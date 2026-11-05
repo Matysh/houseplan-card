@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3870,
+  "revision": 3871,
   "nextTicket": 215,
   "nextFence": 215,
   "tasks": {
@@ -3235,148 +3235,25 @@
     },
     "1298": {
       "issue": 1298,
+      "branch": "codex/1298-deletion-characterization",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1298-deletion-characterization",
-      "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 214,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793850204806,
-      "reviewEntry": 1,
-      "patchId": "7f5645dbdb6c24d7da895645fafdd631ada59b24",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "test/commit-physical-geometry.test.mjs",
-        "test/helpers/geometry-commit-characterization.mjs"
-      ],
-      "s6": {
-        "id": "20261105T034337864-f89885d8",
-        "name": "Тесты для задачи #1298 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T034337864-f89885d8/report.json",
-        "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
-        "status": "passed",
-        "finishedAt": "2026-11-05T03:45:13.333Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
+      "mergedSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
+      "mergedAt": 1793850537974,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1298:1:7f5645dbdb6c24d7da895645fafdd631ada59b24:4d5bb045134cc1e9bb7ce858baf3229dbd381428",
-      "reviewMaterial": {
-        "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
-        "expectedBase": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
-        "patchId": "7f5645dbdb6c24d7da895645fafdd631ada59b24"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1298:1:7f5645dbdb6c24d7da895645fafdd631ada59b24:4d5bb045134cc1e9bb7ce858baf3229dbd381428",
-        "eventId": "github:41963551530:1:tick:0:review-retry",
-        "at": 1793850334625,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1298,
-        "requestId": "review:1298:1:7f5645dbdb6c24d7da895645fafdd631ada59b24:4d5bb045134cc1e9bb7ce858baf3229dbd381428",
-        "kind": "code",
-        "base": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
-        "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
-        "patchId": "7f5645dbdb6c24d7da895645fafdd631ada59b24",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1298,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1298",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Первоначальное предположение о продуктовом дефекте adoption снято чтением #1099. Контракт п.7 и AC8 запрещают изменения маркеров во время построения baseline/кандидатов. Успешное принятие pre-v9 документа и судьба маркеров при нём явно вынесены в «Не-скоуп», порядок adopt после проверок сохранён. FreezeGuard helper уже освобождает заморозку перед намеренным rollback writer. Раньше подставленный length давал отказ, теперь доказанное удаление принимает #1258 и тест по ошибке доходит с construction-only freeze до существующего намеренного adoption writer. Обычный pre-v9 вход без freeze успешно сохраняет правильные маркеры [{id:'m',space:'f'}]; потери данных продукта не обнаружено.\n\nВместо снятия freeze или изменения runtime:\n- В generic deletion-refusal входах использован angle, который #1258 не освобождает. Сохраняется вся конструкционная заморозка и точный rollback. Merge-refusal остаётся length, как раньше.\n- Исторический test/fixtures/1099-commit-characterization.json не меняется. expectedPassport переопределяет только два toast на junction.limit_angle; старые config/history fingerprints и все остальные случаи прежние.\n- Отдельные два length-входа принимают удаление по принятому контракту и проверяют пустую геометрию удалённой комнаты, точные очищенные маркеры, один history entry с полным roomReferences, исходный контур и неизменные полигоны посторонних комнат. Новый тест также утверждает, что исторический паспорт по-прежнему содержит прежний отказ length.\n\nВыбран show с независимым ревью. Слой S6 product нужен из-за production test-build/imports; это тестовая корректировка без product runtime/протокола/визуальных кадров, не требует новой классификации пользовательского изменения. Первичный FAIL CI сохранён, предположение о runtime bug в заголовке уточнено по доказательствам."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принимать. Задача правит только тесты и changelog: продуктовый runtime, исторический паспорт `test/fixtures/1099-commit-characterization.json` и правила adoption не меняются. Причина отказа CI объяснена верно. После #1258 подставленное в тесте нарушение `length` перестало быть отказом для доказанного удаления, поэтому две сцены `*-delete-junction-refusal` стали успешными. В pre-v9 варианте успешная операция дошла до намеренной полной записи `adoptWallSegmentModelCandidateInPlace` по замороженным маркерам. Выбранный подход сохраняет обе проверки. Отказ с откатом и полной заморозкой маркеров теперь проверяется на правиле `angle`, которое исключение #1258 не затрагивает. Само принятие удаления с `length` вынесено в отдельный тест с точными проверками. Блокеров нет. Есть одно необязательное усиление: v9-вариант принятого удаления можно дополнительно прогнать с заморозкой маркеров.",
-          "understanding": "Проблема. Характеризационные сцены #1099 `marker-delete-junction-refusal` и `marker-pre-v9-delete-junction-refusal` подменяют `host._junctionLimitViolations`: на втором вызове (проверка кандидата) он возвращает нарушение `{rule:'length'}`. После #1258 в `src/houseplan-editor-runtime.ts:2177-2186` нарушения `length` отбрасываются, если `removesOnlyLimitSegments` (`src/junction-limits.ts:81-105`) доказывает, что кандидат только удаляет сегменты. Удаление комнаты с `keepWalls:false` под это условие подходит, поэтому коммит принимается, и паспорт с отказом перестаёт совпадать. В pre-v9 при этом срабатывает `adoptEditedSpaceModelInPlace` (`src/physical-candidate-proof.ts:45-48`). Для документов старше v9 он намеренно применяет кандидат целиком, вместе с `markers`, а `adoptWallSegmentModelCandidateInPlace` (`src/wall-segment-model.ts:1059`) удаляет и заново вставляет ключи. На глубоко замороженных маркерах это даёт TypeError.\n\nЧто стало. Хелпер `characterize` получил параметр `junctionRule`. По умолчанию для `*-delete-junction-refusal` подставляется `angle`, для merge — по-прежнему `length`. В тесте `expectedPassport` для этих двух сцен меняет в историческом паспорте только `toasts` на `junction.limit_angle`; хеши config/history сравниваются с прежними. Новый тест `#1298` прогоняет те же сцены с `junctionRule:'length'` без заморозки. Он проверяет `ok`, пустые toasts, очищенные маркеры `[{id:'m',space:'f'}]`, пустую геометрию и граф пространства `f`, одну запись истории с полным `roomReferences` и исходным полигоном, неизменные комнаты `g`/`h`, а также то, что сам архивный паспорт по-прежнему содержит отказ `length`.\n\nРазобранные пути: фильтр исключения `length` в runtime, `removesOnlyLimitSegments`, `adoptEditedSpaceModelInPlace` (ветка pre-v9 и ветка v9 с одним пространством), обёртка заморозки и `_restoreGeometryStateLocal` в хелпере, все потребители хелпера (`test/commit-physical-geometry.test.mjs`, `test/helpers/geometry-passport-1226.mjs`, `test/split-passport-provenance.test.mjs`) и ссылки на фикстуру в корпусах #845.",
-          "analysis": [
-            {
-              "topic": "Правильность диагноза: дефект в тестовом входе, а не в продукте",
-              "assessment": "Диагноз подтверждается исходниками. Исключение #1258 намеренно касается только правила `length` и только при доказанном удалении; остальные правила по-прежнему приводят к отказу. Ошибка во frozen pre-v9 возникает в фазе принятия, которая идёт после всех проверок. Там полная запись документа, включая маркеры, для pre-v9 предусмотрена дизайном (комментарий «older documents retain their atomic all-space migration»). Заморозка в #1099 охраняла фазу построения и проверки, а не намеренную запись. Отказ от правки runtime оправдан.",
-              "evidence": "`src/houseplan-editor-runtime.ts:2176-2186`; `src/junction-limits.ts:76-80` («This only exempts the length rule»); `src/physical-candidate-proof.ts:30-31,44-48`; `src/wall-segment-model.ts:1050-1059`; хелпер `test/helpers/geometry-commit-characterization.mjs:26-32`, где уже есть аналогичное снятие заморозки перед намеренной записью при rollback."
-            },
-            {
-              "topic": "Сохранение защитной силы frozen-guard",
-              "assessment": "Замена на `angle` оставляет сцену настоящим отказом: исключение #1258 к углу не применяется, поэтому выполняются построение baseline и кандидата, проверка, отказ и откат при полностью замороженных маркерах, в том числе в pre-v9. Совпадение прежних хешей config/history с архивом подтверждает, что откат байт-в-байт тот же. Проверка frozen-guard не ослаблена. Merge-сцены остаются на `length`, и это корректно: если бы merge подпал под исключение, тесты бы упали.",
-              "evidence": "`test/helpers/geometry-commit-characterization.mjs:19-25`; `test/commit-physical-geometry.test.mjs:20-27,82-84` (`expectedPassport` меняет только `toasts`)."
-            },
-            {
-              "topic": "Принятое удаление с length проверено содержательно",
-              "assessment": "Новый тест проверяет поведение, а не только статус `ok`: точную очистку ссылок маркера, отсутствие стен и рёбер графа у удалённой комнаты, наличие `roomReferences` в истории (без них Undo не восстановит ссылки), исходный контур и неизменность других пространств. Можно возразить, что тест сам не доказывает срабатывание подменённого нарушения. Но соседняя сцена с `angle` на том же счётчике `calls===2` даёт отказ, значит второй вызов действительно проверяет кандидата, и исключение `length` реально задействовано. Пара сцен подтверждает друг друга.",
-              "evidence": "`test/commit-physical-geometry.test.mjs:115-134`; фикстура `fixture()` в `test/helpers/geometry-commit-harness.mjs:19` (квадраты f/g/h со смещением 0/4/8 совпадают с ожидаемыми полигонами)."
-            },
-            {
-              "topic": "Влияние на других потребителей хелпера",
-              "assessment": "`test/helpers/geometry-passport-1226.mjs` — ручной скрипт воспроизведения паспорта, CI его не запускает. Он берёт `ok/toasts` из старого паспорта и требует `actual.ok===expected.ok` для всех сцен, кроме `unsafe`. На base он по этой причине падал бы на двух сценах удаления. После изменения `actual.ok` снова `false`, хеш конфигурации прежний, так что скрипт стал согласованным, а не сломался. `split-passport-provenance` использует только сцену `split`, которой изменение не касается. Фикстура не менялась, поэтому ссылки `845-wall-corpus-*identities.json` на неё остаются верными.",
-              "evidence": "`test/helpers/geometry-passport-1226.mjs:21-38`; `test/split-passport-provenance.test.mjs:34`; результаты поиска `delete-junction-refusal` по репозиторию."
-            },
-            {
-              "topic": "Ясность и сопровождение",
-              "assessment": "Комментарии объясняют неочевидную причину: почему для удаления используется `angle` и почему архивный паспорт не тронут. Неявное значение по умолчанию `name.includes('delete')?'angle':'length'` в хелпере немного прячет логику, но оно сопровождено комментарием и явной проверкой в тесте, что паспорт по-прежнему содержит `length`. Дополнительной сложности это не добавляет.",
-              "evidence": "`test/helpers/geometry-commit-characterization.mjs:20-23`; `test/commit-physical-geometry.test.mjs:17-20,132-133`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Можно дополнительно прогнать v9-вариант принятого удаления (`marker-delete-junction-refusal` с `junctionRule:'length'`) с `freezeGuards:true`. По `src/physical-candidate-proof.ts:44-53` при совпадении ссылки `markers` у цели и кандидата ветка v9 одного пространства не трогает живые маркеры. Такая проверка зафиксировала бы этот контракт и для успешного пути, а не только для отказа. Цена — одна строка в цикле нового теста; pre-v9 нужно оставить без заморозки, потому что там полная запись намеренная. Это не обязательно: в объём задачи (AC п.2) заморозка успешного пути не входит."
-          ],
-          "boundaries": "Ревью статическое: я прочитал diff, хелпер и тест целиком, путь исключения `length` в runtime, `removesOnlyLimitSegments`, `adoptEditedSpaceModelInPlace` и `adoptWallSegmentModelCandidateInPlace`, а также всех потребителей хелпера и упоминания сцен в репозитории. Тесты я сам не запускал. В качестве результата S6 принят receipt `20261105T034337864-f89885d8` («Тесты для задачи #1298 (перед ревью)», passed, без отказов) на материале `0701ada7`. Текст ТЗ #1099 (п.7, AC8, «Не-скоуп») в репозитории не нашёл. Утверждение автора о том, что принятие pre-v9 вынесено в «Не-скоуп», проверено косвенно: по коду (`physical-candidate-proof.ts`) и по прежнему ревью `legacy/reviews/v1.83.0/CODE-REVIEW-1099-r1.md`, где заморозка описана как охрана построения и проверки. Повтор CI на новом кандидате и stable audit по ТЗ выполняются после S8 и в это ревью не входят."
-        },
-        "usage": {
-          "input_tokens": 38,
-          "cache_creation_input_tokens": 77064,
-          "cache_read_input_tokens": 462944,
-          "output_tokens": 9357,
-          "output_tokens_details": {
-            "thinking_tokens": 2923
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 77064,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1016,
-              "cache_read_input_tokens": 68655,
-              "cache_creation_input_tokens": 12613,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 12613
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принимать. Задача правит только тесты и changelog: продуктовый runtime, исторический паспорт `test/fixtures/1099-commit-characterization.json` и правила adoption не меняются. Причина отказа CI объяснена верно. После #1258 подставленное в тесте нарушение `length` перестало быть отказом для доказанного удаления, поэтому две сцены `*-delete-junction-refusal` стали успешными. В pre-v9 варианте успешная операция дошла до намеренной полной записи `adoptWallSegmentModelCandidateInPlace` по замороженным маркерам. Выбранный подход сохраняет обе проверки. Отказ с откатом и полной заморозкой маркеров теперь проверяется на правиле `angle`, которое исключение #1258 не затрагивает. Само принятие удаления с `length` вынесено в отдельный тест с точными проверками. Блокеров нет. Есть одно необязательное усиление: v9-вариант принятого удаления можно дополнительно прогнать с заморозкой маркеров.\n\n## Понимание решения\n\nПроблема. Характеризационные сцены #1099 `marker-delete-junction-refusal` и `marker-pre-v9-delete-junction-refusal` подменяют `host._junctionLimitViolations`: на втором вызове (проверка кандидата) он возвращает нарушение `{rule:'length'}`. После #1258 в `src/houseplan-editor-runtime.ts:2177-2186` нарушения `length` отбрасываются, если `removesOnlyLimitSegments` (`src/junction-limits.ts:81-105`) доказывает, что кандидат только удаляет сегменты. Удаление комнаты с `keepWalls:false` под это условие подходит, поэтому коммит принимается, и паспорт с отказом перестаёт совпадать. В pre-v9 при этом срабатывает `adoptEditedSpaceModelInPlace` (`src/physical-candidate-proof.ts:45-48`). Для документов старше v9 он намеренно применяет кандидат целиком, вместе с `markers`, а `adoptWallSegmentModelCandidateInPlace` (`src/wall-segment-model.ts:1059`) удаляет и заново вставляет ключи. На глубоко замороженных маркерах это даёт TypeError.\n\nЧто стало. Хелпер `characterize` получил параметр `junctionRule`. По умолчанию для `*-delete-junction-refusal` подставляется `angle`, для merge — по-прежнему `length`. В тесте `expectedPassport` для этих двух сцен меняет в историческом паспорте только `toasts` на `junction.limit_angle`; хеши config/history сравниваются с прежними. Новый тест `#1298` прогоняет те же сцены с `junctionRule:'length'` без заморозки. Он проверяет `ok`, пустые toasts, очищенные маркеры `[{id:'m',space:'f'}]`, пустую геометрию и граф пространства `f`, одну запись истории с полным `roomReferences` и исходным полигоном, неизменные комнаты `g`/`h`, а также то, что сам архивный паспорт по-прежнему содержит отказ `length`.\n\nРазобранные пути: фильтр исключения `length` в runtime, `removesOnlyLimitSegments`, `adoptEditedSpaceModelInPlace` (ветка pre-v9 и ветка v9 с одним пространством), обёртка заморозки и `_restoreGeometryStateLocal` в хелпере, все потребители хелпера (`test/commit-physical-geometry.test.mjs`, `test/helpers/geometry-passport-1226.mjs`, `test/split-passport-provenance.test.mjs`) и ссылки на фикстуру в корпусах #845.\n\n## Разбор решения\n\n### Правильность диагноза: дефект в тестовом входе, а не в продукте\n\nДиагноз подтверждается исходниками. Исключение #1258 намеренно касается только правила `length` и только при доказанном удалении; остальные правила по-прежнему приводят к отказу. Ошибка во frozen pre-v9 возникает в фазе принятия, которая идёт после всех проверок. Там полная запись документа, включая маркеры, для pre-v9 предусмотрена дизайном (комментарий «older documents retain their atomic all-space migration»). Заморозка в #1099 охраняла фазу построения и проверки, а не намеренную запись. Отказ от правки runtime оправдан.\n\nОснование: `src/houseplan-editor-runtime.ts:2176-2186`; `src/junction-limits.ts:76-80` («This only exempts the length rule»); `src/physical-candidate-proof.ts:30-31,44-48`; `src/wall-segment-model.ts:1050-1059`; хелпер `test/helpers/geometry-commit-characterization.mjs:26-32`, где уже есть аналогичное снятие заморозки перед намеренной записью при rollback.\n\n### Сохранение защитной силы frozen-guard\n\nЗамена на `angle` оставляет сцену настоящим отказом: исключение #1258 к углу не применяется, поэтому выполняются построение baseline и кандидата, проверка, отказ и откат при полностью замороженных маркерах, в том числе в pre-v9. Совпадение прежних хешей config/history с архивом подтверждает, что откат байт-в-байт тот же. Проверка frozen-guard не ослаблена. Merge-сцены остаются на `length`, и это корректно: если бы merge подпал под исключение, тесты бы упали.\n\nОснование: `test/helpers/geometry-commit-characterization.mjs:19-25`; `test/commit-physical-geometry.test.mjs:20-27,82-84` (`expectedPassport` меняет только `toasts`).\n\n### Принятое удаление с length проверено содержательно\n\nНовый тест проверяет поведение, а не только статус `ok`: точную очистку ссылок маркера, отсутствие стен и рёбер графа у удалённой комнаты, наличие `roomReferences` в истории (без них Undo не восстановит ссылки), исходный контур и неизменность других пространств. Можно возразить, что тест сам не доказывает срабатывание подменённого нарушения. Но соседняя сцена с `angle` на том же счётчике `calls===2` даёт отказ, значит второй вызов действительно проверяет кандидата, и исключение `length` реально задействовано. Пара сцен подтверждает друг друга.\n\nОснование: `test/commit-physical-geometry.test.mjs:115-134`; фикстура `fixture()` в `test/helpers/geometry-commit-harness.mjs:19` (квадраты f/g/h со смещением 0/4/8 совпадают с ожидаемыми полигонами).\n\n### Влияние на других потребителей хелпера\n\n`test/helpers/geometry-passport-1226.mjs` — ручной скрипт воспроизведения паспорта, CI его не запускает. Он берёт `ok/toasts` из старого паспорта и требует `actual.ok===expected.ok` для всех сцен, кроме `unsafe`. На base он по этой причине падал бы на двух сценах удаления. После изменения `actual.ok` снова `false`, хеш конфигурации прежний, так что скрипт стал согласованным, а не сломался. `split-passport-provenance` использует только сцену `split`, которой изменение не касается. Фикстура не менялась, поэтому ссылки `845-wall-corpus-*identities.json` на неё остаются верными.\n\nОснование: `test/helpers/geometry-passport-1226.mjs:21-38`; `test/split-passport-provenance.test.mjs:34`; результаты поиска `delete-junction-refusal` по репозиторию.\n\n### Ясность и сопровождение\n\nКомментарии объясняют неочевидную причину: почему для удаления используется `angle` и почему архивный паспорт не тронут. Неявное значение по умолчанию `name.includes('delete')?'angle':'length'` в хелпере немного прячет логику, но оно сопровождено комментарием и явной проверкой в тесте, что паспорт по-прежнему содержит `length`. Дополнительной сложности это не добавляет.\n\nОснование: `test/helpers/geometry-commit-characterization.mjs:20-23`; `test/commit-physical-geometry.test.mjs:17-20,132-133`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Можно дополнительно прогнать v9-вариант принятого удаления (`marker-delete-junction-refusal` с `junctionRule:'length'`) с `freezeGuards:true`. По `src/physical-candidate-proof.ts:44-53` при совпадении ссылки `markers` у цели и кандидата ветка v9 одного пространства не трогает живые маркеры. Такая проверка зафиксировала бы этот контракт и для успешного пути, а не только для отказа. Цена — одна строка в цикле нового теста; pre-v9 нужно оставить без заморозки, потому что там полная запись намеренная. Это не обязательно: в объём задачи (AC п.2) заморозка успешного пути не входит.\n\n## Границы анализа\n\nРевью статическое: я прочитал diff, хелпер и тест целиком, путь исключения `length` в runtime, `removesOnlyLimitSegments`, `adoptEditedSpaceModelInPlace` и `adoptWallSegmentModelCandidateInPlace`, а также всех потребителей хелпера и упоминания сцен в репозитории. Тесты я сам не запускал. В качестве результата S6 принят receipt `20261105T034337864-f89885d8` («Тесты для задачи #1298 (перед ревью)», passed, без отказов) на материале `0701ada7`. Текст ТЗ #1099 (п.7, AC8, «Не-скоуп») в репозитории не нашёл. Утверждение автора о том, что принятие pre-v9 вынесено в «Не-скоуп», проверено косвенно: по коду (`physical-candidate-proof.ts`) и по прежнему ревью `legacy/reviews/v1.83.0/CODE-REVIEW-1099-r1.md`, где заморозка описана как охрана построения и проверки. Повтор CI на новом кандидате и stable audit по ТЗ выполняются после S8 и в это ревью не входят.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 4d5bb045134cc1e9bb7ce858baf3229dbd381428 → 0701ada7e3614933bd232899d4c67b6a6bfc6f99\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1298, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПервоначальное предположение о продуктовом дефекте adoption снято чтением #1099. Контракт п.7 и AC8 запрещают изменения маркеров во время построения baseline/кандидатов. Успешное принятие pre-v9 документа и судьба маркеров при нём явно вынесены в «Не-скоуп», порядок adopt после проверок сохранён. FreezeGuard helper уже освобождает заморозку перед намеренным rollback writer. Раньше подставленный length давал отказ, теперь доказанное удаление принимает #1258 и тест по ошибке доходит с construction-only freeze до существующего намеренного adoption writer. Обычный pre-v9 вход без freeze успешно сохраняет правильные маркеры [{id:'m',space:'f'}]; потери данных продукта не обнаружено.\n\nВместо снятия freeze или изменения runtime:\n- В generic deletion-refusal входах использован angle, который #1258 не освобождает. Сохраняется вся конструкционная заморозка и точный rollback. Merge-refusal остаётся length, как раньше.\n- Исторический test/fixtures/1099-commit-characterization.json не меняется. expectedPassport переопределяет только два toast на junction.limit_angle; старые config/history fingerprints и все остальные случаи прежние.\n- Отдельные два length-входа принимают удаление по принятому контракту и проверяют пустую геометрию удалённой комнаты, точные очищенные маркеры, один history entry с полным roomReferences, исходный контур и неизменные полигоны посторонних комнат. Новый тест также утверждает, что исторический паспорт по-прежнему содержит прежний отказ length.\n\nВыбран show с независимым ревью. Слой S6 product нужен из-за production test-build/imports; это тестовая корректировка без product runtime/протокола/визуальных кадров, не требует новой классификации пользовательского изменения. Первичный FAIL CI сохранён, предположение о runtime bug в заголовке уточнено по доказательствам.\n```\n\n</details>\n",
-        "createdAt": "2026-11-05T03:47:59.005Z",
-        "artifactId": 13386497435,
-        "runId": 41963570161,
-        "runAttempt": 1,
-        "completedAt": "2026-11-05T03:48:04Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41963570161",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "4d5bb045134cc1e9bb7ce858baf3229dbd381428"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -3497,120 +3374,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1298,
-    "worker": "finish",
-    "token": "214:finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4:finish:1:admit",
-    "fence": 214,
-    "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
-    "expectedBase": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793850208311,
-    "expiresAt": 1793854132874,
-    "patchId": "7f5645dbdb6c24d7da895645fafdd631ada59b24",
-    "reviewRequest": "review:1298:1:7f5645dbdb6c24d7da895645fafdd631ada59b24:4d5bb045134cc1e9bb7ce858baf3229dbd381428"
-  },
-  "events": {
-    "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4:finish:2:synchronized": {
-      "digest": "15110fa34b50d44560f698670e129a7cb3b5108ee84717a795cca9e0901dd55b",
-      "issue": 1298
-    },
-    "github:41963350967:1:completions:message:ab5aa1d1496c6a460788008c0074be853dacf89c49054ef2b3cad27e50448ca7": {
-      "digest": "d79a5aa9dbc6566b233cdf9f93e3ad9a9a85822ed46ef8a1707c399335bf0311",
-      "issue": 1298
-    },
-    "github:41963350967:1:completions:message:fedd10799ac83b21abe413f56cc49379ff30c8976f7e8936ef3279932cdc19fb": {
-      "digest": "ab042c2f7593d057182a636a3effdfe05ca4346f412a08bc1805dfd37c27c3e9",
-      "issue": 1298
-    },
-    "finish:8b91a747-a91e-48fd-b34e-00b3088ce826": {
-      "digest": "03c63ff3e0a1b98742be99e2d09b41bf881dba30232949fb582c143040c7c1c8",
-      "issue": 1298
-    },
-    "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4:finish:3:s6-label": {
-      "digest": "bff33d52b355641535b3cae643e91361ffd05e7dadc5a800f7d3d5ad1ced0271",
-      "issue": 1298
-    },
-    "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4:finish:4:review-requested": {
-      "digest": "84142c8b558ebbe89d4fab15a6e3218794323b1d1bed3c36155f97169b41b26d",
-      "issue": 1298
-    },
-    "github:41963551530:1:tick:0:review-retry": {
-      "digest": "4d1dec47839131639888d22291f75d33d63fcd14fe33e64e9e050e9ce1f59e06",
-      "issue": 1298
-    },
-    "github:41963551530:1:completions:message:d40a666fe7f1576c57c7dc0b0fa623c015cec265690e18545b77fc8aabf01cc7": {
-      "digest": "e055efefa859571ace785c46e9e56b794a1bfde33ac89f7b1ee178c86da9ec37",
-      "issue": 1298
-    },
-    "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4:finish:7:review-presentation": {
-      "digest": "91507001a30f735f12ef44e3fe9f3b285e67d82358066fc5ce895e893b80df59",
-      "issue": 1298
-    },
-    "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4:finish:7:review-complete": {
-      "digest": "12485d7cc9da5f5e5a781923be9f03b9d0a6bb603b4d6b20e153e8a4aced177f",
-      "issue": 1298
-    },
-    "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4": {
-      "digest": "96077dbe7600f1b9dbeac24d3ce58bff7a0c975fa76b3d6ea9a169539520a22b",
-      "issue": 1298,
-      "message": {
-        "kind": "queued",
-        "issue": 1298,
-        "at": 1793850204806,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
-        "delivered": true
-      }
-    },
-    "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4:finish:1:admit": {
-      "digest": "915382f050d2220c991e14e8134c5b23ead73eda1691e8489a2e138c05bb7d96",
-      "issue": 1298,
-      "message": {
-        "kind": "admitted",
-        "issue": 1298,
-        "at": 1793850208311,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4:finish:3:s6-complete": {
-      "digest": "018907c4a647e626b4f6ce8406510934fcd9579189fdd9cb203fc8b7e9b84e72",
-      "issue": 1298,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1298,
-        "at": 1793850314540,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
-        "phase": "review",
-        "evidence": {
-          "id": "20261105T034337864-f89885d8",
-          "name": "Тесты для задачи #1298 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T034337864-f89885d8/report.json",
-          "materialSha": "0701ada7e3614933bd232899d4c67b6a6bfc6f99",
-          "status": "passed",
-          "finishedAt": "2026-11-05T03:45:13.333Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Первоначальное предположение о продуктовом дефекте adoption снято чтением #1099. Контракт п.7 и AC8 запрещают изменения маркеров во время построения baseline/кандидатов. Успешное принятие pre-v9 документа и судьба маркеров при нём явно вынесены в «Не-скоуп», порядок adopt после проверок сохранён. FreezeGuard helper уже освобождает заморозку перед намеренным rollback writer. Раньше подставленный length давал отказ, теперь доказанное удаление принимает #1258 и тест по ошибке доходит с construction-only freeze до существующего намеренного adoption writer. Обычный pre-v9 вход без freeze успешно сохраняет правильные маркеры [{id:'m',space:'f'}]; потери данных продукта не обнаружено.\n\nВместо снятия freeze или изменения runtime:\n- В generic deletion-refusal входах использован angle, который #1258 не освобождает. Сохраняется вся конструкционная заморозка и точный rollback. Merge-refusal остаётся length, как раньше.\n- Исторический test/fixtures/1099-commit-characterization.json не меняется. expectedPassport переопределяет только два toast на junction.limit_angle; старые config/history fingerprints и все остальные случаи прежние.\n- Отдельные два length-входа принимают удаление по принятому контракту и проверяют пустую геометрию удалённой комнаты, точные очищенные маркеры, один history entry с полным roomReferences, исходный контур и неизменные полигоны посторонних комнат. Новый тест также утверждает, что исторический паспорт по-прежнему содержит прежний отказ length.\n\nВыбран show с независимым ревью. Слой S6 product нужен из-за production test-build/imports; это тестовая корректировка без product runtime/протокола/визуальных кадров, не требует новой классификации пользовательского изменения. Первичный FAIL CI сохранён, предположение о runtime bug в заголовке уточнено по доказательствам.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "644cae87c40425c31fb1b181574f48e434ffb8bd",
     "status": "delivered",
