@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4012,
+  "revision": 4013,
   "nextTicket": 219,
   "nextFence": 219,
   "tasks": {
@@ -3359,7 +3359,10 @@
         "docs/CHANGELOG.ru.md",
         "docs/testing/issue1302-static-handoff.md"
       ],
-      "s6": null
+      "s6": null,
+      "automationError": "automation-error",
+      "automationSince": 1793859097812,
+      "automationDetail": "S6 needs its successful selected set; documentation has no runs"
     }
   },
   "ownerDecisions": {},
@@ -3484,6 +3487,10 @@
     },
     "github:41978619994:1:tick:0:s6-label": {
       "digest": "a2fa30f48d117bf561e33b7790ac29d3bd015e97c23e41eca446d878e326c485",
+      "issue": 1302
+    },
+    "finish:13f68ee6-36ff-438f-8192-617e1208d5c6:finish:3:automation-pending": {
+      "digest": "a395ce06eb0621f7564e3cf14a20241592ef2bf11f8ba538ab4cf8cbbc6668e4",
       "issue": 1302
     },
     "finish:13f68ee6-36ff-438f-8192-617e1208d5c6": {
