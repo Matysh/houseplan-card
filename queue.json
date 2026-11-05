@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4413,
+  "revision": 4414,
   "nextTicket": 232,
   "nextFence": 232,
   "tasks": {
@@ -3430,7 +3430,16 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "test/fixtures/845-wall-corpus-current-identities.json"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T123620757-8c11cdfc",
+        "name": "Тесты для задачи #1308 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261105T123620757-8c11cdfc/report.json",
+        "materialSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48",
+        "status": "passed",
+        "finishedAt": "2026-11-05T12:36:26.302Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -3571,9 +3580,9 @@
     "fence": 231,
     "materialSha": "f8e3b1ae60bca7b8283ff857a75be45aaac9ed48",
     "expectedBase": "f58821aa97edd2c5df40c8a300de079e30cdb464",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793882171764,
-    "expiresAt": 1793882477325,
+    "expiresAt": 1793885787407,
     "patchId": "e6eca6b0d09ebf9e305a4d6419246d6f31465f23"
   },
   "events": {
@@ -3587,6 +3596,10 @@
     },
     "github:42028511493:1:completions:message:edd65378977c3cb77aef312170da84ea6f1e00d61784cd27191a09e774a122c4": {
       "digest": "926c1caa95e1bbe096437db2ae9d8cbacc63d2f0ec8295d87995f280c2462ba2",
+      "issue": 1308
+    },
+    "finish:1c29c746-151f-4322-96d7-7e535de010d3:finish:3:s6-complete": {
+      "digest": "7b8629148494fbb201b800d187e32c9e2d19aae084220aad69075e2826c36569",
       "issue": 1308
     },
     "finish:1c29c746-151f-4322-96d7-7e535de010d3": {
