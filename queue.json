@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4625,
+  "revision": 4626,
   "nextTicket": 239,
   "nextFence": 239,
   "tasks": {
@@ -3611,14 +3611,21 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/issue-1316-ha-cache-race",
-      "materialSha": "5af31e15887c0528ccfc805c6c227763572faa87",
+      "materialSha": "cc4654b3ca8dd40f4b8238d3b0abb70612829ade",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 238,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793886861849,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "7a27939cab329b765cb24513f4a50847714b4c2a",
+      "changedFiles": [
+        "demo/helpers/ha-dialog-assets.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/test/ha-dialog-cache.test.mjs"
+      ]
     },
     "1320": {
       "issue": 1320,
@@ -3793,13 +3800,18 @@
     "worker": "finish",
     "token": "238:finish:6c4871c8-fe13-4ad9-915e-896b05bcae1b:finish:1:admit",
     "fence": 238,
-    "materialSha": "5af31e15887c0528ccfc805c6c227763572faa87",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "cc4654b3ca8dd40f4b8238d3b0abb70612829ade",
+    "expectedBase": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
+    "phase": "testing",
     "admittedAt": 1793886867110,
-    "expiresAt": 1793887167110
+    "expiresAt": 1793887175636,
+    "patchId": "7a27939cab329b765cb24513f4a50847714b4c2a"
   },
   "events": {
+    "finish:6c4871c8-fe13-4ad9-915e-896b05bcae1b:finish:2:synchronized": {
+      "digest": "d9fef22b188032357e62d1ab822950eb7ef9c7702c07054444cbc92915b6a2ac",
+      "issue": 1316
+    },
     "finish:6c4871c8-fe13-4ad9-915e-896b05bcae1b": {
       "digest": "34c1269001db70d8aea7eebd9b438789316a9e9962c8c4aee04e6fa9f9d90c99",
       "issue": 1316,
