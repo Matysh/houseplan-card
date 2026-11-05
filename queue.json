@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4199,
+  "revision": 4200,
   "nextTicket": 226,
   "nextFence": 226,
   "tasks": {
@@ -1686,7 +1686,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793872616814,
       "reviewEntry": 4,
-      "patchId": "2dcd3dd684a0e14a1a585c3d87436b139fba583a",
+      "patchId": "53280afbe222fc57728431d01848374b0641a79e",
       "changedFiles": [
         "demo/golden/static-wall-openings.mjs",
         "demo/smoke_opening_mode_fill.mjs",
@@ -1694,14 +1694,17 @@
         "demo/smoke_static_wall_openings.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
+        "docs/STYLING-HOOKS.md",
         "docs/WALL-THICKNESS.md",
         "docs/release-ledger/v1.83.0/1250.json",
         "src/houseplan-card.ts",
         "src/render/opening-tunnels.ts",
+        "src/room-fit.ts",
         "src/room-floor-paint.ts",
         "src/space-render.ts",
         "src/styles/plan.styles.ts",
         "src/wall-thickness.ts",
+        "test/room-fit.test.mjs",
         "test/room-floor-paint.test.mjs"
       ],
       "notice": {
@@ -3559,10 +3562,11 @@
     "token": "225:finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:1:admit",
     "fence": 225,
     "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
+    "phase": "testing",
     "admittedAt": 1793872620869,
-    "expiresAt": 1793872920869
+    "expiresAt": 1793872927060,
+    "patchId": "53280afbe222fc57728431d01848374b0641a79e"
   },
   "events": {
     "github:42001043930:1:label:spec-request": {
@@ -3715,6 +3719,10 @@
     },
     "github:42005960216:1:completions:metadata:2ce54e88-e266-4066-a443-74dcff54f069:task-notice:1250::": {
       "digest": "4643f3e577dac4a3749254068d22c144c6e025f1a93d9eb1662630184c84acdd",
+      "issue": 1250
+    },
+    "finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:2:synchronized": {
+      "digest": "f3fb35e44c5ad3c14ed302cfb73386fe1612e5570934eaf4ff11d302b42d639d",
       "issue": 1250
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
