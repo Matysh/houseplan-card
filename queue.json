@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3573,
+  "revision": 3574,
   "nextTicket": 206,
   "nextFence": 204,
   "tasks": {
@@ -1997,7 +1997,7 @@
       "ownerDecision": null,
       "ticket": 203,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1793844105215,
       "reviewEntry": 3,
       "patchId": "bf9bb0b03760302552c6f01f24e632d1f92ed8c5",
@@ -2014,14 +2014,13 @@
         "tests_backend/test_junction_limits.py"
       ],
       "notice": {
-        "key": "2:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1793844074176,
-        "entry": 2,
-        "detail": "Backend изменённой области: failed",
-        "eventId": "finish:afa5d581-6a20-41c0-8e59-3cf51e7aed75:finish:4:return:return:1258"
+        "key": "3:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1793845435769,
+        "entry": 3,
+        "requestId": "review:1258:3:bf9bb0b03760302552c6f01f24e632d1f92ed8c5:6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce"
       },
       "s6": {
         "id": "20261105T021831901-319ed656",
@@ -2038,6 +2037,11 @@
         "materialSha": "6b95b1fd07b8c411e2808d9bb1f4bccedc44a71a",
         "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
         "patchId": "bf9bb0b03760302552c6f01f24e632d1f92ed8c5"
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1258:3:bf9bb0b03760302552c6f01f24e632d1f92ed8c5:6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
+        "at": 1793845435769
       }
     },
     "1261": {
@@ -3316,19 +3320,7 @@
     1292,
     1293
   ],
-  "active": {
-    "issue": 1258,
-    "worker": "github-coordinator",
-    "token": "203:github:41954193995:1:tick:1:admit",
-    "fence": 203,
-    "materialSha": "6b95b1fd07b8c411e2808d9bb1f4bccedc44a71a",
-    "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-    "phase": "review",
-    "admittedAt": 1793845049323,
-    "expiresAt": 1793848750445,
-    "patchId": "bf9bb0b03760302552c6f01f24e632d1f92ed8c5",
-    "reviewRequest": "review:1258:3:bf9bb0b03760302552c6f01f24e632d1f92ed8c5:6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce"
-  },
+  "active": null,
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
       "digest": "a3267a6cd7428e3ded61f5b48cd08a5bc3d20e9f699cb2281750a4f1f9f89f6b",
@@ -3424,6 +3416,10 @@
     },
     "finish:c5870fc8-4124-46bd-9d08-6d6fbcf99fbd:finish:7:review-presentation": {
       "digest": "c755bfa9e4d94f72b585660006c7b96e0eb1c9cb81b0442a2869f7d52bfffe10",
+      "issue": 1258
+    },
+    "finish:c5870fc8-4124-46bd-9d08-6d6fbcf99fbd:finish:7:return": {
+      "digest": "12ccf3f790461511b188989074cd231455e77cb1cc25cb3208335e48f4c1baf1",
       "issue": 1258
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
