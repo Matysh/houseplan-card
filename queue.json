@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4010,
+  "revision": 4011,
   "nextTicket": 219,
   "nextFence": 219,
   "tasks": {
@@ -3350,7 +3350,7 @@
       "ownerDecision": null,
       "ticket": 218,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793859079710,
       "reviewEntry": 1,
       "patchId": "c316430f0e06193d36979b1ffd174fdf3ddeba60",
@@ -3358,7 +3358,8 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/testing/issue1302-static-handoff.md"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -3471,9 +3472,9 @@
     "fence": 218,
     "materialSha": "34631cb69c7b61327155c33d261811c0a9b66a9c",
     "expectedBase": "750d351f902f30474018b646f5e55e2462ba1b88",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793859083045,
-    "expiresAt": 1793859388796,
+    "expiresAt": 1793862692785,
     "patchId": "c316430f0e06193d36979b1ffd174fdf3ddeba60"
   },
   "events": {
@@ -3506,6 +3507,25 @@
         "layer": "docs",
         "materialSha": "34631cb69c7b61327155c33d261811c0a9b66a9c",
         "phase": "sync"
+      }
+    },
+    "github:41978619994:1:tick:0:s6-complete": {
+      "digest": "6e273e0291838c64dbfa75c2e29762da89e37a59f6a2988aa1e735e9220fb64f",
+      "issue": 1302,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1302,
+        "at": 1793859092785,
+        "entry": 1,
+        "track": "show",
+        "layer": "docs",
+        "materialSha": "34631cb69c7b61327155c33d261811c0a9b66a9c",
+        "phase": "review",
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Причина установлена по исходному CI trace: snapshot656549.096 содержит четыре Static host — две под HUI-HORIZONTAL-STACK-CARD и две в fixture DIV. После B auth_ok в656416.126 Houseplan GET продолжались с A IDs73/74,75/76; B выполнил registry IDs1/2. Удаление только дочерних карточек оставляло подключённый Lovelace, который пересоздавал A-пару. Исправление companion6452c23857420b43f14789f226ead3a76527049b отсоединяет корень home-assistant только этой тестовой страницы перед созданием пары. Настоящее A остаётся; B — второй реальный authenticated socket. Reload восстанавливает HA. Добавлены проверки ровно двух host и safe receipt в finally с hold-target, без auth/payload. Ни forced reads, ни fake replies/reset/retry, ни увеличение timeout не применялись. Вся старая цепочка real ACK/readback, A high-water/B low-rev, оба paints/reload сохранена. Адресный полный кейс на публичной beta.6 и HA2026.10.4 PASS:business1/1,setup3/3,skip/unexecuted/retry0, собственный AITT9A контейнер удалён адаптером. После HA прогона менялись лишь отступы и unit assertion safe metadata. Синтаксис двух файлов и4/4fixture unit PASS. Полный содержательный diff companion включён в root docs/testing/issue1302-static-handoff.md для независимого ревью; корневая часть документационная, лишних тестов не требует. Companion branch опубликована, main обновится только после принятого ревью; называть задачу завершённой до этой интеграции нельзя. Исходный FAILED stable сохраняется.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
