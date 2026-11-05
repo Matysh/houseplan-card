@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4210,
+  "revision": 4211,
   "nextTicket": 226,
   "nextFence": 226,
   "tasks": {
@@ -1675,179 +1675,25 @@
     },
     "1250": {
       "issue": 1250,
+      "branch": "issue/1250-room-floor-openings",
       "track": "show",
       "layer": "product",
-      "branch": "issue/1250-room-floor-openings",
-      "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 225,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793872616814,
-      "reviewEntry": 4,
-      "patchId": "53280afbe222fc57728431d01848374b0641a79e",
-      "changedFiles": [
-        "demo/golden/static-wall-openings.mjs",
-        "demo/smoke_opening_mode_fill.mjs",
-        "demo/smoke_opening_tunnel_fill.mjs",
-        "demo/smoke_static_wall_openings.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/STYLING-HOOKS.md",
-        "docs/WALL-THICKNESS.md",
-        "docs/release-ledger/v1.83.0/1250.json",
-        "src/houseplan-card.ts",
-        "src/render/opening-tunnels.ts",
-        "src/room-fit.ts",
-        "src/room-floor-paint.ts",
-        "src/space-render.ts",
-        "src/styles/plan.styles.ts",
-        "src/wall-thickness.ts",
-        "test/room-fit.test.mjs",
-        "test/room-floor-paint.test.mjs"
-      ],
-      "notice": {
-        "key": "3:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793872336749,
-        "entry": 3,
-        "requestId": "review:1250:3:2dcd3dd684a0e14a1a585c3d87436b139fba583a:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-        "transitionConfirmed": true
-      },
-      "s6": {
-        "id": "20261105T095711006-714d8ea0",
-        "name": "Тесты для задачи #1250 (перед ревью)",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T095711006-714d8ea0/report.json",
-        "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-        "status": "passed",
-        "finishedAt": "2026-11-05T09:58:21.244Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
+      "mergedSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
+      "mergedAt": 1793872930790,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1250:4:53280afbe222fc57728431d01848374b0641a79e:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-      "reviewMaterial": {
-        "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-        "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-        "patchId": "53280afbe222fc57728431d01848374b0641a79e"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1250:4:53280afbe222fc57728431d01848374b0641a79e:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-        "eventId": "github:42006789514:1:tick:0:review-retry",
-        "at": 1793872720309,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1250,
-        "requestId": "review:1250:4:53280afbe222fc57728431d01848374b0641a79e:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-        "kind": "code",
-        "base": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-        "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-        "patchId": "53280afbe222fc57728431d01848374b0641a79e",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1250,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1250",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Установленный show. Сохраняются канонический wall/opening index и прежние границы владения. Его лица теперь предоставляют чистые половинные контуры без прежнего paint-overlap у оси. `room-floor-paint.ts` строит только презентационную геометрию: из прежнего clean floor вычитается весь домен проходов, затем добавляется часть данного владельца и вычитается каноническая кладка/отдельные тела. Это сохраняет чистые препятствия и предотвращает двойную заливку с родительским полом вложенной комнаты. Единственный SVG-path комнаты владеет цветом/alpha/переходами. На Plan geometry-only mask уменьшает покрытие продолжения по прежнему plan weight; отдельная цветная вставка и hard-stop gradient удалены. Начальная область событий комнаты сохраняется прозрачным hit-path; opening symbols/hosts/hitbox и реальные контакты не меняются.\n\nСоседние комнаты имеют непересекающиеся области. В изолированном floor group их antialias coverage складывается через plus-lighter: это устраняет source-over просвет на дробном пикселе общей оси без расширения половин или повторного применения alpha. Glow/солнце/декор и кладка остаются вне этой композиции, с прежним порядком. Plan в установившемся состоянии использует прежний floor; area getter, конфиг и модель не меняются. 2.5D использует тот же пол плана, Static — общий чистый проектор и отдельный ограниченный структурный кэш.\n\nКэш полноценной комнаты живёт по cleanFloorKey + openingWallIndexKey + позиции/длине проёмов. Цвет, состояние HA, zoom/поворот камеры и веса перехода в ключ не входят. При недоказуемой boolean-геометрии остаётся прежний чистый пол без опасной закраски кладки. Проверки S6: адресные geometry/area/nested/foreign-body cases; настоящие screenshot pixel probes через проход на дробных масштабах для одинаковых/разных цветов и alpha, пустых сторон, диагонали/поворота, Static и 2.5D; счётчики кэша при color/HA tick; native mode transitions, reduced motion и реальная 600-ms анимация контакта. Существующая проверка Static заменяет только устаревшее требование DOM .static-opening-tunnels на фактическое покрытие пола. Golden не принимаются автоматически."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокер прошлого раунда устранён, работу можно принять. Раньше тап по полу комнаты на этаже со стенами и проёмами не подстраивал камеру под комнату (room fit): событие получал прозрачный `.room-hit`, у которого не было комнатной идентичности. Теперь у hit-пути есть `data-hp-room-hit` и `data-id`, и `planGestureOwnerFromPath` распознаёт его как комнату. Распознавание стоит после проверки интерактивных владельцев, поэтому прежний приоритет устройств, проёмов и кнопок сохранён. Это покрыто юнит-тестом и настоящим `page.mouse.click` по полу с ожиданием `_roomFocus`. Близкие рекомендации прошлого раунда тоже учтены: mask висит только во время перехода режимов, Static не обводит контур дважды при нулевых стенах, fingerprint этажа в Static запоминается по record, граница `:hover` описана в STYLING-HOOKS. Новых существенных рисков исправления не принесли. Сама модель «один path комнаты = чистый пол + её половины проёмов − кладка, стык на оси закрывает plus-lighter в изолированной группе» соответствует решению владельца и критериям задачи. Остаются необязательные замечания: инвариант непересекающихся комнат и ограниченный LRU Static.",
-          "understanding": "Проблема. В base пол комнаты заканчивался у внутренней грани кладки. Проход в стене дорисовывал отдельный слой `.opening-tunnels` с копией цвета, а для разных соседей — с hard-stop gradient. Получалось два владельца цвета, alpha и перехода, отсюда шов и рассинхронизация в режимах (#1244).\n\nПосле изменения:\n- `wall-thickness.ts` отдаёт для каждой стороны проёма точные половинные `contours` без paint-overlap у оси.\n- `room-floor-paint.ts::buildRoomFloorPaint` для каждой комнаты строит путь: чистый пол (с дырами вложенных комнат) − весь домен проёмов + свои грани − компоненты канонической кладки. Также сохраняется `basePath` — прежний чистый пол.\n- В полном card геометрия кэшируется по `cleanFloorKey|openingWallIndex.key|позиции проёмов`; цвет, HA, камера и веса в ключ не входят. В Static кэш модульный LRU по `space.id|cleanFloorFingerprint(spCfg)`, а fingerprint теперь запоминается в WeakMap по record.\n- Рендер: видимый `[data-hp=\"room\"]` с расширенной геометрией и `pointer-events:none`. Mask, гасящий продолжение по `--hp-mode-plan-weight`, теперь стоит только при `_modeTransitionBusy`. Прозрачный `.room-hit` по `basePath` несёт `data-hp-room-hit` + `data-id` и прежние обработчики hover и тултипа.\n- Все комнаты лежат в `g.room-floor-paint-layer` (isolation) с `mix-blend-mode:plus-lighter` на `.room`.\n\nВ этом раунде разобраны:\n- `planGestureOwnerFromPath` и порядок проверок (room-fit.ts:163-178);\n- ветка рендера комнат и hit-пути (houseplan-card.ts:11951-12097);\n- `_roomFloorPaintFor` (9937-9978) и условие маски через геттер `_modeTransitionBusy`, по которому перерисовываются класс stage и `inert`;\n- Static: кэш, memo fingerprint, noedge/outline и связь с `--room-stroke-op` при нулевых стенах (space-render.ts:567-642);\n- CSS `.room.noedge`, `.stage.mode-transition .room`, plus-lighter (plan.styles.ts:66-85, 1201-1206);\n- то, что Static использует те же `cardStyles`, то есть plus-lighter применяется и там;\n- потребители `[data-hp=\"room\"]` (wall-node-editor, pdf/svg-snapshot);\n- новая браузерная проверка в smoke_opening_tunnel_fill.mjs.",
-          "analysis": [
-            {
-              "topic": "Исправление блокера room fit",
-              "assessment": "Устранено корректно и минимально. Второй `[data-hp=\"room\"]` не появился, так что styling hooks и wall-node-editor по-прежнему видят один узел комнаты. Новый селектор проверяется после `ROOM_FIT_INTERACTIVE_OWNER`, поэтому `.opening`, `.op-hit`, `.dev` и кнопки над hit-путём сохраняют приоритет. Область событий — прежний чистый пол (`basePath`). Продолжение в проёме событий не получает, как и раньше: старый туннель был `pointer-events:none`. Вложенные комнаты продолжают получать события, потому что `basePath` родителя — evenodd с дырами.",
-              "evidence": "src/room-fit.ts:170-174; src/houseplan-card.ts:12091-12094; test/room-fit.test.mjs: hit→room-a, `.opening`/`.dev` над hit → interactive; demo/smoke_opening_tunnel_fill.mjs: `elementFromPoint` → `.room-hit`, затем `page.mouse.click` и ожидание `_roomFocus.roomId==='Alpha'`."
-            },
-            {
-              "topic": "Модель единой заливки и стык на оси",
-              "assessment": "Удачное решение, его стоит сохранить. У каждой комнаты одна фигура с одним цветом и alpha, поэтому критерий «один владелец» выполнен буквально. Половины проёма не пересекаются. Изолированный plus-lighter складывает antialias coverage соседей на дробном пикселе оси, не расширяя геометрию и не применяя alpha повторно. Вычитание всего домена проёмов до назначения граней решает двойную заливку родителя вложенной комнаты, а вычитание кладки не даёт заливке уйти под полупрозрачную стену. Цена — инвариант «регионы `.room` в группе не пересекаются». Для легаси-конфигов с частично перекрывающимися комнатами перекрытие станет ярче (сложение вместо source-over). Дефектом это не считаю: перекрытие комнат и раньше было некорректным состоянием.",
-              "evidence": "src/room-floor-paint.ts:22-54; src/styles/plan.styles.ts:80-85; test/room-floor-paint.test.mjs (площади 4600/4600, пересечение 0, nested 6700, blocker 4598, outer 4700)."
-            },
-            {
-              "topic": "Mask только на переходе",
-              "assessment": "Исправление корректно. Mask подключается при `_modeTransitionBusy`, а это геттер того же состояния, от которого зависят класс `.mode-transition` и `inert` stage, так что атрибут обновляется на тех же рендерах. В начале перехода View→Plan вес равен 0, маска тождественна, вспышки нет. В конце вес равен 1, продолжение скрыто, и подмена на прежний пол (`_roomFloorPaintFor` возвращает пустую Map в settled Plan) не видна. Обратный переход стартует с веса 1, и маска сразу скрывает продолжение. В settled View маска больше не растеризуется при pan/zoom.",
-              "evidence": "src/houseplan-card.ts:1388, 9940, 12049; src/render/opening-tunnels.ts (rect с `opacity:calc(1 - var(--hp-mode-plan-weight, 0))`)."
-            },
-            {
-              "topic": "Static: контур, кэш и fingerprint",
-              "assessment": "Двойная обводка устранена. Per-room outline рисуется только без нулевых стен, а при нулевых стенах `--room-stroke-op` и так равен 0, и рёбра обводит группа `.room-outlines`, как в base. Без нулевых стен noedge-путь и outline `poly − wallEdgeBodies` дают прежнюю линию на свободных рёбрах и не обводят продолжение в проёме. Memo fingerprint по объекту record снимает стоимость полного content fingerprint на HA-тиках. Ключ полон: `cleanFloorFingerprint` охватывает весь физический record, включая проёмы, а поворот применяется к группе. Ограничение: LRU общий для всех Static-карточек и рассчитан на 8 этажей (см. improvements).",
-              "evidence": "src/space-render.ts:567-596, 608-609, 627-641, 1013-1027; src/floor-geometry-key.ts:88-92."
-            },
-            {
-              "topic": "Порядок слоёв и сопутствующие элементы",
-              "assessment": "Glow, солнце, hover-заливка и декор остаются вне изолированной группы, в прежнем порядке. `.room-outline` и прозрачный `.room-hit` лежат внутри группы и рисуются в source-over, так что на видимый результат почти не влияют. Единственный эффект — заливка соседней комнаты с plus-lighter может подсветить половину штриха outline на свободном общем ребре (или амбровый штрих picked-комнаты во время перехода). Это незначительно. Из архитектурного множителя Decor удалён `.opening-tunnels`, и продолжение теперь следует за заливкой комнаты, как и требует цель задачи.",
-              "evidence": "src/houseplan-card.ts:11968, 12095-12098; src/styles/plan.styles.ts:1095-1104 (диф)."
-            },
-            {
-              "topic": "Результаты S6",
-              "assessment": "Проверки направлены на итоговые пиксели, а не на DOM `.opening-tunnels`. Это: ошибка относительно смеси двух эталонных пикселей вдоль линии через проход на трёх дробных зумах для непрозрачной, полупрозрачной, разной, односторонней и пустой заливки, плюс поворот, диагональ, Static и 2.5D. Добавлены счётчики кэша при смене цвета и HA-тике, а также переходы режимов. Набор «Тесты для задачи #1250 (перед ревью)» на d5f9aa51 завершился со статусом passed. Сами артефакты я не видел.",
-              "evidence": "demo/smoke_opening_tunnel_fill.mjs; demo/smoke_opening_mode_fill.mjs; receipt 20261105T095711006-714d8ea0."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Static: `staticRoomFloorPaintCache` — общий модульный LRU на 8 ключей. Если на дашборде больше 8 разных этажей в Static-карточках, при каждом их перерендере (HA-тик) записи будут вытеснять друг друга, и boolean-геометрия начнёт пересобираться постоянно. Решение подешевле — WeakMap по `o.cfg` или `spCfg`, как у соседних `staticWallGeometryCache`/`staticOpeningIndexCache`. Тогда жизнь кэша совпадёт с жизнью record без искусственного предела. Для типичного дома (≤8 этажей) проблемы нет.",
-            "Добавить короткий комментарий или dev-assert рядом с `.room-floor-paint-layer > .room`. Корректность plus-lighter опирается на то, что регионы комнат не пересекаются. Если появится легаси-конфиг с частично перекрывающимися комнатами, перекрытие станет ярче, и комментарий объяснит причину будущему читателю. Сейчас этот инвариант описан только в CSS-комментарии.",
-            "`OpeningTunnelFace.d` с overlap теперь нужен только тестам и mutation guard. Удаление отложено исполнителем осознанно; при следующей правке wall-thickness стоит убрать его вычисление из продуктового пути, чтобы не строить строку для каждой грани."
-          ],
-          "boundaries": "Сборку, тесты, браузерные smoke и скриншоты не запускал. Использован результат S6 «Тесты для задачи #1250 (перед ревью)»: passed на d5f9aa516768a8c27281d9c118c10db3ae62fc73, без failures. Пиксельные артефакты и отчёт этого набора я не видел.\n\nИсправление room fit проверил по исходникам: селектор и порядок в `planGestureOwnerFromPath`, атрибуты hit-пути, юнит-тест и сценарий реального клика в smoke. Корректность plus-lighter и маски оценивал по семантике композиции и CSS, а не по пикселям. Поддержку `plus-lighter` вне Chromium, производительность blend при pan/zoom на large-house и экспорт PDF (svg-snapshot инлайнит computed `mix-blend-mode`; результат в PDF-движке не проверял) не исследовал. Путь 2.5D подробно не прослеживал: опираюсь на iso-probe в S6 и на то, что iso использует тот же SVG-пол."
-        },
-        "usage": {
-          "input_tokens": 28,
-          "cache_creation_input_tokens": 110647,
-          "cache_read_input_tokens": 1076872,
-          "output_tokens": 14380,
-          "output_tokens_details": {
-            "thinking_tokens": 7028
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 110647,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1077,
-              "cache_read_input_tokens": 98457,
-              "cache_creation_input_tokens": 16394,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 16394
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокер прошлого раунда устранён, работу можно принять. Раньше тап по полу комнаты на этаже со стенами и проёмами не подстраивал камеру под комнату (room fit): событие получал прозрачный `.room-hit`, у которого не было комнатной идентичности. Теперь у hit-пути есть `data-hp-room-hit` и `data-id`, и `planGestureOwnerFromPath` распознаёт его как комнату. Распознавание стоит после проверки интерактивных владельцев, поэтому прежний приоритет устройств, проёмов и кнопок сохранён. Это покрыто юнит-тестом и настоящим `page.mouse.click` по полу с ожиданием `_roomFocus`. Близкие рекомендации прошлого раунда тоже учтены: mask висит только во время перехода режимов, Static не обводит контур дважды при нулевых стенах, fingerprint этажа в Static запоминается по record, граница `:hover` описана в STYLING-HOOKS. Новых существенных рисков исправления не принесли. Сама модель «один path комнаты = чистый пол + её половины проёмов − кладка, стык на оси закрывает plus-lighter в изолированной группе» соответствует решению владельца и критериям задачи. Остаются необязательные замечания: инвариант непересекающихся комнат и ограниченный LRU Static.\n\n## Понимание решения\n\nПроблема. В base пол комнаты заканчивался у внутренней грани кладки. Проход в стене дорисовывал отдельный слой `.opening-tunnels` с копией цвета, а для разных соседей — с hard-stop gradient. Получалось два владельца цвета, alpha и перехода, отсюда шов и рассинхронизация в режимах (#1244).\n\nПосле изменения:\n- `wall-thickness.ts` отдаёт для каждой стороны проёма точные половинные `contours` без paint-overlap у оси.\n- `room-floor-paint.ts::buildRoomFloorPaint` для каждой комнаты строит путь: чистый пол (с дырами вложенных комнат) − весь домен проёмов + свои грани − компоненты канонической кладки. Также сохраняется `basePath` — прежний чистый пол.\n- В полном card геометрия кэшируется по `cleanFloorKey|openingWallIndex.key|позиции проёмов`; цвет, HA, камера и веса в ключ не входят. В Static кэш модульный LRU по `space.id|cleanFloorFingerprint(spCfg)`, а fingerprint теперь запоминается в WeakMap по record.\n- Рендер: видимый `[data-hp=\"room\"]` с расширенной геометрией и `pointer-events:none`. Mask, гасящий продолжение по `--hp-mode-plan-weight`, теперь стоит только при `_modeTransitionBusy`. Прозрачный `.room-hit` по `basePath` несёт `data-hp-room-hit` + `data-id` и прежние обработчики hover и тултипа.\n- Все комнаты лежат в `g.room-floor-paint-layer` (isolation) с `mix-blend-mode:plus-lighter` на `.room`.\n\nВ этом раунде разобраны:\n- `planGestureOwnerFromPath` и порядок проверок (room-fit.ts:163-178);\n- ветка рендера комнат и hit-пути (houseplan-card.ts:11951-12097);\n- `_roomFloorPaintFor` (9937-9978) и условие маски через геттер `_modeTransitionBusy`, по которому перерисовываются класс stage и `inert`;\n- Static: кэш, memo fingerprint, noedge/outline и связь с `--room-stroke-op` при нулевых стенах (space-render.ts:567-642);\n- CSS `.room.noedge`, `.stage.mode-transition .room`, plus-lighter (plan.styles.ts:66-85, 1201-1206);\n- то, что Static использует те же `cardStyles`, то есть plus-lighter применяется и там;\n- потребители `[data-hp=\"room\"]` (wall-node-editor, pdf/svg-snapshot);\n- новая браузерная проверка в smoke_opening_tunnel_fill.mjs.\n\n## Разбор решения\n\n### Исправление блокера room fit\n\nУстранено корректно и минимально. Второй `[data-hp=\"room\"]` не появился, так что styling hooks и wall-node-editor по-прежнему видят один узел комнаты. Новый селектор проверяется после `ROOM_FIT_INTERACTIVE_OWNER`, поэтому `.opening`, `.op-hit`, `.dev` и кнопки над hit-путём сохраняют приоритет. Область событий — прежний чистый пол (`basePath`). Продолжение в проёме событий не получает, как и раньше: старый туннель был `pointer-events:none`. Вложенные комнаты продолжают получать события, потому что `basePath` родителя — evenodd с дырами.\n\nОснование: src/room-fit.ts:170-174; src/houseplan-card.ts:12091-12094; test/room-fit.test.mjs: hit→room-a, `.opening`/`.dev` над hit → interactive; demo/smoke_opening_tunnel_fill.mjs: `elementFromPoint` → `.room-hit`, затем `page.mouse.click` и ожидание `_roomFocus.roomId==='Alpha'`.\n\n### Модель единой заливки и стык на оси\n\nУдачное решение, его стоит сохранить. У каждой комнаты одна фигура с одним цветом и alpha, поэтому критерий «один владелец» выполнен буквально. Половины проёма не пересекаются. Изолированный plus-lighter складывает antialias coverage соседей на дробном пикселе оси, не расширяя геометрию и не применяя alpha повторно. Вычитание всего домена проёмов до назначения граней решает двойную заливку родителя вложенной комнаты, а вычитание кладки не даёт заливке уйти под полупрозрачную стену. Цена — инвариант «регионы `.room` в группе не пересекаются». Для легаси-конфигов с частично перекрывающимися комнатами перекрытие станет ярче (сложение вместо source-over). Дефектом это не считаю: перекрытие комнат и раньше было некорректным состоянием.\n\nОснование: src/room-floor-paint.ts:22-54; src/styles/plan.styles.ts:80-85; test/room-floor-paint.test.mjs (площади 4600/4600, пересечение 0, nested 6700, blocker 4598, outer 4700).\n\n### Mask только на переходе\n\nИсправление корректно. Mask подключается при `_modeTransitionBusy`, а это геттер того же состояния, от которого зависят класс `.mode-transition` и `inert` stage, так что атрибут обновляется на тех же рендерах. В начале перехода View→Plan вес равен 0, маска тождественна, вспышки нет. В конце вес равен 1, продолжение скрыто, и подмена на прежний пол (`_roomFloorPaintFor` возвращает пустую Map в settled Plan) не видна. Обратный переход стартует с веса 1, и маска сразу скрывает продолжение. В settled View маска больше не растеризуется при pan/zoom.\n\nОснование: src/houseplan-card.ts:1388, 9940, 12049; src/render/opening-tunnels.ts (rect с `opacity:calc(1 - var(--hp-mode-plan-weight, 0))`).\n\n### Static: контур, кэш и fingerprint\n\nДвойная обводка устранена. Per-room outline рисуется только без нулевых стен, а при нулевых стенах `--room-stroke-op` и так равен 0, и рёбра обводит группа `.room-outlines`, как в base. Без нулевых стен noedge-путь и outline `poly − wallEdgeBodies` дают прежнюю линию на свободных рёбрах и не обводят продолжение в проёме. Memo fingerprint по объекту record снимает стоимость полного content fingerprint на HA-тиках. Ключ полон: `cleanFloorFingerprint` охватывает весь физический record, включая проёмы, а поворот применяется к группе. Ограничение: LRU общий для всех Static-карточек и рассчитан на 8 этажей (см. improvements).\n\nОснование: src/space-render.ts:567-596, 608-609, 627-641, 1013-1027; src/floor-geometry-key.ts:88-92.\n\n### Порядок слоёв и сопутствующие элементы\n\nGlow, солнце, hover-заливка и декор остаются вне изолированной группы, в прежнем порядке. `.room-outline` и прозрачный `.room-hit` лежат внутри группы и рисуются в source-over, так что на видимый результат почти не влияют. Единственный эффект — заливка соседней комнаты с plus-lighter может подсветить половину штриха outline на свободном общем ребре (или амбровый штрих picked-комнаты во время перехода). Это незначительно. Из архитектурного множителя Decor удалён `.opening-tunnels`, и продолжение теперь следует за заливкой комнаты, как и требует цель задачи.\n\nОснование: src/houseplan-card.ts:11968, 12095-12098; src/styles/plan.styles.ts:1095-1104 (диф).\n\n### Результаты S6\n\nПроверки направлены на итоговые пиксели, а не на DOM `.opening-tunnels`. Это: ошибка относительно смеси двух эталонных пикселей вдоль линии через проход на трёх дробных зумах для непрозрачной, полупрозрачной, разной, односторонней и пустой заливки, плюс поворот, диагональ, Static и 2.5D. Добавлены счётчики кэша при смене цвета и HA-тике, а также переходы режимов. Набор «Тесты для задачи #1250 (перед ревью)» на d5f9aa51 завершился со статусом passed. Сами артефакты я не видел.\n\nОснование: demo/smoke_opening_tunnel_fill.mjs; demo/smoke_opening_mode_fill.mjs; receipt 20261105T095711006-714d8ea0.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Static: `staticRoomFloorPaintCache` — общий модульный LRU на 8 ключей. Если на дашборде больше 8 разных этажей в Static-карточках, при каждом их перерендере (HA-тик) записи будут вытеснять друг друга, и boolean-геометрия начнёт пересобираться постоянно. Решение подешевле — WeakMap по `o.cfg` или `spCfg`, как у соседних `staticWallGeometryCache`/`staticOpeningIndexCache`. Тогда жизнь кэша совпадёт с жизнью record без искусственного предела. Для типичного дома (≤8 этажей) проблемы нет.\n- Добавить короткий комментарий или dev-assert рядом с `.room-floor-paint-layer > .room`. Корректность plus-lighter опирается на то, что регионы комнат не пересекаются. Если появится легаси-конфиг с частично перекрывающимися комнатами, перекрытие станет ярче, и комментарий объяснит причину будущему читателю. Сейчас этот инвариант описан только в CSS-комментарии.\n- `OpeningTunnelFace.d` с overlap теперь нужен только тестам и mutation guard. Удаление отложено исполнителем осознанно; при следующей правке wall-thickness стоит убрать его вычисление из продуктового пути, чтобы не строить строку для каждой грани.\n\n## Границы анализа\n\nСборку, тесты, браузерные smoke и скриншоты не запускал. Использован результат S6 «Тесты для задачи #1250 (перед ревью)»: passed на d5f9aa516768a8c27281d9c118c10db3ae62fc73, без failures. Пиксельные артефакты и отчёт этого набора я не видел.\n\nИсправление room fit проверил по исходникам: селектор и порядок в `planGestureOwnerFromPath`, атрибуты hit-пути, юнит-тест и сценарий реального клика в smoke. Корректность plus-lighter и маски оценивал по семантике композиции и CSS, а не по пикселям. Поддержку `plus-lighter` вне Chromium, производительность blend при pan/zoom на large-house и экспорт PDF (svg-snapshot инлайнит computed `mix-blend-mode`; результат в PDF-движке не проверял) не исследовал. Путь 2.5D подробно не прослеживал: опираюсь на iso-probe в S6 и на то, что iso использует тот же SVG-пол.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 5588345f143ab6ef1a5a6b7dc0a2ec69288b5743 → d5f9aa516768a8c27281d9c118c10db3ae62fc73\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1250, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nУстановленный show. Сохраняются канонический wall/opening index и прежние границы владения. Его лица теперь предоставляют чистые половинные контуры без прежнего paint-overlap у оси. `room-floor-paint.ts` строит только презентационную геометрию: из прежнего clean floor вычитается весь домен проходов, затем добавляется часть данного владельца и вычитается каноническая кладка/отдельные тела. Это сохраняет чистые препятствия и предотвращает двойную заливку с родительским полом вложенной комнаты. Единственный SVG-path комнаты владеет цветом/alpha/переходами. На Plan geometry-only mask уменьшает покрытие продолжения по прежнему plan weight; отдельная цветная вставка и hard-stop gradient удалены. Начальная область событий комнаты сохраняется прозрачным hit-path; opening symbols/hosts/hitbox и реальные контакты не меняются.\n\nСоседние комнаты имеют непересекающиеся области. В изолированном floor group их antialias coverage складывается через plus-lighter: это устраняет source-over просвет на дробном пикселе общей оси без расширения половин или повторного применения alpha. Glow/солнце/декор и кладка остаются вне этой композиции, с прежним порядком. Plan в установившемся состоянии использует прежний floor; area getter, конфиг и модель не меняются. 2.5D использует тот же пол плана, Static — общий чистый проектор и отдельный ограниченный структурный кэш.\n\nКэш полноценной комнаты живёт по cleanFloorKey + openingWallIndexKey + позиции/длине проёмов. Цвет, состояние HA, zoom/поворот камеры и веса перехода в ключ не входят. При недоказуемой boolean-геометрии остаётся прежний чистый пол без опасной закраски кладки. Проверки S6: адресные geometry/area/nested/foreign-body cases; настоящие screenshot pixel probes через проход на дробных масштабах для одинаковых/разных цветов и alpha, пустых сторон, диагонали/поворота, Static и 2.5D; счётчики кэша при color/HA tick; native mode transitions, reduced motion и реальная 600-ms анимация контакта. Существующая проверка Static заменяет только устаревшее требование DOM .static-opening-tunnels на фактическое покрытие пола. Golden не принимаются автоматически.\n```\n\n</details>\n",
-        "createdAt": "2026-11-05T10:01:46.764Z",
-        "artifactId": 13404329789,
-        "runId": 42006814849,
-        "runAttempt": 1,
-        "completedAt": "2026-11-05T10:01:51Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42006814849",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1252": {
@@ -3688,19 +3534,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1250,
-    "worker": "finish",
-    "token": "225:finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:1:admit",
-    "fence": 225,
-    "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-    "expectedBase": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793872620869,
-    "expiresAt": 1793876525482,
-    "patchId": "53280afbe222fc57728431d01848374b0641a79e",
-    "reviewRequest": "review:1250:4:53280afbe222fc57728431d01848374b0641a79e:5588345f143ab6ef1a5a6b7dc0a2ec69288b5743"
-  },
+  "active": null,
   "events": {
     "github:42001043930:1:label:spec-request": {
       "digest": "20f082fa0bf817df866737264ff004773f22a8c32a105dfd0e490928fe7a3c9c",
@@ -3714,34 +3548,6 @@
       "digest": "3ed356d133e94cfc45c7b879312847af24edbec4215a2369e6db5e62e8b7f8b9",
       "issue": 1305
     },
-    "finish:f0c8958b-6d22-4624-855a-021e877d6576:finish:2:synchronized": {
-      "digest": "7e4cfe7cce57dd585154ed9b425d004656597b034b841e1e08ec4507609a6f84",
-      "issue": 1250
-    },
-    "finish:f0c8958b-6d22-4624-855a-021e877d6576:finish:3:automation-pending": {
-      "digest": "2146917e41e682199fc004fc9b9267970fb99965e5abf45747620661d6baf752",
-      "issue": 1250
-    },
-    "finish:a02476ec-ff72-4a79-a42b-47cc138ee1f3": {
-      "digest": "3b8f377244bcae1c2526203b70efb6cfb1a69b03b7576de545f32416b43aecf3",
-      "issue": 1250
-    },
-    "finish:dd3a7fbf-1441-4922-80d0-e5cfa170c975": {
-      "digest": "80be5c1611bc3e4b713f7f1449f8eb877b2ff2a5146d80265263b9ebf91a1c7e",
-      "issue": 1250
-    },
-    "finish:e048986c-e55d-4883-94af-81daa7aa1d20": {
-      "digest": "568b50c11bc5416d765d45aa334f632c24cc8987b78714799138ac51963ba10a",
-      "issue": 1250
-    },
-    "finish:a9c32028-814d-4a22-83fd-25500b42df51": {
-      "digest": "a6ec5a148aecb74c704eb4f77b127dc934a0bf0db0317d4f0ded343ea34c4278",
-      "issue": 1250
-    },
-    "finish:c8b92685-b3b8-4c3c-868a-018d3f38a6a4": {
-      "digest": "d79fad1bdb1427495115d8fed289bf9ec1944bac362b9d2047ee6262cb98d055",
-      "issue": 1250
-    },
     "github:42003929669:1:label:spec-request": {
       "digest": "f79063c365a763cd4bb4132c14f906b2b8f2f4a6c4bb316bf9ecb16d4f22425f",
       "issue": 1305
@@ -3749,38 +3555,6 @@
     "github:42003929669:1:completions:report:6ee2f992ed77a411c68b94a9c92594355a5c9bc19858ab6898d5f5e124666eed": {
       "digest": "0f9e07e2471c210608d567123fbd2ae4cbd88810b74c5ce090b6349437a828ce",
       "issue": 1305
-    },
-    "github:42003929669:1:completions:message:b595f89a6b570b3d56d006df64e28c8cad6838abe079c146f683f9903c83dd0b": {
-      "digest": "cb1d7fd5fdc5068676d56defd12f50bcae3bbf80ccf55ed14d63a2bff5ca66a5",
-      "issue": 1250
-    },
-    "github:42003929669:1:completions:message:30a48b667dc523b1c6b23d7e5e4ac4b6923a1082e6d0a1d7844210d99d37988a": {
-      "digest": "dc1bd53268efa26a25e70013f010ebe1644a87de783ed3d42f8469de014e1808",
-      "issue": 1250
-    },
-    "github:42003929669:1:completions:message:8e68d166438bd374bc0a430854f545275bbe4f05a10722241fc4c4d7077c2ce2": {
-      "digest": "9bb268e52df3d5c3b772bf1a7803b426e7e849ec8a7a4b301c02bfdb42db719d",
-      "issue": 1250
-    },
-    "1250-planner-repair-1793871525582": {
-      "digest": "40e0d430d6f0c2c0a850f28032203461bbc635a05090b8f0cebf101a0160f979",
-      "issue": 1250
-    },
-    "github:42003972947:1:completions:notice:cff349e6beed6e27ea616ae3dfc90cbb473bafd75d3ab3aa7e7e1f42024c7cf7": {
-      "digest": "74e265ace5a06a9032921fb5b5b9f0cb4e45ad57bc828b3a587ad05e1421b266",
-      "issue": 1250
-    },
-    "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:2:synchronized": {
-      "digest": "ed409ecd3b5eb967b0e4b7b5bf60a3f1594b0638759606dd4f7fe442540379e3",
-      "issue": 1250
-    },
-    "finish:cff1fcfc-1d59-4b66-a513-23570224a5f2": {
-      "digest": "8ec14c4f3e2aab054ea7b6320f503df0f7864f1c997e84e12bcfaa2dbfece0a2",
-      "issue": 1250
-    },
-    "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:3:return": {
-      "digest": "0589fb21003f7c555c017836c8affb7051b05ded16167753af915a6e72504332",
-      "issue": 1250
     },
     "github:42004557580:1:spec:1305:spec-presentation": {
       "digest": "a2bc9fee32ff499088352dceb04806016ef97788f2ddbe32b76e7498f089fbdd",
@@ -3798,102 +3572,6 @@
       "digest": "2e048a2b2eff58b0f4929fdff176cffe32e08c12d3e5a18d876bfec3646dff2a",
       "issue": 1305
     },
-    "github:42004557580:1:completions:notice:ed9797245f20422bdef09b33cc93356f48e075c69c4b7c8c56af724fd2df287f": {
-      "digest": "30dc172ba1d39452469307a62d9be8f4ba70996a98af690f1db7dda7b57d7fdd",
-      "issue": 1250
-    },
-    "finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:2:synchronized": {
-      "digest": "1f81e0f8fa7a2b683b4bd90aace053e6a4caee9675d9b4f50bba9196e7d1d27c",
-      "issue": 1250
-    },
-    "finish:f0b46d8a-e98a-4479-8c0f-36f76b25431a": {
-      "digest": "31f09c88f13224c2d9e361e2c84c74091f93b34711a2122d6cbe06ac8e9b5d9c",
-      "issue": 1250
-    },
-    "finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:3:s6-label": {
-      "digest": "a2121e3bceaf1d383ffdf3fbc67a547c6f1e0598edb79db3816ea08b6eb2d008",
-      "issue": 1250
-    },
-    "finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:4:review-requested": {
-      "digest": "ff97774192042c7f6c27fc069973294bbe078ebc5fcd4bb5c41a94e0e5c76a5a",
-      "issue": 1250
-    },
-    "github:42004979063:1:tick:0:review-retry": {
-      "digest": "6030ccfca8a29489d0a7451ed9cdf2c1d4877270b8e1827e10ceabf1e18ff1cf",
-      "issue": 1250
-    },
-    "github:42004979063:1:completions:message:b40b1d7ccd6826e440e7374a6c45b4a0a8cac8ef41f0c2f92ca17859f1bf4c9e": {
-      "digest": "71dfc63c594173550d3c713f055a5b6d9e84741fe46dbb8a5f12e8e87081744c",
-      "issue": 1250
-    },
-    "github:42004979063:1:completions:message:872bc740426350b22a1a5014358e0bde57dfe7adaf5e08872d14eca911ade2e5": {
-      "digest": "94104247a1b2e9f809f2130ea16598de11e6fa5759bce92d0b683fe0fd307135",
-      "issue": 1250
-    },
-    "github:42004979063:1:completions:message:66967f141375cbf705b7d1d0693e05b9704077e5eada0944a0dc4d2bec1586b8": {
-      "digest": "07196559d31319864dbe986e00b1dc98aa9d0be6b20e42d4dfda1c0ec41c9910",
-      "issue": 1250
-    },
-    "finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:10:review-presentation": {
-      "digest": "c2d35c2fb26df5d7a36e122ca2d2e5e2321447acdd7717b6479ea3ef33df86d7",
-      "issue": 1250
-    },
-    "finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:10:return": {
-      "digest": "4238b3409c77dc0b3d5ee7a7fde88a4ffd20fda0400ca23aa1a29ee4b3b82b4d",
-      "issue": 1250
-    },
-    "finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:10:return-label": {
-      "digest": "87211893b96f82a585f08a15e045f0a91a46205974a3e060917351ad11ef7116",
-      "issue": 1250
-    },
-    "github:42005960216:1:completions:report:57dd6ca9565fa6c6b1b8e570b3784aa3b47c24bb040de6abbee7450bf65975a1": {
-      "digest": "57a33e5cdfb523efa63e92e50c8401c597bbb3648754c3bf5fc93550e6f856bf",
-      "issue": 1250
-    },
-    "github:42005960216:1:completions:metadata:2ce54e88-e266-4066-a443-74dcff54f069:task-notice:1250::": {
-      "digest": "4643f3e577dac4a3749254068d22c144c6e025f1a93d9eb1662630184c84acdd",
-      "issue": 1250
-    },
-    "finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:2:synchronized": {
-      "digest": "f3fb35e44c5ad3c14ed302cfb73386fe1612e5570934eaf4ff11d302b42d639d",
-      "issue": 1250
-    },
-    "finish:5cc5a9a2-7c1c-4bbe-9bab-f81571e3f25d": {
-      "digest": "b542345d96a9021fccebe72a13930dc5a424555fc6daee880692506f73a5649f",
-      "issue": 1250
-    },
-    "finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:3:s6-label": {
-      "digest": "f600edb1cf49549c3ae2fc8e07877d32b0740ee837e310440b18c3daed2cb975",
-      "issue": 1250
-    },
-    "finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:4:review-requested": {
-      "digest": "fa8dd382de064e346105087ca1ca6507928267344d36ca90553f5d87d7ba05d4",
-      "issue": 1250
-    },
-    "github:42006789514:1:tick:0:review-retry": {
-      "digest": "f57359d395b598002941de1e9233647f6635a07a4ba79018d704a0af5a74513b",
-      "issue": 1250
-    },
-    "github:42006789514:1:completions:message:13833199767d12be906e6d2b2200a20108dd4bb5214b205e0854c18da50742e2": {
-      "digest": "5002b27fbda2ccddfda4283cda173e46edb00fe78fd1de35526e6931e7fe1114",
-      "issue": 1250
-    },
-    "github:42006789514:1:completions:message:18d09f3ba6796191a56654c668691b6b335cf5a9d85fe1275700313c32f7154c": {
-      "digest": "a6207f2b1988267fe2e287d8f7b632aac6229dbdd0b68b5d1f1a7934ded18314",
-      "issue": 1250
-    },
-    "github:42006789514:1:completions:message:2ae9c35dfb69105330facfa290a19ccaef208e637f008e90565dfd2def2eff07": {
-      "digest": "06bb51e1afb698a70334654c4aba1e17a45b644989d96d96c146b75d8194a29d",
-      "issue": 1250
-    },
-    "finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:7:review-presentation": {
-      "digest": "18c945998d203c12b99141e63cbfa29463bf716911ad656b91b9dfc9cd0e23e0",
-      "issue": 1250
-    },
-    "finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:7:review-complete": {
-      "digest": "6072f154609659802c8eed2eabd4c10073fd60c0acd0ac977d7f2b4715e0ca75",
-      "issue": 1250
-    },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
       "digest": "021ef6863d89bbd22c642800c05bc562bdb14d512963985fc1bcc843907dc6d1",
       "issue": 1305,
@@ -3907,35 +3585,6 @@
         "delivered": true
       }
     },
-    "finish:f0c8958b-6d22-4624-855a-021e877d6576": {
-      "digest": "0b0958b5412c6ab6b015147a6f6c646a1b092dabe96267a009a1a94c714c7c30",
-      "issue": 1250,
-      "message": {
-        "kind": "queued",
-        "issue": 1250,
-        "at": 1793871154013,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c273405e2eb2513a934e03d993890e40f7385bdd",
-        "delivered": true
-      }
-    },
-    "finish:f0c8958b-6d22-4624-855a-021e877d6576:finish:1:admit": {
-      "digest": "e6321732694268503d8e706b82a9a78aefcf3041ed178f626189bb9f0d5edc60",
-      "issue": 1250,
-      "message": {
-        "kind": "admitted",
-        "issue": 1250,
-        "at": 1793871157736,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c273405e2eb2513a934e03d993890e40f7385bdd",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "github:42003929669:1:label:spec-request:spec-replaced:1305": {
       "digest": "f79063c365a763cd4bb4132c14f906b2b8f2f4a6c4bb316bf9ecb16d4f22425f",
       "issue": 1305,
@@ -3946,212 +3595,6 @@
         "previousRound": 2,
         "round": 3,
         "reviewChanges": "Анализ исходников dev `5588345f1`: `wall-node-move.ts`/`wall_node_move.py` явно запрещают новый foreign contact; `wall-node-editor.ts` сейчас строит и проверяет move candidate на кадре; `graph_node_write.py` сохраняет graph identity и перепроверяет physical move; `wall-node-write/history` уже дают сериализацию, ACK и доказанный inverse. Поэтому предложено ограниченное именованное merge намерение в существующем node_move, с отдельной capability без изменения прежней move API. Альтернатива — отдельный WS endpoint/третья история — дублирует те же атомарные правила; простой общий allow-contact небезопасен. Stage4 renderer уже доступен, переписывать его не требуется.\n\nГлавные места для внимания: селективное разрешение контакта только двух IDs, точный q-target, T/X и dependent nodes, opening proof, inverse первого legacy жеста, сохранение native Optimize fixed-point, дешёвый preview до full release safety. Продуктовые тесты/билды/реализация до принятия S4 не запускались. Выполнены чтение актуального issue/контрактов и инвентарь текущих writer/validator/capability путей; конкретные замеры ещё впереди.\n\n### Исправления по предыдущему ревью\n\nПервый раунд: [run 42001092447](https://github.com/Matysh/houseplan-card/actions/runs/42001092447), changes_requested. Полный отчёт и исходная редакция сохраняются. Во время первого S4 владелец изменил контракт: «если между двумя объединяемыми узлами уже есть ребро — давай просто корректно удалять его при объединении». Для правок задача возвращена на S3; это новая редакция для следующего раунда.\n\n- Противоречие магнита и заведомо недостижимой passing-цели → введён дешёвый предварительный axis/finite/swept filter. T/X не притягиваются вне допустимой оси; ordinary move сохраняет прежние строгие правила. Прямые соседи теперь допустимы по новому решению владельца: connecting edge удаляется в том же атомарном действии; допускается граница носителя для merge, без прохода через промежуточный узел. Валентность, углы и прочие дорогие проверки по-прежнему на release.\n- Удаление connecting edge → описаны room cycle removal/валидация, отказ при проёме на удаляемом ребре, обработка вырожденных dependencies, native lossless cleanup и точный inverse. Комнаты и проёмы не удаляются ради успеха.\n- Рекомендация явно удалить source → операция TS/Python и generated runtime названа в скоупе; изолированный source не считается выполненным объединением.\n- Неоднозначная ошибка GraphError → перечислены стабильные merge-коды и i18n mapping, разделены topology refusal и временная недоступность.\n- П5 на backend → уточнено, что это действующий клиентский guard, Python сохраняет свой независимый П1–П4/graph/hosts набор без нового порта renderer.\n- UX цены магнита → описаны захват допустимой цели и увеличение масштаба для обычного размещения рядом.\n\nИсходные команды владельца: объединять узлы drag; притягивать магнитом и подсвечивать **неподвижный** узел; на отпускании проверять число стен/длины/углы и отменять весь жест с понятной ошибкой при отказе; при успехе соединять рёбра обоих узлов; непосредственное ребро между ними **удалять**, а не отказывать только из-за его схлопывания. Нового подтверждения микросдвигов/геометрии пользователем не предлагается. Текущая редакция пока не объявляется принятой.\n\n### Исправления после второго раунда\n\nВторой раунд: [run 42002995046](https://github.com/Matysh/houseplan-card/actions/runs/42002995046), changes_requested; его полный отчёт сохраняется. Блокер: сосед в 8–12 CSS px мог захватиться на простом click при обработке pointerup. Добавлены обязательные условия начала merge — смещение сырого указателя >3 CSS px от pointerdown и строгая близость к target по сравнению с исходным source; click/jitter и pointerup без move проверяются AC1 и native browser test. Это не новый жест и не пользовательское подтверждение: обычный drag остаётся обычным drag. Порог применяется к включению merge, не меняет старые правила ordinary move.\n\nРекомендации r2: любой новый дубль пары концов, включая общий сосед S–C/T–C, теперь явно даёт topology refusal без молчаливой склейки; доказанно lossless локальная компактация сформулирована как обязательная, с допустимым исчезновением самого target и точным Undo/Redo. Изменений реализации и продуктовых прогонов до S5 нет. Эта третья редакция подготовлена на S3 после результата r2.",
-        "delivered": true
-      }
-    },
-    "1250-planner-repair-1793871525582:return:1250": {
-      "digest": "40e0d430d6f0c2c0a850f28032203461bbc635a05090b8f0cebf101a0160f979",
-      "issue": 1250,
-      "message": {
-        "kind": "return",
-        "issue": 1250,
-        "at": 1793871526872,
-        "entry": 1,
-        "notice": {
-          "key": "1:correct deleted-path planning failure before S6",
-          "reason": "correct deleted-path planning failure before S6",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793871526872,
-          "entry": 1,
-          "eventId": "1250-planner-repair-1793871525582:return:1250"
-        },
-        "delivered": true
-      }
-    },
-    "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89": {
-      "digest": "b270b657dc63a571435a2875b240668bb50b5614b4469b23dfb8f21b50f4dc3c",
-      "issue": 1250,
-      "message": {
-        "kind": "queued",
-        "issue": 1250,
-        "at": 1793871550887,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "69c16c88d75b6e4d56498e2e6a2c59f3c77265e5",
-        "delivered": true
-      }
-    },
-    "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:1:admit": {
-      "digest": "6e69fbf734757b4efd8de6daf9e4375a5c466e38afc92b85603f4f7b3de5f9fc",
-      "issue": 1250,
-      "message": {
-        "kind": "admitted",
-        "issue": 1250,
-        "at": 1793871554930,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "69c16c88d75b6e4d56498e2e6a2c59f3c77265e5",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:3:return:return:1250": {
-      "digest": "0589fb21003f7c555c017836c8affb7051b05ded16167753af915a6e72504332",
-      "issue": 1250,
-      "message": {
-        "kind": "return",
-        "issue": 1250,
-        "at": 1793871625872,
-        "entry": 2,
-        "notice": {
-          "key": "2:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1793871625872,
-          "entry": 2,
-          "detail": "Браузер: opening tunnel fill: failed",
-          "eventId": "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89:finish:3:return:return:1250"
-        },
-        "delivered": true
-      }
-    },
-    "finish:571e1367-ed25-439e-9f62-96de9cf3625d": {
-      "digest": "8956761bdd16691d557993a97dd888535c3e40055bdf5b9d4abad3caa7caeacf",
-      "issue": 1250,
-      "message": {
-        "kind": "queued",
-        "issue": 1250,
-        "at": 1793871838693,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
-        "delivered": true
-      }
-    },
-    "finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:1:admit": {
-      "digest": "5ff474d6ec8fae4cba0a705a3610986ed7f616c071f37a1678295151cb66fd19",
-      "issue": 1250,
-      "message": {
-        "kind": "admitted",
-        "issue": 1250,
-        "at": 1793871842385,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:571e1367-ed25-439e-9f62-96de9cf3625d:finish:3:s6-complete": {
-      "digest": "a71f331f355e15e8d5f384a3c946112bf046ccae97964a2666f18c376bc6ba80",
-      "issue": 1250,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1250,
-        "at": 1793871913297,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
-        "phase": "review",
-        "evidence": {
-          "id": "20261105T094411681-27e3227a",
-          "name": "Тесты для задачи #1250 (перед ревью)",
-          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T094411681-27e3227a/report.json",
-          "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
-          "status": "passed",
-          "finishedAt": "2026-11-05T09:45:12.040Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Установленный show. Сохраняются канонический wall/opening index и прежние границы владения. Его лица теперь предоставляют чистые половинные контуры без прежнего paint-overlap у оси. `room-floor-paint.ts` строит только презентационную геометрию: из прежнего clean floor вычитается весь домен проходов, затем добавляется часть данного владельца и вычитается каноническая кладка/отдельные тела. Это сохраняет чистые препятствия и предотвращает двойную заливку с родительским полом вложенной комнаты. Единственный SVG-path комнаты владеет цветом/alpha/переходами. На Plan geometry-only mask уменьшает покрытие продолжения по прежнему plan weight; отдельная цветная вставка и hard-stop gradient удалены. Начальная область событий комнаты сохраняется прозрачным hit-path; opening symbols/hosts/hitbox и реальные контакты не меняются.\n\nСоседние комнаты имеют непересекающиеся области. В изолированном floor group их antialias coverage складывается через plus-lighter: это устраняет source-over просвет на дробном пикселе общей оси без расширения половин или повторного применения alpha. Glow/солнце/декор и кладка остаются вне этой композиции, с прежним порядком. Plan в установившемся состоянии использует прежний floor; area getter, конфиг и модель не меняются. 2.5D использует тот же пол плана, Static — общий чистый проектор и отдельный ограниченный структурный кэш.\n\nКэш полноценной комнаты живёт по cleanFloorKey + openingWallIndexKey + позиции/длине проёмов. Цвет, состояние HA, zoom/поворот камеры и веса перехода в ключ не входят. При недоказуемой boolean-геометрии остаётся прежний чистый пол без опасной закраски кладки. Проверки S6: адресные geometry/area/nested/foreign-body cases; настоящие screenshot pixel probes через проход на дробных масштабах для одинаковых/разных цветов и alpha, пустых сторон, диагонали/поворота, Static и 2.5D; счётчики кэша при color/HA tick; native mode transitions, reduced motion и реальная 600-ms анимация контакта. Существующая проверка Static заменяет только устаревшее требование DOM .static-opening-tunnels на фактическое покрытие пола. Golden не принимаются автоматически.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:d723d18e-2e66-4198-a099-a3032ae578e7": {
-      "digest": "2fe835136474631a075378908e18fe2bba25016080e2755e46fa1561693bebf0",
-      "issue": 1250,
-      "message": {
-        "kind": "queued",
-        "issue": 1250,
-        "at": 1793872616814,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-        "evidence": {
-          "id": "20261105T094411681-27e3227a",
-          "name": "Тесты для задачи #1250 (перед ревью)",
-          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T094411681-27e3227a/report.json",
-          "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
-          "status": "passed",
-          "finishedAt": "2026-11-05T09:45:12.040Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:1:admit": {
-      "digest": "6372840db91921c11a9d31489269232945671946bd1fdc3cae392a4a4bfa5056",
-      "issue": 1250,
-      "message": {
-        "kind": "admitted",
-        "issue": 1250,
-        "at": 1793872620869,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261105T094411681-27e3227a",
-          "name": "Тесты для задачи #1250 (перед ревью)",
-          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T094411681-27e3227a/report.json",
-          "materialSha": "19ff3fb86486e3fa42e0b705379b70288ce9a446",
-          "status": "passed",
-          "finishedAt": "2026-11-05T09:45:12.040Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:d723d18e-2e66-4198-a099-a3032ae578e7:finish:3:s6-complete": {
-      "digest": "33fbb6e697d4f356957310d03f53a965358a51b2b1535c840a5cb99233e6aa78",
-      "issue": 1250,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1250,
-        "at": 1793872702500,
-        "entry": 4,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-        "phase": "review",
-        "evidence": {
-          "id": "20261105T095711006-714d8ea0",
-          "name": "Тесты для задачи #1250 (перед ревью)",
-          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T095711006-714d8ea0/report.json",
-          "materialSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73",
-          "status": "passed",
-          "finishedAt": "2026-11-05T09:58:21.244Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "Установленный show. Сохраняются канонический wall/opening index и прежние границы владения. Его лица теперь предоставляют чистые половинные контуры без прежнего paint-overlap у оси. `room-floor-paint.ts` строит только презентационную геометрию: из прежнего clean floor вычитается весь домен проходов, затем добавляется часть данного владельца и вычитается каноническая кладка/отдельные тела. Это сохраняет чистые препятствия и предотвращает двойную заливку с родительским полом вложенной комнаты. Единственный SVG-path комнаты владеет цветом/alpha/переходами. На Plan geometry-only mask уменьшает покрытие продолжения по прежнему plan weight; отдельная цветная вставка и hard-stop gradient удалены. Начальная область событий комнаты сохраняется прозрачным hit-path; opening symbols/hosts/hitbox и реальные контакты не меняются.\n\nСоседние комнаты имеют непересекающиеся области. В изолированном floor group их antialias coverage складывается через plus-lighter: это устраняет source-over просвет на дробном пикселе общей оси без расширения половин или повторного применения alpha. Glow/солнце/декор и кладка остаются вне этой композиции, с прежним порядком. Plan в установившемся состоянии использует прежний floor; area getter, конфиг и модель не меняются. 2.5D использует тот же пол плана, Static — общий чистый проектор и отдельный ограниченный структурный кэш.\n\nКэш полноценной комнаты живёт по cleanFloorKey + openingWallIndexKey + позиции/длине проёмов. Цвет, состояние HA, zoom/поворот камеры и веса перехода в ключ не входят. При недоказуемой boolean-геометрии остаётся прежний чистый пол без опасной закраски кладки. Проверки S6: адресные geometry/area/nested/foreign-body cases; настоящие screenshot pixel probes через проход на дробных масштабах для одинаковых/разных цветов и alpha, пустых сторон, диагонали/поворота, Static и 2.5D; счётчики кэша при color/HA tick; native mode transitions, reduced motion и реальная 600-ms анимация контакта. Существующая проверка Static заменяет только устаревшее требование DOM .static-opening-tunnels на фактическое покрытие пола. Golden не принимаются автоматически.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
