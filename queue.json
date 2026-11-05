@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3598,
+  "revision": 3599,
   "nextTicket": 206,
   "nextFence": 206,
   "tasks": {
@@ -3580,6 +3580,10 @@
       "digest": "b81ac77eeb8984a5caac0e24b56f1ced7bcabc681ea0678f86b99aeb07701744",
       "issue": 1293
     },
+    "github:41955795206:1:completions:message:c4ae98abf136e98b349036c6216bdc9d76a0b5ef5e76bcdc2be96df16ed5dc72": {
+      "digest": "da2e813d2b5e4a7d3394b10e4c8fc169d662ddb3170cffc81a9183e28defffc9",
+      "issue": 1293
+    },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
       "digest": "12b0082f10079e35464f9817dccadb064f537c421d2ed92c784e133700c84c61",
       "issue": 1258,
@@ -3853,7 +3857,8 @@
         "reviewChanges": "Изменяется только ожидание в `smoke_decor_group_style_cache.mjs` и RU/EN технические changelog. Вместо `waitForFunction(async...)` выполняется один awaited page.evaluate с ограниченным 5 сек асинхронным циклом: реальный config/get должен вернуть цвет #abcdef, до этого polling продолжается по rAF; затем прежний settle ждёт обычную очередь/ACK. Добавлен assert сохранённого значения defaults.config.settings.decor_default_style.color, все сравнения полного config, числа записей, истории, чужих стен/кэшей и SVG сохранены.\n\nПервоначально проверено расширение waitForWrites на приватный таймер runtime; прототип отброшен: это добавляло новые приватные чтения тестового фасада и было избыточно для наблюдаемого подтверждения сохранения. Финальное решение не меняет фасад, runtime debounce/lifecycle, права или write protocol. Потери настроек продукта не было; исходное направление diff в описании исправлено после наблюдения временной шкалы.\n\nАдресный исправленный smoke предварительно PASS на исходном runtime, без обновления bundle/PNG. Исходный FAIL и диагностический late-timer результат сохранены в output/issue-1293. Финальный S6 через общую очередь включает обычный продуктовый минимум и этот smoke, поскольку infrastructure profile browser checks не допускает. Отдельный Node-тест, повторяющий локальный polling-код, не добавляется: серверное значение и cold-remount в самом smoke проверяют нужное поведение.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
