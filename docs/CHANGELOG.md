@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Node hit radius borrows the already measured scale without a second viewport read; history and retained-paint test ports include the visible marker parameters. [#1324](https://github.com/Matysh/houseplan-card/issues/1324)
+
 - Public CI retains tested-product identity across golden/process changes while bundle preparation still includes every capture input. [#1322](https://github.com/Matysh/houseplan-card/issues/1322)
 - Wall-node dragging and context menus cover the complete painted marker at every zoom/grid size, including its stroke and integer context-menu coordinates, instead of falling through to the wall body. [#1259](https://github.com/Matysh/houseplan-card/issues/1259)
 

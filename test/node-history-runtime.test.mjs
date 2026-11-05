@@ -106,6 +106,7 @@ function setup({ floors = ['f', 'g'], damaged = false } = {}) {
     hasPointerCapture: id => captures.has(id), releasePointerCapture: id => captures.delete(id) };
   const root = { ownerDocument: document, querySelectorAll: () => [], querySelector: () => null };
   const host = {
+    _cellCm: 1, _gridPitch: 1000 / 240,
     // This geometry shell registers Lit controllers; alert forms are never opened.
     addController() {},
     get _serverCfg() { return adoption.config; }, set _serverCfg(next) { adoption.stageLocalConfig(next); },

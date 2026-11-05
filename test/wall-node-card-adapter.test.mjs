@@ -245,3 +245,10 @@ test('#843 node history: any Plan/Background tool of a writer applies it; captur
   assert.equal(toasts.filter(text => text.startsWith('history.undone')).length, 3);
 });
 
+
+
+test('node picking measures the current viewport once and lends that scale to its radius (#1324)', t => {
+  const s=setup(t);let reads=0;
+  const view=s.host._viewOr;s.host._viewOr=(...args)=>{reads++;return view(...args);};
+  s.down();assert.equal(reads,1);s.editor.cancel();
+});

@@ -154,7 +154,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     config: () => host._serverCfg,
     screenPoint: ev => { const p = callbacks.point(ev); return [p[0] / NORM_W, p[1] / NORM_W]; },
     unitsPerPixel,
-    hitRadius: () => wallNodeHitRadius(host._cellCm, host._gridPitch, unitsPerPixel() * NORM_W) / NORM_W,
+    hitRadius: units => wallNodeHitRadius(host._cellCm, host._gridPitch, units * NORM_W) / NORM_W,
     stage: () => host._stageEl, root: () => host.renderRoot,
     text, toast,
     freezeViewport: () => host._cancelCameraTransition(false, true),
