@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4577,
-  "nextTicket": 236,
+  "revision": 4578,
+  "nextTicket": 237,
   "nextFence": 236,
   "tasks": {
     "1126": {
@@ -3605,6 +3605,20 @@
         "status": "published",
         "sourceSha": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f"
       }
+    },
+    "1320": {
+      "issue": 1320,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/issue-1320-node-echo",
+      "materialSha": "71905b4cb10738ac6715e2e19fe94e5c2db09c78",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 236,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793886015425,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3737,9 +3751,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1320
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6": {
+      "digest": "4ca7ae043aa45ab3db2b72b6a3baad5ec76b2cb872821d84e3a0e29946f5e8e5",
+      "issue": 1320,
+      "message": {
+        "kind": "queued",
+        "issue": 1320,
+        "at": 1793886015425,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "71905b4cb10738ac6715e2e19fe94e5c2db09c78"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
     "status": "delivered",
