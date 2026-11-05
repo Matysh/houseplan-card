@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3692,
-  "nextTicket": 210,
+  "revision": 3693,
+  "nextTicket": 211,
   "nextFence": 209,
   "tasks": {
     "1126": {
@@ -3207,6 +3207,20 @@
         "sourceSha": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f"
       }
     },
+    "1295": {
+      "issue": 1295,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/1295-exclusive-perf",
+      "materialSha": "6f8241aa3beaad5d3e6821e152ab2adda74f0b62",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 210,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793846866979,
+      "reviewEntry": 1
+    },
     "1296": {
       "issue": 1296,
       "track": "show",
@@ -3338,7 +3352,8 @@
     }
   },
   "waiting": [
-    1296
+    1296,
+    1295
   ],
   "active": {
     "issue": 1292,
@@ -3602,6 +3617,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:0f3f4b23-226f-4b40-8191-712b215ff58d": {
+      "digest": "1b971e35d95fd017e83a4328da486eb4a8295a66b679d18ebb86c1bd9c397132",
+      "issue": 1295,
+      "message": {
+        "kind": "queued",
+        "issue": 1295,
+        "at": 1793846866979,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "6f8241aa3beaad5d3e6821e152ab2adda74f0b62"
       }
     }
   },
