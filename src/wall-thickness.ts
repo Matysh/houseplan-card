@@ -4734,6 +4734,8 @@ export interface OpeningTunnelFace {
   roomId: string;
   /** One SVG path containing one contour per disconnected physical span. */
   d: string;
+  /** Exact half ownership, without the old paint-only axis overlap. */
+  contours: number[][][];
 }
 
 /** Pure geometry consumed by the full-card opening-tunnel renderer. */
@@ -4747,12 +4749,17 @@ export interface OpeningTunnelGeometry {
 
 /** @internal Exported so the non-overlapping union profile has a direct mutation guard. */
 export function tunnelFacePath(side: -1 | 1, pieces: OpeningWallPiece[]): string {
+  return tunnelFaceContours(side, pieces, true).map(points =>
+    'M ' + points.map(p => `${p[0]} ${p[1]}`).join(' L ') + ' Z').join(' ');
+}
+
+function tunnelFaceContours(side: -1 | 1, pieces: OpeningWallPiece[], overlap = false): number[][][] {
   const eps = 1e-9;
   const valid = pieces.filter((piece) => (
     Number.isFinite(piece.x0) && Number.isFinite(piece.x1)
     && Number.isFinite(piece.half) && piece.x1 > piece.x0 && piece.half > 0
   ));
-  if (!valid.length) return '';
+  if (!valid.length) return [];
 
   // Turn overlapping atomic wall intervals into a non-overlapping depth
   // profile. A profile slab uses the deepest physical body covering that X;
@@ -4802,26 +4809,25 @@ export function tunnelFacePath(side: -1 | 1, pieces: OpeningWallPiece[]): string
     // real device-pixel overlap at ordinary wall depths: a 0.1 px overlap was
     // still rasterised as a faint centre seam by Chromium. Because winding is
     // identical this remains one alpha application, not a double-fill band.
-    const seam = Math.min(Math.min(...component.map((slab) => slab.half)) * 0.25, 0.75);
+    const seam = overlap ? Math.min(Math.min(...component.map((slab) => slab.half)) * 0.25, 0.75) : 0;
     const axisY = -side * seam;
-    const commands: string[] = [];
+    const points: number[][] = [];
     if (side === 1) {
-      commands.push(`M ${first.x0} ${axisY} L ${last.x1} ${axisY}`);
+      points.push([first.x0, axisY], [last.x1, axisY]);
       for (let i = component.length - 1; i >= 0; i--) {
         const slab = component[i];
-        commands.push(`L ${slab.x1} ${slab.half} L ${slab.x0} ${slab.half}`);
+        points.push([slab.x1, slab.half], [slab.x0, slab.half]);
       }
     } else {
       // Keep the same winding direction as the positive face. The two faces
       // overlap only around y=0; matching winding makes that overlap solid
       // under the nonzero fill rule instead of cancelling into a hairline.
-      commands.push(`M ${last.x1} ${axisY} L ${first.x0} ${axisY}`);
+      points.push([last.x1, axisY], [first.x0, axisY]);
       for (const slab of component)
-        commands.push(`L ${slab.x0} ${-slab.half} L ${slab.x1} ${-slab.half}`);
+        points.push([slab.x0, -slab.half], [slab.x1, -slab.half]);
     }
-    commands.push('Z');
-    return commands.join(' ');
-  }).join(' ');
+    return points;
+  });
 }
 
 type TunnelOccupancy = Map<string, Array<[number, number]>>;
@@ -4901,7 +4907,7 @@ function openingTunnelGeometryFromIndex(
     pieces: reserveTunnelPieces(opening, side, candidate.pieces, occupied),
   }));
   const faces = renderedPieces.map(({ candidate, side, pieces }) => ({
-    side, roomId: candidate.roomId, d: tunnelFacePath(side, pieces),
+    side, roomId: candidate.roomId, d: tunnelFacePath(side, pieces), contours: tunnelFaceContours(side, pieces),
   }));
   const allPieces = renderedPieces.flatMap(({ pieces }) => pieces);
   if (!allPieces.length) return null;

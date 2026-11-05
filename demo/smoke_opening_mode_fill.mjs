@@ -17,8 +17,9 @@ await page.evaluate(async config => {
   window.__sampleOpeningMode = () => {
     const c = window.__card, root = c.renderRoot;
     const stage = root.querySelector('.stage');
-    const tunnel = root.querySelector('.opening-tunnels [data-id="shared-passage"]');
-    const group = tunnel?.closest('.opening-tunnels');
+    const room = root.querySelector('[data-hp="room"][data-id="Alpha"]');
+    const id = room?.getAttribute('mask')?.slice(5, -1);
+    const coverage = id ? root.querySelector('#' + CSS.escape(id) + ' .room-floor-opening-coverage') : null;
     return {
       busy: c._modeTransitionBusy, projection: c._renderProjection,
       // Projection crossing deliberately holds its source scene until the
@@ -26,7 +27,7 @@ await page.evaluate(async config => {
       source: c._modeProjectionSource,
       sceneOpacity: Number(getComputedStyle(root.querySelector('.zoomwrap')).opacity),
       weight: Number(getComputedStyle(stage).getPropertyValue('--hp-mode-plan-weight')) || 0,
-      present: !!tunnel, opacity: group ? Number(getComputedStyle(group).opacity) : 0,
+      present: !!coverage, opacity: coverage ? Number(getComputedStyle(coverage).opacity) * Number(getComputedStyle(room).opacity) : 0,
       architecture: Number(getComputedStyle(stage).getPropertyValue('--hp-mode-architecture-opacity')) || 1,
       floor: getComputedStyle(root.querySelector('[data-hp="room"][data-id="Alpha"]')).fill,
       phantomLeafMotion: [...root.querySelectorAll('.opening .op-leaf, .opening .op-arc')]
@@ -76,7 +77,7 @@ for (const reduced of [false, true]) {
           check(`${name}: preserves the common projection fade`, samples.some(s => s.sceneOpacity < .25));
         }
         if (editor === 'plan' && entering) {
-          const present = await page.locator('houseplan-card .opening-tunnels [data-hp="opening-tunnel"]').count();
+          const present = await page.locator('houseplan-card mask .room-floor-opening-coverage').count();
           check(`${name}: no stale tunnel in settled Plan`, present === 0);
         }
       }

@@ -658,13 +658,15 @@ invoke it.
 ## 4. Floor, fills, light, area
 
 - **Inner contour** = `inset(poly, half[])`.
-- Room fills and glow are clipped to the inner contour (not painted into the
-  wall hatch).
+- The clean-floor/area and Glow sources retain the inner contour. Room base
+  paint (#1250) composes that clean floor with its owned opening domain,
+  subtracting canonical masonry and independent bodies; it never paints under
+  the wall hatch, including translucent masonry or a foreign overlaid host.
 - The free tunnel cut by a door, window or gate continues the effective room
   fill through the wall body instead of exposing the neutral paper below the
   plan. On an outer wall the one adjacent room owns the complete depth. On a
   shared wall each room owns its half, with a hard colour change exactly on the
-  wall centreline. This is a base-fill layer only: Glow and sun remain above it
+  wall centreline. This is part of the room's single base-fill primitive: Glow and sun remain above it
   with their existing aperture, clipping, colour and opacity.
 - A zero-thickness wall or orphan opening has no coloured tunnel. Mixed-thickness legacy
   spans are clipped to their actual atomic wall bodies.
@@ -680,12 +682,16 @@ invoke it.
   LQI and the formatted clean-floor area. The hover deliberately uses no CSS/SVG
   filters: promoting a filtered sibling makes Chromium briefly recompose and
   brighten the isolated screen-blended Glow layer.
-- Opening-tunnel faces are one simple union contour per connected physical span:
-  thickness steps are vertices on the outer envelope, never touching translucent
-  rectangles, and both halves use the same nonzero winding across their tiny
-  centre overlap, so fractional rasterisation can neither cancel the fill into a
-  seam nor stack its opacity. `render/opening-tunnels.ts` only projects these
-  immutable inputs.
+- Opening ownership faces expose geometry with exact half domains and no
+  paint-only axis overlap. `room-floor-paint.ts` unites each owner's clean floor
+  with its faces. Nested floors lose another owner's opening domain before
+  assignment. An isolated plus-lighter floor composition adds the antialiased
+  coverage of disjoint neighbours without a bright seam or double alpha.
+  The room alone owns its color/alpha and live transitions. A geometry-only
+  coverage mask fades its extension by the existing Plan weight; the base floor
+  and original hit region remain unchanged. There is no separately colored
+  tunnel, hard-stop gradient or substitute paper patch. Flat, 2.5D and Static
+  share the same projection; cached geometry excludes paint/state/mode/camera.
 - A fully nested room is legal (`polyContainsPoly`): the parent's floor and data
   fill are evenodd paths with the island rings as holes
   (`islandsOf`).

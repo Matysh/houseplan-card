@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Remove seven obsolete translation keys from all four locales so the clean dead-key guard runs before mutation testing; retain the existing consumer rules and mutation witness. [#1304](https://github.com/Matysh/houseplan-card/issues/1304)
+- Compose opening floors into their owning room fills, with shared color/alpha and mode transitions instead of a separate tunnel patch. Preserve clean-floor area, physical cut-outs and opening hit targets; share cached presentation geometry with Static and 2.5D. [#1250](https://github.com/Matysh/houseplan-card/issues/1250)
 
 - Keep far vertices fixed during Select node moves: retarget valid split-carrier constraints and retire stale supports through bends in both preview and server proof. Exact Undo/Redo is preserved. [#1303](https://github.com/Matysh/houseplan-card/issues/1303)
 

@@ -35,7 +35,8 @@ const out=await page.evaluate(async ({fixture,diagonalFixture,linePlanFixture,be
   result.wallCutsAndSolidControl=!solid(375,187.5)&&!solid(625,437.5)&&!solid(800,812.5)
     &&!solid(975,375)&&!solid(625,687.5)&&solid(160,187.5)&&solid(625,300);
   result.passageHasNoVisibleSymbol=!opening('shared-passage')?.querySelector('line,path,rect,.op-leaf');
-  result.sharedWindowTunnel=!!root().querySelector('.static-opening-tunnels [data-id="shared-window"]');
+  result.sharedWindowTunnel=[...root().querySelectorAll('[data-hp="room"]')]
+    .some(node=>node instanceof SVGGeometryElement&&node.isPointInFill(new DOMPoint(626,437.5)));
   if(beforeOnly)return result;
   const before=JSON.stringify(fixture);
   const servicesBefore=window.__serviceCalls?.length||0;

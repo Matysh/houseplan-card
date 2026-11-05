@@ -357,7 +357,8 @@ import {
   DEFAULT_DECOR_STYLE, boxCorners, decorCmToUnits, decorStrokeUnits, decorStyleFromSettings,
   decorStyleOf, decorUnitsToCm, normalizeAngle, nudgeDecorShape, type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
-import { renderOpeningTunnelFills } from './render/opening-tunnels';
+import { buildRoomFloorPaint, roomFloorGeometry, type RoomFloorPaint } from './room-floor-paint';
+import { renderRoomFloorMask } from './render/room-floor';
 import {
   openingVisibleMetrics, renderOpeningVisibleGeometry,
   type OpeningFaceOffset, type OpeningVisibleSpec,
@@ -2192,7 +2193,7 @@ export class HouseplanCard extends LitElement {
    * #814: the sun wedges (Flat, 2.5D) count theirs for the floor-cache-reuse smoke. */
   private _floorCacheBuilds = {
     wallUnion: 0, innerContour: 0, cleanFloor: 0, openingWallIndex: 0, lightBarrier: 0,
-    glowClip: 0, physicalBodies: 0, openingTunnel: 0, lightPhysicalBodies: 0, sunRays: 0, isoSun: 0,
+    glowClip: 0, physicalBodies: 0, openingTunnel: 0, roomFloorPaint: 0, lightPhysicalBodies: 0, sunRays: 0, isoSun: 0,
   };
   private _isoFallback = new Set<string>();
   private _openingTunnelCache: {
@@ -2200,6 +2201,8 @@ export class HouseplanCard extends LitElement {
     value: Array<OpeningTunnelGeometry | null>;
   } | null = null;
   /** #814: recently shown floors' tunnels and bodies stay warm (≤ 8, floor-geometry-key.ts). */
+  private _roomFloorPaintCache: { key: string; value: Map<string, RoomFloorPaint> } | null = null;
+  private _roomFloorPaintPool = new Map<string, NonNullable<HouseplanCard['_roomFloorPaintCache']>>();
   private _openingTunnelPool = new Map<string, NonNullable<HouseplanCard['_openingTunnelCache']>>();
   /** A few consumers use intentionally different open-cut projections in one
    * frame. Keep a tiny keyed pool so hit-testing cannot evict placement data
@@ -9932,27 +9935,15 @@ export class HouseplanCard extends LitElement {
     return { key, value };
   }
 
-  /**
-   * Room-coloured base beneath Glow/sun and beneath the architectural symbol.
-   * The pure helper returns exact atomic wall strips in opening-local coords;
-   * a hard-stop gradient changes side precisely at local y=0 (the wall axis),
-   * never at an assumed 50% of an asymmetric bounding box.
-   */
-  private _renderOpeningTunnelFills(
-    space: SpaceModel,
-    roomFills: RoomFillFrame,
-  ): TemplateResult {
-    // Settled Plan has no data tunnel (its blue wash belongs to the room).
-    // During handoff retain the same surface: CSS fades its live fill with
-    // the floor's shared plan weight, rather than exposing white paper early.
+  /** Paint geometry extends the existing room floor, not a second colored layer. */
+  private _roomFloorPaintFor(space: SpaceModel): Map<string, RoomFloorPaint> {
     if ((this._markup && !this._modeTransitionBusy) || !this._spaceWalls.length || !this._openingsR.length)
-      return svg`` as unknown as TemplateResult;
+      return new Map();
     const openCuts = this._openCuts();
-    const geometryInputs = this._openingsR.map((opening) => ({
+    const geometryInputs = this._openingsR.map(opening => ({
       x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
     }));
-    const geometryFingerprint = geometryInputs
-      .map((opening) => `${opening.x},${opening.y},${opening.angle},${opening.length}`).join(';');
+    const geometryFingerprint = geometryInputs.map(o => `${o.x},${o.y},${o.angle},${o.length}`).join(';');
     const wallIndex = this._openingWallIndexFor(space, openCuts);
     const cacheKey = `${wallIndex.key}|${geometryFingerprint}`;
     const tunnels = this._openingTunnelCache = floorPoolEntry(this._openingTunnelPool, this._openingTunnelCache,
@@ -9960,14 +9951,29 @@ export class HouseplanCard extends LitElement {
         this._floorCacheBuilds.openingTunnel++;
         return { key: cacheKey, value: openingTunnelGeometriesFromIndex(wallIndex.value, geometryInputs) };
       });
-    return renderOpeningTunnelFills({
-      openings: this._openingsR,
-      geometries: tunnels.value,
-      fillsByRoomId: roomFills.byId,
-      idPrefix: `${space.id}-data`,
-      groupClass: 'opening-tunnels',
-      dataLayer: 'data',
+    const key = `${this._cleanFloorKey(space.id)}|${cacheKey}`;
+    const frame = this._roomFloorPaintCache = floorPoolEntry(this._roomFloorPaintPool, this._roomFloorPaintCache, key, () => {
+      this._floorCacheBuilds.roomFloorPaint++;
+      const united = this._wallUnionGeometry();
+      if (!united) return { key, value: new Map<string, RoomFloorPaint>() };
+      const polys = space.rooms.map(roomPoly);
+      try {
+        const seeds = space.rooms.flatMap((room, index) => {
+          const poly = polys[index]; if (!poly) return [];
+          const floor = room.id ? this._innerRoomContour(space, room.id, openCuts, united.roomGeom) || poly : poly;
+          const clean = this._cleanFloor(room, floor, space);
+          const holes = islandsOf(floor, polys.filter((p, i) => i !== index && !!p) as number[][][]);
+          return [{ id: room.id || '#' + index, geom: roomFloorGeometry(floor, holes, clean.geom) }];
+        });
+        return { key, value: buildRoomFloorPaint(seeds, this._openingsR, tunnels.value,
+          united.components.map(component => component.geom).filter(geom => geom?.length)) };
+      } catch {
+        // An unprovable extension never paints through masonry or replaces the
+        // established clean floor; cache this fallback for the same geometry.
+        return { key, value: new Map<string, RoomFloorPaint>() };
+      }
     });
+    return frame.value;
   }
 
   private _renderWallBodies(disp: SpaceDisplay, canonical = false): TemplateResult {
@@ -11948,6 +11954,7 @@ export class HouseplanCard extends LitElement {
               const allZeroCuts = this._openCuts();
               const allThickCuts = this._thickWallCuts();
               const roomWallGeometry = this._wallUnionGeometry()?.roomGeom;
+              const floorPaint = this._roomFloorPaintFor(space);
               const polyCache = new Map<any, number[][] | null>();
               const polyOf = (rr: any) => {
                 if (!polyCache.has(rr)) polyCache.set(rr, roomPoly(rr));
@@ -11958,7 +11965,7 @@ export class HouseplanCard extends LitElement {
               const shownRooms = space.rooms.filter((r) => r.area || this._mode === 'view' || this._markup || disp.showBorders);
               // #742: keyed like openings and markers (plan.styles.ts, #525/#534/#742): a bare map() handed the
               // previous floor's room node to the new floor, and `.room`'s transition drew its fill in from white.
-              return keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {
+              return svg`<g class=${floorPaint.size ? 'room-floor-paint-layer' : nothing}>${keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {
               let cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
               if (this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId))
                 cls += ' picked';
@@ -12031,11 +12038,17 @@ export class HouseplanCard extends LitElement {
               const pathD = (pts: number[][]) =>
                 'M ' + pts.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
               const obstaclePath = fillPoly ? this._cleanFloor(r, fillPoly, space).path : '';
+              const paint = floorPaint.get(r.id || '#' + space.rooms.indexOf(r));
+              const maskId = 'hp-room-floor-' + contentFingerprint([space.id, r.id || space.rooms.indexOf(r)]);
               // docs/STYLING-HOOKS.md §3 — the same three hooks whichever SVG
               // element this room happens to be drawn as today
               const hpId = r.id || nothing;
               const hpArea = r.area || nothing;
-              const shape = obstaclePath && fillPoly
+              const shape = paint
+                ? svg`<path class="${cls}" style="${style};pointer-events:none" fill-rule="evenodd"
+                    mask=${paint.extended ? `url(#${maskId})` : nothing}
+                    data-hp="room" data-id=${hpId} data-area=${hpArea} d=${paint.path}></path>`
+                : obstaclePath && fillPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp="room" data-id=${hpId} data-area=${hpArea}
                     d="${[obstaclePath, ...holes.map(pathD)].join(' ')}"
@@ -12075,11 +12088,14 @@ export class HouseplanCard extends LitElement {
                     d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
                     style=${this._markup ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
                 : nothing;
-              return svg`${shape}${outline}`;
-              }));
+              const hit = paint ? svg`<path class="room-hit" d=${paint.basePath} fill="transparent"
+                fill-rule="evenodd" stroke="none" pointer-events="fill"
+                @pointerenter=${enterRoom} @pointermove=${tip}
+                @pointerleave=${() => this._clearPointerHover()}></path>` : nothing;
+              return svg`${paint?.extended ? renderRoomFloorMask(maskId, paint) : nothing}${shape}${hit}${outline}`;
+              }))}</g>`;
             })()}
             ${this._renderRoomHoverFill(roomHover)}
-            ${this._renderOpeningTunnelFills(space, roomFills)}
             ${''/* Decor is one composition layer above every floor treatment
                    (room fill/hover and opening tunnels) and below
                    live lighting, physical plan geometry and devices. Keep

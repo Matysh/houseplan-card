@@ -1,157 +1,107 @@
-/**
- * Room-coloured tunnels in thick walls: door/window/gate, outer and shared
- * walls, a hard split on the wall axis, hide/show policies and editor opacity.
- */
-import { launch, checkAll, finish } from './serve.mjs';
-
-const { page, browser } = await launch();
-
-const result = await page.evaluate(async () => {
-  const c = window.__card;
-  const root = () => c.shadowRoot || c.renderRoot;
-  const sp = c._serverCfg.spaces.find((s) => s.id === c._space);
-  const update = async () => {
-    c._cfgEpoch++;
-    c.requestUpdate();
-    await c.updateComplete;
-  };
-  const settleMode = async () => {
-    const started = performance.now();
-    do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
-    while (c._modeTransitionBusy && performance.now() - started < 1500);
-    await c.updateComplete;
-  };
-  const pitch = 1 / 240;
-  const wallKey = (a, b) => {
-    const q = (v) => Math.round(v / pitch) * pitch;
-    let dx = b[0] - a[0], dy = b[1] - a[1];
-    const len = Math.hypot(dx, dy) || 1;
-    dx /= len; dy /= len;
-    if (dx < -1e-12 || (Math.abs(dx) <= 1e-12 && dy < 0)) { dx = -dx; dy = -dy; }
-    let angle = Math.atan2(dy, dx);
-    if (angle < 0) angle += Math.PI;
-    angle = Math.round(angle * 1800) / 1800;
-    return `${q((a[0] + b[0]) / 2).toFixed(6)},${q((a[1] + b[1]) / 2).toFixed(6)}@${angle.toFixed(4)}`;
-  };
-  const wall = (a, b, cm = 20) => ({ key: wallKey(a, b), a, b, cm });
-
-  sp.rooms = [
-    { id: 'tunnel-left', name: 'Left', area: 'tunnel_left_area',
-      poly: [[0.1, 0.2], [0.5, 0.2], [0.5, 0.7], [0.1, 0.7]],
-      settings: { fill_mode: 'custom', custom_fill: { c: '#112233', a: 0.21 } } },
-    { id: 'tunnel-right', name: 'Right', area: 'tunnel_right_area',
-      poly: [[0.5, 0.2], [0.9, 0.2], [0.9, 0.7], [0.5, 0.7]],
-      settings: {} },
-  ];
-  sp.walls = [
-    wall([0.1, 0.2], [0.5, 0.2]),
-    wall([0.5, 0.2], [0.5, 0.7]),
-    wall([0.5, 0.7], [0.9, 0.7]),
-  ];
-  sp.openings = [
-    { id: 'tunnel-window', type: 'window', x: 0.3, y: 0.2, angle: 0, length: 0.1 },
-    { id: 'tunnel-door', type: 'door', x: 0.5, y: 0.45, angle: 90, length: 0.1 },
-    { id: 'tunnel-gate', type: 'gate', x: 0.7, y: 0.7, angle: 0, length: 0.16 },
-  ];
-  sp.settings = { ...(sp.settings || {}), show_borders: true, hide_openings: false, fill_mode: 'glow' };
-  c._serverCfg.settings = {
-    ...(c._serverCfg.settings || {}),
-    fill_colors: {
-      ...(c._serverCfg.settings?.fill_colors || {}),
-      light_none: { c: '#112233', a: 0.21 },
-      glow_base: { c: '#445566', a: 0.42 },
-    },
-  };
-  c._setMode('view');
-  await update(); await settleMode();
-
-  const tunnels = (layer) => [...root().querySelectorAll(
-    `.opening-tunnels[data-layer="${layer}"] [data-hp="opening-tunnel"]`,
-  )];
-  const byId = (id, layer) => root().querySelector(
-    `.opening-tunnels[data-layer="${layer}"] [data-hp="opening-tunnel"][data-id="${id}"]`,
-  );
-  const out = {};
-  out.allThreeTypes = new Set([...root().querySelectorAll('[data-hp="opening"]')]
-    .map((node) => node.getAttribute('data-kind'))).size === 3;
-  out.windowRepeatsCustomRoom = byId('tunnel-window', 'data')?.getAttribute('fill') === '#112233'
-    && (root().querySelector('[data-hp="room"][data-id="tunnel-left"]')?.getAttribute('style') || '')
-      .includes('--room-fill:#112233')
-    && !byId('tunnel-window', 'glow-base');
-  out.emptyRoomKeepsGateTunnelEmpty = !byId('tunnel-gate', 'data')
-    && !byId('tunnel-gate', 'glow-base') && !root().querySelector('.glow-base-layer');
-
-  const shared = byId('tunnel-door', 'data');
-  const stops = [...(shared?.querySelectorAll('stop') || [])].map((s) => ({
-    offset: s.getAttribute('offset'), color: s.getAttribute('stop-color'),
-    opacity: s.getAttribute('stop-opacity'),
-  }));
-  out.sharedUsesOneHardGradient = !!shared?.querySelector('linearGradient') && stops.length === 4;
-  out.sharedStopsOnWallAxis = stops[1]?.offset === '50.000000%'
-    && stops[2]?.offset === '50.000000%';
-  out.sharedCarriesBothRooms = new Set(stops.map((s) => s.color)).has('#112233')
-    && stops.some((s) => s.color === '#000000' && s.opacity === '0')
-    && !byId('tunnel-door', 'glow-base');
-
-  const svgEl = root().querySelector('.stage svg');
-  const tunnelGroup = root().querySelector('.opening-tunnels');
-  const wallGroup = root().querySelector('.wallbodies');
-  out.layerBeforeWall = !!svgEl && !!tunnelGroup && !!wallGroup
-    && !!(tunnelGroup.compareDocumentPosition(wallGroup) & Node.DOCUMENT_POSITION_FOLLOWING);
-
-  sp.settings.hide_openings = true;
-  sp.settings.show_borders = false; // #945: one visibility policy, including symbols.
-  await update();
-  out.hideSymbolKeepsTunnel = root().querySelectorAll('[data-hp="opening"]').length === 0
-    && tunnels('data').length === 2 && tunnels('glow-base').length === 0;
-
-  sp.settings.show_borders = false;
-  await update();
-  out.hiddenBordersKeepTunnel = root().querySelectorAll('.wallbodies').length === 0
-    && tunnels('data').length === 2 && tunnels('glow-base').length === 0;
-
-  c._setMode('decor');
-  await update(); await settleMode();
-  out.backdropUsesSingleGroupOpacity = tunnels('data').length === 2
-    && tunnels('glow-base').length === 0
-    && [...root().querySelectorAll('.opening-tunnels')]
-      .every((group) => getComputedStyle(group).opacity === '0.35')
-    && !root().querySelector('.glow-base-layer')
-    && getComputedStyle(root().querySelector('.glow-pools-frame')).opacity === '0.35'
-    && byId('tunnel-window', 'data')?.getAttribute('fill-opacity') === '0.21';
-
-  c._setMode('plan');
-  await update(); await settleMode();
-  out.planGestureCannotLeaveStalePatch = tunnels('data').length === 0
-    && tunnels('glow-base').length === 0;
-
-  // Regression #81: atomic wall pieces, including real thickness steps, are
-  // one continuous SVG surface per side. Two faces therefore mean exactly two
-  // contours in one path, never a row of touching translucent rectangles.
-  c._setMode('view');
-  sp.rooms = [{ id: 'atomic-room', name: 'Atomic', area: 'atomic_area',
-    poly: [[0.1, 0.2], [0.9, 0.2], [0.9, 0.7], [0.1, 0.7]],
-    settings: { fill_mode: 'custom', custom_fill: { c: '#112233', a: 0.21 } } }];
-  const atomicSegments = [[0.1, 0.3], [0.3, 0.5], [0.5, 0.7], [0.7, 0.9]];
-  sp.walls = atomicSegments.map(([x0, x1]) => wall([x0, 0.2], [x1, 0.2], 15));
-  sp.openings = [{ id: 'atomic-door', type: 'door', x: 0.5, y: 0.2, angle: 0, length: 0.6 }];
-  sp.settings.hide_openings = true;
-  sp.settings.show_borders = false;
-  await update(); await settleMode();
-  const sameDepth = byId('atomic-door', 'data');
-  out.equalAtomicPiecesAreOneSurface = sameDepth?.tagName.toLowerCase() === 'path'
-    && ((sameDepth.getAttribute('d') || '').match(/\bM /g) || []).length === 2;
-
-  sp.walls = atomicSegments.map(([x0, x1], index) => (
-    wall([x0, 0.2], [x1, 0.2], [10, 20, 15, 15][index])
-  ));
-  await update();
-  const stepped = byId('atomic-door', 'data');
-  out.steppedAtomicPiecesAreOneSurface = stepped?.tagName.toLowerCase() === 'path'
-    && ((stepped.getAttribute('d') || '').match(/\bM /g) || []).length === 2
-    && stepped.getAttribute('fill-opacity') === '0.21';
-  return out;
+/** #1250: real composed pixels across the floor/opening seam, not a tunnel DOM contract. */
+import { createRequire } from 'node:module';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
+import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
+import { makeStaticWallOpeningsFixture } from './fixtures/static-wall-openings.mjs';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+const { PNG } = createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
+requirePinnedBrowser('#1250 unified room floor pixels');
+const { page, browser } = await launch({ width: 1440, height: 1000 });
+await prepareDesktopControls(page);
+const output = 'artifacts/process-next/room-floor-paint'; mkdirSync(output, { recursive: true });
+const out = {};
+const settle = () => page.evaluate(async () => {
+  const c = window.__card; await c.updateComplete;
+  for (let i = 0; i < 18; i++) await new Promise(requestAnimationFrame);
 });
-
-checkAll(result);
-await finish(browser, result);
+async function seed(diagonal = false) {
+  const cfg = commitWallSegmentModel(makeStaticWallOpeningsFixture({ diagonal })).config;
+  cfg.spaces[0].settings.wall_fill = { c: '#778899', a: .35 };
+  await page.evaluate(async cfg => { await window.__hpTest.setServerConfig(cfg); window.__card._fitAll(); }, cfg);
+  await settle();
+}
+async function fills(a, b) {
+  await page.evaluate(async ({ a, b }) => {
+    await window.__hpTest.setServerConfig(cfg => {
+      cfg.spaces[0].rooms.forEach((r, i) => { const value = i ? b : a;
+        r.settings.fill_mode = value ? 'custom' : 'none';
+        if (value) r.settings.custom_fill = value;
+      });
+    });
+  }, { a, b }); await settle();
+}
+function pixel(image, point) {
+  const x = Math.round(point[0]), y = Math.round(point[1]);
+  if (x < 0 || y < 0 || x >= image.width || y >= image.height) throw Error('pixel outside screenshot');
+  return [...image.data.subarray((y * image.width + x) * 4, (y * image.width + x) * 4 + 3)];
+}
+function errorToBlend(p, a, b) {
+  const delta = b.map((v, i) => v - a[i]), length = delta.reduce((n,v) => n + v*v, 0);
+  const t = length ? Math.max(0, Math.min(1, delta.reduce((n,v,i) => n + (p[i]-a[i])*v,0) / length)) : 0;
+  return Math.max(...p.map((v,i) => Math.abs(v-a[i]-t*delta[i])));
+}
+async function probe(name, diagonal = false, staticCard = false, iso = false) {
+  const positions = await page.evaluate(({ diagonal, staticCard }) => {
+    const root = staticCard ? window.__floorStatic.shadowRoot : window.__card.renderRoot;
+    const room = root.querySelector('[data-hp="room"][data-id="Alpha"]');
+    const matrix = room.getScreenCTM();
+    const point = (x, y) => {
+      if (diagonal) [x,y] = [500 + (x-y)/Math.SQRT2,500 + (x+y-1000)/Math.SQRT2];
+      const p = new DOMPoint(x,y).matrixTransform(matrix); return [p.x,p.y];
+    };
+    return { a: point(600,687.5), b: point(650,687.5),
+      line: Array.from({length:121},(_,i) => point(610+i/4,687.5)),
+      center:point(625,687.5), orphanLayer:root.querySelectorAll('.opening-tunnels').length };
+  }, { diagonal, staticCard });
+  const bytes = await page.screenshot({ fullPage:true }); writeFileSync(`${output}/${name}.png`, bytes);
+  const image = PNG.sync.read(bytes), a = pixel(image,positions.a), b = pixel(image,positions.b);
+  const errors = positions.line.map(p => errorToBlend(pixel(image,p),a,b));
+  if (!iso) check(`${name}: no bright seam or double-alpha band`, Math.max(...errors) <= 7);
+  else check(`${name}: floor remains painted inside 2.5D passage`, Math.max(...pixel(image,positions.center)) < 245);
+  check(`${name}: no independent colored opening layer`, positions.orphanLayer === 0);
+  out[name] = { a,b,maxSeamError:Math.max(...errors) };
+}
+await seed();
+const same = { c:'#203040', a:.35 }, dark = { c:'#111111', a:1 };
+const scenarios = [['opaque',dark,dark],['translucent',same,same],
+  ['different',{c:'#143d85',a:.45},{c:'#12603b',a:.7}],['one-empty',same,null],['both-empty',null,null]];
+for (const [name,a,b] of scenarios) {
+  await fills(a,b);
+  for (const zoom of [.87,1.23,1.91]) {
+    await page.evaluate(zoom => {const c=window.__card; c._zoom=zoom; c._view=null; c.requestUpdate();}, zoom);
+    await settle(); await probe(`${name}-${zoom}`);
+  }
+}
+await fills(same,same);
+const before = await page.evaluate(() => ({ counters:{...window.__card._floorCacheBuilds},
+  cfg:JSON.stringify(window.__card._serverCfg), area:window.__card._spaceModel().rooms.map(r=>window.__card._areaOfRoom?.(r)) }));
+await fills({c:'#334477',a:.5},{c:'#889944',a:.6});
+await page.evaluate(async () => {
+  const c=window.__card; c.hass={...c.hass,states:{...c.hass.states,
+    'sensor.floor_paint_tick':{state:'42',attributes:{}}}}; await c.updateComplete;
+}); await settle();
+const after = await page.evaluate(() => ({...window.__card._floorCacheBuilds}));
+check('color and HA ticks do not rebuild floor geometry', after.roomFloorPaint === before.counters.roomFloorPaint
+  && after.cleanFloor === before.counters.cleanFloor && after.openingTunnel === before.counters.openingTunnel);
+await fills(same,same);
+await page.locator('houseplan-card [data-hp="rotate-right"]').click(); await settle();
+await probe('quarter-turn');
+await seed(true); await fills(same,same); await probe('diagonal',true);
+await seed(); await fills(dark,dark);
+await page.evaluate(async () => {
+  await window.__hpTest.setServerConfig(cfg=>{cfg.settings.volumetric_view=true;});
+  await window.__card._ensureIsoSceneRuntime();
+}); await settle(); await probe('iso',false,false,true);
+await page.evaluate(async () => {
+  await window.__hpTest.setServerConfig(cfg=>{cfg.settings.volumetric_view=false;});
+  const el=document.createElement('houseplan-space-card');
+  el.setConfig({type:'custom:houseplan-space-card',space:'f1',title:'',show_button:false,fit:'house'});
+  el.hass=window.__card.hass;
+  const host=document.createElement('div');host.style.width='780px';document.body.append(host);host.append(el);
+  window.__floorStatic=el;
+  const end=performance.now()+10000;while(!el.shadowRoot?.querySelector('[data-hp="room"]')){
+    if(performance.now()>end)throw Error('static floor timeout');await new Promise(requestAnimationFrame);
+  }
+}); await settle(); await probe('static',false,true);
+await finish(browser,out);

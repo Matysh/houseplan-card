@@ -24,7 +24,7 @@ import {
   openingTunnelGeometriesFromIndex, wallBodiesUnionPath, wallBodyNeedsSolid, wallHatchNeedsSolid,
   wallHatchStepUnits, innerContourForRoom, HATCH_BASE_STEP_UNITS,
   openingWallIndex, openingInnerFaceOffsetFromIndex,
-  type OpeningWallIndex, type WallEntry,
+  wallEdgeBodies, type OpeningWallIndex, type WallEntry,
 } from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules } from './rules';
 import { t, type Lang } from './i18n';
@@ -53,7 +53,8 @@ import type { DeviceContactFrame } from './device-contact-render';
 import { valueBadgeTitle } from './device-value-badge';
 import { contentFingerprint } from './visual-continuity';
 import type { VirtualLightSnapshot } from './virtual-light-state';
-import { renderOpeningTunnelFills } from './render/opening-tunnels';
+import { buildRoomFloorPaint, roomFloorGeometry, type RoomFloorPaint } from './room-floor-paint';
+import { cleanFloorFingerprint } from './floor-geometry-key';
 import { renderPaperShapes, type PaperShape } from './render/paper-scene';
 import { gridVisualScale, gridVisualUnits } from './grid-scale';
 import {
@@ -87,6 +88,7 @@ export { spaceModels } from './space-geometry';
 
 type StaticWallGeometry = ReturnType<typeof wallBodiesUnionPath>;
 type StaticWallGeometryEntry = { fingerprint: string; value: StaticWallGeometry };
+const staticRoomFloorPaintCache = new Map<string, { paint: Map<string, RoomFloorPaint>; cuts: number[][] }>();
 const staticWallGeometryCache = new WeakMap<object, Map<string, StaticWallGeometryEntry>>();
 type StaticPhysicalBodiesEntry = { fingerprint: string; value: number[][][] };
 const staticPhysicalBodiesCache = new WeakMap<object, Map<string, StaticPhysicalBodiesEntry>>();
@@ -561,9 +563,29 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       roomCustomFillOf(disp.customFill, room),
     )] as const;
   }));
-  const roomFillsById = new Map<string, ResolvedRoomFill | null>();
-  for (const room of space.rooms) if (room.id) {
-    roomFillsById.set(room.id, resolvedRoomFills.get(room) || null);
+  const paintKey = `${space.id}|${cleanFloorFingerprint(spCfg)}`;
+  let floorEntry = walls.length && projectedOpenings.length ? lruGet(staticRoomFloorPaintCache, paintKey) : undefined;
+  if (!floorEntry && walls.length && projectedOpenings.length) {
+    const cuts = wallEdgeBodies(space.rooms, walls, zeroWalls.contour,
+      GRID_STEP_N, cellCm, GRID_PITCH, NORM_W).map(b => [b.a[0], b.a[1], b.b[0], b.b[1]]);
+    let paint = new Map<string, RoomFloorPaint>();
+    try {
+      const tunnels = openingIndex ? openingTunnelGeometriesFromIndex(openingIndex,
+        projectedOpenings.map(o => ({ x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }))) : [];
+      const polys = space.rooms.map(roomPoly);
+      const seeds = space.rooms.flatMap((room, index) => {
+        const poly = polys[index]; if (!poly) return [];
+        const floor = room.id ? innerContourForRoom(space.rooms, room.id, walls, zeroWalls.contour,
+          GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, canonicalWallGeometry?.roomGeom,
+          canonicalWallGeometry?.multiWallNodes) || poly : poly;
+        const clean = extras.length ? floorMinusBodies(floor, extras) : null;
+        const holes = islandsOf(floor, polys.filter((p, i) => i !== index && !!p) as number[][][]);
+        return [{ id: room.id || '#' + index, geom: roomFloorGeometry(floor, holes, clean) }];
+      });
+      if (canonicalWallGeometry) paint = buildRoomFloorPaint(seeds, projectedOpenings, tunnels,
+        canonicalWallGeometry.components.map(component => component.geom).filter(geom => geom?.length));
+    } catch { /* Same conservative fallback as full View: retain the existing floor. */ }
+    floorEntry = { paint, cuts }; lruSet(staticRoomFloorPaintCache, paintKey, floorEntry, 8);
   }
   const shownRooms = space.rooms
     .filter((r) => r.area || disp.showBorders || roomFillModeOf(disp.fill, r) !== 'none');
@@ -593,12 +615,23 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       // too (in its own block: this is a different card, with its own root).
       const hpId = r.id || nothing;
       const hpArea = r.area || nothing;
-      const shape = r.poly
+      const paint = floorEntry?.paint.get(r.id || '#' + space.rooms.indexOf(r));
+      const poly = roomPoly(r);
+      if (paint) cls += ' noedge';
+      const shape = paint
+        ? svg`<path class="${cls}" style="${style}" data-hp="room" data-id=${hpId} data-area=${hpArea}
+            fill-rule="evenodd" d=${paint.path}></path>`
+        : r.poly
         ? svg`<polygon class="${cls}" style="${style}" data-hp="room" data-id=${hpId} data-area=${hpArea}
             points="${r.poly.map((p) => p.join(',')).join(' ')}"></polygon>`
         : svg`<rect class="${cls}" style="${style}" data-hp="room" data-id=${hpId} data-area=${hpArea}
             x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"></rect>`;
-      return shape;
+      const outline = paint && poly && disp.showBorders
+        ? svg`<path class="room-outline" fill="none" stroke=${disp.color} stroke-opacity=${disp.opacity}
+            stroke-width=${gridVisualUnits(2.5, cellCm)}
+            d=${outlineWithout(poly, zeroWalls.contour.concat(floorEntry?.cuts || []), GRID_PITCH * 0.02)
+              .map(line => `M ${line[0]} ${line[1]} L ${line[2]} ${line[3]}`).join(' ')}></path>` : nothing;
+      return svg`${shape}${outline}`;
     }));
 
   // Opt-in radial pools share the full plan's independent room-level Glow gates.
@@ -736,24 +769,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // gaps between detached buildings, and an empty space has no paper at all,
   // image or no image. The picture is drawn ON the paper, one layer above.
 
-  const tunnelGeometry = openingIndex && walls.length
-    ? openingTunnelGeometriesFromIndex(
-      openingIndex,
-      projectedOpenings.map((opening) => ({
-        x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
-      })),
-    )
-    : projectedOpenings.map(() => null);
-  const openingDataTunnels = projectedOpenings.length
-    ? renderOpeningTunnelFills({
-      openings: projectedOpenings,
-      geometries: tunnelGeometry,
-      fillsByRoomId: roomFillsById,
-      idPrefix: `${space.id}-static-data`,
-      groupClass: 'opening-tunnels static-opening-tunnels',
-      dataLayer: 'data',
-    })
-    : nothing;
   const paperShapes: PaperShape[] = walls.length && canonicalWallGeometry?.paperD
     ? [{ path: canonicalWallGeometry.paperD }]
     : paperRoomShapes(space.rooms);
@@ -989,7 +1004,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
                 : nothing}
               preserveAspectRatio="none" />`
           : nothing}
-        ${roomShapes}
+        <g class=${floorEntry?.paint.size ? 'room-floor-paint-layer' : nothing}>${roomShapes}</g>
         ${disp.showBorders && zeroWalls.contour.length
           ? svg`<g class="room-outlines" aria-hidden="true" pointer-events="none">
               ${space.rooms.map((room) => {
@@ -1003,7 +1018,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
               })}
             </g>`
           : nothing}
-        ${openingDataTunnels}
         <g class="decorlayer" pointer-events="none">${decorImages}</g>
         <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>
         ${glowPools}

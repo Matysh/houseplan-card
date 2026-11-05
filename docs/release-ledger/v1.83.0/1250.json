@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1250,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "The existing stable renderer painted opening backgrounds separately from room floors. Unify their presentation coverage to prevent raster seams and independent opacity while preserving storage, area, symbols and physical semantics.",
+  "summary": {
+    "ru": "Пол комнаты непрерывно продолжается в проёмах, без отдельной цветной вставки.",
+    "en": "Room floors continue seamlessly into openings without a separate colored patch."
+  }
+}
