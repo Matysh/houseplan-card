@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4057,
+  "revision": 4058,
   "nextTicket": 220,
   "nextFence": 220,
   "tasks": {
@@ -3370,7 +3370,18 @@
         "test/wall-node-dependencies.test.mjs",
         "tests_backend/test_ha_wall_node_dependency_carrier.py",
         "tests_backend/test_wall_node_dependency_carrier.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793862723564,
+        "entry": 1,
+        "detail": "Backend изменённой области: failed; Браузер: node dependency carrier: failed",
+        "eventId": "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:3:return:return:1303"
+      }
     }
   },
   "ownerDecisions": {},
@@ -3476,18 +3487,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1303,
-    "worker": "finish",
-    "token": "219:finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:1:admit",
-    "fence": 219,
-    "materialSha": "7d54e81ed95ae4b26ded7dedc5921864834b056d",
-    "expectedBase": "34631cb69c7b61327155c33d261811c0a9b66a9c",
-    "phase": "testing",
-    "admittedAt": 1793862647315,
-    "expiresAt": 1793863006151,
-    "patchId": "c4318090a9f27fcf7fa5410bde4d17d14043ea57"
-  },
+  "active": null,
   "events": {
     "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:2:synchronized": {
       "digest": "5c22272d2b28470fe0940b55b946e9166b56b374288ce680ef3eb7fb3bd3e555",
@@ -3495,6 +3495,10 @@
     },
     "finish:3a9f2fcd-6091-4e3d-9922-ab8a4b2f346c": {
       "digest": "270ed48f2305271b142a9e3ad14f1a6efd232f045fa0a76d61705712ee60fc95",
+      "issue": 1303
+    },
+    "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:3:return": {
+      "digest": "62e6a8cae489e6d3669bc1d7db04e48d1da45d6884a56f0bd4414b3708cad3d1",
       "issue": 1303
     },
     "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9": {
@@ -3522,6 +3526,26 @@
         "layer": "product",
         "materialSha": "7d54e81ed95ae4b26ded7dedc5921864834b056d",
         "phase": "sync"
+      }
+    },
+    "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:3:return:return:1303": {
+      "digest": "62e6a8cae489e6d3669bc1d7db04e48d1da45d6884a56f0bd4414b3708cad3d1",
+      "issue": 1303,
+      "message": {
+        "kind": "return",
+        "issue": 1303,
+        "at": 1793862723564,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793862723564,
+          "entry": 1,
+          "detail": "Backend изменённой области: failed; Браузер: node dependency carrier: failed",
+          "eventId": "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:3:return:return:1303"
+        }
       }
     }
   },
