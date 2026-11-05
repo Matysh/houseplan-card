@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4373,
+  "revision": 4374,
   "nextTicket": 230,
   "nextFence": 230,
   "tasks": {
@@ -117,43 +117,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5"
-      }
-    },
-    "1158": {
-      "issue": 1158,
-      "branch": "codex/issue-1158-zigbee-hover-status",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "mergedSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c",
-      "mergedAt": 1793633295016,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": true,
-      "reviewRequest": "review:1158:2:7ea850062ab804138479086802927eb9bc6fdea6:b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": true,
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "a297fdedf383f8af3187",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 11
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "fa15643e0f27f0192b36d684d4ac8c49fdd81a4c"
       }
     },
     "1174": {
@@ -3423,7 +3386,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2"
       }
     }
   },
@@ -3559,7 +3523,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:42026041095:1:1306": {
+      "digest": "92af5e6e463ed2c503d3a8a8eb9707318040c1d9c09d8c0388be32cf69c10d13",
+      "issue": 1306,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1306,
+        "at": 1793881255172,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "c9e3962770265c36acedbcf66f21bfde785f84f2"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c9e3962770265c36acedbcf66f21bfde785f84f2",
     "status": "pending",
