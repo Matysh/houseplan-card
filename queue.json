@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4166,
+  "revision": 4167,
   "nextTicket": 223,
   "nextFence": 223,
   "tasks": {
@@ -1711,7 +1711,7 @@
       "notice": {
         "key": "1:correct deleted-path planning failure before S6",
         "reason": "correct deleted-path planning failure before S6",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1793871526872,
         "entry": 1,
@@ -3613,6 +3613,10 @@
     },
     "1250-planner-repair-1793871525582": {
       "digest": "40e0d430d6f0c2c0a850f28032203461bbc635a05090b8f0cebf101a0160f979",
+      "issue": 1250
+    },
+    "github:42003972947:1:completions:notice:cff349e6beed6e27ea616ae3dfc90cbb473bafd75d3ab3aa7e7e1f42024c7cf7": {
+      "digest": "74e265ace5a06a9032921fb5b5b9f0cb4e45ad57bc828b3a587ad05e1421b266",
       "issue": 1250
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
