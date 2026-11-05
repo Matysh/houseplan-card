@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3864,
+  "revision": 3865,
   "nextTicket": 215,
   "nextFence": 215,
   "tasks": {
@@ -3396,6 +3396,10 @@
       "digest": "03c63ff3e0a1b98742be99e2d09b41bf881dba30232949fb582c143040c7c1c8",
       "issue": 1298
     },
+    "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4:finish:3:s6-label": {
+      "digest": "bff33d52b355641535b3cae643e91361ffd05e7dadc5a800f7d3d5ad1ced0271",
+      "issue": 1298
+    },
     "finish:42e66e2f-cd1d-4d72-85cc-2a34213270a4": {
       "digest": "96077dbe7600f1b9dbeac24d3ce58bff7a0c975fa76b3d6ea9a169539520a22b",
       "issue": 1298,
@@ -3450,7 +3454,8 @@
         "resubmission": false,
         "reviewChanges": "Первоначальное предположение о продуктовом дефекте adoption снято чтением #1099. Контракт п.7 и AC8 запрещают изменения маркеров во время построения baseline/кандидатов. Успешное принятие pre-v9 документа и судьба маркеров при нём явно вынесены в «Не-скоуп», порядок adopt после проверок сохранён. FreezeGuard helper уже освобождает заморозку перед намеренным rollback writer. Раньше подставленный length давал отказ, теперь доказанное удаление принимает #1258 и тест по ошибке доходит с construction-only freeze до существующего намеренного adoption writer. Обычный pre-v9 вход без freeze успешно сохраняет правильные маркеры [{id:'m',space:'f'}]; потери данных продукта не обнаружено.\n\nВместо снятия freeze или изменения runtime:\n- В generic deletion-refusal входах использован angle, который #1258 не освобождает. Сохраняется вся конструкционная заморозка и точный rollback. Merge-refusal остаётся length, как раньше.\n- Исторический test/fixtures/1099-commit-characterization.json не меняется. expectedPassport переопределяет только два toast на junction.limit_angle; старые config/history fingerprints и все остальные случаи прежние.\n- Отдельные два length-входа принимают удаление по принятому контракту и проверяют пустую геометрию удалённой комнаты, точные очищенные маркеры, один history entry с полным roomReferences, исходный контур и неизменные полигоны посторонних комнат. Новый тест также утверждает, что исторический паспорт по-прежнему содержит прежний отказ length.\n\nВыбран show с независимым ревью. Слой S6 product нужен из-за production test-build/imports; это тестовая корректировка без product runtime/протокола/визуальных кадров, не требует новой классификации пользовательского изменения. Первичный FAIL CI сохранён, предположение о runtime bug в заголовке уточнено по доказательствам.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
