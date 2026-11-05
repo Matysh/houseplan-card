@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4154,
+  "revision": 4155,
   "nextTicket": 223,
   "nextFence": 223,
   "tasks": {
@@ -1703,7 +1703,10 @@
         "src/styles/plan.styles.ts",
         "src/wall-thickness.ts",
         "test/room-floor-paint.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1793871172498,
+      "automationDetail": "ENOENT: no such file or directory, access '/home/matysh/hp-1078-sun-transparency-20261025/src/render/opening-tunnels.ts'"
     },
     "1252": {
       "issue": 1252,
@@ -3563,6 +3566,10 @@
     },
     "finish:f0c8958b-6d22-4624-855a-021e877d6576:finish:2:synchronized": {
       "digest": "7e4cfe7cce57dd585154ed9b425d004656597b034b841e1e08ec4507609a6f84",
+      "issue": 1250
+    },
+    "finish:f0c8958b-6d22-4624-855a-021e877d6576:finish:3:automation-pending": {
+      "digest": "2146917e41e682199fc004fc9b9267970fb99965e5abf45747620661d6baf752",
       "issue": 1250
     },
     "github:42002223818:1:label:spec-request:spec-replaced:1305": {
