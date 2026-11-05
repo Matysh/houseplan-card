@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep the native profile hold pressed until its public scale dialog appears in real HA E2E; retain delayed-timer regression evidence and the empty-space Undo readiness fix. [#1296](https://github.com/Matysh/houseplan-card/issues/1296)
+
 - Wait for observed server-side decor defaults before the cold-remount cache smoke; avoid treating an async polling predicate as persistence completion and assert the stored style explicitly. [#1293](https://github.com/Matysh/houseplan-card/issues/1293)
 - Preserve unchanged exact ordinates during Resize of imported current graphs, preventing near-lattice decimal recovery from creating micro-crossings against fixed neighbours. [#1292](https://github.com/Matysh/houseplan-card/issues/1292)
 
