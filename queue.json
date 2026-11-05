@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4819,
+  "revision": 4820,
   "nextTicket": 244,
   "nextFence": 244,
   "tasks": {
@@ -3828,33 +3828,24 @@
     },
     "1321": {
       "issue": 1321,
+      "branch": "codex/issue-1321-build-inputs",
       "track": "ship",
       "layer": "infra",
-      "branch": "codex/issue-1321-build-inputs",
-      "materialSha": "f873c3c9d152ce8e34579832480cb3fcb2bdc0b5",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 243,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793888457594,
-      "reviewEntry": 1,
-      "patchId": "6dad5f8b967d5881edae41500f26bcad82647240",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "process-next/lib/catalog.mjs",
-        "process-next/test/catalog.test.mjs",
-        "scripts/source-fingerprint.mjs"
-      ],
-      "s6": {
-        "id": "20261105T142115297-2d2f71df",
-        "name": "Тесты для задачи #1321 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261105T142115297-2d2f71df/report.json",
-        "materialSha": "f873c3c9d152ce8e34579832480cb3fcb2bdc0b5",
-        "status": "passed",
-        "finishedAt": "2026-11-05T14:21:26.708Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "9b3fe4a5664f05c2fa2a75a726fff9513cb3b41f",
+      "mergedSha": "f873c3c9d152ce8e34579832480cb3fcb2bdc0b5",
+      "mergedAt": 1793888493350,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -3989,18 +3980,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1321,
-    "worker": "finish",
-    "token": "243:finish:1ea4dda3-5a17-48d0-a258-0b9eb8105af5:finish:1:admit",
-    "fence": 243,
-    "materialSha": "f873c3c9d152ce8e34579832480cb3fcb2bdc0b5",
-    "expectedBase": "9b3fe4a5664f05c2fa2a75a726fff9513cb3b41f",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793888461806,
-    "expiresAt": 1793892087999,
-    "patchId": "6dad5f8b967d5881edae41500f26bcad82647240"
-  },
+  "active": null,
   "events": {
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:2:synchronized": {
       "digest": "3343767c227ffccab7fdec9cdef12d5341f905a95bb12bafe9b70f58c9e3b48a",
@@ -4013,14 +3993,6 @@
     "github:42042666568:1:completions:notice:7e061d22ddd850d6c2e6c9fc4f53c386e20c5fda63a6b9f7df762431ce910536": {
       "digest": "a00089f04e4cc07352da64aad7b0b72106dcfe84f8ddac372218a55dfa5019c2",
       "issue": 1314
-    },
-    "finish:1ea4dda3-5a17-48d0-a258-0b9eb8105af5:finish:2:synchronized": {
-      "digest": "56bf6a3a922bad4465de9521ee1d9efe16d32b8cb3d226e3c993806e9145da02",
-      "issue": 1321
-    },
-    "finish:1ea4dda3-5a17-48d0-a258-0b9eb8105af5:finish:3:s6-complete": {
-      "digest": "db083fbc0ac4682525f5b2806277c22b2e079eaff14d31d206dc679a2cc1503c",
-      "issue": 1321
     },
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433": {
       "digest": "f66ad94ac29c34fcbf2fb5fb5f672e524702a9d25fd303bdd95fb74f965bf851",
