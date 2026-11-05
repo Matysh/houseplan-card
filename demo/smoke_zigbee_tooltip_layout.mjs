@@ -1,4 +1,5 @@
 import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
+import { devicePointerPoint } from './helpers/device-pointer-point.mjs';
 // #802: real pointer + public HA/config inputs. No private card writes: the
 // fixture delivers registry events and the integration's normal topology feed.
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -78,9 +79,9 @@ for (const provider of ['z2m', 'zha']) {
   let pointer;
   const hover = async (id, vertical = 0.5) => {
     await page.mouse.move(2, 2);
-    const box = await marker(id).boundingBox();
-    if (!box) throw new Error(`missing marker ${id}`);
-    pointer = { x: box.x + box.width / 2, y: box.y + box.height * vertical };
+    const { observation, ...point } = await devicePointerPoint(page, marker(id), { vertical });
+    pointer = point;
+    evidence.push({ provider, name: 'native-pointer-target', id, observation });
     await page.mouse.move(pointer.x, pointer.y);
     await settle();
   };
@@ -142,6 +143,7 @@ for (const provider of ['z2m', 'zha']) {
     };
   }, id);
   const witness = async (name, id, { hidden = false } = {}) => {
+    await waitForUiKitPaint(page);
     const value = await sample(id);
     evidence.push({ provider, name, ...value });
     out[`${provider}_${name}`] = value.badgesDisjoint

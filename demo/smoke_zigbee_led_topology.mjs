@@ -1,4 +1,5 @@
 import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
+import { devicePointerPoint } from './helpers/device-pointer-point.mjs';
 // #1004: real mouse input and public config/provider fixtures. No product patch.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -68,14 +69,8 @@ try {
   await root.locator('.led-hit[data-id="d_light1"]').waitFor();
   const hover = async (id, strip = false) => {
     await page.mouse.move(2, 2);
-    const point = await root.locator(`[data-hp="device"][data-id="${id}"]`).evaluate((node, strip) => {
-      if (strip) {
-        const closed = node.closest('[data-led-strip]').dataset.closed === 'true';
-        const p = node.getPointAtLength(node.getTotalLength() * (closed ? .85 : .3)).matrixTransform(node.getScreenCTM());
-        return { x: p.x, y: p.y };
-      }
-      const r = node.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-    }, strip);
+    const { observation, ...point } = await devicePointerPoint(page,
+      root.locator(`[data-hp="device"][data-id="${id}"]`), { strip });
     await page.mouse.move(point.x, point.y);
     await page.evaluate(() => window.__hpTest.settled());
     await page.waitForTimeout(160);
@@ -86,7 +81,7 @@ try {
       markedOwner: window.__card.renderRoot.querySelector('[data-hp-device-hover]')?.getAttribute('data-id'),
       actualHit: window.__card.renderRoot.elementFromPoint(point.x, point.y)?.outerHTML.slice(0, 180),
     }), point);
-    samples.push({ id, point, ...sample }); return { point, ...sample };
+    samples.push({ id, point, observation, ...sample }); return { point, ...sample };
   };
   const fromIcon = await hover('d_lamp');
   check('icon hover draws confirmed route to LED', fromIcon.lines, 1);
