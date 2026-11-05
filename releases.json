@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 437,
+  "revision": 438,
   "active": "v1.84.0-beta.8-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -20694,7 +20694,18 @@
           "status": "pending"
         }
       ],
-      "diagnostics": [],
+      "diagnostics": [
+        {
+          "run": "20261105T195120055-b0609ccb",
+          "sha": "fc915753646d14903f42e7671499bbd5bdacdab5",
+          "status": "failed",
+          "failed": [
+            "product-node:geometry"
+          ],
+          "issue": 1324,
+          "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T195120055-b0609ccb/report.json"
+        }
+      ],
       "shipReview": {
         "sha": "fc915753646d14903f42e7671499bbd5bdacdab5",
         "requestId": "ship-review:45e514d68bef2602c1f95a6ac2be54374076c3b672a9e4e0ae18b35b998a7b02",
@@ -21533,7 +21544,8 @@
     "beta8-20261105-create": "697e4f06cdf95d6f6a7bdcb5f0fbf96939d4c3572dfffbe59ce0fc7d1bf5ca39",
     "beta8-20261105-version-prepared": "2a80f709b5fe2f282310d4fb4a4865d083a80b6ae73e90081cf5f6e59199feb6",
     "ship-review:prepare:033087a5-665d-4a34-81d8-a462b02450ea": "70e220fa156f3557bf6b47c071c909d6af0849dc987edca274618866db7e602a",
-    "ship-review:result:d2b94b84-ffcd-41a4-b303-bd46792a1407": "1353f092b246570b3c3e35bcb58d9a69ab3a57a53d2307114c7173bad32c3ab4"
+    "ship-review:result:d2b94b84-ffcd-41a4-b303-bd46792a1407": "1353f092b246570b3c3e35bcb58d9a69ab3a57a53d2307114c7173bad32c3ab4",
+    "beta8-20261105-first-failure": "be063af237e66d1975efb3fa88bfc56855e739e00a97a3b2b52697199c693a76"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
