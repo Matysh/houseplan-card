@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3525,
+  "revision": 3526,
   "nextTicket": 204,
   "nextFence": 203,
   "tasks": {
@@ -1960,7 +1960,7 @@
       "ownerDecision": null,
       "ticket": 202,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793844063097,
       "reviewEntry": 1,
       "patchId": "b0076d9317d8d8c1030dc208afdc6d7b753ff231",
@@ -1971,7 +1971,16 @@
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.83.0/1254.json",
         "src/houseplan-card.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T021251147-4be869c1",
+        "name": "Тесты для задачи #1254 (перед ревью)",
+        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T021251147-4be869c1/report.json",
+        "materialSha": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
+        "status": "passed",
+        "finishedAt": "2026-11-05T02:13:39.241Z",
+        "failures": []
+      }
     },
     "1256": {
       "issue": 1256,
@@ -3287,9 +3296,9 @@
     "fence": 202,
     "materialSha": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
     "expectedBase": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793844667541,
-    "expiresAt": 1793845086302,
+    "expiresAt": 1793848420385,
     "patchId": "b0076d9317d8d8c1030dc208afdc6d7b753ff231"
   },
   "events": {
@@ -3514,6 +3523,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f"
+      }
+    },
+    "finish:b788cce0-39f3-4ccb-891a-ab46ec76b937:finish:3:s6-complete": {
+      "digest": "5ebd21483e6b3967e528c3ab5846604ebf2fd5914eefbd629b0203d93c022fb5",
+      "issue": 1254,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1254,
+        "at": 1793844820385,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T021251147-4be869c1",
+          "name": "Тесты для задачи #1254 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T021251147-4be869c1/report.json",
+          "materialSha": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
+          "status": "passed",
+          "finishedAt": "2026-11-05T02:13:39.241Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Show. Вместо нулевого перехода используем существующий CameraTransitionController с длительностями controlMotion.appear/leave при изменении видимости панели. Отслеживается лишь видимость последней принятой reference-эпохи. Быстрое повторное переключение сохраняет автоматическое владение и перенаправляет переход из реально показанной камеры. Ручное прерывание использует действующие пути отмены; ни CSS-смещение сцены, ни миграция/запись плана, ни измерение DOM/геометрии на кадре не добавляются. Начальный fit, восстановление сохранённого масштаба и ручной ракурс не анимируются этим правилом. Reduced-motion обрабатывается существующим контроллером.\n\nАдресные проверки S6: нативная панель /houseplan, show/hide, промежуточные camera-кадры, UI Kit timing, конечная reference, быстрый разворот, реальное колесо, reduced-motion, Flat/2.5D × справа/снизу × четыре поворота; существующие #1242/#1165 сценарии для сохранённых настроек, вручную смещённой камеры и профилей. Проверяется отсутствие записи автоматического масштаба и согласованность указателя с камерой в Flat. Проверки выполняются только после допуска в общую очередь.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
