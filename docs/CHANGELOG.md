@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Wait for observed server-side decor defaults before the cold-remount cache smoke; avoid treating an async polling predicate as persistence completion and assert the stored style explicitly. [#1293](https://github.com/Matysh/houseplan-card/issues/1293)
+
 - Check snap junctions against their literal lattice wire, exercise Draw chain compaction through native clicks, and pin weather fixture dates across HA midnight. Product geometry and visual baselines remain unchanged. [#1294](https://github.com/Matysh/houseplan-card/issues/1294)
 - Smoothly recenter an automatically fitted plan when the summary panel appears or disappears. Rapid toggles retarget the current camera; manual views and reduced-motion preferences are preserved. [#1254](https://github.com/Matysh/houseplan-card/issues/1254)
 

@@ -87,9 +87,21 @@ try {
   // Toolbar remains creation defaults even while the furniture group is selected.
   const toolbar=card().locator('.decorbar hp-color-opacity');await toolbar.locator('.trigger').click();
   await toolbar.locator('[data-field="colour-hex"]').fill('#ABCDEF');await toolbar.locator('.confirm').click();
-  await page.waitForFunction(async()=>{const c=window.__card;const r=await c.hass.callWS({type:'houseplan/config/get'});return r.config.settings?.decor_default_style?.color==='#abcdef';});
+  // waitForFunction polls synchronously: an async predicate returns a truthy
+  // Promise even when config/get resolves to the old value. Await the observed
+  // server state explicitly; the ordinary write barrier then waits for its ACK.
+  await page.evaluate(async()=>{
+    const card=window.__card,deadline=performance.now()+5000;
+    for(;;){
+      const reply=await card.hass.callWS({type:'houseplan/config/get'});
+      if(reply.config.settings?.decor_default_style?.color==='#abcdef')return;
+      if(performance.now()>=deadline)throw Error('decor defaults were not persisted');
+      await new Promise(requestAnimationFrame);
+    }
+  });
   await settle();const defaults=await state();
   check('toolbar.group_members_untouched',defaults.config.spaces,expected.spaces);check('toolbar.defaults_only',defaults.defaults.color,'#abcdef');
+  check('toolbar.defaults_are_stored',defaults.config.settings?.decor_default_style?.color,'#abcdef');
   check('toolbar.no_group_history',defaults.history,inline.history);checkWarm('toolbar.defaults',cancel,defaults);
   // A new public card reads stored bytes, with neither warm caches nor selection copied.
   await page.evaluate(()=>{const old=window.__card,next=document.createElement('houseplan-card');
