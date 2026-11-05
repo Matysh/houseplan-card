@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3940,
+  "revision": 3941,
   "nextTicket": 217,
   "nextFence": 217,
   "tasks": {
@@ -3417,6 +3417,10 @@
       "digest": "fd791bcbb4bab98e5a97d0ddccdbdcb07ced21147080d658366dc01dbe6364fd",
       "issue": 1300
     },
+    "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f:finish:3:s6-label": {
+      "digest": "fad570b1a0407417a400c82749f03cea7ad4c418c369ae8d3124e26d2e709923",
+      "issue": 1300
+    },
     "finish:e10f6539-cb83-47f7-be6b-fa3253da6d4f": {
       "digest": "73d7c4be7419fbb04920ec71d61755a52d6734dc7cd3b2c2f136461d5ab93794",
       "issue": 1300,
@@ -3469,7 +3473,8 @@
         "resubmission": false,
         "reviewChanges": "Причина воспроизведена на неизменном публичном frontend: исходная проверка вернула FALSE при CSS height/min-height=44px и DOMRect.height=43.99993896484375px; шла конечная UI-kit FLIP-анимация. Свидетельство: output/issue-1300/original-5.log (dark), сохранён исходный FAILED stable run. Переносим измерение Retry после существующего bounded waitForUiKitPaint: ожидание fonts/реальных конечных анимаций, без отключения анимаций, sleep или повторов оракула. Точная >=44 и ограничения переполнения не меняются. Тот же оракул дополнительно отвергает реальную кнопку 43px; стиль восстанавливается в finally. Runtime не меняется. Числовые размеры/состояние fonts/animations печатаются с результатом для будущего разбора. Сборка/critical/startup в S6 выбраны потому, что нужен настоящий browser smoke (инфраструктурный профиль browser не выполняет); это не новый постоянный гейт. Остальные клавиатура/clipboard/Retry/zero-write assertions остаются. E2E impact: task-impact/1300.md companion. Финальный S6 и независимое ревью выполняет finish на допущенной очередью базе.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
