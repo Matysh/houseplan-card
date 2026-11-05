@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4318,
-  "nextTicket": 228,
+  "revision": 4319,
+  "nextTicket": 229,
   "nextFence": 228,
   "tasks": {
     "1126": {
@@ -3388,6 +3388,20 @@
         "status": "published",
         "sourceSha": "f64fa33c347a8a3fe37789ffc444d74c40daa381"
       }
+    },
+    "1306": {
+      "issue": 1306,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/issue-1306-node-save",
+      "materialSha": "fdb072d74cacf112e50131e89728992a69f242f9",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 228,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793879213339,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3520,7 +3534,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1306
+  ],
   "active": null,
   "events": {
     "github:42015730997:1:label:spec-request": {
@@ -3542,6 +3558,19 @@
     "github:42016863121:1:completions:report:c312fbe4f38cf20bdd83944aa47978a60420e3c52af390cddbeaba9c431d9de3": {
       "digest": "730d333ded1ea6bb8883242e6f9776cf878097fd580d624d163db15b1cc602e4",
       "issue": 1306
+    },
+    "finish:cc51110e-5e69-4bbe-b7b6-5d863b35a685": {
+      "digest": "4fda2947f3e3b5723a3a71224f2556954b701227ac7e36b9d6d734a23ebc823a",
+      "issue": 1306,
+      "message": {
+        "kind": "queued",
+        "issue": 1306,
+        "at": 1793879213339,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "fdb072d74cacf112e50131e89728992a69f242f9"
+      }
     }
   },
   "devWebhook": {
