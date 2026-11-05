@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3977,
+  "revision": 3978,
   "nextTicket": 218,
   "nextFence": 218,
   "tasks": {
@@ -3333,6 +3333,13 @@
         "status": "passed",
         "finishedAt": "2026-11-05T06:06:16.794Z",
         "failures": []
+      },
+      "reviewRound": 1,
+      "reviewRequest": "review:1301:1:d55cd04d80fc37560bc311492a19f545cac853a1:a92688d9f216be54f499d63739fa4392dc9b6f05",
+      "reviewMaterial": {
+        "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
+        "expectedBase": "a92688d9f216be54f499d63739fa4392dc9b6f05",
+        "patchId": "d55cd04d80fc37560bc311492a19f545cac853a1"
       }
     }
   },
@@ -3436,6 +3443,19 @@
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
       }
+    },
+    "code:1301:review:1301:1:d55cd04d80fc37560bc311492a19f545cac853a1:a92688d9f216be54f499d63739fa4392dc9b6f05": {
+      "issue": 1301,
+      "kind": "code",
+      "requestId": "review:1301:1:d55cd04d80fc37560bc311492a19f545cac853a1:a92688d9f216be54f499d63739fa4392dc9b6f05",
+      "materialSha": "750d351f902f30474018b646f5e55e2462ba1b88",
+      "expectedBase": "a92688d9f216be54f499d63739fa4392dc9b6f05",
+      "patchId": "d55cd04d80fc37560bc311492a19f545cac853a1",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-05T06:06:26.246Z"
+      }
     }
   },
   "waiting": [],
@@ -3449,7 +3469,8 @@
     "phase": "review",
     "admittedAt": 1793858743286,
     "expiresAt": 1793862377966,
-    "patchId": "d55cd04d80fc37560bc311492a19f545cac853a1"
+    "patchId": "d55cd04d80fc37560bc311492a19f545cac853a1",
+    "reviewRequest": "review:1301:1:d55cd04d80fc37560bc311492a19f545cac853a1:a92688d9f216be54f499d63739fa4392dc9b6f05"
   },
   "events": {
     "finish:875a00ee-2190-43df-9805-850184b1a584:finish:2:synchronized": {
@@ -3458,6 +3479,10 @@
     },
     "finish:875a00ee-2190-43df-9805-850184b1a584:finish:3:s6-label": {
       "digest": "d38fd2ca1d7dcae17ed4acd8890fc29cb7f65598791c744ed8bf371337f3c120",
+      "issue": 1301
+    },
+    "finish:875a00ee-2190-43df-9805-850184b1a584:finish:4:review-requested": {
+      "digest": "6bbcdfb093f83817d8ee6c965fbc36c01c1233c53b7b2d81d0d5506854517ad6",
       "issue": 1301
     },
     "dev-build:41977639731:1:1300": {
