@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4953,
+  "revision": 4954,
   "nextTicket": 247,
   "nextFence": 247,
   "tasks": {
@@ -3838,7 +3838,16 @@
         "docs/CHANGELOG.ru.md",
         "process-next/lib/catalog.mjs",
         "process-next/test/ci-status.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T192651345-f6783ecf",
+        "name": "Тесты для задачи #1322 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261105T192651345-f6783ecf/report.json",
+        "materialSha": "88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe",
+        "status": "passed",
+        "finishedAt": "2026-11-05T19:27:02.783Z",
+        "failures": []
+      }
     },
     "1323": {
       "issue": 1323,
@@ -4003,14 +4012,18 @@
     "fence": 246,
     "materialSha": "88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe",
     "expectedBase": "3e599f174bdb4719ae0dd3aa52a7a4fdef322827",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793906801285,
-    "expiresAt": 1793907107088,
+    "expiresAt": 1793910424026,
     "patchId": "dacccb2ce7bfbfa4787b3a1694f66af6341d53c3"
   },
   "events": {
     "finish:ad94e3c9-1826-44f8-999a-586ce7063a63:finish:2:synchronized": {
       "digest": "de9082cb060c093aa66e4225dd5df9ddadc2a5142ee08b6491bb3550c09608a8",
+      "issue": 1322
+    },
+    "finish:ad94e3c9-1826-44f8-999a-586ce7063a63:finish:3:s6-complete": {
+      "digest": "1b8d983f556309fbe3fdd520cc873a8b1a01478309021f2dd6d6c9e77d6eca04",
       "issue": 1322
     },
     "finish:ad94e3c9-1826-44f8-999a-586ce7063a63": {
