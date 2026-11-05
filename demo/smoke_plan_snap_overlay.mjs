@@ -214,7 +214,8 @@ const out = await page.evaluate(async () => {
   result.drawPathLength = card._path.length;
   result.drawCommitUsesExactLineNode = card._path.length === 2
     && close(card._path[1][0], linePoint[0]) && close(card._path[1][1], linePoint[1]);
-  const partitionSpanMatches = async (junctionX, parts = card._curSpaceCfg.partitions) => {
+  const partitionSpanMatches = async (junctionIndex, parts = card._curSpaceCfg.partitions) => {
+    const junctionX = junctionIndex / 240;
     const original = JSON.parse(originalPartition);
     const left = parts.find(part => part.id === original.id);
     const right = parts.find(part => part.id !== original.id
@@ -222,9 +223,9 @@ const out = await page.evaluate(async () => {
     const saved = parts.filter(part => part.id.startsWith('saved-'))
       .sort((a, b) => a.id.localeCompare(b.id));
     const graph = card._curSpaceCfg.plan_graph;
-    // The authored fixture gives the selected node literally: 176/240,144/240.
+    // Authored targets are literally 176/240 (hover) and 186/240 (tap), y=144/240.
     // Recovering it by dividing the SVG double by 1000 introduces one ULP.
-    const junction = graph.nodes.filter(node => JSON.stringify(node.p) === '["l","176","144"]');
+    const junction = graph.nodes.filter(node => JSON.stringify(node.p) === JSON.stringify(['l', String(junctionIndex), '144']));
     const incident = junction.length === 1 ? graph.edges.filter(edge => edge.kind === 'partition'
       && (edge.from === junction[0].id || edge.to === junction[0].id)) : [];
     return parts.length === 5 && !!right && incident.length === 3
@@ -233,9 +234,9 @@ const out = await page.evaluate(async () => {
       && await window.sameSnapFixture(right, { ...original, id: right.id, a: [junctionX, .6] })
       && await window.sameSnapFixture(saved, cfg.spaces[0].partitions.filter(part => part.id.startsWith('saved-')));
   };
-  result.existingPartitionNodedAtExactAcceptedJunction = await partitionSpanMatches(176 / 240);
-  result.wrongJunctionIsRejectedByOracle = !await partitionSpanMatches(177 / 240);
-  result.missingSourceHalfIsRejectedByOracle = !await partitionSpanMatches(176 / 240,
+  result.existingPartitionNodedAtExactAcceptedJunction = await partitionSpanMatches(176);
+  result.wrongJunctionIsRejectedByOracle = !await partitionSpanMatches(177);
+  result.missingSourceHalfIsRejectedByOracle = !await partitionSpanMatches(176,
     card._curSpaceCfg.partitions.filter(part => part.id !== 'base-partition'));
 
   // Independent authored legacy input. Never delete current graph carriers by
@@ -299,7 +300,7 @@ const out = await page.evaluate(async () => {
     && !!drawnPartition
     && [drawnPartition.a, drawnPartition.b].some((point) =>
       close(point[0] * 1000, 900) && close(point[1] * 1000, 500));
-  result.secondSourceSpanAndMetadataPreserved = await partitionSpanMatches(secondStart[0] / 1000);
+  result.secondSourceSpanAndMetadataPreserved = await partitionSpanMatches(186);
 
   const gestureGeometry = JSON.stringify({ partitions: card._curSpaceCfg.partitions });
   card._activateMarkupTool('draw');
