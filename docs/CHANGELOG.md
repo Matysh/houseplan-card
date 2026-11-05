@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Count actual TypeScript `any` types instead of prose in the lazy-runtime guard; preserve the accepted type budget and cover both positive and negative cases. [#1307](https://github.com/Matysh/houseplan-card/issues/1307)
+
 - Speed up node saves by reusing command-local exact graph proofs and checking unchanged spaces selectively, while preserving safety checks, durable ACK, ACL/CAS and exact history. [#1306](https://github.com/Matysh/houseplan-card/issues/1306)
 
 - Merge wall nodes by dragging in Select, with a stationary target magnet, atomic removal of a connecting edge, release-time safety checks and exact Undo/Redo. [#1305](https://github.com/Matysh/houseplan-card/issues/1305)

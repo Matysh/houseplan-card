@@ -9,6 +9,22 @@ import { EditorRuntimeLoader, safeRuntimeDiagnostic } from '../test-build/editor
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
+function countAnyTypes(text) {
+  const source = ts.createSourceFile('source.ts', text, ts.ScriptTarget.Latest, true);
+  let count = 0;
+  const visit = node => {
+    if (node.kind === ts.SyntaxKind.AnyKeyword) count++;
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return count;
+}
+
+test('#1307 type census ignores prose and counts real any annotations', () => {
+  assert.equal(countAnyTypes('// any\n/** any */\nconst any = "any"; type Named = { any: string };'), 0);
+  assert.equal(countAnyTypes('let value: any; type Items = Array<any>; const cast = value as any;'), 3);
+});
+
 const deferred = () => {
   let resolve;
   let reject;
@@ -118,11 +134,11 @@ test('lazy runtime boundary keeps the eager entry independent and does not grow 
   };
   visit(join(repoRoot, 'src'));
   const anyCount = sources.reduce(
-    (total, source) => total + (source.match(/\bany\b/g)?.length || 0), 0,
+    (total, source) => total + countAnyTypes(source), 0,
   );
-  // Accepted graph writer/report ports in #1282–#1287 add 31 words. This textual
-  // census includes comments; the behavioral lazy-load checks above stay intact.
-  assert.ok(anyCount <= 1154, `src any count grew from 1154 to ${anyCount}`);
+  // #1307: the accepted source has 993 AnyKeyword nodes. Comments, strings and
+  // property names cannot spend the type budget; additional any types still fail.
+  assert.ok(anyCount <= 993, `src any type count grew from 993 to ${anyCount}`);
 });
 
 test('source type references stay portable across build hosts', () => {
