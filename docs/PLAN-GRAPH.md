@@ -159,10 +159,12 @@ success. Import/other writers and failed saves invalidate the stamp. Exact-rev
 junction counts and touched spaces protect unchanged floors; visibility never
 exempts potentially affected geometry in the edited floor.
 
-The client caches the complete candidate/source/proof-input signature before
-constructing the local geometry closure again. Revision, authority epoch and
-context changes retire it; in-place edits recheck, and negative hits retain
-their specific refusal. Accepted configuration/history still wait for ACK.
+The client signs the conservative local source/candidate proof inputs after
+the existing closure pass. Remote floors are not serialized on each held miss;
+changed foreign geometry enters the closure before reuse is considered.
+Revision, authority epoch and context changes retire it; in-place local edits
+recheck, and negative hits retain their specific refusal. Accepted
+configuration/history still wait for ACK.
 
 `scripts/benchmark-node-save.mjs` generates the synthetic 100/1000/5000-edge
 inputs; `scripts/benchmark-node-save.py` compares sequential production CPU

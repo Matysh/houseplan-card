@@ -96,13 +96,6 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     const ctx = context(), authority = host._serverCfg;
     if (!(deleting ? deleteEnabled() : ctx.enabled) || !supported || !authority) { retire(); return false; }
     try {
-      // Check content and authority BEFORE rebuilding the local closure. Object
-      // identity alone misses an in-place candidate mutation; the exact source,
-      // selected authoritative space and all global proof inputs own this hit.
-      const candidateSignature = JSON.stringify({ authority: { ...authority,
-        spaces: authority.spaces.filter(s => s.id === before.id) }, before, candidate: space,
-        epoch: nodeAdoptionEpoch(host) });
-      if (geometry?.signature === candidateSignature) { refusal = geometry.refusal; return geometry.next.safe; }
       const [localBefore, localNext] = nodeMoveLocalSpaces(before, space);
       const config = { ...authority, spaces: [localNext] };
       // One bounded immutable baseline may survive an Esc retry. Snapshot
@@ -110,6 +103,15 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
       // geometry AND proof inputs, including in-place settings mutations.
       const signature = JSON.stringify({ ...authority, spaces: [localBefore] });
       if (baselineGeometry?.signature !== signature) retire();
+      // Sign exactly the conservative local proof inputs, after its existing
+      // closure pass. Serializing three complete floors on every cache MISS
+      // penalizes ordinary held frames even when remote geometry is unchanged.
+      // A new/moved foreign body enters this closure before any reuse decision.
+      const candidateSignature = JSON.stringify(localNext);
+      if (geometry?.signature === candidateSignature) {
+        refusal = geometry.refusal; geometry.source = before; geometry.candidate = space;
+        return geometry.next.safe;
+      }
       let baseline = baselineGeometry;
       if (!baseline) {
         const booleans = new WallBooleanBaseline();

@@ -689,7 +689,7 @@
     "lastValid": true,
     "writes": 1
   },
-  "nativeAfter": {
+  "nativeAttempt1": {
     "error": null,
     "releaseToAckMs": 4078.214122999999,
     "phase": "release",
@@ -701,6 +701,40 @@
       {
         "phase": "release",
         "ms": 10.200000002980232
+      }
+    ],
+    "toasts": [],
+    "lastValid": true,
+    "writes": 1
+  },
+  "nativeAfter": {
+    "error": null,
+    "releaseToAckMs": 3953.52657,
+    "phase": "release",
+    "checks": [
+      {
+        "phase": "held",
+        "ms": 24.599999994039536
+      },
+      {
+        "phase": "held",
+        "ms": 15.199999988079071
+      },
+      {
+        "phase": "held",
+        "ms": 19.899999991059303
+      },
+      {
+        "phase": "held",
+        "ms": 13.399999991059303
+      },
+      {
+        "phase": "held",
+        "ms": 16.100000008940697
+      },
+      {
+        "phase": "release",
+        "ms": 9.099999994039536
       }
     ],
     "toasts": [],

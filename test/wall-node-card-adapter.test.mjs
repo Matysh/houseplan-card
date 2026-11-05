@@ -163,6 +163,26 @@ test('#1306 cached negative proof retains its specific refusal; no previous succ
   assert.equal(s.proofs.length, 1);
 });
 
+test('#1306 held misses do not serialize untouched remote geometry', t => {
+  const s = setup(t), space = s.host._serverCfg.spaces[0];
+  const remote = space.wall_segments.map(w => ({ ...w, id: 'remote-' + w.id,
+    a: [w.a[0] + 10, w.a[1]], b: [w.b[0] + 10, w.b[1]] }));
+  space.rooms.push({ id: 'remote-room', poly: space.rooms[0].poly.map(p => [p[0] + 10, p[1]]), wall_ids: remote.map(w => w.id) });
+  space.wall_segments.push(...remote);
+  const before = s.source(), next = s.candidate(before), encoded = [], stringify = JSON.stringify;
+  t.mock.method(JSON, 'stringify', (...args) => { const value = stringify(...args); encoded.push(value); return value; });
+  assert.equal(s.editor.port.validate(next, before, false), true);
+  assert.ok(encoded.length);
+  assert.equal(encoded.some(value => value.includes('remote-room')), false);
+});
+
+test('#1306 an in-place invalid local graph cannot borrow the previous success', t => {
+  const s = setup(t), { before, next } = s.validate();
+  next.plan_graph.nodes[0].p = ['q', '0', '0', '0', '1'];
+  assert.equal(s.editor.port.validate(next, before, true), false);
+  assert.equal(s.editor.port.scene(next, before), null);
+});
+
 for (const [key, value] of [['_mode', 'view'], ['_tool', 'wall'], ['_canEdit', false], ['_kiosk', true],
   ['isConnected', false], ['_haWallNodeMoveApi', 0], ['_space', 'other']]) {
   test(`idle cancellation releases retained baseline after ${key} context exit`, t => {

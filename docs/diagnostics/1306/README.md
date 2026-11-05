@@ -22,10 +22,23 @@ baseline намеренно cold в обоих вариантах, чтобы н
 
 CPU-профиль исключает HA executor/очередь, Store, сеть и UI. Отдельный native
 ordinary pointer→production Python wire→ACK probe на 5000 рёбрах: до 10593 мс,
-после 4078 мс, одна запись без merge. Это по одному диагностическому замеру,
+после исправления r1 — 3954 мс, одна запись без merge. Это по одному диагностическому замеру,
 не median и не живой HA владельца. Current native merge smoke также проверяет
 реальный junction callsite: один полный guard на одинаковый ordinary candidate
 через held/release, ни одного physical guard на 100 held merge кадров.
+
+Первый вариант клиентской подписи был возвращён r1: сериализация трёх полных
+пространств на каждом miss увеличила held port.validate с исходных 23,1 до
+34,8 мс, release остался 10,2 мс. Этот результат сохранён как `nativeAttempt1`,
+не скрыт и не объявляется результатом итоговой реализации. Теперь подпись
+охватывает локальные входы существующей conservative closure; новый foreign
+body входит в неё перед reuse. Пять последовательных actual held-вызовов на
+5000 edges: 24,6 / 15,2 / 19,9 / 13,4 / 16,1 мс (median 16,1), release 9,1 мс.
+Исходный client baseline был единичным замером, поэтому это не статистическое
+заявление о сравнении двух распределений. Регрессионный тест сериализации
+невидимого remote-компонента проходит; временное возвращение full-floor
+JSON на miss действительно даёт FAIL. Проверка in-place мутаций и refusal
+сохраняется, дополнительные полные source/candidate snapshots не создаются.
 
 Настоящие authenticated HA тесты наблюдают весь WS→Store путь: exact/cold/stale
 schema stamp, отсутствие repeated graph passes, отсутствие hidden-space работы
