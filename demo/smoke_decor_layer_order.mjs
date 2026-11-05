@@ -98,8 +98,11 @@ const fixture = await page.evaluate(async () => {
       allDecorKindsRender: ['line', 'rect', 'ellipse', 'text', 'furniture', 'image']
         .every((kind) => kinds.has(kind)),
       oneDecorLayer: root().querySelectorAll('.decorlayer').length === 1,
-      dataFloorBeforeDecor: follows(room, decor) && follows(dataTunnel, decor),
-      dataTunnelExists: !!dataTunnel,
+      dataFloorBeforeDecor: follows(room, decor),
+      unifiedFloorCoversOpening: room instanceof SVGGeometryElement
+        && room.isPointInFill(new DOMPoint(500, 150))
+        && room.isPointInFill(new DOMPoint(500, 500)),
+      noRetiredDataTunnel: !dataTunnel,
     },
     probes: { room: toStage(500, 500), tunnel: toStage(500, 150) },
     stored: JSON.stringify(sp.decor),
