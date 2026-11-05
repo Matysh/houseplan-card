@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_saved_bent_carrier_exact_server_frontend_and_history():
     graph = json.loads((ROOT / "test/fixtures/1303-bent-carrier.json").read_text())
-    space = project_graph_space({"id": "floor", "title": "Floor", "cell_cm": 1,
+    space = project_graph_space({"id": "floor", "title": "Floor", "view_box": [0, 0, 1, 1], "cell_cm": 1,
                                  "rooms": [], "openings": []}, graph)["space"]
     before = commit({"model_version": 11, "spaces": [space], "markers": [], "settings": {}})
     space = before["spaces"][0]
@@ -58,7 +58,7 @@ def test_new_x_bend_retires_far_support_but_keeps_its_real_vertical_carrier():
                   "parameters": [["2", "3"], ["1", "2"]]}]}
     for key, identity in [("nodes", "id"), ("edges", "id"), ("dependencies", "node")]:
         graph[key].sort(key=lambda item: item[identity])
-    space = project_graph_space({"id": "floor", "title": "Floor", "cell_cm": 1, "rooms": [], "openings": []}, graph)["space"]
+    space = project_graph_space({"id": "floor", "title": "Floor", "view_box": [0, 0, 1, 1], "cell_cm": 1, "rooms": [], "openings": []}, graph)["space"]
     before = commit({"model_version": 11, "spaces": [space], "markers": [], "settings": {}})
     intent = {"node_id": "a", "point": [2, 0], "target": [2, .25], "target_p": ["l", "480", "60"],
               "axis": "partition:ae", "split_ids": {}}

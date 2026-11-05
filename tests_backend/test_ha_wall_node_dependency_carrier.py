@@ -16,7 +16,7 @@ def _custom_integrations(enable_custom_integrations):
 
 async def test_bent_carrier_node_move_keeps_far_nodes_through_store_undo_redo_reload(hass, hass_ws_client):
     graph = json.loads((Path(__file__).resolve().parents[1] / "test/fixtures/1303-bent-carrier.json").read_text())
-    space = project_graph_space({"id": "floor", "title": "Floor", "cell_cm": 1,
+    space = project_graph_space({"id": "floor", "title": "Floor", "view_box": [0, 0, 1, 1], "cell_cm": 1,
                                  "rooms": [], "openings": []}, graph)["space"]
     entry, client, before = await setup(hass, hass_ws_client,
         source={"model_version": 11, "spaces": [space], "markers": [], "settings": {}})

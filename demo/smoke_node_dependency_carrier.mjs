@@ -10,7 +10,7 @@ import {projectGraphSpace} from '../test-build/plan-graph.js';
 import {commitWallSegmentModel} from '../test-build/wall-segment-model.js';
 
 const graph=JSON.parse(readFileSync(new URL('../test/fixtures/1303-bent-carrier.json',import.meta.url)));
-const space=projectGraphSpace({id:'floor',title:'Nodes',cell_cm:1,rooms:[],openings:[]},graph).space;
+const space=projectGraphSpace({id:'floor',title:'Nodes',view_box:[0,0,1,1],cell_cm:1,rooms:[],openings:[]},graph).space;
 const initial=commitWallSegmentModel({model_version:11,spaces:[space],markers:[],
   settings:{filter_seeded:true,known_devices:[],new_device_ids:[]}}).config;
 let server=structuredClone(initial),revision=1;

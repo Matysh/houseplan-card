@@ -6,7 +6,7 @@ import {structuralWallNodes,prepareNodeMove,applyNodeMove} from '../test-build/w
 import {decodePoint,pointToNumbers} from '../test-build/plan-exact.js';
 
 const fixture=JSON.parse(readFileSync(new URL('./fixtures/1303-bent-carrier.json',import.meta.url)));
-const spaceFor=graph=>projectGraphSpace({id:'floor',title:'Floor',cell_cm:1,rooms:[],openings:[]},graph).space;
+const spaceFor=graph=>projectGraphSpace({id:'floor',title:'Floor',view_box:[0,0,1,1],cell_cm:1,rooms:[],openings:[]},graph).space;
 const move=(space,id,target,axis=null)=>{
   const nodes=structuralWallNodes(space),node=nodes.find(n=>n.nodeId===id);
   return applyNodeMove(prepareNodeMove(space,node,nodes),target,axis);
