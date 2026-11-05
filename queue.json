@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3982,
+  "revision": 3983,
   "nextTicket": 218,
   "nextFence": 218,
   "tasks": {
@@ -3508,6 +3508,10 @@
       "digest": "5a823143ef2d5fbef50b635c0f5a164cc3a456a03e05151357b9ad09ac6f7be8",
       "issue": 1301
     },
+    "github:41978197482:1:completions:message:620db94570ad6d32aa12c90dbfd7e2c9cb0f380a6a5e730025744e24e2174020": {
+      "digest": "273d5627f9f10f901bd1d7d38245f146bae693502408849fffb35470bd6480e1",
+      "issue": 1301
+    },
     "finish:875a00ee-2190-43df-9805-850184b1a584": {
       "digest": "ad3fe83c6f044dccc02f96910cbcd3a9effd47aa6f0721225d12f5d800f035e4",
       "issue": 1301,
@@ -3563,7 +3567,8 @@
         "reviewChanges": "Исходный CI сохранил первое наведение в polygon комнаты, hoverOwner=null. Координата бралась до завершения RAF-движения камеры; Lit settled не является paint oracle. На актуальном dev наблюдалось изменение первого rect после settled (x=537.66796875 →537.484375), затем стабильный native hit. Новый общий helper только читает fonts/DOMRect/SVG CTM/native hit и ждёт три одинаковых кадра (предел5сек), до единственного настоящего mouse.move. Ожидаемые линии/tooltip/hoverOwner не входят в ожидание. Сохраняются первые samples, направления, touch/pen и старый negative-placement control. Stroked SVG с нулевой fill-высотой допускается по реальной длине; перекрывающий LED hit floor также допускается, поскольку nearest-owner — предмет продуктового ассерта, а не готовности. Tooltip раскладка измеряется после существующего bounded finite-paint helper; допуски не расширены и анимации не подавляются. В evidence сохраняется первая и последние геометрии/hit, исходный FAILED не переписывается. Runtime не меняется. Адресный tooltip diagnostic PASS; в LED diagnostic выявлены и устранены два чрезмерных предусловия нового helper (zero fill-box и перекрывающиеся LED), финальный S6 проверяет полный файл. Browser selection требует product S6 profile (build/critical/startup+2 smoke), это не новый гейт. Companion task-impact/1301.md: дополнительный реальный HA E2E не требуется. Финальная проверка и ревью через finish.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
