@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3581,
+  "revision": 3582,
   "nextTicket": 206,
   "nextFence": 205,
   "tasks": {
@@ -3145,7 +3145,7 @@
       "ownerDecision": null,
       "ticket": 204,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793845033042,
       "reviewEntry": 1,
       "patchId": "b57759e6b19a4b03d21507301c540b269380dca6",
@@ -3156,7 +3156,16 @@
         "docs/release-ledger/v1.83.0/1292.json",
         "src/graph-edit-intent.ts",
         "test/graph-edit-intent.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T022434136-c15e8205",
+        "name": "Тесты для задачи #1292 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T022434136-c15e8205/report.json",
+        "materialSha": "968966c43ee06d82cc99ca7fb40763c145fb4084",
+        "status": "passed",
+        "finishedAt": "2026-11-05T02:25:24.229Z",
+        "failures": []
+      }
     },
     "1293": {
       "issue": 1293,
@@ -3322,9 +3331,9 @@
     "fence": 204,
     "materialSha": "968966c43ee06d82cc99ca7fb40763c145fb4084",
     "expectedBase": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793845448734,
-    "expiresAt": 1793845815894,
+    "expiresAt": 1793849125376,
     "patchId": "b57759e6b19a4b03d21507301c540b269380dca6"
   },
   "events": {
@@ -3652,6 +3661,34 @@
         "materialSha": "75c6c7fdfcfcf7171e835fd9b51181bd91cfe3e3",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:db70e95d-6eef-407f-b88b-2af87fdca946:finish:2:s6-complete": {
+      "digest": "c4719f9bca7533589b92164ed073aae758acf4349a34ce792b9def4fb54b5572",
+      "issue": 1292,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1292,
+        "at": 1793845525376,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "968966c43ee06d82cc99ca7fb40763c145fb4084",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T022434136-c15e8205",
+          "name": "Тесты для задачи #1292 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T022434136-c15e8205/report.json",
+          "materialSha": "968966c43ee06d82cc99ca7fb40763c145fb4084",
+          "status": "passed",
+          "finishedAt": "2026-11-05T02:25:24.229Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Исправление `75c6c7fdfcfcf7171e835fd9b51181bd91cfe3e3` сохраняет каждую неизменённую компоненту exact-point по прежнему допуску идентичности числовой проекции (0.5e-9 + machine allowance). Только изменённая компонента проходит `authoredPoint`. Сделано и для полного atom-кольца, и для corner-only target. Прежнее восстановление обеих компонент превращало, например, унаследованный y=0.5000000001 в y=0.5 при изменении x, тогда как неподвижный сосед сохранял q. Новый код не меняет normalizer, допуски графа или физические/junction guards.\n\nКороткая регрессия на независимой incident fixture проверяет обе оси и оба представления контура. Ожидаемые wire буквальны: изменённая .45 рядом с сохранённым q; каждый старый vertex неподвижных комнат, opaque props, вход и валидность графа защищены. Предварительно `graph-edit-intent.test.mjs` 36/36 PASS, включая четыре новые комбинации. Общий финальный S6 выполняется отдельно через finish.\n\nНа частном installable candidate исходника 75c6c7f (version beta.5, ZIP SHA256 `217a3906d84e6bf5ac69696a052c78c2b8c22dbe1fd5dcb8ee33f32a5843c799`) прошёл неизменённый полный HA #1264 first-floor: Resize -3, Keep room-f, Resize +1, Keep room-b, точные Undo/Redo/reload. Business 1/1, setup 3/3, ноль skip/retry, HA2026.10.4, собственная лаборатория `hp-e2e-journeys-8LxcoO`, контейнер удалён. Это исправленный частный пакет, не повторная публикация/перезапись тега beta.5. Исходный FAIL опубликованного пакета сохранён.\n\nНеизменённый `smoke_resize_pointer_real_plan.mjs` на той же исправленной сборке тоже PASS: оба отказа устранились одним исправлением producer. Вторая отдельная правка fake-backend не понадобилась. Локальные файлы доказательств: root `output/issue-1292/fixed/ha-diagnostic-result.json` и clone `output/issue-1292/smoke-fixed.log`.\n\nАльтернатива округлить неподвижные комнаты или отключить `unsplit-crossing` отвергнута: она меняла бы чужую геометрию или принимала недопустимый граф. Риски для ревью: per-ordinate projection-identity tolerance, соответствие corners/atoms и сохранение не-решёточного наследия при новой lattice-координате. Изменение не расширяет допустимые пересечения и не ремонтирует импорт целиком.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
