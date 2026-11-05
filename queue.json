@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4655,
-  "nextTicket": 239,
+  "revision": 4656,
+  "nextTicket": 240,
   "nextFence": 239,
   "tasks": {
     "1126": {
@@ -3628,6 +3628,20 @@
         "status": "pending"
       }
     },
+    "1317": {
+      "issue": 1317,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/issue-1317-help-paint",
+      "materialSha": "f5d2b04237206f4cb93d3484e1046feaea90775f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 239,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793887019089,
+      "reviewEntry": 1
+    },
     "1320": {
       "issue": 1320,
       "branch": "codex/issue-1320-node-echo",
@@ -3796,9 +3810,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1317
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:6f8f13ad-ca30-496a-b86b-d86908562b33": {
+      "digest": "8413c802b5b4e36b273d2a7f1ce431446da98680189b3eeef50ae6ab4f0dda97",
+      "issue": 1317,
+      "message": {
+        "kind": "queued",
+        "issue": 1317,
+        "at": 1793887019089,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "f5d2b04237206f4cb93d3484e1046feaea90775f"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
     "status": "delivered",
