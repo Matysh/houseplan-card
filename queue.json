@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4113,
+  "revision": 4114,
   "nextTicket": 222,
   "nextFence": 222,
   "tasks": {
@@ -3364,7 +3364,16 @@
         "src/i18n/en.json",
         "src/i18n/fr.json",
         "src/i18n/ru.json"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T090238628-e73994c6",
+        "name": "Тесты для задачи #1304 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T090238628-e73994c6/report.json",
+        "materialSha": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
+        "status": "passed",
+        "finishedAt": "2026-11-05T09:03:15.038Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -3477,9 +3486,9 @@
     "fence": 221,
     "materialSha": "5588345f143ab6ef1a5a6b7dc0a2ec69288b5743",
     "expectedBase": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793869348687,
-    "expiresAt": 1793869654501,
+    "expiresAt": 1793872996287,
     "patchId": "af1e54b1feaefe96c6cfd59e1d4d2c5cda82bac3"
   },
   "events": {
@@ -3493,6 +3502,10 @@
     },
     "github:41999106593:1:completions:message:4afd5e177aaed7c01196844e81216a41e47dfd90be6f52fb89da63bb13054cfc": {
       "digest": "3aea540af193298d593f91da644f9e9585866b0fa686c1d7543cc16a79ba6e9f",
+      "issue": 1304
+    },
+    "finish:62086ecd-36d6-4745-850b-d6e7ddde7c6a:finish:3:s6-complete": {
+      "digest": "e684f9b130d9e8ed8a6f3430d47291f7c0b39c8281258f0cc31eee7fd7b52572",
       "issue": 1304
     },
     "finish:62086ecd-36d6-4745-850b-d6e7ddde7c6a": {
