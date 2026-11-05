@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4849,
+  "revision": 4850,
   "nextTicket": 245,
   "nextFence": 245,
   "tasks": {
@@ -3611,7 +3611,7 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/issue-1314-floor-golden",
-      "materialSha": "30352d3a38a12989d835329709c390244a8aa7b0",
+      "materialSha": "10f2ade6a25b38802234a1355687237e915f4f13",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 244,
@@ -3619,7 +3619,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793888526834,
       "reviewEntry": 2,
-      "patchId": "e066116d485460bfeb40a799142efc0028f944c8",
+      "patchId": "4fbe16411194a27a9f2f956e03efa5b17ec3c2ed",
       "changedFiles": [
         "demo/golden/baselines/baselines-index.json",
         "demo/golden/baselines/decor-over-glow-base-dark.png",
@@ -3641,10 +3641,7 @@
         "entry": 1,
         "detail": "Открытие сохранённого плана в View: failed",
         "eventId": "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:3:return:return:1314"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793888542153,
-      "automationDetail": "Local branch changed after ready; do not overwrite the remote task"
+      }
     },
     "1316": {
       "issue": 1316,
@@ -3987,11 +3984,12 @@
     "worker": "finish",
     "token": "244:finish:0a08179f-e816-46c6-9ec9-0decd2cf7460:finish:1:admit",
     "fence": 244,
-    "materialSha": "30352d3a38a12989d835329709c390244a8aa7b0",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "10f2ade6a25b38802234a1355687237e915f4f13",
+    "expectedBase": "f873c3c9d152ce8e34579832480cb3fcb2bdc0b5",
+    "phase": "testing",
     "admittedAt": 1793888530942,
-    "expiresAt": 1793888896340
+    "expiresAt": 1793888898911,
+    "patchId": "4fbe16411194a27a9f2f956e03efa5b17ec3c2ed"
   },
   "events": {
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433:finish:2:synchronized": {
@@ -4032,6 +4030,10 @@
     },
     "finish:42e55d8c-0b5b-4d1f-b9d5-ab26e8c7a280": {
       "digest": "1c7ea638b25d5ab8aae7abf7d871811a03a0ced900282ea81189850374faee47",
+      "issue": 1314
+    },
+    "finish:990fc15f-39b8-4c78-aeb7-025a3afed120:finish:1:synchronized": {
+      "digest": "e4ede244020f03101dc0807ea5bbb00474feb0ce8b6d207f54094bde738b47f5",
       "issue": 1314
     },
     "finish:c57b7f3f-f8e8-4fe8-9931-ff14d04d6433": {
