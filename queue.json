@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4070,
+  "revision": 4071,
   "nextTicket": 221,
   "nextFence": 221,
   "tasks": {
@@ -3584,6 +3584,10 @@
       "digest": "6c3f840d62fd1a2ec62f12ab71b89c5955b3a88444f937135caaec92547c84b3",
       "issue": 1303
     },
+    "github:41985757470:1:completions:message:66b26a6342f1b1c9d05d7b47e834a8f3680e8dc07b33b63f1d0e0e9ba21d117e": {
+      "digest": "dd2e62c50bdd6c8e0672d6bc2d2e653587da67e0d24244ec17241453558ce810",
+      "issue": 1303
+    },
     "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9": {
       "digest": "2a1150c412e08eca2ce6a745e3a08f3caccb293d8e7bd9cfbf55d470e1d100f6",
       "issue": 1303,
@@ -3630,7 +3634,8 @@
           "entry": 1,
           "detail": "Backend изменённой области: failed; Браузер: node dependency carrier: failed",
           "eventId": "finish:28aa8f55-ef5c-4ec6-93e9-d5a899f95aa9:finish:3:return:return:1303"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:d1fcb175-70fa-4f4e-ba9e-21a0ba48990b": {
