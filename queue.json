@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3759,
-  "nextTicket": 211,
+  "revision": 3760,
+  "nextTicket": 212,
   "nextFence": 211,
   "tasks": {
     "1126": {
@@ -3130,17 +3130,16 @@
     "1295": {
       "issue": 1295,
       "track": "show",
-      "layer": "infra",
+      "layer": "product",
       "branch": "codex/1295-exclusive-perf",
-      "materialSha": "6f8241aa3beaad5d3e6821e152ab2adda74f0b62",
+      "materialSha": "552071c8ad1c085ea1d90f15d09e27b87e18c9dd",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 210,
-      "queued": false,
+      "ticket": 211,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793846866979,
-      "reviewEntry": 1,
-      "reason": "addressed-ci-findings",
+      "readyAt": 1793847547367,
+      "reviewEntry": 2,
       "notice": {
         "key": "1:addressed-ci-findings",
         "reason": "addressed-ci-findings",
@@ -3287,7 +3286,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1295
+  ],
   "active": null,
   "events": {
     "github:41958169611:1:completions:message:ed28e223d2325cdaf25e6cc173b6300b36801cfc074d889c8f94918f6d486bea": {
@@ -3348,6 +3349,19 @@
           "entry": 1,
           "eventId": "1295-address-ci7763-findings-20261105:return:1295"
         }
+      }
+    },
+    "finish:177f5104-4964-4ff8-adf9-d33f48d9f158": {
+      "digest": "a2e6828fd28ed7191765dcb241fbe926448af2ab3111627b1b4b41ec8d2d778a",
+      "issue": 1295,
+      "message": {
+        "kind": "queued",
+        "issue": 1295,
+        "at": 1793847547367,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "552071c8ad1c085ea1d90f15d09e27b87e18c9dd"
       }
     }
   },
