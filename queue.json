@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3683,
+  "revision": 3684,
   "nextTicket": 210,
   "nextFence": 209,
   "tasks": {
@@ -511,37 +511,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "56fa550edcad46c6f0f9775deaf079ecd6ceaf4b"
-      }
-    },
-    "1209": {
-      "issue": 1209,
-      "branch": "codex/issue-1209-release-ledger",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "mergedSha": "c44ac63846812de2ef18a17489df7fac1b5dad7f",
-      "mergedAt": 1793625104112,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1210": {
@@ -2021,7 +1990,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "8a990deba549462c9b9264a642be80167f3c859c"
       }
     },
     "1261": {
@@ -3560,6 +3530,18 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "dev-build:41956985762:1:1258": {
+      "digest": "d9545f817304a81ba9c56325422e6f3ad37a7ec9b71cd69e9183ec5d954778b5",
+      "issue": 1258,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1258,
+        "at": 1793846732965,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "8a990deba549462c9b9264a642be80167f3c859c"
       }
     }
   },
