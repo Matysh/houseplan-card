@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4479,
+  "revision": 4480,
   "nextTicket": 234,
   "nextFence": 234,
   "tasks": {
@@ -3474,7 +3474,14 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793882933691,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "917d0bc6fa1a93675a9992758eb5683a1705a26d",
+      "changedFiles": [
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/static-wall-openings-house-phone-light.png",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md"
+      ]
     },
     "1311": {
       "issue": 1311,
@@ -3650,12 +3657,17 @@
     "token": "233:finish:681eabc0-7f66-432e-833d-44fae026d2e8:finish:1:admit",
     "fence": 233,
     "materialSha": "dc2b12dd9231abb9b6aa037d6ea69314a804a756",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5dc83437f0ddc0b29b923aea7e077f90b8c283e8",
+    "phase": "testing",
     "admittedAt": 1793882937484,
-    "expiresAt": 1793883237484
+    "expiresAt": 1793883243311,
+    "patchId": "917d0bc6fa1a93675a9992758eb5683a1705a26d"
   },
   "events": {
+    "finish:681eabc0-7f66-432e-833d-44fae026d2e8:finish:2:synchronized": {
+      "digest": "e29434f3a27bcf2b2aef260bcf29e5aa91a6f0706e68236c4aaab9cef9628acb",
+      "issue": 1309
+    },
     "finish:681eabc0-7f66-432e-833d-44fae026d2e8": {
       "digest": "4753809da6bfd2605d8660e5037e77c5e6647f171f2ffc86bb4308239f01b738",
       "issue": 1309,
