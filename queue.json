@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3635,
+  "revision": 3636,
   "nextTicket": 208,
   "nextFence": 208,
   "tasks": {
@@ -2000,7 +2000,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793846294482,
       "reviewEntry": 5,
-      "patchId": "e3e0bf1208548fb77601202aaf2827b2db39cfa5",
+      "patchId": "bc1841afc98600c09c3bdcdd143a577a0e351eb4",
       "changedFiles": [
         "custom_components/houseplan/junction_limits.py",
         "custom_components/houseplan/wall_removal_proof.py",
@@ -3377,10 +3377,11 @@
     "token": "207:finish:3e50fa83-8de4-4e01-bf6b-8c93cd42f7f7:finish:1:admit",
     "fence": 207,
     "materialSha": "8a990deba549462c9b9264a642be80167f3c859c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "cef7c01a5610be2675165d2ca310cd981e7645c9",
+    "phase": "testing",
     "admittedAt": 1793846298920,
-    "expiresAt": 1793846598920
+    "expiresAt": 1793846605151,
+    "patchId": "bc1841afc98600c09c3bdcdd143a577a0e351eb4"
   },
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
@@ -3569,6 +3570,10 @@
     },
     "finish:d1d51b85-9bdf-4920-83e5-56f66fa2a374:finish:3:return": {
       "digest": "6e72e9e099f46ae06d291974e91e3dfe980ff44fa0230a10fafdfdaf78e59ba8",
+      "issue": 1258
+    },
+    "finish:3e50fa83-8de4-4e01-bf6b-8c93cd42f7f7:finish:2:synchronized": {
+      "digest": "4177aced7c510fcac8c635f76604fef9fd82f177cfe0abb5e9ea488554bd8741",
       "issue": 1258
     },
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5": {
