@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 376,
+  "revision": 377,
   "active": "v1.84.0-beta.7-20261105",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -16903,7 +16903,17 @@
         1321
       ],
       "reviewRequired": true,
-      "review": null,
+      "review": {
+        "sha": "0f60441385c86ca4c107a9d1482ff5510dc6a2c6",
+        "report": {
+          "source": "https://github.com/Matysh/houseplan-card/actions/runs/42039410804",
+          "issue": 1320,
+          "verdict": "accepted",
+          "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
+          "base": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
+          "applicability": "Exact reviewed product fix merged unchanged; diff of all src/ and custom_components/houseplan/ against reviewed SHA contains only beta.6 -> beta.7 version declarations. Later changes are test harness, accepted golden baseline and release notes."
+        }
+      },
       "metrics": null,
       "metricsAcceptedSha": null,
       "portToDev": [
@@ -17692,7 +17702,8 @@
     "beta7-20261105-suite-repairs": "d017cfee5d6ed5406ab466baf902f464a3bbe023750bb0776ab622d0c199720f",
     "ship-review:prepare:d79ceffc-f343-4753-9cac-4c6c23a93689": "1b8a3765911d22594d6b59a93508c617ffa48b31e5d17fd0f461bb47d4b92055",
     "ship-review:result:a9ffe242-4d17-48f9-a0d6-f6041d145a5b": "46c517e3e2e1034fd37e450be03386ae208013cc6c1ea6e7a7dcd3c6d4766bd9",
-    "beta7-20261105-final-repairs": "ca912eefa77ca6cd2e8b03d8291a6e9e5c9c3378138d895180fdd5154060e278"
+    "beta7-20261105-final-repairs": "ca912eefa77ca6cd2e8b03d8291a6e9e5c9c3378138d895180fdd5154060e278",
+    "beta7-20261105-final-product-review": "5ec7aa7046bd1eff6ba168ab9dd906934f6f02002253888688359621f176d4ec"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
