@@ -1,48 +1,9 @@
 {
   "schema": 1,
-  "revision": 5115,
+  "revision": 5116,
   "nextTicket": 250,
   "nextFence": 250,
   "tasks": {
-    "1174": {
-      "issue": 1174,
-      "branch": "codex/1174",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-      "mergedSha": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c",
-      "mergedAt": 1793642411247,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": true,
-      "reviewRequest": "review:1174:3:31d57973e192013afed2658bf71a373b670cc118:4655da54e3b149ee358fc4dd1e6e07aee0097fd5",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": true,
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "milestoneTitle": "1.84.0",
-        "commentCurrent": true,
-        "commentDigest": "a297fdedf383f8af3187",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 11
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "aecc10148dfdb40f8c6b7c0c6cc2489af254ff4c"
-      }
-    },
     "1193": {
       "issue": 1193,
       "branch": "codex/golden-icons-preparation",
@@ -3827,21 +3788,22 @@
       "removedToRelease": false,
       "completion": {
         "labels": true,
-        "milestone": false,
+        "milestone": true,
         "comment": true,
-        "status": "pending",
-        "errors": {
-          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)"
-        },
+        "status": "complete",
+        "errors": {},
         "labelsFrom": "S6-in-progress",
         "removedToRelease": false,
-        "classificationAt": "67eb0501db6141ca2d4c936a5c08a9d61bb369c8",
         "commentCurrent": true,
-        "commentDigest": "461782c36f016e0e633c",
+        "commentDigest": "d1c65df9ac3a3cbebb03",
         "commentFacts": {
           "labels": true,
-          "milestone": false,
+          "milestone": true,
           "target": null
+        },
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 11
         }
       },
       "devBuild": {
