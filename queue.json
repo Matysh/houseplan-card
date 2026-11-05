@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 4168,
-  "nextTicket": 223,
+  "revision": 4169,
+  "nextTicket": 224,
   "nextFence": 223,
   "tasks": {
     "1126": {
@@ -1678,14 +1678,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1250-room-floor-openings",
-      "materialSha": "fac27a63eadb90e0304ba524b43586d24349a891",
+      "materialSha": "69c16c88d75b6e4d56498e2e6a2c59f3c77265e5",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 222,
-      "queued": false,
+      "ticket": 223,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793871154013,
-      "reviewEntry": 1,
+      "readyAt": 1793871550887,
+      "reviewEntry": 2,
       "patchId": "c773102f2cd84fbd21b2fbf163bfc40d5d020ed1",
       "changedFiles": [
         "demo/smoke_opening_mode_fill.mjs",
@@ -1704,10 +1704,6 @@
         "src/wall-thickness.ts",
         "test/room-floor-paint.test.mjs"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1793871172498,
-      "automationDetail": "ENOENT: no such file or directory, access '/home/matysh/hp-1078-sun-transparency-20261025/src/render/opening-tunnels.ts'",
-      "reason": "correct deleted-path planning failure before S6",
       "notice": {
         "key": "1:correct deleted-path planning failure before S6",
         "reason": "correct deleted-path planning failure before S6",
@@ -3548,7 +3544,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1250
+  ],
   "active": null,
   "events": {
     "github:42001043930:1:label:spec-request": {
@@ -3692,6 +3690,19 @@
           "eventId": "1250-planner-repair-1793871525582:return:1250"
         },
         "delivered": true
+      }
+    },
+    "finish:91cbbf32-7509-4a60-add1-9aeef38dbc89": {
+      "digest": "b270b657dc63a571435a2875b240668bb50b5614b4469b23dfb8f21b50f4dc3c",
+      "issue": 1250,
+      "message": {
+        "kind": "queued",
+        "issue": 1250,
+        "at": 1793871550887,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "69c16c88d75b6e4d56498e2e6a2c59f3c77265e5"
       }
     }
   },
