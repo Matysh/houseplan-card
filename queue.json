@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4480,
+  "revision": 4481,
   "nextTicket": 234,
   "nextFence": 234,
   "tasks": {
@@ -3481,7 +3481,16 @@
         "demo/golden/baselines/static-wall-openings-house-phone-light.png",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T124907248-8748c46d",
+        "name": "Тесты для задачи #1309 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261105T124907248-8748c46d/report.json",
+        "materialSha": "dc2b12dd9231abb9b6aa037d6ea69314a804a756",
+        "status": "passed",
+        "finishedAt": "2026-11-05T12:49:46.187Z",
+        "failures": []
+      }
     },
     "1311": {
       "issue": 1311,
@@ -3658,14 +3667,18 @@
     "fence": 233,
     "materialSha": "dc2b12dd9231abb9b6aa037d6ea69314a804a756",
     "expectedBase": "5dc83437f0ddc0b29b923aea7e077f90b8c283e8",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793882937484,
-    "expiresAt": 1793883243311,
+    "expiresAt": 1793886587662,
     "patchId": "917d0bc6fa1a93675a9992758eb5683a1705a26d"
   },
   "events": {
     "finish:681eabc0-7f66-432e-833d-44fae026d2e8:finish:2:synchronized": {
       "digest": "e29434f3a27bcf2b2aef260bcf29e5aa91a6f0706e68236c4aaab9cef9628acb",
+      "issue": 1309
+    },
+    "finish:681eabc0-7f66-432e-833d-44fae026d2e8:finish:3:s6-complete": {
+      "digest": "fcbb6fdb18cbe9a5c7f17d334a92c850cc7a511ceb132fcca4f6d4cd435c74b8",
       "issue": 1309
     },
     "finish:681eabc0-7f66-432e-833d-44fae026d2e8": {
