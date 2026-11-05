@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4586,
+  "revision": 4587,
   "nextTicket": 238,
   "nextFence": 238,
   "tasks": {
@@ -3619,7 +3619,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793886430120,
       "reviewEntry": 2,
-      "patchId": "d6e5190962468737592f491400619425714b9a0c",
+      "patchId": "97d066c6b5667c369115f18dedcd0816209abe68",
       "changedFiles": [
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
@@ -3635,10 +3635,7 @@
         "entry": 1,
         "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно",
         "eventId": "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return:return:1320"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793886440365,
-      "automationDetail": "Commit tracked task changes before finish"
+      }
     }
   },
   "ownerDecisions": {},
@@ -3778,10 +3775,11 @@
     "token": "237:finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:1:admit",
     "fence": 237,
     "materialSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
+    "phase": "testing",
     "admittedAt": 1793886434673,
-    "expiresAt": 1793886853367
+    "expiresAt": 1793886872715,
+    "patchId": "97d066c6b5667c369115f18dedcd0816209abe68"
   },
   "events": {
     "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:2:synchronized": {
@@ -3802,6 +3800,10 @@
     },
     "finish:41cb9a13-2ed5-485c-9e3f-dddd2b43fb41": {
       "digest": "aa59f718a74b9cf10896e21fda88d160493aced54117017e004c164b36205f9f",
+      "issue": 1320
+    },
+    "finish:b7d35d85-c073-4f03-9603-382d897d9e3d:finish:4:synchronized": {
+      "digest": "0d659070bfa2158204864d110c7e3e0eeac402adcec95de438e80f0afb374552",
       "issue": 1320
     },
     "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6": {
