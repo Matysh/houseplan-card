@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5045,
+  "revision": 5046,
   "nextTicket": 249,
   "nextFence": 249,
   "tasks": {
@@ -3836,7 +3836,16 @@
         "test/node-history-runtime.test.mjs",
         "test/wall-node-card-adapter.test.mjs",
         "test/wall-node-paint.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261105T195748920-ecce785d",
+        "name": "Тесты для задачи #1324 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-geometry-ci-20261102/.git/process-next/runs/20261105T195748920-ecce785d/report.json",
+        "materialSha": "67eb0501db6141ca2d4c936a5c08a9d61bb369c8",
+        "status": "passed",
+        "finishedAt": "2026-11-05T19:58:46.420Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -3977,9 +3986,9 @@
     "fence": 248,
     "materialSha": "67eb0501db6141ca2d4c936a5c08a9d61bb369c8",
     "expectedBase": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793908659166,
-    "expiresAt": 1793909018320,
+    "expiresAt": 1793912327655,
     "patchId": "ca0099fe35f486ddad3864567ce938283ff4f66b"
   },
   "events": {
@@ -3989,6 +3998,10 @@
     },
     "finish:9ebdffd9-cbbe-4789-af78-f6108b97fb64": {
       "digest": "9112b5614909cb7596fa5229c768bf160c4755750d458e43312461e526ee6b8b",
+      "issue": 1324
+    },
+    "finish:a5b35f79-6b57-43f0-a294-69b6ec97bace:finish:3:s6-complete": {
+      "digest": "6dd973b632a6558d4a71eb04f1220d8352f08952bb1f53b6e98f8f290a1534b2",
       "issue": 1324
     },
     "finish:a5b35f79-6b57-43f0-a294-69b6ec97bace": {
