@@ -4,6 +4,7 @@ import { harness } from './helpers/geometry-commit-harness.mjs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { removesOnlyLimitSegments, checkSegmentLengths } from '../test-build/junction-limits.js';
 import { CommandStack } from '../test-build/command-stack.js';
+import { PhysicalWriteHistory } from '../test-build/physical-write-history.js';
 
 function source(current = true) {
   const config = { model_version: 10, spaces: [{ id: 'f', cell_cm: 5, rooms: [], partitions: [
@@ -16,6 +17,8 @@ function source(current = true) {
 for (const current of [false, true]) for (const id of ['long', 'short'])
 test(`#1258 ${current ? 'graph' : 'legacy'} real commit deletes ${id} without touching its neighbour; Undo/Redo is exact`, () => {
   const h = harness(source(current)), proto = Object.getPrototypeOf(h.runtime);
+  h.runtime.decorLine = { reset() {} };
+  h.runtime.physicalWriteHistory = new PhysicalWriteHistory();
   h.host._layout = {}; h.host._geometryHistory = new CommandStack();
   h.host._canCommitSpace = () => true; h.host._loadOk = true;
   h.host._maybeRebuildDevices = () => {}; h.runtime._showGeometrySpace = () => {};
@@ -48,7 +51,8 @@ test('#1258 exact physical subset cannot exempt changed, inserted or rekeyed wal
   assert.equal(removesOnlyLimitSegments(before, [survivor, survivor], 5, 5), false);
   assert.equal(removesOnlyLimitSegments(before, [survivor], 5, 4), false);
   const h = harness(source()), next = structuredClone(h.host._serverCfg);
-  next.spaces[0].partitions[1].b[0] -= 1 / 240;
+  next.spaces[0].partitions = next.spaces[0].partitions.slice(1);
+  next.spaces[0].partitions[0].b[0] -= 1 / 240;
   assert.ok(h.runtime._junctionLimitsIntroduced(next, h.host._serverCfg, 'f').some(v => v.rule === 'length'));
 });
 

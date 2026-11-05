@@ -13,7 +13,8 @@ def _custom_integrations(enable_custom_integrations):
 
 
 def source():
-    return commit_wall_segment_model({"spaces": [{"id": "f", "cell_cm": 5, "rooms": [], "partitions": [
+    return commit_wall_segment_model({"spaces": [{"id": "f", "title": "Floor", "view_box": [0, 0, 1, 1],
+        "plan_url": None, "cell_cm": 5, "rooms": [], "partitions": [
         {"id": "long", "a": [24 / 240, 24 / 240], "b": [44 / 240, 24 / 240], "cm": 20},
         {"id": "short", "a": [44 / 240, 24 / 240], "b": [46 / 240, 24 / 240], "cm": 20},
     ]}], "markers": [], "settings": {}})[0]
