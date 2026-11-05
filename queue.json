@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4307,
+  "revision": 4308,
   "nextTicket": 228,
   "nextFence": 228,
   "tasks": {
@@ -426,37 +426,6 @@
         "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": true,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
-      }
-    },
-    "1214": {
-      "issue": 1214,
-      "branch": "codex/1210-converter-witnesses",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "mergedSha": "b69ae05d795f82f52c4091f4bcabc10cfa3d7d5a",
-      "mergedAt": 1793632535503,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
         "commentCurrent": true,
         "commentDigest": "34c7bc28ce5c545336ab",
         "commentFacts": {
@@ -3416,7 +3385,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "f64fa33c347a8a3fe37789ffc444d74c40daa381"
       }
     }
   },
@@ -3538,7 +3508,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:42013627371:1:1305": {
+      "digest": "c26fe948bcfe592571fc541befe491a74825ec7b8eb78ae34db9a666caebd1bc",
+      "issue": 1305,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1305,
+        "at": 1793875797204,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "f64fa33c347a8a3fe37789ffc444d74c40daa381"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "f64fa33c347a8a3fe37789ffc444d74c40daa381",
     "status": "pending",
