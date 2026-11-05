@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 3633,
-  "nextTicket": 207,
+  "revision": 3634,
+  "nextTicket": 208,
   "nextFence": 207,
   "tasks": {
     "1126": {
@@ -1992,14 +1992,14 @@
       "track": "show",
       "layer": "product",
       "branch": "issue/1258-safe-deletion",
-      "materialSha": "5146b134cb24686ee19ec68bb553bea8303f7ffe",
+      "materialSha": "8a990deba549462c9b9264a642be80167f3c859c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 206,
-      "queued": false,
+      "ticket": 207,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793845962300,
-      "reviewEntry": 4,
+      "readyAt": 1793846294482,
+      "reviewEntry": 5,
       "patchId": "e3e0bf1208548fb77601202aaf2827b2db39cfa5",
       "changedFiles": [
         "custom_components/houseplan/junction_limits.py",
@@ -2040,8 +2040,7 @@
       "reviewCorrection": {
         "requestId": "review:1258:3:bf9bb0b03760302552c6f01f24e632d1f92ed8c5:6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
         "at": 1793845435769
-      },
-      "reason": "checks-failed"
+      }
     },
     "1261": {
       "issue": 1261,
@@ -3371,7 +3370,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1258
+  ],
   "active": null,
   "events": {
     "finish:1dc90d42-216f-417c-abd5-aace4f721fc5:finish:2:synchronized": {
@@ -3856,6 +3857,28 @@
           "entry": 4,
           "detail": "Backend изменённой области: failed",
           "eventId": "finish:d1d51b85-9bdf-4920-83e5-56f66fa2a374:finish:3:return:return:1258"
+        }
+      }
+    },
+    "finish:3e50fa83-8de4-4e01-bf6b-8c93cd42f7f7": {
+      "digest": "53c221b596aafe1a08faba97bfa056e999e795cd6d10d469d6de72070455133f",
+      "issue": 1258,
+      "message": {
+        "kind": "queued",
+        "issue": 1258,
+        "at": 1793846294482,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "8a990deba549462c9b9264a642be80167f3c859c",
+        "evidence": {
+          "id": "20261105T021831901-319ed656",
+          "name": "Тесты для задачи #1258 (перед ревью)",
+          "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261105T021831901-319ed656/report.json",
+          "materialSha": "6b95b1fd07b8c411e2808d9bb1f4bccedc44a71a",
+          "status": "passed",
+          "finishedAt": "2026-11-05T02:19:06.059Z",
+          "failures": []
         }
       }
     }
