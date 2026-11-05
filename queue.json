@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 3820,
+  "revision": 3821,
   "nextTicket": 214,
   "nextFence": 214,
   "tasks": {
@@ -3137,7 +3137,7 @@
       "ownerDecision": null,
       "ticket": 213,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793848182381,
       "reviewEntry": 3,
       "notice": {
@@ -3174,19 +3174,15 @@
         "test/selective-invalidation-timing.test.mjs"
       ],
       "s6": {
-        "id": "20261105T025923729-e129c073",
+        "id": "20261105T030959064-6be865b4",
         "name": "Тесты для задачи #1295 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T025923729-e129c073/report.json",
-        "materialSha": "b36d98d78053931541055bbe2f905eefd92f07d5",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T030959064-6be865b4/report.json",
+        "materialSha": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
         "status": "passed",
-        "finishedAt": "2026-11-05T03:01:49.676Z",
+        "finishedAt": "2026-11-05T03:12:45.652Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1295:2:551f82e320b19acf7626d9feca138b8f8ed42a9b:fb04ca0fb54e1671bf5384ca404da67bccde0970",
-        "at": 1793847994227
-      }
+      "reviewRound": null
     },
     "1296": {
       "issue": 1296,
@@ -3368,9 +3364,9 @@
     "fence": 213,
     "materialSha": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
     "expectedBase": "0e2f92ff0387f747c65922d1184b780160e9cd1d",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793848186293,
-    "expiresAt": 1793848605283,
+    "expiresAt": 1793851966694,
     "patchId": "30d4527b958c62633b23c561c560606dc356e949"
   },
   "events": {
@@ -3639,6 +3635,34 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "0e2f92ff0387f747c65922d1184b780160e9cd1d"
+      }
+    },
+    "finish:f3b0df80-8fcc-438d-99b6-431b9b656ae1:finish:3:s6-complete": {
+      "digest": "554dd479514209e6f7c36359134a46ef8e42f7f63b126c6ff32ad08237db97f7",
+      "issue": 1295,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1295,
+        "at": 1793848366694,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
+        "phase": "review",
+        "evidence": {
+          "id": "20261105T030959064-6be865b4",
+          "name": "Тесты для задачи #1295 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261105T030959064-6be865b4/report.json",
+          "materialSha": "4d5bb045134cc1e9bb7ce858baf3229dbd381428",
+          "status": "passed",
+          "finishedAt": "2026-11-05T03:12:45.652Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Финальная правка — изоляция четырёх измерительных серий и разделение обязательного поведения/полноты измерения с диагностическими абсолютными бюджетами. PROCESS.md, «Размеры и производительность», прямо относит прочие микрозамеры к диагностике; отдельные сопоставимые относительные пороги release metrics не меняются. Сопоставимой базы последнего stable здесь нет. Старые числа бюджетов не повышены, красные отчёты не переписаны.\n\nДоказательства:\n- Исходный полный audit 41920312716 FAILED на опубликованном a4dd940c.\n- Serial 41955192150: все четыре PASS на том же runtime, но CPU отличался.\n- Paired 41956366937: jobs2 затем jobs1 на одной EPYC 9V74 / 4 vCPU, тот же чистый a4dd940c. При jobs2 visible FAIL, long task 124 > 117 мс; последовательно все четыре PASS, visible 70 мс. Все серии реально исполнены в обеих фазах. Raw JSON содержит 20 samples на selective-серию; connected — 3 warmup + 5 measured gestures / 300 inputs. Фиксированный порядок фаз и нагрузка host ограничивают причинную точность.\n- Настоящий exclusive CI 41957439627 при обычных jobs2 на 6f8241aa: перекрытия измерений с другими шагами нет, но более медленная EPYC 7763 / 4 vCPU дала history-copy long task 205 > 200 и connected mainThread p95 57.2 > 55 мс. Inactive/visible PASS. Этот FAIL сохранён: изоляция сама по себе не гарантирует абсолютных потолков на разных CPU.\n- После содержательной правки классификации адресный CI https://github.com/Matysh/houseplan-card/actions/runs/41958797300 на финальном rebased b36d98d78053931541055bbe2f905eefd92f07d5 завершился PASS 9/9, materialClean=true. Все четыре серии действительно исполнены, timingDiagnostic=true, в этом прогоне старых численных превышений нет. Это повтор изменившегося механизма после FAIL, не повтор ради случайного зелёного результата. Полный stable не перезапускался.\n\nRunner: первый готовый boolean exclusive дожидается активных шагов, не даёт следующим обогнать его и работает один. Неготовый ждёт prerequisites. Отмечены только четыре измерительных профиля; обычная параллельность сохранена. Режим входит в receipt identity. Изменение runner/storage естественно инвалидирует старые receipts. FAIL блокирует только required descendants.\n\nCatalog передаёт этим четырём скриптам явный --diagnostic-timing. Без флага standalone strict exit и offline nodeBudgetVerdict/timingFailures сохраняют прежние строгие вердикты. В diagnostic режиме отдельно показываются только численные превышения: budgetFailures и timingStatus=exceeded. Геометрия, история, кэши, native/persisted/single-write, неполные выборки, невалидные samples/часы и page errors по-прежнему дают FAIL. У connected raw pass остаётся прежним строгим вердиктом бюджета; executionPass отдельно объясняет исход исполнения. Исторический красный отчёт не переосмысляется как зелёный. Весь smoke не маркируется diagnostic: это скрыло бы функциональные отказы.\n\nТесты контрастируют целую медленную серию с untrusted, unpersisted, duplicate-write, пустыми, нечисловыми, неполными измерениями, functional/clock errors и incomplete checks. Runner проверяет drain, no overtaking, параллельность до/после, успех/отказ, descendants, prerequisites, boolean validation и cache identity. Catalog проверяет ровно четыре отмеченных шага в task/stable и точный diagnostic flag. Предварительно catalog + verdict 24/24 PASS, runner + fallback 29/29 PASS; syntax восьми изменённых инструментов/YAML PASS. Два ранних локальных отказа catalog исправлены без ослабления продуктовых guards: metadata literals были ошибочно приняты статическим reader за исполнение smoke; startup-view отсутствует в stable.\n\nWorkflow и canonical template только дополняют upload-path для существующих raw JSON. После добавления executable demo-кода слой стал product: финальный S6 — обычный минимум + выбранные runner/catalog/fallback/verdict Node + четыре настоящих smoke. Старый локальный finish остановлен, собственный допуск штатно возвращён для смены материала, новый finish сам вычисляет слой по diff. Подробные таблицы и ограничения — docs/testing/issue1295-timing-isolation.md.\n\nРиски для ревью: не потерять обязательный FAIL в diagnostic режиме; честно сохранить strict pass=false в raw; отсутствие перекрытия измерений; семантика scheduler/cache. Полного stable-сертификата и нового релиза задача не заявляет.\n\n### Исправления по предыдущему ревью\n\n1. Согласен: классификация должна следовать общему контракту, а не только списку случайно упавших файлов. Добавлен history320 — единственная оставшаяся browser-обёртка runSelectiveInvalidationGate. Она передаёт тот же diagnosticTiming; общий каталог изолирует и отмечает пять профилей. Тест проверяет полное семейство в task/stable и точный flag. Дополнен адресный S6 настоящим history320. Standalone benchmark CLI по-прежнему строгий без явного флага.\n2. Удалены обе устаревшие дублированные строки #1295 из EN/RU changelog; осталось по одной точной записи с диагностикой и обязательными функциональными отказами.\n3. Из необязательных замечаний исправлены две неточности отчёта: selective с ошибкой/неполным измерением получает timingStatus=invalid; connected harness/page error после успешной проверки функциональности больше не называется budget-only. Новая обвязка сводки диагностики и отдельный release-measurements план не добавлены: текущие raw/log сохраняют превышения, относительные release metrics остаются отдельным действующим контрактом.\n\nИзменение после ревью ограничено этим ответом; полный предыдущий разбор и все FAIL сохранены. Адресный CI 41958797300 перед этим изменением завершился 9/9 PASS на b36d98d7, timingDiagnostic=true, без превышений в том прогоне. Новый финальный S6 включает пять реальных профилей и прежние адресные проверки.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
