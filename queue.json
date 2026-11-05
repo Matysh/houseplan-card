@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4580,
+  "revision": 4581,
   "nextTicket": 237,
   "nextFence": 237,
   "tasks": {
@@ -3625,7 +3625,18 @@
         "docs/CHANGELOG.ru.md",
         "src/wall-node-write.ts",
         "test/wall-node-write.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793886041501,
+        "entry": 1,
+        "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно",
+        "eventId": "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return:return:1320"
+      }
     }
   },
   "ownerDecisions": {},
@@ -3759,21 +3770,14 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1320,
-    "worker": "finish",
-    "token": "236:finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:1:admit",
-    "fence": 236,
-    "materialSha": "71905b4cb10738ac6715e2e19fe94e5c2db09c78",
-    "expectedBase": "0a0df98171f2bfff4ca53317f18ec8a176d5fc7f",
-    "phase": "testing",
-    "admittedAt": 1793886019193,
-    "expiresAt": 1793886325401,
-    "patchId": "d6e5190962468737592f491400619425714b9a0c"
-  },
+  "active": null,
   "events": {
     "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:2:synchronized": {
       "digest": "4dc3cb852069dca24279cffe678b2da48c0e88e82b293ca904572d91f5a477fc",
+      "issue": 1320
+    },
+    "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return": {
+      "digest": "84aa860ae0ad1d9133aebf3f4f58b6f6d0ba2fe57cdbe0d68c374926fae3b15b",
       "issue": 1320
     },
     "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6": {
@@ -3801,6 +3805,26 @@
         "layer": "product",
         "materialSha": "71905b4cb10738ac6715e2e19fe94e5c2db09c78",
         "phase": "sync"
+      }
+    },
+    "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return:return:1320": {
+      "digest": "84aa860ae0ad1d9133aebf3f4f58b6f6d0ba2fe57cdbe0d68c374926fae3b15b",
+      "issue": 1320,
+      "message": {
+        "kind": "return",
+        "issue": 1320,
+        "at": 1793886041501,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793886041501,
+          "entry": 1,
+          "detail": "Сборка и типы продукта: failed; Подготовка модулей для тестов: failed; Подготовка карточки для браузера: Подготовка не завершена успешно; Критичные данные, сохранение и права: Подготовка не завершена успешно; Открытие сохранённого плана в View: Подготовка не завершена успешно; Поведение изменённой области: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно",
+          "eventId": "finish:0af67e30-daa2-4ef0-8c54-32d136f120a6:finish:3:return:return:1320"
+        }
       }
     }
   },
