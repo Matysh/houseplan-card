@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 5375,
+  "revision": 5376,
   "nextTicket": 258,
-  "nextFence": 257,
+  "nextFence": 258,
   "tasks": {
     "1193": {
       "issue": 1193,
@@ -992,7 +992,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 257,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793940533218,
       "reviewEntry": 2,
@@ -4056,10 +4056,18 @@
       }
     }
   },
-  "waiting": [
-    1239
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1239,
+    "worker": "finish",
+    "token": "257:finish:9031ab39-110e-4425-a5ff-fdf38994943a:finish:1:admit",
+    "fence": 257,
+    "materialSha": "853883e0017cdd7cb067cd324b7eb5d21264e231",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1793940537014,
+    "expiresAt": 1793940837014
+  },
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
       "digest": "67cac9ebe76c4866b58c9e7cb7d8cd680d86f665660114c53210503c3b7c11a8",
@@ -4244,6 +4252,29 @@
         "track": "ask",
         "layer": "infra",
         "materialSha": "853883e0017cdd7cb067cd324b7eb5d21264e231",
+        "evidence": {
+          "id": "20261106T043230311-bca5e036",
+          "name": "Тесты для задачи #1239 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261106T043230311-bca5e036/report.json",
+          "materialSha": "a80dbdacd9f0a08aefbed60ff965a49d68072304",
+          "status": "passed",
+          "finishedAt": "2026-11-06T04:32:46.468Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:9031ab39-110e-4425-a5ff-fdf38994943a:finish:1:admit": {
+      "digest": "4298b9f69b6b33b5bc6923a76c667f60ff96304e7dc0c3c7302e459354656429",
+      "issue": 1239,
+      "message": {
+        "kind": "admitted",
+        "issue": 1239,
+        "at": 1793940537014,
+        "entry": 2,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "853883e0017cdd7cb067cd324b7eb5d21264e231",
+        "phase": "sync",
         "evidence": {
           "id": "20261106T043230311-bca5e036",
           "name": "Тесты для задачи #1239 (перед ревью)",
