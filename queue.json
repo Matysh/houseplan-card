@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5484,
+  "revision": 5485,
   "nextTicket": 262,
   "nextFence": 262,
   "tasks": {
@@ -3860,7 +3860,20 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793944990355,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "5f4f82c7700bd2a5fa8e17e4e82767a27f30aa4e",
+      "changedFiles": [
+        "demo/helpers/empty-space-home-arrow.mjs",
+        "demo/smoke_space_switch_transitions.mjs",
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/cycle.json",
+        "docs/release-ledger/v1.84.0/1329.json",
+        "src/houseplan-card.ts",
+        "src/view-frame-view.ts",
+        "test/view-frame-empty.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4014,12 +4027,17 @@
     "token": "261:finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:1:admit",
     "fence": 261,
     "materialSha": "6aabeb50a88dea54b65dc3e913df11431197f5a1",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
+    "phase": "testing",
     "admittedAt": 1793944994911,
-    "expiresAt": 1793945294911
+    "expiresAt": 1793945301139,
+    "patchId": "5f4f82c7700bd2a5fa8e17e4e82767a27f30aa4e"
   },
   "events": {
+    "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:2:synchronized": {
+      "digest": "753f7551c6bc3e78f3c303ac921aa939cd022fe44a289f8d92872c8827aeb2cb",
+      "issue": 1329
+    },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
       "digest": "a56f6f76ba636c40127695117d57a9970d2dabae7dc8e6ca7ab9b154319f8ebc",
       "issue": 1329,
