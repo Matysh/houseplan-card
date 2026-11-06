@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5988,
+  "revision": 5989,
   "nextTicket": 280,
   "nextFence": 280,
   "tasks": {
@@ -3860,7 +3860,31 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793986792366,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "b99176043e38b764da851a0089b76ef4ddca05d6",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "0ce2c7c7b8def6f7ef5dd6522d7d0816c107c28f",
+        "tag": "v1.85.0-beta.1",
+        "verdict": "accepted",
+        "patchId": "b99176043e38b764da851a0089b76ef4ddca05d6",
+        "materialSha": "47a2cd25cad92bce454335a86bf4fcecd297a769"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/panel-room-temperature-dialog-desktop-en.png",
+        "demo/golden/baselines/room-discard-dialog-mobile-ru.png",
+        "demo/golden/baselines/room-temperature-dialog-mobile-ru.png",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4028,12 +4052,17 @@
     "token": "279:release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:1:admit",
     "fence": 279,
     "materialSha": "47a2cd25cad92bce454335a86bf4fcecd297a769",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "4d7b4cc103636e790788ab489845f735a4b5a6f3",
+    "phase": "testing",
     "admittedAt": 1793986797877,
-    "expiresAt": 1793987097877
+    "expiresAt": 1793987104444,
+    "patchId": "b99176043e38b764da851a0089b76ef4ddca05d6"
   },
   "events": {
+    "release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:2:synchronized": {
+      "digest": "63547af5043a4f5fdcf5c78d184bd7701dc490a072b080c264d335f88031c6e7",
+      "issue": 1339
+    },
     "release-return:85e6f578-e449-4322-bc3e-f62aa5901fc4": {
       "digest": "fd16861b56d9b754a54929efc3592ca866cc99f658f668ec75b35ce2a2267b6d",
       "issue": 1339,
