@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6097,
+  "revision": 6098,
   "nextTicket": 283,
   "nextFence": 283,
   "tasks": {
@@ -3884,7 +3884,16 @@
         "docs/CHANGELOG.ru.md",
         "docs/testing/issue1341/README.md",
         "tests_backend/test_ha_zigbee_lqi.py"
-      ]
+      ],
+      "s6": {
+        "id": "20261106T181258383-3f2b376d",
+        "name": "Тесты для задачи #1341 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T181258383-3f2b376d/report.json",
+        "materialSha": "7b3b408a0d796fd126ed8e84bc295183f2de8e15",
+        "status": "passed",
+        "finishedAt": "2026-11-06T18:16:51.645Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4053,9 +4062,9 @@
     "fence": 282,
     "materialSha": "7b3b408a0d796fd126ed8e84bc295183f2de8e15",
     "expectedBase": "b01159e90270a4a454be4d7acbca9d90a51760f7",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793988766527,
-    "expiresAt": 1793989305344,
+    "expiresAt": 1793992613933,
     "patchId": "eef039235a882fb96be4e34e78fe1156a3934cd9"
   },
   "events": {
@@ -4085,6 +4094,10 @@
     },
     "finish:fde98efa-0dde-4d7e-84f6-727848a07763": {
       "digest": "ec3280e814c66160fd7a07560e95e05bd8f9122b320c285b9fa021afd86bb1cf",
+      "issue": 1341
+    },
+    "finish:2a2ae5bc-7ccb-457b-9733-95150874e6d6:finish:3:s6-complete": {
+      "digest": "997e45059644f3ffc31d96000d06fd5e450dbdae56d37cefa120c869cc5d837f",
       "issue": 1341
     },
     "finish:2a2ae5bc-7ccb-457b-9733-95150874e6d6": {
