@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Remove the obsolete assertion for the retired npm test:chunk entrypoint; retain all three behavior tests of the live helper (#1340).
+
 ## v1.85.0-beta.1 — 2026-11-06
 
 - Accept the three room-dialog baselines for the persistent HA-area hint, preserving capture provenance and the owner decision (#1334).

@@ -1,12 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 
 import { chunkFiles, listTestFiles, parseChunk } from '../scripts/test-chunk.mjs';
 
-// #633. Полный набор юнитов в песочнице агента не укладывается в одну команду
-// (≈3 мин), и его резали руками. `npm run test:chunk -- N/M` делит детерминированно;
-// эти тесты держат главное свойство: M частей вместе — каждый файл ровно один раз.
+// #633/#1340: сохранённый scripts/test-chunk.mjs делит набор детерминированно.
+// Эти тесты проверяют, что M частей вместе покрывают каждый файл ровно один раз.
 
 test('N/M разбирается, невозможная часть — ошибка, а не пустой прогон (#633)', () => {
   assert.deepEqual(parseChunk('2/6'), { index: 2, total: 6 });
@@ -43,9 +41,4 @@ test('деление детерминировано и не зависит от 
   // Сортировка по коду символов, не по локали: одна и та же на любой машине.
   assert.deepEqual(chunkFiles(['test/b.test.mjs', 'test/B.test.mjs', 'test/a.test.mjs'], 1, 1),
     ['test/B.test.mjs', 'test/a.test.mjs', 'test/b.test.mjs']);
-});
-
-test('npm run test:chunk ведёт в scripts/test-chunk.mjs (#633)', () => {
-  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(pkg.scripts['test:chunk'], 'node scripts/test-chunk.mjs');
 });
