@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5739,
+  "revision": 5740,
   "nextTicket": 272,
   "nextFence": 272,
   "tasks": {
@@ -1251,18 +1251,21 @@
       "status": "S6-in-progress",
       "readyAt": 1793966110094,
       "reviewEntry": 5,
-      "patchId": "92206664e51ccdb4e29b4d267c6f84a01cccca74",
+      "patchId": "83ed21254145cae9e8db9fd3219a942ecb03213b",
       "changedFiles": [
         "demo/helpers/stairs-placement-preview.mjs",
         "demo/smoke_stairs.mjs",
+        "demo/smoke_wall_node_hit.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/STAIRS.md",
         "docs/release-ledger/v1.83.0/1331.json",
         "docs/release-ledger/v1.84.0/1253.json",
         "docs/release-ledger/v1.84.0/1331.json",
+        "process-next/lib/source-dependencies.mjs",
         "src/houseplan-card.ts",
         "src/stairs-editor.ts",
+        "test/smoke-harness-contract.test.mjs",
         "test/stairs-editor-live.test.mjs"
       ],
       "notice": {
@@ -4083,10 +4086,11 @@
     "token": "271:finish:61534d0e-f40d-463c-a57f-b4bdee7ba31e:finish:1:admit",
     "fence": 271,
     "materialSha": "6c8b0a3ccb95386c911e447331e24fcedf4c62d5",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
+    "phase": "testing",
     "admittedAt": 1793966113763,
-    "expiresAt": 1793966413763
+    "expiresAt": 1793966419501,
+    "patchId": "83ed21254145cae9e8db9fd3219a942ecb03213b"
   },
   "events": {
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
@@ -4227,6 +4231,10 @@
     },
     "github:42213149950:1:completions:notice:ef3d8197118fee48087de860f0ef227c8fc7e5f95d4eef7bd2835f3a3c437e01": {
       "digest": "fdd24b6ca4959a55090f6233c41db08ebc3cd18ce79120ce1ccbcdea99d3177c",
+      "issue": 1253
+    },
+    "finish:61534d0e-f40d-463c-a57f-b4bdee7ba31e:finish:2:synchronized": {
+      "digest": "aed2f4fa5329bf9587db1cabb0d7217d266111c22f633f13e248d0971d988e1f",
       "issue": 1253
     },
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6": {
