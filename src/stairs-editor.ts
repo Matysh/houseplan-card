@@ -278,6 +278,7 @@ export class StairEditorRuntime {
    */
   public stagePointerDown(event: PointerEvent): boolean {
     if (this.owner._mode !== 'plan' || this.owner._tool !== 'stairs') return false;
+    this.clearPlacementPreview();
     if (this.draft) {
       // A second contact turns the gesture into navigation: the draft is gone.
       if (this.draft.pid !== event.pointerId) this.cancelDraft();

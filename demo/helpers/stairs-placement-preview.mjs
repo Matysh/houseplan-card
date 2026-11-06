@@ -40,7 +40,7 @@ export async function stairsPlacementPreview(page){
     await arm(kind);
     const base=await observe();
     const b=await root.locator('.stage').boundingBox();assert.ok(b);
-    const at={x:b.x+b.width*.61,y:b.y+b.height*.61};
+    const at={x:b.x+b.width*(kind==='straight'?.61:.38),y:b.y+b.height*(kind==='straight'?.61:.35)};
     for(let i=0;i<12;i++)await page.mouse.move(at.x+i,at.y);
     await settle();
     const hovered=await observe();assert.equal(hovered.previews,1);assert.equal(hovered.preview.kind,kind);
@@ -56,7 +56,16 @@ export async function stairsPlacementPreview(page){
     await page.mouse.click(at.x+11,at.y);
     await page.evaluate(()=>window.__hpTest.waitForWrites());await settle();
     const placed=await observe();assert.equal(placed.count,base.count+1);assert.equal(placed.previews,0);
-    assert.deepEqual(placed.last,hovered.preview,'native click creates the geometry shown by hover');
+    assert.equal(placed.last.kind,hovered.preview.kind);assert.equal(placed.last.style,hovered.preview.style);
+    // Storage rounds normalized scalars to nine decimals. Compare SVG geometry
+    // at that existing precision, without changing dimensions or visual pixels.
+    for(const key of ['shape','treads','arrow']){
+      const pattern=/-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/gi;
+      const before=hovered.preview[key]||'',after=placed.last[key]||'';
+      assert.equal(after.replace(pattern,'#'),before.replace(pattern,'#'));
+      const a=(after.match(pattern)||[]).map(Number),b=(before.match(pattern)||[]).map(Number);
+      assert.equal(a.length,b.length);for(let i=0;i<a.length;i++)assert.ok(Math.abs(a[i]-b[i])<.000002,`saved ${key} matches preview`);
+    }
     // Leaving the plan removes just the transient; a new move can rearm it.
     await page.mouse.move(at.x+70,at.y+30);await settle();assert.equal((await observe()).previews,1);
     await page.mouse.move(b.x+10,b.y-20);await settle();assert.equal((await observe()).previews,0);

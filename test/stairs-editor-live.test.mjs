@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { StairEditorRuntime } from '../test-build/stairs-editor.js';
 import { MAX_STAIRS_PER_SPACE } from '../test-build/stairs.js';
+import { canonicalizeConfigGeometry } from '../test-build/coordinate-canonicalization.js';
 const stair={id:'s',kind:'straight',x:.4,y:.4,angle:0,direction:'forward',length:.2,width:.1};
 const ev=(x,y)=>({pointerId:1,clientX:x,clientY:y,shiftKey:false,preventDefault(){},stopPropagation(){},currentTarget:{setPointerCapture(){}}});
 function setup(){
@@ -53,14 +54,15 @@ for(const kind of ['straight','spiral']){
   assert.equal(editor.dragging,true);
   editor.pointerUp(hoverEvent(629,500));
   const added=host._curSpaceCfg.stairs.at(-1);
-  assert.deepEqual({...preview,id:added.id},added);
+  assert.deepEqual(canonicalizeConfigGeometry({spaces:[{stairs:[{...preview,id:added.id}]}]}).spaces[0].stairs[0],added,
+    'preview agrees with the existing persisted scalar precision');
   assert.equal(counts().saves,1);assert.equal(counts().history,1);assert.equal(host._cfgEpoch,2);
  });
  test(`#1253 ${kind} hover follows style/context changes and clears without writes`,()=>{
   const {host,editor,counts}=setup();arm(host,editor,kind);
   editor.pointerMove(hoverEvent());
-  host._decorStyle={color:'#f00',opacity:.45};host._cfgEpoch++;
-  assert.equal(editor.hoverStair.color,'#f00');assert.equal(editor.hoverStair.opacity,.45);
+  host._decorStyle={color:'#ff0000',opacity:.45};host._cfgEpoch++;
+  assert.equal(editor.hoverStair.color,'#ff0000');assert.equal(editor.hoverStair.opacity,.45);
   editor.clearPlacementPreview();assert.equal(editor.live,false);
   editor.pointerMove(hoverEvent());host._space='B';assert.equal(editor.hoverStair,null);
   editor.pointerMove(hoverEvent());host._tool='draw';assert.equal(editor.hoverStair,null);
