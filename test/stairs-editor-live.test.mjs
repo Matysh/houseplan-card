@@ -94,4 +94,14 @@ test('#1253 hover clears on secondary navigation, kind switch, cancel and limit'
  editor.pointerMove(hoverEvent());assert.equal(editor.escape(),true);editor.pointerUp(hoverEvent());
  editor.pointerMove(hoverEvent());host._curSpaceCfg.stairs=Array.from({length:MAX_STAIRS_PER_SPACE},(_,i)=>({...stair,id:`s${i}`}));
  assert.equal(editor.hoverStair,null);assert.equal(counts().saves,0);assert.equal(counts().history,0);
-});
+});for(const [kind,x] of [['straight',610],['spiral',590]]){
+ test(`#1253 ${kind} hover includes a positive stair magnet`,()=>{
+  const {host,editor}=setup();arm(host,editor,kind);
+  editor.pointerMove(hoverEvent(x,400));
+  const preview=structuredClone(editor.hoverStair);
+  assert.notEqual(preview.x,x/1000,'fixture really engages a footprint magnet');
+  editor.stagePointerDown(hoverEvent(x,400,{button:0,buttons:1}));editor.pointerUp(hoverEvent(x,400));
+  const added=host._curSpaceCfg.stairs.at(-1);
+  assert.deepEqual(canonicalizeConfigGeometry({spaces:[{stairs:[{...preview,id:added.id}]}]}).spaces[0].stairs[0],added);
+ });
+}
