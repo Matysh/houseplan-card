@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5498,
+  "revision": 5499,
   "nextTicket": 262,
   "nextFence": 262,
   "tasks": {
@@ -3873,7 +3873,18 @@
         "src/houseplan-card.ts",
         "src/view-frame-view.ts",
         "test/view-frame-empty.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793945458360,
+        "entry": 1,
+        "detail": "Поведение: process-next/test/metrics.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Браузер: space switch transitions: failed",
+        "eventId": "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:3:return:return:1329"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4021,18 +4032,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1329,
-    "worker": "finish",
-    "token": "261:finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:1:admit",
-    "fence": 261,
-    "materialSha": "6aabeb50a88dea54b65dc3e913df11431197f5a1",
-    "expectedBase": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
-    "phase": "testing",
-    "admittedAt": 1793944994911,
-    "expiresAt": 1793945714043,
-    "patchId": "5f4f82c7700bd2a5fa8e17e4e82767a27f30aa4e"
-  },
+  "active": null,
   "events": {
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:2:synchronized": {
       "digest": "753f7551c6bc3e78f3c303ac921aa939cd022fe44a289f8d92872c8827aeb2cb",
@@ -4074,6 +4074,10 @@
       "digest": "2289342b20c66d0981b1c2231cf4ea82e58765ebeb1fd8a29afec5cd65bce4ba",
       "issue": 1329
     },
+    "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:3:return": {
+      "digest": "4e40ceed58883721da96f1dbae4035a92ab6a2b68735c7102c97f02fa2acfaa0",
+      "issue": 1329
+    },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
       "digest": "a56f6f76ba636c40127695117d57a9970d2dabae7dc8e6ca7ab9b154319f8ebc",
       "issue": 1329,
@@ -4101,6 +4105,26 @@
         "materialSha": "6aabeb50a88dea54b65dc3e913df11431197f5a1",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:3:return:return:1329": {
+      "digest": "4e40ceed58883721da96f1dbae4035a92ab6a2b68735c7102c97f02fa2acfaa0",
+      "issue": 1329,
+      "message": {
+        "kind": "return",
+        "issue": 1329,
+        "at": 1793945458360,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793945458360,
+          "entry": 1,
+          "detail": "Поведение: process-next/test/metrics.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Браузер: space switch transitions: failed",
+          "eventId": "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:3:return:return:1329"
+        }
       }
     }
   },
