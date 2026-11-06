@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5685,
+  "revision": 5686,
   "nextTicket": 270,
   "nextFence": 270,
   "tasks": {
@@ -4388,20 +4388,6 @@
           "eventId": "finish:4a6e81d8-ffb2-4d83-931c-61a0d59c5ac6:finish:3:return:return:1253"
         },
         "delivered": true
-      }
-    },
-    "finish:86a69c51-1014-417a-9f72-78a0908955bb:finish:1:admit": {
-      "digest": "1d857ef967b06ca437667d35328804058950c5fdbde709e14076e8ec482677f4",
-      "issue": 1336,
-      "message": {
-        "kind": "admitted",
-        "issue": 1336,
-        "at": 1793965469344,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
-        "phase": "sync"
       }
     }
   },
