@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5644,
-  "nextTicket": 267,
+  "revision": 5645,
+  "nextTicket": 268,
   "nextFence": 267,
   "tasks": {
     "1193": {
@@ -1281,14 +1281,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1253-stairs-hover",
-      "materialSha": "8fbccddefcebe22db3de68e15ff5b35cfefdc832",
+      "materialSha": "db5c07733fc9097556f0aede348424beccc90e15",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 262,
-      "queued": false,
+      "ticket": 267,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793946416520,
-      "reviewEntry": 1,
+      "readyAt": 1793964325303,
+      "reviewEntry": 2,
       "patchId": "3cdb36533efea61e975098d00fe91e98d60d32df",
       "changedFiles": [
         "demo/helpers/stairs-placement-preview.mjs",
@@ -1302,7 +1302,6 @@
         "src/stairs-editor.ts",
         "test/stairs-editor-live.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4082,7 +4081,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1253
+  ],
   "active": null,
   "events": {
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
@@ -4242,6 +4243,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7"
+      }
+    },
+    "finish:d0be8eb9-174a-4597-bf98-e10f53759b57": {
+      "digest": "d1d63003c8bc4a335e4cd17ba47ecd15f6742d12ec33c1af1f8177ec47fa5cfa",
+      "issue": 1253,
+      "message": {
+        "kind": "queued",
+        "issue": 1253,
+        "at": 1793964325303,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "db5c07733fc9097556f0aede348424beccc90e15"
       }
     }
   },
