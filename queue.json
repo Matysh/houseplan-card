@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5206,
-  "nextTicket": 251,
+  "revision": 5207,
+  "nextTicket": 252,
   "nextFence": 251,
   "tasks": {
     "1193": {
@@ -3813,6 +3813,20 @@
         "status": "published",
         "sourceSha": "0c7e8838681f68d5d908d9d6e76f8b1d874b58cf"
       }
+    },
+    "1327": {
+      "issue": 1327,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/issue-1327-corner-paper",
+      "materialSha": "fa5a1c30019811c91a6a34ee36d70de7875455c9",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 251,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793935252204,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3966,7 +3980,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1327
+  ],
   "active": null,
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
@@ -4008,6 +4024,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:7dbca649-c750-4744-b6df-6ea9ba5f7796": {
+      "digest": "e83b0ebbba7ba7da57fbab1bf16f8affc6ec2384720edf01fb191f4d72954818",
+      "issue": 1327,
+      "message": {
+        "kind": "queued",
+        "issue": 1327,
+        "at": 1793935252204,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "fa5a1c30019811c91a6a34ee36d70de7875455c9"
       }
     }
   },
