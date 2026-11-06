@@ -32,21 +32,23 @@ try{
  const evidence=await page.evaluate(async()=>{
   const c=window.__card,old=window.__retiredHeaderObserver;
   const before={revision:c._cfgRev,layoutRevision:c._layoutRev,phase:c._panelHeaderChoice.phase,compact:c._compactSpaces};
-  const retired=old.observer!==c._roHdr&&!old.header.isConnected;
+  const retired=old.observer!==c._roHdr;
   if(!retired)throw Error('Fixture did not retire the captured header lease');
-  const getStyle=window.getComputedStyle;let retiredReads=0;
+  const getStyle=window.getComputedStyle,raf=window.requestAnimationFrame;let retiredReads=0,staleScheduledFrames=0;
   window.getComputedStyle=function(element,...args){if(element===old.head||element===old.header)retiredReads++;return getStyle.call(this,element,...args);};
   try{
-   old.fire([{target:old.header,contentRect:{width:1}}]);
+   window.requestAnimationFrame=function(callback){staleScheduledFrames++;return raf.call(this,callback);};
+   try{old.fire([{target:old.header,contentRect:{width:1}}]);}finally{window.requestAnimationFrame=raf;}
    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
    await c.updateComplete;
-   return{retired,retiredReads,before,after:{revision:c._cfgRev,layoutRevision:c._layoutRev,phase:c._panelHeaderChoice.phase,compact:c._compactSpaces}};
+   return{retired,headerReused:old.header.isConnected,retiredReads,staleScheduledFrames,before,after:{revision:c._cfgRev,layoutRevision:c._layoutRev,phase:c._panelHeaderChoice.phase,compact:c._compactSpaces}};
   }finally{window.getComputedStyle=getStyle;}
  });
  mkdirSync('artifacts/header-observer-retirement',{recursive:true});
  writeFileSync('artifacts/header-observer-retirement/evidence.json',JSON.stringify(evidence,null,2));
  assert.equal(evidence.retired,true);
- assert.equal(evidence.retiredReads,0,'a stale observer may not measure its retired header, even if a later frame would repair the layout');
+ assert.equal(evidence.staleScheduledFrames,0,'a retired observer must not schedule header work, including when Lit reuses the header DOM');
+ if(!evidence.headerReused)assert.equal(evidence.retiredReads,0,'a stale observer may not measure its retired header');
  assert.deepEqual(evidence.after,evidence.before,'stale delivery leaves the current header and data revisions intact');
  console.log('OK header observer retirement');
 }finally{await finish(browser);}

@@ -15486,7 +15486,7 @@ const MUTANT_DEFINITIONS = [
       + 'bringing the hidden collinear seams back into durable config (#477)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: '    const target = this._canonicalWallChainHistoryState(state);',
+      find: '    const target = this._canonicalWallChainHistoryState(state);\n      if (target === \'state\') return target;',
       replace: '    const target = state; // mutant: finished-chain history is restored literally',
     }],
   },
