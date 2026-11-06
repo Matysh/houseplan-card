@@ -69,9 +69,10 @@ export async function stairsPlacementPreview(page){
     // Leaving the plan removes just the transient; a new move can rearm it.
     await page.mouse.move(at.x+70,at.y+30);await settle();assert.equal((await observe()).previews,1);
     await page.mouse.move(b.x+10,b.y-20);await settle();assert.equal((await observe()).previews,0);
-    await page.mouse.move(at.x+90,at.y+50);await settle();
+    const cancelAt={x:b.x+b.width*.8,y:b.y+b.height*(kind==='straight'?.25:.78)};
+    await page.mouse.move(cancelAt.x,cancelAt.y);await settle();
     const beforeCancel=await observe();assert.equal(beforeCancel.previews,1);
-    await page.mouse.down();await page.mouse.move(at.x+130,at.y+85);await page.keyboard.press('Escape');await page.mouse.up();
+    await page.mouse.down();await page.mouse.move(cancelAt.x+40,cancelAt.y+35);await page.keyboard.press('Escape');await page.mouse.up();
     await settle();const cancelled=await observe();assert.equal(cancelled.previews,0);
     for(const key of ['cfg','epoch','rev','layoutRev','count'])assert.equal(cancelled[key],beforeCancel[key],`cancel preserves ${key}`);
     evidence.push({kind,hovered,reconciled,placed,cancelled});

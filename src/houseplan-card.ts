@@ -3560,6 +3560,11 @@ export class HouseplanCard extends LitElement {
         this._importTotal = 0;
         return;
       }
+      // A stair placement/transform owns Escape before its open tool tray or
+      // Properties selection; otherwise the later pointerup would still save.
+      if (this._editorRuntime?.stairs.dragging || this._editorRuntime?.stairs.live) {
+        if (this._editorRuntime.stairs.escape()) { e.preventDefault(); return; }
+      }
       if (this._editorSecondary?.hasOpenGroup) {
         e.preventDefault();
         this._editorSecondary?.closeGroup(true);
