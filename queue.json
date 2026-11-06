@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5438,
-  "nextTicket": 260,
+  "revision": 5439,
+  "nextTicket": 261,
   "nextFence": 260,
   "tasks": {
     "1193": {
@@ -3853,6 +3853,20 @@
         "status": "published",
         "sourceSha": "fa5a1c30019811c91a6a34ee36d70de7875455c9"
       }
+    },
+    "1328": {
+      "issue": 1328,
+      "track": "ship",
+      "layer": "docs",
+      "branch": "codex/issue-1328-test-selection-duty",
+      "materialSha": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 260,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793942922610,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -3999,9 +4013,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1328
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:7bb6fdb5-e728-4436-96eb-8605e4269957": {
+      "digest": "c1cba2028b014b89840d3efdb0dd17d16d0d5703eb1d653fe5c513e78c940fd1",
+      "issue": 1328,
+      "message": {
+        "kind": "queued",
+        "issue": 1328,
+        "at": 1793942922610,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
     "status": "delivered",
