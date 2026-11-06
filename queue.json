@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5277,
-  "nextTicket": 253,
+  "revision": 5278,
+  "nextTicket": 254,
   "nextFence": 253,
   "tasks": {
     "1193": {
@@ -1394,14 +1394,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1255-shift-rotate",
-      "materialSha": "5d6e48c49ea6a174abdc6c4f5f7c5a78ab0fa227",
+      "materialSha": "376b6e387031dca5328e46de2e411b6845e76b6a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 252,
-      "queued": false,
+      "ticket": 253,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793935966083,
-      "reviewEntry": 1,
+      "readyAt": 1793936224667,
+      "reviewEntry": 2,
       "patchId": "a46bed96b664576cdf754e0786a9e612794ff287",
       "changedFiles": [
         "demo/smoke_decor_rotation_shift.mjs",
@@ -1418,7 +1418,6 @@
         "test/decor-rotation.test.mjs",
         "test/furniture-transform-contract.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -3999,7 +3998,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1255
+  ],
   "active": null,
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
@@ -4130,6 +4131,19 @@
           "detail": "Браузер: backdrop: failed",
           "eventId": "finish:9150f85a-807c-4b6e-b8ef-a6211c1115d6:finish:3:return:return:1255"
         }
+      }
+    },
+    "finish:32e7d7e6-921f-474f-80c9-5f766498f37f": {
+      "digest": "ab751a66201d3751f61b053db3b0b7c938a17f30d0f26e19285c90a936ad6696",
+      "issue": 1255,
+      "message": {
+        "kind": "queued",
+        "issue": 1255,
+        "at": 1793936224667,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "376b6e387031dca5328e46de2e411b6845e76b6a"
       }
     }
   },
