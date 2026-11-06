@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5381,
-  "nextTicket": 258,
+  "revision": 5382,
+  "nextTicket": 259,
   "nextFence": 258,
   "tasks": {
     "1193": {
@@ -988,14 +988,14 @@
       "track": "ask",
       "layer": "infra",
       "branch": "codex/issue-1239-s6-selection",
-      "materialSha": "853883e0017cdd7cb067cd324b7eb5d21264e231",
+      "materialSha": "f43c2e95a591e2bca2a60f02d68a63bbc5f6da18",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 257,
-      "queued": false,
+      "ticket": 258,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793940533218,
-      "reviewEntry": 2,
+      "readyAt": 1793940748885,
+      "reviewEntry": 3,
       "patchId": "742985fed36a866d983b92d39c21a3f551edbaac",
       "changedFiles": [
         "PROCESS.md",
@@ -1040,11 +1040,7 @@
         "entry": 2,
         "detail": "Поведение механизма: process-next/test/catalog.test.mjs: failed",
         "eventId": "finish:66e36774-1267-46f3-8c79-7e83cf790fe1:finish:1:return:return:1239"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793940548546,
-      "automationDetail": "Selected check infra-behavior:79eb477efef57d8642300c85 reads prepared product artifacts (product-build); an infrastructure-only profile cannot silently build the product",
-      "reason": "checks-failed"
+      }
     },
     "1240": {
       "issue": 1240,
@@ -4061,7 +4057,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1239
+  ],
   "active": null,
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
@@ -4318,6 +4316,28 @@
           "entry": 2,
           "detail": "Поведение механизма: process-next/test/catalog.test.mjs: failed",
           "eventId": "finish:66e36774-1267-46f3-8c79-7e83cf790fe1:finish:1:return:return:1239"
+        }
+      }
+    },
+    "finish:2636c0cd-d453-4d1b-bd3c-d42d2e3934d9": {
+      "digest": "ccddd72a4956eb1a29de4137c98facdf87f6bdde15d639095eace6542799bb51",
+      "issue": 1239,
+      "message": {
+        "kind": "queued",
+        "issue": 1239,
+        "at": 1793940748885,
+        "entry": 3,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "f43c2e95a591e2bca2a60f02d68a63bbc5f6da18",
+        "evidence": {
+          "id": "20261106T043230311-bca5e036",
+          "name": "Тесты для задачи #1239 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261106T043230311-bca5e036/report.json",
+          "materialSha": "a80dbdacd9f0a08aefbed60ff965a49d68072304",
+          "status": "passed",
+          "finishedAt": "2026-11-06T04:32:46.468Z",
+          "failures": []
         }
       }
     }
