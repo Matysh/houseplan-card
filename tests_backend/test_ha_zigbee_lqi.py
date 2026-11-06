@@ -381,3 +381,76 @@ async def test_authenticated_read_only_projection_acl_and_no_raw_or_foreign_data
         coordinator.flush()
         assert len(coordinator.listeners) == 0, "revoked user no longer owns the live projection"
     assert transport.published == []
+
+async def test_malformed_registry_identifiers_do_not_stop_zha_or_z2m_refresh(hass, transport):
+    """One foreign registry record must not break the shared 30-second reader."""
+    entry, mqtt_entry, zha_entry, coordinator, config = await setup(hass)
+    registry = dr.async_get(hass)
+    area = ar.async_get(hass).async_create("Mixed integrations")
+    z2m = device(hass, mqtt_entry, 1, area=area.id)
+    zha = device(hass, zha_entry, 2, area=area.id)
+    foreign_entry = MockConfigEntry(domain="mqtt", title="Third-party MQTT", data={})
+    foreign_entry.add_to_hass(hass)
+    foreign = []
+    for index in range(5):
+        row = registry.async_get_or_create(config_entry_id=foreign_entry.entry_id,
+            identifiers={("polaris_mqtt", f"unit_{index}", "extra")}, name=f"Foreign {index}")
+        foreign.append(registry.async_update_device(row.id, area_id=area.id))
+    # Malformed records must be skipped, not truncated or used to discard the
+    # valid pair on the same device. The tempting extra radios also exist.
+    registry.async_update_device(z2m.id, new_identifiers={*z2m.identifiers,
+        ("mqtt", "zigbee2mqtt_0x0000000000000003", "extra")})
+    registry.async_update_device(zha.id, new_identifiers={*zha.identifiers,
+        ("zha", "00:00:00:00:00:00:00:04", "extra")})
+    radio = SimpleNamespace(ieee="00:00:00:00:00:00:00:02", lqi=180)
+    gateway = SimpleNamespace(config_entry=zha_entry, devices={radio.ieee: radio,
+        "00:00:00:00:00:00:00:04": SimpleNamespace(ieee="00:00:00:00:00:00:00:04", lqi=255)})
+    hass.data["zha"] = SimpleNamespace(gateway=gateway)
+    radios = [*inventory(1, "own"), *inventory(3, "not-owned")]
+    config["spaces"] = [{"id": "floor", "rooms": [{"id": "room", "area": area.id,
+        "poly": [[0, 0], [1, 0], [1, 1], [0, 1]]}]}]
+    await save(entry, config)
+    transport.emit("zigbee2mqtt/bridge/devices", radios, retain=True)
+    await until(lambda: coordinator._refresh_task is None)
+    assert coordinator.bindings == {
+        ("z2m", "zigbee2mqtt", "0000000000000001"): z2m.id,
+        ("zha", zha_entry.entry_id, "0000000000000002"): zha.id,
+    }
+    transport.emit("zigbee2mqtt/own", {"linkquality": 123})
+    assert {key: row["lqi"] for key, row in coordinator.snapshot()["devices"].items()} == {
+        z2m.id: 123, zha.id: 180}
+    registry.async_update_device(foreign[0].id,
+        new_identifiers={("polaris_mqtt", "unit_0", "changed")})
+    await hass.async_block_till_done()
+    await until(lambda: coordinator._refresh_task is None)
+    radio.lqi = 90
+    transport.emit("zigbee2mqtt/own", {"linkquality": 0})
+    await coordinator._tick()
+    await until(lambda: coordinator._refresh_task is None)
+    assert {key: row["lqi"] for key, row in coordinator.snapshot()["devices"].items()} == {
+        z2m.id: 0, zha.id: 90}
+    assert not coordinator._structure_dirty
+    assert not any("not-owned" in topic for topic in transport.subscribed)
+    assert transport.published == []
+@pytest.mark.parametrize("invalid", [None, 17, "mq", {}, (), ("mqtt",),
+    ("mqtt", "zigbee2mqtt_0x0000000000000002", "extra"),
+    ("mqtt", "zigbee2mqtt_0x0000000000000002", "extra", "fourth")])
+def test_rebuild_ignores_bad_identity_without_discarding_valid_pair(monkeypatch, invalid):
+    from custom_components.houseplan import zigbee_lqi as module
+
+    own = SimpleNamespace(id="own", area_id=None, config_entry_id="provider",
+        identifiers=[invalid, ["mqtt", "zigbee2mqtt_0x0000000000000001"]])
+    bad = SimpleNamespace(id="bad", area_id=None, config_entry_id="provider", identifiers=[invalid])
+    devices = {row.id: row for row in (own, bad)}
+    registry = SimpleNamespace(devices=devices, async_get=devices.get)
+    provider = SimpleNamespace(domain="mqtt")
+    hass = SimpleNamespace(config_entries=SimpleNamespace(async_get_entry=lambda key: provider))
+    coordinator = module.ZigbeeLqiCoordinator(hass, None)
+    coordinator.config = {"markers": [{"binding": "device:own"}, {"binding": "device:bad"}]}
+    coordinator.z2m.inventories = {"zigbee2mqtt": {
+        "0000000000000001": "own", "0000000000000002": "not-owned"}}
+    with monkeypatch.context() as patch:
+        patch.setattr(module.dr, "async_get", lambda hass: registry)
+        patch.setattr(module.er, "async_get", lambda hass: SimpleNamespace(entities={}))
+        coordinator._rebuild_bindings(["zigbee2mqtt"])
+    assert coordinator.bindings == {("z2m", "zigbee2mqtt", "0000000000000001"): "own"}

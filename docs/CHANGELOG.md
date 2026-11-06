@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Skip malformed third-party device registry identifiers before unpacking so Zigbee LQI continues updating valid ZHA/Z2M devices and valid pairs on the same device (#1341).
+
 - Remove the obsolete assertion for the retired npm test:chunk entrypoint; retain all three behavior tests of the live helper (#1340).
 
 ## v1.85.0-beta.1 — 2026-11-06

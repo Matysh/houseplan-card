@@ -198,7 +198,11 @@ class ZigbeeLqiCoordinator:
         for device_id in scope:
             device = devices.async_get(device_id)
             entry_ids = config_entry_ids(device)
-            for domain, identifier in device.identifiers:
+            for identity in device.identifiers:
+                # Third-party integrations can leave malformed registry entries.
+                if not isinstance(identity, (tuple, list)) or len(identity) != 2:
+                    continue
+                domain, identifier = identity
                 ieee = registry_ieee(domain, identifier)
                 if not ieee:
                     continue
