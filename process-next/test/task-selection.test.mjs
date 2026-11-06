@@ -214,3 +214,61 @@ test('shared application/stand aggregation does not make every scenario a reader
     // transitive scenario relevance, never execution fingerprints in finalize.
     assert.ok(shell.files.includes('test/tooltip-reader.test.mjs'));
 }));
+test('shared test inputs and product-contract readers participate in product changes', async () => fixture({
+    'test/helpers/geometry-commit.mjs': 'export const x=1;',
+    'test/fixtures/wall-model.json': '{}',
+    'demo/helpers/local-view.mjs': 'export const x=1;',
+    'demo/fixtures/wall-model.json': '{}',
+    'docs/data-hp-contract.json': '{}',
+    'src/houseplan-card.ts': 'export const x=1;',
+    'test/reader.test.mjs': "import './helpers/geometry-commit.mjs'; import './fixtures/wall-model.json'; import '../demo/helpers/local-view.mjs'; import '../demo/fixtures/wall-model.json'; import '../docs/data-hp-contract.json';",
+    'test/unified-wall-tool-source.test.mjs': "import '../src/houseplan-card.ts';",
+}, async (dir) => {
+    for(const path of ['test/helpers/geometry-commit.mjs','test/fixtures/wall-model.json','demo/helpers/local-view.mjs','demo/fixtures/wall-model.json','docs/data-hp-contract.json']) {
+        const p=await select(dir,{changedFiles:[path]});
+        assert.ok(p.files.includes('test/reader.test.mjs'),path);
+        assert.ok(p.explanation.reasons['test/reader.test.mjs'].some(r=>r.includes(path)),path);
+    }
+    const contract=await select(dir,{changedFiles:['src/houseplan-card.ts']});
+    assert.ok(contract.files.includes('test/unified-wall-tool-source.test.mjs'));
+    const missing=await select(dir,{changedFiles:['demo/helpers/unknown-new.mjs']});
+    assert.ok(missing.explanation.gaps.some(g=>g.path==='demo/helpers/unknown-new.mjs'));
+    assert.ok(missing.files.includes('test/reader.test.mjs'));
+}));
+test('spawned script edits invalidate the actual prior PASS and auto-select its reader', async () => fixture({
+    'scripts/generate-pdf-font.mjs': 'console.log(1);',
+    'test/pdf-font-assets.test.mjs': "import test from 'node:test';import assert from 'node:assert/strict';import {spawnSync} from 'node:child_process';test('generated asset',()=>{const r=spawnSync(process.execPath,['scripts/generate-pdf-font.mjs'],{encoding:'utf8'});assert.equal(r.status,0);assert.equal(r.stdout.trim(),'1');});",
+}, async dir=>{
+    const request={root:dir,layer:'infra',changedFiles:['scripts/generate-pdf-font.mjs']};
+    const plan=await planProfile(request);
+    const check=plan.steps.find(s=>s.command.includes('test/pdf-font-assets.test.mjs'));
+    assert.ok(check,'spawn reader is selected without areaTests');
+    assert.ok(check.inputs.includes('scripts/generate-pdf-font.mjs'));
+    const options={root:dir,stateDir:resolve(dir,'state'),environment:{NODE_TEST_CONTEXT:undefined}};
+    // Syntax belongs to the real repository; this fixture executes the actual test/target pair.
+    const runnable=p=>({...p,steps:p.steps.filter(s=>s.id!=='infra-syntax')});
+    const first=await runPlan(runnable(plan),options);
+    assert.equal(first.status,'passed');
+    const reused=await runPlan(runnable(plan),options);
+    assert.equal(reused.results.find(r=>r.id===check.id).status,'reused');
+    await writeFile(resolve(dir,'scripts/generate-pdf-font.mjs'),'console.log(2);');
+    const second=await runPlan(runnable(await planProfile(request)),options);
+    assert.equal(second.results.find(r=>r.id===check.id).status,'failed','changed spawn target must rerun and expose real failure');
+}));
+test('release hotfix retains the addressed profile without automatic task expansion', async () => fixture({
+    'src/wall-change.ts':'', 'test/wall-related.test.mjs':'', 'test/explicit.test.mjs':'',
+},async dir=>{
+    const p=await planProfile({root:dir,event:'hotfix',changedFiles:['src/wall-change.ts'],areaTests:['test/explicit.test.mjs']});
+    assert.equal(p.selection,undefined);
+    assert.ok(p.steps.some(s=>s.command?.includes('test/explicit.test.mjs')));
+    assert.ok(!p.steps.some(s=>s.command?.includes('test/wall-related.test.mjs')));
+}));
+test('build-input tools inherit product scope from the existing preparation inputs', async () => fixture({
+    'scripts/coverage-maps.mjs':'export const x=1;',
+    'test/unrelated-fast.test.mjs':'',
+},async dir=>{
+    const p=await planProfile({root:dir,layer:'product',changedFiles:['scripts/coverage-maps.mjs']});
+    assert.ok(p.steps.some(s=>s.id==='product-build'));
+    assert.ok(p.steps.some(s=>s.command?.includes('test/unrelated-fast.test.mjs')),'unmapped build tool uses the conservative quick fallback');
+    assert.ok(p.selection.gaps.some(g=>g.path==='scripts/coverage-maps.mjs'));
+}));

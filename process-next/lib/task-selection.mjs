@@ -50,7 +50,11 @@ const unique = xs => [...new Set(xs)];
 // every consumer tests each nested behaviour. Dedicated readers and domain
 // witnesses still select the component's actual contracts.
 const AGGREGATION_BOUNDARIES = new Set(['demo/serve.mjs', 'demo/bundle-freshness.mjs', 'scripts/source-fingerprint.mjs', 'src/houseplan-card.ts', 'src/houseplan-panel.ts']);
-const sourceFile = p => /^(?:src\/|custom_components\/houseplan\/|assets\/)/.test(p) || /^(?:package(?:-lock)?\.json|tsconfig.*\.json|rollup\.config\.mjs)$/.test(p);
+const originalSourceFile = p => /^(?:src\/|custom_components\/houseplan\/|assets\/)/.test(p) || /^(?:package(?:-lock)?\.json|tsconfig.*\.json|rollup\.config\.mjs)$/.test(p);
+const isDocument = p => /\.md$/i.test(p) || /^(?:LICENSE|NOTICE)(?:\.[^/]+)?$/.test(p) || /^docs\/.*\.(?:png|jpe?g|webp|svg|gif|pdf)$/i.test(p);
+// Shared helpers, fixtures and contracts are real selection inputs as well as
+// production modules. A new unrecognised input must remain visibly conservative.
+const sourceFile = p => originalSourceFile(p) || !isInfra(p) && !isDocument(p);
 export async function testCatalog(root, inventory, { e2eRoot } = {}) {
     const known = new Map(inventory.entries.map(row => [row.path, row])), rows = [], excluded = [];
     for (const directory of ['test', 'tests_backend', 'demo', 'process-next/test', 'scripts/converters'])
@@ -117,7 +121,7 @@ export function chooseOptionalChecks(candidates, { budgetMs, mandatoryMs, mandat
     }
     return { selected, deferred };
 }
-export async function selectTaskTests({ root, inventory, track, layer, changedFiles = [], areaTests = [] }) {
+export async function selectTaskTests({ root, inventory, track, layer, changedFiles = [], areaTests = [], productSourceInputs = [] }) {
     const catalog = await testCatalog(root, inventory), rows = catalog.rows.filter(fast);
     const selected = new Map(), add = (path, reason) => {
         if (!existsSync(resolve(root, path)))
@@ -129,7 +133,7 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
     };
     for (const path of areaTests)
         add(path, 'Дополнение исполнителя');
-    const product = layer === 'product', productChanges = changedFiles.filter(sourceFile), infraChanges = changedFiles.filter(isInfra);
+    const product = layer === 'product', productChanges = changedFiles.filter(p => !isDocument(p) && (sourceFile(p) || productSourceInputs.includes(p))), infraChanges = changedFiles.filter(p => isInfra(p) && !isDocument(p));
     if (product)
         for (const file of CRITICAL_NODE)
             add(file, 'Общее критичное ядро');
@@ -158,10 +162,10 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
         return result;
     }
     for (const row of rows) {
-        const eligible = product && row.layer === 'product' || infraChanges.length && row.layer === 'infra' || !product && row.layer === 'infra';
+        const eligible = product || row.layer === 'infra';
         if (!eligible)
             continue;
-        const relevant = row.layer === 'infra' ? infraChanges : productChanges;
+        const relevant = row.layer === 'infra' ? unique([...infraChanges, ...(product ? productChanges : [])]) : productChanges;
         if (changedFiles.includes(row.path))
             add(row.path, 'Изменён сам исполняемый файл');
         if (relevant.length) {
@@ -169,8 +173,7 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
             for (const file of relevant)
                 if (inputs.has(file)) {
                     add(row.path, `Читает изменённый модуль/данные: ${file}`);
-                    if (row.layer === 'product')
-                        readerMatches.add(file);
+                    readerMatches.add(file);
                 }
         }
         if (row.layer === 'product' && productChanges.length) {
@@ -187,9 +190,10 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
     for (const path of productChanges.filter(path => domainsOf(path).length && !readerMatches.has(path))) {
         const domains = domainsOf(path);
         mappingGaps.push({ path, reason: 'Нет статически подтверждённого читателя: выбран полный быстрый набор ближайших областей.' });
-        for (const row of rows)
-            if (row.layer === 'product' && row.type !== 'browser' && row.domains.some(id => domains.includes(id)))
-                add(row.path, 'Полный быстрый набор области при неполной карте связей');
+        const nearest = rows.filter(row => row.layer === 'product' && row.type !== 'browser' && row.domains.some(id => domains.includes(id)));
+        const fallback = nearest.length ? nearest : rows.filter(row => row.layer === 'product' && row.type === 'node');
+        for (const row of fallback)
+            add(row.path, nearest.length ? 'Полный быстрый набор области при неполной карте связей' : 'Нет набора ближайшей области: полный быстрый Node fallback');
     }
     if (product && productChanges.length) {
         const smokeDomains = track === 'ship' ? own : unique([...own, ...related]);
@@ -228,6 +232,8 @@ export function selectionText(selection, report) {
     const lines = [`S6 ${selection.track}/${selection.layer}: области ${selection.domains.join(', ') || 'не определены'}; выбрано ${selection.files} файлов.`, `Связи: ${selection.relatedDomains.join(', ') || 'нет'}. Кейсы до исполнения неизвестны; файлы не выдаются за кейсы.`];
     if (selection.optional)
         lines.push(`Дополнения: ${selection.optional.selected.length}; отложено ${selection.optional.deferred.length} (обязательные проверки не сокращаются).`);
+    if (selection.optional?.deferred.length)
+        lines.push('Причины отсрочки: ' + unique(selection.optional.deferred.map(row => row.reason)).join('; '));
     if (selection.cost)
         lines.push(`Оценка всего S6: неизвестна; исторический минимум ${selection.cost.wholeS6BaselineMs === null ? 'не применим' : (selection.cost.wholeS6BaselineMs / 1000) + ' с'}; гипотеза ${selection.cost.hypothesisSeconds} с, без нижней границы и гейта.`);
     if (selection.cost)

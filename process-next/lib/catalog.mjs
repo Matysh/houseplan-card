@@ -9,7 +9,7 @@ import { execFileSync } from 'node:child_process';
 import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, BETA_E2E } from '../catalog/selections.mjs';
 import { makeE2ESteps } from './e2e.mjs';
 import { makeConverterStep } from './converters.mjs';
-import { walk } from './storage.mjs';
+import { walk, matchesInputs } from './storage.mjs';
 import { GOLDEN_CAPTURE_INPUTS } from '../../scripts/source-fingerprint.mjs';
 import { demoIconSourceFiles } from '../../demo/helpers/icon-sources.mjs';
 
@@ -29,6 +29,8 @@ export const PUBLIC_PRODUCT_INPUTS = [...buildSourceInputs.filter(path => path !
   'custom_components/houseplan/**', 'docs/data-hp-contract.json', '.nvmrc', '.python-version'];
 const browserInputs = [...buildInputs, 'demo/**/*.mjs', 'demo/fixtures/**/*.json', 'demo/srv/demo.html', 'demo/srv/assets/*.svg',
   'scripts/browser-attestation.mjs', 'scripts/toolchain-pins.mjs', 'scripts/capture-environment.mjs'];
+const testBuildInputs = [...productInputs, 'tsconfig.test.json', 'scripts/fix-test-build.mjs', 'scripts/coverage-maps.mjs'];
+export const PRODUCT_PREPARATION_INPUTS = [...new Set([...buildInputs, ...testBuildInputs])];
 const pythonInputs = ['custom_components/houseplan/**/*.py', 'custom_components/houseplan/manifest.json', 'tests_backend/**/*.py', 'tests_backend/requirements.txt', 'pytest.ini', 'pyproject.toml'];
 const pythonBackedTests = new Set(['demo/smoke_wall_node_python_roundtrip.mjs',
   'demo/smoke_wall_node_merge.mjs',
@@ -138,7 +140,7 @@ async function checkedPaths(root, paths, tests = false) {
 
 function preparations(steps, { build = false, tests = false, browser = false } = {}) {
   if (build) steps.push(step('product-build', 'Сборка и типы продукта', helper('prepare', 'build'), buildInputs, [], { outputs: ['dist'] }));
-  if (tests) steps.push(step('test-build', 'Подготовка модулей для тестов', helper('prepare', 'tests'), [...productInputs, 'tsconfig.test.json', 'scripts/fix-test-build.mjs', 'scripts/coverage-maps.mjs'], [], { outputs: ['test-build'] }));
+  if (tests) steps.push(step('test-build', 'Подготовка модулей для тестов', helper('prepare', 'tests'), testBuildInputs, [], { outputs: ['test-build'] }));
   if (browser) steps.push(step('demo-assets', 'Подготовка карточки для браузера', ['node', 'scripts/bundle-sync.mjs'], [...buildInputs, 'demo/gen_icons.mjs', 'scripts/bundle-sync.mjs', 'scripts/bundle-tree.mjs'], ['product-build'], { outputs: ['demo/srv/assets/houseplan-assets.json', 'demo/srv/assets/houseplan-card.js', 'demo/srv/assets/houseplan-assets', 'demo/srv/assets/icons.js'] }));
 }
 
@@ -203,7 +205,7 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
   }
   const requested = await checkedPaths(root, areaTests, true);
   const changed = await checkedPaths(root, changedFiles);
-  const selection=!release?await selectTaskTests({root,inventory,track,layer:infra?'infra':'product',changedFiles:changed,areaTests:requested}):null;
+  const selection=!release&&event!=='hotfix'?await selectTaskTests({root,inventory,track,layer:infra?'infra':'product',changedFiles:changed,areaTests:requested,productSourceInputs:changed.filter(file=>matchesInputs(file,PRODUCT_PREPARATION_INPUTS))}):null;
   const affected=selection?.files??requested;if(selection)result.selection=selection.explanation;
   if (infra && !release) {
     const syntax = changed.filter(path => existsSync(resolve(root,path))&&['.mjs', '.cjs', '.js', '.json', '.yml', '.yaml', '.py', '.ts'].includes(extname(path)));

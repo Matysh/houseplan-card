@@ -1,6 +1,10 @@
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, relative, dirname, extname } from 'node:path';
 const safeRelative = value => typeof value === 'string' && value && !value.startsWith('-') && !value.includes('\\') && !value.split('/').includes('..') && !value.startsWith('/') && !value.includes(':');
+// These modules describe future worker commands; literals there are not calls.
+// Ordinary tests may spawn a script instead of importing it. Keep their literal
+// repository paths conservative for both selection and result fingerprints.
+const COMMAND_DECLARATIONS = new Set(['process-next/lib/catalog.mjs', 'process-next/lib/task-selection.mjs', 'process-next/catalog/selections.mjs', 'process-next/lib/background.mjs', 'process-next/lib/e2e.mjs', 'process-next/lib/converters.mjs', 'scripts/mutation-registry.mjs']);
 export function dependencyReader(root) {
     const cache = new Map();
     function direct(file) {
@@ -17,13 +21,15 @@ export function dependencyReader(root) {
                     // a second import/read of the host repository. Ignore comments as well.
                     const literalStarts = new Set([...text.matchAll(/\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`/g)]
                         .filter(m => !m[0].startsWith('/')).map(m => m.index));
-                    // Follow imports and actual data readers. A worker's command array is
+                    // Keep ordinary repository literals conservative, including spawn targets.
+                    // The explicit worker declaration modules above describe future calls:
+                    // a worker's command array is
                     // a declaration, not an import of every executable it may later launch.
                     for (const match of text.matchAll(/['"]((?:src|demo|scripts|dist|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) {
                         if (!literalStarts.has(match.index))
                             continue;
                         const prefix = text.slice(Math.max(0, match.index - 180), match.index);
-                        if (/^(?:src\/|test\/fixtures\/|demo\/fixtures\/)/.test(match[1])
+                        if (!COMMAND_DECLARATIONS.has(file) || /^(?:src\/|test\/fixtures\/|demo\/fixtures\/)/.test(match[1])
                             || /(?:\breadFile(?:Sync)?\s*\(|\bnew\s+URL\s*\()[^;]*$/.test(prefix))
                             edges.push(match[1]);
                     }

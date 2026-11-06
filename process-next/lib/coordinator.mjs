@@ -1,3 +1,5 @@
+import { PRODUCT_PREPARATION_INPUTS } from './catalog.mjs';
+import { matchesInputs } from './storage.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { LeaseLost, StateConflict, ownerDecisionRecord, queueSummary, REVIEW_RETRY_VISIBILITY_MS } from './queue.mjs';
@@ -37,6 +39,7 @@ export function taskLayerFromDiff(files) {
   const doc = file => /\.md$/i.test(file) || /^(?:LICENSE|NOTICE)(?:\.[^/]+)?$/.test(file)
     || /^docs\/.*\.(?:png|jpe?g|webp|svg|gif|pdf)$/i.test(file);
   if (source.every(doc)) return 'docs';
+  if (source.some(file => matchesInputs(file, PRODUCT_PREPARATION_INPUTS))) return 'product';
   if (source.some(file => {
     if (['infrastructure', 'converter', 'product-meta'].includes(knownKinds.get(file))) return false;
     return /^(?:src|custom_components|assets|demo|test|tests_backend)\//.test(file) || file === 'docs/data-hp-contract.json'
