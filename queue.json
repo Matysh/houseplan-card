@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5519,
+  "revision": 5520,
   "nextTicket": 263,
   "nextFence": 263,
   "tasks": {
@@ -4054,18 +4054,12 @@
       }
     },
     "1330": {
-      "requestId": "spec:1330:99efae8b238814fd2e7aa3920df71b229609699c37dd1b808f91b0f4d36e2901",
-      "contextDigest": "99efae8b238814fd2e7aa3920df71b229609699c37dd1b808f91b0f4d36e2901",
+      "requestId": "spec:1330:150260ee3c4ba845d41581fc9071249b59c0adf29eff28aed8ca5f94d3c4f133",
+      "contextDigest": "150260ee3c4ba845d41581fc9071249b59c0adf29eff28aed8ca5f94d3c4f133",
       "base": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1793946923737,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42174677181",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1793958681081
     }
   },
   "reviewPublications": {
@@ -4080,6 +4074,19 @@
       "presentation": {
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
+      }
+    },
+    "spec:1330:spec:1330:150260ee3c4ba845d41581fc9071249b59c0adf29eff28aed8ca5f94d3c4f133": {
+      "issue": 1330,
+      "kind": "spec",
+      "requestId": "spec:1330:150260ee3c4ba845d41581fc9071249b59c0adf29eff28aed8ca5f94d3c4f133",
+      "materialSha": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
+      "expectedBase": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
+      "patchId": "150260ee3c4ba845d41581fc9071249b59c0adf29eff28aed8ca5f94d3c4f133",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-06T09:51:21.081Z"
       }
     }
   },
@@ -4194,6 +4201,10 @@
       "digest": "38d87bec9b2a379ffea4b64ac3427022cd753f216d29303f1c07b6784eae0f3e",
       "issue": 1253
     },
+    "github:42198145898:1:label:spec-request": {
+      "digest": "2f8cf0eddb265af7c4f8aa76d0ae2313d48223e9345be6ede57ace69569a745c",
+      "issue": 1330
+    },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
       "digest": "a56f6f76ba636c40127695117d57a9970d2dabae7dc8e6ca7ab9b154319f8ebc",
       "issue": 1329,
@@ -4292,6 +4303,22 @@
           "eventId": "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:3:return:return:1253"
         },
         "delivered": true
+      }
+    },
+    "github:42198145898:1:label:spec-request:spec-resubmitted:1330": {
+      "digest": "2f8cf0eddb265af7c4f8aa76d0ae2313d48223e9345be6ede57ace69569a745c",
+      "issue": 1330,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1330,
+        "at": 1793958681081,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1330:150260ee3c4ba845d41581fc9071249b59c0adf29eff28aed8ca5f94d3c4f133",
+        "reviewChanges": "Трек ask: нужны новое wire-intent и ограниченный contact-proof. Предлагается сохранить переносимый ID, split host по существующей from/to-политике Draw, radius12px и явный отказ ambiguity<=1px между разными carrier. Новый capability отдельно от merge, optional attach_edge mutually exclusive merge_node_id. Generic Move/DAG/Save/Optimize не расширяются. Предлагаемый held preview как #1305 — outline + точная мишень, полный proof один раз на release. Альтернатива «только snap/allow-contact» отвергнута из-за отсутствия topology и backend proof; temporary node+merge требует лишних IDs/remap, поэтому основной путь — именованный batch split с переиспользованием source node. Выбор внутренней реализации допускает переиспользование узких существующих helpers при том же внешнем контракте.\n\nНа S4 продуктовый код задачи не менялся и S6/HA/native прогоны не выполнялись. Исходные TS/Python diagnostics и Draw-positive из исследования остаются контекстом, а не новым подтверждением ACL/ACK. Содержательно проверить перечисленные числовые правила, допустимость carrier/dependency/room/opening guards и отсутствие широкого разрешения контактов.\n\n\n### Исправления по предыдущему ревью\n\nРаунд S4: [42174677181](https://github.com/Matysh/houseplan-card/actions/runs/42174677181), changes_requested. Служебный exit1 означает содержательный возврат, не ошибку транспорта.\n\n1. Неопределённость tq: добавлено точное клиентское правило Draw quantizedPoint + graphDrawTargetRef, шаг1/240, последовательность radius/rank, orientation policy, пример1/2; отдельно задано, что backend принимает reduced exact rational на named host в MAX_BITS с независимым proof, не требует восстановить неизвестный курсор и не расширяет ordinary Move.\n2. Source степени≥2: требуется решение владельца. Исходное ТЗ ещё не считается согласованным по этой границе. После attach угол/L может стать passing1+branches≥2, который допустим для графа, но текущий Select считает unsupported. Реализация не начата, новый S4 не запрашивается до решения. Рекомендуемый вариант — новый attach только для висячего конца и supported-результата (T), без изменения общего Select; альтернативный — разрешить многоветвевой результат с явным принятием его ограничения либо отдельно расширять Select, что увеличивает задачу.\n\nПредложения ревью об устранении недостижимой T/X positive ветки, отказе заведомому overlap у host-инцидентного дальнего конца, kind-neutral ID и отдельном forward host-baseline для receiving openings будут отражены после выбранной границы source. Старый материал/выводы ревью остаются в ленте; blocker не заменяет S3.\n\n\n### Решение владельца и повторная передача после S4\n\nВладелец в чате2026-11-06: «1330 — допускаем attach только для висячего конца». Blocker снят. Принято ровно одно инцидентное ребро source и supported T-результат; L/угол/T/X исключены и из UI цели, и из server admission. Общая редактируемость junction не расширяется. Ветка недостижимого положительного T/X attach удалена из текущего контракта выбора; прежние ограничения ordinary Move/merge сохранены.\n\nЗамечание1: точка определяется Draw quantizedPoint→graphDrawTargetRef, шаг1/240 от original.from; сервер явно принимает bounded reduced rational named host без восстановления курсора. Замечание2: решено владельцем, source degree1 → supported T, тест на отказ degree≥2 и последующее обычное редактирование T. Дополнительно уточнены предварительный отказ host у дальнего конца/overlap, kind-neutral allocated-once ID, отдельный forward node_move_host_baseline и существующие 20cm/5cm поздние физические отказы. Исходное исследование и предыдущий отчёт остаются историей; изложенные выше решения имеют приоритет для реализации.\n\nПродуктовый код #1330 ещё не начат. Перед повторным S4 — авторский spec-check текущего полного тела. #1331/#1332 и предыдущие задачи продолжаются независимо.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
