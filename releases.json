@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 565,
+  "revision": 566,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -36940,8 +36940,9 @@
           "from": "25d23997a1bb06cb6a2d35d63b22362a20623c64",
           "to": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
           "syncMode": "merge",
-          "status": "pending",
-          "tag": "v1.85.0"
+          "status": "ported",
+          "tag": "v1.85.0",
+          "devSha": "dd8c78da81f79a3b28a772971d2aa971fb2d5ce4"
         }
       ],
       "diagnostics": [],
@@ -37160,7 +37161,8 @@
           "status": "not-required"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "dd8c78da81f79a3b28a772971d2aa971fb2d5ce4",
           "issue": 1343,
           "branch": "issue/1343-release-return-52610e210052",
           "worktree": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/process-next/return-worktrees/52610e210052"
@@ -41658,7 +41660,8 @@
     "stable1850-20261106-publish:completion:1afa5713-2c5a-4706-9937-98a0322fa79e": "89b5806a1b84c250ac1851c15e85ff061181d672ddb14fc647d8538d355dc9ed",
     "stable1850-20261106-publish:completion:4da61387-eed5-4058-8193-2541e2352c2e": "61d405899cc8063516af77c4451cf8a490fd78a77decb3f249688dad6d2ebee8",
     "stable1850-20261106-publish:completion:98b4618c-6dc5-449e-8926-f7242e194f47": "39a3a17a443a562605912fc7027ccaaeab7893e3685f11c5c8a9af730aeb6a3d",
-    "stable1850-20261106-publish:completion:738ffbae-6761-41d2-b25b-93b44d87d81b": "2251922505041269903e755359d23448c252727f4e6e4ee543cc3653d5fae450"
+    "stable1850-20261106-publish:completion:738ffbae-6761-41d2-b25b-93b44d87d81b": "2251922505041269903e755359d23448c252727f4e6e4ee543cc3653d5fae450",
+    "stable1850-20261106-publish:completion:1f456bdb-8044-41a3-a07c-2c3c3b2f9427": "0e6a2fdb026408a0ea267fecfd370711912788b2612baf4cc49853ea4bf210f7"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
