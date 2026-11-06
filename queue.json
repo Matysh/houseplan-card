@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5737,
-  "nextTicket": 271,
+  "revision": 5738,
+  "nextTicket": 272,
   "nextFence": 271,
   "tasks": {
     "1193": {
@@ -1243,14 +1243,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1253-stairs-hover",
-      "materialSha": "a520233c955ffba5f971c62e154a0cbb6f78ab93",
+      "materialSha": "6c8b0a3ccb95386c911e447331e24fcedf4c62d5",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 270,
-      "queued": false,
+      "ticket": 271,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793965579879,
-      "reviewEntry": 4,
+      "readyAt": 1793966110094,
+      "reviewEntry": 5,
       "patchId": "92206664e51ccdb4e29b4d267c6f84a01cccca74",
       "changedFiles": [
         "demo/helpers/stairs-placement-preview.mjs",
@@ -1274,8 +1274,7 @@
         "entry": 4,
         "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed",
         "eventId": "finish:05afdffa-8fb4-43f8-851e-34e1123aea1b:finish:3:return:return:1253"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1254": {
       "issue": 1254,
@@ -4077,7 +4076,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1253
+  ],
   "active": null,
   "events": {
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
@@ -4434,6 +4435,19 @@
           "eventId": "finish:05afdffa-8fb4-43f8-851e-34e1123aea1b:finish:3:return:return:1253"
         },
         "delivered": true
+      }
+    },
+    "finish:61534d0e-f40d-463c-a57f-b4bdee7ba31e": {
+      "digest": "62584d9518fad4083e50221a1fe425965aaeefed6a1bbdd921e4a1b04778c617",
+      "issue": 1253,
+      "message": {
+        "kind": "queued",
+        "issue": 1253,
+        "at": 1793966110094,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6c8b0a3ccb95386c911e447331e24fcedf4c62d5"
       }
     }
   },
