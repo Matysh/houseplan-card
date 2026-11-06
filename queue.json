@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5430,
+  "revision": 5431,
   "nextTicket": 260,
   "nextFence": 260,
   "tasks": {
@@ -235,38 +235,6 @@
         "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": true,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
-      }
-    },
-    "1218": {
-      "issue": 1218,
-      "branch": "codex/1218",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "44330439f73c5bd6a70323797d5558102215bcf0",
-      "mergedSha": "cb1431ea65055b5d327e574c4fe2d567ba0a0d52",
-      "mergedAt": 1793690602694,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
         "commentCurrent": true,
         "commentDigest": "34c7bc28ce5c545336ab",
         "commentFacts": {
@@ -997,10 +965,20 @@
       "removedToRelease": false,
       "reviewRequest": "review:1239:4:7242f162e533627058babbeadb5bb84e79534731:3f778f3d9f3c1b691fce78891d71d095bb051a1e",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
