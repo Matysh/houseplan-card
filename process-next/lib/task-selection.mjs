@@ -5,8 +5,6 @@ import { resolve, basename } from 'node:path';
 import { walk } from './storage.mjs';
 import { dependencyReader } from './source-dependencies.mjs';
 import { BETA_E2E, CRITICAL_NODE } from '../catalog/selections.mjs';
-import { GOLDEN_SCENARIOS } from '../../demo/golden/matrix.mjs';
-import { prepareGoldenSelection } from '../catalog/golden-selection.mjs';
 /** Behaviour taxonomy shared by inventory, task selection and its explanation.
  * Labels inherit from files; no per-test quota or title filtering is applied. */
 export const FIXTURE_ARTIFACTS = new Map([['process-next/test/runner.test.mjs', 'dist/report.json occurs only in rejected output-path metadata; the runner test never reads product dist.'], ['test/coverage-diagnostic.test.mjs', 'All generated artifacts belong to its mkdtemp fixtures; it never needs the product checkout dist.']]);
@@ -56,6 +54,11 @@ const isDocument = p => /\.md$/i.test(p) || /^(?:LICENSE|NOTICE)(?:\.[^/]+)?$/.t
 // production modules. A new unrecognised input must remain visibly conservative.
 const sourceFile = p => originalSourceFile(p) || !isInfra(p) && !isDocument(p);
 export async function testCatalog(root, inventory, { e2eRoot } = {}) {
+    // Queue and public-CI workers import this module from their sparse checkout.
+    // Only actual catalog/task planning requires the full golden fixture tree.
+    const [{ GOLDEN_SCENARIOS }, { prepareGoldenSelection }] = await Promise.all([
+        import('../../demo/golden/matrix.mjs'), import('../catalog/golden-selection.mjs'),
+    ]);
     const known = new Map(inventory.entries.map(row => [row.path, row])), rows = [], excluded = [];
     for (const directory of ['test', 'tests_backend', 'demo', 'process-next/test', 'scripts/converters'])
         for (const path of walk(root, resolve(root, directory))) {

@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { readFile, copyFile } from 'node:fs/promises';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, dirname } from 'node:path';
@@ -271,4 +273,27 @@ test('build-input tools inherit product scope from the existing preparation inpu
     assert.ok(p.steps.some(s=>s.id==='product-build'));
     assert.ok(p.steps.some(s=>s.command?.includes('test/unrelated-fast.test.mjs')),'unmapped build tool uses the conservative quick fallback');
     assert.ok(p.selection.gaps.some(g=>g.path==='scripts/coverage-maps.mjs'));
+}));
+test('coordinator module graph loads within its deployed sparse checkout', async () => fixture({}, async dir=>{
+    // Cone-mode checkout includes the chosen directories and root-level files.
+    // Copy tracked inputs only: no auth, node_modules, artifacts or private state.
+    const workflow=await readFile(resolve(root,'.github/workflows/process-next-coordinator.yml'),'utf8');
+    const lines=workflow.split('\n'), selections=[];
+    for(let i=0;i<lines.length;i++){
+        const m=lines[i].match(/^(\s*)sparse-checkout:\s*\|/);
+        if(!m)continue;
+        const roots=[];
+        while(i+1<lines.length && lines[i+1].startsWith(m[1]+'  ')) roots.push(lines[++i].trim());
+        selections.push(roots);
+    }
+    assert.ok(selections.length>=2,'deployed public-ci and progress sparse definitions are present');
+    assert.ok(selections.every(x=>JSON.stringify(x)===JSON.stringify(selections[0])),'both coordinator jobs share the verified source closure');
+    const paths=execFileSync('git',['ls-files','-z'],{cwd:root,encoding:'utf8'}).split('\0').filter(p=>p && (!p.includes('/') || selections[0].some(prefix=>p.startsWith(prefix+'/'))));
+    for(const path of paths){
+        await mkdir(dirname(resolve(dir,path)),{recursive:true});
+        await copyFile(resolve(root,path),resolve(dir,path));
+    }
+    const code="try{await import('./process-next/templates/coordinator-job.mjs');throw Error('activation guard was skipped');}catch(e){if(e.message!=='New process is not activated')throw e;}";
+    const result=spawnSync(process.execPath,['--input-type=module','-e',code],{cwd:dir,encoding:'utf8',env:{...process.env,PROCESS_NEXT_ENABLED:undefined,NODE_TEST_CONTEXT:undefined}});
+    assert.equal(result.status,0,result.stderr||result.stdout);
 }));
