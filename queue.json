@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6073,
+  "revision": 6074,
   "nextTicket": 281,
   "nextFence": 281,
   "tasks": {
@@ -534,44 +534,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "9aa529f4ca2d7e06d71e6dc1c63ad70fe6efb39d"
-      }
-    },
-    "1235": {
-      "issue": 1235,
-      "branch": "codex/1235-summary-retry",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "d9b720a099fae6d77423cff816d0b911ef4b7fdc",
-      "mergedSha": "a52e6cb44514c55826400c7f3b12623fe76081bf",
-      "mergedAt": 1793714787240,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1235:1:55e3f180f8fa450d886640223aa8737eee8fdde5:d9b720a099fae6d77423cff816d0b911ef4b7fdc",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "a52e6cb44514c55826400c7f3b12623fe76081bf"
       }
     },
     "1236": {
@@ -3876,7 +3838,8 @@
       },
       "releaseTag": "v1.85.0-beta.1",
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "b01159e90270a4a454be4d7acbca9d90a51760f7"
       }
     }
   },
@@ -4040,7 +4003,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:42266334179:1:1339": {
+      "digest": "11ae7a2118f3335f0b6979cc27f9c687ca3b48f527c1bf446042e94201f89989",
+      "issue": 1339,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1339,
+        "at": 1793988023962,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b01159e90270a4a454be4d7acbca9d90a51760f7"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "b01159e90270a4a454be4d7acbca9d90a51760f7",
     "status": "pending",
