@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5820,
-  "nextTicket": 273,
+  "revision": 5821,
+  "nextTicket": 274,
   "nextFence": 273,
   "tasks": {
     "1193": {
@@ -3773,6 +3773,20 @@
         "sourceSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7"
       }
     },
+    "1330": {
+      "issue": 1330,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1330-dangling-node-attach",
+      "materialSha": "3bf206abbcabe3bd34d58e1dec9f713a5a8990bf",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 273,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793970595016,
+      "reviewEntry": 1
+    },
     "1331": {
       "issue": 1331,
       "branch": "codex/1331-s6-baseline",
@@ -4002,7 +4016,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1330
+  ],
   "active": null,
   "events": {
     "github:42174634491:1:spec:1330:spec-request": {
@@ -4060,6 +4076,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:9d1c8233-f35f-40b8-84b4-69e233ae4b2a": {
+      "digest": "69ef4c14a631bad4ea2939a3d4b7c43c1c9bf32d70c8420347875e230ee94015",
+      "issue": 1330,
+      "message": {
+        "kind": "queued",
+        "issue": 1330,
+        "at": 1793970595016,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "3bf206abbcabe3bd34d58e1dec9f713a5a8990bf"
       }
     }
   },
