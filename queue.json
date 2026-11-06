@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5338,
+  "revision": 5339,
   "nextTicket": 257,
   "nextFence": 257,
   "tasks": {
@@ -995,7 +995,27 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793939536138,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "fd302ed7b87e8d37a33543f293cf9ad645f376ef",
+      "changedFiles": [
+        "PROCESS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/TESTING.md",
+        "process-next/catalog/README.md",
+        "process-next/catalog/companion-inventory.json",
+        "process-next/catalog/costs.json",
+        "process-next/cli.mjs",
+        "process-next/lib/catalog.mjs",
+        "process-next/lib/coordinator.mjs",
+        "process-next/lib/runner.mjs",
+        "process-next/lib/source-dependencies.mjs",
+        "process-next/lib/task-selection.mjs",
+        "process-next/remote.mjs",
+        "process-next/templates/prepare-fallback.mjs",
+        "process-next/test/catalog.test.mjs",
+        "process-next/test/task-selection.test.mjs"
+      ]
     },
     "1240": {
       "issue": 1240,
@@ -4017,10 +4037,11 @@
     "token": "256:finish:cb75d341-8e96-4b83-8fb0-2ba5fe4fb157:finish:1:admit",
     "fence": 256,
     "materialSha": "a80dbdacd9f0a08aefbed60ff965a49d68072304",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+    "phase": "testing",
     "admittedAt": 1793939540294,
-    "expiresAt": 1793939840294
+    "expiresAt": 1793939846147,
+    "patchId": "fd302ed7b87e8d37a33543f293cf9ad645f376ef"
   },
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
@@ -4061,6 +4082,10 @@
     },
     "github:42156004494:1:completions:report:c561daa0a39e449f1f5d5973fee9a2abcfd6e6304756f605d246c4f1e527b350": {
       "digest": "446631ecc8338a4f144dabbad2c7e11711ba4fe1487deb54d344490a6173f927",
+      "issue": 1239
+    },
+    "finish:cb75d341-8e96-4b83-8fb0-2ba5fe4fb157:finish:2:synchronized": {
+      "digest": "a426ac4423ce8706fa3c3e0fc20125b2cfe8da58d07a990bf2da5dd79ede43f6",
       "issue": 1239
     },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
