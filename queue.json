@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5598,
+  "revision": 5599,
   "nextTicket": 267,
   "nextFence": 267,
   "tasks": {
@@ -3891,7 +3891,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1329-empty-home-arrow",
-      "materialSha": "0921a7720f5681c18c293ba7c338b3769075d93e",
+      "materialSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 266,
@@ -3899,7 +3899,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793963707739,
       "reviewEntry": 2,
-      "patchId": "5f4f82c7700bd2a5fa8e17e4e82767a27f30aa4e",
+      "patchId": "df97369269631d9cb996547f944d5e340639b467",
       "changedFiles": [
         "demo/helpers/empty-space-home-arrow.mjs",
         "demo/smoke_space_switch_transitions.mjs",
@@ -4125,11 +4125,12 @@
     "worker": "github-coordinator",
     "token": "266:github:42208826353:1:tick:0:admit",
     "fence": 266,
-    "materialSha": "0921a7720f5681c18c293ba7c338b3769075d93e",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
+    "expectedBase": "eaba96b2f80b930dd1a57fe5f23a0be5e193e357",
+    "phase": "testing",
     "admittedAt": 1793963710436,
-    "expiresAt": 1793964010436
+    "expiresAt": 1793964021400,
+    "patchId": "df97369269631d9cb996547f944d5e340639b467"
   },
   "events": {
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:2:synchronized": {
@@ -4266,6 +4267,10 @@
     },
     "github:42208826353:1:completions:message:3cc3ba5d1ad313f3af53f3df4ab65c48a3f16c664ea8acabf5e46e63f824799f": {
       "digest": "d1972230d11f9112e2b854d9a754381e3d2051342f3eec03d41645c4ca8663eb",
+      "issue": 1329
+    },
+    "finish:df57a6d9-9300-4299-a9ce-468a262ea06b:finish:2:synchronized": {
+      "digest": "c1cbe2bcd80026c96218871306531f9ebaf38063f4aa4079ebdacfe6ce062b36",
       "issue": 1329
     },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
