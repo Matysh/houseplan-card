@@ -47,3 +47,44 @@ live graph intents and prepared projection barriers. All new anchors must be
 unique and all oracles must fail on the intended mutant after a clean pass.
 Addressed witness receipts are reported separately from any complete shard.
 No full-shard or release pass is implied by the registry's static validation.
+## Addressed sensitivity receipts
+
+The first batch at 3d33134daf ran every clean guard successfully, then caught
+36/41 mutations. Four survived and one failed in TypeScript preparation; those
+are failed proofs, not passes. The full batch receipt is retained in
+output/issue-1331/witness-receipt.json, with per-ID outcomes in witnesses.log.
+
+The five addressed repairs are:
+
+- copy-pair-skips-server-acl: also remove the current commit-history authorizer;
+  leaving it in place prevented the intended unauthorized commit. Retry clean
+  PASS and caught1/1 at07881c9dd0.
+- optimize-reports-work-it-did-not-do: mutate the public Optimize changed result,
+  not the superseded private intermediate. Retry clean PASS/caught1/1 at3761906b9b.
+- plan-rotation-stale-header-observer-1070: a dedicated native observer witness
+  retains the actual callback and delivers it after its lease is retired by
+  public kiosk configuration. Synchronous RAF instrumentation counts work
+  scheduled by that callback only. DOM reuse is valid; retired observation must
+  schedule none. Current header phase/data revisions remain unchanged. Retry
+  clean PASS/caught1/1 atc5444b0a35.
+- writer-history-skips-finished-chain-normalization: omit the now-unreachable
+  rejection check along with bypassing canonicalization, so the mutant compiles
+  and reaches the real Undo/Redo oracle. Retry clean PASS/caught1/1 atc5444b0a35.
+- static-opening-missing-contact-looks-active-1171: force active for a configured
+  contact absent from the projected states. The door leaf always uses base paint;
+  its arc is the active indicator. The native oracle compares that arc with its
+  known closed tone, proves the active tone differs and retains full-plan parity.
+  This covers absent entities; it does not invent new unavailable-state policy.
+  Final retry is recorded in witness-static-retry3.log.
+
+These are addressed receipts at pinned revisions, not a complete nightly shard.
+Successful first-batch definitions are unchanged by the five followups. The final
+normal S6 uses the complete current diff and automatic catalog selection. New
+native observer coverage is product/presentation with its actual card owner
+linked in declared source dependencies; selection tests assert that reason.
+
+#1332 is part of the same reviewed completion packet: document five existing DOM
+hooks and retire the removed opening-tunnel hook. Its validator is unchanged;
+three registered addressed witnesses passed clean and caught1/1 each. Full product
+S6 is retained for the joint packet because browser/DOM-contract inputs are
+product material. Companion E2E impact: houseplan-e2e main1f102b7, task-impact1331/1332.
