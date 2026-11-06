@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6027,
+  "revision": 6028,
   "nextTicket": 281,
   "nextFence": 281,
   "tasks": {
@@ -4187,6 +4187,10 @@
       "digest": "8d98acef3df6624772360466460fe05a8f81c3cbcbd9b2c67f2a4cf746eaedb2",
       "issue": 1339
     },
+    "github:42266052207:1:completions:message:cb4c98a58d36f70da308451bed175aefa8bd6df9248bf9c8915eb2de6a137e1a": {
+      "digest": "ec4e8889642dcace8a4480af29d140dc19630b4ea98e558d47ab241d17953da1",
+      "issue": 1339
+    },
     "release-return:85e6f578-e449-4322-bc3e-f62aa5901fc4": {
       "digest": "fd16861b56d9b754a54929efc3592ca866cc99f658f668ec75b35ce2a2267b6d",
       "issue": 1339,
@@ -4233,7 +4237,8 @@
           "entry": 1,
           "detail": "Поведение: test/test-chunk.test.mjs: failed",
           "eventId": "release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:3:return:return:1339"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:ada0dd31-8e97-47f7-a660-f49366b8bf2c": {
