@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 492,
+  "revision": 493,
   "active": "v1.85.0-beta.1-20261106",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -30538,7 +30538,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.85.0-beta.1",
@@ -31091,7 +31091,8 @@
           "en": "## v1.85.0-beta.1 — 2026-11-06\n\n- Accept the three room-dialog baselines for the persistent HA-area hint, preserving capture provenance and the owner decision (#1334).\n\n- Show a loaded empty-space prompt and the guarded Plan editor entry in View; hidden objects still count as content (#1333).\n- Keep the available HA-area explanation visible below the room binding field (#1334).\n- Remove the dead commitWallChainSegmentGeometry export and its unused interface members and two obsolete mutation definitions while preserving graph append and live finish (#1335).\n\n- Stair placement hover preserves node menus and panel/history updates while keeping local preview paint coalesced (#1338).\n\n- Select: attach a dangling endpoint to a wall/partition interior with an exact split, server proof and one Undo/Redo command (#1330).\n\n- Preserve smoke error visibility through transparent delegates and strict assertions; finish every native node-hit browser through the shared guard. #1337\n\n- Refresh the offline converter runtime/page with the accepted PlanGraph seam-lineage mapping; track its real compiler/limit inputs independently from card artifacts, preserving fixtures and safety limits. #1336\n\n- Repair current S6 baseline contracts and mutation witnesses; preserve actual source-scanner scopes in selection/reuse and keep infrastructure metadata out of product fallback and isolate parallel HA test directories. #1331\n- Declare five existing DOM hooks in the selector contract, restoring the clean data-hp mutation guard without relaxing source completeness or negative controls. #1332\n- Hide the home arrow on empty spaces, including new-space transitions and an editor's retained frame after its last object is removed; keep Fit for genuine roomless content. [#1329](https://github.com/Matysh/houseplan-card/issues/1329)\n- Preview Straight and Spiral stairs under the mouse before pressing, reusing click geometry and magnets without writes; keep one live owner and consume a late release only after cancelling a held draft; hover-only Escape preserves the next navigation gesture. [#1253](https://github.com/Matysh/houseplan-card/issues/1253)\n\n- S6 selects tests from changed behavior, component links and track; active catalog, explicit unknowns, file-level reuse and fallback preparation share one plan. #1239\n\n- Align room paper with actual mixed-junction masonry; independent branches no longer expose white facade tips. #1327\n- Background rotation: Shift snaps all handles to absolute 45° bearings and updates held previews on modifier edges. Default rotation precision and other Shift gestures stay unchanged. #1255"
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.85.0-beta.1"
     }
   },
   "published": {
@@ -35982,7 +35983,8 @@
     "ship-review:result:bed4a89d-f1ec-49bd-ae06-d1cda2ee262d": "6e2a539529b24592e18d7c5067457d8745b7bc09bb7783c815a5b6dd07d0a4e2",
     "beta1851-20261106-publish:runner-report": "a1fbdf173052693d6c8f5552eeb1b495c35b2fa54d0553c2fd3aa0bad3bfc787",
     "beta1851-20261106-publish:metrics": "880d6f78f2687ea0cb6de098de01d24bfe737eecb48e1f20506293f86d2391eb",
-    "beta1851-20261106-publish:prepared:ba754a0f-f3ca-4601-804e-f21cb7c999f7": "47ff7a340d72c03c0921844ed8c2e5d4300d41830347001d8082cc0c731b0895"
+    "beta1851-20261106-publish:prepared:ba754a0f-f3ca-4601-804e-f21cb7c999f7": "47ff7a340d72c03c0921844ed8c2e5d4300d41830347001d8082cc0c731b0895",
+    "beta1851-20261106-publish:started:492": "ccb069b68761cb84b8423afc7b1cad74efc2260bfcfd9ece3c17359660843cff"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
