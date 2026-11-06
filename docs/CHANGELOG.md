@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.85.0-beta.1 — 2026-11-06
+
 - Accept the three room-dialog baselines for the persistent HA-area hint, preserving capture provenance and the owner decision (#1334).
 
 - Show a loaded empty-space prompt and the guarded Plan editor entry in View; hidden objects still count as content (#1333).

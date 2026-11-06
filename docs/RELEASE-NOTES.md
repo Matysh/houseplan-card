@@ -1,47 +1,27 @@
-<!-- release: v1.84.0 -->
-<!-- stable-notes: 1 -->
-<!-- base: v1.83.1 -->
+<!-- release: v1.85.0-beta.1 -->
+<!-- base: v1.84.0 -->
 <!-- language: ru -->
-## Релиз Houseplan 1.84.0
+## Houseplan 1.85.0-beta.1
 
-Обновление делает редактирование стен надёжнее, добавляет погоду в сводку и расширяет настройку домашних экранов.
+Первая бета после стабильной 1.84.0 улучшает редактирование плана и подсказки.
 
-🧲 **Узлы стен можно объединять перетаскиванием.** Магнит и подсветка показывают цель; соединяющая стена корректно удаляется. Стены и проёмы сохраняют связи при редактировании, Optimize и Undo/Redo. Край видимого узла тоже реагирует на перетаскивание и правый клик. [#1167](https://github.com/Matysh/houseplan-card/issues/1167), [#1305](https://github.com/Matysh/houseplan-card/issues/1305), [#1259](https://github.com/Matysh/houseplan-card/issues/1259)
+- Висячий конец стены можно перетащить на середину другой стены или перегородки: цель подсвечивается, стена разбивается точно в месте соединения, действие поддерживает отмену и повтор. [#1330](https://github.com/Matysh/houseplan-card/issues/1330)
+- Прямая и винтовая лестницы видны под курсором до размещения. Исправлены отмена черновика, контекстное меню узлов и обновление панелей во время предпросмотра. [#1253](https://github.com/Matysh/houseplan-card/issues/1253), [#1338](https://github.com/Matysh/houseplan-card/issues/1338)
+- Shift при повороте декора и изображения плана привязывает угол с шагом 45°; нажатие и отпускание клавиши сразу обновляет предпросмотр. [#1255](https://github.com/Matysh/houseplan-card/issues/1255)
+- В пустом пространстве появилась подсказка с переходом в редактор. Ложная стрелка «План там» исчезла; подсказка под привязкой комнаты к зоне Home Assistant теперь остаётся видимой. [#1329](https://github.com/Matysh/houseplan-card/issues/1329), [#1333](https://github.com/Matysh/houseplan-card/issues/1333), [#1334](https://github.com/Matysh/houseplan-card/issues/1334)
+- Исправлены выступы заливки комнаты в стыках стен с отдельной перегородкой. Обновлены три принятых владельцем эталона диалогов комнаты. [#1327](https://github.com/Matysh/houseplan-card/issues/1327), [#1334](https://github.com/Matysh/houseplan-card/issues/1334)
 
-🏠 **Создавайте комнаты инструментом «Выбрать».** Наведите указатель на замкнутый контур без комнаты: он подсветится, а клик откроет создание комнаты. Инструмент «Стены» позволяет свободно рисовать внутри таких контуров. Пол аккуратно продолжается в проёмах, двери и окна правильно отображаются в статической карточке. [#1176](https://github.com/Matysh/houseplan-card/issues/1176), [#1250](https://github.com/Matysh/houseplan-card/issues/1250)
+После обновления перезапустите Home Assistant и перезагрузите страницы Houseplan.
 
-🖥️ **Свой вид каждого пространства на домашнем экране.** В профиле отдельно задаются масштаб, поворот и оформление пространств; автовозврат восстанавливает настроенный вид. План может учитывать место, занятое сводной панелью. В киоске появился компактный переключатель пространств по касанию. [#1165](https://github.com/Matysh/houseplan-card/issues/1165), [#1127](https://github.com/Matysh/houseplan-card/issues/1127)
-
-🌦️ **Погода в сводной панели.** Текущие условия и прогноз на три дня можно показать даже без других разделов сводки; при нескольких источниках выбирается нужный. Обычный Просмотр тоже умеет центрировать план с учётом панели — эта общая опция по умолчанию выключена. [#1174](https://github.com/Matysh/houseplan-card/issues/1174), [#1242](https://github.com/Matysh/houseplan-card/issues/1242)
-
-🤖 **Непрерывный путь пылесоса.** Пока интеграция догружает настоящий маршрут, временные отрезки соединяют его с текущим положением пылесоса, затем заменяются настоящими. [#1175](https://github.com/Matysh/houseplan-card/issues/1175)
-
-🛠️ **Удобнее повседневная настройка.** Обновлены формы и кнопки, переключение редакторов сохраняет ракурс. При копировании пространства можно отдельно выбирать мебель и другой декор. Ускорено сохранение настроек и узлов, исправлены точные отмена и повтор операций. [#1156](https://github.com/Matysh/houseplan-card/issues/1156), [#1207](https://github.com/Matysh/houseplan-card/issues/1207)
-
-📶 **Понятнее диагностика Zigbee.** Можно показывать только слабый сигнал; пояснения помогают разобраться в неизвестном маршруте и отличиях от карты интеграции. [#1130](https://github.com/Matysh/houseplan-card/issues/1130), [#1157](https://github.com/Matysh/houseplan-card/issues/1157)
-
-После обновления перезапустите Home Assistant и перезагрузите открытые страницы House Plan.
-
-Все изменения: [1.84.0](https://github.com/Matysh/houseplan-card/milestone/11?closed=1)
 <!-- language: en -->
-## Houseplan 1.84.0 release
+## Houseplan 1.85.0-beta.1
 
-This update makes wall editing more reliable, adds weather to the summary and expands home-screen profiles.
+The first beta after stable 1.84.0 improves plan editing and guidance.
 
-🧲 **Merge wall nodes by dragging.** The magnet and highlight identify the target, and a connecting wall is removed correctly. Walls and openings retain their relationships through editing, Optimize and Undo/Redo. Dragging and right-clicking also work at the visible edge of a node. [#1167](https://github.com/Matysh/houseplan-card/issues/1167), [#1305](https://github.com/Matysh/houseplan-card/issues/1305), [#1259](https://github.com/Matysh/houseplan-card/issues/1259)
+- Drag a dangling wall endpoint onto the interior of another wall or partition. The highlighted target splits exactly at the attachment, with Undo and Redo support. [#1330](https://github.com/Matysh/houseplan-card/issues/1330)
+- Straight and Spiral stairs preview under the pointer before placement. Cancellation, node context menus and toolbar updates work during preview. [#1253](https://github.com/Matysh/houseplan-card/issues/1253), [#1338](https://github.com/Matysh/houseplan-card/issues/1338)
+- Hold Shift while rotating decor or the plan image to snap to absolute 45° increments. Pressing and releasing Shift updates the preview immediately. [#1255](https://github.com/Matysh/houseplan-card/issues/1255)
+- Empty spaces offer a shortcut to the plan editor and no longer show a misleading off-screen-plan arrow. The room's Home Assistant area helper stays visible. [#1329](https://github.com/Matysh/houseplan-card/issues/1329), [#1333](https://github.com/Matysh/houseplan-card/issues/1333), [#1334](https://github.com/Matysh/houseplan-card/issues/1334)
+- Fixed room-floor protrusions at mixed wall and partition junctions. Updated the three owner-approved room-dialog baselines. [#1327](https://github.com/Matysh/houseplan-card/issues/1327), [#1334](https://github.com/Matysh/houseplan-card/issues/1334)
 
-🏠 **Create rooms with Select.** Hover an enclosed wall outline without a room to highlight it, then click to open room creation. Walls remains available for drawing freely inside these outlines. Room floors continue cleanly through openings, and doors and windows appear correctly in static cards. [#1176](https://github.com/Matysh/houseplan-card/issues/1176), [#1250](https://github.com/Matysh/houseplan-card/issues/1250)
-
-🖥️ **An individual view for each space on a home screen.** Profiles provide per-space scale, rotation and presentation; idle return restores the configured view. The plan can account for the summary panel's occupied area. Kiosk adds a compact space switcher revealed by touch. [#1165](https://github.com/Matysh/houseplan-card/issues/1165), [#1127](https://github.com/Matysh/houseplan-card/issues/1127)
-
-🌦️ **Weather in the summary panel.** Show current conditions and a three-day forecast even without other summary sections, choosing a source when several are available. Ordinary View can also centre the plan around the panel; this general option is off by default. [#1174](https://github.com/Matysh/houseplan-card/issues/1174), [#1242](https://github.com/Matysh/houseplan-card/issues/1242)
-
-🤖 **A continuous vacuum trail.** Temporary segments connect the last downloaded route to the vacuum's current position, then give way to the real path as the integration supplies it. [#1175](https://github.com/Matysh/houseplan-card/issues/1175)
-
-🛠️ **Smoother everyday editing.** Updated forms and buttons share a consistent presentation, and switching editors preserves the camera. Space copies can include furniture and other decor independently. Settings and node saves are faster, with fixes to exact Undo/Redo. [#1156](https://github.com/Matysh/houseplan-card/issues/1156), [#1207](https://github.com/Matysh/houseplan-card/issues/1207)
-
-📶 **Clearer Zigbee diagnostics.** Show weak signal only, with explanations for unknown routes and differences from the integration's map. [#1130](https://github.com/Matysh/houseplan-card/issues/1130), [#1157](https://github.com/Matysh/houseplan-card/issues/1157)
-
-After updating, restart Home Assistant and reload open House Plan pages.
-
-All changes: [1.84.0](https://github.com/Matysh/houseplan-card/milestone/11?closed=1)
+After updating, restart Home Assistant and reload Houseplan pages.
