@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5646,
+  "revision": 5647,
   "nextTicket": 268,
   "nextFence": 268,
   "tasks": {
@@ -1303,15 +1303,15 @@
         "test/stairs-editor-live.test.mjs"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
+        "key": "2:rebase-conflict",
+        "reason": "rebase-conflict",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793946901379,
-        "entry": 1,
-        "detail": "Поведение: process-next/test/metrics.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/stairs-editor-live.test.mjs: failed; Backend: tests_backend/test_ha_marker_history.py: failed; Браузер: stairs: failed",
-        "eventId": "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:3:return:return:1253"
-      }
+        "at": 1793964335717,
+        "entry": 2,
+        "eventId": "finish:d0be8eb9-174a-4597-bf98-e10f53759b57:finish:2:return:return:1253"
+      },
+      "reason": "rebase-conflict"
     },
     "1254": {
       "issue": 1254,
@@ -4082,17 +4082,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1253,
-    "worker": "finish",
-    "token": "267:finish:d0be8eb9-174a-4597-bf98-e10f53759b57:finish:1:admit",
-    "fence": 267,
-    "materialSha": "db5c07733fc9097556f0aede348424beccc90e15",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1793964329450,
-    "expiresAt": 1793964629450
-  },
+  "active": null,
   "events": {
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
       "digest": "1d72ac2d60e873e63616b547ac291c5b1fcb112e9af5527ca929dfda838e6bcb",
@@ -4173,6 +4163,10 @@
     "github:42198670222:1:completions:report:4461e061f351f9099aba5d47a69b2f86ead73508abaa0647b1592786aad89838": {
       "digest": "4d7dffd60d6c35674dae56410dc1e3c0ba059bdb01feb9edacefca8731a68c56",
       "issue": 1330
+    },
+    "finish:d0be8eb9-174a-4597-bf98-e10f53759b57:finish:2:return": {
+      "digest": "aa5fd19074e458c78a45df796d524738f2682b9419eedaaa8c2cd2fea3aa05a4",
+      "issue": 1253
     },
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6": {
       "digest": "5a4822812d93918e8b0f98ca0f4d8ab4ef6805559fa88314c3161c969d24f310",
@@ -4278,6 +4272,25 @@
         "layer": "product",
         "materialSha": "db5c07733fc9097556f0aede348424beccc90e15",
         "phase": "sync"
+      }
+    },
+    "finish:d0be8eb9-174a-4597-bf98-e10f53759b57:finish:2:return:return:1253": {
+      "digest": "aa5fd19074e458c78a45df796d524738f2682b9419eedaaa8c2cd2fea3aa05a4",
+      "issue": 1253,
+      "message": {
+        "kind": "return",
+        "issue": 1253,
+        "at": 1793964335717,
+        "entry": 2,
+        "notice": {
+          "key": "2:rebase-conflict",
+          "reason": "rebase-conflict",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793964335717,
+          "entry": 2,
+          "eventId": "finish:d0be8eb9-174a-4597-bf98-e10f53759b57:finish:2:return:return:1253"
+        }
       }
     }
   },
