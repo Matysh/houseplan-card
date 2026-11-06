@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 557,
+  "revision": 558,
   "active": "v1.85.0-20261106",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -36528,7 +36528,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.85.0",
@@ -37126,7 +37126,8 @@
           "ru": "<!-- release: v1.85.0 -->\n<!-- base: v1.84.0 -->\n## Релиз Houseplan 1.85.0\n\nРедактировать план стало проще, а обновление Zigbee LQI — устойчивее.\n\n🧲 **Присоединяйте конец стены к другой стене.** Перетащите висячий конец на середину стены или перегородки: подсветка покажет место соединения, а стена разделится точно в этой точке. Действие поддерживает отмену и повтор. [#1330](https://github.com/Matysh/houseplan-card/issues/1330)\n\n🪜 **Видно, куда встанет лестница.** Прямая и винтовая лестницы показываются под курсором до размещения. Исправлены отмена черновика, меню узлов и обновление панелей во время предпросмотра. [#1253](https://github.com/Matysh/houseplan-card/issues/1253), [#1338](https://github.com/Matysh/houseplan-card/issues/1338)\n\n↗️ **Поворачивайте с шагом 45°.** Удерживайте Shift при повороте фигур, текста, мебели, изображений и подложки. Нажатие и отпускание клавиши сразу обновляет предпросмотр. [#1255](https://github.com/Matysh/houseplan-card/issues/1255)\n\n🏠 **Понятнее первый шаг и настройка комнаты.** В пустом пространстве появилась подсказка с переходом в редактор плана; ложная стрелка «План там» больше не мешает. Пояснение под привязкой комнаты к зоне Home Assistant остаётся видимым. Исправлены выступы заливки пола в стыках стен с отдельной перегородкой. [#1329](https://github.com/Matysh/houseplan-card/issues/1329), [#1333](https://github.com/Matysh/houseplan-card/issues/1333), [#1334](https://github.com/Matysh/houseplan-card/issues/1334), [#1327](https://github.com/Matysh/houseplan-card/issues/1327)\n\n📶 **Zigbee LQI продолжает обновляться при ошибке сторонней интеграции.** Некорректный идентификатор устройства в реестре Home Assistant больше не прерывает обновление остальных устройств ZHA/Zigbee2MQTT. Корректные идентификаторы того же устройства сохраняются в обработке. [#1341](https://github.com/Matysh/houseplan-card/issues/1341)\n\nПосле обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.\n\nВсе изменения: [1.85.0](https://github.com/Matysh/houseplan-card/milestone/13?closed=1)\n",
           "en": "<!-- release: v1.85.0 -->\n<!-- base: v1.84.0 -->\n## Houseplan 1.85.0 release\n\nThis release improves plan editing and makes Zigbee LQI updates more resilient.\n\n🧲 **Attach a wall endpoint to another wall.** Drag a dangling endpoint onto the interior of a wall or partition. Highlighting shows the attachment point, the wall splits precisely there, and Undo/Redo supports the operation. [#1330](https://github.com/Matysh/houseplan-card/issues/1330)\n\n🪜 **See where a staircase will go.** Straight and Spiral stairs preview under the pointer before placement. Cancellation, node menus and toolbar updates work during preview. [#1253](https://github.com/Matysh/houseplan-card/issues/1253), [#1338](https://github.com/Matysh/houseplan-card/issues/1338)\n\n↗️ **Rotate in 45° increments.** Hold Shift while rotating shapes, text, furniture, images or the plan backdrop. Pressing and releasing Shift immediately updates the preview. [#1255](https://github.com/Matysh/houseplan-card/issues/1255)\n\n🏠 **Clearer first steps and room setup.** Empty spaces offer a shortcut to the plan editor without a misleading off-screen-plan arrow. The Home Assistant area helper stays visible in room settings. Room floors no longer protrude at mixed wall and partition junctions. [#1329](https://github.com/Matysh/houseplan-card/issues/1329), [#1333](https://github.com/Matysh/houseplan-card/issues/1333), [#1334](https://github.com/Matysh/houseplan-card/issues/1334), [#1327](https://github.com/Matysh/houseplan-card/issues/1327)\n\n📶 **Zigbee LQI keeps updating despite malformed third-party records.** An invalid device identifier in Home Assistant's registry no longer interrupts other ZHA/Zigbee2MQTT updates. Valid identifiers on the same device continue to be processed. [#1341](https://github.com/Matysh/houseplan-card/issues/1341)\n\nAfter updating, restart Home Assistant and reload open Houseplan pages.\n\nAll changes: [1.85.0](https://github.com/Matysh/houseplan-card/milestone/13?closed=1)\n"
         }
-      }
+      },
+      "tag": "v1.85.0"
     }
   },
   "published": {
@@ -42101,7 +42102,8 @@
     "stable1850-20261106-prepared": "6a17f7691b2c6a1eae930a4d6e3974fa721ac87523126aa0fdf986b62a50d716",
     "stable1850-20261106-publish:runner-report": "e3dd24c2dd7a6f83051477998ce6b59b7ed10a044bd59c9968c316c486a21218",
     "stable1850-20261106-publish:metrics": "35622688fe6b61f2be25e6206ea4f8ed7b853097b0aa6cbd74d76d1e6dcc8f76",
-    "stable1850-20261106-publish:prepared:cad32d1a-c06b-4192-af8e-9222a8990da2": "6b019eb2b761d59508d8606214f7ccd40aac443f8f85dbafc541478e35bb6ef7"
+    "stable1850-20261106-publish:prepared:cad32d1a-c06b-4192-af8e-9222a8990da2": "6b019eb2b761d59508d8606214f7ccd40aac443f8f85dbafc541478e35bb6ef7",
+    "stable1850-20261106-publish:started:557": "19e0c0a4ea0ad5cbb2cf307850bc1aee490bc85ed502eba8b940bf315a6ee613"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
