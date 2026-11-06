@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5822,
+  "revision": 5823,
   "nextTicket": 274,
   "nextFence": 274,
   "tasks": {
@@ -3785,7 +3785,10 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793970595016,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "automationError": "automation-error",
+      "automationSince": 1793970604867,
+      "automationDetail": "Commit tracked task changes before finish"
     },
     "1331": {
       "issue": 1331,
@@ -4067,6 +4070,10 @@
     },
     "github:42198670222:1:completions:report:4461e061f351f9099aba5d47a69b2f86ead73508abaa0647b1592786aad89838": {
       "digest": "4d7dffd60d6c35674dae56410dc1e3c0ba059bdb01feb9edacefca8731a68c56",
+      "issue": 1330
+    },
+    "finish:9d1c8233-f35f-40b8-84b4-69e233ae4b2a:finish:2:automation-pending": {
+      "digest": "05735f055f8fd8cf39cd24dcaffb9330d9e626c8fbb539c6a096343d7655d06d",
       "issue": 1330
     },
     "github:42198145898:1:label:spec-request:spec-resubmitted:1330": {
