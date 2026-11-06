@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1331,
+  "baseStable": "v1.83.0",
+  "category": "infra",
+  "summary": {
+    "ru": "Восстановлены контракты S6, адресные mutation witnesses и изоляция HA-тестов.",
+    "en": "Restore S6 contracts, addressed mutation witnesses and HA test isolation."
+  },
+  "rationale": "Completion-only classification for the immutable S8 material eaba96b2, whose inherited cycle still named base v1.83.0. The mixed test/DOM packet required product S6 but changes test infrastructure only, with no user milestone."
+}

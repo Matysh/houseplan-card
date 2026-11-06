@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1331,
+  "baseStable": "v1.84.0",
+  "category": "infra",
+  "summary": {
+    "ru": "Восстановлены контракты S6, адресные mutation witnesses и изоляция HA-тестов.",
+    "en": "Restore S6 contracts, addressed mutation witnesses and HA test isolation."
+  },
+  "rationale": "Classify the already merged #1331 test-infrastructure packet in the active 1.85 cycle based on stable v1.84.0. Product-profile S6 does not turn test and DOM-contract maintenance into user behavior."
+}
