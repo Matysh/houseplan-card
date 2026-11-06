@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5706,
-  "nextTicket": 270,
+  "revision": 5707,
+  "nextTicket": 271,
   "nextFence": 270,
   "tasks": {
     "1193": {
@@ -1246,11 +1246,11 @@
       "materialSha": "a564f7f4f2fa4fa913d04657f6157cdb3d4872d3",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 268,
-      "queued": false,
+      "ticket": 270,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793964393073,
-      "reviewEntry": 3,
+      "readyAt": 1793965579879,
+      "reviewEntry": 4,
       "patchId": "92206664e51ccdb4e29b4d267c6f84a01cccca74",
       "changedFiles": [
         "demo/helpers/stairs-placement-preview.mjs",
@@ -1274,8 +1274,7 @@
         "entry": 3,
         "detail": "Поведение: test/sh3d-convert-page.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
         "eventId": "finish:4a6e81d8-ffb2-4d83-931c-61a0d59c5ac6:finish:3:return:return:1253"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1254": {
       "issue": 1254,
@@ -4077,7 +4076,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1253
+  ],
   "active": null,
   "events": {
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
@@ -4360,6 +4361,19 @@
           "eventId": "finish:4a6e81d8-ffb2-4d83-931c-61a0d59c5ac6:finish:3:return:return:1253"
         },
         "delivered": true
+      }
+    },
+    "finish:05afdffa-8fb4-43f8-851e-34e1123aea1b": {
+      "digest": "01aceca8387661c42b138c8a905195c1f1a23c8a6a09113956cc4399a23d810b",
+      "issue": 1253,
+      "message": {
+        "kind": "queued",
+        "issue": 1253,
+        "at": 1793965579879,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a564f7f4f2fa4fa913d04657f6157cdb3d4872d3"
       }
     }
   },
