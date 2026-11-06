@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5681,
+  "revision": 5682,
   "nextTicket": 270,
   "nextFence": 270,
   "tasks": {
@@ -3936,7 +3936,17 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793965464716,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "86b4b1876f468cd1ef87b90e2d145eb367b0dc9e",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/lib/source-dependencies.mjs",
+        "process-next/test/task-selection.test.mjs",
+        "scripts/sh3d-convert/build-page.mjs",
+        "scripts/sh3d-convert/dist/index.html",
+        "scripts/sh3d-convert/geometry-runtime.generated.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4104,10 +4114,11 @@
     "token": "269:finish:86a69c51-1014-417a-9f72-78a0908955bb:finish:1:admit",
     "fence": 269,
     "materialSha": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
+    "phase": "testing",
     "admittedAt": 1793965469344,
-    "expiresAt": 1793965769344
+    "expiresAt": 1793965775405,
+    "patchId": "86b4b1876f468cd1ef87b90e2d145eb367b0dc9e"
   },
   "events": {
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
@@ -4225,6 +4236,10 @@
     "github:42211258496:1:completions:notice:93092cda2e8ebf7db50501451c553544a572ab1ad976df6b2ddae6dd6bfe1e61": {
       "digest": "5d6698b644aec763ece4e26f5233530f601fedcb1200b9c9420f7f1e78f5aff2",
       "issue": 1253
+    },
+    "finish:86a69c51-1014-417a-9f72-78a0908955bb:finish:2:synchronized": {
+      "digest": "39d6c6a8cb1ea17730ad80877dbff810e0e55e4eb3d35d12eef04ed98c2e10f4",
+      "issue": 1336
     },
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6": {
       "digest": "5a4822812d93918e8b0f98ca0f4d8ab4ef6805559fa88314c3161c969d24f310",
