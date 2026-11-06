@@ -68,7 +68,7 @@ test('infrastructure checks only changed syntax and selected mechanism, with no 
 test('infrastructure can check finish and its planner without consuming declared product outputs', async () => {
   const plan = await planProfile({ root, layer: 'infra',
     changedFiles: ['process-next/cli.mjs', 'process-next/remote.mjs', 'process-next/lib/catalog.mjs'],
-    areaTests: ['process-next/test/remote.test.mjs', 'process-next/test/catalog.test.mjs'] });
+    areaTests: ['process-next/test/remote.test.mjs', 'process-next/test/catalog.test.mjs', 'process-next/test/runner.test.mjs'] });
   assert.equal(plan.steps[0].id,'infra-syntax');
   assert.ok(plan.steps.slice(1).every(s=>s.id.startsWith('infra-behavior:')));
   for(const file of ['process-next/test/remote.test.mjs','process-next/test/catalog.test.mjs','process-next/test/runner.test.mjs'])assert.ok(plan.steps.some(s=>s.command.includes(file)),'explicit mechanism test remains selected');
