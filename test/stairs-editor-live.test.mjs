@@ -91,7 +91,7 @@ test('#1253 hover clears on secondary navigation, kind switch, cancel and limit'
  editor.pointerMove(hoverEvent());editor.pointerMove(hoverEvent(600,500,{buttons:2}));assert.equal(editor.live,false);
  editor.pointerMove(hoverEvent());editor.activatePlacement('spiral');assert.equal(editor.hoverStair,null);
  editor.pointerMove(hoverEvent());assert.equal(editor.hoverStair.kind,'spiral');editor.pointerCancel(hoverEvent());assert.equal(editor.live,false);
- editor.pointerMove(hoverEvent());assert.equal(editor.escape(),true);editor.pointerUp(hoverEvent());
+ editor.pointerMove(hoverEvent());assert.equal(editor.escape(),true);assert.equal(editor.pointerUp(hoverEvent()),false);
  editor.pointerMove(hoverEvent());host._curSpaceCfg.stairs=Array.from({length:MAX_STAIRS_PER_SPACE},(_,i)=>({...stair,id:`s${i}`}));
  assert.equal(editor.hoverStair,null);assert.equal(counts().saves,0);assert.equal(counts().history,0);
 });for(const [kind,x] of [['straight',610],['spiral',590]]){
@@ -105,3 +105,30 @@ test('#1253 hover clears on secondary navigation, kind switch, cancel and limit'
   assert.deepEqual(canonicalizeConfigGeometry({spaces:[{stairs:[{...preview,id:added.id}]}]}).spaces[0].stairs[0],added);
  });
 }
+for(const [tool,button] of [['select',0],['stairs',1],['stairs',2]]){
+ test('#1253 hover Escape cannot consume the next '+tool+'/'+button+' navigation release',()=>{
+  const {host,editor,counts}=setup();arm(host,editor,'straight');editor.pointerMove(hoverEvent());
+  assert.equal(editor.escape(),true);assert.equal(editor.live,false);
+  host._tool=tool;
+  assert.equal(editor.stagePointerDown(hoverEvent(700,600,{button,buttons:button===0?1:button===1?4:2})),false);
+  assert.equal(editor.pointerUp(hoverEvent(700,600)),false,'no placement owned this release');
+  assert.notEqual(host._suppressClick,true);
+  assert.equal(host._cfgEpoch,1);assert.equal(counts().saves,0);assert.equal(counts().history,0);
+ });
+ test('#1253 a fresh '+tool+'/'+button+' down retires a cancelled real draft tail',()=>{
+  const {host,editor,counts}=setup();arm(host,editor,'straight');
+  editor.stagePointerDown(hoverEvent(600,500,{button:0,buttons:1}));assert.equal(editor.escape(),true);
+  host._tool=tool;
+  assert.equal(editor.stagePointerDown(hoverEvent(700,600,{button,buttons:button===0?1:button===1?4:2})),false);
+  assert.equal(editor.pointerUp(hoverEvent(700,600)),false,'the fresh gesture owns its own release');
+  assert.notEqual(host._suppressClick,true);assert.equal(counts().saves,0);assert.equal(counts().history,0);
+ });
+}
+test('#1253 mouse hover never coexists with a held touch draft',()=>{
+ const {host,editor,counts}=setup();arm(host,editor,'straight');
+ editor.stagePointerDown(hoverEvent(600,500,{pointerType:'touch',button:0,buttons:1}));
+ assert.equal(editor.pointerMove(hoverEvent(610,510,{pointerId:2})),false);
+ assert.equal(editor.hoverStair,null);assert.equal(editor.dragging,true);
+ editor.pointerCancel(hoverEvent(600,500,{pointerType:'touch'}));
+ assert.equal(counts().saves,0);assert.equal(counts().history,0);
+});

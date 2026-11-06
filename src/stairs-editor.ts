@@ -103,7 +103,7 @@ export class StairEditorRuntime {
   private drag: StairDrag | null = null;
   private draft: StairDraft | null = null;
   private cancelledPlacement: number | null = null;
-  private hover: { pid: number; space: string; point: number[]; epoch: number;
+  private hover: { space: string; point: number[]; epoch: number;
     cellCm: number; pitch: number; color: string; opacity: number;
     stair: Stair; surfaces: readonly FurnitureWallSurface[] } | null = null;
 
@@ -213,7 +213,7 @@ export class StairEditorRuntime {
 
   private get placementEnabled(): boolean {
     return this.owner._mode === 'plan' && this.owner._tool === 'stairs'
-      && !!this.owner._curSpaceCfg && !this.dialog
+      && !this.draft && !this.drag && !!this.owner._curSpaceCfg && !this.dialog
       && this.stairs.length < MAX_STAIRS_PER_SPACE;
   }
 
@@ -255,7 +255,7 @@ export class StairEditorRuntime {
     // Refresh surface caches only when the accepted geometry/context changes.
     const previous = this.hoverStair && this.hover;
     const surfaces = previous?.surfaces ?? this.surfaces();
-    this.hover = { pid: event.pointerId, space: this.owner._space, point,
+    this.hover = { space: this.owner._space, point,
       epoch: this.owner._cfgEpoch, cellCm: this.owner._cellCm, pitch: this.owner._gridPitch,
       color: this.owner._decorStyle.color, opacity: this.owner._decorStyle.opacity,
       stair: this.placementAt(point, 'stair-placement-preview', surfaces), surfaces };
@@ -277,6 +277,8 @@ export class StairEditorRuntime {
    * the stage keeps its ordinary pan/pinch handling.
    */
   public stagePointerDown(event: PointerEvent): boolean {
+    // A fresh contact owns a new gesture, even under another tool/button.
+    this.cancelledPlacement = null;
     if (this.owner._mode !== 'plan' || this.owner._tool !== 'stairs') return false;
     this.clearPlacementPreview();
     if (this.draft) {
@@ -292,7 +294,6 @@ export class StairEditorRuntime {
       return false;
     }
     event.preventDefault();
-    this.cancelledPlacement = null;
     this.hover = null;
     const point = this.owner._svgPoint(event as unknown as MouseEvent);
     const id = newStairId();
@@ -547,7 +548,7 @@ export class StairEditorRuntime {
   public escape(): boolean {
     if (this.undoActiveDrag()) return true;
     if (this.hover) {
-      this.cancelledPlacement = this.hover.pid;
+      // Hover has no held pointer and therefore no late release to consume.
       this.clearPlacementPreview(); return true;
     }
     if (!this.selectedId) return false;

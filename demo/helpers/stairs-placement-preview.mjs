@@ -75,12 +75,29 @@ export async function stairsPlacementPreview(page){
     await page.mouse.down();await page.mouse.move(cancelAt.x+40,cancelAt.y+35);await page.keyboard.press('Escape');await page.mouse.up();
     await settle();const cancelled=await observe();assert.equal(cancelled.previews,0);
     for(const key of ['cfg','epoch','rev','layoutRev','count'])assert.equal(cancelled[key],beforeCancel[key],`cancel preserves ${key}`);
-    evidence.push({kind,hovered,reconciled,placed,cancelled});
+    // Hover has no held pointer. Its Escape must not steal a later Select up.
+    await page.mouse.move(cancelAt.x,cancelAt.y);await settle();assert.equal((await observe()).previews,1);
+    await page.keyboard.press('Escape');await settle();assert.equal((await observe()).previews,0);
+    await root.locator('[data-hp="tool"][data-tool="select"]').click();await settle();
+    const clickAt={x:b.x+b.width*.88,y:b.y+b.height*.88};
+    await page.mouse.click(clickAt.x,clickAt.y);await settle();
+    await page.waitForFunction(()=>!window.__card._cameraTransition.active&&!window.__card._modeTransitionBusy);
+    const navigation=()=>page.evaluate(()=>{const c=window.__card;return{pointers:c._pointers.size,pan:!!c._panStart,view:structuredClone(c._view)};});
+    const clicked=await navigation();
+    await page.mouse.move(clickAt.x-35,clickAt.y-25,{steps:3});await settle();
+    const free=await navigation();
+    mkdirSync('artifacts/stairs-placement-preview',{recursive:true});
+    writeFileSync('artifacts/stairs-placement-preview/escape-followup-'+kind+'.json',JSON.stringify({clicked,free},null,2));
+    assert.equal(clicked.pointers,0,'Select release clears its own pointer after hover Escape');
+    assert.equal(clicked.pan,false,'no retained pan owner after a plain click');
+    assert.equal(free.pointers,0);assert.equal(free.pan,false);
+    assert.deepEqual(free.view,clicked.view,'mouse movement without buttons cannot move the plan');
+    evidence.push({kind,hovered,reconciled,placed,cancelled,clicked,free});
   }
   await root.locator('[data-hp="tool"][data-tool="select"]').click();await settle();
   assert.equal((await observe()).previews,0);
   mkdirSync('artifacts/stairs-placement-preview',{recursive:true});
   writeFileSync('artifacts/stairs-placement-preview/evidence.json',JSON.stringify(evidence,null,2));
   return{stairs1253NativeHoverAndClick:true,stairs1253NoHoverWrites:true,
-    stairs1253SingleOwnerAfterHostRender:true,stairs1253LeaveAndEscapeTail:true};
+    stairs1253SingleOwnerAfterHostRender:true,stairs1253LeaveAndEscapeTail:true,stairs1253HoverEscapeKeepsNavigation:true};
 }

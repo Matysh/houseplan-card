@@ -25,7 +25,9 @@ wall/stair magnets as an ordinary click. This live preview never enters saved
 stairs, areas or history. Leaving the canvas, changing tool/kind/mode/space or
 cancelling clears it; a host/HA update keeps a single visible owner. The press
 transfers ownership to the existing draft. Inputs without hover still place by
-the same gesture.
+the same gesture. Escape over hover hides only the preview: it never consumes
+the release of a later navigation gesture. Hover cannot coexist with a held
+stair draft or transform.
 Stairs are drawn like decor shapes (#676): press on the plan, drag and release.
 The dominant drag axis is the rise axis, the ascent points from the press to
 the release ("draw from the bottom up"), the sizes are the drawn extents (never

@@ -9,7 +9,7 @@
 - Repair current S6 baseline contracts and mutation witnesses; preserve actual source-scanner scopes in selection/reuse and keep infrastructure metadata out of product fallback and isolate parallel HA test directories. #1331
 - Declare five existing DOM hooks in the selector contract, restoring the clean data-hp mutation guard without relaxing source completeness or negative controls. #1332
 - Hide the home arrow on empty spaces, including new-space transitions and an editor's retained frame after its last object is removed; keep Fit for genuine roomless content. [#1329](https://github.com/Matysh/houseplan-card/issues/1329)
-- Preview Straight and Spiral stairs under the mouse before pressing, reusing click geometry and magnets without writes; keep one live owner and cancel late release after Escape. [#1253](https://github.com/Matysh/houseplan-card/issues/1253)
+- Preview Straight and Spiral stairs under the mouse before pressing, reusing click geometry and magnets without writes; keep one live owner and consume a late release only after cancelling a held draft; hover-only Escape preserves the next navigation gesture. [#1253](https://github.com/Matysh/houseplan-card/issues/1253)
 
 - S6 selects tests from changed behavior, component links and track; active catalog, explicit unknowns, file-level reuse and fallback preparation share one plan. #1239
 
