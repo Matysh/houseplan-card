@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5293,
+  "revision": 5294,
   "nextTicket": 255,
   "nextFence": 255,
   "tasks": {
@@ -4153,6 +4153,10 @@
       "digest": "fa6105551de5daffe8c103503c8be537e4b84cf35090420f044ae8012d3f6e83",
       "issue": 1255
     },
+    "github:42158031505:1:completions:message:daa30f4b71a2909149b28a331632fcf2b7764520fedd4433ad9c4a489b7fa11d": {
+      "digest": "0b896bbe1dcf5b6d5971e8e4326bed71d36212a1a1946636f33b0ccc1d841b7b",
+      "issue": 1255
+    },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
       "digest": "9db3331ba93104ca4e2706e07dea151f95c9f1d0c2e95fe27d16bb2b5ab16815",
       "issue": 1239,
@@ -4266,7 +4270,8 @@
           "entry": 2,
           "detail": "Браузер: backdrop: failed; Браузер: decor text: failed",
           "eventId": "finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:3:return:return:1255"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:e8942406-c96a-4eee-adc0-4e8fd944dad8": {
