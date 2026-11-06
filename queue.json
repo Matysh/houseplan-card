@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5850,
-  "nextTicket": 275,
+  "revision": 5851,
+  "nextTicket": 276,
   "nextFence": 275,
   "tasks": {
     "1193": {
@@ -3778,14 +3778,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1330-dangling-node-attach",
-      "materialSha": "13d2d6b1c8bf599d6a4eee6f9883cdbdd663b71d",
+      "materialSha": "f1c9cd372946db8aa3b86c3e4224903ff6d4ad78",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 274,
-      "queued": false,
+      "ticket": 275,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793970870166,
-      "reviewEntry": 2,
+      "readyAt": 1793972362371,
+      "reviewEntry": 3,
       "patchId": "efb4fe384c7a4d2de1693a25b1d6db6c6d9698cd",
       "changedFiles": [
         "custom_components/houseplan/graph_node_write.py",
@@ -3826,8 +3826,7 @@
         "entry": 2,
         "detail": "Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: wall node delete: failed",
         "eventId": "finish:e39f4278-aeba-4b58-903d-0d5f089fd1c7:finish:3:return:return:1330"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1331": {
       "issue": 1331,
@@ -4058,7 +4057,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1330
+  ],
   "active": null,
   "events": {
     "github:42174634491:1:spec:1330:spec-request": {
@@ -4296,6 +4297,19 @@
           "eventId": "finish:e39f4278-aeba-4b58-903d-0d5f089fd1c7:finish:3:return:return:1330"
         },
         "delivered": true
+      }
+    },
+    "finish:0303ab88-7efd-43b7-90d2-62d8f64f68f0": {
+      "digest": "6ed2f377314af8bb44c4fac83cd344613e98f63afe929e515075c9dc03f3ca8f",
+      "issue": 1330,
+      "message": {
+        "kind": "queued",
+        "issue": 1330,
+        "at": 1793972362371,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "f1c9cd372946db8aa3b86c3e4224903ff6d4ad78"
       }
     }
   },
