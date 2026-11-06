@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5720,
+  "revision": 5721,
   "nextTicket": 271,
   "nextFence": 271,
   "tasks": {
@@ -1266,15 +1266,16 @@
         "test/stairs-editor-live.test.mjs"
       ],
       "notice": {
-        "key": "3:checks-failed",
+        "key": "4:checks-failed",
         "reason": "checks-failed",
-        "status": "delivered",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793964733919,
-        "entry": 3,
-        "detail": "Поведение: test/sh3d-convert-page.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
-        "eventId": "finish:4a6e81d8-ffb2-4d83-931c-61a0d59c5ac6:finish:3:return:return:1253"
-      }
+        "at": 1793965656942,
+        "entry": 4,
+        "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed",
+        "eventId": "finish:05afdffa-8fb4-43f8-851e-34e1123aea1b:finish:3:return:return:1253"
+      },
+      "reason": "checks-failed"
     },
     "1254": {
       "issue": 1254,
@@ -4077,18 +4078,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1253,
-    "worker": "finish",
-    "token": "270:finish:05afdffa-8fb4-43f8-851e-34e1123aea1b:finish:1:admit",
-    "fence": 270,
-    "materialSha": "a520233c955ffba5f971c62e154a0cbb6f78ab93",
-    "expectedBase": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
-    "phase": "testing",
-    "admittedAt": 1793965584140,
-    "expiresAt": 1793965954212,
-    "patchId": "92206664e51ccdb4e29b4d267c6f84a01cccca74"
-  },
+  "active": null,
   "events": {
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
       "digest": "1d72ac2d60e873e63616b547ac291c5b1fcb112e9af5527ca929dfda838e6bcb",
@@ -4220,6 +4210,10 @@
     },
     "finish:853e44f4-2fdd-44e3-8700-4d174234686e": {
       "digest": "1a11ed4f8136f57401ed0507c7e0bb1edad8495ecfb53ae5b82d9f742cf9405e",
+      "issue": 1253
+    },
+    "finish:05afdffa-8fb4-43f8-851e-34e1123aea1b:finish:3:return": {
+      "digest": "83070705c513a1652da21d0963f329fc7f728e8224c618d875c0fe3d7e4c3661",
       "issue": 1253
     },
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6": {
@@ -4415,6 +4409,26 @@
         "materialSha": "a564f7f4f2fa4fa913d04657f6157cdb3d4872d3",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:05afdffa-8fb4-43f8-851e-34e1123aea1b:finish:3:return:return:1253": {
+      "digest": "83070705c513a1652da21d0963f329fc7f728e8224c618d875c0fe3d7e4c3661",
+      "issue": 1253,
+      "message": {
+        "kind": "return",
+        "issue": 1253,
+        "at": 1793965656942,
+        "entry": 4,
+        "notice": {
+          "key": "4:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793965656942,
+          "entry": 4,
+          "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed",
+          "eventId": "finish:05afdffa-8fb4-43f8-851e-34e1123aea1b:finish:3:return:return:1253"
+        }
       }
     }
   },
