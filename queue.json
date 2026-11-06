@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5304,
+  "revision": 5305,
   "nextTicket": 256,
   "nextFence": 256,
   "tasks": {
@@ -1399,7 +1399,7 @@
       "ownerDecision": null,
       "ticket": 255,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793936973547,
       "reviewEntry": 4,
       "patchId": "a612358f93bcf036e7cb013b7a82b9b7ac795940",
@@ -1436,19 +1436,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261106T034029195-aaa7fc45",
+        "id": "20261106T034948199-18f89b57",
         "name": "Тесты для задачи #1255 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261106T034029195-aaa7fc45/report.json",
-        "materialSha": "c14d2bc55c65a575769553b653d6272419ceed1e",
+        "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261106T034948199-18f89b57/report.json",
+        "materialSha": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
         "status": "passed",
-        "finishedAt": "2026-11-06T03:41:03.558Z",
+        "finishedAt": "2026-11-06T03:50:54.540Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1255:3:a009e38188e3e44c6d7f57d70f21c67fec4b02ee:fa5a1c30019811c91a6a34ee36d70de7875455c9",
-        "at": 1793936688109
-      }
+      "reviewRound": null
     },
     "1256": {
       "issue": 1256,
@@ -4027,9 +4023,9 @@
     "fence": 255,
     "materialSha": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
     "expectedBase": "fa5a1c30019811c91a6a34ee36d70de7875455c9",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793936977570,
-    "expiresAt": 1793937336504,
+    "expiresAt": 1793940655872,
     "patchId": "a612358f93bcf036e7cb013b7a82b9b7ac795940"
   },
   "events": {
@@ -4396,6 +4392,34 @@
           "finishedAt": "2026-11-06T03:41:03.558Z",
           "failures": []
         }
+      }
+    },
+    "finish:953981ac-e72a-481e-a00f-0dda130d4aa6:finish:3:s6-complete": {
+      "digest": "28338ac42fb30bc0a9fabc08b939081180d67f4a9018f0ddc0ecbc03d69badde",
+      "issue": 1255,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1255,
+        "at": 1793937055872,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+        "phase": "review",
+        "evidence": {
+          "id": "20261106T034948199-18f89b57",
+          "name": "Тесты для задачи #1255 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261106T034948199-18f89b57/report.json",
+          "materialSha": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+          "status": "passed",
+          "finishedAt": "2026-11-06T03:50:54.540Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Общий rotationAngle сохраняет прежний default (5° обычный декор/подложка, свободный мебель/изображения), Shift задаёт абсолютные 45° с симметричной обработкой полушага. furnitureRotationAngle сохраняет внешний API через тот же расчёт. Decor и backdrop хранят последний сырой угол в состоянии текущего жеста; существующий оконный обработчик modifier key вызывает пересчёт на keydown/keyup Shift. Перед ним сбрасывается ожидающий pointer move, поэтому поздний move не возвращает старое состояние клавиши. Новых глобальных слушателей нет, окончание/cancel/navigation удаляют raw input или его drag identity. Ручки используют существующую локализованную подсказку Shift — 45°; DECOR-EDITOR обновлён. Другие Shift-жесты и physical body rotation не менялись.\n\nАдресные unit: **27/27 PASS**, включая пять видов декора, исходный угол 17°, ±180°/360°, симметричные полушаги, queued backdrop move, модификатор до первого движения, terminal/reset, одно сохранение/история. Устаревшие две source-regex проверки старого «Shift=free» удалены из resize-contract; вместо них исполняемый regression в decor-rotation проверяет новое поведение.\n\nНативный Chromium: **14/14 PASS** на валидном model11-файле, реальные mouse/keyboard для декора и подложки: 5° default, Shift down/up без движения, commit=preview, Undo/Redo одной операцией, чтение записанного угла из demo writer. Транспорт синтетический, не реальный HA. Первые варианты теста обнаружили неготовый mode transition/непопадание в ручку и отказ Redo в общей demo-сцене; эти логи сохранены. Итоговый тест явно ждёт завершения перехода, фиксирует валидный model11-план, держит ручки в видимой области и требует настоящего pointer capture. Safety/history не ослаблялись.\n\nS6 request добавляет существующие furniture/decor history и native backdrop/furniture smoke. Не выдаю ещё не выполненные группы за PASS; общий отчёт публикуется finish. E2E: **надо** перед следующей бетой проверить реальный ACK сохранения и Undo/Redo поворота с Shift и без движения мыши; сейчас реальный HA E2E не запускался. Golden не принимался, стенд владельца не менялся.\n\n\n### Исправления по предыдущему ревью\n\n[Код-ревью, раунд 1](https://github.com/Matysh/houseplan-card/actions/runs/42158048652), changes_requested: постоянный decor.backdrop_hint на четырёх языках обещал свободный угол, таблица USER-GUIDE повторяла старое поведение. Исправлено в ru/en/de/fr и таблице руководства: Shift сохраняет пропорциональное поведение масштабирования и привязывает поворот к 45°. Несвязанный Shift свободного размещения мебели не менялся. Неблокирующее замечание о вводном комментарии furniture.ts также исправлено — импорт перенесён после заголовка.\n\nПредыдущее S6 20261106T034029195-aaa7fc45 прошло 10/10 групп. До него выявлены старые Shift=free ожидания в backdrop/text smoke: они заменены на новые явные 45°, сохранены проверки default 5°, нулевого угла как отсутствующего поля, отрисовки ненулевого угла и возврата в ноль. Адресно оба существующих smoke после правки PASS. Новый материал для повторной передачи: 3f778f3d9; finish выполняет применимый S6 после исправлений, его ещё не полученные результаты не объявляются PASS. Предыдущий отчёт не изменялся.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
