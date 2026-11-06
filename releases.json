@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 556,
+  "revision": 557,
   "active": "v1.85.0-20261106",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -36531,7 +36531,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.85.0",
         "candidate": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
         "base": "626c645948d2f9ecab458b410497641fd3487c69",
         "issues": [
@@ -36950,6 +36950,182 @@
         "selectionDigest": "b83c44c7c6283a4ab50e223dba9139f313e7a4a4d55cf01e920cf2f1623f1d74",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.85.0",
+          "candidate": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
+          "base": "626c645948d2f9ecab458b410497641fd3487c69",
+          "issues": [
+            {
+              "number": 1239,
+              "commits": [
+                "94b43670bf58d49549a81a79b77e3b6dc37b0355",
+                "f38923a4f36ad20410fee1bef4b3642cf4f24fe6"
+              ]
+            },
+            {
+              "number": 1253,
+              "commits": [
+                "26dce32c64a063e7cf778deef8fef5b77449f2af",
+                "27fca2af5db980ee66dab786a82b62243f518cbd",
+                "418a72a888ea5662808e0eb8236e3f40111cc1b1",
+                "4cf931127898cbfd89aae0453ae3a56bc597916c",
+                "726587847e091a397a332f3a6b3a3aebd0f85546"
+              ]
+            },
+            {
+              "number": 1255,
+              "commits": [
+                "376b6e387031dca5328e46de2e411b6845e76b6a",
+                "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+                "5d6e48c49ea6a174abdc6c4f5f7c5a78ab0fa227",
+                "c14d2bc55c65a575769553b653d6272419ceed1e"
+              ]
+            },
+            {
+              "number": 1327,
+              "commits": [
+                "fa5a1c30019811c91a6a34ee36d70de7875455c9"
+              ]
+            },
+            {
+              "number": 1328,
+              "commits": [
+                "be93fa714bfb253e1232d42e1c0b4c2c369cec7e"
+              ]
+            },
+            {
+              "number": 1329,
+              "commits": [
+                "55397e9194ea4ac21ab343cdc5c16a40eb984457",
+                "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7"
+              ]
+            },
+            {
+              "number": 1330,
+              "commits": [
+                "13d2d6b1c8bf599d6a4eee6f9883cdbdd663b71d",
+                "3bf206abbcabe3bd34d58e1dec9f713a5a8990bf",
+                "53ad376ddadab2aa171768e9d928e933912ad18f",
+                "f1c9cd372946db8aa3b86c3e4224903ff6d4ad78"
+              ]
+            },
+            {
+              "number": 1331,
+              "commits": [
+                "3d33134daf1d8bc999e19e35de71205bed63d7b8",
+                "449f270ed8dffd95f796884d7db8819b4694cdfa",
+                "49bd98e540048e3865313ec075b921f28ade02a6",
+                "609add25c393f91ab8351119805459c020e2e5d2",
+                "740eb3245c0c7dd8e0b7cd742e32b95a3c6adeb9",
+                "a520233c955ffba5f971c62e154a0cbb6f78ab93",
+                "b845a1e78245464a5ed04d5150d90d39e49ccaed",
+                "c2a894f63e6c22c169b3e0c45cc88c053e0f0a57",
+                "cd4e0bcc856c5898201f6c801060df22de31e911",
+                "e9e366165d8bc5cf16c4af11de7f21947f247a58",
+                "eaba96b2f80b930dd1a57fe5f23a0be5e193e357"
+              ]
+            },
+            {
+              "number": 1332,
+              "commits": [
+                "6bddb9b0f28c08f2b50f9ea0fd7cd137e16ae69c",
+                "df308613573b5b6dfbea2de77fdde699a37ea355"
+              ]
+            },
+            {
+              "number": 1333,
+              "commits": [
+                "4d7b4cc103636e790788ab489845f735a4b5a6f3",
+                "f091234bbf09d0eb8d7e5baf0b1891b669308bcb",
+                "f510634b6e27d8458d51b7f5ca718503ceed8866"
+              ]
+            },
+            {
+              "number": 1334,
+              "commits": [
+                "ab5096124a7898bb6a26c2929c2758ce26a1842b",
+                "f091234bbf09d0eb8d7e5baf0b1891b669308bcb"
+              ]
+            },
+            {
+              "number": 1335,
+              "commits": [
+                "4d7b4cc103636e790788ab489845f735a4b5a6f3",
+                "f091234bbf09d0eb8d7e5baf0b1891b669308bcb",
+                "f510634b6e27d8458d51b7f5ca718503ceed8866"
+              ]
+            },
+            {
+              "number": 1336,
+              "commits": [
+                "939eca1ea9fcb34c72307aba3781c77ce65027dd"
+              ]
+            },
+            {
+              "number": 1337,
+              "commits": [
+                "6c8b0a3ccb95386c911e447331e24fcedf4c62d5"
+              ]
+            },
+            {
+              "number": 1338,
+              "commits": [
+                "167242ba6ffa6bca2c53f5299933d7f6c71784d5"
+              ]
+            },
+            {
+              "number": 1339,
+              "commits": [
+                "b01159e90270a4a454be4d7acbca9d90a51760f7"
+              ]
+            },
+            {
+              "number": 1340,
+              "commits": [
+                "b01159e90270a4a454be4d7acbca9d90a51760f7"
+              ]
+            },
+            {
+              "number": 1341,
+              "commits": [
+                "7b3b408a0d796fd126ed8e84bc295183f2de8e15"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1239,
+          1253,
+          1255,
+          1327,
+          1328,
+          1329,
+          1330,
+          1331,
+          1332,
+          1333,
+          1334,
+          1335,
+          1336,
+          1337,
+          1338,
+          1339,
+          1340,
+          1341
+        ],
+        "version": "1.85.0",
+        "body": "<!-- release: v1.85.0 -->\n<!-- stable-notes: 1 -->\n<!-- base: v1.84.0 -->\n<!-- language: ru -->\n## Релиз Houseplan 1.85.0\n\nРедактировать план стало проще, а обновление Zigbee LQI — устойчивее.\n\n🧲 **Присоединяйте конец стены к другой стене.** Перетащите висячий конец на середину стены или перегородки: подсветка покажет место соединения, а стена разделится точно в этой точке. Действие поддерживает отмену и повтор. [#1330](https://github.com/Matysh/houseplan-card/issues/1330)\n\n🪜 **Видно, куда встанет лестница.** Прямая и винтовая лестницы показываются под курсором до размещения. Исправлены отмена черновика, меню узлов и обновление панелей во время предпросмотра. [#1253](https://github.com/Matysh/houseplan-card/issues/1253), [#1338](https://github.com/Matysh/houseplan-card/issues/1338)\n\n↗️ **Поворачивайте с шагом 45°.** Удерживайте Shift при повороте фигур, текста, мебели, изображений и подложки. Нажатие и отпускание клавиши сразу обновляет предпросмотр. [#1255](https://github.com/Matysh/houseplan-card/issues/1255)\n\n🏠 **Понятнее первый шаг и настройка комнаты.** В пустом пространстве появилась подсказка с переходом в редактор плана; ложная стрелка «План там» больше не мешает. Пояснение под привязкой комнаты к зоне Home Assistant остаётся видимым. Исправлены выступы заливки пола в стыках стен с отдельной перегородкой. [#1329](https://github.com/Matysh/houseplan-card/issues/1329), [#1333](https://github.com/Matysh/houseplan-card/issues/1333), [#1334](https://github.com/Matysh/houseplan-card/issues/1334), [#1327](https://github.com/Matysh/houseplan-card/issues/1327)\n\n📶 **Zigbee LQI продолжает обновляться при ошибке сторонней интеграции.** Некорректный идентификатор устройства в реестре Home Assistant больше не прерывает обновление остальных устройств ZHA/Zigbee2MQTT. Корректные идентификаторы того же устройства сохраняются в обработке. [#1341](https://github.com/Matysh/houseplan-card/issues/1341)\n\nПосле обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.\n\nВсе изменения: [1.85.0](https://github.com/Matysh/houseplan-card/milestone/13?closed=1)\n<!-- language: en -->\n## Houseplan 1.85.0 release\n\nThis release improves plan editing and makes Zigbee LQI updates more resilient.\n\n🧲 **Attach a wall endpoint to another wall.** Drag a dangling endpoint onto the interior of a wall or partition. Highlighting shows the attachment point, the wall splits precisely there, and Undo/Redo supports the operation. [#1330](https://github.com/Matysh/houseplan-card/issues/1330)\n\n🪜 **See where a staircase will go.** Straight and Spiral stairs preview under the pointer before placement. Cancellation, node menus and toolbar updates work during preview. [#1253](https://github.com/Matysh/houseplan-card/issues/1253), [#1338](https://github.com/Matysh/houseplan-card/issues/1338)\n\n↗️ **Rotate in 45° increments.** Hold Shift while rotating shapes, text, furniture, images or the plan backdrop. Pressing and releasing Shift immediately updates the preview. [#1255](https://github.com/Matysh/houseplan-card/issues/1255)\n\n🏠 **Clearer first steps and room setup.** Empty spaces offer a shortcut to the plan editor without a misleading off-screen-plan arrow. The Home Assistant area helper stays visible in room settings. Room floors no longer protrude at mixed wall and partition junctions. [#1329](https://github.com/Matysh/houseplan-card/issues/1329), [#1333](https://github.com/Matysh/houseplan-card/issues/1333), [#1334](https://github.com/Matysh/houseplan-card/issues/1334), [#1327](https://github.com/Matysh/houseplan-card/issues/1327)\n\n📶 **Zigbee LQI keeps updating despite malformed third-party records.** An invalid device identifier in Home Assistant's registry no longer interrupts other ZHA/Zigbee2MQTT updates. Valid identifiers on the same device continue to be processed. [#1341](https://github.com/Matysh/houseplan-card/issues/1341)\n\nAfter updating, restart Home Assistant and reload open Houseplan pages.\n\nAll changes: [1.85.0](https://github.com/Matysh/houseplan-card/milestone/13?closed=1)\n",
+        "technical": {
+          "ru": "## v1.85.0 — 2026-11-06\n\n- Стабильный выпуск из проверенной v1.85.0-beta.2; описание относительно v1.84.0 сохранено в пользовательском changelog.\n- Присоединение висячего конца к середине стены, предпросмотр лестниц и Shift-поворот 45°: #1330, #1253, #1255, #1338.\n- Подсказки пустого пространства и HA area, аккуратная заливка стыков, устойчивое обновление LQI: #1329, #1333, #1334, #1327, #1341.\n- Актуализированы выборка S6, инфраструктурные тесты и контракт DOM; удалены мёртвый код и устаревший npm-тест: #1239, #1331, #1332, #1335–#1337, #1340.",
+          "en": "## v1.85.0 — 2026-11-06\n\n- Stable release from tested v1.85.0-beta.2; the user changelog describes changes since v1.84.0.\n- Dangling endpoint attachment, staircase hover previews and Shift rotation at 45°: #1330, #1253, #1255, #1338.\n- Empty-space and HA area guidance, mixed-junction room-floor rendering and resilient LQI refresh: #1329, #1333, #1334, #1327, #1341.\n- Updated S6 selection, infrastructure tests and DOM contract; removed dead code and the retired npm assertion: #1239, #1331, #1332, #1335–#1337, #1340."
+        },
+        "userChangelog": {
+          "ru": "<!-- release: v1.85.0 -->\n<!-- base: v1.84.0 -->\n## Релиз Houseplan 1.85.0\n\nРедактировать план стало проще, а обновление Zigbee LQI — устойчивее.\n\n🧲 **Присоединяйте конец стены к другой стене.** Перетащите висячий конец на середину стены или перегородки: подсветка покажет место соединения, а стена разделится точно в этой точке. Действие поддерживает отмену и повтор. [#1330](https://github.com/Matysh/houseplan-card/issues/1330)\n\n🪜 **Видно, куда встанет лестница.** Прямая и винтовая лестницы показываются под курсором до размещения. Исправлены отмена черновика, меню узлов и обновление панелей во время предпросмотра. [#1253](https://github.com/Matysh/houseplan-card/issues/1253), [#1338](https://github.com/Matysh/houseplan-card/issues/1338)\n\n↗️ **Поворачивайте с шагом 45°.** Удерживайте Shift при повороте фигур, текста, мебели, изображений и подложки. Нажатие и отпускание клавиши сразу обновляет предпросмотр. [#1255](https://github.com/Matysh/houseplan-card/issues/1255)\n\n🏠 **Понятнее первый шаг и настройка комнаты.** В пустом пространстве появилась подсказка с переходом в редактор плана; ложная стрелка «План там» больше не мешает. Пояснение под привязкой комнаты к зоне Home Assistant остаётся видимым. Исправлены выступы заливки пола в стыках стен с отдельной перегородкой. [#1329](https://github.com/Matysh/houseplan-card/issues/1329), [#1333](https://github.com/Matysh/houseplan-card/issues/1333), [#1334](https://github.com/Matysh/houseplan-card/issues/1334), [#1327](https://github.com/Matysh/houseplan-card/issues/1327)\n\n📶 **Zigbee LQI продолжает обновляться при ошибке сторонней интеграции.** Некорректный идентификатор устройства в реестре Home Assistant больше не прерывает обновление остальных устройств ZHA/Zigbee2MQTT. Корректные идентификаторы того же устройства сохраняются в обработке. [#1341](https://github.com/Matysh/houseplan-card/issues/1341)\n\nПосле обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.\n\nВсе изменения: [1.85.0](https://github.com/Matysh/houseplan-card/milestone/13?closed=1)\n",
+          "en": "<!-- release: v1.85.0 -->\n<!-- base: v1.84.0 -->\n## Houseplan 1.85.0 release\n\nThis release improves plan editing and makes Zigbee LQI updates more resilient.\n\n🧲 **Attach a wall endpoint to another wall.** Drag a dangling endpoint onto the interior of a wall or partition. Highlighting shows the attachment point, the wall splits precisely there, and Undo/Redo supports the operation. [#1330](https://github.com/Matysh/houseplan-card/issues/1330)\n\n🪜 **See where a staircase will go.** Straight and Spiral stairs preview under the pointer before placement. Cancellation, node menus and toolbar updates work during preview. [#1253](https://github.com/Matysh/houseplan-card/issues/1253), [#1338](https://github.com/Matysh/houseplan-card/issues/1338)\n\n↗️ **Rotate in 45° increments.** Hold Shift while rotating shapes, text, furniture, images or the plan backdrop. Pressing and releasing Shift immediately updates the preview. [#1255](https://github.com/Matysh/houseplan-card/issues/1255)\n\n🏠 **Clearer first steps and room setup.** Empty spaces offer a shortcut to the plan editor without a misleading off-screen-plan arrow. The Home Assistant area helper stays visible in room settings. Room floors no longer protrude at mixed wall and partition junctions. [#1329](https://github.com/Matysh/houseplan-card/issues/1329), [#1333](https://github.com/Matysh/houseplan-card/issues/1333), [#1334](https://github.com/Matysh/houseplan-card/issues/1334), [#1327](https://github.com/Matysh/houseplan-card/issues/1327)\n\n📶 **Zigbee LQI keeps updating despite malformed third-party records.** An invalid device identifier in Home Assistant's registry no longer interrupts other ZHA/Zigbee2MQTT updates. Valid identifiers on the same device continue to be processed. [#1341](https://github.com/Matysh/houseplan-card/issues/1341)\n\nAfter updating, restart Home Assistant and reload open Houseplan pages.\n\nAll changes: [1.85.0](https://github.com/Matysh/houseplan-card/milestone/13?closed=1)\n"
+        }
       }
     }
   },
@@ -41924,7 +42100,8 @@
     "stable1850-20261106-create": "4a965d85d8f6ece263dbe8b9f51d7b1682998302c9ada1c49d2bc5512379ef4b",
     "stable1850-20261106-prepared": "6a17f7691b2c6a1eae930a4d6e3974fa721ac87523126aa0fdf986b62a50d716",
     "stable1850-20261106-publish:runner-report": "e3dd24c2dd7a6f83051477998ce6b59b7ed10a044bd59c9968c316c486a21218",
-    "stable1850-20261106-publish:metrics": "35622688fe6b61f2be25e6206ea4f8ed7b853097b0aa6cbd74d76d1e6dcc8f76"
+    "stable1850-20261106-publish:metrics": "35622688fe6b61f2be25e6206ea4f8ed7b853097b0aa6cbd74d76d1e6dcc8f76",
+    "stable1850-20261106-publish:prepared:cad32d1a-c06b-4192-af8e-9222a8990da2": "6b019eb2b761d59508d8606214f7ccd40aac443f8f85dbafc541478e35bb6ef7"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
