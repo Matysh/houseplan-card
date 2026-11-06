@@ -181,21 +181,21 @@ const res = await page.evaluate(async () => {
   ev('pointermove', stageEl(), rx + 100, ry + 100);   // ровно 45°
   await c.updateComplete;
   out.rotates = Math.abs((c._decorList.find((x) => x.id === 'dtm').angle || 0) - 45) < 1e-6;
-  out.rotationRendered = /rotate\(/.test(attr('dtm', 'transform') || '');
   ev('pointermove', stageEl(), rx + 100, ry + 2);     // ~1.1° → прилипает к 0
   await c.updateComplete;
   out.snapsTo5 = (c._decorList.find((x) => x.id === 'dtm').angle || 0) === 0;
-  ev('pointermove', stageEl(), rx + 100, ry + 2, { shiftKey: true });
+  ev('pointermove', stageEl(), rx + 100, ry + 60, { shiftKey: true });
   await c.updateComplete;
   const snapped = c._decorList.find((x) => x.id === 'dtm').angle || 0;
-  out.shiftSnapsTo45 = snapped === 0; // ближайший абсолютный угол 45°
-  ev('pointerup', stageEl(), rx + 100, ry + 2);
+  out.shiftSnapsTo45 = snapped === 45; // ~31° привязывается к абсолютным 45°
+  ev('pointerup', stageEl(), rx + 100, ry + 60);
   await c.updateComplete;
-  // …а без Shift тот же 1.1° снова прилипает к нулю
+  out.rotationRendered = /rotate\(/.test(attr('dtm', 'transform') || '');
+  // …а без Shift дельта −45° возвращает итоговый угол к нулю
   // повернули обратно в ноль — поле исчезает, фигура снова «прямая»
   ev('pointerdown', frame()?.querySelector('.dthandle.dtrot') || stageEl(), rx + 100, ry);
-  ev('pointermove', stageEl(), rx + 100, ry);
-  ev('pointerup', stageEl(), rx + 100, ry);
+  ev('pointermove', stageEl(), rx + 100, ry - 100);
+  ev('pointerup', stageEl(), rx + 100, ry - 100);
   await c.updateComplete;
   out.zeroAngleDropped = c._decorList.find((x) => x.id === 'dtm').angle === undefined;
 
