@@ -5203,7 +5203,7 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/plan-optimizer.ts",
-    "find": "  const changed = contentJson(persistedConfig) !== original\n    || contentJson(persistedLayout) !== originalLayout;",
+    "find": "  const changed = contentJson(result.config) !== contentJson(configIn || {})\n    || contentJson(result.layout) !== contentJson(layoutIn || {});",
     "replace": "  const changed = true;"
   }
 ],
