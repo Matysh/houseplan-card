@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5805,
+  "revision": 5806,
   "nextTicket": 273,
   "nextFence": 273,
   "tasks": {
@@ -421,43 +421,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "56585f1828bad0e7f483410eb793bdda5a8735fe"
-      }
-    },
-    "1229": {
-      "issue": 1229,
-      "branch": "codex/1229-optimize-diagnostics",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "d3ad645ca1e3ac68a48fd2edf522c6c19a8aa62e",
-      "mergedSha": "938aaded6e44786cd821456d1113916d9bf35bb6",
-      "mergedAt": 1793713750495,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "938aaded6e44786cd821456d1113916d9bf35bb6"
       }
     },
     "1230": {
@@ -1234,7 +1197,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "418a72a888ea5662808e0eb8236e3f40111cc1b1"
       }
     },
     "1254": {
@@ -4096,6 +4060,18 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "dev-build:42217908160:1:1253": {
+      "digest": "831b3952a22524280cb04631d38fcc10f270025ad322474805c3cbde4f190775",
+      "issue": 1253,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1253,
+        "at": 1793968258123,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "418a72a888ea5662808e0eb8236e3f40111cc1b1"
       }
     }
   },
