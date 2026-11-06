@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5204,
+  "revision": 5205,
   "nextTicket": 251,
   "nextFence": 251,
   "tasks": {
@@ -3902,18 +3902,12 @@
       "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41507608155"
     },
     "1239": {
-      "requestId": "spec:1239:26eb0f469ea7c4588e45284e7e0b478bbb596103cfe91ae57a674e14bb0b0713",
-      "contextDigest": "26eb0f469ea7c4588e45284e7e0b478bbb596103cfe91ae57a674e14bb0b0713",
+      "requestId": "spec:1239:76dbc469a77fbca792979f04fd95dec533850ba7c8285aed7eaff4c348aed2e4",
+      "contextDigest": "76dbc469a77fbca792979f04fd95dec533850ba7c8285aed7eaff4c348aed2e4",
       "base": "0c7e8838681f68d5d908d9d6e76f8b1d874b58cf",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1793934964296,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42154920924",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1793935081111
     },
     "1305": {
       "requestId": "spec:1305:f6cf3e55ce613af8f68ec913a60df11c329b45c9c6e63c81b7c8b06d472d5ff3",
@@ -3957,6 +3951,19 @@
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
       }
+    },
+    "spec:1239:spec:1239:76dbc469a77fbca792979f04fd95dec533850ba7c8285aed7eaff4c348aed2e4": {
+      "issue": 1239,
+      "kind": "spec",
+      "requestId": "spec:1239:76dbc469a77fbca792979f04fd95dec533850ba7c8285aed7eaff4c348aed2e4",
+      "materialSha": "0c7e8838681f68d5d908d9d6e76f8b1d874b58cf",
+      "expectedBase": "0c7e8838681f68d5d908d9d6e76f8b1d874b58cf",
+      "patchId": "76dbc469a77fbca792979f04fd95dec533850ba7c8285aed7eaff4c348aed2e4",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-06T03:18:01.111Z"
+      }
     }
   },
   "waiting": [],
@@ -3981,6 +3988,26 @@
     "github:42155458302:1:completions:report:ce6f05c1bbfb5fdd8556d63fc672a205e376dc4532fa4a69129c7869f9258484": {
       "digest": "6af13db60b56bf15c015cc633b45a1fed313f2508de5d6056ed6de056ded60a0",
       "issue": 1239
+    },
+    "issue1239-spec-r2-20261106:spec-request": {
+      "digest": "9db3331ba93104ca4e2706e07dea151f95c9f1d0c2e95fe27d16bb2b5ab16815",
+      "issue": 1239
+    },
+    "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
+      "digest": "9db3331ba93104ca4e2706e07dea151f95c9f1d0c2e95fe27d16bb2b5ab16815",
+      "issue": 1239,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1239,
+        "at": 1793935081111,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1239:76dbc469a77fbca792979f04fd95dec533850ba7c8285aed7eaff4c348aed2e4",
+        "reviewChanges": "### Решение и места для внимания\n\nРабота начинается от dev 0c7e8838681f68d5d908d9d6e76f8b1d874b58cf. Текущий process-next/lib/catalog.mjs на задаче выполняет CRITICAL_NODE, стартовый View и вручную areaTests; track почти не меняет глубину. inventory.json остаётся исторической классификацией миграции #1105, а discoverReleaseTests добавляет более новые файлы. Поэтому полный каталог строится из действующих определений/обнаружения, с наследуемыми метками и явными неизвестными записями; архив не входит в обнаружение.\n\nПредлагается расширить существующий каталог центральными правилами подсистем/сценариев и связями, не копировать план в GitHub workflow. Планирование возвращает метаданные выбора и причины тем же объектом planProfile; run и finish исполняют этот план. Явные areaTests дополняют обязательную выборку, а не заменяют её. Чистые docs возвращаются до подготовки/обнаружения исполнителей. Инфраструктура классифицируется отдельно, без запуска продукта по сходству названий.\n\nПодсчёт различает статические декларации и фактически исполненные параметризованные кейсы: только runner/pytest/Playwright дают точные итоговые кейсы. В бюджете сначала используются реальные сохранённые отчёты с сопоставимыми входами/окружением; для неизвестного состава или неполной длительности показывается неопределённость, не выдуманный точный норматив. Обязательная выборка не урезается по бюджету. Приёмка требует полного списка действующих групп, включая новые после исходного inventory; четыре примера областей не считаются полным каталогом.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/actions/runs/42154920924), verdict changes_requested. Неясность HA E2E/golden → явно оставлены вне автоматического S6 задачи, сквозные Ask ограничены быстрыми контрактами. Пробел карты → обязательные обратные зависимости и полный быстрый набор ближайшей подсистемы, при неизвестной подсистеме широкий быстрый fallback. Рекомендации о гранулярности reuse, резервной среде, rename/delete, фазах и едином PROCESS также включены в контракт редакции 2. Полный предыдущий отчёт сохранён в комментарии, не редактировался.\n\n### Проверки и ограничения\n\nРедакция 2, повторная передача ТЗ. Продукт и запускатель не изменены, продуктовых прогонов нет. До S4 выполняется только авторская spec-check формы этого ТЗ. Содержательно проверить полноту охвата, способ не потерять новые файлы/общие зависимости и разумную глубину треков без возврата полного stable на каждую задачу.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
+      }
     }
   },
   "devWebhook": {
