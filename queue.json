@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5722,
+  "revision": 5723,
   "nextTicket": 271,
   "nextFence": 271,
   "tasks": {
@@ -4432,7 +4432,8 @@
           "entry": 4,
           "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed",
           "eventId": "finish:05afdffa-8fb4-43f8-851e-34e1123aea1b:finish:3:return:return:1253"
-        }
+        },
+        "delivered": true
       }
     }
   },
