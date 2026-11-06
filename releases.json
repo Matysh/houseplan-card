@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 491,
+  "revision": 492,
   "active": "v1.85.0-beta.1-20261106",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -30541,7 +30541,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.85.0-beta.1",
         "candidate": "0ce2c7c7b8def6f7ef5dd6522d7d0816c107c28f",
         "base": "626c645948d2f9ecab458b410497641fd3487c69",
         "issues": [
@@ -30939,6 +30939,158 @@
         "selectionDigest": "3dfd44c0b920642d949349cbf700addcf83a34b5c63b7e2a65013d4572c64208",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.85.0-beta.1",
+          "candidate": "0ce2c7c7b8def6f7ef5dd6522d7d0816c107c28f",
+          "base": "626c645948d2f9ecab458b410497641fd3487c69",
+          "issues": [
+            {
+              "number": 1239,
+              "commits": [
+                "94b43670bf58d49549a81a79b77e3b6dc37b0355",
+                "f38923a4f36ad20410fee1bef4b3642cf4f24fe6"
+              ]
+            },
+            {
+              "number": 1253,
+              "commits": [
+                "26dce32c64a063e7cf778deef8fef5b77449f2af",
+                "27fca2af5db980ee66dab786a82b62243f518cbd",
+                "418a72a888ea5662808e0eb8236e3f40111cc1b1",
+                "4cf931127898cbfd89aae0453ae3a56bc597916c",
+                "726587847e091a397a332f3a6b3a3aebd0f85546"
+              ]
+            },
+            {
+              "number": 1255,
+              "commits": [
+                "376b6e387031dca5328e46de2e411b6845e76b6a",
+                "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+                "5d6e48c49ea6a174abdc6c4f5f7c5a78ab0fa227",
+                "c14d2bc55c65a575769553b653d6272419ceed1e"
+              ]
+            },
+            {
+              "number": 1327,
+              "commits": [
+                "fa5a1c30019811c91a6a34ee36d70de7875455c9"
+              ]
+            },
+            {
+              "number": 1328,
+              "commits": [
+                "be93fa714bfb253e1232d42e1c0b4c2c369cec7e"
+              ]
+            },
+            {
+              "number": 1329,
+              "commits": [
+                "55397e9194ea4ac21ab343cdc5c16a40eb984457",
+                "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7"
+              ]
+            },
+            {
+              "number": 1330,
+              "commits": [
+                "13d2d6b1c8bf599d6a4eee6f9883cdbdd663b71d",
+                "3bf206abbcabe3bd34d58e1dec9f713a5a8990bf",
+                "53ad376ddadab2aa171768e9d928e933912ad18f",
+                "f1c9cd372946db8aa3b86c3e4224903ff6d4ad78"
+              ]
+            },
+            {
+              "number": 1331,
+              "commits": [
+                "3d33134daf1d8bc999e19e35de71205bed63d7b8",
+                "449f270ed8dffd95f796884d7db8819b4694cdfa",
+                "49bd98e540048e3865313ec075b921f28ade02a6",
+                "609add25c393f91ab8351119805459c020e2e5d2",
+                "740eb3245c0c7dd8e0b7cd742e32b95a3c6adeb9",
+                "a520233c955ffba5f971c62e154a0cbb6f78ab93",
+                "b845a1e78245464a5ed04d5150d90d39e49ccaed",
+                "c2a894f63e6c22c169b3e0c45cc88c053e0f0a57",
+                "cd4e0bcc856c5898201f6c801060df22de31e911",
+                "e9e366165d8bc5cf16c4af11de7f21947f247a58",
+                "eaba96b2f80b930dd1a57fe5f23a0be5e193e357"
+              ]
+            },
+            {
+              "number": 1332,
+              "commits": [
+                "6bddb9b0f28c08f2b50f9ea0fd7cd137e16ae69c",
+                "df308613573b5b6dfbea2de77fdde699a37ea355"
+              ]
+            },
+            {
+              "number": 1333,
+              "commits": [
+                "4d7b4cc103636e790788ab489845f735a4b5a6f3",
+                "f091234bbf09d0eb8d7e5baf0b1891b669308bcb",
+                "f510634b6e27d8458d51b7f5ca718503ceed8866"
+              ]
+            },
+            {
+              "number": 1334,
+              "commits": [
+                "ab5096124a7898bb6a26c2929c2758ce26a1842b",
+                "f091234bbf09d0eb8d7e5baf0b1891b669308bcb"
+              ]
+            },
+            {
+              "number": 1335,
+              "commits": [
+                "4d7b4cc103636e790788ab489845f735a4b5a6f3",
+                "f091234bbf09d0eb8d7e5baf0b1891b669308bcb",
+                "f510634b6e27d8458d51b7f5ca718503ceed8866"
+              ]
+            },
+            {
+              "number": 1336,
+              "commits": [
+                "939eca1ea9fcb34c72307aba3781c77ce65027dd"
+              ]
+            },
+            {
+              "number": 1337,
+              "commits": [
+                "6c8b0a3ccb95386c911e447331e24fcedf4c62d5"
+              ]
+            },
+            {
+              "number": 1338,
+              "commits": [
+                "167242ba6ffa6bca2c53f5299933d7f6c71784d5"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1239,
+          1253,
+          1255,
+          1327,
+          1328,
+          1329,
+          1330,
+          1331,
+          1332,
+          1333,
+          1334,
+          1335,
+          1336,
+          1337,
+          1338
+        ],
+        "version": "1.85.0-beta.1",
+        "body": "<!-- release: v1.85.0-beta.1 -->\n<!-- base: v1.84.0 -->\n<!-- language: ru -->\n## Houseplan 1.85.0-beta.1\n\nПервая бета после стабильной 1.84.0 улучшает редактирование плана и подсказки.\n\n- Висячий конец стены можно перетащить на середину другой стены или перегородки: цель подсвечивается, стена разбивается точно в месте соединения, действие поддерживает отмену и повтор. [#1330](https://github.com/Matysh/houseplan-card/issues/1330)\n- Прямая и винтовая лестницы видны под курсором до размещения. Исправлены отмена черновика, контекстное меню узлов и обновление панелей во время предпросмотра. [#1253](https://github.com/Matysh/houseplan-card/issues/1253), [#1338](https://github.com/Matysh/houseplan-card/issues/1338)\n- Shift при повороте декора и изображения плана привязывает угол с шагом 45°; нажатие и отпускание клавиши сразу обновляет предпросмотр. [#1255](https://github.com/Matysh/houseplan-card/issues/1255)\n- В пустом пространстве появилась подсказка с переходом в редактор. Ложная стрелка «План там» исчезла; подсказка под привязкой комнаты к зоне Home Assistant теперь остаётся видимой. [#1329](https://github.com/Matysh/houseplan-card/issues/1329), [#1333](https://github.com/Matysh/houseplan-card/issues/1333), [#1334](https://github.com/Matysh/houseplan-card/issues/1334)\n- Исправлены выступы заливки комнаты в стыках стен с отдельной перегородкой. Обновлены три принятых владельцем эталона диалогов комнаты. [#1327](https://github.com/Matysh/houseplan-card/issues/1327), [#1334](https://github.com/Matysh/houseplan-card/issues/1334)\n\nПосле обновления перезапустите Home Assistant и перезагрузите страницы Houseplan.\n\n<!-- language: en -->\n## Houseplan 1.85.0-beta.1\n\nThe first beta after stable 1.84.0 improves plan editing and guidance.\n\n- Drag a dangling wall endpoint onto the interior of another wall or partition. The highlighted target splits exactly at the attachment, with Undo and Redo support. [#1330](https://github.com/Matysh/houseplan-card/issues/1330)\n- Straight and Spiral stairs preview under the pointer before placement. Cancellation, node context menus and toolbar updates work during preview. [#1253](https://github.com/Matysh/houseplan-card/issues/1253), [#1338](https://github.com/Matysh/houseplan-card/issues/1338)\n- Hold Shift while rotating decor or the plan image to snap to absolute 45° increments. Pressing and releasing Shift updates the preview immediately. [#1255](https://github.com/Matysh/houseplan-card/issues/1255)\n- Empty spaces offer a shortcut to the plan editor and no longer show a misleading off-screen-plan arrow. The room's Home Assistant area helper stays visible. [#1329](https://github.com/Matysh/houseplan-card/issues/1329), [#1333](https://github.com/Matysh/houseplan-card/issues/1333), [#1334](https://github.com/Matysh/houseplan-card/issues/1334)\n- Fixed room-floor protrusions at mixed wall and partition junctions. Updated the three owner-approved room-dialog baselines. [#1327](https://github.com/Matysh/houseplan-card/issues/1327), [#1334](https://github.com/Matysh/houseplan-card/issues/1334)\n\nAfter updating, restart Home Assistant and reload Houseplan pages.\n",
+        "technical": {
+          "ru": "## v1.85.0-beta.1 — 2026-11-06\n\n- Приняты три эталона диалогов комнаты после постоянной подсказки HA area; исходные сравнения и решение владельца сохранены в provenance (#1334).\n\n- В полностью пустом загруженном пространстве View показывает подсказку и штатный переход в редактор с проверкой прав/киоска; скрытые объекты продолжают считаться содержимым (#1333).\n- Под привязкой комнаты к HA area постоянно показано пояснение свободных зон (#1334).\n- Удалён мёртвый экспорт commitWallChainSegmentGeometry и устаревшие поля его интерфейса и два мутационных определения удалённого пути; graph append и рабочий finish сохранены (#1335).\n\n- Hover лестницы не блокирует показ меню удаления узла и обновление панелей/истории; локальное превью остаётся быстрым (#1338).\n\n- Select: висячий конец присоединяется к середине стены/перегородки с точным разбиением, проверкой сервера и одним Undo/Redo (#1330).\n\n- Восстановлен контракт видимости исключений в smoke: учитываются прозрачные delegates и бросающие assert, native node-hit завершает каждый browser общим гардом. #1337\n\n- Синхронизирован встроенный runtime и offline-страница конвертера с принятым lineage mapping при удалении шва PlanGraph; для S6 явно заданы собственный артефакт и реальные входы компиляции, fixtures и ограничения сохранены. #1336\n\n- Актуализировать контракты baseline S6 и адресные мутационные свидетели; учитывать реальные области сканеров в выборке/reuse и исключить ошибочный продуктовый fallback для инфраструктурных данных. Параллельные HA-тесты используют собственные каталоги конфигурации. #1331\n- Объявить пять существующих DOM hooks в контракте селекторов: восстановить чистый data-hp guard мутаций без ослабления полноты source inventory и отрицательных проверок. #1332\n- Стрелка возврата к плану скрыта в пустых пространствах, в том числе после создания и удаления последнего объекта при сохранённой рамке редактора; возврат к реальным объектам без комнат работает как прежде. [#1329](https://github.com/Matysh/houseplan-card/issues/1329)\n- Показывать прямую и винтовую лестницу под курсором до нажатия с геометрией и магнитами обычного клика, без записи; сохранять одного владельца превью и поглощать позднее отпускание только после отмены удерживаемого черновика; Escape над hover сохраняет следующий жест навигации. [#1253](https://github.com/Matysh/houseplan-card/issues/1253)\n\n- S6 автоматически выбирает проверки по изменённому поведению, связям и треку; каталог, неизвестные области, reuse по файлам и подготовка резерва используют общий план. #1239\n\n- Подложка комнат согласована с кладкой в стыках с отдельной перегородкой: устранены белые выступы за стенами. #1327\n- Shift привязывает поворот всех элементов подложки к углам через 45°; предпросмотр реагирует на нажатие и отпускание клавиши без движения мыши. #1255",
+          "en": "## v1.85.0-beta.1 — 2026-11-06\n\n- Accept the three room-dialog baselines for the persistent HA-area hint, preserving capture provenance and the owner decision (#1334).\n\n- Show a loaded empty-space prompt and the guarded Plan editor entry in View; hidden objects still count as content (#1333).\n- Keep the available HA-area explanation visible below the room binding field (#1334).\n- Remove the dead commitWallChainSegmentGeometry export and its unused interface members and two obsolete mutation definitions while preserving graph append and live finish (#1335).\n\n- Stair placement hover preserves node menus and panel/history updates while keeping local preview paint coalesced (#1338).\n\n- Select: attach a dangling endpoint to a wall/partition interior with an exact split, server proof and one Undo/Redo command (#1330).\n\n- Preserve smoke error visibility through transparent delegates and strict assertions; finish every native node-hit browser through the shared guard. #1337\n\n- Refresh the offline converter runtime/page with the accepted PlanGraph seam-lineage mapping; track its real compiler/limit inputs independently from card artifacts, preserving fixtures and safety limits. #1336\n\n- Repair current S6 baseline contracts and mutation witnesses; preserve actual source-scanner scopes in selection/reuse and keep infrastructure metadata out of product fallback and isolate parallel HA test directories. #1331\n- Declare five existing DOM hooks in the selector contract, restoring the clean data-hp mutation guard without relaxing source completeness or negative controls. #1332\n- Hide the home arrow on empty spaces, including new-space transitions and an editor's retained frame after its last object is removed; keep Fit for genuine roomless content. [#1329](https://github.com/Matysh/houseplan-card/issues/1329)\n- Preview Straight and Spiral stairs under the mouse before pressing, reusing click geometry and magnets without writes; keep one live owner and consume a late release only after cancelling a held draft; hover-only Escape preserves the next navigation gesture. [#1253](https://github.com/Matysh/houseplan-card/issues/1253)\n\n- S6 selects tests from changed behavior, component links and track; active catalog, explicit unknowns, file-level reuse and fallback preparation share one plan. #1239\n\n- Align room paper with actual mixed-junction masonry; independent branches no longer expose white facade tips. #1327\n- Background rotation: Shift snaps all handles to absolute 45° bearings and updates held previews on modifier edges. Default rotation precision and other Shift gestures stay unchanged. #1255"
+        },
+        "userChangelog": null
       }
     }
   },
@@ -35829,7 +35981,8 @@
     "ship-review:prepare:a7ae42ac-094d-4c08-87ff-12f86de58ee9": "b738c8ab6e9f9bc0ff97a33d619538ac8854e05611dcbd436ffd8ecf25349da0",
     "ship-review:result:bed4a89d-f1ec-49bd-ae06-d1cda2ee262d": "6e2a539529b24592e18d7c5067457d8745b7bc09bb7783c815a5b6dd07d0a4e2",
     "beta1851-20261106-publish:runner-report": "a1fbdf173052693d6c8f5552eeb1b495c35b2fa54d0553c2fd3aa0bad3bfc787",
-    "beta1851-20261106-publish:metrics": "880d6f78f2687ea0cb6de098de01d24bfe737eecb48e1f20506293f86d2391eb"
+    "beta1851-20261106-publish:metrics": "880d6f78f2687ea0cb6de098de01d24bfe737eecb48e1f20506293f86d2391eb",
+    "beta1851-20261106-publish:prepared:ba754a0f-f3ca-4601-804e-f21cb7c999f7": "47ff7a340d72c03c0921844ed8c2e5d4300d41830347001d8082cc0c731b0895"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
