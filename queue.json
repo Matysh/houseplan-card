@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5284,
+  "revision": 5285,
   "nextTicket": 255,
   "nextFence": 255,
   "tasks": {
@@ -1399,7 +1399,7 @@
       "ownerDecision": null,
       "ticket": 254,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793936414547,
       "reviewEntry": 3,
       "patchId": "a009e38188e3e44c6d7f57d70f21c67fec4b02ee",
@@ -1430,6 +1430,15 @@
         "entry": 2,
         "detail": "Браузер: backdrop: failed; Браузер: decor text: failed",
         "eventId": "finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:3:return:return:1255"
+      },
+      "s6": {
+        "id": "20261106T034029195-aaa7fc45",
+        "name": "Тесты для задачи #1255 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261106T034029195-aaa7fc45/report.json",
+        "materialSha": "c14d2bc55c65a575769553b653d6272419ceed1e",
+        "status": "passed",
+        "finishedAt": "2026-11-06T03:41:03.558Z",
+        "failures": []
       }
     },
     "1256": {
@@ -4009,9 +4018,9 @@
     "fence": 254,
     "materialSha": "c14d2bc55c65a575769553b653d6272419ceed1e",
     "expectedBase": "fa5a1c30019811c91a6a34ee36d70de7875455c9",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793936418128,
-    "expiresAt": 1793936725338,
+    "expiresAt": 1793940065824,
     "patchId": "a009e38188e3e44c6d7f57d70f21c67fec4b02ee"
   },
   "events": {
@@ -4229,6 +4238,34 @@
         "layer": "product",
         "materialSha": "c14d2bc55c65a575769553b653d6272419ceed1e",
         "phase": "sync"
+      }
+    },
+    "finish:e8942406-c96a-4eee-adc0-4e8fd944dad8:finish:3:s6-complete": {
+      "digest": "348beceeafe24012c705eeaf6bccbbaa979d7b42ea6fd04076a314832bd83ea9",
+      "issue": 1255,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1255,
+        "at": 1793936465824,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c14d2bc55c65a575769553b653d6272419ceed1e",
+        "phase": "review",
+        "evidence": {
+          "id": "20261106T034029195-aaa7fc45",
+          "name": "Тесты для задачи #1255 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta3-release-20261028/.git/process-next/runs/20261106T034029195-aaa7fc45/report.json",
+          "materialSha": "c14d2bc55c65a575769553b653d6272419ceed1e",
+          "status": "passed",
+          "finishedAt": "2026-11-06T03:41:03.558Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Общий rotationAngle сохраняет прежний default (5° обычный декор/подложка, свободный мебель/изображения), Shift задаёт абсолютные 45° с симметричной обработкой полушага. furnitureRotationAngle сохраняет внешний API через тот же расчёт. Decor и backdrop хранят последний сырой угол в состоянии текущего жеста; существующий оконный обработчик modifier key вызывает пересчёт на keydown/keyup Shift. Перед ним сбрасывается ожидающий pointer move, поэтому поздний move не возвращает старое состояние клавиши. Новых глобальных слушателей нет, окончание/cancel/navigation удаляют raw input или его drag identity. Ручки используют существующую локализованную подсказку Shift — 45°; DECOR-EDITOR обновлён. Другие Shift-жесты и physical body rotation не менялись.\n\nАдресные unit: **27/27 PASS**, включая пять видов декора, исходный угол 17°, ±180°/360°, симметричные полушаги, queued backdrop move, модификатор до первого движения, terminal/reset, одно сохранение/история. Устаревшие две source-regex проверки старого «Shift=free» удалены из resize-contract; вместо них исполняемый regression в decor-rotation проверяет новое поведение.\n\nНативный Chromium: **14/14 PASS** на валидном model11-файле, реальные mouse/keyboard для декора и подложки: 5° default, Shift down/up без движения, commit=preview, Undo/Redo одной операцией, чтение записанного угла из demo writer. Транспорт синтетический, не реальный HA. Первые варианты теста обнаружили неготовый mode transition/непопадание в ручку и отказ Redo в общей demo-сцене; эти логи сохранены. Итоговый тест явно ждёт завершения перехода, фиксирует валидный model11-план, держит ручки в видимой области и требует настоящего pointer capture. Safety/history не ослаблялись.\n\nS6 request добавляет существующие furniture/decor history и native backdrop/furniture smoke. Не выдаю ещё не выполненные группы за PASS; общий отчёт публикуется finish. E2E: **надо** перед следующей бетой проверить реальный ACK сохранения и Undo/Redo поворота с Shift и без движения мыши; сейчас реальный HA E2E не запускался. Golden не принимался, стенд владельца не менялся.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
