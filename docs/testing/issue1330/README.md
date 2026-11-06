@@ -115,3 +115,10 @@ routed only to live paint and the menu remains inert. This confirmed the
 previously optional #1253 review risk. It is tracked and corrected separately
 as#1338 in this same packet; the original native deletion assertions are kept.
 See docs/testing/issue1338/README.md for the before/after and scope.
+
+
+Addressed mutation execution (standard mutation-gate CLI, one --id per run):
+node-editor-every-write-refusal-is-unsafe-geometry,
+node-repeat-tolerance-retargets-proof, node-server-trusts-forged-inverse.
+Each clean registered guard passed and its declared test failed under the
+mutation:3/3 caught. These are targeted witnesses, not a full nightly shard.
