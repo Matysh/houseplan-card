@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5934,
-  "nextTicket": 277,
+  "revision": 5935,
+  "nextTicket": 278,
   "nextFence": 277,
   "tasks": {
     "1193": {
@@ -3817,14 +3817,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1333-1335-empty-view-and-cleanup",
-      "materialSha": "f091234bbf09d0eb8d7e5baf0b1891b669308bcb",
+      "materialSha": "f510634b6e27d8458d51b7f5ca718503ceed8866",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 276,
-      "queued": false,
+      "ticket": 277,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793975411397,
-      "reviewEntry": 1,
+      "readyAt": 1793975929481,
+      "reviewEntry": 2,
       "patchId": "bead12c1ab699523648d9071970ac358c6c5f95c",
       "changedFiles": [
         "demo/smoke_room_settings_form.mjs",
@@ -3858,7 +3858,6 @@
         "test/space-content-boundary.test.mjs",
         "test/writer-fixed-point.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4061,7 +4060,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1333
+  ],
   "active": null,
   "events": {
     "finish:e42c38ae-f2f5-4cbb-96d8-bf4666902ce3:finish:2:synchronized": {
@@ -4151,6 +4152,19 @@
           "detail": "Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:e42c38ae-f2f5-4cbb-96d8-bf4666902ce3:finish:3:return:return:1333"
         }
+      }
+    },
+    "finish:cca76adb-8fb2-4238-8c23-ce2e35b9ccc5": {
+      "digest": "8140e3cf3cb9b99b3c6bf184d4c1303f9978aef22ce23ebfde3212cd01c860ce",
+      "issue": 1333,
+      "message": {
+        "kind": "queued",
+        "issue": 1333,
+        "at": 1793975929481,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "f510634b6e27d8458d51b7f5ca718503ceed8866"
       }
     }
   },
