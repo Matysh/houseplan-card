@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5763,
+  "revision": 5764,
   "nextTicket": 273,
   "nextFence": 273,
   "tasks": {
@@ -1248,7 +1248,7 @@
       "ownerDecision": null,
       "ticket": 272,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793967493323,
       "reviewEntry": 6,
       "patchId": "247c5b27bdd3c8f26fe0cb59cdfced4df9f87cbb",
@@ -1279,19 +1279,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261106T115525422-8c50305c",
+        "id": "20261106T121830077-f4f5565b",
         "name": "Тесты для задачи #1253 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T115525422-8c50305c/report.json",
-        "materialSha": "6c8b0a3ccb95386c911e447331e24fcedf4c62d5",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T121830077-f4f5565b/report.json",
+        "materialSha": "418a72a888ea5662808e0eb8236e3f40111cc1b1",
         "status": "passed",
-        "finishedAt": "2026-11-06T11:57:55.697Z",
+        "finishedAt": "2026-11-06T12:24:21.561Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1253:5:83ed21254145cae9e8db9fd3219a942ecb03213b:939eca1ea9fcb34c72307aba3781c77ce65027dd",
-        "at": 1793966681021
-      }
+      "reviewRound": null
     },
     "1254": {
       "issue": 1254,
@@ -4101,9 +4097,9 @@
     "fence": 272,
     "materialSha": "418a72a888ea5662808e0eb8236e3f40111cc1b1",
     "expectedBase": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793967497385,
-    "expiresAt": 1793968163054,
+    "expiresAt": 1793971465722,
     "patchId": "247c5b27bdd3c8f26fe0cb59cdfced4df9f87cbb"
   },
   "events": {
@@ -4649,6 +4645,34 @@
           "finishedAt": "2026-11-06T11:57:55.697Z",
           "failures": []
         }
+      }
+    },
+    "finish:b2c3b7c9-d6c1-4403-abef-069f0b0b510f:finish:3:s6-complete": {
+      "digest": "1bbc2bc8804b756eef6d47fceffb30ad70c5cb1f6d5e105ae87debd864adec3f",
+      "issue": 1253,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1253,
+        "at": 1793967865722,
+        "entry": 6,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "418a72a888ea5662808e0eb8236e3f40111cc1b1",
+        "phase": "review",
+        "evidence": {
+          "id": "20261106T121830077-f4f5565b",
+          "name": "Тесты для задачи #1253 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T121830077-f4f5565b/report.json",
+          "materialSha": "418a72a888ea5662808e0eb8236e3f40111cc1b1",
+          "status": "passed",
+          "finishedAt": "2026-11-06T12:24:21.561Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "StairEditorRuntime хранит transient mouse hover отдельно от held draft/drag. Используется тот же zero-length draftStair и withMoveMagnet, что у обычного клика; pointerdown снимает hover и передаёт единоличное владение существующему draft. Hover не выделяет persisted UUID и не меняет stairs/config/history/epoch. Surfaces кешируются на accepted geometry epoch; актуальные scale/style и model-space проверяются при чтении. Pointerleave, неподходящая screen surface, tool/type/mode/space, cancel и лимит снимают preview. Touch gesture сохраняет прежнее поведение.\n\nПревью рисуется существующим stairs live-слоем, pointer-transparent; frame только у selected/held stair. Штатный live-editor hide/reconcile скрывает settled копию при полном host-render. В smoke_stairs добавлен native helper для Straight/Spiral: mouse hover до down, отсутствие записей, настоящий HA property host-render, ровно один visible owner, совпадение геометрии после клика, уход за сцену и Esc с настоящим late up. Исправлен выявленный native дефект приоритета Escape: активный stairs draft/transform/hover отменяется раньше открытой панели инструментов/Properties, иначе Escape закрывал chrome, а late up сохранял геометрию.\n\nДо новой сборки исходные3unit-контракта проходили,6новыхкейсов воспроизводили дефект. Итог сохранённой реализации: build/types/test-build PASS, test/stairs-editor-live.test.mjs11/11PASS (3прежних+8новых, включая реальные footprint magnets Straight/Spiral), полный demo/smoke_stairs.mjs OK со всеми прежними и новыми assertions. Native shape сравнивается по неизменной SVGструктуре/стилю/числу координат и максимальному отличию2e-6render units — только существующее округление normalized storage до9знаков; положения/размеры и pixel thresholds не меняются.\n\nПо #1328 проверены catalog/plan без areaTests: Node — product/editors+stairs/regression/task-release, выбирается по reader/области; smoke_stairs — product/stairs/regression/task-release, выбирается как reader нового helper и обязательный native stairs. Монолитный houseplan-card.ts честно даёт полный fast Node fallback. Статический план не выдаётся за выполненный S6.\n\nПервый S6 run20261106T062712602-7fd272fb failed (158passed+361reused+12failed):16исходныхNode-ошибок подтверждены на исходном dev в #1331, собственные unit/native отказы разобраны и исправлены; отдельно marker-history9/9наbaseline показал нестабильность harness. Все эти baseline-механизмы и изоляция HA directories исправлены в принятом совместном пакете #1331/#1332, слитом в deveaba96b2f8. Blocked снят, но новый S6 #1253 ещё впереди: штатный finish выполняет актуализацию и всю текущую выборку, затем независимое code review.\n\nСохранённая ветка до актуализации: codex/1253-stairs-hover,a748cb7998. Релизная мета — уже открытый владельцем milestone1.85.0 #13, stablebasev1.84.0,major; публикация не поручена. Companion [task-impact/1253.md](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1253.md): расширить настоящий HA journey stairs placement перед следующей бетой. Native evidence artifacts/stairs-placement-preview/evidence.json; логи output/issue-1253. Пользовательский HA не менялся.\n\n### Служебная классификация уже слитой #1331\n\nВ пакет добавлено только оформление categoryinfra для завершённой #1331. Полный product S6 ей был нужен из-за mixed browser/DOM inputs; пользовательского изменения/нового milestone в ней нет. Запись v1.83.0/1331.json закрывает pending milestone в неизменяемом материале eaba96b2 (его унаследованный цикл ещё был1.83→1.84); запись v1.84.0/1331.json описывает фактическую доставку инфраструктуры в активном цикле1.85. Это восстановление оформления после merge, без повторного слияния/ревью продукта #1331. Оно включено в текущий полный diff #1253 для штатной очереди. Основная реализация и ledger major #1253 сохраняются; beta/stable не выпускаются.\n\n### Свежесть standalone-конвертера перед повтором\n\nПосле актуализации run20261106T112649836-1772f263 завершил543шага:175passed+366reused+2failed. Первый — test/sh3d-convert-page.test.mjs, runtime stale. Второй выявлен при чтении итогового receipt: test/smoke-harness-contract.test.mjs (2/8fail), статические проверки прозрачного delegate/throwing assert и реальный пропуск finish в smoke_wall_node_hit. Его разбор продолжается; прежняя фраза об одном отказе была сделана до проверки полного итогового receipt и здесь исправлена. Diff свежей сборки показал11строк уже принятого PlanGraph seam-lineage; source/model/generator в этом пути идентичны dev, лестничный diff их не менял. Отдельная #1336 синхронизировала runtime/page и их реальные metadata inputs без изменения fixtures/goldens/порогов. Она слита в dev939eca1ea9, S6infra19/19PASS,224кейса, без HACS/беты. Новый finish #1253 перебазирует ветку на эту базу и повторяет полный применимый профиль; старый failed receipt сохранён.\n\n### Совместный пакет #1337: terminal smoke verdict\n\nВ итоговом receipt было2failed, не1; уточнение сохранено выше. Второй baseline отказ разобран в #1337 и исправлен в том же completion-пакете #1253/#1337. Полное code review должно покрыть оба diff, отдельного фиктивного S7/нового тестового этапа для #1337 не добавляется.\n\nВ smoke-harness-contract readExecution раскрывает только иначе пустые awaited smoke delegates с буквальным argv.push; собственные действия не наследуют чужой finish, цикл даёт отказ. Старый if/exit-or-throw допускается, strict node:assert/strict equal(await reportPageErrors(),false) распознаётся как бросающий verdict. Новые positive/negative случаи отвергают ignored result/exitCode/expected true/fake assert и непрозрачный delegate. Реальный пропуск исправлен в smoke_wall_node_hit: каждый browser проходит общий finish вместо browser.close. Счётчик и page watcher остаются в serve. В DECLARED_SOURCE_SCOPES читатель smoke-harness-contract получил свой реальный demo/smoke_*.mjs scope.\n\nАдресные contract/exception/lifecycle:23/23PASS,безskip. Native node-hit будет выполнен в штатном S6 текущего пакета. По #1328 проверены catalog/plan: новый Node-кейс наследует существующий infra-файл toolchain/integration с lifecycle addressed; выбирается как изменённый файл и reader изменённых demo в текущей работе над механизмом. Native node-hit — product/geometry/task-release, выбирается как изменённый исполняемый файл. План571шаг, полный product-профиль с additive areaTests трёх затронутых guards, без сокращения основного набора. HEAD6c8b0a3ccb до актуализации.\n\nСам #1253 — прежняя реализация hover/escape, дополнения baseline не меняют staircase product contract. #1331 categoryinfra metadata остаётся служебным восстановлением уже слитой работы; #1336 уже в базе939eca1ea9. После успешного S6 — одно содержательное ревью и общий merge через очередь #1253; #1337 получит S8 с тем же полным принятым отчётом.\n\n### Исправление по код-ревью 42214111138\n\n[Ревью](https://github.com/Matysh/houseplan-card/actions/runs/42214111138) вернуло один блокер: hover Escape ошибочно взводил cancelledPlacement для не удерживаемой мыши, затем release другого жеста поглощался. Подтверждено новым native сценарием на старом коде: после hover→Esc→Select→клика _pointers.size=1 и _panStart=true; движение без кнопки изменило view.x с-419.6396396 на-380 и view.y с90.01287 на118.326898. Сохранён output/issue-1253/review-escape-before-evidence.json; native-old отказал точным assertion, до него тестshape/owner проходил. Обновлённый Node-корпус до исправления:18tests,10PASS/8FAIL,безskip.\n\nВ418a72a888 из hover полностью убран pid: ему не принадлежит удерживаемый указатель. Hover-only escape только очищает preview, без cancelledPlacement. Флаг остаётся только у отменённого реального draft; в начале любого stagePointerDown до ранних return он сбрасывается, чтобы новый tool/button жест владел своим отпусканием. Сохранён прежний consume настоящего late-up после Escape draft без нового down. Добавлены негативные/положительные случаи Select/правая/средняя кнопка и полный native сценарий обоих типов лестницы, проверяющий нулевые pointers/pan и неподвижность камеры при свободном движении.\n\nТакже применено дешёвое необязательное уточнение ревью: placementEnabled требует отсутствия draft/drag; новый hybrid touch-draft/mouse case подтвердил прежнюю двойную transient-возможность и теперь закрывает её. Семантика hover-only Esc остаётся очисткой preview; снятие инструмента/новая общая маршрутизация live/подавление hover над существующим stair не добавляются в эту правку. Finish #1337 сохраняется для каждого отдельного browser, так что каждая scale получает свой terminal verdict до закрытия; итоговый PASS печатается после обоих успешных finish.\n\nДокументация/ru-en changelog уточняют хвост только удерживаемого draft. Новые кейсы остаются в существующем unit-файле и native helper, которые уже выбраны полным текущим S6. Положительный прогон нового кода выполняет очередной штатный finish с применимым reuse; прежние отрицательные и успешные receipts сохранены. Общий review scope по-прежнему #1253/#1337 плюс уже описанное оформление #1331.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
