@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 532,
-  "active": null,
+  "revision": 533,
+  "active": "v1.85.0-beta.2-20261106",
   "candidates": {
     "v1.84.0-beta.2": {
       "id": "v1.84.0-beta.2",
@@ -31535,6 +31535,186 @@
           "branch": "issue/1339-release-return-0ce2c7c7b8de"
         }
       }
+    },
+    "v1.85.0-beta.2-20261106": {
+      "id": "v1.85.0-beta.2-20261106",
+      "kind": "beta",
+      "branch": "release/1.85.0-beta.2",
+      "sourceSha": "7b3b408a0d796fd126ed8e84bc295183f2de8e15",
+      "sha": "7b3b408a0d796fd126ed8e84bc295183f2de8e15",
+      "runner": null,
+      "running": null,
+      "status": "prepared",
+      "membership": {
+        "schema": 1,
+        "tag": "v1.85.0-beta.2",
+        "candidate": "7b3b408a0d796fd126ed8e84bc295183f2de8e15",
+        "base": "626c645948d2f9ecab458b410497641fd3487c69",
+        "issues": [
+          {
+            "number": 1239,
+            "commits": [
+              "94b43670bf58d49549a81a79b77e3b6dc37b0355",
+              "f38923a4f36ad20410fee1bef4b3642cf4f24fe6"
+            ]
+          },
+          {
+            "number": 1253,
+            "commits": [
+              "26dce32c64a063e7cf778deef8fef5b77449f2af",
+              "27fca2af5db980ee66dab786a82b62243f518cbd",
+              "418a72a888ea5662808e0eb8236e3f40111cc1b1",
+              "4cf931127898cbfd89aae0453ae3a56bc597916c",
+              "726587847e091a397a332f3a6b3a3aebd0f85546"
+            ]
+          },
+          {
+            "number": 1255,
+            "commits": [
+              "376b6e387031dca5328e46de2e411b6845e76b6a",
+              "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+              "5d6e48c49ea6a174abdc6c4f5f7c5a78ab0fa227",
+              "c14d2bc55c65a575769553b653d6272419ceed1e"
+            ]
+          },
+          {
+            "number": 1327,
+            "commits": [
+              "fa5a1c30019811c91a6a34ee36d70de7875455c9"
+            ]
+          },
+          {
+            "number": 1328,
+            "commits": [
+              "be93fa714bfb253e1232d42e1c0b4c2c369cec7e"
+            ]
+          },
+          {
+            "number": 1329,
+            "commits": [
+              "55397e9194ea4ac21ab343cdc5c16a40eb984457",
+              "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7"
+            ]
+          },
+          {
+            "number": 1330,
+            "commits": [
+              "13d2d6b1c8bf599d6a4eee6f9883cdbdd663b71d",
+              "3bf206abbcabe3bd34d58e1dec9f713a5a8990bf",
+              "53ad376ddadab2aa171768e9d928e933912ad18f",
+              "f1c9cd372946db8aa3b86c3e4224903ff6d4ad78"
+            ]
+          },
+          {
+            "number": 1331,
+            "commits": [
+              "3d33134daf1d8bc999e19e35de71205bed63d7b8",
+              "449f270ed8dffd95f796884d7db8819b4694cdfa",
+              "49bd98e540048e3865313ec075b921f28ade02a6",
+              "609add25c393f91ab8351119805459c020e2e5d2",
+              "740eb3245c0c7dd8e0b7cd742e32b95a3c6adeb9",
+              "a520233c955ffba5f971c62e154a0cbb6f78ab93",
+              "b845a1e78245464a5ed04d5150d90d39e49ccaed",
+              "c2a894f63e6c22c169b3e0c45cc88c053e0f0a57",
+              "cd4e0bcc856c5898201f6c801060df22de31e911",
+              "e9e366165d8bc5cf16c4af11de7f21947f247a58",
+              "eaba96b2f80b930dd1a57fe5f23a0be5e193e357"
+            ]
+          },
+          {
+            "number": 1332,
+            "commits": [
+              "6bddb9b0f28c08f2b50f9ea0fd7cd137e16ae69c",
+              "df308613573b5b6dfbea2de77fdde699a37ea355"
+            ]
+          },
+          {
+            "number": 1333,
+            "commits": [
+              "4d7b4cc103636e790788ab489845f735a4b5a6f3",
+              "f091234bbf09d0eb8d7e5baf0b1891b669308bcb",
+              "f510634b6e27d8458d51b7f5ca718503ceed8866"
+            ]
+          },
+          {
+            "number": 1334,
+            "commits": [
+              "ab5096124a7898bb6a26c2929c2758ce26a1842b",
+              "f091234bbf09d0eb8d7e5baf0b1891b669308bcb"
+            ]
+          },
+          {
+            "number": 1335,
+            "commits": [
+              "4d7b4cc103636e790788ab489845f735a4b5a6f3",
+              "f091234bbf09d0eb8d7e5baf0b1891b669308bcb",
+              "f510634b6e27d8458d51b7f5ca718503ceed8866"
+            ]
+          },
+          {
+            "number": 1336,
+            "commits": [
+              "939eca1ea9fcb34c72307aba3781c77ce65027dd"
+            ]
+          },
+          {
+            "number": 1337,
+            "commits": [
+              "6c8b0a3ccb95386c911e447331e24fcedf4c62d5"
+            ]
+          },
+          {
+            "number": 1338,
+            "commits": [
+              "167242ba6ffa6bca2c53f5299933d7f6c71784d5"
+            ]
+          },
+          {
+            "number": 1339,
+            "commits": [
+              "b01159e90270a4a454be4d7acbca9d90a51760f7"
+            ]
+          },
+          {
+            "number": 1340,
+            "commits": [
+              "b01159e90270a4a454be4d7acbca9d90a51760f7"
+            ]
+          },
+          {
+            "number": 1341,
+            "commits": [
+              "7b3b408a0d796fd126ed8e84bc295183f2de8e15"
+            ]
+          }
+        ]
+      },
+      "includedIssues": [
+        1239,
+        1253,
+        1255,
+        1327,
+        1328,
+        1329,
+        1330,
+        1331,
+        1332,
+        1333,
+        1334,
+        1335,
+        1336,
+        1337,
+        1338,
+        1339,
+        1340,
+        1341
+      ],
+      "reviewRequired": false,
+      "review": null,
+      "metrics": null,
+      "metricsAcceptedSha": null,
+      "portToDev": [],
+      "diagnostics": []
     }
   },
   "published": {
@@ -36545,7 +36725,8 @@
     "beta1851-20261106-publish:completion:3ca9175a-bf32-4215-9a81-1e984b03a329": "c6eb1c96ae8afc7d7f8ba321f282f01c28f92cd6237198c31d5ae19b1b447776",
     "beta1851-20261106-publish:completion:ef6f8c9f-5e95-41fc-bb74-0b6ee6d11f45": "9902f7c7450ab653174afba41840b56eb46cbc86a572bc898e90779886a521a5",
     "beta1851-20261106-publish:completion:d42778b6-99cf-4c3c-b101-af22c24103cc": "8936db996b7e1bdf0ab420873e3e2b4bfe4e54e3efa683799c720e277cdb7aed",
-    "beta1851-20261106-complete-after-return:completion:dfe9222a-856e-462b-8796-aad53e8595ee": "809acc0145d83e1973df1d41a4adbb02776718a06f6040f6442a9c191d70493c"
+    "beta1851-20261106-complete-after-return:completion:dfe9222a-856e-462b-8796-aad53e8595ee": "809acc0145d83e1973df1d41a4adbb02776718a06f6040f6442a9c191d70493c",
+    "beta1852-20261106-create": "fe34968b097bd6bc4f29fb5f1af00e71320ace80090c625332d0edf3d647f7f9"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
