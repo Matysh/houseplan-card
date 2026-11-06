@@ -127,9 +127,11 @@ export function angleCompare(a:Point,b:Point):number {
 interface Segment {a:Point;b:Point;box:Box;cuts:Map<string,Point>;index:number}
 /** Union membership of analytic domains; intersections node boundary segments,
  * not offset polygons passed through a repair/union/difference pipeline. */
-export function arrangeExact(input:Polygon[],excluded:Polygon[]=[]):Polygon[][] {
-  const polys=[...input,...excluded].filter(p=>p.length>=3),segments:Segment[]=[];
-  const masks=new Set(excluded);
+/** Optional required coverage is classified in the same exact arrangement,
+ * before boundary projection. Empty coverage yields an empty intersection. */
+export function arrangeExact(input:Polygon[],excluded:Polygon[]=[],required?:Polygon[]):Polygon[][] {
+  const polys=[...new Set([...input,...excluded,...(required||[])])].filter(p=>p.length>=3),segments:Segment[]=[];
+  const masks=new Set(excluded),sources=new Set(input),coverage=required&&new Set(required);
   const keys=new WeakMap<Point,string>();
   const keyOf=(point:Point):string=>{let key=keys.get(point);if(key===undefined){key=pointKey(point);keys.set(point,key);}return key;};
   const groups=new Map<string,Map<string,{point:Point;delta:number}>>();
@@ -186,13 +188,14 @@ export function arrangeExact(input:Polygon[],excluded:Polygon[]=[]):Polygon[][] 
     // endpoint projections avoids arbitrary-precision rounding of every new
     // midpoint; all membership decisions below remain exact.
     const pointBox=bounds([a,b]),candidates=query(polyTree,pointBox).filter(p=>overlaps(boxes.get(p)!,pointBox));
-    let l=false,r=false,ml=false,mr=false;
+    let l=false,r=false,ml=false,mr=false,cl=false,cr=false;
     for(const poly of candidates){
       const sides=containsSides(poly,mid,left);
-      if(masks.has(poly)){ml||=sides[0];mr||=sides[1];}else{l||=sides[0];r||=sides[1];}
-      if((ml&&mr)||(!masks.size&&l&&r))break;
+      if(masks.has(poly)){ml||=sides[0];mr||=sides[1];}else if(sources.has(poly)){l||=sides[0];r||=sides[1];}
+      if(coverage?.has(poly)){cl||=sides[0];cr||=sides[1];}
+      if((ml&&mr)||(!masks.size&&l&&r&&(!coverage||cl&&cr)))break;
     }
-    l&&=!ml;r&&=!mr;
+    l&&=!ml&&(!coverage||cl);r&&=!mr&&(!coverage||cr);
     if(l!==r)edges.push({a:l?a:b,b:l?b:a,used:false});
   }
   const outgoing=new Map<string,typeof edges>();
@@ -226,8 +229,8 @@ export function arrangeExact(input:Polygon[],excluded:Polygon[]=[]):Polygon[][] 
   }
   return polygons;
 }
-export function arrange(input:Polygon[],excluded:Polygon[]=[]):number[][][][] {
-  return arrangeExact(input,excluded).map(p=>p.map(r=>{
+export function arrange(input:Polygon[],excluded:Polygon[]=[],required?:Polygon[]):number[][][][] {
+  return arrangeExact(input,excluded,required).map(p=>p.map(r=>{
     const ring=r.map(pointNumbers),closed=[...ring,ring[0].slice()];
     registerExactPaintRing(closed,area(ring.map(numericPoint)).n!==0n);return closed;
   }));
@@ -237,20 +240,23 @@ export function arrange(input:Polygon[],excluded:Polygon[]=[]):number[][][][] {
  * Bbox connectivity is a conservative superset; coupled material is never
  * guessed apart. A partial result is explicitly unfit for a physical write.
  */
-export type ComponentCache=WeakMap<Polygon,{polys:Polygon[];geom:number[][][][]}>;
-export function arrangeComponents(polys:Polygon[],cache?:ComponentCache):{geom:number[][][][];failures:number}{
+export type ComponentCache=WeakMap<Polygon,{polys:Polygon[];required?:Polygon[];geom:number[][][][]}>;
+export function arrangeComponents(polys:Polygon[],cache?:ComponentCache,required?:Polygon[]):{geom:number[][][][];failures:number}{
   const boxes=polys.map(bounds),parents=polys.map((_,i)=>i),items=polys.map((_,i)=>i);
   const find=(i:number):number=>{while(parents[i]!==i){parents[i]=parents[parents[i]];i=parents[i];}return i;};
   const index=tree(items,i=>boxes[i]);
   for(const i of items)for(const j of query(index,boxes[i]))if(j>i&&overlaps(boxes[i],boxes[j]))parents[find(j)]=find(i);
   const groups=new Map<number,Polygon[]>();
   for(const i of items){const id=find(i),list=groups.get(id)||[];list.push(polys[i]);groups.set(id,list);}
+  const coverageTree=required&&tree(required,bounds);
+  const same=(a:Polygon[]|undefined,b:Polygon[]|undefined)=>a===b||!!a&&!!b&&a.length===b.length&&a.every((p,i)=>p===b[i]);
   const geom:number[][][][]=[];let failures=0;
   for(const group of groups.values())try{
+    const coverage=required&&query(coverageTree,bounds(group.flat()));
     const previous=cache?.get(group[0]);
-    if(previous&&previous.polys.length===group.length&&previous.polys.every((poly,i)=>poly===group[i]))geom.push(...previous.geom);
+    if(previous&&same(previous.polys,group)&&same(previous.required,coverage))geom.push(...previous.geom);
     else{
-      const result=arrange(group);geom.push(...result);cache?.set(group[0],{polys:group,geom:result});
+      const result=arrange(group,[],coverage);geom.push(...result);cache?.set(group[0],{polys:group,required:coverage,geom:result});
     }
   }catch{failures++;}
   return{geom,failures};

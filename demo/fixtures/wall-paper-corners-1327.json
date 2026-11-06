@@ -1,0 +1,238 @@
+{
+  "model_version": 11,
+  "spaces": [
+    {
+      "id": "corner-repro",
+      "title": "Corner diagnostic",
+      "cell_cm": 1,
+      "view_box": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "settings": {
+        "bg_color": "#1c2430",
+        "bg_mode": "static",
+        "show_names": false,
+        "wall_fill": {
+          "c": "#ffffff",
+          "a": 1
+        },
+        "fill_mode": "custom",
+        "custom_fill": {
+          "c": "#607d8b",
+          "a": 0
+        }
+      },
+      "rooms": [
+        {
+          "id": "rmw15ppo9-0",
+          "name": "",
+          "poly": [
+            [
+              2.183333333333333,
+              -1.3208333333333333
+            ],
+            [
+              1.9666666666666666,
+              -0.35833333333333334
+            ],
+            [
+              0.31666666666666665,
+              -1.1625
+            ]
+          ]
+        },
+        {
+          "id": "rmw15q8iv-0",
+          "name": "",
+          "poly": [
+            [
+              2.566666666666667,
+              0.7875
+            ],
+            [
+              1.9666666666666666,
+              -0.35833333333333334
+            ],
+            [
+              2.6333333333333333,
+              -0.7625
+            ],
+            [
+              3.154166666666667,
+              0.375
+            ]
+          ]
+        }
+      ],
+      "plan_graph": {
+        "version": 1,
+        "nodes": [
+          {
+            "id": "draw-node-03a79a6f-d0b1-41e5-ab1f-3ce3e7eaae68",
+            "p": [
+              "l",
+              "632",
+              "-183"
+            ]
+          },
+          {
+            "id": "draw-node-9f307705-85cc-40c5-920c-165194ff26ce",
+            "p": [
+              "l",
+              "472",
+              "-86"
+            ]
+          },
+          {
+            "id": "draw-node-eba0d2bf-fd9d-404c-87ef-b7acfdb80195",
+            "p": [
+              "l",
+              "76",
+              "-279"
+            ]
+          },
+          {
+            "id": "draw-node-fe26bea0-6446-4539-93a4-2e0a6b808f47",
+            "p": [
+              "l",
+              "524",
+              "-317"
+            ]
+          },
+          {
+            "id": "ge-35e96c559bc54094",
+            "p": [
+              "l",
+              "757",
+              "90"
+            ]
+          },
+          {
+            "id": "ge-c237bffdf631755f",
+            "p": [
+              "l",
+              "616",
+              "189"
+            ]
+          }
+        ],
+        "edges": [
+          {
+            "id": "partition-4fada5bd-e743-466d-8239-2447101588cb",
+            "from": "draw-node-fe26bea0-6446-4539-93a4-2e0a6b808f47",
+            "to": "draw-node-03a79a6f-d0b1-41e5-ab1f-3ce3e7eaae68",
+            "kind": "partition",
+            "cm": 15
+          },
+          {
+            "id": "ge-02d6c8806058259f",
+            "from": "draw-node-9f307705-85cc-40c5-920c-165194ff26ce",
+            "to": "draw-node-03a79a6f-d0b1-41e5-ab1f-3ce3e7eaae68",
+            "kind": "wall",
+            "cm": 15
+          },
+          {
+            "id": "ge-7324ba892cac59c9",
+            "from": "draw-node-03a79a6f-d0b1-41e5-ab1f-3ce3e7eaae68",
+            "to": "ge-35e96c559bc54094",
+            "kind": "wall",
+            "cm": 15
+          },
+          {
+            "id": "ge-7328b6892cb03bd4",
+            "from": "ge-35e96c559bc54094",
+            "to": "ge-c237bffdf631755f",
+            "kind": "wall",
+            "cm": 15
+          },
+          {
+            "id": "ge-dfbe5e3dc25ddeba",
+            "from": "draw-node-9f307705-85cc-40c5-920c-165194ff26ce",
+            "to": "ge-c237bffdf631755f",
+            "kind": "wall",
+            "cm": 15
+          },
+          {
+            "id": "partition-1ccd114d-ff6f-4e04-990e-95a9e49775da",
+            "from": "draw-node-9f307705-85cc-40c5-920c-165194ff26ce",
+            "to": "draw-node-fe26bea0-6446-4539-93a4-2e0a6b808f47",
+            "kind": "wall",
+            "cm": 15
+          },
+          {
+            "id": "partition-cf961271-f713-4ed8-98c5-211bdca8e348",
+            "from": "draw-node-eba0d2bf-fd9d-404c-87ef-b7acfdb80195",
+            "to": "draw-node-9f307705-85cc-40c5-920c-165194ff26ce",
+            "kind": "wall",
+            "cm": 15
+          },
+          {
+            "id": "partition-e034efdf-2b2a-4336-b903-0bcbca20870e",
+            "from": "draw-node-fe26bea0-6446-4539-93a4-2e0a6b808f47",
+            "to": "draw-node-eba0d2bf-fd9d-404c-87ef-b7acfdb80195",
+            "kind": "wall",
+            "cm": 15
+          }
+        ],
+        "rooms": [
+          {
+            "room": "rmw15ppo9-0",
+            "edges": [
+              {
+                "kind": "wall",
+                "id": "partition-1ccd114d-ff6f-4e04-990e-95a9e49775da",
+                "reverse": true
+              },
+              {
+                "kind": "wall",
+                "id": "partition-cf961271-f713-4ed8-98c5-211bdca8e348",
+                "reverse": true
+              },
+              {
+                "kind": "wall",
+                "id": "partition-e034efdf-2b2a-4336-b903-0bcbca20870e",
+                "reverse": true
+              }
+            ]
+          },
+          {
+            "room": "rmw15q8iv-0",
+            "edges": [
+              {
+                "kind": "wall",
+                "id": "ge-dfbe5e3dc25ddeba",
+                "reverse": true
+              },
+              {
+                "kind": "wall",
+                "id": "ge-02d6c8806058259f",
+                "reverse": false
+              },
+              {
+                "kind": "wall",
+                "id": "ge-7324ba892cac59c9",
+                "reverse": false
+              },
+              {
+                "kind": "wall",
+                "id": "ge-7328b6892cb03bd4",
+                "reverse": false
+              }
+            ]
+          }
+        ],
+        "dependencies": []
+      },
+      "openings": [],
+      "decor": [],
+      "stairs": []
+    }
+  ],
+  "markers": [],
+  "settings": {
+    "bg_color": "#1c2430"
+  }
+}

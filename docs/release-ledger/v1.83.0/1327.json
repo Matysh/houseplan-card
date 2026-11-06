@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1327,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Fixes exposed paper tips reproduced in released v1.84.0 at room corners with an independent partition; keeps physical masonry, graph and opening ownership unchanged.",
+  "summary": {
+    "ru": "Устранены белые выступы подложки за границами стен в стыках с перегородкой.",
+    "en": "Removes exposed white underlay tips at room corners joined by a partition."
+  }
+}

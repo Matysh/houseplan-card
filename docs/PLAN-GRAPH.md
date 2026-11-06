@@ -342,7 +342,10 @@ opaque, including a distinct exactly collinear wall behind a partition door
 The floor slab uses room-owned incidence only: an independent partition at a
 facade corner cannot enlarge it. Room centres plus their complete masonry form
 the paper underlay, with actual courtyard holes and no orphan triangular holes
-beneath continuous material.
+beneath continuous material. Mixed room/independent junctions additionally require
+actual room-masonry coverage for the paper facade (#1327): exact room-only
+facade domains cannot leave exposed tips where full incidence chamfers masonry.
+Room centres remain included; independent rays never enlarge the slab.
 
 `wall-arrangement.ts` nodes those finite boundaries: exact-line interval sweep,
 AABB candidate search, exact intersections, symbolic infinitesimal side tests

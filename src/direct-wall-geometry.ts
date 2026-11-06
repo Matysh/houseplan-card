@@ -12,7 +12,7 @@ import { compareCodePoints } from './codepoint-order';
 import { graphOpeningRun, annotateGraphOpeningRuns } from './graph-opening-run';
 interface Material {poly:A.Polygon;owners:string[];room:boolean}
 interface Ray {d:Q.ExactPoint;u:[number,number];h:number;length:number;thickLength:number;owners:string[];left:number[];right:number[];materials:number[]}
-interface Structure {materials:Material[];paper:A.Polygon[];paperMaterials:A.Polygon[];nodes:MultiWallNodeMap;depth:number;runs:Map<string,readonly string[]>;segments:Array<{kind:string;id:string;a:number[];b:number[]}>;roomGeom?:any;paperGeom?:any;geometryCache:Map<string,any>;componentCache:A.ComponentCache}
+interface Structure {materials:Material[];paper:A.Polygon[];paperMaterials:A.Polygon[];paperCoverage?:A.Polygon[];nodes:MultiWallNodeMap;depth:number;runs:Map<string,readonly string[]>;segments:Array<{kind:string;id:string;a:number[];b:number[]}>;roomGeom?:any;paperGeom?:any;geometryCache:Map<string,any>;componentCache:A.ComponentCache}
 interface ExtraInput {columns:number[][][];partitionCuts:readonly PartitionOpeningCut[]}
 export interface DirectOpening {x:number;y:number;angle:number;length:number;host?:{kind:string;id:string};hostIds?:readonly string[]}
 const extras=new WeakMap<object,ExtraInput>();
@@ -205,7 +205,13 @@ function buildStructure(source:WallGraphSource,cellCm:number,gridPitch:number):S
   const paperMaterials=records.some(r=>!ownedWalls.has(edgeKey(r.edge)))
     ? buildStructure({...source,graph:{...graph,edges:graph.edges.filter(e=>ownedWalls.has(edgeKey(e)))}},cellCm,gridPitch).materials.map(m=>m.poly)
     : trimmed.filter(m=>m.room).map(m=>m.poly);
-  return{materials:trimmed,paper,paperMaterials,nodes:{epsilon,coordinateScale:source.scale,nodes:nodeMetadata,index},depth,runs,segments:carriers,geometryCache:new Map(),componentCache:new WeakMap()};
+  // Independent incidence can chamfer visible room masonry differently from
+  // its room-only facade. Keep the slab inside both domains: room-only paper
+  // prevents a foreign ray enlarging it; actual coverage removes exposed tips.
+  // Classify exact domains together, never round a boundary back into a boolean.
+  const paperCoverage=records.some(r=>!ownedWalls.has(edgeKey(r.edge)))
+    ? [...paper,...trimmed.filter(m=>m.room).map(m=>m.poly)] : undefined;
+  return{materials:trimmed,paper,paperMaterials,paperCoverage,nodes:{epsilon,coordinateScale:source.scale,nodes:nodeMetadata,index},depth,runs,segments:carriers,geometryCache:new Map(),componentCache:new WeakMap()};
 }
 export function directStructure(source:WallGraphSource,cellCm:number,gridPitch:number):Structure {
   let entries=cache.get(source.graph);if(!entries){entries=new Map();cache.set(source.graph,entries);}
@@ -297,7 +303,7 @@ export function directWallGeometry(source:WallGraphSource,cellCm:number,gridPitc
   }
   const roomPolys=structure.materials.filter(m=>m.room).map(m=>m.poly);
   const roomResult=structure.roomGeom?{geom:structure.roomGeom,failures:0}:A.arrangeComponents(roomPolys,structure.componentCache);
-  const paperResult=structure.paperGeom?{geom:structure.paperGeom,failures:0}:A.arrangeComponents([...structure.paper,...structure.paperMaterials],structure.componentCache);
+  const paperResult=structure.paperGeom?{geom:structure.paperGeom,failures:0}:A.arrangeComponents([...structure.paper,...structure.paperMaterials],structure.componentCache,structure.paperCoverage);
   const roomGeom=roomResult.geom,paperGeom=paperResult.geom;
   if(!roomResult.failures)structure.roomGeom=roomGeom;if(!paperResult.failures)structure.paperGeom=paperGeom;
   failedComponents+=roomResult.failures+paperResult.failures;

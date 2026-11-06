@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Align room paper with actual mixed-junction masonry; independent branches no longer expose white facade tips. #1327
+
 ## v1.84.0 — 2026-11-05
 
 - Stable release from tested v1.84.0-beta.8; the user changelog describes changes since v1.83.1. Intermediate beta history is retained below.
