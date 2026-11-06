@@ -755,7 +755,7 @@
   "decor.live_attr_ph": "choisir l’état ou un attribut",
   "decor.live_state": "État",
   "decor.backdrop": "Image d’arrière-plan",
-  "decor.backdrop_hint": "Faites glisser pour déplacer ; tirez un coin pour redimensionner ; utilisez la poignée supérieure pour faire pivoter. Maj modifie les proportions ou libère l’angle.",
+  "decor.backdrop_hint": "Faites glisser pour déplacer ; tirez un coin pour redimensionner ; utilisez la poignée supérieure pour faire pivoter. Maj modifie les proportions pendant le redimensionnement ou aligne la rotation sur des angles de 45°.",
   "decor.backdrop_reset": "Réinitialiser l’image",
   "decor.backdrop_reset_done": "L’image a retrouvé sa position et sa taille d’origine",
   "mode.plan_tip": "Éditeur de plan — la géométrie du logement : dessiner et diviser/fusionner les pièces, les associer aux zones HA, placer portes, fenêtres et portails, déplacer les cartes de pièces, régler l’échelle",

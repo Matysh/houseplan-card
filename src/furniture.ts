@@ -1,4 +1,3 @@
-import { rotationAngle } from './rotation-angle';
 /**
  * The furniture library of the decor layer (docs/FURNITURE.md).
  *
@@ -29,6 +28,8 @@ import { rotationAngle } from './rotation-angle';
  *   - nothing is filled. The card strokes the whole symbol in the decor
  *     colour, so a plan stays a drawing (owner: «символы рисуются линейно»).
  */
+import { rotationAngle } from './rotation-angle';
+
 
 import { NORM_W, GRID_PITCH, CANVAS_LIMIT } from './space-geometry';
 import { GENERATED_FURNITURE_CATALOG } from './furniture-plan-catalog.generated';

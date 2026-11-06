@@ -755,7 +755,7 @@
   "decor.live_attr_ph": "choose state or attribute",
   "decor.live_state": "State",
   "decor.backdrop": "Backdrop image",
-  "decor.backdrop_hint": "Drag to move; pull a corner to resize; use the top handle to rotate. Shift changes proportions or frees the angle.",
+  "decor.backdrop_hint": "Drag to move; pull a corner to resize; use the top handle to rotate. Shift changes proportions while resizing or snaps rotation to 45° bearings.",
   "decor.backdrop_reset": "Reset the picture",
   "decor.backdrop_reset_done": "The picture is back at its original place and size",
   "mode.plan_tip": "Plan editor — the geometry of the home: draw and split/merge rooms, bind them to HA areas, place doors, windows and gates, move room cards, set the scale",

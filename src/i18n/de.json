@@ -755,7 +755,7 @@
   "decor.live_attr_ph": "Wählen Sie Status oder Attribut",
   "decor.live_state": "Status",
   "decor.backdrop": "Hintergrundbild",
-  "decor.backdrop_hint": "Ziehen zum Verschieben; eine Ecke ziehen zum Größenändern; den oberen Griff zum Drehen verwenden. Shift ändert das Verhältnis oder befreit den Winkel.",
+  "decor.backdrop_hint": "Ziehen zum Verschieben; eine Ecke ziehen zum Größenändern; den oberen Griff zum Drehen verwenden. Shift ändert beim Skalieren die Proportionen oder rastet beim Drehen auf 45° ein.",
   "decor.backdrop_reset": "Bild zurücksetzen",
   "decor.backdrop_reset_done": "Das Bild ist wieder an seinem ursprünglichen Platz und in seiner ursprünglichen Größe",
   "mode.plan_tip": "Planungseditor — die Geometrie des Hauses: Räume zeichnen und teilen/zusammenführen, sie mit HA-Bereichen verbinden, Türen, Fenster und Tore platzieren, Raumkarten verschieben, Maßstab festlegen",
