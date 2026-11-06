@@ -155,33 +155,6 @@ export function wallChainLiveSeed(
   return { partitionId, a, b, cm };
 }
 
-/** Prove that the editor appended exactly one partition and changed nothing else. */
-export function isSinglePartitionAppend(
-  beforeInput: unknown, afterSpaceInput: unknown, partitionId: string,
-): boolean {
-  const before = asRecord(beforeInput), after = asRecord(afterSpaceInput);
-  if (!before || !after || String(before.spaceId || '') !== String(after.id || '')) return false;
-  const arrays = [
-    'rooms', 'openings', 'walls', 'wall_segments', 'open_spans', 'wall_columns', 'decor',
-  ];
-  if (arrays.some((key) => stable(before[key] ?? []) !== stable(after[key] ?? []))) return false;
-  const transform = asRecord(before.plan_transform) || {};
-  const transformAfter: DataRecord = {};
-  for (const key of [
-    'plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle', 'plan_opacity',
-  ]) if (after[key] !== undefined) transformAfter[key] = after[key];
-  if (stable(transform) !== stable(transformAfter)) return false;
-
-  const previous = recordsOf(before.partitions);
-  const next = recordsOf(after.partitions);
-  if (next.length !== previous.length + 1
-      || stable(next.slice(0, -1)) !== stable(previous)) return false;
-  const appended = next[next.length - 1];
-  const a = pointOf(appended.a), b = pointOf(appended.b);
-  return appended.id === partitionId && !!a && !!b && !samePoint(a, b)
-    && Number.isFinite(Number(appended.cm)) && Number(appended.cm) >= 0;
-}
-
 /** Build the same bounded physical/junction proof as #461 around one partition. */
 export function wallChainLiveCandidateSpace(
   spaceInput: unknown, seed: WallChainLiveSeed,

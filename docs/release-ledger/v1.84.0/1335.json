@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1335,
+  "baseStable": "v1.84.0",
+  "category": "infra",
+  "summary": {
+    "ru": "Удалён неиспользуемый экспорт старой транзакции Draw; сохранён рабочий finish.",
+    "en": "Remove the unused legacy Draw transaction export while preserving the live finish."
+  },
+  "rationale": "Dead source cleanup without runtime behavior or bundle payload changes; no user-facing release item."
+}

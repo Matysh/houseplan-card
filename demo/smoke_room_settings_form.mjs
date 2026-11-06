@@ -37,6 +37,10 @@ const out = await page.evaluate(async () => {
     && !!q('.hpf-card[data-card="basics"] #room-name')
     && !!q('.hpf-card[data-card="basics"] #room-area')
     && !!q('#room-area')?.closest('.hpf-field')?.querySelector('hp-help');
+  const areaHint = q('#room-area')?.closest('.hpf-field')?.querySelector('.hpf-hint');
+  o.areaHintIsPersistent = areaHint?.textContent.includes('Houseplan')
+    && getComputedStyle(areaHint).display !== 'none'
+    && areaHint.getBoundingClientRect().top >= q('#room-area').closest('hp-settings-select').getBoundingClientRect().bottom;
   o.noLegacyMarkup = qa('.srcrow, .namein, .areasel, .dropbtn, .droppanel, .candlist, .roomtemprange, .hpf-scale, .opv, fieldset').length === 0;
   o.subtitleShowsRoomAndSpace = dlg().subtitle.includes(c._spaceModel().title) && !!dlg().shadowRoot.querySelector('.subtitle');
   o.previewKept = !!q('.hpf-card[data-card="sizes"] .hpf-tint.hpf-preview .cardpreview'); // Q2

@@ -6,6 +6,8 @@
     "additionsAreCompatible": true
   },
   "hooks": {
+    "empty-plan": { "elements": ["div"], "since": "1.85.0", "audience": ["test"] },
+    "empty-plan-edit": { "elements": ["button"], "since": "1.85.0", "audience": ["test"] },
     "field-action": { "elements": ["button"], "since": "1.84.0", "audience": ["test"] },
     "weather-widget": { "elements": ["section"], "since": "1.84.0", "audience": ["test"] },
     "kiosk-spaces": { "elements": ["nav"], "since": "1.84.0", "audience": ["test"] },

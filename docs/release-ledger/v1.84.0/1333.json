@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1333,
+  "baseStable": "v1.84.0",
+  "category": "major",
+  "summary": {
+    "ru": "В пустом пространстве показана подсказка с доступным автору переходом в редактор плана.",
+    "en": "Show an empty-space prompt with the permitted Plan editor entry."
+  },
+  "rationale": "New owner-requested View onboarding state."
+}

@@ -1,4 +1,6 @@
 {
+  "empty.plan_prompt": "Le plan est encore vide. Dessinons quelque chose.",
+  "empty.plan_editor": "Éditeur de plan",
   "kiosk.spaces": "Changer d’espace",
   "toast.room_face_create": "Cliquer pour créer une pièce",
   "markup.shift_45": "Shift — pas de 45°",

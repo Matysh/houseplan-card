@@ -11,7 +11,7 @@ import {
 } from './wall-segment-model';
 import { spacePhysicalGeometryFingerprint } from './plan-geometry-preflight';
 import {
-  isSinglePartitionAppend, wallChainLiveCandidateSpace, wallChainLiveSeed,
+  wallChainLiveCandidateSpace,
   type WallChainLiveSeed,
 } from './draft-live-preflight';
 
@@ -21,7 +21,6 @@ interface WallChainLiveHost<State, Geometry> {
   _serverCfg: ServerConfig | null;
   _activeWallChainPartitionIds: string[];
   _path: number[][];
-  _wallChainSegmentCms: number[];
   _pendingPhysicalWrites: Map<string, { fingerprint: string; before: State }>;
   _checkSpacePhysicalGeometry: (
     config: ServerConfig, spaceId: string,
@@ -51,7 +50,6 @@ export interface WallChainLiveCommitRuntime<
     geometry?: Geometry | null, roomIds?: readonly string[],
   ) => Violation[];
   _junctionLimitLabel: (violation: Violation) => string;
-  _recordGeometry: (name: string, before: State) => void;
   _saveConfig: () => void;
 }
 
@@ -150,91 +148,3 @@ const rejectUnsafe = <State extends { spaceId: string }, Geometry extends Juncti
   runtime.host._showToast(runtime.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
   return false;
 };
-
-/** #461 bounded transaction for one ordinary wall appended by the active chain. */
-export function commitWallChainSegmentGeometry<
-  State extends { spaceId: string },
-  Geometry extends JunctionSharedGeometry,
-  Violation extends { readonly rule: string },
->(
-  runtime: WallChainLiveCommitRuntime<State, Geometry, Violation>,
-  name: string,
-  before: State | null,
-): boolean {
-  const { host } = runtime;
-  const liveCandidate = host._serverCfg;
-  const partitionId = host._activeWallChainPartitionIds[
-    host._activeWallChainPartitionIds.length - 1
-  ] || null;
-  const fallback = () => runtime._commitPhysicalGeometry(name, before, [], true,
-    { kind: 'partitions', ids: partitionId ? [partitionId] : [] });
-  if (Number(liveCandidate?.model_version || 0) >= 11) return fallback();
-  if (!before || !liveCandidate || !partitionId
-      || Number(liveCandidate.model_version || 0) !== WALL_SEGMENT_MODEL_VERSION) return fallback();
-  const liveSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);
-  if (!liveSpace || !isSinglePartitionAppend(before, liveSpace, partitionId)) return fallback();
-
-  let committedCandidate: ServerConfig;
-  try {
-    committedCandidate = commitWallSegmentModel(liveCandidate).config;
-  } catch (error) {
-    runtime._clearGeometryGesture();
-    runtime._restoreGeometryStateLocal(before);
-    runtime._showWallModelMigrationBlocked(error);
-    return false;
-  }
-  const committedSpace = committedCandidate.spaces.find((space) => space.id === before.spaceId);
-  const seed = wallChainLiveSeed(committedSpace, partitionId);
-  if (!committedSpace || !seed) return fallback();
-
-  const previousConfig = JSON.parse(JSON.stringify(liveCandidate)) as ServerConfig;
-  if (!runtime._restoreGeometryStateInConfig(previousConfig, before)) return fallback();
-  const previousSpace = previousConfig.spaces.find((space) => space.id === before.spaceId);
-  const candidateProjection = wallChainLiveCandidateSpace(committedSpace, seed);
-  const previousProjection = wallChainLiveCandidateSpace(previousSpace, seed);
-  if (!candidateProjection || !previousProjection) return fallback();
-  const localCandidate = { ...committedCandidate, spaces: [candidateProjection.space] } as unknown as ServerConfig;
-  const localPrevious = { ...previousConfig, spaces: [previousProjection.space] } as unknown as ServerConfig;
-
-  let geometry: Geometry | null = null;
-  let safe = false;
-  try {
-    const authoredPoints = host._path.length >= 2
-      ? host._path.map((point) => [point[0] / NORM_W, point[1] / NORM_W]) : [];
-    safe = wallModelOffGridValueCount(committedSpace)
-      <= wallModelOffGridValueCount(before, authoredPoints)
-      && host._checkSpacePhysicalGeometry(
-        localCandidate, before.spaceId, (value) => { geometry = value; },
-      ).ok;
-  } catch {
-    safe = false;
-  }
-  if (!safe) return rejectUnsafe(runtime, before);
-  const introduced = runtime._junctionLimitsIntroduced(
-    localCandidate, localPrevious, before.spaceId, geometry, candidateProjection.roomIds,
-  );
-  if (introduced.length) {
-    runtime._clearGeometryGesture();
-    runtime._restoreGeometryStateLocal(before);
-    host._showToast(runtime._junctionLimitLabel(introduced[0]), `junction.limit_${introduced[0].rule}`);
-    return false;
-  }
-
-  adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);
-  const acceptedSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);
-  const accepted = acceptedSpace?.partitions?.find((partition) => partition.id === partitionId);
-  const edgeIndex = host._activeWallChainPartitionIds.length - 1;
-  if (accepted && edgeIndex >= 0 && host._path.length === host._wallChainSegmentCms.length + 1) {
-    host._path[edgeIndex] = [accepted.a[0] * NORM_W, accepted.a[1] * NORM_W];
-    host._path[edgeIndex + 1] = [accepted.b[0] * NORM_W, accepted.b[1] * NORM_W];
-    host._wallChainSegmentCms[edgeIndex] = Number(accepted.cm);
-  }
-  runtime._recordGeometry(name, before);
-  const pending = host._pendingPhysicalWrites.get(before.spaceId);
-  host._pendingPhysicalWrites.set(before.spaceId, {
-    before: pending?.before || before,
-    fingerprint: spacePhysicalGeometryFingerprint(acceptedSpace),
-  });
-  runtime._saveConfig();
-  return true;
-}

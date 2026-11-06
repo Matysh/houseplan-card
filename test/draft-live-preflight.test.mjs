@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  isSinglePartitionAppend, wallChainLiveCandidateSpace, wallChainLiveSeed,
+  wallChainLiveCandidateSpace, wallChainLiveSeed,
 } from '../test-build/draft-live-preflight.js';
 import { increasedViolations, junctionLimitViolations } from '../test-build/junction-limits.js';
 import { GRID_STEP_N } from '../test-build/space-geometry.js';
@@ -45,24 +45,6 @@ const paritySpace = (partitions, seedLengthCm = 40) => ({
     { id: 'remote', a: [2, 2], b: [2 + cmUnits(40), 2], cm: 0 },
     terminal(seedLengthCm),
   ],
-});
-
-test('#461/#478 route guard accepts exactly one terminal partition append', () => {
-  const prior = { id: 'prior', a: [0, 0], b: [0.05, 0], cm: 15 };
-  const appended = { id: 'terminal', a: [0.05, 0], b: [0.1, 0], cm: 15 };
-  const before = { spaceId: 'space', rooms: [], partitions: [prior], plan_transform: {} };
-  const after = { id: 'space', rooms: [], partitions: [prior, appended] };
-  assert.equal(isSinglePartitionAppend(before, after, 'terminal'), true);
-  assert.equal(isSinglePartitionAppend(before, {
-    ...after, walls: [{ key: 'mixed', cm: 15 }],
-  }, 'terminal'), false);
-  assert.equal(isSinglePartitionAppend(before, {
-    ...after, partitions: [appended, prior],
-  }, 'terminal'), false);
-  assert.equal(isSinglePartitionAppend(before, after, 'another'), false);
-  assert.equal(isSinglePartitionAppend(
-    { ...before, partitions: [] }, { ...after, partitions: [appended] }, 'terminal',
-  ), true, 'the first accepted edge is one ordinary partition append');
 });
 
 test('#461/#478 local projection retains interacting walls and drops remote work', () => {
@@ -202,13 +184,12 @@ test('#461 malformed local geometry fails closed into the proof', () => {
   assert.equal(projected.space.walls.some((item) => item.key === 'unlocatable-wall'), true);
 });
 
-test('#461/#478 production source keeps bounded append and terminal room barriers separate', () => {
+test('#461/#478 production source keeps graph append and terminal room barriers separate', () => {
   const runtime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
   const transaction = readFileSync(new URL('../src/draft-live-commit.ts', import.meta.url), 'utf8');
   assert.match(runtime, /partitions\.push\([\s\S]*?_commitPhysicalGeometry\(this\.host\._t\('history\.wall_segment'\), before, \[\], true,\s*\{ kind: 'partitions', ids: \[id\], endpointRefs:/,
     'current append names the exact partition and endpoint graph references at the shared safety barrier');
-  assert.match(transaction, /commitWallChainSegmentGeometry<[\s\S]*?isSinglePartitionAppend/);
-  assert.match(transaction, /commitWallChainSegmentGeometry<[\s\S]*?wallChainLiveCandidateSpace/);
+  assert.match(transaction, /commitWallChainFinishGeometry<[\s\S]*?wallChainLiveCandidateSpace/);
   assert.match(transaction,
     /Number\(liveCandidate\.model_version \|\| 0\) !== WALL_SEGMENT_MODEL_VERSION/,
     'unknown future models must use the generic barrier');

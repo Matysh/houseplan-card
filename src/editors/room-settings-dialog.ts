@@ -139,6 +139,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
             }),
             field({
               label: st('room.area_optional'), htmlFor: 'room-area', help: shelp('room.group_basics.help'),
+              hint: st('room.area_available_hint'),
               control: html`<hp-settings-select><select data-hp="field" data-field="room-area" id="room-area" class="hpf-select" aria-label=${t('room.area_label')}
                 @change=${(e: Event) => {
                   host._areaSel = (e.target as HTMLSelectElement).value;

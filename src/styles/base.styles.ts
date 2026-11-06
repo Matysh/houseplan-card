@@ -8,6 +8,8 @@ import { navigationStyles } from './navigation.styles';
 import { readingKitStyles } from './reading-kit.styles';
 
 export const baseStyles = [readingKitStyles, navigationStyles, iconActionStyles, noticeStyles, toastStyles, controlMotionStyles, css`
+    .empty-plan { position:absolute; inset:0; z-index:10; pointer-events:none; }
+    .empty-plan button { pointer-events:auto; min-height:44px; min-width:44px; }
     .hp-dialog-return-focus:focus-visible { outline:none!important; }
     :host {
       --hp-bg: var(--card-background-color, #16212e);

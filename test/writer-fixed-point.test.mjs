@@ -223,7 +223,7 @@ test('#477 source contract routes every explicit chain finish through one finali
   const transaction = readFileSync(new URL('../src/draft-live-commit.ts', import.meta.url), 'utf8');
   const finishTransaction = transaction.slice(
     transaction.indexOf('export function commitWallChainFinishGeometry'),
-    transaction.indexOf('/** #461 bounded transaction'),
+    transaction.indexOf('const rejectUnsafe'),
   );
   assert.match(runtime, /public _finishWallChain\(\): boolean[\s\S]*?_finalizeWallChainPartitions/);
   assert.match(runtime, /_finishWallChainForNavigation\(\(\) => this\._activateMarkupTool\('select'\)\)[\s\S]{0,300}btn\.reset/);

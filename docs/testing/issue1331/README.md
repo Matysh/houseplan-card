@@ -45,7 +45,7 @@ Four obsolete mutation definitions are retired:
 | space-copy-always-asks-to-optimize | #1227 intentionally copies accepted geometry without any Optimize prompt; current space-copy runtime tests assert this. |
 | space-copy-skips-required-optimize | #1227 removed automatic Optimize, so skipping it is the required behavior. Current accepted-copy/strict server-proof tests remain. |
 | space-copy-ignores-unsafe-optimize-preflight | #1227 removed the copy-time geometry/Optimize preflight. Current source proof and atomic refusal tests remain. |
-| wall-draw-full-preflight-again | Stage4 routes explicit Draw intents through the common graph transaction; the former commitWallChainSegmentGeometry call path is no longer used (the helper remains an unimported export). Current physical proof/candidate counter tests remain; do not recreate a superseded bypass just to mutate it. |
+| wall-draw-full-preflight-again | Stage4 routes explicit Draw intents through the common graph transaction; the former commitWallChainSegmentGeometry call path is no longer used (the unimported helper was subsequently removed in #1335). Current physical proof/candidate counter tests remain; do not recreate a superseded bypass just to mutate it. |
 
 The surviving rejected-copy witness targets current rollback/reload and the
 `rejected copy restores` case. The graph-identity witness checks both explicit

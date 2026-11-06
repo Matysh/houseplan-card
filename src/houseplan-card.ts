@@ -112,6 +112,7 @@ import { acceptTapConfirmation, currentMarkerActionDevice, currentMarkerSettings
 import { ViewHoldGesture } from './view-hold';
 import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
+import { spaceHasContent } from './space-content';
 import { roomTempRangeFromDraft, type SpaceDialogState } from './space-dialog';
 import { mdiHomeCityOutline } from '@mdi/js';
 import { adoptEcovacsSources, projectEcovacsSources, ecovacsSourceAllowed } from './vacuum-ecovacs-client';
@@ -4505,6 +4506,32 @@ export class HouseplanCard extends LitElement {
     this._continuity.retry(this._continuity.recoveryReason || 'plan');
     if (!this._loading) void this._loadFromServer();
   };
+
+  /** Only authoritative, loaded content may offer the empty-plan entry. */
+  private get _emptyViewSpaceId(): string | null {
+    if (this._mode !== 'view' || !this._loadOk || this._loading
+        || this._booting || this._bootFading || this._modeTransitionBusy
+        || this._continuity.state !== 'steady') return null;
+    const space = this._serverCfg?.spaces.find((item) => item.id === this._space);
+    if (!space || !selectSpaceModelById(this._model, this._space)
+        || spaceHasContent(space, this._devices, this._markers)) return null;
+    return space.id;
+  }
+
+  private _renderEmptyViewSpace(): TemplateResult | typeof nothing {
+    const spaceId = this._emptyViewSpaceId;
+    if (!spaceId) return nothing;
+    return html`<div class="empty-plan hpf-empty-state hpf-empty-state-overlay" data-hp="empty-plan" role="status">
+      <span>${this._t('empty.plan_prompt')}</span>
+      ${this._canEdit && !this._kiosk ? html`<button class="btn on" data-hp="empty-plan-edit"
+        @pointerdown=${(event: Event) => event.stopPropagation()}
+        @pointerup=${(event: Event) => event.stopPropagation()}
+        @click=${(event: Event) => {
+          event.stopPropagation();
+          if (this._emptyViewSpaceId === spaceId && this._canEdit && !this._kiosk) this._setMode('plan');
+        }}>${this._t('empty.plan_editor')}</button>` : nothing}
+    </div>`;
+  }
 
   private _renderRecoveryOverlay(): TemplateResult | typeof nothing {
     if (!this._continuity.overlayVisible && this._continuity.state !== 'recovery-error') return nothing;
@@ -12235,6 +12262,7 @@ export class HouseplanCard extends LitElement {
           ${this._renderHomeArrow(this._baseVb(projection, isoScene))}
           ${this._renderEditorRuntimeLoading()}
           ${this._renderRecoveryOverlay()}
+          ${this._renderEmptyViewSpace()}
           ${this._summary?.renderMeasure()}
           ${this._summary?.renderPanel()}
           ${this._renderKioskNavigation()}

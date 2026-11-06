@@ -1,4 +1,6 @@
 {
+  "empty.plan_prompt": "План пока пуст. Давайте что-нибудь нарисуем.",
+  "empty.plan_editor": "Редактора плана",
   "kiosk.spaces": "Переключение пространств",
   "toast.room_face_create": "Клик создаст комнату",
   "markup.shift_45": "Shift — шаг 45°",

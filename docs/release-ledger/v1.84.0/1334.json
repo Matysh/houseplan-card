@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1334,
+  "baseStable": "v1.84.0",
+  "category": "major",
+  "summary": {
+    "ru": "В настройках комнаты постоянно показано пояснение списка свободных HA areas.",
+    "en": "Always explain the available HA areas below the room binding field."
+  },
+  "rationale": "New owner-requested persistent helper text."
+}

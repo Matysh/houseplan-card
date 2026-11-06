@@ -1,4 +1,5 @@
 {
+  "room.area_available_hint": "Seules les zones qui ne sont pas encore liées dans Houseplan sont affichées.",
   "marker.icon_search": "Rechercher",
   "marker.more_info_search": "Rechercher un nom ou entity_id…",
   "marker.more_info_entity": "Ouvrir dans Home Assistant",

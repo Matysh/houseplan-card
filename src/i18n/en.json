@@ -1,4 +1,6 @@
 {
+  "empty.plan_prompt": "The plan is empty. Let’s draw something.",
+  "empty.plan_editor": "Plan editor",
   "kiosk.spaces": "Switch spaces",
   "toast.room_face_create": "Click to create a room",
   "markup.shift_45": "Shift — 45° steps",
