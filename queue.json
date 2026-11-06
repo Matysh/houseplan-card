@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6090,
+  "revision": 6091,
   "nextTicket": 283,
   "nextFence": 283,
   "tasks": {
@@ -3876,7 +3876,15 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793988762331,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "eef039235a882fb96be4e34e78fe1156a3934cd9",
+      "changedFiles": [
+        "custom_components/houseplan/zigbee_lqi.py",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/testing/issue1341/README.md",
+        "tests_backend/test_ha_zigbee_lqi.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4044,12 +4052,17 @@
     "token": "282:finish:2a2ae5bc-7ccb-457b-9733-95150874e6d6:finish:1:admit",
     "fence": 282,
     "materialSha": "7b3b408a0d796fd126ed8e84bc295183f2de8e15",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "b01159e90270a4a454be4d7acbca9d90a51760f7",
+    "phase": "testing",
     "admittedAt": 1793988766527,
-    "expiresAt": 1793989066527
+    "expiresAt": 1793989072865,
+    "patchId": "eef039235a882fb96be4e34e78fe1156a3934cd9"
   },
   "events": {
+    "finish:2a2ae5bc-7ccb-457b-9733-95150874e6d6:finish:2:synchronized": {
+      "digest": "16cc786e9f0a36563cc4eea551cf2119762958019220f4a2863b32a435d56577",
+      "issue": 1341
+    },
     "finish:2a2ae5bc-7ccb-457b-9733-95150874e6d6": {
       "digest": "36a855c6376a1542a25dd2f078260dfa37ece0cb18ff8990431c67520e8d37ae",
       "issue": 1341,
