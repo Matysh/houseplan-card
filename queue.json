@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5377,
+  "revision": 5378,
   "nextTicket": 258,
   "nextFence": 258,
   "tasks": {
@@ -1040,7 +1040,10 @@
         "entry": 1,
         "requestId": "review:1239:1:fd302ed7b87e8d37a33543f293cf9ad645f376ef:3f778f3d9f3c1b691fce78891d71d095bb051a1e",
         "transitionConfirmed": true
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1793940548546,
+      "automationDetail": "Selected check infra-behavior:79eb477efef57d8642300c85 reads prepared product artifacts (product-build); an infrastructure-only profile cannot silently build the product"
     },
     "1240": {
       "issue": 1240,
@@ -4169,6 +4172,10 @@
     },
     "finish:9031ab39-110e-4425-a5ff-fdf38994943a:finish:2:synchronized": {
       "digest": "f8b8cffe4da5baa1e9c74f95ec7042982baf92872c449a8ac436bbb48df0e2b2",
+      "issue": 1239
+    },
+    "finish:9031ab39-110e-4425-a5ff-fdf38994943a:finish:3:automation-pending": {
+      "digest": "4bf01c167853f93af52e7587fac4e68e65447eec2d9c3aa6361cdd30ac7f4a47",
       "issue": 1239
     },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
