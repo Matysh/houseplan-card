@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5917,
+  "revision": 5918,
   "nextTicket": 276,
   "nextFence": 276,
   "tasks": {
@@ -384,43 +384,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "a0b78f6076640746ef2060a4e0c4a34521f2c821"
-      }
-    },
-    "1228": {
-      "issue": 1228,
-      "branch": "codex/1228-raw-model-identity",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "938aaded6e44786cd821456d1113916d9bf35bb6",
-      "mergedSha": "56585f1828bad0e7f483410eb793bdda5a8735fe",
-      "mergedAt": 1793713919105,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "56585f1828bad0e7f483410eb793bdda5a8735fe"
       }
     },
     "1230": {
@@ -3807,7 +3770,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "f1c9cd372946db8aa3b86c3e4224903ff6d4ad78"
       }
     },
     "1331": {
@@ -4041,7 +4005,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:42230433230:1:1330": {
+      "digest": "bfb9f1d9b51530c28e6aaac171cd0c70b52a4632a936725b867c62d7f32bfa89",
+      "issue": 1330,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1330,
+        "at": 1793973924010,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "f1c9cd372946db8aa3b86c3e4224903ff6d4ad78"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "f1c9cd372946db8aa3b86c3e4224903ff6d4ad78",
     "status": "pending",
