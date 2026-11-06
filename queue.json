@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5518,
+  "revision": 5519,
   "nextTicket": 263,
   "nextFence": 263,
   "tasks": {
@@ -4290,7 +4290,8 @@
           "entry": 1,
           "detail": "Поведение: process-next/test/metrics.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/stairs-editor-live.test.mjs: failed; Backend: tests_backend/test_ha_marker_history.py: failed; Браузер: stairs: failed",
           "eventId": "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:3:return:return:1253"
-        }
+        },
+        "delivered": true
       }
     }
   },
