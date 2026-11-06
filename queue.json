@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6149,
+  "revision": 6150,
   "nextTicket": 284,
   "nextFence": 284,
   "tasks": {
@@ -3887,7 +3887,27 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793990023088,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "628c80584cddd057a89efa389d232c7c8cd2b987",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "25d23997a1bb06cb6a2d35d63b22362a20623c64",
+        "tag": "v1.85.0-beta.2",
+        "verdict": "accepted",
+        "patchId": "628c80584cddd057a89efa389d232c7c8cd2b987",
+        "materialSha": "9dda648e1348a32c799d190f68ff19f23c6da408"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4055,10 +4075,11 @@
     "token": "283:release-return-finish:540ac7d3-2f56-4874-83bc-307c5f61a2aa:finish:1:admit",
     "fence": 283,
     "materialSha": "9dda648e1348a32c799d190f68ff19f23c6da408",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "7b3b408a0d796fd126ed8e84bc295183f2de8e15",
+    "phase": "testing",
     "admittedAt": 1793990027968,
-    "expiresAt": 1793990327968
+    "expiresAt": 1793990334386,
+    "patchId": "628c80584cddd057a89efa389d232c7c8cd2b987"
   },
   "events": {
     "github:42271768517:1:completions:message:bea0f6d7ded2f5420ed32468f388781ecb245d03d58d548fd543120f8cb784a0": {
@@ -4067,6 +4088,10 @@
     },
     "github:42271768517:1:completions:message:584cef6195a599093b0dad5f6f7d95da50b419197e2129f92f257d67a161406b": {
       "digest": "e4c4e0c34d1e8f9e7726bc85b12119433425dca4d4833715483fabe13e579adf",
+      "issue": 1342
+    },
+    "release-return-finish:540ac7d3-2f56-4874-83bc-307c5f61a2aa:finish:2:synchronized": {
+      "digest": "efad4fb03e2cdc9dac9bf6ccb2d48949a7a30621646384f0fa48c1d7aa1d61dc",
       "issue": 1342
     },
     "release-return:540ac7d3-2f56-4874-83bc-307c5f61a2aa": {
