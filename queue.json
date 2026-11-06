@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5553,
+  "revision": 5554,
   "nextTicket": 265,
   "nextFence": 265,
   "tasks": {
@@ -4404,6 +4404,10 @@
       "digest": "962af4d2821075ee8b6a84d6fad6e130014276a3af8ebfbd98f6615b9d70c05d",
       "issue": 1331
     },
+    "github:42206831868:1:completions:message:bec30c06a2de2430cfbebceaa6a3ab7b7e11df61f3d27d0c305c0dc055e07df2": {
+      "digest": "0a0f29d809481977eb17e9099ea3fab1bc21fca7c7bdd7fa10aaa0a536ee7d14",
+      "issue": 1331
+    },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
       "digest": "a56f6f76ba636c40127695117d57a9970d2dabae7dc8e6ca7ab9b154319f8ebc",
       "issue": 1329,
@@ -4567,7 +4571,8 @@
           "entry": 1,
           "detail": "Backend: tests_backend/test_ha_backup_archive.py: failed; Backend: tests_backend/test_ha_upload.py: failed; Backend: tests_backend/test_ha_websocket.py: failed; Backend: tests_backend/test_ha_zigbee_topology.py: failed",
           "eventId": "finish:b2fc924c-88be-451b-b93b-b8f66040e0f8:finish:4:return:return:1331"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:5099d78b-ead1-41cb-8386-08541312166b": {
