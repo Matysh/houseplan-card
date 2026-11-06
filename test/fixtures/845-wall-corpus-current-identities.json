@@ -67,6 +67,10 @@
       "configs": 0
     },
     {
+      "file": "test/fixtures/1330-node-attach.json",
+      "configs": 0
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },

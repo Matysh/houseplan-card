@@ -2911,7 +2911,7 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/wall-node-editor.ts",
-    "find": "      const key = nodeDragRefusalKey(error, false, !!s.merge);",
+    "find": "      const key = nodeDragRefusalKey(error, false, !!(s.merge || s.attach));",
     "replace": "      const key = 'node_move_invalid'; // mutant: all refusals look like geometry"
   }
 ],
@@ -3867,8 +3867,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/wall-node-editor.ts",
-    "find": "      && s.target[0] === pending.point[0] && s.target[1] === pending.point[1] && s.merge?.nodeId === pending.merge?.nodeId;",
-    "replace": "      && sameNodePoint(s.target, pending.point) && s.merge?.nodeId === pending.merge?.nodeId;"
+    "find": "      && s.target[0] === pending.point[0] && s.target[1] === pending.point[1] && s.merge?.nodeId === pending.merge?.nodeId",
+    "replace": "      && sameNodePoint(s.target, pending.point) && s.merge?.nodeId === pending.merge?.nodeId"
   }
 ],
   },
@@ -4309,8 +4309,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node scripts/backend-test-guard.mjs forged_inverse tests_backend/test_wall_node_move.py',
     because: '#803 AC10: the independent server inverse proof refuses altered far ends, opening metadata, room and split identity',
     patches: [{ file: 'custom_components/houseplan/wall_node_move.py',
-      find: '        if canonicalize_config_geometry(proof) != canonicalize_config_geometry(baseline):',
-      replace: '        if False and canonicalize_config_geometry(proof) != canonicalize_config_geometry(baseline):',
+      find: '        if not _equal(canonicalize_config_geometry(proof), canonicalize_config_geometry(baseline)):',
+      replace: '        if False and not _equal(canonicalize_config_geometry(proof), canonicalize_config_geometry(baseline)):',
     }],
   },
   {

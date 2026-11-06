@@ -94,3 +94,24 @@ Real HA browser E2E impact: REQUIRED before a future beta, recorded in
 Matysh/houseplan-e2e task-impact/1330.md (506cf10 or later). Extend the existing
 geometry history/refusal journey with native attach, exact ACK/host split,
 Undo/Redo/reload and capability/CAS/ACL/refusal. No beta is part of this task.
+
+
+## Full S6 follow-up
+
+Run20261106T131447503-3b6bef64 completed630 units:627 passed,3 failed.
+New attach files passed31 Node +43 pure/backend +24 real authenticated HA
+cases, and the native attach smoke passed including the18th foreign-authority
+case. The two readiness failures were stale mutation anchors after the intended
+source changes and a new non-config fixture membership row in the current
+wall corpus. Three existing mutations were reanchored without changing their
+guards or fault meaning; the corpus gains only1330-node-attach.json/configs0.
+All prior document identities/full-config hashes and the frozen historical
+oracle remain byte-for-byte values. Addressed metadata checks then passed79/79.
+
+The remaining native node-delete failure was independently repeated and also
+reproduced on a separately built git archive of dev418a72a888. Diagnosis:
+stairs hover makes stairs.live true; generic anonymous requestUpdate is then
+routed only to live paint and the menu remains inert. This confirmed the
+previously optional #1253 review risk. It is tracked and corrected separately
+as#1338 in this same packet; the original native deletion assertions are kept.
+See docs/testing/issue1338/README.md for the before/after and scope.
