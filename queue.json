@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5217,
+  "revision": 5218,
   "nextTicket": 252,
   "nextFence": 252,
   "tasks": {
@@ -4064,6 +4064,10 @@
       "digest": "6d6d3733e21103c907d4aeaf9cdcb735a791f3036c2dbd39f7a8cea9b8b20ee8",
       "issue": 1327
     },
+    "finish:7dbca649-c750-4744-b6df-6ea9ba5f7796:finish:3:s6-label": {
+      "digest": "2590921c118adc379398e918f063f0999259a6c72f708c2e47d6cba3c5cf1e75",
+      "issue": 1327
+    },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
       "digest": "9db3331ba93104ca4e2706e07dea151f95c9f1d0c2e95fe27d16bb2b5ab16815",
       "issue": 1239,
@@ -4135,7 +4139,8 @@
         "resubmission": false,
         "reviewChanges": "### Решение\n\nПодложка остаётся внутри исходной room-only области (независимая ветвь не увеличивает slab), но её внешняя кладка дополнительно требует фактического room-masonry покрытия полной инцидентности. Чистые room-centre полигоны включены в покрытие, поэтому пол не обрезается до стен. Расширен существующий exact arrangement необязательной coverage-группой: обе стороны границы классифицируются вместе до численной проекции, без round-trip через polygon boolean. Пустое покрытие означает пустую область. Для обычного случая без независимых рёбер прежний путь сохраняется.\n\nФизическая geom, clean floor, граф, host-owned openings и safety/ACL/CAS/ACK не меняются. Компонентная изоляция ошибок сохраняется; reuse учитывает идентичность coverage-полигонов и не может вернуть результат другой маски.\n\n### Проверки и ограничения\n\nНовые пять вариантов регрессии до правки FAIL на выступе первого угла; после правки оба угла проверяются на исходном порядке, рендер-масштабе 1000, повороте, зеркале и обратном порядке. Вместе с direct-wall corpus и проверкой coverage/cache: **23/23 unit PASS**. Новый native Chromium smoke: **21/21 PASS** (View/Plan, два zoom, оба угла, пол, треугольная пустота, граф без изменений). Первый ручной browser-вызов остановил freshness guard, поскольку ещё не был выполнен штатный bundle-sync; после этой подготовки smoke PASS, guard не обходился.\n\nОбщий S6 request дополнительно включает wall-thickness, physical-geometry, pdf-scene, direct-wall browser, Static openings и PDF export. Итог этого набора публикует finish; перечисление здесь не означает, что ещё не выполненные группы уже PASS. Пользовательская HA не менялась, golden не принимался, реальный HA E2E не запускался. Для companion E2E вердикт «не надо»: изменён только render-only paper; регрессия покрыта unit/native browser, хранилище и записи не затронуты.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
