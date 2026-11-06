@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6088,
-  "nextTicket": 282,
+  "revision": 6089,
+  "nextTicket": 283,
   "nextFence": 282,
   "tasks": {
     "1193": {
@@ -3863,6 +3863,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1341": {
+      "issue": 1341,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/zigbee-lqi-malformed-identifiers",
+      "materialSha": "7b3b408a0d796fd126ed8e84bc295183f2de8e15",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 282,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793988762331,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4023,9 +4037,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1341
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:2a2ae5bc-7ccb-457b-9733-95150874e6d6": {
+      "digest": "36a855c6376a1542a25dd2f078260dfa37ece0cb18ff8990431c67520e8d37ae",
+      "issue": 1341,
+      "message": {
+        "kind": "queued",
+        "issue": 1341,
+        "at": 1793988762331,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "7b3b408a0d796fd126ed8e84bc295183f2de8e15"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "b01159e90270a4a454be4d7acbca9d90a51760f7",
     "status": "delivered",
