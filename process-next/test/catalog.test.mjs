@@ -71,7 +71,7 @@ test('infrastructure can check finish and its planner without consuming declared
     areaTests: ['process-next/test/remote.test.mjs', 'process-next/test/catalog.test.mjs'] });
   assert.equal(plan.steps[0].id,'infra-syntax');
   assert.ok(plan.steps.slice(1).every(s=>s.id.startsWith('infra-behavior:')));
-  for(const file of ['process-next/test/remote.test.mjs','process-next/test/catalog.test.mjs'])assert.ok(plan.steps.some(s=>s.command.includes(file)),'explicit mechanism test remains selected');
+  for(const file of ['process-next/test/remote.test.mjs','process-next/test/catalog.test.mjs','process-next/test/runner.test.mjs'])assert.ok(plan.steps.some(s=>s.command.includes(file)),'explicit mechanism test remains selected');
   assert.ok(plan.steps.every(item => item.requires.length === 0));
   assert.ok(plan.steps[1].inputs.includes('process-next/lib/catalog.mjs'));
   assert.ok(plan.steps.every(item => !item.inputs.includes(['demo', '**', '*.json'].join('/'))),
