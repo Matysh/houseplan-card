@@ -15,6 +15,7 @@
 //   2. В демо-доме проёмов нет вовсе (`space.openings` пуст у обоих
 //      пространств), поэтому дверь в двух пространствах готовит сам смок.
 import { launch, checkAll, finish } from './serve.mjs';
+import { emptySpaceHomeArrow } from './helpers/empty-space-home-arrow.mjs';
 const { page, browser } = await launch();
 /** DEFAULT_CUSTOM_FILL (`src/logic.ts`) в вычисленном стиле: цвет / `fill-opacity`. */
 const FINAL_FILL = 'rgb(96, 125, 139) / 0.18';
@@ -319,6 +320,7 @@ const res = await page.evaluate(async () => {
     .filter((entry) => /op-leaf|op-arc/.test(entry.cls)).length === 0;
   return out;
 });
+Object.assign(res, await emptySpaceHomeArrow(page));
 checkAll(res, { unexpectedAnimations: [], reusedMarkerNodes: [],
   swappedMarkerNodes: [], swappedOpeningNodes: [],
   noRoomTransitionOnSwitch: [], noRoomNodeOutlivesTheSwitch: [],

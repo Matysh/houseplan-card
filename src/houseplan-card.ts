@@ -6862,19 +6862,19 @@ export class HouseplanCard extends LitElement {
    */
   private _frame:
     | { id: string; model: SpaceModel; layout: unknown; devs: unknown; far: boolean;
-        grow: boolean; rect: Rect; all: Rect; outliers: number }
+        grow: boolean; rect: Rect; all: Rect; outliers: number; hasContent: boolean }
     | null = null;
   /** The outlier hint's «Показать» is on: the frame takes in the far strays
    *  too, so zoom, pan and the fit button all agree about what "everything"
    *  is. Reset when the space changes (docs/CANVAS.md §4.1). */
   private _showFar = false;
 
-  private _frameOf(): { rect: Rect; all: Rect; outliers: number } {
+  private _frameOf(): { rect: Rect; all: Rect; outliers: number; hasContent: boolean } {
     const m = this._spaceModel();
     if (!m) {
       this._frame = null;
       const fallback = { x: 0, y: 0, w: NORM_W, h: NORM_W };
-      return { rect: fallback, all: fallback, outliers: 0 };
+      return { rect: fallback, all: fallback, outliers: 0, hasContent: false };
     }
     // Memo by IDENTITY, not by an epoch counter: `_model`, `_layout` and
     // `_devices` are all replaced (never mutated in place) whenever their
@@ -6910,7 +6910,7 @@ export class HouseplanCard extends LitElement {
     }
     this._frame = {
       id: m.id, model: m, layout, devs: this._displayDevices,
-      far: this._showFar, grow, rect, all, outliers: cf.outliers,
+      far: this._showFar, grow, rect, all, outliers: cf.outliers, hasContent: cf.all !== null,
     };
     if (f?.id === m.id && this._view && this._lastValidStageSize && !this._modeTransitionBusy
         && (this._mode !== 'view' || !this._isoEnabled)
@@ -7195,8 +7195,10 @@ export class HouseplanCard extends LitElement {
   }
 
   private _renderHomeArrow(base = this._baseVb()): TemplateResult | typeof nothing {
+    const frame = this._frameOf();
     return renderHomeArrow(base, this._booting ? null : this._view, this._rotation,
-      this._t('canvas.home_tip'), () => this._fitAll('home'));
+      this._t('canvas.home_tip'), () => this._fitAll('home'),
+      frame.hasContent && this._frame?.id === this._space);
   }
 
   /** Aspect ratio of the scene (width/height, px). */

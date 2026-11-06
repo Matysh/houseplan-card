@@ -440,6 +440,11 @@ produce a zero-sized SVG `viewBox`.
   outside the current view, a small pointer appears at the view edge
   in the frame's direction. Clicking it fits the content. Cheap
   insurance against getting lost in the empty plane.
+  An empty space has no arrow: its fallback `view_box` and an editor's
+  accumulated bounds are camera aids, not real content. Roomless content
+  (for example an independent partition or backdrop) keeps the ordinary
+  arrow. Presence is retained with the existing frame cache, without another
+  geometry pass on each paint (#1329).
 
 ## §6 Icon size — a percentage of the plan
 

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1329,
+  "baseStable": "v1.84.0",
+  "category": "stable-fix",
+  "summary": {
+    "ru": "Пустое пространство не показывает ложную стрелку возврата к плану.",
+    "en": "Empty spaces no longer show a misleading return-to-plan arrow."
+  },
+  "rationale": "The shipped home arrow treats a fallback or retained editor frame as real content. Preserve active-space content eligibility independently of camera bounds."
+}

@@ -3,7 +3,9 @@ import { homeArrowPosition, type FrameRect, type PlanRotation } from './view-fra
 
 /** "Home is that way" (CANVAS §5): an unbounded plane points back to content. */
 export function renderHomeArrow(base: number[], view: FrameRect | null, rotation: PlanRotation,
-  title: string, fit: () => void) {
+  title: string, fit: () => void, hasContent: boolean) {
+  // A fallback/editor-grown frame is useful for the camera, not a lost plan.
+  if (!hasContent) return nothing;
   const arrow = homeArrowPosition(base, view, rotation);
   return !arrow ? nothing : html`<button class="homearrow hpf-icon-action hpf-icon-navigation" data-hp-tooltip=${title} aria-label=${title}
     style="left:${arrow.left.toFixed(1)}%;top:${arrow.top.toFixed(1)}%"
