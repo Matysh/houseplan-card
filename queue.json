@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5563,
+  "revision": 5564,
   "nextTicket": 266,
   "nextFence": 266,
   "tasks": {
@@ -3934,7 +3934,7 @@
       "ownerDecision": null,
       "ticket": 265,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793963309225,
       "reviewEntry": 3,
       "patchId": "d6be1eb73c5eedd56c33283b930b9d739c5cc6a8",
@@ -3974,19 +3974,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261106T105614961-9637612b",
+        "id": "20261106T110950049-4e917eb0",
         "name": "Тесты для задачи #1331 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T105614961-9637612b/report.json",
-        "materialSha": "cd4e0bcc856c5898201f6c801060df22de31e911",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T110950049-4e917eb0/report.json",
+        "materialSha": "eaba96b2f80b930dd1a57fe5f23a0be5e193e357",
         "status": "passed",
-        "finishedAt": "2026-11-06T10:59:30.848Z",
+        "finishedAt": "2026-11-06T11:10:27.488Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1331:2:92c13f72706e79218fcc69000f58f433124d9001:be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
-        "at": 1793963099888
-      }
+      "reviewRound": null
     }
   },
   "ownerDecisions": {},
@@ -4155,9 +4151,9 @@
     "fence": 265,
     "materialSha": "eaba96b2f80b930dd1a57fe5f23a0be5e193e357",
     "expectedBase": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793963314083,
-    "expiresAt": 1793963683928,
+    "expiresAt": 1793967028851,
     "patchId": "d6be1eb73c5eedd56c33283b930b9d739c5cc6a8"
   },
   "events": {
@@ -4682,6 +4678,34 @@
           "finishedAt": "2026-11-06T10:59:30.848Z",
           "failures": []
         }
+      }
+    },
+    "finish:b5e544a5-bdd6-45a2-94b4-7a1741727a37:finish:4:s6-complete": {
+      "digest": "3b25f17310f4355dcf18d5478772a4b1b2f6f4b1fb685e6eb32b6103e269c5ac",
+      "issue": 1331,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1331,
+        "at": 1793963428851,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "eaba96b2f80b930dd1a57fe5f23a0be5e193e357",
+        "phase": "review",
+        "evidence": {
+          "id": "20261106T110950049-4e917eb0",
+          "name": "Тесты для задачи #1331 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T110950049-4e917eb0/report.json",
+          "materialSha": "eaba96b2f80b930dd1a57fe5f23a0be5e193e357",
+          "status": "passed",
+          "finishedAt": "2026-11-06T11:10:27.488Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Совместный пакет #1331 + #1332. Основная очередь/finish — #1331, ревью должно охватывать весь diff обеих задач; #1332 завершится тем же фактическим merge и отчётом. Product-профиль полного S6 сохранён: DOM-контракт и browser witnesses являются продуктовым материалом. Наличие метки infra у #1332 не используется для обхода этой классификации.\n\nНа исходном dev be93 подтверждены16отказов в9Node-файлах. Обновлены реальные текущие контракты: ACK layout_changes из #1287 с защитой свежего локального draft, backdrop port с rotationArm при прежнем ceiling16, async iso readiness и отменённое поле viewModeSnap, публичный Optimize, lifecycle proven stable и индивидуальные compatibility hits (125добавлено/11удалено/746актуально), shared page watcher вместо Validate. Текущие product assertions, данные lifecycle, физические допуски и PNG-эталоны не ослаблены.\n\nЦентрально исправлены selection/fingerprint для реальных dynamic source readers: wildcard scopes сохраняются, source scans TS/Python инвалидируют результаты, docs/custom_components literal data paths учитываются. Для infra diff нет product component fallback. Metrics fixture явно self-contained в mkdtemp; реальные dist consumers по-прежнему требуют сборку. Добавлена исполняемая регрессия: PASS → reuse → реальная TS/Python правка → FAILED rerun, не только сравнение хешей. Адресные27проверок selection PASS. Новый native callback witness классифицирован как product/presentation/task-release и выбирается при изменении card owner; проверены каталог/план по реальному diff (562шага до финального добавления Static oracle).\n\nВ mutation registry41определение приведено к текущим API/anchors/guards.4отменённых определения удалены с поимённым обоснованием в docs/testing/issue1331/README.md: три автоматических Optimize-проверки Copy отменены #1227, прежняя альтернатива Draw preflight снята Stage4. Исходный адресный прогон: все clean guards PASS,36поймано,4survived+1setup-failure сохранены как отказы. Пять доказательств исправлены: ACL включает текущий history authorizer; Optimize мутирует публичный changed; старый header ResizeObserver доставляется после retirement lease; writer bypass компилируется без недостижимой string-ветки; Static проверяет фактический arc tone отсутствующего contact, а не всегда нейтральный leaf. Адресные rerun receipts и pinned SHA записаны в README и output/issue-1331/witness-*.log. Это не полный ночной shard.\n\nДля #1332 пять уже существующих hooks объявлены с фактическими element types; удалённый opening-tunnel из #1250 перенесён в retiredHooks, styling docs направляют к единому room-floor owner. Неизменный validator проходит clean, три зарегистрированных DOM witnesses cleanPASS и пойманы1/1каждый. Исходный scheduled shard4/5 целиком не повторялся.\n\nРиск для свежего взгляда: полнота wildcard invalidation и отсутствие лишнего fixture artifact prep, обоснованность конкретных retired mutation definitions, независимость новых native oracles. Автор не заменяет адресное доказательство полным shard/release результатом. Передача в S7 выполняется только штатным finish после полного фактического S6; его отчёт прикладывает координатор. Companion: Matysh/houseplan-e2e main1f102b7, task-impact/1331.md и1332.md: новых HA journeys не требуется, текущие сохраняются. Выпуск не поручен.\n\n### Дополнение после первого полного S6\n\nRun20261106T104727609-4cd497ef завершил562шага:140passed+418reused+4failed. Все исходные16Node-отказов устранены. В4HA-файлах выявлено10отказов общей изоляции: archive collision-файл исчезает, upload rename ENOENT, mkdir гоняется с удалением. Трассы указывают на один site-packages/testing_config/houseplan для параллельных pytest процессов и autouse rmtree перед каждым кейсом.\n\nВ tests_backend/conftest.py удалена очистка общего каталога; через поддержанный plugin fixture hass_config_dir каждому тесту даётся собственный tmp_path/ha-config до создания hass. Product file handling и assertions не меняются; более специфичный config-flow disk fixture сохранён. Пять затронутых HA-файлов, включая ранее нестабильный marker-history:290/290PASS,19.52s. Финальный обычный finish повторяет S6 с прежним уровнем параллельности и применимым reuse; первый failed receipt сохранён. Это ремонт того же S6 baseline, отдельного пользовательского изменения нет.\n\n\n### Исправление по код-ревью 42206855670\n\n[Ревью](https://github.com/Matysh/houseplan-card/actions/runs/42206855670) вернуло один блокер: неверная атрибуция pin10. Перепроверены blame и дерево ccd0e6a5: Area rollback уже был при pin9 (в старом дереве строка5164). Реальную десятую запись добавил49d4291bb (#1287) в _sendConfigCandidate: ответ layout_changes отражается в working-body только для точки, fingerprint которой не изменился после layoutBeforeSend. Поэтому более свежий локальный draft сохраняется; принятые cache/revision ведёт ConfigAdoption.acceptLayoutPosition, fingerprint — refreshLayoutFingerprint. Считаем это узким допустимым staging принятой point-delta; будущие увеличения pin продолжают давать отказ. Исправлены комментарий ratchet и README, продуктовый код/значение10 не меняются.\n\nДополнительно уточнено: commitWallChainSegmentGeometry остаётся неимпортируемым экспортом, отсутствует его живой вызов, а не сама функция. Удаление оформлено ревьюером отдельной #1335 и в текущий пакет не добавляется. Замечания об улучшении parser declarations/эвристики остаются необязательными направлениями, не новыми гейтами.\n\nПрежний полный S6 прошёл562шага (449reuse),7676известныхкейсов; повторный finish использует полный текущий diff и применимые успехи. Отрицательное ревью сохранено в ленте; повторную передачу публикует координатор после успешного S6.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
