@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5393,
+  "revision": 5394,
   "nextTicket": 259,
   "nextFence": 259,
   "tasks": {
@@ -4246,6 +4246,10 @@
       "digest": "9cc96762fcd71fb3f76dcb2bd6cfcda3f7564525d9a53bb30f9365c8b7aa0431",
       "issue": 1239
     },
+    "github:42165103859:1:completions:message:6bfabe37c1939362648b9eb99a78d55cf82ba511bf980781a76518ef60840cae": {
+      "digest": "5c0592f4402dbc492bb48e3bcea09ff8b78009c6b3af171b8154cab003d493ed",
+      "issue": 1239
+    },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
       "digest": "9db3331ba93104ca4e2706e07dea151f95c9f1d0c2e95fe27d16bb2b5ab16815",
       "issue": 1239,
@@ -4386,7 +4390,8 @@
           "entry": 2,
           "detail": "Поведение механизма: process-next/test/catalog.test.mjs: failed",
           "eventId": "finish:66e36774-1267-46f3-8c79-7e83cf790fe1:finish:1:return:return:1239"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:2636c0cd-d453-4d1b-bd3c-d42d2e3934d9": {
