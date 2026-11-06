@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5525,
-  "nextTicket": 263,
+  "revision": 5526,
+  "nextTicket": 264,
   "nextFence": 263,
   "tasks": {
     "1193": {
@@ -3923,6 +3923,20 @@
         "detail": "Поведение: process-next/test/metrics.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Браузер: space switch transitions: failed",
         "eventId": "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:3:return:return:1329"
       }
+    },
+    "1331": {
+      "issue": 1331,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1331-s6-baseline",
+      "materialSha": "b8b5a39e58cb9a8b8604a9c1df77bb73ce8d1c45",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 263,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793961958236,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4083,7 +4097,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1331
+  ],
   "active": null,
   "events": {
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:2:synchronized": {
@@ -4329,6 +4345,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:b2fc924c-88be-451b-b93b-b8f66040e0f8": {
+      "digest": "bd0af178f225e71e6c0c7e088364ca6e76628eeb06c2810beae424227fa6d5cd",
+      "issue": 1331,
+      "message": {
+        "kind": "queued",
+        "issue": 1331,
+        "at": 1793961958236,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b8b5a39e58cb9a8b8604a9c1df77bb73ce8d1c45"
       }
     }
   },
