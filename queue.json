@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5380,
+  "revision": 5381,
   "nextTicket": 258,
   "nextFence": 258,
   "tasks": {
@@ -1032,18 +1032,19 @@
         "at": 1793940095973
       },
       "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1793940095973,
-        "entry": 1,
-        "requestId": "review:1239:1:fd302ed7b87e8d37a33543f293cf9ad645f376ef:3f778f3d9f3c1b691fce78891d71d095bb051a1e",
-        "transitionConfirmed": true
+        "key": "2:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793940693255,
+        "entry": 2,
+        "detail": "Поведение механизма: process-next/test/catalog.test.mjs: failed",
+        "eventId": "finish:66e36774-1267-46f3-8c79-7e83cf790fe1:finish:1:return:return:1239"
       },
       "automationError": "automation-error",
       "automationSince": 1793940548546,
-      "automationDetail": "Selected check infra-behavior:79eb477efef57d8642300c85 reads prepared product artifacts (product-build); an infrastructure-only profile cannot silently build the product"
+      "automationDetail": "Selected check infra-behavior:79eb477efef57d8642300c85 reads prepared product artifacts (product-build); an infrastructure-only profile cannot silently build the product",
+      "reason": "checks-failed"
     },
     "1240": {
       "issue": 1240,
@@ -4061,18 +4062,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1239,
-    "worker": "finish",
-    "token": "257:finish:9031ab39-110e-4425-a5ff-fdf38994943a:finish:1:admit",
-    "fence": 257,
-    "materialSha": "853883e0017cdd7cb067cd324b7eb5d21264e231",
-    "expectedBase": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
-    "phase": "testing",
-    "admittedAt": 1793940537014,
-    "expiresAt": 1793940956150,
-    "patchId": "742985fed36a866d983b92d39c21a3f551edbaac"
-  },
+  "active": null,
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
       "digest": "67cac9ebe76c4866b58c9e7cb7d8cd680d86f665660114c53210503c3b7c11a8",
@@ -4184,6 +4174,10 @@
     },
     "finish:e9776ee6-3e1e-43ea-b69e-e3fe8b64b974": {
       "digest": "26537d9894f3926328d8ed57cb82b812d9d1a87ecb7f11488c796fc68bc20851",
+      "issue": 1239
+    },
+    "finish:66e36774-1267-46f3-8c79-7e83cf790fe1:finish:1:return": {
+      "digest": "b45d332c2497408e2f67c6ad9d2ce6acdfb5ba0e7b4f769f38954061b3ed780c",
       "issue": 1239
     },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
@@ -4304,6 +4298,26 @@
           "status": "passed",
           "finishedAt": "2026-11-06T04:32:46.468Z",
           "failures": []
+        }
+      }
+    },
+    "finish:66e36774-1267-46f3-8c79-7e83cf790fe1:finish:1:return:return:1239": {
+      "digest": "b45d332c2497408e2f67c6ad9d2ce6acdfb5ba0e7b4f769f38954061b3ed780c",
+      "issue": 1239,
+      "message": {
+        "kind": "return",
+        "issue": 1239,
+        "at": 1793940693255,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793940693255,
+          "entry": 2,
+          "detail": "Поведение механизма: process-next/test/catalog.test.mjs: failed",
+          "eventId": "finish:66e36774-1267-46f3-8c79-7e83cf790fe1:finish:1:return:return:1239"
         }
       }
     }
