@@ -343,3 +343,12 @@ test('a source-scanner success is invalidated by changed frontend or backend dir
   await writeFile(resolve(dir,file),'good');
  }
 }));
+test('header retirement native witness is selected for its actual runtime owner', async()=>fixture({
+ 'src/houseplan-card.ts':'','demo/smoke_header_observer_retirement.mjs':'',
+},async dir=>{
+ const result=await select(dir,{changedFiles:['src/houseplan-card.ts']});
+ assert.ok(result.files.includes('demo/smoke_header_observer_retirement.mjs'));
+ assert.ok(result.explanation.reasons['demo/smoke_header_observer_retirement.mjs'].some(x=>x.includes('Читает')));
+ const catalog=await testCatalog(dir,inventory),row=catalog.rows.find(r=>r.path==='demo/smoke_header_observer_retirement.mjs');
+ assert.equal(row.layer,'product');assert.ok(row.domains.includes('presentation'));assert.equal(row.lifecycle,'task-release');
+}));

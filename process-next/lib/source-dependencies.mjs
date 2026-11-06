@@ -4,7 +4,9 @@ const safeRelative = value => typeof value === 'string' && value && !value.start
 // These modules describe future worker commands; literals there are not calls.
 // Ordinary tests may spawn a script instead of importing it. Keep their literal
 // repository paths conservative for both selection and result fingerprints.
-const TEXT_READ_SCOPES = new Map([
+// Runtime witnesses name their owner; dynamic scanners name the text trees they read.
+const DECLARED_SOURCE_SCOPES = new Map([
+  ['demo/smoke_header_observer_retirement.mjs', ['src/houseplan-card.ts']],
   ['scripts/config-compatibility-inventory.mjs', ['src/**/*.ts', 'custom_components/houseplan/**/*.py']],
   ['test/isometric-contract.test.mjs', ['demo/smoke_*.mjs']],
   ['test/smoke-exception-guard.test.mjs', ['demo/smoke_*.mjs']],
@@ -21,7 +23,7 @@ export function dependencyReader(root) {
                     if (!/\.(?:mjs|cjs|js|ts|py)$/.test(file))
                         return [];
                     const text = await readFile(resolve(root, file), 'utf8');
-                    const edges = [...(TEXT_READ_SCOPES.get(file) || [])];
+                    const edges = [...(DECLARED_SOURCE_SCOPES.get(file) || [])];
                     // A literal inside fixture source text is data being constructed, not
                     // a second import/read of the host repository. Ignore comments as well.
                     const literalStarts = new Set([...text.matchAll(/\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`/g)]

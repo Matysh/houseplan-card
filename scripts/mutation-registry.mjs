@@ -299,7 +299,7 @@ const MUTANT_DEFINITIONS = [
 
   {
     id: 'plan-rotation-stale-header-observer-1070',
-    guard: 'node demo/smoke_led_strip_glow.mjs',
+    guard: "node demo/smoke_header_observer_retirement.mjs",
     because: '#1070: native ResizeObserver/rAF work must not publish header state after disconnect and recreate Glow entry leases before reconnect. Real Lit/DOM lifecycle and opacity transition events require the browser. Registered only; nightly execution.',
     patches: [
   {
@@ -14393,7 +14393,7 @@ const MUTANT_DEFINITIONS = [
   {
     "file": "src/space-render.ts",
     "find": "    const active = amount > 0 && !!opening.contact && available;",
-    "replace": "    const active = amount > 0 && !!opening.contact;"
+    "replace": "    const active = !!opening.contact && (!available || amount > 0);"
   }
 ],
   },
