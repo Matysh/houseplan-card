@@ -56,18 +56,22 @@ const out=await page.evaluate(async ({fixture,diagonalFixture,linePlanFixture,be
     const hass={...c.hass,states:{...c.hass.states,'cover.synthetic_door':e}};
     c.hass=hass;el.hass=hass;await update();
   };
+  const arcTone=(r=root())=>opening('wall-door',r)?.querySelector('.op-arc')?.getAttribute('stroke');
   const stableBox=box();
-  await states('closed',0);const shut=opening('wall-door')?.querySelector('.op-leaf')?.getAttribute('style');
+  await states('closed',0);const shutTone=arcTone();const shut=opening('wall-door')?.querySelector('.op-leaf')?.getAttribute('style');
   await states('open',50);const partial=opening('wall-door')?.querySelector('.op-leaf')?.getAttribute('style');
-  await states('open',100);const open=opening('wall-door')?.querySelector('.op-leaf')?.getAttribute('style');
+  await states('open',100);const activeTone=arcTone();const open=opening('wall-door')?.querySelector('.op-leaf')?.getAttribute('style');
   result.contactMovesLeafWithoutRefit=!!shut&&shut!==partial&&partial!==open&&box()===stableBox&&sameSymbol('wall-door');
   const geometryBefore=root().querySelector('.wallbodies')?.innerHTML;
   await states('unavailable',null);
   result.contactDoesNotChangeMasonry=root().querySelector('.wallbodies')?.innerHTML===geometryBefore&&box()===stableBox;
+  result.unavailableContactHasNeutralTone=!!shutTone&&shutTone!==activeTone&&arcTone()===shutTone;
   const withoutContact={...c.hass.states};delete withoutContact['cover.synthetic_door'];
   const missingHass={...c.hass,states:withoutContact};c.hass=missingHass;el.hass=missingHass;await update();
   const leafFill=(r)=>opening('wall-door',r)?.querySelector('.op-leaf rect')?.getAttribute('fill');
-  result.missingContactHasFullPlanNeutralTone=leafFill(root())===leafFill(c.shadowRoot)&&box()===stableBox;
+  result.missingContactHasFullPlanNeutralTone=!!shutTone&&shutTone!==activeTone
+    &&arcTone()===shutTone&&arcTone(c.shadowRoot)===shutTone
+    &&leafFill(root())===leafFill(c.shadowRoot)&&box()===stableBox;
   await T.setServerConfig(cfg=>{cfg.spaces[0].openings[0].invert=true;});
   await until(()=>el._snap?.config?.spaces[0].openings[0].invert===true);
   await states('closed',0);
