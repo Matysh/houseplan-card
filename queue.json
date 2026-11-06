@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5529,
+  "revision": 5530,
   "nextTicket": 264,
   "nextFence": 264,
   "tasks": {
@@ -3929,7 +3929,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1331-s6-baseline",
-      "materialSha": "b8b5a39e58cb9a8b8604a9c1df77bb73ce8d1c45",
+      "materialSha": "449f270ed8dffd95f796884d7db8819b4694cdfa",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 263,
@@ -3937,9 +3937,31 @@
       "status": "S6-in-progress",
       "readyAt": 1793961958236,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1793961969040,
-      "automationDetail": "Git rebase failed (exit 1)"
+      "patchId": "59d2753da6c11fddf7704a5c23d1af94d9255448",
+      "changedFiles": [
+        "demo/smoke_easy_converter_openings.mjs",
+        "demo/smoke_header_observer_retirement.mjs",
+        "demo/smoke_static_wall_openings.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/STYLING-HOOKS.md",
+        "docs/data-hp-contract.json",
+        "docs/testing-notes/mutation-browser-guards.md",
+        "docs/testing/issue1331/README.md",
+        "process-next/lib/source-dependencies.mjs",
+        "process-next/lib/task-selection.mjs",
+        "process-next/test/metrics.test.mjs",
+        "process-next/test/task-selection.test.mjs",
+        "scripts/config-compatibility-inventory.json",
+        "scripts/mutation-registry.mjs",
+        "test/config-adoption-ownership.test.mjs",
+        "test/config-lifecycle.test.mjs",
+        "test/editor-runtime-loader.test.mjs",
+        "test/isometric-contract.test.mjs",
+        "test/mutation-gate.test.mjs",
+        "test/open-passage-contract.test.mjs",
+        "test/smoke-exception-guard.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4106,11 +4128,12 @@
     "worker": "finish",
     "token": "263:finish:b2fc924c-88be-451b-b93b-b8f66040e0f8:finish:1:admit",
     "fence": 263,
-    "materialSha": "b8b5a39e58cb9a8b8604a9c1df77bb73ce8d1c45",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "449f270ed8dffd95f796884d7db8819b4694cdfa",
+    "expectedBase": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
+    "phase": "testing",
     "admittedAt": 1793961962264,
-    "expiresAt": 1793962321270
+    "expiresAt": 1793962341055,
+    "patchId": "59d2753da6c11fddf7704a5c23d1af94d9255448"
   },
   "events": {
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:2:synchronized": {
@@ -4247,6 +4270,10 @@
     },
     "finish:0da5e68c-6e98-4fa8-8356-dbf481b6ab9f": {
       "digest": "2ef94711afa8232e689cd8330eeb29b40d066ad29d8d0a69252afa811cd0e2ef",
+      "issue": 1331
+    },
+    "finish:b2fc924c-88be-451b-b93b-b8f66040e0f8:finish:3:synchronized": {
+      "digest": "60ebb112732dc908bc36d2af6d7fb93229e5b0611103ed8b3d99bbd084a7a59e",
       "issue": 1331
     },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
