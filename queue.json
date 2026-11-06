@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5406,
+  "revision": 5407,
   "nextTicket": 260,
   "nextFence": 260,
   "tasks": {
@@ -1026,7 +1026,7 @@
         "finishedAt": "2026-11-06T05:00:43.202Z",
         "failures": []
       },
-      "reviewRound": 2,
+      "reviewRound": 3,
       "notice": {
         "key": "3:review-findings",
         "reason": "review-findings",
@@ -1036,6 +1036,12 @@
         "entry": 3,
         "requestId": "review:1239:3:62d41bf668a2db2f52eb2e83cd9e2da0c0f49765:3f778f3d9f3c1b691fce78891d71d095bb051a1e",
         "transitionConfirmed": true
+      },
+      "reviewRequest": "review:1239:4:7242f162e533627058babbeadb5bb84e79534731:3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+      "reviewMaterial": {
+        "materialSha": "94b43670bf58d49549a81a79b77e3b6dc37b0355",
+        "expectedBase": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+        "patchId": "7242f162e533627058babbeadb5bb84e79534731"
       }
     },
     "1240": {
@@ -4051,6 +4057,19 @@
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
       }
+    },
+    "code:1239:review:1239:4:7242f162e533627058babbeadb5bb84e79534731:3f778f3d9f3c1b691fce78891d71d095bb051a1e": {
+      "issue": 1239,
+      "kind": "code",
+      "requestId": "review:1239:4:7242f162e533627058babbeadb5bb84e79534731:3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+      "materialSha": "94b43670bf58d49549a81a79b77e3b6dc37b0355",
+      "expectedBase": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+      "patchId": "7242f162e533627058babbeadb5bb84e79534731",
+      "status": "pending",
+      "presentation": {
+        "round": 3,
+        "occurredAt": "2026-11-06T05:00:53.811Z"
+      }
     }
   },
   "waiting": [],
@@ -4064,7 +4083,8 @@
     "phase": "review",
     "admittedAt": 1793941215574,
     "expiresAt": 1793944844483,
-    "patchId": "7242f162e533627058babbeadb5bb84e79534731"
+    "patchId": "7242f162e533627058babbeadb5bb84e79534731",
+    "reviewRequest": "review:1239:4:7242f162e533627058babbeadb5bb84e79534731:3f778f3d9f3c1b691fce78891d71d095bb051a1e"
   },
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
@@ -4253,6 +4273,10 @@
     },
     "finish:0db9669b-731c-495f-9964-5bff2626c03a:finish:3:s6-label": {
       "digest": "b8344dba4bc67d83f773ecfa2a57a6bea309a7596534cdaacdd71b4af7e93d4b",
+      "issue": 1239
+    },
+    "finish:0db9669b-731c-495f-9964-5bff2626c03a:finish:4:review-requested": {
+      "digest": "bed2b1ccf8a3bf50e3663cd6f2e46f2b72b780b04175e932a3b4e0e32e7ceee3",
       "issue": 1239
     },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
