@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5302,
+  "revision": 5303,
   "nextTicket": 256,
   "nextFence": 256,
   "tasks": {
@@ -1402,7 +1402,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793936973547,
       "reviewEntry": 4,
-      "patchId": "a009e38188e3e44c6d7f57d70f21c67fec4b02ee",
+      "patchId": "a612358f93bcf036e7cb013b7a82b9b7ac795940",
       "changedFiles": [
         "demo/smoke_backdrop.mjs",
         "demo/smoke_decor_rotation_shift.mjs",
@@ -1416,6 +1416,10 @@
         "src/furniture.ts",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts",
+        "src/i18n/de.json",
+        "src/i18n/en.json",
+        "src/i18n/fr.json",
+        "src/i18n/ru.json",
         "src/rotation-angle.ts",
         "test/backdrop-frame-gesture.test.mjs",
         "test/decor-rotation.test.mjs",
@@ -4022,10 +4026,11 @@
     "token": "255:finish:953981ac-e72a-481e-a00f-0dda130d4aa6:finish:1:admit",
     "fence": 255,
     "materialSha": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "fa5a1c30019811c91a6a34ee36d70de7875455c9",
+    "phase": "testing",
     "admittedAt": 1793936977570,
-    "expiresAt": 1793937277570
+    "expiresAt": 1793937284151,
+    "patchId": "a612358f93bcf036e7cb013b7a82b9b7ac795940"
   },
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
@@ -4162,6 +4167,10 @@
     },
     "github:42158361219:1:completions:metadata:4e4798bf-134b-4814-9bbf-003703ad9afa:task-notice:1255::": {
       "digest": "122a4bbbd54e5d7f35f47f9dc6fe56bf721024e5e53eb51117aeb65a3d0416ca",
+      "issue": 1255
+    },
+    "finish:953981ac-e72a-481e-a00f-0dda130d4aa6:finish:2:synchronized": {
+      "digest": "69360a520551fbc2d021461b6f0b0b06ecdfb54c1c475daa3ac220f3576d27cd",
       "issue": 1255
     },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
