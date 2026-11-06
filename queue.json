@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5683,
+  "revision": 5684,
   "nextTicket": 270,
   "nextFence": 270,
   "tasks": {
@@ -3926,35 +3926,24 @@
     },
     "1336": {
       "issue": 1336,
+      "branch": "codex/1336-converter-runtime",
       "track": "ship",
       "layer": "infra",
-      "branch": "codex/1336-converter-runtime",
-      "materialSha": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 269,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1793965464716,
-      "reviewEntry": 1,
-      "patchId": "86b4b1876f468cd1ef87b90e2d145eb367b0dc9e",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "process-next/lib/source-dependencies.mjs",
-        "process-next/test/task-selection.test.mjs",
-        "scripts/sh3d-convert/build-page.mjs",
-        "scripts/sh3d-convert/dist/index.html",
-        "scripts/sh3d-convert/geometry-runtime.generated.mjs"
-      ],
-      "s6": {
-        "id": "20261106T114439937-59ab45fd",
-        "name": "Тесты для задачи #1336 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T114439937-59ab45fd/report.json",
-        "materialSha": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
-        "status": "passed",
-        "finishedAt": "2026-11-06T11:44:59.874Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
+      "mergedSha": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
+      "mergedAt": 1793965507117,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -4117,18 +4106,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1336,
-    "worker": "finish",
-    "token": "269:finish:86a69c51-1014-417a-9f72-78a0908955bb:finish:1:admit",
-    "fence": 269,
-    "materialSha": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
-    "expectedBase": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793965469344,
-    "expiresAt": 1793969101289,
-    "patchId": "86b4b1876f468cd1ef87b90e2d145eb367b0dc9e"
-  },
+  "active": null,
   "events": {
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
       "digest": "1d72ac2d60e873e63616b547ac291c5b1fcb112e9af5527ca929dfda838e6bcb",
@@ -4245,14 +4223,6 @@
     "github:42211258496:1:completions:notice:93092cda2e8ebf7db50501451c553544a572ab1ad976df6b2ddae6dd6bfe1e61": {
       "digest": "5d6698b644aec763ece4e26f5233530f601fedcb1200b9c9420f7f1e78f5aff2",
       "issue": 1253
-    },
-    "finish:86a69c51-1014-417a-9f72-78a0908955bb:finish:2:synchronized": {
-      "digest": "39d6c6a8cb1ea17730ad80877dbff810e0e55e4eb3d35d12eef04ed98c2e10f4",
-      "issue": 1336
-    },
-    "finish:86a69c51-1014-417a-9f72-78a0908955bb:finish:3:s6-complete": {
-      "digest": "25e1a4c41ecc2f1af692fa866433e52b412f2ed7a4bf7ca6b8e60243566ee525",
-      "issue": 1336
     },
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6": {
       "digest": "5a4822812d93918e8b0f98ca0f4d8ab4ef6805559fa88314c3161c969d24f310",
