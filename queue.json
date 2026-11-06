@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5386,
+  "revision": 5387,
   "nextTicket": 259,
   "nextFence": 259,
   "tasks": {
@@ -1026,7 +1026,7 @@
         "finishedAt": "2026-11-06T04:52:59.439Z",
         "failures": []
       },
-      "reviewRound": 1,
+      "reviewRound": 2,
       "notice": {
         "key": "2:checks-failed",
         "reason": "checks-failed",
@@ -1036,6 +1036,12 @@
         "entry": 2,
         "detail": "Поведение механизма: process-next/test/catalog.test.mjs: failed",
         "eventId": "finish:66e36774-1267-46f3-8c79-7e83cf790fe1:finish:1:return:return:1239"
+      },
+      "reviewRequest": "review:1239:3:62d41bf668a2db2f52eb2e83cd9e2da0c0f49765:3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+      "reviewMaterial": {
+        "materialSha": "f43c2e95a591e2bca2a60f02d68a63bbc5f6da18",
+        "expectedBase": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+        "patchId": "62d41bf668a2db2f52eb2e83cd9e2da0c0f49765"
       }
     },
     "1240": {
@@ -4051,6 +4057,19 @@
         "round": 1,
         "occurredAt": "2026-11-02T14:47:26.129Z"
       }
+    },
+    "code:1239:review:1239:3:62d41bf668a2db2f52eb2e83cd9e2da0c0f49765:3f778f3d9f3c1b691fce78891d71d095bb051a1e": {
+      "issue": 1239,
+      "kind": "code",
+      "requestId": "review:1239:3:62d41bf668a2db2f52eb2e83cd9e2da0c0f49765:3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+      "materialSha": "f43c2e95a591e2bca2a60f02d68a63bbc5f6da18",
+      "expectedBase": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+      "patchId": "62d41bf668a2db2f52eb2e83cd9e2da0c0f49765",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-06T04:53:09.384Z"
+      }
     }
   },
   "waiting": [],
@@ -4064,7 +4083,8 @@
     "phase": "review",
     "admittedAt": 1793940753100,
     "expiresAt": 1793944380652,
-    "patchId": "62d41bf668a2db2f52eb2e83cd9e2da0c0f49765"
+    "patchId": "62d41bf668a2db2f52eb2e83cd9e2da0c0f49765",
+    "reviewRequest": "review:1239:3:62d41bf668a2db2f52eb2e83cd9e2da0c0f49765:3f778f3d9f3c1b691fce78891d71d095bb051a1e"
   },
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
@@ -4189,6 +4209,10 @@
     },
     "finish:2636c0cd-d453-4d1b-bd3c-d42d2e3934d9:finish:3:s6-label": {
       "digest": "14b14b5924829be526c9d1c86529e2ffabbb6700747cf103f23a4578c35064ed",
+      "issue": 1239
+    },
+    "finish:2636c0cd-d453-4d1b-bd3c-d42d2e3934d9:finish:4:review-requested": {
+      "digest": "636efcc19de6e7939afcbd522e5a2a03bc8dbd0a7fe9e83296a1b33b22d5978a",
       "issue": 1239
     },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
