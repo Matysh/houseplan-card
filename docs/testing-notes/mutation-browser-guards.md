@@ -23,6 +23,10 @@ a missing module, timeout or failed setup is not a caught mutation. Only the
 intended failed assertion can demonstrate sensitivity. Ordinary negative-input
 tests use unchanged product code and do not count as mutation execution.
 
+#1335 retires the two browser mutation definitions of the removed, unimported
+`commitWallChainSegmentGeometry` path; their native smoke/benchmark files remain
+available. This removes no reachable runtime branch or current graph assertion.
+
 Compatibility metadata for the retained registry reader follows.
 The guideline is `200` (#699), an existing diagnostic value, not an adopted
 limit of the new process or an instruction to run its old checker. The table
@@ -57,13 +61,13 @@ that transition events alone prove disposal.
 
 | Category | Count | Why a browser is still required |
 | --- | ---: | --- |
-| Performance threshold | 10 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
+| Performance threshold | 9 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 106 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 109 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 108 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 58 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 280 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **567 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
+| **Total** | **565 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
 
 
 ## Historical measurements (2026-09-27)
@@ -134,7 +138,6 @@ The witness measures real browser wall-time or frame work; a pure assertion cann
 - `junction-limit-p3-quadratic-again`
 - `junction-limit-p4-bruteforce-again`
 - `resize-render-snapshot-per-handle`
-- `wall-draw-wall-artifact-discarded`
 
 ### Browser harness integrity
 
@@ -610,7 +613,6 @@ toggles; ordinary fresh-click and fade/lifecycle controls remain in the smoke.
 - `touch-pinch-marker-hold-rearmed`
 - `touch-pinch-zoom-persists-per-frame`
 - `unavailable-toggle-stays-silent`
-- `wall-draw-rejection-rollback-skipped`
 
 ### Responsive DOM layout
 
