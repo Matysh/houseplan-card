@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5279,
+  "revision": 5280,
   "nextTicket": 254,
   "nextFence": 254,
   "tasks": {
@@ -1402,12 +1402,15 @@
       "status": "S6-in-progress",
       "readyAt": 1793936224667,
       "reviewEntry": 2,
-      "patchId": "a46bed96b664576cdf754e0786a9e612794ff287",
+      "patchId": "9540bfb8e3844f42ac673e3d57b81cb006dbc91f",
       "changedFiles": [
+        "demo/smoke_backdrop.mjs",
         "demo/smoke_decor_rotation_shift.mjs",
+        "demo/smoke_decor_text.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/DECOR-EDITOR.md",
+        "docs/USER-GUIDE.ru.md",
         "docs/release-ledger/v1.83.0/1255.json",
         "src/backdrop-frame-gesture.ts",
         "src/furniture.ts",
@@ -4005,10 +4008,11 @@
     "token": "253:finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:1:admit",
     "fence": 253,
     "materialSha": "376b6e387031dca5328e46de2e411b6845e76b6a",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "fa5a1c30019811c91a6a34ee36d70de7875455c9",
+    "phase": "testing",
     "admittedAt": 1793936228296,
-    "expiresAt": 1793936528296
+    "expiresAt": 1793936534078,
+    "patchId": "9540bfb8e3844f42ac673e3d57b81cb006dbc91f"
   },
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
@@ -4073,6 +4077,10 @@
     },
     "finish:9150f85a-807c-4b6e-b8ef-a6211c1115d6:finish:3:return": {
       "digest": "315ef7fb4a4643f7c61aaee2559bc41afb6d314b144d63c67066fba4048c4872",
+      "issue": 1255
+    },
+    "finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:2:synchronized": {
+      "digest": "38e33108e2dfe6779912fb1bc4d5982ac2b25774a8c8227311e359064b787c1c",
       "issue": 1255
     },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
