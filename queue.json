@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5611,
+  "revision": 5612,
   "nextTicket": 267,
   "nextFence": 267,
   "tasks": {
@@ -3937,6 +3937,119 @@
         "materialSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
         "expectedBase": "eaba96b2f80b930dd1a57fe5f23a0be5e193e357",
         "patchId": "df97369269631d9cb996547f944d5e340639b467"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1329,
+        "requestId": "review:1329:2:df97369269631d9cb996547f944d5e340639b467:eaba96b2f80b930dd1a57fe5f23a0be5e193e357",
+        "kind": "code",
+        "base": "eaba96b2f80b930dd1a57fe5f23a0be5e193e357",
+        "materialSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
+        "patchId": "df97369269631d9cb996547f944d5e340639b467",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1329,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1329",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Реализация: hasContent запоминается в уже существующем _frameOf cache по cf.all до fallback и editor-grow union. Камера, масштаб и frame bounds сохраняют поведение. Рендер стрелки получает явный флаг содержимого и проверку принадлежности _frame.id активному _space; fallback/предыдущее пространство не считаются планом. Дополнительного прохода геометрии на кадре нет.\n\nРегрессия Node view-frame-empty: на исходном helper первый кейс падает (1/2 overall), положительный roomless контроль проходит; на исправленном коде оба проходят. Native кейсы встроены в существующий smoke_space_switch_transitions через отдельный helper: первый onboarding/create, pan пустой камеры без config/layout writes, реальная отдельная перегородка без комнат и Fit, удаление последнего объекта при editor-grow, создание второго пустого пространства после panned nonempty. Наблюдатель DOM проверяет отсутствие ложных переходных стрелок, UI не подменяется приватными состояниями. Полный native smoke прошёл со всеми прежними assertions до блокировки baseline.\n\nПо #1328 проверены catalog и plan без areaTests: Node — product/presentation/performance/task-release, выбирается как читатель src/view-frame-view.ts; native navigation выбирается по контракту области и изменению helper. Монолитный houseplan-card.ts даёт честный full fast Node fallback. Профиль не сужается. Релизная мета: уже открытый владельцем milestone1.85.0 #13, stablebasev1.84.0, stable-fix; выпуск не поручен.\n\nПервый полный S6 run20261106T060327001-ec241f65 был failed на14исходныхошибках8Node-файлов, отдельно повторённых на devbe93. Они и дополнительные2ошибки config-lifecycle устранены в совместном пакете #1331/#1332, принятом ревью и слитом в deveaba96b2f80b930dd1a57fe5f23a0be5e193e357. Его полный S6 прошёл562шага. Blocked задачи #1329 снимается; это не зачёт её собственного S6. Штатный finish заново актуализирует ветку и выполняет текущую центральную выборку перед код-ревью, с применимым reuse.\n\nСохранённая реализация до актуализации: origin/codex/1329-empty-home-arrow,0921a7720f. Companion: [task-impact/1329.md](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1329.md) — расширить настоящий HA first-space/navigation journey перед следующей бетой. Логи/evidence: output/issue-1329 и artifacts/empty-space-home-arrow. Пользовательский HA не менялся."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Рекомендую принять: блокеров нет. Исправление небольшое и закрывает именно найденную причину. Стрелка «План там — нажмите, чтобы вписать» теперь зависит от признака реального содержимого `cf.all !== null`. Этот признак вычисляется внутри уже мемоизированного `_frameOf` до подстановки fallback (`spaceFrame`/`view_box`) и до объединения с накопленной рамкой редактора. Поэтому у пустого пространства стрелки не будет ни сразу после создания, ни после удаления последнего объекта. Пространство без комнат с настоящей геометрией, подложкой, декором или устройствами сохраняет стрелку и Fit: сам набор объектов `contentItems` не менялся. Камера, масштаб, рамка, данные и записи config/layout остались прежними, дополнительного прохода геометрии нет. Проверки S6 (receipt 20261106T111528655-f284b624, passed на head) использую как есть. Native-сценарий в smoke покрывает AC1–AC3 через настоящий UI. Есть только необязательные замечания о силе тестов.",
+          "understanding": "Проблема: `_frameOf` подменяет отсутствующую рамку содержимого (`contentFrame(...).all === null`) на `spaceFrame(m)`, то есть на служебный `view_box` [0,0,1,1]·NORM_W или единичный квадрат. В редакторе эта рамка к тому же только растёт через `unionRect` с прежней. `renderHomeArrow` получал только `_baseVb()`, построенный из этой рамки, и вид, а затем проверял их непересечение. Если пустую камеру сдвинуть за пределы fallback, появлялась стрелка к несуществующему плану.\n\nПосле исправления в кеш `_frame` добавлено поле `hasContent: cf.all !== null`. Оно вычисляется вместе с остальными полями рамки при промахе мемо, а при попадании возвращается из кеша. `_renderHomeArrow` вызывает `_frameOf()`; это обращение к кешу, потому что `_baseVb` в том же рендере уже его вызвал. Дальше передаётся `frame.hasContent && this._frame?.id === this._space`. В `renderHomeArrow` добавлен ранний выход при `!hasContent`, геометрия стрелки (`homeArrowPosition`) не изменилась.\n\nРазобранные пути:\n- `_frameOf` целиком: ветка без модели, заморозка рамки при жесте с подложкой, мемо по идентичности, ветка grow-union, перерасчёт камеры при изменении рамки;\n- `_contentItems` и `contentItems`/`contentFrame`/`spaceFrame` в `src/space-geometry.ts`: что считается содержимым и когда `all` равен null;\n- `_baseVb` для плоской и изометрической проекции;\n- `_spaceModel` → `selectActiveSpaceModel`, где при несуществующем `_space` выбирается `models[0]`;\n- согласование `_space` через `_adoptInitialSpace`/`resolveInitialSpace` при reload, `completeSpaceDeletion` и импорте;\n- native helper и его подключение в `smoke_space_switch_transitions`.",
+          "analysis": [
+            {
+              "topic": "Источник признака содержимого",
+              "assessment": "Решение верное и минимальное. Признак берётся из того же `contentFrame`, по которому строится рамка камеры, поэтому второго «оракула» пустоты нет: всё, что участвует в Fit, автоматически считается содержимым. Это комнаты, лестницы, подложка `bg` (она есть при наличии `plan_url`, даже до загрузки изображения), проёмы, декор, физические тела стен и перегородок, видимые устройства. Требование ТЗ «не опираться на rooms.length» выполнено по построению. Флаг вычисляется до fallback и до `unionRect`, поэтому накопленная рамка редактора после удаления последнего объекта не превращается в содержимое. В режиме View скрытые устройства и декор с отсутствующим ассетом, как и раньше, не считаются содержимым. Это согласуется с тем, что они не рисуются.",
+              "evidence": "src/houseplan-card.ts:6900-6914 (`cf.all` до `|| spaceFrame(m)` и до `unionRect`); src/space-geometry.ts:311-336, 423, 472-482; src/houseplan-card.ts:6812-6851."
+            },
+            {
+              "topic": "Мемоизация и стоимость",
+              "assessment": "Новой работы на кадр нет. `hasContent` хранится в существующем кеше `_frame` и инвалидируется теми же ключами: model, layout, devs, far, grow. Повторный вызов `_frameOf()` в `_renderHomeArrow` идёт после вызова из `_baseVb` в аргументе по умолчанию или в `_baseVb(projection, isoScene)` на стороне вызова, поэтому попадает в мемо. Побочный эффект `_frameOf` (пересчёт камеры при изменении рамки) повторно не срабатывает. При заморозке на время жеста с подложкой возвращается прежний `f` вместе с его `hasContent`, и это корректно.",
+              "evidence": "src/houseplan-card.ts:6897-6899, 7051-7072, 7197-7203, 12225."
+            },
+            {
+              "topic": "Проверка `_frame.id === _space`",
+              "assessment": "Это обоснованная защита от переходных состояний. `selectActiveSpaceModel` при отсутствии `_space` в модели возвращает `models[0]`, например когда новый id уже записан в `_space`, а модель ещё старая. Без проверки стрелка могла бы указывать на содержимое соседнего пространства. Я проверил, не прячет ли эта проверка стрелку у настоящего плана при устойчиво устаревшем `_space`. Значение по умолчанию `'f1'` заменяется через `_adoptInitialSpace` при setConfig и на каждом reload (`resolveInitialSpace` возвращает только живой id). Удаление пространства и импорт явно вызывают `_commitSpace` с существующим id. Устойчивого расхождения я не нашёл, остаются только переходные кадры, где отсутствие стрелки безопасно.",
+              "evidence": "src/space-model-selection.ts:6-11; src/initial-load.ts:70-85; src/config-adoption.ts:577-586; src/editors/space-delete.ts:60; src/houseplan-editor-runtime.ts:9624-9630; src/houseplan-card.ts:1090, 3908."
+            },
+            {
+              "topic": "Изометрическая проекция",
+              "assessment": "В iso с границами `base` берётся из `scene.canonicalFrame`, а флаг содержимого по-прежнему из плоского `_frameOf`. Для пустого пространства обе величины выводятся из fallback, так что скрытие стрелки корректно. Для непустого пространства поведение не изменилось.",
+              "evidence": "src/houseplan-card.ts:7055-7068."
+            },
+            {
+              "topic": "Native-проверка (AC1–AC3)",
+              "assessment": "Сценарий содержательный и опирается на настоящий UI: onboarding и диалог `space-add`, реальные клики и drag мышью, клик по стрелке для Fit. MutationObserver ловит ложную стрелку в переходных кадрах, но только для пустого активного пространства с совпадающим `_frame.id`. Покрыты:\n- первое и второе пространство, второе — после сдвинутого непустого;\n- pan пустой камеры без записей в config/layout, с проверкой, что вид действительно изменился;\n- перегородка без комнат: появление стрелки и Fit без записей;\n- удаление последнего объекта при `frame.grow === true`.\nСодержимое подставляется через `setServerConfig`, то есть как серверное событие. Для проверки флага этого достаточно. Подложка, декор и устройство в native отдельно не проверяются, но они идут тем же путём `contentItems`, который не менялся.",
+              "evidence": "demo/helpers/empty-space-home-arrow.mjs:24-35, 36-47, 66-90; demo/smoke_space_switch_transitions.mjs:322-326; S6 receipt 20261106T111528655-f284b624 (passed)."
+            },
+            {
+              "topic": "Node-регрессия",
+              "assessment": "Тест полезен как контракт `renderHomeArrow` (флаг перекрывает геометрию при всех поворотах) и как подтверждение, что `contentFrame` отличает пустоту от вырожденной геометрии без комнат: линии и точки. Но флаг в нём передаётся явно, поэтому сама логика вывода в `_frameOf` (до fallback и union) Node-тестом не защищена. Её защищает только native smoke. Это приемлемо, но слабее, чем можно было бы.",
+              "evidence": "test/view-frame-empty.test.mjs:8-23."
+            },
+            {
+              "topic": "Документация и релизная мета",
+              "assessment": "Абзац в CANVAS §5 точно описывает новый контракт, записи CHANGELOG en/ru согласованы. Смена цикла в `cycle.json` (v1.84.0 → v1.85.0, milestone 13) соответствует открытому владельцем milestone по контексту исполнителя. Прецедент открытия цикла коммитом задачи есть (d75d34bf, #1146). Каталог `v1.84.0/` соответствует baseStable.",
+              "evidence": "docs/CANVAS.md:442-447; docs/release-ledger/cycle.json; docs/release-ledger/v1.84.0/1329.json; git_log cycle.json."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "В native-шаге `last-object-removed` нет проверки предусловия: что камера после перехода в Plan действительно вне накопленной рамки, то есть что без исправления стрелка бы появилась. Сейчас `removed.arrow === false` может выполниться и потому, что вид пересекает рамку. Стоит до `pushLine(false)` убедиться, что стрелка видна при содержимом, как это сделано в шаге roomless-positive. Цена — одна дополнительная проверка, зато шаг станет настоящим отрицательным свидетелем для ветки grow.",
+            "Флаг `hasContent` можно было бы вынести в чистую функцию рядом с `contentFrame`, например `frameEligibility(cf)`, или проверять Node-тестом сам вывод «до fallback/union». Сейчас Node-тест подаёт флаг напрямую, и регрессию вида `hasContent: all !== null` (по уже объединённой рамке) поймает только native smoke. Это необязательно: цена — небольшое дробление монолита ради тестируемости."
+          ],
+          "boundaries": "Сборку, тесты и smoke сам не запускал: в S7 это не предусмотрено. Использован receipt S6 20261106T111528655-f284b624 (passed, materialSha = head 86e4d9ff). Слова исполнителя о падении Node-теста на исходном helper и о логах output/issue-1329 и artifacts/empty-space-home-arrow принимаю как его утверждение, сами артефакты не читал. Бандл `custom_components/.../houseplan-card-*.js` в diff не обновлён; судя по истории, он пересобирается при выпуске, и как часть задачи я его не проверял. Companion task-impact/1329.md во внешнем репозитории houseplan-e2e не читал. Поведение на реальной установке HA владельца не проверялось. По исходникам изучены: `_frameOf`, `_contentItems`, `_baseVb`, `_renderHomeArrow` и вызов в iso-рендере, `space-geometry` (`contentItems`/`contentFrame`/`spaceFrame`), выбор и согласование `_space` (`initial-load`, `config-adoption`, `space-delete`, backup import), native helper."
+        },
+        "usage": {
+          "input_tokens": 64,
+          "cache_creation_input_tokens": 77400,
+          "cache_read_input_tokens": 1251208,
+          "output_tokens": 11679,
+          "output_tokens_details": {
+            "thinking_tokens": 3355
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 77400,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 813,
+              "cache_read_input_tokens": 65536,
+              "cache_creation_input_tokens": 16068,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 16068
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРекомендую принять: блокеров нет. Исправление небольшое и закрывает именно найденную причину. Стрелка «План там — нажмите, чтобы вписать» теперь зависит от признака реального содержимого `cf.all !== null`. Этот признак вычисляется внутри уже мемоизированного `_frameOf` до подстановки fallback (`spaceFrame`/`view_box`) и до объединения с накопленной рамкой редактора. Поэтому у пустого пространства стрелки не будет ни сразу после создания, ни после удаления последнего объекта. Пространство без комнат с настоящей геометрией, подложкой, декором или устройствами сохраняет стрелку и Fit: сам набор объектов `contentItems` не менялся. Камера, масштаб, рамка, данные и записи config/layout остались прежними, дополнительного прохода геометрии нет. Проверки S6 (receipt 20261106T111528655-f284b624, passed на head) использую как есть. Native-сценарий в smoke покрывает AC1–AC3 через настоящий UI. Есть только необязательные замечания о силе тестов.\n\n## Понимание решения\n\nПроблема: `_frameOf` подменяет отсутствующую рамку содержимого (`contentFrame(...).all === null`) на `spaceFrame(m)`, то есть на служебный `view_box` [0,0,1,1]·NORM_W или единичный квадрат. В редакторе эта рамка к тому же только растёт через `unionRect` с прежней. `renderHomeArrow` получал только `_baseVb()`, построенный из этой рамки, и вид, а затем проверял их непересечение. Если пустую камеру сдвинуть за пределы fallback, появлялась стрелка к несуществующему плану.\n\nПосле исправления в кеш `_frame` добавлено поле `hasContent: cf.all !== null`. Оно вычисляется вместе с остальными полями рамки при промахе мемо, а при попадании возвращается из кеша. `_renderHomeArrow` вызывает `_frameOf()`; это обращение к кешу, потому что `_baseVb` в том же рендере уже его вызвал. Дальше передаётся `frame.hasContent && this._frame?.id === this._space`. В `renderHomeArrow` добавлен ранний выход при `!hasContent`, геометрия стрелки (`homeArrowPosition`) не изменилась.\n\nРазобранные пути:\n- `_frameOf` целиком: ветка без модели, заморозка рамки при жесте с подложкой, мемо по идентичности, ветка grow-union, перерасчёт камеры при изменении рамки;\n- `_contentItems` и `contentItems`/`contentFrame`/`spaceFrame` в `src/space-geometry.ts`: что считается содержимым и когда `all` равен null;\n- `_baseVb` для плоской и изометрической проекции;\n- `_spaceModel` → `selectActiveSpaceModel`, где при несуществующем `_space` выбирается `models[0]`;\n- согласование `_space` через `_adoptInitialSpace`/`resolveInitialSpace` при reload, `completeSpaceDeletion` и импорте;\n- native helper и его подключение в `smoke_space_switch_transitions`.\n\n## Разбор решения\n\n### Источник признака содержимого\n\nРешение верное и минимальное. Признак берётся из того же `contentFrame`, по которому строится рамка камеры, поэтому второго «оракула» пустоты нет: всё, что участвует в Fit, автоматически считается содержимым. Это комнаты, лестницы, подложка `bg` (она есть при наличии `plan_url`, даже до загрузки изображения), проёмы, декор, физические тела стен и перегородок, видимые устройства. Требование ТЗ «не опираться на rooms.length» выполнено по построению. Флаг вычисляется до fallback и до `unionRect`, поэтому накопленная рамка редактора после удаления последнего объекта не превращается в содержимое. В режиме View скрытые устройства и декор с отсутствующим ассетом, как и раньше, не считаются содержимым. Это согласуется с тем, что они не рисуются.\n\nОснование: src/houseplan-card.ts:6900-6914 (`cf.all` до `|| spaceFrame(m)` и до `unionRect`); src/space-geometry.ts:311-336, 423, 472-482; src/houseplan-card.ts:6812-6851.\n\n### Мемоизация и стоимость\n\nНовой работы на кадр нет. `hasContent` хранится в существующем кеше `_frame` и инвалидируется теми же ключами: model, layout, devs, far, grow. Повторный вызов `_frameOf()` в `_renderHomeArrow` идёт после вызова из `_baseVb` в аргументе по умолчанию или в `_baseVb(projection, isoScene)` на стороне вызова, поэтому попадает в мемо. Побочный эффект `_frameOf` (пересчёт камеры при изменении рамки) повторно не срабатывает. При заморозке на время жеста с подложкой возвращается прежний `f` вместе с его `hasContent`, и это корректно.\n\nОснование: src/houseplan-card.ts:6897-6899, 7051-7072, 7197-7203, 12225.\n\n### Проверка `_frame.id === _space`\n\nЭто обоснованная защита от переходных состояний. `selectActiveSpaceModel` при отсутствии `_space` в модели возвращает `models[0]`, например когда новый id уже записан в `_space`, а модель ещё старая. Без проверки стрелка могла бы указывать на содержимое соседнего пространства. Я проверил, не прячет ли эта проверка стрелку у настоящего плана при устойчиво устаревшем `_space`. Значение по умолчанию `'f1'` заменяется через `_adoptInitialSpace` при setConfig и на каждом reload (`resolveInitialSpace` возвращает только живой id). Удаление пространства и импорт явно вызывают `_commitSpace` с существующим id. Устойчивого расхождения я не нашёл, остаются только переходные кадры, где отсутствие стрелки безопасно.\n\nОснование: src/space-model-selection.ts:6-11; src/initial-load.ts:70-85; src/config-adoption.ts:577-586; src/editors/space-delete.ts:60; src/houseplan-editor-runtime.ts:9624-9630; src/houseplan-card.ts:1090, 3908.\n\n### Изометрическая проекция\n\nВ iso с границами `base` берётся из `scene.canonicalFrame`, а флаг содержимого по-прежнему из плоского `_frameOf`. Для пустого пространства обе величины выводятся из fallback, так что скрытие стрелки корректно. Для непустого пространства поведение не изменилось.\n\nОснование: src/houseplan-card.ts:7055-7068.\n\n### Native-проверка (AC1–AC3)\n\nСценарий содержательный и опирается на настоящий UI: onboarding и диалог `space-add`, реальные клики и drag мышью, клик по стрелке для Fit. MutationObserver ловит ложную стрелку в переходных кадрах, но только для пустого активного пространства с совпадающим `_frame.id`. Покрыты:\n- первое и второе пространство, второе — после сдвинутого непустого;\n- pan пустой камеры без записей в config/layout, с проверкой, что вид действительно изменился;\n- перегородка без комнат: появление стрелки и Fit без записей;\n- удаление последнего объекта при `frame.grow === true`.\nСодержимое подставляется через `setServerConfig`, то есть как серверное событие. Для проверки флага этого достаточно. Подложка, декор и устройство в native отдельно не проверяются, но они идут тем же путём `contentItems`, который не менялся.\n\nОснование: demo/helpers/empty-space-home-arrow.mjs:24-35, 36-47, 66-90; demo/smoke_space_switch_transitions.mjs:322-326; S6 receipt 20261106T111528655-f284b624 (passed).\n\n### Node-регрессия\n\nТест полезен как контракт `renderHomeArrow` (флаг перекрывает геометрию при всех поворотах) и как подтверждение, что `contentFrame` отличает пустоту от вырожденной геометрии без комнат: линии и точки. Но флаг в нём передаётся явно, поэтому сама логика вывода в `_frameOf` (до fallback и union) Node-тестом не защищена. Её защищает только native smoke. Это приемлемо, но слабее, чем можно было бы.\n\nОснование: test/view-frame-empty.test.mjs:8-23.\n\n### Документация и релизная мета\n\nАбзац в CANVAS §5 точно описывает новый контракт, записи CHANGELOG en/ru согласованы. Смена цикла в `cycle.json` (v1.84.0 → v1.85.0, milestone 13) соответствует открытому владельцем milestone по контексту исполнителя. Прецедент открытия цикла коммитом задачи есть (d75d34bf, #1146). Каталог `v1.84.0/` соответствует baseStable.\n\nОснование: docs/CANVAS.md:442-447; docs/release-ledger/cycle.json; docs/release-ledger/v1.84.0/1329.json; git_log cycle.json.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- В native-шаге `last-object-removed` нет проверки предусловия: что камера после перехода в Plan действительно вне накопленной рамки, то есть что без исправления стрелка бы появилась. Сейчас `removed.arrow === false` может выполниться и потому, что вид пересекает рамку. Стоит до `pushLine(false)` убедиться, что стрелка видна при содержимом, как это сделано в шаге roomless-positive. Цена — одна дополнительная проверка, зато шаг станет настоящим отрицательным свидетелем для ветки grow.\n- Флаг `hasContent` можно было бы вынести в чистую функцию рядом с `contentFrame`, например `frameEligibility(cf)`, или проверять Node-тестом сам вывод «до fallback/union». Сейчас Node-тест подаёт флаг напрямую, и регрессию вида `hasContent: all !== null` (по уже объединённой рамке) поймает только native smoke. Это необязательно: цена — небольшое дробление монолита ради тестируемости.\n\n## Границы анализа\n\nСборку, тесты и smoke сам не запускал: в S7 это не предусмотрено. Использован receipt S6 20261106T111528655-f284b624 (passed, materialSha = head 86e4d9ff). Слова исполнителя о падении Node-теста на исходном helper и о логах output/issue-1329 и artifacts/empty-space-home-arrow принимаю как его утверждение, сами артефакты не читал. Бандл `custom_components/.../houseplan-card-*.js` в diff не обновлён; судя по истории, он пересобирается при выпуске, и как часть задачи я его не проверял. Companion task-impact/1329.md во внешнем репозитории houseplan-e2e не читал. Поведение на реальной установке HA владельца не проверялось. По исходникам изучены: `_frameOf`, `_contentItems`, `_baseVb`, `_renderHomeArrow` и вызов в iso-рендере, `space-geometry` (`contentItems`/`contentFrame`/`spaceFrame`), выбор и согласование `_space` (`initial-load`, `config-adoption`, `space-delete`, backup import), native helper.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: eaba96b2f80b930dd1a57fe5f23a0be5e193e357 → 86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1329, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nРеализация: hasContent запоминается в уже существующем _frameOf cache по cf.all до fallback и editor-grow union. Камера, масштаб и frame bounds сохраняют поведение. Рендер стрелки получает явный флаг содержимого и проверку принадлежности _frame.id активному _space; fallback/предыдущее пространство не считаются планом. Дополнительного прохода геометрии на кадре нет.\n\nРегрессия Node view-frame-empty: на исходном helper первый кейс падает (1/2 overall), положительный roomless контроль проходит; на исправленном коде оба проходят. Native кейсы встроены в существующий smoke_space_switch_transitions через отдельный helper: первый onboarding/create, pan пустой камеры без config/layout writes, реальная отдельная перегородка без комнат и Fit, удаление последнего объекта при editor-grow, создание второго пустого пространства после panned nonempty. Наблюдатель DOM проверяет отсутствие ложных переходных стрелок, UI не подменяется приватными состояниями. Полный native smoke прошёл со всеми прежними assertions до блокировки baseline.\n\nПо #1328 проверены catalog и plan без areaTests: Node — product/presentation/performance/task-release, выбирается как читатель src/view-frame-view.ts; native navigation выбирается по контракту области и изменению helper. Монолитный houseplan-card.ts даёт честный full fast Node fallback. Профиль не сужается. Релизная мета: уже открытый владельцем milestone1.85.0 #13, stablebasev1.84.0, stable-fix; выпуск не поручен.\n\nПервый полный S6 run20261106T060327001-ec241f65 был failed на14исходныхошибках8Node-файлов, отдельно повторённых на devbe93. Они и дополнительные2ошибки config-lifecycle устранены в совместном пакете #1331/#1332, принятом ревью и слитом в deveaba96b2f80b930dd1a57fe5f23a0be5e193e357. Его полный S6 прошёл562шага. Blocked задачи #1329 снимается; это не зачёт её собственного S6. Штатный finish заново актуализирует ветку и выполняет текущую центральную выборку перед код-ревью, с применимым reuse.\n\nСохранённая реализация до актуализации: origin/codex/1329-empty-home-arrow,0921a7720f. Companion: [task-impact/1329.md](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1329.md) — расширить настоящий HA first-space/navigation journey перед следующей бетой. Логи/evidence: output/issue-1329 и artifacts/empty-space-home-arrow. Пользовательский HA не менялся.\n```\n\n</details>\n",
+        "createdAt": "2026-11-06T11:21:43.432Z",
+        "artifactId": 13498691245,
+        "runId": 42209311501,
+        "runAttempt": 1,
+        "completedAt": "2026-11-06T11:21:48Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42209311501",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "eaba96b2f80b930dd1a57fe5f23a0be5e193e357"
       }
     },
     "1331": {
@@ -4157,9 +4270,9 @@
     "fence": 266,
     "materialSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
     "expectedBase": "eaba96b2f80b930dd1a57fe5f23a0be5e193e357",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1793963710436,
-    "expiresAt": 1793967512809,
+    "expiresAt": 1793967734131,
     "patchId": "df97369269631d9cb996547f944d5e340639b467",
     "reviewRequest": "review:1329:2:df97369269631d9cb996547f944d5e340639b467:eaba96b2f80b930dd1a57fe5f23a0be5e193e357"
   },
@@ -4334,6 +4447,10 @@
     },
     "github:42209693919:1:tick:0:review-presentation": {
       "digest": "07f3a5ca472b4240fcd3ff1f24ba3a719bf068371ca14edc9c78364076c2c7b5",
+      "issue": 1329
+    },
+    "github:42209693919:1:tick:0:review-complete": {
+      "digest": "11cf641ddf65cc5dd3da5a93bb1f7f923bab66871ef51dc279b3b260d90ba246",
       "issue": 1329
     },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
