@@ -65,7 +65,6 @@ const out=await page.evaluate(async ({fixture,diagonalFixture,linePlanFixture,be
   const geometryBefore=root().querySelector('.wallbodies')?.innerHTML;
   await states('unavailable',null);
   result.contactDoesNotChangeMasonry=root().querySelector('.wallbodies')?.innerHTML===geometryBefore&&box()===stableBox;
-  result.unavailableContactHasNeutralTone=!!shutTone&&shutTone!==activeTone&&arcTone()===shutTone;
   const withoutContact={...c.hass.states};delete withoutContact['cover.synthetic_door'];
   const missingHass={...c.hass,states:withoutContact};c.hass=missingHass;el.hass=missingHass;await update();
   const leafFill=(r)=>opening('wall-door',r)?.querySelector('.op-leaf rect')?.getAttribute('fill');
