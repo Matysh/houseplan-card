@@ -1,3 +1,4 @@
+import { rotationAngle } from './rotation-angle';
 /**
  * The furniture library of the decor layer (docs/FURNITURE.md).
  *
@@ -369,17 +370,7 @@ export function furnitureRotationAngle(
   pointerDeg: number,
   snap45: boolean,
 ): number {
-  let angle = Number(angle0) + (Number(pointerDeg) - Number(pointerStartDeg));
-  if (![angle, pointerStartDeg, pointerDeg].every(Number.isFinite)) angle = 0;
-  if (snap45) {
-    const steps = angle / 45;
-    // Keep the exact half-step deterministic on both sides of zero. Native
-    // Math.round(-0.5) returns -0, which would make symmetric drags snap in
-    // different directions.
-    angle = (steps < 0 ? -Math.round(Math.abs(steps)) : Math.round(steps)) * 45;
-  }
-  angle = ((angle % 360) + 360) % 360;
-  return angle > 180 ? angle - 360 : angle;
+  return rotationAngle(angle0,pointerStartDeg,pointerDeg,snap45);
 }
 
 /** One canonical transform for visible art, selection halo and future consumers. */

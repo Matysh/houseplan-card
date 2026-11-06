@@ -1,3 +1,4 @@
+import { rotationAngle } from './rotation-angle';
 import { nothing, svg, type TemplateResult } from 'lit';
 import { cancelHouseplanPointerMove, flushHouseplanPointerMove, queueHouseplanPointerMove } from './pointer-move-queue';
 import { clampCanvasN, fitInSquare, NORM_W, planRect, PLAN_SCALE_MAX, PLAN_SCALE_MIN, type Rect } from './space-geometry';
@@ -13,7 +14,7 @@ type BackdropParams = { dx: number; dy: number; sx: number; sy: number; angle: n
 type BackdropDrag = {
   kind: 'move' | 'scale' | 'rotate'; pid: number; sx: number; sy: number;
   base: Rect; p0: BackdropParams; fx: number; fy: number; sgx: number; sgy: number;
-  rect0: DecorBox; before: SpaceGeometryState | null; moved: boolean;
+  rect0: DecorBox; pointerAngle?: number; before: SpaceGeometryState | null; moved: boolean;
 };
 
 /** Bounded gesture purposes, not a card-shaped compatibility facade. */
@@ -33,6 +34,7 @@ export interface BackdropFrameGesturePort {
   publish(phase: 'begin' | 'move' | 'end'): void;
   formatLength(a: number[], b: number[]): string;
   rotationArm?(): number | null;
+  rotationHint(): string;
 }
 
 export class BackdropFrameGestureRuntime {
@@ -101,6 +103,7 @@ export class BackdropFrameGestureRuntime {
       before: this.port.snapshot(), moved: false };
     try { (ev.target as Element | null)?.setPointerCapture?.(ev.pointerId); } catch { /* inactive pointer */ }
     this.port.publish('begin');
+    if(rotate&&ev.shiftKey)this.rotationModifier(true);
     return true;
   }
   public move(ev: PointerEvent): void {
@@ -121,14 +124,7 @@ export class BackdropFrameGestureRuntime {
     }
     if (d.kind === 'rotate') {
       const cx = d.rect0.x + d.rect0.w / 2, cy = d.rect0.y + d.rect0.h / 2;
-      const a0 = Math.atan2(d.sy - cy, d.sx - cx) * 180 / Math.PI;
-      let angle = d.p0.angle + (Math.atan2(p[1] - cy, p[0] - cx) * 180 / Math.PI - a0);
-      if (!ev.shiftKey) angle = Math.round(angle / 5) * 5;
-      angle = normalizeAngle(angle);
-      const changed = Math.abs(angle - d.p0.angle) > 1e-9;
-      if (!changed && !d.moved) return;
-      d.moved ||= changed;
-      this.apply(d.p0.dx, d.p0.dy, d.p0.sx, d.p0.sy, angle);
+      this.rotateNow(d,Math.atan2(p[1]-cy,p[0]-cx)*180/Math.PI,ev.shiftKey);
       return;
     }
     const box = resizeDecorBox(d.rect0, d.sgx, d.sgy, p[0], p[1], !ev.shiftKey,
@@ -140,6 +136,23 @@ export class BackdropFrameGestureRuntime {
     d.moved ||= changed;
     const topLeft = resizedBoxTopLeft(box, d.p0.angle, (point) => this.port.snap(point));
     this.apply((topLeft[0] - b.x) / NORM_W, (topLeft[1] - b.y) / NORM_W, sx, sy, d.p0.angle);
+  }
+  /** Recalculate the latest raw angle on a modifier edge, without a fake pointer. */
+  public rotationModifier(shift:boolean):void {
+    if(this.drag?.kind!=='rotate'||!this.frameActive)return;
+    flushHouseplanPointerMove(this.port.queueTarget,'backdrop');
+    const d=this.drag,cx=d.rect0.x+d.rect0.w/2,cy=d.rect0.y+d.rect0.h/2;
+    this.rotateNow(d,d.pointerAngle??Math.atan2(d.sy-cy,d.sx-cx)*180/Math.PI,shift);
+  }
+  private rotateNow(d:BackdropDrag,pointerAngle:number,shift:boolean):void {
+    d.pointerAngle=pointerAngle;
+    const cx=d.rect0.x+d.rect0.w/2,cy=d.rect0.y+d.rect0.h/2;
+    const start=Math.atan2(d.sy-cy,d.sx-cx)*180/Math.PI;
+    const angle=rotationAngle(d.p0.angle,start,pointerAngle,shift,5);
+    const changed=Math.abs(angle-d.p0.angle)>1e-9;
+    if(!changed&&!d.moved)return;
+    d.moved||=changed;
+    this.apply(d.p0.dx,d.p0.dy,d.p0.sx,d.p0.sy,angle);
   }
   /** State-only reset, including its accepted queue/publication asymmetry. */
   public reset(): void { this.drag = null; }
@@ -173,7 +186,7 @@ export class BackdropFrameGestureRuntime {
     return svg`<g class="bdframe" transform=${angle ? `rotate(${angle} ${cx} ${cy})` : nothing}>
       <rect class="bdbox" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"></rect>
       <line class="dtstem" x1="${cx}" y1="${r.y}" x2="${cx}" y2="${r.y - arm}"></line>
-      <circle class="bdhandle dtrot" cx="${cx}" cy="${r.y - arm}" r="${hr.toFixed(1)}"
+      <circle class="bdhandle dtrot" data-hp-tooltip=${this.port.rotationHint()} cx="${cx}" cy="${r.y - arm}" r="${hr.toFixed(1)}"
         @pointerdown=${(e: PointerEvent) => {
           e.stopPropagation(); e.preventDefault(); this.begin(e, undefined, true);
         }}></circle>

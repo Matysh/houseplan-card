@@ -87,7 +87,7 @@ architecture at35% opacity here, and regain their normal opacity on leaving.
 | Cancel | `Esc` restores the state at the start of an active drag/draw/resize/rotate gesture. A completed gesture is reverted with Undo. |
 | Selection | One click selects; drag moves; Arrow keys move the selected decor by one visible grid cell without re-running magnets; the selected object has one common transform frame; double click opens all editable properties. |
 | Scale | Corner drag preserves aspect ratio. Hold `Shift` for independent axes. Furniture and custom images also have four one-axis middle handles and may cross the fixed edge to mirror. |
-| Rotation | Ordinary decor uses 5° steps by default and `Shift` for free rotation. Furniture and custom images are free by default and `Shift` snaps to 45°. Lines use endpoint handles instead of a rotation handle. |
+| Rotation | Ordinary decor uses 5° steps by default; furniture and custom images are free by default. `Shift` snaps every rotation handle to absolute plan-space 45° bearings, including the backdrop. Modifier press/release updates the held preview without pointer motion. Lines use endpoint handles instead of a rotation handle. |
 | Magnet targets | Only other decor objects and room contours: corners, edge centres, centres and edges. The image, devices and openings are excluded. |
 | Context emphasis | Decor and its editing chrome stay fully opaque. Rooms, labels, devices, openings, positive-thickness walls and solid/dashed zero-thickness walls are contextual only and render at 35% opacity. The whole device presentation (core, ring, capsule, values and badges) is pointer-inert: it never hovers, opens, acts or drags, and the active Background tool receives a press through it. The Plan editor shows devices the same way, as a per-marker 35% fade because room labels share the layer there (#687, `UX-MODES.md` › Plan). |
 | View composition | All decor kinds form one layer above room/data fills, room hover fill and opening-tunnel fills. Live Glow, sun, physical walls, opening symbols, devices and room labels remain above decor. The plan image remains below it (§3.3). |
@@ -175,7 +175,7 @@ The plan image is interactive only while **Plan backdrop** is selected:
 
 - body drag moves it;
 - four corner handles preserve ratio by default; `Shift` allows independent axes;
-- the upper handle rotates in 5° steps, or freely with `Shift`;
+- the upper handle rotates in 5° steps, or snaps to 45° bearings with `Shift`;
 - double click opens numeric width, height and angle;
 - `Esc` restores the transform at pointer-down;
 - release creates one named command in the shared 50-step history.
@@ -377,8 +377,8 @@ characters.
   with `Shift`; changing the plan scale therefore keeps the label's physical
   size meaningful. The backend bounds it to `0.1…2000 cm`.
 - **`angle`** — degrees, written by the handle above the block. The step is
-  **5°**, the same step a device icon rotates in; **Shift** enables a free
-  angle but never disables positional grid snapping. Rotating back to zero
+  **5°**, the same step a device icon rotates in; **Shift** snaps the absolute
+  angle to 45° bearings but never disables positional grid snapping. Rotating back to zero
   removes the field, so a straight label stores nothing.
 - **Legacy size is read without a silent migration.** A stored `size` is read
   as the multiplier it used to render at — `s` = 0.7 (14 px), `m` = 1 (20 px),

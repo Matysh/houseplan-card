@@ -9,7 +9,7 @@ function setup(patch = {}) {
   const calls = { publish: [], records: [], saves: 0, toasts: [], invalidations: 0, formats: [] };
   const queueTarget = {};
   const before = { spaceId: 'f1', plan_transform: { ...patch } };
-  const port = { queueTarget, plan: () => plan, mode: () => 'decor', tool: () => 'backdrop',
+  const port = { queueTarget, rotationHint:()=> 'Shift — 45°', plan: () => plan, mode: () => 'decor', tool: () => 'backdrop',
     point: e => [e.clientX, e.clientY], snap: p => p.map(x => Math.round(x / 25) * 25), gridPitch: () => 25,
     snapshot: () => before, record: (key, value) => calls.records.push([key, value]),
     save: () => calls.saves++, toast: key => calls.toasts.push(key),
@@ -64,14 +64,14 @@ test('#861 backdrop: proportional resize and Shift independent axes keep the opp
   }
 });
 
-test('#861 backdrop: rotation remains five-degree snapped and Shift-free', () => {
+test('#861 backdrop: rotation uses five degrees normally and Shift snaps absolute angle to 45 degrees', () => {
   for (const shiftKey of [false, true]) {
     const s = setup(), center = [500, 500], radius = 300, angle = 12.3 * Math.PI / 180;
     s.owner.begin(ev(center[0] + radius, center[1]), undefined, true);
     s.owner.move(ev(center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle), { shiftKey }));
     s.owner.end();
-    assert.equal(s.plan.plan_angle, shiftKey ? 12.3 : 10);
-    assert.equal(s.calls.saves, 1);
+    assert.equal(s.plan.plan_angle, shiftKey ? undefined : 10);
+    assert.equal(s.calls.saves, shiftKey?0:1);
   }
 });
 
@@ -111,4 +111,18 @@ test('#861 backdrop: reset is state-only, cancellation owns the card queue, and 
   await Promise.resolve(); assert.equal(s.calls.invalidations, 0, 'global card disposal cancels owner work');
   s.owner.cancel(); assert.equal(s.owner.active, false);
   assert.equal(s.calls.publish.at(-1), 'end'); assert.equal(s.calls.saves, 0);
+});
+
+
+test('#1255 backdrop: modifier edges flush the raw pointer and commit exactly the preview',()=>{
+ const s=setup({plan_angle:17});s.owner.begin(ev(800,500),undefined,true);
+ const theta=13*Math.PI/180;s.owner.move(ev(500+300*Math.cos(theta),500+300*Math.sin(theta)));
+ s.owner.rotationModifier(true);assert.equal(s.plan.plan_angle,45);assert.equal(s.calls.saves,0);
+ s.owner.rotationModifier(false);assert.equal(s.plan.plan_angle,30);
+ s.owner.rotationModifier(true);s.owner.end();assert.equal(s.plan.plan_angle,45);assert.equal(s.calls.saves,1);assert.equal(s.calls.records.length,1);
+ const angle=s.plan.plan_angle;s.owner.rotationModifier(false);assert.equal(s.plan.plan_angle,angle,'terminal gesture ignores later modifier');
+});
+test('#1255 backdrop: Shift can snap before first move; cancel/reset retire it',()=>{
+ const s=setup({plan_angle:17});s.owner.begin(ev(800,500),undefined,true);s.owner.rotationModifier(true);
+ assert.equal(s.plan.plan_angle,undefined);s.owner.cancel();s.owner.rotationModifier(false);assert.equal(s.calls.saves,0);
 });

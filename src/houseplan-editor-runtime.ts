@@ -1,3 +1,4 @@
+import { rotationAngle } from './rotation-angle';
 import { prepareDialogReturnFocus } from './dialog-return-focus';
 import { captureToast, type ToastCallback } from './toast-presentation';
 import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelInPlace, type PhysicalCandidateProof } from './physical-candidate-proof';
@@ -125,7 +126,7 @@ import {
   furnitureDefaultCm,
   furnitureGraphic, furnitureCorners,
   furnitureRenderTransform, furnitureStrokePx,
-  resizeFurnitureTransform, furnitureRotationAngle,
+  resizeFurnitureTransform,
   furnitureSignedFieldCm, furnitureSignedFieldValue,
   clampFurnCm,
   type FurnitureResizeResult,
@@ -414,7 +415,7 @@ const DECOR_TEXT_CM_MAX = 2000;
 
 /** Rotation step of a decor text block — the same 5° a device icon turns in
  *  (marker dialog). Shift affects angle precision only, never position. */
-const DT_ANGLE_STEP = 5;
+
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
 /** Short semantic-event / direct-terminal-transition window. Event uses
     three sequential 1.1 s waves; motion cool-down itself never animates. */
@@ -981,7 +982,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this._clearRoomFaceHover(); this._cancelOpeningDrag(); this.externalScreens.close(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
+  public invalidateEditorNavigation(): void { this._decorRotationInput=null; this._clearRoomFaceHover(); this._cancelOpeningDrag(); this.externalScreens.close(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -1039,6 +1040,7 @@ export class HouseplanEditorRuntime {
       publish: (phase) => this._publishGesture(phase), now: () => performance.now(),
     });
     this.backdropGesture = new BackdropFrameGestureRuntime({
+      rotationHint: () => this.host._t('markup.shift_45'),
       queueTarget: host, plan: () => host._curSpaceCfg as BackdropPlan | null,
       mode: () => host._mode, tool: () => host._decorTool,
       point: (event) => this._svgPoint(event), snap: (point) => this._snap(point),
@@ -1398,7 +1400,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     // explicit tool of its own; only that tool may claim its body or frame.
     this.host._decorTool = 'select';
     this.backdropGesture.reset();
-    this.host._dtDrag = null;
+    this.host._dtDrag = null; this._decorRotationInput=null;
     this.host._dtBox = null;
     if (mode === 'plan') this._primeDrawWallField();
     this.host._saveNav();
@@ -2325,7 +2327,7 @@ public _clearGeometryGesture(preserveWallChainRedo = false): void {
     this._rszResetController();
     this.host._decorDraft = null;
     this.host._decorMove = null;
-    this.host._dtDrag = null;
+    this.host._dtDrag = null; this._decorRotationInput=null;
     this.backdropGesture.reset();
   }
 
@@ -3978,7 +3980,7 @@ public _cancelDecorGesture(): void {
       this.host._decorSnapCache = null;
     }
     this.host._decorMove = null;
-    this.host._dtDrag = null;
+    this.host._dtDrag = null; this._decorRotationInput=null;
     this.backdropGesture.reset();
     // The cancel frame may retain Lit's stage binding. Retire only this
     // owner's grabbing class; the selected backdrop tool keeps its grab cursor.
@@ -4616,8 +4618,30 @@ public _dtStart(
       lineEnd,
       moved: false,
     };
+    this._decorRotationInput=kind==='rotate'?{drag:this.host._dtDrag,pointerAngle:this.host._dtDrag.a0}:null;
+    if(kind==='rotate'&&ev.shiftKey)this._dtRotate(this.host._dtDrag.a0,true);
     capturePointer(ev);
   }
+
+private _decorRotationInput:{drag:object;pointerAngle:number}|null=null;
+public _decorRotationKey(ev:KeyboardEvent):void {
+    if(ev.key!=='Shift'||this.host._mode!=='decor')return;
+    flushHouseplanPointerMove(this.host,'decor-transform');
+    this.backdropGesture.rotationModifier(ev.type==='keydown');
+    const input=this._decorRotationInput;
+    if(input&&input.drag===this.host._dtDrag&&this.host._dtDrag?.kind==='rotate')
+      this._dtRotate(input.pointerAngle,ev.type==='keydown');
+}
+private _dtRotate(pointerAngle:number,shift:boolean):void {
+    const d=this.host._dtDrag;if(!d||d.kind!=='rotate')return;
+    this._decorRotationInput={drag:d,pointerAngle};
+    const free=d.origShape.kind==='furniture'||d.origShape.kind==='image';
+    const ang=rotationAngle(d.angle0,d.a0,pointerAngle,shift,free?0:5);
+    const changed=Math.abs(ang-d.angle0)>1e-6;
+    if(!changed&&!d.moved)return;
+    d.moved||=changed;
+    this._dtApply(d.id,{angle:ang});
+}
 
 public _dtMove(ev: PointerEvent): void {
     const d = this.host._dtDrag;
@@ -4674,25 +4698,12 @@ public _dtMove(ev: PointerEvent): void {
       return;
     }
     const a = (Math.atan2(p[1] - d.ay, p[0] - d.ax) * 180) / Math.PI;
-    let ang: number;
-    if (d.origShape.kind === 'furniture' || d.origShape.kind === 'image') {
-      ang = furnitureRotationAngle(d.angle0, d.a0, a, ev.shiftKey);
-    } else {
-      ang = d.angle0 + (a - d.a0);
-      // Existing non-furniture contract: 5° normally, Shift = free.
-      if (!ev.shiftKey) ang = Math.round(ang / DT_ANGLE_STEP) * DT_ANGLE_STEP;
-      ang = ((ang % 360) + 360) % 360;
-      if (ang > 180) ang -= 360;
-    }
-    const changed = Math.abs(ang - d.angle0) > 1e-6;
-    if (!changed && !d.moved) return;
-    d.moved ||= changed;
-    this._dtApply(d.id, { angle: ang });
+    this._dtRotate(a,ev.shiftKey);
   }
 
 public _dtUp(): void {
     const d = this.host._dtDrag;
-    this.host._dtDrag = null;
+    this.host._dtDrag = null; this._decorRotationInput=null;
     if (d?.moved) {
       this._recordGeometry(this.host._t('history.decor_transform'), d.before);
       this._saveConfig();

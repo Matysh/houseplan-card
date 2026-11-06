@@ -2656,7 +2656,10 @@ export class HouseplanCard extends LitElement {
   } | null = null;
   private _spaceDialog: SpaceDialogState | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
-  private _deviceAltHandler = (e: KeyboardEvent) => this._editorRuntime?._deviceContactKey(e);
+  private _editorModifierHandler = (e: KeyboardEvent) => {
+    this._editorRuntime?._deviceContactKey(e);
+    this._editorRuntime?._decorRotationKey(e);
+  };
   /** DEV-B703-03 warm re-mount: the dead instance's viewport, and the two
    *  flags that keep the restore from being undone (the server load's centred
    *  _restoreZoom) or applied twice (the dialog revival). */
@@ -3265,8 +3268,8 @@ export class HouseplanCard extends LitElement {
     });
     if (this.hass) this._ensureHaRegistryAuthority();
     window.addEventListener('keydown', this._keyHandler);
-    window.addEventListener('keydown', this._deviceAltHandler);
-    window.addEventListener('keyup', this._deviceAltHandler);
+    window.addEventListener('keydown', this._editorModifierHandler);
+    window.addEventListener('keyup', this._editorModifierHandler);
     window.addEventListener('blur', this._onWindowBlur);
     window.addEventListener('pagehide', this._onWindowBlur);
     window.addEventListener('pointerup', this._onViewPointerTerminal, true);
@@ -3380,8 +3383,8 @@ export class HouseplanCard extends LitElement {
     this._bootSettling = false;
     for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
     window.removeEventListener('keydown', this._keyHandler);
-    window.removeEventListener('keydown', this._deviceAltHandler);
-    window.removeEventListener('keyup', this._deviceAltHandler);
+    window.removeEventListener('keydown', this._editorModifierHandler);
+    window.removeEventListener('keyup', this._editorModifierHandler);
     this._deviceContacts?.clear();
     window.removeEventListener('blur', this._onWindowBlur);
     window.removeEventListener('pagehide', this._onWindowBlur);
@@ -9369,7 +9372,7 @@ export class HouseplanCard extends LitElement {
     return svg`<g class="dtframe${furniture ? ' dtfurnitureframe' : ''}" transform=${ang ? `rotate(${ang} ${ax} ${ay})` : nothing}>
       <rect class="dtbox" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}"></rect>
       <line class="dtstem" x1="${b.x + b.w / 2}" y1="${b.y}" x2="${b.x + b.w / 2}" y2="${b.y - arm}"></line>
-      <circle class="dthandle dtrot" cx="${b.x + b.w / 2}" cy="${b.y - arm}" r="${hr.toFixed(1)}"
+      <circle class="dthandle dtrot" data-hp-tooltip=${this._t('markup.shift_45')} cx="${b.x + b.w / 2}" cy="${b.y - arm}" r="${hr.toFixed(1)}"
         @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'rotate')}></circle>
       <circle class="dtknob" cx="${b.x + b.w / 2}" cy="${b.y - arm}" r="${kr.toFixed(2)}"></circle>
       ${HANDLE_PAINT_ORDER.map((role) => (role === 'edges'

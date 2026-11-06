@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1255,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "Unifies the owner-requested Background rotation modifier across text, shapes, furniture, images and backdrop; adds modifier-edge preview without changing default precision or other gestures.",
+  "summary": {
+    "ru": "Shift привязывает поворот элементов подложки к углам через 45°.",
+    "en": "Shift snaps Background rotation handles to absolute 45-degree bearings."
+  }
+}

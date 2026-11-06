@@ -7,12 +7,10 @@ const runtime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', impor
 const decorImageEditor = readFileSync(new URL('../src/decor-image-editor.ts', import.meta.url), 'utf8');
 const styles = readFileSync(new URL('../src/styles/plan.styles.ts', import.meta.url), 'utf8');
 
-test('#383 furniture uses its continuous signed path without changing shared decor transforms', () => {
+test('#383 furniture uses its continuous signed path without changing shared decor resize transforms', () => {
   const move = runtime.slice(runtime.indexOf('public _dtMove('), runtime.indexOf('public _dtUp('));
   assert.match(move, /d\.origShape\.kind === 'furniture'[\s\S]*resizeFurnitureTransform\(/);
   assert.match(move, /!ev\.shiftKey, decorCmToUnits\(0\.1/);
-  assert.match(move, /furnitureRotationAngle\(d\.angle0, d\.a0, a, ev\.shiftKey\)/);
-  assert.match(move, /Existing non-furniture contract: 5° normally, Shift = free/);
   assert.match(move, /resizeDecorBox\([\s\S]*this\.host\._gridPitch, this\.host\._gridPitch/);
 });
 

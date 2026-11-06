@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Align room paper with actual mixed-junction masonry; independent branches no longer expose white facade tips. #1327
+- Background rotation: Shift snaps all handles to absolute 45° bearings and updates held previews on modifier edges. Default rotation precision and other Shift gestures stay unchanged. #1255
 
 ## v1.84.0 — 2026-11-05
 
