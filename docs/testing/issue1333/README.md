@@ -6,7 +6,7 @@ Common branch: codex/1333-1335-empty-view-and-cleanup; base dev f1c9cd372946db8a
 
 - #1333: authoritative loaded View only; exact selected-space lookup. Saved geometry, backdrop, decor, stairs, LED strips and unfiltered assigned devices/markers count, including hidden objects. Removed marker tombstones and camera bounds do not. Loading/boot/recovery/editor states do not show the prompt. Text is available to readers; the existing Plan entry is offered only to permitted writers outside kiosk. A retained button rechecks current space and permission. No new permission or backend writer.
 - #1334: shared field hint below area select, in all four locales. Existing free-area list and the edited room's current selection stay unchanged.
-- #1335: delete the unused segment transaction, its exclusive append-shape predicate and obsolete interface members. Preserve live finish, its physical/junction guards, shared projection/seed and current graph append. Retired mutation registry remains archived; living source assertions now refer to the actual append/finish owners.
+- #1335: delete the unused segment transaction, its exclusive append-shape predicate and obsolete interface members. Preserve live finish, its physical/junction guards, shared projection/seed and current graph append. The process-v1 archive remains unchanged; living source assertions now refer to the actual append/finish owners.
 
 ## Targeted evidence
 
@@ -25,3 +25,9 @@ The old rolling ceilings already failed the dev baseline. Owner explicitly allow
 ## Real HA E2E task impact
 
 Required before the next beta for #1333/#1334: new empty space, server readback/live updates, space switch, hidden devices/objects, real writer/nonwriter/kiosk, Plan entry and no loading/error prompt; room area hint in create/edit with existing binding retained and save/reload. Companion handoff task-impact/1333-1335.md contains the same scope. #1335 adds no separate HA behavior; retain existing Draw/finish/history journeys. No beta or stable audit is claimed here. Shared queue S6/merge evidence is published in the issue on completion.
+
+## S6 correction
+
+Initial S6 20261106T143027800-ed02e7b2 completed with one failed unit: mutation-gate.test.mjs, 70/71 passing, because two active mutation definitions anchored the deleted segment function. Retire wall-draw-rejection-rollback-skipped and wall-draw-wall-artifact-discarded together with their sole dead target. Their old native guard files remain in the catalog; no production source or assertion was restored just to satisfy obsolete mutation anchors. Archived process-v1 registry remains unchanged. This is retirement of unreachable mutants, not proof of catching live mutants or a full mutation shard.
+
+The addressed bundle-assets.test.mjs contract passed49/49 after the owner-authorized ceiling changes; it supplements the S6 plan because the catalog explicitly reports no inferred budget-mechanism reader. Subsequent finish uses the full current branch diff and that direct reader in areaTests.

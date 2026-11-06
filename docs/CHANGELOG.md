@@ -4,7 +4,7 @@
 
 - Show a loaded empty-space prompt and the guarded Plan editor entry in View; hidden objects still count as content (#1333).
 - Keep the available HA-area explanation visible below the room binding field (#1334).
-- Remove the dead commitWallChainSegmentGeometry export and its unused interface members while preserving graph append and live finish (#1335).
+- Remove the dead commitWallChainSegmentGeometry export and its unused interface members and two obsolete mutation definitions while preserving graph append and live finish (#1335).
 
 - Stair placement hover preserves node menus and panel/history updates while keeping local preview paint coalesced (#1338).
 

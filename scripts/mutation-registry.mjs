@@ -8923,63 +8923,10 @@ const MUTANT_DEFINITIONS = [
       replace: '    return [] as string[];',
     }],
   },
-  {
-    id: 'wall-draw-rejection-rollback-skipped',
-    guard: 'node demo/smoke_wall_draw_click.mjs',
-    because: 'a junction-rejected terminal click must restore its config snapshot before the '
-      + 'gesture is cleared, otherwise the invalid point survives without history or a write (#461 AC6)',
-    patches: [{
-      file: 'src/draft-live-commit.ts',
-      find: '  if (introduced.length) {\n'
-        + '    runtime._clearGeometryGesture();\n'
-        + '    runtime._restoreGeometryStateLocal(before);\n'
-        + '    host._showToast(runtime._junctionLimitLabel(introduced[0]), `junction.limit_${introduced[0].rule}`);\n'
-        + '    return false;\n'
-        + '  }\n\n'
-        + '  adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);\n'
-        + '  const acceptedSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);\n'
-        + '  const accepted = acceptedSpace?.partitions?.find((partition) => partition.id === partitionId);',
-      replace: '  if (introduced.length) {\n'
-        + '    runtime._clearGeometryGesture();\n'
-        + '    host._showToast(runtime._junctionLimitLabel(introduced[0]), `junction.limit_${introduced[0].rule}`);\n'
-        + '    return false; // mutant: rejected segment survives\n'
-        + '  }\n\n'
-        + '  adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);\n'
-        + '  const acceptedSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);\n'
-        + '  const accepted = acceptedSpace?.partitions?.find((partition) => partition.id === partitionId);',
-    }],
-  },
-  {
-    id: 'wall-draw-wall-artifact-discarded',
-    guard: 'node demo/benchmark_wall_draw_click.mjs',
-    because: 'the exact candidate wall union already computed by physical preflight must feed '
-      + 'the junction pass; discarding it repays the expensive union on every click (#461 AC5)',
-    patches: [{
-      file: 'src/draft-live-commit.ts',
-      find: '    localCandidate, localPrevious, before.spaceId, geometry, candidateProjection.roomIds,\n'
-        + '  );\n'
-        + '  if (introduced.length) {\n'
-        + '    runtime._clearGeometryGesture();\n'
-        + '    runtime._restoreGeometryStateLocal(before);\n'
-        + '    host._showToast(runtime._junctionLimitLabel(introduced[0]), `junction.limit_${introduced[0].rule}`);\n'
-        + '    return false;\n'
-        + '  }\n\n'
-        + '  adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);\n'
-        + '  const acceptedSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);\n'
-        + '  const accepted = acceptedSpace?.partitions?.find((partition) => partition.id === partitionId);',
-      replace: '    localCandidate, localPrevious, before.spaceId, null, candidateProjection.roomIds,\n'
-        + '  );\n'
-        + '  if (introduced.length) {\n'
-        + '    runtime._clearGeometryGesture();\n'
-        + '    runtime._restoreGeometryStateLocal(before);\n'
-        + '    host._showToast(runtime._junctionLimitLabel(introduced[0]), `junction.limit_${introduced[0].rule}`);\n'
-        + '    return false;\n'
-        + '  }\n\n'
-        + '  adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);\n'
-        + '  const acceptedSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);\n'
-        + '  const accepted = acceptedSpace?.partitions?.find((partition) => partition.id === partitionId);',
-    }],
-  },
+  // #1335: the rollback/artifact mutants of commitWallChainSegmentGeometry
+  // were retired with that unimported function. Current graph append and live
+  // finish keep their independent behavioral/source guards; no dead target is restored.
+
   {
     id: 'degenerate-apex-bevelled-again',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
