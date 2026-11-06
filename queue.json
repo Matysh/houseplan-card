@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5824,
+  "revision": 5825,
   "nextTicket": 274,
   "nextFence": 274,
   "tasks": {
@@ -3786,9 +3786,37 @@
       "status": "S6-in-progress",
       "readyAt": 1793970595016,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1793970604867,
-      "automationDetail": "Commit tracked task changes before finish"
+      "patchId": "916ba1684fb5529822b58118ca41697a4c3f2eb9",
+      "changedFiles": [
+        "custom_components/houseplan/graph_node_write.py",
+        "custom_components/houseplan/wall_node_attach.py",
+        "custom_components/houseplan/wall_node_move.py",
+        "custom_components/houseplan/websocket_api.py",
+        "demo/smoke_wall_node_attach.mjs",
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/PLAN-GRAPH.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/data-hp-contract.json",
+        "docs/release-ledger/v1.84.0/1330.json",
+        "docs/testing/issue1330/README.md",
+        "process-next/lib/catalog.mjs",
+        "rollup.config.mjs",
+        "src/houseplan-card.ts",
+        "src/plan-snap-overlay.ts",
+        "src/version-recovery-card.ts",
+        "src/wall-node-attach.ts",
+        "src/wall-node-card-adapter.ts",
+        "src/wall-node-editor.ts",
+        "src/wall-node-move.ts",
+        "test/fixtures/1330-node-attach.json",
+        "test/version-recovery-card.test.mjs",
+        "test/wall-node-attach.test.mjs",
+        "test/wall-node-card-adapter.test.mjs",
+        "tests_backend/test_ha_wall_node_attach.py",
+        "tests_backend/test_wall_node_attach.py"
+      ]
     },
     "1331": {
       "issue": 1331,
@@ -4026,10 +4054,11 @@
     "token": "273:finish:9d1c8233-f35f-40b8-84b4-69e233ae4b2a:finish:1:admit",
     "fence": 273,
     "materialSha": "3bf206abbcabe3bd34d58e1dec9f713a5a8990bf",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "418a72a888ea5662808e0eb8236e3f40111cc1b1",
+    "phase": "testing",
     "admittedAt": 1793970599317,
-    "expiresAt": 1793970958625
+    "expiresAt": 1793970972506,
+    "patchId": "916ba1684fb5529822b58118ca41697a4c3f2eb9"
   },
   "events": {
     "github:42174634491:1:spec:1330:spec-request": {
@@ -4078,6 +4107,10 @@
     },
     "finish:330b0b76-909c-4cbb-a2cd-ba29947b364f": {
       "digest": "495b07b9d1a8a9a5d8dd8a8f35e06e145991ee05b298d6fd5a7a33042a0cec8b",
+      "issue": 1330
+    },
+    "finish:9d1c8233-f35f-40b8-84b4-69e233ae4b2a:finish:3:synchronized": {
+      "digest": "78d0c4286e04ee98e3e76c3317616e0f0c77ae5e5aee1136f4094b70ef308655",
       "issue": 1330
     },
     "github:42198145898:1:label:spec-request:spec-resubmitted:1330": {
