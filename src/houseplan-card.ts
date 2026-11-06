@@ -2516,6 +2516,7 @@ export class HouseplanCard extends LitElement {
   private _haWallNodeMoveApi: number | null = null;
   private _haWallNodeDeleteApi: number | null = null;
   private _haWallNodeMergeApi: number | null = null;
+  private _haWallNodeAttachApi: number | null = null;
   private _haPlanGraphApi: number | null = null;
   private _haRoomLabelLayoutApi: number | null = null;
   private _haGraphChangeApi: number | null = null;

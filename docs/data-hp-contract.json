@@ -11,6 +11,7 @@
     "kiosk-spaces": { "elements": ["nav"], "since": "1.84.0", "audience": ["test"] },
     "stair-arrival": { "elements": ["polygon"], "since": "1.84.0", "audience": ["test"] },
     "node-merge-target": { "elements": ["circle"], "since": "1.84.0", "audience": ["test"] },
+    "node-attach-target": { "elements": ["g"], "since": "1.85.0", "audience": ["test"] },
     "external-screen-create": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
     "external-screen-add": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
     "external-screen-edit": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },

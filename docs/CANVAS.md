@@ -660,6 +660,16 @@ An exact point shared by the winning original-axis goal and a non-parallel H/V
 goal is retained without longitudinal rounding, even with the axis guide still
 active. A coincident/parallel H/V line alone is not such a point constraint.
 
+Select dangling-end attach (#1330) follows existing endpoint Merge priority.
+After a deliberate >3 CSS px drag, only a degree-one supported source may
+capture a different finite carrier. Quantize distance along original.from by
+Draw's GRID_STEP_N rule, then retain graphDrawTargetRef's exact projection.
+Rank and test the 12 CSS px radius against that final point. Different eligible
+carriers within 1 CSS px of the best distance are ambiguous and refuse the
+whole gesture. No target leaves ordinary Move in charge. A zero displacement
+never initiates attach. Held feedback is an outline, host line and exact target;
+one release producer/proof owns the split, ACK and one history command.
+
 A T must stay on its original passing axis. An X chooses the nearest original
 axis on first unambiguous movement and freezes it for the gesture; an initial
 tie is a no-op. Finite carrier ends, intervening junctions, thickness boundaries

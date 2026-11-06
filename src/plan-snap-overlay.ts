@@ -429,7 +429,7 @@ function endpointResolution(
   return { kind: 'resolved', candidate: candidates[0], conflicts: [] };
 }
 
-function quantizedPoint(segment: PlanSnapSegment, pointer: readonly number[], step: number): [number, number] {
+export function quantizedPoint(segment: Pick<PlanSnapSegment, 'a' | 'b'>, pointer: readonly number[], step: number): [number, number] {
   const dx = segment.b[0] - segment.a[0];
   const dy = segment.b[1] - segment.a[1];
   const length = Math.hypot(dx, dy);

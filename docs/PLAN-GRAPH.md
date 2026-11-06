@@ -49,6 +49,19 @@ The server independently reconstructs the intent and proves host lineage,
 junction safety and exact history.
 
 
+Select dangling-end attach (#1330) preserves the source node ID and explicitly
+names a receiving finite edge, reduced rational parameter and one new edge ID.
+Only a degree-one source may attach; corners and existing junctions refuse.
+The old edge retains original.from → source, the allocated child continues
+source → original.to. Room cycles, opening parameters and fixed exact foreign
+vertices survive the same atomic edit. The source becomes an on-edge dependent
+of the original receiving endpoints. Each new child obeys the 20cm/material
+minimum even though the global length guard measures a whole collinear run.
+The optional node_move attach_edge and runtime wall_node_attach_api:1 are
+separate from Merge. The server replays both directions from the accepted
+source and compares the complete candidate before granting host lineage.
+Generic Move, graph on-grid admission and other writers are unchanged.
+
 Explicit numeric editor targets recognize a lattice coordinate within the
 existing `1e-4`-step coordinate-noise allowance. Nudge, body translation,
 axial opening movement and safe Resize add proven lattice origins/offsets as

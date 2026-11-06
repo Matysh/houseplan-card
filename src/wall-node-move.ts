@@ -33,11 +33,13 @@ export interface WallNode {
   nodeId?: string;
   passing: number; branches: number; valence: number; supported: boolean;
 }
+export interface NodeAttachEdge { kind: 'wall' | 'partition'; id: string; tq: [string, string]; new_edge_id: string }
 export interface NodeMoveIntent {
   point: NodePoint; target: NodePoint; axis: string | null;
   node_id?: string; target_p?: GraphPoint;
   /** Explicit contraction into this existing ID; ordinary Move never infers it. */
   merge_node_id?: string;
+  attach_edge?: NodeAttachEdge;
   /** Allocated once at pointerdown; no new identities during move/Redo. */
   split_ids: Record<string, string>;
 }

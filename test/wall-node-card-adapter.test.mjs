@@ -252,3 +252,26 @@ test('node picking measures the current viewport once and lends that scale to it
   const view=s.host._viewOr;s.host._viewOr=(...args)=>{reads++;return view(...args);};
   s.down();assert.equal(reads,1);s.editor.cancel();
 });
+
+for(const retirement of ['capability','authority'])test('#1330 queued attach checks captured '+retirement+' before dispatch',async t=>{
+  const s=setup(t);let current=true,sent=0,release;
+  s.host._configWriteGuard=()=>()=>current;s.host._haWallNodeAttachApi=1;
+  s.host.hass.connection={connected:true};s.host.hass.callWS=async()=>{sent++;throw Error('must not send');};
+  s.host._writeChain=new Promise(resolve=>{release=resolve;});
+  const before=s.source(),history={beforeSpace:before,direction:'apply',intent:{attach_edge:{kind:'wall',id:'w0',tq:['1','2'],new_edge_id:'node-attach-00000000-0000-4000-8000-000000000001'}}};
+  const write=s.editor.port.write(history,null);
+  await new Promise(setImmediate);
+  if(retirement==='capability')s.host._haWallNodeAttachApi=null;else current=false;
+  release();await assert.rejects(write,/stale-node-snapshot/);assert.equal(sent,0);
+});
+
+test('#1330 a late attach ACK from a retired authority is never installed',async t=>{
+  const s=setup(t);let current=true,reply,adoptions=0,started;
+  const dispatched=new Promise(resolve=>{started=resolve;});
+  s.host._configWriteGuard=()=>()=>current;s.host._haWallNodeAttachApi=1;
+  s.host.hass.connection={connected:true};s.host.hass.callWS=async()=>{started();return new Promise(resolve=>{reply=resolve;});};
+  s.host._adoption={adoptionEpoch:0,stageConfigCandidate(){adoptions++;},acceptConfigWrite(){adoptions++;}};
+  const before=s.source(),write=s.editor.port.write({beforeSpace:before,direction:'apply',intent:{attach_edge:{kind:'wall',id:'w0',tq:['1','2'],new_edge_id:'node-attach-00000000-0000-4000-8000-000000000001'}}},null);
+  await dispatched;current=false;reply({config:structuredClone(s.host._serverCfg),rev:2});
+  await assert.rejects(write,{message:'context-changed'});assert.equal(adoptions,0);
+});

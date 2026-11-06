@@ -24,6 +24,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   readonly _haWallNodeMoveApi: number | null;
   readonly _haWallNodeDeleteApi: number | null;
   readonly _haWallNodeMergeApi?: number | null;
+  readonly _haWallNodeAttachApi?: number | null;
   readonly _haPlanGraphApi?: number | null;
   readonly _stageEl: HTMLElement | null;
   readonly _cellCm: number; readonly _gridPitch: number;
@@ -69,7 +70,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   const api = () => host._haWallNodeMoveApi === 1 && host._haPlanGraphApi !== null;
   const context = () => {
     const result = { enabled: host._mode === 'plan' && host._tool === 'select' && writer(),
-      space: host._space, revision: host._cfgRev, api: api(), mergeApi: host._haWallNodeMergeApi === 1 };
+      space: host._space, revision: host._cfgRev, api: api(), mergeApi: host._haWallNodeMergeApi === 1, attachApi: host._haWallNodeAttachApi === 1 };
     if (!result.enabled || !result.api || (baselineGeometry && (baselineGeometry.authority !== host._serverCfg
         || baselineGeometry.revision !== result.revision || baselineGeometry.epoch !== nodeAdoptionEpoch(host)
         || baselineGeometry.space !== result.space))) retire();
@@ -85,11 +86,12 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     current: () => boolean = () => true): Promise<ServerConfig> => {
     retire();
     const merging = history.kind !== 'delete' && !!history.intent.merge_node_id;
-    const claim = history.kind === 'delete' || merging ? host._configWriteGuard() : null;
+    const attaching = history.kind !== 'delete' && !!history.intent.attach_edge;
+    const claim = history.kind === 'delete' || merging || attaching ? host._configWriteGuard() : null;
     const authority = () => host.isConnected && host.hass.connection?.connected !== false && !!claim?.();
     return writeWallNode(host, history, basis ?? nodeWriteBasis(host, history.beforeSpace.id), claim ? {
       send: () => authority() && writer() && ['plan', 'decor'].includes(host._mode)
-        && (merging ? host._haWallNodeMergeApi === 1 : host._haWallNodeDeleteApi === 1) && current(),
+        && (merging ? host._haWallNodeMergeApi === 1 : attaching ? host._haWallNodeAttachApi === 1 : host._haWallNodeDeleteApi === 1) && current(),
       accept: authority,
     } : null);
   };
@@ -193,7 +195,8 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     history: direction => runNodeHistory<TState>({
       enabled: () => ['plan', 'decor'].includes(host._mode) && writer(),
       api: history => history.kind === 'delete' ? host._haWallNodeDeleteApi === 1
-        : api() && (!history.intent.merge_node_id || host._haWallNodeMergeApi === 1),
+        : api() && (!history.intent.merge_node_id || host._haWallNodeMergeApi === 1)
+          && (!history.intent.attach_edge || host._haWallNodeAttachApi === 1),
       epoch: () => nodeAdoptionEpoch(host), stack: () => host._geometryHistory,
       canShow: callbacks.canShow, show: callbacks.show, write, text, toast: captureToast(host),
     }, direction),

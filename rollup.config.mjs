@@ -52,6 +52,8 @@ export default {
       // leaves housed in the runtime facade: that mangles its raw-URL ABI.
       if (['/src/pointer-move-queue.ts', '/src/live-editor.ts', '/src/i18n/tools.ts', '/src/wall-segment-model.ts',
         '/src/wall-end-align.ts', '/src/wall-merge.ts', '/src/coincident-partitions.ts',
+        // #1330: Draw's exact target/line quantizer are now shared by lazy Select.
+        '/src/graph-draw-binding.ts', '/src/plan-snap-overlay.ts',
         '/src/device-contact-collision.ts', '/src/device-inbox-i18n.ts',
         '/src/prior-config-write.ts'].some((suffix) => path.endsWith(suffix))) return 'editor-shared';
       // #1147: View also uses this presentation. Its chunk must not bring the

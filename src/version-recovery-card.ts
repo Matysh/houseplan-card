@@ -50,6 +50,7 @@ export interface ConfigCapabilitiesCardPort {
   _haWallNodeMoveApi?: number | null;
   _haWallNodeDeleteApi?: number | null;
   _haWallNodeMergeApi?: number | null;
+  _haWallNodeAttachApi?: number | null;
   _haPlanGraphApi?: number | null;
   _haRoomLabelLayoutApi?: number | null;
   _haGraphChangeApi?: number | null;
@@ -79,6 +80,7 @@ export interface AuthoritativeConfigResponse {
   readonly wall_node_move_api?: unknown;
   readonly wall_node_delete_api?: unknown;
   readonly wall_node_merge_api?: unknown;
+  readonly wall_node_attach_api?: unknown;
   readonly plan_graph_api?: unknown;
   readonly room_label_layout_api?: unknown;
   readonly graph_change_api?: unknown;
@@ -95,7 +97,7 @@ export function adoptCardConfigCapabilities(
   const capabilities = response && typeof response === 'object'
     ? response as Partial<Record<
         'integration_version' | 'frontend_fingerprint' | 'build' | 'support_api' | 'decor_assets_api'
-        | 'summary_panel_api' | 'external_screens_api' | 'external_screens_events_api' | 'radar_stage1_api' | 'wall_node_move_api' | 'wall_node_delete_api' | 'wall_node_merge_api' | 'plan_graph_api' | 'room_label_layout_api' | 'graph_change_api' | 'vacuum_dock_restart_api' | 'vacuum_history_api' | 'device_history_api' | 'support_package_versions', unknown
+        | 'summary_panel_api' | 'external_screens_api' | 'external_screens_events_api' | 'radar_stage1_api' | 'wall_node_move_api' | 'wall_node_delete_api' | 'wall_node_merge_api' | 'wall_node_attach_api' | 'plan_graph_api' | 'room_label_layout_api' | 'graph_change_api' | 'vacuum_dock_restart_api' | 'vacuum_history_api' | 'device_history_api' | 'support_package_versions', unknown
       >> : {};
   host._haIntegrationVersion = normalizeRuntimeVersion(capabilities.integration_version);
   host._haBackendBuild = {
@@ -119,6 +121,7 @@ export function adoptCardConfigCapabilities(
   host._haWallNodeMoveApi = capabilities.wall_node_move_api === 1 ? 1 : null;
   host._haWallNodeDeleteApi = capabilities.wall_node_delete_api === 1 ? 1 : null;
   host._haWallNodeMergeApi = capabilities.wall_node_merge_api === 1 ? 1 : null;
+  host._haWallNodeAttachApi = capabilities.wall_node_attach_api === 1 ? 1 : null;
   host._haPlanGraphApi = capabilities.plan_graph_api === 1 ? 1 : null;
   host._haRoomLabelLayoutApi = capabilities.room_label_layout_api === 1 ? 1 : null;
   host._haGraphChangeApi = capabilities.graph_change_api === 2 ? 2 : null;

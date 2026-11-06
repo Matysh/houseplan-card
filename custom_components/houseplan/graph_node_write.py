@@ -73,6 +73,10 @@ def _has_node_carrier(index, moved, support, via, target=None):
 def move_graph_node_space(space, intent):
     from .wall_node_move import move_node_space, NodeMoveError
 
+    if "attach_edge" in intent:
+        from .wall_node_attach import attach_graph_node_space
+        return attach_graph_node_space(space, intent)
+
     if "merge_node_id" in intent:
         from .wall_node_merge import merge_graph_node_space
         try:

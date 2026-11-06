@@ -16,12 +16,20 @@ import type { NodeDeleteIntent } from './wall-node-delete';
 import { WallNodeDeleteMenu, type NodeDeleteMenuPort } from './wall-node-delete-menu';
 import { encodePoint, readAuthoredPoint, decodePoint, pointToNumbers } from './plan-exact';
 import { applyNodeMerge, pickNodeMergeTarget } from './wall-node-merge';
+import { applyNodeAttach, prepareNodeAttach, type NodeAttachTarget } from './wall-node-attach';
+
+function attachIdentity(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
+  const hex = [...bytes].map(v => v.toString(16).padStart(2, '0')).join('');
+  return 'node-attach-' + [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-');
+}
 
 /** `floor`: the target floor fingerprint this direction expects before it is sent (#843). */
 export interface NodeMoveHistory { kind?: 'move'; beforeSpace: NodeMoveSpace; intent: NodeMoveIntent; direction: 'apply' | 'undo'; floor?: string }
 export interface NodeDeleteHistory { kind: 'delete'; beforeSpace: NodeMoveSpace; intent: NodeDeleteIntent; direction: 'apply' | 'undo'; floor?: string }
 export type NodeCommandHistory = NodeMoveHistory | NodeDeleteHistory;
-export interface NodeEditorContext { enabled: boolean; space: string; revision: number; api: boolean; mergeApi?: boolean }
+export interface NodeEditorContext { enabled: boolean; space: string; revision: number; api: boolean; mergeApi?: boolean; attachApi?: boolean }
 export interface WallNodeEditorPort {
   context(): NodeEditorContext;
   config(): ServerConfig | null;
@@ -54,11 +62,12 @@ interface Session {
   capture: HTMLElement; axis: string | null; target: NodePoint; guide: string | null;
   candidate: NodeMoveSpace | null; affected: string[]; invalid: NodeMoveReason | null;
   moved: boolean; released: boolean; outline: boolean;
-  down: NodePoint; merge: WallNode | null;
+  down: NodePoint; merge: WallNode | null; attach: NodeAttachTarget | null; ambiguousAttach: boolean;
+  attachPicker: ReturnType<typeof prepareNodeAttach> | null;
 }
 interface PendingNodeMove {
   session: Session; point: NodePoint; axis: string | null; guide: string | null;
-  merge: WallNode | null;
+  merge: WallNode | null; attach: NodeAttachTarget | null; ambiguousAttach: boolean;
 }
 interface NodeTopology { nodes: WallNode[]; source: NodeMoveSpace }
 type NodePaintStyle = Partial<Record<'mask' | 'opacity' | 'transition', string>>;
@@ -79,7 +88,7 @@ export class WallNodeEditor {
   private touched = new Map<SVGElement, NodePaintOverride>();
   private liveRoots: SVGGElement[] = [];
   private sourceGhost: SVGGElement | null = null;
-  private sourceCoverage: { axis: string | null; unitPx: number; old: string[]; fixed: string[] } | null = null;
+  private sourceCoverage: { axis: string | null; affectedKey: string; unitPx: number; old: string[]; fixed: string[] } | null = null;
   private listening = true;
   private moveFrame: number | null = null;
   private pendingMove: PendingNodeMove | null = null;
@@ -197,7 +206,8 @@ export class WallNodeEditor {
       configIdentity: JSON.stringify(this.port.config()), plan, capture: stage,
       axis: null, target: [...hit.node!.point], guide: null, candidate: null,
       affected: [], invalid: null, moved: false, released: false, outline: false,
-      down: this.port.screenPoint(ev), merge: null };
+      down: this.port.screenPoint(ev), merge: null, attach: null, ambiguousAttach: false,
+      attachPicker: ctx.attachApi ? prepareNodeAttach(plan, attachIdentity()) : null };
     try { stage.setPointerCapture(ev.pointerId); } catch { this.session = null; return true; }
     // Capture-phase ownership bypasses the ordinary stage pointerdown, which
     // freezes the presented camera before a gesture (CANVAS §5).
@@ -224,7 +234,8 @@ export class WallNodeEditor {
 
   private current(s: Session): boolean {
     const ctx = this.port.context();
-    if (this.session !== s || !ctx.enabled || ctx.space !== s.plan.source.id || !ctx.api) return false;
+    if (this.session !== s || !ctx.enabled || ctx.space !== s.plan.source.id || !ctx.api
+      || s.attachPicker && !ctx.attachApi) return false;
     // #843: an own accepted write (Save that waited or flew) advances the
     // revision of the very same floor; any other revision change retires.
     if (ctx.revision !== s.revision && !(s.basis && this.port.holds?.(s.basis))) return false;
@@ -239,7 +250,11 @@ export class WallNodeEditor {
     const raw = this.port.screenPoint(ev), units = this.port.unitsPerPixel();
     const snapped = resolveNodeMoveSnap(s.plan, raw, units, axis);
     const merge = this.port.context().mergeApi ? pickNodeMergeTarget(s.plan, raw, units, snapped.axis, s.down) : null;
-    this.pendingMove = { session: s, ...snapped, ...(merge ? { point: merge.point, guide: null } : {}), merge };
+    const picked = merge ? null : s.attachPicker?.pick(raw, units, s.down);
+    const attach = picked?.kind === 'target' ? picked.target : null;
+    this.pendingMove = { session: s, ...snapped,
+      ...(merge ? { point: merge.point, guide: null } : attach ? { point: attach.point, guide: null } : {}),
+      merge, attach, ambiguousAttach: picked?.kind === 'ambiguous' };
     if (this.moveFrame !== null) return;
     const view = this.port.document.defaultView;
     if (!view) { this.cancel(); return; }
@@ -263,13 +278,18 @@ export class WallNodeEditor {
     const s = pending.session;
     if (!this.current(s)) { if (this.session === s) this.cancel(); return; }
     const same = s.axis === pending.axis
-      && s.target[0] === pending.point[0] && s.target[1] === pending.point[1] && s.merge?.nodeId === pending.merge?.nodeId;
+      && s.target[0] === pending.point[0] && s.target[1] === pending.point[1] && s.merge?.nodeId === pending.merge?.nodeId
+      && JSON.stringify(s.attach?.edge) === JSON.stringify(pending.attach?.edge) && s.ambiguousAttach === pending.ambiguousAttach;
     const guideChanged = s.guide !== pending.guide;
-    s.axis = pending.axis; s.target = pending.point; s.guide = pending.guide; s.merge = pending.merge;
+    s.axis = pending.axis; s.target = pending.point; s.guide = pending.guide; s.merge = pending.merge; s.attach = pending.attach; s.ambiguousAttach = pending.ambiguousAttach;
     // A repeated snapped position retains its exact accepted OR refused
     // candidate; pointer jitter cannot pay for geometry again.
     if (same) { if (guideChanged) this.port.changed(); return; }
-    if (s.merge) {
+    if (s.ambiguousAttach) {
+      s.moved = true; s.invalid = 'merge_target'; s.candidate = null; s.affected = [];
+      this.port.changed(); return;
+    }
+    if (s.merge || s.attach) {
       // Target selection is not a safety verdict. Paint a bounded outline and
       // keep all graph/physical validation out of held-pointer frames.
       s.moved = true; s.invalid = null; s.candidate = null;
@@ -304,6 +324,12 @@ export class WallNodeEditor {
       s.candidate = result.ok ? result.space : null;
       s.affected = result.ok ? result.affected : [];
     }
+    if (s.attach) {
+      const result = applyNodeAttach(s.plan, s.attach.edge);
+      s.invalid = result.ok ? null : result.reason;
+      s.candidate = result.ok ? result.space : null;
+      s.affected = result.ok ? result.affected : [];
+    }
     // Flush -> DOM -> actual paint opportunity -> save that very candidate.
     // Esc/external adoption may retire the session while the paint is awaited.
     this.port.changed();
@@ -313,7 +339,7 @@ export class WallNodeEditor {
       && this.port.validate(s.candidate, s.plan.source, true);
     if (!valid) {
       if (s.invalid) this.port.toast(this.port.text(`node_move_${s.invalid}`), `node_move_${s.invalid}`);
-      else if (s.merge && s.moved) {
+      else if ((s.merge || s.attach) && s.moved) {
         const key = this.port.refusal?.() || 'node_move_merge_topology';
         this.port.toast(this.port.text(key), key);
       }
@@ -326,6 +352,7 @@ export class WallNodeEditor {
         axis: s.axis, split_ids: s.plan.splitIds,
         ...(s.plan.node.nodeId ? { node_id: s.plan.node.nodeId, target_p: exactTarget || encodePoint(readAuthoredPoint(s.target)) } : {}),
         ...(s.merge ? { merge_node_id: s.merge.nodeId } : {}),
+        ...(s.attach ? { attach_edge: s.attach.edge } : {}),
       }, direction: 'apply' };
     this.port.changed();
     this.busy = true;
@@ -336,7 +363,7 @@ export class WallNodeEditor {
     } catch (error) {
       // A failure from a retired gesture owns neither the new context nor its toast.
       if (this.current(s)) {
-        const key = nodeDragRefusalKey(error, false, !!s.merge);
+        const key = nodeDragRefusalKey(error, false, !!(s.merge || s.attach));
         this.port.toast(this.port.text(key, key === 'node_move_invalid'
           ? { reason: this.port.text('toast.geometry_unsafe') } : undefined), key);
       }
@@ -391,6 +418,11 @@ export class WallNodeEditor {
     const oldAffected = s?.moved ? s.plan.node.walls.filter(w =>
       sameNodePoint(w.a, s.plan.node.point) || sameNodePoint(w.b, s.plan.node.point)
       || !s.plan.node.axes.find(a => a.key === s.axis)?.walls.some(c => c.id === w.id && c.kind === w.kind)) : [];
+    if (s?.candidate && s.attach) {
+      const receiver = structuralNodeWalls(data.source).find(w => w.kind === s.attach!.edge.kind && w.id === s.attach!.edge.id);
+      if (receiver) oldAffected.push(receiver);
+    }
+    const affectedKey = oldAffected.map(w => w.kind + ':' + w.id).join('|');
     const affected = s?.candidate ? structuralNodeWalls(s.candidate).filter(w => s.affected.includes(`${w.kind}:${w.id}`)
       || Object.values(s.plan.splitIds).includes(w.id)) : oldAffected;
     const joinHalf = Math.max(0, ...oldAffected.map(w => w.cm / (data.source.cell_cm || 5) * GRID_STEP_N / 2));
@@ -407,7 +439,7 @@ export class WallNodeEditor {
     // An unchanged carrier/neighbour keeps its ordinary pixels, including
     // where its body overlaps an old arm. Only the changed source is ghosted.
     if (live && s?.moved && (!this.sourceCoverage || this.sourceCoverage.axis !== s.axis
-        || this.sourceCoverage.unitPx !== unitPx)) {
+        || this.sourceCoverage.unitPx !== unitPx || this.sourceCoverage.affectedKey !== affectedKey)) {
       const oldStrips = stripsFor(oldAffected, true);
       const boxes = oldStrips.map(poly => [Math.min(...poly.map(p => p[0])), Math.min(...poly.map(p => p[1])),
         Math.max(...poly.map(p => p[0])), Math.max(...poly.map(p => p[1]))]);
@@ -417,7 +449,7 @@ export class WallNodeEditor {
         return boxes.some(b => Math.min(w.a[0], w.b[0]) - half <= b[2] && Math.max(w.a[0], w.b[0]) + half >= b[0]
           && Math.min(w.a[1], w.b[1]) - half <= b[3] && Math.max(w.a[1], w.b[1]) + half >= b[1]);
       });
-      this.sourceCoverage = { axis: s.axis, unitPx, old: oldStrips.map(toPath), fixed: stripsFor(fixed, false).map(toPath) };
+      this.sourceCoverage = { axis: s.axis, affectedKey, unitPx, old: oldStrips.map(toPath), fixed: stripsFor(fixed, false).map(toPath) };
     }
     const coverage = this.sourceCoverage;
     return svg`<g class="hp-node-layer" data-hp="wall-node-layer" data-state=${s ? s.invalid ? 'invalid' : s.moved ? 'preview' : 'captured' : 'idle'} data-hp-node-state=${s ? s.invalid ? 'invalid' : s.moved ? 'preview' : 'captured' : 'idle'}>
@@ -445,7 +477,14 @@ export class WallNodeEditor {
         cx=${s.merge.point[0] * NORM_W} cy=${s.merge.point[1] * NORM_W} r=${unitPx * 8}
         fill="none" stroke="var(--primary-color, #03a9f4)" stroke-width="2"
         vector-effect="non-scaling-stroke" pointer-events="none"/>` : nothing}
-      ${live && s?.merge && !s.candidate ? oldAffected.map(w => svg`<path
+      ${s?.attach ? svg`<g data-hp="node-attach-target" pointer-events="none">
+        <line x1=${s.attach.a[0] * NORM_W} y1=${s.attach.a[1] * NORM_W}
+          x2=${s.attach.b[0] * NORM_W} y2=${s.attach.b[1] * NORM_W}
+          stroke="var(--primary-color, #03a9f4)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        <circle cx=${s.attach.point[0] * NORM_W} cy=${s.attach.point[1] * NORM_W} r=${unitPx * 8}
+          fill="none" stroke="var(--primary-color, #03a9f4)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+      </g>` : nothing}
+      ${live && (s?.merge || s?.attach) && !s.candidate ? oldAffected.map(w => svg`<path
         d=${`M${[sameNodePoint(w.a, s.plan.node.point) ? s.target : w.a,
           sameNodePoint(w.b, s.plan.node.point) ? s.target : w.b].map(nodePointText).join('L')}`}
         fill="none" stroke="var(--primary-color, #03a9f4)" stroke-opacity=".5"

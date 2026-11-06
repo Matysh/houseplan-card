@@ -369,6 +369,8 @@ def node_move_host_baseline(current: dict[str, Any], candidate: dict[str, Any], 
     # Normalize a COPY with the same read-compatible identity model as the first
     # proof; raw legacy absence is not evidence of a missing node or new host.
     current, _ = _node_current_basis(current, space_id, trusted_current)
+    if "attach_edge" in intent:
+        return _attach_host_baseline(current, candidate, space_id, intent, direction, before_space)
     if "merge_node_id" in intent:
         return _merge_host_baseline(current, candidate, space_id, intent, direction, before_space)
     if "node_id" in intent or "target_p" in intent:
@@ -426,16 +428,33 @@ def node_move_host_baseline(current: dict[str, Any], candidate: dict[str, Any], 
 
 
 def _merge_host_baseline(current, candidate, space_id, intent, direction, before_space):
-    """Reproduce host lineage from original IDs, never grant a candidate host."""
     from .wall_node_merge import merge_graph_node_space
+    return _named_host_baseline(current, candidate, space_id, intent, direction, before_space, merge_graph_node_space)
+
+
+def _attach_host_baseline(current, candidate, space_id, intent, direction, before_space):
+    from .wall_node_attach import attach_graph_node_space
+    return _named_host_baseline(current, candidate, space_id, intent, direction, before_space, attach_graph_node_space)
+
+
+def _named_host_baseline(current, candidate, space_id, intent, direction, before_space, replay):
+    """Independently replay a named edit and compare the COMPLETE candidate.
+
+    Host IDs come only from the accepted source and proven child intervals.
+    Both directions pass this proof, including unchanged foreign fields/floors.
+    """
+
+    from .wall_node_delete import _equal
 
     previous = next((s for s in current.get("spaces", []) if s["id"] == space_id), None)
     source = before_space if direction == "undo" else previous
     if source is None or source.get("id") != space_id or direction not in ("apply", "undo"):
         raise NodeMoveError("merge_target")
-    forward = merge_graph_node_space(source, intent)
+    forward = replay(source, intent)
     old, new = (forward, source) if direction == "undo" else (source, forward)
-    if old != previous:
+    if not _equal(old, previous):
+        raise NodeMoveError("merge_topology")
+    if not _equal({k: v for k, v in candidate.items() if k != "spaces"}, {k: v for k, v in current.items() if k != "spaces"}):
         raise NodeMoveError("merge_topology")
     baseline = copy.deepcopy(current)
     accepted_spaces = {s["id"]: s for s in candidate.get("spaces", [])}
@@ -443,7 +462,7 @@ def _merge_host_baseline(current, candidate, space_id, intent, direction, before
         raise NodeMoveError("merge_topology")
     for original, adjusted in zip(current.get("spaces", []), baseline.get("spaces", []), strict=True):
         expected = new if original["id"] == space_id else original
-        if accepted_spaces[original["id"]] != expected:
+        if not _equal(accepted_spaces[original["id"]], expected):
             raise NodeMoveError("merge_topology")
         openings = {o["id"]: o for o in expected.get("openings", [])}
         if set(openings) != {o["id"] for o in adjusted.get("openings", [])}:
@@ -475,7 +494,8 @@ def node_move_candidate(current: dict[str, Any], space_id: str, intent: dict[str
         # rehost another opening, alter metadata or change another floor.
         forward = apply_move(before_space, intent)
         proof = _node_replace_space(baseline, space_id, forward, local)
-        if canonicalize_config_geometry(proof) != canonicalize_config_geometry(baseline):
+        from .wall_node_delete import _equal
+        if not _equal(canonicalize_config_geometry(proof), canonicalize_config_geometry(baseline)):
             raise NodeMoveError()
         return _node_replace_space(baseline, space_id, before_space, local)
     moved = apply_move(space, intent)

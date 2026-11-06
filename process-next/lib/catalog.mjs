@@ -33,7 +33,7 @@ const testBuildInputs = [...productInputs, 'tsconfig.test.json', 'scripts/fix-te
 export const PRODUCT_PREPARATION_INPUTS = [...new Set([...buildInputs, ...testBuildInputs])];
 const pythonInputs = ['custom_components/houseplan/**/*.py', 'custom_components/houseplan/manifest.json', 'tests_backend/**/*.py', 'tests_backend/requirements.txt', 'pytest.ini', 'pyproject.toml'];
 const pythonBackedTests = new Set(['demo/smoke_wall_node_python_roundtrip.mjs',
-  'demo/smoke_wall_node_merge.mjs',
+  'demo/smoke_wall_node_merge.mjs', 'demo/smoke_wall_node_attach.mjs', 'test/wall-node-attach.test.mjs',
   'demo/smoke_wall_face_lineage.mjs', 'demo/smoke_wall_face_room_split.mjs', 'test/room-write-python.test.mjs']);
 export function discoverReleaseTests(root) {
   const known = new Map(inventory.entries.map(row => [row.path, row]));

@@ -244,3 +244,14 @@ test('#1113 profile stream capability accepts only the exact protocol version',(
   }
   const host={_syncVersionRecovery(){}};adoptCardConfigCapabilities(host,{external_screens_events_api:1});assert.equal(host._haExternalScreensEventsApi,1);
 });
+
+test('#1330 attach is a literal runtime capability and disappears with authority/absent response',()=>{
+  const host={_syncVersionRecovery(){}};
+  adoptCardConfigCapabilities(host,{wall_node_attach_api:1});assert.equal(host._haWallNodeAttachApi,1);
+  for(const value of [undefined,null,0,2,true,'1']){
+    adoptCardConfigCapabilities(host,{wall_node_attach_api:value,config:{wall_node_attach_api:1}});
+    assert.equal(host._haWallNodeAttachApi,null);
+  }
+  adoptCardConfigCapabilities(host,{wall_node_attach_api:1});adoptCardConfigCapabilities(host,null);
+  assert.equal(host._haWallNodeAttachApi,null);
+});

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1330,
+  "baseStable": "v1.84.0",
+  "category": "major",
+  "summary": {
+    "ru": "Висячий конец стены можно присоединить к середине другой стены одним жестом Select.",
+    "en": "Attach a dangling wall endpoint to another wall interior in one Select gesture."
+  },
+  "rationale": "New explicit topology command for Select; independent server replay, exact history and capability negotiation preserve existing Move admission."
+}

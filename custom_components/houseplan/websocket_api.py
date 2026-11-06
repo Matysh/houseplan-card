@@ -1935,6 +1935,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "support_package_versions": list(PACKAGE_VERSIONS),
             "wall_node_move_api": 1,
             "wall_node_merge_api": 1,
+            "wall_node_attach_api": 1,
             "wall_node_delete_api": 1,
             "vacuum_dock_restart_api": 1,
             "vacuum_history_api": 1,

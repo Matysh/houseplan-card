@@ -1,0 +1,2302 @@
+[
+  {
+    "name": "horizontal wall",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "vertical reversed host",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "0",
+            "240"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "180",
+            "120"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "60",
+            "120"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "b",
+          "to": "a",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "diagonal exact q",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "240"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "-60",
+            "300"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "60",
+            "180"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "3"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "zero partition",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 0,
+          "kind": "partition"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 0,
+          "kind": "partition",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "mixed thickness",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 0,
+          "kind": "partition"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "receiver opening first child",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": [
+      {
+        "id": "door",
+        "type": "door",
+        "x": 0.25,
+        "y": 0,
+        "angle": 0,
+        "length": 0.1,
+        "host": {
+          "kind": "wall",
+          "id": "host",
+          "t": 0.25,
+          "tq": [
+            "1",
+            "4"
+          ]
+        },
+        "flip_h": true
+      }
+    ]
+  },
+  {
+    "name": "receiver opening second child reversed",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "b",
+          "to": "a",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": [
+      {
+        "id": "door",
+        "type": "door",
+        "x": 0.25,
+        "y": 0,
+        "angle": 0,
+        "length": 0.1,
+        "host": {
+          "kind": "wall",
+          "id": "host",
+          "t": 0.75,
+          "tq": [
+            "3",
+            "4"
+          ]
+        },
+        "flip_v": true
+      }
+    ]
+  },
+  {
+    "name": "branch opening fixed far center",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": [
+      {
+        "id": "door",
+        "type": "door",
+        "x": 0.5,
+        "y": 0.6,
+        "angle": -90,
+        "length": 0.1,
+        "host": {
+          "kind": "wall",
+          "id": "branch",
+          "t": 0.7,
+          "tq": [
+            "7",
+            "10"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "receiver 1 room owners",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "c",
+          "p": [
+            "l",
+            "240",
+            "-240"
+          ]
+        },
+        {
+          "id": "d",
+          "p": [
+            "l",
+            "0",
+            "-240"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "bc",
+          "from": "b",
+          "to": "c",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "cd",
+          "from": "c",
+          "to": "d",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "da",
+          "from": "d",
+          "to": "a",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [
+        {
+          "room": "r1",
+          "edges": [
+            {
+              "kind": "wall",
+              "id": "host",
+              "reverse": false
+            },
+            {
+              "kind": "wall",
+              "id": "bc",
+              "reverse": false
+            },
+            {
+              "kind": "wall",
+              "id": "cd",
+              "reverse": false
+            },
+            {
+              "kind": "wall",
+              "id": "da",
+              "reverse": false
+            }
+          ]
+        }
+      ],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [
+      {
+        "id": "r1",
+        "name": "Room1",
+        "poly": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            0,
+            -1
+          ]
+        ]
+      }
+    ],
+    "openings": []
+  },
+  {
+    "name": "receiver 2 room owners",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "c",
+          "p": [
+            "l",
+            "240",
+            "-240"
+          ]
+        },
+        {
+          "id": "d",
+          "p": [
+            "l",
+            "0",
+            "-240"
+          ]
+        },
+        {
+          "id": "e",
+          "p": [
+            "l",
+            "240",
+            "240"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "g",
+          "p": [
+            "l",
+            "0",
+            "240"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "bc",
+          "from": "b",
+          "to": "c",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "be",
+          "from": "b",
+          "to": "e",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "cd",
+          "from": "c",
+          "to": "d",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "da",
+          "from": "d",
+          "to": "a",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "eg",
+          "from": "e",
+          "to": "g",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "ga",
+          "from": "g",
+          "to": "a",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [
+        {
+          "room": "r1",
+          "edges": [
+            {
+              "kind": "wall",
+              "id": "host",
+              "reverse": false
+            },
+            {
+              "kind": "wall",
+              "id": "bc",
+              "reverse": false
+            },
+            {
+              "kind": "wall",
+              "id": "cd",
+              "reverse": false
+            },
+            {
+              "kind": "wall",
+              "id": "da",
+              "reverse": false
+            }
+          ]
+        },
+        {
+          "room": "r2",
+          "edges": [
+            {
+              "kind": "wall",
+              "id": "host",
+              "reverse": true
+            },
+            {
+              "kind": "wall",
+              "id": "ga",
+              "reverse": true
+            },
+            {
+              "kind": "wall",
+              "id": "eg",
+              "reverse": true
+            },
+            {
+              "kind": "wall",
+              "id": "be",
+              "reverse": true
+            }
+          ]
+        }
+      ],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [
+      {
+        "id": "r1",
+        "name": "Room1",
+        "poly": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            0,
+            -1
+          ]
+        ]
+      },
+      {
+        "id": "r2",
+        "name": "Room2",
+        "poly": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      }
+    ],
+    "openings": []
+  },
+  {
+    "name": "corner source is excluded",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        },
+        {
+          "id": "z",
+          "p": [
+            "l",
+            "200",
+            "80"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        },
+        {
+          "id": "sz",
+          "from": "s",
+          "to": "z",
+          "cm": 15,
+          "kind": "wall"
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": false,
+    "reason": "merge_target",
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "passing source is excluded",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        },
+        {
+          "id": "z",
+          "p": [
+            "l",
+            "120",
+            "30"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        },
+        {
+          "id": "zs",
+          "from": "z",
+          "to": "s",
+          "cm": 15,
+          "kind": "wall"
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": false,
+    "reason": "merge_target",
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "positive collinear overlap",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "360",
+            "0"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "300",
+            "0"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": false,
+    "reason": "merge_target",
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "new foreign crossing",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        },
+        {
+          "id": "x",
+          "p": [
+            "l",
+            "0",
+            "30"
+          ]
+        },
+        {
+          "id": "y",
+          "p": [
+            "l",
+            "240",
+            "30"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        },
+        {
+          "id": "xy",
+          "from": "x",
+          "to": "y",
+          "cm": 0,
+          "kind": "wall"
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": false,
+    "reason": "merge_topology",
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "receiver opening footprint",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": false,
+    "reason": "merge_opening",
+    "rooms": [],
+    "openings": [
+      {
+        "id": "door",
+        "type": "door",
+        "x": 0.5,
+        "y": 0,
+        "angle": 0,
+        "length": 0.1,
+        "host": {
+          "kind": "wall",
+          "id": "host",
+          "t": 0.5,
+          "tq": [
+            "1",
+            "2"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "receiver opening jamb",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": false,
+    "reason": "merge_opening",
+    "rooms": [],
+    "openings": [
+      {
+        "id": "door",
+        "type": "door",
+        "x": 0.545,
+        "y": 0,
+        "angle": 0,
+        "length": 0.08,
+        "host": {
+          "kind": "wall",
+          "id": "host",
+          "t": 0.545,
+          "tq": [
+            "109",
+            "200"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "remote split dependency reparameterizes fixed point",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "k",
+          "p": [
+            "l",
+            "120",
+            "120"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "k",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        },
+        {
+          "kind": "wall",
+          "id": "kf",
+          "from": "k",
+          "to": "f",
+          "cm": 15
+        }
+      ],
+      "rooms": [],
+      "dependencies": [
+        {
+          "node": "k",
+          "kind": "on-edge",
+          "refs": [
+            {
+              "from": "s",
+              "to": "f"
+            }
+          ],
+          "parameters": [
+            [
+              "1",
+              "2"
+            ]
+          ]
+        }
+      ]
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "remote split dependency retires at bend",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "k",
+          "p": [
+            "l",
+            "120",
+            "120"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "k",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        },
+        {
+          "kind": "wall",
+          "id": "kf",
+          "from": "k",
+          "to": "f",
+          "cm": 15
+        }
+      ],
+      "rooms": [],
+      "dependencies": [
+        {
+          "node": "k",
+          "kind": "on-edge",
+          "refs": [
+            {
+              "from": "s",
+              "to": "f"
+            }
+          ],
+          "parameters": [
+            [
+              "1",
+              "2"
+            ]
+          ]
+        }
+      ]
+    },
+    "tq": [
+      "1",
+      "3"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "foreign exact q fixed end",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "foreign-q",
+          "p": [
+            "q",
+            "1",
+            "7",
+            "2",
+            "7"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "T source is excluded",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "k",
+          "p": [
+            "l",
+            "60",
+            "60"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        },
+        {
+          "id": "z",
+          "p": [
+            "l",
+            "120",
+            "30"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        },
+        {
+          "kind": "wall",
+          "id": "ks",
+          "from": "k",
+          "to": "s",
+          "cm": 15
+        },
+        {
+          "kind": "wall",
+          "id": "zs",
+          "from": "z",
+          "to": "s",
+          "cm": 15
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": false,
+    "rooms": [],
+    "openings": [],
+    "reason": "merge_target"
+  },
+  {
+    "name": "X source is excluded",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "k",
+          "p": [
+            "l",
+            "60",
+            "60"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        },
+        {
+          "id": "u",
+          "p": [
+            "l",
+            "180",
+            "60"
+          ]
+        },
+        {
+          "id": "z",
+          "p": [
+            "l",
+            "120",
+            "30"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        },
+        {
+          "kind": "wall",
+          "id": "ks",
+          "from": "k",
+          "to": "s",
+          "cm": 15
+        },
+        {
+          "kind": "wall",
+          "id": "su",
+          "from": "s",
+          "to": "u",
+          "cm": 15
+        },
+        {
+          "kind": "wall",
+          "id": "zs",
+          "from": "z",
+          "to": "s",
+          "cm": 15
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": false,
+    "rooms": [],
+    "openings": [],
+    "reason": "merge_target"
+  },
+  {
+    "name": "receiver incident to fixed far end",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": false,
+    "rooms": [],
+    "openings": [],
+    "reason": "merge_target"
+  },
+  {
+    "name": "bent branch opening retains fixed-far distance",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "3"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": [
+      {
+        "id": "door",
+        "type": "door",
+        "x": 0.5,
+        "y": 0.6,
+        "angle": -90,
+        "length": 0.1,
+        "host": {
+          "kind": "wall",
+          "id": "branch",
+          "t": 0.7,
+          "tq": [
+            "7",
+            "10"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "diagonal reverse exact q",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "240"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "-60",
+            "300"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "60",
+            "180"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "b",
+          "to": "a",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "3"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": []
+  },
+  {
+    "name": "split child canonical order before existing suffix",
+    "graph": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "a",
+          "p": [
+            "l",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "id": "b",
+          "p": [
+            "l",
+            "240",
+            "0"
+          ]
+        },
+        {
+          "id": "f",
+          "p": [
+            "l",
+            "120",
+            "180"
+          ]
+        },
+        {
+          "id": "s",
+          "p": [
+            "l",
+            "120",
+            "60"
+          ]
+        },
+        {
+          "id": "z1",
+          "p": [
+            "l",
+            "480",
+            "0"
+          ]
+        },
+        {
+          "id": "z2",
+          "p": [
+            "l",
+            "720",
+            "0"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": "branch",
+          "from": "s",
+          "to": "f",
+          "cm": 15,
+          "kind": "wall"
+        },
+        {
+          "id": "host",
+          "from": "a",
+          "to": "b",
+          "cm": 15,
+          "kind": "wall",
+          "props": {
+            "source": "synthetic"
+          }
+        },
+        {
+          "kind": "wall",
+          "id": "zzz",
+          "from": "z1",
+          "to": "z2",
+          "cm": 15
+        }
+      ],
+      "rooms": [],
+      "dependencies": []
+    },
+    "tq": [
+      "1",
+      "2"
+    ],
+    "ok": true,
+    "rooms": [],
+    "openings": []
+  }
+]

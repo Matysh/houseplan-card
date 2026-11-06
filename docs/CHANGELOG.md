@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Select: attach a dangling endpoint to a wall/partition interior with an exact split, server proof and one Undo/Redo command (#1330).
+
 - Preserve smoke error visibility through transparent delegates and strict assertions; finish every native node-hit browser through the shared guard. #1337
 
 - Refresh the offline converter runtime/page with the accepted PlanGraph seam-lineage mapping; track its real compiler/limit inputs independently from card artifacts, preserving fixtures and safety limits. #1336
