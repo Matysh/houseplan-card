@@ -189,8 +189,28 @@ test('one parameterized Node file reports five executed cases, not one file or d
     'test/parameters.test.mjs': "import test from 'node:test'; import assert from 'node:assert/strict'; for(let i=0;i<5;i++)test('variant '+i,()=>assert.ok(i>=0));",
 }, async (dir) => {
     const plan = await planProfile({ root: dir, layer: 'infra', areaTests: ['test/parameters.test.mjs'] });
-    const report = await runPlan(plan, { root: dir, stateDir: resolve(dir, 'state') });
+    // The child is a standalone test run, not a nested child-v8 IPC worker.
+    const report = await runPlan(plan, { root: dir, stateDir: resolve(dir, 'state'), environment: { NODE_TEST_CONTEXT: undefined } });
     assert.equal(report.status, 'passed');
     assert.equal(report.results[0].counts.tests, 5);
     assert.equal(plan.selection.files, 1);
+}));
+
+test('shared application/stand aggregation does not make every scenario a reader of every feature', async () => fixture({
+    'src/chrome-tooltip.ts': 'export const tip=1;',
+    'src/houseplan-card.ts': "import './chrome-tooltip';",
+    'demo/serve.mjs': "import '../src/houseplan-card.ts';",
+    'demo/smoke_vacuum_unrelated.mjs': "import './serve.mjs';",
+    'test/plain-shell.test.mjs': "import '../src/houseplan-card.ts';",
+    'test/tooltip-reader.test.mjs': "import '../src/chrome-tooltip.ts';",
+}, async (dir) => {
+    const changed = await select(dir, {changedFiles: ['src/chrome-tooltip.ts']});
+    assert.ok(changed.files.includes('test/tooltip-reader.test.mjs'));
+    assert.ok(!changed.files.includes('demo/smoke_vacuum_unrelated.mjs'));
+    assert.ok(!changed.files.includes('test/plain-shell.test.mjs'));
+    const shell = await select(dir, {changedFiles: ['src/houseplan-card.ts']});
+    assert.ok(shell.files.includes('test/plain-shell.test.mjs'));
+    // Application changes retain the broad fallback; shell barriers narrow only
+    // transitive scenario relevance, never execution fingerprints in finalize.
+    assert.ok(shell.files.includes('test/tooltip-reader.test.mjs'));
 }));

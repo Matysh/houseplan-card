@@ -45,6 +45,11 @@ const isInfra = p => /^(?:process-next\/|scripts\/|\.github\/)/.test(p);
 export function domainsOf(path) { return DOMAINS.filter(row => row[2].test(path.toLowerCase().replaceAll('_', '-'))).map(row => row[0]); }
 const fast = row => ['node', 'backend', 'browser'].includes(row.type);
 const unique = xs => [...new Set(xs)];
+// Runtime shell/stand loaders intentionally aggregate the whole product. That
+// build dependency remains in execution fingerprints, but is not evidence that
+// every consumer tests each nested behaviour. Dedicated readers and domain
+// witnesses still select the component's actual contracts.
+const AGGREGATION_BOUNDARIES = new Set(['demo/serve.mjs', 'demo/bundle-freshness.mjs', 'scripts/source-fingerprint.mjs', 'src/houseplan-card.ts', 'src/houseplan-panel.ts']);
 const sourceFile = p => /^(?:src\/|custom_components\/houseplan\/|assets\/)/.test(p) || /^(?:package(?:-lock)?\.json|tsconfig.*\.json|rollup\.config\.mjs)$/.test(p);
 export async function testCatalog(root, inventory, { e2eRoot } = {}) {
     const known = new Map(inventory.entries.map(row => [row.path, row])), rows = [], excluded = [];
@@ -145,6 +150,8 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
             if (refs === null)
                 continue;
             result.add(file);
+            if (AGGREGATION_BOUNDARIES.has(file))
+                continue;
             pending.push(...refs);
         }
         memo.set(path, result);
