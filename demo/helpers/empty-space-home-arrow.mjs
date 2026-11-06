@@ -20,7 +20,6 @@ export async function emptySpaceHomeArrow(page) {
     const card=document.createElement('houseplan-card');card.setConfig({type:'custom:houseplan-card',language:'en'});
     document.querySelector('#host').replaceChildren(card);window.__card=card;card.hass=hass;
   });
-  await page.locator('hp-dialog[data-kind="import"] [data-action="import-manual"]').click();
   await page.locator('hp-dialog[data-kind="onboarding"]').waitFor();
   await page.evaluate(()=>{
     const card=window.__card;
@@ -36,7 +35,7 @@ export async function emptySpaceHomeArrow(page) {
     window.__emptyHomeObserver.observe(card.renderRoot,{subtree:true,childList:true,attributes:true});
   });
   const create=async(title,first)=>{
-    if(!first)await page.evaluate(()=>window.__hpTest.openSpaceDialog('create'));
+    if(!first)await page.locator('houseplan-card [data-hp="space-add"]').click();
     const dialog=page.locator(`hp-dialog[data-kind="${first?'onboarding':'space'}"]:not([inert])`);
     await dialog.locator(first?'input[data-field$="-title"]':'#space-title').fill(title);
     if(first)await dialog.locator('input[name="plansrc"][data-value="draw"]').check();
@@ -57,6 +56,7 @@ export async function emptySpaceHomeArrow(page) {
       await page.mouse.move(b.x+b.width*.15,b.y+b.height*.8,{steps:8});await page.mouse.up();
     }
     await page.evaluate(()=>window.__hpTest.settled());
+    await page.waitForFunction(()=>!window.__card._suppressClick && !window.__card._modeTransitionBusy);
   };
   const pushLine=async(on)=>page.evaluate(async on=>{
     await window.__hpTest.setServerConfig(cfg=>{
@@ -79,7 +79,8 @@ export async function emptySpaceHomeArrow(page) {
   await page.locator('houseplan-card .homearrow').click();
   await page.waitForFunction(()=>!window.__card._cameraTransition.active&&!window.__card.renderRoot.querySelector('.homearrow'));
   assert.equal((await snapshot()).writes,positive.writes,'Fit is presentation only');
-  await pan();await page.evaluate(()=>window.__hpTest.setMode('plan'));await waitForUiKitPaint(page);
+  await pan();await page.locator('houseplan-card [data-hp="mode-tab"][data-mode="plan"]').click();
+  await page.waitForFunction(()=>window.__card._mode==='plan' && !window.__card._modeTransitionBusy);await waitForUiKitPaint(page);
   await pushLine(false);
   const removed=await snapshot();assert.equal(removed.frame.grow,true);assert.equal(removed.arrow,false,'grown frame is not content');
   evidence.push({name:'last-object-removed',...removed});

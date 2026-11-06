@@ -320,7 +320,10 @@ const res = await page.evaluate(async () => {
     .filter((entry) => /op-leaf|op-arc/.test(entry.cls)).length === 0;
   return out;
 });
-Object.assign(res, await emptySpaceHomeArrow(page));
+Object.assign(res, await emptySpaceHomeArrow(page).catch(async error => {
+  console.error(await page.evaluate(() => ({mode:window.__card._mode,space:window.__card._space,write:window.__card._canEdit,dialogs:[...window.__card.shadowRoot.querySelectorAll('hp-dialog')].map(d=>({kind:d.dataset.kind,text:d.textContent})),toast:window.__hpTest.toast()?.textContent})));
+  await page.screenshot({path:'artifacts/empty-space-home-arrow-failure.png'}); throw error;
+}));
 checkAll(res, { unexpectedAnimations: [], reusedMarkerNodes: [],
   swappedMarkerNodes: [], swappedOpeningNodes: [],
   noRoomTransitionOnSwitch: [], noRoomNodeOutlivesTheSwitch: [],
