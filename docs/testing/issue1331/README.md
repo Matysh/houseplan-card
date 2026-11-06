@@ -75,7 +75,7 @@ The five addressed repairs are:
   its arc is the active indicator. The native oracle compares that arc with its
   known closed tone, proves the active tone differs and retains full-plan parity.
   This covers absent entities; it does not invent new unavailable-state policy.
-  Final retry is recorded in witness-static-retry3.log.
+  Final retry clean PASS/caught1/1 at66516f17ec, recorded in witness-static-retry3.log.
 
 These are addressed receipts at pinned revisions, not a complete nightly shard.
 Successful first-batch definitions are unchanged by the five followups. The final
@@ -88,3 +88,21 @@ hooks and retire the removed opening-tunnel hook. Its validator is unchanged;
 three registered addressed witnesses passed clean and caught1/1 each. Full product
 S6 is retained for the joint packet because browser/DOM-contract inputs are
 product material. Companion E2E impact: houseplan-e2e main1f102b7, task-impact1331/1332.
+
+## First complete S6 and HA isolation
+
+Run20261106T104727609-4cd497ef completed all562steps:140passed,
+418reused,4failed. All original Node baseline failures are resolved. The four
+failures are HA backup archive, upload, websocket and Zigbee files, with10failed
+cases. Their tracebacks show concurrent tests using the plugin's shared
+site-packages/testing_config/houseplan directory while the prior autouse fixture
+recursively deletes plans/files/assets before each case. Upload rename reports
+ENOENT, an archive collision file vanishes and setup mkdir races deletion.
+
+Replace that cleanup with the supported hass_config_dir fixture override: every
+case gets its own tmp_path/ha-config before hass is created. No shared directory
+is deleted. The config-flow module retains its more specific disk fixture.
+Product file handling and all existing assertions remain unchanged. The five
+addressed files (including the earlier intermittent marker-history case) pass
+290/290 in19.52s. The normal second finish supplies the concurrent S6 proof;
+the failed first receipt is retained rather than renamed green.

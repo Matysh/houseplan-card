@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Repair current S6 baseline contracts and mutation witnesses; preserve actual source-scanner scopes in selection/reuse and keep infrastructure metadata out of product fallback. #1331
+- Repair current S6 baseline contracts and mutation witnesses; preserve actual source-scanner scopes in selection/reuse and keep infrastructure metadata out of product fallback and isolate parallel HA test directories. #1331
 - Declare five existing DOM hooks in the selector contract, restoring the clean data-hp mutation guard without relaxing source completeness or negative controls. #1332
 
 - S6 selects tests from changed behavior, component links and track; active catalog, explicit unknowns, file-level reuse and fallback preparation share one plan. #1239

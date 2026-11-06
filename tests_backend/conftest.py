@@ -91,15 +91,17 @@ if not HAS_HA:
             sys.modules[_name] = _module
 
 if HAS_HA:
-    import shutil
-
     import pytest
 
-    @pytest.fixture(autouse=True)
-    def _clean_persistent_houseplan_test_files(request):
-        """Do not let warm HA harness runs exhaust the shared file quota."""
-        if "hass" in request.fixturenames:
-            hass = request.getfixturevalue("hass")
-            for relative in ("houseplan/plans", "houseplan/files", "houseplan/assets"):
-                shutil.rmtree(Path(hass.config.path(relative)), ignore_errors=True)
-        yield
+    @pytest.fixture
+    def hass_config_dir(tmp_path):
+        """Each HA case owns its files, also across concurrent pytest processes.
+
+        The plugin default is a shared site-packages testing_config directory.
+        Cleaning that directory per test races uploads/archives in other S6
+        backend-file workers. An empty config is sufficient for these fixtures;
+        storage remains mocked by the HA plugin unless a test opts into disk.
+        """
+        directory = tmp_path / "ha-config"
+        directory.mkdir()
+        return str(directory)
