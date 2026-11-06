@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5605,
+  "revision": 5606,
   "nextTicket": 267,
   "nextFence": 267,
   "tasks": {
@@ -4299,6 +4299,10 @@
       "digest": "2dea8ec7a98cf689558fe14555f0cac9db707ca90e8fc6ff7cc2d07500a0ff2f",
       "issue": 1329
     },
+    "finish:df57a6d9-9300-4299-a9ce-468a262ea06b:finish:3:s6-label": {
+      "digest": "4efb17faa3c2dedafa6eb0ebfabe8747dd2bc1c4983cfc08f732c57e736a5572",
+      "issue": 1329
+    },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
       "digest": "a56f6f76ba636c40127695117d57a9970d2dabae7dc8e6ca7ab9b154319f8ebc",
       "issue": 1329,
@@ -4470,7 +4474,8 @@
         "resubmission": false,
         "reviewChanges": "Реализация: hasContent запоминается в уже существующем _frameOf cache по cf.all до fallback и editor-grow union. Камера, масштаб и frame bounds сохраняют поведение. Рендер стрелки получает явный флаг содержимого и проверку принадлежности _frame.id активному _space; fallback/предыдущее пространство не считаются планом. Дополнительного прохода геометрии на кадре нет.\n\nРегрессия Node view-frame-empty: на исходном helper первый кейс падает (1/2 overall), положительный roomless контроль проходит; на исправленном коде оба проходят. Native кейсы встроены в существующий smoke_space_switch_transitions через отдельный helper: первый onboarding/create, pan пустой камеры без config/layout writes, реальная отдельная перегородка без комнат и Fit, удаление последнего объекта при editor-grow, создание второго пустого пространства после panned nonempty. Наблюдатель DOM проверяет отсутствие ложных переходных стрелок, UI не подменяется приватными состояниями. Полный native smoke прошёл со всеми прежними assertions до блокировки baseline.\n\nПо #1328 проверены catalog и plan без areaTests: Node — product/presentation/performance/task-release, выбирается как читатель src/view-frame-view.ts; native navigation выбирается по контракту области и изменению helper. Монолитный houseplan-card.ts даёт честный full fast Node fallback. Профиль не сужается. Релизная мета: уже открытый владельцем milestone1.85.0 #13, stablebasev1.84.0, stable-fix; выпуск не поручен.\n\nПервый полный S6 run20261106T060327001-ec241f65 был failed на14исходныхошибках8Node-файлов, отдельно повторённых на devbe93. Они и дополнительные2ошибки config-lifecycle устранены в совместном пакете #1331/#1332, принятом ревью и слитом в deveaba96b2f80b930dd1a57fe5f23a0be5e193e357. Его полный S6 прошёл562шага. Blocked задачи #1329 снимается; это не зачёт её собственного S6. Штатный finish заново актуализирует ветку и выполняет текущую центральную выборку перед код-ревью, с применимым reuse.\n\nСохранённая реализация до актуализации: origin/codex/1329-empty-home-arrow,0921a7720f. Companion: [task-impact/1329.md](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1329.md) — расширить настоящий HA first-space/navigation journey перед следующей бетой. Логи/evidence: output/issue-1329 и artifacts/empty-space-home-arrow. Пользовательский HA не менялся.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
