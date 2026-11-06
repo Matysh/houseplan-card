@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5254,
+  "revision": 5255,
   "nextTicket": 253,
   "nextFence": 253,
   "tasks": {
@@ -1394,14 +1394,30 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1255-shift-rotate",
-      "materialSha": "60f5631497e602b2cece7fe7db2ff9de9bae9e95",
+      "materialSha": "5d6e48c49ea6a174abdc6c4f5f7c5a78ab0fa227",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 252,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793935966083,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "a46bed96b664576cdf754e0786a9e612794ff287",
+      "changedFiles": [
+        "demo/smoke_decor_rotation_shift.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DECOR-EDITOR.md",
+        "docs/release-ledger/v1.83.0/1255.json",
+        "src/backdrop-frame-gesture.ts",
+        "src/furniture.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/rotation-angle.ts",
+        "test/backdrop-frame-gesture.test.mjs",
+        "test/decor-rotation.test.mjs",
+        "test/furniture-transform-contract.test.mjs"
+      ]
     },
     "1256": {
       "issue": 1256,
@@ -3978,11 +3994,12 @@
     "worker": "finish",
     "token": "252:finish:9150f85a-807c-4b6e-b8ef-a6211c1115d6:finish:1:admit",
     "fence": 252,
-    "materialSha": "60f5631497e602b2cece7fe7db2ff9de9bae9e95",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "5d6e48c49ea6a174abdc6c4f5f7c5a78ab0fa227",
+    "expectedBase": "fa5a1c30019811c91a6a34ee36d70de7875455c9",
+    "phase": "testing",
     "admittedAt": 1793935969534,
-    "expiresAt": 1793936269534
+    "expiresAt": 1793936278446,
+    "patchId": "a46bed96b664576cdf754e0786a9e612794ff287"
   },
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
@@ -4024,6 +4041,10 @@
     "github:42156004494:1:completions:report:c561daa0a39e449f1f5d5973fee9a2abcfd6e6304756f605d246c4f1e527b350": {
       "digest": "446631ecc8338a4f144dabbad2c7e11711ba4fe1487deb54d344490a6173f927",
       "issue": 1239
+    },
+    "finish:9150f85a-807c-4b6e-b8ef-a6211c1115d6:finish:2:synchronized": {
+      "digest": "5802154bcbaeb5db04b08bb56c8f984348a0067af2921785672451df61d85726",
+      "issue": 1255
     },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
       "digest": "9db3331ba93104ca4e2706e07dea151f95c9f1d0c2e95fe27d16bb2b5ab16815",
