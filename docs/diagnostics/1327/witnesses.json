@@ -1,0 +1,38 @@
+{
+  "source": "v1.84.0",
+  "builderStatus": "ok",
+  "rows": [
+    {
+      "id": "draw-node-fe26bea0-6446-4539-93a4-2e0a6b808f47",
+      "node": [
+        2.183333333333333,
+        -1.3208333333333333
+      ],
+      "witness": [
+        2.2227876402597895,
+        -1.3552284971734196
+      ],
+      "paperContains": true,
+      "masonryContains": false,
+      "centreRoomsContain": false,
+      "withoutPartitionMasonryContains": true,
+      "paperUnchangedWhenRemovingPartition": true
+    },
+    {
+      "id": "draw-node-03a79a6f-d0b1-41e5-ab1f-3ce3e7eaae68",
+      "node": [
+        2.6333333333333333,
+        -0.7625
+      ],
+      "witness": [
+        2.647000431438182,
+        -0.8069645555876516
+      ],
+      "paperContains": true,
+      "masonryContains": false,
+      "centreRoomsContain": false,
+      "withoutPartitionMasonryContains": true,
+      "paperUnchangedWhenRemovingPartition": true
+    }
+  ]
+}
