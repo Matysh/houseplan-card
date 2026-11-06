@@ -352,3 +352,24 @@ test('header retirement native witness is selected for its actual runtime owner'
  const catalog=await testCatalog(dir,inventory),row=catalog.rows.find(r=>r.path==='demo/smoke_header_observer_retirement.mjs');
  assert.equal(row.layer,'product');assert.ok(row.domains.includes('presentation'));assert.equal(row.lifecycle,'task-release');
 }));
+test('converter freshness reads its module-local artifact and canonical build inputs', async () => fixture({
+ 'scripts/sh3d-convert/build-page.mjs':await readFile(resolve(root,'scripts/sh3d-convert/build-page.mjs'),'utf8'),
+ 'scripts/sh3d-convert/build-runtime.mjs':await readFile(resolve(root,'scripts/sh3d-convert/build-runtime.mjs'),'utf8'),
+ 'scripts/sh3d-convert/geometry-entry.ts':"export {graph} from '../../src/plan-graph';",
+ 'scripts/sh3d-convert/tsconfig.json':'{}',
+ 'scripts/sh3d-convert/dist/index.html':'owned converter page',
+ 'src/plan-graph.ts':'export const graph=1;',
+ 'custom_components/houseplan/validation.py':'LIMIT=1',
+ 'custom_components/houseplan/led_strips.py':'LIMIT=1',
+ 'test/sh3d-convert-page.test.mjs':"import '../scripts/sh3d-convert/build-page.mjs';",
+},async dir=>{
+ const file='test/sh3d-convert-page.test.mjs',artifact='scripts/sh3d-convert/dist/index.html';
+ const local=await planProfile({root:dir,event:'task',layer:'infra',track:'ship',changedFiles:[artifact],areaTests:[file]});
+ const consumer=local.steps.find(s=>s.command?.includes(file));
+ assert.ok(consumer,'the actual converter artifact reader must be selected');
+ assert.ok(consumer.inputs.includes(artifact));
+ assert.ok(!local.steps.some(s=>s.id==='product-build'),'converter bundle is not the card dist');
+ for(const changed of ['src/plan-graph.ts','custom_components/houseplan/validation.py','custom_components/houseplan/led_strips.py']){
+  assert.ok(consumer.inputs.includes(changed),'real compiler inputs invalidate artifact freshness: '+changed);
+ }
+}));

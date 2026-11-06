@@ -29,7 +29,7 @@ export async function buildPage() {
 if (isMainModule(import.meta.url)) {
   const check = process.argv.includes('--check');
   await syncGeometryRuntime(check);
-  const page = await buildPage(), target = join(HERE, 'dist/index.html');
+  const page = await buildPage(), target = fileURLToPath(new URL('./dist/index.html', import.meta.url));
   if (check) {
     if (readFileSync(target, 'utf8') !== page) throw new Error('Stale converter page: node scripts/sh3d-convert/build-page.mjs');
     console.log('ok: offline converter matches its sources and canonical runtime');

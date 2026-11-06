@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refresh the offline converter runtime/page with the accepted PlanGraph seam-lineage mapping; track its real compiler/limit inputs independently from card artifacts, preserving fixtures and safety limits. #1336
+
 - Repair current S6 baseline contracts and mutation witnesses; preserve actual source-scanner scopes in selection/reuse and keep infrastructure metadata out of product fallback and isolate parallel HA test directories. #1331
 - Declare five existing DOM hooks in the selector contract, restoring the clean data-hp mutation guard without relaxing source completeness or negative controls. #1332
 - Hide the home arrow on empty spaces, including new-space transitions and an editor's retained frame after its last object is removed; keep Fit for genuine roomless content. [#1329](https://github.com/Matysh/houseplan-card/issues/1329)
