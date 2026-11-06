@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 538,
+  "revision": 539,
   "active": "v1.85.0-beta.2-20261106",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -31905,7 +31905,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.85.0-beta.2",
         "candidate": "25d23997a1bb06cb6a2d35d63b22362a20623c64",
         "base": "626c645948d2f9ecab458b410497641fd3487c69",
         "issues": [
@@ -32324,6 +32324,179 @@
         "selectionDigest": "b83c44c7c6283a4ab50e223dba9139f313e7a4a4d55cf01e920cf2f1623f1d74",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.85.0-beta.2",
+          "candidate": "25d23997a1bb06cb6a2d35d63b22362a20623c64",
+          "base": "626c645948d2f9ecab458b410497641fd3487c69",
+          "issues": [
+            {
+              "number": 1239,
+              "commits": [
+                "94b43670bf58d49549a81a79b77e3b6dc37b0355",
+                "f38923a4f36ad20410fee1bef4b3642cf4f24fe6"
+              ]
+            },
+            {
+              "number": 1253,
+              "commits": [
+                "26dce32c64a063e7cf778deef8fef5b77449f2af",
+                "27fca2af5db980ee66dab786a82b62243f518cbd",
+                "418a72a888ea5662808e0eb8236e3f40111cc1b1",
+                "4cf931127898cbfd89aae0453ae3a56bc597916c",
+                "726587847e091a397a332f3a6b3a3aebd0f85546"
+              ]
+            },
+            {
+              "number": 1255,
+              "commits": [
+                "376b6e387031dca5328e46de2e411b6845e76b6a",
+                "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
+                "5d6e48c49ea6a174abdc6c4f5f7c5a78ab0fa227",
+                "c14d2bc55c65a575769553b653d6272419ceed1e"
+              ]
+            },
+            {
+              "number": 1327,
+              "commits": [
+                "fa5a1c30019811c91a6a34ee36d70de7875455c9"
+              ]
+            },
+            {
+              "number": 1328,
+              "commits": [
+                "be93fa714bfb253e1232d42e1c0b4c2c369cec7e"
+              ]
+            },
+            {
+              "number": 1329,
+              "commits": [
+                "55397e9194ea4ac21ab343cdc5c16a40eb984457",
+                "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7"
+              ]
+            },
+            {
+              "number": 1330,
+              "commits": [
+                "13d2d6b1c8bf599d6a4eee6f9883cdbdd663b71d",
+                "3bf206abbcabe3bd34d58e1dec9f713a5a8990bf",
+                "53ad376ddadab2aa171768e9d928e933912ad18f",
+                "f1c9cd372946db8aa3b86c3e4224903ff6d4ad78"
+              ]
+            },
+            {
+              "number": 1331,
+              "commits": [
+                "3d33134daf1d8bc999e19e35de71205bed63d7b8",
+                "449f270ed8dffd95f796884d7db8819b4694cdfa",
+                "49bd98e540048e3865313ec075b921f28ade02a6",
+                "609add25c393f91ab8351119805459c020e2e5d2",
+                "740eb3245c0c7dd8e0b7cd742e32b95a3c6adeb9",
+                "a520233c955ffba5f971c62e154a0cbb6f78ab93",
+                "b845a1e78245464a5ed04d5150d90d39e49ccaed",
+                "c2a894f63e6c22c169b3e0c45cc88c053e0f0a57",
+                "cd4e0bcc856c5898201f6c801060df22de31e911",
+                "e9e366165d8bc5cf16c4af11de7f21947f247a58",
+                "eaba96b2f80b930dd1a57fe5f23a0be5e193e357"
+              ]
+            },
+            {
+              "number": 1332,
+              "commits": [
+                "6bddb9b0f28c08f2b50f9ea0fd7cd137e16ae69c",
+                "df308613573b5b6dfbea2de77fdde699a37ea355"
+              ]
+            },
+            {
+              "number": 1333,
+              "commits": [
+                "4d7b4cc103636e790788ab489845f735a4b5a6f3",
+                "f091234bbf09d0eb8d7e5baf0b1891b669308bcb",
+                "f510634b6e27d8458d51b7f5ca718503ceed8866"
+              ]
+            },
+            {
+              "number": 1334,
+              "commits": [
+                "ab5096124a7898bb6a26c2929c2758ce26a1842b",
+                "f091234bbf09d0eb8d7e5baf0b1891b669308bcb"
+              ]
+            },
+            {
+              "number": 1335,
+              "commits": [
+                "4d7b4cc103636e790788ab489845f735a4b5a6f3",
+                "f091234bbf09d0eb8d7e5baf0b1891b669308bcb",
+                "f510634b6e27d8458d51b7f5ca718503ceed8866"
+              ]
+            },
+            {
+              "number": 1336,
+              "commits": [
+                "939eca1ea9fcb34c72307aba3781c77ce65027dd"
+              ]
+            },
+            {
+              "number": 1337,
+              "commits": [
+                "6c8b0a3ccb95386c911e447331e24fcedf4c62d5"
+              ]
+            },
+            {
+              "number": 1338,
+              "commits": [
+                "167242ba6ffa6bca2c53f5299933d7f6c71784d5"
+              ]
+            },
+            {
+              "number": 1339,
+              "commits": [
+                "b01159e90270a4a454be4d7acbca9d90a51760f7"
+              ]
+            },
+            {
+              "number": 1340,
+              "commits": [
+                "b01159e90270a4a454be4d7acbca9d90a51760f7"
+              ]
+            },
+            {
+              "number": 1341,
+              "commits": [
+                "7b3b408a0d796fd126ed8e84bc295183f2de8e15"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1239,
+          1253,
+          1255,
+          1327,
+          1328,
+          1329,
+          1330,
+          1331,
+          1332,
+          1333,
+          1334,
+          1335,
+          1336,
+          1337,
+          1338,
+          1339,
+          1340,
+          1341
+        ],
+        "version": "1.85.0-beta.2",
+        "body": "<!-- release: v1.85.0-beta.2 -->\n<!-- base: v1.84.0 -->\n<!-- language: ru -->\n## Houseplan 1.85.0-beta.2\n\nИсправлено периодическое падение обновления **Zigbee LQI**, когда сторонняя интеграция записывает в реестр Home Assistant идентификатор устройства некорректного формата. Такие записи теперь пропускаются, а корректные идентификаторы того же устройства и остальные устройства ZHA/Zigbee2MQTT продолжают обрабатываться. [#1341](https://github.com/Matysh/houseplan-card/issues/1341)\n\nОстальные возможности линии 1.85 описаны в [beta.1](https://github.com/Matysh/houseplan-card/releases/tag/v1.85.0-beta.1).\n\nПосле обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.\n\n<!-- language: en -->\n## Houseplan 1.85.0-beta.2\n\nFixed periodic **Zigbee LQI** refresh failures caused by malformed device identifiers registered by a third-party integration in Home Assistant. Invalid records are now skipped while valid identifiers on the same device and other ZHA/Zigbee2MQTT devices continue to update. [#1341](https://github.com/Matysh/houseplan-card/issues/1341)\n\nSee [beta.1](https://github.com/Matysh/houseplan-card/releases/tag/v1.85.0-beta.1) for the other changes in the 1.85 line.\n\nAfter updating, restart Home Assistant and reload open Houseplan pages.\n",
+        "technical": {
+          "ru": "## v1.85.0-beta.2 — 2026-11-06\n\n- Некорректные идентификаторы устройств сторонних интеграций больше не прерывают обновление Zigbee LQI; валидные пары и остальные ZHA/Z2M-устройства продолжают обрабатываться (#1341).\n\n- Удалён устаревший тест снятой npm-команды test:chunk; три поведенческие проверки живого helper сохранены (#1340).",
+          "en": "## v1.85.0-beta.2 — 2026-11-06\n\n- Skip malformed third-party device registry identifiers before unpacking so Zigbee LQI continues updating valid ZHA/Z2M devices and valid pairs on the same device (#1341).\n\n- Remove the obsolete assertion for the retired npm test:chunk entrypoint; retain all three behavior tests of the live helper (#1340)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -37341,7 +37514,8 @@
     "ship-review:prepare:9ce7ef98-c139-49e4-bdf7-2572f323cacf": "82b392413e983fb2ffaa644d45c92628d62d3240488c45ad9b4bb05c33f48d38",
     "ship-review:result:e8290b08-d219-44c8-b520-51367fcc1c87": "b14f6fecc2aef390d8bcae58dda53f2d2cd940ab19f18b6b825e934ffe1c3f6f",
     "beta1852-20261106-publish:runner-report": "d3cdf97c59141192d6a666400c820e1ecdd030c39d518ed4018af117508387e4",
-    "beta1852-20261106-publish:metrics": "3dd2fda0b2f03d479e91aba43849622363be3fedda2cfa9c4468d5b63358a450"
+    "beta1852-20261106-publish:metrics": "3dd2fda0b2f03d479e91aba43849622363be3fedda2cfa9c4468d5b63358a450",
+    "beta1852-20261106-publish:prepared:b1002730-6da7-4014-8c5d-3afb09c0eb09": "643acc7a88b600fb36665b0597c5ab3382090005665df1e40511288307bffd0b"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
