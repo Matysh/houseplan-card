@@ -282,7 +282,7 @@ test('#1098 stair and LED move requests coalesce into the existing live frame',(
  const oldRaf=globalThis.requestAnimationFrame,oldCancel=globalThis.cancelAnimationFrame;let scheduled=0;
  globalThis.requestAnimationFrame=()=>++scheduled;globalThis.cancelAnimationFrame=()=>{};
  try{
-  for(const [mode,runtime,led] of [['plan',{stairs:{live:true}},null],['devices',{}, {dragging:true}]]){
+  for(const [mode,runtime,led] of [['plan',{stairs:{live:true,dragging:true}},null],['devices',{}, {dragging:true}]]){
    const host={isConnected:true,_mode:mode,_editorRuntime:runtime,_ledEditor:led};const before=scheduled;
    for(let i=0;i<30;i++)assert.equal(routeHouseplanEditorUpdate(host),true);
    assert.equal(scheduled-before,1);disposeHouseplanEditor(host);
@@ -296,4 +296,19 @@ test('#1098 HA deferral recognizes both gesture owners until their terminal even
  host._editorRuntime.stairs.dragging=true;assert.equal(runtime.active(),true);
  host._editorRuntime.stairs.dragging=false;host._ledEditor={dragging:true};assert.equal(runtime.active(),true);
  host._ledEditor.dragging=false;assert.equal(runtime.active(),false);
+});
+test('#1338 hover-only stairs do not swallow host chrome updates',()=>{
+ const oldRaf=globalThis.requestAnimationFrame,oldCancel=globalThis.cancelAnimationFrame;let scheduled=0;
+ globalThis.requestAnimationFrame=()=>++scheduled;globalThis.cancelAnimationFrame=()=>{};
+ const host={isConnected:true,_mode:'plan',_editorRuntime:{stairs:{live:true,dragging:false}},_cursorPt:[1,2]};
+ try{
+  for(let i=0;i<30;i++)assert.equal(routeHouseplanEditorUpdate(host),false,'menus/history retain a host render');
+  assert.equal(scheduled,0);
+  assert.equal(routeHouseplanEditorUpdate(host,'_cursorPt',[0,0]),true,'named hover paint remains local');
+  assert.equal(scheduled,1);
+  host._editorRuntime.stairs.dragging=true;
+  assert.equal(routeHouseplanEditorUpdate(host),true,'a real moving/draft gesture stays local');
+  host._editorRuntime.stairs.live=false;
+  assert.equal(routeHouseplanEditorUpdate(host),false,'a down without moving preview retains selection/chrome');
+ }finally{disposeHouseplanEditor(host);globalThis.requestAnimationFrame=oldRaf;globalThis.cancelAnimationFrame=oldCancel;}
 });

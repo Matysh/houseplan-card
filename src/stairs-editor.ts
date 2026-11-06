@@ -1,4 +1,5 @@
 import { html, nothing, svg, type TemplateResult } from 'lit';
+import { scheduleHouseplanEditor } from './live-editor';
 import { canonicalizeConfigGeometry } from './coordinate-canonicalization';
 import { FURN_WALL_CELLS } from './furniture-placement';
 import {
@@ -259,7 +260,9 @@ export class StairEditorRuntime {
       epoch: this.owner._cfgEpoch, cellCm: this.owner._cellCm, pitch: this.owner._gridPitch,
       color: this.owner._decorStyle.color, opacity: this.owner._decorStyle.opacity,
       stair: this.placementAt(point, 'stair-placement-preview', surfaces), surfaces };
-    this.owner.requestUpdate();
+    // Hover has its own bounded paint. It must not claim anonymous host
+    // updates used by context menus, history controls and Properties.
+    scheduleHouseplanEditor(this.owner);
     return true;
   }
 

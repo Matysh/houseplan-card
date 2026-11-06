@@ -27,7 +27,9 @@ cancelling clears it; a host/HA update keeps a single visible owner. The press
 transfers ownership to the existing draft. Inputs without hover still place by
 the same gesture. Escape over hover hides only the preview: it never consumes
 the release of a later navigation gesture. Hover cannot coexist with a held
-stair draft or transform.
+stair draft or transform. Hover schedules its own coalesced local paint; it
+does not own unrelated host updates for node menus, Properties or history
+controls (#1338). Only a held draft or moving transform uses gesture routing.
 Stairs are drawn like decor shapes (#676): press on the plan, drag and release.
 The dominant drag axis is the rise axis, the ascent points from the press to
 the release ("draw from the bottom up"), the sizes are the drawn extents (never

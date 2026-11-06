@@ -132,3 +132,16 @@ test('#1253 mouse hover never coexists with a held touch draft',()=>{
  editor.pointerCancel(hoverEvent(600,500,{pointerType:'touch'}));
  assert.equal(counts().saves,0);assert.equal(counts().history,0);
 });
+
+test('#1338 thirty hover positions coalesce locally without full host renders',async()=>{
+ const {disposeHouseplanEditor}=await import('../test-build/live-editor.js');
+ const oldRaf=globalThis.requestAnimationFrame,oldCancel=globalThis.cancelAnimationFrame;let frames=0;
+ globalThis.requestAnimationFrame=()=>++frames;globalThis.cancelAnimationFrame=()=>{};
+ const {host,editor,counts}=setup();arm(host,editor,'straight');const before=counts();
+ try{
+  for(let i=0;i<30;i++)editor.pointerMove(hoverEvent(600+i,500));
+  assert.equal(frames,1);assert.deepEqual(counts(),before,'hover itself does not request a full host update');
+  assert.equal(editor.live,true);assert.equal(editor.dragging,false);
+  editor.clearPlacementPreview();assert.equal(editor.live,false);assert.equal(counts().updates,before.updates+1,'terminal clear restores the host');
+ }finally{disposeHouseplanEditor(host);globalThis.requestAnimationFrame=oldRaf;globalThis.cancelAnimationFrame=oldCancel;}
+});

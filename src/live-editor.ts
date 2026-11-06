@@ -30,7 +30,7 @@ interface LiveEditorHost {
   _tool: string;
   _deviceDrag: { id: string } | null;
   _editorRuntime?: {
-    readonly stairs?: { readonly live: boolean; renderLayer(): unknown; renderFrame(view: unknown): unknown };
+    readonly stairs?: { readonly live: boolean; readonly dragging: boolean; renderLayer(): unknown; renderFrame(view: unknown): unknown };
     readonly properties?: { selection(): unknown; readonly selectedTextId?: string | null; measureGroupText?(root: ParentNode): void };
     readonly physicalGesture?: { readonly active: boolean; readonly drag: { kind: string; id: string; moved: boolean } | null };
     readonly backdropGesture?: { readonly active: boolean; renderFrame(view: unknown): unknown };
@@ -116,7 +116,9 @@ const activeEditorGesture = (host: LiveEditorHost): boolean => host._mode !== 'v
   !!host._deviceDrag || !!host._editorRuntime?.physicalGesture?.active
   || !!host._decorDraft || !!host._decorMove || !!host._dtDrag || !!host._editorRuntime?.backdropGesture?.active
   || !!host._opDrag
-  || !!host._resize?.dragging || !!host._editorRuntime?.stairs?.live || !!host._ledEditor?.dragging
+  || !!host._resize?.dragging
+  // Hover paint is live, but owns no gesture or unrelated menu/chrome update.
+  || !!(host._editorRuntime?.stairs?.dragging && host._editorRuntime.stairs.live) || !!host._ledEditor?.dragging
 );
 
 /**

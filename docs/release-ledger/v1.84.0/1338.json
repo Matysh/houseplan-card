@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1338,
+  "baseStable": "v1.84.0",
+  "category": "line-fix",
+  "summary": {
+    "ru": "Hover лестницы сохраняет обычное обновление меню и панелей.",
+    "en": "Stair hover preserves normal menu and panel updates."
+  },
+  "rationale": "Fix a defect in the unreleased #1253 hover feature; independently reproduced on dev418a72a888, not present in the base stable UI."
+}

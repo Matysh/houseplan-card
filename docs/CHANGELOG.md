@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Stair placement hover preserves node menus and panel/history updates while keeping local preview paint coalesced (#1338).
+
 - Select: attach a dangling endpoint to a wall/partition interior with an exact split, server proof and one Undo/Redo command (#1330).
 
 - Preserve smoke error visibility through transparent delegates and strict assertions; finish every native node-hit browser through the shared guard. #1337
