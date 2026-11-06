@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5604,
+  "revision": 5605,
   "nextTicket": 267,
   "nextFence": 267,
   "tasks": {
@@ -3896,7 +3896,7 @@
       "ownerDecision": null,
       "ticket": 266,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793963707739,
       "reviewEntry": 2,
       "patchId": "df97369269631d9cb996547f944d5e340639b467",
@@ -3921,6 +3921,15 @@
         "entry": 1,
         "detail": "Поведение: process-next/test/metrics.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Браузер: space switch transitions: failed",
         "eventId": "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:3:return:return:1329"
+      },
+      "s6": {
+        "id": "20261106T111528655-f284b624",
+        "name": "Тесты для задачи #1329 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T111528655-f284b624/report.json",
+        "materialSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
+        "status": "passed",
+        "finishedAt": "2026-11-06T11:18:31.524Z",
+        "failures": []
       }
     },
     "1331": {
@@ -4128,9 +4137,9 @@
     "fence": 266,
     "materialSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
     "expectedBase": "eaba96b2f80b930dd1a57fe5f23a0be5e193e357",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793963710436,
-    "expiresAt": 1793964190716,
+    "expiresAt": 1793967512809,
     "patchId": "df97369269631d9cb996547f944d5e340639b467"
   },
   "events": {
@@ -4434,6 +4443,34 @@
         "materialSha": "0921a7720f5681c18c293ba7c338b3769075d93e",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:df57a6d9-9300-4299-a9ce-468a262ea06b:finish:3:s6-complete": {
+      "digest": "2fcb24fc9499220827492cc94c0bb93252371c5035ba3ed36c84004bf3839697",
+      "issue": 1329,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1329,
+        "at": 1793963912809,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
+        "phase": "review",
+        "evidence": {
+          "id": "20261106T111528655-f284b624",
+          "name": "Тесты для задачи #1329 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T111528655-f284b624/report.json",
+          "materialSha": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
+          "status": "passed",
+          "finishedAt": "2026-11-06T11:18:31.524Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Реализация: hasContent запоминается в уже существующем _frameOf cache по cf.all до fallback и editor-grow union. Камера, масштаб и frame bounds сохраняют поведение. Рендер стрелки получает явный флаг содержимого и проверку принадлежности _frame.id активному _space; fallback/предыдущее пространство не считаются планом. Дополнительного прохода геометрии на кадре нет.\n\nРегрессия Node view-frame-empty: на исходном helper первый кейс падает (1/2 overall), положительный roomless контроль проходит; на исправленном коде оба проходят. Native кейсы встроены в существующий smoke_space_switch_transitions через отдельный helper: первый onboarding/create, pan пустой камеры без config/layout writes, реальная отдельная перегородка без комнат и Fit, удаление последнего объекта при editor-grow, создание второго пустого пространства после panned nonempty. Наблюдатель DOM проверяет отсутствие ложных переходных стрелок, UI не подменяется приватными состояниями. Полный native smoke прошёл со всеми прежними assertions до блокировки baseline.\n\nПо #1328 проверены catalog и plan без areaTests: Node — product/presentation/performance/task-release, выбирается как читатель src/view-frame-view.ts; native navigation выбирается по контракту области и изменению helper. Монолитный houseplan-card.ts даёт честный full fast Node fallback. Профиль не сужается. Релизная мета: уже открытый владельцем milestone1.85.0 #13, stablebasev1.84.0, stable-fix; выпуск не поручен.\n\nПервый полный S6 run20261106T060327001-ec241f65 был failed на14исходныхошибках8Node-файлов, отдельно повторённых на devbe93. Они и дополнительные2ошибки config-lifecycle устранены в совместном пакете #1331/#1332, принятом ревью и слитом в deveaba96b2f80b930dd1a57fe5f23a0be5e193e357. Его полный S6 прошёл562шага. Blocked задачи #1329 снимается; это не зачёт её собственного S6. Штатный finish заново актуализирует ветку и выполняет текущую центральную выборку перед код-ревью, с применимым reuse.\n\nСохранённая реализация до актуализации: origin/codex/1329-empty-home-arrow,0921a7720f. Companion: [task-impact/1329.md](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1329.md) — расширить настоящий HA first-space/navigation journey перед следующей бетой. Логи/evidence: output/issue-1329 и artifacts/empty-space-home-arrow. Пользовательский HA не менялся.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
