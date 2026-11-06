@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6083,
+  "revision": 6084,
   "nextTicket": 282,
   "nextFence": 282,
   "tasks": {
@@ -3856,7 +3856,8 @@
       "readyAt": 1793988074645,
       "reviewEntry": 1,
       "patchId": "d25444d959c88846c88c5ea4f6494ebebdd3564cf0280bbaa7176e869defe2dc",
-      "changedFiles": []
+      "changedFiles": [],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -4025,14 +4026,18 @@
     "fence": 281,
     "materialSha": "b01159e90270a4a454be4d7acbca9d90a51760f7",
     "expectedBase": "b01159e90270a4a454be4d7acbca9d90a51760f7",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793988079009,
-    "expiresAt": 1793988385009,
+    "expiresAt": 1793991689420,
     "patchId": "d25444d959c88846c88c5ea4f6494ebebdd3564cf0280bbaa7176e869defe2dc"
   },
   "events": {
     "finish:bbcc1ede-7433-4573-93fc-856ad6510959:finish:2:synchronized": {
       "digest": "819df90bdc9a15350d3ab83324cdec014ed2c323a153650cb73680849261c7e0",
+      "issue": 1340
+    },
+    "finish:bbcc1ede-7433-4573-93fc-856ad6510959:finish:3:s6-complete": {
+      "digest": "1497094ad2676e7f3fc47f67e1977af5249c9eaf5ce68fdc1ca29831fb8f0981",
       "issue": 1340
     },
     "finish:bbcc1ede-7433-4573-93fc-856ad6510959": {
