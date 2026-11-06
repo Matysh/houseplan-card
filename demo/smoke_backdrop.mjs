@@ -479,7 +479,7 @@ await settle();
   check('backdrop_edge_release_not_grabbing', await grabbing(), false);
 }
 
-// ---------- 6d) the real upper handle snaps by 5°, Shift stays free -------
+// ---------- 6d) the real upper handle snaps by 5°, Shift snaps to absolute 45° -------
 const rotate = async (shift) => {
   await restore();
   // A new editor session returns the grown view frame to the restored plan.
@@ -518,9 +518,9 @@ const rotate = async (shift) => {
   return (await spaceCfg()).angle;
 };
 check('backdrop_rotate_handle_snaps_five_degrees', await rotate(false), 15);
-const freeAngle = await rotate(true);
-check('backdrop_rotate_shift_preserves_free_angle', near(freeAngle, 17, 0.1), true);
-check('backdrop_rotate_shift_is_not_five_degree_snap', freeAngle % 5 !== 0, true);
+const shiftAngle = await rotate(true);
+check('backdrop_rotate_shift_snaps_absolute_45', shiftAngle, 0);
+check('backdrop_rotate_shift_is_exact_multiple', shiftAngle % 45, 0);
 await restore();
 await mode('view');
 await settle();

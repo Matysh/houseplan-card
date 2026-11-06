@@ -171,7 +171,7 @@ const res = await page.evaluate(async () => {
     && Math.abs((grown.size_cm || 0) - legacySizeCm0 * 2) < 0.01;
   ev('pointerup', stageEl(), lx + 100, ly);
 
-  // ручка поворота: шаг 5°, Shift — мимо шага
+  // ручка поворота: шаг 5°, Shift — абсолютные 45°
   c._decorSel = 'dtm'; c.requestUpdate();
   await c.updateComplete; await sleep(60); await c.updateComplete;
   const [rx, ry] = anchor();
@@ -181,16 +181,16 @@ const res = await page.evaluate(async () => {
   ev('pointermove', stageEl(), rx + 100, ry + 100);   // ровно 45°
   await c.updateComplete;
   out.rotates = Math.abs((c._decorList.find((x) => x.id === 'dtm').angle || 0) - 45) < 1e-6;
+  out.rotationRendered = /rotate\(/.test(attr('dtm', 'transform') || '');
   ev('pointermove', stageEl(), rx + 100, ry + 2);     // ~1.1° → прилипает к 0
   await c.updateComplete;
   out.snapsTo5 = (c._decorList.find((x) => x.id === 'dtm').angle || 0) === 0;
   ev('pointermove', stageEl(), rx + 100, ry + 2, { shiftKey: true });
   await c.updateComplete;
-  const free = c._decorList.find((x) => x.id === 'dtm').angle;
-  out.shiftGoesFree = free > 0.5 && free < 5;   // тот же жест, но точный угол
+  const snapped = c._decorList.find((x) => x.id === 'dtm').angle || 0;
+  out.shiftSnapsTo45 = snapped === 0; // ближайший абсолютный угол 45°
   ev('pointerup', stageEl(), rx + 100, ry + 2);
   await c.updateComplete;
-  out.rotationRendered = /rotate\(/.test(attr('dtm', 'transform') || '');
   // …а без Shift тот же 1.1° снова прилипает к нулю
   // повернули обратно в ноль — поле исчезает, фигура снова «прямая»
   ev('pointerdown', frame()?.querySelector('.dthandle.dtrot') || stageEl(), rx + 100, ry);
