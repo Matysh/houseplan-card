@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5756,
+  "revision": 5757,
   "nextTicket": 273,
   "nextFence": 273,
   "tasks": {
@@ -1251,7 +1251,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793967493323,
       "reviewEntry": 6,
-      "patchId": "83ed21254145cae9e8db9fd3219a942ecb03213b",
+      "patchId": "247c5b27bdd3c8f26fe0cb59cdfced4df9f87cbb",
       "changedFiles": [
         "demo/helpers/stairs-placement-preview.mjs",
         "demo/smoke_stairs.mjs",
@@ -4100,10 +4100,11 @@
     "token": "272:finish:b2c3b7c9-d6c1-4403-abef-069f0b0b510f:finish:1:admit",
     "fence": 272,
     "materialSha": "418a72a888ea5662808e0eb8236e3f40111cc1b1",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
+    "phase": "testing",
     "admittedAt": 1793967497385,
-    "expiresAt": 1793967797385
+    "expiresAt": 1793967803752,
+    "patchId": "247c5b27bdd3c8f26fe0cb59cdfced4df9f87cbb"
   },
   "events": {
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
@@ -4300,6 +4301,10 @@
     },
     "github:42214867477:1:completions:metadata:015a35f6-9f8d-4031-aa5f-c9d117145549:task-notice:1253::": {
       "digest": "1e592e747bffd3ee062a1e5ab65506b5ed64f382059c90ced67dc501e237f9d4",
+      "issue": 1253
+    },
+    "finish:b2c3b7c9-d6c1-4403-abef-069f0b0b510f:finish:2:synchronized": {
+      "digest": "269cf9a914cae9cf1314e0643367da53d2400a2ff0ef7e16693032f6375d6126",
       "issue": 1253
     },
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6": {
