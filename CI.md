@@ -1,571 +1,576 @@
 # CI: проверенный продукт в main
 
-**Не подтверждено.** Продукт или входы его сборки в main отличаются от подтверждённого выпуска.
+**Passing:** продукт в main соответствует подтверждённому выпуску.
 
 Main: [`52610e2100528c9e8af7bd36f71984e066f9b9c9`](https://github.com/Matysh/houseplan-card/commit/52610e2100528c9e8af7bd36f71984e066f9b9c9).
 Статус использует уже завершённые проверки выпуска. Новых тестов, сборок или гейтов этот отчёт не запускает.
 
-Проверенный коммит: [`626c645948d2f9ecab458b410497641fd3487c69`](https://github.com/Matysh/houseplan-card/commit/626c645948d2f9ecab458b410497641fd3487c69).
-Выпуск: [v1.84.0](https://github.com/Matysh/houseplan-card/releases/tag/v1.84.0). Профиль: **stable**.
-Завершение исходного результата: 2026-11-05T20:55:28.251Z. Сохранённый результат локального/резервного тест-сета выпуска.
-ID исходного тест-сета: `20261105T205108464-3a005aea`. SHA256 отчёта: `8cefa0f724377961553bf4773ffd5ac06ad7fa4fcbc10cc991b359a7eb24a78a`.
-Обязательных шагов: 551; зачтено прежних успешных результатов: 546.
+Проверенный коммит: [`52610e2100528c9e8af7bd36f71984e066f9b9c9`](https://github.com/Matysh/houseplan-card/commit/52610e2100528c9e8af7bd36f71984e066f9b9c9).
+Выпуск: [v1.85.0](https://github.com/Matysh/houseplan-card/releases/tag/v1.85.0). Профиль: **stable**.
+Завершение исходного результата: 2026-11-06T19:53:18.995Z. Сохранённый результат локального/резервного тест-сета выпуска.
+ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 отчёта: `b79ebb386c2d1ee43623095f6a3529aac8812894a5823305c1fc677b17d4b83b`.
+Обязательных шагов: 556; зачтено прежних успешных результатов: 26.
 
 <details>
 <summary>Состав исходных проверок</summary>
 
-- Сборка и типы продукта: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Подготовка модулей для тестов: reused; исходный набор 20261105T201321284-c9d3eb36.
+- Сборка и типы продукта: passed.
+- Подготовка модулей для тестов: passed.
 - Подготовка карточки для браузера: passed.
+- Поведение: Устройства и действия: passed; tests: 1078, passed: 1078, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Геометрия и стены: passed; tests: 1346, passed: 1345, failed: 0, skipped: 1, cancelled: 0, todo: 0.
+- Поведение: Отрисовка View: reused; tests: 384, passed: 384, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
+- Поведение: Данные и сохранение: reused; tests: 370, passed: 370, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
+- Поведение: Новые продуктовые проверки: passed; tests: 477, passed: 477, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Общие функции: passed; tests: 244, passed: 244, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Редактор и история: reused; tests: 369, passed: 369, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
+- Поведение: Интерфейс и ввод: reused; tests: 153, passed: 153, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
+- Поведение: Свет и солнце: reused; tests: 208, passed: 208, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
+- Поведение: Текст и локализация: reused; tests: 41, passed: 41, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
+- Поведение: Экспорт и PDF: reused; tests: 71, passed: 71, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
+- Backend и сбор покрытия: reused; tests: 3074, passed: 3073, failed: 0, skipped: 1; исходный набор 20261106T182228856-a3f729e9.
 - Подготовка проверяемого ZIP и кандидата: passed.
-- 75 визуальных кадров: панель 61, Lovelace 13, Static 1: reused; tests: 75, passed: 75, failed: 0, skipped: 0; исходный набор 20261105T200106153-d6446e34.
-- HA E2E beta: journeys: reused; tests: 10, passed: 10, failed: 0, skipped: 0; исходный набор 20261105T200106153-d6446e34.
-- HA E2E beta: first-run: reused; tests: 2, passed: 2, failed: 0, skipped: 0; исходный набор 20261105T200106153-d6446e34.
+- Сохранение замера stable для следующей беты: passed (диагностика).
+- Браузер: Сохранённый план при первом открытии без прав редактирования: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Команда устройству сразу после холодного открытия View: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Поздний ответ и смена прав пользователя: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Подтверждение команды устройству: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Жесты редактора без случайного клика или команды: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Жесты на поверхности плана: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Выход из редактора и несохранённые изменения: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Отказ операции и целостность истории геометрии: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Создание декора и выбор созданного объекта: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Переключение между этажами: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Обновление живого текста: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Живое состояние и касания в изометрии: reused; исходный набор 20261106T170450147-af8d43c7.
+- Браузер: Восстановление View после задержки или сбоя: reused; исходный набор 20261106T170450147-af8d43c7.
+- 75 визуальных кадров: панель 61, Lovelace 13, Static 1: reused; tests: 75, passed: 75, failed: 0, skipped: 0; исходный набор 20261106T170450147-af8d43c7.
+- HA E2E beta: journeys: reused; tests: 10, passed: 10, failed: 0, skipped: 0; исходный набор 20261106T182228856-a3f729e9.
+- HA E2E beta: first-run: reused; tests: 2, passed: 2, failed: 0, skipped: 0; исходный набор 20261106T182228856-a3f729e9.
 - HA E2E beta: upgrade: passed; tests: 1, passed: 1, failed: 0, skipped: 0.
-- Остальные визуальные эталоны: reused; tests: 251, passed: 251, failed: 0, skipped: 0; исходный набор 20261105T201321284-c9d3eb36.
-- HA E2E remainder: journeys: reused; tests: 80, passed: 80, failed: 0, skipped: 0; исходный набор 20261105T201321284-c9d3eb36.
+- Браузер: active chain ink: passed.
+- Браузер: activity color settings: passed.
+- Браузер: align guides: passed.
+- Браузер: approved ui: passed.
+- Браузер: approved ui 1207: passed.
+- Браузер: area relocation: passed.
+- Браузер: area relocation safety: passed.
+- Браузер: audit 1490: passed.
+- Браузер: backdrop: passed.
+- Браузер: backdrop guard: passed.
+- Браузер: backup archive: passed.
+- Браузер: backup transfer: passed.
+- Браузер: bg color: passed.
+- Браузер: binding picker: passed.
+- Браузер: binding ui: passed.
+- Браузер: build identity: passed.
+- Браузер: canvas frame: passed.
+- Браузер: capture stability: passed.
+- Браузер: card controls: passed.
+- Браузер: card picker locale: passed.
+- Браузер: card tool conflict: passed.
+- Браузер: climate once: passed.
+- Браузер: climate temp: passed.
+- Браузер: cold view vacuum: passed.
+- Браузер: color picker: passed.
+- Браузер: color picker consumers: passed.
+- Браузер: color picker presentation: passed.
+- Браузер: config authority: passed.
+- Браузер: config lifecycle: passed.
+- Браузер: config reload race: passed.
+- Браузер: config writer: passed.
+- Браузер: continuity stage layout: passed.
+- Браузер: controls: passed.
+- Браузер: cover no plate: passed.
+- Браузер: cover not primary: passed.
+- Браузер: cover plate precedence: passed.
+- Браузер: cover tap: passed.
+- Браузер: css minifier semantics: passed.
+- Браузер: danger confirm branches: passed.
+- Браузер: danger confirmation: passed.
+- Браузер: daycycle layer budget: passed.
+- Браузер: daycycle outline removed: passed.
+- Браузер: daycycle raster: passed.
+- Браузер: daycycle zoom layers: passed.
+- Браузер: decor: passed.
+- Браузер: decor default persist: passed.
+- Браузер: decor group style cache: passed.
+- Браузер: decor group text scale: passed.
+- Браузер: decor images: passed.
+- Браузер: decor layer order: passed.
+- Браузер: decor line click: passed.
+- Браузер: decor multiselect: passed.
+- Браузер: decor order: passed.
+- Браузер: decor preview ownership: passed.
+- Браузер: decor rotation shift: passed.
+- Браузер: decor text: passed.
+- Браузер: deeplink: passed.
+- Браузер: detached authority: passed.
+- Браузер: device battery: passed.
+- Браузер: device battery performance: passed.
+- Браузер: device battery tooltip: passed.
+- Браузер: device battery zigbee: passed.
+- Браузер: device contact composition: passed.
+- Браузер: device contact corners: passed.
+- Браузер: device contact designer: passed.
+- Браузер: device contact editor frame: passed.
+- Браузер: device contact live drag: passed.
+- Браузер: device contact reflow: passed.
+- Браузер: device contact walls: passed.
+- Браузер: device contact work: passed.
+- Браузер: device contact zoom: passed.
+- Браузер: device contacts: passed.
+- Браузер: device copy: passed.
+- Браузер: device equal spacing: passed.
+- Браузер: device hit capsules: passed.
+- Браузер: device icon design: passed.
+- Браузер: device icon pixel alignment: passed.
+- Браузер: device inbox: passed.
+- Браузер: device inbox batch: passed.
+- Браузер: device inbox delete: passed.
+- Браузер: device issue reasons: passed.
+- Браузер: device more info: passed.
+- Браузер: device offline: passed.
+- Браузер: device position history: passed.
+- Браузер: device preview parity: passed.
+- Браузер: device settings 947: passed.
+- Браузер: device settings action: passed.
+- Браузер: device settings form: passed.
+- Браузер: device signal: passed.
+- Браузер: device signal settings: passed.
+- Браузер: device signal topology: passed.
+- Браузер: device structure history: passed.
+- Браузер: dialog config parity: passed.
+- Браузер: dialog footer width: passed.
+- Браузер: dialog help clipping: passed.
+- Браузер: dialog modal recovery: passed.
+- Браузер: dialog picker 998: passed.
+- Браузер: dialog polish 603: passed.
+- Браузер: dialog polish 605: passed.
+- Браузер: dialog segments i18n: passed.
+- Браузер: dialog ui kit: passed.
+- Браузер: dialog zombie: passed.
+- Браузер: direct signal lifecycle: passed.
+- Браузер: direct wall geometry: passed.
+- Браузер: direct zigbee lqi: passed.
+- Браузер: disabled device: passed.
+- Браузер: discard copy: passed.
+- Браузер: discard dialog polish: passed.
+- Браузер: discovery filters: passed.
+- Браузер: drag bounds: passed.
+- Браузер: draw wall thickness: passed.
+- Браузер: e2e hooks: passed.
+- Браузер: e2e primitive fields: passed.
+- Браузер: easy converter openings: passed.
+- Браузер: edge cases: passed.
+- Браузер: edit walk: passed.
+- Браузер: editor command latency: passed.
+- Браузер: editor guides lifecycle: passed.
+- Браузер: editor nudge: passed.
+- Браузер: editor return focus 1248: passed.
+- Браузер: editor styles lazy: passed.
+- Браузер: editor tabs: passed.
+- Браузер: empty backup import: passed.
+- Браузер: entity parent dedup: passed.
+- Браузер: entry stale: passed.
+- Браузер: esc dialogs: passed.
+- Браузер: external screens: passed.
+- Браузер: feedback v2: passed.
+- Браузер: first space converter: passed.
+- Браузер: first space large plan: passed.
+- Браузер: fixed floor: passed.
+- Браузер: fixture contract: passed.
+- Браузер: floor cache reuse: passed.
+- Браузер: floor geometry cache: passed.
+- Браузер: floor snapshot reuse: passed.
+- Браузер: font scales: passed.
+- Браузер: free walls: passed.
+- Браузер: french locale: passed.
+- Браузер: furniture: passed.
+- Браузер: furniture lazy art: passed.
+- Браузер: furniture pan: passed.
+- Браузер: furniture polish: passed.
+- Браузер: gear tabs: passed.
+- Браузер: general settings: passed.
+- Браузер: general settings form: passed.
+- Браузер: geometry cleanup 842: passed.
+- Браузер: geometry corpus: passed.
+- Браузер: german locale: passed.
+- Браузер: glow: passed.
+- Браузер: glow blending: passed.
+- Браузер: glow fail dark: passed.
+- Браузер: glow geometry resilience: passed.
+- Браузер: grid fade: passed.
+- Браузер: grid scale invariance: passed.
+- Браузер: grid snap: passed.
+- Браузер: gs always: passed.
+- Браузер: ha controls: passed.
+- Браузер: ha form shell parity: passed.
+- Браузер: header compact spaces: passed.
+- Браузер: header observer retirement: passed.
+- Браузер: help affordance: passed.
+- Браузер: hidden device toggle: passed.
+- Браузер: hidden flag: passed.
+- Браузер: hide layers: passed.
+- Браузер: hide room names: passed.
+- Браузер: household journeys: passed.
+- Браузер: houseplan panel: passed.
+- Браузер: icon center: passed.
+- Браузер: icon placeholder: passed.
+- Браузер: icon scale: passed.
+- Браузер: inert openings: passed.
+- Браузер: infinite canvas: passed.
+- Браузер: info card confirm: passed.
+- Браузер: info card context: passed.
+- Браузер: interior window light: passed.
+- Браузер: island rooms: passed.
+- Браузер: iso first frame: passed.
+- Браузер: iso flat parity: passed.
+- Браузер: iso floor switch: passed.
+- Браузер: iso room label metrics: passed.
+- Браузер: iso sun: passed.
+- Браузер: iso theme walls: passed.
+- Браузер: iso tiles: passed.
+- Браузер: isometric contract: passed.
+- Браузер: junction holes: passed.
+- Браузер: junction limits: passed.
+- Браузер: junction patch resilience: passed.
+- Браузер: kiosk: passed.
+- Браузер: kiosk cycle context: passed.
+- Браузер: kiosk pan lock: passed.
+- Браузер: kiosk scale no editor: passed.
+- Браузер: kiosk space navigation: passed.
+- Браузер: kiosk viewport recovery: passed.
+- Браузер: lattice write barrier: passed.
+- Браузер: layout fixture barrier: passed.
+- Браузер: layout sync: passed.
+- Браузер: lazy admin locale: passed.
+- Браузер: lazy editor chunk: passed.
+- Браузер: led strip bind: passed.
+- Браузер: led strip draw: passed.
+- Браузер: led strip field: passed.
+- Браузер: led strip glow: passed.
+- Браузер: led strip tube: passed.
+- Браузер: led zoom quality: passed.
+- Браузер: legacy geometry: passed.
+- Браузер: light badges: passed.
+- Браузер: light default tap: passed.
+- Браузер: linked virtual light: passed.
+- Браузер: live pan coverage: passed.
+- Браузер: live pan viewbox: passed.
+- Браузер: lock action: passed.
+- Браузер: lock invariant: passed.
+- Браузер: long press gesture: passed.
+- Браузер: lovelace editor locale 1070: passed.
+- Браузер: marker alert view: passed.
+- Браузер: marker alerts: passed.
+- Браузер: marker shadow transitions: passed.
+- Браузер: marker state source: passed.
+- Браузер: marker stay: passed.
+- Браузер: marker write rollback: passed.
+- Браузер: merge highlight: passed.
+- Браузер: merge split: passed.
+- Браузер: mobile view header: passed.
+- Браузер: modal toast 956: passed.
+- Браузер: mode transition: passed.
+- Браузер: modes: passed.
+- Браузер: moon: passed.
+- Браузер: moon phase direction: passed.
+- Браузер: moon static: passed.
+- Браузер: moon status: passed.
+- Браузер: motion sense: passed.
+- Браузер: mounted authority: passed.
+- Браузер: multiwall junction: passed.
+- Браузер: multiwall strip containment: passed.
+- Браузер: native grid draw: passed.
+- Браузер: nav persist: passed.
+- Браузер: near axis optimize: passed.
+- Браузер: near orthogonal junction: passed.
+- Браузер: new device: passed.
+- Браузер: node dependency carrier: passed.
+- Браузер: node history context: passed.
+- Браузер: open passage: passed.
+- Браузер: opening binding: passed.
+- Браузер: opening drag: passed.
+- Браузер: opening drag graph: passed.
+- Браузер: opening entity search: passed.
+- Браузер: opening escape wide: passed.
+- Браузер: opening inner distances: passed.
+- Браузер: opening measure: passed.
+- Браузер: opening mode fill: passed.
+- Браузер: opening preview: passed.
+- Браузер: opening tunnel fill: passed.
+- Браузер: optimize cleanup: passed.
+- Браузер: optimize coincident partition: passed.
+- Браузер: optimize context: passed.
+- Браузер: optimize coordinate canonicalization: passed.
+- Браузер: optimize geometry preflight: passed.
+- Браузер: optimize micro interval: passed.
+- Браузер: optimize unverified: passed.
+- Браузер: optional space model: passed.
+- Браузер: orphan space references: passed.
+- Браузер: pageshow layout ack: passed.
+- Браузер: pan any zoom: passed.
+- Браузер: panel header overflow: passed.
+- Браузер: panel header touch: passed.
+- Браузер: panel route kiosk: passed.
+- Браузер: partition openings: passed.
+- Браузер: partition openings preview: passed.
+- Браузер: pdf export: passed.
+- Браузер: physical body characterization: passed.
+- Браузер: picker motion: passed.
+- Браузер: placement context message: passed.
+- Браузер: plan device landmarks: passed.
+- Браузер: plan drawing repairs: passed.
+- Браузер: plan entry tool: passed.
+- Браузер: plan graph cold: passed.
+- Браузер: plan graph editor: passed.
+- Браузер: plan picker: passed.
+- Браузер: plan rotation: passed.
+- Браузер: plan rotation editors: passed.
+- Браузер: plan rotation mobile: passed.
+- Браузер: plan rotation touch: passed.
+- Браузер: plan signed: passed.
+- Браузер: plan snap overlay: passed.
+- Браузер: plan upload limit: passed.
+- Браузер: plan upload race: passed.
+- Браузер: plan upload reject: passed.
+- Браузер: portable recovery: passed.
+- Браузер: post write adoption: passed.
+- Браузер: preflight diagnostics: passed.
+- Браузер: preloader: passed.
+- Браузер: preloader lifecycle: passed.
+- Браузер: properties panel: passed.
+- Браузер: radar legacy removal 947: passed.
+- Браузер: radar live: passed.
+- Браузер: radar setup: passed.
+- Браузер: range line draft: passed.
+- Браузер: real plan masonry: passed.
+- Браузер: registryless opening: passed.
+- Браузер: render invalidation: passed.
+- Браузер: render parity: passed.
+- Браузер: render perf: passed.
+- Браузер: resize audit 1550: passed.
+- Браузер: resize inner dimensions: passed.
+- Браузер: resize labels: passed.
+- Браузер: resize outer reconciliation: passed.
+- Браузер: resize pointer real plan: passed.
+- Браузер: resize wall thickness: passed.
+- Браузер: rgb alarm: passed.
+- Браузер: room appearance: passed.
+- Браузер: room area touch: passed.
+- Браузер: room autoclose: passed.
+- Браузер: room cards: passed.
+- Браузер: room climate placement: passed.
+- Браузер: room co2: passed.
+- Браузер: room contact grid: passed.
+- Браузер: room contact storage: passed.
+- Браузер: room device discovery: passed.
+- Браузер: room dimming removed: passed.
+- Браузер: room face select: passed.
+- Браузер: room fill transitions: passed.
+- Браузер: room fit: passed.
+- Браузер: room gear drag: passed.
+- Браузер: room link: passed.
+- Браузер: room metrics alignment: passed.
+- Браузер: room opening host: passed.
+- Браузер: room resize: passed.
+- Браузер: room save retry 946: passed.
+- Браузер: room settings: passed.
+- Браузер: room settings 946: passed.
+- Браузер: room settings form: passed.
+- Браузер: room temperature thresholds: passed.
+- Браузер: room tooltip toggle: passed.
+- Браузер: save race: passed.
+- Браузер: saved plans: passed.
+- Браузер: screen camera 1165: passed.
+- Браузер: sections resize: passed.
+- Браузер: selection geometry 1207: passed.
+- Браузер: selective invalidation: passed.
+- Браузер: selective invalidation authority: passed.
+- Браузер: selective invalidation history0: passed.
+- Браузер: selective invalidation history320: passed.
+- Браузер: selective invalidation inactive: passed.
+- Браузер: selective invalidation visible: passed.
+- Браузер: sensor tick freshness: passed.
+- Браузер: settings button alignment 955: passed.
+- Браузер: settings dialog cards: passed.
+- Браузер: settings mock match 948: passed.
+- Браузер: settings native select 947: passed.
+- Браузер: settings navigation: passed.
+- Браузер: settings polish 955: passed.
+- Браузер: settings polish led climate 955: passed.
+- Браузер: settings polish radar vacuum 955: passed.
+- Браузер: settings polish room sensor 955: passed.
+- Браузер: settings select: passed.
+- Браузер: sign cap: passed.
+- Браузер: signal low only: passed.
+- Браузер: signal visibility: passed.
+- Браузер: signal visibility device policy: passed.
+- Браузер: signal visibility lifecycle: passed.
+- Браузер: signal visibility ui: passed.
+- Браузер: signal visibility work: passed.
+- Браузер: size angle parity: passed.
+- Браузер: smooth zoom: passed.
+- Браузер: space battery policy: passed.
+- Браузер: space card: passed.
+- Браузер: space card bg: passed.
+- Браузер: space card decor capability: passed.
+- Браузер: space card identity: passed.
+- Браузер: space copy: passed.
+- Браузер: space copy categories: passed.
+- Браузер: space create display defaults: passed.
+- Браузер: space delete with devices: passed.
+- Браузер: space scale defaults: passed.
+- Браузер: space settings: passed.
+- Браузер: space settings form: passed.
+- Браузер: space tab reorder: passed.
+- Браузер: split corner wall: passed.
+- Браузер: split nonsnap: passed.
+- Браузер: split polyline: passed.
+- Браузер: stair arrival: passed.
+- Браузер: stairs: passed.
+- Браузер: state value: passed.
+- Браузер: static config events: passed.
+- Браузер: static icon: passed.
+- Браузер: static wall openings: passed.
+- Браузер: static zoom sharpness: passed.
+- Браузер: styling hooks: passed.
+- Браузер: subarea: passed.
+- Браузер: summary camera: passed.
+- Браузер: summary camera cold: passed.
+- Браузер: summary camera motion: passed.
+- Браузер: summary camera restore: passed.
+- Браузер: summary dialog scroll: passed.
+- Браузер: summary first paint: passed.
+- Браузер: summary panel: passed.
+- Браузер: summary panel polish: passed.
+- Браузер: summary warm attach: passed.
+- Браузер: summary weather: passed.
+- Браузер: sun: passed.
+- Браузер: sun live bg: passed.
+- Браузер: sun rim: passed.
+- Браузер: sun soft: passed.
+- Браузер: sun transparent: passed.
+- Браузер: support diagnostics: passed.
+- Браузер: support feedback: passed.
+- Браузер: svg export: passed.
+- Браузер: svg sandbox: passed.
+- Браузер: tap ctx: passed.
+- Браузер: tap run: passed.
+- Браузер: temp fill: passed.
+- Браузер: test facade: passed.
+- Браузер: toast ownership 1246: passed.
+- Браузер: toggle entity: passed.
+- Браузер: toolbar stable width: passed.
+- Браузер: touch tips: passed.
+- Браузер: ui 1051: passed.
+- Браузер: ui 1051 native: passed.
+- Браузер: ui kit motion: passed.
+- Браузер: ui lab 1081: passed.
+- Браузер: ui lab grid: passed.
+- Браузер: ui polish 1132: passed.
+- Браузер: ui polish 1145: passed.
+- Браузер: ui polish 963: passed.
+- Браузер: ui polish 963 reference: passed.
+- Браузер: ui polish 963 touch: passed.
+- Браузер: ui polish 976: passed.
+- Браузер: unified wall tool: passed.
+- Браузер: ux fixes: passed.
+- Браузер: v8 draft write: passed.
+- Браузер: vacuum: passed.
+- Браузер: vacuum camera: passed.
+- Браузер: vacuum dock restart: passed.
+- Браузер: vacuum ecovacs: passed.
+- Браузер: vacuum firstuse: passed.
+- Браузер: vacuum history: passed.
+- Браузер: vacuum history context: passed.
+- Браузер: vacuum history geometry: passed.
+- Браузер: vacuum history touch: passed.
+- Браузер: vacuum live tail: passed.
+- Браузер: vacuum multifloor: passed.
+- Браузер: vacuum native lifecycle: passed.
+- Браузер: vacuum path fidelity: passed.
+- Браузер: vacuum route draft: passed.
+- Браузер: vacuum route recovery: passed.
+- Браузер: vacuum style 1002: passed.
+- Браузер: vacuum tail continuity: passed.
+- Браузер: value face source: passed.
+- Браузер: value format: passed.
+- Браузер: version recovery: passed.
+- Браузер: view device menu: passed.
+- Браузер: view device menu lifecycle: passed.
+- Браузер: view empty space boundary: passed.
+- Браузер: view entry recovery: passed.
+- Браузер: view hold lifecycle: passed.
+- Браузер: view runtime dirty reload: passed.
+- Браузер: view runtime kiosk recovery: passed.
+- Браузер: view runtime recovery: passed.
+- Браузер: virtual light toggle: passed.
+- Браузер: visual continuity: passed.
+- Браузер: volumetric setting: passed.
+- Браузер: wall adoption alias: passed.
+- Браузер: wall chain history: passed.
+- Браузер: wall chain merge: passed.
+- Браузер: wall chain thickness: passed.
+- Браузер: wall corner join: passed.
+- Браузер: wall draw click: passed.
+- Браузер: wall end align: passed.
+- Браузер: wall face lineage: passed.
+- Браузер: wall face overlap: passed.
+- Браузер: wall face room split: passed.
+- Браузер: wall guide ownership: passed.
+- Браузер: wall hatch density: passed.
+- Браузер: wall junctions: passed.
+- Браузер: wall key roundtrip: passed.
+- Браузер: wall node attach: passed.
+- Браузер: wall node connected: passed.
+- Браузер: wall node delete: passed.
+- Браузер: wall node hit: passed.
+- Браузер: wall node merge: passed.
+- Браузер: wall node move: passed.
+- Браузер: wall node python roundtrip: passed.
+- Браузер: wall node reliability: passed.
+- Браузер: wall node topology: passed.
+- Браузер: wall paper corners: passed.
+- Браузер: wall preview handoff 1247: passed.
+- Браузер: wall smooth joint: passed.
+- Браузер: wall thickness: passed.
+- Браузер: wall thickness transition: passed.
+- Браузер: wall union isolation: passed.
+- Браузер: wallthick hover width: passed.
+- Браузер: wallthick standalone: passed.
+- Браузер: warm dialogs: passed.
+- Браузер: warm geometry camera: passed.
+- Браузер: warm mode adoption: passed.
+- Браузер: warm owners: passed.
+- Браузер: warm remount: passed.
+- Браузер: warm view marker: passed.
+- Браузер: wireless controller parity: passed.
+- Браузер: write authority: passed.
+- Браузер: writer fixed point: passed.
+- Браузер: ws resilience: passed.
+- Браузер: yellow principle: passed.
+- Браузер: zero divider taper: passed.
+- Браузер: zero wall migration unblocked: passed.
+- Браузер: zero walls: passed.
+- Браузер: zigbee enable refresh: passed.
+- Браузер: zigbee hidden placement: passed.
+- Браузер: zigbee incomplete reasons: passed.
+- Браузер: zigbee led topology: passed.
+- Браузер: zigbee map explanation: passed.
+- Браузер: zigbee tooltip layout: passed.
+- Браузер: zigbee topology hover: passed.
+- Браузер: zigbee topology job: passed.
+- Браузер: zoom badge visibility: passed.
+- Браузер: zoom flash: passed.
+- Браузер: zoom out: passed.
+- Браузер: view edit permissions: passed.
+- Остальные визуальные эталоны: reused; tests: 251, passed: 251, failed: 0, skipped: 0; исходный набор 20261106T170450147-af8d43c7.
+- Порог backend coverage перед stable: passed.
+- HA E2E remainder: journeys: reused; tests: 84, passed: 84, failed: 0, skipped: 0; исходный набор 20261106T190825729-e4f3b792.
 - HA E2E remainder: first-run: not-required; tests: 0, passed: 0, failed: 0, skipped: 0.
 - HA E2E remainder: upgrade: not-required; tests: 0, passed: 0, failed: 0, skipped: 0.
-- Поведение: Устройства и действия: reused; tests: 1078, passed: 1078, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261105T201321284-c9d3eb36.
-- Поведение: Геометрия и стены: reused; tests: 1327, passed: 1326, failed: 0, skipped: 1, cancelled: 0, todo: 0; исходный набор 20261105T201321284-c9d3eb36.
-- Поведение: Отрисовка View: reused; tests: 381, passed: 381, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261105T200106153-d6446e34.
-- Поведение: Данные и сохранение: reused; tests: 370, passed: 370, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261105T200106153-d6446e34.
-- Поведение: Новые продуктовые проверки: reused; tests: 422, passed: 422, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261105T201321284-c9d3eb36.
-- Поведение: Общие функции: reused; tests: 244, passed: 244, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261105T201321284-c9d3eb36.
-- Поведение: Редактор и история: reused; tests: 369, passed: 369, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261105T200106153-d6446e34.
-- Поведение: Интерфейс и ввод: reused; tests: 153, passed: 153, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261105T200106153-d6446e34.
-- Поведение: Свет и солнце: reused; tests: 208, passed: 208, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261105T200106153-d6446e34.
-- Поведение: Текст и локализация: reused; tests: 41, passed: 41, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261105T200106153-d6446e34.
-- Поведение: Экспорт и PDF: reused; tests: 71, passed: 71, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261105T195120055-b0609ccb.
-- Backend и сбор покрытия: reused; tests: 2998, passed: 2997, failed: 0, skipped: 1; исходный набор 20261105T125741350-bdc026a4.
-- Сохранение замера stable для следующей беты: passed (диагностика).
-- Браузер: Сохранённый план при первом открытии без прав редактирования: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Команда устройству сразу после холодного открытия View: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Поздний ответ и смена прав пользователя: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Подтверждение команды устройству: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Жесты редактора без случайного клика или команды: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Жесты на поверхности плана: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Выход из редактора и несохранённые изменения: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Отказ операции и целостность истории геометрии: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Создание декора и выбор созданного объекта: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Переключение между этажами: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Обновление живого текста: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Живое состояние и касания в изометрии: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: Восстановление View после задержки или сбоя: reused; исходный набор 20261105T200106153-d6446e34.
-- Браузер: active chain ink: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: activity color settings: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: align guides: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: approved ui: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: approved ui 1207: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: area relocation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: area relocation safety: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: audit 1490: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: backdrop: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: backdrop guard: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: backup archive: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: backup transfer: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: bg color: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: binding picker: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: binding ui: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: build identity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: canvas frame: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: capture stability: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: card controls: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: card picker locale: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: card tool conflict: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: climate once: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: climate temp: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: cold view vacuum: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: color picker: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: color picker consumers: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: color picker presentation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: config authority: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: config lifecycle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: config reload race: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: config writer: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: continuity stage layout: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: controls: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: cover no plate: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: cover not primary: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: cover plate precedence: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: cover tap: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: css minifier semantics: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: danger confirm branches: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: danger confirmation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: daycycle layer budget: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: daycycle outline removed: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: daycycle raster: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: daycycle zoom layers: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor default persist: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor group style cache: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor group text scale: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor images: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor layer order: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor line click: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor multiselect: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor order: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor preview ownership: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: decor text: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: deeplink: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: detached authority: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device battery: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device battery performance: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device battery tooltip: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device battery zigbee: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device contact composition: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device contact corners: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device contact designer: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device contact editor frame: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device contact live drag: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device contact reflow: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device contact walls: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device contact work: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device contact zoom: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device contacts: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device copy: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device equal spacing: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device hit capsules: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device icon design: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device icon pixel alignment: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device inbox: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device inbox batch: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device inbox delete: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device issue reasons: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device more info: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device offline: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device position history: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device preview parity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device settings 947: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device settings action: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device settings form: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device signal: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device signal settings: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device signal topology: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: device structure history: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: dialog config parity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: dialog footer width: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: dialog help clipping: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: dialog modal recovery: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: dialog picker 998: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: dialog polish 603: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: dialog polish 605: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: dialog segments i18n: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: dialog ui kit: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: dialog zombie: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: direct signal lifecycle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: direct wall geometry: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: direct zigbee lqi: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: disabled device: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: discard copy: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: discard dialog polish: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: discovery filters: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: drag bounds: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: draw wall thickness: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: e2e hooks: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: e2e primitive fields: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: easy converter openings: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: edge cases: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: edit walk: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: editor command latency: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: editor guides lifecycle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: editor nudge: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: editor return focus 1248: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: editor styles lazy: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: editor tabs: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: empty backup import: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: entity parent dedup: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: entry stale: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: esc dialogs: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: external screens: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: feedback v2: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: first space converter: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: first space large plan: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: fixed floor: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: fixture contract: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: floor cache reuse: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: floor geometry cache: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: floor snapshot reuse: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: font scales: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: free walls: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: french locale: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: furniture: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: furniture lazy art: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: furniture pan: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: furniture polish: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: gear tabs: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: general settings: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: general settings form: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: geometry cleanup 842: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: geometry corpus: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: german locale: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: glow: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: glow blending: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: glow fail dark: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: glow geometry resilience: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: grid fade: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: grid scale invariance: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: grid snap: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: gs always: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ha controls: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ha form shell parity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: header compact spaces: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: help affordance: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: hidden device toggle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: hidden flag: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: hide layers: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: hide room names: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: household journeys: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: houseplan panel: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: icon center: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: icon placeholder: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: icon scale: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: inert openings: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: infinite canvas: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: info card confirm: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: info card context: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: interior window light: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: island rooms: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: iso first frame: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: iso flat parity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: iso floor switch: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: iso room label metrics: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: iso sun: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: iso theme walls: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: iso tiles: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: isometric contract: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: junction holes: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: junction limits: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: junction patch resilience: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: kiosk: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: kiosk cycle context: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: kiosk pan lock: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: kiosk scale no editor: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: kiosk space navigation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: kiosk viewport recovery: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: lattice write barrier: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: layout fixture barrier: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: layout sync: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: lazy admin locale: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: lazy editor chunk: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: led strip bind: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: led strip draw: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: led strip field: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: led strip glow: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: led strip tube: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: led zoom quality: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: legacy geometry: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: light badges: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: light default tap: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: linked virtual light: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: live pan coverage: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: live pan viewbox: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: lock action: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: lock invariant: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: long press gesture: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: lovelace editor locale 1070: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: marker alert view: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: marker alerts: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: marker shadow transitions: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: marker state source: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: marker stay: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: marker write rollback: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: merge highlight: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: merge split: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: mobile view header: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: modal toast 956: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: mode transition: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: modes: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: moon: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: moon phase direction: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: moon static: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: moon status: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: motion sense: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: mounted authority: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: multiwall junction: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: multiwall strip containment: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: native grid draw: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: nav persist: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: near axis optimize: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: near orthogonal junction: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: new device: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: node dependency carrier: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: node history context: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: open passage: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: opening binding: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: opening drag: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: opening drag graph: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: opening entity search: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: opening escape wide: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: opening inner distances: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: opening measure: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: opening mode fill: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: opening preview: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: opening tunnel fill: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: optimize cleanup: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: optimize coincident partition: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: optimize context: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: optimize coordinate canonicalization: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: optimize geometry preflight: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: optimize micro interval: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: optimize unverified: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: optional space model: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: orphan space references: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: pageshow layout ack: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: pan any zoom: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: panel header overflow: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: panel header touch: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: panel route kiosk: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: partition openings: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: partition openings preview: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: pdf export: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: physical body characterization: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: picker motion: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: placement context message: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan device landmarks: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan drawing repairs: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan entry tool: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan graph cold: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan graph editor: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan picker: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan rotation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan rotation editors: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan rotation mobile: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan rotation touch: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan signed: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan snap overlay: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan upload limit: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan upload race: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: plan upload reject: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: portable recovery: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: post write adoption: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: preflight diagnostics: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: preloader: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: preloader lifecycle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: properties panel: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: radar legacy removal 947: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: radar live: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: radar setup: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: range line draft: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: real plan masonry: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: registryless opening: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: render invalidation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: render parity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: render perf: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: resize audit 1550: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: resize inner dimensions: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: resize labels: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: resize outer reconciliation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: resize pointer real plan: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: resize wall thickness: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: rgb alarm: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room appearance: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room area touch: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room autoclose: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room cards: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room climate placement: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room co2: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room contact grid: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room contact storage: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room device discovery: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room dimming removed: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room face select: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room fill transitions: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room fit: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room gear drag: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room link: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room metrics alignment: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room opening host: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room resize: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room save retry 946: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room settings: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room settings 946: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room settings form: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room temperature thresholds: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: room tooltip toggle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: save race: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: saved plans: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: screen camera 1165: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: sections resize: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: selection geometry 1207: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: selective invalidation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: selective invalidation authority: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: selective invalidation history0: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: selective invalidation history320: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: selective invalidation inactive: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: selective invalidation visible: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: sensor tick freshness: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: settings button alignment 955: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: settings dialog cards: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: settings mock match 948: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: settings native select 947: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: settings navigation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: settings polish 955: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: settings polish led climate 955: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: settings polish radar vacuum 955: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: settings polish room sensor 955: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: settings select: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: sign cap: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: signal low only: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: signal visibility: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: signal visibility device policy: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: signal visibility lifecycle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: signal visibility ui: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: signal visibility work: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: size angle parity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: smooth zoom: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space battery policy: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space card: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space card bg: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space card decor capability: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space card identity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space copy: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space copy categories: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space create display defaults: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space delete with devices: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space scale defaults: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space settings: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space settings form: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: space tab reorder: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: split corner wall: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: split nonsnap: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: split polyline: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: stair arrival: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: stairs: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: state value: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: static config events: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: static icon: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: static wall openings: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: static zoom sharpness: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: styling hooks: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: subarea: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: summary camera: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: summary camera cold: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: summary camera motion: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: summary camera restore: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: summary dialog scroll: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: summary first paint: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: summary panel: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: summary panel polish: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: summary warm attach: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: summary weather: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: sun: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: sun live bg: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: sun rim: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: sun soft: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: sun transparent: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: support diagnostics: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: support feedback: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: svg export: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: svg sandbox: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: tap ctx: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: tap run: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: temp fill: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: test facade: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: toast ownership 1246: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: toggle entity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: toolbar stable width: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: touch tips: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui 1051: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui 1051 native: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui kit motion: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui lab 1081: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui lab grid: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui polish 1132: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui polish 1145: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui polish 963: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui polish 963 reference: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui polish 963 touch: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ui polish 976: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: unified wall tool: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ux fixes: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: v8 draft write: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum camera: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum dock restart: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum ecovacs: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum firstuse: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum history: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum history context: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum history geometry: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum history touch: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum live tail: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum multifloor: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum native lifecycle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum path fidelity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum route draft: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum route recovery: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum style 1002: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: vacuum tail continuity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: value face source: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: value format: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: version recovery: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: view device menu: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: view device menu lifecycle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: view entry recovery: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: view hold lifecycle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: view runtime dirty reload: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: view runtime kiosk recovery: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: view runtime recovery: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: virtual light toggle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: visual continuity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: volumetric setting: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall adoption alias: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall chain history: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall chain merge: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall chain thickness: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall corner join: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall draw click: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall end align: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall face lineage: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall face overlap: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall face room split: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall guide ownership: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall hatch density: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall junctions: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall key roundtrip: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall node connected: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall node delete: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall node hit: reused; исходный набор 20261105T195748920-ecce785d.
-- Браузер: wall node merge: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall node move: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall node python roundtrip: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall node reliability: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall node topology: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall preview handoff 1247: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall smooth joint: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall thickness: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall thickness transition: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wall union isolation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wallthick hover width: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wallthick standalone: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: warm dialogs: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: warm geometry camera: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: warm mode adoption: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: warm owners: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: warm remount: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: warm view marker: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: wireless controller parity: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: write authority: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: writer fixed point: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: ws resilience: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: yellow principle: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zero divider taper: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zero wall migration unblocked: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zero walls: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zigbee enable refresh: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zigbee hidden placement: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zigbee incomplete reasons: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zigbee led topology: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zigbee map explanation: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zigbee tooltip layout: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zigbee topology hover: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zigbee topology job: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zoom badge visibility: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zoom flash: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: zoom out: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Браузер: view edit permissions: reused; исходный набор 20261105T201321284-c9d3eb36.
-- Порог backend coverage перед stable: reused; исходный набор 20261105T125741350-bdc026a4.
 - Конвертеры перед stable: 3 формата → импорт в HA: passed (диагностика); tests: 3, passed: 3, failed: 0, skipped: 0.
 
 </details>
