@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5294,
+  "revision": 5295,
   "nextTicket": 255,
   "nextFence": 255,
   "tasks": {
@@ -4157,6 +4157,10 @@
       "digest": "0b896bbe1dcf5b6d5971e8e4326bed71d36212a1a1946636f33b0ccc1d841b7b",
       "issue": 1255
     },
+    "github:42158031505:1:completions:message:6329fcdd6dcac77a30898bb21388707c22f0bc96a37ae21a2e3bdf93342bd36c": {
+      "digest": "4fea91fbd9b7da6effec22e54b7dd2ba3730f1aba451fdeecf33357532a520ac",
+      "issue": 1255
+    },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
       "digest": "9db3331ba93104ca4e2706e07dea151f95c9f1d0c2e95fe27d16bb2b5ab16815",
       "issue": 1239,
@@ -4329,7 +4333,8 @@
         "reviewChanges": "Общий rotationAngle сохраняет прежний default (5° обычный декор/подложка, свободный мебель/изображения), Shift задаёт абсолютные 45° с симметричной обработкой полушага. furnitureRotationAngle сохраняет внешний API через тот же расчёт. Decor и backdrop хранят последний сырой угол в состоянии текущего жеста; существующий оконный обработчик modifier key вызывает пересчёт на keydown/keyup Shift. Перед ним сбрасывается ожидающий pointer move, поэтому поздний move не возвращает старое состояние клавиши. Новых глобальных слушателей нет, окончание/cancel/navigation удаляют raw input или его drag identity. Ручки используют существующую локализованную подсказку Shift — 45°; DECOR-EDITOR обновлён. Другие Shift-жесты и physical body rotation не менялись.\n\nАдресные unit: **27/27 PASS**, включая пять видов декора, исходный угол 17°, ±180°/360°, симметричные полушаги, queued backdrop move, модификатор до первого движения, terminal/reset, одно сохранение/история. Устаревшие две source-regex проверки старого «Shift=free» удалены из resize-contract; вместо них исполняемый regression в decor-rotation проверяет новое поведение.\n\nНативный Chromium: **14/14 PASS** на валидном model11-файле, реальные mouse/keyboard для декора и подложки: 5° default, Shift down/up без движения, commit=preview, Undo/Redo одной операцией, чтение записанного угла из demo writer. Транспорт синтетический, не реальный HA. Первые варианты теста обнаружили неготовый mode transition/непопадание в ручку и отказ Redo в общей demo-сцене; эти логи сохранены. Итоговый тест явно ждёт завершения перехода, фиксирует валидный model11-план, держит ручки в видимой области и требует настоящего pointer capture. Safety/history не ослаблялись.\n\nS6 request добавляет существующие furniture/decor history и native backdrop/furniture smoke. Не выдаю ещё не выполненные группы за PASS; общий отчёт публикуется finish. E2E: **надо** перед следующей бетой проверить реальный ACK сохранения и Undo/Redo поворота с Shift и без движения мыши; сейчас реальный HA E2E не запускался. Golden не принимался, стенд владельца не менялся.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
