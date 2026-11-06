@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6199,
+  "revision": 6200,
   "nextTicket": 285,
   "nextFence": 285,
   "tasks": {
@@ -3911,7 +3911,29 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793994996332,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "4df5c0ec1b3150058b14ad9b524bd312bb23373a",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
+        "tag": "v1.85.0",
+        "verdict": "accepted",
+        "patchId": "4df5c0ec1b3150058b14ad9b524bd312bb23373a",
+        "materialSha": "dd8c78da81f79a3b28a772971d2aa971fb2d5ce4"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "docs/changelog_user_stable_en.md",
+        "docs/changelog_user_stable_ru.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4079,12 +4101,17 @@
     "token": "284:release-return-finish:9769cb36-6692-40b5-92a0-a93b3666008c:finish:1:admit",
     "fence": 284,
     "materialSha": "dd8c78da81f79a3b28a772971d2aa971fb2d5ce4",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "9dda648e1348a32c799d190f68ff19f23c6da408",
+    "phase": "testing",
     "admittedAt": 1793995001067,
-    "expiresAt": 1793995301067
+    "expiresAt": 1793995307524,
+    "patchId": "4df5c0ec1b3150058b14ad9b524bd312bb23373a"
   },
   "events": {
+    "release-return-finish:9769cb36-6692-40b5-92a0-a93b3666008c:finish:2:synchronized": {
+      "digest": "84d14f104c685a6c84dca4a9653b79c99640656c6c24a9206c93ad88e1f9b61c",
+      "issue": 1343
+    },
     "release-return:9769cb36-6692-40b5-92a0-a93b3666008c": {
       "digest": "a95425d161b3a585fcc9f2143732090170796622236a26ff18b13444c9def8ee",
       "issue": 1343,
