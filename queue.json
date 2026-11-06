@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5517,
+  "revision": 5518,
   "nextTicket": 263,
   "nextFence": 263,
   "tasks": {
@@ -1344,7 +1344,7 @@
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1793946901379,
         "entry": 1,
@@ -4189,6 +4189,10 @@
     "github:42175359348:1:completions:report:1a5bd3dc601f5833bd35ab558991a47c6d964846d746fc916735d876dd6681e0": {
       "digest": "230179a020abbb9408d5ca560b9fc3e68788ad156078d6931019d1b1330757c5",
       "issue": 1330
+    },
+    "github:42175359348:1:completions:notice:801785ffca74de862862cdd2232dfa6b59d4086e2d8db9e194660890c58fddef": {
+      "digest": "38d87bec9b2a379ffea4b64ac3427022cd753f216d29303f1c07b6784eae0f3e",
+      "issue": 1253
     },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
       "digest": "a56f6f76ba636c40127695117d57a9970d2dabae7dc8e6ca7ab9b154319f8ebc",
