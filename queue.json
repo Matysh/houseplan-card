@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6080,
-  "nextTicket": 281,
+  "revision": 6081,
+  "nextTicket": 282,
   "nextFence": 281,
   "tasks": {
     "1193": {
@@ -3841,6 +3841,20 @@
         "status": "published",
         "sourceSha": "b01159e90270a4a454be4d7acbca9d90a51760f7"
       }
+    },
+    "1340": {
+      "issue": 1340,
+      "track": "ship",
+      "layer": "docs",
+      "branch": "codex/1340-retired-chunk-entrypoint",
+      "materialSha": "b01159e90270a4a454be4d7acbca9d90a51760f7",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 281,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793988074645,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4001,9 +4015,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1340
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:bbcc1ede-7433-4573-93fc-856ad6510959": {
+      "digest": "78ce53fd1ee4ddc0a8db9dfc95ac9d223972a3cf00a442b3b47da2d9185b379a",
+      "issue": 1340,
+      "message": {
+        "kind": "queued",
+        "issue": 1340,
+        "at": 1793988074645,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "b01159e90270a4a454be4d7acbca9d90a51760f7"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "b01159e90270a4a454be4d7acbca9d90a51760f7",
     "status": "delivered",
