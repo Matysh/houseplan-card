@@ -323,3 +323,23 @@ test('compatibility scanner selects and fingerprints both frontend and backend s
  const consumer=plan.steps.find(s=>s.command?.includes('test/config-lifecycle.test.mjs'));
  assert.ok(consumer.inputs.includes('src/**/*.ts'));assert.ok(consumer.inputs.includes('custom_components/houseplan/**/*.py'));
 }));
+
+test('a source-scanner success is invalidated by changed frontend or backend directory contents', async () => fixture({
+ 'src/new-source.ts':'good','custom_components/houseplan/new_source.py':'good',
+ 'scripts/config-compatibility-inventory.mjs':`import {readdirSync,readFileSync} from 'node:fs';
+ export const scanCompatibility=()=>['src','custom_components/houseplan'].flatMap(dir=>readdirSync(dir).sort().map(name=>readFileSync(dir+'/'+name,'utf8'))).join(',');`,
+ 'test/config-lifecycle.test.mjs':`import test from 'node:test';import assert from 'node:assert/strict';import {scanCompatibility} from '../scripts/config-compatibility-inventory.mjs';test('scanner',()=>assert.equal(scanCompatibility(),'good,good'));`,
+},async dir=>{
+ const plan=await planProfile({root:dir,changedFiles:['src/new-source.ts']});
+ const consumer=plan.steps.find(s=>s.command?.includes('test/config-lifecycle.test.mjs'));
+ const runnable={...plan,steps:[{...consumer,requires:[]}]};
+ const options={root:dir,stateDir:resolve(dir,'.state'),environment:{NODE_TEST_CONTEXT:undefined}};
+ const firstReceipt=await runPlan(runnable,options);
+ assert.equal(firstReceipt.results[0].status,'passed',await readFile(firstReceipt.results[0].logPath,'utf8'));
+ assert.equal((await runPlan(runnable,options)).results[0].status,'reused');
+ for(const file of ['src/new-source.ts','custom_components/houseplan/new_source.py']){
+  await writeFile(resolve(dir,file),'broken');
+  assert.equal((await runPlan(runnable,options)).results[0].status,'failed',file+' must invalidate the prior scanner success');
+  await writeFile(resolve(dir,file),'good');
+ }
+}));
