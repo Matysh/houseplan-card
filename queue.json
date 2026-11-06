@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5663,
+  "revision": 5664,
   "nextTicket": 269,
   "nextFence": 269,
   "tasks": {
@@ -4364,7 +4364,8 @@
           "entry": 3,
           "detail": "Поведение: test/sh3d-convert-page.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
           "eventId": "finish:4a6e81d8-ffb2-4d83-931c-61a0d59c5ac6:finish:3:return:return:1253"
-        }
+        },
+        "delivered": true
       }
     }
   },
