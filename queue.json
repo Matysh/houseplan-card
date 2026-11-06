@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5544,
+  "revision": 5545,
   "nextTicket": 265,
   "nextFence": 265,
   "tasks": {
@@ -3934,7 +3934,7 @@
       "ownerDecision": null,
       "ticket": 264,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1793962558986,
       "reviewEntry": 2,
       "patchId": "92c13f72706e79218fcc69000f58f433124d9001",
@@ -3972,6 +3972,15 @@
         "entry": 1,
         "detail": "Backend: tests_backend/test_ha_backup_archive.py: failed; Backend: tests_backend/test_ha_upload.py: failed; Backend: tests_backend/test_ha_websocket.py: failed; Backend: tests_backend/test_ha_zigbee_topology.py: failed",
         "eventId": "finish:b2fc924c-88be-451b-b93b-b8f66040e0f8:finish:4:return:return:1331"
+      },
+      "s6": {
+        "id": "20261106T105614961-9637612b",
+        "name": "Тесты для задачи #1331 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T105614961-9637612b/report.json",
+        "materialSha": "cd4e0bcc856c5898201f6c801060df22de31e911",
+        "status": "passed",
+        "finishedAt": "2026-11-06T10:59:30.848Z",
+        "failures": []
       }
     }
   },
@@ -4141,9 +4150,9 @@
     "fence": 264,
     "materialSha": "cd4e0bcc856c5898201f6c801060df22de31e911",
     "expectedBase": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1793962563171,
-    "expiresAt": 1793963042079,
+    "expiresAt": 1793966372147,
     "patchId": "92c13f72706e79218fcc69000f58f433124d9001"
   },
   "events": {
@@ -4524,6 +4533,34 @@
         "layer": "product",
         "materialSha": "cd4e0bcc856c5898201f6c801060df22de31e911",
         "phase": "sync"
+      }
+    },
+    "finish:5099d78b-ead1-41cb-8386-08541312166b:finish:3:s6-complete": {
+      "digest": "be10ddd8989b396324fc407c71e871bbf2224269e90b21d89dadf8ec89940a57",
+      "issue": 1331,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1331,
+        "at": 1793962772147,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "cd4e0bcc856c5898201f6c801060df22de31e911",
+        "phase": "review",
+        "evidence": {
+          "id": "20261106T105614961-9637612b",
+          "name": "Тесты для задачи #1331 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T105614961-9637612b/report.json",
+          "materialSha": "cd4e0bcc856c5898201f6c801060df22de31e911",
+          "status": "passed",
+          "finishedAt": "2026-11-06T10:59:30.848Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Совместный пакет #1331 + #1332. Основная очередь/finish — #1331, ревью должно охватывать весь diff обеих задач; #1332 завершится тем же фактическим merge и отчётом. Product-профиль полного S6 сохранён: DOM-контракт и browser witnesses являются продуктовым материалом. Наличие метки infra у #1332 не используется для обхода этой классификации.\n\nНа исходном dev be93 подтверждены16отказов в9Node-файлах. Обновлены реальные текущие контракты: rollback Area relocation, backdrop port с rotationArm при прежнем ceiling16, async iso readiness и отменённое поле viewModeSnap, публичный Optimize, lifecycle proven stable и индивидуальные compatibility hits (125добавлено/11удалено/746актуально), shared page watcher вместо Validate. Текущие product assertions, данные lifecycle, физические допуски и PNG-эталоны не ослаблены.\n\nЦентрально исправлены selection/fingerprint для реальных dynamic source readers: wildcard scopes сохраняются, source scans TS/Python инвалидируют результаты, docs/custom_components literal data paths учитываются. Для infra diff нет product component fallback. Metrics fixture явно self-contained в mkdtemp; реальные dist consumers по-прежнему требуют сборку. Добавлена исполняемая регрессия: PASS → reuse → реальная TS/Python правка → FAILED rerun, не только сравнение хешей. Адресные27проверок selection PASS. Новый native callback witness классифицирован как product/presentation/task-release и выбирается при изменении card owner; проверены каталог/план по реальному diff (562шага до финального добавления Static oracle).\n\nВ mutation registry41определение приведено к текущим API/anchors/guards.4отменённых определения удалены с поимённым обоснованием в docs/testing/issue1331/README.md: три автоматических Optimize-проверки Copy отменены #1227, прежняя альтернатива Draw preflight снята Stage4. Исходный адресный прогон: все clean guards PASS,36поймано,4survived+1setup-failure сохранены как отказы. Пять доказательств исправлены: ACL включает текущий history authorizer; Optimize мутирует публичный changed; старый header ResizeObserver доставляется после retirement lease; writer bypass компилируется без недостижимой string-ветки; Static проверяет фактический arc tone отсутствующего contact, а не всегда нейтральный leaf. Адресные rerun receipts и pinned SHA записаны в README и output/issue-1331/witness-*.log. Это не полный ночной shard.\n\nДля #1332 пять уже существующих hooks объявлены с фактическими element types; удалённый opening-tunnel из #1250 перенесён в retiredHooks, styling docs направляют к единому room-floor owner. Неизменный validator проходит clean, три зарегистрированных DOM witnesses cleanPASS и пойманы1/1каждый. Исходный scheduled shard4/5 целиком не повторялся.\n\nРиск для свежего взгляда: полнота wildcard invalidation и отсутствие лишнего fixture artifact prep, обоснованность конкретных retired mutation definitions, независимость новых native oracles. Автор не заменяет адресное доказательство полным shard/release результатом. Передача в S7 выполняется только штатным finish после полного фактического S6; его отчёт прикладывает координатор. Companion: Matysh/houseplan-e2e main1f102b7, task-impact/1331.md и1332.md: новых HA journeys не требуется, текущие сохраняются. Выпуск не поручен.\n\n### Дополнение после первого полного S6\n\nRun20261106T104727609-4cd497ef завершил562шага:140passed+418reused+4failed. Все исходные16Node-отказов устранены. В4HA-файлах выявлено10отказов общей изоляции: archive collision-файл исчезает, upload rename ENOENT, mkdir гоняется с удалением. Трассы указывают на один site-packages/testing_config/houseplan для параллельных pytest процессов и autouse rmtree перед каждым кейсом.\n\nВ tests_backend/conftest.py удалена очистка общего каталога; через поддержанный plugin fixture hass_config_dir каждому тесту даётся собственный tmp_path/ha-config до создания hass. Product file handling и assertions не меняются; более специфичный config-flow disk fixture сохранён. Пять затронутых HA-файлов, включая ранее нестабильный marker-history:290/290PASS,19.52s. Финальный обычный finish повторяет S6 с прежним уровнем параллельности и применимым reuse; первый failed receipt сохранён. Это ремонт того же S6 baseline, отдельного пользовательского изменения нет.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
