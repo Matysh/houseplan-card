@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5754,
-  "nextTicket": 272,
+  "revision": 5755,
+  "nextTicket": 273,
   "nextFence": 272,
   "tasks": {
     "1193": {
@@ -1243,14 +1243,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1253-stairs-hover",
-      "materialSha": "6c8b0a3ccb95386c911e447331e24fcedf4c62d5",
+      "materialSha": "418a72a888ea5662808e0eb8236e3f40111cc1b1",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 271,
-      "queued": false,
+      "ticket": 272,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793966110094,
-      "reviewEntry": 5,
+      "readyAt": 1793967493323,
+      "reviewEntry": 6,
       "patchId": "83ed21254145cae9e8db9fd3219a942ecb03213b",
       "changedFiles": [
         "demo/helpers/stairs-placement-preview.mjs",
@@ -1288,20 +1288,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1253:5:83ed21254145cae9e8db9fd3219a942ecb03213b:939eca1ea9fcb34c72307aba3781c77ce65027dd",
-      "reviewMaterial": {
-        "materialSha": "6c8b0a3ccb95386c911e447331e24fcedf4c62d5",
-        "expectedBase": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
-        "patchId": "83ed21254145cae9e8db9fd3219a942ecb03213b"
-      },
-      "reviewRetry": {
-        "requestId": "review:1253:5:83ed21254145cae9e8db9fd3219a942ecb03213b:939eca1ea9fcb34c72307aba3781c77ce65027dd",
-        "eventId": "github:42214087561:1:tick:0:review-retry",
-        "at": 1793966295463,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1253:5:83ed21254145cae9e8db9fd3219a942ecb03213b:939eca1ea9fcb34c72307aba3781c77ce65027dd",
         "at": 1793966681021
@@ -4107,7 +4093,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1253
+  ],
   "active": null,
   "events": {
     "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
@@ -4579,6 +4567,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:b2c3b7c9-d6c1-4403-abef-069f0b0b510f": {
+      "digest": "20254fcb9ea01c594b928b014e796462d65e0f57247395316b75e964972552f7",
+      "issue": 1253,
+      "message": {
+        "kind": "queued",
+        "issue": 1253,
+        "at": 1793967493323,
+        "entry": 6,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "418a72a888ea5662808e0eb8236e3f40111cc1b1",
+        "evidence": {
+          "id": "20261106T115525422-8c50305c",
+          "name": "Тесты для задачи #1253 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261106T115525422-8c50305c/report.json",
+          "materialSha": "6c8b0a3ccb95386c911e447331e24fcedf4c62d5",
+          "status": "passed",
+          "finishedAt": "2026-11-06T11:57:55.697Z",
+          "failures": []
+        }
       }
     }
   },
