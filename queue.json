@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5538,
-  "nextTicket": 264,
+  "revision": 5539,
+  "nextTicket": 265,
   "nextFence": 264,
   "tasks": {
     "1193": {
@@ -3929,14 +3929,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1331-s6-baseline",
-      "materialSha": "449f270ed8dffd95f796884d7db8819b4694cdfa",
+      "materialSha": "cd4e0bcc856c5898201f6c801060df22de31e911",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 263,
-      "queued": false,
+      "ticket": 264,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793961958236,
-      "reviewEntry": 1,
+      "readyAt": 1793962558986,
+      "reviewEntry": 2,
       "patchId": "59d2753da6c11fddf7704a5c23d1af94d9255448",
       "changedFiles": [
         "demo/smoke_easy_converter_openings.mjs",
@@ -3962,7 +3962,6 @@
         "test/open-passage-contract.test.mjs",
         "test/smoke-exception-guard.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4133,7 +4132,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1331
+  ],
   "active": null,
   "events": {
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:2:synchronized": {
@@ -4470,6 +4471,19 @@
           "detail": "Backend: tests_backend/test_ha_backup_archive.py: failed; Backend: tests_backend/test_ha_upload.py: failed; Backend: tests_backend/test_ha_websocket.py: failed; Backend: tests_backend/test_ha_zigbee_topology.py: failed",
           "eventId": "finish:b2fc924c-88be-451b-b93b-b8f66040e0f8:finish:4:return:return:1331"
         }
+      }
+    },
+    "finish:5099d78b-ead1-41cb-8386-08541312166b": {
+      "digest": "a1ed73d44cd71d87c5fe96402f08c9fc2f5541ff0cb237c698e0966492f4cbe5",
+      "issue": 1331,
+      "message": {
+        "kind": "queued",
+        "issue": 1331,
+        "at": 1793962558986,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "cd4e0bcc856c5898201f6c801060df22de31e911"
       }
     }
   },
