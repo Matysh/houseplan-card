@@ -1,7 +1,7 @@
 /** Native mouse regression: a painted endpoint owns its whole circle (#1259). */
 import assert from 'node:assert/strict';
 import { mkdirSync,writeFileSync } from 'node:fs';
-import { launch } from './serve.mjs';
+import { launch, finish } from './serve.mjs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { applyNodeMove,prepareNodeMove,structuralWallNodes } from '../test-build/wall-node-move.js';
 mkdirSync('artifacts/1259',{recursive:true});
@@ -62,7 +62,7 @@ for(const scale of [1,2]) {
    await page.mouse.click(after.edge.x,after.edge.y,{button:'right'});try{await page.locator('houseplan-card [data-hp="node-context-menu"]:not([inert])').waitFor({timeout:3000});}catch(error){writeFileSync(`artifacts/1259/context-failure-${label}.json`,JSON.stringify({after,event:await page.evaluate(()=>window.__hitContext)},null,2));throw error;}await page.keyboard.press('Escape');await page.evaluate(()=>window.__hpTest.settled());
    rows.push({label,visibleRadiusCss:t.radius,hitRadiusCss:t.hit,edge:t.edge,passed:true});console.log(JSON.stringify(rows.at(-1)));
   }
- }finally{await browser.close();}
+ }finally{await finish(browser);}
 }
 writeFileSync('artifacts/1259/native-hit.json',JSON.stringify(rows,null,2));
 console.log(`PASS ${rows.length} native mouse scenarios`);

@@ -17,7 +17,22 @@ import { fileURLToPath } from 'node:url';
 const DEMO = fileURLToPath(new URL('../demo/', import.meta.url));
 const smokes = () => readdirSync(DEMO)
   .filter((name) => name.startsWith('smoke_') && name.endsWith('.mjs'));
-const read = (name) => readFileSync(new URL(name, `file://${DEMO}`), 'utf8');
+const rawRead = (name) => readFileSync(new URL(name, 'file://' + DEMO), 'utf8');
+// Only an otherwise empty await-import/argv wrapper delegates its whole run.
+// A smoke with its own actions must still own its own terminal verdict.
+function executionText(name, loader = rawRead, seen = new Set()) {
+  if (seen.has(name)) throw Error('cyclic smoke delegate: ' + name);
+  const text = loader(name);
+  const clean = text.replace(/^\s*\/\/[^\n]*(?:\n|$)/gm, '').trim();
+  const delegated = /^(?:process\.argv\.push\((?:'[^'\n]*'|"[^"\n]*")\);\s*)*await import\((['"])(\.\/smoke_[\w-]+\.mjs)\1\);?$/.exec(clean);
+  return delegated ? executionText(delegated[2].slice(2), loader, new Set([...seen, name])) : text;
+}
+const read = (name) => executionText(name);
+function stopsOnPageErrors(text) {
+  return /if\s*\(\s*await reportPageErrors\(\)\s*\)\s*\{?\s*(?:process\.exit\(1\)|throw\b)/.test(text)
+    || /import\s+assert\s+from\s+['"]node:assert\/strict['"]/.test(text)
+      && /assert\.(?:equal|strictEqual)\(\s*await reportPageErrors\(\)\s*,\s*false\s*[,)]/.test(text);
+}
 const pageBenchmarkIsGuarded = (text) => (
   /watchPage\(await [\s\S]*?\.newPage\(\)\)/.test(text)
   && /if \(await reportPageErrors\(\)\)\s*\{?[\s\S]*?process\.exit\(1\)/.test(text)
@@ -56,7 +71,7 @@ test('вердикт не только выставляет код, но и ос
   for (const name of smokes()) {
     const text = read(name);
     if (!/\breportPageErrors\s*\(/.test(text)) continue;
-    assert.match(text, /if \(await reportPageErrors\(\)\)\s*(process\.exit\(1\)|throw )/,
+    assert.ok(stopsOnPageErrors(text),
       `${name}: вердикт по исключениям обязан останавливать смок, а не только`
       + ' помечать его — иначе после «FAILED» печатается строка успеха');
   }
@@ -165,3 +180,32 @@ test('свидетель переходов при переключении ме
   assert.match(code, /_pickSpace/, 'переключение делается штатным путём');
 });
 
+
+
+test('terminal verdict forms reject ignored results and non-throwing flags', () => {
+  const strict="import assert from 'node:assert/strict';\n";
+  for(const source of [
+    'if (await reportPageErrors()) throw Error("page failed");',
+    'if (await reportPageErrors()) { process.exit(1); }',
+    strict+'assert.equal(await reportPageErrors(), false);',
+    strict+'assert.strictEqual(await reportPageErrors(),false,"uncaught");',
+  ]) assert.equal(stopsOnPageErrors(source),true,source);
+  for(const source of [
+    'await reportPageErrors();',
+    'if (await reportPageErrors()) process.exitCode=1;',
+    strict+'assert.equal(await reportPageErrors(),true);',
+    'const assert={equal(){}};assert.equal(await reportPageErrors(),false);',
+  ]) assert.equal(stopsOnPageErrors(source),false,source);
+});
+
+test('only transparent awaited smoke delegates inherit the terminal guard', () => {
+  const guarded='const {page,browser}=await launch();await page.title();await finish(browser);';
+  const wrapper="// shared fixture\nprocess.argv.push('--lifecycle');\nawait import('./smoke_inner.mjs');";
+  const opaque="await launch();\nawait import('./smoke_inner.mjs');";
+  const sources=new Map([['smoke_outer.mjs',wrapper],['smoke_inner.mjs',guarded],['smoke_opaque.mjs',opaque],
+    ['smoke_a.mjs',"await import('./smoke_b.mjs');"],['smoke_b.mjs',"await import('./smoke_a.mjs');"]]);
+  const loader=name=>sources.get(name);
+  assert.equal(executionText('smoke_outer.mjs',loader),guarded);
+  assert.equal(executionText('smoke_opaque.mjs',loader),opaque,'own actions do not inherit a foreign verdict');
+  assert.throws(()=>executionText('smoke_a.mjs',loader),/cyclic smoke delegate/);
+});

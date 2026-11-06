@@ -12,6 +12,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['scripts/config-compatibility-inventory.mjs', ['src/**/*.ts', 'custom_components/houseplan/**/*.py']],
   ['test/isometric-contract.test.mjs', ['demo/smoke_*.mjs']],
   ['test/smoke-exception-guard.test.mjs', ['demo/smoke_*.mjs']],
+  ['test/smoke-harness-contract.test.mjs', ['demo/smoke_*.mjs']],
 ]);
 const COMMAND_DECLARATIONS = new Set(['process-next/lib/catalog.mjs', 'process-next/lib/task-selection.mjs', 'process-next/catalog/selections.mjs', 'process-next/lib/background.mjs', 'process-next/lib/e2e.mjs', 'process-next/lib/converters.mjs', 'scripts/mutation-registry.mjs']);
 export function dependencyReader(root) {

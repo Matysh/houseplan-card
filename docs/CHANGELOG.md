@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve smoke error visibility through transparent delegates and strict assertions; finish every native node-hit browser through the shared guard. #1337
+
 - Refresh the offline converter runtime/page with the accepted PlanGraph seam-lineage mapping; track its real compiler/limit inputs independently from card artifacts, preserving fixtures and safety limits. #1336
 
 - Repair current S6 baseline contracts and mutation witnesses; preserve actual source-scanner scopes in selection/reuse and keep infrastructure metadata out of product fallback and isolate parallel HA test directories. #1331
