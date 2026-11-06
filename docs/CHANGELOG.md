@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v1.85.0 — 2026-11-06
+
+- Stable release from tested v1.85.0-beta.2; the user changelog describes changes since v1.84.0.
+- Dangling endpoint attachment, staircase hover previews and Shift rotation at 45°: #1330, #1253, #1255, #1338.
+- Empty-space and HA area guidance, mixed-junction room-floor rendering and resilient LQI refresh: #1329, #1333, #1334, #1327, #1341.
+- Updated S6 selection, infrastructure tests and DOM contract; removed dead code and the retired npm assertion: #1239, #1331, #1332, #1335–#1337, #1340.
+
 ## v1.85.0-beta.2 — 2026-11-06
 
 - Skip malformed third-party device registry identifiers before unpacking so Zigbee LQI continues updating valid ZHA/Z2M devices and valid pairs on the same device (#1341).
