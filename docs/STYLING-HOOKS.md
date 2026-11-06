@@ -94,7 +94,6 @@ Everything in this table is **public API**.
 | Room shape | `polygon` / `rect` / `path` (SVG) | `room` | `data-id` = room id, `data-area` = area id | `.room` |
 | Room card (name + metrics) | `div` (HTML, marker layer) | `room-label` | `data-id` = room id, `data-area` | `.roomlabel` |
 | Door / window / gate | `g` (SVG) | `opening` | `data-id` = opening id, `data-kind` = `door` \| `window` \| `gate` | `.opening` |
-| Coloured tunnel inside a thick opening | `path` / `g` (SVG) | `opening-tunnel` | `data-id` = opening id, `data-kind` = `door` \| `window` \| `gate` | `.opening-tunnel` |
 | Wall body (thickness) | `path` (SVG) | `wall` | `data-id` = segment key, `data-kind` = `shared` \| `outer` | `.wallbody` |
 | Independent partition | `path` (SVG editor hit target) | `partition` | `data-id` = partition id, `data-kind` = `partition` | `.physical-hit` |
 | Wall column | `path` / `circle` (SVG editor hit target) | `wall-column` | `data-id` = column id, `data-kind` = `square` \| `circle` | `.physical-hit` |
@@ -600,3 +599,7 @@ Use the existing direct `mode-tab[data-mode]`, `space-settings`, `space-add`,
 `summary-toggle` hooks. Their presence still follows permissions and kiosk.
 
 Room floor paint may extend into its openings (#1250). The stable "[data-hp=room]" hook targets that visible paint; pointer hover and room-tap use the unchanged clean-floor hit surface. Do not rely on native :hover on the paint path; pointer hit surfaces and their attributes remain internal.
+
+### Opening floor after #1250
+
+The opening passage is part of its owning room floor. The separate opening-tunnel hook and class were retired in 1.84.0; their metadata remains in retiredHooks of data-hp-contract.json. Style the owning room floor instead. A second tunnel layer would break the shared color, alpha and light transitions.
