@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5280,
+  "revision": 5281,
   "nextTicket": 254,
   "nextFence": 254,
   "tasks": {
@@ -1422,15 +1422,16 @@
         "test/furniture-transform-contract.test.mjs"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793936050165,
-        "entry": 1,
-        "detail": "Браузер: backdrop: failed",
-        "eventId": "finish:9150f85a-807c-4b6e-b8ef-a6211c1115d6:finish:3:return:return:1255"
-      }
+        "at": 1793936273452,
+        "entry": 2,
+        "detail": "Браузер: backdrop: failed; Браузер: decor text: failed",
+        "eventId": "finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:3:return:return:1255"
+      },
+      "reason": "checks-failed"
     },
     "1256": {
       "issue": 1256,
@@ -4002,18 +4003,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1255,
-    "worker": "finish",
-    "token": "253:finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:1:admit",
-    "fence": 253,
-    "materialSha": "376b6e387031dca5328e46de2e411b6845e76b6a",
-    "expectedBase": "fa5a1c30019811c91a6a34ee36d70de7875455c9",
-    "phase": "testing",
-    "admittedAt": 1793936228296,
-    "expiresAt": 1793936534078,
-    "patchId": "9540bfb8e3844f42ac673e3d57b81cb006dbc91f"
-  },
+  "active": null,
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
       "digest": "67cac9ebe76c4866b58c9e7cb7d8cd680d86f665660114c53210503c3b7c11a8",
@@ -4081,6 +4071,10 @@
     },
     "finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:2:synchronized": {
       "digest": "38e33108e2dfe6779912fb1bc4d5982ac2b25774a8c8227311e359064b787c1c",
+      "issue": 1255
+    },
+    "finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:3:return": {
+      "digest": "297f16c75565fc658a539e31b7e64dc5f315457a2de27bd565dca3e2359359cf",
       "issue": 1255
     },
     "issue1239-spec-r2-20261106:spec-request:spec-resubmitted:1239": {
@@ -4174,6 +4168,26 @@
         "layer": "product",
         "materialSha": "376b6e387031dca5328e46de2e411b6845e76b6a",
         "phase": "sync"
+      }
+    },
+    "finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:3:return:return:1255": {
+      "digest": "297f16c75565fc658a539e31b7e64dc5f315457a2de27bd565dca3e2359359cf",
+      "issue": 1255,
+      "message": {
+        "kind": "return",
+        "issue": 1255,
+        "at": 1793936273452,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793936273452,
+          "entry": 2,
+          "detail": "Браузер: backdrop: failed; Браузер: decor text: failed",
+          "eventId": "finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:3:return:return:1255"
+        }
       }
     }
   },
