@@ -12,8 +12,14 @@ creates every artifact in mkdtemp and needs no product build.
 
 Specific updates:
 
-- The extra card layout stage is the Area relocation rejection rollback, which
-  restores the prior placement; identity/revision ownership is still exclusive.
+- The tenth card layout assignment is the #1287 ACK layout_changes stage in
+  _sendConfigCandidate (49d4291bb, 2026-11-04). A point is staged only if its
+  current fingerprint still equals layoutBeforeSend; a newer local draft wins.
+  ConfigAdoption.acceptLayoutPosition owns accepted-cache/revision changes and
+  refreshLayoutFingerprint owns the identity update. This bounded working-body
+  exception is explicitly reviewed; future count increases still fail. The Area
+  relocation rollback predates pin9 (ccd0e6a5, 2026-10-15), so it is not the
+  cause of the new count. The first review caught that incorrect attribution.
 - The backdrop purpose port has sixteen members including rotationArm. The
   existing sixteen-member ceiling stays intact.
 - Iso selection through an awaited page.evaluate callback is recognized; the
@@ -39,7 +45,7 @@ Four obsolete mutation definitions are retired:
 | space-copy-always-asks-to-optimize | #1227 intentionally copies accepted geometry without any Optimize prompt; current space-copy runtime tests assert this. |
 | space-copy-skips-required-optimize | #1227 removed automatic Optimize, so skipping it is the required behavior. Current accepted-copy/strict server-proof tests remain. |
 | space-copy-ignores-unsafe-optimize-preflight | #1227 removed the copy-time geometry/Optimize preflight. Current source proof and atomic refusal tests remain. |
-| wall-draw-full-preflight-again | Stage4 routes explicit Draw intents through the common graph transaction; the former commitWallChainSegmentGeometry alternative no longer exists. Current physical proof/candidate counter tests remain; do not recreate a superseded bypass just to mutate it. |
+| wall-draw-full-preflight-again | Stage4 routes explicit Draw intents through the common graph transaction; the former commitWallChainSegmentGeometry call path is no longer used (the helper remains an unimported export). Current physical proof/candidate counter tests remain; do not recreate a superseded bypass just to mutate it. |
 
 The surviving rejected-copy witness targets current rollback/reload and the
 `rejected copy restores` case. The graph-identity witness checks both explicit
@@ -106,3 +112,15 @@ Product file handling and all existing assertions remain unchanged. The five
 addressed files (including the earlier intermittent marker-history case) pass
 290/290 in19.52s. The normal second finish supplies the concurrent S6 proof;
 the failed first receipt is retained rather than renamed green.
+
+
+## Code review correction
+
+Review42206855670 returned one blocker: the pin10 attribution was wrong.
+Blame and the pin9 tree confirm the Area rollback existed before ccd0e6a5;
+49d4291bb (#1287) added the actual tenth assignment. The test comment and this
+report now name the ACK stage and its per-point frozen-fingerprint protection,
+with accepted-cache/revision/fingerprint ownership in ConfigAdoption. No product
+behavior or numerical pin changes in this correction. The retired Draw witness
+rationale also distinguishes an unused export from an absent function; its
+separate removal is #1335, outside this packet.

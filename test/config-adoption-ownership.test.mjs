@@ -15,7 +15,8 @@ const OWNER = 'src/config-adoption.ts';
  * the body it belongs to is how #490 F1 lost a concurrent edit. Bodies may
  * still be staged locally before a write (`_serverCfg = candidate`,
  * `_layout = { ...pos }`) — that is the editor's job — but only in the files
- * pinned below, and the counts are a ratchet: they may go down, never up.
+ * pinned below, and the counts are a ratchet: future increases fail review.
+ * The reviewed #1287 ACK point-delta exception is documented beside the pin.
  */
 
 const tsFiles = (dir) => readdirSync(dir).flatMap((name) => {
@@ -39,9 +40,13 @@ const BODY_WRITE = {
  * stages device positions (`applyDevicePlacement`). Lowering a count is a
  * win to record here; raising one is a review finding.
  */
-// #1331: the tenth card body stage is the Area relocation failure rollback:
-// applyDevicePlacement restores the previous placement after a rejected delete.
-// Identity/revision still belongs only to ConfigAdoption (the first AC).
+// #1331 reviewed baseline: #1287 (49d4291bb, 2026-11-04) added the tenth
+// card body assignment in _sendConfigCandidate, applying ACK layout_changes.
+// It stages only a point whose current fingerprint still matches layoutBeforeSend,
+// so a fresher local draft survives. ConfigAdoption.acceptLayoutPosition owns the
+// accepted cache/revision; refreshLayoutFingerprint owns the identity update.
+// The older Area relocation rollback already existed at pin9 (ccd0e6a5).
+// This specific staging exception is reviewed; future increments still fail.
 const BODY_STAGING_ALLOWLIST = {
   'src/houseplan-editor-runtime.ts': { _serverCfg: 5, _layout: 5 },
   'src/houseplan-card.ts': { _serverCfg: 2, _layout: 10 },
