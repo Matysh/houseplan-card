@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 5281,
-  "nextTicket": 254,
+  "revision": 5282,
+  "nextTicket": 255,
   "nextFence": 254,
   "tasks": {
     "1193": {
@@ -1394,14 +1394,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1255-shift-rotate",
-      "materialSha": "376b6e387031dca5328e46de2e411b6845e76b6a",
+      "materialSha": "c14d2bc55c65a575769553b653d6272419ceed1e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 253,
-      "queued": false,
+      "ticket": 254,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793936224667,
-      "reviewEntry": 2,
+      "readyAt": 1793936414547,
+      "reviewEntry": 3,
       "patchId": "9540bfb8e3844f42ac673e3d57b81cb006dbc91f",
       "changedFiles": [
         "demo/smoke_backdrop.mjs",
@@ -1430,8 +1430,7 @@
         "entry": 2,
         "detail": "Браузер: backdrop: failed; Браузер: decor text: failed",
         "eventId": "finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:3:return:return:1255"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1256": {
       "issue": 1256,
@@ -4002,7 +4001,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1255
+  ],
   "active": null,
   "events": {
     "issue1239-spec-r1-20261106:spec-request": {
@@ -4188,6 +4189,19 @@
           "detail": "Браузер: backdrop: failed; Браузер: decor text: failed",
           "eventId": "finish:32e7d7e6-921f-474f-80c9-5f766498f37f:finish:3:return:return:1255"
         }
+      }
+    },
+    "finish:e8942406-c96a-4eee-adc0-4e8fd944dad8": {
+      "digest": "c8b8142b21aaa39d57fed54cb11e57c573c8c232dcb359c07861bab50790f28f",
+      "issue": 1255,
+      "message": {
+        "kind": "queued",
+        "issue": 1255,
+        "at": 1793936414547,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c14d2bc55c65a575769553b653d6272419ceed1e"
       }
     }
   },
