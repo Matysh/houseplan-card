@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5512,
+  "revision": 5513,
   "nextTicket": 263,
   "nextFence": 263,
   "tasks": {
@@ -1339,7 +1339,18 @@
         "src/houseplan-card.ts",
         "src/stairs-editor.ts",
         "test/stairs-editor-live.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793946901379,
+        "entry": 1,
+        "detail": "Поведение: process-next/test/metrics.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/stairs-editor-live.test.mjs: failed; Backend: tests_backend/test_ha_marker_history.py: failed; Браузер: stairs: failed",
+        "eventId": "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:3:return:return:1253"
+      }
     },
     "1254": {
       "issue": 1254,
@@ -4080,18 +4091,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1253,
-    "worker": "finish",
-    "token": "262:finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:1:admit",
-    "fence": 262,
-    "materialSha": "8fbccddefcebe22db3de68e15ff5b35cfefdc832",
-    "expectedBase": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
-    "phase": "testing",
-    "admittedAt": 1793946420172,
-    "expiresAt": 1793947137768,
-    "patchId": "3cdb36533efea61e975098d00fe91e98d60d32df"
-  },
+  "active": null,
   "events": {
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:2:synchronized": {
       "digest": "753f7551c6bc3e78f3c303ac921aa939cd022fe44a289f8d92872c8827aeb2cb",
@@ -4177,6 +4177,10 @@
       "digest": "b0d019b86af9fc57f29bc2b8f8a1b8e2d2d4e6bd5d984100ad1cb4348fe34323",
       "issue": 1253
     },
+    "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:3:return": {
+      "digest": "664d7d07bfcc5cb7a568740578f21a4341b903d67bd4868d2e1c8ef728b1fa3b",
+      "issue": 1253
+    },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
       "digest": "a56f6f76ba636c40127695117d57a9970d2dabae7dc8e6ca7ab9b154319f8ebc",
       "issue": 1329,
@@ -4254,6 +4258,26 @@
         "materialSha": "8fbccddefcebe22db3de68e15ff5b35cfefdc832",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:3:return:return:1253": {
+      "digest": "664d7d07bfcc5cb7a568740578f21a4341b903d67bd4868d2e1c8ef728b1fa3b",
+      "issue": 1253,
+      "message": {
+        "kind": "return",
+        "issue": 1253,
+        "at": 1793946901379,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793946901379,
+          "entry": 1,
+          "detail": "Поведение: process-next/test/metrics.test.mjs: failed; Поведение: test/config-adoption-ownership.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/stairs-editor-live.test.mjs: failed; Backend: tests_backend/test_ha_marker_history.py: failed; Браузер: stairs: failed",
+          "eventId": "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:3:return:return:1253"
+        }
       }
     }
   },
