@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6018,
-  "nextTicket": 280,
+  "revision": 6019,
+  "nextTicket": 281,
   "nextFence": 280,
   "tasks": {
     "1193": {
@@ -3854,13 +3854,13 @@
       "syncMode": "merge",
       "mergeSourceSha": "0ce2c7c7b8def6f7ef5dd6522d7d0816c107c28f",
       "releaseTag": "v1.85.0-beta.1",
-      "materialSha": "47a2cd25cad92bce454335a86bf4fcecd297a769",
+      "materialSha": "b01159e90270a4a454be4d7acbca9d90a51760f7",
       "ownerDecision": null,
-      "ticket": 279,
-      "queued": false,
+      "ticket": 280,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793986792366,
-      "reviewEntry": 1,
+      "readyAt": 1793987657543,
+      "reviewEntry": 2,
       "patchId": "b99176043e38b764da851a0089b76ef4ddca05d6",
       "review": {
         "source": "published-release",
@@ -3885,7 +3885,6 @@
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4056,7 +4055,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1339
+  ],
   "active": null,
   "events": {
     "release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:2:synchronized": {
@@ -4170,6 +4171,19 @@
           "detail": "Поведение: test/test-chunk.test.mjs: failed",
           "eventId": "release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:3:return:return:1339"
         }
+      }
+    },
+    "finish:ada0dd31-8e97-47f7-a660-f49366b8bf2c": {
+      "digest": "0cf24da58cd38df2e63b48ebae2e601dc0943e3fc40ea2cc04c2e28c273f994d",
+      "issue": 1339,
+      "message": {
+        "kind": "queued",
+        "issue": 1339,
+        "at": 1793987657543,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b01159e90270a4a454be4d7acbca9d90a51760f7"
       }
     }
   },
