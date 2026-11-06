@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6017,
+  "revision": 6018,
   "nextTicket": 280,
   "nextFence": 280,
   "tasks": {
@@ -3884,7 +3884,18 @@
         "package.json",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1793987538971,
+        "entry": 1,
+        "detail": "Поведение: test/test-chunk.test.mjs: failed",
+        "eventId": "release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:3:return:return:1339"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4046,18 +4057,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1339,
-    "worker": "finish",
-    "token": "279:release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:1:admit",
-    "fence": 279,
-    "materialSha": "47a2cd25cad92bce454335a86bf4fcecd297a769",
-    "expectedBase": "4d7b4cc103636e790788ab489845f735a4b5a6f3",
-    "phase": "testing",
-    "admittedAt": 1793986797877,
-    "expiresAt": 1793987816813,
-    "patchId": "b99176043e38b764da851a0089b76ef4ddca05d6"
-  },
+  "active": null,
   "events": {
     "release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:2:synchronized": {
       "digest": "63547af5043a4f5fdcf5c78d184bd7701dc490a072b080c264d335f88031c6e7",
@@ -4119,6 +4119,10 @@
       "digest": "03bff187a8d26399acce658361236cf7f8ed882426cffe3ce0ef9213d43491c1",
       "issue": 1339
     },
+    "release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:3:return": {
+      "digest": "3f7d4190e2e25e14478165d99c116a7bce6c26d666297685cbc2213854264b89",
+      "issue": 1339
+    },
     "release-return:85e6f578-e449-4322-bc3e-f62aa5901fc4": {
       "digest": "fd16861b56d9b754a54929efc3592ca866cc99f658f668ec75b35ce2a2267b6d",
       "issue": 1339,
@@ -4146,6 +4150,26 @@
         "materialSha": "47a2cd25cad92bce454335a86bf4fcecd297a769",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:3:return:return:1339": {
+      "digest": "3f7d4190e2e25e14478165d99c116a7bce6c26d666297685cbc2213854264b89",
+      "issue": 1339,
+      "message": {
+        "kind": "return",
+        "issue": 1339,
+        "at": 1793987538971,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793987538971,
+          "entry": 1,
+          "detail": "Поведение: test/test-chunk.test.mjs: failed",
+          "eventId": "release-return-finish:85e6f578-e449-4322-bc3e-f62aa5901fc4:finish:3:return:return:1339"
+        }
       }
     }
   },
