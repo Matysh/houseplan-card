@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5945,
+  "revision": 5946,
   "nextTicket": 279,
   "nextFence": 279,
   "tasks": {
@@ -3825,7 +3825,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793976160918,
       "reviewEntry": 3,
-      "patchId": "2bc9c741716bf7b8f715c93ecff92aff4c4143f4",
+      "patchId": "3bea8181bf5dc7550b49e46a061fafa9f08d5b55",
       "changedFiles": [
         "demo/smoke_room_settings_form.mjs",
         "demo/smoke_view_empty_space_boundary.mjs",
@@ -3836,6 +3836,7 @@
         "docs/release-ledger/v1.84.0/1333.json",
         "docs/release-ledger/v1.84.0/1334.json",
         "docs/release-ledger/v1.84.0/1335.json",
+        "docs/testing-notes/mutation-browser-guards.md",
         "docs/testing/issue1331/README.md",
         "docs/testing/issue1333/README.md",
         "docs/testing/issue1333/empty-space-mobile.png",
@@ -3868,10 +3869,7 @@
         "entry": 2,
         "detail": "Поведение: test/mutation-gate.test.mjs: failed",
         "eventId": "finish:cca76adb-8fb2-4238-8c23-ce2e35b9ccc5:finish:3:return:return:1333"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793976169904,
-      "automationDetail": "Commit tracked task changes before finish"
+      }
     },
     "1336": {
       "issue": 1336,
@@ -4071,10 +4069,11 @@
     "token": "278:finish:baf79fde-a245-4988-ae10-f27f569af645:finish:1:admit",
     "fence": 278,
     "materialSha": "4d7b4cc103636e790788ab489845f735a4b5a6f3",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "f1c9cd372946db8aa3b86c3e4224903ff6d4ad78",
+    "phase": "testing",
     "admittedAt": 1793976165152,
-    "expiresAt": 1793976584133
+    "expiresAt": 1793976601968,
+    "patchId": "3bea8181bf5dc7550b49e46a061fafa9f08d5b55"
   },
   "events": {
     "finish:e42c38ae-f2f5-4cbb-96d8-bf4666902ce3:finish:2:synchronized": {
@@ -4143,6 +4142,10 @@
     },
     "finish:efcbc074-59d3-410a-a777-e995ca6d037f": {
       "digest": "432145c0ec3d02964fecab65546447157c3b5ddfe611712106abc631bc6639ea",
+      "issue": 1333
+    },
+    "finish:baf79fde-a245-4988-ae10-f27f569af645:finish:4:synchronized": {
+      "digest": "ea65051b3c1427d3982b92071f52027dbca866e7ced171b0de5d02699c04eafb",
       "issue": 1333
     },
     "finish:e42c38ae-f2f5-4cbb-96d8-bf4666902ce3": {
