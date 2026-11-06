@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 567,
+  "revision": 568,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -37173,8 +37173,10 @@
         "digest": "b03fe94ed3e5b0eb599eac7496042a44fa57ee956b5cd3db61c8797d9f05bd7e",
         "contentDigest": "5f894b9acd774268fa76fe798ee2c8ca4cc12bbc1cf1aca9803f01934bb51ed5",
         "attempt": 1,
-        "status": "sending",
-        "startedAt": "2026-11-06T20:07:15.264Z"
+        "status": "sent",
+        "startedAt": "2026-11-06T20:07:15.264Z",
+        "messageId": 995,
+        "finishedAt": "2026-11-06T20:07:20.472Z"
       }
     }
   },
@@ -41670,7 +41672,8 @@
     "stable1850-20261106-publish:completion:98b4618c-6dc5-449e-8926-f7242e194f47": "39a3a17a443a562605912fc7027ccaaeab7893e3685f11c5c8a9af730aeb6a3d",
     "stable1850-20261106-publish:completion:738ffbae-6761-41d2-b25b-93b44d87d81b": "2251922505041269903e755359d23448c252727f4e6e4ee543cc3653d5fae450",
     "stable1850-20261106-publish:completion:1f456bdb-8044-41a3-a07c-2c3c3b2f9427": "0e6a2fdb026408a0ea267fecfd370711912788b2612baf4cc49853ea4bf210f7",
-    "github:42285497508:1:complete:completion:b7c8506a-77bf-4d44-ac4e-6dca4fd045a8": "b27b019d24e87774fc50ecb5b8efef596cae784a1f3e4f7bb6d0dd3ccb151fab"
+    "github:42285497508:1:complete:completion:b7c8506a-77bf-4d44-ac4e-6dca4fd045a8": "b27b019d24e87774fc50ecb5b8efef596cae784a1f3e4f7bb6d0dd3ccb151fab",
+    "github:42285497508:1:complete:completion:1e5c0f11-3e3b-4e5d-a6c3-595853d44993": "641548fd2032dd35141785287763c4fa47d208e067f3c9e7fea786874df72636"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
