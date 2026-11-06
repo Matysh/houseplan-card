@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5849,
+  "revision": 5850,
   "nextTicket": 275,
   "nextFence": 275,
   "tasks": {
@@ -4294,7 +4294,8 @@
           "entry": 2,
           "detail": "Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: wall node delete: failed",
           "eventId": "finish:e39f4278-aeba-4b58-903d-0d5f089fd1c7:finish:3:return:return:1330"
-        }
+        },
+        "delivered": true
       }
     }
   },
