@@ -19,6 +19,13 @@ fixed and its field is disabled. Native gestures, full-dialog entry, routing,
 landing geometry and existing history remain unchanged (#931).
 
 The Plan editor has one **Stairs** group with **Straight** and **Spiral** tools.
+With a mouse, the armed tool shows one pointer-transparent default stair under
+the cursor before a press (#1253). It uses the same size, current colour and
+wall/stair magnets as an ordinary click. This live preview never enters saved
+stairs, areas or history. Leaving the canvas, changing tool/kind/mode/space or
+cancelling clears it; a host/HA update keeps a single visible owner. The press
+transfers ownership to the existing draft. Inputs without hover still place by
+the same gesture.
 Stairs are drawn like decor shapes (#676): press on the plan, drag and release.
 The dominant drag axis is the rise axis, the ascent points from the press to
 the release ("draw from the bottom up"), the sizes are the drawn extents (never

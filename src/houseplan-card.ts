@@ -7746,7 +7746,9 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerMove(ev: PointerEvent): void {
-    if (!this._pointers.has(ev.pointerId) && !sceneGestureFromPath(ev.composedPath())) return;
+    if (!this._pointers.has(ev.pointerId) && !sceneGestureFromPath(ev.composedPath())) {
+      this._editorRuntime?.stairs.clearPlacementPreview(); return;
+    }
     this._editorRuntime?.decorLine.pointerMove(ev);
     if (this._editorRuntime?.stairs.pointerMove(ev)) return;
     if (this._editorRuntime?.physicalGesture.rotation?.pid === ev.pointerId) {
@@ -7868,6 +7870,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerLeave(ev: PointerEvent): void {
+    this._editorRuntime?.stairs.clearPlacementPreview();
     this._editorRuntime?._cancelPointerMove('markup-hover');
     this._editorRuntime?._clearRoomFaceHover();
     if (this._mode === 'decor') this._editorRuntime?._furnPointerLeave(ev);

@@ -102,6 +102,10 @@ export class StairEditorRuntime {
   private dialog: StairDialog | null = null;
   private drag: StairDrag | null = null;
   private draft: StairDraft | null = null;
+  private cancelledPlacement: number | null = null;
+  private hover: { pid: number; space: string; point: number[]; epoch: number;
+    cellCm: number; pitch: number; color: string; opacity: number;
+    stair: Stair; surfaces: readonly FurnitureWallSurface[] } | null = null;
 
   public constructor(private readonly owner: StairEditorHostPort, private readonly properties?: {
     select(id: string): boolean; beforeDialog(retry: () => void): boolean;
@@ -111,7 +115,7 @@ export class StairEditorRuntime {
   public get dialogOpen(): boolean { return this.dialog !== null; }
   public get dragging(): boolean { return this.drag !== null || this.draft !== null; }
   /** Only a moving preview belongs to the live frame; selection/down keeps its host update. */
-  public get live(): boolean { return !!this.drag?.preview || this.draft !== null; }
+  public get live(): boolean { return !!this.drag?.preview || this.draft !== null || this.hoverStair !== null; }
   private get previewStairs(): Stair[] {
     return this.stairs.map(stair => this.drag?.id === stair.id ? this.drag.current : stair);
   }
@@ -123,6 +127,7 @@ export class StairEditorRuntime {
   }
 
   public clearSelection(): void {
+    this.clearPlacementPreview();
     this.selectedId = null;
     this.owner.requestUpdate();
   }
@@ -200,9 +205,62 @@ export class StairEditorRuntime {
   }
 
   public activatePlacement(kind: Stair['kind']): void {
+    this.clearPlacementPreview();
     this.preset = kind;
     this.selectedId = null;
     this.owner._activateMarkupTool('stairs');
+  }
+
+  private get placementEnabled(): boolean {
+    return this.owner._mode === 'plan' && this.owner._tool === 'stairs'
+      && !!this.owner._curSpaceCfg && !this.dialog
+      && this.stairs.length < MAX_STAIRS_PER_SPACE;
+  }
+
+  /** Same zero-length draft and magnet as a click, without a persisted ID. */
+  private placementAt(point: number[], id: string, surfaces: readonly FurnitureWallSurface[]): Stair {
+    const stair = draftStair(this.preset, point, point, this.owner._cellCm, id,
+      this.owner._gridPitch, NORM_W, this.creationVisualStyle());
+    return this.withMoveMagnet(stair, [stair.x * NORM_W, stair.y * NORM_W], surfaces);
+  }
+
+  private get hoverStair(): Stair | null {
+    const hover = this.hover;
+    if (!hover) return null;
+    if (!this.placementEnabled || hover.space !== this.owner._space) {
+      this.hover = null; return null;
+    }
+    if (hover.epoch !== this.owner._cfgEpoch || hover.cellCm !== this.owner._cellCm
+      || hover.pitch !== this.owner._gridPitch || hover.color !== this.owner._decorStyle.color
+      || hover.opacity !== this.owner._decorStyle.opacity) {
+      hover.epoch = this.owner._cfgEpoch; hover.cellCm = this.owner._cellCm;
+      hover.pitch = this.owner._gridPitch; hover.color = this.owner._decorStyle.color;
+      hover.opacity = this.owner._decorStyle.opacity; hover.surfaces = this.surfaces();
+      hover.stair = this.placementAt(hover.point, 'stair-placement-preview', hover.surfaces);
+    }
+    return hover.stair;
+  }
+
+  public clearPlacementPreview(): void {
+    if (!this.hover) return;
+    this.hover = null;
+    this.owner.requestUpdate();
+  }
+
+  private hoverAt(event: PointerEvent): boolean {
+    if (!this.placementEnabled || event.pointerType !== 'mouse' || event.buttons !== 0 || !event.isPrimary) {
+      this.clearPlacementPreview(); return false;
+    }
+    const point = this.owner._svgPoint(event as unknown as MouseEvent);
+    // Refresh surface caches only when the accepted geometry/context changes.
+    const previous = this.hoverStair && this.hover;
+    const surfaces = previous?.surfaces ?? this.surfaces();
+    this.hover = { pid: event.pointerId, space: this.owner._space, point,
+      epoch: this.owner._cfgEpoch, cellCm: this.owner._cellCm, pitch: this.owner._gridPitch,
+      color: this.owner._decorStyle.color, opacity: this.owner._decorStyle.opacity,
+      stair: this.placementAt(point, 'stair-placement-preview', surfaces), surfaces };
+    this.owner.requestUpdate();
+    return true;
   }
 
   private placeStair(stair: Stair, before: unknown): void {
@@ -233,6 +291,8 @@ export class StairEditorRuntime {
       return false;
     }
     event.preventDefault();
+    this.cancelledPlacement = null;
+    this.hover = null;
     const point = this.owner._svgPoint(event as unknown as MouseEvent);
     const id = newStairId();
     this.draft = {
@@ -264,6 +324,7 @@ export class StairEditorRuntime {
 
   private cancelDraft(): void {
     if (!this.draft) return;
+    this.cancelledPlacement = this.draft.pid;
     this.draft = null;
     this.owner.requestUpdate();
   }
@@ -277,13 +338,7 @@ export class StairEditorRuntime {
     }
     const before = this.owner._geometrySnapshot();
     const id = newStairId();
-    const stair = this.withMoveMagnet(
-      draftStair(
-        this.preset, point, point, this.owner._cellCm, id, this.owner._gridPitch,
-        NORM_W, this.creationVisualStyle(),
-      ),
-      [point[0], point[1]], this.surfaces(),
-    );
+    const stair = this.placementAt(point, id, this.surfaces());
     this.placeStair(stair, before);
   }
 
@@ -383,6 +438,8 @@ export class StairEditorRuntime {
     handle: StairHandleSign = { sx: 0, sy: 0 },
   ): void {
     if (!this.inputEnabled || this.draft) return;
+    this.clearPlacementPreview();
+    this.cancelledPlacement = null;
     event.preventDefault();
     event.stopPropagation();
     if (this.properties && !this.properties.select(stair.id)) return;
@@ -414,7 +471,8 @@ export class StairEditorRuntime {
       return true;
     }
     const drag = this.drag;
-    if (!drag || drag.pid !== event.pointerId) return false;
+    if (!drag) return this.hoverAt(event);
+    if (drag.pid !== event.pointerId) return false;
     const point = this.owner._svgPoint(event as unknown as MouseEvent);
     let next: Stair = { ...drag.original };
     if (drag.mode === 'move') {
@@ -442,6 +500,10 @@ export class StairEditorRuntime {
   }
 
   private endDrag(event: PointerEvent, cancelled: boolean): boolean {
+    if (this.cancelledPlacement === event.pointerId) {
+      this.cancelledPlacement = null; this.swallowNextClick(); return true;
+    }
+    if (cancelled) this.clearPlacementPreview();
     if (this.draft?.pid === event.pointerId) {
       const draft = this.draft;
       this.draft = null;
@@ -483,6 +545,10 @@ export class StairEditorRuntime {
 
   public escape(): boolean {
     if (this.undoActiveDrag()) return true;
+    if (this.hover) {
+      this.cancelledPlacement = this.hover.pid;
+      this.clearPlacementPreview(); return true;
+    }
     if (!this.selectedId) return false;
     this.selectedId = null;
     this.owner.requestUpdate();
@@ -490,7 +556,7 @@ export class StairEditorRuntime {
   }
 
   public beforeModeChange(mode: StairEditorHostPort['_mode']): void {
-    if (mode !== this.owner._mode) this.undoActiveDrag();
+    if (mode !== this.owner._mode) { this.clearPlacementPreview(); this.undoActiveDrag(); }
   }
 
   public afterModeChange(): void {
@@ -498,6 +564,8 @@ export class StairEditorRuntime {
   }
 
   public clearGesture(): void {
+    this.hover = null;
+    this.cancelledPlacement = null;
     this.drag = null;
     this.draft = null;
     this.selectedId = null;
@@ -569,7 +637,10 @@ export class StairEditorRuntime {
       stair, spaceIds, this.inputEnabled && this.selectedId === stair.id, false,
     ));
     const draft = this.draft ? this.renderStair(this.draft.stair, spaceIds, true, true) : nothing;
-    return svg`<g class="hp-stairs-layer">${items}${draft}</g>` as unknown as TemplateResult;
+    const hover = this.hoverStair;
+    const preview = hover ? svg`<g class="hp-stair-placement-preview" pointer-events="none">
+      ${this.renderStair(hover, spaceIds, false, true)}</g>` : nothing;
+    return svg`<g class="hp-stairs-layer">${items}${draft}${preview}</g>` as unknown as TemplateResult;
   }
 
   /**

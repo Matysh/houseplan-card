@@ -1,0 +1,5 @@
+{
+ "schema":1,"issue":1253,"baseStable":"v1.84.0","category":"major",
+ "summary":{"ru":"Превью прямой и винтовой лестницы под курсором до нажатия.","en":"Preview straight and spiral stairs under the cursor before pressing."},
+ "rationale":"New placement feedback for the existing Plan Stairs tools without changing persisted geometry or non-hover gestures."
+}

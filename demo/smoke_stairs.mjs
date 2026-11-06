@@ -6,6 +6,7 @@
 // internals are read-only oracles.
 import { launch, checkAll, finish } from './serve.mjs';
 import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
+import { stairsPlacementPreview } from './helpers/stairs-placement-preview.mjs';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 import { fixtureWallKey } from './fixtures/wall-key.mjs';
 import { isDeepStrictEqual } from 'node:util';
@@ -915,5 +916,6 @@ for(const [direction,expected]of[['undo',historyBefore],['redo',historyMoved]]){
  out[`history1100${direction}StairPaintReadback`]=JSON.stringify(observed.pose)===JSON.stringify(expected.pose);
  out[`history1100${direction}NoPhysicalBuilds`]=JSON.stringify(observed.builds)===JSON.stringify(historyMoved.builds);
 }
+Object.assign(out,await stairsPlacementPreview(page));
 checkAll(out);
 await finish(browser, out);
