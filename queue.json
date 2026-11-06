@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 5503,
+  "revision": 5504,
   "nextTicket": 263,
   "nextFence": 263,
   "tasks": {
@@ -1326,7 +1326,20 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793946416520,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "3cdb36533efea61e975098d00fe91e98d60d32df",
+      "changedFiles": [
+        "demo/helpers/stairs-placement-preview.mjs",
+        "demo/smoke_stairs.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/STAIRS.md",
+        "docs/release-ledger/cycle.json",
+        "docs/release-ledger/v1.84.0/1253.json",
+        "src/houseplan-card.ts",
+        "src/stairs-editor.ts",
+        "test/stairs-editor-live.test.mjs"
+      ]
     },
     "1254": {
       "issue": 1254,
@@ -4052,10 +4065,11 @@
     "token": "262:finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:1:admit",
     "fence": 262,
     "materialSha": "8fbccddefcebe22db3de68e15ff5b35cfefdc832",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
+    "phase": "testing",
     "admittedAt": 1793946420172,
-    "expiresAt": 1793946720172
+    "expiresAt": 1793946726088,
+    "patchId": "3cdb36533efea61e975098d00fe91e98d60d32df"
   },
   "events": {
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c:finish:2:synchronized": {
@@ -4105,6 +4119,10 @@
     "github:42173747434:1:completions:notice:ec0d81f48778affca079734f87bfbe4dd924008b1f84712c6313f29776cfe6e4": {
       "digest": "71ed3e2122d518d966e97641dbd385d46fbf0f4222a385a706b512fe0d26e730",
       "issue": 1329
+    },
+    "finish:95131da2-3f3b-4553-928f-1f1480ce3ee6:finish:2:synchronized": {
+      "digest": "1d72ac2d60e873e63616b547ac291c5b1fcb112e9af5527ca929dfda838e6bcb",
+      "issue": 1253
     },
     "finish:ae9032c5-af13-4978-a4c2-fa174015ba9c": {
       "digest": "a56f6f76ba636c40127695117d57a9970d2dabae7dc8e6ca7ab9b154319f8ebc",
