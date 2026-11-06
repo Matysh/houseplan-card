@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 548,
+  "revision": 549,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -32967,6 +32967,11 @@
             1340,
             1341
           ]
+        },
+        "retire-beta": {
+          "status": "completed",
+          "branch": "release/1.85.0-beta.1",
+          "sha": "0ce2c7c7b8def6f7ef5dd6522d7d0816c107c28f"
         }
       }
     }
@@ -37934,7 +37939,8 @@
     "beta1852-20261106-publish:completion:8795b9a7-b4d9-46ae-8b62-df27c3f890c3": "98f3380e542c5de2efc7ee861d822684dad7d95500b523354821d7cf2f5b0f33",
     "beta1852-20261106-publish:completion:a6340328-9458-49bf-8b42-78c768da4b13": "926f64dddd6dcaa94aa9f4dacdcd9aa4a484c52816722495f5779da6677924bd",
     "beta1852-20261106-publish:completion:c1f92dc9-0ffa-4e9e-b78d-a656eb652ffa": "7a24db09723baee087207f67de95621466343e8968bd31ec2df490ab7680b934",
-    "beta1852-20261106-publish:completion:d22073b6-847a-4675-9292-899185c145c0": "06ef27a75b3b9a45b537787991c0d22940eaf5102266cc20fe82a0924cbe99a4"
+    "beta1852-20261106-publish:completion:d22073b6-847a-4675-9292-899185c145c0": "06ef27a75b3b9a45b537787991c0d22940eaf5102266cc20fe82a0924cbe99a4",
+    "beta1852-20261106-publish:completion:a40f6871-9f5b-4d9f-8c20-dabb6330383e": "1aae4e8da7ab5ad63481fad6dfd0b277d5f425951735ab3117a7c1d99f7a80b9"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
