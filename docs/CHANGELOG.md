@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- S6 selects tests from changed behavior, component links and track; active catalog, explicit unknowns, file-level reuse and fallback preparation share one plan. #1239
+
 - Align room paper with actual mixed-junction masonry; independent branches no longer expose white facade tips. #1327
 - Background rotation: Shift snaps all handles to absolute 45° bearings and updates held previews on modifier edges. Default rotation precision and other Shift gestures stay unchanged. #1255
 

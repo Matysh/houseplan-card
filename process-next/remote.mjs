@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {selectionText} from './lib/task-selection.mjs';
 import { readFile, writeFile, mkdtemp, rm, mkdir } from 'node:fs/promises';
 import { resolve, join, dirname, relative } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -405,8 +406,10 @@ export async function finishTask({ config, event, queue, api, git, review, depen
     if (dependencies.prepareEnvironment) await dependencies.prepareEnvironment();
     const plan = await (dependencies.planProfile ?? planProfile)({ ...(event.request ?? {}), root: config.workspace, event: 'task', issue: task.issue,
       track: task.track, ownerAssigned: ownerShip(task), layer: task.layer, changedFiles: task.changedFiles ?? [], areaTests: event.areaTests ?? event.request?.areaTests ?? [] });
+    if(plan.selection)onProgress({kind:'selection',text:selectionText(plan.selection)});
     const report = await (dependencies.runPlan ?? runPlan)(plan, { root: config.workspace, stateDir: config.localStateDir,
       reuse: true, signal, onProgress: progress => onProgress({ kind: 'checks', ...progress }) });
+    if(plan.selection)onProgress({kind:'selection',text:selectionText({...plan.selection,reasons:{}},report)});
     return { outcome: report.status, evidence: { id: report.id, name: report.name, reportPath: report.reportPath, materialSha: active.materialSha,
       status: report.status, finishedAt: report.finishedAt,
       failures: (report.results ?? []).filter(row => ['failed', 'unavailable', 'cancelled', 'blocked'].includes(row.status))
@@ -719,3 +722,4 @@ export async function main(args = process.argv.slice(2)) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
   main().catch(error => { process.stderr.write(error.message + '\n'); process.exitCode = 1; });
+

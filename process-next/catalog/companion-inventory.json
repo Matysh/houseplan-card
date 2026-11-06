@@ -1,0 +1,803 @@
+{
+  "schema": 1,
+  "sourceRun": "20261105T201321284-c9d3eb36",
+  "companionCommit": "917f64b7bcbd46f1a67b13215566900ad15c98d2",
+  "note": "Exact project/file/title roster from retained real HA reports of stable 1.84.0; metadata only, never authorizes a task E2E run. Supply e2eRoot to detect changed or new files before claiming current external coverage.",
+  "files": {
+    "tests/00-vacuum-trail.admin.spec.mjs": "739ac911a7f3444059a3e8d3a59fab8364459e903d38fba84d635bea44234a4f",
+    "tests/auth.setup.mjs": "4e03e28869c6f2793ff73123dd786477fda82e1b0d8abd418ce1eb6655f3e776",
+    "tests/dashboard.admin.spec.mjs": "f925d9b310f760e03ab75371cca6a2c00e5cee2483e18331fbf61e1510dbc179",
+    "tests/editor-decor.admin.spec.mjs": "383febce822fe40267e0236c162b408c29c3c594d48eb52a254cf69726229686",
+    "tests/editor-devices.admin.spec.mjs": "e8f9975e175c723ed4e953b59ed5ab482af6558ed86ab693e20fcb9ca95bdf78",
+    "tests/editor-plan.admin.spec.mjs": "5b18eb8effcef9e834b6814285d5ff89c0434b3a9dee59d814543dc2f21a066f",
+    "tests/first-run/empty.viewer.spec.mjs": "2f61329472a6d32ccd1d6d33dc1681fab44beb794ec74f6fdd21ffa277e184fc",
+    "tests/first-run/first-space.admin.spec.mjs": "81367cacc50e1894ebf2adb283f9e03124bd56c6de13acbc3e770258635d419e",
+    "tests/ha-bootstrap.admin.spec.mjs": "79c408ab77792f99ad21febab5137f7d4137827eb2b2fee68a2dc797780e421c",
+    "tests/light.admin.spec.mjs": "6ab15fa8cbb589e2a132341dbb67ab1c3928cab9dd7ee8e596d8557577464b48",
+    "tests/node-save.admin.spec.mjs": "4a589e49ccd6364cfb28a6b2d7cf39f8cf276cddb0eea9db344ca26d4e42ab03",
+    "tests/panel-header.admin.spec.mjs": "543fff1d687acd5bae8f5e0c343d30c213881d9c137ca749be44f84a96548909",
+    "tests/panel-kiosk.admin.spec.mjs": "ad98bb8aa3c2b1d4e230f6d6a7314bd6a11a5e41bab93054b56a086650790ba9",
+    "tests/panel-kiosk.mobile.spec.mjs": "b4d7ad651a9edd6615e8831f58c94091544e5f09629b3df1dd07c864eaff6910",
+    "tests/panel-kiosk.viewer.spec.mjs": "b821f92063338dda35bfdc984ae5c16016b56d0a7319f6017a646a7121cd0c78",
+    "tests/panel-profiles.admin.spec.mjs": "17feb7f10e6c0816b0bb512324af23658b0696b61f6ee1f59b52bcdb6bce69c6",
+    "tests/panel-profiles.viewer.spec.mjs": "f0d7641678025f701f3911db3a5ffe76b70ab736cd882cc526239c9b506bcea2",
+    "tests/panel.admin.spec.mjs": "002fd501c81f129cf5da97eb001c017d3a7bf06bd04555bf0bc7fff75221fb52",
+    "tests/panel.mobile.spec.mjs": "7857b7879e479e696ceb2531ee7ff8151ac00f58be29119cf4133f0587656e14",
+    "tests/pdf.admin.spec.mjs": "6725ec0abb60c3019992798c40dd36983781bd4747ba3554009a2287f8c14cba",
+    "tests/plan-model.setup.mjs": "3877a6968bcdbfe4bbbf65cb614a351e44250e01cd701c4ef99f27512dca3384",
+    "tests/readonly.viewer.spec.mjs": "4bc181cb3a7e4021b44d8b8e9438197897d3ef6461d4b99640e1fe397c12ad69",
+    "tests/regressions-beta4-extra.admin.spec.mjs": "8aecdfc66913b0591fc26e92234cf3324d16d62608eaddbedabfbe096e1a83c5",
+    "tests/regressions-beta4.admin.spec.mjs": "2a7a5c4c0fa3dac1de91037047176fbfe1e5b730a3571e867c99f8c0ea561587",
+    "tests/selective-invalidation.admin.spec.mjs": "5afc333d99cc367d66d7f27e15476a866f2d7c5eaf98e64869136939b8af1f84",
+    "tests/settings.admin.spec.mjs": "18f8519e495db56777dd2a4ab31f04f8b442d0c7b787195c848c7c4918b79f15",
+    "tests/space-copy-lifecycle.admin.spec.mjs": "cc2505b8499844f98490bf95d954c5da35ab48bb679aea648457ce8ddd6a47af",
+    "tests/spaces.admin.spec.mjs": "3e0d81665c95456519e9e0a486583d8736672792e104d1fb25a1e5eec1d8e1ce",
+    "tests/static-sync.admin.spec.mjs": "584a8b3cb1b94d280d0ea1ff69f4eeb5e33224e527e9534d8272b1dfbbd0a0aa",
+    "tests/summary.admin.spec.mjs": "7633f01cf0fb9576edb47a1cbe60b023be0f8a529c421b9ca7297538c95ddd98",
+    "tests/support.admin.spec.mjs": "10d9aecb9bd7127aab023562f15015deb424822f614bf4b274196e4bc2e99ee4",
+    "tests/transfer-export.admin.spec.mjs": "3abe5cd4090e86c8bd21e482a9077229c96c28a8ef348361e2eb423cbef9cff8",
+    "tests/transfer-import.admin.spec.mjs": "1f793b005012cbd5bad19fcff0ce2a0d4a6462e5eac07466864c205ebdc49003",
+    "tests/upgrade/upgrade.admin.spec.mjs": "0cc001dffe2996705d4bb0caa599cfe42139185cd5f2ca94b6dbf07de7209422",
+    "tests/zz-restart.admin.spec.mjs": "9657c7b19857bac69e5d370c005e470afb4f0a3db62c162546aa580724c5c8c9"
+  },
+  "rows": [
+    {
+      "id": "admin:tests/00-vacuum-trail.admin.spec.mjs:the stored trail is drawn, a live run moves the robot and draws a trail the server keeps",
+      "file": "tests/00-vacuum-trail.admin.spec.mjs",
+      "title": "the stored trail is drawn, a live run moves the robot and draws a trail the server keeps",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/dashboard.admin.spec.mjs:kiosk view hides the header and keeps the plan",
+      "file": "tests/dashboard.admin.spec.mjs",
+      "title": "kiosk view hides the header and keeps the plan",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/dashboard.admin.spec.mjs:Masonry view: the card still draws the plan",
+      "file": "tests/dashboard.admin.spec.mjs",
+      "title": "Masonry view: the card still draws the plan",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/dashboard.admin.spec.mjs:Panel view: the card owns the page",
+      "file": "tests/dashboard.admin.spec.mjs",
+      "title": "Panel view: the card owns the page",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/dashboard.admin.spec.mjs:Sections view: the card defaults to the full width of its section",
+      "file": "tests/dashboard.admin.spec.mjs",
+      "title": "Sections view: the card defaults to the full width of its section",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-decor.admin.spec.mjs:a rectangle, an oval and a line are drawn and kept",
+      "file": "tests/editor-decor.admin.spec.mjs",
+      "title": "a rectangle, an oval and a line are drawn and kept",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-decor.admin.spec.mjs:a sofa from the furniture palette is placed and kept",
+      "file": "tests/editor-decor.admin.spec.mjs",
+      "title": "a sofa from the furniture palette is placed and kept",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-decor.admin.spec.mjs:a text with a live Home Assistant value is placed and shows the value",
+      "file": "tests/editor-decor.admin.spec.mjs",
+      "title": "a text with a live Home Assistant value is placed and shows the value",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-decor.admin.spec.mjs:an uploaded image is placed on the plan and served back after a reload",
+      "file": "tests/editor-decor.admin.spec.mjs",
+      "title": "an uploaded image is placed on the plan and served back after a reload",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-decor.admin.spec.mjs:the backdrop image of a space is moved in its own tool",
+      "file": "tests/editor-decor.admin.spec.mjs",
+      "title": "the backdrop image of a space is moved in its own tool",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-devices.admin.spec.mjs:a device is moved with undo and redo, renamed and copied, and the plan keeps it",
+      "file": "tests/editor-devices.admin.spec.mjs",
+      "title": "a device is moved with undo and redo, renamed and copied, and the plan keeps it",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-devices.admin.spec.mjs:Properties follows the real card width at 1023, 1024 and 1025 without losing selection",
+      "file": "tests/editor-devices.admin.spec.mjs",
+      "title": "Properties follows the real card width at 1023, 1024 and 1025 without losing selection",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-devices.admin.spec.mjs:the Properties panel changes the size of the selected device",
+      "file": "tests/editor-devices.admin.spec.mjs",
+      "title": "the Properties panel changes the size of the selected device",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-devices.admin.spec.mjs:two devices pulled together by the magnets form one outlined group",
+      "file": "tests/editor-devices.admin.spec.mjs",
+      "title": "two devices pulled together by the magnets form one outlined group",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-plan.admin.spec.mjs:a room deleted with its walls kept is created again in the same walls",
+      "file": "tests/editor-plan.admin.spec.mjs",
+      "title": "a room deleted with its walls kept is created again in the same walls",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-plan.admin.spec.mjs:a room is resized by dragging its wall",
+      "file": "tests/editor-plan.admin.spec.mjs",
+      "title": "a room is resized by dragging its wall",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-plan.admin.spec.mjs:a wall node is dragged to a new point",
+      "file": "tests/editor-plan.admin.spec.mjs",
+      "title": "a wall node is dragged to a new point",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-plan.admin.spec.mjs:a zero-thickness wall is drawn and kept as an axis without a body",
+      "file": "tests/editor-plan.admin.spec.mjs",
+      "title": "a zero-thickness wall is drawn and kept as an axis without a body",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/editor-plan.admin.spec.mjs:walls drawn into a closed contour become a saved room",
+      "file": "tests/editor-plan.admin.spec.mjs",
+      "title": "walls drawn into a closed contour become a saved room",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/ha-bootstrap.admin.spec.mjs:settings and import dialogs survive a late genuine HA bootstrap on cold and repeated entry",
+      "file": "tests/ha-bootstrap.admin.spec.mjs",
+      "title": "settings and import dialogs survive a late genuine HA bootstrap on cold and repeated entry",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/light.admin.spec.mjs:a lamp switched on in Home Assistant spreads its light on the plan, and off removes it",
+      "file": "tests/light.admin.spec.mjs",
+      "title": "a lamp switched on in Home Assistant spreads its light on the plan, and off removes it",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/node-save.admin.spec.mjs:adjacent merge removes its connecting edge atomically and stale CAS cannot enter history",
+      "file": "tests/node-save.admin.spec.mjs",
+      "title": "adjacent merge removes its connecting edge atomically and stale CAS cannot enter history",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/node-save.admin.spec.mjs:ordinary node save and independent merge wait for real ACK and retain exact history across spaces",
+      "file": "tests/node-save.admin.spec.mjs",
+      "title": "ordinary node save and independent merge wait for real ACK and retain exact history across spaces",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/node-save.admin.spec.mjs:painted node edge at high zoom moves only that endpoint and opens its menu without a write on cancel",
+      "file": "tests/node-save.admin.spec.mjs",
+      "title": "painted node edge at high zoom moves only that endpoint and opens its menu without a write on cancel",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/node-save.admin.spec.mjs:unsafe foreign contact refuses the whole node gesture without a write",
+      "file": "tests/node-save.admin.spec.mjs",
+      "title": "unsafe foreign contact refuses the whole node gesture without a write",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-header.admin.spec.mjs:editor close glyph stays centered in full and compact modes with real HA icons",
+      "file": "tests/panel-header.admin.spec.mjs",
+      "title": "editor close glyph stays centered in full and compact modes with real HA icons",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-header.admin.spec.mjs:the native HA menu follows width and the real sidebar preference, and stays outside Lovelace",
+      "file": "tests/panel-header.admin.spec.mjs",
+      "title": "the native HA menu follows width and the real sidebar preference, and stays outside Lovelace",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-kiosk.admin.spec.mjs:1103-1 cold path and query kiosk remove both headers and all editor entries",
+      "file": "tests/panel-kiosk.admin.spec.mjs",
+      "title": "1103-1 cold path and query kiosk remove both headers and all editor entries",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-kiosk.admin.spec.mjs:1103-10 dirty device draft Keep retains input/URL; Discard enters exactly the requested kiosk without a write",
+      "file": "tests/panel-kiosk.admin.spec.mjs",
+      "title": "1103-10 dirty device draft Keep retains input/URL; Discard enters exactly the requested kiosk without a write",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-kiosk.admin.spec.mjs:1103-10 late real Save reply cannot act on the replacement HA panel",
+      "file": "tests/panel-kiosk.admin.spec.mjs",
+      "title": "1103-10 late real Save reply cannot act on the replacement HA panel",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-kiosk.admin.spec.mjs:1103-2/3 position follows ordinary UI order and path keeps foreign query encoding and hash",
+      "file": "tests/panel-kiosk.admin.spec.mjs",
+      "title": "1103-2/3 position follows ordinary UI order and path keeps foreign query encoding and hash",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-kiosk.admin.spec.mjs:1103-4 malformed positions show all floors; fixed position resists hash and native swipe",
+      "file": "tests/panel-kiosk.admin.spec.mjs",
+      "title": "1103-4 malformed positions show all floors; fixed position resists hash and native swipe",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-kiosk.admin.spec.mjs:1103-5 SPA, Back/Forward and foreign query preserve the mounted card, camera and actual IO",
+      "file": "tests/panel-kiosk.admin.spec.mjs",
+      "title": "1103-5 SPA, Back/Forward and foreign query preserve the mounted card, camera and actual IO",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-kiosk.admin.spec.mjs:1103-7 true HA leave ends editor, remount does not retain old actions",
+      "file": "tests/panel-kiosk.admin.spec.mjs",
+      "title": "1103-7 true HA leave ends editor, remount does not retain old actions",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-kiosk.admin.spec.mjs:1103-8 add/remove changes an out-of-range URL between all floors and a real fixed floor",
+      "file": "tests/panel-kiosk.admin.spec.mjs",
+      "title": "1103-8 add/remove changes an out-of-range URL between all floors and a real fixed floor",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-kiosk.admin.spec.mjs:1103-8 another real client reorders floors; a genuinely stale cold cache waits for the authoritative roster",
+      "file": "tests/panel-kiosk.admin.spec.mjs",
+      "title": "1103-8 another real client reorders floors; a genuinely stale cold cache waits for the authoritative roster",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-profiles.admin.spec.mjs:a cold saved profile opens its floor, rotation, sizes and display defaults",
+      "file": "tests/panel-profiles.admin.spec.mjs",
+      "title": "a cold saved profile opens its floor, rotation, sizes and display defaults",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-profiles.admin.spec.mjs:a native admin Save reaches a real read-only screen live with zero extra config GETs",
+      "file": "tests/panel-profiles.admin.spec.mjs",
+      "title": "a native admin Save reaches a real read-only screen live with zero extra config GETs",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel-profiles.admin.spec.mjs:URL overrides outrank profile and native local choices without persisting them",
+      "file": "tests/panel-profiles.admin.spec.mjs",
+      "title": "URL overrides outrank profile and native local choices without persisting them",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel.admin.spec.mjs:is listed in the sidebar and shows the plan on the very first open",
+      "file": "tests/panel.admin.spec.mjs",
+      "title": "is listed in the sidebar and shows the plan on the very first open",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel.admin.spec.mjs:lists the spaces in one select on this window and as tabs on a wide one",
+      "file": "tests/panel.admin.spec.mjs",
+      "title": "lists the spaces in one select on this window and as tabs on a wide one",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel.admin.spec.mjs:reflects entity state changed in Home Assistant",
+      "file": "tests/panel.admin.spec.mjs",
+      "title": "reflects entity state changed in Home Assistant",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel.admin.spec.mjs:survives leaving for a dashboard and coming back inside the app",
+      "file": "tests/panel.admin.spec.mjs",
+      "title": "survives leaving for a dashboard and coming back inside the app",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/panel.admin.spec.mjs:tapping a toggle-bound lamp switches it in Home Assistant",
+      "file": "tests/panel.admin.spec.mjs",
+      "title": "tapping a toggle-bound lamp switches it in Home Assistant",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/pdf.admin.spec.mjs:switching room names off in the dialog changes the PDF",
+      "file": "tests/pdf.admin.spec.mjs",
+      "title": "switching room names off in the dialog changes the PDF",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/pdf.admin.spec.mjs:the current space downloads as a real PDF",
+      "file": "tests/pdf.admin.spec.mjs",
+      "title": "the current space downloads as a real PDF",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4-extra.admin.spec.mjs:#1264 first-floor Resize minus3, Keep room-f, Resize plus1, Keep room-b has no new hidden or mixed-role material",
+      "file": "tests/regressions-beta4-extra.admin.spec.mjs",
+      "title": "#1264 first-floor Resize minus3, Keep room-f, Resize plus1, Keep room-b has no new hidden or mixed-role material",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4-extra.admin.spec.mjs:#1264 native seam Resize preserves the exact dependent corner belonging only to fixed rooms",
+      "file": "tests/regressions-beta4-extra.admin.spec.mjs",
+      "title": "#1264 native seam Resize preserves the exact dependent corner belonging only to fixed rooms",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4-extra.admin.spec.mjs:#1265 a real refused promotion Save preserves storage and a native retry commits the exact host",
+      "file": "tests/regressions-beta4-extra.admin.spec.mjs",
+      "title": "#1265 a real refused promotion Save preserves storage and a native retry commits the exact host",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4-extra.admin.spec.mjs:#1265 composite 874 native closure preserves parent, neighbour and source material through real ACK/history/reload",
+      "file": "tests/regressions-beta4-extra.admin.spec.mjs",
+      "title": "#1265 composite 874 native closure preserves parent, neighbour and source material through real ACK/history/reload",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4.admin.spec.mjs:#1263 one Escape cancels a contacted device drag before up, then native history and reload stay exact",
+      "file": "tests/regressions-beta4.admin.spec.mjs",
+      "title": "#1263 one Escape cancels a contacted device drag before up, then native history and reload stay exact",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4.admin.spec.mjs:#1264 an independent incident material obstacle safely clamps Resize without a storage write",
+      "file": "tests/regressions-beta4.admin.spec.mjs",
+      "title": "#1264 an independent incident material obstacle safely clamps Resize without a storage write",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4.admin.spec.mjs:#1264 native Resize nodes the fixed neighbour, preserves independent material and opening child through history",
+      "file": "tests/regressions-beta4.admin.spec.mjs",
+      "title": "#1264 native Resize nodes the fixed neighbour, preserves independent material and opening child through history",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4.admin.spec.mjs:#1265 a Draw segment cut by an existing divider saves both room offers with exact shared identity",
+      "file": "tests/regressions-beta4.admin.spec.mjs",
+      "title": "#1265 a Draw segment cut by an existing divider saves both room offers with exact shared identity",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4.admin.spec.mjs:#1265 promotion retains source atoms and the exact opening host after real Save",
+      "file": "tests/regressions-beta4.admin.spec.mjs",
+      "title": "#1265 promotion retains source atoms and the exact opening host after real Save",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4.admin.spec.mjs:#1265 promotion-residual retains source atoms and the exact opening host after real Save",
+      "file": "tests/regressions-beta4.admin.spec.mjs",
+      "title": "#1265 promotion-residual retains source atoms and the exact opening host after real Save",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4.admin.spec.mjs:#1278 #1267 opening Escape is inert; own-wall centre snap with Shift survives ACK and reload",
+      "file": "tests/regressions-beta4.admin.spec.mjs",
+      "title": "#1278 #1267 opening Escape is inert; own-wall centre snap with Shift survives ACK and reload",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/regressions-beta4.admin.spec.mjs:#1279 classic Split has one physical divider and exact all-wall thickness history",
+      "file": "tests/regressions-beta4.admin.spec.mjs",
+      "title": "#1279 classic Split has one physical divider and exact all-wall thickness history",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/selective-invalidation.admin.spec.mjs:a confirmed Save refusal leaves server truth intact and does not poison subsequent Copy and history",
+      "file": "tests/selective-invalidation.admin.spec.mjs",
+      "title": "a confirmed Save refusal leaves server truth intact and does not poison subsequent Copy and history",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/selective-invalidation.admin.spec.mjs:an HA update on an inactive floor is current when that floor is shown",
+      "file": "tests/selective-invalidation.admin.spec.mjs",
+      "title": "an HA update on an inactive floor is current when that floor is shown",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/selective-invalidation.admin.spec.mjs:Save remains pending until its real HA ACK, then closes and survives reload",
+      "file": "tests/selective-invalidation.admin.spec.mjs",
+      "title": "Save remains pending until its real HA ACK, then closes and survives reload",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/settings.admin.spec.mjs:Device on the plan: a new display is saved and shown again",
+      "file": "tests/settings.admin.spec.mjs",
+      "title": "Device on the plan: a new display is saved and shown again",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/settings.admin.spec.mjs:General settings: a toggle is saved for the whole installation",
+      "file": "tests/settings.admin.spec.mjs",
+      "title": "General settings: a toggle is saved for the whole installation",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/settings.admin.spec.mjs:Room settings: a renamed room shows its new name on the plan",
+      "file": "tests/settings.admin.spec.mjs",
+      "title": "Room settings: a renamed room shows its new name on the plan",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/settings.admin.spec.mjs:Space settings: a renamed space keeps its new name",
+      "file": "tests/settings.admin.spec.mjs",
+      "title": "Space settings: a renamed space keeps its new name",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/space-copy-lifecycle.admin.spec.mjs:space-copy furniture and decor choices persist all four combinations without changing the source",
+      "file": "tests/space-copy-lifecycle.admin.spec.mjs",
+      "title": "space-copy furniture and decor choices persist all four combinations without changing the source",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/space-copy-lifecycle.admin.spec.mjs:space-copy name survives the retired HA settings shell and Cancel keeps configuration",
+      "file": "tests/space-copy-lifecycle.admin.spec.mjs",
+      "title": "space-copy name survives the retired HA settings shell and Cancel keeps configuration",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/spaces.admin.spec.mjs:a space is added, kept after a reload, and deleted again",
+      "file": "tests/spaces.admin.spec.mjs",
+      "title": "a space is added, kept after a reload, and deleted again",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/static-sync.admin.spec.mjs:a real five-write burst uses one shared layout GET; equal and older events do not read or roll back",
+      "file": "tests/static-sync.admin.spec.mjs",
+      "title": "a real five-write burst uses one shared layout GET; equal and older events do not read or roll back",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/static-sync.admin.spec.mjs:a real virtual-light event paints immediately and survives a layout-only refresh",
+      "file": "tests/static-sync.admin.spec.mjs",
+      "title": "a real virtual-light event paints immediately and survives a layout-only refresh",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/static-sync.admin.spec.mjs:five native full-card drags ACK and update both static cards on the same HA connection",
+      "file": "tests/static-sync.admin.spec.mjs",
+      "title": "five native full-card drags ACK and update both static cards on the same HA connection",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/static-sync.admin.spec.mjs:held old reads cannot replace newer events, and a real connection handoff drops the old revision high-water",
+      "file": "tests/static-sync.admin.spec.mjs",
+      "title": "held old reads cannot replace newer events, and a real connection handoff drops the old revision high-water",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/static-sync.admin.spec.mjs:new configuration refreshes config and advertised capabilities, while layout-only and legacy events retain the other half",
+      "file": "tests/static-sync.admin.spec.mjs",
+      "title": "new configuration refreshes config and advertised capabilities, while layout-only and legacy events retain the other half",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/summary.admin.spec.mjs:the summary panel is shown, its values are drawn and its title and values are edited",
+      "file": "tests/summary.admin.spec.mjs",
+      "title": "the summary panel is shown, its values are drawn and its title and values are edited",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/support.admin.spec.mjs:the diagnostics package is prepared, previewed and downloaded without sending",
+      "file": "tests/support.admin.spec.mjs",
+      "title": "the diagnostics package is prepared, previewed and downloaded without sending",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/transfer-export.admin.spec.mjs:a complex plan exports as a complete ZIP with its backdrop, pictures and Zigbee snapshot",
+      "file": "tests/transfer-export.admin.spec.mjs",
+      "title": "a complex plan exports as a complete ZIP with its backdrop, pictures and Zigbee snapshot",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/transfer-export.admin.spec.mjs:a plan with problems: the export names them and gives the repaired, incomplete copy",
+      "file": "tests/transfer-export.admin.spec.mjs",
+      "title": "a plan with problems: the export names them and gives the repaired, incomplete copy",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/transfer-export.admin.spec.mjs:the current space exports as JSON, and as its plan only",
+      "file": "tests/transfer-export.admin.spec.mjs",
+      "title": "the current space exports as JSON, and as its plan only",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/transfer-import.admin.spec.mjs:a dirty ZIP: the preview names every problem, the import keeps the plan sound, undo brings the old plan back",
+      "file": "tests/transfer-import.admin.spec.mjs",
+      "title": "a dirty ZIP: the preview names every problem, the import keeps the plan sound, undo brings the old plan back",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/transfer-import.admin.spec.mjs:a JSON from House Plan 1.62 on another Home Assistant is migrated to the current plan model",
+      "file": "tests/transfer-import.admin.spec.mjs",
+      "title": "a JSON from House Plan 1.62 on another Home Assistant is migrated to the current plan model",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/transfer-import.admin.spec.mjs:a space exported as JSON comes back as a new space, devices already on the plan skipped",
+      "file": "tests/transfer-import.admin.spec.mjs",
+      "title": "a space exported as JSON comes back as a new space, devices already on the plan skipped",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/transfer-import.admin.spec.mjs:damaged, wrong and invalid files are refused and the plan stays as it was",
+      "file": "tests/transfer-import.admin.spec.mjs",
+      "title": "damaged, wrong and invalid files are refused and the plan stays as it was",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "admin:tests/zz-restart.admin.spec.mjs:an open plan survives a Home Assistant restart and is live again",
+      "file": "tests/zz-restart.admin.spec.mjs",
+      "title": "an open plan survives a Home Assistant restart and is live again",
+      "project": "admin",
+      "setup": false
+    },
+    {
+      "id": "first-run-admin:tests/first-run/first-space.admin.spec.mjs:from the sidebar page to a saved first space without any image",
+      "file": "tests/first-run/first-space.admin.spec.mjs",
+      "title": "from the sidebar page to a saved first space without any image",
+      "project": "first-run-admin",
+      "setup": false
+    },
+    {
+      "id": "first-run-viewer:tests/first-run/empty.viewer.spec.mjs:a non-admin sees a calm read-only empty state, no create action",
+      "file": "tests/first-run/empty.viewer.spec.mjs",
+      "title": "a non-admin sees a calm read-only empty state, no create action",
+      "project": "first-run-viewer",
+      "setup": false
+    },
+    {
+      "id": "mobile:tests/panel-kiosk.mobile.spec.mjs:1103-6 mobile all/fixed native swipe, pinch, pan, double tap, local sizes and orientation",
+      "file": "tests/panel-kiosk.mobile.spec.mjs",
+      "title": "1103-6 mobile all/fixed native swipe, pinch, pan, double tap, local sizes and orientation",
+      "project": "mobile",
+      "setup": false
+    },
+    {
+      "id": "mobile:tests/panel.mobile.spec.mjs:sidebar page on a phone draws the plan and opens the drawer",
+      "file": "tests/panel.mobile.spec.mjs",
+      "title": "sidebar page on a phone draws the plan and opens the drawer",
+      "project": "mobile",
+      "setup": false
+    },
+    {
+      "id": "plan-model:tests/plan-model.setup.mjs:the seed plan reaches the current plan model through one undone edit",
+      "file": "tests/plan-model.setup.mjs",
+      "title": "the seed plan reaches the current plan model through one undone edit",
+      "project": "plan-model",
+      "setup": true
+    },
+    {
+      "id": "setup:tests/auth.setup.mjs:login as admin (demo)",
+      "file": "tests/auth.setup.mjs",
+      "title": "login as admin (demo)",
+      "project": "setup",
+      "setup": true
+    },
+    {
+      "id": "setup:tests/auth.setup.mjs:login as viewer (viewer)",
+      "file": "tests/auth.setup.mjs",
+      "title": "login as viewer (viewer)",
+      "project": "setup",
+      "setup": true
+    },
+    {
+      "id": "upgrade:tests/upgrade/upgrade.admin.spec.mjs:an open browser follows an integration update after the HA restart",
+      "file": "tests/upgrade/upgrade.admin.spec.mjs",
+      "title": "an open browser follows an integration update after the HA restart",
+      "project": "upgrade",
+      "setup": false
+    },
+    {
+      "id": "viewer:tests/panel-kiosk.viewer.spec.mjs:1103-9 ordinary Lovelace kiosk cycle/floor/rotation contract and strict bad floor remain",
+      "file": "tests/panel-kiosk.viewer.spec.mjs",
+      "title": "1103-9 ordinary Lovelace kiosk cycle/floor/rotation contract and strict bad floor remain",
+      "project": "viewer",
+      "setup": false
+    },
+    {
+      "id": "viewer:tests/panel-kiosk.viewer.spec.mjs:1103-9 viewer kiosk cannot expose editors or write; empty plan offers no creation",
+      "file": "tests/panel-kiosk.viewer.spec.mjs",
+      "title": "1103-9 viewer kiosk cannot expose editors or write; empty plan offers no creation",
+      "project": "viewer",
+      "setup": false
+    },
+    {
+      "id": "viewer:tests/panel-profiles.viewer.spec.mjs:deletion falls back live, new IDs never capture the old URL, and the screen stays read-only",
+      "file": "tests/panel-profiles.viewer.spec.mjs",
+      "title": "deletion falls back live, new IDs never capture the old URL, and the screen stays read-only",
+      "project": "viewer",
+      "setup": false
+    },
+    {
+      "id": "viewer:tests/readonly.viewer.spec.mjs:the dashboard card is the same read-only plan",
+      "file": "tests/readonly.viewer.spec.mjs",
+      "title": "the dashboard card is the same read-only plan",
+      "project": "viewer",
+      "setup": false
+    },
+    {
+      "id": "viewer:tests/readonly.viewer.spec.mjs:the sidebar page shows the plan read-only",
+      "file": "tests/readonly.viewer.spec.mjs",
+      "title": "the sidebar page shows the plan read-only",
+      "project": "viewer",
+      "setup": false
+    }
+  ],
+  "discoveryInputs": {
+    "contract/data-hp-contract.json": "67526d34c1e823a01e837dc069d876e2c848cff4b2800b0d5a14caa484ac3779",
+    "fixtures/backups/README.md": "f5377b71e7a649bcc6ef53b15a5be60bff63a5833c34f079f0a2429060f78ff4",
+    "fixtures/backups/current-dirty-geometry.json": "357e04a891e4e41600412f4d0da90283cfc5d54fc5dde2c5a5a139f9b7647f23",
+    "fixtures/backups/legacy10-transfer-cases.json": "8d51553a5e6228af76bf3a368ce246e937400059828d6ddaf42fa812ff56a006",
+    "fixtures/images/e2e-tile.png": "82fadda555a4e694987e45c7a14b46699e861bf103e50cffd343b7afa79e56f4",
+    "fixtures/regressions/README.md": "956197ff6524eef48300560528b4f6e767d17a8fa2e261238df7e4af4b862334",
+    "fixtures/regressions/closure-actions.json": "b66b59ba47614af5d49d836e6dec1eea655c994304c29abb362df8ce14bf2424",
+    "fixtures/regressions/closure.json": "eadb25ad2c5680c793a4e329ac285a927af96b417c5bf82d79bf7c71db9936e7",
+    "fixtures/regressions/dependent.json": "5f1ac8920ba067a1051e2a910e6dd770e7c77eff3b2e81431606009c6e933990",
+    "fixtures/regressions/draw-two.json": "58cd1c04a8877e05aa57a2c9b5e8b7721f333525b296a5b596d19c374721e70d",
+    "fixtures/regressions/first-floor.json": "67ecb423fbf6cb52b997e1df1d132b0f932b4fd239d705859550530344399942",
+    "fixtures/regressions/legacy-stairs.json": "629646f7d3d10bfccc84d8f45309c37138fdd076e3ca3adbe6743b829171e2e2",
+    "fixtures/regressions/node-save-adjacent.json": "c9951f695d056f6dbbfbe099e4a9af69fe4982e4839847bae1ccbb780e40e682",
+    "fixtures/regressions/node-save-foreign.json": "ab093ac7c6b2dc34fa764f176615588a996b3e379cc1e208fd552918a45ea21b",
+    "fixtures/regressions/node-save-independent.json": "655b78ceeeb27193bb39e1fdc23a5a688ca08e5e141b981b98345e56f766febe",
+    "fixtures/regressions/opening.json": "e4f2003cc26f4b898c25c8dbcf8143da8cd6dc126ebba0c6fce93735413e3f18",
+    "fixtures/regressions/promotion-expected.json": "f8ae947c1409daa8e42e53c984fade2eee76644cc13958628bb6ce87bf832a25",
+    "fixtures/regressions/promotion-residual.json": "f04387f24a32638a37baa203eba76e7f0d5db3059eff0b5d4f0ac757a057ad58",
+    "fixtures/regressions/promotion.json": "316301b8ea29cd7d65b217920e8d3394bb26f206625b07db78da9ce681098ca5",
+    "fixtures/regressions/resize-conflict.json": "0df5695493599cb7dc0a8c999b8aecd430144c9922a89ba8ee1bfbc34c7d09c9",
+    "fixtures/regressions/resize.json": "0ba4cb6a0210760526c1295045ffbe8472a5f512f61d4b95ebd4354ab10fbc50",
+    "fixtures/regressions/split.json": "5d3175760c3297a034b945d76a486fb65dc58cc3f763532d4c6ec50bf5a127ee",
+    "package-lock.json": "61c133156dddc8f0021e00c1217707c954c27f263fb811613ea2a54e08337d1b",
+    "package.json": "65108deaf5ffab26090348a1e8696ddb2b5c19d539ba8da6305ea7bdd2d075e7",
+    "playwright.config.mjs": "60b8eb329f8a66fb1a07ab554adb535b2cca5ccfb87e8380fe37c0684e541f8b",
+    "tests/00-vacuum-trail.admin.spec.mjs": "739ac911a7f3444059a3e8d3a59fab8364459e903d38fba84d635bea44234a4f",
+    "tests/auth.setup.mjs": "4e03e28869c6f2793ff73123dd786477fda82e1b0d8abd418ce1eb6655f3e776",
+    "tests/dashboard.admin.spec.mjs": "f925d9b310f760e03ab75371cca6a2c00e5cee2483e18331fbf61e1510dbc179",
+    "tests/editor-decor.admin.spec.mjs": "383febce822fe40267e0236c162b408c29c3c594d48eb52a254cf69726229686",
+    "tests/editor-devices.admin.spec.mjs": "e8f9975e175c723ed4e953b59ed5ab482af6558ed86ab693e20fcb9ca95bdf78",
+    "tests/editor-plan.admin.spec.mjs": "5b18eb8effcef9e834b6814285d5ff89c0434b3a9dee59d814543dc2f21a066f",
+    "tests/first-run/empty.viewer.spec.mjs": "2f61329472a6d32ccd1d6d33dc1681fab44beb794ec74f6fdd21ffa277e184fc",
+    "tests/first-run/first-space.admin.spec.mjs": "81367cacc50e1894ebf2adb283f9e03124bd56c6de13acbc3e770258635d419e",
+    "tests/ha-bootstrap.admin.spec.mjs": "79c408ab77792f99ad21febab5137f7d4137827eb2b2fee68a2dc797780e421c",
+    "tests/lib/backup-fixtures.mjs": "4387281cddfb31c84f00df9e63000d99929d7cbfc647a88c4db7a3277e6e613f",
+    "tests/lib/backup.mjs": "79b1fa909e8a1d1d98ca351ebd61be94205899d514a1377a665c658ad1c0bcfc",
+    "tests/lib/beta4-regressions.mjs": "d93deba5e325721b536118ce30d494427dcc8623da49f9fdb00de5b887bac29f",
+    "tests/lib/beta5-maintenance.mjs": "03808e1164862b314d607a3e9c1c290897057cb20cec84f22e3f1aee745d8863",
+    "tests/lib/contract.mjs": "a624db6dabcc402e471f23b028aa65de15fd76682312012efcc6ad1699f4ffde",
+    "tests/lib/current-space.mjs": "f82c57f570f0a0c09f6a656cd62ea138a2bfd3ea76c3ada3a6660dfd9a64aeb4",
+    "tests/lib/exact-graph-first-space.mjs": "cc4f4d37cc99dce170894946357617eeb7497b80c8a89e756a1d0d6509fcf710",
+    "tests/lib/ha-api.mjs": "0b51c042d6fa60cc7d378826fb47e6d2ef994e19010775b1b4c00ee46c2d0071",
+    "tests/lib/ha-ctl.mjs": "dc7c14577a386f14387894fd353a20a168c1cebbf8366439c61ce621223a42ce",
+    "tests/lib/ha-page.mjs": "6f7273fbbdfe0c30eabb78193ea3aa55ab63f332ac6e96aac2bfa2cef644ccbe",
+    "tests/lib/ha-ws.mjs": "a2a7d04f4b26e535962f7521aa7f99acd99e7dee9fee6b58c1a3c031b67bf80f",
+    "tests/lib/held-config-reply.mjs": "8908336b5cd203878527c3cc5e742df51cc9cfde627bd47e6d17edfd14f5f571",
+    "tests/lib/hooks.mjs": "bbe53ed72ed9099b6837959fa7fdae5e8fe4ba215731a49e671ea126a6968fd0",
+    "tests/lib/panel-kiosk-journeys.mjs": "08f4c861404a9b0aa5d4b1c8105c48744d0f09f2dad365098680546fbb4e9e6a",
+    "tests/lib/panel-profiles.mjs": "2cd715fb2b15851e11cf2681999038548c3bd430731a177819db8cfbbc46ddbc",
+    "tests/lib/panel-release-contract.mjs": "06aecce180f9b06df751f8e1542fb4f5f151b144db8284daaba75d5e71ebe8c7",
+    "tests/lib/panel-shell.mjs": "6548c70b67415451bbc08abb9d6880337767af3fe829b94e7b06296ba8162ae3",
+    "tests/lib/plan.mjs": "a46094768aa23b0aa219b1a72c8edebda17be250d21e57b4a62f27b5f07295ef",
+    "tests/lib/preview-observer.mjs": "1eb81d9cd1fc5e18ec7be9c9368f82efff244ab509f485b7b879246370dca615",
+    "tests/lib/profile-fixtures.mjs": "df14b97523e8cb6922fbcff11181d3f56785894e6e82d07f3833d25b12a1c2fe",
+    "tests/lib/seed-guard.mjs": "5106a2ecbdcd9faf1dda1d8396a441462ccecf4a95b072aec17c5db7e5657365",
+    "tests/lib/static-sync.mjs": "931c9d6f7033ba620c66e887c245071bd9380949df3133b351152a7a6b33f3da",
+    "tests/lib/visible-plan-target.mjs": "11c774cf05214b4fce443220ab87dbe7696d2a1b20f2a0b90d2a8f7dbd47b52c",
+    "tests/lib/zip.mjs": "0b1eda9000a11222b8eb8ae9196e1cf40b6694cd6e87a4dca1351239ee4e5847",
+    "tests/light.admin.spec.mjs": "6ab15fa8cbb589e2a132341dbb67ab1c3928cab9dd7ee8e596d8557577464b48",
+    "tests/node-save.admin.spec.mjs": "4a589e49ccd6364cfb28a6b2d7cf39f8cf276cddb0eea9db344ca26d4e42ab03",
+    "tests/panel-header.admin.spec.mjs": "543fff1d687acd5bae8f5e0c343d30c213881d9c137ca749be44f84a96548909",
+    "tests/panel-kiosk.admin.spec.mjs": "ad98bb8aa3c2b1d4e230f6d6a7314bd6a11a5e41bab93054b56a086650790ba9",
+    "tests/panel-kiosk.mobile.spec.mjs": "b4d7ad651a9edd6615e8831f58c94091544e5f09629b3df1dd07c864eaff6910",
+    "tests/panel-kiosk.viewer.spec.mjs": "b821f92063338dda35bfdc984ae5c16016b56d0a7319f6017a646a7121cd0c78",
+    "tests/panel-profiles.admin.spec.mjs": "17feb7f10e6c0816b0bb512324af23658b0696b61f6ee1f59b52bcdb6bce69c6",
+    "tests/panel-profiles.viewer.spec.mjs": "f0d7641678025f701f3911db3a5ffe76b70ab736cd882cc526239c9b506bcea2",
+    "tests/panel.admin.spec.mjs": "002fd501c81f129cf5da97eb001c017d3a7bf06bd04555bf0bc7fff75221fb52",
+    "tests/panel.mobile.spec.mjs": "7857b7879e479e696ceb2531ee7ff8151ac00f58be29119cf4133f0587656e14",
+    "tests/pdf.admin.spec.mjs": "6725ec0abb60c3019992798c40dd36983781bd4747ba3554009a2287f8c14cba",
+    "tests/plan-model.setup.mjs": "3877a6968bcdbfe4bbbf65cb614a351e44250e01cd701c4ef99f27512dca3384",
+    "tests/readonly.viewer.spec.mjs": "4bc181cb3a7e4021b44d8b8e9438197897d3ef6461d4b99640e1fe397c12ad69",
+    "tests/regressions-beta4-extra.admin.spec.mjs": "8aecdfc66913b0591fc26e92234cf3324d16d62608eaddbedabfbe096e1a83c5",
+    "tests/regressions-beta4.admin.spec.mjs": "2a7a5c4c0fa3dac1de91037047176fbfe1e5b730a3571e867c99f8c0ea561587",
+    "tests/selective-invalidation.admin.spec.mjs": "5afc333d99cc367d66d7f27e15476a866f2d7c5eaf98e64869136939b8af1f84",
+    "tests/settings.admin.spec.mjs": "18f8519e495db56777dd2a4ab31f04f8b442d0c7b787195c848c7c4918b79f15",
+    "tests/space-copy-lifecycle.admin.spec.mjs": "cc2505b8499844f98490bf95d954c5da35ab48bb679aea648457ce8ddd6a47af",
+    "tests/spaces.admin.spec.mjs": "3e0d81665c95456519e9e0a486583d8736672792e104d1fb25a1e5eec1d8e1ce",
+    "tests/static-sync.admin.spec.mjs": "584a8b3cb1b94d280d0ea1ff69f4eeb5e33224e527e9534d8272b1dfbbd0a0aa",
+    "tests/summary.admin.spec.mjs": "7633f01cf0fb9576edb47a1cbe60b023be0f8a529c421b9ca7297538c95ddd98",
+    "tests/support.admin.spec.mjs": "10d9aecb9bd7127aab023562f15015deb424822f614bf4b274196e4bc2e99ee4",
+    "tests/transfer-export.admin.spec.mjs": "3abe5cd4090e86c8bd21e482a9077229c96c28a8ef348361e2eb423cbef9cff8",
+    "tests/transfer-import.admin.spec.mjs": "1f793b005012cbd5bad19fcff0ce2a0d4a6462e5eac07466864c205ebdc49003",
+    "tests/upgrade/upgrade.admin.spec.mjs": "0cc001dffe2996705d4bb0caa599cfe42139185cd5f2ca94b6dbf07de7209422",
+    "tests/zz-restart.admin.spec.mjs": "9657c7b19857bac69e5d370c005e470afb4f0a3db62c162546aa580724c5c8c9"
+  }
+}

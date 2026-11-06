@@ -138,3 +138,8 @@ E2E. Отсутствие E2E checkout или окружения показыв�
 
 Фоновые мутации и смысл их исходов:
 [mutation-browser-guards.md](testing-notes/mutation-browser-guards.md).
+
+
+## Центральная выборка S6 (#1239)
+
+Состав задаёт PROCESS, данные — `process-next/lib/task-selection.mjs`, фактические команды — существующий catalog/runner. Просмотр всех активных типов: `node process-next/cli.mjs catalog`; снимок по конкретному diff: `plan --event task --track show --changed-file src/example.ts` (файл примера заменить реальным; удалённые пути допустимы). Читаемый план объясняет области/связи, причины, неизвестные cases/стоимость и явно отложенные дополнения. `--json` сохраняет машинный формат. `run` и `finish` исполняют эту же выборку; файлы не объединяются в меняющуюся по меткам команду. Адресные infrastructure unit проверяют механизм выбора на temp fixtures/подменённых исполнителях, не поднимая весь продукт, HA E2E или старые Validate.

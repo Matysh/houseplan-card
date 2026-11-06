@@ -1,5 +1,9 @@
-import { readFile, access, stat } from 'node:fs/promises';
-import { resolve, relative, dirname, extname } from 'node:path';
+import {createHash} from 'node:crypto';
+import {dependencyReader} from './source-dependencies.mjs';
+import {selectTaskTests,FIXTURE_ARTIFACTS} from './task-selection.mjs';
+import { readFile, access } from 'node:fs/promises';
+import {existsSync} from 'node:fs';
+import { resolve, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, BETA_E2E } from '../catalog/selections.mjs';
@@ -42,6 +46,7 @@ export function discoverReleaseTests(root) {
     return [{ ...row, kind: old?.kind ?? row.kind, group: old?.group ?? 'new-product', groupLabel: old?.groupLabel ?? 'Новые продуктовые проверки' }];
   });
 }
+const fileStepId=(prefix,file)=>prefix+':'+createHash('sha256').update(file).digest('hex').slice(0,24);
 const step = (id, name, command, inputs, requires = [], extra = {}) => ({
   id, name, command, cwd: 'root', inputs: [...new Set(inputs)], requires, diagnostic: false, ...extra,
 });
@@ -54,31 +59,7 @@ const safeRelative = value => typeof value === 'string' && value && !value.start
 // Follow ordinary relative module/data references without importing the old
 // process classifier. This includes a test helper's dependencies in reuse.
 async function finalize(root, plan) {
-  const cache = new Map();
-  function direct(file) {
-    if (!cache.has(file)) cache.set(file, (async () => {
-      try {
-        if (!(await stat(resolve(root, file))).isFile()) return null;
-        if (!/\.(?:mjs|cjs|js|ts)$/.test(file)) return [];
-        const text = await readFile(resolve(root, file), 'utf8');
-        const edges = [];
-        // This catalog declares possible inputs/outputs; those strings are not reads by its callers.
-        // Still follow its imports below so changes to planner dependencies invalidate reuse.
-        if (file !== 'process-next/lib/catalog.mjs')
-          for (const match of text.matchAll(/['"]((?:src|demo|scripts|dist|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) edges.push(match[1]);
-        // Dynamic directory readers cannot honestly be narrowed to literal imports.
-        if (/\breaddirSync\b|\bimport\s*\(\s*[^'"\s]/.test(text) && file.startsWith('test/')) edges.push('src/**');
-        for (const match of text.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*|new\s+URL\s*\(\s*)['"](\.[^'"]+)['"]/g)) {
-          let candidate = relative(root, resolve(root, dirname(file), match[1].split(/[?#]/)[0])).replaceAll('\\', '/');
-          if (!safeRelative(candidate)) continue;
-          if (candidate.startsWith('test-build/')) candidate = candidate.replace(/^test-build\//, 'src/').replace(/\.js$/, '.ts');
-          edges.push(...(extname(candidate) ? [candidate] : [candidate, `${candidate}.ts`, `${candidate}.mjs`, `${candidate}.js`]));
-        }
-        return edges;
-      } catch { return null; }
-    })());
-    return cache.get(file);
-  }
+  const direct=dependencyReader(root);
   for (const check of plan.steps.filter(item => item.cwd === 'root' && item.command)) {
     // Use the generator's exact source closure. A broad demo/**/*.json would
     // treat the generated bundle manifest as source and invalidate preparation.
@@ -86,7 +67,7 @@ async function finalize(root, plan) {
       ? demoIconSourceFiles(root) : [];
     // Changed infra files are hashed data, not automatically executed modules.
     // Syntax reads its argv as text; behavior executes only its selected tests.
-    const sourceRoots = ['infra-syntax', 'infra-behavior'].includes(check.id) ? [] : check.inputs;
+    const sourceRoots = (check.id==='infra-syntax'||check.id.startsWith('infra-behavior')) ? [] : check.inputs;
     const commandRoots = check.id === 'infra-syntax' ? check.command.slice(1, 2) : check.command.slice(1);
     const seeds = [...sourceRoots, ...commandRoots].filter(path => safeRelative(path) && !/[?*]/.test(path) && /\.(?:mjs|cjs|js|ts|json|py)$/.test(path));
     const visited = new Set(), found = new Set(), artifactPreparations = new Set(); let pending = seeds;
@@ -111,7 +92,7 @@ async function finalize(root, plan) {
     // generator, so do not turn their artifact strings into new build edges.
     check.inputs = [...new Set([...check.inputs, ...found, ...iconInputs])].sort();
     for (const id of artifactPreparations) {
-      if (id === check.id) continue;
+      if (id === check.id||check.fixtureArtifacts) continue;
       if (!plan.steps.some(item => item.id === id)) throw Error(`Selected check ${check.id} reads prepared product artifacts (${id}); an infrastructure-only profile cannot silently build the product`);
       check.requires = [...new Set([...check.requires, id])];
     }
@@ -150,7 +131,7 @@ async function checkedPaths(root, paths, tests = false) {
     if (tests && !/^(?:test\/.*\.test\.mjs|tests_backend\/test_.*\.py|demo\/smoke[^/]*\.mjs|process-next\/test\/.*\.test\.mjs)$/.test(path)) {
       throw Error(`Unsupported affected test: ${path}`);
     }
-    await access(resolve(root, path));
+    if(tests)await access(resolve(root,path)); // changed sources may be deleted/renamed
   }
   return unique;
 }
@@ -220,28 +201,32 @@ export async function planProfile({ root, event = 'task', issue, track = 'show',
     }
     result.limitations.push('No mutation run is part of task/beta/stable/hotfix.'); return finalize(root, result);
   }
-  const affected = await checkedPaths(root, areaTests, true);
+  const requested = await checkedPaths(root, areaTests, true);
   const changed = await checkedPaths(root, changedFiles);
+  const selection=!release?await selectTaskTests({root,inventory,track,layer:infra?'infra':'product',changedFiles:changed,areaTests:requested}):null;
+  const affected=selection?.files??requested;if(selection)result.selection=selection.explanation;
   if (infra && !release) {
-    const syntax = changed.filter(path => ['.mjs', '.cjs', '.js', '.json', '.yml', '.yaml', '.py', '.ts'].includes(extname(path)));
+    const syntax = changed.filter(path => existsSync(resolve(root,path))&&['.mjs', '.cjs', '.js', '.json', '.yml', '.yaml', '.py', '.ts'].includes(extname(path)));
     if (syntax.length) steps.push(step('infra-syntax', 'Синтаксис и типы изменённых инструментов', helper('syntax', ...syntax), [...syntax, 'package.json', 'package-lock.json']));
     const node = affected.filter(path => path.endsWith('.mjs') && !path.startsWith('demo/'));
     const py = affected.filter(path => path.endsWith('.py'));
     if (affected.some(path => path.startsWith('demo/'))) throw Error('Infrastructure profile cannot silently include browser product checks');
-    if (node.length) steps.push(step('infra-behavior', 'Поведение затронутого механизма', ['node', '--test', '--test-reporter=tap', ...node], [...changed, ...node, 'package.json', 'package-lock.json'], [], { expectedNonempty: true }));
-    if (py.length) steps.push(step('infra-python', 'Python: затронутый механизм', ['python3', '-m', 'pytest', '-q', ...py], [...changed, ...py, 'tests_backend/conftest.py', 'tests_backend/pure_imports.py']));
+    for(const file of node)steps.push(step(fileStepId('infra-behavior',file),'Поведение механизма: '+file,['node','--test','--test-reporter=tap',file],[file,'package.json','package-lock.json'],[],{expectedNonempty:true,fixtureArtifacts:FIXTURE_ARTIFACTS.has(file)}));
+    for(const file of py)steps.push(step(fileStepId('infra-python',file),'Python: '+file,['python3','-m','pytest','-q',file],[file,'tests_backend/conftest.py','tests_backend/pure_imports.py']));
     if (!affected.length) result.limitations.push('No affected mechanism tests supplied. This is not a passed behavior test; the task author selects relevant tests.');
     return finalize(root, result);
   }
   result.prerequisites.push('Node dependencies from package-lock.json already installed; pinned Chromium available for browser checks.');
   preparations(steps, { build: true, tests: true, browser: true });
   if (!release) {
+    const tools=changed.filter(file=>/^(?:process-next\/|scripts\/|\.github\/)/.test(file)&&existsSync(resolve(root,file))&&/\.(?:mjs|cjs|js|json|yml|yaml|py|ts)$/.test(file));
+    if(tools.length)steps.push(step('infra-syntax','Синтаксис изменённых инструментов',helper('syntax',...tools),[...tools,'package.json','package-lock.json']));
     steps.push(nodeStep('critical-data-rights', 'Критичные данные, сохранение и права', CRITICAL_NODE, ['test-build']));
     steps.push(step('startup-view', 'Открытие сохранённого плана в View', helper('startup-smoke'), browserInputs, ['demo-assets'], { timeoutMs: 120000 }));
     const extraNode = affected.filter(path => path.endsWith('.test.mjs') && !CRITICAL_NODE.includes(path));
-    if (extraNode.length) steps.push(nodeStep('affected-node', 'Поведение изменённой области', extraNode, ['test-build']));
+    for(const file of extraNode)steps.push(nodeStep(fileStepId('affected-node',file),'Поведение: '+file,[file],['test-build']));
     const extraPy = affected.filter(path => path.endsWith('.py'));
-    if (extraPy.length) steps.push(step('affected-backend', 'Backend изменённой области', helper('backend', '--no-coverage', ...extraPy), pythonInputs));
+    for(const file of extraPy)steps.push(step(fileStepId('affected-backend',file),'Backend: '+file,helper('backend','--no-coverage',file),[...pythonInputs.filter(p=>p!=='tests_backend/**/*.py'),file,'tests_backend/conftest.py','tests_backend/pure_imports.py','tests_backend/fixtures/**']));
     for (const file of affected.filter(path => path.startsWith('demo/'))) steps.push(smokeStep({ file, args: [] }));
     return finalize(root, result);
   }

@@ -1,0 +1,74 @@
+import { readFile, stat } from 'node:fs/promises';
+import { resolve, relative, dirname, extname } from 'node:path';
+const safeRelative = value => typeof value === 'string' && value && !value.startsWith('-') && !value.includes('\\') && !value.split('/').includes('..') && !value.startsWith('/') && !value.includes(':');
+export function dependencyReader(root) {
+    const cache = new Map();
+    function direct(file) {
+        if (!cache.has(file))
+            cache.set(file, (async () => {
+                try {
+                    if (!(await stat(resolve(root, file))).isFile())
+                        return null;
+                    if (!/\.(?:mjs|cjs|js|ts|py)$/.test(file))
+                        return [];
+                    const text = await readFile(resolve(root, file), 'utf8');
+                    const edges = [];
+                    // A literal inside fixture source text is data being constructed, not
+                    // a second import/read of the host repository. Ignore comments as well.
+                    const literalStarts = new Set([...text.matchAll(/\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`/g)]
+                        .filter(m => !m[0].startsWith('/')).map(m => m.index));
+                    // Follow imports and actual data readers. A worker's command array is
+                    // a declaration, not an import of every executable it may later launch.
+                    for (const match of text.matchAll(/['"]((?:src|demo|scripts|dist|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) {
+                        if (!literalStarts.has(match.index))
+                            continue;
+                        const prefix = text.slice(Math.max(0, match.index - 180), match.index);
+                        if (/^(?:src\/|test\/fixtures\/|demo\/fixtures\/)/.test(match[1])
+                            || /(?:\breadFile(?:Sync)?\s*\(|\bnew\s+URL\s*\()[^;]*$/.test(prefix))
+                            edges.push(match[1]);
+                    }
+                    // Dynamic directory readers cannot honestly be narrowed to literal imports.
+                    if (/\breaddirSync\b|\bimport\s*\(\s*[^'"\s]/.test(text) && file.startsWith('test/'))
+                        edges.push('src/**');
+                    for (const match of text.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*|new\s+URL\s*\(\s*)['"](\.[^'"]+)['"]/g)) {
+                        const quote = match.index + match[0].search(/['"]/);
+                        if (!literalStarts.has(quote))
+                            continue;
+                        let candidate = relative(root, resolve(root, dirname(file), match[1].split(/[?#]/)[0])).replaceAll('\\', '/');
+                        if (!safeRelative(candidate))
+                            continue;
+                        if (candidate.startsWith('test-build/'))
+                            candidate = candidate.replace(/^test-build\//, 'src/').replace(/\.js$/, '.ts');
+                        if (file.endsWith('.ts') && candidate.endsWith('.js'))
+                            edges.push(candidate.replace(/\.js$/, '.ts'));
+                        edges.push(...(extname(candidate) ? [candidate] : [candidate, `${candidate}.ts`, `${candidate}.mjs`, `${candidate}.js`]));
+                    }
+                    if (file.endsWith('.py'))
+                        for (const match of text.matchAll(/^\s*from\s+(custom_components\.houseplan(?:\.[\w.]+)?|tests_backend(?:\.[\w.]+)?|\.[\w.]*)\s+import\s+([^\n]+)/gm)) {
+                            const module = match[1], base = module.startsWith('.') ? relative(root, resolve(root, dirname(file), ...Array(Math.max(0, module.match(/^\.+/)[0].length - 1)).fill('..'), module.replace(/^\.+/, '').replaceAll('.', '/'))).replaceAll('\\', '/') : module.replaceAll('.', '/');
+                            edges.push(base + '.py', base + '/__init__.py');
+                            for (const name of match[2].replace(/[()]/g, '').split(',')) {
+                                const value = name.trim().split(/\s+/)[0];
+                                if (/^\w+$/.test(value))
+                                    edges.push(base + '/' + value + '.py');
+                            }
+                        }
+                    if (file.endsWith('.py'))
+                        for (const match of text.matchAll(/^\s*import\s+([^\n]+)/gm))
+                            for (const part of match[1].split(',')) {
+                                const name = part.trim().split(/\s+/)[0];
+                                if (!/^(?:custom_components\.houseplan|tests_backend)\./.test(name))
+                                    continue;
+                                const module = name.replaceAll('.', '/');
+                                edges.push(module + '.py', module + '/__init__.py');
+                            }
+                    return edges;
+                }
+                catch {
+                    return null;
+                }
+            })());
+        return cache.get(file);
+    }
+    return direct;
+}

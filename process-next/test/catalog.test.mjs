@@ -25,7 +25,7 @@ test('Python-backed browser witnesses bind backend changes without adding HA or 
   const ordinary = await planProfile({ root, event: 'task', layer: 'product', areaTests: ['demo/smoke_summary_weather.mjs'] });
   assert.equal(ordinary.steps.find(step => step.id.startsWith('smoke:')).inputs.includes('custom_components/houseplan/**/*.py'), false);
   const unit = await planProfile({ root, event: 'task', layer: 'product', areaTests: ['test/room-write-python.test.mjs'] });
-  assert.ok(unit.steps.find(step => step.id === 'affected-node').inputs.includes('custom_components/houseplan/**/*.py'));
+  assert.ok(unit.steps.find(step => step.id.startsWith('affected-node:')).inputs.includes('custom_components/houseplan/**/*.py'));
 });
 test('pure docs creates no preparation, test or unavailable gate, including after-review', async () => {
   const plan = await planProfile({ root, event: 'fix', layer: 'docs', issue: 1105, areaTests: ['not-a-file'] });
@@ -58,7 +58,7 @@ test('infrastructure checks only changed syntax and selected mechanism, with no 
     await writeFile(resolve(temp, 'scripts/queue.mjs'), 'export const queue = 1;');
     await writeFile(resolve(temp, 'test/queue.test.mjs'), '');
     const plan = await planProfile({ root: temp, layer: 'infra', changedFiles: ['scripts/queue.mjs'], areaTests: ['test/queue.test.mjs'] });
-    assert.deepEqual(plan.steps.map(item => item.id), ['infra-syntax', 'infra-behavior']);
+    assert.deepEqual(plan.steps.map(item => item.id.split(':')[0]), ['infra-syntax', 'infra-behavior']);
     assert.deepEqual(plan.steps[1].command, ['node', '--test', '--test-reporter=tap', 'test/queue.test.mjs']);
     assert.ok(plan.steps.every(item => !item.inputs.some(path => path.startsWith('src/'))));
     await assert.rejects(planProfile({ root: temp, layer: 'infra', areaTests: ['../outside.test.mjs'] }), /relative path/);
@@ -69,7 +69,9 @@ test('infrastructure can check finish and its planner without consuming declared
   const plan = await planProfile({ root, layer: 'infra',
     changedFiles: ['process-next/cli.mjs', 'process-next/remote.mjs', 'process-next/lib/catalog.mjs'],
     areaTests: ['process-next/test/remote.test.mjs', 'process-next/test/catalog.test.mjs'] });
-  assert.deepEqual(plan.steps.map(item => item.id), ['infra-syntax', 'infra-behavior']);
+  assert.equal(plan.steps[0].id,'infra-syntax');
+  assert.ok(plan.steps.slice(1).every(s=>s.id.startsWith('infra-behavior:')));
+  for(const file of ['process-next/test/remote.test.mjs','process-next/test/catalog.test.mjs'])assert.ok(plan.steps.some(s=>s.command.includes(file)),'explicit mechanism test remains selected');
   assert.ok(plan.steps.every(item => item.requires.length === 0));
   assert.ok(plan.steps[1].inputs.includes('process-next/lib/catalog.mjs'));
   assert.ok(plan.steps.every(item => !item.inputs.includes(['demo', '**', '*.json'].join('/'))),
@@ -87,15 +89,16 @@ test('#1196 a transitive built-manifest reader declares its producer even before
     await writeFile(resolve(temp, helper), `import { readFileSync } from 'node:fs';\nexport const read = () => readFileSync(${JSON.stringify(manifest)}, 'utf8');\n`);
     await writeFile(resolve(temp, consumer), "import { read } from '../scripts/read-built.mjs';\n");
     const plan = await planProfile({ root: temp, areaTests: [consumer] });
-    const check = plan.steps.find(item => item.id === 'affected-node');
+    const check = plan.steps.find(item => item.id.startsWith('affected-node:'));
     assert.ok(check.inputs.includes(helper), 'the imported reader stays in the source identity');
     assert.ok(check.requires.includes('product-build'), 'built-manifest consumer waits for product-build');
     assert.ok(!check.inputs.includes(manifest), 'generated manifest is not a source/cache input');
     const metadataTest = 'test/metadata.test.mjs';
     await writeFile(resolve(temp, metadataTest), 'export {};\n');
     const infra = await planProfile({ root: temp, layer: 'infra', changedFiles: [helper], areaTests: [metadataTest] });
-    assert.deepEqual(infra.steps.map(item => item.id), ['infra-syntax', 'infra-behavior']);
-    assert.ok(infra.steps.every(item => item.inputs.includes(helper)), 'changed code remains a hashed input');
+    assert.deepEqual(infra.steps.map(item => item.id.split(':')[0]), ['infra-syntax', 'infra-behavior']);
+    assert.ok(infra.steps[0].inputs.includes(helper),'changed tooling is hashed by syntax');
+    assert.ok(!infra.steps[1].inputs.includes(helper),'unread tooling does not invalidate an independent behavior unit');
     assert.ok(infra.steps.every(item => item.requires.length === 0), 'hashing/syntax does not execute changed code');
     await assert.rejects(planProfile({ root: temp, layer: 'infra', areaTests: [consumer] }), /prepared product artifacts/);
   } finally { await rm(temp, { recursive: true, force: true }); }

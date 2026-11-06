@@ -1,3 +1,4 @@
+import {planRequirements} from '../lib/task-selection.mjs';
 import { appendFileSync, mkdirSync, readFileSync, realpathSync, writeFileSync, readdirSync, existsSync, copyFileSync } from 'node:fs';
 import { cpus, release } from 'node:os';
 import path from 'node:path';
@@ -17,7 +18,7 @@ function relativeFile(value, name) {
 }
 
 /** Request remains data: it never supplies a shell program, checkout repository or output filename. */
-export function normalizeFallbackRequest(input, { workspace, candidate }) {
+export function normalizeFallbackRequest(input, { workspace, candidate, plan }) {
   if (!object(input)) throw Error('Fallback request must be an object');
   if (!fullSha(candidate)) throw Error('Candidate must be a full 40-character commit SHA');
   if (!workspace || !path.isAbsolute(workspace)) throw Error('Absolute CI workspace required');
@@ -46,10 +47,10 @@ export function normalizeFallbackRequest(input, { workspace, candidate }) {
     if (!/^\d+\.\d+\.\d+(?:b\d+)?$/.test(request.haVersion ?? '')) throw Error('Pin haVersion, for example 2026.10.4');
     if (!(/^v\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/.test(request.upgradeFrom ?? '') || fullSha(request.upgradeFrom))) throw Error('Exact upgradeFrom tag/SHA required');
   }
-  const infra = ['infra', 'infrastructure'].includes(request.layer);
-  const needsBrowser = releaseEvent || request.event === 'mutation' || ['task', 'hotfix'].includes(request.event) && !infra;
-  const needsBackend = releaseEvent || request.event === 'mutation' || (request.areaTests ?? []).some(file => file.startsWith('tests_backend/'));
-  const needsPython = needsBackend || (request.changedFiles ?? []).some(file => file.endsWith('.py'));
+  // Actual task preparation is derived from the same plan as WSL. Calls without
+  // a plan only validate transport shape; the executable CLI resolves it below.
+  const requirements=plan?planRequirements(plan):{needsBrowser:releaseEvent||request.event==='mutation',needsBackend:releaseEvent||request.event==='mutation',needsPython:releaseEvent||request.event==='mutation'};
+  const {needsBrowser,needsBackend,needsPython}=requirements;
   // Host-specific WSL locations are deliberately replaced, not interpreted in a shell.
   request.e2eRoot = path.join(workspace, 'process-next', '.state', 'fallback-e2e');
   request.workRoot = path.join(workspace, 'artifacts', 'process-next-e2e-labs');
@@ -135,7 +136,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const input = JSON.parse(process.env.HP_REQUEST ?? 'null');
     if (phase === 'restore') console.log(`Restored ${restoreFallbackResults(workspace).length} result files; applicability is decided by the runner.`);
     else if (phase === 'plan') {
-      const prepared = normalizeFallbackRequest(input, { workspace, candidate });
+      const normalized=normalizeFallbackRequest(input,{workspace,candidate});
+      const task=['task','hotfix'].includes(normalized.request.event);
+      const plan=task?await (await import('../lib/catalog.mjs')).planProfile({...normalized.request,root:workspace}):undefined;
+      const prepared=normalizeFallbackRequest(input,{workspace,candidate,plan});
       const outputs = { needs_e2e: prepared.needsE2E, needs_browser: prepared.needsBrowser, needs_backend: prepared.needsBackend,
         needs_python: prepared.needsPython, e2e_commit: prepared.e2eCommit, measurements_commit: prepared.measurementsCommit };
       if (!process.env.GITHUB_OUTPUT) throw Error('GITHUB_OUTPUT required');

@@ -47,7 +47,7 @@ export function taskLayerFromDiff(files) {
 export async function inspectTaskMaterial(git, expectedBase, materialSha) {
   await git.ensureCommit(expectedBase); await git.ensureCommit(materialSha);
   await git.assertAncestor(expectedBase, materialSha);
-  const changedFiles = (await git.git(['diff', '--name-only', '-z', expectedBase, materialSha])).split('\0').filter(Boolean);
+  const changedFiles = (await git.git(['diff', '--no-renames', '--name-only', '-z', expectedBase, materialSha])).split('\0').filter(Boolean);
   // Full blob IDs give patch-id the same binary identity without buffering
   // every image's encoded payload (large Golden updates can exceed 16 MiB).
   const patch = await git.git(['diff', '--full-index', expectedBase, materialSha]);

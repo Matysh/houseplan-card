@@ -130,6 +130,7 @@ export async function runPlan(plan, { root, e2eRoot, stateDir, jobs = 2,
   const directory = join(store.directory, 'runs', id); mkdirSync(directory, { recursive: true });
   const identityEnvironment = { node: process.version, platform: process.platform, arch: process.arch, ...environment, runner: implementation };
   const report = { schema: 1, id, name: plan.name, event: plan.event, issue: plan.issue, startedAt: new Date().toISOString(), status: 'running', results: [], environment: identityEnvironment };
+  if(plan.selection)report.selection=plan.selection;
   writeJson(join(directory, 'plan.json'), plan); store.save(report);
   const results = new Map(), running = new Map(), pending = new Map(plan.steps.map(s => [s.id, s]));
   const roots = { root, e2e: e2eRoot && resolve(e2eRoot) };

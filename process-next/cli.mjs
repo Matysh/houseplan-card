@@ -1,9 +1,10 @@
 #!/usr/bin/env node
+import {testCatalog,selectionText} from './lib/task-selection.mjs';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
-import { planProfile } from './lib/catalog.mjs';
+import { planProfile,inventory } from './lib/catalog.mjs';
 import { runPlan } from './lib/runner.mjs';
 import { readJson, writeJson, ResultStore, defaultStateDir } from './lib/storage.mjs';
 import { LocalQueueStore, QueueController } from './lib/queue.mjs';
@@ -114,6 +115,7 @@ export async function main(argv = process.argv.slice(2)) {
           request: optionsForPlan(o), track: o.track, areaTests: o['area-test'], s6: o.s6 ?? 'local' },
         onProgress: progress => {
           if (o.json) print(progress);
+          else if(progress.kind==='selection')process.stdout.write(progress.text+'\n');
           else if (progress.kind === 'queue') process.stdout.write(`Очередь: ${progress.active ? `#${progress.active.issue}, ${progress.active.phase}` : 'слот свободен'}; ваша позиция: ${progress.waiting.find(item => item.issue === Number(o.issue))?.position ?? 'в слоте'}; ${Math.round(progress.elapsedMs / 1000)} сек\n`);
           else if (progress.kind === 'transition' && progress.action === 'already-completed')
             process.stdout.write(`Задача #${progress.issue} уже завершена серверным координатором (S8).\n`);
@@ -131,9 +133,11 @@ export async function main(argv = process.argv.slice(2)) {
     print(acceptGolden({ root, scenes: requireValue(o.scenes, '--scenes').split(','), report: requireValue(o.report, '--report'),
       decision: requireValue(o.decision, '--decision'), execute: !!o.execute })); return 0;
   }
+  if(command==='catalog'){const catalog=await testCatalog(root,inventory,{e2eRoot:o['e2e-root']});if(o.json)print(catalog);else{process.stdout.write(`Каталог: ${catalog.counts.files} исполняемых файлов, ${catalog.counts.scenes} сцен; кейсы определяются только запуском.\n`);for(const row of catalog.rows)process.stdout.write(`${row.type} · ${row.lifecycle} · ${row.path} · ${row.domains.join(', ')||'НЕ РАЗМЕЧЕНО'} · ${row.scenario}\n`);}return 0;}
   if (command === 'plan' || command === 'run') {
     const options = { ...optionsForPlan(o), root }, plan = await planProfile(options);
-    if (command === 'plan') { print(plan); return 0; }
+    if(command==='plan'){if(o.json)print(plan);else process.stdout.write(plan.name+'\n'+(selectionText(plan.selection)||'Проверки: '+plan.steps.length)+'\n'+plan.steps.map(s=>'  '+s.name).join('\n')+'\n');return 0;}
+    if(!o.json&&plan.selection)process.stdout.write(selectionText(plan.selection)+'\n');
     const controller = new AbortController(), abort = () => controller.abort(); process.once('SIGINT', abort); process.once('SIGTERM', abort);
     let last = null, lastPrint = 0;
     const progress = event => {
@@ -169,6 +173,7 @@ export async function main(argv = process.argv.slice(2)) {
     if (o.json) print({ type: 'result', ...report });
     else {
       process.stdout.write(`\n${report.name}: ${report.status}\n`);
+      if(plan.selection)process.stdout.write(selectionText({...plan.selection,reasons:{}},report)+'\n');
       for (const r of report.results) process.stdout.write(`  ${r.status}: ${r.name}${r.diagnostic ? ' [диагностика]' : ''}${r.counts?.tests !== undefined ? ` · ${r.counts.tests} кейсов` : ''}${r.reason || r.error ? ' · ' + (r.reason || r.error) : ''}\n`);
       process.stdout.write(`Отчёт: ${report.reportPath}\n`);
     }
@@ -207,3 +212,4 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   try { process.exitCode = await main(); }
   catch (error) { console.error(`Ошибка: ${error.message}`); process.exitCode = 1; }
 }
+

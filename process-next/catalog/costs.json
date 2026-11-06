@@ -1,0 +1,2080 @@
+{
+  "schema": 1,
+  "sourceRun": "20261105T201321284-c9d3eb36",
+  "materialSha": "578a288327597a5054e3b7360bb0bb864856a8df",
+  "environment": {
+    "node": "v22.23.2",
+    "platform": "linux",
+    "arch": "x64",
+    "runner": "2029e6ec3a02dfb1895e13c1951a2ac6b1ebde436693940c8ffb8717eba6b280"
+  },
+  "conditions": "Ubuntu WSL, prepared dependencies, jobs=4; wall time includes contention. Not comparable to GitHub and not a deadline.",
+  "baseline": {
+    "source": "process-next/evidence/product-minimum-wsl.json",
+    "totalMs": 45801,
+    "buildMs": 42151
+  },
+  "hypothesisSeconds": {
+    "ship": 120,
+    "show": 420,
+    "ask": 900
+  },
+  "units": {
+    "product-build": {
+      "durationMs": 29523,
+      "cases": null
+    },
+    "test-build": {
+      "durationMs": 9826,
+      "cases": null
+    },
+    "demo-assets": {
+      "durationMs": 211,
+      "cases": null
+    },
+    "demo/smoke_active_chain_ink.mjs": {
+      "durationMs": 4322,
+      "cases": null
+    },
+    "demo/smoke_activity_color_settings.mjs": {
+      "durationMs": 6958,
+      "cases": null
+    },
+    "demo/smoke_align_guides.mjs": {
+      "durationMs": 4526,
+      "cases": null
+    },
+    "demo/smoke_approved_ui.mjs": {
+      "durationMs": 28746,
+      "cases": null
+    },
+    "demo/smoke_approved_ui_1207.mjs": {
+      "durationMs": 8620,
+      "cases": null
+    },
+    "demo/smoke_area_relocation.mjs": {
+      "durationMs": 20589,
+      "cases": null
+    },
+    "demo/smoke_area_relocation_safety.mjs": {
+      "durationMs": 2691,
+      "cases": null
+    },
+    "demo/smoke_audit_1490.mjs": {
+      "durationMs": 2248,
+      "cases": null
+    },
+    "demo/smoke_backdrop.mjs": {
+      "durationMs": 30592,
+      "cases": null
+    },
+    "demo/smoke_backdrop_guard.mjs": {
+      "durationMs": 4637,
+      "cases": null
+    },
+    "demo/smoke_backup_archive.mjs": {
+      "durationMs": 7190,
+      "cases": null
+    },
+    "demo/smoke_backup_transfer.mjs": {
+      "durationMs": 1936,
+      "cases": null
+    },
+    "demo/smoke_bg_color.mjs": {
+      "durationMs": 3875,
+      "cases": null
+    },
+    "demo/smoke_binding_picker.mjs": {
+      "durationMs": 1873,
+      "cases": null
+    },
+    "demo/smoke_binding_ui.mjs": {
+      "durationMs": 3710,
+      "cases": null
+    },
+    "demo/smoke_build_identity.mjs": {
+      "durationMs": 2555,
+      "cases": null
+    },
+    "demo/smoke_canvas_frame.mjs": {
+      "durationMs": 3368,
+      "cases": null
+    },
+    "demo/smoke_capture_stability.mjs": {
+      "durationMs": 9907,
+      "cases": null
+    },
+    "demo/smoke_card_controls.mjs": {
+      "durationMs": 1911,
+      "cases": null
+    },
+    "demo/smoke_card_picker_locale.mjs": {
+      "durationMs": 655,
+      "cases": null
+    },
+    "demo/smoke_card_tool_conflict.mjs": {
+      "durationMs": 1666,
+      "cases": null
+    },
+    "demo/smoke_climate_once.mjs": {
+      "durationMs": 1535,
+      "cases": null
+    },
+    "demo/smoke_climate_temp.mjs": {
+      "durationMs": 2029,
+      "cases": null
+    },
+    "demo/smoke_cold_view_vacuum.mjs": {
+      "durationMs": 1503,
+      "cases": null
+    },
+    "demo/smoke_color_picker.mjs": {
+      "durationMs": 2373,
+      "cases": null
+    },
+    "demo/smoke_color_picker_consumers.mjs": {
+      "durationMs": 1822,
+      "cases": null
+    },
+    "demo/smoke_color_picker_presentation.mjs": {
+      "durationMs": 9002,
+      "cases": null
+    },
+    "demo/smoke_config_authority.mjs": {
+      "durationMs": 4299,
+      "cases": null
+    },
+    "demo/smoke_config_lifecycle.mjs": {
+      "durationMs": 6775,
+      "cases": null
+    },
+    "demo/smoke_config_reload_race.mjs": {
+      "durationMs": 1492,
+      "cases": null
+    },
+    "demo/smoke_config_writer.mjs": {
+      "durationMs": 1677,
+      "cases": null
+    },
+    "demo/smoke_continuity_stage_layout.mjs": {
+      "durationMs": 1443,
+      "cases": null
+    },
+    "demo/smoke_controls.mjs": {
+      "durationMs": 2204,
+      "cases": null
+    },
+    "demo/smoke_cover_no_plate.mjs": {
+      "durationMs": 10653,
+      "cases": null
+    },
+    "demo/smoke_cover_not_primary.mjs": {
+      "durationMs": 1779,
+      "cases": null
+    },
+    "demo/smoke_cover_plate_precedence.mjs": {
+      "durationMs": 2207,
+      "cases": null
+    },
+    "demo/smoke_cover_tap.mjs": {
+      "durationMs": 2511,
+      "cases": null
+    },
+    "demo/smoke_css_minifier_semantics.mjs": {
+      "durationMs": 1795,
+      "cases": null
+    },
+    "demo/smoke_danger_confirm_branches.mjs": {
+      "durationMs": 4281,
+      "cases": null
+    },
+    "demo/smoke_danger_confirmation.mjs": {
+      "durationMs": 3119,
+      "cases": null
+    },
+    "demo/smoke_daycycle_layer_budget.mjs": {
+      "durationMs": 4110,
+      "cases": null
+    },
+    "demo/smoke_daycycle_outline_removed.mjs": {
+      "durationMs": 3594,
+      "cases": null
+    },
+    "demo/smoke_daycycle_raster.mjs": {
+      "durationMs": 31652,
+      "cases": null
+    },
+    "demo/smoke_daycycle_zoom_layers.mjs": {
+      "durationMs": 15815,
+      "cases": null
+    },
+    "demo/smoke_decor.mjs": {
+      "durationMs": 2978,
+      "cases": null
+    },
+    "demo/smoke_decor_default_persist.mjs": {
+      "durationMs": 4570,
+      "cases": null
+    },
+    "demo/smoke_decor_group_style_cache.mjs": {
+      "durationMs": 8618,
+      "cases": null
+    },
+    "demo/smoke_decor_group_text_scale.mjs": {
+      "durationMs": 3794,
+      "cases": null
+    },
+    "demo/smoke_decor_images.mjs": {
+      "durationMs": 2666,
+      "cases": null
+    },
+    "demo/smoke_decor_layer_order.mjs": {
+      "durationMs": 2027,
+      "cases": null
+    },
+    "demo/smoke_decor_line_click.mjs": {
+      "durationMs": 18132,
+      "cases": null
+    },
+    "demo/smoke_decor_multiselect.mjs": {
+      "durationMs": 24361,
+      "cases": null
+    },
+    "demo/smoke_decor_order.mjs": {
+      "durationMs": 29486,
+      "cases": null
+    },
+    "demo/smoke_decor_preview_ownership.mjs": {
+      "durationMs": 5399,
+      "cases": null
+    },
+    "demo/smoke_decor_text.mjs": {
+      "durationMs": 2851,
+      "cases": null
+    },
+    "demo/smoke_deeplink.mjs": {
+      "durationMs": 1454,
+      "cases": null
+    },
+    "demo/smoke_detached_authority.mjs": {
+      "durationMs": 8328,
+      "cases": null
+    },
+    "demo/smoke_device_battery.mjs": {
+      "durationMs": 8543,
+      "cases": null
+    },
+    "demo/smoke_device_battery_performance.mjs": {
+      "durationMs": 2259,
+      "cases": null
+    },
+    "demo/smoke_device_battery_tooltip.mjs": {
+      "durationMs": 17086,
+      "cases": null
+    },
+    "demo/smoke_device_battery_zigbee.mjs": {
+      "durationMs": 6451,
+      "cases": null
+    },
+    "demo/smoke_device_contact_composition.mjs": {
+      "durationMs": 2502,
+      "cases": null
+    },
+    "demo/smoke_device_contact_corners.mjs": {
+      "durationMs": 14646,
+      "cases": null
+    },
+    "demo/smoke_device_contact_designer.mjs": {
+      "durationMs": 45635,
+      "cases": null
+    },
+    "demo/smoke_device_contact_editor_frame.mjs": {
+      "durationMs": 13555,
+      "cases": null
+    },
+    "demo/smoke_device_contact_live_drag.mjs": {
+      "durationMs": 2795,
+      "cases": null
+    },
+    "demo/smoke_device_contact_reflow.mjs": {
+      "durationMs": 19125,
+      "cases": null
+    },
+    "demo/smoke_device_contact_walls.mjs": {
+      "durationMs": 117347,
+      "cases": null
+    },
+    "demo/smoke_device_contact_work.mjs": {
+      "durationMs": 7834,
+      "cases": null
+    },
+    "demo/smoke_device_contact_zoom.mjs": {
+      "durationMs": 28004,
+      "cases": null
+    },
+    "demo/smoke_device_contacts.mjs": {
+      "durationMs": 7077,
+      "cases": null
+    },
+    "demo/smoke_device_copy.mjs": {
+      "durationMs": 8230,
+      "cases": null
+    },
+    "demo/smoke_device_equal_spacing.mjs": {
+      "durationMs": 25886,
+      "cases": null
+    },
+    "demo/smoke_device_hit_capsules.mjs": {
+      "durationMs": 2913,
+      "cases": null
+    },
+    "demo/smoke_device_icon_design.mjs": {
+      "durationMs": 4360,
+      "cases": null
+    },
+    "demo/smoke_device_icon_pixel_alignment.mjs": {
+      "durationMs": 10235,
+      "cases": null
+    },
+    "demo/smoke_device_inbox.mjs": {
+      "durationMs": 1913,
+      "cases": null
+    },
+    "demo/smoke_device_inbox_batch.mjs": {
+      "durationMs": 4963,
+      "cases": null
+    },
+    "demo/smoke_device_inbox_delete.mjs": {
+      "durationMs": 8028,
+      "cases": null
+    },
+    "demo/smoke_device_issue_reasons.mjs": {
+      "durationMs": 4894,
+      "cases": null
+    },
+    "demo/smoke_device_more_info.mjs": {
+      "durationMs": 13194,
+      "cases": null
+    },
+    "demo/smoke_device_offline.mjs": {
+      "durationMs": 7790,
+      "cases": null
+    },
+    "demo/smoke_device_position_history.mjs": {
+      "durationMs": 3180,
+      "cases": null
+    },
+    "demo/smoke_device_preview_parity.mjs": {
+      "durationMs": 4888,
+      "cases": null
+    },
+    "demo/smoke_device_settings_947.mjs": {
+      "durationMs": 40129,
+      "cases": null
+    },
+    "demo/smoke_device_settings_action.mjs": {
+      "durationMs": 53158,
+      "cases": null
+    },
+    "demo/smoke_device_settings_form.mjs": {
+      "durationMs": 6350,
+      "cases": null
+    },
+    "demo/smoke_device_signal.mjs": {
+      "durationMs": 5537,
+      "cases": null
+    },
+    "demo/smoke_device_signal_settings.mjs": {
+      "durationMs": 6194,
+      "cases": null
+    },
+    "demo/smoke_device_signal_topology.mjs": {
+      "durationMs": 6718,
+      "cases": null
+    },
+    "demo/smoke_device_structure_history.mjs": {
+      "durationMs": 9489,
+      "cases": null
+    },
+    "demo/smoke_dialog_config_parity.mjs": {
+      "durationMs": 5968,
+      "cases": null
+    },
+    "demo/smoke_dialog_footer_width.mjs": {
+      "durationMs": 3045,
+      "cases": null
+    },
+    "demo/smoke_dialog_help_clipping.mjs": {
+      "durationMs": 3453,
+      "cases": null
+    },
+    "demo/smoke_dialog_modal_recovery.mjs": {
+      "durationMs": 3681,
+      "cases": null
+    },
+    "demo/smoke_dialog_picker_998.mjs": {
+      "durationMs": 88268,
+      "cases": null
+    },
+    "demo/smoke_dialog_polish_603.mjs": {
+      "durationMs": 109374,
+      "cases": null
+    },
+    "demo/smoke_dialog_polish_605.mjs": {
+      "durationMs": 2652,
+      "cases": null
+    },
+    "demo/smoke_dialog_segments_i18n.mjs": {
+      "durationMs": 6588,
+      "cases": null
+    },
+    "demo/smoke_dialog_ui_kit.mjs": {
+      "durationMs": 5926,
+      "cases": null
+    },
+    "demo/smoke_dialog_zombie.mjs": {
+      "durationMs": 2590,
+      "cases": null
+    },
+    "demo/smoke_direct_signal_lifecycle.mjs": {
+      "durationMs": 2448,
+      "cases": null
+    },
+    "demo/smoke_direct_wall_geometry.mjs": {
+      "durationMs": 4473,
+      "cases": null
+    },
+    "demo/smoke_direct_zigbee_lqi.mjs": {
+      "durationMs": 4311,
+      "cases": null
+    },
+    "demo/smoke_disabled_device.mjs": {
+      "durationMs": 2330,
+      "cases": null
+    },
+    "demo/smoke_discard_copy.mjs": {
+      "durationMs": 4394,
+      "cases": null
+    },
+    "demo/smoke_discard_dialog_polish.mjs": {
+      "durationMs": 6126,
+      "cases": null
+    },
+    "demo/smoke_discovery_filters.mjs": {
+      "durationMs": 3766,
+      "cases": null
+    },
+    "demo/smoke_drag_bounds.mjs": {
+      "durationMs": 1942,
+      "cases": null
+    },
+    "demo/smoke_draw_wall_thickness.mjs": {
+      "durationMs": 4313,
+      "cases": null
+    },
+    "demo/smoke_e2e_hooks.mjs": {
+      "durationMs": 12711,
+      "cases": null
+    },
+    "demo/smoke_e2e_primitive_fields.mjs": {
+      "durationMs": 4801,
+      "cases": null
+    },
+    "demo/smoke_easy_converter_openings.mjs": {
+      "durationMs": 3469,
+      "cases": null
+    },
+    "demo/smoke_edge_cases.mjs": {
+      "durationMs": 2367,
+      "cases": null
+    },
+    "demo/smoke_edit_walk.mjs": {
+      "durationMs": 60504,
+      "cases": null
+    },
+    "demo/smoke_editor_command_latency.mjs": {
+      "durationMs": 23916,
+      "cases": null
+    },
+    "demo/smoke_editor_guides_lifecycle.mjs": {
+      "durationMs": 7336,
+      "cases": null
+    },
+    "demo/smoke_editor_nudge.mjs": {
+      "durationMs": 10666,
+      "cases": null
+    },
+    "demo/smoke_editor_return_focus_1248.mjs": {
+      "durationMs": 3153,
+      "cases": null
+    },
+    "demo/smoke_editor_styles_lazy.mjs": {
+      "durationMs": 18794,
+      "cases": null
+    },
+    "demo/smoke_editor_tabs.mjs": {
+      "durationMs": 7817,
+      "cases": null
+    },
+    "demo/smoke_empty_backup_import.mjs": {
+      "durationMs": 37755,
+      "cases": null
+    },
+    "demo/smoke_entity_parent_dedup.mjs": {
+      "durationMs": 2478,
+      "cases": null
+    },
+    "demo/smoke_entry_stale.mjs": {
+      "durationMs": 1202,
+      "cases": null
+    },
+    "demo/smoke_esc_dialogs.mjs": {
+      "durationMs": 2490,
+      "cases": null
+    },
+    "demo/smoke_external_screens.mjs": {
+      "durationMs": 6377,
+      "cases": null
+    },
+    "demo/smoke_feedback_v2.mjs": {
+      "durationMs": 1743,
+      "cases": null
+    },
+    "demo/smoke_first_space_converter.mjs": {
+      "durationMs": 20554,
+      "cases": null
+    },
+    "demo/smoke_first_space_large_plan.mjs": {
+      "durationMs": 10014,
+      "cases": null
+    },
+    "demo/smoke_fixed_floor.mjs": {
+      "durationMs": 3919,
+      "cases": null
+    },
+    "demo/smoke_fixture_contract.mjs": {
+      "durationMs": 2533,
+      "cases": null
+    },
+    "demo/smoke_floor_cache_reuse.mjs": {
+      "durationMs": 19025,
+      "cases": null
+    },
+    "demo/smoke_floor_geometry_cache.mjs": {
+      "durationMs": 9580,
+      "cases": null
+    },
+    "demo/smoke_floor_snapshot_reuse.mjs": {
+      "durationMs": 4032,
+      "cases": null
+    },
+    "demo/smoke_font_scales.mjs": {
+      "durationMs": 1784,
+      "cases": null
+    },
+    "demo/smoke_free_walls.mjs": {
+      "durationMs": 3386,
+      "cases": null
+    },
+    "demo/smoke_french_locale.mjs": {
+      "durationMs": 1537,
+      "cases": null
+    },
+    "demo/smoke_furniture.mjs": {
+      "durationMs": 3781,
+      "cases": null
+    },
+    "demo/smoke_furniture_lazy_art.mjs": {
+      "durationMs": 7212,
+      "cases": null
+    },
+    "demo/smoke_furniture_pan.mjs": {
+      "durationMs": 4371,
+      "cases": null
+    },
+    "demo/smoke_furniture_polish.mjs": {
+      "durationMs": 1814,
+      "cases": null
+    },
+    "demo/smoke_gear_tabs.mjs": {
+      "durationMs": 3943,
+      "cases": null
+    },
+    "demo/smoke_general_settings.mjs": {
+      "durationMs": 1926,
+      "cases": null
+    },
+    "demo/smoke_general_settings_form.mjs": {
+      "durationMs": 5457,
+      "cases": null
+    },
+    "demo/smoke_geometry_cleanup_842.mjs": {
+      "durationMs": 19890,
+      "cases": null
+    },
+    "demo/smoke_geometry_corpus.mjs": {
+      "durationMs": 2648,
+      "cases": null
+    },
+    "demo/smoke_german_locale.mjs": {
+      "durationMs": 2740,
+      "cases": null
+    },
+    "demo/smoke_glow.mjs": {
+      "durationMs": 5169,
+      "cases": null
+    },
+    "demo/smoke_glow_blending.mjs": {
+      "durationMs": 2067,
+      "cases": null
+    },
+    "demo/smoke_glow_fail_dark.mjs": {
+      "durationMs": 1664,
+      "cases": null
+    },
+    "demo/smoke_glow_geometry_resilience.mjs": {
+      "durationMs": 1818,
+      "cases": null
+    },
+    "demo/smoke_grid_fade.mjs": {
+      "durationMs": 2381,
+      "cases": null
+    },
+    "demo/smoke_grid_scale_invariance.mjs": {
+      "durationMs": 13923,
+      "cases": null
+    },
+    "demo/smoke_grid_snap.mjs": {
+      "durationMs": 5672,
+      "cases": null
+    },
+    "demo/smoke_gs_always.mjs": {
+      "durationMs": 1698,
+      "cases": null
+    },
+    "demo/smoke_ha_controls.mjs": {
+      "durationMs": 3038,
+      "cases": null
+    },
+    "demo/smoke_ha_form_shell_parity.mjs": {
+      "durationMs": 1846,
+      "cases": null
+    },
+    "demo/smoke_header_compact_spaces.mjs": {
+      "durationMs": 8691,
+      "cases": null
+    },
+    "demo/smoke_help_affordance.mjs": {
+      "durationMs": 5509,
+      "cases": null
+    },
+    "demo/smoke_hidden_device_toggle.mjs": {
+      "durationMs": 13044,
+      "cases": null
+    },
+    "demo/smoke_hidden_flag.mjs": {
+      "durationMs": 2983,
+      "cases": null
+    },
+    "demo/smoke_hide_layers.mjs": {
+      "durationMs": 3821,
+      "cases": null
+    },
+    "demo/smoke_hide_room_names.mjs": {
+      "durationMs": 2733,
+      "cases": null
+    },
+    "demo/smoke_household_journeys.mjs": {
+      "durationMs": 9314,
+      "cases": null
+    },
+    "demo/smoke_houseplan_panel.mjs": {
+      "durationMs": 4012,
+      "cases": null
+    },
+    "demo/smoke_icon_center.mjs": {
+      "durationMs": 1693,
+      "cases": null
+    },
+    "demo/smoke_icon_placeholder.mjs": {
+      "durationMs": 1765,
+      "cases": null
+    },
+    "demo/smoke_icon_scale.mjs": {
+      "durationMs": 2148,
+      "cases": null
+    },
+    "demo/smoke_inert_openings.mjs": {
+      "durationMs": 1796,
+      "cases": null
+    },
+    "demo/smoke_infinite_canvas.mjs": {
+      "durationMs": 5558,
+      "cases": null
+    },
+    "demo/smoke_info_card_confirm.mjs": {
+      "durationMs": 16057,
+      "cases": null
+    },
+    "demo/smoke_info_card_context.mjs": {
+      "durationMs": 17321,
+      "cases": null
+    },
+    "demo/smoke_interior_window_light.mjs": {
+      "durationMs": 18453,
+      "cases": null
+    },
+    "demo/smoke_island_rooms.mjs": {
+      "durationMs": 1778,
+      "cases": null
+    },
+    "demo/smoke_iso_first_frame.mjs": {
+      "durationMs": 11147,
+      "cases": null
+    },
+    "demo/smoke_iso_flat_parity.mjs": {
+      "durationMs": 11258,
+      "cases": null
+    },
+    "demo/smoke_iso_floor_switch.mjs": {
+      "durationMs": 2363,
+      "cases": null
+    },
+    "demo/smoke_iso_room_label_metrics.mjs": {
+      "durationMs": 4088,
+      "cases": null
+    },
+    "demo/smoke_iso_sun.mjs": {
+      "durationMs": 3462,
+      "cases": null
+    },
+    "demo/smoke_iso_theme_walls.mjs": {
+      "durationMs": 4198,
+      "cases": null
+    },
+    "demo/smoke_iso_tiles.mjs": {
+      "durationMs": 10154,
+      "cases": null
+    },
+    "demo/smoke_isometric_contract.mjs": {
+      "durationMs": 4520,
+      "cases": null
+    },
+    "demo/smoke_junction_holes.mjs": {
+      "durationMs": 2308,
+      "cases": null
+    },
+    "demo/smoke_junction_limits.mjs": {
+      "durationMs": 4547,
+      "cases": null
+    },
+    "demo/smoke_junction_patch_resilience.mjs": {
+      "durationMs": 3901,
+      "cases": null
+    },
+    "demo/smoke_kiosk.mjs": {
+      "durationMs": 2267,
+      "cases": null
+    },
+    "demo/smoke_kiosk_cycle_context.mjs": {
+      "durationMs": 8651,
+      "cases": null
+    },
+    "demo/smoke_kiosk_pan_lock.mjs": {
+      "durationMs": 2254,
+      "cases": null
+    },
+    "demo/smoke_kiosk_scale_no_editor.mjs": {
+      "durationMs": 92096,
+      "cases": null
+    },
+    "demo/smoke_kiosk_space_navigation.mjs": {
+      "durationMs": 6320,
+      "cases": null
+    },
+    "demo/smoke_kiosk_viewport_recovery.mjs": {
+      "durationMs": 26264,
+      "cases": null
+    },
+    "demo/smoke_lattice_write_barrier.mjs": {
+      "durationMs": 3163,
+      "cases": null
+    },
+    "demo/smoke_layout_fixture_barrier.mjs": {
+      "durationMs": 4187,
+      "cases": null
+    },
+    "demo/smoke_layout_sync.mjs": {
+      "durationMs": 2949,
+      "cases": null
+    },
+    "demo/smoke_lazy_admin_locale.mjs": {
+      "durationMs": 15107,
+      "cases": null
+    },
+    "demo/smoke_lazy_editor_chunk.mjs": {
+      "durationMs": 37396,
+      "cases": null
+    },
+    "demo/smoke_led_strip_bind.mjs": {
+      "durationMs": 10995,
+      "cases": null
+    },
+    "demo/smoke_led_strip_draw.mjs": {
+      "durationMs": 11765,
+      "cases": null
+    },
+    "demo/smoke_led_strip_field.mjs": {
+      "durationMs": 42971,
+      "cases": null
+    },
+    "demo/smoke_led_strip_glow.mjs": {
+      "durationMs": 48141,
+      "cases": null
+    },
+    "demo/smoke_led_strip_tube.mjs": {
+      "durationMs": 18199,
+      "cases": null
+    },
+    "demo/smoke_led_zoom_quality.mjs": {
+      "durationMs": 19751,
+      "cases": null
+    },
+    "demo/smoke_legacy_geometry.mjs": {
+      "durationMs": 1629,
+      "cases": null
+    },
+    "demo/smoke_light_badges.mjs": {
+      "durationMs": 2716,
+      "cases": null
+    },
+    "demo/smoke_light_default_tap.mjs": {
+      "durationMs": 1582,
+      "cases": null
+    },
+    "demo/smoke_linked_virtual_light.mjs": {
+      "durationMs": 3358,
+      "cases": null
+    },
+    "demo/smoke_live_pan_coverage.mjs": {
+      "durationMs": 10384,
+      "cases": null
+    },
+    "demo/smoke_live_pan_viewbox.mjs": {
+      "durationMs": 1852,
+      "cases": null
+    },
+    "demo/smoke_lock_action.mjs": {
+      "durationMs": 1403,
+      "cases": null
+    },
+    "demo/smoke_lock_invariant.mjs": {
+      "durationMs": 1510,
+      "cases": null
+    },
+    "demo/smoke_long_press_gesture.mjs": {
+      "durationMs": 1992,
+      "cases": null
+    },
+    "demo/smoke_lovelace_editor_locale_1070.mjs": {
+      "durationMs": 9349,
+      "cases": null
+    },
+    "demo/smoke_marker_alert_view.mjs": {
+      "durationMs": 35380,
+      "cases": null
+    },
+    "demo/smoke_marker_alerts.mjs": {
+      "durationMs": 12227,
+      "cases": null
+    },
+    "demo/smoke_marker_shadow_transitions.mjs": {
+      "durationMs": 2549,
+      "cases": null
+    },
+    "demo/smoke_marker_state_source.mjs": {
+      "durationMs": 10571,
+      "cases": null
+    },
+    "demo/smoke_marker_stay.mjs": {
+      "durationMs": 1593,
+      "cases": null
+    },
+    "demo/smoke_marker_write_rollback.mjs": {
+      "durationMs": 5280,
+      "cases": null
+    },
+    "demo/smoke_merge_highlight.mjs": {
+      "durationMs": 1937,
+      "cases": null
+    },
+    "demo/smoke_merge_split.mjs": {
+      "durationMs": 2071,
+      "cases": null
+    },
+    "demo/smoke_mobile_view_header.mjs": {
+      "durationMs": 5377,
+      "cases": null
+    },
+    "demo/smoke_modal_toast_956.mjs": {
+      "durationMs": 3210,
+      "cases": null
+    },
+    "demo/smoke_mode_transition.mjs": {
+      "durationMs": 9506,
+      "cases": null
+    },
+    "demo/smoke_modes.mjs": {
+      "durationMs": 3044,
+      "cases": null
+    },
+    "demo/smoke_moon.mjs": {
+      "durationMs": 8899,
+      "cases": null
+    },
+    "demo/smoke_moon_phase_direction.mjs": {
+      "durationMs": 4120,
+      "cases": null
+    },
+    "demo/smoke_moon_static.mjs": {
+      "durationMs": 12079,
+      "cases": null
+    },
+    "demo/smoke_moon_status.mjs": {
+      "durationMs": 16092,
+      "cases": null
+    },
+    "demo/smoke_motion_sense.mjs": {
+      "durationMs": 13550,
+      "cases": null
+    },
+    "demo/smoke_mounted_authority.mjs": {
+      "durationMs": 10116,
+      "cases": null
+    },
+    "demo/smoke_multiwall_junction.mjs": {
+      "durationMs": 2421,
+      "cases": null
+    },
+    "demo/smoke_multiwall_strip_containment.mjs": {
+      "durationMs": 3219,
+      "cases": null
+    },
+    "demo/smoke_native_grid_draw.mjs": {
+      "durationMs": 5230,
+      "cases": null
+    },
+    "demo/smoke_nav_persist.mjs": {
+      "durationMs": 2452,
+      "cases": null
+    },
+    "demo/smoke_near_axis_optimize.mjs": {
+      "durationMs": 1692,
+      "cases": null
+    },
+    "demo/smoke_near_orthogonal_junction.mjs": {
+      "durationMs": 2107,
+      "cases": null
+    },
+    "demo/smoke_new_device.mjs": {
+      "durationMs": 1550,
+      "cases": null
+    },
+    "demo/smoke_node_dependency_carrier.mjs": {
+      "durationMs": 6272,
+      "cases": null
+    },
+    "demo/smoke_node_history_context.mjs": {
+      "durationMs": 7482,
+      "cases": null
+    },
+    "demo/smoke_open_passage.mjs": {
+      "durationMs": 4423,
+      "cases": null
+    },
+    "demo/smoke_opening_binding.mjs": {
+      "durationMs": 1590,
+      "cases": null
+    },
+    "demo/smoke_opening_drag.mjs": {
+      "durationMs": 29139,
+      "cases": null
+    },
+    "demo/smoke_opening_drag_graph.mjs": {
+      "durationMs": 15101,
+      "cases": null
+    },
+    "demo/smoke_opening_entity_search.mjs": {
+      "durationMs": 2239,
+      "cases": null
+    },
+    "demo/smoke_opening_escape_wide.mjs": {
+      "durationMs": 3499,
+      "cases": null
+    },
+    "demo/smoke_opening_inner_distances.mjs": {
+      "durationMs": 2123,
+      "cases": null
+    },
+    "demo/smoke_opening_measure.mjs": {
+      "durationMs": 4992,
+      "cases": null
+    },
+    "demo/smoke_opening_mode_fill.mjs": {
+      "durationMs": 25799,
+      "cases": null
+    },
+    "demo/smoke_opening_preview.mjs": {
+      "durationMs": 3359,
+      "cases": null
+    },
+    "demo/smoke_opening_tunnel_fill.mjs": {
+      "durationMs": 15320,
+      "cases": null
+    },
+    "demo/smoke_optimize_cleanup.mjs": {
+      "durationMs": 5149,
+      "cases": null
+    },
+    "demo/smoke_optimize_coincident_partition.mjs": {
+      "durationMs": 2832,
+      "cases": null
+    },
+    "demo/smoke_optimize_context.mjs": {
+      "durationMs": 25360,
+      "cases": null
+    },
+    "demo/smoke_optimize_coordinate_canonicalization.mjs": {
+      "durationMs": 2329,
+      "cases": null
+    },
+    "demo/smoke_optimize_geometry_preflight.mjs": {
+      "durationMs": 1647,
+      "cases": null
+    },
+    "demo/smoke_optimize_micro_interval.mjs": {
+      "durationMs": 1680,
+      "cases": null
+    },
+    "demo/smoke_optimize_unverified.mjs": {
+      "durationMs": 8336,
+      "cases": null
+    },
+    "demo/smoke_optional_space_model.mjs": {
+      "durationMs": 1811,
+      "cases": null
+    },
+    "demo/smoke_orphan_space_references.mjs": {
+      "durationMs": 2201,
+      "cases": null
+    },
+    "demo/smoke_pageshow_layout_ack.mjs": {
+      "durationMs": 14471,
+      "cases": null
+    },
+    "demo/smoke_pan_any_zoom.mjs": {
+      "durationMs": 2935,
+      "cases": null
+    },
+    "demo/smoke_panel_header_overflow.mjs": {
+      "durationMs": 35748,
+      "cases": null
+    },
+    "demo/smoke_panel_header_touch.mjs": {
+      "durationMs": 2831,
+      "cases": null
+    },
+    "demo/smoke_panel_route_kiosk.mjs": {
+      "durationMs": 3738,
+      "cases": null
+    },
+    "demo/smoke_partition_openings.mjs": {
+      "durationMs": 2461,
+      "cases": null
+    },
+    "demo/smoke_partition_openings_preview.mjs": {
+      "durationMs": 9467,
+      "cases": null
+    },
+    "demo/smoke_pdf_export.mjs": {
+      "durationMs": 4980,
+      "cases": null
+    },
+    "demo/smoke_physical_body_characterization.mjs": {
+      "durationMs": 6733,
+      "cases": null
+    },
+    "demo/smoke_picker_motion.mjs": {
+      "durationMs": 2010,
+      "cases": null
+    },
+    "demo/smoke_placement_context_message.mjs": {
+      "durationMs": 3699,
+      "cases": null
+    },
+    "demo/smoke_plan_device_landmarks.mjs": {
+      "durationMs": 2895,
+      "cases": null
+    },
+    "demo/smoke_plan_drawing_repairs.mjs": {
+      "durationMs": 1804,
+      "cases": null
+    },
+    "demo/smoke_plan_entry_tool.mjs": {
+      "durationMs": 7113,
+      "cases": null
+    },
+    "demo/smoke_plan_graph_cold.mjs": {
+      "durationMs": 2536,
+      "cases": null
+    },
+    "demo/smoke_plan_graph_editor.mjs": {
+      "durationMs": 14769,
+      "cases": null
+    },
+    "demo/smoke_plan_picker.mjs": {
+      "durationMs": 3157,
+      "cases": null
+    },
+    "demo/smoke_plan_rotation.mjs": {
+      "durationMs": 15999,
+      "cases": null
+    },
+    "demo/smoke_plan_rotation_editors.mjs": {
+      "durationMs": 12479,
+      "cases": null
+    },
+    "demo/smoke_plan_rotation_mobile.mjs": {
+      "durationMs": 6831,
+      "cases": null
+    },
+    "demo/smoke_plan_rotation_touch.mjs": {
+      "durationMs": 4086,
+      "cases": null
+    },
+    "demo/smoke_plan_signed.mjs": {
+      "durationMs": 1680,
+      "cases": null
+    },
+    "demo/smoke_plan_snap_overlay.mjs": {
+      "durationMs": 4781,
+      "cases": null
+    },
+    "demo/smoke_plan_upload_limit.mjs": {
+      "durationMs": 2130,
+      "cases": null
+    },
+    "demo/smoke_plan_upload_race.mjs": {
+      "durationMs": 1602,
+      "cases": null
+    },
+    "demo/smoke_plan_upload_reject.mjs": {
+      "durationMs": 1614,
+      "cases": null
+    },
+    "demo/smoke_portable_recovery.mjs": {
+      "durationMs": 4858,
+      "cases": null
+    },
+    "demo/smoke_post_write_adoption.mjs": {
+      "durationMs": 1759,
+      "cases": null
+    },
+    "demo/smoke_preflight_diagnostics.mjs": {
+      "durationMs": 1547,
+      "cases": null
+    },
+    "demo/smoke_preloader.mjs": {
+      "durationMs": 3845,
+      "cases": null
+    },
+    "demo/smoke_preloader_lifecycle.mjs": {
+      "durationMs": 13224,
+      "cases": null
+    },
+    "demo/smoke_properties_panel.mjs": {
+      "durationMs": 20153,
+      "cases": null
+    },
+    "demo/smoke_radar_legacy_removal_947.mjs": {
+      "durationMs": 7657,
+      "cases": null
+    },
+    "demo/smoke_radar_live.mjs": {
+      "durationMs": 1709,
+      "cases": null
+    },
+    "demo/smoke_radar_setup.mjs": {
+      "durationMs": 8786,
+      "cases": null
+    },
+    "demo/smoke_range_line_draft.mjs": {
+      "durationMs": 2302,
+      "cases": null
+    },
+    "demo/smoke_real_plan_masonry.mjs": {
+      "durationMs": 2740,
+      "cases": null
+    },
+    "demo/smoke_registryless_opening.mjs": {
+      "durationMs": 1812,
+      "cases": null
+    },
+    "demo/smoke_render_invalidation.mjs": {
+      "durationMs": 3484,
+      "cases": null
+    },
+    "demo/smoke_render_parity.mjs": {
+      "durationMs": 1499,
+      "cases": null
+    },
+    "demo/smoke_render_perf.mjs": {
+      "durationMs": 1759,
+      "cases": null
+    },
+    "demo/smoke_resize_audit_1550.mjs": {
+      "durationMs": 5866,
+      "cases": null
+    },
+    "demo/smoke_resize_inner_dimensions.mjs": {
+      "durationMs": 1570,
+      "cases": null
+    },
+    "demo/smoke_resize_labels.mjs": {
+      "durationMs": 1878,
+      "cases": null
+    },
+    "demo/smoke_resize_outer_reconciliation.mjs": {
+      "durationMs": 1836,
+      "cases": null
+    },
+    "demo/smoke_resize_pointer_real_plan.mjs": {
+      "durationMs": 18924,
+      "cases": null
+    },
+    "demo/smoke_resize_wall_thickness.mjs": {
+      "durationMs": 2707,
+      "cases": null
+    },
+    "demo/smoke_rgb_alarm.mjs": {
+      "durationMs": 1418,
+      "cases": null
+    },
+    "demo/smoke_room_appearance.mjs": {
+      "durationMs": 6528,
+      "cases": null
+    },
+    "demo/smoke_room_area_touch.mjs": {
+      "durationMs": 9247,
+      "cases": null
+    },
+    "demo/smoke_room_autoclose.mjs": {
+      "durationMs": 1886,
+      "cases": null
+    },
+    "demo/smoke_room_cards.mjs": {
+      "durationMs": 1472,
+      "cases": null
+    },
+    "demo/smoke_room_climate_placement.mjs": {
+      "durationMs": 1496,
+      "cases": null
+    },
+    "demo/smoke_room_co2.mjs": {
+      "durationMs": 8222,
+      "cases": null
+    },
+    "demo/smoke_room_contact_grid.mjs": {
+      "durationMs": 34267,
+      "cases": null
+    },
+    "demo/smoke_room_contact_storage.mjs": {
+      "durationMs": 26413,
+      "cases": null
+    },
+    "demo/smoke_room_device_discovery.mjs": {
+      "durationMs": 40427,
+      "cases": null
+    },
+    "demo/smoke_room_dimming_removed.mjs": {
+      "durationMs": 16659,
+      "cases": null
+    },
+    "demo/smoke_room_face_select.mjs": {
+      "durationMs": 23320,
+      "cases": null
+    },
+    "demo/smoke_room_fill_transitions.mjs": {
+      "durationMs": 11158,
+      "cases": null
+    },
+    "demo/smoke_room_fit.mjs": {
+      "durationMs": 8875,
+      "cases": null
+    },
+    "demo/smoke_room_gear_drag.mjs": {
+      "durationMs": 2622,
+      "cases": null
+    },
+    "demo/smoke_room_link.mjs": {
+      "durationMs": 4979,
+      "cases": null
+    },
+    "demo/smoke_room_metrics_alignment.mjs": {
+      "durationMs": 31985,
+      "cases": null
+    },
+    "demo/smoke_room_opening_host.mjs": {
+      "durationMs": 13783,
+      "cases": null
+    },
+    "demo/smoke_room_resize.mjs": {
+      "durationMs": 3091,
+      "cases": null
+    },
+    "demo/smoke_room_save_retry_946.mjs": {
+      "durationMs": 2600,
+      "cases": null
+    },
+    "demo/smoke_room_settings.mjs": {
+      "durationMs": 2352,
+      "cases": null
+    },
+    "demo/smoke_room_settings_946.mjs": {
+      "durationMs": 5055,
+      "cases": null
+    },
+    "demo/smoke_room_settings_form.mjs": {
+      "durationMs": 5350,
+      "cases": null
+    },
+    "demo/smoke_room_temperature_thresholds.mjs": {
+      "durationMs": 1833,
+      "cases": null
+    },
+    "demo/smoke_room_tooltip_toggle.mjs": {
+      "durationMs": 1601,
+      "cases": null
+    },
+    "demo/smoke_save_race.mjs": {
+      "durationMs": 2339,
+      "cases": null
+    },
+    "demo/smoke_saved_plans.mjs": {
+      "durationMs": 1730,
+      "cases": null
+    },
+    "demo/smoke_screen_camera_1165.mjs": {
+      "durationMs": 3507,
+      "cases": null
+    },
+    "demo/smoke_sections_resize.mjs": {
+      "durationMs": 7614,
+      "cases": null
+    },
+    "demo/smoke_selection_geometry_1207.mjs": {
+      "durationMs": 2307,
+      "cases": null
+    },
+    "demo/smoke_selective_invalidation.mjs": {
+      "durationMs": 23878,
+      "cases": null
+    },
+    "demo/smoke_selective_invalidation_authority.mjs": {
+      "durationMs": 17054,
+      "cases": null
+    },
+    "demo/smoke_selective_invalidation_history0.mjs": {
+      "durationMs": 30000,
+      "cases": null
+    },
+    "demo/smoke_selective_invalidation_history320.mjs": {
+      "durationMs": 55560,
+      "cases": null
+    },
+    "demo/smoke_selective_invalidation_inactive.mjs": {
+      "durationMs": 27109,
+      "cases": null
+    },
+    "demo/smoke_selective_invalidation_visible.mjs": {
+      "durationMs": 27457,
+      "cases": null
+    },
+    "demo/smoke_sensor_tick_freshness.mjs": {
+      "durationMs": 4421,
+      "cases": null
+    },
+    "demo/smoke_settings_button_alignment_955.mjs": {
+      "durationMs": 34107,
+      "cases": null
+    },
+    "demo/smoke_settings_dialog_cards.mjs": {
+      "durationMs": 1954,
+      "cases": null
+    },
+    "demo/smoke_settings_mock_match_948.mjs": {
+      "durationMs": 4669,
+      "cases": null
+    },
+    "demo/smoke_settings_native_select_947.mjs": {
+      "durationMs": 3261,
+      "cases": null
+    },
+    "demo/smoke_settings_navigation.mjs": {
+      "durationMs": 2875,
+      "cases": null
+    },
+    "demo/smoke_settings_polish_955.mjs": {
+      "durationMs": 148174,
+      "cases": null
+    },
+    "demo/smoke_settings_polish_led_climate_955.mjs": {
+      "durationMs": 133913,
+      "cases": null
+    },
+    "demo/smoke_settings_polish_radar_vacuum_955.mjs": {
+      "durationMs": 165088,
+      "cases": null
+    },
+    "demo/smoke_settings_polish_room_sensor_955.mjs": {
+      "durationMs": 84455,
+      "cases": null
+    },
+    "demo/smoke_settings_select.mjs": {
+      "durationMs": 4448,
+      "cases": null
+    },
+    "demo/smoke_sign_cap.mjs": {
+      "durationMs": 2186,
+      "cases": null
+    },
+    "demo/smoke_signal_low_only.mjs": {
+      "durationMs": 5524,
+      "cases": null
+    },
+    "demo/smoke_signal_visibility.mjs": {
+      "durationMs": 8807,
+      "cases": null
+    },
+    "demo/smoke_signal_visibility_device_policy.mjs": {
+      "durationMs": 10406,
+      "cases": null
+    },
+    "demo/smoke_signal_visibility_lifecycle.mjs": {
+      "durationMs": 5405,
+      "cases": null
+    },
+    "demo/smoke_signal_visibility_ui.mjs": {
+      "durationMs": 22138,
+      "cases": null
+    },
+    "demo/smoke_signal_visibility_work.mjs": {
+      "durationMs": 2605,
+      "cases": null
+    },
+    "demo/smoke_size_angle_parity.mjs": {
+      "durationMs": 1858,
+      "cases": null
+    },
+    "demo/smoke_smooth_zoom.mjs": {
+      "durationMs": 4411,
+      "cases": null
+    },
+    "demo/smoke_space_battery_policy.mjs": {
+      "durationMs": 4104,
+      "cases": null
+    },
+    "demo/smoke_space_card.mjs": {
+      "durationMs": 4423,
+      "cases": null
+    },
+    "demo/smoke_space_card_bg.mjs": {
+      "durationMs": 4157,
+      "cases": null
+    },
+    "demo/smoke_space_card_decor_capability.mjs": {
+      "durationMs": 1587,
+      "cases": null
+    },
+    "demo/smoke_space_card_identity.mjs": {
+      "durationMs": 7346,
+      "cases": null
+    },
+    "demo/smoke_space_copy.mjs": {
+      "durationMs": 2263,
+      "cases": null
+    },
+    "demo/smoke_space_copy_categories.mjs": {
+      "durationMs": 9029,
+      "cases": null
+    },
+    "demo/smoke_space_create_display_defaults.mjs": {
+      "durationMs": 1844,
+      "cases": null
+    },
+    "demo/smoke_space_delete_with_devices.mjs": {
+      "durationMs": 3848,
+      "cases": null
+    },
+    "demo/smoke_space_scale_defaults.mjs": {
+      "durationMs": 2261,
+      "cases": null
+    },
+    "demo/smoke_space_settings.mjs": {
+      "durationMs": 1614,
+      "cases": null
+    },
+    "demo/smoke_space_settings_form.mjs": {
+      "durationMs": 7741,
+      "cases": null
+    },
+    "demo/smoke_space_tab_reorder.mjs": {
+      "durationMs": 6980,
+      "cases": null
+    },
+    "demo/smoke_split_corner_wall.mjs": {
+      "durationMs": 1882,
+      "cases": null
+    },
+    "demo/smoke_split_nonsnap.mjs": {
+      "durationMs": 1729,
+      "cases": null
+    },
+    "demo/smoke_split_polyline.mjs": {
+      "durationMs": 1544,
+      "cases": null
+    },
+    "demo/smoke_stair_arrival.mjs": {
+      "durationMs": 10722,
+      "cases": null
+    },
+    "demo/smoke_stairs.mjs": {
+      "durationMs": 18180,
+      "cases": null
+    },
+    "demo/smoke_state_value.mjs": {
+      "durationMs": 1400,
+      "cases": null
+    },
+    "demo/smoke_static_config_events.mjs": {
+      "durationMs": 3131,
+      "cases": null
+    },
+    "demo/smoke_static_icon.mjs": {
+      "durationMs": 2283,
+      "cases": null
+    },
+    "demo/smoke_static_wall_openings.mjs": {
+      "durationMs": 9619,
+      "cases": null
+    },
+    "demo/smoke_static_zoom_sharpness.mjs": {
+      "durationMs": 4816,
+      "cases": null
+    },
+    "demo/smoke_styling_hooks.mjs": {
+      "durationMs": 5003,
+      "cases": null
+    },
+    "demo/smoke_subarea.mjs": {
+      "durationMs": 2174,
+      "cases": null
+    },
+    "demo/smoke_summary_camera.mjs": {
+      "durationMs": 8128,
+      "cases": null
+    },
+    "demo/smoke_summary_camera_cold.mjs": {
+      "durationMs": 6089,
+      "cases": null
+    },
+    "demo/smoke_summary_camera_motion.mjs": {
+      "durationMs": 12941,
+      "cases": null
+    },
+    "demo/smoke_summary_camera_restore.mjs": {
+      "durationMs": 3144,
+      "cases": null
+    },
+    "demo/smoke_summary_dialog_scroll.mjs": {
+      "durationMs": 5428,
+      "cases": null
+    },
+    "demo/smoke_summary_first_paint.mjs": {
+      "durationMs": 6039,
+      "cases": null
+    },
+    "demo/smoke_summary_panel.mjs": {
+      "durationMs": 6054,
+      "cases": null
+    },
+    "demo/smoke_summary_panel_polish.mjs": {
+      "durationMs": 21680,
+      "cases": null
+    },
+    "demo/smoke_summary_warm_attach.mjs": {
+      "durationMs": 4396,
+      "cases": null
+    },
+    "demo/smoke_summary_weather.mjs": {
+      "durationMs": 3334,
+      "cases": null
+    },
+    "demo/smoke_sun.mjs": {
+      "durationMs": 5886,
+      "cases": null
+    },
+    "demo/smoke_sun_live_bg.mjs": {
+      "durationMs": 1400,
+      "cases": null
+    },
+    "demo/smoke_sun_rim.mjs": {
+      "durationMs": 3906,
+      "cases": null
+    },
+    "demo/smoke_sun_soft.mjs": {
+      "durationMs": 1429,
+      "cases": null
+    },
+    "demo/smoke_sun_transparent.mjs": {
+      "durationMs": 15301,
+      "cases": null
+    },
+    "demo/smoke_support_diagnostics.mjs": {
+      "durationMs": 2387,
+      "cases": null
+    },
+    "demo/smoke_support_feedback.mjs": {
+      "durationMs": 4345,
+      "cases": null
+    },
+    "demo/smoke_svg_export.mjs": {
+      "durationMs": 7994,
+      "cases": null
+    },
+    "demo/smoke_svg_sandbox.mjs": {
+      "durationMs": 1042,
+      "cases": null
+    },
+    "demo/smoke_tap_ctx.mjs": {
+      "durationMs": 4275,
+      "cases": null
+    },
+    "demo/smoke_tap_run.mjs": {
+      "durationMs": 1652,
+      "cases": null
+    },
+    "demo/smoke_temp_fill.mjs": {
+      "durationMs": 1564,
+      "cases": null
+    },
+    "demo/smoke_test_facade.mjs": {
+      "durationMs": 4915,
+      "cases": null
+    },
+    "demo/smoke_toast_ownership_1246.mjs": {
+      "durationMs": 10985,
+      "cases": null
+    },
+    "demo/smoke_toggle_entity.mjs": {
+      "durationMs": 1770,
+      "cases": null
+    },
+    "demo/smoke_toolbar_stable_width.mjs": {
+      "durationMs": 17164,
+      "cases": null
+    },
+    "demo/smoke_touch_tips.mjs": {
+      "durationMs": 1484,
+      "cases": null
+    },
+    "demo/smoke_ui_1051.mjs": {
+      "durationMs": 11077,
+      "cases": null
+    },
+    "demo/smoke_ui_1051_native.mjs": {
+      "durationMs": 14737,
+      "cases": null
+    },
+    "demo/smoke_ui_kit_motion.mjs": {
+      "durationMs": 5088,
+      "cases": null
+    },
+    "demo/smoke_ui_lab_1081.mjs": {
+      "durationMs": 6281,
+      "cases": null
+    },
+    "demo/smoke_ui_lab_grid.mjs": {
+      "durationMs": 4698,
+      "cases": null
+    },
+    "demo/smoke_ui_polish_1132.mjs": {
+      "durationMs": 5284,
+      "cases": null
+    },
+    "demo/smoke_ui_polish_1145.mjs": {
+      "durationMs": 10598,
+      "cases": null
+    },
+    "demo/smoke_ui_polish_963.mjs": {
+      "durationMs": 20656,
+      "cases": null
+    },
+    "demo/smoke_ui_polish_963_reference.mjs": {
+      "durationMs": 42088,
+      "cases": null
+    },
+    "demo/smoke_ui_polish_963_touch.mjs": {
+      "durationMs": 3349,
+      "cases": null
+    },
+    "demo/smoke_ui_polish_976.mjs": {
+      "durationMs": 7377,
+      "cases": null
+    },
+    "demo/smoke_unified_wall_tool.mjs": {
+      "durationMs": 2076,
+      "cases": null
+    },
+    "demo/smoke_ux_fixes.mjs": {
+      "durationMs": 1848,
+      "cases": null
+    },
+    "demo/smoke_v8_draft_write.mjs": {
+      "durationMs": 2141,
+      "cases": null
+    },
+    "demo/smoke_vacuum.mjs": {
+      "durationMs": 2442,
+      "cases": null
+    },
+    "demo/smoke_vacuum_camera.mjs": {
+      "durationMs": 17131,
+      "cases": null
+    },
+    "demo/smoke_vacuum_dock_restart.mjs": {
+      "durationMs": 4753,
+      "cases": null
+    },
+    "demo/smoke_vacuum_ecovacs.mjs": {
+      "durationMs": 8370,
+      "cases": null
+    },
+    "demo/smoke_vacuum_firstuse.mjs": {
+      "durationMs": 3191,
+      "cases": null
+    },
+    "demo/smoke_vacuum_history.mjs": {
+      "durationMs": 8969,
+      "cases": null
+    },
+    "demo/smoke_vacuum_history_context.mjs": {
+      "durationMs": 23955,
+      "cases": null
+    },
+    "demo/smoke_vacuum_history_geometry.mjs": {
+      "durationMs": 6170,
+      "cases": null
+    },
+    "demo/smoke_vacuum_history_touch.mjs": {
+      "durationMs": 3361,
+      "cases": null
+    },
+    "demo/smoke_vacuum_live_tail.mjs": {
+      "durationMs": 11605,
+      "cases": null
+    },
+    "demo/smoke_vacuum_multifloor.mjs": {
+      "durationMs": 2408,
+      "cases": null
+    },
+    "demo/smoke_vacuum_native_lifecycle.mjs": {
+      "durationMs": 3106,
+      "cases": null
+    },
+    "demo/smoke_vacuum_path_fidelity.mjs": {
+      "durationMs": 2380,
+      "cases": null
+    },
+    "demo/smoke_vacuum_route_draft.mjs": {
+      "durationMs": 2867,
+      "cases": null
+    },
+    "demo/smoke_vacuum_route_recovery.mjs": {
+      "durationMs": 34345,
+      "cases": null
+    },
+    "demo/smoke_vacuum_style_1002.mjs": {
+      "durationMs": 5364,
+      "cases": null
+    },
+    "demo/smoke_vacuum_tail_continuity.mjs": {
+      "durationMs": 9699,
+      "cases": null
+    },
+    "demo/smoke_value_face_source.mjs": {
+      "durationMs": 2361,
+      "cases": null
+    },
+    "demo/smoke_value_format.mjs": {
+      "durationMs": 1836,
+      "cases": null
+    },
+    "demo/smoke_version_recovery.mjs": {
+      "durationMs": 14970,
+      "cases": null
+    },
+    "demo/smoke_view_device_menu.mjs": {
+      "durationMs": 7120,
+      "cases": null
+    },
+    "demo/smoke_view_device_menu_lifecycle.mjs": {
+      "durationMs": 33377,
+      "cases": null
+    },
+    "demo/smoke_view_entry_recovery.mjs": {
+      "durationMs": 7590,
+      "cases": null
+    },
+    "demo/smoke_view_hold_lifecycle.mjs": {
+      "durationMs": 35209,
+      "cases": null
+    },
+    "demo/smoke_view_runtime_dirty_reload.mjs": {
+      "durationMs": 4663,
+      "cases": null
+    },
+    "demo/smoke_view_runtime_kiosk_recovery.mjs": {
+      "durationMs": 6256,
+      "cases": null
+    },
+    "demo/smoke_view_runtime_recovery.mjs": {
+      "durationMs": 44532,
+      "cases": null
+    },
+    "demo/smoke_virtual_light_toggle.mjs": {
+      "durationMs": 1642,
+      "cases": null
+    },
+    "demo/smoke_visual_continuity.mjs": {
+      "durationMs": 17889,
+      "cases": null
+    },
+    "demo/smoke_volumetric_setting.mjs": {
+      "durationMs": 2723,
+      "cases": null
+    },
+    "demo/smoke_wall_adoption_alias.mjs": {
+      "durationMs": 6236,
+      "cases": null
+    },
+    "demo/smoke_wall_chain_history.mjs": {
+      "durationMs": 3235,
+      "cases": null
+    },
+    "demo/smoke_wall_chain_merge.mjs": {
+      "durationMs": 8149,
+      "cases": null
+    },
+    "demo/smoke_wall_chain_thickness.mjs": {
+      "durationMs": 1477,
+      "cases": null
+    },
+    "demo/smoke_wall_corner_join.mjs": {
+      "durationMs": 4537,
+      "cases": null
+    },
+    "demo/smoke_wall_draw_click.mjs": {
+      "durationMs": 2662,
+      "cases": null
+    },
+    "demo/smoke_wall_end_align.mjs": {
+      "durationMs": 3992,
+      "cases": null
+    },
+    "demo/smoke_wall_face_lineage.mjs": {
+      "durationMs": 38698,
+      "cases": null
+    },
+    "demo/smoke_wall_face_overlap.mjs": {
+      "durationMs": 1923,
+      "cases": null
+    },
+    "demo/smoke_wall_face_room_split.mjs": {
+      "durationMs": 58474,
+      "cases": null
+    },
+    "demo/smoke_wall_guide_ownership.mjs": {
+      "durationMs": 27233,
+      "cases": null
+    },
+    "demo/smoke_wall_hatch_density.mjs": {
+      "durationMs": 3251,
+      "cases": null
+    },
+    "demo/smoke_wall_junctions.mjs": {
+      "durationMs": 1671,
+      "cases": null
+    },
+    "demo/smoke_wall_key_roundtrip.mjs": {
+      "durationMs": 3100,
+      "cases": null
+    },
+    "demo/smoke_wall_node_connected.mjs": {
+      "durationMs": 14355,
+      "cases": null
+    },
+    "demo/smoke_wall_node_delete.mjs": {
+      "durationMs": 14804,
+      "cases": null
+    },
+    "demo/smoke_wall_node_merge.mjs": {
+      "durationMs": 31176,
+      "cases": null
+    },
+    "demo/smoke_wall_node_move.mjs": {
+      "durationMs": 5956,
+      "cases": null
+    },
+    "demo/smoke_wall_node_python_roundtrip.mjs": {
+      "durationMs": 4219,
+      "cases": null
+    },
+    "demo/smoke_wall_node_reliability.mjs": {
+      "durationMs": 10395,
+      "cases": null
+    },
+    "demo/smoke_wall_node_topology.mjs": {
+      "durationMs": 36221,
+      "cases": null
+    },
+    "demo/smoke_wall_preview_handoff_1247.mjs": {
+      "durationMs": 2694,
+      "cases": null
+    },
+    "demo/smoke_wall_smooth_joint.mjs": {
+      "durationMs": 4472,
+      "cases": null
+    },
+    "demo/smoke_wall_thickness.mjs": {
+      "durationMs": 9692,
+      "cases": null
+    },
+    "demo/smoke_wall_thickness_transition.mjs": {
+      "durationMs": 4683,
+      "cases": null
+    },
+    "demo/smoke_wall_union_isolation.mjs": {
+      "durationMs": 2589,
+      "cases": null
+    },
+    "demo/smoke_wallthick_hover_width.mjs": {
+      "durationMs": 2020,
+      "cases": null
+    },
+    "demo/smoke_wallthick_standalone.mjs": {
+      "durationMs": 12228,
+      "cases": null
+    },
+    "demo/smoke_warm_dialogs.mjs": {
+      "durationMs": 22362,
+      "cases": null
+    },
+    "demo/smoke_warm_geometry_camera.mjs": {
+      "durationMs": 9216,
+      "cases": null
+    },
+    "demo/smoke_warm_mode_adoption.mjs": {
+      "durationMs": 38842,
+      "cases": null
+    },
+    "demo/smoke_warm_owners.mjs": {
+      "durationMs": 7066,
+      "cases": null
+    },
+    "demo/smoke_warm_remount.mjs": {
+      "durationMs": 4149,
+      "cases": null
+    },
+    "demo/smoke_warm_view_marker.mjs": {
+      "durationMs": 20137,
+      "cases": null
+    },
+    "demo/smoke_wireless_controller_parity.mjs": {
+      "durationMs": 1577,
+      "cases": null
+    },
+    "demo/smoke_write_authority.mjs": {
+      "durationMs": 3677,
+      "cases": null
+    },
+    "demo/smoke_writer_fixed_point.mjs": {
+      "durationMs": 3635,
+      "cases": null
+    },
+    "demo/smoke_ws_resilience.mjs": {
+      "durationMs": 2631,
+      "cases": null
+    },
+    "demo/smoke_yellow_principle.mjs": {
+      "durationMs": 2198,
+      "cases": null
+    },
+    "demo/smoke_zero_divider_taper.mjs": {
+      "durationMs": 1673,
+      "cases": null
+    },
+    "demo/smoke_zero_wall_migration_unblocked.mjs": {
+      "durationMs": 1428,
+      "cases": null
+    },
+    "demo/smoke_zero_walls.mjs": {
+      "durationMs": 1762,
+      "cases": null
+    },
+    "demo/smoke_zigbee_enable_refresh.mjs": {
+      "durationMs": 38957,
+      "cases": null
+    },
+    "demo/smoke_zigbee_hidden_placement.mjs": {
+      "durationMs": 4103,
+      "cases": null
+    },
+    "demo/smoke_zigbee_incomplete_reasons.mjs": {
+      "durationMs": 3991,
+      "cases": null
+    },
+    "demo/smoke_zigbee_led_topology.mjs": {
+      "durationMs": 15491,
+      "cases": null
+    },
+    "demo/smoke_zigbee_map_explanation.mjs": {
+      "durationMs": 1842,
+      "cases": null
+    },
+    "demo/smoke_zigbee_tooltip_layout.mjs": {
+      "durationMs": 19703,
+      "cases": null
+    },
+    "demo/smoke_zigbee_topology_hover.mjs": {
+      "durationMs": 5792,
+      "cases": null
+    },
+    "demo/smoke_zigbee_topology_job.mjs": {
+      "durationMs": 6141,
+      "cases": null
+    },
+    "demo/smoke_zoom_badge_visibility.mjs": {
+      "durationMs": 2361,
+      "cases": null
+    },
+    "demo/smoke_zoom_flash.mjs": {
+      "durationMs": 2907,
+      "cases": null
+    },
+    "demo/smoke_zoom_out.mjs": {
+      "durationMs": 7222,
+      "cases": null
+    }
+  }
+}
