@@ -640,6 +640,7 @@ export class HouseplanCard extends LitElement {
         // HA reused its object. Detached demand stays with the read owner.
         forceHass = this.isConnected;
         if (forceHass) this._renderLife.retireHass();
+        this._haWallNodeAttachApi = null;
         this._haVacuumDockRestartApi = null;
         this._haVacuumHistoryApi = null;
         this._haDeviceHistoryApi = null;

@@ -124,7 +124,7 @@ try {
   await ack(releasePositionRev);await page.mouse.up();assert.equal(writes.length,count+1);assert.ok(writes[count].intent.attach_edge);
   observations.push({case:'release has the last position',writes:1});
   // Cancel, missing capability, ambiguous carriers and non-dangling source.
-  for(const mode of ['cancel','old-backend','ambiguous','corner','capability-retired']){
+  for(const mode of ['cancel','old-backend','ambiguous','corner','capability-retired','authority-retired']){
     const c=structuredClone(cases[mode==='corner'?10:0]);
     if(mode==='ambiguous'){
       c.graph.nodes.push({id:'x',p:['l','0','-2']},{id:'y',p:['l','240','-2']});c.graph.edges.push({kind:'partition',id:'other',from:'x',to:'y',cm:0});
@@ -133,10 +133,14 @@ try {
     source=await screen([.5,.25]);target=await screen([.5,mode==='ambiguous'?-1/240:0]);
     await page.mouse.move(source.x,source.y);await page.mouse.down();await page.mouse.move(target.x,target.y);
     await page.evaluate(()=>new Promise(requestAnimationFrame));
-    if(['cancel','capability-retired'].includes(mode)){
+    if(['cancel','capability-retired','authority-retired'].includes(mode)){
       assert.equal((await inspect()).target,true);
       if(mode==='cancel')await page.evaluate(()=>{const e=window.__card._editorRuntime.nodeMove;e.port.stage().dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,composed:true,pointerId:e.activePointerId,pointerType:'mouse'}));});
-      else await page.evaluate(()=>{window.__card._haWallNodeAttachApi=null;window.__card.requestUpdate();});
+      else if(mode==='capability-retired')await page.evaluate(()=>{window.__card._haWallNodeAttachApi=null;window.__card.requestUpdate();});
+      else {
+        const reset=await page.evaluate(()=>{const c=window.__card;c.hass={...c.hass,connection:{...c.hass.connection},user:{...c.hass.user,id:'synthetic-foreign'}};return c._haWallNodeAttachApi;});
+        assert.equal(reset,null,'authority change resets attach capability before the next read');
+      }
     }else if(mode!=='ambiguous')assert.equal((await inspect()).target,false);
     if(mode==='old-backend'||mode==='corner')await page.keyboard.press('Escape');
     await page.mouse.up();await page.waitForFunction(()=>!window.__card._editorRuntime.nodeMove.dragging);
@@ -166,7 +170,7 @@ try {
   const next=revision+1;await page.mouse.up();await ack(next);assert.equal(writes.length,count+1);assert.equal((await inspect()).guards,1);
   observations.push({case:'5000 edges / 100 held targets',frames:frames.length,p50:frames[Math.floor(frames.length/2)],p95:frames[Math.ceil(frames.length*.95)-1],heldFullProofs:0,releaseFullProofs:1});
   writeFileSync('artifacts/1330/native-observations.json',JSON.stringify(observations,null,2)+'\n');
-  check('native attach, ACK, exact history, cancellation and bounded preview',observations.length,17);
+  check('native attach, ACK, exact history, cancellation and bounded preview',observations.length,18);
  } catch(error) {
   console.log('native failure state',await page.evaluate(()=>{
     const c=window.__card,e=c._editorRuntime?.nodeMove,s=e?.session;

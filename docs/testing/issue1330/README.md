@@ -50,7 +50,7 @@ normal build with unchanged named retry exports passes.
   contact refusal and late physical limits. They do not use the owner's HA.
 - The adapter additionally checks queued capability/authority retirement and a
   late ACK with zero adoption. Missing config/get capability is fail-closed.
-- Native smoke completed17 observations:10 successful host/material/opening/
+- Initial native smoke completed17 observations:10 successful host/material/opening/
   room variants, release's final position without a move,5 cancellation/
   compatibility/ambiguity variants, and100 target changes on5000 edges.
   The held attach window had0 full physical proofs/writes/history; release1
@@ -79,6 +79,11 @@ fingerprints/fallback prerequisites include their Python inputs.
 - tests_backend/test_wall_node_attach.py: geometry / regression / task-release
 - tests_backend/test_ha_wall_node_attach.py: geometry, runtime / regression / task-release
 - demo/smoke_wall_node_attach.mjs: geometry / regression / task-release
+
+A final source review added explicit attach-capability reset at the card's HA
+authority boundary, plus an18th native no-write case for a foreign connection.
+The first queued run was cancelled before S7 to include this correction; its
+cancelled/unrun entries are not product failures or passing checks.
 
 The final queued S6 report and substantive code review are authoritative for
 merge readiness; the addressed commands above alone are not an S8 claim.
