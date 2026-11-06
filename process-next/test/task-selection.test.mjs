@@ -64,7 +64,7 @@ test('unknown new product sources select all fast Node, flag the gap and never s
     const plan = await planProfile({ root: dir, changedFiles: ['src/unmapped-new-feature.ts'] });
     assert.equal(plan.steps.some(s => /golden|e2e|mutation|converter/.test(s.id)), false);
 }));
-test('static readers include both sides of import cycles without wildcard fanout', async () => fixture({
+test('static readers include both sides of import cycles and actual directory scopes', async () => fixture({
     'src/light-a.ts': "import './light-b'; export const a=1;", 'src/light-b.ts': "import './light-a.js'; export const b=2;",
     'test/plain-a.test.mjs': "import '../test-build/light-a.js';", 'test/plain-b.test.mjs': "import '../test-build/light-b.js';",
     'test/tree-reader.test.mjs': "import {readdirSync} from 'node:fs'; readdirSync('src');",
@@ -72,7 +72,7 @@ test('static readers include both sides of import cycles without wildcard fanout
     const result = await select(dir, { changedFiles: ['src/light-a.ts'] });
     assert.ok(result.files.includes('test/plain-a.test.mjs'));
     assert.ok(result.files.includes('test/plain-b.test.mjs'));
-    assert.ok(!result.files.includes('test/tree-reader.test.mjs'));
+    assert.ok(result.files.includes('test/tree-reader.test.mjs'), 'a real source-directory reader is affected by every changed source in that scope');
     assert.ok(result.explanation.reasons['test/plain-b.test.mjs'].some(r => r.includes('Читает')));
 }));
 test('deleted and renamed source paths still contribute their old domain', async () => fixture({
@@ -296,4 +296,30 @@ test('coordinator module graph loads within its deployed sparse checkout', async
     const code="try{await import('./process-next/templates/coordinator-job.mjs');throw Error('activation guard was skipped');}catch(e){if(e.message!=='New process is not activated')throw e;}";
     const result=spawnSync(process.execPath,['--input-type=module','-e',code],{cwd:dir,encoding:'utf8',env:{...process.env,PROCESS_NEXT_ENABLED:undefined,NODE_TEST_CONTEXT:undefined}});
     assert.equal(result.status,0,result.stderr||result.stdout);
+}));
+// #1331: test metadata must not invent a product-component fallback in infra.
+test('infra contract data selects its actual reader without product build fallback', async () => fixture({
+ 'docs/contract.json': '{}',
+ 'test/infra-contract.test.mjs': "import {readFileSync} from 'node:fs'; readFileSync(new URL('../docs/contract.json',import.meta.url));",
+ 'test/view-contract-product.test.mjs': "import '../dist/render.mjs';",
+}, async dir => {
+ const localInventory={entries:[{path:'test/infra-contract.test.mjs',kind:'infrastructure',decision:'keep'}]};
+ const result=await selectTaskTests({root:dir,inventory:localInventory,layer:'infra',track:'show',changedFiles:['docs/contract.json']});
+ assert.deepEqual(result.files,['test/infra-contract.test.mjs']);
+ assert.ok(result.explanation.reasons['test/infra-contract.test.mjs'].some(x=>x.includes('Читает')));
+ assert.equal(result.explanation.gaps.some(g=>g.reason?.includes('полный быстрый')),false);
+}));
+test('compatibility scanner selects and fingerprints both frontend and backend source scopes', async () => fixture({
+ 'src/new-source.ts': '', 'custom_components/houseplan/new_source.py':'',
+ 'scripts/config-compatibility-inventory.mjs': 'export function scanCompatibility(){}',
+ 'test/config-lifecycle.test.mjs': "import '../scripts/config-compatibility-inventory.mjs';",
+}, async dir => {
+ for(const file of ['src/new-source.ts','custom_components/houseplan/new_source.py']){
+  const result=await select(dir,{changedFiles:[file]});
+  assert.ok(result.files.includes('test/config-lifecycle.test.mjs'));
+  assert.ok(result.explanation.reasons['test/config-lifecycle.test.mjs'].some(x=>x.includes('Читает')));
+ }
+ const plan=await planProfile({root:dir,changedFiles:['src/new-source.ts']});
+ const consumer=plan.steps.find(s=>s.command?.includes('test/config-lifecycle.test.mjs'));
+ assert.ok(consumer.inputs.includes('src/**/*.ts'));assert.ok(consumer.inputs.includes('custom_components/houseplan/**/*.py'));
 }));

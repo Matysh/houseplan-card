@@ -3,14 +3,15 @@
 import assert from 'node:assert/strict';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { pathToFileURL, fileURLToPath } from 'node:url';
-import { launchPanelCold, finish, check } from './serve.mjs';
+import { launchPanelCold, finish, check, watchPage } from './serve.mjs';
 import { convertEasy } from '../scripts/sh3d-convert/easy.mjs';
 
 const { page, browser } = await launchPanelCold({ width: 1280, height: 800 });
 const artifacts = new URL('../artifacts/easy-converter-openings/', import.meta.url);
 mkdirSync(artifacts, { recursive: true });
 try {
-  const converter = await page.context().newPage();
+  const context = page.context();
+  const converter = watchPage(await context.newPage());
   await converter.route(/^https?:/, route => route.abort());
   await converter.goto(pathToFileURL(fileURLToPath(new URL('../scripts/sh3d-convert/dist/index.html', import.meta.url))).href);
   await converter.locator('#format').selectOption('easy');

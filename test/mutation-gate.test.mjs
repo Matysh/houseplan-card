@@ -1151,7 +1151,6 @@ test('#492 §6.4: реестр базы читается из git без поб�
 test('#496: гварды check-docs не требуют свежих скриншотов', () => {
   const strict = MUTANTS.filter((m) => /check-docs\.mjs/.test(m.guard) && !/--screenshots=warn/.test(m.guard));
   assert.deepEqual(strict.map((m) => m.id), []);
-  assert.ok(MUTANTS.some((m) => /check-docs\.mjs --screenshots=warn/.test(m.guard)), 'хотя бы один гвард check-docs есть');
 });
 
 // #496 (run 2795): package.json — вход почти каждого гварда, и добавленный

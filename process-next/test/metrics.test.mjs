@@ -93,7 +93,7 @@ test('failed benchmark produces a diagnostic report with actual sizes and no sta
   assert.ok(result.comparison.primary.filter(row => row.unit === 'ms').every(row => row.status === 'missing'));
   assert.match(renderMetrics(result.comparison), /Chromium unavailable/);
   assert.equal(JSON.parse(readFileSync(join(f.output, 'metrics.json'))).evidenceStatus, 'incomplete');
-  assert.equal(releaseReadiness({ kind: 'beta', sha: f.sourceSha, runner: { ready: true, sha: f.sourceSha, event: 'beta' }, metrics: result.comparison }).ready, true);
+  assert.equal(releaseReadiness({ kind: 'beta', sha: f.sourceSha, runner: { ready: true, sha: f.sourceSha, event: 'beta' }, shipReview: {sha:f.sourceSha,inventoryComplete:true,status:'not-required'}, metrics: result.comparison }).ready, true);
 });
 
 test('a missing or nonfinite timing series does not discard other measured values', t => {

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Repair current S6 baseline contracts and mutation witnesses; preserve actual source-scanner scopes in selection/reuse and keep infrastructure metadata out of product fallback. #1331
+
 - S6 selects tests from changed behavior, component links and track; active catalog, explicit unknowns, file-level reuse and fallback preparation share one plan. #1239
 
 - Align room paper with actual mixed-junction masonry; independent branches no longer expose white facade tips. #1327

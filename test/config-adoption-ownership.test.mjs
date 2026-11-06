@@ -39,9 +39,12 @@ const BODY_WRITE = {
  * stages device positions (`applyDevicePlacement`). Lowering a count is a
  * win to record here; raising one is a review finding.
  */
+// #1331: the tenth card body stage is the Area relocation failure rollback:
+// applyDevicePlacement restores the previous placement after a rejected delete.
+// Identity/revision still belongs only to ConfigAdoption (the first AC).
 const BODY_STAGING_ALLOWLIST = {
   'src/houseplan-editor-runtime.ts': { _serverCfg: 5, _layout: 5 },
-  'src/houseplan-card.ts': { _serverCfg: 2, _layout: 9 },
+  'src/houseplan-card.ts': { _serverCfg: 2, _layout: 10 },
 };
 
 const count = (text, re) => (text.match(re) || []).length;

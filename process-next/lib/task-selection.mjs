@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto';
 import { CONVERTER_CASES } from '../converters/cases.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
-import { walk } from './storage.mjs';
+import { walk, matchesInputs } from './storage.mjs';
 import { dependencyReader } from './source-dependencies.mjs';
 import { BETA_E2E, CRITICAL_NODE } from '../catalog/selections.mjs';
 /** Behaviour taxonomy shared by inventory, task selection and its explanation.
  * Labels inherit from files; no per-test quota or title filtering is applied. */
-export const FIXTURE_ARTIFACTS = new Map([['process-next/test/runner.test.mjs', 'dist/report.json occurs only in rejected output-path metadata; the runner test never reads product dist.'], ['test/coverage-diagnostic.test.mjs', 'All generated artifacts belong to its mkdtemp fixtures; it never needs the product checkout dist.']]);
+export const FIXTURE_ARTIFACTS = new Map([['process-next/test/metrics.test.mjs', 'All ZIP/frontend/benchmark paths are created in measurementFixture mkdtemp; the test consumes no prepared product artifact.'], ['process-next/test/runner.test.mjs', 'dist/report.json occurs only in rejected output-path metadata; the runner test never reads product dist.'], ['test/coverage-diagnostic.test.mjs', 'All generated artifacts belong to its mkdtemp fixtures; it never needs the product checkout dist.']]);
 export const DOMAINS = [
     ['geometry', 'Геометрия, стены и комнаты', /(?:wall|junction|masonry|physical|plan-graph|plan-exact|render-exact|polygon|polyclip|contour|coordinate|optimiz|room-face|space-geometry|geometry|graph|grid|canvas|floor|room|node|column|partition|apex|near-axis|open-span|model-invariant|plan-entry|plan-rotation|zero-divider|merge|split|align|contact-basis|plan-drawing|open-passage|range-line|size-angle|active-chain|edit-walk|plan-signed)/, ['storage', 'history', 'openings', 'lighting', 'isometry', 'pdf'], ['direct_wall_geometry', 'geometry_history_refusal']],
     ['storage', 'Хранение, импорт и полномочия', /(?:config|storage|store|layout|migration|upload|durab|backup|import|serializ|canonical|validation|rights|permiss|access|revision|conflict|write|transport|late-context|binding-status|legacy-draft|previous-data|discard|save-|saved-plan|copy|signing|sign-cap|converter|plan-signed)/, ['geometry', 'history', 'devices'], ['geometry_history_refusal', 'view_edit_permissions']],
@@ -136,7 +136,8 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
     };
     for (const path of areaTests)
         add(path, 'Дополнение исполнителя');
-    const product = layer === 'product', productChanges = changedFiles.filter(p => !isDocument(p) && (sourceFile(p) || productSourceInputs.includes(p))), infraChanges = changedFiles.filter(p => isInfra(p) && !isDocument(p));
+    const product = layer === 'product', productChanges = product ? changedFiles.filter(p => !isDocument(p) && (sourceFile(p) || productSourceInputs.includes(p))) : [],
+        infraChanges = changedFiles.filter(p => !isDocument(p) && (!product || isInfra(p)));
     if (product)
         for (const file of CRITICAL_NODE)
             add(file, 'Общее критичное ядро');
@@ -150,9 +151,10 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
         const result = new Set(), pending = [path], visited = new Set();
         while (pending.length) {
             const file = pending.pop();
-            if (visited.has(file) || file.includes('*') || /^(?:dist|artifacts|demo\/srv\/assets)\//.test(file))
+            if (visited.has(file) || /^(?:dist|artifacts|demo\/srv\/assets)\//.test(file))
                 continue;
             visited.add(file);
+            if (/[?*]/.test(file)) { result.add(file); continue; }
             const refs = await direct(file);
             if (refs === null)
                 continue;
@@ -174,7 +176,7 @@ export async function selectTaskTests({ root, inventory, track, layer, changedFi
         if (relevant.length) {
             const inputs = await closure(row.path);
             for (const file of relevant)
-                if (inputs.has(file)) {
+                if (inputs.has(file) || [...inputs].some(pattern => /[?*]/.test(pattern) && matchesInputs(file, [pattern]))) {
                     add(row.path, `Читает изменённый модуль/данные: ${file}`);
                     readerMatches.add(file);
                 }

@@ -46,7 +46,9 @@ test('#1015 real stable deadlines warn only affected branches and never turn kee
   assert.deepEqual(lifecycleWarnings(['src/houseplan-header.ts']), []);
   assert.deepEqual(COMPATIBILITY_BRANCHES.filter((branch) => lifecycleState(branch).eligible).map((branch) => branch.id), ['weather-option']);
   const invalid = structuredClone(COMPATIBILITY_BRANCHES);
-  invalid[0].until.release = 'v1.82.0';
+  const dated = invalid.find(branch => branch.since.kind === 'stable');
+  assert.ok(dated, 'the invalid deadline control needs a proven stable branch');
+  dated.until = {...dated.until,release:'v0.0.0'};
   assert.ok(validateLifecycle(CONFIG_FIELD_REGISTRY, invalid).some((item) => item.includes('invalid two-stable until')));
 });
 

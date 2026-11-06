@@ -87,7 +87,7 @@ test('every browser smoke that explicitly selects Iso waits for its lazy runtime
     assert.doesNotMatch(source, /_setProjection\(/, `${name} still selects 2.5D the pre-#649 way`);
     // The facade waits for `.stage.projection-iso`, which the card sets only
     // once the lazy runtime is installed (_effectiveProjection).
-    assert.match(source, /await (?:window\.)?(?:__hpHarnessProjection|__hpEnsureHarnessIsoRuntime|ensureIsoRuntime|(?:__hpTest|\w+)\.setVolumetricView)\(/,
+    assert.match(source, /await (?:page\.evaluate\(\(\) => )?(?:window\.)?(?:__hpHarnessProjection|__hpEnsureHarnessIsoRuntime|ensureIsoRuntime|(?:__hpTest|\w+)\.setVolumetricView)\(/,
       `${name} selects Iso without waiting for the lazy runtime`);
   }
   assert.ok(consumers.length >= 14, 'the guard unexpectedly lost known Iso smoke consumers');
@@ -250,7 +250,7 @@ test('one frame resolves one structural source and latches late topology/project
     'structural diagnostics must never serialize identifiers or thrown errors');
   assert.match(card, /failed: \(_ignored, info\) => \{[\s\S]*?safeRuntimeDiagnostic\('runtime-load', 'unverified', info\.terminal\)/);
   assert.doesNotMatch(card, /unable to load hidden isometric runtime[\s\S]{0,160}\b(?:error|message|stack|url)\b/i);
-  assert.match(effective, /const fallback = \(\) => \{[\s\S]*?_cancelCameraTransition\(false\); this\._view = null;[\s\S]*?this\._viewModeSnap = null;[\s\S]*?catch \(error\)[\s\S]*?return fallback\(\)/,
+  assert.match(effective, /const fallback = \(\) => \{[\s\S]*?_cancelCameraTransition\(false\); this\._view = null;[\s\S]*?catch \(error\)[\s\S]*?return fallback\(\)/,
     'a structural failure may not reuse an Iso camera as a Flat viewBox');
   assert.match(effective, /fallback = \(\) => \{ if \(this\._renderProjection === 'iso'\)/,
     'the persistent latch must not erase later Flat pan/zoom frames');

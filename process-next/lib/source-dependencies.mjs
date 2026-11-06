@@ -4,6 +4,11 @@ const safeRelative = value => typeof value === 'string' && value && !value.start
 // These modules describe future worker commands; literals there are not calls.
 // Ordinary tests may spawn a script instead of importing it. Keep their literal
 // repository paths conservative for both selection and result fingerprints.
+const TEXT_READ_SCOPES = new Map([
+  ['scripts/config-compatibility-inventory.mjs', ['src/**/*.ts', 'custom_components/houseplan/**/*.py']],
+  ['test/isometric-contract.test.mjs', ['demo/smoke_*.mjs']],
+  ['test/smoke-exception-guard.test.mjs', ['demo/smoke_*.mjs']],
+]);
 const COMMAND_DECLARATIONS = new Set(['process-next/lib/catalog.mjs', 'process-next/lib/task-selection.mjs', 'process-next/catalog/selections.mjs', 'process-next/lib/background.mjs', 'process-next/lib/e2e.mjs', 'process-next/lib/converters.mjs', 'scripts/mutation-registry.mjs']);
 export function dependencyReader(root) {
     const cache = new Map();
@@ -16,7 +21,7 @@ export function dependencyReader(root) {
                     if (!/\.(?:mjs|cjs|js|ts|py)$/.test(file))
                         return [];
                     const text = await readFile(resolve(root, file), 'utf8');
-                    const edges = [];
+                    const edges = [...(TEXT_READ_SCOPES.get(file) || [])];
                     // A literal inside fixture source text is data being constructed, not
                     // a second import/read of the host repository. Ignore comments as well.
                     const literalStarts = new Set([...text.matchAll(/\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`/g)]
@@ -25,7 +30,7 @@ export function dependencyReader(root) {
                     // The explicit worker declaration modules above describe future calls:
                     // a worker's command array is
                     // a declaration, not an import of every executable it may later launch.
-                    for (const match of text.matchAll(/['"]((?:src|demo|scripts|dist|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) {
+                    for (const match of text.matchAll(/['"]((?:src|demo|scripts|docs|custom_components|dist|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) {
                         if (!literalStarts.has(match.index))
                             continue;
                         const prefix = text.slice(Math.max(0, match.index - 180), match.index);

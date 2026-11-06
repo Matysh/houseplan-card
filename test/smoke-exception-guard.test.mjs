@@ -40,14 +40,7 @@ test('пробы гарда лежат вне маски смоков и вне 
   }
 });
 
-test('пробы вызываются в job с браузером и служат guard мутантов (#404)', () => {
-  const workflow = read('.github/workflows/validate.yml');
-  const smoke = workflow.slice(workflow.indexOf('\n  smoke:\n'), workflow.indexOf('\n  smoke_done:\n'));
-  assert.match(smoke, /node demo\/guard\/verify-guard\.mjs/,
-    'проверка обязана идти там, где есть Chromium: в job «Фронтенд» npm test браузер не ставит,'
-    + ' и тест на пробах молча скипался бы');
-  assert.match(smoke, /if: matrix\.shard == 1/, 'один раз, а не в каждом шарде');
-
+test('пробы остаются зарегистрированными browser mutation guards (#404)', () => {
   const mutants = read('scripts/mutation-registry.mjs');
   // Только browser guards: premature snapshot с #776 доказывается без гонки
   // в smoke-harness-lifecycle.test.mjs. Настоящий канал Playwright остаётся
@@ -67,15 +60,14 @@ test('пробы вызываются в job с браузером и служа
   );
 });
 
-test('#434 smoke job and each smoke file have independent time bounds', () => {
-  const workflow = read('.github/workflows/validate.yml');
-  const smoke = workflow.slice(workflow.indexOf('\n  smoke:\n'), workflow.indexOf('\n  smoke_done:\n'));
-  assert.match(smoke, /\n    timeout-minutes: 35\n/,
-    'job smoke must not inherit the six-hour GitHub Actions default');
-  assert.match(smoke, /timeout --kill-after=10s 180s node "\$f"/,
-    'one hung file must be killed while the remaining shard files still run');
-  assert.match(smoke, /if \[ "\$status" -eq 124 \]; then\s*\n\s*echo "diagnostic smoke-timeout:/,
-    'a timeout needs a distinct diagnostic rather than a generic test failure');
+test('#434 current runner and individual browser steps retain finite independent bounds', () => {
+  const catalog = read('process-next/lib/catalog.mjs');
+  const runner = read('process-next/lib/runner.mjs');
+  const smoke = catalog.slice(catalog.indexOf('function smokeStep('),catalog.indexOf('export async function planProfile'));
+  assert.match(smoke, /timeoutMs: 600000/, 'each native browser step has a finite timeout');
+  assert.match(runner, /step\.timeoutMs \?\? 15 \* 60_000/, 'every executable unit has a finite default');
+  assert.match(runner, /timedOut = true; stop\(\)/, 'timeout requests child termination');
+  assert.match(runner, /SIGKILL/, 'a stuck child cannot ignore the final deadline');
 });
 
 test('страницы, созданные вне launch(), подписаны общим гардом (#404, Medium-1)', () => {

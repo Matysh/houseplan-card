@@ -301,8 +301,13 @@ const MUTANT_DEFINITIONS = [
     id: 'plan-rotation-stale-header-observer-1070',
     guard: 'node demo/smoke_led_strip_glow.mjs',
     because: '#1070: native ResizeObserver/rAF work must not publish header state after disconnect and recreate Glow entry leases before reconnect. Real Lit/DOM lifecycle and opacity transition events require the browser. Registered only; nightly execution.',
-    patches: [{ file: 'src/houseplan-card.ts',
-      find: 'if (!ownsHeader()) return;', replace: '/* stale header observer accepted */' }],
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "const ownsHeader = () => this.isConnected && this._roHdr === observer && stage === this._stageEl;",
+    "replace": "const ownsHeader = () => true;"
+  }
+],
   },
   {
     id: 'plan-rotation-mobile-ignores-header-height-1070',
@@ -465,9 +470,13 @@ const MUTANT_DEFINITIONS = [
     id: 'wall-ring-paints-numerical-needle-1076',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/polygon-paint.test.mjs',
     because: '#1076: the real smooth-wall boolean result must retain its physical body while SVG/PDF projections suppress only its numerical needle. Ordinary negative inputs retain thin holes, free caps and disconnected bodies; execution only nightly.',
-    patches: [{ file: 'src/wall-thickness.ts',
-      find: '      if (!hasPaintableRingArea(pts)) continue;',
-      replace: '      if (pts.length < 3) continue;' }],
+    patches: [
+  {
+    "file": "src/wall-thickness.ts",
+    "find": "      if (!hasPaintableRingArea(ring)) continue;",
+    "replace": "      if (ring.length < 3) continue;"
+  }
+],
   },
   {
     id:'room-sun-boolean-coercion-1078',
@@ -486,7 +495,13 @@ const MUTANT_DEFINITIONS = [
     id: 'keyboard-opening-45-uses-vertical-1025',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/editor-nudge.test.mjs',
     because: '#1025 AC4: all four opening types must retain Left/Right at 45 degrees for both endpoint orders and both diagonal signs. Nightly execution only.',
-    patches: [{file:'src/editors/plan-nudge.ts',find:'  const horizontal = Math.abs(wx) + EPS >= Math.abs(wy);',replace:'  const horizontal = Math.abs(wx) > Math.abs(wy) + EPS;'}],
+    patches: [
+  {
+    "file": "src/editors/plan-nudge.ts",
+    "find": "  // Decimal endpoint subtraction must not flip an authored 45-degree host to Up/Down.\n  const horizontal = Math.abs(wx) + EPS >= Math.abs(wy);",
+    "replace": "  // Decimal endpoint subtraction must not flip an authored 45-degree host to Up/Down.\n  const horizontal = Math.abs(wx) > Math.abs(wy) + EPS;"
+  }
+],
   },
   {
     id: 'keyboard-layout-late-ack-regresses-revision-1025',
@@ -595,9 +610,13 @@ const MUTANT_DEFINITIONS = [
     id: 'decor-properties-escape-steals-draft-1047',
     guard: 'node demo/smoke_decor_creation_selection.mjs',
     because: '#1047 AC3: Escape during a real drawing gesture must cancel the draft before mouse release, rather than clearing the Properties target and allowing a new object to commit. Nightly execution only.',
-    patches: [{ file: 'src/editors/properties/editor.ts',
-      find: 'if (this.host._decorDraft || this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;',
-      replace: 'if (this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;' }],
+    patches: [
+  {
+    "file": "src/editors/properties/editor.ts",
+    "find": "if (this.host._deviceDrag || this.host._opDrag || this.host._decorDraft || this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;",
+    "replace": "if (this.host._deviceDrag || this.host._opDrag || this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;"
+  }
+],
   },
   {
     id: 'zigbee-lqi-per-packet-full-projection-1090',
@@ -904,10 +923,13 @@ const MUTANT_DEFINITIONS = [
     id: 'room-promotion-rejects-safe-restoration',
     guard: 'python3 -m pytest tests_backend/test_room_opening_host.py -k frontend_room_restoration -q',
     because: '#996 AC1/AC2: the real frontend candidates must pass ordinary same-ID restoration, not only Optimize.',
-    patches: [{ file: 'custom_components/houseplan/validation.py',
-      find: 'proved = same_partition or same_wall or (',
-      replace: 'proved = same_partition or (',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/validation.py",
+    "find": "proved = same_partition or same_graph_run or same_wall or (",
+    "replace": "proved = same_partition or ("
+  }
+],
   },
   {
     id: 'room-promotion-ignores-carrier-thickness',
@@ -1099,10 +1121,13 @@ const MUTANT_DEFINITIONS = [
     id:'modal-toast-below-top-layer-956',
     guard:'node demo/smoke_modal_toast_956.mjs',
     because:'#956 AC1: only genuine HA/native browser modal paint can prove that error lettering is visible; DOM presence and root z-index are insufficient. Independent foreground ink pixels expose routing below the modal.',
-    patches:[{file:'src/toast-presentation.ts',
-      find:'const target = owners[owners.length - 1]?.portal() || root.querySelector',
-      replace:'const target = owners[owners.length]?.portal() || root.querySelector',
-    }],
+    patches:[
+  {
+    "file": "src/toast-presentation.ts",
+    "find": "const target = this.resolveOwner(this._context)?.portal() || root.querySelector",
+    "replace": "const target = root.querySelector"
+  }
+],
   },
   {
     id:'modal-toast-reannounces-on-route-956',
@@ -1519,12 +1544,18 @@ const MUTANT_DEFINITIONS = [
     id: 'copy-pair-skips-server-acl',
     guard: 'node scripts/backend-test-guard.mjs issue_935_copy_acl tests_backend/test_ha_marker_copy.py',
     because: '#935 AC6: an authenticated read-only user cannot create a marker or layout entry.',
-    patches: [{ file: 'custom_components/houseplan/websocket_api.py',
-      find: '    if not _check_write(hass, connection):\n        connection.send_error(msg["id"], "unauthorized", "Only editors may copy devices")',
-      replace: '    if msg["id"] < 0:\n        connection.send_error(msg["id"], "unauthorized", "Only editors may copy devices")' },
-    { file: 'custom_components/houseplan/websocket_api.py',
-      find: '            if not _check_write(hass, connection):\n                connection.send_error(msg["id"], "unauthorized", "Editing permission was lost")',
-      replace: '            if msg["id"] < 0:\n                connection.send_error(msg["id"], "unauthorized", "Editing permission was lost")' }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/websocket_api.py",
+    "find": "    if not _check_write(hass, connection):\n        connection.send_error(msg[\"id\"], \"unauthorized\", \"Only editors may copy devices\")",
+    "replace": "    if msg[\"id\"] < 0:\n        connection.send_error(msg[\"id\"], \"unauthorized\", \"Only editors may copy devices\")"
+  },
+  {
+    "file": "custom_components/houseplan/websocket_api.py",
+    "find": "            if not _check_write(hass, connection):\n                connection.send_error(msg[\"id\"], \"unauthorized\", \"Editing permission was lost\")\n                return\n            if not source_available():",
+    "replace": "            if msg[\"id\"] < 0:\n                connection.send_error(msg[\"id\"], \"unauthorized\", \"Editing permission was lost\")\n                return\n            if not source_available():"
+  }
+],
   },
   {
     id: 'copy-controls-skip-semantic-validation',
@@ -1538,9 +1569,13 @@ const MUTANT_DEFINITIONS = [
     id: 'copy-writes-only-config-half',
     guard: 'node scripts/backend-test-guard.mjs issue_935_copy tests_backend/test_ha_marker_copy.py',
     because: '#935 AC6: actual HA Store failure/recovery fixtures require marker, reverse refs and position as a whole pair.',
-    patches: [{ file: 'custom_components/houseplan/websocket_api.py',
-      find: '                        "config_rev": cr, "layout_rev": lr, "final_metadata": original_metadata}\n            await commit_history_pair(rt, session, pending, rollback)',
-      replace: '                        "config_rev": cr, "layout_rev": lr, "final_metadata": original_metadata}\n            await async_save_config_state(rt, target, cr + 1)' }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/websocket_api.py",
+    "find": "                        \"config_rev\": cr, \"layout_rev\": lr, \"final_metadata\": original_metadata}\n            await commit_history_pair(rt, session, pending, rollback, authorize=_write_authority(hass, connection))",
+    "replace": "                        \"config_rev\": cr, \"layout_rev\": lr, \"final_metadata\": original_metadata}\n            await async_save_config_state(rt, target, cr + 1)"
+  }
+],
   },
   {
     id: 'plan-converter-forgets-input-generation',
@@ -1753,7 +1788,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'partition-held-openings-never-paint',
-    guard: 'node demo/smoke_partition_openings_preview.mjs',
+    guard: "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_partition_openings_preview.mjs",
     because: '#861 AC11: only the mounted renderer can prove actual door/window ink follows two held targets; resolved coordinate units alone missed the inherited symptom.',
     patches: [{ file: 'src/live-editor.ts',
       find: "  return drag?.kind === 'partition' && drag.moved",
@@ -1761,7 +1796,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'partition-held-openings-keep-stale-copy',
-    guard: 'node demo/smoke_partition_openings_preview.mjs',
+    guard: "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_partition_openings_preview.mjs",
     because: '#861 AC11: actual painted leaf groups must have one visible copy, not an old settled symbol behind the translated live one; pure owners cannot observe DOM suppression.',
     patches: [{ file: 'src/live-editor.ts',
       find: '    makeMovingOpeningsTransparent(state, root, physicalOpeningIds(host._editorRuntime?.physicalGesture?.drag, host._openingsR));',
@@ -2045,17 +2080,17 @@ const MUTANT_DEFINITIONS = [
     "guard": "node demo/smoke_view_hold_lifecycle.mjs",
     "because": "#847 AC3: trusted mouse releases beyond the invisible 44px target below the pan threshold; browser hit testing is required.",
     "patches": [
-      {
-        "file": "src/houseplan-card.ts",
-        "find": "  private readonly _onViewPointerTerminal = (event: PointerEvent): void => {\n    this._viewHold.cancel(event.pointerId);",
-        "replace": "  private readonly _onViewPointerTerminal = (event: PointerEvent): void => {\n    // mutant: ignore outer terminal"
-      },
-      {
-        "file": "src/houseplan-card.ts",
-        "find": "  private _stagePointerUp(ev: PointerEvent): void {\n    this._viewHold.cancel(ev.pointerId);",
-        "replace": "  private _stagePointerUp(ev: PointerEvent): void {\n    // mutant: ignore stage terminal"
-      }
-    ]
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "  private readonly _onViewPointerTerminal = (event: PointerEvent): void => {\n    this._kioskNavigation.release(event.pointerId);\n    this._viewHold.cancel(event.pointerId);",
+    "replace": "  private readonly _onViewPointerTerminal = (event: PointerEvent): void => {\n    this._kioskNavigation.release(event.pointerId);\n    // mutant: ignore outer terminal"
+  },
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "  private _stagePointerUp(ev: PointerEvent): void {\n    this._viewHold.cancel(ev.pointerId);",
+    "replace": "  private _stagePointerUp(ev: PointerEvent): void {\n    // mutant: ignore stage terminal"
+  }
+]
   },
   {
     "id": "view-blur-keeps-activation-tail",
@@ -2873,10 +2908,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#891 AC4" test/wall-node-editor.test.mjs',
     because: '#891 AC4: the actual editor release must not present transport/conflict as a geometry failure',
-    patches: [{ file: 'src/wall-node-editor.ts',
-      find: '      const key = nodeDragRefusalKey(error);',
-      replace: "      const key = 'node_move_invalid'; // mutant: all refusals look like geometry",
-    }],
+    patches: [
+  {
+    "file": "src/wall-node-editor.ts",
+    "find": "      const key = nodeDragRefusalKey(error, false, !!s.merge);",
+    "replace": "      const key = 'node_move_invalid'; // mutant: all refusals look like geometry"
+  }
+],
   },
   {
     id: 'node-history-shows-floor-before-answer',
@@ -3237,10 +3275,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#879 AC1/3/4" test/room-device-discovery.test.mjs',
     because: '#879 AC1/AC4: the durable baseline must be in the same accepted config as the room, not only in local state.',
-    patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: 'await this.host._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout,acknowledgementCurrent);',
-      replace: 'await this.host._sendConfigCandidate(candidate,contactLayout,acknowledgementCurrent);',
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-editor-runtime.ts",
+    "find": "await this.host._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout,acknowledgementCurrent,roomLabels);",
+    "replace": "await this.host._sendConfigCandidate(candidate,contactLayout,acknowledgementCurrent,roomLabels);"
+  }
+],
   },
   {
     id: 'light-group-marker-icon-by-rules',
@@ -3823,10 +3864,13 @@ const MUTANT_DEFINITIONS = [
     id: 'node-repeat-tolerance-retargets-proof',
     guard: 'node --test --test-name-pattern="sub-epsilon free-axis" test/wall-node-editor.test.mjs',
     because: '#834 AC3: reuse requires exact resolved coordinates, not proximity that can silently change the written intent',
-    patches: [{ file: 'src/wall-node-editor.ts',
-      find: '      && s.target[0] === pending.point[0] && s.target[1] === pending.point[1];',
-      replace: '      && sameNodePoint(s.target, pending.point);',
-    }],
+    patches: [
+  {
+    "file": "src/wall-node-editor.ts",
+    "find": "      && s.target[0] === pending.point[0] && s.target[1] === pending.point[1] && s.merge?.nodeId === pending.merge?.nodeId;",
+    "replace": "      && sameNodePoint(s.target, pending.point) && s.merge?.nodeId === pending.merge?.nodeId;"
+  }
+],
   },
   {
     id: 'node-frame-forgets-first-x-axis',
@@ -4340,10 +4384,13 @@ const MUTANT_DEFINITIONS = [
     id: 'node-host-ledger-rejects-raw-legacy-catalogue',
     guard: 'node scripts/backend-test-guard.mjs legacy_room_input tests_backend/test_wall_node_move.py',
     because: '#803 AC11: the independent ledger must read-normalise legacy room-wall identities without writing the source',
-    patches: [{ file: 'custom_components/houseplan/wall_node_move.py',
-      find: '    current, _ = commit_wall_segment_model(current)',
-      replace: '    current = copy.deepcopy(current)  # mutant: skip legacy read normalization',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/wall_node_move.py",
+    "find": "    return commit_wall_segment_model(current)[0], False",
+    "replace": "    return copy.deepcopy(current), False # mutant: skip legacy read normalization"
+  }
+],
   },
   {
     id: 'node-carrier-blocks-infinite-foreign-line',
@@ -5153,11 +5200,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node --test --test-name-pattern="импорт" test/geometry-corpus.test.mjs',
     because: '#477/#560: приведённый план Optimize трогать не должен; вечное changed=true '
       + 'заново пишет конфиг, бьёт rev и множит записи истории на каждом нажатии',
-    patches: [{
-      file: 'src/plan-optimizer.ts',
-      find: '  const changed = JSON.stringify(persistedConfig) !== original\n    || JSON.stringify(persistedLayout) !== originalLayout;',
-      replace: '  const changed = true;',
-    }],
+    patches: [
+  {
+    "file": "src/plan-optimizer.ts",
+    "find": "  const changed = contentJson(persistedConfig) !== original\n    || contentJson(persistedLayout) !== originalLayout;",
+    "replace": "  const changed = true;"
+  }
+],
   },
   {
     id: 'summary-hide-unmounts-before-animation',
@@ -6126,36 +6175,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'space-copy-always-asks-to-optimize',
-    guard: 'node --test --test-name-pattern="no extra confirmation" test/space-copy-runtime.test.mjs',
-    because: 'an already clean plan must use the name submission as its only confirmation (#456 AC3)',
-    patches: [{
-      file: 'src/space-copy-runtime.ts',
-      find: '    if (optimized.changed) {',
-      replace: '    if (true) {',
-    }],
-  },
-  {
-    id: 'space-copy-skips-required-optimize',
-    guard: 'node --test --test-name-pattern="durable before the copy" test/space-copy-runtime.test.mjs',
-    because: 'the accepted whole-plan Optimize must become durable before the copy is derived or written (#456 AC4)',
-    patches: [{
-      file: 'src/space-copy-runtime.ts',
-      find: '      await commitPlanOptimization(host, optimized.config, optimized.layout);',
-      replace: '      await Promise.resolve();',
-    }],
-  },
-  {
-    id: 'space-copy-ignores-unsafe-optimize-preflight',
-    guard: 'node --test --test-name-pattern="unsafe Optimize" test/space-copy-runtime.test.mjs',
-    because: 'a failed whole-plan geometry proof must stop before confirmation or either write (#456 AC5)',
-    patches: [{
-      file: 'src/space-copy-runtime.ts',
-      find: '      if (!preflight.ok) {',
-      replace: '      if (false && !preflight.ok) {',
-    }],
-  },
-  {
     id: 'space-copy-drops-existing-partitions',
     guard: 'node --test --test-name-pattern="complete allowed physical surface" test/space-copy.test.mjs',
     because: 'copying room contours alone loses independent walls already drawn in the source (#456 AC6)',
@@ -6210,7 +6229,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'space-copy-rejection-keeps-local-copy',
-    guard: 'node --test --test-name-pattern="keeps accepted Optimize" test/space-copy-runtime.test.mjs',
+    guard: "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern=\"rejected copy restores\" test/space-copy-runtime.test.mjs",
     because: 'a rejected second write must restore server truth without rolling back the accepted Optimize (#456 AC11)',
     patches: [{
       file: 'src/space-copy-runtime.ts',
@@ -7229,20 +7248,18 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_room_resize.mjs',
     because: 'a candidate rejected by the exact production wall/floor preflight must create '
       + 'neither preview nor commit; polygon-only success previously persisted disappearing walls',
-    patches: [{
-      file: 'src/resize-controller.ts',
-      find: '      try { valid = input.validatePreview(accepted.preview); } catch { valid = false; }',
-      replace: '      try { valid = true; } catch { valid = false; }',
-    }, {
-      file: 'src/houseplan-editor-runtime.ts',
-      find: '    if (!legacySafe) {',
-      replace: '    if (false && !legacySafe) {',
-    }, {
-      file: 'src/houseplan-editor-runtime.ts',
-      find: '        && (candidateProof = physicalCandidateProof(committedCandidate, before.spaceId,\n'
-        + '          (config, id, capture) => this.host._checkSpacePhysicalGeometry(config, id, capture), candidateProof)).result.ok;',
-      replace: '        && true;',
-    }],
+    patches: [
+  {
+    "file": "src/resize-controller.ts",
+    "find": "      try { valid = input.validatePreview(accepted.preview); } catch { valid = false; }",
+    "replace": "      try { valid = true; } catch { valid = false; }"
+  },
+  {
+    "file": "src/houseplan-editor-runtime.ts",
+    "find": "      if (!candidateProof.result.ok) throw new Error('physical-geometry');",
+    "replace": "      /* mutant: skip committed candidate refusal */"
+  }
+],
   },
   {
     id: 'resize-history-boundary-repair-removed',
@@ -7355,13 +7372,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_german_locale.mjs',
     because: 'a failed dictionary must be visible on the View card, not only a console line — '
       + 'a German user on a stale tab silently reading English is the N7 hole (#354 К2)',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "    this._languageFailureUnsub = composeUnsub(subscribeLanguageLoadFailures(() => {\n"
-        + "      this._showToast(this._t('toast.locale_load_failed'), 'toast.locale_load_failed');\n"
-        + '    }), ',
-      replace: '    this._languageFailureUnsub = composeUnsub(',
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "    this._languageFailureUnsub = composeUnsub(subscribeLanguageLoadFailures(() => {\n      this._showToast(this._t('toast.locale_load_failed'), 'toast.locale_load_failed', { owner: null });\n    }), ",
+    "replace": "    this._languageFailureUnsub = composeUnsub("
+  }
+],
   },
   {
     id: 'french-locale-wrong-dictionary',
@@ -7812,15 +7829,18 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_room_fit.mjs',
     because: 'room focus is session-only and must not leak its zoom into LS_ZOOM on '
       + 'completion or cancellation (#152 AC15)',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "    if (state.reason !== 'room') this._saveZoom();",
-      replace: '    this._saveZoom();',
-    }, {
-      file: 'src/houseplan-card.ts',
-      find: "    if (presentedZoom !== undefined && reason !== 'room') this._saveZoom();",
-      replace: '    if (presentedZoom !== undefined) this._saveZoom();',
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "    if (saveZoom && state.reason !== 'room') this._saveZoom();",
+    "replace": "    if (saveZoom) this._saveZoom();"
+  },
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "    if (saveZoom && presentedZoom !== undefined && reason !== 'room') this._saveZoom();",
+    "replace": "    if (presentedZoom !== undefined) if (saveZoom) this._saveZoom();"
+  }
+],
   },
   {
     id: 'camera-anchor-from-presented',
@@ -8475,21 +8495,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_backdrop_guard.mjs',
     because: 'silently uploading the original the user just declined is the exact dishonesty the '
       + 'phase-2 contract forbids — staging must stay clean after a failed reduce (#39 AC4b)',
-    patches: [{
-      file: 'src/backdrop-pick.ts',
-      find: '    } catch {\n'
-        + '      // Honest phase 2 (spec §UX): no silent fallback to the original the\n'
-        + '      // user just declined — staging stays clean, the toast says what happened.\n'
-        + '      if (!stillCurrent()) return;\n'
-        + '      close();\n'
-        + "      host._showToast(host._t('backdrop.downscale_failed'), 'backdrop.downscale_failed');\n"
-        + '    }',
-      replace: '    } catch {\n'
-        + '      const payload = await encodePlanFile(guard.file, guard.ext, guard.file.name);\n'
-        + '      apply(payload);\n'
-        + '      close();\n'
-        + '    }',
-    }],
+    patches: [
+  {
+    "file": "src/backdrop-pick.ts",
+    "find": "    } catch {\n      // Honest phase 2 (spec §UX): no silent fallback to the original the\n      // user just declined — staging stays clean, the toast says what happened.\n      if (!stillCurrent()) return;\n      close();\n      showToast(host._t('backdrop.downscale_failed'), 'backdrop.downscale_failed');\n    }",
+    "replace": "    } catch {\n      const payload = await encodePlanFile(guard.file, guard.ext, guard.file.name);\n      apply(payload);\n      close();\n    }"
+  }
+],
   },
   {
     id: 'backdrop-busy-dismiss-races-decision',
@@ -8883,17 +8895,6 @@ const MUTANT_DEFINITIONS = [
       file: 'src/houseplan-card.ts',
       find: '    if (introduced.length) {\n      this._clearGeometryGesture();',
       replace: '    if (false && introduced.length) {\n      this._clearGeometryGesture();',
-    }],
-  },
-  {
-    id: 'wall-draw-full-preflight-again',
-    guard: 'node demo/benchmark_wall_draw_click.mjs',
-    because: 'every intermediate Walls click must use the bounded #461 barrier; routing it back '
-      + 'through the generic full-space transaction recreates the measured one-second pause',
-    patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: "    if (!commitWallChainSegmentGeometry(this, this.host._t('history.wall_segment'), before)) {",
-      replace: "    if (!this._commitPhysicalGeometry(this.host._t('history.wall_segment'), before)) {",
     }],
   },
   {
@@ -9888,11 +9889,13 @@ const MUTANT_DEFINITIONS = [
       + 'test/coordinate-canonicalization.test.mjs',
     because: 'a server-only fix leaves the open card rendering its noisy mutable config until '
       + 'reload, so the current session can still reproduce the geometry failure after Save',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '      const candidate = canonicalizeConfigGeometry(this._serverCfg);',
-      replace: '      const candidate = this._serverCfg;',
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "      const candidate = canonicalizeConfigWrite(this._serverCfg);",
+    "replace": "      const candidate = this._serverCfg;"
+  }
+],
   },
   {
     id: 'image-box-frontend-canonicalization-omitted',
@@ -10280,17 +10283,18 @@ const MUTANT_DEFINITIONS = [
       + 'test/wall-union-isolation.test.mjs',
     because: 'one direct physical writer is enough to recreate the corrupt persisted geometry '
       + 'even when Resize and the other editors use the shared transaction boundary (#278)',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "    if (this._commitPhysicalGeometry(this._t('history.wall_thickness'), before))",
-      replace: "    if ((this._recordGeometry(this._t('history.wall_thickness'), before), true))",
-    }, {
-      // #313: the independent-masonry writer is a second thickness commit
-      // point — bypassing the barrier there recreates the same #278 hole.
-      file: 'src/houseplan-card.ts',
-      find: "      const committed = this._commitPhysicalGeometry(\n        this._t('history.wall_thickness'), before,\n      );",
-      replace: "      const committed = (this._recordGeometry(this._t('history.wall_thickness'), before), true);",
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-editor-runtime.ts",
+    "find": "if (this._commitPhysicalGeometry(this.host._t('history.wall_thickness'), before, [], true,\n      { kind: 'thickness', edges: wallTargets.map(segment => ({ kind: 'wall', id: segment.id })),\n        ...(allRoom && d.roomId ? { rooms: [d.roomId] } : {}),\n        ...(!wallTargets.length && !allRoom && d.roomId ? { selection: {room:d.roomId,\n          a:d.a.map(n=>n/NORM_W),b:d.b.map(n=>n/NORM_W)} } : {}), cm: cmRaw }))",
+    "replace": "if ((this._recordGeometry(this.host._t('history.wall_thickness'), before), true))"
+  },
+  {
+    "file": "src/houseplan-editor-runtime.ts",
+    "find": "const committed = this._commitPhysicalGeometry(\n        this.host._t('history.wall_thickness'), before, [], true,\n        { kind: 'thickness', edges: [{ kind: 'partition', id: partition.id }], cm: cmRaw },\n      );",
+    "replace": "const committed = (this._recordGeometry(this.host._t('history.wall_thickness'), before), true);"
+  }
+],
   },
   {
     id: 'model-invariants-bypasses-production-geometry',
@@ -11181,9 +11185,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_empty_backup_import.mjs',
     because: '#875: two native dialog activation events before Lit disables the button '
       + 'must send exactly one HA transaction; the witness requires the actual browser/custom-element lifecycle.',
-    patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: 'public async _applyBackupImport(): Promise<void> {\n    const d = this.host._backupImportDialog;\n    const request = this._backupImportRequest;\n    if (!this._ownsBackupImport(request) || !this.host._canImportBackup\n      || !d || d.busy || !d.token || !d.preview) return;',
-      replace: 'public async _applyBackupImport(): Promise<void> {\n    const d = this.host._backupImportDialog;\n    const request = this._backupImportRequest;\n    if (!this._ownsBackupImport(request) || !this.host._canImportBackup\n      || !d || !d.token || !d.preview) return;' }],
+    patches: [
+  {
+    "file": "src/houseplan-editor-runtime.ts",
+    "find": "public async _applyBackupImport(): Promise<void> {\n    const showToast = captureToast(this.host);\n    const d = this.host._backupImportDialog;\n    const request = this._backupImportRequest;\n    if (!this._ownsBackupImport(request) || !this.host._canImportBackup\n      || !d || d.busy || !d.token || !d.preview) return;",
+    "replace": "public async _applyBackupImport(): Promise<void> {\n    const showToast = captureToast(this.host);\n    const d = this.host._backupImportDialog;\n    const request = this._backupImportRequest;\n    if (!this._ownsBackupImport(request) || !this.host._canImportBackup\n      || !d || !d.token || !d.preview) return;"
+  }
+],
   },
   {
     id: 'backup-import-blocks-populated-space-create',
@@ -11955,11 +11963,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue 310" test/wall-thickness.test.mjs',
     because: 'выступ прямоугольного торца за грань тонкой стены — это и есть зубец из отчёта владельца',
-    patches: [{
-      file: 'src/physical-geometry.ts',
-      find: '  for (const { segmentIndex, wedge } of pairButtEndTrimWedges(allSegments, epsilon)) {',
-      replace: '  for (const { segmentIndex, wedge } of pairButtEndTrimWedges([], epsilon)) {',
-    }],
+    patches: [
+  {
+    "file": "src/physical-geometry.ts",
+    "find": "  const trimWedges = pairButtEndTrimWedges(allSegments, epsilon);",
+    "replace": "  const trimWedges = pairButtEndTrimWedges([], epsilon);"
+  }
+],
   },
   {
     id: 'butt-end-trim-unbounded',
@@ -12937,13 +12947,19 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="structural transaction crosses" '
       + 'test/wall-segment-model.test.mjs',
-    because: 'a geometry writer that persists the mutable v7/v8 projection without rebuilding '
-      + 'stable ids can detach thickness and opening hosts during any later editor operation (#282)',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '      } else committedCandidate = commitEditedSpaceModel(liveCandidate, before.spaceId);',
-      replace: '      } else committedCandidate = liveCandidate;',
-    }],
+    because: "An ordinary or prepared graph edit must prove/project the actual live proposal, not approve an unchanged baseline or keep an unchecked mutable projection (#282, Stage4).",
+    patches: [
+  {
+    "file": "src/houseplan-editor-runtime.ts",
+    "find": "graphEdit = commitGraphEditResult(baseSpace, liveSpace, intent,",
+    "replace": "graphEdit = commitGraphEditResult(baseSpace, baseSpace, intent,"
+  },
+  {
+    "file": "src/houseplan-editor-runtime.ts",
+    "find": "editedSpace = projectGraphSpace(liveSpace, liveSpace.plan_graph!).space;",
+    "replace": "editedSpace = liveSpace;"
+  }
+],
   },
   {
     id: 'wall-identity-history-restore-barrier-bypassed',
@@ -14272,11 +14288,13 @@ const MUTANT_DEFINITIONS = [
       + 'the editor filter): a positional map() hands each room node to its neighbour, so the '
       + 'node no longer belongs to its data-id and any fill difference replays the 0.12s .room '
       + 'transition from the neighbour\'s value (#742 AC2)',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '              return keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {',
-      replace: '              return keyed(space.id, shownRooms.map((r) => {',
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {",
+    "replace": "keyed(space.id, shownRooms.map((r) => {"
+  }
+],
   },
   {
     id: 'rooms-rendered-without-space-key',
@@ -14284,15 +14302,18 @@ const MUTANT_DEFINITIONS = [
     because: 'room ids are unique only inside a space: without the outer space key repeat matches '
       + 'r1 of the previous floor to r1 of the next one, keeps the node, and its fill draws in '
       + 'from the previous floor\'s computed value — the white frame of #742 (AC1, same-id case)',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '              return keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {',
-      replace: '              return repeat(shownRooms, (r, index) => r.id || index, (r) => {',
-    }, {
-      file: 'src/houseplan-card.ts',
-      find: '              return svg`${shape}${outline}`;\n              }));\n            })()}',
-      replace: '              return svg`${shape}${outline}`;\n              });\n            })()}',
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {",
+    "replace": "repeat(shownRooms, (r, index) => r.id || index, (r) => {"
+  },
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "              return svg`${paint?.extended ? renderRoomFloorMask(maskId, paint) : nothing}${shape}${hit}${outline}`;\n              }))}</g>`;",
+    "replace": "              return svg`${paint?.extended ? renderRoomFloorMask(maskId, paint) : nothing}${shape}${hit}${outline}`;\n              })}</g>`;"
+  }
+],
   },
   {
     id: 'space-card-rooms-rendered-without-keys',
@@ -14368,8 +14389,13 @@ const MUTANT_DEFINITIONS = [
     id: 'static-opening-missing-contact-looks-active-1171',
     guard: 'node demo/smoke_static_wall_openings.mjs',
     because: '#1171: the actual static leaf must retain full-plan neutral paint when its configured contact is absent from projected HA state.',
-    patches: [{file:'src/space-render.ts',find:'    const active = amount > 0 && available;',
-      replace:'    const active = amount > 0 && !!opening.contact;'}],
+    patches: [
+  {
+    "file": "src/space-render.ts",
+    "find": "    const active = amount > 0 && !!opening.contact && available;",
+    "replace": "    const active = amount > 0 && !!opening.contact;"
+  }
+],
   },
   {
     id: 'static-wall-cut-cache-ignores-opening-geometry-1171',
@@ -15345,10 +15371,13 @@ const MUTANT_DEFINITIONS = [
     id: 'e2e-inbox-refusal-toast-loses-identity-1011',
     guard: 'node --test test/device-inbox-930.test.mjs',
     because: 'a moved selection must refuse every write and emit the selection_changed identity through the actual deletion helper (#1011 r2)',
-    patches: [{ file: 'src/marker-deletion.ts',
-      find: "    host._showToast(inboxT(host, 'device_inbox.selection_changed'), 'device_inbox.selection_changed'); return;",
-      replace: "    host._showToast(inboxT(host, 'device_inbox.selection_changed')); return;",
-    }],
+    patches: [
+  {
+    "file": "src/marker-deletion.ts",
+    "find": "    showToast(inboxT(host, 'device_inbox.selection_changed'), 'device_inbox.selection_changed'); return;",
+    "replace": "    showToast(inboxT(host, 'device_inbox.selection_changed')); return;"
+  }
+],
   },
   {
     id: 'e2e-toast-label-wrapper-unclassified-1011',
@@ -15452,7 +15481,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'writer-history-skips-finished-chain-normalization',
-    guard: 'node demo/smoke_writer_fixed_point.mjs',
+    guard: "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_writer_fixed_point.mjs",
     because: 'Undo/Redo after a chain has finished must restore canonical snapshots rather than '
       + 'bringing the hidden collinear seams back into durable config (#477)',
     patches: [{
@@ -15616,20 +15645,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'Optimize must report a failed target only after the common retry/rollback protocol '
       + 'has restored the exact before-pair and metadata (#491 AC1)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '        try:\n'
-        + '            await _commit_pair(rt, pending, rollback)\n'
-        + '        except PairCommitFailure as err:\n'
-        + '            message = (\n'
-        + '                "Plan optimization failed; the previous plan is pending recovery"\n',
-      replace: '        try:\n'
-        + '            await _persist_pair_intent(rt, pending)\n'
-        + '            await _converge_pair(rt, pending)\n'
-        + '        except PairCommitFailure as err:\n'
-        + '            message = (\n'
-        + '                "Plan optimization failed; the previous plan is pending recovery"\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/websocket_api.py",
+    "find": "        try:\n            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))\n        except PairCommitFailure as err:\n            message = (\n                \"Plan optimization failed; the previous plan is pending recovery\"\n",
+    "replace": "        try:\n            await _persist_pair_intent(rt, pending)\n            await _converge_pair(rt, pending)\n        except PairCommitFailure as err:\n            message = (\n                \"Plan optimization failed; the previous plan is pending recovery\"\n"
+  }
+],
   },
   {
     id: 'optimize-undo-skips-pair-retry-rollback',
@@ -15638,20 +15660,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'Optimize Undo needs the same retry/rollback primitive; otherwise a failed restore '
       + 'can leave a target intent over the still-live optimized pair (#491 AC2)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '        try:\n'
-        + '            await _commit_pair(rt, pending, rollback)\n'
-        + '        except PairCommitFailure as err:\n'
-        + '            message = (\n'
-        + '                "Plan undo failed; the previous plan is pending recovery"\n',
-      replace: '        try:\n'
-        + '            await _persist_pair_intent(rt, pending)\n'
-        + '            await _converge_pair(rt, pending)\n'
-        + '        except PairCommitFailure as err:\n'
-        + '            message = (\n'
-        + '                "Plan undo failed; the previous plan is pending recovery"\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/websocket_api.py",
+    "find": "        try:\n            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))\n        except PairCommitFailure as err:\n            message = (\n                \"Plan undo failed; the previous plan is pending recovery\"\n",
+    "replace": "        try:\n            await _persist_pair_intent(rt, pending)\n            await _converge_pair(rt, pending)\n        except PairCommitFailure as err:\n            message = (\n                \"Plan undo failed; the previous plan is pending recovery\"\n"
+  }
+],
   },
   {
     id: 'summary-picker-renders-unbounded-results',
@@ -15873,11 +15888,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_summary_dialog_scroll.mjs',
     because: 'the attribute is only a promise until hp-dialog forwards it to ha-dialog; a shell that '
       + 'swallows flex-content leaves the HA branch exactly as broken as before (#508 AC1)',
-    patches: [{
-      file: 'src/hp-dialog.ts',
-      find: "        ?flexcontent=${this.flexContent}\n        .preventScrimClose=${!this.dismissOnScrim}\n        .ariaLabelledBy=${this._titleId}\n        @opened=${this._focusInitial}",
-      replace: "        .preventScrimClose=${!this.dismissOnScrim}\n        .ariaLabelledBy=${this._titleId}\n        @opened=${this._focusInitial}",
-    }],
+    patches: [
+  {
+    "file": "src/hp-dialog.ts",
+    "find": "        ?flexcontent=${this.flexContent || this.hasAttribute('settings-layout')}\n        .preventScrimClose=${!this.dismissOnScrim}\n        .ariaLabelledBy=${this._titleId}\n        @opened=${this._focusInitial}",
+    "replace": "        .preventScrimClose=${!this.dismissOnScrim}\n        .ariaLabelledBy=${this._titleId}\n        @opened=${this._focusInitial}"
+  }
+],
   },
   {
     id: 'room-settings-click-does-not-open',
@@ -16067,15 +16084,13 @@ const MUTANT_DEFINITIONS = [
     id: 'node-move-ignores-junction-baseline-1102',
     guard: 'node scripts/backend-test-guard.mjs issue_1102_node_move_junction_baseline_has_exact_revision_authority tests_backend/test_ha_wall_node_move_baseline.py',
     because: '#1102: node movement must omit previous-side work only for an exact-revision junction baseline.',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '            validate_partition_opening_hosts(candidate, proved_baseline)\n'
-        + '            inherited = rt.junction_baseline\n'
-        + '            counts = validate_junction_limits(candidate, previous, baseline_counts=(\n'
-        + '                inherited[1] if inherited and inherited[0] == rev else None))\n',
-      replace: '            validate_partition_opening_hosts(candidate, proved_baseline)\n'
-        + '            counts = validate_junction_limits(candidate, previous)\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/websocket_api.py",
+    "find": "                validate_partition_opening_hosts(candidate, proved_baseline)\n                inherited = rt.junction_baseline\n                counts = validate_junction_limits(candidate, previous, baseline_counts=(\n                    inherited[1] if inherited and inherited[0] == rev else None), touched_spaces=touched)\n",
+    "replace": "                validate_partition_opening_hosts(candidate, proved_baseline)\n                counts = validate_junction_limits(candidate, previous, touched_spaces=touched)\n"
+  }
+],
   },
   {
     id: 'space-delete-cpu-on-event-loop-1101',
@@ -17722,11 +17737,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/led-strip-editor.test.mjs',
     because: "#780 ТЗ §5: a marker bound to another strip cannot be taken silently",
-    patches: [{
-      file: 'src/led-strip-editor.ts',
-      find: "    if (owner && owner.strip.id !== stripId) { this.host._showToast(this.t('led.taken'), 'led.taken'); return; }",
-      replace: "    void owner;",
-    }],
+    patches: [
+  {
+    "file": "src/led-strip-editor.ts",
+    "find": "    if (owner && owner.strip.id !== stripId) { showToast(this.t('led.taken'), 'led.taken'); return; }",
+    "replace": "    void owner;"
+  }
+],
   },
   {
     id: 'led-unbound-in-view',
@@ -18163,13 +18180,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_room_resize.mjs',
     because: '#814 AC4: a live step must run the full physical preflight; skipped, a candidate the '
       + 'preflight rejects is previewed and the drag no longer stops with its reason',
-    patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: "    if (!liveSpace || !this._rszSpaceCandidateGeometry(this.host._space, liveSpace).ok)\n"
-        + "      return { ok: false, reason: 'physical-geometry' };\n",
-      replace: "    if (!liveSpace) // mutant: the live physical preflight is skipped\n"
-        + "      return { ok: false, reason: 'physical-geometry' };\n",
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-editor-runtime.ts",
+    "find": "    if (!liveSpace || !liveGeometry?.ok)\n      return { ok: false, reason: 'physical-geometry' };\n",
+    "replace": "    if (!liveSpace) // mutant: skip live physical refusal\n      return { ok: false, reason: 'physical-geometry' };\n"
+  }
+],
   },
   // #821: бенчмарк рендера Resize считает snapshot на настоящем владельце.
   {
@@ -18808,7 +18825,7 @@ const discardConfirmMotionGuardCases = [
     patches: [
   {
     "file": "src/styles/ui-motion.styles.ts",
-    "find": "controlReducedMotionCss('.hpf-motion, .hpf-motion::before, .hpf-motion::after')",
+    "find": "controlReducedMotionCss('.hpf-motion, .hpf-motion::before, .hpf-motion::after, .hpf-fade')",
     "replace": "controlReducedMotionCss('.hpf-retired-motion')"
   }
 ],
@@ -18850,9 +18867,13 @@ const contact1003GuardCases=[
     id:'contact-pair-layout-cas-skipped-1003',
     guard:'node scripts/backend-test-guard.mjs contact_conflict_or_invalid_basis tests_backend/test_ha_device_contacts.py',
     because:'#1003 AC11: authenticated config/set must reject stale layout revision without changing either durable half.',
-    patches:[{file:'custom_components/houseplan/websocket_api.py',
-      find:'            if "contact_layout" not in msg or msg.get("expected_layout_rev") != layout_rev:',
-      replace:'            if "contact_layout" not in msg:'}],
+    patches:[
+  {
+    "file": "custom_components/houseplan/websocket_api.py",
+    "find": "            if not (\"contact_layout\" in msg or \"room_label_layout\" in msg) or msg.get(\"expected_layout_rev\") != layout_rev:",
+    "replace": "            if not (\"contact_layout\" in msg or \"room_label_layout\" in msg):"
+  }
+],
   },
   {
     id:'contact-pair-basis-validation-skipped-1003',
@@ -19398,12 +19419,12 @@ const externalScreens1113Cases = [
     "guard": "python -m pytest tests_backend/test_external_screens.py -q",
     "because": "#1113: Only unchanged dangling references survive an ordinary write. Registered only; execution belongs to nightly.",
     "patches": [
-      {
-        "file": "custom_components/houseplan/validation.py",
-        "find": "if screen != before and screen[\"space\"] is not None and screen[\"space\"] not in spaces:",
-        "replace": "if False:"
-      }
-    ]
+  {
+    "file": "custom_components/houseplan/validation.py",
+    "find": "if (screen[\"space\"] is not None and screen[\"space\"] not in spaces",
+    "replace": "if (False and screen[\"space\"] is not None and screen[\"space\"] not in spaces"
+  }
+]
   },
   {
     "id": "screen-mixed-event-claims-patch-1113",
@@ -19422,12 +19443,12 @@ const externalScreens1113Cases = [
     "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/external-screens.test.mjs",
     "because": "#1113: Explicit URL values precede every profile field. Registered only; execution belongs to nightly.",
     "patches": [
-      {
-        "file": "src/external-screens.ts",
-        "find": "return this.result = { ...result, ...route.overrides };",
-        "replace": "return this.result = { ...route.overrides, ...result };"
-      }
-    ]
+  {
+    "file": "src/external-screens.ts",
+    "find": "if (value !== undefined) Object.assign(result, { [key]: value });",
+    "replace": "if (false && value !== undefined) Object.assign(result, { [key]: value });"
+  }
+]
   },
   {
     "id": "screen-event-ignores-exact-base-1113",
