@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6293,
+  "revision": 6294,
   "nextTicket": 287,
   "nextFence": 286,
   "tasks": {
@@ -3948,7 +3948,18 @@
         "test/mode-transition.test.mjs",
         "test/optional-space-model-contract.test.mjs",
         "test/room-gear-drag.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794050417241,
+        "entry": 1,
+        "detail": "Поведение: test/device-marker-polish-contract.test.mjs: failed; Поведение: test/docs-accept.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/plan-device-landmarks.test.mjs: failed; Поведение: test/stairs-view-arrival.test.mjs: failed; Поведение: test/stairs.test.mjs: failed; Поведение: test/wall-node-bundle.test.mjs: failed; Браузер: editor command latency: failed; Браузер: space switch transitions: failed; Браузер: view edit permissions: failed; Браузер: warm mode adoption: failed",
+        "eventId": "finish:bce46f88-bd3a-469a-b845-85cd9718dcdc:finish:3:return:return:1344"
+      }
     },
     "1346": {
       "issue": 1346,
@@ -4140,18 +4151,7 @@
   "waiting": [
     1346
   ],
-  "active": {
-    "issue": 1344,
-    "worker": "finish",
-    "token": "285:finish:bce46f88-bd3a-469a-b845-85cd9718dcdc:finish:1:admit",
-    "fence": 285,
-    "materialSha": "fdc7fea05d31e42f89149cf212bde2d3acc44f3f",
-    "expectedBase": "dd8c78da81f79a3b28a772971d2aa971fb2d5ce4",
-    "phase": "testing",
-    "admittedAt": 1794049740224,
-    "expiresAt": 1794050709561,
-    "patchId": "722f3429ad934877394e6bcc930c89670248cde5"
-  },
+  "active": null,
   "events": {
     "github:42340404811:1:label:spec-request": {
       "digest": "89b760117a3c9f6c20e0c78d9a8914fb588df44a41263be279b60b87babb296b",
@@ -4273,6 +4273,10 @@
       "digest": "807d971752ec2063c8b779152e3e6e0e97c3a179a991507353b61dfebdf3606c",
       "issue": 1344
     },
+    "finish:bce46f88-bd3a-469a-b845-85cd9718dcdc:finish:3:return": {
+      "digest": "89f83c06ea8af97f59c87647fd9e8af27e37c0a52628567e3ea314f34b3c3873",
+      "issue": 1344
+    },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
       "digest": "61a7be3a82320de8f445a83960ccf8e6814cc676278e03450ce87edc18fdd35a",
       "issue": 1344,
@@ -4331,6 +4335,26 @@
         "layer": "product",
         "materialSha": "ce0796e207211f495008ed9b9ce21e031484175c",
         "delivered": true
+      }
+    },
+    "finish:bce46f88-bd3a-469a-b845-85cd9718dcdc:finish:3:return:return:1344": {
+      "digest": "89f83c06ea8af97f59c87647fd9e8af27e37c0a52628567e3ea314f34b3c3873",
+      "issue": 1344,
+      "message": {
+        "kind": "return",
+        "issue": 1344,
+        "at": 1794050417241,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794050417241,
+          "entry": 1,
+          "detail": "Поведение: test/device-marker-polish-contract.test.mjs: failed; Поведение: test/docs-accept.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/plan-device-landmarks.test.mjs: failed; Поведение: test/stairs-view-arrival.test.mjs: failed; Поведение: test/stairs.test.mjs: failed; Поведение: test/wall-node-bundle.test.mjs: failed; Браузер: editor command latency: failed; Браузер: space switch transitions: failed; Браузер: view edit permissions: failed; Браузер: warm mode adoption: failed",
+          "eventId": "finish:bce46f88-bd3a-469a-b845-85cd9718dcdc:finish:3:return:return:1344"
+        }
       }
     }
   },
