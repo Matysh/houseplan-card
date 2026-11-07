@@ -1829,8 +1829,13 @@ export class HouseplanCard extends LitElement {
       const scene = root.querySelector<HTMLElement>('.zoomwrap');
       owner.set(scene, 'translate', 'none');
       const left = Math.round((visual.stageWidth - raster[0]) / 2), top = Math.round((visual.stageHeight - raster[1]) / 2);
-      owner.set(scene, 'left', left + 'px');
-      owner.set(scene, 'top', top + 'px');
+      // Keep the fixed cqw raster out of layout while its outer viewport
+      // changes height. Integer translation has the same camera rounding as
+      // left/top; the ordinary endpoint path is restored before frame(to).
+      owner.set(scene, 'left', moving ? '0px' : left + 'px');
+      owner.set(scene, 'top', moving ? '0px' : top + 'px');
+      owner.set(scene, 'transform', moving ? `translate(${left}px,${top}px)` : 'none');
+      owner.set(scene, 'will-change', moving ? 'transform' : 'auto');
     }
     if (terminal) {
       // Present the endpoint with the ordinary raster path, while the same

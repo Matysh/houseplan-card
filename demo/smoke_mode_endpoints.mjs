@@ -105,7 +105,7 @@ try {
       });
     });
     for (const width of [1280, 390]) {
-      await page.setViewportSize({width,height:800});
+      await page.setViewportSize({width,height:width===390?844:800});
       await page.evaluate(async width => {
         const card = window.__card;
         // The demo host carries its own margins/width. Use a neutral outer
