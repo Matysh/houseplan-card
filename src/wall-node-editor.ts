@@ -404,12 +404,12 @@ export class WallNodeEditor {
 
   renderMenu(): TemplateResult | typeof nothing { return this.deleteMenu?.render() ?? nothing; }
 
-  render(live = false): TemplateResult | typeof nothing {
+  render(live = false, prepared = false): TemplateResult | typeof nothing {
     const ctx = this.port.context();
-    if (ctx.enabled && !this.listening) { this.listening = true; this.port.document.defaultView?.addEventListener('pagehide', this.pagehide); }
+    if ((ctx.enabled || prepared) && !this.listening) { this.listening = true; this.port.document.defaultView?.addEventListener('pagehide', this.pagehide); }
     if (!ctx.enabled) {
       if (this.session || !this.port.delete?.context().enabled) this.cancel();
-      return nothing;
+      if (!prepared) return nothing;
     }
     if (this.session && !this.current(this.session)) this.cancel();
     const data = this.session ? { source: this.session.plan.source, nodes: this.session.plan.nodes } : this.nodes();

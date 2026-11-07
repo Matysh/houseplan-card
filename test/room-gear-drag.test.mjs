@@ -4,6 +4,7 @@ import {
   clampRoomGearPointAlongPath,
   RoomGearDragController,
   resolveRoomGearCenter,
+  roomGearAutoCenter,
   roomGearDragMoved,
   roomGearPointAllowed,
 } from '../test-build/room-gear-drag.js';
@@ -67,4 +68,16 @@ test('#645 Resize preview cannot prune a session position that is valid after ca
 
   controller.center(room, preview);
   assert.equal(controller.positions.has(key), false, 'committed geometry still prunes stale state');
+});
+
+ test('#1344 cached automatic centre follows in-place edits and preview rollback', () => {
+  const room = {id:'memo', poly:[[0,0],[10,0],[10,10],[0,10]]};
+  const original = roomGearAutoCenter(room);
+  original[0] = 999;
+  assert.deepEqual(roomGearAutoCenter(room), [5,5], 'callers cannot mutate the cached point');
+  room.poly.forEach(p => p[0] += 20);
+  assert.deepEqual(roomGearAutoCenter(room), [25,5], 'in-place geometry edits invalidate the centre');
+  const preview = [[0,0],[4,0],[4,4],[0,4]];
+  assert.deepEqual(roomGearAutoCenter(room,preview), [2,2]);
+  assert.deepEqual(roomGearAutoCenter(room), [25,5], 'cancel restores the committed geometry result');
 });

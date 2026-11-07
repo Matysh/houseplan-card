@@ -17,18 +17,25 @@ await page.evaluate(async config => {
   window.__sampleOpeningMode = () => {
     const c = window.__card, root = c.renderRoot;
     const stage = root.querySelector('.stage');
-    const room = root.querySelector('[data-hp="room"][data-id="Alpha"]');
-    const id = room?.getAttribute('mask')?.slice(5, -1);
-    const coverage = id ? root.querySelector('#' + CSS.escape(id) + ' .room-floor-opening-coverage') : null;
+    const room = root.querySelector('[data-hp-mode-layer="rooms"] :is(.room,.hp-mode-room)[data-mode-room-id="Alpha"]')
+      || root.querySelector('[data-hp="room"][data-id="Alpha"]');
+    const visual = c._modeTransitionVisual;
+    let ancestorOpacity = 1;
+    for (let node = room?.parentElement; node && !node.classList.contains('zoomwrap'); node = node.parentElement)
+      ancestorOpacity *= Number(getComputedStyle(node).opacity);
+    // Independently authored north-door witness, inside the opening's room
+    // half of the wall thickness and outside the clean Plan floor.
+    const tunnelPoint = new DOMPoint(375, 200);
+    const coverage = !!room?.isPointInFill(tunnelPoint);
     return {
       busy: c._modeTransitionBusy, projection: c._renderProjection,
       // Projection crossing deliberately holds its source scene until the
       // common fade's midpoint. A settled Plan source has no live fill.
       source: c._modeProjectionSource,
       sceneOpacity: Number(getComputedStyle(root.querySelector('.zoomwrap')).opacity),
-      weight: Number(getComputedStyle(stage).getPropertyValue('--hp-mode-plan-weight')) || 0,
-      present: !!coverage, opacity: coverage ? Number(getComputedStyle(coverage).opacity) * Number(getComputedStyle(room).opacity) : 0,
-      architecture: Number(getComputedStyle(stage).getPropertyValue('--hp-mode-architecture-opacity')) || 1,
+      weight: visual?.planWeight ?? (c._mode === 'plan' ? 1 : 0),
+      present: coverage, opacity: coverage ? Number(getComputedStyle(room).fillOpacity) * Number(getComputedStyle(room).opacity) * ancestorOpacity : 0,
+      architecture: visual?.architectureOpacity ?? (c._mode === 'decor' ? .35 : 1),
       floor: getComputedStyle(root.querySelector('[data-hp="room"][data-id="Alpha"]')).fill,
       phantomLeafMotion: [...root.querySelectorAll('.opening .op-leaf, .opening .op-arc')]
         .some(node => node.getAnimations().some(a => a instanceof CSSTransition && a.playState === 'running')),
@@ -77,8 +84,8 @@ for (const reduced of [false, true]) {
           check(`${name}: preserves the common projection fade`, samples.some(s => s.sceneOpacity < .25));
         }
         if (editor === 'plan' && entering) {
-          const present = await page.locator('houseplan-card mask .room-floor-opening-coverage').count();
-          check(`${name}: no stale tunnel in settled Plan`, present === 0);
+          const settled = await page.evaluate(() => window.__sampleOpeningMode());
+          check(`${name}: no visible stale tunnel in settled Plan`, settled.opacity <= .001 && settled.floor === 'rgb(62, 166, 255)' );
         }
       }
     }

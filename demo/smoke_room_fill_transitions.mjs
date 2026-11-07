@@ -74,6 +74,21 @@ await page.evaluate(() => {
       stroke: [stroke > 0 ? rgbOf(style.stroke) : null, stroke],
     };
   };
+  const modeSurfaces = () => [...c.renderRoot.querySelectorAll(
+    '[data-hp-mode-layer] :is(.room,.hp-mode-room)[data-mode-room-id="r1"]')];
+  const modePaint = () => {
+    const surfaces = modeSurfaces();
+    if (!surfaces.length) return paint(room());
+    const paints = surfaces.map(node => {
+      let opacity = 1;
+      for (let item=node;item && !item.classList.contains('stage');item=item.parentElement)
+        opacity *= Number(getComputedStyle(item).opacity);
+      const value=paint(node);
+      return {value,opacity};
+    });
+    const sum = key => round(paints.reduce((sum,{value,opacity})=>sum+value[key][1]*opacity,0));
+    return {cls:room().getAttribute('class'),fill:[null,sum('fill')],stroke:[null,sum('stroke')]};
+  };
   const transitionsOf = (node) => node.getAnimations().filter((animation) => animation instanceof CSSTransition);
   /**
    * Pause every transition of the node at its first frame. The observer runs
@@ -101,14 +116,14 @@ await page.evaluate(() => {
     async rest() { await settle(); return paint(room()); },
     async measureMode(act) {
       await settle();
-      const node = room(), start = paint(node), samples = [start];
+      const nodes = modeSurfaces(), node = room(), start = modePaint(), samples = [start];
       await act();
       const started = performance.now();
-      do { await frame(); samples.push(paint(room())); }
+      do { await frame(); samples.push(modePaint()); }
       while (c._modeTransitionBusy && performance.now() - started < 3000);
-      await settle(); const end = paint(room()); samples.push(end);
+      await settle(); const end = modePaint(); samples.push(end);
       const peak = key => Math.max(...samples.map(sample => sample[key][1]));
-      return {sameNode: room() === node, from: start.cls, to: end.cls,
+      return {sameNode: nodes.length ? nodes.length === 2 && nodes.every((node,index)=>node === modeSurfaces()[index] && node.isConnected) : room() === node, from: start.cls, to: end.cls,
         properties: ['shared-mode-timeline'], frozen: true,
         spansBothEnds: samples.some(sample => sample.fill[1] > Math.min(start.fill[1], end.fill[1]) + .005
           && sample.fill[1] < Math.max(start.fill[1], end.fill[1]) - .005),
@@ -250,7 +265,7 @@ const STATES = {
 for (const [name, result] of Object.entries(measured)) {
   const [from, to] = STATES[name];
   check(`${name}: fixture`, from.test(result.from) && to.test(result.to) || [result.from, result.to]);
-  check(`${name}: the same room node changes state`, result.sameNode);
+  check(`${name}: endpoint nodes survive the state change`, result.sameNode);
   check(`${name}: fill interpolates between its actual endpoints`,
     (result.properties.includes('shared-mode-timeline') || result.properties.includes('fill') && result.frozen)
       && result.spansBothEnds || result);

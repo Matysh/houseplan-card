@@ -8,9 +8,35 @@ interface OwnedStyle {
 export class ModePresentation {
   private readonly styles = new Map<HTMLElement | SVGElement, OwnedStyle>();
   private readonly inert = new Map<HTMLElement, boolean>();
+  private readonly opacityAnimations = new Map<HTMLElement | SVGElement, Animation>();
+
+  /** A paused compositor effect has no independent clock: the controller
+   * samples its exact opacity in its own RAF. CSS important keeps its native
+   * cascade path. Terminal/cancel uses direct styles and cancels our effect. */
+  public opacity(element: HTMLElement | SVGElement | null, value: string, compositor = false, priority = ''): void {
+    if (!element) return;
+    const previous = this.styles.get(element)?.last.get('opacity');
+    let animation = this.opacityAnimations.get(element);
+    if (!compositor || priority || typeof element.animate !== 'function'
+        || (!animation && (!previous || Number(previous.input) === Number(value)))) {
+      this.set(element, 'opacity', value, priority); return;
+    }
+    if (!animation) {
+      animation = element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1, fill: 'both' });
+      animation.pause();
+      this.opacityAnimations.set(element, animation);
+    }
+    animation.currentTime = Math.max(0, Math.min(1, Number(value)));
+  }
+
+  public stopOpacity(element: HTMLElement | SVGElement): void {
+    this.opacityAnimations.get(element)?.cancel();
+    this.opacityAnimations.delete(element);
+  }
 
   public set(element: HTMLElement | SVGElement | null, name: string, value: string, priority = ''): void {
     if (!element) return;
+    if (name === 'opacity') this.stopOpacity(element);
     let record = this.styles.get(element);
     if (!record) {
       record = { text: element.getAttribute('style'), values: new Map(), owned: new Set(), last: new Map() };
@@ -24,10 +50,10 @@ export class ModePresentation {
     const previous = record.last.get(name);
     // CSSOM rounds serialized numbers. 1279.9999999998px can serialize as
     // 1280px while LayoutUnit is still one subpixel short of the endpoint.
-    if (previous?.input !== value || previous.priority !== priority
-        || element.style.getPropertyValue(name) !== previous.value
-        || element.style.getPropertyPriority(name) !== previous.priority)
-      element.style.setProperty(name, value, priority);
+    if (previous?.input === value && previous.priority === priority
+        && element.style.getPropertyValue(name) === previous.value
+        && element.style.getPropertyPriority(name) === previous.priority) return;
+    element.style.setProperty(name, value, priority);
     record.last.set(name, { value: element.style.getPropertyValue(name), priority: element.style.getPropertyPriority(name), input: value });
   }
 
@@ -59,11 +85,13 @@ export class ModePresentation {
   public setInert(element: HTMLElement | null, value: boolean): void {
     if (!element) return;
     if (!this.inert.has(element)) this.inert.set(element, element.inert);
-    element.inert = value;
+    if (element.inert !== value) element.inert = value;
   }
 
   /** Retarget/cancel/disconnect all release exactly the same properties. */
   public clear(): void {
+    for (const animation of this.opacityAnimations.values()) animation.cancel();
+    this.opacityAnimations.clear();
     for (const [element, record] of this.styles) {
       const current = new Map<string, { value: string; priority: string }>();
       for (let index = 0; index < element.style.length; index++) {
@@ -89,7 +117,7 @@ export class ModePresentation {
         if (record.text === null && !element.style.length) element.removeAttribute('style');
       }
     }
-    for (const [element, prior] of this.inert) element.inert = prior;
+    for (const [element, prior] of this.inert) if (element.inert !== prior) element.inert = prior;
     this.styles.clear();
     this.inert.clear();
   }

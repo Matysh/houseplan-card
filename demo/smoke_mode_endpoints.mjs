@@ -68,6 +68,27 @@ try {
     owner.set(probe,'opacity','0.1');owner.clear();
     return probe.getAttribute('style')===next;
   });
+  results.quietInertOwnership=await page.evaluate(()=>{
+    const owner=window.__card._modePresentation,probe=document.createElement('div');
+    const observer=new MutationObserver(()=>{});observer.observe(probe,{attributes:true,attributeFilter:['inert']});
+    for(let n=0;n<20;n++)owner.setInert(probe,true);
+    owner.clear();const records=observer.takeRecords();observer.disconnect();
+    return records.length===2 && !probe.inert;
+  });
+  results.sampledOpacityHasOneOwner=await page.evaluate(()=>{
+    const owner=window.__card._modePresentation,probe=document.createElement('div');
+    probe.style.cssText='position:absolute;opacity:.7';window.__card.renderRoot.append(probe);
+    const original=probe.getAttribute('style');owner.opacity(probe,'.7');
+    const observer=new MutationObserver(()=>{});observer.observe(probe,{attributes:true,attributeFilter:['style']});
+    owner.opacity(probe,'.2',true);const first=Number(getComputedStyle(probe).opacity);
+    const effects=probe.getAnimations();owner.opacity(probe,'.8',true);
+    const second=Number(getComputedStyle(probe).opacity);
+    const sampled=effects.length===1&&effects[0].playState==='paused'
+      &&probe.getAnimations()[0]===effects[0]&&observer.takeRecords().length===0;
+    owner.clear();observer.disconnect();
+    const cleaned=probe.getAnimations().length===0&&probe.getAttribute('style')===original;
+    probe.remove();return sampled&&Math.abs(first-.2)<.00001&&Math.abs(second-.8)<.00001&&cleaned;
+  });
   for (const overlap of [false, true]) {
     if (overlap) await page.evaluate(async () => {
       await window.__hpTest.setLayout(layout => {
@@ -153,12 +174,18 @@ try {
         const cleaned = await page.evaluate(() => {
           const card = window.__card, root = card.renderRoot;
           return !card._stageEl.inert && card._modePresentation.styles.size === 0
-            && card._modePresentation.inert.size === 0 && root.querySelectorAll('.plan-svg').length === 1
+            && card._modePresentation.inert.size === 0 && card._modePresentation.opacityAnimations.size === 0 && root.querySelectorAll('.plan-svg').length === 1
             && [...root.querySelectorAll('.hp-mode-scene-svg')].every(node =>
               !node.style.willChange && !node.style.transform && !node.style.opacity);
         });
         const id = width+'-'+(overlap?'overlap':'normal')+'-'+from+'-'+to;
-        results[id] = held && cleaned && diff.ok;
+        const markerInput = await page.evaluate(() => {
+          const c=window.__card, interactive=c._mode==='view'||c._mode==='devices';
+          return [...c.renderRoot.querySelectorAll('[data-hp="device"]')].every(n=>
+            n.inert===!interactive && (interactive ? n.getAttribute('role')==='button' && n.tabIndex===0
+              : !n.hasAttribute('role') && !n.hasAttribute('tabindex')));
+        });
+        results[id] = held && cleaned && diff.ok && markerInput;
         diagnostics.push({id,held,cleaned,...diff});
         if (!results[id]) {
           console.log('endpointFailure',JSON.stringify({id,before,after:await page.evaluate(()=>{const c=window.__card;return {hdrH:c._hdrH,headHeight:c.renderRoot.querySelector('.hdr > .head').getBoundingClientRect().height,card:c.renderRoot.querySelector('ha-card').getBoundingClientRect().toJSON(),stage:c._stageEl.getBoundingClientRect().toJSON(),view:c._view,layer:(()=>{const n=c.renderRoot.querySelector('.devlayer');return {style:n.getAttribute('style'),rect:n.getBoundingClientRect().toJSON()};})(),gear:[...c.renderRoot.querySelectorAll('.rlgearbtn')].map(n=>({room:n.dataset.room,style:n.getAttribute('style'),rect:n.getBoundingClientRect().toJSON()}))};})}));

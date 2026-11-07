@@ -2556,3 +2556,22 @@ flag. A proved copy uses its own accepted geometry as the jamb/junction
 baseline; the resulting real counts are cached for subsequent delta checks.
 Other semantic validations, CAS, authority and persistence use config/set
 unchanged. New IDs never become a general geometry-validation bypass.
+
+### View/editor presentation ownership (#1344)
+
+The mode controller owns one RAF token, including the separate RAF after
+frame(to). `ModePresentation` owns transient styles, inertness and paused opacity
+effects. The controller samples those effects; they have no independent running
+clock. Terminal presentation uses the ordinary raster path before cleanup.
+
+Flat scenes retain independent paint slots and both room endpoints. The View
+endpoint owns its opening-floor continuation, while Plan owns its ordinary clean
+room geometry. Only the active room surface exposes canonical room hooks.
+Inactive geometry and prepared editor hit ink remain non-interactive. Promotion
+and exposure bounds are temporary.
+
+Semantic device shells and common geometry are memoized separately from camera
+coordinates. Flat marker positions commit only for a newly rendered accepted
+scene, never for a retained `noChange`/projection-source frame. Existing snapshot
+and config adoption remain authoritative. Explicit synchronous config read scopes
+share one fingerprint; a later handler or async continuation starts fresh.

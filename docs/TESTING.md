@@ -143,3 +143,24 @@ E2E. Отсутствие E2E checkout или окружения показыв�
 ## Центральная выборка S6 (#1239)
 
 Состав задаёт PROCESS, данные — `process-next/lib/task-selection.mjs`, фактические команды — существующий catalog/runner. Просмотр всех активных типов: `node process-next/cli.mjs catalog`; снимок по конкретному diff: `plan --event task --track show --changed-file src/example.ts` (файл примера заменить реальным; удалённые пути допустимы). Читаемый план объясняет области/связи, причины, неизвестные cases/стоимость и явно отложенные дополнения. `--json` сохраняет машинный формат. `run` и `finish` исполняют эту же выборку; файлы не объединяются в меняющуюся по меткам команду. Адресные infrastructure unit проверяют механизм выбора на temp fixtures/подменённых исполнителях, не поднимая весь продукт, HA E2E или старые Validate.
+
+### Mode transition witnesses (#1344)
+
+`demo/smoke_mode_endpoints.mjs` retains the actual controller's settling RAF,
+captures frame(to), then releases that same token and captures the first stable
+stage. It uses the existing stage pixel policy, fixed time, actual card widths
+1280/390, overlapping markers, and an accepted HA update during motion. It also
+checks exact CSS endpoint writes, style/inert/effect cleanup and current marker
+input roles. It creates no accepted baselines.
+
+The room/opening transition witnesses inspect the effective alpha of both
+retained endpoints. The opening fixture uses a fixed north-door point inside its
+floor continuation; projection opacity is checked separately. They retain the
+contact animation, reversal, color/alpha endpoint and no-overshoot assertions.
+
+`demo/performance/mode-transition.mjs` is diagnostic: RAF samples are proxies.
+Its numbers and part-build counts pass through the existing large-house report
+and measurement/metrics path outside primary readiness. Addressed trace events
+and actual endpoint captures provide presentation evidence; the smoke does not
+add a cadence gate. Compare timings on the same browser/machine without another
+benchmark or a test-build preparation running concurrently.

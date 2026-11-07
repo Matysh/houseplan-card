@@ -14,11 +14,12 @@ export function renderModeSceneLayers(
     data-hp=${((layer.id === 'rooms' && mode !== 'plan') || (layer.id === 'room-ink' && mode === 'plan')) ? 'stage' : nothing}
     data-grid-step=${((layer.id === 'rooms' && mode !== 'plan') || (layer.id === 'room-ink' && mode === 'plan')) ? gridStep : nothing}
     data-hp-layer=${((layer.id === 'rooms' && mode !== 'plan') || (layer.id === 'room-ink' && mode === 'plan')) ? 'plan' : layer.id}
+    aria-hidden=${mode !== 'plan' && (layer.id === 'plan-base' || layer.id === 'plan-ink') ? 'true' : nothing}
     data-hp-mode-layer=${layer.id} data-hp-live-viewbox="floor"
     viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
     preserveAspectRatio="xMidYMid meet" style="z-index:1;pointer-events:none">
     <g transform=${transform || nothing}
-      style=${layer.id === 'paper-ink' || layer.id === 'room-ink' && mode !== 'plan' || layer.id === 'rooms' && mode === 'plan' ? 'pointer-events:none' : 'pointer-events:auto'}>
+      style=${layer.id === 'paper-ink' || mode !== 'plan' && (layer.id === 'plan-base' || layer.id === 'plan-ink') || layer.id === 'room-ink' && mode !== 'plan' || layer.id === 'rooms' && mode === 'plan' ? 'pointer-events:none' : 'pointer-events:auto'}>
       ${guard([...layer.inputs], () => { observed?.(layer.id); return layer.render(); })}
     </g>
   </svg>`;

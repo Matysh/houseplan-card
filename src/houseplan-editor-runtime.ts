@@ -560,6 +560,7 @@ export interface HouseplanEditorHostPort {
   readonly _loadOk: boolean;
   _canEdit: boolean;
   _haWallNodeMoveApi: number | null;
+  readonly _haPlanGraphApi: number | null;
   _haWallNodeDeleteApi: number | null;
   _haVacuumDockRestartApi: number | null;
   _haVacuumHistoryApi: number | null;
@@ -591,7 +592,8 @@ export interface HouseplanEditorHostPort {
   _contourClosed: boolean;
   _curSpaceCfg: any;
   _currentModeVisual: (mode?: HouseplanMode) => ModeVisualState | null;
-  _captureModePresentationSource(): void;
+  _captureModePresentationSource(targetMode?: HouseplanMode): void;
+  readonly _modeSceneRevision: number;
   _cursorPt: number[] | null;
   _decorBoxOf: (shape: DecorShape) => DecorBox | null;
   _decorDraft: { kind: "line" | "rect" | "ellipse"; a: number[]; b: number[]; pid: number; } | null;
@@ -1010,6 +1012,7 @@ export class HouseplanEditorRuntime {
   public readonly roomGear: RoomGearDragController;
   private readonly wallDialogGesture = new WallThicknessDialogGesture();
   public nodeMove: WallNodeEditor | null = null;
+  public readonly modeSceneBuilds = { planStatic: 0, planNodes: 0, planSnap: 0 };
   private readonly _decorImages: DecorImageEditor<SpaceGeometryState | null>;
   // #592: маркерный диалог уехал в src/editors/marker-dialog.ts и обращается
   // к контроллеру оттуда. Остальной класс использует `public _x` — поле
@@ -1149,13 +1152,32 @@ export class HouseplanEditorRuntime {
     this._preparedNodeScene = inputs;
     this._loadNodeMove();
     this.nodeMove?.prepare();
+    const space = this.host._spaceModel();
+    if (space) for (const room of space.rooms) this.roomGear.center(room, roomPoly(room), space.id);
   }
-  private _renderWallNodes(): TemplateResult | typeof nothing {
-    if (this.host._mode !== 'plan' || !this.host._canEdit || this.host._kiosk) {
-      this.nodeMove?.cancel(); return nothing;
+  private _planNodeInkVisible = false;
+  private _renderWallNodes(warm = false): TemplateResult | typeof nothing {
+    if ((!warm && this.host._mode !== 'plan') || !this.host._canEdit || this.host._kiosk) {
+      this.nodeMove?.cancel(); this._planNodeInkVisible = false; return nothing;
     }
     this._loadNodeMove();
-    return this.nodeMove?.render() || nothing;
+    const nodes = this.nodeMove;
+    if (!nodes) return nothing;
+    if (!warm) return nodes.render();
+    if (this.host._mode !== 'plan' || this.host._tool !== 'select' && nodes.dragging) nodes.cancel();
+    const enabled = this.host._mode === 'plan' && this.host._tool === 'select';
+    const visible = enabled || this.host._mode !== 'plan' && this.host._modeTransitionBusy && this._planNodeInkVisible;
+    this._planNodeInkVisible = visible;
+    const view = this.host._viewOr(this.host._baseVb()), language = langOf(this.host.hass, this.host._config?.language);
+    const inputs = [nodes, this.host._floorKey(this.host._space), this.host._renderPixelsPerUnit(view),
+      nodes.activePointerId, nodes.preview?.sp, nodes.invalid, nodes.busy,
+      this.host._haWallNodeMoveApi, this.host._haPlanGraphApi,
+      toolsT(language, 'node_move_hint'), toolsT(language, 'node_move_update_required'),
+      toolsT(language, 'node_move_unsupported_junction')];
+    return svg`<g opacity=${visible ? '1' : '0'} aria-hidden=${visible ? nothing : 'true'}
+      pointer-events=${visible ? 'auto' : 'none'}>
+      ${guard(inputs, () => { this.modeSceneBuilds.planNodes++; return nodes.render(false, true); })}
+    </g>`;
   }
     /** Writer-only Plan tools expose node menus; handles still require Select. */
   private _loadNodeMove(): void {
@@ -1323,7 +1345,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       ? { ...capturedVisual, toolbarContentOpacity: this.host._reducedMotion ? 1 : 0.35 }
       : capturedVisual;
     this.host._cancelModeTransition(false);
-    this.host._captureModePresentationSource();
+    this.host._captureModePresentationSource(mode);
     this.host._editorSecondary.closeForNavigation();
     // A live decor transform is a transaction. Switching tabs must cancel and
     // restore it, not merely forget its pointer record after the config has
@@ -1345,7 +1367,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
         });
       }
     }
-    if (previousMode === 'plan' && mode !== 'plan') this.roomGear.reset();
+    if (previousMode === 'plan' && mode !== 'plan') { this.roomGear.reset(); this.nodeMove?.cancel(); }
     if (previousMode === 'devices' && mode !== 'devices') {
       this.host._deviceInbox = null;
       this.host._deviceInboxReturn = null;
@@ -10536,7 +10558,8 @@ public _renderRoomGear(
     const dragging = this.roomGear.dragging(this.roomGear.key(r.id, space.id));
     return html`<button class="rlgearbtn ${dragging ? 'dragging' : ''}"
       data-hp="room-settings" data-room=${r.id}
-      style="left:${left}%;top:${top}%"
+      style="left:${left}%;top:${top}%${this.host._markup ? '' : ';display:none'}"
+      ?inert=${!this.host._markup} aria-hidden=${this.host._markup ? nothing : 'true'}
       data-hp-tooltip=${this.host._t('room.settings_title')} aria-label=${this.host._t('room.settings_title')}
       @pointerdown=${(e: PointerEvent) => this.roomGear.pointerDown(e, r)}
       @pointermove=${(e: PointerEvent) => this.roomGear.pointerMove(e)}
@@ -11042,8 +11065,8 @@ public _renderPhysicalEditorLayer(): TemplateResult {
     return svg`<g class="physical-editor">${partitions}${columns}${ghost}${chrome}</g>`;
   }
 
-public _renderHiddenWallDiagnosticOverlay(): TemplateResult {
-    if (!this.host._markup) return svg`` as unknown as TemplateResult;
+public _renderHiddenWallDiagnosticOverlay(warm = false): TemplateResult {
+    if (!this.host._markup && !warm) return svg`` as unknown as TemplateResult;
     const geometry = this._hiddenWallDiagnosticSnapshot().value;
     if (!geometry.segments.length) return svg`` as unknown as TemplateResult;
     const radius = wallNodeRadius(this.host._cellCm, this.host._gridPitch);
@@ -11064,8 +11087,8 @@ public _renderHiddenWallDiagnosticOverlay(): TemplateResult {
     </g>` as unknown as TemplateResult;
   }
 
-public _renderPlanSnapOverlay(): TemplateResult {
-    if (!this.host._markup) {
+public _renderPlanSnapOverlay(warm = false): TemplateResult {
+    if (!warm && !this.host._markup) {
       return svg`` as unknown as TemplateResult;
     }
     const geometry = this._planSnapGeometrySnapshot().value;
@@ -11077,7 +11100,7 @@ public _renderPlanSnapOverlay(): TemplateResult {
       data-segment-count=${geometry.segments.length}
       data-endpoint-count=${geometry.endpoints.length}
       aria-hidden="true" pointer-events="none">
-      ${guard([geometry, staticRadius, [...conflictKeys].sort().join('|')], () => svg`
+      ${guard([geometry, staticRadius, [...conflictKeys].sort().join('|')], () => { this.modeSceneBuilds.planSnap++; return svg`
         ${geometry.segments.map((segment) => svg`<line class="plan-snap-line"
           data-key=${segment.key} data-source-kind=${segment.sourceKind}
           x1=${segment.a[0]} y1=${segment.a[1]} x2=${segment.b[0]} y2=${segment.b[1]}
@@ -11086,7 +11109,7 @@ public _renderPlanSnapOverlay(): TemplateResult {
           data-kind="endpoint" data-key=${endpoint.key} data-active="false"
           cx=${endpoint.point[0]} cy=${endpoint.point[1]} r=${staticRadius}
           pointer-events="none"></circle>`)}
-      `)}
+      `; })}
       <circle class="plan-snap-node ${active ? 'active' : ''} ${active?.kind === 'line' ? 'dynamic' : ''}"
         data-hp="plan-snap-active-marker"
         data-kind=${active?.kind ?? nothing} data-key=${active?.key ?? nothing}
@@ -11172,12 +11195,6 @@ public _drawPreviewJoinPatchD(
 public _renderMarkupLayer(vb: number[]): TemplateResult {
     // Derived axes omit zero and positive-body stretches; their dedicated
     // layers paint those segments with the correct style and z-order.
-    const openCuts = this.host._openCuts();
-    const thickCuts = this.host._thickWallCuts();
-    const allCuts = openCuts.concat(thickCuts);
-    const segs = allCuts.length
-      ? cutSegments(this.host._segments, allCuts, this.host._gridPitch * 0.02)
-      : this.host._segments;
     const path = this.host._path;
     const g = this.host._gridPitch;
     const view = this.host._viewOr(this.host._baseVb());
@@ -11214,13 +11231,24 @@ public _renderMarkupLayer(vb: number[]): TemplateResult {
     const repairPreview = this.host._wallFaceBatch?.candidates[this.host._wallFaceBatch.index]?.repair
       || this.host._wallRepairDiagnostic;
     const floorView = this.host._planVisibleRect(view);
+    const activeControls = !!(this.host._physicalSel || this.host._duplicateColumnId
+      || this.physicalGesture.active || this.host._resize.dragging);
+    const staticInputs = [this.host._floorKey(this.host._space), this.host._cellCm, this.host._gridPitch,
+      this.host._renderPixelsPerUnit(view), this.host._physicalSel?.kind, this.host._physicalSel?.id,
+      this.host._duplicateColumnId, activeControls ? this.host._modeSceneRevision : 0];
     return svg`
       ${this._gridLevels()
         ? svg`<rect data-hp-live-grid x="${liveGridBounds(floorView).x}" y="${liveGridBounds(floorView).y}" width="${liveGridBounds(floorView).w}" height="${liveGridBounds(floorView).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
         : nothing}
-      ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
-      ${this._renderPhysicalEditorLayer()}
-      ${this._renderWallNodes()}
+      ${guard(staticInputs, () => {
+        this.modeSceneBuilds.planStatic++;
+        const cuts = this.host._openCuts().concat(this.host._thickWallCuts());
+        const segments = cuts.length
+          ? cutSegments(this.host._segments, cuts, this.host._gridPitch * .02) : this.host._segments;
+        return svg`${segments.map(s => svg`<line class="seg" x1=${s[0]} y1=${s[1]} x2=${s[2]} y2=${s[3]}></line>`)}
+          ${this._renderPhysicalEditorLayer()}`;
+      })}
+      ${this._renderWallNodes(true)}
       ${this.host._tool === 'column' && this.host._cursorPt && this.host._drawWallCm
         ? svg`<path class="physical-drag" d=${(() => {
             const c: WallColumnCfg = { id: 'preview', shape: 'square', center: this.host._cursorPt!, cm: this.host._drawWallCm! };

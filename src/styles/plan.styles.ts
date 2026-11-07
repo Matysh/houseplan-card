@@ -630,6 +630,9 @@ export const planStyles = css`
       box-shadow: var(--shadow-1);
       z-index: 2;
     }
+    /* Prepared editor hit ink never participates in View or other tools. */
+    .stage:not(.mode-decor) :is(.dselecthit,.dfurniturehit),
+    .stage.mode-decor:not(.dtool-select) :is(.dselecthit,.dfurniturehit) { display:none; }
     .rlgearbtn { transition: opacity 0.15s, filter 0.15s, box-shadow 0.15s; }
     .rlgearbtn.dragging {
       cursor: grabbing;

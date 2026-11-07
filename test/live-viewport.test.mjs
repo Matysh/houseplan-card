@@ -349,3 +349,19 @@ test('#1344 mode completion reads the actual HTML baseline after a mid-motion co
   disposeHouseplanViewport(host);
   assert.equal(paintedHouseplanViewBox(host),null);
 });
+
+test('#1344 bounded mode raster keeps its anchor across the gesture refresh budget', () => {
+  const root=fakeRoot(),painted=frame(0,0);
+  let anchor=paintLiveViewport(root,painted,painted,null,{now:0,force:true,keepSceneLayer:true});
+  const writes=root.camera.writes;
+  const moved=frame(0,.5);
+  anchor=paintLiveViewport(root,painted,moved,anchor,{now:200,keepSceneLayer:true,lockSceneAnchor:true,sceneExposureClip:'inset(-25%)'});
+  assert.equal(root.camera.writes,writes,'mode uses its precomputed bounded exposure without repainting SVG');
+  assert.notEqual(root.camera.style.transform,undefined);
+  anchor=paintLiveViewport(root,painted,moved,anchor,{now:201,force:true});
+  assert.equal(root.camera.attrs.viewBox,'0 0.5 1000 500','terminal commit still publishes exact coordinates');
+  assert.equal(root.camera.style.transform,undefined);
+  assert.equal(root.camera.style.clipPath,undefined);
+  paintLiveViewport(root,moved,frame(0,1),anchor,{now:401});
+  assert.equal(root.camera.attrs.viewBox,'0 1 1000 500','ordinary gestures retain their refresh budget');
+});

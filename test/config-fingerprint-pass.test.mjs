@@ -109,3 +109,16 @@ test('#725 AC2: a pass that never reaches end() closes itself in a microtask', a
   pass.read(3, config, build);
   assert.equal(built.count, 6, "B's own microtask closes B");
 });
+
+
+test('#1344 finite read scopes nest and retire before handlers, including on throw', () => {
+  const pass=new ConfigFingerprintPass(),config={spaces:[]},{built,build}=counter();
+  const value=pass.run(()=>{const first=pass.read(1,config,build);assert.equal(pass.run(()=>pass.read(1,config,build)),first);return first;});
+  assert.equal(value,'fingerprint-1');assert.equal(built.count,1);
+  assert.equal(pass.read(1,config,build),'fingerprint-2','later handler builds fresh');
+  assert.throws(()=>pass.run(()=>{pass.read(1,config,build);throw Error('read failed');}),/read failed/);
+  assert.equal(pass.read(1,config,build),'fingerprint-4','failed read cannot strand a cache');
+  pass.begin();pass.read(1,config,build);pass.run(()=>pass.read(1,config,build));pass.read(1,config,build);
+  assert.equal(built.count,5,'nested scope does not close the outer render pass');
+  pass.end();
+});

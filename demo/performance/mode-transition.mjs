@@ -13,14 +13,17 @@ export async function collectModeTransitionSamples({ fixture = 'large-house-v1',
     await card.updateComplete;
     await frame(); await frame();
   };
-  const rows = [];
+  const rows = [], initialMode = card._mode;
+  const buildCounts = () => ({ ...card._modeSceneBuilds, ...Object.fromEntries(
+    Object.entries(card._editorRuntime?.modeSceneBuilds ?? {}).map(([key, value]) => ['editor:' + key, value])) });
+  try {
   for (let sample = 0; sample < samples; sample++) {
     for (const [from, to] of [['view', 'plan'], ['plan', 'view'], ['view', 'devices'],
       ['devices', 'view'], ['view', 'decor'], ['decor', 'view'], ['plan', 'devices']]) {
       if (card._mode !== from) { card._setMode(from); await ready(); }
       await ready();
       const updates = [], frames = [], originals = {};
-      const startBuilds = card._modeSceneBuilds ? { ...card._modeSceneBuilds } : null;
+      const startBuilds = card._modeSceneBuilds || card._editorRuntime?.modeSceneBuilds ? buildCounts() : null;
       let started = 0, endpoint = null, interactive = null, rafIndex = 0, sampling = true, raf = 0;
       const mark = 'hp-mode:' + fixture + ':' + sample + ':' + from + '-' + to;
       const pulse = () => { if (sampling) { rafIndex++; raf = requestAnimationFrame(pulse); } };
@@ -59,7 +62,7 @@ export async function collectModeTransitionSamples({ fixture = 'large-house-v1',
         card._setMode(to);
         await ready();
         const end = performance.now();
-        const builds = startBuilds && Object.fromEntries(Object.entries(card._modeSceneBuilds)
+        const builds = startBuilds && Object.fromEntries(Object.entries(buildCounts())
           .map(([key, value]) => [key, value - (startBuilds[key] || 0)]));
         rows.push({ fixture, sample, from, to, firstMotionMs: frames[0]?.at ?? null,
           firstMotionRaf: frames[0]?.rafIndex ?? null, rafSamples: frames.length,
@@ -77,6 +80,9 @@ export async function collectModeTransitionSamples({ fixture = 'large-house-v1',
         card._applyModeTransitionFrame = originals.frame;
       }
     }
+  }
+  } finally {
+    if (card._mode !== initialMode) { card._setMode(initialMode); await ready(); }
   }
   return { status: 'measured', diagnostic: true, reducedMotion: false,
     cadence: 'RAF callbacks are proxies; presented frames require an addressed trace',

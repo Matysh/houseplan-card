@@ -363,7 +363,6 @@ import {
   decorStyleOf, decorUnitsToCm, normalizeAngle, nudgeDecorShape, type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
 import { buildRoomFloorPaint, roomFloorGeometry, type RoomFloorPaint } from './room-floor-paint';
-import { renderRoomFloorMask } from './render/opening-tunnels';
 import {
   openingVisibleMetrics, renderOpeningVisibleGeometry,
   type OpeningFaceOffset, type OpeningVisibleSpec,
@@ -1077,7 +1076,7 @@ export class HouseplanCard extends LitElement {
     if (this._kiosk) return;
     for (let pass = 0; pass < 3; pass++) {
       const before = JSON.stringify([this._panelHeaderChoice.phase, this._panelHeaderChoice.phone, this._compactSpaces]);
-      if (modePreparation && this._measureHeaderNow) this._measureHeaderNow();
+      if (modePreparation && this._measureHeaderNow) this._cfgPass.run(() => this._measureHeaderNow?.());
       else {
         this._onWinResize?.();
         await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
@@ -1528,6 +1527,9 @@ export class HouseplanCard extends LitElement {
   }
 
   private _currentModeVisual(mode = this._mode as HouseplanMode): ModeVisualState | null {
+    return this._cfgPass.run(() => this._readModeVisual(mode));
+  }
+  private _readModeVisual(mode: HouseplanMode): ModeVisualState | null {
     this._modeHeaderPositions = this._headerMotion.capture(this.renderRoot.querySelector('.head'));
     if (mode === 'view' && !this._modeTransitionBusy) this._modeEditorInk.clear();
     // During the one-frame target measurement the controller has not started
@@ -1582,8 +1584,9 @@ export class HouseplanCard extends LitElement {
       stage: this._cssColor(this._stageBg(this._spaceDisplayForRender()), paper), paper };
   }
   /** Capture before target DOM/style changes, in the same source read batch. */
-  public _captureModePresentationSource(): void {
-    for (const device of this.renderRoot.querySelectorAll<HTMLElement>('.devlayer .dev')) {
+  public _captureModePresentationSource(targetMode?: HouseplanMode): void {
+    const plan = this._mode === 'plan' || targetMode === 'plan' || !!this._modeTransitionVisual?.planWeight;
+    if (plan) for (const device of this.renderRoot.querySelectorAll<HTMLElement>('.devlayer .dev')) {
       this._modeDeviceAlpha.set(device, Number(getComputedStyle(device).opacity));
       this._modeDeviceAlphaKeys.set(device, this._modeDeviceAlphaKey(device));
     }
@@ -1630,22 +1633,122 @@ export class HouseplanCard extends LitElement {
       .map(name => device.classList.contains(name) ? '1' : '0').join('');
   }
 
+  private _flatMarkerGeometryPending: { devices: readonly DevItem[]; view: ModeViewBox } | null = null;
+  private readonly _flatMarkerPositions = new WeakMap<HTMLElement, {
+    left: string; top: string; actualLeft: string; actualTop: string;
+  }>();
+  private _syncFlatMarkerGeometry(): void {
+    const pending = this._flatMarkerGeometryPending;
+    this._flatMarkerGeometryPending = null;
+    if (!pending || this._renderProjection !== 'flat') return;
+    const layer = this.renderRoot.querySelector('.devlayer');
+    if (!layer) return;
+    const nodes = new Map([...layer.querySelectorAll<HTMLElement>(':scope > [data-hp="device"]')]
+      .map(node => [node.dataset.id, node]));
+    const view = pending.view;
+    for (const device of pending.devices) {
+      const node = nodes.get(device.id);
+      if (!node) continue;
+      const point = this._pos(device), [x, y] = this._framePercent([point.x, point.y], view);
+      const left = x + '%', top = y + '%', prior = this._flatMarkerPositions.get(node);
+      if (prior?.left !== left || prior.actualLeft !== node.style.left) node.style.left = left;
+      if (prior?.top !== top || prior.actualTop !== node.style.top) node.style.top = top;
+      this._flatMarkerPositions.set(node, { left, top, actualLeft: node.style.left, actualTop: node.style.top });
+    }
+  }
+  private _modeMarkerInputState: readonly unknown[] | null = null;
+  private _syncModeMarkerInput(): void {
+    if (this._modeTransitionBusy) return; // The stage owns effective inertness until the final commit.
+    const inputs = [this._mode === 'view' || this._mode === 'devices', this._modeSceneRevision,
+      this.renderRoot.querySelector('.devlayer')];
+    if (this._modeMarkerInputState?.every((value,index)=>value===inputs[index])) return;
+    this._modeMarkerInputState = inputs;
+    // Interactivity belongs to the mode, independently of memoized marker ink.
+    // The stage remains inert throughout the visual transition.
+    const markerInteractive = this._mode === 'view' || this._mode === 'devices';
+    for (const marker of this._modeNodes('.devlayer .dev:not(.iso-tile-shadow):not(.led-badge)')) {
+      if ((marker as HTMLElement).inert !== !markerInteractive) (marker as HTMLElement).inert = !markerInteractive;
+      if (markerInteractive) {
+        if (marker.getAttribute('role') !== 'button') marker.setAttribute('role', 'button');
+        if (marker.getAttribute('tabindex') !== '0') marker.setAttribute('tabindex', '0');
+      } else {
+        marker.removeAttribute('role'); marker.removeAttribute('tabindex');
+      }
+    }
+  }
+  private _modeRoomHookState: readonly unknown[] | null = null;
+  private _syncModeRoomHooks(): void {
+    const inputs = [this._mode, this._modeSceneRevision,
+      this.renderRoot.querySelector('[data-hp-mode-layer="rooms"]'),
+      this.renderRoot.querySelector('[data-hp-mode-layer="room-ink"]')];
+    if (this._modeRoomHookState?.every((value, index) => value === inputs[index])) return;
+    this._modeRoomHookState = inputs;
+    for (const id of ['rooms', 'room-ink']) {
+      const layer = this.renderRoot.querySelector('[data-hp-mode-layer="' + id + '"]');
+      if (!layer) continue;
+      const active = (this._mode === 'plan') === (id === 'room-ink');
+      const transfer = (node: Element, canonical: string, passive: string): void => {
+        node.classList.toggle(canonical, active);
+        node.classList.toggle(passive, !active);
+        const roomId = node.getAttribute('data-mode-room-id');
+        if (active && roomId) node.setAttribute('data-id', roomId);
+        else node.removeAttribute('data-id');
+      };
+      for (const node of layer.querySelectorAll<SVGElement>('.room,.hp-mode-room')) {
+        transfer(node, 'room', 'hp-mode-room');
+        if (active) {
+          node.setAttribute('data-hp', 'room');
+          const area = node.getAttribute('data-mode-room-area');
+          if (area) node.setAttribute('data-area', area); else node.removeAttribute('data-area');
+          if (node.hasAttribute('data-mode-room-paint')) node.style.setProperty('pointer-events', 'none');
+          else node.style.removeProperty('pointer-events');
+        } else {
+          node.removeAttribute('data-hp'); node.removeAttribute('data-area');
+          node.style.setProperty('pointer-events', 'none', 'important');
+        }
+      }
+      for (const node of layer.querySelectorAll('.room-hit,.hp-mode-room-hit')) {
+        transfer(node, 'room-hit', 'hp-mode-room-hit');
+        node.toggleAttribute('data-hp-room-hit', active);
+        node.setAttribute('pointer-events', active ? 'fill' : 'none');
+      }
+      for (const node of layer.querySelectorAll('.room-outline,.hp-mode-room-outline')) {
+        node.classList.toggle('room-outline', active);
+        node.classList.toggle('hp-mode-room-outline', !active);
+      }
+    }
+  }
+  private readonly _modePresentationNodes = new Map<string, (HTMLElement | SVGElement)[]>();
+  private _modePresentationAlphaDirty = true;
+  private _modeNodes(selector: string): (HTMLElement | SVGElement)[] {
+    let nodes = this._modePresentationNodes.get(selector);
+    if (!nodes) {
+      nodes = [...this.renderRoot.querySelectorAll<HTMLElement | SVGElement>(selector)];
+      this._modePresentationNodes.set(selector, nodes);
+    }
+    return nodes;
+  }
   private _paintModePresentation(visual: ModeVisualState): void {
     const root = this.renderRoot;
     const owner = this._modePresentation;
-    const devices = [...root.querySelectorAll<HTMLElement>('.devlayer .dev')];
+    const planFade = this._mode === 'plan' || !!visual.planWeight || !!this._modeTransition.state?.from.planWeight;
+    const devices = planFade ? this._modeNodes('.devlayer .dev') : [];
     // Batch the initial reads before any presentation writes. Interleaving
     // getComputedStyle with each marker's opacity would repeatedly flush style.
-    const changedAlpha = devices.filter(device => !this._modeDeviceAlpha.has(device)
-      || this._modeDeviceAlphaKeys.get(device) !== this._modeDeviceAlphaKey(device));
-    for (const device of changedAlpha) owner.restoreProperty(device, 'opacity');
+    const changedAlpha = this._modePresentationAlphaDirty ? devices.filter(device => !this._modeDeviceAlpha.has(device)
+      || this._modeDeviceAlphaKeys.get(device) !== this._modeDeviceAlphaKey(device)) : [];
+    this._modePresentationAlphaDirty = false;
+    for (const device of changedAlpha) { owner.stopOpacity(device); owner.restoreProperty(device, 'opacity'); }
     for (const device of changedAlpha) {
       this._modeDeviceAlpha.set(device, Number(getComputedStyle(device).opacity));
       this._modeDeviceAlphaKeys.set(device, this._modeDeviceAlphaKey(device));
     }
+    const moving = this._modeTransition.state?.phase === 'running';
     const set = (selector: string, name: string, value: string, important = false): void => {
-      for (const node of root.querySelectorAll<HTMLElement | SVGElement>(selector))
-        owner.set(node, name, value, important ? 'important' : '');
+      for (const node of this._modeNodes(selector)) {
+        if (name === 'opacity') owner.opacity(node, value, moving, important ? 'important' : '');
+        else owner.set(node, name, value, important ? 'important' : '');
+      }
     };
     set('.hdr > .head', 'height', visual.headerHeight + 'px');
     set('.editorchrome', 'height', visual.editorChromeHeight + 'px');
@@ -1703,21 +1806,22 @@ export class HouseplanCard extends LitElement {
     for (const device of devices) {
       const base = this._modeDeviceAlpha.get(device) ?? 1;
       owner.set(device, 'filter', 'none');
-      owner.set(device, 'opacity', String(base * Math.max(0, 1 - .65 * plan / visual.architectureOpacity)));
+      owner.opacity(device, String(base * Math.max(0, 1 - .65 * plan / visual.architectureOpacity)), moving);
       owner.set(device, 'will-change', 'opacity');
     }
     const properties = root.querySelector<HTMLElement>('.hp-properties');
     owner.setInert(properties, true);
     owner.set(properties, 'transform', 'translateX(' + (1 - visual.editorWeight) * 100 + '%)');
-    owner.set(properties, 'opacity', String(visual.editorWeight));
+    owner.opacity(properties, String(visual.editorWeight), moving);
+    const terminal = this._modeTransition.state?.phase === 'settling';
     const raster = this._modeSceneSize;
     if (raster) {
       const scene = root.querySelector<HTMLElement>('.zoomwrap');
       owner.set(scene, 'translate', 'none');
-      owner.set(scene, 'left', Math.round((visual.stageWidth - raster[0]) / 2) + 'px');
-      owner.set(scene, 'top', Math.round((visual.stageHeight - raster[1]) / 2) + 'px');
+      const left = Math.round((visual.stageWidth - raster[0]) / 2), top = Math.round((visual.stageHeight - raster[1]) / 2);
+      owner.set(scene, 'left', left + 'px');
+      owner.set(scene, 'top', top + 'px');
     }
-    const terminal = this._modeTransition.state?.phase === 'settling';
     if (terminal) {
       // Present the endpoint with the ordinary raster path, while the same
       // controller still owns inert until its next RAF.
@@ -1752,6 +1856,8 @@ export class HouseplanCard extends LitElement {
   }
 
   private _clearModePresentation(): void {
+    this._modePresentationNodes.clear();
+    this._modePresentationAlphaDirty = true;
     this._modePresentation.clear();
     this._modeDeviceAlpha.clear();
     this._modeDeviceAlphaKeys.clear();
@@ -1773,6 +1879,9 @@ export class HouseplanCard extends LitElement {
   }
 
   private _applyModeTransitionFrame(state: ModeTransitionState): void {
+    this._cfgPass.run(() => this._paintTransitionFrame(state));
+  }
+  private _paintTransitionFrame(state: ModeTransitionState): void {
     if (state.targetMode !== this._mode) return;
     if (this._modeProjectionCrossing) {
       const progress = state.duration > 0 ? Math.min(1, Math.max(0, (performance.now() - state.startedAt) / state.duration)) : 1;
@@ -1804,6 +1913,9 @@ export class HouseplanCard extends LitElement {
   }
 
   private _settleModeTransition(state: ModeTransitionState): void {
+    this._cfgPass.run(() => this._finishModeTransition(state));
+  }
+  private _finishModeTransition(state: ModeTransitionState): void {
     if (state.targetMode !== this._mode) return;
     const settledRequest = this._modeTransitionRequest;
     this._modeSceneFinishPending = true;
@@ -1952,6 +2064,7 @@ export class HouseplanCard extends LitElement {
         }
         return;
       }
+      this._cfgPass.run(() => {
       const inner = this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null;
       const targetChromeHeight = targetMode === 'view' ? 0 : inner?.scrollHeight || 0;
       const headerHeight = this._editorRuntime?._modeHeaderHeight(targetMode) ?? from.headerHeight;
@@ -2003,6 +2116,7 @@ export class HouseplanCard extends LitElement {
       scheduleHouseplanViewport(this, true, true);
       this._modeTransition.start(from, to, targetMode,
         this._reducedMotion || forceAtomic ? 0 : controlMotion.mode.duration);
+      });
     });
   }
 
@@ -5116,13 +5230,21 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(changed: PropertyValues): void {
+    this._cfgPass.run(() => this._updatedModeReadScope(changed));
+  }
+  private _updatedModeReadScope(changed: PropertyValues): void {
+    this._modePresentationNodes.clear();
+    this._modePresentationAlphaDirty = true;
     this._modePresentation.adoptRenderedStyles();
+    this._syncModeRoomHooks();
+    this._syncModeMarkerInput();
+    this._syncFlatMarkerGeometry();
     this._stairsView.updated();
     this._toastPresentation.refresh();
     if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);
     this._syncCycleTimer();
-    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); if (!this._modeProjectionSource) { if (this._liveRt) this._liveRt.commit(); else commitHouseplanViewport(this); }
-    this._editorRuntime?._commitLiveEditor();
+    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); if (!this._modeProjectionSource && !this._modeTransitionPreparing) { if (this._liveRt) this._liveRt.commit(); else commitHouseplanViewport(this); }
+    if (!this._modeTransitionBusy) this._editorRuntime?._commitLiveEditor();
     if (!this._modeTransitionBusy) {
       this._editorRuntime?.prepareModeScene();
       this._liveRt?.syncContacts();
@@ -5278,7 +5400,7 @@ export class HouseplanCard extends LitElement {
         this._openSpaceDialog('create');
       }
     }
-    if ((this._modeTransition.state || this._modeTransitionPreparing) && this._modeTransitionVisual)
+    if (this._modeTransition.state && this._modeTransitionVisual)
       this._paintModePresentation(this._modeTransitionVisual);
     this._modeSceneFinishPending = false;
   }
@@ -7116,6 +7238,8 @@ export class HouseplanCard extends LitElement {
    *  is. Reset when the space changes (docs/CANVAS.md §4.1). */
   private _showFar = false;
 
+  private _contentFrameMemo: { model: SpaceModel; layout: unknown; devs: unknown; missingDecor: boolean;
+    value: ReturnType<typeof contentFrame> } | null = null;
   private _frameOf(): { rect: Rect; all: Rect; outliers: number; hasContent: boolean } {
     const m = this._spaceModel();
     if (!m) {
@@ -7144,7 +7268,14 @@ export class HouseplanCard extends LitElement {
     if (f && f.id === m.id && this._editorRuntime?.backdropGesture.active) return f;
     if (f && f.id === m.id && f.model === m && f.layout === layout
         && f.devs === this._displayDevices && f.far === this._showFar && f.grow === grow) return f;
-    const cf = contentFrame(this._contentItems(m));
+    const missingDecor = this._mode === 'decor' && this._decorList.some(item => item.kind === 'image' && !this._decorAssets.has(item.asset_id));
+    let source = this._contentFrameMemo;
+    if (!f || !source || source.model !== m || source.layout !== layout || source.devs !== this._displayDevices
+        || source.missingDecor !== missingDecor) {
+      source = this._contentFrameMemo = { model: m, layout, devs: this._displayDevices, missingDecor,
+        value: contentFrame(this._contentItems(m)) };
+    }
+    const cf = source.value;
     let all = cf.all || spaceFrame(m);
     let rect = this._showFar ? all : (cf.core || spaceFrame(m));
     if (f && f.id === m.id && grow && f.grow) {
@@ -9650,6 +9781,7 @@ export class HouseplanCard extends LitElement {
     const W = NORM_W, H = this._decorH;
     const editing = this._mode === 'decor';
     const erasing = editing && this._decorTool === 'erase';
+    const preparedSelect = !!this._editorRuntime && this._canEdit && !this._kiosk;
     // One measured outer viewBox scale for the whole layer. Furniture paths
     // keep `non-scaling-stroke` only to reject their own independent width /
     // depth transform; multiplying by this factor restores the same physical
@@ -9666,7 +9798,9 @@ export class HouseplanCard extends LitElement {
       modeScale === null ? stage?.clientHeight : modeScale * planView.h, planView.w, planView.h,
     );
     const onlyIds = Array.isArray(onlyId) ? new Set(onlyId) : null;
-    const shapes = this._decorList.filter((sh) => onlyIds ? onlyIds.has(sh.id) : onlyId === undefined || sh.id === onlyId).map((sh) => {
+    const shapes = this._decorList.filter((sh) => onlyIds ? onlyIds.has(sh.id) : onlyId === undefined || sh.id === onlyId).map((sh) => guard([this._modeSceneRevision, sh, furnitureScreenScale, onlyId,
+      editing && this._decorSel === sh.id, erasing, preparedSelect,
+      sh.kind === 'image' && !this._decorAssets.has(sh.asset_id) && editing], () => {
       const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
       const style = this._decorResolvedStyle(sh);
       const strokeWidth = this._decorWidthUnits(sh);
@@ -9682,7 +9816,7 @@ export class HouseplanCard extends LitElement {
           stroke-dasharray=${sh.line_style === 'dashed' ? `${strokeWidth * 4} ${strokeWidth * 3}` : nothing}
           stroke-linecap="round" stroke-linejoin="round"
           @pointerdown=${down} @dblclick=${dbl}></line>
-          ${editing && this._decorTool === 'select' ? svg`<line class="dshape dselecthit"
+          ${preparedSelect ? svg`<line class="dshape dselecthit"
             data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
             x1="${sh.x1 * W}" y1="${sh.y1 * H}" x2="${sh.x2 * W}" y2="${sh.y2 * H}"
             @pointerdown=${down} @dblclick=${dbl}></line>` : nothing}
@@ -9755,7 +9889,7 @@ export class HouseplanCard extends LitElement {
           stroke-width="${visibleStrokePx}" fill="none"
           stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"
           @pointerdown=${down} @dblclick=${dbl}></path>
-          ${editing && this._decorTool === 'select' ? svg`<path
+          ${preparedSelect ? svg`<path
             class="dshape dfurniturehit" data-hp="decor" data-id="${sh.id}"
             data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${art.d}" transform=${tr}
             stroke-width="${selectStrokePx}" fill="none" stroke-linecap="round"
@@ -9790,7 +9924,7 @@ export class HouseplanCard extends LitElement {
           )}</text>`;
       }
       return nothing;
-    });
+    }));
     // живое превью рисуемой фигуры
     let draft: unknown = nothing;
     const d = this._decorDraft;
@@ -10020,16 +10154,21 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Thick-wall spans in render units — suppress centreline stroke under bodies. */
+  private _thickWallCutsMemo: { key: string; value: number[][] } | null = null;
   private _thickWallCuts(): number[][] {
     const space = this._spaceModel();
     if (!space) return [];
     const walls = this._spaceWalls;
     if (!walls.length) return [];
     const openCuts = this._openCuts();
-    return wallEdgeBodies(
+    const key = `${this._floorKey(space.id)}|${this._wallKeyPitch}|${this._cellCm}|${this._gridPitch}|${openCuts.map(cut => cut.join(',')).join(';')}`;
+    if (this._thickWallCutsMemo?.key === key) return this._thickWallCutsMemo.value;
+    const value = wallEdgeBodies(
       space.rooms, walls, openCuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     ).map((b) => [b.a[0], b.a[1], b.b[0], b.b[1]]);
+    this._thickWallCutsMemo = { key, value };
+    return value;
   }
 
   /** Structural room face shared by every fill surface in the same frame. */
@@ -10195,8 +10334,8 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Paint geometry extends the existing room floor, not a second colored layer. */
-  private _roomFloorPaintFor(space: SpaceModel): Map<string, RoomFloorPaint> {
-    if ((this._markup && !this._modeTransitionBusy) || !this._spaceWalls.length || !this._openingsR.length)
+  private _roomFloorPaintFor(space: SpaceModel, viewEndpoint = false): Map<string, RoomFloorPaint> {
+    if ((!viewEndpoint && this._markup && !this._modeTransitionBusy) || !this._spaceWalls.length || !this._openingsR.length)
       return new Map();
     const openCuts = this._openCuts();
     const geometryInputs = this._openingsR.map(opening => ({
@@ -11846,19 +11985,25 @@ export class HouseplanCard extends LitElement {
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {
+    this._flatMarkerGeometryPending = null;
     this._kioskNavigation.sync(this._kioskNavigationEnabled);
     return this._lightBarrierPass.run(() => this._renderLightPass());
   }
 
+  protected update(changed: PropertyValues): void {
+    try { super.update(changed); }
+    finally { this._cfgPass.end(); }
+  }
+
   private _renderLightPass(): TemplateResult | typeof nothing | typeof noChange {
-    try {
+    {
       const body = this._renderBody();
       // `nothing` is the only root that has no decision surface. `noChange` is
       // deliberately nested: it preserves the committed body while allowing the
       // sibling hp-confirm to settle/cancel on a ready -> warm transition.
       if (body === nothing) return body;
       return this._renderRoot(body);
-    } finally { this._cfgPass.end(); } // #725: the pass ends with render, before DOM commit and updated()
+    } // The fingerprint pass includes lazy Lit directives, and ends before updated().
   }
 
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
@@ -12046,7 +12191,7 @@ export class HouseplanCard extends LitElement {
           @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`
       : nothing}</span>`;
     const sceneSpace = space;
-    const renderRooms = (roomMode: HouseplanMode, mirror = false, canonical = true): TemplateResult => {
+    const renderRooms = (roomMode: HouseplanMode, canonical = true): TemplateResult => {
       const planRoom = roomMode === 'plan';
 
               // audit L1: hoisted out of the per-room map — these depend on the
@@ -12054,7 +12199,7 @@ export class HouseplanCard extends LitElement {
               const allZeroCuts = this._openCuts();
               const allThickCuts = this._thickWallCuts();
               const roomWallGeometry = this._wallUnionGeometry()?.roomGeom;
-              const floorPaint = this._roomFloorPaintFor(sceneSpace);
+              const floorPaint = planRoom ? new Map<string, RoomFloorPaint>() : this._roomFloorPaintFor(sceneSpace, true);
               const polyCache = new Map<any, number[][] | null>();
               const polyOf = (rr: any) => {
                 if (!polyCache.has(rr)) polyCache.set(rr, roomPoly(rr));
@@ -12137,42 +12282,41 @@ export class HouseplanCard extends LitElement {
                 'M ' + pts.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
               const obstaclePath = fillPoly ? this._cleanFloor(r, fillPoly, sceneSpace).path : '';
               const paint = floorPaint.get(r.id || '#' + sceneSpace.rooms.indexOf(r));
-              const maskId = 'hp-room-floor-' + contentFingerprint([sceneSpace.id, r.id || sceneSpace.rooms.indexOf(r)]) + (mirror ? '-mode-plan' : '');
               // docs/STYLING-HOOKS.md §3 — the same three hooks whichever SVG
               // element this room happens to be drawn as today
               const hpId = r.id || nothing;
               const hpArea = r.area || nothing;
               const shape = paint
-                ? svg`<path class="${cls}" style="${style};pointer-events:none" fill-rule="evenodd"
-                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} d=${paint.path}></path>`
+                ? svg`<path data-mode-room-paint class="${cls}" style="${style};pointer-events:none" fill-rule="evenodd"
+                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing} d=${paint.path}></path>`
                 : obstaclePath && fillPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
-                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea}
+                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
                     d="${[obstaclePath, ...holes.map(pathD)].join(' ')}"
                     @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearPointerHover()}></path>`
                 : holes.length && fillPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
-                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea}
+                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
                     d="${[fillPoly, ...holes].map(pathD).join(' ')}"
                     @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearPointerHover()}></path>`
                  : fillPoly && fillPoly !== myPoly
                  ? svg`<polygon class="${cls}" style="${style}" points="${fillPoly.map((p) => p.join(',')).join(' ')}"
-                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea}
+                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
                     @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearPointerHover()}></polygon>`
                  : r.poly
                  ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
-                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea}
+                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
                     @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearPointerHover()}></polygon>`
                  : svg`<rect class="${cls}" style="${style}"
-                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea}
+                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} data-mode-room-id=${r.id || nothing} data-mode-room-area=${r.area || nothing}
                      x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
                     @pointerenter=${enterRoom}
                     @pointermove=${tip}
@@ -12185,13 +12329,15 @@ export class HouseplanCard extends LitElement {
                     d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
                     style=${planRoom ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
                 : nothing;
-              const hit = paint ? svg`<path class=${canonical ? 'room-hit' : 'hp-mode-room-hit'} ?data-hp-room-hit=${canonical} data-id=${hpId} d=${paint.basePath} fill="transparent"
+              const hit = paint ? svg`<path class=${canonical ? 'room-hit' : 'hp-mode-room-hit'} ?data-hp-room-hit=${canonical} data-id=${hpId} data-mode-room-id=${r.id || nothing} d=${paint.basePath} fill="transparent"
                 fill-rule="evenodd" stroke="none" pointer-events=${canonical ? 'fill' : 'none'}
                 @pointerenter=${enterRoom} @pointermove=${tip}
                 @pointerleave=${() => this._clearPointerHover()}></path>` : nothing;
-              return svg`${paint?.extended ? renderRoomFloorMask(maskId, paint) : nothing}${shape}${hit}${outline}`;
+              return svg`${shape}${hit}${outline}`;
               }))}</g>`;
                 };
+    if (!iso && !this._modeProjectionSource)
+      this._flatMarkerGeometryPending = { devices: this._renderDevices, view: { ...view } };
     const sceneInputs = [this._modeSceneRevision, this._space, this._cfgRev, this._layoutRev, this._cfgEpoch, contentFingerprint(disp), this._renderProjection, this._rotation, this._cellCm];
     const modeLayers: ModeSceneLayer[] = [
       { id: "paper", inputs: [...sceneInputs, ...[]], render: () => svg`${''/* THE PAPER IS THE ROOMS (docs/DECOR-EDITOR.md §3.3, owner
@@ -12226,9 +12372,9 @@ export class HouseplanCard extends LitElement {
                   @dblclick=${(e: Event) => this._openBackdropDialog(e)}
                   preserveAspectRatio="none" />`
               : nothing}` },
-      { id: "rooms", inputs: [...sceneInputs, this._mode === 'plan', disp.showBorders ? 'normal' : this._modeTransitionBusy || this._mode === 'view' || this._mode === 'plan' ? 'view' : 'editor'], render: () => svg`${renderRooms(this._mode === 'plan' || this._modeTransitionBusy ? 'view' : this._mode, false, this._mode !== 'plan')}` },
-      { id:'room-ink', inputs:[...sceneInputs, this._mode === 'plan'], render:()=>renderRooms('plan', true, this._mode === 'plan') },
-      { id: "decor", inputs: [...sceneInputs, ...[this._mode === 'decor', this._decorSel, this._decorTool, this._renderPixelsPerUnit(view)]], render: () => svg`${this._renderRoomHoverFill(roomHover)}
+      { id: "rooms", inputs: [...sceneInputs, disp.showBorders ? 'normal' : this._modeTransitionBusy || this._mode === 'view' || this._mode === 'plan' ? 'view' : 'editor'], render: () => svg`${renderRooms(this._mode === 'plan' || this._modeTransitionBusy ? 'view' : this._mode, this._mode !== 'plan')}` },
+      { id:'room-ink', inputs:[...sceneInputs, this._mergeSel, this._splitSel], render:()=>renderRooms('plan', this._mode === 'plan') },
+      { id: "decor", inputs: [...sceneInputs, ...[this._mode === 'decor' && (disp.hideDecor || !!this._decorSel || this._decorTool === 'erase' || this._decorList.some(item => item.kind === 'image' && !this._decorAssets.has(item.asset_id))), this._decorSel, this._decorTool, this._renderPixelsPerUnit(view)]], render: () => svg`${this._renderRoomHoverFill(roomHover)}
             ${''/* Decor is one composition layer above every floor treatment
                    (room fill/hover and opening tunnels) and below
                    live lighting, physical plan geometry and devices. Keep
@@ -12242,7 +12388,7 @@ export class HouseplanCard extends LitElement {
             ${glowLayerVisible ? this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) : nothing}
             ${this._renderSunRays(space)}` },
       { id: "editor-guides", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('guides', this._editing, () => svg`<g class="hp-editor-only-layer">${this._renderAlignGuides()}</g>`)}` },
-      { id: "plan-base", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('markup', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderMarkupLayer(vb)}</g>`)}
+      { id: "plan-base", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('markup', !!this._editorRuntime && this._canEdit && !this._kiosk, () => svg`<g class="hp-plan-only-layer">${this._renderMarkupLayer(vb)}</g>`)}
             ${''/* «Скрыть проёмы» (space.hide_openings) — same deal: the plan
                    editor keeps drawing doors, windows and gates so they stay
                    editable, and only the symbols are hidden elsewhere. What
@@ -12261,7 +12407,7 @@ export class HouseplanCard extends LitElement {
                    thick wall bodies. Their
                    full centreline geometry remains visible for editing. */}` },
       { id: "zero-editor", inputs: [...sceneInputs, ...[this._editing, this._modeTransitionBusy]], render: () => svg`${this._editing || this._modeTransitionBusy ? this._renderZeroWalls(disp) : nothing}` },
-      { id: "plan-ink", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('hidden-walls', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderHiddenWallDiagnosticOverlay()}</g>`)}
+      { id: "plan-ink", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('hidden-walls', !!this._editorRuntime && this._canEdit && !this._kiosk, () => svg`<g class="hp-plan-only-layer">${this._renderHiddenWallDiagnosticOverlay(true)}</g>`)}
             ${this._editorInk('opening-preview', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderOpeningPlacementPreview()}</g>`)}
             ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
@@ -12273,8 +12419,8 @@ export class HouseplanCard extends LitElement {
                    otherwise cover the chain axis and nodes (#307). It stays
                    below the snap overlay so snap highlights keep priority. */}
             ${this._editorInk('chain', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderActiveChainInk()}</g>`)}
-            ${this._editorInk('nodes', this._markup, () => svg`<g class="hp-plan-only-layer hp-plan-snap-layer">${this._renderPlanSnapOverlay()}</g>`)}` },
-      { id: "openings", inputs: [...sceneInputs, ...[this._markup, disp.hideOpenings]], render: () => svg`${disp.hideOpenings && !this._markup
+            ${this._editorInk('nodes', !!this._editorRuntime && this._canEdit && !this._kiosk, () => svg`<g class="hp-plan-only-layer hp-plan-snap-layer">${this._renderPlanSnapOverlay(true)}</g>`)}` },
+      { id: "openings", inputs: [...sceneInputs, ...[disp.hideOpenings && this._markup, disp.hideOpenings]], render: () => svg`${disp.hideOpenings && !this._markup
               ? nothing
               : isoLayers && !isoLayers.floorSymbols
                 ? nothing
@@ -12564,7 +12710,7 @@ export class HouseplanCard extends LitElement {
                   r, space, view, disp, isoOverlays?.rooms.get(r),
                 ))
               : nothing}
-            ${this._markup ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
+            ${this._editorRuntime && this._canEdit && !this._kiosk ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
             ${''/* #649: one floor-shadow layer (z below every tile), after the markers in DOM order */}${iso ? html`<div class="iso-tile-shadows" aria-hidden="true">${repeat(devs, (d) => d.id, (d) => this._renderDevice(d, view, showLqi, isoOverlays?.devices.get(d.id), true))}${this._renderOpeningLocks(view, isoOverlays?.locks, true)}</div>` : nothing}
             ${renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices, registry: this._haRegistry, currentSpace: space.id, spaces: this._serverCfg?.spaces, viewKey: view, zoom: this._zoom, view: this._mode === 'view', kiosk: this._kiosk, ready: this._viewRuntimes.zigbee.state === 'ready', onLayout: () => this._liveRt?.hover() })}
           </div>
@@ -13225,6 +13371,12 @@ export class HouseplanCard extends LitElement {
     isoPlacement?: IsoOverlayPlacement,
     ghost = false,
   ): TemplateResult {
+    return html`${guard([this._modeSceneRevision, this._devicePresentation(d, showLqi),
+      d.id, d.name, d.primary, d.area, d.virtual, d.hidden, d.userHidden, d.bindingStatus?.kind,
+      ...(isoPlacement || ghost ? [view.x, view.y, view.w, view.h] : []),
+      showLqi, isoPlacement, ghost, this._rotation, this._selId,
+      this._mode === 'devices' && this._selId === d.id], () => {
+    this._modeSceneBuilds['device-shells'] = (this._modeSceneBuilds['device-shells'] || 0) + 1;
     const pos = this._pos(d);
     const point = isoPlacement?.visualScene ?? [pos.x, pos.y];
     const [left, top] = this._framePercent(point, view, !!isoPlacement);
@@ -13239,7 +13391,6 @@ export class HouseplanCard extends LitElement {
       ? this._t((`marker.ha_disabled_${disabledReason}`) as any)
       : d.hidden && d.userHidden ? this._t('marker.hidden_ghost') : d.name;
     const a11yState = deviceA11yState(presentation);
-    const interactive = this._mode === 'view' || this._mode === 'devices';
     const deviceAriaLabel = deviceAccessibleLabel([
       ghostLabel,
       !presentation.haDisabled
@@ -13274,9 +13425,6 @@ export class HouseplanCard extends LitElement {
       data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
       data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
       data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
-      ?inert=${!interactive}
-      role=${interactive ? 'button' : nothing}
-      tabindex=${interactive ? '0' : nothing}
       aria-label=${deviceAriaLabel}
       class="dev ${deviceThemeClass(this._renderPlanHass)} ${presentation.classes.join(' ')} ${this._selId === d.id ? 'sel' : ''} ${d.virtual ? 'virtual' : ''} ${d.hidden ? 'ghost' : ''} ${presentation.haDisabled ? 'ha-disabled' : ''} ${presentation.valueText != null ? 'valonly' : ''} ${floorLight}"
       style="${st.join(';')}"
@@ -13309,6 +13457,7 @@ export class HouseplanCard extends LitElement {
       }); })}
       ${this._vacRouteBadge(d)}
     </div>`;
+    })}`;
   }
   /** #780 r1 M1: the value badge of a strip, passive, at its anchor (`_pos`). */
   private _ledBadge(d: DevItem, view: { x: number; y: number; w: number; h: number }, iso?: IsoOverlayPlacement) {
@@ -13579,9 +13728,11 @@ export class HouseplanCard extends LitElement {
         tabindex=${separateAreaAction ? '0' : nothing}
         aria-label=${separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
         @keydown=${separateAreaAction && r.id ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
-      >${r.name || (this._markup ? this._t('room.unnamed') : '')}</span>${showAreaLink
-        ? separateAreaAction
-          ? html`<button type="button" class="rlgo rlarea" data-hp="room-area-link"
+      >${r.name || (this._markup ? this._t('room.unnamed') : '')}</span>${r.area && !this._kiosk && (this._canEdit || this.hass?.user?.is_admin === true)
+        ? html`<button type="button" class="rlgo rlarea"
+              data-hp=${separateAreaAction ? 'room-area-link' : nothing}
+              style=${separateAreaAction ? nothing : 'display:none'}
+              ?inert=${!separateAreaAction} aria-hidden=${separateAreaAction ? nothing : 'true'}
               aria-label=${this._t('room.open_area_named', { name: areaName })}
               title=${this._t('room.open_area')}
               @click=${(e: Event) => { e.stopPropagation(); this._clickRoom(r); }}
@@ -13589,11 +13740,12 @@ export class HouseplanCard extends LitElement {
               @keyup=${(e: KeyboardEvent) => e.stopPropagation()}
               @dblclick=${(e: Event) => e.stopPropagation()}
               @pointerdown=${(e: Event) => e.stopPropagation()}
-            ><ha-icon icon="mdi:open-in-new"></ha-icon></button>`
-          : html`<ha-icon class="rlgo" icon="mdi:open-in-new"></ha-icon>`
+            ><ha-icon icon="mdi:open-in-new"></ha-icon></button><ha-icon class="rlgo" icon="mdi:open-in-new"
+              style=${showAreaLink && !separateAreaAction ? nothing : 'display:none'}
+              aria-hidden="true"></ha-icon>`
         : nothing}</span>
       ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
-      ${this._mode === 'plan'
+      ${this._editorRuntime && this._canEdit && !this._kiosk
         ? ['tl', 'tr', 'bl', 'br'].map(
             (c) => html`<span class="rlhandle ${c}"
               @pointerdown=${(e: PointerEvent) => this._rlResizeDown(e, r, space.id)}
@@ -14094,12 +14246,12 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._renderMarkupDefs(_vb);
   }
 
-  private _renderHiddenWallDiagnosticOverlay(): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderHiddenWallDiagnosticOverlay();
+  private _renderHiddenWallDiagnosticOverlay(warm = false): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderHiddenWallDiagnosticOverlay(warm);
   }
 
-  private _renderPlanSnapOverlay(): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderPlanSnapOverlay();
+  private _renderPlanSnapOverlay(warm = false): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderPlanSnapOverlay(warm);
   }
 
   private _renderMarkupLayer(vb: number[]): TemplateResult {

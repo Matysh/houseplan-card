@@ -19,14 +19,24 @@ export function roomGearPointAllowed(
     || pointOnBoundary(candidate, polygon as number[][]);
 }
 
+const roomGearCenters = new WeakMap<RoomCfg, { geometry: string; point: RoomGearPoint | null }>();
+
 export function roomGearAutoCenter(
   room: RoomCfg,
   polygonOverride?: number[][] | null,
 ): RoomGearPoint | null {
   const polygon = polygonOverride ?? roomPoly(room);
   if (!polygon?.length) return null;
-  const point = poleOfInaccessibility(polygon);
-  return finitePoint(point) ? [point[0], point[1]] : null;
+  // Include coordinates so an in-place edit or transient preview cannot reuse
+  // a center from the previous room shape. Callers receive their own tuple.
+  const geometry = JSON.stringify(polygon);
+  let cached = roomGearCenters.get(room);
+  if (!cached || cached.geometry !== geometry) {
+    const point = poleOfInaccessibility(polygon);
+    cached = { geometry, point: finitePoint(point) ? [point[0], point[1]] : null };
+    roomGearCenters.set(room, cached);
+  }
+  return cached.point ? [...cached.point] : null;
 }
 
 export function resolveRoomGearCenter(

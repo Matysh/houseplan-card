@@ -4,6 +4,7 @@
 
 - Recognize closed room contours with dangling internal walls; retain partitions and openings without requiring Optimize (#1346).
 - Fixed a stale nightly mutation witness selector after the onboarding boundary test was renamed (#1345).
+- Rework View/editor transitions with retained scene surfaces, a presented endpoint before finishing, and silent editor-code preparation on writer intent (#1344).
 
 ## v1.85.0 — 2026-11-06
 

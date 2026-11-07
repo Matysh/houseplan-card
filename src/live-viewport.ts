@@ -225,7 +225,7 @@ export function paintLiveViewport(
   painted: LiveViewportFrame,
   current: LiveViewportFrame,
   anchor?: LiveViewportAnchor | null,
-  options: { now?: number; force?: boolean; keepSceneLayer?: boolean; sceneExposureClip?: string } = {},
+  options: { now?: number; force?: boolean; keepSceneLayer?: boolean; sceneExposureClip?: string; lockSceneAnchor?: boolean } = {},
 ): LiveViewportAnchor {
   const now = options.now ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
   const base: LiveViewportAnchor = anchor ?? { frame: painted, at: -Infinity };
@@ -233,7 +233,7 @@ export function paintLiveViewport(
     return base;
   }
   const refresh = options.force === true || !finiteView(base.frame.view)
-    || !finiteView(base.frame.floor) || needsViewBoxRefresh(base, current, now);
+    || !finiteView(base.frame.floor) || (!options.lockSceneAnchor && needsViewBoxRefresh(base, current, now));
   const next: LiveViewportAnchor = refresh ? { frame: current, at: now } : base;
   if (refresh) {
     const viewBox = liveViewBoxText(current.view);
@@ -317,7 +317,7 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
     state.raf = 0; state.pending = null;
     if (!state.painted) state.painted = next;
     state.anchor = paintLiveViewport(
-      host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true, force, sceneExposureClip: host._modeSceneClip ?? undefined },
+      host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true, force, sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip },
     );
     return;
   }
@@ -331,7 +331,7 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
     if (!next || !root) return;
     if (!state.painted) state.painted = next;
     state.anchor = paintLiveViewport(
-      root, state.painted, next, state.anchor, { keepSceneLayer: true, sceneExposureClip: host._modeSceneClip ?? undefined },
+      root, state.painted, next, state.anchor, { keepSceneLayer: true, sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip },
     );
   });
 }

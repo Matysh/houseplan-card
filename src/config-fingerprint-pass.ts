@@ -4,14 +4,15 @@
  * `_model` keys its memo on the config epoch plus a structural fingerprint that
  * walks every space and room. One render reads `_model` dozens of times, and
  * each read used to walk the whole house again. Inside one pass — from the
- * start of `willUpdate()` to the end of `render()` — the first read builds the
+ * start of `willUpdate()` through the synchronous Lit DOM commit — the first read builds the
  * key with its fingerprint and the rest reuse that very string while the epoch,
  * the config object and its `spaces` array stay the same. Remembering only the
  * fingerprint and gluing the key anew on each read was tried first: on the large
  * house in 2.5D it measured slower than no memo at all (more GC on load and on a
  * first floor visit), while one remembered key is faster.
  *
- * Outside a pass (handlers, `updated()`, timers, async continuations) every
+ * Outside a render or explicit synchronous read pass (handlers, timers, async
+ * continuations) every
  * read builds the fingerprint, exactly as before: that is where an in-place
  * mutation without an epoch bump can happen, and the fingerprint is the belt
  * that still sees it (HP-1454-04).
@@ -31,6 +32,13 @@ export class ConfigFingerprintPass {
     this.open = true;
     this.memo = null;
     queueMicrotask(() => { if (this.serial === serial) this.end(); });
+  }
+
+  /** One synchronous read boundary; nested readers share the current pass. */
+  public run<T>(read: () => T): T {
+    if (this.open) return read();
+    this.begin();
+    try { return read(); } finally { this.end(); }
   }
 
   public end(): void {
