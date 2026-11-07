@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6304,
+  "revision": 6305,
   "nextTicket": 287,
   "nextFence": 287,
   "tasks": {
@@ -3985,7 +3985,18 @@
         "src/wall-face-graph.ts",
         "test/fixtures/1346-room-face-spurs.json",
         "test/wall-face-graph.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794050975137,
+        "entry": 1,
+        "detail": "Поведение: test/wall-identity-corpus.test.mjs: failed",
+        "eventId": "finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:3:return:return:1346"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4161,18 +4172,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1346,
-    "worker": "finish",
-    "token": "286:finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:1:admit",
-    "fence": 286,
-    "materialSha": "ce0796e207211f495008ed9b9ce21e031484175c",
-    "expectedBase": "dd8c78da81f79a3b28a772971d2aa971fb2d5ce4",
-    "phase": "testing",
-    "admittedAt": 1794050460473,
-    "expiresAt": 1794051238246,
-    "patchId": "fa926ecc6900e0b0665c22288a24d4ce257c05d4"
-  },
+  "active": null,
   "events": {
     "github:42340404811:1:label:spec-request": {
       "digest": "89b760117a3c9f6c20e0c78d9a8914fb588df44a41263be279b60b87babb296b",
@@ -4334,6 +4334,10 @@
       "digest": "c0d8a3f367a076773683e10e3d6afe92bcc2bb3f6c0a4974b72d4297d47cbfb6",
       "issue": 1346
     },
+    "finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:3:return": {
+      "digest": "a38c99147890e4f2a0afa185e44323576512aa6d8b31f46657f640980a02f978",
+      "issue": 1346
+    },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
       "digest": "61a7be3a82320de8f445a83960ccf8e6814cc676278e03450ce87edc18fdd35a",
       "issue": 1344,
@@ -4426,6 +4430,26 @@
         "layer": "product",
         "materialSha": "ce0796e207211f495008ed9b9ce21e031484175c",
         "phase": "sync"
+      }
+    },
+    "finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:3:return:return:1346": {
+      "digest": "a38c99147890e4f2a0afa185e44323576512aa6d8b31f46657f640980a02f978",
+      "issue": 1346,
+      "message": {
+        "kind": "return",
+        "issue": 1346,
+        "at": 1794050975137,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794050975137,
+          "entry": 1,
+          "detail": "Поведение: test/wall-identity-corpus.test.mjs: failed",
+          "eventId": "finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:3:return:return:1346"
+        }
       }
     }
   },
