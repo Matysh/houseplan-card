@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6421,
+  "revision": 6422,
   "nextTicket": 290,
   "nextFence": 290,
   "tasks": {
@@ -3884,15 +3884,16 @@
         "test/stairs.test.mjs"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
-        "status": "delivered",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794050417241,
-        "entry": 1,
-        "detail": "Поведение: test/device-marker-polish-contract.test.mjs: failed; Поведение: test/docs-accept.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/plan-device-landmarks.test.mjs: failed; Поведение: test/stairs-view-arrival.test.mjs: failed; Поведение: test/stairs.test.mjs: failed; Поведение: test/wall-node-bundle.test.mjs: failed; Браузер: editor command latency: failed; Браузер: space switch transitions: failed; Браузер: view edit permissions: failed; Браузер: warm mode adoption: failed",
-        "eventId": "finish:bce46f88-bd3a-469a-b845-85cd9718dcdc:finish:3:return:return:1344"
-      }
+        "at": 1794052623296,
+        "entry": 2,
+        "detail": "Поведение: test/card-version.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/node-history-runtime.test.mjs: failed",
+        "eventId": "finish:05e9fbba-c792-4085-822c-2a4215dab8a9:finish:3:return:return:1344"
+      },
+      "reason": "checks-failed"
     },
     "1345": {
       "issue": 1345,
@@ -4138,18 +4139,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1344,
-    "worker": "finish",
-    "token": "289:finish:05e9fbba-c792-4085-822c-2a4215dab8a9:finish:1:admit",
-    "fence": 289,
-    "materialSha": "62f340a2103bf587980ad6ebdedcadcf6344581b",
-    "expectedBase": "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
-    "phase": "testing",
-    "admittedAt": 1794051970051,
-    "expiresAt": 1794052869276,
-    "patchId": "e3d387e0886407c8eecb868aa3202c881cd542e0"
-  },
+  "active": null,
   "events": {
     "github:42340404811:1:label:spec-request": {
       "digest": "89b760117a3c9f6c20e0c78d9a8914fb588df44a41263be279b60b87babb296b",
@@ -4323,6 +4313,10 @@
       "digest": "961d9237af01a2d38c14d9f4e121600dcd7044d341571cd0b9accc9de56552e9",
       "issue": 1344
     },
+    "finish:05e9fbba-c792-4085-822c-2a4215dab8a9:finish:3:return": {
+      "digest": "39e8ad759cded32c8fbc1ca69582d116a56a4dfda67ec849a7d61c28508f3801",
+      "issue": 1344
+    },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
       "digest": "61a7be3a82320de8f445a83960ccf8e6814cc676278e03450ce87edc18fdd35a",
       "issue": 1344,
@@ -4415,6 +4409,26 @@
         "layer": "product",
         "materialSha": "3364e54b5497d1bc9dcebc43d7e3308b7de8e49f",
         "phase": "sync"
+      }
+    },
+    "finish:05e9fbba-c792-4085-822c-2a4215dab8a9:finish:3:return:return:1344": {
+      "digest": "39e8ad759cded32c8fbc1ca69582d116a56a4dfda67ec849a7d61c28508f3801",
+      "issue": 1344,
+      "message": {
+        "kind": "return",
+        "issue": 1344,
+        "at": 1794052623296,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794052623296,
+          "entry": 2,
+          "detail": "Поведение: test/card-version.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/node-history-runtime.test.mjs: failed",
+          "eventId": "finish:05e9fbba-c792-4085-822c-2a4215dab8a9:finish:3:return:return:1344"
+        }
       }
     }
   },
