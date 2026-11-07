@@ -1,0 +1,149 @@
+{
+  "method": "phaseLinks timestamp-linked dump ids; GPU root size only, shared_images is a child and is not summed; software headless accounting, not a physical tablet GPU measurement",
+  "reports": [
+    {
+      "label": "review-r1-final-base-layers",
+      "sha": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
+      "rows": [
+        {
+          "phase": "rest",
+          "svg": 1,
+          "layers": null,
+          "promoted": [],
+          "gpuBytes": 16023552
+        },
+        {
+          "phase": "wheel-active",
+          "svg": 1,
+          "layers": 5,
+          "promoted": [
+            {
+              "name": "svg",
+              "role": "plan-svg"
+            },
+            {
+              "name": "div",
+              "role": "devlayer"
+            }
+          ],
+          "gpuBytes": 16023552
+        },
+        {
+          "phase": "rest-after",
+          "svg": 1,
+          "layers": 3,
+          "promoted": [],
+          "gpuBytes": 16023552
+        }
+      ]
+    },
+    {
+      "label": "review-r1-chrome-writer-layers",
+      "sha": "5267c5d281497afed9b17b91eb15c9828ea2537a",
+      "rows": [
+        {
+          "phase": "rest",
+          "svg": 19,
+          "layers": null,
+          "promoted": [],
+          "gpuBytes": 11550720
+        },
+        {
+          "phase": "wheel-active",
+          "svg": 19,
+          "layers": 5,
+          "promoted": [
+            {
+              "name": "div",
+              "role": "floor"
+            },
+            {
+              "name": "div",
+              "role": "devlayer"
+            }
+          ],
+          "gpuBytes": 17842176
+        },
+        {
+          "phase": "rest-after",
+          "svg": 19,
+          "layers": 3,
+          "promoted": [],
+          "gpuBytes": 17842176
+        }
+      ]
+    },
+    {
+      "label": "review-r1-final-base-reader-layers",
+      "sha": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
+      "rows": [
+        {
+          "phase": "rest",
+          "svg": 1,
+          "layers": null,
+          "promoted": [],
+          "gpuBytes": 16023552
+        },
+        {
+          "phase": "wheel-active",
+          "svg": 1,
+          "layers": 5,
+          "promoted": [
+            {
+              "name": "svg",
+              "role": "plan-svg"
+            },
+            {
+              "name": "div",
+              "role": "devlayer"
+            }
+          ],
+          "gpuBytes": 16023552
+        },
+        {
+          "phase": "rest-after",
+          "svg": 1,
+          "layers": 3,
+          "promoted": [],
+          "gpuBytes": 16023552
+        }
+      ]
+    },
+    {
+      "label": "review-r1-chrome-reader-layers",
+      "sha": "5267c5d281497afed9b17b91eb15c9828ea2537a",
+      "rows": [
+        {
+          "phase": "rest",
+          "svg": 1,
+          "layers": null,
+          "promoted": [],
+          "gpuBytes": 14434304
+        },
+        {
+          "phase": "wheel-active",
+          "svg": 1,
+          "layers": 5,
+          "promoted": [
+            {
+              "name": "svg",
+              "role": "plan-svg"
+            },
+            {
+              "name": "div",
+              "role": "devlayer"
+            }
+          ],
+          "gpuBytes": 18366464
+        },
+        {
+          "phase": "rest-after",
+          "svg": 1,
+          "layers": 3,
+          "promoted": [],
+          "gpuBytes": 18366464
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,780 @@
+{
+  "schema": 1,
+  "version": "1.85.0",
+  "sourceSha": "864ab61fb5845eddbb5c9f940caa9b0c65b56012",
+  "candidateRoot": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/process-next/return-worktrees/52610e210052/artifacts/process-next/candidate",
+  "zip": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/process-next/return-worktrees/52610e210052/artifacts/process-next/houseplan.zip",
+  "standalone": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/process-next/return-worktrees/52610e210052/artifacts/process-next/houseplan-card.js",
+  "standaloneDigest": "4522ff7df249ee0ef537590c06877f9da363d4e33ecb4d0bcbe75758cbf3d75d",
+  "artifactDigest": "411922f5cf47d1379990539382c9f2ee5fd26a9fec53d5f6d39b94ee1ffd84aa",
+  "files": [
+    {
+      "path": "custom_components/houseplan/THIRD_PARTY_NOTICES.md",
+      "digest": "3205d6d35de4b430e6df4e0000fe35c4330eb0ef2a91bd86c56abec5b9d62ac2"
+    },
+    {
+      "path": "custom_components/houseplan/__init__.py",
+      "digest": "ad0aa1e710b81d3b7d773bec388798878e61ee0ff66f9e3adc1c9de28ba47bdd"
+    },
+    {
+      "path": "custom_components/houseplan/asset_integrity.py",
+      "digest": "5a0c72eda3114b39ca363f2950ece755b01a8acaf0372a50d88d2ccf23232684"
+    },
+    {
+      "path": "custom_components/houseplan/auth.py",
+      "digest": "4fc1b252d121d82afe99091699dce7e3223ad6ff7d080df2fa838422259b1b53"
+    },
+    {
+      "path": "custom_components/houseplan/backup_archive.py",
+      "digest": "039656814544cf9228645b350f08eef186c565eabae9283450032eef0fe01e4d"
+    },
+    {
+      "path": "custom_components/houseplan/backup_files.py",
+      "digest": "4a39eec523f8f34f03ba70664ebd611bd0c563ad4385d4e32096ebd06f294286"
+    },
+    {
+      "path": "custom_components/houseplan/backup_http.py",
+      "digest": "3d81ca30116ace638f7cd18913a644fae2356d0348ba4c6c64c351b31c132a06"
+    },
+    {
+      "path": "custom_components/houseplan/backup_service.py",
+      "digest": "65b51df43fbc9d8c6cbe3e1378b53569a56915d23ff2fedd40a2622c577a6b8b"
+    },
+    {
+      "path": "custom_components/houseplan/backup_transaction.py",
+      "digest": "b1326ab4ba004868acd5a73646aaab59715e6519c5e5c9f1b7df18db540612d3"
+    },
+    {
+      "path": "custom_components/houseplan/brand/icon.png",
+      "digest": "c56f108f97d6731f4415196066b338c89842b5e146e2b66a2b84f5eb22e6ef04"
+    },
+    {
+      "path": "custom_components/houseplan/brand/icon@2x.png",
+      "digest": "1ebd80063d7e47a90ee888941562ee770316cb0f7d41b7542c9c570e7bbad399"
+    },
+    {
+      "path": "custom_components/houseplan/brand/logo.png",
+      "digest": "0118660d9510bc3c5207c46585b91f895e1d2bd5e931ab8bee681a4ccdc1a2d0"
+    },
+    {
+      "path": "custom_components/houseplan/brand/logo@2x.png",
+      "digest": "0a2da505979ce0d624cbfa06d782173605d29a389036a95d8ab3b3e23bd53c53"
+    },
+    {
+      "path": "custom_components/houseplan/build_identity.py",
+      "digest": "1f230149740aa37fcb624a6381c30cf4dd9b87ff9ff1c73e04688f76301154db"
+    },
+    {
+      "path": "custom_components/houseplan/config_flow.py",
+      "digest": "ef48fc1faba6a132e4b94e156248df6f9beb6c0f45a0de92a2387e9e714b8b84"
+    },
+    {
+      "path": "custom_components/houseplan/config_migrations.py",
+      "digest": "00ae99dbc949b4152dc3eef8542c7c47ae0fa3b158fd62c01ac7d8ac6c8397eb"
+    },
+    {
+      "path": "custom_components/houseplan/const.py",
+      "digest": "8cbcdf76d946c4ea04ba8cb28da3955f687aedafff7d6892306c2c4e35c97161"
+    },
+    {
+      "path": "custom_components/houseplan/contact_basis.py",
+      "digest": "d3731327db3b6782f35efd27cb6bbe1e312f115205505891100a2f2310b61f86"
+    },
+    {
+      "path": "custom_components/houseplan/coordinate_canonicalization.py",
+      "digest": "a4bf26ee28311b48318e868f189f822c721c381617081b34f1c709bcb6590075"
+    },
+    {
+      "path": "custom_components/houseplan/decor_assets.py",
+      "digest": "aba21c8eed53afc6856c2375c3515d544a28010c658a1905b6e4bc1311d2e157"
+    },
+    {
+      "path": "custom_components/houseplan/deletion_layout.py",
+      "digest": "3c4eaafe98b261c0db98b586b5c40ac5d17b130dd50b224a93b0dd7f082ec78f"
+    },
+    {
+      "path": "custom_components/houseplan/diagnostics.py",
+      "digest": "04d21dd2726fe0ae97a853262076b79db7a97b2b702b6f43d59392360b68917c"
+    },
+    {
+      "path": "custom_components/houseplan/external_screens_websocket.py",
+      "digest": "d10e8982365073c0eb778086bfa34850bd23abb0cfd32d10db4d74bf630285e6"
+    },
+    {
+      "path": "custom_components/houseplan/frontend_asset_manifest.py",
+      "digest": "ff9b8b0a9d0319d1d64f6a62bdca8402bfa561d816413361b37d3b917582fd0f"
+    },
+    {
+      "path": "custom_components/houseplan/frontend_assets.py",
+      "digest": "e64eee5084db82c01f1dd171de309568904341e84e3756ca3e040e15cddbb60d"
+    },
+    {
+      "path": "custom_components/houseplan/frontend_registration.py",
+      "digest": "424cc1e04bac393479fa7511a979241e686afae97b57c05b406a087e5422bc57"
+    },
+    {
+      "path": "custom_components/houseplan/geometry_migration.py",
+      "digest": "74cdce7c18490f180b4f344c549d888d24af29cd06141e41a015578900e1eb4b"
+    },
+    {
+      "path": "custom_components/houseplan/graph_digest.py",
+      "digest": "7f8d119229aa0b9ec305b8858798b3a54b5c308ab1f78dbf2c29c4ca4fc8a141"
+    },
+    {
+      "path": "custom_components/houseplan/graph_host_continuity.py",
+      "digest": "da25a73697ec4360672bc4a194cfc678f8462413d0ba9853c97f752c935ad3e5"
+    },
+    {
+      "path": "custom_components/houseplan/graph_node_write.py",
+      "digest": "d7f4809ad091acd1b49135d6d454c73e37743529f8e9c8b0c65269522603c246"
+    },
+    {
+      "path": "custom_components/houseplan/graph_validation_scope.py",
+      "digest": "3f6b5ffbcfbc48e3e4a6059500719100e0bdea70e9d23fa54b6ac820d090e705"
+    },
+    {
+      "path": "custom_components/houseplan/graph_write.py",
+      "digest": "980a6c090b54dd8820ffbd86ad6835e705ea622c69564b3d16ea6488b9471e12"
+    },
+    {
+      "path": "custom_components/houseplan/http_api.py",
+      "digest": "215002d14666bcc1e508227433276d905a98cdae532797b30a9781023a557007"
+    },
+    {
+      "path": "custom_components/houseplan/import_export.py",
+      "digest": "046bea2d15185c8d2cbc9a0481af80ecb409419335b81de6d440cc77124672e1"
+    },
+    {
+      "path": "custom_components/houseplan/junction_limits.py",
+      "digest": "bda808fc1d72444502fe2d9a4d35179c9f12a8477c84f0cc32bff3e0b7841be0"
+    },
+    {
+      "path": "custom_components/houseplan/led_strip_inventory.py",
+      "digest": "776209ff6ea297f8e0d4272085a056e456a4e6cdd562c1bfa7ad79cfbd998381"
+    },
+    {
+      "path": "custom_components/houseplan/led_strips.py",
+      "digest": "f88332f8dfeac74322e4961c49147d2e46a43fdcbdfcd2e881601e02a31462e1"
+    },
+    {
+      "path": "custom_components/houseplan/manifest.json",
+      "digest": "64a7db99486402d0e9c5efdd58563518de06745b4359f0219bd04bee7eef2926"
+    },
+    {
+      "path": "custom_components/houseplan/marker_alerts.py",
+      "digest": "a08878aace1e17660fe2db3b857c2425b57d7779999bbfaa79c046d0fd4d594e"
+    },
+    {
+      "path": "custom_components/houseplan/marker_copy.py",
+      "digest": "2d9662f5c23e88e1b804f492ccd8274d096e9fe0186d8514f43e736058c584c0"
+    },
+    {
+      "path": "custom_components/houseplan/marker_history.py",
+      "digest": "df9eab8cdd9e6b4a9991b507e59345657648cfcf8e2ef0274ec14cfd90260e5d"
+    },
+    {
+      "path": "custom_components/houseplan/marker_history_websocket.py",
+      "digest": "7e9fd2875a26a1548e131e11b695bcaa7649499fcf27cce386e3eb4442d8688f"
+    },
+    {
+      "path": "custom_components/houseplan/opening_repair.py",
+      "digest": "e2c07bff4002704ebe3b6c3411f3cb987f97be80499d8546a62f33646ac546d0"
+    },
+    {
+      "path": "custom_components/houseplan/panel_registration.py",
+      "digest": "02ee5364287c1c70470178eed5595eea0d8bba29f9a0162b0a1e5c132a666233"
+    },
+    {
+      "path": "custom_components/houseplan/partition_promotion.py",
+      "digest": "87e66f265f7661769f3226e8b748cf6c43b08e22715480a7341ffc345d11fd5d"
+    },
+    {
+      "path": "custom_components/houseplan/plan_graph.py",
+      "digest": "ce795e47aa8708d6ed051e1e6845da8692dfcd01f1e2f2658135eadc95789b5f"
+    },
+    {
+      "path": "custom_components/houseplan/plan_graph_exact.py",
+      "digest": "0364ff546161eb820d726cd9b1794613e7cc78d19783d89a0372054320c73ad5"
+    },
+    {
+      "path": "custom_components/houseplan/plan_graph_migration.py",
+      "digest": "e76405773e763e7c30707f6a6a617d010bb9495c5839caefea0ee9c2d6fa0475"
+    },
+    {
+      "path": "custom_components/houseplan/plan_graph_source.py",
+      "digest": "45ff95f4bc7c0c17cdabbdd299b33ee1bc4653255fcc20fe50f427acc68127fe"
+    },
+    {
+      "path": "custom_components/houseplan/plan_graph_spatial.py",
+      "digest": "49a42b7465c6a4a85d885ae89947d8f93f236a135d44ed1fe03cec5ab1c45d54"
+    },
+    {
+      "path": "custom_components/houseplan/plans.py",
+      "digest": "486fe0f0acc9ff17cb3e611aed85181a1adf8bb9c62c57509889595eb24c667c"
+    },
+    {
+      "path": "custom_components/houseplan/portable_recovery.py",
+      "digest": "092a4b0d58340b9243d8762170ad0e87a13808c82df2fa07a59d365b6b9997c4"
+    },
+    {
+      "path": "custom_components/houseplan/previous_data.py",
+      "digest": "3930d086984ea416679c5f3ff4580cfbf6c49f1ebaf03f87163e2e3440ded716"
+    },
+    {
+      "path": "custom_components/houseplan/projection.py",
+      "digest": "273ee0f95353159d4ff2bf7f032aa4b11fcd670a8e43a6046a0d38cb8a8320ce"
+    },
+    {
+      "path": "custom_components/houseplan/quality_scale.yaml",
+      "digest": "a05302f7620d4d5f4d33dd6397b0823995f4a3b6bb67a6075240d96b9db3cd27"
+    },
+    {
+      "path": "custom_components/houseplan/radar.py",
+      "digest": "7635a139d0249d147b65457f84c72ec864e71ee72978308d3317edb5409580f5"
+    },
+    {
+      "path": "custom_components/houseplan/radar_geometry.py",
+      "digest": "8b9c359136865c0040c5a45ea27daa9200f2ed9d048c62f754be0ace0867bf06"
+    },
+    {
+      "path": "custom_components/houseplan/radar_validation.py",
+      "digest": "b2de317722e1429767939828331a1f13899ca9b049f7dbfdb263bac7b99e42ec"
+    },
+    {
+      "path": "custom_components/houseplan/radar_websocket.py",
+      "digest": "d396f673627c69d1362f95f1eb88c401dc83339ea2b1a493c71104f0ad1ee6ce"
+    },
+    {
+      "path": "custom_components/houseplan/registry_snapshot.py",
+      "digest": "7758107835a290b493a2e4d1e15a1e184d8f16df30aa1e3db620c7016fa09a36"
+    },
+    {
+      "path": "custom_components/houseplan/repairs.py",
+      "digest": "ed27ec70c5754b76254ff81c7d0d974e91c85157d1f38531b5e982a0a178d487"
+    },
+    {
+      "path": "custom_components/houseplan/room_appearance.py",
+      "digest": "53222dbcecb301c888c339637d92e90bbc9d4959b6cce5e0a32c9079b6bdad52"
+    },
+    {
+      "path": "custom_components/houseplan/space_copy.py",
+      "digest": "2827c698561f48e2aec8a100fd8ff990ce186f16867c44febf7581ea4b30182c"
+    },
+    {
+      "path": "custom_components/houseplan/store.py",
+      "digest": "9188b00a75c4bcfb6c975bff99241acf45092e02bd85af64c0c2d2c4ae7edbcf"
+    },
+    {
+      "path": "custom_components/houseplan/strings.json",
+      "digest": "86e930dc8c68aa943751c0264cd067b0cd7d28eee1d7b35de48696460e8fb98c"
+    },
+    {
+      "path": "custom_components/houseplan/structural_upload.py",
+      "digest": "2e5e568eb158d12427f6e33ba41021e7211aea164928258f332e0cdd8291fc04"
+    },
+    {
+      "path": "custom_components/houseplan/structural_websocket.py",
+      "digest": "a37dffe1bda684fa58184898ab676d575e82a331ec22ffa79cc1a13cec7aa2c3"
+    },
+    {
+      "path": "custom_components/houseplan/support_builds.py",
+      "digest": "7cc2d5d6bfe573db8fbe0b3a411362f7ca8c49bb7d6b3878871f97874920fa34"
+    },
+    {
+      "path": "custom_components/houseplan/support_config_projection.py",
+      "digest": "a6a36a4222cd2063a389334a4361d185411a55ada40ee522981791da7b3063fa"
+    },
+    {
+      "path": "custom_components/houseplan/support_diagnostic_values.py",
+      "digest": "d5be9351610c783ad555baf337639d5035ec82c93a9b46d0db5a9a40adf2514d"
+    },
+    {
+      "path": "custom_components/houseplan/support_diagnostics.py",
+      "digest": "dd3ec21faec3462f84e9788d657c379bbe9dde1aa53107491dbee7f01a7cf210"
+    },
+    {
+      "path": "custom_components/houseplan/support_package.py",
+      "digest": "07b86a5d6d597a45dae127a86cc99883e3729cdc358ca4eaf18ed1c8adf0164c"
+    },
+    {
+      "path": "custom_components/houseplan/support_preview.py",
+      "digest": "61ccb81244d4fc4fcd365d094f77160142a986ec3ee1db2197ebeddbfd47d744"
+    },
+    {
+      "path": "custom_components/houseplan/support_snapshot.py",
+      "digest": "46b02dd2a48957031ba1c4283b0672a7667860ce450b047ffa6cd436d1a6d14d"
+    },
+    {
+      "path": "custom_components/houseplan/support_transport.py",
+      "digest": "834d5abdaa78582e89d6c61e19ca6d4cd179f073d774034b1448b3bcfd25d82d"
+    },
+    {
+      "path": "custom_components/houseplan/support_wire_schema.py",
+      "digest": "1de73d02cff4ddeba20e84ab826935e9fdef32a575495995306224b7ee8309b7"
+    },
+    {
+      "path": "custom_components/houseplan/system_health.py",
+      "digest": "faecdf3ec2646425a13ce7777d89394466a190cd4903b65378558314de7b12bb"
+    },
+    {
+      "path": "custom_components/houseplan/trails.py",
+      "digest": "9aaac84ebf32c31b35c56aa50a6fde542c005649440d9bc4753aa72418ab34b8"
+    },
+    {
+      "path": "custom_components/houseplan/translations/de.json",
+      "digest": "649015f5b30b14f577d62aba17b4ffa904881e6b5d2c5743d8445bafc49fdeab"
+    },
+    {
+      "path": "custom_components/houseplan/translations/en.json",
+      "digest": "85e8b595f10c4148e05f9d97def7c84bed7f80d3cd032419123410d68dbe28d7"
+    },
+    {
+      "path": "custom_components/houseplan/translations/fr.json",
+      "digest": "22959782bb214f055a6982ef826c86b06658cb197b46e93bce931fc5c0ee6baf"
+    },
+    {
+      "path": "custom_components/houseplan/translations/ru.json",
+      "digest": "838d9561cbb53ea8af80ccca8639017d1f39d9ef9cb22f848353f9bd676b049d"
+    },
+    {
+      "path": "custom_components/houseplan/vacuum_camera_read.py",
+      "digest": "5226d6093670c5348f8dc149605a4f8a47d86e4115559f5242eb19230c74e522"
+    },
+    {
+      "path": "custom_components/houseplan/vacuum_ecovacs.py",
+      "digest": "e401c5193f3fa45dac85e9f105eb90cd43c77d2e975b973a450ca228f937998e"
+    },
+    {
+      "path": "custom_components/houseplan/vacuum_ecovacs_reader.py",
+      "digest": "952d5f95f7fd0cb71b8e76d11723f37da061e58fb1dc297665d167c32725728b"
+    },
+    {
+      "path": "custom_components/houseplan/vacuum_ecovacs_websocket.py",
+      "digest": "ab90a3f68ca1b919464da1f8a3d0078da0f9771c4edc167b7bb5bfdaba31f0c9"
+    },
+    {
+      "path": "custom_components/houseplan/vacuum_history.py",
+      "digest": "1c123cae757a7a27be09ec7cf27896408c1986469444b6eba2b5e1cca6b38a60"
+    },
+    {
+      "path": "custom_components/houseplan/vacuum_history_websocket.py",
+      "digest": "29b3a3c2c5a12472c68da1cabb7bae481b3d8184cf1018930bb6716c63347cec"
+    },
+    {
+      "path": "custom_components/houseplan/vacuum_live_tail.py",
+      "digest": "ebb92fb10f476eb6d6bec8fa6c30a391efce9d9b201b025bd93491d34146b8fd"
+    },
+    {
+      "path": "custom_components/houseplan/vacuum_path_collector.py",
+      "digest": "f7cd6ab3eebec1f0258f3140ab8704881ac3d60ed759f6dee87d5e73324dcac3"
+    },
+    {
+      "path": "custom_components/houseplan/vacuum_paths.py",
+      "digest": "c7895d94ce2599ef6283e4e5ea76717a4f09fe8cd963c86e80b51e9c9eb2547d"
+    },
+    {
+      "path": "custom_components/houseplan/vacuum_routes.py",
+      "digest": "7b869b270de24b3ccbf01d51e3ce5a7defb2e646186f4ff6bdd8d2b1a0654f74"
+    },
+    {
+      "path": "custom_components/houseplan/validation.py",
+      "digest": "dee7a2eb466d7f41cabef77ef12391e0bf78a973a764ca055ca803097f16b613"
+    },
+    {
+      "path": "custom_components/houseplan/virtual_lights.py",
+      "digest": "9ce1518a0f375facd979873ff109e99b5bcaa66005e16c409034a2317a32ddfd"
+    },
+    {
+      "path": "custom_components/houseplan/wall_node_attach.py",
+      "digest": "89e8be88f946a19ad4bab4e91b27e73abcf663e20f75f6869cb9069e49d5676b"
+    },
+    {
+      "path": "custom_components/houseplan/wall_node_delete.py",
+      "digest": "c4f5cbb23ef4f06805797731cc28cb73d5c1d6e0d7dc35d412655d32b75249a1"
+    },
+    {
+      "path": "custom_components/houseplan/wall_node_merge.py",
+      "digest": "4a3835e3d3b9fdf564f7f09f8acda41e50afd3464d760a2ece145be1f6e5a625"
+    },
+    {
+      "path": "custom_components/houseplan/wall_node_move.py",
+      "digest": "57ec50ad8362dd0c995614c602e73084eff5cb8f7f20bd2a2faf55d6efe3cfac"
+    },
+    {
+      "path": "custom_components/houseplan/wall_removal_proof.py",
+      "digest": "a57a18e3d6336dcee74a919544e6a361a36e2a82e4f6b03f3fb2d623e4d714a0"
+    },
+    {
+      "path": "custom_components/houseplan/wall_segment_model.py",
+      "digest": "f427bc0483b72073fe1e4665a1c39c3a8c641f0e3567a4ebdc2ccb3a0b86a6ac"
+    },
+    {
+      "path": "custom_components/houseplan/websocket_api.py",
+      "digest": "19da921be06508ceffda1455fec833ff26804e50329082f38f5a717ebf3bad8e"
+    },
+    {
+      "path": "custom_components/houseplan/zigbee_lqi.py",
+      "digest": "f3e529797b8da606e781580f95cba665a6167e35c5adcc031b64c96f5ab92040"
+    },
+    {
+      "path": "custom_components/houseplan/zigbee_lqi_model.py",
+      "digest": "00e64f44a1232462392d884ebfe2c4390739b57df3ed615b6392a9fbb36ddc23"
+    },
+    {
+      "path": "custom_components/houseplan/zigbee_lqi_websocket.py",
+      "digest": "74747a16d9e63ed715eecf016c23d58d22155acfd99ead86612debce0cd8a96c"
+    },
+    {
+      "path": "custom_components/houseplan/zigbee_lqi_z2m.py",
+      "digest": "129518ac46353c0f86ea83539411765210e7b76bd7a0f62a28359dc2ff8c70f3"
+    },
+    {
+      "path": "custom_components/houseplan/zigbee_lqi_zha.py",
+      "digest": "9a9fd89bd0927027d52a8666aa1495e6042cb53bfa716b174acf8044bbfe16a4"
+    },
+    {
+      "path": "custom_components/houseplan/zigbee_topology.py",
+      "digest": "18f30345cc6ca791d7d5f2990038fb44c99d872352fd4777051576c608bcacb2"
+    },
+    {
+      "path": "custom_components/houseplan/zigbee_websocket.py",
+      "digest": "48e8927a781f6a0193e2c2d7925cebc300490ab938e783dfb2510b0d7da22f41"
+    },
+    {
+      "path": "docs/data-hp-contract.json",
+      "digest": "8e6e80b6acfd3e69f09092ff726c9672301cd4d21b5ff386d6a8990af54c725f"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/backdrop-pick-xpLs-mkK.js",
+      "digest": "ccf07896be56be872e3ac8ba9542030a1f1a6ec63af66ad13532514b63c5d5eb"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/backup-archive-client-Dd9b5q7O.js",
+      "digest": "2501713a673fcc26e68230c9c2fc5bcfee11b7d5a82bfe0d3b1b9d783c018cad"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/card-editor-validation-Da78TWeP.js",
+      "digest": "5722ee01b64b9903a59919901646b1921c2c223aa026e5eb2e8837d48b9dbcf3"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/chrome-tooltip-DPMcESr2.js",
+      "digest": "eaabd772f208ae716d3625a5689652457c29b0c759d3d73edce952e7d51bf6d7"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/context-menu-CxEHpaG5.js",
+      "digest": "90702e14b35a693bdc3a8cd807b1eee17103247da2796136c5d9b6a26dc6dd06"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/coordinate-canonicalization-D0uVBknV.js",
+      "digest": "83d73cc7e14401aa40e9653ff3f1770015450ebdb925bd080e5cfeee0ba04ce6"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/de-CGlilIhM.js",
+      "digest": "4f79e65db700b19cc3424f30138a2be09657d7f539eadf3477657e32b5b8dae8"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/device-contact-basis-DMJ8By6_.js",
+      "digest": "998ff0d762bee90f13cf7541e5ec67b3bb16691b24a37d75c4e8bd8837c90fab"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/device-contact-floor-DX3U63wm.js",
+      "digest": "b6c08af17a40a6b97a32b6e72581ed8b6f50ba8cd0457c73ed5c3c5067fb36da"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/device-contact-geometry-B_BQSWAs.js",
+      "digest": "a0d118de83035ad55ccc36ff6f0006fd3e43d1da9ae85ed25fe03ea7ca03e961"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/device-contact-scene-BPpm7j9U.js",
+      "digest": "9eacd18655254fb0cdfb02ac8202637cdbca7720abfa9b482b0ecedd097f5e6b"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/device-contact-write-Bdcheore.js",
+      "digest": "40badc7a6f3ee2e09450dcf98444ec427b8da9e09a7ea1fa35f730f4b5161adf"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/device-inbox-DU_bXJH_.js",
+      "digest": "501172c682fa2e47c7d31d5416abc158220928e0e6cb06a053b23040ab8ffe22"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/editor-D_EWVjLs.js",
+      "digest": "e607ec974de25d203e6a2ba91310efb2b06abb92678967ffdf8e54fa134005b4"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/editor-shared-gclXMDC5.js",
+      "digest": "313719f67369bbdcae73966df270225303c6f1095ba698eb80bf12ff2427eb67"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/en-CB2Q7Iqm.js",
+      "digest": "2777d0c742b68b5523d0c9920a96693e1ae8f370aa981f14ec8b8172d1fbc2d7"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/floating-surface-SA_dMUFY.js",
+      "digest": "dd7b9429a1781c916eb67200cb57993940fcf7fc4e888c1e92fe8b8ac72d3656"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/fr-Bk0yhw86.js",
+      "digest": "57cfa6bf7ad77708d0efbb5f34050a4bef3e67e63549ca395a6e95342bad0c3e"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/furniture-plan-art.generated-BWcNTz_k.js",
+      "digest": "c22a459c10e804d93b2ad289f3757b053b8ee48ead8b3c05fe68756204a57746"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/graph-optimize-DYjJQ_U3.js",
+      "digest": "a267bac30b4c8e33b0ee26b5b34a2ccb53726619e84c6fa858de043d271579dc"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/graph-seam-opening-Do2n2oeB.js",
+      "digest": "5bff9bef2c7859382dff7229293c9867be74008484b341f34cc2e1c625a8a5df"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/graph-write-change-CWeXAuZ_.js",
+      "digest": "3aee30bd18dcc1094b3497244b75969878fed0fbdc62b145581d5963bee7d58d"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/houseplan-card-D9DVMsFt.js",
+      "digest": "1ea7a4602983636c2e6d30fae611877f72cf1d580e4b774677de2a191cd95ddf"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/houseplan-editor-runtime-CZm_I5Oy.js",
+      "digest": "5e2c4da205a98e57029bb4a7df553ae5bcdc2345df123f15bbc895ee8e00a0af"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/houseplan-onboarding-runtime-DYhypG5r.js",
+      "digest": "dad24d5173644e6c046a66f89068dd1543558dc7780dd4ac045c3ba64e12cdff"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/hp-color-opacity-DhXzyBWb.js",
+      "digest": "a5e14382248bad9c2b5a1e91d726ffabad51c54164100424c6330a535004cf14"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/hp-plan-converter-info-C9ttG2aT.js",
+      "digest": "dd0c81af49cb88d8ff17a1ed0bd5d2e5e0ddacb37dc8a7b8657b249474a07957"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/hp-settings-select-De_1ZyRQ.js",
+      "digest": "cee4c7ebf3bf63095c7197dc4b634c37064757d7e8f66d78df8ceb941e82b3ed"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/hp-zigbee-topology-overlay-Cj62pM8n.js",
+      "digest": "c5f52dd8468397599f797b0a876d4a29cfc04d152712f8b446d8f11e1fd44b6a"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/iso-scene-render-CGgzNodl.js",
+      "digest": "dfc829297d1337bd6f5e10d173bb667d71292bcf248d9fab0ad4c0fe47dc5a5f"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/led-de-tUwsTrQa.js",
+      "digest": "12a3cde148dd9b6cf14888403159029c21a58833b56e4cdb2fc3341c465006b3"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/led-fr-CrleK_au.js",
+      "digest": "39d6d64e43b9c04411daddbaab20f09d70921b4b76bd2f14f352762148333428"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/led-ru-D4u_yalj.js",
+      "digest": "0199b7d2f9c076e3ce0467284b90699b63549d7e812a333c1b7eb114dec9d5eb"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/led-strip-editor-BJfmpBjv.js",
+      "digest": "7bba7b52da92c7dda96dcda055768be5e490323ed02b7edcdf1f2e7fa3adc04b"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/led-strip-field-BW0Y3yTa.js",
+      "digest": "b175b8f015ed59059f2ef401fe0b7d7c16a8c932d4aaee295892a36effbd3b77"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/led-strip-geometry-1dMjHhvh.js",
+      "digest": "db053d53c750871bdbcb4c7e818aa3f9b59a2c7c3a709313fb9c50dcf5fe1432"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/led-strip-runtime-CtJ0YD0V.js",
+      "digest": "8701543229e4187bee14fd402975af2c27979493d416190bd99a83f0db1fbd5c"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/lit-element-BHE7LZLj.js",
+      "digest": "e91ff9e3e23a1d9c4afdc08c9ffa2fb466c2cb08063f674e34b97258b5521529"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/live-interaction-runtime-q5ax6nFB.js",
+      "digest": "92b3aab199b7a0b08286bca91807de021b59135b1638ef7bafdf1073bc91d42d"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/live-tip-placement-BXf0uTEd.js",
+      "digest": "f36639f2e94aa1e9513aab4738b8d6eca15ced96cb248e778b09f49e971ce15e"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/marker-alert-presentation-C404kdBN.js",
+      "digest": "7c1d48a3054cf84a70b4dd238a4d3f3d8466d63dfae9a07b671c42762facc3bd"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/marker-alert-view-runtime-DX2qgeP7.js",
+      "digest": "00a4110a6112dab67577099db01267ca23f32deddb19c7953cffac25427f646b"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/marker-deletion-BAml3zjK.js",
+      "digest": "54de2730bcc3ec561ad4e71963626c92ecb7f29bf6a86cf8f6b89827de4d396a"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/moon-runtime-D7x_15vz.js",
+      "digest": "fbe1756c77adb7c0a3647af7fa5922dcb17c066845ff66e325bf4efefb869356"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/namespace-language-Cf1maIvd.js",
+      "digest": "887b24078a069e1a14beef8c29b3f55520181ccf552729a39e67c03431ebab56"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/open-spans-YrWsXwGk.js",
+      "digest": "8b53b2218cd37d1682fe41a96825a20a8176d12278074a2d338b36538c34a34e"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/optimize-plans-dialog-CGuL3_Bi.js",
+      "digest": "b24abe3d41ded17fa4f99c4515b476b115cf6cbe835289e1b3839704bc3d7772"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/pdf-export-BDo0Egbp.js",
+      "digest": "ff8271f681284448cba4de7a600980752d07cbefc60e4d2b57ac320f93a555b3"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/plan-converter-C0BcaUoq.js",
+      "digest": "19d0f82b53554442cd3afbe449315a9517cbfd987677163bd9a96f48d0428256"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/plan-graph-DsPhi5Hz.js",
+      "digest": "022c34806641eb79bd8461f0e83c087646a4f02f537a21500aba5b04603ce8b3"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/plan-optimizer-BaA3ju8s.js",
+      "digest": "6c255ab4e646ac0b369c21adbde9a1ad68afb9d303d50918d64c0af6b117cde0"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/ref-CDyQMf0q.js",
+      "digest": "7765aebb5979151bfe4ffa878ee3fa59f1aeb599f3e875a970d6ce2739328b2b"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/settings-B-Pxr2yz.js",
+      "digest": "e6c8db053bd09ea5c314482ad596bc122a6ff3032dcc4313fe419b9361cc4938"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/settings-de-B0EBfx_3.js",
+      "digest": "ad06963385c4141e621f21e4b3323919d17441b5c9951b47e85f7dc64735ffd0"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/settings-fr-DBpaDwXJ.js",
+      "digest": "b87845c19a8fc7cd299c37621bd9722a310a6220e62a18d2dd4be1ab64c1c216"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/settings-ru-Drj22Arc.js",
+      "digest": "f001a7bfc593fd33f4f0498da3a393e2bea43191217ca973ef843c88e75034dc"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/settings-select-control-BGlzvNgF.js",
+      "digest": "c85af1e1bebea52bef5961f602d3ef625ba64e0321a0f558f58a76deeef44e79"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/sha256-j9N4SM78.js",
+      "digest": "2d9f6066625507195514ff5102951258a6bec749ab59054ce426fc07c2953c08"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/space-editor-iY7m9bdX.js",
+      "digest": "c6a38226530b69baa7e597ce525efe2451ce187dcec239a33a6adcfdca8fa9e9"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/stored-wall-contact-DCbofqiQ.js",
+      "digest": "b262f2d89fb3704aef73f1ed6a3648b891ffce536c97a2f47bd8481fe90c548a"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/summary-panel-editor-C96gjZCQ.js",
+      "digest": "73738289a54dd71dc43bfa34c79f814d7048115a24f8d2140eaf85c5f3b4f7b3"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/summary-panel-metrics-CmuvCuQU.js",
+      "digest": "14f5d18bf36a7216140899260712176f13d32cbd21d602efeb422e6220bb5b31"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/summary-panel-runtime-entry-xhIjNQj2.js",
+      "digest": "78e622ecddd3aede58e8a7ae21eac16a01ddd8ff1452dae3da555b5316ad9c9b"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/summary-shared-v6ZRFC3S.js",
+      "digest": "beb5f4a1d8fda1c595de00f3b5a2b6669b0a8ba0e4dfd7e7a7072fba97342fe3"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/support-de-CNAjzeXL.js",
+      "digest": "ae3c6d5d61a9cef8a3c9f662335707b11fd92fe2a05fb7ad0e451b1962b3311b"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/support-diagnostics-BEzNb6JN.js",
+      "digest": "01e0a1ebd5166acd215ae2c1810ca13bb4a6b4fed7bb487955f493fcde523416"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/support-fr-BJ_1BKY6.js",
+      "digest": "9de88c553e27cad9f92535b128bcd32545a880e4b3cb598aa009b5ed63a015a1"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/support-ru-B9Mtsyb2.js",
+      "digest": "5d414ea9564edf55db389692dcd355353ae996b646ef150257ee10cba60f145e"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/tools-de-ChbB9MFa.js",
+      "digest": "b12c5c9d2b165f78fea03ffc4aa83ad13629294bd52eb0e30d07a15843dbf7df"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/tools-fr-B-7rWhKx.js",
+      "digest": "d9aa11f378ed96ddea8ad5be2aef961050d2ca1093f6bc1a1cd7a17b068bd706"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/tools-ru-kZ8O6_JI.js",
+      "digest": "b6533d04671c320862d8042434a4bb9b4174987af6a9769f54e5b3a37feb71b0"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/topology-de-BpL0-out.js",
+      "digest": "807467df47ab5dda262bf6a12710717b918371d3358f915861e55f447f51e704"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/topology-fr-DfT8T-bp.js",
+      "digest": "f86ef7c2f0a5ba8ad4e81311ef28d979bac0f34adc8729e470b7e1dc38c61076"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/topology-ru-B_hbSkXu.js",
+      "digest": "395dbcd4525bb79fd3904e788901c2a98ed2f2c577f279c0ac93c21ee0866825"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/view-device-menu-CoCvV3VM.js",
+      "digest": "d6ea2165f5cf56a2594872414a1c28ecb9c6db4b7281651b0582a815e1c0a5f0"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/view-frame-Cf3fRGpJ.js",
+      "digest": "c391debfb10552c5ecc63ee4145fd20bed0ec6e5514f43f230fc1ec075559c39"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/wall-face-graph-C08KLMZw.js",
+      "digest": "d4fa98fbede48ef2bc696271e27fa644a9023b42dd31a0199f21557317fce5c0"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/wall-node-card-adapter-B-1J6Haf.js",
+      "digest": "1beb3b25db8bc308360e52c2644aa3e67e39dc81afcea582aa3643e6108882c3"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/zigbee-topology-Drq8D8N0.js",
+      "digest": "f6223511c32e078b8aaa52f3dbc0dc8bd8decb002326ddfb73bbe19aa72c4bf5"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets/zigbee-topology-runtime-fTEvZEU0.js",
+      "digest": "618a170f979a85b8a02328562a994007bfceeaabaddc8dcc1f443f87e96a49f1"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-card.js",
+      "digest": "4522ff7df249ee0ef537590c06877f9da363d4e33ecb4d0bcbe75758cbf3d75d"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-panel.js",
+      "digest": "77277e63c4e750d82a6675174f1f40a71d0e31400e3dc1ef8949c4ceca9b346b"
+    },
+    {
+      "path": "custom_components/houseplan/frontend/houseplan-assets.json",
+      "digest": "8926cc56a33debecb53989686046b6a7189b7f20af48cd31203438e80369ec3d"
+    }
+  ]
+}

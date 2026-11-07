@@ -366,3 +366,13 @@ test('#1344 the partial first RAF after start is not a display interval',()=>{
  assert.equal(c.active,true,'6ms from start to first RAF must not shrink the two 16ms opportunities');
  assert.equal(pending.size,1);tick(96);assert.equal(c.active,false);assert.equal(finished,1);
 });
+
+test('#1344 ordinary sub-millisecond RAF phase jitter does not add a third hold frame',()=>{
+ let now=0,seq=0,finished=0;const pending=new Map();
+ const c=new ModeTransitionController({frame:()=>{},settled:()=>finished++},
+ {now:()=>now,requestFrame:cb=>{pending.set(++seq,cb);return seq},cancelFrame:id=>pending.delete(id)});
+ const from=endpoint('view',0,600,{x:0,y:0,w:800,h:600}),to=endpoint('plan',96,504,{x:0,y:48,w:800,h:504});
+ const tick=(time,wall)=>{now=wall;assert.equal(pending.size,1);const[id,cb]=pending.entries().next().value;pending.delete(id);cb(time);};
+ c.start(from,to,'plan',30);tick(16.7,17.2);tick(33.4,34.4);tick(50.1,50.5);tick(66.8,67.1);
+ assert.equal(c.active,false);assert.equal(finished,1);assert.equal(pending.size,0);
+});

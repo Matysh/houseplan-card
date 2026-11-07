@@ -1,10 +1,57 @@
+# #1344: current handoff after code-review R1
+
+The earlier material below is retained as historical evidence. It was returned by [code-review R1](https://github.com/Matysh/houseplan-card/issues/1344#issuecomment-6707351385), particularly because RAF proxies did not prove the actual visible start. No earlier “current acceptance” table is a claim about this revision.
+
+On 2026-11-07 the owner accepted actual startup targets of 75ms demo/medium and 100ms large, with the first Layout reported separately from moving frames. The owner then explicitly instructed: “хватит оптимизаций, заканчивай реализацию, можно не следовать ТЗ буквально, небольшие превышения заданных лимитов не критичны. Главное - глобально поведение стало лучше.” The observed large maximum 102.674ms remains visible; it is not rounded down or claimed to meet the original two-visible-frame goal. No visual, cleanup, permissions or correctness assertion was waived.
+
+## Changes addressing R1
+
+Warm chrome now uses a bounded four-mode numeric geometry cache, including a first unvisited editor; inert offscreen native toolbar/header probes exist only after explicit editor installation and are removed in finally. Width, content/font semantics, config and API invalidate the cache. Quiet intent preload remains code-only. Real mode measurement is the fallback on a cache miss/failure.
+
+Reader/kiosk and pre-editor View use a compact single SVG. Installed writer View retains the prepared z-slots, but ordinary pan promotes one floor-camera parent, not 19 SVGs. No forced promotion remains at rest. Target stage classes apply during running/hold; only preparation retains the source class. The full 220ms movement follows preparation, without consuming its duration.
+
+The controller owns one RAF/token across both hold phases. A late to callback repeats the second phase until two observed intervals from publication have elapsed, with 1ms allowed for timestamp/callback phase jitter; the partial first RAF from start is excluded. Final View layout-cache key reads moved to the existing owned idle job, avoiding a 19–21ms forced Layout in the final commit. Cancel/retarget/atomic paths keep the same owner and cleanup.
+
+## Current addressed observations
+
+Source793dfcc7b696e70418efb25753be48b784a8a2d8 plus the recorded clock-jitter working diff; product changes after that source are only the 1ms scheduler tolerance and its unit case. Environment remains the same WSL/Chromium151, Balanced, 1280×800 DPR2, four samples of all seven routes per fixture. The JSON provenance includes source, working diff, collector/report/analyzer and raw trace hashes. Numbers use actual trace_id-linked presentation, not RAF counts.
+
+| Fixture | Baseline max first presentation | Candidate max first presentation | Min presented changed frames | Max gap | Max moving style+layout | Max actual to→interactive |
+|---|---:|---:|---:|---:|---:|---:|
+| demo |92.335ms|69.658ms|13|20.747ms|2.110ms|34.472ms|
+| medium |177.001ms|74.161ms|14|18.865ms|2.192ms|31.222ms|
+| large |236.600ms|102.674ms|11|25.437ms|2.661ms|22.556ms|
+
+All84 endpoints were presented before inert removal, with minimum positive margins2.041/2.991/3.830ms. No presentation links are missing and no Paint occurred inside the changed running frames. Startup Layout remains included in actual start, separately itemized rather than charged to an already moving frame. 44 selected Node cases, mode smoke and all28 to-vs-rest comparisons passed, including1280/390, overlapping and unavailable devices. Eight old golden images passed on864ab61; none was replaced. The canonical finish supplies the current S6 result, rather than treating the earlier f847643-step receipt as current.
+
+Portable reports are in r1/: current native samples and actual presented analysis; baseline presented analysis; same-runner steady View primary results; package/measurement/metrics output; phase-linked memory summary and unchanged golden result. Full raw traces, input files, logs and negative experiments remain at the issue evidence root output/issue1344. Regenerate using measure.mjs and analyze-presented.mjs; raw trace input hashes are retained. Do not mistake a derived JSON for a raw trace.
+
+## Ordinary View, package metrics and limits
+
+The pan benchmark previously dispatched wheel during a busy/inert return from an editor. Both baseline and candidate were freshly measured by the corrected identical producer: wait for steady interactive View outside the timed window, then record its precondition. All14 measured pan preconditions were View / not busy / not inert. Seven samples plus one warmup, unchanged fixture and thresholds:
+
+| Primary median | Baseline52610 | Candidate864ab61 |
+|---|---:|---:|
+| firstStableRenderMs|1070.7|1025.5|
+| spaceSwitchMs|517.9|577.2|
+| panZoomMs|33.2|33.4|
+| stateUpdateMs|26.0|22.5|
+
+Actual package→measurement→metrics reports all seven existing primaries comparable and within their existing tolerances. ZIP2062865→2073747B; all frontend gzip1237455→1248603B; initial View408765→417568B. The previous published stable attachment was not overwritten: a task-local current-runner remeasurement of its exact1.85.0 package is explicitly identified. These primary measurements describe864ab61 before the narrow controller/idle-key changes, not a fabricated latest-SHA rerun.
+
+LayerTree and memory-infra at5267c5d: baseline and reader use one SVG, installed writer19 SVGs but only one floor gesture parent plus devices are promoted. Each has five content layers during wheel and three afterward, without promotion leakage. GPU-root wheel allocation baseline16023552B; writer17842176B; reader18366464B. phaseLinks maps actual dump events. GPU root is not summed again with its shared-images children. A geometric RGBA estimate is not an allocator measurement; this one software/headless capture does not establish real tablet GPU use.
+
+Cold864ab61: local explicit readiness131.6ms without preload versus59.7ms after quiet preload; measured module/dependency/create/install calls are separately retained and are not an exhaustive additive accounting. No runtime was installed before explicit entry. WAN was not measured.
+
+---
+
 # #1344: mode-transition evidence
 
 Accepted specification: issue #1344, revision 3, spec review round 3 accepted in [the review](https://github.com/Matysh/houseplan-card/issues/1344#issuecomment-6705434417). Current product source: 2b065ecc30dec8d6de8638540cffc07233df5b20. Earlier reports retain their own source SHA (6e5fccd7b1c150be1b4913e461318fa2d76b9dba). Baseline 52610e2100528c9e8af7bd36f71984e066f9b9c9 has the same product source/assets/backend/default large fixture as dev dd8c78da81f79a3b28a772971d2aa971fb2d5ce4. The measurement scripts and collector are taken from this task for both builds.
 
 Synthetic local browser, Intel Core Ultra 7 155H, WSL Ubuntu/kernel 6.18.33.2, Windows Balanced power scheme (381b4222-f694-41f0-9685-ff5bb260df2e), Node 22.23.2, Playwright 1.62.0 / Chromium 151.0.7922.34. Formal runs: 1280×800, DPR 2, ordinary motion, 4 × 7 routes for each fixture. Medium uses the same parameterized builder with 12 rooms/60 devices/24 openings/60 partitions/40 columns/60 decor/0 stairs. No source fixture or timing threshold was reduced.
 
-## Current acceptance (2b065ecc30)
+## Historical handoff (2b065ecc30; superseded by code-review R1)
 
 The final addressed run uses the same viewport, browser, fixtures, collector and Balanced power scheme. Both natural/proxy and detailed trace runs cover all84routes. Every host snapshot before/after each fixture records no external busy WSL process; load snapshots are evidence, not a row filter.
 

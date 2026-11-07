@@ -275,7 +275,9 @@ export class ModeTransitionController {
         if (this._state?.token !== token) return;
         observeFrame(time);
         const elapsed = Math.max(this._clock.now(), time) - publishedAt;
-        if (Number.isFinite(interval) && elapsed < 2 * interval) {
+        // RAF's timeline timestamp and callback entry are sampled at different
+        // instants. A <=1ms phase jitter must not add an entire display frame.
+        if (Number.isFinite(interval) && elapsed + 1 < 2 * interval) {
           this._raf = this._clock.requestFrame(finish);
           return;
         }

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "geometry-view-dark-fit",
+    "code": 0
+  },
+  {
+    "id": "geometry-plan-editor-dark",
+    "code": 0
+  },
+  {
+    "id": "panel-geometry-devices-editor-dark",
+    "code": 0
+  },
+  {
+    "id": "panel-geometry-decor-editor-dark",
+    "code": 0
+  },
+  {
+    "id": "panel-stairs-flat-normal-light",
+    "code": 0
+  },
+  {
+    "id": "stairs-flat-selected-light",
+    "code": 0
+  },
+  {
+    "id": "hidden-devices-editor-dark",
+    "code": 0
+  },
+  {
+    "id": "room-label-parity-plan-light",
+    "code": 0
+  }
+]
