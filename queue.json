@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6565,
-  "nextTicket": 294,
+  "revision": 6566,
+  "nextTicket": 295,
   "nextFence": 294,
   "tasks": {
     "1193": {
@@ -3894,6 +3894,20 @@
         "status": "published",
         "sourceSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865"
       }
+    },
+    "1348": {
+      "issue": 1348,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1348-glass-doors",
+      "materialSha": "628ca768782b89a07bb9779f651c6f1cfcd5cb26",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 294,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794078338812,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4068,9 +4082,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1348
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:14291f4c-491e-41ef-9944-69cb94df3718": {
+      "digest": "98999a9eecd31aa230451dbe4f4fd7ad4b12fd1e7f92b97e843ad1f75e78434d",
+      "issue": 1348,
+      "message": {
+        "kind": "queued",
+        "issue": 1348,
+        "at": 1794078338812,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "628ca768782b89a07bb9779f651c6f1cfcd5cb26"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "890a4ada80b4d379aaa523f0c18f96cbb6e046e5",
     "status": "delivered",
