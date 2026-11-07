@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6465,
+  "revision": 6466,
   "nextTicket": 292,
   "nextFence": 292,
   "tasks": {
@@ -3801,7 +3801,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794072032189,
       "reviewEntry": 4,
-      "patchId": "b3fdf0615e5169ef0814ea7f1d40e56f535d94a5",
+      "patchId": "38e59cd05a63259ea1bdf34e37ac10519b72cb1b",
       "changedFiles": [
         "demo/benchmark_large_house.mjs",
         "demo/fixtures/large-house.mjs",
@@ -3841,8 +3841,20 @@
         "docs/testing/issue1344/pipeline-metrics.md",
         "docs/testing/issue1344/pipeline-package.json",
         "docs/testing/issue1344/pipeline-performance.json",
+        "docs/testing/issue1344/r1/review-r1-base-trace-presented-analysis.json",
+        "docs/testing/issue1344/r1/review-r1-chrome-memory-summary.json",
+        "docs/testing/issue1344/r1/review-r1-clock-jitter-native.json",
+        "docs/testing/issue1344/r1/review-r1-clock-jitter-trace-presented-analysis.json",
+        "docs/testing/issue1344/r1/review-r1-final-goldens.json",
+        "docs/testing/issue1344/r1/review-r1-pipeline-measurement.json",
+        "docs/testing/issue1344/r1/review-r1-pipeline-metrics.json",
+        "docs/testing/issue1344/r1/review-r1-pipeline-metrics.md",
+        "docs/testing/issue1344/r1/review-r1-pipeline-package.json",
+        "docs/testing/issue1344/r1/review-r1-steady-base-primary.json",
+        "docs/testing/issue1344/r1/review-r1-steady-candidate-primary.json",
         "docs/testing/issue1344/selection.json",
         "docs/testing/issue1344/style-flush-v2-flush.json",
+        "docs/testing/issue1344/view-layers.mjs",
         "process-next/lib/metrics.mjs",
         "process-next/test/metrics.test.mjs",
         "scripts/bundle-manifest.mjs",
@@ -3851,6 +3863,7 @@
         "src/config-fingerprint-pass.ts",
         "src/device-contact-render.ts",
         "src/editor-runtime-loader.ts",
+        "src/editors/properties/editor.ts",
         "src/editors/properties/styles.ts",
         "src/header-motion.ts",
         "src/houseplan-card.ts",
@@ -3866,9 +3879,11 @@
         "src/led-strip-runtime.ts",
         "src/live-interaction-runtime.ts",
         "src/live-viewport.ts",
+        "src/mode-chrome-layout.ts",
         "src/mode-presentation.ts",
         "src/mode-scene-layers.ts",
         "src/mode-transition.ts",
+        "src/panel-header-flow.ts",
         "src/render/opening-tunnels.ts",
         "src/room-gear-drag.ts",
         "src/stairs-editor.ts",
@@ -3890,6 +3905,7 @@
         "test/mode-transition.test.mjs",
         "test/node-history-runtime.test.mjs",
         "test/optional-space-model-contract.test.mjs",
+        "test/panel-header-flow.test.mjs",
         "test/plan-device-landmarks.test.mjs",
         "test/room-gear-drag.test.mjs",
         "test/stairs-view-arrival.test.mjs",
@@ -4170,10 +4186,11 @@
     "token": "291:finish:b8cea9ad-8fe6-4a6d-86ad-fc88596f70f4:finish:1:admit",
     "fence": 291,
     "materialSha": "5569cd8b2210fe33133bf358a07bfbfad17ac0a6",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
+    "phase": "testing",
     "admittedAt": 1794072036101,
-    "expiresAt": 1794072336101
+    "expiresAt": 1794072342406,
+    "patchId": "38e59cd05a63259ea1bdf34e37ac10519b72cb1b"
   },
   "events": {
     "github:42340404811:1:label:spec-request": {
@@ -4450,6 +4467,10 @@
     },
     "github:42375581290:1:completions:metadata:aa706b90-fe40-426d-a381-2ebfa8caf24f:task-notice:1344::": {
       "digest": "d3f5d8114a51bbe8a12c62b82acf7a62525c3e946070ca4b85981e0ef3f02aeb",
+      "issue": 1344
+    },
+    "finish:b8cea9ad-8fe6-4a6d-86ad-fc88596f70f4:finish:2:synchronized": {
+      "digest": "dd5543d04bbe82bae34fb7f42af6a2823bd4ca1cfa78727d075897a77eea06fe",
       "issue": 1344
     },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
