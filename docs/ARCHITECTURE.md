@@ -2559,8 +2559,9 @@ unchanged. New IDs never become a general geometry-validation bypass.
 
 ### View/editor presentation ownership (#1344)
 
-The mode controller owns one RAF token, including the separate RAF after
-frame(to). `ModePresentation` owns transient styles, inertness and paused opacity
+The mode controller owns one RAF token, including two sequential phases after
+frame(to): a complete presentation opportunity, then the final commit. Both
+phases remain active and cancellable; only one RAF is scheduled at a time. `ModePresentation` owns transient styles, inertness and paused opacity
 effects. The controller samples those effects; they have no independent running
 clock. Terminal presentation uses the ordinary raster path before cleanup.
 
@@ -2575,3 +2576,11 @@ coordinates. Flat marker positions commit only for a newly rendered accepted
 scene, never for a retained `noChange`/projection-source frame. Existing snapshot
 and config adoption remain authoritative. Explicit synchronous config read scopes
 share one fingerprint; a later handler or async continuation starts fresh.
+
+The fixed mode raster moves by integer compositor translation; its cqw size
+stays constant. The ordinary raster path is restored for to. The mode exposure
+window covers the larger endpoint plus one raster pixel, while free gestures
+retain their separate 25% reserve. Identical opaque-white paper endpoints share
+one surface during motion; different materials keep the paired additive blend.
+Verified editor code survives a failed quiet dictionary preload, so explicit
+language retries reuse the namespace's failed-import knowledge.

@@ -1816,7 +1816,7 @@ export class HouseplanCard extends LitElement {
     for (const device of devices) {
       const base = this._modeDeviceAlpha.get(device) ?? 1;
       owner.set(device, 'filter', 'none');
-      owner.opacity(device, String(base * Math.max(0, 1 - .65 * plan / visual.architectureOpacity)), moving);
+      owner.opacity(device, String(base * Math.max(0, 1 - .65 * plan / visual.architectureOpacity)), moving, '', String(base));
       owner.set(device, 'will-change', 'opacity');
     }
     const properties = root.querySelector<HTMLElement>('.hp-properties');

@@ -94,6 +94,18 @@ try {
     const disposed=probe.getAnimations().length===0&&probe.getAttribute('style')===original;
     probe.remove();return sampled&&Math.abs(first-.2)<.00001&&Math.abs(second-.8)<.00001&&cleaned&&reused&&disposed;
   });
+  results.opacityBasePreparedBeforeFinish=await page.evaluate(()=>{
+    const owner=window.__card._modePresentation,probe=document.createElement('div');
+    probe.style.cssText='position:absolute;opacity:.7';window.__card.renderRoot.append(probe);
+    const original=probe.getAttribute('style');owner.opacity(probe,'.35');
+    owner.opacity(probe,'.2',true,'','.7');
+    const masked=probe.style.opacity==='0.7'&&Math.abs(Number(getComputedStyle(probe).opacity)-.2)<.00001;
+    const observer=new MutationObserver(()=>{});observer.observe(probe,{attributes:true,attributeFilter:['style']});
+    owner.opacity(probe,'.7');
+    const quiet=observer.takeRecords().length===0&&probe.getAnimations().length===0;
+    observer.disconnect();owner.clear();const restored=probe.getAttribute('style')===original;
+    probe.remove();return masked&&quiet&&restored;
+  });
   for (const overlap of [false, true]) {
     if (overlap) await page.evaluate(async () => {
       await window.__hpTest.setLayout(layout => {

@@ -127,8 +127,8 @@ export function renderModeDiagnostics(record) {
   };
   return heading + 'Тёплый редактор; reduced motion выключен. RAF-сэмплы — прокси, '
     + 'не доказательство предъявления кадра. Предъявление проверяется отдельной трассой. '
-    + 'Интерактивность: снятие inert после конечного commit.\n\n'
-    + '| Переход | Начало, мс | RAF-сэмплы | Макс. разрыв, мс | После to до интерактивности, мс |\n'
+    + 'Интерактивность: снятие inert после конечного commit; время ниже отсчитывается от JS-тика to, не от compositor presentation.\n\n'
+    + '| Переход | Начало, мс | RAF-сэмплы | Макс. разрыв, мс | От тика to до интерактивности, мс |\n'
     + '|---|---:|---:|---:|---:|\n'
     + [...groups].map(([key, rows]) => '| ' + key + ' | '
       + ['firstMotionMs', 'rafSamples', 'maxFrameGapMs', 'afterToInteractiveMs'].map(name => value(rows, name)).join(' | ') + ' |').join('\n') + '\n';

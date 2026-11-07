@@ -14,7 +14,7 @@ export class ModePresentation {
   /** A paused compositor effect has no independent clock: the controller
    * samples its exact opacity in its own RAF. CSS important keeps its native
    * cascade path. Terminal/cancel uses direct styles and cancels our effect. */
-  public opacity(element: HTMLElement | SVGElement | null, value: string, compositor = false, priority = ''): void {
+  public opacity(element: HTMLElement | SVGElement | null, value: string, compositor = false, priority = '', underlying?: string): void {
     if (!element) return;
     const previous = this.styles.get(element)?.last.get('opacity');
     let animation = this.opacityAnimations.get(element);
@@ -29,6 +29,9 @@ export class ModePresentation {
         this.opacityPool.set(element, animation);
       }
       animation.pause();
+      // The paused effect masks the ordinary base. Prepare it once while
+      // entering, so cancelling at to need not rewrite every marker style.
+      if (underlying !== undefined) this.set(element, 'opacity', underlying, priority);
       this.opacityAnimations.set(element, animation);
     }
     animation.currentTime = Math.max(0, Math.min(1, Number(value)));

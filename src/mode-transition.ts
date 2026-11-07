@@ -249,13 +249,17 @@ export class ModeTransitionController {
         this._raf = this._clock.requestFrame(tick);
         return;
       }
-      // frame(to) gets a presentation opportunity. The same RAF/token owns
-      // cancellation and retargeting while this terminal frame is retained.
+      // A next-RAF callback can precede the compositor presentation of to.
+      // Retain it for a complete rendering opportunity, then finish from
+      // the same clock/token. At most one RAF is scheduled at either phase.
       this._raf = this._clock.requestFrame(() => {
         if (this._state?.token !== token) return;
-        this._raf = 0;
-        this._state = null;
-        this._hooks.settled(current);
+        this._raf = this._clock.requestFrame(() => {
+          if (this._state?.token !== token) return;
+          this._raf = 0;
+          this._state = null;
+          this._hooks.settled(current);
+        });
       });
     };
     this._raf = this._clock.requestFrame(tick);

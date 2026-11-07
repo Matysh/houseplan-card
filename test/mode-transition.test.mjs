@@ -100,10 +100,14 @@ test('controller is deterministic, settles exactly and leaves no scheduled frame
   assert.ok(controller.presented.stageHeight > 504 && controller.presented.stageHeight < 600);
   step(100);
   assert.deepEqual(controller.presented, to);
-  assert.equal(settled, null, 'the terminal frame remains visible until the next RAF');
+  assert.equal(settled, null, 'the terminal frame owns a complete presentation opportunity');
   assert.equal(controller.active, true);
   assert.equal(callbacks.size, 1);
   step(116);
+  assert.equal(settled, null, 'first RAF retains to while the compositor presents it');
+  assert.equal(controller.active, true);
+  assert.equal(callbacks.size, 1);
+  step(132);
   assert.deepEqual(settled, to);
   assert.equal(controller.active, false);
   assert.equal(callbacks.size, 0);
@@ -239,4 +243,18 @@ test('#1344 Devices retains live glow while Plan and Decor fade it', () => {
 test('#1344 smaller target keeps only the one-pixel raster rounding reserve',()=>{
  const clip=modeRasterExposureClip({stageWidth:1000,stageHeight:800},{stageWidth:700,stageHeight:400});
  assert.equal(clip,'inset(-0.125% -0.1%)');
+});
+
+test('#1344 finish after the presentation opportunity still belongs to the cancelled token', () => {
+ let now=0,sequence=0;const callbacks=new Map(),settled=[];
+ const clock={now:()=>now,requestFrame:cb=>{callbacks.set(++sequence,cb);return sequence;},cancelFrame:id=>callbacks.delete(id)};
+ const c=new ModeTransitionController({frame:()=>{},settled:s=>settled.push(s.targetMode)},clock);
+ const view=endpoint('view',0,600,{x:0,y:0,w:800,h:600}),plan=endpoint('plan',120,480,{x:0,y:0,w:800,h:480});
+ const step=t=>{now=t;const[id,cb]=callbacks.entries().next().value;callbacks.delete(id);cb(t);};
+ c.start(view,plan,'plan',100);step(100);step(116);
+ const stale=callbacks.values().next().value;assert.equal(callbacks.size,1);
+ c.start(plan,view,'view',100);stale(132);assert.deepEqual(settled,[]);assert.equal(callbacks.size,1);
+ c.cancel(true);assert.deepEqual(settled,['view']);assert.equal(callbacks.size,0);
+ c.start(view,plan,'plan',100);step(216);step(232);const disposed=callbacks.values().next().value;
+ c.dispose();disposed(248);assert.deepEqual(settled,['view']);assert.equal(c.active,false);assert.equal(callbacks.size,0);
 });
