@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6424,
+  "revision": 6425,
   "nextTicket": 291,
   "nextFence": 291,
   "tasks": {
@@ -3801,7 +3801,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794055747934,
       "reviewEntry": 3,
-      "patchId": "e3d387e0886407c8eecb868aa3202c881cd542e0",
+      "patchId": "b3fdf0615e5169ef0814ea7f1d40e56f535d94a5",
       "changedFiles": [
         "demo/benchmark_large_house.mjs",
         "demo/fixtures/large-house.mjs",
@@ -3819,17 +3819,28 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/TESTING.md",
+        "docs/testing-notes/mutation-browser-guards.md",
         "docs/testing/issue1344/README.md",
         "docs/testing/issue1344/analyze-presented.mjs",
         "docs/testing/issue1344/baseline-native-v2.json",
+        "docs/testing/issue1344/candidate-current-native-r2.json",
+        "docs/testing/issue1344/candidate-current-trace-r2-presented-analysis.json",
+        "docs/testing/issue1344/candidate-current-trace-r2.json",
         "docs/testing/issue1344/candidate-final-v4.json",
+        "docs/testing/issue1344/candidate-trace-final-v4-flow-presented-analysis.json",
         "docs/testing/issue1344/candidate-trace-final-v4-presented-analysis.json",
+        "docs/testing/issue1344/candidate-trace-final-v5-flow-presented-analysis.json",
         "docs/testing/issue1344/candidate-trace-final-v5-presented-analysis.json",
+        "docs/testing/issue1344/cold-load-parts.json",
+        "docs/testing/issue1344/cold-load.mjs",
+        "docs/testing/issue1344/inert-commit-probe.json",
+        "docs/testing/issue1344/initial-view-composition.json",
         "docs/testing/issue1344/measure.mjs",
         "docs/testing/issue1344/pipeline-measurement.json",
         "docs/testing/issue1344/pipeline-metrics.json",
         "docs/testing/issue1344/pipeline-metrics.md",
         "docs/testing/issue1344/pipeline-package.json",
+        "docs/testing/issue1344/pipeline-performance.json",
         "docs/testing/issue1344/selection.json",
         "docs/testing/issue1344/style-flush-v2-flush.json",
         "process-next/lib/metrics.mjs",
@@ -3877,6 +3888,7 @@
         "test/large-house-fixture.test.mjs",
         "test/live-viewport.test.mjs",
         "test/mode-transition.test.mjs",
+        "test/node-history-runtime.test.mjs",
         "test/optional-space-model-contract.test.mjs",
         "test/plan-device-landmarks.test.mjs",
         "test/room-gear-drag.test.mjs",
@@ -4144,10 +4156,11 @@
     "token": "290:finish:88e1468c-f156-4630-ae54-1018f4e61017:finish:1:admit",
     "fence": 290,
     "materialSha": "f8473ce1c5b9875e9ce669f6bc423006a6cf321f",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
+    "phase": "testing",
     "admittedAt": 1794055751515,
-    "expiresAt": 1794056051515
+    "expiresAt": 1794056057291,
+    "patchId": "b3fdf0615e5169ef0814ea7f1d40e56f535d94a5"
   },
   "events": {
     "github:42340404811:1:label:spec-request": {
@@ -4324,6 +4337,10 @@
     },
     "finish:05e9fbba-c792-4085-822c-2a4215dab8a9:finish:3:return": {
       "digest": "39e8ad759cded32c8fbc1ca69582d116a56a4dfda67ec849a7d61c28508f3801",
+      "issue": 1344
+    },
+    "finish:88e1468c-f156-4630-ae54-1018f4e61017:finish:2:synchronized": {
+      "digest": "9fec2ddf7afd43cd2797956d98881f2f9f213489a5f3740768cfd021a45df99c",
       "issue": 1344
     },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
