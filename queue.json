@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6312,
+  "revision": 6313,
   "nextTicket": 288,
   "nextFence": 288,
   "tasks": {
@@ -3971,7 +3971,7 @@
       "ownerDecision": null,
       "ticket": 287,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794051035446,
       "reviewEntry": 2,
       "patchId": "95a88f4d839cd4c9416c8831967fc3db978a5328",
@@ -3996,6 +3996,15 @@
         "entry": 1,
         "detail": "Поведение: test/wall-identity-corpus.test.mjs: failed",
         "eventId": "finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:3:return:return:1346"
+      },
+      "s6": {
+        "id": "20261107T113049908-4f641173",
+        "name": "Тесты для задачи #1346 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261107T113049908-4f641173/report.json",
+        "materialSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865",
+        "status": "passed",
+        "finishedAt": "2026-11-07T11:35:19.119Z",
+        "failures": []
       }
     }
   },
@@ -4179,9 +4188,9 @@
     "fence": 287,
     "materialSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865",
     "expectedBase": "dd8c78da81f79a3b28a772971d2aa971fb2d5ce4",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794051039018,
-    "expiresAt": 1794051578458,
+    "expiresAt": 1794054920341,
     "patchId": "95a88f4d839cd4c9416c8831967fc3db978a5328"
   },
   "events": {
@@ -4508,6 +4517,34 @@
         "layer": "product",
         "materialSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865",
         "phase": "sync"
+      }
+    },
+    "finish:ceffde05-e103-4686-b458-0fe025351246:finish:3:s6-complete": {
+      "digest": "0d4cb0a60f5aa52bc08ea6ae50fae2d04160b4a460950a96568b81d300848c01",
+      "issue": 1346,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1346,
+        "at": 1794051320341,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865",
+        "phase": "review",
+        "evidence": {
+          "id": "20261107T113049908-4f641173",
+          "name": "Тесты для задачи #1346 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261107T113049908-4f641173/report.json",
+          "materialSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865",
+          "status": "passed",
+          "finishedAt": "2026-11-07T11:35:19.119Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "База dev `dd8c78da8`, ветка `codex/issue-1346-room-face-spurs`. Содержательный трек show выбран как локальный ремонт существующего поведения; начальную метку назначает finish.\n\n### Решение и места для внимания\n\nПосле существующей atomization выполняется итеративный low-link DFS O(V+E) и определяются рёбра-мосты. Они исключаются только из adjacency/старта half-edge обхода граней. Возвращаемые atoms и их provenance не изменяются. Существующая проверка простоты/повторных вершин и точных sourcePoints остаётся. Вариант «просто разрешить повторные вершины» не выбран: он принял бы составной/самокасающийся обход как room ring. Удаление перегородок/соединение разрывов не выполняется.\n\nBoundary provenance не включает мост, поэтому новая тупиковая стена не получает полномочия объявить старую грань новой. Существующие exact-зависимости/хранение/проёмы/room ownership и серверные guards не меняются.\n\n### Диагностика и проверки\n\n[Обезличенная диагностика](https://github.com/Matysh/houseplan-card/blob/codex/issue-1346-room-face-spurs/docs/diagnostics/1346/README.md), [синтетический fixture](https://github.com/Matysh/houseplan-card/blob/codex/issue-1346-room-face-spurs/test/fixtures/1346-room-face-spurs.json). Полный пакет репорта и контактные данные остаются приватными.\n\nДо изменения 3 FAIL / 2 PASS в 5 новых регрессиях; исходный TAP сохранён локально. После изменения адресный Node-набор wall-face-graph/room-split/repair прошёл 43/43; затем добавлен ещё один сценарий занятой соседней комнаты, который включён в финальный S6. Новые случаи проверяют внешние/внутренние ветви, развилки, мост между независимыми/вложенными циклами, реальные разрывы, сохранность атомов и стабильность identity/source order, длинное дерево 12000 edges без рекурсивного стека.\n\nИсходный приватный репорт повторно пропущен через исправленную функцию на неизменённых source-данных: 3 грани / 2 свободных кандидата вместо 2/1, исходники неизменны. Это helper replay, не реальная запись HA.\n\nСуществующий native `smoke_room_face_select.mjs` дополнен синтетической сценой: настоящие hover/click, Cancel без записи, создание комнаты с сохранённой тупиковой стеной, точные graph/geometry Undo/Redo и незамкнутый отрицательный случай. Его фактический результат, сборку и весь выбранный S6 опубликует finish. Новых baseline/допусков нет.\n\nКлассификация и выборка проверены планом #1239/#1328: wall-face-graph unit выбран по прямому импорту изменённого модуля, fixture, собственному изменению и geometry; native выбран по изменённому файлу/fixture и explicit areaTests. Тесты включены по одному файловому шагу. У release-ledger JSON остаётся существующий консервативный пробел статической карты с дополнительной быстрой выборкой; ради сужения S6 классификатор/его входы не менялись.\n\n[E2E impact: надо](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1346.md), commit eba6449ca3ed31d7f08652500886f04f2f00fb01: дополнить реальный HA geometry journey до следующей беты. Native fake transport не выдаётся за HA Store/ACL/CAS/ACK.\n\nОбновлены PLAN-GRAPH и RU/EN changelog. В текущем цикле v1.84.0 добавлена stable-fix запись: тот же guard повторных вершин подтверждён в исходном stable 1.84.0 и дефект воспроизведён в выпущенном 1.85.0. Сам цикл/выпуск не менялись.\n\n### Разбор первого S6\n\nRun `20261107T112111680-b8d725c4`: 397 шагов, единственный FAIL — ожидаемый полный состав current corpus после добавления нового fixture. Native Select smoke прошёл, включая новый hover/dialog/Cancel/create/preserve-wall/exact Undo/Redo/open-boundary сценарий; остальные независимые проверки прошли.\n\nВ `845-wall-corpus-current-identities.json` добавлены ровно одна запись inventory и один документ нового fixture. Программное сравнение подтвердило неизменность всех 575 старых документов (полные fingerprints/identity/fullConfigSha256) и 97 старых inventory записей. Исторический архив/паспорт не изменён, исходные guards не ослаблены. Документ и diff приложены в диагностике. Первый FAIL сохранён; повтор S6 не считается успешным до результата finish.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
