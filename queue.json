@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6321,
+  "revision": 6322,
   "nextTicket": 288,
   "nextFence": 288,
   "tasks": {
@@ -4431,6 +4431,10 @@
       "digest": "6126bb7be3b35c6e1005019e47e225a7563ee3fef32e9b7ad0d0e38aa8d92de3",
       "issue": 1346
     },
+    "github:42368793431:1:completions:message:084fb7c28676d9d8e3a375a2fd8e78f7a3b4eb357cdd8edf0225d32d1fa7201f": {
+      "digest": "1cf32a68a6d12d5c190b9d3e932513f1aa5aa2843ca300ef9bef99c73ae48bd2",
+      "issue": 1346
+    },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
       "digest": "61a7be3a82320de8f445a83960ccf8e6814cc676278e03450ce87edc18fdd35a",
       "issue": 1344,
@@ -4544,7 +4548,8 @@
           "entry": 1,
           "detail": "Поведение: test/wall-identity-corpus.test.mjs: failed",
           "eventId": "finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:3:return:return:1346"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:ceffde05-e103-4686-b458-0fe025351246": {
