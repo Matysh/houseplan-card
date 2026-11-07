@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 6294,
+  "revision": 6295,
   "nextTicket": 287,
-  "nextFence": 286,
+  "nextFence": 287,
   "tasks": {
     "1193": {
       "issue": 1193,
@@ -3970,7 +3970,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 286,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794050395550,
       "reviewEntry": 1
@@ -4148,10 +4148,18 @@
       }
     }
   },
-  "waiting": [
-    1346
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1346,
+    "worker": "finish",
+    "token": "286:finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:1:admit",
+    "fence": 286,
+    "materialSha": "ce0796e207211f495008ed9b9ce21e031484175c",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1794050460473,
+    "expiresAt": 1794050760473
+  },
   "events": {
     "github:42340404811:1:label:spec-request": {
       "digest": "89b760117a3c9f6c20e0c78d9a8914fb588df44a41263be279b60b87babb296b",
@@ -4355,6 +4363,20 @@
           "detail": "Поведение: test/device-marker-polish-contract.test.mjs: failed; Поведение: test/docs-accept.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/plan-device-landmarks.test.mjs: failed; Поведение: test/stairs-view-arrival.test.mjs: failed; Поведение: test/stairs.test.mjs: failed; Поведение: test/wall-node-bundle.test.mjs: failed; Браузер: editor command latency: failed; Браузер: space switch transitions: failed; Браузер: view edit permissions: failed; Браузер: warm mode adoption: failed",
           "eventId": "finish:bce46f88-bd3a-469a-b845-85cd9718dcdc:finish:3:return:return:1344"
         }
+      }
+    },
+    "finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:1:admit": {
+      "digest": "6f5917fd0bbec757d00527a23a05e52d76093df28f7e5824797dddb066caefa9",
+      "issue": 1346,
+      "message": {
+        "kind": "admitted",
+        "issue": 1346,
+        "at": 1794050460473,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ce0796e207211f495008ed9b9ce21e031484175c",
+        "phase": "sync"
       }
     }
   },
