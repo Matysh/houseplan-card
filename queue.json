@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6275,
-  "nextTicket": 285,
+  "revision": 6276,
+  "nextTicket": 286,
   "nextFence": 285,
   "tasks": {
     "1193": {
@@ -3863,6 +3863,20 @@
         "status": "published",
         "sourceSha": "dd8c78da81f79a3b28a772971d2aa971fb2d5ce4"
       }
+    },
+    "1344": {
+      "issue": 1344,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1344-mode-transitions",
+      "materialSha": "fdc7fea05d31e42f89149cf212bde2d3acc44f3f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 285,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794049736089,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4037,7 +4051,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1344
+  ],
   "active": null,
   "events": {
     "github:42340404811:1:label:spec-request": {
@@ -4115,6 +4131,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:bce46f88-bd3a-469a-b845-85cd9718dcdc": {
+      "digest": "9acfec1e2c5ab2c18825616376febed38850ebb13301c662dfc60f8e1ed82cf3",
+      "issue": 1344,
+      "message": {
+        "kind": "queued",
+        "issue": 1344,
+        "at": 1794049736089,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "fdc7fea05d31e42f89149cf212bde2d3acc44f3f"
       }
     }
   },
