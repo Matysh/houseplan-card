@@ -317,7 +317,7 @@ test('Stage 4 materials are bounded and capability-safe; #649 walls follow the u
   assert.doesNotMatch(styles, /\.stage(?:\.theme-dark|:not\(\.theme-light\)) \.iso-(?:side|top|wall|floor-side|opening|texture)/);
   assert.match(styles, /\.iso-top-hi\s*\{\s*stop-color:\s*var\(--iso-top-hi/);
   assert.match(styles, /\.iso-side-mid\s*\{\s*stop-color:\s*var\(--iso-side-mid/);
-  assert.match(card, /\$\{iso \? `;\$\{isoWallMaterialVars\(disp\.wallFill\.c\)\}` : ''\}/);
+  assert.match(card, /\.\.\.\(iso \? Object\.fromEntries\(isoWallMaterialVars\(disp\.wallFill\.c\)\.split\(';'\)/);
   assert.doesNotMatch(styles, /iso-overlay-plate|hp-iso-overlay-texture/,
     'themes and forced colors must not recreate a painted footprint');
   assert.doesNotMatch(styles, /iso-overlay-ground|iso-overlay-tether/,

@@ -106,7 +106,7 @@ export function templateAttributeValues(source, attribute, file = 'source.ts', r
 export function toolVocabularyFromSources(sourceByFile) {
   const values = new Set();
   const methods = new Map([
-    ['houseplan-card.ts', ['_editorToolbarGroups']],
+    ['houseplan-card.ts', ['_editorToolbarGroupsFor']],
     ['houseplan-editor-runtime.ts', ['_shapesToolbarGroup', '_roomsToolbarGroup', '_renderDecorBar']],
     ['stairs-editor.ts', ['toolbarGroup']],
   ]);

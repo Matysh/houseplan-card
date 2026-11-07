@@ -10791,8 +10791,13 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/mode-scene-layers.ts",
-    "find": "return html`${layers.filter(layer =>",
-    "replace": "return html`${[...layers.filter(layer => layer.id === 'decor'), ...layers.filter(layer => layer.id !== 'decor')].filter(layer =>"
+    "find": "${layers.filter(layer => !['paper-ink'",
+    "replace": "${[...layers.filter(layer => layer.id === 'decor'), ...layers.filter(layer => layer.id !== 'decor')].filter(layer => !['paper-ink'"
+  },
+  {
+    "file": "src/mode-scene-layers.ts",
+    "find": "return html`<div class=\"hp-mode-scene-camera\" data-hp-live-scene=\"floor\">${layers.filter(layer =>",
+    "replace": "return html`<div class=\"hp-mode-scene-camera\" data-hp-live-scene=\"floor\">${[...layers.filter(layer => layer.id === 'decor'), ...layers.filter(layer => layer.id !== 'decor')].filter(layer =>"
   }
 ],
   },
@@ -19534,7 +19539,7 @@ const panelHeader1120Cases = [
     patches:[{file:'src/panel-header-flow.ts',find:'Number.isFinite(widths[phase]) && widths[phase] <= available',replace:'phase > 0 && Number.isFinite(widths[phase]) && widths[phase] <= available'}]},
   {id:'panel-header-cache-ignores-content-1120',guard:'node --test test/panel-header-flow.test.mjs',
     because:'#1120 AC3/7: changed locale/roster/mode must remeasure even at the same fractional owner width.',
-    patches:[{file:'src/panel-header-flow.ts',find:'owner !== this.owner || key !== this.key || width !== this.width || !this.value',replace:'owner !== this.owner || width !== this.width || !this.value'}]},
+    patches:[{file:'src/panel-header-flow.ts',find:'const id = JSON.stringify([key, width]);',replace:'const id = JSON.stringify([width]);'}]},
   {id:'panel-menu-external-sidebar-1120',guard:'node --test test/panel-header-menu.test.mjs',
     because:'#1120 AC1: the pinned modern public HA predicate hides the menu when an external provider declares its own sidebar.',
     patches:[{file:'src/panel-header-menu.ts',find:'&& hass?.auth?.external?.config?.hasSidebar !== true',replace:'&& true'}]},
