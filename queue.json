@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6305,
-  "nextTicket": 287,
+  "revision": 6306,
+  "nextTicket": 288,
   "nextFence": 287,
   "tasks": {
     "1193": {
@@ -3966,14 +3966,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1346-room-face-spurs",
-      "materialSha": "ce0796e207211f495008ed9b9ce21e031484175c",
+      "materialSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 286,
-      "queued": false,
+      "ticket": 287,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794050395550,
-      "reviewEntry": 1,
+      "readyAt": 1794051035446,
+      "reviewEntry": 2,
       "patchId": "fa926ecc6900e0b0665c22288a24d4ce257c05d4",
       "changedFiles": [
         "demo/smoke_room_face_select.mjs",
@@ -3986,7 +3986,6 @@
         "test/fixtures/1346-room-face-spurs.json",
         "test/wall-face-graph.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4171,7 +4170,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1346
+  ],
   "active": null,
   "events": {
     "github:42340404811:1:label:spec-request": {
@@ -4450,6 +4451,19 @@
           "detail": "Поведение: test/wall-identity-corpus.test.mjs: failed",
           "eventId": "finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:3:return:return:1346"
         }
+      }
+    },
+    "finish:ceffde05-e103-4686-b458-0fe025351246": {
+      "digest": "d21d55e43e525cf8128657d86a5cd67a93f407acfa79e614b8979de0158b823e",
+      "issue": 1346,
+      "message": {
+        "kind": "queued",
+        "issue": 1346,
+        "at": 1794051035446,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865"
       }
     }
   },
