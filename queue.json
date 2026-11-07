@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6587,
+  "revision": 6588,
   "nextTicket": 296,
   "nextFence": 296,
   "tasks": {
@@ -3908,19 +3908,28 @@
       "status": "S6-in-progress",
       "readyAt": 1794079916162,
       "reviewEntry": 2,
-      "patchId": "1e1a1b8f38e9671b1f280ac7d44c520c355d9904",
+      "patchId": "37118ec9e6d990a0196d83cf0f652bb233e48769",
       "changedFiles": [
         "custom_components/houseplan/import_export.py",
         "custom_components/houseplan/support_package.py",
         "custom_components/houseplan/support_wire_schema.py",
         "custom_components/houseplan/validation.py",
+        "demo/helpers/scene-paint-probe.mjs",
+        "demo/smoke_backdrop.mjs",
         "demo/smoke_glass_door_sun.mjs",
+        "demo/smoke_node_history_context.mjs",
         "demo/smoke_opening_light_transparent.mjs",
+        "demo/smoke_plan_graph_editor.mjs",
+        "demo/smoke_plan_snap_overlay.mjs",
+        "demo/smoke_wall_node_delete.mjs",
+        "demo/smoke_wall_node_topology.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/LIGHT.md",
         "docs/SUN.md",
         "docs/USER-GUIDE.ru.md",
+        "scripts/config-schema.json",
+        "scripts/support-relay/hp_relay/support_wire_schema.py",
         "src/editors/properties/catalog.ts",
         "src/editors/properties/patch.ts",
         "src/editors/properties/strings.ts",
@@ -4135,10 +4144,11 @@
     "token": "295:finish:b9c22d20-e2e9-4911-bf0f-48c909a2fa1a:finish:1:admit",
     "fence": 295,
     "materialSha": "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "890a4ada80b4d379aaa523f0c18f96cbb6e046e5",
+    "phase": "testing",
     "admittedAt": 1794079919789,
-    "expiresAt": 1794080219789
+    "expiresAt": 1794080225453,
+    "patchId": "37118ec9e6d990a0196d83cf0f652bb233e48769"
   },
   "events": {
     "finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:2:synchronized": {
@@ -4211,6 +4221,10 @@
     },
     "finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:3:return": {
       "digest": "4a46ea60433b4c24310a8846b257e07576c7215f97c73c20ace1135304b06b09",
+      "issue": 1348
+    },
+    "finish:b9c22d20-e2e9-4911-bf0f-48c909a2fa1a:finish:2:synchronized": {
+      "digest": "8e9df55d54c51b6b1128ac3922e8933eb99997f0dabbb55746bc34182f0bc8fe",
       "issue": 1348
     },
     "finish:14291f4c-491e-41ef-9944-69cb94df3718": {
