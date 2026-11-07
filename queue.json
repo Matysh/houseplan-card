@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6476,
+  "revision": 6477,
   "nextTicket": 292,
   "nextFence": 292,
   "tasks": {
@@ -3934,7 +3934,9 @@
       "reviewCorrection": {
         "requestId": "review:1344:3:b3fdf0615e5169ef0814ea7f1d40e56f535d94a5:b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
         "at": 1794056920542
-      }
+      },
+      "automationError": "checks-unavailable",
+      "automationSince": 1794072676487
     },
     "1345": {
       "issue": 1345,
@@ -4511,6 +4513,10 @@
     },
     "finish:d4c3df8d-1c1f-434c-8bc6-29770d55ac50": {
       "digest": "f3360b5c1b9639d4be3498ab4c4d4b2ae96d4f079eeb4f4b81fe38da91f5a89a",
+      "issue": 1344
+    },
+    "finish:b8cea9ad-8fe6-4a6d-86ad-fc88596f70f4:finish:3:automation-pending": {
+      "digest": "91bee594047f796584d827522aa4d5f0390c8ba2bea6d440def4ecb2ac750d08",
       "issue": 1344
     },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
