@@ -10,7 +10,7 @@ export interface LazyLanguageModule {
 export interface RuntimeLanguageEntry {
   code: string;
   dictionary?: LocaleDictionary;
-  loadDictionary?: (attempt: 0 | 1) => Promise<LazyLanguageModule>;
+  loadDictionary?: (attempt: 0 | 1, fresh?: boolean) => Promise<LazyLanguageModule>;
 }
 
 export type LanguageLoadState = 'ready' | 'pending' | 'fallback';
@@ -19,6 +19,7 @@ export interface LanguageRuntimeContract {
   state(code: string): LanguageLoadState;
   dictionary(code: string): LocaleDictionary | undefined;
   ensure(code: string): Promise<void>;
+  preload?(code: string): Promise<void>;
 }
 
 /**
@@ -32,6 +33,8 @@ export class LanguageRuntime {
   private readonly dictionaries = new Map<string, LocaleDictionary>();
   private readonly pending = new Map<string, Promise<void>>();
   private readonly failed = new Set<string>();
+  private readonly preloads = new Map<string, Promise<void>>();
+  private readonly preloadErrors = new Map<string, unknown>();
 
   public constructor(
     private readonly entries: readonly RuntimeLanguageEntry[],
@@ -60,12 +63,38 @@ export class LanguageRuntime {
     const existing = this.pending.get(code);
     if (existing) return existing;
     const entry = this.entries.find((candidate) => candidate.code === code);
-    const task = this.load(entry).finally(() => this.pending.delete(code));
+    const prepared = this.preloads.get(code);
+    const load = () => this.dictionaries.has(code) ? Promise.resolve()
+      : this.load(entry, this.preloadErrors.delete(code));
+    const task = (prepared ? prepared.then(load, load) : load()).finally(() => this.pending.delete(code));
     this.pending.set(code, task);
     return task;
   }
 
-  private async load(entry: RuntimeLanguageEntry | undefined): Promise<void> {
+  /** Opportunistic code preparation neither settles fallback nor notifies UI.
+   * One failed import leaves both explicit attempts available with fresh URLs. */
+  public preload(code: string): Promise<void> {
+    if (this.state(code) !== 'pending') return Promise.resolve();
+    const explicit = this.pending.get(code);
+    if (explicit) return explicit;
+    const existing = this.preloads.get(code);
+    if (existing) return existing;
+    if (this.preloadErrors.has(code)) return Promise.reject(this.preloadErrors.get(code));
+    const entry = this.entries.find(candidate => candidate.code === code);
+    if (!entry?.loadDictionary) return Promise.resolve();
+    const task = Promise.resolve().then(async () => {
+      const loaded = await entry.loadDictionary!(0);
+      if (loaded.fingerprint !== this.expectedFingerprint)
+        throw new Error('locale preload fingerprint mismatch for ' + code);
+      this.dictionaries.set(code, loaded.dictionary);
+    }).catch(error => {
+      this.preloadErrors.set(code, error); throw error;
+    }).finally(() => this.preloads.delete(code));
+    this.preloads.set(code, task);
+    return task;
+  }
+
+  private async load(entry: RuntimeLanguageEntry | undefined, freshFirst = false): Promise<void> {
     if (!entry?.loadDictionary) {
       if (entry) this.failed.add(entry.code);
       return;
@@ -73,7 +102,7 @@ export class LanguageRuntime {
     let lastError: unknown;
     for (const attempt of [0, 1] as const) {
       try {
-        const loaded = await entry.loadDictionary(attempt);
+        const loaded = await entry.loadDictionary(attempt, attempt === 0 && freshFirst);
         if (loaded.fingerprint !== this.expectedFingerprint) {
           throw new Error(`locale fingerprint mismatch for ${entry.code}`);
         }

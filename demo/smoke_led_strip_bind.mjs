@@ -35,6 +35,17 @@ await evaluate(async () => {
 });
 await page.waitForTimeout(800);
 check('an editable strip loads the tool for the Devices editor', await evaluate(() => !!window.__card._ledEditor));
+check('#1344 LED editor ink is visibly painted, not only present in DOM',await evaluate(()=>{
+  const node=window.__card.renderRoot.querySelector('.led-editor');
+  if(!node||node.getBoundingClientRect().width<=0)return false;
+  let alpha=1;
+  for(let part=node;part&&!part.classList.contains('stage');part=part.parentElement){
+    const style=getComputedStyle(part);if(style.display==='none'||style.visibility==='hidden')return false;
+    alpha*=Number(style.opacity);
+  }
+  return alpha>.99;
+}));
+
 const icon = (id) => evaluate((id) => !!window.__card.shadowRoot.querySelector(`.dev[data-id="${id}"], [data-hp="device"][data-id="${id}"]:not(.led-hit)`), id);
 check('the light starts as an ordinary icon', await icon('d_bedlight'));
 

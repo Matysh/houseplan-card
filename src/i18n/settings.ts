@@ -15,15 +15,16 @@ import { namespaceLanguageRuntime } from './namespace-language';
 
 export type SettingsI18nKey = keyof typeof en;
 
-const retryUrl = (asset: string): string => new URL(`${asset}?retry`, import.meta.url).href;
+let retrySeq = 0;
+const retryUrl = (asset: string, fresh = false): string => new URL(`${asset}?retry${fresh ? '=' + (++retrySeq) : ''}`, import.meta.url).href;
 
 export const SETTINGS_LANGUAGE_RUNTIME = namespaceLanguageRuntime(en, {
-  ru: (attempt) => (attempt === 0 ? import('./settings/settings-ru')
-    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_RU_RETRY_ASSET__'))),
-  de: (attempt) => (attempt === 0 ? import('./settings/settings-de')
-    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_DE_RETRY_ASSET__'))),
-  fr: (attempt) => (attempt === 0 ? import('./settings/settings-fr')
-    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_FR_RETRY_ASSET__'))),
+  ru: (attempt, fresh = false) => (attempt === 0 && !fresh ? import('./settings/settings-ru')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_RU_RETRY_ASSET__', fresh))),
+  de: (attempt, fresh = false) => (attempt === 0 && !fresh ? import('./settings/settings-de')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_DE_RETRY_ASSET__', fresh))),
+  fr: (attempt, fresh = false) => (attempt === 0 && !fresh ? import('./settings/settings-fr')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_FR_RETRY_ASSET__', fresh))),
 });
 
 const entryOf = (lang: Lang, key: SettingsI18nKey): string | undefined =>

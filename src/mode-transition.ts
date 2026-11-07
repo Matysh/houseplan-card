@@ -29,6 +29,8 @@ export interface ModeVisualState {
   /** The imported backdrop has a separate editor de-emphasis contract. */
   backdropOpacity: number;
   viewWeight: number;
+  /** Glow remains visible in Devices, unlike View-only chrome. */
+  glowWeight?: number;
   editorWeight: number;
   /** Plan ink retires independently when moving to another open editor. */
   planWeight?: number;
@@ -66,8 +68,11 @@ export function modeRasterExposureClip(
   from: Pick<ModeVisualState, 'stageWidth' | 'stageHeight'>,
   to: Pick<ModeVisualState, 'stageWidth' | 'stageHeight'>,
 ): string {
-  const x = Math.max(25, ((to.stageWidth - from.stageWidth) / 2 + 1) / Math.max(1, from.stageWidth) * 100);
-  const y = Math.max(25, ((to.stageHeight - from.stageHeight) / 2 + 1) / Math.max(1, from.stageHeight) * 100);
+  // Mode motion has fixed endpoint cameras and an inert stage, unlike a
+  // free pan. Expose the larger endpoint plus one raster pixel for rounding;
+  // the ordinary gesture's 25% reserve would allocate unused blend textures.
+  const x = (Math.max(0, (to.stageWidth - from.stageWidth) / 2) + 1) / Math.max(1, from.stageWidth) * 100;
+  const y = (Math.max(0, (to.stageHeight - from.stageHeight) / 2) + 1) / Math.max(1, from.stageHeight) * 100;
   return `inset(-${y}% -${x}%)`;
 }
 
@@ -185,6 +190,7 @@ export function interpolateModeVisualState(
     architectureOpacity: lerp(from.architectureOpacity, to.architectureOpacity, p),
     backdropOpacity: lerp(from.backdropOpacity, to.backdropOpacity, p),
     viewWeight: lerp(from.viewWeight, to.viewWeight, p),
+    glowWeight: lerp(from.glowWeight ?? from.viewWeight, to.glowWeight ?? to.viewWeight, p),
     editorWeight: lerp(from.editorWeight, to.editorWeight, p),
     planWeight: lerp(from.planWeight ?? (from.presentedMode === 'plan' ? 1 : 0),
       to.planWeight ?? (to.presentedMode === 'plan' ? 1 : 0), p),

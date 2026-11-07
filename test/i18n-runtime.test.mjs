@@ -287,3 +287,46 @@ test('#627 AC5 составной гейт ждёт словарь простр�
   await mainComposite.ensure('de');
   assert.equal(mainComposite.state('de'), 'fallback');
 });
+
+test('#1344 quiet locale preload deduplicates and is reused by explicit entry', async () => {
+  const pending=deferred(),calls=[],warnings=[],failures=[];
+  const runtime=new LanguageRuntime([{code:'en',dictionary:{save:'Save'}},
+    {code:'ru',loadDictionary:(attempt,fresh=false)=>{calls.push([attempt,fresh]);return pending.promise;}}],
+    'build',(...args)=>warnings.push(args),code=>failures.push(code));
+  const a=runtime.preload('ru'),b=runtime.preload('ru');assert.equal(a,b);
+  await Promise.resolve();assert.deepEqual(calls,[[0,false]]);
+  pending.resolve({fingerprint:'build',dictionary:{save:'Сохранить'}});
+  await a;await runtime.ensure('ru');
+  assert.equal(runtime.dictionary('ru').save,'Сохранить');
+  assert.deepEqual(calls,[[0,false]]);assert.deepEqual(warnings,[]);assert.deepEqual(failures,[]);
+});
+
+test('#1344 rejected locale preload stays silent and preserves two explicit attempts', async () => {
+  const calls=[],warnings=[],failures=[];
+  const runtime=new LanguageRuntime([{code:'ru',loadDictionary:async(attempt,fresh=false)=>{
+    calls.push([attempt,fresh]);if(calls.length<3)throw Error('network');
+    return {fingerprint:'build',dictionary:{save:'Сохранить'}};
+  }}],'build',(...args)=>warnings.push(args),code=>failures.push(code));
+  await assert.rejects(runtime.preload('ru'),/network/);
+  assert.equal(runtime.state('ru'),'pending');
+  await assert.rejects(runtime.preload('ru'),/network/);
+  assert.equal(calls.length,1,'repeated intent cannot retry a rejected prefetch');
+  assert.deepEqual(warnings,[]);assert.deepEqual(failures,[]);
+  await runtime.ensure('ru');
+  assert.deepEqual(calls,[[0,false],[0,true],[1,false]]);
+  assert.equal(runtime.state('ru'),'ready');assert.equal(runtime.dictionary('ru').save,'Сохранить');
+  assert.deepEqual(warnings,[]);assert.deepEqual(failures,[]);
+});
+
+test('#1344 explicit locale entry waits for a pending preload and recovers its rejection', async () => {
+  const pending=deferred(),calls=[],failures=[];
+  const runtime=new LanguageRuntime([{code:'ru',loadDictionary:(attempt,fresh=false)=>{
+    calls.push([attempt,fresh]);return calls.length===1?pending.promise:
+      Promise.resolve({fingerprint:'build',dictionary:{ok:'Да'}});
+  }}],'build',()=>{},code=>failures.push(code));
+  const prefetched=runtime.preload('ru'),observed=assert.rejects(prefetched,/offline/);
+  await Promise.resolve();const explicit=runtime.ensure('ru');
+  assert.equal(calls.length,1);pending.reject(Error('offline'));await observed;await explicit;
+  assert.deepEqual(calls,[[0,false],[0,true]]);assert.equal(runtime.dictionary('ru').ok,'Да');
+  assert.deepEqual(failures,[]);
+});

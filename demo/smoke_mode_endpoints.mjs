@@ -87,7 +87,12 @@ try {
       &&probe.getAnimations()[0]===effects[0]&&observer.takeRecords().length===0;
     owner.clear();observer.disconnect();
     const cleaned=probe.getAnimations().length===0&&probe.getAttribute('style')===original;
-    probe.remove();return sampled&&Math.abs(first-.2)<.00001&&Math.abs(second-.8)<.00001&&cleaned;
+    owner.opacity(probe,'.7');owner.opacity(probe,'.35',true);
+    const reused=probe.getAnimations()[0]===effects[0] && effects[0].playState==='paused'
+      && Math.abs(Number(getComputedStyle(probe).opacity)-.35)<.00001;
+    owner.dispose();
+    const disposed=probe.getAnimations().length===0&&probe.getAttribute('style')===original;
+    probe.remove();return sampled&&Math.abs(first-.2)<.00001&&Math.abs(second-.8)<.00001&&cleaned&&reused&&disposed;
   });
   for (const overlap of [false, true]) {
     if (overlap) await page.evaluate(async () => {

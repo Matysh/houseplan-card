@@ -387,7 +387,7 @@ test('#1344 preload deduplicates code without installing or showing loading UI',
   const pending = deferred(), states = [], failures = [], loads = [];
   let creates = 0, installs = 0, language = 'ru';
   const prepared = [];
-  const module = { fingerprint: 'same', prepare: async () => { prepared.push(language); },
+  const module = { fingerprint: 'same', prepare: async (quiet = false) => { prepared.push([language, quiet]); },
     create: () => { creates++; return {}; } };
   const loader = new EditorRuntimeLoader({ expectedFingerprint: 'same',
     load: (attempt, fresh) => { loads.push([attempt, fresh]); return pending.promise; },
@@ -403,7 +403,7 @@ test('#1344 preload deduplicates code without installing or showing loading UI',
   assert.deepEqual(failures, []);
   language = 'en';
   assert.equal(await loader.ensure(), true);
-  assert.deepEqual(prepared, ['ru', 'en']);
+  assert.deepEqual(prepared, [['ru', true], ['en', false]]);
   assert.equal(creates, 1);
   assert.equal(installs, 1);
   assert.equal(loads.length, 1);
@@ -461,4 +461,18 @@ test('#1344 preload fingerprint and synchronous failures are silent and recovera
   assert.equal(await loader.ensure(), true);
   assert.equal(creates, 1);
   assert.equal(failures, 0);
+});
+
+ test('#1344 failed dependency preparation retains verified code and its dictionary cache', async () => {
+  let loads = 0, prepares = 0, installs = 0;
+  const module = { fingerprint: 'same', prepare: async quiet => {
+    prepares++; if (quiet) throw Error('dictionary import failed');
+  }, create: () => ({}) };
+  const loader = new EditorRuntimeLoader({ expectedFingerprint: 'same',
+    load: async () => { loads++; return module; }, install: () => installs++ });
+  assert.equal(await loader.preload(), false);
+  assert.equal(await loader.preload(), false);
+  assert.equal(loader.state, 'idle'); assert.equal(installs, 0);
+  assert.equal(await loader.ensure(), true);
+  assert.equal(loads, 1); assert.equal(prepares, 2); assert.equal(installs, 1);
 });

@@ -832,6 +832,16 @@ for (const mode of ['plan', 'decor']) {
     return [root.querySelector('[data-marker="d_light1"] .led-core')?.getAttribute('stroke'),
       root.querySelector('.led-passive')?.getAttribute('opacity'), !!root.querySelector('.led-hit')];
   }), ['#80d5ff', '0.45', false]);
+  check(`#1344 ${mode} passive LED retains its effective opacity`,await evaluate(()=>{
+    const node=window.__card.renderRoot.querySelector('.led-passive');
+    if(!node)return false;let alpha=1;
+    for(let part=node;part&&!part.classList.contains('stage');part=part.parentElement){
+      const style=getComputedStyle(part);if(style.display==='none'||style.visibility==='hidden')return false;
+      alpha*=Number(style.opacity);
+    }
+    return Math.abs(alpha-.45)<.00001;
+  }));
+
 }
 await evaluate(() => window.__hpTest.setMode('devices'));
 check('#790: Devices retains the live core colour', (await stripe('d_light1'))?.core, '#80d5ff');

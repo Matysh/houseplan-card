@@ -488,6 +488,7 @@ export interface LedCardHost {
   _mode: string;
   _showAll: boolean;
   _stageEl: HTMLElement | null;
+  readonly _renderPixelsPerUnit?: (view: { w: number }) => number;
   _lightBarriers: (space: SpaceModel, polys: { r: RoomCfg; poly: number[][] }[]) => LightBarrierScene;
   _pointInRoom: (point: number[], room: RoomCfg) => boolean;
   _clickDevice: (e: MouseEvent, d: DevItem) => void;
@@ -594,7 +595,7 @@ export function renderLedLayerFor(
   host: LedCardHost, space: SpaceModel, spaceGlow: boolean, view: { w: number },
 ): TemplateResult {
   const frame = ledFrameFor(host, space, spaceGlow);
-  const width = host._stageEl?.clientWidth;
+  const width = host._renderPixelsPerUnit ? host._renderPixelsPerUnit(view) * view.w : host._stageEl?.clientWidth;
   // ТЗ §7: 2.5D only in View; editors keep Flat. D takes the shared tile scale.
   const iso = host._renderProjection === 'iso' && host._mode === 'view';
   const d = iso ? frame.d * ISO_ICON_SCALE : frame.d;
@@ -632,9 +633,9 @@ export function renderLedLayerFor(
     } : null,
   });
   // ТЗ §4 п.10: Plan/Background show a passive translucent mark, never a target.
-  return host._mode === 'plan' || host._mode === 'decor'
-    ? svg`<g class="led-passive" opacity="0.45" pointer-events="none">${stripes}</g>` as unknown as TemplateResult
-    : stripes;
+  const passive = host._mode === 'plan' || host._mode === 'decor';
+  return svg`<g class=${passive ? 'led-passive' : nothing} opacity=${passive ? '0.45' : '1'}
+    pointer-events=${passive ? 'none' : nothing}>${stripes}</g>` as unknown as TemplateResult;
 }
 
 export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean): TemplateResult {

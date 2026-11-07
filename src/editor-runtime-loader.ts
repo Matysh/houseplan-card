@@ -6,7 +6,7 @@ export const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export interface EditorRuntimeModule<Runtime> {
   readonly fingerprint: string;
   /** Current locale/dependencies, with no construction or installation. */
-  prepare?(): Promise<unknown>;
+  prepare?(quiet?: boolean): Promise<unknown>;
   create(): Runtime;
 }
 
@@ -96,20 +96,22 @@ export class EditorRuntimeLoader<Runtime> {
   /** Intent may warm code and dictionaries, never runtime state or UI. */
   public preload(): Promise<boolean> {
     if (this._state === 'ready') return Promise.resolve(true);
-    if (this._state === 'failed' || this._awaitingIntent) return Promise.resolve(false);
+    if (this._state === 'failed' || this._awaitingIntent || this._preloadFailed) return Promise.resolve(false);
     if (this._inFlight) return this._inFlight;
     if (this._preloading) return this._preloading.then(Boolean);
     const pending: Promise<EditorRuntimeModule<Runtime> | null> = Promise.resolve().then(async () => {
       try {
         const module = this._preloaded ?? await this.options.load(0, this._preloadFailed);
         this._checkFingerprint(module);
-        await module.prepare?.();
+        // Keep verified code if only a dictionary/dependency preload fails.
+        // A fresh editor chunk would create new namespace caches and lose the
+        // failed dictionary URL, consuming explicit attempt 0 in Chromium.
         this._preloaded = module;
+        await module.prepare?.(true);
         return module;
       } catch {
         // Chromium retains a rejected import. Explicit entry gets a fresh
         // attempt 0 as well as the ordinary retry, without a hover toast.
-        this._preloaded = null;
         this._preloadFailed = true;
         return null;
       } finally {

@@ -188,8 +188,8 @@ export const planStyles = css`
     .stage.mode-view [data-hp-mode-layer="editor-guides"],
     .stage:not(.mode-plan) [data-hp-mode-layer="plan-base"],
     .stage:not(.mode-plan) [data-hp-mode-layer="plan-ink"],
-    .stage:not(.mode-view) [data-hp-mode-layer="glow"],
-    .stage:not(.mode-view) [data-hp-mode-layer="led"] { opacity:0; }
+    .stage.mode-plan [data-hp-mode-layer="glow"],
+    .stage.mode-decor [data-hp-mode-layer="glow"] { opacity:0; }
     .stage.mode-decor:not(.dtool-backdrop) [data-hp-mode-layer="backdrop"] { opacity:.5; }
     .stage.mode-plan [data-hp-mode-layer="rooms"] { opacity:0; }
     .stage.mode-plan [data-hp-mode-layer="room-ink"] { opacity:1; }
@@ -389,10 +389,10 @@ export const planStyles = css`
       fill-opacity: var(--room-fill-op, 0);
     }
     /* Explicit descendant classes avoid the existing pseudo-combinator minifier bug (#1121). */
-    .stage.mode-plan .glow-pools-frame,
-    .stage.mode-plan .led-fields,
-    .stage.mode-decor .glow-pools-frame,
-    .stage.mode-decor .led-fields { display:none; }
+    .stage.mode-plan:not(.mode-transition) .glow-pools-frame,
+    .stage.mode-plan:not(.mode-transition) .led-fields,
+    .stage.mode-decor:not(.mode-transition) .glow-pools-frame,
+    .stage.mode-decor:not(.mode-transition) .led-fields { display:none; }
     .glow-pools-frame,
     .glow-pools,
     .glow-spot {

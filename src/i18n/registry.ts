@@ -24,20 +24,23 @@ export interface LanguageEntry {
   // locale. These four short strings are synchronous in every language.
   cardPicker?: typeof pickerEn;
   dictionary?: LocaleDictionary;
-  loadDictionary?: (attempt: 0 | 1) => Promise<LazyLanguageModule>;
+  loadDictionary?: (attempt: 0 | 1, fresh?: boolean) => Promise<LazyLanguageModule>;
 }
 
-async function loadGerman(attempt: 0 | 1): Promise<LazyLanguageModule> {
-  const module = attempt === 0
+let languageRetrySeq = 0;
+const retryQuery = (fresh: boolean): string => fresh ? '?retry=' + (++languageRetrySeq) : '?retry';
+
+async function loadGerman(attempt: 0 | 1, fresh = false): Promise<LazyLanguageModule> {
+  const module = attempt === 0 && !fresh
     ? await import('./de')
-    : await import(/* @vite-ignore */ new URL(`${GERMAN_RETRY_ASSET}?retry`, import.meta.url).href);
+    : await import(/* @vite-ignore */ new URL(`${GERMAN_RETRY_ASSET}${retryQuery(fresh)}`, import.meta.url).href);
   return { dictionary: module.dictionary, fingerprint: module.fingerprint };
 }
 
-async function loadFrench(attempt: 0 | 1): Promise<LazyLanguageModule> {
-  const module = attempt === 0
+async function loadFrench(attempt: 0 | 1, fresh = false): Promise<LazyLanguageModule> {
+  const module = attempt === 0 && !fresh
     ? await import('./fr')
-    : await import(/* @vite-ignore */ new URL(`${FRENCH_RETRY_ASSET}?retry`, import.meta.url).href);
+    : await import(/* @vite-ignore */ new URL(`${FRENCH_RETRY_ASSET}${retryQuery(fresh)}`, import.meta.url).href);
   return { dictionary: module.dictionary, fingerprint: module.fingerprint };
 }
 

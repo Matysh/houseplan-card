@@ -740,8 +740,9 @@ export class HouseplanCard extends LitElement {
           })()) as typeof import('./houseplan-editor-runtime');
       return {
         fingerprint: module.EDITOR_RUNTIME_FINGERPRINT,
-        prepare: () => Promise.all([
-          module.EDITOR_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)),
+        prepare: (quiet = false) => Promise.all([
+          quiet ? module.EDITOR_LANGUAGE_RUNTIME.preload?.(langOf(this.hass, this._config?.language))
+            : module.EDITOR_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)),
           liveRuntimeCode.ensure(),
         ]),
         create: () => new module.HouseplanEditorRuntime(
@@ -1570,6 +1571,7 @@ export class HouseplanCard extends LitElement {
         ? Number(getComputedStyle(backdrop).opacity) / (this._spaceModel()?.bg?.opacity ?? 1)
         : mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1,
       viewWeight: mode === 'view' ? 1 : 0,
+      glowWeight: mode === 'view' || mode === 'devices' ? 1 : 0,
       editorWeight: mode === 'view' ? 0 : 1,
       planWeight: mode === 'plan' ? 1 : 0,
       toolbarContentOpacity: mode === 'view' ? 0 : 1,
@@ -1623,6 +1625,7 @@ export class HouseplanCard extends LitElement {
     try { this.requestUpdate(); } finally { this._modeScenePhaseRequest = false; }
   }
   private readonly _modeSceneBuilds: Record<string, number> = {};
+  private _modeGlowInputs: readonly unknown[] | null = null;
   private _modeSceneFinishPending = false;
 
   private readonly _modePresentation = new ModePresentation();
@@ -1780,15 +1783,22 @@ export class HouseplanCard extends LitElement {
       layer('editor-guides', visual.editorWeight);
       layer('plan-base', plan);
       layer('plan-ink', plan);
-      layer('glow', visual.viewWeight);
-      layer('led', visual.viewWeight);
-      // Add premultiplied endpoint coverage inside one temporary isolation.
-      set('.hp-mode-crossfade', 'isolation', 'isolate');
-      set('.hp-mode-crossfade > svg', 'mix-blend-mode', 'plus-lighter');
-      layer('paper', visual.viewWeight);
-      set('[data-hp-mode-layer="paper"] .hp-paper', 'fill', this._targetPaperColor('view'), true);
+      layer('glow', visual.glowWeight ?? visual.viewWeight);
+      layer('led', 1);
+      // Add premultiplied room endpoint coverage inside one temporary isolation.
+      set('[data-hp-mode-pair="rooms"]', 'isolation', 'isolate');
+      set('[data-hp-mode-pair="rooms"] > svg', 'mix-blend-mode', 'plus-lighter');
+      const paperColor = this._targetPaperColor('view');
+      const sharedPaper = paperColor === 'rgb(255, 255, 255)';
+      // Identical opaque paper has one antialiased silhouette. Blending two
+      // identical full-viewport rasters adds GPU work without changing ink.
+      // Keep the paired path for genuinely different endpoint materials.
+      set('[data-hp-mode-pair="paper"]', 'isolation', sharedPaper ? 'auto' : 'isolate');
+      set('[data-hp-mode-pair="paper"] > svg', 'mix-blend-mode', sharedPaper ? 'normal' : 'plus-lighter');
+      layer('paper', sharedPaper ? 1 : visual.viewWeight);
+      set('[data-hp-mode-layer="paper"] .hp-paper', 'fill', paperColor, true);
       set('[data-hp-mode-layer="paper-ink"] .hp-paper', 'fill', 'rgb(255, 255, 255)', true);
-      layer('paper-ink', visual.editorWeight);
+      layer('paper-ink', sharedPaper ? 0 : visual.editorWeight);
       set('.hp-backdrop', 'opacity', '1');
       layer('backdrop', visual.backdropOpacity);
     } else {
@@ -2094,6 +2104,7 @@ export class HouseplanCard extends LitElement {
         architectureOpacity: targetMode === 'decor' ? 0.35 : 1,
         backdropOpacity: targetMode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1,
         viewWeight: targetMode === 'view' ? 1 : 0,
+        glowWeight: targetMode === 'view' || targetMode === 'devices' ? 1 : 0,
         editorWeight: targetMode === 'view' ? 0 : 1,
         planWeight: targetMode === 'plan' ? 1 : 0,
         toolbarContentOpacity: targetMode === 'view' ? 0 : 1,
@@ -3734,7 +3745,8 @@ export class HouseplanCard extends LitElement {
     this._editorRuntimeLoadingTimer = undefined;
     this._editorRuntimeLoadingVisible = false;
     this._modeTransition.dispose();
-    this._clearModePresentation(); this._modeSceneSize = null;
+    this._clearModePresentation(); this._modePresentation.dispose(); this._modeSceneSize = null;
+    this._modeGlowInputs = null;
     this._modeProjectionSource = null; this._modeProjectionCrossing = false;
     this._modeEditorInk.clear();
     this._modeProjectionScene = null;
@@ -11987,11 +11999,13 @@ export class HouseplanCard extends LitElement {
   protected render(): TemplateResult | typeof nothing | typeof noChange {
     this._flatMarkerGeometryPending = null;
     this._kioskNavigation.sync(this._kioskNavigationEnabled);
-    return this._lightBarrierPass.run(() => this._renderLightPass());
+    return this._renderLightPass();
   }
 
   protected update(changed: PropertyValues): void {
-    try { super.update(changed); }
+    // guard() evaluates its deferred SVG callbacks inside Lit commit, after
+    // render() returns. Glow and LED must share this complete synchronous pass.
+    try { this._lightBarrierPass.run(() => super.update(changed)); }
     finally { this._cfgPass.end(); }
   }
 
@@ -12339,6 +12353,9 @@ export class HouseplanCard extends LitElement {
     if (!iso && !this._modeProjectionSource)
       this._flatMarkerGeometryPending = { devices: this._renderDevices, view: { ...view } };
     const sceneInputs = [this._modeSceneRevision, this._space, this._cfgRev, this._layoutRev, this._cfgEpoch, contentFingerprint(disp), this._renderProjection, this._rotation, this._cellCm];
+    const activeGlow = this._mode === 'view' || this._mode === 'devices' || (modeVisual?.glowWeight ?? modeVisual?.viewWeight ?? 0) > 0;
+    const glowInputs = activeGlow ? sceneInputs : this._modeGlowInputs;
+    if (!iso && activeGlow) this._modeGlowInputs = sceneInputs;
     const modeLayers: ModeSceneLayer[] = [
       { id: "paper", inputs: [...sceneInputs, ...[]], render: () => svg`${''/* THE PAPER IS THE ROOMS (docs/DECOR-EDITOR.md §3.3, owner
                    2026-08-04). Opaque shapes stop the scene background —
@@ -12384,8 +12401,8 @@ export class HouseplanCard extends LitElement {
       { id: "stairs", inputs: [...sceneInputs, ...[this._mode === 'plan', this._mode === 'view']], render: () => svg`${this._mode === 'plan' && this._editorRuntime
               ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer()}
             ${this._mode === 'plan' ? svg`<g data-hp-live-stairs></g>` : nothing}` },
-      { id: "glow", inputs: [...sceneInputs, ...[glowLayerVisible, this._mode === 'view' || !!modeVisual && transitionFromMode === 'view']], render: () => svg`${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}
-            ${glowLayerVisible ? this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) : nothing}
+      { id: "glow", inputs: [...(glowInputs ?? []), this._effSunRays() && activeGlow], render: () => svg`${guard([...(glowInputs ?? [])], () => glowInputs ? svg`${this._renderGlowLayer(space, disp, view)}
+            ${this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) ?? nothing}` : nothing)}
             ${this._renderSunRays(space)}` },
       { id: "editor-guides", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('guides', this._editing, () => svg`<g class="hp-editor-only-layer">${this._renderAlignGuides()}</g>`)}` },
       { id: "plan-base", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('markup', !!this._editorRuntime && this._canEdit && !this._kiosk, () => svg`<g class="hp-plan-only-layer">${this._renderMarkupLayer(vb)}</g>`)}

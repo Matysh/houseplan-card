@@ -11,15 +11,16 @@ import { namespaceLanguageRuntime } from './namespace-language';
 
 export type LedI18nKey = keyof typeof en;
 
-const retryUrl = (asset: string): string => new URL(`${asset}?retry`, import.meta.url).href;
+let retrySeq = 0;
+const retryUrl = (asset: string, fresh = false): string => new URL(`${asset}?retry${fresh ? '=' + (++retrySeq) : ''}`, import.meta.url).href;
 
 export const LED_LANGUAGE_RUNTIME = namespaceLanguageRuntime(en, {
-  ru: (attempt) => (attempt === 0 ? import('./led/led-ru')
-    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_LED_RU_RETRY_ASSET__'))),
-  de: (attempt) => (attempt === 0 ? import('./led/led-de')
-    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_LED_DE_RETRY_ASSET__'))),
-  fr: (attempt) => (attempt === 0 ? import('./led/led-fr')
-    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_LED_FR_RETRY_ASSET__'))),
+  ru: (attempt, fresh = false) => (attempt === 0 && !fresh ? import('./led/led-ru')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_LED_RU_RETRY_ASSET__', fresh))),
+  de: (attempt, fresh = false) => (attempt === 0 && !fresh ? import('./led/led-de')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_LED_DE_RETRY_ASSET__', fresh))),
+  fr: (attempt, fresh = false) => (attempt === 0 && !fresh ? import('./led/led-fr')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_LED_FR_RETRY_ASSET__', fresh))),
 });
 
 export function ledT(

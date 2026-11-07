@@ -16,7 +16,7 @@ import { LANGUAGE_RUNTIME, notifyLanguageLoadFailures } from './registry';
 
 const BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
-export type NamespaceLoader = (attempt: 0 | 1) => Promise<LazyLanguageModule>;
+export type NamespaceLoader = (attempt: 0 | 1, fresh?: boolean) => Promise<LazyLanguageModule>;
 
 export interface NamespaceLoaders {
   readonly ru: NamespaceLoader;
@@ -55,6 +55,8 @@ export function composeLanguageRuntimes(
     dictionary: (code) => primary.dictionary(code),
     ensure: (code) => Promise.all([primary, ...namespaces].map((runtime) => runtime.ensure(code)))
       .then(() => undefined),
+    preload: (code) => Promise.all([primary, ...namespaces].map(runtime =>
+      runtime.preload ? runtime.preload(code) : runtime.ensure(code))).then(() => undefined),
   };
 }
 

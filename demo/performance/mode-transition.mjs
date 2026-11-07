@@ -47,7 +47,14 @@ export async function collectModeTransitionSamples({ fixture = 'large-house-v1',
       card._applyModeTransitionFrame = function (state) {
         const at = performance.now();
         const result = originals.frame.call(this, state);
-        if (state.presented !== state.from) {
+        const visual = state.presented, from = state.from;
+        const changed = visual.headerHeight !== from.headerHeight || visual.stageHeight !== from.stageHeight
+          || visual.viewWeight !== from.viewWeight || visual.planWeight !== from.planWeight
+          || visual.editorWeight !== from.editorWeight
+          || visual.viewport.centerX !== from.viewport.centerX || visual.viewport.centerY !== from.viewport.centerY
+          || visual.viewport.pixelsPerUnit !== from.viewport.pixelsPerUnit;
+        // A new interpolated object at raw=0 is still the unchanged source frame.
+        if (changed || state.phase === 'settling') {
           frames.push({ at: performance.now() - started, rafIndex, controllerTime: at - started,
             phase: state.phase, paintJsMs: performance.now() - at });
           if (state.phase === 'settling') {

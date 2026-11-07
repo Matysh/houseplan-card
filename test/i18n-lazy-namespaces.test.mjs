@@ -40,8 +40,8 @@ test('#627 AC3 у каждого из девяти чанков — загруз
       assert.ok(entry, `${namespace}-${language}: запись манифеста`);
       assert.equal(entry.module, `/src/i18n/${namespace}/${namespace}-${language}.ts`);
       assert.match(text, new RegExp(
-        `${language}: \\(attempt\\) => \\(attempt === 0 \\? import\\('${escape(`./${namespace}/${namespace}-${language}`)}'\\)\\n`
-          + `\\s+: import\\(/\\* @vite-ignore \\*/ retryUrl\\('${entry.token}'\\)\\)\\)`,
+        `${language}: \\(attempt, fresh = false\\) => \\(attempt === 0 && !fresh \\? import\\('${escape(`./${namespace}/${namespace}-${language}`)}'\\)\\n`
+          + `\\s+: import\\(/\\* @vite-ignore \\*/ retryUrl\\('${entry.token}', fresh\\)\\)\\)`,
       ), `${namespace}-${language}: первая попытка — ребро rollup, вторая — точный hashed-адрес`);
       assert.equal(text.split(entry.token).length - 1, 1, `${entry.token}: ровно одно вхождение`);
       // Чанк несёт свой язык и отпечаток сборки.

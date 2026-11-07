@@ -76,10 +76,10 @@ test('empty render keeps create/import affordances without spatial layers', () =
 
   // Обёртка: настоящий `nothing` пробрасывается как есть. `noChange` вложен в
   // стабильный shell: так тело остаётся, а соседний confirm можно убрать.
-  // #789: внешний render ограничивает кэш барьеров одним проходом; контракт
-  // пустого тела и подтверждения остаётся во внутренней обёртке.
-  assert.match(methodBody('render'),
-    /return this\._lightBarrierPass\.run\(\(\) => this\._renderLightPass\(\)\);/);
+  // #1344: the finite cache also encloses guard callbacks during Lit commit.
+  // Empty-body/confirmation behavior remains inside the render wrapper.
+  assert.match(methodBody('render'), /return this\._renderLightPass\(\);/);
+  assert.match(methodBody('update'), /this\._lightBarrierPass\.run\(\(\) => super\.update\(changed\)\)/);
   const wrapper = methodBody('_renderLightPass');
   assert.match(wrapper, /const body = this\._renderBody\(\);/);
   assert.match(wrapper, /if \(body === nothing\) return body;/);

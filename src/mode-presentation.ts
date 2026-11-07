@@ -9,6 +9,7 @@ export class ModePresentation {
   private readonly styles = new Map<HTMLElement | SVGElement, OwnedStyle>();
   private readonly inert = new Map<HTMLElement, boolean>();
   private readonly opacityAnimations = new Map<HTMLElement | SVGElement, Animation>();
+  private opacityPool = new WeakMap<HTMLElement | SVGElement, Animation>();
 
   /** A paused compositor effect has no independent clock: the controller
    * samples its exact opacity in its own RAF. CSS important keeps its native
@@ -22,12 +23,18 @@ export class ModePresentation {
       this.set(element, 'opacity', value, priority); return;
     }
     if (!animation) {
-      animation = element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1, fill: 'both' });
+      animation = this.opacityPool.get(element);
+      if (!animation) {
+        animation = element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1, fill: 'both' });
+        this.opacityPool.set(element, animation);
+      }
       animation.pause();
       this.opacityAnimations.set(element, animation);
     }
     animation.currentTime = Math.max(0, Math.min(1, Number(value)));
   }
+
+  public dispose(): void { this.clear(); this.opacityPool = new WeakMap(); }
 
   public stopOpacity(element: HTMLElement | SVGElement): void {
     this.opacityAnimations.get(element)?.cancel();

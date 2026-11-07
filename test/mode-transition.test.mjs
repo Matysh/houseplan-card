@@ -204,7 +204,8 @@ test('#1344 terminal-frame retarget/cancel/dispose cannot deliver an old finish'
 test('#1344 fixed raster exposure covers a wider endpoint without unbounded promotion', () => {
   const clip=modeRasterExposureClip({stageWidth:540,stageHeight:600},{stageWidth:900,stageHeight:700});
   const [y,x]=clip.match(/-([\d.]+)%/g).map(Number.parseFloat).map(Math.abs);
-  assert.equal(y,25);
+  assert.equal(y,8.5);
+  assert.equal((1+y/50)*600,702, 'exact taller endpoint plus two raster pixels');
   assert.ok(x>33.333&&x<34);
 });
 
@@ -223,4 +224,19 @@ test('#1344 atomic completion releases busy before terminal layout measurement',
 test('#1344 target height rounds the fixed chrome once instead of subtracting rounded totals', () => {
   const from={stageHeight:743,headerHeight:55.8,editorChromeHeight:0,headerBudget:57,headerFixedBudget:1.4};
   assert.equal(modeStageHeight(from,71.2),727);
+});
+
+test('#1344 Devices retains live glow while Plan and Decor fade it', () => {
+  const view = {...endpoint('view',0,600,{x:0,y:0,w:800,h:600}),glowWeight:1};
+  const devices = {...endpoint('devices',100,500,{x:0,y:0,w:800,h:500}),glowWeight:1};
+  const plan = {...devices,presentedMode:'plan',glowWeight:0};
+  for (const p of [0,.25,.5,.75,1]) assert.equal(interpolateModeVisualState(view,devices,p).glowWeight,1);
+  assert.equal(interpolateModeVisualState(plan,devices,0).glowWeight,0);
+  assert.equal(interpolateModeVisualState(plan,devices,1).glowWeight,1);
+  assert.ok(interpolateModeVisualState(plan,devices,.5).glowWeight>0);
+});
+
+test('#1344 smaller target keeps only the one-pixel raster rounding reserve',()=>{
+ const clip=modeRasterExposureClip({stageWidth:1000,stageHeight:800},{stageWidth:700,stageHeight:400});
+ assert.equal(clip,'inset(-0.125% -0.1%)');
 });

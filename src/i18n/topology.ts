@@ -5,7 +5,8 @@ import { namespaceLanguageRuntime } from './namespace-language';
 
 export type TopologyI18nKey = keyof typeof en;
 
-const retryUrl = (asset: string): string => new URL(`${asset}?retry`, import.meta.url).href;
+let retrySeq = 0;
+const retryUrl = (asset: string, fresh = false): string => new URL(`${asset}?retry${fresh ? '=' + (++retrySeq) : ''}`, import.meta.url).href;
 
 /**
  * #627: English is static (the synchronous fallback); ru/de/fr are separate
@@ -13,12 +14,12 @@ const retryUrl = (asset: string): string => new URL(`${asset}?retry`, import.met
  * runtime before they paint topology copy.
  */
 export const TOPOLOGY_LANGUAGE_RUNTIME = namespaceLanguageRuntime(en, {
-  ru: (attempt) => (attempt === 0 ? import('./topology/topology-ru')
-    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_TOPOLOGY_RU_RETRY_ASSET__'))),
-  de: (attempt) => (attempt === 0 ? import('./topology/topology-de')
-    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_TOPOLOGY_DE_RETRY_ASSET__'))),
-  fr: (attempt) => (attempt === 0 ? import('./topology/topology-fr')
-    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_TOPOLOGY_FR_RETRY_ASSET__'))),
+  ru: (attempt, fresh = false) => (attempt === 0 && !fresh ? import('./topology/topology-ru')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_TOPOLOGY_RU_RETRY_ASSET__', fresh))),
+  de: (attempt, fresh = false) => (attempt === 0 && !fresh ? import('./topology/topology-de')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_TOPOLOGY_DE_RETRY_ASSET__', fresh))),
+  fr: (attempt, fresh = false) => (attempt === 0 && !fresh ? import('./topology/topology-fr')
+    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_TOPOLOGY_FR_RETRY_ASSET__', fresh))),
 });
 
 /**
