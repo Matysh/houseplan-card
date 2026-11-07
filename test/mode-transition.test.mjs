@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ModeTransitionController,
-  modeStageHeight, modeRasterExposureClip,
+  modeStageHeight, modeRasterExposureClip, modeRasterOriginBias,
   interpolateModeVisualState,
   viewBoxFromViewport,
   viewportFromViewBox,
@@ -257,4 +257,23 @@ test('#1344 finish after the presentation opportunity still belongs to the cance
  c.cancel(true);assert.deepEqual(settled,['view']);assert.equal(callbacks.size,0);
  c.start(view,plan,'plan',100);step(216);step(232);const disposed=callbacks.values().next().value;
  c.dispose();disposed(248);assert.deepEqual(settled,['view']);assert.equal(c.active,false);assert.equal(callbacks.size,0);
+});
+
+test('#1344 target-snapped raster preserves the physical centre through odd and even heights',()=>{
+ for(const from of [{stageWidth:800,stageHeight:673},{stageWidth:1280,stageHeight:700}])
+ for(const to of [{stageWidth:920,stageHeight:458},{stageWidth:800,stageHeight:674}]){
+  const bias=modeRasterOriginBias(from,to),ppu=.742,centre=[450,530],point=[550,570];
+  for(const p of [0,.1,.5,.9,1])for(const [axis,key]of[[0,'stageWidth'],[1,'stageHeight']]){
+   const size=from[key]+(to[key]-from[key])*p,origin=(size-from[key])/2-bias[axis];
+   const anchor=centre[axis]-bias[axis]/ppu;
+   const actual=(point[axis]-anchor)*ppu+from[key]/2+origin;
+   assert.ok(Math.abs(actual-((point[axis]-centre[axis])*ppu+size/2))<1e-9);
+   if(p===1)assert.equal(origin,Math.round(origin));
+  }
+ }
+});
+test('#1344 unchanged physical scale is exact rather than an exp/log near-identity',()=>{
+ const from=endpoint('view',0,673,{x:0,y:0,w:800,h:673});from.viewport.pixelsPerUnit=.742;
+ const to={...from,presentedMode:'devices',viewport:{...from.viewport}};
+ for(const p of [0,.1,.5,.9,1])assert.equal(interpolateModeVisualState(from,to,p).viewport.pixelsPerUnit,.742);
 });

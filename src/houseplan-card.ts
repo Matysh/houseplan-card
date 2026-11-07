@@ -289,7 +289,7 @@ import {
 } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
 import {
-  ModeTransitionController, viewportFromViewBox, modeStageHeight, modeRasterExposureClip,
+  ModeTransitionController, viewportFromViewBox, modeStageHeight, modeRasterExposureClip, modeRasterOriginBias,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
 } from './mode-transition';
 import {
@@ -302,7 +302,7 @@ import {
   type RoomFitGestureCandidate,
 } from './room-fit';
 import type { FurniturePlacementPress } from './furniture-placement-press';
-import { liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection } from './live-viewport';
+import { liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection, isIdentityLiveLayerProjection } from './live-viewport';
 import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
@@ -1374,6 +1374,7 @@ export class HouseplanCard extends LitElement {
   /** Fixed raster viewport, centred and clipped by the moving stage. Changing
    * its clipping edges must not resize/repaint every SVG on every frame. */
   private _modeSceneSize: [number, number] | null = null;
+  private _modeSceneOrigin: [number, number] | null = null;
   private _modeProjectionSource: 'flat' | 'iso' | null = null;
   private _modeProjectionCrossing = false;
   private _modeProjectionOpacity = 1;
@@ -1802,12 +1803,13 @@ export class HouseplanCard extends LitElement {
     if (raster) {
       const scene = root.querySelector<HTMLElement>('.zoomwrap');
       owner.set(scene, 'translate', 'none');
-      const left = Math.round((visual.stageWidth - raster[0]) / 2), top = Math.round((visual.stageHeight - raster[1]) / 2);
-      // Keep the fixed cqw raster out of layout while its outer viewport
-      // changes height. Integer translation has the same camera rounding as
-      // left/top; the ordinary endpoint path is restored before frame(to).
-      owner.set(scene, 'left', moving ? '0px' : left + 'px');
-      owner.set(scene, 'top', moving ? '0px' : top + 'px');
+      const dx = (visual.stageWidth - raster[0]) / 2, dy = (visual.stageHeight - raster[1]) / 2;
+      const left = this._modeSceneOrigin ? dx - this._modeSceneOrigin[0] : Math.round(dx);
+      const top = this._modeSceneOrigin ? dy - this._modeSceneOrigin[1] : Math.round(dy);
+      // The target-snapped raster translates without changing its camera.
+      // Both endpoint coordinates are integers on the ordinary to path.
+      owner.set(scene, 'left', moving ? '0px' : Math.round(left) + 'px');
+      owner.set(scene, 'top', moving ? '0px' : Math.round(top) + 'px');
       owner.set(scene, 'transform', moving ? `translate(${left}px,${top}px)` : 'none');
       owner.set(scene, 'will-change', moving ? 'transform' : 'auto');
     }
@@ -1816,23 +1818,7 @@ export class HouseplanCard extends LitElement {
       // controller still owns inert until its next RAF.
       const from = paintedHouseplanViewBox(this) ?? this._modeTransition.state!.from.viewport.viewBox;
       commitHouseplanViewport(this);
-      const current = visual.viewport.viewBox;
-      for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
-        owner.set(layer, 'transform', 'none');
-        if (raster) { owner.set(layer, 'width', raster[0] + 'px'); owner.set(layer, 'height', raster[1] + 'px'); }
-        const projection = liveLayerProjection(from, current);
-        for (const child of layer.children) {
-          const node = child as HTMLElement;
-          const left = node.style?.left, top = node.style?.top;
-          if (!left?.endsWith('%') || !top?.endsWith('%')) continue;
-          owner.set(node, 'left', (parseFloat(left) * projection.scaleX + projection.translateXPercent) + '%');
-          owner.set(node, 'top', (parseFloat(top) * projection.scaleY + projection.translateYPercent) + '%');
-        }
-        for (const svg of layer.querySelectorAll<SVGElement>('[data-hp-live-inherited-scene="camera"]'))
-          svg.setAttribute('viewBox', `${current.x} ${current.y} ${current.w} ${current.h}`);
-        owner.set(layer, 'left', '0px');
-        owner.set(layer, 'top', '0px');
-      }
+      this._rebaseModeHtml(from, visual.viewport.viewBox, raster);
       set('.hp-mode-scene-svg', 'clip-path', this._modeSceneClip || 'inset(-25%)');
       set('.hp-mode-scene-svg', 'will-change', 'auto');
       set('.hp-mode-crossfade', 'isolation', 'auto');
@@ -1840,7 +1826,27 @@ export class HouseplanCard extends LitElement {
     } else scheduleHouseplanViewport(this, true);
   }
 
+  private _rebaseModeHtml(from: ModeViewBox, current: ModeViewBox, raster: readonly [number, number] | null): void {
+    const owner = this._modePresentation, projection = liveLayerProjection(from, current);
+    const reposition = !isIdentityLiveLayerProjection(projection);
+    for (const layer of this.renderRoot.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
+      if (layer.style.transform && layer.style.transform !== 'none') owner.set(layer, 'transform', 'none');
+      if (raster) { owner.set(layer, 'width', raster[0] + 'px'); owner.set(layer, 'height', raster[1] + 'px'); }
+      if (reposition) for (const child of layer.children) {
+        const node = child as HTMLElement, left = node.style?.left, top = node.style?.top;
+        if (!left?.endsWith('%') || !top?.endsWith('%')) continue;
+        owner.set(node, 'left', (parseFloat(left) * projection.scaleX + projection.translateXPercent) + '%');
+        owner.set(node, 'top', (parseFloat(top) * projection.scaleY + projection.translateYPercent) + '%');
+      }
+      const text = `${current.x} ${current.y} ${current.w} ${current.h}`;
+      for (const svg of layer.querySelectorAll<SVGElement>('[data-hp-live-inherited-scene="camera"]'))
+        if (svg.getAttribute('viewBox') !== text) svg.setAttribute('viewBox', text);
+      owner.set(layer, 'left', '0px'); owner.set(layer, 'top', '0px');
+    }
+  }
+
   private _clearModePresentation(): void {
+    this._modeSceneOrigin = null;
     this._modePresentationNodes.clear();
     this._modePresentation.clear();
     // Projection crossing and the raster camera use these outside paint().
@@ -1878,14 +1884,12 @@ export class HouseplanCard extends LitElement {
       if (scene) scene.style.opacity = String(this._modeProjectionOpacity);
     }
     const size = this._modeSceneSize ?? [state.presented.stageWidth, state.presented.stageHeight];
-    // SVG raster snapping is relative to its viewport origin. Keep that
-    // origin on a CSS pixel and compensate the half-pixel in the camera,
-    // so odd/even toolbar heights do not change the endpoint raster.
     const dx = (state.presented.stageWidth - size[0]) / 2;
     const dy = (state.presented.stageHeight - size[1]) / 2;
+    const origin = this._modeSceneOrigin ?? [dx - Math.round(dx), dy - Math.round(dy)];
     const viewport = { ...state.presented.viewport,
-      centerX: state.presented.viewport.centerX + (Math.round(dx) - dx) / state.presented.viewport.pixelsPerUnit,
-      centerY: state.presented.viewport.centerY + (Math.round(dy) - dy) / state.presented.viewport.pixelsPerUnit };
+      centerX: state.presented.viewport.centerX - origin[0] / state.presented.viewport.pixelsPerUnit,
+      centerY: state.presented.viewport.centerY - origin[1] / state.presented.viewport.pixelsPerUnit };
     const camera = this._physicalCamera(viewport, size[0], size[1]);
     state.presented.viewport.viewBox = { ...camera.viewBox };
     this._modeTransitionVisual = state.presented;
@@ -2089,14 +2093,23 @@ export class HouseplanCard extends LitElement {
       // Keep the already-rendered HTML and SVG raster coordinates fixed.
       // Enlarging only their parent here would stretch marker faces on Y.
       this._modeSceneSize = [from.stageWidth, from.stageHeight];
+      this._modeSceneOrigin = !this._reducedMotion && !forceAtomic && !this._modeProjectionCrossing
+        && this._renderProjection === 'flat' && this._rotation === 0 ? modeRasterOriginBias(from, to) : null;
       this._modeSceneClip = modeRasterExposureClip(from, to);
       const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
       if (scene) {
         scene.style.width = `${this._modeSceneSize[0]}px`; scene.style.height = `${this._modeSceneSize[1]}px`;
       }
-      const rasterCamera = this._physicalCamera(from.viewport, ...this._modeSceneSize);
+      const origin = this._modeSceneOrigin ?? [0, 0];
+      const rasterCamera = this._physicalCamera({ ...from.viewport,
+        centerX: from.viewport.centerX - origin[0] / from.viewport.pixelsPerUnit,
+        centerY: from.viewport.centerY - origin[1] / from.viewport.pixelsPerUnit }, ...this._modeSceneSize);
+      const htmlFrom = paintedHouseplanViewBox(this);
       this._view = rasterCamera.viewBox; this._zoom = rasterCamera.zoom;
-      scheduleHouseplanViewport(this, true, true);
+      if (this._modeSceneOrigin && htmlFrom) {
+        this._rebaseModeHtml(htmlFrom, rasterCamera.viewBox, this._modeSceneSize);
+        commitHouseplanViewport(this, true);
+      } else scheduleHouseplanViewport(this, true, true);
       this._modeTransition.start(from, to, targetMode,
         this._reducedMotion || forceAtomic ? 0 : controlMotion.mode.duration);
       });

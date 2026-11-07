@@ -2577,8 +2577,10 @@ scene, never for a retained `noChange`/projection-source frame. Existing snapsho
 and config adoption remain authoritative. Explicit synchronous config read scopes
 share one fingerprint; a later handler or async continuation starts fresh.
 
-The fixed mode raster moves by integer compositor translation; its cqw size
-stays constant. The ordinary raster path is restored for to. The mode exposure
+The fixed mode raster is snapped once for the target. Its camera and cqw size
+stay constant during compositor translation; the ordinary integer raster path
+is restored for to. HTML coordinates share that accepted raster basis before
+motion, so unchanged inputs need no coordinate/viewBox rewrite at the end. The mode exposure
 window covers the larger endpoint plus one raster pixel, while free gestures
 retain their separate 25% reserve. Identical opaque-white paper endpoints share
 one surface during motion; different materials keep the paired additive blend.

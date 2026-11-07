@@ -62,6 +62,17 @@ export function modeStageHeight(
     + from.editorChromeHeight - headerHeight - editorChromeHeight));
 }
 
+/** Snap the fixed raster for the target once, rather than re-snapping its
+ * camera at every fractional toolbar height. The global camera stays exact. */
+export function modeRasterOriginBias(
+  from: Pick<ModeVisualState, 'stageWidth' | 'stageHeight'>,
+  to: Pick<ModeVisualState, 'stageWidth' | 'stageHeight'>,
+): [number, number] {
+  const dx = (to.stageWidth - from.stageWidth) / 2;
+  const dy = (to.stageHeight - from.stageHeight) / 2;
+  return [dx - Math.round(dx), dy - Math.round(dy)];
+}
+
 /** A fixed source raster exposes only the larger endpoint's viewport.
  * Ordinary gestures retain their existing 25% window. */
 export function modeRasterExposureClip(
@@ -173,7 +184,7 @@ export function interpolateModeVisualState(
   const camera = {
     centerX: lerp(from.viewport.centerX, to.viewport.centerX, p),
     centerY: lerp(from.viewport.centerY, to.viewport.centerY, p),
-    pixelsPerUnit: Math.exp(lerp(Math.log(fromPpu), Math.log(toPpu), p)),
+    pixelsPerUnit: fromPpu === toPpu ? fromPpu : Math.exp(lerp(Math.log(fromPpu), Math.log(toPpu), p)),
   };
   return {
     presentedMode: p < 0.5 ? from.presentedMode : to.presentedMode,
