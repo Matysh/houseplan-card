@@ -1,0 +1,141 @@
+{
+  "track": "ask",
+  "layer": "product",
+  "domains": [
+    "performance",
+    "toolchain",
+    "presentation",
+    "editors",
+    "lighting",
+    "openings",
+    "geometry",
+    "storage",
+    "pdf",
+    "devices",
+    "runtime",
+    "i18n",
+    "navigation",
+    "stairs",
+    "summary"
+  ],
+  "gaps": [
+    {
+      "path": "docs/testing/issue1344/analyze-presented.mjs",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/measure.mjs",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "src/houseplan-card.ts",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "src/live-interaction-runtime.ts",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    }
+  ],
+  "cost": {
+    "knownMs": 466131,
+    "unknownUnits": 605,
+    "expectedTotalMs": null,
+    "sourceRun": "20261105T201321284-c9d3eb36",
+    "environment": {
+      "node": "v22.23.2",
+      "platform": "linux",
+      "arch": "x64",
+      "runner": "2029e6ec3a02dfb1895e13c1951a2ac6b1ebde436693940c8ffb8717eba6b280"
+    },
+    "wholeS6BaselineMs": 45801,
+    "hypothesisSeconds": 900,
+    "note": "Исторические наблюдения подготовленной WSL, не норматив. Сумма последовательных затрат, без обещания параллельного времени; неизвестное не заменено квотой."
+  },
+  "requiredChecks": [
+    {
+      "file": "demo/smoke_mode_transition.mjs",
+      "selected": true,
+      "reasons": [
+        "Дополнение исполнителя",
+        "Изменён сам исполняемый файл",
+        "Читает изменённый модуль/данные: demo/performance/mode-transition.mjs",
+        "Читает изменённый модуль/данные: demo/smoke_mode_transition.mjs"
+      ]
+    },
+    {
+      "file": "demo/smoke_mode_endpoints.mjs",
+      "selected": true,
+      "reasons": [
+        "Дополнение исполнителя",
+        "Изменён сам исполняемый файл",
+        "Читает изменённый модуль/данные: demo/smoke_mode_endpoints.mjs"
+      ]
+    },
+    {
+      "file": "demo/smoke_editor_preload.mjs",
+      "selected": true,
+      "reasons": [
+        "Дополнение исполнителя",
+        "Изменён сам исполняемый файл",
+        "Читает изменённый модуль/данные: demo/smoke_editor_preload.mjs"
+      ]
+    },
+    {
+      "file": "demo/smoke_warm_mode_adoption.mjs",
+      "selected": true,
+      "reasons": [
+        "Дополнение исполнителя"
+      ]
+    },
+    {
+      "file": "demo/smoke_iso_floor_switch.mjs",
+      "selected": true,
+      "reasons": [
+        "Дополнение исполнителя"
+      ]
+    },
+    {
+      "file": "demo/smoke_editor_return_focus_1248.mjs",
+      "selected": true,
+      "reasons": [
+        "Дополнение исполнителя"
+      ]
+    },
+    {
+      "file": "process-next/test/metrics.test.mjs",
+      "selected": true,
+      "reasons": [
+        "Дополнение исполнителя",
+        "Изменён сам исполняемый файл",
+        "Читает изменённый модуль/данные: process-next/lib/metrics.mjs",
+        "Читает изменённый модуль/данные: process-next/test/metrics.test.mjs",
+        "Читает изменённый модуль/данные: demo/benchmark_large_house.mjs",
+        "Читает изменённый модуль/данные: demo/fixtures/large-house.mjs",
+        "Читает изменённый модуль/данные: demo/performance/mode-transition.mjs",
+        "Читает изменённый модуль/данные: src/device-contact-render.ts",
+        "Читает изменённый модуль/данные: src/editor-runtime-loader.ts",
+        "Читает изменённый модуль/данные: src/editors/properties/styles.ts",
+        "Читает изменённый модуль/данные: src/houseplan-card.ts",
+        "Читает изменённый модуль/данные: src/houseplan-editor-runtime.ts",
+        "Читает изменённый модуль/данные: src/i18n/language-runtime.ts",
+        "Читает изменённый модуль/данные: src/i18n/led.ts",
+        "Читает изменённый модуль/данные: src/i18n/namespace-language.ts",
+        "Читает изменённый модуль/данные: src/i18n/registry.ts",
+        "Читает изменённый модуль/данные: src/i18n/settings.ts",
+        "Читает изменённый модуль/данные: src/i18n/support.ts",
+        "Читает изменённый модуль/данные: src/i18n/tools.ts",
+        "Читает изменённый модуль/данные: src/i18n/topology.ts",
+        "Читает изменённый модуль/данные: src/led-strip-runtime.ts",
+        "Читает изменённый модуль/данные: src/live-interaction-runtime.ts",
+        "Читает изменённый модуль/данные: src/live-viewport.ts",
+        "Читает изменённый модуль/данные: src/mode-transition.ts",
+        "Читает изменённый модуль/данные: src/room-gear-drag.ts",
+        "Читает изменённый модуль/данные: src/stairs-editor.ts",
+        "Читает изменённый модуль/данные: src/stairs-symbol.ts",
+        "Читает изменённый модуль/данные: src/wall-node-card-adapter.ts",
+        "Читает изменённый модуль/данные: src/wall-node-editor.ts"
+      ]
+    }
+  ],
+  "steps": 642
+}
