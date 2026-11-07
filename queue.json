@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6567,
+  "revision": 6568,
   "nextTicket": 295,
   "nextFence": 295,
   "tasks": {
@@ -3907,7 +3907,43 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794078338812,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "1e1a1b8f38e9671b1f280ac7d44c520c355d9904",
+      "changedFiles": [
+        "custom_components/houseplan/import_export.py",
+        "custom_components/houseplan/support_package.py",
+        "custom_components/houseplan/support_wire_schema.py",
+        "custom_components/houseplan/validation.py",
+        "demo/smoke_glass_door_sun.mjs",
+        "demo/smoke_opening_light_transparent.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/LIGHT.md",
+        "docs/SUN.md",
+        "docs/USER-GUIDE.ru.md",
+        "src/editors/properties/catalog.ts",
+        "src/editors/properties/patch.ts",
+        "src/editors/properties/strings.ts",
+        "src/glow-scene.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/i18n/de.json",
+        "src/i18n/en.json",
+        "src/i18n/fr.json",
+        "src/i18n/ru.json",
+        "src/interior-window-light.ts",
+        "src/iso-sun.ts",
+        "src/logic.ts",
+        "src/sun-door-passages.ts",
+        "src/sun.ts",
+        "src/types.ts",
+        "test/interior-window-light.test.mjs",
+        "test/properties-catalog.test.mjs",
+        "test/properties-patch.test.mjs",
+        "test/sun-door-passages.test.mjs",
+        "test/sun.test.mjs",
+        "tests_backend/test_ha_import_export.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4089,12 +4125,17 @@
     "token": "294:finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:1:admit",
     "fence": 294,
     "materialSha": "628ca768782b89a07bb9779f651c6f1cfcd5cb26",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "890a4ada80b4d379aaa523f0c18f96cbb6e046e5",
+    "phase": "testing",
     "admittedAt": 1794078342239,
-    "expiresAt": 1794078642239
+    "expiresAt": 1794078648048,
+    "patchId": "1e1a1b8f38e9671b1f280ac7d44c520c355d9904"
   },
   "events": {
+    "finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:2:synchronized": {
+      "digest": "a51ee62124b43b28e367b58526afae13a7fae8439b5a3e717cad972cb35c31bc",
+      "issue": 1348
+    },
     "finish:14291f4c-491e-41ef-9944-69cb94df3718": {
       "digest": "98999a9eecd31aa230451dbe4f4fd7ad4b12fd1e7f92b97e843ad1f75e78434d",
       "issue": 1348,
