@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6323,
-  "nextTicket": 288,
+  "revision": 6324,
+  "nextTicket": 289,
   "nextFence": 288,
   "tasks": {
     "1193": {
@@ -3961,6 +3961,20 @@
         "eventId": "finish:bce46f88-bd3a-469a-b845-85cd9718dcdc:finish:3:return:return:1344"
       }
     },
+    "1345": {
+      "issue": 1345,
+      "track": "ship",
+      "layer": "infra",
+      "branch": "codex/1345-mutation-assets",
+      "materialSha": "73595a80710cf4a26df3c67d6d2108647a58ab8e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 288,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794051542376,
+      "reviewEntry": 1
+    },
     "1346": {
       "issue": 1346,
       "track": "show",
@@ -4200,7 +4214,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1345
+  ],
   "active": {
     "issue": 1346,
     "worker": "finish",
@@ -4613,6 +4629,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:97e9fed5-2f4d-4a2a-ac88-02fae14a0454": {
+      "digest": "1b8af9b097c846b55e3c23d4e7b55487311c12a723c504b3e339dbf4f7b6ef26",
+      "issue": 1345,
+      "message": {
+        "kind": "queued",
+        "issue": 1345,
+        "at": 1794051542376,
+        "entry": 1,
+        "track": "ship",
+        "layer": "infra",
+        "materialSha": "73595a80710cf4a26df3c67d6d2108647a58ab8e"
       }
     }
   },
