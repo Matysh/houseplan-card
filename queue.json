@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6288,
-  "nextTicket": 286,
+  "revision": 6289,
+  "nextTicket": 287,
   "nextFence": 286,
   "tasks": {
     "1193": {
@@ -3949,6 +3949,20 @@
         "test/optional-space-model-contract.test.mjs",
         "test/room-gear-drag.test.mjs"
       ]
+    },
+    "1346": {
+      "issue": 1346,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/issue-1346-room-face-spurs",
+      "materialSha": "ce0796e207211f495008ed9b9ce21e031484175c",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 286,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794050395550,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4123,7 +4137,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1346
+  ],
   "active": {
     "issue": 1344,
     "worker": "finish",
@@ -4283,6 +4299,19 @@
         "layer": "product",
         "materialSha": "fdc7fea05d31e42f89149cf212bde2d3acc44f3f",
         "phase": "sync"
+      }
+    },
+    "finish:4076c8c9-212c-44cc-9f14-790388f8635b": {
+      "digest": "58e3ed9ec36bb184c8bd4bfeb142ba67f67ce3a88c47cf7c9b4d110fad4f6503",
+      "issue": 1346,
+      "message": {
+        "kind": "queued",
+        "issue": 1346,
+        "at": 1794050395550,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ce0796e207211f495008ed9b9ce21e031484175c"
       }
     }
   },
