@@ -57,6 +57,14 @@ The private replay JSON/log remain local. This is helper evidence, not an HA wri
   exact Undo/Redo, and an open-boundary negative. It uses the normal demo
   transport; real HA persistence is not claimed.
 
+The first S6 completed 397 steps: 396 passed, including all native witnesses;
+the only failure was current corpus membership after adding the new fixture.
+The current passport adds exactly one inventory row/document. An independent
+comparison retained all 575 old document records and all 97 old inventory rows
+unchanged; the historical archive/passport and all executable guards remain intact.
+The original failed run is 20261107T112111680-b8d725c4. Repeat S6 uses applicable
+results and publishes its actual outcome.
+
 S6 is selected by the shared runner; results/review are published on
 [issue #1346](https://github.com/Matysh/houseplan-card/issues/1346).
 The `wall-face-graph` file inherits geometry classification and static import

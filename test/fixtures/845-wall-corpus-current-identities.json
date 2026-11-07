@@ -71,6 +71,10 @@
       "configs": 0
     },
     {
+      "file": "test/fixtures/1346-room-face-spurs.json",
+      "configs": 1
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },
@@ -23383,6 +23387,28 @@
         }
       ],
       "fullConfigSha256": "20db2c7cd846b8ce0f43fbf224f6498c78863218c56d628d7363561b693e4ba7"
+    },
+    {
+      "label": "test/fixtures/1346-room-face-spurs.json/nativeConfig",
+      "fingerprint": "d59075cc35370a95c25f641c5b67e78cd46d65bf21efabf04e1a670c0e3ef4fb",
+      "ok": true,
+      "identity": [
+        {
+          "space": "room-face-spurs",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "bottom",
+            "internal-dead-end",
+            "left",
+            "right",
+            "right~1",
+            "top"
+          ]
+        }
+      ],
+      "fullConfigSha256": "74a2200d2e435645bfabb156026632ad6adbdc805a175a9f18bce39303019862"
     },
     {
       "label": "test/fixtures/280-optimize-rehost-current.json/config",
