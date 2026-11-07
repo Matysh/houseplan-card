@@ -745,7 +745,7 @@ export class HouseplanCard extends LitElement {
             : module.EDITOR_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)),
           liveRuntimeCode.ensure(),
           module.HouseplanEditorRuntime.prepareSceneCode(attempt === 1 || !!fresh,
-            () => `${CARD_VERSION}-${++hpLazyRetrySeq}`),
+            () => String(++hpLazyRetrySeq)),
         ]),
         create: () => new module.HouseplanEditorRuntime(
           this as unknown as import('./houseplan-editor-runtime').HouseplanEditorHostPort,

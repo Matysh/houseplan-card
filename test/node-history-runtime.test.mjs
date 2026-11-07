@@ -17,6 +17,8 @@ after(() => {
   globalThis.requestAnimationFrame = previousFrame;
 });
 const { HouseplanEditorRuntime } = await import('../test-build/houseplan-editor-runtime.js');
+// Match the card's production loader: code is prepared before construction.
+await HouseplanEditorRuntime.prepareSceneCode(false, () => 'node-history-test');
 const { createConfigAdoption, adoptStructuralResponses } = await import('../test-build/config-adoption.js');
 const { ConfigWriteContext } = await import('../test-build/config-write-context.js');
 const { CommandStack } = await import('../test-build/command-stack.js');

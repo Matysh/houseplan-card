@@ -16,6 +16,22 @@ const { collectModeTransitionSamples } = await import('../../../demo/performance
 const { makeLargeHouseFixture } = await import(pathToFileURL(root + '/demo/fixtures/large-house.mjs'));
 const { makeLargeHouseFixture: builder } = await import('../../../demo/fixtures/large-house.mjs');
 const medium = () => builder({ floors: 1, roomsPerFloor: 12, devices: 60, openings: 24, partitions: 60, columns: 40, decor: 60, stairs: 0 });
+// Diagnostic provenance only: no rows are filtered or accepted by host load.
+const hostSamples = [];
+const sampleHost = phase => {
+    const sample = { phase, at: new Date().toISOString(), loadAverage: os.loadavg() };
+    try {
+        const processes = execFileSync('ps', ['-eo', 'pid,ppid,pcpu,comm'], { encoding: 'utf8' }).trim().split('\n').slice(1).map(line => {
+            const [, pid, ppid, cpu, command] = line.match(/^\s*(\d+)\s+(\d+)\s+([\d.]+)\s+(.+)$/) || [];
+            return { pid: Number(pid), ppid: Number(ppid), cpu: Number(cpu), command };
+        });
+        const own = new Set([process.pid]);
+        for (let size = -1; size !== own.size;) { size = own.size; for (const p of processes) if (own.has(p.ppid)) own.add(p.pid); }
+        sample.externalBusyProcesses = processes.filter(p => !own.has(p.pid) && p.cpu > 1);
+    } catch (error) { sample.processProbeUnavailable = error.message; }
+    hostSamples.push(sample);
+};
+sampleHost('before-browser');
 const { page, browser } = await launch({ width: 1280, height: 800 }, 2, [], {}, root + '/demo/srv', root);
 await page.emulateMedia({ reducedMotion: 'no-preference' });
 const cdp = await page.context().newCDPSession(page);
@@ -61,10 +77,12 @@ try {
         if (trace)
             await cdp.send('Tracing.start', { categories: 'devtools.timeline,blink.user_timing,disabled-by-default-devtools.timeline.frame', transferMode: 'ReturnAsStream' });
         if (flush) await page.evaluate(()=>{const c=window.__card,original=c._applyModeTransitionFrame;window.__modeFlushRows=[];c._applyModeTransitionFrame=function(state){const t=performance.now();const result=original.call(this,state),jsMs=performance.now()-t;const v=state.presented,f=state.from,changed=v.headerHeight!==f.headerHeight||v.stageHeight!==f.stageHeight||v.viewWeight!==f.viewWeight||v.editorWeight!==f.editorWeight||v.planWeight!==f.planWeight;if(changed||state.phase==='settling'){const at=performance.now();const marker=this.renderRoot.querySelector('.devlayer .dev:last-of-type');if(marker)getComputedStyle(marker).filter;this._stageEl.getBoundingClientRect();window.__modeFlushRows.push({from:f.presentedMode,to:state.targetMode,phase:state.phase,jsMs,styleLayoutFlushMs:performance.now()-at});}return result;};});
+        sampleHost(name + ':before-samples');
         const diagnostic = await page.evaluate(collectModeTransitionSamples, { fixture: name, samples: 4 });
         const measured = diagnostic.rows;
         if (flush) fs.writeFileSync(out + '/' + label + '-' + name + '-flush.json', JSON.stringify({ method: 'Separate synchronous getComputedStyle(last marker).filter plus stage.getBoundingClientRect; includes API overhead; not cadence acceptance.', rows: await page.evaluate(() => window.__modeFlushRows) }, null, 2));
         rows.push(...measured);
+        sampleHost(name + ':after-samples');
         console.log(JSON.stringify({ fixture: name, rows: measured.length, first: measured[0]?.firstMotionMs, maxStart: Math.max(...measured.map(r => r.firstMotionMs || 0)) }));
         if (trace) {
             const done = new Promise(r => cdp.once('Tracing.tracingComplete', r));
@@ -81,7 +99,7 @@ try {
             fs.writeFileSync(out + '/' + label + '-' + name + '-trace.json', Buffer.concat(chunks));
         }
     }
-    fs.writeFileSync(out + '/' + label + '.json', JSON.stringify({ label, root, sourceSha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), workingDiffSha256: createHash('sha256').update(execFileSync('git', ['diff', 'HEAD'], { cwd: root })).digest('hex'), host: { node: process.version, platform: process.platform, kernel: os.release(), cpu: os.cpus()[0]?.model, logicalCpus: os.cpus().length }, trace, flush, viewport: { width: 1280, height: 800, dpr: 2 }, chromium: await browser.version(), buildFingerprint: JSON.parse(fs.readFileSync(root + '/dist/houseplan-assets.json', 'utf8')).fingerprint, collectorSha256: createHash('sha256').update(collectModeTransitionSamples.toString()).digest('hex'), note: 'RAF samples are proxies; presented frames require the trace. Interactive is inert MutationObserver; afterToReady includes two extra RAFs.', rows }, null, 2));
+    fs.writeFileSync(out + '/' + label + '.json', JSON.stringify({ label, root, sourceSha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), workingDiffSha256: createHash('sha256').update(execFileSync('git', ['diff', 'HEAD'], { cwd: root })).digest('hex'), host: { node: process.version, platform: process.platform, kernel: os.release(), cpu: os.cpus()[0]?.model, logicalCpus: os.cpus().length, samples: hostSamples }, trace, flush, viewport: { width: 1280, height: 800, dpr: 2 }, chromium: await browser.version(), buildFingerprint: JSON.parse(fs.readFileSync(root + '/dist/houseplan-assets.json', 'utf8')).fingerprint, collectorSha256: createHash('sha256').update(collectModeTransitionSamples.toString()).digest('hex'), note: 'RAF samples are proxies; presented frames require the trace. Interactive is inert MutationObserver; afterToReady includes two extra RAFs.', rows }, null, 2));
 }
 finally {
     await browser.close();

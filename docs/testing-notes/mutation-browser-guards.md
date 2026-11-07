@@ -27,6 +27,10 @@ tests use unchanged product code and do not count as mutation execution.
 `commitWallChainSegmentGeometry` path; their native smoke/benchmark files remain
 available. This removes no reachable runtime branch or current graph assertion.
 
+#1344 moves `plan-device-landmarks-hit-target` to its native browser witness:
+native inert inheritance, capsule/core hit testing and trusted Walls/room-button
+clicks require Chromium; computed CSS alone does not prove this boundary.
+
 Compatibility metadata for the retained registry reader follows.
 The guideline is `200` (#699), an existing diagnostic value, not an adopted
 limit of the new process or an instruction to run its old checker. The table
@@ -64,10 +68,10 @@ that transition events alone prove disposal.
 | Performance threshold | 9 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 106 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 108 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 109 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 58 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 280 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **565 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
+| **Total** | **566 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
 
 
 ## Historical measurements (2026-09-27)
@@ -392,6 +396,8 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 - `zigbee-topology-unknown-outline-ignores-plan-zoom`
 
 ### Pointer geometry and trusted interaction
+
+- `plan-device-landmarks-hit-target`
 
 - `view-menu-outside-click-leaks-1089`
 

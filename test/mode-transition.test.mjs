@@ -277,3 +277,43 @@ test('#1344 unchanged physical scale is exact rather than an exp/log near-identi
  const to={...from,presentedMode:'devices',viewport:{...from.viewport}};
  for(const p of [0,.1,.5,.9,1])assert.equal(interpolateModeVisualState(from,to,p).viewport.pixelsPerUnit,.742);
 });
+
+test('#1344 trace joins presentation by trace_id, keeps missing frames explicit and deduplicates merged presents', async t => {
+  const fs = await import('node:fs'), path = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const dir = fs.mkdtempSync(path.join(tmpdir(), 'houseplan-mode-trace-'));
+  t.after(() => {
+    assert.equal(path.dirname(path.resolve(dir)), path.resolve(tmpdir()));
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+  const events = [];
+  for (const [id, sequence, begin] of [['A',10,1000],['B',11,4000],['missing',12,8000],['C',13,12000]]) {
+    events.push({name:'AnimationFrame',ph:'b',pid:7,tid:8,id2:{local:'track'},ts:begin,
+      args:{id,animation_frame_timing_info:{begin_frame_id:{source_id:1,sequence_number:sequence}}}},
+      {name:'AnimationFrame',ph:'e',pid:7,tid:8,id2:{local:'track'},ts:begin+2000,args:{}});
+  }
+  for (const [id, sequence, ts] of [['A',100,10000],['B',101,20000],['C',101,20000],['decoy',10,7000],['missing',0,17000]])
+    events.push({name:'AnimationFrame::Presentation',ph:'n',pid:7,tid:8,ts,
+      args:{id,begin_frame_id:{source_id:sequence?1:0,sequence_number:sequence}}});
+  events.push({name:'hp-mode:large:0:view-plan:start',ts:0},
+    {name:'hp-mode:large:0:view-plan:interactive',ts:25000},
+    {name:'Layout',ph:'X',pid:7,tid:8,ts:1600,dur:1000},
+    {name:'Layout',ph:'X',pid:9,tid:10,ts:1600,dur:999999});
+  fs.writeFileSync(path.join(dir,'sample-large-trace.json'),JSON.stringify({traceEvents:events}));
+  fs.writeFileSync(path.join(dir,'sample.json'),JSON.stringify({rows:[{fixture:'large',sample:0,from:'view',to:'plan',rafSamples:4,
+    frames:[1.5,4.5,8.5,12.5].map((controllerTime,index)=>({controllerTime,phase:index===3?'settling':'running'}))}]}));
+  const script=fileURLToPath(new URL('../docs/testing/issue1344/analyze-presented.mjs',import.meta.url));
+  const run=spawnSync(process.execPath,[script,dir,'sample'],{encoding:'utf8'});
+  assert.equal(run.status,0,run.stdout+run.stderr);
+  const [row]=JSON.parse(fs.readFileSync(path.join(dir,'sample-presented-analysis.json'),'utf8')).rows;
+  assert.equal(row.presentedChangedFrames,2);
+  assert.equal(row.unmatched,0);
+  assert.equal(row.notPresented,1);
+  assert.equal(row.maxPresentedGapMs,10);
+  assert.equal(row.firstPresentedMs,10);
+  assert.equal(row.interactiveMinusToPresentationMs,5);
+  assert.equal(row.terminalFrame.traceId,'C');
+  assert.equal(row.maxStyleLayoutMs,1);
+});

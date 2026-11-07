@@ -1,0 +1,6753 @@
+{
+  "provenance": {
+    "sourceSha": "6e5fccd7b1c150be1b4913e461318fa2d76b9dba",
+    "buildFingerprint": "cb692890c66176b8f20b82ccd510c3477c7ea06a11b4f29e82e0cfd10025f5c2",
+    "collectorSha256": "a742c7fdac784028f6838e5740d83ea63f3ede351325368dd7196931511471bd",
+    "reportSha256": "afe25991887e20f062dc4518a43400c379f807de38bd81d0eccc4beb0d9fe232",
+    "analyzerSha256": "4ccf87cecc7775f03f419416de62e2be7b6d71925f9f899c41b5e2c59c98c8b6",
+    "traceInputs": [
+      {
+        "fixture": "demo",
+        "file": "candidate-trace-final-v5-demo-trace.json",
+        "sha256": "ad5a852eaa48723b24f7e32151d0d441de6bb9237fa630c0963d8bcdb7d03da1"
+      },
+      {
+        "fixture": "medium",
+        "file": "candidate-trace-final-v5-medium-trace.json",
+        "sha256": "1787b290b3fe6457d7a4517242f4dc3c6329b362fd760349e940ac52fb13af42"
+      },
+      {
+        "fixture": "large",
+        "file": "candidate-trace-final-v5-large-trace.json",
+        "sha256": "c785c8cd5c409773c4345fe0d5e3f0bbb10b1336654a7c2bcb31153529fc023e"
+      }
+    ]
+  },
+  "method": "Match changed controller sample to enclosing AnimationFrame begin/end, then pid:args.id (Chromium trace_id) to AnimationFrame::Presentation; begin and presented frame sequence can differ. No RAF sample is assumed presented; missing links remain explicit.",
+  "rows": [
+    {
+      "fixture": "demo",
+      "sample": 0,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 89.941,
+      "maxPresentedGapMs": 20.568,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72263727618,
+        "end": 72263747243,
+        "sequence": 77,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438260d",
+        "presentation": 72263780657
+      },
+      "interactiveMinusToPresentationMs": 2.042,
+      "maxStyleLayoutMs": 1.652,
+      "costs": [
+        {
+          "sequence": 64,
+          "styleLayoutMs": 1.018
+        },
+        {
+          "sequence": 65,
+          "styleLayoutMs": 1.652
+        },
+        {
+          "sequence": 66,
+          "styleLayoutMs": 0.794
+        },
+        {
+          "sequence": 67,
+          "styleLayoutMs": 0.769
+        },
+        {
+          "sequence": 68,
+          "styleLayoutMs": 0.803
+        },
+        {
+          "sequence": 69,
+          "styleLayoutMs": 0.942
+        },
+        {
+          "sequence": 70,
+          "styleLayoutMs": 0.792
+        },
+        {
+          "sequence": 71,
+          "styleLayoutMs": 0.693
+        },
+        {
+          "sequence": 72,
+          "styleLayoutMs": 0.73
+        },
+        {
+          "sequence": 73,
+          "styleLayoutMs": 0.679
+        },
+        {
+          "sequence": 74,
+          "styleLayoutMs": 0.594
+        },
+        {
+          "sequence": 75,
+          "styleLayoutMs": 0.573
+        },
+        {
+          "sequence": 77,
+          "styleLayoutMs": 0.696
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 0,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 51.924,
+      "maxPresentedGapMs": 19.67,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72264094986,
+        "end": 72264112177,
+        "sequence": 99,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4382515",
+        "presentation": 72264128387
+      },
+      "interactiveMinusToPresentationMs": 17.695,
+      "maxStyleLayoutMs": 0.806,
+      "costs": [
+        {
+          "sequence": 85,
+          "styleLayoutMs": 0.45
+        },
+        {
+          "sequence": 86,
+          "styleLayoutMs": 0.77
+        },
+        {
+          "sequence": 87,
+          "styleLayoutMs": 0.674
+        },
+        {
+          "sequence": 88,
+          "styleLayoutMs": 0.754
+        },
+        {
+          "sequence": 89,
+          "styleLayoutMs": 0.77
+        },
+        {
+          "sequence": 90,
+          "styleLayoutMs": 0.775
+        },
+        {
+          "sequence": 91,
+          "styleLayoutMs": 0.694
+        },
+        {
+          "sequence": 92,
+          "styleLayoutMs": 0.769
+        },
+        {
+          "sequence": 93,
+          "styleLayoutMs": 0.713
+        },
+        {
+          "sequence": 94,
+          "styleLayoutMs": 0.66
+        },
+        {
+          "sequence": 95,
+          "styleLayoutMs": 0.642
+        },
+        {
+          "sequence": 96,
+          "styleLayoutMs": 0.567
+        },
+        {
+          "sequence": 97,
+          "styleLayoutMs": 0.514
+        },
+        {
+          "sequence": 98,
+          "styleLayoutMs": 0.379
+        },
+        {
+          "sequence": 99,
+          "styleLayoutMs": 0.806
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 0,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 53.521,
+      "maxPresentedGapMs": 17.689,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72264461711,
+        "end": 72264478524,
+        "sequence": 121,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438206b",
+        "presentation": 72264494552
+      },
+      "interactiveMinusToPresentationMs": 18.48,
+      "maxStyleLayoutMs": 0.544,
+      "costs": [
+        {
+          "sequence": 107,
+          "styleLayoutMs": 0.152
+        },
+        {
+          "sequence": 108,
+          "styleLayoutMs": 0.393
+        },
+        {
+          "sequence": 109,
+          "styleLayoutMs": 0.382
+        },
+        {
+          "sequence": 110,
+          "styleLayoutMs": 0.453
+        },
+        {
+          "sequence": 111,
+          "styleLayoutMs": 0.444
+        },
+        {
+          "sequence": 112,
+          "styleLayoutMs": 0.405
+        },
+        {
+          "sequence": 113,
+          "styleLayoutMs": 0.413
+        },
+        {
+          "sequence": 114,
+          "styleLayoutMs": 0.536
+        },
+        {
+          "sequence": 115,
+          "styleLayoutMs": 0.439
+        },
+        {
+          "sequence": 116,
+          "styleLayoutMs": 0.394
+        },
+        {
+          "sequence": 117,
+          "styleLayoutMs": 0.376
+        },
+        {
+          "sequence": 118,
+          "styleLayoutMs": 0.437
+        },
+        {
+          "sequence": 119,
+          "styleLayoutMs": 0.4
+        },
+        {
+          "sequence": 120,
+          "styleLayoutMs": 0.373
+        },
+        {
+          "sequence": 121,
+          "styleLayoutMs": 0.544
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 0,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 63.63,
+      "maxPresentedGapMs": 17.021,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72264828369,
+        "end": 72264845388,
+        "sequence": 143,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4383fd2",
+        "presentation": 72264861498
+      },
+      "interactiveMinusToPresentationMs": 17.365,
+      "maxStyleLayoutMs": 0.593,
+      "costs": [
+        {
+          "sequence": 130,
+          "styleLayoutMs": 0.593
+        },
+        {
+          "sequence": 131,
+          "styleLayoutMs": 0.504
+        },
+        {
+          "sequence": 132,
+          "styleLayoutMs": 0.592
+        },
+        {
+          "sequence": 133,
+          "styleLayoutMs": 0.417
+        },
+        {
+          "sequence": 134,
+          "styleLayoutMs": 0.43
+        },
+        {
+          "sequence": 135,
+          "styleLayoutMs": 0.428
+        },
+        {
+          "sequence": 136,
+          "styleLayoutMs": 0.39
+        },
+        {
+          "sequence": 137,
+          "styleLayoutMs": 0.475
+        },
+        {
+          "sequence": 138,
+          "styleLayoutMs": 0.409
+        },
+        {
+          "sequence": 139,
+          "styleLayoutMs": 0.372
+        },
+        {
+          "sequence": 140,
+          "styleLayoutMs": 0.365
+        },
+        {
+          "sequence": 141,
+          "styleLayoutMs": 0.357
+        },
+        {
+          "sequence": 142,
+          "styleLayoutMs": 0.418
+        },
+        {
+          "sequence": 143,
+          "styleLayoutMs": 0.561
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 0,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 64.886,
+      "maxPresentedGapMs": 18.076,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72265195041,
+        "end": 72265211703,
+        "sequence": 165,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4383a28",
+        "presentation": 72265228088
+      },
+      "interactiveMinusToPresentationMs": 17.704,
+      "maxStyleLayoutMs": 0.504,
+      "costs": [
+        {
+          "sequence": 152,
+          "styleLayoutMs": 0.465
+        },
+        {
+          "sequence": 153,
+          "styleLayoutMs": 0.339
+        },
+        {
+          "sequence": 154,
+          "styleLayoutMs": 0.498
+        },
+        {
+          "sequence": 155,
+          "styleLayoutMs": 0.459
+        },
+        {
+          "sequence": 156,
+          "styleLayoutMs": 0.424
+        },
+        {
+          "sequence": 157,
+          "styleLayoutMs": 0.441
+        },
+        {
+          "sequence": 158,
+          "styleLayoutMs": 0.444
+        },
+        {
+          "sequence": 159,
+          "styleLayoutMs": 0.377
+        },
+        {
+          "sequence": 160,
+          "styleLayoutMs": 0.36
+        },
+        {
+          "sequence": 161,
+          "styleLayoutMs": 0.504
+        },
+        {
+          "sequence": 162,
+          "styleLayoutMs": 0.361
+        },
+        {
+          "sequence": 163,
+          "styleLayoutMs": 0.409
+        },
+        {
+          "sequence": 164,
+          "styleLayoutMs": 0.373
+        },
+        {
+          "sequence": 165,
+          "styleLayoutMs": 0.5
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 0,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 45.033,
+      "maxPresentedGapMs": 17.853,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72265561554,
+        "end": 72265578440,
+        "sequence": 187,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43839f4",
+        "presentation": 72265594588
+      },
+      "interactiveMinusToPresentationMs": 17.696,
+      "maxStyleLayoutMs": 0.531,
+      "costs": [
+        {
+          "sequence": 173,
+          "styleLayoutMs": 0.364
+        },
+        {
+          "sequence": 174,
+          "styleLayoutMs": 0.464
+        },
+        {
+          "sequence": 175,
+          "styleLayoutMs": 0.436
+        },
+        {
+          "sequence": 176,
+          "styleLayoutMs": 0.404
+        },
+        {
+          "sequence": 177,
+          "styleLayoutMs": 0.47
+        },
+        {
+          "sequence": 178,
+          "styleLayoutMs": 0.423
+        },
+        {
+          "sequence": 179,
+          "styleLayoutMs": 0.397
+        },
+        {
+          "sequence": 180,
+          "styleLayoutMs": 0.408
+        },
+        {
+          "sequence": 181,
+          "styleLayoutMs": 0.456
+        },
+        {
+          "sequence": 182,
+          "styleLayoutMs": 0.531
+        },
+        {
+          "sequence": 183,
+          "styleLayoutMs": 0.387
+        },
+        {
+          "sequence": 184,
+          "styleLayoutMs": 0.368
+        },
+        {
+          "sequence": 185,
+          "styleLayoutMs": 0.437
+        },
+        {
+          "sequence": 186,
+          "styleLayoutMs": 0.341
+        },
+        {
+          "sequence": 187,
+          "styleLayoutMs": 0.524
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 0,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 50.284,
+      "maxPresentedGapMs": 18.74,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72266261703,
+        "end": 72266278669,
+        "sequence": 229,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4383370",
+        "presentation": 72266294610
+      },
+      "interactiveMinusToPresentationMs": 18.167,
+      "maxStyleLayoutMs": 0.851,
+      "costs": [
+        {
+          "sequence": 215,
+          "styleLayoutMs": 0.426
+        },
+        {
+          "sequence": 216,
+          "styleLayoutMs": 0.622
+        },
+        {
+          "sequence": 217,
+          "styleLayoutMs": 0.558
+        },
+        {
+          "sequence": 218,
+          "styleLayoutMs": 0.617
+        },
+        {
+          "sequence": 219,
+          "styleLayoutMs": 0.58
+        },
+        {
+          "sequence": 220,
+          "styleLayoutMs": 0.815
+        },
+        {
+          "sequence": 221,
+          "styleLayoutMs": 0.587
+        },
+        {
+          "sequence": 222,
+          "styleLayoutMs": 0.559
+        },
+        {
+          "sequence": 223,
+          "styleLayoutMs": 0.549
+        },
+        {
+          "sequence": 224,
+          "styleLayoutMs": 0.63
+        },
+        {
+          "sequence": 225,
+          "styleLayoutMs": 0.526
+        },
+        {
+          "sequence": 226,
+          "styleLayoutMs": 0.647
+        },
+        {
+          "sequence": 227,
+          "styleLayoutMs": 0.613
+        },
+        {
+          "sequence": 228,
+          "styleLayoutMs": 0.354
+        },
+        {
+          "sequence": 229,
+          "styleLayoutMs": 0.851
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 1,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 68.245,
+      "maxPresentedGapMs": 20.328,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72266977434,
+        "end": 72266992351,
+        "sequence": 271,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4380d7c",
+        "presentation": 72267001835
+      },
+      "interactiveMinusToPresentationMs": 10.639,
+      "maxStyleLayoutMs": 0.905,
+      "costs": [
+        {
+          "sequence": 258,
+          "styleLayoutMs": 0.794
+        },
+        {
+          "sequence": 259,
+          "styleLayoutMs": 0.687
+        },
+        {
+          "sequence": 260,
+          "styleLayoutMs": 0.637
+        },
+        {
+          "sequence": 261,
+          "styleLayoutMs": 0.607
+        },
+        {
+          "sequence": 262,
+          "styleLayoutMs": 0.678
+        },
+        {
+          "sequence": 263,
+          "styleLayoutMs": 0.682
+        },
+        {
+          "sequence": 264,
+          "styleLayoutMs": 0.604
+        },
+        {
+          "sequence": 265,
+          "styleLayoutMs": 0.65
+        },
+        {
+          "sequence": 266,
+          "styleLayoutMs": 0.905
+        },
+        {
+          "sequence": 267,
+          "styleLayoutMs": 0.578
+        },
+        {
+          "sequence": 268,
+          "styleLayoutMs": 0.579
+        },
+        {
+          "sequence": 269,
+          "styleLayoutMs": 0.621
+        },
+        {
+          "sequence": 270,
+          "styleLayoutMs": 0.639
+        },
+        {
+          "sequence": 271,
+          "styleLayoutMs": 0.752
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 1,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 51.703,
+      "maxPresentedGapMs": 17.258,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72267328336,
+        "end": 72267345290,
+        "sequence": 293,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4380822",
+        "presentation": 72267361268
+      },
+      "interactiveMinusToPresentationMs": 17.95,
+      "maxStyleLayoutMs": 1.145,
+      "costs": [
+        {
+          "sequence": 279,
+          "styleLayoutMs": 0.44
+        },
+        {
+          "sequence": 280,
+          "styleLayoutMs": 0.814
+        },
+        {
+          "sequence": 281,
+          "styleLayoutMs": 0.73
+        },
+        {
+          "sequence": 282,
+          "styleLayoutMs": 0.861
+        },
+        {
+          "sequence": 283,
+          "styleLayoutMs": 0.734
+        },
+        {
+          "sequence": 284,
+          "styleLayoutMs": 0.729
+        },
+        {
+          "sequence": 285,
+          "styleLayoutMs": 1.145
+        },
+        {
+          "sequence": 286,
+          "styleLayoutMs": 0.753
+        },
+        {
+          "sequence": 287,
+          "styleLayoutMs": 0.808
+        },
+        {
+          "sequence": 288,
+          "styleLayoutMs": 0.724
+        },
+        {
+          "sequence": 289,
+          "styleLayoutMs": 0.678
+        },
+        {
+          "sequence": 290,
+          "styleLayoutMs": 0.52
+        },
+        {
+          "sequence": 291,
+          "styleLayoutMs": 0.562
+        },
+        {
+          "sequence": 292,
+          "styleLayoutMs": 0.38
+        },
+        {
+          "sequence": 293,
+          "styleLayoutMs": 0.881
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 1,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 64.606,
+      "maxPresentedGapMs": 21.946,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72267694980,
+        "end": 72267711508,
+        "sequence": 315,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4380708",
+        "presentation": 72267728030
+      },
+      "interactiveMinusToPresentationMs": 17.688,
+      "maxStyleLayoutMs": 0.496,
+      "costs": [
+        {
+          "sequence": 302,
+          "styleLayoutMs": 0.415
+        },
+        {
+          "sequence": 303,
+          "styleLayoutMs": 0.309
+        },
+        {
+          "sequence": 304,
+          "styleLayoutMs": 0.419
+        },
+        {
+          "sequence": 305,
+          "styleLayoutMs": 0.435
+        },
+        {
+          "sequence": 306,
+          "styleLayoutMs": 0.428
+        },
+        {
+          "sequence": 307,
+          "styleLayoutMs": 0.446
+        },
+        {
+          "sequence": 308,
+          "styleLayoutMs": 0.364
+        },
+        {
+          "sequence": 309,
+          "styleLayoutMs": 0.368
+        },
+        {
+          "sequence": 310,
+          "styleLayoutMs": 0.378
+        },
+        {
+          "sequence": 311,
+          "styleLayoutMs": 0.434
+        },
+        {
+          "sequence": 312,
+          "styleLayoutMs": 0.408
+        },
+        {
+          "sequence": 313,
+          "styleLayoutMs": 0.36
+        },
+        {
+          "sequence": 314,
+          "styleLayoutMs": 0.338
+        },
+        {
+          "sequence": 315,
+          "styleLayoutMs": 0.496
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 1,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 47.369,
+      "maxPresentedGapMs": 17.172,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72268061490,
+        "end": 72268078316,
+        "sequence": 337,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43802db",
+        "presentation": 72268094517
+      },
+      "interactiveMinusToPresentationMs": 17.743,
+      "maxStyleLayoutMs": 0.562,
+      "costs": [
+        {
+          "sequence": 323,
+          "styleLayoutMs": 0.288
+        },
+        {
+          "sequence": 324,
+          "styleLayoutMs": 0.431
+        },
+        {
+          "sequence": 325,
+          "styleLayoutMs": 0.467
+        },
+        {
+          "sequence": 326,
+          "styleLayoutMs": 0.406
+        },
+        {
+          "sequence": 327,
+          "styleLayoutMs": 0.372
+        },
+        {
+          "sequence": 328,
+          "styleLayoutMs": 0.381
+        },
+        {
+          "sequence": 329,
+          "styleLayoutMs": 0.411
+        },
+        {
+          "sequence": 330,
+          "styleLayoutMs": 0.366
+        },
+        {
+          "sequence": 331,
+          "styleLayoutMs": 0.562
+        },
+        {
+          "sequence": 332,
+          "styleLayoutMs": 0.383
+        },
+        {
+          "sequence": 333,
+          "styleLayoutMs": 0.366
+        },
+        {
+          "sequence": 334,
+          "styleLayoutMs": 0.365
+        },
+        {
+          "sequence": 335,
+          "styleLayoutMs": 0.441
+        },
+        {
+          "sequence": 336,
+          "styleLayoutMs": 0.322
+        },
+        {
+          "sequence": 337,
+          "styleLayoutMs": 0.518
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 1,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 48.561,
+      "maxPresentedGapMs": 18.88,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72268428211,
+        "end": 72268444957,
+        "sequence": 359,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438011b",
+        "presentation": 72268461216
+      },
+      "interactiveMinusToPresentationMs": 17.425,
+      "maxStyleLayoutMs": 0.498,
+      "costs": [
+        {
+          "sequence": 345,
+          "styleLayoutMs": 0.391
+        },
+        {
+          "sequence": 346,
+          "styleLayoutMs": 0.347
+        },
+        {
+          "sequence": 347,
+          "styleLayoutMs": 0.456
+        },
+        {
+          "sequence": 348,
+          "styleLayoutMs": 0.425
+        },
+        {
+          "sequence": 349,
+          "styleLayoutMs": 0.419
+        },
+        {
+          "sequence": 350,
+          "styleLayoutMs": 0.432
+        },
+        {
+          "sequence": 351,
+          "styleLayoutMs": 0.416
+        },
+        {
+          "sequence": 352,
+          "styleLayoutMs": 0.386
+        },
+        {
+          "sequence": 353,
+          "styleLayoutMs": 0.383
+        },
+        {
+          "sequence": 354,
+          "styleLayoutMs": 0.374
+        },
+        {
+          "sequence": 355,
+          "styleLayoutMs": 0.414
+        },
+        {
+          "sequence": 356,
+          "styleLayoutMs": 0.387
+        },
+        {
+          "sequence": 357,
+          "styleLayoutMs": 0.49
+        },
+        {
+          "sequence": 358,
+          "styleLayoutMs": 0.335
+        },
+        {
+          "sequence": 359,
+          "styleLayoutMs": 0.498
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 1,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 44.727,
+      "maxPresentedGapMs": 17.33,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72268777876,
+        "end": 72268794664,
+        "sequence": 380,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4381cfa",
+        "presentation": 72268810985
+      },
+      "interactiveMinusToPresentationMs": 17.849,
+      "maxStyleLayoutMs": 0.477,
+      "costs": [
+        {
+          "sequence": 367,
+          "styleLayoutMs": 0.36
+        },
+        {
+          "sequence": 368,
+          "styleLayoutMs": 0.437
+        },
+        {
+          "sequence": 369,
+          "styleLayoutMs": 0.437
+        },
+        {
+          "sequence": 370,
+          "styleLayoutMs": 0.477
+        },
+        {
+          "sequence": 371,
+          "styleLayoutMs": 0.373
+        },
+        {
+          "sequence": 372,
+          "styleLayoutMs": 0.371
+        },
+        {
+          "sequence": 373,
+          "styleLayoutMs": 0.372
+        },
+        {
+          "sequence": 374,
+          "styleLayoutMs": 0.367
+        },
+        {
+          "sequence": 375,
+          "styleLayoutMs": 0.378
+        },
+        {
+          "sequence": 376,
+          "styleLayoutMs": 0.357
+        },
+        {
+          "sequence": 377,
+          "styleLayoutMs": 0.361
+        },
+        {
+          "sequence": 378,
+          "styleLayoutMs": 0.35
+        },
+        {
+          "sequence": 379,
+          "styleLayoutMs": 0.349
+        },
+        {
+          "sequence": 380,
+          "styleLayoutMs": 0.474
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 1,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 85.856,
+      "maxPresentedGapMs": 26.266,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72269481946,
+        "end": 72269502608,
+        "sequence": 422,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4381967",
+        "presentation": 72269536528
+      },
+      "interactiveMinusToPresentationMs": 0.972,
+      "maxStyleLayoutMs": 1.015,
+      "costs": [
+        {
+          "sequence": 409,
+          "styleLayoutMs": 0.957
+        },
+        {
+          "sequence": 410,
+          "styleLayoutMs": 0.723
+        },
+        {
+          "sequence": 411,
+          "styleLayoutMs": 0.645
+        },
+        {
+          "sequence": 412,
+          "styleLayoutMs": 0.626
+        },
+        {
+          "sequence": 413,
+          "styleLayoutMs": 0.728
+        },
+        {
+          "sequence": 414,
+          "styleLayoutMs": 0.595
+        },
+        {
+          "sequence": 415,
+          "styleLayoutMs": 0.593
+        },
+        {
+          "sequence": 417,
+          "styleLayoutMs": 0.565
+        },
+        {
+          "sequence": 418,
+          "styleLayoutMs": 0.699
+        },
+        {
+          "sequence": 419,
+          "styleLayoutMs": 0.903
+        },
+        {
+          "sequence": 421,
+          "styleLayoutMs": 0.696
+        },
+        {
+          "sequence": 422,
+          "styleLayoutMs": 1.015
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 2,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 9,
+      "presentedChangedFrames": 9,
+      "firstPresentedMs": 95.169,
+      "maxPresentedGapMs": 32.821,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72270194310,
+        "end": 72270216714,
+        "sequence": 465,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43813bc",
+        "presentation": 72270238039
+      },
+      "interactiveMinusToPresentationMs": 8.02,
+      "maxStyleLayoutMs": 1.527,
+      "costs": [
+        {
+          "sequence": 451,
+          "styleLayoutMs": 1.267
+        },
+        {
+          "sequence": 452,
+          "styleLayoutMs": 0.637
+        },
+        {
+          "sequence": 454,
+          "styleLayoutMs": 1.527
+        },
+        {
+          "sequence": 456,
+          "styleLayoutMs": 0.88
+        },
+        {
+          "sequence": 458,
+          "styleLayoutMs": 0.787
+        },
+        {
+          "sequence": 460,
+          "styleLayoutMs": 1.134
+        },
+        {
+          "sequence": 461,
+          "styleLayoutMs": 0.973
+        },
+        {
+          "sequence": 463,
+          "styleLayoutMs": 0.951
+        },
+        {
+          "sequence": 465,
+          "styleLayoutMs": 0.865
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 2,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 56.515,
+      "maxPresentedGapMs": 27.255,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72270570746,
+        "end": 72270592400,
+        "sequence": 487,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4381121",
+        "presentation": 72270619693
+      },
+      "interactiveMinusToPresentationMs": 2.612,
+      "maxStyleLayoutMs": 1.149,
+      "costs": [
+        {
+          "sequence": 473,
+          "styleLayoutMs": 0.642
+        },
+        {
+          "sequence": 474,
+          "styleLayoutMs": 0.78
+        },
+        {
+          "sequence": 475,
+          "styleLayoutMs": 0.795
+        },
+        {
+          "sequence": 476,
+          "styleLayoutMs": 0.8
+        },
+        {
+          "sequence": 477,
+          "styleLayoutMs": 0.799
+        },
+        {
+          "sequence": 479,
+          "styleLayoutMs": 0.739
+        },
+        {
+          "sequence": 480,
+          "styleLayoutMs": 0.941
+        },
+        {
+          "sequence": 482,
+          "styleLayoutMs": 1.149
+        },
+        {
+          "sequence": 483,
+          "styleLayoutMs": 0.644
+        },
+        {
+          "sequence": 484,
+          "styleLayoutMs": 0.618
+        },
+        {
+          "sequence": 485,
+          "styleLayoutMs": 0.574
+        },
+        {
+          "sequence": 486,
+          "styleLayoutMs": 0.479
+        },
+        {
+          "sequence": 487,
+          "styleLayoutMs": 0.806
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 2,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 58.286,
+      "maxPresentedGapMs": 19.726,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72270940168,
+        "end": 72270958274,
+        "sequence": 509,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4386c15",
+        "presentation": 72270975859
+      },
+      "interactiveMinusToPresentationMs": 4.254,
+      "maxStyleLayoutMs": 0.942,
+      "costs": [
+        {
+          "sequence": 495,
+          "styleLayoutMs": 0.942
+        },
+        {
+          "sequence": 496,
+          "styleLayoutMs": 0.42
+        },
+        {
+          "sequence": 497,
+          "styleLayoutMs": 0.404
+        },
+        {
+          "sequence": 498,
+          "styleLayoutMs": 0.443
+        },
+        {
+          "sequence": 499,
+          "styleLayoutMs": 0.535
+        },
+        {
+          "sequence": 501,
+          "styleLayoutMs": 0.567
+        },
+        {
+          "sequence": 502,
+          "styleLayoutMs": 0.423
+        },
+        {
+          "sequence": 503,
+          "styleLayoutMs": 0.425
+        },
+        {
+          "sequence": 504,
+          "styleLayoutMs": 0.424
+        },
+        {
+          "sequence": 505,
+          "styleLayoutMs": 0.399
+        },
+        {
+          "sequence": 506,
+          "styleLayoutMs": 0.457
+        },
+        {
+          "sequence": 507,
+          "styleLayoutMs": 0.449
+        },
+        {
+          "sequence": 508,
+          "styleLayoutMs": 0.389
+        },
+        {
+          "sequence": 509,
+          "styleLayoutMs": 0.653
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 2,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 69.183,
+      "maxPresentedGapMs": 28.16,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72271293102,
+        "end": 72271321984,
+        "sequence": 531,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4386b9a",
+        "presentation": 72271348658
+      },
+      "interactiveMinusToPresentationMs": 15.644,
+      "maxStyleLayoutMs": 1.109,
+      "costs": [
+        {
+          "sequence": 518,
+          "styleLayoutMs": 0.511
+        },
+        {
+          "sequence": 519,
+          "styleLayoutMs": 0.566
+        },
+        {
+          "sequence": 520,
+          "styleLayoutMs": 0.442
+        },
+        {
+          "sequence": 521,
+          "styleLayoutMs": 0.461
+        },
+        {
+          "sequence": 522,
+          "styleLayoutMs": 0.483
+        },
+        {
+          "sequence": 523,
+          "styleLayoutMs": 0.454
+        },
+        {
+          "sequence": 524,
+          "styleLayoutMs": 0.397
+        },
+        {
+          "sequence": 525,
+          "styleLayoutMs": 0.407
+        },
+        {
+          "sequence": 526,
+          "styleLayoutMs": 0.455
+        },
+        {
+          "sequence": 527,
+          "styleLayoutMs": 0.534
+        },
+        {
+          "sequence": 528,
+          "styleLayoutMs": 0.469
+        },
+        {
+          "sequence": 529,
+          "styleLayoutMs": 0.654
+        },
+        {
+          "sequence": 531,
+          "styleLayoutMs": 1.109
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 2,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 11,
+      "presentedChangedFrames": 11,
+      "firstPresentedMs": 81.801,
+      "maxPresentedGapMs": 27.048,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72271685141,
+        "end": 72271707783,
+        "sequence": 554,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4386961",
+        "presentation": 72271729562
+      },
+      "interactiveMinusToPresentationMs": 1.574,
+      "maxStyleLayoutMs": 0.842,
+      "costs": [
+        {
+          "sequence": 541,
+          "styleLayoutMs": 0.723
+        },
+        {
+          "sequence": 542,
+          "styleLayoutMs": 0.672
+        },
+        {
+          "sequence": 543,
+          "styleLayoutMs": 0.842
+        },
+        {
+          "sequence": 544,
+          "styleLayoutMs": 0.79
+        },
+        {
+          "sequence": 545,
+          "styleLayoutMs": 0.604
+        },
+        {
+          "sequence": 546,
+          "styleLayoutMs": 0.728
+        },
+        {
+          "sequence": 548,
+          "styleLayoutMs": 0.804
+        },
+        {
+          "sequence": 549,
+          "styleLayoutMs": 0.62
+        },
+        {
+          "sequence": 550,
+          "styleLayoutMs": 0.568
+        },
+        {
+          "sequence": 553,
+          "styleLayoutMs": 0.767
+        },
+        {
+          "sequence": 554,
+          "styleLayoutMs": 0.641
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 2,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 106.148,
+      "maxPresentedGapMs": 18.255,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72272067815,
+        "end": 72272082128,
+        "sequence": 577,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438643e",
+        "presentation": 72272111115
+      },
+      "interactiveMinusToPresentationMs": 2.125,
+      "maxStyleLayoutMs": 0.929,
+      "costs": [
+        {
+          "sequence": 564,
+          "styleLayoutMs": 0.778
+        },
+        {
+          "sequence": 565,
+          "styleLayoutMs": 0.929
+        },
+        {
+          "sequence": 566,
+          "styleLayoutMs": 0.888
+        },
+        {
+          "sequence": 567,
+          "styleLayoutMs": 0.876
+        },
+        {
+          "sequence": 568,
+          "styleLayoutMs": 0.629
+        },
+        {
+          "sequence": 569,
+          "styleLayoutMs": 0.565
+        },
+        {
+          "sequence": 570,
+          "styleLayoutMs": 0.531
+        },
+        {
+          "sequence": 571,
+          "styleLayoutMs": 0.465
+        },
+        {
+          "sequence": 572,
+          "styleLayoutMs": 0.564
+        },
+        {
+          "sequence": 573,
+          "styleLayoutMs": 0.443
+        },
+        {
+          "sequence": 574,
+          "styleLayoutMs": 0.473
+        },
+        {
+          "sequence": 575,
+          "styleLayoutMs": 0.432
+        },
+        {
+          "sequence": 576,
+          "styleLayoutMs": 0.418
+        },
+        {
+          "sequence": 577,
+          "styleLayoutMs": 0.606
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 2,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 56.241,
+      "maxPresentedGapMs": 19.764,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72272786669,
+        "end": 72272801406,
+        "sequence": 620,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4387e3a",
+        "presentation": 72272811441
+      },
+      "interactiveMinusToPresentationMs": 17.902,
+      "maxStyleLayoutMs": 0.863,
+      "costs": [
+        {
+          "sequence": 606,
+          "styleLayoutMs": 0.569
+        },
+        {
+          "sequence": 607,
+          "styleLayoutMs": 0.707
+        },
+        {
+          "sequence": 608,
+          "styleLayoutMs": 0.697
+        },
+        {
+          "sequence": 609,
+          "styleLayoutMs": 0.806
+        },
+        {
+          "sequence": 610,
+          "styleLayoutMs": 0.637
+        },
+        {
+          "sequence": 611,
+          "styleLayoutMs": 0.636
+        },
+        {
+          "sequence": 612,
+          "styleLayoutMs": 0.788
+        },
+        {
+          "sequence": 614,
+          "styleLayoutMs": 0.58
+        },
+        {
+          "sequence": 615,
+          "styleLayoutMs": 0.692
+        },
+        {
+          "sequence": 616,
+          "styleLayoutMs": 0.639
+        },
+        {
+          "sequence": 617,
+          "styleLayoutMs": 0.544
+        },
+        {
+          "sequence": 618,
+          "styleLayoutMs": 0.551
+        },
+        {
+          "sequence": 619,
+          "styleLayoutMs": 0.398
+        },
+        {
+          "sequence": 620,
+          "styleLayoutMs": 0.863
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 3,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 55.837,
+      "maxPresentedGapMs": 23.396,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72273493682,
+        "end": 72273514115,
+        "sequence": 663,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43878f2",
+        "presentation": 72273528658
+      },
+      "interactiveMinusToPresentationMs": 17.48,
+      "maxStyleLayoutMs": 1.218,
+      "costs": [
+        {
+          "sequence": 648,
+          "styleLayoutMs": 0.304
+        },
+        {
+          "sequence": 649,
+          "styleLayoutMs": 0.579
+        },
+        {
+          "sequence": 650,
+          "styleLayoutMs": 1.218
+        },
+        {
+          "sequence": 651,
+          "styleLayoutMs": 1.017
+        },
+        {
+          "sequence": 653,
+          "styleLayoutMs": 0.896
+        },
+        {
+          "sequence": 654,
+          "styleLayoutMs": 0.702
+        },
+        {
+          "sequence": 655,
+          "styleLayoutMs": 0.746
+        },
+        {
+          "sequence": 656,
+          "styleLayoutMs": 0.694
+        },
+        {
+          "sequence": 657,
+          "styleLayoutMs": 0.58
+        },
+        {
+          "sequence": 659,
+          "styleLayoutMs": 0.848
+        },
+        {
+          "sequence": 660,
+          "styleLayoutMs": 0.592
+        },
+        {
+          "sequence": 661,
+          "styleLayoutMs": 0.717
+        },
+        {
+          "sequence": 663,
+          "styleLayoutMs": 1.209
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 3,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 51.866,
+      "maxPresentedGapMs": 18.488,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72273877664,
+        "end": 72273887628,
+        "sequence": 685,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4387795",
+        "presentation": 72273897227
+      },
+      "interactiveMinusToPresentationMs": 14.665,
+      "maxStyleLayoutMs": 1.005,
+      "costs": [
+        {
+          "sequence": 671,
+          "styleLayoutMs": 0.828
+        },
+        {
+          "sequence": 672,
+          "styleLayoutMs": 1.005
+        },
+        {
+          "sequence": 673,
+          "styleLayoutMs": 0.978
+        },
+        {
+          "sequence": 674,
+          "styleLayoutMs": 0.684
+        },
+        {
+          "sequence": 675,
+          "styleLayoutMs": 0.68
+        },
+        {
+          "sequence": 676,
+          "styleLayoutMs": 0.86
+        },
+        {
+          "sequence": 677,
+          "styleLayoutMs": 0.681
+        },
+        {
+          "sequence": 678,
+          "styleLayoutMs": 0.71
+        },
+        {
+          "sequence": 679,
+          "styleLayoutMs": 0.646
+        },
+        {
+          "sequence": 680,
+          "styleLayoutMs": 0.885
+        },
+        {
+          "sequence": 681,
+          "styleLayoutMs": 0.614
+        },
+        {
+          "sequence": 682,
+          "styleLayoutMs": 0.646
+        },
+        {
+          "sequence": 683,
+          "styleLayoutMs": 0.523
+        },
+        {
+          "sequence": 684,
+          "styleLayoutMs": 0.335
+        },
+        {
+          "sequence": 685,
+          "styleLayoutMs": 0.783
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 3,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 53.11,
+      "maxPresentedGapMs": 18.97,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72274227719,
+        "end": 72274245775,
+        "sequence": 707,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43872fa",
+        "presentation": 72274261498
+      },
+      "interactiveMinusToPresentationMs": 17.893,
+      "maxStyleLayoutMs": 0.885,
+      "costs": [
+        {
+          "sequence": 693,
+          "styleLayoutMs": 0.597
+        },
+        {
+          "sequence": 694,
+          "styleLayoutMs": 0.394
+        },
+        {
+          "sequence": 695,
+          "styleLayoutMs": 0.396
+        },
+        {
+          "sequence": 696,
+          "styleLayoutMs": 0.43
+        },
+        {
+          "sequence": 697,
+          "styleLayoutMs": 0.549
+        },
+        {
+          "sequence": 698,
+          "styleLayoutMs": 0.365
+        },
+        {
+          "sequence": 699,
+          "styleLayoutMs": 0.47
+        },
+        {
+          "sequence": 700,
+          "styleLayoutMs": 0.361
+        },
+        {
+          "sequence": 701,
+          "styleLayoutMs": 0.405
+        },
+        {
+          "sequence": 702,
+          "styleLayoutMs": 0.378
+        },
+        {
+          "sequence": 703,
+          "styleLayoutMs": 0.454
+        },
+        {
+          "sequence": 704,
+          "styleLayoutMs": 0.346
+        },
+        {
+          "sequence": 705,
+          "styleLayoutMs": 0.395
+        },
+        {
+          "sequence": 706,
+          "styleLayoutMs": 0.347
+        },
+        {
+          "sequence": 707,
+          "styleLayoutMs": 0.885
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 3,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 48.416,
+      "maxPresentedGapMs": 21.627,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72274578216,
+        "end": 72274594987,
+        "sequence": 728,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4387069",
+        "presentation": 72274614738
+      },
+      "interactiveMinusToPresentationMs": 14.965,
+      "maxStyleLayoutMs": 0.531,
+      "costs": [
+        {
+          "sequence": 715,
+          "styleLayoutMs": 0.348
+        },
+        {
+          "sequence": 716,
+          "styleLayoutMs": 0.462
+        },
+        {
+          "sequence": 717,
+          "styleLayoutMs": 0.45
+        },
+        {
+          "sequence": 718,
+          "styleLayoutMs": 0.397
+        },
+        {
+          "sequence": 719,
+          "styleLayoutMs": 0.371
+        },
+        {
+          "sequence": 720,
+          "styleLayoutMs": 0.484
+        },
+        {
+          "sequence": 721,
+          "styleLayoutMs": 0.38
+        },
+        {
+          "sequence": 722,
+          "styleLayoutMs": 0.429
+        },
+        {
+          "sequence": 723,
+          "styleLayoutMs": 0.419
+        },
+        {
+          "sequence": 724,
+          "styleLayoutMs": 0.403
+        },
+        {
+          "sequence": 725,
+          "styleLayoutMs": 0.489
+        },
+        {
+          "sequence": 726,
+          "styleLayoutMs": 0.414
+        },
+        {
+          "sequence": 727,
+          "styleLayoutMs": 0.369
+        },
+        {
+          "sequence": 728,
+          "styleLayoutMs": 0.531
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 3,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 52.161,
+      "maxPresentedGapMs": 22.051,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72274945855,
+        "end": 72274961832,
+        "sequence": 750,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4384ca5",
+        "presentation": 72274994316
+      },
+      "interactiveMinusToPresentationMs": 1.508,
+      "maxStyleLayoutMs": 0.807,
+      "costs": [
+        {
+          "sequence": 736,
+          "styleLayoutMs": 0.2
+        },
+        {
+          "sequence": 737,
+          "styleLayoutMs": 0.445
+        },
+        {
+          "sequence": 738,
+          "styleLayoutMs": 0.581
+        },
+        {
+          "sequence": 739,
+          "styleLayoutMs": 0.495
+        },
+        {
+          "sequence": 740,
+          "styleLayoutMs": 0.536
+        },
+        {
+          "sequence": 741,
+          "styleLayoutMs": 0.521
+        },
+        {
+          "sequence": 742,
+          "styleLayoutMs": 0.527
+        },
+        {
+          "sequence": 743,
+          "styleLayoutMs": 0.472
+        },
+        {
+          "sequence": 744,
+          "styleLayoutMs": 0.451
+        },
+        {
+          "sequence": 745,
+          "styleLayoutMs": 0.341
+        },
+        {
+          "sequence": 746,
+          "styleLayoutMs": 0.807
+        },
+        {
+          "sequence": 747,
+          "styleLayoutMs": 0.374
+        },
+        {
+          "sequence": 748,
+          "styleLayoutMs": 0.693
+        },
+        {
+          "sequence": 749,
+          "styleLayoutMs": 0.371
+        },
+        {
+          "sequence": 750,
+          "styleLayoutMs": 0.631
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 3,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 46.928,
+      "maxPresentedGapMs": 20.628,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72275294828,
+        "end": 72275311401,
+        "sequence": 771,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4384a10",
+        "presentation": 72275327825
+      },
+      "interactiveMinusToPresentationMs": 17.604,
+      "maxStyleLayoutMs": 0.595,
+      "costs": [
+        {
+          "sequence": 758,
+          "styleLayoutMs": 0.368
+        },
+        {
+          "sequence": 759,
+          "styleLayoutMs": 0.416
+        },
+        {
+          "sequence": 760,
+          "styleLayoutMs": 0.454
+        },
+        {
+          "sequence": 761,
+          "styleLayoutMs": 0.595
+        },
+        {
+          "sequence": 762,
+          "styleLayoutMs": 0.428
+        },
+        {
+          "sequence": 763,
+          "styleLayoutMs": 0.535
+        },
+        {
+          "sequence": 764,
+          "styleLayoutMs": 0.467
+        },
+        {
+          "sequence": 765,
+          "styleLayoutMs": 0.454
+        },
+        {
+          "sequence": 766,
+          "styleLayoutMs": 0.404
+        },
+        {
+          "sequence": 767,
+          "styleLayoutMs": 0.504
+        },
+        {
+          "sequence": 768,
+          "styleLayoutMs": 0.426
+        },
+        {
+          "sequence": 769,
+          "styleLayoutMs": 0.35
+        },
+        {
+          "sequence": 770,
+          "styleLayoutMs": 0.366
+        },
+        {
+          "sequence": 771,
+          "styleLayoutMs": 0.528
+        }
+      ]
+    },
+    {
+      "fixture": "demo",
+      "sample": 3,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 53.943,
+      "maxPresentedGapMs": 18.876,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72276000260,
+        "end": 72276014041,
+        "sequence": 813,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43845b8",
+        "presentation": 72276028659
+      },
+      "interactiveMinusToPresentationMs": 17.319,
+      "maxStyleLayoutMs": 0.799,
+      "costs": [
+        {
+          "sequence": 799,
+          "styleLayoutMs": 0.546
+        },
+        {
+          "sequence": 800,
+          "styleLayoutMs": 0.657
+        },
+        {
+          "sequence": 801,
+          "styleLayoutMs": 0.631
+        },
+        {
+          "sequence": 802,
+          "styleLayoutMs": 0.651
+        },
+        {
+          "sequence": 803,
+          "styleLayoutMs": 0.569
+        },
+        {
+          "sequence": 804,
+          "styleLayoutMs": 0.691
+        },
+        {
+          "sequence": 805,
+          "styleLayoutMs": 0.528
+        },
+        {
+          "sequence": 806,
+          "styleLayoutMs": 0.798
+        },
+        {
+          "sequence": 807,
+          "styleLayoutMs": 0.526
+        },
+        {
+          "sequence": 808,
+          "styleLayoutMs": 0.794
+        },
+        {
+          "sequence": 809,
+          "styleLayoutMs": 0.694
+        },
+        {
+          "sequence": 810,
+          "styleLayoutMs": 0.551
+        },
+        {
+          "sequence": 811,
+          "styleLayoutMs": 0.796
+        },
+        {
+          "sequence": 812,
+          "styleLayoutMs": 0.373
+        },
+        {
+          "sequence": 813,
+          "styleLayoutMs": 0.799
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 0,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 85.432,
+      "maxPresentedGapMs": 18.519,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72280156684,
+        "end": 72280172253,
+        "sequence": 1062,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4385d39",
+        "presentation": 72280196697
+      },
+      "interactiveMinusToPresentationMs": 4.478,
+      "maxStyleLayoutMs": 2.138,
+      "costs": [
+        {
+          "sequence": 1049,
+          "styleLayoutMs": 1.59
+        },
+        {
+          "sequence": 1050,
+          "styleLayoutMs": 2.138
+        },
+        {
+          "sequence": 1051,
+          "styleLayoutMs": 1.155
+        },
+        {
+          "sequence": 1052,
+          "styleLayoutMs": 1.159
+        },
+        {
+          "sequence": 1053,
+          "styleLayoutMs": 1.675
+        },
+        {
+          "sequence": 1054,
+          "styleLayoutMs": 1.378
+        },
+        {
+          "sequence": 1055,
+          "styleLayoutMs": 1.553
+        },
+        {
+          "sequence": 1056,
+          "styleLayoutMs": 1.227
+        },
+        {
+          "sequence": 1057,
+          "styleLayoutMs": 1.395
+        },
+        {
+          "sequence": 1058,
+          "styleLayoutMs": 1.133
+        },
+        {
+          "sequence": 1059,
+          "styleLayoutMs": 1.665
+        },
+        {
+          "sequence": 1060,
+          "styleLayoutMs": 0.99
+        },
+        {
+          "sequence": 1061,
+          "styleLayoutMs": 1.063
+        },
+        {
+          "sequence": 1062,
+          "styleLayoutMs": 1.452
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 0,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 76.725,
+      "maxPresentedGapMs": 18.268,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72280518217,
+        "end": 72280531232,
+        "sequence": 1084,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438580d",
+        "presentation": 72280560908
+      },
+      "interactiveMinusToPresentationMs": 4.617,
+      "maxStyleLayoutMs": 1.774,
+      "costs": [
+        {
+          "sequence": 1071,
+          "styleLayoutMs": 0.966
+        },
+        {
+          "sequence": 1072,
+          "styleLayoutMs": 1.561
+        },
+        {
+          "sequence": 1073,
+          "styleLayoutMs": 1.263
+        },
+        {
+          "sequence": 1074,
+          "styleLayoutMs": 1.472
+        },
+        {
+          "sequence": 1075,
+          "styleLayoutMs": 1.228
+        },
+        {
+          "sequence": 1076,
+          "styleLayoutMs": 1.16
+        },
+        {
+          "sequence": 1077,
+          "styleLayoutMs": 1.33
+        },
+        {
+          "sequence": 1078,
+          "styleLayoutMs": 1.272
+        },
+        {
+          "sequence": 1079,
+          "styleLayoutMs": 1.299
+        },
+        {
+          "sequence": 1080,
+          "styleLayoutMs": 1.222
+        },
+        {
+          "sequence": 1081,
+          "styleLayoutMs": 1.64
+        },
+        {
+          "sequence": 1082,
+          "styleLayoutMs": 1.122
+        },
+        {
+          "sequence": 1083,
+          "styleLayoutMs": 1.461
+        },
+        {
+          "sequence": 1084,
+          "styleLayoutMs": 1.774
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 0,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 71.73,
+      "maxPresentedGapMs": 18.871,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72280879119,
+        "end": 72280897371,
+        "sequence": 1106,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4385772",
+        "presentation": 72280910693
+      },
+      "interactiveMinusToPresentationMs": 20.793,
+      "maxStyleLayoutMs": 1.092,
+      "costs": [
+        {
+          "sequence": 1093,
+          "styleLayoutMs": 0.47
+        },
+        {
+          "sequence": 1094,
+          "styleLayoutMs": 0.487
+        },
+        {
+          "sequence": 1095,
+          "styleLayoutMs": 0.714
+        },
+        {
+          "sequence": 1096,
+          "styleLayoutMs": 0.573
+        },
+        {
+          "sequence": 1097,
+          "styleLayoutMs": 0.745
+        },
+        {
+          "sequence": 1098,
+          "styleLayoutMs": 0.591
+        },
+        {
+          "sequence": 1099,
+          "styleLayoutMs": 0.458
+        },
+        {
+          "sequence": 1100,
+          "styleLayoutMs": 0.537
+        },
+        {
+          "sequence": 1101,
+          "styleLayoutMs": 0.54
+        },
+        {
+          "sequence": 1102,
+          "styleLayoutMs": 0.56
+        },
+        {
+          "sequence": 1103,
+          "styleLayoutMs": 0.499
+        },
+        {
+          "sequence": 1104,
+          "styleLayoutMs": 0.442
+        },
+        {
+          "sequence": 1105,
+          "styleLayoutMs": 0.467
+        },
+        {
+          "sequence": 1106,
+          "styleLayoutMs": 1.092
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 0,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 69.327,
+      "maxPresentedGapMs": 18.296,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72281262311,
+        "end": 72281280815,
+        "sequence": 1129,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4385231",
+        "presentation": 72281294176
+      },
+      "interactiveMinusToPresentationMs": 20.232,
+      "maxStyleLayoutMs": 1.119,
+      "costs": [
+        {
+          "sequence": 1115,
+          "styleLayoutMs": 0.462
+        },
+        {
+          "sequence": 1116,
+          "styleLayoutMs": 0.472
+        },
+        {
+          "sequence": 1117,
+          "styleLayoutMs": 0.59
+        },
+        {
+          "sequence": 1118,
+          "styleLayoutMs": 0.557
+        },
+        {
+          "sequence": 1119,
+          "styleLayoutMs": 0.535
+        },
+        {
+          "sequence": 1120,
+          "styleLayoutMs": 0.501
+        },
+        {
+          "sequence": 1121,
+          "styleLayoutMs": 0.597
+        },
+        {
+          "sequence": 1122,
+          "styleLayoutMs": 0.629
+        },
+        {
+          "sequence": 1123,
+          "styleLayoutMs": 0.523
+        },
+        {
+          "sequence": 1124,
+          "styleLayoutMs": 0.501
+        },
+        {
+          "sequence": 1125,
+          "styleLayoutMs": 0.486
+        },
+        {
+          "sequence": 1126,
+          "styleLayoutMs": 0.477
+        },
+        {
+          "sequence": 1127,
+          "styleLayoutMs": 0.677
+        },
+        {
+          "sequence": 1128,
+          "styleLayoutMs": 0.515
+        },
+        {
+          "sequence": 1129,
+          "styleLayoutMs": 1.119
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 0,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 78.332,
+      "maxPresentedGapMs": 18.149,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72281646138,
+        "end": 72281663049,
+        "sequence": 1152,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4385170",
+        "presentation": 72281677949
+      },
+      "interactiveMinusToPresentationMs": 20.063,
+      "maxStyleLayoutMs": 0.823,
+      "costs": [
+        {
+          "sequence": 1138,
+          "styleLayoutMs": 0.612
+        },
+        {
+          "sequence": 1139,
+          "styleLayoutMs": 0.556
+        },
+        {
+          "sequence": 1140,
+          "styleLayoutMs": 0.447
+        },
+        {
+          "sequence": 1141,
+          "styleLayoutMs": 0.554
+        },
+        {
+          "sequence": 1142,
+          "styleLayoutMs": 0.823
+        },
+        {
+          "sequence": 1143,
+          "styleLayoutMs": 0.521
+        },
+        {
+          "sequence": 1144,
+          "styleLayoutMs": 0.532
+        },
+        {
+          "sequence": 1145,
+          "styleLayoutMs": 0.577
+        },
+        {
+          "sequence": 1146,
+          "styleLayoutMs": 0.628
+        },
+        {
+          "sequence": 1147,
+          "styleLayoutMs": 0.537
+        },
+        {
+          "sequence": 1148,
+          "styleLayoutMs": 0.692
+        },
+        {
+          "sequence": 1149,
+          "styleLayoutMs": 0.555
+        },
+        {
+          "sequence": 1150,
+          "styleLayoutMs": 0.445
+        },
+        {
+          "sequence": 1151,
+          "styleLayoutMs": 0.593
+        },
+        {
+          "sequence": 1152,
+          "styleLayoutMs": 0.796
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 0,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 62.489,
+      "maxPresentedGapMs": 18.045,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72282012702,
+        "end": 72282029543,
+        "sequence": 1174,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438acd9",
+        "presentation": 72282045219
+      },
+      "interactiveMinusToPresentationMs": 19.281,
+      "maxStyleLayoutMs": 0.797,
+      "costs": [
+        {
+          "sequence": 1161,
+          "styleLayoutMs": 0.589
+        },
+        {
+          "sequence": 1162,
+          "styleLayoutMs": 0.554
+        },
+        {
+          "sequence": 1163,
+          "styleLayoutMs": 0.476
+        },
+        {
+          "sequence": 1164,
+          "styleLayoutMs": 0.7
+        },
+        {
+          "sequence": 1165,
+          "styleLayoutMs": 0.491
+        },
+        {
+          "sequence": 1166,
+          "styleLayoutMs": 0.511
+        },
+        {
+          "sequence": 1167,
+          "styleLayoutMs": 0.512
+        },
+        {
+          "sequence": 1168,
+          "styleLayoutMs": 0.64
+        },
+        {
+          "sequence": 1169,
+          "styleLayoutMs": 0.485
+        },
+        {
+          "sequence": 1170,
+          "styleLayoutMs": 0.716
+        },
+        {
+          "sequence": 1171,
+          "styleLayoutMs": 0.477
+        },
+        {
+          "sequence": 1172,
+          "styleLayoutMs": 0.614
+        },
+        {
+          "sequence": 1173,
+          "styleLayoutMs": 0.685
+        },
+        {
+          "sequence": 1174,
+          "styleLayoutMs": 0.797
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 0,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 85.345,
+      "maxPresentedGapMs": 20.592,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72282722429,
+        "end": 72282743429,
+        "sequence": 1216,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438a7d6",
+        "presentation": 72282771800
+      },
+      "interactiveMinusToPresentationMs": 3.423,
+      "maxStyleLayoutMs": 2.521,
+      "costs": [
+        {
+          "sequence": 1203,
+          "styleLayoutMs": 1.465
+        },
+        {
+          "sequence": 1204,
+          "styleLayoutMs": 1.275
+        },
+        {
+          "sequence": 1205,
+          "styleLayoutMs": 1.227
+        },
+        {
+          "sequence": 1206,
+          "styleLayoutMs": 1.157
+        },
+        {
+          "sequence": 1207,
+          "styleLayoutMs": 1.087
+        },
+        {
+          "sequence": 1208,
+          "styleLayoutMs": 1.368
+        },
+        {
+          "sequence": 1209,
+          "styleLayoutMs": 1.727
+        },
+        {
+          "sequence": 1210,
+          "styleLayoutMs": 1.255
+        },
+        {
+          "sequence": 1211,
+          "styleLayoutMs": 1.123
+        },
+        {
+          "sequence": 1213,
+          "styleLayoutMs": 1.546
+        },
+        {
+          "sequence": 1214,
+          "styleLayoutMs": 1.555
+        },
+        {
+          "sequence": 1215,
+          "styleLayoutMs": 1.197
+        },
+        {
+          "sequence": 1216,
+          "styleLayoutMs": 2.521
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 1,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 85.901,
+      "maxPresentedGapMs": 19.934,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72283449342,
+        "end": 72283466849,
+        "sequence": 1260,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438a1d9",
+        "presentation": 72283498110
+      },
+      "interactiveMinusToPresentationMs": 1.578,
+      "maxStyleLayoutMs": 1.887,
+      "costs": [
+        {
+          "sequence": 1247,
+          "styleLayoutMs": 1.349
+        },
+        {
+          "sequence": 1248,
+          "styleLayoutMs": 1.327
+        },
+        {
+          "sequence": 1249,
+          "styleLayoutMs": 1.21
+        },
+        {
+          "sequence": 1250,
+          "styleLayoutMs": 1.124
+        },
+        {
+          "sequence": 1251,
+          "styleLayoutMs": 1.258
+        },
+        {
+          "sequence": 1252,
+          "styleLayoutMs": 1.207
+        },
+        {
+          "sequence": 1253,
+          "styleLayoutMs": 1.141
+        },
+        {
+          "sequence": 1254,
+          "styleLayoutMs": 1.86
+        },
+        {
+          "sequence": 1255,
+          "styleLayoutMs": 1.158
+        },
+        {
+          "sequence": 1257,
+          "styleLayoutMs": 1.078
+        },
+        {
+          "sequence": 1258,
+          "styleLayoutMs": 1.225
+        },
+        {
+          "sequence": 1259,
+          "styleLayoutMs": 1.084
+        },
+        {
+          "sequence": 1260,
+          "styleLayoutMs": 1.887
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 1,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 83.207,
+      "maxPresentedGapMs": 18.688,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72283838110,
+        "end": 72283855285,
+        "sequence": 1283,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438bc31",
+        "presentation": 72283882668
+      },
+      "interactiveMinusToPresentationMs": 2.654,
+      "maxStyleLayoutMs": 1.636,
+      "costs": [
+        {
+          "sequence": 1270,
+          "styleLayoutMs": 1.398
+        },
+        {
+          "sequence": 1271,
+          "styleLayoutMs": 1.337
+        },
+        {
+          "sequence": 1272,
+          "styleLayoutMs": 1.277
+        },
+        {
+          "sequence": 1273,
+          "styleLayoutMs": 1.253
+        },
+        {
+          "sequence": 1274,
+          "styleLayoutMs": 1.29
+        },
+        {
+          "sequence": 1275,
+          "styleLayoutMs": 1.518
+        },
+        {
+          "sequence": 1276,
+          "styleLayoutMs": 1.336
+        },
+        {
+          "sequence": 1277,
+          "styleLayoutMs": 1.435
+        },
+        {
+          "sequence": 1278,
+          "styleLayoutMs": 1.202
+        },
+        {
+          "sequence": 1279,
+          "styleLayoutMs": 1.29
+        },
+        {
+          "sequence": 1280,
+          "styleLayoutMs": 1.636
+        },
+        {
+          "sequence": 1281,
+          "styleLayoutMs": 1.022
+        },
+        {
+          "sequence": 1282,
+          "styleLayoutMs": 1.116
+        },
+        {
+          "sequence": 1283,
+          "styleLayoutMs": 1.626
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 1,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 73.056,
+      "maxPresentedGapMs": 18.311,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72284212756,
+        "end": 72284229122,
+        "sequence": 1306,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438bb0f",
+        "presentation": 72284244811
+      },
+      "interactiveMinusToPresentationMs": 19.309,
+      "maxStyleLayoutMs": 0.785,
+      "costs": [
+        {
+          "sequence": 1293,
+          "styleLayoutMs": 0.502
+        },
+        {
+          "sequence": 1294,
+          "styleLayoutMs": 0.462
+        },
+        {
+          "sequence": 1295,
+          "styleLayoutMs": 0.487
+        },
+        {
+          "sequence": 1296,
+          "styleLayoutMs": 0.465
+        },
+        {
+          "sequence": 1297,
+          "styleLayoutMs": 0.49
+        },
+        {
+          "sequence": 1298,
+          "styleLayoutMs": 0.455
+        },
+        {
+          "sequence": 1299,
+          "styleLayoutMs": 0.47
+        },
+        {
+          "sequence": 1300,
+          "styleLayoutMs": 0.456
+        },
+        {
+          "sequence": 1301,
+          "styleLayoutMs": 0.564
+        },
+        {
+          "sequence": 1302,
+          "styleLayoutMs": 0.441
+        },
+        {
+          "sequence": 1303,
+          "styleLayoutMs": 0.563
+        },
+        {
+          "sequence": 1304,
+          "styleLayoutMs": 0.406
+        },
+        {
+          "sequence": 1305,
+          "styleLayoutMs": 0.466
+        },
+        {
+          "sequence": 1306,
+          "styleLayoutMs": 0.785
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 1,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 66.305,
+      "maxPresentedGapMs": 19.825,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72284579034,
+        "end": 72284595896,
+        "sequence": 1328,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438b6f2",
+        "presentation": 72284610925
+      },
+      "interactiveMinusToPresentationMs": 19.788,
+      "maxStyleLayoutMs": 0.811,
+      "costs": [
+        {
+          "sequence": 1315,
+          "styleLayoutMs": 0.529
+        },
+        {
+          "sequence": 1316,
+          "styleLayoutMs": 0.779
+        },
+        {
+          "sequence": 1317,
+          "styleLayoutMs": 0.522
+        },
+        {
+          "sequence": 1318,
+          "styleLayoutMs": 0.575
+        },
+        {
+          "sequence": 1319,
+          "styleLayoutMs": 0.514
+        },
+        {
+          "sequence": 1320,
+          "styleLayoutMs": 0.51
+        },
+        {
+          "sequence": 1321,
+          "styleLayoutMs": 0.461
+        },
+        {
+          "sequence": 1322,
+          "styleLayoutMs": 0.518
+        },
+        {
+          "sequence": 1323,
+          "styleLayoutMs": 0.622
+        },
+        {
+          "sequence": 1324,
+          "styleLayoutMs": 0.733
+        },
+        {
+          "sequence": 1325,
+          "styleLayoutMs": 0.581
+        },
+        {
+          "sequence": 1326,
+          "styleLayoutMs": 0.484
+        },
+        {
+          "sequence": 1327,
+          "styleLayoutMs": 0.448
+        },
+        {
+          "sequence": 1328,
+          "styleLayoutMs": 0.811
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 1,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 71.589,
+      "maxPresentedGapMs": 19.597,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72284945297,
+        "end": 72284964379,
+        "sequence": 1350,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438b5d3",
+        "presentation": 72284977479
+      },
+      "interactiveMinusToPresentationMs": 20.761,
+      "maxStyleLayoutMs": 1.434,
+      "costs": [
+        {
+          "sequence": 1337,
+          "styleLayoutMs": 0.686
+        },
+        {
+          "sequence": 1338,
+          "styleLayoutMs": 0.528
+        },
+        {
+          "sequence": 1339,
+          "styleLayoutMs": 0.443
+        },
+        {
+          "sequence": 1340,
+          "styleLayoutMs": 0.555
+        },
+        {
+          "sequence": 1341,
+          "styleLayoutMs": 0.509
+        },
+        {
+          "sequence": 1342,
+          "styleLayoutMs": 0.463
+        },
+        {
+          "sequence": 1343,
+          "styleLayoutMs": 0.51
+        },
+        {
+          "sequence": 1344,
+          "styleLayoutMs": 0.516
+        },
+        {
+          "sequence": 1345,
+          "styleLayoutMs": 0.485
+        },
+        {
+          "sequence": 1346,
+          "styleLayoutMs": 0.543
+        },
+        {
+          "sequence": 1347,
+          "styleLayoutMs": 0.436
+        },
+        {
+          "sequence": 1348,
+          "styleLayoutMs": 0.581
+        },
+        {
+          "sequence": 1349,
+          "styleLayoutMs": 0.397
+        },
+        {
+          "sequence": 1350,
+          "styleLayoutMs": 1.434
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 1,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 66.263,
+      "maxPresentedGapMs": 17.712,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72285314202,
+        "end": 72285329126,
+        "sequence": 1372,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438b0aa",
+        "presentation": 72285344904
+      },
+      "interactiveMinusToPresentationMs": 20.222,
+      "maxStyleLayoutMs": 0.798,
+      "costs": [
+        {
+          "sequence": 1359,
+          "styleLayoutMs": 0.449
+        },
+        {
+          "sequence": 1360,
+          "styleLayoutMs": 0.78
+        },
+        {
+          "sequence": 1361,
+          "styleLayoutMs": 0.532
+        },
+        {
+          "sequence": 1362,
+          "styleLayoutMs": 0.728
+        },
+        {
+          "sequence": 1363,
+          "styleLayoutMs": 0.538
+        },
+        {
+          "sequence": 1364,
+          "styleLayoutMs": 0.724
+        },
+        {
+          "sequence": 1365,
+          "styleLayoutMs": 0.557
+        },
+        {
+          "sequence": 1366,
+          "styleLayoutMs": 0.566
+        },
+        {
+          "sequence": 1367,
+          "styleLayoutMs": 0.61
+        },
+        {
+          "sequence": 1368,
+          "styleLayoutMs": 0.519
+        },
+        {
+          "sequence": 1369,
+          "styleLayoutMs": 0.497
+        },
+        {
+          "sequence": 1370,
+          "styleLayoutMs": 0.489
+        },
+        {
+          "sequence": 1371,
+          "styleLayoutMs": 0.65
+        },
+        {
+          "sequence": 1372,
+          "styleLayoutMs": 0.798
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 1,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 84.23,
+      "maxPresentedGapMs": 32.081,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72286053158,
+        "end": 72286071411,
+        "sequence": 1416,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4388acf",
+        "presentation": 72286114370
+      },
+      "interactiveMinusToPresentationMs": 4.458,
+      "maxStyleLayoutMs": 2.154,
+      "costs": [
+        {
+          "sequence": 1403,
+          "styleLayoutMs": 1.761
+        },
+        {
+          "sequence": 1404,
+          "styleLayoutMs": 1.456
+        },
+        {
+          "sequence": 1405,
+          "styleLayoutMs": 1.152
+        },
+        {
+          "sequence": 1406,
+          "styleLayoutMs": 1.386
+        },
+        {
+          "sequence": 1407,
+          "styleLayoutMs": 1.274
+        },
+        {
+          "sequence": 1408,
+          "styleLayoutMs": 1.356
+        },
+        {
+          "sequence": 1409,
+          "styleLayoutMs": 1.576
+        },
+        {
+          "sequence": 1411,
+          "styleLayoutMs": 1.312
+        },
+        {
+          "sequence": 1412,
+          "styleLayoutMs": 1.426
+        },
+        {
+          "sequence": 1414,
+          "styleLayoutMs": 1.339
+        },
+        {
+          "sequence": 1415,
+          "styleLayoutMs": 1.639
+        },
+        {
+          "sequence": 1416,
+          "styleLayoutMs": 2.154
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 2,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 11,
+      "presentedChangedFrames": 11,
+      "firstPresentedMs": 97.479,
+      "maxPresentedGapMs": 29.187,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72286812455,
+        "end": 72286835137,
+        "sequence": 1462,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43884b3",
+        "presentation": 72286875551
+      },
+      "interactiveMinusToPresentationMs": 8.068,
+      "maxStyleLayoutMs": 3.5,
+      "costs": [
+        {
+          "sequence": 1448,
+          "styleLayoutMs": 1.373
+        },
+        {
+          "sequence": 1449,
+          "styleLayoutMs": 3.5
+        },
+        {
+          "sequence": 1450,
+          "styleLayoutMs": 1.591
+        },
+        {
+          "sequence": 1451,
+          "styleLayoutMs": 1.579
+        },
+        {
+          "sequence": 1452,
+          "styleLayoutMs": 1.988
+        },
+        {
+          "sequence": 1455,
+          "styleLayoutMs": 1.663
+        },
+        {
+          "sequence": 1456,
+          "styleLayoutMs": 1.611
+        },
+        {
+          "sequence": 1458,
+          "styleLayoutMs": 1.37
+        },
+        {
+          "sequence": 1459,
+          "styleLayoutMs": 1.316
+        },
+        {
+          "sequence": 1460,
+          "styleLayoutMs": 1.58
+        },
+        {
+          "sequence": 1462,
+          "styleLayoutMs": 1.729
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 2,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 88.447,
+      "maxPresentedGapMs": 25.52,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72287237640,
+        "end": 72287257468,
+        "sequence": 1487,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4388251",
+        "presentation": 72287272538
+      },
+      "interactiveMinusToPresentationMs": 9.617,
+      "maxStyleLayoutMs": 2.217,
+      "costs": [
+        {
+          "sequence": 1473,
+          "styleLayoutMs": 1.398
+        },
+        {
+          "sequence": 1474,
+          "styleLayoutMs": 1.751
+        },
+        {
+          "sequence": 1475,
+          "styleLayoutMs": 1.413
+        },
+        {
+          "sequence": 1476,
+          "styleLayoutMs": 1.718
+        },
+        {
+          "sequence": 1478,
+          "styleLayoutMs": 2.217
+        },
+        {
+          "sequence": 1480,
+          "styleLayoutMs": 1.723
+        },
+        {
+          "sequence": 1481,
+          "styleLayoutMs": 1.939
+        },
+        {
+          "sequence": 1483,
+          "styleLayoutMs": 1.366
+        },
+        {
+          "sequence": 1484,
+          "styleLayoutMs": 1.174
+        },
+        {
+          "sequence": 1485,
+          "styleLayoutMs": 1.973
+        },
+        {
+          "sequence": 1486,
+          "styleLayoutMs": 0.533
+        },
+        {
+          "sequence": 1487,
+          "styleLayoutMs": 1.992
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 2,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 86.382,
+      "maxPresentedGapMs": 21.662,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72287612776,
+        "end": 72287629591,
+        "sequence": 1510,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4389e93",
+        "presentation": 72287662113
+      },
+      "interactiveMinusToPresentationMs": 2.834,
+      "maxStyleLayoutMs": 0.898,
+      "costs": [
+        {
+          "sequence": 1496,
+          "styleLayoutMs": 0.551
+        },
+        {
+          "sequence": 1497,
+          "styleLayoutMs": 0.581
+        },
+        {
+          "sequence": 1498,
+          "styleLayoutMs": 0.626
+        },
+        {
+          "sequence": 1499,
+          "styleLayoutMs": 0.692
+        },
+        {
+          "sequence": 1500,
+          "styleLayoutMs": 0.488
+        },
+        {
+          "sequence": 1501,
+          "styleLayoutMs": 0.811
+        },
+        {
+          "sequence": 1502,
+          "styleLayoutMs": 0.56
+        },
+        {
+          "sequence": 1503,
+          "styleLayoutMs": 0.659
+        },
+        {
+          "sequence": 1504,
+          "styleLayoutMs": 0.606
+        },
+        {
+          "sequence": 1505,
+          "styleLayoutMs": 0.548
+        },
+        {
+          "sequence": 1506,
+          "styleLayoutMs": 0.598
+        },
+        {
+          "sequence": 1507,
+          "styleLayoutMs": 0.527
+        },
+        {
+          "sequence": 1508,
+          "styleLayoutMs": 0.503
+        },
+        {
+          "sequence": 1509,
+          "styleLayoutMs": 0.562
+        },
+        {
+          "sequence": 1510,
+          "styleLayoutMs": 0.898
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 2,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 68.153,
+      "maxPresentedGapMs": 19.554,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72287997075,
+        "end": 72288012595,
+        "sequence": 1533,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4389c6c",
+        "presentation": 72288028097
+      },
+      "interactiveMinusToPresentationMs": 19.956,
+      "maxStyleLayoutMs": 0.87,
+      "costs": [
+        {
+          "sequence": 1520,
+          "styleLayoutMs": 0.513
+        },
+        {
+          "sequence": 1521,
+          "styleLayoutMs": 0.499
+        },
+        {
+          "sequence": 1522,
+          "styleLayoutMs": 0.521
+        },
+        {
+          "sequence": 1523,
+          "styleLayoutMs": 0.656
+        },
+        {
+          "sequence": 1524,
+          "styleLayoutMs": 0.512
+        },
+        {
+          "sequence": 1525,
+          "styleLayoutMs": 0.512
+        },
+        {
+          "sequence": 1526,
+          "styleLayoutMs": 0.528
+        },
+        {
+          "sequence": 1527,
+          "styleLayoutMs": 0.488
+        },
+        {
+          "sequence": 1528,
+          "styleLayoutMs": 0.717
+        },
+        {
+          "sequence": 1529,
+          "styleLayoutMs": 0.574
+        },
+        {
+          "sequence": 1530,
+          "styleLayoutMs": 0.471
+        },
+        {
+          "sequence": 1531,
+          "styleLayoutMs": 0.484
+        },
+        {
+          "sequence": 1532,
+          "styleLayoutMs": 0.625
+        },
+        {
+          "sequence": 1533,
+          "styleLayoutMs": 0.87
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 2,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 15,
+      "presentedChangedFrames": 15,
+      "firstPresentedMs": 77.63,
+      "maxPresentedGapMs": 17.155,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72288378948,
+        "end": 72288396079,
+        "sequence": 1556,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43898a1",
+        "presentation": 72288410731
+      },
+      "interactiveMinusToPresentationMs": 19.905,
+      "maxStyleLayoutMs": 0.749,
+      "costs": [
+        {
+          "sequence": 1542,
+          "styleLayoutMs": 0.602
+        },
+        {
+          "sequence": 1543,
+          "styleLayoutMs": 0.503
+        },
+        {
+          "sequence": 1544,
+          "styleLayoutMs": 0.563
+        },
+        {
+          "sequence": 1545,
+          "styleLayoutMs": 0.488
+        },
+        {
+          "sequence": 1546,
+          "styleLayoutMs": 0.528
+        },
+        {
+          "sequence": 1547,
+          "styleLayoutMs": 0.505
+        },
+        {
+          "sequence": 1548,
+          "styleLayoutMs": 0.475
+        },
+        {
+          "sequence": 1549,
+          "styleLayoutMs": 0.485
+        },
+        {
+          "sequence": 1550,
+          "styleLayoutMs": 0.455
+        },
+        {
+          "sequence": 1551,
+          "styleLayoutMs": 0.57
+        },
+        {
+          "sequence": 1552,
+          "styleLayoutMs": 0.55
+        },
+        {
+          "sequence": 1553,
+          "styleLayoutMs": 0.535
+        },
+        {
+          "sequence": 1554,
+          "styleLayoutMs": 0.478
+        },
+        {
+          "sequence": 1555,
+          "styleLayoutMs": 0.454
+        },
+        {
+          "sequence": 1556,
+          "styleLayoutMs": 0.749
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 2,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 77.014,
+      "maxPresentedGapMs": 18.301,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72288745805,
+        "end": 72288762409,
+        "sequence": 1578,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438967e",
+        "presentation": 72288794753
+      },
+      "interactiveMinusToPresentationMs": 3.04,
+      "maxStyleLayoutMs": 0.787,
+      "costs": [
+        {
+          "sequence": 1565,
+          "styleLayoutMs": 0.523
+        },
+        {
+          "sequence": 1566,
+          "styleLayoutMs": 0.509
+        },
+        {
+          "sequence": 1567,
+          "styleLayoutMs": 0.498
+        },
+        {
+          "sequence": 1568,
+          "styleLayoutMs": 0.49
+        },
+        {
+          "sequence": 1569,
+          "styleLayoutMs": 0.499
+        },
+        {
+          "sequence": 1570,
+          "styleLayoutMs": 0.556
+        },
+        {
+          "sequence": 1571,
+          "styleLayoutMs": 0.541
+        },
+        {
+          "sequence": 1572,
+          "styleLayoutMs": 0.517
+        },
+        {
+          "sequence": 1573,
+          "styleLayoutMs": 0.514
+        },
+        {
+          "sequence": 1574,
+          "styleLayoutMs": 0.495
+        },
+        {
+          "sequence": 1575,
+          "styleLayoutMs": 0.473
+        },
+        {
+          "sequence": 1576,
+          "styleLayoutMs": 0.541
+        },
+        {
+          "sequence": 1577,
+          "styleLayoutMs": 0.508
+        },
+        {
+          "sequence": 1578,
+          "styleLayoutMs": 0.787
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 2,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 89.925,
+      "maxPresentedGapMs": 25.484,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72289480668,
+        "end": 72289500483,
+        "sequence": 1622,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43891a6",
+        "presentation": 72289513785
+      },
+      "interactiveMinusToPresentationMs": 16.711,
+      "maxStyleLayoutMs": 2.047,
+      "costs": [
+        {
+          "sequence": 1608,
+          "styleLayoutMs": 1.493
+        },
+        {
+          "sequence": 1609,
+          "styleLayoutMs": 1.56
+        },
+        {
+          "sequence": 1610,
+          "styleLayoutMs": 2.047
+        },
+        {
+          "sequence": 1611,
+          "styleLayoutMs": 1.119
+        },
+        {
+          "sequence": 1612,
+          "styleLayoutMs": 1.402
+        },
+        {
+          "sequence": 1614,
+          "styleLayoutMs": 1.162
+        },
+        {
+          "sequence": 1615,
+          "styleLayoutMs": 1.424
+        },
+        {
+          "sequence": 1616,
+          "styleLayoutMs": 1.613
+        },
+        {
+          "sequence": 1617,
+          "styleLayoutMs": 1.378
+        },
+        {
+          "sequence": 1618,
+          "styleLayoutMs": 1.385
+        },
+        {
+          "sequence": 1621,
+          "styleLayoutMs": 1.083
+        },
+        {
+          "sequence": 1622,
+          "styleLayoutMs": 1.848
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 3,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 89.325,
+      "maxPresentedGapMs": 23.177,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72290212148,
+        "end": 72290231238,
+        "sequence": 1666,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438ebb3",
+        "presentation": 72290265760
+      },
+      "interactiveMinusToPresentationMs": 3.505,
+      "maxStyleLayoutMs": 1.83,
+      "costs": [
+        {
+          "sequence": 1652,
+          "styleLayoutMs": 1.053
+        },
+        {
+          "sequence": 1653,
+          "styleLayoutMs": 1.3
+        },
+        {
+          "sequence": 1654,
+          "styleLayoutMs": 1.223
+        },
+        {
+          "sequence": 1655,
+          "styleLayoutMs": 1.118
+        },
+        {
+          "sequence": 1656,
+          "styleLayoutMs": 1.449
+        },
+        {
+          "sequence": 1658,
+          "styleLayoutMs": 1.221
+        },
+        {
+          "sequence": 1659,
+          "styleLayoutMs": 1.214
+        },
+        {
+          "sequence": 1660,
+          "styleLayoutMs": 1.273
+        },
+        {
+          "sequence": 1661,
+          "styleLayoutMs": 1.587
+        },
+        {
+          "sequence": 1662,
+          "styleLayoutMs": 1.29
+        },
+        {
+          "sequence": 1663,
+          "styleLayoutMs": 1.83
+        },
+        {
+          "sequence": 1664,
+          "styleLayoutMs": 1.142
+        },
+        {
+          "sequence": 1666,
+          "styleLayoutMs": 1.549
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 3,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 78.964,
+      "maxPresentedGapMs": 21.825,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72290599268,
+        "end": 72290618925,
+        "sequence": 1689,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438e956",
+        "presentation": 72290631355
+      },
+      "interactiveMinusToPresentationMs": 16.576,
+      "maxStyleLayoutMs": 1.753,
+      "costs": [
+        {
+          "sequence": 1676,
+          "styleLayoutMs": 1.132
+        },
+        {
+          "sequence": 1677,
+          "styleLayoutMs": 1.445
+        },
+        {
+          "sequence": 1678,
+          "styleLayoutMs": 1.328
+        },
+        {
+          "sequence": 1679,
+          "styleLayoutMs": 1.332
+        },
+        {
+          "sequence": 1681,
+          "styleLayoutMs": 1.27
+        },
+        {
+          "sequence": 1682,
+          "styleLayoutMs": 1.571
+        },
+        {
+          "sequence": 1683,
+          "styleLayoutMs": 1.351
+        },
+        {
+          "sequence": 1684,
+          "styleLayoutMs": 1.261
+        },
+        {
+          "sequence": 1685,
+          "styleLayoutMs": 1.242
+        },
+        {
+          "sequence": 1686,
+          "styleLayoutMs": 1.286
+        },
+        {
+          "sequence": 1688,
+          "styleLayoutMs": 1.206
+        },
+        {
+          "sequence": 1689,
+          "styleLayoutMs": 1.753
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 3,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 81.226,
+      "maxPresentedGapMs": 19.175,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72290962831,
+        "end": 72290978753,
+        "sequence": 1711,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438e5b6",
+        "presentation": 72291010259
+      },
+      "interactiveMinusToPresentationMs": 4.285,
+      "maxStyleLayoutMs": 0.72,
+      "costs": [
+        {
+          "sequence": 1698,
+          "styleLayoutMs": 0.525
+        },
+        {
+          "sequence": 1699,
+          "styleLayoutMs": 0.516
+        },
+        {
+          "sequence": 1700,
+          "styleLayoutMs": 0.489
+        },
+        {
+          "sequence": 1701,
+          "styleLayoutMs": 0.454
+        },
+        {
+          "sequence": 1702,
+          "styleLayoutMs": 0.483
+        },
+        {
+          "sequence": 1703,
+          "styleLayoutMs": 0.652
+        },
+        {
+          "sequence": 1704,
+          "styleLayoutMs": 0.513
+        },
+        {
+          "sequence": 1705,
+          "styleLayoutMs": 0.466
+        },
+        {
+          "sequence": 1706,
+          "styleLayoutMs": 0.468
+        },
+        {
+          "sequence": 1707,
+          "styleLayoutMs": 0.481
+        },
+        {
+          "sequence": 1708,
+          "styleLayoutMs": 0.459
+        },
+        {
+          "sequence": 1709,
+          "styleLayoutMs": 0.425
+        },
+        {
+          "sequence": 1710,
+          "styleLayoutMs": 0.64
+        },
+        {
+          "sequence": 1711,
+          "styleLayoutMs": 0.72
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 3,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 68.199,
+      "maxPresentedGapMs": 18.35,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72291345760,
+        "end": 72291362802,
+        "sequence": 1734,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438e30e",
+        "presentation": 72291377206
+      },
+      "interactiveMinusToPresentationMs": 19.916,
+      "maxStyleLayoutMs": 0.896,
+      "costs": [
+        {
+          "sequence": 1721,
+          "styleLayoutMs": 0.59
+        },
+        {
+          "sequence": 1722,
+          "styleLayoutMs": 0.62
+        },
+        {
+          "sequence": 1723,
+          "styleLayoutMs": 0.471
+        },
+        {
+          "sequence": 1724,
+          "styleLayoutMs": 0.403
+        },
+        {
+          "sequence": 1725,
+          "styleLayoutMs": 0.527
+        },
+        {
+          "sequence": 1726,
+          "styleLayoutMs": 0.462
+        },
+        {
+          "sequence": 1727,
+          "styleLayoutMs": 0.719
+        },
+        {
+          "sequence": 1728,
+          "styleLayoutMs": 0.524
+        },
+        {
+          "sequence": 1729,
+          "styleLayoutMs": 0.579
+        },
+        {
+          "sequence": 1730,
+          "styleLayoutMs": 0.458
+        },
+        {
+          "sequence": 1731,
+          "styleLayoutMs": 0.603
+        },
+        {
+          "sequence": 1732,
+          "styleLayoutMs": 0.426
+        },
+        {
+          "sequence": 1733,
+          "styleLayoutMs": 0.516
+        },
+        {
+          "sequence": 1734,
+          "styleLayoutMs": 0.896
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 3,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 83.458,
+      "maxPresentedGapMs": 19,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72291712544,
+        "end": 72291728667,
+        "sequence": 1756,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438fe6c",
+        "presentation": 72291760513
+      },
+      "interactiveMinusToPresentationMs": 3.984,
+      "maxStyleLayoutMs": 0.77,
+      "costs": [
+        {
+          "sequence": 1743,
+          "styleLayoutMs": 0.65
+        },
+        {
+          "sequence": 1744,
+          "styleLayoutMs": 0.499
+        },
+        {
+          "sequence": 1745,
+          "styleLayoutMs": 0.534
+        },
+        {
+          "sequence": 1746,
+          "styleLayoutMs": 0.491
+        },
+        {
+          "sequence": 1747,
+          "styleLayoutMs": 0.565
+        },
+        {
+          "sequence": 1748,
+          "styleLayoutMs": 0.457
+        },
+        {
+          "sequence": 1749,
+          "styleLayoutMs": 0.505
+        },
+        {
+          "sequence": 1750,
+          "styleLayoutMs": 0.497
+        },
+        {
+          "sequence": 1751,
+          "styleLayoutMs": 0.515
+        },
+        {
+          "sequence": 1752,
+          "styleLayoutMs": 0.669
+        },
+        {
+          "sequence": 1753,
+          "styleLayoutMs": 0.547
+        },
+        {
+          "sequence": 1754,
+          "styleLayoutMs": 0.438
+        },
+        {
+          "sequence": 1755,
+          "styleLayoutMs": 0.493
+        },
+        {
+          "sequence": 1756,
+          "styleLayoutMs": 0.77
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 3,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 77.443,
+      "maxPresentedGapMs": 18.756,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72292079092,
+        "end": 72292096557,
+        "sequence": 1778,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438fdc8",
+        "presentation": 72292127560
+      },
+      "interactiveMinusToPresentationMs": 3.433,
+      "maxStyleLayoutMs": 0.916,
+      "costs": [
+        {
+          "sequence": 1765,
+          "styleLayoutMs": 0.465
+        },
+        {
+          "sequence": 1766,
+          "styleLayoutMs": 0.503
+        },
+        {
+          "sequence": 1767,
+          "styleLayoutMs": 0.514
+        },
+        {
+          "sequence": 1768,
+          "styleLayoutMs": 0.493
+        },
+        {
+          "sequence": 1769,
+          "styleLayoutMs": 0.482
+        },
+        {
+          "sequence": 1770,
+          "styleLayoutMs": 0.629
+        },
+        {
+          "sequence": 1771,
+          "styleLayoutMs": 0.508
+        },
+        {
+          "sequence": 1772,
+          "styleLayoutMs": 0.752
+        },
+        {
+          "sequence": 1773,
+          "styleLayoutMs": 0.522
+        },
+        {
+          "sequence": 1774,
+          "styleLayoutMs": 0.579
+        },
+        {
+          "sequence": 1775,
+          "styleLayoutMs": 0.487
+        },
+        {
+          "sequence": 1776,
+          "styleLayoutMs": 0.432
+        },
+        {
+          "sequence": 1777,
+          "styleLayoutMs": 0.495
+        },
+        {
+          "sequence": 1778,
+          "styleLayoutMs": 0.916
+        }
+      ]
+    },
+    {
+      "fixture": "medium",
+      "sample": 3,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 86.801,
+      "maxPresentedGapMs": 20.851,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72292788364,
+        "end": 72292807374,
+        "sequence": 1820,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438f489",
+        "presentation": 72292837374
+      },
+      "interactiveMinusToPresentationMs": 3.299,
+      "maxStyleLayoutMs": 1.86,
+      "costs": [
+        {
+          "sequence": 1807,
+          "styleLayoutMs": 1.682
+        },
+        {
+          "sequence": 1808,
+          "styleLayoutMs": 1.2
+        },
+        {
+          "sequence": 1809,
+          "styleLayoutMs": 1.109
+        },
+        {
+          "sequence": 1810,
+          "styleLayoutMs": 1.141
+        },
+        {
+          "sequence": 1811,
+          "styleLayoutMs": 1.483
+        },
+        {
+          "sequence": 1812,
+          "styleLayoutMs": 1.297
+        },
+        {
+          "sequence": 1813,
+          "styleLayoutMs": 1.201
+        },
+        {
+          "sequence": 1814,
+          "styleLayoutMs": 1.696
+        },
+        {
+          "sequence": 1816,
+          "styleLayoutMs": 1.09
+        },
+        {
+          "sequence": 1817,
+          "styleLayoutMs": 1.585
+        },
+        {
+          "sequence": 1818,
+          "styleLayoutMs": 1.057
+        },
+        {
+          "sequence": 1819,
+          "styleLayoutMs": 1.147
+        },
+        {
+          "sequence": 1820,
+          "styleLayoutMs": 1.86
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 0,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 11,
+      "presentedChangedFrames": 11,
+      "firstPresentedMs": 121.377,
+      "maxPresentedGapMs": 25.117,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72296212367,
+        "end": 72296234508,
+        "sequence": 2026,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438cce1",
+        "presentation": 72296270624
+      },
+      "interactiveMinusToPresentationMs": 4.218,
+      "maxStyleLayoutMs": 2.451,
+      "costs": [
+        {
+          "sequence": 2012,
+          "styleLayoutMs": 1.516
+        },
+        {
+          "sequence": 2013,
+          "styleLayoutMs": 2.451
+        },
+        {
+          "sequence": 2014,
+          "styleLayoutMs": 1.464
+        },
+        {
+          "sequence": 2016,
+          "styleLayoutMs": 1.494
+        },
+        {
+          "sequence": 2017,
+          "styleLayoutMs": 2.09
+        },
+        {
+          "sequence": 2019,
+          "styleLayoutMs": 1.674
+        },
+        {
+          "sequence": 2020,
+          "styleLayoutMs": 1.859
+        },
+        {
+          "sequence": 2022,
+          "styleLayoutMs": 1.575
+        },
+        {
+          "sequence": 2023,
+          "styleLayoutMs": 2.129
+        },
+        {
+          "sequence": 2024,
+          "styleLayoutMs": 1.512
+        },
+        {
+          "sequence": 2026,
+          "styleLayoutMs": 1.791
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 0,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 101.16,
+      "maxPresentedGapMs": 20.238,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72296628467,
+        "end": 72296661626,
+        "sequence": 2051,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438cb76",
+        "presentation": 72296678499
+      },
+      "interactiveMinusToPresentationMs": 4.148,
+      "maxStyleLayoutMs": 2.213,
+      "costs": [
+        {
+          "sequence": 2037,
+          "styleLayoutMs": 1.922
+        },
+        {
+          "sequence": 2038,
+          "styleLayoutMs": 1.668
+        },
+        {
+          "sequence": 2039,
+          "styleLayoutMs": 1.56
+        },
+        {
+          "sequence": 2040,
+          "styleLayoutMs": 1.992
+        },
+        {
+          "sequence": 2041,
+          "styleLayoutMs": 1.814
+        },
+        {
+          "sequence": 2042,
+          "styleLayoutMs": 2.087
+        },
+        {
+          "sequence": 2043,
+          "styleLayoutMs": 1.496
+        },
+        {
+          "sequence": 2044,
+          "styleLayoutMs": 1.551
+        },
+        {
+          "sequence": 2045,
+          "styleLayoutMs": 1.606
+        },
+        {
+          "sequence": 2046,
+          "styleLayoutMs": 1.545
+        },
+        {
+          "sequence": 2047,
+          "styleLayoutMs": 1.486
+        },
+        {
+          "sequence": 2048,
+          "styleLayoutMs": 1.487
+        },
+        {
+          "sequence": 2049,
+          "styleLayoutMs": 1.328
+        },
+        {
+          "sequence": 2051,
+          "styleLayoutMs": 2.213
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 0,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 98.12,
+      "maxPresentedGapMs": 19.001,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72297013370,
+        "end": 72297030545,
+        "sequence": 2074,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438c7bc",
+        "presentation": 72297060749
+      },
+      "interactiveMinusToPresentationMs": 6.028,
+      "maxStyleLayoutMs": 0.96,
+      "costs": [
+        {
+          "sequence": 2061,
+          "styleLayoutMs": 0.579
+        },
+        {
+          "sequence": 2062,
+          "styleLayoutMs": 0.619
+        },
+        {
+          "sequence": 2063,
+          "styleLayoutMs": 0.503
+        },
+        {
+          "sequence": 2064,
+          "styleLayoutMs": 0.722
+        },
+        {
+          "sequence": 2065,
+          "styleLayoutMs": 0.574
+        },
+        {
+          "sequence": 2066,
+          "styleLayoutMs": 0.577
+        },
+        {
+          "sequence": 2067,
+          "styleLayoutMs": 0.548
+        },
+        {
+          "sequence": 2068,
+          "styleLayoutMs": 0.539
+        },
+        {
+          "sequence": 2069,
+          "styleLayoutMs": 0.581
+        },
+        {
+          "sequence": 2070,
+          "styleLayoutMs": 0.847
+        },
+        {
+          "sequence": 2071,
+          "styleLayoutMs": 0.504
+        },
+        {
+          "sequence": 2072,
+          "styleLayoutMs": 0.758
+        },
+        {
+          "sequence": 2073,
+          "styleLayoutMs": 0.5
+        },
+        {
+          "sequence": 2074,
+          "styleLayoutMs": 0.96
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 0,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 111.497,
+      "maxPresentedGapMs": 20.86,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72297413509,
+        "end": 72297430877,
+        "sequence": 2098,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438c507",
+        "presentation": 72297460240
+      },
+      "interactiveMinusToPresentationMs": 5.677,
+      "maxStyleLayoutMs": 1.06,
+      "costs": [
+        {
+          "sequence": 2085,
+          "styleLayoutMs": 0.576
+        },
+        {
+          "sequence": 2087,
+          "styleLayoutMs": 0.72
+        },
+        {
+          "sequence": 2088,
+          "styleLayoutMs": 0.56
+        },
+        {
+          "sequence": 2089,
+          "styleLayoutMs": 0.674
+        },
+        {
+          "sequence": 2090,
+          "styleLayoutMs": 0.571
+        },
+        {
+          "sequence": 2091,
+          "styleLayoutMs": 0.772
+        },
+        {
+          "sequence": 2092,
+          "styleLayoutMs": 0.524
+        },
+        {
+          "sequence": 2093,
+          "styleLayoutMs": 0.769
+        },
+        {
+          "sequence": 2094,
+          "styleLayoutMs": 0.646
+        },
+        {
+          "sequence": 2095,
+          "styleLayoutMs": 0.567
+        },
+        {
+          "sequence": 2096,
+          "styleLayoutMs": 0.52
+        },
+        {
+          "sequence": 2097,
+          "styleLayoutMs": 0.515
+        },
+        {
+          "sequence": 2098,
+          "styleLayoutMs": 1.06
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 0,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 96.491,
+      "maxPresentedGapMs": 19.269,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72297796793,
+        "end": 72297814121,
+        "sequence": 2121,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438c06a",
+        "presentation": 72297831172
+      },
+      "interactiveMinusToPresentationMs": 17.368,
+      "maxStyleLayoutMs": 0.974,
+      "costs": [
+        {
+          "sequence": 2108,
+          "styleLayoutMs": 0.798
+        },
+        {
+          "sequence": 2109,
+          "styleLayoutMs": 0.791
+        },
+        {
+          "sequence": 2111,
+          "styleLayoutMs": 0.591
+        },
+        {
+          "sequence": 2112,
+          "styleLayoutMs": 0.584
+        },
+        {
+          "sequence": 2113,
+          "styleLayoutMs": 0.525
+        },
+        {
+          "sequence": 2114,
+          "styleLayoutMs": 0.574
+        },
+        {
+          "sequence": 2115,
+          "styleLayoutMs": 0.543
+        },
+        {
+          "sequence": 2116,
+          "styleLayoutMs": 0.51
+        },
+        {
+          "sequence": 2117,
+          "styleLayoutMs": 0.682
+        },
+        {
+          "sequence": 2118,
+          "styleLayoutMs": 0.546
+        },
+        {
+          "sequence": 2119,
+          "styleLayoutMs": 0.907
+        },
+        {
+          "sequence": 2120,
+          "styleLayoutMs": 0.605
+        },
+        {
+          "sequence": 2121,
+          "styleLayoutMs": 0.974
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 0,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 87.934,
+      "maxPresentedGapMs": 19.922,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72298196564,
+        "end": 72298213283,
+        "sequence": 2145,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438df33",
+        "presentation": 72298228405
+      },
+      "interactiveMinusToPresentationMs": 21.139,
+      "maxStyleLayoutMs": 1.017,
+      "costs": [
+        {
+          "sequence": 2132,
+          "styleLayoutMs": 0.585
+        },
+        {
+          "sequence": 2133,
+          "styleLayoutMs": 0.718
+        },
+        {
+          "sequence": 2134,
+          "styleLayoutMs": 0.746
+        },
+        {
+          "sequence": 2135,
+          "styleLayoutMs": 0.649
+        },
+        {
+          "sequence": 2136,
+          "styleLayoutMs": 0.667
+        },
+        {
+          "sequence": 2137,
+          "styleLayoutMs": 0.589
+        },
+        {
+          "sequence": 2138,
+          "styleLayoutMs": 0.594
+        },
+        {
+          "sequence": 2139,
+          "styleLayoutMs": 0.599
+        },
+        {
+          "sequence": 2140,
+          "styleLayoutMs": 0.547
+        },
+        {
+          "sequence": 2141,
+          "styleLayoutMs": 0.521
+        },
+        {
+          "sequence": 2142,
+          "styleLayoutMs": 0.57
+        },
+        {
+          "sequence": 2143,
+          "styleLayoutMs": 0.541
+        },
+        {
+          "sequence": 2144,
+          "styleLayoutMs": 0.533
+        },
+        {
+          "sequence": 2145,
+          "styleLayoutMs": 1.017
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 0,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 103.191,
+      "maxPresentedGapMs": 22.777,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72298964073,
+        "end": 72298986477,
+        "sequence": 2191,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438d682",
+        "presentation": 72299020692
+      },
+      "interactiveMinusToPresentationMs": 5.494,
+      "maxStyleLayoutMs": 2.861,
+      "costs": [
+        {
+          "sequence": 2178,
+          "styleLayoutMs": 1.996
+        },
+        {
+          "sequence": 2179,
+          "styleLayoutMs": 2.861
+        },
+        {
+          "sequence": 2180,
+          "styleLayoutMs": 1.687
+        },
+        {
+          "sequence": 2181,
+          "styleLayoutMs": 1.636
+        },
+        {
+          "sequence": 2182,
+          "styleLayoutMs": 1.619
+        },
+        {
+          "sequence": 2183,
+          "styleLayoutMs": 1.772
+        },
+        {
+          "sequence": 2184,
+          "styleLayoutMs": 1.681
+        },
+        {
+          "sequence": 2186,
+          "styleLayoutMs": 2.083
+        },
+        {
+          "sequence": 2187,
+          "styleLayoutMs": 1.672
+        },
+        {
+          "sequence": 2188,
+          "styleLayoutMs": 1.585
+        },
+        {
+          "sequence": 2189,
+          "styleLayoutMs": 1.688
+        },
+        {
+          "sequence": 2191,
+          "styleLayoutMs": 2.794
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 1,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 111.777,
+      "maxPresentedGapMs": 23.134,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72299754805,
+        "end": 72299775029,
+        "sequence": 2238,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e438d0f5",
+        "presentation": 72299807203
+      },
+      "interactiveMinusToPresentationMs": 5.976,
+      "maxStyleLayoutMs": 2.284,
+      "costs": [
+        {
+          "sequence": 2225,
+          "styleLayoutMs": 1.432
+        },
+        {
+          "sequence": 2226,
+          "styleLayoutMs": 1.599
+        },
+        {
+          "sequence": 2227,
+          "styleLayoutMs": 1.334
+        },
+        {
+          "sequence": 2228,
+          "styleLayoutMs": 1.426
+        },
+        {
+          "sequence": 2230,
+          "styleLayoutMs": 1.346
+        },
+        {
+          "sequence": 2231,
+          "styleLayoutMs": 1.288
+        },
+        {
+          "sequence": 2232,
+          "styleLayoutMs": 1.465
+        },
+        {
+          "sequence": 2233,
+          "styleLayoutMs": 2.284
+        },
+        {
+          "sequence": 2235,
+          "styleLayoutMs": 1.418
+        },
+        {
+          "sequence": 2236,
+          "styleLayoutMs": 1.379
+        },
+        {
+          "sequence": 2237,
+          "styleLayoutMs": 1.455
+        },
+        {
+          "sequence": 2238,
+          "styleLayoutMs": 1.877
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 1,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 102.782,
+      "maxPresentedGapMs": 20.186,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72300184990,
+        "end": 72300192256,
+        "sequence": 2263,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4392fd9",
+        "presentation": 72300226975
+      },
+      "interactiveMinusToPresentationMs": -7.064,
+      "maxStyleLayoutMs": 2.22,
+      "costs": [
+        {
+          "sequence": 2250,
+          "styleLayoutMs": 1.439
+        },
+        {
+          "sequence": 2251,
+          "styleLayoutMs": 1.877
+        },
+        {
+          "sequence": 2252,
+          "styleLayoutMs": 1.722
+        },
+        {
+          "sequence": 2253,
+          "styleLayoutMs": 1.867
+        },
+        {
+          "sequence": 2254,
+          "styleLayoutMs": 2.025
+        },
+        {
+          "sequence": 2255,
+          "styleLayoutMs": 1.85
+        },
+        {
+          "sequence": 2256,
+          "styleLayoutMs": 1.547
+        },
+        {
+          "sequence": 2257,
+          "styleLayoutMs": 1.886
+        },
+        {
+          "sequence": 2258,
+          "styleLayoutMs": 1.57
+        },
+        {
+          "sequence": 2259,
+          "styleLayoutMs": 1.521
+        },
+        {
+          "sequence": 2261,
+          "styleLayoutMs": 1.632
+        },
+        {
+          "sequence": 2262,
+          "styleLayoutMs": 1.887
+        },
+        {
+          "sequence": 2263,
+          "styleLayoutMs": 2.22
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 1,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 97.956,
+      "maxPresentedGapMs": 19.339,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72300564889,
+        "end": 72300579929,
+        "sequence": 2287,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4392a2c",
+        "presentation": 72300595054
+      },
+      "interactiveMinusToPresentationMs": 19.855,
+      "maxStyleLayoutMs": 0.929,
+      "costs": [
+        {
+          "sequence": 2274,
+          "styleLayoutMs": 0.895
+        },
+        {
+          "sequence": 2275,
+          "styleLayoutMs": 0.581
+        },
+        {
+          "sequence": 2277,
+          "styleLayoutMs": 0.576
+        },
+        {
+          "sequence": 2278,
+          "styleLayoutMs": 0.637
+        },
+        {
+          "sequence": 2279,
+          "styleLayoutMs": 0.544
+        },
+        {
+          "sequence": 2280,
+          "styleLayoutMs": 0.572
+        },
+        {
+          "sequence": 2281,
+          "styleLayoutMs": 0.546
+        },
+        {
+          "sequence": 2282,
+          "styleLayoutMs": 0.803
+        },
+        {
+          "sequence": 2283,
+          "styleLayoutMs": 0.539
+        },
+        {
+          "sequence": 2284,
+          "styleLayoutMs": 0.646
+        },
+        {
+          "sequence": 2285,
+          "styleLayoutMs": 0.57
+        },
+        {
+          "sequence": 2286,
+          "styleLayoutMs": 0.717
+        },
+        {
+          "sequence": 2287,
+          "styleLayoutMs": 0.929
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 1,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 98.46,
+      "maxPresentedGapMs": 20.583,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72300964847,
+        "end": 72300979548,
+        "sequence": 2311,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43929ee",
+        "presentation": 72301010130
+      },
+      "interactiveMinusToPresentationMs": 6.232,
+      "maxStyleLayoutMs": 0.93,
+      "costs": [
+        {
+          "sequence": 2298,
+          "styleLayoutMs": 0.587
+        },
+        {
+          "sequence": 2299,
+          "styleLayoutMs": 0.611
+        },
+        {
+          "sequence": 2300,
+          "styleLayoutMs": 0.736
+        },
+        {
+          "sequence": 2301,
+          "styleLayoutMs": 0.626
+        },
+        {
+          "sequence": 2302,
+          "styleLayoutMs": 0.602
+        },
+        {
+          "sequence": 2303,
+          "styleLayoutMs": 0.714
+        },
+        {
+          "sequence": 2304,
+          "styleLayoutMs": 0.669
+        },
+        {
+          "sequence": 2305,
+          "styleLayoutMs": 0.512
+        },
+        {
+          "sequence": 2306,
+          "styleLayoutMs": 0.549
+        },
+        {
+          "sequence": 2307,
+          "styleLayoutMs": 0.519
+        },
+        {
+          "sequence": 2308,
+          "styleLayoutMs": 0.57
+        },
+        {
+          "sequence": 2309,
+          "styleLayoutMs": 0.604
+        },
+        {
+          "sequence": 2310,
+          "styleLayoutMs": 0.562
+        },
+        {
+          "sequence": 2311,
+          "styleLayoutMs": 0.93
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 1,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 97.141,
+      "maxPresentedGapMs": 18.936,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72301363366,
+        "end": 72301380667,
+        "sequence": 2335,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e439242d",
+        "presentation": 72301409510
+      },
+      "interactiveMinusToPresentationMs": 5.293,
+      "maxStyleLayoutMs": 0.997,
+      "costs": [
+        {
+          "sequence": 2322,
+          "styleLayoutMs": 0.478
+        },
+        {
+          "sequence": 2323,
+          "styleLayoutMs": 0.709
+        },
+        {
+          "sequence": 2324,
+          "styleLayoutMs": 0.59
+        },
+        {
+          "sequence": 2325,
+          "styleLayoutMs": 0.591
+        },
+        {
+          "sequence": 2326,
+          "styleLayoutMs": 0.557
+        },
+        {
+          "sequence": 2327,
+          "styleLayoutMs": 0.695
+        },
+        {
+          "sequence": 2328,
+          "styleLayoutMs": 0.585
+        },
+        {
+          "sequence": 2329,
+          "styleLayoutMs": 0.625
+        },
+        {
+          "sequence": 2330,
+          "styleLayoutMs": 0.916
+        },
+        {
+          "sequence": 2331,
+          "styleLayoutMs": 0.904
+        },
+        {
+          "sequence": 2332,
+          "styleLayoutMs": 0.756
+        },
+        {
+          "sequence": 2333,
+          "styleLayoutMs": 0.527
+        },
+        {
+          "sequence": 2334,
+          "styleLayoutMs": 0.517
+        },
+        {
+          "sequence": 2335,
+          "styleLayoutMs": 0.997
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 1,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 98.444,
+      "maxPresentedGapMs": 18.917,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72301764740,
+        "end": 72301780976,
+        "sequence": 2359,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43923f9",
+        "presentation": 72301810623
+      },
+      "interactiveMinusToPresentationMs": 4.874,
+      "maxStyleLayoutMs": 1.09,
+      "costs": [
+        {
+          "sequence": 2346,
+          "styleLayoutMs": 0.829
+        },
+        {
+          "sequence": 2347,
+          "styleLayoutMs": 0.71
+        },
+        {
+          "sequence": 2348,
+          "styleLayoutMs": 0.725
+        },
+        {
+          "sequence": 2349,
+          "styleLayoutMs": 0.787
+        },
+        {
+          "sequence": 2350,
+          "styleLayoutMs": 0.741
+        },
+        {
+          "sequence": 2351,
+          "styleLayoutMs": 0.652
+        },
+        {
+          "sequence": 2352,
+          "styleLayoutMs": 0.62
+        },
+        {
+          "sequence": 2353,
+          "styleLayoutMs": 0.573
+        },
+        {
+          "sequence": 2354,
+          "styleLayoutMs": 0.516
+        },
+        {
+          "sequence": 2355,
+          "styleLayoutMs": 0.641
+        },
+        {
+          "sequence": 2356,
+          "styleLayoutMs": 0.543
+        },
+        {
+          "sequence": 2357,
+          "styleLayoutMs": 0.616
+        },
+        {
+          "sequence": 2358,
+          "styleLayoutMs": 0.576
+        },
+        {
+          "sequence": 2359,
+          "styleLayoutMs": 1.09
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 1,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 105.493,
+      "maxPresentedGapMs": 24.549,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72302537696,
+        "end": 72302558550,
+        "sequence": 2405,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4393d71",
+        "presentation": 72302590797
+      },
+      "interactiveMinusToPresentationMs": 3.701,
+      "maxStyleLayoutMs": 2.566,
+      "costs": [
+        {
+          "sequence": 2392,
+          "styleLayoutMs": 1.565
+        },
+        {
+          "sequence": 2393,
+          "styleLayoutMs": 2.566
+        },
+        {
+          "sequence": 2394,
+          "styleLayoutMs": 1.609
+        },
+        {
+          "sequence": 2395,
+          "styleLayoutMs": 1.571
+        },
+        {
+          "sequence": 2396,
+          "styleLayoutMs": 1.46
+        },
+        {
+          "sequence": 2398,
+          "styleLayoutMs": 1.565
+        },
+        {
+          "sequence": 2399,
+          "styleLayoutMs": 2.022
+        },
+        {
+          "sequence": 2400,
+          "styleLayoutMs": 1.43
+        },
+        {
+          "sequence": 2401,
+          "styleLayoutMs": 1.64
+        },
+        {
+          "sequence": 2403,
+          "styleLayoutMs": 1.885
+        },
+        {
+          "sequence": 2404,
+          "styleLayoutMs": 1.467
+        },
+        {
+          "sequence": 2405,
+          "styleLayoutMs": 2.539
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 2,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 10,
+      "presentedChangedFrames": 10,
+      "firstPresentedMs": 134.018,
+      "maxPresentedGapMs": 20.572,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72303279725,
+        "end": 72303300925,
+        "sequence": 2450,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4393733",
+        "presentation": 72303317780
+      },
+      "interactiveMinusToPresentationMs": 15.154,
+      "maxStyleLayoutMs": 4.946,
+      "costs": [
+        {
+          "sequence": 2437,
+          "styleLayoutMs": 1.767
+        },
+        {
+          "sequence": 2438,
+          "styleLayoutMs": 4.946
+        },
+        {
+          "sequence": 2439,
+          "styleLayoutMs": 1.914
+        },
+        {
+          "sequence": 2442,
+          "styleLayoutMs": 1.525
+        },
+        {
+          "sequence": 2443,
+          "styleLayoutMs": 1.716
+        },
+        {
+          "sequence": 2444,
+          "styleLayoutMs": 1.471
+        },
+        {
+          "sequence": 2445,
+          "styleLayoutMs": 1.699
+        },
+        {
+          "sequence": 2446,
+          "styleLayoutMs": 1.601
+        },
+        {
+          "sequence": 2448,
+          "styleLayoutMs": 1.408
+        },
+        {
+          "sequence": 2450,
+          "styleLayoutMs": 1.711
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 2,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 106.896,
+      "maxPresentedGapMs": 26.477,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72303680194,
+        "end": 72303700947,
+        "sequence": 2474,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e439322e",
+        "presentation": 72303739643
+      },
+      "interactiveMinusToPresentationMs": 5.579,
+      "maxStyleLayoutMs": 3.201,
+      "costs": [
+        {
+          "sequence": 2461,
+          "styleLayoutMs": 2.465
+        },
+        {
+          "sequence": 2462,
+          "styleLayoutMs": 3.201
+        },
+        {
+          "sequence": 2463,
+          "styleLayoutMs": 1.621
+        },
+        {
+          "sequence": 2464,
+          "styleLayoutMs": 1.725
+        },
+        {
+          "sequence": 2465,
+          "styleLayoutMs": 1.77
+        },
+        {
+          "sequence": 2466,
+          "styleLayoutMs": 1.733
+        },
+        {
+          "sequence": 2467,
+          "styleLayoutMs": 1.603
+        },
+        {
+          "sequence": 2469,
+          "styleLayoutMs": 2.092
+        },
+        {
+          "sequence": 2470,
+          "styleLayoutMs": 1.668
+        },
+        {
+          "sequence": 2471,
+          "styleLayoutMs": 1.875
+        },
+        {
+          "sequence": 2472,
+          "styleLayoutMs": 2.433
+        },
+        {
+          "sequence": 2474,
+          "styleLayoutMs": 3.063
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 2,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 98.307,
+      "maxPresentedGapMs": 19.095,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72304080405,
+        "end": 72304097252,
+        "sequence": 2498,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e439317b",
+        "presentation": 72304126149
+      },
+      "interactiveMinusToPresentationMs": 6.541,
+      "maxStyleLayoutMs": 1.069,
+      "costs": [
+        {
+          "sequence": 2485,
+          "styleLayoutMs": 0.563
+        },
+        {
+          "sequence": 2486,
+          "styleLayoutMs": 0.612
+        },
+        {
+          "sequence": 2487,
+          "styleLayoutMs": 0.627
+        },
+        {
+          "sequence": 2488,
+          "styleLayoutMs": 0.6
+        },
+        {
+          "sequence": 2489,
+          "styleLayoutMs": 0.674
+        },
+        {
+          "sequence": 2490,
+          "styleLayoutMs": 0.594
+        },
+        {
+          "sequence": 2491,
+          "styleLayoutMs": 0.591
+        },
+        {
+          "sequence": 2492,
+          "styleLayoutMs": 0.644
+        },
+        {
+          "sequence": 2493,
+          "styleLayoutMs": 0.616
+        },
+        {
+          "sequence": 2494,
+          "styleLayoutMs": 1.053
+        },
+        {
+          "sequence": 2495,
+          "styleLayoutMs": 0.696
+        },
+        {
+          "sequence": 2496,
+          "styleLayoutMs": 0.542
+        },
+        {
+          "sequence": 2497,
+          "styleLayoutMs": 0.549
+        },
+        {
+          "sequence": 2498,
+          "styleLayoutMs": 1.069
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 2,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 91.714,
+      "maxPresentedGapMs": 18.022,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72304479653,
+        "end": 72304498396,
+        "sequence": 2522,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4390c3d",
+        "presentation": 72304513623
+      },
+      "interactiveMinusToPresentationMs": 19.031,
+      "maxStyleLayoutMs": 1.524,
+      "costs": [
+        {
+          "sequence": 2509,
+          "styleLayoutMs": 0.561
+        },
+        {
+          "sequence": 2510,
+          "styleLayoutMs": 1.054
+        },
+        {
+          "sequence": 2511,
+          "styleLayoutMs": 0.606
+        },
+        {
+          "sequence": 2512,
+          "styleLayoutMs": 0.76
+        },
+        {
+          "sequence": 2513,
+          "styleLayoutMs": 0.857
+        },
+        {
+          "sequence": 2514,
+          "styleLayoutMs": 0.635
+        },
+        {
+          "sequence": 2515,
+          "styleLayoutMs": 0.618
+        },
+        {
+          "sequence": 2516,
+          "styleLayoutMs": 0.583
+        },
+        {
+          "sequence": 2517,
+          "styleLayoutMs": 0.565
+        },
+        {
+          "sequence": 2518,
+          "styleLayoutMs": 0.597
+        },
+        {
+          "sequence": 2519,
+          "styleLayoutMs": 0.662
+        },
+        {
+          "sequence": 2520,
+          "styleLayoutMs": 0.628
+        },
+        {
+          "sequence": 2521,
+          "styleLayoutMs": 0.51
+        },
+        {
+          "sequence": 2522,
+          "styleLayoutMs": 1.524
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 2,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 100.699,
+      "maxPresentedGapMs": 20.714,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72304863283,
+        "end": 72304879986,
+        "sequence": 2545,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4390b01",
+        "presentation": 72304913666
+      },
+      "interactiveMinusToPresentationMs": 7.034,
+      "maxStyleLayoutMs": 1.029,
+      "costs": [
+        {
+          "sequence": 2532,
+          "styleLayoutMs": 0.781
+        },
+        {
+          "sequence": 2533,
+          "styleLayoutMs": 0.732
+        },
+        {
+          "sequence": 2534,
+          "styleLayoutMs": 0.67
+        },
+        {
+          "sequence": 2535,
+          "styleLayoutMs": 0.602
+        },
+        {
+          "sequence": 2536,
+          "styleLayoutMs": 0.593
+        },
+        {
+          "sequence": 2537,
+          "styleLayoutMs": 0.839
+        },
+        {
+          "sequence": 2538,
+          "styleLayoutMs": 0.602
+        },
+        {
+          "sequence": 2539,
+          "styleLayoutMs": 1.029
+        },
+        {
+          "sequence": 2540,
+          "styleLayoutMs": 0.67
+        },
+        {
+          "sequence": 2541,
+          "styleLayoutMs": 0.947
+        },
+        {
+          "sequence": 2542,
+          "styleLayoutMs": 0.629
+        },
+        {
+          "sequence": 2543,
+          "styleLayoutMs": 0.929
+        },
+        {
+          "sequence": 2544,
+          "styleLayoutMs": 0.537
+        },
+        {
+          "sequence": 2545,
+          "styleLayoutMs": 0.917
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 2,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 95.54,
+      "maxPresentedGapMs": 18.484,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72305263094,
+        "end": 72305280179,
+        "sequence": 2569,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43906c2",
+        "presentation": 72305310201
+      },
+      "interactiveMinusToPresentationMs": 6.39,
+      "maxStyleLayoutMs": 1.001,
+      "costs": [
+        {
+          "sequence": 2556,
+          "styleLayoutMs": 0.668
+        },
+        {
+          "sequence": 2557,
+          "styleLayoutMs": 0.71
+        },
+        {
+          "sequence": 2558,
+          "styleLayoutMs": 0.62
+        },
+        {
+          "sequence": 2559,
+          "styleLayoutMs": 0.704
+        },
+        {
+          "sequence": 2560,
+          "styleLayoutMs": 0.909
+        },
+        {
+          "sequence": 2561,
+          "styleLayoutMs": 0.672
+        },
+        {
+          "sequence": 2562,
+          "styleLayoutMs": 0.624
+        },
+        {
+          "sequence": 2563,
+          "styleLayoutMs": 0.716
+        },
+        {
+          "sequence": 2564,
+          "styleLayoutMs": 0.584
+        },
+        {
+          "sequence": 2565,
+          "styleLayoutMs": 0.546
+        },
+        {
+          "sequence": 2566,
+          "styleLayoutMs": 0.577
+        },
+        {
+          "sequence": 2567,
+          "styleLayoutMs": 0.739
+        },
+        {
+          "sequence": 2568,
+          "styleLayoutMs": 0.596
+        },
+        {
+          "sequence": 2569,
+          "styleLayoutMs": 1.001
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 2,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 119.572,
+      "maxPresentedGapMs": 21.408,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72306044388,
+        "end": 72306078920,
+        "sequence": 2616,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43901fd",
+        "presentation": 72306098032
+      },
+      "interactiveMinusToPresentationMs": 3.673,
+      "maxStyleLayoutMs": 3.844,
+      "costs": [
+        {
+          "sequence": 2602,
+          "styleLayoutMs": 2.37
+        },
+        {
+          "sequence": 2604,
+          "styleLayoutMs": 1.467
+        },
+        {
+          "sequence": 2605,
+          "styleLayoutMs": 1.327
+        },
+        {
+          "sequence": 2606,
+          "styleLayoutMs": 1.455
+        },
+        {
+          "sequence": 2607,
+          "styleLayoutMs": 1.483
+        },
+        {
+          "sequence": 2608,
+          "styleLayoutMs": 1.788
+        },
+        {
+          "sequence": 2609,
+          "styleLayoutMs": 1.995
+        },
+        {
+          "sequence": 2611,
+          "styleLayoutMs": 1.496
+        },
+        {
+          "sequence": 2612,
+          "styleLayoutMs": 1.849
+        },
+        {
+          "sequence": 2613,
+          "styleLayoutMs": 1.612
+        },
+        {
+          "sequence": 2614,
+          "styleLayoutMs": 1.529
+        },
+        {
+          "sequence": 2616,
+          "styleLayoutMs": 3.844
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 3,
+      "from": "view",
+      "to": "plan",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 111.387,
+      "maxPresentedGapMs": 21.3,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72306806678,
+        "end": 72306823895,
+        "sequence": 2661,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4391bcd",
+        "presentation": 72306859937
+      },
+      "interactiveMinusToPresentationMs": -0.554,
+      "maxStyleLayoutMs": 2.296,
+      "costs": [
+        {
+          "sequence": 2648,
+          "styleLayoutMs": 1.446
+        },
+        {
+          "sequence": 2649,
+          "styleLayoutMs": 1.56
+        },
+        {
+          "sequence": 2650,
+          "styleLayoutMs": 1.667
+        },
+        {
+          "sequence": 2651,
+          "styleLayoutMs": 2.296
+        },
+        {
+          "sequence": 2652,
+          "styleLayoutMs": 1.583
+        },
+        {
+          "sequence": 2653,
+          "styleLayoutMs": 1.447
+        },
+        {
+          "sequence": 2655,
+          "styleLayoutMs": 1.817
+        },
+        {
+          "sequence": 2656,
+          "styleLayoutMs": 1.422
+        },
+        {
+          "sequence": 2657,
+          "styleLayoutMs": 1.637
+        },
+        {
+          "sequence": 2658,
+          "styleLayoutMs": 1.646
+        },
+        {
+          "sequence": 2659,
+          "styleLayoutMs": 1.344
+        },
+        {
+          "sequence": 2660,
+          "styleLayoutMs": 1.392
+        },
+        {
+          "sequence": 2661,
+          "styleLayoutMs": 1.649
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 3,
+      "from": "plan",
+      "to": "view",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 115.629,
+      "maxPresentedGapMs": 26.941,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72307206194,
+        "end": 72307224549,
+        "sequence": 2685,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43916c2",
+        "presentation": 72307249269
+      },
+      "interactiveMinusToPresentationMs": 6.273,
+      "maxStyleLayoutMs": 4.374,
+      "costs": [
+        {
+          "sequence": 2672,
+          "styleLayoutMs": 1.684
+        },
+        {
+          "sequence": 2673,
+          "styleLayoutMs": 4.374
+        },
+        {
+          "sequence": 2674,
+          "styleLayoutMs": 1.845
+        },
+        {
+          "sequence": 2675,
+          "styleLayoutMs": 3.053
+        },
+        {
+          "sequence": 2677,
+          "styleLayoutMs": 1.587
+        },
+        {
+          "sequence": 2678,
+          "styleLayoutMs": 1.52
+        },
+        {
+          "sequence": 2679,
+          "styleLayoutMs": 1.667
+        },
+        {
+          "sequence": 2681,
+          "styleLayoutMs": 1.622
+        },
+        {
+          "sequence": 2682,
+          "styleLayoutMs": 1.643
+        },
+        {
+          "sequence": 2683,
+          "styleLayoutMs": 1.851
+        },
+        {
+          "sequence": 2684,
+          "styleLayoutMs": 1.598
+        },
+        {
+          "sequence": 2685,
+          "styleLayoutMs": 2.061
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 3,
+      "from": "view",
+      "to": "devices",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 98.19,
+      "maxPresentedGapMs": 19.114,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72307596779,
+        "end": 72307613273,
+        "sequence": 2709,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4391509",
+        "presentation": 72307643285
+      },
+      "interactiveMinusToPresentationMs": 4.766,
+      "maxStyleLayoutMs": 0.955,
+      "costs": [
+        {
+          "sequence": 2696,
+          "styleLayoutMs": 0.706
+        },
+        {
+          "sequence": 2697,
+          "styleLayoutMs": 0.566
+        },
+        {
+          "sequence": 2698,
+          "styleLayoutMs": 0.496
+        },
+        {
+          "sequence": 2699,
+          "styleLayoutMs": 0.585
+        },
+        {
+          "sequence": 2700,
+          "styleLayoutMs": 0.733
+        },
+        {
+          "sequence": 2701,
+          "styleLayoutMs": 0.563
+        },
+        {
+          "sequence": 2702,
+          "styleLayoutMs": 0.776
+        },
+        {
+          "sequence": 2703,
+          "styleLayoutMs": 0.5
+        },
+        {
+          "sequence": 2704,
+          "styleLayoutMs": 0.899
+        },
+        {
+          "sequence": 2705,
+          "styleLayoutMs": 0.582
+        },
+        {
+          "sequence": 2706,
+          "styleLayoutMs": 0.533
+        },
+        {
+          "sequence": 2707,
+          "styleLayoutMs": 0.572
+        },
+        {
+          "sequence": 2708,
+          "styleLayoutMs": 0.543
+        },
+        {
+          "sequence": 2709,
+          "styleLayoutMs": 0.955
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 3,
+      "from": "devices",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 94.121,
+      "maxPresentedGapMs": 18.746,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72307996550,
+        "end": 72308012742,
+        "sequence": 2733,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e43910ca",
+        "presentation": 72308042991
+      },
+      "interactiveMinusToPresentationMs": 5.304,
+      "maxStyleLayoutMs": 0.912,
+      "costs": [
+        {
+          "sequence": 2720,
+          "styleLayoutMs": 0.672
+        },
+        {
+          "sequence": 2721,
+          "styleLayoutMs": 0.569
+        },
+        {
+          "sequence": 2722,
+          "styleLayoutMs": 0.541
+        },
+        {
+          "sequence": 2723,
+          "styleLayoutMs": 0.628
+        },
+        {
+          "sequence": 2724,
+          "styleLayoutMs": 0.663
+        },
+        {
+          "sequence": 2725,
+          "styleLayoutMs": 0.612
+        },
+        {
+          "sequence": 2726,
+          "styleLayoutMs": 0.653
+        },
+        {
+          "sequence": 2727,
+          "styleLayoutMs": 0.552
+        },
+        {
+          "sequence": 2728,
+          "styleLayoutMs": 0.647
+        },
+        {
+          "sequence": 2729,
+          "styleLayoutMs": 0.533
+        },
+        {
+          "sequence": 2730,
+          "styleLayoutMs": 0.643
+        },
+        {
+          "sequence": 2731,
+          "styleLayoutMs": 0.562
+        },
+        {
+          "sequence": 2732,
+          "styleLayoutMs": 0.563
+        },
+        {
+          "sequence": 2733,
+          "styleLayoutMs": 0.912
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 3,
+      "from": "view",
+      "to": "decor",
+      "rafSamples": 13,
+      "presentedChangedFrames": 13,
+      "firstPresentedMs": 97.093,
+      "maxPresentedGapMs": 19.846,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72308396505,
+        "end": 72308412777,
+        "sequence": 2757,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4396f22",
+        "presentation": 72308429108
+      },
+      "interactiveMinusToPresentationMs": 18.538,
+      "maxStyleLayoutMs": 1.011,
+      "costs": [
+        {
+          "sequence": 2744,
+          "styleLayoutMs": 0.649
+        },
+        {
+          "sequence": 2745,
+          "styleLayoutMs": 0.675
+        },
+        {
+          "sequence": 2747,
+          "styleLayoutMs": 0.795
+        },
+        {
+          "sequence": 2748,
+          "styleLayoutMs": 0.549
+        },
+        {
+          "sequence": 2749,
+          "styleLayoutMs": 0.563
+        },
+        {
+          "sequence": 2750,
+          "styleLayoutMs": 0.566
+        },
+        {
+          "sequence": 2751,
+          "styleLayoutMs": 0.919
+        },
+        {
+          "sequence": 2752,
+          "styleLayoutMs": 0.551
+        },
+        {
+          "sequence": 2753,
+          "styleLayoutMs": 1.011
+        },
+        {
+          "sequence": 2754,
+          "styleLayoutMs": 0.576
+        },
+        {
+          "sequence": 2755,
+          "styleLayoutMs": 0.511
+        },
+        {
+          "sequence": 2756,
+          "styleLayoutMs": 0.542
+        },
+        {
+          "sequence": 2757,
+          "styleLayoutMs": 0.916
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 3,
+      "from": "decor",
+      "to": "view",
+      "rafSamples": 14,
+      "presentedChangedFrames": 14,
+      "firstPresentedMs": 95.406,
+      "maxPresentedGapMs": 19.707,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72308796070,
+        "end": 72308813847,
+        "sequence": 2781,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4396ae6",
+        "presentation": 72308843529
+      },
+      "interactiveMinusToPresentationMs": 4.793,
+      "maxStyleLayoutMs": 1.267,
+      "costs": [
+        {
+          "sequence": 2768,
+          "styleLayoutMs": 0.63
+        },
+        {
+          "sequence": 2769,
+          "styleLayoutMs": 0.589
+        },
+        {
+          "sequence": 2770,
+          "styleLayoutMs": 0.571
+        },
+        {
+          "sequence": 2771,
+          "styleLayoutMs": 0.618
+        },
+        {
+          "sequence": 2772,
+          "styleLayoutMs": 0.568
+        },
+        {
+          "sequence": 2773,
+          "styleLayoutMs": 0.725
+        },
+        {
+          "sequence": 2774,
+          "styleLayoutMs": 0.557
+        },
+        {
+          "sequence": 2775,
+          "styleLayoutMs": 0.549
+        },
+        {
+          "sequence": 2776,
+          "styleLayoutMs": 0.525
+        },
+        {
+          "sequence": 2777,
+          "styleLayoutMs": 0.5
+        },
+        {
+          "sequence": 2778,
+          "styleLayoutMs": 0.589
+        },
+        {
+          "sequence": 2779,
+          "styleLayoutMs": 0.62
+        },
+        {
+          "sequence": 2780,
+          "styleLayoutMs": 0.509
+        },
+        {
+          "sequence": 2781,
+          "styleLayoutMs": 1.267
+        }
+      ]
+    },
+    {
+      "fixture": "large",
+      "sample": 3,
+      "from": "plan",
+      "to": "devices",
+      "rafSamples": 12,
+      "presentedChangedFrames": 12,
+      "firstPresentedMs": 102.858,
+      "maxPresentedGapMs": 21.683,
+      "unmatched": 0,
+      "notPresented": 0,
+      "terminalFrame": {
+        "pid": 552930,
+        "tid": 552930,
+        "begin": 72309565157,
+        "end": 72309571945,
+        "sequence": 2826,
+        "source": 4294967296,
+        "traceId": "c1bc8b66e4396596",
+        "presentation": 72309593514
+      },
+      "interactiveMinusToPresentationMs": 4.715,
+      "maxStyleLayoutMs": 2.126,
+      "costs": [
+        {
+          "sequence": 2813,
+          "styleLayoutMs": 1.634
+        },
+        {
+          "sequence": 2814,
+          "styleLayoutMs": 1.56
+        },
+        {
+          "sequence": 2816,
+          "styleLayoutMs": 1.921
+        },
+        {
+          "sequence": 2817,
+          "styleLayoutMs": 1.394
+        },
+        {
+          "sequence": 2818,
+          "styleLayoutMs": 1.437
+        },
+        {
+          "sequence": 2819,
+          "styleLayoutMs": 1.469
+        },
+        {
+          "sequence": 2821,
+          "styleLayoutMs": 1.437
+        },
+        {
+          "sequence": 2822,
+          "styleLayoutMs": 1.424
+        },
+        {
+          "sequence": 2823,
+          "styleLayoutMs": 1.539
+        },
+        {
+          "sequence": 2824,
+          "styleLayoutMs": 1.46
+        },
+        {
+          "sequence": 2825,
+          "styleLayoutMs": 1.591
+        },
+        {
+          "sequence": 2826,
+          "styleLayoutMs": 2.126
+        }
+      ]
+    }
+  ]
+}
