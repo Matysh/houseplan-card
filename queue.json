@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 6481,
+  "revision": 6482,
   "nextTicket": 293,
-  "nextFence": 292,
+  "nextFence": 293,
   "tasks": {
     "1193": {
       "issue": 1193,
@@ -3797,7 +3797,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 292,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794072855985,
       "reviewEntry": 5,
@@ -4178,10 +4178,18 @@
       }
     }
   },
-  "waiting": [
-    1344
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1344,
+    "worker": "finish",
+    "token": "292:finish:24079b43-5206-4685-9a52-41eb0dfc43f8:finish:1:admit",
+    "fence": 292,
+    "materialSha": "6c0e32afcc431e01bc82447f9c9ba0a53aec3800",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1794072859949,
+    "expiresAt": 1794073159949
+  },
   "events": {
     "github:42340404811:1:label:spec-request": {
       "digest": "89b760117a3c9f6c20e0c78d9a8914fb588df44a41263be279b60b87babb296b",
@@ -4770,6 +4778,29 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "6c0e32afcc431e01bc82447f9c9ba0a53aec3800",
+        "evidence": {
+          "id": "20261107T124922978-26a5e481",
+          "name": "Тесты для задачи #1344 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261107T124922978-26a5e481/report.json",
+          "materialSha": "f8473ce1c5b9875e9ce669f6bc423006a6cf321f",
+          "status": "passed",
+          "finishedAt": "2026-11-07T12:58:47.408Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:24079b43-5206-4685-9a52-41eb0dfc43f8:finish:1:admit": {
+      "digest": "2354ce84329a2d22509fae8bcc96c52e274ab0f710eeaa4c1091ea1fddc64faf",
+      "issue": 1344,
+      "message": {
+        "kind": "admitted",
+        "issue": 1344,
+        "at": 1794072859949,
+        "entry": 5,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "6c0e32afcc431e01bc82447f9c9ba0a53aec3800",
+        "phase": "sync",
         "evidence": {
           "id": "20261107T124922978-26a5e481",
           "name": "Тесты для задачи #1344 (перед ревью)",
