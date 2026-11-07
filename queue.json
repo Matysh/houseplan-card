@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6316,
+  "revision": 6317,
   "nextTicket": 288,
   "nextFence": 288,
   "tasks": {
@@ -4411,6 +4411,10 @@
       "digest": "84ca16ae106dae75352b58b2a5982ec4d3e00f56a96d298931e5f2668636a7ca",
       "issue": 1344
     },
+    "github:42368793431:1:completions:message:80fc14b08c688511b0c282c84a1d204f7adeb74244451fab502da1995c452aa0": {
+      "digest": "a299735423b058050fea02b3a429998d8454f16f666222080cbfbd6ced536988",
+      "issue": 1346
+    },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
       "digest": "61a7be3a82320de8f445a83960ccf8e6814cc676278e03450ce87edc18fdd35a",
       "issue": 1344,
@@ -4488,7 +4492,8 @@
           "entry": 1,
           "detail": "Поведение: test/device-marker-polish-contract.test.mjs: failed; Поведение: test/docs-accept.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/plan-device-landmarks.test.mjs: failed; Поведение: test/stairs-view-arrival.test.mjs: failed; Поведение: test/stairs.test.mjs: failed; Поведение: test/wall-node-bundle.test.mjs: failed; Браузер: editor command latency: failed; Браузер: space switch transitions: failed; Браузер: view edit permissions: failed; Браузер: warm mode adoption: failed",
           "eventId": "finish:bce46f88-bd3a-469a-b845-85cd9718dcdc:finish:3:return:return:1344"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:1:admit": {
