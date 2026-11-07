@@ -877,6 +877,7 @@ export class HouseplanCard extends LitElement {
 
   public async _ensureEditorRuntime(): Promise<boolean> {
     const [ready] = await Promise.all([this._editorRuntimeLoader.ensure(), this._viewRuntimes.live.ensure()]);
+    if (ready) { await this.updateComplete; await this._editorRuntime?.prepareModeLayouts(); }
     return ready;
   }
 
@@ -1039,6 +1040,7 @@ export class HouseplanCard extends LitElement {
       configure: this._norm && this._canEdit,
       create: this._canEdit && !this._kiosk && !this._hasFixedFloor };
   }
+  private _modeChromeEpoch = 0;
   private _modeHeaderTypography: { head: HTMLElement; revision: number; key: string[] } | null = null;
   private _panelHeaderContentKey(head: HTMLElement, mode: HouseplanMode = this._mode): string {
     let typography = this._modeHeaderTypography;
@@ -1055,6 +1057,26 @@ export class HouseplanCard extends LitElement {
       Array.from(head.querySelector('.header-actions')?.children || [])
         .map(node => [node.getAttribute('class'), node.childElementCount])]);
   }
+  public _modeChromeKey(width:number):string {
+    const head=this.renderRoot.querySelector<HTMLElement>('.hdr > .head');
+    return JSON.stringify([width,this._modeChromeEpoch,this._cfgRev,this._cfgEpoch,this._adoption.currentConfigFingerprint(),
+      head?this._panelHeaderContentKey(head,'view'):null,this._haDecorAssetsApi]);
+  }
+  public _modeChromeHeaderWidth():number {
+    const head=this.renderRoot.querySelector<HTMLElement>('.hdr > .head');
+    return head?panelHeaderWidth(head)+(head.hasAttribute('data-hp-properties-wide')?360:0):0;
+  }
+  public _measureModeHeader(mode:HouseplanMode,width:number):PanelHeaderMeasurement|null {
+    const header=this.renderRoot.querySelector<HTMLElement>('.hdr'),head=header?.querySelector<HTMLElement>(':scope > .head');
+    return header&&head&&width>0?this._panelHeaderMemo.resolve(this._roHdr??head,this._panelHeaderContentKey(head,mode),width,
+      ()=>measurePanelHeader(header,head,width,this._panelHeaderSpaces,mode,(this._editorRuntime?.properties.reservedWidthForMode(mode)??0)>0)):null;
+  }
+  public async _prepareModeHeaderSelect(needed:boolean):Promise<void> {
+    if(!needed||customElements.get('hp-settings-select'))return;
+    this._spaceSelectLoad ||= import('./hp-settings-select').then(()=>{this.requestUpdate();});
+    await this._spaceSelectLoad;
+  }
+
   private _renderPanelMenu(): TemplateResult | typeof nothing {
     if (!this.panelHost) return nothing;
     return renderPanelMenu(panelMenuState(this.hass, !!this.narrow, this._kiosk, this._t('panel.sidebar_menu')));
@@ -1072,10 +1094,10 @@ export class HouseplanCard extends LitElement {
     const header = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
     const head = header?.querySelector(':scope > .head') as HTMLElement | null;
     if (!header || !head) return null;
-    const width = mode === 'view' ? headerContentWidth(getComputedStyle(header)) : panelHeaderWidth(head);
+    const width = this._modeChromeHeaderWidth() - (this._editorRuntime?.properties.reservedWidthForMode(mode)??0);
     return width > 0 ? this._panelHeaderMemo.resolve(this._roHdr ?? head,
       this._panelHeaderContentKey(head, mode), width,
-      () => measurePanelHeader(header, head, width, this._panelHeaderSpaces, mode)).height : null;
+      () => measurePanelHeader(header, head, width, this._panelHeaderSpaces, mode,(this._editorRuntime?.properties.reservedWidthForMode(mode)??0)>0)).height : null;
   }
   private async _settlePanelHeader(modePreparation = false): Promise<void> {
     if (this._kiosk) return;
@@ -1533,7 +1555,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _currentModeVisual(mode = this._mode as HouseplanMode): ModeVisualState | null {
-    return this._cfgPass.run(() => this._readModeVisual(mode));
+    return this._cfgPass.run(() => { this._modeColors(); return this._readModeVisual(mode); });
   }
   private _readModeVisual(mode: HouseplanMode): ModeVisualState | null {
     this._modeHeaderPositions = this._headerMotion.capture(this.renderRoot.querySelector('.head'));
@@ -1627,8 +1649,8 @@ export class HouseplanCard extends LitElement {
   private readonly _modeSceneBuilds: Record<string, number> = {};
   private _modeGlowInputs: readonly unknown[] | null = null;
   private _modeSceneFinishPending = false;
-  private _modeStageSourceClass: string | null = null;
-  private _modeStageTargetClass = '';
+  private _modePreparingStageClass: string | null = null;
+  private _modePreparedStageClass = '';
 
   private readonly _modePresentation = new ModePresentation();
   private _flatMarkerGeometryPending: { devices: readonly DevItem[]; view: ModeViewBox } | null = null;
@@ -1730,10 +1752,12 @@ export class HouseplanCard extends LitElement {
     const owner = this._modePresentation;
     const planFade = this._mode === 'plan' || !!visual.planWeight || !!this._modeTransition.state?.from.planWeight;
     const devices = planFade ? this._modeNodes('.devlayer .dev') : [];
-    const moving = this._modeTransition.state?.phase === 'running';
-    const set = (selector: string, name: string, value: string, important = false): void => {
+    const motion = this._modeTransition.state;
+    const moving = motion?.phase === 'running';
+    const varies = (weight: (value: ModeVisualState) => number): boolean => !!motion && weight(motion.from) !== weight(motion.to);
+    const set = (selector: string, name: string, value: string, important = false, animate = moving): void => {
       for (const node of this._modeNodes(selector)) {
-        if (name === 'opacity') owner.opacity(node, value, moving, important ? 'important' : '');
+        if (name === 'opacity') owner.opacity(node, value, animate, important ? 'important' : '');
         else owner.set(node, name, value, important ? 'important' : '');
       }
     };
@@ -1749,29 +1773,31 @@ export class HouseplanCard extends LitElement {
     const plan = visual.planWeight ?? 0;
     const surfaces = root.querySelector('.hp-mode-scene-svg');
     if (surfaces) {
-      const layer = (id: string, opacity: number): void => {
-        set('[data-hp-mode-layer="' + id + '"]', 'opacity', String(opacity));
-        set('[data-hp-mode-layer="' + id + '"]', 'will-change', 'transform, opacity');
+      const layer = (id: string, weight: (value: ModeVisualState) => number): void => {
+        const animated = moving && varies(weight);
+        set('[data-hp-mode-layer="' + id + '"]', 'opacity', String(weight(visual)), false, animated);
+        if (animated) set('[data-hp-mode-layer="' + id + '"]', 'will-change', 'opacity');
       };
       // Opacity is on independent SVG surfaces, never on their internal ink.
-      set('.hp-mode-scene-svg :is(.room,.hp-mode-room), .hp-mode-scene-svg :is(.room-outline,.hp-mode-room-outline), .hp-mode-scene-svg .wallbodies, .hp-mode-scene-svg .opening, .hp-mode-scene-svg .zero-walls, .hp-mode-scene-svg .hp-stairs-layer', 'opacity', '1');
-      set('.hp-mode-scene-svg .hp-view-only-layer, .hp-mode-scene-svg .hp-editor-only-layer, .hp-mode-scene-svg .hp-plan-only-layer, .hp-mode-scene-svg .glow-pools-frame, .hp-mode-scene-svg .led-fields', 'opacity', '1', true);
-      layer('rooms', visual.architectureOpacity * (1 - plan));
-      layer('room-ink', visual.architectureOpacity * plan);
+      set('.hp-mode-scene-svg :is(.room,.hp-mode-room), .hp-mode-scene-svg :is(.room-outline,.hp-mode-room-outline), .hp-mode-scene-svg .wallbodies, .hp-mode-scene-svg .opening, .hp-mode-scene-svg .zero-walls, .hp-mode-scene-svg .hp-stairs-layer', 'opacity', '1', false, false);
+      set('.hp-mode-scene-svg .hp-view-only-layer, .hp-mode-scene-svg .hp-editor-only-layer, .hp-mode-scene-svg .hp-plan-only-layer, .hp-mode-scene-svg .glow-pools-frame, .hp-mode-scene-svg .led-fields', 'opacity', '1', true, false);
+      layer('rooms', v => v.architectureOpacity * (1 - (v.planWeight ?? 0)));
+      layer('room-ink', v => v.architectureOpacity * (v.planWeight ?? 0));
       if (!this._spaceDisplayForRender().showBorders)
         set('[data-hp-mode-layer="rooms"] :is(.room,.hp-mode-room):not([data-area])', 'opacity', String(visual.viewWeight));
       for (const id of ['walls', 'openings', 'stairs', 'room-hover'])
-        layer(id, visual.architectureOpacity);
-      layer('zero-view', visual.architectureOpacity * visual.viewWeight);
-      layer('zero-editor', visual.architectureOpacity * visual.editorWeight);
-      layer('editor-guides', visual.editorWeight);
-      layer('plan-base', plan);
-      layer('plan-ink', plan);
-      layer('glow', visual.glowWeight ?? visual.viewWeight);
-      layer('led', 1);
+        layer(id, v => v.architectureOpacity);
+      layer('zero-view', v => v.architectureOpacity * v.viewWeight);
+      layer('zero-editor', v => v.architectureOpacity * v.editorWeight);
+      layer('editor-guides', v => v.editorWeight);
+      layer('plan-base', v => v.planWeight ?? 0);
+      layer('plan-ink', v => v.planWeight ?? 0);
+      layer('glow', v => v.glowWeight ?? v.viewWeight);
+      layer('led', () => 1);
       // Add premultiplied room endpoint coverage inside one temporary isolation.
-      set('[data-hp-mode-pair="rooms"]', 'isolation', 'isolate');
-      set('[data-hp-mode-pair="rooms"] > svg', 'mix-blend-mode', 'plus-lighter');
+      const roomCrossfade = varies(v => v.planWeight ?? 0);
+      set('[data-hp-mode-pair="rooms"]', 'isolation', roomCrossfade ? 'isolate' : 'auto');
+      set('[data-hp-mode-pair="rooms"] > svg', 'mix-blend-mode', roomCrossfade ? 'plus-lighter' : 'normal');
       const paperColor = this._targetPaperColor('view');
       const sharedPaper = paperColor === 'rgb(255, 255, 255)';
       // Identical opaque paper has one antialiased silhouette. Blending two
@@ -1779,12 +1805,12 @@ export class HouseplanCard extends LitElement {
       // Keep the paired path for genuinely different endpoint materials.
       set('[data-hp-mode-pair="paper"]', 'isolation', sharedPaper ? 'auto' : 'isolate');
       set('[data-hp-mode-pair="paper"] > svg', 'mix-blend-mode', sharedPaper ? 'normal' : 'plus-lighter');
-      layer('paper', sharedPaper ? 1 : visual.viewWeight);
+      layer('paper', v => sharedPaper ? 1 : v.viewWeight);
       set('[data-hp-mode-layer="paper"] .hp-paper', 'fill', paperColor, true);
       set('[data-hp-mode-layer="paper-ink"] .hp-paper', 'fill', 'rgb(255, 255, 255)', true);
-      layer('paper-ink', sharedPaper ? 0 : visual.editorWeight);
-      set('.hp-backdrop', 'opacity', '1');
-      layer('backdrop', visual.backdropOpacity);
+      layer('paper-ink', v => sharedPaper ? 0 : v.editorWeight);
+      set('.hp-backdrop', 'opacity', '1', false, false);
+      layer('backdrop', v => v.backdropOpacity);
     } else {
       // Projection crossing retains its existing one-scene fade/atomic path.
       set('.room, .opening, .room-outline, .wallbodies, .zero-walls, .hp-stairs-layer',
@@ -1795,7 +1821,7 @@ export class HouseplanCard extends LitElement {
       set('.hp-paper', 'fill', visual.paperColor, true);
       set('.hp-backdrop', 'opacity', String((this._spaceModel()?.bg?.opacity ?? 1) * visual.backdropOpacity));
     }
-    set('.devlayer', 'opacity', String(visual.architectureOpacity));
+    set('.devlayer', 'opacity', String(visual.architectureOpacity), false, moving && varies(v => v.architectureOpacity));
     set('.hp-day-cycle-env, .hp-moon-sky', 'opacity', String(visual.viewWeight), true);
     for (const device of devices)
       owner.filterOpacity(device, Math.max(0, 1 - .65 * plan / visual.architectureOpacity),
@@ -1853,7 +1879,7 @@ export class HouseplanCard extends LitElement {
 
   private _clearModePresentation(): void {
     this._modeSceneOrigin = null;
-    this._modeStageSourceClass = null;
+    this._modePreparingStageClass = null;
     this._modePresentationNodes.clear();
     this._modePresentation.clear();
     // Projection crossing and the raster camera use these outside paint().
@@ -1878,8 +1904,6 @@ export class HouseplanCard extends LitElement {
   }
   private _paintTransitionFrame(state: ModeTransitionState): void {
     if (state.targetMode !== this._mode) return;
-    if (state.phase === 'settling' && this._modeStageSourceClass && this._stageEl)
-      this._stageEl.className = this._modeStageTargetClass + ' mode-transition';
     if (this._modeProjectionCrossing) {
       const progress = state.duration > 0 ? Math.min(1, Math.max(0, (performance.now() - state.startedAt) / state.duration)) : 1;
       if (progress >= .5 && this._modeProjectionSource) {
@@ -2047,7 +2071,9 @@ export class HouseplanCard extends LitElement {
     // Preparation belongs to the user command timeline; do not restart the
     // easing at zero after its render/measurement microtask.
     const requestedAt = performance.now();
-    this._modeStageSourceClass = this._modeProjectionCrossing ? null : this._stageEl?.className.replace(/\s+mode-transition\b/g, '') ?? null;
+    const layout=this._editorRuntime?.modeLayoutFor(targetMode);
+    if(layout){this._panelHeaderChoice=layout.header;this._compactSpaces=layout.header.phase>=3;}
+    this._modePreparingStageClass = this._modeProjectionCrossing ? null : this._stageEl?.className.replace(/\s+mode-transition\b/g, '') ?? null;
     void this.updateComplete.then(async () => {
       if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
         // Only clean the generation that still owns the preparing flag. A
@@ -2062,12 +2088,14 @@ export class HouseplanCard extends LitElement {
       }
       // The prepared Lit frame already owns source dimensions. Measure target
       // chrome before presentation writes invalidate the scene layout.
+      if(!layout) {
       const headerReady = this._settlePanelHeader(true);
       if (this._spaceSelectLoad && !customElements.get('hp-settings-select')) {
         if (this._stageEl) this._stageEl.inert = true;
         this._paintModePresentation(from);
       }
       await headerReady;
+      }
       if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
         if (request === this._modeTransitionRequest) {
           this._cancelModeTransition(false); this.requestUpdate();
@@ -2076,17 +2104,17 @@ export class HouseplanCard extends LitElement {
       }
       this._cfgPass.run(() => {
       const inner = this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null;
-      const targetChromeHeight = targetMode === 'view' ? 0 : inner?.scrollHeight || 0;
-      const headerHeight = this._panelHeaderChoice?.height > 0 ? this._panelHeaderChoice.height
-        : this._editorRuntime?._modeHeaderHeight(targetMode) ?? from.headerHeight;
+      const targetChromeHeight = targetMode === 'view' ? 0 : layout?.chromeHeight ?? inner?.scrollHeight ?? 0;
+      const headerHeight = layout?.header.height ?? (this._panelHeaderChoice?.height > 0 ? this._panelHeaderChoice.height
+        : this._editorRuntime?._modeHeaderHeight(targetMode) ?? from.headerHeight);
       // The hidden frame preserves source sizes; keep the header + stage + chrome budget
       // constant so every RAF moves both edges without a final layout jump.
       const targetStageHeight = modeStageHeight(from, headerHeight, targetChromeHeight);
       const card = this.renderRoot.querySelector<HTMLElement>('ha-card');
       const properties = this.renderRoot.querySelector<HTMLElement>('.hp-properties');
-      const targetStageWidth = card?.clientWidth
+      const targetStageWidth = layout?.width ?? (card?.clientWidth
         ? card.clientWidth - (this._editorRuntime?.properties.wide ? properties?.offsetWidth || 0 : 0)
-        : this._stageEl?.clientWidth || from.stageWidth;
+        : this._stageEl?.clientWidth || from.stageWidth);
       const targetCamera = this._physicalCamera(from.viewport, targetStageWidth, targetStageHeight);
       const targetView = targetCamera.viewBox;
       this._modeTransitionTargetZoom = targetCamera.zoom;
@@ -2113,16 +2141,19 @@ export class HouseplanCard extends LitElement {
       this._modeTransitionPreparing = false;
       const forceAtomic = this._modeTransitionForceAtomic;
       this._modeTransitionForceAtomic = false;
-      this._headerMotion.start(this.renderRoot.querySelector('.head'), this._modeHeaderPositions, this._reducedMotion || forceAtomic);
+      this._headerMotion.start(this.renderRoot.querySelector('.head'), this._modeHeaderPositions, this._reducedMotion || forceAtomic, layout?.header.positions);
+      // Source dimensions are already accepted. Publishing this basis must
+      // not query freshly invalidated scene client metrics.
+      this._modeSceneSize = [from.stageWidth, from.stageHeight];
       if (!this._modeProjectionSource) commitHouseplanViewport(this);
       // Publish the stage's phase-owned inert baseline after the read batch,
       // before any motion or rendering opportunity. Presentation retains it
       // until the final Lit commit, exactly like a prepared inert binding.
       if (this._stageEl) this._stageEl.inert = true;
-      this._stageEl?.classList.add('mode-transition');
+      if (this._stageEl) this._stageEl.className = this._modePreparedStageClass + ' mode-transition';
+      this._modePreparingStageClass = null;
       // Keep the already-rendered HTML and SVG raster coordinates fixed.
       // Enlarging only their parent here would stretch marker faces on Y.
-      this._modeSceneSize = [from.stageWidth, from.stageHeight];
       this._modeSceneOrigin = !this._reducedMotion && !forceAtomic && !this._modeProjectionCrossing
         && this._renderProjection === 'flat' && this._rotation === 0 ? modeRasterOriginBias(from, to) : null;
       this._modeSceneClip = modeRasterExposureClip(from, to);
@@ -3855,6 +3886,7 @@ export class HouseplanCard extends LitElement {
     this._continuityDisposed = true;
     ledRelease(this); // #780 r1 M5: no retained LED cache after disconnect
     super.disconnectedCallback();
+    this._editorRuntime?.cancelModeLayouts();
   }
 
   private _onKey(e: KeyboardEvent): void {
@@ -5377,7 +5409,7 @@ export class HouseplanCard extends LitElement {
       this._measureHeaderNow = measure;
       this._onWinResize = schedule; window.addEventListener('resize', schedule);
       const fonts = hdr.ownerDocument.fonts;
-      const fontsChanged = () => { if (ownsHeader()) { this._modeHeaderTypography = null; this._panelHeaderMemo.invalidate(); schedule(); } };
+      const fontsChanged = () => { if (ownsHeader()) { this._modeHeaderTypography = null; this._modeChromeEpoch++; this._panelHeaderMemo.invalidate(); schedule(); } };
       if (fonts) {
         fonts.addEventListener('loadingdone', fontsChanged);
         void fonts.ready.then(fontsChanged);
@@ -5429,6 +5461,7 @@ export class HouseplanCard extends LitElement {
     if (this._modeTransition.state && this._modeTransitionVisual)
       this._paintModePresentation(this._modeTransitionVisual);
     this._modeSceneFinishPending = false;
+    this._editorRuntime?.scheduleModeLayouts();
   }
 
   // ================= server: config + layout =================
@@ -9975,9 +10008,10 @@ export class HouseplanCard extends LitElement {
 
   // ================= shared editor secondary surface =================
 
-  private get _editorToolbarGroups(): readonly EditorToolbarGroup[] {
-    if (this._mode === 'decor') return [this._editorRuntimeOrThrow()._shapesToolbarGroup()];
-    if (this._mode !== 'plan') return [];
+  private get _editorToolbarGroups(): readonly EditorToolbarGroup[] { return this._editorToolbarGroupsFor(this._mode); }
+  public _editorToolbarGroupsFor(mode:HouseplanMode): readonly EditorToolbarGroup[] {
+    if (mode === 'decor') return [this._editorRuntimeOrThrow()._shapesToolbarGroup()];
+    if (mode !== 'plan') return [];
     return [this._editorRuntimeOrThrow()._roomsToolbarGroup(), {
       id: 'opening',
       label: this._t('markup.opening'),
@@ -12471,10 +12505,8 @@ export class HouseplanCard extends LitElement {
             ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
             <g data-hp-live-editor></g>` }
     ];
-    this._modeStageTargetClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}`;
-    const stageClass = (this._modeStageSourceClass && this._modeTransitionBusy && this._modeTransition.state?.phase !== 'settling'
-      ? this._modeStageSourceClass : this._modeStageTargetClass)
-      + (this._modeTransition.active ? ' mode-transition' : '');
+    const stageClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}` + (this._modeTransition.active ? ' mode-transition' : '');
+    this._modePreparedStageClass = stageClass;
     return html`
       <ha-card
         ?data-hp-properties-wide=${this._editorRuntime?.properties.wide}
@@ -12500,7 +12532,7 @@ export class HouseplanCard extends LitElement {
           data-panel-flow=${this._panelHeaderChoice.phase}
           ?data-panel-phone=${this._panelHeaderChoice.phone}
           data-panel-mode=${this._mode} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
-        <div class="head hpf-chrome-group" style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
+        <div class="head hpf-chrome-group" ?data-hp-properties-wide=${this._editorRuntime?.properties.wide} style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
           ${this._renderPanelMenu()}
           ${renderHeaderSpaceNavigation({
             spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces,
@@ -12565,7 +12597,7 @@ export class HouseplanCard extends LitElement {
           : nothing}
         </div>
 
-        <div class=${stageClass}
+        <div class=${this._modeTransitionPreparing && this._modePreparingStageClass ? this._modePreparingStageClass : stageClass}
           data-hp-plan-rotation=${this._rotation}
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}

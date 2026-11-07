@@ -158,12 +158,15 @@ export class PropertiesEditor {
       }
     }).finally(() => { if (this.handoff === receipt) this.handoff = null; host.requestUpdate(); });
   }
-  private get allowed(): boolean {
+  private allowedForMode(mode: string): boolean {
     const host = this.host;
     return host.isConnected && host._canEdit && !host._kiosk && host._norm && host._loadOk
-      && host._mode !== 'view' && !!host._serverCfg && !!host._configWriteGuard()();
+      && mode !== 'view' && !!host._serverCfg && !!host._configWriteGuard()();
   }
+  private get allowed(): boolean { return this.allowedForMode(this.host._mode); }
   get wide(): boolean { return this.allowed && this.width >= PROPERTIES_MIN_WIDTH; }
+  get cardWidth():number{return this.width;}
+  reservedWidthForMode(mode:string):number{return this.allowedForMode(mode)&&this.width>=PROPERTIES_MIN_WIDTH?360:0;}
   get identity(): PropertiesIdentity | null {
     const value = this.selected;
     if (value?.editor === 'decor' && this.selectionContext

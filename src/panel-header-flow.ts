@@ -1,8 +1,9 @@
+import { headerControls, type HeaderPosition } from './header-motion';
 import { headerNavigationGroup, headerNavigationItem, headerNavigationIconSize } from './header-navigation-kit';
 
 export type PanelHeaderPhase = 0 | 1 | 2 | 3 | 4;
 export interface PanelHeaderChoice { phase: PanelHeaderPhase; phone: boolean }
-export interface PanelHeaderMeasurement extends PanelHeaderChoice { height: number }
+export interface PanelHeaderMeasurement extends PanelHeaderChoice { height: number; positions?: ReadonlyMap<string,HeaderPosition> }
 export interface PanelHeaderSpaces {
   spaces: readonly { id: string; title: string }[];
   current: string;
@@ -83,7 +84,7 @@ function nativeMetric(node: Node, doc: Document): Node | null {
   }
   if (node.localName.includes('-')) {
     const metric = doc.createElement('span');
-    if (node.classList.contains('compact-space-select')) metric.classList.add('compact-space-select');
+    if (node.classList.contains('compact-space-select')) { metric.classList.add('compact-space-select'); metric.dataset.hp='space-select'; }
     if (node.classList.contains('compact-space-select'))
       metric.style.cssText = 'display:block;flex:0 0 180px;width:180px;min-width:180px;height:44px;';
     return metric;
@@ -108,13 +109,13 @@ function spaceMetrics(doc: Document, nav: PanelHeaderSpaces, compact: boolean): 
     tabs.appendChild(value); return value;
   };
   if (compact) {
-    const field = doc.createElement('span'); field.className = 'compact-space-select';
+    const field = doc.createElement('span'); field.className = 'compact-space-select'; field.dataset.hp='space-select';
     field.style.cssText = 'display:block;flex:0 0 180px;width:180px;min-width:180px;height:44px;';
     tabs.appendChild(field);
-    if (nav.configure) button('tabedit compact-space-settings').appendChild(iconMetric(doc, headerNavigationIconSize));
+    if (nav.configure) { const settings=button('tabedit compact-space-settings');settings.dataset.hp='space-settings';settings.appendChild(iconMetric(doc, headerNavigationIconSize)); }
   } else {
     for (const space of nav.spaces) {
-      const tab = button(space.id === nav.current ? 'active' : '');
+      const tab = button(space.id === nav.current ? 'active' : ''); tab.dataset.hp='space-tab';
       const label = doc.createElement('span'); label.className = 'tabtitle'; label.textContent = space.title;
       tab.appendChild(label);
       if (nav.configure) {
@@ -124,14 +125,14 @@ function spaceMetrics(doc: Document, nav: PanelHeaderSpaces, compact: boolean): 
       }
     }
   }
-  if (nav.create) button('tabadd').appendChild(iconMetric(doc, headerNavigationIconSize));
+  if (nav.create) { const add=button('tabadd');add.dataset.hp='space-add';add.appendChild(iconMetric(doc, headerNavigationIconSize)); }
   return tabs;
 }
 
 /** One synchronous, inert native metrics tree; removed before the next task/paint.
  * The actual controls/popup/focus never participate in candidate probing. */
 export function measurePanelHeader(
-  header: HTMLElement, head: HTMLElement, available: number, nav: PanelHeaderSpaces, mode: string,
+  header: HTMLElement, head: HTMLElement, available: number, nav: PanelHeaderSpaces, mode: string, wide?: boolean,
 ): PanelHeaderMeasurement {
   const doc = header.ownerDocument;
   const probe = doc.createElement('div');
@@ -141,7 +142,10 @@ export function measurePanelHeader(
   probe.style.cssText = 'position:fixed;left:-100000px;top:0;visibility:hidden;pointer-events:none;'
     + 'width:max-content;min-height:0;contain:layout style;';
   const copy = nativeMetric(head, doc) as HTMLElement;
+  if(wide!==undefined)copy.toggleAttribute('data-hp-properties-wide',wide);
   copy.style.height = ''; copy.style.overflow = 'visible'; copy.style.width = 'max-content';
+  const close=copy.querySelector('.editor-close-slot'),modes=copy.querySelector('.modes');
+  if(close&&modes){const target=modes.querySelector('[data-mode="'+mode+'"]');if(target)target.after(close);else modes.appendChild(close);}
   probe.appendChild(copy);
   const replaceTabs = (compact: boolean): void => {
     const old = copy.querySelector(':scope > .tabs');
@@ -166,7 +170,9 @@ export function measurePanelHeader(
     probe.toggleAttribute('data-panel-phone', choice.phone);
     replaceTabs(choice.phase >= 3);
     copy.style.width = available + 'px';
-    return { ...choice, height: outerSize(copy, 'height') };
+    const height=outerSize(copy,'height'),origin=copy.getBoundingClientRect();
+    const positions=new Map(headerControls(copy).map(([key,element])=>{const rect=element.getBoundingClientRect();return [key,{x:rect.x-origin.x,y:rect.y-origin.y}] as const}));
+    return { ...choice, height, positions };
   } finally { probe.remove(); }
 }
 

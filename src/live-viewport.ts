@@ -265,7 +265,7 @@ export function paintLiveViewport(
       { exposeSceneOverflow: true, exposureClip: options.sceneExposureClip },
     );
   }
-  const floorScenes = [...root.querySelectorAll<HTMLElement>('[data-hp-live-scene="floor"]')];
+  const floorScenes = options.sceneExposureClip ? [] : [...root.querySelectorAll<HTMLElement>('[data-hp-live-scene="floor"]')];
   const floorProjection = isIdentityLiveLayerProjection(sceneFloor) && !keepSceneLayer ? null : sceneFloor;
   for (const scene of floorScenes) {
     const exposed = floorProjection !== null;
@@ -278,7 +278,7 @@ export function paintLiveViewport(
     if (floorScenes.some(scene => scene.contains(svg))) continue;
     setLayerProjection(
       svg,
-      isIdentityLiveLayerProjection(sceneFloor) && !keepSceneLayer ? null : sceneFloor,
+      isIdentityLiveLayerProjection(sceneFloor) && (!keepSceneLayer || !!options.sceneExposureClip) ? null : sceneFloor,
       { exposeSceneOverflow: true, exposureClip: options.sceneExposureClip },
     );
   }

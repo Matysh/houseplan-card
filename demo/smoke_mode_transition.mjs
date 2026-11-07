@@ -74,6 +74,25 @@ try { diagnostics=await page.evaluate(collectModeTransitionSamples,{fixture:"dem
 catch(error) { diagnostics={status:"unavailable",diagnostic:true,reason:error.message}; }
 console.log(JSON.stringify({modeTransitionDiagnostics:diagnostics}));
 
+// A first unvisited mode after explicit installation uses accepted chrome metrics.
+result.warmChromeAvoidsSceneMeasurements = await page.evaluate(async () => {
+ const c=window.__card,frame=()=>new Promise(r=>requestAnimationFrame(r));
+ c._setMode('view');while(c._modeTransitionBusy)await frame();await c.updateComplete;
+ await c._ensureEditorRuntime();const rt=c._editorRuntime;
+ if(!rt.modeLayoutFor('decor'))return false;
+ const width=Object.getOwnPropertyDescriptor(Element.prototype,'clientWidth');
+ const height=Object.getOwnPropertyDescriptor(Element.prototype,'scrollHeight');
+ const header=rt._modeHeaderHeight,flip=c._headerMotion.start;
+ try{
+  Object.defineProperty(Element.prototype,'clientWidth',{...width,get(){if(c._modeTransitionBusy&&this.localName==='ha-card')throw Error('mode read card width');return width.get.call(this)}});
+  Object.defineProperty(Element.prototype,'scrollHeight',{...height,get(){if(c._modeTransitionBusy&&this.classList.contains('editorchrome-inner'))throw Error('mode measured toolbar');return height.get.call(this)}});
+  rt._modeHeaderHeight=function(...args){if(c._modeTransitionBusy)throw Error('mode remeasured header');return header.apply(this,args)};
+  c._headerMotion.start=function(head,before,reduced,positions){if(!positions)throw Error('mode measured control positions');return flip.call(this,head,before,reduced,positions)};
+  c._setMode('decor');let attempts=0;while(c._modeTransitionBusy&&attempts++<180)await frame();await c.updateComplete;
+  return !c._modeTransitionBusy&&!c._stageEl.inert&&c._mode==='decor';
+ }finally{Object.defineProperty(Element.prototype,'clientWidth',width);Object.defineProperty(Element.prototype,'scrollHeight',height);rt._modeHeaderHeight=header;c._headerMotion.start=flip;}
+});
+
 // Ordinary View gestures keep one bounded scene promotion after editor install.
 result.oneSceneGestureSurface = await page.evaluate(async () => {
  const c=window.__card,frame=()=>new Promise(r=>requestAnimationFrame(r));
@@ -168,7 +187,7 @@ for(const phase of [0,1])for(const action of ['ha','camera','reduced']){
   else{await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>!window.__card._modeTransitionBusy);}
   await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._stageEl.inert);
   if(action!=='ha'){
-    result['hold'+phase+'-'+action+'-cancels']=held&&await page.evaluate(async()=>{const c=window.__card,h=window.__modeHold;c._modeTransition._clock=h.clock;c._setMode('devices');h.stale(performance.now());await c.updateComplete;while(c._modeTransitionBusy)await new Promise(r=>requestAnimationFrame(r));return c._mode==='devices'&&!c._stageEl.inert;});
+    result['hold'+phase+'-'+action+'-cancels']=held&&await page.evaluate(async()=>{const c=window.__card,h=window.__modeHold;c._modeTransition._clock=h.clock;c._setMode('devices');h.stale(performance.now());await c.updateComplete;while(c._modeTransitionBusy)await new Promise(r=>requestAnimationFrame(r));await c.updateComplete;return c._mode==='devices'&&!c._stageEl.inert;});
   }else result['hold'+phase+'-one-latest-contact-sync']=await page.evaluate(()=>{const h=window.__modeHold;return h.calls.length===1&&h.calls[0].busy===false&&h.calls[0].state==='unavailable';});
   await page.evaluate(()=>{const c=window.__card,h=window.__modeHold;c._modeTransition._clock=h.clock;c._liveRt.syncContacts=h.sync;delete window.__modeHold;});
 }

@@ -9,7 +9,7 @@ export const propertiesStyles = unsafeCSS(css`
   ha-card[data-hp-properties-wide] { position: relative; }
   ha-card[data-hp-properties-wide] > .stage,
   ha-card[data-hp-properties-wide] .editorchrome { width: calc(100% - 360px); }
-  ha-card[data-hp-properties-wide] > .hdr > .head { width: calc(100% - 360px); box-sizing: border-box; padding-block: 8px; }
+  .hdr > .head[data-hp-properties-wide] { width: calc(100% - 360px); box-sizing: border-box; padding-block: 8px; }
   .hp-properties {
     color-scheme: light dark;
     position: absolute; right: 0; top: 0; bottom: 0;
@@ -18,7 +18,7 @@ export const propertiesStyles = unsafeCSS(css`
     opacity: 1;
     transform: none;
   }
-  ha-card[data-hp-mode='view'] .hp-properties { opacity:0; transform:translateX(100%); }
+  /* View unmounts the idle surface; ModePresentation owns the outgoing fade. */
   .hp-properties[data-theme='light'] { color-scheme: light; }
   .hp-properties[data-theme='dark'] { color-scheme: dark; }
   .hp-properties *, .hp-properties *::before, .hp-properties *::after { box-sizing: border-box; }

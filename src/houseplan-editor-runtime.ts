@@ -1,3 +1,5 @@
+import { ModeChromeLayouts, type ModeChromeProbe } from './mode-chrome-layout';
+import type { PanelHeaderMeasurement } from './panel-header-flow';
 let nodeEditorFactory: typeof import('./wall-node-card-adapter').createWallNodeEditor | null = null;
 let nodeEditorLoading: Promise<void> | null = null;
 let nodeEditorFailed = false;
@@ -511,6 +513,11 @@ interface DeviceInboxDialogState {
 }
 
 export interface HouseplanEditorHostPort {
+  _modeChromeKey(width:number):string;
+  _modeChromeHeaderWidth():number;
+  _measureModeHeader(mode:HouseplanMode,width:number):PanelHeaderMeasurement|null;
+  _prepareModeHeaderSelect(needed:boolean):Promise<void>;
+  _editorToolbarGroupsFor(mode:HouseplanMode):readonly EditorToolbarGroup[];
   readonly _configWriteContext: import('./config-write-context').ConfigWriteContext;
   readonly _alerts?: import('./marker-alert-view-runtime').MarkerAlertViewRuntime;
   readonly _connectionWasLost: boolean;
@@ -921,6 +928,38 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  private readonly chromeLayouts=new ModeChromeLayouts();
+  private cancelChromeIdle:(()=>void)|null=null;
+  public modeLayoutFor(mode:HouseplanMode){return this.chromeLayouts.get(this.host._modeChromeKey(this.properties.cardWidth),mode);}
+  public async prepareModeLayouts():Promise<void>{
+    try {
+    const host=this.host;
+    if(!host.isConnected||!host._canEdit||host._kiosk||!host._loadOk||!host._norm||!host._spaceModel()||host._modeTransitionBusy)return;
+    const key=host._modeChromeKey(this.properties.cardWidth);
+    if(this.chromeLayouts.ready(key))return;
+    const card=host.renderRoot.querySelector<HTMLElement>('ha-card'),headWidth=host._modeChromeHeaderWidth();
+    if(!card||card.clientWidth<=0||headWidth<=0)return;
+    const width=card.clientWidth,plans:ModeChromeProbe[]=[];
+    for(const mode of ['view','plan','devices','decor'] as const){
+      const reserved=this.properties.reservedWidthForMode(mode),header=host._measureModeHeader(mode,headWidth-reserved);
+      if(!header)return;
+      plans.push({mode,width:width-reserved,header,chromeHeight:0,content:mode==='view'?nothing:mode==='plan'?this._renderMarkupBar():mode==='devices'?this._renderDevicesBar():this._renderDecorBar()});
+    }
+    await host._prepareModeHeaderSelect(plans.some(plan=>plan.header.phase>=3));
+    if(key!==host._modeChromeKey(this.properties.cardWidth)||!host.isConnected||host._modeTransitionBusy)return;
+    await this.chromeLayouts.prepare(key,card,plans);
+    } catch(error) { this.chromeLayouts.clear(); this.chromeLayouts.error=String(error); }
+  }
+  public scheduleModeLayouts():void{
+    const host=this.host;
+    if(!host.isConnected||host._mode!=='view'||!host._canEdit||host._kiosk||!host._norm||!host._spaceModel()||host._modeTransitionBusy||this.cancelChromeIdle
+      ||this.chromeLayouts.ready(host._modeChromeKey(this.properties.cardWidth)))return;
+    const run=()=>{this.cancelChromeIdle=null;void this.prepareModeLayouts();};
+    if(typeof requestIdleCallback==='function'){const id=requestIdleCallback(run,{timeout:500});this.cancelChromeIdle=()=>cancelIdleCallback(id);}
+    else{const id=setTimeout(run,0);this.cancelChromeIdle=()=>clearTimeout(id);}
+  }
+  public cancelModeLayouts():void{this.cancelChromeIdle?.();this.cancelChromeIdle=null;this.chromeLayouts.clear();}
+
   /** Code only: the Select controller/cache remains a distinct lazy graph. */
   public static prepareSceneCode(fresh: boolean, retryNonce: () => string): Promise<void> {
     if (nodeEditorFactory) return Promise.resolve();
@@ -5492,7 +5531,7 @@ public _renderDecorBar(): TemplateResult {
     return html`<div class="editbar decorbar" data-hp="toolbar" data-kind="decor">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
       ${tools.map(
-        ([t, ic, k]) => html`${t === 'text' ? this.host._editorToolbarGroups.map(group => this._renderEditorGroupLauncher(group)) : nothing}<button class="btn dtool ${this.host._decorTool === t ? 'on' : ''}" data-hp="tool" data-tool=${t}
+        ([t, ic, k]) => html`${t === 'text' ? this.host._editorToolbarGroupsFor('decor').map(group => this._renderEditorGroupLauncher(group)) : nothing}<button class="btn dtool ${this.host._decorTool === t ? 'on' : ''}" data-hp="tool" data-tool=${t}
           data-editor-palette=${t === 'furniture' || t === 'image' ? t : nothing}
           ?data-editor-tool-intent=${t !== 'furniture' && t !== 'image'}
           @click=${() => this._activateDecorTool(t)}
@@ -11460,7 +11499,7 @@ public _renderMarkupBar(): TemplateResult {
 
 
 
-      ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
+      ${this.host._editorToolbarGroupsFor('plan').map((group) => this._renderEditorGroupLauncher(group))}
       <button class="btn ${this.host._tool === 'wallthick' ? 'on' : ''}" data-hp="tool" data-tool="wall-thickness" data-editor-tool-intent
         @click=${() => this._activateMarkupTool('wallthick')}
         data-hp-tooltip=${this.host._t('title.markup_wallthick')}>
