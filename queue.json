@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6479,
+  "revision": 6480,
   "nextTicket": 292,
   "nextFence": 292,
   "tasks": {
@@ -3912,14 +3912,13 @@
         "test/stairs.test.mjs"
       ],
       "notice": {
-        "key": "3:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1794056920542,
-        "entry": 3,
-        "requestId": "review:1344:3:b3fdf0615e5169ef0814ea7f1d40e56f535d94a5:b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
-        "transitionConfirmed": true
+        "key": "4:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794072793476,
+        "entry": 4,
+        "eventId": "issue1344-return-invalidated-fourth:return:1344"
       },
       "s6": {
         "id": "20261107T124922978-26a5e481",
@@ -3936,7 +3935,8 @@
         "at": 1794056920542
       },
       "automationError": "checks-unavailable",
-      "automationSince": 1794072676487
+      "automationSince": 1794072676487,
+      "reason": "checks-failed"
     },
     "1345": {
       "issue": 1345,
@@ -4182,18 +4182,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1344,
-    "worker": "finish",
-    "token": "291:finish:b8cea9ad-8fe6-4a6d-86ad-fc88596f70f4:finish:1:admit",
-    "fence": 291,
-    "materialSha": "5569cd8b2210fe33133bf358a07bfbfad17ac0a6",
-    "expectedBase": "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
-    "phase": "testing",
-    "admittedAt": 1794072036101,
-    "expiresAt": 1794073062061,
-    "patchId": "38e59cd05a63259ea1bdf34e37ac10519b72cb1b"
-  },
+  "active": null,
   "events": {
     "github:42340404811:1:label:spec-request": {
       "digest": "89b760117a3c9f6c20e0c78d9a8914fb588df44a41263be279b60b87babb296b",
@@ -4527,6 +4516,10 @@
       "digest": "33d9e137ed4ab457c89ec6cc3f2be0d6316ba93fcb6eb9d93761e8c650c2e42e",
       "issue": 1344
     },
+    "issue1344-return-invalidated-fourth": {
+      "digest": "e44e3da111104a5fe49bf834ca0a45f99ccf6c40d6eb4f2f430cc923ac7a04d6",
+      "issue": 1344
+    },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
       "digest": "61a7be3a82320de8f445a83960ccf8e6814cc676278e03450ce87edc18fdd35a",
       "issue": 1344,
@@ -4745,6 +4738,25 @@
           "status": "passed",
           "finishedAt": "2026-11-07T12:58:47.408Z",
           "failures": []
+        }
+      }
+    },
+    "issue1344-return-invalidated-fourth:return:1344": {
+      "digest": "e44e3da111104a5fe49bf834ca0a45f99ccf6c40d6eb4f2f430cc923ac7a04d6",
+      "issue": 1344,
+      "message": {
+        "kind": "return",
+        "issue": 1344,
+        "at": 1794072793476,
+        "entry": 4,
+        "notice": {
+          "key": "4:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794072793476,
+          "entry": 4,
+          "eventId": "issue1344-return-invalidated-fourth:return:1344"
         }
       }
     }
