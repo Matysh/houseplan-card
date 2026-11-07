@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6482,
+  "revision": 6483,
   "nextTicket": 293,
   "nextFence": 293,
   "tasks": {
@@ -3801,7 +3801,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794072855985,
       "reviewEntry": 5,
-      "patchId": "38e59cd05a63259ea1bdf34e37ac10519b72cb1b",
+      "patchId": "15ebcee5319dbc673ab18410628537e091b19f40",
       "changedFiles": [
         "demo/benchmark_large_house.mjs",
         "demo/fixtures/large-house.mjs",
@@ -3858,6 +3858,7 @@
         "process-next/lib/metrics.mjs",
         "process-next/test/metrics.test.mjs",
         "scripts/bundle-manifest.mjs",
+        "scripts/data-hp-source.mjs",
         "scripts/mutation-registry.mjs",
         "src/boot-soft-layout.ts",
         "src/config-fingerprint-pass.ts",
@@ -3900,6 +3901,7 @@
         "test/geometry-history-refusal.test.mjs",
         "test/i18n-lazy-namespaces.test.mjs",
         "test/i18n-runtime.test.mjs",
+        "test/isometric-contract.test.mjs",
         "test/large-house-fixture.test.mjs",
         "test/live-viewport.test.mjs",
         "test/mode-transition.test.mjs",
@@ -4185,10 +4187,11 @@
     "token": "292:finish:24079b43-5206-4685-9a52-41eb0dfc43f8:finish:1:admit",
     "fence": 292,
     "materialSha": "6c0e32afcc431e01bc82447f9c9ba0a53aec3800",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
+    "phase": "testing",
     "admittedAt": 1794072859949,
-    "expiresAt": 1794073159949
+    "expiresAt": 1794073166171,
+    "patchId": "15ebcee5319dbc673ab18410628537e091b19f40"
   },
   "events": {
     "github:42340404811:1:label:spec-request": {
@@ -4525,6 +4528,10 @@
     },
     "issue1344-return-invalidated-fourth": {
       "digest": "e44e3da111104a5fe49bf834ca0a45f99ccf6c40d6eb4f2f430cc923ac7a04d6",
+      "issue": 1344
+    },
+    "finish:24079b43-5206-4685-9a52-41eb0dfc43f8:finish:2:synchronized": {
+      "digest": "e7215722c343584b78c86df75afd82ab66bd7d6a78ed19d9238d062cc7b5510d",
       "issue": 1344
     },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
