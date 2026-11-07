@@ -1,0 +1,3512 @@
+{
+  "method": "Synchronous getComputedStyle(last marker).filter plus stage.getBoundingClientRect after each changed controller frame; includes API overhead; separate observer, not cadence acceptance.",
+  "rows": [
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 2.0999999940395355
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5999999940395355,
+      "styleLayoutFlushMs": 1.6000000089406967
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5999999940395355,
+      "styleLayoutFlushMs": 1.7000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.7000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 1.7000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.7000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 1.7999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "settling",
+      "jsMs": 2.9000000059604645,
+      "styleLayoutFlushMs": 1.5999999940395355
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 0.8999999910593033,
+      "styleLayoutFlushMs": 1.800000011920929
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.5999999940395355
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 2.2000000029802322,
+      "styleLayoutFlushMs": 1.5999999940395355
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 2,
+      "styleLayoutFlushMs": 2.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.7000000029802322
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 0.9000000059604645,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "settling",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 0.7999999970197678
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 2.1000000089406967,
+      "styleLayoutFlushMs": 0.8999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.800000011920929
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "settling",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 0.7999999970197678
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 0.9000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 2.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.6000000089406967
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5999999940395355,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.9000000059604645,
+      "styleLayoutFlushMs": 1.199999988079071
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "settling",
+      "jsMs": 3,
+      "styleLayoutFlushMs": 1.5999999940395355
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 1.300000011920929
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 1
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5999999940395355,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 1.199999988079071
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "settling",
+      "jsMs": 2,
+      "styleLayoutFlushMs": 1.8999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.30000001192092896
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 0.800000011920929
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.7999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "settling",
+      "jsMs": 2.0999999940395355,
+      "styleLayoutFlushMs": 1.6000000089406967
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 2.1000000089406967
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.699999988079071,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 2,
+      "styleLayoutFlushMs": 1.8999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "settling",
+      "jsMs": 2.0999999940395355,
+      "styleLayoutFlushMs": 0.7000000029802322
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.30000001192092896
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 0.7999999970197678
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 0.8999999910593033,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "settling",
+      "jsMs": 2.4000000059604645,
+      "styleLayoutFlushMs": 1
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.30000001192092896
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 1.9000000059604645,
+      "styleLayoutFlushMs": 0.9000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.699999988079071,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.8999999910593033,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 1.199999988079071
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5999999940395355,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 1.300000011920929
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "settling",
+      "jsMs": 3,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 1.800000011920929
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5999999940395355,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "settling",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 1.9000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.30000001192092896
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 2,
+      "styleLayoutFlushMs": 0.9000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 0.9000000059604645,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 1
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.1000000089406967
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.300000011920929
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.8999999910593033
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 2.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "settling",
+      "jsMs": 2.8999999910593033,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.300000011920929
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 2,
+      "styleLayoutFlushMs": 2.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 0.8999999910593033,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.30000001192092896
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "settling",
+      "jsMs": 1.8999999910593033,
+      "styleLayoutFlushMs": 0.7000000029802322
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5999999940395355,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.30000001192092896
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 1.9000000059604645,
+      "styleLayoutFlushMs": 0.7999999970197678
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "settling",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 0.7999999970197678
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 2.0999999940395355,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.30000001192092896
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 0.7999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.5999999940395355
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.0999999940395355
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.7999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "settling",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.699999988079071
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 1
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.199999988079071
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.699999988079071,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "settling",
+      "jsMs": 2.3999999910593033,
+      "styleLayoutFlushMs": 1.800000011920929
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 2.0999999940395355,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 0.699999988079071
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 0.8999999910593033,
+      "styleLayoutFlushMs": 1.300000011920929
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.7000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 1.1000000089406967
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.5999999940395355,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.300000011920929
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.199999988079071
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "settling",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 2.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 2
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 2.1000000089406967,
+      "styleLayoutFlushMs": 1.7000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 1.300000011920929
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.199999988079071
+    },
+    {
+      "from": "plan",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 2.2999999970197678,
+      "styleLayoutFlushMs": 2.1000000089406967
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "devices",
+      "phase": "settling",
+      "jsMs": 1.6000000089406967,
+      "styleLayoutFlushMs": 0.7000000029802322
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5999999940395355,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.5,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 1.7000000029802322,
+      "styleLayoutFlushMs": 0.8999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 2.2000000029802322,
+      "styleLayoutFlushMs": 0.7000000029802322
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.5999999940395355,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.699999988079071,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5999999940395355
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "view",
+      "to": "decor",
+      "phase": "settling",
+      "jsMs": 2,
+      "styleLayoutFlushMs": 0.7999999970197678
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 0.9000000059604645,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.7999999970197678
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "decor",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 1.800000011920929,
+      "styleLayoutFlushMs": 0.699999988079071
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.7999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.800000011920929,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 1.1000000089406967
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.1000000089406967
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2999999970197678
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.699999988079071,
+      "styleLayoutFlushMs": 1.300000011920929
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "running",
+      "jsMs": 1.4000000059604645,
+      "styleLayoutFlushMs": 1.3999999910593033
+    },
+    {
+      "from": "view",
+      "to": "plan",
+      "phase": "settling",
+      "jsMs": 2.199999988079071,
+      "styleLayoutFlushMs": 1.4000000059604645
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 1.1000000089406967
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.3999999910593033,
+      "styleLayoutFlushMs": 1.1000000089406967
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.5
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.199999988079071
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.1000000089406967
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 1.2000000029802322
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "plan",
+      "to": "devices",
+      "phase": "settling",
+      "jsMs": 1.7999999970197678,
+      "styleLayoutFlushMs": 2.2000000029802322
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 0.9000000059604645,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2999999970197678,
+      "styleLayoutFlushMs": 0.6000000089406967
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.300000011920929,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.0999999940395355,
+      "styleLayoutFlushMs": 0.29999999701976776
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.199999988079071,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.1000000089406967,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.4000000059604645
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1.2000000029802322,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 1,
+      "styleLayoutFlushMs": 0.5
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "running",
+      "jsMs": 0.9000000059604645,
+      "styleLayoutFlushMs": 0.3999999910593033
+    },
+    {
+      "from": "devices",
+      "to": "view",
+      "phase": "settling",
+      "jsMs": 1.800000011920929,
+      "styleLayoutFlushMs": 0.7999999970197678
+    }
+  ]
+}
