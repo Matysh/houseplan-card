@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Recognize closed room contours with dangling internal walls; retain partitions and openings without requiring Optimize (#1346).
+- Fixed a stale nightly mutation witness selector after the onboarding boundary test was renamed (#1345).
 
 ## v1.85.0 — 2026-11-06
 

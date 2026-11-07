@@ -14869,10 +14869,10 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'bundle-budget-onboarding-ceiling-dropped',
-    guard: 'node --test --test-name-pattern="#627 AC1" test/bundle-assets.test.mjs',
-    because: '#627: the first-run graph grew 13.9 → 34.5 KB gzip unnoticed because it was only '
-      + 'counted, never compared. Dropping it from the ceiling loop returns exactly that state — '
-      + 'a declared ceiling nobody enforces',
+    guard: 'node --test --test-name-pattern="#627 historical onboarding helper" test/bundle-assets.test.mjs',
+    because: '#627/#1345: the retained manual budget helper must still check its explicit onboarding ceiling. '
+      + 'Removing that graph from the helper loop must fail its synthetic boundary witness; '
+      + 'this does not restore retired candidate ratchets to the current task/release process',
     patches: [{
       file: 'scripts/bundle-budget.mjs',
       find: "    [manifest.lazyOnboardingGzipBytes, lazyOnboardingCeiling, 'lazy onboarding graph'],\n",

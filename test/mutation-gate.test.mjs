@@ -12,7 +12,7 @@ import {
   anchorSpan, anchorRegion, parseDiffRanges, ANCHOR_RADIUS_LINES,
   witnessFingerprint, readLedger, recordCaught, splitByLedger, LEDGER_SCHEMA,
 } from '../scripts/mutation-gate.mjs';
-import { guardPhases } from '../scripts/mutation-guard-outcome.mjs';
+import { guardPhases, staticTestSelectionProblems } from '../scripts/mutation-guard-outcome.mjs';
 import { checkMutationRegistry } from '../scripts/mutation-registry-check.mjs';
 import {
   BROWSER_GUARD_LIMIT, browserGuardPolicy, documentedBrowserGuards,
@@ -1256,4 +1256,11 @@ test('#620: --plan-only печатает окружение плана', () => {
   const unit = plan('view-conflict-requires-editor-runtime');
   assert.match(unit.stdout, /^plan-browser=false$/m);
   assert.match(unit.stdout, /^plan-python=false$/m);
+});
+
+test('#1345 onboarding mutation witness selects its retained boundary test', () => {
+  const mutant = definition('bundle-budget-onboarding-ceiling-dropped');
+  assert.deepEqual(staticTestSelectionProblems(mutant.guard,
+    file => readFileSync(join(repoRoot, file), 'utf8')), [],
+  'a renamed witness must not turn the nightly clean guard into an empty selection');
 });
