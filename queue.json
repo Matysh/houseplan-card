@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6408,
-  "nextTicket": 289,
+  "revision": 6409,
+  "nextTicket": 290,
   "nextFence": 289,
   "tasks": {
     "1193": {
@@ -3793,14 +3793,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1344-mode-transitions",
-      "materialSha": "fdc7fea05d31e42f89149cf212bde2d3acc44f3f",
+      "materialSha": "3364e54b5497d1bc9dcebc43d7e3308b7de8e49f",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 285,
-      "queued": false,
+      "ticket": 289,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794049736089,
-      "reviewEntry": 1,
+      "readyAt": 1794051965754,
+      "reviewEntry": 2,
       "patchId": "722f3429ad934877394e6bcc930c89670248cde5",
       "changedFiles": [
         "demo/benchmark_large_house.mjs",
@@ -3873,7 +3873,6 @@
         "test/optional-space-model-contract.test.mjs",
         "test/room-gear-drag.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4128,7 +4127,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1344
+  ],
   "active": null,
   "events": {
     "github:42340404811:1:label:spec-request": {
@@ -4324,6 +4325,19 @@
           "eventId": "finish:bce46f88-bd3a-469a-b845-85cd9718dcdc:finish:3:return:return:1344"
         },
         "delivered": true
+      }
+    },
+    "finish:05e9fbba-c792-4085-822c-2a4215dab8a9": {
+      "digest": "35bf70606157754b986fd8c7ef6a0b71ee685db4cc0e9c2d6d8d080ae8a4d6ca",
+      "issue": 1344,
+      "message": {
+        "kind": "queued",
+        "issue": 1344,
+        "at": 1794051965754,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "3364e54b5497d1bc9dcebc43d7e3308b7de8e49f"
       }
     }
   },
