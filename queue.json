@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6584,
+  "revision": 6585,
   "nextTicket": 295,
   "nextFence": 295,
   "tasks": {
@@ -3943,7 +3943,18 @@
         "test/sun-door-passages.test.mjs",
         "test/sun.test.mjs",
         "tests_backend/test_ha_import_export.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794079341059,
+        "entry": 1,
+        "detail": "Поведение: test/isometric-contract.test.mjs: failed; Backend: tests_backend/test_config_schema_manifest.py: failed; Backend: tests_backend/test_plan_graph_support.py: failed; Браузер: backdrop: failed; Браузер: node history context: failed; Браузер: plan graph editor: failed; Браузер: plan snap overlay: failed; Браузер: wall node delete: failed; Браузер: wall node topology: failed",
+        "eventId": "finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:3:return:return:1348"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4119,18 +4130,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1348,
-    "worker": "finish",
-    "token": "294:finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:1:admit",
-    "fence": 294,
-    "materialSha": "628ca768782b89a07bb9779f651c6f1cfcd5cb26",
-    "expectedBase": "890a4ada80b4d379aaa523f0c18f96cbb6e046e5",
-    "phase": "testing",
-    "admittedAt": 1794078342239,
-    "expiresAt": 1794079601518,
-    "patchId": "1e1a1b8f38e9671b1f280ac7d44c520c355d9904"
-  },
+  "active": null,
   "events": {
     "finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:2:synchronized": {
       "digest": "a51ee62124b43b28e367b58526afae13a7fae8439b5a3e717cad972cb35c31bc",
@@ -4200,6 +4200,10 @@
       "digest": "1921063869d2915d993cd45e8c28d003331129489a11f922764b75008c4dab46",
       "issue": 1348
     },
+    "finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:3:return": {
+      "digest": "4a46ea60433b4c24310a8846b257e07576c7215f97c73c20ace1135304b06b09",
+      "issue": 1348
+    },
     "finish:14291f4c-491e-41ef-9944-69cb94df3718": {
       "digest": "98999a9eecd31aa230451dbe4f4fd7ad4b12fd1e7f92b97e843ad1f75e78434d",
       "issue": 1348,
@@ -4225,6 +4229,26 @@
         "layer": "product",
         "materialSha": "628ca768782b89a07bb9779f651c6f1cfcd5cb26",
         "phase": "sync"
+      }
+    },
+    "finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:3:return:return:1348": {
+      "digest": "4a46ea60433b4c24310a8846b257e07576c7215f97c73c20ace1135304b06b09",
+      "issue": 1348,
+      "message": {
+        "kind": "return",
+        "issue": 1348,
+        "at": 1794079341059,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794079341059,
+          "entry": 1,
+          "detail": "Поведение: test/isometric-contract.test.mjs: failed; Backend: tests_backend/test_config_schema_manifest.py: failed; Backend: tests_backend/test_plan_graph_support.py: failed; Браузер: backdrop: failed; Браузер: node history context: failed; Браузер: plan graph editor: failed; Браузер: plan snap overlay: failed; Браузер: wall node delete: failed; Браузер: wall node topology: failed",
+          "eventId": "finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:3:return:return:1348"
+        }
       }
     }
   },
