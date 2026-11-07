@@ -128,5 +128,34 @@ result.hiddenProjectionRecovery=await page.evaluate(async()=>{
  return true;
 });
 
+
+// #1344: both owned hold phases remain busy/inert; host consumers can cancel them.
+await page.evaluate(async()=>{await window.__hpTest.setVolumetricView(false);await window.__card._viewRuntimes.live.ensure();await window.__hpTest.settled();});
+for(const phase of [0,1])for(const action of ['ha','camera','reduced']){
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.waitForFunction(()=>!window.__card._reducedMotion);
+  await page.evaluate(async()=>{const c=window.__card;c._setMode('view',false);await c.updateComplete;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const clock=c._modeTransition._clock,hold={clock,pending:null,sequence:0,calls:[],sync:c._liveRt.syncContacts};
+    c._liveRt.syncContacts=function(...args){hold.calls.push({busy:c._modeTransitionBusy,state:c._renderPlanHass?.states?.['light.ceiling']?.state});return hold.sync.apply(this,args);};
+    window.__modeHold=hold;c._modeTransition._clock={...clock,requestFrame(callback){
+      if(c._modeTransition.state?.phase==='settling'){const id=--hold.sequence;hold.pending={callback,id};return id;}return clock.requestFrame(callback);
+    },cancelFrame(id){if(id<0){if(hold.pending?.id===id)hold.pending=null;}else clock.cancelFrame(id);}};c._setMode('plan');});
+  await page.waitForFunction(()=>!!window.__modeHold.pending);
+  if(phase===1){await page.evaluate(()=>{const h=window.__modeHold,cb=h.pending.callback;h.pending=null;h.clock.requestFrame(cb);});await page.waitForFunction(()=>!!window.__modeHold.pending);}
+  const held=await page.evaluate(()=>{const c=window.__card;return c._modeTransition.active&&c._modeTransitionBusy&&c._stageEl.inert&&c._modeTransition.state.phase==='settling';});
+  await page.evaluate(()=>{window.__modeHold.stale=window.__modeHold.pending.callback;});
+  if(action==='ha'){
+    await page.evaluate(async()=>{const c=window.__card,state=c.hass.states['light.ceiling'];c.hass={...c.hass,states:{...c.hass.states,'light.ceiling':{...state,state:'unavailable'}}};await c.updateComplete;});
+    result['hold'+phase+'-ha-keeps-presentation']=held&&await page.evaluate(()=>{const c=window.__card;return c._modeTransition.active&&c._modeTransitionBusy&&c._stageEl.inert&&!!c.renderRoot.querySelector('.stage.mode-transition');});
+    await page.evaluate(()=>{const c=window.__card,h=window.__modeHold,cb=h.pending.callback;c._modeTransition._clock=h.clock;h.pending=null;h.clock.requestFrame(cb);});
+  }else if(action==='camera')await page.evaluate(async()=>{window.__card._prepareCameraCommand();await window.__card.updateComplete;});
+  else{await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>!window.__card._modeTransitionBusy);}
+  await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._stageEl.inert);
+  if(action!=='ha'){
+    result['hold'+phase+'-'+action+'-cancels']=held&&await page.evaluate(async()=>{const c=window.__card,h=window.__modeHold;c._modeTransition._clock=h.clock;c._setMode('devices');h.stale(performance.now());await c.updateComplete;while(c._modeTransitionBusy)await new Promise(r=>requestAnimationFrame(r));return c._mode==='devices'&&!c._stageEl.inert;});
+  }else result['hold'+phase+'-one-latest-contact-sync']=await page.evaluate(()=>{const h=window.__modeHold;return h.calls.length===1&&h.calls[0].busy===false&&h.calls[0].state==='unavailable';});
+  await page.evaluate(()=>{const c=window.__card,h=window.__modeHold;c._modeTransition._clock=h.clock;c._liveRt.syncContacts=h.sync;delete window.__modeHold;});
+}
+
 checkAll(result);
 await finish(browser, result);

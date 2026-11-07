@@ -1586,12 +1586,7 @@ export class HouseplanCard extends LitElement {
       stage: this._cssColor(this._stageBg(this._spaceDisplayForRender()), paper), paper };
   }
   /** Capture before target DOM/style changes, in the same source read batch. */
-  public _captureModePresentationSource(targetMode?: HouseplanMode): void {
-    const plan = this._mode === 'plan' || targetMode === 'plan' || !!this._modeTransitionVisual?.planWeight;
-    if (plan) for (const device of this.renderRoot.querySelectorAll<HTMLElement>('.devlayer .dev')) {
-      this._modeDeviceAlpha.set(device, Number(getComputedStyle(device).opacity));
-      this._modeDeviceAlphaKeys.set(device, this._modeDeviceAlphaKey(device));
-    }
+  public _captureModePresentationSource(_targetMode?: HouseplanMode): void {
     this._modeColors();
   }
   private _targetStageColor(mode: HouseplanMode): string {
@@ -1629,13 +1624,6 @@ export class HouseplanCard extends LitElement {
   private _modeSceneFinishPending = false;
 
   private readonly _modePresentation = new ModePresentation();
-  private readonly _modeDeviceAlpha = new Map<Element, number>();
-  private readonly _modeDeviceAlphaKeys = new Map<Element, string>();
-  private _modeDeviceAlphaKey(device: Element): string {
-    return ['unavail','ghost','ha-disabled','led-badge','iso-tile-shadow']
-      .map(name => device.classList.contains(name) ? '1' : '0').join('');
-  }
-
   private _flatMarkerGeometryPending: { devices: readonly DevItem[]; view: ModeViewBox } | null = null;
   private readonly _flatMarkerPositions = new WeakMap<HTMLElement, {
     left: string; top: string; actualLeft: string; actualTop: string;
@@ -1722,7 +1710,6 @@ export class HouseplanCard extends LitElement {
     }
   }
   private readonly _modePresentationNodes = new Map<string, (HTMLElement | SVGElement)[]>();
-  private _modePresentationAlphaDirty = true;
   private _modeNodes(selector: string): (HTMLElement | SVGElement)[] {
     let nodes = this._modePresentationNodes.get(selector);
     if (!nodes) {
@@ -1736,16 +1723,6 @@ export class HouseplanCard extends LitElement {
     const owner = this._modePresentation;
     const planFade = this._mode === 'plan' || !!visual.planWeight || !!this._modeTransition.state?.from.planWeight;
     const devices = planFade ? this._modeNodes('.devlayer .dev') : [];
-    // Batch the initial reads before any presentation writes. Interleaving
-    // getComputedStyle with each marker's opacity would repeatedly flush style.
-    const changedAlpha = this._modePresentationAlphaDirty ? devices.filter(device => !this._modeDeviceAlpha.has(device)
-      || this._modeDeviceAlphaKeys.get(device) !== this._modeDeviceAlphaKey(device)) : [];
-    this._modePresentationAlphaDirty = false;
-    for (const device of changedAlpha) { owner.stopOpacity(device); owner.restoreProperty(device, 'opacity'); }
-    for (const device of changedAlpha) {
-      this._modeDeviceAlpha.set(device, Number(getComputedStyle(device).opacity));
-      this._modeDeviceAlphaKeys.set(device, this._modeDeviceAlphaKey(device));
-    }
     const moving = this._modeTransition.state?.phase === 'running';
     const set = (selector: string, name: string, value: string, important = false): void => {
       for (const node of this._modeNodes(selector)) {
@@ -1813,12 +1790,9 @@ export class HouseplanCard extends LitElement {
     }
     set('.devlayer', 'opacity', String(visual.architectureOpacity));
     set('.hp-day-cycle-env, .hp-moon-sky', 'opacity', String(visual.viewWeight), true);
-    for (const device of devices) {
-      const base = this._modeDeviceAlpha.get(device) ?? 1;
-      owner.set(device, 'filter', 'none');
-      owner.opacity(device, String(base * Math.max(0, 1 - .65 * plan / visual.architectureOpacity)), moving, '', String(base));
-      owner.set(device, 'will-change', 'opacity');
-    }
+    for (const device of devices)
+      owner.filterOpacity(device, Math.max(0, 1 - .65 * plan / visual.architectureOpacity),
+        moving || this._modeTransitionPreparing);
     const properties = root.querySelector<HTMLElement>('.hp-properties');
     owner.setInert(properties, true);
     owner.set(properties, 'transform', 'translateX(' + (1 - visual.editorWeight) * 100 + '%)');
@@ -1859,12 +1833,8 @@ export class HouseplanCard extends LitElement {
         owner.set(layer, 'left', '0px');
         owner.set(layer, 'top', '0px');
       }
-      for (const device of devices) {
-        owner.set(device, 'opacity', String(this._modeDeviceAlpha.get(device) ?? 1));
-        owner.set(device, 'filter', plan === 1 ? 'opacity(0.35)' : 'none');
-      }
       set('.hp-mode-scene-svg', 'clip-path', this._modeSceneClip || 'inset(-25%)');
-      set('.hp-mode-scene-svg, .devlayer .dev', 'will-change', 'auto');
+      set('.hp-mode-scene-svg', 'will-change', 'auto');
       set('.hp-mode-crossfade', 'isolation', 'auto');
       set('.hp-mode-crossfade > svg', 'mix-blend-mode', 'normal');
     } else scheduleHouseplanViewport(this, true);
@@ -1872,10 +1842,7 @@ export class HouseplanCard extends LitElement {
 
   private _clearModePresentation(): void {
     this._modePresentationNodes.clear();
-    this._modePresentationAlphaDirty = true;
     this._modePresentation.clear();
-    this._modeDeviceAlpha.clear();
-    this._modeDeviceAlphaKeys.clear();
     // Projection crossing and the raster camera use these outside paint().
     for (const [selector, names] of [
       ['.zoomwrap', ['width', 'height', 'opacity']],
@@ -5251,7 +5218,6 @@ export class HouseplanCard extends LitElement {
   }
   private _updatedModeReadScope(changed: PropertyValues): void {
     this._modePresentationNodes.clear();
-    this._modePresentationAlphaDirty = true;
     this._modePresentation.adoptRenderedStyles();
     this._syncModeRoomHooks();
     this._syncModeMarkerInput();

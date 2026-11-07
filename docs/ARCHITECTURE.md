@@ -2584,3 +2584,10 @@ retain their separate 25% reserve. Identical opaque-white paper endpoints share
 one surface during motion; different materials keep the paired additive blend.
 Verified editor code survives a failed quiet dictionary preload, so explicit
 language retries reuse the namespace's failed-import knowledge.
+
+Plan marker fading uses a paused per-marker filter-opacity effect, matching
+the ordinary Plan CSS multiplier. Authored opacity (including unavailable and
+hidden markers) is never replaced. The controller samples the multiplier;
+cancelling its effect reveals the already-authored endpoint filter without
+rewriting marker opacity/filter/will-change. The ordinary direct-style fallback
+remains available when Web Animations are absent.

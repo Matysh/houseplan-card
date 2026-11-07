@@ -10,11 +10,13 @@ export class ModePresentation {
   private readonly inert = new Map<HTMLElement, boolean>();
   private readonly opacityAnimations = new Map<HTMLElement | SVGElement, Animation>();
   private opacityPool = new WeakMap<HTMLElement | SVGElement, Animation>();
+  private readonly filterAnimations = new Map<HTMLElement | SVGElement, Animation>();
+  private filterPool = new WeakMap<HTMLElement | SVGElement, Animation>();
 
   /** A paused compositor effect has no independent clock: the controller
    * samples its exact opacity in its own RAF. CSS important keeps its native
    * cascade path. Terminal/cancel uses direct styles and cancels our effect. */
-  public opacity(element: HTMLElement | SVGElement | null, value: string, compositor = false, priority = '', underlying?: string): void {
+  public opacity(element: HTMLElement | SVGElement | null, value: string, compositor = false, priority = ''): void {
     if (!element) return;
     const previous = this.styles.get(element)?.last.get('opacity');
     let animation = this.opacityAnimations.get(element);
@@ -29,15 +31,38 @@ export class ModePresentation {
         this.opacityPool.set(element, animation);
       }
       animation.pause();
-      // The paused effect masks the ordinary base. Prepare it once while
-      // entering, so cancelling at to need not rewrite every marker style.
-      if (underlying !== undefined) this.set(element, 'opacity', underlying, priority);
       this.opacityAnimations.set(element, animation);
     }
     animation.currentTime = Math.max(0, Math.min(1, Number(value)));
   }
 
-  public dispose(): void { this.clear(); this.opacityPool = new WeakMap(); }
+  /** The marker's own opacity (unavailable/hidden/custom) stays authored.
+   * A paused filter effect multiplies it exactly like the ordinary Plan CSS.
+   * Cancelling reveals that CSS at to without rewriting every marker style. */
+  public filterOpacity(element: HTMLElement | SVGElement, value: number, active: boolean): void {
+    if (!active) { this.stopFilter(element); this.restoreProperty(element, 'filter'); return; }
+    if (typeof element.animate !== 'function') {
+      this.set(element, 'filter', 'opacity(' + value + ')'); return;
+    }
+    let animation = this.filterAnimations.get(element);
+    if (!animation) {
+      animation = this.filterPool.get(element);
+      if (!animation) {
+        animation = element.animate([{ filter:'opacity(0)' }, { filter:'opacity(1)' }], { duration:1, fill:'both' });
+        this.filterPool.set(element, animation);
+      }
+      animation.pause(); this.filterAnimations.set(element, animation);
+    }
+    animation.currentTime = Math.max(0, Math.min(1, value));
+  }
+
+  private stopFilter(element: HTMLElement | SVGElement): void {
+    this.filterAnimations.get(element)?.cancel(); this.filterAnimations.delete(element);
+  }
+
+  public dispose(): void {
+    this.clear(); this.opacityPool = new WeakMap(); this.filterPool = new WeakMap();
+  }
 
   public stopOpacity(element: HTMLElement | SVGElement): void {
     this.opacityAnimations.get(element)?.cancel();
@@ -47,6 +72,7 @@ export class ModePresentation {
   public set(element: HTMLElement | SVGElement | null, name: string, value: string, priority = ''): void {
     if (!element) return;
     if (name === 'opacity') this.stopOpacity(element);
+    if (name === 'filter') this.stopFilter(element);
     let record = this.styles.get(element);
     if (!record) {
       record = { text: element.getAttribute('style'), values: new Map(), owned: new Set(), last: new Map() };
@@ -102,6 +128,8 @@ export class ModePresentation {
   public clear(): void {
     for (const animation of this.opacityAnimations.values()) animation.cancel();
     this.opacityAnimations.clear();
+    for (const animation of this.filterAnimations.values()) animation.cancel();
+    this.filterAnimations.clear();
     for (const [element, record] of this.styles) {
       const current = new Map<string, { value: string; priority: string }>();
       for (let index = 0; index < element.style.length; index++) {

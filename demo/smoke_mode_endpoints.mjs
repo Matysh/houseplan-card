@@ -94,17 +94,20 @@ try {
     const disposed=probe.getAnimations().length===0&&probe.getAttribute('style')===original;
     probe.remove();return sampled&&Math.abs(first-.2)<.00001&&Math.abs(second-.8)<.00001&&cleaned&&reused&&disposed;
   });
-  results.opacityBasePreparedBeforeFinish=await page.evaluate(()=>{
+  results.sampledFilterKeepsAuthoredBase=await page.evaluate(()=>{
     const owner=window.__card._modePresentation,probe=document.createElement('div');
-    probe.style.cssText='position:absolute;opacity:.7';window.__card.renderRoot.append(probe);
-    const original=probe.getAttribute('style');owner.opacity(probe,'.35');
-    owner.opacity(probe,'.2',true,'','.7');
-    const masked=probe.style.opacity==='0.7'&&Math.abs(Number(getComputedStyle(probe).opacity)-.2)<.00001;
-    const observer=new MutationObserver(()=>{});observer.observe(probe,{attributes:true,attributeFilter:['style']});
-    owner.opacity(probe,'.7');
-    const quiet=observer.takeRecords().length===0&&probe.getAnimations().length===0;
-    observer.disconnect();owner.clear();const restored=probe.getAttribute('style')===original;
-    probe.remove();return masked&&quiet&&restored;
+    probe.style.cssText='position:absolute;opacity:.7;filter:opacity(.35)';window.__card.renderRoot.append(probe);
+    const original=probe.getAttribute('style'),observer=new MutationObserver(()=>{});
+    observer.observe(probe,{attributes:true,attributeFilter:['style']});
+    owner.filterOpacity(probe,.2,true);const effect=probe.getAnimations()[0];
+    const sampled=effect?.playState==='paused'&&getComputedStyle(probe).opacity==='0.7'
+      &&getComputedStyle(probe).filter==='opacity(0.2)';
+    owner.filterOpacity(probe,1,false);
+    const ordinary=getComputedStyle(probe).filter==='opacity(0.35)'&&probe.getAnimations().length===0;
+    owner.filterOpacity(probe,.6,true);const reused=probe.getAnimations()[0]===effect;
+    owner.dispose();const quiet=observer.takeRecords().length===0;observer.disconnect();
+    const clean=probe.getAnimations().length===0&&probe.getAttribute('style')===original;
+    probe.remove();return sampled&&ordinary&&reused&&quiet&&clean;
   });
   for (const overlap of [false, true]) {
     if (overlap) await page.evaluate(async () => {
@@ -191,7 +194,7 @@ try {
         const cleaned = await page.evaluate(() => {
           const card = window.__card, root = card.renderRoot;
           return !card._stageEl.inert && card._modePresentation.styles.size === 0
-            && card._modePresentation.inert.size === 0 && card._modePresentation.opacityAnimations.size === 0 && root.querySelectorAll('.plan-svg').length === 1
+            && card._modePresentation.inert.size === 0 && card._modePresentation.opacityAnimations.size === 0 && card._modePresentation.filterAnimations.size === 0 && root.querySelectorAll('.plan-svg').length === 1
             && [...root.querySelectorAll('.hp-mode-scene-svg')].every(node =>
               !node.style.willChange && !node.style.transform && !node.style.opacity);
         });
