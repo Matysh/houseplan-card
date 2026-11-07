@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6505,
+  "revision": 6506,
   "nextTicket": 293,
   "nextFence": 293,
   "tasks": {
@@ -3798,7 +3798,7 @@
       "ownerDecision": null,
       "ticket": 292,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1794072855985,
       "reviewEntry": 5,
       "patchId": "15ebcee5319dbc673ab18410628537e091b19f40",
@@ -3914,13 +3914,13 @@
         "test/stairs.test.mjs"
       ],
       "notice": {
-        "key": "4:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794072793476,
-        "entry": 4,
-        "eventId": "issue1344-return-invalidated-fourth:return:1344"
+        "key": "5:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1794073788626,
+        "entry": 5,
+        "requestId": "review:1344:5:15ebcee5319dbc673ab18410628537e091b19f40:b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa"
       },
       "s6": {
         "id": "20261107T173432383-cf889047",
@@ -3944,6 +3944,11 @@
         "at": 1794073472023,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1344:5:15ebcee5319dbc673ab18410628537e091b19f40:b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
+        "at": 1794073788626
       }
     },
     "1345": {
@@ -4204,19 +4209,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1344,
-    "worker": "finish",
-    "token": "292:finish:24079b43-5206-4685-9a52-41eb0dfc43f8:finish:1:admit",
-    "fence": 292,
-    "materialSha": "6c0e32afcc431e01bc82447f9c9ba0a53aec3800",
-    "expectedBase": "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
-    "phase": "review",
-    "admittedAt": 1794072859949,
-    "expiresAt": 1794077061465,
-    "patchId": "15ebcee5319dbc673ab18410628537e091b19f40",
-    "reviewRequest": "review:1344:5:15ebcee5319dbc673ab18410628537e091b19f40:b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa"
-  },
+  "active": null,
   "events": {
     "github:42340404811:1:label:spec-request": {
       "digest": "89b760117a3c9f6c20e0c78d9a8914fb588df44a41263be279b60b87babb296b",
@@ -4640,6 +4633,10 @@
     },
     "github:42398202000:1:tick:0:review-presentation": {
       "digest": "c7b7798098820a7db1647d996750aaa74199df551249e4cdd481967a45332aa4",
+      "issue": 1344
+    },
+    "github:42398202000:1:tick:0:return": {
+      "digest": "99bb930fdc9c70cb30a9cbb69454ad322baae52bf55e040c58e702c38a9e56ba",
       "issue": 1344
     },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
