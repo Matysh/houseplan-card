@@ -408,3 +408,11 @@ authoritative first-write adoption, history, token/ACL/CAS/fault recovery and
 native editor actions. Performance series distinguish graph-only moves from
 physical validation and full Optimize; a helper microbenchmark alone is not
 evidence that the complete editor satisfies its behavior.
+
+Room-candidate topology (#1346) excludes graph bridges only from bounded-face
+walks: a dangling internal partition or a bridge between cycles cannot erase an
+otherwise closed boundary. Atoms and source provenance remain intact; no wall,
+opening, stored graph or exact endpoint is removed or joined. Face boundary
+provenance excludes those non-cyclic edges, so Draw does not claim an old face
+when adding a dead end. The derived bridge search is iterative and linear in
+vertices/atoms; genuinely open perimeters remain unclosed.

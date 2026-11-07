@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Recognize closed room contours with dangling internal walls; retain partitions and openings without requiring Optimize (#1346).
+
 ## v1.85.0 — 2026-11-06
 
 - Stable release from tested v1.85.0-beta.2; the user changelog describes changes since v1.84.0.

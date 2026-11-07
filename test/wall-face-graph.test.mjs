@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { classifyWallFaceCandidates } from '../test-build/wall-face-room-split.js';
 import assert from 'node:assert/strict';
 import {
   atomizeWallSegments,
@@ -238,4 +240,59 @@ test('coincident axes deduplicate atoms while retaining every owner', () => {
   assert.equal(graph.faces.length, 1);
   const top = graph.atoms.find((atom) => atom.sourceKeys.includes('top'));
   assert.deepEqual(top.sourceKeys, ['top', 'top-copy']);
+});
+
+const spurFixture = JSON.parse(readFileSync(new URL('./fixtures/1346-room-face-spurs.json', import.meta.url), 'utf8'));
+test('#1346 an internal dead end preserves the closed face, hit, identity and source atoms', () => {
+  const sources = spurFixture.sources, frozen = JSON.stringify(sources);
+  const baseline = buildWallFaceGraph(sources.slice(0, 4));
+  for (const input of [sources, [...sources].reverse().map(s => ({...s, a:s.b, b:s.a}))]) {
+    const graph = buildWallFaceGraph(input);
+    assert.equal(graph.faces.length, 1);
+    assert.equal(graph.faces[0].area, 10000);
+    assert.equal(graph.faces[0].key, baseline.faces[0].key);
+    assert.equal(findWallFaceAtPoint(graph, [25, 50])?.key, baseline.faces[0].key);
+    assert.ok(graph.atoms.some(a => a.sourceKeys.includes('internal-dead-end')), 'the wall remains in derived atoms');
+    assert.ok(!graph.faces[0].sourceKeys.includes('internal-dead-end'), 'a dead end is not boundary authority');
+  }
+  assert.equal(JSON.stringify(sources), frozen);
+});
+test('#1346 branching internal chains and exterior dead ends cannot hide or enlarge a face', () => {
+  const graph = buildWallFaceGraph([...rectangle,
+    edge('stem', [100,50], [60,50]), edge('fork-a', [60,50], [40,30]),
+    edge('fork-b', [60,50], [40,70]), edge('outside', [0,50], [-40,50]),
+  ]);
+  assert.deepEqual(graph.faces.map(f => f.area), [10000]);
+  assert.equal(findWallFaceAtPoint(graph, [-20,55]), null);
+  assert.deepEqual(findNewWallFaces(rectangle, [...rectangle, edge('new-spur', [100,50], [50,50])], 'new-spur'), [],
+    'drawing a dead end never claims an old room as a newly closed face');
+});
+test('#1346 bridge between independent or nested cycles preserves their simple faces', () => {
+  const right = rectangle.map(s => ({...s,key:'other-'+s.key,a:[s.a[0]+200,s.a[1]],b:[s.b[0]+200,s.b[1]]}));
+  const linked = buildWallFaceGraph([...rectangle,...right,edge('link',[100,50],[200,50])]);
+  assert.deepEqual(linked.faces.map(f => f.area), [10000,10000]);
+  const inner = rectangle.map(s => ({...s,key:'inner-'+s.key,a:[25+s.a[0]/2,25+s.a[1]/2],b:[25+s.b[0]/2,25+s.b[1]/2]}));
+  const nested = buildWallFaceGraph([...rectangle,...inner,edge('nested-link',[0,50],[25,50])]);
+  assert.deepEqual(nested.faces.map(f => f.area), [2500,10000]);
+  assert.equal(findWallFaceAtPoint(nested,[50,50])?.area,2500);
+});
+test('#1346 an open perimeter stays open despite a visually nearby dead end', () => {
+  const open = [...rectangle.slice(0,3),edge('incomplete-left',[0,100],[0,.01]),
+    edge('internal',[100,50],[50,50]),edge('almost-close',[50,50],[.01,50])];
+  assert.equal(buildWallFaceGraph(open,.001).faces.length,0);
+});
+test('#1346 a long connected tree uses bounded traversal without losing a neighbouring room', () => {
+  const chain = Array.from({length:12000},(_,i)=>edge('tree-'+i,[100+i,50],[101+i,50]));
+  const graph = buildWallFaceGraph([...rectangle,...chain]);
+  assert.equal(graph.faces.length,1);
+  assert.equal(graph.faces[0].area,10000);
+  assert.equal(graph.atoms.length,12005);
+});
+test('#1346 an occupied neighbour does not hide a free face containing a dead end', () => {
+  const wide=rectangle.map(s=>({...s,a:[s.a[0]*2,s.a[1]],b:[s.b[0]*2,s.b[1]]}));
+  const graph=buildWallFaceGraph([...wide,edge('shared',[100,0],[100,100]),edge('dead-end',[200,50],[150,50])]);
+  const candidates=classifyWallFaceCandidates(graph.faces,[{id:'occupied',poly:[[0,0],[100,0],[100,100],[0,100]]}],.001);
+  assert.equal(candidates.length,1);
+  assert.equal(candidates[0].area,10000);
+  assert.ok(candidates[0].ring.every(p=>p[0]>=100));
 });

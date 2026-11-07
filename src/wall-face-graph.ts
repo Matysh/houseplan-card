@@ -545,6 +545,39 @@ export function atomizeWallSegments(
   return atomize(input, epsilon);
 }
 
+/** A bridge belongs to no simple cycle. Keep it in atoms/provenance, but do
+ * not walk it as a face boundary: an inward tree would revisit its attachment
+ * vertex and suppress an otherwise closed face. Iterative DFS also handles
+ * long connected chains without consuming the JavaScript call stack. */
+function faceBridges(adjacency: ReadonlyMap<string, ReadonlySet<string>>): Set<string> {
+  const discovered = new Map<string, number>(), low = new Map<string, number>();
+  const bridges = new Set<string>();
+  let sequence = 0;
+  type Frame = { vertex: string; parent?: string; next: Iterator<string> };
+  const enter = (vertex: string, parent?: string): Frame => {
+    discovered.set(vertex, ++sequence); low.set(vertex, sequence);
+    return { vertex, parent, next: adjacency.get(vertex)!.values() };
+  };
+  for (const root of adjacency.keys()) {
+    if (discovered.has(root)) continue;
+    const stack: Frame[] = [enter(root)];
+    while (stack.length) {
+      const frame = stack[stack.length - 1], neighbour = frame.next.next();
+      if (neighbour.done) {
+        stack.pop();
+        if (frame.parent !== undefined) {
+          low.set(frame.parent, Math.min(low.get(frame.parent)!, low.get(frame.vertex)!));
+          if (low.get(frame.vertex)! > discovered.get(frame.parent)!)
+            bridges.add(edgeKey(frame.parent, frame.vertex));
+        }
+      } else if (neighbour.value !== frame.parent) {
+        if (!discovered.has(neighbour.value)) stack.push(enter(neighbour.value, frame.vertex));
+        else low.set(frame.vertex, Math.min(low.get(frame.vertex)!, discovered.get(neighbour.value)!));
+      }
+    }
+  }
+  return bridges;
+}
 /** Build deterministic simple bounded faces from already-atomized axes. */
 export function buildWallFaceGraph(
   input: readonly WallGraphSourceSegment[],
@@ -570,10 +603,11 @@ export function buildWallFaceGraph(
     adjacency.get(aKey)!.add(bKey);
     adjacency.get(bKey)!.add(aKey);
   }
+  const bridges = faceBridges(adjacency);
   const sortedAdjacency = new Map<string, string[]>();
   for (const [key, neighbours] of adjacency) {
     const origin = points.get(key)!;
-    sortedAdjacency.set(key, [...neighbours].sort((left, right) => {
+    sortedAdjacency.set(key, [...neighbours].filter(next => !bridges.has(edgeKey(key, next))).sort((left, right) => {
       const a = points.get(left)!;
       const b = points.get(right)!;
       return Math.atan2(a[1] - origin[1], a[0] - origin[0])
@@ -587,6 +621,7 @@ export function buildWallFaceGraph(
   const directedKey = (a: string, b: string): string => `${a}>${b}`;
   for (const atom of atoms) {
     const endpoints = [vertexKey(atom.a, safeEpsilon), vertexKey(atom.b, safeEpsilon)] as const;
+    if (bridges.has(edgeKey(endpoints[0], endpoints[1]))) continue;
     for (const [startA, startB] of [endpoints, [endpoints[1], endpoints[0]]] as const) {
       if (directedVisited.has(directedKey(startA, startB))) continue;
       const vertexKeys: string[] = [];

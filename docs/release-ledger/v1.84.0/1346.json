@@ -1,0 +1,5 @@
+{
+  "schema":1,"issue":1346,"baseStable":"v1.84.0","category":"stable-fix",
+  "rationale":"Released v1.84.0 and v1.85.0 reject a bounded face whose walk visits an internal dangling edge. Exclude derived graph bridges from face walks without modifying the stored graph, walls, openings or safety contracts.",
+  "summary":{"ru":"Исправлено распознавание замкнутых комнат с тупиковыми внутренними стенами.","en":"Recognize closed rooms containing dangling internal walls."}
+}

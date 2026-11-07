@@ -170,6 +170,36 @@ try{
  check('changed geometry hides stale hover before next move',!(await state()).painted);
  await move([50,50]);check('changed graph no longer offers removed face',!(await state()).hover);
  await tool('draw');await move([140,50]);check('Walls never paints an existing face',!(await state()).painted);
+ // #1346: a dangling interior wall is retained while its surrounding room is offered.
+ const spurs=currentGraphFixture(JSON.parse(readFileSync(new URL('../test/fixtures/1346-room-face-spurs.json',import.meta.url),'utf8')).nativeConfig);
+ await page.evaluate(async cfg=>{await window.__hpTest.setServerConfig(cfg);await window.__hpTest.switchSpace(cfg.spaces[0].id);},spurs);
+ await settle();await tool('select');
+ const spurOriginal=(await state()).cfg;
+ await move([300,300]);
+ check('1346 closed boundary with an interior dead end is highlighted',!!(await state()).hover&&(await state()).painted);
+ await click([300,300]);
+ const spurDialog=card.locator('hp-dialog[data-kind="room"]');await spurDialog.waitFor();await waitForUiKitPaint(page);
+ check('1346 native click opens the room dialog without drawing or writing',
+  (await state()).path===0&&equal((await state()).cfg,spurOriginal));
+ await spurDialog.locator('button.btn[data-hp="dialog-cancel"]').click();await settle();
+ check('1346 Cancel preserves the exact original graph',equal((await state()).cfg,spurOriginal));
+ await move([300,300]);await click([300,300]);await spurDialog.waitFor();await waitForUiKitPaint(page);
+ await spurDialog.locator('#room-name').fill('Room around a dead end');
+ await spurDialog.locator('.dialog-action-commit [data-hp="dialog-confirm"]').click();await settle();
+ const spurCreated=(await state()).cfg;
+ check('1346 room creation preserves the dangling wall',spurCreated.spaces[0].rooms.length===1
+  &&equal(spurCreated.spaces[0].partitions.find(p=>p.id==='internal-dead-end'),spurOriginal.spaces[0].partitions.find(p=>p.id==='internal-dead-end')));
+ await history('undo');
+ check('1346 Undo restores exact geometry and graph',equal(geometry((await state()).cfg),geometry(spurOriginal))
+  &&equal((await state()).cfg.spaces[0].plan_graph,spurOriginal.spaces[0].plan_graph));
+ await move([300,300]);check('1346 Undo restores the room offer',!!(await state()).hover);
+ await history('redo');
+ check('1346 Redo restores exact room identity and graph',equal(geometry((await state()).cfg),geometry(spurCreated))
+  &&equal((await state()).cfg.spaces[0].plan_graph,spurCreated.spaces[0].plan_graph));
+ const spurOpen=structuredClone(spurs);spurOpen.spaces[0].plan_graph.edges=spurOpen.spaces[0].plan_graph.edges.filter(e=>e.id!=='top');
+ await page.evaluate(cfg=>window.__hpTest.setServerConfig(cfg),spurOpen);await settle();await move([300,300]);
+ check('1346 a genuinely open boundary with a dead end is not highlighted',!(await state()).hover);
+ await click([300,300]);check('1346 an open boundary cannot open a room dialog',!(await state()).roomDialog);
  // Normal multi-room flow: the first room consumes the shared partition.
  const adjacent={model_version:10,spaces:[{id:'adjacent',title:'Adjacent rooms',cell_cm:5,view_box:[0,0,1,1],rooms:[],wall_segments:[],openings:[],partitions:[
   {id:'adj-top',a:[.1,.1],b:[.9,.1],cm:20},

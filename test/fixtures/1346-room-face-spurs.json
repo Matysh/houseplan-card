@@ -1,0 +1,24 @@
+{
+  "description": "Synthetic hpr-c07b164fc6 topology: a closed room boundary with a dangling internal partition. No report geometry or private metadata.",
+  "sources": [
+    {"key":"top","a":[0,0],"b":[100,0]},
+    {"key":"right","a":[100,0],"b":[100,100]},
+    {"key":"bottom","a":[100,100],"b":[0,100]},
+    {"key":"left","a":[0,100],"b":[0,0]},
+    {"key":"internal-dead-end","a":[100,50],"b":[50,50]}
+  ],
+  "nativeConfig": {
+    "model_version":10,
+    "settings":{},"markers":[],
+    "spaces":[{
+      "id":"room-face-spurs","title":"Room with a dangling wall","cell_cm":5,"view_box":[0,0,1,1],"rooms":[],"wall_segments":[],"openings":[],
+      "partitions":[
+        {"id":"top","a":[0.1,0.1],"b":[0.9,0.1],"cm":15},
+        {"id":"right","a":[0.9,0.1],"b":[0.9,0.9],"cm":15},
+        {"id":"bottom","a":[0.9,0.9],"b":[0.1,0.9],"cm":15},
+        {"id":"left","a":[0.1,0.9],"b":[0.1,0.1],"cm":15},
+        {"id":"internal-dead-end","a":[0.9,0.5],"b":[0.5,0.5],"cm":15}
+      ]
+    }]
+  }
+}
