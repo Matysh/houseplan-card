@@ -339,3 +339,30 @@ test('preparation does not consume the 220ms motion interval', () => {
   assert.equal(pending.size,1);
   c.cancel(false);assert.equal(pending.size,0);
 });
+
+test('#1344 a late to callback retains two complete observed intervals, with one cancellable owner',()=>{
+ let now=0,seq=0;const pending=new Map(),completed=[];
+ const clock={now:()=>now,requestFrame:cb=>{pending.set(++seq,cb);return seq},cancelFrame:id=>pending.delete(id)};
+ const c=new ModeTransitionController({frame:()=>{},settled:s=>completed.push(s.targetMode)},clock);
+ const from=endpoint('view',0,600,{x:0,y:0,w:800,h:600}),to=endpoint('plan',96,504,{x:0,y:48,w:800,h:504});
+ const tick=(time,wall=time)=>{now=wall;assert.equal(pending.size,1);const[id,cb]=pending.entries().next().value;pending.delete(id);cb(time);};
+ c.start(from,to,'plan',220);tick(16);tick(204);tick(220,234);
+ assert.equal(c.state.phase,'settling');tick(236,238);tick(252,254);
+ assert.equal(c.active,true,'second callback had only 20ms since a late paint');
+ assert.deepEqual(completed,[]);assert.equal(pending.size,1);
+ const stale=pending.values().next().value;c.cancel(false);stale(268);
+ assert.equal(pending.size,0);assert.deepEqual(completed,[]);
+ now=300;c.start(from,to,'plan',220);tick(316);tick(504);tick(520,534);tick(536,538);tick(552,554);tick(568,570);
+ assert.equal(c.active,false);assert.equal(pending.size,0);assert.deepEqual(completed,['plan']);
+});
+
+test('#1344 the partial first RAF after start is not a display interval',()=>{
+ let now=10,seq=0,finished=0;const pending=new Map();
+ const c=new ModeTransitionController({frame:()=>{},settled:()=>finished++},
+ {now:()=>now,requestFrame:cb=>{pending.set(++seq,cb);return seq},cancelFrame:id=>pending.delete(id)});
+ const from=endpoint('view',0,600,{x:0,y:0,w:800,h:600}),to=endpoint('plan',96,504,{x:0,y:48,w:800,h:504});
+ const tick=(time,wall=time)=>{now=wall;const[id,cb]=pending.entries().next().value;pending.delete(id);cb(time);};
+ c.start(from,to,'plan',30);tick(16);tick(32);tick(48,50);tick(64);tick(80);
+ assert.equal(c.active,true,'6ms from start to first RAF must not shrink the two 16ms opportunities');
+ assert.equal(pending.size,1);tick(96);assert.equal(c.active,false);assert.equal(finished,1);
+});

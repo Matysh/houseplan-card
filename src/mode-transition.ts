@@ -248,29 +248,45 @@ export class ModeTransitionController {
       return token;
     }
     this._hooks.frame(this._state);
+    let lastFrame: number | null = null, interval = Infinity;
+    const observeFrame = (time: number): void => {
+      const delta = lastFrame === null ? 0 : time - lastFrame;
+      if (delta > 0) interval = Math.min(interval, delta);
+      lastFrame = time;
+    };
     const tick = (time: number): void => {
+      observeFrame(time);
       const current = this._state;
       if (!current || current.token !== token) return;
       const raw = clamp01((time - current.startedAt) / current.duration);
       current.presented = raw >= 1 ? current.to
         : interpolateModeVisualState(current.from, current.to, raw);
       current.phase = raw >= 1 ? 'settling' : 'running';
+      const publishedAt = raw >= 1 ? Math.max(this._clock.now(), time) : 0;
       this._hooks.frame(current);
       if (raw < 1) {
         this._raf = this._clock.requestFrame(tick);
         return;
       }
-      // A next-RAF callback can precede the compositor presentation of to.
-      // Retain it for a complete rendering opportunity, then finish from
-      // the same clock/token. At most one RAF is scheduled at either phase.
-      this._raf = this._clock.requestFrame(() => {
+      // Two callbacks are not two full opportunities if to was published
+      // late inside its RAF. Keep the second phase on this same clock/token
+      // until two observed intervals have elapsed since the frame(to) publication.
+      const finish = (time: number): void => {
         if (this._state?.token !== token) return;
-        this._raf = this._clock.requestFrame(() => {
-          if (this._state?.token !== token) return;
-          this._raf = 0;
-          this._state = null;
-          this._hooks.settled(current);
-        });
+        observeFrame(time);
+        const elapsed = Math.max(this._clock.now(), time) - publishedAt;
+        if (Number.isFinite(interval) && elapsed < 2 * interval) {
+          this._raf = this._clock.requestFrame(finish);
+          return;
+        }
+        this._raf = 0;
+        this._state = null;
+        this._hooks.settled(current);
+      };
+      this._raf = this._clock.requestFrame(time => {
+        if (this._state?.token !== token) return;
+        observeFrame(time);
+        this._raf = this._clock.requestFrame(finish);
       });
     };
     this._raf = this._clock.requestFrame(tick);

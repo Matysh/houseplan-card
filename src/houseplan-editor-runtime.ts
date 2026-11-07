@@ -953,7 +953,9 @@ export class HouseplanEditorRuntime {
   public scheduleModeLayouts():void{
     const host=this.host;
     if(!host.isConnected||host._mode!=='view'||!host._canEdit||host._kiosk||!host._norm||!host._spaceModel()||host._modeTransitionBusy||this.cancelChromeIdle
-      ||this.chromeLayouts.ready(host._modeChromeKey(this.properties.cardWidth)))return;
+      )return;
+    // Even a cache-hit key can read lazy font metrics. Resolve it in the idle
+    // task after browser layout, never inside the terminal Lit commit.
     const run=()=>{this.cancelChromeIdle=null;void this.prepareModeLayouts();};
     if(typeof requestIdleCallback==='function'){const id=requestIdleCallback(run,{timeout:500});this.cancelChromeIdle=()=>cancelIdleCallback(id);}
     else{const id=setTimeout(run,0);this.cancelChromeIdle=()=>clearTimeout(id);}
