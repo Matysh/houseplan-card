@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6597,
+  "revision": 6598,
   "nextTicket": 296,
   "nextFence": 296,
   "tasks": {
@@ -3905,7 +3905,7 @@
       "ownerDecision": null,
       "ticket": 295,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794079916162,
       "reviewEntry": 2,
       "patchId": "37118ec9e6d990a0196d83cf0f652bb233e48769",
@@ -3962,6 +3962,15 @@
         "entry": 1,
         "detail": "Поведение: test/isometric-contract.test.mjs: failed; Backend: tests_backend/test_config_schema_manifest.py: failed; Backend: tests_backend/test_plan_graph_support.py: failed; Браузер: backdrop: failed; Браузер: node history context: failed; Браузер: plan graph editor: failed; Браузер: plan snap overlay: failed; Браузер: wall node delete: failed; Браузер: wall node topology: failed",
         "eventId": "finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:3:return:return:1348"
+      },
+      "s6": {
+        "id": "20261107T193211417-eb92be75",
+        "name": "Тесты для задачи #1348 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261107T193211417-eb92be75/report.json",
+        "materialSha": "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
+        "status": "passed",
+        "finishedAt": "2026-11-07T19:42:18.805Z",
+        "failures": []
       }
     }
   },
@@ -4145,9 +4154,9 @@
     "fence": 295,
     "materialSha": "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
     "expectedBase": "890a4ada80b4d379aaa523f0c18f96cbb6e046e5",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794079919789,
-    "expiresAt": 1794080759116,
+    "expiresAt": 1794084140047,
     "patchId": "37118ec9e6d990a0196d83cf0f652bb233e48769"
   },
   "events": {
@@ -4335,6 +4344,34 @@
         "layer": "product",
         "materialSha": "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
         "phase": "sync"
+      }
+    },
+    "finish:b9c22d20-e2e9-4911-bf0f-48c909a2fa1a:finish:3:s6-complete": {
+      "digest": "52ce54a633dcb82906d7e5f26abd4be243e39468b0299b634d574138249934b8",
+      "issue": 1348,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1348,
+        "at": 1794080540047,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
+        "phase": "review",
+        "evidence": {
+          "id": "20261107T193211417-eb92be75",
+          "name": "Тесты для задачи #1348 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261107T193211417-eb92be75/report.json",
+          "materialSha": "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
+          "status": "passed",
+          "finishedAt": "2026-11-07T19:42:18.805Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\n\nРеализован door-only флаг `light_transparent`: в диалоге проёма и панели свойств — «Пропускает свет», default off. Отсутствие/false оставляет прежнюю логику. Флаг переопределяет только оптическую апертуру, не датчик, символ, привязки, замок или геометрию.\n\n### Решение и границы\n\nGlow использует общий владелец барьеров full/static. Для солнца внешняя отмеченная дверь использует существующие правила окна. Для внутренней двери переиспользуется доказательство физического хоста и двух противоположных комнат из internal-window classifier; общий для Flat/2.5D транспорт продолжает исходный луч через реальные грани тоннеля, без перезапуска длины/градиента. Цепочка дверей допустима; колонны/стены/Solid zero walls сохраняют тени. Room sun_transparent не требуется, отмеченная комната остаётся неокрашенной. Значение переносится в full/space/plan-only export/import и диагностический support-пакет; новой модели данных и миграции нет.\n\nПри аналитике задан необязательный вопрос о ширине солнечного сценария; ответа не было. Принято полное толкование исходного запроса (внешняя дверь как окно + продолжение через внутренние двери), о чём сообщил в чате. Это авторское допущение, а не дополнительное утверждение владельца. Отдельные коэффициенты/настройки не вводились.\n\nОсновное место для внимания — геометрия передачи луча и сохранение старого результата при выключенном флаге. Транспорт нормализует только временные clipping-координаты на 1e-8 plan units для тригонометрических хвостов; сохранённый граф не меняется. Исходная дальность Flat и 2.5D остаётся разной по действующим формулам.\n\n### Проверки и ограничения\n\nДо общей S6: сборка и bundle-sync успешны; 75 адресных Node-тестов (sun, interior window/Glow, properties/catalog/i18n), 5 дополнительных solar passage tests (цепочка, дальность, тоннель/откосы, препятствие, invalid/exterior host, sun-transparent room, Flat/iso, поворот 27°), 9 backend transfer cases. Native Chromium: диалог/панель свойств/сохранение/fresh-card и отдельная карточка с солнечным лучом в Flat/2.5D, закрытым датчиком и инвалидацией после выключения. Синтетические скриншоты просмотрены; эталоны не менялись. Это не HA E2E на пользовательской установке. Итог общей выборки публикует координатор.\n\nТекущий release-cycle в репозитории ещё v1.84.0→v1.85.0, хотя v1.85.0 уже опубликован. Новую версию/цикл в этой задаче не назначал; классификация новой пользовательской возможности для следующего цикла — major. Выпуск не запрошен.\n\n### Подготовка после первого S6\n\nПервый общий S6 на 628ca76878 завершился отказом: 578 шагов passed, 91 reused, 9 failed. Три ошибки подготовки #1348 исправлены: регенерирован scripts/config-schema.json, синхронизирована точная копия support_wire_schema.py для support-relay, вызов ожидания 2.5D в новом smoke оформлен по существующему статическому контракту.\n\nШесть остальных браузерных отказов независимо воспроизведены на чистой базе 890a4ada80b4d379aaa523f0c18f96cbb6e046e5 без #1348: smoke_backdrop, smoke_node_history_context, smoke_plan_graph_editor, smoke_plan_snap_overlay, smoke_wall_node_delete, smoke_wall_node_topology (все exit 1). Причина — старые DOM-предположения после #1344: первый SVG больше не содержит все поверхности, а невидимые узлы/диагностика могут сохраняться в DOM.\n\nИсправлена только обвязка этих проверок. Общий read-only scene-paint probe проверяет фактическую видимость по предкам и доступность pointer input; тесты требуют отсутствия как видимых, так и интерактивных узлов вне Select. Snap overlay также проверяется по paint/input. Проверки подложки читают изображение и порядок в общей стопке поверхностей. Native graph-editor сохраняет контроль границ/перекрытия, допуская попадание в другое SVG той же сцены или пустую zoomwrap, которая теперь получает ввод. Геометрические и history-assertions не ослаблены; продуктовая логика #1344 не меняется.\n\nАдресный повтор: backend manifest/twin (6 cases) и isometric contract прошли; history/snap/delete/topology и новый solar smoke прошли. Финальный адресный повтор backdrop/graph-editor и schema parity также прошёл. Материал повторной передачи: 48775e5f10; запускается общий finish с зачётом применимых успешных результатов.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
