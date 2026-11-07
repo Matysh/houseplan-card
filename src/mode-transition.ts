@@ -229,17 +229,14 @@ export class ModeTransitionController {
     to: ModeVisualState,
     targetMode: HouseplanMode,
     duration = 220,
-    requestedAt?: number,
   ): number {
     this.cancel(false);
     const token = ++this._token;
     const now = this._clock.now();
-    const startedAt = Number.isFinite(requestedAt) ? Math.min(now, requestedAt!) : now;
     this._state = {
       token, phase: duration <= 0 ? 'settling' : 'running', from, to,
-      presented: duration <= 0 ? to : startedAt < now
-        ? interpolateModeVisualState(from, to, clamp01((now - startedAt) / duration)) : from,
-      startedAt, duration: Math.max(0, duration), targetMode,
+      presented: duration <= 0 ? to : from,
+      startedAt: now, duration: Math.max(0, duration), targetMode,
     };
     if (duration <= 0) {
       const terminal = this._state;

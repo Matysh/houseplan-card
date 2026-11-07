@@ -1270,7 +1270,20 @@ try {
         await card.updateComplete;
       });
 
+      // A user cannot wheel the inert stage while the preceding editor return
+      // is still running. Keep its preparation/hold outside this steady-View
+      // metric rather than timing a synthetic cancellation of that transition.
+      const panReadyStarted = performance.now();
+      while (card._modeTransitionBusy) {
+        if (performance.now() - panReadyStarted > 5000) throw new Error('View did not settle before panZoom');
+        await frame();
+      }
+      await card.updateComplete;
+      await frame();
       const stage = card.renderRoot.querySelector('.stage');
+      const panZoomPrecondition = { mode: card._mode, busy: !!card._modeTransitionBusy, inert: stage.inert };
+      if (panZoomPrecondition.mode !== 'view' || panZoomPrecondition.busy || panZoomPrecondition.inert)
+        throw new Error('panZoom requires an interactive steady View');
       const rect = stage.getBoundingClientRect();
       const panZoom = await duration(async () => {
         stage.dispatchEvent(new WheelEvent('wheel', {
@@ -1416,6 +1429,7 @@ try {
         stateUpdateMs: stateUpdate.ms,
         resizePreviewMs: resizePreview.ms,
         panZoomMs: panZoom.ms,
+        panZoomPrecondition,
         settingsDialogMs: settingsDialog.ms,
         switchCycleMs: switchCycle.ms,
         switchCycleBuilds: {

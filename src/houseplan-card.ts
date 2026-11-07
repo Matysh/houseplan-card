@@ -2068,9 +2068,6 @@ export class HouseplanCard extends LitElement {
     from: ModeVisualState,
     targetMode: HouseplanMode,
   ): void {
-    // Preparation belongs to the user command timeline; do not restart the
-    // easing at zero after its render/measurement microtask.
-    const requestedAt = performance.now();
     const layout=this._editorRuntime?.modeLayoutFor(targetMode);
     if(layout){this._panelHeaderChoice=layout.header;this._compactSpaces=layout.header.phase>=3;}
     this._modePreparingStageClass = this._modeProjectionCrossing ? null : this._stageEl?.className.replace(/\s+mode-transition\b/g, '') ?? null;
@@ -2172,7 +2169,7 @@ export class HouseplanCard extends LitElement {
         commitHouseplanViewport(this, true);
       } else scheduleHouseplanViewport(this, true, true);
       this._modeTransition.start(from, to, targetMode,
-        this._reducedMotion || forceAtomic ? 0 : controlMotion.mode.duration, requestedAt);
+        this._reducedMotion || forceAtomic ? 0 : controlMotion.mode.duration);
       });
     });
   }

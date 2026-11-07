@@ -5,7 +5,7 @@ import { launch, checkAll, finish } from './serve.mjs';
 import { collectModeTransitionSamples } from './performance/mode-transition.mjs';
 
 const { page, browser } = await launch({ width: 820, height: 760 });
-page.on('console',message=>{if(message.text().startsWith('Hidden projection'))console.log(message.text());});
+page.on('console',message=>{if(message.text().startsWith('Hidden projection')||message.text().startsWith('Warm chrome geometry'))console.log(message.text());});
 const result = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
@@ -79,7 +79,7 @@ result.warmChromeAvoidsSceneMeasurements = await page.evaluate(async () => {
  const c=window.__card,frame=()=>new Promise(r=>requestAnimationFrame(r));
  c._setMode('view');while(c._modeTransitionBusy)await frame();await c.updateComplete;
  await c._ensureEditorRuntime();const rt=c._editorRuntime;
- if(!rt.modeLayoutFor('decor'))return false;
+ const layout=rt.modeLayoutFor('decor');if(!layout)return false;
  const width=Object.getOwnPropertyDescriptor(Element.prototype,'clientWidth');
  const height=Object.getOwnPropertyDescriptor(Element.prototype,'scrollHeight');
  const header=rt._modeHeaderHeight,flip=c._headerMotion.start;
@@ -89,7 +89,13 @@ result.warmChromeAvoidsSceneMeasurements = await page.evaluate(async () => {
   rt._modeHeaderHeight=function(...args){if(c._modeTransitionBusy)throw Error('mode remeasured header');return header.apply(this,args)};
   c._headerMotion.start=function(head,before,reduced,positions){if(!positions)throw Error('mode measured control positions');return flip.call(this,head,before,reduced,positions)};
   c._setMode('decor');let attempts=0;while(c._modeTransitionBusy&&attempts++<180)await frame();await c.updateComplete;
-  return !c._modeTransitionBusy&&!c._stageEl.inert&&c._mode==='decor';
+  const head=c.renderRoot.querySelector('.head'),origin=head.getBoundingClientRect();
+  const positions=c._headerMotion.capture(head);
+  const visible=[...head.querySelectorAll('button,hp-settings-select')].filter(n=>n.getBoundingClientRect().width>0);
+  const geometry=[...positions].every(([key,point])=>{if(point.x===0&&point.y===0)return true;const expected=layout.header.positions.get(key);if(!expected)return false;
+    return Math.abs(point.x-origin.x-expected.x)<.5&&Math.abs(point.y-origin.y-expected.y)<.5;});
+  if(!geometry)console.log('Warm chrome geometry mismatch',JSON.stringify({origin:{x:origin.x,y:origin.y},expected:[...layout.header.positions],actual:[...positions]}));
+  return !c._modeTransitionBusy&&!c._stageEl.inert&&c._mode==='decor'&&visible.length>0&&geometry;
  }finally{Object.defineProperty(Element.prototype,'clientWidth',width);Object.defineProperty(Element.prototype,'scrollHeight',height);rt._modeHeaderHeight=header;c._headerMotion.start=flip;}
 });
 

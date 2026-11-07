@@ -144,8 +144,30 @@ export function measurePanelHeader(
   const copy = nativeMetric(head, doc) as HTMLElement;
   if(wide!==undefined)copy.toggleAttribute('data-hp-properties-wide',wide);
   copy.style.height = ''; copy.style.overflow = 'visible'; copy.style.width = 'max-content';
+  // Prefill can run from View before the target tab has ever been selected.
+  // Measure its active typography, not the currently selected source tab.
+  for (const tab of copy.querySelectorAll<HTMLElement>('.modetab[data-mode]'))
+    tab.classList.toggle('active', tab.dataset.mode === mode);
   const close=copy.querySelector('.editor-close-slot'),modes=copy.querySelector('.modes');
-  if(close&&modes){const target=modes.querySelector('[data-mode="'+mode+'"]');if(target)target.after(close);else modes.appendChild(close);}
+  if (close && modes) {
+    if (mode === 'view') {
+      close.setAttribute('aria-hidden', 'true');
+      close.replaceChildren();
+    } else {
+      close.removeAttribute('aria-hidden');
+      if (!close.querySelector('button')) {
+        const button = doc.createElement('button');
+        button.className = 'closex';
+        button.dataset.hp = 'editor-close';
+        button.dataset.editorNavigation = 'view';
+        button.appendChild(iconMetric(doc, 13));
+        close.appendChild(button);
+      }
+    }
+    const target = modes.querySelector('[data-mode="' + mode + '"]');
+    if (target) target.after(close);
+    else modes.appendChild(close);
+  }
   probe.appendChild(copy);
   const replaceTabs = (compact: boolean): void => {
     const old = copy.querySelector(':scope > .tabs');
