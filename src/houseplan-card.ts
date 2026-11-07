@@ -744,6 +744,8 @@ export class HouseplanCard extends LitElement {
           quiet ? module.EDITOR_LANGUAGE_RUNTIME.preload?.(langOf(this.hass, this._config?.language))
             : module.EDITOR_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)),
           liveRuntimeCode.ensure(),
+          module.HouseplanEditorRuntime.prepareSceneCode(attempt === 1 || !!fresh,
+            () => `${CARD_VERSION}-${++hpLazyRetrySeq}`),
         ]),
         create: () => new module.HouseplanEditorRuntime(
           this as unknown as import('./houseplan-editor-runtime').HouseplanEditorHostPort,
@@ -1940,6 +1942,12 @@ export class HouseplanCard extends LitElement {
         this._saveZoom();
         this.requestUpdate();
       }
+      // ResizeObserver may have consumed the last size change while the
+      // controller was holding to. Publish the accepted pair here as well.
+      if (this._lastValidStageSize?.[0] === state.to.stageWidth
+          && this._lastValidStageSize[1] === state.to.stageHeight)
+        this._warmPatch({ hdrH: this._hdrH, stageH: state.to.stageHeight,
+          ownHdrH: state.to.headerHeight + state.to.editorChromeHeight });
       const focused = (this.renderRoot as ShadowRoot).activeElement as HTMLElement | null;
       const lostWithOutgoingUi = !focused || !focused.isConnected
         || !!focused.closest?.('.editorchrome, .stage');
@@ -12421,7 +12429,7 @@ export class HouseplanCard extends LitElement {
                    below the snap overlay so snap highlights keep priority. */}
             ${this._editorInk('chain', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderActiveChainInk()}</g>`)}
             ${this._editorInk('nodes', !!this._editorRuntime && this._canEdit && !this._kiosk, () => svg`<g class="hp-plan-only-layer hp-plan-snap-layer">${this._renderPlanSnapOverlay(true)}</g>`)}` },
-      { id: "openings", inputs: [...sceneInputs, ...[disp.hideOpenings && this._markup, disp.hideOpenings]], render: () => svg`${disp.hideOpenings && !this._markup
+      { id: "openings", inputs: [...sceneInputs, ...[disp.hideOpenings && this._markup, disp.hideOpenings, this._markup && this._openingsR.some(opening => !!opening.orphanReason)]], render: () => svg`${disp.hideOpenings && !this._markup
               ? nothing
               : isoLayers && !isoLayers.floorSymbols
                 ? nothing
@@ -13729,11 +13737,9 @@ export class HouseplanCard extends LitElement {
         tabindex=${separateAreaAction ? '0' : nothing}
         aria-label=${separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
         @keydown=${separateAreaAction && r.id ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
-      >${r.name || (this._markup ? this._t('room.unnamed') : '')}</span>${r.area && !this._kiosk && (this._canEdit || this.hass?.user?.is_admin === true)
-        ? html`<button type="button" class="rlgo rlarea"
-              data-hp=${separateAreaAction ? 'room-area-link' : nothing}
-              style=${separateAreaAction ? nothing : 'display:none'}
-              ?inert=${!separateAreaAction} aria-hidden=${separateAreaAction ? nothing : 'true'}
+      >${r.name || (this._markup ? this._t('room.unnamed') : '')}</span>${showAreaLink
+        ? separateAreaAction
+          ? html`<button type="button" class="rlgo rlarea" data-hp="room-area-link"
               aria-label=${this._t('room.open_area_named', { name: areaName })}
               title=${this._t('room.open_area')}
               @click=${(e: Event) => { e.stopPropagation(); this._clickRoom(r); }}
@@ -13741,9 +13747,8 @@ export class HouseplanCard extends LitElement {
               @keyup=${(e: KeyboardEvent) => e.stopPropagation()}
               @dblclick=${(e: Event) => e.stopPropagation()}
               @pointerdown=${(e: Event) => e.stopPropagation()}
-            ><ha-icon icon="mdi:open-in-new"></ha-icon></button><ha-icon class="rlgo" icon="mdi:open-in-new"
-              style=${showAreaLink && !separateAreaAction ? nothing : 'display:none'}
-              aria-hidden="true"></ha-icon>`
+            ><ha-icon icon="mdi:open-in-new"></ha-icon></button>`
+          : html`<ha-icon class="rlgo" icon="mdi:open-in-new"></ha-icon>`
         : nothing}</span>
       ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
       ${this._editorRuntime && this._canEdit && !this._kiosk

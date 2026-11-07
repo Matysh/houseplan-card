@@ -881,7 +881,7 @@ test('#861 actual mode/cancel/clear consumers retain their different physical re
     if (operation === 'mode') {
       Object.assign(s.host, { _bootSoftCancel() {}, _endTabDrag() {}, _clearTransientHover() {},
         _cancelDevicePressFeedback() {}, _cancelDangerConfirm() {}, _effectiveProjection: () => 'flat',
-        _currentModeVisual: () => null, _cancelModeTransition() {}, _commitViewModeAtomic() {},
+        _currentModeVisual: () => null, _captureModePresentationSource() {}, _cancelModeTransition() {}, _commitViewModeAtomic() {},
         _editorSecondary: { closeForNavigation() {} }, _zoom: 1, _modeTransitionRequest: 0 });
       s.runtime._setMode('view', false);
     } else if (operation === 'cancelPath') s.runtime._cancelPath();

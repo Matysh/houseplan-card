@@ -194,7 +194,15 @@ test('issue 212 removes the global touch latch and gates every shared hover sele
   ]) {
     const text = source(name);
     const selectors = [...text.matchAll(/(^|\})([^{}]+)\{/gm)].map((match) => match[2]);
-    const naked = selectors.flatMap((selector) => selector.split(','))
+    const naked = selectors.flatMap((selector) => {
+        let depth = 0, start = 0; const parts = [];
+        for (let index = 0; index < selector.length; index++) {
+          if (selector[index] === '(' || selector[index] === '[') depth++;
+          if (selector[index] === ')' || selector[index] === ']') depth--;
+          if (selector[index] === ',' && depth === 0) { parts.push(selector.slice(start, index)); start = index + 1; }
+        }
+        parts.push(selector.slice(start)); return parts;
+      })
       .map((selector) => selector.trim())
       .filter((selector) => selector.includes(':hover'))
       .filter((selector) => !/:host\([^)]*\[data-pointer-hover\][^)]*\)/.test(selector));

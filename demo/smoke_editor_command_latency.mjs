@@ -102,6 +102,9 @@ try {
     });
     await page.waitForFunction(() => !window.__card._booting && window.__card._loadOk);
     await page.evaluate(() => window.__hpTest.setMode('decor'));
+    // Compare the resting physical scene, after the retained endpoint releases.
+    await page.waitForFunction(() => !window.__card._modeTransitionBusy);
+    await card.evaluate(c => c.updateComplete);
     check(`latency.${large}.cold_reload.exact_stored_config`, await stored(), placed);
     check(`latency.${large}.cold_reload.exact_physical_SVG`, (await observation()).physical, baseline.physical);
     check(`latency.${large}.cold_reload.shape_visible`, await card.locator(`[data-hp="decor"][data-id="${shape.id}"]`).first().isVisible());

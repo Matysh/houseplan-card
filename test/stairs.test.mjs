@@ -441,7 +441,7 @@ test('#693 курсор move над телом лестницы — только
   assert.ok(rules.some(([selectors, body]) => selectors.includes('.hp-stair.navigable') && cursorOf(body) === 'pointer'),
     'ссылка несёт pointer на группе');
   const view = readFileSync(new URL('../src/stairs-view.ts', import.meta.url), 'utf8');
-  assert.match(view, /<g class="hp-stair hp-stair-view /, 'слой View помечает свои лестницы');
+  assert.match(view, /classes:\s*'hp-stair-view '/, 'слой View помечает свои лестницы');
 });
 
 // #694: a View-layer host whose `_model` getter counts its reads, as the card's

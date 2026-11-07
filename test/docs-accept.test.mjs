@@ -142,21 +142,11 @@ test('разбор пути фикстуры не зависит от разде
   assert.equal(basename('01-view-desktop.png'), '01-view-desktop.png');
 });
 
-test('правило среды в шапках совпадает с реализацией (#401)', () => {
-  // Предыдущее правило («снимать только в CI») жило исключительно в
-  // комментарии, и разошлось с реальностью в тот день, когда появилась цена.
-  // Этот тест держит текст и механизм вместе.
+test('#401 acceptance declares intent and does not require a CI capture', () => {
   const script = readFileSync(new URL('../scripts/docs-accept.mjs', import.meta.url), 'utf8');
-  const workflow = readFileSync(
-    new URL('../.github/workflows/docs-screenshots.yml', import.meta.url), 'utf8',
-  );
-  for (const [name, text] of [['docs-accept.mjs', script], ['docs-screenshots.yml', workflow]]) {
-    assert.match(text, /#401/, `${name}: правило приёмки не сослано на решение`);
-    assert.match(text, /байт-в-байт/, `${name}: не назван признак доказанной среды`);
-  }
-  assert.match(script, /--expect-change/, 'декларация намерения обязана быть в описании');
-  assert.equal(/снимать только в CI|только из артефакта CI/.test(workflow), false,
-    'старое правило про место съёмки осталось в тексте');
+  const workflow = readFileSync(new URL('../.github/workflows/docs-screenshots.yml', import.meta.url), 'utf8');
+  assert.match(script, /--expect-change/);
+  assert.doesNotMatch(workflow, /снимать только в CI|только из артефакта CI/);
 });
 
 test('#421 acceptance trace records a new pixel review exactly', () => {

@@ -57,6 +57,27 @@ out.failedLocaleLeavesExplicitAttempts=localeUrls.length===3&&new Set(localeUrls
   &&new URL(localeUrls[1]).searchParams.has('retry')&&new URL(localeUrls[2]).searchParams.has('retry')
   &&await russian.page.evaluate(()=>!window.__card._toast&&window.__card.getAttribute('lang')==='ru');
 
+// Select remains a separate lazy chunk; failed quiet dependency loading must
+// preserve both explicit attempts even across a fresh editor module namespace.
+const nodeCase=await cold(),nodeUrls=[];
+const nodeName=manifest.files.map(file=>file.path).find(path=>/wall-node-card-adapter-[^/]+\.js$/.test(path))?.split('/').at(-1);
+if(!nodeName)throw Error('missing Select-only node module');
+await nodeCase.page.route('**/'+nodeName+'*',async route=>{
+  nodeUrls.push(route.request().url());
+  if(nodeUrls.length<=2)await route.abort('failed');else await route.fallback();
+});
+await intent(nodeCase.page);
+await nodeCase.page.waitForFunction(()=>window.__card._editorRuntimeLoader._preloadFailed);
+out.failedNodePreloadSilent=nodeUrls.length===1&&await nodeCase.page.evaluate(()=>{
+  const c=window.__card;return !c._editorRuntime&&!c._toast&&!c._editorRuntimeLoadingVisible&&c._mode==='view';
+});
+await nodeCase.page.locator('houseplan-card [data-editor-navigation="plan"]').click();
+await nodeCase.page.waitForFunction(()=>window.__card._editorRuntimeLoader.state==='ready'&&window.__card._mode==='plan');
+out.failedNodeLeavesExplicitAttempts=nodeUrls.length===3&&new Set(nodeUrls).size===3
+  &&nodeUrls.slice(1).every(url=>new URL(url).searchParams.has('hp_retry'))
+  &&await nodeCase.page.evaluate(()=>!!window.__card._editorRuntime.nodeMove&&!window.__card._toast);
+console.log('node retry evidence',JSON.stringify({urls:nodeUrls}));
+
 // Click during a pending preload retains the existing delayed spinner.
 const p=await cold();let release;const held=new Promise(r=>{release=r;});let pendingRequests=0;
 await p.page.route('**/'+name+'*',async route=>{pendingRequests++;await held;await route.fallback();});

@@ -3208,10 +3208,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_vacuum_camera.mjs',
     because: '#871 AC1: native intermediate pan frames observe SVG/plan screen landmarks; '
       + 'a settled frame or a pure inverse cannot reveal a second live ancestor projection.',
-    patches: [{ file: 'src/houseplan-card.ts',
-      find: 'data-hp-live-inherited-scene="camera"',
-      replace: 'data-hp-live-viewbox="camera"',
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "class=\"vactrail\" data-hp=\"vacuum-trail\" data-hp-live-inherited-scene=\"camera\"",
+    "replace": "class=\"vactrail\" data-hp=\"vacuum-trail\" data-hp-live-viewbox=\"camera\""
+  }
+],
   },
   {
     id: 'vacuum-tip-runtime-skips-current-matrix',
@@ -4587,12 +4590,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_stairs.mjs',
     because: '#740 AC2: all treads of one stair are a single path; separate tread lines bring '
       + 'back 3–7 DOM elements per stair that every floor switch rebuilds.',
-    patches: [{
-      file: 'src/stairs-view.ts',
-      find: '        ${markup.treads ? svg`<path class="hp-stair-tread" d=${markup.treads}></path>` : nothing}\n',
-      replace: '        ${geometry.treads.map((line) => svg`<line class="hp-stair-tread"\n'
-        + '          x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}\n',
-    }],
+    patches: [
+  {
+    "file": "src/stairs-symbol.ts",
+    "find": "      ${markup.treads ? svg`<path class=\"hp-stair-tread\" d=${markup.treads}></path>` : nothing}",
+    "replace": "      ${geometry.treads.map(line => svg`<line class=\"hp-stair-tread\" x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}"
+  }
+],
   },
   {
     id: 'stairs-fixed-floor-still-navigates',
@@ -5167,11 +5171,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_household_journeys.mjs',
     because: '#560 J4: маркер с действием обязан доставаться клавиатурой — без tabindex он '
       + 'остаётся нажимаемым мышью, и обычный прогон этого не замечает',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "      tabindex=${interactive ? '0' : nothing}\n      aria-label=${deviceAriaLabel}",
-      replace: '      aria-label=${deviceAriaLabel}',
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "        if (marker.getAttribute('tabindex') !== '0') marker.setAttribute('tabindex', '0');",
+    "replace": "        marker.removeAttribute('tabindex');"
+  }
+],
   },
   {
     id: 'household-enter-stops-acting',
@@ -6762,11 +6768,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/editor-runtime-loader.test.mjs',
     because: 'a mixed entry/editor build must fail closed instead of installing incompatible code (#337)',
-    patches: [{
-      file: 'src/editor-runtime-loader.ts',
-      find: '        if (module.fingerprint !== this.options.expectedFingerprint) {',
-      replace: '        if (false && module.fingerprint !== this.options.expectedFingerprint) {',
-    }],
+    patches: [
+  {
+    "file": "src/editor-runtime-loader.ts",
+    "find": "    if (module.fingerprint !== this.options.expectedFingerprint) {",
+    "replace": "    if (false && module.fingerprint !== this.options.expectedFingerprint) {"
+  }
+],
   },
   {
     id: 'editor-runtime-one-retry',
@@ -7385,11 +7393,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_french_locale.mjs',
     because: 'a French profile silently reading another dictionary is invisible to parity units — '
       + 'only the bundle smoke proves the fr entry loads the fr chunk (#371)',
-    patches: [{
-      file: 'src/i18n/registry.ts',
-      find: "    : await import(/* @vite-ignore */ new URL(`${FRENCH_RETRY_ASSET}?retry`, import.meta.url).href);\n  return { dictionary: module.dictionary, fingerprint: module.fingerprint };",
-      replace: "    : await import(/* @vite-ignore */ new URL(`${FRENCH_RETRY_ASSET}?retry`, import.meta.url).href);\n  void module.dictionary;\n  return { dictionary: en, fingerprint: module.fingerprint };",
-    }],
+    patches: [
+  {
+    "file": "src/i18n/registry.ts",
+    "find": "    : await import(/* @vite-ignore */ new URL(`${FRENCH_RETRY_ASSET}${retryQuery(fresh)}`, import.meta.url).href);\n  return { dictionary: module.dictionary, fingerprint: module.fingerprint };",
+    "replace": "    : await import(/* @vite-ignore */ new URL(`${FRENCH_RETRY_ASSET}${retryQuery(fresh)}`, import.meta.url).href);\n  return { dictionary: en, fingerprint: module.fingerprint };"
+  }
+],
   },
   {
     id: 'i18n-namespace-eager-locale',
@@ -7441,12 +7451,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_lazy_admin_locale.mjs',
     because: 'a German administrator silently reading the English settings dialog is invisible '
       + 'to parity units — only the bundle smoke proves the de loader commits the de chunk (#627 AC6)',
-    patches: [{
-      file: 'src/i18n/settings.ts',
-      find: "    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_DE_RETRY_ASSET__'))),\n",
-      replace: "    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_DE_RETRY_ASSET__')))\n"
-        + '    .then((module) => ({ dictionary: en, fingerprint: module.fingerprint })),\n',
-    }],
+    patches: [
+  {
+    "file": "src/i18n/settings.ts",
+    "find": "    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_DE_RETRY_ASSET__', fresh))),",
+    "replace": "    : import(/* @vite-ignore */ retryUrl('__HOUSEPLAN_SETTINGS_DE_RETRY_ASSET__', fresh)))\n      .then(module => ({ dictionary: en, fingerprint: module.fingerprint })),"
+  }
+],
   },
   {
     id: 'static-glow-light-cache-spread',
@@ -8336,20 +8347,17 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'plan-device-landmarks-hit-target',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test test/plan-device-landmarks.test.mjs',
+    guard: "node demo/smoke_plan_device_landmarks.mjs",
     because: '#687 AC2: a visible marker must never own a Plan-editor point; without the '
       + 'pointer boundary its 44 px hit area and capsule swallow the Walls tool click and the '
       + 'room settings button below',
-    patches: [{
-      file: 'src/styles/plan.styles.ts',
-      find: '    .stage.markup .devlayer .dev,\n'
-        + '    .stage.markup .devlayer .dev *,\n'
-        + '    .stage.markup .devlayer .dev::before {\n'
-        + '      pointer-events: none;\n'
-        + '    }\n',
-      replace: '',
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "    const markerInteractive = this._mode === 'view' || this._mode === 'devices';",
+    "replace": "    const markerInteractive = true;"
+  }
+],
   },
   {
     id: 'daycycle-scene-transform-hint-back',
@@ -8372,13 +8380,13 @@ const MUTANT_DEFINITIONS = [
       + '&& node --test test/live-viewport.test.mjs',
     because: '#689 K3: without the clip a projected scene exposes its whole content and the '
       + 'promoted layer grows with zoom squared (plan-svg 15.9x the stage at ~460 %)',
-    patches: [{
-      file: 'src/live-viewport.ts',
-      find: '  if (expose && style.clipPath !== LIVE_SCENE_EXPOSURE_CLIP) {\n'
-        + '    style.clipPath = LIVE_SCENE_EXPOSURE_CLIP;\n'
-        + '  }\n',
-      replace: '',
-    }],
+    patches: [
+  {
+    "file": "src/live-viewport.ts",
+    "find": "    if (previous?.input !== clip || previous.value !== style.clipPath) style.clipPath = clip;",
+    "replace": "    style.clipPath = 'none';"
+  }
+],
   },
   {
     id: 'opening-light-quantum-identity',
@@ -10780,23 +10788,13 @@ const MUTANT_DEFINITIONS = [
     because: 'moving decor back before room fills reproduces #231: opaque custom floors, room '
       + 'hover erase stored decor even though the decor group still exists in the DOM; '
       + 'the raster probes must catch the visual regression, including the filled opening tunnel',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "            ${''/* Decor is one composition layer above every floor treatment\n"
-        + '                   (room fill/hover and opening tunnels) and below\n'
-        + '                   live lighting, physical plan geometry and devices. Keep\n'
-        + '                   hide_decor visual-only: the decor editor must always paint\n'
-        + '                   stored shapes so they remain editable. */}\n'
-        + "            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view)}\n",
-      replace: '',
-    }, {
-      file: 'src/houseplan-card.ts',
-      find: '            ${(() => {\n'
-        + '              // audit L1: hoisted out of the per-room map — these depend on the',
-      replace: "            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view)}\n"
-        + '            ${(() => {\n'
-        + '              // audit L1: hoisted out of the per-room map — these depend on the',
-    }],
+    patches: [
+  {
+    "file": "src/mode-scene-layers.ts",
+    "find": "return html`${layers.filter(layer =>",
+    "replace": "return html`${[...layers.filter(layer => layer.id === 'decor'), ...layers.filter(layer => layer.id !== 'decor')].filter(layer =>"
+  }
+],
   },
   {
     id: 'feather-20px',
@@ -12703,11 +12701,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_opening_inner_distances.mjs',
     because: 'correct numbers alone do not identify which physical span they describe; the '
       + 'placement preview must keep its dimension lines and endpoint ticks visible',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '            ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}',
-      replace: '            ${nothing}',
-    }],
+    patches: [
+  {
+    "file": "src/houseplan-card.ts",
+    "find": "    return this._editorRuntimeOrThrow()._renderOpeningDimensionGuides(measure);",
+    "replace": "    return svg``;"
+  }
+],
   },
   {
     id: 'grid-scale-visual-factor-constant',
@@ -14238,8 +14238,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/houseplan-card.ts",
-    "find": "keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {",
-    "replace": "keyed(space.id, shownRooms.map((r) => {"
+    "find": "repeat(shownRooms, (r, index) => r.id || index, (r) => {",
+    "replace": "repeat(shownRooms, (_r, index) => index, (r) => {"
   }
 ],
   },
@@ -14252,13 +14252,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/houseplan-card.ts",
-    "find": "keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {",
-    "replace": "repeat(shownRooms, (r, index) => r.id || index, (r) => {"
-  },
-  {
-    "file": "src/houseplan-card.ts",
-    "find": "              return svg`${paint?.extended ? renderRoomFloorMask(maskId, paint) : nothing}${shape}${hit}${outline}`;\n              }))}</g>`;",
-    "replace": "              return svg`${paint?.extended ? renderRoomFloorMask(maskId, paint) : nothing}${shape}${hit}${outline}`;\n              })}</g>`;"
+    "find": "keyed(sceneSpace.id, repeat(shownRooms,",
+    "replace": "keyed('all-spaces', repeat(shownRooms,"
   }
 ],
   },
@@ -14559,11 +14554,13 @@ const MUTANT_DEFINITIONS = [
       + 'нельзя сдвинуть, её надо нарисовать заново; в профиле владельца кадр панорамы '
       + 'доезжал до экрана 200 мс, а драйвер пропускал 124-144 тика в секунду с пометкой '
       + '«ждём краску». Кадр жеста обязан быть трансформом, а не новой краской',
-    patches: [{
-      file: 'src/live-viewport.ts',
-      find: '    || !finiteView(base.frame.floor) || needsViewBoxRefresh(base, current, now);',
-      replace: '    || !finiteView(base.frame.floor) || true;',
-    }],
+    patches: [
+  {
+    "file": "src/live-viewport.ts",
+    "find": "    || !finiteView(base.frame.floor) || (!options.lockSceneAnchor && needsViewBoxRefresh(base, current, now));",
+    "replace": "    || !finiteView(base.frame.floor) || true;"
+  }
+],
   },
   {
     id: 'live-pan-writes-unchanged-viewbox',

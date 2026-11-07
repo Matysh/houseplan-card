@@ -32,7 +32,11 @@ test('arrival highlights all and only reciprocal stairs, using their cached outl
   assert.equal(highlights(layer).length, 2);
   for (const item of highlights(layer)) {
     const overlay = item.values.find(value => value?.values?.[1]?.strings?.join('').includes('stair-arrival')).values[1];
-    assert.equal(bound(overlay, 'points'), bound(item, 'points'), 'same real outline');
+    const guardedInk = item.values.find(value => typeof value?.values?.[1] === 'function');
+    assert.ok(guardedInk, 'symbol owns its cached geometry');
+    const ink = guardedInk.values[1]();
+    assert.match(ink.strings.join(''), /class="hp-stair-outline"/);
+    assert.equal(bound(overlay, 'points'), bound(ink, 'points'), 'same real outline');
   }
   f.runtime.updated(); f.runtime.updated(); assert.equal(f.timers.size, 1);
   const timer = [...f.timers.values()][0]; assert.equal(timer.ms, 2000);

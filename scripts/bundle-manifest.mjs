@@ -446,7 +446,10 @@ export function editorRuntimeRetryUrlPlugin({ coverage = coverageMapsEnabled() }
       }
       // #848: roots keep their content-hashed build URL. The nonce changes
       // only the browser module-map key, never an entry or dependency hash.
-      for (const entry of VIEW_RUNTIME_RETRY_CHUNKS) {
+      for (const entry of [...VIEW_RUNTIME_RETRY_CHUNKS, {
+        module: '/src/wall-node-card-adapter.ts', token: '__HOUSEPLAN_NODE_EDITOR_RETRY_ASSET__',
+        exports: ['createWallNodeEditor'],
+      }]) {
         const owners = chunks.filter(chunk => chunk.code.includes(entry.token));
         if (!owners.length) continue; // older/focused plugin fixtures have no View boundaries
         const count = owners.reduce((n, chunk) => n + chunk.code.split(entry.token).length - 1, 0);

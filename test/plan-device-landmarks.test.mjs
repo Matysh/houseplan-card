@@ -60,14 +60,12 @@ test('#687 the Plan fade multiplies the marker\'s own opacity instead of replaci
   assert.ok(decls.every((d) => !('opacity' in d)), `${MARKER} must not set opacity`);
 });
 
-test('#687 the whole marker subtree is pointer-inert in the Plan editor, as in Background', () => {
-  for (const [plan, background] of [
-    [MARKER, '.stage.mode-decor .devlayer'],
-    [`${MARKER} *`, '.stage.mode-decor .devlayer *'],
-    [`${MARKER}::before`, '.stage.mode-decor .dev::before'],
-  ]) {
-    assert.ok(declsFor(plan).some((d) => d['pointer-events'] === 'none'), `${plan} must be pointer-inert`);
-    assert.ok(declsFor(background).some((d) => d['pointer-events'] === 'none'), `${background} must stay pointer-inert`);
+test('#687 Background preserves its CSS pointer boundary; Plan uses native inert', () => {
+  // Native Plan inertness, descendant hit testing and real tool clicks are
+  // covered by the selected smoke_plan_device_landmarks browser witness.
+  for (const selector of ['.stage.mode-decor .devlayer', '.stage.mode-decor .devlayer *',
+    '.stage.mode-decor .dev::before']) {
+    assert.ok(declsFor(selector).some(d => d['pointer-events'] === 'none'), selector);
   }
 });
 

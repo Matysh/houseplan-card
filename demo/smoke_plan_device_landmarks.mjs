@@ -139,11 +139,11 @@ const probe = await page.evaluate(async () => {
   const cursor = { core: cursorAt(core), capsule: cursorAt(capsule) };
   out.coreFallsThrough = !!hit.core && !hit.core.closest('.dev');
   out.capsuleFallsThrough = !!hit.capsule && !hit.capsule.closest('.dev');
-  out.markerSubtreeIsPointerInert = !!dev && !!frame
-    && getComputedStyle(dev).pointerEvents === 'none'
-    && getComputedStyle(dev, '::before').pointerEvents === 'none'
-    && getComputedStyle(frame).pointerEvents === 'none'
-    && [...dev.querySelectorAll('*')].every((el) => getComputedStyle(el).pointerEvents === 'none');
+  out.markerSubtreeIsPointerInert = !!dev && !!frame && dev.inert
+    && !dev.hasAttribute('tabindex') && !dev.hasAttribute('role');
+  // Inert is an interaction boundary; computed pointer-events need not change.
+  // Core/capsule hit tests and the real Walls/room-button clicks below prove
+  // the descendants cannot consume the plan input.
   // "The cursor over a marker is the cursor of what lies below": the same
   // point with the marker taken out of layout gives the same target/cursor.
   if (dev) {

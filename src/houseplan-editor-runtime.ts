@@ -1,4 +1,6 @@
-import { createWallNodeEditor } from './wall-node-card-adapter';
+let nodeEditorFactory: typeof import('./wall-node-card-adapter').createWallNodeEditor | null = null;
+let nodeEditorLoading: Promise<void> | null = null;
+let nodeEditorFailed = false;
 import { rotationAngle } from './rotation-angle';
 import { prepareDialogReturnFocus } from './dialog-return-focus';
 import { captureToast, type ToastCallback } from './toast-presentation';
@@ -919,6 +921,25 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  /** Code only: the Select controller/cache remains a distinct lazy graph. */
+  public static prepareSceneCode(fresh: boolean, retryNonce: () => string): Promise<void> {
+    if (nodeEditorFactory) return Promise.resolve();
+    if (nodeEditorLoading) return nodeEditorLoading;
+    nodeEditorLoading = (async () => {
+      try {
+        const module = fresh || nodeEditorFailed
+          ? await import(/* @vite-ignore */ (() => {
+              const url = new URL('__HOUSEPLAN_NODE_EDITOR_RETRY_ASSET__', import.meta.url);
+              url.searchParams.set('hp_retry', retryNonce()); return url.href;
+            })()) as typeof import('./wall-node-card-adapter')
+          : await import('./wall-node-card-adapter');
+        nodeEditorFactory = module.createWallNodeEditor; nodeEditorFailed = false;
+      } catch (error) { nodeEditorFailed = true; throw error; }
+      finally { nodeEditorLoading = null; }
+    })();
+    return nodeEditorLoading;
+  }
+
   private _roomFaceCache: { key: string; graph: WallFaceGraph | null;
     masonry: readonly Geom[];
     candidates: Map<string, WallFaceCandidate | null>;
@@ -1181,9 +1202,9 @@ export class HouseplanEditorRuntime {
   }
     /** Writer-only Plan tools expose node menus; handles still require Select. */
   private _loadNodeMove(): void {
-    if (this.nodeMove || !this.host.isConnected) return;
+    if (this.nodeMove || !this.host.isConnected || !nodeEditorFactory) return;
     try {
-      this.nodeMove = createWallNodeEditor<SpaceGeometryState>(this.host, {
+      this.nodeMove = nodeEditorFactory<SpaceGeometryState>(this.host, {
         point: ev => this._svgPoint(ev),
         snapshot: space => this._geometrySnapshotFromConfig({ spaces: [space] }, space.id),
         introduced: (config, baseline, id, geometry, baselineGeometry) =>
