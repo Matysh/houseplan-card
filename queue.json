@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6410,
+  "revision": 6411,
   "nextTicket": 290,
   "nextFence": 290,
   "tasks": {
@@ -3793,7 +3793,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1344-mode-transitions",
-      "materialSha": "3364e54b5497d1bc9dcebc43d7e3308b7de8e49f",
+      "materialSha": "62f340a2103bf587980ad6ebdedcadcf6344581b",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 289,
@@ -3801,17 +3801,19 @@
       "status": "S6-in-progress",
       "readyAt": 1794051965754,
       "reviewEntry": 2,
-      "patchId": "722f3429ad934877394e6bcc930c89670248cde5",
+      "patchId": "e3d387e0886407c8eecb868aa3202c881cd542e0",
       "changedFiles": [
         "demo/benchmark_large_house.mjs",
         "demo/fixtures/large-house.mjs",
         "demo/performance/mode-transition.mjs",
+        "demo/smoke_editor_command_latency.mjs",
         "demo/smoke_editor_preload.mjs",
         "demo/smoke_led_strip_bind.mjs",
         "demo/smoke_led_strip_glow.mjs",
         "demo/smoke_mode_endpoints.mjs",
         "demo/smoke_mode_transition.mjs",
         "demo/smoke_opening_mode_fill.mjs",
+        "demo/smoke_plan_device_landmarks.mjs",
         "demo/smoke_room_fill_transitions.mjs",
         "docs/ARCHITECTURE.md",
         "docs/CHANGELOG.md",
@@ -3832,6 +3834,8 @@
         "docs/testing/issue1344/style-flush-v2-flush.json",
         "process-next/lib/metrics.mjs",
         "process-next/test/metrics.test.mjs",
+        "scripts/bundle-manifest.mjs",
+        "scripts/mutation-registry.mjs",
         "src/boot-soft-layout.ts",
         "src/config-fingerprint-pass.ts",
         "src/device-contact-render.ts",
@@ -3864,14 +3868,20 @@
         "src/wall-node-card-adapter.ts",
         "src/wall-node-editor.ts",
         "test/config-fingerprint-pass.test.mjs",
+        "test/device-marker-polish-contract.test.mjs",
+        "test/docs-accept.test.mjs",
         "test/editor-runtime-loader.test.mjs",
+        "test/geometry-history-refusal.test.mjs",
         "test/i18n-lazy-namespaces.test.mjs",
         "test/i18n-runtime.test.mjs",
         "test/large-house-fixture.test.mjs",
         "test/live-viewport.test.mjs",
         "test/mode-transition.test.mjs",
         "test/optional-space-model-contract.test.mjs",
-        "test/room-gear-drag.test.mjs"
+        "test/plan-device-landmarks.test.mjs",
+        "test/room-gear-drag.test.mjs",
+        "test/stairs-view-arrival.test.mjs",
+        "test/stairs.test.mjs"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -4133,11 +4143,12 @@
     "worker": "finish",
     "token": "289:finish:05e9fbba-c792-4085-822c-2a4215dab8a9:finish:1:admit",
     "fence": 289,
-    "materialSha": "3364e54b5497d1bc9dcebc43d7e3308b7de8e49f",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "62f340a2103bf587980ad6ebdedcadcf6344581b",
+    "expectedBase": "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
+    "phase": "testing",
     "admittedAt": 1794051970051,
-    "expiresAt": 1794052270051
+    "expiresAt": 1794052282554,
+    "patchId": "e3d387e0886407c8eecb868aa3202c881cd542e0"
   },
   "events": {
     "github:42340404811:1:label:spec-request": {
@@ -4266,6 +4277,10 @@
     },
     "github:42368793431:1:completions:notice:80fc14b08c688511b0c282c84a1d204f7adeb74244451fab502da1995c452aa0": {
       "digest": "84ca16ae106dae75352b58b2a5982ec4d3e00f56a96d298931e5f2668636a7ca",
+      "issue": 1344
+    },
+    "finish:05e9fbba-c792-4085-822c-2a4215dab8a9:finish:2:synchronized": {
+      "digest": "5997177cc3ac13827cb21fb803ee7d4f32bb2c37322c464ee4d3d2f650fc09bc",
       "issue": 1344
     },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
