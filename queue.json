@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6307,
+  "revision": 6308,
   "nextTicket": 288,
   "nextFence": 288,
   "tasks": {
@@ -3974,7 +3974,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794051035446,
       "reviewEntry": 2,
-      "patchId": "fa926ecc6900e0b0665c22288a24d4ce257c05d4",
+      "patchId": "95a88f4d839cd4c9416c8831967fc3db978a5328",
       "changedFiles": [
         "demo/smoke_room_face_select.mjs",
         "docs/CHANGELOG.md",
@@ -3984,6 +3984,7 @@
         "docs/release-ledger/v1.84.0/1346.json",
         "src/wall-face-graph.ts",
         "test/fixtures/1346-room-face-spurs.json",
+        "test/fixtures/845-wall-corpus-current-identities.json",
         "test/wall-face-graph.test.mjs"
       ],
       "notice": {
@@ -4177,10 +4178,11 @@
     "token": "287:finish:ceffde05-e103-4686-b458-0fe025351246:finish:1:admit",
     "fence": 287,
     "materialSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "dd8c78da81f79a3b28a772971d2aa971fb2d5ce4",
+    "phase": "testing",
     "admittedAt": 1794051039018,
-    "expiresAt": 1794051339018
+    "expiresAt": 1794051344714,
+    "patchId": "95a88f4d839cd4c9416c8831967fc3db978a5328"
   },
   "events": {
     "github:42340404811:1:label:spec-request": {
@@ -4345,6 +4347,10 @@
     },
     "finish:4076c8c9-212c-44cc-9f14-790388f8635b:finish:3:return": {
       "digest": "a38c99147890e4f2a0afa185e44323576512aa6d8b31f46657f640980a02f978",
+      "issue": 1346
+    },
+    "finish:ceffde05-e103-4686-b458-0fe025351246:finish:2:synchronized": {
+      "digest": "8195d738b3aaaaba03a0e7b3e723b41d1adaa8ed3671640f1a4ebd96b413c0bc",
       "issue": 1346
     },
     "github:42341452995:1:label:spec-request:spec-resubmitted:1344": {
