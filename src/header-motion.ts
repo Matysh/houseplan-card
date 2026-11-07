@@ -22,8 +22,10 @@ export class HeaderMotion {
   start(head: ParentNode | null, before: Map<string, Position>, reduced: boolean): void {
     this.cancel();
     if (reduced) return;
-    for (const [key, element] of this.controls(head)) {
-      const start = before.get(key), end = element.getBoundingClientRect();
+    // Measure all controls before any animation writes invalidate style.
+    const controls = this.controls(head).map(([key, element]) => ({ key, element, end: element.getBoundingClientRect() }));
+    for (const { key, element, end } of controls) {
+      const start = before.get(key);
       if (!start || !end.width || !end.height || typeof element.animate !== 'function') continue;
       const x = start.x - end.x, y = start.y - end.y;
       if (Math.abs(x) < .5 && Math.abs(y) < .5) continue;

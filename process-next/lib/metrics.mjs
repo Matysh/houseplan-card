@@ -53,6 +53,7 @@ export function collectMeasurement({ zip, performance, host, runnerHash, release
   if (!host?.cpu || !host?.power_scheme || !runnerHash) diagnostics.push('Условия замера записаны не полностью; сравнение времени недоступно');
   return { schema: 1, release, source_sha: sourceSha, recorded_at_utc: new Date().toISOString(), ...sizes, timing_metrics, host,
     measurement_status: diagnostics.length ? 'incomplete' : 'complete', diagnostics,
+    ...(performance?.modeTransitionDiagnostics ? { transition_diagnostics: performance.modeTransitionDiagnostics } : {}),
     timing_protocol: { profile: performance?.profile, fixture: performance?.fixture, warmups: performance?.warmups, samples: performance?.samples, runtime: performance?.runtime, runner_sha256: runnerHash } };
 }
 const validSamples = samples => Array.isArray(samples) && samples.length >= 5 && samples.every(value => Number.isFinite(value) && value >= 0);
@@ -97,6 +98,7 @@ export function compareMeasurements(candidate, latestStable, anchor = frozenBase
   const needsMeasurement = primary.some(row => ['missing', 'incomparable', 'noisy'].includes(row.status));
   return { schema: 1, sha: candidate.source_sha, reference: latestStable?.release ?? 'нет замера последнего stable', anchor: anchor.release,
     requiresDecision: primary.some(row => row.blocks), needsMeasurement, primary, diagnostic,
+    transitionDiagnostics: candidate.transition_diagnostics ?? null,
     ready: !primary.some(row => row.blocks) };
 }
 export function renderMetrics(report) {
@@ -104,5 +106,30 @@ export function renderMetrics(report) {
     ...rows.map(r => `| ${r.label} | ${r.before ?? 'нет данных'} | ${r.after ?? 'нет данных'} | ${r.percent === null ? '—' : r.percent.toFixed(1) + '%'} | ${r.status}${r.blocks ? ': решение владельца' : ''} |`)].join('\n');
   const notes = report.evidenceStatus && report.evidenceStatus !== 'complete'
     ? `Состояние замера: ${report.evidenceStatus}. Отсутствующие данные не означают успешную проверку.\n${(report.diagnostics ?? []).map(reason => `- ${reason}`).join('\n')}\n\n` : '';
-  return notes + table(`Сравнение с ${report.reference}`, report.primary) + '\n\n' + table(`Диагностика с ${report.anchor} (не блокирует)`, report.diagnostic) + '\n';
+  return notes + table(`Сравнение с ${report.reference}`, report.primary) + '\n\n' + table(`Диагностика с ${report.anchor} (не блокирует)`, report.diagnostic) + '\n' + renderModeDiagnostics(report.transitionDiagnostics);
+}
+
+/** These observations never enter POLICY/primary or publication readiness. */
+export function renderModeDiagnostics(record) {
+  if (!record) return '';
+  const heading = '\n## Переходы режимов — диагностика, не блокирует\n\n';
+  if (record.status !== 'measured') return heading + 'Замер недоступен: '
+    + (record.failures ?? ['нет данных']).join('; ') + '\n';
+  const groups = new Map();
+  for (const row of record.rows ?? []) {
+    const key = row.from + ' → ' + row.to;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  }
+  const value = (rows, key) => {
+    const values = rows.map(row => row[key]).filter(Number.isFinite);
+    return values.length ? median(values).toFixed(1) : 'нет данных';
+  };
+  return heading + 'Тёплый редактор; reduced motion выключен. RAF-сэмплы — прокси, '
+    + 'не доказательство предъявления кадра. Предъявление проверяется отдельной трассой. '
+    + 'Интерактивность: снятие inert после конечного commit.\n\n'
+    + '| Переход | Начало, мс | RAF-сэмплы | Макс. разрыв, мс | После to до интерактивности, мс |\n'
+    + '|---|---:|---:|---:|---:|\n'
+    + [...groups].map(([key, rows]) => '| ' + key + ' | '
+      + ['firstMotionMs', 'rafSamples', 'maxFrameGapMs', 'afterToInteractiveMs'].map(name => value(rows, name)).join(' | ') + ' |').join('\n') + '\n';
 }

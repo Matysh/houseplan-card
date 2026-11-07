@@ -1,3 +1,4 @@
+import { renderStairSymbol, renderStairLayer } from './stairs-symbol';
 import { nothing, svg, type TemplateResult } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
 import { controlMotion } from './ui-motion';
@@ -142,35 +143,20 @@ export class StairViewRuntime {
       };
       const highlight = arrival && stair.target_space_id === arrival.from;
       if (highlight) arrival.rendered = true;
-      return svg`<g class="hp-stair hp-stair-view ${active ? 'navigable' : ''} ${interactive ? 'input-enabled' : ''}"
-        data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
-        data-target-state=${targetState}
-        style=${stairStyleVars(
-          stair, this.owner._cellCm, this.owner._gridPitch, this.owner._decorStyle,
-        )}
-        role=${active ? 'link' : 'img'} tabindex=${active ? '0' : nothing}
-        aria-label=${this.owner._t('markup.stairs')}
-        @click=${navigate}
-        @pointerenter=${tip}
-        @pointermove=${tip}
-        @pointerleave=${() => { if (active) this.owner._clearPointerHover(); }}
-        @keydown=${(event: KeyboardEvent) => {
-          if (active && (event.key === 'Enter' || event.key === ' ')) {
-            event.preventDefault();
-            navigate(event);
-          }
-        }}>
-        <polygon class="hp-stair-outline" points=${markup.outline}></polygon>
-        <polygon class="hp-stair-hit" points=${markup.outline}
-          @pointerdown=${(event: PointerEvent) => this.pointerDown(event)}></polygon>
-        ${geometry.trapezoid.map((line) => svg`<line class="hp-stair-trapezoid"
-          x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
-        ${markup.treads ? svg`<path class="hp-stair-tread" d=${markup.treads}></path>` : nothing}
-        <path class="hp-stair-arrow" d=${geometry.arrowPath}></path>
-        ${highlight ? keyed(arrival.token, svg`<polygon class="hpf-arrival-highlight hpf-motion"
-          data-hp="stair-arrival" points=${markup.outline} aria-hidden="true"></polygon>`) : nothing}
-      </g>`;
+      return renderStairSymbol({
+        stair, geometry, markup,
+        classes: 'hp-stair-view ' + (active ? 'navigable' : '') + ' ' + (interactive ? 'input-enabled' : ''),
+        targetState, style: stairStyleVars(stair, this.owner._cellCm, this.owner._gridPitch, this.owner._decorStyle),
+        role: active ? 'link' : 'img', focusable: active, label: this.owner._t('markup.stairs'),
+        down: event => this.pointerDown(event), click: navigate, enter: tip, move: tip,
+        leave: () => { if (active) this.owner._clearPointerHover(); },
+        key: event => {
+          if (active && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); navigate(event); }
+        },
+        extra: highlight ? keyed(arrival.token, svg`<polygon class="hpf-arrival-highlight hpf-motion"
+          data-hp="stair-arrival" points=${markup.outline} aria-hidden="true"></polygon>`) : nothing,
+      });
     });
-    return svg`<g class="hp-stairs-layer">${items}</g>` as unknown as TemplateResult;
+    return renderStairLayer(items);
   }
 }

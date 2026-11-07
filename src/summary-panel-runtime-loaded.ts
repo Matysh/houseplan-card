@@ -1042,7 +1042,10 @@ export class LoadedSummaryPanelRuntime {
    * names it): the stage, probe and kiosk-button boxes and the safe-area insets.
    * Render paths use what it stored.
    */
-  private measureLayout(): void {
+  /** Called once with the shown terminal dimensions, before the card commit. */
+  public settleModeLayout(): void { this.measureLayout(false); }
+
+  private measureLayout(notify = true): void {
     // The mode controller owns the moving stage. Measuring the summary on
     // every resize would force a full scene render per animation frame.
     // The terminal card update measures its final available box once.
@@ -1066,7 +1069,7 @@ export class LoadedSummaryPanelRuntime {
     };
     if ((Object.keys(next) as (keyof SummaryLayoutState)[]).some((name) => next[name] !== this.stage[name])) {
       this.stage = next;
-      this.host.requestUpdate();
+      if (notify) this.host.requestUpdate();
     }
   }
 

@@ -34,6 +34,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   readonly isConnected: boolean;
   _baseVb(): number[];
   _viewOr(vb: number[]): { w: number };
+  _renderPixelsPerUnit?(view: { w: number }): number;
   _t(key: I18nKey, params?: Record<string, string | number>): string;
   _showToast(text: string, id?: string, context?: ToastContext): void;
   _cancelCameraTransition(commitTarget?: boolean, keepPresented?: boolean): void;
@@ -148,7 +149,11 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     host._geometryHistory.push({ name: toolsT(language(), history.kind === 'delete' ? 'node_delete_history'
       : history.intent.merge_node_id ? 'node_merge_history' : 'node_move_history'), before, after });
   };
-  const unitsPerPixel = () => host._viewOr(host._baseVb()).w / Math.max(1, host._stageEl?.clientWidth || 1) / NORM_W;
+  const unitsPerPixel = () => {
+    const view = host._viewOr(host._baseVb());
+    const px = host._renderPixelsPerUnit?.(view) ?? Math.max(1, host._stageEl?.clientWidth || 1) / view.w;
+    return 1 / Math.max(Number.EPSILON, px) / NORM_W;
+  };
   const editor = new WallNodeEditor({
     document: host.renderRoot.ownerDocument,
     context,

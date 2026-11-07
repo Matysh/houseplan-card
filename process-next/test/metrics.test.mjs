@@ -128,3 +128,23 @@ test('complete collection still records all seven actual metrics', t => {
   assert.equal(Object.keys(result.measurement.timing_metrics).length, 4);
   assert.equal(result.comparison.primary.length, 7);
 });
+
+test('#1344 slow transition diagnostics are visible and cannot become release gates', () => {
+  const { base, candidate } = records();
+  const previous = compareMeasurements(candidate, base, base);
+  candidate.transition_diagnostics = { status: 'measured', rows: [{
+    from: 'view', to: 'plan', firstMotionMs: 5000, rafSamples: 1,
+    maxFrameGapMs: 5000, afterToInteractiveMs: 5000,
+  }] };
+  const result = compareMeasurements(candidate, base, base);
+  assert.deepEqual(result.primary, previous.primary);
+  assert.equal(result.ready, previous.ready);
+  assert.equal(result.requiresDecision, previous.requiresDecision);
+  assert.match(renderMetrics(result), /Переходы режимов.*диагностика, не блокирует/);
+  assert.match(renderMetrics(result), /5000.0/);
+  assert.ok(!Object.keys(POLICY).some(key => /mode|transition/i.test(key)));
+  candidate.transition_diagnostics = { status: 'unavailable', failures: ['browser did not settle'] };
+  const missing = compareMeasurements(candidate, base, base);
+  assert.equal(missing.ready, previous.ready);
+  assert.match(renderMetrics(missing), /Замер недоступен: browser did not settle/);
+});

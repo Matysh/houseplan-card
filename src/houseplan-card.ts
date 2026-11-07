@@ -1,3 +1,7 @@
+import { renderModeSceneLayers, type ModeSceneLayer } from './mode-scene-layers';
+import { guard } from 'lit/directives/guard.js';
+import { ModePresentation } from './mode-presentation';
+import { liveRuntimeCode } from './view-runtime-code';
 import { callout, field, rangeLine, ensureFormKitStyles } from './editors/form-kit';
 import { sendHouseplanWrite } from './large-write-transport';
 import { annotateSpaceGraphOpeningRuns } from './graph-opening-run';
@@ -285,20 +289,20 @@ import {
 } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
 import {
-  ModeTransitionController, viewportFromViewBox, modeStageHeight,
+  ModeTransitionController, viewportFromViewBox, modeStageHeight, modeRasterExposureClip,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
 } from './mode-transition';
 import {
   CameraTransitionController, sameCameraState,
   type CameraState, type CameraTransitionReason, type CameraTransitionState,
-} from './viewport-transition'; import { measuredCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
+} from './viewport-transition'; import { measuredCardHeaderHeight, rawCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
 import {
   PlanTapGestureController, roomFitPlanTarget, roomFitClampFrame,
   roomFitPlanBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
   type RoomFitGestureCandidate,
 } from './room-fit';
 import type { FurniturePlacementPress } from './furniture-placement-press';
-import { liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport } from './live-viewport';
+import { liveGridBounds, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, liveLayerProjection } from './live-viewport';
 import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
@@ -632,6 +636,9 @@ export class HouseplanCard extends LitElement {
   }
 
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
+    if (name === undefined && !this._modeScenePhaseRequest
+        && (this._modeTransitionPreparing || this._modeSceneFinishPending || this._modeTransition?.active))
+      this._modeSceneRefreshRequested = true;
     let forceHass = false;
     let panelMenuChanged = false;
     if (name === 'hass') {
@@ -724,17 +731,20 @@ export class HouseplanCard extends LitElement {
     import('./houseplan-editor-runtime').HouseplanEditorRuntime
   >({
     expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
-    load: async (attempt) => {
-      const module = attempt === 0
+    load: async (attempt, fresh) => {
+      const module = attempt === 0 && !fresh
         ? await import('./houseplan-editor-runtime')
         : await import(/* @vite-ignore */ (() => {
             const url = new URL(EDITOR_RETRY_ASSET, import.meta.url);
             url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
             return url.href;
           })()) as typeof import('./houseplan-editor-runtime');
-      if (module.EDITOR_RUNTIME_FINGERPRINT === ENTRY_BUILD_FINGERPRINT) await module.EDITOR_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)); // #627: dictionaries settle before install
       return {
         fingerprint: module.EDITOR_RUNTIME_FINGERPRINT,
+        prepare: () => Promise.all([
+          module.EDITOR_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)),
+          liveRuntimeCode.ensure(),
+        ]),
         create: () => new module.HouseplanEditorRuntime(
           this as unknown as import('./houseplan-editor-runtime').HouseplanEditorHostPort,
         ),
@@ -872,6 +882,15 @@ export class HouseplanCard extends LitElement {
 
   /** Test/performance hook; product callers trigger it only while alpha is active. */
   public async _ensureIsoSceneRuntime(): Promise<boolean> { if (this._isoSceneRuntimeLoader.state === 'idle') { this._isoFirstFrame.runtimeLoading(); this.requestUpdate(); } return this._isoSceneRuntimeLoader.ensure(); }
+
+  private readonly _preloadEditorIntent = (event: Event): void => {
+    if (!this.isConnected || !this._canEdit || this._kiosk) return;
+    const target = event.target instanceof Element ? event.target.closest(
+      '[data-editor-navigation], [data-hp="empty-plan-edit"]',
+    ) : null;
+    if (!target || target.getAttribute('data-editor-navigation') === 'view') return;
+    void this._editorRuntimeLoader.preload();
+  };
 
   private _editorRuntimeStateChanged(state: EditorRuntimeLoaderState): void {
     clearTimeout(this._editorRuntimeLoadingTimer);
@@ -1016,11 +1035,18 @@ export class HouseplanCard extends LitElement {
       configure: this._norm && this._canEdit,
       create: this._canEdit && !this._kiosk && !this._hasFixedFloor };
   }
+  private _modeHeaderTypography: { head: HTMLElement; revision: number; key: string[] } | null = null;
   private _panelHeaderContentKey(head: HTMLElement, mode: HouseplanMode = this._mode): string {
-    const typography = getComputedStyle(head);
+    let typography = this._modeHeaderTypography;
+    if (!typography || typography.head !== head || typography.revision !== this._modeSceneRevision
+        || (!this._modeTransitionBusy && !this._modeSceneFinishPending)) {
+      const style = getComputedStyle(head);
+      typography = this._modeHeaderTypography = { head, revision: this._modeSceneRevision,
+        key: [style.fontFamily, style.fontSize, style.fontWeight, style.letterSpacing] };
+    }
     return JSON.stringify([mode, this._space, this._canEdit, this._norm, this._hasFixedFloor,
       langOf(this.hass, this._config?.language), this.narrow, this._panelMenuHassKey,
-      typography.fontFamily, typography.fontSize, typography.fontWeight, typography.letterSpacing,
+      ...typography.key,
       this._panelHeaderSpaces.spaces.map(space => [space.id, space.title]),
       Array.from(head.querySelector('.header-actions')?.children || [])
         .map(node => [node.getAttribute('class'), node.childElementCount])]);
@@ -1043,14 +1069,19 @@ export class HouseplanCard extends LitElement {
     const head = header?.querySelector(':scope > .head') as HTMLElement | null;
     if (!header || !head) return null;
     const width = mode === 'view' ? headerContentWidth(getComputedStyle(header)) : panelHeaderWidth(head);
-    return width > 0 ? measurePanelHeader(header, head, width, this._panelHeaderSpaces, mode).height : null;
+    return width > 0 ? this._panelHeaderMemo.resolve(this._roHdr ?? head,
+      this._panelHeaderContentKey(head, mode), width,
+      () => measurePanelHeader(header, head, width, this._panelHeaderSpaces, mode)).height : null;
   }
-  private async _settlePanelHeader(): Promise<void> {
+  private async _settlePanelHeader(modePreparation = false): Promise<void> {
     if (this._kiosk) return;
     for (let pass = 0; pass < 3; pass++) {
       const before = JSON.stringify([this._panelHeaderChoice.phase, this._panelHeaderChoice.phone, this._compactSpaces]);
-      this._onWinResize?.();
-      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      if (modePreparation && this._measureHeaderNow) this._measureHeaderNow();
+      else {
+        this._onWinResize?.();
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      }
       if (this._spaceSelectLoad) await this._spaceSelectLoad;
       await this.updateComplete;
       if (before === JSON.stringify([this._panelHeaderChoice.phase, this._panelHeaderChoice.phone, this._compactSpaces])) return;
@@ -1516,11 +1547,15 @@ export class HouseplanCard extends LitElement {
     const zoomwrap = this.renderRoot.querySelector('.zoomwrap') as HTMLElement | null;
     const filter = zoomwrap ? getComputedStyle(zoomwrap).filter : '';
     const brightness = Number(/brightness\(([^)]+)\)/.exec(filter)?.[1]);
+    const headerHeight = this.renderRoot.querySelector('.hdr > .head')?.getBoundingClientRect().height || 0;
+    const chromeHeight = mode === 'view' ? 0 : chrome?.getBoundingClientRect().height || 0;
+    const rawBudget = rawCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight) ?? this._hdrH;
     return {
       presentedMode: mode,
-      headerHeight: this.renderRoot.querySelector('.hdr > .head')?.getBoundingClientRect().height || 0,
+      headerHeight,
       headerBudget: this._hdrH,
-      editorChromeHeight: mode === 'view' ? 0 : chrome?.getBoundingClientRect().height || 0,
+      headerFixedBudget: rawBudget - headerHeight - chromeHeight,
+      editorChromeHeight: chromeHeight,
       stageWidth: stage.clientWidth,
       stageHeight: stage.clientHeight,
       viewport: { ...viewportFromViewBox(view, stage.clientWidth),
@@ -1539,10 +1574,23 @@ export class HouseplanCard extends LitElement {
     };
   }
 
+  private _modeThemeColors: { revision: number; stage: string; paper: string } | null = null;
+  private _modeColors(): { revision: number; stage: string; paper: string } {
+    if (this._modeThemeColors?.revision === this._modeSceneRevision) return this._modeThemeColors;
+    const paper = this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)');
+    return this._modeThemeColors = { revision: this._modeSceneRevision,
+      stage: this._cssColor(this._stageBg(this._spaceDisplayForRender()), paper), paper };
+  }
+  /** Capture before target DOM/style changes, in the same source read batch. */
+  public _captureModePresentationSource(): void {
+    for (const device of this.renderRoot.querySelectorAll<HTMLElement>('.devlayer .dev')) {
+      this._modeDeviceAlpha.set(device, Number(getComputedStyle(device).opacity));
+      this._modeDeviceAlphaKeys.set(device, this._modeDeviceAlphaKey(device));
+    }
+    this._modeColors();
+  }
   private _targetStageColor(mode: HouseplanMode): string {
-    if (mode !== 'view') return 'rgb(255, 255, 255)';
-    return this._cssColor(this._stageBg(this._spaceDisplayForRender()),
-      this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)'));
+    return mode === 'view' ? this._modeColors().stage : 'rgb(255, 255, 255)';
   }
 
   private _physicalCamera(camera: ModeVisualState['viewport'], width: number, height: number): CameraState {
@@ -1552,40 +1600,164 @@ export class HouseplanCard extends LitElement {
 
   /** Only presentation properties and the existing live camera are painted
    * per frame. Lit constructs the target scene/overflow once before motion. */
+  /** Physical scale is already accepted by the camera owner during mode motion. */
+  private _renderPixelsPerUnit(view: { w: number }): number {
+    const visual = this._modeTransitionVisual;
+    const scale = visual && this._modeTransitionBusy
+      ? visual.viewport.pixelsPerUnit
+      : this._modeSceneFinishPending && this._lastValidStageSize && view.w
+        ? this._lastValidStageSize[0] / view.w
+        : this._stageEl && view.w ? this._stageEl.clientWidth / view.w : 1;
+    return Math.round(scale * 1e6) / 1e6;
+  }
+
+  private _modeSceneClip: string | null = null;
+  private _modeSceneRevision = 0;
+  private _modeSceneRefreshRequested = false;
+  private _modeScenePhaseRequest = false;
+  private _requestModeSceneUpdate(): void {
+    this._modeScenePhaseRequest = true;
+    try { this.requestUpdate(); } finally { this._modeScenePhaseRequest = false; }
+  }
+  private readonly _modeSceneBuilds: Record<string, number> = {};
+  private _modeSceneFinishPending = false;
+
+  private readonly _modePresentation = new ModePresentation();
+  private readonly _modeDeviceAlpha = new Map<Element, number>();
+  private readonly _modeDeviceAlphaKeys = new Map<Element, string>();
+  private _modeDeviceAlphaKey(device: Element): string {
+    return ['unavail','ghost','ha-disabled','led-badge','iso-tile-shadow']
+      .map(name => device.classList.contains(name) ? '1' : '0').join('');
+  }
+
   private _paintModePresentation(visual: ModeVisualState): void {
     const root = this.renderRoot;
-    const head = root.querySelector<HTMLElement>('.hdr > .head');
-    const chrome = root.querySelector<HTMLElement>('.editorchrome');
-    const inner = root.querySelector<HTMLElement>('.editorchrome-inner');
+    const owner = this._modePresentation;
+    const devices = [...root.querySelectorAll<HTMLElement>('.devlayer .dev')];
+    // Batch the initial reads before any presentation writes. Interleaving
+    // getComputedStyle with each marker's opacity would repeatedly flush style.
+    const changedAlpha = devices.filter(device => !this._modeDeviceAlpha.has(device)
+      || this._modeDeviceAlphaKeys.get(device) !== this._modeDeviceAlphaKey(device));
+    for (const device of changedAlpha) owner.restoreProperty(device, 'opacity');
+    for (const device of changedAlpha) {
+      this._modeDeviceAlpha.set(device, Number(getComputedStyle(device).opacity));
+      this._modeDeviceAlphaKeys.set(device, this._modeDeviceAlphaKey(device));
+    }
+    const set = (selector: string, name: string, value: string, important = false): void => {
+      for (const node of root.querySelectorAll<HTMLElement | SVGElement>(selector))
+        owner.set(node, name, value, important ? 'important' : '');
+    };
+    set('.hdr > .head', 'height', visual.headerHeight + 'px');
+    set('.editorchrome', 'height', visual.editorChromeHeight + 'px');
+    set('.editorchrome', 'opacity', String(visual.editorWeight));
+    set('.editorchrome-inner', 'opacity', String(visual.toolbarContentOpacity));
     const stage = this._stageEl;
-    if (head) head.style.height = `${visual.headerHeight}px`;
-    if (chrome) { chrome.style.height = `${visual.editorChromeHeight}px`; chrome.style.opacity = String(visual.editorWeight); }
-    if (inner) inner.style.opacity = String(visual.toolbarContentOpacity);
-    if (stage) {
-      stage.style.height = `${visual.stageHeight}px`; stage.style.width = `${visual.stageWidth}px`;
-      stage.style.background = visual.stageColor;
-      stage.style.setProperty('--hp-mode-architecture-opacity', String(visual.architectureOpacity));
-      stage.style.setProperty('--hp-mode-paper', visual.paperColor);
-      stage.style.setProperty('--hp-mode-view-weight', String(visual.viewWeight));
-      stage.style.setProperty('--hp-mode-editor-weight', String(visual.editorWeight));
-      stage.style.setProperty('--hp-mode-plan-weight', String(visual.planWeight ?? 0));
+    owner.set(stage, 'height', visual.stageHeight + 'px');
+    owner.set(stage, 'width', visual.stageWidth + 'px');
+    owner.set(stage, 'background', visual.stageColor);
+    owner.setInert(stage, true);
+    const plan = visual.planWeight ?? 0;
+    const surfaces = root.querySelector('.hp-mode-scene-svg');
+    if (surfaces) {
+      const layer = (id: string, opacity: number): void => {
+        set('[data-hp-mode-layer="' + id + '"]', 'opacity', String(opacity));
+        set('[data-hp-mode-layer="' + id + '"]', 'will-change', 'transform, opacity');
+      };
+      // Opacity is on independent SVG surfaces, never on their internal ink.
+      set('.hp-mode-scene-svg :is(.room,.hp-mode-room), .hp-mode-scene-svg :is(.room-outline,.hp-mode-room-outline), .hp-mode-scene-svg .wallbodies, .hp-mode-scene-svg .opening, .hp-mode-scene-svg .zero-walls, .hp-mode-scene-svg .hp-stairs-layer', 'opacity', '1');
+      set('.hp-mode-scene-svg .hp-view-only-layer, .hp-mode-scene-svg .hp-editor-only-layer, .hp-mode-scene-svg .hp-plan-only-layer, .hp-mode-scene-svg .glow-pools-frame, .hp-mode-scene-svg .led-fields', 'opacity', '1', true);
+      layer('rooms', visual.architectureOpacity * (1 - plan));
+      layer('room-ink', visual.architectureOpacity * plan);
+      if (!this._spaceDisplayForRender().showBorders)
+        set('[data-hp-mode-layer="rooms"] :is(.room,.hp-mode-room):not([data-area])', 'opacity', String(visual.viewWeight));
+      for (const id of ['walls', 'openings', 'stairs', 'room-hover'])
+        layer(id, visual.architectureOpacity);
+      layer('zero-view', visual.architectureOpacity * visual.viewWeight);
+      layer('zero-editor', visual.architectureOpacity * visual.editorWeight);
+      layer('editor-guides', visual.editorWeight);
+      layer('plan-base', plan);
+      layer('plan-ink', plan);
+      layer('glow', visual.viewWeight);
+      layer('led', visual.viewWeight);
+      // Add premultiplied endpoint coverage inside one temporary isolation.
+      set('.hp-mode-crossfade', 'isolation', 'isolate');
+      set('.hp-mode-crossfade > svg', 'mix-blend-mode', 'plus-lighter');
+      layer('paper', visual.viewWeight);
+      set('[data-hp-mode-layer="paper"] .hp-paper', 'fill', this._targetPaperColor('view'), true);
+      set('[data-hp-mode-layer="paper-ink"] .hp-paper', 'fill', 'rgb(255, 255, 255)', true);
+      layer('paper-ink', visual.editorWeight);
+      set('.hp-backdrop', 'opacity', '1');
+      layer('backdrop', visual.backdropOpacity);
+    } else {
+      // Projection crossing retains its existing one-scene fade/atomic path.
+      set('.room, .opening, .room-outline, .wallbodies, .zero-walls, .hp-stairs-layer',
+        'opacity', String(visual.architectureOpacity));
+      set('.hp-view-only-layer, .glow-pools-frame, .led-fields', 'opacity', String(visual.viewWeight), true);
+      set('.hp-plan-only-layer', 'opacity', String(plan), true);
+      set('.hp-editor-only-layer', 'opacity', String(visual.editorWeight), true);
+      set('.hp-paper', 'fill', visual.paperColor, true);
+      set('.hp-backdrop', 'opacity', String((this._spaceModel()?.bg?.opacity ?? 1) * visual.backdropOpacity));
     }
-    root.querySelector<HTMLElement>('ha-card')?.style.setProperty('--hp-mode-editor-weight', String(visual.editorWeight));
-    const backdrop = root.querySelector<SVGElement>('.hp-backdrop');
-    if (backdrop) backdrop.style.opacity = String((this._spaceModel()?.bg?.opacity ?? 1) * visual.backdropOpacity);
+    set('.devlayer', 'opacity', String(visual.architectureOpacity));
+    set('.hp-day-cycle-env, .hp-moon-sky', 'opacity', String(visual.viewWeight), true);
+    for (const device of devices) {
+      const base = this._modeDeviceAlpha.get(device) ?? 1;
+      owner.set(device, 'filter', 'none');
+      owner.set(device, 'opacity', String(base * Math.max(0, 1 - .65 * plan / visual.architectureOpacity)));
+      owner.set(device, 'will-change', 'opacity');
+    }
     const properties = root.querySelector<HTMLElement>('.hp-properties');
-    if (properties) {
-      properties.inert = true;
-      properties.style.transform = `translateX(${(1 - visual.editorWeight) * 100}%)`;
-      properties.style.opacity = String(visual.editorWeight);
+    owner.setInert(properties, true);
+    owner.set(properties, 'transform', 'translateX(' + (1 - visual.editorWeight) * 100 + '%)');
+    owner.set(properties, 'opacity', String(visual.editorWeight));
+    const raster = this._modeSceneSize;
+    if (raster) {
+      const scene = root.querySelector<HTMLElement>('.zoomwrap');
+      owner.set(scene, 'translate', 'none');
+      owner.set(scene, 'left', Math.round((visual.stageWidth - raster[0]) / 2) + 'px');
+      owner.set(scene, 'top', Math.round((visual.stageHeight - raster[1]) / 2) + 'px');
     }
-    scheduleHouseplanViewport(this, true);
+    const terminal = this._modeTransition.state?.phase === 'settling';
+    if (terminal) {
+      // Present the endpoint with the ordinary raster path, while the same
+      // controller still owns inert until its next RAF.
+      const from = paintedHouseplanViewBox(this) ?? this._modeTransition.state!.from.viewport.viewBox;
+      commitHouseplanViewport(this);
+      const current = visual.viewport.viewBox;
+      for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
+        owner.set(layer, 'transform', 'none');
+        if (raster) { owner.set(layer, 'width', raster[0] + 'px'); owner.set(layer, 'height', raster[1] + 'px'); }
+        const projection = liveLayerProjection(from, current);
+        for (const child of layer.children) {
+          const node = child as HTMLElement;
+          const left = node.style?.left, top = node.style?.top;
+          if (!left?.endsWith('%') || !top?.endsWith('%')) continue;
+          owner.set(node, 'left', (parseFloat(left) * projection.scaleX + projection.translateXPercent) + '%');
+          owner.set(node, 'top', (parseFloat(top) * projection.scaleY + projection.translateYPercent) + '%');
+        }
+        for (const svg of layer.querySelectorAll<SVGElement>('[data-hp-live-inherited-scene="camera"]'))
+          svg.setAttribute('viewBox', `${current.x} ${current.y} ${current.w} ${current.h}`);
+        owner.set(layer, 'left', '0px');
+        owner.set(layer, 'top', '0px');
+      }
+      for (const device of devices) {
+        owner.set(device, 'opacity', String(this._modeDeviceAlpha.get(device) ?? 1));
+        owner.set(device, 'filter', plan === 1 ? 'opacity(0.35)' : 'none');
+      }
+      set('.hp-mode-scene-svg', 'clip-path', this._modeSceneClip || 'inset(-25%)');
+      set('.hp-mode-scene-svg, .devlayer .dev', 'will-change', 'auto');
+      set('.hp-mode-crossfade', 'isolation', 'auto');
+      set('.hp-mode-crossfade > svg', 'mix-blend-mode', 'normal');
+    } else scheduleHouseplanViewport(this, true);
   }
 
   private _clearModePresentation(): void {
+    this._modePresentation.clear();
+    this._modeDeviceAlpha.clear();
+    this._modeDeviceAlphaKeys.clear();
+    // Projection crossing and the raster camera use these outside paint().
     for (const [selector, names] of [
-      ['.hdr > .head', ['width']], ['.stage', ['width']],
-      ['.hp-backdrop', ['opacity']], ['.hp-properties', ['transform', 'opacity']], ['.zoomwrap', ['width', 'height', 'opacity']],
+      ['.zoomwrap', ['width', 'height', 'opacity']],
     ] as const) for (const element of this.renderRoot.querySelectorAll<HTMLElement>(selector)) {
       for (const name of names) element.style.removeProperty(name);
     }
@@ -1593,7 +1765,7 @@ export class HouseplanCard extends LitElement {
 
   private _targetPaperColor(mode: HouseplanMode): string {
     if (mode !== 'view' || !this._spaceModel()?.bg) return 'rgb(255, 255, 255)';
-    return this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)');
+    return this._modeColors().paper;
   }
 
   private _targetBrightness(_mode: HouseplanMode): number {
@@ -1615,7 +1787,15 @@ export class HouseplanCard extends LitElement {
       if (scene) scene.style.opacity = String(this._modeProjectionOpacity);
     }
     const size = this._modeSceneSize ?? [state.presented.stageWidth, state.presented.stageHeight];
-    const camera = this._physicalCamera(state.presented.viewport, size[0], size[1]);
+    // SVG raster snapping is relative to its viewport origin. Keep that
+    // origin on a CSS pixel and compensate the half-pixel in the camera,
+    // so odd/even toolbar heights do not change the endpoint raster.
+    const dx = (state.presented.stageWidth - size[0]) / 2;
+    const dy = (state.presented.stageHeight - size[1]) / 2;
+    const viewport = { ...state.presented.viewport,
+      centerX: state.presented.viewport.centerX + (Math.round(dx) - dx) / state.presented.viewport.pixelsPerUnit,
+      centerY: state.presented.viewport.centerY + (Math.round(dy) - dy) / state.presented.viewport.pixelsPerUnit };
+    const camera = this._physicalCamera(viewport, size[0], size[1]);
     state.presented.viewport.viewBox = { ...camera.viewBox };
     this._modeTransitionVisual = state.presented;
     this._view = { ...camera.viewBox };
@@ -1626,12 +1806,18 @@ export class HouseplanCard extends LitElement {
   private _settleModeTransition(state: ModeTransitionState): void {
     if (state.targetMode !== this._mode) return;
     const settledRequest = this._modeTransitionRequest;
+    this._modeSceneFinishPending = true;
     this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._modeProjectionOpacity = 1; this._isoProjectionSnapshot = null;
+    // The controller has released busy, but the endpoint dimensions are still
+    // presented. Store summary's final box before the one terminal Lit update.
+    this._summary?.settleModeLayout();
+    this._liveRt?.prepareContacts();
     this._clearModePresentation();
     const targetCamera = this._physicalCamera(state.to.viewport, state.to.stageWidth, state.to.stageHeight);
     this._view = targetCamera.viewBox;
     this._zoom = targetCamera.zoom;
     this._modeSceneSize = null;
+    this._modeSceneClip = null;
     this._hdrH = Math.round(state.to.headerBudget);
     this._modeTransitionVisual = null;
     this._modeTransitionPreparing = false;
@@ -1639,7 +1825,7 @@ export class HouseplanCard extends LitElement {
     if (this._mode === 'view') {
       this._saveZoom();
     }
-    this.requestUpdate();
+    this._requestModeSceneUpdate();
     void this.updateComplete.then(() => {
       if (!this.isConnected || settledRequest !== this._modeTransitionRequest
           || this._modeTransitionBusy || state.targetMode !== this._mode) return;
@@ -1647,15 +1833,6 @@ export class HouseplanCard extends LitElement {
       // font load or outer resize may land while ResizeObserver is suppressed
       // by the transition; reconcile it before the next visible interaction.
       const stage = this._stageEl;
-      // Commit the resting paint without starting a second CSS fill/alpha
-      // transition after the shared timeline (#746). Flush its final style
-      // once; ordinary room state/appearance changes keep their own motion.
-      if (stage) {
-        stage.classList.add('mode-paint-settling');
-        const room = stage.querySelector('.room');
-        if (room) void getComputedStyle(room).fill;
-        stage.classList.remove('mode-paint-settling');
-      }
       if (stage && stage.clientWidth > 0 && stage.clientHeight > 0
           && (Math.abs(stage.clientWidth - state.to.stageWidth) > 0.5
             || Math.abs(stage.clientHeight - state.to.stageHeight) > 0.5)) {
@@ -1686,6 +1863,7 @@ export class HouseplanCard extends LitElement {
     this._modeProjectionSource = null; this._modeProjectionCrossing = false; this._modeProjectionOpacity = 1; this._isoProjectionSnapshot = null;
     this._modeTransition.cancel(commitTarget);
     this._modeSceneSize = null;
+    this._modeSceneClip = null;
     this._headerMotion.cancel();
     this._clearModePresentation();
     if (!commitTarget && retained && presented) {
@@ -1765,7 +1943,9 @@ export class HouseplanCard extends LitElement {
         }
         return;
       }
-      await this._settlePanelHeader();
+      // Publish the source before any asynchronous narrow-header preparation.
+      this._paintModePresentation(from);
+      await this._settlePanelHeader(true);
       if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
         if (request === this._modeTransitionRequest) {
           this._cancelModeTransition(false); this.requestUpdate();
@@ -1790,6 +1970,7 @@ export class HouseplanCard extends LitElement {
         presentedMode: targetMode,
         headerHeight,
         headerBudget: from.headerBudget + from.stageHeight - targetStageHeight,
+        headerFixedBudget: from.headerFixedBudget,
         editorChromeHeight: targetChromeHeight,
         stageWidth: targetStageWidth,
         stageHeight: targetStageHeight,
@@ -1808,7 +1989,11 @@ export class HouseplanCard extends LitElement {
       const forceAtomic = this._modeTransitionForceAtomic;
       this._modeTransitionForceAtomic = false;
       if (!this._modeProjectionSource) commitHouseplanViewport(this);
-      this._modeSceneSize = [Math.max(from.stageWidth, targetStageWidth), Math.max(from.stageHeight, targetStageHeight)];
+      this._headerMotion.start(this.renderRoot.querySelector('.head'), this._modeHeaderPositions, this._reducedMotion || forceAtomic);
+      // Keep the already-rendered HTML and SVG raster coordinates fixed.
+      // Enlarging only their parent here would stretch marker faces on Y.
+      this._modeSceneSize = [from.stageWidth, from.stageHeight];
+      this._modeSceneClip = modeRasterExposureClip(from, to);
       const scene = this.renderRoot.querySelector<HTMLElement>('.zoomwrap');
       if (scene) {
         scene.style.width = `${this._modeSceneSize[0]}px`; scene.style.height = `${this._modeSceneSize[1]}px`;
@@ -1816,7 +2001,6 @@ export class HouseplanCard extends LitElement {
       const rasterCamera = this._physicalCamera(from.viewport, ...this._modeSceneSize);
       this._view = rasterCamera.viewBox; this._zoom = rasterCamera.zoom;
       scheduleHouseplanViewport(this, true, true);
-      this._headerMotion.start(this.renderRoot.querySelector('.head'), this._modeHeaderPositions, this._reducedMotion || forceAtomic);
       this._modeTransition.start(from, to, targetMode,
         this._reducedMotion || forceAtomic ? 0 : controlMotion.mode.duration);
     });
@@ -2410,6 +2594,7 @@ export class HouseplanCard extends LitElement {
   private _compactSpaces = false;
   private _spaceSelectLoad: Promise<unknown> | null = null;
   private _onWinResize?: () => void;
+  private _measureHeaderNow?: () => void;
   private _hdrH = 118; // measured px above the stage (see the observer in updated())
   /** HP-1552: first-open boot veil. In normal (non-kiosk) mode the stage is
    *  calc(100dvh - _hdrH), and _hdrH is measured from HA's chrome — which
@@ -2714,9 +2899,13 @@ export class HouseplanCard extends LitElement {
         this._cameraTransition.active || this._pointers.size > 0 || !!this._pinchStart || !!this._panStart);
   }
   private get _zoomBadge(): { percent: number; hidden: boolean } {
+    // The fixed raster box is an implementation detail; show the physical
+    // camera of the presented stage, including the retained frame(to).
+    const visual = this._modeTransitionVisual;
+    const camera = visual ? this._physicalCamera(visual.viewport, visual.stageWidth, visual.stageHeight) : this._cameraState();
     return this._usesScreenCamera && this._screenReference
-      ? screenZoomBadge(this._cameraState(), this._screenReference)
-      : { percent: Math.round(this._zoom * 100), hidden: this._zoom <= 1 };
+      ? screenZoomBadge(camera, this._screenReference)
+      : { percent: Math.round(camera.zoom * 100), hidden: camera.zoom <= 1 };
   }
   private get _effectiveCycle(): number {
     return this._kiosk && !this._hasFixedFloor && this._model.length > 1
@@ -3237,6 +3426,8 @@ export class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.locale_load_failed'), 'toast.locale_load_failed', { owner: null });
     }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed'), 'toast.furniture_art_load_failed', { owner: null }))); // #474
     super.connectedCallback();
+    for (const type of ['pointerenter', 'focus', 'pointerdown'])
+      this.renderRoot.addEventListener(type, this._preloadEditorIntent, true);
     this._toastPresentation.connect(this.renderRoot as ShadowRoot);
     for (const type of ['pointerdown', 'pointermove', 'click', 'wheel', 'keydown']) this.addEventListener(
       type, this._kioskInteraction, { capture: true, passive: true },
@@ -3324,6 +3515,8 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    for (const type of ['pointerenter', 'focus', 'pointerdown'])
+      this.renderRoot.removeEventListener(type, this._preloadEditorIntent, true);
     this._stairsView.disconnect();
     this._kioskNavigation.reset(false);
     this._rotationMotion.cancel();
@@ -4429,7 +4622,10 @@ export class HouseplanCard extends LitElement {
 
   private _visualFrameFingerprint(): string {
     const stage = this._stageEl;
-    const size = stage ? [stage.clientWidth, stage.clientHeight] : [0, 0];
+    const visual = this._modeTransitionVisual;
+    const size = this._modeTransitionBusy || this._modeSceneFinishPending
+      ? visual ? [visual.stageWidth, visual.stageHeight] : this._lastValidStageSize ?? [0, 0]
+      : stage ? [stage.clientWidth, stage.clientHeight] : [0, 0];
     return visualFrameFingerprint([
       this._cfgRev,
       this._adoption.currentConfigFingerprint(),
@@ -4862,6 +5058,13 @@ export class HouseplanCard extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
+    // A phase-only commit keeps common scene parts. Every ordinary update,
+    // accepted HA/config/layout change, or floor change invalidates this reuse.
+    if (this._modeSceneRefreshRequested || (!this._modeTransitionBusy && !this._modeSceneFinishPending)
+        || ['hass', '_config', '_serverCfg', '_cfgRev', '_cfgEpoch', '_layoutRev', '_layout', '_space']
+          .some(key => changed.has(key)))
+      this._modeSceneRevision++;
+    this._modeSceneRefreshRequested = false;
     this._warmMarker.reconcile();
     if (changed.has('_serverCfg') || changed.has('_space') || changed.has('_openingInfo')) this._syncOpeningInfo();
     this._viewRuntimes.reconcile();
@@ -4913,13 +5116,17 @@ export class HouseplanCard extends LitElement {
     this._captureRenderDeviceSnapshot();
   }
   protected updated(changed: PropertyValues): void {
+    this._modePresentation.adoptRenderedStyles();
     this._stairsView.updated();
     this._toastPresentation.refresh();
     if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);
     this._syncCycleTimer();
     if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); if (!this._modeProjectionSource) { if (this._liveRt) this._liveRt.commit(); else commitHouseplanViewport(this); }
     this._editorRuntime?._commitLiveEditor();
-    this._liveRt?.syncContacts();
+    if (!this._modeTransitionBusy) {
+      this._editorRuntime?.prepareModeScene();
+      this._liveRt?.syncContacts();
+    }
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
     this._syncRadarLive();
@@ -5019,14 +5226,17 @@ export class HouseplanCard extends LitElement {
         if (this._containerOwnedHeight || entry) schedule();
       });
       observer.observe(hdr); observer.observe(stage);
+      this._measureHeaderNow = measure;
       this._onWinResize = schedule; window.addEventListener('resize', schedule);
       const fonts = hdr.ownerDocument.fonts;
-      const fontsChanged = () => { if (ownsHeader()) { this._panelHeaderMemo.invalidate(); schedule(); } };
+      const fontsChanged = () => { if (ownsHeader()) { this._modeHeaderTypography = null; this._panelHeaderMemo.invalidate(); schedule(); } };
       if (fonts) {
         fonts.addEventListener('loadingdone', fontsChanged);
         void fonts.ready.then(fontsChanged);
       }
       this._headerLeaseCleanup = () => {
+        this._measureHeaderNow = undefined;
+        this._modeHeaderTypography = null;
         if (frame) cancelAnimationFrame(frame);
         if (this._headerFocusFrame !== undefined) cancelAnimationFrame(this._headerFocusFrame);
         this._headerFocusFrame = undefined;
@@ -5068,6 +5278,9 @@ export class HouseplanCard extends LitElement {
         this._openSpaceDialog('create');
       }
     }
+    if ((this._modeTransition.state || this._modeTransitionPreparing) && this._modeTransitionVisual)
+      this._paintModePresentation(this._modeTransitionVisual);
+    this._modeSceneFinishPending = false;
   }
 
   // ================= server: config + layout =================
@@ -5461,7 +5674,7 @@ export class HouseplanCard extends LitElement {
           && (runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS) > now ? 1 : 0}`)
       .join('|');
     const virtualFingerprint = virtualLightFingerprint(this._virtualLights);
-    const demand = JSON.stringify([this._space, this._mode, [...this._summary?.entityIds() || []], this._snapshotConsumerDemand()]);
+    const demand = JSON.stringify([this._space, this._mode === 'devices' && this._showAll, [...this._summary?.entityIds() || []], this._snapshotConsumerDemand()]);
     if (this._capturedSeq === this._hassSequence
         && this._capturedSnapshotDemand === demand
         && this._capturedSnapshotDevices === this._displayDevices
@@ -9442,12 +9655,15 @@ export class HouseplanCard extends LitElement {
     // depth transform; multiplying by this factor restores the same physical
     // camera zoom ordinary decor gets from the plan SVG (#361).
     const stage = this._stageEl;
+    const modeScale = this._modeTransitionBusy || this._modeSceneFinishPending
+      ? this._renderPixelsPerUnit(planView) : null;
     // #361/#649: one camera rule in both views — stroke px = width × screen
     // scale of the plan. The 2.5D floor matrix only foreshortens y by cos 20°,
     // as it does for every other decor stroke; the former iso constant 1 made
     // furniture several times thicker there (#649 3a).
     const furnitureScreenScale = furniturePlanScreenScale(
-      stage?.clientWidth, stage?.clientHeight, planView.w, planView.h,
+      modeScale === null ? stage?.clientWidth : modeScale * planView.w,
+      modeScale === null ? stage?.clientHeight : modeScale * planView.h, planView.w, planView.h,
     );
     const onlyIds = Array.isArray(onlyId) ? new Set(onlyId) : null;
     const shapes = this._decorList.filter((sh) => onlyIds ? onlyIds.has(sh.id) : onlyId === undefined || sh.id === onlyId).map((sh) => {
@@ -10027,9 +10243,8 @@ export class HouseplanCard extends LitElement {
       return svg`` as unknown as TemplateResult;
     const united = this._wallUnionGeometry();
     if (!united) return svg`` as unknown as TemplateResult;
-    const stage = this._stageEl;
     const v = this._viewOr(this._baseVb());
-    const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
+    const px = this._renderPixelsPerUnit(v);
     const stroke = disp?.color || '#607d8b';
     // Two independent ways for hatching to become noise: a body too thin to
     // hold stripes, and stripes too close to tell apart (#230 §8.4).
@@ -11492,9 +11707,7 @@ export class HouseplanCard extends LitElement {
     });
     // A hair on SCREEN, so an edge stays a hairline at any zoom instead of
     // turning into a smear when the plan is enlarged.
-    const perUnit = this._stageEl?.clientWidth && view.w
-      ? this._stageEl.clientWidth / view.w
-      : 1;
+    const perUnit = this._renderPixelsPerUnit(view);
     // #396: the freeze must key on "the camera is moving", not on the two
     // gesture flags. An animated transition sets neither, so every tween frame
     // rebuilt the blur region — the very cost this gate was added to avoid.
@@ -11815,7 +12028,8 @@ export class HouseplanCard extends LitElement {
     const dayCycle = this._dayCycleState();
     const dayCycleWeight = modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
     const paperShapes = this._paperShapes(space.rooms); const isoFirstFramePending = !this._modeProjectionCrossing && this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime);
-    const transitionFromMode = this._modeTransition.state?.from.presentedMode;
+    const transitionFromMode = this._modeTransition.state?.from.presentedMode
+      ?? (this._modeTransitionPreparing ? modeVisual?.presentedMode : undefined);
     const glowLayerVisible = !this._markup || !!modeVisual && (
       modeVisual.presentedMode === 'view' || modeVisual.presentedMode === 'devices'
       || transitionFromMode === 'view' || transitionFromMode === 'devices'
@@ -11831,9 +12045,257 @@ export class HouseplanCard extends LitElement {
           class="closex" data-hp-tooltip=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')} data-hp="editor-close" data-editor-navigation="view"
           @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`
       : nothing}</span>`;
+    const sceneSpace = space;
+    const renderRooms = (roomMode: HouseplanMode, mirror = false, canonical = true): TemplateResult => {
+      const planRoom = roomMode === 'plan';
+
+              // audit L1: hoisted out of the per-room map — these depend on the
+              // config, not on entity state, and were recomputed per room.
+              const allZeroCuts = this._openCuts();
+              const allThickCuts = this._thickWallCuts();
+              const roomWallGeometry = this._wallUnionGeometry()?.roomGeom;
+              const floorPaint = this._roomFloorPaintFor(sceneSpace);
+              const polyCache = new Map<any, number[][] | null>();
+              const polyOf = (rr: any) => {
+                if (!polyCache.has(rr)) polyCache.set(rr, roomPoly(rr));
+                return polyCache.get(rr)!;
+              };
+              const otherPolys = (rr: any) =>
+                sceneSpace.rooms.filter((o) => o !== rr).map(polyOf).filter(Boolean) as number[][][];
+              const shownRooms = sceneSpace.rooms.filter((r) => r.area || roomMode === 'view' || planRoom || disp.showBorders);
+              // #742: keyed like openings and markers (plan.styles.ts, #525/#534/#742): a bare map() handed the
+              // previous floor's room node to the new floor, and `.room`'s transition drew its fill in from white.
+              return svg`<g class=${floorPaint.size ? 'room-floor-paint-layer' : nothing}>${keyed(sceneSpace.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {
+              let cls = (canonical ? 'room ' : 'hp-mode-room ') + (sceneSpace.bg ? 'overlay' : 'yard') + (planRoom ? ' outlined' : '');
+              if (planRoom && (r.id === this._mergeSel || r.id === this._splitSel?.roomId))
+                cls += ' picked';
+              let style = '';
+              const effFill = roomFillModeOf(disp.fill, r);
+              if (!planRoom && (disp.showBorders || effFill !== 'none')) {
+                cls += ' styled';
+                const st: string[] = [];
+                // keep the stroke colour even when borders are hidden, so hover can reveal it
+                st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`);
+                // One frame-local resolver drives both this room and every
+                // thick-wall opening tunnel that continues its floor colour.
+                const fillC = roomFills.byRoom.get(r) || null;
+                if (fillC) {
+                  cls += ' filled';
+                  st.push(`--room-fill:${fillC.color}`, `--room-fill-op:${fillC.opacity}`);
+                } else st.push('--room-fill:transparent', '--room-fill-op:0');
+                style = st.join(';');
+              }
+              if (!canonical) style += ';pointer-events:none!important';
+              let areaText: string | null | undefined;
+              const tip = (e: PointerEvent) => {
+                if (!this._roomTipEnabledForPointer(e)) return;
+                if (areaText === undefined) areaText = this._roomArea(r);
+                this._showTip(
+                  e,
+                  r.name || this._t('room.unnamed'),
+                  areaText ? this._t('tip.area', { value: areaText }) : '',
+                  showLqi ? this._roomLqi(r.area) : null,
+                  this._roomTemp(r),
+                  this._roomHum(r),
+                  true,
+                  this._roomCo2(r),
+                );
+              };
+              const enterRoom = (event: PointerEvent) => {
+                this._notePointer(event);
+                if (this._pointerModality.hoverEnabled) {
+                  this._hoverRoom = { space: sceneSpace.id, room: r };
+                  this._syncLiveHover();
+                }
+              };
+              const myPoly = polyOf(r);
+              // A room's ordinary solid stroke must not run beneath its zero
+              // wall overlay — suppress it and draw a trimmed outline. This
+              // includes exterior zero atoms, not only shared room boundaries.
+              // Applies in the Plan editor too (picked rooms keep their full
+              // amber highlight — the merge/split selection must stay visible).
+              const isPicked = planRoom && (r.id === this._mergeSel || r.id === this._splitSel?.roomId);
+              const zeroCuts = myPoly && !isPicked
+                ? allZeroCuts.filter((cut) => {
+                    const midpoint = [(cut[0] + cut[2]) / 2, (cut[1] + cut[3]) / 2];
+                    return myPoly.some((point, index) => distToSegment(
+                      midpoint,
+                      [point[0], point[1], ...myPoly[(index + 1) % myPoly.length]],
+                    ) <= this._gridPitch * 0.08);
+                  })
+                : [];
+              const thickCuts = !isPicked ? allThickCuts : [];
+              const edgeCuts = zeroCuts.concat(thickCuts);
+              if (edgeCuts.length) cls += ' noedge';
+              // island rooms punch holes in their parent's fill (evenodd)
+              const walls = this._spaceWalls;
+              const fillPoly = (walls.length && r.id && myPoly)
+                ? (this._innerRoomContour(sceneSpace, r.id, allZeroCuts, roomWallGeometry) || myPoly)
+                : myPoly;
+              const holes = fillPoly ? islandsOf(fillPoly, otherPolys(r)) : [];
+              const pathD = (pts: number[][]) =>
+                'M ' + pts.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
+              const obstaclePath = fillPoly ? this._cleanFloor(r, fillPoly, sceneSpace).path : '';
+              const paint = floorPaint.get(r.id || '#' + sceneSpace.rooms.indexOf(r));
+              const maskId = 'hp-room-floor-' + contentFingerprint([sceneSpace.id, r.id || sceneSpace.rooms.indexOf(r)]) + (mirror ? '-mode-plan' : '');
+              // docs/STYLING-HOOKS.md §3 — the same three hooks whichever SVG
+              // element this room happens to be drawn as today
+              const hpId = r.id || nothing;
+              const hpArea = r.area || nothing;
+              const shape = paint
+                ? svg`<path class="${cls}" style="${style};pointer-events:none" fill-rule="evenodd"
+                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea} d=${paint.path}></path>`
+                : obstaclePath && fillPoly
+                ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
+                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea}
+                    d="${[obstaclePath, ...holes.map(pathD)].join(' ')}"
+                    @pointerenter=${enterRoom}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearPointerHover()}></path>`
+                : holes.length && fillPoly
+                ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
+                    data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea}
+                    d="${[fillPoly, ...holes].map(pathD).join(' ')}"
+                    @pointerenter=${enterRoom}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearPointerHover()}></path>`
+                 : fillPoly && fillPoly !== myPoly
+                 ? svg`<polygon class="${cls}" style="${style}" points="${fillPoly.map((p) => p.join(',')).join(' ')}"
+                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea}
+                    @pointerenter=${enterRoom}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearPointerHover()}></polygon>`
+                 : r.poly
+                 ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
+                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea}
+                    @pointerenter=${enterRoom}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearPointerHover()}></polygon>`
+                 : svg`<rect class="${cls}" style="${style}"
+                     data-hp=${canonical ? 'room' : nothing} data-id=${hpId} data-area=${hpArea}
+                     x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
+                    @pointerenter=${enterRoom}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearPointerHover()}></rect>`;
+              const trimmed = edgeCuts.length && myPoly
+                ? outlineWithout(myPoly, edgeCuts, this._gridPitch * 0.02)
+                : null;
+              const outline = trimmed
+                ? svg`<path class="${canonical ? 'room-outline' : 'hp-mode-room-outline'} ${planRoom ? 'outlined' : ''}"
+                    d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
+                    style=${planRoom ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
+                : nothing;
+              const hit = paint ? svg`<path class=${canonical ? 'room-hit' : 'hp-mode-room-hit'} ?data-hp-room-hit=${canonical} data-id=${hpId} d=${paint.basePath} fill="transparent"
+                fill-rule="evenodd" stroke="none" pointer-events=${canonical ? 'fill' : 'none'}
+                @pointerenter=${enterRoom} @pointermove=${tip}
+                @pointerleave=${() => this._clearPointerHover()}></path>` : nothing;
+              return svg`${paint?.extended ? renderRoomFloorMask(maskId, paint) : nothing}${shape}${hit}${outline}`;
+              }))}</g>`;
+                };
+    const sceneInputs = [this._modeSceneRevision, this._space, this._cfgRev, this._layoutRev, this._cfgEpoch, contentFingerprint(disp), this._renderProjection, this._rotation, this._cellCm];
+    const modeLayers: ModeSceneLayer[] = [
+      { id: "paper", inputs: [...sceneInputs, ...[]], render: () => svg`${''/* THE PAPER IS THE ROOMS (docs/DECOR-EDITOR.md §3.3, owner
+                   2026-08-04). Opaque shapes stop the scene background —
+                   bg_color or the day-cycle environment — from bleeding through the
+                   plan. They follow the ROOM CONTOURS and nothing else: one
+                   shape per room in exactly the room's own geometry, so an
+                   L-shaped house or a pair of detached buildings never grows a
+                   white bounding rectangle, and an empty space has no paper at
+                   all. A backdrop image no longer makes paper of its own — it
+                   is drawn ON this sheet, one layer below the geometry, so a
+                   picture with transparency and no rooms under it shows the
+                   scene through, which is the deliberate consequence.
+                   `space` comes from _renderCfg, so a live resize preview
+                   controller preview moves the paper together with the rooms.
+                   One <g> keeps the visible sheet and filtered silhouette free of room seams. */}
+            ${wallHatch}${renderPaperShapes(paperShapes)}` },
+      { id:'paper-ink', inputs:sceneInputs, render:()=>renderPaperShapes(paperShapes, 'hp-paper-editor-ink') },
+      { id: "grid", inputs: [...sceneInputs, ...[this._editing, this._modeTransitionBusy, this._gridPitch]], render: () => svg`${this._editing ? this._renderMarkupDefs(vb) : nothing}
+            ${''/* the grid is a property of the plane, not of a box: it follows
+                   the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}
+            ${this._editing && !this._markup && this._gridLevels()
+              ? svg`<rect data-hp-live-grid x="${liveGridBounds(floorView).x}" y="${liveGridBounds(floorView).y}" width="${liveGridBounds(floorView).w}" height="${liveGridBounds(floorView).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
+              : nothing}` },
+      { id: "backdrop", inputs: [...sceneInputs, ...[backdropHref]], render: () => svg`${space.bg && backdropHref
+              ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
+                  opacity="${space.bg.opacity ?? 1}"
+                  @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}
+                  transform=${space.bg.angle
+                    ? `rotate(${space.bg.angle} ${space.bg.x + space.bg.w / 2} ${space.bg.y + space.bg.h / 2})`
+                    : nothing}
+                  @dblclick=${(e: Event) => this._openBackdropDialog(e)}
+                  preserveAspectRatio="none" />`
+              : nothing}` },
+      { id: "rooms", inputs: [...sceneInputs, this._mode === 'plan', disp.showBorders ? 'normal' : this._modeTransitionBusy || this._mode === 'view' || this._mode === 'plan' ? 'view' : 'editor'], render: () => svg`${renderRooms(this._mode === 'plan' || this._modeTransitionBusy ? 'view' : this._mode, false, this._mode !== 'plan')}` },
+      { id:'room-ink', inputs:[...sceneInputs, this._mode === 'plan'], render:()=>renderRooms('plan', true, this._mode === 'plan') },
+      { id: "decor", inputs: [...sceneInputs, ...[this._mode === 'decor', this._decorSel, this._decorTool, this._renderPixelsPerUnit(view)]], render: () => svg`${this._renderRoomHoverFill(roomHover)}
+            ${''/* Decor is one composition layer above every floor treatment
+                   (room fill/hover and opening tunnels) and below
+                   live lighting, physical plan geometry and devices. Keep
+                   hide_decor visual-only: the decor editor must always paint
+                   stored shapes so they remain editable. */}
+            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view)}` },
+      { id: "stairs", inputs: [...sceneInputs, ...[this._mode === 'plan', this._mode === 'view']], render: () => svg`${this._mode === 'plan' && this._editorRuntime
+              ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer()}
+            ${this._mode === 'plan' ? svg`<g data-hp-live-stairs></g>` : nothing}` },
+      { id: "glow", inputs: [...sceneInputs, ...[glowLayerVisible, this._mode === 'view' || !!modeVisual && transitionFromMode === 'view']], render: () => svg`${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}
+            ${glowLayerVisible ? this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) : nothing}
+            ${this._renderSunRays(space)}` },
+      { id: "editor-guides", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('guides', this._editing, () => svg`<g class="hp-editor-only-layer">${this._renderAlignGuides()}</g>`)}` },
+      { id: "plan-base", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('markup', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderMarkupLayer(vb)}</g>`)}
+            ${''/* «Скрыть проёмы» (space.hide_openings) — same deal: the plan
+                   editor keeps drawing doors, windows and gates so they stay
+                   editable, and only the symbols are hidden elsewhere. What
+                   an opening MEANS is untouched: light still spills through
+                   it, the sun still comes in at its window, and the contact
+                   sensor still opens it. */}
+            ${''/* View: zero-thickness geometry still meets thick walls on their
+                   centreline, but paints BELOW the physical wall body. The
+                   hatch therefore masks the visually awkward half-dashes
+                   inside thick jambs without changing the stored span. */}` },
+      { id: "zero-view", inputs: [...sceneInputs, ...[this._editing, this._modeTransitionBusy]], render: () => svg`${!this._editing || this._modeTransitionBusy ? this._renderZeroWalls(disp) : nothing}` },
+      { id: "walls", inputs: [...sceneInputs, ...[disp.showBorders || this._mode === 'plan' || this._mode === 'decor', this._renderPixelsPerUnit(view), this._opDrag?.preview]], render: () => svg`${this._renderWallBodies(disp)}` },
+      { id: "room-hover", inputs: [...sceneInputs, ...[roomHover, this._markup, this._tool]], render: () => svg`${this._markup && this._tool === 'resize' ? this._renderResizeMeasurements() : nothing}
+            ${this._renderRoomHoverOutline(roomHover)}
+            ${''/* Editors: saved zero-thickness walls deliberately paint AFTER
+                   thick wall bodies. Their
+                   full centreline geometry remains visible for editing. */}` },
+      { id: "zero-editor", inputs: [...sceneInputs, ...[this._editing, this._modeTransitionBusy]], render: () => svg`${this._editing || this._modeTransitionBusy ? this._renderZeroWalls(disp) : nothing}` },
+      { id: "plan-ink", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('hidden-walls', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderHiddenWallDiagnosticOverlay()}</g>`)}
+            ${this._editorInk('opening-preview', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderOpeningPlacementPreview()}</g>`)}
+            ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}
+            ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
+            ${''/* Static architectural axes and endpoints are a Plan-editor
+                   invariant. Tool-specific hover/snap state is resolved inside
+                   the overlay and remains exclusive to Walls. */}
+            ${''/* Active chain ink paints above the wall bodies: persisted
+                   draft segments already own opaque masonry, which would
+                   otherwise cover the chain axis and nodes (#307). It stays
+                   below the snap overlay so snap highlights keep priority. */}
+            ${this._editorInk('chain', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderActiveChainInk()}</g>`)}
+            ${this._editorInk('nodes', this._markup, () => svg`<g class="hp-plan-only-layer hp-plan-snap-layer">${this._renderPlanSnapOverlay()}</g>`)}` },
+      { id: "openings", inputs: [...sceneInputs, ...[this._markup, disp.hideOpenings]], render: () => svg`${disp.hideOpenings && !this._markup
+              ? nothing
+              : isoLayers && !isoLayers.floorSymbols
+                ? nothing
+                : this._renderOpenings(disp)}` },
+      { id: "led", inputs: [...sceneInputs, ...[this._mode === 'devices']], render: () => svg`${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view) ?? nothing}
+            ${this._mode === 'devices' && (this._ledEditor || space.led_strips?.some((s) => s.active !== false))
+              ? this._ledEd(space.id)?.layer(space) : nothing}` },
+      { id: "editor-top", inputs: [...sceneInputs, ...[this._mode, this._tool, view.x, view.y, view.w, view.h]], render: () => svg`${this._renderWallThickUi()}
+            ${this._markup && this._tool === 'resize' ? this._renderResizeLayer(view) : nothing}
+            ${''/* editor chrome, not plan content: the backdrop frame sits on
+                   top of everything the plan draws so its handles stay
+                   grabbable (docs/DECOR-EDITOR.md §3.2). It exists only in the
+                   backdrop editor, where rooms and devices are pointer-inert. */}
+            ${this._editorRuntime?.backdropGesture.renderFrame(view)}
+            ${this._renderTextFrame(view)}
+            ${this._editorRuntime?.properties.selection()}
+            ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
+            <g data-hp-live-editor></g>` }
+    ];
     return html`
       <ha-card
-        style="--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}"
         ?data-hp-properties-wide=${this._editorRuntime?.properties.wide}
         data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
         data-continuity-state=${this._continuity.state}
@@ -11927,7 +12389,7 @@ export class HouseplanCard extends LitElement {
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
           ?inert=${this._modeTransitionBusy}
-          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${modeVisual ? `;width:${modeVisual.stageWidth}px` : ''}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-plan-weight:${modeVisual?.planWeight ?? (this._mode === 'plan' ? 1 : 0)};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${iso ? `;${isoWallMaterialVars(disp.wallFill.c)}` : ''}"
+          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${modeVisual ? `;width:${modeVisual.stageWidth}px` : ''}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a}${iso ? `;${isoWallMaterialVars(disp.wallFill.c)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @contextmenu=${this._mode === 'decor' ? (e: MouseEvent) => this._editorRuntime?.decorOrder.open(e) : nothing}
@@ -11955,7 +12417,7 @@ export class HouseplanCard extends LitElement {
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${isoFrame?.underlay ?? nothing}
             </svg>` : nothing}
-          <svg class="plan-svg" data-hp="stage" data-grid-step=${this._gridPitch} data-hp-layer="plan"
+          ${iso ? svg`<svg class="plan-svg" data-hp="stage" data-grid-step=${this._gridPitch} data-hp-layer="plan"
             data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
             viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
             preserveAspectRatio="xMidYMid meet">
@@ -11991,153 +12453,7 @@ export class HouseplanCard extends LitElement {
                   @dblclick=${(e: Event) => this._openBackdropDialog(e)}
                   preserveAspectRatio="none" />`
               : nothing}
-            ${(() => {
-              // audit L1: hoisted out of the per-room map — these depend on the
-              // config, not on entity state, and were recomputed per room.
-              const allZeroCuts = this._openCuts();
-              const allThickCuts = this._thickWallCuts();
-              const roomWallGeometry = this._wallUnionGeometry()?.roomGeom;
-              const floorPaint = this._roomFloorPaintFor(space);
-              const polyCache = new Map<any, number[][] | null>();
-              const polyOf = (rr: any) => {
-                if (!polyCache.has(rr)) polyCache.set(rr, roomPoly(rr));
-                return polyCache.get(rr)!;
-              };
-              const otherPolys = (rr: any) =>
-                space.rooms.filter((o) => o !== rr).map(polyOf).filter(Boolean) as number[][][];
-              const shownRooms = space.rooms.filter((r) => r.area || this._mode === 'view' || this._markup || disp.showBorders);
-              // #742: keyed like openings and markers (plan.styles.ts, #525/#534/#742): a bare map() handed the
-              // previous floor's room node to the new floor, and `.room`'s transition drew its fill in from white.
-              return svg`<g class=${floorPaint.size ? 'room-floor-paint-layer' : nothing}>${keyed(space.id, repeat(shownRooms, (r, index) => r.id || index, (r) => {
-              let cls = 'room ' + (space.bg ? 'overlay' : 'yard') + (this._markup ? ' outlined' : '');
-              if (this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId))
-                cls += ' picked';
-              let style = '';
-              const effFill = roomFillModeOf(disp.fill, r);
-              if ((!this._markup || this._modeTransitionBusy) && (disp.showBorders || effFill !== 'none')) {
-                cls += ' styled';
-                const st: string[] = [];
-                // keep the stroke colour even when borders are hidden, so hover can reveal it
-                st.push(`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`);
-                // One frame-local resolver drives both this room and every
-                // thick-wall opening tunnel that continues its floor colour.
-                const fillC = roomFills.byRoom.get(r) || null;
-                if (fillC) {
-                  cls += ' filled';
-                  st.push(`--room-fill:${fillC.color}`, `--room-fill-op:${fillC.opacity}`);
-                } else st.push('--room-fill:transparent', '--room-fill-op:0');
-                style = st.join(';');
-              } else if (this._modeTransitionBusy) {
-                style = space.bg ? '--room-fill:transparent;--room-fill-op:0;--room-stroke:transparent;--room-stroke-op:0'
-                  : '--room-fill:var(--hp-room-yard-color);--room-fill-op:var(--hp-room-yard-fill-alpha);--room-stroke:var(--hp-room-yard-color);--room-stroke-op:1';
-              }
-              let areaText: string | null | undefined;
-              const tip = (e: PointerEvent) => {
-                if (!this._roomTipEnabledForPointer(e)) return;
-                if (areaText === undefined) areaText = this._roomArea(r);
-                this._showTip(
-                  e,
-                  r.name || this._t('room.unnamed'),
-                  areaText ? this._t('tip.area', { value: areaText }) : '',
-                  showLqi ? this._roomLqi(r.area) : null,
-                  this._roomTemp(r),
-                  this._roomHum(r),
-                  true,
-                  this._roomCo2(r),
-                );
-              };
-              const enterRoom = (event: PointerEvent) => {
-                this._notePointer(event);
-                if (this._pointerModality.hoverEnabled) {
-                  this._hoverRoom = { space: space.id, room: r };
-                  this._syncLiveHover();
-                }
-              };
-              const myPoly = polyOf(r);
-              // A room's ordinary solid stroke must not run beneath its zero
-              // wall overlay — suppress it and draw a trimmed outline. This
-              // includes exterior zero atoms, not only shared room boundaries.
-              // Applies in the Plan editor too (picked rooms keep their full
-              // amber highlight — the merge/split selection must stay visible).
-              const isPicked = this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId);
-              const zeroCuts = myPoly && !isPicked
-                ? allZeroCuts.filter((cut) => {
-                    const midpoint = [(cut[0] + cut[2]) / 2, (cut[1] + cut[3]) / 2];
-                    return myPoly.some((point, index) => distToSegment(
-                      midpoint,
-                      [point[0], point[1], ...myPoly[(index + 1) % myPoly.length]],
-                    ) <= this._gridPitch * 0.08);
-                  })
-                : [];
-              const thickCuts = !isPicked ? allThickCuts : [];
-              const edgeCuts = zeroCuts.concat(thickCuts);
-              if (edgeCuts.length) cls += ' noedge';
-              // island rooms punch holes in their parent's fill (evenodd)
-              const walls = this._spaceWalls;
-              const fillPoly = (walls.length && r.id && myPoly)
-                ? (this._innerRoomContour(space, r.id, allZeroCuts, roomWallGeometry) || myPoly)
-                : myPoly;
-              const holes = fillPoly ? islandsOf(fillPoly, otherPolys(r)) : [];
-              const pathD = (pts: number[][]) =>
-                'M ' + pts.map((p) => p[0] + ' ' + p[1]).join(' L ') + ' Z';
-              const obstaclePath = fillPoly ? this._cleanFloor(r, fillPoly, space).path : '';
-              const paint = floorPaint.get(r.id || '#' + space.rooms.indexOf(r));
-              const maskId = 'hp-room-floor-' + contentFingerprint([space.id, r.id || space.rooms.indexOf(r)]);
-              // docs/STYLING-HOOKS.md §3 — the same three hooks whichever SVG
-              // element this room happens to be drawn as today
-              const hpId = r.id || nothing;
-              const hpArea = r.area || nothing;
-              const shape = paint
-                ? svg`<path class="${cls}" style="${style};pointer-events:none" fill-rule="evenodd"
-                    mask=${paint.extended && this._modeTransitionBusy ? `url(#${maskId})` : nothing}
-                    data-hp="room" data-id=${hpId} data-area=${hpArea} d=${paint.path}></path>`
-                : obstaclePath && fillPoly
-                ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
-                    data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    d="${[obstaclePath, ...holes.map(pathD)].join(' ')}"
-                    @pointerenter=${enterRoom}
-                    @pointermove=${tip}
-                    @pointerleave=${() => this._clearPointerHover()}></path>`
-                : holes.length && fillPoly
-                ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
-                    data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    d="${[fillPoly, ...holes].map(pathD).join(' ')}"
-                    @pointerenter=${enterRoom}
-                    @pointermove=${tip}
-                    @pointerleave=${() => this._clearPointerHover()}></path>`
-                 : fillPoly && fillPoly !== myPoly
-                 ? svg`<polygon class="${cls}" style="${style}" points="${fillPoly.map((p) => p.join(',')).join(' ')}"
-                     data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    @pointerenter=${enterRoom}
-                    @pointermove=${tip}
-                    @pointerleave=${() => this._clearPointerHover()}></polygon>`
-                 : r.poly
-                 ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
-                     data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    @pointerenter=${enterRoom}
-                    @pointermove=${tip}
-                    @pointerleave=${() => this._clearPointerHover()}></polygon>`
-                 : svg`<rect class="${cls}" style="${style}"
-                     data-hp="room" data-id=${hpId} data-area=${hpArea}
-                     x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
-                    @pointerenter=${enterRoom}
-                    @pointermove=${tip}
-                    @pointerleave=${() => this._clearPointerHover()}></rect>`;
-              const trimmed = edgeCuts.length && myPoly
-                ? outlineWithout(myPoly, edgeCuts, this._gridPitch * 0.02)
-                : null;
-              const outline = trimmed
-                ? svg`<path class="room-outline ${this._markup ? 'outlined' : ''}"
-                    d="${trimmed.map((sg) => `M ${sg[0]} ${sg[1]} L ${sg[2]} ${sg[3]}`).join(' ')}"
-                    style=${this._markup ? nothing : `stroke:${disp.color};stroke-opacity:${disp.showBorders ? disp.opacity : 0}`}></path>`
-                : nothing;
-              const hit = paint ? svg`<path class="room-hit" data-hp-room-hit data-id=${hpId} d=${paint.basePath} fill="transparent"
-                fill-rule="evenodd" stroke="none" pointer-events="fill"
-                @pointerenter=${enterRoom} @pointermove=${tip}
-                @pointerleave=${() => this._clearPointerHover()}></path>` : nothing;
-              return svg`${paint?.extended ? renderRoomFloorMask(maskId, paint) : nothing}${shape}${hit}${outline}`;
-              }))}</g>`;
-            })()}
+            ${renderRooms(this._mode)}
             ${this._renderRoomHoverFill(roomHover)}
             ${''/* Decor is one composition layer above every floor treatment
                    (room fill/hover and opening tunnels) and below
@@ -12204,7 +12520,7 @@ export class HouseplanCard extends LitElement {
             ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
             <g data-hp-live-editor></g>
             </g>
-          </svg>
+          </svg>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; })}
           ${litCache(iso && isoLayers?.structural ? svg`<svg class="iso-shadows-svg" data-hp-live-viewbox="camera"
               viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
@@ -12958,6 +13274,7 @@ export class HouseplanCard extends LitElement {
       data-hp-iso-nudged=${isoPlacement?.plane === 'raised' ? 'false' : nothing}
       data-hp-iso-floor=${isoPlacement ? `${isoPlacement.floorScene[0]},${isoPlacement.floorScene[1]}` : nothing}
       data-hp-iso-visual=${isoPlacement ? `${point[0]},${point[1]}` : nothing}
+      ?inert=${!interactive}
       role=${interactive ? 'button' : nothing}
       tabindex=${interactive ? '0' : nothing}
       aria-label=${deviceAriaLabel}
@@ -12983,13 +13300,13 @@ export class HouseplanCard extends LitElement {
       @pointercancel=${(e: PointerEvent) => this._pointerCancel(e, d)}
       @lostpointercapture=${(e: PointerEvent) => this._pointerCancel(e, d)}
     >
-      ${renderDeviceFace(presentation, {
+      ${guard([presentation, this._newIds.has(d.id), d.userHidden, d.marker?.hidden, ghostLabel, this._config?.language], () => { this._modeSceneBuilds['device-faces'] = (this._modeSceneBuilds['device-faces'] || 0) + 1; return renderDeviceFace(presentation, {
         surface: 'interactive-plan',
         newDevice: this._newIds.has(d.id),
         hiddenDevice: d.userHidden ?? d.marker?.hidden === true,
         newDeviceTitle: this._t('device.new'),
         disabledTitle: presentation.haDisabled ? ghostLabel : '',
-      })}
+      }); })}
       ${this._vacRouteBadge(d)}
     </div>`;
   }

@@ -42,6 +42,7 @@ interface LiveViewportHost {
   _planVisibleRect?: (view: LiveViewBox) => LiveViewBox;
   _zoom: number;
   readonly _zoomBadge?: { percent: number; hidden: boolean };
+  readonly _modeSceneClip?: string | null;
   renderRoot: ParentNode;
 }
 
@@ -54,6 +55,13 @@ const stateOf = (host: object): LiveViewportState => {
   }
   return state;
 };
+
+/** Actual HTML coordinates of the last Lit commit, including data updates
+ * accepted in the middle of a mode transition. */
+export function paintedHouseplanViewBox(host: object): LiveViewBox | null {
+  const view = states.get(host)?.painted?.view;
+  return view ? { ...view } : null;
+}
 
 export const liveViewBoxText = (view: LiveViewBox): string =>
   `${view.x} ${view.y} ${view.w} ${view.h}`;
@@ -140,10 +148,11 @@ export function inheritedSceneClip(painted: LiveViewBox, anchor: LiveViewBox): s
   return `inset(${y - h * .25}% ${100 - x - w * 1.25}% ${100 - y - h * 1.25}% ${x - w * .25}%)`;
 }
 
+const sceneExposureClips = new WeakMap<ElementCSSInlineStyle, { input: string; value: string }>();
 const setLayerProjection = (
   layer: ElementCSSInlineStyle,
   projection: LiveLayerProjection | null,
-  options: { exposeSceneOverflow?: boolean } = {},
+  options: { exposeSceneOverflow?: boolean; exposureClip?: string } = {},
 ): void => {
   const style = layer.style;
   const expose = options.exposeSceneOverflow === true;
@@ -155,9 +164,10 @@ const setLayerProjection = (
     if (expose && style.overflow === 'visible') {
       style.removeProperty('overflow');
     }
-    if (expose && style.clipPath === LIVE_SCENE_EXPOSURE_CLIP) {
+    if (expose && style.clipPath === (sceneExposureClips.get(layer)?.value ?? LIVE_SCENE_EXPOSURE_CLIP)) {
       style.removeProperty('clip-path');
     }
+    if (expose) sceneExposureClips.delete(layer);
     // #531: снимать только то, что стоит. Лишняя запись в стиль — это
     // инвалидация, а тихий кадр обязан оставлять DOM нетронутым.
     if (style.transform) {
@@ -175,8 +185,11 @@ const setLayerProjection = (
   if (expose && style.overflow !== 'visible') {
     style.overflow = 'visible';
   }
-  if (expose && style.clipPath !== LIVE_SCENE_EXPOSURE_CLIP) {
-    style.clipPath = LIVE_SCENE_EXPOSURE_CLIP;
+  if (expose) {
+    const clip = options.exposureClip ?? LIVE_SCENE_EXPOSURE_CLIP;
+    const previous = sceneExposureClips.get(layer);
+    if (previous?.input !== clip || previous.value !== style.clipPath) style.clipPath = clip;
+    sceneExposureClips.set(layer, { input: clip, value: style.clipPath });
   }
   const text = projectionText(projection);
   // Promotion is gesture-scoped, not a per-frame hint (#579). Avoid even
@@ -185,7 +198,10 @@ const setLayerProjection = (
   if (style.transformOrigin !== '0 0' && style.transformOrigin !== '0px 0px') {
     style.transformOrigin = '0 0';
   }
-  if (style.willChange !== 'transform') style.willChange = 'transform';
+  // A mode surface owns opacity as well as this camera's transform. Do not
+  // alternate its promotion hint on every frame.
+  if (style.willChange !== 'transform' && style.willChange !== 'transform, opacity')
+    style.willChange = 'transform';
   if (style.transform !== text) style.transform = text;
 };
 
@@ -209,7 +225,7 @@ export function paintLiveViewport(
   painted: LiveViewportFrame,
   current: LiveViewportFrame,
   anchor?: LiveViewportAnchor | null,
-  options: { now?: number; force?: boolean; keepSceneLayer?: boolean } = {},
+  options: { now?: number; force?: boolean; keepSceneLayer?: boolean; sceneExposureClip?: string } = {},
 ): LiveViewportAnchor {
   const now = options.now ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
   const base: LiveViewportAnchor = anchor ?? { frame: painted, at: -Infinity };
@@ -246,14 +262,14 @@ export function paintLiveViewport(
     setLayerProjection(
       svg,
       isIdentityLiveLayerProjection(sceneCamera) && !keepSceneLayer ? null : sceneCamera,
-      { exposeSceneOverflow: true },
+      { exposeSceneOverflow: true, exposureClip: options.sceneExposureClip },
     );
   }
   for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')) {
     setLayerProjection(
       svg,
       isIdentityLiveLayerProjection(sceneFloor) && !keepSceneLayer ? null : sceneFloor,
-      { exposeSceneOverflow: true },
+      { exposeSceneOverflow: true, exposureClip: options.sceneExposureClip },
     );
   }
   const projection = liveLayerProjection(painted.view, current.view);
@@ -301,7 +317,7 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
     state.raf = 0; state.pending = null;
     if (!state.painted) state.painted = next;
     state.anchor = paintLiveViewport(
-      host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true, force },
+      host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true, force, sceneExposureClip: host._modeSceneClip ?? undefined },
     );
     return;
   }
@@ -315,7 +331,7 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
     if (!next || !root) return;
     if (!state.painted) state.painted = next;
     state.anchor = paintLiveViewport(
-      root, state.painted, next, state.anchor, { keepSceneLayer: true },
+      root, state.painted, next, state.anchor, { keepSceneLayer: true, sceneExposureClip: host._modeSceneClip ?? undefined },
     );
   });
 }
@@ -338,7 +354,7 @@ export function commitHouseplanViewport(value: object, keepSceneLayer = false): 
   // the middle of that session (#579). The terminal Lit frame passes false and
   // restores the authored, transform-free idle DOM.
   state.anchor = paintLiveViewport(root, state.painted, state.painted, state.anchor, {
-    force: true, keepSceneLayer,
+    force: true, keepSceneLayer, sceneExposureClip: host._modeSceneClip ?? undefined,
   });
 }
 

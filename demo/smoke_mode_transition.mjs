@@ -2,6 +2,7 @@
 // geometry and camera. This smoke deliberately observes real animation frames;
 // it never asserts an exact wall-clock millisecond.
 import { launch, checkAll, finish } from './serve.mjs';
+import { collectModeTransitionSamples } from './performance/mode-transition.mjs';
 
 const { page, browser } = await launch({ width: 820, height: 760 });
 page.on('console',message=>{if(message.text().startsWith('Hidden projection'))console.log(message.text());});
@@ -65,6 +66,13 @@ const result = await page.evaluate(async () => {
       && !root().querySelector('.stage').classList.contains('mode-transition'),
   };
 });
+
+// Numeric timings are diagnostics only; the existing behavioral checks above
+// remain the only smoke assertions.
+let diagnostics;
+try { diagnostics=await page.evaluate(collectModeTransitionSamples,{fixture:"demo-smoke",samples:1}); }
+catch(error) { diagnostics={status:"unavailable",diagnostic:true,reason:error.message}; }
+console.log(JSON.stringify({modeTransitionDiagnostics:diagnostics}));
 
 // The projection crossing retains one real scene and switches it while faded;
 // narrow and reduced-motion paths must leave neither a veil nor an inert stage.

@@ -1,3 +1,4 @@
+import { createWallNodeEditor } from './wall-node-card-adapter';
 import { rotationAngle } from './rotation-angle';
 import { prepareDialogReturnFocus } from './dialog-return-focus';
 import { captureToast, type ToastCallback } from './toast-presentation';
@@ -590,6 +591,7 @@ export interface HouseplanEditorHostPort {
   _contourClosed: boolean;
   _curSpaceCfg: any;
   _currentModeVisual: (mode?: HouseplanMode) => ModeVisualState | null;
+  _captureModePresentationSource(): void;
   _cursorPt: number[] | null;
   _decorBoxOf: (shape: DecorShape) => DecorBox | null;
   _decorDraft: { kind: "line" | "rect" | "ellipse"; a: number[]; b: number[]; pid: number; } | null;
@@ -695,6 +697,8 @@ export interface HouseplanEditorHostPort {
   _kioskScale: { icon: number; font: number; };
   _isoEnabled: boolean;
   _lastValidStageSize: [number, number] | null;
+  _modeSceneFinishPending: boolean;
+  _renderPixelsPerUnit: (view: { w: number }) => number;
   _layout: DeviceLayout;
   readonly _layoutRev: number;
   _logicalViewCenter: () => { x: number; y: number; } | null;
@@ -1006,8 +1010,6 @@ export class HouseplanEditorRuntime {
   public readonly roomGear: RoomGearDragController;
   private readonly wallDialogGesture = new WallThicknessDialogGesture();
   public nodeMove: WallNodeEditor | null = null;
-  private _nodeMoveLoad: Promise<void> | null = null;
-  private _nodeMoveEpoch = 0;
   private readonly _decorImages: DecorImageEditor<SpaceGeometryState | null>;
   // #592: маркерный диалог уехал в src/editors/marker-dialog.ts и обращается
   // к контроллеру оттуда. Остальной класс использует `public _x` — поле
@@ -1137,6 +1139,16 @@ export class HouseplanEditorRuntime {
     host._resize = new ResizeController<
       ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
     >();
+    this.prepareModeScene();
+  }
+  private _preparedNodeScene: readonly unknown[] | null = null;
+  public prepareModeScene(): void {
+    if (!this.host._canEdit || this.host._kiosk || !this.host.isConnected || !this.host.renderRoot) return;
+    const inputs = [this.host._space, this.host._cfgEpoch, this.host._cfgRev, this.host._serverCfg, this.host._cellCm, this.host._gridPitch];
+    if (this._preparedNodeScene?.every((value, index) => value === inputs[index])) return;
+    this._preparedNodeScene = inputs;
+    this._loadNodeMove();
+    this.nodeMove?.prepare();
   }
   private _renderWallNodes(): TemplateResult | typeof nothing {
     if (this.host._mode !== 'plan' || !this.host._canEdit || this.host._kiosk) {
@@ -1147,11 +1159,8 @@ export class HouseplanEditorRuntime {
   }
     /** Writer-only Plan tools expose node menus; handles still require Select. */
   private _loadNodeMove(): void {
-    if (this.nodeMove || this._nodeMoveLoad) return;
-    const showToast = captureToast(this.host);
-    const epoch = this._nodeMoveEpoch;
-    this._nodeMoveLoad = import('./wall-node-card-adapter').then(({ createWallNodeEditor }) => {
-      if (epoch !== this._nodeMoveEpoch || !this.host.isConnected) return;
+    if (this.nodeMove || !this.host.isConnected) return;
+    try {
       this.nodeMove = createWallNodeEditor<SpaceGeometryState>(this.host, {
         point: ev => this._svgPoint(ev),
         snapshot: space => this._geometrySnapshotFromConfig({ spaces: [space] }, space.id),
@@ -1167,14 +1176,9 @@ export class HouseplanEditorRuntime {
               || this.physicalGesture.active || this.backdropGesture.active),
         },
       });
-      this.host.requestUpdate();
-    }).catch(() => { showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe'); })
-      .finally(() => {
-        this._nodeMoveLoad = null;
-        // A Select return before the old import settles needs a new render;
-        // the retired epoch must neither install nor strand its controller.
-        if (epoch !== this._nodeMoveEpoch && this.host.isConnected) this.host.requestUpdate();
-      });
+    } catch {
+      captureToast(this.host)(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe');
+    }
   }
 private _publishGesture(phase: 'begin' | 'move' | 'end'): void {
     const boundary = this._gestureBoundary;
@@ -1194,7 +1198,7 @@ public _commitLiveEditor(deviceId?: string): void {
   this.properties.syncNative();
   if (this.host.isConnected) this.nodeMove?.paint();
 }
-public _disposeLiveEditor(): void { this.decorLine.reset(); this.properties.dispose(); this.optimizationUndo.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { this.decorLine.reset(); this.properties.dispose(); this.optimizationUndo.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
 public _visualCommand<T>(command: () => Promise<T>): Promise<T> { return this.properties.command(command); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
@@ -1245,13 +1249,15 @@ public warmRoomDraft() {
 /** Natural header height belongs to the loaded editor's mode-layout boundary.
  * Route departure can measure View before Lit has replaced the editor DOM. */
 public _modeHeaderHeight(mode: HouseplanMode): number {
-    const panelHeight = this.host._panelHeaderNaturalHeight(mode);
-    if (panelHeight !== null) return panelHeight;
     const root = this.host.renderRoot;
     const card = root.querySelector('ha-card[data-hp-mode]');
     const head = root.querySelector('.hdr > .head') as HTMLElement | null;
     if (!card || !head) return 0;
     const previousMode = card.getAttribute('data-hp-mode');
+    if (previousMode !== mode) {
+      const measured = this.host._panelHeaderNaturalHeight(mode);
+      if (measured !== null) return measured;
+    }
     const previousHeight = head.style.height;
     try {
       card.setAttribute('data-hp-mode', mode);
@@ -1317,6 +1323,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       ? { ...capturedVisual, toolbarContentOpacity: this.host._reducedMotion ? 1 : 0.35 }
       : capturedVisual;
     this.host._cancelModeTransition(false);
+    this.host._captureModePresentationSource();
     this.host._editorSecondary.closeForNavigation();
     // A live decor transform is a transaction. Switching tabs must cancel and
     // restore it, not merely forget its pointer record after the config has
@@ -5595,6 +5602,10 @@ public _renderBackdropDialog(): TemplateResult {
   }
 
 public _cssPxToRender(px: number): number {
+    if (this.host._modeTransitionBusy || this.host._modeSceneFinishPending) {
+      const view = this.host._viewOr(this.host._baseVb());
+      return px / this.host._renderPixelsPerUnit(view);
+    }
     const stage = this.host._stageEl;
     const view = this.host._viewOr(this.host._baseVb());
     if (!stage?.clientWidth || !stage.clientHeight) return (this.host._gridPitch / 8) * px;
@@ -10894,9 +10905,8 @@ public _renderOpeningDialog(): TemplateResult {
   }
 
 public _gridLevels(): { fine: number; coarse: number } | null {
-    const stage = this.host._stageEl;
     const v = this.host._viewOr(this.host._baseVb());
-    const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
+    const px = this.host._renderPixelsPerUnit(v);
     return gridLevels(this.host._gridPitch, px);
   }
 
@@ -10931,8 +10941,7 @@ public _renderPhysicalEditorLayer(): TemplateResult {
     if (!space) return svg`` as unknown as TemplateResult;
     const g = this.host._gridPitch;
     const view = this.host._viewOr(this.host._baseVb());
-    const stage = this.host._stageEl;
-    const unitsPerPx = stage?.clientWidth ? view.w / stage.clientWidth : g / 8;
+    const unitsPerPx = 1 / this.host._renderPixelsPerUnit(view);
     const touchStroke = 24;
     const handleR = Math.max(g * 0.22, unitsPerPx * 8);
     const rotateHandleR = Math.max(handleR, unitsPerPx * 12);

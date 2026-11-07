@@ -86,6 +86,7 @@ export class DeviceContactRenderer {
   }
 
   public clear(): void {
+    this.preparedFont = null;
     this.reflowed=false;
     this.retireElements(); this.layout.clear(); this.authored.clear();
     this.fontDocument?.fonts?.removeEventListener('loadingdone',this.fontsChanged);
@@ -101,6 +102,14 @@ export class DeviceContactRenderer {
     this.screen = null;
   }
 
+  private preparedFont: { root: ParentNode; value: string } | null = null;
+  private fontKey(root: ParentNode): string {
+    const shadow = root as ShadowRoot, host = shadow.host;
+    const font = host ? shadow.ownerDocument.defaultView?.getComputedStyle(host) : null;
+    return font ? [font.fontFamily, font.fontWeight, font.fontStyle, font.fontStretch, font.letterSpacing].join('|') : '';
+  }
+  /** Read in the retained endpoint's measure batch, before terminal DOM writes. */
+  public prepare(root: ParentNode): void { this.preparedFont = { root, value: this.fontKey(root) }; }
   public sync(root: ParentNode, frame: DeviceContactFrame): boolean {
     if (!frame.enabled) { const active = !!this.scene; if (active) this.clear(); return active; }
     const turned = this.rotation !== (frame.rotation ?? 0);
@@ -113,9 +122,8 @@ export class DeviceContactRenderer {
       this.fontDocument=doc;
       doc?.fonts?.addEventListener('loadingdone',this.fontsChanged);
     }
-    const host=(root as ShadowRoot).host;
-    const font=host?doc.defaultView?.getComputedStyle(host):null;
-    const context=font?[font.fontFamily,font.fontWeight,font.fontStyle,font.fontStretch,font.letterSpacing].join('|'):'';
+    const context = this.preparedFont?.root === root ? this.preparedFont.value : this.fontKey(root);
+    this.preparedFont = null;
     if(context!==this.fontContext){this.metrics.clear();this.fontContext=context;this.frameKey='';}
     const floor = frame.floor ? deviceContactFloor(frame.floor.config, frame.floor.model) : null;
     if (floor && !floor.safe) { const active = !!this.scene; if (active) this.clear(); return active; }

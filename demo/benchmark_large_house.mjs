@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch } from './serve.mjs';
+import { collectModeTransitionSamples } from './performance/mode-transition.mjs';
 import { LARGE_HOUSE_COUNTS, makeLargeHouseFixture } from './fixtures/large-house.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { ensureHarnessEditorRuntime } from './editor-runtime-compat.mjs';
@@ -1465,7 +1466,8 @@ try {
           },
         } : {}),
       };
-      card.remove();
+      if (profile === 'large-house-v1' && sample >= 0) window.__hpModeDiagnosticCard = card;
+      else card.remove();
       await frame();
       return result;
     }, {
@@ -1475,6 +1477,19 @@ try {
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
       requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo, requiresOffFloorIsolation, planRotation,
     });
+    if (profile === 'large-house-v1' && measuredSample >= 0) {
+      try {
+        await page.emulateMedia({ reducedMotion: 'no-preference' });
+        await page.waitForFunction(() => window.__hpModeDiagnosticCard?._reducedMotion === false);
+        row.modeTransitions = await page.evaluate(collectModeTransitionSamples, { fixture: profile, samples: 1 });
+      } catch (error) {
+        row.modeTransitions = { status: 'unavailable', diagnostic: true, reason: error.message, rows: [] };
+        console.log('Диагностика переходов недоступна: ' + error.message);
+      } finally {
+        await page.evaluate(() => { window.__hpModeDiagnosticCard?.remove(); delete window.__hpModeDiagnosticCard; });
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+      }
+    }
     // #520: диагностика печатается в лог прогона и в запись не попадает.
     const { bootDiag, ...measured } = row;
     if (bootDiag) {
@@ -1545,6 +1560,13 @@ const report = {
     stage3Required: requireStage3,
   } : {}),
   rows,
+  ...(profile === 'large-house-v1' ? { modeTransitionDiagnostics: {
+    status: rows.every(row => row.modeTransitions?.status === 'measured') ? 'measured' : 'unavailable',
+    diagnostic: true, viewport, deviceScaleFactor: 1, reducedMotion: false,
+    cadence: 'RAF samples are proxies; actual presentation requires an addressed trace',
+    rows: rows.flatMap(row => row.modeTransitions?.rows ?? []),
+    failures: rows.filter(row => row.modeTransitions?.status !== 'measured').map(row => row.modeTransitions?.reason ?? 'not measured'),
+  } } : {}),
   note: `Compare with a base-SHA report captured by the same runner and evaluate the ${profile} budget.`,
 };
 

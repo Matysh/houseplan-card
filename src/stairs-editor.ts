@@ -1,3 +1,4 @@
+import { renderStairSymbol, renderStairLayer } from './stairs-symbol';
 import { html, nothing, svg, type TemplateResult } from 'lit';
 import { scheduleHouseplanEditor } from './live-editor';
 import { canonicalizeConfigGeometry } from './coordinate-canonicalization';
@@ -613,27 +614,17 @@ export class StairEditorRuntime {
         this.owner.requestUpdate();
       }
     };
-    return svg`<g class="hp-stair ${selected ? 'selected' : ''} ${inputEnabled ? 'input-enabled' : ''} ${draft ? 'draft' : ''}"
-      data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
-      data-target-state=${targetState}
-      style=${stairStyleVars(
-        stair, this.owner._cellCm, this.owner._gridPitch, this.creationVisualStyle(),
-      )}
-      role="img"
-      aria-label=${this.owner._t('markup.stairs')}
-      @dblclick=${(event: MouseEvent) => {
+    return renderStairSymbol({
+      stair, geometry, markup,
+      classes: (selected ? 'selected' : '') + ' ' + (inputEnabled ? 'input-enabled' : '') + ' ' + (draft ? 'draft' : ''),
+      targetState, style: stairStyleVars(stair, this.owner._cellCm, this.owner._gridPitch, this.creationVisualStyle()),
+      role: 'img', label: this.owner._t('markup.stairs'),
+      down: event => this.pointerDown(event, stair, 'move'), click: select,
+      doubleClick: event => {
         event.stopPropagation();
         if (this.owner._mode === 'plan' && !draft) this.openDialog(stair);
-      }}>
-      <polygon class="hp-stair-outline" points=${markup.outline}></polygon>
-      <polygon class="hp-stair-hit" points=${markup.outline}
-        @pointerdown=${(event: PointerEvent) => this.pointerDown(event, stair, 'move')}
-        @click=${select}></polygon>
-      ${geometry.trapezoid.map((line) => svg`<line class="hp-stair-trapezoid"
-        x1=${line.a[0]} y1=${line.a[1]} x2=${line.b[0]} y2=${line.b[1]}></line>`)}
-      ${markup.treads ? svg`<path class="hp-stair-tread" d=${markup.treads}></path>` : nothing}
-      <path class="hp-stair-arrow" d=${geometry.arrowPath}></path>
-    </g>` as unknown as TemplateResult;
+      },
+    });
   }
 
   public renderLayer(): TemplateResult {
@@ -645,7 +636,7 @@ export class StairEditorRuntime {
     const hover = this.hoverStair;
     const preview = hover ? svg`<g class="hp-stair-placement-preview" pointer-events="none">
       ${this.renderStair(hover, spaceIds, false, true)}</g>` : nothing;
-    return svg`<g class="hp-stairs-layer">${items}${draft}${preview}</g>` as unknown as TemplateResult;
+    return renderStairLayer(items, draft, preview);
   }
 
   /**

@@ -15,6 +15,8 @@ export interface ModeVisualState {
   headerHeight: number;
   /** Existing stage offset, including the bounded outer HA header allowance. */
   headerBudget: number;
+  /** Unrounded chrome outside the head/toolbar; avoids subtracting rounded totals. */
+  headerFixedBudget?: number;
   editorChromeHeight: number;
   stageWidth: number;
   stageHeight: number;
@@ -47,11 +49,26 @@ export interface ModeTransitionState {
 /** Camera endpoints use the same integer client-height basis as the settled
  * stage. Native HA toolbar text can contribute fractional CSS pixels. */
 export function modeStageHeight(
-  from: Pick<ModeVisualState, 'stageHeight' | 'headerHeight' | 'editorChromeHeight'>,
+  from: Pick<ModeVisualState, 'stageHeight' | 'headerHeight' | 'editorChromeHeight'>
+    & Partial<Pick<ModeVisualState, 'headerBudget' | 'headerFixedBudget'>>,
   headerHeight: number, editorChromeHeight = 0,
 ): number {
+  if (from.headerFixedBudget !== undefined && from.headerBudget !== undefined)
+    return Math.max(1, from.stageHeight + from.headerBudget
+      - Math.round(from.headerFixedBudget + headerHeight + editorChromeHeight));
   return Math.max(1, Math.round(from.stageHeight + from.headerHeight
     + from.editorChromeHeight - headerHeight - editorChromeHeight));
+}
+
+/** A fixed source raster exposes only the larger endpoint's viewport.
+ * Ordinary gestures retain their existing 25% window. */
+export function modeRasterExposureClip(
+  from: Pick<ModeVisualState, 'stageWidth' | 'stageHeight'>,
+  to: Pick<ModeVisualState, 'stageWidth' | 'stageHeight'>,
+): string {
+  const x = Math.max(25, ((to.stageWidth - from.stageWidth) / 2 + 1) / Math.max(1, from.stageWidth) * 100);
+  const y = Math.max(25, ((to.stageHeight - from.stageHeight) / 2 + 1) / Math.max(1, from.stageHeight) * 100);
+  return `inset(-${y}% -${x}%)`;
 }
 
 export interface ModeTransitionHooks {
@@ -157,6 +174,7 @@ export function interpolateModeVisualState(
     presentedMode: p < 0.5 ? from.presentedMode : to.presentedMode,
     headerHeight: lerp(from.headerHeight, to.headerHeight, p),
     headerBudget: lerp(from.headerBudget, to.headerBudget, p),
+    headerFixedBudget: from.headerFixedBudget,
     editorChromeHeight: lerp(from.editorChromeHeight, to.editorChromeHeight, p),
     stageWidth,
     stageHeight,
@@ -186,7 +204,7 @@ export class ModeTransitionController {
   ) {}
 
   public get state(): ModeTransitionState | null { return this._state; }
-  public get active(): boolean { return this._state?.phase === 'running' || this._state?.phase === 'preparing'; }
+  public get active(): boolean { return this._state !== null; }
   public get presented(): ModeVisualState | null { return this._state?.presented || null; }
 
   public start(
@@ -204,9 +222,12 @@ export class ModeTransitionController {
       startedAt: now, duration: Math.max(0, duration), targetMode,
     };
     if (duration <= 0) {
-      this._hooks.frame(this._state);
-      this._hooks.settled(this._state);
-      this._state = null;
+      const terminal = this._state;
+      this._hooks.frame(terminal);
+      if (this._state?.token === token) {
+        this._state = null;
+        this._hooks.settled(terminal);
+      }
       return token;
     }
     this._hooks.frame(this._state);
@@ -222,9 +243,14 @@ export class ModeTransitionController {
         this._raf = this._clock.requestFrame(tick);
         return;
       }
-      this._raf = 0;
-      this._hooks.settled(current);
-      if (this._state?.token === token) this._state = null;
+      // frame(to) gets a presentation opportunity. The same RAF/token owns
+      // cancellation and retargeting while this terminal frame is retained.
+      this._raf = this._clock.requestFrame(() => {
+        if (this._state?.token !== token) return;
+        this._raf = 0;
+        this._state = null;
+        this._hooks.settled(current);
+      });
     };
     this._raf = this._clock.requestFrame(tick);
     return token;

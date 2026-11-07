@@ -16,7 +16,7 @@ const STAIR_COUNT = 250;
 
 const round = (value) => Number(value.toFixed(6));
 
-const roomGrid = (floor) => {
+const roomGrid = (floor, count = ROOMS_PER_FLOOR) => {
   const rooms = [];
   const left = 0.04;
   const top = 0.04;
@@ -37,7 +37,7 @@ const roomGrid = (floor) => {
       });
     }
   }
-  return rooms;
+  return rooms.slice(0, count);
 };
 
 const wallSegments = (rooms) => {
@@ -150,7 +150,7 @@ const entityKinds = [
   ['vacuum', 'docked'],
 ];
 
-const makeRuntime = (spaces) => {
+const makeRuntime = (spaces, deviceCount = DEVICE_COUNT) => {
   const devices = {};
   const entities = {};
   const states = {};
@@ -158,7 +158,7 @@ const makeRuntime = (spaces) => {
   const layout = {};
   const roomRefs = spaces.flatMap((space) => space.rooms.map((room) => ({ space, room })));
   for (const { room } of roomRefs) areas[room.area] = { area_id: room.area, name: room.name };
-  for (let index = 0; index < DEVICE_COUNT; index++) {
+  for (let index = 0; index < deviceCount; index++) {
     const { space, room } = roomRefs[index % roomRefs.length];
     const [domain, baseState] = entityKinds[index % entityKinds.length];
     const deviceId = `perf-device-${index}`;
@@ -209,15 +209,27 @@ export const LARGE_HOUSE_COUNTS = Object.freeze({
   stairs: STAIR_COUNT,
 });
 
-export const makeLargeHouseFixture = ({ includeStairs = true } = {}) => {
-  let openingsLeft = OPENING_COUNT;
-  let partitionsLeft = PARTITION_COUNT;
-  let columnsLeft = COLUMN_COUNT;
-  let decorLeft = DECOR_COUNT;
-  const spaces = Array.from({ length: FLOOR_COUNT }, (_, floor) => {
-    const rooms = roomGrid(floor);
+export const makeLargeHouseFixture = ({
+  includeStairs = true, floors = FLOOR_COUNT, roomsPerFloor = ROOMS_PER_FLOOR,
+  devices = DEVICE_COUNT, openings = OPENING_COUNT, partitions = PARTITION_COUNT,
+  columns = COLUMN_COUNT, decor = DECOR_COUNT, stairs = STAIR_COUNT,
+} = {}) => {
+  for (const [name, value, minimum] of [
+    ['floors', floors, 1], ['roomsPerFloor', roomsPerFloor, 1], ['devices', devices, 0],
+    ['openings', openings, 0], ['partitions', partitions, 0], ['columns', columns, 0],
+    ['decor', decor, 0], ['stairs', stairs, 0],
+  ]) if (!Number.isInteger(value) || value < minimum) throw Error('Invalid fixture count: ' + name);
+  if (roomsPerFloor > ROOMS_PER_FLOOR) throw Error('Fixture room grid has at most 20 rooms');
+  const counts = { floors, rooms: floors * roomsPerFloor, devices, openings, partitions,
+    columns, decor, stairs: includeStairs ? stairs : 0 };
+  let openingsLeft = openings;
+  let partitionsLeft = partitions;
+  let columnsLeft = columns;
+  let decorLeft = decor;
+  const spaces = Array.from({ length: floors }, (_, floor) => {
+    const rooms = roomGrid(floor, roomsPerFloor);
     const segments = wallSegments(rooms);
-    const floorsRemaining = FLOOR_COUNT - floor;
+    const floorsRemaining = floors - floor;
     const openingCount = Math.ceil(openingsLeft / floorsRemaining);
     const partitionCount = Math.ceil(partitionsLeft / floorsRemaining);
     const columnCount = Math.ceil(columnsLeft / floorsRemaining);
@@ -247,10 +259,10 @@ export const makeLargeHouseFixture = ({ includeStairs = true } = {}) => {
       partitions: makePartitions(floor, rooms, partitionCount),
       wall_columns: makeColumns(floor, rooms, columnCount),
       decor: makeDecor(floor, decorCount),
-      ...(includeStairs && floor === 0 ? { stairs: makeStairs(floor, STAIR_COUNT) } : {}),
+      ...(includeStairs && floor === 0 ? { stairs: makeStairs(floor, stairs) } : {}),
     };
   });
-  const runtime = makeRuntime(spaces);
+  const runtime = makeRuntime(spaces, devices);
   const lightMarkers = Object.entries(runtime.entities)
     .filter(([entityId]) => entityId.startsWith('light.'))
     .map(([_entityId, entity]) => ({
@@ -261,6 +273,6 @@ export const makeLargeHouseFixture = ({ includeStairs = true } = {}) => {
   return {
     config: { spaces, markers: lightMarkers, settings: { glow_radius_cm: 300 } },
     ...runtime,
-    counts: LARGE_HOUSE_COUNTS,
+    counts,
   };
 };

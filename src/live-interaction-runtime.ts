@@ -105,6 +105,7 @@ export class LiveRuntime {
     return pending;
   }
   public viewport(now = false, force = false): void { scheduleHouseplanViewport(this.host, now, force); }
+  public prepareContacts(): void { this.contacts.prepare((this.host as { renderRoot: ParentNode }).renderRoot); }
   public syncContacts(): void { syncHouseplanDeviceContacts(this.host, this.contacts); }
   public hover(): void { syncHouseplanHover(this.host); }
   public devicePointerTip(event: PointerEvent, device: DevItem): void {

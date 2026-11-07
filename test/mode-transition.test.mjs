@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ModeTransitionController,
-  modeStageHeight,
+  modeStageHeight, modeRasterExposureClip,
   interpolateModeVisualState,
   viewBoxFromViewport,
   viewportFromViewBox,
@@ -99,6 +99,11 @@ test('controller is deterministic, settles exactly and leaves no scheduled frame
   step(50);
   assert.ok(controller.presented.stageHeight > 504 && controller.presented.stageHeight < 600);
   step(100);
+  assert.deepEqual(controller.presented, to);
+  assert.equal(settled, null, 'the terminal frame remains visible until the next RAF');
+  assert.equal(controller.active, true);
+  assert.equal(callbacks.size, 1);
+  step(116);
   assert.deepEqual(settled, to);
   assert.equal(controller.active, false);
   assert.equal(callbacks.size, 0);
@@ -160,4 +165,62 @@ test('retarget starts from the actually presented frame and invalidates old RAF'
 
   assert.deepEqual(frames.at(-1), presented);
   assert.equal(callbacks.size, 1, 'the previous generation cannot retain a scheduled frame');
+});
+
+test('#1344 terminal-frame retarget/cancel/dispose cannot deliver an old finish', () => {
+  let now = 0, sequence = 0;
+  const callbacks = new Map(), settled = [];
+  const clock = { now: () => now,
+    requestFrame: cb => { callbacks.set(++sequence, cb); return sequence; },
+    cancelFrame: id => callbacks.delete(id) };
+  const controller = new ModeTransitionController({ frame: () => {}, settled: s => settled.push(s.targetMode) }, clock);
+  const view = endpoint('view', 0, 600, { x: 0, y: 0, w: 800, h: 600 });
+  const plan = endpoint('plan', 120, 480, { x: 40, y: 30, w: 720, h: 432 });
+  const step = time => { now = time; const [id, cb] = callbacks.entries().next().value; callbacks.delete(id); cb(time); };
+  controller.start(view, plan, 'plan', 100);
+  step(100);
+  assert.deepEqual(controller.presented, plan);
+  assert.equal(controller.active, true);
+  assert.deepEqual(settled, []);
+  const staleFinish = callbacks.values().next().value;
+  controller.start(plan, view, 'view', 100);
+  staleFinish(101);
+  assert.deepEqual(settled, []);
+  assert.equal(callbacks.size, 1);
+  step(200);
+  controller.cancel(true);
+  assert.deepEqual(settled, ['view']);
+  assert.equal(callbacks.size, 0);
+  controller.start(view, plan, 'plan', 100);
+  step(300);
+  const disposedFinish = callbacks.values().next().value;
+  controller.dispose();
+  disposedFinish(301);
+  assert.deepEqual(settled, ['view']);
+  assert.equal(controller.active, false);
+  assert.equal(callbacks.size, 0);
+});
+
+test('#1344 fixed raster exposure covers a wider endpoint without unbounded promotion', () => {
+  const clip=modeRasterExposureClip({stageWidth:540,stageHeight:600},{stageWidth:900,stageHeight:700});
+  const [y,x]=clip.match(/-([\d.]+)%/g).map(Number.parseFloat).map(Math.abs);
+  assert.equal(y,25);
+  assert.ok(x>33.333&&x<34);
+});
+
+test('#1344 atomic completion releases busy before terminal layout measurement', () => {
+  const from=endpoint('view',0,600,{x:0,y:0,w:800,h:600});
+  const to=endpoint('plan',120,480,{x:0,y:0,w:800,h:480});
+  let completed=0;
+  const controller=new ModeTransitionController({
+    frame:state=>assert.equal(state.presented,to),
+    settled:state=>{completed++;assert.equal(controller.active,false);assert.equal(state.targetMode,'plan');},
+  },{now:()=>0,requestFrame:()=>{throw Error('atomic transition scheduled a frame');},cancelFrame:()=>{}});
+  controller.start(from,to,'plan',0);
+  assert.equal(completed,1);
+});
+
+test('#1344 target height rounds the fixed chrome once instead of subtracting rounded totals', () => {
+  const from={stageHeight:743,headerHeight:55.8,editorChromeHeight:0,headerBudget:57,headerFixedBudget:1.4};
+  assert.equal(modeStageHeight(from,71.2),727);
 });

@@ -5,6 +5,8 @@ export const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
 export interface EditorRuntimeModule<Runtime> {
   readonly fingerprint: string;
+  /** Current locale/dependencies, with no construction or installation. */
+  prepare?(): Promise<unknown>;
   create(): Runtime;
 }
 
@@ -32,7 +34,7 @@ export function safeRuntimeDiagnostic(
 
 export interface EditorRuntimeLoaderOptions<Runtime> {
   readonly expectedFingerprint: string;
-  readonly load: (attempt: 0 | 1) => Promise<EditorRuntimeModule<Runtime>>;
+  readonly load: (attempt: 0 | 1, fresh?: boolean) => Promise<EditorRuntimeModule<Runtime>>;
   readonly install: (runtime: Runtime) => void;
   readonly stateChanged?: (state: EditorRuntimeLoaderState) => void;
   readonly failed?: (error: unknown, info: EditorRuntimeLoaderFailure) => void;
@@ -81,11 +83,48 @@ export class EditorRuntimeLoader<Runtime> {
   private _inFlight: Promise<boolean> | null = null;
   /** A non-terminal failure waits for the next explicit intent (#757). */
   private _awaitingIntent = false;
+  private _preloaded: EditorRuntimeModule<Runtime> | null = null;
+  private _preloading: Promise<EditorRuntimeModule<Runtime> | null> | null = null;
+  private _preloadFailed = false;
 
   public constructor(private readonly options: EditorRuntimeLoaderOptions<Runtime>) {}
 
   public get state(): EditorRuntimeLoaderState {
     return this._state;
+  }
+
+  /** Intent may warm code and dictionaries, never runtime state or UI. */
+  public preload(): Promise<boolean> {
+    if (this._state === 'ready') return Promise.resolve(true);
+    if (this._state === 'failed' || this._awaitingIntent) return Promise.resolve(false);
+    if (this._inFlight) return this._inFlight;
+    if (this._preloading) return this._preloading.then(Boolean);
+    const pending: Promise<EditorRuntimeModule<Runtime> | null> = Promise.resolve().then(async () => {
+      try {
+        const module = this._preloaded ?? await this.options.load(0, this._preloadFailed);
+        this._checkFingerprint(module);
+        await module.prepare?.();
+        this._preloaded = module;
+        return module;
+      } catch {
+        // Chromium retains a rejected import. Explicit entry gets a fresh
+        // attempt 0 as well as the ordinary retry, without a hover toast.
+        this._preloaded = null;
+        this._preloadFailed = true;
+        return null;
+      } finally {
+        if (this._preloading === pending) this._preloading = null;
+      }
+    });
+    this._preloading = pending;
+    return pending.then(Boolean);
+  }
+
+  private _checkFingerprint(module: EditorRuntimeModule<Runtime>): void {
+    if (module.fingerprint !== this.options.expectedFingerprint) {
+      throw new FingerprintMismatchError('Editor runtime fingerprint mismatch: expected '
+        + this.options.expectedFingerprint + ', got ' + module.fingerprint);
+    }
   }
 
   /** `intent`: `explicit` — a user action or an opening; `reconcile` — a render
@@ -108,13 +147,15 @@ export class EditorRuntimeLoader<Runtime> {
     let sawMismatch = false;
     for (const attempt of [0, 1] as const) {
       try {
-        const module = await this.options.load(attempt);
-        if (module.fingerprint !== this.options.expectedFingerprint) {
-          throw new FingerprintMismatchError(
-            `Editor runtime fingerprint mismatch: expected ${this.options.expectedFingerprint}, got ${module.fingerprint}`,
-          );
-        }
+        const warm = attempt === 0
+          ? this._preloading ? await this._preloading : this._preloaded : null;
+        const module = warm ?? await this.options.load(attempt, attempt === 0 && this._preloadFailed);
+        this._checkFingerprint(module);
+        // Hover may precede a language change. Resolve that locale before install.
+        await module.prepare?.();
         const runtime = module.create();
+        this._preloaded = module;
+        this._preloadFailed = false;
         this.options.install(runtime);
         this._setState('ready');
         return true;

@@ -58,44 +58,15 @@ export const planStyles = css`
       inset: auto;
       left: 50%; top: 50%; translate: -50% -50%;
     }
-    .stage.mode-transition .hp-view-only-layer,
-    .stage.mode-transition .hp-day-cycle-env,
-    .stage.mode-transition .hp-moon-sky { opacity: var(--hp-mode-view-weight) !important; }
-    .stage.mode-transition .hp-editor-only-layer { opacity: var(--hp-mode-editor-weight) !important; }
-    .stage.mode-transition .hp-plan-only-layer { opacity: var(--hp-mode-plan-weight) !important; pointer-events:none; }
-    /* Endpoint alpha is premultiplied before colour mixing (#746). Native
-       room transitions must not compete with the common mode progress. */
-    .stage.mode-paint-settling .room { transition:none; }
-    .stage.mode-transition .room {
-      transition:none;
-      fill:color-mix(in srgb,
-        color-mix(in srgb,var(--room-fill,transparent) calc(var(--room-fill-op,0) * 100%),transparent) calc((1 - var(--hp-mode-plan-weight)) * 100%),
-        color-mix(in srgb,var(--hp-room-outline-color) calc(var(--hp-room-outline-fill-alpha) * 100%),transparent) calc(var(--hp-mode-plan-weight) * 100%));
-      fill-opacity:1;
-      stroke:color-mix(in srgb,
-        color-mix(in srgb,var(--room-stroke,transparent) calc(var(--room-stroke-op,0) * 100%),transparent) calc((1 - var(--hp-mode-plan-weight)) * 100%),
-        color-mix(in srgb,var(--hp-room-outline-color) calc(var(--hp-room-outline-stroke-alpha) * 100%),transparent) calc(var(--hp-mode-plan-weight) * 100%));
-      stroke-opacity:1;
-    }
+    .stage.mode-transition :is(.room,.hp-mode-room),
+    .stage.mode-transition .dev { transition:none; }
+    .stage.mode-transition .hp-mode-scene-svg { overflow:visible;clip-path:inset(-25%); }
     /* Adjacent room regions partition one floor. Add their antialiased
        coverage in an isolated layer instead of source-over darkening the
        fractional shared pixel. Actual regions never overlap; each room owns
        its color and alpha once, including its opening continuation. */
     .room-floor-paint-layer { isolation:isolate; }
-    .room-floor-paint-layer > .room { mix-blend-mode:plus-lighter; }
-    .stage.mode-transition .devlayer .dev {
-      filter:opacity(calc(1 - .65 * var(--hp-mode-plan-weight) / var(--hp-mode-architecture-opacity)));
-    }
-    .stage.mode-transition .glow-pools-frame,
-    .stage.mode-transition .led-fields { display: block; opacity: var(--hp-mode-view-weight); }
-    .stage.mode-transition .hp-view-only-layer,
-    .stage.mode-transition .hp-editor-only-layer {
-      pointer-events: none;
-      will-change: opacity;
-    }
-    .stage.mode-transition .hp-paper {
-      fill: var(--hp-mode-paper) !important;
-    }
+    .room-floor-paint-layer > :is(.room,.hp-mode-room) { mix-blend-mode:plus-lighter; }
     /* Four-phase environment (#146): constant layers cross-fade because CSS
        gradients themselves are not reliably interpolated. Everything stays
        behind the plan; the plan tree is never dimmed, tinted or faded. */
@@ -203,13 +174,29 @@ export const planStyles = css`
        particular); the old descendant-wide stage-SVG selector stretched every
        preview over the tray and stacked them into one blocking artefact. The
        vacuum trail/fit overlays have their own explicit geometry below. */
-    .zoomwrap > svg {
+    .zoomwrap > svg,
+    .hp-mode-crossfade > svg {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       display: block;
     }
+    [data-hp-mode-layer="room-ink"], [data-hp-mode-layer="paper-ink"] { opacity:0; }
+    .stage:not(.mode-view) [data-hp-mode-layer="zero-view"],
+    .stage.mode-view [data-hp-mode-layer="zero-editor"],
+    .stage.mode-view [data-hp-mode-layer="editor-guides"],
+    .stage:not(.mode-plan) [data-hp-mode-layer="plan-base"],
+    .stage:not(.mode-plan) [data-hp-mode-layer="plan-ink"],
+    .stage:not(.mode-view) [data-hp-mode-layer="glow"],
+    .stage:not(.mode-view) [data-hp-mode-layer="led"] { opacity:0; }
+    .stage.mode-decor:not(.dtool-backdrop) [data-hp-mode-layer="backdrop"] { opacity:.5; }
+    .stage.mode-plan [data-hp-mode-layer="rooms"] { opacity:0; }
+    .stage.mode-plan [data-hp-mode-layer="room-ink"] { opacity:1; }
+    .stage:not(.mode-view) [data-hp-mode-layer="paper"] { opacity:0; }
+    .stage:not(.mode-view) [data-hp-mode-layer="paper-ink"] { opacity:1; }
+    .hp-paper-editor-ink .hp-paper { fill:#fff; }
+    .hp-mode-crossfade { position:absolute; inset:0; z-index:1; pointer-events:none; }
     .plan-svg { z-index: 1; }
     .iso-underlay-svg { z-index: 0; overflow: visible; }
     .iso-shadows-svg { z-index: 3; overflow: visible; }
@@ -354,13 +341,13 @@ export const planStyles = css`
        joins its walls with a ROUND join instead: the corner reads as the
        stroke's own radius, never as a tooth. The linecap matters only for the
        open outlines below, but it costs nothing to state it here. */
-    .room {
-      transition: 0.12s;
+    :is(.room,.hp-mode-room) {
+      transition: fill .12s, fill-opacity .12s, stroke .12s, stroke-opacity .12s;
       cursor: default;
       stroke-linejoin: round;
       stroke-linecap: round;
     }
-    .stage.mode-view .room { cursor: pointer; }
+    .stage.mode-view :is(.room,.hp-mode-room) { cursor: pointer; }
     /* #746: every state of a room writes its transparency the way .styled
        does — an opaque colour plus fill-opacity / stroke-opacity, and
        transparent only together with a zero *-opacity. The transition above
@@ -372,29 +359,29 @@ export const planStyles = css`
        floor with no fill flashed every room grey, entering or leaving the
        plan editor darkened a filled floor. The resting paint is the same.
        Witness: demo/smoke_room_fill_transitions.mjs. */
-    .room.overlay {
+    :is(.room,.hp-mode-room).overlay {
       fill: transparent;
       fill-opacity: 0;
       stroke: transparent;
       stroke-opacity: 0;
       stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
     }
-    :host([data-pointer-hover]) .stage.mode-view .room.overlay:not(.styled):hover {
+    :host([data-pointer-hover]) .stage.mode-view :is(.room,.hp-mode-room).overlay:not(.styled):hover {
       stroke: var(--hp-accent);
       stroke-opacity: 1;
     }
-    .room.yard {
+    :is(.room,.hp-mode-room).yard {
       fill: var(--hp-room-yard-color);
       fill-opacity: var(--hp-room-yard-fill-alpha);
       stroke: var(--hp-room-yard-color);
       stroke-opacity: 1;
       stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
     }
-    :host([data-pointer-hover]) .stage.mode-view .room.yard:not(.styled):hover {
+    :host([data-pointer-hover]) .stage.mode-view :is(.room,.hp-mode-room).yard:not(.styled):hover {
       stroke: var(--hp-accent);
       stroke-opacity: 1;
     }
-    .room.styled {
+    :is(.room,.hp-mode-room).styled {
       stroke: var(--room-stroke, transparent);
       stroke-opacity: var(--room-stroke-op, 0);
       stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
@@ -448,7 +435,7 @@ export const planStyles = css`
     /* The explicit late room-hover layer owns the wash and halo. Keeping CSS
        filters off room paths prevents Chromium from recompositing the sibling
        screen-blended Glow layer for one bright frame on every hover. */
-    :host([data-pointer-hover]) .stage.mode-view .room.styled:hover {
+    :host([data-pointer-hover]) .stage.mode-view :is(.room,.hp-mode-room).styled:hover {
       stroke: var(--hp-accent);
       stroke-opacity: 1;
     }
@@ -475,7 +462,7 @@ export const planStyles = css`
        Removing either half brings the phantom animation back through a
        different door.
 
-       #742: the room shapes share the rule. .room above transitions every
+       #742: the room shapes share the rule. :is(.room,.hp-mode-room) above transitions every
        property for 0.12 s, and the flat room list was a bare map(): on a floor
        switch the previous floor's room node became the new floor's room, and
        its fill drew in from the stranger's value — one paper-white frame, then
@@ -1091,15 +1078,25 @@ export const planStyles = css`
     /* Backdrop-editor de-emphasis is a shared mode-transition coordinate.
        It multiplies whole presentation groups and never changes Glow source
        alpha, additive blending, or the underlying resolved state. */
-    .stage .room,
+    .stage :is(.room,.hp-mode-room),
     .stage .devlayer,
     .stage .opening,
-    .stage .room-outline,
+    .stage :is(.room-outline,.hp-mode-room-outline),
     .stage .wallbodies,
     .stage .glow-pools-frame,
     .stage .zero-walls,
     .stage .hp-stairs-layer {
-      opacity: var(--hp-mode-architecture-opacity, 1);
+      opacity: 1;
+    }
+    .stage.mode-decor :is(.room,.hp-mode-room),
+    .stage.mode-decor .devlayer,
+    .stage.mode-decor .opening,
+    .stage.mode-decor :is(.room-outline,.hp-mode-room-outline),
+    .stage.mode-decor .wallbodies,
+    .stage.mode-decor .glow-pools-frame,
+    .stage.mode-decor .zero-walls,
+    .stage.mode-decor .hp-stairs-layer {
+      opacity: .35;
     }
     .opening-preview {
       opacity: 0.5;
@@ -1199,16 +1196,16 @@ export const planStyles = css`
       stroke-dasharray: none;
     }
     /* Rooms with zero/thick stretches: the polygon's own stroke is fully off.
-       The trimmed .room-outline draws normal walls; View hover gets its own
+       The trimmed :is(.room-outline,.hp-mode-room-outline) draws normal walls; View hover gets its own
        top overlay after the wall bodies. */
-    .room.noedge {
+    :is(.room,.hp-mode-room).noedge {
       stroke-opacity: 0 !important;
     }
     /* rooms with open boundaries draw their walls as separate M..L subpaths,
        so a corner between two of them is two stroke ENDS meeting: round caps
        fill it in the same way a round join fills a closed contour's corner
        (owner 2026-08-04 — no teeth anywhere on a room border). */
-    .room-outline {
+    :is(.room-outline,.hp-mode-room-outline) {
       fill: none;
       stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
       stroke-linejoin: round;
@@ -1216,7 +1213,7 @@ export const planStyles = css`
       pointer-events: none;
     }
     /* Plan editor: trimmed outlines use the markup blue */
-    .room-outline.outlined {
+    :is(.room-outline,.hp-mode-room-outline).outlined {
       stroke: rgba(62, 166, 255, 0.55);
       stroke-opacity: 1;
     }
@@ -1247,7 +1244,7 @@ export const planStyles = css`
       stroke-linecap: round;
       pointer-events: none;
     }
-    .stage.markup .room {
+    .stage.markup :is(.room,.hp-mode-room) {
       pointer-events: none;
     }
     /* #687: devices are landmarks in the Plan editor too, exactly as in
@@ -1260,11 +1257,7 @@ export const planStyles = css`
     .stage.markup .devlayer .dev {
       filter: opacity(0.35);
     }
-    .stage.markup .devlayer .dev,
-    .stage.markup .devlayer .dev *,
-    .stage.markup .devlayer .dev::before {
-      pointer-events: none;
-    }
+    /* Native inert on each marker owns Plan input without restyling every face descendant. */
     /* mode frames: the edit modes are visible at a glance */
     .stage.mode-plan {
       outline: 2px solid #ffc14d;
@@ -1274,15 +1267,15 @@ export const planStyles = css`
       outline: 2px solid var(--hp-accent);
       outline-offset: -2px;
     }
-    /* #746: opaque colour plus *-opacity, like every .room state (see .room.overlay) */
-    .room.outlined {
+    /* #746: opaque colour plus *-opacity, like every :is(.room,.hp-mode-room) state (see :is(.room,.hp-mode-room).overlay) */
+    :is(.room,.hp-mode-room).outlined {
       stroke: var(--hp-room-outline-color);
       stroke-opacity: var(--hp-room-outline-stroke-alpha);
       fill: var(--hp-room-outline-color);
       fill-opacity: var(--hp-room-outline-fill-alpha);
     }
     /* AFTER .outlined: same specificity — source order decides (gotcha x4) */
-    .room.picked {
+    :is(.room,.hp-mode-room).picked {
       stroke: #ffc14d;
       stroke-opacity: 1;
       stroke-width: calc(3px * var(--hp-cell-visual-scale, 1));
@@ -1306,7 +1299,7 @@ export const planStyles = css`
       stroke-width: 0;
     }
     /* the contour being drawn in the Plan editor: each wall is its own <line>,
-       so the round cap IS the corner (matches the finished .room border) */
+       so the round cap IS the corner (matches the finished :is(.room,.hp-mode-room) border) */
     .seg {
       stroke: var(--hp-accent);
       stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));

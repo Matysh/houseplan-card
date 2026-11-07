@@ -399,6 +399,9 @@ export class WallNodeEditor {
   dispose(): void { this.cancel(); this.deleteMenu?.dispose(); this.port.dispose?.(); this.cache = null; this.clearLive(); this.listening = false;
     this.port.document.defaultView?.removeEventListener('pagehide', this.pagehide); }
 
+  /** Populate pure topology before the first warm Plan render; no DOM or commands. */
+  prepare(): void { this.nodes(); }
+
   renderMenu(): TemplateResult | typeof nothing { return this.deleteMenu?.render() ?? nothing; }
 
   render(live = false): TemplateResult | typeof nothing {
@@ -567,7 +570,12 @@ export class WallNodeEditor {
         group.dataset.hpNodeLive = String(i); group.setAttribute('pointer-events', 'none');
         const anchor = i === 0 ? svgRoot.querySelector('.hp-backdrop, [data-hp="room"]')
           : i === 1 ? svgRoot.querySelector('[data-hp="room"]') : null;
-        (anchor?.parentElement || svgRoot).insertBefore(group, anchor); this.liveRoots.push(group);
+        // Mode surfaces retain the original paper/fill/masonry z-slots.
+        // Older consumers keep the single-SVG path.
+        const slot = i === 0 ? root.querySelector<SVGSVGElement>('[data-hp-mode-layer="paper"]')
+          : i === 2 ? root.querySelector<SVGSVGElement>('[data-hp-mode-layer="editor-top"]') : null;
+        const parent = slot ? i === 0 ? slot.querySelector('g') || slot : slot : anchor?.parentElement || svgRoot;
+        parent.insertBefore(group, slot ? null : anchor); this.liveRoots.push(group);
       }
     }
     const scene = s.candidate ? this.port.scene?.(s.candidate, s.plan.source) : null;

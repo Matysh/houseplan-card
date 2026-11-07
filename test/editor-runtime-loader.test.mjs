@@ -382,3 +382,83 @@ test('#861 owner modules remain editor-lazy and callers cannot retain the remove
       assert.ok(!removed.has(node.argumentExpression.text), `${file}: ${node.argumentExpression.text}`);
   });
 });
+
+test('#1344 preload deduplicates code without installing or showing loading UI', async () => {
+  const pending = deferred(), states = [], failures = [], loads = [];
+  let creates = 0, installs = 0, language = 'ru';
+  const prepared = [];
+  const module = { fingerprint: 'same', prepare: async () => { prepared.push(language); },
+    create: () => { creates++; return {}; } };
+  const loader = new EditorRuntimeLoader({ expectedFingerprint: 'same',
+    load: (attempt, fresh) => { loads.push([attempt, fresh]); return pending.promise; },
+    install: () => installs++, stateChanged: s => states.push(s), failed: e => failures.push(e) });
+  const one = loader.preload(), two = loader.preload();
+  await Promise.resolve();
+  assert.equal(loader.state, 'idle');
+  assert.equal(creates, 0);
+  assert.deepEqual(states, []);
+  pending.resolve(module);
+  assert.deepEqual(await Promise.all([one, two]), [true, true]);
+  assert.equal(installs, 0);
+  assert.deepEqual(failures, []);
+  language = 'en';
+  assert.equal(await loader.ensure(), true);
+  assert.deepEqual(prepared, ['ru', 'en']);
+  assert.equal(creates, 1);
+  assert.equal(installs, 1);
+  assert.equal(loads.length, 1);
+  assert.deepEqual(states, ['loading', 'ready']);
+});
+
+test('#1344 failed hover preserves two real explicit attempts using fresh URLs', async () => {
+  const loads = [], failures = [];
+  let installs = 0;
+  const loader = new EditorRuntimeLoader({ expectedFingerprint: 'same',
+    load: async (attempt, fresh) => {
+      loads.push([attempt, !!fresh]);
+      if (loads.length <= 2) throw Error('Network failed');
+      return { fingerprint: 'same', create: () => ({}) };
+    }, install: () => installs++, failed: e => failures.push(e) });
+  assert.equal(await loader.preload(), false);
+  assert.equal(loader.state, 'idle');
+  assert.deepEqual(failures, []);
+  assert.equal(await loader.ensure(), true);
+  assert.deepEqual(loads, [[0, false], [0, true], [1, false]]);
+  assert.equal(installs, 1);
+  assert.deepEqual(failures, []);
+});
+
+test('#1344 click during rejected preload starts a fresh explicit cycle', async () => {
+  const pending = deferred(), loads = [];
+  const loader = new EditorRuntimeLoader({ expectedFingerprint: 'same',
+    load: (attempt, fresh) => {
+      loads.push([attempt, !!fresh]);
+      return loads.length === 1 ? pending.promise
+        : Promise.resolve({ fingerprint: 'same', create: () => ({}) });
+    }, install: () => {} });
+  const hover = loader.preload();
+  await Promise.resolve();
+  const click = loader.ensure();
+  pending.reject(Error('Connection lost'));
+  assert.equal(await hover, false);
+  assert.equal(await click, true);
+  assert.deepEqual(loads, [[0, false], [0, true]]);
+});
+
+test('#1344 preload fingerprint and synchronous failures are silent and recoverable', async () => {
+  let calls = 0, creates = 0, failures = 0;
+  const loader = new EditorRuntimeLoader({ expectedFingerprint: 'same',
+    load: () => {
+      calls++;
+      if (calls === 1) throw Error('synchronous failure');
+      return Promise.resolve({ fingerprint: calls === 2 ? 'other' : 'same', create: () => { creates++; return {}; } });
+    }, install: () => {}, failed: () => failures++ });
+  assert.equal(await loader.preload(), false);
+  assert.equal(await loader.preload(), false);
+  assert.equal(loader.state, 'idle');
+  assert.equal(creates, 0);
+  assert.equal(failures, 0);
+  assert.equal(await loader.ensure(), true);
+  assert.equal(creates, 1);
+  assert.equal(failures, 0);
+});

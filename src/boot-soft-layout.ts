@@ -4,7 +4,7 @@ export type SettledSoftStage = {
 };
 
 /** Measure the card-owned chrome plus the bounded HA chrome above the card. */
-export function measuredCardHeaderHeight(
+export function rawCardHeaderHeight(
   root: ParentNode,
   stage: HTMLElement,
   containerOwnedHeight: boolean,
@@ -14,8 +14,14 @@ export function measuredCardHeaderHeight(
   const cardRect = card.getBoundingClientRect();
   const own = stage.getBoundingClientRect().top - cardRect.top;
   const above = containerOwnedHeight ? 0 : Math.min(Math.max(cardRect.top, 0), 120);
-  const height = Math.round(own + above);
+  const height = own + above;
   return height >= 0 ? height : null;
+}
+export function measuredCardHeaderHeight(
+  root: ParentNode, stage: HTMLElement, containerOwnedHeight: boolean,
+): number | null {
+  const value = rawCardHeaderHeight(root, stage, containerOwnedHeight);
+  return value === null ? null : Math.round(value);
 }
 
 /**

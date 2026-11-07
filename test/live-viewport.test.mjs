@@ -8,7 +8,7 @@ import {
   liveViewBoxText,
   inheritedSceneClip,
   liveGridBounds,
-  paintLiveViewport,
+  paintLiveViewport, commitHouseplanViewport, paintedHouseplanViewBox, disposeHouseplanViewport,
 } from '../test-build/live-viewport.js';
 
 test('live viewport projects pan and zoom from the last complete frame', () => {
@@ -308,4 +308,44 @@ test('#689 AC3: exposure is bounded by a clip that leaves together with it', () 
     assert.equal(scene.style.transform, undefined);
     assert.ok(scene.styleRemovals.includes('clip-path'));
   }
+});
+
+test('#1344 camera frames preserve the opacity owner promotion until terminal cleanup', () => {
+  const root = fakeRoot(), painted = frame(0, 0);
+  for (const svg of [root.camera, root.cameraPeer, root.floor]) svg.style.willChange = 'transform, opacity';
+  let anchor = paintLiveViewport(root, painted, painted, null, {now:0,keepSceneLayer:true});
+  const writes = root.camera.styleWrites;
+  anchor = paintLiveViewport(root, painted, painted, anchor, {now:16,keepSceneLayer:true});
+  assert.equal(root.camera.style.willChange, 'transform, opacity');
+  assert.equal(root.camera.styleWrites, writes, 'no promotion ping-pong on an unchanged frame');
+  paintLiveViewport(root, painted, painted, anchor, {now:32,force:true});
+  assert.equal(root.camera.style.willChange, undefined);
+  assert.equal(root.camera.style.transform, undefined);
+});
+
+test('#1344 bounded mode exposure stays quiet and is removed at the terminal commit', () => {
+  const root=fakeRoot(),painted=frame(0,0),clip='inset(-25% -34%)';
+  let anchor=paintLiveViewport(root,painted,painted,null,{now:0,keepSceneLayer:true,sceneExposureClip:clip});
+  assert.equal(root.camera.style.clipPath,clip);
+  const writes=root.camera.styleWrites;
+  anchor=paintLiveViewport(root,painted,painted,anchor,{now:16,keepSceneLayer:true,sceneExposureClip:clip});
+  assert.equal(root.camera.styleWrites,writes);
+  paintLiveViewport(root,painted,painted,anchor,{now:32,force:true});
+  assert.equal(root.camera.style.clipPath,undefined);
+});
+
+test('#1344 mode completion reads the actual HTML baseline after a mid-motion commit', () => {
+  const root=fakeRoot();
+  let view={x:0,y:0,w:1000,h:500};
+  const host={renderRoot:root,_zoom:1,_baseVb:()=>[],_viewOr:()=>view,_floorView:v=>v};
+  commitHouseplanViewport(host);
+  assert.deepEqual(paintedHouseplanViewBox(host),view);
+  view={x:0,y:.5,w:1000,h:500};
+  commitHouseplanViewport(host,true);
+  const captured=paintedHouseplanViewBox(host);
+  assert.deepEqual(captured,view);
+  captured.y=999;
+  assert.equal(paintedHouseplanViewBox(host).y,.5,'reader cannot change the owner baseline');
+  disposeHouseplanViewport(host);
+  assert.equal(paintedHouseplanViewBox(host),null);
 });
