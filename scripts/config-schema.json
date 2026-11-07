@@ -1096,6 +1096,10 @@
       "opaque": "<function _finite>",
       "required": true
     },
+    "config.spaces[].openings[].light_transparent": {
+      "required": false,
+      "type": "bool"
+    },
     "config.spaces[].openings[].lock": {
       "nullable": true,
       "required": false,

@@ -1,3 +1,4 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 // #843: Undo/Redo of a wall-node move is applied from any Plan/Background tool,
 // after a mode or floor change and after the person's own write; it moves the
 // cursor only after the server accepted it and shows the result floor. Real
@@ -22,6 +23,7 @@ const hold = type => {
   return (gates[type] = { promise, release, arrived: false });
 };
 const { page, browser } = await launch({ width: 1180, height: 920 });
+await installScenePaintProbe(page);
 await page.exposeFunction('historyWire', async message => {
   if (message.type === 'houseplan/config/get') return { config: structuredClone(server), rev: revision, can_write: true, wall_node_move_api: 1, plan_graph_api: 1 };
   if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
@@ -78,7 +80,7 @@ const state = () => page.evaluate(() => {
   const card = window.__card, history = card._geometryHistory;
   const button = icon => card.renderRoot.querySelector(`[data-hp="toolbar"] ha-icon[icon="${icon}"]`)?.closest('button');
   return { mode: card._mode, tool: card._tool, space: card._space, undo: history.undoName, redo: history.redoName,
-    size: history.size, handles: card.renderRoot.querySelectorAll('.hp-node-handle').length,
+    size: history.size, handles: [...card.renderRoot.querySelectorAll('.hp-node-handle')].filter(window.__hpScenePaintedOrInteractive).length,
     undoDisabled: button('mdi:undo-variant')?.disabled ?? null, redoDisabled: button('mdi:redo-variant')?.disabled ?? null };
 });
 const idle = () => page.waitForFunction(() => {

@@ -1,3 +1,4 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 // #803: synthetic before/during/after/cancel pixel oracles for shared/T/X/zero.
 import assert from 'node:assert/strict';
 import { launch, finish } from './serve.mjs';
@@ -31,6 +32,7 @@ const scenarios = [
 ];
 let server, revision = 1, capability = true, canWrite = true, refused = false, writes = 0;
 const { page, browser } = await launch({ width: 1180, height: 920 });
+await installScenePaintProbe(page);
 // Handles may already be stable while a warm camera still names the preceding
 // stage size. SVG then letterboxes that viewBox, unlike the stage's input map.
 // Observe the completed refit and its painted viewBox; never repair the camera
@@ -305,7 +307,7 @@ refused = false; await mount(cycle.cfg);
 for (const mode of ['view', 'devices', 'decor']) { // decor is the Background editor's internal mode
   await page.evaluate(async mode => { await window.__hpTest.setMode(mode); }, mode);
   await page.waitForFunction(mode => window.__card._mode === mode && !window.__card._modeTransitionBusy, mode);
-  assert.equal(await page.evaluate(() => window.__card.renderRoot.querySelectorAll('.hp-node-handle').length), 0,
-    `${mode}: no wall-node handles`);
+  assert.equal(await page.evaluate(() => [...window.__card.renderRoot.querySelectorAll('.hp-node-handle')].filter(window.__hpScenePaintedOrInteractive).length), 0,
+    `${mode}: no visible or interactive wall-node handles`);
 }
 await finish(browser, { scenarios: scenarios.length, cycles: 100, writes });

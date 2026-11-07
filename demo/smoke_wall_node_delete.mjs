@@ -1,3 +1,4 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 // #1045: native contextmenu and the shared history; HA is only the recording
 // wire. The server recomputes the narrow intent with the production kernel.
 // UI expectations below independently name the surviving geometry and fields.
@@ -46,6 +47,7 @@ const projected = message => {
   return message.fields?.length ? Object.fromEntries(Object.entries(config).filter(([key]) => message.fields.includes(key))) : config;
 };
 const { page, browser } = await launch({ width: 1500, height: 1000 });
+await installScenePaintProbe(page);
 // Exercise the real wide Properties surface; demo's default host is 780px.
 await page.addStyleTag({ content: '#host{width:100%;padding:0;margin:0}' });
 await page.exposeFunction('nodeDeleteWire', async message => {
@@ -170,7 +172,7 @@ try {
     const selected = await page.evaluate(() => window.__card._tool), before = await state();
     await open([.4, .3]);
     check(`delete.tools.${tool.id}.enabled_without_Select`, await action().isEnabled());
-    check(`delete.tools.${tool.id}.no_move_handles`, await card.locator('.hp-node-handle').count(), 0);
+    check(`delete.tools.${tool.id}.no_move_handles`, await card.locator('.hp-node-handle').evaluateAll(nodes => nodes.filter(window.__hpScenePaintedOrInteractive).length), 0);
     const moved = await screen([.6, .5]); await page.mouse.move(moved.x, moved.y); await settled();
     const after = await state();
     check(`delete.tools.${tool.id}.no_placement_pan_history_or_write`,

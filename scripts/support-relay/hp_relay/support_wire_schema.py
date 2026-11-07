@@ -468,7 +468,7 @@ SPACE = Object(
                     "id": REF_OR_NULL,
                     "type": enum("door", "window", "gate", "passage"),
                     **fields("x y angle length", NUMBER),
-                    **fields("invert flip_h flip_v", BOOL),
+                    **fields("invert flip_h flip_v light_transparent", BOOL),
                     **fields("contact lock", REF_OR_NULL),
                     "host": Object(
                         {

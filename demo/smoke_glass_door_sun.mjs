@@ -36,7 +36,7 @@ try{
  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{cfg.spaces[0].openings.find(o=>o.id==='glass').light_transparent=true;}));
  state=await inside(false);assert.equal(state.geometry,true,JSON.stringify(state));assert.equal(state.rendered,true,JSON.stringify(state));assert.equal(state.symbol,0);out.closedGlassFlat=true;
  await page.waitForTimeout(1200);await page.screenshot({path:'artifacts/glass-door-1348/flat.png'});
- await page.evaluate(()=>window.__hpTest.setVolumetricView(true));
+ await page.evaluate(() => window.__hpTest.setVolumetricView(true));
  state=await inside(true);assert.equal(state.geometry,true,JSON.stringify(state));assert.equal(state.symbol,0);assert.ok(await page.locator('.sunlayer polygon,.sunlayer path').count());out.closedGlassIso=true;
  await page.waitForTimeout(1200);await page.screenshot({path:'artifacts/glass-door-1348/iso.png'});
  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{delete cfg.spaces[0].openings.find(o=>o.id==='glass').light_transparent;}));

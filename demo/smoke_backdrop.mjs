@@ -376,10 +376,9 @@ const layers = await page.evaluate(() => {
   const c = window.__card;
   const m = c._spaceModel();
   const svgEl = c.renderRoot.querySelector('.stage svg');
-  // Stage 2 keeps the flat floor DOM byte-for-byte equivalent but places it
-  // in one transformable scene group shared with Iso. Ordering is therefore
-  // measured inside the group that actually owns paper/image/rooms.
-  const layerRoot = [...svgEl.children].find((node) =>
+  // #1344 splits Flat into ordered retained surfaces. Compare those surfaces;
+  // the single-SVG projection still uses its owning scene group.
+  const layerRoot = c.renderRoot.querySelector('.hp-mode-scene-camera') || [...svgEl.children].find((node) =>
     node.querySelector?.('.hp-paperg') && node.querySelector?.('.room')) || svgEl;
   const kids = [...layerRoot.children];
   const idx = (sel) => kids.findIndex((n) => n.matches(sel) || n.querySelector?.(sel));
@@ -541,7 +540,7 @@ const fit = await page.evaluate(() => {
   const c = window.__card;
   const svg = c.renderRoot.querySelector('.stage svg');
   const b = svg.getAttribute('viewBox').split(' ').map(Number);
-  const image = svg.querySelector('image');
+  const image = c.renderRoot.querySelector('.stage svg image');
   const bg = Object.fromEntries(['x', 'y', 'w', 'h'].map((key) =>
     [key, Number(image.getAttribute({ w: 'width', h: 'height' }[key] || key))]));
   return { b, bg };

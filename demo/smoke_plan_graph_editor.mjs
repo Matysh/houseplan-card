@@ -99,8 +99,12 @@ const nativePoint = async (x, y) => {
     const stage = svg.closest('.stage').getBoundingClientRect();
     const within = r => s.x >= r.left && s.x <= r.right && s.y >= r.top && s.y <= r.bottom;
     const hit = window.__card.renderRoot.elementFromPoint(s.x, s.y);
+    // Split SVG surfaces share the camera; blank floor input lands on zoomwrap.
+    const surface = hit?.closest('.hp-mode-scene-svg');
+    const onScene = hit?.classList.contains('zoomwrap')
+      || surface?.closest('.stage') === svg.closest('.stage') || !!hit && svg.contains(hit);
     return { x: s.x, y: s.y, inside: within(r) && within(stage),
-      unobscured: !!hit && svg.contains(hit)
+      unobscured: !!hit && onScene
         && !hit.closest('button,input,select,textarea,[contenteditable="true"],.drawwall,[role="dialog"]'),
       hit: hit ? `${hit.localName}.${hit.getAttribute('class') || ''}` : null };
   }, [x, y]);

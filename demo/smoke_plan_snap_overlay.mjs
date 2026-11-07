@@ -1,9 +1,11 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 /** Issue #137: architectural endpoint/line overlay and exact snap in Plan. */
 import { isDeepStrictEqual } from 'node:util';
 import { launch, checkAll, finish } from './serve.mjs';
 import { currentGraphFixture, editGraphFixture } from './helpers/graph-fixture.mjs';
 
 const { page, browser } = await launch({ width: 900, height: 820 }, 1);
+await installScenePaintProbe(page);
 await page.exposeFunction('snapHiddenPartitionFixture', source => {
   const config = currentGraphFixture(source);
   editGraphFixture(config, 'snap', { kind: 'partitions', ids: ['hidden-partition'] }, draft => {
@@ -438,15 +440,15 @@ const out = await page.evaluate(async () => {
 
   card._setMode('devices');
   await update();
-  const devicesHaveNoPlanOverlay = !overlay();
+  const devicesHaveNoPlanOverlay = !window.__hpScenePaintedOrInteractive(overlay());
   card._setMode('decor');
   await update();
-  const decorHasNoPlanOverlay = !overlay();
+  const decorHasNoPlanOverlay = !window.__hpScenePaintedOrInteractive(overlay());
   card._setMode('view');
   await update();
   result.nonPlanModesHaveNoOverlay = devicesHaveNoPlanOverlay && decorHasNoPlanOverlay
-    && !overlay()
-    && !root().querySelector('[data-hp="hidden-wall-diagnostic"]');
+    && !window.__hpScenePaintedOrInteractive(overlay())
+    && !window.__hpScenePaintedOrInteractive(root().querySelector('[data-hp="hidden-wall-diagnostic"]'));
 
   return result;
 });
