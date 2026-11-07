@@ -7,7 +7,7 @@ export interface ModeSceneLayer {
 }
 /** Contiguous paint slots preserve z-order and the existing live camera. */
 export function renderModeSceneLayers(
-  layers: readonly ModeSceneLayer[], view: { x: number; y: number; w: number; h: number }, transform: string | undefined, gridStep: number, mode: string, observed?: (id: string) => void,
+  layers: readonly ModeSceneLayer[], view: { x: number; y: number; w: number; h: number }, transform: string | undefined, gridStep: number, mode: string, observed?: (id: string) => void, split = true,
 ): TemplateResult {
   const render = (layer: ModeSceneLayer): TemplateResult => svg`<svg
     class=${((layer.id === 'rooms' && mode !== 'plan') || (layer.id === 'room-ink' && mode === 'plan')) ? 'plan-svg hp-mode-scene-svg' : 'hp-mode-scene-svg'}
@@ -23,10 +23,15 @@ export function renderModeSceneLayers(
       ${guard([...layer.inputs], () => { observed?.(layer.id); return layer.render(); })}
     </g>
   </svg>`;
-  return html`${layers.filter(layer => layer.id !== 'room-ink' && layer.id !== 'paper-ink').map(layer => {
+  if (!split) return svg`<svg class="plan-svg hp-mode-scene-svg" data-hp="stage" data-grid-step=${gridStep}
+    data-hp-layer="plan" data-hp-live-viewbox="floor" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+    preserveAspectRatio="xMidYMid meet" style="z-index:1;pointer-events:none">
+    ${layers.filter(layer => !['paper-ink','room-ink','grid','editor-guides','plan-base','zero-editor','plan-ink','editor-top'].includes(layer.id)).map(layer => svg`<g data-hp-mode-layer=${layer.id} transform=${transform || nothing} style="pointer-events:auto">
+      ${guard([...layer.inputs], () => { observed?.(layer.id); return layer.render(); })}</g>`)}</svg>`;
+  return html`<div class="hp-mode-scene-camera" data-hp-live-scene="floor">${layers.filter(layer => layer.id !== 'room-ink' && layer.id !== 'paper-ink').map(layer => {
     const other = layer.id === 'rooms' ? 'room-ink' : layer.id === 'paper' ? 'paper-ink' : null;
     return other ? html`<div class="hp-mode-crossfade" data-hp-mode-pair=${layer.id}>
       ${render(layer)}${render(layers.find(item => item.id === other)!)}
     </div>` : render(layer);
-  })}`;
+  })}</div>`;
 }

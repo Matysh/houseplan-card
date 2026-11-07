@@ -174,6 +174,8 @@ export const planStyles = css`
        particular); the old descendant-wide stage-SVG selector stretched every
        preview over the tray and stacked them into one blocking artefact. The
        vacuum trail/fit overlays have their own explicit geometry below. */
+    .hp-mode-scene-camera { position:absolute; inset:0; z-index:1; pointer-events:none; }
+    .hp-mode-scene-camera > svg,
     .zoomwrap > svg,
     .hp-mode-crossfade > svg {
       position: absolute;
@@ -196,6 +198,7 @@ export const planStyles = css`
     .stage:not(.mode-view) [data-hp-mode-layer="paper"] { opacity:0; }
     .stage:not(.mode-view) [data-hp-mode-layer="paper-ink"] { opacity:1; }
     .hp-paper-editor-ink .hp-paper { fill:#fff; }
+    [data-hp-live-scene-exposed] .hp-mode-scene-svg { overflow:visible; }
     .hp-mode-crossfade { position:absolute; inset:0; z-index:1; pointer-events:none; }
     .plan-svg { z-index: 1; }
     .iso-underlay-svg { z-index: 0; overflow: visible; }

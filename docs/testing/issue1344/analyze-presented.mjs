@@ -43,7 +43,23 @@ for (const fixture of ['demo', 'medium', 'large']) {
         const terminal = matched.find(f => f.phase === 'settling')?.traceFrame;
         const costs = matched.filter(f => f.traceFrame).map(f => { const af = f.traceFrame; const pieces = events.filter(e => e.ph === 'X' && e.pid === af.pid && e.tid === af.tid && ['Layout', 'UpdateLayoutTree'].includes(e.name) && e.ts >= af.begin && e.ts < af.end); return { sequence: af.sequence, styleLayoutMs: pieces.reduce((sum, e) => sum + (e.dur || 0), 0) / 1000 }; });
         const runningPaint = events.filter(e => e.ph === 'X' && e.name === 'Paint' && matched.some(f => f.phase === 'running' && f.traceFrame && e.pid === f.traceFrame.pid && e.tid === f.traceFrame.tid && e.ts >= f.traceFrame.begin && e.ts < f.traceFrame.end));
-        rows.push({ runningPaintEvents: runningPaint.length, runningPaintNodes: [...new Set(runningPaint.map(e => e.args?.data?.nodeName))], fixture, sample: row.sample, from: row.from, to: row.to, rafSamples: row.rafSamples, presentedChangedFrames: shown.length, firstPresentedMs: shown.length ? (shown[0] - start) / 1000 : null, maxPresentedGapMs: shown.length > 1 ? Math.max(...shown.slice(1).map((t, i) => (t - shown[i]) / 1000)) : null, unmatched: matched.filter(f => !f.traceFrame).length, notPresented: matched.filter(f => f.traceFrame && !Number.isFinite(f.traceFrame.presentation)).length, terminalFrame: terminal ?? null, interactiveMinusToPresentationMs: Number.isFinite(terminal?.presentation) && Number.isFinite(interactive) ? (interactive - terminal.presentation) / 1000 : null, maxStyleLayoutMs: costs.length ? Math.max(...costs.map(c => c.styleLayoutMs)) : null, costs });
+        const first = matched[0]?.traceFrame;
+        const firstPaintEnd = start + (row.frames[0]?.at ?? row.frames[0]?.controllerTime ?? 0) * 1000;
+        const sameRenderer = e => first && e.pid === first.pid && e.tid === first.tid;
+        const styleEvents = events.filter(e => e.ph === 'X' && sameRenderer(e) && ['Layout','UpdateLayoutTree'].includes(e.name));
+        const beforePaint = styleEvents.filter(e => e.ts >= start && e.ts < firstPaintEnd);
+        const afterPaint = styleEvents.filter(e => e.ts >= firstPaintEnd && e.ts < (first?.end ?? firstPaintEnd));
+        const sumMs = list => list.reduce((sum,e)=>sum+(e.dur||0),0)/1000;
+        const startup = { firstControllerMs:row.frames[0]?.controllerTime ?? null,
+          firstPaintEndMs:(firstPaintEnd-start)/1000,
+          litWallMs:(row.updates ?? []).filter(u=>start+u.at*1000<firstPaintEnd).reduce((sum,u)=>sum+u.ms,0),
+          synchronousStyleLayoutBeforePaintMs:sumMs(beforePaint),
+          styleLayoutAfterPaintInFirstOpportunityMs:sumMs(afterPaint),
+          firstOpportunityEndMs:first ? (first.end-start)/1000 : null,
+          firstOpportunityDurationMs:first ? (first.end-first.begin)/1000 : null,
+          submissionToPresentationMs:Number.isFinite(first?.presentation)?(first.presentation-first.end)/1000:null,
+          beforePaintEvents:beforePaint.map(e=>({name:e.name,atMs:(e.ts-start)/1000,ms:(e.dur||0)/1000})) };
+        rows.push({ startup, runningPaintEvents: runningPaint.length, runningPaintNodes: [...new Set(runningPaint.map(e => e.args?.data?.nodeName))], fixture, sample: row.sample, from: row.from, to: row.to, rafSamples: row.rafSamples, presentedChangedFrames: shown.length, firstPresentedMs: shown.length ? (shown[0] - start) / 1000 : null, maxPresentedGapMs: shown.length > 1 ? Math.max(...shown.slice(1).map((t, i) => (t - shown[i]) / 1000)) : null, unmatched: matched.filter(f => !f.traceFrame).length, notPresented: matched.filter(f => f.traceFrame && !Number.isFinite(f.traceFrame.presentation)).length, terminalFrame: terminal ?? null, interactiveMinusToPresentationMs: Number.isFinite(terminal?.presentation) && Number.isFinite(interactive) ? (interactive - terminal.presentation) / 1000 : null, maxStyleLayoutMs: costs.length ? Math.max(...costs.map(c => c.styleLayoutMs)) : null, costs });
     }
 }
 fs.writeFileSync(out + '/' + outputLabel + '-presented-analysis.json', JSON.stringify({ provenance: { sourceSha: report.sourceSha, buildFingerprint: report.buildFingerprint, collectorSha256: report.collectorSha256, reportSha256: sha256(fs.readFileSync(out + '/' + label + '.json')), analyzerSha256: sha256(fs.readFileSync(new URL(import.meta.url))), traceInputs }, method: 'Match changed controller sample to enclosing AnimationFrame begin/end, then pid:args.id (Chromium trace_id) to AnimationFrame::Presentation; begin and presented frame sequence can differ. No RAF sample is assumed presented; missing links remain explicit.', rows }, null, 2));

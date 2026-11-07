@@ -24,18 +24,23 @@ export function choosePanelHeader(
 /** Same owner/content/width lends one measured result; visual ticks do not remeasure. */
 export class PanelHeaderMemo {
   private owner: object | null = null;
-  private key = '';
-  private width = -1;
-  private value: PanelHeaderMeasurement | null = null;
+  private readonly values = new Map<string, PanelHeaderMeasurement>();
   public resolve(owner: object, key: string, width: number,
     measure: () => PanelHeaderMeasurement): PanelHeaderMeasurement {
-    if (owner !== this.owner || key !== this.key || width !== this.width || !this.value) {
-      this.value = measure(); this.owner = owner; this.key = key; this.width = width;
+    if (owner !== this.owner) { this.clear(); this.owner = owner; }
+    const id = JSON.stringify([key, width]);
+    let value = this.values.get(id);
+    if (!value) {
+      value = measure();
+      // Four modes plus a recent width/content variant; never an unbounded
+      // cache of space names, locale revisions or responsive widths.
+      if (this.values.size >= 8) this.values.delete(this.values.keys().next().value!);
+      this.values.set(id, value);
     }
-    return this.value;
+    return value;
   }
-  public invalidate(): void { this.key = ''; this.value = null; }
-  public clear(): void { this.owner = null; this.width = -1; this.invalidate(); }
+  public invalidate(): void { this.values.clear(); }
+  public clear(): void { this.owner = null; this.invalidate(); }
 }
 
 const numeric = (value: string): number => Number.parseFloat(value) || 0;

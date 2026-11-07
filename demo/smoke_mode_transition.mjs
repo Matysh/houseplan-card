@@ -16,7 +16,7 @@ const result = await page.evaluate(async () => {
     do {
       await sleepFrame();
       const stage = root().querySelector('.stage');
-      const svg = stage?.querySelector(':scope .zoomwrap > svg');
+      const svg = stage?.querySelector(':scope .zoomwrap .plan-svg');
       if (stage && svg) {
         const vb = svg.viewBox.baseVal;
         samples.push({
@@ -73,6 +73,22 @@ let diagnostics;
 try { diagnostics=await page.evaluate(collectModeTransitionSamples,{fixture:"demo-smoke",samples:1}); }
 catch(error) { diagnostics={status:"unavailable",diagnostic:true,reason:error.message}; }
 console.log(JSON.stringify({modeTransitionDiagnostics:diagnostics}));
+
+// Ordinary View gestures keep one bounded scene promotion after editor install.
+result.oneSceneGestureSurface = await page.evaluate(async () => {
+ const c=window.__card,frame=()=>new Promise(r=>requestAnimationFrame(r));
+ c._setMode('view');while(c._modeTransitionBusy)await frame();await c.updateComplete;
+ const root=c.renderRoot,stage=c._stageEl,svg=root.querySelector('.plan-svg');
+ const before=svg.getBoundingClientRect().width/svg.viewBox.baseVal.width;
+ const rect=stage.getBoundingClientRect();
+ stage.dispatchEvent(new WheelEvent('wheel',{deltaY:-120,clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2,bubbles:true,cancelable:true}));
+ await frame();await frame();
+ const surfaces=()=>[...root.querySelectorAll('[data-hp-live-scene="floor"],[data-hp-live-viewbox="floor"]')];
+ const promoted=surfaces().filter(n=>n.style.willChange.includes('transform')).length;
+ await new Promise(r=>setTimeout(r,500));await c.updateComplete;
+ const after=svg.getBoundingClientRect().width/svg.viewBox.baseVal.width;
+ return promoted===1&&after>before&&surfaces().every(n=>!n.style.transform&&!n.style.willChange);
+});
 
 // The projection crossing retains one real scene and switches it while faded;
 // narrow and reduced-motion paths must leave neither a veil nor an inert stage.

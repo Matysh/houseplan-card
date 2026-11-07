@@ -51,3 +51,12 @@ test('#1120 allocated head uses fractional untransformed border-box space, not i
     if (old === undefined) delete globalThis.getComputedStyle; else globalThis.getComputedStyle = old;
   }
 });
+
+test('header memo lends recent modes but bounds and invalidates all measurements', () => {
+ const memo=new PanelHeaderMemo(),owner={};let count=0;const measure=()=>({phase:0,phone:false,height:++count});
+ const a=memo.resolve(owner,'view',780,measure);memo.resolve(owner,'plan',780,measure);
+ assert.equal(memo.resolve(owner,'view',780,measure),a);assert.equal(count,2);
+ for(let i=0;i<10;i++)memo.resolve(owner,'mode-'+i,780,measure);
+ memo.resolve(owner,'view',780,measure);assert.equal(count,13,'oldest measurements are evicted');
+ memo.invalidate();memo.resolve(owner,'mode-9',780,measure);assert.equal(count,14,'font invalidation clears all modes');
+});

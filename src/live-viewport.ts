@@ -265,7 +265,17 @@ export function paintLiveViewport(
       { exposeSceneOverflow: true, exposureClip: options.sceneExposureClip },
     );
   }
+  const floorScenes = [...root.querySelectorAll<HTMLElement>('[data-hp-live-scene="floor"]')];
+  const floorProjection = isIdentityLiveLayerProjection(sceneFloor) && !keepSceneLayer ? null : sceneFloor;
+  for (const scene of floorScenes) {
+    const exposed = floorProjection !== null;
+    if (scene.hasAttribute('data-hp-live-scene-exposed') !== exposed) scene.toggleAttribute('data-hp-live-scene-exposed', exposed);
+    setLayerProjection(scene, floorProjection, { exposeSceneOverflow:true, exposureClip:options.sceneExposureClip });
+  }
   for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')) {
+    // One bounded camera surface promotes the contiguous scene during gestures.
+    // Opacity surfaces remain independent for mode transitions.
+    if (floorScenes.some(scene => scene.contains(svg))) continue;
     setLayerProjection(
       svg,
       isIdentityLiveLayerProjection(sceneFloor) && !keepSceneLayer ? null : sceneFloor,

@@ -299,6 +299,7 @@ test('#1344 trace joins presentation by trace_id, keeps missing frames explicit 
       args:{id,begin_frame_id:{source_id:sequence?1:0,sequence_number:sequence}}});
   events.push({name:'hp-mode:large:0:view-plan:start',ts:0},
     {name:'hp-mode:large:0:view-plan:interactive',ts:25000},
+    {name:'UpdateLayoutTree',ph:'X',pid:7,tid:8,ts:1200,dur:100},
     {name:'Layout',ph:'X',pid:7,tid:8,ts:1600,dur:1000},
     {name:'Layout',ph:'X',pid:9,tid:10,ts:1600,dur:999999},
     {name:'Paint',ph:'X',pid:7,tid:8,ts:1800,dur:200,args:{data:{nodeName:'SVG proof'}}},
@@ -317,7 +318,22 @@ test('#1344 trace joins presentation by trace_id, keeps missing frames explicit 
   assert.equal(row.firstPresentedMs,10);
   assert.equal(row.interactiveMinusToPresentationMs,5);
   assert.equal(row.terminalFrame.traceId,'C');
-  assert.equal(row.maxStyleLayoutMs,1);
+  assert.equal(row.maxStyleLayoutMs,1.1);
+  assert.equal(row.startup.synchronousStyleLayoutBeforePaintMs,.1);
+  assert.equal(row.startup.styleLayoutAfterPaintInFirstOpportunityMs,1);
   assert.equal(row.runningPaintEvents,1);
   assert.deepEqual(row.runningPaintNodes,['SVG proof']);
+});
+
+test('first presentation includes preparation elapsed on the same command timeline', () => {
+  let now=24, sequence=0;const pending=new Map(),shown=[];
+  const c=new ModeTransitionController({frame:s=>shown.push(s.presented),settled:()=>{}},
+    {now:()=>now,requestFrame:cb=>{pending.set(++sequence,cb);return sequence},cancelFrame:id=>pending.delete(id)});
+  const from=endpoint('view',0,600,{x:0,y:0,w:800,h:600});
+  const to=endpoint('plan',96,504,{x:0,y:48,w:800,h:504});
+  c.start(from,to,'plan',220,0);
+  assert.deepEqual(shown[0],interpolateModeVisualState(from,to,24/220));
+  assert.equal(c.state.startedAt,0);
+  assert.equal(pending.size,1,'preparation does not introduce a second clock');
+  c.cancel(false);assert.equal(pending.size,0);
 });
