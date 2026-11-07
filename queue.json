@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6606,
+  "revision": 6607,
   "nextTicket": 296,
   "nextFence": 296,
   "tasks": {
@@ -4332,6 +4332,10 @@
       "digest": "e7925719d45e6e1efd816f876a90d3c49c9bb995ddd2abb34add49bb3acbce1e",
       "issue": 1348
     },
+    "github:42407510994:1:completions:message:91a7abcdee3dc67c388aaad2170a10193419bb1a9c0a116ba07082b244f147d0": {
+      "digest": "4690f234a0d75820eb9e1cb71d0337fef0af51e27581171eb0606c9cfe88393f",
+      "issue": 1348
+    },
     "finish:14291f4c-491e-41ef-9944-69cb94df3718": {
       "digest": "98999a9eecd31aa230451dbe4f4fd7ad4b12fd1e7f92b97e843ad1f75e78434d",
       "issue": 1348,
@@ -4378,7 +4382,8 @@
           "entry": 1,
           "detail": "Поведение: test/isometric-contract.test.mjs: failed; Backend: tests_backend/test_config_schema_manifest.py: failed; Backend: tests_backend/test_plan_graph_support.py: failed; Браузер: backdrop: failed; Браузер: node history context: failed; Браузер: plan graph editor: failed; Браузер: plan snap overlay: failed; Браузер: wall node delete: failed; Браузер: wall node topology: failed",
           "eventId": "finish:14291f4c-491e-41ef-9944-69cb94df3718:finish:3:return:return:1348"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:b9c22d20-e2e9-4911-bf0f-48c909a2fa1a": {
