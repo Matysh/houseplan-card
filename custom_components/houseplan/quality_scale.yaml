@@ -1,0 +1,129 @@
+# Integration Quality Scale self-assessment.
+# Custom integrations are not formally graded (they sit in the "Custom" tier),
+# but we track the official checklist here. done = implemented, exempt = not
+# applicable with the reason.
+rules:
+  # ---- Bronze ----
+  action-setup:
+    status: exempt
+    comment: The integration registers no service actions.
+  appropriate-polling:
+    status: exempt
+    comment: No polling — storage + WebSocket API + frontend serving only.
+  brands:
+    status: done
+    comment: Local brand images in custom_components/houseplan/brand/ (HA >=2026.3 mechanism).
+  common-modules:
+    status: done
+    comment: const.py, store.py (stores + runtime data), validation.py (pure schemas).
+  config-flow:
+    status: done
+  config-flow-test-coverage:
+    status: done
+    comment: tests_backend/test_ha_config_flow.py (runs in CI on Python 3.13).
+  dependency-transparency:
+    status: done
+    comment: No external requirements.
+  docs-actions:
+    status: exempt
+    comment: No service actions.
+  docs-high-level-description:
+    status: done
+    comment: README.md.
+  docs-installation-instructions:
+    status: done
+    comment: README.md (HACS + manual).
+  docs-removal-instructions:
+    status: done
+    comment: README.md uninstall section.
+  entity-event-setup:
+    status: exempt
+    comment: No entities.
+  entity-unique-id:
+    status: exempt
+    comment: No entities.
+  has-entity-name:
+    status: exempt
+    comment: No entities.
+  runtime-data:
+    status: done
+    comment: entry.runtime_data holds HouseplanData (stores + write lock).
+  test-before-configure:
+    status: exempt
+    comment: No external device/service to validate during the flow.
+  test-before-setup:
+    status: done
+    comment: Storage load is verified in async_setup_entry (ConfigEntryNotReady on failure).
+  unique-config-entry:
+    status: done
+    comment: single_config_entry in manifest.
+  # ---- Silver ----
+  action-exceptions:
+    status: exempt
+    comment: No service actions; WS handlers reply with typed error codes.
+  config-entry-unloading:
+    status: done
+    comment: Unload supported; WS commands and static paths are global by design (documented in __init__).
+  docs-configuration-parameters:
+    status: done
+    comment: README documents the admin_only option and card options.
+  docs-installation-parameters:
+    status: done
+  entity-unavailable:
+    status: exempt
+    comment: No entities.
+  integration-owner:
+    status: done
+  log-when-unavailable:
+    status: exempt
+    comment: No external service.
+  parallel-updates:
+    status: exempt
+    comment: No entities/polling.
+  reauthentication-flow:
+    status: exempt
+    comment: No authentication against an external service.
+  test-coverage:
+    status: todo
+    comment: >-
+      #42 stage 1 shipped the machinery: pytest-cov in CI with a committed
+      baseline gate, coverage.xml artifact and a hard fail on a silently
+      skipped HA harness. The 90%/95% thresholds are raised by follow-up
+      baseline bumps; the rule flips to done at >=95%.
+  # ---- Gold (selected; entity/device rules are exempt — no entities) ----
+  diagnostics:
+    status: done
+    comment: diagnostics.py with redaction of personal marker fields.
+  reconfiguration-flow:
+    status: exempt
+    comment: Nothing to reconfigure — no host/credentials; all data is edited in the card UI.
+  repair-issues:
+    status: done
+    comment: Missing plan files raise repair issues (translation_key broken_plan).
+  docs-troubleshooting:
+    status: done
+    comment: >-
+      USER-GUIDE.md #22 Troubleshooting and USER-GUIDE.ru.md #22 «Диагностика»
+      cover load failures, missing devices, geometry, vacuum and reporting.
+  docs-examples:
+    status: done
+    comment: >-
+      USER-GUIDE carries executable YAML examples for both cards (view,
+      space card with fit/light_pools, filters) and the setup walkthrough.
+  # ---- Platinum ----
+  strict-typing:
+    status: todo
+    comment: >-
+      #42 stage 1: mypy strict gates six pure modules (const, projection,
+      coordinate_canonicalization, frontend_asset_manifest, junction_limits,
+      plans) via a grow-only allowlist; the HA-boundary modules are the next
+      stage.
+  async-dependency:
+    status: exempt
+    comment: No dependencies.
+  inject-websession:
+    status: exempt
+    comment: >-
+      The optional user-confirmed support relay is the integration's only
+      outgoing HTTP path and creates its bounded ClientSession explicitly;
+      ordinary plan, device and asset operation remains local.
