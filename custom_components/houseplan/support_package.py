@@ -519,6 +519,7 @@ def _project_space(
                     "y",
                     "angle",
                     "length",
+                    "light_transparent",
                     "invert",
                     "flip_h",
                     "flip_v",

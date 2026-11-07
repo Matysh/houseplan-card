@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a door-only “Lets light through” switch for closed glass doors: shared Glow, exterior solar apertures and bounded sunlight continuation through interior glass doors in Flat/2.5D; retain the flag through save/export/import (#1348).
+
 - Recognize closed room contours with dangling internal walls; retain partitions and openings without requiring Optimize (#1346).
 - Fixed a stale nightly mutation witness selector after the onboarding boundary test was renamed (#1345).
 - Rework View/editor transitions with retained scene surfaces, a presented endpoint before finishing, and silent editor-code preparation on writer intent (#1344).

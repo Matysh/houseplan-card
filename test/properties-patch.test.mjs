@@ -51,3 +51,15 @@ test('#931 visual history records absence/null only for changed keys and restore
   assert.equal(applyDeviceVisualFields(newer,size).size,null);
   assert.equal(newer.size,2);
 });
+
+
+test('#1348 the door light switch preserves state, geometry and sibling openings', () => {
+  const door={id:'d',type:'door',x:.3,y:.4,angle:90,length:.1,contact:'binary_sensor.d',lock:'lock.d',invert:true,flip_h:true,host:{kind:'wall',id:'w',t:.4}};
+  const sibling={...door,id:'other'}; const space={id:'s',title:'S',openings:[door,sibling]};
+  assert.equal(patchPropertiesTarget(space,{kind:'opening',value:door},'light_transparent',true,context),true);
+  assert.deepEqual(space.openings,[{...door,light_transparent:true},sibling]);
+  assert.equal(patchPropertiesTarget(space,{kind:'opening',value:space.openings[0]},'light_transparent',false,context),true);
+  assert.deepEqual(space.openings,[door,sibling]);
+  for(const type of ['window','gate','passage']) assert.equal(patchPropertiesTarget(space,
+    {kind:'opening',value:{...door,type}},'light_transparent',true,context),false);
+});

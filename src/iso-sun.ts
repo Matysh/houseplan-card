@@ -13,6 +13,7 @@ import { sunDirOnPlan, windowLit, windowWallInfo, type SunRoom, type SunWindow }
 import { directionalOccluders, floorMinusBodies, geometryOuterRings } from './physical-geometry';
 import { intersection } from 'polyclip-ts';
 import { resolveSunAccess, type SunAccess } from './sun-access';
+import { continueSolarBeam, type SunDoorPassage } from './sun-door-passages';
 
 /** Lab `min(910, max(215, 408·(0.55 + 1.4·(1 − e/90)^1.6)))` in wall heights. */
 export const ISO_SUN_LENGTH = Object.freeze({ base: 408 / 218.8, min: 215 / 218.8, max: 910 / 218.8 });
@@ -51,11 +52,13 @@ export interface IsoSunBeam {
   normal: [number, number];
   depth: number;
   clip: number[][];
+  clipPolys?: number[][][];
   polys: number[][][];
 }
 
 export interface IsoSunInput {
   access?: SunAccess;
+  glassDoors?: readonly SunDoorPassage[];
   rooms: SunRoom[];
   windows: SunWindow[];
   azimuth: number;
@@ -120,6 +123,13 @@ export function computeIsoSunBeams(input: IsoSunInput): IsoSunBeam[] {
       openingId: w.id, roomId: info.roomId, lightFloor: !!input.lightFloorRooms?.has(info.roomId),
       a, b, shift, normal, depth, clip, polys,
     });
+    const regions = continueSolarBeam({roomId:info.roomId,polys,a,b,dir:away,len:travel},
+      input.rooms,input.innerByRoom,input.glassDoors ?? [],input.occluders ?? []);
+    for (const region of regions) {
+      const continued=geometryOuterRings(region.geometry);
+      out.push({ openingId:w.id,roomId:region.roomId,lightFloor:!!input.lightFloorRooms?.has(region.roomId),
+        a,b,shift,normal,depth,clip:region.clip,clipPolys:continued,polys:continued });
+    }
   }
   return out;
 }
@@ -155,7 +165,7 @@ export function renderIsoSunWash(
           ${beam.lightFloor ? svg`<linearGradient id="hp-iso-sun-edge-${i}" gradientUnits="userSpaceOnUse"
             x1="${mx}" y1="${my}" x2="${mx + (ex - mx) * ISO_SUN_STREAK.reach}" y2="${my + (ey - my) * ISO_SUN_STREAK.reach}">
             ${stopsSvg(ISO_SUN_STREAK_STOPS)}</linearGradient>` : nothing}
-          <clipPath id="hp-iso-sun-clip-${i}"><polygon points="${pts(beam.clip)}"></polygon></clipPath>`;
+          <clipPath id="hp-iso-sun-clip-${i}">${(beam.clipPolys ?? [beam.clip]).map(poly => svg`<polygon points="${pts(poly)}"></polygon>`)}</clipPath>`;
       })}
     </defs>
     <g class="sunlayer iso-sunwash hp-view-only-layer ${out ? 'out' : ''}" opacity="${opacity}">

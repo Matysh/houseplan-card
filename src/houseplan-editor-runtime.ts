@@ -746,7 +746,7 @@ export interface HouseplanEditorHostPort {
   _openBindingInHa: (binding: string) => void;
   _openCuts: () => number[][];
   _openingAmt: (o: OpeningCfg) => number;
-  _openingDialog: { id?: string; type: "door" | "window" | "gate" | "passage"; lengthCm: number; lengthTouched?: boolean; contact: string; lock: string; contactOpen?: boolean; contactFilter?: string; lockOpen?: boolean; lockFilter?: string; invert: boolean; flipH: boolean; flipV: boolean; host?: OpeningHost; x: number; y: number; angle: number; } | null;
+  _openingDialog: { id?: string; type: "door" | "window" | "gate" | "passage"; lengthCm: number; lengthTouched?: boolean; contact: string; lock: string; contactOpen?: boolean; contactFilter?: string; lockOpen?: boolean; lockFilter?: string; invert: boolean; lightTransparent?: boolean; flipH: boolean; flipV: boolean; host?: OpeningHost; x: number; y: number; angle: number; } | null;
   _openingDimensionContextCache: { key: string; value: OpeningDimensionContext; } | null;
   _openingEntityAvailable: (eid: string | null | undefined) => boolean;
   _openingFace: (opening: RenderOpening, index: OpeningWallIndex, flipV: boolean) => OpeningFaceOffset;
@@ -6270,10 +6270,10 @@ public _openingClick(raw: number[]): void {
         lengthCm: Math.round((rebound.length * NORM_W / this.host._gridPitch) * this.host._cellCm),
         lengthTouched: false,
         contact: rebound.contact || '', lock: rebound.lock || '',
-        invert: !!rebound.invert, flipH: !!rebound.flip_h, flipV: !!rebound.flip_v,
+        invert: !!rebound.invert, lightTransparent: rebound.light_transparent === true, flipH: !!rebound.flip_h, flipV: !!rebound.flip_v,
       } : {
         type: place.type, lengthCm: place.lengthCm, contact: '', lock: '',
-        invert: false, flipH: place.flipH, flipV: place.flipV,
+        invert: false, lightTransparent: false, flipH: place.flipH, flipV: place.flipV,
       }),
       ...(place.host ? { host: place.host } : {}),
       x: place.x, y: place.y, angle: place.angle,
@@ -6298,6 +6298,7 @@ public _editOpening(o: RenderOpening): void {
       contact: o.contact || '',
       lock: o.lock || '',
       invert: !!o.invert,
+      lightTransparent: o.light_transparent === true,
       flipH: !!o.flip_h,
       flipV: !!o.flip_v,
       ...(o.host?.kind === 'partition' ? { host: { ...o.host } } : {}),
@@ -6663,6 +6664,8 @@ public _saveOpening(): void {
     } else {
       delete o.host;
     }
+    if (d.type === 'door' && d.lightTransparent === true) o.light_transparent = true;
+    else delete o.light_transparent;
     if (d.type === 'passage') {
       // The canonical passage record contains geometry only. Delete keys
       // instead of writing null/false so imports and old broken records have
@@ -10955,6 +10958,11 @@ public _renderOpeningDialog(): TemplateResult {
           ${d.type === 'door' || d.type === 'gate'
             ? html`<label>${this.host._t('opening.lock_label')}</label>
                 ${picker('lock', this._lockCandidates())}`
+            : nothing}
+
+          ${d.type === 'door'
+            ? html`<label class="hpf-check hpf-check-wrap srcrow">${this._boolInput(d.lightTransparent === true, (v) => (this.host._openingDialog = { ...d, lightTransparent: v }), false, 'opening-light-transparent')}
+                <span>${this.host._t('opening.light_transparent')}</span></label>`
             : nothing}
 
           ${d.type !== 'gate' && d.type !== 'passage'

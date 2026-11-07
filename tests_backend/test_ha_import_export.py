@@ -3832,3 +3832,37 @@ def test_current_space_transfer_remaps_graph_and_exact_host_without_reconstructi
     assert new["host"]["id"] != old["host"]["id"]
     assert new["host"]["tq"] == old["host"]["tq"] == ["1", "1"]
     assert [new["x"], new["y"], new["length"]] == [old["x"], old["y"], old["length"]]
+
+
+@pytest.mark.parametrize("kind,plan_only", [("full", False), ("space", False), ("space", True)])
+@pytest.mark.parametrize("value", [None, False, True])
+def test_issue1348_glass_door_survives_transfer(tmp_path, kind, plan_only, value):
+    config = _config()
+    space = config["spaces"][0]
+    wall = next(w for w in space["wall_segments"]
+        if all(point[1] == 0 for point in (w["a"], w["b"])))
+    door = {"id": "glass-door", "type": "door", "x": .5, "y": 0, "angle": 0, "length": .2,
+        "host": {"kind": "wall", "id": wall["id"], "t": .5, "tq": ["1", "2"]},
+        "contact": "binary_sensor.door", "lock": "lock.door"}
+    if value is not None:
+        door["light_transparent"] = value
+    space["openings"] = [door]
+    from custom_components.houseplan.plan_graph import project_graph_space
+    next(edge for edge in space["plan_graph"]["edges"] if edge["id"] == wall["id"])["cm"] = 20
+    config["spaces"][0] = project_graph_space(space, space["plan_graph"])["space"]
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        card_version="test", config_root=tmp_path, plan_only=plan_only)
+    parsed = parse_document(json.dumps(document).encode())
+    restored = parsed["payload"]["config"]["spaces"][0]["openings"][0]
+    assert restored.get("light_transparent") is value
+    assert restored["type"] == "door"
+    if not plan_only:
+        assert restored["contact"] == door["contact"]
+        assert restored["lock"] == door["lock"]
+    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    current = _config()
+    preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
+    imported, _, _ = prepare_apply(get_candidate(runtime, preview["token"], "alice"), current, {}, confirm_missing_content=True)
+    assert any(o.get("light_transparent") is value for s in imported["spaces"] for o in s.get("openings", []))

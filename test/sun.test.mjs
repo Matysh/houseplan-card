@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   norm360, planSunAngle, sunDirOnPlan, dayPhase,
   isExteriorWall, windowWallInfo, windowLit,
-  rayLength, rayQuad, clipToRoom, computeSunRays,
+  rayLength, rayQuad, clipToRoom, computeSunRays, solarWindowOpenings,
   rayAlpha, rayColor, RAY_MAX_ALPHA,
   raysVisible, rayPeakAlpha, RAY_ELEVATION_MIN, RAY_FADE_MS,
   RAY_LENGTH_K, RAY_FADE_END, rayStops, RAY_MIN_COS,
@@ -686,4 +686,20 @@ test('sunStateOf: hass shapes, garbage-safe', () => {
   assert.equal(sunStateOf({ states: {} }), null);
   assert.equal(sunStateOf({ states: { 'sun.sun': { attributes: { azimuth: 'x', elevation: 1 } } } }), null);
   assert.equal(sunStateOf(null), null);
+});
+
+
+test('#1348 exterior glass doors reuse window solar geometry without changing old openings', () => {
+  const input = {id:'glass-door',type:'door',rx:300,ry:100,angle:0,rlen:60,contact:'binary_sensor.closed'};
+  const rooms=[{id:'inside',poly:[[100,100],[500,100],[500,500],[100,500]]}];
+  assert.deepEqual(solarWindowOpenings([input,{...input,light_transparent:false}]),[]);
+  const aperture=solarWindowOpenings([{...input,light_transparent:true}]);
+  const window=[{id:'glass-door',x:300,y:100,angle:0,length:60}];
+  assert.deepEqual(aperture,window);
+  assert.deepEqual(computeSunRays(rooms,aperture,0,30,0),computeSunRays(rooms,window,0,30,0));
+  assert.ok(computeSunRays(rooms,aperture,0,30,0).length);
+  assert.deepEqual(computeSunRays(rooms,aperture,180,30,0),[],'the sun must face the opening');
+  assert.deepEqual(computeSunRays(rooms,aperture,0,-1,0),[],'night stays dark');
+  assert.deepEqual(solarWindowOpenings([{...input,light_transparent:true,host:{kind:'partition'}}]),[]);
+  assert.deepEqual(solarWindowOpenings([{...input,type:'gate',light_transparent:true}]),[]);
 });

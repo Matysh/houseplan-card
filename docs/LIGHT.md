@@ -35,8 +35,10 @@ every lamp in the space.
 
 **Transparent**
 
-- doorways and gates to floor on both sides, but only by their resolved opening
-  amount. An unbound opening is fully transparent, a bound closed one is opaque,
+- doorways and gates to floor on both sides, by their resolved opening
+  amount. A door with `light_transparent: true` passes its full aperture even
+  when closed; absent/false retains the contact-driven rule (#1348). Normally,
+  an unbound opening is fully transparent, a bound closed one is opaque,
   and a positional cover cuts a centre-aligned fraction of the full aperture;
 - saved `passage` openings — always cut through the masonry, so an opening is a
   real gap between two jamb faces and a thick wall's returns narrow the beam;
@@ -64,8 +66,10 @@ input is only a v8 read projection and migrates to ordinary `cm:0` atoms.
 The classifier is an explicit `door | gate | passage | window` allowlist.
 Window eligibility alone is not transparency: the structural pass intersects
 unambiguous opposite room-side intervals and validates explicit host identity,
-position and physical masonry. Doors and gates
-state is resolved by the same `openingAmount()` used for their visible symbol:
+position and physical masonry. Door and gate
+state normally follows the same `openingAmount()` used for their visible symbol.
+The door-only glass flag overrides only the optical amount, never the symbol,
+contact, animation or lock; it has no effect on gates. Contact resolution is unchanged:
 binary contacts yield zero or full aperture, finite `current_position` yields
 `clamp(position / 100)`, and `invert` mirrors a known amount. Missing,
 disabled, `unknown` or `unavailable` contacts preserve the static-plan fallback
@@ -81,8 +85,8 @@ Only its explicit partition body (plus an exactly collinear covering room wall)
 is cut. Internal glass follows the same sliced physical cuts, including
 partition hosts; exterior glass and one-sided door/gate/passage cuts remain
 opaque, and an invalid host fails dark. A window hosted by an independent
-wall never becomes a sunlight source; sunlight still belongs to exterior room
-windows.
+wall never becomes a sunlight source; sunlight sources still belong to exterior room
+windows and flagged glass doors (see SUN.md).
 
 Source placement follows the same geometry, fail-dark. If the source centre is
 inside an opaque wall body, an exterior/invalid window tunnel, or an exterior door/gate opening,

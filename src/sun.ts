@@ -220,6 +220,17 @@ export type { SunRoom } from './sun-access';
 /** A window opening in render units: centre, wall angle°, full length. */
 export interface SunWindow { id: string; x: number; y: number; angle: number; length: number }
 
+/** Exterior door glass uses the existing window aperture, compass and horizon rules. */
+export function solarWindowOpenings(openings: readonly {
+  id: string; type: string; light_transparent?: boolean; host?: { kind: string };
+  rx: number; ry: number; angle: number; rlen: number;
+}[]): SunWindow[] {
+  return openings.filter(opening => opening.host?.kind !== 'partition'
+    && (opening.type === 'window' || opening.type === 'door' && opening.light_transparent === true))
+    .map(opening => ({ id: opening.id, x: opening.rx, y: opening.ry,
+      angle: opening.angle, length: opening.rlen }));
+}
+
 /**
  * Is the wall stretch at `mid` with outward normal `n` exterior — i.e. is
  * there NO room just outside it? Probes one point `probe` units out.

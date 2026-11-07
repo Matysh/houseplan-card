@@ -2247,6 +2247,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
                     vol.Optional("contact"): vol.Any(str, None),
                     vol.Optional("lock"): vol.Any(str, None),
                     vol.Optional("invert"): bool,
+                    vol.Optional("light_transparent"): bool,
                     vol.Optional("flip_h"): bool,
                     vol.Optional("flip_v"): bool,
                     vol.Optional("host"): OPENING_HOST_SCHEMA,

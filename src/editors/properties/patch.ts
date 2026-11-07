@@ -75,6 +75,10 @@ export function patchPropertiesTarget(
     let patch = opening;
     if ((field === 'flip_h' || field === 'flip_v') && typeof value === 'boolean' && opening.type !== 'passage'
       && !(opening.type === 'gate' && field === 'flip_h')) patch = { ...opening, [field]: value };
+    else if (field === 'light_transparent' && opening.type === 'door' && typeof value === 'boolean') {
+      patch = { ...opening };
+      if (value) patch.light_transparent = true; else delete patch.light_transparent;
+    }
     else if (finite(value) && (field === 'length' || field === 'gap')) {
       const core = openingPropertiesCore(opening, space.partitions ?? [], space.wall_segments ?? [], cellCm);
       if (!core) return false;

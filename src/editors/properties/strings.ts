@@ -2,7 +2,7 @@
 import { subst } from '../../logic';
 import { t, langOf, type I18nKey } from '../../i18n';
 const reused = {title:'btn.properties',copy:'btn.copy',delete:'btn.delete',cancel:'btn.cancel',
-  fill:'decor.fill',line:'decor.line',rect:'decor.rect',ellipse:'decor.ellipse',furniture:'decor.furniture'} as const satisfies Record<string,I18nKey>;
+  light_transparent:'opening.light_transparent',fill:'decor.fill',line:'decor.line',rect:'decor.rect',ellipse:'decor.ellipse',furniture:'decor.furniture'} as const satisfies Record<string,I18nKey>;
 const en = {
   selection_count: 'Selected: {count}', mixed_values: 'Different values',
   group_incompatible: 'Select objects of one type to edit their shared appearance.',
@@ -35,7 +35,7 @@ const en = {
   device_hint: 'Position of the icon centre on the plan.', device_size_hint: 'The icon is scaled proportionally.',
   text_center_hint: 'Position of the text frame centre.', text_size_hint: 'Dimensions are calculated from the text and font.',
   image_hint: 'Position of the image frame centre.', led_hint: 'Change the strip shape using points on the plan.',
-  hinge: 'Swap hinges', opening_side: 'Opening direction', side_a: 'Towards side A', side_b: 'Towards side B',
+  light_transparent: 'Lets light through', hinge: 'Swap hinges', opening_side: 'Opening direction', side_a: 'Towards side A', side_b: 'Towards side B',
   into_room: 'Into room “{name}”', outside: 'Outside',
   direction: 'Direction', up: 'Up', down: 'Down', clockwise: 'Clockwise', counterclockwise: 'Counter-clockwise',
   reflection: 'Reflection', horizontal: 'Horizontal', vertical: 'Vertical', proportions: 'Proportions', keep_ratio: 'Keep proportions',
@@ -86,7 +86,7 @@ const ru: Record<Key, string> = {
   device_hint: 'Положение центра значка на плане.', device_size_hint: 'Размер значка меняется пропорционально.',
   text_center_hint: 'Положение центра рамки текста.', text_size_hint: 'Габариты вычисляются по тексту и шрифту.',
   image_hint: 'Положение центра рамки изображения.', led_hint: 'Перемещайте точки ленты на плане.',
-  hinge: 'Переставить петли', opening_side: 'Открывание', side_a: 'К стороне A', side_b: 'К стороне B',
+  light_transparent: 'Пропускает свет', hinge: 'Переставить петли', opening_side: 'Открывание', side_a: 'К стороне A', side_b: 'К стороне B',
   into_room: 'В комнату «{name}»', outside: 'Наружу',
   direction: 'Направление', up: 'Вверх', down: 'Вниз', clockwise: 'По часовой стрелке', counterclockwise: 'Против часовой стрелки',
   reflection: 'Отражение', horizontal: 'Горизонтально', vertical: 'Вертикально', proportions: 'Пропорции', keep_ratio: 'Сохранять пропорции',

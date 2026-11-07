@@ -326,6 +326,8 @@ export interface OpeningCfg {
   contact?: string | null; // binary_sensor / cover driving open-closed
   lock?: string | null;    // lock entity (door-like openings: doors and gates)
   invert?: boolean;
+  /** Door glass: optical transmission only; never the live/drawn opening state. */
+  light_transparent?: boolean;
   flip_h?: boolean; // hinge on the other jamb
   flip_v?: boolean; // opens to the other side of the wall
   /** Explicit owner for an opening cut into an independent wall. */

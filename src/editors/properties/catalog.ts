@@ -153,6 +153,7 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
       geometryHint = 'opening_hint';
       if (opening.type !== 'passage') {
         featureTitle = opening.type === 'door' ? 'door_features' : opening.type;
+        if (opening.type === 'door') features.push({ key: 'light_transparent', label: 'light_transparent', value: opening.light_transparent === true, control: 'toggle', wide: true });
         if (opening.type === 'door') features.push({ key: 'flip_h', label: 'hinge', value: opening.flip_h === true, control: 'toggle', icon: 'swap', wide: true });
         features.push(choice('flip_v', 'opening_side', opening.flip_v === true, context.openingSides.map((label, i) => ({ value: String(!!i), label }))));
       }

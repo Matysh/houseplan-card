@@ -331,6 +331,13 @@ export function openingAmount(
   return invert ? 1 - base : base;
 }
 
+/** A door's optical aperture is independent of its sensor-driven symbol. */
+export function openingLightAmount(
+  opening: { type: string; light_transparent?: boolean }, drawnAmount: number,
+): number {
+  return opening.type === 'door' && opening.light_transparent === true ? 1 : drawnAmount;
+}
+
 /** Explicit light allowlist. Unknown future opening types stay fail-dark until
  * their physical semantics are deliberately added and tested. */
 export function isInteriorLightOpeningType(type: string): type is 'door' | 'gate' | 'passage' | 'window' {

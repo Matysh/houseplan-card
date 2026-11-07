@@ -242,6 +242,7 @@
   "opening.none": "— keine —",
   "opening.search_ph": "Suche: Name oder Entitäts-ID…",
   "opening.invert": "Geöffnet/geschlossen invertieren",
+  "opening.light_transparent": "Lässt Licht durch",
   "opening.flip_h": "Scharnier an der anderen Zarge",
   "opening.flip_v": "Öffnet zur anderen Seite",
   "opening.open": "Offen",

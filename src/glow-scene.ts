@@ -15,7 +15,7 @@ import {
 } from './devices';
 import {
   glowAlpha, isInteriorLightOpeningType, openingLightApertureLength,
-  openingLightStateSignature, outlineWithout, pointInPolygon,
+  openingLightStateSignature, openingLightAmount, outlineWithout, pointInPolygon,
   quantizeOpeningLightAmount, resolveGlowAppearance, roomPoly,
 } from './logic';
 import {
@@ -294,7 +294,7 @@ export function resolveLightBarrierRevision(input: {
       && onFloor([opening.rx - nx * probe, opening.ry - ny * probe]);
     return interior ? [{
       opening,
-      amount: quantizeOpeningLightAmount(input.openingAmount(opening)),
+      amount: quantizeOpeningLightAmount(openingLightAmount(opening, input.openingAmount(opening))),
     }] : [];
   });
   const openingStateSignature = openingLightStateSignature(

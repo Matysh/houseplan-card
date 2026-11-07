@@ -139,3 +139,24 @@ test('floor and host edits change the structural key; camera is absent from it',
   assert.notEqual(f.revisionFor(0).fingerprint,first);
   assert.equal(f.revisionFor(0).fingerprint,f.revisionFor(0).fingerprint);
 });
+
+
+test('#1348 glass-door transmission changes only its optical aperture', () => {
+  for (const flag of [undefined, false, true]) {
+    const door = { ...glass(), type: 'door', contact: 'binary_sensor.door',
+      ...(flag === undefined ? {} : { light_transparent: flag }) };
+    const f = arrange(pair(), door);
+    assert.equal(seen(f.sceneFor(0), [130,50]), flag === true);
+    assert.equal(seen(f.sceneFor(1), [130,50]), true, 'off retains the ordinary open-door path');
+    assert.equal(seen(f.sceneFor(0), [130,5]), false, 'glass does not erase its jamb');
+    if (flag === true) assert.equal(f.revisionFor(0).fingerprint, f.revisionFor(1).fingerprint,
+      'the contact still changes the symbol but not glass transmission');
+    else assert.notEqual(f.revisionFor(0).fingerprint, f.revisionFor(1).fingerprint);
+    assert.deepEqual(f.opening, door, 'the optical pass never mutates the opening');
+  }
+  const gate = arrange(pair(), { ...glass(), type: 'gate', light_transparent: true });
+  assert.equal(seen(gate.sceneFor(0), [130,50]), false, 'the door setting does not opt gates in');
+  const column = arrange(pair(), { ...glass(), type: 'door', light_transparent: true },
+    { columns: [{id:'column',shape:'square',center:[150,50],cm:20}] });
+  assert.equal(seen(column.sceneFor(0), [180,50]), false, 'other obstacles remain opaque');
+});

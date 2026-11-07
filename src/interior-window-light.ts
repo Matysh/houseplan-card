@@ -75,3 +75,13 @@ export function interiorWindowLightPassages(
     };
   });
 }
+
+/** Optical classification adapter: reuse the exact host/room proof, never
+ * modify the door's saved type, sensor state, symbol or geometry. */
+export function interiorGlassDoorPassages(
+  opening: GeometryOpeningProjection, space: SpaceModel, index: OpeningWallIndex,
+): GeometryOpeningProjection[] {
+  return opening.type === 'door' && opening.light_transparent === true
+    ? interiorWindowLightPassages({ ...opening, type: 'window' }, space, index)
+      .map(slice => ({ ...slice, type: 'door' as const })) : [];
+}

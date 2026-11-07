@@ -355,6 +355,7 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
                 opening,
                 ("id", "type", "x", "y", "angle", "length")
                 + (() if opening.get("type") == "passage" else ("flip_h", "flip_v"))
+                + (("light_transparent",) if opening.get("type") == "door" else ())
                 + (("host",) if opening.get("host") else ()),
             )
             for opening in space.get("openings") or []

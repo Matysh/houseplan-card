@@ -153,6 +153,26 @@ this flag (normalizing an empty room settings object to absence); the saved
 record/history retains it. Even a first flag change keeps physical caches warm.
 Unrelated HA ticks perform no topology rebuild.
 
+### Glass doors (#1348)
+
+Doors have a **Lets light through** switch (`light_transparent`, default off),
+independent of room `sun_transparent`. An exterior flagged door is a window
+for sunlight: the same compass, horizon, incidence, source-span and length
+rules apply. An independent-partition door cannot become an exterior source.
+
+An interior flagged door transmits an already existing window ray through
+its actual aperture and both jamb faces into the next room. Chains of glass
+doors share the original direction, reach and gradient; a door never restarts
+the ray or creates light in an isolated room. Each interval must have a valid
+physical host and two unambiguous opposite room floors. Invalid hosts fail
+dark; columns, other wall bodies and Solid zero walls retain their shadows.
+The transport calculation is shared by Flat and 2.5D. The original beam length
+of each renderer stays unchanged.
+
+A room marked `sun_transparent` stays unpainted; a beam may traverse its
+proven glass-door chain. Missing/false door flags preserve previous solar
+behavior. The flag does not change the contact state, door drawing or control.
+
 ### Ordinary window rules
 
 Boolean, global + per-space (null = inherit), default OFF.

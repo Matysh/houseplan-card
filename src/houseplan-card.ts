@@ -77,12 +77,13 @@ import { type SafeResizePlan, type SafeResizeResolution } from './resize';
 import { formatArea } from './area-format';
 import { type ResizeAreaPlacement } from './resize-labels';
 import {
-  computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf,
+  computeSunRays, solarWindowOpenings, dayPhase, northDegOf, bgModeOf, sunRaysOn, sunRayOriginOf,
   sunStateOf, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
   rayStops, resolveDayCycle, type DayCycleState,
   rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
 } from './sun';
 import { resolveSunAccess, sunBarrierLines } from './sun-access';
+import { buildSunDoorPassages, continueSolarBeam } from './sun-door-passages';
 import { renderDayCycleEnvironment } from './day-cycle-render';
 import { dayCycleClock, moonLayer, moonSkyState } from './moon-gate';
 import { renderPaperShapes, type PaperShape } from './render/paper-scene';
@@ -2654,6 +2655,7 @@ export class HouseplanCard extends LitElement {
     lockOpen?: boolean;
     lockFilter?: string;
     invert: boolean;
+    lightTransparent?: boolean;
     flipH: boolean;
     flipV: boolean;
     host?: OpeningHost;
@@ -11265,6 +11267,7 @@ export class HouseplanCard extends LitElement {
     ];
     return {
       rooms, windows, occluders, access,
+      glassDoors: buildSunDoorPassages(this._openingsR, space, openingWallIndex, this._cellCm, this._gridPitch),
       innerByRoom: walls.length ? innerByRoom : undefined,
       wallDepthByOpening: walls.length ? wallDepthByOpening : undefined,
     };
@@ -11315,8 +11318,7 @@ export class HouseplanCard extends LitElement {
     // A contour-wall host is stable identity metadata, not a different physical
     // carrier. Only an independent partition window is excluded from exterior
     // sunlight (#132, ADR 282 Stage 1).
-    const windows = this._openingsR.filter((o) => o.type === 'window' && o.host?.kind !== 'partition')
-      .map((o) => ({ id: o.id, x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }));
+    const windows = solarWindowOpenings(this._openingsR);
     const key = sunGeometryKey(this._openingWallIndexFor(space, zeroWalls.contour).key,
       physicalBodiesKey(this._floorKey(space.id), this._cellCm, this._gridPitch), windows,
       [sun.azimuth, sun.elevation, north, origin, sunRoomSettingsKey(space.rooms)], zeroWalls);
@@ -11333,7 +11335,7 @@ export class HouseplanCard extends LitElement {
     }
     if (!this._sunRaysCache || this._sunRaysCache.key !== key) {
       this._floorCacheBuilds.sunRays++;
-      const { rooms, innerByRoom, wallDepthByOpening, occluders: sunOccluders, access } = this._sunInputs(space, zeroWalls, windows);
+      const { rooms, innerByRoom, wallDepthByOpening, occluders: sunOccluders, access, glassDoors } = this._sunInputs(space, zeroWalls, windows);
       let rays = computeSunRays(
         rooms, windows, sun.azimuth, sun.elevation, north!, innerByRoom, wallDepthByOpening, origin, access,
       );
@@ -11348,6 +11350,13 @@ export class HouseplanCard extends LitElement {
           };
         }).filter((ray) => ray.paths?.length || ray.polys.length);
       }
+      if (glassDoors.length) rays = rays.map(ray => {
+        const regions = continueSolarBeam(ray, rooms, innerByRoom, glassDoors, sunOccluders);
+        if (!regions.length) return ray;
+        const originalPaths = ray.paths ?? ray.polys.map(poly => polyclipPathD([[poly.concat([poly[0]])]]));
+        return { ...ray, paths: [...originalPaths, ...regions.map(region => polyclipPathD(region.geometry))].filter(Boolean),
+          polys: [...ray.polys, ...regions.flatMap(region => geometryOuterRings(region.geometry))] };
+      });
       // the rim is pure geometry off the same wedges — memoised on the same key
       this._sunRaysCache = { key, rays, rims: rays.map((r) => rayRimEdges(r)) };
     }

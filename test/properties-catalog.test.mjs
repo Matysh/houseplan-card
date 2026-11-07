@@ -69,6 +69,8 @@ test('#931 column, stair and all opening variants expose only applicable control
     const m=model({kind:'opening',value:{...space.openings[0],type}}), f=fields(m);
     assert.equal(f.x.mode,'readonly'); assert.equal(f.gap.label,'wall_end_gap'); assert.equal(f.length.max,600);
     assert.equal(f.angle.mode,'readonly'); assert.equal(f.invert,undefined);
+    assert.equal(f.light_transparent?.control, type === 'door' ? 'toggle' : undefined);
+    if (type === 'door') assert.equal(f.light_transparent.value, false);
     if(type==='passage') assert.equal(m.groups.length,3);
     else if(type==='gate'||type==='window') {
       assert.equal(f.flip_h,undefined);
