@@ -1,0 +1,87 @@
+{
+  "sourceSha": "2b065ecc30dec8d6de8638540cffc07233df5b20",
+  "workingDiffSha256": "e982ece251094a7d3f19fe8cd361562781f0a6bf21bfea8b2dab47dad00a2c2f",
+  "buildFingerprint": "079b6a86391f5bb93a13a0ecbd93f15f960b59e57aa7936057791529879667f4",
+  "chromium": "151.0.7922.34",
+  "viewport": {
+    "width": 1280,
+    "height": 800,
+    "dpr": 2
+  },
+  "fixture": "demo",
+  "locale": "en",
+  "note": "Browser-routed local assets; cold code and warm intent separated from mode motion. No real HA network latency is claimed.",
+  "rows": [
+    {
+      "preload": false,
+      "stateBefore": {
+        "runtime": false,
+        "state": "idle",
+        "mode": "view"
+      },
+      "ok": true,
+      "ms": 88.40000000596046,
+      "parts": [
+        {
+          "phase": "module",
+          "args": [
+            0,
+            false
+          ],
+          "ms": 40
+        },
+        {
+          "phase": "dependencies",
+          "quiet": false,
+          "ms": 5.4000000059604645
+        },
+        {
+          "phase": "create",
+          "ms": 20.5
+        },
+        {
+          "phase": "install",
+          "ms": 0
+        }
+      ]
+    },
+    {
+      "preload": true,
+      "stateBefore": {
+        "runtime": false,
+        "state": "idle",
+        "mode": "view"
+      },
+      "ok": true,
+      "ms": 43.599999994039536,
+      "parts": [
+        {
+          "phase": "module",
+          "args": [
+            0,
+            false
+          ],
+          "ms": 38.5
+        },
+        {
+          "phase": "dependencies",
+          "quiet": true,
+          "ms": 4.9000000059604645
+        },
+        {
+          "phase": "dependencies",
+          "quiet": false,
+          "ms": 0
+        },
+        {
+          "phase": "create",
+          "ms": 21
+        },
+        {
+          "phase": "install",
+          "ms": 0
+        }
+      ]
+    }
+  ]
+}

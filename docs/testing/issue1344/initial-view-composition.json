@@ -1,0 +1,41 @@
+{
+  "baselineSourceSha": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
+  "candidateSourceSha": "2b065ecc30dec8d6de8638540cffc07233df5b20",
+  "baselineFiles": [
+    "houseplan-assets/coordinate-canonicalization-B0Vm-hCu.js",
+    "houseplan-assets/houseplan-card-DWNVXBAx.js",
+    "houseplan-assets/lit-element-D-fz-ZJk.js",
+    "houseplan-assets/open-spans-Bq9br8LF.js",
+    "houseplan-assets/ref-ChxcsdGX.js",
+    "houseplan-assets/view-frame-C6a_xtLN.js",
+    "houseplan-card.js"
+  ],
+  "candidateFiles": [
+    "houseplan-assets/coordinate-canonicalization-DTYLXleK.js",
+    "houseplan-assets/houseplan-card-BDUMwg9U.js",
+    "houseplan-assets/lit-element-DM27eS2P.js",
+    "houseplan-assets/open-spans-CkCwuLFa.js",
+    "houseplan-assets/ref-BIgaOkbg.js",
+    "houseplan-assets/view-frame-CApZs3Yb.js",
+    "houseplan-card.js"
+  ],
+  "baselineRoles": [
+    "houseplan-assets/coordinate-canonicalization-HASH.js",
+    "houseplan-assets/houseplan-card-HASH.js",
+    "houseplan-assets/lit-element-HASH.js",
+    "houseplan-assets/open-spans-HASH.js",
+    "houseplan-assets/ref-HASH.js",
+    "houseplan-assets/view-frame-HASH.js",
+    "houseplan-card.js"
+  ],
+  "candidateRoles": [
+    "houseplan-assets/coordinate-canonicalization-HASH.js",
+    "houseplan-assets/houseplan-card-HASH.js",
+    "houseplan-assets/lit-element-HASH.js",
+    "houseplan-assets/open-spans-HASH.js",
+    "houseplan-assets/ref-HASH.js",
+    "houseplan-assets/view-frame-HASH.js",
+    "houseplan-card.js"
+  ],
+  "same": true
+}

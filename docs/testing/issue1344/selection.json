@@ -8,15 +8,16 @@
     "editors",
     "lighting",
     "openings",
+    "devices",
     "geometry",
     "storage",
     "pdf",
-    "devices",
     "runtime",
     "i18n",
     "navigation",
     "stairs",
-    "summary"
+    "summary",
+    "history"
   ],
   "gaps": [
     {
@@ -24,7 +25,39 @@
       "reason": "Неизвестная область: выбран полный быстрый Node fallback."
     },
     {
+      "path": "docs/testing/issue1344/baseline-native-v2.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/candidate-final-v4.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/candidate-trace-final-v4-flow-presented-analysis.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/candidate-trace-final-v4-presented-analysis.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/candidate-trace-final-v5-flow-presented-analysis.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/candidate-trace-final-v5-presented-analysis.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
       "path": "docs/testing/issue1344/measure.mjs",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/pipeline-metrics.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/pipeline-package.json",
       "reason": "Неизвестная область: выбран полный быстрый Node fallback."
     },
     {
@@ -34,10 +67,58 @@
     {
       "path": "src/live-interaction-runtime.ts",
       "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "test/docs-accept.test.mjs",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/candidate-current-native-r2.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/candidate-current-trace-r2-presented-analysis.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/candidate-current-trace-r2.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/cold-load-parts.json",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/cold-load.mjs",
+      "reason": "Неизвестная область: выбран полный быстрый Node fallback."
+    },
+    {
+      "path": "docs/testing/issue1344/pipeline-measurement.json",
+      "reason": "Нет статически подтверждённого читателя: выбран полный быстрый набор ближайших областей."
+    },
+    {
+      "path": "docs/testing/issue1344/selection.json",
+      "reason": "Нет статически подтверждённого читателя: выбран полный быстрый набор ближайших областей."
+    },
+    {
+      "path": "docs/testing/issue1344/style-flush-v2-flush.json",
+      "reason": "Нет статически подтверждённого читателя: выбран полный быстрый набор ближайших областей."
+    },
+    {
+      "path": "docs/testing/issue1344/inert-commit-probe.json",
+      "reason": "Нет статически подтверждённого читателя: выбран полный быстрый набор ближайших областей."
+    },
+    {
+      "path": "docs/testing/issue1344/initial-view-composition.json",
+      "reason": "Нет статически подтверждённого читателя: выбран полный быстрый набор ближайших областей."
+    },
+    {
+      "path": "docs/testing/issue1344/pipeline-performance.json",
+      "reason": "Нет статически подтверждённого читателя: выбран полный быстрый набор ближайших областей."
     }
   ],
   "cost": {
-    "knownMs": 466131,
+    "knownMs": 469026,
     "unknownUnits": 605,
     "expectedTotalMs": null,
     "sourceRun": "20261105T201321284-c9d3eb36",
@@ -53,22 +134,58 @@
   },
   "requiredChecks": [
     {
-      "file": "demo/smoke_mode_transition.mjs",
+      "file": "test/mode-transition.test.mjs",
       "selected": true,
       "reasons": [
         "Дополнение исполнителя",
         "Изменён сам исполняемый файл",
-        "Читает изменённый модуль/данные: demo/performance/mode-transition.mjs",
-        "Читает изменённый модуль/данные: demo/smoke_mode_transition.mjs"
+        "Читает изменённый модуль/данные: docs/testing/issue1344/analyze-presented.mjs",
+        "Читает изменённый модуль/данные: src/mode-transition.ts",
+        "Читает изменённый модуль/данные: test/mode-transition.test.mjs",
+        "Безопасный fallback: неразмеченный исходник",
+        "Обязательная область/связь (ask): presentation",
+        "Полный быстрый набор области при неполной карте связей"
       ]
     },
     {
-      "file": "demo/smoke_mode_endpoints.mjs",
+      "file": "test/node-history-runtime.test.mjs",
       "selected": true,
       "reasons": [
         "Дополнение исполнителя",
         "Изменён сам исполняемый файл",
-        "Читает изменённый модуль/данные: demo/smoke_mode_endpoints.mjs"
+        "Читает изменённый модуль/данные: src/device-contact-render.ts",
+        "Читает изменённый модуль/данные: src/editor-runtime-loader.ts",
+        "Читает изменённый модуль/данные: src/editors/properties/styles.ts",
+        "Читает изменённый модуль/данные: src/houseplan-editor-runtime.ts",
+        "Читает изменённый модуль/данные: src/i18n/language-runtime.ts",
+        "Читает изменённый модуль/данные: src/i18n/led.ts",
+        "Читает изменённый модуль/данные: src/i18n/namespace-language.ts",
+        "Читает изменённый модуль/данные: src/i18n/registry.ts",
+        "Читает изменённый модуль/данные: src/i18n/settings.ts",
+        "Читает изменённый модуль/данные: src/i18n/support.ts",
+        "Читает изменённый модуль/данные: src/i18n/tools.ts",
+        "Читает изменённый модуль/данные: src/i18n/topology.ts",
+        "Читает изменённый модуль/данные: src/led-strip-runtime.ts",
+        "Читает изменённый модуль/данные: src/live-interaction-runtime.ts",
+        "Читает изменённый модуль/данные: src/live-viewport.ts",
+        "Читает изменённый модуль/данные: src/mode-transition.ts",
+        "Читает изменённый модуль/данные: src/room-gear-drag.ts",
+        "Читает изменённый модуль/данные: src/stairs-editor.ts",
+        "Читает изменённый модуль/данные: src/stairs-symbol.ts",
+        "Читает изменённый модуль/данные: src/wall-node-card-adapter.ts",
+        "Читает изменённый модуль/данные: src/wall-node-editor.ts",
+        "Читает изменённый модуль/данные: test/node-history-runtime.test.mjs",
+        "Безопасный fallback: неразмеченный исходник",
+        "Обязательная область/связь (ask): geometry, history"
+      ]
+    },
+    {
+      "file": "demo/smoke_plan_device_landmarks.mjs",
+      "selected": true,
+      "reasons": [
+        "Дополнение исполнителя",
+        "Изменён сам исполняемый файл",
+        "Читает изменённый модуль/данные: demo/smoke_plan_device_landmarks.mjs"
       ]
     },
     {
@@ -78,6 +195,15 @@
         "Дополнение исполнителя",
         "Изменён сам исполняемый файл",
         "Читает изменённый модуль/данные: demo/smoke_editor_preload.mjs"
+      ]
+    },
+    {
+      "file": "demo/smoke_mode_endpoints.mjs",
+      "selected": true,
+      "reasons": [
+        "Дополнение исполнителя",
+        "Изменён сам исполняемый файл",
+        "Читает изменённый модуль/данные: demo/smoke_mode_endpoints.mjs"
       ]
     },
     {
@@ -137,5 +263,5 @@
       ]
     }
   ],
-  "steps": 642
+  "steps": 643
 }

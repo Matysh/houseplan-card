@@ -300,7 +300,9 @@ test('#1344 trace joins presentation by trace_id, keeps missing frames explicit 
   events.push({name:'hp-mode:large:0:view-plan:start',ts:0},
     {name:'hp-mode:large:0:view-plan:interactive',ts:25000},
     {name:'Layout',ph:'X',pid:7,tid:8,ts:1600,dur:1000},
-    {name:'Layout',ph:'X',pid:9,tid:10,ts:1600,dur:999999});
+    {name:'Layout',ph:'X',pid:9,tid:10,ts:1600,dur:999999},
+    {name:'Paint',ph:'X',pid:7,tid:8,ts:1800,dur:200,args:{data:{nodeName:'SVG proof'}}},
+    {name:'Paint',ph:'X',pid:9,tid:10,ts:1800,dur:200,args:{data:{nodeName:'other renderer'}}});
   fs.writeFileSync(path.join(dir,'sample-large-trace.json'),JSON.stringify({traceEvents:events}));
   fs.writeFileSync(path.join(dir,'sample.json'),JSON.stringify({rows:[{fixture:'large',sample:0,from:'view',to:'plan',rafSamples:4,
     frames:[1.5,4.5,8.5,12.5].map((controllerTime,index)=>({controllerTime,phase:index===3?'settling':'running'}))}]}));
@@ -316,4 +318,6 @@ test('#1344 trace joins presentation by trace_id, keeps missing frames explicit 
   assert.equal(row.interactiveMinusToPresentationMs,5);
   assert.equal(row.terminalFrame.traceId,'C');
   assert.equal(row.maxStyleLayoutMs,1);
+  assert.equal(row.runningPaintEvents,1);
+  assert.deepEqual(row.runningPaintNodes,['SVG proof']);
 });

@@ -1,0 +1,11 @@
+{
+  "originalOwnedInert": true,
+  "releases": [
+    {
+      "finishPending": false,
+      "busy": false,
+      "mode": "plan"
+    }
+  ],
+  "restInert": false
+}
