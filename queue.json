@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7156,
-  "nextTicket": 312,
+  "revision": 7157,
+  "nextTicket": 313,
   "nextFence": 312,
   "tasks": {
     "1193": {
@@ -4050,14 +4050,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/issue-1354-device-settings-navigation",
-      "materialSha": "77792069a99fcb4f9dc0b4c8bc14ee9001e5fb86",
+      "materialSha": "ad794da4050a59757526862d0de8424c642463fc",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 311,
-      "queued": false,
+      "ticket": 312,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794151742816,
-      "reviewEntry": 2,
+      "readyAt": 1794152045748,
+      "reviewEntry": 3,
       "patchId": "18ac45ba3774662ff22738b853082b3d72108e68",
       "changedFiles": [
         "demo/smoke_device_settings_scroll.mjs",
@@ -4077,8 +4077,7 @@
         "entry": 2,
         "detail": "Поведение: test/bundle-assets.test.mjs: failed",
         "eventId": "finish:872d324d-36fb-4f06-b772-81f55c572dca:finish:3:return:return:1354"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1355": {
       "issue": 1355,
@@ -4290,7 +4289,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1354
+  ],
   "active": null,
   "events": {
     "github:42494670650:1:completions:message:de523e3a07221dfd6ec11859c7f009daa47996f6145075597e8afe0fe5951266": {
@@ -4459,6 +4460,19 @@
           "detail": "Поведение: test/bundle-assets.test.mjs: failed",
           "eventId": "finish:872d324d-36fb-4f06-b772-81f55c572dca:finish:3:return:return:1354"
         }
+      }
+    },
+    "finish:fe54ab29-7f96-4427-800f-608e3eb86837": {
+      "digest": "b666473c9cca119b8418f2f4fe3a30feec88f6c8e1da38eac0b6daef2c6f5553",
+      "issue": 1354,
+      "message": {
+        "kind": "queued",
+        "issue": 1354,
+        "at": 1794152045748,
+        "entry": 3,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "ad794da4050a59757526862d0de8424c642463fc"
       }
     }
   },
