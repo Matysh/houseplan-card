@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6875,
+  "revision": 6876,
   "nextTicket": 303,
   "nextFence": 303,
   "tasks": {
@@ -3970,48 +3970,24 @@
     },
     "1352": {
       "issue": 1352,
+      "branch": "codex/issue-1352-editor-chrome-alignment",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/issue-1352-editor-chrome-alignment",
-      "materialSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 302,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1794132059013,
-      "reviewEntry": 2,
-      "patchId": "abf7924ec06a42105692447bbc6bbbb39393297e",
-      "changedFiles": [
-        "demo/smoke_editor_chrome_alignment.mjs",
-        "demo/smoke_editor_tabs.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.84.0/1352.json",
-        "process-next/lib/source-dependencies.mjs",
-        "scripts/mutation-registry.mjs",
-        "src/hp-color-opacity.ts",
-        "src/styles/chrome.styles.ts",
-        "src/styles/navigation.styles.ts"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
+      "status": "S8-merged",
+      "expectedBase": "0d127cd038f4110e7d90cac7004f508f07717fff",
+      "mergedSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
+      "mergedAt": 1794132276072,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
         "status": "pending",
-        "fromStatus": "S6-in-progress",
-        "at": 1794131904949,
-        "entry": 1,
-        "detail": "Поведение: test/mutation-gate.test.mjs: failed; Браузер: editor tabs: failed",
-        "eventId": "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:3:return:return:1352"
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261108T100114080-81c22736",
-        "name": "Тесты для задачи #1352 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261108T100114080-81c22736/report.json",
-        "materialSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
-        "status": "passed",
-        "finishedAt": "2026-11-08T10:04:29.715Z",
-        "failures": []
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -4188,104 +4164,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1352,
-    "worker": "finish",
-    "token": "302:finish:6ced53f8-4090-43ac-8fd9-2e47d4e87df9:finish:1:admit",
-    "fence": 302,
-    "materialSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
-    "expectedBase": "0d127cd038f4110e7d90cac7004f508f07717fff",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794132062903,
-    "expiresAt": 1794135870880,
-    "patchId": "abf7924ec06a42105692447bbc6bbbb39393297e"
-  },
+  "active": null,
   "events": {
-    "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:2:synchronized": {
-      "digest": "fe9703725349cc00b1bacc240e8a4b63204b8b1a94a51fe021b613d3040ed267",
-      "issue": 1352
-    },
-    "github:42469033349:1:completions:message:b3d4d91c8a5b8518e8a1b6265b8db56d1e43f797f7ea94617e4d07e6062019a7": {
-      "digest": "a57d2099d40d70dd4761de39efb025e1cdd6422b92a752be211acee547248198",
-      "issue": 1352
-    },
-    "github:42469033349:1:completions:message:937f6e698dfb0f244b9f34996b2b6b2365bb0717cbf983cfb16ccc1590fe7cdb": {
-      "digest": "4538463cceed7bf25560871b31eea0f18e7b92e2c13969ea11b076369bba67c6",
-      "issue": 1352
-    },
-    "finish:b7d64cb0-e0a3-492d-9903-2d2088d5d9e1": {
-      "digest": "732066b055ca7852288615300b8a7ae863c63f9c1b38fdec2329cfe51c6eb2d8",
-      "issue": 1352
-    },
-    "finish:752c599b-ff4e-44b1-aae9-4bc7722b7e82": {
-      "digest": "f877a32663ca427f89c4b9e97d641261c851446009d0c58073590f20b52ae385",
-      "issue": 1352
-    },
-    "finish:979a7992-1ec2-402f-b776-6224c3c11efd": {
-      "digest": "3e04ba6fbf6437597a7a1c1a4aa929546c97e2e6647a0e223f64d3db7638de09",
-      "issue": 1352
-    },
-    "finish:41a7d92c-69fc-4960-a457-31f9b67d7668": {
-      "digest": "d13bafdfc77effe9e3232a4e3eb94bc927bc8bcdd8e9fde52418b60e37be5f53",
-      "issue": 1352
-    },
-    "finish:0fa36ca8-eef4-4b7d-97b7-8a82c073a0df": {
-      "digest": "ab53a19f163874cd2be84acce18350494c4572ad8d735b4f69a4e6e2d0414e99",
-      "issue": 1352
-    },
-    "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:3:return": {
-      "digest": "81e8983e5bde5153160aa463dbc665f26afb91df9d8953ed96af9a157ceff2ae",
-      "issue": 1352
-    },
-    "finish:6ced53f8-4090-43ac-8fd9-2e47d4e87df9:finish:2:synchronized": {
-      "digest": "9a7128edbafe2d29a2b60bda6418f732b5b33f4ff8db7dc2b6361c714526508b",
-      "issue": 1352
-    },
-    "finish:50bfc65f-e6c1-4332-b546-7fd1b4c94a4b": {
-      "digest": "21c6e454f3fb8f1fcd2aa0196ee38c9d7f65a7bcfa5f0d1ca14e285b12c5a816",
-      "issue": 1352
-    },
-    "finish:3b56cf5d-41c6-4205-accf-b12beff8be07": {
-      "digest": "7b7bd9aed0362a6f313b538e8951b9ae309d1db4d23d60ed6bf70f3bda3e2f27",
-      "issue": 1352
-    },
-    "finish:4d9ab58a-aec4-421e-a14e-3beca612b0f4": {
-      "digest": "faa1f0a96ec92fcace0488985b20bc9bc0e133620e8ee36c7c33f06dd66ccd2a",
-      "issue": 1352
-    },
-    "finish:6ced53f8-4090-43ac-8fd9-2e47d4e87df9:finish:3:s6-complete": {
-      "digest": "580981b4a7fce1215950c49b90939bd023e849c62ee6df285cd019c3f1a9d5fd",
-      "issue": 1352
-    },
-    "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7": {
-      "digest": "2022e094c0bcd034e00f179fdff8c17f02491c3b32e5b2a1046328addc1a4fcb",
-      "issue": 1352,
-      "message": {
-        "kind": "queued",
-        "issue": 1352,
-        "at": 1794131572220,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "12605c18b10a439baca2a08308840a5acd308406",
-        "delivered": true
-      }
-    },
-    "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:1:admit": {
-      "digest": "22f0b11f3a2a191ae7aa865b0b116f01f9da0007bb57d3933304c681f2640a92",
-      "issue": 1352,
-      "message": {
-        "kind": "admitted",
-        "issue": 1352,
-        "at": 1794131576381,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "12605c18b10a439baca2a08308840a5acd308406",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:3:return:return:1352": {
       "digest": "81e8983e5bde5153160aa463dbc665f26afb91df9d8953ed96af9a157ceff2ae",
       "issue": 1352,
