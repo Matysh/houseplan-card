@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7569,
+  "revision": 7570,
   "nextTicket": 322,
   "nextFence": 322,
   "tasks": {
@@ -4165,9 +4165,12 @@
       "status": "S6-in-progress",
       "readyAt": 1794179346075,
       "reviewEntry": 2,
-      "patchId": "931f7266d216a953b1d5dd4814cdb8b2920d85db",
+      "patchId": "248cb42a7ecd0b9311f4ce15f6fed574fec7e9bf",
       "changedFiles": [
+        "demo/helpers/empty-space-home-arrow.mjs",
         "demo/smoke_header_actions_menu.mjs",
+        "demo/smoke_mobile_view_header.mjs",
+        "demo/smoke_mode_transition.mjs",
         "demo/smoke_panel_header_overflow.mjs",
         "docs/ARCHITECTURE.md",
         "docs/CHANGELOG.md",
@@ -4175,6 +4178,7 @@
         "docs/TOUCH-SUPPORT.md",
         "docs/USER-GUIDE.ru.md",
         "docs/UX-MODES.md",
+        "docs/data-hp-contract.json",
         "docs/release-ledger/v1.85.0/1364.json",
         "src/header-space-select.ts",
         "src/houseplan-card.ts",
@@ -4385,10 +4389,11 @@
     "token": "321:finish:33d041d7-5d38-432f-a60f-c1ecd0f9fa2d:finish:1:admit",
     "fence": 321,
     "materialSha": "556e13dc6e6f9366898abf7dc6b187ae6c67b7a1",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
+    "phase": "testing",
     "admittedAt": 1794179349666,
-    "expiresAt": 1794179649666
+    "expiresAt": 1794179655030,
+    "patchId": "248cb42a7ecd0b9311f4ce15f6fed574fec7e9bf"
   },
   "events": {
     "github:42532864133:1:completions:message:222710fd0fc6ab26ffd10f4da4c8e78055fee949bfc87be9a201b201928bf3ac": {
@@ -4433,6 +4438,10 @@
     },
     "finish:9edf4d56-53eb-400b-b760-29e679219f4a:finish:2:return": {
       "digest": "f5cdb4bbaf9a36e1b0f932711166bec36d85b27100023aa6053bd217ed945fa4",
+      "issue": 1364
+    },
+    "finish:33d041d7-5d38-432f-a60f-c1ecd0f9fa2d:finish:2:synchronized": {
+      "digest": "5c52ba80ead5074d2c817b66494064ac7a108ceb1b89b926b232df134eddd8ae",
       "issue": 1364
     },
     "finish:9edf4d56-53eb-400b-b760-29e679219f4a": {
