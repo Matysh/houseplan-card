@@ -1,5 +1,7 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
+await installScenePaintProbe(page);
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -32,7 +34,7 @@ const res = await page.evaluate(async () => {
     }
   }
   // метки resize: в Просмотре нет, в Плане при наведении есть (проверим наличие в DOM)
-  out.noHandlesInView = sr().querySelectorAll('.rlhandle').length === 0;
+  out.noHandlesInView = [...sr().querySelectorAll('.rlhandle')].every(el=>!window.__hpScenePaintedOrInteractive(el));
   c._setMode('plan'); await c.updateComplete;
   const planLbl = sr().querySelector('.roomlabel');
   out.handlesInPlan = planLbl?.querySelectorAll('.rlhandle').length === 4;

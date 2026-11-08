@@ -28,6 +28,10 @@
 export const SELECTORS = Object.freeze({
   modeRoot: 'ha-card[data-hp-mode]',
   modeTab: '[data-hp="mode-tab"][data-mode="{mode}"]',
+  stage: '[data-hp="stage"]',
+  headerActionsTrigger: '[data-hp="header-actions-trigger"]',
+  headerActionsMenu: '[data-hp="header-actions-menu"]',
+  headerAction: '[data-hp="header-actions-menu"] [data-hp="action"][data-action="{action}"]',
   editorClose: '[data-hp="editor-close"]',
   // Group items live in the secondary tray, outside the primary toolbar.
   tool: '[data-hp="tool"][data-tool="{tool}"]',
@@ -94,6 +98,26 @@ export function installHpTest(selectors) {
     return [...new Set(out)];
   };
   const find = (c, name, params) => deepAll(rootOf(c), sel(name, params))[0] || null;
+  // Retained scenes remain queryable; an action must belong to a drawn,
+  // non-inert route, including across open shadow boundaries.
+  const findAction = (c, name, params) => deepAll(rootOf(c), sel(name, params)).find(el => {
+    if (!el.getClientRects().length) return false;
+    for (let node = el; node; node = node.parentElement || node.getRootNode()?.host) {
+      const style = getComputedStyle(node);
+      if (node.inert || style.display === 'none' || style.visibility === 'hidden') return false;
+    }
+    return true;
+  }) || null;
+  const headerAction = async (c, action, name, params) => {
+    const direct = findAction(c, name, params);
+    if (direct) return direct;
+    const root = rootOf(c), trigger = find(c, 'headerActionsTrigger');
+    if (!trigger?.getClientRects().length) return null;
+    if (!deepAll(root, sel('headerActionsMenu')).some(menu=>!menu.inert)) {
+      trigger.click(); await settled();
+    }
+    return findAction(c, 'headerAction', {action});
+  };
   const mode = (c) => rootOf(c)?.querySelector(selectors.modeRoot)?.getAttribute('data-hp-mode') || '?';
   const missing = (op, c, name, params) => new Error(
     `__hpTest.${op}: ${sel(name, params)} не отрисован (режим ${mode(c)})`);
@@ -205,13 +229,15 @@ export function installHpTest(selectors) {
       const c = need('setMode');
       if (mode(c) === next) { await settled(); return; }
       const button = next === 'view'
-        ? find(c, 'editorClose')
-        : find(c, 'modeTab', { mode: next });
+        ? await headerAction(c, 'mode-view', 'editorClose')
+        : await headerAction(c, 'mode-' + next, 'modeTab', { mode: next });
       if (!button) throw missing('setMode', c, next === 'view' ? 'editorClose' : 'modeTab', { mode: next });
       button.click();
       await settled();
       await waitFor('setMode', () => mode(c) === next,
         () => `${sel('modeRoot')} не перешёл в ${next} (сейчас ${mode(c)})`);
+      await waitFor('setMode', () => deepAll(rootOf(c), sel('stage')).every(node=>!node.closest('[inert]')),
+        () => 'план ещё не принимает ввод после перехода');
       await settled();
     },
 
@@ -261,7 +287,7 @@ export function installHpTest(selectors) {
 
     async openRoomEdit(room) {
       const c = need('openRoomEdit');
-      const gear = find(c, 'roomSettings', { room });
+      const gear = findAction(c, 'roomSettings', { room });
       if (!gear) throw missing('openRoomEdit', c, 'roomSettings', { room });
       gear.click();
       return openDialog('openRoomEdit', c, 'room');
@@ -269,9 +295,11 @@ export function installHpTest(selectors) {
 
     async openMarkerDialog(deviceId) {
       const c = need('openMarkerDialog');
-      const target = deviceId === undefined
-        ? find(c, 'addDevice')
-        : find(c, 'device', { id: deviceId });
+      const target = await waitFor('openMarkerDialog', () => deviceId === undefined
+        ? findAction(c, 'addDevice')
+        : findAction(c, 'device', { id: deviceId }),
+        () => (deviceId === undefined ? missing('openMarkerDialog', c, 'addDevice')
+          : missing('openMarkerDialog', c, 'device', { id: deviceId })).message);
       if (!target) {
         throw deviceId === undefined
           ? missing('openMarkerDialog', c, 'addDevice')
@@ -282,7 +310,7 @@ export function installHpTest(selectors) {
       if (deviceId !== undefined && find(c, 'propertiesPanel') && !find(c, 'dialogOfKind', { kind: 'marker' })) {
         // #931: a single click now selects; the native double-click keeps the
         // full settings entrypoint. Never bypass that handler via private state.
-        const selected = find(c, 'device', { id: deviceId });
+        const selected = findAction(c, 'device', { id: deviceId });
         if (!selected) throw missing('openMarkerDialog', c, 'device', { id: deviceId });
         selected.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, detail: 2 }));
       }

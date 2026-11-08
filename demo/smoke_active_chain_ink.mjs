@@ -62,7 +62,7 @@ const out = await page.evaluate(async () => {
   await card._editorRuntime._whenLiveEditorSettled();
 
   const pathline = root().querySelector('polyline.pathline');
-  const vertices = [...root().querySelectorAll('circle.vertex')];
+  const vertices = [...pathline.parentElement.querySelectorAll('circle.vertex')];
   const bodies = [...root().querySelectorAll('.wallbody-fill')];
   const overlay = root().querySelector('[data-hp="plan-snap-overlay"]');
   result.pathlinePresent = !!pathline;

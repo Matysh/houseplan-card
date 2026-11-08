@@ -370,8 +370,9 @@ try{
     window.__1038FurnitureListeners={adds:0,removes:0};
     const add=window.addEventListener.bind(window),remove=window.removeEventListener.bind(window);
     window.__1038RestoreFurnitureListeners=()=>{window.addEventListener=add;window.removeEventListener=remove;};
-    window.addEventListener=(type,...rest)=>{if(type==='keydown'||type==='keyup')window.__1038FurnitureListeners.adds++;return add(type,...rest);};
-    window.removeEventListener=(type,...rest)=>{if(type==='keydown'||type==='keyup')window.__1038FurnitureListeners.removes++;return remove(type,...rest);};
+    const active=[],capture=opts=>typeof opts==='boolean'?opts:!!opts?.capture;
+    window.addEventListener=(type,...rest)=>{if((type==='keydown'||type==='keyup')&&!active.some(r=>r.type===type&&r.fn===rest[0]&&r.capture===capture(rest[1]))){active.push({type,fn:rest[0],capture:capture(rest[1])});window.__1038FurnitureListeners.adds++;}return add(type,...rest);};
+    window.removeEventListener=(type,...rest)=>{if(type==='keydown'||type==='keyup'){const i=active.findIndex(r=>r.type===type&&r.fn===rest[0]&&r.capture===capture(rest[1]));if(i>=0){active.splice(i,1);window.__1038FurnitureListeners.removes++;}}return remove(type,...rest);};
   });
   const armFurniture=async()=>{
     await page.evaluate(()=>window.__hpTest.setTool('furniture'));

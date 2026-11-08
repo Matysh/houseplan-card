@@ -1,3 +1,4 @@
+import {waitForUiKitPaint} from './helpers/ui-kit-paint.mjs';
 // #564 AC2: real rendered Icon/Text/Double/legacy faces must own every
 // painted cardinal point even when the invisible 44 px floor of a neighbouring
 // marker overlaps it. Synthetic rectangles cannot prove the CSS/DOM geometry.
@@ -117,6 +118,7 @@ const ids = {
 const directions = ['right', 'bottom', 'left', 'top'];
 const cases = [];
 
+await waitForUiKitPaint(page);
 for (const [type, targetId] of Object.entries(ids)) {
   for (const direction of directions) {
     const prepared = await page.evaluate(async ({ type, targetId, direction }) => {
@@ -218,6 +220,7 @@ for (const [type, targetId] of Object.entries(ids)) {
 
     if (prepared.ready) {
       await page.mouse.click(prepared.point.x, prepared.point.y);
+      await page.waitForFunction(()=>!!window.__card._infoCard);
       prepared.clicked = await page.evaluate(async () => {
         const card = window.__card;
         await card.updateComplete;

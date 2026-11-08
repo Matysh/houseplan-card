@@ -89,8 +89,19 @@ try{
    out[prefix+'_selected']=!!approved.title&&!!actual.title&&!/Ничего не выбрано|Nothing selected/.test(approved.title+' '+actual.title);
    const near=(a,b)=>a.length===b.length&&a.every((v,i)=>Math.abs(v-b[i])<=1);
    out[prefix+'_panel']=near(approved.panel,actual.panel);
-   out[prefix+'_section_geometry']=approved.groups.length===actual.groups.length&&approved.groups.every((group,i)=>near(group.box,actual.groups[i].box));
-   out[prefix+'_field_geometry']=approved.groups.every((group,i)=>group.fields.length===actual.groups[i]?.fields.length&&group.fields.every((f,j)=>f.key===actual.groups[i].fields[j].key&&near(f.box,actual.groups[i].fields[j].box)));
+   // #1348 adds one accepted door toggle above the existing flip controls.
+   // Derive its exact row/gap from the immutable prototype; keep every old
+   // field, group and one-pixel geometry tolerance intact.
+   const expected=structuredClone(approved);
+   if(scene==='door'){
+    const group=expected.groups.find(g=>g.fields.some(f=>f.key==='flip_h'));
+    const first=group.fields.find(f=>f.key==='flip_h'),second=group.fields.find(f=>f.key==='flip_v');
+    const extra=second.box[1]-first.box[1];
+    const toggle={key:'light_transparent',box:[...first.box]};
+    group.fields.forEach(field=>field.box[1]+=extra);group.fields.unshift(toggle);group.box[3]+=extra;
+   }
+   out[prefix+'_section_geometry']=expected.groups.length===actual.groups.length&&expected.groups.every((group,i)=>near(group.box,actual.groups[i].box));
+   out[prefix+'_field_geometry']=expected.groups.every((group,i)=>group.fields.length===actual.groups[i]?.fields.length&&group.fields.every((f,j)=>f.key===actual.groups[i].fields[j].key&&near(f.box,actual.groups[i].fields[j].box)));
    const addedKeys=mode==='decor'?['properties-decor-front','properties-decor-back']:[];
    const added=actual.actions.filter(a=>addedKeys.includes(a.key));
    const semantic=actions=>actions.map(({text,disabled})=>({text,disabled}));

@@ -1,5 +1,7 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
+await installScenePaintProbe(page);
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -13,8 +15,8 @@ const res = await page.evaluate(async () => {
   c._setMode('decor'); await c.updateComplete; out.gridInDecor = grid();
   await new Promise((r) => setTimeout(r, 250)); // transition .room 0.12s
   // decor: комнаты и устройства полупрозрачны
-  const room = sr().querySelector('.room');
-  out.roomFaded = room ? Number(getComputedStyle(room).opacity) < 0.5 : null;
+  const room = [...sr().querySelectorAll('.room')].find(el=>window.__hpSceneOpacity(el)>0);
+  out.roomFaded = room ? window.__hpSceneOpacity(room) < 0.5 : null;
   const dl = sr().querySelector('.devlayer');
   out.devsFaded = dl ? Number(getComputedStyle(dl).opacity) < 0.5 : null;
   // а декор-слой — нет
@@ -25,12 +27,12 @@ const res = await page.evaluate(async () => {
   // в других редакторах прозрачности нет
   c._setMode('devices'); await c.updateComplete;
   await new Promise((r) => setTimeout(r, 250));
-  const room2 = sr().querySelector('.room');
-  out.notFadedInDevices = room2 ? Number(getComputedStyle(room2).opacity) > 0.9 : null;
+  const room2 = [...sr().querySelectorAll('.room')].find(el=>window.__hpSceneOpacity(el)>0);
+  out.notFadedInDevices = room2 ? window.__hpSceneOpacity(room2) > 0.9 : null;
   c._setMode('view'); await c.updateComplete;
   await new Promise((r) => setTimeout(r, 250));
-  const room3 = sr().querySelector('.room');
-  out.notFadedInView = room3 ? Number(getComputedStyle(room3).opacity) > 0.9 : null;
+  const room3 = [...sr().querySelectorAll('.room')].find(el=>window.__hpSceneOpacity(el)>0);
+  out.notFadedInView = room3 ? window.__hpSceneOpacity(room3) > 0.9 : null;
   return out;
 });
 checkAll(res);

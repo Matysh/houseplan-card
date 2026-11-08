@@ -1,3 +1,4 @@
+import {headerActionTarget} from './helpers/header-actions.mjs';
 import { launch, check, checkAll, finish } from './serve.mjs';
 // #997: wide tabs are an explicit >1024px card contract, not the default viewport.
 const { page, browser } = await launch({width:1800,height:900});
@@ -107,32 +108,21 @@ for(const [key,value] of Object.entries(compact))check(key,value);
 // мобильный вид (#616): ряд вкладок не выезжает за карточку, а «+» на ≤ 480 px
 // живёт в меню шестерёнки — пункт есть, внутри карточки и попадает под палец.
 await page.setViewportSize({ width: 390, height: 760 });
-const narrow = await page.evaluate(async () => {
-  const out = {};
-  const c = window.__card;
-  await new Promise((r) => setTimeout(r, 250));
-  c.requestUpdate(); await c.updateComplete;
-  const sr = c.shadowRoot || c.renderRoot;
-  const head = sr.querySelector('.head');
-  out.narrowNoHOverflow = head.scrollWidth <= head.clientWidth + 1
-    ? true : `scrollW=${head.scrollWidth} > clientW=${head.clientWidth}`;
-  out.narrowInlineAddVisible = !!sr.querySelector('.tab.tabadd')?.getClientRects().length;
-  await c.updateComplete;
-  const btn = sr.querySelector('[data-hp="space-add"]');
-  out.narrowAddPresent = !!btn;
-  btn?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  const cr = sr.querySelector('ha-card').getBoundingClientRect();
-  const br = btn ? btn.getBoundingClientRect() : null;
-  out.narrowAddInsideCard = !br ? 'нет пункта'
-    : br.right <= cr.right + 1 && br.left >= cr.left - 1 ? true
-    : `btn ${Math.round(br.left)}..${Math.round(br.right)} vs card ${Math.round(cr.left)}..${Math.round(cr.right)}`;
-  out.narrowAddHittable = !br ? 'нет пункта' : (() => {
-    const hit = sr.elementFromPoint(br.left + br.width / 2, br.top + br.height / 2);
-    return hit && hit.closest && hit.closest('[data-hp="space-add"]') === btn ? true : 'перекрыта';
-  })();
-  await c.updateComplete;
-  return out;
+const narrow = await page.locator('houseplan-card .head').evaluate(head=>({
+  narrowNoHOverflow:head.scrollWidth<=head.clientWidth+1,
+}));
+const narrowAdd=await headerActionTarget(page.locator('houseplan-card'),'space-add');
+narrow.narrowAddPresent=await narrowAdd.isVisible();
+narrow.narrowAddInsideCard=await narrowAdd.evaluate(btn=>{
+ const br=btn.getBoundingClientRect(),cr=window.__card.renderRoot.querySelector('ha-card').getBoundingClientRect();
+ return br.right<=cr.right+1&&br.left>=cr.left-1;
 });
+narrow.narrowAddHittable=await narrowAdd.evaluate(btn=>{
+ const r=btn.getBoundingClientRect(),root=btn.getRootNode();
+ return root.elementFromPoint(r.left+r.width/2,r.top+r.height/2)?.closest('button')===btn;
+});
+await narrowAdd.click();await page.locator('houseplan-card hp-dialog[data-kind="space"]').waitFor({state:'visible'});
+narrow.narrowAddOpensCreate=await page.evaluate(()=>window.__card._spaceDialog?.mode==='create');
 for (const [k, v] of Object.entries(narrow)) check(k, v);
 
 await finish(browser, { ...res, ...kio, ...compact, ...narrow });

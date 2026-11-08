@@ -1,3 +1,4 @@
+import {headerActionTarget,clickHeaderAction} from './helpers/header-actions.mjs';
 // #1070: native 320px mode navigation preserves one header/stage budget and
 // the saved canonical View camera at90, including the reduced-motion terminal.
 import assert from 'node:assert/strict';
@@ -24,7 +25,7 @@ const records=[];
 try{
   await page.addStyleTag({content:'#host{width:auto!important;padding:0!important;margin:0!important}'});
   await page.emulateMedia({reducedMotion:'reduce'});await wait();
-  await card.locator('[data-hp="rotate-right"]').click();await wait();
+  await clickHeaderAction(card,'rotate-right');await wait();
   // Zoom buttons yield their space in the compact header; use the supported gesture.
   const zoomStage = await card.locator('.stage').boundingBox();
   await page.mouse.move(zoomStage.x+zoomStage.width/2,zoomStage.y+zoomStage.height/2);
@@ -44,8 +45,8 @@ try{
       await page.evaluate(()=>{window.__phoneTrace=[];window.__phoneTracing=true;const tick=()=>{
         if(!window.__phoneTracing)return;window.__phoneTrace.push(window.__phoneSample());requestAnimationFrame(tick);
       };requestAnimationFrame(tick);});
-      if(target==='view')await card.locator('.head [data-hp="editor-close"]').click();
-      else await card.locator(`[data-hp="mode-tab"][data-mode="${target}"]`).click();
+      if(target==='view')await clickHeaderAction(card,'mode-view');
+      else await clickHeaderAction(card,'mode-'+target);
       await wait();const end=await snapshot();
       const trace=await page.evaluate(()=>{window.__phoneTracing=false;return window.__phoneTrace;});
       const maxBudgetDelta=Math.max(...trace.map(s=>Math.abs(s.head+s.chrome+s.stage-total)));
@@ -62,13 +63,13 @@ try{
   await page.setViewportSize({width:390,height:900});await wait();
   await page.emulateMedia({reducedMotion:'no-preference'});
   const rapidBefore=await snapshot();
-  const plan=await card.locator('[data-hp="mode-tab"][data-mode="plan"]').boundingBox();
+  const plan=await (await headerActionTarget(card,'mode-plan')).boundingBox();
   await page.mouse.click(plan.x+plan.width/2,plan.y+plan.height/2);
   await page.waitForFunction(()=>window.__card._modeTransitionBusy);
-  const retarget=await card.locator('[data-hp="mode-tab"][data-mode="decor"]').boundingBox();
+  const retarget=await (await headerActionTarget(card,'mode-decor')).boundingBox();
   await page.mouse.click(retarget.x+retarget.width/2,retarget.y+retarget.height/2);await wait();
   assert.equal(await card.locator('ha-card').getAttribute('data-hp-mode'),'decor');
-  await card.locator('.head [data-hp="editor-close"]').click();await wait();
+  await clickHeaderAction(card,'mode-view');await wait();
   const rapidAfter=await snapshot();
   assert.equal(rapidAfter.camera.zoom,rapidBefore.camera.zoom);
   assert.ok(Object.keys(rapidBefore.camera.view).every(k=>Math.abs(rapidBefore.camera.view[k]-rapidAfter.camera.view[k])<1e-9));

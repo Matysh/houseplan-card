@@ -1,3 +1,4 @@
+import {headerActionTarget,clickHeaderAction} from './helpers/header-actions.mjs';
 import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 // #919: native display toggle, immutable stored visibility and ordinary faces.
@@ -16,7 +17,7 @@ const settle = async () => {
   await page.waitForFunction(() => !window.__card._cameraTransition.active
     && !window.__card._refitRaf && !window.__card._pendingRefitSize);
 };
-const toggle = async () => { await card.locator('[data-hp="hidden-devices"]').click(); await settle(); };
+const toggle = async () => { await clickHeaderAction(card,'hidden-devices'); await settle(); };
 const state = () => page.evaluate(() => {
   const c = window.__card, id = window.__hiddenTargets.lamp;
   const el = c.renderRoot.querySelector(`[data-hp="device"][data-id="${id}"]`);
@@ -71,7 +72,7 @@ await page.evaluate(async () => {
 });
 await settle();
 await prepareDesktopControls(page);
-await card.locator('[data-hp="zoom-fit"]').click(); await settle();
+await clickHeaderAction(card,'zoom-fit'); await settle();
 await card.locator('[data-hp="zoom-in"]').click(); await settle();
 const before = await stored();
 checkAll({ defaultOff: (await state()).shown === 'false', hiddenAbsentBefore: !(await state()).exists });
@@ -144,7 +145,7 @@ checkAll({ toolbarOffUpdatesHeader: (await state()).shown === 'false', toolbarOf
 await toggle();
 check('toolbarOnUpdatesHeader', (await state()).shown, 'true');
 await prepareDesktopControls(page);
-await card.locator('[data-hp="zoom-fit"]').click(); await settle();
+await clickHeaderAction(card,'zoom-fit'); await settle();
 const positionBefore = await page.evaluate(() => structuredClone(window.__card._layout[window.__hiddenTargets.lamp]));
 const writerStart = await page.evaluate(() => window.__hiddenWrites.length);
 const lampFace = card.locator(`[data-hp="device"][data-id="${await page.evaluate(() => window.__hiddenTargets.lamp)}"]`);
@@ -241,7 +242,7 @@ await page.evaluate(async () => {
   await window.__hpTest.setLayout({ 'hidden-far': { s: 'f1', x: 90, y: .5 } });
 }); await settle();
 await prepareDesktopControls(page);
-await card.locator('[data-hp="zoom-fit"]').click(); await settle();
+await clickHeaderAction(card,'zoom-fit'); await settle();
 const frameBefore = await page.evaluate(() => ({ ...window.__card._view }));
 await toggle();
 const frameAfterReveal = await page.evaluate(() => ({ ...window.__card._view }));
@@ -250,7 +251,7 @@ const revealKeepsCamera = ['x','y','w','h'].every(key=>Math.abs(frameAfterReveal
 if (!revealKeepsCamera) console.error('hidden-device reveal camera', { frameBefore, frameAfterReveal });
 check('farRevealDoesNotMoveCamera', revealKeepsCamera);
 await prepareDesktopControls(page);
-await card.locator('[data-hp="zoom-fit"]').click(); await settle();
+await clickHeaderAction(card,'zoom-fit'); await settle();
 const fitted = await page.evaluate(() => ({ ...window.__card._view }));
 check('nextFitIncludesRevealedFarMarker', fitted.w > frameBefore.w * 20);
 await page.evaluate(() => window.__hpTest.setMode('devices')); await settle();
@@ -279,10 +280,11 @@ await settle();
 const mobilePair = await stored();
 const mobileServices = await page.evaluate(() => window.__serviceCalls.length);
 
-const mobileEye = card.locator('[data-hp="hidden-devices"]');
-check('touchMenuAgreesWithDesktopChoice', await mobileEye.getAttribute('aria-pressed'), 'true');
+const mobileEye = await headerActionTarget(card,'hidden-devices');
+check('touchMenuAgreesWithDesktopChoice', await card.locator('[data-hp="hidden-devices"]').getAttribute('aria-pressed'), 'true');
 await mobileEye.tap(); await settle();
-check('touchEyeRemainsDirectlyReachable', await mobileEye.isVisible());
+check('touchEyeReachableThroughCurrentHeader', await (await headerActionTarget(card,'hidden-devices')).isVisible());
+await page.keyboard.press('Escape');
 await waitForUiKitPaint(page);
 check('touchEyeNeedsNoLegacyMenu', await card.locator('[data-hp="header-menu"]').count(), 0);
 check('touchEyeHidesFace', await card.locator('[data-hp="device"][data-id="hidden-far"]').count(), 0);
@@ -324,7 +326,7 @@ check('linkedLightAbsentWithEyeOff', await linkedFace.count(), 0);
 const linkedPair = await stored();
 await toggle();
 await prepareDesktopControls(page);
-await card.locator('[data-hp="zoom-fit"]').click(); await settle();
+await clickHeaderAction(card,'zoom-fit'); await settle();
 check('linkedLightRevealedAsOrdinary', await linkedFace.evaluate(el => !el.classList.contains('ghost')));
 const linkedBefore = await page.evaluate(() => ({ calls: window.__serviceCalls.length,
   state: window.__card.hass.states['switch.kettle'].state }));

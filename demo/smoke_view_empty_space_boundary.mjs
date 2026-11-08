@@ -1,3 +1,4 @@
+import {headerActionTarget,clickHeaderAction} from './helpers/header-actions.mjs';
 // #1333: actual cold View, server adoption, space navigation and permission changes.
 import { launchColdView, check, checkAll, finish } from './serve.mjs';
 import { mkdirSync } from 'node:fs';
@@ -40,7 +41,7 @@ await button.tap();
 await page.waitForFunction(() => window.__card._mode === 'plan' && !window.__card._modeTransitionBusy);
 out.ctaOpensCurrentPlan = await page.evaluate(() => window.__card._space === 'empty1333');
 out.editorHasNoPrompt = await prompt.count() === 0;
-await page.locator('[data-hp="editor-close"]').first().click();
+await clickHeaderAction(page.locator('houseplan-card').first(),'mode-view');
 await prompt.waitFor({ state: 'visible' });
 // Retained DOM references must recheck current authority at click time.
 await page.evaluate(() => { window.__1333stale = window.__card.renderRoot.querySelector('[data-hp="empty-plan-edit"]'); });

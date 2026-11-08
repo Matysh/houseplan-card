@@ -1,3 +1,4 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
 // #1081/UI-044: native pan, presented grid-edge pixels and bounded camera paint.
 import { createRequire } from 'node:module';
@@ -7,6 +8,7 @@ import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 const { PNG } = createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
 requirePinnedBrowser();
 const { page, browser } = await launch({ width: 2000, height: 1000 }, 1, [], { reducedMotion: 'reduce' });
+await installScenePaintProbe(page);
 await prepareDesktopControls(page);
 const output = resolve(process.env.HP_1081_GRID_OUTPUT || 'output/ui-lab-1081-grid');
 mkdirSync(output, { recursive: true });
@@ -64,6 +66,6 @@ try {
     check(`${mode}.released_grid_stays_covered`, await page.locator('[data-hp-live-grid]').count() > 0, true);
   }
   await page.evaluate(() => window.__hpTest.setMode('view'));
-  check('view.grid_stays_off', await page.locator('[data-hp-live-grid]').count(), 0);
+  check('view.grid_stays_off', await page.locator('[data-hp-live-grid]').evaluateAll(nodes=>nodes.filter(el=>window.__hpScenePaintedOrInteractive(el)).length), 0);
   writeFileSync(resolve(output, 'receipt.json'), JSON.stringify(results, null, 2));
 } finally { await finish(browser, results); }

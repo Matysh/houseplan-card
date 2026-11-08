@@ -263,7 +263,7 @@ const res = await page.evaluate(async () => {
   // сохранённые линии рендерятся с круглыми концами: диаметр = толщине линии,
   // стык двух линий под углом — без зубца (скриншот владельца)
   await c.updateComplete;
-  const lines = [...sr().querySelectorAll('.decorlayer line.dshape')];
+  const lines = [...sr().querySelectorAll('.decorlayer line.dshape:not(.dselecthit)')];
   out.savedLineRound = lines.length > 0 && lines.every((l) =>
     l.getAttribute('stroke-linecap') === 'round' && l.getAttribute('stroke-linejoin') === 'round');
   // вырожденная фигура не сохраняется
@@ -658,6 +658,7 @@ const res = await page.evaluate(async () => {
   await esc(); out.escTool = c._decorTool === 'select' && c._mode === 'decor';
   await esc(); out.escExit = c._mode === 'view';
   // 8) в Просмотре фигуры видны, но inert
+  await window.__hpTest.setMode('view');
   const shp = sr().querySelector('.decorlayer .dshape');
   out.visibleInView = !!shp;
   out.inertInView = shp ? getComputedStyle(shp).pointerEvents === 'none' : null;
@@ -685,7 +686,7 @@ Object.assign(res, await page.evaluate(async () => {
     c.hass = { ...c.hass, themes: { ...(c.hass.themes || {}), darkMode } };
     await c.updateComplete;
     const rect = trigger?.getBoundingClientRect();
-    themeStates.push(!!rect && rect.width === 44 && rect.height === 44
+    themeStates.push(!!rect && rect.width === 40 && rect.height === 40
       && getComputedStyle(trigger).visibility === 'visible');
   }
   trigger?.click();

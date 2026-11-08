@@ -348,7 +348,9 @@ try {
     }
     const contentSettings = f.card._serverCfg.settings;
     const dense = structuredClone(contentSettings.summary_panel);
-    dense.blocks[0].values = Array.from({ length: 20 }, (_, index) => ({
+    // A terminal card render restores natural stage height (927px here).
+    // Keep the intended long-list precondition after that render as well.
+    dense.blocks[0].values = Array.from({ length: 40 }, (_, index) => ({
       id: `scroll-${index}`, label: `Reading ${index}`, source: { type: 'system', key: 'device_count' },
     }));
     dense.blocks.push({ id: 'filtered', title: 'Private 505 filtered', visible: true,
@@ -369,6 +371,7 @@ try {
     dense.title = 'Updated while visible'; dense.blocks[1].scope = { type: 'space', space_id: 'filtered-away-505' };
     f.card._serverCfg = { ...f.card._serverCfg, settings: { ...contentSettings, summary_panel: structuredClone(dense) } };
     f.card._settings = f.card._serverCfg.settings; f.card.requestUpdate(); await f.settle();
+    out.eligible_update_retains_real_overflow = scroll.scrollHeight-scroll.clientHeight>=scrollBefore;
     out.eligible_config_update_is_in_place_without_private_block = f.panel() === contentNode
       && contentNode.querySelector('h2').textContent === 'Updated while visible'
       && !contentNode.textContent.includes('Private 505 filtered') && contentNode.getAnimations().length === 0

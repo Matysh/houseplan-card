@@ -76,7 +76,7 @@ const fixture = await page.evaluate(async () => {
   c._setMode('view');
   await update();
 
-  const svg = root().querySelector('.stage .zoomwrap > svg');
+  const svg = root().querySelector('[data-hp="stage"]');
   const stageRect = root().querySelector('.stage').getBoundingClientRect();
   const ctm = svg.getScreenCTM();
   const toStage = (x, y) => {

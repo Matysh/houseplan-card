@@ -19,12 +19,14 @@ const out = await page.evaluate(async () => {
   const addReal = window.addEventListener.bind(window);
   const removeReal = window.removeEventListener.bind(window);
   let shiftAdds = 0; let shiftRemoves = 0;
+  const activeShiftListeners=[];
+  const capture=opts=>typeof opts==='boolean'?opts:!!opts?.capture;
   window.addEventListener = (type, fn, opts) => {
-    if (type === 'keydown' || type === 'keyup') shiftAdds++;
+    if ((type === 'keydown' || type === 'keyup') && !activeShiftListeners.some(r=>r.type===type&&r.fn===fn&&r.capture===capture(opts))) { activeShiftListeners.push({type,fn,capture:capture(opts)}); shiftAdds++; }
     return addReal(type, fn, opts);
   };
   window.removeEventListener = (type, fn, opts) => {
-    if (type === 'keydown' || type === 'keyup') shiftRemoves++;
+    if (type === 'keydown' || type === 'keyup') { const i=activeShiftListeners.findIndex(r=>r.type===type&&r.fn===fn&&r.capture===capture(opts));if(i>=0){activeShiftListeners.splice(i,1);shiftRemoves++;} }
     return removeReal(type, fn, opts);
   };
 

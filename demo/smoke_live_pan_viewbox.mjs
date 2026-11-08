@@ -18,15 +18,18 @@ const out = await page.evaluate(async () => {
   card._setMode('view');
   await settle();
   const stage = root.querySelector('.stage');
-  const scene = root.querySelector('[data-hp-live-viewbox]');
+  const scene = root.querySelector('[data-hp="stage"]');
+  const transformOwner = scene?.closest('[data-hp-live-scene="floor"]') || scene;
   const layer = root.querySelector('[data-hp-live-layer="camera"]');
   result.sceneExists = !!scene && !!layer && !!stage;
   if (!result.sceneExists) return result;
 
   // Наблюдаем ровно за атрибутом, ради которого всё затевалось.
-  let viewBoxWrites = 0;
+  let viewBoxWrites = 0, allLayerViewBoxWrites = 0;
   const observer = new MutationObserver((records) => {
-    for (const record of records) if (record.attributeName === 'viewBox') viewBoxWrites += 1;
+    for (const record of records) if (record.attributeName === 'viewBox') {
+      allLayerViewBoxWrites++; if(record.target===scene)viewBoxWrites++;
+    }
   });
   for (const node of root.querySelectorAll('[data-hp-live-viewbox]')) {
     observer.observe(node, { attributes: true, attributeFilter: ['viewBox'] });
@@ -67,7 +70,7 @@ const out = await page.evaluate(async () => {
     send('pointermove', -step * 6, -step * 3);
     await frame();
     frames += 1;
-    const transform = getComputedStyle(scene).transform;
+    const transform = getComputedStyle(transformOwner).transform;
     if (transform && transform !== 'none') framesWithSceneTransform += 1;
     if (marker && room) {
       // #451: слой устройств и сцена обязаны ехать как одно целое. Сравниваются
@@ -80,6 +83,9 @@ const out = await page.evaluate(async () => {
   }
   const elapsed = performance.now() - startedAt;
   const writesDuringGesture = viewBoxWrites;
+  const markerMoved = marker && Math.hypot(...centre(marker).map((value,i)=>value-markerBefore[i]));
+  const roomMoved = room && Math.hypot(...centre(room).map((value,i)=>value-roomBefore[i]));
+  result.sceneActuallyMoves = markerMoved > 20 && roomMoved > 20;
   send('pointerup', -120, -60);
   await settle();
   await frame();
@@ -90,6 +96,7 @@ const out = await page.evaluate(async () => {
   const allowed = Math.max(2, Math.ceil(elapsed / 100) + 1);
   result.framesInGesture = frames;
   result.viewBoxWritesDuringGesture = writesDuringGesture;
+  console.log('all-layer-viewBox-writes', allLayerViewBoxWrites);
   result.gestureDoesNotRepaintEveryFrame = writesDuringGesture <= allowed;
   result.wellBelowFrameCount = writesDuringGesture < frames / 2;
   // Сцена действительно едет: на большинстве кадров жеста на ней живой трансформ.
@@ -100,7 +107,7 @@ const out = await page.evaluate(async () => {
   result.markerFollowsTheScene = worstParity <= 1;
   // После жеста кадр осевший: новый viewBox записан, трансформов не осталось.
   result.viewBoxSettledAfterGesture = viewBoxOf() !== boxBefore;
-  result.noTransformAfterGesture = ['none', ''].includes(getComputedStyle(scene).transform)
+  result.noTransformAfterGesture = ['none', ''].includes(getComputedStyle(transformOwner).transform)
     && ['none', ''].includes(getComputedStyle(layer).transform);
   return result;
 });

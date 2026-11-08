@@ -116,7 +116,7 @@ const out = await page.evaluate(async () => {
     '.habindingbanner[role="status"][aria-live="polite"]',
   );
   result.passageHidesBindingAndFlipControls = root().querySelectorAll(
-    'hp-dialog .body select, hp-dialog .body input[type="checkbox"]',
+    'hp-dialog .body select:not([name="optype"]), hp-dialog .body input[type="checkbox"], hp-dialog [data-action="opening-entity-open"]',
   ).length === 0;
   c._openingDialog = null;
   await settle();

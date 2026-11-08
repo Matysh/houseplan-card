@@ -1,9 +1,11 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 // New setting "background color around the plan": global (config.settings.bg_color,
 // gear dialog) with a per-space override (space dialog, empty = inherit), applied
 // to the stage in view and kiosk modes and to the static space-card. Editors keep
 // their own canvas; the open dialogs preview the pending color live.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 900, height: 900 }, 1);
+await installScenePaintProbe(page);
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -228,7 +230,7 @@ const paper = await page.evaluate(async () => {
   c._cfgRev = (c._cfgRev || 0) + 1;
   await upd();
   const m = c._spaceModel();
-  const shapes = () => [...sr().querySelectorAll('.stage svg .hp-paper')];
+  const shapes = () => [...sr().querySelectorAll('.stage svg .hp-paper')].filter(el=>window.__hpSceneOpacity(el)>0);
   const p = shapes()[0];
   out.paperExists = !!p;
   out.imagePlanPapersTheRooms = shapes().length === m.rooms.length;
@@ -242,13 +244,11 @@ const paper = await page.evaluate(async () => {
       && cs.fill !== 'none' && !/rgba\(.*,\s*0\)/.test(cs.fill);
   }
   // …and the picture is drawn ON that paper: image after paper, before walls
-  const svgEl = sr().querySelector('.stage svg');
-  const layerRoot = [...svgEl.children].find((node) =>
-    node.querySelector?.('.hp-paperg') && node.querySelector?.('.room')) || svgEl;
-  const kids = [...layerRoot.children];
-  const idxOf = (sel) => kids.findIndex((n) => n.matches(sel) || n.querySelector?.(sel));
-  out.imageAbovePaper = idxOf('image') > idxOf('.hp-paper') && idxOf('image') >= 0;
-  out.imageBelowRooms = idxOf('image') < idxOf('.room, .room-outline');
+  const painted = selector => [...sr().querySelectorAll('.stage '+selector)].filter(el=>window.__hpSceneOpacity(el)>0);
+  const image = painted('image')[0], rooms = painted('.room, .room-outline');
+  const follows = (a,b)=>!!a&&!!b&&!!(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING);
+  out.imageAbovePaper = !!image && shapes().every(shape=>follows(shape,image));
+  out.imageBelowRooms = !!image && rooms.length>0 && rooms.every(room=>follows(image,room));
   // editors keep the paper too (their canvas ignores bg_color anyway)
   c._setMode('decor');
   await upd(); await settleMode();
@@ -302,7 +302,7 @@ const drawn = await page.evaluate(async () => {
   c._cfgRev = (c._cfgRev || 0) + 1;
   c._cfgEpoch++;
   await upd();
-  const papers = () => [...sr().querySelectorAll('.stage.noplan svg .hp-paper')];
+  const papers = () => [...sr().querySelectorAll('.stage.noplan svg .hp-paper')].filter(el=>window.__hpSceneOpacity(el)>0);
   let ps = papers();
   out.paperPerRoom = ps.length === sp.rooms.length;
   out.paperShapesMatchRooms = ps.length === 2

@@ -133,7 +133,7 @@ await page.evaluate(async () => {
   c._regSignature = '';
   c._cfgEpoch++;
   c._maybeRebuildDevices();
-  c._setMode('view');
+  await window.__hpTest.setMode('view');
   c.requestUpdate();
   await c.updateComplete;
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -491,7 +491,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
     && unavailable.getAttribute('tabindex') === '0'
     && enter.defaultPrevented && space.defaultPrevented && moreInfo === 2;
 
-  await c._setMode('devices');
+  await window.__hpTest.setMode('devices');
   await c.updateComplete;
   const editorNode = node('d_light1');
   editorNode.dispatchEvent(new KeyboardEvent('keydown', {
@@ -500,7 +500,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
   await c.updateComplete;
   const editorKeyboardOpensSettings = c._markerDialog?.devId === 'd_light1';
   c._markerDialog = null;
-  await c._setMode('plan');
+  await window.__hpTest.setMode('plan');
   await c.updateComplete;
   const planNode = node('d_light1');
   const planNotInTabOrder = !planNode?.hasAttribute('role') && !planNode?.hasAttribute('tabindex');

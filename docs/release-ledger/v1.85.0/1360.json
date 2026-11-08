@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1360,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Share anchored-surface scroll validation between Help and settings selects so delayed pre-open scroll events do not dismiss the surface.",
+  "summary": {
+    "ru": "Подсказки настроек остаются открытыми после прокрутки к их кнопке.",
+    "en": "Keep settings help open after scrolling its trigger into view."
+  }
+}

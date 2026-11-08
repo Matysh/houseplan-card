@@ -1,8 +1,10 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 // Правило владельца (2026-08-06): жёлтая подложка всегда означает «работает
 // сейчас». В glow-режиме световое пятно ДОПОЛНЯЕТ её, но не заменяет. RGB
 // лампы по-прежнему красит только пятно/эффект, не значок и не рамку.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
+await installScenePaintProbe(page);
 const out = await page.evaluate(async () => {
   const o = {};
   const c = window.__card;
@@ -48,7 +50,7 @@ const out = await page.evaluate(async () => {
   le = devEl('d_lamp');
   const ke = devEl('d_kettle');
   o.litLampYellowInGlow = !!le && le.classList.contains('on') && !le.classList.contains('rgb');
-  o.glowSpotPresent = !!sr().querySelector('.stage svg radialGradient, .stage svg [id*=glow]');
+  o.glowSpotPresent = !![...sr().querySelectorAll('.stage svg radialGradient, .stage svg [id*=glow]')].some(el=>window.__hpSceneOpacity(el)>0);
   o.socketStaysYellowInGlow = !!ke && ke.classList.contains('on');
   o.morphInGlow = le?.querySelector('ha-icon')?.getAttribute('icon')?.includes('lightbulb') ?? false;
 
@@ -63,7 +65,7 @@ const out = await page.evaluate(async () => {
   le = devEl('d_lamp');
   o.planEditorLampYellow = !!le && le.classList.contains('on'); // слой скрыт — жёлтый вернулся
   o.planEditorKettleStillOn = !!devEl('d_kettle')?.classList.contains('on');
-  o.planEditorNoGlow = !sr().querySelector('.stage svg radialGradient, .stage svg [id*=glow]');
+  o.planEditorNoGlow = ![...sr().querySelectorAll('.stage svg radialGradient, .stage svg [id*=glow]')].some(el=>window.__hpSceneOpacity(el)>0);
   c._setMode('view'); await settleMode();
 
   // --- выключенная лампа тёмная в обоих режимах ---------------------------

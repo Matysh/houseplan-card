@@ -156,12 +156,13 @@ const res = await page.evaluate(async () => {
     { id: 'dc_t', kind: 'text', x: 0.5, y: 0.92, text: 'Подпись', color: '#123456' },
   ];
   c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
-  out.decorHookFindsEveryShape = qa('[data-hp="decor"]').length === 4;
+  const decorIds = [...new Set(qa('[data-hp="decor"]').map(el=>el.getAttribute('data-id')))].sort();
+  out.decorHookFindsEveryShape = JSON.stringify(decorIds) === JSON.stringify(['dc_e','dc_l','dc_r','dc_t']);
   out.decorKindLine = q('[data-hp="decor"][data-kind="line"]')?.getAttribute('data-id') === 'dc_l';
   out.decorKindRect = q('[data-hp="decor"][data-kind="rect"]')?.getAttribute('data-id') === 'dc_r';
   out.decorKindEllipse = q('[data-hp="decor"][data-kind="ellipse"]')?.getAttribute('data-id') === 'dc_e';
   out.decorKindText = q('[data-hp="decor"][data-kind="text"]')?.getAttribute('data-id') === 'dc_t';
-  out.decorKeepsItsClasses = qa('[data-hp="decor"]').length === 4
+  out.decorKeepsItsClasses = decorIds.length === 4
     && qa('[data-hp="decor"]').every((e) => e.classList.contains('dshape'))
     && !!q('[data-hp="decor"][data-kind="text"]')?.classList.contains('dtext');
   // старый селектор текстовой надписи (его уже использует smoke_decor_text) цел

@@ -42,7 +42,7 @@ function contractViolations(selectors) {
     if (!hooks) problems.push(`${name}: нет ни одного контрактного хука`);
     const stripped = selector
       .replace(/\[data-hp(?:-[a-z-]+)?(?:="[^"]*")?\]/g, '')
-      .replace(/\[data-(?:id|room|mode|tool|kind)="[^"]*"\]/g, '')
+      .replace(/\[data-(?:id|room|mode|tool|kind|action)="[^"]*"\]/g, '')
       .replace(/\bha-card\b/g, '');
     if (/[.#a-z]/i.test(stripped)) problems.push(`${name}: лишнее в селекторе — «${stripped.trim()}»`);
   }
@@ -58,6 +58,7 @@ test('#629 AC7: чужой селектор в таблице фасада от�
   assert.match(contractViolations({ ...SELECTORS, gear: '.rlgearbtn' }).join('\n'), /gear: нет ни одного контрактного хука/);
   assert.match(contractViolations({ ...SELECTORS, x: '[data-hp="not-a-hook"]' }).join('\n'), /не объявлен/);
   assert.match(contractViolations({ ...SELECTORS, y: '[data-hp="tool"][data-tool="lasso"]' }).join('\n'), /вне словаря/);
+  assert.match(contractViolations({ ...SELECTORS, badAction: '[data-hp="action"][data-action="not-a-command"]' }).join('\n'), /вне словаря/);
   assert.match(contractViolations({ ...SELECTORS, z: '[data-hp="dialog"] .body' }).join('\n'), /лишнее в селекторе/);
 });
 

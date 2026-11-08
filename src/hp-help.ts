@@ -322,6 +322,8 @@ export class HpHelp extends LitElement {
     const targetOwnsHelp = target instanceof Node
       && (target === dialog || (target instanceof Element && target.contains(this)));
     if (this._open && helpScrollShouldDismiss(insideSurface, targetOwnsHelp)) {
+      const anchor = this.renderRoot.querySelector('.trigger')?.getBoundingClientRect();
+      if (anchor && !this._floating.anchorMoved(anchor)) return;
       this._closeHelp(false, 'scroll');
     }
   };
@@ -470,6 +472,7 @@ export class HpHelp extends LitElement {
     const anchor = trigger.getBoundingClientRect();
     const surfaceRect = surface.getBoundingClientRect();
     if (!anchor.width || !anchor.height || !surfaceRect.width || !surfaceRect.height) return false;
+    this._floating.recordAnchor(anchor);
     const placement = placeFloatingSurface(
       anchor,
       surfaceRect,

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1358,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Retire quarter-turn presentation before mode ownership changes and clear imperative stage widths after rapid mode transitions.",
+  "summary": {
+    "ru": "Исправлены остаточные поворот и ширина сцены после переключения редакторов.",
+    "en": "Clear residual scene rotation and width after switching editors."
+  }
+}

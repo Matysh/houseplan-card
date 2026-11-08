@@ -1,3 +1,4 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 // #544: `setLayerProjection` must expose scene pixels beyond the old SVG
 // viewport while the compositor transform is live. The outer `.stage` still
 // clips the card. DOM strings and a screenshot after pointerup cannot prove
@@ -9,6 +10,7 @@ const { page, browser } = await launch(
   { width: 1100, height: 760 }, 1, [], { hasTouch: true },
 );
 
+await installScenePaintProbe(page);
 const checks = {};
 const diagnostics = {};
 const frame = () => page.evaluate(() => new Promise((done) => requestAnimationFrame(done)));
@@ -42,7 +44,7 @@ const resetCamera = async () => {
 const liveState = () => page.evaluate(() => {
   const card = document.querySelector('houseplan-card');
   const root = card.renderRoot;
-  const scenes = [...root.querySelectorAll('[data-hp-live-viewbox]')];
+  const scenes = [...root.querySelectorAll('[data-hp-live-scene="floor"],[data-hp-live-viewbox]')].filter(node=>node.getAttribute('data-hp-live-viewbox')!=='floor'||!node.closest('[data-hp-live-scene="floor"]'));
   const centre = (node) => {
     const rect = node?.getBoundingClientRect();
     return rect ? [rect.left + rect.width / 2, rect.top + rect.height / 2] : null;
@@ -69,12 +71,12 @@ const liveState = () => page.evaluate(() => {
     marker: centre(root.querySelector('[data-hp="device"]')),
     room: centre(root.querySelector('[data-hp="room"]')),
     effects: {
-      dayCycle: !!root.querySelector('.hp-day-cycle-env .hp-day-cycle-bg.active'),
-      glowBases: root.querySelectorAll('.glow-base-layer .glow-base').length,
-      glowPools: root.querySelectorAll('.glowlayer circle, .glow-pool').length,
+      dayCycle: [...root.querySelectorAll('.hp-day-cycle-env .hp-day-cycle-bg.active')].some(el=>window.__hpSceneOpacity(el)>0),
+      glowBases: [...root.querySelectorAll('.glow-base-layer .glow-base')].filter(el=>window.__hpSceneOpacity(el)>0).length,
+      glowPools: [...root.querySelectorAll('.glowlayer circle, .glow-pool')].filter(el=>window.__hpSceneOpacity(el)>0).length,
       roomFills: root.querySelectorAll('.room.filled').length,
       hatchedWalls: root.querySelectorAll('.wallbody:not(.solid)[fill^="url("]').length,
-      customBackground: (stage?.getAttribute('style') || '').includes('#123456'),
+      customBackground: !!stage && getComputedStyle(stage).backgroundColor === 'rgb(18, 52, 86)',
     },
   };
 });
@@ -335,11 +337,12 @@ const runStablePromotion = async () => {
   const initial = await liveState();
   await page.evaluate(() => {
     const card = document.querySelector('houseplan-card');
-    const scenes = [...card.renderRoot.querySelectorAll('[data-hp-live-viewbox]')];
+    const scenes = [...card.renderRoot.querySelectorAll('[data-hp-live-scene="floor"],[data-hp-live-viewbox]')].filter(node=>node.getAttribute('data-hp-live-viewbox')!=='floor'||!node.closest('[data-hp-live-scene="floor"]'));
+    const anchors=[...card.renderRoot.querySelectorAll('[data-hp-live-viewbox]')].filter(node=>node.getAttribute('data-hp-live-viewbox')!=='floor'||node.matches('[data-hp="stage"]'));
     const records = [];
     const observer = new MutationObserver((batch) => records.push(...batch));
-    for (const scene of scenes) observer.observe(scene, {
-      attributes: true, attributeFilter: ['style', 'viewBox'], attributeOldValue: true,
+    for (const scene of new Set([...scenes,...anchors])) observer.observe(scene, {
+      attributes: true, attributeFilter: ['style','viewBox'], attributeOldValue: true,
     });
     window.__hp579Promotion = { observer, records };
   });
@@ -364,17 +367,19 @@ const runStablePromotion = async () => {
   const active = await page.evaluate(async () => {
     await Promise.resolve();
     const card = document.querySelector('houseplan-card');
-    const scenes = [...card.renderRoot.querySelectorAll('[data-hp-live-viewbox]')];
+    const scenes = [...card.renderRoot.querySelectorAll('[data-hp-live-scene="floor"],[data-hp-live-viewbox]')].filter(node=>node.getAttribute('data-hp-live-viewbox')!=='floor'||!node.closest('[data-hp-live-scene="floor"]'));
+    const anchors=[...card.renderRoot.querySelectorAll('[data-hp-live-viewbox]')].filter(node=>node.getAttribute('data-hp-live-viewbox')!=='floor'||node.matches('[data-hp="stage"]'));
     const state = window.__hp579Promotion;
     const records = [...state.records, ...state.observer.takeRecords()];
     state.observer.disconnect();
     delete window.__hp579Promotion;
-    const styleRecords = records.filter((record) => record.attributeName === 'style');
+    const styleRecords = records.filter((record) => record.attributeName === 'style' && scenes.includes(record.target));
     const promoted = (text) => typeof text === 'string'
       && text.includes('overflow: visible') && text.includes('transform-origin:')
       && text.includes('will-change: transform') && text.includes('transform:');
     return {
       sceneCount: scenes.length,
+      viewBoxAnchorCount:anchors.length,
       styleMutations: styleRecords.length,
       viewBoxMutations: records.filter((record) => record.attributeName === 'viewBox').length,
       demotedOldValues: styleRecords.filter((record) => !promoted(record.oldValue)).length,
@@ -391,9 +396,9 @@ const runStablePromotion = async () => {
     && active.demotedOldValues === 0;
   // The forced Lit commit contributes one deliberate anchor write per scene;
   // subtract it before judging the ordinary 100 ms / 15% refresh budget.
-  const budgetedViewBoxMutations = active.viewBoxMutations - active.sceneCount;
-  checks.stablePromotionKeepsViewBoxBudget = budgetedViewBoxMutations >= active.sceneCount * 3
-    && budgetedViewBoxMutations <= active.sceneCount * 5;
+  const budgetedViewBoxMutations = active.viewBoxMutations - active.viewBoxAnchorCount;
+  checks.stablePromotionKeepsViewBoxBudget = budgetedViewBoxMutations >= active.viewBoxAnchorCount * 3
+    && budgetedViewBoxMutations <= active.viewBoxAnchorCount * 5;
   checks.stablePromotionCleansAtTerminal = terminal.allTemporaryStylesCleared;
 };
 

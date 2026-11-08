@@ -1909,6 +1909,7 @@ export class HouseplanCard extends LitElement {
     // Projection crossing and the raster camera use these outside paint().
     for (const [selector, names] of [
       ['.zoomwrap', ['width', 'height', 'opacity']],
+      ['.stage', ['width']],
     ] as const) for (const element of this.renderRoot.querySelectorAll<HTMLElement>(selector)) {
       for (const name of names) element.style.removeProperty(name);
     }
@@ -8961,6 +8962,7 @@ export class HouseplanCard extends LitElement {
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true, warm = false): void {
     if (!warm) this._cancelPendingWarmMode();
     if (mode !== this._mode) {
+      this._rotationMotion.cancel();
       this._stairsView.clearArrival();
       ++this._viewDeviceMenuRequest;
       this._clearRoomFocus(true);

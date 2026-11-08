@@ -234,7 +234,7 @@ const sameBox = (a, b) => !!a && !!b && a.every((value, index) => Math.abs(value
       const stage = root.querySelector('.stage');
       window.__hpSkySamples.push({
         busy: !!card._modeTransitionBusy,
-        weight: Number(getComputedStyle(stage).getPropertyValue('--hp-mode-view-weight')),
+        weight: card._modeTransition.presented?.viewWeight ?? card._modeTransitionVisual?.viewWeight ?? (card._mode==='view'?1:0),
         sky: sky ? Number(getComputedStyle(sky).opacity) : null,
         moon: moon ? { on: moon.classList.contains('on'), opacity: Number(getComputedStyle(moon).opacity) } : null,
       });

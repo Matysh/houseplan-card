@@ -31,16 +31,16 @@ const res = await page.evaluate(async () => {
   out.badgeOpensInfo = !!c._openingInfo;
   c._openingInfo = null;
   // Plan: op-hit интерактивен, клик редактирует
-  c._setMode('devices'); await c.updateComplete;
+  await window.__hpTest.setMode('devices'); await c.updateComplete;
   out.devModeCursor = getComputedStyle(sr().querySelector('.dev')).cursor;
-  c._setMode('plan'); await c.updateComplete;
+  await window.__hpTest.setMode('plan'); await c.updateComplete;
   out.badgeInertInPlan = (() => { const b = sr().querySelector('.oplock'); return b ? getComputedStyle(b).pointerEvents === 'none' : 'no-badge'; })();
   const cs2 = getComputedStyle(sr().querySelector('.op-hit'));
   out.planInteractive = cs2.pointerEvents === 'auto' && cs2.cursor === 'grab';
   const op = c._spaceModel().openings?.[0] || { id: 'op1', rx: 550, ry: 200, rlen: 90 };
   c._opClick({ stopPropagation(){} }, op);
   out.planClickEdits = !!c._openingDialog;
-  c._openingDialog = null; c._setMode('view');
+  c._openingDialog = null; await window.__hpTest.setMode('view');
   return out;
 });
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)

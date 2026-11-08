@@ -6,6 +6,7 @@ import type { HpDialog } from './hp-dialog';
 export class FloatingSurfaceController {
   private host: HTMLElement | null = null;
   private root: ShadowRoot | null = null;
+  private anchorBounds: DOMRectReadOnly | null = null;
 
   constructor(
     private readonly owner: HTMLElement,
@@ -28,6 +29,15 @@ export class FloatingSurfaceController {
 
   public get hasFallback(): boolean {
     return !!this.host;
+  }
+
+  public recordAnchor(bounds: DOMRectReadOnly): void { this.anchorBounds = bounds; }
+
+  /** A queued scroll may describe the position already used for placement. */
+  public anchorMoved(bounds: DOMRectReadOnly): boolean {
+    const prior = this.anchorBounds;
+    return !prior || bounds.left !== prior.left || bounds.top !== prior.top
+      || bounds.right !== prior.right || bounds.bottom !== prior.bottom;
   }
 
   public containsPath(path: EventTarget[]): boolean {
@@ -60,6 +70,7 @@ export class FloatingSurfaceController {
   }
 
   public destroy(): void {
+    this.anchorBounds = null;
     if (this.root) litRender(nothing, this.root);
     this.host?.remove();
     this.host = null;

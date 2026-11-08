@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1359,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Use non-pruning room gear resolution while preparing an active resize preview so cancellation retains the session position.",
+  "summary": {
+    "ru": "Отмена изменения комнаты сохраняет перемещённую кнопку её настроек.",
+    "en": "Keep a moved room settings button when resizing is cancelled."
+  }
+}

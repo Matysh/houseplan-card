@@ -1,14 +1,16 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 /** Issue #228: exact drawing, existing faces, bounded repair and room deletion. */
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 820 }, 1);
+await installScenePaintProbe(page);
 
 const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
   const clone = (value) => JSON.parse(JSON.stringify(value));
-  const update = async () => { card.requestUpdate(); await card.updateComplete; };
+  const update = async () => { card.requestUpdate(); await card.updateComplete; await card._editorRuntime._whenLiveEditorSettled(); };
   const base = {
     id: 'repairs', title: 'Repairs', cell_cm: 5, view_box: [0, 0, 1, 0.7],
     rooms: [], wall_segments: [], openings: [], partitions: [], wall_columns: [],
@@ -31,7 +33,7 @@ const out = await page.evaluate(async () => {
     card._roomDeleteDialog = null;
     card._wallRepairDiagnostic = null;
     card._drawWallField = '20';
-    card._setMode('plan');
+    await window.__hpTest.setMode('plan');
     card._tool = 'draw';
     card._clearPlanSnapHover();
     await update();
@@ -44,14 +46,12 @@ const out = await page.evaluate(async () => {
   ];
 
   await reset();
-  const stage = root().querySelector('.stage');
-  const rect = stage.getBoundingClientRect();
-  const view = card._viewOr(card._baseVb());
-  const clickAt = (x, y, shiftKey = false, ctrlKey = false) => new MouseEvent('click', {
-    clientX: rect.left + ((x - view.x) / view.w) * rect.width,
-    clientY: rect.top + ((y - view.y) / view.h) * rect.height,
-    bubbles: true, shiftKey, ctrlKey,
-  });
+  const clickAt = (x, y, shiftKey = false, ctrlKey = false) => {
+    const matrix=root().querySelector('[data-hp="stage"]').getScreenCTM();
+    if(!matrix)throw Error('Drawing fixture requires a current floor matrix');
+    const point=new DOMPoint(x,y).matrixTransform(matrix);
+    return new MouseEvent('click',{clientX:point.x,clientY:point.y,bubbles:true,shiftKey,ctrlKey});
+  };
   card._path = [[100, 600]];
   card._cursorPt = [200, 600];
   await update();
@@ -184,10 +184,9 @@ const out = await page.evaluate(async () => {
   result.deleteWallsCascadesExclusiveOpening = card._curSpaceCfg.rooms.length === 0
     && !card._curSpaceCfg.openings;
 
-  card._setMode('view');
+  await window.__hpTest.setMode('view');
   await update();
-  result.viewHasNoEditorRepairChrome = !root().querySelector('.wall-repair-preview')
-    && !root().querySelector('.active-axis');
+  result.viewHasNoEditorRepairChrome = ![...root().querySelectorAll('.wall-repair-preview,.active-axis')].some(el=>window.__hpScenePaintedOrInteractive(el));
   return result;
 });
 

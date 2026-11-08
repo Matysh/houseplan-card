@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Keep settings Help open after a queued scroll that already revealed its trigger; share the anchor check with dropdowns (#1360).
+
+- Clear residual scene rotation and width after rapid View/editor handoffs (#1358).
+- Keep moved room settings buttons through resize preview and cancellation (#1359).
+- Update stable browser/HA observation for retained layers, compact header actions and independent settings scrolling (#1357).
+
 - Keep settings dropdowns open after a queued scroll that revealed their trigger; actual anchor movement still dismisses the menu (#1356).
 
 ## v1.85.1-beta.1 — 2026-11-08

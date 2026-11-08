@@ -1,3 +1,4 @@
+import {waitForUiKitPaint} from './helpers/ui-kit-paint.mjs';
 // Issue #213: dense fractional geometry plus painted-centroid proof at common DPRs.
 import { launch, checkAll, finish } from './serve.mjs';
 
@@ -9,6 +10,7 @@ for (const dpr of dprs) {
   const { page, browser } = await launch(
     { width: 980, height: 760 }, dpr, [], { colorScheme: 'light' },
   );
+  await waitForUiKitPaint(page);
   await page.evaluate(async () => {
     const c = window.__card;
     c.hass = { ...c.hass, themes: { ...(c.hass.themes || {}), darkMode: false } };

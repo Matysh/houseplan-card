@@ -60,7 +60,7 @@ const out = await evaluateRetainedAction(page, async () => {
   };
 
   // ---- (a) a DEVICE MARKER goes to 2.5 / 2.2 ---------------------------
-  c._setMode('devices'); await c.updateComplete;
+  await window.__hpTest.setMode('devices'); await c.updateComplete;
   const dev = c._devices.find((d) => !d.virtual);
   const p0 = c._pos(dev);
   beginDeviceDrag(dev, p0, 11);
@@ -81,7 +81,7 @@ const out = await evaluateRetainedAction(page, async () => {
   o.frameFollowedTheMarker = b1[0] + b1[2] > 2.4 * NORM_W;
 
   // ---- (c) a ROOM LABEL, the worse of the two (it clamped to view_box) --
-  c._setMode('plan'); await c.updateComplete;
+  await window.__hpTest.setMode('plan'); await c.updateComplete;
   const room = c._spaceModel(c._space).rooms.find((r) => r.name);
   const lp = c._labelPos(room, c._space);
   c._drag = { id: 'rl_' + room.id, sx: 400, sy: 400, ox: lp.x, oy: lp.y, moved: false };
@@ -97,7 +97,7 @@ const out = await evaluateRetainedAction(page, async () => {
   o.labelSurvivesRebuild = near(lp2.x / NORM_W, 2.7) && near(lp2.y / NORM_W, 2.4);
 
   // ---- (d) DECOR born far out, and moved further still -------------------
-  c._setMode('decor'); await c.updateComplete;
+  await window.__hpTest.setMode('decor'); await c.updateComplete;
   c._decorTool = 'rect';
   c._decorDraft = { kind: 'rect', a: [2.6 * NORM_W, 2.6 * NORM_W], b: [2.9 * NORM_W, 2.8 * NORM_W], pid: 1 };
   c._decorCommitDraft(); await c.updateComplete;
@@ -123,7 +123,7 @@ const out = await evaluateRetainedAction(page, async () => {
   c._decorMove = null;
 
   // ---- (e) the ONE bound that is left is the backend's ±5000 ------------
-  c._setMode('devices'); await c.updateComplete;
+  await window.__hpTest.setMode('devices'); await c.updateComplete;
   const dev2 = c._devices.find((d) => d.id !== dev.id && !d.virtual);
   const q0 = c._pos(dev2);
   beginDeviceDrag(dev2, q0, 12);
@@ -142,7 +142,7 @@ const out = await evaluateRetainedAction(page, async () => {
   o.shiftStillSnapsToTheNodes = onGrid(c._layout[dev3.id].x);
   c._cancelDeviceDrag();
 
-  c._setMode('view');
+  await window.__hpTest.setMode('view');
   return o;
 }, 'drag bounds scenarios');
 

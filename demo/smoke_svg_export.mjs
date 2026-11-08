@@ -1,3 +1,4 @@
+import {headerActionTarget,clickHeaderAction} from './helpers/header-actions.mjs';
 // #1036: the actual dialog/download, then a standalone file with no HA runtime.
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -77,8 +78,7 @@ await ready();
 const dialog = page.locator('hp-pdf-dialog');
 const field = (name) => dialog.locator(`[data-field="${name}"]`);
 const open = async () => {
-  const trigger = page.locator('[data-hp="pdf"]');
-  await trigger.click();
+  await clickHeaderAction(page.locator('houseplan-card').first(),'pdf');
   await dialog.waitFor({ state: 'attached' });
 };
 const selectSvg = async () => { await field('export-format').selectOption('svg'); };

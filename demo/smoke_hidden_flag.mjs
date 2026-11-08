@@ -1,8 +1,10 @@
+import {installScenePaintProbe} from './helpers/scene-paint-probe.mjs';
 // docs/FILTERING.md: скрытие — явная галка. Конфиг материализуется сеятелем
 // (filter_seeded), галка в диалоге у всех устройств, «Показать скрытые» —
 // локальный показ (#919), скрытые активные устройства рисуются как обычные.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
+await installScenePaintProbe(page);
 const out = {};
 
 // --- сеятель материализует конфиг при загрузке ---------------------------
@@ -252,8 +254,8 @@ Object.assign(out, await page.evaluate(async () => {
   c._serverCfg = cfg; c._cfgEpoch++; c._regSignature = '';
   c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
   const fullRoom = [...(c.shadowRoot || c.renderRoot).querySelectorAll('.room')]
-    .find((r) => (r.getAttribute('style') || '').includes('--room-fill'));
-  const fullFill = fullRoom ? (fullRoom.getAttribute('style').match(/--room-fill:([^;]+)/) || [])[1] : null;
+    .find((r) => window.__hpSceneOpacity(r)>0 && (r.getAttribute('style') || '').includes('--room-fill'));
+  const fullFill = fullRoom ? fullRoom.style.getPropertyValue('--room-fill').trim() : null;
 
   window.__hpInvalidate?.(); // сбросить модульный кэш от предыдущей карточки
   const hass = { ...c.hass, callWS: async (m) => {
@@ -276,7 +278,7 @@ Object.assign(out, await page.evaluate(async () => {
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const stRoom = [...card.renderRoot.querySelectorAll('.room')]
     .find((r) => (r.getAttribute('style') || '').includes('--room-fill'));
-  const stFill = stRoom ? (stRoom.getAttribute('style').match(/--room-fill:([^;]+)/) || [])[1] : null;
+  const stFill = stRoom ? stRoom.style.getPropertyValue('--room-fill').trim() : null;
   o.fullPaintsHiddenLqi = !!fullFill;
   o.staticPaintsHiddenLqi = !!stFill;
   o.lqiParity = !!fullFill && fullFill === stFill;

@@ -383,7 +383,8 @@ try {
   const editorRequests = desktop.requests.slice(beforeOpen).map((path) => path.replace(/\?.*$/, ''));
   console.log('JS requested on opening the editor:', JSON.stringify(editorRequests));
   const known = new Set(['lazyEditorFiles', 'lazyNamespaceLocaleFiles', 'lazyMoonFiles', 'lazyLocaleFiles',
-    'lazyFurnitureArtFiles'].flatMap((graph) => manifest[graph] || []));
+    'lazyFurnitureArtFiles'].flatMap((graph) => manifest[graph] || []).concat(
+    manifest.files.map(file => file.path).filter(path => /^houseplan-assets\/wall-node-card-adapter-[A-Za-z0-9_-]+\.js$/.test(path))));
   out.editorOpenRequestsOnlyKnownGraphs = editorRequests.includes(runtimePath)
     && editorRequests.every((path) => known.has(path)) || editorRequests.filter((path) => !known.has(path)).join(',');
 

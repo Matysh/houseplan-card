@@ -12,15 +12,16 @@ const {page}=f,out={};watchPage(page);await enforcePinnedBrowser(f.browser);
 try{
  await prepareUi963Page(page,f.url);
  await assertFreshDemoBundle(page,fileURLToPath(new URL('..',import.meta.url)));
- const card=page.locator('houseplan-card'),action=card.locator('[data-hp=summary-toggle]');
- // Warm the real keyboard path before the independent touch-focus neighbour.
- // Responsive headers hide zoom buttons; the same real Chrome tooltip path
- // remains on the visible summary neighbour and its toggle action.
- const keyboard=card.locator('[data-hp=summary-settings]');
+ const card=page.locator('houseplan-card');
+ await page.evaluate(()=>window.__hpTest.setMode('plan'));
+ const action=card.locator('[data-hp=tool][data-tool=draw]');
+ // Compact headers replace tooltip buttons with labelled menu commands.
+ // Use two visible toolbar neighbours to preserve the genuine keyboard-to-touch
+ // Chrome tooltip path at the original phone viewport.
+ const keyboard=card.locator('[data-hp=tool][data-tool=select]');
  for(let i=0;i<100;i++){await page.keyboard.press('Tab');if(await keyboard.evaluate(el=>el===el.getRootNode().activeElement))break;}
  await page.waitForTimeout(350);out.keyboard_hint_before_touch=await card.locator('.hp-chrome-tooltip').isVisible();
- await page.keyboard.press('Escape');
- const before=await page.evaluate(()=>({pressed:window.__card.renderRoot.querySelector('[data-hp=summary-toggle]').getAttribute('aria-pressed'),data:JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout})}));
+ const before=await page.evaluate(()=>({pressed:window.__card.renderRoot.querySelector('[data-hp=tool][data-tool=draw]').getAttribute('aria-pressed'),data:JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout})}));
  const r=await action.boundingBox();await page.touchscreen.tap(r.x+r.width/2,r.y+r.height/2);
  await page.waitForFunction(()=>!window.__card._cameraTransition.active);await page.waitForTimeout(400);
  out.touch_keeps_action=await action.getAttribute('aria-pressed')!==before.pressed;

@@ -31,7 +31,8 @@ const seed=async decor=>{
     if(window.__card._space!=='group')await window.__hpTest.switchSpace('group');
     await window.__hpTest.setMode('decor');await window.__hpTest.setTool('select');
   },decor);
-  await card.locator('[data-hp="zoom-fit"]').click();await settle();
+  await card.locator('[data-hp="zoom-fit"]').click();
+  await page.waitForFunction(()=>{const c=window.__card;return !c._cameraTransition.active&&!c._modeTransitionBusy&&!c._refitRaf&&!c._pendingRefitSize;});await settle();
 };
 const point=async(x,y)=>card.locator('.decorlayer').evaluate((el,[x,y])=>{
   const p=new DOMPoint(x*1000,y*1000).matrixTransform(el.getScreenCTM());return{x:p.x,y:p.y};

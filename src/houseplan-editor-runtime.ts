@@ -1216,7 +1216,10 @@ export class HouseplanEditorRuntime {
     this._loadNodeMove();
     this.nodeMove?.prepare();
     const space = this.host._spaceModel();
-    if (space) for (const room of space.rooms) this.roomGear.center(room, roomPoly(room), space.id);
+    if (space) for (const room of space.rooms) {
+      if (this.host._resize.dragging) this.roomGear.previewCenter(room, roomPoly(room), space.id);
+      else this.roomGear.center(room, roomPoly(room), space.id);
+    }
   }
   private _planNodeInkVisible = false;
   private _renderWallNodes(warm = false): TemplateResult | typeof nothing {

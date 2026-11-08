@@ -81,7 +81,7 @@ const result = await page.evaluate(async (visualFixture) => {
   const stage = root().querySelector('.stage');
   const before = {
     rooms: stage.querySelectorAll('.room').length,
-    viewBox: stage.querySelector('.zoomwrap > svg')?.getAttribute('viewBox'),
+    viewBox: stage.querySelector('[data-hp="stage"]')?.getAttribute('viewBox'),
     fingerprint: root().querySelector('ha-card')?.dataset.frameFingerprint || '',
     snapshot: root().querySelector('ha-card')?.dataset.deviceSnapshotSequence || '',
     token: Number(root().querySelector('ha-card')?.dataset.continuityToken || 0),
@@ -117,12 +117,12 @@ const result = await page.evaluate(async (visualFixture) => {
       const zoom = liveStage?.querySelector('.zoomwrap');
       const computed = zoom ? getComputedStyle(zoom) : null;
       const host = root().querySelector('ha-card');
-      const svg = liveStage?.querySelector('.zoomwrap > svg');
+      const svg = liveStage?.querySelector('[data-hp="stage"]');
       const stageRect = liveStage?.getBoundingClientRect();
       const svgRect = svg?.getBoundingClientRect();
       samples.push({
         rooms: liveStage?.querySelectorAll('.room').length || 0,
-        viewBox: liveStage?.querySelector('.zoomwrap > svg')?.getAttribute('viewBox') || '',
+        viewBox: liveStage?.querySelector('[data-hp="stage"]')?.getAttribute('viewBox') || '',
         visible: !!computed && computed.display !== 'none' && computed.visibility !== 'hidden',
         overlay: !!root().querySelector('.recoveryoverlay'),
         state: host?.dataset.continuityState || '',

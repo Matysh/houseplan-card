@@ -291,7 +291,7 @@ try {
     d.querySelector('[data-section-target="appearance"]').click();
     await c.updateComplete;
     await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
-    const scroller = d.renderRoot.querySelector('.content'), p = d.querySelector('hp-device-preview');
+    const scroller = d.querySelector('.hpf-settings-content'), p = d.querySelector('hp-device-preview');
     await p.updateComplete;
     const a = scroller.getBoundingClientRect(), b = p.getBoundingClientRect();
     scroller.scrollTop += b.top - a.top - Math.min(180, Math.max(0, (a.height - b.height) / 2));

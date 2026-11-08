@@ -635,7 +635,7 @@ async function countWarmPixels(page, png, region) {
 async function inspectDecorPixels(page, png, clip, spec) {
   return page.evaluate(async ({ png64, clip, spec }) => {
     const card = window.__goldenCard;
-    const svg = card?.renderRoot?.querySelector('.stage .zoomwrap > svg');
+    const svg = card?.renderRoot?.querySelector('[data-hp="stage"]');
     const decor = card?.renderRoot?.querySelector('.decorlayer');
     const matrix = svg?.getScreenCTM?.();
     if (!svg || !decor || !matrix) throw new Error('semantic golden decor layer is missing');

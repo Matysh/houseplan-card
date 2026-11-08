@@ -6,6 +6,6 @@ export async function prepareDesktopControls(page) {
   await page.locator('#host').evaluate(host => host.style.removeProperty('width'));
   // A later, deliberate compact phase must still be able to override this.
   await page.addStyleTag({ content: '#host { width:calc(100vw - 16px); }' });
-  await page.locator('houseplan-card').first().locator('[data-hp="zoom-fit"]').waitFor({ state: 'visible', timeout: 10000 });
+  await page.locator('houseplan-card').first().locator('[data-hp="zoom-fit"]:visible, [data-hp="header-actions-trigger"]:visible').first().waitFor({ state: 'visible', timeout: 10000 });
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }

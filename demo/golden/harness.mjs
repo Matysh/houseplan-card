@@ -1958,9 +1958,12 @@ export async function prepareGoldenScenario(page, scenario) {
           configurable: true,
           get: () => [group],
         });
+        Object.defineProperty(card, '_editorToolbarGroupsFor', { configurable:true, value:()=>[group] });
         card.requestUpdate();
-        await card.updateComplete;
-        card._editorSecondary.toggleGroup(card._editorToolbarGroups, group.id);
+        await card.updateComplete;await frame();
+        const groupTrigger=card.renderRoot.querySelector('[data-editor-group="golden-group"]');
+        if(!groupTrigger)throw Error('golden group fixture has no rendered command');
+        groupTrigger.click();
         expectedKind = 'group';
       } else {
         throw new Error(`unknown golden editor tray: ${scenario.editorTray}`);
@@ -2251,7 +2254,7 @@ export async function prepareGoldenScenario(page, scenario) {
         const details=settings.querySelector('.hpf-profile-diagnostics');
         details?.querySelector('summary')?.click();
         await card.updateComplete;
-        const info=card._vacTrailDiagnostics(device),body=settings.shadowRoot?.querySelector('.content');
+        const info=card._vacTrailDiagnostics(device),body=settings.querySelector('.hpf-settings-content');
         if (!body || !details?.open || info.display!=='vac.trail_display_pending' || info.provisional!==3)
           throw new Error('golden pending native/live diagnostics are not shown');
         body.scrollTop += details.getBoundingClientRect().top-body.getBoundingClientRect().top-12;
@@ -2264,7 +2267,7 @@ export async function prepareGoldenScenario(page, scenario) {
         const info = card._vacTrailDiagnostics(device);
         const label = 'Showing the last accepted path; new data has not been accepted';
         const row = [...settings.querySelectorAll('.vacdiag > div')].find(item => item.textContent.includes(label));
-        const body = settings.shadowRoot?.querySelector('.content');
+        const body = settings.querySelector('.hpf-settings-content');
         if (!body || !row || !details?.open || info.display !== 'vac.trail_display_retained'
             || info.reason !== 'coordinates_unverified' || !(info.rendered > 0))
           throw new Error('golden retained native diagnostics are not actually shown');
@@ -2279,10 +2282,9 @@ export async function prepareGoldenScenario(page, scenario) {
         await card.updateComplete;
         card._setMarkerGlowMode('fixed');
         await card.updateComplete;
-        // #600: роль и режим свечения — сегменты набора; скроллер диалога один —
-        // `.content` в теневом корне hp-dialog (form-shell), а не `.body`.
+        // #1354: device content owns scrolling independently of section navigation.
         const dialog = card.renderRoot.querySelector('hp-dialog');
-        const body = dialog?.shadowRoot?.querySelector('.content');
+        const body = dialog?.querySelector('.hpf-settings-content');
         const roleGroup = dialog?.querySelector('input[name="marker-light-role"]')?.closest('.hpf-field');
         const glowGroup = dialog?.querySelector('input[name="marker-glow-mode"]')?.closest('.hpf-block');
         const roleInputs = roleGroup?.querySelectorAll('input[name="marker-light-role"]');
@@ -2334,7 +2336,7 @@ export async function prepareGoldenScenario(page, scenario) {
         if (['standard', 'manual'].includes(scenario.deviceStateSource) && p.visual.status !== 'working')
           throw new Error('golden state-source active case is not working');
         if (protectedFace && !p.protectedFace) throw new Error('golden protected state-source face lost authority');
-        const body = settings.shadowRoot?.querySelector('.content');
+        const body = settings.querySelector('.hpf-settings-content');
         if (!body) throw new Error('golden state-source scroller missing');
         body.scrollTop += select.getBoundingClientRect().top - body.getBoundingClientRect().top - 40;
         if (['unknown', 'protected'].includes(scenario.deviceStateSource))
@@ -2343,7 +2345,7 @@ export async function prepareGoldenScenario(page, scenario) {
       }
       if (scenario.deviceToggleEntity) {
         const dialog = card.renderRoot.querySelector('hp-dialog');
-        const body = dialog?.shadowRoot?.querySelector('.content'); // #600: единственный скроллер
+        const body = dialog?.querySelector('.hpf-settings-content'); // #1354: device content pane
         const select = dialog?.querySelector('#marker-toggle-entity');
         const warning = dialog?.querySelector('.markertoggleentity [role="status"]');
         const childLock = 'switch.golden_washer_child_lock';
@@ -3157,7 +3159,11 @@ export async function prepareGoldenScenario(page, scenario) {
     if (!await action.isDisabled() || !/two walls/i.test(await action.innerText()))
       throw Error('Node endpoint must visibly explain its degree refusal under Walls');
     result.nodeMenu = await page.evaluate(() => ({ tool: window.__goldenCard._tool,
-      handles: window.__goldenCard.renderRoot.querySelectorAll('.hp-node-handle').length }));
+      handles: [...window.__goldenCard.renderRoot.querySelectorAll('.hp-node-handle')].filter(node=>{
+        const r=node.getBoundingClientRect();
+        return r.width>0&&r.height>0&&!node.closest('[inert]')&&(node.checkVisibility({checkOpacity:true,checkVisibilityCSS:true})
+          || node.getRootNode().elementFromPoint(r.x+r.width/2,r.y+r.height/2)===node);
+      }).length }));
     if (result.nodeMenu.tool !== scenario.nodeMenuTool || result.nodeMenu.handles !== 0)
       throw Error('Node menu must retain the selected non-Select tool without enabling Move');
   }
