@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 611,
+  "revision": 612,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -44974,25 +44974,29 @@
           "from": "55569543d09c0fc650b7918e44490ebc9fd88431",
           "to": "ce6ac7af5763e462251ac35b76a2372f8c0d00b6",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "7c129169ce755a0b9293bd83b566c7d36f799d80"
         },
         {
           "from": "ce6ac7af5763e462251ac35b76a2372f8c0d00b6",
           "to": "7f3aac1498cc48151af6bdb277460aac13e03a40",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "7c129169ce755a0b9293bd83b566c7d36f799d80"
         },
         {
           "from": "7f3aac1498cc48151af6bdb277460aac13e03a40",
           "to": "c48c3d389059cf226cd8088fe16c731ef9d6bf82",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "7c129169ce755a0b9293bd83b566c7d36f799d80"
         },
         {
           "from": "c48c3d389059cf226cd8088fe16c731ef9d6bf82",
           "to": "7c129169ce755a0b9293bd83b566c7d36f799d80",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "0a3c5489931d8a90090e622e839bc60d4ac3971c"
         }
       ],
       "diagnostics": [],
@@ -45541,7 +45545,8 @@
           "sha": "25d23997a1bb06cb6a2d35d63b22362a20623c64"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "0a3c5489931d8a90090e622e839bc60d4ac3971c",
           "issue": 1355,
           "branch": "issue/1355-release-return-7c129169ce75",
           "worktree": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/process-next/return-worktrees/52610e210052/artifacts/process-next/return-worktrees/7c129169ce75"
@@ -50078,7 +50083,8 @@
     "beta1851-20261108-publish:completion:8598b219-ff20-4cb3-bab5-34f0ca618ca9": "ff5c3286fc6da452595bbd58ac35cabf4158aaa7387bea0b7c96123aff85f43f",
     "beta1851-20261108-publish:completion:906ca306-e627-45b5-ae66-334a65ddf8d9": "ce4f3ddee36fc29140b4b3a54b4c2bbe50db8ab07e3e610c6b2116395922a52d",
     "beta1851-20261108-publish:completion:a2a864c3-c345-48ce-80bf-6834a41c660c": "a6c9824f79e493aacfabe0378479636528fc8f99132134921a8965a78c5586f6",
-    "beta1851-20261108-publish:completion:bb223a43-a273-4903-b23e-e2d34006c370": "34c31f8fe982543b730145696e9c4ca13c382f2a2ae353aa037efbaf361eb2ae"
+    "beta1851-20261108-publish:completion:bb223a43-a273-4903-b23e-e2d34006c370": "34c31f8fe982543b730145696e9c4ca13c382f2a2ae353aa037efbaf361eb2ae",
+    "beta1851-20261108-publish:completion:2fe5cedc-83ea-43d0-ab90-41156e22db95": "a1f21545ba6bf9561a2c9c1ac724f8e7d1470a624292a9feb1d6ed5bc0aa4f57"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
