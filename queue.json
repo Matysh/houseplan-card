@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7098,
+  "revision": 7099,
   "nextTicket": 310,
   "nextFence": 310,
   "tasks": {
@@ -4060,7 +4060,61 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794150718878,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "9b90da59e333dd520888078c0eeff75a4822788d",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "7c129169ce755a0b9293bd83b566c7d36f799d80",
+        "tag": "v1.85.1-beta.1",
+        "verdict": "accepted",
+        "patchId": "9b90da59e333dd520888078c0eeff75a4822788d",
+        "materialSha": "0a3c5489931d8a90090e622e839bc60d4ac3971c"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/device-alert-form-numeric.png",
+        "demo/golden/baselines/device-battery-mobile-dark.png",
+        "demo/golden/baselines/geometry-plan-editor-dark.png",
+        "demo/golden/baselines/panel-decor-multiselect-dark.png",
+        "demo/golden/baselines/panel-device-state-source-unknown-en.png",
+        "demo/golden/baselines/panel-furniture-placement-preview-light.png",
+        "demo/golden/baselines/panel-geometry-decor-editor-dark.png",
+        "demo/golden/baselines/panel-geometry-devices-editor-dark.png",
+        "demo/golden/baselines/panel-opening-placement-door-thick-wall-dark.png",
+        "demo/golden/baselines/panel-plan-snap-endpoint-light.png",
+        "demo/golden/baselines/panel-tray-narrow-tool-ru.png",
+        "demo/golden/baselines/panel-vacuum-live-tail-pending-dialog-dark.png",
+        "demo/golden/baselines/panel-version-mismatch-touch-light-ru.png",
+        "demo/golden/baselines/panel-wide-plan-editor-dark-en.png",
+        "demo/golden/baselines/safe-resize-handles-clamp-dark.png",
+        "demo/smoke_glass_door_sun.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "docs/SUN.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/data-hp-contract.json",
+        "docs/release-ledger/cycle.json",
+        "docs/release-ledger/v1.85.0/1344.json",
+        "docs/release-ledger/v1.85.0/1345.json",
+        "docs/release-ledger/v1.85.0/1346.json",
+        "docs/release-ledger/v1.85.0/1347.json",
+        "docs/release-ledger/v1.85.0/1348.json",
+        "docs/release-ledger/v1.85.0/1349.json",
+        "docs/release-ledger/v1.85.0/1350.json",
+        "docs/release-ledger/v1.85.0/1351.json",
+        "docs/release-ledger/v1.85.0/1352.json",
+        "docs/release-ledger/v1.85.0/1353.json",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/iso-sun.ts",
+        "src/sun-door-passages.ts",
+        "test/sun-door-passages.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4255,12 +4309,17 @@
     "token": "309:release-return-finish:94d131a5-c3ad-405f-b81c-bdfdf2104e2c:finish:1:admit",
     "fence": 309,
     "materialSha": "0a3c5489931d8a90090e622e839bc60d4ac3971c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "55569543d09c0fc650b7918e44490ebc9fd88431",
+    "phase": "testing",
     "admittedAt": 1794150723261,
-    "expiresAt": 1794151023261
+    "expiresAt": 1794151029841,
+    "patchId": "9b90da59e333dd520888078c0eeff75a4822788d"
   },
   "events": {
+    "release-return-finish:94d131a5-c3ad-405f-b81c-bdfdf2104e2c:finish:2:synchronized": {
+      "digest": "aefe8216a05b5bb2d03d8a32177bb613ad84c9da5344e910ebc9bae423ea97cc",
+      "issue": 1355
+    },
     "release-return:94d131a5-c3ad-405f-b81c-bdfdf2104e2c": {
       "digest": "3e7431828e404a64b0fd4e7da14aaeab681a44c60f7b16cc037ea7b1f5e4e923",
       "issue": 1355,
