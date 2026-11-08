@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6876,
+  "revision": 6877,
   "nextTicket": 303,
   "nextFence": 303,
   "tasks": {
@@ -4166,26 +4166,6 @@
   "waiting": [],
   "active": null,
   "events": {
-    "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:3:return:return:1352": {
-      "digest": "81e8983e5bde5153160aa463dbc665f26afb91df9d8953ed96af9a157ceff2ae",
-      "issue": 1352,
-      "message": {
-        "kind": "return",
-        "issue": 1352,
-        "at": 1794131904949,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1794131904949,
-          "entry": 1,
-          "detail": "Поведение: test/mutation-gate.test.mjs: failed; Браузер: editor tabs: failed",
-          "eventId": "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:3:return:return:1352"
-        }
-      }
-    },
     "finish:6ced53f8-4090-43ac-8fd9-2e47d4e87df9": {
       "digest": "4e4a03099d196d75f79b2d4ec151302f55b4388ca331e3ad6ecd92b41a0a738d",
       "issue": 1352,
