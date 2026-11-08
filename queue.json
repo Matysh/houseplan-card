@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7169,
+  "revision": 7170,
   "nextTicket": 313,
   "nextFence": 313,
   "tasks": {
@@ -4318,20 +4318,6 @@
           "detail": "Поведение: test/bundle-assets.test.mjs: failed",
           "eventId": "finish:872d324d-36fb-4f06-b772-81f55c572dca:finish:3:return:return:1354"
         }
-      }
-    },
-    "finish:fe54ab29-7f96-4427-800f-608e3eb86837:finish:1:admit": {
-      "digest": "5f6fdf72d71144d1c955da9e8c7778ab7289054ba2768b46a3d0094f21ff57be",
-      "issue": 1354,
-      "message": {
-        "kind": "admitted",
-        "issue": 1354,
-        "at": 1794152049347,
-        "entry": 3,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "ad794da4050a59757526862d0de8424c642463fc",
-        "phase": "sync"
       }
     }
   },
