@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7423,
+  "revision": 7424,
   "nextTicket": 318,
   "nextFence": 318,
   "tasks": {
@@ -4351,6 +4351,10 @@
       "digest": "aea9271e3556f7d6bcb25618e029ad893e66caa719e28cade1a03495dfdf108e",
       "issue": 1362
     },
+    "github:42521392612:1:completions:message:05f6f263ac889ea7a1f46a8fff3f05c9fc5f7c4e92d53257c102b7e3f0dfb624": {
+      "digest": "e13b822a5797ca1f6a5d2ac49ffb4c9a75c6c977b9d5a65b9d53420ef52d3a13",
+      "issue": 1362
+    },
     "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b": {
       "digest": "1e71879d15305252c73d3f00cf991b16419d7cd2768ba0d96ca2b3294fdd42a3",
       "issue": 1362,
@@ -4397,7 +4401,8 @@
           "entry": 1,
           "detail": "Браузер: hidden device toggle: failed",
           "eventId": "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b:finish:3:return:return:1362"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:0042e52f-4212-4060-ac09-81fa89b16fa2": {
