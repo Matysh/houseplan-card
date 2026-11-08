@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7044,
+  "revision": 7045,
   "nextTicket": 309,
   "nextFence": 309,
   "tasks": {
@@ -3998,35 +3998,24 @@
     },
     "1353": {
       "issue": 1353,
+      "branch": "codex/1347-accepted-goldens",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1347-accepted-goldens",
-      "materialSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 308,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1794145430343,
-      "reviewEntry": 1,
-      "patchId": "fc9c81cab42673f07a58e2192e6ccec45f1683cf",
-      "changedFiles": [
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/panel-three-rows-ui-1132.png",
-        "demo/golden/baselines/plan-rotation-phone-editor-320-1070.png",
-        "demo/golden/baselines/plan-rotation-phone-editor-360-1070.png",
-        "demo/golden/baselines/plan-rotation-phone-view-320-1070.png",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
-      ],
-      "s6": {
-        "id": "20261108T134405346-dee3692a",
-        "name": "Тесты для задачи #1353 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T134405346-dee3692a/report.json",
-        "materialSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
-        "status": "passed",
-        "finishedAt": "2026-11-08T13:46:06.696Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
+      "mergedSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
+      "mergedAt": 1794145573046,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -4230,35 +4219,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1353,
-    "worker": "finish",
-    "token": "308:finish:fb9635c3-2b4e-4bc6-85af-8d7cdfee23ef:finish:1:admit",
-    "fence": 308,
-    "materialSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
-    "expectedBase": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794145433923,
-    "expiresAt": 1794149167908,
-    "patchId": "fc9c81cab42673f07a58e2192e6ccec45f1683cf"
-  },
+  "active": null,
   "events": {
-    "finish:fb9635c3-2b4e-4bc6-85af-8d7cdfee23ef:finish:2:synchronized": {
-      "digest": "934f16588e66b22a556ad6353d714fe9f6b65170f9bb23af9cdf6fcf628fabeb",
-      "issue": 1353
-    },
-    "finish:1424397b-e0d1-450c-94e6-e9d742bd50a8": {
-      "digest": "4985c40b70693899bb7f07ab66dab6b9d4454202e9faf526b9abb689ac4c5171",
-      "issue": 1353
-    },
-    "finish:bc106b0a-a255-4c85-af1b-2f6f5081d271": {
-      "digest": "56dab181618de0d09612e5a8ff5820d5af880412ad8336628bc387e52100c5e6",
-      "issue": 1353
-    },
-    "finish:fb9635c3-2b4e-4bc6-85af-8d7cdfee23ef:finish:3:s6-complete": {
-      "digest": "5658c54d08a1ac471842a7ae3a31b3434ed9908b6bdb41a4db82b11924dc90ad",
-      "issue": 1353
-    },
     "finish:fb9635c3-2b4e-4bc6-85af-8d7cdfee23ef": {
       "digest": "ab37af976da3ea7cbbe4b3cead6d5fe64286eb5296c87a75cf8ef4bd3806da3e",
       "issue": 1353,
