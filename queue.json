@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7593,
+  "revision": 7594,
   "nextTicket": 324,
   "nextFence": 324,
   "tasks": {
@@ -4553,6 +4553,10 @@
       "digest": "dc92c04ad561791dbdf974d2fb648dc345576831f71c389cfc856be930d88985",
       "issue": 1364
     },
+    "github:42534449870:1:completions:message:19d7bbfdadbb18e5e964e97a158981db511629da0bcda54325ae3d3cb9b57973": {
+      "digest": "117ddf8213d5fc7ce0d025967b260aef70f614d08926e09fcd4f899759dd9f65",
+      "issue": 1364
+    },
     "finish:9edf4d56-53eb-400b-b760-29e679219f4a": {
       "digest": "ba2b0801094a68e6e1c731c49650dd32fb1093f4c638b590c91cc4e0c5222e18",
       "issue": 1364,
@@ -4599,7 +4603,8 @@
           "entry": 1,
           "detail": "Поведение: test/data-hp-contract.test.mjs: failed; Браузер: mobile view header: failed; Браузер: mode transition: failed; Браузер: space switch transitions: failed",
           "eventId": "finish:9edf4d56-53eb-400b-b760-29e679219f4a:finish:2:return:return:1364"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:33d041d7-5d38-432f-a60f-c1ecd0f9fa2d": {
