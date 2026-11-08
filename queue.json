@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6708,
+  "revision": 6709,
   "nextTicket": 299,
   "nextFence": 299,
   "tasks": {
@@ -4205,6 +4205,10 @@
       "digest": "4d68f53e30ec14ae866576c682d77243eebf78f8ac183c7966d2989f4fc668ac",
       "issue": 1351
     },
+    "github:42456604433:1:completions:message:66866e392ff3426ed1a7986a49ab582489cc84b734b24b5b6ed92f6b5c64c4c5": {
+      "digest": "edce53f047c1848fa479b94b6897f35e4d63ff3a01dd10454b0abb170113b51e",
+      "issue": 1350
+    },
     "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366": {
       "digest": "226cb18f97e7304958b0dcc283dcdf27a3d05ae89c39478f515c63cb2fe3a550",
       "issue": 1351,
@@ -4251,7 +4255,8 @@
           "entry": 1,
           "detail": "Поведение: test/open-passage-contract.test.mjs: failed",
           "eventId": "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:3:return:return:1351"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1": {
