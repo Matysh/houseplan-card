@@ -36,7 +36,7 @@ export async function emptySpaceHomeArrow(page) {
     window.__emptyHomeObserver.observe(card.renderRoot,{subtree:true,childList:true,attributes:true});
   });
   const create=async(title,first)=>{
-    if(!first)await page.locator('houseplan-card [data-hp="space-add"]').click();
+    if(!first)await clickHeaderAction(page.locator('houseplan-card').first(),'space-add');
     const dialog=page.locator(`hp-dialog[data-kind="${first?'onboarding':'space'}"]:not([inert])`);
     await dialog.locator(first?'input[data-field$="-title"]':'#space-title').fill(title);
     if(first)await dialog.locator('input[name="plansrc"][data-value="draw"]').check();
