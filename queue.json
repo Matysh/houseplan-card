@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6785,
+  "revision": 6786,
   "nextTicket": 301,
   "nextFence": 301,
   "tasks": {
@@ -3904,7 +3904,7 @@
       "ownerDecision": null,
       "ticket": 300,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794121293790,
       "reviewEntry": 2,
       "patchId": "df5fb51eac77bd0ac0c6a7d1dba0f21e5c6f9ccb",
@@ -3930,6 +3930,15 @@
         "entry": 1,
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/summary-panel-presentation.test.mjs: failed; Поведение: test/summary-panel-runtime.test.mjs: failed",
         "eventId": "finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1:finish:3:return:return:1350"
+      },
+      "s6": {
+        "id": "20261108T070355887-f7cf46ad",
+        "name": "Тесты для задачи #1350 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T070355887-f7cf46ad/report.json",
+        "materialSha": "0d127cd038f4110e7d90cac7004f508f07717fff",
+        "status": "passed",
+        "finishedAt": "2026-11-08T07:09:09.002Z",
+        "failures": []
       }
     },
     "1351": {
@@ -4150,9 +4159,9 @@
     "fence": 300,
     "materialSha": "0d127cd038f4110e7d90cac7004f508f07717fff",
     "expectedBase": "60199f149e7653417447ab7b82a0cda6d9a0a86f",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794121370255,
-    "expiresAt": 1794122016617,
+    "expiresAt": 1794125350305,
     "patchId": "df5fb51eac77bd0ac0c6a7d1dba0f21e5c6f9ccb"
   },
   "events": {
@@ -4341,6 +4350,34 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f"
+      }
+    },
+    "finish:275b47a8-d7e9-4f81-bfec-d276867304a0:finish:2:s6-complete": {
+      "digest": "4e2196da054fb033ebeb03a859c2a389428a804b15c4420508444ab09c0f1af9",
+      "issue": 1350,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1350,
+        "at": 1794121750305,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0d127cd038f4110e7d90cac7004f508f07717fff",
+        "phase": "review",
+        "evidence": {
+          "id": "20261108T070355887-f7cf46ad",
+          "name": "Тесты для задачи #1350 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T070355887-f7cf46ad/report.json",
+          "materialSha": "0d127cd038f4110e7d90cac7004f508f07717fff",
+          "status": "passed",
+          "finishedAt": "2026-11-08T07:09:09.002Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Результат и причина\n\nДефект воспроизведён на настоящем HA frontend 20260930.4 из проверенного UI Lab cache (без HA-сервера, auth и устройств). В строке с ha-switch браузер видит label.control = HA-SWITCH и cursor:pointer, но клик по тексту не меняет checked и не даёт change. Прямой клик меняет значение один раз. Причина: браузерная активация label создаёт click на custom-element host, но не вызывает публичный метод ha-switch.click(), который делегирует настоящему внутреннему input.\n\n### Решение и границы\n\nОдин делегированный обработчик activateCheckLabel устанавливается владельцем общего UI Kit (ensureFormKitStyles) один раз на его renderRoot. Обрабатываются только hpf-check с ha-switch: нажатие по подписи отменяет дополнительный браузерный host-click, фокусирует контрол и вызывает его публичный click(). checked, change и клавиатура остаются собственностью HA-контрола; обработчики/черновик/сохранение форм не меняются. Нативный checkbox не перехватывается. Путь самого контрола и отдельные ссылки, Help, кнопки, поля пропускаются; disabled/inert не активируются.\n\n_boolInput явно отражает disabled в атрибуте ha-switch, параметризованный CSS общей подписи даёт disabled cursor:not-allowed. Непараметризованный исторический вывод генератора сохраняется по документированному API-контракту, активная продуктовая CSS-ветка проверяется в браузере. Разметка, размеры и внешний вид enabled-строки не меняются. Обход всех текущих ha-switch в src показал один генератор _boolInput; поэтому исправление не привязано к диалогу двери.\n\nРиск для внимания: распространение и default activation click через label, ShadowRoot, HA и независимые вложенные действия; защита от двойного переключения и повторных слушателей после рендера/повторного открытия. Новый helper не знает HA-сервисов и не пишет config сам.\n\n### Проверки и ограничения\n\nДо общей S6: сборка/типы и bundle-sync PASS, test/form-kit.test.mjs 9 PASS. Новый demo/smoke_check_label.mjs: 20 native-сценариев — настоящий HA + нативный fallback, подпись on/off, прямой клик, Space, повторный рендер, вложенный span подписи, disabled-подпись/контрол и курсор, повторное включение, независимые ссылка и настоящий hp-help, сохранение и повторное открытие реальной двери синтетического плана. Состояние disabled задаётся входным условием существующего renderer, сами контролы не заменяются заглушками. В HA-прогоне ошибки страницы и внешние запросы отсутствуют. Baseline и candidate подтверждены одним воспроизводителем; эталоны не менялись.\n\nЭто offline genuine-HA component proof, не HA E2E на пользовательской установке. Другие исторические версии HA в этой задаче не заявлены проверенными. Итог общей S6 публикует координатор.\n\nУстановлен track:show первым вызовом finish. Продуктовый баг присутствует в текущей стабильной UI-линии; следующая релизная классификация stable-fix. В репозитории всё ещё старый cycle v1.84.0→v1.85.0, хотя 1.85.0 опубликована; новую целевую версию в этой задаче не назначал. Выпуск не запрошен.\n\n### Подготовка после первого S6\n\nПервый общий S6 (20261108T065437233-d7dc6716): 300 шагов, 177 passed, 119 reused, 4 failed. Все браузерные сценарии прошли. Четыре отказа имеют две причины:\n\n- config-lifecycle audit воспринял слово «legacy» в новом комментарии как ветку совместимости. Сам helper обслуживает текущие компактные ряды и не читает старые данные: неточный комментарий исправлен на «compact», аудит и его инвентарь не менялись.\n- unit-fixtures geometry-history-refusal, summary-panel-presentation и summary-panel-runtime давали runtime упрощённые renderRoot-объекты без событийного API. Теперь корни создаются как Object.assign(new EventTarget(), …), что соответствует реальному DOM-контракту. Проверки геометрии, истории, сводной и полномочий не менялись и не удалялись. В продукт не добавлен обход подписки для тестовой среды.\n\nАдресный повтор этих четырёх файлов: 78/78 PASS. Поведение продукта относительно первого материала не менялось; далее общий finish с зачётом применимых успешных результатов.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
