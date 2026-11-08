@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7573,
-  "nextTicket": 322,
+  "revision": 7574,
+  "nextTicket": 323,
   "nextFence": 322,
   "tasks": {
     "1193": {
@@ -4157,14 +4157,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1364-single-row-header",
-      "materialSha": "556e13dc6e6f9366898abf7dc6b187ae6c67b7a1",
+      "materialSha": "09399a68115e164313430c2facaf7a565b8ed9c8",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 321,
-      "queued": false,
+      "ticket": 322,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794179346075,
-      "reviewEntry": 2,
+      "readyAt": 1794179550656,
+      "reviewEntry": 3,
       "patchId": "248cb42a7ecd0b9311f4ce15f6fed574fec7e9bf",
       "changedFiles": [
         "demo/helpers/empty-space-home-arrow.mjs",
@@ -4194,8 +4194,7 @@
         "entry": 2,
         "detail": "Браузер: space switch transitions: failed",
         "eventId": "finish:33d041d7-5d38-432f-a60f-c1ecd0f9fa2d:finish:3:return:return:1364"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4383,7 +4382,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1364
+  ],
   "active": null,
   "events": {
     "github:42532864133:1:completions:message:222710fd0fc6ab26ffd10f4da4c8e78055fee949bfc87be9a201b201928bf3ac": {
@@ -4552,6 +4553,19 @@
           "detail": "Браузер: space switch transitions: failed",
           "eventId": "finish:33d041d7-5d38-432f-a60f-c1ecd0f9fa2d:finish:3:return:return:1364"
         }
+      }
+    },
+    "finish:ee4d2ccb-917a-4f2e-ba5c-3edf4cd1657d": {
+      "digest": "b1d39a0a47c2c53c6e5d100568d04c49caec6290a51f19413c22a18a1852c272",
+      "issue": 1364,
+      "message": {
+        "kind": "queued",
+        "issue": 1364,
+        "at": 1794179550656,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "09399a68115e164313430c2facaf7a565b8ed9c8"
       }
     }
   },
