@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7296,
+  "revision": 7297,
   "nextTicket": 315,
   "nextFence": 315,
   "tasks": {
@@ -4054,7 +4054,10 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794166103564,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "automationError": "automation-error",
+      "automationSince": 1794166112443,
+      "automationDetail": "Commit tracked task changes before finish"
     }
   },
   "ownerDecisions": {},
@@ -4255,6 +4258,10 @@
     "expiresAt": 1794166407579
   },
   "events": {
+    "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9:finish:2:automation-pending": {
+      "digest": "76a3f4d591645d432cb217f2e5bdbd6d2a615c424d0eceeb1e0f5e1681a77790",
+      "issue": 1357
+    },
     "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9": {
       "digest": "0b85103b375840c595a3e9bbb4bb14c57017613becb839d8815798ac764677d9",
       "issue": 1357,
