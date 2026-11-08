@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6984,
+  "revision": 6985,
   "nextTicket": 307,
   "nextFence": 307,
   "tasks": {
@@ -3829,14 +3829,14 @@
         "test/styles-split.test.mjs"
       ],
       "notice": {
-        "key": "3:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1794138210112,
-        "entry": 3,
-        "requestId": "review:1347:3:9b5bfa77455daf27fc936550fbd03bffe4a18371:2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
-        "transitionConfirmed": true
+        "key": "4:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794139037127,
+        "entry": 4,
+        "detail": "Браузер: toolbar stable width: failed",
+        "eventId": "finish:6a2b6b16-09f5-4a73-8dec-1e9d420ab31e:finish:3:return:return:1347"
       },
       "s6": {
         "id": "20261108T113042791-2c153068",
@@ -3851,7 +3851,8 @@
       "reviewCorrection": {
         "requestId": "review:1347:3:9b5bfa77455daf27fc936550fbd03bffe4a18371:2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
         "at": 1794138210112
-      }
+      },
+      "reason": "checks-failed"
     },
     "1348": {
       "issue": 1348,
@@ -4225,18 +4226,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1347,
-    "worker": "finish",
-    "token": "306:finish:6a2b6b16-09f5-4a73-8dec-1e9d420ab31e:finish:1:admit",
-    "fence": 306,
-    "materialSha": "48778427d68eb886492861d98b8ef453d99d85d5",
-    "expectedBase": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
-    "phase": "testing",
-    "admittedAt": 1794138722064,
-    "expiresAt": 1794139334432,
-    "patchId": "663d8ef9a1c66ae62c3a7048ecfefd3eee3f378d"
-  },
+  "active": null,
   "events": {
     "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17:finish:2:synchronized": {
       "digest": "10e2da08566e3790274b04cf6c13e6d4426fe2f8c7dac5a4ee2907b4d83586b4",
@@ -4420,6 +4410,10 @@
     },
     "finish:f46ded96-ca1d-44b9-9f2a-c059c3639b89": {
       "digest": "7f2c553b93b8fc280441ca845cdd4da322c205bfc4f440226265028e0d8a36fb",
+      "issue": 1347
+    },
+    "finish:6a2b6b16-09f5-4a73-8dec-1e9d420ab31e:finish:3:return": {
+      "digest": "8cfa9b17734c1a750b4a75051a1108c20cca14c2aaded206142ba0b207698fe0",
       "issue": 1347
     },
     "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17": {
@@ -4671,6 +4665,26 @@
           "status": "passed",
           "finishedAt": "2026-11-08T11:36:48.166Z",
           "failures": []
+        }
+      }
+    },
+    "finish:6a2b6b16-09f5-4a73-8dec-1e9d420ab31e:finish:3:return:return:1347": {
+      "digest": "8cfa9b17734c1a750b4a75051a1108c20cca14c2aaded206142ba0b207698fe0",
+      "issue": 1347,
+      "message": {
+        "kind": "return",
+        "issue": 1347,
+        "at": 1794139037127,
+        "entry": 4,
+        "notice": {
+          "key": "4:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794139037127,
+          "entry": 4,
+          "detail": "Браузер: toolbar stable width: failed",
+          "eventId": "finish:6a2b6b16-09f5-4a73-8dec-1e9d420ab31e:finish:3:return:return:1347"
         }
       }
     }
