@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1351,
+  "baseStable": "v1.84.0",
+  "category": "stable-fix",
+  "rationale": "Replace the opening dialog's four radios with the existing UI Kit Select. Retain type choices, new-opening width defaults, existing widths and dependent fields without changing persistence or geometry.",
+  "summary": {
+    "ru": "Тип проёма выбирается стандартным выпадающим списком.",
+    "en": "Use the standard dropdown to choose the opening type."
+  }
+}

@@ -20,6 +20,16 @@ const out = await page.evaluate(async () => {
   const rows = (kind) => [...sr().querySelectorAll(
     `[data-opening-panel="${kind}"] .opening-entity-candidate[data-opening-entity]:not([data-opening-entity=""])`,
   )];
+  const typeSelect = () => sr().querySelector('select[data-field="optype"]');
+  const chooseType = async value => {
+    const control = typeSelect().closest('hp-settings-select');
+    await control.updateComplete;
+    control.shadowRoot.querySelector('[data-hp="select-trigger"]').click();
+    await control.updateComplete;
+    control.shadowRoot.querySelector(`[data-hp="select-option"][data-id="${value}"]`).click();
+    await settle();
+    await control.updateComplete;
+  };
 
   c.hass = {
     ...c.hass,
@@ -74,9 +84,25 @@ const out = await page.evaluate(async () => {
     panelsInitiallyClosed: !sr().querySelector('.opening-entity-panel'),
     noUnrelatedLedFields: !sr().querySelector('hp-dialog[data-kind="opening"] [data-field^="led-"]'),
     openingLengthIdentity: sr().querySelector('[data-hp="field"][data-field="opening-length"]')?.value === String(c._openingDialog.lengthCm),
-    typeOptionsHaveIdentity: [...sr().querySelectorAll('[data-hp="field"][data-field="optype"]')]
-      .map(el => el.dataset.value).sort().join(',') === 'door,gate,passage,window',
+    typeOptionsHaveIdentity: [...typeSelect().options].map(option => option.value).join(',') === 'window,door,passage,gate',
+    typeUsesSharedSelect: !!typeSelect().closest('hp-settings-select') && !sr().querySelector('input[type="radio"][name="optype"]'),
+    typeInitiallyReflectsOpening: typeSelect().value === 'door',
   };
+
+  const originalLength = c._openingDialog.lengthCm;
+  for (const type of ['window', 'passage', 'gate', 'door']) {
+    c._openingDialog = { ...c._openingDialog, contactOpen: true, lockOpen: true, flipH: true };
+    await settle();
+    await chooseType(type);
+    const picker = typeSelect().closest('hp-settings-select');
+    result[`${type}SelectedThroughSharedMenu`] = c._openingDialog.type === type && typeSelect().value === type
+      && picker.shadowRoot.querySelector('[data-hp="select-trigger"]').textContent.includes(c._t(`opening.${type}`));
+    result[`${type}PreservesExistingLength`] = c._openingDialog.lengthCm === originalLength;
+    result[`${type}ClosesBindingPickers`] = !c._openingDialog.contactOpen && !c._openingDialog.lockOpen;
+    result[`${type}ShowsExpectedFields`] = sr().querySelectorAll('.opening-entity-drop').length
+      === (type === 'passage' ? 0 : type === 'window' ? 1 : 2);
+    if (type === 'gate') result.gateResetsHinge = c._openingDialog.flipH === false;
+  }
 
   sr().querySelector('[data-opening-picker="contact"]').click();
   await settle();
@@ -147,6 +173,15 @@ const out = await page.evaluate(async () => {
   c._openingDialog = { ...c._openingDialog, type: 'passage' };
   await settle();
   result.passageStillHasNoBindingPickers = !sr().querySelector('.opening-entity-drop');
+
+  // New openings keep the established defaults; existing ones above retain their width.
+  c._openingDialog = { ...c._openingDialog, id: undefined, lengthCm: 135 };
+  await settle();
+  for (const [type, length] of [['window', 120], ['door', 90], ['passage', 90], ['gate', 300]]) {
+    await chooseType(type);
+    result[`${type}NewOpeningDefault`] = c._openingDialog.lengthCm === length
+      && sr().querySelector('[data-field="opening-length"]').value === String(length);
+  }
   c._openingDialog = null;
   return result;
 });

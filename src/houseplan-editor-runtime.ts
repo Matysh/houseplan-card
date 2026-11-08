@@ -24,6 +24,7 @@ import { sendHouseplanWrite } from './large-write-transport';
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { callout, disclosure, unitInput } from './editors/form-kit';
+import { selectControl } from './settings-select-control';
 import { html, svg, nothing, TemplateResult } from 'lit';
 import { difference, type Geom } from 'polyclip-ts';
 import { LazyBackupArchiveClient } from './backup-archive-lazy';
@@ -10905,32 +10906,16 @@ public _renderOpeningDialog(): TemplateResult {
                   ? this.host._t('opening.partition_jamb_margin', { distance: jambDistance })
                   : this.host._t('opening.host_partition')}</span>
             </div>` : nothing}
-          <label>${this.host._t('opening.type_label')}</label>
-          <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="optype" data-value="window" type="radio" name="optype" .checked=${d.type === 'window'}
-            @change=${() => (this.host._openingDialog = {
-              ...d, type: 'window', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('window'),
-              contactOpen: false, lockOpen: false,
-            })} />
-            <span>${this.host._t('opening.window')}</span></label>
-          <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="optype" data-value="door" type="radio" name="optype" .checked=${d.type === 'door'}
-            @change=${() => (this.host._openingDialog = {
-              ...d, type: 'door', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('door'),
-              contactOpen: false, lockOpen: false,
-            })} />
-            <span>${this.host._t('opening.door')}</span></label>
-          <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="optype" data-value="passage" type="radio" name="optype" .checked=${d.type === 'passage'}
-            @change=${() => (this.host._openingDialog = {
-              ...d, type: 'passage', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('passage'),
-              contactOpen: false, lockOpen: false,
-            })} />
-            <span>${this.host._t('opening.passage')}</span></label>
-          <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="optype" data-value="gate" type="radio" name="optype" .checked=${d.type === 'gate'}
-            @change=${() => (this.host._openingDialog = {
-              ...d, type: 'gate',
-              lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('gate'), flipH: false,
-              contactOpen: false, lockOpen: false,
-            })} />
-            <span>${this.host._t('opening.gate')}</span></label>
+          <label for="optype">${this.host._t('opening.type_label')}</label>
+          ${selectControl({ name: 'optype', value: d.type,
+            options: (['window', 'door', 'passage', 'gate'] as const).map(type => ({ value: type, label: this.host._t(`opening.${type}` as I18nKey) })),
+            onChange: type => {
+              this.host._openingDialog = {
+                ...d, type, lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm(type),
+                ...(type === 'gate' ? { flipH: false } : {}), contactOpen: false, lockOpen: false,
+              };
+            },
+          })}
 
           <label>${this.host._t('opening.length_label')}</label>
           <input data-hp="field" data-field="opening-length" class="namein tempin" type="number" min="20" max="600" step="5" .value=${String(d.lengthCm)}
