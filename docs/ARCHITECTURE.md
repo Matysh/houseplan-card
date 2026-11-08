@@ -189,6 +189,12 @@ native value before requesting the existing `_pickSpace` path, so a refused
 draft handoff cannot display another floor. Public select hooks and
 `aria-controls` let the smoke facade choose through the real popup.
 
+The intrinsic header's wrapped candidate now selects a single compact row
+(#1364): space dropdown or sole-space text, plus a 44px vertical-ellipsis button.
+Its metric tree uses the same sole-space representation and flex sizing as the
+live header. The lazy actions menu still dispatches to existing command owners;
+the panel does not acquire a second roster or navigation implementation.
+
 Internal window light (#1079) uses room-side candidates from the canonical
 opening-wall index. `interior-window-light.ts` validates host authority and
 intersects proven opposite floor intervals before the shared Glow/LED barrier

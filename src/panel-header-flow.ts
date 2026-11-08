@@ -9,7 +9,6 @@ export interface PanelHeaderSpaces {
   current: string;
   configure: boolean;
   create: boolean;
-  compactPicker?: boolean;
 }
 
 /** Ordered intrinsic candidates. Numbers are measured CSS pixels, never breakpoints. */
@@ -114,7 +113,7 @@ function nativeMetric(node: Node, doc: Document): Node | null {
   return metric;
 }
 
-function spaceMetrics(doc: Document, nav: PanelHeaderSpaces, compact: boolean): HTMLElement {
+function spaceMetrics(doc: Document, nav: PanelHeaderSpaces, compact: boolean, collapsed = false): HTMLElement {
   const tabs = doc.createElement('nav');
   tabs.className = headerNavigationGroup(compact);
   const button = (className: string): HTMLButtonElement => {
@@ -122,9 +121,15 @@ function spaceMetrics(doc: Document, nav: PanelHeaderSpaces, compact: boolean): 
     tabs.appendChild(value); return value;
   };
   if (compact) {
-    const field = doc.createElement('span'); field.className = 'compact-space-select'; field.dataset.hp='space-select';
-    field.style.cssText = 'display:block;flex:0 0 180px;width:180px;min-width:180px;height:44px;';
-    tabs.appendChild(field);
+    if (collapsed && nav.spaces.length === 1) {
+      const title = doc.createElement('span'); title.className = 'compact-space-title'; title.dataset.hp = 'space-name';
+      const text = doc.createElement('span'); text.textContent = nav.spaces[0].title; title.append(text); tabs.append(title);
+    } else {
+      const field = doc.createElement('span'); field.className = 'compact-space-select'; field.dataset.hp='space-select';
+      field.style.cssText = collapsed ? 'display:block;height:44px;'
+        : 'display:block;flex:0 0 180px;width:180px;min-width:180px;height:44px;';
+      tabs.appendChild(field);
+    }
     if (nav.configure) { const settings=button('tabedit compact-space-settings');settings.dataset.hp='space-settings';settings.appendChild(iconMetric(doc, headerNavigationIconSize)); }
   } else {
     for (const space of nav.spaces) {
@@ -152,7 +157,6 @@ export function measurePanelHeader(
   probe.className = 'hdr panel-header-metrics';
   probe.setAttribute('aria-hidden', 'true'); probe.inert = true;
   probe.setAttribute('data-panel-mode', mode);
-  probe.toggleAttribute('data-panel-picker', nav.compactPicker !== false);
   probe.style.cssText = 'position:fixed;left:-100000px;top:0;visibility:hidden;pointer-events:none;'
     + 'width:max-content;min-height:0;contain:layout style;';
   const copy = nativeMetric(head, doc) as HTMLElement;
@@ -183,9 +187,9 @@ export function measurePanelHeader(
     else modes.appendChild(close);
   }
   probe.appendChild(copy);
-  const replaceTabs = (compact: boolean): void => {
+  const replaceTabs = (compact: boolean, collapsed = false): void => {
     const old = copy.querySelector(':scope > .tabs');
-    old?.replaceWith(spaceMetrics(doc, nav, compact));
+    old?.replaceWith(spaceMetrics(doc, nav, compact, collapsed));
   };
   const widths: number[] = [];
   header.parentElement?.appendChild(probe);
@@ -206,9 +210,10 @@ export function measurePanelHeader(
     probe.toggleAttribute('data-panel-phone', choice.phone);
     replaceTabs(choice.phase >= 3);
     copy.style.width = available + 'px';
-    if (choice.phase === 4 && panelHeaderRows(headerControls(copy).map(([,element]) => element.getBoundingClientRect())) >= 3) {
+    if (choice.phase === 4 && panelHeaderRows(headerControls(copy).map(([,element]) => element.getBoundingClientRect())) >= 2) {
       choice = { phase: 5, phone: false };
       applyPanelHeaderChoice(probe, choice);
+      replaceTabs(true, true);
     }
     const height=outerSize(copy,'height'),origin=copy.getBoundingClientRect();
     const positions=new Map(headerControls(copy).map(([key,element])=>{const rect=element.getBoundingClientRect();return [key,{x:rect.x-origin.x,y:rect.y-origin.y}] as const}));

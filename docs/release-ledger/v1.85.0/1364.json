@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1364,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Refine the compact header introduced by #1347: keep space context beside the existing actions menu in one row without changing command owners, permissions or navigation guards.",
+  "summary": {
+    "ru": "Узкая шапка: пространство и меню ⋮ в одной строке.",
+    "en": "Keep space context and the actions menu in one narrow header row."
+  }
+}

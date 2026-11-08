@@ -90,16 +90,13 @@ try {
     check('width'+row.width+'menuFirst44',row.phase===5 ? row.controls[0]?.rect.width>=44&&row.controls[0]?.rect.height>=44 : row.first==='panel-menu'&&row.menu?.width>=44&&row.menu?.height>=44);
     check('width'+row.width+'rotationRetained',row.phase===5 ? row.rotations.length===0 : row.rotations.length===2&&row.rotations.every(r=>r.width>=44&&r.height>=44));
     check('width'+row.width+'metricTreeRetired',row.metrics===0);
-    if(row.phase===4&&row.rows===2) {
-      const firstAction=row.controls.find(c=>c.kind==='rotate-left');
-      check('width'+row.width+'wrappedActionsLeft',Math.abs(firstAction.rect.x-(row.head.x+12))<=1);
-    }
+    check('width'+row.width+'singleRow',row.rows===1);
     if(row.phase!==5&&row.zoom===0) check('width'+row.width+'rotationEndRounded',parseFloat(row.rightRadius)>=6);
   }
   const classify=row=>row.phase;
   const pivot=evidence.widths.findIndex(row=>row.width===320)+1;
   const down=evidence.widths.slice(0,pivot).map(classify), up=evidence.widths.slice(pivot).map(classify);
-  check('allOrderedObservableStages',new Set(down).size===6);
+  check('allOrderedObservableStages',JSON.stringify([...new Set(down)]),JSON.stringify([0,1,2,3,5]));
   check('orderedReduction',down.every((phase,i)=>i===0||phase>=down[i-1]));
   check('reverseRestoration',up.every((phase,i)=>i===0||phase<=up[i-1])&&up.at(-1)===0);
   // Find the final single-row physical minimum: no guessed product threshold.
@@ -110,7 +107,7 @@ try {
       const row=await page.evaluate(async width=>{
         document.getElementById('host').style.width=width+'px';return await window.__overflowSettle();
       },width);
-      if(row.rows>1) break;
+      if(row.phase===5) break;
       last={width,...row};
     }
     evidence.lastSingleRow=last;
@@ -135,7 +132,7 @@ try {
     },mode);
     const state=await page.evaluate(()=>window.__overflowSettle());
     evidence['phoneEditor'+mode]=state;
-    check('phoneEditor'+mode+'wrappedControlsFit',state.phase===5&&state.rows<=2&&state.scroll<=state.head.width+1);
+    check('phoneEditor'+mode+'singleRowControlsFit',state.phase===5&&state.rows===1&&state.scroll<=state.head.width+1);
     const close=await headerActionTarget(card,'mode-view');
     check('phoneEditor'+mode+'close44',await close.evaluate(e=>{
       const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44;
@@ -149,7 +146,9 @@ try {
     check('phoneEditor'+mode+'fillsPanel',view.stage.height>0
       &&Math.abs(view.stage.height+view.head.height-view.panel.height)<=1);
   }
-  await page.evaluate(async()=>{document.getElementById('host').style.width='1280px';await window.__overflowSettle();});
+  // Reserve enough actual head width for direct controls beside Properties;
+  // the old 1280px fixture now correctly selects the one-row actions menu.
+  await page.evaluate(async()=>{document.getElementById('host').style.width='1800px';await window.__overflowSettle();});
   const savedView=await card.locator('.plan-svg').getAttribute('viewBox');
   for(const mode of ['plan','devices','decor']) {
     await clickHeaderAction(card,'mode-'+mode);

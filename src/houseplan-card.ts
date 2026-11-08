@@ -1060,7 +1060,6 @@ export class HouseplanCard extends LitElement {
   }
   private get _panelHeaderSpaces(): PanelHeaderSpaces {
     return { spaces: this._headerNavigationSpaces, current: this._space,
-      compactPicker: this.panelHost ? this._headerNavigationSpaces.length > 1 : !this._hasFixedFloor,
       configure: this._norm && this._canEdit,
       create: this._canEdit && !this._kiosk && !this._hasFixedFloor };
   }
@@ -12555,18 +12554,16 @@ export class HouseplanCard extends LitElement {
         <div class="hdr ${this._kiosk ? 'kioskhide' : ''}"
           data-panel-flow=${this._panelHeaderChoice.phase}
           ?data-panel-phone=${this._panelHeaderChoice.phone}
-          ?data-panel-picker=${this._panelHeaderSpaces.compactPicker}
           data-panel-mode=${this._mode} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
         <div class="head hpf-chrome-group" ?data-hp-properties-wide=${this._editorRuntime?.properties.wide} style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
           ${this._renderPanelMenu()}
-          <button type="button" class="btn header-actions-trigger" data-hp="header-actions-trigger"
+          <button type="button" class="btn hpf-icon-action header-actions-trigger" data-hp="header-actions-trigger"
             aria-haspopup="menu" aria-expanded=${this._headerActionsMenu?.open ? 'true' : 'false'}
-            @click=${this._openHeaderActions} aria-label=${this._t('panel.actions')}>
-            <ha-icon icon="mdi:dots-horizontal"></ha-icon>${this._t('panel.actions')}
-            <ha-icon icon="mdi:chevron-down"></ha-icon>
+            @click=${this._openHeaderActions} aria-label=${this._t('panel.actions')} data-hp-tooltip=${this._t('panel.actions')}>
+            <ha-icon icon="mdi:dots-vertical"></ha-icon>
           </button>
           ${renderHeaderSpaceNavigation({
-            spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces,
+            spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces, collapsed: this._panelHeaderChoice.phase === 5,
             labels: { spaces: this._t('nav.spaces'), configure: this._t('title.configure_space'), add: this._t('title.add_space') },
             reorderable: this._canReorderTabs && navigationSpaces.length > 1 && this._mode !== 'view', drag: this._tabDrag,
             pick: id => this._pickSpace(id), tabClick: id => this._tabClick(id),

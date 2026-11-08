@@ -61,24 +61,26 @@ whole header and menu; Back or the ordinary /houseplan URL exits.
 Adaptation measures actual content, names, locale and available container
 width. In order: short Plan/Devices/Background labels with equal pencils become
 distinct compact icons; exactly Zoom out/Fit all/Zoom in disappear; space tabs
-become a dropdown; the editor/action gap shrinks to 10 px; finally actions wrap
-left onto further rows. Expansion restores the reverse sequence, without fixed
-width thresholds. #1132 retires the additional phone hiding/menu fallback:
-spaces occupy the first row, editors and rotations the next, and remaining
-actions wrap below (three rows in the approved390px fixture; more for tighter
-or longer content). Groups and editor close have44px targets; rotation/zoom
+become a dropdown; the editor/action gap shrinks to 10 px. Before the controls
+wrap, #1364 selects one row with the space context and a 44 × 44 px vertical-
+ellipsis action button. Multiple available spaces use the standard dropdown;
+one available space, including a pinned card, uses its plain name. Long names
+truncate. The menu retains all permitted original actions, including current
+space settings, Add space and the HA drawer command under its existing policy.
+Expansion restores the reverse sequence without fixed width thresholds.
+Groups and editor close have44px targets; rotation/zoom
 are separate outlined groups with10px between them. Gestures retain zoom.
 Properties independently uses 1024 px of card width. Lovelace uses the same
-content-based header (#1184), retaining its title but receiving no HA menu.
+content-based header (#1184), starting with space navigation and receiving no HA menu.
 
 - render the plan and current states correctly;
 - use the same content-based header in panel and Lovelace at every width,
-  preserving direct actions and 44px targets, with wrapping as required;
+  preserving actions and 44px targets through the single-row compact menu;
 - select floor tabs or the shared dropdown by actual available space, retaining
   touch selection, accepted floor and editor dirty-navigation guards;
-- keep editor close directly reachable in the shared 44px slot. There is no
-  old one-row/56px phone limit, viewport-based gear menu or fixed 1024px header
-  threshold. Editors remain desktop-first/best effort on touch;
+- keep editor close reachable through the compact menu or shared 44px slot.
+  There is no viewport-based gear menu or fixed 1024px header threshold.
+  Internal editor toolbars may wrap; editors remain desktop-first/best effort on touch;
 - support convenient pan, pinch zoom and space switching;
 - keep the room Area administration shortcut out of the touch hit plane on
   screens without hover. The shortcut is visually clipped and non-interactive

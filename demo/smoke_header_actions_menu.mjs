@@ -1,18 +1,23 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchColdView, check, finish, requirePinnedBrowser } from './serve.mjs';
-requirePinnedBrowser('#1347 intrinsic third-row actions menu');
+requirePinnedBrowser('#1364 intrinsic single-row actions menu');
 const {page,browser}=await launchColdView({width:1800,height:1000},1,[],{hasTouch:true});
-const out='artifacts/header-actions-1347';mkdirSync(out,{recursive:true});
+const out='artifacts/header-actions-1364';mkdirSync(out,{recursive:true});
 const card=page.locator('houseplan-card').first(),trigger=card.locator('[data-hp="header-actions-trigger"]');
 const menu=card.locator('[data-hp="header-actions-menu"]:not([inert])');
 const settle=async()=>{await page.evaluate(()=>window.__hpTest.settled());await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._modeTransitionPreparing);await page.evaluate(()=>window.__hpTest.settled());};
 const size=async width=>{await page.evaluate(width=>{const host=document.getElementById('host');host.style.cssText='width:'+width+'px!important;max-width:none!important;margin:0;padding:0';},width);await settle();};
 const read=()=>page.evaluate(()=>{const c=window.__card,r=c.renderRoot,h=r.querySelector('.hdr>.head'),hdr=h.parentElement;
  const visible=e=>e.getBoundingClientRect().width>0&&e.getBoundingClientRect().height>0;
+ const space=[...h.querySelectorAll('hp-settings-select,[data-hp="space-name"]')].find(visible),action=h.querySelector('[data-hp="header-actions-trigger"]');
+ const s=space?.getBoundingClientRect(),a=action.getBoundingClientRect();
  return {phase:Number(hdr.dataset.panelFlow),picker:[...h.querySelectorAll('hp-settings-select')].some(visible),
+ name:h.querySelector('[data-hp="space-name"]')?.textContent,expectedName:c._headerNavigationSpaces.find(x=>x.id===c._space)?.title,
+ rows:new Set([...h.querySelectorAll('button,hp-settings-select,[data-hp="space-name"]')].filter(visible).map(e=>Math.round(e.getBoundingClientRect().y))).size,
  buttons:[...h.querySelectorAll('button')].filter(visible).map(b=>({hp:b.dataset.hp,w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height})),
  width:h.getBoundingClientRect().width,scroll:h.scrollWidth,height:h.getBoundingClientRect().height,
- pickerAbove:[...h.querySelectorAll('hp-settings-select')].filter(visible).every(s=>s.getBoundingClientRect().bottom<=h.querySelector('[data-hp=header-actions-trigger]').getBoundingClientRect().top),
+ spaceBeside:!!s&&s.width>0&&s.right<=a.left+.5&&Math.abs(s.y-a.y)<.5,
+ triggerGlyph:action.querySelector('ha-icon')?.getAttribute('icon'),triggerText:action.textContent.trim(),
  metrics:r.querySelectorAll('.panel-header-metrics').length};});
 try {
  await page.evaluate(()=>{window.__card.setConfig({...window.__card._config,language:'ru'});});await settle();
@@ -21,10 +26,12 @@ try {
  const narrow=widths.filter(r=>r.phase===5),normal=widths.filter(r=>r.phase<5);
  check('measured-transition-exists',narrow.length>0&&normal.length>0);
  check('normal-before-extreme',widths.every((r,i)=>!i||r.phase>=widths[i-1].phase));
- check('picker-above-actions',narrow.every(r=>r.pickerAbove));
+ check('space-beside-actions',narrow.every(r=>r.spaceBeside&&r.rows===1));
+ check('all-adaptive-states-stay-one-row',widths.every(r=>r.rows===1));
+ check('icon-only-vertical-actions',narrow.every(r=>r.triggerGlyph==='mdi:dots-vertical'&&r.triggerText===''));
  check('extreme-only-one-button',narrow.every(r=>r.buttons.length===1&&r.buttons[0].hp==='header-actions-trigger'));
  check('no-overflow',widths.every(r=>r.scroll<=r.width+1&&r.metrics===0));
- check('44px-target',narrow.every(r=>r.buttons[0].w>=44&&r.buttons[0].h>=44));
+ check('44px-square-target',narrow.every(r=>r.buttons[0].w===44&&r.buttons[0].h===44));
  await size(320);check('unpinned-card-keeps-picker',(await read()).picker);
  await trigger.click();await menu.waitFor();
  const items=await menu.locator('button').evaluateAll(bs=>bs.map(b=>({action:b.dataset.action,label:b.textContent.trim(),height:b.getBoundingClientRect().height})));
@@ -49,15 +56,35 @@ try {
  check('editor-navigation',await page.evaluate(()=>window.__card._mode),'plan');
  await trigger.click();await menu.locator('[data-action="mode-view"]').click();await settle();
  check('editor-close',await page.evaluate(()=>window.__card._mode),'view');
- // Pinned Lovelace omits only the selector, preserving the action commands.
+ for(const language of ['en','ru','de','fr']){
+  await page.evaluate(async language=>{window.__card.setConfig({...window.__card._config,language});await window.__hpTest.setServerConfig(cfg=>{
+   cfg.spaces[0].title='A very long ground floor space name '.repeat(5);cfg.spaces[1].title='Second floor';
+  });},language);await settle();
+  for(const width of [480,390,320,180]){await size(width);const row=await read();check(language+'-'+width+'-one-row',row.rows===1&&row.scroll<=row.width+1&&row.spaceBeside);}
+ }
+ await size(320);
+ const originalSpace=await page.evaluate(()=>window.__card._space);
+ const picker=card.locator('[data-hp="space-select"]');
+ await picker.locator('[data-hp="select-trigger"]').click();
+ const next=await picker.locator('option').evaluateAll((options,current)=>options.find(o=>o.value!==current).value,originalSpace);
+ await picker.locator('[data-hp="select-option"][data-id="'+next+'"]').click();await settle();
+ check('space-picker-uses-existing-navigation',await page.evaluate(()=>window.__card._space),next);
+ await trigger.click();await menu.locator('[data-action="space-settings"]').click();
+ const spaceDialog=card.locator('hp-dialog[data-kind="space"]');await spaceDialog.waitFor();
+ check('space-settings-uses-current-space',await spaceDialog.locator('#space-title').inputValue(),'Second floor');
+ await spaceDialog.locator('[slot="footer"] [data-hp="dialog-cancel"]').click();await spaceDialog.waitFor({state:'detached'});await settle();
+ await trigger.click();await menu.locator('[data-action="space-add"]').click();await spaceDialog.waitFor();
+ check('add-space-opens-create',await spaceDialog.locator('#space-title').inputValue(),'');
+ await spaceDialog.locator('[slot="footer"] [data-hp="dialog-cancel"]').click();await spaceDialog.waitFor({state:'detached'});await settle();
+ // A sole available space is always a plain label, including pinned Lovelace.
  await page.evaluate(()=>{const c=window.__card;c.setConfig({...c._config,floor:c._space});});await settle();
- check('pinned-card-hides-picker',!(await read()).picker);await card.screenshot({path:out+'/pinned-card.png'});
+ let single=await read();check('pinned-card-keeps-plain-name',!single.picker&&single.name===single.expectedName&&single.spaceBeside);await card.screenshot({path:out+'/pinned-card.png'});
  await page.evaluate(()=>{const c=window.__card;const {floor,...config}=c._config;c.setConfig(config);c.panelHost=true;c.requestUpdate();});await settle();
  check('multi-space-panel-keeps-picker',(await read()).picker);
  await page.evaluate(async()=>{await window.__hpTest.setServerConfig(cfg=>{cfg.spaces=cfg.spaces.slice(0,1);});});await settle();
- check('single-space-panel-hides-picker',!(await read()).picker);
+ single=await read();check('single-space-panel-keeps-plain-name',!single.picker&&single.name===single.expectedName&&single.spaceBeside);
  await page.evaluate(()=>{const c=window.__card;c.panelHost=false;c.requestUpdate();});await settle();
- check('single-space-unpinned-card-keeps-picker',(await read()).picker);
+ single=await read();check('single-space-unpinned-card-keeps-plain-name',!single.picker&&single.name===single.expectedName&&single.spaceBeside);
  // Revoked authority or a changed layout cannot leave a stale actionable sheet.
  await trigger.click();await page.evaluate(()=>{window.__card._serverCanWrite=false;window.__card.requestUpdate();});await settle();
  await menu.waitFor({state:'hidden'});await size(180);await trigger.click();

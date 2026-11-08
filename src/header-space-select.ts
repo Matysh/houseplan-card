@@ -20,6 +20,7 @@ interface HeaderSpaceNavigation {
   current: string;
   mode: string;
   compact: boolean;
+  collapsed?: boolean;
   labels: { spaces: string; configure: string; add: string };
   reorderable: boolean;
   drag: { id: string; moved: boolean; targetId: string | null; placement: 'before' | 'after' | null } | null;
@@ -60,7 +61,9 @@ export function renderHeaderSpaceNavigation(nav: HeaderSpaceNavigation): Templat
   const { spaces, current, compact, labels, drag } = nav;
   return html`<nav class=${headerNavigationGroup(compact)} aria-label=${labels.spaces}
       @pointermove=${nav.pointerMove}>
-    ${compact ? keyed(nav.mode, renderHeaderSpaceSelect(spaces, current, labels.spaces, nav.pick))
+    ${compact ? nav.collapsed && spaces.length === 1
+      ? html`<span class="compact-space-title" data-hp="space-name" data-hp-tooltip=${spaces[0].title}><span>${spaces[0].title}</span></span>`
+      : keyed(nav.mode, renderHeaderSpaceSelect(spaces, current, labels.spaces, nav.pick))
       : spaces.map(space => html`<button data-hp="space-tab" data-space=${space.id} data-id=${space.id}
           class="${headerNavigationItem} ${current === space.id ? 'active' : ''}${drag?.moved && drag.id === space.id ? ' dragging' : ''}${
             drag?.moved && drag.targetId === space.id ? ` drop-${drag.placement}` : ''}"

@@ -52,7 +52,7 @@ export const panelHeaderStyles = css`
 .hdr[data-panel-flow='4'] > .head { flex-wrap:wrap; }
 .hdr[data-panel-flow='4'] .head > .spacer { display:none; }
 .hdr[data-panel-flow='4'] .head > .header-actions { flex:1 0 100%; }
-/* Keep the existing two-row arrangement until its controls need a third row. */
+/* The wrapped candidate is measured before selecting the single-row menu. */
 .hdr[data-panel-flow='4'] .head > .modes { min-width:0; max-width:100%; flex-wrap:wrap; }
 .hdr[data-panel-flow='4'] .head > .tabs { max-width:100%; flex-shrink:1; }
 .hdr[data-panel-flow='4'] .compact-space-select { flex:1 1 180px; min-width:44px; }
@@ -72,14 +72,15 @@ export const panelHeaderStyles = css`
 .panel-menu { flex:0 0 44px; }
 .hdr[data-panel-flow] .head > .header-actions-trigger { display:none; }
 .hdr[data-panel-flow] .header-actions-trigger:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
-.hdr[data-panel-flow='5'] > .head { flex-direction:column; align-items:stretch; }
+.hdr[data-panel-flow='5'] > .head { flex-direction:row; align-items:center; flex-wrap:nowrap; }
 .hdr[data-panel-flow='5'] .head > :is(.panel-menu,.modes,.spacer,.header-actions,.title) { display:none; }
-.hdr[data-panel-flow='5'] .head > .tabs { display:none; }
-.hdr[data-panel-flow='5'][data-panel-picker] .head > .tabs { display:flex; width:100%; }
-.hdr[data-panel-flow='5'] .head > .tabs > :not(.compact-space-select) { display:none; }
-.hdr[data-panel-flow='5'] .compact-space-select { flex:1 1 auto; width:100%; min-width:44px; max-width:100%; }
+.hdr[data-panel-flow='5'] .head > .tabs { display:flex; flex:1 1 0; width:0; min-width:0; max-width:none; }
+.hdr[data-panel-flow='5'] .head > .tabs > :not(.compact-space-select):not(.compact-space-title) { display:none; }
+.hdr[data-panel-flow='5'] .compact-space-select { flex:1 1 0; width:0; min-width:44px; max-width:100%; }
+.hdr[data-panel-flow='5'] .compact-space-select::part(control) { border-radius:7px; }
+.hdr[data-panel-flow='5'] .compact-space-title { display:flex; align-items:center; flex:1 1 0; min-width:0; height:44px; padding:0 12px; box-sizing:border-box; font-size:13px; font-weight:600; line-height:20px; }
+.hdr[data-panel-flow='5'] .compact-space-title > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .hdr[data-panel-flow='5'] .head > .header-actions-trigger {
-  display:flex; align-items:center; justify-content:center; gap:10px; order:1;
-  width:100%; min-width:44px; min-height:44px; margin:0;
+  display:inline-flex; flex:0 0 44px; order:1; width:44px; min-width:44px; height:44px; padding:0; margin:0;
 }
 `;

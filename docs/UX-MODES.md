@@ -50,12 +50,13 @@ whole header and menu; Back or the ordinary /houseplan URL exits.
 Adaptation measures actual content, names, locale and available container
 width. In order: short Plan/Devices/Background labels with equal pencils become
 distinct compact icons; exactly Zoom out/Fit all/Zoom in disappear; space tabs
-become a dropdown; the editor/action gap shrinks to 10 px; finally actions wrap
-left onto further rows. Expansion restores the reverse sequence, without fixed
-width thresholds. #1132 retires the additional phone hiding/menu fallback:
-spaces occupy the first row, editors and rotations the next, and remaining
-actions wrap below (three rows in the approved390px fixture; more for tighter
-or longer content). Groups and editor close have44px targets; rotation/zoom
+become a dropdown; the editor/action gap shrinks to 10 px. Before the controls
+wrap, #1364 selects one compact row: the space selector (or a plain name when
+only one space is available) and a 44px vertical-ellipsis action button. Pinned
+cards also retain their space name. The menu reuses all permitted original
+commands, including space settings and Add space. Expansion restores the reverse
+sequence, without fixed width thresholds. This supersedes the hiding and
+two-row compact matrix of #1347. Groups and editor close have44px targets; rotation/zoom
 are separate outlined groups with10px between them. Gestures retain zoom.
 Properties independently uses 1024 px of card width. #1184 applies this same
 header, ordered intrinsic measurement and 44px targets to Lovelace. Only the
@@ -65,8 +66,8 @@ does not participate in header measurement. Sections uses the theme's card
 radius, including the stage's lower corners, and a header in normal flow without
 the outer HA header's sticky offset. The full-screen panel keeps square corners.
 There is no separate viewport-based phone gear menu. Narrow View and editors
-retain direct actions over multiple rows; the ordinary card's remaining stage
-height accounts for those rows. Each embedded card measures its own container,
+share the single-row intrinsic action-menu variant; internal editor toolbars
+retain their own wrapping. Each embedded card measures its own container,
 including fonts and content changes, independently of the window and neighbours.
 Space tabs/dropdown retain accepted selection, dirty-navigation guards and
 editor reorder when tabs are visible. Kiosk hides either placement's header.
