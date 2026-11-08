@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7496,
+  "revision": 7497,
   "nextTicket": 320,
   "nextFence": 320,
   "tasks": {
@@ -4202,7 +4202,10 @@
         "entry": 1,
         "detail": "Поведение: test/grid-scale-static-fixture.test.mjs: failed",
         "eventId": "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:3:return:return:1363"
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1794178380822,
+      "automationDetail": "Local branch changed after ready; do not overwrite the remote task"
     }
   },
   "ownerDecisions": {},
@@ -4433,6 +4436,10 @@
     },
     "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:3:return": {
       "digest": "626e3ed2a7ae42a4b20e1a09580e6b2ab412cd355d7093abbe34058010c97ad1",
+      "issue": 1363
+    },
+    "finish:64a67665-ce14-41a7-93f0-f30a773289d5:finish:2:automation-pending": {
+      "digest": "1ff87c5aa3324ddd52ff875065ab499656165a5bb910e0aaf0641d146cb9a7e9",
       "issue": 1363
     },
     "finish:605de1e0-083d-4131-a7ac-72cca22dadcd": {
