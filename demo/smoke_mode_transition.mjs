@@ -2,6 +2,7 @@
 // geometry and camera. This smoke deliberately observes real animation frames;
 // it never asserts an exact wall-clock millisecond.
 import { launch, checkAll, finish } from './serve.mjs';
+import { clickHeaderAction } from './helpers/header-actions.mjs';
 import { collectModeTransitionSamples } from './performance/mode-transition.mjs';
 
 const { page, browser } = await launch({ width: 820, height: 760 });
@@ -122,7 +123,7 @@ for (const [name, width, reduced] of [['isoWide', 1440, false], ['isoNarrow', 38
   await page.emulateMedia({reducedMotion: reduced ? 'reduce' : 'no-preference'});
   await page.evaluate(async () => { await window.__hpTest.setVolumetricView(true); await window.__hpTest.settled(); });
   if(name==='isoRotated'){
-    await page.locator('houseplan-card [data-hp=rotate-right]').click();
+    await clickHeaderAction(page.locator('houseplan-card').first(),'rotate-right');
     await page.waitForTimeout(300);
   }
   result[name] = await page.evaluate(async () => {

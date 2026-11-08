@@ -6,7 +6,7 @@
     "additionsAreCompatible": true
   },
   "hooks": {
-    "header-actions-trigger": { "elements": ["button"], "since": "1.85.1-beta.1", "audience": ["test"], "description": "Shared header actions trigger when the ordinary layout would require a third control row." },
+    "header-actions-trigger": { "elements": ["button"], "since": "1.85.1-beta.1", "audience": ["test"], "description": "Shared 44px vertical-ellipsis actions trigger before the ordinary layout wraps." },
     "header-actions-menu": { "elements": ["div"], "since": "1.85.1-beta.1", "audience": ["test"], "description": "Shared UI Kit touch menu presenting existing header commands." },
     "empty-plan": { "elements": ["div"], "since": "1.85.0", "audience": ["test"] },
     "empty-plan-edit": { "elements": ["button"], "since": "1.85.0", "audience": ["test"] },
@@ -23,6 +23,7 @@
     "external-screen-copy": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
     "external-screen-ok": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
     "space-select": { "elements": ["hp-settings-select"], "since": "1.83.0", "audience": ["test"] },
+    "space-name": { "elements": ["span"], "since": "1.85.1-beta.2", "audience": ["test"], "description": "Plain sole-space name in the single-row compact header, including pinned cards." },
     "space-select-value": { "elements": ["select"], "since": "1.83.0", "audience": ["test"] },
     "select-trigger": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
     "select-menu": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },

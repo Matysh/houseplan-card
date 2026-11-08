@@ -109,8 +109,11 @@ try {
   await settle(); row = await read();
   assert.equal(row.titleCount, 0, 'read-only full card also omits its configured heading');
   assert.ok(!row.controls.some(c => ['mode-tab','settings','pdf','support','space-add','space-settings'].includes(c.id)), JSON.stringify(row));
-  assert.ok(row.controls.some(c => c.id === 'hidden-devices'));
-  await card().locator('[data-hp="hidden-devices"]').tap(); await settle();
+  const readOnlyEye = await headerActionTarget(card(),'hidden-devices');
+  if(row.phase===5) assert.equal(await card().locator('[data-hp="header-actions-menu"] [data-action="mode-plan"],[data-hp="header-actions-menu"] [data-action="settings"],[data-hp="header-actions-menu"] [data-action="space-add"]').count(),0);
+  const beforeReadOnlyEye = await card().locator('.head [data-hp="hidden-devices"]').getAttribute('aria-pressed');
+  await readOnlyEye.tap(); await settle();
+  assert.notEqual(await card().locator('.head [data-hp="hidden-devices"]').getAttribute('aria-pressed'),beforeReadOnlyEye);
   await page.evaluate(() => window.__card.setConfig({ type:'custom:houseplan-card',kiosk:true,cycle:0 })); await settle();
   assert.equal(await card().locator('.hdr').evaluate(e => getComputedStyle(e).display), 'none');
   assert.equal(await card().evaluate(c => !!c._roHdr), false);

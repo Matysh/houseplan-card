@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {waitForUiKitPaint} from './ui-kit-paint.mjs';
+import {clickHeaderAction} from './header-actions.mjs';
 
 /** #1329: genuine create dialogs, pointer pan and Fit. The server-event fixture
  * owns content changes; only observations read internal camera/frame state. */
@@ -79,7 +80,7 @@ export async function emptySpaceHomeArrow(page) {
   await page.locator('houseplan-card .homearrow').click();
   await page.waitForFunction(()=>!window.__card._cameraTransition.active&&!window.__card.renderRoot.querySelector('.homearrow'));
   assert.equal((await snapshot()).writes,positive.writes,'Fit is presentation only');
-  await pan();await page.locator('houseplan-card [data-hp="mode-tab"][data-mode="plan"]').click();
+  await pan();await clickHeaderAction(page.locator('houseplan-card').first(),'mode-plan');
   await page.waitForFunction(()=>window.__card._mode==='plan' && !window.__card._modeTransitionBusy);await waitForUiKitPaint(page);
   await pushLine(false);
   const removed=await snapshot();assert.equal(removed.frame.grow,true);assert.equal(removed.arrow,false,'grown frame is not content');
