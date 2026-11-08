@@ -16,6 +16,8 @@ export interface EditorMenuModel {
   anchor: RectLike | (() => RectLike); gap?: number; minWidth?: number; viewport?: () => FloatingViewport;
   localTo?: HTMLElement;
   returnFocus?: Element | null;
+  /** An optional toggle remains inside the interaction boundary, not the popup geometry. */
+  trigger?: Element;
   current(): boolean;
   close(focus: boolean): void;
   outside?(event: PointerEvent): void;
@@ -50,13 +52,15 @@ export class EditorContextMenu {
   }
   private readonly outside = (event: PointerEvent): void => {
     const path = event.composedPath();
-    if (this.element && path.includes(this.element) || this.model?.localTo && path.includes(this.model.localTo)) return;
+    if (this.element && path.includes(this.element) || this.model?.localTo && path.includes(this.model.localTo)
+      || this.model?.trigger && path.includes(this.model.trigger)) return;
     const model = this.model;
     this.close(false); model?.outside?.(event);
   };
   private readonly focus = (event: FocusEvent): void => {
     const path = event.composedPath();
-    if (this.element && !path.includes(this.element) && (!this.model?.localTo || !path.includes(this.model.localTo))) this.close(false);
+    if (this.element && !path.includes(this.element) && (!this.model?.localTo || !path.includes(this.model.localTo))
+      && (!this.model?.trigger || !path.includes(this.model.trigger))) this.close(false);
   };
   private readonly key = (event: KeyboardEvent): void => {
     if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); this.close(true); }

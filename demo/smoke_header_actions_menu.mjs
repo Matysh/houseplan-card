@@ -30,6 +30,12 @@ try {
  const items=await menu.locator('button').evaluateAll(bs=>bs.map(b=>({action:b.dataset.action,label:b.textContent.trim(),height:b.getBoundingClientRect().height})));
  check('all-owned-commands', ['space-settings','space-add','mode-plan','mode-devices','mode-decor','rotate-left','rotate-right','zoom-in','zoom-out','zoom-fit','hidden-devices','settings','pdf','support','summary-settings','summary-toggle'].every(id=>items.some(i=>i.action===id)));
  check('menu-touch-targets-and-labels',items.every(i=>i.height>=44&&i.label.length>0));
+ await trigger.click();await menu.waitFor({state:'hidden'});
+ check('pointer-trigger-closes',await trigger.getAttribute('aria-expanded'),'false');
+ await trigger.press('Enter');await menu.waitFor();
+ await trigger.press('Enter');await menu.waitFor({state:'hidden'});
+ check('keyboard-trigger-closes',await trigger.getAttribute('aria-expanded'),'false');
+ await trigger.click();await menu.waitFor();
  await menu.evaluate(async e=>{await Promise.all(e.getAnimations().map(a=>a.finished.catch(()=>{})));});
  await card.screenshot({path:out+'/unpinned-card-menu.png'});
  await page.keyboard.press('Escape');await menu.waitFor({state:'hidden'});

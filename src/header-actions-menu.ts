@@ -23,7 +23,7 @@ export class HeaderActionsMenu {
     const snapshot = commands.map(button => [button, state(button)] as const);
     this.model = { token: {}, hp: 'header-actions-menu', label, density: 'touch',
       anchor: () => trigger.getBoundingClientRect(), minWidth: trigger.getBoundingClientRect().width,
-      returnFocus: trigger, current: () => current() && snapshot.every(([button,accepted]) => button.isConnected && state(button) === accepted),
+      trigger, returnFocus: trigger, current: () => current() && snapshot.every(([button,accepted]) => button.isConnected && state(button) === accepted),
       close: () => this.close(),
       items: commands.map((button,index) => ({ key: String(index), action: button.dataset.editorNavigation
           ? 'mode-' + button.dataset.editorNavigation : button.dataset.hp || String(index),
