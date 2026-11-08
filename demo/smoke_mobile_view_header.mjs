@@ -1,5 +1,6 @@
 // #1184/#1207 UI-018: native shared-header controls, adaptation, hidden PDF title and roles.
 import assert from 'node:assert/strict';
+import { headerActionTarget, clickHeaderAction } from './helpers/header-actions.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launch, finish } from './serve.mjs';
 
@@ -42,7 +43,8 @@ try {
     assert.ok(row.scroll <= row.width + 1, JSON.stringify(row));
     assert.ok(row.controls.every(c => c.inside && c.width >= 43.99 && c.height >= 43.99), JSON.stringify(row));
     assert.ok(!row.legacy && !row.haMenu && row.titleCount === 0, JSON.stringify(row));
-    for (const id of ['mode-tab','settings','pdf','support','hidden-devices','space-add'])
+    if(row.phase===5) assert.deepEqual(row.controls.map(c=>c.id),['header-actions-trigger']);
+    else for (const id of ['mode-tab','settings','pdf','support','hidden-devices','space-add'])
       assert.ok(row.controls.some(c => c.id === id), id + ' at ' + width);
     assert.equal(row.metricTrees, 0); assert.ok(row.stageHeight > 100);
     if ([1800,390,320].includes(width)) await card().locator('.hdr').screenshot({ path:`${dir}/card-${width}.png` });
@@ -51,17 +53,17 @@ try {
   assert.ok(records.slice(0,8).every((r,i,a) => !i || r.phase >= a[i-1].phase));
   await size(390);
   for (const mode of ['plan','devices','decor']) {
-    await card().locator(`[data-hp="mode-tab"][data-mode="${mode}"]`).tap(); await settle();
+    await clickHeaderAction(card(),'mode-'+mode); await settle();
     assert.equal(await card().locator('ha-card').getAttribute('data-hp-mode'), mode);
     const row = await read(); assert.ok(row.stageHeight > 50, JSON.stringify(row));
-    const close = card().locator('.head [data-hp="editor-close"]');
+    const close = await headerActionTarget(card(),'mode-view');
     const rect = await close.boundingBox(); assert.ok(rect.width >= 44 && rect.height >= 44);
     await close.tap(); await settle();
     assert.equal(await card().locator('ha-card').getAttribute('data-hp-mode'), 'view');
   }
   const eye = card().locator('[data-hp="hidden-devices"]');
-  const pressed = await eye.getAttribute('aria-pressed'); await eye.tap(); await settle();
-  assert.notEqual(await eye.getAttribute('aria-pressed'), pressed); await eye.tap(); await settle();
+  const pressed = await eye.getAttribute('aria-pressed'); await clickHeaderAction(card(),'hidden-devices'); await settle();
+  assert.notEqual(await eye.getAttribute('aria-pressed'), pressed); await clickHeaderAction(card(),'hidden-devices'); await settle();
   const title = 'A very long custom Houseplan card title that must remain readable';
   await page.evaluate(title => window.__card.setConfig({ ...window.__card._config, title }), title); await settle();
   let row = await read(); assert.equal(row.titleCount, 0); assert.equal(row.titleHint, undefined); assert.ok(row.scroll <= row.width + 1);
@@ -70,7 +72,7 @@ try {
   // UI-018 applies to every full Lovelace card, not only Sections. The same
   // existing field still reaches the real PDF surface; do not restore the
   // heading, delete its config, or replace the PDF runtime with a fake.
-  await card().locator('[data-hp="pdf"]').tap();
+  await clickHeaderAction(card(),'pdf');
   const pdf = card().locator('hp-pdf-dialog');
   await pdf.waitFor({ state:'attached' });
   const pdfCancel = pdf.locator('[slot=footer] [data-hp=dialog-cancel]');

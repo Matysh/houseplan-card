@@ -1,4 +1,5 @@
 import { launchPanelCold, check, finish } from './serve.mjs';
+import { headerActionTarget, clickHeaderAction } from './helpers/header-actions.mjs';
 import { assertFreshDemoBundleUnlessAllowed } from './bundle-freshness.mjs';
 import { requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
 
@@ -35,7 +36,7 @@ try {
       const find=selector=>[...head.querySelectorAll(selector)].find(visible);
       const menu=find('[data-hp=panel-menu]'), picker=find('[data-hp=space-select]');
       const modes=find('.modes'),actions=find('.header-actions'),rotate=find('[data-hp=rotate-right]');
-      return {head:box(head),stage:box(root.querySelector('.stage')),panel:box(panel),scroll:head.scrollWidth,
+      return {phase:Number(head.parentElement.dataset.panelFlow),haEligible:!!head.querySelector('[data-hp=panel-menu]'),head:box(head),stage:box(root.querySelector('.stage')),panel:box(panel),scroll:head.scrollWidth,
         menu:menu?box(menu):null,menuName:menu?.getAttribute('aria-label'),
         first:find('button')?.dataset.hp, picker:!!picker,spaceSettings:!!find('.tabedit,[data-hp=space-settings]'),
         labels:!!find('.panel-mode-full'),zoom:[...head.querySelectorAll('[data-hp^=zoom-]')].filter(visible).length,
@@ -85,20 +86,20 @@ try {
     check('width'+row.width+'noOuterReserve',!row.outer&&Math.abs(row.head.y-row.panel.y)<=1);
     check('width'+row.width+'noHorizontalOverflow',row.scroll<=row.head.width+1);
     check('width'+row.width+'allControlsWithinHeader',row.controls.every(c=>c.rect.x>=row.head.x-1&&c.rect.right<=row.head.right+1&&c.rect.y>=row.head.y&&c.rect.bottom<=row.head.bottom+1));
-    check('width'+row.width+'actionsNeverHidden',!row.gear&&row.spaceSettings&&['mode-tab','settings','pdf','support','hidden-devices','space-add'].every(kind=>row.controls.some(c=>c.kind===kind)));
-    check('width'+row.width+'menuFirst44',row.first==='panel-menu'&&row.menu?.width>=44&&row.menu?.height>=44);
-    check('width'+row.width+'rotationRetained',row.rotations.length===2&&row.rotations.every(r=>r.width>=44&&r.height>=44));
+    check('width'+row.width+'actionsAvailable',row.phase===5 ? row.controls.length===1&&row.first==='header-actions-trigger' : !row.gear&&row.spaceSettings&&['mode-tab','settings','pdf','support','hidden-devices','space-add'].every(kind=>row.controls.some(c=>c.kind===kind)));
+    check('width'+row.width+'menuFirst44',row.phase===5 ? row.controls[0]?.rect.width>=44&&row.controls[0]?.rect.height>=44 : row.first==='panel-menu'&&row.menu?.width>=44&&row.menu?.height>=44);
+    check('width'+row.width+'rotationRetained',row.phase===5 ? row.rotations.length===0 : row.rotations.length===2&&row.rotations.every(r=>r.width>=44&&r.height>=44));
     check('width'+row.width+'metricTreeRetired',row.metrics===0);
-    if(row.rows===2) {
+    if(row.phase===4&&row.rows===2) {
       const firstAction=row.controls.find(c=>c.kind==='rotate-left');
       check('width'+row.width+'wrappedActionsLeft',Math.abs(firstAction.rect.x-(row.head.x+12))<=1);
     }
-    if(row.zoom===0) check('width'+row.width+'rotationEndRounded',parseFloat(row.rightRadius)>=6);
+    if(row.phase!==5&&row.zoom===0) check('width'+row.width+'rotationEndRounded',parseFloat(row.rightRadius)>=6);
   }
-  const classify=row=>row.rows>1?4:row.picker?3:row.zoom===0?2:row.labels?0:1;
+  const classify=row=>row.phase;
   const pivot=evidence.widths.findIndex(row=>row.width===320)+1;
   const down=evidence.widths.slice(0,pivot).map(classify), up=evidence.widths.slice(pivot).map(classify);
-  check('allOrderedObservableStages',new Set(down).size===5);
+  check('allOrderedObservableStages',new Set(down).size===6);
   check('orderedReduction',down.every((phase,i)=>i===0||phase>=down[i-1]));
   check('reverseRestoration',up.every((phase,i)=>i===0||phase<=up[i-1])&&up.at(-1)===0);
   // Find the final single-row physical minimum: no guessed product threshold.
@@ -121,14 +122,12 @@ try {
   const items=await page.locator('houseplan-panel houseplan-card .head button').evaluateAll(nodes=>
     nodes.filter(e=>e.getBoundingClientRect().width>0).map(e=>({id:e.dataset.hp,width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height})));
   evidence.phoneItems=items;
-  check('phoneKeepsAllWriterActions',['mode-tab','space-settings','space-add',
-    'settings','pdf','support','hidden-devices'].every(id=>items.some(item=>item.id===id)));
+  check('phoneUsesOneActionsTrigger',items.filter(i=>i.id!=='select-trigger').length===1&&items.some(i=>i.id==='header-actions-trigger'));
   check('phoneMenuTargets44',items.every(item=>item.width>=44&&item.height>=44));
   const card=page.locator('houseplan-panel houseplan-card');
-  // #1132 keeps every editor directly reachable even on a phone. Groups and
-  // close share the approved 44px target rather than disappearing into a menu.
+  // Every editor remains reachable through the visible 44px menu route.
   for(const mode of ['plan','devices','decor']) {
-    await card.locator('[data-hp=mode-tab][data-mode='+mode+']').click();
+    await clickHeaderAction(card,'mode-'+mode);
     await page.waitForFunction(mode=>{
       const r=window.__overflowPanel.shadowRoot.querySelector('houseplan-card').shadowRoot;
       return r.querySelector('ha-card')?.dataset.hpMode===mode
@@ -136,10 +135,10 @@ try {
     },mode);
     const state=await page.evaluate(()=>window.__overflowSettle());
     evidence['phoneEditor'+mode]=state;
-    check('phoneEditor'+mode+'wrappedControlsFit',state.rows>=3&&state.scroll<=state.head.width+1);
-    const close=card.locator('.hdr>.head [data-hp=editor-close]');
+    check('phoneEditor'+mode+'wrappedControlsFit',state.phase===5&&state.rows<=2&&state.scroll<=state.head.width+1);
+    const close=await headerActionTarget(card,'mode-view');
     check('phoneEditor'+mode+'close44',await close.evaluate(e=>{
-      const r=e.getBoundingClientRect();return r.width===44&&r.height===44;
+      const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44;
     }));
     await close.click();
     await page.waitForFunction(()=>{
@@ -153,7 +152,7 @@ try {
   await page.evaluate(async()=>{document.getElementById('host').style.width='1280px';await window.__overflowSettle();});
   const savedView=await card.locator('.plan-svg').getAttribute('viewBox');
   for(const mode of ['plan','devices','decor']) {
-    await card.locator('[data-hp=mode-tab][data-mode='+mode+']').click();
+    await clickHeaderAction(card,'mode-'+mode);
     await page.waitForFunction(mode=>{
       const r=window.__overflowPanel.shadowRoot.querySelector('houseplan-card').shadowRoot;
       return r.querySelector('ha-card')?.dataset.hpMode===mode
@@ -203,7 +202,7 @@ try {
   await page.evaluate(async()=>{document.getElementById('host').style.width='320px';await window.__overflowSettle();});
   // A real dirty dialog retains its text and focus across layout changes and
   // Keep; Discard closes without writing the server plan.
-  await card.locator('[data-hp=space-settings]').click();
+  await clickHeaderAction(card,'space-settings');
   const form=card.locator('hp-dialog[data-kind=space]');
   const title=form.locator('input[data-field$="-title"]');
   await title.fill('Unfinished header resize');
@@ -220,8 +219,8 @@ try {
   await page.evaluate(async()=>{document.getElementById('host').style.width='320px';await window.__overflowSettle();});
   check('dirtyDiscardReturnsToView',await card.locator('ha-card').getAttribute('data-hp-mode'),'view');
   // Actual pointer and Enter must each emit one public event.
-  const menu=page.locator('houseplan-panel houseplan-card [data-hp=panel-menu]');
-  await menu.click();await menu.focus();await page.keyboard.press('Enter');
+  await clickHeaderAction(card,'panel-menu');
+  const menu=await headerActionTarget(card,'panel-menu');await menu.focus();await page.keyboard.press('Enter');
   check('nativePointerAndEnterPublicEvents',await page.evaluate(()=>window.__overflowEvents.length===2
     &&window.__overflowEvents.every(e=>e.bubbles&&e.composed)));
   // Mutate the same public HA object, including fields absent on minimum HA.
@@ -240,7 +239,7 @@ try {
       return await window.__overflowSettle();
     },{patch,narrow});
     evidence.menu.push({name,...row});
-    check('publicPolicy'+name,!!row.menu===expected);
+    check('publicPolicy'+name,row.haEligible===expected);
   }
   await page.evaluate(async()=>{
     const panel=window.__overflowPanel;
@@ -263,7 +262,7 @@ try {
   await page.evaluate(async()=>{document.getElementById('host').style.width='1800px';await window.__overflowSettle();});
   await card.locator('[data-hp=mode-tab][data-mode=plan]').focus();
   await page.evaluate(async()=>{document.getElementById('host').style.width='320px';await window.__overflowSettle();});
-  check('phoneEditorKeepsItsVisibleFocus',await card.locator('[data-hp=mode-tab][data-mode=plan]').evaluate(e=>e.getRootNode().activeElement===e));
+  check('phoneEditorTransfersFocusToActions',await card.locator('[data-hp=header-actions-trigger]').evaluate(e=>e.getRootNode().activeElement===e));
   await page.evaluate(async()=>{
     const outside=document.createElement('button');outside.id='native-outside-focus';outside.textContent='Outside header';
     document.body.append(outside);outside.focus();

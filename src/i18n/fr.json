@@ -1,4 +1,5 @@
 {
+  "panel.actions": "Actions",
   "empty.plan_prompt": "Le plan est encore vide. Dessinons quelque chose.",
   "empty.plan_editor": "Éditeur de plan",
   "kiosk.spaces": "Changer d’espace",

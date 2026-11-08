@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Collect header actions into one shared menu when the measured layout would need a third control row; retain the space picker for unpinned cards and multi-space panels (#1347).
+
 - Align the header's editor close action with the shared navigation controls and shrink the Background toolbar colour trigger to keep all three single-row editor toolbars the same height (#1352).
 
 - Use the standard dropdown for the opening type in the create/edit dialog, preserving type-specific fields and width defaults (#1351).

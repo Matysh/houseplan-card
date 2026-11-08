@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { choosePanelHeader, PanelHeaderMemo, panelHeaderWidth } from '../test-build/panel-header-flow.js';
+import { choosePanelHeader, PanelHeaderMemo, panelHeaderWidth, panelHeaderRows } from '../test-build/panel-header-flow.js';
 
 test('#1120 intrinsic candidates keep strict order and reverse from the full candidate', () => {
   const widths = [970.5, 811.25, 679.75, 599.5];
@@ -59,4 +59,11 @@ test('header memo lends recent modes but bounds and invalidates all measurements
  for(let i=0;i<10;i++)memo.resolve(owner,'mode-'+i,780,measure);
  memo.resolve(owner,'view',780,measure);assert.equal(count,13,'oldest measurements are evicted');
  memo.invalidate();memo.resolve(owner,'mode-9',780,measure);assert.equal(count,14,'font invalidation clears all modes');
+});
+
+test('#1347 counts actual rows, ignoring hidden controls and mixed same-row heights', () => {
+  const rect = (top,height=44,width=44) => ({top,bottom:top+height,height,width});
+  assert.equal(panelHeaderRows([rect(10),rect(11,42),rect(64)]),2);
+  assert.equal(panelHeaderRows([rect(10),rect(64),rect(118),rect(0,0,0)]),3);
+  assert.equal(panelHeaderRows([rect(10),rect(10),rect(0,0,0)]),1);
 });

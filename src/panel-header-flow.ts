@@ -1,7 +1,7 @@
 import { headerControls, type HeaderPosition } from './header-motion';
 import { headerNavigationGroup, headerNavigationItem, headerNavigationIconSize } from './header-navigation-kit';
 
-export type PanelHeaderPhase = 0 | 1 | 2 | 3 | 4;
+export type PanelHeaderPhase = 0 | 1 | 2 | 3 | 4 | 5;
 export interface PanelHeaderChoice { phase: PanelHeaderPhase; phone: boolean }
 export interface PanelHeaderMeasurement extends PanelHeaderChoice { height: number; positions?: ReadonlyMap<string,HeaderPosition> }
 export interface PanelHeaderSpaces {
@@ -9,6 +9,7 @@ export interface PanelHeaderSpaces {
   current: string;
   configure: boolean;
   create: boolean;
+  compactPicker?: boolean;
 }
 
 /** Ordered intrinsic candidates. Numbers are measured CSS pixels, never breakpoints. */
@@ -20,6 +21,18 @@ export function choosePanelHeader(
       return { phase: phase as PanelHeaderPhase, phone: false };
   }
   return { phase: 4, phone: wrappedFirstRow > available };
+}
+
+/** Count occupied control rows by overlapping vertical intervals, independent of
+ * differing icon/select heights on the same flex row. */
+export function panelHeaderRows(rects: readonly { top: number; bottom: number; width: number; height: number }[]): number {
+  const rows: { top: number; bottom: number }[] = [];
+  for (const rect of [...rects].filter(r => r.width > 0 && r.height > 0).sort((a,b) => a.top-b.top)) {
+    const row = rows.find(r => Math.min(r.bottom,rect.bottom) > Math.max(r.top,rect.top));
+    if (row) { row.top = Math.max(row.top,rect.top); row.bottom = Math.min(row.bottom,rect.bottom); }
+    else rows.push({ top: rect.top, bottom: rect.bottom });
+  }
+  return rows.length;
 }
 
 /** Same owner/content/width lends one measured result; visual ticks do not remeasure. */
@@ -139,6 +152,7 @@ export function measurePanelHeader(
   probe.className = 'hdr panel-header-metrics';
   probe.setAttribute('aria-hidden', 'true'); probe.inert = true;
   probe.setAttribute('data-panel-mode', mode);
+  probe.toggleAttribute('data-panel-picker', nav.compactPicker !== false);
   probe.style.cssText = 'position:fixed;left:-100000px;top:0;visibility:hidden;pointer-events:none;'
     + 'width:max-content;min-height:0;contain:layout style;';
   const copy = nativeMetric(head, doc) as HTMLElement;
@@ -187,11 +201,15 @@ export function measurePanelHeader(
     const wrappedFirstRow = outerSize(copy, 'width');
     if (spacer) copy.appendChild(spacer);
     if (actions) copy.appendChild(actions);
-    const choice = choosePanelHeader(available, widths, wrappedFirstRow);
+    let choice = choosePanelHeader(available, widths, wrappedFirstRow);
     probe.setAttribute('data-panel-flow', String(choice.phase));
     probe.toggleAttribute('data-panel-phone', choice.phone);
     replaceTabs(choice.phase >= 3);
     copy.style.width = available + 'px';
+    if (choice.phase === 4 && panelHeaderRows(headerControls(copy).map(([,element]) => element.getBoundingClientRect())) >= 3) {
+      choice = { phase: 5, phone: false };
+      applyPanelHeaderChoice(probe, choice);
+    }
     const height=outerSize(copy,'height'),origin=copy.getBoundingClientRect();
     const positions=new Map(headerControls(copy).map(([key,element])=>{const rect=element.getBoundingClientRect();return [key,{x:rect.x-origin.x,y:rect.y-origin.y}] as const}));
     return { ...choice, height, positions };

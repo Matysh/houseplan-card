@@ -17,6 +17,7 @@ import { headerContentWidth, renderHeaderSpaceNavigation } from './header-space-
 import { PanelHeaderMemo, measurePanelHeader, applyPanelHeaderChoice, panelHeaderWidth,
   type PanelHeaderMeasurement, type PanelHeaderSpaces } from './panel-header-flow';
 import { panelMenuKey, panelMenuState, renderPanelMenu } from './panel-header-menu';
+import type { HeaderActionsMenu } from './header-actions-menu';
 import { DeviceRosterStateKey } from './device-roster-state-key';
 import { DemandSpaceModels } from './demand-space-models';
 import { snapshotConsumerDemand, type SnapshotConsumerDemand } from './render-snapshot-consumers';
@@ -1036,8 +1037,31 @@ export class HouseplanCard extends LitElement {
     const model = this._model, fixed = this._fixedFloorState(model), space = this._spaceModel();
     return fixed.kind === 'valid' && space ? [space] : model;
   }
+  private _headerActionsMenu: HeaderActionsMenu | null = null;
+  private _headerActionsLoad: Promise<typeof import('./header-actions-menu')> | null = null;
+  private _headerActionsRequest = 0;
+  private async _openHeaderActions(event: Event): Promise<void> {
+    if (this._headerActionsMenu?.open) { this._headerActionsMenu.close(); return; }
+    const trigger = event.currentTarget as HTMLButtonElement, head = trigger.parentElement;
+    if (!head) return;
+    const request = ++this._headerActionsRequest, config = this._config, space = this._space, mode = this._mode;
+    const key = this._panelHeaderContentKey(head);
+    const current = () => request === this._headerActionsRequest && this.isConnected && !this._kiosk
+      && this._config === config && this._space === space && this._mode === mode
+      && head.parentElement?.getAttribute('data-panel-flow') === '5'
+      && trigger.isConnected && this._panelHeaderContentKey(head) === key;
+    try {
+      const module = await (this._headerActionsLoad ??= import('./header-actions-menu').catch(error => {
+        this._headerActionsLoad = null; throw error;
+      }));
+      if (!current()) return;
+      this._headerActionsMenu ??= new module.HeaderActionsMenu(this);
+      this._headerActionsMenu.show(head, trigger, this._t('panel.actions'), current);
+    } catch (error) { console.warn('[houseplan] header actions menu unavailable', error); }
+  }
   private get _panelHeaderSpaces(): PanelHeaderSpaces {
     return { spaces: this._headerNavigationSpaces, current: this._space,
+      compactPicker: this.panelHost ? this._headerNavigationSpaces.length > 1 : !this._hasFixedFloor,
       configure: this._norm && this._canEdit,
       create: this._canEdit && !this._kiosk && !this._hasFixedFloor };
   }
@@ -1051,7 +1075,7 @@ export class HouseplanCard extends LitElement {
       typography = this._modeHeaderTypography = { head, revision: this._modeSceneRevision,
         key: [style.fontFamily, style.fontSize, style.fontWeight, style.letterSpacing] };
     }
-    return JSON.stringify([mode, this._space, this._canEdit, this._norm, this._hasFixedFloor,
+    return JSON.stringify([mode, this._space, this._canEdit, this._norm, this._hasFixedFloor, this.panelHost,
       langOf(this.hass, this._config?.language), this.narrow, this._panelMenuHassKey,
       ...typography.key,
       this._panelHeaderSpaces.spaces.map(space => [space.id, space.title]),
@@ -3685,6 +3709,7 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    ++this._headerActionsRequest; this._headerActionsMenu?.dispose();
     for (const type of ['pointerenter', 'focus', 'pointerdown'])
       this.renderRoot.removeEventListener(type, this._preloadEditorIntent, true);
     this._stairsView.disconnect();
@@ -12537,9 +12562,16 @@ export class HouseplanCard extends LitElement {
         <div class="hdr ${this._kiosk ? 'kioskhide' : ''}"
           data-panel-flow=${this._panelHeaderChoice.phase}
           ?data-panel-phone=${this._panelHeaderChoice.phone}
+          ?data-panel-picker=${this._panelHeaderSpaces.compactPicker}
           data-panel-mode=${this._mode} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
         <div class="head hpf-chrome-group" ?data-hp-properties-wide=${this._editorRuntime?.properties.wide} style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
           ${this._renderPanelMenu()}
+          <button type="button" class="btn header-actions-trigger" data-hp="header-actions-trigger"
+            aria-haspopup="menu" aria-expanded=${this._headerActionsMenu?.open ? 'true' : 'false'}
+            @click=${this._openHeaderActions} aria-label=${this._t('panel.actions')}>
+            <ha-icon icon="mdi:dots-horizontal"></ha-icon>${this._t('panel.actions')}
+            <ha-icon icon="mdi:chevron-down"></ha-icon>
+          </button>
           ${renderHeaderSpaceNavigation({
             spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces,
             labels: { spaces: this._t('nav.spaces'), configure: this._t('title.configure_space'), add: this._t('title.add_space') },
@@ -12584,6 +12616,7 @@ export class HouseplanCard extends LitElement {
           ${!this._kiosk ? this._summary?.renderControls() : nothing}
           </div>
         </div>
+        ${this._headerActionsMenu?.render() ?? nothing}
         ${this._canEdit && !this._kiosk
           ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"
               style=${modeVisual ? `height:${modeVisual.editorChromeHeight}px;opacity:${modeVisual.editorWeight}` : nothing}

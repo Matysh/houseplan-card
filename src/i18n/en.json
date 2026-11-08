@@ -1,4 +1,5 @@
 {
+  "panel.actions": "Actions",
   "empty.plan_prompt": "The plan is empty. Let’s draw something.",
   "empty.plan_editor": "Plan editor",
   "kiosk.spaces": "Switch spaces",

@@ -1,6 +1,7 @@
 // #997: real UI choices, actual header widths and accepted navigation state.
 import { launchColdView, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { mkdirSync } from 'node:fs';
+import { clickHeaderAction } from './helpers/header-actions.mjs';
 
 requirePinnedBrowser();
 const { page, browser } = await launchColdView({ width: 1440, height: 1000 }, 1, [], { hasTouch: true });
@@ -28,7 +29,7 @@ const snapshot = () => page.evaluate(() => {
     const a = luminance(background), b = luminance(ink);
     return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
   };
-  return { width: root.querySelector('.hdr').getBoundingClientRect().width,
+  return { phase:Number(root.querySelector('.hdr').dataset.panelFlow),width: root.querySelector('.hdr').getBoundingClientRect().width,
     compact: shown(host), tabs: root.querySelectorAll('[data-hp="space-tab"]').length,
     value: select?.value, label: trigger?.textContent.trim(), space: c._space,
     fieldHeight: trigger?.getBoundingClientRect().height,
@@ -124,12 +125,12 @@ try {
   for (const width of [481, 768, 1024]) {
     await size(width);
     const s = await snapshot();
-    check(`header.${width}.settings-and-add`, s.gear && s.add);
-    await card.locator('[data-hp="space-settings"]').click();
+    check(`header.${width}.settings-and-add`, s.phase===5 ? !s.gear&&!s.add : s.gear&&s.add);
+    await clickHeaderAction(card,'space-settings');
     await card.locator('hp-dialog[data-kind="space"]').waitFor();
     check(`header.${width}.settings-real-dialog`, await card.locator('hp-dialog[data-kind="space"]').count(), 1);
     await page.keyboard.press('Escape'); await settle();
-    await card.locator('[data-hp="space-add"]').click();
+    await clickHeaderAction(card,'space-add');
     await card.locator('hp-dialog[data-kind="space"]').waitFor();
     check(`header.${width}.add-real-dialog`, await card.locator('hp-dialog[data-kind="space"]').count(), 1);
     await page.keyboard.press('Escape'); await settle();
@@ -149,7 +150,7 @@ try {
   await size(390, 390, 844);
   let s = await snapshot();
   check('header.phone.field-44px', s.fieldHeight, 44);
-  check('header.phone.direct-actions', !s.headerMenu && s.gear && s.add);
+  check('header.phone.actions-reachable', !s.headerMenu&&(s.phase===5 ? !s.gear&&!s.add : s.gear&&s.add));
   check('header.phone.no-legacy-gear', !s.headerMenu);
   const touch = await button.boundingBox();
   await page.touchscreen.tap(touch.x + touch.width / 2, touch.y + touch.height / 2);

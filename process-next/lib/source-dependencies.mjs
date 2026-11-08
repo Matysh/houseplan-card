@@ -9,6 +9,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   // The converter tsc entry and backend literals are real build inputs, not card dist.
   ['scripts/sh3d-convert/build-runtime.mjs', ['scripts/sh3d-convert/geometry-entry.ts', 'scripts/sh3d-convert/tsconfig.json', 'custom_components/houseplan/validation.py', 'custom_components/houseplan/led_strips.py']],
   ['demo/smoke_header_observer_retirement.mjs', ['src/houseplan-card.ts']],
+  ['demo/smoke_header_actions_menu.mjs', ['src/houseplan-card.ts', 'src/header-actions-menu.ts', 'src/panel-header-flow.ts', 'src/styles/panel-header.styles.ts', 'src/header-space-select.ts', 'src/editor-context-menu.ts']],
   ['demo/smoke_header_mode_position_regression.mjs', ['src/editors/properties/styles.ts', 'src/styles/panel-header.styles.ts', 'src/styles/navigation.styles.ts']],
   ['demo/smoke_opening_entity_search.mjs', ['src/houseplan-editor-runtime.ts', 'src/settings-select-control.ts']],
   ['demo/smoke_editor_chrome_alignment.mjs', ['src/styles/navigation.styles.ts', 'src/styles/chrome.styles.ts', 'src/hp-color-opacity.ts']],

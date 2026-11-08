@@ -11,7 +11,7 @@ export interface EditorMenuItem {
 }
 export interface EditorMenuModel {
   /** A new opening always gets a new owner token, even for the same object. */
-  token: object; hp: 'device-context-menu' | 'decor-context-menu' | 'catalog-context-menu' | 'node-context-menu'; items: EditorMenuItem[];
+  token: object; hp: 'device-context-menu' | 'decor-context-menu' | 'catalog-context-menu' | 'node-context-menu' | 'header-actions-menu'; items: EditorMenuItem[];
   density?: 'compact' | 'touch'; label?: string;
   anchor: RectLike | (() => RectLike); gap?: number; minWidth?: number; viewport?: () => FloatingViewport;
   localTo?: HTMLElement;
@@ -158,7 +158,7 @@ export class EditorContextMenu {
     const token = model.token;
     this.view = html`<div class="hpf-context-menu ${model.density === 'touch' ? 'hpf-context-menu-touch' : ''}"
       data-hp=${model.hp === 'device-context-menu' ? 'device-context-menu' : model.hp === 'decor-context-menu' ? 'decor-context-menu'
-          : model.hp === 'catalog-context-menu' ? 'catalog-context-menu' : 'node-context-menu'}
+          : model.hp === 'catalog-context-menu' ? 'catalog-context-menu' : model.hp === 'header-actions-menu' ? 'header-actions-menu' : 'node-context-menu'}
       role="menu" aria-label=${model.label ?? nothing}
       ${ref(element => this.mount(element, token))}
       @pointerdown=${(event: Event) => event.stopPropagation()} @click=${(event: Event) => event.stopPropagation()}
