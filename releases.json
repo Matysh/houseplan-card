@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 572,
+  "revision": 573,
   "active": "v1.85.1-beta.1-20261108",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -37184,14 +37184,14 @@
       "kind": "beta",
       "branch": "release/1.85.1-beta.1",
       "sourceSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
-      "sha": "ce6ac7af5763e462251ac35b76a2372f8c0d00b6",
+      "sha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "ce6ac7af5763e462251ac35b76a2372f8c0d00b6",
+        "candidate": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
         "issues": [
           {
@@ -37278,7 +37278,7 @@
         1352,
         1353
       ],
-      "reviewRequired": false,
+      "reviewRequired": true,
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
@@ -37288,16 +37288,15 @@
           "to": "ce6ac7af5763e462251ac35b76a2372f8c0d00b6",
           "syncMode": "merge",
           "status": "pending"
+        },
+        {
+          "from": "ce6ac7af5763e462251ac35b76a2372f8c0d00b6",
+          "to": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+          "syncMode": "merge",
+          "status": "pending"
         }
       ],
-      "diagnostics": [],
-      "shipReview": {
-        "sha": "ce6ac7af5763e462251ac35b76a2372f8c0d00b6",
-        "requestId": "ship-review:0cb372e611fc003765150fd95540d47e58d4ef774d2611024715dbbf90a50b1b",
-        "selectionDigest": "46807313cded53d69255983662f59eec4d6f1540514e9ae1f67dcdbea47510ee",
-        "status": "accepted",
-        "inventoryComplete": true
-      }
+      "diagnostics": []
     }
   },
   "published": {
@@ -41797,7 +41796,8 @@
     "beta1851-20261108-create": "389c732018589b352643adaaa356fbe616367207d657688f6e537b08ae73ff54",
     "beta1851-20261108-prepared": "70f23e0c28665c39eef98b16c46d9848234323690b15010b2f8509c12198b259",
     "ship-review:prepare:b64143a6-89f2-4fcc-ad46-a2c6125ade5c": "3bd0ad9c1f7b493cc15ec83c4aa8d6b9302af34efe4d7d98ea49a26e1d86ca82",
-    "ship-review:result:cccb2eca-2300-40e5-b719-72d265ab4ae8": "60900777203e9e285aa645aee79fd4c24272e403ff46eadd37968b00152137d0"
+    "ship-review:result:cccb2eca-2300-40e5-b719-72d265ab4ae8": "60900777203e9e285aa645aee79fd4c24272e403ff46eadd37968b00152137d0",
+    "beta1851-20261108-solar-scope": "ca10ff403081f49addd878989410332460e80ed1e0b27128a19f62f331932e3f"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
