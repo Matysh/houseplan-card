@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6874,
+  "revision": 6875,
   "nextTicket": 303,
   "nextFence": 303,
   "tasks": {
@@ -4003,6 +4003,15 @@
         "entry": 1,
         "detail": "Поведение: test/mutation-gate.test.mjs: failed; Браузер: editor tabs: failed",
         "eventId": "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:3:return:return:1352"
+      },
+      "s6": {
+        "id": "20261108T100114080-81c22736",
+        "name": "Тесты для задачи #1352 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261108T100114080-81c22736/report.json",
+        "materialSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
+        "status": "passed",
+        "finishedAt": "2026-11-08T10:04:29.715Z",
+        "failures": []
       }
     }
   },
@@ -4186,9 +4195,9 @@
     "fence": 302,
     "materialSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
     "expectedBase": "0d127cd038f4110e7d90cac7004f508f07717fff",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794132062903,
-    "expiresAt": 1794132541789,
+    "expiresAt": 1794135870880,
     "patchId": "abf7924ec06a42105692447bbc6bbbb39393297e"
   },
   "events": {
@@ -4242,6 +4251,10 @@
     },
     "finish:4d9ab58a-aec4-421e-a14e-3beca612b0f4": {
       "digest": "faa1f0a96ec92fcace0488985b20bc9bc0e133620e8ee36c7c33f06dd66ccd2a",
+      "issue": 1352
+    },
+    "finish:6ced53f8-4090-43ac-8fd9-2e47d4e87df9:finish:3:s6-complete": {
+      "digest": "580981b4a7fce1215950c49b90939bd023e849c62ee6df285cd019c3f1a9d5fd",
       "issue": 1352
     },
     "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7": {
