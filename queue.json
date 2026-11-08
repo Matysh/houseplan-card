@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6748,
+  "revision": 6749,
   "nextTicket": 301,
   "nextFence": 301,
   "tasks": {
@@ -4218,6 +4218,10 @@
       "digest": "b4fb9ad2b79a745e6e52d9a1fd72cf2e0f882516da83181f64643c2ea0312102",
       "issue": 1350
     },
+    "github:42457145262:1:completions:message:0e6cefa700cdba29306ebdcb2efa0aca3ad1b8581a7c5dd55ba7fe5927a411bd": {
+      "digest": "e0ae11647155fd5631a8a930ae9b0ae5021e9522622626c2a5c0c8b63db1f9ad",
+      "issue": 1350
+    },
     "finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1": {
       "digest": "5348f0f6e57b195ce521fc8e3b183060dfc0c526718bdf69c00994255265a10e",
       "issue": 1350,
@@ -4265,20 +4269,6 @@
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/summary-panel-presentation.test.mjs: failed; Поведение: test/summary-panel-runtime.test.mjs: failed",
           "eventId": "finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1:finish:3:return:return:1350"
         }
-      }
-    },
-    "finish:f7beb877-d8cf-4417-8da0-724fca56535e:finish:1:admit": {
-      "digest": "3cf56e03f296728c00464cdeb9be78c3fbb8c14b0ddaf440bd8eb8fa83e3c360",
-      "issue": 1351,
-      "message": {
-        "kind": "admitted",
-        "issue": 1351,
-        "at": 1794121217708,
-        "entry": 2,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f",
-        "phase": "sync"
       }
     },
     "finish:275b47a8-d7e9-4f81-bfec-d276867304a0": {
