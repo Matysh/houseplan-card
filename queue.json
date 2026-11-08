@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7004,
+  "revision": 7005,
   "nextTicket": 308,
   "nextFence": 308,
   "tasks": {
@@ -4514,6 +4514,10 @@
       "digest": "43d73f2230ca09c1aef4e498bff6c64f677ba5aa669161bddd736c3a43d031f1",
       "issue": 1347
     },
+    "github:42478877240:1:completions:message:e999db4d3e00112461154524c9c2d6f8fc138d06ec8a2c15d92e6ec86c6bc86b": {
+      "digest": "1b8a3b53572c2f0460dbc885bd6f90a2ff18cb476bc905336df9c21ab94ce91e",
+      "issue": 1347
+    },
     "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17": {
       "digest": "694064b2d600b039adfa9434efa1ac898d3e748c7f923b26391c7752b2c3c8fb",
       "issue": 1347,
@@ -4785,7 +4789,8 @@
           "entry": 4,
           "detail": "Браузер: toolbar stable width: failed",
           "eventId": "finish:6a2b6b16-09f5-4a73-8dec-1e9d420ab31e:finish:3:return:return:1347"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:809cc8c9-e7ef-46b0-ab32-b5d70646f170": {
