@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6994,
+  "revision": 6995,
   "nextTicket": 308,
   "nextFence": 308,
   "tasks": {
@@ -3797,7 +3797,7 @@
       "ownerDecision": null,
       "ticket": 307,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794139321533,
       "reviewEntry": 5,
       "patchId": "da84b0c0f39810e685135e22611f1085e662fc98",
@@ -3840,19 +3840,15 @@
         "eventId": "finish:6a2b6b16-09f5-4a73-8dec-1e9d420ab31e:finish:3:return:return:1347"
       },
       "s6": {
-        "id": "20261108T113042791-2c153068",
+        "id": "20261108T120217271-333bc56c",
         "name": "Тесты для задачи #1347 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T113042791-2c153068/report.json",
-        "materialSha": "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T120217271-333bc56c/report.json",
+        "materialSha": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
         "status": "passed",
-        "finishedAt": "2026-11-08T11:36:48.166Z",
+        "finishedAt": "2026-11-08T12:08:56.453Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1347:3:9b5bfa77455daf27fc936550fbd03bffe4a18371:2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
-        "at": 1794138210112
-      }
+      "reviewRound": null
     },
     "1348": {
       "issue": 1348,
@@ -4233,9 +4229,9 @@
     "fence": 307,
     "materialSha": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
     "expectedBase": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794139324970,
-    "expiresAt": 1794139985522,
+    "expiresAt": 1794143337685,
     "patchId": "da84b0c0f39810e685135e22611f1085e662fc98"
   },
   "events": {
@@ -4770,6 +4766,34 @@
           "finishedAt": "2026-11-08T11:36:48.166Z",
           "failures": []
         }
+      }
+    },
+    "finish:809cc8c9-e7ef-46b0-ab32-b5d70646f170:finish:3:s6-complete": {
+      "digest": "18ec34d82dae6a959e4e6cc286203f9a19fc3b49ed5ac16917897d35508896f4",
+      "issue": 1347,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1347,
+        "at": 1794139737685,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
+        "phase": "review",
+        "evidence": {
+          "id": "20261108T120217271-333bc56c",
+          "name": "Тесты для задачи #1347 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T120217271-333bc56c/report.json",
+          "materialSha": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
+          "status": "passed",
+          "finishedAt": "2026-11-08T12:08:56.453Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "### Цель и результат\nДо изменения обычные кнопки шапки занимали три ряда. Новая фаза 5 включается по фактическим рядам инертного измерительного дерева, без viewport breakpoint. Panel/одно пространство — только действия, panel/несколько — выбор над действиями; card/fixed — только действия, card/unpinned — выбор над действиями, включая одно пространство. Исходные команды и внутренние toolbar редакторов сохранены.\n\n### Решение и риски\nМеню лениво использует общий UI Kit и снимок исходных кнопок (подписи/disabled/current/pressed); вызов идёт в их исходный click с прежними dirty-guard, правами, HA event и диалогами. current() отзывает устаревшие команды, disconnect снимает listeners. Trigger входит в interaction boundary, поэтому pointer/Enter закрывают открытое меню. Стили и измерительное дерево используют одну фазу, memo ограничен. Особое внимание: пересчёт по реальному контейнеру, фокус при смене фаз, режим/пространство/права между открытием и командой.\n\n### Проверки и ограничения\nПоследний полный S6 на 4bef1932846f: **588/588 PASS, 203 исполнены и 385 зачтены**, run `20261108T113042791-2c153068`, 7781 известных кейсов. Число 11/577 в прошлом авторском контексте относилось к более раннему bf3267573, не к этому run. Браузерные проверки новой матрицы, pointer/Enter/Escape/outside, прав, реальных переходов, HA event, dirty dialogs, PDF и touch прошли. Реального HA backend E2E/полного stable набора не было, backend не менялся.\n\nПосле замечаний фактически прошли `node demo/smoke_modes.mjs` и `node demo/smoke_ui_polish_963.mjs` (настоящие HA компоненты 20260930.4): при viewport 280/390 фактическая ширина шапки 262/372, фаза 5, снаружи один trigger; команды проверены внутри меню. Пять адресных capture через канонический golden-runner завершили семантическую подготовку: широкая panel-wide-view-light-en совпадает с baseline, panel-three-rows-ui-1132 и три plan-rotation-phone-* имеют намеренные pixel differences новой шапки. Все пять кадров просмотрены; **PNG baselines и manifest не принимались и не изменялись**. Это не PASS полного golden/stable: четыре сравнения остаются different до принятия при подготовке релиза. Артефакты сохранены вне checkout: output/issue1347. После расширения: S6 run `20261108T115213642-7bf46342` завершился 599/600: оба smoke из ревью PASS, единственный отказ — сохранённый toolbar stable width с обращениями к скрытым прямым кнопкам. Он обновлён по видимому маршруту (обычные контролы / общий menu) с прежними проверками геометрии, hit target, фокуса, подписей и стабильности размеров. Фактический повтор toolbar PASS на 1800/1000/768/390/320 × en/ru × три редактора; две phone golden semantic fixtures в том же тесте PASS. Для нового trigger сохранён прежний 2px solid keyboard focus ring вместо браузерного 1px auto. Третий witness также в центральной map и areaTests. Новый итоговый S6 идёт через finish.\n\n### Исправления по предыдущему ревью\n[Раунд 3](https://github.com/Matysh/houseplan-card/actions/runs/42476539995), материал 4bef1932846f, changes_requested. Продуктовых блокеров ревью не нашло; замечание — сохранённые browser oracle.\n\n1. `smoke_modes`: подсчёт редакторских действий теперь по трём смысловым data-hp settings/pdf/support, а не всем .btn с растущим списком исключений. Точные прежние ожидания трёх команд сохранены.\n2. `smoke_ui_polish_963`: при фазе 5 проверяется единственный внешний trigger и полный прежний набор команд через реальное меню, с 44px и подписями. При фазах 0–4 прямые действия, отсутствие overlap/overflow, геометрия и stage assertions сохранены.\n3. Оба smoke связаны с исходниками шапки в центральной dependency map и добавлены в areaTests; они выбираются по изменённому поведению и будут исполнены в повторном S6.\n4. Поиск точных подсчётов и narrow goldens нашёл устаревшие guard в golden/harness: panel HA target и phone rotate/editor-close перенесены в допустимую фазу 5; для фаз 0–4 физические прежние проверки оставлены. В фазе 5 проверяются исходные команды и видимый 44px trigger; скрытый close не выдаётся за видимый glyph. Проверено адресными capture пяти сцен. Остальные найденные .head button проверки относятся к широким сценам либо фильтруют видимые controls.\n\n5. Найденный полным новым S6 `smoke_toolbar_stable_width` также актуализирован: физические цели берутся из видимой шапки/меню, скрытый source close не измеряется как видимый; source adjacency/имена, 44px/hit, отсутствие overflow, stage, стабильная геометрия переходов сохраняются. Один 2px focus-visible rule добавлен новому trigger. Optional замечания предыдущего ревью не являются выполненными требованиями этого раунда.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
