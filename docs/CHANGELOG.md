@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep settings dropdowns open after a queued scroll that revealed their trigger; actual anchor movement still dismisses the menu (#1356).
+
 ## v1.85.1-beta.1 — 2026-11-08
 - Keep Device settings navigation in place while the content scrolls, with independently reachable sections on short windows and a compact visible divider after Details (#1354).
 

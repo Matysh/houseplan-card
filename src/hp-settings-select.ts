@@ -63,6 +63,7 @@ export class HpSettingsSelect extends LitElement {
   private closeTimer?: number;
   private motion?: Animation;
   private fallback = false;
+  private anchorBounds?: DOMRect;
   private typeahead = '';
   private lastType = 0;
   private get native(): HTMLSelectElement | null { return this.querySelector('select'); }
@@ -112,13 +113,22 @@ export class HpSettingsSelect extends LitElement {
     const win = this.floating.window(), button = this.renderRoot.querySelector('button'), surface = this.surface();
     if (!win || !button || !surface) return;
     const anchor = button.getBoundingClientRect(), viewport = floatingViewport(win);
+    this.anchorBounds = anchor;
     surface.style.width = `${Math.min(Math.max(anchor.width, 180), viewport.width - 16)}px`;
     surface.style.maxHeight = `${Math.min(320, viewport.height - 16)}px`;
     const place = placeFloatingSurface(anchor, surface.getBoundingClientRect(), viewport);
     surface.style.left = `${place.left}px`; surface.style.top = `${place.top}px`;
   };
   private outside = (e: PointerEvent): void => { if (!this.floating.containsPath(e.composedPath())) this.close(); };
-  private dismissScroll = (e: Event): void => { if (!this.floating.containsPath(e.composedPath())) this.close(); };
+  private dismissScroll = (e: Event): void => {
+    if (this.floating.containsPath(e.composedPath())) return;
+    const anchor = this.renderRoot.querySelector('button')?.getBoundingClientRect(), prior = this.anchorBounds;
+    // A trigger click can scroll its pane before open(); the queued scroll
+    // event arrives afterwards. Only movement since placement invalidates it.
+    if (anchor && prior && anchor.left === prior.left && anchor.top === prior.top
+        && anchor.right === prior.right && anchor.bottom === prior.bottom) return;
+    this.close();
+  };
   private focusout = (): void => { queueMicrotask(() => { if (this._open && !this.floating.ownsActiveElement()) this.close(); }); };
   private async open(): Promise<void> {
     if (this._open || !this.native || this.native.disabled) return;

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1356,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Preserve native settings menu interaction when the scroll revealing its trigger is delivered after opening; dismiss only if the anchor actually moved.",
+  "summary": {
+    "ru": "Исправлено преждевременное закрытие выпадающих списков настроек после прокрутки.",
+    "en": "Fix premature dismissal of settings dropdowns after scrolling."
+  }
+}

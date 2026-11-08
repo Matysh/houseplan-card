@@ -68,5 +68,21 @@ try {
  out.optionReducedMotion=await dialog.locator('[data-hp-overlay="select"] [role="option"]').first().evaluate(el=>getComputedStyle(el).transitionDuration==='0s');
  await dialog.locator('[data-hp-overlay="select"] [role="listbox"]').press('Escape');
  await page.evaluate(()=>{Object.assign(HTMLElement.prototype,{showPopover:window.__selectNativePopover.show,hidePopover:window.__selectNativePopover.hide});});
+ // #1356: a genuine overflowing option list scrolls inside its surface.
+ await dialog.evaluate(el=>{
+  const control=document.createElement('hp-settings-select');control.dataset.scrollRegression='1356';
+  const select=document.createElement('select');select.setAttribute('aria-label','Scroll regression');
+  for(let i=0;i<20;i++){const option=document.createElement('option');option.value=String(i);option.textContent='Choice '+i;select.append(option);}
+  control.append(select);el.querySelector('.hpf-settings-content').append(control);
+ });
+ const scrolling=dialog.locator('hp-settings-select[data-scroll-regression="1356"]');
+ await scrolling.locator('button').click();
+ const scrollingMenu=scrolling.locator('[role="listbox"]');
+ out.fixtureHasRealOptionOverflow=await scrollingMenu.evaluate(el=>el.scrollHeight>el.clientHeight);
+ await scrollingMenu.hover();await page.mouse.wheel(0,160);
+ await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-scroll-regression="1356"]').shadowRoot.querySelector('[role="listbox"]').scrollTop>0);
+ out.internalMenuScrollKeepsOpen=await scrolling.locator('button').getAttribute('aria-expanded')==='true';
+ await scrolling.getByRole('option',{name:'Choice 10',exact:true}).click();
+ out.nativeChoiceAfterInternalScroll=await scrolling.locator('select').inputValue()==='10';
 } catch(error){console.error(error);out.completed=false;}
 checkAll(out);await finish(browser,out);
