@@ -194,9 +194,8 @@ try {
     out[`header_${width}_no_overflow`]=await card.locator('.head').evaluate(el=>el.scrollWidth<=el.clientWidth+1);
     if(width>480)out[`header_${width}_one_action_row`]=await card.locator('.header-actions').count()>0&&await card.locator('.header-actions').evaluate(el=>{const boxes=[...el.children].filter(e=>getComputedStyle(e).display!=='none').map(e=>e.getBoundingClientRect());return boxes.length>0&&Math.max(...boxes.map(b=>b.top))-Math.min(...boxes.map(b=>b.top))<2;});
     else {
-      // #1184 deliberately wraps the shared header after its intrinsic final
-      // phase. Keep real direct controls and usable stage space, rather than
-      // imposing #963's superseded single-row/56px phone layout.
+      // #1347 keeps up to two ordinary rows, then moves commands into one
+      // shared menu. Retain geometry, touch targets and usable stage space.
       const layout=await card.evaluate(card=>{
         const root=card.renderRoot,head=root.querySelector('.head').getBoundingClientRect();
         const header=root.querySelector('.hdr').getBoundingClientRect(),stage=root.querySelector('.stage').getBoundingClientRect();
@@ -217,12 +216,22 @@ try {
           if(joined)sharedBorders.push([a.id,b.id]);
           return !joined;
         }));
-        return {head:head.toJSON(),header:header.toJSON(),stage:stage.toJSON(),outer:outer.toJSON(),viewportHeight:innerHeight,
+        return {phase:Number(root.querySelector('.hdr').dataset.panelFlow),head:head.toJSON(),header:header.toJSON(),stage:stage.toJSON(),outer:outer.toJSON(),viewportHeight:innerHeight,
           controls:controls.map(c=>({id:c.id,rect:c.rect.toJSON()})),overlaps,sharedBorders};
       });
       headerLayouts[width]=layout;
       out[`header_${width}_controls_do_not_overlap`]=layout.controls.length>0&&!layout.overlaps;
-      out[`header_${width}_direct_actions_retained`]=['settings','pdf','support','hidden-devices','space-add','mode-tab'].every(id=>layout.controls.some(c=>c.id===id));
+      out[`header_${width}_actions_reachable`]=layout.phase===5
+        ? layout.controls.length===1&&layout.controls[0].id==='header-actions-trigger'
+        : ['settings','pdf','support','hidden-devices','space-add','mode-tab'].every(id=>layout.controls.some(c=>c.id===id));
+      if(layout.phase===5){
+        await card.locator('[data-hp=header-actions-trigger]').click();
+        const sheet=card.locator('[data-hp=header-actions-menu]:not([inert])');await sheet.waitFor();
+        const commands=await sheet.locator('button').evaluateAll(nodes=>nodes.map(n=>({id:n.dataset.action,label:n.textContent.trim(),rect:n.getBoundingClientRect().toJSON()})));
+        out[`header_${width}_menu_commands_and_targets`]=['settings','pdf','support','hidden-devices','space-add','mode-plan','mode-devices','mode-decor'].every(id=>commands.some(c=>c.id===id))
+          &&commands.every(c=>c.label&&c.rect.width>=44&&c.rect.height>=44);
+        await page.keyboard.press('Escape');await sheet.waitFor({state:'hidden'});
+      }
       out[`header_${width}_targets_44px_inside`]=layout.controls.every(({rect:r})=>r.width>=43.99&&r.height>=43.99&&r.left>=layout.head.left-1&&r.right<=layout.head.right+1&&r.top>=layout.head.top-1&&r.bottom<=layout.head.bottom+1);
       out[`phone_${width}_stage_accounts_for_header`]=layout.stage.height>100&&layout.stage.top>=layout.header.bottom-1
         &&layout.stage.bottom<=layout.outer.top+layout.viewportHeight+1&&layout.stage.bottom<=layout.outer.bottom+1;

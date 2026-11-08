@@ -2745,6 +2745,9 @@ export async function prepareGoldenScenario(page, scenario) {
       const menuExpected = !scenario.panelKioskUrl && panel?.hass?.kioskMode !== true
         && panel?.hass?.auth?.external?.config?.hasSidebar !== true
         && (panel?.narrow === true || panel?.hass?.dockedSidebar === 'always_hidden');
+      const actionsOnly = card.renderRoot.querySelector('.hdr')?.dataset.panelFlow === '5';
+      const menuTarget = actionsOnly ? card.renderRoot.querySelector('[data-hp="header-actions-trigger"]') : menu;
+      const firstVisible = [...card.renderRoot.querySelectorAll('.head button')].find(node => node.getBoundingClientRect().width > 0);
       const stage = card.renderRoot.querySelector('.stage');
       const empty = card.renderRoot.querySelector('.empty');
       const panelRect = panel?.getBoundingClientRect();
@@ -2773,10 +2776,10 @@ export async function prepareGoldenScenario(page, scenario) {
           || panel.shadowRoot.querySelectorAll('houseplan-card').length !== 1
           || card.panelHost !== true || card._config?.kiosk === true
           || card.renderRoot.querySelector('.head > .title')
-          || menuExpected && (menu.getBoundingClientRect().width < 44
-            || menu.getBoundingClientRect().height < 44
+          || menuExpected && (!menuTarget || menuTarget.getBoundingClientRect().width < 44
+            || menuTarget.getBoundingClientRect().height < 44
             || !menu.getAttribute('aria-label')
-            || card.renderRoot.querySelector('.head button') !== menu)
+            || firstVisible !== menuTarget)
           || horizontalOverflow > 1
           || !panelRect || panelRect.width <= 0 || panelRect.height <= 0
           || !contentRect || !cardRect
@@ -2927,7 +2930,12 @@ export async function prepareGoldenScenario(page, scenario) {
         ?.querySelector('[data-hp="select-trigger"]');
       const shown = element => element && element.getBoundingClientRect().width > 0;
       const targets = [floor, ...head.querySelectorAll('button')].filter(shown);
-      if (!floor || !targets.some(target => target.dataset.hp === 'rotate-right')
+      const actionsOnly = head.parentElement.dataset.panelFlow === '5';
+      const trigger = head.querySelector('[data-hp="header-actions-trigger"]');
+      const controls = [...head.querySelectorAll('button')].filter(shown);
+      if (!floor || !shown(floor) || !head.querySelector('[data-hp="rotate-right"]')
+          || (actionsOnly ? controls.length !== 1 || controls[0] !== trigger
+            : !targets.some(target => target.dataset.hp === 'rotate-right'))
           || head.querySelector('[data-hp="header-menu"]')) throw Error('shared phone header controls are missing');
       const rows = [];
       for (const target of targets) {
@@ -2937,8 +2945,10 @@ export async function prepareGoldenScenario(page, scenario) {
           throw Error(`phone target is clipped or too small: ${target.dataset.hp}`);
         if (!rows.some(value => Math.abs(value - y) < 1)) rows.push(y);
       }
-      const close = head.querySelector('[data-hp="editor-close"]');
-      if (scenario.mode !== 'view') {
+      const ownedClose = head.querySelector('[data-hp="editor-close"]');
+      if (scenario.mode !== 'view' && !ownedClose) throw Error('phone editor close command is missing');
+      const close = actionsOnly ? null : ownedClose;
+      if (scenario.mode !== 'view' && !actionsOnly) {
         if (!close) throw Error('phone editor close is missing');
         const r = close.getBoundingClientRect();
         if (r.width < 43.99 || r.height < 43.99 || r.x < bounds.x - .1
@@ -2948,7 +2958,7 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!rows.length || head.scrollWidth > bounds.width + 1 || document.documentElement.scrollWidth > innerWidth)
         throw Error(`phone header layout is invalid: ${rows.length} rows, height ${bounds.height}`);
       const rect = close?.getBoundingClientRect();
-      return { rows: rows.length, height: bounds.height, width: bounds.width,
+      return { actionsOnly, rows: rows.length, height: bounds.height, width: bounds.width,
         close: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height,
           color: getComputedStyle(close).color, opacity: getComputedStyle(close).opacity } : null };
     }, scenario);

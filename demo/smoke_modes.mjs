@@ -11,9 +11,8 @@ const st = () => page.evaluate(() => {
     mode: c._mode,
     modeTabs: sr.querySelectorAll('.modetab').length,
     active: sr.querySelector('.modetab.active')?.getAttribute('data-mode'),
-    // #616: the phone gear (.header-menu-button) is in the DOM but hidden above 480 px.
-    // #919: the eye is a separate display control, not an editor action.
-    editBtns: sr.querySelectorAll('.head .btn:not(.zb):not(.header-menu-button):not([data-hp="hidden-devices"])').length,
+    // Count the three command owners, independent of hidden presentation triggers.
+    editBtns: sr.querySelectorAll('.head :is([data-hp="settings"],[data-hp="pdf"],[data-hp="support"])').length,
     hiddenToggle: sr.querySelectorAll('.head [data-hp="hidden-devices"][aria-pressed="false"]').length,
     gears: sr.querySelectorAll('.tabedit').length,
     // The last bar stays mounted for the exit animation; only an open chrome
