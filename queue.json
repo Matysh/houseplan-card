@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7325,
+  "revision": 7326,
   "nextTicket": 315,
   "nextFence": 315,
   "tasks": {
@@ -4111,7 +4111,18 @@
         "src/hp-help.ts",
         "src/hp-settings-select.ts",
         "test/hp-test-facade.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794167753379,
+        "entry": 1,
+        "detail": "Браузер: device icon pixel alignment: failed",
+        "eventId": "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9:finish:5:return:return:1357"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4300,18 +4311,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1357,
-    "worker": "finish",
-    "token": "314:finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9:finish:1:admit",
-    "fence": 314,
-    "materialSha": "63dd217db4fb0fe2a06780ac873611a36544f7e9",
-    "expectedBase": "6d8822ab2c5cc3c70262f9e1dd218c2ba120c231",
-    "phase": "testing",
-    "admittedAt": 1794166107579,
-    "expiresAt": 1794168050706,
-    "patchId": "6fed26adaa2f5fb4abf3949fa75ed79b977a9b07"
-  },
+  "active": null,
   "events": {
     "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9:finish:2:automation-pending": {
       "digest": "76a3f4d591645d432cb217f2e5bdbd6d2a615c424d0eceeb1e0f5e1681a77790",
@@ -4429,6 +4429,10 @@
       "digest": "0aaa81843a33d28bb549c7fe1600d4b6929cb599dadaa7b5c7c8c7d5e797c2c2",
       "issue": 1357
     },
+    "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9:finish:5:return": {
+      "digest": "e0fb8a8cbe1885dee7844f97b0547a85a68f2f5091d2c6971bfb7983f8445554",
+      "issue": 1357
+    },
     "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9": {
       "digest": "0b85103b375840c595a3e9bbb4bb14c57017613becb839d8815798ac764677d9",
       "issue": 1357,
@@ -4454,6 +4458,26 @@
         "layer": "product",
         "materialSha": "63dd217db4fb0fe2a06780ac873611a36544f7e9",
         "phase": "sync"
+      }
+    },
+    "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9:finish:5:return:return:1357": {
+      "digest": "e0fb8a8cbe1885dee7844f97b0547a85a68f2f5091d2c6971bfb7983f8445554",
+      "issue": 1357,
+      "message": {
+        "kind": "return",
+        "issue": 1357,
+        "at": 1794167753379,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794167753379,
+          "entry": 1,
+          "detail": "Браузер: device icon pixel alignment: failed",
+          "eventId": "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9:finish:5:return:return:1357"
+        }
       }
     }
   },
