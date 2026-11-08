@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7141,
+  "revision": 7142,
   "nextTicket": 311,
   "nextFence": 311,
   "tasks": {
@@ -4050,7 +4050,7 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/issue-1354-device-settings-navigation",
-      "materialSha": "bb78d310b51acb271df3a4df0ffa275bc7f34a7c",
+      "materialSha": "ae9b2ae83f841273debc56d953f344b4e9a5561e",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 310,
@@ -4058,9 +4058,16 @@
       "status": "S6-in-progress",
       "readyAt": 1794151086146,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1794151544325,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      "patchId": "30285d49ad993544efcb62571b8fb11ed1952b81",
+      "changedFiles": [
+        "demo/smoke_device_settings_scroll.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.84.0/1354.json",
+        "process-next/lib/source-dependencies.mjs",
+        "src/hp-dialog.ts",
+        "src/styles/settings-dialogs.styles.ts"
+      ]
     },
     "1355": {
       "issue": 1355,
@@ -4277,11 +4284,12 @@
     "worker": "github-coordinator",
     "token": "310:github:42494670650:1:tick:0:admit",
     "fence": 310,
-    "materialSha": "bb78d310b51acb271df3a4df0ffa275bc7f34a7c",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "ae9b2ae83f841273debc56d953f344b4e9a5561e",
+    "expectedBase": "0a3c5489931d8a90090e622e839bc60d4ac3971c",
+    "phase": "testing",
     "admittedAt": 1794151494398,
-    "expiresAt": 1794151869532
+    "expiresAt": 1794151910601,
+    "patchId": "30285d49ad993544efcb62571b8fb11ed1952b81"
   },
   "events": {
     "github:42494670650:1:completions:message:de523e3a07221dfd6ec11859c7f009daa47996f6145075597e8afe0fe5951266": {
@@ -4294,6 +4302,10 @@
     },
     "finish:965d307f-588b-4752-b4a3-f58adef5638d": {
       "digest": "574ad8d97625ec64d8e7e79fcc3b7a5f171586e485e5e57ae2e704ee0ea7cf6b",
+      "issue": 1354
+    },
+    "finish:6b1a2579-a5a5-41fa-85af-9cc8683c7fee:finish:2:synchronized": {
+      "digest": "f667dcd8e6d4e425fb17db536db85c1ed70ecdb34c7898f4dede84bebe500185",
       "issue": 1354
     },
     "finish:6b1a2579-a5a5-41fa-85af-9cc8683c7fee": {
