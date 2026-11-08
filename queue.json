@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6962,
+  "revision": 6963,
   "nextTicket": 306,
   "nextFence": 306,
   "tasks": {
@@ -3797,7 +3797,7 @@
       "ownerDecision": null,
       "ticket": 305,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794137426803,
       "reviewEntry": 3,
       "patchId": "9b5bfa77455daf27fc936550fbd03bffe4a18371",
@@ -3836,12 +3836,12 @@
         "eventId": "author-toggle-fix-1347-20261108:return:1347"
       },
       "s6": {
-        "id": "20261108T112501773-d1ade19c",
+        "id": "20261108T113042791-2c153068",
         "name": "Тесты для задачи #1347 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T112501773-d1ade19c/report.json",
-        "materialSha": "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T113042791-2c153068/report.json",
+        "materialSha": "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
         "status": "passed",
-        "finishedAt": "2026-11-08T11:26:02.496Z",
+        "finishedAt": "2026-11-08T11:36:48.166Z",
         "failures": []
       },
       "reviewRound": null
@@ -4225,9 +4225,9 @@
     "fence": 305,
     "materialSha": "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
     "expectedBase": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794137430608,
-    "expiresAt": 1794138089610,
+    "expiresAt": 1794141409402,
     "patchId": "9b5bfa77455daf27fc936550fbd03bffe4a18371"
   },
   "events": {
@@ -4511,6 +4511,34 @@
           "finishedAt": "2026-11-08T11:26:02.496Z",
           "failures": []
         }
+      }
+    },
+    "finish:98591470-235a-4310-9949-188818a8f1b8:finish:3:s6-complete": {
+      "digest": "8658c95d46c4519c1d58ecae903120dc0e74e09de4fbea2dbe6fb06c6d9e2077",
+      "issue": 1347,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1347,
+        "at": 1794137809402,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
+        "phase": "review",
+        "evidence": {
+          "id": "20261108T113042791-2c153068",
+          "name": "Тесты для задачи #1347 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T113042791-2c153068/report.json",
+          "materialSha": "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
+          "status": "passed",
+          "finishedAt": "2026-11-08T11:36:48.166Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\nДо изменения третья строка обычных кнопок занимала место плана. Добавлена крайняя ступень после существующих 0–4: меню «Действия» включается только если измеренная обычная раскладка требует минимум трёх рядов. Матрица выбора пространства реализована по последнему уточнению владельца: panel/одно — без выбора, panel/несколько — выбор сверху; card/fixed — без выбора, card/unpinned — выбор сверху, включая одно пространство.\n\n### Решение\nИспользуется прежнее инертное измерительное дерево из native-узлов и ограниченный memo. После измерения фазы 4 считаются реальные пересекающиеся вертикальные интервалы контролов. Исходные кнопки остаются владельцами команд; общий лениво загружаемый UI Kit menu показывает их подписи/disabled/current/pressed и вызывает исходный click. Так сохраняются dirty-navigation, права, HA public event и диалоги без второй реализации. Старые фазы и внутренние toolbar редакторов сохранены. Ширина viewport не определяет порог.\n\n### Риски и места для внимания\nГраница перехода и восстановление на расширении, фокус при скрытии исходных кнопок, контекст меню после смены режима/пространства/прав, соответствие метрического дерева живому. Menu snapshot отзывается при изменении контекста или состояний исходных команд; disconnect снимает callbacks/listeners. HA sidebar доступен через меню только когда положен прежней native policy. В широком View новый menu chunk не загружается.\n\n### Проверки и ограничения\nЛокально сборка с типами и 14 Node тестов прошли. Новый smoke_header_actions_menu проверил матрицу закрепления/пространств, порядок строк, обратимость, 44px, список команд и состояний, Escape/фокус, outside, реальные переходы редакторов и отзыв прав. Обновлённые smoke_panel_header_overflow, smoke_header_compact_spaces, smoke_mobile_view_header и неизменённый smoke_panel_header_touch прошли: публичный HA event, диалоги/dirty state, PDF title, навигация, мышь/keyboard/touch. Снимки просмотрены исполнителем, отдельного принятия golden не было; реальные HA E2E и полный stable набор не запускались, backend не менялся. Первый полный S6: 523/526 успешны; три отказа касались реестра новых data-hp, списка фаз CSS и проверенного French/English homograph. Исправлены: два hook зарегистрированы без выдумывания следующего номера версии, разрешена фаза 5, «Actions» отмечено как корректный французский омограф. Адресный повтор этих контрактов: 46/46 PASS. Второй S6 на bf3267573: 588/588 PASS (11 исполнены, 577 зачтены). Перед код-ревью исполнитель дополнительно нашёл и исправил повторное открытие меню при нажатии его trigger: опциональный trigger теперь часть interaction boundary общего UI Kit (геометрия popup не меняется); существующие потребители без trigger сохраняют поведение. Новый browser witness подтвердил pointer/Enter toggle-close. Старый review workflow 42475751141 успел запуститься; после штатного return в S6 он отменён исполнителем до использования результата, итоговую выборку после этой правки исполняет finish. Новый browser witness связан с его исходниками в центральной карте, areaTests дополняет выборку.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
