@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6868,
-  "nextTicket": 302,
+  "revision": 6869,
+  "nextTicket": 303,
   "nextFence": 302,
   "tasks": {
     "1193": {
@@ -3973,14 +3973,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/issue-1352-editor-chrome-alignment",
-      "materialSha": "12605c18b10a439baca2a08308840a5acd308406",
+      "materialSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 301,
-      "queued": false,
+      "ticket": 302,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794131572220,
-      "reviewEntry": 1,
+      "readyAt": 1794132059013,
+      "reviewEntry": 2,
       "patchId": "404343c0ea22ea5cbded6848fb5bbfff4feebf86",
       "changedFiles": [
         "demo/smoke_editor_chrome_alignment.mjs",
@@ -3992,7 +3992,6 @@
         "src/styles/chrome.styles.ts",
         "src/styles/navigation.styles.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4177,7 +4176,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1352
+  ],
   "active": null,
   "events": {
     "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:2:synchronized": {
@@ -4263,6 +4264,19 @@
           "detail": "Поведение: test/mutation-gate.test.mjs: failed; Браузер: editor tabs: failed",
           "eventId": "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:3:return:return:1352"
         }
+      }
+    },
+    "finish:6ced53f8-4090-43ac-8fd9-2e47d4e87df9": {
+      "digest": "4e4a03099d196d75f79b2d4ec151302f55b4388ca331e3ad6ecd92b41a0a738d",
+      "issue": 1352,
+      "message": {
+        "kind": "queued",
+        "issue": 1352,
+        "at": 1794132059013,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e"
       }
     }
   },
