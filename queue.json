@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7499,
+  "revision": 7500,
   "nextTicket": 320,
   "nextFence": 320,
   "tasks": {
@@ -4120,7 +4120,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1363-accepted-stable",
-      "materialSha": "e061bfff7fe4982e41cc00e68a6b1a5f533c9b36",
+      "materialSha": "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 319,
@@ -4128,7 +4128,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794178370888,
       "reviewEntry": 2,
-      "patchId": "29df0d1da0e426dabd65077ec156d7c92fc8c141",
+      "patchId": "f7169b8ff61e6d0f48dede59c8ea550f5b11ae90",
       "changedFiles": [
         "demo/golden/baselines/baselines-index.json",
         "demo/golden/baselines/css-migration-rules-invalid-dark.png",
@@ -4191,7 +4191,8 @@
         "demo/golden/baselines/wall-junctions-plan-t-dark.png",
         "demo/smoke_grid_scale_invariance.mjs",
         "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
+        "docs/CHANGELOG.ru.md",
+        "test/grid-scale-static-fixture.test.mjs"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -4202,10 +4203,7 @@
         "entry": 1,
         "detail": "Поведение: test/grid-scale-static-fixture.test.mjs: failed",
         "eventId": "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:3:return:return:1363"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1794178380822,
-      "automationDetail": "Local branch changed after ready; do not overwrite the remote task"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4399,11 +4397,12 @@
     "worker": "finish",
     "token": "319:finish:64a67665-ce14-41a7-93f0-f30a773289d5:finish:1:admit",
     "fence": 319,
-    "materialSha": "e061bfff7fe4982e41cc00e68a6b1a5f533c9b36",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
+    "expectedBase": "f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
+    "phase": "testing",
     "admittedAt": 1794178374369,
-    "expiresAt": 1794178793715
+    "expiresAt": 1794178813421,
+    "patchId": "f7169b8ff61e6d0f48dede59c8ea550f5b11ae90"
   },
   "events": {
     "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:2:synchronized": {
@@ -4448,6 +4447,10 @@
     },
     "finish:db675803-5475-4be7-92fa-2c83c5c715ce": {
       "digest": "c7146255794130f7449ae5a63d17c36dc0bccbdf7b03ac4e97da981371b8c15c",
+      "issue": 1363
+    },
+    "finish:64a67665-ce14-41a7-93f0-f30a773289d5:finish:4:synchronized": {
+      "digest": "3d221c48f25a4705ab2508ad90bd6fee83c0b96f25d00aa35f417372153bea4a",
       "issue": 1363
     },
     "finish:605de1e0-083d-4131-a7ac-72cca22dadcd": {
