@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6744,
+  "revision": 6745,
   "nextTicket": 301,
   "nextFence": 300,
   "tasks": {
@@ -3998,6 +3998,15 @@
         "entry": 1,
         "detail": "Поведение: test/open-passage-contract.test.mjs: failed",
         "eventId": "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:3:return:return:1351"
+      },
+      "s6": {
+        "id": "20261108T070028078-4ad4d8ff",
+        "name": "Тесты для задачи #1351 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261108T070028078-4ad4d8ff/report.json",
+        "materialSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f",
+        "status": "passed",
+        "finishedAt": "2026-11-08T07:02:26.509Z",
+        "failures": []
       }
     }
   },
@@ -4183,9 +4192,9 @@
     "fence": 299,
     "materialSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f",
     "expectedBase": "6cedac4193d114c7eea822f6e06b4fb65181bd9d",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794121217708,
-    "expiresAt": 1794121630973,
+    "expiresAt": 1794124947719,
     "patchId": "c0960cc00bb216be457a4b68839f2c03f99f39d2"
   },
   "events": {
@@ -4279,6 +4288,10 @@
     },
     "finish:5054aa27-b6b7-4dd8-842d-bae13f009a9f": {
       "digest": "e68808b0af7c24005e9ea8ee1d08bd2f550f078a93137762bf21cbbc7970afcc",
+      "issue": 1351
+    },
+    "finish:f7beb877-d8cf-4417-8da0-724fca56535e:finish:3:s6-complete": {
+      "digest": "21ad9ec74d2248a3f146d0504f894f3439c8012d34d7b33160b42e766c6f7143",
       "issue": 1351
     },
     "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366": {
