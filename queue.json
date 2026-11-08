@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7409,
-  "nextTicket": 316,
+  "revision": 7410,
+  "nextTicket": 317,
   "nextFence": 316,
   "tasks": {
     "1193": {
@@ -4078,6 +4078,20 @@
         "status": "published",
         "sourceSha": "8c05977f2c0d029c6c3f5ae8ced3f07d4823de3c"
       }
+    },
+    "1362": {
+      "issue": 1362,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1362-visible-smoke",
+      "materialSha": "c27ba8a163900f4165952f752dd8da7cedfff1ae",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 316,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794170176387,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4265,9 +4279,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1362
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b": {
+      "digest": "1e71879d15305252c73d3f00cf991b16419d7cd2768ba0d96ca2b3294fdd42a3",
+      "issue": 1362,
+      "message": {
+        "kind": "queued",
+        "issue": 1362,
+        "at": 1794170176387,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "c27ba8a163900f4165952f752dd8da7cedfff1ae"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "8c05977f2c0d029c6c3f5ae8ced3f07d4823de3c",
     "status": "delivered",
