@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6901,
+  "revision": 6902,
   "nextTicket": 303,
   "nextFence": 303,
   "tasks": {
@@ -435,39 +435,6 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "reviewRequest": "review:1239:4:7242f162e533627058babbeadb5bb84e79534731:3f778f3d9f3c1b691fce78891d71d095bb051a1e",
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
-      }
-    },
-    "1241": {
-      "issue": 1241,
-      "branch": "codex/1241-quiet-comments",
-      "track": "show",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
-      "mergedSha": "2ad5f43ce2dea9ee33fff5fe98ee82f520578494",
-      "mergedAt": 1793726485645,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1241:1:77c6cbcdb2468291b13384ab9e744a9e5fa5d273:d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
       "completion": {
         "labels": true,
         "milestone": "not-required",
@@ -4001,7 +3968,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e"
       }
     }
   },
@@ -4179,7 +4147,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:42469866641:1:1352": {
+      "digest": "114a1bc6487d20c08a0634a0a76da289e02f95f8ec13f2eb01ef32a8d756dbef",
+      "issue": 1352,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1352,
+        "at": 1794132429154,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
     "status": "pending",
