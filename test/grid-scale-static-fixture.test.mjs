@@ -21,13 +21,24 @@ test('grid-scale static fixture keeps config and layout in one isolated snapshot
   assert.equal(patch.layout.device.x, 1.2);
 });
 
-test('grid-scale smoke uses the coherent static snapshot without weakening raster limits', () => {
+test('grid-scale smoke keeps coherent static snapshots and owner-approved projection limits', () => {
   const source = readFileSync(new URL('../demo/smoke_grid_scale_invariance.mjs', import.meta.url), 'utf8');
   assert.match(source, /coherentGridScaleStaticPatch\(source\)/);
   assert.match(source, /compact\._snap = \{ \.\.\.compact\._snap, \.\.\.nextPatch \}/);
   assert.match(source, /firstSize: \[first\.width, first\.height\]/);
   assert.match(source, /secondSize: \[second\.width, second\.height\]/);
-  assert.match(source, /diff\.changed <= 150 && diff\.maxDelta <= 40 && diff\.meanDelta <= 0\.05/);
+  assert.match(source, /const pixelEquivalent = \(diff, changedLimit = 150\) => diff\.sameSize/);
+  assert.match(source, /diff\.changed <= changedLimit && diff\.maxDelta <= 40 && diff\.meanDelta <= 0\.05/);
+  assert.match(source, /const isoPixelLimit = 300;/);
+  for (const diff of ['flatDiff', 'staticDiff', 'planDiff', 'darkViewDiff', 'devicesDiff', 'backgroundDiff']) {
+    assert.ok(source.includes('pixelEquivalent(' + diff + ')'), diff + ' keeps the default limit');
+    assert.ok(!source.includes('pixelEquivalent(' + diff + ','), diff + ' has no projection allowance');
+  }
+  for (const theme of ['Light', 'Dark']) {
+    assert.ok(source.includes('pixelEquivalent(iso' + theme + 'Diff, isoPixelLimit)'));
+    assert.ok(source.includes('iso' + theme + 'ShiftDiff.changed > isoPixelLimit'));
+    assert.ok(source.includes('!pixelEquivalent(iso' + theme + 'ShiftDiff, isoPixelLimit)'));
+  }
 });
 
 test('grid-scale static fixture rejects partial inputs', () => {
