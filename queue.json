@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7512,
+  "revision": 7513,
   "nextTicket": 321,
   "nextFence": 320,
   "tasks": {
@@ -4226,6 +4226,103 @@
         "at": 1794178589970,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1363,
+        "requestId": "review:1363:2:f7169b8ff61e6d0f48dede59c8ea550f5b11ae90:f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
+        "kind": "code",
+        "base": "f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
+        "materialSha": "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
+        "patchId": "f7169b8ff61e6d0f48dede59c8ea550f5b11ae90",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1363,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1363",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Ветка `codex/1363-accepted-stable`, base `f2dcbcc6a2c715e5364ecded43d8848955ecca9f`, head `e061bfff7fe4982e41cc00e68a6b1a5f533c9b36`. Трек show сохранён. Продуктовый код и модель данных не меняются.\n\n### Разрешение и точный пакет PNG\n\nВладелец явно принял оба решения в чате2026-11-09; запись: https://github.com/Matysh/houseplan-card/issues/1363#issuecomment-6728097518. Все58SHA PNG из принятой галереи сверены с исходными capture artifacts. Штатный golden-accept выполнен на точном capture checkout63dd217 (6кадровbeta+52rest); принятие сохранено commit a34d17fb29. Только этот baseline-commit перенесён cherry-pick -x на актуальныйdevf2dcbcc; capture/sourceSha в provenance остаётся настоящим63dd217, не подменяется текущимhead.\n\nИзменены ровно58PNG и их per-frame provenance в baselines-index.json.322остальные записи индекса (включая исторические) и все глобальные поля прежнего bulk acceptance сохранены побайтно/структурно. Другие PNG не менялись. Текущие58baselineSHA повторно совпали с утверждёнными actualSHA. Остальные файлы diff: один native grid smoke и RU/EN changelog; всего62пути.\n\n### Калибровка и отрицательные свидетели\n\nТолько isoLight/isoDark вызывают pixelEquivalent с changedLimit300; значение по умолчанию150, maxDelta40,mean0.05 и все прежние геометрические/input/cancel assertions сохранены. В обеих темах новый свидетель реально сдвигает `.zoomwrap` на1CSSpx, снимает устойчивый browser raster, затем в finally восстанавливает прежний translate и priority до остальных native-сценариев.\n\nФактические результаты: эквивалентныеiso-пары256пикселей,max13,mean.007327/.006905; светлый сдвиг37238пикселей,max255,mean2.009274; тёмный37609,max218,mean2.426238. Оба настоящих сдвига отвергнуты. Все flat/static/Plan/Devices/Background пары проходят с прежним лимитом150; геометрические показатели и cancel/input проверки зелёные.\n\n### Проверки до финального S6\n\nАдресная подвыборка существующего stable-каталога `20261108T224015078-7d643df8` на head e061bfff:6/6шагов successful,materialClean=true. Подготовкаbuild/types/test-build зачтена по неизменным входам, demo-assets выполнен; grid smokePASS, все75beta+251rest=326goldenPASS,0different/0errors/0skip. Это явно адресная проверка изменённых входов, не новый полный567шаговыйstable-прогон. При повторной verify новые картинки в baselines не принимались: остались именно ранее одобренные58PNG.\n\nНовые два assertions находятся в существующем native browser-файле smoke_grid_scale_invariance, который в каталоге keep/browser; назначение geometry/2.5D не изменилось. Для S6 явно запрошены этот native-файл и существующий golden-accept.test; централизованный выбор не урезается. Golden-кадры сохраняют собственный адресный маршрут; новых глобальных гейтов нет.\n\nПосле этих подготовительных проверок выполняется штатный finish: вход в очередь, актуализация при необходимости, принятый S6, затем содержательное S7. Неизменные продукт/backend/HA-входы из прошлого полного аудита не объявляются повторно исполненными. Выпуск версии не запрошен.\n\n\n### Поправка после первого S6\n\nRun 20261108T224747195-442e626d: 558/559 шагов passed/reused; один отказ в test/grid-scale-static-fixture.test.mjs — старый regex требовал литерал 150 вместо параметра. В 26db513dfa статический guard обновлён на точный согласованный контракт (default/flat 150, только iso 300, max 40, mean 0.05, отрицательные свидетели в обеих темах). Все три теста файла проходят. Исходный красный отчёт сохранён; запускается повторный S6."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Работу можно принимать, блокеров нет. Изменение делает ровно то, что разрешил владелец. Заменены 58 перечисленных PNG вместе с их per-frame provenance. Допуск changed-pixel поднят со 150 до 300 только для iso-пар (2.5D) в smoke_grid_scale_invariance. Остальные пороги не тронуты: maxDelta 40, meanDelta 0.05, лимит 150 для плоских пар и геометрические assertions. Отрицательный свидетель добавлен корректно: он сравнивает один и тот же detailed-кадр без сдвига и со сдвигом `.zoomwrap` на 1 CSS px. Если сдвиг из-за повторного рендера не применится, тест покраснеет, а не пройдёт молча. Статический guard в test/grid-scale-static-fixture.test.mjs закрепляет именно этот контракт, а не ослабляет его. Повторный S6 на 26db513 зелёный. Продуктовый код и модель данных не менялись.",
+          "understanding": "Что было до изменения. По итогам stable-аудита (#1357) 58 golden-кадров из 326 разошлись с baselines. Кроме того, на iso-парах проверка инвариантности сетки 5cm/1cm падала из-за антиалиасинга краёв: 256 изменённых пикселей при лимите 150, хотя maxDelta 13 и mean ≈0.007 говорят о подлинной эквивалентности. Владелец 2026-11-09 принял все 58 кадров и разрешил лимит 300 только для 2.5D.\n\nЧто сделано:\n1) Коммит aa87b19 — cherry-pick штатного golden-accept, выполненного на capture-checkout 63dd217. В provenance честно указаны sourceSha/capture.sourceSha = 63dd217, а не текущий head. decision ссылается на комментарий владельца, ci: null, глобальные поля индекса (schema/matrixVersion 109/acceptedAt/capture) не тронуты.\n2) Коммит e061bff: у `pixelEquivalent` появился параметр `changedLimit = 150`, константа `isoPixelLimit = 300` передаётся только для isoLight/isoDark. Добавлен `onePixelSceneShift`: он ставит inline `translate: 1px 0px` на `.zoomwrap`, снимает stableScreenshot и сравнивает с только что снятым `isoX.detailed.pixels`; в finally прежнее значение и priority восстанавливаются. Assertions `isoXRejectsOnePixelSceneShift` требуют одновременно sameSize, changed > 300 и !pixelEquivalent.\n3) Коммит 26db513: статический regex-guard переписан под новую сигнатуру. Он проверяет, что шесть плоских/static/devices/background diff вызываются без второго аргумента, iso — с isoPixelLimit, а свидетели есть в обеих темах.\n\nКакие пути разобраны: последовательность capture → pair → witness → следующие сценарии openingEdgeAction/backgroundCancel. Свидетель стоит до них, а `__applyGridScaleFixture` всё равно перестраивает сцену. Также проверены рендер `.zoomwrap` в src/houseplan-card.ts:12663–12665 (Lit-биндинг атрибута style без translate) и CSS .zoomwrap в plan.styles.ts:46–60 (translate задаётся только в .stage.mode-transition, в статическом View его нет).",
+          "analysis": [
+            {
+              "topic": "Отрицательный свидетель сдвига на 1 px",
+              "assessment": "Свидетель устроен правильно. Сравниваются два снимка одного и того же состояния (cellCm=1, iso, та же тема), разница только в физическом сдвиге сцены, так что он доказывает чувствительность метрики при новом лимите. Существенно, что отказ работает в безопасную сторону: если Lit перезапишет атрибут style или сдвиг не применится, diff будет около 0 и assertion `changed > isoPixelLimit` покраснеет. Ложный зелёный исключён. Восстановление в finally учитывает priority и отсутствие исходного значения. Даже если что-то останется, следующий `__applyGridScaleFixture` пересобирает сцену, но рендер `.zoomwrap` не трогает translate. Запас большой: по S6 37238 и 37609 изменённых пикселей при лимите 300.",
+              "evidence": "demo/smoke_grid_scale_invariance.mjs:346–370 (onePixelSceneShift и вызовы сразу после pair iso), :540–545 (assertions); src/houseplan-card.ts:12663–12665; src/styles/plan.styles.ts:46–60. Цифры из контекста исполнителя и успешного S6 20261108T225518872-4e310c38."
+            },
+            {
+              "topic": "Узость калибровки",
+              "assessment": "Допуск ослаблен точечно: значение по умолчанию осталось 150, повышенный лимит передаётся только в двух местах, maxDelta и meanDelta общие и не изменены. Статический тест прямо запрещает передавать второй аргумент шести остальным парам, поэтому случайное расширение allowance будет поймано. Регулярные выражения привязаны к форме текста (например, `const isoPixelLimit = 300;`), но для guard-теста это приемлемо и соответствует прежнему стилю файла.",
+              "evidence": "demo/smoke_grid_scale_invariance.mjs:504–507, 524–539; test/grid-scale-static-fixture.test.mjs:23–43."
+            },
+            {
+              "topic": "Пакет эталонов и provenance",
+              "assessment": "Изменения индекса соответствуют списку из ТЗ: в карте SHA и в per-frame записях меняются только перечисленные сцены. Записи из прошлых bulk-приёмок (#1256/#1257, #1277, #1353) у этих кадров заменены новым decision с реальным capture-sha 63dd217, а у остальных записей и в глобальном блоке изменений нет. Пара -/+ с одинаковым ключом `decor-group-style-applied-dark` — артефакт выравнивания diff, а не порча JSON (ключ на строке 3645 head один). Принимать на 63dd217 обоснованно: коммиты между 63dd217 и f2dcbcc касаются тестов/фикстур, и решающее доказательство — адресная verify на head: все 326 кадров PASS, 0 different.",
+              "evidence": "diff demo/golden/baselines/baselines-index.json (строки 50–410 карты SHA, per-frame блоки); head baselines-index.json:1–22; git_log: aa87b19 (cherry-pick a34d17fb29), 192b3fa/8c05977/f5e65f4/c27ba8a/f2dcbcc."
+            },
+            {
+              "topic": "Проверки",
+              "assessment": "Первый S6 упал на старом regex в статическом guard. Причина была точно в том, что литерал 150 стал параметром, и исправление закрепляет новый контракт, а не удаляет проверку. Повторный S6 на 26db513 прошёл. Полный 567-шаговый stable-прогон финальной редакции не заявляется, и это честно отражено в ТЗ.",
+              "evidence": "Комментарий 6728323686 (возврат с S7, `test/grid-scale-static-fixture.test.mjs: failed`); receipt 20261108T225518872-4e310c38 status passed на materialSha 26db513."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Необязательно: в diagnostic-выводе `pixel-diffs` можно печатать применённый лимит рядом с iso-парами (например, `limits: { default: 150, iso: isoPixelLimit }`). Тогда при будущем красном CI по логу сразу видно, с каким порогом сравнивался каждый diff. Стоимость — одна строка; польза — меньше путаницы при следующих калибровках."
+          ],
+          "boundaries": "Сборку, smoke и golden verify я не запускал: это S7, использованы результаты S6. Источники: receipt 20261108T225518872-4e310c38 (passed на 26db513), а также описанные исполнителем адресная подвыборка 20261108T224015078-7d643df8 (grid smoke PASS, 326 golden PASS) и числа свидетелей. Сами PNG визуально не сравнивал и SHA файлов с галереей не сверял: локальная галерея C:/Users/... недоступна, сверку и одобрение выполнили владелец и исполнитель. По исходникам изучены smoke_grid_scale_invariance.mjs целиком (до и после), статический тест, рендер и CSS `.zoomwrap`, структура и глобальные поля baselines-index.json и история коммитов. Хвост diff индекса после первых ~157k символов я читал выборочно — по поиску ключей, а не построчно."
+        },
+        "usage": {
+          "input_tokens": 20,
+          "cache_creation_input_tokens": 110652,
+          "cache_read_input_tokens": 816643,
+          "output_tokens": 6588,
+          "output_tokens_details": {
+            "thinking_tokens": 1541
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 110652,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 742,
+              "cache_read_input_tokens": 100996,
+              "cache_creation_input_tokens": 9656,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 9656
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принимать, блокеров нет. Изменение делает ровно то, что разрешил владелец. Заменены 58 перечисленных PNG вместе с их per-frame provenance. Допуск changed-pixel поднят со 150 до 300 только для iso-пар (2.5D) в smoke_grid_scale_invariance. Остальные пороги не тронуты: maxDelta 40, meanDelta 0.05, лимит 150 для плоских пар и геометрические assertions. Отрицательный свидетель добавлен корректно: он сравнивает один и тот же detailed-кадр без сдвига и со сдвигом `.zoomwrap` на 1 CSS px. Если сдвиг из-за повторного рендера не применится, тест покраснеет, а не пройдёт молча. Статический guard в test/grid-scale-static-fixture.test.mjs закрепляет именно этот контракт, а не ослабляет его. Повторный S6 на 26db513 зелёный. Продуктовый код и модель данных не менялись.\n\n## Понимание решения\n\nЧто было до изменения. По итогам stable-аудита (#1357) 58 golden-кадров из 326 разошлись с baselines. Кроме того, на iso-парах проверка инвариантности сетки 5cm/1cm падала из-за антиалиасинга краёв: 256 изменённых пикселей при лимите 150, хотя maxDelta 13 и mean ≈0.007 говорят о подлинной эквивалентности. Владелец 2026-11-09 принял все 58 кадров и разрешил лимит 300 только для 2.5D.\n\nЧто сделано:\n1) Коммит aa87b19 — cherry-pick штатного golden-accept, выполненного на capture-checkout 63dd217. В provenance честно указаны sourceSha/capture.sourceSha = 63dd217, а не текущий head. decision ссылается на комментарий владельца, ci: null, глобальные поля индекса (schema/matrixVersion 109/acceptedAt/capture) не тронуты.\n2) Коммит e061bff: у `pixelEquivalent` появился параметр `changedLimit = 150`, константа `isoPixelLimit = 300` передаётся только для isoLight/isoDark. Добавлен `onePixelSceneShift`: он ставит inline `translate: 1px 0px` на `.zoomwrap`, снимает stableScreenshot и сравнивает с только что снятым `isoX.detailed.pixels`; в finally прежнее значение и priority восстанавливаются. Assertions `isoXRejectsOnePixelSceneShift` требуют одновременно sameSize, changed > 300 и !pixelEquivalent.\n3) Коммит 26db513: статический regex-guard переписан под новую сигнатуру. Он проверяет, что шесть плоских/static/devices/background diff вызываются без второго аргумента, iso — с isoPixelLimit, а свидетели есть в обеих темах.\n\nКакие пути разобраны: последовательность capture → pair → witness → следующие сценарии openingEdgeAction/backgroundCancel. Свидетель стоит до них, а `__applyGridScaleFixture` всё равно перестраивает сцену. Также проверены рендер `.zoomwrap` в src/houseplan-card.ts:12663–12665 (Lit-биндинг атрибута style без translate) и CSS .zoomwrap в plan.styles.ts:46–60 (translate задаётся только в .stage.mode-transition, в статическом View его нет).\n\n## Разбор решения\n\n### Отрицательный свидетель сдвига на 1 px\n\nСвидетель устроен правильно. Сравниваются два снимка одного и того же состояния (cellCm=1, iso, та же тема), разница только в физическом сдвиге сцены, так что он доказывает чувствительность метрики при новом лимите. Существенно, что отказ работает в безопасную сторону: если Lit перезапишет атрибут style или сдвиг не применится, diff будет около 0 и assertion `changed > isoPixelLimit` покраснеет. Ложный зелёный исключён. Восстановление в finally учитывает priority и отсутствие исходного значения. Даже если что-то останется, следующий `__applyGridScaleFixture` пересобирает сцену, но рендер `.zoomwrap` не трогает translate. Запас большой: по S6 37238 и 37609 изменённых пикселей при лимите 300.\n\nОснование: demo/smoke_grid_scale_invariance.mjs:346–370 (onePixelSceneShift и вызовы сразу после pair iso), :540–545 (assertions); src/houseplan-card.ts:12663–12665; src/styles/plan.styles.ts:46–60. Цифры из контекста исполнителя и успешного S6 20261108T225518872-4e310c38.\n\n### Узость калибровки\n\nДопуск ослаблен точечно: значение по умолчанию осталось 150, повышенный лимит передаётся только в двух местах, maxDelta и meanDelta общие и не изменены. Статический тест прямо запрещает передавать второй аргумент шести остальным парам, поэтому случайное расширение allowance будет поймано. Регулярные выражения привязаны к форме текста (например, `const isoPixelLimit = 300;`), но для guard-теста это приемлемо и соответствует прежнему стилю файла.\n\nОснование: demo/smoke_grid_scale_invariance.mjs:504–507, 524–539; test/grid-scale-static-fixture.test.mjs:23–43.\n\n### Пакет эталонов и provenance\n\nИзменения индекса соответствуют списку из ТЗ: в карте SHA и в per-frame записях меняются только перечисленные сцены. Записи из прошлых bulk-приёмок (#1256/#1257, #1277, #1353) у этих кадров заменены новым decision с реальным capture-sha 63dd217, а у остальных записей и в глобальном блоке изменений нет. Пара -/+ с одинаковым ключом `decor-group-style-applied-dark` — артефакт выравнивания diff, а не порча JSON (ключ на строке 3645 head один). Принимать на 63dd217 обоснованно: коммиты между 63dd217 и f2dcbcc касаются тестов/фикстур, и решающее доказательство — адресная verify на head: все 326 кадров PASS, 0 different.\n\nОснование: diff demo/golden/baselines/baselines-index.json (строки 50–410 карты SHA, per-frame блоки); head baselines-index.json:1–22; git_log: aa87b19 (cherry-pick a34d17fb29), 192b3fa/8c05977/f5e65f4/c27ba8a/f2dcbcc.\n\n### Проверки\n\nПервый S6 упал на старом regex в статическом guard. Причина была точно в том, что литерал 150 стал параметром, и исправление закрепляет новый контракт, а не удаляет проверку. Повторный S6 на 26db513 прошёл. Полный 567-шаговый stable-прогон финальной редакции не заявляется, и это честно отражено в ТЗ.\n\nОснование: Комментарий 6728323686 (возврат с S7, `test/grid-scale-static-fixture.test.mjs: failed`); receipt 20261108T225518872-4e310c38 status passed на materialSha 26db513.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Необязательно: в diagnostic-выводе `pixel-diffs` можно печатать применённый лимит рядом с iso-парами (например, `limits: { default: 150, iso: isoPixelLimit }`). Тогда при будущем красном CI по логу сразу видно, с каким порогом сравнивался каждый diff. Стоимость — одна строка; польза — меньше путаницы при следующих калибровках.\n\n## Границы анализа\n\nСборку, smoke и golden verify я не запускал: это S7, использованы результаты S6. Источники: receipt 20261108T225518872-4e310c38 (passed на 26db513), а также описанные исполнителем адресная подвыборка 20261108T224015078-7d643df8 (grid smoke PASS, 326 golden PASS) и числа свидетелей. Сами PNG визуально не сравнивал и SHA файлов с галереей не сверял: локальная галерея C:/Users/... недоступна, сверку и одобрение выполнили владелец и исполнитель. По исходникам изучены smoke_grid_scale_invariance.mjs целиком (до и после), статический тест, рендер и CSS `.zoomwrap`, структура и глобальные поля baselines-index.json и история коммитов. Хвост diff индекса после первых ~157k символов я читал выборочно — по поиску ключей, а не построчно.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: f2dcbcc6a2c715e5364ecded43d8848955ecca9f → 26db513dfaa58f9e59a7eda2e38e6d538d3d00ed\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1363, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nВетка `codex/1363-accepted-stable`, base `f2dcbcc6a2c715e5364ecded43d8848955ecca9f`, head `e061bfff7fe4982e41cc00e68a6b1a5f533c9b36`. Трек show сохранён. Продуктовый код и модель данных не меняются.\n\n### Разрешение и точный пакет PNG\n\nВладелец явно принял оба решения в чате2026-11-09; запись: https://github.com/Matysh/houseplan-card/issues/1363#issuecomment-6728097518. Все58SHA PNG из принятой галереи сверены с исходными capture artifacts. Штатный golden-accept выполнен на точном capture checkout63dd217 (6кадровbeta+52rest); принятие сохранено commit a34d17fb29. Только этот baseline-commit перенесён cherry-pick -x на актуальныйdevf2dcbcc; capture/sourceSha в provenance остаётся настоящим63dd217, не подменяется текущимhead.\n\nИзменены ровно58PNG и их per-frame provenance в baselines-index.json.322остальные записи индекса (включая исторические) и все глобальные поля прежнего bulk acceptance сохранены побайтно/структурно. Другие PNG не менялись. Текущие58baselineSHA повторно совпали с утверждёнными actualSHA. Остальные файлы diff: один native grid smoke и RU/EN changelog; всего62пути.\n\n### Калибровка и отрицательные свидетели\n\nТолько isoLight/isoDark вызывают pixelEquivalent с changedLimit300; значение по умолчанию150, maxDelta40,mean0.05 и все прежние геометрические/input/cancel assertions сохранены. В обеих темах новый свидетель реально сдвигает `.zoomwrap` на1CSSpx, снимает устойчивый browser raster, затем в finally восстанавливает прежний translate и priority до остальных native-сценариев.\n\nФактические результаты: эквивалентныеiso-пары256пикселей,max13,mean.007327/.006905; светлый сдвиг37238пикселей,max255,mean2.009274; тёмный37609,max218,mean2.426238. Оба настоящих сдвига отвергнуты. Все flat/static/Plan/Devices/Background пары проходят с прежним лимитом150; геометрические показатели и cancel/input проверки зелёные.\n\n### Проверки до финального S6\n\nАдресная подвыборка существующего stable-каталога `20261108T224015078-7d643df8` на head e061bfff:6/6шагов successful,materialClean=true. Подготовкаbuild/types/test-build зачтена по неизменным входам, demo-assets выполнен; grid smokePASS, все75beta+251rest=326goldenPASS,0different/0errors/0skip. Это явно адресная проверка изменённых входов, не новый полный567шаговыйstable-прогон. При повторной verify новые картинки в baselines не принимались: остались именно ранее одобренные58PNG.\n\nНовые два assertions находятся в существующем native browser-файле smoke_grid_scale_invariance, который в каталоге keep/browser; назначение geometry/2.5D не изменилось. Для S6 явно запрошены этот native-файл и существующий golden-accept.test; централизованный выбор не урезается. Golden-кадры сохраняют собственный адресный маршрут; новых глобальных гейтов нет.\n\nПосле этих подготовительных проверок выполняется штатный finish: вход в очередь, актуализация при необходимости, принятый S6, затем содержательное S7. Неизменные продукт/backend/HA-входы из прошлого полного аудита не объявляются повторно исполненными. Выпуск версии не запрошен.\n\n\n### Поправка после первого S6\n\nRun 20261108T224747195-442e626d: 558/559 шагов passed/reused; один отказ в test/grid-scale-static-fixture.test.mjs — старый regex требовал литерал 150 вместо параметра. В 26db513dfa статический guard обновлён на точный согласованный контракт (default/flat 150, только iso 300, max 40, mean 0.05, отрицательные свидетели в обеих темах). Все три теста файла проходят. Исходный красный отчёт сохранён; запускается повторный S6.\n```\n\n</details>\n",
+        "createdAt": "2026-11-08T22:58:33.560Z",
+        "artifactId": 13638376339,
+        "runId": 42532695344,
+        "runAttempt": 1,
+        "completedAt": "2026-11-08T22:56:32Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42532695344",
+        "runStatus": "in_progress",
+        "publicationPending": true,
+        "expectedBase": "f2dcbcc6a2c715e5364ecded43d8848955ecca9f"
       }
     },
     "1364": {
@@ -4452,9 +4549,9 @@
     "fence": 319,
     "materialSha": "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
     "expectedBase": "f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1794178374369,
-    "expiresAt": 1794182172370,
+    "expiresAt": 1794182327438,
     "patchId": "f7169b8ff61e6d0f48dede59c8ea550f5b11ae90",
     "reviewRequest": "review:1363:2:f7169b8ff61e6d0f48dede59c8ea550f5b11ae90:f2dcbcc6a2c715e5364ecded43d8848955ecca9f"
   },
@@ -4545,6 +4642,10 @@
     },
     "finish:64a67665-ce14-41a7-93f0-f30a773289d5:finish:8:review-presentation": {
       "digest": "eac3e89a1d39b2fa83a74054f6ab36eb16d8b154021c7f32365d4b19a471b3ed",
+      "issue": 1363
+    },
+    "finish:64a67665-ce14-41a7-93f0-f30a773289d5:finish:8:review-complete": {
+      "digest": "e407413efa827ed2b93a091f3ded5ccbbed7d8297be63b141b4cce545864d456",
       "issue": 1363
     },
     "finish:605de1e0-083d-4131-a7ac-72cca22dadcd": {
