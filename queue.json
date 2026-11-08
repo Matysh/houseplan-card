@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6985,
-  "nextTicket": 307,
+  "revision": 6986,
+  "nextTicket": 308,
   "nextFence": 307,
   "tasks": {
     "1193": {
@@ -3792,14 +3792,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1347-narrow-header",
-      "materialSha": "48778427d68eb886492861d98b8ef453d99d85d5",
+      "materialSha": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 306,
-      "queued": false,
+      "ticket": 307,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794138718417,
-      "reviewEntry": 4,
+      "readyAt": 1794139321533,
+      "reviewEntry": 5,
       "patchId": "663d8ef9a1c66ae62c3a7048ecfefd3eee3f378d",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -3851,8 +3851,7 @@
       "reviewCorrection": {
         "requestId": "review:1347:3:9b5bfa77455daf27fc936550fbd03bffe4a18371:2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
         "at": 1794138210112
-      },
-      "reason": "checks-failed"
+      }
     },
     "1348": {
       "issue": 1348,
@@ -4225,7 +4224,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1347
+  ],
   "active": null,
   "events": {
     "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17:finish:2:synchronized": {
@@ -4685,6 +4686,28 @@
           "entry": 4,
           "detail": "Браузер: toolbar stable width: failed",
           "eventId": "finish:6a2b6b16-09f5-4a73-8dec-1e9d420ab31e:finish:3:return:return:1347"
+        }
+      }
+    },
+    "finish:809cc8c9-e7ef-46b0-ab32-b5d70646f170": {
+      "digest": "188e12c7ec803a7cc3a50cbb416403c338c7c5b2b69b2a57bb2a84124cd5c166",
+      "issue": 1347,
+      "message": {
+        "kind": "queued",
+        "issue": 1347,
+        "at": 1794139321533,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
+        "evidence": {
+          "id": "20261108T113042791-2c153068",
+          "name": "Тесты для задачи #1347 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T113042791-2c153068/report.json",
+          "materialSha": "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
+          "status": "passed",
+          "finishedAt": "2026-11-08T11:36:48.166Z",
+          "failures": []
         }
       }
     }
