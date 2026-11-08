@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6705,
-  "nextTicket": 298,
+  "revision": 6706,
+  "nextTicket": 299,
   "nextFence": 298,
   "tasks": {
     "1193": {
@@ -3931,6 +3931,20 @@
         "sourceSha": "6cedac4193d114c7eea822f6e06b4fb65181bd9d"
       }
     },
+    "1350": {
+      "issue": 1350,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1350-toggle-label",
+      "materialSha": "eb1e71e05f6c0fc67b02147f7c1df219ca4363a5",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 298,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794120853007,
+      "reviewEntry": 1
+    },
     "1351": {
       "issue": 1351,
       "track": "ship",
@@ -4138,7 +4152,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1350
+  ],
   "active": null,
   "events": {
     "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:2:synchronized": {
@@ -4224,6 +4240,19 @@
           "detail": "Поведение: test/open-passage-contract.test.mjs: failed",
           "eventId": "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:3:return:return:1351"
         }
+      }
+    },
+    "finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1": {
+      "digest": "5348f0f6e57b195ce521fc8e3b183060dfc0c526718bdf69c00994255265a10e",
+      "issue": 1350,
+      "message": {
+        "kind": "queued",
+        "issue": 1350,
+        "at": 1794120853007,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "eb1e71e05f6c0fc67b02147f7c1df219ca4363a5"
       }
     }
   },
