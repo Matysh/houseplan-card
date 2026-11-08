@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6692,
+  "revision": 6693,
   "nextTicket": 297,
   "nextFence": 297,
   "tasks": {
@@ -420,44 +420,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8"
-      }
-    },
-    "1238": {
-      "issue": 1238,
-      "branch": "codex/1238-import-opening-repair",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
-      "mergedSha": "0c030e70016f34ee103ce9a0e15a312915edb09f",
-      "mergedAt": 1793717876152,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1238:2:e980a082ed510df9e71aa3e78f243633d02d8991:d3db9729b6d43cd3ecdeff2a18f518a2c8dfd2f4",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "0c030e70016f34ee103ce9a0e15a312915edb09f"
       }
     },
     "1239": {
@@ -3965,7 +3927,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "6cedac4193d114c7eea822f6e06b4fb65181bd9d"
       }
     }
   },
@@ -4143,7 +4106,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:42455939858:1:1349": {
+      "digest": "6d26b8963f028d708a85ad1b74b1f27a63dc12bb006601a13f75afe77269ae62",
+      "issue": 1349,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1349,
+        "at": 1794120385840,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "6cedac4193d114c7eea822f6e06b4fb65181bd9d"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "6cedac4193d114c7eea822f6e06b4fb65181bd9d",
     "status": "pending",
