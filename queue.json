@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7502,
+  "revision": 7503,
   "nextTicket": 320,
   "nextFence": 320,
   "tasks": {
@@ -4466,6 +4466,10 @@
       "digest": "135977a66c9aca494a9f9fb4368c5ba3495b7a9889f97493b76df9411c0f2743",
       "issue": 1363
     },
+    "finish:64a67665-ce14-41a7-93f0-f30a773289d5:finish:5:s6-label": {
+      "digest": "51ac60b15995ab96f143d5b407cb2b031fe99528db024fd2300323ca8771e78c",
+      "issue": 1363
+    },
     "finish:605de1e0-083d-4131-a7ac-72cca22dadcd": {
       "digest": "e098ae9154966b945c26e6434156d83073ef4230f888e6a63e55d88f9b332b6e",
       "issue": 1363,
@@ -4567,7 +4571,8 @@
         "resubmission": false,
         "reviewChanges": "Ветка `codex/1363-accepted-stable`, base `f2dcbcc6a2c715e5364ecded43d8848955ecca9f`, head `e061bfff7fe4982e41cc00e68a6b1a5f533c9b36`. Трек show сохранён. Продуктовый код и модель данных не меняются.\n\n### Разрешение и точный пакет PNG\n\nВладелец явно принял оба решения в чате2026-11-09; запись: https://github.com/Matysh/houseplan-card/issues/1363#issuecomment-6728097518. Все58SHA PNG из принятой галереи сверены с исходными capture artifacts. Штатный golden-accept выполнен на точном capture checkout63dd217 (6кадровbeta+52rest); принятие сохранено commit a34d17fb29. Только этот baseline-commit перенесён cherry-pick -x на актуальныйdevf2dcbcc; capture/sourceSha в provenance остаётся настоящим63dd217, не подменяется текущимhead.\n\nИзменены ровно58PNG и их per-frame provenance в baselines-index.json.322остальные записи индекса (включая исторические) и все глобальные поля прежнего bulk acceptance сохранены побайтно/структурно. Другие PNG не менялись. Текущие58baselineSHA повторно совпали с утверждёнными actualSHA. Остальные файлы diff: один native grid smoke и RU/EN changelog; всего62пути.\n\n### Калибровка и отрицательные свидетели\n\nТолько isoLight/isoDark вызывают pixelEquivalent с changedLimit300; значение по умолчанию150, maxDelta40,mean0.05 и все прежние геометрические/input/cancel assertions сохранены. В обеих темах новый свидетель реально сдвигает `.zoomwrap` на1CSSpx, снимает устойчивый browser raster, затем в finally восстанавливает прежний translate и priority до остальных native-сценариев.\n\nФактические результаты: эквивалентныеiso-пары256пикселей,max13,mean.007327/.006905; светлый сдвиг37238пикселей,max255,mean2.009274; тёмный37609,max218,mean2.426238. Оба настоящих сдвига отвергнуты. Все flat/static/Plan/Devices/Background пары проходят с прежним лимитом150; геометрические показатели и cancel/input проверки зелёные.\n\n### Проверки до финального S6\n\nАдресная подвыборка существующего stable-каталога `20261108T224015078-7d643df8` на head e061bfff:6/6шагов successful,materialClean=true. Подготовкаbuild/types/test-build зачтена по неизменным входам, demo-assets выполнен; grid smokePASS, все75beta+251rest=326goldenPASS,0different/0errors/0skip. Это явно адресная проверка изменённых входов, не новый полный567шаговыйstable-прогон. При повторной verify новые картинки в baselines не принимались: остались именно ранее одобренные58PNG.\n\nНовые два assertions находятся в существующем native browser-файле smoke_grid_scale_invariance, который в каталоге keep/browser; назначение geometry/2.5D не изменилось. Для S6 явно запрошены этот native-файл и существующий golden-accept.test; централизованный выбор не урезается. Golden-кадры сохраняют собственный адресный маршрут; новых глобальных гейтов нет.\n\nПосле этих подготовительных проверок выполняется штатный finish: вход в очередь, актуализация при необходимости, принятый S6, затем содержательное S7. Неизменные продукт/backend/HA-входы из прошлого полного аудита не объявляются повторно исполненными. Выпуск версии не запрошен.\n\n\n### Поправка после первого S6\n\nRun 20261108T224747195-442e626d: 558/559 шагов passed/reused; один отказ в test/grid-scale-static-fixture.test.mjs — старый regex требовал литерал 150 вместо параметра. В 26db513dfa статический guard обновлён на точный согласованный контракт (default/flat 150, только iso 300, max 40, mean 0.05, отрицательные свидетели в обеих темах). Все три теста файла проходят. Исходный красный отчёт сохранён; запускается повторный S6.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
