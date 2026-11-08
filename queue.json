@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7163,
+  "revision": 7164,
   "nextTicket": 313,
   "nextFence": 313,
   "tasks": {
@@ -4077,6 +4077,15 @@
         "entry": 2,
         "detail": "Поведение: test/bundle-assets.test.mjs: failed",
         "eventId": "finish:872d324d-36fb-4f06-b772-81f55c572dca:finish:3:return:return:1354"
+      },
+      "s6": {
+        "id": "20261108T153419991-8bf3b592",
+        "name": "Тесты для задачи #1354 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261108T153419991-8bf3b592/report.json",
+        "materialSha": "ad794da4050a59757526862d0de8424c642463fc",
+        "status": "passed",
+        "finishedAt": "2026-11-08T15:38:30.241Z",
+        "failures": []
       }
     },
     "1355": {
@@ -4297,9 +4306,9 @@
     "fence": 312,
     "materialSha": "ad794da4050a59757526862d0de8424c642463fc",
     "expectedBase": "0a3c5489931d8a90090e622e839bc60d4ac3971c",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794152049347,
-    "expiresAt": 1794152588579,
+    "expiresAt": 1794155911498,
     "patchId": "179c744d48de3592a313ad4ba15e68b5c0e22fa7"
   },
   "events": {
@@ -4381,6 +4390,10 @@
     },
     "finish:3ee02c12-3f9f-4641-a08d-e8237c766210": {
       "digest": "76e87f7609dc70d21b92f6f98f9a9a723e7f562b20a726cec4b9aee2b3ec7fdb",
+      "issue": 1354
+    },
+    "finish:fe54ab29-7f96-4427-800f-608e3eb86837:finish:3:s6-complete": {
+      "digest": "12981b13b32cad4395cc9e54ecbaec5018aa6a1b5ddacc47f2308cb1bdc3c067",
       "issue": 1354
     },
     "finish:6b1a2579-a5a5-41fa-85af-9cc8683c7fee": {
