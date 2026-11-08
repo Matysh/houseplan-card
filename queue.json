@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6940,
+  "revision": 6941,
   "nextTicket": 305,
   "nextFence": 305,
   "tasks": {
@@ -3800,7 +3800,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794137086415,
       "reviewEntry": 2,
-      "patchId": "8e63b1ca357f5b5c1f3d806baafc7adb3ca944c3",
+      "patchId": "f093d9c8fdcb1c06083e393bc435843960e58a79",
       "changedFiles": [
         "demo/helpers/header-actions.mjs",
         "demo/smoke_header_actions_menu.mjs",
@@ -3810,6 +3810,7 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/USER-GUIDE.ru.md",
+        "docs/data-hp-contract.json",
         "process-next/lib/source-dependencies.mjs",
         "src/editor-context-menu.ts",
         "src/header-actions-menu.ts",
@@ -3820,7 +3821,9 @@
         "src/i18n/ru.json",
         "src/panel-header-flow.ts",
         "src/styles/panel-header.styles.ts",
-        "test/panel-header-flow.test.mjs"
+        "test/i18n.test.mjs",
+        "test/panel-header-flow.test.mjs",
+        "test/styles-split.test.mjs"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -4198,10 +4201,11 @@
     "token": "304:finish:276a573b-19e2-4caa-96fb-1d017e224d94:finish:1:admit",
     "fence": 304,
     "materialSha": "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
+    "phase": "testing",
     "admittedAt": 1794137090025,
-    "expiresAt": 1794137390025
+    "expiresAt": 1794137396081,
+    "patchId": "f093d9c8fdcb1c06083e393bc435843960e58a79"
   },
   "events": {
     "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17:finish:2:synchronized": {
@@ -4234,6 +4238,10 @@
     },
     "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17:finish:3:return": {
       "digest": "03af8ec13056501305f9d15933463f080cc078d20e9bf662756aae8e9fa2c794",
+      "issue": 1347
+    },
+    "finish:276a573b-19e2-4caa-96fb-1d017e224d94:finish:2:synchronized": {
+      "digest": "a387578d94caa659c91be2d962851aaa6971abfba1972ec773516db371d655b6",
       "issue": 1347
     },
     "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17": {
