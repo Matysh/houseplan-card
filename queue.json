@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6779,
+  "revision": 6780,
   "nextTicket": 301,
   "nextFence": 301,
   "tasks": {
@@ -453,43 +453,6 @@
       },
       "devBuild": {
         "status": "not-required"
-      }
-    },
-    "1240": {
-      "issue": 1240,
-      "branch": "issue/1240-card-picker-i18n",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "0c030e70016f34ee103ce9a0e15a312915edb09f",
-      "mergedSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef",
-      "mergedAt": 1793722707525,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "a297fdedf383f8af3187",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 11
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "d4f96e0a88d6d7de6703f241f2effcb2e48b18ef"
       }
     },
     "1241": {
@@ -4002,7 +3965,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f"
       }
     }
   },
@@ -4345,6 +4309,18 @@
         "materialSha": "a4f636ddbd0cfbd1ae4085634351b8f831d8403c",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:42457145262:1:1351": {
+      "digest": "8b4c10a255b9163352ba5d3401b04b43dbddd549a25256679529f6b9caa5f45a",
+      "issue": 1351,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1351,
+        "at": 1794121485318,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f"
       }
     }
   },
