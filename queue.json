@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7594,
+  "revision": 7595,
   "nextTicket": 324,
   "nextFence": 324,
   "tasks": {
@@ -4557,6 +4557,10 @@
       "digest": "117ddf8213d5fc7ce0d025967b260aef70f614d08926e09fcd4f899759dd9f65",
       "issue": 1364
     },
+    "github:42534449870:1:completions:message:7c33064c3cd17c811da95e3da58b608addd900cd079da266aba6022eaa927620": {
+      "digest": "68e5e6a1e95ad2b7cf90faea8bcfa9251e14bb17e77abe0c8b4632cc939dd170",
+      "issue": 1364
+    },
     "finish:9edf4d56-53eb-400b-b760-29e679219f4a": {
       "digest": "ba2b0801094a68e6e1c731c49650dd32fb1093f4c638b590c91cc4e0c5222e18",
       "issue": 1364,
@@ -4653,7 +4657,8 @@
           "entry": 2,
           "detail": "Браузер: space switch transitions: failed",
           "eventId": "finish:33d041d7-5d38-432f-a60f-c1ecd0f9fa2d:finish:3:return:return:1364"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:ee4d2ccb-917a-4f2e-ba5c-3edf4cd1657d": {
