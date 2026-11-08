@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7566,
+  "revision": 7567,
   "nextTicket": 321,
   "nextFence": 321,
   "tasks": {
@@ -4180,7 +4180,18 @@
         "src/houseplan-card.ts",
         "src/panel-header-flow.ts",
         "src/styles/panel-header.styles.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794179271840,
+        "entry": 1,
+        "detail": "Поведение: test/data-hp-contract.test.mjs: failed; Браузер: mobile view header: failed; Браузер: mode transition: failed; Браузер: space switch transitions: failed",
+        "eventId": "finish:9edf4d56-53eb-400b-b760-29e679219f4a:finish:2:return:return:1364"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4369,18 +4380,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1364,
-    "worker": "github-coordinator",
-    "token": "320:github:42532864133:1:tick:1:admit",
-    "fence": 320,
-    "materialSha": "136b1dbbe4f55a0e4029c900ef7d00426902b4a1",
-    "expectedBase": "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
-    "phase": "testing",
-    "admittedAt": 1794178739168,
-    "expiresAt": 1794179534410,
-    "patchId": "931f7266d216a953b1d5dd4814cdb8b2920d85db"
-  },
+  "active": null,
   "events": {
     "github:42532864133:1:completions:message:222710fd0fc6ab26ffd10f4da4c8e78055fee949bfc87be9a201b201928bf3ac": {
       "digest": "864fefd238a9f6426042f84eb730aa1438244c8a0abcea2f9faacab281ce2dc9",
@@ -4422,6 +4422,10 @@
       "digest": "bb8fe5f3c55da4a2c5193643fc5406d31dfbffa71006eeab8e04a94ba795f729",
       "issue": 1364
     },
+    "finish:9edf4d56-53eb-400b-b760-29e679219f4a:finish:2:return": {
+      "digest": "f5cdb4bbaf9a36e1b0f932711166bec36d85b27100023aa6053bd217ed945fa4",
+      "issue": 1364
+    },
     "finish:9edf4d56-53eb-400b-b760-29e679219f4a": {
       "digest": "ba2b0801094a68e6e1c731c49650dd32fb1093f4c638b590c91cc4e0c5222e18",
       "issue": 1364,
@@ -4461,6 +4465,26 @@
         "track": "show",
         "layer": "product",
         "materialSha": "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed"
+      }
+    },
+    "finish:9edf4d56-53eb-400b-b760-29e679219f4a:finish:2:return:return:1364": {
+      "digest": "f5cdb4bbaf9a36e1b0f932711166bec36d85b27100023aa6053bd217ed945fa4",
+      "issue": 1364,
+      "message": {
+        "kind": "return",
+        "issue": 1364,
+        "at": 1794179271840,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794179271840,
+          "entry": 1,
+          "detail": "Поведение: test/data-hp-contract.test.mjs: failed; Браузер: mobile view header: failed; Браузер: mode transition: failed; Браузер: space switch transitions: failed",
+          "eventId": "finish:9edf4d56-53eb-400b-b760-29e679219f4a:finish:2:return:return:1364"
+        }
       }
     }
   },
