@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { launch, finish } from './serve.mjs';
+import { headerActionTarget, clickHeaderAction } from './helpers/header-actions.mjs';
 import { GOLDEN_SCENARIOS } from './golden/matrix.mjs';
 import { prepareGoldenScenario } from './golden/harness.mjs';
 const {page,browser}=await launch({width:1800,height:900});
@@ -18,21 +19,28 @@ try{
     await page.evaluate(language=>window.__card.setConfig({...window.__card._config,language}),lang);await settle();
     for(const width of [1800,1000,768,390,320]){
       await page.evaluate(width=>document.getElementById('host').style.cssText=`width:${width}px!important;max-width:none!important;padding:0!important;margin:0!important`,width);await settle();
-      const add=card.locator('[data-hp="space-add"]');
+      const menuPhase=await card.locator('.hdr').getAttribute('data-panel-flow')==='5';
+      const add=card.locator(menuPhase ? '[data-hp="header-actions-trigger"]' : '[data-hp="space-add"]');
       await add.focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');
-      assert.ok(await add.evaluate(e=>e.matches(':focus-visible')&&getComputedStyle(e).outlineWidth==='2px'&&getComputedStyle(e).outlineStyle==='solid'));
+      const focusState=await add.evaluate(e=>({visible:e.matches(':focus-visible'),outlineWidth:getComputedStyle(e).outlineWidth,
+        outlineStyle:getComputedStyle(e).outlineStyle,active:e.getRootNode().activeElement?.getAttribute('data-hp')}));
+      assert.ok(focusState.visible&&focusState.outlineWidth==='2px'&&focusState.outlineStyle==='solid',JSON.stringify({lang,width,menuPhase,focusState}));
       let previous=null;
       for(const mode of modes){
         const tab=card.locator(`[data-hp="mode-tab"][data-mode="${mode}"]`);
         assert.equal(await tab.getAttribute('aria-label'),words[lang][`mode.${mode}`]);
         assert.equal(await tab.getAttribute('data-hp-tooltip'),words[lang][`mode.${mode}_tip`]);
-        await tab.click();await settle();
+        await clickHeaderAction(card,'mode-'+mode);await settle();
+        await headerActionTarget(card,'mode-view');
         const state=await card.evaluate(c=>{
           const root=c.shadowRoot,head=root.querySelector('.head'),group=head.querySelector('.modes');
           const slot=group.querySelector('.editor-close-slot'),active=group.querySelector('.modetab.active');
-          const close=slot.querySelector('.closex'),rect=close.getBoundingClientRect();
+          const actionsOnly=head.parentElement.dataset.panelFlow==='5';
+          const originalClose=slot.querySelector('.closex');
+          const close=actionsOnly ? root.querySelector('[data-hp="header-actions-menu"]:not([inert]) [data-action="mode-view"]') : originalClose;
+          const rect=close.getBoundingClientRect();
           const hit=root.elementFromPoint(rect.x+5,rect.y+rect.height/2);
-          return {width:group.getBoundingClientRect().width,height:head.getBoundingClientRect().height,
+          return {actionsOnly,width:(actionsOnly ? head.querySelector('[data-hp="header-actions-trigger"]') : group).getBoundingClientRect().width,height:head.getBoundingClientRect().height,
             closeWidth:rect.width,closeHeight:rect.height,closeAfterActive:active.nextElementSibling===slot,
             hit:hit===close||close.contains(hit),scroll:head.scrollWidth,available:head.clientWidth,
             x:rect.x+5,y:rect.y+rect.height/2,stage:root.querySelector('.stage').clientHeight,
@@ -43,8 +51,9 @@ try{
         assert.ok(!state.nestedClose&&!state.count,JSON.stringify(state));
         if(previous)assert.ok(Math.abs(previous.width-state.width)<1&&Math.abs(previous.height-state.height)<1,JSON.stringify({previous,state}));
         previous=state;
+        if(state.actionsOnly){await page.keyboard.press('Escape');await card.locator('[data-hp="header-actions-menu"]:not([inert])').waitFor({state:'hidden'});}
       }
-      const box=await card.locator('.head [data-hp="editor-close"]').boundingBox();
+      const box=await (await headerActionTarget(card,'mode-view')).boundingBox();
       await page.mouse.click(box.x+5,box.y+box.height/2);await settle();
       assert.equal(await card.locator('ha-card').getAttribute('data-hp-mode'),'view');
       assert.equal(await card.locator('.head [data-hp="editor-close"]').count(),0);
@@ -58,4 +67,5 @@ try{
     const result=await prepareGoldenScenario(page,scene);
     assert.ok(result.phoneHeader.rows>0&&result.phoneHeader.height>0);
   }
-}finally{await finish(browser);}
+}catch(error){await browser.close();throw error;}
+await finish(browser);

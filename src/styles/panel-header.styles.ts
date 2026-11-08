@@ -71,6 +71,7 @@ export const panelHeaderStyles = css`
 .hdr[data-panel-flow='4'] .head > .title { flex:1 0 100%; max-width:100%; }
 .panel-menu { flex:0 0 44px; }
 .hdr[data-panel-flow] .head > .header-actions-trigger { display:none; }
+.hdr[data-panel-flow] .header-actions-trigger:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
 .hdr[data-panel-flow='5'] > .head { flex-direction:column; align-items:stretch; }
 .hdr[data-panel-flow='5'] .head > :is(.panel-menu,.modes,.spacer,.header-actions,.title) { display:none; }
 .hdr[data-panel-flow='5'] .head > .tabs { display:none; }
