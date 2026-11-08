@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep stable smoke assertions on the visible hidden-device action, the phone View header and the explicit frozen door field order (#1362).
+
 - Restore LED strip actions after leaving an editor for View (#1361).
 
 - Keep settings Help open after a queued scroll that already revealed its trigger; share the anchor check with dropdowns (#1360).

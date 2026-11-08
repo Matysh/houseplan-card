@@ -98,7 +98,7 @@ try{
     const first=group.fields.find(f=>f.key==='flip_h'),second=group.fields.find(f=>f.key==='flip_v');
     const extra=second.box[1]-first.box[1];
     const toggle={key:'light_transparent',box:[...first.box]};
-    group.fields.forEach(field=>field.box[1]+=extra);group.fields.unshift(toggle);group.box[3]+=extra;
+    group.fields.slice(flipIndex).forEach(field=>field.box[1]+=extra);group.fields.splice(flipIndex,0,toggle);group.box[3]+=extra;
    }
    out[prefix+'_section_geometry']=expected.groups.length===actual.groups.length&&expected.groups.every((group,i)=>near(group.box,actual.groups[i].box));
    out[prefix+'_field_geometry']=expected.groups.every((group,i)=>group.fields.length===actual.groups[i]?.fields.length&&group.fields.every((f,j)=>f.key===actual.groups[i].fields[j].key&&near(f.box,actual.groups[i].fields[j].box)));

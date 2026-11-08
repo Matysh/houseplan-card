@@ -215,7 +215,7 @@ await page.reload({ waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => window.__card?._model?.length && !window.__card._booting);
 await installHpTestOnPage(page);
 card = page.locator('houseplan-card').first();
-check('reloadRestoresSavedChoice', await card.locator('[data-hp="hidden-devices"]').getAttribute('aria-pressed'), 'true');
+check('reloadRestoresSavedChoice', await mobileEye.getAttribute('aria-pressed'), 'true');
 check('reloadUsesSameCardAddress', await page.evaluate(() => window.__card._hiddenDevicePreference.address), persistedKey);
 await page.evaluate(async () => {
   const c = window.__card, lamp = c._devices.find(d => d.space === c._space && d.primary?.startsWith('light.'));

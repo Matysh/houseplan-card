@@ -38,4 +38,4 @@ try{
   });
  });
  await f.assertClean();checkAll(out);await finish(f.browser,out);
-}finally{await f.close();}
+}finally{await f.close();}  out.phone_editor_header_fits=await phoneHeaderFits();
