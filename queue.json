@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7040,
+  "revision": 7041,
   "nextTicket": 309,
   "nextFence": 309,
   "tasks": {
@@ -4008,7 +4008,17 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794145430343,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "fc9c81cab42673f07a58e2192e6ccec45f1683cf",
+      "changedFiles": [
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/panel-three-rows-ui-1132.png",
+        "demo/golden/baselines/plan-rotation-phone-editor-320-1070.png",
+        "demo/golden/baselines/plan-rotation-phone-editor-360-1070.png",
+        "demo/golden/baselines/plan-rotation-phone-view-320-1070.png",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4217,12 +4227,17 @@
     "token": "308:finish:fb9635c3-2b4e-4bc6-85af-8d7cdfee23ef:finish:1:admit",
     "fence": 308,
     "materialSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
+    "phase": "testing",
     "admittedAt": 1794145433923,
-    "expiresAt": 1794145733923
+    "expiresAt": 1794145739445,
+    "patchId": "fc9c81cab42673f07a58e2192e6ccec45f1683cf"
   },
   "events": {
+    "finish:fb9635c3-2b4e-4bc6-85af-8d7cdfee23ef:finish:2:synchronized": {
+      "digest": "934f16588e66b22a556ad6353d714fe9f6b65170f9bb23af9cdf6fcf628fabeb",
+      "issue": 1353
+    },
     "finish:fb9635c3-2b4e-4bc6-85af-8d7cdfee23ef": {
       "digest": "ab37af976da3ea7cbbe4b3cead6d5fe64286eb5296c87a75cf8ef4bd3806da3e",
       "issue": 1353,
