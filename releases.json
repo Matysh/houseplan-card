@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 568,
-  "active": null,
+  "revision": 569,
+  "active": "v1.85.1-beta.1-20261108",
   "candidates": {
     "v1.84.0-beta.2": {
       "id": "v1.84.0-beta.2",
@@ -37178,6 +37178,112 @@
         "messageId": 995,
         "finishedAt": "2026-11-06T20:07:20.472Z"
       }
+    },
+    "v1.85.1-beta.1-20261108": {
+      "id": "v1.85.1-beta.1-20261108",
+      "kind": "beta",
+      "branch": "release/1.85.1-beta.1",
+      "sourceSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
+      "sha": "55569543d09c0fc650b7918e44490ebc9fd88431",
+      "runner": null,
+      "running": null,
+      "status": "prepared",
+      "membership": {
+        "schema": 1,
+        "tag": "v1.85.1-beta.1",
+        "candidate": "55569543d09c0fc650b7918e44490ebc9fd88431",
+        "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
+        "issues": [
+          {
+            "number": 1344,
+            "commits": [
+              "890a4ada80b4d379aaa523f0c18f96cbb6e046e5"
+            ]
+          },
+          {
+            "number": 1345,
+            "commits": [
+              "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa"
+            ]
+          },
+          {
+            "number": 1346,
+            "commits": [
+              "ce0796e207211f495008ed9b9ce21e031484175c",
+              "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865"
+            ]
+          },
+          {
+            "number": 1347,
+            "commits": [
+              "48778427d68eb886492861d98b8ef453d99d85d5",
+              "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
+              "739b288b9006a233eb8fdb44e165c461625054c3",
+              "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
+              "f7b252d8f0c63e6fa3c87712099b5f06bac010e5"
+            ]
+          },
+          {
+            "number": 1348,
+            "commits": [
+              "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
+              "628ca768782b89a07bb9779f651c6f1cfcd5cb26"
+            ]
+          },
+          {
+            "number": 1349,
+            "commits": [
+              "6cedac4193d114c7eea822f6e06b4fb65181bd9d"
+            ]
+          },
+          {
+            "number": 1350,
+            "commits": [
+              "0d127cd038f4110e7d90cac7004f508f07717fff",
+              "c723c9ba1baf695506f17d643a7eb6ad361c57dd",
+              "f8801ee93a85b1bc981506c5cabe3dbf125807c3"
+            ]
+          },
+          {
+            "number": 1351,
+            "commits": [
+              "5d3a14677c83db84157697f9a425179bc0a02fb4",
+              "60199f149e7653417447ab7b82a0cda6d9a0a86f"
+            ]
+          },
+          {
+            "number": 1352,
+            "commits": [
+              "12605c18b10a439baca2a08308840a5acd308406",
+              "2f8be3041a4b8cb8c34cede5d145e02c86deef5e"
+            ]
+          },
+          {
+            "number": 1353,
+            "commits": [
+              "55569543d09c0fc650b7918e44490ebc9fd88431"
+            ]
+          }
+        ]
+      },
+      "includedIssues": [
+        1344,
+        1345,
+        1346,
+        1347,
+        1348,
+        1349,
+        1350,
+        1351,
+        1352,
+        1353
+      ],
+      "reviewRequired": false,
+      "review": null,
+      "metrics": null,
+      "metricsAcceptedSha": null,
+      "portToDev": [],
+      "diagnostics": []
     }
   },
   "published": {
@@ -41673,7 +41779,8 @@
     "stable1850-20261106-publish:completion:738ffbae-6761-41d2-b25b-93b44d87d81b": "2251922505041269903e755359d23448c252727f4e6e4ee543cc3653d5fae450",
     "stable1850-20261106-publish:completion:1f456bdb-8044-41a3-a07c-2c3c3b2f9427": "0e6a2fdb026408a0ea267fecfd370711912788b2612baf4cc49853ea4bf210f7",
     "github:42285497508:1:complete:completion:b7c8506a-77bf-4d44-ac4e-6dca4fd045a8": "b27b019d24e87774fc50ecb5b8efef596cae784a1f3e4f7bb6d0dd3ccb151fab",
-    "github:42285497508:1:complete:completion:1e5c0f11-3e3b-4e5d-a6c3-595853d44993": "641548fd2032dd35141785287763c4fa47d208e067f3c9e7fea786874df72636"
+    "github:42285497508:1:complete:completion:1e5c0f11-3e3b-4e5d-a6c3-595853d44993": "641548fd2032dd35141785287763c4fa47d208e067f3c9e7fea786874df72636",
+    "beta1851-20261108-create": "389c732018589b352643adaaa356fbe616367207d657688f6e537b08ae73ff54"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
