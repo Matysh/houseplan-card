@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 586,
+  "revision": 587,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -45493,6 +45493,25 @@
         "assetName": "houseplan.zip",
         "bytes": 2076885,
         "observedAt": "2026-11-08T15:08:29.083Z"
+      },
+      "completion": {
+        "issues": {
+          "status": "running",
+          "eligible": [
+            1344,
+            1345,
+            1346,
+            1347,
+            1348,
+            1349,
+            1350,
+            1351,
+            1352,
+            1353
+          ],
+          "waitingForS8": [],
+          "completed": []
+        }
       }
     }
   },
@@ -50000,7 +50019,8 @@
     "beta1851-20261108-publish:prepared:eaeb5978-f06c-47c3-9b68-3bf35f8b161c": "c63d3f86a91f3da9513e8231eae41d86bd33ceac4b0f41377e70c21dcc83d900",
     "beta1851-20261108-publish:started:583": "57b062a576e79da18c01f2bc9aab733ee5cab3bf1631addf3905c83f8e62c4f4",
     "beta1851-20261108-publish:published": "ce7ed57cbaece9b558215ed667ca39ac18dac226b5621d803ebfedbc75f9466d",
-    "beta1851-20261108-publish:completion:9f62da36-3f82-4785-b224-75448f04dff1": "c6dc5e27509e36e4979991038440273ae0d76ffc2371f1e59d5ca4114982d541"
+    "beta1851-20261108-publish:completion:9f62da36-3f82-4785-b224-75448f04dff1": "c6dc5e27509e36e4979991038440273ae0d76ffc2371f1e59d5ca4114982d541",
+    "beta1851-20261108-publish:completion:04500c3e-60f7-453c-8859-e59cfe571659": "e56531b636c2eea9d41c7192bfdb913ad6c0352d5fd46a0296febccbe0db6680"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
