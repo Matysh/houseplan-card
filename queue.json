@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7579,
-  "nextTicket": 323,
+  "revision": 7580,
+  "nextTicket": 324,
   "nextFence": 323,
   "tasks": {
     "1193": {
@@ -4160,11 +4160,11 @@
       "materialSha": "09399a68115e164313430c2facaf7a565b8ed9c8",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 322,
-      "queued": false,
+      "ticket": 323,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794179550656,
-      "reviewEntry": 3,
+      "readyAt": 1794179789179,
+      "reviewEntry": 4,
       "patchId": "1cc7c7550b8e5ddf94d4ab07ebb9d1ac849548ff",
       "changedFiles": [
         "demo/helpers/empty-space-home-arrow.mjs",
@@ -4194,8 +4194,7 @@
         "entry": 3,
         "detail": "Браузер: space switch transitions: failed",
         "eventId": "finish:ee4d2ccb-917a-4f2e-ba5c-3edf4cd1657d:finish:3:return:return:1364"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4383,7 +4382,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1364
+  ],
   "active": null,
   "events": {
     "github:42532864133:1:completions:message:222710fd0fc6ab26ffd10f4da4c8e78055fee949bfc87be9a201b201928bf3ac": {
@@ -4615,6 +4616,19 @@
           "detail": "Браузер: space switch transitions: failed",
           "eventId": "finish:ee4d2ccb-917a-4f2e-ba5c-3edf4cd1657d:finish:3:return:return:1364"
         }
+      }
+    },
+    "finish:aeebf595-2918-4acf-9861-8c4a3e840841": {
+      "digest": "671426417f8751bead688a1950b674783aea7dcd0015493cbc7d65e52fc132df",
+      "issue": 1364,
+      "message": {
+        "kind": "queued",
+        "issue": 1364,
+        "at": 1794179789179,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "09399a68115e164313430c2facaf7a565b8ed9c8"
       }
     }
   },
