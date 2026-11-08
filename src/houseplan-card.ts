@@ -5383,6 +5383,7 @@ export class HouseplanCard extends LitElement {
         if (!ownsHeader() || this._modeTransition.active) return;
         const head = hdr.querySelector(':scope > .head') as HTMLElement | null;
         let compact = this._compactSpaces;
+        const wasCollapsed = this._panelHeaderChoice.phase === 5;
         if (head && headerWidth > 0) {
           const previous = this._panelHeaderChoice;
           const active = (this.renderRoot as ShadowRoot).activeElement;
@@ -5400,7 +5401,7 @@ export class HouseplanCard extends LitElement {
             if (ownsHeader()) { this.requestUpdate(); schedule(); }
           }).catch(() => { this._spaceSelectLoad = null; });
         }
-        if (compact !== this._compactSpaces) {
+        if (compact !== this._compactSpaces || wasCollapsed !== (this._panelHeaderChoice.phase === 5)) {
           this._compactSpaces = compact; this.requestUpdate();
           void this.updateComplete.then(() => {
             if (ownsHeader()) schedule();

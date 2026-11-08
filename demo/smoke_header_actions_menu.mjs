@@ -19,6 +19,16 @@ const read=()=>page.evaluate(()=>{const c=window.__card,r=c.renderRoot,h=r.query
  spaceBeside:!!s&&s.width>0&&s.right<=a.left+.5&&Math.abs(s.y-a.y)<.5,
  triggerGlyph:action.querySelector('ha-icon')?.getAttribute('icon'),triggerText:action.textContent.trim(),
  metrics:r.querySelectorAll('.panel-header-metrics').length};});
+const singleResizeMatrix=async label=>{
+ const rows=[];
+ for(const width of [1800,1400,1100,1000,900,780,600,320,600,780,900,1000,1100,1400,1800]){
+  await size(width);const row=await read();rows.push({width,...row});
+  if(row.phase===5)check(label+'-'+width+'-plain-name',!row.picker&&row.name===row.expectedName&&row.spaceBeside&&row.rows===1);
+  if(row.phase===3)check(label+'-'+width+'-ordinary-compact-picker',row.picker&&row.name===undefined&&row.rows===1);
+ }
+ check(label+'-crosses-3-and-5',rows.some(r=>r.phase===3)&&rows.some(r=>r.phase===5));
+ await size(320);
+};
 try {
  await page.evaluate(()=>{window.__card.setConfig({...window.__card._config,language:'ru'});});await settle();
  const widths=[];
@@ -77,12 +87,17 @@ try {
  check('add-space-opens-create',await spaceDialog.locator('#space-title').inputValue(),'');
  await spaceDialog.locator('[slot="footer"] [data-hp="dialog-cancel"]').click();await spaceDialog.waitFor({state:'detached'});await settle();
  // A sole available space is always a plain label, including pinned Lovelace.
+ await page.evaluate(async()=>{const id=window.__card._space;await window.__hpTest.setServerConfig(cfg=>{
+  cfg.spaces.find(space=>space.id===id).title='A very long pinned floor name '.repeat(6);
+ });});await settle();
  await page.evaluate(()=>{const c=window.__card;c.setConfig({...c._config,floor:c._space});});await settle();
  let single=await read();check('pinned-card-keeps-plain-name',!single.picker&&single.name===single.expectedName&&single.spaceBeside);await card.screenshot({path:out+'/pinned-card.png'});
+ await singleResizeMatrix('pinned-width-only');
  await page.evaluate(()=>{const c=window.__card;const {floor,...config}=c._config;c.setConfig(config);c.panelHost=true;c.requestUpdate();});await settle();
  check('multi-space-panel-keeps-picker',(await read()).picker);
  await page.evaluate(async()=>{await window.__hpTest.setServerConfig(cfg=>{cfg.spaces=cfg.spaces.slice(0,1);});});await settle();
  single=await read();check('single-space-panel-keeps-plain-name',!single.picker&&single.name===single.expectedName&&single.spaceBeside);
+ await singleResizeMatrix('single-panel-width-only');
  await page.evaluate(()=>{const c=window.__card;c.panelHost=false;c.requestUpdate();});await settle();
  single=await read();check('single-space-unpinned-card-keeps-plain-name',!single.picker&&single.name===single.expectedName&&single.spaceBeside);
  // Revoked authority or a changed layout cannot leave a stale actionable sheet.
