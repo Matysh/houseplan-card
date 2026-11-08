@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7148,
-  "nextTicket": 311,
+  "revision": 7149,
+  "nextTicket": 312,
   "nextFence": 311,
   "tasks": {
     "1193": {
@@ -4050,14 +4050,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/issue-1354-device-settings-navigation",
-      "materialSha": "ae9b2ae83f841273debc56d953f344b4e9a5561e",
+      "materialSha": "77792069a99fcb4f9dc0b4c8bc14ee9001e5fb86",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 310,
-      "queued": false,
+      "ticket": 311,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794151086146,
-      "reviewEntry": 1,
+      "readyAt": 1794151742816,
+      "reviewEntry": 2,
       "patchId": "30285d49ad993544efcb62571b8fb11ed1952b81",
       "changedFiles": [
         "demo/smoke_device_settings_scroll.mjs",
@@ -4068,7 +4068,6 @@
         "src/hp-dialog.ts",
         "src/styles/settings-dialogs.styles.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4290,7 +4289,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1354
+  ],
   "active": null,
   "events": {
     "github:42494670650:1:completions:message:de523e3a07221dfd6ec11859c7f009daa47996f6145075597e8afe0fe5951266": {
@@ -4388,6 +4389,19 @@
           "detail": "Поведение: test/bundle-assets.test.mjs: failed; Поведение: test/commit-physical-geometry.test.mjs: cancelled; Поведение: test/golden-matrix.test.mjs: cancelled; Поведение: test/graph-1216-reliability.test.mjs: Подготовка не завершена успешно; Поведение: test/graph-draw-binding.test.mjs: Подготовка не завершена успешно; Поведение: test/graph-edit-seams.test.mjs: Подготовка не завершена успешно; Поведение: test/graph-editor-invariant.test.mjs: Подготовка не завершена успешно; Поведение: test/graph-editor-layout-invariant.test.mjs: Подготовка не завершена успешно; Поведение: test/hidden-device-visibility.test.mjs: Подготовка не завершена успешно; Поведение: test/houseplan-panel.test.mjs: Подготовка не завершена успешно; Поведение: test/houseplan-render-lifecycle.test.mjs: Подготовка не завершена успешно; Поведение: test/i18n-dead-keys.test.mjs: Подготовка не завершена успешно; Поведение: test/i18n-lazy-namespaces.test.mjs: Подготовка не завершена успешно; Поведение: test/i18n.test.mjs: Подготовка не завершена успешно; Поведение: test/interior-window-light.test.mjs: Подготовка не завершена успешно; Поведение: test/isometric-contract.test.mjs: Подготовка не завершена успешно; Поведение: test/junction-limits.test.mjs: Подготовка не завершена успешно; Поведение: test/kiosk-viewport-recovery.test.mjs: Подготовка не завершена успешно; Поведение: test/late-context-replies.test.mjs: Подготовка не завершена успешно; Поведение: test/led-strip-editor.test.mjs: Подготовка не завершена успешно; Поведение: test/led-strip-geometry.test.mjs: Подготовка не завершена успешно; Поведение: test/led-strip-path-cache.test.mjs: Подготовка не завершена успешно; Поведение: test/led-strip-runtime.test.mjs: Подготовка не завершена успешно; Поведение: test/legacy-draft-commit.test.mjs: Подготовка не завершена успешно; Поведение: test/light-barrier-pass.test.mjs: Подготовка не завершена успешно; Поведение: test/light-group-icon-878.test.mjs: Подготовка не завершена успешно; Поведение: test/light-visibility.test.mjs: Подготовка не завершена успешно; Поведение: test/live-editor.test.mjs: Подготовка не завершена успешно; Поведение: test/marker-activity-save-865.test.mjs: Подготовка не завершена успешно; Поведение: test/marker-alert-editor.test.mjs: Подготовка не завершена успешно; Поведение: test/marker-alert-presentation.test.mjs: Подготовка не завершена успешно; Поведение: test/marker-deletion.test.mjs: Подготовка не завершена успешно; Поведение: test/marker-state-source-form.test.mjs: Подготовка не завершена успешно; Поведение: test/marker-state-source.test.mjs: Подготовка не завершена успешно; Поведение: test/moon-phase-direction.test.mjs: Подготовка не завершена успешно; Поведение: test/moon-settings.test.mjs: Подготовка не завершена успешно; Поведение: test/moon.test.mjs: Подготовка не завершена успешно; Поведение: test/mutation-browser-offload.test.mjs: Подготовка не завершена успешно; Поведение: test/mutation-gate-report.test.mjs: Подготовка не завершена успешно; Поведение: test/mutation-gate.test.mjs: Подготовка не завершена успешно; Поведение: test/mutation-guard-outcome.test.mjs: Подготовка не завершена успешно; Поведение: test/native-grid-draw.test.mjs: Подготовка не завершена успешно; Поведение: test/native-select-contract.test.mjs: Подготовка не завершена успешно; Поведение: test/near-axis.test.mjs: Подготовка не завершена успешно; Поведение: test/new-device-ack.test.mjs: Подготовка не завершена успешно; Поведение: test/node-history-runtime.test.mjs: Подготовка не завершена успешно; Поведение: test/node-performance-report.test.mjs: Подготовка не завершена успешно; Поведение: test/open-passage-contract.test.mjs: Подготовка не завершена успешно; Поведение: test/opening-drag.test.mjs: Подготовка не завершена успешно; Поведение: test/optimize-plans-dialog.test.mjs: Подготовка не завершена успешно; Поведение: test/optional-space-model-contract.test.mjs: Подготовка не завершена успешно; Поведение: test/performance-budget.test.mjs: Подготовка не завершена успешно; Поведение: test/plan-geometry-preflight.test.mjs: Подготовка не завершена успешно; Поведение: test/presentation-light-frame.test.mjs: Подготовка не завершена успешно; Поведение: test/properties-catalog.test.mjs: Подготовка не завершена успешно; Поведение: test/properties-color-draft.test.mjs: Подготовка не завершена успешно; Поведение: test/properties-editor.test.mjs: Подготовка не завершена успешно; Поведение: test/properties-patch.test.mjs: Подготовка не завершена успешно; Поведение: test/render-device-snapshot.test.mjs: Подготовка не завершена успешно; Поведение: test/render-invalidation.test.mjs: Подготовка не завершена успешно; Поведение: test/render-snapshot-consumers.test.mjs: Подготовка не завершена успешно; Поведение: test/render-snapshot-floor-reuse.test.mjs: Подготовка не завершена успешно; Поведение: test/render-snapshot-incremental.test.mjs: Подготовка не завершена успешно; Поведение: test/resize-production-path.test.mjs: Подготовка не завершена успешно; Поведение: test/room-co2.test.mjs: Подготовка не завершена успешно; Поведение: test/room-deletion.test.mjs: Подготовка не завершена успешно; Поведение: test/room-device-discovery.test.mjs: Подготовка не завершена успешно; Поведение: test/room-dimming-removed.test.mjs: Подготовка не завершена успешно; Поведение: test/room-save-946.test.mjs: Подготовка не завершена успешно; Поведение: test/settings-sections.test.mjs: Подготовка не завершена успешно; Поведение: test/sh3d-convert-page.test.mjs: Подготовка не завершена успешно; Поведение: test/shared-wall-split.test.mjs: Подготовка не завершена успешно; Поведение: test/signal-visibility.test.mjs: Подготовка не завершена успешно; Поведение: test/smoke-exception-guard.test.mjs: Подготовка не завершена успешно; Поведение: test/smoke-harness-contract.test.mjs: Подготовка не завершена успешно; Поведение: test/space-card-audit-lows.test.mjs: Подготовка не завершена успешно; Поведение: test/space-card-fit.test.mjs: Подготовка не завершена успешно; Поведение: test/space-card-led-disconnect.test.mjs: Подготовка не завершена успешно; Поведение: test/space-card-signal.test.mjs: Подготовка не завершена успешно; Поведение: test/space-copy-runtime.test.mjs: Подготовка не завершена успешно; Поведение: test/space-delete-dialog.test.mjs: Подготовка не завершена успешно; Поведение: test/space-dialog.test.mjs: Подготовка не завершена успешно; Поведение: test/space-render-caches.test.mjs: Подготовка не завершена успешно; Поведение: test/split-passport-provenance.test.mjs: Подготовка не завершена успешно; Поведение: test/static-wall-openings.test.mjs: Подготовка не завершена успешно; Поведение: test/summary-panel-area-memo.test.mjs: Подготовка не завершена успешно; Поведение: test/summary-panel-preferences.test.mjs: Подготовка не завершена успешно; Поведение: test/summary-panel-presentation.test.mjs: Подготовка не завершена успешно; Поведение: test/summary-panel-runtime.test.mjs: Подготовка не завершена успешно; Поведение: test/summary-panel.test.mjs: Подготовка не завершена успешно; Поведение: test/summary-runtime-loader.test.mjs: Подготовка не завершена успешно; Поведение: test/sun-access.test.mjs: Подготовка не завершена успешно; Поведение: test/sun-door-passages.test.mjs: Подготовка не завершена успешно; Поведение: test/sun.test.mjs: Подготовка не завершена успешно; Поведение: test/support-diagnostics.test.mjs: Подготовка не завершена успешно; Поведение: test/support-feedback.test.mjs: Подготовка не завершена успешно; Поведение: test/svg-export.test.mjs: Подготовка не завершена успешно; Поведение: test/toast-identity-source.test.mjs: Подготовка не завершена успешно; Поведение: test/toast-save-context.test.mjs: Подготовка не завершена успешно; Поведение: test/ui-lab-1081.test.mjs: Подготовка не завершена успешно; Поведение: test/vacuum-dock-restart-write.test.mjs: Подготовка не завершена успешно; Поведение: test/vacuum-ecovacs-client.test.mjs: Подготовка не завершена успешно; Поведение: test/vacuum-maps-section.test.mjs: Подготовка не завершена успешно; Поведение: test/vacuum-trail-diagnostics.test.mjs: Подготовка не завершена успешно; Поведение: test/version-recovery-card-contract.test.mjs: Подготовка не завершена успешно; Поведение: test/version-recovery-card.test.mjs: Подготовка не завершена успешно; Поведение: test/version-recovery.test.mjs: Подготовка не завершена успешно; Поведение: test/view-accessibility.test.mjs: Подготовка не завершена успешно; Поведение: test/view-device-menu.test.mjs: Подготовка не завершена успешно; Поведение: test/view-runtime-boundary.test.mjs: Подготовка не завершена успешно; Поведение: test/virtual-light-state.test.mjs: Подготовка не завершена успешно; Поведение: test/wall-end-align.test.mjs: Подготовка не завершена успешно; Поведение: test/wall-identity-corpus.test.mjs: Подготовка не завершена успешно; Поведение: test/wall-removal-limits.test.mjs: Подготовка не завершена успешно; Поведение: test/wall-segment-model.test.mjs: Подготовка не завершена успешно; Поведение: test/wall-thickness-selection.test.mjs: Подготовка не завершена успешно; Поведение: test/wall-union-isolation.test.mjs: Подготовка не завершена успешно; Поведение: test/windows-portability.test.mjs: Подготовка не завершена успешно; Поведение: test/writer-fixed-point.test.mjs: Подготовка не завершена успешно; Поведение: test/zigbee-topology-action.test.mjs: Подготовка не завершена успешно; Поведение: test/zigbee-topology.test.mjs: Подготовка не завершена успешно; Backend: tests_backend/test_ha_portable_recovery.py: Подготовка не завершена успешно; Backend: tests_backend/test_ha_signal_visibility_low.py: Подготовка не завершена успешно; Backend: tests_backend/test_ha_virtual_lights.py: Подготовка не завершена успешно; Backend: tests_backend/test_led_strips.py: Подготовка не завершена успешно; Backend: tests_backend/test_plan_graph_support.py: Подготовка не завершена успешно; Backend: tests_backend/test_portable_recovery.py: Подготовка не завершена успешно; Backend: tests_backend/test_settings_moon.py: Подготовка не завершена успешно; Backend: tests_backend/test_settings_signal_visibility.py: Подготовка не завершена успешно; Backend: tests_backend/test_virtual_lights.py: Подготовка не завершена успешно; Браузер: cold view toggle: Подготовка не завершена успешно; Браузер: device settings 947: Подготовка не завершена успешно; Браузер: device settings scroll: Подготовка не завершена успешно; Браузер: dialog ui kit: Подготовка не завершена успешно; Браузер: editor chrome alignment: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: settings navigation: Подготовка не завершена успешно; Браузер: settings select: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно",
           "eventId": "finish:6b1a2579-a5a5-41fa-85af-9cc8683c7fee:finish:3:return:return:1354"
         }
+      }
+    },
+    "finish:872d324d-36fb-4f06-b772-81f55c572dca": {
+      "digest": "6551c0f299bb1396003ba7c3388eea34e147e14b49380d85970a289d4b190fcd",
+      "issue": 1354,
+      "message": {
+        "kind": "queued",
+        "issue": 1354,
+        "at": 1794151742816,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "77792069a99fcb4f9dc0b4c8bc14ee9001e5fb86"
       }
     }
   },
