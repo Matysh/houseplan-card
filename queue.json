@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7494,
-  "nextTicket": 319,
+  "revision": 7495,
+  "nextTicket": 320,
   "nextFence": 319,
   "tasks": {
     "1193": {
@@ -4123,11 +4123,11 @@
       "materialSha": "e061bfff7fe4982e41cc00e68a6b1a5f533c9b36",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 318,
-      "queued": false,
+      "ticket": 319,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794178052294,
-      "reviewEntry": 1,
+      "readyAt": 1794178370888,
+      "reviewEntry": 2,
       "patchId": "29df0d1da0e426dabd65077ec156d7c92fc8c141",
       "changedFiles": [
         "demo/golden/baselines/baselines-index.json",
@@ -4193,7 +4193,6 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4391,7 +4390,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1363
+  ],
   "active": null,
   "events": {
     "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:2:synchronized": {
@@ -4473,6 +4474,19 @@
           "detail": "Поведение: test/grid-scale-static-fixture.test.mjs: failed",
           "eventId": "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:3:return:return:1363"
         }
+      }
+    },
+    "finish:64a67665-ce14-41a7-93f0-f30a773289d5": {
+      "digest": "8d4d2cb59ef16fb942f8a9c50ada23ec51c3ae05653dd9c9b27ef5ad32965558",
+      "issue": 1363,
+      "message": {
+        "kind": "queued",
+        "issue": 1363,
+        "at": 1794178370888,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e061bfff7fe4982e41cc00e68a6b1a5f533c9b36"
       }
     }
   },
