@@ -9,7 +9,7 @@ export const propertiesStyles = unsafeCSS(css`
   ha-card[data-hp-properties-wide] { position: relative; }
   ha-card[data-hp-properties-wide] > .stage,
   ha-card[data-hp-properties-wide] .editorchrome { width: calc(100% - 360px); }
-  .hdr > .head[data-hp-properties-wide] { width: calc(100% - 360px); box-sizing: border-box; padding-block: 8px; }
+  .hdr > .head[data-hp-properties-wide] { width: calc(100% - 360px); box-sizing: border-box; }
   .hp-properties {
     color-scheme: light dark;
     position: absolute; right: 0; top: 0; bottom: 0;

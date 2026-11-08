@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep shared header buttons at the same vertical position when switching between View and editors with the wide Properties panel (#1349).
+
 - Add a door-only “Lets light through” switch for closed glass doors: shared Glow, exterior solar apertures and bounded sunlight continuation through interior glass doors in Flat/2.5D; retain the flag through save/export/import (#1348).
 
 - Recognize closed room contours with dangling internal walls; retain partitions and openings without requiring Optimize (#1346).

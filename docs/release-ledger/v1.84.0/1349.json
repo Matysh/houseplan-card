@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1349,
+  "baseStable": "v1.84.0",
+  "category": "stable-fix",
+  "rationale": "The shared header uses a smaller vertical padding when the wide Properties panel opens, lifting common controls by 2 CSS pixels. Retain the common header padding in every mode without changing the reserved width or responsive layout.",
+  "summary": {
+    "ru": "Устранено смещение основных кнопок шапки при переходах между Просмотром и редакторами.",
+    "en": "Keep shared header controls vertically stable when switching between View and editors."
+  }
+}
