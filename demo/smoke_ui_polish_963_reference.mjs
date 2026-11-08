@@ -95,7 +95,9 @@ try{
    const expected=structuredClone(approved);
    if(scene==='door'){
     const group=expected.groups.find(g=>g.fields.some(f=>f.key==='flip_h'));
-    const first=group.fields.find(f=>f.key==='flip_h'),second=group.fields.find(f=>f.key==='flip_v');
+    if(group?.fields[0]?.key!=='flip_h')throw Error('Immutable door group must begin with flip_h');
+    const flipIndex=group.fields.findIndex(f=>f.key==='flip_h');
+    const first=group.fields[flipIndex],second=group.fields.find(f=>f.key==='flip_v');
     const extra=second.box[1]-first.box[1];
     const toggle={key:'light_transparent',box:[...first.box]};
     group.fields.slice(flipIndex).forEach(field=>field.box[1]+=extra);group.fields.splice(flipIndex,0,toggle);group.box[3]+=extra;

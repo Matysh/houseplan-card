@@ -13,6 +13,15 @@ try{
  await prepareUi963Page(page,f.url);
  await assertFreshDemoBundle(page,fileURLToPath(new URL('..',import.meta.url)));
  const card=page.locator('houseplan-card');
+ const phoneHeaderFits=()=>card.locator('.head').evaluate(el=>{
+  const head=el.getBoundingClientRect(), controls=[...el.querySelectorAll('button,select')].filter(control=>{
+   const r=control.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(control).visibility==='visible';
+  });
+  return el.scrollWidth<=el.clientWidth+1&&controls.every(control=>{
+   const r=control.getBoundingClientRect();return r.left>=head.left-1&&r.right<=head.right+1&&r.top>=head.top-1&&r.bottom<=head.bottom+1;
+  });
+ });
+ out.phone_header_fits=await phoneHeaderFits();
  await page.evaluate(()=>window.__hpTest.setMode('plan'));
  const action=card.locator('[data-hp=tool][data-tool=draw]');
  // Compact headers replace tooltip buttons with labelled menu commands.
@@ -29,13 +38,6 @@ try{
  out.touch_preserves_data=await page.evaluate(before=>JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout})===before.data,before);
  // #1184 replaced the fixed 56px header with intrinsic responsive rows. Judge
  // real visible target containment; the accepted intrinsic header may wrap.
- out.phone_header_fits=await card.locator('.head').evaluate(el=>{
-  const head=el.getBoundingClientRect(), controls=[...el.querySelectorAll('button,select')].filter(control=>{
-   const r=control.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(control).visibility==='visible';
-  });
-  return el.scrollWidth<=el.clientWidth+1&&controls.every(control=>{
-   const r=control.getBoundingClientRect();return r.left>=head.left-1&&r.right<=head.right+1&&r.top>=head.top-1&&r.bottom<=head.bottom+1;
-  });
- });
+ out.phone_editor_header_fits=await phoneHeaderFits();
  await f.assertClean();checkAll(out);await finish(f.browser,out);
-}finally{await f.close();}  out.phone_editor_header_fits=await phoneHeaderFits();
+}finally{await f.close();}
