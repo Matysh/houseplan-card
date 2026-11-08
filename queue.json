@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7526,
+  "revision": 7527,
   "nextTicket": 321,
   "nextFence": 321,
   "tasks": {
@@ -4143,14 +4143,30 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1364-single-row-header",
-      "materialSha": "a64f27e9e5e2fda4c5e789f1f8618584b66f9a4f",
+      "materialSha": "136b1dbbe4f55a0e4029c900ef7d00426902b4a1",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 320,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794178691643,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "931f7266d216a953b1d5dd4814cdb8b2920d85db",
+      "changedFiles": [
+        "demo/smoke_header_actions_menu.mjs",
+        "demo/smoke_panel_header_overflow.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/TOUCH-SUPPORT.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/UX-MODES.md",
+        "docs/release-ledger/v1.85.0/1364.json",
+        "src/header-space-select.ts",
+        "src/houseplan-card.ts",
+        "src/panel-header-flow.ts",
+        "src/styles/panel-header.styles.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4358,11 +4374,12 @@
     "worker": "github-coordinator",
     "token": "320:github:42532864133:1:tick:1:admit",
     "fence": 320,
-    "materialSha": "a64f27e9e5e2fda4c5e789f1f8618584b66f9a4f",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "136b1dbbe4f55a0e4029c900ef7d00426902b4a1",
+    "expectedBase": "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
+    "phase": "testing",
     "admittedAt": 1794178739168,
-    "expiresAt": 1794179039168
+    "expiresAt": 1794179068693,
+    "patchId": "931f7266d216a953b1d5dd4814cdb8b2920d85db"
   },
   "events": {
     "github:42532864133:1:completions:message:222710fd0fc6ab26ffd10f4da4c8e78055fee949bfc87be9a201b201928bf3ac": {
@@ -4371,6 +4388,10 @@
     },
     "github:42532864133:1:completions:message:dfeb82c9e393c2f530e4c3804abd2d82d8296f4aecb23220607bd0915936528d": {
       "digest": "2049fcf72ff9f1fbe838dc69084c934749026613440a8b7ea45ca000429f292f",
+      "issue": 1364
+    },
+    "finish:9edf4d56-53eb-400b-b760-29e679219f4a:finish:1:synchronized": {
+      "digest": "0138908039cdf3865fc4da1c8823faf0f9b4b7dc25803d0853fb359174922e85",
       "issue": 1364
     },
     "finish:9edf4d56-53eb-400b-b760-29e679219f4a": {
