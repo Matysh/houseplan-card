@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7567,
-  "nextTicket": 321,
+  "revision": 7568,
+  "nextTicket": 322,
   "nextFence": 321,
   "tasks": {
     "1193": {
@@ -4157,14 +4157,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1364-single-row-header",
-      "materialSha": "136b1dbbe4f55a0e4029c900ef7d00426902b4a1",
+      "materialSha": "556e13dc6e6f9366898abf7dc6b187ae6c67b7a1",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 320,
-      "queued": false,
+      "ticket": 321,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794178691643,
-      "reviewEntry": 1,
+      "readyAt": 1794179346075,
+      "reviewEntry": 2,
       "patchId": "931f7266d216a953b1d5dd4814cdb8b2920d85db",
       "changedFiles": [
         "demo/smoke_header_actions_menu.mjs",
@@ -4181,7 +4181,6 @@
         "src/panel-header-flow.ts",
         "src/styles/panel-header.styles.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4379,7 +4378,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1364
+  ],
   "active": null,
   "events": {
     "github:42532864133:1:completions:message:222710fd0fc6ab26ffd10f4da4c8e78055fee949bfc87be9a201b201928bf3ac": {
@@ -4485,6 +4486,19 @@
           "detail": "Поведение: test/data-hp-contract.test.mjs: failed; Браузер: mobile view header: failed; Браузер: mode transition: failed; Браузер: space switch transitions: failed",
           "eventId": "finish:9edf4d56-53eb-400b-b760-29e679219f4a:finish:2:return:return:1364"
         }
+      }
+    },
+    "finish:33d041d7-5d38-432f-a60f-c1ecd0f9fa2d": {
+      "digest": "1121b9fc4b0871769a726038912e6117d0f0f4ef2cf0daf6b900565b28d4bc9b",
+      "issue": 1364,
+      "message": {
+        "kind": "queued",
+        "issue": 1364,
+        "at": 1794179346075,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "556e13dc6e6f9366898abf7dc6b187ae6c67b7a1"
       }
     }
   },
