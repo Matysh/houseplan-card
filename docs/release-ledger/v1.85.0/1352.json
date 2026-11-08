@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1352,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Included after v1.85.0; owner explicitly selected the next stable target 1.85.1 instead of 1.86.0. Align editor close controls and toolbar heights.",
+  "summary": {
+    "ru": "Выровнены верхний крестик и высота панелей редакторов.",
+    "en": "Align editor close controls and toolbar heights."
+  }
+}

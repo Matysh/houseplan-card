@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1344,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Included after v1.85.0; owner explicitly selected the next stable target 1.85.1 instead of 1.86.0. Improve transitions between View and editors.",
+  "summary": {
+    "ru": "Улучшены переходы между Просмотром и редакторами.",
+    "en": "Improve transitions between View and editors."
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1345,
+  "baseStable": "v1.85.0",
+  "category": "infra",
+  "rationale": "Included after v1.85.0; owner explicitly selected the next stable target 1.85.1 instead of 1.86.0. Repair the scheduled mutation witness path.",
+  "summary": {
+    "ru": "Исправлена ссылка ночного mutation witness.",
+    "en": "Repair the scheduled mutation witness path."
+  }
+}

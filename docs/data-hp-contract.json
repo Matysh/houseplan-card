@@ -6,8 +6,8 @@
     "additionsAreCompatible": true
   },
   "hooks": {
-    "header-actions-trigger": { "elements": ["button"], "since": "unreleased (#1347)", "audience": ["test"], "description": "Shared header actions trigger when the ordinary layout would require a third control row." },
-    "header-actions-menu": { "elements": ["div"], "since": "unreleased (#1347)", "audience": ["test"], "description": "Shared UI Kit touch menu presenting existing header commands." },
+    "header-actions-trigger": { "elements": ["button"], "since": "1.85.1-beta.1", "audience": ["test"], "description": "Shared header actions trigger when the ordinary layout would require a third control row." },
+    "header-actions-menu": { "elements": ["div"], "since": "1.85.1-beta.1", "audience": ["test"], "description": "Shared UI Kit touch menu presenting existing header commands." },
     "empty-plan": { "elements": ["div"], "since": "1.85.0", "audience": ["test"] },
     "empty-plan-edit": { "elements": ["button"], "since": "1.85.0", "audience": ["test"] },
     "field-action": { "elements": ["button"], "since": "1.84.0", "audience": ["test"] },

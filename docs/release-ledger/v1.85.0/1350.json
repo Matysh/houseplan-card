@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1350,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Included after v1.85.0; owner explicitly selected the next stable target 1.85.1 instead of 1.86.0. Activate UI Kit switches through their text labels.",
+  "summary": {
+    "ru": "Клик по подписи переключает тумблер UI Kit.",
+    "en": "Activate UI Kit switches through their text labels."
+  }
+}

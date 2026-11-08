@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.85.1-beta.1 — 2026-11-08
+
 - Accept the four owner-approved narrow-header baselines for #1347, preserving global provenance and every other baseline (#1353).
 
 - Collect header actions into one shared menu when the measured layout would need a third control row; retain the space picker for unpinned cards and multi-space panels (#1347).

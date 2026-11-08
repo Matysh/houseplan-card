@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1349,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Included after v1.85.0; owner explicitly selected the next stable target 1.85.1 instead of 1.86.0. Keep shared header controls vertically stable across modes.",
+  "summary": {
+    "ru": "Сохранена вертикальная позиция кнопок шапки при смене режима.",
+    "en": "Keep shared header controls vertically stable across modes."
+  }
+}
