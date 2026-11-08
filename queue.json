@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6966,
+  "revision": 6967,
   "nextTicket": 306,
   "nextFence": 306,
   "tasks": {
@@ -3828,7 +3828,7 @@
       "notice": {
         "key": "2:author-toggle-fix-before-review",
         "reason": "author-toggle-fix-before-review",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S7-code-review",
         "at": 1794137377253,
         "entry": 2,
@@ -4376,6 +4376,10 @@
     },
     "github:42476526592:1:tick:0:review-retry": {
       "digest": "a916cbca7259c885cf0cd0b64e1d6b1e736b14f50250366fbafd0c22f474dad6",
+      "issue": 1347
+    },
+    "github:42476526592:1:completions:notice:6b00dde3cc2816454f80d71619082d4846199782999f77ddc93222f3fca6a31f": {
+      "digest": "f1ce394339b6a85beb5a82f7c25fb0f57f414f6c387a99fe815acebc729a5c65",
       "issue": 1347
     },
     "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17": {
