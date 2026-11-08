@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6704,
+  "revision": 6705,
   "nextTicket": 298,
   "nextFence": 298,
   "tasks": {
@@ -3952,7 +3952,18 @@
         "docs/release-ledger/v1.84.0/1351.json",
         "process-next/lib/source-dependencies.mjs",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794120817906,
+        "entry": 1,
+        "detail": "Поведение: test/open-passage-contract.test.mjs: failed",
+        "eventId": "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:3:return:return:1351"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4128,18 +4139,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1351,
-    "worker": "finish",
-    "token": "297:finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:1:admit",
-    "fence": 297,
-    "materialSha": "5d3a14677c83db84157697f9a425179bc0a02fb4",
-    "expectedBase": "6cedac4193d114c7eea822f6e06b4fb65181bd9d",
-    "phase": "testing",
-    "admittedAt": 1794120558256,
-    "expiresAt": 1794121097323,
-    "patchId": "85e278a591f30123accae5f428314545f141ab40"
-  },
+  "active": null,
   "events": {
     "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:2:synchronized": {
       "digest": "9eeab9e3863fd011520e7ed16d24777411ded0bb4ce5a62c31ca1ee6e594f2cb",
@@ -4173,6 +4173,10 @@
       "digest": "1fe567008fa6a32aa85947af03b55012fe0e1eb2ffb3aed451143c5f1cc51eaf",
       "issue": 1351
     },
+    "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:3:return": {
+      "digest": "94ce49d508027f8a3a9eced6c9820c6d5b66c64ad9a7450843b1090ab61336ba",
+      "issue": 1351
+    },
     "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366": {
       "digest": "226cb18f97e7304958b0dcc283dcdf27a3d05ae89c39478f515c63cb2fe3a550",
       "issue": 1351,
@@ -4200,6 +4204,26 @@
         "materialSha": "5d3a14677c83db84157697f9a425179bc0a02fb4",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:3:return:return:1351": {
+      "digest": "94ce49d508027f8a3a9eced6c9820c6d5b66c64ad9a7450843b1090ab61336ba",
+      "issue": 1351,
+      "message": {
+        "kind": "return",
+        "issue": 1351,
+        "at": 1794120817906,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794120817906,
+          "entry": 1,
+          "detail": "Поведение: test/open-passage-contract.test.mjs: failed",
+          "eventId": "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:3:return:return:1351"
+        }
       }
     }
   },
