@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {once} from 'node:events';
 import {chromium,expect} from 'playwright/test';
 import {createLabServer} from './ui-lab/server.mjs';
+import {prepareHa} from './ui-lab/prepare-ha.mjs';
 import {launch,checkAll,finish} from './serve.mjs';
 import {attestLaunchedBrowser} from '../scripts/browser-attestation.mjs';
 const results=[];
@@ -84,6 +85,7 @@ async function exercise(page,authentic){
   results.push((authentic?'HA ':'native ')+'save and reopen');
 }
 async function genuine(){
+  await prepareHa(); // Verify the cache, or prepare only the allowlisted pinned wheel.
   const server=createLabServer({port:0});server.listen(0,'127.0.0.1');await once(server,'listening');
   const origin='http://127.0.0.1:'+server.address().port,browser=await chromium.launch(),errors=[],external=[];
   try{
