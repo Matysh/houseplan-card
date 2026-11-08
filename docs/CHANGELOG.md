@@ -3,6 +3,7 @@
 ## Unreleased
 
 ## v1.85.1-beta.1 — 2026-11-08
+- Keep Device settings navigation in place while the content scrolls, with independently reachable sections on short windows and a compact visible divider after Details (#1354).
 
 - Accept the four owner-approved narrow-header baselines for #1347, preserving global provenance and every other baseline (#1353).
 

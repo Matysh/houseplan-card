@@ -261,6 +261,7 @@ export class HpDialog extends LitElement {
     :host([settings-layout]) .title-text { font-size:18px; }
     :host([settings-layout]) .content { display:flex; flex-direction:column; background:var(--card-background-color,var(--hp-bg,#202126)); }
     :host([settings-layout]) ::slotted(.hpf-settings-form) { flex:1 0 auto; }
+    :host([settings-layout][data-kind=marker]) ::slotted(.hpf-settings-form) { flex:1 1 0; min-height:0; overflow:hidden; }
     :host(.ui-dialog[settings-layout]) .header,
     :host([data-kind=pdf][settings-layout]) .header { padding:12px 16px; }
     :host([compact]) { --hp-dialog-wide-width:560px; }

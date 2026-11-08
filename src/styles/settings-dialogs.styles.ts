@@ -19,6 +19,12 @@ hp-dialog:is([data-kind=space],[data-kind=marker])[settings-layout]{--hp-dialog-
 .hpf-settings-nav{position:sticky;top:0;display:grid;align-content:start;gap:4px;padding:13px 8px;min-width:0;}
 .hpf-settings-nav hr{width:100%;border:0;margin:14px 0;}
 .hpf-settings-content{min-width:0;align-self:stretch;border-inline-start:1px solid var(--hpf-line);padding:20px;}
+/* Device settings keep navigation and content in the shell's available body. */
+.hpf-settings-layout[data-settings-kind=marker]{flex:1 1 0;min-height:0;grid-template-rows:minmax(0,1fr);}
+.hpf-settings-layout[data-settings-kind=marker] > .hpf-settings-nav{position:static;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
+.hpf-settings-layout[data-settings-kind=marker] > .hpf-settings-content{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;}
+.hpf-settings-layout[data-settings-kind=marker] > .hpf-settings-nav hr{margin:4px 0;}
+${readingSeparatorCss('.hpf-settings-layout[data-settings-kind=marker] > .hpf-settings-nav hr')}
 .hpf-settings-pane[hidden]{display:none!important;}
 .hpf-settings-form .hpf-settings-pane .hpf-grid-stacked{display:block;}
 .hpf-settings-pane .hpf-colorfield{width:100%;box-sizing:border-box;}
@@ -115,6 +121,7 @@ hp-dialog[data-kind=room][settings-layout] .hpf-grid{grid-template-columns:minma
 .hpf-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
 @media(max-width:550px){
 .hpf-settings-layout{grid-template-columns:minmax(0,1fr);}
+.hpf-settings-layout[data-settings-kind=marker]{grid-template-rows:auto minmax(0,1fr);}
 .hpf-settings-nav{display:none;}
 .hpf-settings-mobile{display:block;position:sticky;top:0;z-index:2;padding:10px 14px;border-bottom:1px solid var(--hpf-line);background:var(--hpf-surface);}
 .hpf-settings-content{border:0;padding:18px 14px;}

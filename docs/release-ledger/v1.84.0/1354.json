@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1354,
+  "baseStable": "v1.84.0",
+  "category": "stable-fix",
+  "rationale": "Bound Device settings to the existing dialog body so content scrolling cannot move its stretched section navigation. Keep long navigation reachable in short windows and render the existing separator after Details with the shared separator recipe and a smaller gap.",
+  "summary": {
+    "ru": "Зафиксировано меню настроек устройства и добавлен компактный разделитель после «Сведения».",
+    "en": "Keep Device settings navigation stationary and add a compact divider after Details."
+  }
+}
