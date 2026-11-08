@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6942,
+  "revision": 6943,
   "nextTicket": 305,
   "nextFence": 305,
   "tasks": {
@@ -3797,7 +3797,7 @@
       "ownerDecision": null,
       "ticket": 304,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794137086415,
       "reviewEntry": 2,
       "patchId": "f093d9c8fdcb1c06083e393bc435843960e58a79",
@@ -3834,6 +3834,15 @@
         "entry": 1,
         "detail": "Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/i18n.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed",
         "eventId": "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17:finish:3:return:return:1347"
+      },
+      "s6": {
+        "id": "20261108T112501773-d1ade19c",
+        "name": "Тесты для задачи #1347 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T112501773-d1ade19c/report.json",
+        "materialSha": "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
+        "status": "passed",
+        "finishedAt": "2026-11-08T11:26:02.496Z",
+        "failures": []
       }
     },
     "1348": {
@@ -4202,9 +4211,9 @@
     "fence": 304,
     "materialSha": "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
     "expectedBase": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794137090025,
-    "expiresAt": 1794137449199,
+    "expiresAt": 1794140763614,
     "patchId": "f093d9c8fdcb1c06083e393bc435843960e58a79"
   },
   "events": {
@@ -4320,6 +4329,34 @@
         "layer": "product",
         "materialSha": "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
         "phase": "sync"
+      }
+    },
+    "finish:276a573b-19e2-4caa-96fb-1d017e224d94:finish:3:s6-complete": {
+      "digest": "b6da7ea26b5b5c0a17e6a868a9d00dc4efcea8ec1d184e442bf3b90c2244b23f",
+      "issue": 1347,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1347,
+        "at": 1794137163614,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
+        "phase": "review",
+        "evidence": {
+          "id": "20261108T112501773-d1ade19c",
+          "name": "Тесты для задачи #1347 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T112501773-d1ade19c/report.json",
+          "materialSha": "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
+          "status": "passed",
+          "finishedAt": "2026-11-08T11:26:02.496Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\nДо изменения третья строка обычных кнопок занимала место плана. Добавлена крайняя ступень после существующих 0–4: меню «Действия» включается только если измеренная обычная раскладка требует минимум трёх рядов. Матрица выбора пространства реализована по последнему уточнению владельца: panel/одно — без выбора, panel/несколько — выбор сверху; card/fixed — без выбора, card/unpinned — выбор сверху, включая одно пространство.\n\n### Решение\nИспользуется прежнее инертное измерительное дерево из native-узлов и ограниченный memo. После измерения фазы 4 считаются реальные пересекающиеся вертикальные интервалы контролов. Исходные кнопки остаются владельцами команд; общий лениво загружаемый UI Kit menu показывает их подписи/disabled/current/pressed и вызывает исходный click. Так сохраняются dirty-navigation, права, HA public event и диалоги без второй реализации. Старые фазы и внутренние toolbar редакторов сохранены. Ширина viewport не определяет порог.\n\n### Риски и места для внимания\nГраница перехода и восстановление на расширении, фокус при скрытии исходных кнопок, контекст меню после смены режима/пространства/прав, соответствие метрического дерева живому. Menu snapshot отзывается при изменении контекста или состояний исходных команд; disconnect снимает callbacks/listeners. HA sidebar доступен через меню только когда положен прежней native policy. В широком View новый menu chunk не загружается.\n\n### Проверки и ограничения\nЛокально сборка с типами и 14 Node тестов прошли. Новый smoke_header_actions_menu проверил матрицу закрепления/пространств, порядок строк, обратимость, 44px, список команд и состояний, Escape/фокус, outside, реальные переходы редакторов и отзыв прав. Обновлённые smoke_panel_header_overflow, smoke_header_compact_spaces, smoke_mobile_view_header и неизменённый smoke_panel_header_touch прошли: публичный HA event, диалоги/dirty state, PDF title, навигация, мышь/keyboard/touch. Снимки просмотрены исполнителем, отдельного принятия golden не было; реальные HA E2E и полный stable набор не запускались, backend не менялся. Первый полный S6: 523/526 успешны; три отказа касались реестра новых data-hp, списка фаз CSS и проверенного French/English homograph. Исправлены: два hook зарегистрированы без выдумывания следующего номера версии, разрешена фаза 5, «Actions» отмечено как корректный французский омограф. Адресный повтор этих контрактов: 46/46 PASS. Итоговую повторную выборку S6 исполняет finish. Новый browser witness связан с его исходниками в центральной карте, areaTests дополняет выборку.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
