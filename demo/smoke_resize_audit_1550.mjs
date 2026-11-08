@@ -43,23 +43,22 @@ const restore = () => page.evaluate((s) => {
   return c.updateComplete && true;
 }, snap);
 const enter = async (tool) => {
-  const changed = await page.evaluate((t) => {
+  await page.evaluate(async (t) => {
+    // Readiness follows the actual mode handoff, including a busy renderer.
+    await window.__hpTest.setMode('plan');
     const c = window.__card;
-    const changed = !c._markup;
-    if (changed) c._setMode('plan');
     c._tool = t; c._resize.selectRoom(null); c.requestUpdate();
-    return Promise.resolve(c.updateComplete).then(() => changed);
+    await c.updateComplete;
   }, tool);
-  if (changed) await page.waitForTimeout(220);
 };
 const settle = () => page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res))));
 const screenPt = (x, y) => page.evaluate(([x, y]) => {
   const c = window.__card;
-  const stage = c.renderRoot.querySelector('.stage');
-  const r = stage.getBoundingClientRect();
-  const svg = stage.querySelector('svg');
-  const [vx, vy, vw, vh] = svg.getAttribute('viewBox').split(' ').map(Number);
-  return [r.left + ((x - vx) / vw) * r.width, r.top + ((y - vy) / vh) * r.height];
+  const svg = c.renderRoot.querySelector('[data-hp="stage"]');
+  const matrix = svg?.getScreenCTM();
+  if (!matrix) throw Error('Resize coordinate plane is not ready');
+  const point = new DOMPoint(x, y).matrixTransform(matrix);
+  return [point.x, point.y];
 }, [x, y]);
 // geometry the SERVER would get (the mutable config _writeConfig reads)
 const roomSrv = (id) => page.evaluate((id) => {
@@ -99,6 +98,9 @@ const [h550x, h550y] = await screenPt(550, 360);
 const [h600x] = await screenPt(600, 360);
 const [h650x] = await screenPt(650, 360);
 const [h700x] = await screenPt(700, 360);
+check('01_initial_handle_ready', await page.evaluate(([x, y]) =>
+  window.__card.renderRoot.elementFromPoint(x, y)?.classList.contains('rszhandle') === true,
+[h550x, h550y]));
 // drag 1 commits r1's right wall 0.55 → 0.60: a write enters the debounce queue
 await page.mouse.move(h550x, h550y);
 await page.mouse.down();
