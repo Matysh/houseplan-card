@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6742,
-  "nextTicket": 300,
+  "revision": 6743,
+  "nextTicket": 301,
   "nextFence": 300,
   "tasks": {
     "1193": {
@@ -3936,14 +3936,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1350-toggle-label",
-      "materialSha": "8fc54f5a34190d2079578f85e1b16d4f4bb3eeb2",
+      "materialSha": "a4f636ddbd0cfbd1ae4085634351b8f831d8403c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 298,
-      "queued": false,
+      "ticket": 300,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794120853007,
-      "reviewEntry": 1,
+      "readyAt": 1794121293790,
+      "reviewEntry": 2,
       "patchId": "67749adfcd7ebe8744d97926c9c60166e1cb2100",
       "changedFiles": [
         "demo/smoke_check_label.mjs",
@@ -3955,7 +3955,6 @@
         "src/houseplan-editor-runtime.ts",
         "src/styles/form-kit.styles.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4174,7 +4173,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1350
+  ],
   "active": {
     "issue": 1351,
     "worker": "finish",
@@ -4400,6 +4401,19 @@
         "layer": "product",
         "materialSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f",
         "phase": "sync"
+      }
+    },
+    "finish:275b47a8-d7e9-4f81-bfec-d276867304a0": {
+      "digest": "3d7aa0a8002ae4c8dac190d4bb12b82bb1a9021f1655f484fb5d344f76752be8",
+      "issue": 1350,
+      "message": {
+        "kind": "queued",
+        "issue": 1350,
+        "at": 1794121293790,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a4f636ddbd0cfbd1ae4085634351b8f831d8403c"
       }
     }
   },
