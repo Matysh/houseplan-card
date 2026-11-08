@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7414,
-  "nextTicket": 317,
+  "revision": 7415,
+  "nextTicket": 318,
   "nextFence": 317,
   "tasks": {
     "1193": {
@@ -4084,14 +4084,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1362-visible-smoke",
-      "materialSha": "c27ba8a163900f4165952f752dd8da7cedfff1ae",
+      "materialSha": "f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 316,
-      "queued": false,
+      "ticket": 317,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794170176387,
-      "reviewEntry": 1,
+      "readyAt": 1794170427409,
+      "reviewEntry": 2,
       "patchId": "8e109b024186f7db0c9bf2d3c409a0e3e72ecda2",
       "changedFiles": [
         "demo/smoke_hidden_device_toggle.mjs",
@@ -4100,7 +4100,6 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4298,7 +4297,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1362
+  ],
   "active": null,
   "events": {
     "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b:finish:2:synchronized": {
@@ -4358,6 +4359,19 @@
           "detail": "Браузер: hidden device toggle: failed",
           "eventId": "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b:finish:3:return:return:1362"
         }
+      }
+    },
+    "finish:0042e52f-4212-4060-ac09-81fa89b16fa2": {
+      "digest": "18c9d00151e21b2297c3966fba055ada39ea08948db004ca44b25f8ab09c0f89",
+      "issue": 1362,
+      "message": {
+        "kind": "queued",
+        "issue": 1362,
+        "at": 1794170427409,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "f2dcbcc6a2c715e5364ecded43d8848955ecca9f"
       }
     }
   },
