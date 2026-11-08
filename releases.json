@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 583,
+  "revision": 584,
   "active": "v1.85.1-beta.1-20261108",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -37538,7 +37538,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.85.1-beta.1",
@@ -45101,7 +45101,8 @@
           "en": "## v1.85.1-beta.1 — 2026-11-08\n\n- Accept the four owner-approved narrow-header baselines for #1347, preserving global provenance and every other baseline (#1353).\n\n- Collect header actions into one shared menu when the measured layout would need a third control row; retain the space picker for unpinned cards and multi-space panels (#1347).\n\n- Align the header's editor close action with the shared navigation controls and shrink the Background toolbar colour trigger to keep all three single-row editor toolbars the same height (#1352).\n\n- Use the standard dropdown for the opening type in the create/edit dialog, preserving type-specific fields and width defaults (#1351).\n\n- Keep shared header buttons at the same vertical position when switching between View and editors with the wide Properties panel (#1349).\n- Fix text-label activation for left-side UI Kit HA switches; preserve one change per click, disabled rows, native checkbox behavior and independent Help/links (#1350).\n\n- Add a door-only “Lets light through” switch for closed glass doors: shared Glow and exterior solar apertures in Flat/2.5D; interior doors do not extend sunlight; retain the flag through save/export/import (#1348).\n\n- Recognize closed room contours with dangling internal walls; retain partitions and openings without requiring Optimize (#1346).\n- Fixed a stale nightly mutation witness selector after the onboarding boundary test was renamed (#1345).\n- Rework View/editor transitions with retained scene surfaces, a presented endpoint before finishing, and silent editor-code preparation on writer intent (#1344)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.85.1-beta.1"
     }
   },
   "published": {
@@ -49612,7 +49613,8 @@
     "ship-review:result:3edc14c0-424a-406d-920f-c1080e6767e1": "edaa294f683218fd4055acd63f452e114ea10c0f85d13b78692b151006a35a54",
     "beta1851-20261108-publish:runner-report": "4ff722a6fe7a61e24184ddec56e1354d475ce0ff7dddd4c05016603661c0a7e1",
     "beta1851-20261108-publish:metrics": "753d80bba3594ebc24605cbaf176f69d2c83c43fa4604ff05d929d99ddce9bf8",
-    "beta1851-20261108-publish:prepared:eaeb5978-f06c-47c3-9b68-3bf35f8b161c": "c63d3f86a91f3da9513e8231eae41d86bd33ceac4b0f41377e70c21dcc83d900"
+    "beta1851-20261108-publish:prepared:eaeb5978-f06c-47c3-9b68-3bf35f8b161c": "c63d3f86a91f3da9513e8231eae41d86bd33ceac4b0f41377e70c21dcc83d900",
+    "beta1851-20261108-publish:started:583": "57b062a576e79da18c01f2bc9aab733ee5cab3bf1631addf3905c83f8e62c4f4"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
