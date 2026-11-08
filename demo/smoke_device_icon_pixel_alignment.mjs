@@ -21,6 +21,12 @@ for (const dpr of dprs) {
     await c.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const root = c.shadowRoot || c.renderRoot;
+    // Live camera paint owns inline left/top. Keep this diagnostic anchor fixed
+    // across the shell/core screenshots so a late paint cannot move it outside
+    // the captured clip; the production core/shell geometry stays untouched.
+    const anchorStyle = document.createElement('style');
+    anchorStyle.textContent = '.dev[data-id="d_light1"]{left:50%!important;top:50%!important}';
+    root.append(anchorStyle);
     const marker = root.querySelector('.dev[data-id="d_light1"]');
     const layer = marker.closest('.devlayer');
     for (const node of layer.children) {
