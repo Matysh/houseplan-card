@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 6732,
-  "nextTicket": 299,
+  "revision": 6733,
+  "nextTicket": 300,
   "nextFence": 299,
   "tasks": {
     "1193": {
@@ -3961,14 +3961,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/issue-1351-opening-type-select",
-      "materialSha": "5d3a14677c83db84157697f9a425179bc0a02fb4",
+      "materialSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 297,
-      "queued": false,
+      "ticket": 299,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794120554609,
-      "reviewEntry": 1,
+      "readyAt": 1794120907813,
+      "reviewEntry": 2,
       "patchId": "85e278a591f30123accae5f428314545f141ab40",
       "changedFiles": [
         "demo/smoke_opening_entity_search.mjs",
@@ -3978,7 +3978,6 @@
         "process-next/lib/source-dependencies.mjs",
         "src/houseplan-editor-runtime.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4163,7 +4162,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1351
+  ],
   "active": {
     "issue": 1350,
     "worker": "finish",
@@ -4310,6 +4311,19 @@
         "materialSha": "eb1e71e05f6c0fc67b02147f7c1df219ca4363a5",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:f7beb877-d8cf-4417-8da0-724fca56535e": {
+      "digest": "e350bdfc1ce741f7781be1715cbe5f1e18da22ef88d7bff90595e7ccbbc952d7",
+      "issue": 1351,
+      "message": {
+        "kind": "queued",
+        "issue": 1351,
+        "at": 1794120907813,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f"
       }
     }
   },
