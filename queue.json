@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7698,
+  "revision": 7699,
   "nextTicket": 326,
   "nextFence": 326,
   "tasks": {
@@ -4175,7 +4175,18 @@
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.85.0/1365.json",
         "src/header-actions-menu.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794182178196,
+        "entry": 1,
+        "detail": "Браузер: device contact editor frame: failed; Браузер: geometry history refusal: failed; Браузер: space switch transitions: failed",
+        "eventId": "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:3:return:return:1365"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4364,18 +4375,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1365,
-    "worker": "finish",
-    "token": "325:finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:1:admit",
-    "fence": 325,
-    "materialSha": "300d5338f736f5437bc8756e67b69c9871738597",
-    "expectedBase": "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928",
-    "phase": "testing",
-    "admittedAt": 1794181808965,
-    "expiresAt": 1794182468083,
-    "patchId": "d5f6e59e64f87dcffb5dc846de64c192541e9042"
-  },
+  "active": null,
   "events": {
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:2:synchronized": {
       "digest": "65eb9a0157345cff04c12e54f954bef4341245f6f9cb6d66333c65b93f918fe6",
@@ -4413,6 +4413,10 @@
       "digest": "a88338c58883033e1879bad16b63c093d52843e1869534cd7816e0d278d36ce0",
       "issue": 1365
     },
+    "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:3:return": {
+      "digest": "419ea1adac14ad47c9f4f2b5c10c2dbf32ddfbc3a63f0576568d0e074f4d0632",
+      "issue": 1365
+    },
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915": {
       "digest": "e315381794b817f11fc4399d2e54fc289d4e81155a3aa6969408f80cd013240f",
       "issue": 1365,
@@ -4440,6 +4444,26 @@
         "materialSha": "300d5338f736f5437bc8756e67b69c9871738597",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:3:return:return:1365": {
+      "digest": "419ea1adac14ad47c9f4f2b5c10c2dbf32ddfbc3a63f0576568d0e074f4d0632",
+      "issue": 1365,
+      "message": {
+        "kind": "return",
+        "issue": 1365,
+        "at": 1794182178196,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794182178196,
+          "entry": 1,
+          "detail": "Браузер: device contact editor frame: failed; Браузер: geometry history refusal: failed; Браузер: space switch transitions: failed",
+          "eventId": "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:3:return:return:1365"
+        }
       }
     }
   },
