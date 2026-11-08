@@ -151,6 +151,16 @@ for (const [type, targetId] of Object.entries(ids)) {
       }
 
       const stageRect = stage.getBoundingClientRect();
+      // Fixture positions are authored test geometry. Ordinary hover renders
+      // legitimately rewrite Lit-owned inline positions, so keep these inputs
+      // in a fixture stylesheet while preserving real face paint/native hits.
+      let geometryStyle=root.querySelector('style[data-hit-geometry]');
+      if(!geometryStyle){geometryStyle=document.createElement('style');geometryStyle.dataset.hitGeometry='564';root.append(geometryStyle);}
+      const holdPositions=(neighbourX,neighbourY)=>{geometryStyle.textContent=
+        '.dev:not([data-id="'+targetId+'"])' + ':not([data-id="hit-neighbour"]){display:none!important}' +
+        '.dev[data-id="'+targetId+'"]{left:'+stageRect.width/2+'px!important;top:'+stageRect.height/2+'px!important}' +
+        '.dev[data-id="hit-neighbour"]{left:'+neighbourX+'px!important;top:'+neighbourY+'px!important}';};
+      holdPositions(stageRect.width/2,stageRect.height/2);
       target.style.left = `${stageRect.width / 2}px`;
       target.style.top = `${stageRect.height / 2}px`;
       neighbour.style.left = `${stageRect.width / 2}px`;
@@ -181,6 +191,7 @@ for (const [type, targetId] of Object.entries(ids)) {
       };
       neighbour.style.left = `${desired.x - stageRect.left}px`;
       neighbour.style.top = `${desired.y - stageRect.top}px`;
+      holdPositions(desired.x-stageRect.left,desired.y-stageRect.top);
       card._deviceHits.invalidate();
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 

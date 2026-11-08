@@ -12514,7 +12514,7 @@ export class HouseplanCard extends LitElement {
               : isoLayers && !isoLayers.floorSymbols
                 ? nothing
                 : this._renderOpenings(disp)}` },
-      { id: "led", inputs: [...sceneInputs, ...[this._mode === 'devices']], render: () => svg`${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view) ?? nothing}
+      { id: "led", inputs: [...sceneInputs, this._mode], render: () => svg`${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view) ?? nothing}
             ${this._mode === 'devices' && (this._ledEditor || space.led_strips?.some((s) => s.active !== false))
               ? this._ledEd(space.id)?.layer(space) : nothing}` },
       { id: "editor-top", inputs: [...sceneInputs, ...[this._mode, this._tool, view.x, view.y, view.w, view.h]], render: () => svg`${this._renderWallThickUi()}

@@ -98,7 +98,7 @@ const res = await page.evaluate(async () => {
   await card.updateComplete;
   await frame();
 
-  const dialogBody = root().querySelector('hp-dialog .body');
+  const dialogBody = root().querySelector('hp-dialog .hpf-settings-content');
   const scrollGeometry = () => dialogBody ? {
     clientHeight: dialogBody.clientHeight,
     scrollHeight: dialogBody.scrollHeight,
@@ -205,10 +205,13 @@ const res = await page.evaluate(async () => {
   await frame();
 
   // Scrolling the owning dialog closes help instead of leaving a detached bubble.
-  const body = glowHelpButton?.getRootNode()?.host?.closest('hp-dialog')?.querySelector('.body');
-  body?.dispatchEvent(new Event('scroll', { bubbles: false }));
+  const body = glowHelpButton?.getRootNode()?.host?.closest('hp-dialog')?.querySelector('.hpf-settings-content');
+  const scrollBefore = body?.scrollTop;
+  if (body) body.scrollTop += body.scrollTop > 24 ? -24 : 24;
   await frame();
-  out.ownScrollCloses = glowHelpButton?.getAttribute('aria-expanded') === 'false';
+  out.ownScrollCloses = body?.scrollHeight > body?.clientHeight
+    && body.scrollTop !== scrollBefore
+    && glowHelpButton?.getAttribute('aria-expanded') === 'false';
 
   // Force feature detection down the true portal fallback branch.
   const show = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover');

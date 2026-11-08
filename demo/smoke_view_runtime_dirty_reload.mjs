@@ -15,7 +15,6 @@ const optionalRoot = manifest.files.find((file) => /\/view-device-menu-[^/]+\.js
 assert.ok(optionalRoot, 'real independent View menu runtime exists in the manifest');
 const { page, browser } = await launchColdView({ width: 1280, height: 960 });
 const out = {}, trace = [], writes = [], documents = [];
-page.on('console',m=>{if(m.type()==='error'||m.type()==='warning')console.log('dirty-console',m.text());});
 const draftName = 'Unsaved Reload Guard 848';
 const reloadSelector = 'houseplan-card [data-hp="view-runtime-reload"]';
 const markerSelector = 'houseplan-card hp-dialog[data-kind="marker"]';
@@ -86,7 +85,6 @@ try {
     if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documents.push(request.url());
   });
   await clickHeaderAction(page.locator('houseplan-card'),'mode-devices');
-  console.log('dirty-mode',await page.evaluate(()=>{const c=window.__card;return {mode:c._mode,canEdit:c._canEdit,loadOk:c._loadOk,norm:!!c._norm,booting:c._booting,bootSoft:c._bootSoft,pending:c._pendingNavMode,runtime:!!c._editorRuntime,stage:c.renderRoot.querySelector('.stage')?.className};}));
   await page.waitForFunction(()=>window.__card._mode==='devices'&&!window.__card._modeTransitionBusy);
   await page.locator('houseplan-card [data-hp="tool"][data-tool="add-device"]').click();
   const name = page.locator(`${markerSelector} #marker-name`);

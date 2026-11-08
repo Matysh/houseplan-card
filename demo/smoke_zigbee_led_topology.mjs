@@ -66,7 +66,6 @@ try {
   await root.locator('hp-zigbee-topology-settings').getByRole('button', { name: /Read ZHA/ }).click();
   await page.waitForFunction(() => window.__ledTopologyCalls.zha === 1);
   await page.evaluate(async () => { await window.__hpTest.close(); await window.__hpTest.setMode('view'); });
-  console.log('led-topology-precondition',JSON.stringify(await page.evaluate(()=>{const c=window.__card;return {mode:c._mode,boot:c._booting,bootSoft:c._bootSoft,stage:c.renderRoot.querySelector('.stage')?.className,ledRuntime:!!c._ledRt,ledKeys:Object.keys(c).filter(k=>/led.*(runtime|loader)/i.test(k)),strips:c._spaceModel()?.led_strips,paths:[...c.renderRoot.querySelectorAll('.led-hit')].map(n=>({id:n.dataset.id,mid:n.dataset.mid,display:getComputedStyle(n).display,visibility:getComputedStyle(n).visibility})),markers:c._serverCfg?.markers?.filter(m=>m.id==='d_light1')};}))));
   await root.locator('.led-hit[data-id="d_light1"]').waitFor();
   const hover = async (id, strip = false) => {
     await page.mouse.move(2, 2);
