@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1353,
+  "baseStable": "v1.85.0",
+  "category": "infra",
+  "rationale": "Included after v1.85.0; owner explicitly selected the next stable target 1.85.1 instead of 1.86.0. Accept the four owner-approved narrow-header baselines.",
+  "summary": {
+    "ru": "Приняты четыре эталона узкой шапки по решению владельца.",
+    "en": "Accept the four owner-approved narrow-header baselines."
+  }
+}

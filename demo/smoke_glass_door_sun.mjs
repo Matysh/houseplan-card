@@ -34,12 +34,19 @@ try{
  await window.__hpTest.settled();},fixture);
  let state=await inside(false);assert.equal(state.geometry,false,JSON.stringify(state));out.closedOpaqueFlat=true;
  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{cfg.spaces[0].openings.find(o=>o.id==='glass').light_transparent=true;}));
- state=await inside(false);assert.equal(state.geometry,true,JSON.stringify(state));assert.equal(state.rendered,true,JSON.stringify(state));assert.equal(state.symbol,0);out.closedGlassFlat=true;
+ state=await inside(false);assert.equal(state.geometry,false,JSON.stringify(state));assert.equal(state.rendered,false,JSON.stringify(state));assert.equal(state.symbol,0);out.interiorGlassKeepsFlatLocal=true;
  await page.waitForTimeout(1200);await page.screenshot({path:'artifacts/glass-door-1348/flat.png'});
  await page.evaluate(() => window.__hpTest.setVolumetricView(true));
- state=await inside(true);assert.equal(state.geometry,true,JSON.stringify(state));assert.equal(state.symbol,0);assert.ok(await page.locator('.sunlayer polygon,.sunlayer path').count());out.closedGlassIso=true;
+ state=await inside(true);assert.equal(state.geometry,false,JSON.stringify(state));assert.equal(state.symbol,0);assert.ok(await page.locator('.sunlayer polygon,.sunlayer path').count());out.interiorGlassKeepsIsoLocal=true;
  await page.waitForTimeout(1200);await page.screenshot({path:'artifacts/glass-door-1348/iso.png'});
  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{delete cfg.spaces[0].openings.find(o=>o.id==='glass').light_transparent;}));
  state=await inside(true);assert.equal(state.geometry,false,JSON.stringify(state));out.toggleInvalidatesIso=true;
  await page.evaluate(()=>window.__hpTest.setVolumetricView(false));state=await inside(false);assert.equal(state.geometry,false,JSON.stringify(state));out.toggleInvalidatesFlat=true;
+ await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{Object.assign(cfg.spaces[0].openings.find(o=>o.id==='window'),{type:'door',light_transparent:true});}));
+ for(const iso of [false,true]){await page.evaluate(iso=>window.__hpTest.setVolumetricView(iso),iso);
+ const beams=await page.evaluate(iso=>{const c=window.__card;return (iso?c._isoSunCache?.beams:c._sunRaysCache?.rays)?.map(r=>r.openingId);},iso);
+ assert.ok(beams?.includes('window'),'exterior glass door remains a solar source');assert.equal((await inside(iso)).geometry,false);}
+ out.exteriorGlassBothRenderers=true;
+ await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{delete cfg.spaces[0].openings.find(o=>o.id==='window').light_transparent;}));
+ assert.equal(await page.locator('.sunlayer polygon,.sunlayer path').count(),0,'opaque exterior door is not a solar source');out.exteriorOpaqueStaysDark=true;
 }catch(error){out.completed=false;throw error;}finally{checkAll(out);await finish(browser,out);}

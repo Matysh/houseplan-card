@@ -84,7 +84,6 @@ import {
   rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
 } from './sun';
 import { resolveSunAccess, sunBarrierLines } from './sun-access';
-import { buildSunDoorPassages, continueSolarBeam } from './sun-door-passages';
 import { renderDayCycleEnvironment } from './day-cycle-render';
 import { dayCycleClock, moonLayer, moonSkyState } from './moon-gate';
 import { renderPaperShapes, type PaperShape } from './render/paper-scene';
@@ -395,7 +394,7 @@ import { isoWallMaterialVars, parseCssColor } from './iso-materials'; import { I
 import { renderIsoTileShadow } from './iso-tiles';
 import { displayVersion } from './card-version';
 import { ConfigFingerprintPass } from './config-fingerprint-pass';
-const CARD_VERSION = '1.85.0';
+const CARD_VERSION = '1.85.1-beta.1';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
 const PDF_RETRY_ASSET = '__HOUSEPLAN_PDF_RETRY_ASSET__';
@@ -11292,7 +11291,6 @@ export class HouseplanCard extends LitElement {
     ];
     return {
       rooms, windows, occluders, access,
-      glassDoors: buildSunDoorPassages(this._openingsR, space, openingWallIndex, this._cellCm, this._gridPitch),
       innerByRoom: walls.length ? innerByRoom : undefined,
       wallDepthByOpening: walls.length ? wallDepthByOpening : undefined,
     };
@@ -11360,7 +11358,7 @@ export class HouseplanCard extends LitElement {
     }
     if (!this._sunRaysCache || this._sunRaysCache.key !== key) {
       this._floorCacheBuilds.sunRays++;
-      const { rooms, innerByRoom, wallDepthByOpening, occluders: sunOccluders, access, glassDoors } = this._sunInputs(space, zeroWalls, windows);
+      const { rooms, innerByRoom, wallDepthByOpening, occluders: sunOccluders, access } = this._sunInputs(space, zeroWalls, windows);
       let rays = computeSunRays(
         rooms, windows, sun.azimuth, sun.elevation, north!, innerByRoom, wallDepthByOpening, origin, access,
       );
@@ -11375,13 +11373,6 @@ export class HouseplanCard extends LitElement {
           };
         }).filter((ray) => ray.paths?.length || ray.polys.length);
       }
-      if (glassDoors.length) rays = rays.map(ray => {
-        const regions = continueSolarBeam(ray, rooms, innerByRoom, glassDoors, sunOccluders);
-        if (!regions.length) return ray;
-        const originalPaths = ray.paths ?? ray.polys.map(poly => polyclipPathD([[poly.concat([poly[0]])]]));
-        return { ...ray, paths: [...originalPaths, ...regions.map(region => polyclipPathD(region.geometry))].filter(Boolean),
-          polys: [...ray.polys, ...regions.flatMap(region => geometryOuterRings(region.geometry))] };
-      });
       // the rim is pure geometry off the same wedges — memoised on the same key
       this._sunRaysCache = { key, rays, rims: rays.map((r) => rayRimEdges(r)) };
     }

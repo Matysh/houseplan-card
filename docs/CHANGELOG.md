@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.85.1-beta.1 — 2026-11-08
+
 - Accept the four owner-approved narrow-header baselines for #1347, preserving global provenance and every other baseline (#1353).
 
 - Collect header actions into one shared menu when the measured layout would need a third control row; retain the space picker for unpinned cards and multi-space panels (#1347).
@@ -13,7 +15,7 @@
 - Keep shared header buttons at the same vertical position when switching between View and editors with the wide Properties panel (#1349).
 - Fix text-label activation for left-side UI Kit HA switches; preserve one change per click, disabled rows, native checkbox behavior and independent Help/links (#1350).
 
-- Add a door-only “Lets light through” switch for closed glass doors: shared Glow, exterior solar apertures and bounded sunlight continuation through interior glass doors in Flat/2.5D; retain the flag through save/export/import (#1348).
+- Add a door-only “Lets light through” switch for closed glass doors: shared Glow and exterior solar apertures in Flat/2.5D; interior doors do not extend sunlight; retain the flag through save/export/import (#1348).
 
 - Recognize closed room contours with dangling internal walls; retain partitions and openings without requiring Optimize (#1346).
 - Fixed a stale nightly mutation witness selector after the onboarding boundary test was renamed (#1345).
