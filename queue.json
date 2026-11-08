@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7038,
-  "nextTicket": 308,
+  "revision": 7039,
+  "nextTicket": 309,
   "nextFence": 308,
   "tasks": {
     "1193": {
@@ -3995,6 +3995,20 @@
         "status": "published",
         "sourceSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e"
       }
+    },
+    "1353": {
+      "issue": 1353,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1347-accepted-goldens",
+      "materialSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 308,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794145430343,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4196,9 +4210,25 @@
       "runId": 42478893721
     }
   },
-  "waiting": [],
+  "waiting": [
+    1353
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:fb9635c3-2b4e-4bc6-85af-8d7cdfee23ef": {
+      "digest": "ab37af976da3ea7cbbe4b3cead6d5fe64286eb5296c87a75cf8ef4bd3806da3e",
+      "issue": 1353,
+      "message": {
+        "kind": "queued",
+        "issue": 1353,
+        "at": 1794145430343,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "55569543d09c0fc650b7918e44490ebc9fd88431"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
     "status": "delivered",
