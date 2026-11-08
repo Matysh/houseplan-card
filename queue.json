@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7432,
+  "revision": 7433,
   "nextTicket": 318,
   "nextFence": 318,
   "tasks": {
@@ -4109,6 +4109,15 @@
         "entry": 1,
         "detail": "Браузер: hidden device toggle: failed",
         "eventId": "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b:finish:3:return:return:1362"
+      },
+      "s6": {
+        "id": "20261108T204041078-4946cf7a",
+        "name": "Тесты для задачи #1362 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T204041078-4946cf7a/report.json",
+        "materialSha": "f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
+        "status": "passed",
+        "finishedAt": "2026-11-08T20:42:09.613Z",
+        "failures": []
       }
     }
   },
@@ -4305,9 +4314,9 @@
     "fence": 317,
     "materialSha": "f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
     "expectedBase": "8c05977f2c0d029c6c3f5ae8ced3f07d4823de3c",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794170430923,
-    "expiresAt": 1794170790417,
+    "expiresAt": 1794174132801,
     "patchId": "79357df3e7d88b564e3bbe4df8aea1842d35a6a6"
   },
   "events": {
@@ -4353,6 +4362,10 @@
     },
     "github:42521392612:1:completions:message:05f6f263ac889ea7a1f46a8fff3f05c9fc5f7c4e92d53257c102b7e3f0dfb624": {
       "digest": "e13b822a5797ca1f6a5d2ac49ffb4c9a75c6c977b9d5a65b9d53420ef52d3a13",
+      "issue": 1362
+    },
+    "finish:0042e52f-4212-4060-ac09-81fa89b16fa2:finish:3:s6-complete": {
+      "digest": "1d8567225444f3df33620f457212dd7a99c28f3b93e2e1aa0980cc6b5e08c2b9",
       "issue": 1362
     },
     "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b": {
