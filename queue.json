@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7493,
+  "revision": 7494,
   "nextTicket": 319,
   "nextFence": 319,
   "tasks": {
@@ -4192,7 +4192,18 @@
         "demo/smoke_grid_scale_invariance.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794178316174,
+        "entry": 1,
+        "detail": "Поведение: test/grid-scale-static-fixture.test.mjs: failed",
+        "eventId": "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:3:return:return:1363"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4381,18 +4392,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1363,
-    "worker": "finish",
-    "token": "318:finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:1:admit",
-    "fence": 318,
-    "materialSha": "e061bfff7fe4982e41cc00e68a6b1a5f533c9b36",
-    "expectedBase": "f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
-    "phase": "testing",
-    "admittedAt": 1794178055545,
-    "expiresAt": 1794178595495,
-    "patchId": "29df0d1da0e426dabd65077ec156d7c92fc8c141"
-  },
+  "active": null,
   "events": {
     "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:2:synchronized": {
       "digest": "9358b92d88d1733e7f800052eb43f53efe7bb1d26b421a349ac337cb90d039f0",
@@ -4422,6 +4422,10 @@
       "digest": "7d5f9819b2a91aa06cac25f84caf76081363ea38a47e7bf7d7431a5491a3d8f6",
       "issue": 1363
     },
+    "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:3:return": {
+      "digest": "626e3ed2a7ae42a4b20e1a09580e6b2ab412cd355d7093abbe34058010c97ad1",
+      "issue": 1363
+    },
     "finish:605de1e0-083d-4131-a7ac-72cca22dadcd": {
       "digest": "e098ae9154966b945c26e6434156d83073ef4230f888e6a63e55d88f9b332b6e",
       "issue": 1363,
@@ -4449,6 +4453,26 @@
         "materialSha": "e061bfff7fe4982e41cc00e68a6b1a5f533c9b36",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:3:return:return:1363": {
+      "digest": "626e3ed2a7ae42a4b20e1a09580e6b2ab412cd355d7093abbe34058010c97ad1",
+      "issue": 1363,
+      "message": {
+        "kind": "return",
+        "issue": 1363,
+        "at": 1794178316174,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794178316174,
+          "entry": 1,
+          "detail": "Поведение: test/grid-scale-static-fixture.test.mjs: failed",
+          "eventId": "finish:605de1e0-083d-4131-a7ac-72cca22dadcd:finish:3:return:return:1363"
+        }
       }
     }
   },
