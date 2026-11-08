@@ -4,6 +4,7 @@
  */
 import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from './styles/form-kit.styles';
 import { dialogCompositionCss } from './styles/dialog-composition.styles';
+import { activateCheckLabel } from './check-label';
 
 const FORM_KIT_CSS = cardDialogFormKitTokens
   + formKitCss({ ...CARD_DIALOG_FORM_KIT, parameterized: true }, { withSwitch: false }) + dialogCompositionCss;
@@ -23,6 +24,7 @@ export interface FormKitStyleHost {
 export function ensureFormKitStyles(host: FormKitStyleHost): void {
   const root = host.renderRoot as ShadowRoot;
   if (!root || adopted.has(root)) return;
+  root.addEventListener('click', activateCheckLabel);
   const doc = root.ownerDocument ?? globalThis.document;
   const Sheet = doc?.defaultView?.CSSStyleSheet;
   if (Sheet && 'adoptedStyleSheets' in root) {

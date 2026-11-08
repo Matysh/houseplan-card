@@ -10095,7 +10095,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
 public _boolInput(checked: boolean, onChange: (v: boolean) => void, disabled: boolean, fieldId: string): TemplateResult {
     const h = (e: Event) => onChange(!!(e.target as HTMLInputElement).checked);
     return customElements.get('ha-switch')
-      ? html`<ha-switch data-hp="field" data-field=${fieldId} .checked=${checked} .disabled=${disabled} @change=${h}></ha-switch>`
+      ? html`<ha-switch data-hp="field" data-field=${fieldId} .checked=${checked} .disabled=${disabled} ?disabled=${disabled} @change=${h}></ha-switch>`
       : html`<input data-hp="field" data-field=${fieldId} type="checkbox" .checked=${checked} ?disabled=${disabled} @change=${h} />`;
   }
 

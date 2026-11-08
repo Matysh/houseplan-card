@@ -5,6 +5,7 @@
 - Use the standard dropdown for the opening type in the create/edit dialog, preserving type-specific fields and width defaults (#1351).
 
 - Keep shared header buttons at the same vertical position when switching between View and editors with the wide Properties panel (#1349).
+- Fix text-label activation for left-side UI Kit HA switches; preserve one change per click, disabled rows, native checkbox behavior and independent Help/links (#1350).
 
 - Add a door-only “Lets light through” switch for closed glass doors: shared Glow, exterior solar apertures and bounded sunlight continuation through interior glass doors in Flat/2.5D; retain the flag through save/export/import (#1348).
 

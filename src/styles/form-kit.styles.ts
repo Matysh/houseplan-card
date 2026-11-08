@@ -278,7 +278,7 @@ export function checkLabelsCss(options: FormKitCssOptions, selector?: string, wr
   return `  ${label} { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: .875rem; color: var(${tokens.muted}); cursor: pointer; white-space: ${wrapping === 'wrap' ? 'normal' : 'nowrap'}; }
   ${label} > input { width: 18px; height: 18px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }${wrapping === 'wrap' ? `\n  ${label} > input { flex:none; }` : ''}
   ${label}:has(input:disabled), ${label}:has(input:disabled) * { cursor:not-allowed; }
-`;
+${options.parameterized ? `  ${label}:has(ha-switch[disabled]), ${label}:has(ha-switch[disabled]) * { cursor:not-allowed; }\n` : ''}`;
 }
 
 /** Shared callout surface. Compact informational copy keeps the same theme/motion owners. */
