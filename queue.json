@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7043,
+  "revision": 7044,
   "nextTicket": 309,
   "nextFence": 309,
   "tasks": {
@@ -4018,7 +4018,16 @@
         "demo/golden/baselines/plan-rotation-phone-view-320-1070.png",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261108T134405346-dee3692a",
+        "name": "Тесты для задачи #1353 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T134405346-dee3692a/report.json",
+        "materialSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
+        "status": "passed",
+        "finishedAt": "2026-11-08T13:46:06.696Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4228,9 +4237,9 @@
     "fence": 308,
     "materialSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
     "expectedBase": "f7b252d8f0c63e6fa3c87712099b5f06bac010e5",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794145433923,
-    "expiresAt": 1794145853123,
+    "expiresAt": 1794149167908,
     "patchId": "fc9c81cab42673f07a58e2192e6ccec45f1683cf"
   },
   "events": {
@@ -4244,6 +4253,10 @@
     },
     "finish:bc106b0a-a255-4c85-af1b-2f6f5081d271": {
       "digest": "56dab181618de0d09612e5a8ff5820d5af880412ad8336628bc387e52100c5e6",
+      "issue": 1353
+    },
+    "finish:fb9635c3-2b4e-4bc6-85af-8d7cdfee23ef:finish:3:s6-complete": {
+      "digest": "5658c54d08a1ac471842a7ae3a31b3434ed9908b6bdb41a4db82b11924dc90ad",
       "issue": 1353
     },
     "finish:fb9635c3-2b4e-4bc6-85af-8d7cdfee23ef": {
