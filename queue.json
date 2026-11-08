@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7326,
-  "nextTicket": 315,
+  "revision": 7327,
+  "nextTicket": 316,
   "nextFence": 315,
   "tasks": {
     "1193": {
@@ -4047,14 +4047,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1357-stable-finish",
-      "materialSha": "63dd217db4fb0fe2a06780ac873611a36544f7e9",
+      "materialSha": "8c05977f2c0d029c6c3f5ae8ced3f07d4823de3c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 314,
-      "queued": false,
+      "ticket": 315,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794166103564,
-      "reviewEntry": 1,
+      "readyAt": 1794168010656,
+      "reviewEntry": 2,
       "patchId": "6fed26adaa2f5fb4abf3949fa75ed79b977a9b07",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -4112,7 +4112,6 @@
         "src/hp-settings-select.ts",
         "test/hp-test-facade.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4310,7 +4309,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1357
+  ],
   "active": null,
   "events": {
     "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9:finish:2:automation-pending": {
@@ -4478,6 +4479,19 @@
           "detail": "Браузер: device icon pixel alignment: failed",
           "eventId": "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9:finish:5:return:return:1357"
         }
+      }
+    },
+    "finish:00ea80d7-5494-4561-8b1b-e9e8c5a06f60": {
+      "digest": "9a497220c3de9988bf61c681988fbede67229a27cac0905e9b03948a57828b62",
+      "issue": 1357,
+      "message": {
+        "kind": "queued",
+        "issue": 1357,
+        "at": 1794168010656,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "8c05977f2c0d029c6c3f5ae8ced3f07d4823de3c"
       }
     }
   },
