@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.85.1-beta.2 — 2026-11-09
+
 - Accept the 58 owner-reviewed stable-audit frames; calibrate equivalent-grid AA to 300 pixels only in 2.5D, with a real one-pixel scene-shift witness in both themes (#1363).
 - Keep the space name or selector beside a 44px vertical-ellipsis actions menu in a single narrow header row, including single-space panels and pinned cards (#1364).
 
