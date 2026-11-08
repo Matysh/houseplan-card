@@ -20,10 +20,11 @@ test('passage is exposed in the agreed toolbar and dialog order', () => {
 
   const dialogStart = card.indexOf('private _renderOpeningDialog()');
   const dialog = card.slice(dialogStart, card.indexOf('private _gridLevels()', dialogStart));
-  const radioOrder = ['window', 'door', 'passage', 'gate']
-    .map((type) => dialog.indexOf(`.checked=\${d.type === '${type}'}`));
-  assert.equal(radioOrder.every((offset) => offset >= 0), true);
-  assert.deepEqual([...radioOrder].sort((a, b) => a - b), radioOrder);
+  assert.match(dialog, /selectControl\(\{ name: 'optype', value: d\.type/);
+  const types = dialog.match(/options: \(\[([^\]]+)\] as const\)\.map/);
+  assert.ok(types, 'the opening dropdown declares its ordered options');
+  assert.deepEqual([...types[1].matchAll(/'([^']+)'/g)].map(match => match[1]),
+    ['window', 'door', 'passage', 'gate']);
   assert.match(dialog, /role="status" aria-live="polite"/);
   assert.match(dialog, /d\.type !== 'passage'[\s\S]*opening\.contact_label/);
   assert.match(dialog, /d\.type === 'door' \|\| d\.type === 'gate'/);
