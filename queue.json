@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6738,
+  "revision": 6739,
   "nextTicket": 300,
   "nextFence": 299,
   "tasks": {
@@ -3954,7 +3954,18 @@
         "src/form-kit-styles.ts",
         "src/houseplan-editor-runtime.ts",
         "src/styles/form-kit.styles.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794121167048,
+        "entry": 1,
+        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/summary-panel-presentation.test.mjs: failed; Поведение: test/summary-panel-runtime.test.mjs: failed",
+        "eventId": "finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1:finish:3:return:return:1350"
+      }
     },
     "1351": {
       "issue": 1351,
@@ -4165,18 +4176,7 @@
   "waiting": [
     1351
   ],
-  "active": {
-    "issue": 1350,
-    "worker": "finish",
-    "token": "298:finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1:finish:1:admit",
-    "fence": 298,
-    "materialSha": "8fc54f5a34190d2079578f85e1b16d4f4bb3eeb2",
-    "expectedBase": "6cedac4193d114c7eea822f6e06b4fb65181bd9d",
-    "phase": "testing",
-    "admittedAt": 1794120856822,
-    "expiresAt": 1794121455703,
-    "patchId": "67749adfcd7ebe8744d97926c9c60166e1cb2100"
-  },
+  "active": null,
   "events": {
     "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366:finish:2:synchronized": {
       "digest": "9eeab9e3863fd011520e7ed16d24777411ded0bb4ce5a62c31ca1ee6e594f2cb",
@@ -4252,6 +4252,10 @@
     },
     "finish:5ab56457-f52b-4b05-b507-fde11bff12b6": {
       "digest": "2c4f9d7c935141a9773b5ca451c96afd33c7838dc6b91f982cb198e857dde905",
+      "issue": 1350
+    },
+    "finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1:finish:3:return": {
+      "digest": "9b078534bd8112629bce791bf151e3de977b31b58e19b7bddc0c0c707ec049cf",
       "issue": 1350
     },
     "finish:fa669634-f5ae-48fc-9e82-04bb3f04b366": {
@@ -4344,6 +4348,26 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f"
+      }
+    },
+    "finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1:finish:3:return:return:1350": {
+      "digest": "9b078534bd8112629bce791bf151e3de977b31b58e19b7bddc0c0c707ec049cf",
+      "issue": 1350,
+      "message": {
+        "kind": "return",
+        "issue": 1350,
+        "at": 1794121167048,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794121167048,
+          "entry": 1,
+          "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/summary-panel-presentation.test.mjs: failed; Поведение: test/summary-panel-runtime.test.mjs: failed",
+          "eventId": "finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1:finish:3:return:return:1350"
+        }
       }
     }
   },
