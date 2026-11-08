@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Accept the 58 owner-reviewed stable-audit frames; calibrate equivalent-grid AA to 300 pixels only in 2.5D, with a real one-pixel scene-shift witness in both themes (#1363).
+
 - Keep stable smoke assertions on the visible hidden-device action, the phone View header and the explicit frozen door field order (#1362).
 
 - Restore LED strip actions after leaving an editor for View (#1361).

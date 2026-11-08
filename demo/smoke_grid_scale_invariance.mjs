@@ -343,8 +343,31 @@ const devices = await pair('devices');
 // pixel; the masked box and openings are covered by critical metrics and by
 // the View/Plan raster pairs respectively.
 const background = await pair('decor', { hide: ['.bdbox', '.opening'] });
+// A physical one-CSS-pixel displacement must still fail the calibrated iso
+// comparison. Restore the scene before the native editor/cancel scenarios.
+const onePixelSceneShift = async (reference) => {
+  const before = await page.evaluate(() => {
+    const scene = window.__card.renderRoot.querySelector('.zoomwrap');
+    if (!scene) throw Error('Grid negative witness needs its real scene');
+    const previous = { value: scene.style.getPropertyValue('translate'),
+      priority: scene.style.getPropertyPriority('translate') };
+    scene.style.setProperty('translate', '1px 0px');
+    return previous;
+  });
+  try {
+    return await pixelDiff(reference.pixels, await stableScreenshot(stage));
+  } finally {
+    await page.evaluate((previous) => {
+      const scene = window.__card.renderRoot.querySelector('.zoomwrap');
+      if (previous.value) scene.style.setProperty('translate', previous.value, previous.priority);
+      else scene.style.removeProperty('translate');
+    }, before);
+  }
+};
 const isoLight = await pair('view', { projection: 'iso' });
+const isoLightShiftDiff = await onePixelSceneShift(isoLight.detailed);
 const isoDark = await pair('view', { projection: 'iso', theme: 'dark' });
+const isoDarkShiftDiff = await onePixelSceneShift(isoDark.detailed);
 
 const openingEdgeAction = async (cellCm) => {
   await setTheme('light');
@@ -478,15 +501,17 @@ const devicesDiff = await pixelDiff(devices.reference.pixels, devices.detailed.p
 const backgroundDiff = await pixelDiff(background.reference.pixels, background.detailed.pixels);
 const isoLightDiff = await pixelDiff(isoLight.reference.pixels, isoLight.detailed.pixels);
 const isoDarkDiff = await pixelDiff(isoDark.reference.pixels, isoDark.detailed.pixels);
-const pixelEquivalent = (diff) => diff.sameSize
-  && diff.changed <= 150 && diff.maxDelta <= 40 && diff.meanDelta <= 0.05;
+// #1363: owner-approved equivalent-grid edge AA calibration for 2.5D only.
+const isoPixelLimit = 300;
+const pixelEquivalent = (diff, changedLimit = 150) => diff.sameSize
+  && diff.changed <= changedLimit && diff.maxDelta <= 40 && diff.meanDelta <= 0.05;
 
 // Diagnostic only: the raw diff numbers behind every pixel verdict, so a CI
 // failure reports HOW FAR a pair drifted instead of a bare boolean (#302).
 console.error('pixel-diffs', JSON.stringify({
   flat: flatDiff, static: staticDiff, plan: planDiff, darkView: darkViewDiff,
   devices: devicesDiff, background: backgroundDiff,
-  isoLight: isoLightDiff, isoDark: isoDarkDiff,
+  isoLight: isoLightDiff, isoDark: isoDarkDiff, isoLightShift: isoLightShiftDiff, isoDarkShift: isoDarkShiftDiff,
 }));
 const out = {
   referenceFactorIsOne: referenceView.metrics.factor === 1,
@@ -509,9 +534,13 @@ const out = {
   backgroundPixelsMatch: pixelEquivalent(backgroundDiff),
   backgroundPointerCancelIsMutationFree: referenceBackgroundCancel.ok && detailedBackgroundCancel.ok,
   isoLightCriticalMetricsMatch: metricPairsNear(isoLight.reference.metrics, isoLight.detailed.metrics),
-  isoLightPixelsMatch: pixelEquivalent(isoLightDiff),
+  isoLightPixelsMatch: pixelEquivalent(isoLightDiff, isoPixelLimit),
   isoDarkCriticalMetricsMatch: metricPairsNear(isoDark.reference.metrics, isoDark.detailed.metrics),
-  isoDarkPixelsMatch: pixelEquivalent(isoDarkDiff),
+  isoDarkPixelsMatch: pixelEquivalent(isoDarkDiff, isoPixelLimit),
+  isoLightRejectsOnePixelSceneShift: isoLightShiftDiff.sameSize
+    && isoLightShiftDiff.changed > isoPixelLimit && !pixelEquivalent(isoLightShiftDiff, isoPixelLimit),
+  isoDarkRejectsOnePixelSceneShift: isoDarkShiftDiff.sameSize
+    && isoDarkShiftDiff.changed > isoPixelLimit && !pixelEquivalent(isoDarkShiftDiff, isoPixelLimit),
   // #649: 2.5D is the General settings switch; the card never shows a toggle.
   isoHasNoCardToggle: referenceView.metrics.projectionToggleCount === 0
     && isoLight.reference.metrics.projection === 'iso'
@@ -530,7 +559,7 @@ if (Object.values(out).some((value) => !value)) {
     isoLight: { reference: isoLight.reference.metrics, detailed: isoLight.detailed.metrics },
     isoDark: { reference: isoDark.reference.metrics, detailed: isoDark.detailed.metrics },
     flatDiff, staticDiff, planDiff, darkViewDiff, devicesDiff, backgroundDiff,
-    isoLightDiff, isoDarkDiff,
+    isoLightDiff, isoDarkDiff, isoLightShiftDiff, isoDarkShiftDiff,
     referenceBackgroundCancel, detailedBackgroundCancel,
     referenceOpeningEdgeActs, detailedOpeningEdgeActs,
   }, null, 2));
