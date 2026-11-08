@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6773,
+  "revision": 6774,
   "nextTicket": 301,
   "nextFence": 301,
   "tasks": {
@@ -3936,7 +3936,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1350-toggle-label",
-      "materialSha": "a4f636ddbd0cfbd1ae4085634351b8f831d8403c",
+      "materialSha": "0d127cd038f4110e7d90cac7004f508f07717fff",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 300,
@@ -3944,7 +3944,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794121293790,
       "reviewEntry": 2,
-      "patchId": "67749adfcd7ebe8744d97926c9c60166e1cb2100",
+      "patchId": "df5fb51eac77bd0ac0c6a7d1dba0f21e5c6f9ccb",
       "changedFiles": [
         "demo/smoke_check_label.mjs",
         "docs/CHANGELOG.md",
@@ -3953,7 +3953,10 @@
         "src/check-label.ts",
         "src/form-kit-styles.ts",
         "src/houseplan-editor-runtime.ts",
-        "src/styles/form-kit.styles.ts"
+        "src/styles/form-kit.styles.ts",
+        "test/geometry-history-refusal.test.mjs",
+        "test/summary-panel-presentation.test.mjs",
+        "test/summary-panel-runtime.test.mjs"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -4181,11 +4184,12 @@
     "worker": "github-coordinator",
     "token": "300:github:42457145262:1:tick:0:admit",
     "fence": 300,
-    "materialSha": "a4f636ddbd0cfbd1ae4085634351b8f831d8403c",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "0d127cd038f4110e7d90cac7004f508f07717fff",
+    "expectedBase": "60199f149e7653417447ab7b82a0cda6d9a0a86f",
+    "phase": "testing",
     "admittedAt": 1794121370255,
-    "expiresAt": 1794121670255
+    "expiresAt": 1794121729955,
+    "patchId": "df5fb51eac77bd0ac0c6a7d1dba0f21e5c6f9ccb"
   },
   "events": {
     "github:42456604433:1:completions:message:66866e392ff3426ed1a7986a49ab582489cc84b734b24b5b6ed92f6b5c64c4c5": {
@@ -4250,6 +4254,10 @@
     },
     "github:42457145262:1:completions:message:9b8a91c899150f078ad33795b8626b0f73a4ab9376babfedacff2bf02089495c": {
       "digest": "ca5a721bcd96e78a177a5b371d65338e38718d449517140dde1eda4eccdd840e",
+      "issue": 1350
+    },
+    "finish:275b47a8-d7e9-4f81-bfec-d276867304a0:finish:1:synchronized": {
+      "digest": "be9cabd660bed62adb8a1f2abdf48dd9d864311ad8ae3dfcbacc7a7d0f3b71b2",
       "issue": 1350
     },
     "finish:433c2a1b-41d2-4b9c-a67b-47d4e5d26ce1": {
