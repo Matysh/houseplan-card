@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7413,
+  "revision": 7414,
   "nextTicket": 317,
   "nextFence": 317,
   "tasks": {
@@ -4099,7 +4099,18 @@
         "demo/smoke_ui_polish_963_touch.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794170278068,
+        "entry": 1,
+        "detail": "Браузер: hidden device toggle: failed",
+        "eventId": "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b:finish:3:return:return:1362"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4288,18 +4299,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1362,
-    "worker": "finish",
-    "token": "316:finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b:finish:1:admit",
-    "fence": 316,
-    "materialSha": "c27ba8a163900f4165952f752dd8da7cedfff1ae",
-    "expectedBase": "8c05977f2c0d029c6c3f5ae8ced3f07d4823de3c",
-    "phase": "testing",
-    "admittedAt": 1794170180119,
-    "expiresAt": 1794170539273,
-    "patchId": "8e109b024186f7db0c9bf2d3c409a0e3e72ecda2"
-  },
+  "active": null,
   "events": {
     "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b:finish:2:synchronized": {
       "digest": "dccb024cfe497052e5420610be7453bdb4e185ddc71980f0df4b5ee4638aac03",
@@ -4307,6 +4307,10 @@
     },
     "finish:ac41c78f-d47e-4959-8bed-7ba486732665": {
       "digest": "32a6fb97f29c92d21ef917e64ab7212a8e74d733bb739a23146bc957efdb1777",
+      "issue": 1362
+    },
+    "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b:finish:3:return": {
+      "digest": "cdc595b1a5b0e1f1698f89d14fe0fde4302e5844207dda70f960cfaceb885b82",
       "issue": 1362
     },
     "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b": {
@@ -4334,6 +4338,26 @@
         "layer": "product",
         "materialSha": "c27ba8a163900f4165952f752dd8da7cedfff1ae",
         "phase": "sync"
+      }
+    },
+    "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b:finish:3:return:return:1362": {
+      "digest": "cdc595b1a5b0e1f1698f89d14fe0fde4302e5844207dda70f960cfaceb885b82",
+      "issue": 1362,
+      "message": {
+        "kind": "return",
+        "issue": 1362,
+        "at": 1794170278068,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794170278068,
+          "entry": 1,
+          "detail": "Браузер: hidden device toggle: failed",
+          "eventId": "finish:2f9c5446-6c5b-468d-9166-fdbaaf70bb9b:finish:3:return:return:1362"
+        }
       }
     }
   },
