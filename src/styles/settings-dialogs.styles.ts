@@ -19,7 +19,6 @@ hp-dialog:is([data-kind=space],[data-kind=marker])[settings-layout]{--hp-dialog-
 .hpf-settings-nav{position:sticky;top:0;display:grid;align-content:start;gap:4px;padding:13px 8px;min-width:0;}
 .hpf-settings-nav hr{width:100%;border:0;margin:14px 0;}
 .hpf-settings-content{min-width:0;align-self:stretch;border-inline-start:1px solid var(--hpf-line);padding:20px;}
-/* Device settings keep navigation and content in the shell's available body. */
 .hpf-settings-layout[data-settings-kind=marker]{flex:1 1 0;min-height:0;grid-template-rows:minmax(0,1fr);}
 .hpf-settings-layout[data-settings-kind=marker] > .hpf-settings-nav{position:static;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
 .hpf-settings-layout[data-settings-kind=marker] > .hpf-settings-content{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;}
