@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7115,
+  "revision": 7116,
   "nextTicket": 311,
   "nextFence": 310,
   "tasks": {
@@ -4128,7 +4128,16 @@
         "src/iso-sun.ts",
         "src/sun-door-passages.ts",
         "test/sun-door-passages.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261108T151216959-f2998377",
+        "name": "Тесты для задачи #1355 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261108T151216959-f2998377/report.json",
+        "materialSha": "0a3c5489931d8a90090e622e839bc60d4ac3971c",
+        "status": "passed",
+        "finishedAt": "2026-11-08T15:24:24.793Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4326,9 +4335,9 @@
     "fence": 309,
     "materialSha": "0a3c5489931d8a90090e622e839bc60d4ac3971c",
     "expectedBase": "55569543d09c0fc650b7918e44490ebc9fd88431",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794150723261,
-    "expiresAt": 1794151764958,
+    "expiresAt": 1794155067620,
     "patchId": "9b90da59e333dd520888078c0eeff75a4822788d"
   },
   "events": {
@@ -4394,6 +4403,10 @@
     },
     "finish:5658874d-6dda-49d9-ab39-01b30183ef24": {
       "digest": "f69fb676d277c7826a1649a5e881904ff8e7359b7025d22c37e5bd297fac7431",
+      "issue": 1355
+    },
+    "release-return-finish:94d131a5-c3ad-405f-b81c-bdfdf2104e2c:finish:3:s6-complete": {
+      "digest": "8d20c44e2aa83f0f97498ce65d5285d234c3f3328364210509f3bb0e43d80922",
       "issue": 1355
     },
     "release-return:94d131a5-c3ad-405f-b81c-bdfdf2104e2c": {
