@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7583,
+  "revision": 7584,
   "nextTicket": 324,
   "nextFence": 324,
   "tasks": {
@@ -4485,6 +4485,10 @@
       "digest": "c200067c6d27deb48315376e884db137f327c24820ab961d64a1eaa763fbc7af",
       "issue": 1364
     },
+    "finish:aeebf595-2918-4acf-9861-8c4a3e840841:finish:3:s6-label": {
+      "digest": "1cb3e06aecd203c4caf506c06f87ff4842150b484cc91df8bb9687b189188ead",
+      "issue": 1364
+    },
     "finish:9edf4d56-53eb-400b-b760-29e679219f4a": {
       "digest": "ba2b0801094a68e6e1c731c49650dd32fb1093f4c638b590c91cc4e0c5222e18",
       "issue": 1364,
@@ -4692,7 +4696,8 @@
         "resubmission": false,
         "reviewChanges": "Реализация: `codex/issue-1364-single-row-header`, исходный коммит `a64f27e9e`. До первого переноса обычных контролов общий intrinsic-измеритель выбирает фазу 5 с одним рядом «пространство + ⋮». Единственное доступное пространство в этом варианте — текст, в том числе fixed card; несколько — прежний hp-settings-select. Размер ⋮ 44×44, меню и владельцы команд остаются прежними. Измерительная native-копия использует ту же flex-компоновку и представление пространства; отдельный ростер/обработчик перехода не добавлен.\n\nПроверить три результата: (1) один ряд без overflow и доступное пространство во всём узком диапазоне; (2) все разрешённые действия через исходные guards, настройки именно текущего пространства; (3) восстановление широкого состояния, согласованность измерений и камеры при переходах редакторов, read-only/kiosk.\n\nАдресный предварительный запуск `npm run build` + `node scripts/bundle-sync.mjs` прошёл; `node demo/smoke_header_actions_menu.mjs` прошёл после исправления сравнения строки с хвостовым пробелом. В preview overflow-теста старый «wide» fixture 1280px корректно стал компактным при вычете Properties 360px, поэтому проверка прямого крестика перенесена на действительно широкую 1800px компоновку; прежняя проверка центровки SVG и всех hit targets сохранена. Канонический S6 выполняет finish после допуска в очередь.\n\nКлассификация тестов: существующие browser smoke; `planProfile` выбрал `smoke_header_actions_menu` по изменениям каждого из panel-header-flow.ts/header-space-select.ts/panel-header.styles.ts без areaTests. Полный план — центральная выборка, areaTests её дополняют.\n\nE2E: **надо**, запись [task-impact/1364.md](https://github.com/Matysh/houseplan-e2e/blob/main/task-impact/1364.md). Синтетические скриншоты не заменяют серверный HA E2E и не принимают новые эталоны #1353. Обновлены канонические UX/Touch/Architecture, руководство, RU/EN changelog и release ledger stable-fix.\n\n\n### Исправления после первого S6\n\nПрогон `20261108T225933715-cdd0eefe` завершён: четыре FAIL разобраны. `data-hp-contract` обнаружил незарегистрированный новый `space-name` — добавлен в общий контракт, описание actions-trigger обновлено на первый перенос. Read-only mobile-header, isoRotated в mode-transition и empty-space-home-arrow в space-switch-transitions ещё нажимали скрытые исходные кнопки; переведены на существующий `headerActionTarget/clickHeaderAction`, который выбирает видимый исходный контрол или реальное меню. Сохранены все проверки состояния, отсутствие запрещённых действий, camera/animation и запись-счётчики; дополнительно проверяется смена pressed у read-only eye. Это адаптация пользовательского маршрута к согласованному #1364, а не ослабление assertions. Исходный отказ сохранён; новый finish повторяет упавшие/связанные шаги и засчитывает применимые успехи.\n\nВладелец дополнительно поручил выпустить следующую бету после S8 и явно принял изменения эталонов, связанные с шапкой. Вне шапки изменения требуют самостоятельного разбора.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
