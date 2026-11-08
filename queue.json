@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7360,
+  "revision": 7361,
   "nextTicket": 316,
   "nextFence": 316,
   "tasks": {
@@ -4605,6 +4605,10 @@
       "digest": "74b80bc31030f90f5180b3bca3385e47af52f5e72114b9cb4bf7c100804b7f47",
       "issue": 1357
     },
+    "github:42519768008:1:completions:message:4d1a6233ad217f3333923c3bd2a45737777ec01359a43e5d9f6344edaed3f97c": {
+      "digest": "f1b0c81165143161c32c402f3a606b145f106e667fdf973fc72870580ff5ebe2",
+      "issue": 1357
+    },
     "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9": {
       "digest": "0b85103b375840c595a3e9bbb4bb14c57017613becb839d8815798ac764677d9",
       "issue": 1357,
@@ -4651,7 +4655,8 @@
           "entry": 1,
           "detail": "Браузер: device icon pixel alignment: failed",
           "eventId": "finish:0e149a22-4615-4cfd-8275-3ee53cb31fe9:finish:5:return:return:1357"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:00ea80d7-5494-4561-8b1b-e9e8c5a06f60": {
