@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1352,
+  "baseStable": "v1.84.0",
+  "category": "stable-fix",
+  "rationale": "Use one outlined navigation geometry for the header close action instead of a separately painted absolute child and border wrapper. Scope a 40px colour trigger to the Background toolbar so single-row editor toolbars share the existing 57px height; preserve intrinsic wrapping and popup behaviour.",
+  "summary": {
+    "ru": "Выровнены верхний крестик редактора и высота панелей трёх редакторов.",
+    "en": "Align the header close action and the three editor toolbar heights."
+  }
+}

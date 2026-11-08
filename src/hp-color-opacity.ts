@@ -190,8 +190,8 @@ export class HpColorOpacity extends LitElement {
     }
     .readout { font:inherit; color:var(--hp-color-readout-color,var(--primary-text-color)); line-height:var(--hp-color-readout-line-height,inherit); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
     .trigger {
-      width: 44px;
-      height: 44px;
+      width: var(--hp-color-trigger-size,44px);
+      height: var(--hp-color-trigger-size,44px);
       flex: none;
       box-sizing: border-box;
       padding: 3px;

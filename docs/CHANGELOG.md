@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Align the header's editor close action with the shared navigation controls and shrink the Background toolbar colour trigger to keep all three single-row editor toolbars the same height (#1352).
+
 - Use the standard dropdown for the opening type in the create/edit dialog, preserving type-specific fields and width defaults (#1351).
 
 - Keep shared header buttons at the same vertical position when switching between View and editors with the wide Properties panel (#1349).
