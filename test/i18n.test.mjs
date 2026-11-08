@@ -515,6 +515,7 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
   // Every entry here is a legitimate French/English homograph or a unit,
   // template or brand token — reviewed with the contributed dictionary.
   const allowed = new Set([
+    'panel.actions', // #1347: Actions is the correct noun in both French and English.
     'mode.plan_short', // #1120: Plan is the same product term in EN, DE and FR.
     'view.menu_ha', // #1089: preserve the same HA command name in every menu.
     'export.transparent', // #1036: Transparent is also the French background label.

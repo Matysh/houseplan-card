@@ -112,7 +112,7 @@ test('#1184 the appended header sheet owns shared intrinsic-flow roots and its n
   assert.ok(rules.length > 20);
   for (const rule of rules) for (const selector of rule.selectors)
     assert.ok(selector.startsWith('.hdr[data-panel-flow]')
-      || /^\.hdr\[data-panel-flow=['"][0-4]['"]\]/.test(selector)
+      || /^\.hdr\[data-panel-flow=['"][0-5]['"]\]/.test(selector)
       || selector === '.panel-menu'
       || selector === '.panel-header-metrics .panel-icon-metric', `unscoped shared-header rule: ${selector}`);
 });
