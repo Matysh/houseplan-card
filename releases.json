@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 582,
+  "revision": 583,
   "active": "v1.85.1-beta.1-20261108",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -37541,7 +37541,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.85.1-beta.1",
         "candidate": "7c129169ce755a0b9293bd83b566c7d36f799d80",
         "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
         "issues": [
@@ -45002,6 +45002,105 @@
         "selectionDigest": "46807313cded53d69255983662f59eec4d6f1540514e9ae1f67dcdbea47510ee",
         "status": "not-required",
         "inventoryComplete": true
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.85.1-beta.1",
+          "candidate": "7c129169ce755a0b9293bd83b566c7d36f799d80",
+          "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
+          "issues": [
+            {
+              "number": 1344,
+              "commits": [
+                "890a4ada80b4d379aaa523f0c18f96cbb6e046e5"
+              ]
+            },
+            {
+              "number": 1345,
+              "commits": [
+                "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa"
+              ]
+            },
+            {
+              "number": 1346,
+              "commits": [
+                "ce0796e207211f495008ed9b9ce21e031484175c",
+                "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865"
+              ]
+            },
+            {
+              "number": 1347,
+              "commits": [
+                "48778427d68eb886492861d98b8ef453d99d85d5",
+                "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
+                "739b288b9006a233eb8fdb44e165c461625054c3",
+                "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
+                "f7b252d8f0c63e6fa3c87712099b5f06bac010e5"
+              ]
+            },
+            {
+              "number": 1348,
+              "commits": [
+                "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
+                "628ca768782b89a07bb9779f651c6f1cfcd5cb26"
+              ]
+            },
+            {
+              "number": 1349,
+              "commits": [
+                "6cedac4193d114c7eea822f6e06b4fb65181bd9d"
+              ]
+            },
+            {
+              "number": 1350,
+              "commits": [
+                "0d127cd038f4110e7d90cac7004f508f07717fff",
+                "c723c9ba1baf695506f17d643a7eb6ad361c57dd",
+                "f8801ee93a85b1bc981506c5cabe3dbf125807c3"
+              ]
+            },
+            {
+              "number": 1351,
+              "commits": [
+                "5d3a14677c83db84157697f9a425179bc0a02fb4",
+                "60199f149e7653417447ab7b82a0cda6d9a0a86f"
+              ]
+            },
+            {
+              "number": 1352,
+              "commits": [
+                "12605c18b10a439baca2a08308840a5acd308406",
+                "2f8be3041a4b8cb8c34cede5d145e02c86deef5e"
+              ]
+            },
+            {
+              "number": 1353,
+              "commits": [
+                "55569543d09c0fc650b7918e44490ebc9fd88431"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1344,
+          1345,
+          1346,
+          1347,
+          1348,
+          1349,
+          1350,
+          1351,
+          1352,
+          1353
+        ],
+        "version": "1.85.1-beta.1",
+        "body": "<!-- release: v1.85.1-beta.1 -->\n## Houseplan 1.85.1-beta.1\n\nПервая бета линии **1.85.1** после стабильной 1.85.0.\n\n- **Удобнее на узком экране.** Перед появлением третьего ряда кнопок шапка собирает действия в одно меню. Выбор пространства остаётся сверху; в карточке с закреплённым пространством он скрывается. В основной панели с одним пространством остаётся только меню действий. (#1347)\n- **Плавнее переходы к редакторам.** Подготовка редактора начинается заранее при намерении его открыть; сцена остаётся доступной до показа конечного кадра. (#1344)\n- **Свет через стеклянные двери.** Новая настройка «Пропускает свет» позволяет закрытой двери передавать освещение и сохраняется при переносе плана. (#1348)\n- **Надёжнее работа с планом.** Замкнутая комната распознаётся и при внутренней тупиковой перегородке. (#1346)\n- **Доработан интерфейс.** Подпись тумблера переключает его значение; тип проёма выбирается стандартным списком; выровнены кнопка закрытия, панели редакторов и положение общих кнопок шапки. (#1349, #1350, #1351, #1352)\n\nПосле обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.\n\n---\n\nFirst beta of **1.85.1**, based on stable 1.85.0.\n\n- **A compact header for narrow screens.** Actions move into one menu before a third button row appears. Space selection stays above it; pinned-space cards omit the selector, and a single-space primary panel shows actions only. (#1347)\n- **Smoother editor transitions.** Editor preparation starts on user intent while the current scene remains available until its final frame is presented. (#1344)\n- **Light through glass doors.** The new “Lets light through” setting lets closed doors transmit illumination and survives plan transfers. (#1348)\n- **More reliable plan editing.** Closed rooms are recognized with dangling internal walls. (#1346)\n- **UI refinements.** Switch labels activate their controls, opening types use the standard dropdown, and editor close controls, toolbar heights and shared header positions are aligned. (#1349, #1350, #1351, #1352)\n\nRestart Home Assistant and reload open Houseplan pages after upgrading.\n",
+        "technical": {
+          "ru": "## v1.85.1-beta.1 — 2026-11-08\n\n- По подтверждению владельца приняты четыре эталона узкой шапки #1347; сохранены прежние глобальные сведения и все остальные baseline (#1353).\n\n- На ширине, где кнопки шапки потребовали бы третью строку, все действия собраны в общее меню; выбор пространства сохраняется в карточке без закрепления и в основной панели с несколькими пространствами (#1347).\n\n- Верхний крестик редактора использует общие размеры и рамку кнопок режимов; колор-пикер Подложки уменьшен, чтобы однострочные панели трёх редакторов были одной высоты (#1352).\n\n- Тип проёма в диалоге создания и редактирования выбирается стандартным выпадающим списком; зависимые поля и значения ширины сохранены (#1351).\n\n- Основные кнопки шапки сохраняют положение по вертикали при переходах между Просмотром и редакторами с широкой панелью свойств (#1349).\n- Исправлен клик по подписи справа от тумблера UI Kit: настоящий HA-переключатель меняет значение один раз, disabled остаётся инертным, нативные checkbox и отдельные Help/ссылки сохраняют своё поведение (#1350).\n\n- Добавлен переключатель «Пропускает свет» у двери: Glow проходит через закрытую стеклянную дверь, наружная дверь пропускает солнце как окно в Flat/2.5D; внутренние двери не продолжают солнечные лучи. Настройка сохраняется и переносится при экспорте/импорте (#1348).\n\n- Замкнутые контуры комнат распознаются и с тупиковыми внутренними перегородками; стены и проёмы сохраняются, Optimize не требуется (#1346).\n- Исправлена устаревшая ссылка ночной мутационной проверки после переименования теста границ онбординга (#1345).\n- Переработан переход между Просмотром и редакторами: постоянные поверхности сцены, показ конечного кадра до завершения и тихая подготовка кода редактора по намерению пользователя с правами записи (#1344).",
+          "en": "## v1.85.1-beta.1 — 2026-11-08\n\n- Accept the four owner-approved narrow-header baselines for #1347, preserving global provenance and every other baseline (#1353).\n\n- Collect header actions into one shared menu when the measured layout would need a third control row; retain the space picker for unpinned cards and multi-space panels (#1347).\n\n- Align the header's editor close action with the shared navigation controls and shrink the Background toolbar colour trigger to keep all three single-row editor toolbars the same height (#1352).\n\n- Use the standard dropdown for the opening type in the create/edit dialog, preserving type-specific fields and width defaults (#1351).\n\n- Keep shared header buttons at the same vertical position when switching between View and editors with the wide Properties panel (#1349).\n- Fix text-label activation for left-side UI Kit HA switches; preserve one change per click, disabled rows, native checkbox behavior and independent Help/links (#1350).\n\n- Add a door-only “Lets light through” switch for closed glass doors: shared Glow and exterior solar apertures in Flat/2.5D; interior doors do not extend sunlight; retain the flag through save/export/import (#1348).\n\n- Recognize closed room contours with dangling internal walls; retain partitions and openings without requiring Optimize (#1346).\n- Fixed a stale nightly mutation witness selector after the onboarding boundary test was renamed (#1345).\n- Rework View/editor transitions with retained scene surfaces, a presented endpoint before finishing, and silent editor-code preparation on writer intent (#1344)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -49512,7 +49611,8 @@
     "ship-review:prepare:fbd3271a-d5ae-41dd-9cd4-d66aa96723bd": "abbc8cf6adae45980f9485742d56cbc420ed55b0110d6d81e1647c475faa1dac",
     "ship-review:result:3edc14c0-424a-406d-920f-c1080e6767e1": "edaa294f683218fd4055acd63f452e114ea10c0f85d13b78692b151006a35a54",
     "beta1851-20261108-publish:runner-report": "4ff722a6fe7a61e24184ddec56e1354d475ce0ff7dddd4c05016603661c0a7e1",
-    "beta1851-20261108-publish:metrics": "753d80bba3594ebc24605cbaf176f69d2c83c43fa4604ff05d929d99ddce9bf8"
+    "beta1851-20261108-publish:metrics": "753d80bba3594ebc24605cbaf176f69d2c83c43fa4604ff05d929d99ddce9bf8",
+    "beta1851-20261108-publish:prepared:eaeb5978-f06c-47c3-9b68-3bf35f8b161c": "c63d3f86a91f3da9513e8231eae41d86bd33ceac4b0f41377e70c21dcc83d900"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
