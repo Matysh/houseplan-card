@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 569,
+  "revision": 570,
   "active": "v1.85.1-beta.1-20261108",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -37184,14 +37184,14 @@
       "kind": "beta",
       "branch": "release/1.85.1-beta.1",
       "sourceSha": "55569543d09c0fc650b7918e44490ebc9fd88431",
-      "sha": "55569543d09c0fc650b7918e44490ebc9fd88431",
+      "sha": "ce6ac7af5763e462251ac35b76a2372f8c0d00b6",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
-        "tag": "v1.85.1-beta.1",
-        "candidate": "55569543d09c0fc650b7918e44490ebc9fd88431",
+        "tag": null,
+        "candidate": "ce6ac7af5763e462251ac35b76a2372f8c0d00b6",
         "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
         "issues": [
           {
@@ -37282,7 +37282,14 @@
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
-      "portToDev": [],
+      "portToDev": [
+        {
+          "from": "55569543d09c0fc650b7918e44490ebc9fd88431",
+          "to": "ce6ac7af5763e462251ac35b76a2372f8c0d00b6",
+          "syncMode": "merge",
+          "status": "pending"
+        }
+      ],
       "diagnostics": []
     }
   },
@@ -41780,7 +41787,8 @@
     "stable1850-20261106-publish:completion:1f456bdb-8044-41a3-a07c-2c3c3b2f9427": "0e6a2fdb026408a0ea267fecfd370711912788b2612baf4cc49853ea4bf210f7",
     "github:42285497508:1:complete:completion:b7c8506a-77bf-4d44-ac4e-6dca4fd045a8": "b27b019d24e87774fc50ecb5b8efef596cae784a1f3e4f7bb6d0dd3ccb151fab",
     "github:42285497508:1:complete:completion:1e5c0f11-3e3b-4e5d-a6c3-595853d44993": "641548fd2032dd35141785287763c4fa47d208e067f3c9e7fea786874df72636",
-    "beta1851-20261108-create": "389c732018589b352643adaaa356fbe616367207d657688f6e537b08ae73ff54"
+    "beta1851-20261108-create": "389c732018589b352643adaaa356fbe616367207d657688f6e537b08ae73ff54",
+    "beta1851-20261108-prepared": "70f23e0c28665c39eef98b16c46d9848234323690b15010b2f8509c12198b259"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
