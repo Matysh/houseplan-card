@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7688,
+  "revision": 7689,
   "nextTicket": 326,
   "nextFence": 326,
   "tasks": {
@@ -491,44 +491,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "5126d7401c4755f6612aa27aaddbb26c9f3ca171"
-      }
-    },
-    "1244": {
-      "issue": 1244,
-      "branch": "issue/1244-opening-floor-fade",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-      "mergedSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab",
-      "mergedAt": 1793729380949,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1244:1:a123437815ff3dd9ce3cac536a69bc06b65bb6b9:a2fff2c1008b72d2d37b9046e332f5c45f64e096",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "a297fdedf383f8af3187",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 11
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "ad46b790228f0b2e7ae37f7905a63843043cf2ab"
       }
     },
     "1246": {
@@ -4166,10 +4128,25 @@
       "removedToRelease": false,
       "reviewRequest": "review:1364:5:ac41764568e4248c56d28e2a15d7a47ac7cb0455:26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": 15,
+          "cycleMilestone": 15
+        },
+        "milestoneTitle": "1.85.1",
+        "commentCurrent": true,
+        "commentDigest": "f05541086a4cb3bf0fd7",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": 15
+        }
       },
       "devBuild": {
         "status": "published",
