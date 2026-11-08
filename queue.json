@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6950,
+  "revision": 6951,
   "nextTicket": 305,
   "nextFence": 305,
   "tasks": {
@@ -4306,6 +4306,10 @@
       "digest": "bc2a08eff13de42dd01009adc0608d95edffc4257a544e3bff39216ccfdb4832",
       "issue": 1347
     },
+    "github:42475728888:1:completions:message:2e95aec4ce5ca9f72c037e33342bd466d8e75d783083cd46ddd3451eb4180c82": {
+      "digest": "51c90fc026f6f52aabee26f40fd501c2639c9efbcf51c76a9ff4d104a5201aca",
+      "issue": 1347
+    },
     "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17": {
       "digest": "694064b2d600b039adfa9434efa1ac898d3e748c7f923b26391c7752b2c3c8fb",
       "issue": 1347,
@@ -4352,7 +4356,8 @@
           "entry": 1,
           "detail": "Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/i18n.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed",
           "eventId": "finish:5196e48c-ee75-40f2-aec7-9d19a19f6c17:finish:3:return:return:1347"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:276a573b-19e2-4caa-96fb-1d017e224d94": {
