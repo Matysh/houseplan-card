@@ -68,7 +68,7 @@ function setup({ floors = ['f', 'g'], configInput } = {}) {
   window.cancelAnimationFrame = () => {};
   const document = { defaultView: window, createElement: () => ({ dataset: {}, textContent: '' }), createElementNS: () => ({ style: {}, classList: { add() {} }, appendChild() {} }) };
   const stage = { getBoundingClientRect: () => ({ left: 0, top: 0 }), removeAttribute() {} };
-  const root = { ownerDocument: document, appendChild() {}, querySelectorAll: () => [], querySelector: selector => selector === '.stage' ? stage : null };
+  const root = Object.assign(new EventTarget(), { ownerDocument: document, appendChild() {}, querySelectorAll: () => [], querySelector: selector => selector === '.stage' ? stage : null });
   const host = {
     // This geometry shell registers Lit controllers; alert forms are never opened.
     addController() {},

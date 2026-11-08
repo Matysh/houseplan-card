@@ -352,9 +352,9 @@ function runtimeFixture(t) {
     _stageEl: { clientWidth: 1024, clientHeight: 768, getBoundingClientRect: () => ({ top: 0 }) },
     ownerDocument: { defaultView: f.view, visibilityState: 'visible',
       createElement: () => ({ dataset: {}, textContent: '' }) },
-    renderRoot: { adoptedStyleSheets: [], firstChild: null,
+    renderRoot: Object.assign(new EventTarget(), { adoptedStyleSheets: [], firstChild: null,
       querySelector: (selector) => selector === '.summary-overlay' ? f.element : null,
-      insertBefore: () => undefined },
+      insertBefore: () => undefined }),
     requestUpdate: () => undefined,
     isConnected: true,
   };

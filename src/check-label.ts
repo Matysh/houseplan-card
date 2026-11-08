@@ -1,4 +1,4 @@
-/** Shared activation for legacy check rows with a genuine HA switch.
+/** Shared activation for compact check rows with a genuine HA switch.
  * Browser label activation clicks the custom-element host, not its public
  * click() method. HA's click() delegates to its own native input. */
 export function activateCheckLabel(event: Event): void {

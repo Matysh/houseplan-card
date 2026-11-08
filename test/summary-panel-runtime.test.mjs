@@ -43,14 +43,14 @@ const hostFixture = () => {
     defaultView: undefined, visibilityState: 'visible',
     createElement: () => ({ dataset: {}, textContent: '' }),
   };
-  const root = {
+  const root = Object.assign(new EventTarget(), {
     ownerDocument,
     adoptedStyleSheets: [], firstChild: null,
     querySelector: () => null,
     querySelectorAll: () => [],
     insertBefore: () => undefined,
     appendChild: () => undefined,
-  };
+  });
   return {
     localName: 'houseplan-card', parentNode: null,
     hass: { user: { id: 'alice', name: 'Alice', is_admin: true }, states: {}, config: {} },
