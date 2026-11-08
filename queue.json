@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 6854,
+  "revision": 6855,
   "nextTicket": 302,
   "nextFence": 302,
   "tasks": {
@@ -3980,7 +3980,18 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794131572220,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "404343c0ea22ea5cbded6848fb5bbfff4feebf86",
+      "changedFiles": [
+        "demo/smoke_editor_chrome_alignment.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.84.0/1352.json",
+        "process-next/lib/source-dependencies.mjs",
+        "src/hp-color-opacity.ts",
+        "src/styles/chrome.styles.ts",
+        "src/styles/navigation.styles.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4162,12 +4173,17 @@
     "token": "301:finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:1:admit",
     "fence": 301,
     "materialSha": "12605c18b10a439baca2a08308840a5acd308406",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "0d127cd038f4110e7d90cac7004f508f07717fff",
+    "phase": "testing",
     "admittedAt": 1794131576381,
-    "expiresAt": 1794131876381
+    "expiresAt": 1794131881960,
+    "patchId": "404343c0ea22ea5cbded6848fb5bbfff4feebf86"
   },
   "events": {
+    "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7:finish:2:synchronized": {
+      "digest": "fe9703725349cc00b1bacc240e8a4b63204b8b1a94a51fe021b613d3040ed267",
+      "issue": 1352
+    },
     "finish:a0ed3c72-abf9-4975-a52e-ac55a57db4f7": {
       "digest": "2022e094c0bcd034e00f179fdff8c17f02491c3b32e5b2a1046328addc1a4fcb",
       "issue": 1352,
