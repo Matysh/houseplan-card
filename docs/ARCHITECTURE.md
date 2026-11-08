@@ -194,6 +194,10 @@ The intrinsic header's wrapped candidate now selects a single compact row
 Its metric tree uses the same sole-space representation and flex sizing as the
 live header. The lazy actions menu still dispatches to existing command owners;
 the panel does not acquire a second roster or navigation implementation.
+Header actions intersect their horizontal floating viewport with the allocated
+head (#1365), so a right-side trigger cannot place commands under Properties.
+Vertical limits still use the visual viewport, including keyboard offsets;
+other context menus keep their existing placement.
 
 Internal window light (#1079) uses room-side candidates from the canonical
 opening-wall index. `interior-window-light.ts` validates host authority and

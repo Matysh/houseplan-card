@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1365,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Bound header actions horizontally to the allocated field so Properties cannot intercept compact menu commands. Keep existing viewport height, command owners and keyboard capture safeguards.",
+  "summary": {
+    "ru": "Меню узкой шапки не перекрывается панелью свойств.",
+    "en": "Keep compact header commands reachable beside Properties."
+  }
+}

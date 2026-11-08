@@ -64,6 +64,19 @@ try {
  await page.mouse.click(1700,950);await menu.waitFor({state:'hidden'});check('outside-closes',await menu.count(),0);
  await trigger.click();await menu.locator('[data-action="mode-plan"]').click();await settle();
  check('editor-navigation',await page.evaluate(()=>window.__card._mode),'plan');
+ // A wide window with Properties leaves a narrower head; the popup must
+ // remain reachable inside that head instead of falling under Properties.
+ await size(1024);
+ check('properties-case-is-compact',(await read()).phase,5);
+ check('properties-case-has-real-panel',await card.locator('[data-hp="properties-panel"]').isVisible());
+ await trigger.click();await menu.waitFor();
+ check('popup-stays-inside-head',await menu.evaluate(e=>{
+  const h=window.__card.renderRoot.querySelector('.hdr>.head').getBoundingClientRect(),r=e.getBoundingClientRect();
+  return r.left>=h.left&&r.right<=h.right;
+ }));
+ await menu.locator('[data-action="mode-view"]').click({timeout:5000});await settle();
+ check('properties-cannot-intercept-close',await page.evaluate(()=>window.__card._mode),'view');
+ await size(320);await trigger.click();await menu.locator('[data-action="mode-plan"]').click();await settle();
  await trigger.click();await menu.locator('[data-action="mode-view"]').click();await settle();
  check('editor-close',await page.evaluate(()=>window.__card._mode),'view');
  for(const language of ['en','ru','de','fr']){

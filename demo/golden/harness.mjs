@@ -1040,13 +1040,16 @@ async function preparePlanKeyboardCapture(page, scenario) {
     undefined, { timeout: 9000 });
   const guard = await page.evaluateHandle(({ space, tool }) => {
     const card = window.__goldenCard, root = card.renderRoot;
-    const tab = root.querySelector('[data-hp="mode-tab"][data-mode="plan"].active');
+    const activePlan = root.querySelector('[data-hp="mode-tab"][data-mode="plan"].active');
+    const collapsed = root.querySelector('.hdr')?.getAttribute('data-panel-flow') === '5';
+    const tab = collapsed ? root.querySelector('[data-hp="header-actions-trigger"]') : activePlan;
     const deepActive = () => {
       let node = document.activeElement;
       while (node?.shadowRoot?.activeElement) node = node.shadowRoot.activeElement;
       return node;
     };
-    if (!tab || deepActive() !== tab || card._mode !== 'plan' || card._space !== space || card._tool !== tool)
+    if (!activePlan || !tab || !tab.getClientRects().length || deepActive() !== tab
+        || card._mode !== 'plan' || card._space !== space || card._tool !== tool)
       throw Error('golden Plan keyboard precondition lacks the current active Plan tab/mode/space/tool');
     if (tool === 'resize' && !card._resize?.preview)
       throw Error('golden Plan keyboard precondition lost the intended live Resize preview');
@@ -1060,6 +1063,7 @@ async function preparePlanKeyboardCapture(page, scenario) {
       const rect = stage.getBoundingClientRect();
       return { config: JSON.stringify(card._serverCfg), layout: JSON.stringify(card._layout),
         cfgRev: card._cfgRev, layoutRev: card._layoutRev, mode: card._mode, space: card._space, tool: card._tool,
+        activePlan: activePlan.isConnected && activePlan.classList.contains('active'),
         stageRect: [rect.x, rect.y, rect.width, rect.height],
         geometry: [stage, ...stage.querySelectorAll('svg,g,path,polygon,polyline,line,rect,circle,ellipse,image,text')]
           .map(node => ({ tag: node.tagName, id: node.getAttribute('data-id'), attrs: Object.fromEntries(
