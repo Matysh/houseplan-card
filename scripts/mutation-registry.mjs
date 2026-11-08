@@ -12392,8 +12392,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/styles/navigation.styles.ts",
-    "find": "position:absolute; inset:-1px; width:44px; height:44px;",
-    "replace": "position:absolute; inset:-1px; width:24px; height:24px;"
+    "find": ".hpf-nav-modes .closex { width:44px; padding:0;",
+    "replace": ".hpf-nav-modes .closex { width:24px; min-width:24px; height:24px; min-height:24px; padding:0;"
   }
 ],
   },
@@ -12404,8 +12404,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/styles/navigation.styles.ts",
-    "find": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; }",
-    "replace": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; }\n@media(max-width:1100px) { .hpf-nav-modes .closex { display:none; } }"
+    "find": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; line-height:1; }",
+    "replace": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; line-height:1; }\n@media(max-width:1100px) { .hpf-nav-modes .closex { display:none; } }"
   }
 ],
   },
@@ -19527,8 +19527,8 @@ const panelHeader1120Cases = [
     patches:[
   {
     "file": "src/styles/navigation.styles.ts",
-    "find": "position:absolute; inset:-1px; width:44px; height:44px;",
-    "replace": "position:absolute; inset:1px; width:44px; height:44px;"
+    "find": ".hpf-nav-modes .closex { width:44px; padding:0;",
+    "replace": ".hpf-nav-modes .closex { top:2px; width:44px; padding:0;"
   }
 ]},
   {id:'panel-header-measures-outer-owner-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
@@ -19586,7 +19586,7 @@ const uiPolish1145Cases = [
     "replace": "${selector}:is(:disabled,[aria-disabled=true]){cursor:not-allowed;opacity:.5;pointer-events:none;}"
   }
 ]},
- {id:'ordinary-color-target40-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC4: ordinary trigger is44px; compact swatch remains36px.',patches:[{file:'src/hp-color-opacity.ts',find:'.trigger {\n      width: 44px;\n      height: 44px;',replace:'.trigger {\n      width: 40px;\n      height: 40px;'}]},
+ {id:'ordinary-color-target40-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC4: ordinary trigger defaults to44px; explicit toolbar40px and compact36px consumers keep their own sizes.',patches:[{file:'src/hp-color-opacity.ts',find:'.trigger {\n      width: var(--hp-color-trigger-size,44px);\n      height: var(--hp-color-trigger-size,44px);',replace:'.trigger {\n      width: var(--hp-color-trigger-size,40px);\n      height: var(--hp-color-trigger-size,40px);'}]},
 ];
 // #1150: declaration only; real missing-theme input is exercised by the native audit.
 const compactEditor1150Cases = [{

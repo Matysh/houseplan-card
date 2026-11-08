@@ -40,13 +40,15 @@ const res = await page.evaluate(async () => {
     && sr().querySelector('.editbar-tools')?.inert === true
     && getComputedStyle(barClose).pointerEvents === 'auto';
   const enteringStage = sr().querySelector('.stage');
-  const editorSceneLayer = enteringStage?.querySelector('.hp-editor-only-layer');
+  // #1344 owns transition opacity on the retained surfaces, not inner ink
+  // attributes or the retired --hp-mode-view-weight custom property.
+  const editorSceneLayer = enteringStage?.querySelector('[data-hp-mode-layer="editor-guides"]');
+  const viewSceneLayer = enteringStage?.querySelector('[data-hp-mode-layer="zero-view"]');
   const enteringVisual = c._modeTransitionVisual;
   out.sceneLayersUseTransitionWeights = c._modeTransitionBusy && !!enteringVisual
-    && !!editorSceneLayer
-    && Math.abs(Number(editorSceneLayer.getAttribute('opacity')) - enteringVisual.editorWeight) < 0.001
-    && Math.abs(Number(getComputedStyle(enteringStage).getPropertyValue('--hp-mode-view-weight'))
-      - enteringVisual.viewWeight) < 0.001;
+    && !!editorSceneLayer && !!viewSceneLayer
+    && Math.abs(Number(getComputedStyle(editorSceneLayer).opacity) - enteringVisual.editorWeight) < 0.001
+    && Math.abs(Number(getComputedStyle(viewSceneLayer).opacity) - enteringVisual.viewWeight) < 0.001;
   out.planBarCloseIconIsCentered = !!barCloseRect && !!barCloseIconRect
     && Math.abs((barCloseIconRect.left + barCloseIconRect.width / 2)
       - (barCloseRect.left + barCloseRect.width / 2)) <= 1
@@ -93,7 +95,7 @@ const res = await page.evaluate(async () => {
   // pin the generic launcher/keyboard/restore contract independently of any
   // one editor tool's business logic.
   let groupInvokes = 0;
-  Object.defineProperty(c, '_editorToolbarGroups', { configurable: true, get: () => [{
+  Object.defineProperty(c, '_editorToolbarGroupsFor', { configurable: true, value: () => [{
     id: 'smoke-group', label: 'Smoke group', icon: 'mdi:dots-grid', items: [{
       id: 'smoke-command', label: 'Smoke command', icon: 'mdi:check',
       role: 'command', invoke: () => { groupInvokes += 1; },
@@ -160,7 +162,7 @@ const res = await page.evaluate(async () => {
     && c._editorSecondary.hasOpenGroup === false;
   await settleMode();
   tabs()[0].click(); await settleMode();
-  delete c._editorToolbarGroups;
+  delete c._editorToolbarGroupsFor;
   c._tool = 'select'; c.requestUpdate(); await c.updateComplete;
   // 4) прямое переключение План → Устройства
   // Deliberately make the outgoing bar taller: the editor transition must
