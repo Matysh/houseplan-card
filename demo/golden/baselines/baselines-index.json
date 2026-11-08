@@ -53,7 +53,7 @@
     "panel-three-rows-ui-1132": "278bd69d46cce5f1e45bc85aa81b47915167c9d6de1171505e58c28f29ca04f8",
     "header-spaces-phone-light-997": "011a71973bb16315e5279867cea828ab6e4fab43f5c0c534dfaa085d800a10a0",
     "header-spaces-menu-dark-997": "ebff5d89b23be93bfdd93b6584c893fe98102583978f97ea980db3ea88568f26",
-    "panel-wide-plan-editor-dark-en": "798083ad53b3f237b4e2be09836163d248c889072fb06bb9bc3953e5a1194eba",
+    "panel-wide-plan-editor-dark-en": "e1bf1b661fc113046b0cb8ee9ae91fa3253ae95f4884466281b9c7ec491b9fff",
     "panel-narrow-read-only-empty-light-en": "c51930cbcf59dd841f85fb70b140048c96cd686763cdfe8711b7713b4766366d",
     "version-mismatch-desktop-dark-en": "a413eaf58585703d41387100b12ad53646afac89d822f7ab5f36c0d1c86f962e",
     "version-mismatch-touch-light-ru": "495aae4f51d69e820a97a60d171a902dbb871ad247395ec5522d432e690b1e83",
@@ -109,9 +109,9 @@
     "day-cycle-dusk-moon-crescent-south-dark": "0fe6a5a9e449337296820f6117df00dbf8da4c630e8649415ceb0d755c335253",
     "static-bg-moon-gibbous-white-light": "2afc3160bf9baaf7ca44703614c284af8d5b90f1aeb2ccfc5ec375e7fbdd3bcf",
     "static-bg-moon-crescent-south-dark": "997299840c86e1fbb4998788c62c85ead304baad2cce04d951acd4a8a7ff52e3",
-    "geometry-plan-editor-dark": "ea8c11ef69cc352ae79d53349b0a3e55962daf52747b5df00ec290b69b63ffc5",
+    "geometry-plan-editor-dark": "5fbd196498329a3c459d905367fd29424d1dcc2f10258f2cd93207060c28dafc",
     "safe-resize-handles-clamp-light": "967fcfca6d2fdf32fa56d358c4c69f4d656369d38e58e808abd38a94316330f7",
-    "safe-resize-handles-clamp-dark": "4a02ef73e43b746c438f169dcf909107280a0125d6c039d70de868fe82dd6004",
+    "safe-resize-handles-clamp-dark": "f3a153ed64d0964a4c4a6ed0239d0904b21f3c6dddce41c821b99d596828fa1c",
     "space-tab-drop-before-light": "50ac6467a4a1bdacec3f594e410f086dedea3f060485413bb9ac5309699144e4",
     "space-tab-drop-after-dark": "cdc8a4a5ae2367ea41400689fd6da2f03427a69acb4d4aff14415416c9fb216b",
     "plan-snap-endpoint-light": "b1747139f78a4315278faeccdbbd5439b3ca8464d714fc816ad4947f27ce18d6",
@@ -199,7 +199,7 @@
     "device-battery-board-light": "1a234d72f532bfdaddb527601b6372ea178e83c0e317145aae36f81a595283ea",
     "device-battery-board-dark": "7b61a438a0b7bc00e9aa5d64b27a61d852f7bf811f61eb07c8ab027815393431",
     "device-battery-board-medium": "febfaf3245d91ed98aa2976b5360c190c9a7d9935622df0b28aecaf15e7b7e9b",
-    "device-battery-mobile-dark": "a62a870c8d889cb9afa16d45e41e7cd50d4801380bca68ef9cac0ecfdc121a83",
+    "device-battery-mobile-dark": "70935975904958c20fe455b8bf9d16dd109798d11f95f3e851c7511158e3a5f8",
     "device-battery-zigbee-overlap-dark": "28fac3c01a0a140a8d946161f1ef6dd03db320d6c81802e40c7bc6589be61cea",
     "device-value-face-cover-source-dark": "9eb2e1bb0293eedc9fafac297a1018e2da8b12df214b75e90d8d8416f648877f",
     "device-icon-state-table-light": "9327187757fb35668bfaaece0cbe56e6d6b1a956c77d8c6740dab98f334ce538",
@@ -307,7 +307,7 @@
     "device-alert-alarm-iso": "78ab859a4ac887305225b3b2b029a29f9583aae9dea783b8e53817c76f0db50b",
     "device-alert-reasons": "a59aaea513653a1c6115acb7cd5600ee3b3edadf5d5a3bcaab3ea53bafb99a67",
     "device-alert-form-empty": "3bbd1d73976a238358b1f9dcd6a91c40f14239304caa6c47e135f1c9327d2f62",
-    "device-alert-form-numeric": "2627fd677d1c29709d5848272faea53bbe9fea9350aa626239017d32ab17f2ad",
+    "device-alert-form-numeric": "798ab083ce3685a09109f39fb1fa7fa0e83ec1f22232e5e2fca4b51405ede7c2",
     "device-alert-form-enum": "87b18ec0918d0061dfd1a7689db5ce84096814bbbb0608f87f18aee11abf0415",
     "device-issues-maintenance-plan": "f052cc259b3a74d146451a21800683f60fef663e16b88c96d4c78e9e7365caf6",
     "device-issues-maintenance-card": "5dfb011421a1ed5e30a1c2b5888dd33281708631449147c40ad219f0bd21aea9",
@@ -363,20 +363,20 @@
     "panel-isometric-geometry-view-light": "26d051b0a3d4b4a003f4a6d96b7d4d1a44931c138d47066b9239821e2a9f1d09",
     "panel-isometric-stage3-overlays-dark": "8c307ef189d7c75cc644eac80ffeb753aa723e8b605342bc90a63887d96d5f75",
     "panel-isometric-opening-symbol-parity-dark": "297036f72c0317334f1c23ad9c190181edc0925d073bdde77373fe065df6a109",
-    "panel-geometry-devices-editor-dark": "11b51ffbec91747830c9bb0e0b3091366d77b855b19d94f742fdd874e9a3fd91",
-    "panel-geometry-decor-editor-dark": "a900eb15597a97e51aea448419c34b416904d1aee2973592f030d63780ec9c82",
+    "panel-geometry-devices-editor-dark": "97d96930d3f39bd71f03432c452f255e14717bf0e22a34d77c9a12bcc40550b5",
+    "panel-geometry-decor-editor-dark": "397f57dad36d7a497a9b12ac8ecb711b3ab3e78489f2306fb769099d4666f72f",
     "panel-device-dialog-mobile-ru": "bac6e2cf1fc757248d79b5731f580efbd01e0fdc6fc7822b49a23d8123664398",
     "panel-room-temperature-dialog-desktop-en": "134c98d32d595fd8d198b3439b5f3adb803ca41434d43d74637914873c6f1f27",
     "panel-view-device-menu-readonly-light-ru": "6d9d4b5e7c42b8e378f0ab9bec71a7238b026e1b2decfb45db2908cd25cce4ce",
-    "panel-version-mismatch-touch-light-ru": "8c0803d04e6276f3edf29bcdd33bb12a305d18c24ae2ed22df5d5bce65253c66",
-    "panel-plan-snap-endpoint-light": "b2d2f115017607c2e74274091f839000adac92fe054df246ef48fcee87f59660",
-    "panel-opening-placement-door-thick-wall-dark": "d51d9fd169bbd8a8f62eed18fed0b482fa16f3dbd85c6de98481c7fc96cb10d3",
-    "panel-tray-narrow-tool-ru": "cfe43fedb18fa1ec37cc905b4ae6d3e8e9694ed63b2f48c2e6ac2b9568627303",
-    "panel-decor-multiselect-dark": "da5142ef2d9afa970c79e714fb6b502881ea7589df28a94d219a95465b6fcfd5",
-    "panel-furniture-placement-preview-light": "a4e765ca0245e934366965730e1c8f46cc0f24913d6df9162498de3b99fa6870",
+    "panel-version-mismatch-touch-light-ru": "dd0da54d1d94d0979767ed1e46d8008302a01ba21cbc0080eb6e138af254563d",
+    "panel-plan-snap-endpoint-light": "b57bf2102ea1a4f1df5af83f414ea8a118e1704198f14808af1e3039ff385372",
+    "panel-opening-placement-door-thick-wall-dark": "ccc180ad157a83961e7dff64b917c392f30b15bbfe0b26a7e8afc06994015d89",
+    "panel-tray-narrow-tool-ru": "78cf35011b981b83dbd9795adf5e32ef41ddac36966426f7c2756609f872b4f0",
+    "panel-decor-multiselect-dark": "438f485c908c0b97ccb556228f3150eeae785328644ecad1348dc28da8cdecf0",
+    "panel-furniture-placement-preview-light": "62cca2ed31788f02e1e333df46d5134a37b4b4f26548c0af508072ed11baa62f",
     "panel-furniture-transform-dark": "0ff168801552644406efe458f7b22f40ae1a8fc081b46c3c302092ab7c3d660c",
     "panel-device-inbox-narrow-ru-dark": "b2a9b5baf89503cc0506fc99985a774c15e0e090828bd603d229ad2553716974",
-    "panel-device-state-source-unknown-en": "c163af1a3e4c984f57e35e3f3ed5a2c38be76a1ed22af496aad0c54cd5443667",
+    "panel-device-state-source-unknown-en": "102f61a8bb8e04a1c8a56e4c609b1cc71a23d83b027c6d5e99272e7313a2b49b",
     "panel-hidden-devices-view-light": "6c3f6d6613e6cb980e906b1e4ea6992b50d24f58511e502223d282fb4dba3e9c",
     "panel-large-house-warm-remount-dark": "945aef970bc193d6195f3ef5a87a2683f67cdb6524116a6df8fa68d640bd75a3",
     "panel-isometric-large-warm-remount-dark": "648548e7bda73b45f34550061fb40e04c15bc5e13e7c6320f54c57b5bacdd3ab",
@@ -392,7 +392,7 @@
     "panel-lighting-opaque-glow-two-doorways-dark": "fdd11a5628a6ab7921459dcf52dd3c6e35baea7733e335b78601fb74c53e4622",
     "panel-vacuum-trail-smoothing-dark": "79299b3b74d1a1db88244917ce118a8ba167bc8fbbdd45f91b0ab5c4b52becea",
     "panel-vacuum-history-seconds-narrow": "0f9bea6c9d8295f80bebf233bdf08700e86ba7ba8223c33301c0f1e0177fec73",
-    "panel-vacuum-live-tail-pending-dialog-dark": "81cc4b60dbb31fb0b1ff1bd94c3c5ce954ea21d342c25f175cb443896244d59a",
+    "panel-vacuum-live-tail-pending-dialog-dark": "411fcb7a40a62c9a3508943fe165c7ec203aaaecabaceeba09340a5cf0f1e6ec",
     "panel-room-co2-flat-light": "73e945b9646c8c1ee94ac050d8b4555c8ca34166a5dd916a943ac1dcf266c445",
     "panel-room-label-parity-plan-dark": "8412c172c3fbd65369fb712641888f437f4f392f82e02f1fb72503a48b90351c",
     "panel-approved-ui-summary-light-1119": "e0e76434b36eae79812c3d4f3ef918d135b985e6e2914976cbe57554ecb0c4dc",
@@ -708,76 +708,61 @@
       "sourceSceneId": "isometric-opening-symbol-parity-dark"
     },
     "panel-wide-plan-editor-dark-en": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "panel",
       "sourceSceneId": "panel-wide-plan-editor-dark-en"
     },
     "panel-geometry-devices-editor-dark": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "panel",
       "sourceSceneId": "geometry-devices-editor-dark"
     },
     "panel-geometry-decor-editor-dark": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "panel",
       "sourceSceneId": "geometry-decor-editor-dark"
@@ -848,146 +833,121 @@
       "sourceSceneId": "view-device-menu-readonly-light-ru"
     },
     "panel-version-mismatch-touch-light-ru": {
-      "acceptedAt": "2026-11-02T06:08:05.012Z",
-      "decision": "https://github.com/Matysh/houseplan-card/issues/1192#issuecomment-6570369464",
-      "reportSha256": "5a437c3c902ab9bedfafc0ca7b82c62aaf4179013d6afe574775347b09d974bd",
-      "sourceSha": "e567536e8ce22017eb8a156f4b5cbd3d760ea678",
-      "sourceFingerprint": "233216a19647e5445b3de8c196fd92b52357fc93332e45bb5cf2f7d44764e66f",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "e567536e8ce22017eb8a156f4b5cbd3d760ea678",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "233216a19647e5445b3de8c196fd92b52357fc93332e45bb5cf2f7d44764e66f",
-        "harnessIconsSha256": "574093732c3b970b51d5609ec496bc0ddcf3417eb01e44418ffa57cf36314327",
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
         "ci": null
       },
       "host": "panel",
       "sourceSceneId": "version-mismatch-touch-light-ru"
     },
     "panel-plan-snap-endpoint-light": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "panel",
       "sourceSceneId": "plan-snap-endpoint-light"
     },
     "panel-opening-placement-door-thick-wall-dark": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "panel",
       "sourceSceneId": "opening-placement-door-thick-wall-dark"
     },
     "panel-tray-narrow-tool-ru": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "panel",
       "sourceSceneId": "tray-narrow-tool-ru"
     },
     "panel-decor-multiselect-dark": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "panel",
       "sourceSceneId": "decor-multiselect-dark"
     },
     "panel-furniture-placement-preview-light": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "panel",
       "sourceSceneId": "furniture-placement-preview-light"
@@ -1038,26 +998,21 @@
       "sourceSceneId": "device-inbox-narrow-ru-dark"
     },
     "panel-device-state-source-unknown-en": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "panel",
       "sourceSceneId": "device-state-source-unknown-en"
@@ -1373,26 +1328,21 @@
       "sourceSceneId": "vacuum-history-seconds-narrow"
     },
     "panel-vacuum-live-tail-pending-dialog-dark": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "panel",
       "sourceSceneId": "vacuum-live-tail-pending-dialog-dark"
@@ -1718,26 +1668,21 @@
       "sourceSceneId": "plan-rotation-phone-view-320-1070"
     },
     "geometry-plan-editor-dark": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "lovelace",
       "sourceSceneId": "geometry-plan-editor-dark"
@@ -1788,26 +1733,21 @@
       "sourceSceneId": "device-battery-board-light"
     },
     "device-battery-mobile-dark": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "lovelace",
       "sourceSceneId": "device-battery-mobile-dark"
@@ -1833,26 +1773,21 @@
       "sourceSceneId": "device-offline-dark"
     },
     "safe-resize-handles-clamp-dark": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "lovelace",
       "sourceSceneId": "safe-resize-handles-clamp-dark"
@@ -1908,26 +1843,21 @@
       "sourceSceneId": "device-alert-maintenance-iso"
     },
     "device-alert-form-numeric": {
-      "acceptedAt": "2026-11-04T03:36:26.855Z",
-      "decision": "Owner reply 2026-11-04 in #1256/#1257 chat: Принять все 31 кадр из галереи; gallery beta3-visual-review/review.html from CI 41726660162",
-      "reportSha256": "957938f9b18aa07bf08fa8035d3904732d1f3f1fb3685399e9d1d398b421dbe1",
-      "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
-      "sourceFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
+      "acceptedAt": "2026-11-08T14:59:36.756Z",
+      "decision": "https://github.com/Matysh/houseplan-card/issues/1353#issuecomment-6723040436",
+      "reportSha256": "1495ab8f0816cc2d42c281dd1b9d42ece2efd8c998e3e3fbe2dd576d079c1471",
+      "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
+      "sourceFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
       "matrixVersion": 110,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "f36cb76fc37667eef6b66d85e3ab8f89e5b81335",
+        "sourceSha": "7f3aac1498cc48151af6bdb277460aac13e03a40",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "1864c2783dbe591a96d22388952fc543ce7704b8b9024feb7d07dc294d84b781",
-        "harnessIconsSha256": "ca57e223bc494e7bf5520a10dbd07180502f0b661d589ad35e9deb4e06b195ca",
-        "ci": {
-          "repository": "Matysh/houseplan-card",
-          "run": 41726660162,
-          "attempt": 1,
-          "sha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
-        }
+        "buildFingerprint": "d1043e05f8e263b11fdc545a88cd4d4c79292152bf9fe880130a8871a2e06fb0",
+        "harnessIconsSha256": "49d3b0b179d852d7017cfe166cb36557538c86c8cb16f05df81c258ea224da6f",
+        "ci": null
       },
       "host": "lovelace",
       "sourceSceneId": "device-alert-form-numeric"
