@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7731,
+  "revision": 7732,
   "nextTicket": 328,
   "nextFence": 328,
   "tasks": {
@@ -4182,15 +4182,16 @@
         "src/houseplan-card.ts"
       ],
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794183250056,
-        "entry": 2,
-        "detail": "Браузер: geometry history refusal: failed; Браузер: plan rotation: failed; Браузер: settings button alignment 955: failed; Браузер: settings polish 955: failed; Браузер: space switch transitions: failed; Браузер: ui kit motion: failed; Браузер: view runtime recovery: failed; Браузер: zigbee enable refresh: failed",
-        "eventId": "finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0:finish:3:return:return:1365"
-      }
+        "at": 1794184188625,
+        "entry": 3,
+        "detail": "Браузер: header actions menu: failed; Браузер: space switch transitions: failed; Браузер: ui kit motion: failed; Браузер: view runtime recovery: failed; Браузер: zigbee enable refresh: failed",
+        "eventId": "finish:b9387771-f680-43b9-a931-6e0eccddcc93:finish:3:return:return:1365"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -4379,18 +4380,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1365,
-    "worker": "finish",
-    "token": "327:finish:b9387771-f680-43b9-a931-6e0eccddcc93:finish:1:admit",
-    "fence": 327,
-    "materialSha": "edfff6faf85844d906fed60ab72a979560811ce4",
-    "expectedBase": "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928",
-    "phase": "testing",
-    "admittedAt": 1794183333102,
-    "expiresAt": 1794184471864,
-    "patchId": "ed6d761510723648869237709d2094d295dc05e2"
-  },
+  "active": null,
   "events": {
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:2:synchronized": {
       "digest": "65eb9a0157345cff04c12e54f954bef4341245f6f9cb6d66333c65b93f918fe6",
@@ -4544,6 +4534,10 @@
       "digest": "a14835c65397546362c7973eb2bc1c373c7a8ada59640ccded6efa1274f058b3",
       "issue": 1365
     },
+    "finish:b9387771-f680-43b9-a931-6e0eccddcc93:finish:3:return": {
+      "digest": "741638e11ed44edf382efa2887c00ef1c7ef8425cebc6240543dc59e93e33de7",
+      "issue": 1365
+    },
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915": {
       "digest": "e315381794b817f11fc4399d2e54fc289d4e81155a3aa6969408f80cd013240f",
       "issue": 1365,
@@ -4665,6 +4659,26 @@
         "layer": "product",
         "materialSha": "edfff6faf85844d906fed60ab72a979560811ce4",
         "phase": "sync"
+      }
+    },
+    "finish:b9387771-f680-43b9-a931-6e0eccddcc93:finish:3:return:return:1365": {
+      "digest": "741638e11ed44edf382efa2887c00ef1c7ef8425cebc6240543dc59e93e33de7",
+      "issue": 1365,
+      "message": {
+        "kind": "return",
+        "issue": 1365,
+        "at": 1794184188625,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794184188625,
+          "entry": 3,
+          "detail": "Браузер: header actions menu: failed; Браузер: space switch transitions: failed; Браузер: ui kit motion: failed; Браузер: view runtime recovery: failed; Браузер: zigbee enable refresh: failed",
+          "eventId": "finish:b9387771-f680-43b9-a931-6e0eccddcc93:finish:3:return:return:1365"
+        }
       }
     }
   },
