@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7790,
+  "revision": 7791,
   "nextTicket": 331,
   "nextFence": 331,
   "tasks": {
@@ -4188,15 +4188,16 @@
         "src/styles/chrome.styles.ts"
       ],
       "notice": {
-        "key": "5:checks-failed",
+        "key": "6:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794186732974,
-        "entry": 5,
+        "at": 1794187491816,
+        "entry": 6,
         "detail": "Браузер: editor chrome alignment: failed",
-        "eventId": "finish:41e3a906-2477-405b-9cca-682b2dd3a15f:finish:3:return:return:1365"
-      }
+        "eventId": "finish:251d0319-e581-4cf7-9008-d3bb5b52a178:finish:3:return:return:1365"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -4385,18 +4386,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1365,
-    "worker": "finish",
-    "token": "330:finish:251d0319-e581-4cf7-9008-d3bb5b52a178:finish:1:admit",
-    "fence": 330,
-    "materialSha": "93dfba7106bfa4a29171a7015252ec7ab59778fa",
-    "expectedBase": "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928",
-    "phase": "testing",
-    "admittedAt": 1794186813432,
-    "expiresAt": 1794187772614,
-    "patchId": "aa74c88699a7f855c8179176f1fbda0c964a7faf"
-  },
+  "active": null,
   "events": {
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:2:synchronized": {
       "digest": "65eb9a0157345cff04c12e54f954bef4341245f6f9cb6d66333c65b93f918fe6",
@@ -4734,6 +4724,10 @@
       "digest": "4b48781a34face854dd8b9be07aece6db667edd0de8c0c91c96d261ac99a8d9b",
       "issue": 1365
     },
+    "finish:251d0319-e581-4cf7-9008-d3bb5b52a178:finish:3:return": {
+      "digest": "449ee8a8c6c9067eba33d9818f6badfa12c0b5c14b874edede32553859d3c388",
+      "issue": 1365
+    },
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915": {
       "digest": "e315381794b817f11fc4399d2e54fc289d4e81155a3aa6969408f80cd013240f",
       "issue": 1365,
@@ -5003,6 +4997,26 @@
         "layer": "product",
         "materialSha": "93dfba7106bfa4a29171a7015252ec7ab59778fa",
         "phase": "sync"
+      }
+    },
+    "finish:251d0319-e581-4cf7-9008-d3bb5b52a178:finish:3:return:return:1365": {
+      "digest": "449ee8a8c6c9067eba33d9818f6badfa12c0b5c14b874edede32553859d3c388",
+      "issue": 1365,
+      "message": {
+        "kind": "return",
+        "issue": 1365,
+        "at": 1794187491816,
+        "entry": 6,
+        "notice": {
+          "key": "6:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794187491816,
+          "entry": 6,
+          "detail": "Браузер: editor chrome alignment: failed",
+          "eventId": "finish:251d0319-e581-4cf7-9008-d3bb5b52a178:finish:3:return:return:1365"
+        }
       }
     }
   },
