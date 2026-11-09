@@ -43,6 +43,15 @@ try {
  check('no-overflow',widths.every(r=>r.scroll<=r.width+1&&r.metrics===0));
  check('44px-square-target',narrow.every(r=>r.buttons[0].w===44&&r.buttons[0].h===44));
  await size(320);check('unpinned-card-keeps-picker',(await read()).picker);
+ let deferredMenus=0;
+ await page.route(/\/header-actions-menu-[^/?]+\.js(?:\?.*)?$/,async route=>{
+  deferredMenus++;await new Promise(resolve=>setTimeout(resolve,120));await route.fallback();
+ });
+ await page.evaluate(()=>window.__hpTest.setMode('plan'));await settle();
+ check('facade-waits-for-lazy-header-command',await page.evaluate(()=>window.__card._mode),'plan');
+ check('facade-case-really-deferred-menu',deferredMenus,1);
+ await page.evaluate(()=>window.__hpTest.setMode('view'));await settle();
+ await page.unroute(/\/header-actions-menu-[^/?]+\.js(?:\?.*)?$/);
  await trigger.click();await menu.waitFor();
  const items=await menu.locator('button').evaluateAll(bs=>bs.map(b=>({action:b.dataset.action,label:b.textContent.trim(),height:b.getBoundingClientRect().height})));
  check('all-owned-commands', ['space-settings','space-add','mode-plan','mode-devices','mode-decor','rotate-left','rotate-right','zoom-in','zoom-out','zoom-fit','hidden-devices','settings','pdf','support','summary-settings','summary-toggle'].every(id=>items.some(i=>i.action===id)));

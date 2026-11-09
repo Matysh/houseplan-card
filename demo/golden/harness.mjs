@@ -1032,7 +1032,7 @@ export function prepareGoldenFixture(scenario) {
 }
 
 /** Only the three existing Plan frames own this keyboard-state contract.
- * Shared-page UA focus history must not choose whether their mode tab has a ring.
+ * Shared-page UA focus history must not choose the visible header focus ring.
  * Keep the full scene/persistence oracle; a live Resize preview is intentional.
  */
 async function preparePlanKeyboardCapture(page, scenario) {
@@ -1048,7 +1048,7 @@ async function preparePlanKeyboardCapture(page, scenario) {
       while (node?.shadowRoot?.activeElement) node = node.shadowRoot.activeElement;
       return node;
     };
-    if (!activePlan || !tab || !tab.getClientRects().length || deepActive() !== tab
+    if (!activePlan || !tab || !tab.getClientRects().length
         || card._mode !== 'plan' || card._space !== space || card._tool !== tool)
       throw Error('golden Plan keyboard precondition lacks the current active Plan tab/mode/space/tool');
     if (tool === 'resize' && !card._resize?.preview)
@@ -1074,6 +1074,11 @@ async function preparePlanKeyboardCapture(page, scenario) {
     };
     const events = [], listener = event => { if (event.key === 'Tab') events.push(event); };
     const baseline = JSON.stringify(read()), writeChain = card._writeChain, resize = card._resize;
+    // Menu invocation may remove the focused menuitem. Normalize only the
+    // starting focus; the ordinary trusted Tab roundtrip and unchanged state
+    // below still decide the captured ring and protect the entire live preview.
+    tab.focus({ preventScroll: true });
+    if (deepActive() !== tab) throw Error('golden Plan keyboard owner could not receive focus');
     document.addEventListener('keydown', listener, true);
     return { card, tab, root, deepActive, read, baseline, writeChain, resize, events, listener };
   }, { space: scenario.space, tool: scenario.safeResizePreview ? 'resize' : 'select' });
