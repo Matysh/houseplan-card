@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8115,
+  "revision": 8116,
   "nextTicket": 340,
   "nextFence": 340,
   "tasks": {
@@ -4242,7 +4242,31 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794224958740,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "b2e37e6b30e66a32b55bb93d650a2c70a6eb8b68",
+      "changedFiles": [
+        "demo/smoke_compact_header_polish.mjs",
+        "demo/smoke_header_actions_menu.mjs",
+        "demo/smoke_panel_header_overflow.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/data-hp-contract.json",
+        "docs/release-ledger/v1.85.0/1371.json",
+        "process-next/lib/source-dependencies.mjs",
+        "src/editor-context-menu.styles.ts",
+        "src/editor-context-menu.ts",
+        "src/header-actions-menu.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-panel.ts",
+        "src/panel-header-flow.ts",
+        "src/panel-header-menu.ts",
+        "src/panel-sidebar-state.ts",
+        "src/styles/panel-header.styles.ts",
+        "src/styles/plan.styles.ts",
+        "src/ui-motion.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4437,12 +4461,17 @@
     "token": "339:finish:60c8c752-377e-43b3-a8bf-4b0398adf66e:finish:1:admit",
     "fence": 339,
     "materialSha": "8da5b861fe13824b4988392979adcca2fe3fc0b0",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "69a565c1fff387657b44ad9327dd2ab39cf4526b",
+    "phase": "testing",
     "admittedAt": 1794224963172,
-    "expiresAt": 1794225263172
+    "expiresAt": 1794225269418,
+    "patchId": "b2e37e6b30e66a32b55bb93d650a2c70a6eb8b68"
   },
   "events": {
+    "finish:60c8c752-377e-43b3-a8bf-4b0398adf66e:finish:2:synchronized": {
+      "digest": "9052206b7ee5eb17fdd61f91d4493d1747e0121d0ca89d2644a8ea4adbc3d488",
+      "issue": 1371
+    },
     "finish:60c8c752-377e-43b3-a8bf-4b0398adf66e": {
       "digest": "68d3f86b3d0cfbf796aa121de276028aa2c3669f265b0955774b5a073c6cb7f2",
       "issue": 1371,
