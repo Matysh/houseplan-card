@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8218,
+  "revision": 8219,
   "nextTicket": 342,
   "nextFence": 342,
   "tasks": {
@@ -4242,7 +4242,36 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794239327792,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "78cd9ff65365bdfd28d48d886e127f5cc354930f",
+      "changedFiles": [
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/decor-color-popover-mobile-ru.png",
+        "demo/golden/baselines/device-alert-form-numeric.png",
+        "demo/golden/baselines/geometry-plan-editor-dark.png",
+        "demo/golden/baselines/german-view-mobile-light.png",
+        "demo/golden/baselines/panel-device-state-source-unknown-en.png",
+        "demo/golden/baselines/panel-geometry-decor-editor-dark.png",
+        "demo/golden/baselines/panel-geometry-devices-editor-dark.png",
+        "demo/golden/baselines/panel-opening-placement-door-thick-wall-dark.png",
+        "demo/golden/baselines/panel-plan-snap-endpoint-light.png",
+        "demo/golden/baselines/panel-vacuum-live-tail-pending-dialog-dark.png",
+        "demo/golden/baselines/plan-rotation-phone-editor-320-1070.png",
+        "demo/golden/baselines/plan-rotation-phone-editor-360-1070.png",
+        "demo/golden/baselines/safe-resize-handles-clamp-dark.png",
+        "demo/golden/baselines/tray-narrow-palette-en.png",
+        "demo/golden/baselines/ui-1081-device-confirm-narrow-dark.png",
+        "demo/golden/baselines/ui-1081-device-confirm-narrow-light.png",
+        "demo/golden/harness.mjs",
+        "demo/helpers/header-actions.mjs",
+        "demo/smoke_houseplan_panel.mjs",
+        "demo/smoke_panel_header_touch.mjs",
+        "demo/smoke_plan_rotation_mobile.mjs",
+        "demo/smoke_view_empty_space_boundary.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/TOUCH-SUPPORT.md"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4437,12 +4466,17 @@
     "token": "341:finish:69075c94-2d3d-4c6e-b05c-1ce90dfc32a0:finish:1:admit",
     "fence": 341,
     "materialSha": "727c643c5970b267dea8d2091b2bf6315afd2dd5",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae",
+    "phase": "testing",
     "admittedAt": 1794239331582,
-    "expiresAt": 1794239631582
+    "expiresAt": 1794239638284,
+    "patchId": "78cd9ff65365bdfd28d48d886e127f5cc354930f"
   },
   "events": {
+    "finish:69075c94-2d3d-4c6e-b05c-1ce90dfc32a0:finish:2:synchronized": {
+      "digest": "665d9e646b869e4e232fabb68fd86e261be75b57c8f42ca0e9c041f362d59c41",
+      "issue": 1372
+    },
     "finish:69075c94-2d3d-4c6e-b05c-1ce90dfc32a0": {
       "digest": "662e03f6e2eabd97a4d3f2fda6d9285590cfbfaf6af6bb665e754b08338558e2",
       "issue": 1372,
