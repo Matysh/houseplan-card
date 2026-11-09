@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7732,
+  "revision": 7733,
   "nextTicket": 328,
   "nextFence": 328,
   "tasks": {
@@ -4584,7 +4584,8 @@
           "entry": 1,
           "detail": "Браузер: device contact editor frame: failed; Браузер: geometry history refusal: failed; Браузер: space switch transitions: failed",
           "eventId": "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:3:return:return:1365"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0": {
