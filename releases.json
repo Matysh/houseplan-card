@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 657,
+  "revision": 658,
   "active": "v1.85.1-beta.3-20261109",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -54575,7 +54575,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.85.1-beta.3",
         "candidate": "2892d28f49b424dc0668ad1203568532c68dff85",
         "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
         "issues": [
@@ -62158,6 +62158,224 @@
         "selectionDigest": "ca1d07171c9d2977bbc0a62d96b1a8cfeb1e5b4c5082f2438622152853968c4c",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.85.1-beta.3",
+          "candidate": "2892d28f49b424dc0668ad1203568532c68dff85",
+          "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
+          "issues": [
+            {
+              "number": 1344,
+              "commits": [
+                "890a4ada80b4d379aaa523f0c18f96cbb6e046e5"
+              ]
+            },
+            {
+              "number": 1345,
+              "commits": [
+                "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa"
+              ]
+            },
+            {
+              "number": 1346,
+              "commits": [
+                "ce0796e207211f495008ed9b9ce21e031484175c",
+                "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865"
+              ]
+            },
+            {
+              "number": 1347,
+              "commits": [
+                "48778427d68eb886492861d98b8ef453d99d85d5",
+                "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
+                "739b288b9006a233eb8fdb44e165c461625054c3",
+                "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
+                "f7b252d8f0c63e6fa3c87712099b5f06bac010e5"
+              ]
+            },
+            {
+              "number": 1348,
+              "commits": [
+                "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
+                "628ca768782b89a07bb9779f651c6f1cfcd5cb26"
+              ]
+            },
+            {
+              "number": 1349,
+              "commits": [
+                "6cedac4193d114c7eea822f6e06b4fb65181bd9d"
+              ]
+            },
+            {
+              "number": 1350,
+              "commits": [
+                "0d127cd038f4110e7d90cac7004f508f07717fff",
+                "c723c9ba1baf695506f17d643a7eb6ad361c57dd",
+                "f8801ee93a85b1bc981506c5cabe3dbf125807c3"
+              ]
+            },
+            {
+              "number": 1351,
+              "commits": [
+                "5d3a14677c83db84157697f9a425179bc0a02fb4",
+                "60199f149e7653417447ab7b82a0cda6d9a0a86f"
+              ]
+            },
+            {
+              "number": 1352,
+              "commits": [
+                "12605c18b10a439baca2a08308840a5acd308406",
+                "2f8be3041a4b8cb8c34cede5d145e02c86deef5e"
+              ]
+            },
+            {
+              "number": 1353,
+              "commits": [
+                "55569543d09c0fc650b7918e44490ebc9fd88431"
+              ]
+            },
+            {
+              "number": 1354,
+              "commits": [
+                "77792069a99fcb4f9dc0b4c8bc14ee9001e5fb86",
+                "ad794da4050a59757526862d0de8424c642463fc",
+                "ae9b2ae83f841273debc56d953f344b4e9a5561e"
+              ]
+            },
+            {
+              "number": 1356,
+              "commits": [
+                "6d8822ab2c5cc3c70262f9e1dd218c2ba120c231"
+              ]
+            },
+            {
+              "number": 1357,
+              "commits": [
+                "192b3faf1a9206f7927aa5efa0d8aeaebdc8aa2d",
+                "63dd217db4fb0fe2a06780ac873611a36544f7e9",
+                "8c05977f2c0d029c6c3f5ae8ced3f07d4823de3c",
+                "ec8d3e0a235d69786ddedf1bd8b9d3abdbd1f5de"
+              ]
+            },
+            {
+              "number": 1361,
+              "commits": [
+                "63dd217db4fb0fe2a06780ac873611a36544f7e9"
+              ]
+            },
+            {
+              "number": 1362,
+              "commits": [
+                "c27ba8a163900f4165952f752dd8da7cedfff1ae",
+                "f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
+                "f5e65f41061c1dd4838c57c039d7e524bb4cbab7"
+              ]
+            },
+            {
+              "number": 1363,
+              "commits": [
+                "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
+                "aa87b1990ac78e3e553a657bbf3e456bcad430a0",
+                "e061bfff7fe4982e41cc00e68a6b1a5f533c9b36"
+              ]
+            },
+            {
+              "number": 1364,
+              "commits": [
+                "09399a68115e164313430c2facaf7a565b8ed9c8",
+                "136b1dbbe4f55a0e4029c900ef7d00426902b4a1",
+                "556e13dc6e6f9366898abf7dc6b187ae6c67b7a1",
+                "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928"
+              ]
+            },
+            {
+              "number": 1365,
+              "commits": [
+                "300d5338f736f5437bc8756e67b69c9871738597",
+                "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
+                "89d8a177c8f635fbc8cbc1853cc8193ce2c91d71",
+                "98dbf0bbe4147e5a2c80aee6e80ec85076b908f8",
+                "edfff6faf85844d906fed60ab72a979560811ce4"
+              ]
+            },
+            {
+              "number": 1367,
+              "commits": [
+                "4f9f245f35b316c5ced02df44e4c575a86371f8b"
+              ]
+            },
+            {
+              "number": 1369,
+              "commits": [
+                "5d522469dd04bb0630f3a890652e32e94fe02c2e"
+              ]
+            },
+            {
+              "number": 1370,
+              "commits": [
+                "69a565c1fff387657b44ad9327dd2ab39cf4526b"
+              ]
+            },
+            {
+              "number": 1371,
+              "commits": [
+                "751524d095e5722609d7728b087aee5c5d260af2",
+                "8da5b861fe13824b4988392979adcca2fe3fc0b0",
+                "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae",
+                "ce5dd17f7b7cfdbdbae5fc55e259d0ec0176d736"
+              ]
+            },
+            {
+              "number": 1372,
+              "commits": [
+                "289324fde710f8a0ac7a6471d3c05a80a94c9441",
+                "727c643c5970b267dea8d2091b2bf6315afd2dd5"
+              ]
+            },
+            {
+              "number": 1373,
+              "commits": [
+                "41a213a6c3c25749ba0e274c3596746f26916617",
+                "b0d5e5554c361684ddf5db92d5b0b86adefce8e5"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1344,
+          1345,
+          1346,
+          1347,
+          1348,
+          1349,
+          1350,
+          1351,
+          1352,
+          1353,
+          1354,
+          1356,
+          1357,
+          1361,
+          1362,
+          1363,
+          1364,
+          1365,
+          1367,
+          1369,
+          1370,
+          1371,
+          1372,
+          1373
+        ],
+        "version": "1.85.1-beta.3",
+        "body": "<!-- release: v1.85.1-beta.3 -->\n## Houseplan 1.85.1-beta.3\n\nТретья бета линии **1.85.1**. Изменения относительно beta.2:\n\n- **Шапка лучше использует доступное место.** Обычные кнопки могут занимать два ряда; когда нужен третий, появляется компактное меню действий. Оно раскрывается на всю ширину рабочей области и подстраивается под содержимое. (#1371)\n- **Настоящее меню Home Assistant.** Отдельная кнопка слева отражает состояние боковой панели HA. В узких редакторах Close/Undo/Redo собраны в столбик справа. (#1371)\n- **Надёжнее ввод.** После двойного клика для вписывания план сразу можно перетаскивать; наведение учитывает тип указателя, а клавиатурный фокус сохраняется при сворачивании шапки. (#1371)\n\nПроверки браузера и настоящего Home Assistant актуализированы под новую шапку; обновлены 20 визуальных эталонов, явно принятых владельцем. (#1370, #1372, #1373)\n\nПосле обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.\n\n---\n\nThird beta of **1.85.1**. Changes since beta.2:\n\n- **The header uses available space better.** Ordinary controls may occupy two rows; when a third would be needed, a compact actions menu appears. It spans the available header width and sizes itself to its content. (#1371)\n- **Native Home Assistant navigation.** A separate button on the left reflects the HA sidebar state. Close/Undo/Redo form a column on the right in narrow editors. (#1371)\n- **More reliable input.** The plan can be dragged immediately after a double-click fit; hover follows the pointer type, and keyboard focus is preserved when the header collapses. (#1371)\n\nBrowser and real Home Assistant checks follow the updated header; 20 explicitly owner-approved visual references have been refreshed. (#1370, #1372, #1373)\n\nRestart Home Assistant and reload open Houseplan pages after upgrading.\n",
+        "technical": {
+          "ru": "## v1.85.1-beta.3 — 2026-11-09\n\n- Обновлены четыре дополнительно принятых владельцем кадра шапки, восстановленных в #1372; SHA изображений и пороги сравнения сохранены (#1373).\n\n- Browser/golden/HA проверки учитывают два обычных ряда, отдельную HA-кнопку и колонку 40px в редакторах; ввод ждёт нарисованную цель, отзыв прав — принятое read-only состояние. Обновлены только 16 принятых владельцем кадров (#1372).\n\n- Обычная шапка сохраняет два ряда до сворачивания; меню раскрывается на всю ширину по высоте содержимого, с иконками и состоянием настоящего sidebar HA. Кнопки истории редакторов расположены в столбик; после двойного клика план сразу перетаскивается, hover учитывает тип указателя, а фокус сохраняется при сворачивании шапки (#1371).\n\n- Smoke импорта резервной копии открывает настройки через видимую команду шапки; чистый мутационный guard снова работает после переноса узких действий в меню (#1370).",
+          "en": "## v1.85.1-beta.3 — 2026-11-09\n\n- Accept the four additional owner-reviewed header frames recovered by #1372, preserving their exact image hashes and comparison thresholds (#1373).\n\n- Align browser/golden/HA checks with the two-row intrinsic header, separate HA control and 40px stacked editor buttons; wait for painted native targets and the adopted read-only state, and refresh only the 16 owner-approved frames (#1372).\n\n- Keep ordinary header controls in two rows before collapsing; reveal a full-width, content-sized actions menu with source icons, native HA sidebar state and stacked editor history controls. Preserve immediate panning after double-click fit, pointer-only hover and keyboard focus when the header collapses (#1371).\n\n- Open settings through the visible header action in the empty-backup import smoke, preserving its clean mutation guard after narrow-header menu changes (#1370)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -66725,7 +66943,8 @@
     "ship-review:prepare:0fa8acd4-9918-48a8-8e98-0f13aa5e64b0": "187b270686cd08fc4e021f82ccd35facbdde01ee46e26f83ff4c10553f54bee6",
     "ship-review:result:4d1c432e-9617-432f-9078-75d1d28b075c": "69ae74f359eb7e4018bbfa9affa5c7bf014587ea6fb30fff0fcfcdec67ed4649",
     "beta1851-3-20261109-publish:runner-report": "2afe23c7ce1fb1769ea70d09e859853bbf8789142fcb79c5551409d8b0272875",
-    "beta1851-3-20261109-publish:metrics": "4581199f2cdf8315c0e60f764515bf2806ae184b9408298285491f70b33ed013"
+    "beta1851-3-20261109-publish:metrics": "4581199f2cdf8315c0e60f764515bf2806ae184b9408298285491f70b33ed013",
+    "beta1851-3-20261109-publish:prepared:b8a6a109-7700-410d-b724-ea72b91d284f": "b7b8e839a0225e2049efa5675a482cde1abc42d064dcf168368c35a207c94b06"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
