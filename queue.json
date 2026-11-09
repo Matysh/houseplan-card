@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7714,
-  "nextTicket": 327,
+  "revision": 7715,
+  "nextTicket": 328,
   "nextFence": 327,
   "tasks": {
     "1193": {
@@ -4158,14 +4158,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1365-header-menu-bounds",
-      "materialSha": "89d8a177c8f635fbc8cbc1853cc8193ce2c91d71",
+      "materialSha": "edfff6faf85844d906fed60ab72a979560811ce4",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 326,
-      "queued": false,
+      "ticket": 327,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794182570089,
-      "reviewEntry": 2,
+      "readyAt": 1794183329019,
+      "reviewEntry": 3,
       "patchId": "5963677a985e40736505a09e5e8d4a87b60db385",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -4186,8 +4186,7 @@
         "entry": 2,
         "detail": "Браузер: geometry history refusal: failed; Браузер: plan rotation: failed; Браузер: settings button alignment 955: failed; Браузер: settings polish 955: failed; Браузер: space switch transitions: failed; Браузер: ui kit motion: failed; Браузер: view runtime recovery: failed; Браузер: zigbee enable refresh: failed",
         "eventId": "finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0:finish:3:return:return:1365"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4375,7 +4374,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1365
+  ],
   "active": null,
   "events": {
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:2:synchronized": {
@@ -4564,6 +4565,19 @@
           "detail": "Браузер: geometry history refusal: failed; Браузер: plan rotation: failed; Браузер: settings button alignment 955: failed; Браузер: settings polish 955: failed; Браузер: space switch transitions: failed; Браузер: ui kit motion: failed; Браузер: view runtime recovery: failed; Браузер: zigbee enable refresh: failed",
           "eventId": "finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0:finish:3:return:return:1365"
         }
+      }
+    },
+    "finish:b9387771-f680-43b9-a931-6e0eccddcc93": {
+      "digest": "976c76b780b0ce24f4178af2cb4b4732cff6968d2bfda1bcb2f29c9002380587",
+      "issue": 1365,
+      "message": {
+        "kind": "queued",
+        "issue": 1365,
+        "at": 1794183329019,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "edfff6faf85844d906fed60ab72a979560811ce4"
       }
     }
   },
