@@ -9,6 +9,7 @@ import {buttonPaint,approvedSavePaint} from './helpers/button-paint.mjs';
 import {assertFreshDemoBundle} from './bundle-freshness.mjs';
 import {checkAll,watchPage,finish} from './serve.mjs';
 import {fileURLToPath} from 'node:url';
+import {clickHeaderAction} from './helpers/header-actions.mjs';
 
 const out={},demoFont=process.argv.includes('--demo-font');
 const lineHeight=process.argv.find(arg=>arg.startsWith('--line-height='))?.slice(14);
@@ -33,7 +34,7 @@ for(const language of ['ru','en','de','fr']){
   const settings=JSON.parse(readFileSync(new URL(`../src/i18n/settings/${language}.json`,import.meta.url),'utf8'));
   for(const kind of ['settings','space','room','marker']){
    await p.evaluate(async kind=>{await window.__hpTest.switchSpace(kind==='marker'?'floor01':'f1');await window.__hpTest.setMode(kind==='marker'?'devices':'plan');},kind);
-   if(kind==='settings')await p.locator('houseplan-card [data-hp=settings]').filter({visible:true}).first().click();
+   if(kind==='settings')await clickHeaderAction(p.locator('houseplan-card').first(),'settings');
    else if(kind==='space')await p.evaluate(()=>window.__hpTest.openSpaceDialog('edit','f1').then(()=>null));
    else if(kind==='room')await p.evaluate(()=>window.__hpTest.openRoomEdit('r1').then(()=>null));
    else await openSettingsDeviceDialog(p,'demo_led_controller');

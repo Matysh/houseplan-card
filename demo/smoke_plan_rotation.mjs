@@ -1,4 +1,5 @@
 import { prepareDesktopControls } from './helpers/desktop-controls.mjs';
+import { clickHeaderAction } from './helpers/header-actions.mjs';
 // #1070: native controls/gestures plus exact painted-frame and persistence oracles.
 import { launch, launchColdView, launchPanelCold, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
@@ -328,7 +329,7 @@ try {
       document.getElementById('host').append(c); window.__card = c; c.hass = window.__mkHass();
     });
     await denied.page.waitForFunction(() => window.__card?._booting === false);
-    await denied.page.locator('houseplan-card [data-hp="rotate-right"]').click();
+    await clickHeaderAction(denied.page.locator('houseplan-card').last(),'rotate-right');
     await denied.page.waitForFunction(() => window.__card.renderRoot.querySelector('.stage').dataset.hpPlanRotation === '90');
     check('cold denied browser storage still permits rotation in memory', true);
   } finally { await denied.browser.close(); }

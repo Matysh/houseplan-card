@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchColdView, check, finish, requirePinnedBrowser } from './serve.mjs';
+import { clickHeaderAction } from './helpers/header-actions.mjs';
 requirePinnedBrowser('#1364 intrinsic single-row actions menu');
 const {page,browser}=await launchColdView({width:1800,height:1000},1,[],{hasTouch:true});
 const out='artifacts/header-actions-1364';mkdirSync(out,{recursive:true});
@@ -85,7 +86,19 @@ try {
  }));
  await menu.locator('[data-action="mode-view"]').click({timeout:5000});await settle();
  check('properties-cannot-intercept-close',await page.evaluate(()=>window.__card._mode),'view');
- await size(320);await trigger.click();await menu.locator('[data-action="mode-plan"]').click();await settle();
+ await clickHeaderAction(card,'mode-decor');await settle();
+ await page.evaluate(()=>window.__hpTest.setTool('line'));await settle();
+ const drawing=await card.locator('.plan-svg').boundingBox();
+ await page.mouse.click(drawing.x+drawing.width*.3,drawing.y+drawing.height*.65);
+ await page.mouse.click(drawing.x+drawing.width*.45,drawing.y+drawing.height*.65);
+ await page.evaluate(()=>window.__hpTest.waitForWrites());
+ const pendingLine=await page.evaluate(()=>JSON.stringify(window.__card._decorStart));
+ check('background-line-is-still-active',pendingLine!==undefined&&pendingLine!=='null');
+ await trigger.click();await menu.waitFor({timeout:5000});
+ check('opening-menu-keeps-live-line',await page.evaluate(()=>JSON.stringify(window.__card._decorStart)),pendingLine);
+ await menu.locator('[data-action="mode-plan"]').click();await settle();
+ check('live-drawing-cannot-swallow-menu-command',await page.evaluate(()=>window.__card._mode),'plan');
+ await size(320);
  await trigger.click();await menu.locator('[data-action="mode-view"]').click();await settle();
  check('editor-close',await page.evaluate(()=>window.__card._mode),'view');
  for(const language of ['en','ru','de','fr']){

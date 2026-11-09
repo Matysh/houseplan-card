@@ -1054,7 +1054,10 @@ export class HouseplanCard extends LitElement {
         this._headerActionsLoad = null; throw error;
       }));
       if (!current()) return;
-      this._headerActionsMenu ??= new module.HeaderActionsMenu(this);
+      this._headerActionsMenu ??= new module.HeaderActionsMenu({
+        renderRoot: this.renderRoot,
+        requestUpdate: () => this.requestUpdate('_headerActionsMenu', null),
+      });
       this._headerActionsMenu.show(head, trigger, this._t('panel.actions'), current);
     } catch (error) { console.warn('[houseplan] header actions menu unavailable', error); }
   }
