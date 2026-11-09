@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7885,
+  "revision": 7886,
   "nextTicket": 335,
   "nextFence": 335,
   "tasks": {
@@ -4266,6 +4266,15 @@
         "entry": 1,
         "detail": "Браузер: support feedback: failed",
         "eventId": "finish:06e1a3c3-3618-4946-9427-4630aff706d9:finish:3:return:return:1367"
+      },
+      "s6": {
+        "id": "20261109T023421829-8d17e98b",
+        "name": "Тесты для задачи #1367 (перед слиянием)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261109T023421829-8d17e98b/report.json",
+        "materialSha": "4f9f245f35b316c5ced02df44e4c575a86371f8b",
+        "status": "passed",
+        "finishedAt": "2026-11-09T02:34:52.047Z",
+        "failures": []
       }
     }
   },
@@ -4476,9 +4485,9 @@
     "fence": 334,
     "materialSha": "4f9f245f35b316c5ced02df44e4c575a86371f8b",
     "expectedBase": "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794191651413,
-    "expiresAt": 1794191957079,
+    "expiresAt": 1794195293417,
     "patchId": "72fefc2cb272f20b19fcc3a3071e6108a406e6c8"
   },
   "events": {
@@ -4556,6 +4565,10 @@
     },
     "finish:2dcb9df4-1ed7-42bd-ab90-f9d0587cb03f:finish:2:synchronized": {
       "digest": "5499e95f351ed3d86e8325429733fd6db01d3c3e78c6d07306c3cb7d0a9af637",
+      "issue": 1367
+    },
+    "finish:2dcb9df4-1ed7-42bd-ab90-f9d0587cb03f:finish:3:s6-complete": {
+      "digest": "45ec5232c39e48d0477a3a7b96b3cd2bf800a704c07e63ad4b94a778afdbd482",
       "issue": 1367
     },
     "release-return:fed8a071-c709-4789-964a-27e474e10c6a": {
