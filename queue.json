@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 8392,
-  "nextTicket": 344,
+  "revision": 8393,
+  "nextTicket": 345,
   "nextFence": 344,
   "tasks": {
     "1193": {
@@ -4233,6 +4233,20 @@
         "status": "published",
         "sourceSha": "4abd035f177fbbeff8338a82693759563e578b2e"
       }
+    },
+    "1375": {
+      "issue": 1375,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1375-mdi-picker-kit",
+      "materialSha": "d8a2139227a8ab591da54c77dff1d3aff8eb48f8",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 344,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794249909923,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4420,9 +4434,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1375
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:40930de5-804e-4c02-a634-853dfd0bb1cb": {
+      "digest": "6122d5242a190a20426b872df9335fd6b991a913511a7973de9ad7589f4bd2ee",
+      "issue": 1375,
+      "message": {
+        "kind": "queued",
+        "issue": 1375,
+        "at": 1794249909923,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d8a2139227a8ab591da54c77dff1d3aff8eb48f8"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "4abd035f177fbbeff8338a82693759563e578b2e",
     "status": "delivered",
