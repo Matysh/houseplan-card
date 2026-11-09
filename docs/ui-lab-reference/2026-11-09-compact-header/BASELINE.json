@@ -1,0 +1,13 @@
+{
+  "ref": "dev@69a565c1f",
+  "commit": "69a565c1fff387657b44ad9327dd2ab39cf4526b",
+  "sourceVersion": "1.85.1-beta.2",
+  "baseBuildFingerprint": "25082393e20e43280e241f577e5276bedec34506e8bd302093f267b36b7468ac",
+  "haFrontend": "20260930.4",
+  "node": "22.23.2",
+  "approvedOn": "2026-11-09",
+  "ownerAcceptance": "заводи задачу и фиксируй в ней все внесенные изменения",
+  "issue": 1371,
+  "prototypeOverrides": true,
+  "productImplemented": false
+}

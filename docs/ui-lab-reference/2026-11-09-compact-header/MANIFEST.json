@@ -1,0 +1,58 @@
+{
+  "issue": 1371,
+  "approvedOn": "2026-11-09",
+  "scope": "Public package; private data excluded",
+  "hashAlgorithm": "SHA-256; MANIFEST.json itself excluded",
+  "files": [
+    {
+      "path": "accepted/header-menu-labels-patch.mjs",
+      "bytes": 1662,
+      "sha256": "b5fbb3b7a5d5161a8cbe1196d75bf69cce725e26c78d471768d2c99cd8c20874"
+    },
+    {
+      "path": "accepted/header-sheet-patch.mjs",
+      "bytes": 5708,
+      "sha256": "451c651db6467d52eaf0b0c9a1ae466edcdf1da65930d5a88bf794ce2c11524b"
+    },
+    {
+      "path": "accepted/serve-header-prototype.mjs",
+      "bytes": 4591,
+      "sha256": "ca240400af9791368b8e61800f49ecbf4192df5866a21eaf975aa6997e0cbf4a"
+    },
+    {
+      "path": "ACCEPTED.md",
+      "bytes": 14830,
+      "sha256": "9dbc3c8710187c57239b2362f383bd489a1519fb4fa9cc70755b4a7921d7f9dc"
+    },
+    {
+      "path": "BASELINE.json",
+      "bytes": 499,
+      "sha256": "ed9edf58a3bbd32d1e07949f62ebb88d15e8f5d5bc29483d3585bb610a4e86b7"
+    },
+    {
+      "path": "header-menu-labels-patch.mjs",
+      "bytes": 1662,
+      "sha256": "b5fbb3b7a5d5161a8cbe1196d75bf69cce725e26c78d471768d2c99cd8c20874"
+    },
+    {
+      "path": "header-sheet-patch.mjs",
+      "bytes": 5708,
+      "sha256": "451c651db6467d52eaf0b0c9a1ae466edcdf1da65930d5a88bf794ce2c11524b"
+    },
+    {
+      "path": "JOURNAL.md",
+      "bytes": 15908,
+      "sha256": "3391725b7e913c48e2fe0b10dbebd502359ec438d9b7a7765b8963d7fee9d420"
+    },
+    {
+      "path": "README.md",
+      "bytes": 6074,
+      "sha256": "01c0620d4cad9a5f1fc09fd15a675dc516073088777928dcbe05f6cf572c365e"
+    },
+    {
+      "path": "serve-reference.mjs",
+      "bytes": 5523,
+      "sha256": "9bf82e6ee03bc06b377e0f324af2d00145e471f49803ab8854d60f86049d3095"
+    }
+  ]
+}
