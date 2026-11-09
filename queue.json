@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8394,
+  "revision": 8395,
   "nextTicket": 345,
   "nextFence": 345,
   "tasks": {
@@ -4246,7 +4246,46 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794249909923,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "70f97906028df1704db2987948031badd537dafb",
+      "changedFiles": [
+        "THIRD_PARTY_NOTICES.md",
+        "custom_components/houseplan/THIRD_PARTY_NOTICES.md",
+        "custom_components/houseplan/licenses/mdi.txt",
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/panel-device-icon-picker-dark-1375.png",
+        "demo/golden/device-icon-picker.mjs",
+        "demo/golden/harness.mjs",
+        "demo/golden/matrix.mjs",
+        "demo/helpers/device-icon-picker-fixture.mjs",
+        "demo/helpers/icon-sources.mjs",
+        "demo/smoke_device_icon_picker.mjs",
+        "demo/ui-lab/verify-icon-picker.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DIALOG-UI-KIT.md",
+        "docs/release-ledger/v1.85.0/1375.json",
+        "package-lock.json",
+        "package.json",
+        "process-next/catalog/selections.mjs",
+        "process-next/lib/source-dependencies.mjs",
+        "process-next/test/catalog.test.mjs",
+        "scripts/bundle-budget.mjs",
+        "scripts/bundle-manifest.mjs",
+        "scripts/generate-mdi-icon-catalog.mjs",
+        "src/editors/ha-icon-picker-kit.ts",
+        "src/editors/hp-icon-picker.ts",
+        "src/editors/marker-dialog.ts",
+        "src/i18n/settings/de.json",
+        "src/i18n/settings/en.json",
+        "src/i18n/settings/fr.json",
+        "src/i18n/settings/ru.json",
+        "src/mdi-icon-catalog.ts",
+        "src/mdi-icon-data.json",
+        "test/golden-matrix.test.mjs",
+        "test/icon-picker.test.mjs",
+        "tsconfig.test.json"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4441,12 +4480,17 @@
     "token": "344:finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:1:admit",
     "fence": 344,
     "materialSha": "d8a2139227a8ab591da54c77dff1d3aff8eb48f8",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "4abd035f177fbbeff8338a82693759563e578b2e",
+    "phase": "testing",
     "admittedAt": 1794249913885,
-    "expiresAt": 1794250213885
+    "expiresAt": 1794250219728,
+    "patchId": "70f97906028df1704db2987948031badd537dafb"
   },
   "events": {
+    "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:2:synchronized": {
+      "digest": "5b2a362eca7f4a56197d76b32c60fa4e62cff7ace817d79885aca554edc049bf",
+      "issue": 1375
+    },
     "finish:40930de5-804e-4c02-a634-853dfd0bb1cb": {
       "digest": "6122d5242a190a20426b872df9335fd6b991a913511a7973de9ad7589f4bd2ee",
       "issue": 1375,
