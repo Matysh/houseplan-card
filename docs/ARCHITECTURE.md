@@ -200,6 +200,9 @@ Vertical limits still use the visual viewport, including keyboard offsets;
 other context menus keep their existing placement.
 Menu changes request a named chrome update; an active drawing gesture may route
 anonymous pointer refreshes to live geometry, but cannot swallow menu mounting.
+The popup renders beside the card's other context menus, outside the sticky
+header stacking context; the existing shared popup layer stays above tool trays.
+Kiosk hides this relocated presentation immediately as its model retires.
 
 Internal window light (#1079) uses room-side candidates from the canonical
 opening-wall index. `interior-window-light.ts` validates host authority and

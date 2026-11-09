@@ -141,6 +141,12 @@ try {
  check('readonly-omits-edit-commands',await menu.locator('[data-action="mode-plan"],[data-action="settings"],[data-action="space-add"]').count(),0);
  await page.keyboard.press('Escape');await size(1800);
  check('widening-restores-original-layout',(await read()).phase<5);
+ await size(180);await trigger.click();await menu.waitFor();
+ check('kiosk-hides-detached-header-menu',await page.evaluate(async()=>{
+  const c=window.__card;c.setConfig({...c._config,kiosk:true,cycle:0});await c.updateComplete;
+  return getComputedStyle(c.renderRoot.querySelector('.hdr')).display==='none'
+    && [...c.renderRoot.querySelectorAll('[data-hp="header-actions-menu"]')].every(e=>getComputedStyle(e).display==='none');
+ }));
  writeFileSync(out+'/evidence.json',JSON.stringify({widths,items},null,2));
  await finish(browser,{widths:widths.map(r=>({width:r.width,phase:r.phase})),items:items.map(i=>i.action)});
 } catch(error){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});await browser.close();throw error;}

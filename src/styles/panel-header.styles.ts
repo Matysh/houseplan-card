@@ -70,6 +70,7 @@ export const panelHeaderStyles = css`
 .hdr[data-panel-flow] .head > .title > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .hdr[data-panel-flow='4'] .head > .title { flex:1 0 100%; max-width:100%; }
 .panel-menu { flex:0 0 44px; }
+.hdr.kioskhide ~ [data-hp='header-actions-menu'] { display:none; }
 .hdr[data-panel-flow] .head > .header-actions-trigger { display:none; }
 .hdr[data-panel-flow] .header-actions-trigger:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
 .hdr[data-panel-flow='5'] > .head { flex-direction:row; align-items:center; flex-wrap:nowrap; }

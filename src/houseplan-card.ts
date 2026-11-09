@@ -12610,7 +12610,6 @@ export class HouseplanCard extends LitElement {
           ${!this._kiosk ? this._summary?.renderControls() : nothing}
           </div>
         </div>
-        ${this._headerActionsMenu?.render() ?? nothing}
         ${this._canEdit && !this._kiosk
           ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"
               style=${modeVisual ? `height:${modeVisual.editorChromeHeight}px;opacity:${modeVisual.editorWeight}` : nothing}
@@ -12842,6 +12841,7 @@ export class HouseplanCard extends LitElement {
             : nothing}
         </div>
 
+        ${this._headerActionsMenu?.render() ?? nothing}
         ${this._editorRuntime?.properties.render()}
         ${dialogPresence(this._editorRuntime?.deviceCopy.render())}
         ${this._editorRuntime?.decorOrder.render()}
