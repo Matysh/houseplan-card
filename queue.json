@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7931,
-  "nextTicket": 335,
+  "revision": 7932,
+  "nextTicket": 336,
   "nextFence": 335,
   "tasks": {
     "1193": {
@@ -4169,11 +4169,11 @@
       "releaseTag": "v1.85.1-beta.2",
       "materialSha": "51738e7bf5d6fd3c0888c1138e5ac47678702cde",
       "ownerDecision": null,
-      "ticket": 332,
-      "queued": false,
+      "ticket": 335,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794190638337,
-      "reviewEntry": 1,
+      "readyAt": 1794191886639,
+      "reviewEntry": 2,
       "patchId": "235b3b32f4aa5da5b8f667d850b129ed27ff7d22",
       "review": {
         "source": "published-release",
@@ -4209,7 +4209,6 @@
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4443,7 +4442,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1366
+  ],
   "active": null,
   "events": {
     "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:2:synchronized": {
@@ -4558,6 +4559,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "4f9f245f35b316c5ced02df44e4c575a86371f8b"
+      }
+    },
+    "release-1851-beta2-return-correction-2": {
+      "digest": "a386de54f26272a670074afafa65ddeab7f9a8b72f58b7d4c04c8b303fc79121",
+      "issue": 1366,
+      "message": {
+        "kind": "queued",
+        "issue": 1366,
+        "at": 1794191886639,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "51738e7bf5d6fd3c0888c1138e5ac47678702cde"
       }
     }
   },
