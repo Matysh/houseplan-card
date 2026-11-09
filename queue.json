@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7742,
+  "revision": 7743,
   "nextTicket": 329,
   "nextFence": 329,
   "tasks": {
@@ -4166,20 +4166,25 @@
       "status": "S6-in-progress",
       "readyAt": 1794184935741,
       "reviewEntry": 4,
-      "patchId": "ed6d761510723648869237709d2094d295dc05e2",
+      "patchId": "05dbe230cf74e9c0c0239c35431dadb6edf33f03",
       "changedFiles": [
         "demo/golden/harness.mjs",
+        "demo/helpers/empty-space-home-arrow.mjs",
         "demo/helpers/hp-test.mjs",
         "demo/helpers/settings-polish-955.mjs",
         "demo/smoke_header_actions_menu.mjs",
         "demo/smoke_plan_rotation.mjs",
         "demo/smoke_settings_button_alignment_955.mjs",
+        "demo/smoke_ui_kit_motion.mjs",
+        "demo/smoke_view_runtime_recovery.mjs",
+        "demo/smoke_zigbee_enable_refresh.mjs",
         "docs/ARCHITECTURE.md",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.85.0/1365.json",
         "src/header-actions-menu.ts",
-        "src/houseplan-card.ts"
+        "src/houseplan-card.ts",
+        "src/styles/panel-header.styles.ts"
       ],
       "notice": {
         "key": "3:checks-failed",
@@ -4385,10 +4390,11 @@
     "token": "328:finish:6a85423f-2533-43d2-83ac-0703576b7e36:finish:1:admit",
     "fence": 328,
     "materialSha": "3979eda0eded14b615ea00598788a07b98ba88fc",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928",
+    "phase": "testing",
     "admittedAt": 1794184939159,
-    "expiresAt": 1794185239159
+    "expiresAt": 1794185244795,
+    "patchId": "05dbe230cf74e9c0c0239c35431dadb6edf33f03"
   },
   "events": {
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:2:synchronized": {
@@ -4549,6 +4555,10 @@
     },
     "github:42540839323:1:completions:notice:b4e635761ea6e453043dbff09fe5511fb3fc845b9cf6929a30ae296a32ca597b": {
       "digest": "f195439d73b95d6aef18f8bd6f134e2fe7ca503858c8d94ce53ac4a5218ae4c9",
+      "issue": 1365
+    },
+    "finish:6a85423f-2533-43d2-83ac-0703576b7e36:finish:2:synchronized": {
+      "digest": "9847e0465fa9ab58454b5463681fd11effbd3c23f5318a618ae89bd8887fcea7",
       "issue": 1365
     },
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915": {
