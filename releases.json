@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 678,
+  "revision": 679,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -62148,7 +62148,8 @@
           "from": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5",
           "to": "2892d28f49b424dc0668ad1203568532c68dff85",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "4abd035f177fbbeff8338a82693759563e578b2e"
         }
       ],
       "diagnostics": [],
@@ -62786,7 +62787,8 @@
           "sha": "0db5a9f7c2b2d9381a1dbc7d640ae51f91f0bb8f"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "4abd035f177fbbeff8338a82693759563e578b2e",
           "issue": 1374,
           "branch": "issue/1374-release-return-2892d28f49b4",
           "worktree": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/process-next/return-worktrees/52610e210052/artifacts/process-next/return-worktrees/2892d28f49b4"
@@ -67389,7 +67391,8 @@
     "beta1851-3-20261109-publish:completion:e29562b3-eec5-407d-8e17-67f12c59abd5": "38e9307f4d096e1a4682fea3829b24ce85e39d1758d9783abbe5517658d57a33",
     "beta1851-3-20261109-publish:completion:ddb90c8f-44e6-499a-9123-454e1186f6c3": "f35d9296a69a4c3e962ab85959d35063773be51aa514b19acec1a706e03c61c6",
     "beta1851-3-20261109-publish:completion:d81c68ba-826d-40b2-93d6-d689a126f6aa": "9be7426b6e30f3d1ce8117332fe6add57b1e5d5ec62effeaf214d300d1d52c5e",
-    "beta1851-3-20261109-publish:completion:6de8c2c1-8942-4600-84f4-4335a6df952b": "5cf0d67b2c067495667d4eea04230516b4aab5a1ebf919040c69b0e4c906da4d"
+    "beta1851-3-20261109-publish:completion:6de8c2c1-8942-4600-84f4-4335a6df952b": "5cf0d67b2c067495667d4eea04230516b4aab5a1ebf919040c69b0e4c906da4d",
+    "beta1851-3-20261109-publish:completion:497d0955-a654-4433-b6d5-160fbe9742ce": "3a7402da60d09e4ce39527327bdc5eae21b9ab03bf21f988656f8b05b38d7764"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
