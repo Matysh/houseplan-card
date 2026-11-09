@@ -6246,7 +6246,9 @@ export class HouseplanCard extends LitElement {
         this._devicePositionHistory.removeWhere(({ before, after }) =>
           relocating.has(before.deviceId) || relocating.has(after.deviceId));
         const dialog = this._markerDialog;
-        if (dialog?.devId && !dialog.roomTouched && this._areaRelocationIds.has(dialog.devId)) {
+        // A rebind can rediscover the old HA device while its save is pending.
+        // Do not replace that transaction's draft: completion owns its identity.
+        if (dialog?.devId && !dialog.busy && !dialog.roomTouched && this._areaRelocationIds.has(dialog.devId)) {
           const current = this._devices.find((device) => device.id === dialog.devId);
           if (current) this._markerDialog = {
             ...dialog,

@@ -335,3 +335,7 @@ and preview immediately; save/reopen retains that result. Shared floating-surfac
 styles suppress the browser tap highlight for dropdown hosts, triggers and options
 in native and fallback surfaces, preserving explicit hover/selection/focus paint.
 Browser coverage includes mobile Chromium and WebKit emulation, not physical Safari.
+
+A pending marker save owns its busy draft identity. HA Area relocation must not
+replace that draft during rediscovery of the old binding; otherwise successful
+rebinding cannot close its dialog. The rebind browser case covers this race.

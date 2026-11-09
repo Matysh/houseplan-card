@@ -26,17 +26,18 @@ for(const {theme,width,fallback=false,authentic=false,engine='chromium',reduced=
     window.__addRegistryDevice('picker_rebind_light','Picker regression light','Light','living_room');
     window.__addRegistryEntity('light.picker_rebind','living_room','on','mqtt',{device_id:'picker_rebind_light'},{friendly_name:'Picker regression light'});
     window.__card.hass=window.__mkHass();
-    await window.__hpTest.setServerConfig(c=>{c.markers.find(m=>m.id==='demo_living_climate').icon='mdi:access-point-minus';});
+    await window.__hpTest.setServerConfig(c=>{const m=c.markers.find(m=>m.id==='demo_living_climate');m.icon='mdi:access-point-minus';m.pdfs=[];});
   });
   const section=async(d,id)=>{
-    if(width<=550){
-      const section=d.locator('hp-settings-select:has([data-field="settings-section"])');
-      await section.locator('[data-hp="select-trigger"]').click();
+    const compact=d.locator('hp-settings-select:has([data-field="settings-section"])');
+    if(await compact.isVisible()){
+      await compact.locator('[data-hp="select-trigger"]').click();
       await d.locator(`[data-hp="select-option"][data-id="${id}"]`).click();
     }else await d.locator(`[data-section-target="${id}"]`).click();
     await waitForUiKitPaint(page);
   };
-  const open=async()=>{await openSettingsDeviceDialog(page,'demo_living_climate');const d=page.locator('hp-dialog[data-kind="marker"]');await section(d,'appearance');return d;};
+  let markerId='demo_living_climate';
+  const open=async()=>{await openSettingsDeviceDialog(page,markerId);const d=page.locator('hp-dialog[data-kind="marker"]');await section(d,'appearance');return d;};
   let dialog=await open();const picker=()=>dialog.locator('hp-icon-picker');
   await inspectDeviceIconPicker(page,{expectedValue:'mdi:access-point-minus'});
   await assertIconPickerPolish(page,picker(),{desktop:width>550,reduced});
@@ -82,19 +83,27 @@ for(const {theme,width,fallback=false,authentic=false,engine='chromium',reduced=
   // triggers and options suppress only the browser tap overlay on both engines.
   await section(dialog,'basics');const binding=dialog.locator('#marker-binding');
   const tap=async loc=>assert.equal((await loc.evaluate(e=>getComputedStyle(e).getPropertyValue('-webkit-tap-highlight-color'))).replace(/\s/g,''),'rgba(0,0,0,0)');
-  await tap(binding);await binding.click();const candidate=dialog.locator('[data-value="device:picker_rebind_light"]');
+  await tap(binding);await binding.click();await dialog.locator('#marker-show-entities').check();const candidate=dialog.locator('[data-value="entity:light.picker_rebind"]');
   await expect(candidate).toBeVisible();await tap(candidate);await candidate.click();
   await section(dialog,'appearance');await picker().locator('.clear').click();
   const rebound=await assertAutomaticIcon(page,picker());assert.notEqual(rebound,clearedIcon,'binding change uses the new device automatic icon');
   const display=dialog.locator('hp-settings-select:has(#marker-display)');await tap(display.locator('button'));await display.locator('button').click();
   await tap(dialog.locator('[data-hp="select-option"]:visible').first());await page.keyboard.press('Escape');
-  await dialog.locator('[data-hp="dialog-confirm"]').first().click();await expect(dialog).toHaveCount(0);await page.evaluate(()=>window.__hpTest.waitForWrites());
-  dialog=await open();assert.equal(await assertAutomaticIcon(page,picker()),rebound);await dialog.locator('[slot="footer"] [data-hp="dialog-cancel"]').click();
+  await dialog.locator('[data-hp="dialog-confirm"]').first().click();
+  await expect(dialog).toHaveCount(0);await page.evaluate(()=>window.__hpTest.waitForWrites());
+  markerId=await page.evaluate(()=>window.__card._serverCfg.markers.find(m=>m.binding==='entity:light.picker_rebind').id);
+  dialog=await open();assert.equal(await assertAutomaticIcon(page,picker()),rebound);await dialog.locator('[slot="footer"] [data-hp="dialog-cancel"]').click();await expect(dialog).toHaveCount(0);
   // A new virtual marker has the canonical fallback before any custom choice.
   await page.evaluate(()=>window.__hpTest.openMarkerDialog().then(()=>null));dialog=page.locator('hp-dialog[data-kind="marker"]');await section(dialog,'appearance');
   assert.equal(await assertAutomaticIcon(page,picker()),'mdi:map-marker');
   await trigger().click();await search.fill('mdi:fan');await page.keyboard.press('Enter');await picker().locator('.clear').click();
   assert.equal(await assertAutomaticIcon(page,picker()),'mdi:map-marker');
+  const virtualDisplay=dialog.locator('hp-settings-select:has(#marker-display)');
+  await virtualDisplay.locator('button').click();await dialog.locator('[data-hp="select-option"][data-id="icon_ripple"]').click();
+  const color=dialog.locator('hp-color-opacity[data-activity-color]');await tap(color.locator('.trigger'));await color.locator('.trigger').click();
+  const hue=dialog.locator('[data-field="colour-hue"]');await expect(hue).toBeVisible();await tap(hue);
+  const colorConfirm=dialog.locator('[data-action="colour-confirm"]');await tap(colorConfirm);await colorConfirm.click();
+  await expect(color.locator('.trigger')).toHaveAttribute('aria-expanded','false');
   await f.assertClean();assert.equal(await reportPageErrors(),false,'no card error before closing the page');passed++;console.log('PASS',theme,width,{fallback,authentic,engine,reduced,browser:f.browser.version()});
  }finally{await f.close();}
 }
