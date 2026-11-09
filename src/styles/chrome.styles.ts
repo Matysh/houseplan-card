@@ -57,6 +57,7 @@ const chromeCoreStyles = unsafeCSS(css`
       margin-top: -4px;
     }
     .hdr.kioskhide { display: none; }
+    .hdr.kioskhide ~ [data-hp='header-actions-menu'] { display: none; }
     .decorbar hp-color-opacity { flex: 0 0 auto; --hp-color-trigger-size:40px; }
     /* issue #220: a tab can be dragged to a new position in the editors */
     .tab[data-reorderable] { cursor: grab; }
