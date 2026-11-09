@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7859,
+  "revision": 7860,
   "nextTicket": 333,
   "nextFence": 333,
   "tasks": {
@@ -4192,7 +4192,42 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794190638337,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "235b3b32f4aa5da5b8f667d850b129ed27ff7d22",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "0db5a9f7c2b2d9381a1dbc7d640ae51f91f0bb8f",
+        "tag": "v1.85.1-beta.2",
+        "verdict": "accepted",
+        "patchId": "235b3b32f4aa5da5b8f667d850b129ed27ff7d22",
+        "materialSha": "51738e7bf5d6fd3c0888c1138e5ac47678702cde"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/device-alert-form-numeric.png",
+        "demo/golden/baselines/device-battery-mobile-dark.png",
+        "demo/golden/baselines/geometry-plan-editor-dark.png",
+        "demo/golden/baselines/panel-device-state-source-unknown-en.png",
+        "demo/golden/baselines/panel-geometry-decor-editor-dark.png",
+        "demo/golden/baselines/panel-geometry-devices-editor-dark.png",
+        "demo/golden/baselines/panel-opening-placement-door-thick-wall-dark.png",
+        "demo/golden/baselines/panel-plan-snap-endpoint-light.png",
+        "demo/golden/baselines/panel-three-rows-ui-1132.png",
+        "demo/golden/baselines/panel-tray-narrow-tool-ru.png",
+        "demo/golden/baselines/panel-vacuum-live-tail-pending-dialog-dark.png",
+        "demo/golden/baselines/panel-version-mismatch-touch-light-ru.png",
+        "demo/golden/baselines/plan-rotation-phone-view-320-1070.png",
+        "demo/golden/baselines/safe-resize-handles-clamp-dark.png",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4401,12 +4436,17 @@
     "token": "332:release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:1:admit",
     "fence": 332,
     "materialSha": "51738e7bf5d6fd3c0888c1138e5ac47678702cde",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
+    "phase": "testing",
     "admittedAt": 1794190643436,
-    "expiresAt": 1794190943436
+    "expiresAt": 1794190950072,
+    "patchId": "235b3b32f4aa5da5b8f667d850b129ed27ff7d22"
   },
   "events": {
+    "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:2:synchronized": {
+      "digest": "dca38b8455ada14b36b13dc218ffaa54fc30d4161b5122270fe48a210a266810",
+      "issue": 1366
+    },
     "release-return:fed8a071-c709-4789-964a-27e474e10c6a": {
       "digest": "2692e833edcc362fd3812094b5cee889021f58bfec2b74eca1fda238f8538e5c",
       "issue": 1366,
