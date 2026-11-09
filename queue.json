@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8268,
+  "revision": 8269,
   "nextTicket": 343,
   "nextFence": 343,
   "tasks": {
@@ -4269,37 +4269,24 @@
     },
     "1373": {
       "issue": 1373,
+      "branch": "codex/1373-accepted-header-goldens",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1373-accepted-header-goldens",
-      "materialSha": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 342,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1794240597566,
-      "reviewEntry": 1,
-      "patchId": "74b8a330872b2de93675d95942962a021a369520",
-      "changedFiles": [
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/header-spaces-phone-light-997.png",
-        "demo/golden/baselines/panel-three-rows-ui-1132.png",
-        "demo/golden/baselines/panel-tray-narrow-tool-ru.png",
-        "demo/golden/baselines/panel-version-mismatch-touch-light-ru.png",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.85.0/1372.json",
-        "docs/release-ledger/v1.85.0/1373.json"
-      ],
-      "s6": {
-        "id": "20261109T161016870-d122fa78",
-        "name": "Тесты для задачи #1373 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261109T161016870-d122fa78/report.json",
-        "materialSha": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5",
-        "status": "passed",
-        "finishedAt": "2026-11-09T16:12:46.685Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "727c643c5970b267dea8d2091b2bf6315afd2dd5",
+      "mergedSha": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5",
+      "mergedAt": 1794240773865,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -4489,31 +4476,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1373,
-    "worker": "finish",
-    "token": "342:finish:d56fff0d-c3d1-4e57-8484-74bde7346fc1:finish:1:admit",
-    "fence": 342,
-    "materialSha": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5",
-    "expectedBase": "727c643c5970b267dea8d2091b2bf6315afd2dd5",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794240605118,
-    "expiresAt": 1794244368023,
-    "patchId": "74b8a330872b2de93675d95942962a021a369520"
-  },
+  "active": null,
   "events": {
-    "finish:d56fff0d-c3d1-4e57-8484-74bde7346fc1:finish:2:synchronized": {
-      "digest": "b5af63413aee7240e0382e1d590318f983f93396473eed3e01f2e9952db80cf9",
-      "issue": 1373
-    },
-    "finish:37ea488e-a014-48d0-aa1f-aa365ec419e5": {
-      "digest": "379b0c0572ea35a005b9753805b551c958127ffc3398dace475d38dc35d9126d",
-      "issue": 1373
-    },
-    "finish:d56fff0d-c3d1-4e57-8484-74bde7346fc1:finish:3:s6-complete": {
-      "digest": "8473ceb7ed8b63f8911d0a0e93ea9d509e7ca4596f8b16053a54331f28244d77",
-      "issue": 1373
-    },
     "dev-build:42651172882:1:1372": {
       "digest": "6b18c525a22e9c7eec4ea3b15d50680f9071d16280f2cef4f19b5e6c4eda619b",
       "issue": 1372,
