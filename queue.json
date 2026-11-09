@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8307,
+  "revision": 8308,
   "nextTicket": 343,
   "nextFence": 343,
   "tasks": {
@@ -541,43 +541,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "3f778f3d9f3c1b691fce78891d71d095bb051a1e"
-      }
-    },
-    "1256": {
-      "issue": 1256,
-      "branch": "issue/1256-node-projection-equality",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "a0b78f6076640746ef2060a4e0c4a34521f2c821",
-      "mergedSha": "7ab5767a92fd87379f77a47a0a766e386e7ea654",
-      "mergedAt": 1793742903416,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "7ab5767a92fd87379f77a47a0a766e386e7ea654"
       }
     },
     "1258": {
@@ -4267,7 +4230,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5"
       }
     }
   },
@@ -4458,7 +4422,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:42652507855:1:1373": {
+      "digest": "5ac67ca79ce3f856b8ba9d96409214b3bf9305c475489589adeb078eea4f461a",
+      "issue": 1373,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1373,
+        "at": 1794240955660,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "727c643c5970b267dea8d2091b2bf6315afd2dd5",
     "status": "delivered",
