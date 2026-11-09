@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8428,
+  "revision": 8429,
   "nextTicket": 346,
   "nextFence": 346,
   "tasks": {
@@ -4665,6 +4665,10 @@
       "digest": "f95d3faa6bd54b161731bc8c0f336b8f134ea288156d5253e97a1af1f468634a",
       "issue": 1375
     },
+    "github:42682086599:1:completions:message:bc5c7bcbdaa4e4fcf9b7a6187e0c1a95fa14158390fed35af0df67905248812e": {
+      "digest": "0d7b88e926f69b8555d5311bf9e71c4c5a611b2d7a158b50d37aecc945962f15",
+      "issue": 1375
+    },
     "finish:40930de5-804e-4c02-a634-853dfd0bb1cb": {
       "digest": "6122d5242a190a20426b872df9335fd6b991a913511a7973de9ad7589f4bd2ee",
       "issue": 1375,
@@ -4711,7 +4715,8 @@
           "entry": 1,
           "detail": "Поведение: test/i18n-dead-keys.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
           "eventId": "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:3:return:return:1375"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:758735eb-f0f6-450a-bcef-26a3ea164998": {
