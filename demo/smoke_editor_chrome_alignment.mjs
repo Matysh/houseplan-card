@@ -42,12 +42,12 @@ try {
     const centre = paint ? new DOMPoint(paint.x + paint.width / 2, paint.y + paint.height / 2).matrixTransform(path.getScreenCTM()) : null;
     const bar = root.querySelector('.editbar');
     const color = bar.querySelector('hp-color-opacity');
-    return { close: visible ? box(close) : null, glyphCentre: centre?.y, tab: visible ? box(header.querySelector('.modetab.active')) : null,
+    return { phase: Number(header.parentElement.dataset.panelFlow), close: visible ? box(close) : null, glyphCentre: centre?.y, tab: visible ? box(header.querySelector('.modetab.active')) : null,
       slot: visible ? box(header.querySelector('.editor-close-slot')) : null, bar: box(bar),
       controls: [...bar.querySelectorAll('.editbar-tools > button,.editbar-end > button')].map(box),
       color: color ? box(color.shadowRoot.querySelector('.trigger')) : null };
   });
-  for (const width of [1920, 1000, 600]) {
+  for (const width of [1920, 1000, 600, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await page.evaluate(width => { document.getElementById('host').style.width = `${width}px`; }, width);
     await settled();
@@ -61,7 +61,7 @@ try {
         && Math.abs(value.close.y - value.slot.y) < .5
         && Math.abs(value.glyphCentre - value.tab.y - value.tab.height / 2) < .5;
       const idle = await geometry();
-      if (width >= 1000) {
+      if (idle.phase !== 5) {
         const close = card.locator('.head [data-hp="editor-close"]');
         check(`${width}-${mode}-header-close-aligned`, idle.close !== null && aligned(idle));
         await close.hover();

@@ -110,9 +110,12 @@ test('issue 266 the media wrappers survived the move', () => {
 test('#1184 the appended header sheet owns shared intrinsic-flow roots and its native metrics', () => {
   const rules = parseRules(panelHeaderStyles.cssText).filter(rule => rule.kind === 'rule');
   assert.ok(rules.length > 20);
-  for (const rule of rules) for (const selector of rule.selectors)
+  for (const rule of rules) for (const candidate of rule.selectors) {
+    const gate = ':host([data-pointer-hover]) ';
+    const selector = candidate.startsWith(gate) ? candidate.slice(gate.length) : candidate;
     assert.ok(selector.startsWith('.hdr[data-panel-flow]')
       || /^\.hdr\[data-panel-flow=['"][0-5]['"]\]/.test(selector)
       || selector === '.panel-menu'
-      || selector === '.panel-header-metrics .panel-icon-metric', `unscoped shared-header rule: ${selector}`);
+      || selector === '.panel-header-metrics .panel-icon-metric', `unscoped shared-header rule: ${candidate}`);
+  }
 });

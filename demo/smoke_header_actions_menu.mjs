@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchColdView, check, finish, requirePinnedBrowser } from './serve.mjs';
-import { clickHeaderAction } from './helpers/header-actions.mjs';
+import { clickHeaderAction, headerActionTarget } from './helpers/header-actions.mjs';
 requirePinnedBrowser('#1364 intrinsic single-row actions menu');
 const {page,browser}=await launchColdView({width:1800,height:1000},1,[],{hasTouch:true});
 const out='artifacts/header-actions-1364';mkdirSync(out,{recursive:true});
@@ -76,19 +76,21 @@ try {
  await page.mouse.click(1700,950);await menu.waitFor({state:'hidden'});check('outside-closes',await menu.count(),0);
  await trigger.click();await menu.locator('[data-action="mode-plan"]').click();await settle();
  check('editor-navigation',await page.evaluate(()=>window.__card._mode),'plan');
- // A wide window with Properties leaves a narrower head; the popup must
- // stays reachable above Properties while using the whole House Plan field (#1371).
+ // #1371 retains ordinary rows beside Properties at this width; do not
+ // invent a viewport threshold to force the menu back into that state.
  await size(1024);
- check('properties-case-is-compact',(await read()).phase,5);
+ const propertiesHeader=await read();
+ check('properties-case-keeps-ordinary-header',propertiesHeader.phase<5&&propertiesHeader.rows<=2);
  check('properties-case-has-real-panel',await card.locator('[data-hp="properties-panel"]').isVisible());
- await trigger.click();await menu.waitFor();
- check('popup-stays-inside-houseplan-field',await menu.evaluate(e=>{
-  const h=window.__card.getBoundingClientRect(),r=e.getBoundingClientRect();
-  return r.left>=h.left&&r.right<=h.right;
- }));
- await menu.locator('[data-action="mode-view"]').click({timeout:5000});await settle();
+ const propertiesClose=await headerActionTarget(card,'mode-view');
+ await propertiesClose.click({timeout:5000});await settle();
  check('properties-cannot-intercept-close',await page.evaluate(()=>window.__card._mode),'view');
- await clickHeaderAction(card,'mode-decor');await settle();
+ await size(320);await trigger.click();await menu.waitFor();
+ check('popup-stays-inside-houseplan-field',await menu.evaluate(e=>{
+  const h=window.__card.getBoundingClientRect(),r=e.getBoundingClientRect(),head=window.__card.renderRoot.querySelector('.head').getBoundingClientRect();
+  return Math.abs(r.left-h.left)<.5&&Math.abs(r.right-h.right)<.5&&Math.abs(r.top-head.bottom)<.5;
+ }));
+ await menu.locator('[data-action="mode-decor"]').click();await settle();
  await page.evaluate(()=>window.__hpTest.setTool('line'));await settle();
  const drawing=await card.locator('.plan-svg').boundingBox();
  await page.mouse.click(drawing.x+drawing.width*.3,drawing.y+drawing.height*.65);
@@ -107,7 +109,7 @@ try {
   await page.evaluate(async language=>{window.__card.setConfig({...window.__card._config,language});await window.__hpTest.setServerConfig(cfg=>{
    cfg.spaces[0].title='A very long ground floor space name '.repeat(5);cfg.spaces[1].title='Second floor';
   });},language);await settle();
-  for(const width of [480,390,320,180]){await size(width);const row=await read();check(language+'-'+width+'-one-row',row.rows===1&&row.scroll<=row.width+1&&row.spaceBeside);}
+  for(const width of [480,390,320,180]){await size(width);const row=await read();check(language+'-'+width+'-bounded-rows',row.scroll<=row.width+1&&(row.phase===5?row.rows===1&&row.spaceBeside:row.rows<=2));}
  }
  await size(320);
  const originalSpace=await page.evaluate(()=>window.__card._space);

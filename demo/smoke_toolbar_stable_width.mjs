@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { launch, finish } from './serve.mjs';
 import { headerActionTarget, clickHeaderAction } from './helpers/header-actions.mjs';
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 import { GOLDEN_SCENARIOS } from './golden/matrix.mjs';
 import { prepareGoldenScenario } from './golden/harness.mjs';
 const {page,browser}=await launch({width:1800,height:900});
@@ -24,7 +25,9 @@ try{
       await add.focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');
       const focusState=await add.evaluate(e=>({visible:e.matches(':focus-visible'),outlineWidth:getComputedStyle(e).outlineWidth,
         outlineStyle:getComputedStyle(e).outlineStyle,active:e.getRootNode().activeElement?.getAttribute('data-hp')}));
-      assert.ok(focusState.visible&&focusState.outlineWidth==='2px'&&focusState.outlineStyle==='solid',JSON.stringify({lang,width,menuPhase,focusState}));
+      assert.ok(focusState.visible,JSON.stringify({lang,width,menuPhase,focusState}));
+      if(menuPhase)assert.equal(focusState.outlineStyle,'none','closed actions trigger must not retain an active focus frame');
+      else assert.ok(focusState.outlineWidth==='2px'&&focusState.outlineStyle==='solid',JSON.stringify({lang,width,menuPhase,focusState}));
       let previous=null;
       for(const mode of modes){
         const tab=card.locator(`[data-hp="mode-tab"][data-mode="${mode}"]`);
@@ -32,6 +35,7 @@ try{
         assert.equal(await tab.getAttribute('data-hp-tooltip'),words[lang][`mode.${mode}_tip`]);
         await clickHeaderAction(card,'mode-'+mode);await settle();
         await headerActionTarget(card,'mode-view');
+        await waitForUiKitPaint(page);
         const state=await card.evaluate(c=>{
           const root=c.shadowRoot,head=root.querySelector('.head'),group=head.querySelector('.modes');
           const slot=group.querySelector('.editor-close-slot'),active=group.querySelector('.modetab.active');
@@ -53,7 +57,9 @@ try{
         previous=state;
         if(state.actionsOnly){await page.keyboard.press('Escape');await card.locator('[data-hp="header-actions-menu"]:not([inert])').waitFor({state:'hidden'});}
       }
-      const box=await (await headerActionTarget(card,'mode-view')).boundingBox();
+      const closeAction=await headerActionTarget(card,'mode-view');
+      await waitForUiKitPaint(page);
+      const box=await closeAction.boundingBox();
       await page.mouse.click(box.x+5,box.y+box.height/2);await settle();
       assert.equal(await card.locator('ha-card').getAttribute('data-hp-mode'),'view');
       assert.equal(await card.locator('.head [data-hp="editor-close"]').count(),0);

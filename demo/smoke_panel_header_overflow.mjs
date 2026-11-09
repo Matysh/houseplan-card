@@ -107,7 +107,7 @@ try {
       const row=await page.evaluate(async width=>{
         document.getElementById('host').style.width=width+'px';return await window.__overflowSettle();
       },width);
-      if(row.phase===5) break;
+      if(row.phase>=4) break;
       last={width,...row};
     }
     evidence.lastSingleRow=last;
@@ -119,7 +119,7 @@ try {
   const items=await page.locator('houseplan-panel houseplan-card .head button').evaluateAll(nodes=>
     nodes.filter(e=>e.getBoundingClientRect().width>0).map(e=>({id:e.dataset.hp,width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height})));
   evidence.phoneItems=items;
-  check('phoneUsesOneActionsTrigger',items.filter(i=>i.id!=='select-trigger').length===1&&items.some(i=>i.id==='header-actions-trigger'));
+  check('phoneKeepsSeparateHaAndActionsTriggers',items.filter(i=>i.id!=='select-trigger').length===2&&items.some(i=>i.id==='panel-menu')&&items.some(i=>i.id==='header-actions-trigger'));
   check('phoneMenuTargets44',items.every(item=>item.width>=44&&item.height>=44));
   const card=page.locator('houseplan-panel houseplan-card');
   // Every editor remains reachable through the visible 44px menu route.

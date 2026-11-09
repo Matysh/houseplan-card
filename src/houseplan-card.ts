@@ -1167,7 +1167,7 @@ export class HouseplanCard extends LitElement {
         } else if (kind === 'mode-tab' && mode) {
           target = visible('[data-hp="mode-tab"][data-mode="' + mode + '"]');
         } else if (kind?.startsWith('zoom-')) target = visible('[data-hp="rotate-right"]');
-        (target || visible('button'))?.focus();
+        (target || visible('[data-hp="header-actions-trigger"]') || visible('button'))?.focus();
       });
     });
   }

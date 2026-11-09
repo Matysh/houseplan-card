@@ -32,7 +32,7 @@ test('#1120 the full-height shell delegates the accessible HA menu to every ordi
   for (const property of ['width', 'height', 'min-width', 'min-height'])
     assert.ok(action.declarations.includes(`${property}:44px`));
   assert.match(iconActionStyles.cssText, /button\.hpf-icon-action:focus-visible/);
-  assert.match(card, /private _renderPanelMenu\(\)[^{]*\{\s*if \(!this.panelHost\) return nothing;\s*return renderPanelMenu\(panelMenuState\(this.hass, !!this.narrow, this._kiosk,/);
+  assert.match(card, /private _renderPanelMenu\(\)[^{]*\{\s*if \(!this.panelHost\) return nothing;\s*return renderPanelMenu\(\{ \.\.\.panelMenuState\(this.hass, !!this.narrow, this._kiosk,/);
   assert.match(card, /private _renderEmptyPanelHeader\(\)[^{]*\{\s*if \(!this.panelHost \|\| this._kiosk\) return nothing;[\s\S]*?if \(!menu.visible\) return nothing;/);
   assert.equal((card.match(/\$\{this\.panelHost \? this\._renderEmptyPanelHeader\(\) :/g) || []).length, 3,
     'pending, invalid and read-only empty branches retain the ordinary HA exit');
