@@ -11,6 +11,7 @@ import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {configDifference} from './ci-flake-evidence.mjs';
 import {waitForUiKitPaint} from './ui-kit-paint.mjs';
+import {clickHeaderAction} from './header-actions.mjs';
 
 // Keep every interaction/viewport/theme assertion in one shared implementation.
 export async function runSettingsPolish955(defaultCases, finish) {
@@ -59,7 +60,7 @@ try{
   await page.setViewportSize({width:1280,height:900});
   await page.evaluate(async device=>{await window.__hpTest.switchSpace(device?'floor01':'f1');await window.__hpTest.setMode(device?'devices':'plan');},!!device);
   if(device)await openSettingsDeviceDialog(page,device);
-  else if(kind==='settings')await page.locator('houseplan-card [data-hp=settings]').filter({visible:true}).first().click();
+  else if(kind==='settings')await clickHeaderAction(page.locator('houseplan-card').first(),'settings');
   else if(kind==='space')await page.evaluate(()=>window.__hpTest.openSpaceDialog('edit','f1').then(()=>null));
   else await page.evaluate(()=>window.__hpTest.openRoomEdit('r1').then(()=>null));
   const d=page.locator(`houseplan-card hp-dialog[data-kind="${kind}"]`);await d.waitFor();await settled();

@@ -1,6 +1,7 @@
 import { nothing, type TemplateResult } from 'lit';
 import { EditorContextMenu, type EditorMenuModel } from './editor-context-menu';
 import { adoptEditorContextMenuStyles } from './editor-context-menu-adoption';
+import { floatingViewport } from './floating-surface';
 
 /** The original controls remain the command owners, including dirty-navigation
  * guards and HA event dispatch. The sheet only presents their current snapshot. */
@@ -23,6 +24,12 @@ export class HeaderActionsMenu {
     const snapshot = commands.map(button => [button, state(button)] as const);
     this.model = { token: {}, hp: 'header-actions-menu', label, density: 'touch',
       anchor: () => trigger.getBoundingClientRect(), minWidth: trigger.getBoundingClientRect().width,
+      viewport: () => {
+        const viewport = floatingViewport(window), bounds = head.getBoundingClientRect();
+        const left = Math.max(viewport.left, bounds.left);
+        const right = Math.min(viewport.left + viewport.width, bounds.right);
+        return { ...viewport, left, width: Math.max(0, right - left) };
+      },
       trigger, returnFocus: trigger, current: () => current() && snapshot.every(([button,accepted]) => button.isConnected && state(button) === accepted),
       close: () => this.close(),
       items: commands.map((button,index) => ({ key: String(index), action: button.dataset.editorNavigation

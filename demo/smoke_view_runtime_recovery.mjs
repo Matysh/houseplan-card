@@ -1,5 +1,6 @@
 // #848: real module-map failures on the production graph; no runtime-field seeding.
 import { readFileSync, mkdirSync } from 'node:fs';
+import { headerActionTarget } from './helpers/header-actions.mjs';
 import { launchColdView, launchPanelCold, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
 requirePinnedBrowser('848 optional View recovery');
@@ -22,8 +23,9 @@ mkdirSync('artifacts/view-runtime', { recursive: true });
 async function start(kind, { language = 'en', width = 1280, hidden = false, dependency = false, terminal = false, otherKinds = [] } = {}) {
   const { page, browser } = await launchColdView({ width: 1280, height: 900 }, 1, [], { hasTouch: true });
   // A genuine saved local preference from the preceding healthy document.
-  await page.locator('houseplan-card .summary-control button[aria-pressed]').waitFor();
-  if (kind === 'summary' && !hidden) await page.locator('houseplan-card .summary-control button[aria-pressed]').click();
+  const summaryAction = await headerActionTarget(page.locator('houseplan-card'), 'summary-toggle');
+  if (kind === 'summary' && !hidden) await summaryAction.click();
+  else if (await page.locator('houseplan-card [data-hp="header-actions-menu"]').count()) await page.keyboard.press('Escape');
   const preference = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage)
     .filter(key => key.startsWith('houseplan.summary-panel.v1:')).map(key => [key, localStorage.getItem(key)])));
   if (kind === 'summary' && !hidden && Object.keys(preference).length !== 1) throw Error('summary fixture did not persist exactly its real local preference');

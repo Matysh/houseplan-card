@@ -1,5 +1,6 @@
 // #1147: read real painted animation frames; no suppression or API patching.
 import assert from 'node:assert/strict';
+import { clickHeaderAction } from './helpers/header-actions.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { launchHaDialogFixture, applyHaDialogTypography } from './helpers/ha-dialog-fixture.mjs';
@@ -45,8 +46,7 @@ try {
     await assertFreshDemoBundle(page, fileURLToPath(new URL('..', import.meta.url)));
     await page.evaluate(ensureHarnessEditorRuntime); await installHpTestOnPage(page);
     const open = async () => {
-      const settings = page.locator('houseplan-card [data-hp="settings"]');
-      await settings.click();
+      await clickHeaderAction(page.locator('houseplan-card'), 'settings');
     };
     for (const reduced of [false, true]) {
       await page.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' });

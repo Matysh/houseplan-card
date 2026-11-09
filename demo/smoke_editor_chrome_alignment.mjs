@@ -1,5 +1,7 @@
 // #1352: shared header close geometry and equal single-row editor chrome.
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
+import { clickHeaderAction, headerActionTarget } from './helpers/header-actions.mjs';
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 
 requirePinnedBrowser('#1352 editor chrome alignment');
 const { page, browser } = await launch({ width: 1920, height: 900 });
@@ -34,13 +36,14 @@ try {
     };
     const header = root.querySelector('.hdr > .head');
     const close = header.querySelector('.closex');
-    const path = close.querySelector('ha-icon').shadowRoot.querySelector('path');
-    const paint = path.getBBox();
-    const centre = new DOMPoint(paint.x + paint.width / 2, paint.y + paint.height / 2).matrixTransform(path.getScreenCTM());
+    const visible = close.getClientRects().length > 0;
+    const path = visible ? close.querySelector('ha-icon').shadowRoot.querySelector('path') : null;
+    const paint = path?.getBBox();
+    const centre = paint ? new DOMPoint(paint.x + paint.width / 2, paint.y + paint.height / 2).matrixTransform(path.getScreenCTM()) : null;
     const bar = root.querySelector('.editbar');
     const color = bar.querySelector('hp-color-opacity');
-    return { close: box(close), glyphCentre: centre.y, tab: box(header.querySelector('.modetab.active')),
-      slot: box(header.querySelector('.editor-close-slot')), bar: box(bar),
+    return { close: visible ? box(close) : null, glyphCentre: centre?.y, tab: visible ? box(header.querySelector('.modetab.active')) : null,
+      slot: visible ? box(header.querySelector('.editor-close-slot')) : null, bar: box(bar),
       controls: [...bar.querySelectorAll('.editbar-tools > button,.editbar-end > button')].map(box),
       color: color ? box(color.shadowRoot.querySelector('.trigger')) : null };
   });
@@ -50,20 +53,36 @@ try {
     await settled();
     const bars = [];
     for (const mode of ['plan', 'devices', 'decor']) {
-      await card.locator(`.head [data-mode="${mode}"]`).click();
+      await clickHeaderAction(card, 'mode-' + mode);
       await settled();
-      const close = card.locator('.head [data-hp="editor-close"]');
       const aligned = value => Math.abs(value.close.y - value.tab.y) < .5
         && Math.abs(value.close.height - value.tab.height) < .5
         && value.close.width >= 44 && value.close.height >= 44
         && Math.abs(value.close.y - value.slot.y) < .5
         && Math.abs(value.glyphCentre - value.tab.y - value.tab.height / 2) < .5;
       const idle = await geometry();
-      check(`${width}-${mode}-header-close-aligned`, aligned(idle));
-      await close.hover();
-      check(`${width}-${mode}-header-close-hover-aligned`, aligned(await geometry()));
-      await close.focus();
-      check(`${width}-${mode}-header-close-focus-aligned`, aligned(await geometry()));
+      if (width >= 1000) {
+        const close = card.locator('.head [data-hp="editor-close"]');
+        check(`${width}-${mode}-header-close-aligned`, idle.close !== null && aligned(idle));
+        await close.hover();
+        check(`${width}-${mode}-header-close-hover-aligned`, aligned(await geometry()));
+        await close.focus();
+        check(`${width}-${mode}-header-close-focus-aligned`, aligned(await geometry()));
+      } else {
+        check(`${width}-${mode}-compact-hides-source-close`, idle.close === null);
+        const close = await headerActionTarget(card, 'mode-view');
+        await waitForUiKitPaint(page);
+        const initial = await close.boundingBox();
+        const unchanged = async () => {
+          const next = await close.boundingBox();
+          return initial && next && ['x','y','width','height'].every(key => Math.abs(initial[key]-next[key]) < .5);
+        };
+        check(`${width}-${mode}-compact-close-target`, initial?.height >= 44 && initial?.width >= 44);
+        await close.hover(); check(`${width}-${mode}-compact-close-hover-aligned`, await unchanged());
+        await close.focus(); check(`${width}-${mode}-compact-close-focus-aligned`, await unchanged());
+        check(`${width}-${mode}-compact-current-editor`, await card.locator(`[data-hp="header-actions-menu"] [data-action="mode-${mode}"]`).getAttribute('aria-current'), 'true');
+        await page.keyboard.press('Escape');
+      }
       check(`${width}-${mode}-tools-not-clipped`, idle.controls.every(control => control.width > 0
         && control.y >= idle.bar.y && control.bottom <= idle.bar.bottom));
       if (mode === 'decor') {
@@ -83,7 +102,7 @@ try {
   await picker.locator('[data-action="colour-confirm"]').click();
   check('compact-picker-keeps-colour-and-opacity', await page.evaluate(() =>
     window.__card._decorStyle.color.toLowerCase() === '#13579b' && window.__card._decorStyle.opacity === .65));
-  await card.locator('.head [data-hp="editor-close"]').click();
+  await clickHeaderAction(card, 'mode-view');
   await settled();
   check('header-close-returns-to-view', await page.evaluate(() => window.__card._mode === 'view'
     && !window.__card.renderRoot.querySelector('.head .closex')));

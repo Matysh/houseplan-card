@@ -116,7 +116,8 @@ export function installHpTest(selectors) {
     if (!deepAll(root, sel('headerActionsMenu')).some(menu=>!menu.inert)) {
       trigger.click(); await settled();
     }
-    return findAction(c, 'headerAction', {action});
+    return waitFor('headerAction', () => findAction(c, 'headerAction', {action}),
+      () => `меню не отрисовало разрешённую команду ${action}`);
   };
   const mode = (c) => rootOf(c)?.querySelector(selectors.modeRoot)?.getAttribute('data-hp-mode') || '?';
   const missing = (op, c, name, params) => new Error(

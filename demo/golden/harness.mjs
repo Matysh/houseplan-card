@@ -1032,7 +1032,7 @@ export function prepareGoldenFixture(scenario) {
 }
 
 /** Only the three existing Plan frames own this keyboard-state contract.
- * Shared-page UA focus history must not choose whether their mode tab has a ring.
+ * Shared-page UA focus history must not choose the visible header focus ring.
  * Keep the full scene/persistence oracle; a live Resize preview is intentional.
  */
 async function preparePlanKeyboardCapture(page, scenario) {
@@ -1040,13 +1040,16 @@ async function preparePlanKeyboardCapture(page, scenario) {
     undefined, { timeout: 9000 });
   const guard = await page.evaluateHandle(({ space, tool }) => {
     const card = window.__goldenCard, root = card.renderRoot;
-    const tab = root.querySelector('[data-hp="mode-tab"][data-mode="plan"].active');
+    const activePlan = root.querySelector('[data-hp="mode-tab"][data-mode="plan"].active');
+    const collapsed = root.querySelector('.hdr')?.getAttribute('data-panel-flow') === '5';
+    const tab = collapsed ? root.querySelector('[data-hp="header-actions-trigger"]') : activePlan;
     const deepActive = () => {
       let node = document.activeElement;
       while (node?.shadowRoot?.activeElement) node = node.shadowRoot.activeElement;
       return node;
     };
-    if (!tab || deepActive() !== tab || card._mode !== 'plan' || card._space !== space || card._tool !== tool)
+    if (!activePlan || !tab || !tab.getClientRects().length
+        || card._mode !== 'plan' || card._space !== space || card._tool !== tool)
       throw Error('golden Plan keyboard precondition lacks the current active Plan tab/mode/space/tool');
     if (tool === 'resize' && !card._resize?.preview)
       throw Error('golden Plan keyboard precondition lost the intended live Resize preview');
@@ -1060,6 +1063,7 @@ async function preparePlanKeyboardCapture(page, scenario) {
       const rect = stage.getBoundingClientRect();
       return { config: JSON.stringify(card._serverCfg), layout: JSON.stringify(card._layout),
         cfgRev: card._cfgRev, layoutRev: card._layoutRev, mode: card._mode, space: card._space, tool: card._tool,
+        activePlan: activePlan.isConnected && activePlan.classList.contains('active'),
         stageRect: [rect.x, rect.y, rect.width, rect.height],
         geometry: [stage, ...stage.querySelectorAll('svg,g,path,polygon,polyline,line,rect,circle,ellipse,image,text')]
           .map(node => ({ tag: node.tagName, id: node.getAttribute('data-id'), attrs: Object.fromEntries(
@@ -1070,6 +1074,11 @@ async function preparePlanKeyboardCapture(page, scenario) {
     };
     const events = [], listener = event => { if (event.key === 'Tab') events.push(event); };
     const baseline = JSON.stringify(read()), writeChain = card._writeChain, resize = card._resize;
+    // Menu invocation may remove the focused menuitem. Normalize only the
+    // starting focus; the ordinary trusted Tab roundtrip and unchanged state
+    // below still decide the captured ring and protect the entire live preview.
+    tab.focus({ preventScroll: true });
+    if (deepActive() !== tab) throw Error('golden Plan keyboard owner could not receive focus');
     document.addEventListener('keydown', listener, true);
     return { card, tab, root, deepActive, read, baseline, writeChain, resize, events, listener };
   }, { space: scenario.space, tool: scenario.safeResizePreview ? 'resize' : 'select' });

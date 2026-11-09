@@ -1054,7 +1054,10 @@ export class HouseplanCard extends LitElement {
         this._headerActionsLoad = null; throw error;
       }));
       if (!current()) return;
-      this._headerActionsMenu ??= new module.HeaderActionsMenu(this);
+      this._headerActionsMenu ??= new module.HeaderActionsMenu({
+        renderRoot: this.renderRoot,
+        requestUpdate: () => this.requestUpdate('_headerActionsMenu', null),
+      });
       this._headerActionsMenu.show(head, trigger, this._t('panel.actions'), current);
     } catch (error) { console.warn('[houseplan] header actions menu unavailable', error); }
   }
@@ -12607,7 +12610,6 @@ export class HouseplanCard extends LitElement {
           ${!this._kiosk ? this._summary?.renderControls() : nothing}
           </div>
         </div>
-        ${this._headerActionsMenu?.render() ?? nothing}
         ${this._canEdit && !this._kiosk
           ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"
               style=${modeVisual ? `height:${modeVisual.editorChromeHeight}px;opacity:${modeVisual.editorWeight}` : nothing}
@@ -12839,6 +12841,7 @@ export class HouseplanCard extends LitElement {
             : nothing}
         </div>
 
+        ${this._headerActionsMenu?.render() ?? nothing}
         ${this._editorRuntime?.properties.render()}
         ${dialogPresence(this._editorRuntime?.deviceCopy.render())}
         ${this._editorRuntime?.decorOrder.render()}

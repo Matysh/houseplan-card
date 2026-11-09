@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchColdView, check, finish, requirePinnedBrowser } from './serve.mjs';
+import { clickHeaderAction } from './helpers/header-actions.mjs';
 requirePinnedBrowser('#1364 intrinsic single-row actions menu');
 const {page,browser}=await launchColdView({width:1800,height:1000},1,[],{hasTouch:true});
 const out='artifacts/header-actions-1364';mkdirSync(out,{recursive:true});
@@ -43,6 +44,15 @@ try {
  check('no-overflow',widths.every(r=>r.scroll<=r.width+1&&r.metrics===0));
  check('44px-square-target',narrow.every(r=>r.buttons[0].w===44&&r.buttons[0].h===44));
  await size(320);check('unpinned-card-keeps-picker',(await read()).picker);
+ let deferredMenus=0;
+ await page.route(/\/header-actions-menu-[^/?]+\.js(?:\?.*)?$/,async route=>{
+  deferredMenus++;await new Promise(resolve=>setTimeout(resolve,120));await route.fallback();
+ });
+ await page.evaluate(()=>window.__hpTest.setMode('plan'));await settle();
+ check('facade-waits-for-lazy-header-command',await page.evaluate(()=>window.__card._mode),'plan');
+ check('facade-case-really-deferred-menu',deferredMenus,1);
+ await page.evaluate(()=>window.__hpTest.setMode('view'));await settle();
+ await page.unroute(/\/header-actions-menu-[^/?]+\.js(?:\?.*)?$/);
  await trigger.click();await menu.waitFor();
  const items=await menu.locator('button').evaluateAll(bs=>bs.map(b=>({action:b.dataset.action,label:b.textContent.trim(),height:b.getBoundingClientRect().height})));
  check('all-owned-commands', ['space-settings','space-add','mode-plan','mode-devices','mode-decor','rotate-left','rotate-right','zoom-in','zoom-out','zoom-fit','hidden-devices','settings','pdf','support','summary-settings','summary-toggle'].every(id=>items.some(i=>i.action===id)));
@@ -64,6 +74,31 @@ try {
  await page.mouse.click(1700,950);await menu.waitFor({state:'hidden'});check('outside-closes',await menu.count(),0);
  await trigger.click();await menu.locator('[data-action="mode-plan"]').click();await settle();
  check('editor-navigation',await page.evaluate(()=>window.__card._mode),'plan');
+ // A wide window with Properties leaves a narrower head; the popup must
+ // remain reachable inside that head instead of falling under Properties.
+ await size(1024);
+ check('properties-case-is-compact',(await read()).phase,5);
+ check('properties-case-has-real-panel',await card.locator('[data-hp="properties-panel"]').isVisible());
+ await trigger.click();await menu.waitFor();
+ check('popup-stays-inside-head',await menu.evaluate(e=>{
+  const h=window.__card.renderRoot.querySelector('.hdr>.head').getBoundingClientRect(),r=e.getBoundingClientRect();
+  return r.left>=h.left&&r.right<=h.right;
+ }));
+ await menu.locator('[data-action="mode-view"]').click({timeout:5000});await settle();
+ check('properties-cannot-intercept-close',await page.evaluate(()=>window.__card._mode),'view');
+ await clickHeaderAction(card,'mode-decor');await settle();
+ await page.evaluate(()=>window.__hpTest.setTool('line'));await settle();
+ const drawing=await card.locator('.plan-svg').boundingBox();
+ await page.mouse.click(drawing.x+drawing.width*.3,drawing.y+drawing.height*.65);
+ await page.mouse.click(drawing.x+drawing.width*.45,drawing.y+drawing.height*.65);
+ await page.evaluate(()=>window.__hpTest.waitForWrites());
+ const pendingLine=await page.evaluate(()=>JSON.stringify(window.__card._editorRuntime?.decorLine.snapshot));
+ check('background-line-is-still-active',pendingLine!==undefined&&pendingLine!=='null');
+ await trigger.click();await menu.waitFor({timeout:5000});
+ check('opening-menu-keeps-live-line',await page.evaluate(()=>JSON.stringify(window.__card._editorRuntime?.decorLine.snapshot)),pendingLine);
+ await menu.locator('[data-action="mode-plan"]').click();await settle();
+ check('live-drawing-cannot-swallow-menu-command',await page.evaluate(()=>window.__card._mode),'plan');
+ await size(320);
  await trigger.click();await menu.locator('[data-action="mode-view"]').click();await settle();
  check('editor-close',await page.evaluate(()=>window.__card._mode),'view');
  for(const language of ['en','ru','de','fr']){
@@ -106,6 +141,12 @@ try {
  check('readonly-omits-edit-commands',await menu.locator('[data-action="mode-plan"],[data-action="settings"],[data-action="space-add"]').count(),0);
  await page.keyboard.press('Escape');await size(1800);
  check('widening-restores-original-layout',(await read()).phase<5);
+ await size(180);await trigger.click();await menu.waitFor();
+ check('kiosk-hides-detached-header-menu',await page.evaluate(async()=>{
+  const c=window.__card;c.setConfig({...c._config,kiosk:true,cycle:0});await c.updateComplete;
+  return getComputedStyle(c.renderRoot.querySelector('.hdr')).display==='none'
+    && [...c.renderRoot.querySelectorAll('[data-hp="header-actions-menu"]')].every(e=>getComputedStyle(e).display==='none');
+ }));
  writeFileSync(out+'/evidence.json',JSON.stringify({widths,items},null,2));
  await finish(browser,{widths:widths.map(r=>({width:r.width,phase:r.phase})),items:items.map(i=>i.action)});
 } catch(error){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});await browser.close();throw error;}
