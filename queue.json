@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8405,
+  "revision": 8406,
   "nextTicket": 345,
   "nextFence": 345,
   "tasks": {
@@ -4285,7 +4285,18 @@
         "test/golden-matrix.test.mjs",
         "test/icon-picker.test.mjs",
         "tsconfig.test.json"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794250752519,
+        "entry": 1,
+        "detail": "Поведение: test/i18n-dead-keys.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
+        "eventId": "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:3:return:return:1375"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4474,18 +4485,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1375,
-    "worker": "finish",
-    "token": "344:finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:1:admit",
-    "fence": 344,
-    "materialSha": "d8a2139227a8ab591da54c77dff1d3aff8eb48f8",
-    "expectedBase": "4abd035f177fbbeff8338a82693759563e578b2e",
-    "phase": "testing",
-    "admittedAt": 1794249913885,
-    "expiresAt": 1794250902853,
-    "patchId": "70f97906028df1704db2987948031badd537dafb"
-  },
+  "active": null,
   "events": {
     "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:2:synchronized": {
       "digest": "5b2a362eca7f4a56197d76b32c60fa4e62cff7ace817d79885aca554edc049bf",
@@ -4531,6 +4531,10 @@
       "digest": "e760ad709631b62a3b86fe81a1495da94dd90ddccf687dc5a60bf27f16ee58d4",
       "issue": 1375
     },
+    "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:3:return": {
+      "digest": "e4a450518284c07d587dac2a9d1d29b959e7db1eae243c637dd7502da31fe633",
+      "issue": 1375
+    },
     "finish:40930de5-804e-4c02-a634-853dfd0bb1cb": {
       "digest": "6122d5242a190a20426b872df9335fd6b991a913511a7973de9ad7589f4bd2ee",
       "issue": 1375,
@@ -4556,6 +4560,26 @@
         "layer": "product",
         "materialSha": "d8a2139227a8ab591da54c77dff1d3aff8eb48f8",
         "phase": "sync"
+      }
+    },
+    "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:3:return:return:1375": {
+      "digest": "e4a450518284c07d587dac2a9d1d29b959e7db1eae243c637dd7502da31fe633",
+      "issue": 1375,
+      "message": {
+        "kind": "return",
+        "issue": 1375,
+        "at": 1794250752519,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794250752519,
+          "entry": 1,
+          "detail": "Поведение: test/i18n-dead-keys.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
+          "eventId": "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:3:return:return:1375"
+        }
       }
     }
   },
