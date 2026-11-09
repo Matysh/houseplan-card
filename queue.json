@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7820,
+  "revision": 7821,
   "nextTicket": 332,
   "nextFence": 332,
   "tasks": {
@@ -4879,6 +4879,10 @@
       "digest": "81b0c20f61bb8878ca63e1bce6ae7fcfcebfa894de5a7e1446262cfd98e14975",
       "issue": 1365
     },
+    "github:42546476000:1:completions:message:219dbf938dbf3a6c4ae49f00083e481735aad15629075799d01f07ef940d9ea9": {
+      "digest": "2d0f306f9fe6815ba38fcd92dca36c29107cca643440bd8bb7d3b7257619b269",
+      "issue": 1365
+    },
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915": {
       "digest": "e315381794b817f11fc4399d2e54fc289d4e81155a3aa6969408f80cd013240f",
       "issue": 1365,
@@ -5175,7 +5179,8 @@
           "entry": 6,
           "detail": "Браузер: editor chrome alignment: failed",
           "eventId": "finish:251d0319-e581-4cf7-9008-d3bb5b52a178:finish:3:return:return:1365"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:5df79bbd-2fa8-46ae-b6df-28e89d80186f": {
