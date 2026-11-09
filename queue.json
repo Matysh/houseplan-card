@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7817,
+  "revision": 7818,
   "nextTicket": 332,
   "nextFence": 332,
   "tasks": {
@@ -4867,6 +4867,10 @@
       "digest": "b2d025c48796c0cce7ca8fb831e128fa5919d1212cd02520e7cd939f244b3b6c",
       "issue": 1365
     },
+    "github:42546476000:1:completions:message:568d27ee0faf1ad5ff04d4bdfa759786aa32a7b77480263a5f71da2c3f79f449": {
+      "digest": "86d8eef5677ed13f02a1fc826eb95208e3c16396bbb58325546d0157224d8e0a",
+      "issue": 1365
+    },
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915": {
       "digest": "e315381794b817f11fc4399d2e54fc289d4e81155a3aa6969408f80cd013240f",
       "issue": 1365,
@@ -5063,7 +5067,8 @@
           "entry": 4,
           "detail": "Поведение: test/styles-split.test.mjs: failed",
           "eventId": "finish:6a85423f-2533-43d2-83ac-0703576b7e36:finish:3:return:return:1365"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:41e3a906-2477-405b-9cca-682b2dd3a15f": {
