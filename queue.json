@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7737,
+  "revision": 7738,
   "nextTicket": 328,
   "nextFence": 328,
   "tasks": {
@@ -4634,7 +4634,8 @@
           "entry": 2,
           "detail": "Браузер: geometry history refusal: failed; Браузер: plan rotation: failed; Браузер: settings button alignment 955: failed; Браузер: settings polish 955: failed; Браузер: space switch transitions: failed; Браузер: ui kit motion: failed; Браузер: view runtime recovery: failed; Браузер: zigbee enable refresh: failed",
           "eventId": "finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0:finish:3:return:return:1365"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:b9387771-f680-43b9-a931-6e0eccddcc93": {
