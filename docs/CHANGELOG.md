@@ -3,6 +3,8 @@
 ## Unreleased
 
 ## v1.85.1-beta.2 — 2026-11-09
+
+- Keep Device settings navigation in place while the content scrolls, with independently reachable sections on short windows and a compact visible divider after Details (#1354).
 - Keep the narrow header actions popup inside its allocated field and mount it during active drawing; retain native keyboard focus capture and wait for lazy commands in browser fixtures (#1365).
 
 - Accept the 58 owner-reviewed stable-audit frames; calibrate equivalent-grid AA to 300 pixels only in 2.5D, with a real one-pixel scene-shift witness in both themes (#1363).
@@ -21,7 +23,6 @@
 - Keep settings dropdowns open after a queued scroll that revealed their trigger; actual anchor movement still dismisses the menu (#1356).
 
 ## v1.85.1-beta.1 — 2026-11-08
-- Keep Device settings navigation in place while the content scrolls, with independently reachable sections on short windows and a compact visible divider after Details (#1354).
 
 - Accept the four owner-approved narrow-header baselines for #1347, preserving global provenance and every other baseline (#1353).
 
