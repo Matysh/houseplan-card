@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8007,
+  "revision": 8008,
   "nextTicket": 338,
   "nextFence": 338,
   "tasks": {
@@ -4218,6 +4218,15 @@
         "entry": 2,
         "detail": "Браузер: wall face lineage: failed",
         "eventId": "release-1851-beta2-return-correction-2:finish:3:return:return:1366"
+      },
+      "s6": {
+        "id": "20261109T030128110-ce5e0ac8",
+        "name": "Тесты для задачи #1366 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261109T030128110-ce5e0ac8/report.json",
+        "materialSha": "5f690dbdf8064bbdc159388c963423590317163f",
+        "status": "passed",
+        "finishedAt": "2026-11-09T03:08:07.061Z",
+        "failures": []
       }
     },
     "1367": {
@@ -4486,9 +4495,9 @@
     "fence": 337,
     "materialSha": "5f690dbdf8064bbdc159388c963423590317163f",
     "expectedBase": "5d522469dd04bb0630f3a890652e32e94fe02c2e",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794193272371,
-    "expiresAt": 1794193932515,
+    "expiresAt": 1794197288565,
     "patchId": "235b3b32f4aa5da5b8f667d850b129ed27ff7d22"
   },
   "events": {
@@ -4622,6 +4631,10 @@
     },
     "finish:e7467608-560a-4e21-ba36-43cd2b200dd3": {
       "digest": "e940f04b08a4006c0983ee121b05a3096acf5185785a107b022ff3a6976a3f4a",
+      "issue": 1366
+    },
+    "release-1851-beta2-return-correction-3:finish:3:s6-complete": {
+      "digest": "f94f560f7c4f938308c5bf8f172eda23aebd4b62512c6d1b0f264c71b1437c2f",
       "issue": 1366
     },
     "release-return:fed8a071-c709-4789-964a-27e474e10c6a": {
