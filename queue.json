@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7699,
-  "nextTicket": 326,
+  "revision": 7700,
+  "nextTicket": 327,
   "nextFence": 326,
   "tasks": {
     "1193": {
@@ -4158,14 +4158,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1365-header-menu-bounds",
-      "materialSha": "300d5338f736f5437bc8756e67b69c9871738597",
+      "materialSha": "89d8a177c8f635fbc8cbc1853cc8193ce2c91d71",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 325,
-      "queued": false,
+      "ticket": 326,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794181804763,
-      "reviewEntry": 1,
+      "readyAt": 1794182570089,
+      "reviewEntry": 2,
       "patchId": "d5f6e59e64f87dcffb5dc846de64c192541e9042",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -4176,7 +4176,6 @@
         "docs/release-ledger/v1.85.0/1365.json",
         "src/header-actions-menu.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4374,7 +4373,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1365
+  ],
   "active": null,
   "events": {
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:2:synchronized": {
@@ -4464,6 +4465,19 @@
           "detail": "Браузер: device contact editor frame: failed; Браузер: geometry history refusal: failed; Браузер: space switch transitions: failed",
           "eventId": "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:3:return:return:1365"
         }
+      }
+    },
+    "finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0": {
+      "digest": "883612438db2c8480da9382a5dc555013afc6aa5b32737dd56cc5a284771864e",
+      "issue": 1365,
+      "message": {
+        "kind": "queued",
+        "issue": 1365,
+        "at": 1794182570089,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "89d8a177c8f635fbc8cbc1853cc8193ce2c91d71"
       }
     }
   },
