@@ -12,7 +12,7 @@ import { markerDirty, markerProblems, restoreMarkerRadarRemoval } from './marker
 import { settingsCopy } from './settings-copy';
 import { renderMarkerStateSource } from './marker-state-source';
 import { renderMarkerMoreInfo } from './marker-more-info';
-import { iconPickerKit } from './ha-icon-picker-kit';
+import './hp-icon-picker';
 import { moreInfoDraftInvalid } from '../marker-more-info-fields';
 
 import { resolveDevicePresentation } from '../device-presentation';
@@ -603,24 +603,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     });
 
     // --------------------------------------------------------- Appearance
-    const iconControl = customElements.get('ha-icon-picker')
-      // Feed the effective icon to HA's picker so its field renders both
-      // the glyph and the mdi:* label. autoIcon is presentation-only:
-      // untouched dialogs still save d.icon as an empty auto override.
-      ? html`<ha-icon-picker ${iconPickerKit(st('marker.icon_search'))} data-hp="field" data-field="marker-icon" id="marker-icon" .hass=${this.host.hass} .value=${d.icon || d.autoIcon}
-          .placeholder=${d.autoIcon || 'mdi:shape-outline'}
-          .fallbackPath=${undefined}
-          @value-changed=${(e: CustomEvent<{ value?: string }>) => {
-            const icon = e.detail.value || '';
-            // Some picker versions announce an assigned value. Do not
-            // let that turn the display-only auto icon into an override.
-            if (!d.icon && icon === d.autoIcon) return;
-            this.host._markerDialog = { ...d, icon };
-          }}></ha-icon-picker>`
-      : html`<input data-hp="field" data-field="marker-icon" id="marker-icon" class="hpf-input" type="text"
-          placeholder=${d.autoIcon || t('marker.icon_ph')}
-          .value=${d.icon}
-          @input=${(e: Event) => (this.host._markerDialog = { ...d, icon: (e.target as HTMLInputElement).value })} />`;
+    const iconControl = html`<hp-icon-picker data-hp="field" data-field="marker-icon" id="marker-icon"
+      .value=${d.icon} .autoIcon=${d.autoIcon} .label=${t('marker.icon_label')}
+      .labels=${{ search:st('marker.icon_search'), clear:st('marker.icon_clear'), use:st('marker.icon_use'),
+        loading:st('marker.icon_loading'), error:st('marker.icon_load_error'), retry:st('marker.icon_retry'), refine:st('marker.icon_refine') }}
+      @value-changed=${(e:CustomEvent<{value:string}>) => {this.host._markerDialog={...d,icon:e.detail.value};}}></hp-icon-picker>`;
     const badgeToggleDisabled = displayIsNeutral(d.display) || (!badgeCandidates.length && !d.valueBadgeSource);
     const appearance = formCard({
       id: 'appearance',
@@ -628,13 +615,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       body: formSections([
           field({
           label: t('marker.icon_label'), htmlFor: 'marker-icon', help: shelp('marker.icon.help'),
-          control: html`<div class="hpf-iconfield">
-            <div class="hpf-iconfield-control">
-              ${customElements.get('ha-icon-picker') ? nothing : html`
-                <span class="hpf-iconpreview" aria-hidden="true"><ha-icon icon=${d.icon || d.autoIcon || 'mdi:shape-outline'}></ha-icon></span>`}
-              ${iconControl}
-            </div>
-          </div>`,
+          control: iconControl,
         }),
           this.host._ledSection(d.devId),
           field({

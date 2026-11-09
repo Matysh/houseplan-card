@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1375,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Owner approved replacing the fragile HA icon-picker adapter with a local UI Kit picker in the 1.85.1 fix line.",
+  "summary": {
+    "ru": "Собственный MDI picker в настройках устройства и видимый golden-эталон.",
+    "en": "Own device MDI picker with a visible golden regression scene."
+  }
+}

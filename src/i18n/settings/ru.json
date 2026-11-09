@@ -1,6 +1,12 @@
 {
   "room.area_available_hint": "Отображаются только те комнаты, которые еще не привязаны в Houseplan.",
   "marker.icon_search": "Поиск",
+  "marker.icon_clear": "Сбросить выбранную иконку",
+  "marker.icon_use": "Использовать",
+  "marker.icon_loading": "Загрузка иконок…",
+  "marker.icon_load_error": "Не удалось загрузить иконки. Можно ввести имя вручную.",
+  "marker.icon_retry": "Повторить",
+  "marker.icon_refine": "Уточните поиск, чтобы найти нужную иконку.",
   "marker.more_info_search": "Поиск по имени или entity_id…",
   "marker.more_info_entity": "Открывать в Home Assistant",
   "marker.more_info_auto": "Авто",

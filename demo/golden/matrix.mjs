@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 110;
+export const GOLDEN_MATRIX_VERSION = 111;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1361,6 +1361,9 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     deviceName: 'Living room light controller with an intentionally long title',
     openHelp: 'marker.glow_mode.help', helpTextRegion: { key: 'marker.glow_mode.help', minPixels: 30 },
     focusDialogClose: true, language: 'en', theme: 'dark', viewport: { width: 1180, height: 1200 }, ...page },
+  { id: 'panel-device-icon-picker-dark-1375', fixture: 'visual', space: 'golden-lighting',
+    panelHost: true, dialog: 'device', deviceId: 'golden-light-two', deviceIconPicker: true,
+    language: 'ru', theme: 'dark', viewport: { width: 1280, height: 1000 }, ...page },
   { id: 'device-dialog-mobile-ru', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,
     deviceName: 'Контроллер освещения гостиной с намеренно очень длинным названием',

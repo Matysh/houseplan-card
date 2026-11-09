@@ -449,6 +449,9 @@ export function editorRuntimeRetryUrlPlugin({ coverage = coverageMapsEnabled() }
       for (const entry of [...VIEW_RUNTIME_RETRY_CHUNKS, {
         module: '/src/wall-node-card-adapter.ts', token: '__HOUSEPLAN_NODE_EDITOR_RETRY_ASSET__',
         exports: ['createWallNodeEditor'],
+      }, {
+        module: '/src/mdi-icon-catalog.ts', token: '__HOUSEPLAN_MDI_CATALOG_RETRY_ASSET__',
+        exports: ['mdiCatalog'],
       }]) {
         const owners = chunks.filter(chunk => chunk.code.includes(entry.token));
         if (!owners.length) continue; // older/focused plugin fixtures have no View boundaries

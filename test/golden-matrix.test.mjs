@@ -201,7 +201,7 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
 });
 
 test('issue 486 keeps its three ordinary panel-host surfaces alongside route kiosk scenes', () => {
-  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.panelHost && !scenario.panelKioskUrl && !scenario.id.endsWith('-ui-1132'));
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.panelHost && !scenario.dialog && !scenario.panelKioskUrl && !scenario.id.endsWith('-ui-1132'));
   assert.deepEqual(scenarios.map((scenario) => scenario.id), [
     'panel-wide-view-light-en',
     'panel-wide-plan-editor-dark-en',
@@ -529,7 +529,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 110);
+  assert.equal(GOLDEN_MATRIX_VERSION, 111);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -1035,7 +1035,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 110);
+  assert.equal(GOLDEN_MATRIX_VERSION, 111);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',
@@ -1368,4 +1368,16 @@ test('#718 AC8 static-background moon scenes: the chosen colour, the sky layer, 
   }
   assert.match(harness, /hp-dialog \[data-moon-status\]/);
   assert.match(harness, /innerWidth <= 390/);
+});
+
+
+test('#1375 release golden exposes the local device icon picker',()=>{
+  const id='panel-device-icon-picker-dark-1375';
+  const selected=prepareGoldenSelection(GOLDEN_SCENARIOS);
+  const scene=selected.beta.find(scene=>scene.id===id);
+  assert.ok(scene,'the field regression belongs to the fixed beta/stable selection');
+  assert.equal(scene.deviceIconPicker,true);assert.equal(scene.dialog,'device');
+  assert.equal(scene.panelHost,true);assert.equal(scene.theme,'dark');assert.equal(scene.capture,'page');
+  const fixture=prepareGoldenFixture(scene);
+  assert.equal(fixture.config.markers.find(marker=>marker.id===scene.deviceId).icon,'mdi:access-point-minus');
 });

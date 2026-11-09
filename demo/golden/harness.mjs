@@ -1,4 +1,5 @@
 import { addExternalScreenFixture, prepareExternalScreens } from './external-screens.mjs';
+import { inspectDeviceIconPicker } from './device-icon-picker.mjs';
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
 import { makeMarkerAlertsFixture } from '../fixtures/marker-alerts.mjs';
@@ -790,6 +791,11 @@ export function prepareGoldenFixture(scenario) {
       fixture.states[humidityId] = { entity_id: humidityId, state: '45',
         attributes: { device_class: 'humidity', unit_of_measurement: '%' } };
     }
+  }
+  if (scenario.deviceIconPicker) {
+    const marker=fixture.config.markers.find(marker=>marker.id===scenario.deviceId);
+    if(!marker)throw Error('Native icon picker fixture marker is missing');
+    marker.icon='mdi:access-point-minus';
   }
   if (scenario.deviceName) {
     if (!scenario.deviceId || !fixture.devices?.[scenario.deviceId])
@@ -2254,7 +2260,7 @@ export async function prepareGoldenScenario(page, scenario) {
       card._openMarkerDialog(device);
       await card.updateComplete;
       const settings = card.renderRoot.querySelector('hp-dialog');
-      const target = scenario.vacuumRetained || scenario.vacuumLive ? 'vacuum' : scenario.deviceStateSource ? 'appearance' : scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity || scenario.deviceMoreInfo ? 'actions' : 'basics';
+      const target = scenario.vacuumRetained || scenario.vacuumLive ? 'vacuum' : scenario.deviceStateSource || scenario.deviceIconPicker ? 'appearance' : scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity || scenario.deviceMoreInfo ? 'actions' : 'basics';
       const navigation = settings?.querySelector(`[data-section-target="${target}"]`);
       if (!navigation) throw new Error(`golden device settings section missing: ${target}`);
       navigation.click();
@@ -3223,6 +3229,7 @@ export async function prepareGoldenScenario(page, scenario) {
   if(scenario.sunTransparent)result.sunTransparent=await prepareSunTransparent(page,!!scenario.sunTransparent.sealed);
   if (scenario.externalScreens) await prepareExternalScreens(page, scenario);
   if (scenario.staticWallOpenings) result.staticWallOpenings = await prepareStaticWallOpenings(page,scenario);
+  if (scenario.deviceIconPicker) result.deviceIconPicker=await inspectDeviceIconPicker(page,{expectedValue:'mdi:access-point-minus'});
   return result;
 }
 

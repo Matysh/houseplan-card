@@ -42,7 +42,7 @@ export const GOLDEN_ADDITIONS = Object.freeze({
   deviceProblems: [
     'device-offline-dark', 'device-alert-alarm-flat', 'device-alert-maintenance-iso',
     'device-alert-form-numeric', 'device-battery-board-light', 'device-battery-mobile-dark',
-    'device-state-source-unknown-en', 'hidden-devices-view-light',
+    'device-state-source-unknown-en', 'hidden-devices-view-light', 'panel-device-icon-picker-dark-1375',
   ],
   largePlansAndIsometry: [
     'large-house-warm-remount-dark', 'isometric-large-warm-remount-dark',

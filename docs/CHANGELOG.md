@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Replace the HA device icon picker adapter with a local UI Kit field, searchable lazy MDI catalog and SVG previews; preserve custom names, automatic reset and dialog keyboard behavior, and cover the visible picker in release goldens (#1375).
+
 ## v1.85.1-beta.3 — 2026-11-09
 
 - Accept the four additional owner-reviewed header frames recovered by #1372, preserving their exact image hashes and comparison thresholds (#1373).
