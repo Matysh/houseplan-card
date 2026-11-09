@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7740,
-  "nextTicket": 328,
+  "revision": 7741,
+  "nextTicket": 329,
   "nextFence": 328,
   "tasks": {
     "1193": {
@@ -4158,14 +4158,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1365-header-menu-bounds",
-      "materialSha": "edfff6faf85844d906fed60ab72a979560811ce4",
+      "materialSha": "3979eda0eded14b615ea00598788a07b98ba88fc",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 327,
-      "queued": false,
+      "ticket": 328,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794183329019,
-      "reviewEntry": 3,
+      "readyAt": 1794184935741,
+      "reviewEntry": 4,
       "patchId": "ed6d761510723648869237709d2094d295dc05e2",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -4190,8 +4190,7 @@
         "entry": 3,
         "detail": "Браузер: header actions menu: failed; Браузер: space switch transitions: failed; Браузер: ui kit motion: failed; Браузер: view runtime recovery: failed; Браузер: zigbee enable refresh: failed",
         "eventId": "finish:b9387771-f680-43b9-a931-6e0eccddcc93:finish:3:return:return:1365"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4379,7 +4378,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1365
+  ],
   "active": null,
   "events": {
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:2:synchronized": {
@@ -4690,6 +4691,19 @@
           "eventId": "finish:b9387771-f680-43b9-a931-6e0eccddcc93:finish:3:return:return:1365"
         },
         "delivered": true
+      }
+    },
+    "finish:6a85423f-2533-43d2-83ac-0703576b7e36": {
+      "digest": "af0110cce69488a5e38c4bcc691e804c45bec4568e6e6e24483b3f67dfad8082",
+      "issue": 1365,
+      "message": {
+        "kind": "queued",
+        "issue": 1365,
+        "at": 1794184935741,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3979eda0eded14b615ea00598788a07b98ba88fc"
       }
     }
   },
