@@ -1,0 +1,57 @@
+{
+  "issue": 1376,
+  "acceptedOn": "2026-11-09",
+  "algorithm": "SHA-256; manifest itself excluded",
+  "files": [
+    {
+      "path": "accepted/mdi-picker-patch.mjs",
+      "bytes": 3936,
+      "sha256": "e98df10ca8485984538e2cc4a08e9eb3e91d5ed047ab2f04d6613f5545d77f48"
+    },
+    {
+      "path": "accepted/mobile-menu-tap-patch.mjs",
+      "bytes": 640,
+      "sha256": "1e3de7bc3adecc7b8f15946eafe671975389fe4524d46be6c70feb79c5d233ed"
+    },
+    {
+      "path": "accepted/serve-mdi-prototype.mjs",
+      "bytes": 2174,
+      "sha256": "eaef08461dbbed3bbf9fcd72328907a473f2d52129e269a71c74862beb6e80bf"
+    },
+    {
+      "path": "ACCEPTED.md",
+      "bytes": 11834,
+      "sha256": "b93a7f3ea9784866af5be0647de785f9d8d4fd182d88005d2a1ed1f67f2734b3"
+    },
+    {
+      "path": "BASELINE.json",
+      "bytes": 581,
+      "sha256": "d15c637a5652f0ab88f0b974831437020b8da29f5fb7cbdad79b17ba97b45411"
+    },
+    {
+      "path": "JOURNAL.md",
+      "bytes": 13148,
+      "sha256": "fa50f3c89c0b485288faaffa10c4b4d484816a30a087c6b389a87e3811c32696"
+    },
+    {
+      "path": "mdi-picker-patch.mjs",
+      "bytes": 3936,
+      "sha256": "e98df10ca8485984538e2cc4a08e9eb3e91d5ed047ab2f04d6613f5545d77f48"
+    },
+    {
+      "path": "mobile-menu-tap-patch.mjs",
+      "bytes": 640,
+      "sha256": "1e3de7bc3adecc7b8f15946eafe671975389fe4524d46be6c70feb79c5d233ed"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5697,
+      "sha256": "a200128941198d3d37ae67df3d172c5aca17c872faf5667c41a8aa4844fd9286"
+    },
+    {
+      "path": "serve-reference.mjs",
+      "bytes": 3013,
+      "sha256": "74cc80e04853506ddb3050b90a49a21f9388f63d55cd87c1ced2962d9c436c61"
+    }
+  ]
+}
