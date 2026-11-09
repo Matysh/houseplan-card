@@ -92,10 +92,10 @@ try {
  await page.mouse.click(drawing.x+drawing.width*.3,drawing.y+drawing.height*.65);
  await page.mouse.click(drawing.x+drawing.width*.45,drawing.y+drawing.height*.65);
  await page.evaluate(()=>window.__hpTest.waitForWrites());
- const pendingLine=await page.evaluate(()=>JSON.stringify(window.__card._decorStart));
+ const pendingLine=await page.evaluate(()=>JSON.stringify(window.__card._editorRuntime?.decorLine.snapshot));
  check('background-line-is-still-active',pendingLine!==undefined&&pendingLine!=='null');
  await trigger.click();await menu.waitFor({timeout:5000});
- check('opening-menu-keeps-live-line',await page.evaluate(()=>JSON.stringify(window.__card._decorStart)),pendingLine);
+ check('opening-menu-keeps-live-line',await page.evaluate(()=>JSON.stringify(window.__card._editorRuntime?.decorLine.snapshot)),pendingLine);
  await menu.locator('[data-action="mode-plan"]').click();await settle();
  check('live-drawing-cannot-swallow-menu-command',await page.evaluate(()=>window.__card._mode),'plan');
  await size(320);

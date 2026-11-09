@@ -51,6 +51,15 @@ export async function emptySpaceHomeArrow(page) {
     frame:window.__card._frame&&{id:window.__card._frame.id,rect:window.__card._frame.rect,grow:window.__card._frame.grow},
     arrow:!!window.__card.renderRoot.querySelector('.homearrow'),writes:window.__emptyHomeWrites.length}));
   const pan=async()=>{
+    // This helper mounts a new cold card. The boot refit may still replace
+    // its camera after onboarding; start navigation only on the revealed,
+    // settled frame, as a user does. Keep the observer above active through
+    // that reveal so the no-flash create assertion still covers it.
+    await page.waitForFunction(()=>{
+      const c=window.__card;return !c._booting&&!c._cameraTransition.active
+        &&!c._modeTransitionBusy&&!c._refitRaf;
+    });
+    await waitForUiKitPaint(page);
     const stage=page.locator('houseplan-card .stage'),b=await stage.boundingBox();assert.ok(b);
     for(let i=0;i<2;i++){
       await page.mouse.move(b.x+b.width*.85,b.y+b.height*.8);await page.mouse.down();

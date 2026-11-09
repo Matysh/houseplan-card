@@ -1,13 +1,14 @@
 // #1031: the real General Settings owner must allow OFF -> ON -> load without reopening.
 import { launch, checkAll, finish } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
+import { clickHeaderAction } from './helpers/header-actions.mjs';
 
 const { page, browser } = await launch({ width: 1120, height: 850 });
+await clickHeaderAction(page.locator('houseplan-card'), 'settings');
 const result = await page.evaluate(async () => {
   const card = window.__card;
   const settled = async () => { card.requestUpdate(); await window.__hpTest.settled(); };
   const root = () => card.shadowRoot || card.renderRoot;
-  root().querySelector('[data-hp="settings"]').click(); await settled();
   const dialog = root().querySelector('hp-dialog[data-kind="settings"]');
   dialog.querySelector('[data-section-target="zigbee"]').click(); await settled();
   const topology = dialog.querySelector('hp-zigbee-topology-settings');
@@ -72,7 +73,7 @@ const setup = async (options = {}) => {
   // Locale adoption and the lazy dialog owner need not finish in two frames.
   // Follow the real rendered controls; native locator clicks wait for their
   // readiness instead of dereferencing an absent/stale dialog after settled().
-  await page.locator('[data-hp="settings"]').click();
+  await clickHeaderAction(page.locator('houseplan-card'), 'settings');
   const dialog = page.locator('hp-dialog[data-kind="settings"]');
   await dialog.locator('[data-section-target="zigbee"]').click();
   await dialog.locator('hp-zigbee-topology-settings .hpf-toggle input[type="checkbox"]').click();
@@ -176,8 +177,8 @@ await page.evaluate(async () => {
   const c = window.__card, root = c.shadowRoot || c.renderRoot;
   root.querySelector('hp-dialog[data-kind="settings"] [data-hp="dialog-cancel"]').click();
   await window.__hpTest.settled();
-  root.querySelector('[data-hp="settings"]').click(); await window.__hpTest.settled();
 });
+await clickHeaderAction(page.locator('houseplan-card'), 'settings');
 await release(); state = await stats();
 record('closedRequestCannotStartOrCloseReplacementDialog', state.starts === 0 && state.open && !state.busy);
 
