@@ -282,7 +282,6 @@
   "marker.room_choose": "— Raum auswählen —",
   "marker.room_auto": "— nach Gerätebereich (auto) —",
   "marker.icon_label": "Symbol",
-  "marker.icon_ph": "mdi:… (leer = automatisch)",
   "display.badge": "Symbol + Zustand",
   "display.icon_ripple": "Symbol + Zustand und Aktivität",
   "display.static_icon": "Immer statisches Symbol",

@@ -282,7 +282,6 @@
   "marker.room_choose": "— выберите комнату —",
   "marker.room_auto": "— по зоне устройства (авто) —",
   "marker.icon_label": "Иконка",
-  "marker.icon_ph": "mdi:… (пусто = авто)",
   "display.badge": "Значок + состояние",
   "display.icon_ripple": "Значок + состояние и активность",
   "display.static_icon": "Всегда статичный значок",

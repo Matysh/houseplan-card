@@ -282,7 +282,6 @@
   "marker.room_choose": "— select a room —",
   "marker.room_auto": "— by device area (auto) —",
   "marker.icon_label": "Icon",
-  "marker.icon_ph": "mdi:… (empty = auto)",
   "display.badge": "Icon + state",
   "display.icon_ripple": "Icon + state and activity",
   "display.static_icon": "Always static icon",

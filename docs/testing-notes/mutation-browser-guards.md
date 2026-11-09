@@ -272,12 +272,13 @@ reduced-motion cascade require mounted Chromium; pure decision tests cannot
 observe these pixels or transforms. These witnesses are declared, not executed
 during development.
 
-- `icon-picker-wrapper-restores-second-border-988`
-- `dialog-icon-picker-loses-local-kit-998`
+- `device-icon-picker-restores-second-border-1375`
+- `device-icon-picker-loses-kit-radius-1375`
 
-#998 observes the genuine HA field's computed 44 px height, 8 px radius and
-accepted triangle beside an ordinary select. The adapter being mounted is not
-an oracle; its actual browser presentation is. Registered for background execution.
+#1375 observes the local device picker's computed 44 px height, 8 px radius,
+triangle and single border beside an ordinary select, without HA picker registration.
+The two former HA-adapter witnesses now mutate the product-owned field.
+Registered for background execution; their clean browser witness runs on S6.
 
 #988 observes the computed border paint around a genuine-picker host; CSS
 matching alone cannot tell whether the wrapper and HA paint two contours.

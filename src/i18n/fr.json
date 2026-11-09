@@ -282,7 +282,6 @@
   "marker.room_choose": "— sélectionner une pièce —",
   "marker.room_auto": "— selon la zone de l’appareil (auto) —",
   "marker.icon_label": "Icône",
-  "marker.icon_ph": "mdi:… (vide = auto)",
   "display.badge": "Icône + état",
   "display.icon_ripple": "Icône + état et activité",
   "display.static_icon": "Icône toujours statique",

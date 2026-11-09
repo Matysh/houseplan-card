@@ -1,6 +1,7 @@
 // #1375: local picker works without HA picker definitions.
 import assert from 'node:assert/strict';
 import {expect} from 'playwright/test';
+import {reportPageErrors} from './serve.mjs';
 import {launchDeviceIconPickerFixture} from './helpers/device-icon-picker-fixture.mjs';
 import {installHpTestOnPage} from './helpers/hp-test.mjs';
 import {installSettingsDeviceFixture,openSettingsDeviceDialog} from './helpers/settings-device-947-fixture.mjs';
@@ -54,7 +55,7 @@ for(const {theme,width,fallback=false,authentic=false} of cases){
   const confirm=page.locator('hp-dialog[data-kind="confirm"]');await expect(confirm).toBeVisible();
   await confirm.locator('[slot="footer"] [data-hp="dialog-confirm"]').click();await expect(dialog).toHaveCount(0);
   dialog=await open();await expect(picker()).toHaveJSProperty('value','phu:custom-lamp');
-  await f.assertClean();passed++;console.log('PASS',theme,width,{fallback,authentic});
+  await f.assertClean();assert.equal(await reportPageErrors(),false,'no card error before closing the page');passed++;console.log('PASS',theme,width,{fallback,authentic});
  }finally{await f.close();}
 }
 // A failed lazy asset must leave manual entry usable and support a real retry.
@@ -77,7 +78,8 @@ for(const {theme,width,fallback=false,authentic=false} of cases){
   await expect.poll(()=>picker.evaluate(p=>p._catalog?.size||0)).toBe(7447);
   assert.equal(requests,3,'retry uses a fresh module URL after the failed import');
   await search.fill('mdi:fan');await page.keyboard.press('Enter');await expect(picker).toHaveJSProperty('value','mdi:fan');
-  await f.assertClean();passed++;console.log('PASS lazy catalog failure, manual entry and retry');
+  await f.assertClean();assert.equal(await reportPageErrors(),false,'no card error before closing the page');passed++;console.log('PASS lazy catalog failure, manual entry and retry');
  } finally {await f.close();}
 }
+assert.equal(await reportPageErrors(),false,'no handled or unhandled card error');
 console.log('PROCESS_NEXT_RESULT '+JSON.stringify({tests:passed,passed,failed:0,skipped:0}));
