@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7960,
+  "revision": 7961,
   "nextTicket": 337,
   "nextFence": 337,
   "tasks": {
@@ -4269,7 +4269,12 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794192600091,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c5266667cb0d9d98a5197d42c8b4afa513f2763e",
+      "changedFiles": [
+        "demo/helpers/hp-test.mjs",
+        "demo/smoke_header_actions_menu.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4464,10 +4469,11 @@
     "token": "336:finish:c3db3462-9fc9-4ce0-970e-559b2a0851e7:finish:1:admit",
     "fence": 336,
     "materialSha": "5d522469dd04bb0630f3a890652e32e94fe02c2e",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "4f9f245f35b316c5ced02df44e4c575a86371f8b",
+    "phase": "testing",
     "admittedAt": 1794192604002,
-    "expiresAt": 1794192904002
+    "expiresAt": 1794192909621,
+    "patchId": "c5266667cb0d9d98a5197d42c8b4afa513f2763e"
   },
   "events": {
     "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:2:synchronized": {
@@ -4565,6 +4571,10 @@
     "github:42552966786:1:completions:notice:1b70857841fe383da7c74e525421e508c2512dbdbe7419e0841c87133e26c5a3": {
       "digest": "7d9848313b65ba86c63f0c7001e78a0be8c526a3bbe83a1e5f06f1a57be9017e",
       "issue": 1366
+    },
+    "finish:c3db3462-9fc9-4ce0-970e-559b2a0851e7:finish:2:synchronized": {
+      "digest": "3e0d33d3fc903bc83b97c7f22cd26eca9361611dd36080a174d877b4244172b7",
+      "issue": 1369
     },
     "release-return:fed8a071-c709-4789-964a-27e474e10c6a": {
       "digest": "2692e833edcc362fd3812094b5cee889021f58bfec2b74eca1fda238f8538e5c",
