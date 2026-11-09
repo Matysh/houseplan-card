@@ -31,11 +31,11 @@ export function panelMenuKey(
   return JSON.stringify([state.visible, state.label]);
 }
 
-export function renderPanelMenu(state: { visible: boolean; label: string }): TemplateResult | typeof nothing {
+export function renderPanelMenu(state: { visible: boolean; label: string; open?: boolean }): TemplateResult | typeof nothing {
   if (!state.visible) return nothing;
   return html`<button class="panel-menu hpf-icon-action hpf-icon-plain" type="button" data-hp="panel-menu"
-    aria-label=${state.label} data-hp-tooltip=${state.label}
+    aria-label=${state.label} data-hp-tooltip=${state.label} aria-expanded=${String(!!state.open)} ?data-sidebar-open=${!!state.open}
     @click=${(event: Event) => event.currentTarget?.dispatchEvent(new CustomEvent('hass-toggle-menu', {
       bubbles: true, composed: true,
-    }))}><ha-icon icon="mdi:menu"></ha-icon></button>`;
+    }))}><ha-icon icon="mdi:menu"></ha-icon><ha-icon class="panel-menu-open" icon="mdi:menu-open" aria-hidden="true"></ha-icon></button>`;
 }

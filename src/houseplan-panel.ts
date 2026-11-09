@@ -1,4 +1,5 @@
 import './houseplan-card';
+import { observePanelSidebar } from './panel-sidebar-state';
 import { parseRouteKiosk } from './panel-route-kiosk';
 import type { RouteKiosk } from './route-kiosk';
 
@@ -11,6 +12,7 @@ interface PanelRoute { prefix?: string; path?: string; }
 interface HouseplanCardElement extends HTMLElement {
   hass?: unknown;
   panelHost: boolean;
+  panelSidebarOpen: boolean;
   panelRoutePrefix: string | null;
   narrow: boolean | null;
   routeKiosk: RouteKiosk;
@@ -27,6 +29,7 @@ export class HouseplanPanel extends HTMLElement {
   private _route?: unknown;
   private _panel?: unknown;
   private _card?: HouseplanCardElement;
+  private _stopSidebar?: () => void;
   private _acceptedUrl = '';
   private _acceptedRoute?: unknown;
   private _pendingRoute?: { intent: RouteKiosk; url: string; route: unknown };
@@ -60,11 +63,14 @@ export class HouseplanPanel extends HTMLElement {
     this._ensureShell();
     window.addEventListener('location-changed', this._onLocationChanged);
     window.addEventListener('popstate', this._onLocationChanged);
+    this._stopSidebar?.();
+    this._stopSidebar = observePanelSidebar(this, open => { if (this._card) this._card.panelSidebarOpen = open; });
   }
 
   public disconnectedCallback(): void {
     window.removeEventListener('location-changed', this._onLocationChanged);
     window.removeEventListener('popstate', this._onLocationChanged);
+    this._stopSidebar?.(); this._stopSidebar = undefined;
     this._pendingRoute = undefined;
   }
 

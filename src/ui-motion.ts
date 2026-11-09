@@ -14,6 +14,14 @@ export function controlMotionReduced(view: Pick<Window, 'matchMedia'> | null = g
   return view?.matchMedia('(prefers-reduced-motion: reduce)').matches ?? false;
 }
 
+/** Reveal a content-sized surface without scaling its text or icons. */
+export function controlDisclosureFrames(appearing: boolean, current?: Pick<CSSStyleDeclaration, 'clipPath'>): Keyframe[] {
+  const open = 'inset(0 0 0% 0)', closed = 'inset(0 0 100% 0)';
+  const from = current?.clipPath && current.clipPath !== 'none' ? current.clipPath : appearing ? closed : open;
+  return [{ clipPath: from, opacity: 1, translate: '0 0' },
+    { clipPath: appearing ? open : closed, opacity: 1, translate: '0 0' }];
+}
+
 /** Individual translate leaves the caller's positional transform intact. */
 export function controlSurfaceFrames(appearing: boolean, current?: Pick<CSSStyleDeclaration, 'opacity' | 'translate'>): Keyframe[] {
   const position = current ? { translate: current.translate } : {};

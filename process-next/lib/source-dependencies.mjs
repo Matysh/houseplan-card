@@ -12,6 +12,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['demo/smoke_modes.mjs', ['src/houseplan-card.ts', 'src/header-menu.ts', 'src/styles/panel-header.styles.ts']],
   ['demo/smoke_toolbar_stable_width.mjs', ['src/houseplan-card.ts', 'src/panel-header-flow.ts', 'src/header-actions-menu.ts', 'src/styles/panel-header.styles.ts']],
   ['demo/smoke_ui_polish_963.mjs', ['src/houseplan-card.ts', 'src/panel-header-flow.ts', 'src/header-actions-menu.ts', 'src/styles/panel-header.styles.ts']],
+  ['demo/smoke_compact_header_polish.mjs', ['src/houseplan-card.ts', 'src/houseplan-panel.ts', 'src/panel-sidebar-state.ts', 'src/panel-header-menu.ts', 'src/panel-header-flow.ts', 'src/header-actions-menu.ts', 'src/editor-context-menu.ts', 'src/editor-context-menu.styles.ts', 'src/styles/panel-header.styles.ts', 'src/styles/plan.styles.ts', 'src/ui-motion.ts']],
   ['demo/smoke_header_actions_menu.mjs', ['src/houseplan-card.ts', 'src/header-actions-menu.ts', 'src/panel-header-flow.ts', 'src/styles/panel-header.styles.ts', 'src/header-space-select.ts', 'src/editor-context-menu.ts']],
   ['demo/smoke_header_mode_position_regression.mjs', ['src/editors/properties/styles.ts', 'src/styles/panel-header.styles.ts', 'src/styles/navigation.styles.ts']],
   ['demo/smoke_opening_entity_search.mjs', ['src/houseplan-editor-runtime.ts', 'src/settings-select-control.ts']],

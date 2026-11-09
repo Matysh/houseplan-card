@@ -698,7 +698,7 @@ export class HouseplanCard extends LitElement {
       if (!render && !this._summary?.observeHassComposition()) return;
     }
     if (name !== undefined) this._terminalFrame = 0;
-    if (!panelMenuChanged && !(this.panelHost && name === 'narrow')
+    if (!panelMenuChanged && !(this.panelHost && (name === 'narrow' || name === 'panelSidebarOpen'))
         && this._editorRuntime?._routeLiveEditorUpdate(name, oldValue)) return;
     this._liveRt?.clear();
     super.requestUpdate(name, oldValue, forceHass ? { ...options, hasChanged: () => true } : options);
@@ -970,6 +970,7 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
   public hass?: any;
+  public panelSidebarOpen = false;
   public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
   /** Stable owner supplied by the HA shell, even while another route is active. */
   public panelRoutePrefix: string | null = null;
@@ -1056,6 +1057,7 @@ export class HouseplanCard extends LitElement {
       if (!current()) return;
       this._headerActionsMenu ??= new module.HeaderActionsMenu({
         renderRoot: this.renderRoot,
+        getBoundingClientRect: () => this.getBoundingClientRect(),
         requestUpdate: () => this.requestUpdate('_headerActionsMenu', null),
       });
       this._headerActionsMenu.show(head, trigger, this._t('panel.actions'), current);
@@ -1105,14 +1107,14 @@ export class HouseplanCard extends LitElement {
 
   private _renderPanelMenu(): TemplateResult | typeof nothing {
     if (!this.panelHost) return nothing;
-    return renderPanelMenu(panelMenuState(this.hass, !!this.narrow, this._kiosk, this._t('panel.sidebar_menu')));
+    return renderPanelMenu({ ...panelMenuState(this.hass, !!this.narrow, this._kiosk, this._t('panel.sidebar_menu')), open: this.panelSidebarOpen });
   }
   private _renderEmptyPanelHeader(): TemplateResult | typeof nothing {
     if (!this.panelHost || this._kiosk) return nothing;
     const menu = panelMenuState(this.hass, !!this.narrow, false, this._t('panel.sidebar_menu'));
     if (!menu.visible) return nothing;
     return html`<div class="hdr" data-panel-flow="0" data-panel-mode=${this._mode}>
-      <div class="head hpf-chrome-group">${renderPanelMenu(menu)}</div></div>`;
+      <div class="head hpf-chrome-group">${renderPanelMenu({ ...menu, open: this.panelSidebarOpen })}</div></div>`;
   }
   /** The loaded mode owner may measure View before Lit replaces the editor DOM. */
   public _panelHeaderNaturalHeight(mode: HouseplanMode): number | null {
@@ -3522,6 +3524,7 @@ export class HouseplanCard extends LitElement {
     _dangerConfirm: { state: true },
     hass: { attribute: false },
     panelHost: { type: Boolean, attribute: 'panel-host', reflect: true },
+    panelSidebarOpen: { type: Boolean, attribute: false },
     layout: { type: String, reflect: true },
     narrow: { attribute: false },
     _config: { state: true },

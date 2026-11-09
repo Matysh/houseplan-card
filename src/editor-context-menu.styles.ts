@@ -26,6 +26,15 @@ export const editorContextMenuStyles = unsafeCSS(css`
   .hpf-context-menu-touch > button { min-height:44px; padding:12px 14px; gap:10px; line-height:20px; }
   .hpf-context-menu-touch > button > :is(ha-icon, svg) { --mdc-icon-size:20px; width:20px; height:20px; flex:none; }
   .hpf-context-menu > button:is([aria-current='true'], [aria-pressed='true']) { color:var(--primary-color,#03a9f4); font-weight:600; }
+  .hpf-context-menu.hpf-context-menu-disclosure {
+    display:flex; flex-direction:column; overscroll-behavior:contain;
+    border-radius:0; box-shadow:none; margin:0; padding:0;
+  }
+  .hpf-context-menu-disclosure > button { flex-shrink:0; }
+  .hpf-context-menu-disclosure .header-menu-label { display:flex; align-items:center; gap:10px; min-width:0; line-height:20px; }
+  .hpf-context-menu-disclosure .header-menu-label > :is(ha-icon,svg) { --mdc-icon-size:18px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 18px; width:18px; height:18px; pointer-events:none; }
+  .hpf-context-menu-disclosure > button[data-action='summary-toggle'] { font-weight:inherit; }
+  .hpf-context-menu-disclosure > button[data-action='summary-toggle']:not(:hover):not(:focus-visible) { color:var(--primary-text-color); }
   .hpf-context-menu-scrim { position:fixed; inset:0; z-index:1; background:transparent; }
   .hpf-context-menu[inert] { pointer-events: none; }
 `.cssText + floatingSurfaceCss('.hpf-context-menu', '0') + controlReducedMotionCss('.hpf-context-menu > button'));

@@ -210,7 +210,7 @@ export function measurePanelHeader(
     probe.toggleAttribute('data-panel-phone', choice.phone);
     replaceTabs(choice.phase >= 3);
     copy.style.width = available + 'px';
-    if (choice.phase === 4 && panelHeaderRows(headerControls(copy).map(([,element]) => element.getBoundingClientRect())) >= 2) {
+    if (choice.phase === 4 && panelHeaderRows(headerControls(copy).map(([,element]) => element.getBoundingClientRect())) >= 3) {
       choice = { phase: 5, phone: false };
       applyPanelHeaderChoice(probe, choice);
       replaceTabs(true, true);

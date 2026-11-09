@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep ordinary header controls in two rows before collapsing; reveal a full-width, content-sized actions menu with source icons, native HA sidebar state and stacked editor history controls. Preserve immediate panning after double-click fit (#1371).
+
 - Open settings through the visible header action in the empty-backup import smoke, preserving its clean mutation guard after narrow-header menu changes (#1370).
 
 ## v1.85.1-beta.2 — 2026-11-09

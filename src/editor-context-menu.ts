@@ -1,7 +1,7 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { floatingViewport, placeFloatingSurface, type FloatingViewport, type RectLike } from './floating-surface';
-import { controlMotion, controlMotionReduced, controlSurfaceFrames } from './ui-motion';
+import { controlMotion, controlMotionReduced, controlSurfaceFrames, controlDisclosureFrames } from './ui-motion';
 
 export interface EditorMenuItem {
   key: string; label: string | TemplateResult; disabled?: boolean;
@@ -13,6 +13,7 @@ export interface EditorMenuModel {
   /** A new opening always gets a new owner token, even for the same object. */
   token: object; hp: 'device-context-menu' | 'decor-context-menu' | 'catalog-context-menu' | 'node-context-menu' | 'header-actions-menu'; items: EditorMenuItem[];
   density?: 'compact' | 'touch'; label?: string;
+  presentation?: 'disclosure';
   anchor: RectLike | (() => RectLike); gap?: number; minWidth?: number; viewport?: () => FloatingViewport;
   localTo?: HTMLElement;
   returnFocus?: Element | null;
@@ -33,6 +34,7 @@ export class EditorContextMenu {
   private invoked = false;
   private animation: Animation | null = null;
   private exiting = false;
+  private enteringFrom?: Pick<CSSStyleDeclaration, 'clipPath'>;
   private listening = false;
   constructor(private readonly changed: () => void) {}
 
@@ -110,7 +112,10 @@ export class EditorContextMenu {
     }
     if (fresh) {
       if (!controlMotionReduced()) {
-        this.animation = element.animate(controlSurfaceFrames(true), controlMotion.appear);
+        this.animation = this.model?.presentation === 'disclosure'
+          ? element.animate(controlDisclosureFrames(true, this.enteringFrom), controlMotion.disclosure)
+          : element.animate(controlSurfaceFrames(true), controlMotion.appear);
+        this.enteringFrom = undefined;
       }
       queueMicrotask(() => {
         if (this.active && this.model?.token === token && element.isConnected) {
@@ -123,6 +128,13 @@ export class EditorContextMenu {
     const model = this.model, element = this.element;
     if (!model || !element) return;
     const viewport = model.viewport?.() ?? floatingViewport(window);
+    if (model.presentation === 'disclosure') {
+      Object.assign(element.style, { position: 'fixed', left: viewport.left + 'px', top: viewport.top + 'px',
+        width: Math.max(0, viewport.width) + 'px', minWidth: '0', maxWidth: 'none',
+        maxHeight: Math.max(0, viewport.height) + 'px' });
+      return;
+    }
+    element.style.width = '';
     element.style.maxWidth = `${Math.max(0, viewport.width - 16)}px`;
     element.style.minWidth = `${Math.min(model.minWidth ?? 0, Math.max(0, viewport.width - 16))}px`;
     element.style.maxHeight = `${Math.max(0, viewport.height - 16)}px`;
@@ -144,9 +156,11 @@ export class EditorContextMenu {
         this.dispose(); return nothing;
       }
       const style = getComputedStyle(element);
-      const current = { opacity: style.opacity, translate: style.translate };
+      const current = { opacity: style.opacity, translate: style.translate, clipPath: style.clipPath };
       this.exiting = true; this.animation?.cancel();
-      const animation = element.animate(controlSurfaceFrames(false, current), { ...controlMotion.leave, fill: 'both' });
+      const disclosure = this.model?.presentation === 'disclosure';
+      const animation = element.animate(disclosure ? controlDisclosureFrames(false, current) : controlSurfaceFrames(false, current),
+        { ...(disclosure ? controlMotion.disclosure : controlMotion.leave), fill: 'both' });
       this.animation = animation;
       void animation.finished.then(() => {
         if (this.animation !== animation) return;
@@ -155,12 +169,14 @@ export class EditorContextMenu {
       return this.view;
     }
     if (this.model?.token !== model.token) {
+      this.enteringFrom = this.exiting && this.element?.isConnected && model.presentation === 'disclosure'
+        ? { clipPath: getComputedStyle(this.element).clipPath } : undefined;
       this.retire(); this.animation?.cancel(); this.animation = null;
       this.element = null; this.exiting = false; this.active = true; this.invoked = false;
     }
     this.model = model;
     const token = model.token;
-    this.view = html`<div class="hpf-context-menu ${model.density === 'touch' ? 'hpf-context-menu-touch' : ''}"
+    this.view = html`<div class="hpf-context-menu ${model.density === 'touch' ? 'hpf-context-menu-touch' : ''} ${model.presentation === 'disclosure' ? 'hpf-context-menu-disclosure' : ''}"
       data-hp=${model.hp === 'device-context-menu' ? 'device-context-menu' : model.hp === 'decor-context-menu' ? 'decor-context-menu'
           : model.hp === 'catalog-context-menu' ? 'catalog-context-menu' : model.hp === 'header-actions-menu' ? 'header-actions-menu' : 'node-context-menu'}
       role="menu" aria-label=${model.label ?? nothing}
@@ -183,7 +199,7 @@ export class EditorContextMenu {
   }
   dispose(): void {
     this.retire(); this.animation?.cancel(); this.animation = null;
-    this.model = null; this.element = null; this.view = nothing; this.exiting = false;
+    this.model = null; this.element = null; this.view = nothing; this.exiting = false; this.enteringFrom = undefined;
   }
 }
 

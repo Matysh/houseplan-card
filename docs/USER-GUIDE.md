@@ -443,7 +443,12 @@ Lovelace uses the same header (#1184), without a second Home Assistant menu.
 The card keeps its configured or default title. Long text is shortened with
 the full title available in a tooltip; at narrow widths it can use a separate
 row above the controls. Editors, settings, help, Summary and hidden-device
-controls remain direct actions, subject to permissions. There are no fixed
+controls remain available, subject to permissions. Ordinary controls can occupy
+two rows; the actions menu appears when a third row would be needed, measured
+from the available width and content. It expands directly below the header
+across the plan, with content height and its own scrolling for long lists.
+Zoom buttons remain on the full header; zoom gestures remain available.
+Compact editors stack Close, Undo and Redo at the right. There are no fixed
 480/360/1024px header breakpoints or one-row/56px phone limit.
 
 The floor dropdown keeps the existing order and full option names. Selection

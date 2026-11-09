@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1371,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Transfer the owner-approved compact header refinement from UI Lab: preserve two ordinary rows, use a content-sized disclosure menu and native HA drawer state, align editor controls and prevent browser selection from cancelling scene panning.",
+  "summary": {
+    "ru": "Полировка компактной шапки и панорамирования после двойного клика.",
+    "en": "Polish the compact header and panning after double-click fit."
+  }
+}

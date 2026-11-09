@@ -17,6 +17,11 @@ export const planStyles = css`
     @media (prefers-reduced-motion: reduce) {
       .radar-target { transition: none; }
     }
+    /* Browser text selection must not turn the next scene pan into native drag. */
+    .stage > .zoomwrap { user-select:none; -webkit-user-select:none; }
+    .stage > .zoomwrap :is(input,textarea,[contenteditable]:not([contenteditable='false'])) {
+      user-select:text; -webkit-user-select:text;
+    }
     .stage.noplan {
       background: #ffffff;
     }
