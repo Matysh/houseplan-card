@@ -2957,10 +2957,11 @@ export async function prepareGoldenScenario(page, scenario) {
           throw Error(`phone target is clipped or too small: ${target.dataset.hp}`);
         if (!rows.some(value => Math.abs(value - y) < 1)) rows.push(y);
       }
+      const isEditor = (scenario.mode ?? 'view') !== 'view';
       const ownedClose = head.querySelector('[data-hp="editor-close"]');
-      if (scenario.mode !== 'view' && !ownedClose) throw Error('phone editor close command is missing');
-      const close = actionsOnly ? root.querySelector('.editbar-end [data-hp="editor-close"]') : ownedClose;
-      if (scenario.mode !== 'view') {
+      if (isEditor && !ownedClose) throw Error('phone editor close command is missing');
+      const close = !isEditor ? null : actionsOnly ? root.querySelector('.editbar-end [data-hp="editor-close"]') : ownedClose;
+      if (isEditor) {
         if (!close) throw Error('phone editor close is missing');
         const r = close.getBoundingClientRect(), limit = actionsOnly ? root.querySelector('ha-card').getBoundingClientRect() : bounds;
         const size = actionsOnly ? 40 : 44;

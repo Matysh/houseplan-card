@@ -78,7 +78,7 @@ try{
   assert.equal(await card.locator('ha-card').getAttribute('data-hp-mode'),'decor');
   await clickHeaderAction(card,'mode-view');await wait();
   const rapidAfter=await snapshot();
-  assert.equal(rapidAfter.camera.zoom,rapidBefore.camera.zoom);
+  assert.ok(Math.abs(rapidAfter.camera.zoom-rapidBefore.camera.zoom)<1e-12, 'rapid retarget preserves zoom within floating-point precision');
   assert.ok(Object.keys(rapidBefore.camera.view).every(k=>Math.abs(rapidBefore.camera.view[k]-rapidAfter.camera.view[k])<1e-9));
   writeFileSync('artifacts/plan-rotation-1070/phone-mode-trace.json',JSON.stringify({records},null,2));
   console.log('PASS',records.map(r=>({mode:r.mode,target:r.target,reduced:r.reduced,maxBudgetDelta:r.maxBudgetDelta,head:r.end.head})));

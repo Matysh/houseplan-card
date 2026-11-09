@@ -35,10 +35,6 @@ export async function headerActionTarget(card, action) {
   const original = card.locator(mode === 'view' ? '.head [data-hp="editor-close"]'
     : mode ? '.head [data-hp="mode-tab"][data-mode="' + mode + '"]' : '.head [data-hp="' + action + '"]');
   if (await original.isVisible()) return waitForHeaderTarget(card, original);
-  if (mode === 'view') {
-    const close = card.locator('.editbar-end [data-hp="editor-close"]:visible').first();
-    if (await close.isVisible()) return waitForHeaderTarget(card, close);
-  }
   const sheet = card.locator('[data-hp="header-actions-menu"]:not([inert])');
   if (!await sheet.isVisible()) await card.locator('[data-hp="header-actions-trigger"]').click();
   const target = sheet.locator('[data-action="' + action + '"]');
