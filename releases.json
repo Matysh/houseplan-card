@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 622,
+  "revision": 623,
   "active": "v1.85.1-beta.2-20261109",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -45904,7 +45904,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.85.1-beta.2",
         "candidate": "0db5a9f7c2b2d9381a1dbc7d640ae51f91f0bb8f",
         "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
         "issues": [
@@ -53606,6 +53606,177 @@
         "selectionDigest": "d8e0f657c1a507eca9b80b8565bb4e62090f0edb452405ba14fd76645a88f55a",
         "status": "not-required",
         "inventoryComplete": true
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.85.1-beta.2",
+          "candidate": "0db5a9f7c2b2d9381a1dbc7d640ae51f91f0bb8f",
+          "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
+          "issues": [
+            {
+              "number": 1344,
+              "commits": [
+                "890a4ada80b4d379aaa523f0c18f96cbb6e046e5"
+              ]
+            },
+            {
+              "number": 1345,
+              "commits": [
+                "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa"
+              ]
+            },
+            {
+              "number": 1346,
+              "commits": [
+                "ce0796e207211f495008ed9b9ce21e031484175c",
+                "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865"
+              ]
+            },
+            {
+              "number": 1347,
+              "commits": [
+                "48778427d68eb886492861d98b8ef453d99d85d5",
+                "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
+                "739b288b9006a233eb8fdb44e165c461625054c3",
+                "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
+                "f7b252d8f0c63e6fa3c87712099b5f06bac010e5"
+              ]
+            },
+            {
+              "number": 1348,
+              "commits": [
+                "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
+                "628ca768782b89a07bb9779f651c6f1cfcd5cb26"
+              ]
+            },
+            {
+              "number": 1349,
+              "commits": [
+                "6cedac4193d114c7eea822f6e06b4fb65181bd9d"
+              ]
+            },
+            {
+              "number": 1350,
+              "commits": [
+                "0d127cd038f4110e7d90cac7004f508f07717fff",
+                "c723c9ba1baf695506f17d643a7eb6ad361c57dd",
+                "f8801ee93a85b1bc981506c5cabe3dbf125807c3"
+              ]
+            },
+            {
+              "number": 1351,
+              "commits": [
+                "5d3a14677c83db84157697f9a425179bc0a02fb4",
+                "60199f149e7653417447ab7b82a0cda6d9a0a86f"
+              ]
+            },
+            {
+              "number": 1352,
+              "commits": [
+                "12605c18b10a439baca2a08308840a5acd308406",
+                "2f8be3041a4b8cb8c34cede5d145e02c86deef5e"
+              ]
+            },
+            {
+              "number": 1353,
+              "commits": [
+                "55569543d09c0fc650b7918e44490ebc9fd88431"
+              ]
+            },
+            {
+              "number": 1354,
+              "commits": [
+                "77792069a99fcb4f9dc0b4c8bc14ee9001e5fb86",
+                "ad794da4050a59757526862d0de8424c642463fc",
+                "ae9b2ae83f841273debc56d953f344b4e9a5561e"
+              ]
+            },
+            {
+              "number": 1356,
+              "commits": [
+                "6d8822ab2c5cc3c70262f9e1dd218c2ba120c231"
+              ]
+            },
+            {
+              "number": 1357,
+              "commits": [
+                "192b3faf1a9206f7927aa5efa0d8aeaebdc8aa2d",
+                "63dd217db4fb0fe2a06780ac873611a36544f7e9",
+                "8c05977f2c0d029c6c3f5ae8ced3f07d4823de3c",
+                "ec8d3e0a235d69786ddedf1bd8b9d3abdbd1f5de"
+              ]
+            },
+            {
+              "number": 1361,
+              "commits": [
+                "63dd217db4fb0fe2a06780ac873611a36544f7e9"
+              ]
+            },
+            {
+              "number": 1362,
+              "commits": [
+                "c27ba8a163900f4165952f752dd8da7cedfff1ae",
+                "f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
+                "f5e65f41061c1dd4838c57c039d7e524bb4cbab7"
+              ]
+            },
+            {
+              "number": 1363,
+              "commits": [
+                "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
+                "aa87b1990ac78e3e553a657bbf3e456bcad430a0",
+                "e061bfff7fe4982e41cc00e68a6b1a5f533c9b36"
+              ]
+            },
+            {
+              "number": 1364,
+              "commits": [
+                "09399a68115e164313430c2facaf7a565b8ed9c8",
+                "136b1dbbe4f55a0e4029c900ef7d00426902b4a1",
+                "556e13dc6e6f9366898abf7dc6b187ae6c67b7a1",
+                "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928"
+              ]
+            },
+            {
+              "number": 1365,
+              "commits": [
+                "300d5338f736f5437bc8756e67b69c9871738597",
+                "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
+                "89d8a177c8f635fbc8cbc1853cc8193ce2c91d71",
+                "98dbf0bbe4147e5a2c80aee6e80ec85076b908f8",
+                "edfff6faf85844d906fed60ab72a979560811ce4"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1344,
+          1345,
+          1346,
+          1347,
+          1348,
+          1349,
+          1350,
+          1351,
+          1352,
+          1353,
+          1354,
+          1356,
+          1357,
+          1361,
+          1362,
+          1363,
+          1364,
+          1365
+        ],
+        "version": "1.85.1-beta.2",
+        "body": "<!-- release: v1.85.1-beta.2 -->\n## Houseplan 1.85.1-beta.2\n\nВторая бета линии **1.85.1**. Изменения относительно beta.1:\n\n- **Одна строка на узком экране.** Название или выбор пространства и кнопка ⋮ теперь стоят рядом. При одном пространстве, в том числе в закреплённой карточке, остаётся его название без выпадающего списка. Настройки пространства и добавление доступны через общее меню действий. (#1364, #1365)\n- **Надёжнее переходы между просмотром и редакторами.** После быстрого переключения не остаются временный поворот и ширина сцены; LED-ленты снова реагируют на действия после выхода из редактора. (#1358, #1361)\n- **Навигация настроек устройства остаётся на месте.** Длинное содержимое прокручивается отдельно от списка разделов; после «Сведения» появился компактный разделитель. (#1354)\n- **Удобнее настройки.** Выпадающий список и подсказка не закрываются от отложенной прокрутки, которая только показала их кнопку. Настоящее перемещение кнопки по-прежнему закрывает меню. (#1356, #1360)\n- **Стабильнее редактирование комнат.** Кнопка настроек комнаты сохраняет перемещённое положение при предпросмотре изменения размера и его отмене. (#1359)\n\nОбновлены проверки реального Home Assistant и визуальные эталоны. (#1357, #1362, #1363)\n\nПосле обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.\n\n---\n\nSecond beta of **1.85.1**. Changes since beta.1:\n\n- **One row on narrow screens.** The space name or selector sits beside the ⋮ button. A single space, including a pinned card, keeps its plain name without a dropdown. Space settings and Add space are available through the shared actions menu. (#1364, #1365)\n- **More reliable View/editor transitions.** Rapid switches no longer leave residual scene rotation or width; LED strip actions work again after leaving an editor. (#1358, #1361)\n- **Device settings navigation stays in place.** Long content scrolls independently from the section list, with a compact divider after Details. (#1354)\n- **Better settings interaction.** A dropdown or Help stays open after a queued scroll that only revealed its trigger. Actual trigger movement still dismisses the menu. (#1356, #1360)\n- **More stable room editing.** A moved room settings button keeps its position during resize preview and cancellation. (#1359)\n\nReal Home Assistant checks and visual references have been updated. (#1357, #1362, #1363)\n\nRestart Home Assistant and reload open Houseplan pages after upgrading.\n",
+        "technical": {
+          "ru": "## v1.85.1-beta.2 — 2026-11-09\n\n- Меню настроек устройства остаётся на месте при прокрутке содержимого; на низких окнах пункты доступны через собственную прокрутку, после «Сведения» добавлен компактный видимый разделитель (#1354).\n- Меню ⋮ остаётся внутри рабочей области шапки и открывается при активном рисовании; keyboard capture сохраняет проверку видимого фокуса, а фасад ждёт ленивую команду (#1365).\n\n- Приняты 58 одобренных кадров stable-аудита; лимит AA-пикселей эквивалентных сеток увеличен до 300 только для 2.5D, с проверкой реального сдвига сцены на 1 px в обеих темах (#1363).\n- В узкой шапке название или выбор пространства и кнопка ⋮ занимают одну строку, в том числе при одном пространстве и в закреплённой карточке; настройки пространства и добавление доступны через меню (#1364).\n\n- Stable smoke проверяет состояние видимой команды скрытых устройств, шапку View на телефоне и явный порядок frozen door-полей (#1362).\n\n- LED-ленты снова реагируют на действия после выхода из редактора в Просмотр (#1361).\n\n- Подсказки настроек не закрываются от отложенной прокрутки, которая уже показала их кнопку; проверка якоря общая с выпадающими списками (#1360).\n\n- После быстрых переходов между Просмотром и редакторами очищаются временный поворот и ширина сцены (#1358).\n- Перемещённая кнопка настроек комнаты сохраняется при предпросмотре размера и его отмене (#1359).\n- Актуализированы браузерные и HA-проверки сохранённых слоёв, компактного меню шапки и прокрутки настроек (#1357).\n\n- Выпадающий список настроек не закрывается от отложенного события прокрутки, которое лишь показало его кнопку; реальное смещение кнопки по-прежнему закрывает меню (#1356).",
+          "en": "## v1.85.1-beta.2 — 2026-11-09\n\n- Keep Device settings navigation in place while the content scrolls, with independently reachable sections on short windows and a compact visible divider after Details (#1354).\n- Keep the narrow header actions popup inside its allocated field and mount it during active drawing; retain native keyboard focus capture and wait for lazy commands in browser fixtures (#1365).\n\n- Accept the 58 owner-reviewed stable-audit frames; calibrate equivalent-grid AA to 300 pixels only in 2.5D, with a real one-pixel scene-shift witness in both themes (#1363).\n- Keep the space name or selector beside a 44px vertical-ellipsis actions menu in a single narrow header row, including single-space panels and pinned cards (#1364).\n\n- Keep stable smoke assertions on the visible hidden-device action, the phone View header and the explicit frozen door field order (#1362).\n\n- Restore LED strip actions after leaving an editor for View (#1361).\n\n- Keep settings Help open after a queued scroll that already revealed its trigger; share the anchor check with dropdowns (#1360).\n\n- Clear residual scene rotation and width after rapid View/editor handoffs (#1358).\n- Keep moved room settings buttons through resize preview and cancellation (#1359).\n- Update stable browser/HA observation for retained layers, compact header actions and independent settings scrolling (#1357).\n\n- Keep settings dropdowns open after a queued scroll that revealed their trigger; actual anchor movement still dismisses the menu (#1356)."
+        },
+        "userChangelog": null
       }
     }
   },
@@ -58149,7 +58320,8 @@
     "ship-review:prepare:8292827d-4640-4485-9596-e2697e2c8805": "e7ff2fb266cad21b54d47224c7a5767e185ba7c52a439da07e97e0d4b79ee359",
     "ship-review:result:a68fb329-29c8-4bff-bd3e-cd9060ceb4a6": "458191b6ec80401fd0d74131c38c63360227e1e3eca1ddf3525120a2dafa510f",
     "release-1851-beta2-publish-1:runner-report": "0863bd98ab8aad64bfb6359e8587351fc0d8ead102981c9a201a9f532fb8799e",
-    "release-1851-beta2-publish-1:metrics": "dbef9d7f77f4290ebe479f58525de268076b9e8ae89fd68ed64a5f0297dfaa0a"
+    "release-1851-beta2-publish-1:metrics": "dbef9d7f77f4290ebe479f58525de268076b9e8ae89fd68ed64a5f0297dfaa0a",
+    "release-1851-beta2-publish-1:prepared:e29523d7-ebd5-4dd5-a8cf-5b5df1839b33": "8dc6ff62f02951dc700a8fd48469a45d032e5dfd5d54ddf6431a5f1d736a03c1"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
