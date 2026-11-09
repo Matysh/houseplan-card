@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8086,
+  "revision": 8087,
   "nextTicket": 339,
   "nextFence": 339,
   "tasks": {
@@ -497,39 +497,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "d5f9aa516768a8c27281d9c118c10db3ae62fc73"
-      }
-    },
-    "1252": {
-      "issue": 1252,
-      "branch": "codex/1252-sparse-coordinator",
-      "track": "show",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-      "mergedSha": "082f99ccf9c9667cb17edae74f529e9e7695872a",
-      "mergedAt": 1793733506390,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1252:1:3c534d3cd09ad85beea7a227b25565e78fb0d56a:5126d7401c4755f6612aa27aaddbb26c9f3ca171",
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1253": {
@@ -4259,7 +4226,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "69a565c1fff387657b44ad9327dd2ab39cf4526b"
       }
     }
   },
@@ -4450,7 +4418,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:42593713671:1:1370": {
+      "digest": "6c1d06061f9faf26e333567cd982c9404d66fca27fe85fcc3018b889754c6ce3",
+      "issue": 1370,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1370,
+        "at": 1794216672402,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "69a565c1fff387657b44ad9327dd2ab39cf4526b"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "5f690dbdf8064bbdc159388c963423590317163f",
     "status": "delivered",
