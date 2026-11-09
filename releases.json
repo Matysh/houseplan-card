@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 616,
+  "revision": 617,
   "active": "v1.85.1-beta.2-20261109",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -45558,14 +45558,14 @@
       "kind": "beta",
       "branch": "release/1.85.1-beta.2",
       "sourceSha": "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928",
-      "sha": "d9e4f70e0b3b5a572af18f14b37698c1174b26be",
+      "sha": "0db5a9f7c2b2d9381a1dbc7d640ae51f91f0bb8f",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "d9e4f70e0b3b5a572af18f14b37698c1174b26be",
+        "candidate": "0db5a9f7c2b2d9381a1dbc7d640ae51f91f0bb8f",
         "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
         "issues": [
           {
@@ -45691,6 +45691,16 @@
               "556e13dc6e6f9366898abf7dc6b187ae6c67b7a1",
               "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928"
             ]
+          },
+          {
+            "number": 1365,
+            "commits": [
+              "300d5338f736f5437bc8756e67b69c9871738597",
+              "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
+              "89d8a177c8f635fbc8cbc1853cc8193ce2c91d71",
+              "98dbf0bbe4147e5a2c80aee6e80ec85076b908f8",
+              "edfff6faf85844d906fed60ab72a979560811ce4"
+            ]
           }
         ]
       },
@@ -45711,9 +45721,10 @@
         1361,
         1362,
         1363,
-        1364
+        1364,
+        1365
       ],
-      "reviewRequired": false,
+      "reviewRequired": true,
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
@@ -45723,16 +45734,15 @@
           "to": "d9e4f70e0b3b5a572af18f14b37698c1174b26be",
           "syncMode": "merge",
           "status": "pending"
+        },
+        {
+          "from": "d9e4f70e0b3b5a572af18f14b37698c1174b26be",
+          "to": "0db5a9f7c2b2d9381a1dbc7d640ae51f91f0bb8f",
+          "syncMode": "merge",
+          "status": "pending"
         }
       ],
-      "diagnostics": [],
-      "shipReview": {
-        "sha": "d9e4f70e0b3b5a572af18f14b37698c1174b26be",
-        "requestId": "ship-review:d069ad9afe5ac7c8e850548587331e939d9295bd3c4c18de8d85c21bd1d06a68",
-        "selectionDigest": "d8e0f657c1a507eca9b80b8565bb4e62090f0edb452405ba14fd76645a88f55a",
-        "status": "accepted",
-        "inventoryComplete": true
-      }
+      "diagnostics": []
     }
   },
   "published": {
@@ -50269,7 +50279,8 @@
     "v1-85-1-beta-2-20261109:create": "ebcee28ceafbede721c67100c558038346706a361363687d05cedcaa83dfe1f2",
     "v1-85-1-beta-2-20261109:prepare": "c0ac755baf35a6be39693c9de337e7b58ce2693a336828abf46386c06b368491",
     "ship-review:prepare:55dda2a3-4b29-48cb-a414-8b77c1bebd66": "01c553ab6dc1dbf9211638d673a883d9046b0fc7e4a38ef73d22bab9118cba55",
-    "ship-review:result:ad9fb8fe-b2bf-4e11-971e-36c72da43308": "cd08564c5b764b2da3c7e5a82ea194426c73fb398aa7e65109e31a2d733213a8"
+    "ship-review:result:ad9fb8fe-b2bf-4e11-971e-36c72da43308": "cd08564c5b764b2da3c7e5a82ea194426c73fb398aa7e65109e31a2d733213a8",
+    "release-1851-beta2-final-fix-1": "8d97b68099f4cbe12af9e7120fbcd460f2fd675d66532eec2c809f846e48c98f"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
