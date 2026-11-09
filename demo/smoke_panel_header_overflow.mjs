@@ -86,17 +86,17 @@ try {
     check('width'+row.width+'noOuterReserve',!row.outer&&Math.abs(row.head.y-row.panel.y)<=1);
     check('width'+row.width+'noHorizontalOverflow',row.scroll<=row.head.width+1);
     check('width'+row.width+'allControlsWithinHeader',row.controls.every(c=>c.rect.x>=row.head.x-1&&c.rect.right<=row.head.right+1&&c.rect.y>=row.head.y&&c.rect.bottom<=row.head.bottom+1));
-    check('width'+row.width+'actionsAvailable',row.phase===5 ? row.controls.length===1&&row.first==='header-actions-trigger' : !row.gear&&row.spaceSettings&&['mode-tab','settings','pdf','support','hidden-devices','space-add'].every(kind=>row.controls.some(c=>c.kind===kind)));
-    check('width'+row.width+'menuFirst44',row.phase===5 ? row.controls[0]?.rect.width>=44&&row.controls[0]?.rect.height>=44 : row.first==='panel-menu'&&row.menu?.width>=44&&row.menu?.height>=44);
+    check('width'+row.width+'actionsAvailable',row.phase===5 ? row.controls.length===2&&row.first==='panel-menu'&&row.controls[1].kind==='header-actions-trigger' : !row.gear&&row.spaceSettings&&['mode-tab','settings','pdf','support','hidden-devices','space-add'].every(kind=>row.controls.some(c=>c.kind===kind)));
+    check('width'+row.width+'menuFirst44',row.phase===5 ? row.controls.every(c=>c.rect.width>=44&&c.rect.height>=44) : row.first==='panel-menu'&&row.menu?.width>=44&&row.menu?.height>=44);
     check('width'+row.width+'rotationRetained',row.phase===5 ? row.rotations.length===0 : row.rotations.length===2&&row.rotations.every(r=>r.width>=44&&r.height>=44));
     check('width'+row.width+'metricTreeRetired',row.metrics===0);
-    check('width'+row.width+'singleRow',row.rows===1);
+    check('width'+row.width+'ordinaryRowsFit',row.rows<=(row.phase===4?2:1));
     if(row.phase!==5&&row.zoom===0) check('width'+row.width+'rotationEndRounded',parseFloat(row.rightRadius)>=6);
   }
   const classify=row=>row.phase;
   const pivot=evidence.widths.findIndex(row=>row.width===320)+1;
   const down=evidence.widths.slice(0,pivot).map(classify), up=evidence.widths.slice(pivot).map(classify);
-  check('allOrderedObservableStages',JSON.stringify([...new Set(down)]),JSON.stringify([0,1,2,3,5]));
+  check('allOrderedObservableStages',JSON.stringify([...new Set(down)]),JSON.stringify([0,1,2,3,4,5]));
   check('orderedReduction',down.every((phase,i)=>i===0||phase>=down[i-1]));
   check('reverseRestoration',up.every((phase,i)=>i===0||phase<=up[i-1])&&up.at(-1)===0);
   // Find the final single-row physical minimum: no guessed product threshold.

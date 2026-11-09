@@ -38,7 +38,8 @@ try {
  check('measured-transition-exists',narrow.length>0&&normal.length>0);
  check('normal-before-extreme',widths.every((r,i)=>!i||r.phase>=widths[i-1].phase));
  check('space-beside-actions',narrow.every(r=>r.spaceBeside&&r.rows===1));
- check('all-adaptive-states-stay-one-row',widths.every(r=>r.rows===1));
+ check('ordinary-states-fit-two-rows',widths.every(r=>r.rows<=(r.phase===4?2:1)));
+ check('ordinary-second-row-is-preserved',widths.some(r=>r.phase===4&&r.rows===2));
  check('icon-only-vertical-actions',narrow.every(r=>r.triggerGlyph==='mdi:dots-vertical'&&r.triggerText===''));
  check('extreme-only-one-button',narrow.every(r=>r.buttons.length===1&&r.buttons[0].hp==='header-actions-trigger'));
  check('no-overflow',widths.every(r=>r.scroll<=r.width+1&&r.metrics===0));
@@ -55,7 +56,8 @@ try {
  await page.unroute(/\/header-actions-menu-[^/?]+\.js(?:\?.*)?$/);
  await trigger.click();await menu.waitFor();
  const items=await menu.locator('button').evaluateAll(bs=>bs.map(b=>({action:b.dataset.action,label:b.textContent.trim(),height:b.getBoundingClientRect().height})));
- check('all-owned-commands', ['space-settings','space-add','mode-plan','mode-devices','mode-decor','rotate-left','rotate-right','zoom-in','zoom-out','zoom-fit','hidden-devices','settings','pdf','support','summary-settings','summary-toggle'].every(id=>items.some(i=>i.action===id)));
+ check('all-owned-commands', ['space-settings','space-add','mode-plan','mode-devices','mode-decor','rotate-left','rotate-right','hidden-devices','settings','pdf','support','summary-settings','summary-toggle'].every(id=>items.some(i=>i.action===id)));
+ check('menu-omits-zoom-and-separate-ha-menu',!items.some(i=>['zoom-in','zoom-out','zoom-fit','panel-menu'].includes(i.action)));
  check('menu-touch-targets-and-labels',items.every(i=>i.height>=44&&i.label.length>0));
  await trigger.click();await menu.waitFor({state:'hidden'});
  check('pointer-trigger-closes',await trigger.getAttribute('aria-expanded'),'false');
@@ -75,13 +77,13 @@ try {
  await trigger.click();await menu.locator('[data-action="mode-plan"]').click();await settle();
  check('editor-navigation',await page.evaluate(()=>window.__card._mode),'plan');
  // A wide window with Properties leaves a narrower head; the popup must
- // remain reachable inside that head instead of falling under Properties.
+ // stays reachable above Properties while using the whole House Plan field (#1371).
  await size(1024);
  check('properties-case-is-compact',(await read()).phase,5);
  check('properties-case-has-real-panel',await card.locator('[data-hp="properties-panel"]').isVisible());
  await trigger.click();await menu.waitFor();
- check('popup-stays-inside-head',await menu.evaluate(e=>{
-  const h=window.__card.renderRoot.querySelector('.hdr>.head').getBoundingClientRect(),r=e.getBoundingClientRect();
+ check('popup-stays-inside-houseplan-field',await menu.evaluate(e=>{
+  const h=window.__card.getBoundingClientRect(),r=e.getBoundingClientRect();
   return r.left>=h.left&&r.right<=h.right;
  }));
  await menu.locator('[data-action="mode-view"]').click({timeout:5000});await settle();

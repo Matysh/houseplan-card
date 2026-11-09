@@ -125,6 +125,12 @@ assert.equal(await field.evaluate(el=>el.selectionEnd-el.selectionStart),22);
 await field.fill(originalText);
 await spaceDialog.locator('[data-hp="dialog-cancel"]').last().click();await spaceDialog.waitFor({state:'detached'});
 check('nativeDialogTextSelectionRemainsAvailable',true);
+await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{cfg.spaces[0].title='A very long ground floor name with kitchen and guest rooms';cfg.spaces[1].title='Second floor with bedrooms and office';}));
+for(const language of ['en','ru','de','fr']){
+ await page.evaluate(language=>{const c=window.__card;c.hass={...c.hass,language,locale:{...c.hass.locale,language}};},language);
+ for(const width of [1440,800,390]){await resize(width);const row=await readHeader();assert.equal(row.overflow,false);assert.ok(row.rows<=2);}
+}
+check('longNamesAndFourLocalesStayWithinTwoRows',true);
 await page.emulateMedia({reducedMotion:'reduce'});await resize(390);await trigger.click();await menu.waitFor();
 assert.equal(await menu.evaluate(el=>el.getAnimations().length),0);await page.keyboard.press('Escape');
 assert.equal(await card.locator('[data-hp="header-actions-menu"]').count(),0);check('reducedMotionRetiresWithoutAnimation',true);
