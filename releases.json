@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 658,
+  "revision": 659,
   "active": "v1.85.1-beta.3-20261109",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -54572,7 +54572,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.85.1-beta.3",
@@ -62376,7 +62376,8 @@
           "en": "## v1.85.1-beta.3 — 2026-11-09\n\n- Accept the four additional owner-reviewed header frames recovered by #1372, preserving their exact image hashes and comparison thresholds (#1373).\n\n- Align browser/golden/HA checks with the two-row intrinsic header, separate HA control and 40px stacked editor buttons; wait for painted native targets and the adopted read-only state, and refresh only the 16 owner-approved frames (#1372).\n\n- Keep ordinary header controls in two rows before collapsing; reveal a full-width, content-sized actions menu with source icons, native HA sidebar state and stacked editor history controls. Preserve immediate panning after double-click fit, pointer-only hover and keyboard focus when the header collapses (#1371).\n\n- Open settings through the visible header action in the empty-backup import smoke, preserving its clean mutation guard after narrow-header menu changes (#1370)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.85.1-beta.3"
     }
   },
   "published": {
@@ -66944,7 +66945,8 @@
     "ship-review:result:4d1c432e-9617-432f-9078-75d1d28b075c": "69ae74f359eb7e4018bbfa9affa5c7bf014587ea6fb30fff0fcfcdec67ed4649",
     "beta1851-3-20261109-publish:runner-report": "2afe23c7ce1fb1769ea70d09e859853bbf8789142fcb79c5551409d8b0272875",
     "beta1851-3-20261109-publish:metrics": "4581199f2cdf8315c0e60f764515bf2806ae184b9408298285491f70b33ed013",
-    "beta1851-3-20261109-publish:prepared:b8a6a109-7700-410d-b724-ea72b91d284f": "b7b8e839a0225e2049efa5675a482cde1abc42d064dcf168368c35a207c94b06"
+    "beta1851-3-20261109-publish:prepared:b8a6a109-7700-410d-b724-ea72b91d284f": "b7b8e839a0225e2049efa5675a482cde1abc42d064dcf168368c35a207c94b06",
+    "beta1851-3-20261109-publish:started:658": "a272249f4e292fb1009c4a1a090265089ce630803f4c0a4c4b663e4d2380c0f1"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
