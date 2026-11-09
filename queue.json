@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7888,
+  "revision": 7889,
   "nextTicket": 335,
   "nextFence": 335,
   "tasks": {
@@ -4565,19 +4565,6 @@
           "eventId": "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:3:return:return:1366"
         },
         "delivered": true
-      }
-    },
-    "finish:2dcb9df4-1ed7-42bd-ab90-f9d0587cb03f": {
-      "digest": "c2ae5ecdae441188b9f6061f833c02c9a8b453b2e024a5febc197090b46f4581",
-      "issue": 1367,
-      "message": {
-        "kind": "queued",
-        "issue": 1367,
-        "at": 1794191647568,
-        "entry": 2,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "4f9f245f35b316c5ced02df44e4c575a86371f8b"
       }
     },
     "finish:2dcb9df4-1ed7-42bd-ab90-f9d0587cb03f:finish:1:admit": {
