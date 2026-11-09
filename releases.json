@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 676,
+  "revision": 677,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -62784,6 +62784,12 @@
           "status": "completed",
           "branch": "release/1.85.1-beta.2",
           "sha": "0db5a9f7c2b2d9381a1dbc7d640ae51f91f0bb8f"
+        },
+        "return-to-dev": {
+          "status": "running",
+          "issue": 1374,
+          "branch": "issue/1374-release-return-2892d28f49b4",
+          "worktree": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/process-next/return-worktrees/52610e210052/artifacts/process-next/return-worktrees/2892d28f49b4"
         }
       }
     }
@@ -67381,7 +67387,8 @@
     "beta1851-3-20261109-publish:completion:571a50e5-392b-4402-928c-8462f6f43d4e": "2b0059d07a1f64a321d1781f1a69c6527ee899362e080c21de46a20e21876b75",
     "beta1851-3-20261109-publish:completion:46c5f1f3-de0c-414c-a344-ba0e9076d4bf": "603a08546d08105584a1a12989d9127c9accd989aa4497d66bd1ab82a29fe1c4",
     "beta1851-3-20261109-publish:completion:e29562b3-eec5-407d-8e17-67f12c59abd5": "38e9307f4d096e1a4682fea3829b24ce85e39d1758d9783abbe5517658d57a33",
-    "beta1851-3-20261109-publish:completion:ddb90c8f-44e6-499a-9123-454e1186f6c3": "f35d9296a69a4c3e962ab85959d35063773be51aa514b19acec1a706e03c61c6"
+    "beta1851-3-20261109-publish:completion:ddb90c8f-44e6-499a-9123-454e1186f6c3": "f35d9296a69a4c3e962ab85959d35063773be51aa514b19acec1a706e03c61c6",
+    "beta1851-3-20261109-publish:completion:d81c68ba-826d-40b2-93d6-d689a126f6aa": "9be7426b6e30f3d1ce8117332fe6add57b1e5d5ec62effeaf214d300d1d52c5e"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
