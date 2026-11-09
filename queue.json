@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7882,
-  "nextTicket": 334,
+  "revision": 7883,
+  "nextTicket": 335,
   "nextFence": 334,
   "tasks": {
     "1193": {
@@ -4245,19 +4245,18 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/issue-1367-support-menu-smoke",
-      "materialSha": "87ad9f60491f10ddd1107d7aec77252a2b6c8a4e",
+      "materialSha": "4f9f245f35b316c5ced02df44e4c575a86371f8b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 333,
-      "queued": false,
+      "ticket": 334,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794191507540,
-      "reviewEntry": 1,
+      "readyAt": 1794191647568,
+      "reviewEntry": 2,
       "patchId": "9eb5333afa84d0edf122e1ef6815463e3f1b3fbf",
       "changedFiles": [
         "demo/smoke_support_feedback.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4469,7 +4468,9 @@
       "runId": 42546494376
     }
   },
-  "waiting": [],
+  "waiting": [
+    1367
+  ],
   "active": null,
   "events": {
     "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:2:synchronized": {
@@ -4641,6 +4642,19 @@
           "detail": "Браузер: support feedback: failed",
           "eventId": "finish:06e1a3c3-3618-4946-9427-4630aff706d9:finish:3:return:return:1367"
         }
+      }
+    },
+    "finish:2dcb9df4-1ed7-42bd-ab90-f9d0587cb03f": {
+      "digest": "c2ae5ecdae441188b9f6061f833c02c9a8b453b2e024a5febc197090b46f4581",
+      "issue": 1367,
+      "message": {
+        "kind": "queued",
+        "issue": 1367,
+        "at": 1794191647568,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "4f9f245f35b316c5ced02df44e4c575a86371f8b"
       }
     }
   },
