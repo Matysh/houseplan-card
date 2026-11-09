@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 652,
+  "revision": 653,
   "active": "v1.85.1-beta.3-20261109",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -54219,14 +54219,14 @@
       "kind": "beta",
       "branch": "release/1.85.1-beta.3",
       "sourceSha": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5",
-      "sha": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5",
+      "sha": "2892d28f49b424dc0668ad1203568532c68dff85",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
-        "tag": "v1.85.1-beta.3",
-        "candidate": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5",
+        "tag": null,
+        "candidate": "2892d28f49b424dc0668ad1203568532c68dff85",
         "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
         "issues": [
           {
@@ -54436,7 +54436,14 @@
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
-      "portToDev": [],
+      "portToDev": [
+        {
+          "from": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5",
+          "to": "2892d28f49b424dc0668ad1203568532c68dff85",
+          "syncMode": "merge",
+          "status": "pending"
+        }
+      ],
       "diagnostics": []
     }
   },
@@ -58999,7 +59006,8 @@
     "release-1851-beta2-publish-1:completion:a56896b2-e5bb-4bc8-9951-4a1f30c25c62": "6e6bf45f75582a2863dcdfcce8629c8a5eb4c954ab943bf60bd34eb086bcc272",
     "release-1851-beta2-publish-1:completion:b5038aaf-1300-454f-af1d-d4ff0901ce4c": "257c7335b937ee7d4667e1a79634d3959031b82c611cf0faaeda48cf1cb1a7a6",
     "release-1851-beta2-publish-1:completion:10069eb9-b60e-4b2c-8620-d06a36ab4507": "ecd184f46e03cb9b0d3c50022e41878d9a1d1193a8b254aa44109a7a0cb2aa75",
-    "beta1851-3-20261109-create": "c09c7546b390b3d413ec360b642e3ecaae1c22d7df53a9ffafa10171090d97c0"
+    "beta1851-3-20261109-create": "c09c7546b390b3d413ec360b642e3ecaae1c22d7df53a9ffafa10171090d97c0",
+    "beta1851-3-20261109-prepared": "4fb2d821ca1182b6efdf37142fdc1c7cefd7c6f08c916a763f845b9395811627"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
