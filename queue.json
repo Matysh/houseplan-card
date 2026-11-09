@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 8406,
-  "nextTicket": 345,
+  "revision": 8407,
+  "nextTicket": 346,
   "nextFence": 345,
   "tasks": {
     "1193": {
@@ -4239,14 +4239,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1375-mdi-picker-kit",
-      "materialSha": "d8a2139227a8ab591da54c77dff1d3aff8eb48f8",
+      "materialSha": "8474326a1425d5cccb37c289d64b4498db6a4c8a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 344,
-      "queued": false,
+      "ticket": 345,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794249909923,
-      "reviewEntry": 1,
+      "readyAt": 1794251116598,
+      "reviewEntry": 2,
       "patchId": "70f97906028df1704db2987948031badd537dafb",
       "changedFiles": [
         "THIRD_PARTY_NOTICES.md",
@@ -4286,7 +4286,6 @@
         "test/icon-picker.test.mjs",
         "tsconfig.test.json"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4484,7 +4483,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1375
+  ],
   "active": null,
   "events": {
     "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:2:synchronized": {
@@ -4580,6 +4581,19 @@
           "detail": "Поведение: test/i18n-dead-keys.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
           "eventId": "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:3:return:return:1375"
         }
+      }
+    },
+    "finish:758735eb-f0f6-450a-bcef-26a3ea164998": {
+      "digest": "a1ec44d07e9c0e6d61f45261b01bbf1fbee306790ae8844c56115d8db53ae8df",
+      "issue": 1375,
+      "message": {
+        "kind": "queued",
+        "issue": 1375,
+        "at": 1794251116598,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "8474326a1425d5cccb37c289d64b4498db6a4c8a"
       }
     }
   },
