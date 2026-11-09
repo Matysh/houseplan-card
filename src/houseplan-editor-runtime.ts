@@ -7965,7 +7965,8 @@ public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): voi
         showEntities: d.bindingKind === 'entity' && !!this.host._fullRegistryHass.entities[d.bindingRef || '']?.device_id,
         bindingFilter: '',
         icon: d.marker?.icon || '',
-        autoIcon: d.icon || '',
+        // Resolve from the binding/rules, independently of a persisted custom icon.
+        autoIcon: this.host._autoIconForBinding(d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef),
         display: normalizeDeviceDisplay(d.marker?.display),
         rippleColor: safeStoredColor(d.marker?.ripple_color, ''),
         rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 1.5,
@@ -8043,7 +8044,7 @@ public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): voi
     } else {
       this.host._markerDialog = {
         name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
-        showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
+        showEntities: false, bindingFilter: '', icon: '', autoIcon: this.host._autoIconForBinding('virtual'),
         display: 'badge', rippleColor: '', rippleSize: 1.5, size: 1, angle: 0,
         tapAction: 'info', tapActionTouched: false,
         originalHasTapAction: false, originalTapAction: undefined, tapHintAnnouncement: '',

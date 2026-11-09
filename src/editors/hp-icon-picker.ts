@@ -5,11 +5,11 @@ import { floatingViewport, placeFloatingSurface } from '../floating-surface';
 import { floatingSurfaceCss } from '../styles/floating-surface.styles';
 import { selectionListCss } from '../styles/selection-list.styles';
 import { textFieldsCss, CARD_DIALOG_FORM_KIT } from '../styles/form-kit.styles';
-import { settingsActionTransition } from '../styles/settings-action.styles';
+import { settingsActionTransition, settingsChoiceHover } from '../styles/settings-action.styles';
 import { controlMotion, controlMotionReduced, controlSurfaceFrames } from '../ui-motion';
 import { controlReducedMotionCss } from '../styles/ui-motion.styles';
 
-interface PickerLabels { search:string; clear:string; use:string; loading:string; error:string; retry:string; refine:string; }
+interface PickerLabels { search:string; clear:string; use:string; loading:string; error:string; retry:string; }
 let catalogRetry = 0;
 let catalogPromise: Promise<ReadonlyMap<string,string>> | undefined;
 function loadCatalog(): Promise<ReadonlyMap<string,string>> {
@@ -33,7 +33,7 @@ export class HpIconPicker extends LitElement {
   labels!: PickerLabels;
   private _open = false;
   private _query = '';
-  private _active = 0;
+  private _active = -1;
   private _catalog?: ReadonlyMap<string,string>;
   private _failed = false;
   private readonly uid = 'hp-icons-' + ++sequence;
@@ -47,7 +47,7 @@ export class HpIconPicker extends LitElement {
     + textFieldsCss(CARD_DIALOG_FORM_KIT,'input') + `
     :host { display:block; min-width:0; font:inherit; }
     * { box-sizing:border-box; }
-    .field { position:relative; display:flex; align-items:center; width:100%; height:44px; overflow:hidden;
+    .field { cursor:pointer; position:relative; display:flex; align-items:center; width:100%; height:44px; overflow:hidden;
       border:1px solid var(--hpf-line,var(--divider-color,#7776)); border-radius:8px;
       background:var(--hpf-control-surface,var(--hpf-canvas,var(--secondary-background-color,#282930)));
       color:var(--primary-text-color,#e6e7eb); }
@@ -55,11 +55,14 @@ export class HpIconPicker extends LitElement {
     .trigger { display:flex; align-items:center; gap:14px; flex:1; min-width:0; height:42px;
       padding:0 14px; text-align:start; scroll-margin-block:2px; }
     .trigger span { padding-inline-end:24px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .clear { margin-inline-end:34px; width:42px; height:42px; flex:none; padding:9px; }
+    .clear { display:inline-flex; align-items:center; justify-content:center; margin-inline-end:34px; width:40px; height:40px; flex:none; padding:0; border-radius:50%; }
     svg,ha-icon { display:block; width:24px; height:24px; flex:none; fill:currentColor; --mdc-icon-size:24px; }
-    .arrow { position:absolute; inset-inline-end:14px; width:18px; height:18px; pointer-events:none; }
-    .field:focus-within { border-color:var(--hpf-accent,var(--primary-color)); box-shadow:inset 0 0 0 1px var(--hpf-accent,var(--primary-color)); }
-    button:focus-visible,[role=option].active { outline:2px solid var(--hpf-accent,var(--primary-color)); outline-offset:-3px; }
+    .arrow { position:absolute; inset-inline-end:14px; width:18px; height:18px; pointer-events:none; transform:rotate(0deg);
+      transition:transform ${controlMotion.paint.duration}ms ${controlMotion.paint.easing}; }
+    .trigger[aria-expanded=true] .arrow { transform:rotate(180deg); }
+    .field:focus-within { border-color:var(--hpf-accent,var(--primary-color)); box-shadow:none; }
+    .clear:focus-visible,[role=option].active { outline:2px solid var(--hpf-accent,var(--primary-color)); outline-offset:-3px; }
+    .trigger:focus-visible { outline:none; }
     .menu { position:fixed; inset:auto; margin:0; padding:5px; z-index:10000; width:320px;
       max-width:calc(100vw - 16px); max-height:360px; overflow:hidden; font:inherit; opacity:0; }
     .menu:popover-open,.menu:not([popover]) { display:flex; flex-direction:column; }
@@ -72,10 +75,10 @@ export class HpIconPicker extends LitElement {
     [role=option] span { min-width:0; flex:1; }
     .status { flex:none; padding:8px 12px; color:var(--secondary-text-color); font-size:13px; }
     .retry { min-height:44px; padding:10px 12px; text-decoration:underline; }
-    @media(hover:hover) { .field:hover { border-color:var(--hpf-accent,var(--primary-color)); } .clear:hover { background:var(--hpf-tint); } }
+    @media(hover:hover) and (pointer:fine) { .field:hover { ${settingsChoiceHover} } .clear:hover { background:rgb(127 127 127 / .16); } }
     @media(max-width:550px) { .field,input { font-size:16px; } }
     .field,button,[role=option] { ` + settingsActionTransition + ' }'
-    + controlReducedMotionCss('.field,button,.menu,[role=option]'));
+    + controlReducedMotionCss('.field,button,.arrow,.menu,[role=option]'));
   connectedCallback(): void { super.connectedCallback(); void this.load(); }
   disconnectedCallback(): void { this.close(false,true); super.disconnectedCallback(); }
   private async load(): Promise<void> {
@@ -107,9 +110,9 @@ export class HpIconPicker extends LitElement {
     return html`<div class="menu" popover=${popover?'manual':nothing} @keydown=${(e:KeyboardEvent)=>this.keydown(e)}>
       <input type="search" role="combobox" autocomplete="off" spellcheck="false" aria-label=${this.labels.search}
         aria-expanded="true" aria-controls=${this.uid} aria-autocomplete="list"
-        aria-activedescendant=${options.length ? this.uid+'-'+this._active : nothing}
+        aria-activedescendant=${this._active >= 0 && this._active < options.length ? this.uid+'-'+this._active : nothing}
         placeholder=${this.labels.search} .value=${this._query} @input=${(e:Event)=>{
-          this._query=(e.target as HTMLInputElement).value; this._active=0;
+          this._query=(e.target as HTMLInputElement).value; this._active=-1;
         }} />
       <div class="list" role="listbox" id=${this.uid} aria-label=${this.label}>
         ${options.map((name,i)=>html`<div role="option" id=${this.uid+'-'+i} data-icon=${name}
@@ -118,7 +121,7 @@ export class HpIconPicker extends LitElement {
           ${this.glyph(name)}<span>${this._catalog?.has(name)?name:this.labels.use+' '+name}</span>
           ${name===this.effective?html`<b aria-hidden="true">✓</b>`:nothing}</div>`)}
       </div>
-      <div class="status" role="status">${this._failed?this.labels.error:!this._catalog?this.labels.loading:options.length>=60?this.labels.refine:options.length?nothing:this.labels.refine}</div>
+      ${this._failed || !this._catalog ? html`<div class="status" role="status">${this._failed?this.labels.error:this.labels.loading}</div>` : nothing}
       ${this._failed?html`<button class="retry" type="button" @click=${()=>void this.load()}>${this.labels.retry}</button>`:nothing}
     </div>`;
   }
@@ -148,7 +151,7 @@ export class HpIconPicker extends LitElement {
   private async open():Promise<void> {
     if(this._open)return;
     const win=this.floating.window(); if(!win)return;
-    this.close(false,true); this._open=true; this._query=''; this._active=0;
+    this.close(false,true); this._open=true; this._query=''; this._active=-1;
     this.fallback=!this.floating.usesPopover();
     if(this._failed)void this.load();
     await this.updateComplete; if(!this._open)return;
@@ -190,9 +193,9 @@ export class HpIconPicker extends LitElement {
     if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();this.close(true);return;}
     if(e.key==='Tab'){this.close(true);return;}
     const options=this.options;
-    if(e.key==='Enter'){e.preventDefault();if(options[this._active])this.choose(options[this._active]);return;}
+    if(e.key==='Enter'){e.preventDefault();const first=this._active < 0 ? 0 : this._active;if(options[first])this.choose(options[first]);return;}
     if(!['ArrowDown','ArrowUp'].includes(e.key))return;
-    e.preventDefault();this._active=options.length?(this._active+(e.key==='ArrowDown'?1:-1)+options.length)%options.length:0;
+    e.preventDefault();this._active=options.length?(this._active < 0 ? (e.key==='ArrowDown'?0:options.length-1) : (this._active+(e.key==='ArrowDown'?1:-1)+options.length)%options.length):-1;
     void this.updateComplete.then(()=>this.surface()?.querySelector('#'+this.uid+'-'+this._active)?.scrollIntoView({block:'nearest'}));
   }
   render():TemplateResult {
@@ -200,7 +203,7 @@ export class HpIconPicker extends LitElement {
       aria-haspopup="listbox" aria-expanded=${String(this._open)} aria-controls=${this.uid}
       @keydown=${(e:KeyboardEvent)=>this.keydown(e)} @click=${(e:MouseEvent)=>{e.stopPropagation();this._open?this.close(true):void this.open();}}>
       ${this.glyph(this.effective)}<span>${this.effective||'mdi:…'}</span><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5z"></path></svg></button>
-      ${this.value?html`<button class="clear" type="button" aria-label=${this.labels.clear} @click=${(e:MouseEvent)=>{e.stopPropagation();this.choose('');}}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18.3 5.7-1.4-1.4L12 9.2 7.1 4.3 5.7 5.7l4.9 4.9-4.9 4.9 1.4 1.4 4.9-4.9 4.9 4.9 1.4-1.4-4.9-4.9z"></path></svg></button>`:nothing}</div>
+      ${this.value?html`<button class="clear" type="button" aria-label=${this.labels.clear} @click=${(e:MouseEvent)=>{e.stopPropagation();this.choose('');}}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12Z"></path></svg></button>`:nothing}</div>
       ${!this.fallback?this.menu(true):nothing}`;
   }
 }

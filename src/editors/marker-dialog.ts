@@ -606,7 +606,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     const iconControl = html`<hp-icon-picker data-hp="field" data-field="marker-icon" id="marker-icon"
       .value=${d.icon} .autoIcon=${d.autoIcon} .label=${t('marker.icon_label')}
       .labels=${{ search:st('marker.icon_search'), clear:st('marker.icon_clear'), use:st('marker.icon_use'),
-        loading:st('marker.icon_loading'), error:st('marker.icon_load_error'), retry:st('marker.icon_retry'), refine:st('marker.icon_refine') }}
+        loading:st('marker.icon_loading'), error:st('marker.icon_load_error'), retry:st('marker.icon_retry') }}
       @value-changed=${(e:CustomEvent<{value:string}>) => {this.host._markerDialog={...d,icon:e.detail.value};}}></hp-icon-picker>`;
     const badgeToggleDisabled = displayIsNeutral(d.display) || (!badgeCandidates.length && !d.valueBadgeSource);
     const appearance = formCard({

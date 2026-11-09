@@ -6,7 +6,6 @@
   "marker.icon_loading": "Chargement des icônes…",
   "marker.icon_load_error": "Impossible de charger les icônes. Vous pouvez saisir un nom manuellement.",
   "marker.icon_retry": "Réessayer",
-  "marker.icon_refine": "Affinez la recherche pour trouver une icône.",
   "marker.more_info_search": "Rechercher un nom ou entity_id…",
   "marker.more_info_entity": "Ouvrir dans Home Assistant",
   "marker.more_info_auto": "Auto",

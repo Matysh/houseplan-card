@@ -6,7 +6,6 @@
   "marker.icon_loading": "Symbole werden geladen…",
   "marker.icon_load_error": "Symbole konnten nicht geladen werden. Der Name kann weiterhin eingegeben werden.",
   "marker.icon_retry": "Erneut versuchen",
-  "marker.icon_refine": "Suche verfeinern, um weitere Symbole zu finden.",
   "marker.more_info_search": "Nach Name oder entity_id suchen…",
   "marker.more_info_entity": "In Home Assistant öffnen",
   "marker.more_info_auto": "Auto",

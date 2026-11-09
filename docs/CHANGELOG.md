@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Polish the local MDI picker against the accepted UI Lab reference: reset to the current automatic icon, share select hover paint, centre the circular clear target, rotate the arrow and start search without a focused result or empty hint strip. Suppress the browser tap overlay through shared floating UI Kit styles, with Chromium/WebKit mobile and persistent open/hover goldens (#1376).
+
 - Replace the HA device icon picker adapter with a local UI Kit field, searchable lazy MDI catalog and SVG previews; preserve custom names, automatic reset and dialog keyboard behavior, and cover the visible picker in release goldens (#1375).
 
 ## v1.85.1-beta.3 — 2026-11-09

@@ -1,6 +1,9 @@
 import { controlMotion } from '../ui-motion';
 import { controlReducedMotionCss } from './ui-motion.styles';
 
+/** Shared hover paint for outlined choice fields (select and MDI picker). */
+export const settingsChoiceHover = 'border-color:var(--hpf-accent,var(--primary-color,#03a9f4));background:var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,var(--card-background-color,#202126)));';
+
 /** Shared interaction paint for settings actions, confirmations and pickers. */
 const paint = `${controlMotion.paint.duration}ms ${controlMotion.paint.easing}`;
 export const settingsActionTransition = `transition:background ${paint},color ${paint},border-color ${paint},box-shadow ${paint};`;

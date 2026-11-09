@@ -40,3 +40,30 @@ export async function inspectDeviceIconPicker(page, { expectedValue, filled = tr
   }
   return result;
 }
+
+/** #1376: capture the actual open surface and centred clear hover, not a mock. */
+export async function prepareDeviceIconPicker(page,state='closed') {
+  const result=await inspectDeviceIconPicker(page,{expectedValue:'mdi:access-point-minus'});
+  const picker=page.locator('hp-dialog[data-kind="marker"] hp-icon-picker');
+  if(state==='open') {
+    await picker.locator('.trigger').click();
+    await page.waitForFunction(()=>{
+      const p=window.__goldenCard.renderRoot.querySelector('hp-dialog[data-kind="marker"] hp-icon-picker');
+      return p?.shadowRoot.querySelector('.menu.visible [role="option"]') && p._active===-1;
+    });
+  } else if(state==='clear-hover') await picker.locator('.clear').hover();
+  else if(state!=='closed') throw Error('Unknown icon picker golden state: '+state);
+  // Two painted frames settle the shared motion without changing its duration.
+  await page.waitForTimeout(200);
+  const paint=await picker.evaluate(p=>{
+    const s=p.shadowRoot,menu=s.querySelector('.menu');
+    return {expanded:s.querySelector('.trigger').getAttribute('aria-expanded'),active:p._active,
+      status:!!menu?.querySelector('.status'),aria:menu?.querySelector('input')?.getAttribute('aria-activedescendant'),
+      clear:s.querySelector('.clear')&&getComputedStyle(s.querySelector('.clear')).backgroundColor};
+  });
+  if(state==='open' && (paint.expanded!=='true'||paint.active!==-1||paint.status||paint.aria))
+    throw Error('Picker open golden has a stale active option/status strip: '+JSON.stringify(paint));
+  if(state==='clear-hover' && paint.clear.replace(/\s/g,'')!=='rgba(127,127,127,0.16)')
+    throw Error('Picker clear golden is not hovering its actual circular button');
+  return {...result,state,paint};
+}

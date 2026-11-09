@@ -1,5 +1,5 @@
 import { addExternalScreenFixture, prepareExternalScreens } from './external-screens.mjs';
-import { inspectDeviceIconPicker } from './device-icon-picker.mjs';
+import { prepareDeviceIconPicker } from './device-icon-picker.mjs';
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
 import { makeMarkerAlertsFixture } from '../fixtures/marker-alerts.mjs';
@@ -3229,7 +3229,7 @@ export async function prepareGoldenScenario(page, scenario) {
   if(scenario.sunTransparent)result.sunTransparent=await prepareSunTransparent(page,!!scenario.sunTransparent.sealed);
   if (scenario.externalScreens) await prepareExternalScreens(page, scenario);
   if (scenario.staticWallOpenings) result.staticWallOpenings = await prepareStaticWallOpenings(page,scenario);
-  if (scenario.deviceIconPicker) result.deviceIconPicker=await inspectDeviceIconPicker(page,{expectedValue:'mdi:access-point-minus'});
+  if (scenario.deviceIconPicker) result.deviceIconPicker=await prepareDeviceIconPicker(page,scenario.deviceIconPickerState);
   return result;
 }
 

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1376,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Owner-approved polish of the local MDI picker and shared dropdown tap paint in the 1.85.1 fix line.",
+  "summary": {
+    "ru": "Полировка MDI picker, корректный сброс иконки и общий стиль тапа выпадающих полей.",
+    "en": "Polished MDI picker, correct automatic icon reset and shared dropdown tap paint."
+  }
+}

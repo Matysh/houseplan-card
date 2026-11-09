@@ -1,7 +1,7 @@
 import { LitElement, css, unsafeCSS, html, nothing, type TemplateResult } from 'lit';
 import { controlMotion, controlMotionReduced, controlSurfaceFrames } from './ui-motion';
 import { floatingSurfaceCss } from './styles/floating-surface.styles';
-import { settingsActionTransition } from './styles/settings-action.styles';
+import { settingsActionTransition, settingsChoiceHover } from './styles/settings-action.styles';
 import { selectionListCss } from './styles/selection-list.styles';
 import { controlReducedMotionCss } from './styles/ui-motion.styles';
 import { FloatingSurfaceController } from './floating-surface-controller';
@@ -31,7 +31,6 @@ export class HpSettingsSelect extends LitElement {
     button span { flex:1; min-width:0; overflow-wrap:anywhere; }
     button svg { width:18px; height:18px; flex:none; fill:currentColor; }
     button[aria-expanded=true] svg { transform:rotate(180deg); }
-    :host([data-pointer-hover]) button:hover { border-color:var(--hpf-accent,var(--primary-color,#03a9f4)); background:var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,var(--card-background-color,#202126))); }
     button:focus-visible,.menu:focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color,#03a9f4)); outline-offset:2px; }
     button:disabled { opacity:.45; cursor:not-allowed; }
     .menu { position:fixed; inset:auto; margin:0; box-sizing:border-box; z-index:10000;
@@ -48,6 +47,7 @@ export class HpSettingsSelect extends LitElement {
     :host([variant^='header']) button span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     :host([variant='header']) button { padding-inline:12px; gap:8px; background:transparent; border-radius:7px 0 0 7px; }
   `.cssText + `
+    :host([data-pointer-hover]) button:hover { ${settingsChoiceHover} }
     button, [role=option] { ${settingsActionTransition} }
     button svg { transition:transform ${controlMotion.paint.duration}ms ${controlMotion.paint.easing}; }
     ${controlReducedMotionCss('button,button svg,.menu,[role=option]')}

@@ -316,3 +316,22 @@ smoke_capture_stability проверяет само сравнение на од
 обоими порядками открытия в smoke_approved_ui. Для изменения этой области
 выбирается адресная проверка на S6 по [процессу](../PROCESS.md); замеры размера
 относятся к выпуску беты. Формат данных сохраняется.
+
+### MDI picker polish (#1376)
+
+The accepted UI-054/UI-055 reference is commit
+`0752a733b268368520559055a3e2392183703f94`,
+`docs/ui-lab-reference/2026-11-09-mdi-picker/`. Its response transforms are
+replay evidence only; production uses the shared TypeScript controls. The field
+shares settings-select hover paint, has one outer keyboard-focus border, a centred
+40px circular clear button and a 160ms rotating arrow (no motion when reduced).
+Opening or editing a search leaves no active result; arrows select the first/last
+result and Enter without an active result chooses the first. Loaded results have
+no hint/status strip; loading and retry errors remain visible.
+
+The automatic icon is resolved from the current binding independently of any
+persisted override, including new virtual markers. Clearing changes the field
+and preview immediately; save/reopen retains that result. Shared floating-surface
+styles suppress the browser tap highlight for dropdown hosts, triggers and options
+in native and fallback surfaces, preserving explicit hover/selection/focus paint.
+Browser coverage includes mobile Chromium and WebKit emulation, not physical Safari.

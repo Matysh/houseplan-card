@@ -6,7 +6,6 @@
   "marker.icon_loading": "Loading icons…",
   "marker.icon_load_error": "Could not load icons. You can still enter an icon name.",
   "marker.icon_retry": "Retry",
-  "marker.icon_refine": "Refine the search to see more icons.",
   "marker.more_info_search": "Search name or entity_id…",
   "marker.more_info_entity": "Open in Home Assistant",
   "marker.more_info_auto": "Auto",

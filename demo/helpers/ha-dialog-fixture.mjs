@@ -70,7 +70,7 @@ export async function applyHaDialogTypography(page) {
 export async function launchHaDialogFixture({
   authentic = true, viewport = { width: 1600, height: 1000 },
   pin = HA_DIALOG_PIN, cacheDir, wheelPath, assets, colorScheme = 'light', extraModules = [], hasTouch = false, videoDir,
-  repoRoot = REPO, browserArgs = [],
+  repoRoot = REPO, browserArgs = [], browserType = chromium, isMobile = false, reducedMotion = 'no-preference',
 } = {}) {
   const ha = authentic ? assets || await prepareHaDialogAssets({ pin, cacheDir, wheelPath }) : null;
   const errors = [], externalRequests = [], websocketAttempts = [];
@@ -97,6 +97,8 @@ export async function launchHaDialogFixture({
           response.writeHead(404).end('Not found'); return;
         }
         body = readFileSync(file);
+        // Match HA's real viewport on emulated mobile browsers.
+        if (pathname === '/product.html' && isMobile) body = body.toString().replace('<head>', '<head><meta name="viewport" content="width=device-width,initial-scale=1">').replace('</head>', '<style>#host{box-sizing:border-box;width:100%;max-width:780px;}</style></head>');
         type = MIME[extname(file)] || 'application/octet-stream';
         if (ha && pathname === `/frontend_latest/${pin.app}`) {
           const source = body.toString();
@@ -128,8 +130,8 @@ export async function launchHaDialogFixture({
   const url = `http://127.0.0.1:${server.address().port}`;
   let browser;
   try {
-    browser = await chromium.launch({args: browserArgs});
-    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, colorScheme, hasTouch, timezoneId: 'Europe/Moscow', serviceWorkers: 'block', ...(videoDir ? {recordVideo:{dir:videoDir,size:viewport}} : {}) });
+    browser = await browserType.launch({args: browserArgs});
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, colorScheme, hasTouch, isMobile, reducedMotion, timezoneId: 'Europe/Moscow', serviceWorkers: 'block', ...(videoDir ? {recordVideo:{dir:videoDir,size:viewport}} : {}) });
     await context.route('**/*', async (route) => {
       if (new URL(route.request().url()).origin !== url) {
         externalRequests.push(route.request().url()); await route.abort();

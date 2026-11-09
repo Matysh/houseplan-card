@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 111;
+export const GOLDEN_MATRIX_VERSION = 112;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1364,6 +1364,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'panel-device-icon-picker-dark-1375', fixture: 'visual', space: 'golden-lighting',
     panelHost: true, dialog: 'device', deviceId: 'golden-light-two', deviceIconPicker: true,
     language: 'ru', theme: 'dark', viewport: { width: 1280, height: 1000 }, ...page },
+  { id: 'panel-device-icon-picker-open-dark-1376', fixture: 'visual', space: 'golden-lighting',
+    panelHost: true, dialog: 'device', deviceId: 'golden-light-two', deviceIconPicker: true, deviceIconPickerState: 'open',
+    language: 'ru', theme: 'dark', viewport: { width: 1280, height: 1000 }, ...page },
+  { id: 'panel-device-icon-picker-clear-hover-light-1376', fixture: 'visual', space: 'golden-lighting',
+    panelHost: true, dialog: 'device', deviceId: 'golden-light-two', deviceIconPicker: true, deviceIconPickerState: 'clear-hover',
+    language: 'ru', theme: 'light', viewport: { width: 1280, height: 1000 }, ...page },
   { id: 'device-dialog-mobile-ru', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device', deviceId: 'golden-light-two', deviceLightControls: true,
     deviceName: 'Контроллер освещения гостиной с намеренно очень длинным названием',

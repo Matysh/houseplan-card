@@ -105,12 +105,12 @@ test('#1196 a transitive built-manifest reader declares its producer even before
 });
 test('beta uses approved files, one narrowed permission run and panel-first visual selection', async () => {
   const plan = await planProfile({ root, event: 'beta', version: '1.85.0-beta.1' });
-  assert.equal(BETA_SMOKES.length, 13); assert.equal(BETA_GOLDEN.length, 76); assert.equal(BETA_E2E.length, 13);
-  assert.equal(Object.values(GOLDEN_ADDITIONS).flat().length, 51);
+  assert.equal(BETA_SMOKES.length, 13); assert.equal(BETA_GOLDEN.length, 78); assert.equal(BETA_E2E.length, 13);
+  assert.equal(Object.values(GOLDEN_ADDITIONS).flat().length, 53);
   assert.equal(plan.steps.filter(item => item.id.startsWith('smoke:')).length, 13);
   assert.deepEqual(BETA_SMOKES.find(item => item.file.includes('view_edit_permissions')).args, ['--only=late']);
   const { beta } = prepareGoldenSelection(GOLDEN_SCENARIOS);
-  assert.equal(beta.filter(scene => scene.panelHost).length, 62);
+  assert.equal(beta.filter(scene => scene.panelHost).length, 64);
   assert.equal(beta.filter(scene => !scene.panelHost && !scene.staticWallOpenings).length, 13);
   assert.equal(beta.filter(scene => scene.staticWallOpenings).length, 1);
   const golden = plan.steps.find(item => item.id === 'golden-beta');
