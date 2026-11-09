@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7805,
+  "revision": 7806,
   "nextTicket": 332,
   "nextFence": 332,
   "tasks": {
@@ -4163,7 +4163,7 @@
       "ownerDecision": null,
       "ticket": 331,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794187517769,
       "reviewEntry": 7,
       "patchId": "2eea909a4094ceea1ca335194e169a1ff6aae5a6",
@@ -4196,6 +4196,15 @@
         "entry": 6,
         "detail": "Браузер: editor chrome alignment: failed",
         "eventId": "finish:251d0319-e581-4cf7-9008-d3bb5b52a178:finish:3:return:return:1365"
+      },
+      "s6": {
+        "id": "20261109T012533750-4c9b5cce",
+        "name": "Тесты для задачи #1365 (перед ревью)",
+        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261109T012533750-4c9b5cce/report.json",
+        "materialSha": "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
+        "status": "passed",
+        "finishedAt": "2026-11-09T01:36:40.584Z",
+        "failures": []
       }
     }
   },
@@ -4392,9 +4401,9 @@
     "fence": 331,
     "materialSha": "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
     "expectedBase": "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794187521883,
-    "expiresAt": 1794188480921,
+    "expiresAt": 1794191801862,
     "patchId": "2eea909a4094ceea1ca335194e169a1ff6aae5a6"
   },
   "events": {
@@ -5102,6 +5111,34 @@
         "layer": "product",
         "materialSha": "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
         "phase": "sync"
+      }
+    },
+    "finish:5df79bbd-2fa8-46ae-b6df-28e89d80186f:finish:3:s6-complete": {
+      "digest": "db4feeb166e8603438e48742415a0dd90174041f1c2d73e247142d87c713a167",
+      "issue": 1365,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1365,
+        "at": 1794188201862,
+        "entry": 7,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
+        "phase": "review",
+        "evidence": {
+          "id": "20261109T012533750-4c9b5cce",
+          "name": "Тесты для задачи #1365 (перед ревью)",
+          "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261109T012533750-4c9b5cce/report.json",
+          "materialSha": "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
+          "status": "passed",
+          "finishedAt": "2026-11-09T01:36:40.584Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Ветка `codex/issue-1365-header-menu-bounds`, `300d5338f`. Дефект подтверждён новым сценарием `smoke_header_actions_menu` на неисправленном свежем bundle: viewport1800, host1024, настоящий Properties360, шапка compact. Bounds-проверка падает, обычный click menuitem `mode-view` за5s не проходит: `hp-prop-group.geometry` перехватывает pointer. Лог `artifacts/1365/popup-before.log`. Это тот же дефект, что на настоящем HA в journeys и first-run первого кандидата.\n\nРешение использует уже поддержанный `EditorMenuModel.viewport`: пересечение горизонтальных границ visualViewport и выделенного `head.getBoundingClientRect()`. Top/height visualViewport сохранены; общий placeFloatingSurface сам выбирает flip/shift. Не меняются глобальный z-index, остальные context menus, источник команд, dirty/ACL/CAS/ACK. Альтернатива с глобальным повышением слоя Properties не нужна; локальные границы сохраняют меню в собственной рабочей области и у карточки, встроенной в широкую страницу.\n\nGolden-guard теперь различает активный исходный Plan-tab и видимого владельца keyboard focus: в фазе5 это ⋮, иначе исходный Plan-tab. Активность Plan, mode/space/tool и видимость owner — обязательные предусловия; исходные Shift+Tab/Tab, trusted events, focus-visible, весь snapshot persistence/preview/geometry и writeChain сохраняются. Порогов и PNG эта задача не меняет; согласованное владельцем принятие кадров выполняется в release-кандидате после захвата.\n\nПроверить: menu bounds и реальные hit targets с Properties; восстановление/клавиатуру в панели и embedded card; неизменность иных popup и vertical scrolling. S6 через finish. E2E обновлён в [PR33](https://github.com/Matysh/houseplan-e2e/pull/33), `task-impact/1365.md`, настоящий повтор кандидата ещё предстоит. Прежние 10 skipped journeys не считаются выполненными.\n\n\n### Разбор первого S6\n\nПрогон `20261108T235020021-caf7050d`: новый pointer/menu-bound witness PASS. Два FAIL относятся к подготовке существующих проверок: device-contact-editor-frame требует исходный focus после входа через меню; geometry-history-refusal использует фасад, который искал пункт сразу после инициирования lazy import.\n\nФасад теперь ограниченно ждёт именно видимую разрешённую menu-команду, без повторного клика/смены приватного режима. В smoke добавлен реальный задержанный module request120ms с `route.fallback()` в штатный demo.local transport. Воспроизведение старого фасада из HEAD300d533 (только переустановка тестового installHpTest, продукт не подменялся) подтверждено: `artifacts/1365/lazy-old-facade.log`; новый фасад с той же задержкой проходит. Первоначальный диагностический route.continue обходил offline transport и давал DNS-отказ — исправлен, этот ошибочный запуск не выдаётся за доказательство гонки.\n\nKeyboard guard снимает полный baseline/writeChain/preview **до** установки начального фокуса на видимом контроле через обычный DOM focus({preventScroll:true}); затем неизменные trusted Shift+Tab/Tab и snapshot доказывают отсутствие изменений. Начальное состояние не полагается на удалённый после invoke menuitem. Активный исходный Plan и mode/space/tool/preview продолжают проверяться. Адресные `smoke_header_actions_menu` и `smoke_device_contact_editor_frame` PASS на свежей сборке после исправлений.\n\nКлассификация проверена по плану finish: header-actions smoke выбран как непосредственный читатель `src/header-actions-menu.ts`; для golden harness выбраны соответствующие статические читатели, сами пиксельные кадры сохраняют beta-маршрут. Следующий finish повторяет текущий diff с применимым reuse.\n\n\n### Найденный дефект маршрутизации chrome\n\nВо втором S6 geometry-history отказался и после ожидания lazy import. Диагностика `artifacts/1365/geohistory-diag.log`: mode=decor, canEdit=true, busy/preparing=false; HeaderActionsMenu.open=true, но DOM меню отсутствует. Причина подтверждена по `routeHouseplanEditorUpdate`: во время активной линии анонимный requestUpdate уходит только в live-геометрию. Это второй реальный дефект шапки, не ошибка ожидания теста.\n\n`edfff6faf`: карточка передаёт меню адаптер с именованным `requestUpdate('_headerActionsMenu', null)`; live-роутер не перехватывает изменение chrome. Общий pointer-маршрут, скрытые карточки, сохранение и проверки не ослаблены. Новый короткий native witness рисует линию Подложки, подтверждает сохранённый активный anchor, открывает ⋮ обычным click и переключает Plan; само открытие не должно менять anchor. Длинный geometry-history остаётся самостоятельной проверкой исходных отказов Undo/Redo.\n\nТри других отказа второго S6 — старые direct-click пути: rotation при запрете browser storage и General settings в двух #955-проверках. Переведены на существующий `clickHeaderAction`; исходные поворот/сохранение в памяти, Save lettering, 4 локали, формы и пиксельные допуски сохранены. Это не основание переснимать эталоны Save или менять их пороги.\n\n\n### Завершение разбора третьего S6\n\n`98dbf0bbe`: popup вынесен из sticky hdr (z20) в существующий корневой слой context menus, рядом с Properties. Это устраняет перехват панелью инструмента (z70) при активной линии. Числовые z-index не менялись. Соседний kiosk CSS сохраняет немедленное скрытие popup вместе с шапкой. Адресный header-actions PASS: Properties bounds, обычный click с активной DecorLineDrawing.session и неизменным snapshot, переход Plan, kiosk hide. Первоначальное наблюдение теста ошибочно читало несуществующий _decorStart; исправлено на реальный readonly decorLine.snapshot, и только этот проход считается подтверждением anchor.\n\nЕщё три прямых пути General settings/summary в motion/recovery/Zigbee переведены на visible headerActionTarget/clickHeaderAction. Motion native PASS (4 profiles), полный optional View recovery PASS, Zigbee OFF→ON/held ACK/CAS/locale PASS. Исходные временные, persistence, retry и permission assertions сохранены.\n\nНестабильный positive witness #1329 воспроизведён в полном space-switch сценарии с readonly диагностикой: после двух жестов view.x=1025.109, base.right=1050, поэтому стрелка правильно отсутствует. Новый холодный card начинал навигацию до boot refit (CREATE_DIAG booting=true); предыдущий удачный проход x=1067.686 не был основанием считать дефект исчезнувшим. Pan теперь дожидается фактического завершения boot/camera/mode/refit и конечного UI paint. Продукт не меняется, камера не переписывается, наблюдатель no-flash остаётся включённым во время reveal. Адресный полный space-switch PASS с неизменными no-write/Fit/empty/create assertions.\n\nПоследний S6: `20261109T001544863-3667de56`, 609 результатов, 5 отказов разобраны выше; он не считается зелёным. Следующий finish проверяет актуальную ветку. Новые проверки добавлены в уже выбранный header-actions smoke; изменённые native smoke выбраны S6 как прямые читатели, thresholds/PNG не менялись.\n\n\n### Итог четвёртого S6\n\n`20261109T004230467-5c141635`: 649 результатов, единственный FAIL — `test/styles-split.test.mjs`: root sibling selector kioskhide не относится к разрешённым intrinsic-flow roots файла panel-header. Все browser сценарии, включая header-actions, cold empty-space witness, geometry-history и три адаптированных теста, PASS. Отказ не игнорируется: идентичное по смыслу правило перенесено в chrome.styles.ts рядом с `.hdr.kioskhide`, без изменения запрета в тесте и без расширения области разрешённых селекторов. Следующий finish повторяет S6 по текущему материалу с применимым reuse.\n\n\n### Итог пятого S6\n\n`20261109T005810060-86a52a52`: 649 результатов; styles-split 7/7 (применимый reuse), один отказ `smoke_editor_chrome_alignment` на скрытом direct-click Plan при600px. На1920/1000 все исходные проверки рамок/glyph/hover/focus и три toolbar57px уже прошли. Старый600px сценарий зависел от незавершённой intrinsic-раскладки: иногда успевал нажать исходную кнопку до её переноса в ⋮. Теперь навигация использует visible helper с layout settle. Для1920/1000 исходные геометрические проверки сохранены; для600px явно требуется скрытие исходного close, проверяется видимый пункт выхода ≥44px, неизменность его рамки при hover/focus, текущий editor в меню. Проверки всех toolbar controls, размеров colour trigger40×40, настоящей смены цвета/opacity и выхода в View сохранены. Порог0.5px не меняется. Это адаптация к принятому #1364, а не изменение продукта.\n\n\n### Уточнение подготовки геометрического измерения\n\nШестой S6 `20261109T011345104-329fd199` закончил все650; единственный FAIL — новый compact hover/focus witness: initial bbox читался во время штатной180ms translate-анимации появления меню, тогда как hover ждал устойчивого элемента. Это ошибка подготовки нового теста. Изолированная копия того же сценария с `waitForUiKitPaint` перед initial bbox прошла1920/1000/600, все toolbar/color/exit и исходные wide проверки; лог `artifacts/1365/chrome-paint-diag.log`. Эта readonly подготовка теперь перенесена в основной сценарий, без отключения анимаций и изменения0.5px. Продукт с87193ee6f не менялся. Следующий finish проверяет финальную версию теста и применимые результаты.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
