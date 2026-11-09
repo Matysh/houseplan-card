@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8420,
+  "revision": 8421,
   "nextTicket": 346,
   "nextFence": 346,
   "tasks": {
@@ -4605,6 +4605,10 @@
       "digest": "320c022b50c7f6489929c50c4a68f728838e82c2c5803e43d7f6c3ed0f16d1a9",
       "issue": 1375
     },
+    "finish:758735eb-f0f6-450a-bcef-26a3ea164998:finish:3:s6-label": {
+      "digest": "50053162ffc573c765c68f592fc5a635a04c3c46babeb43e0295d7f4fbaea410",
+      "issue": 1375
+    },
     "finish:40930de5-804e-4c02-a634-853dfd0bb1cb": {
       "digest": "6122d5242a190a20426b872df9335fd6b991a913511a7973de9ad7589f4bd2ee",
       "issue": 1375,
@@ -4704,7 +4708,8 @@
         "resubmission": false,
         "reviewChanges": "### Цель и решение\n\nПо прямому решению владельца заменён нативный HA picker собственным `hp-icon-picker`, а адаптер к HA Shadow DOM удалён. UI Kit: одно поле 44 px / radius 8 px, общий floating surface, движения и overlay-стек. Есть поиск, до 60 результатов и точное ручное `prefix:name`, выбор клавиатурой, Escape/Tab, очистка к авто, сохранение/повторное открытие и отмена несохранённого выбора. MDI рисуется локальными SVG; сторонние наборы отображаются необязательным `ha-icon`.\n\n### Материал и риски\n\nВетка `codex/1375-mdi-picker-kit`, HEAD `8474326a1425d5cccb37c289d64b4498db6a4c8a` (исправления S6 поверх принятого эталона d8a2139227), база `4abd035f177fbbeff8338a82693759563e578b2e`.\n\nКаталог — 7447 иконок MDI 7.4.47. `src/mdi-icon-data.json` (2.76 MB) сгенерирован `scripts/generate-mdi-icon-catalog.mjs` из закреплённого `@mdi/svg` и путей `@mdi/js`; это данные SVG, а не вручную написанная логика. Генератор поддерживает `--check`. Прямой runtime-импорт полного `@mdi/js` отвергнут после обнаружения попадания namespace в общий cold View chunk. Итоговый каталог — отдельный nested lazy chunk 790136 B gzip, не входящий в initial View. Ручной ввод остаётся доступен при отказе каталога, повтор использует новый URL модуля. Добавлены распространяемые notices/license.\n\nБюджет изолированного кандидата: initial View 419607 B gzip, editor UI 412670 B gzip. В рамках действующего разрешения владельца на повышение лимитов: initial ceiling 420000, absolute wall 468512, editor ceiling 420000. Пороги PNG не изменялись.\n\n### Выполненные проверки\n\n- `npm run build` — PASS; `node scripts/bundle-budget.mjs` — PASS.\n- `node demo/smoke_device_icon_picker.mjs` — **7/7 PASS**: dark/light × 1280/390; fallback без Popover API; настоящий pinned HA dialog offline; отказ lazy asset, ручное имя и успешный retry. Включены клик именно по стрелке, фокус, поиск, выбор/очистка, save/reopen и Cancel. Обычные случаи работают без регистрации `ha-icon-picker`; проверен cold View без запроса MDI-каталога.\n- `node --test test/icon-picker.test.mjs test/golden-matrix.test.mjs` — **63/63 PASS**; затем адресно актуализирован `process-next/test/catalog.test.mjs` — **15/15 PASS**.\n- Изолированный настоящий **HA Core 2026.11.0**: **1/1 бизнес-кейс PASS** + 3 setup PASS на HEAD c7c0557cf1, digest кандидата `82b2c93c0d160e91fdf2baf8aa1444f412a0aefa1105e9cbf755fcd8f5177a8b`. Проверены локальный SVG, выбор, Escape, сохранение/reopen и сброс. Это адресная диагностика временным кейсом поверх E2E commit `697314e0a6aa3c5339851b3e6a8447bb6e6da875`, а не полный HA-набор. Кейс и сводка сохранены в `output/1375/ha-after-case.mjs` и `ha-after-summary.json`; пользовательский HA не изменялся, собственный Docker-контейнер удалён.\n- Классификация новых Node/browser проверок — presentation/devices, regression, task-release. В source-dependencies явно зарегистрированы читатели picker/catalog/marker-dialog/form-kit; план S6 выбирает smoke по этим исходникам. Golden зарегистрирован в beta+stable; beta теперь 76 сцен.\n\n### Визуальное принятие и оставшееся\n\nПоказан владельцу постоянный кадр `panel-device-icon-picker-dark-1375`, SHA PNG `5dc76cb2f4333a60c73a46d74e7f5d55b6aba68b2fc33110d335ba9430f2da79`. Повторный canonical capture с HEAD c7c0557cf1 **байтово совпал** с показанным кадром. 2026-11-09 владелец явно ответил «Принять этот кадр» на вопрос о сцене и SHA выше (ответ на request_user_input_async call_db5d0ece8261490ea5f3585f6119106b). Canonical golden-accept выполнен: принят только этот PNG, 380 прочих записей не изменены, предупреждений нет; пороги не менялись. Эталон сохранён коммитом d8a2139227. Далее очередь `finish` с `output/1375/task.json`, её полный текущий S6 и независимое S7. S8/merge ещё не объявлялись; выпуск не запрошен.\n\n### Исправления по первому S6\n\nПрогон `20261109T184526014-c0f4941b` завершил все 637 шагов и выявил три отказа. `i18n-dead-keys`: удалён неиспользуемый `marker.icon_ph` из en/ru/de/fr. `smoke-harness-contract`: fixture вызывает общий watchPage; smoke проверяет reportPageErrors перед закрытием каждой страницы и перед итогом. `mutation-gate`: два старых HA-adapter свидетеля заменены на `device-icon-picker-loses-kit-radius-1375` и `device-icon-picker-restores-second-border-1375`, guard — собственный smoke; синхронизированы inventory и foreign-CSS consumers (остаётся ha-dialog-motion).\n\nАдресно после исправлений: **91/91 PASS** (`i18n-dead-keys`, `mutation-gate`, `smoke-harness-contract`). `mutation-gate --check`: готовность 1788 определений, 993 уникальных чтения исходников; `execution=0`, результат обнаружения мутаций остаётся для фонового запуска. Механизм проверок и продуктовые assertions не ослаблялись. Новый вход finish выполняет текущий S6 с применимым reuse; отчёт этого входа будет штатно приложен перед S7. Внешний вид и принятый PNG не менялись.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
