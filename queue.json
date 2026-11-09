@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7713,
+  "revision": 7714,
   "nextTicket": 327,
   "nextFence": 327,
   "tasks": {
@@ -4178,15 +4178,16 @@
         "src/header-actions-menu.ts"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794182178196,
-        "entry": 1,
-        "detail": "Браузер: device contact editor frame: failed; Браузер: geometry history refusal: failed; Браузер: space switch transitions: failed",
-        "eventId": "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:3:return:return:1365"
-      }
+        "at": 1794183250056,
+        "entry": 2,
+        "detail": "Браузер: geometry history refusal: failed; Браузер: plan rotation: failed; Браузер: settings button alignment 955: failed; Браузер: settings polish 955: failed; Браузер: space switch transitions: failed; Браузер: ui kit motion: failed; Браузер: view runtime recovery: failed; Браузер: zigbee enable refresh: failed",
+        "eventId": "finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0:finish:3:return:return:1365"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -4375,18 +4376,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1365,
-    "worker": "finish",
-    "token": "326:finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0:finish:1:admit",
-    "fence": 326,
-    "materialSha": "89d8a177c8f635fbc8cbc1853cc8193ce2c91d71",
-    "expectedBase": "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928",
-    "phase": "testing",
-    "admittedAt": 1794182574797,
-    "expiresAt": 1794183534392,
-    "patchId": "5963677a985e40736505a09e5e8d4a87b60db385"
-  },
+  "active": null,
   "events": {
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:2:synchronized": {
       "digest": "65eb9a0157345cff04c12e54f954bef4341245f6f9cb6d66333c65b93f918fe6",
@@ -4476,6 +4466,10 @@
       "digest": "6b135b251acce9c2d78d250961524afada940fcb818334090fb9b82d3da0c65f",
       "issue": 1365
     },
+    "finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0:finish:3:return": {
+      "digest": "15458f5d829bf4b8f3edaf193fe67015e410a8ece30e9fdf1c26a01be242ce87",
+      "issue": 1365
+    },
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915": {
       "digest": "e315381794b817f11fc4399d2e54fc289d4e81155a3aa6969408f80cd013240f",
       "issue": 1365,
@@ -4550,6 +4544,26 @@
         "layer": "product",
         "materialSha": "89d8a177c8f635fbc8cbc1853cc8193ce2c91d71",
         "phase": "sync"
+      }
+    },
+    "finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0:finish:3:return:return:1365": {
+      "digest": "15458f5d829bf4b8f3edaf193fe67015e410a8ece30e9fdf1c26a01be242ce87",
+      "issue": 1365,
+      "message": {
+        "kind": "return",
+        "issue": 1365,
+        "at": 1794183250056,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794183250056,
+          "entry": 2,
+          "detail": "Браузер: geometry history refusal: failed; Браузер: plan rotation: failed; Браузер: settings button alignment 955: failed; Браузер: settings polish 955: failed; Браузер: space switch transitions: failed; Браузер: ui kit motion: failed; Браузер: view runtime recovery: failed; Браузер: zigbee enable refresh: failed",
+          "eventId": "finish:771a03cb-3f69-4344-b35a-3a3e23c9d9c0:finish:3:return:return:1365"
+        }
       }
     }
   },
