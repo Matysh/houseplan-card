@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1372,
+  "baseStable": "v1.85.0",
+  "category": "infra",
+  "rationale": "Align browser/golden/real-HA checks with the accepted header and update 16 explicitly owner-approved frames. Product behavior and comparison thresholds are unchanged."
+}
