@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7995,
-  "nextTicket": 337,
+  "revision": 7996,
+  "nextTicket": 338,
   "nextFence": 337,
   "tasks": {
     "1193": {
@@ -4169,11 +4169,11 @@
       "releaseTag": "v1.85.1-beta.2",
       "materialSha": "d0331b0d3c633e4bfd60919c492934d66e48daef",
       "ownerDecision": null,
-      "ticket": 335,
-      "queued": false,
+      "ticket": 337,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794191886639,
-      "reviewEntry": 2,
+      "readyAt": 1794193269601,
+      "reviewEntry": 3,
       "patchId": "235b3b32f4aa5da5b8f667d850b129ed27ff7d22",
       "review": {
         "source": "published-release",
@@ -4218,8 +4218,7 @@
         "entry": 2,
         "detail": "Браузер: wall face lineage: failed",
         "eventId": "release-1851-beta2-return-correction-2:finish:3:return:return:1366"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1367": {
       "issue": 1367,
@@ -4478,7 +4477,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1366
+  ],
   "active": null,
   "events": {
     "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:2:synchronized": {
@@ -4675,6 +4676,19 @@
           "eventId": "release-1851-beta2-return-correction-2:finish:3:return:return:1366"
         },
         "delivered": true
+      }
+    },
+    "release-1851-beta2-return-correction-3": {
+      "digest": "c81e82f1968ed835c80b13c6182b54d2892e80183da2b8ca009f9669ec8a62b1",
+      "issue": 1366,
+      "message": {
+        "kind": "queued",
+        "issue": 1366,
+        "at": 1794193269601,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d0331b0d3c633e4bfd60919c492934d66e48daef"
       }
     }
   },
