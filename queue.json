@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8408,
+  "revision": 8409,
   "nextTicket": 346,
   "nextFence": 346,
   "tasks": {
@@ -4247,7 +4247,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794251116598,
       "reviewEntry": 2,
-      "patchId": "70f97906028df1704db2987948031badd537dafb",
+      "patchId": "a21060b00008c6b4abe4a31b651211f180b1db5d",
       "changedFiles": [
         "THIRD_PARTY_NOTICES.md",
         "custom_components/houseplan/THIRD_PARTY_NOTICES.md",
@@ -4265,6 +4265,7 @@
         "docs/CHANGELOG.ru.md",
         "docs/DIALOG-UI-KIT.md",
         "docs/release-ledger/v1.85.0/1375.json",
+        "docs/testing-notes/mutation-browser-guards.md",
         "package-lock.json",
         "package.json",
         "process-next/catalog/selections.mjs",
@@ -4272,10 +4273,16 @@
         "process-next/test/catalog.test.mjs",
         "scripts/bundle-budget.mjs",
         "scripts/bundle-manifest.mjs",
+        "scripts/css-foreign.json",
         "scripts/generate-mdi-icon-catalog.mjs",
+        "scripts/mutation-registry.mjs",
         "src/editors/ha-icon-picker-kit.ts",
         "src/editors/hp-icon-picker.ts",
         "src/editors/marker-dialog.ts",
+        "src/i18n/de.json",
+        "src/i18n/en.json",
+        "src/i18n/fr.json",
+        "src/i18n/ru.json",
         "src/i18n/settings/de.json",
         "src/i18n/settings/en.json",
         "src/i18n/settings/fr.json",
@@ -4490,10 +4497,11 @@
     "token": "345:finish:758735eb-f0f6-450a-bcef-26a3ea164998:finish:1:admit",
     "fence": 345,
     "materialSha": "8474326a1425d5cccb37c289d64b4498db6a4c8a",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "4abd035f177fbbeff8338a82693759563e578b2e",
+    "phase": "testing",
     "admittedAt": 1794251121021,
-    "expiresAt": 1794251421021
+    "expiresAt": 1794251427456,
+    "patchId": "a21060b00008c6b4abe4a31b651211f180b1db5d"
   },
   "events": {
     "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:2:synchronized": {
@@ -4542,6 +4550,10 @@
     },
     "finish:40930de5-804e-4c02-a634-853dfd0bb1cb:finish:3:return": {
       "digest": "e4a450518284c07d587dac2a9d1d29b959e7db1eae243c637dd7502da31fe633",
+      "issue": 1375
+    },
+    "finish:758735eb-f0f6-450a-bcef-26a3ea164998:finish:2:synchronized": {
+      "digest": "31eaaa998ae220ede23af5b6dc7668e1d496832b17eb114f00bc85d9c192577a",
       "issue": 1375
     },
     "finish:40930de5-804e-4c02-a634-853dfd0bb1cb": {
