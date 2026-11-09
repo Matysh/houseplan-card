@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7881,
+  "revision": 7882,
   "nextTicket": 334,
   "nextFence": 334,
   "tasks": {
@@ -4256,7 +4256,18 @@
       "patchId": "9eb5333afa84d0edf122e1ef6815463e3f1b3fbf",
       "changedFiles": [
         "demo/smoke_support_feedback.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794191574170,
+        "entry": 1,
+        "detail": "Браузер: support feedback: failed",
+        "eventId": "finish:06e1a3c3-3618-4946-9427-4630aff706d9:finish:3:return:return:1367"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4459,18 +4470,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1367,
-    "worker": "finish",
-    "token": "333:finish:06e1a3c3-3618-4946-9427-4630aff706d9:finish:1:admit",
-    "fence": 333,
-    "materialSha": "87ad9f60491f10ddd1107d7aec77252a2b6c8a4e",
-    "expectedBase": "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
-    "phase": "testing",
-    "admittedAt": 1794191511530,
-    "expiresAt": 1794191870385,
-    "patchId": "9eb5333afa84d0edf122e1ef6815463e3f1b3fbf"
-  },
+  "active": null,
   "events": {
     "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:2:synchronized": {
       "digest": "dca38b8455ada14b36b13dc218ffaa54fc30d4161b5122270fe48a210a266810",
@@ -4538,6 +4538,10 @@
     },
     "finish:0b5be611-8763-43bb-a5cf-ffdb79c920ea": {
       "digest": "8221a2a64646e72df25c48f4153584c819360da0357012a92e0939cbd73b1646",
+      "issue": 1367
+    },
+    "finish:06e1a3c3-3618-4946-9427-4630aff706d9:finish:3:return": {
+      "digest": "439b06999dcb545490635ccb52af8912e1c3d542d7cac073a987e2deaf63898b",
       "issue": 1367
     },
     "release-return:fed8a071-c709-4789-964a-27e474e10c6a": {
@@ -4617,6 +4621,26 @@
         "materialSha": "87ad9f60491f10ddd1107d7aec77252a2b6c8a4e",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:06e1a3c3-3618-4946-9427-4630aff706d9:finish:3:return:return:1367": {
+      "digest": "439b06999dcb545490635ccb52af8912e1c3d542d7cac073a987e2deaf63898b",
+      "issue": 1367,
+      "message": {
+        "kind": "return",
+        "issue": 1367,
+        "at": 1794191574170,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794191574170,
+          "entry": 1,
+          "detail": "Браузер: support feedback: failed",
+          "eventId": "finish:06e1a3c3-3618-4946-9427-4630aff706d9:finish:3:return:return:1367"
+        }
       }
     }
   },
