@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8065,
+  "revision": 8066,
   "nextTicket": 339,
   "nextFence": 339,
   "tasks": {
@@ -4228,32 +4228,24 @@
     },
     "1370": {
       "issue": 1370,
+      "branch": "codex/1370-empty-backup-guard",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1370-empty-backup-guard",
-      "materialSha": "69a565c1fff387657b44ad9327dd2ab39cf4526b",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 338,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1794216259509,
-      "reviewEntry": 1,
-      "patchId": "a72d783163f62732523a1c9fd62e4c4f58dae394",
-      "changedFiles": [
-        "demo/smoke_empty_backup_import.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.85.0/1370.json"
-      ],
-      "s6": {
-        "id": "20261109T092437286-92124a75",
-        "name": "Тесты для задачи #1370 (перед слиянием)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261109T092437286-92124a75/report.json",
-        "materialSha": "69a565c1fff387657b44ad9327dd2ab39cf4526b",
-        "status": "passed",
-        "finishedAt": "2026-11-09T09:28:22.421Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "5f690dbdf8064bbdc159388c963423590317163f",
+      "mergedSha": "69a565c1fff387657b44ad9327dd2ab39cf4526b",
+      "mergedAt": 1794216509010,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -4443,81 +4435,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1370,
-    "worker": "finish",
-    "token": "338:finish:6c4e936c-895e-4152-965d-09e69930df81:finish:1:admit",
-    "fence": 338,
-    "materialSha": "69a565c1fff387657b44ad9327dd2ab39cf4526b",
-    "expectedBase": "5f690dbdf8064bbdc159388c963423590317163f",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794216264830,
-    "expiresAt": 1794220106620,
-    "patchId": "a72d783163f62732523a1c9fd62e4c4f58dae394"
-  },
-  "events": {
-    "finish:6c4e936c-895e-4152-965d-09e69930df81:finish:2:synchronized": {
-      "digest": "66142b0b3907120328306d2ba44abed3dc9a95c9782d6c09057dc2061fe91650",
-      "issue": 1370
-    },
-    "github:42593164136:1:completions:message:16a12301e1a7e29a35683474bdd5f5bd14b7e24917aafce1de941204dacede52": {
-      "digest": "f1cbd4f8ccc92a497376792b3a03dec2dc28a26cd9225260cefc196b82f5d056",
-      "issue": 1370
-    },
-    "github:42593164136:1:completions:message:3753a4edb1dbc7713902a20daf74e0695cb54bbb3d6a48690a735348ff11f077": {
-      "digest": "238040135d0661ecfb93db9c0b1bb78fa139b9f4ed96174e784fb58de2ded192",
-      "issue": 1370
-    },
-    "finish:3783e26e-baef-4d37-8edd-14a8e58e0515": {
-      "digest": "ca33d9160db62749f52656940d96f01e7b9f8189b70d871604058259ddb115b6",
-      "issue": 1370
-    },
-    "finish:29cfabc1-52c0-46a8-b84c-532504738510": {
-      "digest": "d65b6522e1b0f7069adf00faf400927688697e98fe556a96ba7d3bb1bbe331cc",
-      "issue": 1370
-    },
-    "finish:fd721fb0-4dec-4768-bbe2-439c7f49785d": {
-      "digest": "d566064cba35d406128dc536ab02f4f89abd7fc31fc16f2f4201924c89e56720",
-      "issue": 1370
-    },
-    "finish:6c4e936c-895e-4152-965d-09e69930df81:finish:3:s6-complete": {
-      "digest": "960d677a6c57f2a7be4d7a8b49f5456f759507f18a910462c8d5ec2e828f6131",
-      "issue": 1370
-    },
-    "finish:927633f1-7790-4c62-b388-6e40fce29ded": {
-      "digest": "9b327be12c0c7f7f884c1289e35e2efc73b919c76c01042f0c26dd92b02b1f30",
-      "issue": 1370
-    },
-    "finish:6c4e936c-895e-4152-965d-09e69930df81": {
-      "digest": "70bb59a2bf3f676b40a8366bef1596e919bbf7a14184af50c81072c725ae1193",
-      "issue": 1370,
-      "message": {
-        "kind": "queued",
-        "issue": 1370,
-        "at": 1794216259509,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "69a565c1fff387657b44ad9327dd2ab39cf4526b",
-        "delivered": true
-      }
-    },
-    "finish:6c4e936c-895e-4152-965d-09e69930df81:finish:1:admit": {
-      "digest": "1a3ed3d6082dad5e676810d2a83efb4c0a386a126e8b71a0506054fa9bc6c7f1",
-      "issue": 1370,
-      "message": {
-        "kind": "admitted",
-        "issue": 1370,
-        "at": 1794216264830,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "69a565c1fff387657b44ad9327dd2ab39cf4526b",
-        "phase": "sync",
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "5f690dbdf8064bbdc159388c963423590317163f",
     "status": "delivered",
