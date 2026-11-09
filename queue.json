@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7778,
+  "revision": 7779,
   "nextTicket": 331,
   "nextFence": 331,
   "tasks": {
@@ -4166,12 +4166,13 @@
       "status": "S6-in-progress",
       "readyAt": 1794186809615,
       "reviewEntry": 6,
-      "patchId": "5a19cb3719aee482b7778d6c43f27721b1955205",
+      "patchId": "aa74c88699a7f855c8179176f1fbda0c964a7faf",
       "changedFiles": [
         "demo/golden/harness.mjs",
         "demo/helpers/empty-space-home-arrow.mjs",
         "demo/helpers/hp-test.mjs",
         "demo/helpers/settings-polish-955.mjs",
+        "demo/smoke_editor_chrome_alignment.mjs",
         "demo/smoke_header_actions_menu.mjs",
         "demo/smoke_plan_rotation.mjs",
         "demo/smoke_settings_button_alignment_955.mjs",
@@ -4390,10 +4391,11 @@
     "token": "330:finish:251d0319-e581-4cf7-9008-d3bb5b52a178:finish:1:admit",
     "fence": 330,
     "materialSha": "93dfba7106bfa4a29171a7015252ec7ab59778fa",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928",
+    "phase": "testing",
     "admittedAt": 1794186813432,
-    "expiresAt": 1794187113432
+    "expiresAt": 1794187119458,
+    "patchId": "aa74c88699a7f855c8179176f1fbda0c964a7faf"
   },
   "events": {
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:2:synchronized": {
@@ -4682,6 +4684,10 @@
     },
     "finish:41e3a906-2477-405b-9cca-682b2dd3a15f:finish:3:return": {
       "digest": "ee19c804f4dc0827ba317fc62cb1e69af2ab0b9924dc33a69afc450ad8ca5784",
+      "issue": 1365
+    },
+    "finish:251d0319-e581-4cf7-9008-d3bb5b52a178:finish:2:synchronized": {
+      "digest": "cfc4f880f09d02e09c7150edda1bce12430d205c9c180a18091e1ba1efb86549",
       "issue": 1365
     },
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915": {
