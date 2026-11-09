@@ -6,7 +6,7 @@
     "additionsAreCompatible": true
   },
   "hooks": {
-    "header-actions-trigger": { "elements": ["button"], "since": "1.85.1-beta.1", "audience": ["test"], "description": "Shared 44px vertical-ellipsis actions trigger before the ordinary layout wraps." },
+    "header-actions-trigger": { "elements": ["button"], "since": "1.85.1-beta.1", "audience": ["test"], "description": "Shared 44px vertical-ellipsis actions trigger after the ordinary layout needs more than two rows." },
     "header-actions-menu": { "elements": ["div"], "since": "1.85.1-beta.1", "audience": ["test"], "description": "Shared UI Kit touch menu presenting existing header commands." },
     "empty-plan": { "elements": ["div"], "since": "1.85.0", "audience": ["test"] },
     "empty-plan-edit": { "elements": ["button"], "since": "1.85.0", "audience": ["test"] },
@@ -212,7 +212,9 @@
     "panel-menu": {
       "elements": ["button"],
       "since": "1.73.0-beta.7",
-      "audience": ["test"]
+      "audience": ["test"],
+      "attributes": { "aria-expanded": ["false", "true"] },
+      "description": "Native HA drawer control; aria-expanded reflects actual sidebar state (#1371)."
     },
     "partition": {
       "elements": ["path"],
