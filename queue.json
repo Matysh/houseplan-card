@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8376,
+  "revision": 8377,
   "nextTicket": 344,
   "nextFence": 344,
   "tasks": {
@@ -617,40 +617,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2"
-      }
-    },
-    "1261": {
-      "issue": 1261,
-      "branch": "issue/1261-release-return-b3058111c193",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "7ab5767a92fd87379f77a47a0a766e386e7ea654",
-      "mergedSha": "1f97c6e294fddf4531995802365d2904edbbcacf",
-      "mergedAt": 1793768177027,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.84.0-beta.3",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "1f97c6e294fddf4531995802365d2904edbbcacf"
       }
     },
     "1262": {
@@ -4264,7 +4230,8 @@
       },
       "releaseTag": "v1.85.1-beta.3",
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "4abd035f177fbbeff8338a82693759563e578b2e"
       }
     }
   },
@@ -4455,7 +4422,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:42660224598:1:1374": {
+      "digest": "8a6c759671467573b94d0a224f3be8d58b7618d878ab09de5e7645f0b8bdeea2",
+      "issue": 1374,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1374,
+        "at": 1794243750587,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "4abd035f177fbbeff8338a82693759563e578b2e"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "4abd035f177fbbeff8338a82693759563e578b2e",
     "status": "pending",
