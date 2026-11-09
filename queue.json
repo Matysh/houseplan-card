@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 8130,
-  "nextTicket": 340,
+  "revision": 8131,
+  "nextTicket": 341,
   "nextFence": 340,
   "tasks": {
     "1193": {
@@ -4235,14 +4235,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1371-compact-header",
-      "materialSha": "8da5b861fe13824b4988392979adcca2fe3fc0b0",
+      "materialSha": "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 339,
-      "queued": false,
+      "ticket": 340,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794224958740,
-      "reviewEntry": 1,
+      "readyAt": 1794226958054,
+      "reviewEntry": 2,
       "patchId": "b2e37e6b30e66a32b55bb93d650a2c70a6eb8b68",
       "changedFiles": [
         "demo/smoke_compact_header_polish.mjs",
@@ -4267,7 +4267,6 @@
         "src/styles/plan.styles.ts",
         "src/ui-motion.ts"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4465,7 +4464,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1371
+  ],
   "active": null,
   "events": {
     "finish:60c8c752-377e-43b3-a8bf-4b0398adf66e:finish:2:synchronized": {
@@ -4573,6 +4574,19 @@
           "detail": "Поведение: test/device-marker-polish-contract.test.mjs: failed; Поведение: test/houseplan-panel.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed; Браузер: editor chrome alignment: failed; Браузер: header actions menu: failed; Браузер: panel header overflow: failed; Браузер: toolbar stable width: failed",
           "eventId": "finish:60c8c752-377e-43b3-a8bf-4b0398adf66e:finish:3:return:return:1371"
         }
+      }
+    },
+    "finish:7c16bdf2-0cef-43b9-bf1e-3a92a5c60e85": {
+      "digest": "4a499b7fc2adff1d318ed074b5ffde4f93679bf08c917282a66f6c2d945bbfbb",
+      "issue": 1371,
+      "message": {
+        "kind": "queued",
+        "issue": 1371,
+        "at": 1794226958054,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae"
       }
     }
   },
