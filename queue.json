@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8132,
+  "revision": 8133,
   "nextTicket": 341,
   "nextFence": 341,
   "tasks": {
@@ -4243,11 +4243,13 @@
       "status": "S6-in-progress",
       "readyAt": 1794226958054,
       "reviewEntry": 2,
-      "patchId": "b2e37e6b30e66a32b55bb93d650a2c70a6eb8b68",
+      "patchId": "9c70788e4ca89eab587cdf68aecc4af333cb371f",
       "changedFiles": [
         "demo/smoke_compact_header_polish.mjs",
+        "demo/smoke_editor_chrome_alignment.mjs",
         "demo/smoke_header_actions_menu.mjs",
         "demo/smoke_panel_header_overflow.mjs",
+        "demo/smoke_toolbar_stable_width.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/USER-GUIDE.md",
@@ -4265,7 +4267,9 @@
         "src/panel-sidebar-state.ts",
         "src/styles/panel-header.styles.ts",
         "src/styles/plan.styles.ts",
-        "src/ui-motion.ts"
+        "src/ui-motion.ts",
+        "test/houseplan-panel.test.mjs",
+        "test/styles-split.test.mjs"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -4471,10 +4475,11 @@
     "token": "340:finish:7c16bdf2-0cef-43b9-bf1e-3a92a5c60e85:finish:1:admit",
     "fence": 340,
     "materialSha": "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "69a565c1fff387657b44ad9327dd2ab39cf4526b",
+    "phase": "testing",
     "admittedAt": 1794226961628,
-    "expiresAt": 1794227261628
+    "expiresAt": 1794227268065,
+    "patchId": "9c70788e4ca89eab587cdf68aecc4af333cb371f"
   },
   "events": {
     "finish:60c8c752-377e-43b3-a8bf-4b0398adf66e:finish:2:synchronized": {
@@ -4535,6 +4540,10 @@
     },
     "finish:60c8c752-377e-43b3-a8bf-4b0398adf66e:finish:3:return": {
       "digest": "82533bfbf165131eff8153643a350e3acfe44863736573f0b21073b3e0710d8a",
+      "issue": 1371
+    },
+    "finish:7c16bdf2-0cef-43b9-bf1e-3a92a5c60e85:finish:2:synchronized": {
+      "digest": "8726ff551b5af36486b93e5500d8755aab8e5046e12e02858a11e38b19f5d522",
       "issue": 1371
     },
     "finish:60c8c752-377e-43b3-a8bf-4b0398adf66e": {
