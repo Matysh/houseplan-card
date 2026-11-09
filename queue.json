@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7947,
+  "revision": 7948,
   "nextTicket": 336,
   "nextFence": 336,
   "tasks": {
@@ -4638,7 +4638,8 @@
           "entry": 2,
           "detail": "Браузер: wall face lineage: failed",
           "eventId": "release-1851-beta2-return-correction-2:finish:3:return:return:1366"
-        }
+        },
+        "delivered": true
       }
     }
   },
