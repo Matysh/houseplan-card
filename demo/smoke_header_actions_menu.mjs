@@ -135,6 +135,15 @@ try {
  await singleResizeMatrix('single-panel-width-only');
  await page.evaluate(()=>{const c=window.__card;c.panelHost=false;c.requestUpdate();});await settle();
  single=await read();check('single-space-unpinned-card-keeps-plain-name',!single.picker&&single.name===single.expectedName&&single.spaceBeside);
+ check('sole-space-facade-is-idempotent',await page.evaluate(async()=>{
+  const c=window.__card,before=JSON.stringify([c._serverCfg,c._layout]),chain=c._writeChain;
+  await window.__hpTest.switchSpace(c._serverCfg.spaces[0].id);
+  return JSON.stringify([c._serverCfg,c._layout])===before&&c._writeChain===chain;
+ }));
+ check('sole-space-facade-rejects-foreign-id',await page.evaluate(async()=>{
+  try{await window.__hpTest.switchSpace('missing-space-1369');return false;}
+  catch(error){return String(error.message).startsWith('__hpTest.switchSpace:');}
+ }));
  // Revoked authority or a changed layout cannot leave a stale actionable sheet.
  await trigger.click();await page.evaluate(()=>{window.__card._serverCanWrite=false;window.__card.requestUpdate();});await settle();
  await menu.waitFor({state:'hidden'});await size(180);await trigger.click();

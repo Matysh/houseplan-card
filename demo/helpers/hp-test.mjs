@@ -37,6 +37,7 @@ export const SELECTORS = Object.freeze({
   tool: '[data-hp="tool"][data-tool="{tool}"]',
   toast: '[data-hp="toast"]',
   spaceTab: '[data-hp="space-tab"][data-id="{id}"]',
+  spaceName: '[data-hp="space-name"]',
   spaceSelect: '[data-hp="space-select"]',
   spaceSelectValue: '[data-hp="space-select-value"]',
   selectTrigger: '[data-hp="select-trigger"]',
@@ -259,10 +260,16 @@ export function installHpTest(selectors) {
 
     async switchSpace(id) {
       const c = need('switchSpace');
+      const soleSpace = () => {
+        const spaces = c._serverCfg?.spaces, name = findAction(c, 'spaceName');
+        return spaces?.length === 1 && spaces[0].id === id && name
+          && name.textContent.trim() === String(spaces[0].title ?? '').trim();
+      };
       // A remounted card can finish its first Lit update before the compact
       // control's shadow root is ready. Wait for the actual user entrypoint;
       // permission delivery may intentionally remain pending in the caller.
       const control = await waitFor('switchSpace', () => {
+        if (soleSpace()) return { name: true };
         const tab = find(c, 'spaceTab', { id });
         if (tab) return { tab };
         const select = find(c, 'spaceSelect');
@@ -270,7 +277,7 @@ export function installHpTest(selectors) {
         return button ? { button } : null;
       }, () => `навигация для пространства ${id} не отрисована (режим ${mode(c)})`);
       if (control.tab) control.tab.click();
-      else {
+      else if (control.button) {
         const button = control.button;
         button.click(); await settled();
         const menu = deepAll(c.ownerDocument, sel('selectMenu'))
@@ -281,7 +288,7 @@ export function installHpTest(selectors) {
       }
       await settled();
       await waitFor('switchSpace', () => find(c, 'spaceTab', { id })?.getAttribute('aria-current') === 'page'
-        || find(c, 'spaceSelectValue')?.value === id,
+        || find(c, 'spaceSelectValue')?.value === id || soleSpace(),
         () => `пространство ${id} не стало текущим`);
       await settled();
     },
