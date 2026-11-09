@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8265,
+  "revision": 8266,
   "nextTicket": 343,
   "nextFence": 343,
   "tasks": {
@@ -4279,7 +4279,19 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794240597566,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "74b8a330872b2de93675d95942962a021a369520",
+      "changedFiles": [
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/header-spaces-phone-light-997.png",
+        "demo/golden/baselines/panel-three-rows-ui-1132.png",
+        "demo/golden/baselines/panel-tray-narrow-tool-ru.png",
+        "demo/golden/baselines/panel-version-mismatch-touch-light-ru.png",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.85.0/1372.json",
+        "docs/release-ledger/v1.85.0/1373.json"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4474,12 +4486,17 @@
     "token": "342:finish:d56fff0d-c3d1-4e57-8484-74bde7346fc1:finish:1:admit",
     "fence": 342,
     "materialSha": "b0d5e5554c361684ddf5db92d5b0b86adefce8e5",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "727c643c5970b267dea8d2091b2bf6315afd2dd5",
+    "phase": "testing",
     "admittedAt": 1794240605118,
-    "expiresAt": 1794240905118
+    "expiresAt": 1794240911320,
+    "patchId": "74b8a330872b2de93675d95942962a021a369520"
   },
   "events": {
+    "finish:d56fff0d-c3d1-4e57-8484-74bde7346fc1:finish:2:synchronized": {
+      "digest": "b5af63413aee7240e0382e1d590318f983f93396473eed3e01f2e9952db80cf9",
+      "issue": 1373
+    },
     "dev-build:42651172882:1:1372": {
       "digest": "6b18c525a22e9c7eec4ea3b15d50680f9071d16280f2cef4f19b5e6c4eda619b",
       "issue": 1372,
