@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 7739,
+  "revision": 7740,
   "nextTicket": 328,
   "nextFence": 328,
   "tasks": {
@@ -4688,7 +4688,8 @@
           "entry": 3,
           "detail": "Браузер: header actions menu: failed; Браузер: space switch transitions: failed; Браузер: ui kit motion: failed; Браузер: view runtime recovery: failed; Браузер: zigbee enable refresh: failed",
           "eventId": "finish:b9387771-f680-43b9-a931-6e0eccddcc93:finish:3:return:return:1365"
-        }
+        },
+        "delivered": true
       }
     }
   },
