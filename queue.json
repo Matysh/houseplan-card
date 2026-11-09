@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8143,
+  "revision": 8144,
   "nextTicket": 341,
   "nextFence": 341,
   "tasks": {
@@ -4240,7 +4240,7 @@
       "ownerDecision": null,
       "ticket": 340,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794226958054,
       "reviewEntry": 2,
       "patchId": "9c70788e4ca89eab587cdf68aecc4af333cb371f",
@@ -4280,6 +4280,15 @@
         "entry": 1,
         "detail": "Поведение: test/device-marker-polish-contract.test.mjs: failed; Поведение: test/houseplan-panel.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed; Браузер: editor chrome alignment: failed; Браузер: header actions menu: failed; Браузер: panel header overflow: failed; Браузер: toolbar stable width: failed",
         "eventId": "finish:60c8c752-377e-43b3-a8bf-4b0398adf66e:finish:3:return:return:1371"
+      },
+      "s6": {
+        "id": "20261109T122253766-62568a60",
+        "name": "Тесты для задачи #1371 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261109T122253766-62568a60/report.json",
+        "materialSha": "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae",
+        "status": "passed",
+        "finishedAt": "2026-11-09T12:33:57.560Z",
+        "failures": []
       }
     }
   },
@@ -4476,9 +4485,9 @@
     "fence": 340,
     "materialSha": "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae",
     "expectedBase": "69a565c1fff387657b44ad9327dd2ab39cf4526b",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794226961628,
-    "expiresAt": 1794227861339,
+    "expiresAt": 1794231238844,
     "patchId": "9c70788e4ca89eab587cdf68aecc4af333cb371f"
   },
   "events": {
@@ -4658,6 +4667,34 @@
         "layer": "product",
         "materialSha": "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae",
         "phase": "sync"
+      }
+    },
+    "finish:7c16bdf2-0cef-43b9-bf1e-3a92a5c60e85:finish:3:s6-complete": {
+      "digest": "71569efe5b3ca33ece3ba7499eaa9673280cd913746f54d9ad66d8ff09bd7fa2",
+      "issue": 1371,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1371,
+        "at": 1794227638844,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae",
+        "phase": "review",
+        "evidence": {
+          "id": "20261109T122253766-62568a60",
+          "name": "Тесты для задачи #1371 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261109T122253766-62568a60/report.json",
+          "materialSha": "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae",
+          "status": "passed",
+          "finishedAt": "2026-11-09T12:33:57.560Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Трек show сохраняется. База реализации — `69a565c1fff387657b44ad9327dd2ab39cf4526b`. Материалы `397ec430e08107c62e4312bfe216c598ba0bcbda` и их продуктовая база сохранены отдельно; эталонные серверные патчи не переносились в исходники.\n\n### Реализация\n\n- Intrinsic header сохраняет phase 4 с двумя рядами; phase 5 выбирается при третьем. Промежуточные уплотнения и обратный resize сохранены.\n- В общем EditorContextMenu добавлена presentation disclosure: геометрия по полю House Plan ниже основной head, естественная высота, ограничение доступным viewport, собственная прокрутка и inert сразу при закрытии. Анимации используют общий controlMotion.disclosure, без scale; закрытие берёт текущий clipPath, повторное открытие может продолжить прерванное движение.\n- HeaderActionsMenu сохраняет прежних владельцев/guards/disabled; убраны только zoom-in/fit/out и отдельная HA-команда, добавлены исходные и составные иконки 18 px, нейтральный Summary. Это согласованное расширение поверх прежнего узкого popup #1365: меню теперь на всю ширину House Plan, остаётся выше Properties.\n- HA sidebar state читается из отражаемого `open` у содержащего `ha-drawer`, наблюдатель живёт только вместе с HouseplanPanel. Нет lab-атрибута и независимого toggle boolean. В Lovelace кнопки HA нет; прежние kiosk/external/sidebar visibility policy сохранены. Публичный aria-expanded объявлен в DOM contract.\n- Сцене задан user-select:none с текстовыми исключениями, без global preventDefault; Close/Undo/Redo в компактных редакторах имеют 40×40 и шаг 44 px.\n\n### Фактическая подготовительная проверка\n\n- Сборка/типы прошли; entry topology сохранена. Первые ошибки импорта адаптера и интерполяции CSS устранены, не обходились изменением сборочных гардов.\n- Новый native smoke `demo/smoke_compact_header_polish.mjs` PASS: переходы туда/обратно, геометрия/иконки меню, прерывание открытия и повторное открытие, bounded scroll, три редактора, 8 native pan после dblclick, три палитры, состояния Summary/HA, текстовое выделение, длинные названия и en/ru/de/fr, reduced motion. Это synthetic browser transport, не HA backend proof.\n- Сравнение с принятым прототипом на идентичных данных/теме/viewport: на исходной подготовке **20/20 PNG совпали побайтно**; после исправлений S6 — 19/20 побайтно, у одного текстового фрагмента maxDelta2/255 (AA), геометрия и анимации те же — light/dark View, меню и три редактора, открытие 0/55/110/165/220 мс и закрытие 0/55/110/165/219 мс. Дополнительно идентичны View на 1440/800/390 px. Локальные материалы: `output/1371/reference-detail`, `product-detail`, `visual-comparison.json`; golden PNG не менялись.\n- На точном installable candidate `c3238da3ec888493d9ffc1e7aaa7809b0bf7adae`, настоящий HA Core2026.10.4: **3/3 бизнес-сценария PASS, 3 setup PASS, 0 retry/skip**. Проверены реальные scrim/Escape, отражаемое состояние HA иконки, отсутствие HA-кнопки в Lovelace, меню/ряды/редакторские кнопки и 8 native pan. Лаборатория изолирована и удалён только её собственный контейнер; полный HA suite не объявляется проверенным.\n- E2E impact: надо, реализован в [companion PR#34](https://github.com/Matysh/houseplan-e2e/pull/34), код `bd18100d3e222250d672e7726bd20b2a7dd53602`. Новый атрибут контракта даёт явный skip для старых сборок, но на кандидате все три сценария выполнены. Авторский просмотр и syntax/contract lint прошли; независимое ревью companion-кода пока не заявляется. Просьба учесть связанный diff при доступности репозитория; если недоступен — явно сохранить эту границу анализа.\n- Классификация нового smoke: product/browser, presentation, regression, task-release. План выбирает его как изменённый файл, по связям с каждым изменённым source-механизмом и через areaTests. Центральная выборка не урезана; fallback для большого houseplan-card и релизного учёта виден в плане.\n\nПрежние проверки, требовавшие только один обычный ряд/zoom внутри compact menu/HA внутри списка, актуализируются под прямое решение UI-047–UI-053. Остальные assertions сохраняются. Финальные rebase/S6, код-ревью и merge выполняет общая очередь finish; на момент подготовки этого контекста S6 ещё не завершён.\n\n\n### Исправления после первого S6\n\nПрогон `20261109T114935279-2b9e312e` завершён: 632 шага, 7 отказов; исходный отчёт и логи сохранены, не переписаны зелёными. До S7 он не дошёл. Исправления в `c3238da3ec888493d9ffc1e7aaa7809b0bf7adae`:\n\n- Hover-стили шапки получили штатный `:host([data-pointer-hover])`. Состояния открыто/закрыто задаются независимо от sticky :hover; Summary сохраняет обычный вид. Все правила находятся под .hdr[data-panel-flow]. Инвариант проверки scope допускает только штатный pointer-gate перед прежним корнем, произвольные unscoped-правила не разрешены.\n- При исчезновении исходной команды фокус сначала возвращается к видимому menu-trigger, а не к отдельно стоящей HA-кнопке; проверка внешнего фокуса сохранена.\n- Статический тест panelHost/kiosk обновлён под добавление фактического состояния sidebar в renderPanelMenu, защитные условия не удалены.\n- Старые viewport-предположения в editor alignment и menu/overflow сценариях заменены проверкой реально выбранной phase. Сохранены два обычных ряда и доступность закрытия рядом с Properties; первый пункт HA остаётся отдельным от списка. Физический min-gap проверяется до перехода к wrapping.\n- Закрытый trigger не обязан иметь постоянный focus-outline по UI-050; остальные кнопки сохраняют прежнюю проверку. Native координатный click остаётся native: перед измерением ждём фактическую конечную UI Kit анимацию, не отключая её.\n\nПроверка исправлений: **22/22 Node tests PASS** (device-marker-polish-contract, houseplan-panel, styles-split); **5/5 browser files PASS** (editor-chrome-alignment, header-actions-menu, panel-header-overflow, toolbar-stable-width, compact-header-polish).\n\nНа исправленном installable candidate c3238da3ec повторены адресные HA проверки: **3/3 business PASS, 3 setup PASS, 0 retry/skip**; теперь также проверены переход в настоящий Settings через sidebar и возврат. Первое добавление route-кейса упало на устаревшем href /config/dashboard; исправлен только тестовый селектор на реальный Settings link по роли, красный отчёт сохранён. Итоговый companion SHA bd18100d3e222250d672e7726bd20b2a7dd53602; SHA-256 пакета: `441635a268c7d90e1620b7678fa29b56c651ce34bfa2a52809d7b30d0177d1f4`.\n\nИсточники публичного HA-контракта: [ha-drawer 20260930.4](https://github.com/home-assistant/frontend/blob/20260930.4/src/components/ha-drawer.ts), [минимальная ветка 20240605.0](https://github.com/home-assistant/frontend/blob/20240605.0/src/components/ha-drawer.ts); у прежнего MWC DrawerBase open также reflect:true. Живой HA-прогон выполнен именно на Core2026.10.4; остальные версии не объявляются прогнанными.\n\nПовторный центральный S6 выполняется через новый вход finish. Golden/пороги и релизная версия не менялись.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
