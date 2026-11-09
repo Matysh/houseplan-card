@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Align browser/golden/HA checks with the two-row intrinsic header, separate HA control and40px stacked editor buttons; wait for painted native targets and the adopted read-only state, and refresh only the16 owner-approved frames (#1372).
+
 - Keep ordinary header controls in two rows before collapsing; reveal a full-width, content-sized actions menu with source icons, native HA sidebar state and stacked editor history controls. Preserve immediate panning after double-click fit, pointer-only hover and keyboard focus when the header collapses (#1371).
 
 - Open settings through the visible header action in the empty-backup import smoke, preserving its clean mutation guard after narrow-header menu changes (#1370).

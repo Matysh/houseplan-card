@@ -38,7 +38,10 @@ try {
  await wait();await assertFreshDemoBundleUnlessAllowed(page);
  await page.waitForFunction(()=>{
   const root=window.__card.shadowRoot,zoom=root.querySelector('[data-hp=zoom-in]');
-  return root.querySelector('[data-hp=space-select]')&&zoom?.getBoundingClientRect().width===0;
+  const space = [...root.querySelectorAll('[data-hp=space-select],[data-hp=space-name]')]
+    .some(el => el.getBoundingClientRect().width > 0);
+  return space && root.querySelector('[data-hp=header-actions-trigger]')?.getBoundingClientRect().width > 0
+    && zoom?.getBoundingClientRect().width===0;
  });
  check('panelTouchZoomButtonsHidden',await card.locator('[data-hp^=zoom-]').evaluateAll(nodes=>
   nodes.length===3&&nodes.every(e=>e.getBoundingClientRect().width===0)));

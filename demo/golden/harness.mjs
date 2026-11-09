@@ -2757,7 +2757,8 @@ export async function prepareGoldenScenario(page, scenario) {
         && panel?.hass?.auth?.external?.config?.hasSidebar !== true
         && (panel?.narrow === true || panel?.hass?.dockedSidebar === 'always_hidden');
       const actionsOnly = card.renderRoot.querySelector('.hdr')?.dataset.panelFlow === '5';
-      const menuTarget = actionsOnly ? card.renderRoot.querySelector('[data-hp="header-actions-trigger"]') : menu;
+      // #1371 keeps the native HA control separate from the disclosure.
+      const menuTarget = menu;
       const firstVisible = [...card.renderRoot.querySelectorAll('.head button')].find(node => node.getBoundingClientRect().width > 0);
       const stage = card.renderRoot.querySelector('.stage');
       const empty = card.renderRoot.querySelector('.empty');
@@ -2958,15 +2959,24 @@ export async function prepareGoldenScenario(page, scenario) {
       }
       const ownedClose = head.querySelector('[data-hp="editor-close"]');
       if (scenario.mode !== 'view' && !ownedClose) throw Error('phone editor close command is missing');
-      const close = actionsOnly ? null : ownedClose;
-      if (scenario.mode !== 'view' && !actionsOnly) {
+      const close = actionsOnly ? root.querySelector('.editbar-end [data-hp="editor-close"]') : ownedClose;
+      if (scenario.mode !== 'view') {
         if (!close) throw Error('phone editor close is missing');
-        const r = close.getBoundingClientRect();
-        if (r.width < 43.99 || r.height < 43.99 || r.x < bounds.x - .1
-            || r.right > bounds.right + .1 || r.y < bounds.y - .1 || r.bottom > bounds.bottom + .1)
-          throw Error('phone editor close is clipped or too small');
+        const r = close.getBoundingClientRect(), limit = actionsOnly ? root.querySelector('ha-card').getBoundingClientRect() : bounds;
+        const size = actionsOnly ? 40 : 44;
+        if (Math.abs(r.width-size) > .01 || Math.abs(r.height-size) > .01 || r.x < limit.x - .1
+            || r.right > limit.right + .1 || r.y < limit.y - .1 || r.bottom > limit.bottom + .1)
+          throw Error('phone editor close is clipped or incorrectly sized');
+        if (actionsOnly) {
+          const stack = [...close.parentElement.querySelectorAll('button')].map(el=>({el,r:el.getBoundingClientRect()}))
+            .filter(item=>item.r.width).sort((a,b)=>a.r.y-b.r.y);
+          if(stack.length!==3 || stack[0].el!==close || stack.some((item,i)=>Math.abs(item.r.width-40)>.01
+              || Math.abs(item.r.height-40)>.01 || Math.abs(item.r.x-r.x)>.01
+              || i>0 && Math.abs(item.r.y-stack[i-1].r.y-44)>.01))
+            throw Error('compact editor controls must be Close/Undo/Redo in one40px column');
+        }
       }
-      if (!rows.length || head.scrollWidth > bounds.width + 1 || document.documentElement.scrollWidth > innerWidth)
+      if (!rows.length || rows.length > (actionsOnly ? 1 : 2) || head.scrollWidth > bounds.width + 1 || document.documentElement.scrollWidth > innerWidth)
         throw Error(`phone header layout is invalid: ${rows.length} rows, height ${bounds.height}`);
       const rect = close?.getBoundingClientRect();
       return { actionsOnly, rows: rows.length, height: bounds.height, width: bounds.width,
@@ -2990,10 +3000,12 @@ export async function prepareGoldenScenario(page, scenario) {
       const field = host.querySelector('select'), root = host.shadowRoot;
       const button = root.querySelector('[data-hp="select-trigger"]');
       const bounds = button.getBoundingClientRect(), style = getComputedStyle(button);
+      const standalone = host.closest('.hdr')?.dataset.panelFlow === '5';
+      const rightRadius = standalone ? '7px' : '0px';
       if (field.value !== scenario.space || !button.textContent.includes(scenario.headerSpaces.title)
           || Math.abs(bounds.height - 44) > .5 || host.getAttribute('variant') !== 'header'
           || style.borderTopLeftRadius !== '7px' || style.borderBottomLeftRadius !== '7px'
-          || style.borderTopRightRadius !== '0px' || style.borderBottomRightRadius !== '0px'
+          || style.borderTopRightRadius !== rightRadius || style.borderBottomRightRadius !== rightRadius
           || style.visibility !== 'visible' || style.opacity === '0')
         throw new Error(`compact floor field is not visibly usable: ${scenario.id}`);
       if (scenario.headerSpaces.open) {

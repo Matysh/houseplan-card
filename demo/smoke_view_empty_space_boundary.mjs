@@ -1,4 +1,5 @@
-import {headerActionTarget,clickHeaderAction} from './helpers/header-actions.mjs';
+import {clickHeaderAction} from './helpers/header-actions.mjs';
+import {waitForUiKitPaint} from './helpers/ui-kit-paint.mjs';
 // #1333: actual cold View, server adoption, space navigation and permission changes.
 import { launchColdView, check, checkAll, finish } from './serve.mjs';
 import { mkdirSync } from 'node:fs';
@@ -25,6 +26,8 @@ await page.evaluate(async () => {
 await prompt.waitFor({ state: 'visible' });
 check('literal Russian prompt', await prompt.locator('span').textContent(), 'План пока пуст. Давайте что-нибудь нарисуем.');
 check('literal Russian editor label', await button.textContent(), 'Редактора плана');
+await button.waitFor({state:'visible'});
+await waitForUiKitPaint(page);
 const rect = await button.boundingBox();
 out.touchTarget44 = rect.width >= 44 && rect.height >= 44;
 out.coldViewHasNoEditor = await page.evaluate(() => !window.__card._editorRuntime);
@@ -46,6 +49,8 @@ await prompt.waitFor({ state: 'visible' });
 // Retained DOM references must recheck current authority at click time.
 await page.evaluate(() => { window.__1333stale = window.__card.renderRoot.querySelector('[data-hp="empty-plan-edit"]'); });
 await page.evaluate(async () => { window.__1333writer = false; await window.__hpTest.setServerConfig(cfg => cfg); });
+await prompt.waitFor({state:'visible'});
+await button.waitFor({state:'hidden'});
 out.readOnlyHasTextOnly = await prompt.count() === 1 && await button.count() === 0;
 await page.evaluate(() => window.__1333stale.click());
 out.revokedStaleButtonRefuses = await page.evaluate(() => window.__card._mode === 'view');

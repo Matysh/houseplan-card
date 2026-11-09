@@ -59,14 +59,21 @@ try{
       'View canonical camera restores after a two-row header round trip');
     assert.ok(Math.hypot(...after.point.map((n,i)=>n-before.point[i]))<.1,'restored View has no painted point drift');
   }
-  // Direct editor navigation remains usable during a running shared-head transition.
-  await page.setViewportSize({width:390,height:900});await wait();
+  // In-flight retarget uses two genuinely painted editor commands. Phone mode
+  // and camera round trips above remain at320px; a disclosure's invisible item
+  // cannot be a native coordinate target during its opening animation.
+  await page.setViewportSize({width:1800,height:900});await wait();
   await page.emulateMedia({reducedMotion:'no-preference'});
   const rapidBefore=await snapshot();
   const plan=await (await headerActionTarget(card,'mode-plan')).boundingBox();
   await page.mouse.click(plan.x+plan.width/2,plan.y+plan.height/2);
   await page.waitForFunction(()=>window.__card._modeTransitionBusy);
-  const retarget=await (await headerActionTarget(card,'mode-decor')).boundingBox();
+  const retargetTarget=await headerActionTarget(card,'mode-decor');
+  assert.ok(await page.evaluate(()=>window.__card._modeTransitionBusy), 'retarget remains in-flight');
+  assert.ok(await retargetTarget.evaluate(button=>{const r=button.getBoundingClientRect();
+    const hit=button.getRootNode().elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+    return hit===button||button.contains(hit);}), 'retarget is a painted native target');
+  const retarget=await retargetTarget.boundingBox();
   await page.mouse.click(retarget.x+retarget.width/2,retarget.y+retarget.height/2);await wait();
   assert.equal(await card.locator('ha-card').getAttribute('data-hp-mode'),'decor');
   await clickHeaderAction(card,'mode-view');await wait();

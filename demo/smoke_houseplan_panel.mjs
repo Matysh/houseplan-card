@@ -437,18 +437,25 @@ wideUserActivation.retainedStageInteractiveFocuses &&= stageFocused;
 // horizontal scrollbar. Keep the populated panel mounted for this check.
 await page.setViewportSize({ width: 320, height: 720 });
 await page.evaluate(() => { window.__hpPanel.narrow = true; });
-// #1120: the lazy picker/Lit commit is part of the new content-driven phone
-// presentation. #1132 keeps actions directly visible on further rows. Observe
-// that public presentation before the unchanged two-frame
-// camera/height stability oracle (rather than sampling the old wide row).
+// Observe the actual #1371 phone presentation before the unchanged two-frame
+// camera/height stability oracle: up to two ordinary rows, then disclosure.
 await page.waitForFunction(() => {
   const root = window.__hpPanelCard.renderRoot;
-  const picker = root.querySelector('[data-hp="space-select"]');
+  const head = root.querySelector('.head'), shown = el => el?.getBoundingClientRect().width > 0;
+  const space = [...root.querySelectorAll('[data-hp="space-select"],[data-hp="space-name"]')].find(shown);
   const gear = root.querySelector('[data-hp="header-menu"]');
   const rotation = root.querySelector('[data-hp="rotate-left"]');
   const menu = root.querySelector('[data-hp="panel-menu"]');
-  return picker?.getBoundingClientRect().width > 0 && (!gear || gear.getBoundingClientRect().width === 0)
-    && rotation?.getBoundingClientRect().top >= menu?.getBoundingClientRect().bottom;
+  const compact = shown(root.querySelector('[data-hp="header-actions-trigger"]'));
+  const rows = [];
+  for (const el of [space, ...head.querySelectorAll('button')].filter(shown)) {
+    const r = el.getBoundingClientRect(), y = r.y + r.height/2;
+    if (!rows.some(prior => Math.abs(prior-y) < 1)) rows.push(y);
+  }
+  return !!space && shown(menu) && (!gear || !shown(gear))
+    && rows.length > 0 && rows.length <= (compact ? 1 : 2)
+    && head.scrollWidth <= head.clientWidth + 1
+    && (compact ? !shown(rotation) : shown(rotation));
 });
 const resized = await page.evaluate(async () => {
   const card = window.__hpPanelCard;

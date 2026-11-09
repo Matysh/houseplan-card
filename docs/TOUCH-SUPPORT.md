@@ -61,21 +61,25 @@ whole header and menu; Back or the ordinary /houseplan URL exits.
 Adaptation measures actual content, names, locale and available container
 width. In order: short Plan/Devices/Background labels with equal pencils become
 distinct compact icons; exactly Zoom out/Fit all/Zoom in disappear; space tabs
-become a dropdown; the editor/action gap shrinks to 10 px. Before the controls
-wrap, #1364 selects one row with the space context and a 44 × 44 px vertical-
-ellipsis action button. Multiple available spaces use the standard dropdown;
+become a dropdown; the editor/action gap shrinks to 10 px. The ordinary presentation uses up to two rows. If it needs a third row,
+#1371 selects one row with the space context and a44 ×44px vertical-ellipsis
+action button. Multiple available spaces use the standard dropdown;
 one available space, including a pinned card, uses its plain name. Long names
-truncate. The menu retains all permitted original actions, including current
-space settings, Add space and the HA drawer command under its existing policy.
+truncate. The menu retains permitted original commands, including current space settings
+and Add space. Zoom out/Fit all/Zoom in are omitted from the compact menu;
+gestures retain zoom. The native44 ×44px HA drawer control stays separate,
+left of the space context, under its existing visibility policy.
 Expansion restores the reverse sequence without fixed width thresholds.
-Groups and editor close have44px targets; rotation/zoom
+Header groups and ordinary editor close have44px targets. In the compact
+editor chrome, Close/Undo/Redo form a40 ×40px column with4px gaps;
+ordinary and two-row editor layout is unchanged. Rotation/zoom
 are separate outlined groups with10px between them. Gestures retain zoom.
 Properties independently uses 1024 px of card width. Lovelace uses the same
 content-based header (#1184), starting with space navigation and receiving no HA menu.
 
 - render the plan and current states correctly;
 - use the same content-based header in panel and Lovelace at every width,
-  preserving actions and 44px targets through the single-row compact menu;
+  preserving actions and44px View targets through the compact menu after two ordinary rows;
 - select floor tabs or the shared dropdown by actual available space, retaining
   touch selection, accepted floor and editor dirty-navigation guards;
 - keep editor close reachable through the compact menu or shared 44px slot.

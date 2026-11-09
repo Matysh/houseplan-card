@@ -1,3 +1,21 @@
+/** Resolve a painted target, including disclosure clipping, without waiting away
+ * unrelated mode motion. Disabled items remain inspectable by their callers. */
+async function waitForHeaderTarget(card, target) {
+  const deadline = Date.now() + 2500;
+  for (;;) {
+    const painted = await target.evaluate(button => {
+      const r = button.getBoundingClientRect();
+      if (!(r.width > 0 && r.height > 0)) return false;
+      if (button.matches(':disabled,[aria-disabled="true"]')) return true;
+      const hit = button.getRootNode().elementFromPoint(r.x + r.width/2, r.y + r.height/2);
+      return hit === button || button.contains(hit);
+    });
+    if (painted) return target;
+    if (Date.now() >= deadline) throw Error('Header menu target did not become painted and hittable');
+    await card.evaluate(() => new Promise(requestAnimationFrame));
+  }
+}
+
 /** Exercise the visible product route in either intrinsic header layout. */
 export async function headerActionTarget(card, action) {
   await card.evaluate(async host => {
@@ -16,11 +34,15 @@ export async function headerActionTarget(card, action) {
   const mode = action.startsWith('mode-') ? action.slice(5) : null;
   const original = card.locator(mode === 'view' ? '.head [data-hp="editor-close"]'
     : mode ? '.head [data-hp="mode-tab"][data-mode="' + mode + '"]' : '.head [data-hp="' + action + '"]');
-  if (await original.isVisible()) return original;
+  if (await original.isVisible()) return waitForHeaderTarget(card, original);
+  if (mode === 'view') {
+    const close = card.locator('.editbar-end [data-hp="editor-close"]:visible').first();
+    if (await close.isVisible()) return waitForHeaderTarget(card, close);
+  }
   const sheet = card.locator('[data-hp="header-actions-menu"]:not([inert])');
   if (!await sheet.isVisible()) await card.locator('[data-hp="header-actions-trigger"]').click();
   const target = sheet.locator('[data-action="' + action + '"]');
   await target.waitFor({state:'visible'});
-  return target;
+  return waitForHeaderTarget(card, target);
 }
 export async function clickHeaderAction(card, action) { await (await headerActionTarget(card, action)).click(); }
