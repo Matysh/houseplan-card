@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 623,
+  "revision": 624,
   "active": "v1.85.1-beta.2-20261109",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -45901,7 +45901,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.85.1-beta.2",
@@ -53777,7 +53777,8 @@
           "en": "## v1.85.1-beta.2 — 2026-11-09\n\n- Keep Device settings navigation in place while the content scrolls, with independently reachable sections on short windows and a compact visible divider after Details (#1354).\n- Keep the narrow header actions popup inside its allocated field and mount it during active drawing; retain native keyboard focus capture and wait for lazy commands in browser fixtures (#1365).\n\n- Accept the 58 owner-reviewed stable-audit frames; calibrate equivalent-grid AA to 300 pixels only in 2.5D, with a real one-pixel scene-shift witness in both themes (#1363).\n- Keep the space name or selector beside a 44px vertical-ellipsis actions menu in a single narrow header row, including single-space panels and pinned cards (#1364).\n\n- Keep stable smoke assertions on the visible hidden-device action, the phone View header and the explicit frozen door field order (#1362).\n\n- Restore LED strip actions after leaving an editor for View (#1361).\n\n- Keep settings Help open after a queued scroll that already revealed its trigger; share the anchor check with dropdowns (#1360).\n\n- Clear residual scene rotation and width after rapid View/editor handoffs (#1358).\n- Keep moved room settings buttons through resize preview and cancellation (#1359).\n- Update stable browser/HA observation for retained layers, compact header actions and independent settings scrolling (#1357).\n\n- Keep settings dropdowns open after a queued scroll that revealed their trigger; actual anchor movement still dismisses the menu (#1356)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.85.1-beta.2"
     }
   },
   "published": {
@@ -58321,7 +58322,8 @@
     "ship-review:result:a68fb329-29c8-4bff-bd3e-cd9060ceb4a6": "458191b6ec80401fd0d74131c38c63360227e1e3eca1ddf3525120a2dafa510f",
     "release-1851-beta2-publish-1:runner-report": "0863bd98ab8aad64bfb6359e8587351fc0d8ead102981c9a201a9f532fb8799e",
     "release-1851-beta2-publish-1:metrics": "dbef9d7f77f4290ebe479f58525de268076b9e8ae89fd68ed64a5f0297dfaa0a",
-    "release-1851-beta2-publish-1:prepared:e29523d7-ebd5-4dd5-a8cf-5b5df1839b33": "8dc6ff62f02951dc700a8fd48469a45d032e5dfd5d54ddf6431a5f1d736a03c1"
+    "release-1851-beta2-publish-1:prepared:e29523d7-ebd5-4dd5-a8cf-5b5df1839b33": "8dc6ff62f02951dc700a8fd48469a45d032e5dfd5d54ddf6431a5f1d736a03c1",
+    "release-1851-beta2-publish-1:started:623": "143752574b84a5b632d57dab05183ffef5a9318433107d69dc89a9765246d19b"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
