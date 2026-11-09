@@ -1,24 +1,28 @@
-<!-- release: v1.85.1-beta.1 -->
-## Houseplan 1.85.1-beta.1
+<!-- release: v1.85.1-beta.2 -->
+## Houseplan 1.85.1-beta.2
 
-Первая бета линии **1.85.1** после стабильной 1.85.0.
+Вторая бета линии **1.85.1**. Изменения относительно beta.1:
 
-- **Удобнее на узком экране.** Перед появлением третьего ряда кнопок шапка собирает действия в одно меню. Выбор пространства остаётся сверху; в карточке с закреплённым пространством он скрывается. В основной панели с одним пространством остаётся только меню действий. (#1347)
-- **Плавнее переходы к редакторам.** Подготовка редактора начинается заранее при намерении его открыть; сцена остаётся доступной до показа конечного кадра. (#1344)
-- **Свет через стеклянные двери.** Новая настройка «Пропускает свет» позволяет закрытой двери передавать освещение и сохраняется при переносе плана. (#1348)
-- **Надёжнее работа с планом.** Замкнутая комната распознаётся и при внутренней тупиковой перегородке. (#1346)
-- **Доработан интерфейс.** Подпись тумблера переключает его значение; тип проёма выбирается стандартным списком; выровнены кнопка закрытия, панели редакторов и положение общих кнопок шапки. (#1349, #1350, #1351, #1352)
+- **Одна строка на узком экране.** Название или выбор пространства и кнопка ⋮ теперь стоят рядом. При одном пространстве, в том числе в закреплённой карточке, остаётся его название без выпадающего списка. Настройки пространства и добавление доступны через общее меню действий. (#1364, #1365)
+- **Надёжнее переходы между просмотром и редакторами.** После быстрого переключения не остаются временный поворот и ширина сцены; LED-ленты снова реагируют на действия после выхода из редактора. (#1358, #1361)
+- **Навигация настроек устройства остаётся на месте.** Длинное содержимое прокручивается отдельно от списка разделов; после «Сведения» появился компактный разделитель. (#1354)
+- **Удобнее настройки.** Выпадающий список и подсказка не закрываются от отложенной прокрутки, которая только показала их кнопку. Настоящее перемещение кнопки по-прежнему закрывает меню. (#1356, #1360)
+- **Стабильнее редактирование комнат.** Кнопка настроек комнаты сохраняет перемещённое положение при предпросмотре изменения размера и его отмене. (#1359)
+
+Обновлены проверки реального Home Assistant и визуальные эталоны. (#1357, #1362, #1363)
 
 После обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.
 
 ---
 
-First beta of **1.85.1**, based on stable 1.85.0.
+Second beta of **1.85.1**. Changes since beta.1:
 
-- **A compact header for narrow screens.** Actions move into one menu before a third button row appears. Space selection stays above it; pinned-space cards omit the selector, and a single-space primary panel shows actions only. (#1347)
-- **Smoother editor transitions.** Editor preparation starts on user intent while the current scene remains available until its final frame is presented. (#1344)
-- **Light through glass doors.** The new “Lets light through” setting lets closed doors transmit illumination and survives plan transfers. (#1348)
-- **More reliable plan editing.** Closed rooms are recognized with dangling internal walls. (#1346)
-- **UI refinements.** Switch labels activate their controls, opening types use the standard dropdown, and editor close controls, toolbar heights and shared header positions are aligned. (#1349, #1350, #1351, #1352)
+- **One row on narrow screens.** The space name or selector sits beside the ⋮ button. A single space, including a pinned card, keeps its plain name without a dropdown. Space settings and Add space are available through the shared actions menu. (#1364, #1365)
+- **More reliable View/editor transitions.** Rapid switches no longer leave residual scene rotation or width; LED strip actions work again after leaving an editor. (#1358, #1361)
+- **Device settings navigation stays in place.** Long content scrolls independently from the section list, with a compact divider after Details. (#1354)
+- **Better settings interaction.** A dropdown or Help stays open after a queued scroll that only revealed its trigger. Actual trigger movement still dismisses the menu. (#1356, #1360)
+- **More stable room editing.** A moved room settings button keeps its position during resize preview and cancellation. (#1359)
+
+Real Home Assistant checks and visual references have been updated. (#1357, #1362, #1363)
 
 Restart Home Assistant and reload open Houseplan pages after upgrading.
