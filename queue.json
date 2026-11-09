@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 7758,
-  "nextTicket": 329,
+  "revision": 7759,
+  "nextTicket": 330,
   "nextFence": 329,
   "tasks": {
     "1193": {
@@ -4158,14 +4158,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1365-header-menu-bounds",
-      "materialSha": "3979eda0eded14b615ea00598788a07b98ba88fc",
+      "materialSha": "87193ee6f6fccca0420a94ffc3ed43fe303c3565",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 328,
-      "queued": false,
+      "ticket": 329,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794184935741,
-      "reviewEntry": 4,
+      "readyAt": 1794185874409,
+      "reviewEntry": 5,
       "patchId": "05dbe230cf74e9c0c0239c35431dadb6edf33f03",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -4195,8 +4195,7 @@
         "entry": 4,
         "detail": "Поведение: test/styles-split.test.mjs: failed",
         "eventId": "finish:6a85423f-2533-43d2-83ac-0703576b7e36:finish:3:return:return:1365"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4384,7 +4383,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1365
+  ],
   "active": null,
   "events": {
     "finish:5894ea6b-8739-4dee-9829-ef4613d9e915:finish:2:synchronized": {
@@ -4806,6 +4807,19 @@
           "detail": "Поведение: test/styles-split.test.mjs: failed",
           "eventId": "finish:6a85423f-2533-43d2-83ac-0703576b7e36:finish:3:return:return:1365"
         }
+      }
+    },
+    "finish:41e3a906-2477-405b-9cca-682b2dd3a15f": {
+      "digest": "fc7b8c54e218c75bdf0ced3b29aa61b134e47cd92be92141449272ab1ad5149d",
+      "issue": 1365,
+      "message": {
+        "kind": "queued",
+        "issue": 1365,
+        "at": 1794185874409,
+        "entry": 5,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "87193ee6f6fccca0420a94ffc3ed43fe303c3565"
       }
     }
   },
