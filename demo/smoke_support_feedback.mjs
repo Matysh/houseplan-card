@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
+import { headerActionTarget } from './helpers/header-actions.mjs';
 
 const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 const PREVIEW_TEXT = '{"format":"houseplan-support-package","version":1}\n';
@@ -38,11 +39,23 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
     await update();
   };
   const open = async () => {
-    const button = root().querySelector('.support-button');
+    const visible = element => element && element.getBoundingClientRect().width > 0
+      && element.getBoundingClientRect().height > 0 && getComputedStyle(element).visibility !== 'hidden'
+      && !element.closest('[inert]');
+    let button = root().querySelector('.support-button');
     if (!button) throw new Error('support button missing');
+    let settings = button.previousElementSibling?.previousElementSibling, pdf = button.previousElementSibling;
+    if (!visible(button)) {
+      const command = action => root().querySelector(`[data-hp="header-actions-menu"]:not([inert]) [data-action="${action}"]`);
+      if (!visible(command('support'))) root().querySelector('[data-hp="header-actions-trigger"]').click();
+      await until(() => visible(command('support')), 'visible Support menu command');
+      button = command('support'); settings = command('settings'); pdf = command('pdf');
+    }
+    const targets = { support: button.getBoundingClientRect(), settings: settings?.getBoundingClientRect(), pdf: pdf?.getBoundingClientRect() };
     button.click();
     await until(() => !!card._supportDialog, 'dialog open');
     await update();
+    return targets;
   };
 
   card._haIntegrationVersion = version;
@@ -141,14 +154,9 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
   await update();
 
   const supportCallsBeforeOpen = calls.length;
-  await open();
+  const targets = await open();
   const dialog = root().querySelector('#support-dialog');
-  const supportButton = root().querySelector('.support-button');
-  const pdfButton = supportButton?.previousElementSibling;
-  const settingsButton = pdfButton?.previousElementSibling;
-  const touchRect = supportButton.getBoundingClientRect();
-  const pdfRect = pdfButton?.getBoundingClientRect();
-  const settingsRect = settingsButton?.getBoundingClientRect();
+  const touchRect = targets.support, pdfRect = targets.pdf, settingsRect = targets.settings;
   const message = dialog?.querySelector('#support-message');
   const contact = dialog?.querySelector('#support-contact');
   const guide = dialog?.querySelector('#support-docs-heading + a');
@@ -424,29 +432,22 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
 
 const responsive = async (viewport) => {
   await page.setViewportSize(viewport);
-  return page.evaluate(async () => {
+  await page.evaluate(async () => {
     const card = window.__card;
     if (card._supportDialog) await card._editorRuntime._closeSupportDialog();
-    card._setMode('view');
-    await card.updateComplete;
-    // #616: at ≤ 480 px the entry point is the header menu item, not the header
-    // button (hidden there); its hit target is what the phone user taps.
-    let button = card.renderRoot.querySelector('.support-button');
-    let entryRect = null;
-    if (innerWidth <= 480) {
-      
-      await card.updateComplete;
-      button = card.renderRoot.querySelector('[data-hp="support"]');
-      entryRect = button?.getBoundingClientRect();
-    }
-    button?.click();
+    await window.__hpTest.setMode('view');
+  });
+  const entry = await headerActionTarget(page.locator('houseplan-card'), 'support');
+  const buttonRect = await entry.boundingBox();
+  await entry.click();
+  return page.evaluate(async buttonRect => {
+    const card = window.__card;
     await card.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const dialog = card.renderRoot.querySelector('#support-dialog');
     const body = dialog?.querySelector('.supportbody');
     const footer = dialog?.querySelector('.supportfooter');
     const dialogRect = dialog?.getBoundingClientRect();
-    const buttonRect = entryRect ?? button?.getBoundingClientRect();
     return !!dialog && !!body && !!footer && !!dialogRect && !!buttonRect
       && dialogRect.left >= -1 && dialogRect.right <= innerWidth + 1
       && dialogRect.top >= -1 && dialogRect.bottom <= innerHeight + 1
@@ -454,7 +455,7 @@ const responsive = async (viewport) => {
       && body.scrollWidth <= body.clientWidth + 1
       && body.clientHeight > 0 && footer.getBoundingClientRect().height > 0
       && buttonRect.width >= 44 && buttonRect.height >= 44;
-  });
+  }, buttonRect);
 };
 
 result.phonePortrait = await responsive({ width: 320, height: 760 });
