@@ -2,9 +2,11 @@
 
 ## Unreleased
 
+## v1.85.1-beta.3 — 2026-11-09
+
 - Accept the four additional owner-reviewed header frames recovered by #1372, preserving their exact image hashes and comparison thresholds (#1373).
 
-- Align browser/golden/HA checks with the two-row intrinsic header, separate HA control and40px stacked editor buttons; wait for painted native targets and the adopted read-only state, and refresh only the16 owner-approved frames (#1372).
+- Align browser/golden/HA checks with the two-row intrinsic header, separate HA control and 40px stacked editor buttons; wait for painted native targets and the adopted read-only state, and refresh only the 16 owner-approved frames (#1372).
 
 - Keep ordinary header controls in two rows before collapsing; reveal a full-width, content-sized actions menu with source icons, native HA sidebar state and stacked editor history controls. Preserve immediate panning after double-click fit, pointer-only hover and keyboard focus when the header collapses (#1371).
 
