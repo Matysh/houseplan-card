@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8009,
+  "revision": 8010,
   "nextTicket": 338,
   "nextFence": 338,
   "tasks": {
@@ -4161,72 +4161,24 @@
     "1366": {
       "issue": 1366,
       "branch": "issue/1366-release-return-0db5a9f7c2b2",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "0db5a9f7c2b2d9381a1dbc7d640ae51f91f0bb8f",
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "5d522469dd04bb0630f3a890652e32e94fe02c2e",
+      "mergedSha": "5f690dbdf8064bbdc159388c963423590317163f",
+      "mergedAt": 1794193694556,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
       "releaseTag": "v1.85.1-beta.2",
-      "materialSha": "5f690dbdf8064bbdc159388c963423590317163f",
-      "ownerDecision": null,
-      "ticket": 337,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1794193269601,
-      "reviewEntry": 3,
-      "patchId": "235b3b32f4aa5da5b8f667d850b129ed27ff7d22",
-      "review": {
-        "source": "published-release",
-        "sourceSha": "0db5a9f7c2b2d9381a1dbc7d640ae51f91f0bb8f",
-        "tag": "v1.85.1-beta.2",
-        "verdict": "accepted",
-        "patchId": "235b3b32f4aa5da5b8f667d850b129ed27ff7d22",
-        "materialSha": "5f690dbdf8064bbdc159388c963423590317163f"
-      },
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "demo/golden/baselines/baselines-index.json",
-        "demo/golden/baselines/device-alert-form-numeric.png",
-        "demo/golden/baselines/device-battery-mobile-dark.png",
-        "demo/golden/baselines/geometry-plan-editor-dark.png",
-        "demo/golden/baselines/panel-device-state-source-unknown-en.png",
-        "demo/golden/baselines/panel-geometry-decor-editor-dark.png",
-        "demo/golden/baselines/panel-geometry-devices-editor-dark.png",
-        "demo/golden/baselines/panel-opening-placement-door-thick-wall-dark.png",
-        "demo/golden/baselines/panel-plan-snap-endpoint-light.png",
-        "demo/golden/baselines/panel-three-rows-ui-1132.png",
-        "demo/golden/baselines/panel-tray-narrow-tool-ru.png",
-        "demo/golden/baselines/panel-vacuum-live-tail-pending-dialog-dark.png",
-        "demo/golden/baselines/panel-version-mismatch-touch-light-ru.png",
-        "demo/golden/baselines/plan-rotation-phone-view-320-1070.png",
-        "demo/golden/baselines/safe-resize-handles-clamp-dark.png",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "package-lock.json",
-        "package.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "notice": {
-        "key": "2:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794192396691,
-        "entry": 2,
-        "detail": "Браузер: wall face lineage: failed",
-        "eventId": "release-1851-beta2-return-correction-2:finish:3:return:return:1366"
-      },
-      "s6": {
-        "id": "20261109T030128110-ce5e0ac8",
-        "name": "Тесты для задачи #1366 (перед ревью)",
-        "reportPath": "/home/matysh/hp-beta6-release2/.git/process-next/runs/20261109T030128110-ce5e0ac8/report.json",
-        "materialSha": "5f690dbdf8064bbdc159388c963423590317163f",
-        "status": "passed",
-        "finishedAt": "2026-11-09T03:08:07.061Z",
-        "failures": []
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1367": {
@@ -4488,288 +4440,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1366,
-    "worker": "github-coordinator",
-    "token": "337:github:42553925115:1:tick:0:admit",
-    "fence": 337,
-    "materialSha": "5f690dbdf8064bbdc159388c963423590317163f",
-    "expectedBase": "5d522469dd04bb0630f3a890652e32e94fe02c2e",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794193272371,
-    "expiresAt": 1794197291977,
-    "patchId": "235b3b32f4aa5da5b8f667d850b129ed27ff7d22"
-  },
+  "active": null,
   "events": {
-    "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:2:synchronized": {
-      "digest": "dca38b8455ada14b36b13dc218ffaa54fc30d4161b5122270fe48a210a266810",
-      "issue": 1366
-    },
-    "github:42550057386:1:completions:message:e3ca41488c9e1315a1515836c824434f486410bc9491e06ff564ef285ed3b1ba": {
-      "digest": "82b58fcde652117cac95939c58cd6ae424cadf71b174eecfa7c33ef9bf82f2f1",
-      "issue": 1366
-    },
-    "github:42550057386:1:completions:message:daf0ee68856f026e710e09eb3e1c6f51de8ba66850cab0343cbcd448273d0d3e": {
-      "digest": "e735a60b9b91e834069584f1032b417bf5d88edf98f394ddb713a83e0602801c",
-      "issue": 1366
-    },
-    "finish:5d815b63-1d20-42bd-bed9-7b8899ba0161": {
-      "digest": "77e594a81deeb614f8614aaa3cfd74e3a3df9934f3b25208b96e9e11f3e101cb",
-      "issue": 1366
-    },
-    "finish:54c76dfa-1104-49fd-a9bd-da64cd6de63e": {
-      "digest": "a91001fcf1fc0bc4b0a32fac168dd56f8734dc1f2690c10f6ec5d0e5ea89d5f9",
-      "issue": 1366
-    },
-    "finish:cb716977-f2a8-4a45-bee6-ef7bdb6d7fe6": {
-      "digest": "628375dc682cd29e5d62460a33e9f884a8411acd9cbd771ddc70a38ca6d0d767",
-      "issue": 1366
-    },
-    "finish:4eb956f1-907e-414a-90c1-77fadb2e26ed": {
-      "digest": "a738a60fc28458b1297b51a4b17818b2fd82fe653222591759c55e045a3ce6f4",
-      "issue": 1366
-    },
-    "finish:23aa36ca-afe0-41b4-8457-3f101f479dc9": {
-      "digest": "9d77d995c82a6e60fa70eadfcd7c1c4804191acd0a10d0ea7fcc79eb4409a517",
-      "issue": 1366
-    },
-    "finish:2e626781-831b-4912-b26e-05731d69aef7": {
-      "digest": "ab43c98ecaf7651da3db97b2824540f7259f997138866c81e59780295c2492a7",
-      "issue": 1366
-    },
-    "finish:6411a728-a092-473b-a564-dd21b8b6550e": {
-      "digest": "edbbd1471c7d0dadba097a14912d7be258d0808701de45ffdab15ba05d4226d1",
-      "issue": 1366
-    },
-    "finish:71d372ae-ff2d-4dd5-9b8e-fc60da42f044": {
-      "digest": "06c0b4fdb322b86e0b9c86eb1a1c8102c140778fb60917322ea0c63bdd7fa925",
-      "issue": 1366
-    },
-    "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:3:return": {
-      "digest": "83273c0f20550eb350db7d8bcf734642dfaa9f46107db91f32fe76de4b226098",
-      "issue": 1366
-    },
-    "github:42551283173:1:completions:notice:ac4142f09062e246476a056502e34b080943b193ab304d4896192d1767befe2a": {
-      "digest": "aac3430a753b60cd8109b39de9e317412ec0979b9e45af92b5cc9596b2b75c49",
-      "issue": 1366
-    },
-    "release-1851-beta2-return-correction-2:finish:2:synchronized": {
-      "digest": "6251a661220891202b34953c6f3ca060483999aca0c0d77cc47451795d6c0492",
-      "issue": 1366
-    },
-    "finish:31a126c0-dc78-49f7-bf49-37f0b954dd8e": {
-      "digest": "f8b669a8fb631ae8e9cb1a1b8245ff7448c1112f7c67f2c79b4106fa3d5f6fda",
-      "issue": 1366
-    },
-    "finish:74632ba0-41bc-4612-8dfd-ca4c3b8a0eba": {
-      "digest": "5fabe68885527dc890706064671b79e48bb1565654e9e57361c1826b5077886a",
-      "issue": 1366
-    },
-    "finish:4479967c-c3c3-4bb5-b80e-651650729dc3": {
-      "digest": "2606610929692ba3cf02feb88cd544b8defe37d137ca4a2f668ff1ab79b050fd",
-      "issue": 1366
-    },
-    "finish:1ac9f735-4990-46e4-ba8d-3f40cf7d32b5": {
-      "digest": "4736eeb134fe2221b0c255b784defefdd3ec004d7791e5bc4c5b50bd8ea9e162",
-      "issue": 1366
-    },
-    "finish:99f006cf-574a-40ad-8c3c-0d07a271ae29": {
-      "digest": "652b335637fdb4245b64b14da103ab62eba9caf8c9f1bfc2e7c7a26be8db9887",
-      "issue": 1366
-    },
-    "finish:c14ad310-e384-4954-86a4-afde21d8ba46": {
-      "digest": "61b1bbd5214d3050543ab8f3859203534af0c47e5d16b6477139c651dac3dc90",
-      "issue": 1366
-    },
-    "finish:05062985-161f-4e05-b533-55bee14f1efc": {
-      "digest": "768c4973342320dcdbe4f1e0a2d87063c59bc7e72bc652d5de14e47518647113",
-      "issue": 1366
-    },
-    "finish:39a30684-5122-40e1-9140-db69dcadd9aa": {
-      "digest": "a2789305213fbb37abc14fab8d7f20eaf5ea9bb312c00e006d89364b4c19d3d8",
-      "issue": 1366
-    },
-    "release-1851-beta2-return-correction-2:finish:3:return": {
-      "digest": "d1f74574c5a18d46d19f5ec350cc4dbb50ae3f5dd726bd2f96636cdcf514a0cc",
-      "issue": 1366
-    },
-    "github:42552966786:1:completions:notice:1b70857841fe383da7c74e525421e508c2512dbdbe7419e0841c87133e26c5a3": {
-      "digest": "7d9848313b65ba86c63f0c7001e78a0be8c526a3bbe83a1e5f06f1a57be9017e",
-      "issue": 1366
-    },
-    "release-1851-beta2-return-correction-3:finish:2:synchronized": {
-      "digest": "e633bcf72e04a35c2d6542791a1c1800abf7c581981976ed288ca91dd3d2013c",
-      "issue": 1366
-    },
-    "github:42553925115:1:completions:message:99ca2da61fb62b88764ba9280c92ac947f51d7494f0bce358e25f6e5ac737ef1": {
-      "digest": "edecb02491e4298d6dd0b3bb94f1d1837f604f3c67a386c6850e91284707b75a",
-      "issue": 1366
-    },
-    "github:42553925115:1:completions:message:c861afdcc79ca58ff471a480bcbc47a612288877f17891a7f8137390bcd19063": {
-      "digest": "577944cc5f4dfaa529a69b64c42e9f11aee26dd2f14d04ba5b85ebbec2e773e2",
-      "issue": 1366
-    },
-    "finish:3b4914a2-b50b-4599-bab6-3eef321fac69": {
-      "digest": "f5f6b914c1979d2afb699b44e32f2e0bb7cb8b4a8aeb7eb8dcd6956d4daf6d3a",
-      "issue": 1366
-    },
-    "finish:339d162b-c899-4411-a65b-49e1061a9425": {
-      "digest": "d8d246efd49ef0ffa7676d2dec1249282093efe25c5bdc466fcd52dfa1b447a8",
-      "issue": 1366
-    },
-    "finish:3741e6f5-d95d-4366-bb3d-e348c0f396b1": {
-      "digest": "666cc3224aa04ea4a2c1d7d02ba3a139ac1e4c47416b31f46670efa1f8fa94c5",
-      "issue": 1366
-    },
-    "finish:1c50cf60-c202-4602-b834-cc1d575b8c53": {
-      "digest": "b123d4f1d37b078e8d0fe24f266cc397ca102212ba92fabe9d560c2463f22bbe",
-      "issue": 1366
-    },
-    "finish:57fd1001-6f8b-4673-8a1a-bf616139f525": {
-      "digest": "89cb4fc187b746d617e891c50c7054c0bc8ee2d9f3594c0f359827648cdd8cfb",
-      "issue": 1366
-    },
-    "finish:e7467608-560a-4e21-ba36-43cd2b200dd3": {
-      "digest": "e940f04b08a4006c0983ee121b05a3096acf5185785a107b022ff3a6976a3f4a",
-      "issue": 1366
-    },
-    "release-1851-beta2-return-correction-3:finish:3:s6-complete": {
-      "digest": "f94f560f7c4f938308c5bf8f172eda23aebd4b62512c6d1b0f264c71b1437c2f",
-      "issue": 1366
-    },
-    "finish:1064dd26-1bd0-4424-a898-f331974383b3": {
-      "digest": "199322131797f2431f4c68a1587cdd4b0730e4e19a5663611904d0f8d3fcbdcc",
-      "issue": 1366
-    },
-    "release-return:fed8a071-c709-4789-964a-27e474e10c6a": {
-      "digest": "2692e833edcc362fd3812094b5cee889021f58bfec2b74eca1fda238f8538e5c",
-      "issue": 1366,
-      "message": {
-        "kind": "queued",
-        "issue": 1366,
-        "at": 1794190638337,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "51738e7bf5d6fd3c0888c1138e5ac47678702cde",
-        "delivered": true
-      }
-    },
-    "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:1:admit": {
-      "digest": "243e001ff77e263627266eb7e606854525139530136e128962cc5fbfda87e69b",
-      "issue": 1366,
-      "message": {
-        "kind": "admitted",
-        "issue": 1366,
-        "at": 1794190643436,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "51738e7bf5d6fd3c0888c1138e5ac47678702cde",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:3:return:return:1366": {
-      "digest": "83273c0f20550eb350db7d8bcf734642dfaa9f46107db91f32fe76de4b226098",
-      "issue": 1366,
-      "message": {
-        "kind": "return",
-        "issue": 1366,
-        "at": 1794191195856,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1794191195856,
-          "entry": 1,
-          "detail": "Поведение: test/room-write-python.test.mjs: failed; Backend: tests_backend/test_backend_translations.py: failed; Backend: tests_backend/test_config_migrations.py: failed; Backend: tests_backend/test_config_schema_manifest.py: failed; Backend: tests_backend/test_conftest_harness_notice.py: failed; Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_coordinate_canonicalization.py: failed; Backend: tests_backend/test_coordinate_canonicalization_pure.py: failed; Backend: tests_backend/test_decor_assets.py: failed; Backend: tests_backend/test_deletion_layout.py: failed; Backend: tests_backend/test_easy_floorplan_convert.py: failed; Backend: tests_backend/test_external_screens.py: failed; Backend: tests_backend/test_frontend_assets.py: failed; Backend: tests_backend/test_geometry_cleanup_842.py: failed; Backend: tests_backend/test_graph_host_continuity.py: failed; Backend: tests_backend/test_graph_node_write.py: failed; Backend: tests_backend/test_graph_write.py: failed; Backend: tests_backend/test_ha_backup_archive.py: failed; Backend: tests_backend/test_ha_build_identity.py: failed; Backend: tests_backend/test_ha_config_flow.py: failed; Backend: tests_backend/test_ha_config_migrations.py: failed; Backend: tests_backend/test_ha_config_set_scoped.py: failed; Backend: tests_backend/test_ha_decor_group_transfer.py: failed; Backend: tests_backend/test_ha_deletion_layout.py: failed; Backend: tests_backend/test_ha_device_contacts.py: failed; Backend: tests_backend/test_ha_diagnostics.py: failed; Backend: tests_backend/test_ha_easy_floorplan_convert.py: failed; Backend: tests_backend/test_ha_editor_command_latency.py: failed; Backend: tests_backend/test_ha_external_screens_websocket.py: failed; Backend: tests_backend/test_ha_frontend_registration.py: failed; Backend: tests_backend/test_ha_import_export.py: failed; Backend: tests_backend/test_ha_import_opening_repair.py: failed; Backend: tests_backend/test_ha_marker_alerts.py: failed; Backend: tests_backend/test_ha_marker_copy.py: failed; Backend: tests_backend/test_ha_marker_history.py: failed; Backend: tests_backend/test_ha_marker_signal.py: failed; Backend: tests_backend/test_ha_node_save_validation.py: failed; Backend: tests_backend/test_ha_panel_registration.py: failed; Backend: tests_backend/test_ha_picture_elements_convert.py: failed; Backend: tests_backend/test_ha_plan_graph.py: failed; Backend: tests_backend/test_ha_portable_recovery.py: failed; Backend: tests_backend/test_ha_radar.py: failed; Backend: tests_backend/test_ha_radar_websocket.py: failed; Backend: tests_backend/test_ha_room_contact_grid.py: failed; Backend: tests_backend/test_ha_room_contact_storage.py: failed; Backend: tests_backend/test_ha_room_opening_host.py: failed; Backend: tests_backend/test_ha_setup.py: failed; Backend: tests_backend/test_ha_sh3d_convert.py: failed; Backend: tests_backend/test_ha_signal_visibility_low.py: failed; Backend: tests_backend/test_ha_space_copy.py: failed; Backend: tests_backend/test_ha_space_delete_executor.py: failed; Backend: tests_backend/test_ha_space_delete_routes.py: failed; Backend: tests_backend/test_ha_structural_upload.py: failed; Backend: tests_backend/test_ha_summary_weather.py: failed; Backend: tests_backend/test_ha_support_transport.py: failed; Backend: tests_backend/test_ha_support_v2.py: failed; Backend: tests_backend/test_ha_upload.py: failed; Backend: tests_backend/test_ha_vacuum_ecovacs.py: failed; Backend: tests_backend/test_ha_vacuum_history.py: failed; Backend: tests_backend/test_ha_vacuum_live_tail.py: failed; Backend: tests_backend/test_ha_vacuum_native_lifecycle.py: failed; Backend: tests_backend/test_ha_vacuum_paths.py: failed; Backend: tests_backend/test_ha_vacuum_source_first.py: failed; Backend: tests_backend/test_ha_vacuum_trail_style.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_ha_wall_node_attach.py: failed; Backend: tests_backend/test_ha_wall_node_delete.py: failed; Backend: tests_backend/test_ha_wall_node_dependency_carrier.py: failed; Backend: tests_backend/test_ha_wall_node_merge.py: failed; Backend: tests_backend/test_ha_wall_node_move_baseline.py: failed; Backend: tests_backend/test_ha_wall_removal_limits.py: failed; Backend: tests_backend/test_ha_websocket.py: failed; Backend: tests_backend/test_ha_zigbee_lqi.py: failed; Backend: tests_backend/test_ha_zigbee_lqi_performance.py: failed; Backend: tests_backend/test_ha_zigbee_topology.py: failed; Backend: tests_backend/test_junction_limits.py: failed; Backend: tests_backend/test_junction_parity.py: failed; Backend: tests_backend/test_led_strips.py: failed; Backend: tests_backend/test_marker_alerts.py: failed; Backend: tests_backend/test_marker_hide_battery.py: failed; Backend: tests_backend/test_marker_hide_signal.py: failed; Backend: tests_backend/test_marker_history.py: failed; Backend: tests_backend/test_node_save_validation.py: failed; Backend: tests_backend/test_opening_repair.py: failed; Backend: tests_backend/test_opening_repair_legacy10.py: failed; Backend: tests_backend/test_picture_elements_convert.py: failed; Backend: tests_backend/test_plan_graph.py: failed; Backend: tests_backend/test_plan_graph_migration.py: failed; Backend: tests_backend/test_plan_graph_source.py: failed; Backend: tests_backend/test_plan_graph_support.py: failed; Backend: tests_backend/test_plan_upload.py: failed; Backend: tests_backend/test_portable_recovery.py: failed; Backend: tests_backend/test_previous_data.py: failed; Backend: tests_backend/test_projection.py: failed; Backend: tests_backend/test_radar_geometry.py: failed; Backend: tests_backend/test_radar_validation.py: failed; Backend: tests_backend/test_room_appearance.py: failed; Backend: tests_backend/test_room_contact_grid.py: failed; Backend: tests_backend/test_room_opening_host.py: failed; Backend: tests_backend/test_settings_device_battery.py: failed; Backend: tests_backend/test_settings_moon.py: failed; Backend: tests_backend/test_settings_signal_visibility.py: failed; Backend: tests_backend/test_sh3d_convert.py: failed; Backend: tests_backend/test_structural_upload.py: failed; Backend: tests_backend/test_summary_camera_settings.py: failed; Backend: tests_backend/test_summary_panel.py: failed; Backend: tests_backend/test_support_builds.py: failed; Backend: tests_backend/test_support_config_projection.py: failed; Backend: tests_backend/test_support_diagnostic_values.py: failed; Backend: tests_backend/test_support_lqi_wire.py: failed; Backend: tests_backend/test_support_package.py: failed; Backend: tests_backend/test_support_package_v2.py: failed; Backend: tests_backend/test_support_wire_schema.py: failed; Backend: tests_backend/test_trail_recorder.py: failed; Backend: tests_backend/test_trail_recorder_imports.py: failed; Backend: tests_backend/test_trails.py: failed; Backend: tests_backend/test_vacuum_ecovacs.py: failed; Backend: tests_backend/test_vacuum_history.py: failed; Backend: tests_backend/test_vacuum_live_tail.py: failed; Backend: tests_backend/test_vacuum_paths.py: failed; Backend: tests_backend/test_vacuum_route_validation.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed; Backend: tests_backend/test_vacuum_trail_style.py: failed; Backend: tests_backend/test_validation.py: failed; Backend: tests_backend/test_virtual_lights.py: failed; Backend: tests_backend/test_wall_contact_storage.py: failed; Backend: tests_backend/test_wall_face_lineage.py: failed; Backend: tests_backend/test_wall_node_attach.py: failed; Backend: tests_backend/test_wall_node_connected.py: failed; Backend: tests_backend/test_wall_node_delete.py: failed; Backend: tests_backend/test_wall_node_dependency_carrier.py: failed; Backend: tests_backend/test_wall_node_merge.py: failed; Backend: tests_backend/test_wall_node_move.py: failed; Backend: tests_backend/test_wall_node_parity.py: failed; Backend: tests_backend/test_wall_removal_proof.py: failed; Backend: tests_backend/test_wall_segment_model.py: failed; Backend: tests_backend/test_zigbee_lqi_model.py: failed; Браузер: node dependency carrier: failed; Браузер: support feedback: failed; Браузер: wall face lineage: failed; Браузер: wall face room split: failed; Браузер: wall node attach: failed; Браузер: wall node merge: failed; Браузер: wall node python roundtrip: failed",
-          "eventId": "release-return-finish:fed8a071-c709-4789-964a-27e474e10c6a:finish:3:return:return:1366"
-        },
-        "delivered": true
-      }
-    },
-    "release-1851-beta2-return-correction-2": {
-      "digest": "a386de54f26272a670074afafa65ddeab7f9a8b72f58b7d4c04c8b303fc79121",
-      "issue": 1366,
-      "message": {
-        "kind": "queued",
-        "issue": 1366,
-        "at": 1794191886639,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "51738e7bf5d6fd3c0888c1138e5ac47678702cde",
-        "delivered": true
-      }
-    },
-    "release-1851-beta2-return-correction-2:finish:1:admit": {
-      "digest": "d3ddb85a2904468730e816ba6cc2eff14672e4b8e79d8f9433a453a62d9dd6bc",
-      "issue": 1366,
-      "message": {
-        "kind": "admitted",
-        "issue": 1366,
-        "at": 1794191890856,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "51738e7bf5d6fd3c0888c1138e5ac47678702cde",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "release-1851-beta2-return-correction-2:finish:3:return:return:1366": {
-      "digest": "d1f74574c5a18d46d19f5ec350cc4dbb50ae3f5dd726bd2f96636cdcf514a0cc",
-      "issue": 1366,
-      "message": {
-        "kind": "return",
-        "issue": 1366,
-        "at": 1794192396691,
-        "entry": 2,
-        "notice": {
-          "key": "2:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1794192396691,
-          "entry": 2,
-          "detail": "Браузер: wall face lineage: failed",
-          "eventId": "release-1851-beta2-return-correction-2:finish:3:return:return:1366"
-        },
-        "delivered": true
-      }
-    },
-    "release-1851-beta2-return-correction-3": {
-      "digest": "c81e82f1968ed835c80b13c6182b54d2892e80183da2b8ca009f9669ec8a62b1",
-      "issue": 1366,
-      "message": {
-        "kind": "queued",
-        "issue": 1366,
-        "at": 1794193269601,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d0331b0d3c633e4bfd60919c492934d66e48daef",
-        "delivered": true
-      }
-    },
-    "github:42553925115:1:tick:0:admit": {
-      "digest": "e843fe7470b7168008509eaf8c99c42a9bd35a4857219666416a74335a7253a2",
-      "issue": 1366,
-      "message": {
-        "kind": "admitted",
-        "issue": 1366,
-        "at": 1794193272371,
-        "entry": 3,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d0331b0d3c633e4bfd60919c492934d66e48daef",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "dev-build:42553923931:1:1369": {
       "digest": "bfa71519d0d8d7f1c899aba64be9f028d251c55150884370c32eb0b5c50b7d43",
       "issue": 1369,
