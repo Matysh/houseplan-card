@@ -1,6 +1,7 @@
 // #1352: shared header close geometry and equal single-row editor chrome.
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { clickHeaderAction, headerActionTarget } from './helpers/header-actions.mjs';
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 
 requirePinnedBrowser('#1352 editor chrome alignment');
 const { page, browser } = await launch({ width: 1920, height: 900 });
@@ -70,6 +71,7 @@ try {
       } else {
         check(`${width}-${mode}-compact-hides-source-close`, idle.close === null);
         const close = await headerActionTarget(card, 'mode-view');
+        await waitForUiKitPaint(page);
         const initial = await close.boundingBox();
         const unchanged = async () => {
           const next = await close.boundingBox();
