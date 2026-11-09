@@ -29,7 +29,7 @@ export async function inspectDeviceIconPicker(page, { expectedValue, filled = tr
   const near = (a,b) => Number.isFinite(a) && Math.abs(a-b)<.1;
   if (!result.runtime || !near(result.bounds.height,44) || !near(result.fieldHeight,44)
       || !near(result.ordinaryHeight,44) || result.border!=='1px' || result.radius!=='8px'
-      || result.innerBorder!=='0px' 
+      || result.innerBorder!=='0px'
       || result.background==='rgba(0, 0, 0, 0)' || !result.visible || result.overflow
       || !result.inViewport || !result.triggerInside || !result.clearInside || !result.arrowInside
       || result.bounds.x<result.pane.x-.5 || result.bounds.right>result.pane.right+.5

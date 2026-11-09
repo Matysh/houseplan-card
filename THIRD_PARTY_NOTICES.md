@@ -57,3 +57,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+## Material Design Icons — local device icon picker
+
+MDI 7.4.47, from @mdi/js and @mdi/svg (Pictogrammers / Templarian and contributors).
+Source: https://github.com/Templarian/MaterialDesign
+
+Icons: Pictogrammers Free License / Apache 2.0; non-icon code: MIT.
+The upstream notice and the Apache 2.0 license are included in
+custom_components/houseplan/licenses/mdi.txt in the installed package.

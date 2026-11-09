@@ -14,6 +14,8 @@ export function demoIconSourceFiles(root) {
     for (const f of readdirSync(resolve(root, dir), { withFileTypes: true })) {
       const name = `${dir}/${f.name}`;
       if (f.isDirectory()) { if (!GENERATED.has(name)) scan(name); continue; }
+      // Generated glyph data is rendered by hp-icon-picker, not the HA icon stub.
+      if (name === 'src/mdi-icon-data.json') continue;
       if (f.isFile() && /\.(ts|json|html|mjs)$/.test(f.name)) files.push(name);
     }
   };

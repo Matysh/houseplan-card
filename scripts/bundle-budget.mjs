@@ -59,7 +59,10 @@ import { NAMESPACE_LOCALE_CHUNKS } from './bundle-manifest.mjs';
 // +10% rule applies to the previous387200 B wall: new425920 B. Shared action
 // recipes now also paint cold View; rolling reference390000 keeps its2000 B band.
 export const INITIAL_VIEW_RECALIBRATION_GZIP_BYTES = 387_200;
-export const INITIAL_VIEW_GZIP_BUDGET = 425_920;
+// #1375: owner permits higher limits instead of byte chasing. The measured
+// isolated candidate is 419607 B; the prior rolling ceiling was 409000 B.
+// The full 7447-glyph catalog (790136 B gzip) is a separate nested lazy asset.
+export const INITIAL_VIEW_GZIP_BUDGET = 468_512;
 export const INITIAL_PANEL_ONLY_GZIP_BUDGET = 8 * 1024;
 
 /**
@@ -477,7 +480,8 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // Current dev baseline was 408251 B; dead-export cleanup 408261 B; empty View
 // adds 516 B to 408777 B. Record the actual integrated line, retaining the
 // existing 2000 B noise band and the 425920 B absolute resource wall.
-export const INITIAL_VIEW_GZIP_CEILING = 409_000;
+// #1375 measured isolated candidate: 419607 B; no full MDI data in cold View.
+export const INITIAL_VIEW_GZIP_CEILING = 420_000;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -916,7 +920,8 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // #1113 SPEC r2: frozen R1 382259 ->382264 (+5 own bytes), final cd31dbf3.
 // Preserve the inherited1025-B gap and2000-B band.
 // #1333–#1335: integrated dev lazy editor already measured 408245 B; owner permits recalibration.
-export const LAZY_EDITOR_GZIP_CEILING = 409_000;
+// #1375: measured editor UI graph 412670 B, prior ceiling 409000 B; glyphs stay nested lazy.
+export const LAZY_EDITOR_GZIP_CEILING = 420_000;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

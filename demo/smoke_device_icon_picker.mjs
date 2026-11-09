@@ -27,7 +27,8 @@ for(const {theme,width,fallback=false,authentic=false} of cases){
   assert.equal(await page.evaluate(()=>!!customElements.get('ha-icon-picker')),false);
   const trigger=()=>picker().locator('button.trigger');
   await trigger().focus();await page.keyboard.press('Shift+Tab');await page.keyboard.press('Tab');await expect(trigger()).toBeFocused();
-  await trigger().click();const search=dialog.locator('input[type=search]');await expect(search).toBeVisible();await search.fill('mdi:fan');
+  const field=picker().locator('.field');const fieldWidth=await field.evaluate(el=>el.clientWidth);
+  await field.click({position:{x:fieldWidth-16,y:22}});const search=dialog.locator('input[type=search]');await expect(search).toBeVisible();await search.fill('mdi:fan');
   await dialog.locator('[role=option][data-icon="mdi:fan"]').click();
   await expect(picker()).toHaveJSProperty('value','mdi:fan');await expect(trigger()).toHaveAttribute('aria-expanded','false');await waitForUiKitPaint(page);await inspectDeviceIconPicker(page,{expectedValue:'mdi:fan'});
   await dialog.locator('[data-hp="dialog-confirm"]').first().click();await expect(dialog).toHaveCount(0);

@@ -196,11 +196,11 @@ export class HpIconPicker extends LitElement {
     void this.updateComplete.then(()=>this.surface()?.querySelector('#'+this.uid+'-'+this._active)?.scrollIntoView({block:'nearest'}));
   }
   render():TemplateResult {
-    return html`<div class="field"><button class="trigger" type="button" aria-label=${this.label+': '+this.effective}
+    return html`<div class="field" @click=${()=>this._open?this.close(true):void this.open()}><button class="trigger" type="button" aria-label=${this.label+': '+this.effective}
       aria-haspopup="listbox" aria-expanded=${String(this._open)} aria-controls=${this.uid}
-      @keydown=${(e:KeyboardEvent)=>this.keydown(e)} @click=${()=>this._open?this.close(true):void this.open()}>
+      @keydown=${(e:KeyboardEvent)=>this.keydown(e)} @click=${(e:MouseEvent)=>{e.stopPropagation();this._open?this.close(true):void this.open();}}>
       ${this.glyph(this.effective)}<span>${this.effective||'mdi:…'}</span><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5z"></path></svg></button>
-      ${this.value?html`<button class="clear" type="button" aria-label=${this.labels.clear} @click=${()=>this.choose('')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18.3 5.7-1.4-1.4L12 9.2 7.1 4.3 5.7 5.7l4.9 4.9-4.9 4.9 1.4 1.4 4.9-4.9 4.9 4.9 1.4-1.4-4.9-4.9z"></path></svg></button>`:nothing}</div>
+      ${this.value?html`<button class="clear" type="button" aria-label=${this.labels.clear} @click=${(e:MouseEvent)=>{e.stopPropagation();this.choose('');}}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18.3 5.7-1.4-1.4L12 9.2 7.1 4.3 5.7 5.7l4.9 4.9-4.9 4.9 1.4 1.4 4.9-4.9 4.9 4.9 1.4-1.4-4.9-4.9z"></path></svg></button>`:nothing}</div>
       ${!this.fallback?this.menu(true):nothing}`;
   }
 }

@@ -105,7 +105,7 @@ test('#1196 a transitive built-manifest reader declares its producer even before
 });
 test('beta uses approved files, one narrowed permission run and panel-first visual selection', async () => {
   const plan = await planProfile({ root, event: 'beta', version: '1.85.0-beta.1' });
-  assert.equal(BETA_SMOKES.length, 13); assert.equal(BETA_GOLDEN.length, 75); assert.equal(BETA_E2E.length, 13);
+  assert.equal(BETA_SMOKES.length, 13); assert.equal(BETA_GOLDEN.length, 76); assert.equal(BETA_E2E.length, 13);
   assert.equal(Object.values(GOLDEN_ADDITIONS).flat().length, 50);
   assert.equal(plan.steps.filter(item => item.id.startsWith('smoke:')).length, 13);
   assert.deepEqual(BETA_SMOKES.find(item => item.file.includes('view_edit_permissions')).args, ['--only=late']);

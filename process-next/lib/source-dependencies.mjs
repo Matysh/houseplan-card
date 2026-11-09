@@ -18,7 +18,7 @@ const DECLARED_SOURCE_SCOPES = new Map([
   ['demo/smoke_opening_entity_search.mjs', ['src/houseplan-editor-runtime.ts', 'src/settings-select-control.ts']],
   ['demo/smoke_editor_chrome_alignment.mjs', ['src/styles/navigation.styles.ts', 'src/styles/chrome.styles.ts', 'src/hp-color-opacity.ts']],
   ['demo/smoke_device_settings_scroll.mjs', ['src/hp-dialog.ts', 'src/styles/settings-dialogs.styles.ts']],
-  ['demo/smoke_device_icon_picker.mjs', ['src/editors/hp-icon-picker.ts', 'src/mdi-icon-catalog.ts', 'src/mdi-icon-names.json', 'src/editors/marker-dialog.ts', 'src/styles/form-kit.styles.ts']],
+  ['demo/smoke_device_icon_picker.mjs', ['src/editors/hp-icon-picker.ts', 'src/mdi-icon-catalog.ts', 'src/mdi-icon-data.json', 'src/editors/marker-dialog.ts', 'src/styles/form-kit.styles.ts']],
   ['scripts/config-compatibility-inventory.mjs', ['src/**/*.ts', 'custom_components/houseplan/**/*.py']],
   ['test/isometric-contract.test.mjs', ['demo/smoke_*.mjs']],
   ['test/smoke-exception-guard.test.mjs', ['demo/smoke_*.mjs']],

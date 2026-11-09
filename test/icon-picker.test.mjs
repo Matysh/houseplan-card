@@ -11,8 +11,8 @@ test('local MDI catalog preserves canonical digit separators and exact glyphs',(
 });
 test('local catalog covers every pinned MDI name with an SVG path',()=>{
  const meta=JSON.parse(readFileSync(new URL('../node_modules/@mdi/svg/meta.json',import.meta.url)));
- const names=JSON.parse(readFileSync(new URL('../src/mdi-icon-names.json',import.meta.url)));
- assert.deepEqual(names,meta.map(icon=>icon.name).sort());
+ const names=Object.keys(JSON.parse(readFileSync(new URL('../src/mdi-icon-data.json',import.meta.url))));
+ assert.deepEqual(names,meta.map(icon=>'mdi:'+icon.name).sort());
  assert.equal(mdiCatalog.size,meta.length);
- for(const name of names)assert.match(mdiCatalog.get('mdi:'+name),/^M\s*[\d.-]/,name);
+ for(const name of names)assert.match(mdiCatalog.get(name),/^M\s*[\d.-]/,name);
 });
