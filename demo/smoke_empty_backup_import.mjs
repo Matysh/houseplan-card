@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { launchPanelCold, finish } from './serve.mjs';
+import { clickHeaderAction } from './helpers/header-actions.mjs';
 
 const manifest = JSON.parse(readFileSync('dist/houseplan-assets.json', 'utf8'));
 const runtime = manifest.files.map(f => f.path).find(p => /houseplan-editor-runtime-[^/]+\.js$/.test(p));
@@ -160,7 +161,7 @@ async function cancel(page) {
 try {
   // r1/M1: a delayed settings import must not change existing Add space handlers.
   const warm = await start({ populated: true });
-  await warm.page.locator('[data-hp="settings"]').click();
+  await clickHeaderAction(warm.page.locator('houseplan-card'), 'settings');
   await warm.page.evaluate(() => { window.emptyImportFixture.delay = 'settings-pending.json'; });
   await warm.page.locator('.backupupload input[type="file"]').setInputFiles(file(fixture(), 'settings-pending.json'));
   await warm.page.waitForFunction(() => !!window.emptyImportFixture.release, null, { timeout: 5000 })

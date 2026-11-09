@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Open settings through the visible header action in the empty-backup import smoke, preserving its clean mutation guard after narrow-header menu changes (#1370).
+
 ## v1.85.1-beta.2 — 2026-11-09
 
 - Keep Device settings navigation in place while the content scrolls, with independently reachable sections on short windows and a compact visible divider after Details (#1354).
