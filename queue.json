@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8153,
+  "revision": 8154,
   "nextTicket": 341,
   "nextFence": 341,
   "tasks": {
@@ -4659,6 +4659,10 @@
       "digest": "ce9116240ee44db1263517bddf3ddb2f661b4cba047b25680fe8ab9aa19d19e4",
       "issue": 1371
     },
+    "github:42618082350:1:completions:message:0b25cb88d95e39bcbb5c9d705bb60385299a37cad62f8fa49496f2f2e55ff225": {
+      "digest": "6d36aac5a2561fe52a134d0b9a07a81bc7ef274917f45e9c336fb9d1c921de5c",
+      "issue": 1371
+    },
     "finish:60c8c752-377e-43b3-a8bf-4b0398adf66e": {
       "digest": "68d3f86b3d0cfbf796aa121de276028aa2c3669f265b0955774b5a073c6cb7f2",
       "issue": 1371,
@@ -4705,7 +4709,8 @@
           "entry": 1,
           "detail": "Поведение: test/device-marker-polish-contract.test.mjs: failed; Поведение: test/houseplan-panel.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed; Браузер: editor chrome alignment: failed; Браузер: header actions menu: failed; Браузер: panel header overflow: failed; Браузер: toolbar stable width: failed",
           "eventId": "finish:60c8c752-377e-43b3-a8bf-4b0398adf66e:finish:3:return:return:1371"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:7c16bdf2-0cef-43b9-bf1e-3a92a5c60e85": {
