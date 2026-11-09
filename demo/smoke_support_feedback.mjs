@@ -39,6 +39,7 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
     await update();
   };
   const open = async () => {
+    await update(); // Apply the scenario's locale/authority before snapshotting its menu.
     const visible = element => element && element.getBoundingClientRect().width > 0
       && element.getBoundingClientRect().height > 0 && getComputedStyle(element).visibility !== 'hidden'
       && !element.closest('[inert]');
