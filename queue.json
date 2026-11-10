@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8748,
+  "revision": 8749,
   "nextTicket": 352,
   "nextFence": 352,
   "tasks": {
@@ -4306,7 +4306,18 @@
       ],
       "automationError": "automation-error",
       "automationSince": 1794326236470,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json",
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794327640321,
+        "entry": 1,
+        "detail": "Поведение: process-next/test/golden-floor-continuity.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Backend: tests_backend/test_wall_node_dependency_carrier.py: failed",
+        "eventId": "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:6:return:return:1380"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4495,18 +4506,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1380,
-    "worker": "finish",
-    "token": "351:finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:1:admit",
-    "fence": 351,
-    "materialSha": "80bb14c52d66c16ae5f9cb397a9fc177f2f2ee64",
-    "expectedBase": "a05e6437f7a062f67c67200842698aef8987439f",
-    "phase": "testing",
-    "admittedAt": 1794326213387,
-    "expiresAt": 1794327909159,
-    "patchId": "039edf5ad3e450f4b1c39dfeafc6564dd41be8fb"
-  },
+  "active": null,
   "events": {
     "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:2:synchronized": {
       "digest": "756ca27512b98fa04023ef9b645e5396e5c5451905ade1e6e9ef0462354a135d",
@@ -4616,6 +4616,10 @@
       "digest": "68a89c395ff11b1b9ec75556821b241ce73b4201fa561bab9bc7fa107cfb2313",
       "issue": 1380
     },
+    "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:6:return": {
+      "digest": "11ae4d0746b731f76e28d3bbd7d042ad5dfed210f12e35a3ed13ab9bbfb56804",
+      "issue": 1380
+    },
     "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e": {
       "digest": "7a359aa9115de97157f2897b2fd26bc651bbe70173af935ba2b921c02b237648",
       "issue": 1380,
@@ -4643,6 +4647,26 @@
         "materialSha": "80bb14c52d66c16ae5f9cb397a9fc177f2f2ee64",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:6:return:return:1380": {
+      "digest": "11ae4d0746b731f76e28d3bbd7d042ad5dfed210f12e35a3ed13ab9bbfb56804",
+      "issue": 1380,
+      "message": {
+        "kind": "return",
+        "issue": 1380,
+        "at": 1794327640321,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794327640321,
+          "entry": 1,
+          "detail": "Поведение: process-next/test/golden-floor-continuity.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Backend: tests_backend/test_wall_node_dependency_carrier.py: failed",
+          "eventId": "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:6:return:return:1380"
+        }
       }
     }
   },
