@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 690,
+  "revision": 691,
   "active": "v1.85.1-20261110",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -66405,7 +66405,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.85.1",
         "candidate": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
         "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
         "issues": [
@@ -74172,6 +74172,256 @@
         "selectionDigest": "ca1d07171c9d2977bbc0a62d96b1a8cfeb1e5b4c5082f2438622152853968c4c",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.85.1",
+          "candidate": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
+          "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
+          "issues": [
+            {
+              "number": 1344,
+              "commits": [
+                "890a4ada80b4d379aaa523f0c18f96cbb6e046e5"
+              ]
+            },
+            {
+              "number": 1345,
+              "commits": [
+                "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa"
+              ]
+            },
+            {
+              "number": 1346,
+              "commits": [
+                "ce0796e207211f495008ed9b9ce21e031484175c",
+                "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865"
+              ]
+            },
+            {
+              "number": 1347,
+              "commits": [
+                "48778427d68eb886492861d98b8ef453d99d85d5",
+                "4bef1932846fd1fddde23cd1d7c7e4d84d6d0b93",
+                "739b288b9006a233eb8fdb44e165c461625054c3",
+                "bf3267573b30a39c6e23693e3a7bcc40e70d3103",
+                "f7b252d8f0c63e6fa3c87712099b5f06bac010e5"
+              ]
+            },
+            {
+              "number": 1348,
+              "commits": [
+                "48775e5f10c9c0696ca7a5d3bc877481a1e281d1",
+                "628ca768782b89a07bb9779f651c6f1cfcd5cb26"
+              ]
+            },
+            {
+              "number": 1349,
+              "commits": [
+                "6cedac4193d114c7eea822f6e06b4fb65181bd9d"
+              ]
+            },
+            {
+              "number": 1350,
+              "commits": [
+                "0d127cd038f4110e7d90cac7004f508f07717fff",
+                "c723c9ba1baf695506f17d643a7eb6ad361c57dd",
+                "f8801ee93a85b1bc981506c5cabe3dbf125807c3"
+              ]
+            },
+            {
+              "number": 1351,
+              "commits": [
+                "5d3a14677c83db84157697f9a425179bc0a02fb4",
+                "60199f149e7653417447ab7b82a0cda6d9a0a86f"
+              ]
+            },
+            {
+              "number": 1352,
+              "commits": [
+                "12605c18b10a439baca2a08308840a5acd308406",
+                "2f8be3041a4b8cb8c34cede5d145e02c86deef5e"
+              ]
+            },
+            {
+              "number": 1353,
+              "commits": [
+                "55569543d09c0fc650b7918e44490ebc9fd88431"
+              ]
+            },
+            {
+              "number": 1354,
+              "commits": [
+                "77792069a99fcb4f9dc0b4c8bc14ee9001e5fb86",
+                "ad794da4050a59757526862d0de8424c642463fc",
+                "ae9b2ae83f841273debc56d953f344b4e9a5561e"
+              ]
+            },
+            {
+              "number": 1356,
+              "commits": [
+                "6d8822ab2c5cc3c70262f9e1dd218c2ba120c231"
+              ]
+            },
+            {
+              "number": 1357,
+              "commits": [
+                "192b3faf1a9206f7927aa5efa0d8aeaebdc8aa2d",
+                "63dd217db4fb0fe2a06780ac873611a36544f7e9",
+                "8c05977f2c0d029c6c3f5ae8ced3f07d4823de3c",
+                "ec8d3e0a235d69786ddedf1bd8b9d3abdbd1f5de"
+              ]
+            },
+            {
+              "number": 1361,
+              "commits": [
+                "63dd217db4fb0fe2a06780ac873611a36544f7e9"
+              ]
+            },
+            {
+              "number": 1362,
+              "commits": [
+                "c27ba8a163900f4165952f752dd8da7cedfff1ae",
+                "f2dcbcc6a2c715e5364ecded43d8848955ecca9f",
+                "f5e65f41061c1dd4838c57c039d7e524bb4cbab7"
+              ]
+            },
+            {
+              "number": 1363,
+              "commits": [
+                "26db513dfaa58f9e59a7eda2e38e6d538d3d00ed",
+                "aa87b1990ac78e3e553a657bbf3e456bcad430a0",
+                "e061bfff7fe4982e41cc00e68a6b1a5f533c9b36"
+              ]
+            },
+            {
+              "number": 1364,
+              "commits": [
+                "09399a68115e164313430c2facaf7a565b8ed9c8",
+                "136b1dbbe4f55a0e4029c900ef7d00426902b4a1",
+                "556e13dc6e6f9366898abf7dc6b187ae6c67b7a1",
+                "9e57e6b8611e0e9f1573b0a2eaa8de41d7cc2928"
+              ]
+            },
+            {
+              "number": 1365,
+              "commits": [
+                "300d5338f736f5437bc8756e67b69c9871738597",
+                "53264a604c95ec3693a6f2834a0fd784e2cefdf4",
+                "89d8a177c8f635fbc8cbc1853cc8193ce2c91d71",
+                "98dbf0bbe4147e5a2c80aee6e80ec85076b908f8",
+                "edfff6faf85844d906fed60ab72a979560811ce4"
+              ]
+            },
+            {
+              "number": 1367,
+              "commits": [
+                "4f9f245f35b316c5ced02df44e4c575a86371f8b"
+              ]
+            },
+            {
+              "number": 1369,
+              "commits": [
+                "5d522469dd04bb0630f3a890652e32e94fe02c2e"
+              ]
+            },
+            {
+              "number": 1370,
+              "commits": [
+                "69a565c1fff387657b44ad9327dd2ab39cf4526b"
+              ]
+            },
+            {
+              "number": 1371,
+              "commits": [
+                "751524d095e5722609d7728b087aee5c5d260af2",
+                "8da5b861fe13824b4988392979adcca2fe3fc0b0",
+                "c3238da3ec888493d9ffc1e7aaa7809b0bf7adae",
+                "ce5dd17f7b7cfdbdbae5fc55e259d0ec0176d736"
+              ]
+            },
+            {
+              "number": 1372,
+              "commits": [
+                "289324fde710f8a0ac7a6471d3c05a80a94c9441",
+                "727c643c5970b267dea8d2091b2bf6315afd2dd5"
+              ]
+            },
+            {
+              "number": 1373,
+              "commits": [
+                "41a213a6c3c25749ba0e274c3596746f26916617",
+                "b0d5e5554c361684ddf5db92d5b0b86adefce8e5"
+              ]
+            },
+            {
+              "number": 1375,
+              "commits": [
+                "290a0a49d49a5e71c898519fb6c03b3bc06a4ec8",
+                "8474326a1425d5cccb37c289d64b4498db6a4c8a",
+                "98fe878e7b138766a6b34c0e0211bebcd67afaf4",
+                "c7c0557cf116b131c4dc09315a53ea7ab9d040ac",
+                "d8a2139227a8ab591da54c77dff1d3aff8eb48f8"
+              ]
+            },
+            {
+              "number": 1376,
+              "commits": [
+                "43ba394009baf90441149076e7aafe17449a8b3c",
+                "7d32757c0dee2ec359a597fdd0ea4c58cbce2343",
+                "9ccb758699da09595e59ca45df689e07b1140f50",
+                "d214d3338f83bc89729f501df1e87d488e58d199"
+              ]
+            },
+            {
+              "number": 1377,
+              "commits": [
+                "9310d8b88b35a975fe9ce7ca398cc7add50ab2dd",
+                "fe1f3b3776eb75c168295c6dc7557cc80deab3d9"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1344,
+          1345,
+          1346,
+          1347,
+          1348,
+          1349,
+          1350,
+          1351,
+          1352,
+          1353,
+          1354,
+          1356,
+          1357,
+          1361,
+          1362,
+          1363,
+          1364,
+          1365,
+          1367,
+          1369,
+          1370,
+          1371,
+          1372,
+          1373,
+          1375,
+          1376,
+          1377
+        ],
+        "version": "1.85.1",
+        "body": "<!-- release: v1.85.1 -->\n<!-- stable-notes: 1 -->\n<!-- base: v1.85.0 -->\n<!-- language: ru -->\n## Релиз Houseplan 1.85.1\n\nОбновление делает интерфейс удобнее на телефоне и исправляет повседневные сценарии редактирования.\n\n📱 **Шапка подстраивается под место.** Кнопки сохраняют два обычных ряда, а когда нужен третий — собираются в меню действий на всю доступную ширину. Выбор пространства остаётся доступен там, где он нужен; отдельная кнопка управляет боковой панелью Home Assistant. В узких редакторах кнопки закрытия, отмены и повтора расположены рядом в столбик. [#1347](https://github.com/Matysh/houseplan-card/issues/1347), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)\n\n🎨 **Надёжный выбор иконки устройства.** Собственный MDI picker предлагает поиск и предпросмотр иконок без зависимости от компонента HA. Крестик сразу возвращает автоматическую иконку текущей привязки; поле и предпросмотр совпадают после сохранения. Выпадающие поля больше не перекрываются системной подсветкой тапа. [#1375](https://github.com/Matysh/houseplan-card/issues/1375), [#1376](https://github.com/Matysh/houseplan-card/issues/1376)\n\n🚪 **Стеклянные двери могут пропускать свет.** Новая настройка закрытой двери учитывается для искусственного света и внешних солнечных проёмов. Межкомнатные двери не расширяют солнечные лучи между комнатами. Свечение и LED-ленты плавно гаснут без преждевременного обрыва анимации. [#1377](https://github.com/Matysh/houseplan-card/issues/1377), [#1348](https://github.com/Matysh/houseplan-card/issues/1348)\n\n⚙️ **Удобнее настройки и переключение режимов.** Разделы настроек устройства остаются под рукой при прокрутке; подпись рядом с переключателем тоже переключает его. Меню и справка не закрываются из-за отложенной прокрутки. Переходы между просмотром и редакторами стали быстрее и устойчивее. [#1354](https://github.com/Matysh/houseplan-card/issues/1354), [#1350](https://github.com/Matysh/houseplan-card/issues/1350), [#1356](https://github.com/Matysh/houseplan-card/issues/1356), [#1360](https://github.com/Matysh/houseplan-card/issues/1360), [#1344](https://github.com/Matysh/houseplan-card/issues/1344), [#1358](https://github.com/Matysh/houseplan-card/issues/1358)\n\n🏠 **Исправлены действия на плане.** Замкнутые комнаты распознаются с висячими внутренними стенами; после выхода из редактора снова доступны действия LED-ленты. Сохраняются кнопки настроек комнаты при предпросмотре изменения размеров, а после двойного клика для вписывания план сразу можно перетаскивать. [#1346](https://github.com/Matysh/houseplan-card/issues/1346), [#1361](https://github.com/Matysh/houseplan-card/issues/1361), [#1359](https://github.com/Matysh/houseplan-card/issues/1359), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)\n\nПосле обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.\n\nВсе изменения: [1.85.1](https://github.com/Matysh/houseplan-card/milestone/15?closed=1)\n<!-- language: en -->\n## Houseplan 1.85.1 release\n\nThis update improves the phone interface and everyday editing workflows.\n\n📱 **A header that fits the available space.** Controls keep two ordinary rows and collapse into a full-width actions menu when a third would be needed. Space selection remains available where needed, and a separate button controls the Home Assistant sidebar. Close/Undo/Redo form a column in narrow editors. [#1347](https://github.com/Matysh/houseplan-card/issues/1347), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)\n\n🎨 **Reliable device icon selection.** The local MDI picker provides search and icon previews without relying on HA's picker component. Clear immediately restores the automatic icon for the current binding; the field and preview agree after saving. Dropdown controls no longer receive the browser's extra tap highlight. [#1375](https://github.com/Matysh/houseplan-card/issues/1375), [#1376](https://github.com/Matysh/houseplan-card/issues/1376)\n\n🚪 **Glass doors can transmit light.** A new option for closed doors affects artificial light and exterior solar apertures. Interior doors do not extend sunlight between rooms. Glow and LED strips fade out smoothly without cutting the animation short. [#1377](https://github.com/Matysh/houseplan-card/issues/1377), [#1348](https://github.com/Matysh/houseplan-card/issues/1348)\n\n⚙️ **Easier settings and mode changes.** Device settings sections remain reachable while scrolling, and clicking a switch label toggles the switch. Dropdowns and Help stay open after delayed scrolling. View/editor transitions are faster and more reliable. [#1354](https://github.com/Matysh/houseplan-card/issues/1354), [#1350](https://github.com/Matysh/houseplan-card/issues/1350), [#1356](https://github.com/Matysh/houseplan-card/issues/1356), [#1360](https://github.com/Matysh/houseplan-card/issues/1360), [#1344](https://github.com/Matysh/houseplan-card/issues/1344), [#1358](https://github.com/Matysh/houseplan-card/issues/1358)\n\n🏠 **Plan interactions repaired.** Closed rooms are recognized with dangling interior walls, LED strip actions work after returning from an editor, and room settings buttons remain available during resize preview. Dragging works immediately after a double-click fit. [#1346](https://github.com/Matysh/houseplan-card/issues/1346), [#1361](https://github.com/Matysh/houseplan-card/issues/1361), [#1359](https://github.com/Matysh/houseplan-card/issues/1359), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)\n\nAfter updating, restart Home Assistant and reload open Houseplan pages.\n\nAll changes: [1.85.1](https://github.com/Matysh/houseplan-card/milestone/15?closed=1)\n",
+        "technical": {
+          "ru": "## v1.85.1 — 2026-11-10\n\n- Освобождение обычного Glow и LED после выключения отсчитывается от кадра с leaving-состоянием: поздний старт CSS больше не обрывает 500-мс затухание. Отмена кадров/таймера сохраняет off/on, смену пространства и dispose (#1377).\n\n- Оставшиеся проверки формы, предпросмотра и иконки устройства переведены на собственный picker; в пакетных golden явно задано принятое состояние клавиатурного фокуса, PNG и пороги сравнения сохранены.\n\n- В stable перенесены проверенные исправления бет 1.85.1: сохранённые поверхности переходов View/редакторов, распознавание комнат с висячими стенами, свет через стеклянные двери, клик по подписи переключателя UI Kit и единые панели редакторов (#1344, #1346, #1348, #1349, #1350, #1351, #1352).\n- Шапка сохраняет два измеренных ряда перед сворачиванием в меню на всю ширину; учтены настоящее состояние sidebar HA и клавиатурный фокус, после двойного вписывания сразу доступно перетаскивание (#1347, #1364, #1365, #1371).\n- Разделы настроек устройства доступны через независимую прокрутку; выпадающие поля и справка не закрываются из-за отложенного scroll, кнопки комнаты сохраняются при resize preview, действия LED доступны после выхода из редактора (#1354, #1356, #1358, #1359, #1360, #1361).\n- Адаптер HA icon picker заменён ленивым локальным каталогом MDI и SVG-полем; уточнены сброс/предпросмотр, клавиатура, общий hover, геометрия крестика, поворот стрелки и стиль тапа. Занятый сохранением черновик не заменяется при смене привязки (#1375, #1376).\n- Обновлены только явно принятые владельцем кадры; browser/HA helpers актуализированы под шапку и диалоги с сохранением строгих продуктовых проверок. Добавлены постоянные golden открытого picker и hover сброса, мобильный Chromium/WebKit и согласованная подготовка CI (#1353, #1357, #1362, #1363, #1370, #1372, #1373, #1375, #1376).",
+          "en": "## v1.85.1 — 2026-11-10\n\n- Anchor ordinary Glow and LED fade-out cleanup after the leaving state has painted, so a late CSS start cannot truncate the 500 ms fade. Cancel pending frames and timer together for off/on, space changes and disposal (#1377).\n\n- Align the remaining device-form/preview/icon regression witnesses with the local picker and pin the accepted keyboard-focus state for batch goldens; preserve accepted PNGs and comparison thresholds.\n\n- Bring the reviewed 1.85.1 beta fixes to stable: retained View/editor transitions, closed-room recognition with dangling walls, glass-door light transmission, UI Kit label activation and consistent editor toolbars (#1344, #1346, #1348, #1349, #1350, #1351, #1352).\n- Adapt the header to two measured rows before collapsing into a full-width actions menu, preserve native HA sidebar state and keyboard focus, and allow immediate dragging after double-click fit (#1347, #1364, #1365, #1371).\n- Keep device settings navigation reachable through independent scrolling; retain dropdowns and Help after queued scroll, room controls during resize preview and LED actions after leaving an editor (#1354, #1356, #1358, #1359, #1360, #1361).\n- Replace the fragile HA icon-picker adapter with a lazy local MDI catalog and SVG field; polish automatic reset/preview, keyboard selection, shared hover, clear-target geometry, arrow motion and dropdown tap paint. Preserve the busy save draft during rebinding (#1375, #1376).\n- Refresh only explicitly owner-approved visual frames and retain strict product assertions while aligning browser/HA helpers with the revised header and dialog layout. Add persistent picker open/clear-hover goldens and Chromium/WebKit mobile coverage with matching CI preparation (#1353, #1357, #1362, #1363, #1370, #1372, #1373, #1375, #1376)."
+        },
+        "userChangelog": {
+          "ru": "<!-- release: v1.85.1 -->\n<!-- base: v1.85.0 -->\n## Релиз Houseplan 1.85.1\n\nОбновление делает интерфейс удобнее на телефоне и исправляет повседневные сценарии редактирования.\n\n📱 **Шапка подстраивается под место.** Кнопки сохраняют два обычных ряда, а когда нужен третий — собираются в меню действий на всю доступную ширину. Выбор пространства остаётся доступен там, где он нужен; отдельная кнопка управляет боковой панелью Home Assistant. В узких редакторах кнопки закрытия, отмены и повтора расположены рядом в столбик. [#1347](https://github.com/Matysh/houseplan-card/issues/1347), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)\n\n🎨 **Надёжный выбор иконки устройства.** Собственный MDI picker предлагает поиск и предпросмотр иконок без зависимости от компонента HA. Крестик сразу возвращает автоматическую иконку текущей привязки; поле и предпросмотр совпадают после сохранения. Выпадающие поля больше не перекрываются системной подсветкой тапа. [#1375](https://github.com/Matysh/houseplan-card/issues/1375), [#1376](https://github.com/Matysh/houseplan-card/issues/1376)\n\n🚪 **Стеклянные двери могут пропускать свет.** Новая настройка закрытой двери учитывается для искусственного света и внешних солнечных проёмов. Межкомнатные двери не расширяют солнечные лучи между комнатами. Свечение и LED-ленты плавно гаснут без преждевременного обрыва анимации. [#1377](https://github.com/Matysh/houseplan-card/issues/1377), [#1348](https://github.com/Matysh/houseplan-card/issues/1348)\n\n⚙️ **Удобнее настройки и переключение режимов.** Разделы настроек устройства остаются под рукой при прокрутке; подпись рядом с переключателем тоже переключает его. Меню и справка не закрываются из-за отложенной прокрутки. Переходы между просмотром и редакторами стали быстрее и устойчивее. [#1354](https://github.com/Matysh/houseplan-card/issues/1354), [#1350](https://github.com/Matysh/houseplan-card/issues/1350), [#1356](https://github.com/Matysh/houseplan-card/issues/1356), [#1360](https://github.com/Matysh/houseplan-card/issues/1360), [#1344](https://github.com/Matysh/houseplan-card/issues/1344), [#1358](https://github.com/Matysh/houseplan-card/issues/1358)\n\n🏠 **Исправлены действия на плане.** Замкнутые комнаты распознаются с висячими внутренними стенами; после выхода из редактора снова доступны действия LED-ленты. Сохраняются кнопки настроек комнаты при предпросмотре изменения размеров, а после двойного клика для вписывания план сразу можно перетаскивать. [#1346](https://github.com/Matysh/houseplan-card/issues/1346), [#1361](https://github.com/Matysh/houseplan-card/issues/1361), [#1359](https://github.com/Matysh/houseplan-card/issues/1359), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)\n\nПосле обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.\n\nВсе изменения: [1.85.1](https://github.com/Matysh/houseplan-card/milestone/15?closed=1)\n",
+          "en": "<!-- release: v1.85.1 -->\n<!-- base: v1.85.0 -->\n## Houseplan 1.85.1 release\n\nThis update improves the phone interface and everyday editing workflows.\n\n📱 **A header that fits the available space.** Controls keep two ordinary rows and collapse into a full-width actions menu when a third would be needed. Space selection remains available where needed, and a separate button controls the Home Assistant sidebar. Close/Undo/Redo form a column in narrow editors. [#1347](https://github.com/Matysh/houseplan-card/issues/1347), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)\n\n🎨 **Reliable device icon selection.** The local MDI picker provides search and icon previews without relying on HA's picker component. Clear immediately restores the automatic icon for the current binding; the field and preview agree after saving. Dropdown controls no longer receive the browser's extra tap highlight. [#1375](https://github.com/Matysh/houseplan-card/issues/1375), [#1376](https://github.com/Matysh/houseplan-card/issues/1376)\n\n🚪 **Glass doors can transmit light.** A new option for closed doors affects artificial light and exterior solar apertures. Interior doors do not extend sunlight between rooms. Glow and LED strips fade out smoothly without cutting the animation short. [#1377](https://github.com/Matysh/houseplan-card/issues/1377), [#1348](https://github.com/Matysh/houseplan-card/issues/1348)\n\n⚙️ **Easier settings and mode changes.** Device settings sections remain reachable while scrolling, and clicking a switch label toggles the switch. Dropdowns and Help stay open after delayed scrolling. View/editor transitions are faster and more reliable. [#1354](https://github.com/Matysh/houseplan-card/issues/1354), [#1350](https://github.com/Matysh/houseplan-card/issues/1350), [#1356](https://github.com/Matysh/houseplan-card/issues/1356), [#1360](https://github.com/Matysh/houseplan-card/issues/1360), [#1344](https://github.com/Matysh/houseplan-card/issues/1344), [#1358](https://github.com/Matysh/houseplan-card/issues/1358)\n\n🏠 **Plan interactions repaired.** Closed rooms are recognized with dangling interior walls, LED strip actions work after returning from an editor, and room settings buttons remain available during resize preview. Dragging works immediately after a double-click fit. [#1346](https://github.com/Matysh/houseplan-card/issues/1346), [#1361](https://github.com/Matysh/houseplan-card/issues/1361), [#1359](https://github.com/Matysh/houseplan-card/issues/1359), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)\n\nAfter updating, restart Home Assistant and reload open Houseplan pages.\n\nAll changes: [1.85.1](https://github.com/Matysh/houseplan-card/milestone/15?closed=1)\n"
+        }
       }
     }
   },
@@ -78782,7 +79032,8 @@
     "stable1851-20261110-fade-full-on-witness": "1420bf887ec07d8bd94ee4a59ce621d5c48967ff3d4bb36bc709b5c57fc089b2",
     "stable1851-20261110-fade-review-accepted": "277939cf3bd0b8fdd0de2eebeaf9fc59431e53fadbf0026bea3364e13d1d6bbc",
     "stable1851-20261110-publish:runner-report": "90a715a2f09aad41d076dd96e55a7a511f2f96ace8a6d34e9f39a7ba43062125",
-    "stable1851-20261110-publish:metrics": "120853c657099dc628c20fd669a87c4fd192849b083509f7a12535c6f1e64730"
+    "stable1851-20261110-publish:metrics": "120853c657099dc628c20fd669a87c4fd192849b083509f7a12535c6f1e64730",
+    "stable1851-20261110-publish:prepared:d9f1d916-d7d7-4a1f-a57e-41f5d1f77213": "b7726cc2fe02926d2afa90f6e5c1390b210dcc943c42ca30357517cafd2ffca0"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
