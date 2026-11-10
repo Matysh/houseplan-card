@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 8719,
-  "nextTicket": 351,
+  "revision": 8720,
+  "nextTicket": 352,
   "nextFence": 351,
   "tasks": {
     "1193": {
@@ -4237,6 +4237,20 @@
         "status": "published",
         "sourceSha": "a05e6437f7a062f67c67200842698aef8987439f"
       }
+    },
+    "1380": {
+      "issue": 1380,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/issue-1380-witness-repairs",
+      "materialSha": "80bb14c52d66c16ae5f9cb397a9fc177f2f2ee64",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 351,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794326208696,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4424,9 +4438,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1380
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e": {
+      "digest": "7a359aa9115de97157f2897b2fd26bc651bbe70173af935ba2b921c02b237648",
+      "issue": 1380,
+      "message": {
+        "kind": "queued",
+        "issue": 1380,
+        "at": 1794326208696,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "80bb14c52d66c16ae5f9cb397a9fc177f2f2ee64"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "1862202d4be66cdc8b9b8d4165a350af70f62876",
     "status": "delivered",
