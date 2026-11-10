@@ -487,7 +487,11 @@ only the geometry differs:
   source (#789). A microtask seals the batch so a later rAF cannot bring a
   newly inserted source into an earlier entry frame. Forget/disconnect cancels
   empty batches; identity checks reject late callbacks. Normal 500 ms fade and
-  reduced-motion behavior remain shared with ordinary Glow.
+  reduced-motion behavior remain shared with ordinary Glow. Fade-out cleanup
+  is armed after the leaving state has had a painted frame; a slow initial
+  render cannot consume the 500 ms CSS fade. Pending paint callbacks and
+  cleanup timers are cancelled together on reactivation, forget and dispose.
+  Reduced motion keeps its immediate dark state and bounded timer (#1377).
 - **Render-local scene reuse.** The main card shares a resolved barrier scene
   between its Glow/LED consumers within one synchronous `render()` only
   (`LightBarrierPass`). `finally` clears the memo even on early return or error.

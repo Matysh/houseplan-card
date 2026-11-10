@@ -12,20 +12,16 @@ const res = await page.evaluate(async () => {
   sr().querySelector('[data-section-target="appearance"]').click(); await c.updateComplete;
   out.autoIconStored = c._markerDialog.autoIcon === dev.icon;
   out.iconEmpty = c._markerDialog.icon === '';
-  // #947: the effective automatic icon is in the picker, without a second
-  // technical hint or a reset button. The fallback renders the same glyph.
-  const effectiveIcon = () => sr().querySelector('ha-icon-picker')?.value
-    || sr().querySelector('.hpf-iconpreview ha-icon')?.getAttribute('icon');
-  out.autoIconRendered = effectiveIcon() === dev.icon;
+  // The local picker paints its automatic fallback without a duplicate hint.
+  const picker = sr().querySelector('hp-icon-picker');
+  await picker.updateComplete;
+  const effectiveIcon = () => picker.shadowRoot.querySelector('.trigger span')?.textContent.trim();
+  out.autoIconRendered = effectiveIcon() === dev.icon
+    && !!picker.shadowRoot.querySelector('.trigger > svg:not(.arrow) path');
   out.noDuplicateAutoHint = !sr().querySelector('.iconauto');
-  // пикер (или фолбэк-инпут) получил placeholder
-  const picker = sr().querySelector('ha-icon-picker');
-  const inputs = [...sr().querySelectorAll('hp-dialog input')];
-  out.placeholderSet = picker
-    ? picker.placeholder === dev.icon
-    : inputs.some((i) => i.placeholder === dev.icon);
+  out.automaticFallbackSet = picker.autoIcon === dev.icon && picker.value === '';
   // при явной иконке подсказки нет
-  c._markerDialog = { ...c._markerDialog, icon: 'mdi:star' }; await c.updateComplete;
+  c._markerDialog = { ...c._markerDialog, icon: 'mdi:star' }; await c.updateComplete; await picker.updateComplete;
   out.explicitIconRendered = effectiveIcon() === 'mdi:star';
   out.noHintWhenExplicit = !sr().querySelector('.iconauto');
   c._markerDialog = null; await c.updateComplete;

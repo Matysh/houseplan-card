@@ -131,6 +131,7 @@ export interface GlowRuntimeHost {
 }
 
 type GlowEntryBatch = { keys: Set<string>; raf: number };
+type GlowFade = { frame: number | null; timer: number | null };
 
 export interface GlowRuntimeState {
   clipCache: Map<string, GlowClipGeometry | null>;
@@ -141,7 +142,7 @@ export interface GlowRuntimeState {
   enteringSources: Set<string>;
   enterBatches: Set<GlowEntryBatch>;
   collectingEntryBatch: GlowEntryBatch | null;
-  fadeTimers: Map<string, number>;
+  fadeTimers: Map<string, GlowFade>;
   featherSuspendUntil: number;
   featherResumeTimer: number;
   sourceSeq: number;
@@ -515,6 +516,15 @@ function forgetGlowEntry(state: GlowRuntimeState, host: GlowRuntimeHost, key: st
   }
 }
 
+function cancelGlowFade(state: GlowRuntimeState, host: GlowRuntimeHost, key: string): void {
+  const fade = state.fadeTimers.get(key);
+  if (!fade) return;
+  const win = host.window();
+  if (fade.frame != null) win.cancelAnimationFrame(fade.frame);
+  if (fade.timer != null) win.clearTimeout(fade.timer);
+  state.fadeTimers.delete(key);
+}
+
 export function transitionGlowSource(
   state: GlowRuntimeState,
   host: GlowRuntimeHost,
@@ -524,11 +534,7 @@ export function transitionGlowSource(
   const win = host.window();
   let domId = state.renderedSources.get(key);
   if (active) {
-    const timer = state.fadeTimers.get(key);
-    if (timer != null) {
-      win.clearTimeout(timer);
-      state.fadeTimers.delete(key);
-    }
+    cancelGlowFade(state, host, key);
     if (domId == null) {
       suspendGlowFeather(state, host);
       domId = ++state.sourceSeq;
@@ -542,14 +548,27 @@ export function transitionGlowSource(
   forgetGlowEntry(state, host, key);
   if (!state.fadeTimers.has(key)) {
     suspendGlowFeather(state, host);
-    const timer = win.setTimeout(() => {
-      if (state.fadeTimers.get(key) !== timer) return;
-      state.fadeTimers.delete(key);
-      state.renderedSources.delete(key);
-      state.lastAppearance.delete(key);
-      if (host.isConnected()) host.requestUpdate();
-    }, GLOW_FADE_MS + 34);
-    state.fadeTimers.set(key, timer);
+    const fade: GlowFade = { frame: null, timer: null };
+    state.fadeTimers.set(key, fade);
+    const arm = () => {
+      if (state.fadeTimers.get(key) !== fade) return;
+      fade.frame = null;
+      fade.timer = win.setTimeout(() => {
+        if (state.fadeTimers.get(key) !== fade) return;
+        state.fadeTimers.delete(key);
+        state.renderedSources.delete(key);
+        state.lastAppearance.delete(key);
+        if (host.isConnected()) host.requestUpdate();
+      }, GLOW_FADE_MS + 34);
+    };
+    // Render precedes the CSS transition's first painted frame. Retain the
+    // node for the full fade after that paint, rather than racing it with a
+    // render-time deadline. Reduced motion has no transition to await.
+    if (host.reducedMotion()) arm();
+    else fade.frame = win.requestAnimationFrame(() => {
+      if (state.fadeTimers.get(key) !== fade) return;
+      fade.frame = win.requestAnimationFrame(arm);
+    });
   }
   return { domId, entering: false, leaving: true };
 }
@@ -557,10 +576,7 @@ export function transitionGlowSource(
 export function forgetGlowSource(
   state: GlowRuntimeState, host: GlowRuntimeHost, key: string,
 ): void {
-  const win = host.window();
-  const timer = state.fadeTimers.get(key);
-  if (timer != null) win.clearTimeout(timer);
-  state.fadeTimers.delete(key);
+  cancelGlowFade(state, host, key);
   forgetGlowEntry(state, host, key);
   state.renderedSources.delete(key);
   state.lastAppearance.delete(key);
@@ -591,7 +607,7 @@ export function disposeGlowRuntime(
   state: GlowRuntimeState, host: GlowRuntimeHost,
 ): void {
   const win = host.window();
-  for (const timer of state.fadeTimers.values()) win.clearTimeout(timer);
+  for (const key of state.fadeTimers.keys()) cancelGlowFade(state, host, key);
   for (const batch of state.enterBatches) win.cancelAnimationFrame(batch.raf);
   win.clearTimeout(state.featherResumeTimer);
   state.clipCache.clear();

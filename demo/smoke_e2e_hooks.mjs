@@ -67,7 +67,7 @@ try {
     const fields = dialog => {
       const missing = [];
       const inspect = surface => {
-        for (const element of surface.querySelectorAll('input,select,textarea,button,ha-switch,ha-slider,ha-icon-picker,hp-color-opacity')) {
+        for (const element of surface.querySelectorAll('input,select,textarea,button,ha-switch,ha-slider,hp-icon-picker,hp-color-opacity')) {
           const hook = element.getAttribute('data-hp');
           if (!hook || (hook === 'field' && !element.getAttribute('data-field'))) {
             missing.push(`${element.localName}#${element.id}: ${element.outerHTML.slice(0, 300)}`);

@@ -45,6 +45,17 @@ export async function inspectDeviceIconPicker(page, { expectedValue, filled = tr
 export async function prepareDeviceIconPicker(page,state='closed') {
   const result=await inspectDeviceIconPicker(page,{expectedValue:'mdi:access-point-minus'});
   const picker=page.locator('hp-dialog[data-kind="marker"] hp-icon-picker');
+  if(state!=='open') {
+    // Accepted closed/hover frames include the initial Basic navigation focus.
+    // A warm batch retains pointer modality from prior scenes; establish the
+    // same real keyboard focus as a cold capture without changing selection.
+    await page.keyboard.press('Tab');
+    const basics=page.locator('hp-dialog[data-kind="marker"] [data-section-target="basics"]');
+    const focused=await basics.evaluate(button=>{
+      button.focus({preventScroll:true});return button.matches(':focus-visible');
+    });
+    if(!focused)throw Error('Picker golden lacks its accepted keyboard-focus precondition');
+  }
   if(state==='open') {
     await picker.locator('.trigger').click();
     await page.waitForFunction(()=>{

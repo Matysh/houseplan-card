@@ -225,8 +225,8 @@ const res = await page.evaluate(async () => {
     await node?.updateComplete;
     return face(node?.renderRoot?.querySelector('.dev'));
   };
-  const autoField = () => markerDialog()?.querySelector('.hpf-iconpreview ha-icon')?.getAttribute('icon')
-    || markerDialog()?.querySelector('ha-icon-picker')?.value || '';
+  const autoField = () => markerDialog()?.querySelector('hp-icon-picker')?.shadowRoot
+    ?.querySelector('.trigger span')?.textContent.trim() || '';
   const waitUntil = async (predicate, what) => {
     const end = performance.now() + 6000;
     while (!predicate()) {

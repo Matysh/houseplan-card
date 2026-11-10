@@ -158,6 +158,7 @@ result.tileKeyboardOpens = await trigger.getAttribute('aria-expanded') === 'true
 await page.keyboard.press('Escape');
 result.tileKeyboardEscapeCloses = await trigger.getAttribute('aria-expanded') === 'false';
 
+await page.mouse.move(2,2);
 const icon = await page.evaluate(async () => {
   const c = window.__card;
   const root = () => c.shadowRoot || c.renderRoot;
@@ -165,40 +166,39 @@ const icon = await page.evaluate(async () => {
   c._setMode('devices');
   c._openMarkerDialog(); await refresh();
   root().querySelector('hp-dialog[data-kind="marker"] [data-section-target="appearance"]').click(); await refresh();
-  let field = root().querySelector('hp-dialog[data-kind="marker"] .hpf-iconfield');
-  const fallback = field && field.querySelectorAll('.hpf-iconpreview').length === 1
-    && field.querySelector('.hpf-iconfield-control input')
-    && Math.round(field.querySelector('.hpf-iconfield-control').getBoundingClientRect().height) === 44;
+  let field = root().querySelector('hp-dialog[data-kind="marker"] hp-icon-picker');
+  await field?.updateComplete;
+  const fallback = field?.localName === 'hp-icon-picker'
+    && !root().querySelector('hp-dialog[data-kind="marker"] ha-icon-picker')
+    && Math.round(field.shadowRoot.querySelector('.field').getBoundingClientRect().height) === 44;
   c._markerDialog = null; await refresh();
   if (!customElements.get('ha-icon-picker')) {
     customElements.define('ha-icon-picker', class extends HTMLElement {});
   }
   c._openMarkerDialog(); await refresh();
   root().querySelector('hp-dialog[data-kind="marker"] [data-section-target="appearance"]').click(); await refresh();
-  field = root().querySelector('hp-dialog[data-kind="marker"] .hpf-iconfield');
-  const picker = field?.querySelector('ha-icon-picker');
-  const onePreview = !!picker && field.querySelectorAll('.hpf-iconpreview').length === 0
-    && !!picker.placeholder && Math.round(field.querySelector('.hpf-iconfield-control').getBoundingClientRect().height) === 44;
-  const style = picker && getComputedStyle(picker);
-  // #995: HA owns the single themed border; only the outer wrapper is clear.
-  // The empty stand-in below has no shadow form, so witness its theme tokens.
-  const themed = !!style && style.getPropertyValue('--mdc-text-field-fill-color').trim() === 'transparent'
-    && !!style.getPropertyValue('--hpf-line').trim() && !!style.getPropertyValue('--hpf-canvas').trim()
-    && style.getPropertyValue('--ha-color-border-neutral-loud').trim() === style.getPropertyValue('--hpf-line').trim()
-    && style.getPropertyValue('--ha-color-form-background').trim() === style.getPropertyValue('--hpf-canvas').trim();
-  const haWrapperHasNoBorderPaint = !!picker
+  field = root().querySelector('hp-dialog[data-kind="marker"] hp-icon-picker');
+  const picker = field;await picker?.updateComplete;
+  const painted=picker?.shadowRoot.querySelector('.field');
+  const onePreview = !!picker && picker.shadowRoot.querySelectorAll('.trigger > svg:not(.arrow)').length === 1
+    && !!picker.autoIcon && Math.round(painted.getBoundingClientRect().height) === 44;
+  const style = painted && getComputedStyle(painted);
+  const ordinary=root().querySelector('hp-dialog[data-kind="marker"] hp-settings-select:has(#marker-display)')?.shadowRoot.querySelector('button');
+  const ordinaryStyle=ordinary&&getComputedStyle(ordinary);
+  const themed = !!style && !!ordinaryStyle && style.backgroundColor === ordinaryStyle.backgroundColor
+    && style.borderTopColor === ordinaryStyle.borderTopColor && style.borderRadius === '8px';
+  const wrapperHasNoBorderPaint = !!picker && !root().querySelector('hp-dialog[data-kind="marker"] ha-icon-picker')
     && parseFloat(getComputedStyle(picker.parentElement).borderTopWidth) === 0;
   const iconValue = c._markerDialog.icon;
   picker?.dispatchEvent(new CustomEvent('value-changed', { detail: { value: 'mdi:home' } }));
   await refresh();
   const selects = c._markerDialog.icon === 'mdi:home';
-  field = root().querySelector('hp-dialog[data-kind="marker"] .hpf-iconfield');
-  // #947: clearing is owned by the retained native HA picker; no duplicate reset button.
-  field?.querySelector('ha-icon-picker')?.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '' } })); await refresh();
+  field = root().querySelector('hp-dialog[data-kind="marker"] hp-icon-picker');
+  field?.dispatchEvent(new CustomEvent('value-changed', { detail: { value: '' } })); await refresh();
   const clears = c._markerDialog.icon === '' && iconValue !== 'mdi:home';
   const rotation = root().querySelector('hp-dialog[data-kind="marker"] label[for="marker-angle"]')?.textContent.trim();
   c._markerDialog = null; await refresh();
-  return { fallback: !!fallback, onePreview, themed, haWrapperHasNoBorderPaint, selects, clears, rotation: rotation === 'Rotation' };
+  return { localWithoutHa: !!fallback, onePreview, themed, wrapperHasNoBorderPaint, selects, clears, rotation: rotation === 'Rotation' };
 });
 for (const [key, ok] of Object.entries(icon)) result[`icon_${key}`] = ok;
 
