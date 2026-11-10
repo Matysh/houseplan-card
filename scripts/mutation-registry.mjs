@@ -10319,10 +10319,10 @@ const MUTANT_DEFINITIONS = [
       + 'private Apply method directly instead of clicking the deliberately absent button (#199)',
     patches: [{
       file: 'src/optimize-plans-dialog.ts',
-      find: '    if (!d || d.busy || !this.port.config() || !d.changed || !d.preflight?.ok) return;',
+      find: '    if (d.busy || !this.port.config() || !d.changed || !d.preflight?.ok) return;',
       // `!d.preflight` остаётся ради сужения типа: иначе мутант не компилируется
       // и ловится компилятором, а не тестом.
-      replace: '    if (!d || d.busy || !this.port.config() || !d.changed || !d.preflight) return;',
+      replace: '    if (d.busy || !this.port.config() || !d.changed || !d.preflight) return;',
     }],
   },
   {
@@ -10361,8 +10361,8 @@ const MUTANT_DEFINITIONS = [
       + 'to treat an unsafe whole-plan candidate as an accepted risk (#199)',
     patches: [{
       file: 'src/optimize-plans-dialog.ts',
-      find: '          ${!d.changed || !d.preflight?.ok ? nothing : html`',
-      replace: '          ${!d.changed ? nothing : html`',
+      find: '          ${applied || !d.changed || !d.preflight?.ok ? nothing : html`',
+      replace: '          ${applied || !d.changed ? nothing : html`',
     }],
   },
   // #869: непроверенные позиции Optimize — объяснение, повтор, диагностика.
@@ -10381,8 +10381,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_optimize_context.mjs',
     because: '#892 AC8: the actual GUI preview must capture the existing HA authority claim. A held real Apply reply after a same-connection user replacement must preserve the independently accepted pair; a helper stub cannot prove the runtime captures that claim. State-only frames remain positive controls.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: '        authorityCurrent: host._configWriteGuard?.(),',
-      replace: '        authorityCurrent: undefined,',
+      find: '      authorityCurrent: host._configWriteGuard(),',
+      replace: '      authorityCurrent: undefined,',
     }, {file:'src/plan-optimize-write.ts',
       find:'  }, { isCurrent: () => authorityCurrent()\n',
       replace:'  }, { isCurrent: () => true\n',
@@ -10436,8 +10436,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_optimize_cleanup.mjs',
     because: '#892 cleanup button must rebuild a deletion preview while leaving both stores untouched until Apply',
     patches: [{ file: 'src/optimize-plans-dialog.ts',
-      find: '    this.preview(d.removeLiveMissingPositions, !d.removeInvalidMissingPositions);',
-      replace: '    this.preview(d.removeLiveMissingPositions, d.removeInvalidMissingPositions);',
+      find: '    void this.preview(d.removeLiveMissingPositions, !d.removeInvalidMissingPositions, !!d.replacesUndo);',
+      replace: '    void this.preview(d.removeLiveMissingPositions, d.removeInvalidMissingPositions, !!d.replacesUndo);',
     }],
   },
   {
@@ -10501,8 +10501,8 @@ const MUTANT_DEFINITIONS = [
       + 'the old early return wrote nothing to the clipboard (#869 D2, AC5)',
     patches: [{
       file: 'src/optimize-plans-dialog.ts',
-      find: '    if (!dialog) return;\n    let text: string;',
-      replace: '    if (!dialog || !preflight || preflight.ok) return;\n    let text: string;',
+      find: '    const text = this.diagnosticText(dialog);',
+      replace: '    const text = previewState(dialog) && !dialog.preflight?.ok ? null : this.diagnosticText(dialog);',
     }],
   },
   {
@@ -10614,10 +10614,9 @@ const MUTANT_DEFINITIONS = [
     because: 'opening the Optimize preview or cancelling it must never persist a lossy repair (#290)',
     patches: [{
       file: 'src/optimize-plans-dialog.ts',
-      find: '  public open(): void { this.preview(false); }',
-      replace: '  public open(): void {\n'
-        + '    this.preview(false);\n'
-        + '    void this.run();\n'
+      find: '  public open(): void | Promise<void> { return this.preview(false); }',
+      replace: '  public open(): Promise<void> {\n'
+        + '    return Promise.resolve(this.preview(false)).then(() => this.run());\n'
         + '  }',
     }],
   },
@@ -12011,8 +12010,8 @@ const MUTANT_DEFINITIONS = [
     because: 'диагностика с хэшем сохранённой геометрии не несёт ничего сверх экспорта (AC4)',
     patches: [{
       file: 'src/optimize-plans-dialog.ts',
-      find: "      this.diagnostics(preflight, dialog.config ?? null), null, 2,",
-      replace: "      this.diagnostics(preflight, this.port.config()), null, 2,",
+      find: "      return JSON.stringify(this.diagnostics(dialog.preflight, dialog.config ?? null), null, 2);",
+      replace: "      return JSON.stringify(this.diagnostics(dialog.preflight, this.port.config()), null, 2);",
     }],
   },
   {

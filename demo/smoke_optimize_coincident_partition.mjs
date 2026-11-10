@@ -38,7 +38,9 @@ const out = await page.evaluate(async () => {
   // #896: the custom optimizer and the ordinary Thickness Save share one
   // coherent wire store. A GET-only rev=3 used to conflict with base rev=1.
   const { createFixtureStore } = await import('/fixture-state.js');
-  const store = createFixtureStore(serverConfig, serverLayout);
+  const store = createFixtureStore(serverConfig, serverLayout, () => {}, {
+    configRevision: card._cfgRev, layoutRevision: card._layoutRev,
+  });
   const sent = [];
   const baseCall = card.hass.callWS.bind(card.hass);
   card.hass = {

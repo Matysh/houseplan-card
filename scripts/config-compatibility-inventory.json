@@ -6,8 +6,28 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "d66b100d13d6424ffa6d8c95d6f952132324c32d67878e9d2c07b2df892ea6ca",
+  "matchesSha256": "2f87b7de777c66c932b20bce760795127abec91ef59a2db24b2544ac0c89a00c",
   "hits": [
+    {
+      "id": "5ccffe673ec4e6e1a4019520",
+      "path": "src/optimize-feedback.ts",
+      "line": 13,
+      "text": "/** Older compatible servers confirm revisions without echoing canonical bodies. */",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "transport",
+      "reason": "Optimize metadata-only ACK protocol compatibility; canonical bodies require authoritative readback, not a persisted model decoder."
+    },
+    {
+      "id": "ca94264b53458a1e0749c789",
+      "path": "src/optimize-plans-dialog.ts",
+      "line": 621,
+      "text": "+ r.legacyZeroWallsMigrated;",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "word-only",
+      "reason": "Presentation-only summary of existing zero-wall migration counters; no new persisted decoder or repair algorithm."
+    },
     {
       "id": "4755842f1b9d67d7cf8927d3",
       "path": "custom_components/houseplan/graph_node_write.py",

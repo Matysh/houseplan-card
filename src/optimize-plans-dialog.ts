@@ -456,8 +456,10 @@ export class OptimizePlansDialog {
         source: d.source, config: d.config, busy: false, failure };
       this.publish(owner, next);
       if (next.phase === 'unknown') this.uncertain = next;
-      if (!this.port.dialog() || this.port.dialog() === owner.state)
-        showToast(this.port.t(next.phase === 'unknown' ? 'gs.optimize_unknown_title' : 'gs.optimize_failed_title'));
+      if (!this.port.dialog() || this.port.dialog() === owner.state) {
+        const toastKey = next.phase === 'unknown' ? 'gs.optimize_unknown_title' : 'gs.optimize_failed_title';
+        showToast(this.port.t(toastKey), toastKey);
+      }
       if (failure.kind === 'changed' && this.port.canWrite()) {
         this.operation = null;
         await this.refresh();
@@ -710,6 +712,7 @@ export class OptimizePlansDialog {
                   : r.unverifiedPositions.length ? 'gs.optimize_no_changes' : 'gs.align_none',
               )}</p>`
             : html`
+          ${applied && (gridWarning || r.rotated || r.partitionsReconciled || r.openingsRehosted || r.openingParametersCanonicalized) ? html`<h4 class="hpf-section-heading">${this.port.t('gs.optimize_group_geometry')}</h4>` : nothing}
           ${r.moved ? html`<p class="alignmsg">${this.port.t(applied ? 'gs.optimize_applied_count' : 'gs.align_count', {
                   n: String(r.moved), total: String(r.total), cm: String(d.cm),
                 })}</p>` : nothing}

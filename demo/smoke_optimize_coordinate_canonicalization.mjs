@@ -55,7 +55,7 @@ const out = await page.evaluate(async () => {
     }]));
   const isCanonical = (value) => value === canonicalCoordinate(value);
   let serverConfig = clone(original), serverLayout = {}, backup = null;
-  let configRev = 1, layoutRev = 1;
+  let configRev = card._cfgRev, layoutRev = card._layoutRev;
   let lastToast = '';
   const sent = [];
   const baseCall = card.hass.callWS.bind(card.hass);
@@ -134,8 +134,9 @@ const out = await page.evaluate(async () => {
   result.applyLayoutEqualsBackendTarget = JSON.stringify(card._layout)
     === JSON.stringify(serverLayout);
   result.applyPreservesUnknownFields = card._serverCfg.spaces[0].future?.kept === true;
-  result.toastExplainsZeroMoveCleanup = lastToast.includes('0 elements moved')
-    && !lastToast.includes('0 records maintained');
+  result.resultExplainsZeroMoveCleanup = card._alignDialog?.phase === 'result'
+    && card._alignDialog.report.latticeCoordinatesCanonicalized > 0
+    && !card.renderRoot.querySelector('hp-dialog')?.textContent.includes('0 records maintained');
 
   await Promise.all([card._reloadConfigOnly(true), card._reloadLayoutOnly()]);
   await card._editorRuntime.optimizePlans.open(); await card.updateComplete;

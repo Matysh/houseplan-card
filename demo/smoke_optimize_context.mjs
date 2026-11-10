@@ -10,6 +10,7 @@ async function open(page) {
   await settings(page).locator('[data-section-target="data"]').click();
   await settings(page).getByRole('button',{name:await page.evaluate(()=>window.__card._t('gs.align_all')),exact:true}).click();
   await optimize(page).waitFor();
+  await page.waitForFunction(() => !!window.__card._alignDialog?.report && !window.__card._alignDialog.busy);
   await page.evaluate(() => window.__hpTest.settled());
 }
 async function seed(page, positions) {
@@ -47,6 +48,7 @@ for (const kind of ['state', 'connection', 'user']) {
     const positions = { grp_context: { s: 'deleted', x: 0.25, y: 0.5, k: 1.6 } };
     const original = await seed(page, positions);
     await open(page); await optimize(page).locator('.optimize-invalid-cleanup').click();
+    await page.waitForFunction(() => !!window.__card._alignDialog?.report && !window.__card._alignDialog.busy);
     await page.evaluate(() => {
       const card = window.__card, base = card.hass;
       window.__892Hold = { writes: [], adopted: [], entered: false };
@@ -149,6 +151,7 @@ for (const kind of ['state', 'connection', 'user']) {
     await settings(page).locator('.btn[data-hp="dialog-confirm"]').click();
     await page.waitForFunction(() => window.__892Pending.entered);
     await open(page); await optimize(page).locator('.optimize-invalid-cleanup').click();
+    await page.waitForFunction(() => !!window.__card._alignDialog?.report && !window.__card._alignDialog.busy);
     await optimize(page).locator('[data-hp="dialog-confirm"]').click();
     await page.evaluate(() => window.__hpTest.settled());
     check('pending:realSettingsWriteBlocksApplyTransport', await page.evaluate(() =>
@@ -163,6 +166,12 @@ for (const kind of ['state', 'connection', 'user']) {
     await page.waitForFunction(owner => !!window.__card._haRegistry.devices[owner], owner);
     await page.evaluate(() => window.__892Pending.release());
     await page.waitForFunction(() => window.__card._alignDialog && !window.__card._alignDialog.busy);
+    if (await page.evaluate(() => window.__card._alignDialog.phase === 'failure')) {
+      check('pending:secondIntakeDuringPresentedFrameRefusesStalePreview', await page.evaluate(() =>
+        window.__card._alignDialog.failure.kind === 'changed' && window.__892Pending.writes.length === 0));
+      await optimize(page).locator('.optimize-refresh').click();
+      await page.waitForFunction(() => !!window.__card._alignDialog?.report && !window.__card._alignDialog.busy);
+    }
     check('pending:acceptedWriteAndOwnerArrivalRequireFreshConsent', await page.evaluate(owner => {
       const card = window.__card, d = card._alignDialog;
       return window.__892Pending.writes.length === 0 && !d.removeInvalidMissingPositions
@@ -197,6 +206,7 @@ for (const direction of ['full-to-partial', 'partial-to-full']) {
     };
     if (direction === 'partial-to-full') await registryAccess(false);
     await open(page); await optimize(page).locator('.optimize-invalid-cleanup').click();
+    await page.waitForFunction(() => !!window.__card._alignDialog?.report && !window.__card._alignDialog.busy);
     await registryAccess(direction === 'partial-to-full');
     await optimize(page).locator('[data-hp="dialog-confirm"]').click();
     await page.evaluate(() => window.__hpTest.settled());
@@ -264,6 +274,7 @@ for (const direction of ['full-to-partial', 'partial-to-full']) {
     await page.waitForFunction(() => window.__card._loadOk
       && window.__card._cfgRev === 1 && window.__card._layoutRev === 1);
     await open(page); await optimize(page).locator('.optimize-invalid-cleanup').click();
+    await page.waitForFunction(() => !!window.__card._alignDialog?.report && !window.__card._alignDialog.busy);
     await optimize(page).locator('[data-hp="dialog-confirm"]').click();
     await page.waitForFunction(() => window.__card._canOptimizeUndo && !window.__card._layout.grp_persistence);
     const remount = async revision => {

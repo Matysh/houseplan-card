@@ -56,7 +56,7 @@ const out = await page.evaluate(async () => {
   };
   const clone = (value) => JSON.parse(JSON.stringify(value));
   let serverConfig = clone(original), serverLayout = {}, backup = null;
-  let configRev = 1, layoutRev = 1;
+  let configRev = card._cfgRev, layoutRev = card._layoutRev;
   const sent = [];
   const baseCall = card.hass.callWS.bind(card.hass);
   card.hass = {

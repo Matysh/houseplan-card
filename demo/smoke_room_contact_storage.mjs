@@ -89,6 +89,8 @@ for(const optimize of [false,true])for(const reverse of [false,true]){
       check(`${name}: preview does not write`,(await snapshot(page)).writes===beforePreview.writes);
       await dialog.locator('[data-hp="dialog-confirm"]').click();await settle(page);
       check(`${name}: Optimize has one acknowledged write`,(await snapshot(page)).writes===beforePreview.writes+1);
+      await page.waitForFunction(()=>window.__card._alignDialog?.phase==='result');
+      await dialog.locator('.btn[data-hp="dialog-cancel"]').click();
       // Close the retained parent through its ordinary Cancel control.
       if(await settings.count())await settings.locator('.btn[data-hp="dialog-cancel"]').click();
     }

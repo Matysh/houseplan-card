@@ -13,7 +13,11 @@ async function open() {
   await settings().locator('[data-section-target="data"]').click();
   await settings().getByRole('button',{name:await page.evaluate(()=>window.__card._t('gs.align_all')),exact:true}).click();
   await optimize().waitFor();
+  await previewReady();
   await page.evaluate(() => window.__hpTest.settled());
+}
+async function previewReady() {
+  await page.waitForFunction(() => !!window.__card._alignDialog?.report && !window.__card._alignDialog.busy);
 }
 async function close() {
   await optimize().locator('.btn[data-hp="dialog-cancel"]').click();
@@ -88,10 +92,14 @@ for (const theme of ['light', 'dark']) {
 }
 await optimize().locator('.optimize-invalid-cleanup').focus();
 await page.keyboard.press('Space');
+await previewReady();
 record('keyboardSelectPreviewsWithoutWriting', await page.evaluate(() => window.__892.writes.length === 0
   && window.__card._alignDialog.removeInvalidMissingPositions === true));
+await optimize().locator('.optimize-invalid-cleanup').focus();
 await page.keyboard.press('Space');
+await previewReady();
 await optimize().locator('.optimize-invalid-cleanup').click();
+await previewReady();
 let selected = await page.evaluate(() => ({ removed: window.__card._alignDialog.report.invalidPositionsRemoved.map(x => x.id),
   future: window.__card._alignDialog.layout.future_widget,
   unchanged: JSON.stringify(window.__card._layout), writes: window.__892.writes.length }));
@@ -103,16 +111,18 @@ record('cancelWritesNothing', await page.evaluate(before => window.__892.writes.
   && JSON.stringify(window.__card._layout) === before.layout
   && JSON.stringify(window.__card._serverCfg) === before.config, before));
 
-await open(); await optimize().locator('.optimize-invalid-cleanup').click();
+await open(); await optimize().locator('.optimize-invalid-cleanup').click(); await previewReady();
 await page.evaluate(async () => {
   await window.__hpTest.setServerConfig(cfg => { cfg.spaces[0].title += ' changed'; });
   await window.__hpTest.settled();
 });
 await optimize().locator('[data-hp="dialog-confirm"]').click();
+await previewReady();
 record('newRevisionResetsConsentWithoutWrite', await page.evaluate(() => window.__892.writes.length === 0
   && window.__card._alignDialog.removeInvalidMissingPositions === false
   && window.__card._alignDialog.config.spaces[0].title.endsWith(' changed')));
 await optimize().locator('.optimize-invalid-cleanup').click();
+await previewReady();
 const proposed = await page.evaluate(() => ({ config: structuredClone(window.__card._alignDialog.config),
   layout: structuredClone(window.__card._alignDialog.layout),
   configRev: window.__card._cfgRev, layoutRev: window.__card._layoutRev }));

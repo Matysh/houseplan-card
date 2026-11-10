@@ -18,6 +18,7 @@ const out = await page.evaluate(async (fixture) => {
     && (space.wall_segments || []).some((segment) => segment.id === opening.host.id);
   let serverConfig = copy(fixture);
   let serverLayout = {};
+  let configRev = card._cfgRev, layoutRev = card._layoutRev;
   const sent = [];
   const baseCall = card.hass.callWS.bind(card.hass);
   card.hass = {
@@ -27,12 +28,12 @@ const out = await page.evaluate(async (fixture) => {
         sent.push(message.type);
         serverConfig = copy(message.config);
         serverLayout = copy(message.layout);
-        return { ok: true, config_rev: 2, layout_rev: 2, can_undo: true, config: copy(serverConfig), layout: copy(serverLayout) };
+        return { ok: true, config_rev: ++configRev, layout_rev: ++layoutRev, can_undo: true, config: copy(serverConfig), layout: copy(serverLayout) };
       }
       if (message.type === 'houseplan/config/get')
-        return { config: copy(serverConfig), rev: 2, can_write: true, can_optimize_undo: true };
+        return { config: copy(serverConfig), rev: configRev, can_write: true, can_optimize_undo: true };
       if (message.type === 'houseplan/layout/get')
-        return { layout: copy(serverLayout), rev: 2 };
+        return { layout: copy(serverLayout), rev: layoutRev };
       return baseCall(message);
     },
   };

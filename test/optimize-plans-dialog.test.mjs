@@ -326,7 +326,12 @@ test('#642 run: a stale fingerprint is rechecked, and a red recheck stops the wr
 test('#1170 run: success writes the exact pair and retains its report without summing overlapping counters', async () => {
   const seen = [];
   const { dialog, state, calls } = fakePort({
-    commit: async (config, layout) => { seen.push(state.dialog?.busy); calls.commit.push([config, layout]); },
+    commit: async (config, layout) => {
+      seen.push(state.dialog?.busy); calls.commit.push([config, layout]);
+      state.config = config; state.layout = layout;
+      state.configRev = (state.configRev ?? 1) + 1; state.layoutRev = (state.layoutRev ?? 2) + 1;
+      return { config, layout, configRev: state.configRev, layoutRev: state.layoutRev, canUndo: true, canonical: true };
+    },
   });
   state.dialog = dialogOf({ report: report({ moved: 2, latticeCoordinatesCanonicalized: 7, orphanRoomLabelsRemoved: 1 }) });
   const { config, layout } = state.dialog;
