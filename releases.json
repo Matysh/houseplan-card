@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 684,
+  "revision": 685,
   "active": "v1.85.1-20261110",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -62800,14 +62800,14 @@
       "kind": "stable",
       "branch": "release/1.85.1",
       "sourceSha": "2892d28f49b424dc0668ad1203568532c68dff85",
-      "sha": "4e2bb7b1ab1166822d3708a1a51d0e3c66a95f62",
+      "sha": "7aa8b1bc9f800af045733dff6a846fd58781ff08",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "4e2bb7b1ab1166822d3708a1a51d0e3c66a95f62",
+        "candidate": "7aa8b1bc9f800af045733dff6a846fd58781ff08",
         "base": "52610e2100528c9e8af7bd36f71984e066f9b9c9",
         "issues": [
           {
@@ -63034,7 +63034,7 @@
         1375,
         1376
       ],
-      "reviewRequired": false,
+      "reviewRequired": true,
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
@@ -63054,6 +63054,12 @@
         {
           "from": "351dd258222f5dccee3994674e7693b4b95e855b",
           "to": "4e2bb7b1ab1166822d3708a1a51d0e3c66a95f62",
+          "syncMode": "merge",
+          "status": "pending"
+        },
+        {
+          "from": "4e2bb7b1ab1166822d3708a1a51d0e3c66a95f62",
+          "to": "7aa8b1bc9f800af045733dff6a846fd58781ff08",
           "syncMode": "merge",
           "status": "pending"
         }
@@ -67669,7 +67675,8 @@
     "stable1851-20261110-reviewed-fixes": "b5caef1d3adcbd74e93bce7716a94db6a40b4489a9e9bf4eddcdfc6c125c0ef4",
     "stable1851-20261110-reviewed-fixes-accepted": "af4d069dcf3914b0682dce5d3ff5f40df2be030e8a7dd11cddef355748565680",
     "stable1851-20261110-version-notes": "c7c049d193fd6aaa4f21483001fc3dbc9af81fcb5996d3896cde5a1563f3adba",
-    "stable1851-20261110-test-migration": "3a47225786820e36c7a90229c94e322b34e0c5ca3928303eed02577cd49a52aa"
+    "stable1851-20261110-test-migration": "3a47225786820e36c7a90229c94e322b34e0c5ca3928303eed02577cd49a52aa",
+    "stable1851-20261110-fade-paint-fix": "f58e49a170bd3cd37453c1be9a7e6746d049fc470d1e0ecd6e5fa2575581b98f"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
