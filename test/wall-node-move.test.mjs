@@ -25,6 +25,18 @@ const plan = (s, p, splitIds = {}) => {
   assert.ok(n, `node ${p}`); return prepareNodeMove(s, n, nodes, splitIds);
 };
 
+test('#1380 a collinear endpoint move preserves the exact fixed opening center', () => {
+  const base = commitWallSegmentModel({ spaces: [{ id:'f', rooms:[],
+    partitions:[wall('a',[0,0],[1,0],25)], openings:[{ id:'door', type:'door', x:.75, y:0,
+      angle:0, length:.1, flip_h:true, host:{kind:'partition',id:'a',t:.75} }] }], markers:[],settings:{} }).config;
+  const source = base.spaces[0], before = snapshot(source);
+  const result = applyNodeMove(plan(source,[0,0]),[-.5,0],null);
+  assert.equal(result.ok,true);
+  const opening = result.space.openings[0];
+  assert.deepEqual([opening.x,opening.y,opening.host.tq,opening.flip_h],[.75,0,['5','6'],true]);
+  assert.deepEqual(source,before);
+});
+
 test('#845 frozen v10 physical goldens and current graph identities retain safe movement', () => {
   const cases = JSON.parse(readFileSync(new URL('./fixtures/845-wall-identity-parity.json', import.meta.url))).cases;
   for (const c of cases.filter(c => c.intent)) {

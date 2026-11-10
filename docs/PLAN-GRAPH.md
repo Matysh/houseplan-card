@@ -83,6 +83,16 @@ Opening hosts retain `{kind,id,t}` and add exact `tq:[numerator,denominator]`.
 explicit moves/rehosting update it. Splitting or reversing an edge remaps the
 parameter and preserves the physical opening and door-side flags.
 
+Node movement retains the exact world centre on a still-collinear host. For a
+rotated host, both mirrors derive the fixed-end distance policy from one
+correctly rounded exact squared-length ratio and one IEEE square root, then
+combine that ratio with the exact previous parameter. Language-specific hypot
+rounding does not become a different persisted `tq`. A node collapse refuses an
+opening whose exact centre would leave its new carrier rather than silently
+projecting it to a nearby point. Numeric server intents use the same bounded
+authored-grid allowance as the frontend; explicit `target_p` and stored `q`
+coordinates retain their exact values.
+
 ## Automatic legacy normalization
 
 The first structural write, import or explicit Optimize freezes the original

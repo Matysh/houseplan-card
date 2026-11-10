@@ -7,6 +7,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium, expect } from 'playwright/test';
+import { clickHeaderAction } from '../helpers/header-actions.mjs';
 
 const arg = name => process.argv.find(v => v.startsWith(`--${name}=`))?.slice(name.length + 3);
 const authorRoot = fileURLToPath(new URL('../../', import.meta.url));
@@ -52,7 +53,8 @@ try {
       await page.locator('#lab-launcher').click(); await page.locator('#lab-theme').selectOption(theme); await page.locator('#lab-close').click();
       const panel = page.locator('[data-hp=properties-panel]');
       const mode = async value => {
-        if (value === 'view') await page.locator('[data-hp=editor-close]').filter({ visible:true }).first().click(); else await page.locator(`[data-hp=mode-tab][data-mode=${value}]`).click();
+        if (await page.evaluate(value => window.__lab.card._mode !== value, value))
+          await clickHeaderAction(page.locator('houseplan-card').first(), `mode-${value}`);
         await page.waitForFunction(value => { const c=window.__lab.card; return c._mode===value && !c._modeTransitionBusy && (value=== 'view' || !!c._editorRuntime); }, value);
       };
       const capture = async state => {
@@ -138,7 +140,10 @@ try {
         }
       }
       await mode('view'); await expect(panel).toHaveCount(0);
-      profile.viewTargets = await page.locator('.zoomctl button').filter({ visible:true }).evaluateAll(nodes => nodes.map(el => ({ width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height })));
+      // The intrinsic phone header deliberately replaces the hidden zoom group
+      // with its 44px actions trigger; inspect the painted View route, not a
+      // desktop-only control that no longer exists on this width.
+      profile.viewTargets = await page.locator('.zoomctl button,[data-hp=header-actions-trigger]').filter({ visible:true }).evaluateAll(nodes => nodes.map(el => ({ width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height })));
       assert.ok(profile.viewTargets.length > 0 && profile.viewTargets.every(r => r.width >= 44 && r.height >= 44));
       assert.equal(await page.evaluate(() => window.__lab.safety.services.length), services);
       await capture('view'); console.log(`PASS ${profile.id}: ${profile.frames.length} frames`);

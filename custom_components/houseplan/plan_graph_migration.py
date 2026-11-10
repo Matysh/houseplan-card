@@ -131,12 +131,19 @@ def _collect(space):
                     if isinstance(preferred, str) and preferred:
                         entry["preferred"].append(preferred)
     generated = {}
+    # The legacy ABI uses the first matching key, even with duplicate overlays.
+    # Index once instead of scanning the complete catalogue for every room edge.
+    overlay_by_key = {}
+    for overlay in space.get("walls", []) if room_only else []:
+        key = overlay.get("key")
+        if isinstance(key, str):
+            overlay_by_key.setdefault(key, overlay)
     for key, item in sorted(room_only.items()):
         base = min(item["preferred"]) if item["preferred"] else legacy_wall_segment_id(str(space.get("id", "")), item["a"], item["b"], item["owners"])
         identity, suffix = base, 2
         while "wall:" + identity in sources:
             identity, suffix = base + "-" + str(suffix), suffix + 1
-        overlay = next((w for w in space.get("walls", []) if w.get("key") == _wall_key(item["a"], item["b"])), {})
+        overlay = overlay_by_key.get(_wall_key(item["a"], item["b"]), {})
         generated[key] = add(dict(id=identity, a=item["a"], b=item["b"], cm=overlay.get("cm", 0)), "wall", item["owners"])
     ordered = sorted(sources.values(), key=_key)
     geometry = {(_pk(s["a"]), _pk(s["b"])): s for s in reversed(ordered) if s["kind"] == "wall"}
@@ -332,6 +339,17 @@ def migrate_graph_space(space, options=None):
                 for second in rooms[i+1:]:
                     if second["id"] in first.get("open_to", []) or first["id"] in second.get("open_to", []):
                         legacy_cuts.extend(_shared_boundaries(_poly(first), _poly(second)))
+        # A finite accepted interval must intersect the source AABB expanded by
+        # radius. This broad phase can admit extras; interval() remains the exact
+        # authority. Keep input order so coincident cut identities are unchanged.
+        overlays = []
+        if any(s["kind"] == "wall" for s in sources):
+            for order, overlay in enumerate(space.get("walls", [])):
+                if isinstance(overlay.get("a"), list) and isinstance(overlay.get("b"), list):
+                    a, b = read_source_point(overlay["a"]), read_source_point(overlay["b"])
+                    a, b = sorted((a, b), key=_xy)
+                    overlays.append(dict(a=a, b=b, order=order))
+        overlay_tree = _Tree(overlays) if overlays else None
         zero_intervals, opening_intervals = {}, {}
         for s in sources:
             if s["kind"] != "wall":
@@ -344,12 +362,14 @@ def migrate_graph_space(space, options=None):
                     for t in span:
                         cut_point(s, t)
             zero_intervals[_key(s)] = zeros
-            for overlay in space.get("walls", []):
-                if isinstance(overlay.get("a"), list) and isinstance(overlay.get("b"), list):
-                    span = interval(s, read_source_point(overlay["a"]), read_source_point(overlay["b"]))
-                    if span:
-                        for t in span:
-                            cut_point(s, t)
+            lo = P(s["a"].x-radius, min(s["a"].y, s["b"].y)-radius)
+            hi = P(s["b"].x+radius, max(s["a"].y, s["b"].y)+radius)
+            nearby_overlays = overlay_tree.query(lo, hi) if overlay_tree else []
+            for overlay in sorted(nearby_overlays, key=lambda row: row["order"]):
+                span = interval(s, overlay["a"], overlay["b"])
+                if span:
+                    for t in span:
+                        cut_point(s, t)
             for opening in space.get("openings", []) if zeros else []:
                 if opening.get("host", {}).get("kind") == "partition" or opening.get("length", 0) <= 0:
                     continue

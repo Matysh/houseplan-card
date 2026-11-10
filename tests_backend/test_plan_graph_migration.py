@@ -14,6 +14,64 @@ from custom_components.houseplan.plan_graph_migration import migrate_graph_space
 CORPUS = json.loads((Path(__file__).parents[1] / "test/fixtures/plan-graph-corpus.json").read_text())
 
 
+@pytest.mark.parametrize("angle", [0, 45, 137])
+def test_1380_overlay_index_preserves_complete_exhaustive_result_and_order(monkeypatch, angle):
+    import math
+    import custom_components.houseplan.plan_graph_migration as migration
+
+    cosine, sine = math.cos(math.radians(angle)), math.sin(math.radians(angle))
+
+    def point(x, y):
+        return [x * cosine - y * sine, x * sine + y * cosine]
+
+    rooms, walls = [], []
+    for i in range(12):
+        poly = [point(i * 2 + x, y) for x, y in [(0, 0), (1, 0), (1, 1), (0, 1)]]
+        rooms.append({"id": f"r{i}", "poly": poly})
+        for j, a in enumerate(poly):
+            b = poly[(j + 1) % 4]
+            walls.append({"key": migration._wall_key(a, b), "a": b if j % 2 else a,
+                          "b": a if j % 2 else b, "cm": 10})
+    source = {"id": "floor", "cell_cm": 5, "rooms": rooms, "walls": walls}
+    frozen = copy.deepcopy(source)
+    original_tree = migration._Tree
+
+    def run(exhaustive):
+        examined = []
+
+        class QueryTree(original_tree):
+            def __init__(self, items, depth=0):
+                self.overlay_rows = items if items and "order" in items[0] else None
+                self.root = depth == 0
+                super().__init__(items, depth)
+
+            def query(self, lo, hi):
+                rows = self.overlay_rows if exhaustive and self.overlay_rows is not None else super().query(lo, hi)
+                if self.root and self.overlay_rows is not None:
+                    examined.append(len(rows))
+                return rows
+
+        monkeypatch.setattr(migration, "_Tree", QueryTree)
+        return migration.migrate_graph_space(source), sum(examined)
+
+    indexed, fast_count = run(False)
+    exhaustive, full_count = run(True)
+    assert indexed == exhaustive
+    assert source == frozen
+    assert fast_count < full_count / 2
+
+
+def test_1380_legacy_overlay_key_index_keeps_the_first_duplicate():
+    import custom_components.houseplan.plan_graph_migration as migration
+
+    a, b = [0, 0], [1, 0]
+    key = migration._wall_key(a, b)
+    sources, _, _ = migration._collect({"id": "f", "rooms": [{"id": "r", "poly": [a, b, [0, 1]]}],
+        "walls": [{"key": key, "cm": 10}, {"key": key, "cm": 20}]})
+    edge = next(s for s in sources if s["a"] == migration.read_source_point(a) and s["b"] == migration.read_source_point(b))
+    assert edge["cm"] == 10
+
+
 def test_1282_decimal_lattice_alias_retains_optional_grid_anchor_through_contacts():
     from custom_components.houseplan.plan_graph import validate_graph
     source = {"id": "floor", "cell_cm": 5, "rooms": [{"id": "r", "name": "R",

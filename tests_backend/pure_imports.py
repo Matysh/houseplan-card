@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
 
@@ -38,7 +39,8 @@ def _namespace_package(name: str, path: Path) -> ModuleType:
     return module
 
 
-def load_pure(name: str, file: Path):
+@contextmanager
+def pure_module(name: str, file: Path):
     """Загрузить модуль по пути под указанным именем и убрать за собой.
 
     Имя значимо: относительные импорты внутри модуля резолвятся только тогда,
@@ -80,6 +82,9 @@ def load_pure(name: str, file: Path):
         sys.modules[f"{PACKAGE_ROOT.name}.houseplan"] = houseplan
         sys.modules[name] = module
         spec.loader.exec_module(module)
+        # Keep the namespace alive for lazy relative imports during the call,
+        # not merely during exec_module. Always restore the original objects.
+        yield module
     finally:
         for key in [
             key for key in sys.modules
@@ -87,4 +92,12 @@ def load_pure(name: str, file: Path):
         ]:
             del sys.modules[key]
         sys.modules.update(saved)
-    return module
+
+
+def load_pure(name: str, file: Path):
+    """Load eagerly and immediately restore imports, retaining the original API.
+
+    Callers executing lazy relative imports use the scoped pure_module instead.
+    """
+    with pure_module(name, file) as module:
+        return module

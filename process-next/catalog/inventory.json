@@ -43,6 +43,14 @@
   },
   "entries": [
     {
+      "path": "test/render-layout-read.test.mjs",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "#1380 behavioral regression of the render-layout AST guard, including transitive measurement laundering; run when this mechanism changes, not on every product task.",
+      "mechanism": "render-layout-guard",
+      "automaticReleaseRun": false
+    },
+    {
       "path": "test/action-pins.test.mjs",
       "kind": "infrastructure",
       "decision": "retire",

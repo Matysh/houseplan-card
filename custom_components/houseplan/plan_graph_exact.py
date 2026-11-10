@@ -11,6 +11,7 @@ import re
 from dataclasses import dataclass
 from fractions import Fraction
 from typing import Any
+from .coordinate_canonicalization import LATTICE_NOISE_STEPS
 
 MAX_BITS = 4096
 CANVAS_LIMIT = 5000
@@ -94,6 +95,21 @@ def read_source_point(x: Any, y: Any = None) -> ExactPoint:
     if y is None and isinstance(x, (list, tuple)) and len(x) == 2:
         x, y = x
     return check_point(ExactPoint(parse_decimal(x), parse_decimal(y)))
+
+
+def read_authored_point(value: Any) -> ExactPoint:
+    """Explicit numeric editor targets mirror TS readAuthoredPoint.
+
+    Raw legacy decoding and stored q coordinates never use this allowance.
+    """
+    point = read_source_point(value)
+
+    def coordinate(raw, exact):
+        scaled = float(raw) * GRID_N
+        nearest = math.floor(scaled + 0.5)
+        return Fraction(nearest, GRID_N) if abs(scaled - nearest) < LATTICE_NOISE_STEPS else exact
+
+    return check_point(ExactPoint(coordinate(value[0], point.x), coordinate(value[1], point.y)))
 
 
 def encode_point(point: ExactPoint) -> list[str]:

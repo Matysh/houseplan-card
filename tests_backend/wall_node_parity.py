@@ -13,11 +13,9 @@ import subprocess
 import uuid
 from pathlib import Path
 
-from pure_imports import load_pure
+from pure_imports import pure_module
 
 ROOT = Path(__file__).resolve().parents[1]
-MODULE = load_pure("custom_components.houseplan.wall_node_move",
-                   ROOT / "custom_components/houseplan/wall_node_move.py")
 RUNNER = ROOT / "test/helpers/wall-node-parity-runner.mjs"
 CASES = ROOT / "test/fixtures/803-wall-node-parity.json"
 IDENTITY = ROOT / "test/fixtures/845-wall-identity-parity.json"
@@ -41,9 +39,9 @@ def pinned_test_ids():
         uuid.uuid4 = original
 
 
-def commit(config):
+def commit(config, module):
     with pinned_test_ids():
-        return MODULE.commit_wall_segment_model(config)[0]
+        return module.commit_wall_segment_model(config)[0]
 
 
 def frontend(request, build_dir):
@@ -58,7 +56,12 @@ def frontend(request, build_dir):
     return json.loads(result.stdout)
 
 
-def error_reason(error):
+def error_reason(error, *, migration=False):
+    # TS's commit facade wraps exact-graph decode/proof errors as invalid-room.
+    # Compare that public migration category, not a Python-only inner reason.
+    # Missing imports and arbitrary exceptions remain hard failures.
+    if migration and getattr(error, "code", None) in {"invalid_plan_graph", "plan_graph_resource_limit"}:
+        return "invalid-room"
     return getattr(error, "reason", getattr(error, "code", str(error))).removeprefix("node_move_")
 
 
@@ -145,30 +148,30 @@ def room_cases():
     return cases
 
 
-def compare_rows(rows, build_dir):
+def compare_rows(rows, build_dir, module):
     moves = accepted = inverses = 0
     cross_inputs = []
     for row in rows:
         name = row["name"]
         source = copy.deepcopy(row["input"])
         try:
-            base = source if row.get("mode") == "pure" else commit(source)
+            base = source if row.get("mode") == "pure" else commit(source, module)
         except Exception as error:
-            assert not row["ok"] and row["reason"] == error_reason(error), (name, error)
+            assert not row["ok"] and row["reason"] == error_reason(error, migration=True), (name, error)
             continue
         assert row["ok"], name
         same(base, row["base"], name + ": first migration")
         if row.get("mode") != "pure":
-            assert commit(base) == base == row["repeat"], f"{name}: repeated commit differs"
-            assert commit(row["base"]) == row["base"], f"{name}: Python(TS) differs"
+            assert commit(base, module) == base == row["repeat"], f"{name}: repeated commit differs"
+            assert commit(row["base"], module) == row["base"], f"{name}: Python(TS) differs"
             cross_inputs.append(base)
         for move in row.get("moves", []):
             moves += 1
             intent = move["intent"]
             try:
                 with pinned_test_ids():
-                    after = MODULE.move_node_space(base["spaces"][0], intent) if row.get("mode") == "pure" \
-                        else MODULE.node_move_candidate(source, "f", intent)
+                    after = module.move_node_space(base["spaces"][0], intent) if row.get("mode") == "pure" \
+                        else module.node_move_candidate(source, "f", intent)
             except Exception as error:
                 assert not move["ok"] and move["reason"] == error_reason(error), (name, intent, error)
                 continue
@@ -176,12 +179,12 @@ def compare_rows(rows, build_dir):
             assert row.get("mode") != "pure", "corrupt pure vector must refuse"
             same(after, move["after"], name + ": complete candidate " + str(intent))
             same(after, move["repeat"], name + ": repeated TS candidate")
-            assert commit(after) == after, f"{name}: server response not stable"
+            assert commit(after, module) == after, f"{name}: server response not stable"
             accepted += 1
             # Browser before_space is the proof input, not Python's own baseline.
-            restored = MODULE.node_move_candidate(after, "f", intent, "undo", row["base"]["spaces"][0])
+            restored = module.node_move_candidate(after, "f", intent, "undo", row["base"]["spaces"][0])
             assert restored == row["base"], f"{name}: browser-baseline Undo differs"
-            assert MODULE.node_move_candidate(restored, "f", intent) == after, f"{name}: Redo differs"
+            assert module.node_move_candidate(restored, "f", intent) == after, f"{name}: Redo differs"
             inverses += 1
         assert source == row["input"], name + ": source mutated"
         if "expected" in row and "intent" in row:
@@ -191,13 +194,19 @@ def compare_rows(rows, build_dir):
 
 
 def run(build_dir=ROOT / "test-build"):
+    with pure_module("custom_components.houseplan.wall_node_move",
+                     ROOT / "custom_components/houseplan/wall_node_move.py") as module:
+        return _run(build_dir, module)
+
+
+def _run(build_dir, module):
     vectors = json.loads(IDENTITY.read_text(encoding="utf-8"))["cases"]
     cases = partition_cases() + vectors + room_cases()
     rows = frontend({"action": "cases", "cases": cases}, build_dir)
     assert len(rows) == len(cases)
-    counts = compare_rows(rows, build_dir)
+    counts = compare_rows(rows, build_dir, module)
     corpus = frontend({"action": "corpus"}, build_dir)
-    compare_rows([{**c, "name": c["label"]} for c in corpus], build_dir)
+    compare_rows([{**c, "name": c["label"]} for c in corpus], build_dir, module)
     print(f"wall-node parity: {len(cases)} scenarios + {len(corpus)} corpus documents; "
           f"{counts[0]} moves, {counts[1]} accepted, {counts[2]} exact browser-baseline Undo/Redo; "
           "TS/Python full candidates, cross-idempotence and refusals identical")

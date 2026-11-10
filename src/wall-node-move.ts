@@ -8,7 +8,9 @@ import { wallKey } from './wall-thickness';
 import type { OpeningCfg, PartitionCfg, RoomCfg, WallSegmentEntry, WallEntry } from './types';
 import { applyGraphOperation, projectGraphSpace, prepareGraph, type PlanGraph, type GraphOperation } from './plan-graph';
 import { decodePoint, encodePoint, readAuthoredPoint, pointToNumbers, parseDecimal, encodeRational,
-  projectParameter, pointAt, cmp, ZERO, ONE, decodeRational } from './plan-exact';
+  projectParameter, pointAt, pointEq, cmp, ZERO, ONE, decodeRational } from './plan-exact';
+import { squaredDistance as exactSquaredDistance, div as exactDiv, sub as exactSub,
+  mul as exactMul, toNumber } from './plan-exact';
 import type { GraphPoint } from './plan-exact';
 import { NodeMoveDependencies } from './wall-node-dependencies';
 
@@ -481,13 +483,20 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
         target: encodePoint(readAuthoredPoint(target)), detachDependency: true });
       for (const opening of out.openings || []) if (opening.host && affected.includes(`${opening.host.kind}:${opening.host.id}`)) {
         const edge = source.plan_graph.edges.find(edge => edge.kind === opening.host!.kind && edge.id === opening.host!.id)!;
-        const passing = carrier?.walls.some(w => w.kind === edge.kind && w.id === edge.id);
         const byId = new Map(source.plan_graph.nodes.map(v => [v.id, v]));
         const endpoint = (id: string) => id === n.nodeId ? readAuthoredPoint(target) : decodePoint(byId.get(id)!.p);
         const old = source.openings!.find(item => item.id === opening.id)!;
         const oldT = old.host!.tq ? decodeRational(old.host!.tq) : parseDecimal(old.host!.t);
         const center = pointAt(decodePoint(byId.get(edge.from)!.p), decodePoint(byId.get(edge.to)!.p), oldT);
-        const t = passing ? projectParameter(center, endpoint(edge.from), endpoint(edge.to)) : parseDecimal(opening.host.t);
+        const a = endpoint(edge.from), b = endpoint(edge.to), projected = projectParameter(center, a, b);
+        // A fixed opening on a still-collinear changed carrier retains its
+        // exact world centre, including endpoint moves, just like the server.
+        let t = projected;
+        if (!pointEq(pointAt(a, b, projected), center)) {
+          const oldA = decodePoint(byId.get(edge.from)!.p), oldB = decodePoint(byId.get(edge.to)!.p);
+          const ratio = parseDecimal(Math.sqrt(toNumber(exactDiv(exactSquaredDistance(oldA, oldB), exactSquaredDistance(a, b)))));
+          t = edge.from === n.nodeId ? exactSub(ONE, exactMul(exactSub(ONE, oldT), ratio)) : exactMul(oldT, ratio);
+        }
         operations.push({ kind: 'rehost-opening', opening: opening.id,
           host: { kind: opening.host.kind, id: opening.host.id, t: encodeRational(t) } });
       }

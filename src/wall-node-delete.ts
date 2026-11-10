@@ -5,7 +5,7 @@ import { polygonArea, roomsOverlap, polyIsSimple } from './logic';
 import { sameNodePoint, structuralNodeWalls, structuralWallNodes,
   type NodeMoveSpace, type NodePoint, type NodeWall } from './wall-node-move';
 import { wallKey } from './wall-thickness';
-import { applyGraphOperation, projectGraphSpace } from './plan-graph';
+import { applyGraphOperation, projectGraphSpace, PlanGraphError } from './plan-graph';
 
 export interface NodeDeleteIntent { point: NodePoint; node_id?: string }
 export type NodeDeleteReason = 'degree' | 'unsafe' | 'opening';
@@ -148,7 +148,7 @@ export function applyNodeDelete(source: NodeMoveSpace, intent: NodeDeleteIntent)
       { hosts: source.openings || [] });
       for (const opening of out.openings || []) if (opening.id in result.mapping.hosts) opening.host = result.mapping.hosts[opening.id];
       return { ok: true, space: projectGraphSpace(out, result.graph).space, retained: keep.id, removed: drop.id };
-    } catch { return fail(); }
+    } catch (error) { return fail(error instanceof PlanGraphError && error.code === 'collapse-host-incidence' ? 'opening' : 'unsafe'); }
   }
   return { ok: true, space: out, retained: keep.id, removed: drop.id };
 }

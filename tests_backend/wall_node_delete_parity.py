@@ -4,14 +4,18 @@ import json
 import math
 from pathlib import Path
 
-from pure_imports import load_pure
+from pure_imports import pure_module
 from wall_node_parity import ROOT, commit, frontend, same
 
-MODULE = load_pure("custom_components.houseplan.wall_node_delete",
-                   ROOT / "custom_components/houseplan/wall_node_delete.py")
 
 
 def run(build_dir):
+    with pure_module("custom_components.houseplan.wall_node_delete",
+                     ROOT / "custom_components/houseplan/wall_node_delete.py") as module:
+        return _run(build_dir, module)
+
+
+def _run(build_dir, module):
     if not (Path(build_dir) / "wall-node-delete.js").is_file():
         raise FileNotFoundError("node deletion parity prerequisites are missing; compile tsconfig.junction-parity.json")
     vectors = json.loads((ROOT / "test/fixtures/1045-wall-node-delete.json").read_text())
@@ -48,25 +52,36 @@ def run(build_dir):
     accepted = 0
     for case, row in zip(cases, rows, strict=True):
         frozen = copy.deepcopy(case["input"])
-        base = case["input"] if case.get("mode") == "pure" else commit(case["input"])
+        base = case["input"] if case.get("mode") == "pure" else commit(case["input"], module)
         same(base, row["before"], case["name"] + ": original canonical snapshot")
-        intent = {"point": case["point"]}
+        intent = row["intent"]
         try:
-            result = MODULE.delete_node_space(base["spaces"][0], intent)
-        except MODULE.NodeDeleteError as error:
+            result = module.node_delete_candidate(base, "f", intent)["spaces"][0] if base["spaces"][0].get("plan_graph") \
+                else module.delete_node_space(base["spaces"][0], intent)
+        except module.NodeDeleteError as error:
             assert not row["ok"] and error.code == "node_delete_" + row["reason"], case["name"]
         else:
             assert row["ok"], case["name"]
             same(result, row["space"], case["name"] + ": complete local delta")
-            after = commit({**base, "spaces": [result]})
+            after = commit({**base, "spaces": [result]}, module)
             same(after, row["after"], case["name"] + ": complete canonical candidate")
-            canonical = commit(base)
-            proved = MODULE.node_delete_candidate(canonical, "f", intent)
-            same(proved, after, case["name"] + ": real server forward proof")
-            restored = MODULE.node_delete_candidate(after, "f", intent, "undo", canonical["spaces"][0])
-            same(restored, canonical, case["name"] + ": exact browser-baseline Undo")
-            same(MODULE.node_delete_candidate(restored, "f", intent), after, case["name"] + ": exact Redo")
             accepted += 1
+        # Legacy deletion/remigration and an edit of an existing graph have
+        # different identity owners. Prove the current graph against its actual
+        # TS candidate instead of inventing a newly migrated identity baseline.
+        current = row["current"]
+        canonical = commit(base, module)
+        same(canonical, current["before"], case["name"] + ": current canonical baseline")
+        try:
+            proved = module.node_delete_candidate(canonical, "f", current["intent"])
+        except module.NodeDeleteError as error:
+            assert not current["ok"] and error.code == "node_delete_" + current["reason"], case["name"]
+        else:
+            assert current["ok"], case["name"]
+            same(proved, current["after"], case["name"] + ": real current server forward proof")
+            restored = module.node_delete_candidate(proved, "f", current["intent"], "undo", canonical["spaces"][0])
+            same(restored, canonical, case["name"] + ": exact browser-baseline Undo")
+            same(module.node_delete_candidate(restored, "f", current["intent"]), proved, case["name"] + ": exact Redo")
         assert case["input"] == frozen
         if "expected" in case:
             assert row["ok"] == case["expected"]["ok"], case["name"]

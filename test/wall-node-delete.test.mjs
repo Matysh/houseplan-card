@@ -8,6 +8,22 @@ import { buildNodePreview } from '../test-build/wall-node-preview.js';
 import { increasedViolations, junctionLimitViolations } from '../test-build/junction-limits.js';
 const cases = JSON.parse(readFileSync(new URL('./fixtures/1045-wall-node-delete.json', import.meta.url)));
 
+test('#1380 current collapse cannot move an exactly hosted opening off its carrier', () => {
+  const item = structuredClone(cases.find(c => c.name === 'collinear-opening'));
+  assert.ok(item);
+  const angle = Math.PI / 4, c = Math.cos(angle), s = Math.sin(angle);
+  const transform = ([x,y]) => [x*c-y*s+.125,x*s+y*c-.25];
+  for (const wall of item.space.partitions) { wall.a=transform(wall.a);wall.b=transform(wall.b); }
+  for (const opening of item.space.openings) {
+    [opening.x,opening.y]=transform([opening.x,opening.y]);opening.angle=(opening.angle+45+90)%180-90;
+  }
+  const source = commitWallSegmentModel({ spaces:[item.space],markers:[],settings:{} }).config.spaces[0];
+  const point = transform(item.point),node=structuralWallNodes(source).find(n=>Math.hypot(n.point[0]-point[0],n.point[1]-point[1])<1e-8);
+  const before=structuredClone(source);
+  assert.deepEqual(applyNodeDelete(source,{point,node_id:node.nodeId}),{ok:false,reason:'opening'});
+  assert.deepEqual(source,before);
+});
+
 test('#1045 shared ordinary deletion/refusal fixtures preserve the frozen source and every physical field', () => {
   for (const item of cases) {
     const before = structuredClone(item.space), result = applyNodeDelete(item.space, { point: item.point });

@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import copy
+import math
 
 from .coordinate_canonicalization import canonicalize_number
 from .plan_graph import validate_graph, project_graph_space, propagate_dependencies, edge_key
 from .plan_graph_exact import (
     GraphError, decode_point, decode_rational, encode_point, encode_rational,
-    parse_decimal, point_at, project_parameter, read_source_point, to_numbers,
+    parse_decimal, point_at, project_parameter, read_source_point, read_authored_point, squared_distance, to_numbers,
 )
 
 
@@ -71,7 +72,7 @@ def _has_node_carrier(index, moved, support, via, target=None):
 
 
 def move_graph_node_space(space, intent):
-    from .wall_node_move import move_node_space, NodeMoveError
+    from .wall_node_move import move_node_space, NodeMoveError, _point
 
     if "attach_edge" in intent:
         from .wall_node_attach import attach_graph_node_space
@@ -89,7 +90,9 @@ def move_graph_node_space(space, intent):
     identity, index = node_identity(space, intent)
     if not index.incident[identity]:
         raise NodeMoveError()
-    target = decode_point(intent["target_p"]) if "target_p" in intent else read_source_point(intent.get("target"))
+    # Numeric editor intents keep the same invalid-input contract as the TS
+    # and legacy preflight, before exact decoding can report a graph fault.
+    target = decode_point(intent["target_p"]) if "target_p" in intent else read_authored_point(_point(intent.get("target")))
     legacy_intent = {"point": to_numbers(index.points[identity]), "target": to_numbers(target),
                      "axis": intent.get("axis"), "split_ids": intent.get("split_ids", {})}
     # The old operation remains an independent physical preflight. Its
@@ -146,7 +149,13 @@ def move_graph_node_space(space, intent):
         a, b = after_index.points[old["from"]], after_index.points[old["to"]]
         projected_t = project_parameter(centre, a, b)
         old_collinear = point_at(a, b, projected_t) == centre
-        t = projected_t if old_collinear else parse_decimal(proposed["host"]["t"])
+        # One correctly-rounded squared-length ratio and one IEEE sqrt in both
+        # mirrors; language-specific hypot rounding must not alter exact tq.
+        t = projected_t
+        if not old_collinear:
+            ratio = parse_decimal(math.sqrt(float(squared_distance(index.points[old["from"]], index.points[old["to"]])
+                                                  / squared_distance(a, b))))
+            t = 1 - (1 - before_t) * ratio if old["from"] == identity else before_t * ratio
         opening["host"] = {**host, "tq": encode_rational(t), "t": float(t)}
         opening["angle"] = canonicalize_number(proposed["angle"])
     return project_graph_space(base, graph)["space"]
@@ -158,6 +167,10 @@ def delete_graph_node_space(space, intent):
     if not set(intent) <= {"point", "node_id"}:
         raise NodeDeleteError()
     identity, index = node_identity(space, intent)
+    # Degree belongs to the selected graph identity, not to every numerically
+    # nearby legacy endpoint. Match the frontend before physical preflight.
+    if len(index.incident[identity]) != 2:
+        raise NodeDeleteError("degree")
     legacy_intent = {"point": to_numbers(index.points[identity])}
     _, keep, drop, _, _, _ = _deletion(space, legacy_intent)
     physical = delete_node_space(space, legacy_intent)

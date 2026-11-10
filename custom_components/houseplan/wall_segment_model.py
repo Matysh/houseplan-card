@@ -970,7 +970,9 @@ def commit_wall_segment_model(
     from .graph_write import normalize_graph_config
 
     previous_ids = {(space.get("id"), edge.get("id")) for space in config.get("spaces", []) for edge in space.get("wall_segments", [])}
-    candidate = normalize_graph_config(config)
+    # Match the TS commit facade's scalar ABI after graph ownership is known.
+    # The canonicalizer deliberately leaves exact graph projections/tq intact.
+    candidate = canonicalize_config_geometry(normalize_graph_config(config))
     migrated = sum((space.get("id"), edge.get("id")) not in previous_ids for space in candidate.get("spaces", []) for edge in space.get("wall_segments", []))
     if migration_report is not None:
         drafts = [draft for space in config.get("spaces", []) for draft in space.get("room_drafts", [])]

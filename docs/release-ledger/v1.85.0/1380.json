@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1380,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "The authorized mutation repair exposed actual current-model node/host parity defects and quadratic legacy migration work, in addition to stale test infrastructure. No schema or model version changes.",
+  "summary": {
+    "ru": "Ускорена миграция старых планов; исправлены точное сохранение проёмов и согласованность операций с узлами.",
+    "en": "Faster legacy plan migration and consistent exact opening/node operations."
+  }
+}

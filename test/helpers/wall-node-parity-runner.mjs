@@ -22,9 +22,17 @@ if(request.action==='corpus'){
   const {applyNodeDelete}=await import(pathToFileURL(resolve(build,'wall-node-delete.js')).href);
   console.log(JSON.stringify(request.cases.map(c=>{
     const before=c.mode==='pure'?c.input:commit(c.input);
-    const result=applyNodeDelete(before.spaces[0],{point:c.point});
-    return {name:c.name,before,...result,...(result.ok?{after:commit({...before,
-      spaces:before.spaces.map((s,i)=>i===0?result.space:s)})}: {})};
+    const intentFor=space=>{
+      const node=structuralWallNodes(space).find(n=>Math.hypot(n.point[0]-c.point[0],n.point[1]-c.point[1])<1e-8);
+      return {point:c.point,...(node?.nodeId?{node_id:node.nodeId}:{})};
+    };
+    const intent=intentFor(before.spaces[0]),result=applyNodeDelete(before.spaces[0],intent);
+    const currentBefore=commit(before),currentIntent=intentFor(currentBefore.spaces[0]);
+    const currentResult=applyNodeDelete(currentBefore.spaces[0],currentIntent);
+    return {name:c.name,before,intent,...result,...(result.ok?{after:commit({...before,
+      spaces:before.spaces.map((s,i)=>i===0?result.space:s)})}: {}),
+      current:{before:currentBefore,intent:currentIntent,...currentResult,
+        ...(currentResult.ok?{after:commit({...currentBefore,spaces:[currentResult.space]})}:{})}};
   })));
 }else if(request.action==='cross'){
   console.log(JSON.stringify(request.configs.map(c=>commit(c))));
@@ -43,6 +51,22 @@ if(request.action==='corpus'){
       const moves=intents.map(intent=>{
         const node=nodes.find(n=>Math.hypot(n.point[0]-intent.point[0],n.point[1]-intent.point[1])<1e-8);
         if(!node)throw Error(c.name+': fixture node is missing');
+        if(node.nodeId)intent.node_id=node.nodeId;
+        // Frozen model10 fixtures name a former carrier ID. The current UI
+        // chooses its axis after migration. Translate only a proven historical
+        // carrier to its unique current passing axis; arbitrary invalid IDs
+        // remain invalid and the fixture's acceptance assertion stays intact.
+        if(c.expected?.config?.model_version===10&&intent.axis&&!node.axes.some(a=>a.key===intent.axis)){
+          const old=c.expected.config.spaces[0].wall_segments.find(w=>'wall:'+w.id===intent.axis);
+          if(old){
+            const dx=old.b[0]-old.a[0],dy=old.b[1]-old.a[1],length=Math.hypot(dx,dy);
+            const axes=node.axes.filter(a=>a.passing
+              && Math.abs(dx*a.direction[1]-dy*a.direction[0])<=length*1e-9
+              && Math.abs((node.point[0]-old.a[0])*dy-(node.point[1]-old.a[1])*dx)<=length*1e-9);
+            if(axes.length!==1)throw Error(c.name+': historical carrier has no unique current axis');
+            intent.axis=axes[0].key;
+          }
+        }
         const result=applyNodeMove(prepareNodeMove(space,node,nodes,intent.split_ids),intent.target,intent.axis);
         if(!result.ok)return {intent,...result};
         try{const after=commit({...base,spaces:[result.space]});return {intent,ok:true,after,repeat:commit(after)};}

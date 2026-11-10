@@ -203,6 +203,37 @@ def test_issue_398_pure_imports_leaves_sys_modules_as_it_found_it():
     assert_registry_unchanged()
 
 
+def test_issue_1380_scoped_pure_module_keeps_lazy_imports_and_restores_identity():
+    import sys
+    from tests_backend.pure_imports import HOUSEPLAN_ROOT, pure_module
+
+    def snapshot():
+        return {k: v for k, v in sys.modules.items() if k == "custom_components" or k.startswith("custom_components.")}
+
+    before = snapshot()
+    for fail in (False, True):
+        try:
+            with pure_module("custom_components.houseplan.wall_node_move", HOUSEPLAN_ROOT / "wall_node_move.py") as module:
+                config = {"spaces": [{"id": "f", "rooms": [], "partitions": [
+                    {"id": "p", "a": [0, 0], "b": [1, 0], "cm": 10}]}], "markers": [], "settings": {}}
+                actual, _ = module.commit_wall_segment_model(config)
+                assert actual["model_version"] == 11
+                assert "custom_components.houseplan.graph_write" in sys.modules
+                # Nested scopes restore the already-active module identities.
+                active = snapshot()
+                with pure_module("custom_components.houseplan.const", HOUSEPLAN_ROOT / "const.py") as const:
+                    assert const.DOMAIN == "houseplan"
+                assert snapshot().keys() == active.keys()
+                assert all(sys.modules[k] is v for k, v in active.items())
+                if fail:
+                    raise RuntimeError("scope exit probe")
+        except RuntimeError as error:
+            assert fail and str(error) == "scope exit probe"
+        after = snapshot()
+        assert after.keys() == before.keys()
+        assert all(after[k] is v for k, v in before.items())
+
+
 def test_issue_465_pure_imports_is_order_independent():
     """Чистый процесс без parent package не должен запускать реальный __init__.
 
