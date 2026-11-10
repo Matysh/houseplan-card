@@ -8,6 +8,9 @@ from pathlib import Path
 
 import pytest
 
+from custom_components.houseplan.coordinate_canonicalization import (
+    canonicalize_config_geometry,
+)
 from custom_components.houseplan.validation import (
     CONFIG_SCHEMA,
     PartitionOpeningHostError,
@@ -17,9 +20,14 @@ from custom_components.houseplan.validation import (
 )
 from custom_components.houseplan.wall_segment_model import (
     LEGACY_WALL_SEGMENT_MODEL_VERSION as WALL_SEGMENT_MODEL_VERSION,
+)
+from custom_components.houseplan.wall_segment_model import (
     WallSegmentMigrationError,
-    decode_legacy_wall_segment_model as commit_wall_segment_model,
+    _wall_key,
     deterministic_wall_segment_id,
+)
+from custom_components.houseplan.wall_segment_model import (
+    decode_legacy_wall_segment_model as commit_wall_segment_model,
 )
 
 
@@ -114,6 +122,26 @@ def test_hash_and_endpoint_order_match_frontend_vector() -> None:
     assert deterministic_wall_segment_id(
         "floor", [1, 0], [0, 0], ["room-a", "room-b"]
     ) == expected
+
+
+def test_issue_845_legacy_seed_uses_stored_precision_before_assigning_ids():
+    source = _config({"id": "floor", "rooms": [_room("room", 1 / 8192, .1, .75, .6)]})
+    before = copy.deepcopy(source)
+    stored = canonicalize_config_geometry(source)
+    assert stored != source, "positive raw/storage precision difference"
+    actual, _ = commit_wall_segment_model(source)
+    expected, _ = commit_wall_segment_model(stored)
+    assert actual == expected, "nine-decimal storage echo must not change freshly assigned wall IDs"
+    assert source == before
+
+
+@pytest.mark.parametrize("end", [5, 11, 17, 23])
+def test_issue_845_legacy_wall_key_retains_odd_lattice_midpoint_after_storage_echo(end):
+    a, b = [0, 2 / 240], [end / 240, 2 / 240]
+    def echo(point):
+        return [round(value, 9) for value in point]
+    assert _wall_key(a, b) == _wall_key(echo(a), echo(b))
+    assert _wall_key(a, b) != _wall_key([a[0], a[1] + .0001], b), "not a general topology snap"
 
 
 def test_migration_is_pure_complete_idempotent_and_schema_valid() -> None:

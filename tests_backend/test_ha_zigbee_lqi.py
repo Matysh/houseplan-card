@@ -255,6 +255,9 @@ async def test_multiple_instances_foreign_inventory_exact_registry_and_conflict_
     transport.emit("two/bridge/devices", inventory(1, "same"))
     await until(lambda: coordinator._refresh_task is None)
     assert set(coordinator.snapshot()["devices"]) == {z.id}, "same IEEE in two instances refuses both; removed b is retired"
+    transport.emit("one/same", {"linkquality": 220})
+    transport.emit("two/same", {"linkquality": 140})
+    assert set(coordinator.snapshot()["devices"]) == {z.id}, "fresh traffic from either ambiguous network stays refused"
 
 
 async def test_rename_remove_repair_topics_registry_and_old_callbacks_are_fenced(hass, transport):

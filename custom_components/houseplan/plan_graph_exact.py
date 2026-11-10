@@ -11,6 +11,7 @@ import re
 from dataclasses import dataclass
 from fractions import Fraction
 from typing import Any
+
 from .coordinate_canonicalization import LATTICE_NOISE_STEPS
 
 MAX_BITS = 4096

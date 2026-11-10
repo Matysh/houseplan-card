@@ -245,7 +245,8 @@ const MUTANT_DEFINITIONS = [
     because: '#1000 AC8: the actual cold Chromium request graph must omit the optional threshold graph without a rule, including readonly View. A pure codec/runtime unit cannot prove that the mounted card gates its import or avoids editor/settings chunks. Registered only; nightly execution.',
     patches: [{ file: 'src/view-runtimes.ts',
       find: "if (this.alerts.state !== 'ready' && this.wantsAlerts()) void this.alerts.ensure();",
-      replace: "if (this.alerts.state !== 'ready') void this.alerts.ensure();" }],
+      replace: "if (this.alerts.state !== 'ready') void this.alerts.ensure();" },
+      {file:'src/view-runtimes.ts',find:'}, false, () => this.wantsAlerts()));',replace:'}, false, () => true));'}],
   },
   {
     id: 'threshold-writer-skips-alert-validation-1000',
@@ -542,7 +543,7 @@ const MUTANT_DEFINITIONS = [
     because: '#1051 AC2/7: actual 0/50/100 input paint must fit the intended inline grid slot. The common form-kit cascade can leave the opacity wrapper flex and clip digits despite an unchanged outer control box; only mounted browser layout reveals this. Nightly execution only.',
     patches: [{ file: 'src/styles/form-kit.styles.ts',
       find: '  ${field} > .${p}-opacity.${p}-inline-opacity, ${field} .${p}-inline-opacity > .${p}-unit { display:contents; }',
-      replace: '  ${field} .${p}-inline-opacity, ${field} .${p}-inline-opacity > .${p}-unit { display:contents; }' }],
+      replace: '  ${field} > .${p}-opacity.${p}-inline-opacity { display:flex; }\n  ${field} .${p}-inline-opacity > .${p}-unit { display:contents; }' }],
   },
   {
     id: 'ui-led-menu-keeps-scene-pan-1051',
@@ -2663,7 +2664,7 @@ const MUTANT_DEFINITIONS = [
 },
 {
   "id": "wall-identity-short-room-edge-rejected",
-  "guard": "npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity",
+  "guard": "python -m pytest -q tests_backend/test_wall_segment_model.py",
   "because": "#845 AC1: accepted browser 2.4/3.6mm T targets and stored 3.4mm edges survive server proof and Undo",
   "patches": [
     {
@@ -2675,7 +2676,7 @@ const MUTANT_DEFINITIONS = [
 },
 {
   "id": "wall-identity-legacy-split-priority",
-  "guard": "npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity",
+  "guard": "python -m pytest -q tests_backend/test_wall_segment_model.py",
   "because": "#845 AC2: shared room boundaries own nearby split points before legacy wall endpoints",
   "patches": [
     {
@@ -2687,7 +2688,7 @@ const MUTANT_DEFINITIONS = [
 },
 {
   "id": "wall-identity-legacy-thickness-fallback-absent",
-  "guard": "npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity",
+  "guard": "python -m pytest -q tests_backend/test_wall_segment_model.py",
   "because": "#845 AC2: legacy gap inherits browser thickness before previous cm; browser-baseline Undo remains exact",
   "patches": [
     {
@@ -2699,19 +2700,24 @@ const MUTANT_DEFINITIONS = [
 },
 {
   "id": "wall-identity-seed-before-canonicalization",
-  "guard": "npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity",
+  "guard": "python -m pytest -q tests_backend/test_wall_segment_model.py",
   "because": "#845 AC7: nine-decimal canonicalization precedes deterministic seed keys, including odd 1/8192",
   "patches": [
     {
       "file": "custom_components/houseplan/wall_segment_model.py",
       "find": "    candidate = canonicalize_config_geometry(copy.deepcopy(config))",
       "replace": "    candidate = copy.deepcopy(config) # mutant: raw twelve-decimal seed"
+    },
+    {
+      "file": "custom_components/houseplan/wall_segment_model.py",
+      "find": "        poly = [[canonicalize_lattice_coordinate(p[0]),\n                 canonicalize_lattice_coordinate(p[1])] for p in poly]",
+      "replace": "        poly = [[float(p[0]), float(p[1])] for p in poly]"
     }
   ]
 },
 {
   "id": "wall-identity-key-ignores-storage-noise",
-  "guard": "npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity",
+  "guard": "python -m pytest -q tests_backend/test_wall_segment_model.py",
   "because": "#845 room matrix: odd lattice midpoint keeps the same compatibility key after a nine-decimal echo",
   "patches": [
     {
@@ -2794,7 +2800,7 @@ const MUTANT_DEFINITIONS = [
     id: 'spacing-write-differs-from-the-shown-point',
     guard: 'node demo/smoke_device_equal_spacing.mjs',
     because: '#873 AC1/AC6: history must retain the shown magnet target. Re-rounding the raw pointer in the command after-state corrupts Redo when minimum zoom puts a neighbouring lattice node inside the capture radius; the browser observes persisted Undo/Redo, not only the initial live-layout write.',
-    patches: [{ file: 'src/houseplan-card.ts', find: '    const after = devicePlacement(this._layout, d.id);\n', replace: '    const box = (this.renderRoot.querySelector(\'.stage\') as HTMLElement).getBoundingClientRect(), view = this._viewOr(this._baseVb()); // mutant: the write re-rounds the raw pointer\n    const after: DevicePlacement | null = this._devicePlacementForCanvas(d, drag.ox + ((ev.clientX - drag.sx) / box.width) * view.w, drag.oy + ((ev.clientY - drag.sy) / box.height) * view.h);\n' }],
+    patches: [{ file: 'src/houseplan-card.ts', find: '    const after = devicePlacement(this._layout, d.id);\n', replace: '    const box = (this.renderRoot.querySelector(\'.stage\') as HTMLElement).getBoundingClientRect(), view = this._viewOr(this._baseVb()); // mutant: the write re-rounds the raw pointer\n    const after: DevicePlacement | null = this._devicePlacementForCanvas(d, drag.ox + ((ev.clientX - drag.sx) / box.width) * view.w, drag.oy + ((ev.clientY - drag.sy) / box.height) * view.h);\n' }, { file:'src/houseplan-card.ts', find:'movement=prepareContactMove(this,drag,after);', replace:'movement=prepareContactMove(this,drag,after,true);' }],
   },
   {
     id: 'spacing-target-search-before-the-mode-check',
@@ -3339,6 +3345,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'src/houseplan-editor-runtime.ts',
       find: '          partitionIds: selectWallFacePromotionIds(acceptedRings, model.partitions, epsilon),\n',
       replace: '',
+    }, {file:'src/houseplan-editor-runtime.ts',
+      find:'consumedPartitionIds: [...selectWallFacePromotionIds(acceptedRings, model.partitions, epsilon)],',
+      replace:'consumedPartitionIds: model.partitions.map(partition => partition.id),',
     }],
   },
   {
@@ -3360,6 +3369,9 @@ const MUTANT_DEFINITIONS = [
       find: '            original?.cm ?? carrier?.cm\n'
         + '              ?? this._wallSourceCmAt(midpoint, batch.activePath, batch.activeCms),\n',
       replace: '            original?.cm ?? fallback,\n',
+    }, {file:'src/graph-edit-intent.ts',
+      find:"plan.operations.push({kind:'convert-edge',edge:ref(edge),target});",
+      replace:"plan.operations.push({kind:'convert-edge',edge:ref(edge),target}, {kind:'set-thickness',edges:[target],cm:authorized[0].cm});",
     }],
   },
   {
@@ -4550,14 +4562,12 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'wall-face-lineage-skips-post-reconcile-settlement',
-    guard: 'node demo/smoke_wall_face_lineage.mjs',
-    because: '#804 AC1/AC3/AC5: only the production room-dialog save proves that residual '
-      + 'partition IDs are settled before the strict wall-model barrier; pure helper tests '
-      + 'cannot detect an omitted runtime call, and the duplicate-ID guard must remain intact.',
+    guard: 'node --test test/wall-face-lineage.test.mjs',
+    because: '#804: exact graph face commands now independently own room identity, so the current native dialog cannot expose omitted legacy hint settlement. The retained v10 suite must clear occupied residual hints before its strict duplicate-ID barrier; native room/config-save coverage remains separate.',
     patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: '        if (room.wall_ids) room.wall_ids = settleWallFaceLineage(room.wall_ids, remainingPartitionIds);\n',
-      replace: '        // mutant: stale partition lineage reaches the wall-model barrier\n',
+      file: 'src/wall-face-lineage.ts',
+      find: "  return lineage.map((id) => remainingPartitionIds.has(id) ? '' : id);",
+      replace: '  return [...lineage];',
     }],
   },
   {
@@ -8931,11 +8941,15 @@ const MUTANT_DEFINITIONS = [
     id: 'room-accept-leaves-coincident-partitions',
     guard: 'node demo/smoke_unified_wall_tool.mjs',
     because: 'accepting a face must consume active and older coincident partition intervals in '
-      + 'the same transaction; otherwise the next Optimize repairs the just-created room (#478 AC13)',
+      + 'the same transaction; bypass both legacy reconciliation and the graph faces consumed-ID boundary, otherwise the current graph command independently fixes the legacy proposal (#478 AC13)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
       find: '          allowCoincidentPartitions: true, // #478 room acceptance consumes its wall carriers.',
       replace: '          allowCoincidentPartitions: false, // mutant: accepted carriers survive',
+    }, {
+      file: 'src/houseplan-editor-runtime.ts',
+      find: 'consumedPartitionIds: [...selectWallFacePromotionIds(acceptedRings, model.partitions, epsilon)],',
+      replace: 'consumedPartitionIds: [],',
     }],
   },
   {
@@ -12433,7 +12447,7 @@ const MUTANT_DEFINITIONS = [
   {
     "file": "src/styles/navigation.styles.ts",
     "find": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; line-height:1; }",
-    "replace": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; line-height:1; }\n@media(max-width:1100px) { .hpf-nav-modes .closex { display:none; } }"
+    "replace": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; line-height:1; }\n@container hp-head (min-width:721px) and (max-width:1100px) { .hpf-nav-modes .closex { display:none; } }"
   }
 ],
   },
@@ -14374,8 +14388,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'static-wall-cut-cache-ignores-opening-geometry-1171',
-    guard: 'node demo/smoke_static_wall_openings.mjs',
-    because: '#1171: moving/resizing/deleting an opening must replace its old masonry cut on a retained configuration.',
+    guard: 'node --test test/static-wall-openings.test.mjs',
+    because: '#1171: the existing direct Static renderer test mutates a retained config identity and proves moved/deleted masonry paths. Public browser config events replace config identity and therefore cannot expose this WeakMap-key omission; native symbol/paint checks remain independent.',
     patches: [{
       file: 'src/space-render.ts',
       find: '    ? contentFingerprint({ structureFingerprint, extras, openings: roomOpenings })',
@@ -17037,11 +17051,11 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'warm-pan-during-runtime-keeps-refit-blocked',
-    guard: 'node demo/smoke_warm_mode_adoption.mjs',
-    because: '#762 AC6: a user camera change during lazy loading must release the old hold so subsequent resize works',
+    guard: 'node --test test/warm-mode-adoption.test.mjs',
+    because: '#762/#1234: a newer camera now deliberately keeps its hold until the editor paints; the old early-release anchor belongs only to refusal. The actual two-frame completion must release its own hold and not a newer owner. Native remount/pan/resize remains separately covered.',
     patches: [{ file: 'src/warm-mode-adoption.ts',
-      find: '    host._releaseWarmRefit(host._editorModeRequest);',
-      replace: '    // mutant: the abandoned camera keeps stage resize blocked',
+      find: '    () => host._releaseWarmRefit(request),',
+      replace: '    () => undefined,',
     }],
   },
   {

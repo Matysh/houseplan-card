@@ -205,6 +205,7 @@ def test_issue_398_pure_imports_leaves_sys_modules_as_it_found_it():
 
 def test_issue_1380_scoped_pure_module_keeps_lazy_imports_and_restores_identity():
     import sys
+
     from tests_backend.pure_imports import HOUSEPLAN_ROOT, pure_module
 
     def snapshot():

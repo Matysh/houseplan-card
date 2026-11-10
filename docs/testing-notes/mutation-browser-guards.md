@@ -70,8 +70,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 105 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 107 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 58 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 278 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **561 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
+| Custom-element and HA browser lifecycle | 275 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **558 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
 
 
 ## Historical measurements (2026-09-27)
@@ -721,7 +721,6 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 
 ### Custom-element and HA browser lifecycle
 
-- `static-wall-cut-cache-ignores-opening-geometry-1171`
 
 
 - `view-menu-forgets-generation-1089`
@@ -1117,10 +1116,11 @@ resolver negatives cover role/route classification, not its rendered wiring.
 
 - `zigbee-hover-incomplete-uses-global-partial`
 
-`wall-face-lineage-skips-post-reconcile-settlement` (#804) needs the production room
-dialog, post-reconciliation runtime wiring, history, asynchronous `config/set` and
-reload. Pure lineage-helper tests cannot prove that the editor actually settles
-residual-owned IDs before the strict wall-model barrier or rolls rejected writes back.
+`wall-face-lineage-skips-post-reconcile-settlement` (#804) moved in #1380 to the
+retained v10 residual-lineage suite. Current exact-graph face commands independently
+own the projected identity, so skipping the legacy hint call does not corrupt that
+native path. The direct suite proves occupied hints are cleared before the legacy
+duplicate-ID barrier; native room Save/history/reload checks remain independent.
 
 The five #874 witnesses below reuse one native room-closure smoke. Pure clipping
 tests cannot prove the runtime applies Split rather than nesting, restores each
@@ -1278,7 +1278,6 @@ owner, with no settled copy surviving the next presented frame.
 - `view-current-space-aria-removed`
 - `volumetric-kiosk-ignores-setting`
 - `wall-face-apply-skips-overlap-guard`
-- `wall-face-lineage-skips-post-reconcile-settlement`
 - `wall-face-composite-falls-back-to-island`
 - `wall-face-shared-cut-loses-own-carrier-cm`
 - `wall-face-reload-keeps-form-after-draft-loss`
@@ -1288,7 +1287,6 @@ owner, with no settled copy surviving the next presented frame.
 - `wallthick-hit-narrowed`
 - `warm-late-resume-beats-user-mode`
 - `warm-late-resume-crosses-space`
-- `warm-pan-during-runtime-keeps-refit-blocked`
 - `warm-pending-mode-leaves-revive-waiting`
 - `warm-resume-camera-depends-on-dialog`
 - `warm-resume-overwrites-view-return-camera`
@@ -1360,7 +1358,6 @@ remain historical evidence, not the current geometry contract.
 #1145 adds four browser-only witnesses: computed footer/body cascade, pointer-events and disabled hit cursor, native sticky touch hover versus desktop hover, and real44px/compact36px ShadowRoot targets. Two negative43px inputs exercise the size oracle without patching the implementation. Declarations only; no development mutant execution.
 
 #1171 registers `static-room-opening-symbols-omitted-1171`,
-`static-wall-cut-cache-ignores-opening-geometry-1171` and
 `static-frame-omits-opening-envelope-1171` and
 `static-opening-missing-contact-looks-active-1171` against the actual space-card smoke.
 These guard painted shared symbols, event-driven masonry freshness and measured
@@ -1369,5 +1366,11 @@ browser results. Missing-contact fill paint has an ordinary RED before its fix.
 The accepted-code BEFORE misses symbols/cuts/tunnels. Existing
 #764 identity anchors follow the replacement shared list. Definitions only:
 static readiness is not mutation execution or a caught verdict.
+
+#1380 moves `static-wall-cut-cache-ignores-opening-geometry-1171` to the
+existing `static-wall-openings` Node suite. It renders the real Static template
+twice with the same config object while changing the opening; the public
+browser config event replaces that object and therefore bypasses this cache
+boundary. Native symbols, leaf bounds and event-driven paint checks remain.
 
 #1150 adds one mounted-theme witness: the genuine HA Properties action must retain semantic danger ink/border when the host theme omits --error-color. Its ordinary theme-input case is RED before the fallback fix and checks the completed paint transition; static readiness is not execution or caught evidence. Existing moved CSS/DOM witnesses keep their historical IDs and target the shared owner.

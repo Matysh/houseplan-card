@@ -34,6 +34,9 @@ try{
         assert.equal(await tab.getAttribute('aria-label'),words[lang][`mode.${mode}`]);
         assert.equal(await tab.getAttribute('data-hp-tooltip'),words[lang][`mode.${mode}_tip`]);
         await clickHeaderAction(card,'mode-'+mode);await settle();
+        if(await card.locator('.hdr').getAttribute('data-panel-flow')!=='5')
+          assert.ok(await card.locator('.head [data-hp="editor-close"]').isVisible(),
+            `allocated ${width}px header must retain its visible editor close action`);
         await headerActionTarget(card,'mode-view');
         await waitForUiKitPaint(page);
         const state=await card.evaluate(c=>{
