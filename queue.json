@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8603,
+  "revision": 8604,
   "nextTicket": 350,
   "nextFence": 350,
   "tasks": {
@@ -4290,7 +4290,16 @@
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts",
         "test/glow-entry-batch.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261110T063204118-8a47e5c1",
+        "name": "Тесты для задачи #1378 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261110T063204118-8a47e5c1/report.json",
+        "materialSha": "1862202d4be66cdc8b9b8d4165a350af70f62876",
+        "status": "passed",
+        "finishedAt": "2026-11-10T06:42:30.334Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4486,9 +4495,9 @@
     "fence": 349,
     "materialSha": "1862202d4be66cdc8b9b8d4165a350af70f62876",
     "expectedBase": "9ccb758699da09595e59ca45df689e07b1140f50",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794292309022,
-    "expiresAt": 1794293208176,
+    "expiresAt": 1794296551684,
     "patchId": "6d866180e18ecc41bebd6898fccc21c136f8e20a"
   },
   "events": {
@@ -4534,6 +4543,10 @@
     },
     "finish:9522b416-b55a-45d4-948f-51092902d2ee": {
       "digest": "55ebcd956b120a9ba4a787a600022cd32778b40a2f502fd62c972aeb398dc567",
+      "issue": 1378
+    },
+    "release-return-finish:18fb2576-8e0a-4b98-b9d2-b6b30e9d7845:finish:3:s6-complete": {
+      "digest": "88219d77c231a716e3212c312bdb450520b70f8975177ba92c05d36d9ec94f4f",
       "issue": 1378
     },
     "release-return:18fb2576-8e0a-4b98-b9d2-b6b30e9d7845": {
