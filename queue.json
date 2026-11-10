@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8518,
+  "revision": 8519,
   "nextTicket": 349,
   "nextFence": 349,
   "tasks": {
@@ -4649,6 +4649,10 @@
       "digest": "14fa42f85188d13dae1ba2c2fd88990e6a78c2a534d324225282b1dc75aaf537",
       "issue": 1376
     },
+    "github:42743497137:1:completions:message:873b7e094e829117a315044b4851b18e70606af6fec897517cabfad227b91216": {
+      "digest": "9a489a0abc144995307a3ac87b365f7c6622f91bea8b23660b34f1734685780c",
+      "issue": 1376
+    },
     "finish:34fa40c7-bd1d-4329-bf38-721eecc329ca": {
       "digest": "bfe1e1f24133117d190b8981475985af54419675c3acb662d39bc6e63356c394",
       "issue": 1376,
@@ -4695,7 +4699,8 @@
           "entry": 1,
           "detail": "Поведение: test/golden-matrix.test.mjs: failed",
           "eventId": "finish:34fa40c7-bd1d-4329-bf38-721eecc329ca:finish:3:return:return:1376"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:148865d6-8712-4852-9edf-6c8ca70f5e8d": {
