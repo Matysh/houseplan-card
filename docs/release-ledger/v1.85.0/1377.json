@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1377,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Confirmed during the authorized 1.85.1 stable run; preserve the complete 500 ms Glow/LED fade when CSS starts after render.",
+  "summary": {
+    "ru": "Полное плавное затухание свечения и LED при позднем старте CSS-перехода.",
+    "en": "Complete Glow and LED fade-out when CSS transitions start after render."
+  }
+}

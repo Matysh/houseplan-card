@@ -20,7 +20,7 @@ This update improves the phone interface and everyday editing workflows.
 
 🎨 **Reliable device icon selection.** The local MDI picker provides search and icon previews without relying on HA's picker component. Clear immediately restores the automatic icon for the current binding; the field and preview agree after saving. Dropdown controls no longer receive the browser's extra tap highlight. [#1375](https://github.com/Matysh/houseplan-card/issues/1375), [#1376](https://github.com/Matysh/houseplan-card/issues/1376)
 
-🚪 **Glass doors can transmit light.** A new option for closed doors affects artificial light and exterior solar apertures. Interior doors do not extend sunlight between rooms. [#1348](https://github.com/Matysh/houseplan-card/issues/1348)
+🚪 **Glass doors can transmit light.** A new option for closed doors affects artificial light and exterior solar apertures. Interior doors do not extend sunlight between rooms. Glow and LED strips fade out smoothly without cutting the animation short. [#1377](https://github.com/Matysh/houseplan-card/issues/1377), [#1348](https://github.com/Matysh/houseplan-card/issues/1348)
 
 ⚙️ **Easier settings and mode changes.** Device settings sections remain reachable while scrolling, and clicking a switch label toggles the switch. Dropdowns and Help stay open after delayed scrolling. View/editor transitions are faster and more reliable. [#1354](https://github.com/Matysh/houseplan-card/issues/1354), [#1350](https://github.com/Matysh/houseplan-card/issues/1350), [#1356](https://github.com/Matysh/houseplan-card/issues/1356), [#1360](https://github.com/Matysh/houseplan-card/issues/1360), [#1344](https://github.com/Matysh/houseplan-card/issues/1344), [#1358](https://github.com/Matysh/houseplan-card/issues/1358)
 

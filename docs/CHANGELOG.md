@@ -4,6 +4,8 @@
 
 ## v1.85.1 — 2026-11-10
 
+- Anchor ordinary Glow and LED fade-out cleanup after the leaving state has painted, so a late CSS start cannot truncate the 500 ms fade. Cancel pending frames and timer together for off/on, space changes and disposal (#1377).
+
 - Align the remaining device-form/preview/icon regression witnesses with the local picker and pin the accepted keyboard-focus state for batch goldens; preserve accepted PNGs and comparison thresholds.
 
 - Bring the reviewed 1.85.1 beta fixes to stable: retained View/editor transitions, closed-room recognition with dangling walls, glass-door light transmission, UI Kit label activation and consistent editor toolbars (#1344, #1346, #1348, #1349, #1350, #1351, #1352).

@@ -64,11 +64,15 @@ test('off before the entry frame preserves its peers and fade-out duration', () 
   const first = r.enter('s|a'); r.enter('s|b');
   const off = r.off('s|a');
   assert.deepEqual(off, { domId: first.domId, entering: false, leaving: true });
-  assert.equal(r.frames.size, 1, 'cancelling one member must not cancel another');
-  const timer = r.state.fadeTimers.get('s|a');
-  assert.equal(r.timers.get(timer).delay, GLOW_FADE_MS + 34);
+  assert.equal(r.state.enterBatches.size, 1, 'cancelling one member must not cancel another');
+  const fade = r.state.fadeTimers.get('s|a');
+  assert.equal(fade.timer, null, 'render-time cleanup must not race the first CSS paint');
   r.frame();
   assert.equal(r.updates, 1);
+  assert.equal(fade.timer, null, 'the leaving state needs its painted frame first');
+  r.frame();
+  const timer = fade.timer;
+  assert.equal(r.timers.get(timer).delay, GLOW_FADE_MS + 34);
   assert.equal(r.state.renderedSources.has('s|a'), true, 'off node survives through fade');
   r.timers.get(timer).cb();
   assert.equal(r.state.renderedSources.has('s|a'), false);
@@ -76,18 +80,24 @@ test('off before the entry frame preserves its peers and fade-out duration', () 
   r.dispose();
 });
 
-test('rapid off/on keeps DOM identity and rejects its stale fade callback', () => {
-  const r = runtime();
-  const first = r.enter('s|a');
-  r.off('s|a');
-  const stale = r.timers.get(r.state.fadeTimers.get('s|a')).cb;
-  assert.equal(r.frames.size, 0, 'last departing entry cancels the empty batch');
-  assert.deepEqual(r.enter('s|a'), { domId: first.domId, entering: false, leaving: false });
-  stale();
-  assert.equal(r.state.renderedSources.get('s|a'), first.domId);
-  assert.equal(r.updates, 0);
-  r.dispose();
-});
+for (const paintedFrames of [0, 1, 2]) {
+  test(`rapid off/on cancels fade at stage ${paintedFrames} and rejects its stale callback`, () => {
+    const r = runtime();
+    const first = r.enter('s|a'); r.frame();
+    r.off('s|a');
+    for (let i = 0; i < paintedFrames; i++) r.frame();
+    const fade = r.state.fadeTimers.get('s|a');
+    const stale = fade.frame == null ? r.timers.get(fade.timer).cb : r.frames.get(fade.frame);
+    assert.deepEqual(r.enter('s|a'), { domId: first.domId, entering: false, leaving: false });
+    stale();
+    assert.equal(r.state.renderedSources.get('s|a'), first.domId);
+    assert.equal(r.state.fadeTimers.size, 0);
+    assert.equal(r.frames.size, 0, 'cancelled first paint must not schedule a second frame');
+    assert.equal(r.updates, 1);
+    r.dispose();
+    assert.equal(r.timers.size, 0);
+  });
+}
 
 test('prune/space switch remove only their sources; cancelled old frame cannot consume the new batch', () => {
   const r = runtime();
@@ -111,8 +121,8 @@ test('disconnect/dispose prevent queued entry and fade callbacks from updating t
   const r = runtime();
   r.enter('s|a');
   const staleFrame = [...r.frames.values()][0];
-  r.off('s|a');
-  const staleFade = r.timers.get(r.state.fadeTimers.get('s|a')).cb;
+  r.off('s|a'); r.frame(); r.frame();
+  const staleFade = r.timers.get(r.state.fadeTimers.get('s|a').timer).cb;
   r.enter('s|b'); r.disconnect();
   r.frame();
   assert.equal(r.updates, 0);
