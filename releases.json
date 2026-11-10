@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 708,
+  "revision": 709,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -74480,6 +74480,14 @@
           "branch": "issue/1378-release-return-fe1f3b3776eb",
           "worktree": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/process-next/return-worktrees/52610e210052/artifacts/process-next/return-worktrees/fe1f3b3776eb"
         }
+      },
+      "announcement": {
+        "tag": "v1.85.1",
+        "digest": "704687fdbf5b07d806c5153871d8f1cdb61e3644cbac592a57d9cbe5d59857c3",
+        "contentDigest": "6154758e499383c2b28dbc692bfde2c9a33754ee3363e6049afe1d62b02c3a98",
+        "attempt": 1,
+        "status": "sending",
+        "startedAt": "2026-11-10T06:45:55.442Z"
       }
     }
   },
@@ -79170,7 +79178,8 @@
     "github:42770594504:1:complete:completion:a75d5f5f-3987-4550-aff0-624ddb16a97b": "05c8cf33c63185f9ba9a0332d5c0b4aef187151db914829d2a9317dad20583db",
     "github:42770594504:1:complete:completion:c66136ad-db03-4554-ba31-da478b59cd54": "7e27a846e3f0795e3aa23cf4940edf799c0cefc77956b303e63ee38dede8f3b0",
     "github:42770594504:1:complete:completion:45fddc06-40ab-4ed1-87d6-473416ce329f": "3857961d8d5b51ab5552d679428072f28f1d7bdaf10a264beb686e63d4b9c610",
-    "github:42770594504:1:complete:completion:9aabc3fc-519b-4c72-9d35-e88cf452cfc9": "328ffd3601edeccb6783851c87bb8c341ca060c209d7075fbd26a8d28aaf94c9"
+    "github:42770594504:1:complete:completion:9aabc3fc-519b-4c72-9d35-e88cf452cfc9": "328ffd3601edeccb6783851c87bb8c341ca060c209d7075fbd26a8d28aaf94c9",
+    "github:42770594504:1:complete:completion:90f61ce6-100d-4f6f-bbc0-11a3101f0af7": "ff8110fadf259ac63437b58e49cc89c1e57c807935caad27c1938eaac03bdcd6"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
