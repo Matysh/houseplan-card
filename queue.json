@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8653,
+  "revision": 8654,
   "nextTicket": 351,
   "nextFence": 351,
   "tasks": {
@@ -4275,7 +4275,7 @@
       "ownerDecision": null,
       "ticket": 350,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794302509064,
       "reviewEntry": 1,
       "patchId": "5799ca457b14b79be42903fbba9d175ece6a103d",
@@ -4285,7 +4285,16 @@
         "docs/release-ledger/v1.85.0/1379.json",
         "tests_backend/test_backend_quality.py",
         "tests_backend/test_plan_graph_source.py"
-      ]
+      ],
+      "s6": {
+        "id": "20261110T092204930-177daded",
+        "name": "Тесты для задачи #1379 (перед ревью)",
+        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261110T092204930-177daded/report.json",
+        "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
+        "status": "passed",
+        "finishedAt": "2026-11-10T09:22:34.407Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4481,9 +4490,9 @@
     "fence": 350,
     "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
     "expectedBase": "1862202d4be66cdc8b9b8d4165a350af70f62876",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794302513810,
-    "expiresAt": 1794302819341,
+    "expiresAt": 1794306155867,
     "patchId": "5799ca457b14b79be42903fbba9d175ece6a103d"
   },
   "events": {
@@ -4516,6 +4525,34 @@
         "layer": "product",
         "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
         "phase": "sync"
+      }
+    },
+    "finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0:finish:3:s6-complete": {
+      "digest": "e4fefb723f8575f029bdd9310960f848fcea3d4d134bd8bc526a68a2641d6f61",
+      "issue": 1379,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1379,
+        "at": 1794302555867,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
+        "phase": "review",
+        "evidence": {
+          "id": "20261110T092204930-177daded",
+          "name": "Тесты для задачи #1379 (перед ревью)",
+          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261110T092204930-177daded/report.json",
+          "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
+          "status": "passed",
+          "finishedAt": "2026-11-10T09:22:34.407Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Материал: `1862202d4be66cdc8b9b8d4165a350af70f62876` → `a05e6437f7a062f67c67200842698aef8987439f`, ветка `codex/1379-backend-quality-guard`, трек show.\n\nДо исправления исходный guard локально и в CI давал 2 failed / 6 passed: проверка `validate.yml` после его штатного удаления и нераспознанная HA-зависимость через `test_ha_wall_node_delete.setup`. Проверка исполнения старого mypy-гейта удалена по действующему cutover: её mutant `typing-gate-stops-running` уже в архивном списке. Новый обязательный mypy-вызов не добавлялся; прочие проверки backend-контрактов сохранены.\n\nСканер `_needs_home_assistant` теперь идёт по статическим импортам соседних `.py`-helpers и квалифицированным `tests_backend.*`; `seen` ограничивает циклы в рамках одного обхода. Новые fixture-случаи проверяют bare/package/relative цепочки, чужой package, чистый цикл, добавление HA-ребра и lazy/TYPE_CHECKING. Это статический сканер, не общий Python import resolver; динамические importlib-вызовы не добавлялись в его контракт.\n\nУсиленная проверка также обнаружила ранее скрытую зависимость `test_plan_graph_source.py`: тест импортирует HA Store на уровне модуля. Добавлено явное `pytest.importorskip(\"homeassistant\")` перед импортом интеграции, как предусматривает существующее правило #436. С установленным HA все три случая исполняются и проходят; runtime интеграции и сами тестовые сценарии не менялись. Изменение касается инфраструктуры, но путь существующего product-теста механически даёт смешанный product S6. Поэтому для учёта записана категория `infra`, без нового пользовательского milestone или выбора новой версии.\n\nАдресные результаты на продуктовом коде коммита `2043988b75` (следующий коммит меняет только инфраструктурную ledger-классификацию): чистый guard **9 passed**; `test_plan_graph_source.py` **3 passed**; subprocess-probe с искусственно недоступным HA **9 passed, 1 skipped**. Этот skip — честная недоступная зависимость в probe, не пропуск в подготовленной HA-среде. Пять зарегистрированных свидетелей реально выполнены и пойманы: `pure-imports-stops-cleaning`, `error-code-dropped-from-contract`, `error-scanner-loses-a-class-source`, `error-code-via-variable-dropped`, `pure-backend-test-pulls-home-assistant`. В каждом случае чистый guard зелёный, мутант красный. Полный шард 358 не повторялся.\n\nКанонический план S6 сохранён: новые случаи унаследовали инфраструктурную addressed-классификацию существующего файла и выбираются по изменению самого файла/статическому чтению; оба изменённых backend-файла и backend-test-hygiene явно присутствуют. Окончательный S6 выполняет общая очередь; адресные результаты выше не подменяют её квитанцию. Исходный CI-журнал и артефакты сохранены в `output/1379/`. Решение по E2E: [houseplan-e2e#38](https://github.com/Matysh/houseplan-e2e/issues/38), нового HA journey не требуется. Проверить независимо корректность разрешения импортов и сохранность смысла guard.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
