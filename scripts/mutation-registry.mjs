@@ -78,6 +78,15 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 const MUTANT_DEFINITIONS = [
 
   {
+    id: 'wall-node-rotated-host-ratio-parity-1380',
+    guard: 'npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs && python tests_backend/wall_node_parity.py --build-dir=test-build/junction-parity',
+    because: '#1380: keep the strict TS/Python full-candidate and Undo/Redo matrix, including delete parity, on the nightly route; independently rounded lengths must not change a rotated opening host tq.',
+    patches: [{ file: 'src/wall-node-move.ts',
+      find: '          const ratio = parseDecimal(Math.sqrt(toNumber(exactDiv(exactSquaredDistance(oldA, oldB), exactSquaredDistance(a, b)))));',
+      replace: '          const ratio = parseDecimal(Math.sqrt(toNumber(exactSquaredDistance(oldA, oldB))) / Math.sqrt(toNumber(exactSquaredDistance(a, b))));' }],
+  },
+
+  {
     id: 'mutation-base-registry-default-buffer-1380',
     guard: 'node --test --test-name-pattern="#1380 historical registry" test/mutation-gate.test.mjs',
     because: '#1380: a >1MiB historical registry must be read whole; stdout exhaustion must never import the current legacy re-export and erase the definition delta.',
