@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 8650,
-  "nextTicket": 350,
+  "revision": 8651,
+  "nextTicket": 351,
   "nextFence": 350,
   "tasks": {
     "1193": {
@@ -4264,6 +4264,20 @@
         "status": "published",
         "sourceSha": "1862202d4be66cdc8b9b8d4165a350af70f62876"
       }
+    },
+    "1379": {
+      "issue": 1379,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1379-backend-quality-guard",
+      "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 350,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794302509064,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4451,9 +4465,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1379
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0": {
+      "digest": "12a2d6ae41840a382d01b8300f5eab449464d5138257b526c76a767a4e2e1d39",
+      "issue": 1379,
+      "message": {
+        "kind": "queued",
+        "issue": 1379,
+        "at": 1794302509064,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a05e6437f7a062f67c67200842698aef8987439f"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "1862202d4be66cdc8b9b8d4165a350af70f62876",
     "status": "delivered",
