@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8855,
+  "revision": 8856,
   "nextTicket": 355,
   "nextFence": 355,
   "tasks": {
@@ -16,7 +16,45 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794347470122,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "f38a61c60aef82591306eba8eaea827dfdd1f927",
+      "changedFiles": [
+        "demo/smoke_grid_snap.mjs",
+        "demo/smoke_near_axis_optimize.mjs",
+        "demo/smoke_optimize_cleanup.mjs",
+        "demo/smoke_optimize_coincident_partition.mjs",
+        "demo/smoke_optimize_geometry_preflight.mjs",
+        "demo/smoke_optimize_micro_interval.mjs",
+        "demo/smoke_optimize_outcomes.mjs",
+        "demo/smoke_resize_outer_reconciliation.mjs",
+        "demo/smoke_room_contact_storage.mjs",
+        "demo/srv/assets/icons.js",
+        "demo/srv/demo.html",
+        "demo/srv/fixture-state.js",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.85.0/1170.json",
+        "src/houseplan-editor-runtime.ts",
+        "src/i18n/settings/de.json",
+        "src/i18n/settings/en.json",
+        "src/i18n/settings/fr.json",
+        "src/i18n/settings/ru.json",
+        "src/large-write-transport.ts",
+        "src/optimize-feedback.ts",
+        "src/optimize-plans-dialog.ts",
+        "src/optimize-plans-loader.ts",
+        "src/optimize-reload.ts",
+        "src/optimize-status.ts",
+        "src/plan-optimize-write.ts",
+        "src/styles/editor-dialogs.styles.ts",
+        "test/demo-fixture.test.mjs",
+        "test/geometry-cleanup-842.test.mjs",
+        "test/optimize-cleanup-892.test.mjs",
+        "test/optimize-feedback-authority.test.mjs",
+        "test/optimize-plans-dialog.test.mjs",
+        "test/write-authority-snapshot.test.mjs"
+      ]
     },
     "1193": {
       "issue": 1193,
@@ -4459,10 +4497,11 @@
     "token": "354:finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad:finish:1:admit",
     "fence": 354,
     "materialSha": "18d3a48073afcf8e092aea732b64087e3bbed867",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "f1a94ef30fc1b8e24574de4d4cc9fcb65aa12caa",
+    "phase": "testing",
     "admittedAt": 1794347474136,
-    "expiresAt": 1794347774136
+    "expiresAt": 1794347780852,
+    "patchId": "f38a61c60aef82591306eba8eaea827dfdd1f927"
   },
   "events": {
     "github:42899605434:1:label:spec-request": {
@@ -4503,6 +4542,10 @@
     },
     "github:42901870528:1:completions:report:19b529d703fa73ca19c861c22e66320eeb3e4f1f89d640282775e00718b51be0": {
       "digest": "59d56e7a9c487be6fed59307c472a54cb0775b2409fa211e7f10189ad965f0e9",
+      "issue": 1170
+    },
+    "finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad:finish:2:synchronized": {
+      "digest": "31e5151b2ceb9e5cf4393d11eef1154c1f7eaf7bdbc1586b62d9b8bf048fa038",
       "issue": 1170
     },
     "github:42901000173:1:label:spec-request:spec-resubmitted:1170": {
