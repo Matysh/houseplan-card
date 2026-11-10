@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 703,
+  "revision": 704,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -74132,38 +74132,44 @@
           "from": "2892d28f49b424dc0668ad1203568532c68dff85",
           "to": "9ccb758699da09595e59ca45df689e07b1140f50",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9"
         },
         {
           "from": "9ccb758699da09595e59ca45df689e07b1140f50",
           "to": "351dd258222f5dccee3994674e7693b4b95e855b",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9"
         },
         {
           "from": "351dd258222f5dccee3994674e7693b4b95e855b",
           "to": "4e2bb7b1ab1166822d3708a1a51d0e3c66a95f62",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9"
         },
         {
           "from": "4e2bb7b1ab1166822d3708a1a51d0e3c66a95f62",
           "to": "7aa8b1bc9f800af045733dff6a846fd58781ff08",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9"
         },
         {
           "from": "7aa8b1bc9f800af045733dff6a846fd58781ff08",
           "to": "9310d8b88b35a975fe9ce7ca398cc7add50ab2dd",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9"
         },
         {
           "from": "9310d8b88b35a975fe9ce7ca398cc7add50ab2dd",
           "to": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
           "syncMode": "merge",
-          "status": "pending",
-          "tag": "v1.85.1"
+          "status": "ported",
+          "tag": "v1.85.1",
+          "devSha": "1862202d4be66cdc8b9b8d4165a350af70f62876"
         }
       ],
       "diagnostics": [],
@@ -74467,7 +74473,8 @@
           "status": "not-required"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "1862202d4be66cdc8b9b8d4165a350af70f62876",
           "issue": 1378,
           "branch": "issue/1378-release-return-fe1f3b3776eb",
           "worktree": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/process-next/return-worktrees/52610e210052/artifacts/process-next/return-worktrees/fe1f3b3776eb"
@@ -79157,7 +79164,8 @@
     "stable1851-20261110-publish:completion:3d603acf-09f5-4fff-8932-68a8988c8ef8": "6b91e53c2d2ae54728107bf3d7884fbb203844947d3b86901e95cb962c704622",
     "stable1851-20261110-publish:completion:86722590-c38d-4b5b-9c19-3b5656c58a2b": "fb90f6c3788fef9a290295ac6cb524cce7ed9454d3ae623c8d7361eb03a1dd15",
     "stable1851-20261110-publish:completion:5b476dd5-912e-45aa-a064-5051950d9faf": "a807d8fedcc1860880a2e95213d3b02076f6f49f66c1dec508fc7e1dd9cc644b",
-    "stable1851-20261110-publish:completion:9ead93a2-b737-4dbf-9482-5ec7906f12ec": "0e5686674f70b14b01694486bce6edb5e263bffc57a84f212efa0de368d666c1"
+    "stable1851-20261110-publish:completion:9ead93a2-b737-4dbf-9482-5ec7906f12ec": "0e5686674f70b14b01694486bce6edb5e263bffc57a84f212efa0de368d666c1",
+    "stable1851-20261110-publish:completion:c692a4ce-21fa-409c-bbb8-3f0da624b77b": "34238d722f90a2064bf8228754aa4547b5cc9b651539fe3280931cff6f473fb3"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
