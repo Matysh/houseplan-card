@@ -126,33 +126,6 @@ def test_issue_42_mypy_strict_allowlist_only_grows():
         "the list only ever grows (#42)")
 
 
-def test_issue_42_mypy_strict_is_actually_executed_by_ci():
-    """The typing gate must RUN, not merely be configured (#42 r6 Medium).
-
-    The allowlist test above compares text; without a workflow step that
-    invokes mypy, a regression in any of the six modules reaches dev
-    unnoticed — measurable quality that nothing measures. Three facts are
-    pinned: mypy is pinned in the dependency file the backend job installs
-    from, a step actually invokes it, and that step derives the module list
-    from pyproject.toml instead of duplicating it (a drifted duplicate is a
-    green step checking the wrong thing).
-    """
-    requirements = (REPO / "tests_backend" / "requirements.txt").read_text(encoding="utf-8")
-    assert re.search(r"^mypy==\d+\.\d+", requirements, re.M), (
-        "mypy is not pinned in tests_backend/requirements.txt — the typing gate "
-        "would not be reproducible from the SHA (#42)")
-
-    workflow = (REPO / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
-    steps = [block for block in workflow.split("      - name: ") if "mypy" in block]
-    assert steps, "no validate.yml step runs mypy — AC4 has no execution in CI (#42)"
-    step = steps[0]
-    assert re.search(r"python -m mypy\s", step), (
-        "the mypy step must invoke the checker itself, not only mention it")
-    assert "tool" in step and "mypy" in step and "pyproject.toml" in step, (
-        "the step must read the strict allowlist from pyproject.toml, not repeat it")
-    assert "exit 1" in step, "an empty allowlist must fail the step, not pass it silently"
-
-
 def test_issue_42_every_noqa_carries_a_reason():
     for path in sorted(BACKEND.glob("*.py")):
         for index, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -359,8 +332,15 @@ def _ha_dependent_backend_modules(root: Path | None = None) -> set[str]:
     return needs
 
 
-def _needs_home_assistant(path: Path, ha_modules: set[str]) -> bool:
-    """Оборвётся ли импорт этого файла без Home Assistant."""
+def _needs_home_assistant(
+    path: Path, ha_modules: set[str], *, seen: set[Path] | None = None,
+) -> bool:
+    """Оборвётся ли импорт файла, включая соседние test/helper-модули, без HA."""
+    path = path.resolve()
+    seen = set() if seen is None else seen
+    if path in seen:
+        return False
+    seen.add(path)
     imports = _toplevel_imports(path)
     if {name.split(".")[0] for name in imports} & {
         "homeassistant", "pytest_homeassistant_custom_component",
@@ -371,7 +351,16 @@ def _needs_home_assistant(path: Path, ha_modules: set[str]) -> bool:
         parts = name.split(".")
         if parts[:2] == ["custom_components", "houseplan"] and len(parts) > 2:
             touched.add(parts[2])
-    return bool(touched & ha_modules)
+    if touched & ha_modules:
+        return True
+    # HA может прийти через общий setup соседнего теста, как в #1258.
+    # Имя test_ha_* само по себе зависимостью не считается.
+    for name in sorted(imports):
+        local = name.removeprefix("tests_backend.").lstrip(".").split(".")[0]
+        helper = path.parent / f"{local}.py"
+        if helper.is_file() and _needs_home_assistant(helper, ha_modules, seen=seen):
+            return True
+    return False
 
 
 def test_issue_436_ha_dependent_test_modules_declare_it():
@@ -432,3 +421,46 @@ def test_issue_436_scanner_follows_transitive_ha_dependencies(tmp_path):
         "def f():\n    from .direct import HomeAssistant\n    return HomeAssistant\n",
     )
     assert _ha_dependent_backend_modules(tmp_path) == {"direct", "middle", "far"}
+
+
+def test_issue_1379_scanner_follows_local_test_helpers(tmp_path):
+    """Bare, package and relative helper imports preserve collection-time HA needs."""
+    (tmp_path / "direct.py").write_text("from homeassistant.core import HomeAssistant\n")
+    (tmp_path / "middle.py").write_text("from direct import HomeAssistant\n")
+    for name, source in {
+        "bare": "from middle import HomeAssistant\n",
+        "qualified": "from tests_backend.middle import HomeAssistant\n",
+        "relative": "from .middle import HomeAssistant\n",
+    }.items():
+        entry = tmp_path / f"test_{name}.py"
+        entry.write_text(source)
+        assert _needs_home_assistant(entry, set()), name
+
+    unrelated = tmp_path / "test_unrelated.py"
+    unrelated.write_text("from unrelated_package.direct import HomeAssistant\n")
+    assert not _needs_home_assistant(unrelated, set()), "do not resolve another package as a local helper"
+
+
+def test_issue_1379_scanner_handles_helper_cycles_and_lazy_imports(tmp_path):
+    """Cycles terminate; a later HA edge is found without treating lazy imports as eager."""
+    entry = tmp_path / "test_cycle.py"
+    entry.write_text("from cycle_a import setup\n")
+    (tmp_path / "cycle_a.py").write_text("from cycle_b import setup\n")
+    cycle_b = tmp_path / "cycle_b.py"
+    cycle_b.write_text("from cycle_a import setup\n")
+    assert not _needs_home_assistant(entry, {"store"})
+
+    cycle_b.write_text(
+        "from cycle_a import setup\n"
+        "from custom_components.houseplan.store import get_data\n"
+    )
+    assert _needs_home_assistant(entry, {"store"})
+
+    (tmp_path / "lazy.py").write_text(
+        "from typing import TYPE_CHECKING\n"
+        "if TYPE_CHECKING:\n    from homeassistant.core import HomeAssistant\n"
+        "def setup():\n    from homeassistant.core import HomeAssistant\n"
+    )
+    lazy_entry = tmp_path / "test_lazy.py"
+    lazy_entry.write_text("from lazy import setup\n")
+    assert not _needs_home_assistant(lazy_entry, set())

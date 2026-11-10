@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Repair the backend-quality mutation clean guard: remove the retired Validate assertion, follow local test-helper imports with cycle protection, and declare the graph-source tests’ HA dependency (#1379).
+
 ## v1.85.1 — 2026-11-10
 
 - Anchor ordinary Glow and LED fade-out cleanup after the leaving state has painted, so a late CSS start cannot truncate the 500 ms fade. Cancel pending frames and timer together for off/on, space changes and disposal (#1377).

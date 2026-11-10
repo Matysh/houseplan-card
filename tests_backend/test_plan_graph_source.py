@@ -4,6 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
+pytest.importorskip("homeassistant")
+
 from custom_components.houseplan import plan_graph_source as module
 from custom_components.houseplan.plan_graph_exact import GraphError
 
