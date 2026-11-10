@@ -274,17 +274,33 @@ export function selectForDiff(mutants, files, base, options = {}) {
   return { selected: mutants.filter((m) => ids.has(m.id)), byFiles, byRegistry, removed };
 }
 
-export async function baseRegistry(baseRef) {
+export async function baseRegistry(baseRef, { root = repoRoot, runGit = spawnSync } = {}) {
+  const options = { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 };
+  const git = (args) => {
+    const result = runGit('git', ['-C', root, ...args], options);
+    if (result.error || result.signal || result.status == null) {
+      throw new Error(`cannot read base registry ${baseRef}: ${result.error?.code || result.signal || 'no exit status'}`);
+    }
+    return result;
+  };
   let registryFile = MUTATION_REGISTRY_FILES[0];
-  let shown = spawnSync('git', ['-C', repoRoot, 'show', `${baseRef}:${registryFile}`], { encoding: 'utf8' });
+  let shown = git(['show', `${baseRef}:${registryFile}`]);
   if (shown.status !== 0) {
+    // Only an absent pre-split file permits legacy fallback. A failed read of
+    // an existing modern registry must not import HEAD through the legacy
+    // re-export and silently report an empty definition delta (#1380).
+    const listed = git(['ls-tree', '--name-only', baseRef, '--', registryFile]);
+    if (listed.status !== 0) return null;
+    if (listed.stdout.trim()) {
+      throw new Error(`cannot read base registry ${baseRef}:${registryFile}`);
+    }
     // Compatibility across the one-time #558 split: a base before this
     // refactor still stores declarations inside mutation-gate.mjs.
     registryFile = LEGACY_MUTATION_REGISTRY_FILE;
-    shown = spawnSync('git', ['-C', repoRoot, 'show', `${baseRef}:${registryFile}`], { encoding: 'utf8' });
+    shown = git(['show', `${baseRef}:${registryFile}`]);
   }
   if (shown.status !== 0) return null;
-  const temp = join(repoRoot, 'scripts', `.mutation-gate.base-${process.pid}.mjs`);
+  const temp = join(root, 'scripts', `.mutation-gate.base-${process.pid}.mjs`);
   writeFileSync(temp, shown.stdout);
   try {
     const mod = await import(`${pathToFileURL(temp).href}?t=${Date.now()}`);

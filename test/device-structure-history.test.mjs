@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { CommandStack } from '../test-build/command-stack.js';
 import { ConfigWriteContext } from '../test-build/config-write-context.js';
@@ -9,6 +9,13 @@ import { rememberDialogBaseline, forgetDialogBaseline } from '../test-build/edit
 
 const deferred = () => { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return { promise, resolve, reject }; };
 const turn = () => new Promise(resolve => setImmediate(resolve));
+const histories = new Set();
+afterEach(() => {
+  // Mutation failures must report the assertion, not leave a lease heartbeat
+  // alive until the outer runner times out. Explicit in-test retire stays.
+  for (const history of histories) history.retire();
+  histories.clear();
+});
 function fixture() {
   const calls=[],toasts=[],adopted=[];
   const h={ isConnected:true,_mode:'devices',_space:'f1',_canEdit:true,_kiosk:false,_haDeviceHistoryApi:1,
@@ -26,6 +33,7 @@ function fixture() {
   }};
   h._configWriteContext.observe(h.hass);
   const history=new DeviceStructureHistory(h);
+  histories.add(history);
   h._devicePositionHistory=new CommandStack(50,()=>history.prune());
   const fields=history.fields();
   const reply={config:{markers:[{id:'new'}],spaces:[{id:'f1'}]},layout:{new:{x:.2,y:.3}},config_rev:2,layout_rev:3,history_token:fields.operation_id};

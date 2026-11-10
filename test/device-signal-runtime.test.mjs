@@ -92,11 +92,19 @@ test('#1053 capability acquisition requests only metadata and ignores any config
   for (const code of ['unknown_command', 'unauthorized', 'invalid_format']) {
     const old = fixture(); let requests = 0;
     old.hass.callWS = async () => { requests++; throw { code }; };
-    const off = subscribeDirectSignal(old.hass, () => {}); await settle();
-    const second = subscribeDirectSignal(old.hass, () => {}); await settle();
-    await new Promise(resolve => setTimeout(resolve, 1100));
-    assert.equal(requests, 1, `${code} is terminal for this connected session`);
-    assert.equal(old.counts().subscriptions, 0); off(); second();
+    const off = subscribeDirectSignal(old.hass, () => {});
+    let second = () => {};
+    try {
+      await settle();
+      second = subscribeDirectSignal(old.hass, () => {}); await settle();
+      await new Promise(resolve => setTimeout(resolve, 1100));
+      assert.equal(requests, 1, `${code} is terminal for this connected session`);
+      assert.equal(old.counts().subscriptions, 0);
+    } finally {
+      // A failed retry-loop assertion must still retire the feed/timer. Leaving
+      // it connected hides the actual assertion behind the runner's timeout.
+      off(); second();
+    }
   }
 });
 

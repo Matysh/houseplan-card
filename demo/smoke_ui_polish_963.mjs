@@ -151,7 +151,16 @@ try {
   await page.waitForTimeout(220);out.disabled_delete_reason=await tip.isVisible()&&(await tip.innerText()).includes('комнаты');
   out.disabled_delete_bounds=await tip.evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=8&&r.right<=innerWidth-8&&r.width<=320;});
   const deleteBox=await deleteButton.boundingBox();await page.mouse.click(deleteBox.x+deleteBox.width/2,deleteBox.y+deleteBox.height/2);await settle();out.disabled_delete_preserves_wall=await page.evaluate(()=>window.__card._spaceModel().wall_segments.some(w=>w.id==='contour'));
-  await zoom.hover();await page.waitForTimeout(80);await mode('decor');await page.waitForTimeout(360);out.editor_change_retires_tooltip=!(await tip.isVisible());
+  await zoom.hover();await page.waitForTimeout(350);out.context_change_has_visible_tooltip=await tip.isVisible();
+  // A server epoch changes tooltip ownership without a pointer/focus dismissal
+  // or replacing the header anchor. An armed-but-unpainted bubble alone can
+  // independently fail its lazy-load validity check and miss hostUpdated.
+  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{
+    cfg.settings={...cfg.settings,tooltip_context_probe_1380:true};return cfg;
+  }));
+  await settle();await page.waitForTimeout(160);
+  out.server_epoch_retires_visible_tooltip=!(await tip.isVisible());
+  await page.mouse.move(0,0);await zoom.hover();await page.waitForTimeout(80);await mode('decor');await page.waitForTimeout(360);out.editor_change_retires_tooltip=!(await tip.isVisible());
   await mode('devices');out.devices_history_at_end=await card.locator('.devbar .editbar-end button').count()===3;
   const originalLanguage=await page.evaluate(()=>window.__card._config.language);
   const deviceHints={

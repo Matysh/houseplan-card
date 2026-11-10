@@ -36,6 +36,21 @@ try{
  out.touch_keeps_action=await action.getAttribute('aria-pressed')!==before.pressed;
  out.touch_does_not_arm_tooltip=!(await card.locator('.hp-chrome-tooltip').isVisible());
  out.touch_preserves_data=await page.evaluate(before=>JSON.stringify({config:window.__card._serverCfg,layout:window.__card._layout})===before.data,before);
+ // A tool action also retires the tooltip context. Isolate the real native
+ // touch-focus route on a non-command fixture button in the same mounted bar,
+ // so that unrelated navigation cannot hide an incorrectly armed tooltip.
+ await action.evaluate(el=>{
+  const button=document.createElement('button');button.className='btn';
+  button.dataset.hp='tooltip-touch-witness';button.dataset.hpTooltip='Touch focus must not show keyboard help';
+  button.textContent='Touch';el.parentElement.append(button);
+ });
+ const focusOnly=card.locator('[data-hp=tooltip-touch-witness]');
+ const target=await focusOnly.boundingBox();
+ await page.touchscreen.tap(target.x+target.width/2,target.y+target.height/2);
+ await page.waitForTimeout(400);
+ out.native_touch_focus_is_not_keyboard=await focusOnly.evaluate(el=>el===el.getRootNode().activeElement&&!el.matches(':focus-visible'));
+ out.touch_focus_without_navigation_does_not_arm_tooltip=!(await card.locator('.hp-chrome-tooltip').isVisible());
+ await focusOnly.evaluate(el=>el.remove());
  // #1184 replaced the fixed 56px header with intrinsic responsive rows. Judge
  // real visible target containment; the accepted intrinsic header may wrap.
  out.phone_editor_header_fits=await phoneHeaderFits();

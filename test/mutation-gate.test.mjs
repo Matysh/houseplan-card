@@ -1145,6 +1145,46 @@ test('#492 §6.4: реестр базы читается из git без поб�
   assert.deepEqual(leftovers, [], 'временный модуль удалён');
 });
 
+test('#1380 historical registry larger than the default Git stdout buffer stays historical', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'hp-registry-large-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, 'scripts'));
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^GIT_/i.test(name))),
+    GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null' };
+  const git = (...args) => {
+    const result = spawnSync('git', ['-C', root, ...args], { encoding: 'utf8', env });
+    assert.equal(result.status, 0, result.stderr);
+  };
+  git('init', '-q');
+  git('config', 'user.name', 'Mutation fixture');
+  git('config', 'user.email', 'mutation@example.invalid');
+  git('config', 'core.hooksPath', join(root, 'no-hooks'));
+  const registry = join(root, 'scripts/mutation-registry.mjs');
+  const old = [{ id: 'historical-definition', patches: [], guard: 'old', because: 'old' }];
+  writeFileSync(registry, `export const MUTANTS=${JSON.stringify(old)};\n/*${'x'.repeat(1100000)}*/\n`);
+  // The post-split legacy entry imports the current registry. Falling back to
+  // it after a truncated git-show would silently compare HEAD with itself.
+  writeFileSync(join(root, 'scripts/mutation-gate.mjs'), "export { MUTANTS } from './mutation-registry.mjs';\n");
+  git('add', 'scripts'); git('commit', '-qm', 'historical oversized registry');
+  writeFileSync(registry, 'export const MUTANTS=[{id:"current-working-tree"}];\n');
+  assert.deepEqual(await baseRegistry('HEAD', { root }), old);
+  assert.equal(readFileSync(registry, 'utf8'), 'export const MUTANTS=[{id:"current-working-tree"}];\n');
+  assert.deepEqual(readdirSync(join(root, 'scripts')).filter(name => name.startsWith('.mutation-gate.base-')), []);
+});
+
+test('#1380 registry read failure cannot silently fall back to current definitions', async () => {
+  let calls = 0;
+  await assert.rejects(baseRegistry('base', { runGit: () => {
+    calls++; return { status: null, error: Object.assign(new Error('buffer exhausted'), { code: 'ENOBUFS' }) };
+  } }), /ENOBUFS/);
+  assert.equal(calls, 1, 'transport failure is not an absent historical file');
+  calls = 0;
+  await assert.rejects(baseRegistry('base', { runGit: () => ++calls === 1
+    ? { status: 128, stderr: 'read failed' }
+    : { status: 0, stdout: 'scripts/mutation-registry.mjs\n' } }), /cannot read base registry/);
+  assert.equal(calls, 2, 'a present modern file forbids legacy re-export fallback');
+});
+
 // #496 (run 2793): гвард на check-docs в строгом режиме красил ЧИСТЫЙ прогон на
 // любом src-диффе без пересъёмки скриншотов — свежесть кадров с #479 судится на
 // кандидате, а мутант проверяет содержимое документации.

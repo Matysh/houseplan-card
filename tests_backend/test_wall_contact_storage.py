@@ -10,6 +10,7 @@ from custom_components.houseplan.partition_promotion import same_partition_wall_
 from custom_components.houseplan.validation import (
     CONFIG_SCHEMA, validate_partition_opening_hosts, validate_wall_model_transition,
     PartitionOpeningHostError, WallModelClientOutdatedError,
+    _existing_wall_room_ownership_only,
 )
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 from custom_components.houseplan.plan_graph import project_graph_space, validate_graph
@@ -171,3 +172,20 @@ def test_room_ownership_of_existing_catalogue_is_not_a_stale_geometry_edit(corru
     else:
         validate_wall_model_transition(after, before)
         validate_wall_model_transition(before, after)  # ordinary Undo
+
+
+@pytest.mark.parametrize("ring", ["complete", "missing", "partial"])
+def test_existing_carrier_ownership_requires_the_whole_legacy_ring(ring):
+    """Test the compatibility proof itself before graph validation can refuse."""
+    points = [[0, 0], [1, 0], [1, 1], [0, 1]]
+    walls = [{"id": f"w{i}", "a": a, "b": points[(i + 1) % 4], "cm": 15}
+             for i, a in enumerate(points)]
+    space = {"id": "floor", "wall_segments": walls, "rooms": []}
+    room = {"id": "new", "poly": points, "wall_ids": [wall["id"] for wall in walls]}
+    if ring == "missing":
+        del room["wall_ids"]
+    elif ring == "partial":
+        room["wall_ids"].pop()
+    previous = {"spaces": [space]}
+    candidate = {"spaces": [{**space, "rooms": [room]}]}
+    assert _existing_wall_room_ownership_only(candidate, previous) is (ring == "complete")

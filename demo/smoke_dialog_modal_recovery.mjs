@@ -375,6 +375,9 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
   detached.addEventListener('hp-close', () => detached.rejectClose());
   detachedHa.open = false;
   detached.remove();
+  // A delayed owner decision may arrive after unmount even though stale HA
+  // shell events are now fenced before they can request another close.
+  detached.rejectClose();
   await frame();
   await frame();
   const disconnectedRejectDoesNotReopen = !detached.isConnected && detachedHa.open === false;

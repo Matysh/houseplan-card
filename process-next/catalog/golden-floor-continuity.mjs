@@ -9,7 +9,9 @@ export async function inspectTunnelContinuity(page, png, clip, spec) {
     const opening = card?._openingsR?.find(item => item.id === spec.openingId);
     const floors = [...(root?.querySelectorAll('[data-hp="room"]') || [])].filter(path => {
       const style = getComputedStyle(path);
-      return path instanceof SVGGeometryElement && style.fill !== 'none'
+      // Unfilled paper is also uniformly painted. It is not a positive control
+      // for the room-coloured fill whose tunnel seam this witness judges.
+      return path instanceof SVGGeometryElement && path.classList.contains('filled') && style.fill !== 'none'
         && style.fill !== 'rgba(0, 0, 0, 0)' && Number(style.fillOpacity) > 0 && Number(style.opacity) > 0;
     });
     if (!opening || !(opening.rlen > 0) || !floors.length)

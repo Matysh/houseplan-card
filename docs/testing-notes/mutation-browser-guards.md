@@ -70,8 +70,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 106 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 109 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 58 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 280 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **566 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
+| Custom-element and HA browser lifecycle | 279 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **565 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
 
 
 ## Historical measurements (2026-09-27)
@@ -847,7 +847,6 @@ registered for background execution and was not executed during development.
 
 - `contact-effective-point-not-painted-1003`
 - `contact-late-font-invalidation-lost-1003`
-- `contact-contour-only-forces-axis-frame-1003`
 - `contact-drag-value-frame-deferred-1003`
 
 - `svg-stale-context-downloads-1036`

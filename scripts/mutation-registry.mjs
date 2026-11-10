@@ -78,6 +78,15 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 const MUTANT_DEFINITIONS = [
 
   {
+    id: 'mutation-base-registry-default-buffer-1380',
+    guard: 'node --test --test-name-pattern="#1380 historical registry" test/mutation-gate.test.mjs',
+    because: '#1380: a >1MiB historical registry must be read whole; stdout exhaustion must never import the current legacy re-export and erase the definition delta.',
+    patches: [{ file: 'scripts/mutation-selection.mjs',
+      find: "const options = { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 };",
+      replace: "const options = { encoding: 'utf8', maxBuffer: 1024 * 1024 };" }],
+  },
+
+  {
     id: 'golden-lamp-out-of-reach',
     guard: 'node process-next/catalog/golden-runner.mjs --mode=capture --scenario=panel-lighting-opaque-glow-two-doorways-dark',
     because: 'сцена заведена как защита дверного света (#71) и однажды уже была '
@@ -1159,7 +1168,7 @@ const MUTANT_DEFINITIONS = [
   {
     id:'editor-tooltip-survives-context-963',
     guard:'node demo/smoke_ui_polish_963.mjs',
-    because:'#963 AC4/9: an armed header tooltip remains mounted across editor changes; only the actual card lifecycle cancels that delayed top-layer bubble.',
+    because:'#963 AC4/9: an already visible header tooltip must retire on a server config epoch without pointer/focus dismissal; only the mounted hostUpdated lifecycle observes that ownership change.',
     patches:[{file:'src/chrome-tooltip-lazy.ts',find:'  hostUpdated(): void { if (this.owner && !this.valid()) this.hide(); }',replace:'  hostUpdated(): void {}'}],
   },
   {
@@ -19517,7 +19526,7 @@ const approvedUi1119Cases = [
     patches:[{file:'src/editors/properties/editor.ts',find:'const PROPERTIES_MIN_WIDTH = 1024;',replace:'const PROPERTIES_MIN_WIDTH = 960;'}]},
   {id:'editor-light-spill-visible-1119',guard:'node demo/smoke_approved_ui.mjs',
     because:'#1119 AC6: a real on-source positive control remains visible in View/Devices and is hidden only in Plan/Background.',
-    patches:[{file:'src/styles/plan.styles.ts',find:'.stage.mode-decor .glow-pools-frame,',replace:'.stage:not(.stage) .glow-pools-frame,'}]},
+    patches:[{file:'src/styles/plan.styles.ts',find:'.stage.mode-decor:not(.mode-transition) .glow-pools-frame,',replace:'.stage:not(.stage) .glow-pools-frame,'}]},
   {id:'ordinary-offline-fades-floor-shadow-1119',guard:'node demo/smoke_device_offline.mjs',
     because:'#1119 AC7: the real marker fades, but its distinct floor-shadow twin retains ordinary opacity and ink; the natural pre-fix render fails this existing oracle.',
     patches:[{file:'src/styles/devices.styles.ts',find:'.dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }',replace:'.dev.unavail:not(.led-badge) { opacity:0.35; }'}]},
