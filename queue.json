@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8714,
+  "revision": 8715,
   "nextTicket": 351,
   "nextFence": 351,
   "tasks": {
@@ -693,44 +693,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "bc7c230157200797a0439bdd1e64800c2871f522"
-      }
-    },
-    "1267": {
-      "issue": 1267,
-      "branch": "fix/1267-opening-rulers",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "bdb7c83edfea4c3c963b31dba21dc36752f5414a",
-      "mergedSha": "f2df18637a7bbf87d95c598692156fa49211c6ec",
-      "mergedAt": 1793780613775,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1267:2:1251e8df09d0c24803cb9522ebc4364ae2243e93:bdb7c83edfea4c3c963b31dba21dc36752f5414a",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "f2df18637a7bbf87d95c598692156fa49211c6ec"
       }
     },
     "1268": {
@@ -4217,10 +4179,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "releaseTag": "v1.85.1",
       "devBuild": {
