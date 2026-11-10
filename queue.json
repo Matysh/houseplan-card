@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8890,
+  "revision": 8891,
   "nextTicket": 356,
   "nextFence": 356,
   "tasks": {
@@ -4728,6 +4728,10 @@
       "digest": "fd8c3eee9238e2b0b077db62ad8b28f3b9e56fd4058705d8099eaa597c7ed543",
       "issue": 1170
     },
+    "github:42913600336:1:completions:message:961452697f2a6f6e334f03b4b4a547df018d15c93358079f89d5e199d0cf16c8": {
+      "digest": "97d4e6c7c28cbffdb89801635f4f2d924aa8669893d087d80983beb295c49c0d",
+      "issue": 1170
+    },
     "github:42901000173:1:label:spec-request:spec-resubmitted:1170": {
       "digest": "e947cf6fa99cff86f05f84e4184aefd06ba3ec9a6577784e89b30ea342957741",
       "issue": 1170,
@@ -4791,7 +4795,8 @@
           "entry": 1,
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/i18n-dead-keys.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optimize-plans-dialog.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Браузер: near axis optimize: failed; Браузер: optimize cleanup: failed; Браузер: optimize coincident partition: failed; Браузер: optimize context: failed; Браузер: optimize coordinate canonicalization: failed; Браузер: optimize micro interval: failed; Браузер: resize outer reconciliation: failed; Браузер: room contact storage: failed",
           "eventId": "finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad:finish:3:return:return:1170"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:285738f2-620a-4c39-9137-091c78c9c2fe": {
