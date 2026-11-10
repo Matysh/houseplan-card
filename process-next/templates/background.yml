@@ -43,7 +43,7 @@ jobs:
           python-version-file: .python-version
       - run: python3 -m pip install -r tests_backend/requirements.txt
         if: matrix.kind == 'mutations'
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - name: Выполнить отдельную фоновую работу
         run: node process-next/templates/background-job.mjs
       - name: Сообщить об отказе мутаций в issue

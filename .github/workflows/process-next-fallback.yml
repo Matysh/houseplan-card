@@ -57,9 +57,9 @@ jobs:
           python-version-file: .python-version
       - name: Подготовить Node без установки hooks
         run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Подготовить Chromium продукта
+      - name: Подготовить браузеры продукта
         if: steps.request.outputs.needs_browser == 'true'
-        run: node node_modules/playwright/cli.js install --with-deps chromium
+        run: node node_modules/playwright/cli.js install --with-deps chromium webkit
       - name: Подготовить зависимости backend
         if: steps.request.outputs.needs_backend == 'true'
         run: python -m pip install -r tests_backend/requirements.txt pytest-cov

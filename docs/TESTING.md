@@ -34,6 +34,12 @@
 эквивалентным эталону Linux. Подмена браузера или расширение допуска не лечит
 ошибку окружения.
 
+MDI picker проверяется также в мобильном WebKit из закреплённого Playwright.
+Подготовленный WSL и чистый CI для продуктовых browser-проверок используют
+`node node_modules/playwright/cli.js install --with-deps chromium webkit`.
+Fallback/background устанавливают оба движка; companion HA E2E сохраняет свой
+Chromium-набор. Эмуляция WebKit не означает проверку физического Safari.
+
 Выборка задаётся запускателю, например:
 
 ```bash
