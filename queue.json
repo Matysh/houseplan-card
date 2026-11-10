@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8881,
+  "revision": 8882,
   "nextTicket": 356,
   "nextFence": 356,
   "tasks": {
@@ -14,7 +14,7 @@
       "ownerDecision": null,
       "ticket": 355,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794348569328,
       "reviewEntry": 2,
       "patchId": "e1b92ef285cf3b590d9a7454faeca26a51a5d1d6",
@@ -73,6 +73,15 @@
         "entry": 1,
         "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/i18n-dead-keys.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optimize-plans-dialog.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Браузер: near axis optimize: failed; Браузер: optimize cleanup: failed; Браузер: optimize coincident partition: failed; Браузер: optimize context: failed; Браузер: optimize coordinate canonicalization: failed; Браузер: optimize micro interval: failed; Браузер: resize outer reconciliation: failed; Браузер: room contact storage: failed",
         "eventId": "finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad:finish:3:return:return:1170"
+      },
+      "s6": {
+        "id": "20261110T220945733-50cf9b16",
+        "name": "Тесты для задачи #1170 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261110T220945733-50cf9b16/report.json",
+        "materialSha": "412f1993843b72adf9311f908f552e7a419c4530",
+        "status": "passed",
+        "finishedAt": "2026-11-10T22:20:06.174Z",
+        "failures": []
       }
     },
     "1193": {
@@ -4517,9 +4526,9 @@
     "fence": 355,
     "materialSha": "412f1993843b72adf9311f908f552e7a419c4530",
     "expectedBase": "f1a94ef30fc1b8e24574de4d4cc9fcb65aa12caa",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794348573627,
-    "expiresAt": 1794349472137,
+    "expiresAt": 1794352807359,
     "patchId": "e1b92ef285cf3b590d9a7454faeca26a51a5d1d6"
   },
   "events": {
@@ -4748,6 +4757,34 @@
         "layer": "product",
         "materialSha": "412f1993843b72adf9311f908f552e7a419c4530",
         "phase": "sync"
+      }
+    },
+    "finish:285738f2-620a-4c39-9137-091c78c9c2fe:finish:3:s6-complete": {
+      "digest": "5cc3d07e943f330f8eeaa24924165344ea81ef91dd49af9dbc2e22022c675593",
+      "issue": 1170,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1170,
+        "at": 1794349207359,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "412f1993843b72adf9311f908f552e7a419c4530",
+        "phase": "review",
+        "evidence": {
+          "id": "20261110T220945733-50cf9b16",
+          "name": "Тесты для задачи #1170 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261110T220945733-50cf9b16/report.json",
+          "materialSha": "412f1993843b72adf9311f908f552e7a419c4530",
+          "status": "passed",
+          "finishedAt": "2026-11-10T22:20:06.174Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\n\nРеализован принятый сокращённый вариант: видимое ожидание до загрузки/расчёта, сохраняющийся итог Optimize, честные B/C/D/E/F/I вместо исчезнувшего отчёта и неоднозначного toast. Существующие геометрический алгоритм, парная запись, CAS, формат хранения и одноуровневый Undo не меняются. Код-ревью — первая передача после принятия ТЗ редакции 2.\n\n### Решение\n\nКонтроллер сохраняет владение текущей операцией независимо от видимости окна: «Закрыть» не отменяет запись, повторное открытие присоединяется к ней. Отдельный небольшой неленивый shell показывает ожидание перед импортом и кадр перед синхронной постпроверкой. Помощники передаются в ленивый диалог через options: сохранена проверяемая граница чанка, без статического затягивания editor runtime.\n\nУзкий writer переносит факт before-dispatch/dispatched/acknowledged через типизированный отказ. Загрузка большого тела на временный URL ещё не означает dispatch команды. Минимальный ACK валидируется до adoption/сброса истории: явный успех, целые ревизии строго больше отправленных expected, can_undo и согласованная пара тел. Старый metadata-only ACK допускает успех записи, но требует авторитетного readback перед утверждением B/C/D. Неполный ACK и неизвестный отказ после dispatch дают I. Общий acceptPairWrite не расширен.\n\nСинхронизация использует существующие authoritative reader, layout IO и gated adopter: результат adopted/superseded/failed, asset-wait не означает успех. До фактического принятия обеих частей и нового preview повторный Apply при I закрыт. Постпроверка ровно одна, чистая, без записи/второго preflight. Известный численный хвост остаётся D, не маскируется и не запускает цикл.\n\nСтандартная форма помощи получает короткий безопасный контекст только по кнопке. Готовый черновик не затирается, attach и отправка автоматически не включаются; доступен clipboard fallback. RU/EN/DE/FR, руководство и changelog обновлены. Синтетический fixture теперь действительно хранит парный Optimize ACK и одноуровневый Undo, но не выдаётся за настоящий сервер/ACL.\n\n### Риски и места для внимания\n\nПоздний ответ после смены authority, закрытие/открытие во время записи, собственные события с теми же ревизиями, неуспешная локальная adoption после доказанного ACK, неполная пара/dirty overlay при readback, сохранение неизвестного исхода после закрытия, предупреждение о замене Undo при новом Apply. Пропуски и непроверенные ссылки не дают безоговорочного clean. Локализация места — только по однозначному subject из реального source; raw exception.message в диагностике нет. Владельческий HA не изменялся.\n\n### Проверки и ограничения\n\nВ ходе отладки: сборка и адресные 70 Node-проверок контроллера/стадии записи/синхронизации/fixture прошли; новый native сценарий прошёл ожидание до chunk, закрытие/открытие при записи, retained result, явный отказ, I и неуспешное обновление, помощь без автоотправки. После этого усилены проверки монотонности ревизий и адаптированы старые native ожидания к retained result; окончательный доказательный S6 будет выполнен одной командой finish в общей очереди на фактическом SHA и передан координатором. Отладочные результаты не заменяют его.\n\nПервый S6 на 18d3a4807 завершился с отказами до передачи на модель. Исправлено: удалены три больше не используемых старых перевода во всех языках, подключён заголовок группы геометрии; toast получил стабильный ID; два новых упоминания классифицированы в существующем compatibility inventory без изменения lifecycle; семь мутационных якорей перенесены на новую реализацию без удаления свидетелей. Старые browser fixtures теперь выдают ревизии от фактического baseline, возвращают полные тела либо проходят настоящий legacy-readback и ждут асинхронный preview; retained result закрывается обычной кнопкой перед последующими действиями. Подмена commit в одном unit теперь возвращает типизированный receipt. Отдельно прошли 68 адресных Node-проверок, inventory/якоря и все восемь ранее упавших native сценариев. Контекстный native также проверяет отказ устаревшего preview при втором intake во время представленного кадра и явную кнопку обновления, а не скрытый write. Светлый и тёмный итоговые кадры просмотрены; автоматической приёмки golden нет. Следующий доказательный S6 — через finish с reuse; прежний failed не объявляется успешным.\n\nКлассификация нового authority-теста — critical/security, native Optimize — geometry; план S6 включает обязательные быстрые области и адресные сквозные сценарии. Полный продуктовый набор/мутации/снятие golden и новый реальный HA E2E не запускаются для этой задачи автоматически. Обновление сопровождающих настоящих HA E2E зафиксировано отдельно: [houseplan-e2e#40](https://github.com/Matysh/houseplan-e2e/issues/40); подтверждение реальных ACL/диска не приписывается synthetic wire. Новые визуальные эталоны не приняты автоматически.\n\n### Исправления по предыдущему ревью ТЗ\n\n[Раунд 1](https://github.com/Matysh/houseplan-card/issues/1170#issuecomment-6779115432) → [принятая редакция 2](https://github.com/Matysh/houseplan-card/issues/1170#issuecomment-6779294221): введён факт стадии вместо угадывания по code; void-refresh заменён доказательным парным adoption; ACK не достраивается предположением +1; добавлено предупреждение Undo при D/следующем Apply; eager shell и представленный кадр перед постпроверкой; cleanup и оставленные живые ссылки проходят через общий правдивый итог. Это замечания S4, код-ревью ещё не было. Серверная обработка ImportFailure и численный алгоритм не расширяются в этой задаче: неизвестный серверный code после dispatch консервативно даёт I.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
