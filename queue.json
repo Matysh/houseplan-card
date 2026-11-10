@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8654,
+  "revision": 8655,
   "nextTicket": 351,
   "nextFence": 351,
   "tasks": {
@@ -4500,6 +4500,10 @@
       "digest": "8742dea8bc3c93919c01b99b893864ed3ac78027d968ad3dc79ef2ce4faeeeac",
       "issue": 1379
     },
+    "finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0:finish:3:s6-label": {
+      "digest": "bd3873475184a8cc762a3c2ba13e2d4b44399544a576b62b0dc0f04528c2f808",
+      "issue": 1379
+    },
     "finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0": {
       "digest": "12a2d6ae41840a382d01b8300f5eab449464d5138257b526c76a767a4e2e1d39",
       "issue": 1379,
@@ -4552,7 +4556,8 @@
         "resubmission": false,
         "reviewChanges": "Материал: `1862202d4be66cdc8b9b8d4165a350af70f62876` → `a05e6437f7a062f67c67200842698aef8987439f`, ветка `codex/1379-backend-quality-guard`, трек show.\n\nДо исправления исходный guard локально и в CI давал 2 failed / 6 passed: проверка `validate.yml` после его штатного удаления и нераспознанная HA-зависимость через `test_ha_wall_node_delete.setup`. Проверка исполнения старого mypy-гейта удалена по действующему cutover: её mutant `typing-gate-stops-running` уже в архивном списке. Новый обязательный mypy-вызов не добавлялся; прочие проверки backend-контрактов сохранены.\n\nСканер `_needs_home_assistant` теперь идёт по статическим импортам соседних `.py`-helpers и квалифицированным `tests_backend.*`; `seen` ограничивает циклы в рамках одного обхода. Новые fixture-случаи проверяют bare/package/relative цепочки, чужой package, чистый цикл, добавление HA-ребра и lazy/TYPE_CHECKING. Это статический сканер, не общий Python import resolver; динамические importlib-вызовы не добавлялись в его контракт.\n\nУсиленная проверка также обнаружила ранее скрытую зависимость `test_plan_graph_source.py`: тест импортирует HA Store на уровне модуля. Добавлено явное `pytest.importorskip(\"homeassistant\")` перед импортом интеграции, как предусматривает существующее правило #436. С установленным HA все три случая исполняются и проходят; runtime интеграции и сами тестовые сценарии не менялись. Изменение касается инфраструктуры, но путь существующего product-теста механически даёт смешанный product S6. Поэтому для учёта записана категория `infra`, без нового пользовательского milestone или выбора новой версии.\n\nАдресные результаты на продуктовом коде коммита `2043988b75` (следующий коммит меняет только инфраструктурную ledger-классификацию): чистый guard **9 passed**; `test_plan_graph_source.py` **3 passed**; subprocess-probe с искусственно недоступным HA **9 passed, 1 skipped**. Этот skip — честная недоступная зависимость в probe, не пропуск в подготовленной HA-среде. Пять зарегистрированных свидетелей реально выполнены и пойманы: `pure-imports-stops-cleaning`, `error-code-dropped-from-contract`, `error-scanner-loses-a-class-source`, `error-code-via-variable-dropped`, `pure-backend-test-pulls-home-assistant`. В каждом случае чистый guard зелёный, мутант красный. Полный шард 358 не повторялся.\n\nКанонический план S6 сохранён: новые случаи унаследовали инфраструктурную addressed-классификацию существующего файла и выбираются по изменению самого файла/статическому чтению; оба изменённых backend-файла и backend-test-hygiene явно присутствуют. Окончательный S6 выполняет общая очередь; адресные результаты выше не подменяют её квитанцию. Исходный CI-журнал и артефакты сохранены в `output/1379/`. Решение по E2E: [houseplan-e2e#38](https://github.com/Matysh/houseplan-e2e/issues/38), нового HA journey не требуется. Проверить независимо корректность разрешения импортов и сохранность смысла guard.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
