@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 8749,
-  "nextTicket": 352,
+  "revision": 8750,
+  "nextTicket": 353,
   "nextFence": 352,
   "tasks": {
     "1193": {
@@ -4243,14 +4243,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1380-witness-repairs",
-      "materialSha": "80bb14c52d66c16ae5f9cb397a9fc177f2f2ee64",
+      "materialSha": "079dee2123c5ebce01defca908ab1227a5d2f7d2",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 351,
-      "queued": false,
+      "ticket": 352,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794326208696,
-      "reviewEntry": 1,
+      "readyAt": 1794328245440,
+      "reviewEntry": 2,
       "patchId": "039edf5ad3e450f4b1c39dfeafc6564dd41be8fb",
       "changedFiles": [
         "custom_components/houseplan/graph_node_write.py",
@@ -4304,10 +4304,6 @@
         "tests_backend/wall_node_delete_parity.py",
         "tests_backend/wall_node_parity.py"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1794326236470,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json",
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4505,7 +4501,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1380
+  ],
   "active": null,
   "events": {
     "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:2:synchronized": {
@@ -4667,6 +4665,19 @@
           "detail": "Поведение: process-next/test/golden-floor-continuity.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Backend: tests_backend/test_wall_node_dependency_carrier.py: failed",
           "eventId": "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:6:return:return:1380"
         }
+      }
+    },
+    "finish:1947ca70-41f5-4eeb-9eff-b685e745d5c3": {
+      "digest": "9e05940034f082b16d0a96dc07a8cb6875b40b403e5e638b14368895397f3bca",
+      "issue": 1380,
+      "message": {
+        "kind": "queued",
+        "issue": 1380,
+        "at": 1794328245440,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "079dee2123c5ebce01defca908ab1227a5d2f7d2"
       }
     }
   },
