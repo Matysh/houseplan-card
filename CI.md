@@ -1,8 +1,8 @@
 # CI: проверенный продукт в main
 
-**Passing:** продукт в main соответствует подтверждённому выпуску.
+**Не подтверждено.** Продукт или входы его сборки в main отличаются от подтверждённого выпуска.
 
-Main: [`52610e2100528c9e8af7bd36f71984e066f9b9c9`](https://github.com/Matysh/houseplan-card/commit/52610e2100528c9e8af7bd36f71984e066f9b9c9).
+Main: [`fe1f3b3776eb75c168295c6dc7557cc80deab3d9`](https://github.com/Matysh/houseplan-card/commit/fe1f3b3776eb75c168295c6dc7557cc80deab3d9).
 Статус использует уже завершённые проверки выпуска. Новых тестов, сборок или гейтов этот отчёт не запускает.
 
 Проверенный коммит: [`52610e2100528c9e8af7bd36f71984e066f9b9c9`](https://github.com/Matysh/houseplan-card/commit/52610e2100528c9e8af7bd36f71984e066f9b9c9).
