@@ -1,9 +1,23 @@
 {
   "schema": 1,
-  "revision": 8853,
-  "nextTicket": 354,
+  "revision": 8854,
+  "nextTicket": 355,
   "nextFence": 354,
   "tasks": {
+    "1170": {
+      "issue": 1170,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/issue-1170-optimize-results",
+      "materialSha": "18d3a48073afcf8e092aea732b64087e3bbed867",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 354,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794347470122,
+      "reviewEntry": 1
+    },
     "1193": {
       "issue": 1193,
       "branch": "codex/golden-icons-preparation",
@@ -4438,7 +4452,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1170
+  ],
   "active": null,
   "events": {
     "github:42899605434:1:label:spec-request": {
@@ -4496,6 +4512,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad": {
+      "digest": "44755fdf0e9c2416360a872854f4bc02086a7e5d8883dd1667e9db855c2cab08",
+      "issue": 1170,
+      "message": {
+        "kind": "queued",
+        "issue": 1170,
+        "at": 1794347470122,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "18d3a48073afcf8e092aea732b64087e3bbed867"
       }
     }
   },
