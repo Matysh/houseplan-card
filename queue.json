@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8662,
+  "revision": 8663,
   "nextTicket": 351,
   "nextFence": 351,
   "tasks": {
@@ -4267,160 +4267,25 @@
     },
     "1379": {
       "issue": 1379,
+      "branch": "codex/1379-backend-quality-guard",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1379-backend-quality-guard",
-      "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 350,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794302509064,
-      "reviewEntry": 1,
-      "patchId": "5799ca457b14b79be42903fbba9d175ece6a103d",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.85.0/1379.json",
-        "tests_backend/test_backend_quality.py",
-        "tests_backend/test_plan_graph_source.py"
-      ],
-      "s6": {
-        "id": "20261110T092204930-177daded",
-        "name": "Тесты для задачи #1379 (перед ревью)",
-        "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261110T092204930-177daded/report.json",
-        "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
-        "status": "passed",
-        "finishedAt": "2026-11-10T09:22:34.407Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "1862202d4be66cdc8b9b8d4165a350af70f62876",
+      "mergedSha": "a05e6437f7a062f67c67200842698aef8987439f",
+      "mergedAt": 1794302739543,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1379:1:5799ca457b14b79be42903fbba9d175ece6a103d:1862202d4be66cdc8b9b8d4165a350af70f62876",
-      "reviewMaterial": {
-        "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
-        "expectedBase": "1862202d4be66cdc8b9b8d4165a350af70f62876",
-        "patchId": "5799ca457b14b79be42903fbba9d175ece6a103d"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1379:1:5799ca457b14b79be42903fbba9d175ece6a103d:1862202d4be66cdc8b9b8d4165a350af70f62876",
-        "eventId": "github:42790190659:1:tick:0:review-retry",
-        "at": 1794302576439,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1379,
-        "requestId": "review:1379:1:5799ca457b14b79be42903fbba9d175ece6a103d:1862202d4be66cdc8b9b8d4165a350af70f62876",
-        "kind": "code",
-        "base": "1862202d4be66cdc8b9b8d4165a350af70f62876",
-        "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
-        "patchId": "5799ca457b14b79be42903fbba9d175ece6a103d",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1379,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1379",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Материал: `1862202d4be66cdc8b9b8d4165a350af70f62876` → `a05e6437f7a062f67c67200842698aef8987439f`, ветка `codex/1379-backend-quality-guard`, трек show.\n\nДо исправления исходный guard локально и в CI давал 2 failed / 6 passed: проверка `validate.yml` после его штатного удаления и нераспознанная HA-зависимость через `test_ha_wall_node_delete.setup`. Проверка исполнения старого mypy-гейта удалена по действующему cutover: её mutant `typing-gate-stops-running` уже в архивном списке. Новый обязательный mypy-вызов не добавлялся; прочие проверки backend-контрактов сохранены.\n\nСканер `_needs_home_assistant` теперь идёт по статическим импортам соседних `.py`-helpers и квалифицированным `tests_backend.*`; `seen` ограничивает циклы в рамках одного обхода. Новые fixture-случаи проверяют bare/package/relative цепочки, чужой package, чистый цикл, добавление HA-ребра и lazy/TYPE_CHECKING. Это статический сканер, не общий Python import resolver; динамические importlib-вызовы не добавлялись в его контракт.\n\nУсиленная проверка также обнаружила ранее скрытую зависимость `test_plan_graph_source.py`: тест импортирует HA Store на уровне модуля. Добавлено явное `pytest.importorskip(\"homeassistant\")` перед импортом интеграции, как предусматривает существующее правило #436. С установленным HA все три случая исполняются и проходят; runtime интеграции и сами тестовые сценарии не менялись. Изменение касается инфраструктуры, но путь существующего product-теста механически даёт смешанный product S6. Поэтому для учёта записана категория `infra`, без нового пользовательского milestone или выбора новой версии.\n\nАдресные результаты на продуктовом коде коммита `2043988b75` (следующий коммит меняет только инфраструктурную ledger-классификацию): чистый guard **9 passed**; `test_plan_graph_source.py` **3 passed**; subprocess-probe с искусственно недоступным HA **9 passed, 1 skipped**. Этот skip — честная недоступная зависимость в probe, не пропуск в подготовленной HA-среде. Пять зарегистрированных свидетелей реально выполнены и пойманы: `pure-imports-stops-cleaning`, `error-code-dropped-from-contract`, `error-scanner-loses-a-class-source`, `error-code-via-variable-dropped`, `pure-backend-test-pulls-home-assistant`. В каждом случае чистый guard зелёный, мутант красный. Полный шард 358 не повторялся.\n\nКанонический план S6 сохранён: новые случаи унаследовали инфраструктурную addressed-классификацию существующего файла и выбираются по изменению самого файла/статическому чтению; оба изменённых backend-файла и backend-test-hygiene явно присутствуют. Окончательный S6 выполняет общая очередь; адресные результаты выше не подменяют её квитанцию. Исходный CI-журнал и артефакты сохранены в `output/1379/`. Решение по E2E: [houseplan-e2e#38](https://github.com/Matysh/houseplan-e2e/issues/38), нового HA journey не требуется. Проверить независимо корректность разрешения импортов и сохранность смысла guard."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Принимаю. Изменение устраняет обе причины, по которым guard `tests_backend/test_backend_quality.py` падал на исправном коде:\n- проверку удалённого `validate.yml` убрали по решению cutover, а не заглушили;\n- сканер HA-зависимостей теперь видит импорт через соседние helper-модули тестов.\n\nПо исходникам разрешение импортов корректно для форм bare, `tests_backend.*` и relative. Циклы завершаются, а различие между импортом при сборке (collection) и lazy/TYPE_CHECKING сохранено, так как обход по-прежнему строится на `_toplevel_imports`. Найденная заново реальная зависимость `test_plan_graph_source.py` объявлена правильно. Пять зарегистрированных свидетелей этого guard не задеты правкой по существу. Продукт и runtime не меняются. Блокеров нет.",
-          "understanding": "Проблема. Фоновый мутационный шард 3/5 упал на исправном коде: 2 failed / 6 passed. Причины две:\n1. `test_issue_42_mypy_strict_is_actually_executed_by_ci` читал `.github/workflows/validate.yml`, а этот workflow удалён при cutover. В `.github/workflows` его действительно нет, а мутант `typing-gate-stops-running` есть в `process-next/evidence/cutover-retired-mutants.json`.\n2. `test_issue_436_ha_dependent_test_modules_declare_it` требует, чтобы сканер распознал HA-зависимость в каждом `test_ha_*.py`. Шесть файлов (`test_ha_node_save_validation`, `test_ha_wall_node_attach`, `_merge`, `_move_baseline`, `_dependency_carrier`, `test_ha_wall_removal_limits`) получают HA только через `from test_ha_wall_node_delete import setup`. Старый `_needs_home_assistant` смотрел лишь на прямые импорты `homeassistant` и `custom_components.houseplan.*`, поэтому пропускал их.\n\nПосле правки:\n- устаревший тест удалён, новый mypy-гейт не добавлен (так требует AC1);\n- `_needs_home_assistant` рекурсивно обходит соседние `.py`-файлы, которые получаются из имени импорта: префикс `tests_backend.` и ведущие точки отбрасываются, берётся первый сегмент. Множество `seen` общее на один корневой вызов. Для каждого helper применяются те же проверки, включая `touched & ha_modules`;\n- пока первая проверка падала, вторая не доходила до списка `undeclared`. Теперь она до него доходит и находит `test_plan_graph_source.py`: тест на уровне модуля импортирует `plan_graph_source`, а тот в строке 13 импортирует `homeassistant.helpers.storage.Store`. Добавлен `pytest.importorskip(\"homeassistant\")` до импортов интеграции.\n\nРазобранные пути: `_toplevel_imports` (как нормализуются `from . import x`, `from .x import y`, `from tests_backend import x`), новая рекурсия, вызывающие места в двух тестах #436, реальные цепочки `test_ha_* → test_ha_wall_node_delete`, импорты `plan_graph_source.py`, записи реестра мутантов с guard `test_backend_quality.py` (строки 7741, 7879, 7890, 7901, 13362).",
-          "analysis": [
-            {
-              "topic": "Корректность разрешения импортов",
-              "assessment": "Нормализация согласована с тем, что выдаёт `_toplevel_imports`:\n- для `from .middle import X` получаются `.middle` и `.middle.X`;\n- для `from . import middle` получается `.middle` (замена `..`→`.`);\n- для `from tests_backend import middle` получается `tests_backend.middle`, и после `removeprefix` остаётся `middle`;\n- bare-импорт `middle` даёт `middle`.\nСтандартные и чужие пакеты (`json`, `custom_components`, `unrelated_package`) отображаются на несуществующий `path.parent/<name>.py` и отсекаются через `is_file()`. Для голого `.` получается имя `.py` — безвредно. Ложного срабатывания на стандартный модуль быть не может, пока рядом нет одноимённого файла; но такой файл и на практике затенил бы модуль при rootdir-вставке pytest, так что срабатывание было бы оправданным.",
-              "evidence": "tests_backend/test_backend_quality.py:286-293 (нормализация ImportFrom), 358-362 (резолв helper); фикстуры bare/qualified/relative/unrelated в 426-441."
-            },
-            {
-              "topic": "Циклы и общий `seen`",
-              "assessment": "Обход — DFS с отметкой узла при входе и общим `seen` на один корневой вызов. Возврат `False` для уже посещённого узла не даёт ложного «чисто» для корня. Любой путь от корня до HA-ребра будет пройден, потому что узел, через который идёт путь, исследуется полностью в момент первого посещения. Нужен только ответ на вопрос о достижимости из корня, а это классический корректный случай. Для каждого файла в `test_issue_436_ha_dependent_test_modules_declare_it` создаётся свежий `seen` (значение по умолчанию `None`), поэтому состояние между файлами не протекает. `resolve()` нормализует ключи.",
-              "evidence": "test_backend_quality.py:335-343; тест циклов 444-457: чистый цикл → False, добавленное HA-ребро в `cycle_b` находится через уже посещённый `cycle_a`."
-            },
-            {
-              "topic": "Различие collection и lazy/TYPE_CHECKING",
-              "assessment": "Рекурсия идёт только по `_toplevel_imports`. Тела функций и блоки `if TYPE_CHECKING` не учитываются ни в корне, ни в helper-модулях, так что семантика #436 сохранена. Фикстура `lazy.py` закрепляет это для helper-уровня.",
-              "evidence": "test_backend_quality.py:271-307, 459-466."
-            },
-            {
-              "topic": "Удаление проверки mypy в CI",
-              "assessment": "Это не ослабление по своей воле. Проверялся артефакт (`validate.yml`), который выведен из эксплуатации. Соответствующий мутант уже в списке выведенных, а AC1 прямо запрещает восстанавливать гейт. Тест `test_issue_42_mypy_strict_allowlist_only_grows` остаётся, но теперь только как проверка текста конфигурации без исполнения. Это осознанное следствие cutover, а не дефект этой задачи.",
-              "evidence": ".github/workflows не содержит validate.yml; process-next/evidence/cutover-retired-mutants.json:1770; legacy/process-v1/scripts/mutation-registry.mjs:8124."
-            },
-            {
-              "topic": "`test_plan_graph_source.py`",
-              "assessment": "Зависимость реальная: `plan_graph_source.py:13` импортирует `homeassistant.helpers.storage.Store` на уровне модуля, и без HA сборка всего `tests_backend/` оборвалась бы. `importorskip` стоит до импортов интеграции, как требует правило #436. Сценарии тестов не менялись. Объяснение, почему зависимость была «скрытой», правдоподобно: прежде падала проверка `ha_named`, и до `undeclared` выполнение не доходило.",
-              "evidence": "tests_backend/test_plan_graph_source.py:5-10; custom_components/houseplan/plan_graph_source.py:13."
-            },
-            {
-              "topic": "Зарегистрированные свидетели guard (AC3)",
-              "assessment": "Правка не затрагивает механизмы, на которые опираются мутанты:\n- `pure-imports-stops-cleaning` патчит `pure_imports.py`;\n- `error-code-*` и `error-scanner-loses-a-class-source` — `const.py` и строку `fixed |= ...`, которая не изменена;\n- `pure-backend-test-pulls-home-assistant` добавляет прямой импорт `store` в `test_projection.py`, а его ловит прежняя ветка `touched & ha_modules`.\nНа такие свидетели ссылается только активный реестр; удалённый тест в нём не упоминается. Автор сообщает о реальном выполнении всех пяти. Это его адресный результат, я его не воспроизводил.",
-              "evidence": "scripts/mutation-registry.mjs:7741-7750, 7879-7909, 13362-13372."
-            },
-            {
-              "topic": "Учётные файлы",
-              "assessment": "Категория `infra` в ledger и формулировки CHANGELOG соответствуют сути изменения. Каталог `v1.85.0` для `baseStable` согласуется с соседними записями (например, #1377 при уже выпущенной v1.85.1).",
-              "evidence": "docs/release-ledger/v1.85.0/1379.json; docs/release-ledger/v1.85.0/1377.json."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Сканер слегка строже реального поведения pytest. Если non-`test_ha_` тест импортирует helper, который сам вызывает `importorskip(\"homeassistant\")`, то Skipped распространится и сборка не упадёт, но сканер всё равно потребует явного объявления. Менять это не нужно: явное объявление дешевле и понятнее. Достаточно знать о такой границе.",
-            "Комментарий у цикла (строки 356-357) ссылается на #1258 и сообщает, что имя `test_ha_*` само по себе зависимостью не считается. Полезно было бы добавить одну фразу о том, что разрешение ограничено соседними файлами каталога и статическими импортами, а `importlib` и вложенные пакеты не поддерживаются. Сейчас это сказано только в контексте исполнителя, а не в коде."
-          ],
-          "boundaries": "Сам я ничего не запускал: ни pytest, ни мутантов, ни шард. Корректность разрешения импортов, циклов и lazy-семантики проверена чтением `_toplevel_imports` и новой рекурсии на конкретных формах импорта. Использованы:\n- квитанция S6 `20261110T092204930-177daded` (passed, материал `a05e6437`);\n- адресные результаты автора: 9 passed, 3 passed, probe без HA 9 passed / 1 skipped, пять свидетелей пойманы. Это заявления автора, а не мои прогоны.\n\nПолный шард 3/5 после исправления не повторялся; его подтвердит следующий фоновый прогон. Не проверял по всем файлам `tests_backend`, что больше ни один non-`test_ha_` тест не попадает в `undeclared`: опираюсь на зелёный guard в S6. Внешнее решение houseplan-e2e#38 не открывал."
-        },
-        "usage": {
-          "input_tokens": 18,
-          "cache_creation_input_tokens": 54685,
-          "cache_read_input_tokens": 209536,
-          "output_tokens": 8327,
-          "output_tokens_details": {
-            "thinking_tokens": 2575
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 54685,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 957,
-              "cache_read_input_tokens": 41151,
-              "cache_creation_input_tokens": 13534,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 13534
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nПринимаю. Изменение устраняет обе причины, по которым guard `tests_backend/test_backend_quality.py` падал на исправном коде:\n- проверку удалённого `validate.yml` убрали по решению cutover, а не заглушили;\n- сканер HA-зависимостей теперь видит импорт через соседние helper-модули тестов.\n\nПо исходникам разрешение импортов корректно для форм bare, `tests_backend.*` и relative. Циклы завершаются, а различие между импортом при сборке (collection) и lazy/TYPE_CHECKING сохранено, так как обход по-прежнему строится на `_toplevel_imports`. Найденная заново реальная зависимость `test_plan_graph_source.py` объявлена правильно. Пять зарегистрированных свидетелей этого guard не задеты правкой по существу. Продукт и runtime не меняются. Блокеров нет.\n\n## Понимание решения\n\nПроблема. Фоновый мутационный шард 3/5 упал на исправном коде: 2 failed / 6 passed. Причины две:\n1. `test_issue_42_mypy_strict_is_actually_executed_by_ci` читал `.github/workflows/validate.yml`, а этот workflow удалён при cutover. В `.github/workflows` его действительно нет, а мутант `typing-gate-stops-running` есть в `process-next/evidence/cutover-retired-mutants.json`.\n2. `test_issue_436_ha_dependent_test_modules_declare_it` требует, чтобы сканер распознал HA-зависимость в каждом `test_ha_*.py`. Шесть файлов (`test_ha_node_save_validation`, `test_ha_wall_node_attach`, `_merge`, `_move_baseline`, `_dependency_carrier`, `test_ha_wall_removal_limits`) получают HA только через `from test_ha_wall_node_delete import setup`. Старый `_needs_home_assistant` смотрел лишь на прямые импорты `homeassistant` и `custom_components.houseplan.*`, поэтому пропускал их.\n\nПосле правки:\n- устаревший тест удалён, новый mypy-гейт не добавлен (так требует AC1);\n- `_needs_home_assistant` рекурсивно обходит соседние `.py`-файлы, которые получаются из имени импорта: префикс `tests_backend.` и ведущие точки отбрасываются, берётся первый сегмент. Множество `seen` общее на один корневой вызов. Для каждого helper применяются те же проверки, включая `touched & ha_modules`;\n- пока первая проверка падала, вторая не доходила до списка `undeclared`. Теперь она до него доходит и находит `test_plan_graph_source.py`: тест на уровне модуля импортирует `plan_graph_source`, а тот в строке 13 импортирует `homeassistant.helpers.storage.Store`. Добавлен `pytest.importorskip(\"homeassistant\")` до импортов интеграции.\n\nРазобранные пути: `_toplevel_imports` (как нормализуются `from . import x`, `from .x import y`, `from tests_backend import x`), новая рекурсия, вызывающие места в двух тестах #436, реальные цепочки `test_ha_* → test_ha_wall_node_delete`, импорты `plan_graph_source.py`, записи реестра мутантов с guard `test_backend_quality.py` (строки 7741, 7879, 7890, 7901, 13362).\n\n## Разбор решения\n\n### Корректность разрешения импортов\n\nНормализация согласована с тем, что выдаёт `_toplevel_imports`:\n- для `from .middle import X` получаются `.middle` и `.middle.X`;\n- для `from . import middle` получается `.middle` (замена `..`→`.`);\n- для `from tests_backend import middle` получается `tests_backend.middle`, и после `removeprefix` остаётся `middle`;\n- bare-импорт `middle` даёт `middle`.\nСтандартные и чужие пакеты (`json`, `custom_components`, `unrelated_package`) отображаются на несуществующий `path.parent/<name>.py` и отсекаются через `is_file()`. Для голого `.` получается имя `.py` — безвредно. Ложного срабатывания на стандартный модуль быть не может, пока рядом нет одноимённого файла; но такой файл и на практике затенил бы модуль при rootdir-вставке pytest, так что срабатывание было бы оправданным.\n\nОснование: tests_backend/test_backend_quality.py:286-293 (нормализация ImportFrom), 358-362 (резолв helper); фикстуры bare/qualified/relative/unrelated в 426-441.\n\n### Циклы и общий `seen`\n\nОбход — DFS с отметкой узла при входе и общим `seen` на один корневой вызов. Возврат `False` для уже посещённого узла не даёт ложного «чисто» для корня. Любой путь от корня до HA-ребра будет пройден, потому что узел, через который идёт путь, исследуется полностью в момент первого посещения. Нужен только ответ на вопрос о достижимости из корня, а это классический корректный случай. Для каждого файла в `test_issue_436_ha_dependent_test_modules_declare_it` создаётся свежий `seen` (значение по умолчанию `None`), поэтому состояние между файлами не протекает. `resolve()` нормализует ключи.\n\nОснование: test_backend_quality.py:335-343; тест циклов 444-457: чистый цикл → False, добавленное HA-ребро в `cycle_b` находится через уже посещённый `cycle_a`.\n\n### Различие collection и lazy/TYPE_CHECKING\n\nРекурсия идёт только по `_toplevel_imports`. Тела функций и блоки `if TYPE_CHECKING` не учитываются ни в корне, ни в helper-модулях, так что семантика #436 сохранена. Фикстура `lazy.py` закрепляет это для helper-уровня.\n\nОснование: test_backend_quality.py:271-307, 459-466.\n\n### Удаление проверки mypy в CI\n\nЭто не ослабление по своей воле. Проверялся артефакт (`validate.yml`), который выведен из эксплуатации. Соответствующий мутант уже в списке выведенных, а AC1 прямо запрещает восстанавливать гейт. Тест `test_issue_42_mypy_strict_allowlist_only_grows` остаётся, но теперь только как проверка текста конфигурации без исполнения. Это осознанное следствие cutover, а не дефект этой задачи.\n\nОснование: .github/workflows не содержит validate.yml; process-next/evidence/cutover-retired-mutants.json:1770; legacy/process-v1/scripts/mutation-registry.mjs:8124.\n\n### `test_plan_graph_source.py`\n\nЗависимость реальная: `plan_graph_source.py:13` импортирует `homeassistant.helpers.storage.Store` на уровне модуля, и без HA сборка всего `tests_backend/` оборвалась бы. `importorskip` стоит до импортов интеграции, как требует правило #436. Сценарии тестов не менялись. Объяснение, почему зависимость была «скрытой», правдоподобно: прежде падала проверка `ha_named`, и до `undeclared` выполнение не доходило.\n\nОснование: tests_backend/test_plan_graph_source.py:5-10; custom_components/houseplan/plan_graph_source.py:13.\n\n### Зарегистрированные свидетели guard (AC3)\n\nПравка не затрагивает механизмы, на которые опираются мутанты:\n- `pure-imports-stops-cleaning` патчит `pure_imports.py`;\n- `error-code-*` и `error-scanner-loses-a-class-source` — `const.py` и строку `fixed |= ...`, которая не изменена;\n- `pure-backend-test-pulls-home-assistant` добавляет прямой импорт `store` в `test_projection.py`, а его ловит прежняя ветка `touched & ha_modules`.\nНа такие свидетели ссылается только активный реестр; удалённый тест в нём не упоминается. Автор сообщает о реальном выполнении всех пяти. Это его адресный результат, я его не воспроизводил.\n\nОснование: scripts/mutation-registry.mjs:7741-7750, 7879-7909, 13362-13372.\n\n### Учётные файлы\n\nКатегория `infra` в ledger и формулировки CHANGELOG соответствуют сути изменения. Каталог `v1.85.0` для `baseStable` согласуется с соседними записями (например, #1377 при уже выпущенной v1.85.1).\n\nОснование: docs/release-ledger/v1.85.0/1379.json; docs/release-ledger/v1.85.0/1377.json.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Сканер слегка строже реального поведения pytest. Если non-`test_ha_` тест импортирует helper, который сам вызывает `importorskip(\"homeassistant\")`, то Skipped распространится и сборка не упадёт, но сканер всё равно потребует явного объявления. Менять это не нужно: явное объявление дешевле и понятнее. Достаточно знать о такой границе.\n- Комментарий у цикла (строки 356-357) ссылается на #1258 и сообщает, что имя `test_ha_*` само по себе зависимостью не считается. Полезно было бы добавить одну фразу о том, что разрешение ограничено соседними файлами каталога и статическими импортами, а `importlib` и вложенные пакеты не поддерживаются. Сейчас это сказано только в контексте исполнителя, а не в коде.\n\n## Границы анализа\n\nСам я ничего не запускал: ни pytest, ни мутантов, ни шард. Корректность разрешения импортов, циклов и lazy-семантики проверена чтением `_toplevel_imports` и новой рекурсии на конкретных формах импорта. Использованы:\n- квитанция S6 `20261110T092204930-177daded` (passed, материал `a05e6437`);\n- адресные результаты автора: 9 passed, 3 passed, probe без HA 9 passed / 1 skipped, пять свидетелей пойманы. Это заявления автора, а не мои прогоны.\n\nПолный шард 3/5 после исправления не повторялся; его подтвердит следующий фоновый прогон. Не проверял по всем файлам `tests_backend`, что больше ни один non-`test_ha_` тест не попадает в `undeclared`: опираюсь на зелёный guard в S6. Внешнее решение houseplan-e2e#38 не открывал.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 1862202d4be66cdc8b9b8d4165a350af70f62876 → a05e6437f7a062f67c67200842698aef8987439f\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1379, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nМатериал: `1862202d4be66cdc8b9b8d4165a350af70f62876` → `a05e6437f7a062f67c67200842698aef8987439f`, ветка `codex/1379-backend-quality-guard`, трек show.\n\nДо исправления исходный guard локально и в CI давал 2 failed / 6 passed: проверка `validate.yml` после его штатного удаления и нераспознанная HA-зависимость через `test_ha_wall_node_delete.setup`. Проверка исполнения старого mypy-гейта удалена по действующему cutover: её mutant `typing-gate-stops-running` уже в архивном списке. Новый обязательный mypy-вызов не добавлялся; прочие проверки backend-контрактов сохранены.\n\nСканер `_needs_home_assistant` теперь идёт по статическим импортам соседних `.py`-helpers и квалифицированным `tests_backend.*`; `seen` ограничивает циклы в рамках одного обхода. Новые fixture-случаи проверяют bare/package/relative цепочки, чужой package, чистый цикл, добавление HA-ребра и lazy/TYPE_CHECKING. Это статический сканер, не общий Python import resolver; динамические importlib-вызовы не добавлялись в его контракт.\n\nУсиленная проверка также обнаружила ранее скрытую зависимость `test_plan_graph_source.py`: тест импортирует HA Store на уровне модуля. Добавлено явное `pytest.importorskip(\"homeassistant\")` перед импортом интеграции, как предусматривает существующее правило #436. С установленным HA все три случая исполняются и проходят; runtime интеграции и сами тестовые сценарии не менялись. Изменение касается инфраструктуры, но путь существующего product-теста механически даёт смешанный product S6. Поэтому для учёта записана категория `infra`, без нового пользовательского milestone или выбора новой версии.\n\nАдресные результаты на продуктовом коде коммита `2043988b75` (следующий коммит меняет только инфраструктурную ledger-классификацию): чистый guard **9 passed**; `test_plan_graph_source.py` **3 passed**; subprocess-probe с искусственно недоступным HA **9 passed, 1 skipped**. Этот skip — честная недоступная зависимость в probe, не пропуск в подготовленной HA-среде. Пять зарегистрированных свидетелей реально выполнены и пойманы: `pure-imports-stops-cleaning`, `error-code-dropped-from-contract`, `error-scanner-loses-a-class-source`, `error-code-via-variable-dropped`, `pure-backend-test-pulls-home-assistant`. В каждом случае чистый guard зелёный, мутант красный. Полный шард 358 не повторялся.\n\nКанонический план S6 сохранён: новые случаи унаследовали инфраструктурную addressed-классификацию существующего файла и выбираются по изменению самого файла/статическому чтению; оба изменённых backend-файла и backend-test-hygiene явно присутствуют. Окончательный S6 выполняет общая очередь; адресные результаты выше не подменяют её квитанцию. Исходный CI-журнал и артефакты сохранены в `output/1379/`. Решение по E2E: [houseplan-e2e#38](https://github.com/Matysh/houseplan-e2e/issues/38), нового HA journey не требуется. Проверить независимо корректность разрешения импортов и сохранность смысла guard.\n```\n\n</details>\n",
-        "createdAt": "2026-11-10T09:25:12.308Z",
-        "artifactId": 13751203098,
-        "runId": 42790218289,
-        "runAttempt": 1,
-        "completedAt": "2026-11-10T09:25:18Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42790218289",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "1862202d4be66cdc8b9b8d4165a350af70f62876"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -4624,116 +4489,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1379,
-    "worker": "finish",
-    "token": "350:finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0:finish:1:admit",
-    "fence": 350,
-    "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
-    "expectedBase": "1862202d4be66cdc8b9b8d4165a350af70f62876",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794302513810,
-    "expiresAt": 1794306337006,
-    "patchId": "5799ca457b14b79be42903fbba9d175ece6a103d",
-    "reviewRequest": "review:1379:1:5799ca457b14b79be42903fbba9d175ece6a103d:1862202d4be66cdc8b9b8d4165a350af70f62876"
-  },
-  "events": {
-    "finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0:finish:2:synchronized": {
-      "digest": "8742dea8bc3c93919c01b99b893864ed3ac78027d968ad3dc79ef2ce4faeeeac",
-      "issue": 1379
-    },
-    "finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0:finish:3:s6-label": {
-      "digest": "bd3873475184a8cc762a3c2ba13e2d4b44399544a576b62b0dc0f04528c2f808",
-      "issue": 1379
-    },
-    "finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0:finish:4:review-requested": {
-      "digest": "ba06eb863dfc340be8dffa0eff26a45142b9c771ff8af98b68338f87be436f51",
-      "issue": 1379
-    },
-    "github:42790190659:1:tick:0:review-retry": {
-      "digest": "7525dccdfd7567852217251793a627f991fc704f21b4b9e95f976c21342daf2a",
-      "issue": 1379
-    },
-    "github:42790190659:1:completions:message:a3b9d14e1842daa7debc54fd15491f82fd1b1933285a513a874b7174dc9bc78e": {
-      "digest": "3d853b4b67a6085b24b5a8da197cc53ac9450d4bf6028019df90a7c557799f46",
-      "issue": 1379
-    },
-    "github:42790190659:1:completions:message:f330bf11f6b87a284764888fd062b318e10e1023c11a276e73ab9abf405bd65f": {
-      "digest": "fa8e0ff6c2fc9beebc42ae33062007292aa8a6c3633f952ea5874087675e7d36",
-      "issue": 1379
-    },
-    "github:42790190659:1:completions:message:28f7fc677b5af7989a1e17e1fd44055907df930a6fab48312899923c78e0a415": {
-      "digest": "aac696e54b7c3d70e6d765d65533c7e70a1d4758b73488b4dac390d6c413e537",
-      "issue": 1379
-    },
-    "github:42790573095:1:tick:0:review-presentation": {
-      "digest": "b9b30c017fe62046597ec52daa0c00cc57334358c903c1f140ffb3487618b606",
-      "issue": 1379
-    },
-    "github:42790573095:1:tick:0:review-complete": {
-      "digest": "53c71cd7a5cee3d0e8060d5b69568a6364bdcb2bd90711b590aad8bc21d034b4",
-      "issue": 1379
-    },
-    "finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0": {
-      "digest": "12a2d6ae41840a382d01b8300f5eab449464d5138257b526c76a767a4e2e1d39",
-      "issue": 1379,
-      "message": {
-        "kind": "queued",
-        "issue": 1379,
-        "at": 1794302509064,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
-        "delivered": true
-      }
-    },
-    "finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0:finish:1:admit": {
-      "digest": "5144e39937b7aae21b977603f912b05002ed3f3c8e8d737a7259f021f3aa5ab7",
-      "issue": 1379,
-      "message": {
-        "kind": "admitted",
-        "issue": 1379,
-        "at": 1794302513810,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:9c0cd1f2-44bc-49b7-87ea-05a0f4188df0:finish:3:s6-complete": {
-      "digest": "e4fefb723f8575f029bdd9310960f848fcea3d4d134bd8bc526a68a2641d6f61",
-      "issue": 1379,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1379,
-        "at": 1794302555867,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
-        "phase": "review",
-        "evidence": {
-          "id": "20261110T092204930-177daded",
-          "name": "Тесты для задачи #1379 (перед ревью)",
-          "reportPath": "/home/matysh/hp-1096-scoped-validation-20261027/.git/process-next/runs/20261110T092204930-177daded/report.json",
-          "materialSha": "a05e6437f7a062f67c67200842698aef8987439f",
-          "status": "passed",
-          "finishedAt": "2026-11-10T09:22:34.407Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Материал: `1862202d4be66cdc8b9b8d4165a350af70f62876` → `a05e6437f7a062f67c67200842698aef8987439f`, ветка `codex/1379-backend-quality-guard`, трек show.\n\nДо исправления исходный guard локально и в CI давал 2 failed / 6 passed: проверка `validate.yml` после его штатного удаления и нераспознанная HA-зависимость через `test_ha_wall_node_delete.setup`. Проверка исполнения старого mypy-гейта удалена по действующему cutover: её mutant `typing-gate-stops-running` уже в архивном списке. Новый обязательный mypy-вызов не добавлялся; прочие проверки backend-контрактов сохранены.\n\nСканер `_needs_home_assistant` теперь идёт по статическим импортам соседних `.py`-helpers и квалифицированным `tests_backend.*`; `seen` ограничивает циклы в рамках одного обхода. Новые fixture-случаи проверяют bare/package/relative цепочки, чужой package, чистый цикл, добавление HA-ребра и lazy/TYPE_CHECKING. Это статический сканер, не общий Python import resolver; динамические importlib-вызовы не добавлялись в его контракт.\n\nУсиленная проверка также обнаружила ранее скрытую зависимость `test_plan_graph_source.py`: тест импортирует HA Store на уровне модуля. Добавлено явное `pytest.importorskip(\"homeassistant\")` перед импортом интеграции, как предусматривает существующее правило #436. С установленным HA все три случая исполняются и проходят; runtime интеграции и сами тестовые сценарии не менялись. Изменение касается инфраструктуры, но путь существующего product-теста механически даёт смешанный product S6. Поэтому для учёта записана категория `infra`, без нового пользовательского milestone или выбора новой версии.\n\nАдресные результаты на продуктовом коде коммита `2043988b75` (следующий коммит меняет только инфраструктурную ledger-классификацию): чистый guard **9 passed**; `test_plan_graph_source.py` **3 passed**; subprocess-probe с искусственно недоступным HA **9 passed, 1 skipped**. Этот skip — честная недоступная зависимость в probe, не пропуск в подготовленной HA-среде. Пять зарегистрированных свидетелей реально выполнены и пойманы: `pure-imports-stops-cleaning`, `error-code-dropped-from-contract`, `error-scanner-loses-a-class-source`, `error-code-via-variable-dropped`, `pure-backend-test-pulls-home-assistant`. В каждом случае чистый guard зелёный, мутант красный. Полный шард 358 не повторялся.\n\nКанонический план S6 сохранён: новые случаи унаследовали инфраструктурную addressed-классификацию существующего файла и выбираются по изменению самого файла/статическому чтению; оба изменённых backend-файла и backend-test-hygiene явно присутствуют. Окончательный S6 выполняет общая очередь; адресные результаты выше не подменяют её квитанцию. Исходный CI-журнал и артефакты сохранены в `output/1379/`. Решение по E2E: [houseplan-e2e#38](https://github.com/Matysh/houseplan-e2e/issues/38), нового HA journey не требуется. Проверить независимо корректность разрешения импортов и сохранность смысла guard.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "1862202d4be66cdc8b9b8d4165a350af70f62876",
     "status": "delivered",
