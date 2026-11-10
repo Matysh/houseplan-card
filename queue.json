@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 8868,
-  "nextTicket": 355,
+  "revision": 8869,
+  "nextTicket": 356,
   "nextFence": 355,
   "tasks": {
     "1170": {
@@ -9,14 +9,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/issue-1170-optimize-results",
-      "materialSha": "18d3a48073afcf8e092aea732b64087e3bbed867",
+      "materialSha": "412f1993843b72adf9311f908f552e7a419c4530",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 354,
-      "queued": false,
+      "ticket": 355,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794347470122,
-      "reviewEntry": 1,
+      "readyAt": 1794348569328,
+      "reviewEntry": 2,
       "patchId": "f38a61c60aef82591306eba8eaea827dfdd1f927",
       "changedFiles": [
         "demo/smoke_grid_snap.mjs",
@@ -55,7 +55,6 @@
         "test/optimize-plans-dialog.test.mjs",
         "test/write-authority-snapshot.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4501,7 +4500,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1170
+  ],
   "active": null,
   "events": {
     "github:42899605434:1:label:spec-request": {
@@ -4658,6 +4659,19 @@
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/i18n-dead-keys.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optimize-plans-dialog.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Браузер: near axis optimize: failed; Браузер: optimize cleanup: failed; Браузер: optimize coincident partition: failed; Браузер: optimize context: failed; Браузер: optimize coordinate canonicalization: failed; Браузер: optimize micro interval: failed; Браузер: resize outer reconciliation: failed; Браузер: room contact storage: failed",
           "eventId": "finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad:finish:3:return:return:1170"
         }
+      }
+    },
+    "finish:285738f2-620a-4c39-9137-091c78c9c2fe": {
+      "digest": "f795be22d2b933bb123c0ff027afbdab2315cc964529f26efc54c33284abe590",
+      "issue": 1170,
+      "message": {
+        "kind": "queued",
+        "issue": 1170,
+        "at": 1794348569328,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "412f1993843b72adf9311f908f552e7a419c4530"
       }
     }
   },
