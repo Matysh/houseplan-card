@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 8505,
-  "nextTicket": 348,
+  "revision": 8506,
+  "nextTicket": 349,
   "nextFence": 348,
   "tasks": {
     "1193": {
@@ -4248,11 +4248,11 @@
       "materialSha": "9ccb758699da09595e59ca45df689e07b1140f50",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 347,
-      "queued": false,
+      "ticket": 348,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794277365073,
-      "reviewEntry": 2,
+      "readyAt": 1794277867061,
+      "reviewEntry": 3,
       "patchId": "c4ca01150a3a83a699866ac4f1c785c9dae4de60",
       "changedFiles": [
         ".github/workflows/process-next-background.yml",
@@ -4298,8 +4298,7 @@
         "at": 1794277768820,
         "entry": 2,
         "eventId": "finish:148865d6-8712-4852-9edf-6c8ca70f5e8d:finish:4:expire:return:1376"
-      },
-      "reason": "executor-admission-expired"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4487,7 +4486,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1376
+  ],
   "active": null,
   "events": {
     "finish:34fa40c7-bd1d-4329-bf38-721eecc329ca:finish:2:synchronized": {
@@ -4653,6 +4654,19 @@
           "entry": 2,
           "eventId": "finish:148865d6-8712-4852-9edf-6c8ca70f5e8d:finish:4:expire:return:1376"
         }
+      }
+    },
+    "s6delivery1376-20261110-ready-2": {
+      "digest": "ca950f28b4252bc597b1aaf6440d7515635ccd13c871b921c32522c6e2e5a1fb",
+      "issue": 1376,
+      "message": {
+        "kind": "queued",
+        "issue": 1376,
+        "at": 1794277867061,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9ccb758699da09595e59ca45df689e07b1140f50"
       }
     }
   },
