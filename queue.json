@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8751,
+  "revision": 8752,
   "nextTicket": 353,
   "nextFence": 353,
   "tasks": {
@@ -4251,7 +4251,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794328245440,
       "reviewEntry": 2,
-      "patchId": "039edf5ad3e450f4b1c39dfeafc6564dd41be8fb",
+      "patchId": "a19705dfb2b6380f294bfe44385cbc0974d184e1",
       "changedFiles": [
         "custom_components/houseplan/graph_node_write.py",
         "custom_components/houseplan/plan_graph_exact.py",
@@ -4268,14 +4268,19 @@
         "demo/ui-lab/editor-kit-audit.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY-INVENTORY.md",
         "docs/PLAN-GRAPH.md",
         "docs/release-ledger/v1.85.0/1380.json",
         "docs/testing-notes/mutation-browser-guards.md",
         "process-next/catalog/golden-floor-continuity.mjs",
         "process-next/catalog/inventory.json",
+        "process-next/test/golden-floor-continuity.test.mjs",
+        "scripts/config-compatibility-inventory.json",
         "scripts/mutation-registry.mjs",
         "scripts/mutation-selection.mjs",
         "scripts/render-layout-read.mjs",
+        "scripts/sh3d-convert/dist/index.html",
+        "scripts/sh3d-convert/geometry-runtime.generated.mjs",
         "src/plan-graph.ts",
         "src/wall-node-delete.ts",
         "src/wall-node-move.ts",
@@ -4508,10 +4513,11 @@
     "token": "352:finish:1947ca70-41f5-4eeb-9eff-b685e745d5c3:finish:1:admit",
     "fence": 352,
     "materialSha": "079dee2123c5ebce01defca908ab1227a5d2f7d2",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "a05e6437f7a062f67c67200842698aef8987439f",
+    "phase": "testing",
     "admittedAt": 1794328250081,
-    "expiresAt": 1794328550081
+    "expiresAt": 1794328557665,
+    "patchId": "a19705dfb2b6380f294bfe44385cbc0974d184e1"
   },
   "events": {
     "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:2:synchronized": {
@@ -4624,6 +4630,10 @@
     },
     "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:6:return": {
       "digest": "11ae4d0746b731f76e28d3bbd7d042ad5dfed210f12e35a3ed13ab9bbfb56804",
+      "issue": 1380
+    },
+    "finish:1947ca70-41f5-4eeb-9eff-b685e745d5c3:finish:2:synchronized": {
+      "digest": "f5647cc0be000e04e7dd04e206e8f0760e3de6b7c53b4cda1a733ee830744a66",
       "issue": 1380
     },
     "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e": {
