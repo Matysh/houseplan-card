@@ -116,21 +116,23 @@ const out = await page.evaluate(async () => {
 
   q('[data-section-target=appearance]').click(); await upd();
   // --- Appearance: иконка, display, бейдж, превью (Q3), размеры ----------------
-  o.iconFieldHasPreview = !!q('#marker-icon') && !!q('.hpf-iconfield .hpf-iconpreview ha-icon');
-  o.noAutoPinOrResetButton = !q('.iconauto .hpf-link') && !q('.hpf-iconclear');
-  const icon = q('#marker-icon');
-  icon.focus();
-  const iconWrapper = getComputedStyle(icon.closest('.hpf-iconfield-control'));
-  o.fallbackHasSingleFocusOwner = icon.tagName === 'INPUT'
-    && parseFloat(iconWrapper.borderTopWidth) === 1 && iconWrapper.borderTopColor !== 'rgba(0, 0, 0, 0)'
-    && iconWrapper.outlineStyle === 'solid' && parseFloat(iconWrapper.outlineWidth) === 2
-    && getComputedStyle(icon.closest('.hpf-iconfield')).outlineStyle === 'none'
-    && parseFloat(getComputedStyle(icon).borderTopWidth) === 0;
-  if (icon.tagName === 'HA-ICON-PICKER') icon.dispatchEvent(new CustomEvent('value-changed',{detail:{value:'mdi:home'}}));
-  else input(icon,'mdi:home');
+  const icon = q('hp-icon-picker#marker-icon');
+  await icon.updateComplete;
+  const iconRoot=icon.shadowRoot,iconField=iconRoot.querySelector('.field'),iconTrigger=iconRoot.querySelector('.trigger');
+  o.iconFieldHasPreview = !!iconRoot.querySelector('.trigger > svg:not(.arrow) path');
+  o.noDuplicateLegacyIconControls = !q('.iconauto .hpf-link') && !q('.hpf-iconclear')
+    && iconRoot.querySelectorAll('.clear').length <= 1;
+  iconTrigger.focus();
+  const iconPaint = getComputedStyle(iconField);
+  o.localPickerHasSingleFocusOwner = icon.tagName === 'HP-ICON-PICKER'
+    && parseFloat(iconPaint.borderTopWidth) === 1 && iconPaint.borderTopColor !== 'rgba(0, 0, 0, 0)'
+    && iconPaint.boxShadow === 'none' && iconField.matches(':focus-within')
+    && getComputedStyle(iconTrigger).outlineStyle === 'none'
+    && getComputedStyle(icon).outlineStyle === 'none'
+    && parseFloat(getComputedStyle(iconTrigger).borderTopWidth) === 0;
+  icon.dispatchEvent(new CustomEvent('value-changed',{detail:{value:'mdi:home'}}));
   await upd(); o.manualIconWrites = c._markerDialog.icon === 'mdi:home';
-  if (icon.tagName === 'HA-ICON-PICKER') icon.dispatchEvent(new CustomEvent('value-changed',{detail:{value:''}}));
-  else input(icon,'');
+  icon.dispatchEvent(new CustomEvent('value-changed',{detail:{value:''}}));
   await upd(); o.clearResetsIcon = c._markerDialog.icon === '';
   const displayField=q('#marker-display')?.closest('.hpf-field');
   o.displaySelectWithContextualHelp = !!q('#marker-display.hpf-select')

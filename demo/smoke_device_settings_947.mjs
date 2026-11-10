@@ -42,7 +42,7 @@ try{
   out[`${name}_battery_then_signal`]=await dialog.evaluate(el=>el.querySelector('#marker-hide-battery').closest('.hpf-section').nextElementSibling?.contains(el.querySelector('#marker-hide-signal')));
   if(name==='led'){
    out.owned_led_note_is_contextual=await dialog.locator('.led-representation').evaluate(el=>!el.querySelector('.hpf-note,.hpf-callout')&&!!el.querySelector('hp-help[instant]')?.text?.trim());
-   out.owned_led_action_after_icon=await dialog.evaluate(el=>{const icon=el.querySelector('.hpf-iconfield'),led=el.querySelector('[data-led-action="show-icon"]'),display=el.querySelector('#marker-display');return !!led&&!!(icon.compareDocumentPosition(led)&Node.DOCUMENT_POSITION_FOLLOWING)&&!!(led.compareDocumentPosition(display)&Node.DOCUMENT_POSITION_FOLLOWING);});
+   out.owned_led_action_after_icon=await dialog.evaluate(el=>{const icon=el.querySelector('hp-icon-picker#marker-icon'),led=el.querySelector('[data-led-action="show-icon"]'),display=el.querySelector('#marker-display');return !!icon&&!!led&&!!display&&!!(icon.compareDocumentPosition(led)&Node.DOCUMENT_POSITION_FOLLOWING)&&!!(led.compareDocumentPosition(display)&Node.DOCUMENT_POSITION_FOLLOWING);});
    out.led72=await dialog.locator('hp-device-preview .value-badge').textContent().then(t=>t.includes('72'));
    const display=dialog.locator('#marker-display'),originalDisplay=await display.inputValue();
    await display.selectOption('icon_ripple');await tick();

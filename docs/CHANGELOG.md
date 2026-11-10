@@ -4,6 +4,8 @@
 
 ## v1.85.1 — 2026-11-10
 
+- Align the remaining device-form/preview/icon regression witnesses with the local picker and pin the accepted keyboard-focus state for batch goldens; preserve accepted PNGs and comparison thresholds.
+
 - Bring the reviewed 1.85.1 beta fixes to stable: retained View/editor transitions, closed-room recognition with dangling walls, glass-door light transmission, UI Kit label activation and consistent editor toolbars (#1344, #1346, #1348, #1349, #1350, #1351, #1352).
 - Adapt the header to two measured rows before collapsing into a full-width actions menu, preserve native HA sidebar state and keyboard focus, and allow immediate dragging after double-click fit (#1347, #1364, #1365, #1371).
 - Keep device settings navigation reachable through independent scrolling; retain dropdowns and Help after queued scroll, room controls during resize preview and LED actions after leaving an editor (#1354, #1356, #1358, #1359, #1360, #1361).
