@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8724,
+  "revision": 8725,
   "nextTicket": 352,
   "nextFence": 352,
   "tasks": {
@@ -4303,7 +4303,10 @@
         "tests_backend/test_wall_segment_model.py",
         "tests_backend/wall_node_delete_parity.py",
         "tests_backend/wall_node_parity.py"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1794326236470,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     }
   },
   "ownerDecisions": {},
@@ -4515,6 +4518,10 @@
     },
     "github:42849664473:1:completions:message:52a90609355aad4aa327a745ca9fa8b275a9d01b7dc96680ef5ecdec855c91c2": {
       "digest": "71394b73825a0fae98b87e52fe2e214e001514fac4fe7f0ed549cfe642487d6f",
+      "issue": 1380
+    },
+    "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:3:automation-pending": {
+      "digest": "7b89c04ff1563d91899bd8ca72b8dc39c081ab994763116d3d15f2a8c35eaf46",
       "issue": 1380
     },
     "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e": {
