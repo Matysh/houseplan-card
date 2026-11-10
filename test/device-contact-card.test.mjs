@@ -4,6 +4,30 @@ import { contactValueFrameChanged,syncHouseplanDeviceContacts } from '../test-bu
 import { spaceModels } from '../test-build/space-geometry.js';
 import { floorGeometryKeyReader } from '../test-build/floor-geometry-key.js';
 
+test('#1003 contour-only sync invalidates hits without scheduling another editor frame', () => {
+  for (const [before, after, changed, expectedUpdates] of [
+    [false, false, true, 0], [false, true, true, 1],
+    [true, false, true, 1], [false, false, false, 0],
+  ]) {
+    let updates = 0, hits = 0;
+    const host = {
+      _renderProjection: 'flat', _mode: 'plan', _markup: true,
+      _kioskScale: { icon: 1 }, _renderDevices: [], _deviceHits: {}, renderRoot: {},
+      _layout: {}, _rotation: 0, _cfgEpoch: 1, _renderCfg: { spaces: [] },
+      _curSpaceCfg: { id: 'floor', rooms: [], cell_cm: 5 },
+      _spaceModel: () => ({ id: 'floor', rooms: [], cell_cm: 5 }),
+      _spaceDisplayForRender: () => ({ showBorders: true }),
+      _wallUnionGeometry: () => ({ components: [] }), _zeroWalls: () => ({ lines: [] }),
+      _invalidateDeviceHitGeometry: () => hits++, requestUpdate: () => updates++,
+    };
+    const renderer = { reflowed: before, hit: () => {}, clear: () => {},
+      sync: () => { renderer.reflowed = after; return changed; } };
+    syncHouseplanDeviceContacts(host, renderer);
+    assert.equal(hits, Number(changed), 'a changed contour retires hit geometry');
+    assert.equal(updates, expectedUpdates, `reflow ${before} → ${after}, changed=${changed}`);
+  }
+});
+
 test('#1003 only the held component value rows bypass ordinary gesture deferral',()=>{
   const before={states:{'sensor.a':{state:'23'},'sensor.other':{state:'0'}}};
   const host={_deviceDrag:{id:'a'},_renderDevices:[{id:'a',entities:['sensor.a']}],

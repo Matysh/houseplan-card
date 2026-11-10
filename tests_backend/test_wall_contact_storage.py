@@ -18,6 +18,19 @@ from custom_components.houseplan.plan_graph_exact import (
 )
 
 
+@pytest.mark.parametrize("end,start,accepted", [(.5, .5, True), (.4, .6, False), (.6, .4, False)])
+def test_legacy_carrier_chain_independently_refuses_interior_gaps_and_overlaps(end, start, accepted):
+    """Exercise the chain proof, not a graph projection refusal before that proof."""
+    source = {"id": "branch", "a": [0, 0], "b": [1, 0], "cm": 15}
+    walls = [{**source, "b": [end, 0]}, {**source, "id": "tail", "a": [start, 0]}]
+    old = {"id": "door", "length": .1, "angle": 0, "x": .2, "y": 0,
+           "host": {"kind": "partition", "id": "branch", "t": .2}}
+    new = {**old, "host": {"kind": "wall", "id": "branch", "t": .2 / end}}
+    assert same_partition_wall_chain_promotion(
+        old, new, source, walls, {"branch", "tail"}, [source],
+    ) is accepted
+
+
 def test_shared_derived_cut_has_one_storage_identity_and_survives_next_write():
     fixture = json.loads((Path(__file__).parents[1] / "test/fixtures/1166-shared-cut.json").read_text())
     candidate = commit_wall_segment_model(fixture["source"])[0]

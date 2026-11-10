@@ -90,14 +90,21 @@ try {
   for(const kind of ['drag','cancel','lostcapture','multi']) {
     await reset(); await click(200,250); p=await point(450,350);
     if(kind==='drag') { await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+40,p.y+20,{steps:5});await page.mouse.up(); }
-    else await card.locator('.stage').evaluate((el,{kind,p})=>{
+    else {
+      const retired = await card.locator('.stage').evaluate((el,{kind,p})=>{
       const fire=(type,id=41)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,composed:true,cancelable:true,
         pointerId:id,pointerType:'touch',isPrimary:id===41,button:0,clientX:p.x,clientY:p.y}));
       fire('pointerdown');
       if(kind==='multi'){fire('pointerdown',42);fire('pointerup',42);}
       else fire(kind==='cancel'?'pointercancel':'lostpointercapture');
+      // Read the mounted Line owner's retirement before a later pointerup or
+      // the common touch-click barrier can independently suppress the click.
+      const retired = !window.__card._editorRuntime.decorLine.owns(41);
       fire('pointerup');el.dispatchEvent(new MouseEvent('click',{bubbles:true,composed:true,clientX:p.x,clientY:p.y}));
-    },{kind,p});
+      return retired;
+      },{kind,p});
+      if(kind==='cancel'||kind==='lostcapture')check(`line.${kind}_retires_own_press`,retired);
+    }
     await settle();s=await state();check(`line.${kind}_no_segment`,s.decor.length,0);
     check(`line.${kind}_keeps_anchor`,!!s.anchor);
     // Navigation changed the viewport: resolve the next deliberate coordinates afresh.

@@ -1166,7 +1166,7 @@ const MUTANT_DEFINITIONS = [
     id:'background-stairs-stay-opaque-963',
     guard:'node demo/smoke_ui_polish_963.mjs',
     because:'#963 AC8: the computed standalone stair layer must join architecture opacity only in Background and restore in View; source data/geometry do not reveal the painted cascade.',
-    patches:[{file:'src/styles/plan.styles.ts',find:'.stage .hp-stairs-layer {',replace:'.stage .hp-stairs-layer-disabled {'}],
+    patches:[{file:'src/styles/plan.styles.ts',find:'.stage.mode-decor .hp-stairs-layer {',replace:'.stage.mode-decor .hp-stairs-layer-disabled {'}],
   },
   {
     id:'column-rotation-target-shrunk-963',
@@ -1513,8 +1513,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node --test test/device-contact-card.test.mjs',
     because: '#935: a real decor-size input must leave the contact wall cache warm; architectural inputs and different model/current records must still invalidate it.',
     patches: [{ file: 'src/structural-space-record.ts',
-      find: "key !== 'decor' && !nonStructural.includes(key)",
-      replace: "key !== '__mutation_never_excluded__' && !nonStructural.includes(key)" }],
+      find: "physicalRecord(record, ['decor', 'title', ...nonStructural])",
+      replace: "physicalRecord(record, ['__mutation_never_excluded__', 'title', ...nonStructural])" }],
   },
   {
     id: 'copy-attachments-bypass-upload-quota',
@@ -1554,6 +1554,11 @@ const MUTANT_DEFINITIONS = [
     "file": "custom_components/houseplan/websocket_api.py",
     "find": "            if not _check_write(hass, connection):\n                connection.send_error(msg[\"id\"], \"unauthorized\", \"Editing permission was lost\")\n                return\n            if not source_available():",
     "replace": "            if msg[\"id\"] < 0:\n                connection.send_error(msg[\"id\"], \"unauthorized\", \"Editing permission was lost\")\n                return\n            if not source_available():"
+  },
+  {
+    "file": "custom_components/houseplan/websocket_api.py",
+    "find": "await commit_history_pair(rt, session, pending, rollback, authorize=_write_authority(hass, connection))",
+    "replace": "await commit_history_pair(rt, session, pending, rollback, authorize=None)"
   }
 ],
   },
@@ -2405,7 +2410,10 @@ const MUTANT_DEFINITIONS = [
     because: '#890 AC6: a delayed transport reply across the actual HA/Lit intake lifecycle cannot authorize a different connection or install its old revisions.',
     patches: [{ file: 'src/houseplan-card.ts',
       find: "      if (!isCurrent() || acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });\n      this._adoption.acceptConfigWrite(canonicalCandidate, response);",
-      replace: "      if (acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });\n      this._adoption.acceptConfigWrite(canonicalCandidate, response);" }],
+      replace: "      if (acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });\n      this._adoption.acceptConfigWrite(canonicalCandidate, response);" },
+      { file: 'src/houseplan-card.ts',
+        find: '}, { isCurrent: () => isCurrent()\n        && (!acknowledgementCurrent || acknowledgementCurrent()) });',
+        replace: '}, { isCurrent: () => true\n        && (!acknowledgementCurrent || acknowledgementCurrent()) });' }],
   },
   {
     id: 'vacuum-route-write-forgets-canonical-attempt',
@@ -3477,7 +3485,8 @@ const MUTANT_DEFINITIONS = [
     because: '#866 AC9: a real 200-marker board paints an updated badge value through public options reconciliation while preserving its identical geometry and full-index build count.',
     patches: [{file:'src/device-contact-render.ts',
       find:'    if (sameGeometry) {',
-      replace:'    if (false && sameGeometry) {'}],
+      replace:'    if (false && sameGeometry) {'},
+      {file:'src/device-contact-render.ts',find:'    if(reusable) {',replace:'    if(reusable && !sameGeometry) {'}],
   },
   {
     id: 'device-contact-rounds-exact-drop-to-grid',
@@ -12495,8 +12504,8 @@ const MUTANT_DEFINITIONS = [
     because: '#997 AC3: without editor styles, native computed colours must keep the real header field readable in light/dark/custom themes; source tokens alone cannot prove painted contrast.',
     patches: [{
       file: 'src/hp-settings-select.ts',
-      find: 'border-radius:8px; background:var(--hpf-control-surface,var(--hpf-canvas,var(--secondary-background-color,color-mix(in srgb,var(--card-background-color,#202126) 90%,var(--primary-text-color,#e6e7eb)))));',
-      replace: 'border-radius:8px; background:var(--hpf-control-surface,var(--hpf-canvas,var(--secondary-background-color,#282930)));',
+      find: 'gap:8px; background:transparent; border-radius:7px 0 0 7px;',
+      replace: 'gap:8px; background:#282930; border-radius:7px 0 0 7px;',
     }],
   },
   {
@@ -16348,7 +16357,7 @@ const MUTANT_DEFINITIONS = [
       find: '    if (!assetReady) {\n'
         + "      host._continuity.note('asset-failed');",
       replace: '    if (!assetReady) {\n'
-        + '      adoption.acceptConfigWrite(candidateConfig ?? adoption.config!, cfgResp ?? {});\n'
+        + '      adoption.acceptConfigWrite(candidateConfig ?? adoption.config!, { rev: cfgResp?.rev });\n'
         + "      host._continuity.note('asset-failed');",
     }],
   },
@@ -18788,8 +18797,8 @@ const contact1003GuardCases=[
       find:'      && !contactValueFrameChanged(this.host,this.contacts,before,after);',replace:'      && true;'}],
   },
   {
-    id:'contact-contour-only-forces-axis-frame-1003',guard:'node demo/smoke_device_contact_editor_frame.mjs',
-    because:'#1003 AC14/AC15: only the mounted room-resize live/axis layer lifecycle exposes a spurious contact-only rerender duplicating measured edges and leaders.',
+    id:'contact-contour-only-forces-axis-frame-1003',guard:'node --test test/device-contact-card.test.mjs',
+    because:'#1003 AC14/AC15: a contour-only adapter change invalidates hits without requesting an extra editor frame; a real contact reflow still requests one. The browser frame smoke separately covers the live/axis layer.',
     patches:[{file:'src/device-contact-card.ts',find:'    if(wasReflowed||renderer.reflowed)host.requestUpdate();',
       replace:'    host.requestUpdate();'}],
   },
@@ -18969,8 +18978,8 @@ const decorLine1046Cases = [
       replace:"private _runNodeHistory(direction: 'undo' | 'redo'): void {"}] },
   { id:'decor-line-synthetic-click-accepted-1046', guard:'node --test test/decor-line-drawing.test.mjs',
     because:'#1046 AC4: a click without its own clean pointer pair cannot author a segment.',
-    patches:[{file:'src/editors/decor/line-drawing.ts',find:'if (!ready || suppressed || !this.sync() || this.port.blocked()',
-      replace:'if (suppressed || !this.sync() || this.port.blocked()'}] },
+    patches:[{file:'src/editors/decor/line-drawing.ts',find:'const ready = this.ready; this.ready = null;',
+      replace:"const ready = this.ready ?? { x:event.clientX, y:event.clientY, type:'mouse' }; this.ready = null;"}] },
   { id:'decor-line-shift-ray-bypassed-1046', guard:'node --test test/decor-line-drawing.test.mjs',
     because:'#1046 AC2: an incompatible positional magnet cannot skew an exact Shift ray.',
     patches:[{file:'src/editors/decor/line-drawing.ts',find:'if (!shift) return magnet;',replace:'if (true) return magnet;'}] },
@@ -19091,10 +19100,10 @@ const decorGroup1038Cases = [
 
 const editorLatency1075Cases = [
   {id:'decor-history-rebuilds-physical-walls-1075', guard:compiledNodeSmoke('smoke_editor_command_latency'),
-    because:'#1075 AC8: native furniture Undo/Redo must preserve warm structural cache builds and identical cold-reference SVG; a pure helper cannot prove the mounted history caller uses it.',
-    patches:[{file:'src/houseplan-editor-runtime.ts',
-      find:'const decorOnly = !host._pendingPhysicalWrites.size && restoreDecorOnlyHistory(config, before, target);',
-      replace:'const decorOnly = host._pendingPhysicalWrites.size < 0 && restoreDecorOnlyHistory(config, before, target);'}]},
+    because:'#1075 AC8: native furniture Undo/Redo must preserve warm physical caches and identical cold-reference SVG. Mutate the current physical-key owner: generic nonphysical restore now also preserves the old decor-only fast path.',
+    patches:[{file:'src/structural-space-record.ts',
+      find:"physicalRecord(record, ['decor', 'title', ...nonStructural])",
+      replace:"physicalRecord(record, ['__mutation_never_excluded__', 'title', ...nonStructural])"}]},
   {id:'decor-history-physical-delta-ignored-1075',
     guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/decor-history-restore.test.mjs',
     because:'#1075 AC8: changed walls, stairs, transforms and unknown non-decor fields must retain the strict restore lane.',
@@ -19129,8 +19138,8 @@ const decorStyle1071Cases = [
     guard: compiledNodeSmoke('smoke_decor_group_style_cache'),
     because: '#1071 AC1/2: a native sidebar colour/alpha commit keeps warm structural builds and identical cold-reference walls; annotations never enter masonry keys.',
     patches: [{file:'src/structural-space-record.ts',
-      find:"key !== 'decor' && !nonStructural.includes(key)",
-      replace:'!nonStructural.includes(key)'}],
+      find:"physicalRecord(record, ['decor', 'title', ...nonStructural])",
+      replace:"physicalRecord(record, ['__mutation_never_excluded__', 'title', ...nonStructural])"}],
   },
 ];
 
