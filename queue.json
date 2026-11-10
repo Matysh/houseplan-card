@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8760,
+  "revision": 8761,
   "nextTicket": 353,
   "nextFence": 353,
   "tasks": {
@@ -4701,6 +4701,10 @@
       "digest": "ee4ec6648e854d2f99861079c81f14154ab4d102e1de637fef85c2d258d342a0",
       "issue": 1380
     },
+    "github:42855850935:1:completions:message:b2032b9b0ad612f537c08ca7f218f3fdaf0c53420906d12abc2a466b15059187": {
+      "digest": "34064f35aa68d36c12f84122f823b31e20a79ed84328c098decbc3776c05889d",
+      "issue": 1380
+    },
     "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e": {
       "digest": "7a359aa9115de97157f2897b2fd26bc651bbe70173af935ba2b921c02b237648",
       "issue": 1380,
@@ -4747,7 +4751,8 @@
           "entry": 1,
           "detail": "Поведение: process-next/test/golden-floor-continuity.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Backend: tests_backend/test_wall_node_dependency_carrier.py: failed",
           "eventId": "finish:867b842b-dd9a-407f-b2f8-bbfb5787fb9e:finish:6:return:return:1380"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:1947ca70-41f5-4eeb-9eff-b685e745d5c3": {
