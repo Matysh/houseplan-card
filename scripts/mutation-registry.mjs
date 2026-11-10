@@ -17033,8 +17033,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'warm-resume-overwrites-view-return-camera',
-    guard: 'node demo/smoke_warm_mode_adoption.mjs',
-    because: '#762 AC1: delayed entry must preserve the original View return camera, not the temporary editor viewport',
+    guard: 'node --test test/warm-mode-adoption.test.mjs',
+    because: '#762 AC1/#1234: the direct committed-mode fixture overwrites the View return slot and proves that adoption restores its original identity. Current mounted navigation independently retains that slot. Native remount/exit camera checks remain separate.',
     patches: [{ file: 'src/warm-mode-adoption.ts',
       find: 'if (host._warmVp && host._mode === mode) host._viewModeSnap = viewModeSnap;',
       replace: 'if (host._warmVp && host._mode === mode) void viewModeSnap; // mutant: keep the overwritten snapshot',

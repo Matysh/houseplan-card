@@ -70,8 +70,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 105 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 107 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 58 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 275 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **558 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
+| Custom-element and HA browser lifecycle | 274 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **557 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
 
 
 ## Historical measurements (2026-09-27)
@@ -421,6 +421,15 @@ The intrinsic compact header now remains one row; its native smoke alone cannot
 prove the old two-row arithmetic. The direct cases check canonical dimensions
 and both fixed/fractional budget branches. Native mode navigation, animation
 and settled menu hit-testing remain covered by the unchanged product routes.
+
+The two historical warm-adoption witnesses now use the existing direct
+`warm-mode-adoption` suite: #1234 moved camera-hold release to the actual
+two-frame completion, and mounted navigation independently retains the View
+return slot. The committed-mode fixture deliberately overwrites that slot
+and checks identity plus release ownership. Native remount, pan, resize and
+exit-camera coverage remains unchanged. The five legacy wall-identity
+witnesses likewise target the retained v10 decoder suite, not the current
+graph facade used by the separate strict TS/Python parity run.
 
 - `furniture-release-ignores-pan-1081`
 
@@ -1289,7 +1298,6 @@ owner, with no settled copy surviving the next presented frame.
 - `warm-late-resume-crosses-space`
 - `warm-pending-mode-leaves-revive-waiting`
 - `warm-resume-camera-depends-on-dialog`
-- `warm-resume-overwrites-view-return-camera`
 - `writer-history-skips-finished-chain-normalization`
 - `zigbee-topology-endpoint-cleanup-skipped`
 - `zigbee-topology-endpoint-elevation-removed`

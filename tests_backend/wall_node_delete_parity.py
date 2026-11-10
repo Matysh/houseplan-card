@@ -8,7 +8,6 @@ from pure_imports import pure_module
 from wall_node_parity import ROOT, commit, frontend, same
 
 
-
 def run(build_dir):
     with pure_module("custom_components.houseplan.wall_node_delete",
                      ROOT / "custom_components/houseplan/wall_node_delete.py") as module:

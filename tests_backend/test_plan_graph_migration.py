@@ -17,6 +17,7 @@ CORPUS = json.loads((Path(__file__).parents[1] / "test/fixtures/plan-graph-corpu
 @pytest.mark.parametrize("angle", [0, 45, 137])
 def test_1380_overlay_index_preserves_complete_exhaustive_result_and_order(monkeypatch, angle):
     import math
+
     import custom_components.houseplan.plan_graph_migration as migration
 
     cosine, sine = math.cos(math.radians(angle)), math.sin(math.radians(angle))
