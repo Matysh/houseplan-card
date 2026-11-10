@@ -13,7 +13,6 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { isGeometryCleanupRefusal } from './config-adoption';
 import { formatLatticeShiftCm } from './coordinate-canonicalization';
 import type { DeviceLayout } from './device-position-history';
 import { haRegistryDiagnostics } from './ha-binding-status';
@@ -33,9 +32,13 @@ import type {
 import type { ServerConfig } from './types';
 import type { OptimizeSource, OptimizeWriteGuard, sameOptimizeSource } from './optimize-source';
 import { contentFingerprint } from './visual-continuity';
+import type { optimizeFailure, optimizeFailureDiagnostics, OptimizeWriteFailure,
+  OptimizeReceipt, OptimizeStatusState } from './optimize-feedback';
+import type { OptimizeReloadResult } from './optimize-reload';
+import type { renderOptimizeStatus } from './optimize-status';
 
 /** Optimization preview plus the exact pair, so commit cannot differ from it. */
-export type OptimizePlansDialogState = {
+export type OptimizePreviewState = {
     report: OptimizeReport; config: any; layout: Record<string, any>;
     preflight: OptimizeGeometryPreflightResult | null;
     /** the promised maximum, in centimetres, ALREADY rounded up (AUD-158B1-01) */
@@ -53,7 +56,21 @@ export type OptimizePlansDialogState = {
     retrying?: boolean;
     /** #869: the last re-check still brought no complete registry. */
     retryFailed?: boolean;
+    phase?: 'preview' | 'saving' | 'verifying' | 'result';
+    outcome?: 'clean' | 'limited' | 'remaining' | 'unchecked' | 'stale';
+    afterReport?: OptimizeReport;
+    replacesUndo?: boolean;
+    canUndo?: boolean;
 };
+export type OptimizePlansDialogState = OptimizePreviewState | OptimizeStatusState;
+const previewState = (state: OptimizePlansDialogState | null): state is OptimizePreviewState =>
+  !!state && 'report' in state;
+
+export function optimizeHasObservations(report: OptimizeReport): boolean {
+  return !!(report.wallsStraightenSkipped || report.nestedRefsUnresolved
+    || report.liveMissingPositions.length || report.unverifiedPositions.length
+    || report.invalidPositionsRetained.length || report.registryAuthoritative === false);
+}
 
 /**
  * Всё, что диалогу нужно от редактора. Порт собирает рантайм в конструкторе;
@@ -78,14 +95,15 @@ export interface OptimizePlansDialogPort {
   requestUpdate(): void;
   showToast(message: string, id?: string): void;
   captureToast?(): (message: string, id?: string) => void;
-  errorText(error: unknown): string;
+  support(message: string): boolean;
   checkGeometry(config: ServerConfig): OptimizeGeometryPreflightResult;
   referenceContext(removeLiveMissingPositions: boolean, removeInvalidMissingPositions?: boolean): SpaceReferenceRepairContext;
-  showMigrationBlocked(error: unknown): void;
+  /** In a browser resolves after a presented frame; synchronous ports are useful in pure tests. */
+  present(): void | Promise<void>;
   clearGeometryGesture(): void;
-  commit(config: ServerConfig, layout: DeviceLayout, guard: OptimizeWriteGuard): Promise<void>;
+  commit(config: ServerConfig, layout: DeviceLayout, guard: OptimizeWriteGuard): Promise<OptimizeReceipt>;
   /** a write conflict reloads both stores before the error toast */
-  reloadAfterConflict(): Promise<unknown>;
+  reloadAfterConflict(): Promise<OptimizeReloadResult>;
   /** #780: strips passing through walls of the optimised result (lazy LED tool). */
   ledNote(): TemplateResult | typeof nothing;
 }
@@ -133,6 +151,13 @@ export function preflightVersionsDiffer(integration: string | null, cardVersion:
 export interface OptimizePlansDialogOptions {
   optimize: typeof optimizePlans;
   sourceMatches: typeof sameOptimizeSource;
+  /** Like optimize itself, eager editor helpers are injected to keep raw-URL exports stable. */
+  feedback: {
+    failure: typeof optimizeFailure;
+    diagnostics: typeof optimizeFailureDiagnostics;
+    isWriteFailure(error: unknown): error is OptimizeWriteFailure;
+    renderStatus: typeof renderOptimizeStatus;
+  };
   /** the bounded wait of «Check again», 10 s by default */
   registryRetryMs?: number;
 }
@@ -149,6 +174,25 @@ export class OptimizePlansDialog {
   private reportedFingerprint: string | null = null;
 
   private readonly registryRetryMs: number;
+  private operation: { state: OptimizePlansDialogState } | null = null;
+  private uncertain: OptimizeStatusState | null = null;
+
+  public retire(): void { this.operation = null; this.uncertain = null; }
+
+  private owns(source: OptimizeSource): boolean {
+    return source.authorityCurrent?.() !== false && source.connection === this.port.source().connection;
+  }
+
+  /** Closing changes visibility, not the ownership of an already dispatched request. */
+  private publish(owner: { state: OptimizePlansDialogState }, state: OptimizePlansDialogState): boolean {
+    if (this.operation !== owner || !this.owns(owner.state.source)) return false;
+    const visible = this.port.dialog() === owner.state;
+    owner.state = state;
+    if (visible) this.port.setDialog(state);
+    return true;
+  }
+
+  private close = (): void => { this.port.setDialog(null); };
 
   public constructor(
     private readonly port: OptimizePlansDialogPort,
@@ -185,26 +229,9 @@ export class OptimizePlansDialog {
   public async copyDiagnostics(): Promise<void> {
     const showToast = this.port.captureToast?.() ?? ((message: string, id?: string) => this.port.showToast(message, id));
     const dialog = this.port.dialog();
-    const preflight = dialog?.preflight;
     if (!dialog) return;
-    let text: string;
-    if (preflight && !preflight.ok) {
-      text = JSON.stringify(
-        this.diagnostics(preflight, dialog.config ?? null), null, 2,
-      );
-    } else if (dialog.report.unverifiedPositions.length) {
-      // #869: without a geometry refusal the button copies the unmatched records.
-      text = JSON.stringify(unverifiedDiagnostics({
-        items: dialog.report.unverifiedPositions,
-        registry: haRegistryDiagnostics(this.port.hass()),
-        analysisAuthoritative: dialog.report.registryAuthoritative === true,
-        cardVersion: this.port.cardVersion(),
-        integrationVersion: this.port.integrationVersion(),
-        now: new Date(),
-      }), null, 2);
-    } else {
-      return;
-    }
+    const text = this.diagnosticText(dialog);
+    if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
       if (this.fallbacks.delete(dialog)) this.port.requestUpdate();
@@ -217,11 +244,57 @@ export class OptimizePlansDialog {
     }
   }
 
+  private diagnosticText(dialog: OptimizePlansDialogState): string | null {
+    if (!previewState(dialog)) return dialog.failure ? JSON.stringify(this.options.feedback.diagnostics(
+      dialog.failure, dialog.source, { card: this.port.cardVersion(), integration: this.port.integrationVersion() },
+    ), null, 2) : null;
+    if (dialog.preflight && !dialog.preflight.ok)
+      return JSON.stringify(this.diagnostics(dialog.preflight, dialog.config ?? null), null, 2);
+    const report = dialog.afterReport ?? dialog.report;
+    if (report.unverifiedPositions.length) return JSON.stringify(unverifiedDiagnostics({
+      items: report.unverifiedPositions, registry: haRegistryDiagnostics(this.port.hass()),
+      analysisAuthoritative: report.registryAuthoritative === true,
+      cardVersion: this.port.cardVersion(), integrationVersion: this.port.integrationVersion(), now: new Date(),
+    }), null, 2);
+    return dialog.outcome && dialog.outcome !== 'clean' ? JSON.stringify({
+      kind: 'houseplan-optimize-result', outcome: dialog.outcome,
+      cardVersion: this.port.cardVersion(), integrationVersion: this.port.integrationVersion(),
+      configRev: dialog.source.configRev, layoutRev: dialog.source.layoutRev,
+      configFingerprint: dialog.source.configFingerprint, layoutFingerprint: dialog.source.layoutFingerprint,
+      wallsSkipped: report.wallsStraightenSkipped, unverified: report.unverifiedPositions.length,
+      retainedPositions: report.liveMissingPositions.length, unresolvedReferences: report.nestedRefsUnresolved,
+    }, null, 2) : null;
+  }
+
+  private support = (): void => {
+    const state = this.port.dialog();
+    if (!state) return;
+    // The existing support message has a 10,000-code-point limit. A large
+    // preflight retains its copy action; only the bounded summary is prefilled.
+    let diagnostic = this.diagnosticText(state);
+    if (diagnostic && [...diagnostic].length > 7000) diagnostic = JSON.stringify({
+      kind: 'houseplan-optimize', summaryOnly: true, cardVersion: this.port.cardVersion(),
+      configRev: state.source.configRev, layoutRev: state.source.layoutRev,
+    });
+    const message = `${this.port.t('gs.optimize_support_intro')}\n${diagnostic || ''}`;
+    if (this.port.support(message)) this.close();
+    else this.port.showToast(this.port.t('gs.optimize_support_busy'), 'gs.optimize_support_busy');
+  };
+
   /**
    * Preview whole-plan maintenance. Nothing is written here: the pure run
    * produces both the report and the exact config/layout pair to commit.
    */
-  public preview(removeLiveMissingPositions: boolean, removeInvalidMissingPositions = false): void {
+  public preview(removeLiveMissingPositions: boolean, removeInvalidMissingPositions = false,
+    replacesUndo = false): void | Promise<void> {
+    if (this.operation && !this.owns(this.operation.state.source)) this.operation = null;
+    if (this.uncertain && !this.owns(this.uncertain.source)) this.uncertain = null;
+    if (this.operation && this.owns(this.operation.state.source)) {
+      this.port.setDialog(this.operation.state); return;
+    }
+    if (this.uncertain && this.owns(this.uncertain.source)) {
+      this.port.setDialog(this.uncertain); return;
+    }
     const config = this.port.config();
     if (!this.port.canWrite()) {
       this.port.showToast(this.port.t('gs.optimize_write_required'), 'gs.optimize_write_required');
@@ -229,18 +302,36 @@ export class OptimizePlansDialog {
     }
     if (!this.port.planReady() || !config) return;
     const source = this.port.source();
+    const pending: OptimizeStatusState = { phase: 'checking', busy: true, source, config };
+    const owner = { state: pending as OptimizePlansDialogState };
+    this.operation = owner;
+    this.port.setDialog(pending);
+    const calculate = (): void => {
+      if (this.operation !== owner || !this.owns(source)) return;
+      if (this.port.dialog() !== pending) { this.operation = null; return; }
+      if (!this.port.canWrite() || !this.options.sourceMatches(source, this.port.source())) {
+        this.publish(owner, { ...pending, phase: 'failure', busy: false,
+          failure: this.options.feedback.failure({ code: this.port.canWrite() ? 'optimize_preview_changed' : 'unauthorized' }, config, 'checking') });
+        this.operation = null; return;
+      }
+      try {
+        this.publish(owner, this.calculatePreview(config, source, removeLiveMissingPositions, removeInvalidMissingPositions, replacesUndo));
+      } catch (error) {
+        this.publish(owner, { ...pending, phase: 'failure', busy: false, failure: this.options.feedback.failure(error, config, 'checking') });
+      } finally { if (this.operation === owner) this.operation = null; }
+    };
+    const presented = this.port.present();
+    return presented ? presented.then(calculate) : calculate();
+  }
+
+  private calculatePreview(config: ServerConfig, source: OptimizeSource, removeLiveMissingPositions: boolean,
+    removeInvalidMissingPositions: boolean, replacesUndo: boolean): OptimizePreviewState {
     const spaces = config.spaces || [];
-    let r;
-    try {
-      r = this.options.optimize(
+    const r = this.options.optimize(
         config,
         this.port.layout() || {},
         this.port.referenceContext(removeLiveMissingPositions, removeInvalidMissingPositions),
       );
-    } catch (error) {
-      this.port.showMigrationBlocked(error);
-      return;
-    }
     const preflight = r.changed ? this.port.checkGeometry(r.config) : null;
     if (preflight) this.reportPreflightFailure(preflight, r.config);
     // The maximum geometry shift is an UPPER BOUND, not a sample. The run
@@ -258,32 +349,32 @@ export class OptimizePlansDialog {
         typeof room === 'string' && !!room && !rooms.has(room)))
       .map((marker) => String(marker.name || marker.id));
     // A new dialog object also starts without an inline clipboard fallback.
-    this.port.setDialog({
+    return {
       report: r.report, config: r.config, layout: r.layout, cm, where,
       preflight, changed: r.changed, busy: false, removeLiveMissingPositions,
       removeInvalidMissingPositions, source,
-      vacuumNames,
-    });
+      vacuumNames, replacesUndo,
+    };
   }
 
-  public open(): void { this.preview(false); }
+  public open(): void | Promise<void> { return this.preview(false); }
 
   public toggleLivePositions(): void {
     const dialog = this.port.dialog();
-    if (!dialog || dialog.busy || dialog.retrying || !dialog.report.liveMissingPositions.length) return;
+    if (!previewState(dialog) || dialog.outcome || dialog.busy || dialog.retrying || !dialog.report.liveMissingPositions.length) return;
     if (this.refreshChanged(dialog)) return;
-    this.preview(!dialog.removeLiveMissingPositions, dialog.removeInvalidMissingPositions);
+    void this.preview(!dialog.removeLiveMissingPositions, dialog.removeInvalidMissingPositions, !!dialog.replacesUndo);
   }
 
   public toggleInvalidPositions(): void {
     const d = this.port.dialog();
-    if (!d || d.busy || d.retrying || (d.changed && !d.preflight?.ok)
+    if (!previewState(d) || d.outcome || d.busy || d.retrying || (d.changed && !d.preflight?.ok)
       || !d.report.invalidPositionsEligible.length) return;
     if (this.refreshChanged(d)) return;
-    this.preview(d.removeLiveMissingPositions, !d.removeInvalidMissingPositions);
+    void this.preview(d.removeLiveMissingPositions, !d.removeInvalidMissingPositions, !!d.replacesUndo);
   }
 
-  private refreshChanged(d: OptimizePlansDialogState): boolean {
+  private refreshChanged(d: OptimizePreviewState): boolean {
     if (this.options.sourceMatches(d.source, this.port.source())) return false;
     this.preview(false, false);
     this.port.showToast(this.port.t('gs.optimize_preview_changed'), 'gs.optimize_preview_changed');
@@ -298,13 +389,13 @@ export class OptimizePlansDialog {
    */
   public async retryRegistry(): Promise<void> {
     const dialog = this.port.dialog();
-    if (!dialog || dialog.busy || dialog.retrying) return;
+    if (!previewState(dialog) || dialog.busy || dialog.retrying) return;
     const pending = { ...dialog, retrying: true, retryFailed: false };
     this.port.setDialog(pending);
     const complete = await reloadHaRegistriesBounded(this.port.hass(), this.registryRetryMs);
     if (this.port.dialog() !== pending) return;
     // New evidence requires a new opt-in; never carry deletion consent across a refresh.
-    if (complete) this.preview(false, false);
+    if (complete) await this.preview(false, false, (!!dialog.outcome && dialog.canUndo === true) || !!dialog.replacesUndo);
     if (this.port.dialog() === pending) {
       this.port.setDialog({ ...pending, retrying: false, retryFailed: !complete });
     }
@@ -316,76 +407,125 @@ export class OptimizePlansDialog {
    */
   public async run(): Promise<void> {
     const showToast = this.port.captureToast?.() ?? ((message: string, id?: string) => this.port.showToast(message, id));
-    let d = this.port.dialog();
+    const d = this.port.dialog();
     if (!this.port.canWrite()) {
       this.port.showToast(this.port.t('gs.optimize_write_required'), 'gs.optimize_write_required');
       return;
     }
-    if (d?.retrying) return; // #869: the re-check may still rebuild this preview
-    if (!d || d.busy || !this.port.config() || !d.changed || !d.preflight?.ok) return;
+    if (!previewState(d) || d.outcome || d.retrying || this.operation || this.uncertain) return;
+    if (d.busy || !this.port.config() || !d.changed || !d.preflight?.ok) return;
     if (!this.options.sourceMatches(d.source, this.port.source())) {
-      this.preview(false, false);
+      await this.preview(false, false);
       this.port.showToast(this.port.t('gs.optimize_preview_changed'), 'gs.optimize_preview_changed');
       return;
     }
-    const fingerprint = contentFingerprint(d.config);
-    if (d.preflight.fingerprint !== fingerprint) {
-      const preflight = this.port.checkGeometry(d.config);
-      this.reportPreflightFailure(preflight, d.config);
-      d = { ...d, preflight };
-      this.port.setDialog(d);
-      if (!preflight.ok) return;
-    }
-    this.port.clearGeometryGesture();
-    const pending = { ...d, busy: true };
+    const pending: OptimizePreviewState = { ...d, busy: true, phase: 'saving' };
+    const owner = { state: pending as OptimizePlansDialogState };
+    this.operation = owner;
     this.port.setDialog(pending);
+    let commitStarted = false;
+    let accepted = false;
     try {
-      await this.port.commit(d.config, d.layout, {
+      await this.port.present();
+      if (!this.owns(d.source) || this.operation !== owner) return;
+      if (d.preflight.fingerprint !== contentFingerprint(d.config)) {
+        const preflight = this.port.checkGeometry(d.config);
+        this.reportPreflightFailure(preflight, d.config);
+        if (!preflight.ok) { this.publish(owner, { ...d, preflight, busy: false }); return; }
+      }
+      this.port.clearGeometryGesture();
+      commitStarted = true;
+      const receipt = await this.port.commit(d.config, d.layout, {
         source: d.source, current: () => this.port.source(), canWrite: () => this.port.canWrite(),
       });
-      if (this.port.dialog() !== pending || !this.port.canWrite()) return;
-      if (d.removeInvalidMissingPositions) {
-        this.preview(false, false);
-        showToast(this.port.t('gs.optimize_invalid_done', {
-          n: String(d.report.invalidPositionsRemoved.length),
-        }), 'gs.optimize_invalid_done');
-      } else this.port.setDialog(null);
-      if (d.removeInvalidMissingPositions) return;
-      showToast(this.port.t('gs.align_done', {
-        n: String(d.report.moved),
-        m: String(d.report.migrated + d.report.canonicalized
-          + d.report.coordsCanonicalized + d.report.latticeCoordinatesCanonicalized
-          + d.report.wallsMerged + d.report.spansMerged
-          + d.report.partitionsMerged + d.report.partitionsReconciled
-          + d.report.openingsRehosted + (d.report.openingParametersCanonicalized || 0) + d.report.wallsStraightened),
-        r: String(d.report.spaceRefsRemapped + d.report.roomRefsRemapped
-          + d.report.positionsRemapped + d.report.markersDetached
-          + d.report.orphanRoomLabelsRemoved + d.report.orphanDevicePositionsRemoved
-          + d.report.orphanGroupPositionsRemoved + d.report.invalidPositionsRemoved.length),
-      }), 'gs.align_done');
-    } catch (e: any) { // any-ok: ответ WS HA не типизирован, code читается как у всех писателей конфига
-      const current = this.port.dialog();
-      if (current !== pending) return;
-      if (e?.code === 'optimize_preview_changed') {
-        if (this.port.canWrite()) this.preview(false, false);
-        else this.port.setDialog({ ...pending, busy: false });
-        const key = this.port.canWrite() ? 'gs.optimize_preview_changed' : 'gs.optimize_write_required';
-        showToast(this.port.t(key), key);
+      accepted = true;
+      await this.finishResult(owner, d, receipt);
+      if (this.owns(d.source) && (!this.port.dialog() || this.port.dialog() === owner.state))
+        showToast(this.port.t('gs.optimize_saved_title'), 'gs.optimize_saved_title');
+    } catch (error) {
+      if (this.operation !== owner || !this.owns(d.source)) return;
+      if (accepted || (this.options.feedback.isWriteFailure(error) && error.stage === 'acknowledged')) {
+        this.publish(owner, { ...d, phase: 'result', busy: false, outcome: 'unchecked' });
         return;
       }
-      if (current) this.port.setDialog({ ...current, busy: false });
-      if (e?.code === 'wall_model_client_outdated') {
-        showToast(this.port.t('toast.wall_model_client_outdated'), 'toast.wall_model_client_outdated');
-        return;
+      // A bare rejection from a writer is conservatively post-dispatch. Only
+      // the narrow writer's evidence can prove a before-dispatch refusal.
+      const failure = this.options.feedback.failure(error, d.config,
+        this.options.feedback.isWriteFailure(error) ? error.stage : commitStarted ? 'dispatched' : 'checking');
+      const next: OptimizeStatusState = { phase: failure.kind === 'unknown' ? 'unknown' : 'failure',
+        source: d.source, config: d.config, busy: false, failure };
+      this.publish(owner, next);
+      if (next.phase === 'unknown') this.uncertain = next;
+      if (!this.port.dialog() || this.port.dialog() === owner.state)
+        showToast(this.port.t(next.phase === 'unknown' ? 'gs.optimize_unknown_title' : 'gs.optimize_failed_title'));
+      if (failure.kind === 'changed' && this.port.canWrite()) {
+        this.operation = null;
+        await this.refresh();
       }
-      if (e?.code === 'conflict') {
-        await this.port.reloadAfterConflict();
-        if (this.port.dialog() !== current && this.port.dialog()?.source !== current.source) return;
-        if (this.port.canWrite()) this.preview(false, false);
-      }
-      if (!isGeometryCleanupRefusal(e)) showToast(this.port.t('toast.error', { err: this.port.errorText(e) }), 'toast.error');
+    } finally {
+      if (this.operation === owner) this.operation = null;
     }
   }
+
+  private async finishResult(owner: { state: OptimizePlansDialogState }, d: OptimizePreviewState,
+    receipt: OptimizeReceipt): Promise<void> {
+    if (!this.owns(d.source) || this.operation !== owner) return;
+    this.publish(owner, { ...d, phase: 'verifying', busy: true });
+    let outcome: NonNullable<OptimizePreviewState['outcome']> = 'unchecked';
+    let afterReport: OptimizeReport | undefined;
+    let source = this.port.source();
+    try {
+      if (!receipt.canonical && await this.port.reloadAfterConflict() !== 'adopted')
+        throw new Error('Canonical pair unavailable');
+      source = this.port.source();
+      if (source.configRev !== receipt.configRev || source.layoutRev !== receipt.layoutRev
+        || (receipt.canonical && (source.configFingerprint !== contentFingerprint(receipt.config)
+          || source.layoutFingerprint !== contentFingerprint(receipt.layout)))) outcome = 'stale';
+      else {
+        await this.port.present();
+        if (!this.port.canWrite() || !this.options.sourceMatches(source, this.port.source())) outcome = 'stale';
+        else {
+          const result = this.options.optimize(this.port.config()!, this.port.layout() || {},
+            this.port.referenceContext(d.removeLiveMissingPositions, d.removeInvalidMissingPositions));
+          afterReport = result.report;
+          outcome = !this.options.sourceMatches(source, this.port.source()) ? 'stale'
+            : result.changed ? 'remaining' : optimizeHasObservations(result.report) ? 'limited' : 'clean';
+        }
+      }
+    } catch { /* The save already succeeded. A failed postcheck is not a rejected save. */ }
+    this.publish(owner, { ...d, source, phase: 'result', busy: false, outcome, afterReport, canUndo: receipt.canUndo });
+  }
+
+  private recheck = (): void => {
+    const d = this.port.dialog();
+    if (previewState(d) && !d.busy) void this.preview(false, false, (!!d.outcome && d.canUndo === true) || !!d.replacesUndo);
+  };
+
+  private refresh = async (): Promise<void> => {
+    const d = this.port.dialog();
+    if (!d || d.busy || this.operation) return;
+    const uncertain = this.uncertain;
+    const pending: OptimizeStatusState = { phase: 'refreshing', config: this.port.config(),
+      source: this.port.source(), busy: true };
+    const owner = { state: pending as OptimizePlansDialogState };
+    this.operation = owner;
+    this.port.setDialog(pending);
+    let refreshed: OptimizeReloadResult = 'failed';
+    try { refreshed = await this.port.reloadAfterConflict(); } catch { /* A rejected read is not adoption. */ }
+    if (this.operation !== owner || !this.owns(pending.source)) return;
+    if (refreshed === 'adopted') {
+      const visible = this.port.dialog() === pending;
+      this.uncertain = null; this.operation = null;
+      if (visible) await this.preview(false, false);
+    } else {
+      const failed: OptimizeStatusState = uncertain ? { ...uncertain, refreshFailed: true }
+        : { ...pending, phase: 'failure', busy: false, refreshFailed: true,
+          failure: this.options.feedback.failure({ code: 'conflict' }, pending.config, 'refreshing') };
+      this.publish(owner, failed);
+      if (uncertain) this.uncertain = failed;
+      this.operation = null;
+    }
+  };
 
   /**
    * #869: records that could not be matched. One explanation (they belong to
@@ -393,7 +533,7 @@ export class OptimizePlansDialog {
    * the registry line with «Check again» when this analysis ran on incomplete
    * HA data, and the support copy whenever the geometry check did not refuse.
    */
-  private renderUnverified(d: OptimizePlansDialogState, failed: boolean): TemplateResult {
+  private renderUnverified(d: OptimizePreviewState, failed: boolean): TemplateResult {
     const items = d.report.unverifiedPositions;
     const groups: Record<UnverifiedGroup, SpaceReferencePositionDetail[]> = {
       legacy_group: [], unknown_owner: [], registry_unavailable: [],
@@ -449,10 +589,17 @@ export class OptimizePlansDialog {
    * The confirmation separates geometry movement from lossless maintenance,
    * and promises the one-deep undo before either store is changed.
    */
-  render(): TemplateResult {
-    const d = this.port.dialog()!;
+  render(): TemplateResult | typeof nothing {
+    const state = this.port.dialog();
+    if (!state) return nothing;
+    if (!previewState(state)) return this.options.feedback.renderStatus(state, {
+      ...this.port, close: this.close, refresh: this.refresh, copy: () => this.copyDiagnostics(),
+      support: this.support, fallback: this.clipboardFallback,
+    });
+    const d = state;
     const r = d.report;
-    const failed = d.changed && !d.preflight?.ok;
+    const applied = !!d.outcome || d.phase === 'verifying';
+    const failed = !applied && d.changed && !d.preflight?.ok;
     const failures = d.preflight?.failures || [];
     const visibleNames = failures.slice(0, 3).map((failure) => failure.displayName);
     const spaces = visibleNames.length
@@ -464,11 +611,12 @@ export class OptimizePlansDialog {
       : '';
     const repaired = r.spaceRefsRemapped + r.roomRefsRemapped
       + r.positionsRemapped + r.markersDetached;
-    const modelMaintenance = r.migrated + r.canonicalized + r.coordsCanonicalized
+    const scalarMaintenance = r.migrated + r.canonicalized + r.coordsCanonicalized
+      + r.wallsMerged + r.spansMerged + r.partitionsMerged;
+    const modelMaintenance = scalarMaintenance
       + r.wallSegmentsMigrated
       + r.roomDraftsMigrated + r.roomDraftSegmentsMigrated
-      + r.wallsMerged + r.spansMerged + r.partitionsMerged
-      + r.partitionsReconciled + r.openingsRehosted;
+      + r.legacyZeroWallsMigrated;
     const gridWarning = r.moved + r.rotated + r.coordsCanonicalized + r.wallsStraightened;
     const straightenCm = Math.ceil(r.maxStraightenShiftCm * 10) / 10;
     const straightenSpace = (this.port.config()?.spaces || []).find(
@@ -525,8 +673,14 @@ export class OptimizePlansDialog {
     const visibleDetails = referenceDetails.slice(0, 10);
     const remainingDetails = Math.max(0, referenceDetails.length - visibleDetails.length);
     return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.port.hass()} data-kind="settings" .title=${this.port.t('gs.align_title')} icon="mdi:broom"
-      dismiss-on-scrim @hp-close=${() => this.port.setDialog(null)}>
+      dismiss-on-scrim @hp-close=${this.close}>
         <div class="body">
+          ${d.busy ? html`<p class="alignmsg" role="status" aria-live="polite"><ha-icon class="hpf-spinner" icon="mdi:loading"></ha-icon>${this.port.t(d.phase === 'verifying' ? 'gs.optimize_verifying' : 'gs.optimize_saving')}</p>
+            <p class="rhint">${this.port.t('gs.optimize_close_hint')}</p>` : nothing}
+          ${d.outcome ? html`<h3 class="hpf-section-heading" role="status">${this.port.t(d.outcome === 'clean' ? 'gs.optimize_success_title' : 'gs.optimize_saved_title')}</h3>
+            <p class="alignmsg">${this.port.t(`gs.optimize_result_${d.outcome}`)}</p>
+            <h3 class="hpf-section-heading">${this.port.t('gs.optimize_applied')}</h3>` : nothing}
+          ${d.replacesUndo || (d.outcome === 'remaining' && d.canUndo) ? html`<p class="rhint">${this.port.t('gs.optimize_replaces_undo')}</p>` : nothing}
           ${failed
             ? html`
               <p class="alignmsg">${this.port.t('gs.align_preflight_failed', { spaces, more })}</p>
@@ -536,25 +690,27 @@ export class OptimizePlansDialog {
               ${failures.length > 10 ? html`<p class="alignmsg">
                 ${this.port.t('gs.align_preflight_more', { n: String(failures.length - 10) })}
               </p>` : nothing}
-              <div class="rhint">${this.port.t('gs.align_preflight_hint')}</div>
-              ${preflightVersionsDiffer(this.port.integrationVersion(), this.port.cardVersion()) ? html`
-                <div class="rhint">${this.port.t('gs.preflight_update_hint')}</div>` : nothing}
+              <div class="rhint">${this.port.t('gs.optimize_not_applied')}</div>
+              <div class="rhint">${this.port.t('gs.optimize_geometry_help')}</div>
               <div class="row">
                 <button class="btn ghost" @click=${() => this.copyDiagnostics()}>
                   <ha-icon icon="mdi:content-copy"></ha-icon>
                   ${this.port.t('gs.preflight_copy')}
                 </button>
+                <button class="btn ghost optimize-support" @click=${this.support}>${this.port.t('gs.optimize_support')}</button>
               </div>
               ${this.fallbackBlock(this.clipboardFallback)}`
             : !d.changed
-            ? html`<p class="alignmsg">${this.port.t(
-                r.liveMissingPositions.length || r.nestedRefsUnresolved
+            ? html`${!optimizeHasObservations(r) ? html`<h3 class="hpf-section-heading" role="status">${this.port.t('gs.optimize_clean_title')}</h3>` : nothing}
+              <p class="alignmsg">${this.port.t(
+                r.liveMissingPositions.length || r.nestedRefsUnresolved || r.wallsStraightenSkipped
+                  || r.invalidPositionsRetained.length || (r.registryAuthoritative === false && !r.unverifiedPositions.length)
                   ? 'gs.optimize_no_automatic_changes'
                   // #869 п. 1: unmatched records alone ask nothing of the person.
                   : r.unverifiedPositions.length ? 'gs.optimize_no_changes' : 'gs.align_none',
               )}</p>`
             : html`
-              ${r.moved ? html`<p class="alignmsg">${this.port.t('gs.align_count', {
+          ${r.moved ? html`<p class="alignmsg">${this.port.t(applied ? 'gs.optimize_applied_count' : 'gs.align_count', {
                   n: String(r.moved), total: String(r.total), cm: String(d.cm),
                 })}</p>` : nothing}
               ${r.currentPositionsMoved ? html`<p class="alignmsg">${this.port.t('gs.optimize_visible_positions', {
@@ -563,41 +719,12 @@ export class OptimizePlansDialog {
               ${r.archivedPositions ? html`<p class="alignmsg">${this.port.t('gs.optimize_missing_space_positions', {
                   n: String(r.archivedPositionsMoved), total: String(r.archivedPositions),
                 })}</p>` : nothing}
-              ${r.latticeCoordinatesCanonicalized ? html`
-                <p class="alignmsg">${this.port.t('gs.optimize_lattice_summary', {
-                  n: String(r.latticeCoordinatesCanonicalized),
-                  cm: formatLatticeShiftCm(r.latticeMaxShiftCm),
-                })}</p>
-                ${r.latticeSpaces.map((space) => html`<p class="alignmsg">${this.port.t(
-                  'gs.optimize_lattice_space', {
-                    space: space.space,
-                    n: String(space.canonicalized),
-                    far: String(space.far),
-                  },
-                )}</p>`)}
-              ` : nothing}
               ${d.where
                 ? html`<p class="alignmsg">${this.port.t('gs.align_where', { s: d.where })}</p>`
                 : nothing}
               ${r.rotated
                 ? html`<p class="alignmsg">${this.port.t('gs.align_turned', { n: String(r.rotated) })}</p>`
                 : nothing}
-              ${r.wallSegmentsMigrated ? html`<p class="alignmsg">${this.port.t(
-                  'gs.wall_segments_migrated', { n: String(r.wallSegmentsMigrated) },
-                )}</p>` : nothing}
-              ${r.roomDraftsMigrated || r.roomDraftSegmentsMigrated ? html`
-                <p class="alignmsg">${this.port.t('gs.room_drafts_migrated', {
-                  drafts: String(r.roomDraftsMigrated),
-                  segments: String(r.roomDraftSegmentsMigrated),
-                })}</p>` : nothing}
-              ${r.legacyZeroWallsMigrated ? html`<p class="alignmsg">${this.port.t(
-                  'gs.zero_walls_migrated', { n: String(r.legacyZeroWallsMigrated) },
-                )}</p>` : nothing}
-              ${modelMaintenance ? html`<p class="alignmsg">${this.port.t('gs.optimize_changes', {
-                  m: String(r.migrated), c: String(r.canonicalized),
-                  p: String(r.coordsCanonicalized), w: String(r.wallsMerged),
-                  s: String(r.spansMerged), i: String(r.partitionsMerged),
-                })}</p>` : nothing}
               ${r.partitionsReconciled ? html`<p class="alignmsg">${this.port.t(
                   'gs.optimize_coincident_partitions', { n: String(r.partitionsReconciled) },
                 )}</p>` : nothing}
@@ -615,25 +742,56 @@ export class OptimizePlansDialog {
               ${straightenWhere ? html`<p class="alignmsg">${this.port.t(
                   'gs.optimize_walls_straightened_where', { s: straightenWhere },
                 )}</p>` : nothing}
+              ${applied && (modelMaintenance || r.glowSpacesMigrated || r.glowRoomsMigrated || r.latticeCoordinatesCanonicalized) ? html`<h4 class="hpf-section-heading">${this.port.t('gs.optimize_group_model')}</h4>` : nothing}
+              ${r.latticeCoordinatesCanonicalized ? html`
+                <p class="alignmsg">${this.port.t('gs.optimize_lattice_summary', {
+                  n: String(r.latticeCoordinatesCanonicalized),
+                  cm: formatLatticeShiftCm(r.latticeMaxShiftCm),
+                })}</p>
+                ${r.latticeSpaces.map((space) => html`<p class="alignmsg">${this.port.t(
+                  'gs.optimize_lattice_space', {
+                    space: space.space,
+                    n: String(space.canonicalized),
+                    far: String(space.far),
+                  },
+                )}</p>`)}
+              ` : nothing}
+              ${r.wallSegmentsMigrated ? html`<p class="alignmsg">${this.port.t(
+                  'gs.wall_segments_migrated', { n: String(r.wallSegmentsMigrated) },
+                )}</p>` : nothing}
+              ${r.roomDraftsMigrated || r.roomDraftSegmentsMigrated ? html`
+                <p class="alignmsg">${this.port.t('gs.room_drafts_migrated', {
+                  drafts: String(r.roomDraftsMigrated),
+                  segments: String(r.roomDraftSegmentsMigrated),
+                })}</p>` : nothing}
+              ${r.legacyZeroWallsMigrated ? html`<p class="alignmsg">${this.port.t(
+                  'gs.zero_walls_migrated', { n: String(r.legacyZeroWallsMigrated) },
+                )}</p>` : nothing}
+              ${scalarMaintenance ? html`<p class="alignmsg">${this.port.t('gs.optimize_changes', {
+                  m: String(r.migrated), c: String(r.canonicalized),
+                  p: String(r.coordsCanonicalized), w: String(r.wallsMerged),
+                  s: String(r.spansMerged), i: String(r.partitionsMerged),
+                })}</p>` : nothing}
               ${r.glowSpacesMigrated || r.glowRoomsMigrated
                 ? html`<p class="alignmsg">${this.port.t('gs.optimize_glow_migration', {
                     spaces: String(r.glowSpacesMigrated),
                     rooms: String(r.glowRoomsMigrated),
                   })}</p>`
                 : nothing}
-              ${gridWarning ? html`<div class="rhint">${this.port.t('gs.align_warn')}</div>` : nothing}`}
-          ${!failed && r.wallsStraightenSkipped ? html`<p class="rhint">${this.port.t(
+              ${gridWarning && !applied ? html`<div class="rhint">${this.port.t('gs.align_warn')}</div>` : nothing}`}
+          ${!failed && !applied && r.wallsStraightenSkipped ? html`<p class="rhint">${this.port.t(
               'gs.optimize_walls_straighten_skipped', {
                 n: String(r.wallsStraightenSkipped),
               },
             )}</p>` : nothing}
-          ${repaired
+          ${applied && (repaired || removed) ? html`<h4 class="hpf-section-heading">${this.port.t('gs.optimize_group_references')}</h4>` : nothing}
+          ${repaired && !failed
             ? html`<p class="alignmsg">${this.port.t('gs.optimize_references', {
                 spaces: String(r.spaceRefsRemapped), rooms: String(r.roomRefsRemapped),
                 positions: String(r.positionsRemapped), detached: String(r.markersDetached),
               })}</p>`
             : nothing}
-          ${removed
+          ${removed && !failed
             ? html`<p class="alignmsg">${this.port.t('gs.optimize_orphans_removed', {
                 total: String(removed),
                 rooms: String(r.orphanRoomLabelsRemoved),
@@ -641,7 +799,7 @@ export class OptimizePlansDialog {
                 groups: String(r.orphanGroupPositionsRemoved),
               })}</p>`
             : nothing}
-          ${r.liveMissingPositions.length
+          ${r.liveMissingPositions.length && !applied && !failed
             ? html`<div class="optimize-live">
                 <p class="alignmsg">${this.port.t(d.removeLiveMissingPositions
                   ? 'gs.optimize_live_positions_remove' : 'gs.optimize_live_positions', {
@@ -661,8 +819,8 @@ export class OptimizePlansDialog {
                   : nothing}
               </div>`
             : nothing}
-          ${r.unverifiedPositions.length ? this.renderUnverified(d, failed) : nothing}
-          ${invalidEligible.length || invalidRetained.length ? html`<div class="optimize-invalid">
+          ${r.unverifiedPositions.length && !applied ? this.renderUnverified(d, failed) : nothing}
+          ${!applied && !failed && (invalidEligible.length || invalidRetained.length) ? html`<div class="optimize-invalid">
               <p class="alignmsg">${this.port.t('gs.optimize_invalid_eligible', {
                 n: String(invalidEligible.length),
               })}</p>
@@ -688,14 +846,27 @@ export class OptimizePlansDialog {
                     return n ? html`<li>${this.port.t(`gs.optimize_invalid_${reason}`, { n: String(n) })}</li>` : nothing;
                   })}</ul>` : nothing}
             </div>` : nothing}
-          ${r.nestedRefsUnresolved
+          ${r.nestedRefsUnresolved && !failed && !applied
             ? html`<div class="rhint" role="alert">${this.port.t('gs.optimize_vacuum_warning', {
                 n: String(r.nestedRefsUnresolved),
               })}</div>`
             : nothing}
-          ${(d.vacuumNames || []).map((name) => html`<p class="rhint">${this.port.t('gs.optimize_vacuum_action', { name })}</p>`)}
-          ${this.port.ledNote()}
-          ${referenceDetails.length
+          ${!failed ? (d.vacuumNames || []).map((name) => html`<p class="rhint">${this.port.t('gs.optimize_vacuum_action', { name })}</p>`) : nothing}
+          ${!failed ? this.port.ledNote() : nothing}
+          ${d.outcome && d.afterReport && optimizeHasObservations(d.afterReport) ? html`
+            <h3 class="hpf-section-heading">${this.port.t('gs.optimize_remaining')}</h3>
+            ${d.afterReport.unverifiedPositions.length || d.afterReport.registryAuthoritative === false
+              ? this.renderUnverified({ ...d, report: d.afterReport }, false) : nothing}
+            ${d.afterReport.wallsStraightenSkipped ? html`<p class="rhint">${this.port.t('gs.optimize_walls_straighten_skipped', { n: String(d.afterReport.wallsStraightenSkipped) })}</p>` : nothing}
+            ${d.afterReport.liveMissingPositions.length ? html`<p class="rhint">${this.port.t('gs.optimize_retained_positions', { n: String(d.afterReport.liveMissingPositions.length) })}</p>` : nothing}
+            ${d.afterReport.nestedRefsUnresolved ? html`<p class="rhint">${this.port.t('gs.optimize_vacuum_warning', { n: String(d.afterReport.nestedRefsUnresolved) })}</p>` : nothing}
+            ${d.afterReport.invalidPositionsRetained.length ? html`<p class="rhint">${this.port.t('gs.optimize_invalid_retained', { n: String(d.afterReport.invalidPositionsRetained.length) })}</p>` : nothing}
+            ` : nothing}
+          ${d.outcome && d.outcome !== 'clean' ? html`<div class="optimize-actions">
+            ${!d.afterReport?.unverifiedPositions.length ? html`<button class="btn ghost optimize-copy" @click=${() => this.copyDiagnostics()}>${this.port.t('gs.preflight_copy')}</button>` : nothing}
+            <button class="btn ghost optimize-support" @click=${this.support}>${this.port.t('gs.optimize_support')}</button>
+          </div>${!d.afterReport?.unverifiedPositions.length ? this.fallbackBlock(this.clipboardFallback) : nothing}` : nothing}
+          ${referenceDetails.length && !failed
             ? html`<details class="optimize-details">
                 <summary>${this.port.t('gs.optimize_details')}</summary>
                 <ul>
@@ -711,12 +882,13 @@ export class OptimizePlansDialog {
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
-          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => this.port.setDialog(null)}>${this.port.t(
-            d.changed ? 'btn.cancel' : 'btn.close',
+          <button class="btn ghost" data-hp="dialog-cancel" @click=${this.close}>${this.port.t(
+            d.changed && !d.busy && !applied ? 'btn.cancel' : 'btn.close',
           )}</button>
-          ${!d.changed || !d.preflight?.ok ? nothing : html`
+          ${d.outcome && d.outcome !== 'clean' ? html`<button class="btn ghost optimize-recheck" @click=${d.outcome === 'stale' ? this.refresh : this.recheck}>${this.port.t(d.outcome === 'stale' ? 'gs.optimize_refresh' : 'gs.optimize_recheck')}</button>` : nothing}
+          ${applied || !d.changed || !d.preflight?.ok ? nothing : html`
             <button class="btn on" data-hp="dialog-confirm" @click=${() => this.run()} ?disabled=${d.busy || !!d.retrying || !this.port.canWrite()}>
-              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this.port.t(d.removeInvalidMissingPositions ? 'gs.optimize_apply_changes' : 'gs.align_run')}
+              <ha-icon class=${d.busy ? 'hpf-spinner' : ''} icon=${d.busy ? 'mdi:loading' : 'mdi:check'}></ha-icon>${this.port.t(d.busy ? 'gs.optimize_saving' : d.removeInvalidMissingPositions ? 'gs.optimize_apply_changes' : 'gs.align_run')}
             </button>`}
         </div>
     </hp-dialog>`;

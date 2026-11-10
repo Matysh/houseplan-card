@@ -49,7 +49,7 @@ const out = await page.evaluate(async () => {
         backup = { config: clone(serverConfig), layout: clone(serverLayout) };
         serverConfig = clone(message.config); serverLayout = clone(message.layout);
         return { ok: true, config_rev: store.pushConfig(serverConfig),
-          layout_rev: store.pushLayout(serverLayout), can_undo: true };
+          layout_rev: store.pushLayout(serverLayout), can_undo: true, config: clone(serverConfig), layout: clone(serverLayout) };
       }
       if (message.type === 'houseplan/plan/optimize_undo') {
         sent.push(message.type);

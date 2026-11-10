@@ -4,6 +4,7 @@ import { captureWriteAuthority } from './config-write-context';
 import type { DeviceLayout } from './device-position-history';
 import type { ServerConfig } from './types';
 import { OptimizePreviewChangedError, sameOptimizeSource, type OptimizeWriteGuard } from './optimize-source';
+import { optimizeReceipt, OptimizeWriteFailure, type OptimizeReceipt, type OptimizeWriteStage } from './optimize-feedback';
 
 interface Clearable { clear(): void }
 interface Flushable { pending(): boolean; flush(): void }
@@ -41,7 +42,10 @@ export async function commitPlanOptimization(
   config: ServerConfig,
   layout: DeviceLayout,
   guard?: OptimizeWriteGuard,
-): Promise<void> {
+): Promise<OptimizeReceipt> {
+  let stage: OptimizeWriteStage = 'before-dispatch';
+  let receipt: OptimizeReceipt | undefined;
+  try {
   if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.flush();
   await host._writeChain;
   if (Number(config.model_version || 0) >= 11 && host._haPlanGraphApi === null)
@@ -66,11 +70,17 @@ export async function commitPlanOptimization(
     && (!guard || guard.source.authorityCurrent?.() !== false
       && guard.current().connection === guard.source.connection),
     canDispatch: () => !guard || guard.canWrite() && sameOptimizeSource(guard.source, guard.current()),
+    onDispatch: () => { stage = 'dispatched'; },
   });
   if (guard && (guard.source.authorityCurrent?.() === false
       || guard.current().connection !== guard.source.connection)) {
     throw new OptimizePreviewChangedError();
   }
+  receipt = optimizeReceipt(response, config, layout, expectedConfigRev, expectedLayoutRev);
+  stage = 'acknowledged';
+  // A newer accepted pair must never be replaced by this older response.
+  if (host._cfgRev > receipt.configRev || host._layoutRev > receipt.layoutRev)
+    throw new OptimizePreviewChangedError();
   // Both bodies with both revisions from the reply that accepted them (#500 I2).
   host._adoption.acceptPairWrite(config, layout, response);
   host._geometryHistory.clear();
@@ -87,4 +97,8 @@ export async function commitPlanOptimization(
   host._maybeRebuildDevices();
   host._cacheSnapshot();
   host.requestUpdate();
+  return receipt;
+  } catch (error) {
+    throw new OptimizeWriteFailure(error, stage, receipt);
+  }
 }

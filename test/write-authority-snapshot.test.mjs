@@ -113,7 +113,7 @@ test('#1220 Optimize/space-copy pair writer accepts an own ACK after snapshot re
     _geometryHistory: { clear() {} }, _devicePositionHistory: { clear() {} }, _cancelDeviceDrag() {},
     _dirtyPos: new Set(), _sentPos: new Map(), _cfgEpoch: 0,
     _maybeRebuildDevices() {}, _cacheSnapshot() {}, requestUpdate() {} });
-  o.host.hass.callWS = async () => { o.replace(); return { rev: 2, layout_rev: 2 }; };
+  o.host.hass.callWS = async () => { o.replace(); return { ok: true, config_rev: 2, layout_rev: 2, can_undo: true, config: cfg, layout: {} }; };
   await commitPlanOptimization(o.host, cfg, {});
   assert.equal(accepted, 1);
 });

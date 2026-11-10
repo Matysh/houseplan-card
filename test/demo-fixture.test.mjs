@@ -6,6 +6,30 @@ import { transitionOutcome } from '../demo/transition-timeline.mjs';
 const fixture = () => createFixtureStore({ spaces: [], markers: [], settings: {}, future: { keep: 1 } },
   { a: { s: 'f', x: .2, y: .3, future: 'a' }, b: { s: 'f', x: .7, y: .8, future: 'b' } });
 
+test('#1170 Optimize wire fixture stores the acknowledged pair, checks both revisions and retains one Undo', () => {
+  const s = fixture();
+  const beforeConfig = s.handle({ type: 'houseplan/config/get' }).config;
+  const beforeLayout = s.handle({ type: 'houseplan/layout/get' }).layout;
+  const config = { ...beforeConfig, title: 'optimized' }, layout = { a: beforeLayout.a };
+  assert.throws(() => s.handle({ type: 'houseplan/plan/optimize', config, layout,
+    expected_config_rev: 1, expected_layout_rev: 99 }), { code: 'conflict' });
+  assert.deepEqual(s.handle({ type: 'houseplan/config/get' }).config, beforeConfig);
+  const ack = s.handle({ type: 'houseplan/plan/optimize', config, layout, expected_config_rev: 1, expected_layout_rev: 1 });
+  assert.equal(ack.ok, true); assert.equal(ack.can_undo, true);
+  assert.deepEqual(s.handle({ type: 'houseplan/config/get' }).config, ack.config);
+  assert.deepEqual(s.handle({ type: 'houseplan/layout/get' }).layout, ack.layout);
+  ack.config.title = 'not persisted'; config.title = 'also not persisted';
+  assert.equal(s.handle({ type: 'houseplan/config/get' }).config.title, 'optimized');
+  const undone = s.handle({ type: 'houseplan/plan/optimize_undo', expected_config_rev: 2, expected_layout_rev: 2 });
+  assert.deepEqual(undone.config, beforeConfig); assert.deepEqual(undone.layout, beforeLayout);
+  assert.equal(undone.can_undo, false);
+  const applied = s.handle({ type: 'houseplan/plan/optimize', config, layout, expected_config_rev: 3, expected_layout_rev: 3 });
+  s.handle({ type: 'houseplan/layout/update', device_id: 'a', pos: { s: 'f', x: .5, y: .5 } });
+  assert.equal(s.handle({ type: 'houseplan/layout/get' }).can_optimize_undo, false);
+  assert.throws(() => s.handle({ type: 'houseplan/plan/optimize_undo', expected_config_rev: applied.config_rev,
+    expected_layout_rev: s.layoutRev }), { code: 'undo_unavailable' });
+});
+
 test('#1226 replacing a fixture transport preserves revisions and makes acknowledged writes readable', () => {
   const source = { spaces: [], markers: [], settings: {} }, events = [];
   const store = createFixtureStore(source, {}, (...args) => events.push(args), { configRevision: 7, layoutRevision: 4 });

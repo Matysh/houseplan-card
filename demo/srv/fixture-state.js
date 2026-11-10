@@ -5,6 +5,7 @@ export function createFixtureStore(config, layout, emit = () => {}, {
 } = {}) {
   let cfg = structuredClone(config), positions = structuredClone(layout);
   let configRev = configRevision, layoutRev = layoutRevision;
+  let optimizeBackup = null;
   // #1073 is a wire/lifecycle fixture, not the production delta validator.
   // Real conflict/ACL/file/paired-write behavior is covered by HA tests.
   const commands = new Map(), receipts = new Map();
@@ -16,7 +17,8 @@ export function createFixtureStore(config, layout, emit = () => {}, {
     const omit = cfg => ({...cfg,settings:Object.fromEntries(Object.entries(cfg.settings||{}).filter(([key])=>key!=='external_screens'))});
     return equal(omit(before),omit(value)) ? {external_screens_update:{version:1,base_rev:baseRev,value:structuredClone(value.settings.external_screens)}} : undefined;
   };
-  const changed = (kind, data) => {
+  const changed = (kind, data, keepOptimize = false) => {
+    if (!keepOptimize) optimizeBackup = null;
     const event = `houseplan_${kind}_updated`, rev = kind === 'config' ? configRev : layoutRev;
     if (data) emit(event, rev, data); else emit(event, rev);
   };
@@ -32,14 +34,28 @@ export function createFixtureStore(config, layout, emit = () => {}, {
     get layoutRev() { return layoutRev; },
     pushConfig(value) { const event=screenEvent(cfg,value,configRev); cfg = structuredClone(value); configRev++; changed('config',event); return configRev; },
     pushLayout(value) { positions = structuredClone(value); layoutRev++; changed('layout'); return layoutRev; },
-    // The old optimizer stub is deliberately not a geometry implementation.
-    advanceOptimizer() { return { config_rev: ++configRev, layout_rev: ++layoutRev }; },
     handle(m, registryEntities = []) {
       switch (m.type) {
         case 'houseplan/config/get': return { config: structuredClone(cfg), rev: configRev, can_write: true, device_contact_api: 1, plan_graph_api: 1,
           ...(externalScreens ? { external_screens_api: 2, external_screens_events_api: 1 } : {}),
           ...(markerHistory ? { device_history_api: 1 } : {}) };
-        case 'houseplan/layout/get': return { layout: structuredClone(positions), rev: layoutRev };
+        case 'houseplan/layout/get': return { layout: structuredClone(positions), rev: layoutRev,
+          can_optimize_undo: !!optimizeBackup, undo_kind: optimizeBackup ? 'optimize' : null };
+        // Wire storage only: the real optimizer/guards still run in the product.
+        case 'houseplan/plan/optimize':
+        case 'houseplan/plan/optimize_undo': {
+          cas({ expected_rev: m.expected_config_rev }, configRev);
+          cas({ expected_rev: m.expected_layout_rev }, layoutRev);
+          const undo = m.type.endsWith('_undo');
+          if (undo && !optimizeBackup) throw Object.assign(new Error('no Optimize backup'), { code: 'undo_unavailable' });
+          const target = undo ? optimizeBackup : { config: m.config, layout: m.layout };
+          const next = structuredClone(target);
+          optimizeBackup = undo ? null : pair();
+          cfg = next.config; positions = next.layout;
+          configRev++; layoutRev++;
+          changed('config', undefined, true); changed('layout', undefined, true);
+          return { ok: true, ...reply(), can_undo: !!optimizeBackup };
+        }
         case 'houseplan/marker/copy': {
           if(markerHistory && receipts.has(m.operation_id))return structuredClone(receipts.get(m.operation_id));
           const before=pair();

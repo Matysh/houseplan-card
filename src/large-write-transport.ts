@@ -17,6 +17,8 @@ export interface HouseplanWriteOptions {
    * staging never authorizes dispatch from a retired gesture. */
   canDispatch?(): boolean;
   signal?: AbortSignal;
+  /** Evidence for the owning operation; uploading a temporary body is not commit. */
+  onDispatch?(): void;
 }
 export type HouseplanWriteMessage = Record<string, unknown> & { type: string };
 
@@ -94,7 +96,10 @@ export async function sendHouseplanWrite<T = unknown>(
     if (options.canDispatch && !options.canDispatch()) throw error('context-changed');
   };
   assertDispatch();
-  if (bytes <= WS_DIRECT_LIMIT_BYTES) return current(callWS<T>(snapshot));
+  if (bytes <= WS_DIRECT_LIMIT_BYTES) {
+    options.onDispatch?.();
+    return current(callWS<T>(snapshot));
+  }
 
   let reply: unknown;
   if (fetchWithAuth) {
@@ -130,5 +135,6 @@ export async function sendHouseplanWrite<T = unknown>(
   for (const key of CONTROL_KEYS) if (own(snapshot, key)) compact[key] = snapshot[key];
   if (new TextEncoder().encode(JSON.stringify(compact)).byteLength > WS_DIRECT_LIMIT_BYTES) throw error('too_large');
   assertDispatch();
+  options.onDispatch?.();
   return current(callWS<T>(compact));
 }

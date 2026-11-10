@@ -27,7 +27,7 @@ const out = await page.evaluate(async (fixture) => {
         sent.push(message.type);
         serverConfig = copy(message.config);
         serverLayout = copy(message.layout);
-        return { ok: true, config_rev: 2, layout_rev: 2, can_undo: true };
+        return { ok: true, config_rev: 2, layout_rev: 2, can_undo: true, config: copy(serverConfig), layout: copy(serverLayout) };
       }
       if (message.type === 'houseplan/config/get')
         return { config: copy(serverConfig), rev: 2, can_write: true, can_optimize_undo: true };

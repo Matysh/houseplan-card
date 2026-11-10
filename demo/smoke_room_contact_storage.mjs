@@ -63,7 +63,7 @@ for(const optimize of [false,true])for(const reverse of [false,true]){
           if(m.expected_config_rev!==cfg.rev||m.expected_layout_rev!==layout.rev)
             throw Object.assign(new Error('conflict'),{code:'conflict'});
           const config_rev=window.__pushServerConfig(m.config),layout_rev=window.__pushServerLayout(m.layout);
-          s.saved=structuredClone(m.config);s.writes++;return {ok:true,config_rev,layout_rev,can_undo:true};
+          s.saved=structuredClone(m.config);s.writes++;return {ok:true,config_rev,layout_rev,can_undo:true,config:structuredClone(m.config),layout:structuredClone(m.layout)};
         }
         if(m.type==='houseplan/config/set'){
           s.attempts++;

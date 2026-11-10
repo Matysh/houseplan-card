@@ -181,6 +181,8 @@ import { guardDraftNavigation, requestMarkerClose, requestRoomClose } from './ed
 import { EditorChainExit, finishWallChainForNavigation } from './editor-chain-exit';
 import { forgetMarkerBaseline, rememberMarkerBaseline, rememberMarkerRadarRemoval } from './editors/marker-form-state';
 import { commitPlanOptimization } from './plan-optimize-write';
+import { reloadOptimizePair } from './optimize-reload';
+import type { LayoutWriteReload } from './layout-write-reload';
 import { PlanOptimizationUndo, type UndoHass } from './plan-optimize-undo';
 import { saveSpaceCopy } from './space-copy-runtime';
 import { DeviceCopyEditor } from './device-copy-editor';
@@ -901,6 +903,7 @@ export interface HouseplanEditorHostPort {
   _wallUnionCache: { key: string; value: ReturnType<typeof wallBodiesUnionPath>; } | null;
   _wallUnionPool: Map<string, { key: string; value: ReturnType<typeof wallBodiesUnionPath>; }>;
   _writeChain: Promise<void>;
+  readonly _layoutIO: LayoutWriteReload;
   _writesPending: number;
   _sendConfigCandidate: (candidate: ServerConfig, contactLayout?:DeviceLayout, acknowledgementCurrent?:()=>boolean, roomLabels?: RoomLabelPositions) => Promise<void>;
   _configWriteGuard: (pendingOnly?: boolean) => () => boolean;
@@ -1159,6 +1162,20 @@ export class HouseplanEditorRuntime {
       confirmDiscard: () => host._confirmDanger(radarDiscardRequest((key) => host._t(key))),
     });
     this.optimizationUndo = new PlanOptimizationUndo(host, () => this._clearGeometryGesture());
+    const optimizeSource = () => ({
+      configRev: host._cfgRev, layoutRev: host._layoutRev,
+      configFingerprint: contentFingerprint(host._serverCfg),
+      layoutFingerprint: contentFingerprint(host._layout),
+      ownersFingerprint: contentFingerprint({
+        revision: host._haRegistry.revision, authoritative: host._haRegistry.authoritative,
+        deviceIds: Object.keys(host._haRegistry.devices || {}).sort(),
+        entityIds: Object.keys(host._haRegistry.entities || {}).sort(),
+        stateIds: Object.keys(host.hass?.states || {}).sort(),
+        effectiveAreas: host._devices.map((device) => [device.id, device.virtual, device.area]),
+      }),
+      connection: host.hass?.connection,
+      authorityCurrent: host._configWriteGuard(),
+    });
     this.optimizePlans = new LazyOptimizePlansDialog({
       dialog: () => host._alignDialog,
       setDialog: (next) => { host._alignDialog = next; },
@@ -1167,33 +1184,29 @@ export class HouseplanEditorRuntime {
       config: () => host._serverCfg,
       planReady: () => !!host._norm,
       canWrite: () => host._canEdit && !host._kiosk,
-      source: () => ({
-        configRev: host._cfgRev, layoutRev: host._layoutRev,
-        configFingerprint: contentFingerprint(host._serverCfg),
-        layoutFingerprint: contentFingerprint(host._layout),
-        ownersFingerprint: contentFingerprint({
-          revision: host._haRegistry.revision, authoritative: host._haRegistry.authoritative,
-          deviceIds: Object.keys(host._haRegistry.devices || {}).sort(),
-          entityIds: Object.keys(host._haRegistry.entities || {}).sort(),
-          stateIds: Object.keys(host.hass?.states || {}).sort(),
-          effectiveAreas: host._devices.map((device) => [device.id, device.virtual, device.area]),
-        }),
-        connection: host.hass?.connection,
-        authorityCurrent: host._configWriteGuard?.(),
-      }),
+      source: optimizeSource,
       layout: () => host._layout,
       integrationVersion: () => host._haIntegrationVersion,
       cardVersion: () => displayVersion(CARD_VERSION),
       requestUpdate: () => host.requestUpdate(),
       showToast: (message, id) => host._showToast(message, id),
       captureToast: () => captureToast(host),
-      errorText: (error) => host._errText(error),
+      support: (message) => this._openSupportDialog(message),
       checkGeometry: (config) => host._checkOptimizeGeometry(config),
       referenceContext: (removeLive, removeInvalid) => this._optimizeReferenceContext(removeLive, removeInvalid),
-      showMigrationBlocked: (error) => this._showWallModelMigrationBlocked(error),
+      present: async () => {
+        await host.updateComplete;
+        await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      },
       clearGeometryGesture: () => this._clearGeometryGesture(),
       commit: (config, layout, guard) => commitPlanOptimization(host, config, layout, guard),
-      reloadAfterConflict: () => Promise.all([host._reloadConfigOnly(true), host._reloadLayoutOnly()]),
+      reloadAfterConflict: () => reloadOptimizePair({
+        hass: host.hass, source: optimizeSource, layoutIO: host._layoutIO,
+        pending: () => host._writesPending > 0 || host._saveConfigDebounced.pending()
+          || host._dirtyPos.size > 0 || host._sentPos.size > 0,
+        read: (hass, current) => host._getAuthoritativeConfig(hass, current),
+        adopt: input => host._adoptAuthoritative(input),
+      }),
       ledNote: () => host._ledNote(),
     }, () => langOf(host.hass, host._config?.language));
     host._editorSecondary = new EditorSecondaryController({
@@ -1286,7 +1299,7 @@ public _commitLiveEditor(deviceId?: string): void {
   this.properties.syncNative();
   if (this.host.isConnected) this.nodeMove?.paint();
 }
-public _disposeLiveEditor(): void { this.decorLine.reset(); this.properties.dispose(); this.optimizationUndo.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { this.decorLine.reset(); this.properties.dispose(); this.optimizationUndo.retire(); this.optimizePlans.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
 public _visualCommand<T>(command: () => Promise<T>): Promise<T> { return this.properties.command(command); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
@@ -8997,13 +9010,16 @@ public _openSettingsDialog = (): void => {
 /** #731: the card revived General settings — a new opening, so a new snapshot. */
 public _openMoonStatus(): void { openMoonStatus(this.host); }
 
-public _openSupportDialog = (): void => {
-    if (!this.properties.beforeIntent(() => this._openSupportDialog(), true)) return;
-    if (!this.host._norm || !this.host._canEdit) return;
+public _openSupportDialog = (message = ''): boolean => {
+    const previous = this.host._supportDialog;
+    if (message && previous && (previous.message.trim() || previous.status !== 'idle')) return false;
+    if (!this.properties.beforeIntent(() => this._openSupportDialog(message), true)) return false;
+    if (!this.host._norm || !this.host._canEdit) return false;
     clearTimeout(this._supportExpiryTimer);
     this._supportExpiryTimer = undefined;
     this._supportPreviewGeneration += 1;
-    this.host._supportDialog = newSupportDialogState();
+    this.host._supportDialog = { ...newSupportDialogState(), message };
+    return true;
   };
 
 private _supportPatch(

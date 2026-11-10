@@ -190,10 +190,6 @@ function mkHass(){
       if(m.type==='houseplan/layout/get')SERVED.layout=server.layoutRev;
       const reply=server.handle(m,Object.values(ENTITIES));
       if(reply!==undefined)return reply;
-      if(m.type==='houseplan/plan/optimize')return{
-        ok:true,...server.advanceOptimizer(),can_undo:true};
-      if(m.type==='houseplan/plan/optimize_undo')return{
-        ok:true,...server.advanceOptimizer(),can_undo:false};
       return {ok:true};
     },
     callService:serviceRecorder.callService,

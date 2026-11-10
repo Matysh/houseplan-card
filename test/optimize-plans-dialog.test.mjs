@@ -17,11 +17,15 @@ import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { LazyOptimizePlansDialog } from '../test-build/optimize-plans-loader.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
 import { sameOptimizeSource } from '../test-build/optimize-source.js';
+import { OptimizeWriteFailure, optimizeFailure, optimizeFailureDiagnostics } from '../test-build/optimize-feedback.js';
+import { renderOptimizeStatus } from '../test-build/optimize-status.js';
 import { resolve as resolvePath } from 'node:path';
 import { REPO_ROOT, VIEW_ENTRIES, staticGraph } from './helpers/editor-style-ownership.mjs';
 
 const MODULE_SOURCE = readFileSync(new URL('../src/optimize-plans-dialog.ts', import.meta.url), 'utf8');
 const BUILT_SOURCE = readFileSync(new URL('../test-build/optimize-plans-dialog.js', import.meta.url), 'utf8');
+const feedback = { failure: optimizeFailure, diagnostics: optimizeFailureDiagnostics,
+  isWriteFailure: error => error instanceof OptimizeWriteFailure, renderStatus: renderOptimizeStatus };
 
 // ---------------------------------------------------------------- fixtures
 
@@ -107,21 +111,25 @@ function fakePort(overrides = {}, registryRetryMs = undefined) {
     requestUpdate: () => { calls.requestUpdate += 1; },
     showToast: (message) => { calls.toasts.push(message); },
     captureToast: () => (message) => { calls.toasts.push(message); },
-    errorText: (error) => String(error?.message ?? error),
+    support: () => false,
     checkGeometry: (config) => { calls.checkGeometry.push(config); return okPreflight(config); },
     referenceContext: (removeLive, removeInvalid) => { calls.referenceContext.push(removeLive); return {
       removeLiveMissingPositions: removeLive, removeInvalidMissingPositions: removeInvalid,
     }; },
-    showMigrationBlocked: (error) => { calls.migration.push(error); },
+    present: () => undefined,
     clearGeometryGesture: () => { calls.gesture += 1; },
-    commit: async (config, layout) => { calls.commit.push([config, layout]); },
-    reloadAfterConflict: async () => { calls.reload += 1; },
+    commit: async (config, layout) => {
+      calls.commit.push([config, layout]); state.config = config; state.layout = layout;
+      state.configRev = (state.configRev ?? 1) + 1; state.layoutRev = (state.layoutRev ?? 2) + 1;
+      return { config, layout, configRev: state.configRev, layoutRev: state.layoutRev, canUndo: true, canonical: true };
+    },
+    reloadAfterConflict: async () => { calls.reload += 1; return 'adopted'; },
     // #780: strips through walls come from the lazy LED tool; none in this fixture.
     ledNote: () => "",
     ...overrides,
   };
   return { port, calls, state, dialog: new OptimizePlansDialog(port, {
-    optimize: optimizePlans, sourceMatches: sameOptimizeSource, registryRetryMs,
+    optimize: optimizePlans, sourceMatches: sameOptimizeSource, registryRetryMs, feedback,
   }) };
 }
 
@@ -203,12 +211,14 @@ test('#642 preflightVersionsDiffer: only a known, different integration version 
 
 // ------------------------------------------------------------------ preview
 
-test('#642 preview: a failed migration reports once and opens nothing', () => {
+test('#1170 preview: an exception stays in the dialog rather than a circular migration toast', () => {
   const boom = new Error('wall model');
   const { dialog, calls, state } = fakePort({ referenceContext: () => { throw boom; } });
   dialog.preview(false);
-  assert.deepEqual(calls.migration, [boom]);
-  assert.equal(state.dialog, null);
+  assert.deepEqual(calls.migration, []);
+  assert.equal(state.dialog.phase, 'failure');
+  assert.equal(state.dialog.failure.kind, 'prepare');
+  assert.doesNotMatch(flatten(dialog.render()), /wall model|wall_model_migration_blocked/);
 });
 
 test('#642 preview: nothing without a plan or a saved config', () => {
@@ -263,8 +273,8 @@ test('#1246 Optimize retains its action toast callback across an awaited failure
     commit:()=>new Promise((_,fail)=>{reject=fail;}),
   });
   state.dialog=dialogOf();
-  const pending=dialog.run();active='nested-confirm';reject(new Error('refused'));await pending;
-  assert.deepEqual(messages,[{owner:'optimize',message:'toast.error{"err":"refused"}'}]);
+  const pending=dialog.run();await Promise.resolve();active='nested-confirm';reject(new Error('refused'));await pending;
+  assert.deepEqual(messages,[{owner:'optimize',message:'gs.optimize_unknown_title'}]);
 });
 
 test('#642 open: preview never writes, and cancel closes without a write', async () => {
@@ -313,7 +323,7 @@ test('#642 run: a stale fingerprint is rechecked, and a red recheck stops the wr
   }
 });
 
-test('#642 run: success writes the exact pair, closes, and toasts counts including lattice cleanup', async () => {
+test('#1170 run: success writes the exact pair and retains its report without summing overlapping counters', async () => {
   const seen = [];
   const { dialog, state, calls } = fakePort({
     commit: async (config, layout) => { seen.push(state.dialog?.busy); calls.commit.push([config, layout]); },
@@ -327,23 +337,26 @@ test('#642 run: success writes the exact pair, closes, and toasts counts includi
   assert.equal(calls.commit[0][0], config);
   assert.equal(calls.commit[0][1], layout);
   assert.deepEqual(calls.checkGeometry, [], 'an unchanged fingerprint is not rechecked');
-  assert.equal(state.dialog, null);
-  assert.deepEqual(calls.toasts, ['gs.align_done{"n":"2","m":"7","r":"1"}']);
+  assert.equal(state.dialog.phase, 'result');
+  assert.equal(state.dialog.report.moved, 2);
+  assert.equal(state.dialog.report.latticeCoordinatesCanonicalized, 7);
+  assert.deepEqual(calls.toasts, ['gs.optimize_saved_title']);
 });
 
 test('#642 run: conflict reloads both stores; outdated client gets its own toast', async () => {
-  const conflict = fakePort({ commit: async () => { throw Object.assign(new Error('c'), { code: 'conflict' }); } });
+  const conflict = fakePort({ commit: async () => { throw new OptimizeWriteFailure({ code: 'conflict' }, 'dispatched'); } });
   conflict.state.dialog = dialogOf();
   await conflict.dialog.run();
   assert.equal(conflict.calls.reload, 1);
   assert.equal(conflict.state.dialog.busy, false, 'the dialog stays open and usable');
-  assert.deepEqual(conflict.calls.toasts, ['toast.error{"err":"c"}']);
+  assert.deepEqual(conflict.calls.toasts, ['gs.optimize_failed_title']);
 
-  const outdated = fakePort({ commit: async () => { throw { code: 'wall_model_client_outdated' }; } });
+  const outdated = fakePort({ commit: async () => { throw new OptimizeWriteFailure({ code: 'wall_model_client_outdated' }, 'before-dispatch'); } });
   outdated.state.dialog = dialogOf();
   await outdated.dialog.run();
   assert.equal(outdated.calls.reload, 0);
-  assert.deepEqual(outdated.calls.toasts, ['toast.wall_model_client_outdated']);
+  assert.deepEqual(outdated.calls.toasts, ['gs.optimize_failed_title']);
+  assert.equal(outdated.state.dialog.failure.kind, 'version');
 });
 
 // -------------------------------------------------------------- diagnostics
@@ -458,7 +471,7 @@ test('#642 render: failed preflight names each reason and offers no Apply', () =
   assert.doesNotMatch(text, /data-hp="dialog-confirm"/, 'the failure state is not a dismissible warning');
   assert.doesNotMatch(text, /gs\.preflight_update_hint/);
   state.integration = '0.0.1-other';
-  assert.match(flatten(dialog.render()), /gs\.preflight_update_hint/);
+  assert.doesNotMatch(flatten(dialog.render()), /gs\.preflight_update_hint/, 'different version strings alone do not prove incompatibility');
 });
 
 test('#642 render: nothing to do — plain «none» or «no automatic changes», never Apply', () => {
@@ -737,7 +750,7 @@ test('#869 AC3 a refused or hung reload keeps the same report and says the data 
   const { dialog, state } = realPort({
     config: optimalConfig(), layout: ownerLayout(), hass, context: () => rosterOf(hass), retryMs: 250,
   });
-  assert.equal(new OptimizePlansDialog(fakePort().port, { optimize: optimizePlans, sourceMatches: sameOptimizeSource }).registryRetryMs, 10_000,
+  assert.equal(new OptimizePlansDialog(fakePort().port, { optimize: optimizePlans, sourceMatches: sameOptimizeSource, feedback }).registryRetryMs, 10_000,
     'default wait is 10 s');
   dialog.open();
   const before = state.dialog;
@@ -993,10 +1006,13 @@ test('#869 the loader opens the real dialog and routes the block strings to the 
   assert.equal(flatten(loader.render()), '', 'nothing paints before the chunk arrives');
   assert.equal(loader.clipboardFallback, null);
   state.config = { spaces: [space('a', 'Alpha', 0.5), space('b', 'Beta', 0.50337)], markers: [], settings: {} };
-  await loader.open();
+  const opening = loader.open();
+  assert.equal(state.dialog.phase, 'loading');
+  assert.match(flatten(loader.render()), /Checking plans/);
+  await opening;
   assert.ok(state.dialog?.changed, 'the real preview opened');
   assert.deepEqual(calls.commit, []);
-  assert.ok(calls.requestUpdate >= 1, 'the render requested before the load repaints');
+  assert.ok(state.dialog.report, 'the eager shell was replaced by the lazy report');
   state.dialog = dialogOf({ changed: false, preflight: null, report: report({
     unverifiedPositions: [{ id: 'x', kind: 'unknown', name: '', spaceId: 'gone', reason: 'unknown_owner' }],
     registryAuthoritative: false,
@@ -1050,6 +1066,8 @@ test('#892 AC5: cleanup is preview-only, Apply writes its exact pair, post-commi
       assert.equal(guard.canWrite(), true);
       assert.equal(sameOptimizeSource(guard.source, guard.current()), true);
       calls.commit.push([cfg, lay]); state.config = cfg; layout = lay;
+      state.configRev = 2; state.layoutRev = 3;
+      return { config: cfg, layout: lay, configRev: 2, layoutRev: 3, canUndo: true, canonical: true };
     },
   });
   state.config = config;
@@ -1065,10 +1083,11 @@ test('#892 AC5: cleanup is preview-only, Apply writes its exact pair, post-commi
   assert.match(flatten(dialog.render()), /gs.optimize_invalid_selected/);
   await dialog.run();
   assert.deepEqual(calls.commit[0], [candidate.config, candidate.layout]);
-  assert.equal(state.dialog.report.invalidPositionsEligible.length, 0);
-  assert.equal(state.dialog.changed, false);
-  assert.equal(state.dialog.removeInvalidMissingPositions, false);
-  assert.match(calls.toasts.at(-1), /gs.optimize_invalid_done/);
+  assert.equal(state.dialog.report.invalidPositionsRemoved.length, 3, 'retain the applied delta');
+  assert.equal(state.dialog.afterReport.invalidPositionsEligible.length, 0);
+  assert.equal(state.dialog.phase, 'result');
+  assert.equal(state.dialog.outcome, 'clean');
+  assert.match(calls.toasts.at(-1), /gs.optimize_saved_title/);
   assert.equal(port.dialog(), state.dialog);
 });
 
@@ -1077,6 +1096,7 @@ test('#892 AC8/9: closing a pending Apply cannot close or toast a subsequently o
   const { dialog, state, calls } = fakePort({ commit: () => new Promise(r => { finish = r; }) });
   state.dialog = dialogOf();
   const pending = dialog.run();
+  await Promise.resolve();
   state.dialog = dialogOf();
   const reopened = state.dialog;
   finish(); await pending;
@@ -1096,4 +1116,182 @@ test('#892 AC6: retained-only records keep a disabled cleanup button and an expl
   assert.match(flatten(template), /gs.optimize_invalid_none_safe/);
   dialog.toggleInvalidPositions();
   assert.equal(state.dialog.removeInvalidMissingPositions, false);
+});
+
+// #1170: lifecycle/outcome tests use the production controller with controlled
+// optimizer/transport seams, not a second implementation of its state machine.
+const deferred = () => { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return { promise, resolve, reject }; };
+function readyController(post = 'clean', overrides = {}) {
+  const h = fakePort(overrides); let checks = 0;
+  h.state.config = optimalConfig();
+  h.state.dialog = dialogOf({ config: h.state.config, source: h.port.source(), report: report({ moved: 2, total: 3 }) });
+  h.dialog = new OptimizePlansDialog(h.port, { sourceMatches: sameOptimizeSource, feedback,
+    optimize: (cfg, layout) => {
+      checks++;
+      if (post === 'throws') throw Error('private postcheck message');
+      return { config: cfg, layout, changed: post === 'remaining',
+        report: report(post === 'limited' ? { wallsStraightenSkipped: 1 } : {}) };
+    } });
+  return { ...h, checks: () => checks };
+}
+
+test('#1170 initial calculation waits for a presented busy frame and never writes', async () => {
+  const frame = deferred(); let calculated = 0;
+  const h = fakePort({ present: () => frame.promise });
+  h.dialog = new OptimizePlansDialog(h.port, { sourceMatches: sameOptimizeSource, feedback,
+    optimize: (...args) => { calculated++; return optimizePlans(...args); } });
+  const opening = h.dialog.open();
+  assert.equal(h.state.dialog.phase, 'checking');
+  assert.match(flatten(h.dialog.render()), /gs.optimize_checking/);
+  assert.equal(calculated, 0); assert.equal(h.calls.commit.length, 0);
+  frame.resolve(); await opening;
+  assert.equal(calculated, 1); assert.ok(h.state.dialog.report);
+});
+
+test('#1170 closing and reopening a sent Apply restores one operation, not a duplicate write', async () => {
+  const gate = deferred(); let writes = 0;
+  const h = readyController(); const commit = h.port.commit;
+  h.port.commit = async (...args) => { writes++; await gate.promise; return commit(...args); };
+  const applying = h.dialog.run(); await Promise.resolve();
+  assert.equal(h.state.dialog.busy, true);
+  assert.match(flatten(h.dialog.render()), /gs.optimize_close_hint/);
+  handlerFor(h.dialog.render(), 'hp-close')();
+  assert.equal(h.state.dialog, null);
+  await h.dialog.open();
+  assert.equal(h.state.dialog.phase, 'saving');
+  await h.dialog.run(); assert.equal(writes, 1);
+  gate.resolve(); await applying;
+  assert.equal(h.state.dialog.outcome, 'clean');
+  assert.equal(h.checks(), 1); assert.equal(h.calls.commit.length, 1);
+  assert.match(flatten(h.dialog.render()), /gs.optimize_result_clean/);
+  assert.doesNotMatch(flatten(h.dialog.render()), /data-hp="dialog-confirm"/);
+});
+
+test('#1170 success keeps only the confirmed report and a single read-only postcheck', async () => {
+  for (const post of ['clean', 'limited', 'remaining', 'throws']) {
+    const h = readyController(post);
+    const delta = h.state.dialog.report;
+    await h.dialog.run();
+    assert.equal(h.state.dialog.phase, 'result', post);
+    assert.equal(h.state.dialog.outcome, post === 'throws' ? 'unchecked' : post, post);
+    assert.equal(h.state.dialog.report, delta, 'do not replace saved delta with a new candidate');
+    assert.equal(h.checks(), 1); assert.equal(h.calls.commit.length, 1);
+    assert.equal(h.calls.checkGeometry.length, 0, 'no second physical preflight after saving');
+    assert.doesNotMatch(flatten(h.dialog.render()), /private postcheck/);
+    await h.dialog.run(); assert.equal(h.calls.commit.length, 1, 'a result is not an Apply target');
+  }
+});
+
+test('#1170 remaining changes need another explicit preview and warn about replacing Undo', async () => {
+  const h = readyController('remaining'); await h.dialog.run();
+  assert.match(flatten(h.dialog.render()), /gs.optimize_replaces_undo/);
+  handlerFor(h.dialog.render(), 'click', 'optimize-recheck')();
+  assert.equal(h.state.dialog.outcome, undefined);
+  assert.equal(h.state.dialog.replacesUndo, true);
+  assert.equal(h.calls.commit.length, 1);
+  assert.match(flatten(h.dialog.render()), /data-hp="dialog-confirm"/);
+  assert.match(flatten(h.dialog.render()), /gs.optimize_replaces_undo/);
+});
+
+test('#1170 an unknown save survives closing; failed/superseded reads never unlock the old candidate', async () => {
+  for (const read of ['failed', 'superseded']) {
+    const h = readyController('clean', {
+      commit: async () => { throw new OptimizeWriteFailure({ code: 'commit_failed' }, 'dispatched'); },
+      reloadAfterConflict: async () => read,
+    });
+    const candidate = h.state.dialog;
+    await h.dialog.run();
+    assert.equal(h.state.dialog.phase, 'unknown');
+    handlerFor(h.dialog.render(), 'hp-close')(); await h.dialog.open();
+    assert.equal(h.state.dialog.phase, 'unknown');
+    await handlerFor(h.dialog.render(), 'click', 'optimize-refresh')();
+    assert.equal(h.state.dialog.phase, 'unknown'); assert.equal(h.state.dialog.refreshFailed, true);
+    h.state.dialog = candidate; await h.dialog.run();
+    assert.equal(h.checks(), 0, 'no postcheck or replacement preview without synchronization');
+  }
+});
+
+test('#1170 adopted synchronization releases unknown state only for a fresh preview', async () => {
+  let writes = 0;
+  const h = readyController('clean', {
+    commit: async () => { writes++; throw new OptimizeWriteFailure({ code: 'commit_failed' }, 'dispatched'); },
+    reloadAfterConflict: async () => 'adopted',
+  });
+  await h.dialog.run();
+  await handlerFor(h.dialog.render(), 'click', 'optimize-refresh')();
+  assert.ok(h.state.dialog.report); assert.equal(h.state.dialog.changed, false);
+  assert.equal(writes, 1); assert.equal(h.checks(), 1);
+});
+
+test('#1170 identical context error codes are classified by dispatch evidence', async () => {
+  for (const stage of ['before-dispatch', 'dispatched', 'acknowledged']) {
+    const h = readyController('clean', {
+      commit: async () => { throw new OptimizeWriteFailure({ code: 'context-changed' }, stage); },
+      reloadAfterConflict: async () => 'failed',
+    });
+    await h.dialog.run();
+    assert.equal(h.state.dialog.phase, stage === 'before-dispatch' ? 'failure' : stage === 'dispatched' ? 'unknown' : 'result', stage);
+    if (stage === 'acknowledged') assert.equal(h.state.dialog.outcome, 'unchecked');
+    if (stage === 'dispatched') assert.doesNotMatch(flatten(h.dialog.render()), /gs.optimize_not_applied/);
+  }
+});
+
+test('#1170 a superseded authority cannot render or toast its old result in another dialog', async () => {
+  const gate = deferred(); const h = readyController(); const commit = h.port.commit;
+  h.port.commit = async (...args) => { await gate.promise; return commit(...args); };
+  const pending = h.dialog.run(); await Promise.resolve();
+  const foreign = dialogOf(); h.state.connection = {}; h.state.dialog = foreign;
+  gate.resolve(); await pending;
+  assert.equal(h.state.dialog, foreign); assert.deepEqual(h.calls.toasts, []);
+});
+
+test('#1170 a changed source during the presented postcheck frame cannot claim a clean result', async () => {
+  let frames = 0;
+  const h = readyController();
+  h.port.present = async () => { if (++frames === 2) h.state.ownersFingerprint = 'new owners'; };
+  await h.dialog.run();
+  assert.equal(h.state.dialog.outcome, 'stale'); assert.equal(h.checks(), 0);
+});
+
+test('#1170 a legacy metadata-only ACK requires canonical readback before a clean result', async () => {
+  for (const read of ['adopted', 'failed', 'superseded']) {
+    const h = readyController(); const commit = h.port.commit;
+    h.port.commit = async (...args) => ({ ...await commit(...args), canonical: false });
+    h.port.reloadAfterConflict = async () => read;
+    await h.dialog.run();
+    assert.equal(h.state.dialog.outcome, read === 'adopted' ? 'clean' : 'unchecked', read);
+    assert.equal(h.checks(), read === 'adopted' ? 1 : 0);
+    assert.equal(h.calls.commit.length, 1);
+  }
+});
+
+test('#1170 failure diagnostics and Help omit private exception text and preserve a busy draft', async t => {
+  let message;
+  const h = readyController('clean', {
+    commit: async () => { throw new OptimizeWriteFailure(Error('SECRET token and coordinates'), 'dispatched'); },
+    support: text => { message = text; return false; },
+  });
+  await h.dialog.run();
+  withClipboard(t, { writeText: async () => { throw Error('clipboard unavailable'); } });
+  await h.dialog.copyDiagnostics();
+  assert.match(h.dialog.clipboardFallback, /houseplan-optimize/);
+  assert.doesNotMatch(h.dialog.clipboardFallback, /SECRET|coordinates|token/);
+  handlerFor(h.dialog.render(), 'click', 'optimize-support')();
+  assert.match(message, /houseplan-optimize/); assert.doesNotMatch(message, /SECRET/);
+  assert.equal(h.state.dialog.phase, 'unknown', 'a busy support draft does not consume the failure');
+  h.port.support = text => { message = text; return true; };
+  handlerFor(h.dialog.render(), 'click', 'optimize-support')();
+  assert.equal(h.state.dialog, null, 'only successful entry closes Optimize');
+});
+
+test('#1170 no-op with retained observations cannot say the plan is completely optimized', () => {
+  for (const patch of [{ wallsStraightenSkipped: 1 }, { nestedRefsUnresolved: 1 },
+    { unverifiedPositions: [{ id: 'old', kind: 'unknown', spaceId: 'gone' }] },
+    { liveMissingPositions: [{ id: 'live', kind: 'device', name: 'Lamp', spaceId: 'gone' }] }]) {
+    const h = fakePort();
+    h.state.dialog = dialogOf({ changed: false, preflight: null, report: report(patch) });
+    const text = flatten(h.dialog.render());
+    assert.doesNotMatch(text, /gs.optimize_result_clean|gs.optimize_clean_title/);
+    assert.equal(h.calls.commit.length, 0);
+  }
 });

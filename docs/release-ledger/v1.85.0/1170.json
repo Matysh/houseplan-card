@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1170,
+  "baseStable": "v1.85.0",
+  "category": "major",
+  "rationale": "Owner-approved Optimize UX: explicit waiting, persistent outcomes and conservative save reconciliation; no repair algorithm or persisted model change.",
+  "summary": {
+    "ru": "Понятное ожидание и итоги оптимизации, диагностика отказов и безопасное обновление после неподтверждённой записи.",
+    "en": "Clear Optimize waiting and outcomes, actionable failure diagnostics and safe reconciliation of unconfirmed saves."
+  }
+}

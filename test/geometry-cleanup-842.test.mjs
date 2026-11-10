@@ -194,7 +194,7 @@ test('#842 AC6: Optimize flushes the pending edit normally and replaces the pair
     _canOptimizeUndo: false, _undoKind: null, _dirtyPos: new Set(), _sentPos: new Map(),
     _modelCache: null, _frame: null, _cacheSnapshot() {},
   });
-  h.host.hass = { callWS: async (message) => { messages.push(message); return { can_undo: true, config_rev: 9, layout_rev: 2 }; } };
+  h.host.hass = { callWS: async (message) => { messages.push(message); return { ok: true, can_undo: true, config_rev: 9, layout_rev: 2, config: optimized, layout: {} }; } };
   h.host._serverCfg.settings.show_room_tooltip = false;
   h.runtime._saveConfig();
   await commitPlanOptimization(h.host, optimized, {});

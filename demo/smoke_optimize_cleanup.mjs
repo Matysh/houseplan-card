@@ -118,18 +118,20 @@ const proposed = await page.evaluate(() => ({ config: structuredClone(window.__c
   configRev: window.__card._cfgRev, layoutRev: window.__card._layoutRev }));
 await optimize().locator('[data-hp="dialog-confirm"]').click();
 await page.evaluate(() => window.__hpTest.waitForWrites());
+await page.waitForFunction(() => window.__card._alignDialog?.phase === 'result');
 record('oneAtomicWriteUsesExactPreviewAndFrozenRevisions', await page.evaluate(expected => {
   const writes = window.__892.writes;
   return writes.length === 1 && JSON.stringify(writes[0].config) === JSON.stringify(expected.config)
     && JSON.stringify(writes[0].layout) === JSON.stringify(expected.layout)
     && writes[0].expected_config_rev === expected.configRev && writes[0].expected_layout_rev === expected.layoutRev;
 }, proposed));
-record('postAdoptionReportIsCleanAndUndoAvailable', await page.evaluate(() => {
+record('postAdoptionKeepsAppliedReportAndSeparateRemainingObservations', await page.evaluate(() => {
   const card = window.__card;
   return !card._layout.grp_obsolete && !card._layout.grp_second_obsolete
     && !card._layout.aa892000000000000000000000000000 && card._layout.future_widget?.future === true
-    && card._alignDialog.report.invalidPositionsEligible.length === 0
-    && !card._alignDialog.changed && card._canOptimizeUndo && card._undoKind === 'optimize';
+    && card._alignDialog.report.invalidPositionsRemoved.length === 3
+    && card._alignDialog.afterReport.invalidPositionsEligible.length === 0
+    && card._alignDialog.phase === 'result' && card._canOptimizeUndo && card._undoKind === 'optimize';
 }));
 record('retainedViewPlacementScaleAndVacuumUnchanged', await page.evaluate(expected => {
   const card = window.__card;

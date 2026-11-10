@@ -33,7 +33,7 @@ const out = await page.evaluate(async () => {
     callWS: async (message) => {
       if (message.type === 'houseplan/plan/optimize') {
         sent.push(clone(message));
-        return { ok: true, config_rev: 42, layout_rev: 24, can_undo: true };
+        return { ok: true, config_rev: 42, layout_rev: 24, can_undo: true, config: clone(message.config), layout: clone(message.layout) };
       }
       return baseCall(message);
     },
@@ -75,7 +75,7 @@ const out = await page.evaluate(async () => {
     'Could not safely verify the geometry of the following spaces: Alpha, beta, Space 3, and 1 more.',
   );
   result.englishFailureHasExactHint = englishText.includes(
-    'Plans were not changed. Copy the diagnostics with the button below and attach them to the bug report together with a space export.',
+    'This optimization was not applied.',
   );
   // #295: every failure (up to 10) is listed with its reason; the injected
   // title renders as inert text — lit escapes it, no element is created.
@@ -146,7 +146,7 @@ const out = await page.evaluate(async () => {
   result.russianFailureHasExactCopy = russianText.includes(
     'Не удалось безопасно проверить геометрию следующих пространств: Alpha, beta, Пространство 3 и ещё 1.',
   ) && russianText.includes(
-    'Планы не изменены. Скопируйте диагностику кнопкой ниже и приложите её к отчёту об ошибке вместе с экспортом пространства.',
+    'Эта оптимизация не применена.',
   ) && russianText.includes(
     'Alpha: Тело стен не построилось (объединение вернуло пустоту)',
   );

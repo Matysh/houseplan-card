@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Plan optimization paints its waiting states, retains the applied report and distinguishes skipped repairs, rejection and unconfirmed saving. Its single postcheck never reapplies changes; diagnostics use existing Help, and closing the dialog does not cancel a sent request (#1170).
+
 - Repair all four blocked mutation clean controls: adaptive editor navigation, render-layout ownership, scoped lazy Python imports and exact TS/Python node parity. Index legacy wall overlays (cold 576-atom validation ~22 s → ~2 s without raising its budget); preserve exact hosted-opening centres, authored grid targets and graph-owned deletion identities (#1380).
 
 - Repair the backend-quality mutation clean guard: remove the retired Validate assertion, follow local test-helper imports with cycle protection, and declare the graph-source tests’ HA dependency (#1379).

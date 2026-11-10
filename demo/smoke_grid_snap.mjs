@@ -245,7 +245,8 @@ const out = await page.evaluate(async () => {
   c.hass = { ...c.hass, callWS: async (m) => { sent.push(m.type); return base(m); } };
   await c._editorRuntime.optimizePlans.run();
   await c.updateComplete;
-  o.alignDialogClosed = c._alignDialog === null;
+  o.alignDialogRetainsConfirmedResult = c._alignDialog?.phase === 'result';
+  c._alignDialog = null; // This geometry-only case leaves the new persistent result.
   o.alignUsedAtomicConfigLayoutWrite = sent.filter((t) => t === 'houseplan/plan/optimize').length === 1;
 
   const g = c._serverCfg.spaces[0];

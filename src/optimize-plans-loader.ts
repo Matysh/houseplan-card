@@ -16,6 +16,8 @@ import type { OptimizePlansDialog, OptimizePlansDialogPort } from './optimize-pl
 import type { OptimizeGeometryPreflightResult } from './plan-geometry-preflight';
 import { sameOptimizeSource } from './optimize-source';
 import type { ServerConfig } from './types';
+import { optimizeFailure, optimizeFailureDiagnostics, OptimizeWriteFailure, type OptimizeStatusState } from './optimize-feedback';
+import { renderOptimizeStatus } from './optimize-status';
 
 /** The runtime's port: the card's own catalog only; the loader adds `settings`. */
 export type OptimizePlansHostPort = Omit<OptimizePlansDialogPort, 't'> & {
@@ -25,6 +27,7 @@ export type OptimizePlansHostPort = Omit<OptimizePlansDialogPort, 't'> & {
 export class LazyOptimizePlansDialog {
   private dialog: OptimizePlansDialog | null = null;
   private loading: Promise<OptimizePlansDialog> | null = null;
+  private lifecycle = {};
 
   public constructor(
     private readonly port: OptimizePlansHostPort,
@@ -40,7 +43,11 @@ export class LazyOptimizePlansDialog {
         ...port,
         t: (key, vars) => (hasSettingsTranslation(this.lang(), key)
           ? settingsT(this.lang(), key, vars) : port.t(key as I18nKey, vars)),
-      }, { optimize: optimizePlans, sourceMatches: sameOptimizeSource });
+      }, { optimize: optimizePlans, sourceMatches: sameOptimizeSource, feedback: {
+        failure: optimizeFailure, diagnostics: optimizeFailureDiagnostics,
+        isWriteFailure: (error): error is OptimizeWriteFailure => error instanceof OptimizeWriteFailure,
+        renderStatus: renderOptimizeStatus,
+      } });
       return this.dialog;
     }, (error: unknown) => {
       this.loading = null;
@@ -67,11 +74,27 @@ export class LazyOptimizePlansDialog {
       this.port.showToast(settingsT(this.lang(), 'gs.optimize_write_required'), 'gs.optimize_write_required');
       return Promise.resolve();
     }
-    const connection = this.port.source().connection;
-    return this.withDialog((dialog) => {
-      if (this.port.source().connection === connection) dialog.open();
-    });
+    if (this.dialog) return Promise.resolve(this.dialog.open());
+    const source = this.port.source(), lifecycle = this.lifecycle;
+    const pending: OptimizeStatusState = { phase: 'loading', config: this.port.config(), source, busy: true };
+    this.port.setDialog(pending);
+    return (async () => {
+      await this.port.present();
+      if (this.lifecycle !== lifecycle || this.port.dialog() !== pending || source.authorityCurrent?.() === false) return;
+      try {
+        const dialog = await this.load();
+        if (this.lifecycle === lifecycle && this.port.dialog() === pending
+          && this.port.source().connection === source.connection && source.authorityCurrent?.() !== false)
+          await dialog.open();
+      } catch (error) {
+        if (this.lifecycle === lifecycle && this.port.dialog() === pending
+          && this.port.source().connection === source.connection && source.authorityCurrent?.() !== false)
+          this.port.setDialog({ ...pending, phase: 'failure', busy: false,
+            failure: optimizeFailure(error, pending.config, 'loading') });
+      }
+    })();
   }
+  public retire(): void { this.lifecycle = {}; this.dialog?.retire(); }
   public preview(removeLive: boolean): Promise<void> {
     return this.withDialog((dialog) => dialog.preview(removeLive));
   }
@@ -90,7 +113,15 @@ export class LazyOptimizePlansDialog {
   /** A state written before the chunk arrived paints once it has loaded. */
   public render(): TemplateResult | typeof nothing {
     if (this.dialog) return this.dialog.render();
-    void this.load().then(() => this.port.requestUpdate(), () => undefined);
-    return nothing;
+    const state = this.port.dialog();
+    if (!state || 'report' in state) return nothing;
+    return renderOptimizeStatus(state, {
+      ...this.port,
+      t: (key, vars) => hasSettingsTranslation(this.lang(), key)
+        ? settingsT(this.lang(), key, vars) : this.port.t(key as I18nKey, vars),
+      close: () => this.port.setDialog(null),
+      refresh: () => this.open(),
+      support: undefined,
+    });
   }
 }

@@ -114,7 +114,7 @@ function writeHarness() {
   const current = { ...source }; let allowed = true, flush = () => {};
   const host = { _saveConfigDebounced: { pending: () => true, flush: () => flush() },
     _writeChain: Promise.resolve(), _cfgRev: 7, _layoutRev: 9,
-    hass: { callWS: async (message) => { messages.push(message); return { config_rev: 8, layout_rev: 10, can_undo: true }; } },
+    hass: { callWS: async (message) => { messages.push(message); return { ok: true, config_rev: 8, layout_rev: 10, can_undo: true, config: cfg, layout }; } },
     _adoption: { snapshot: () => ({ config: cfg }), acceptPairWrite: (...args) => adoptions.push(args) },
     _geometryHistory: { clear() {} }, _devicePositionHistory: { clear() {} }, _cancelDeviceDrag() {},
     _dirtyPos: new Set(), _sentPos: new Map(), _maybeRebuildDevices() {}, _cacheSnapshot() {}, requestUpdate() {},
@@ -144,7 +144,7 @@ test('#892 AC1/8: revoked permission after queued writes sends nothing; exact ac
   assert.equal(h.messages.length, 1);
   assert.equal(h.messages[0].expected_config_rev, 7);
   assert.equal(h.messages[0].expected_layout_rev, 9);
-  assert.deepEqual(h.adoptions[0], [h.cfg, h.layout, { config_rev: 8, layout_rev: 10, can_undo: true }]);
+  assert.deepEqual(h.adoptions[0], [h.cfg, h.layout, { ok: true, config_rev: 8, layout_rev: 10, can_undo: true, config: h.cfg, layout: h.layout }]);
   assert.equal(h.host._canOptimizeUndo, true);
   assert.equal(h.host._undoKind, 'optimize');
 });

@@ -28,7 +28,7 @@ const out = await page.evaluate(async (sourceSpace) => {
         backup = { config: clone(serverConfig), layout: clone(serverLayout) };
         serverConfig = clone(message.config);
         serverLayout = clone(message.layout);
-        return { ok: true, config_rev: ++configRev, layout_rev: ++layoutRev, can_undo: true };
+        return { ok: true, config_rev: ++configRev, layout_rev: ++layoutRev, can_undo: true, config: clone(serverConfig), layout: clone(serverLayout) };
       }
       if (message.type === 'houseplan/plan/optimize_undo') {
         sent.push(message.type);

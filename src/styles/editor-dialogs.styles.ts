@@ -354,6 +354,8 @@ export const editorDialogsStyles = unsafeCSS(css`
     .optimize-unverified p, .optimize-unverified ul { margin: 0; }
     .optimize-unverified ul { padding-inline-start: 22px; font-size: 13px; }
     .optimize-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+    .optimize-status { overflow-wrap: anywhere; min-width: 0; }
+    .optimize-status .preflight-diagnostics { white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
     .optimize-action { min-height: 44px; }
     .optimize-details {
       margin-top: var(--sp-3);
