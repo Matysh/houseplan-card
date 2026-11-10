@@ -2,11 +2,13 @@
 
 ## Unreleased
 
-- Keep a rebinding save in control of its busy dialog draft when the old HA device is rediscovered, so completion closes the dialog normally (#1376).
+## v1.85.1 — 2026-11-10
 
-- Polish the local MDI picker against the accepted UI Lab reference: reset to the current automatic icon, share select hover paint, centre the circular clear target, rotate the arrow and start search without a focused result or empty hint strip. Suppress the browser tap overlay through shared floating UI Kit styles, with Chromium/WebKit mobile and persistent open/hover goldens (#1376).
-
-- Replace the HA device icon picker adapter with a local UI Kit field, searchable lazy MDI catalog and SVG previews; preserve custom names, automatic reset and dialog keyboard behavior, and cover the visible picker in release goldens (#1375).
+- Bring the reviewed 1.85.1 beta fixes to stable: retained View/editor transitions, closed-room recognition with dangling walls, glass-door light transmission, UI Kit label activation and consistent editor toolbars (#1344, #1346, #1348, #1349, #1350, #1351, #1352).
+- Adapt the header to two measured rows before collapsing into a full-width actions menu, preserve native HA sidebar state and keyboard focus, and allow immediate dragging after double-click fit (#1347, #1364, #1365, #1371).
+- Keep device settings navigation reachable through independent scrolling; retain dropdowns and Help after queued scroll, room controls during resize preview and LED actions after leaving an editor (#1354, #1356, #1358, #1359, #1360, #1361).
+- Replace the fragile HA icon-picker adapter with a lazy local MDI catalog and SVG field; polish automatic reset/preview, keyboard selection, shared hover, clear-target geometry, arrow motion and dropdown tap paint. Preserve the busy save draft during rebinding (#1375, #1376).
+- Refresh only explicitly owner-approved visual frames and retain strict product assertions while aligning browser/HA helpers with the revised header and dialog layout. Add persistent picker open/clear-hover goldens and Chromium/WebKit mobile coverage with matching CI preparation (#1353, #1357, #1362, #1363, #1370, #1372, #1373, #1375, #1376).
 
 ## v1.85.1-beta.3 — 2026-11-09
 

@@ -377,7 +377,7 @@ import {
   rewriteMarkerRoomReferences,
 } from './room-reference-transaction';
 
-const CARD_VERSION = '1.85.1-beta.3';
+const CARD_VERSION = '1.85.1';
 
 // #474: the editor imports the furniture artwork statically and hands it to
 // the page runtime the moment this chunk evaluates — before the loader's
