@@ -4656,6 +4656,8 @@ function applyGraphOperation(before, operation, context = {}) {
                         const t = hostParameter(host.host);
                         const point = pointAt(decodePoint(findNode(old.from).p), decodePoint(findNode(old.to).p), t);
                         const next = projectParameter(point, decodePoint(findNode(keep.from).p), decodePoint(findNode(keep.to).p));
+                        if (!pointEq(pointAt(decodePoint(findNode(keep.from).p), decodePoint(findNode(keep.to).p), next), point))
+                            fail('collapse-host-incidence');
                         host.host = canonicalHost({ ...host.host, ...targetRef(keep) }, next);
                         mapping.hosts[host.id] = clone$1(host.host);
                     }

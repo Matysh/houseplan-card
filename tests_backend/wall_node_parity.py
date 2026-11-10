@@ -39,7 +39,11 @@ def pinned_test_ids():
         uuid.uuid4 = original
 
 
-def commit(config, module):
+def commit(config, module=None):
+    if module is None:
+        with pure_module("custom_components.houseplan.wall_segment_model",
+                         ROOT / "custom_components/houseplan/wall_segment_model.py") as scoped:
+            return commit(config, scoped)
     with pinned_test_ids():
         return module.commit_wall_segment_model(config)[0]
 

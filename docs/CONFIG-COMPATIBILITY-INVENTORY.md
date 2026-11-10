@@ -8,7 +8,12 @@ and real HA websocket tests; [contract](CONFIG-COMPATIBILITY.md#per-space-presen
 
 Historical #1015 provenance: reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
 
-Current snapshot: **635 individually classified matching lines**, sha256:`7ec9f7bfb923c572f2dd4baa1e41ad93b7049b20b7c394d0a62d90a775a451b5`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+Current snapshot: **750 individually classified matching lines**, sha256:`d66b100d13d6424ffa6d8c95d6f952132324c32d67878e9d2c07b2df892ea6ca`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+
+#1380 classifies three current graph-write/exact-coordinate safety comments as
+`current-feature` and the first-key-wins historical wall-overlay ABI as
+`wall-model-chain`. These are individual source records, not new fallback
+permissions or a change to the migration lifecycle.
 
 Historical #1015 captured product trees: src `22655ecb08f00d9b1f6c8381a1a3d3c9c51487cb`; integration `0019b652824aaad42fd0e6f5372cb595e8a41dc7`. These immutable Git trees identify the original capture; ongoing completeness is checked against exact source-match IDs, so an unrelated edit does not expire unchanged matches.
 

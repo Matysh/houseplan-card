@@ -234,6 +234,15 @@ def test_issue_1380_scoped_pure_module_keeps_lazy_imports_and_restores_identity(
         assert after.keys() == before.keys()
         assert all(after[k] is v for k, v in before.items())
 
+    # The shared parity helper also supports callers without an active scope.
+    # Its lazy commit must not leak modules into later Home Assistant tests.
+    from wall_node_parity import commit
+
+    assert commit(config) == actual
+    after = snapshot()
+    assert after.keys() == before.keys()
+    assert all(after[k] is v for k, v in before.items())
+
 
 def test_issue_465_pure_imports_is_order_independent():
     """Чистый процесс без parent package не должен запускать реальный __init__.

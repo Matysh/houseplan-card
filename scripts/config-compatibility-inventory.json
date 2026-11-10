@@ -6,8 +6,48 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "00f9724c42f5387fc536647e988bb4373195ce47c9fbf1272196a124d773d878",
+  "matchesSha256": "d66b100d13d6424ffa6d8c95d6f952132324c32d67878e9d2c07b2df892ea6ca",
   "hits": [
+    {
+      "id": "4755842f1b9d67d7cf8927d3",
+      "path": "custom_components/houseplan/graph_node_write.py",
+      "line": 94,
+      "text": "# and legacy preflight, before exact decoding can report a graph fault.",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current graph editor intent validation before the independent physical preflight; not a superseded persisted form."
+    },
+    {
+      "id": "7ce144b33604c14100facfc1",
+      "path": "custom_components/houseplan/graph_node_write.py",
+      "line": 171,
+      "text": "# nearby legacy endpoint. Match the frontend before physical preflight.",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current selected graph-node degree proof; nearby projected endpoints must not change selected identity."
+    },
+    {
+      "id": "9f6bda3ce6818321f75e726e",
+      "path": "custom_components/houseplan/plan_graph_exact.py",
+      "line": 104,
+      "text": "Raw legacy decoding and stored q coordinates never use this allowance.",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current numeric authored-intent tolerance boundary; exact stored coordinates and raw decoding remain untouched."
+    },
+    {
+      "id": "3f2712072d834f434c883d1a",
+      "path": "custom_components/houseplan/plan_graph_migration.py",
+      "line": 134,
+      "text": "# The legacy ABI uses the first matching key, even with duplicate overlays.",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "Versioned structural migration preserves first-key-wins wall-overlay decoding when indexing historical evidence; no reader removal or stored-form change."
+    },
     {
       "id": "7d34f2627cf92c5fbca93eda",
       "path": "custom_components/houseplan/backup_transaction.py",
