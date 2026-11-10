@@ -21,16 +21,29 @@ const res = await page.evaluate(async () => {
   out.hasLitLight = !!litLight;
   out.spots = sr().querySelectorAll('.glowlayer circle').length;
   out.spotsMatchLights = out.spots === c._devices.filter((d) => d.space === spId && d.entities.some((e) => e.startsWith('light.') && c.hass.states[e]?.state === 'on')).length;
-  // 3) выключение лампы плавно гасит пятно и удаляет его после 500 мс
+  // 3) Preserve the visible 500 ms fade, then release its transparent node
+  // within the same 750 ms observation window as the shared Glow/LED witness.
   const eid = litLight.entities.find((e) => e.startsWith('light.') && c.hass.states[e]?.state === 'on');
   const st0 = c.hass.states[eid];
+  const fadeAt = performance.now();
   c.hass = { ...c.hass, states: { ...c.hass.states, [eid]: { ...st0, state: 'off' } } };
   await c.updateComplete;
   const leavingSpot = sr().querySelector('.glow-spot.is-leaving');
   out.spotFadesOut = !!leavingSpot
     && getComputedStyle(leavingSpot).transitionDuration.split(',').some((v) => v.trim() === '0.5s');
-  await new Promise((r) => setTimeout(r, 550));
-  out.spotGone = sr().querySelectorAll('.glowlayer circle').length === out.spots - 1;
+  const fadeEnds = [];
+  const recordFade = (event) => {
+    if (event.target === leavingSpot && event.propertyName === 'opacity') fadeEnds.push(event.elapsedTime);
+  };
+  sr().addEventListener('transitionend', recordFade);
+  while (performance.now() - fadeAt < 750
+    && sr().querySelectorAll('.glowlayer circle').length !== out.spots - 1) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  sr().removeEventListener('transitionend', recordFade);
+  out.spotFadeCompletes = fadeEnds.some((elapsed) => Math.abs(elapsed - 0.5) < 0.01);
+  out.spotGone = sr().querySelectorAll('.glowlayer circle').length === out.spots - 1
+    && performance.now() - fadeAt <= 750;
   c.hass = { ...c.hass, states: { ...c.hass.states, [eid]: st0 } }; await c.updateComplete;
   const returningSpot = [...sr().querySelectorAll('.glow-spot')]
     .find((node) => node.dataset.glowSource === eid);
