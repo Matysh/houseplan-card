@@ -1,53 +1,57 @@
 # CI: проверенный продукт в main
 
-**Не подтверждено.** Продукт или входы его сборки в main отличаются от подтверждённого выпуска.
+**Passing:** продукт в main соответствует подтверждённому выпуску.
 
 Main: [`fe1f3b3776eb75c168295c6dc7557cc80deab3d9`](https://github.com/Matysh/houseplan-card/commit/fe1f3b3776eb75c168295c6dc7557cc80deab3d9).
 Статус использует уже завершённые проверки выпуска. Новых тестов, сборок или гейтов этот отчёт не запускает.
 
-Проверенный коммит: [`52610e2100528c9e8af7bd36f71984e066f9b9c9`](https://github.com/Matysh/houseplan-card/commit/52610e2100528c9e8af7bd36f71984e066f9b9c9).
-Выпуск: [v1.85.0](https://github.com/Matysh/houseplan-card/releases/tag/v1.85.0). Профиль: **stable**.
-Завершение исходного результата: 2026-11-06T19:53:18.995Z. Сохранённый результат локального/резервного тест-сета выпуска.
-ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 отчёта: `b79ebb386c2d1ee43623095f6a3529aac8812894a5823305c1fc677b17d4b83b`.
-Обязательных шагов: 556; зачтено прежних успешных результатов: 26.
+Проверенный коммит: [`fe1f3b3776eb75c168295c6dc7557cc80deab3d9`](https://github.com/Matysh/houseplan-card/commit/fe1f3b3776eb75c168295c6dc7557cc80deab3d9).
+Выпуск: [v1.85.1](https://github.com/Matysh/houseplan-card/releases/tag/v1.85.1). Профиль: **stable**.
+Завершение исходного результата: 2026-11-10T06:28:19.236Z. Сохранённый результат локального/резервного тест-сета выпуска.
+ID исходного тест-сета: `20261110T053501368-01e5f701`. SHA256 отчёта: `618ebd687f8ccd87a4ef4596a87acdacd0aa14c50cfd6ad8333ff1f3c7c64198`.
+Обязательных шагов: 567; зачтено прежних успешных результатов: 10.
 
 <details>
 <summary>Состав исходных проверок</summary>
 
-- Сборка и типы продукта: passed.
-- Подготовка модулей для тестов: passed.
-- Подготовка карточки для браузера: passed.
-- Поведение: Устройства и действия: passed; tests: 1078, passed: 1078, failed: 0, skipped: 0, cancelled: 0, todo: 0.
-- Поведение: Геометрия и стены: passed; tests: 1346, passed: 1345, failed: 0, skipped: 1, cancelled: 0, todo: 0.
-- Поведение: Отрисовка View: reused; tests: 384, passed: 384, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
-- Поведение: Данные и сохранение: reused; tests: 370, passed: 370, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
-- Поведение: Новые продуктовые проверки: passed; tests: 477, passed: 477, failed: 0, skipped: 0, cancelled: 0, todo: 0.
-- Поведение: Общие функции: passed; tests: 244, passed: 244, failed: 0, skipped: 0, cancelled: 0, todo: 0.
-- Поведение: Редактор и история: reused; tests: 369, passed: 369, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
-- Поведение: Интерфейс и ввод: reused; tests: 153, passed: 153, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
-- Поведение: Свет и солнце: reused; tests: 208, passed: 208, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
-- Поведение: Текст и локализация: reused; tests: 41, passed: 41, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
-- Поведение: Экспорт и PDF: reused; tests: 71, passed: 71, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261106T150019219-3b2b1eb8.
-- Backend и сбор покрытия: reused; tests: 3074, passed: 3073, failed: 0, skipped: 1; исходный набор 20261106T182228856-a3f729e9.
+- Сборка и типы продукта: reused; исходный набор 20261110T051627322-49a38d39.
+- Подготовка модулей для тестов: reused; исходный набор 20261110T051627322-49a38d39.
+- Подготовка карточки для браузера: reused; исходный набор 20261110T052738629-cb453e6b.
 - Подготовка проверяемого ZIP и кандидата: passed.
-- Сохранение замера stable для следующей беты: passed (диагностика).
-- Браузер: Сохранённый план при первом открытии без прав редактирования: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Команда устройству сразу после холодного открытия View: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Поздний ответ и смена прав пользователя: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Подтверждение команды устройству: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Жесты редактора без случайного клика или команды: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Жесты на поверхности плана: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Выход из редактора и несохранённые изменения: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Отказ операции и целостность истории геометрии: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Создание декора и выбор созданного объекта: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Переключение между этажами: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Обновление живого текста: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Живое состояние и касания в изометрии: reused; исходный набор 20261106T170450147-af8d43c7.
-- Браузер: Восстановление View после задержки или сбоя: reused; исходный набор 20261106T170450147-af8d43c7.
-- 75 визуальных кадров: панель 61, Lovelace 13, Static 1: reused; tests: 75, passed: 75, failed: 0, skipped: 0; исходный набор 20261106T170450147-af8d43c7.
-- HA E2E beta: journeys: reused; tests: 10, passed: 10, failed: 0, skipped: 0; исходный набор 20261106T182228856-a3f729e9.
-- HA E2E beta: first-run: reused; tests: 2, passed: 2, failed: 0, skipped: 0; исходный набор 20261106T182228856-a3f729e9.
+- HA E2E beta: journeys: passed; tests: 10, passed: 10, failed: 0, skipped: 0.
+- HA E2E beta: first-run: passed; tests: 2, passed: 2, failed: 0, skipped: 0.
 - HA E2E beta: upgrade: passed; tests: 1, passed: 1, failed: 0, skipped: 0.
+- HA E2E remainder: journeys: passed; tests: 90, passed: 90, failed: 0, skipped: 0.
+- HA E2E remainder: first-run: not-required; tests: 0, passed: 0, failed: 0, skipped: 0.
+- HA E2E remainder: upgrade: not-required; tests: 0, passed: 0, failed: 0, skipped: 0.
+- 78 визуальных кадров: панель 64, Lovelace 13, Static 1: passed; tests: 78, passed: 78, failed: 0, skipped: 0.
+- Остальные визуальные эталоны: passed; tests: 251, passed: 251, failed: 0, skipped: 0.
+- Поведение: Устройства и действия: passed; tests: 1078, passed: 1078, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Геометрия и стены: passed; tests: 1353, passed: 1352, failed: 0, skipped: 1, cancelled: 0, todo: 0.
+- Поведение: Отрисовка View: passed; tests: 404, passed: 404, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Данные и сохранение: passed; tests: 371, passed: 371, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Новые продуктовые проверки: passed; tests: 483, passed: 483, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Общие функции: passed; tests: 244, passed: 244, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Редактор и история: passed; tests: 375, passed: 375, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Интерфейс и ввод: passed; tests: 153, passed: 153, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Свет и солнце: reused; tests: 212, passed: 212, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261110T051627322-49a38d39.
+- Поведение: Текст и локализация: passed; tests: 44, passed: 44, failed: 0, skipped: 0, cancelled: 0, todo: 0.
+- Поведение: Экспорт и PDF: reused; tests: 71, passed: 71, failed: 0, skipped: 0, cancelled: 0, todo: 0; исходный набор 20261110T025147929-df75c6b3.
+- Backend и сбор покрытия: reused; tests: 3083, passed: 3082, failed: 0, skipped: 1; исходный набор 20261108T141610763-4a8c768b.
+- Сохранение замера stable для следующей беты: passed (диагностика).
+- Браузер: Сохранённый план при первом открытии без прав редактирования: passed.
+- Браузер: Команда устройству сразу после холодного открытия View: passed.
+- Браузер: Поздний ответ и смена прав пользователя: passed.
+- Браузер: Подтверждение команды устройству: passed.
+- Браузер: Жесты редактора без случайного клика или команды: passed.
+- Браузер: Жесты на поверхности плана: passed.
+- Браузер: Выход из редактора и несохранённые изменения: passed.
+- Браузер: Отказ операции и целостность истории геометрии: passed.
+- Браузер: Создание декора и выбор созданного объекта: passed.
+- Браузер: Переключение между этажами: passed.
+- Браузер: Обновление живого текста: passed.
+- Браузер: Живое состояние и касания в изометрии: passed.
+- Браузер: Восстановление View после задержки или сбоя: passed.
 - Браузер: active chain ink: passed.
 - Браузер: activity color settings: passed.
 - Браузер: align guides: passed.
@@ -69,12 +73,14 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: card controls: passed.
 - Браузер: card picker locale: passed.
 - Браузер: card tool conflict: passed.
+- Браузер: check label: passed.
 - Браузер: climate once: passed.
 - Браузер: climate temp: passed.
 - Браузер: cold view vacuum: passed.
 - Браузер: color picker: passed.
 - Браузер: color picker consumers: passed.
 - Браузер: color picker presentation: passed.
+- Браузер: compact header polish: passed.
 - Браузер: config authority: passed.
 - Браузер: config lifecycle: passed.
 - Браузер: config reload race: passed.
@@ -124,6 +130,7 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: device equal spacing: passed.
 - Браузер: device hit capsules: passed.
 - Браузер: device icon design: passed.
+- Браузер: device icon picker: passed; tests: 9, passed: 9, failed: 0, skipped: 0.
 - Браузер: device icon pixel alignment: passed.
 - Браузер: device inbox: passed.
 - Браузер: device inbox batch: passed.
@@ -136,6 +143,7 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: device settings 947: passed.
 - Браузер: device settings action: passed.
 - Браузер: device settings form: passed.
+- Браузер: device settings scroll: passed.
 - Браузер: device signal: passed.
 - Браузер: device signal settings: passed.
 - Браузер: device signal topology: passed.
@@ -144,7 +152,7 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: dialog footer width: passed.
 - Браузер: dialog help clipping: passed.
 - Браузер: dialog modal recovery: passed.
-- Браузер: dialog picker 998: passed.
+- Браузер: dialog picker 998: passed; tests: 9, passed: 9, failed: 0, skipped: 0.
 - Браузер: dialog polish 603: passed.
 - Браузер: dialog polish 605: passed.
 - Браузер: dialog segments i18n: passed.
@@ -164,9 +172,11 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: easy converter openings: passed.
 - Браузер: edge cases: passed.
 - Браузер: edit walk: passed.
+- Браузер: editor chrome alignment: passed.
 - Браузер: editor command latency: passed.
 - Браузер: editor guides lifecycle: passed.
 - Браузер: editor nudge: passed.
+- Браузер: editor preload: passed.
 - Браузер: editor return focus 1248: passed.
 - Браузер: editor styles lazy: passed.
 - Браузер: editor tabs: passed.
@@ -196,7 +206,8 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: geometry cleanup 842: passed.
 - Браузер: geometry corpus: passed.
 - Браузер: german locale: passed.
-- Браузер: glow: passed.
+- Браузер: glass door sun: passed.
+- Браузер: glow: reused; исходный набор 20261110T052738629-cb453e6b.
 - Браузер: glow blending: passed.
 - Браузер: glow fail dark: passed.
 - Браузер: glow geometry resilience: passed.
@@ -206,7 +217,9 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: gs always: passed.
 - Браузер: ha controls: passed.
 - Браузер: ha form shell parity: passed.
+- Браузер: header actions menu: passed.
 - Браузер: header compact spaces: passed.
+- Браузер: header mode position regression: passed.
 - Браузер: header observer retirement: passed.
 - Браузер: help affordance: passed.
 - Браузер: hidden device toggle: passed.
@@ -249,7 +262,7 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: led strip bind: passed.
 - Браузер: led strip draw: passed.
 - Браузер: led strip field: passed.
-- Браузер: led strip glow: passed.
+- Браузер: led strip glow: reused; исходный набор 20261110T052738629-cb453e6b.
 - Браузер: led strip tube: passed.
 - Браузер: led zoom quality: passed.
 - Браузер: legacy geometry: passed.
@@ -272,6 +285,7 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: merge split: passed.
 - Браузер: mobile view header: passed.
 - Браузер: modal toast 956: passed.
+- Браузер: mode endpoints: passed.
 - Браузер: mode transition: passed.
 - Браузер: modes: passed.
 - Браузер: moon: passed.
@@ -296,6 +310,7 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: opening entity search: passed.
 - Браузер: opening escape wide: passed.
 - Браузер: opening inner distances: passed.
+- Браузер: opening light transparent: passed.
 - Браузер: opening measure: passed.
 - Браузер: opening mode fill: passed.
 - Браузер: opening preview: passed.
@@ -497,7 +512,7 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: vacuum tail continuity: passed.
 - Браузер: value face source: passed.
 - Браузер: value format: passed.
-- Браузер: version recovery: passed.
+- Браузер: version recovery: reused; исходный набор 20261110T052738629-cb453e6b.
 - Браузер: view device menu: passed.
 - Браузер: view device menu lifecycle: passed.
 - Браузер: view empty space boundary: passed.
@@ -566,11 +581,7 @@ ID исходного тест-сета: `20261106T190004284-967e7f21`. SHA256 �
 - Браузер: zoom flash: passed.
 - Браузер: zoom out: passed.
 - Браузер: view edit permissions: passed.
-- Остальные визуальные эталоны: reused; tests: 251, passed: 251, failed: 0, skipped: 0; исходный набор 20261106T170450147-af8d43c7.
-- Порог backend coverage перед stable: passed.
-- HA E2E remainder: journeys: reused; tests: 84, passed: 84, failed: 0, skipped: 0; исходный набор 20261106T190825729-e4f3b792.
-- HA E2E remainder: first-run: not-required; tests: 0, passed: 0, failed: 0, skipped: 0.
-- HA E2E remainder: upgrade: not-required; tests: 0, passed: 0, failed: 0, skipped: 0.
+- Порог backend coverage перед stable: reused; исходный набор 20261108T165752277-669a8619.
 - Конвертеры перед stable: 3 формата → импорт в HA: passed (диагностика); tests: 3, passed: 3, failed: 0, skipped: 0.
 
 </details>
