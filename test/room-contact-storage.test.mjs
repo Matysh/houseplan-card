@@ -6,6 +6,7 @@ import {buildWallFaceGraph,findWallFaceAtPoint} from '../test-build/wall-face-gr
 import {spaceModels,GRID_PITCH,NORM_W} from '../test-build/space-geometry.js';
 import {buildPlanSnapGeometry} from '../test-build/plan-snap-overlay.js';
 import {optimizePlans} from '../test-build/plan-optimizer.js';
+import {alignAllToGrid} from '../test-build/align-grid.js';
 import {commitWallSegmentModel,decodeLegacyWallSegmentModel,wallModelOffGridValueCount} from '../test-build/wall-segment-model.js';
 import {editGraphFixture} from './helpers/graph-fixture.mjs';
 import {checkOptimizeGeometry} from '../test-build/plan-geometry-preflight.js';
@@ -107,4 +108,18 @@ test('#1166 accepted Optimize is a storage-roundtrip no-op and retains both cont
   const second=optimizePlans(roundtrip.config,roundtrip.layout);
   assert.equal(second.changed,false);
   assert.deepEqual(second.config,first.config);
+});
+
+test('#1166 direct legacy Align retains finite shared-T incidence before graph repair',()=>{
+  const before=source(),snapshot=structuredClone(before);
+  const aligned=alignAllToGrid(before.spaces,{});
+  assert.deepEqual(before,snapshot,'the numerical proposal never edits its source');
+  both({...before,spaces:aligned.spaces});
+  const a=[.1,.12],b=[.82,.44],contact=a.map((v,i)=>v+(b[i]-v)/3);
+  assert.equal(storedWallContact(contact,a,b),true,'positive finite oblique T');
+  const angled={id:'oblique',rooms:[],partitions:[{id:'carrier',a,b,cm:20},
+    {id:'branch',a:contact,b:[.2,.8],cm:15}]};
+  const next=alignAllToGrid([angled],{}).spaces[0];
+  assert.equal(storedWallContact(next.partitions[1].a,next.partitions[0].a,next.partitions[0].b),true,
+    'independent Cartesian rounding cannot detach an interior endpoint from its finite sloped carrier');
 });

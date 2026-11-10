@@ -8,7 +8,7 @@ import { normalizeRoomAppearance } from '../test-build/room-appearance.js';
 import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { checkOptimizeGeometry } from '../test-build/plan-geometry-preflight.js';
 import { reconcileCoincidentPartitions } from '../test-build/coincident-partitions.js';
-import { GRID_PITCH, GRID_STEP_N as S } from '../test-build/space-geometry.js';
+import { GRID_PITCH, GRID_STEP_N as S, spaceModels } from '../test-build/space-geometry.js';
 import { wallIntervals } from '../test-build/wall-thickness.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
@@ -28,6 +28,17 @@ test('issue 276 reconciles the anonymized 5 cm offset fixture without moving its
   // HA config/get already projects the legacy appearance defaults.
   const input = normalizeRoomAppearance(clone(fixture));
   const before = clone(input);
+  // The graph optimizer now owns the final host too, independently repairing
+  // a bad numerical proposal. Prove the legacy reconciliation boundary itself.
+  const source = input.spaces[0];
+  const reconciled = reconcileCoincidentPartitions(source, spaceModels(input)[0], source.walls, [],
+    {pitch:S,cellCm:source.cell_cm||5,gridPitch:GRID_PITCH,coordScale:1000});
+  assert.equal(reconciled.partitionsReconciled,1);
+  assert.equal(reconciled.openingsRehosted,1);
+  assert.deepEqual(reconciled.partitions,[]);
+  assert.equal(reconciled.openings[0].host,undefined,'the removed partition cannot remain the opening owner');
+  assert.equal(reconciled.openings[0].id,source.openings[0].id);
+  assert.deepEqual(reconciled.openings[0].future_field,source.openings[0].future_field);
   const result = optimize(input);
   assert.deepEqual(input, before, 'Optimize preview must not mutate the source');
   assert.equal(result.changed, true);

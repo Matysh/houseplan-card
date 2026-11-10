@@ -36,7 +36,7 @@ test('#1246 late failed Save uses the originating dialog callback, not a nested 
 });
 
 test('#1093 deferred ACK never closes a room early or retires a replacement owner', async()=>{
-  for(const scenario of ['accepted','replacement','context','refused']){
+  for(const scenario of ['accepted','replacement','context','context-refused','refused']){
     const f=fixture();rememberRoomBaseline(f.host);
     let current=true,release,reject,rollbacks=0;
     f.host._configWriteGuard=()=>()=>current;
@@ -45,9 +45,9 @@ test('#1093 deferred ACK never closes a room early or retires a replacement owne
     const pending=saveRoomEdit(f.runtime);
     assert.equal(f.host._roomDialog,true);
     assert.equal(animateDialogExit(f.host,'room'),true);
-    if(scenario==='replacement')rememberRoomBaseline(f.host);
-    if(scenario==='context')current=false;
-    if(scenario==='refused')reject(new Error('refused'));else release();
+    if(scenario==='replacement'||scenario==='context-refused')rememberRoomBaseline(f.host);
+    if(scenario==='context'||scenario==='context-refused')current=false;
+    if(scenario==='refused'||scenario==='context-refused')reject(new Error('refused'));else release();
     await pending;
     assert.equal(f.host._roomDialog,scenario!=='accepted',scenario);
     assert.equal(animateDialogExit(f.host,'room'),scenario!=='accepted',scenario);

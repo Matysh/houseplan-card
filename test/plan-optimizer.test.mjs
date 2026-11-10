@@ -342,9 +342,16 @@ test('Optimize canonicalizes the six-room ULP source without claiming a visible 
     markers: [], settings: {}, future: { kept: true },
   };
   const before = structuredClone(config);
-  const first = optimizePlans(config, {});
+  // Graph proposals independently normalize room points now. A retained layout
+  // record still needs the pre-Align storage boundary, not a visible move.
+  const layout = { retained: { s: 'noisy', x: S * 72 + 1e-15, y: S * 96 - 1e-15 } };
+  const layoutBefore = structuredClone(layout);
+  const first = optimizePlans(config, layout);
 
   assert.deepEqual(config, before, 'preview never mutates the noisy source');
+  assert.deepEqual(layout, layoutBefore, 'preview never mutates retained positions');
+  assert.equal(first.layout.retained.x, canonicalizeLatticeCoordinate(S * 72));
+  assert.equal(first.layout.retained.y, canonicalizeLatticeCoordinate(S * 96));
   assert.equal(first.changed, true);
   assert.equal(first.report.moved, 0);
   assert.equal(first.report.maxShift, 0);

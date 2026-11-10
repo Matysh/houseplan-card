@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { reconcileCoincidentPartitions } from '../test-build/coincident-partitions.js';
-import { GRID_PITCH, GRID_STEP_N as S } from '../test-build/space-geometry.js';
+import { GRID_PITCH, GRID_STEP_N as S, spaceModels } from '../test-build/space-geometry.js';
 import { wallIntervals, wallKey } from '../test-build/wall-thickness.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
@@ -64,6 +64,14 @@ test('issue 296 reconciles the covered middle and keeps deterministic disjoint r
     walls: [{ key: wallKey([0, 0], [1, 0], S), a: [0, 0], b: [1, 0], cm: 15 }],
     partitions: [{ id: 'long-wall', a: [-0.25, 0], b: [1.25, 0], cm: 20 }],
   };
+  // Final graph optimization has its own residual ownership now. Check the
+  // legacy proposal too, before that independent repair can hide a bad result.
+  const direct = reconcileCoincidentPartitions(space,spaceModels(configOf(space))[0],space.walls,[],
+    {pitch:S,cellCm:5,gridPitch:GRID_PITCH,coordScale:1000});
+  assert.equal(direct.partitionsReconciled,1);
+  assert.deepEqual(direct.partitions.map(p=>[p.a,p.b]),[[[-.25,0],[0,0]],[[1,0],[1.25,0]]]);
+  assert.equal(direct.partitions[0].id,'long-wall');
+  assert.equal(direct.partitions[1].id,'long-wall~r-cwqje9','legacy residual IDs use their stable geometry hash');
   const first = optimizePlans(configOf(space), {});
   assert.equal(first.report.partitionsReconciled, 1);
   assert.equal(first.config.spaces[0].partitions.length, 2);

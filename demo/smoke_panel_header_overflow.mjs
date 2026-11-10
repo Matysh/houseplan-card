@@ -189,6 +189,18 @@ try {
       &&Math.abs(wide.closeAlignment.slotToPill)<=.5);
     check('wideEditor'+mode+'allControlsFitAndHit',wide.fits&&wide.boxes.every(b=>b.inHead&&b.hit));
     check('wideEditor'+mode+'heightAndCamera',wide.positive&&wide.height&&wide.cameraAspect);
+    // The old1800px positive fits even when the360px Properties reserve is
+    // incorrectly ignored. Cross intrinsic reduction boundaries while that
+    // actual panel remains mounted, not just in the full-width View header.
+    for(const width of [1700,1550,1400,1280,1120,1024,1800]) {
+      const row=await page.evaluate(async width=>{
+        document.getElementById('host').style.width=width+'px';return await window.__overflowSettle();
+      },width);
+      evidence[`allocatedEditor${mode}${width}`]=row;
+      check(`allocatedEditor${mode}${width}PropertiesRetained`,row.head.width<width&&row.panel.width>=row.head.width+360);
+      check(`allocatedEditor${mode}${width}ControlsFit`,row.scroll<=row.head.width+1&&row.controls.every(c=>
+        c.rect.x>=row.head.x-1&&c.rect.right<=row.head.right+1&&c.rect.y>=row.head.y&&c.rect.bottom<=row.head.bottom+1));
+    }
     await card.locator('.hdr>.head [data-hp=editor-close]').click();
     await page.waitForFunction(()=>{
       const r=window.__overflowPanel.shadowRoot.querySelector('houseplan-card').shadowRoot;

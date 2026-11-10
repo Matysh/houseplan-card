@@ -52,6 +52,15 @@ try{
       const maxBudgetDelta=Math.max(...trace.map(s=>Math.abs(s.head+s.chrome+s.stage-total)));
       assert.ok(maxBudgetDelta<1.1,JSON.stringify({mode,target,reduced,maxBudgetDelta,trace}));
       records.push({mode,target,reduced,before,end,maxBudgetDelta,trace});
+      if(target!=='view'){
+        // The compact header's disclosure is now a shared floating surface,
+        // not a child of .head. Test its actual settled paint ownership.
+        const command=await headerActionTarget(card,'mode-view');
+        assert.ok(await command.evaluate(button=>{const r=button.getBoundingClientRect();
+          const hit=button.getRootNode().elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+          return hit===button||button.contains(hit);}), 'settled header menu is above the editor toolbar');
+        await page.keyboard.press('Escape');
+      }
     }
     const after=await snapshot();
     assert.equal(after.camera.zoom,before.camera.zoom);

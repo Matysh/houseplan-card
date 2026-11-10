@@ -18,6 +18,11 @@ test('#1207 physical camera survives frame growth/shrink and stage resize at eve
   ]) for (const [width, height] of [[1200, 760], [840, 630], [320, 600]]) {
     const vb = [frame.x, frame.y, frame.w, frame.h], display = turnRect(frame, rotation);
     const result = physicalPlanCamera(camera, vb, display, rotation, width, height);
+    const canonicalFit=fitView(vb,width/height);
+    assert.ok(Math.abs(result.viewBox.w-canonicalFit.w/result.zoom)<1e-10,
+      'stored width uses the canonical fit, not the rotated display fit');
+    assert.ok(Math.abs(result.viewBox.h-canonicalFit.h/result.zoom)<1e-10,
+      'stored height uses the canonical fit, not the rotated display fit');
     const presented = presentationViewport(result.viewBox, vb, display, rotation, result.zoom, [width, height], null);
     assert.ok(Math.abs(width / presented.w - camera.pixelsPerUnit) < 1e-10);
     assert.ok(Math.abs(height / presented.h - camera.pixelsPerUnit) < 1e-10);

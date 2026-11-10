@@ -67,11 +67,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 9 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 106 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 109 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Paint, cascade and layer composition | 105 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 107 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 58 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 279 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **565 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
+| Custom-element and HA browser lifecycle | 278 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **561 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
 
 
 ## Historical measurements (2026-09-27)
@@ -173,7 +173,6 @@ real Playwright page-error channel.
 - `ordinary-offline-content-only-1119`
 - `ordinary-offline-fades-floor-shadow-1119`
 
-- `opening-drag-drops-retained-index-1097`
 - `opening-drag-hides-direct-physical-producer-1097`
 - `opening-drag-fractional-clip-seam-1097`
 - `opening-drag-normal-paint-loses-preview-1097`
@@ -406,8 +405,6 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 pointer closes the common menu; a pure callback cannot prove that event tail.
 
 - `plan-rotation-pointer-skips-inverse-1070`
-- `plan-rotation-mode-writes-display-camera-1070`
-- `plan-rotation-mobile-ignores-header-height-1070`
 - `plan-rotation-settled-toolbar-covers-menu-1070`
 - `plan-rotation-reduced-terminal-keeps-stale-height-1070`
 - `lovelace-rotation-pending-locale-allows-save-1070`
@@ -417,6 +414,13 @@ toolbar and stage heights on the same frame, including the zero-duration termina
 The Lovelace witness holds actual language-module requests and delivers public
 HA-form events while both real editor hosts are pending. Registered for background;
 none of these mutations are executed during development.
+
+#1380 moves the physical-camera dimension and changed-header arithmetic
+witnesses to the existing `view-frame` and `mode-transition` Node suites.
+The intrinsic compact header now remains one row; its native smoke alone cannot
+prove the old two-row arithmetic. The direct cases check canonical dimensions
+and both fixed/fractional budget branches. Native mode navigation, animation
+and settled menu hit-testing remain covered by the unchanged product routes.
 
 - `furniture-release-ignores-pan-1081`
 
@@ -731,7 +735,6 @@ execution and caught results remain background.
 - `replaced-stage-keeps-old-resize-observer-1093`
 
 - `pending-config-refusal-allows-paired-write-1093`
-- `late-room-save-closes-new-owner-1093`
 
 
 - `plan-rotation-stale-header-observer-1070`

@@ -3,7 +3,8 @@ import * as Q from '../test-build/plan-exact.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { flushHouseplanPointerMove } from '../test-build/pointer-move-queue.js';
-import { wallBodiesUnionPath } from '../test-build/wall-thickness.js';
+import { wallBodiesUnionPath, recutWallBodiesGeometry, wallKey } from '../test-build/wall-thickness.js';
+import { pointInPolygon } from '../test-build/logic.js';
 import { physicalBodyParts } from '../test-build/physical-geometry.js';
 import { OpeningDragWalls, openingDragClip } from '../test-build/opening-drag-preview.js';
 globalThis.window ??= { customCards: [] };
@@ -148,6 +149,30 @@ test('#1097 physical result retains raw joins without changing enumerable or clo
     assert.deepEqual(parts.rawPatches, parts.patches, 'uncut positive has the canonical raw join shapes');
     assert.deepEqual(Object.keys(parts), ['partitions','columns','patches','all']);
     assert.equal(Object.hasOwn(structuredClone(parts), 'rawPatches'), false, 'retained inputs stay out of serialized copies');
+});
+
+test('#1097 legacy local preview retains its non-enumerable wall index and real aperture cut', () => {
+    const points = [[100,100],[900,100],[900,900],[100,900]], pitch = 1/240;
+    const rooms = [{id:'legacy',poly:points}];
+    const walls = points.map((a,i) => ({key:wallKey(a.map(n=>n/1000),points[(i+1)%4].map(n=>n/1000),pitch),cm:20}));
+    const space = {id:'floor',rooms,partitions:[],wall_columns:[]};
+    const opening = {id:'o',type:'window',x:.4,y:.1,length:.08,rx:400,ry:100,rlen:80,angle:0};
+    const inputs = items => items.map(o=>({x:o.rx,y:o.ry,angle:o.angle,length:o.rlen}));
+    const base = wallBodiesUnionPath(rooms,walls,[],inputs([opening]),pitch,5,10,1000);
+    assert.ok(base?.openingIndex,'the ordinary legacy union provides retained topology');
+    assert.equal(Object.keys(base).includes('openingIndex'),false,'spread alone would drop this owner');
+    const preview = new OpeningDragWalls(base,space,[opening],'o',inputs,[],5,10);
+    const moved = {...opening,rx:600,x:.6};
+    assert.ok(preview.render(moved,null,{color:'#789',wallFill:{c:'#abc',a:.5}},1,'legacy',
+        {a:1,b:0,c:0,d:1,e:0,f:0,dpr:1}));
+    assert.strictEqual(preview.room.openingIndex,base.openingIndex);
+    const cut = recutWallBodiesGeometry(preview.room,inputs([moved]),[]);
+    assert.ok(cut);
+    const solid = point => cut.geom.some(poly=>pointInPolygon(point,poly[0])
+        && !poly.slice(1).some(hole=>pointInPolygon(point,hole)));
+    assert.equal(solid([600,100]),false,'the moved aperture is empty');
+    assert.equal(solid([642,100]),true,'the adjacent shoulder stays masonry');
+    assert.equal(solid([400,100]),true,'the previous aperture is filled');
 });
 
 test('1236 current drag retains its prepared domains as exact host parameters move',()=>{
