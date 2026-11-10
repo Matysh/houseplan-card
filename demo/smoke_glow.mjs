@@ -12,7 +12,18 @@ const res = await page.evaluate(async () => {
   // включить glow-режим
   await hp.setServerConfig((cfg) => inSpace(cfg, (s) => ({
     ...s, settings: { ...(s.settings || {}), fill_mode: 'glow' } })));
-  await new Promise((r) => setTimeout(r, 250));
+  // Off must start from a fully lit pool. Reversing the still-entering
+  // transition legitimately shortens its duration under the CSS rules.
+  const fullyLit = () => {
+    const pools = [...sr().querySelectorAll('.glowlayer .glow-spot')];
+    return pools.length > 0 && pools.every((pool) => !pool.classList.contains('is-entering')
+      && Number(getComputedStyle(pool).opacity) === 1);
+  };
+  const lightReadyAt = performance.now();
+  while (!fullyLit() && performance.now() - lightReadyAt < 750) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  if (!fullyLit()) throw new Error('Glow did not finish entering before the full fade-out witness');
   // #943: legacy Glow leaves data fills empty and paints only actual light pools.
   out.dataFillSeparated = sr().querySelectorAll('.room.filled').length === 0;
   out.noRetiredGlowBase = sr().querySelectorAll('.glow-base-layer, .glow-base-tunnels').length === 0;
