@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8867,
+  "revision": 8868,
   "nextTicket": 355,
   "nextFence": 355,
   "tasks": {
@@ -54,7 +54,18 @@
         "test/optimize-feedback-authority.test.mjs",
         "test/optimize-plans-dialog.test.mjs",
         "test/write-authority-snapshot.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794348152054,
+        "entry": 1,
+        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/i18n-dead-keys.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optimize-plans-dialog.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Браузер: near axis optimize: failed; Браузер: optimize cleanup: failed; Браузер: optimize coincident partition: failed; Браузер: optimize context: failed; Браузер: optimize coordinate canonicalization: failed; Браузер: optimize micro interval: failed; Браузер: resize outer reconciliation: failed; Браузер: room contact storage: failed",
+        "eventId": "finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad:finish:3:return:return:1170"
+      }
     },
     "1193": {
       "issue": 1193,
@@ -4491,18 +4502,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1170,
-    "worker": "finish",
-    "token": "354:finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad:finish:1:admit",
-    "fence": 354,
-    "materialSha": "18d3a48073afcf8e092aea732b64087e3bbed867",
-    "expectedBase": "f1a94ef30fc1b8e24574de4d4cc9fcb65aa12caa",
-    "phase": "testing",
-    "admittedAt": 1794347474136,
-    "expiresAt": 1794348433345,
-    "patchId": "f38a61c60aef82591306eba8eaea827dfdd1f927"
-  },
+  "active": null,
   "events": {
     "github:42899605434:1:label:spec-request": {
       "digest": "bc6ad1bc3c230a5a106f3c4527e3d8c7d6ef6a83459d78bf818c3ed3ef65cea7",
@@ -4592,6 +4592,10 @@
       "digest": "240c2e10a46082abb89b07508df7cd0ec6d3380cc127c78b570256b5f2333e78",
       "issue": 1170
     },
+    "finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad:finish:3:return": {
+      "digest": "a0c6e548255519d57113b40242a2918a43cb3d304998cddc14b4bbc4da9f290a",
+      "issue": 1170
+    },
     "github:42901000173:1:label:spec-request:spec-resubmitted:1170": {
       "digest": "e947cf6fa99cff86f05f84e4184aefd06ba3ec9a6577784e89b30ea342957741",
       "issue": 1170,
@@ -4634,6 +4638,26 @@
         "layer": "product",
         "materialSha": "18d3a48073afcf8e092aea732b64087e3bbed867",
         "phase": "sync"
+      }
+    },
+    "finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad:finish:3:return:return:1170": {
+      "digest": "a0c6e548255519d57113b40242a2918a43cb3d304998cddc14b4bbc4da9f290a",
+      "issue": 1170,
+      "message": {
+        "kind": "return",
+        "issue": 1170,
+        "at": 1794348152054,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794348152054,
+          "entry": 1,
+          "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/i18n-dead-keys.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optimize-plans-dialog.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Браузер: near axis optimize: failed; Браузер: optimize cleanup: failed; Браузер: optimize coincident partition: failed; Браузер: optimize context: failed; Браузер: optimize coordinate canonicalization: failed; Браузер: optimize micro interval: failed; Браузер: resize outer reconciliation: failed; Браузер: room contact storage: failed",
+          "eventId": "finish:11e8d923-53a3-4160-a8ab-ecbd1767d8ad:finish:3:return:return:1170"
+        }
       }
     }
   },
