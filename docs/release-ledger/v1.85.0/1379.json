@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1379,
+  "baseStable": "v1.85.0",
+  "category": "infra",
+  "rationale": "Only test infrastructure and an explicit collection dependency change. Mixed backend test paths use product S6 mechanically; this adds no product feature or user milestone.",
+  "summary": {
+    "ru": "Восстановлен чистый backend-quality guard фоновых мутаций.",
+    "en": "Restore the background mutation backend-quality clean guard."
+  }
+}
