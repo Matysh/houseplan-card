@@ -405,7 +405,9 @@
     "panel-wall-union-isolation-view-dark": "c1c6e3aeed72fa228632b1aa2a5cfbd68c446ef304ddc6915fa77bb7700a4c45",
     "panel-multiwall-junction-bevel-view-dark": "bd2abb2544200393d79706a38de1f07d6617533d36daf060780dc9cfb563fb39",
     "panel-opening-symbol-diagonal-partition-dark": "87552e08a66fc14d3ee2d370578f40e1cab94ad20d6b1ee802b23c00d4818ca1",
-    "panel-device-icon-picker-dark-1375": "5dc76cb2f4333a60c73a46d74e7f5d55b6aba68b2fc33110d335ba9430f2da79"
+    "panel-device-icon-picker-dark-1375": "020573218037fe2edf329938afcb3e73f7c4fa5f540ba44e4c604853dc81a5d8",
+    "panel-device-icon-picker-open-dark-1376": "1fac6c179775b9f221d825c07234013b4faaa3cccebdab89a3998834bfe74380",
+    "panel-device-icon-picker-clear-hover-light-1376": "ff904b1b5f8fdc61de7e532c9869d1f30510ef6d70646c00e527847de7819185"
   },
   "scenarioProvenance": {
     "panel-wide-view-light-en": {
@@ -6644,24 +6646,64 @@
       "sourceSceneId": "device-ripple-color-popover-mobile-ru"
     },
     "panel-device-icon-picker-dark-1375": {
-      "acceptedAt": "2026-11-09T18:44:22.438Z",
-      "decision": "https://github.com/Matysh/houseplan-card/issues/1375",
-      "reportSha256": "c7491ace4774c8ec51b9d337f0af3637ddd1461f253ad6d2e4c583f68a97f1ec",
-      "sourceSha": "c7c0557cf116b131c4dc09315a53ea7ab9d040ac",
-      "sourceFingerprint": "35fd73d9a7d0e5458562c2a3aba01e292ca3bfa0e605bd8d6504df3dd40a666a",
-      "matrixVersion": 111,
+      "acceptedAt": "2026-11-10T02:01:17.899Z",
+      "decision": "Owner chat 2026-11-10: accept all three #1376 frames, exact hashes in async reply call_5f449dba13744f21a7e2df8f914cb4e3",
+      "reportSha256": "bc10f0f0afb754cd543621c67687eb0a00f12d9e01853bfeb2e97bebe95a6cb9",
+      "sourceSha": "d214d3338f83bc89729f501df1e87d488e58d199",
+      "sourceFingerprint": "86e934db9672284316d9f8b472f76038bff0ee284a276d0f01fa1901427603ed",
+      "matrixVersion": 112,
       "chromium": "151.0.7922.34",
       "capture": {
-        "sourceSha": "c7c0557cf116b131c4dc09315a53ea7ab9d040ac",
+        "sourceSha": "d214d3338f83bc89729f501df1e87d488e58d199",
         "platform": "linux",
         "arch": "x64",
         "chromium": "151.0.7922.34",
-        "buildFingerprint": "35fd73d9a7d0e5458562c2a3aba01e292ca3bfa0e605bd8d6504df3dd40a666a",
-        "harnessIconsSha256": "56037a56beb82db57ce25e251d4d4b44b4b984ffb9b31c8f1a1da8ca5cb7960f",
+        "buildFingerprint": "86e934db9672284316d9f8b472f76038bff0ee284a276d0f01fa1901427603ed",
+        "harnessIconsSha256": "574093732c3b970b51d5609ec496bc0ddcf3417eb01e44418ffa57cf36314327",
         "ci": null
       },
       "host": "panel",
       "sourceSceneId": "panel-device-icon-picker-dark-1375"
+    },
+    "panel-device-icon-picker-open-dark-1376": {
+      "acceptedAt": "2026-11-10T02:01:18.000Z",
+      "decision": "Owner chat 2026-11-10: accept all three #1376 frames, exact hashes in async reply call_5f449dba13744f21a7e2df8f914cb4e3",
+      "reportSha256": "7952e8cc395ea1a8f60f36772a3ac97409b85257483c17a349265cf5cc58ca47",
+      "sourceSha": "d214d3338f83bc89729f501df1e87d488e58d199",
+      "sourceFingerprint": "86e934db9672284316d9f8b472f76038bff0ee284a276d0f01fa1901427603ed",
+      "matrixVersion": 112,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "d214d3338f83bc89729f501df1e87d488e58d199",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "86e934db9672284316d9f8b472f76038bff0ee284a276d0f01fa1901427603ed",
+        "harnessIconsSha256": "574093732c3b970b51d5609ec496bc0ddcf3417eb01e44418ffa57cf36314327",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-icon-picker-open-dark-1376"
+    },
+    "panel-device-icon-picker-clear-hover-light-1376": {
+      "acceptedAt": "2026-11-10T02:01:18.082Z",
+      "decision": "Owner chat 2026-11-10: accept all three #1376 frames, exact hashes in async reply call_5f449dba13744f21a7e2df8f914cb4e3",
+      "reportSha256": "0699b567fc3dc0b67493024600ef5340f9cb93a4e32971ab9709b9321cd5abed",
+      "sourceSha": "d214d3338f83bc89729f501df1e87d488e58d199",
+      "sourceFingerprint": "86e934db9672284316d9f8b472f76038bff0ee284a276d0f01fa1901427603ed",
+      "matrixVersion": 112,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "d214d3338f83bc89729f501df1e87d488e58d199",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "86e934db9672284316d9f8b472f76038bff0ee284a276d0f01fa1901427603ed",
+        "harnessIconsSha256": "574093732c3b970b51d5609ec496bc0ddcf3417eb01e44418ffa57cf36314327",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-device-icon-picker-clear-hover-light-1376"
     }
   }
 }
