@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9457,
+  "revision": 9458,
   "nextTicket": 370,
   "nextFence": 370,
   "tasks": {
@@ -4293,7 +4293,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794422845299,
       "reviewEntry": 3,
-      "patchId": "490b611ef5cc1aede418e06cdb261dac63f1e099",
+      "patchId": "a2ef9975967b3507046c3597b4b814af04edad4d",
       "changedFiles": [
         ".gitignore",
         "custom_components/houseplan/frontend_asset_manifest.py",
@@ -4302,7 +4302,10 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.85.0/1387.json",
+        "process-next/lib/catalog.mjs",
+        "process-next/lib/metrics.mjs",
         "process-next/lib/package.mjs",
+        "process-next/test/metrics.test.mjs",
         "process-next/test/package.test.mjs",
         "scripts/bundle-manifest.mjs",
         "scripts/bundle-sync.mjs",
@@ -4572,10 +4575,11 @@
     "token": "369:finish:bd97be4e-fd09-4657-92ec-03597a4161be:finish:1:admit",
     "fence": 369,
     "materialSha": "74a8de539e1aeabecc51cb651c7119cedc333067",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
+    "phase": "testing",
     "admittedAt": 1794422849500,
-    "expiresAt": 1794423149500
+    "expiresAt": 1794423155671,
+    "patchId": "a2ef9975967b3507046c3597b4b814af04edad4d"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4776,6 +4780,10 @@
     },
     "github:43079117489:1:completions:metadata:b343e64f-7bd8-4efa-a5d6-772e660afa51:task-notice:1387::": {
       "digest": "ee6e9ee7f3df339783af2c3566a64447fa38c0f9a1cb93b905cf68ee3e34210a",
+      "issue": 1387
+    },
+    "finish:bd97be4e-fd09-4657-92ec-03597a4161be:finish:2:synchronized": {
+      "digest": "cbfb0b6766d0664ed7d2854161b5258ed18bac893535d2958763df3356827dc9",
       "issue": 1387
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
