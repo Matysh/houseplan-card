@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9197,
+  "revision": 9198,
   "nextTicket": 362,
   "nextFence": 362,
   "tasks": {
@@ -4301,7 +4301,7 @@
       "notice": {
         "key": "2:review-findings",
         "reason": "review-findings",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S7-code-review",
         "at": 1794408426155,
         "entry": 2,
@@ -4786,6 +4786,10 @@
     },
     "github:43041755669:1:completions:report:5d31a384de8a26420497fd5d3f0164db3471ecac1b30fffd7a1c44b2ed7c4e42": {
       "digest": "1c940c003388b800c4c5e96e74c2be5e0e1b4f8a536d2d88b4b05d0e6233476a",
+      "issue": 1384
+    },
+    "github:43041755669:1:completions:metadata:581b9ed7-dcc4-4c06-98c6-09847bae6b3b:task-notice:1384::": {
+      "digest": "cbad6b54231c0df81fd31f218accb8a8d323e278498359b37a046920c05000a8",
       "issue": 1384
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
