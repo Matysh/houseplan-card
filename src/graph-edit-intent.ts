@@ -242,8 +242,10 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
       [...(roomNodes.values())].some(map=>map.has(node)&&map.get(node)!==node));
     const target=moved&&[...roomNodes.values()].map(map=>map.get(moved)).find(node=>node&&node!==moved);
     const retained=moved&&target&&(index.incident.get(moved)||[]).find(edge=>{
-      if(edgeKey(edge)===edgeKey(removed)||edge.kind!==removed.kind||edge.cm!==removed.cm
-        ||!jsonValueEqual(edge.props||null,removed.props||null))return false;
+      // Only this zero-length slice disappears. Its material has no extent
+      // in the result; the continuing edge retains its own cm/props. Requiring
+      // equal material here would block a valid return to a mixed T junction.
+      if(edgeKey(edge)===edgeKey(removed)||edge.kind!==removed.kind)return false;
       const next=plan.newEdges.get(edgeKey(edge));
       return next&&[next.from,next.to].includes(target)
         &&!Q.pointEq(plan.nodePoints.get(next.from)!,plan.nodePoints.get(next.to)!)
@@ -253,6 +255,9 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
     if(!moved||!target||!retained)failure('resize-collapsed-edge',edgeKey(removed));
     const retarget=plan.operations.find(op=>op.kind==='retarget-edge'&&edgeKey(op.edge)===edgeKey(retained));
     if(!retarget||retarget.kind!=='retarget-edge')failure('resize-collapsed-edge',edgeKey(removed));
+    // Keep the continuing edge incident to the abandoned seam until the
+    // kernel collapse below. This deliberately restores its original endpoint
+    // in the preceding retarget; host lineage still runs through collapse.
     if(retarget.from===target)retarget.from=moved;
     else if(retarget.to===target)retarget.to=moved;
     else failure('resize-collapsed-edge',edgeKey(removed));
@@ -294,15 +299,17 @@ function settleResizePlan(graph:PlanGraph,index:ReturnType<typeof graphIndex>,ro
   const changed=new Set<string>();
   // An external branch participates in its proved junction. A separate body
   // laid over an existing room wall remains independent (#1264), even if its
-  // endpoint happens to share that junction's identity.
-  const branches=new Set(graph.edges.filter(e=>e.kind==='partition'&&![e.from,e.to]
+  // endpoint happens to share that junction's identity. This also covers
+  // unowned contour walls retained by delete-room/keepWalls.
+  const branches=new Set(graph.edges.filter(e=>!roots.has(edgeKey(e))&&![e.from,e.to]
     .flatMap(node=>index.incident.get(node)||[]).filter(w=>roots.has(edgeKey(w))).some(w=>{
     const a=index.points.get(e.from)!,b=index.points.get(e.to)!,c=index.points.get(w.from)!,d=index.points.get(w.to)!;
     if(Q.orientation(a,b,c).n||Q.orientation(a,b,d).n)return false;
     const tc=Q.projectParameter(c,a,b),td=Q.projectParameter(d,a,b);
     return Q.cmp(Q.min(Q.ONE,Q.max(tc,td)),Q.max(Q.ZERO,Q.min(tc,td)))>0;
   })).map(edgeKey));
-  const edges=[...plan.newEdges.values()].filter(e=>e.kind==='wall'||branches.has(edgeKey(e)))
+  const edges=[...plan.newEdges.values()].filter(e=>branches.has(edgeKey(e))
+    ||[...(origins.get(edgeKey(e))||[])].some(source=>roots.has(source)))
     .sort((a,b)=>codepoint(edgeKey(a),edgeKey(b)));
   for(const edge of edges){
     const key=edgeKey(edge),old=index.edges.get(key);

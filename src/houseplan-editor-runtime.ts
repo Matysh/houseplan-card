@@ -3575,10 +3575,11 @@ public _rszProjectPreview(
  * #769: a resize moves rooms, walls and room openings, never partitions,
  * columns or the host of a partition opening, so the physical bodies of the
  * preview record are those of the stored one: the cache is re-keyed, not
- * rebuilt (smoke #769 AC8 c compares them with a fresh card). No union is
- * seeded: since #451 the live preflight checks a local component and publishes
- * no artifact, and a host render mid-drag builds the preview union through the
- * card's miss branch, keyed by the same module (AC8 a).
+ * rebuilt (smoke #769 AC8 c compares them with a fresh card). The local
+ * preflight publishes no floor-wide artifact. Live paint now requests the
+ * canonical preview union through the card's keyed miss branch (#1383), so
+ * its cost and saved-floor cache lifetime are checked by the addressed
+ * large-house interaction benchmark and floor-cache smoke.
  */
 public _rszAcceptPreview(
     _preview: ResizePreview | null, _wallGeometry: ResizeWallArtifact | null,

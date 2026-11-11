@@ -146,8 +146,12 @@ adapter is retained only for pre-graph plans: it must not reject a vanishing
 intermediate atom before the exact bridge can join its T junctions. A meeting
 endpoint is reused only on an originally incident source run; disappearing
 pieces compose their host mappings through the kernel's collapse operation.
-The same cleanup runs in preview and commit. Unrelated old seams are not swept
-on read, and other nodes supported by a seam prevent its removal.
+The same cleanup runs in preview and commit. It includes functionally empty
+collinear seams on all cycles of the selected rooms, as with faces/thickness.
+Reads never sweep old seams; other nodes supported by a seam prevent its
+removal. When a slice vanishes between meeting T junctions, its zero-length
+material disappears without changing the continuing edge's thickness or props;
+real material boundaries remain protected by the seam cleanup.
 
 In the historical catalogue decoder, an actual side-wall ownership split at an unchanged neighbouring corner is
 distinct from moving that corner. Only overlapping same-carrier changes may

@@ -30,6 +30,7 @@ function degree(space,x,y) {
   assert.ok(nodes.length <= 1, `duplicate nodes at ${x},${y}`);
   return nodes.length ? index.incident.get(nodes[0].id).length : 0;
 }
+const hasEndpoint=(index,edge,point)=>[edge.from,edge.to].some(node=>Q.pointEq(index.points.get(node),Q.readSourcePoint(point)));
 
 test('#1383 T-junction moves without leaving a straight seam; a second Resize returns it',()=>{
   const before = fixture(), frozen = structuredClone(before);
@@ -132,4 +133,60 @@ test('#1383 meeting T junctions rehost an opening on the disappearing source sli
   assert.equal(restored.contact,opening.contact);assert.deepEqual(restored.custom,opening.custom);
   assert.equal(validateGraph(result.plan_graph,{hosts:[restored.host]}).ok,true);
   assert.ok(graphIndex(result.plan_graph).edges.has(`${restored.host.kind}:${restored.host.id}`));
+});
+
+for(const variant of ['thickness','props'])test(`#1383 meeting T junctions preserve different ${variant} and an opening on the vanishing slice`,()=>{
+  let before=fixture(false,true);
+  const graph=structuredClone(before.plan_graph),index=graphIndex(graph);
+  const right=graph.edges.find(edge=>edge.kind==='wall'
+    &&hasEndpoint(index,edge,[.5,.5])&&hasEndpoint(index,edge,[.9,.5]));
+  assert.ok(right);
+  if(variant==='thickness')right.cm=30;
+  else right.props={material:'right-only',custom:{keep:true}};
+  before=projectGraphSpace(before,graph).space;
+  const original=structuredClone(before),outside=structuredClone(before.partitions);
+  let moved=move(before,.5,.6);
+  const slice=moved.wall_segments.find(edge=>edge.a[1]===.5&&edge.b[1]===.5
+    &&Math.min(edge.a[0],edge.b[0])===.5&&Math.max(edge.a[0],edge.b[0])===.6);
+  assert.ok(slice);
+  const opening={id:'mixed-slice',type:'window',x:.55,y:.5,angle:0,length:.04,
+    contact:'binary_sensor.synthetic_mixed',custom:{keep:['metadata']},host:{kind:'wall',id:slice.id,t:.5}};
+  moved=commitGraphEdit(moved,{...structuredClone(moved),openings:[opening]},{kind:'openings',ids:[opening.id]});
+  const returned=move(moved,.6,.5),restored=returned.openings[0];
+  const resultIndex=graphIndex(returned.plan_graph);
+  const retained=resultIndex.edges.get(`wall:${right.id}`);
+  assert.equal(validateGraph(returned.plan_graph,{hosts:[restored.host]}).ok,true);
+  assert.equal(degree(returned,.6,.5),0,'old moving endpoint is gone');
+  assert.equal(degree(returned,.5,.5),4,'real material junction remains');
+  assert.equal(retained.cm,right.cm);
+  assert.deepEqual(retained.props,right.props);
+  assert.deepEqual(returned.partitions,outside);
+  assert.equal(restored.x,.55);assert.equal(restored.y,.5);assert.equal(restored.length,.04);
+  assert.equal(restored.contact,opening.contact);assert.deepEqual(restored.custom,opening.custom);
+  assert.equal(restored.host.id,right.id,'vanishing slice rehosts onto the live continuing edge');
+  const left=returned.plan_graph.edges.find(edge=>edge.kind==='wall'&&edge.id!==right.id
+    &&hasEndpoint(resultIndex,edge,[.1,.5])&&hasEndpoint(resultIndex,edge,[.5,.5]));
+  assert.equal(left.cm,20);assert.equal(left.props,undefined,'the other material was not propagated');
+  assert.deepEqual(before,original,'source remains immutable');
+});
+
+test('#1383 an unowned wall overlaid on a room wall stays independent during Resize',()=>{
+  let before=fixture(false,true);
+  const graph=structuredClone(before.plan_graph),index=graphIndex(graph);
+  const source=graph.edges.find(edge=>edge.kind==='wall'
+    &&hasEndpoint(index,edge,[.5,.5])&&hasEndpoint(index,edge,[.9,.5]));
+  const independent={...structuredClone(source),id:'unowned-overlay',cm:12,props:{keep:'independent'}};
+  graph.edges.push(independent);
+  before=projectGraphSpace(before,graph).space;
+  const original=structuredClone(before);
+  const moved=move(before,.5,.6);
+  assert.deepEqual(moved.plan_graph.edges.find(edge=>edge.id===independent.id),independent);
+  const returned=move(moved,.6,.5);
+  for(const state of [moved,returned]){
+    assert.deepEqual(state.plan_graph.edges.find(edge=>edge.id===independent.id),independent);
+    assert.equal(state.plan_graph.edges.length-state.plan_graph.rooms.reduce((keys,room)=>{
+      for(const edge of room.edges)keys.add(`${edge.kind}:${edge.id}`);return keys;
+    },new Set()).size,2,'only the original partition and independent wall have no owner');
+  }
+  assert.deepEqual(before,original);
 });
