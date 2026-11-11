@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9060,
-  "nextTicket": 358,
+  "revision": 9061,
+  "nextTicket": 359,
   "nextFence": 358,
   "tasks": {
     "1170": {
@@ -4278,14 +4278,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/issue-1383-resize",
-      "materialSha": "4e7a95c92f04250f5de4c561ef9dce5ef4045db5",
+      "materialSha": "41e852cbc365ac81595b3d618b8bb3be83e1c89b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 357,
-      "queued": false,
+      "ticket": 358,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794400152086,
-      "reviewEntry": 1,
+      "readyAt": 1794401006035,
+      "reviewEntry": 2,
       "patchId": "49f0960ff9c998f419f26a35746f131f2170ee12",
       "changedFiles": [
         "demo/fixtures/resize-junctions.mjs",
@@ -4315,7 +4315,6 @@
         "test/resize-junction-regression.test.mjs",
         "test/resize.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4555,7 +4554,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1383
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4810,6 +4811,19 @@
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
           "eventId": "finish:99035b88-361b-4141-a0db-3b4a7b11eed4:finish:3:return:return:1383"
         }
+      }
+    },
+    "finish:1cc76c56-c0a7-4122-85e5-a648f22499c2": {
+      "digest": "d2b8d6291c7f360cb5f1d09ba3c5cb2b15eabeb0d055c52d272469923bdbb264",
+      "issue": 1383,
+      "message": {
+        "kind": "queued",
+        "issue": 1383,
+        "at": 1794401006035,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "41e852cbc365ac81595b3d618b8bb3be83e1c89b"
       }
     }
   },
