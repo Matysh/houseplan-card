@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9417,
+  "revision": 9418,
   "nextTicket": 369,
   "nextFence": 369,
   "tasks": {
@@ -4293,8 +4293,9 @@
       "status": "S6-in-progress",
       "readyAt": 1794421566663,
       "reviewEntry": 2,
-      "patchId": "3099e257d3048b0970c28f9a438d17c3ff1a8051",
+      "patchId": "490b611ef5cc1aede418e06cdb261dac63f1e099",
       "changedFiles": [
+        ".gitignore",
         "custom_components/houseplan/frontend_asset_manifest.py",
         "custom_components/houseplan/frontend_assets.py",
         "docs/ARCHITECTURE.md",
@@ -4557,10 +4558,11 @@
     "token": "368:finish:21b44f92-407b-46f8-9122-7cbf312e6d02:finish:1:admit",
     "fence": 368,
     "materialSha": "b97ce95fb118a4009ff487027762a24f4f185f3b",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
+    "phase": "testing",
     "admittedAt": 1794421570565,
-    "expiresAt": 1794421870565
+    "expiresAt": 1794421877227,
+    "patchId": "490b611ef5cc1aede418e06cdb261dac63f1e099"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4689,6 +4691,10 @@
     },
     "author-stop-1387-generated-ignore-20261111": {
       "digest": "e9dafb16bf8cc04e48c8cd6b462a4b19583a57f9132e148b2f716afa62617718",
+      "issue": 1387
+    },
+    "finish:21b44f92-407b-46f8-9122-7cbf312e6d02:finish:2:synchronized": {
+      "digest": "c6ca4afb0d726c635f04384572f90770e1df38c0253af24b73d6254c81f3ef70",
       "issue": 1387
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
