@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9331,
-  "nextTicket": 366,
+  "revision": 9332,
+  "nextTicket": 367,
   "nextFence": 366,
   "tasks": {
     "1170": {
@@ -4279,14 +4279,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1386-card-reconnect",
-      "materialSha": "89a2710b6ed85f7e4c438586921c27d382bbd9d8",
+      "materialSha": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 365,
-      "queued": false,
+      "ticket": 366,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794417633919,
-      "reviewEntry": 2,
+      "readyAt": 1794419072818,
+      "reviewEntry": 3,
       "patchId": "68ef5129990acbd67d9c247e8c8fb6cf7511f655",
       "changedFiles": [
         "demo/smoke_card_reconnect.mjs",
@@ -4311,8 +4311,7 @@
         "entry": 2,
         "detail": "Before review: finish registry user authority rebinding in the static card too; completed receipts remain applicable.",
         "eventId": "author-stop-1386-static-user-20261111:return:1386"
-      },
-      "reason": "executor-stopped"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4542,7 +4541,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1386
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4932,6 +4933,19 @@
           "detail": "Before review: finish registry user authority rebinding in the static card too; completed receipts remain applicable.",
           "eventId": "author-stop-1386-static-user-20261111:return:1386"
         }
+      }
+    },
+    "finish:b56548e1-5d2c-4cf5-bf61-13455c4b1b0a": {
+      "digest": "8b6ee0464d94e0d49b172f672fe4dedd8252a5e05c3a9a1dc746df050ea4e953",
+      "issue": 1386,
+      "message": {
+        "kind": "queued",
+        "issue": 1386,
+        "at": 1794419072818,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a"
       }
     }
   },
