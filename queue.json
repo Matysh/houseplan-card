@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9313,
-  "nextTicket": 365,
+  "revision": 9314,
+  "nextTicket": 366,
   "nextFence": 365,
   "tasks": {
     "1170": {
@@ -4279,14 +4279,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1386-card-reconnect",
-      "materialSha": "5fbbc5f1dec522b7566faf2be67eeed75efa8f54",
+      "materialSha": "89a2710b6ed85f7e4c438586921c27d382bbd9d8",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 364,
-      "queued": false,
+      "ticket": 365,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794415979071,
-      "reviewEntry": 1,
+      "readyAt": 1794417633919,
+      "reviewEntry": 2,
       "patchId": "343eaf1de80641f63ed07c1b29b0d6f106ab6327",
       "changedFiles": [
         "demo/smoke_card_reconnect.mjs",
@@ -4299,7 +4299,6 @@
         "src/houseplan-card.ts",
         "test/ha-registry-lifecycle.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4539,7 +4538,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1386
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4818,6 +4819,19 @@
           "detail": "Поведение: test/icon-picker.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optimize-plans-dialog.test.mjs: failed; Браузер: readonly cold start: failed",
           "eventId": "finish:20e7fa10-9703-4b16-8f69-86410bd3a806:finish:3:return:return:1386"
         }
+      }
+    },
+    "finish:224bc278-f4f3-41ff-8c16-61b6e2824b30": {
+      "digest": "0f9f829d9cefd8be487ab0e1203e4d68730da13dbe48664f2b5958ab02915f27",
+      "issue": 1386,
+      "message": {
+        "kind": "queued",
+        "issue": 1386,
+        "at": 1794417633919,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "89a2710b6ed85f7e4c438586921c27d382bbd9d8"
       }
     }
   },
