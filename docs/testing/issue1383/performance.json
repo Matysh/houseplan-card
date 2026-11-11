@@ -1,0 +1,1293 @@
+{
+  "schema": 1,
+  "issue": 1383,
+  "purpose": "Address code-review round 2: canonical live Resize rendering cost and saved-floor cache lifetime.",
+  "commands": {
+    "candidate": "node demo/benchmark_large_house.mjs --profile=large-house-interaction-v1 --output=artifacts/issue1383/large-house-final.json",
+    "baseline": "node demo/benchmark_large_house.mjs --profile=large-house-interaction-v1 --target-root=/home/sergey/hp-1380-witness-repairs --output=artifacts/issue1383/large-house-base.json",
+    "compare": "node demo/performance/compare.mjs --candidate=artifacts/issue1383/large-house-final.json --baseline=artifacts/issue1383/large-house-base.json --budgets=demo/performance/budgets-large-house-interaction.json",
+    "floorCache": "node demo/smoke_floor_cache_reuse.mjs"
+  },
+  "candidate": {
+    "sourceSha": "c0206b72acd2b520a12c8960ad73d6c5fdfbdaa5",
+    "buildFingerprint": "67c51c3daa78ab1663e2d9e9dfefa93e4eb296ac8fe99f418d4e201b541575c7",
+    "generatedAt": "2026-11-11T13:12:03.274Z",
+    "profile": "large-house-interaction-v1",
+    "runtime": {
+      "node": "v22.23.4",
+      "chromium": "151.0.7922.34",
+      "platform": "linux",
+      "arch": "x64",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "deviceScaleFactor": 1,
+      "reducedMotion": true
+    },
+    "fixture": {
+      "floors": 3,
+      "rooms": 60,
+      "devices": 200,
+      "openings": 100,
+      "partitions": 60,
+      "columns": 40,
+      "decor": 500,
+      "stairs": 250
+    },
+    "samples": 7,
+    "warmups": 1,
+    "summary": {
+      "modelReadyMs": {
+        "median": 845.1,
+        "p95": 881.9,
+        "min": 815.2,
+        "max": 881.9
+      },
+      "firstStableRenderMs": {
+        "median": 2519.2,
+        "p95": 2576,
+        "min": 2475.6,
+        "max": 2576
+      },
+      "interactionSeriesMs": {
+        "median": 2133,
+        "p95": 2198,
+        "min": 2111.7,
+        "max": 2198
+      },
+      "hoverSeriesMs": {
+        "median": 199.5,
+        "p95": 199.69999999925494,
+        "min": 199.39999999850988,
+        "max": 199.69999999925494
+      },
+      "panSeriesMs": {
+        "median": 398.69999999925494,
+        "p95": 415.4000000022352,
+        "min": 398.29999999701977,
+        "max": 415.4000000022352
+      },
+      "cameraSeriesMs": {
+        "median": 199.80000000074506,
+        "p95": 199.90000000223517,
+        "min": 199.60000000149012,
+        "max": 199.90000000223517
+      },
+      "editorSeriesMs": {
+        "median": 644.3000000007451,
+        "p95": 661.3999999985099,
+        "min": 641.0999999977648,
+        "max": 661.3999999985099
+      },
+      "irrelevantHaTicksMs": {
+        "median": 31.5,
+        "p95": 33.100000001490116,
+        "min": 28.5,
+        "max": 33.100000001490116
+      },
+      "relevantHaTickMs": {
+        "median": 33.19999999925494,
+        "p95": 33.30000000074506,
+        "min": 33.100000001490116,
+        "max": 33.30000000074506
+      },
+      "spaceSwitchMs": {
+        "median": 554,
+        "p95": 570.7,
+        "min": 528.5,
+        "max": 570.7
+      },
+      "stateUpdateMs": {
+        "median": 28.3,
+        "p95": 38.2,
+        "min": 23.9,
+        "max": 38.2
+      },
+      "resizePreviewMs": {
+        "median": 257,
+        "p95": 276.7,
+        "min": 242.3,
+        "max": 276.7
+      },
+      "panZoomMs": {
+        "median": 33.2,
+        "p95": 34.2,
+        "min": 33.1,
+        "max": 34.2
+      },
+      "settingsDialogMs": {
+        "median": 40.5,
+        "p95": 46.4,
+        "min": 38,
+        "max": 46.4
+      },
+      "switchCycleMs": {
+        "median": 1267,
+        "p95": 1308.9,
+        "min": 1165,
+        "max": 1308.9
+      }
+    },
+    "longTasks": {
+      "maxSingleMs": 734,
+      "countP95": 18,
+      "totalP95Ms": 3009
+    },
+    "rows": [
+      {
+        "sample": 0,
+        "resizePreviewMs": 257,
+        "editorSeriesMs": 661.3999999985099,
+        "switchCycleMs": 1269.9,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 2,
+          "maxMs": 140,
+          "totalMs": 195
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 4,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 35.80000000074506,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 1,
+        "resizePreviewMs": 261.6,
+        "editorSeriesMs": 644.3000000007451,
+        "switchCycleMs": 1165,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 2,
+          "maxMs": 134,
+          "totalMs": 185
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 4,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 33.80000000074506,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 2,
+        "resizePreviewMs": 276.7,
+        "editorSeriesMs": 648.6000000052154,
+        "switchCycleMs": 1260.9,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 2,
+          "maxMs": 145,
+          "totalMs": 201
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 4,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 35.80000000074506,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 3,
+        "resizePreviewMs": 258,
+        "editorSeriesMs": 643.5,
+        "switchCycleMs": 1267,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 2,
+          "maxMs": 139,
+          "totalMs": 193
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 4,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 35.20000000298023,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 4,
+        "resizePreviewMs": 246.5,
+        "editorSeriesMs": 645.5,
+        "switchCycleMs": 1308.9,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 2,
+          "maxMs": 137,
+          "totalMs": 190
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 4,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 34.900000002235174,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 5,
+        "resizePreviewMs": 244.7,
+        "editorSeriesMs": 644,
+        "switchCycleMs": 1283.8,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 2,
+          "maxMs": 138,
+          "totalMs": 191
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 4,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 35.19999999925494,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 6,
+        "resizePreviewMs": 242.3,
+        "editorSeriesMs": 641.0999999977648,
+        "switchCycleMs": 1249.9,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 2,
+          "maxMs": 135,
+          "totalMs": 189
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 4,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 35.400000002235174,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      }
+    ]
+  },
+  "baseline": {
+    "sourceSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+    "buildFingerprint": "5344629f67c60c7d34582cf063a77dc8fca85b8c19355a21df7b147ffeb96c60",
+    "generatedAt": "2026-11-11T13:04:57.843Z",
+    "profile": "large-house-interaction-v1",
+    "runtime": {
+      "node": "v22.23.4",
+      "chromium": "151.0.7922.34",
+      "platform": "linux",
+      "arch": "x64",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "deviceScaleFactor": 1,
+      "reducedMotion": true
+    },
+    "fixture": {
+      "floors": 3,
+      "rooms": 60,
+      "devices": 200,
+      "openings": 100,
+      "partitions": 60,
+      "columns": 40,
+      "decor": 500,
+      "stairs": 250
+    },
+    "samples": 7,
+    "warmups": 1,
+    "summary": {
+      "modelReadyMs": {
+        "median": 832,
+        "p95": 849.6,
+        "min": 817.9,
+        "max": 849.6
+      },
+      "firstStableRenderMs": {
+        "median": 2476.9,
+        "p95": 2573.2,
+        "min": 2456.2,
+        "max": 2573.2
+      },
+      "interactionSeriesMs": {
+        "median": 1981.9,
+        "p95": 2012.5,
+        "min": 1980.2,
+        "max": 2012.5
+      },
+      "hoverSeriesMs": {
+        "median": 199.69999999925494,
+        "p95": 199.70000000298023,
+        "min": 199.5,
+        "max": 199.70000000298023
+      },
+      "panSeriesMs": {
+        "median": 398.5999999977648,
+        "p95": 398.8999999985099,
+        "min": 398.3999999985099,
+        "max": 398.8999999985099
+      },
+      "cameraSeriesMs": {
+        "median": 199.69999999925494,
+        "p95": 200,
+        "min": 199.69999999925494,
+        "max": 200
+      },
+      "editorSeriesMs": {
+        "median": 510.0000000074506,
+        "p95": 523.0999999977648,
+        "min": 507.70000000298023,
+        "max": 523.0999999977648
+      },
+      "irrelevantHaTicksMs": {
+        "median": 31.5,
+        "p95": 32.399999998509884,
+        "min": 29,
+        "max": 32.399999998509884
+      },
+      "relevantHaTickMs": {
+        "median": 33.30000000074506,
+        "p95": 33.30000000074506,
+        "min": 33.19999999925494,
+        "max": 33.30000000074506
+      },
+      "spaceSwitchMs": {
+        "median": 537.6,
+        "p95": 561.2,
+        "min": 529.7,
+        "max": 561.2
+      },
+      "stateUpdateMs": {
+        "median": 31.7,
+        "p95": 38.9,
+        "min": 24.9,
+        "max": 38.9
+      },
+      "resizePreviewMs": {
+        "median": 249.6,
+        "p95": 254.4,
+        "min": 240.8,
+        "max": 254.4
+      },
+      "panZoomMs": {
+        "median": 33.1,
+        "p95": 33.2,
+        "min": 33.1,
+        "max": 33.2
+      },
+      "settingsDialogMs": {
+        "median": 41.7,
+        "p95": 44.5,
+        "min": 35.6,
+        "max": 44.5
+      },
+      "switchCycleMs": {
+        "median": 1249,
+        "p95": 1295.5,
+        "min": 1162.7,
+        "max": 1295.5
+      }
+    },
+    "longTasks": {
+      "maxSingleMs": 708,
+      "countP95": 17,
+      "totalP95Ms": 2855
+    },
+    "rows": [
+      {
+        "sample": 0,
+        "resizePreviewMs": 251,
+        "editorSeriesMs": 507.70000000298023,
+        "switchCycleMs": 1233.2,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 52,
+          "totalMs": 52
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 3,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 33.79999999701977,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 1,
+        "resizePreviewMs": 249.6,
+        "editorSeriesMs": 512.2000000029802,
+        "switchCycleMs": 1162.7,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 51,
+          "totalMs": 51
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 3,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 33.69999999925494,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 2,
+        "resizePreviewMs": 247.7,
+        "editorSeriesMs": 509,
+        "switchCycleMs": 1172.4,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 52,
+          "totalMs": 52
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 3,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 34.400000002235174,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 3,
+        "resizePreviewMs": 254.4,
+        "editorSeriesMs": 509.5,
+        "switchCycleMs": 1249,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 53,
+          "totalMs": 53
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 3,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 34.5,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 4,
+        "resizePreviewMs": 245.8,
+        "editorSeriesMs": 511.80000000074506,
+        "switchCycleMs": 1295.5,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 52,
+          "totalMs": 52
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 3,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 35.5,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 5,
+        "resizePreviewMs": 240.8,
+        "editorSeriesMs": 510.0000000074506,
+        "switchCycleMs": 1284.4,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 50,
+          "totalMs": 50
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 3,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 33.5,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      },
+      {
+        "sample": 6,
+        "resizePreviewMs": 253.8,
+        "editorSeriesMs": 523.0999999977648,
+        "switchCycleMs": 1283.1,
+        "editorLongTasks": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 53,
+          "totalMs": 53
+        },
+        "cacheEntries": {
+          "cleanFloor": 60,
+          "glowClip": 3,
+          "wallUnion": 1,
+          "wallUnionPool": 3,
+          "innerContour": 60,
+          "openingTunnel": 1,
+          "openingTunnelPool": 3,
+          "physicalBodiesPool": 3,
+          "openingWallIndex": 1,
+          "isoGeometry": 0,
+          "planSnapGeometry": 1,
+          "wallFaceGraph": 0
+        },
+        "cacheGrowth": {
+          "cleanFloor": 0,
+          "glowClip": 0,
+          "wallUnion": 0,
+          "wallUnionPool": 0,
+          "innerContour": 0,
+          "openingTunnel": 0,
+          "openingTunnelPool": 0,
+          "physicalBodiesPool": 0,
+          "openingWallIndex": 0,
+          "isoGeometry": 0,
+          "planSnapGeometry": 0,
+          "wallFaceGraph": 0
+        },
+        "resizeLivePreflightChecks": 1,
+        "resizeLivePreflightMs": 34.20000000298023,
+        "editorLivePaints": 9,
+        "editorConfigStable": true,
+        "editorWsWrites": 0
+      }
+    ]
+  },
+  "evaluation": {
+    "schema": 1,
+    "profile": "large-house-interaction-v1",
+    "pass": false,
+    "mode": "relative",
+    "candidateFingerprint": "67c51c3daa78ab1663e2d9e9dfefa93e4eb296ac8fe99f418d4e201b541575c7",
+    "baselineFingerprint": "5344629f67c60c7d34582cf063a77dc8fca85b8c19355a21df7b147ffeb96c60",
+    "candidateSha": "c0206b72acd2b520a12c8960ad73d6c5fdfbdaa5",
+    "baselineSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+    "checks": [
+      {
+        "id": "timing.modelReadyMs.median",
+        "actual": 845.1,
+        "limit": 1081.6,
+        "pass": true,
+        "baseline": 832,
+        "regressionLimit": 1081.6,
+        "hardLimit": 2500
+      },
+      {
+        "id": "timing.firstStableRenderMs.median",
+        "actual": 2519.2,
+        "limit": 3219.97,
+        "pass": true,
+        "baseline": 2476.9,
+        "regressionLimit": 3219.97,
+        "hardLimit": 3740
+      },
+      {
+        "id": "timing.interactionSeriesMs.median",
+        "actual": 2133,
+        "limit": 2972.85,
+        "pass": true,
+        "baseline": 1981.9,
+        "regressionLimit": 2972.85,
+        "hardLimit": 3630
+      },
+      {
+        "id": "timing.hoverSeriesMs.median",
+        "actual": 199.5,
+        "limit": 299.55,
+        "pass": true,
+        "baseline": 199.7,
+        "regressionLimit": 299.55,
+        "hardLimit": 500
+      },
+      {
+        "id": "timing.panSeriesMs.median",
+        "actual": 398.7,
+        "limit": 500,
+        "pass": true,
+        "baseline": 398.6,
+        "regressionLimit": 597.9,
+        "hardLimit": 500
+      },
+      {
+        "id": "timing.cameraSeriesMs.median",
+        "actual": 199.8,
+        "limit": 299.55,
+        "pass": true,
+        "baseline": 199.7,
+        "regressionLimit": 299.55,
+        "hardLimit": 500
+      },
+      {
+        "id": "timing.editorSeriesMs.median",
+        "actual": 644.3,
+        "limit": 750,
+        "pass": true,
+        "baseline": 510,
+        "regressionLimit": 765,
+        "hardLimit": 750
+      },
+      {
+        "id": "timing.irrelevantHaTicksMs.median",
+        "actual": 31.5,
+        "limit": 71.5,
+        "pass": true,
+        "baseline": 31.5,
+        "regressionLimit": 71.5,
+        "hardLimit": 250
+      },
+      {
+        "id": "timing.relevantHaTickMs.median",
+        "actual": 33.2,
+        "limit": 73.3,
+        "pass": true,
+        "baseline": 33.3,
+        "regressionLimit": 73.3,
+        "hardLimit": 250
+      },
+      {
+        "id": "timing.spaceSwitchMs.median",
+        "actual": 554,
+        "limit": 806.4,
+        "pass": true,
+        "baseline": 537.6,
+        "regressionLimit": 806.4,
+        "hardLimit": 1500
+      },
+      {
+        "id": "timing.stateUpdateMs.median",
+        "actual": 28.3,
+        "limit": 106.7,
+        "pass": true,
+        "baseline": 31.7,
+        "regressionLimit": 106.7,
+        "hardLimit": 1000
+      },
+      {
+        "id": "timing.resizePreviewMs.median",
+        "actual": 257,
+        "limit": 399.6,
+        "pass": true,
+        "baseline": 249.6,
+        "regressionLimit": 399.6,
+        "hardLimit": 2000
+      },
+      {
+        "id": "timing.panZoomMs.median",
+        "actual": 33.2,
+        "limit": 93.1,
+        "pass": true,
+        "baseline": 33.1,
+        "regressionLimit": 93.1,
+        "hardLimit": 500
+      },
+      {
+        "id": "timing.settingsDialogMs.median",
+        "actual": 40.5,
+        "limit": 141.7,
+        "pass": true,
+        "baseline": 41.7,
+        "regressionLimit": 141.7,
+        "hardLimit": 1000
+      },
+      {
+        "id": "timing.switchCycleMs.median",
+        "actual": 1267,
+        "limit": 950,
+        "pass": false,
+        "baseline": 1249,
+        "regressionLimit": 1686.15,
+        "hardLimit": 950
+      },
+      {
+        "id": "longTask.available",
+        "actual": 1,
+        "limit": 1,
+        "pass": true
+      },
+      {
+        "id": "longTask.maxSingleMs",
+        "actual": 734,
+        "limit": 958,
+        "pass": true,
+        "baseline": 708,
+        "hardLimit": 3000
+      },
+      {
+        "id": "longTask.countP95",
+        "actual": 18,
+        "limit": 18,
+        "pass": true,
+        "baseline": 17,
+        "hardLimit": 18
+      },
+      {
+        "id": "longTask.totalP95Ms",
+        "actual": 3009,
+        "limit": 3711.5,
+        "pass": true,
+        "baseline": 2855,
+        "hardLimit": 4350
+      },
+      {
+        "id": "longTask.hoverSeries.available",
+        "actual": 1,
+        "limit": 1,
+        "pass": true
+      },
+      {
+        "id": "longTask.hoverSeries.maxSingleMs",
+        "actual": 0,
+        "limit": 150,
+        "pass": true
+      },
+      {
+        "id": "longTask.hoverSeries.countP95",
+        "actual": 0,
+        "limit": 3,
+        "pass": true
+      },
+      {
+        "id": "longTask.hoverSeries.totalP95Ms",
+        "actual": 0,
+        "limit": 300,
+        "pass": true
+      },
+      {
+        "id": "longTask.panSeries.available",
+        "actual": 1,
+        "limit": 1,
+        "pass": true
+      },
+      {
+        "id": "longTask.panSeries.maxSingleMs",
+        "actual": 0,
+        "limit": 150,
+        "pass": true
+      },
+      {
+        "id": "longTask.panSeries.countP95",
+        "actual": 0,
+        "limit": 3,
+        "pass": true
+      },
+      {
+        "id": "longTask.panSeries.totalP95Ms",
+        "actual": 0,
+        "limit": 300,
+        "pass": true
+      },
+      {
+        "id": "longTask.cameraSeries.available",
+        "actual": 1,
+        "limit": 1,
+        "pass": true
+      },
+      {
+        "id": "longTask.cameraSeries.maxSingleMs",
+        "actual": 0,
+        "limit": 150,
+        "pass": true
+      },
+      {
+        "id": "longTask.cameraSeries.countP95",
+        "actual": 0,
+        "limit": 3,
+        "pass": true
+      },
+      {
+        "id": "longTask.cameraSeries.totalP95Ms",
+        "actual": 0,
+        "limit": 300,
+        "pass": true
+      },
+      {
+        "id": "longTask.editorSeries.available",
+        "actual": 1,
+        "limit": 1,
+        "pass": true
+      },
+      {
+        "id": "longTask.editorSeries.maxSingleMs",
+        "actual": 145,
+        "limit": 165,
+        "pass": true
+      },
+      {
+        "id": "longTask.editorSeries.countP95",
+        "actual": 2,
+        "limit": 3,
+        "pass": true
+      },
+      {
+        "id": "longTask.editorSeries.totalP95Ms",
+        "actual": 201,
+        "limit": 300,
+        "pass": true
+      },
+      {
+        "id": "heap.preciseGc",
+        "actual": 1,
+        "limit": 1,
+        "pass": true
+      },
+      {
+        "id": "heap.growthP95Bytes",
+        "actual": 1935718,
+        "limit": 18712422,
+        "pass": true,
+        "baseline": 1935206,
+        "hardLimit": 67108864
+      },
+      {
+        "id": "cache.entries.cleanFloor",
+        "actual": 60,
+        "limit": 100,
+        "pass": true
+      },
+      {
+        "id": "cache.entries.glowClip",
+        "actual": 3,
+        "limit": 200,
+        "pass": true
+      },
+      {
+        "id": "cache.entries.wallUnion",
+        "actual": 1,
+        "limit": 1,
+        "pass": true
+      },
+      {
+        "id": "cache.entries.openingTunnel",
+        "actual": 1,
+        "limit": 1,
+        "pass": true
+      },
+      {
+        "id": "cache.entries.openingWallIndex",
+        "actual": 1,
+        "limit": 1,
+        "pass": true
+      },
+      {
+        "id": "cache.entries.planSnapGeometry",
+        "actual": 1,
+        "limit": 1,
+        "pass": true
+      },
+      {
+        "id": "cache.entries.wallFaceGraph",
+        "actual": 0,
+        "limit": 4,
+        "pass": true
+      },
+      {
+        "id": "cache.growth.cleanFloor",
+        "actual": 0,
+        "limit": 0,
+        "pass": true
+      },
+      {
+        "id": "cache.growth.glowClip",
+        "actual": 0,
+        "limit": 0,
+        "pass": true
+      },
+      {
+        "id": "cache.growth.wallUnion",
+        "actual": 0,
+        "limit": 0,
+        "pass": true
+      },
+      {
+        "id": "cache.growth.openingTunnel",
+        "actual": 0,
+        "limit": 0,
+        "pass": true
+      },
+      {
+        "id": "cache.growth.openingWallIndex",
+        "actual": 0,
+        "limit": 0,
+        "pass": true
+      },
+      {
+        "id": "cache.growth.planSnapGeometry",
+        "actual": 0,
+        "limit": 0,
+        "pass": true
+      },
+      {
+        "id": "cache.growth.wallFaceGraph",
+        "actual": 0,
+        "limit": 0,
+        "pass": true
+      },
+      {
+        "id": "renderedDevices",
+        "actual": 200,
+        "limit": 200,
+        "pass": true
+      }
+    ],
+    "failures": [
+      {
+        "id": "timing.switchCycleMs.median",
+        "actual": 1267,
+        "limit": 950,
+        "pass": false,
+        "baseline": 1249,
+        "regressionLimit": 1686.15,
+        "hardLimit": 950
+      }
+    ]
+  },
+  "floorCacheReuse": {
+    "status": "passed",
+    "sourceSha": "c0206b72acd2b520a12c8960ad73d6c5fdfbdaa5",
+    "log": "artifacts/issue1383/review-floor-cache.log"
+  },
+  "limits": "CPU-only synthetic Chromium runs on the same WSL host, sequential with no concurrent tests. This is not a real-HA or full stable release run. The complete performance evaluator result, including any pre-existing absolute-budget failure, is retained below; addressed Resize/cache checks are not a blanket performance pass."
+}
