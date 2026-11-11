@@ -355,6 +355,10 @@
       "configs": 1
     },
     {
+      "file": "demo/fixtures/resize-junctions.mjs",
+      "configs": 1
+    },
+    {
       "file": "demo/fixtures/selective-invalidation.mjs",
       "configs": 1
     },
@@ -24044,6 +24048,83 @@
         }
       ],
       "fullConfigSha256": "463a1b416e1dc1476b7dbfa581789d2293e24fdaa1be398929648659ffd2b394"
+    },
+    {
+      "label": "demo/fixtures/resize-junctions.mjs:makeResizeJunctionFixture/config",
+      "fingerprint": "07e78f27e0575561db01b2a81a4e19f364dbe727be800b0ac2c94ec1199c0d62",
+      "ok": true,
+      "identity": [
+        {
+          "space": "resize-junctions",
+          "catalogue": [
+            "wall-2436pae3psj5kacvkocb",
+            "wall-2436pae3psj5kacvkocb~1",
+            "wall-2z3xjx7pcaoenvszopj2",
+            "wall-5kndvvjr5atsj35w5zhk",
+            "wall-agxx3vvrwpu3gbrhpst4",
+            "wall-eh34dv6x3wknezfr3cvn",
+            "wall-eoaronhvnl2cbcyl5f4q",
+            "wall-rs7sjoo3q2z4jcrxn5ur",
+            "wall-tlp7gf5enlo6upytabnl",
+            "wall-wuhqpczsoclqfrhip3g2"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-agxx3vvrwpu3gbrhpst4",
+                "wall-5kndvvjr5atsj35w5zhk",
+                "wall-2436pae3psj5kacvkocb",
+                "wall-tlp7gf5enlo6upytabnl"
+              ]
+            },
+            {
+              "id": "lower",
+              "walls": [
+                "wall-2436pae3psj5kacvkocb",
+                "wall-2436pae3psj5kacvkocb~1",
+                "wall-eh34dv6x3wknezfr3cvn",
+                "wall-rs7sjoo3q2z4jcrxn5ur",
+                "wall-eoaronhvnl2cbcyl5f4q"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-2z3xjx7pcaoenvszopj2",
+                "wall-wuhqpczsoclqfrhip3g2",
+                "wall-2436pae3psj5kacvkocb~1",
+                "wall-5kndvvjr5atsj35w5zhk"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "moving-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-5kndvvjr5atsj35w5zhk"
+              }
+            },
+            {
+              "id": "side-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-agxx3vvrwpu3gbrhpst4"
+              }
+            },
+            {
+              "id": "bottom-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-2436pae3psj5kacvkocb~1"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ],
+      "fullConfigSha256": "dce656585201c3a0304a0eec832b21298f267411b251d14489a661d899137dfa"
     }
   ]
 }

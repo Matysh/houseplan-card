@@ -8,12 +8,16 @@ and real HA websocket tests; [contract](CONFIG-COMPATIBILITY.md#per-space-presen
 
 Historical #1015 provenance: reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
 
-Current snapshot: **752 individually classified matching lines**, sha256:`2f87b7de777c66c932b20bce760795127abec91ef59a2db24b2544ac0c89a00c`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+Current snapshot: **753 individually classified matching lines**, sha256:`08c5a7d79e4fc4a5e9930874a43c622b8d340811f703961b1794a6fee296a424`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
 
 #1380 classifies three current graph-write/exact-coordinate safety comments as
 `current-feature` and the first-key-wins historical wall-overlay ABI as
 `wall-model-chain`. These are individual source records, not new fallback
 permissions or a change to the migration lifecycle.
+
+#1383 records the existing pre-graph Resize adapter under `wall-model-chain`;
+current graph writes bind exact nodes directly. No reader removal or lifecycle
+change is authorized by this additional explanatory source match.
 
 Historical #1015 captured product trees: src `22655ecb08f00d9b1f6c8381a1a3d3c9c51487cb`; integration `0019b652824aaad42fd0e6f5372cb595e8a41dc7`. These immutable Git trees identify the original capture; ongoing completeness is checked against exact source-match IDs, so an unrelated edit does not expire unchanged matches.
 
@@ -141,7 +145,7 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [src/houseplan-card.ts](../src/houseplan-card.ts) | 3 | exclusion:transport |
 | [src/houseplan-editor-runtime.ts](../src/houseplan-editor-runtime.ts) | 14 | branch:decor-live-link |
 | [src/houseplan-editor-runtime.ts](../src/houseplan-editor-runtime.ts) | 3 | branch:decor-width |
-| [src/houseplan-editor-runtime.ts](../src/houseplan-editor-runtime.ts) | 28 | branch:wall-model-chain |
+| [src/houseplan-editor-runtime.ts](../src/houseplan-editor-runtime.ts) | 29 | branch:wall-model-chain |
 | [src/houseplan-editor-runtime.ts](../src/houseplan-editor-runtime.ts) | 6 | exclusion:current-feature |
 | [src/houseplan-editor-runtime.ts](../src/houseplan-editor-runtime.ts) | 1 | exclusion:session-state |
 | [src/houseplan-editor-runtime.ts](../src/houseplan-editor-runtime.ts) | 11 | exclusion:transport |

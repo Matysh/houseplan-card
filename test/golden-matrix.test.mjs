@@ -201,7 +201,7 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
 });
 
 test('issue 486 keeps its three ordinary panel-host surfaces alongside route kiosk scenes', () => {
-  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.panelHost && !scenario.dialog && !scenario.panelKioskUrl && !scenario.id.endsWith('-ui-1132'));
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.panelHost && !scenario.dialog && !scenario.panelKioskUrl && !scenario.resizeJunction && !scenario.id.endsWith('-ui-1132'));
   assert.deepEqual(scenarios.map((scenario) => scenario.id), [
     'panel-wide-view-light-en',
     'panel-wide-plan-editor-dark-en',
@@ -225,6 +225,25 @@ test('issue 486 keeps its three ordinary panel-host surfaces alongside route kio
   assert.deepEqual(fixture.config.spaces, []);
   assert.deepEqual(fixture.config.markers, []);
   assert.deepEqual(fixture.layout, {});
+});
+
+test('#1383 Resize golden covers whole rooms before, during and after each junction gesture on the real panel', () => {
+  const scenes = GOLDEN_SCENARIOS.filter(scene => scene.resizeJunction);
+  assert.deepEqual(scenes.map(scene => scene.id), [
+    'panel-resize-junction-tee-before', 'panel-resize-junction-tee-during', 'panel-resize-junction-tee-after',
+    'panel-resize-junction-cross-before', 'panel-resize-junction-cross-during', 'panel-resize-junction-cross-after',
+    'panel-resize-junction-partition-before', 'panel-resize-junction-partition-during', 'panel-resize-junction-partition-after',
+  ]);
+  for (const scene of scenes) {
+    assert.equal(scene.panelHost, true);
+    assert.equal(scene.mode, 'plan');
+    assert.equal(scene.capture, 'stage');
+    assert.deepEqual(scene.viewport, {width:1180,height:1000});
+    assert.equal(scene.zoom, .65);
+    const space = prepareGoldenFixture(scene).config.spaces.find(space => space.id === scene.space);
+    assert.deepEqual(space.openings.map(opening => opening.id).sort(), ['bottom-door', 'moving-door', 'side-window']);
+    assert.equal(space.rooms.length, scene.resizeJunction.kind === 'cross' ? 4 : scene.resizeJunction.kind === 'partition' ? 2 : 3);
+  }
 });
 
 test('issue 462 has reviewed desktop, narrow-touch and attempted-kiosk notices', () => {
@@ -529,7 +548,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 112);
+  assert.equal(GOLDEN_MATRIX_VERSION, 113);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -1035,7 +1054,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 112);
+  assert.equal(GOLDEN_MATRIX_VERSION, 113);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',

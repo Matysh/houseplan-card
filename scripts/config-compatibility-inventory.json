@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "2f87b7de777c66c932b20bce760795127abec91ef59a2db24b2544ac0c89a00c",
+  "matchesSha256": "08c5a7d79e4fc4a5e9930874a43c622b8d340811f703961b1794a6fee296a424",
   "hits": [
     {
       "id": "5ccffe673ec4e6e1a4019520",
@@ -7527,6 +7527,16 @@
       "kind": "branch",
       "owner": "zero-wall-boundaries",
       "reason": "Persisted representation: open_spans/open_to virtual contours below model9. The model9 contract intentionally changes degraded opening/light behavior and may need host proof. A lossless transparent migration for every tolerated old geometry is not proven; old backend and read-only degraded plans remain supported."
+    },
+    {
+      "id": "3e783efca85d8dc8f952051f",
+      "path": "src/houseplan-editor-runtime.ts",
+      "line": 3427,
+      "text": "// legacy catalogue adapter rejects a vanishing intermediate atom before",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "Resize keeps the existing pre-graph room atom adapter for legacy inputs; current graph writes bind exact source nodes directly. This comment records that existing model-chain boundary, without adding a decoder or changing its lifecycle."
     }
   ],
   "sourceTrees": {
