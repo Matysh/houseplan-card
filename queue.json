@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9214,
+  "revision": 9215,
   "nextTicket": 364,
   "nextFence": 364,
   "tasks": {
@@ -4287,7 +4287,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794410238728,
       "reviewEntry": 4,
-      "patchId": "87893d021d9fc211935ea193fcb2f5dd7bf73382",
+      "patchId": "d0737e2ba2b62df9cc1145fa2d3a9e26dcc08815",
       "changedFiles": [
         "demo/fixtures/resize-junctions.mjs",
         "demo/golden/harness.mjs",
@@ -4561,10 +4561,11 @@
     "token": "363:finish:9f751cfb-7a46-4750-8311-b10aadae7a76:finish:1:admit",
     "fence": 363,
     "materialSha": "6c5b515d67cfe007016bbe141f8e842e15dd7115",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "20a8fec94a403520d4a38c7c9e8f0d5d9f535b3d",
+    "phase": "testing",
     "admittedAt": 1794410243182,
-    "expiresAt": 1794410543182
+    "expiresAt": 1794410549793,
+    "patchId": "d0737e2ba2b62df9cc1145fa2d3a9e26dcc08815"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4837,6 +4838,10 @@
     },
     "finish:2ea096cb-9ade-4bb3-be99-4034cda24c89:finish:3:return": {
       "digest": "f6e7472103f9dc711d98973373d62013f33752cc96297ba0faea1f9a8d568ef5",
+      "issue": 1384
+    },
+    "finish:9f751cfb-7a46-4750-8311-b10aadae7a76:finish:2:synchronized": {
+      "digest": "7d2e65bfa31496e3bf92daebb2a475e0f96aaef7ee73c93bb8dd40ef7db5b34b",
       "issue": 1384
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
