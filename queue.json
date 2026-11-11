@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9408,
+  "revision": 9409,
   "nextTicket": 368,
   "nextFence": 368,
   "tasks": {
@@ -4292,7 +4292,25 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794421093161,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "3099e257d3048b0970c28f9a438d17c3ff1a8051",
+      "changedFiles": [
+        "custom_components/houseplan/frontend_asset_manifest.py",
+        "custom_components/houseplan/frontend_assets.py",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.85.0/1387.json",
+        "process-next/lib/package.mjs",
+        "process-next/test/package.test.mjs",
+        "scripts/bundle-manifest.mjs",
+        "scripts/bundle-sync.mjs",
+        "scripts/bundle-tree.mjs",
+        "test/bundle-assets.test.mjs",
+        "test/bundle-sync.test.mjs",
+        "tests_backend/test_frontend_assets.py",
+        "tests_backend/test_ha_frontend_assets.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4529,10 +4547,11 @@
     "token": "367:finish:b3b18a91-915e-444c-8076-d1694e96713d:finish:1:admit",
     "fence": 367,
     "materialSha": "4539f74d0e2c2e4b8ea4c5f636e39eedcb51a71c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
+    "phase": "testing",
     "admittedAt": 1794421097380,
-    "expiresAt": 1794421397380
+    "expiresAt": 1794421404405,
+    "patchId": "3099e257d3048b0970c28f9a438d17c3ff1a8051"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4634,6 +4653,10 @@
     "github:42980477516:1:completions:report:dc4a5da63a2c734ea4b0aad48faf91bfb257334eb9d6a55d3b9ff3060735a7fe": {
       "digest": "fb4637786d495fc8ce43ce75f7a7eb1c2167af80d6ab3749599266002f7b48d5",
       "issue": 1024
+    },
+    "finish:b3b18a91-915e-444c-8076-d1694e96713d:finish:2:synchronized": {
+      "digest": "a7c1f0499b76e162f6695316c421745d520128b10c8a35b3d19ac4bbfd0b532a",
+      "issue": 1387
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
