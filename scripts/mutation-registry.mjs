@@ -2023,10 +2023,10 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'config-old-subscription-interrupts-new-paired-load',
     guard: 'node demo/smoke_config_authority.mjs',
-    because: '#890 AC6: an actual late old-server event must not start a config-only B read and cancel its mandatory config/layout pair; the mounted subscription consumer is the oracle.',
+    because: '#890 AC6 / #1386: bypass physical-owner fencing and current-handler routing together so an actual retired subscription invokes its old callback and interrupts the new mandatory pair; removing only one redundant protection is not the defect.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: 'const receive = (ev: unknown) => { if (ownsContext()) return callback(ev); };',
-      replace: 'const receive = (ev: unknown) => { return callback(ev); };' }],
+      find: '        const receive = (ev: unknown) => {',
+      replace: '        const receive = (ev: unknown) => {\n          if (Boolean(true)) return callback(ev); // bypass both routing protections' }],
   },
   {
     id: 'view-space-change-keeps-pending-hold',

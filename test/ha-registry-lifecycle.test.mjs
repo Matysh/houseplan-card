@@ -76,7 +76,8 @@ test('#1386 a true reconnect supersedes an older pending registry response', asy
   const release = acquireHaRegistries(f.hass, () => {});
   await settle(); assert.equal(held.length, 2);
   f.disable(); f.hass.callWS = current;
-  refreshHaRegistries(f.hass); refreshHaRegistries(f.hass);
+  refreshHaRegistries(f.hass, { connectionReady: true });
+  refreshHaRegistries(f.hass, { connectionReady: true });
   t.mock.timers.tick(100); await settle();
   assert.equal(f.requests.length, 2, 'the reconnect refresh is coalesced');
   assert.equal(haRegistrySnapshot(f.hass).devices.lamp.disabled_by, 'user');
@@ -143,4 +144,32 @@ test('#1386 late subscription setup cannot replace or release a new lease', asyn
   assert.equal(active.size, 2, 'only the new pair survives the obsolete subscribe ACK');
   again(); t.mock.timers.tick(5000); await settle();
   assert.equal(active.size, 0);
+});
+
+test('#1386 an ordinary refresh joins the current read instead of duplicating it', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const f = fixture(), held = [];
+  f.hass.callWS = request => new Promise(resolve => held.push({ request, resolve }));
+  const release = acquireHaRegistries(f.hass, () => {});
+  await settle(); refreshHaRegistries(f.hass);
+  t.mock.timers.tick(100); await settle();
+  assert.equal(held.length, 2, 'one device list and one entity list satisfy both callers');
+  for (const { request, resolve } of held) resolve(request.type.includes('device_registry')
+    ? [{ id: 'lamp', disabled_by: null }] : []);
+  await settle(); assert.equal(haRegistrySnapshot(f.hass).authoritative, true);
+  release(); t.mock.timers.tick(5000); await settle();
+});
+
+test('#1386 additional consumers do not retry a refused load until explicit refresh', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const f = fixture();
+  f.hass.callWS = async request => { f.requests.push(request.type); throw Error('unauthorized'); };
+  const release = acquireHaRegistries(f.hass, () => {});
+  await settle();
+  const other = acquireHaRegistries(f.hass, () => {});
+  await settle(); assert.equal(f.requests.length, 2);
+  refreshHaRegistries(f.hass); t.mock.timers.tick(100); await settle();
+  assert.equal(f.requests.length, 4);
+  assert.equal(haRegistrySnapshot(f.hass).access, 'limited');
+  release(); other(); t.mock.timers.tick(5000); await settle();
 });

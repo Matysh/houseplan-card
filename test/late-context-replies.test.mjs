@@ -166,6 +166,8 @@ for (const mode of ['connection', 'aba', 'detach']) test(`#901 wiring: public HA
   context.observe(hass);
   const host = { hass, isConnected: true, _configWriteContext: context,
     _liveSyncConnection: null, _liveSyncGeneration: 0, _liveSyncAttempt: null,
+    _liveSyncReceivers: new Map(), _liveSyncSubscriptionOwner: {},
+    _retireLiveSyncSubscriptions: HouseplanCard.prototype._retireLiveSyncSubscriptions,
     _externalConfigStreamRecovery: new ExternalConfigStreamRecovery(),
     _vacRt: new Map(),
     _vacSrvTrails: { fresh: { current: { points: [[1, 2]] } } }, _vacTrailFormat: 2,

@@ -175,7 +175,8 @@ async function loadFullRegistries(hass: any, entry: RegistryCacheEntry): Promise
   return entry.loading;
 }
 
-function scheduleReload(hass: any, entry: RegistryCacheEntry): void {
+function scheduleReload(hass: any, entry: RegistryCacheEntry, supersede = true): void {
+  if (!supersede && entry.loading) return;
   entry.needsRefresh = true;
   entry.loadOwner = undefined;
   entry.loading = undefined;
@@ -233,7 +234,7 @@ export function acquireHaRegistries(hass: any, listener: () => void): () => void
   entry.refs++;
   entry.listeners.add(listener);
   // A short DOM move keeps event coverage. Missing coverage always revalidates.
-  if (entry.needsRefresh || (wasUnused && !(entry.unsubDevice && entry.unsubEntity)))
+  if (entry.access === 'pending' || (wasUnused && (entry.needsRefresh || !(entry.unsubDevice && entry.unsubEntity))))
     void loadFullRegistries(hass, entry);
   void ensureSubscriptions(hass, entry);
   let released = false;
@@ -257,10 +258,10 @@ export function acquireHaRegistries(hass: any, listener: () => void): () => void
 }
 
 /** Retry after a websocket reconnect or an account/permission change. */
-export function refreshHaRegistries(hass: any): void {
+export function refreshHaRegistries(hass: any, options: { connectionReady?: boolean } = {}): void {
   const entry = entryOf(hass);
   if (!entry) return;
-  scheduleReload(hass, entry);
+  scheduleReload(hass, entry, options.connectionReady === true);
   void ensureSubscriptions(hass, entry);
 }
 

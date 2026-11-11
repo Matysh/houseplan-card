@@ -5708,6 +5708,9 @@ export class HouseplanCard extends LitElement {
             const data = ev && typeof ev === 'object' && 'data' in ev ? ev.data : null;
             if (data && typeof data === 'object' && 'kind' in data && data.kind === 'closed')
               this._retireLiveSyncSubscriptions();
+            else if (data && typeof data === 'object' && 'rev' in data
+                && ((event === 'houseplan_config_updated' && Number(data.rev) === this._cfgRev)
+                  || (event === 'houseplan_layout_updated' && Number(data.rev) === this._layoutRev))) return;
             this._read.defer(); return;
           }
           return this._liveSyncReceivers.get(event)?.(ev);
@@ -6025,7 +6028,7 @@ export class HouseplanCard extends LitElement {
   }
   private _onConnReady = (): void => {
     if (!this.isConnected) {
-      refreshHaRegistries(this.hass);
+      refreshHaRegistries(this.hass, { connectionReady: true });
       this._connectionWasLost = true; this._read.defer(); return;
     }
     if (this._externalConfigStreamRecovery.blocked) {
@@ -6034,7 +6037,7 @@ export class HouseplanCard extends LitElement {
     this._loadTries = 0;
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined;
-    refreshHaRegistries(this.hass);
+    refreshHaRegistries(this.hass, { connectionReady: true });
     if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
     if (this._cfgWriting) {
       clearTimeout(this._reloadRetry);

@@ -7,6 +7,13 @@ try {
   const report = await page.evaluate(async () => {
     const card = window.__card, parent = card.parentElement, original = card.hass;
     const connection = Object.assign(new EventTarget(), original.connection);
+    const subscriptions = new Map();
+    connection.subscribeEvents = async (handler, event) => {
+      const callbacks = subscriptions.get(event) || new Set();
+      subscriptions.set(event, callbacks); callbacks.add(handler);
+      const unsubscribe = await original.connection.subscribeEvents(handler, event);
+      return () => { callbacks.delete(handler); unsubscribe(); };
+    };
     const requests = [];
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
     const until = async predicate => {
@@ -49,6 +56,13 @@ try {
       && counts()['houseplan/layout/get'] === initial['houseplan/layout/get'];
     checks.noRepeatedPhysicalBuild = card._spaceModels.work.builds === builds;
     checks.samePaintedPlan = card.renderRoot.querySelector('svg.plan-svg')?.outerHTML === fingerprint;
+
+    const beforeEcho = counts();
+    card.remove();
+    for (const [event, rev] of [['houseplan_config_updated', card._cfgRev], ['houseplan_layout_updated', card._layoutRev]])
+      for (const receive of subscriptions.get(event) || []) receive({ data: { rev } });
+    parent.append(card); await card.updateComplete; await sleep(100);
+    checks.sameRevisionEchoDoesNotReload = JSON.stringify(counts()) === JSON.stringify(beforeEcho);
 
     const beforeEvent = counts()['houseplan/config/get'];
     const positionId = Object.keys(card._layout)[0];

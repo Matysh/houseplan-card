@@ -213,7 +213,7 @@ const result = await page.evaluate(async (rawFixture) => {
   out.readonlyNewDeviceDoesNotToast = readonlyToasts.length === 0;
   out.readonlyKnownDevicesStayAuthoritative = !cold.card._settings.known_devices.includes(addedDeviceId);
   cold.card.remove();
-  await sleep(20);
+  for (let i = 0; i < 160 && !cold.calls.unsubscribed.includes('houseplan_layout_updated'); i++) await sleep(20);
   out.successfulSubscriptionCleanedUp = cold.calls.unsubscribed.includes('houseplan_layout_updated');
 
   const warm = await mount('Readonly cold start');
