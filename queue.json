@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9389,
+  "revision": 9390,
   "nextTicket": 367,
   "nextFence": 367,
   "tasks": {
@@ -984,38 +984,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c"
-      }
-    },
-    "1280": {
-      "issue": 1280,
-      "branch": "fix/1280-binary-patch-identity",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "99c83e17f1222ebfc61dcd07099fdaa9ccff525b",
-      "mergedSha": "cb3142d914c3d39cee6b09b5fc18ddfc8a7e1b89",
-      "mergedAt": 1793803581333,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1281": {
@@ -4308,7 +4276,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a"
       }
     }
   },
@@ -4691,6 +4660,18 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "dev-build:43074770805:1:1386": {
+      "digest": "66d4d309d6e221079171a1ab775e601e2dd9a896f9cee74af971de85ec6bb1e9",
+      "issue": 1386,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1386,
+        "at": 1794420605192,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a"
       }
     }
   },
