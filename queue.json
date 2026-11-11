@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9518,
-  "nextTicket": 370,
+  "revision": 9519,
+  "nextTicket": 371,
   "nextFence": 370,
   "tasks": {
     "1170": {
@@ -4279,6 +4279,20 @@
         "status": "published",
         "sourceSha": "74a8de539e1aeabecc51cb651c7119cedc333067"
       }
+    },
+    "1388": {
+      "issue": 1388,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/1388-first-view-analysis",
+      "materialSha": "3f89c4132e2f1e9243df350f26aae849d275bc65",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 370,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794423884233,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4508,7 +4522,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1388
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4672,6 +4688,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "74a8de539e1aeabecc51cb651c7119cedc333067"
+      }
+    },
+    "finish:04a3ed87-3f4b-448d-a0cc-623fa5b903d1": {
+      "digest": "19820cdabd5fb454d59b26916832d6f5f7613283a12e5773b8e60d9d766e805a",
+      "issue": 1388,
+      "message": {
+        "kind": "queued",
+        "issue": 1388,
+        "at": 1794423884233,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "3f89c4132e2f1e9243df350f26aae849d275bc65"
       }
     }
   },
