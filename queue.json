@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9521,
+  "revision": 9522,
   "nextTicket": 371,
   "nextFence": 371,
   "tasks": {
@@ -4290,7 +4290,7 @@
       "ownerDecision": null,
       "ticket": 370,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794423884233,
       "reviewEntry": 1,
       "patchId": "349cbf9385f4d9747bf398618d0045446d2ec26c",
@@ -4300,7 +4300,16 @@
         "docs/analysis/1388-profile-driver.txt",
         "docs/analysis/1388-remount-driver.txt",
         "docs/analysis/1388-scene-driver.txt"
-      ]
+      ],
+      "s6": {
+        "id": "20261111T190459341-e92cb1d3",
+        "name": "Тесты для задачи #1388 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T190459341-e92cb1d3/report.json",
+        "materialSha": "3f89c4132e2f1e9243df350f26aae849d275bc65",
+        "status": "passed",
+        "finishedAt": "2026-11-11T19:04:59.517Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4538,9 +4547,9 @@
     "fence": 370,
     "materialSha": "3f89c4132e2f1e9243df350f26aae849d275bc65",
     "expectedBase": "74a8de539e1aeabecc51cb651c7119cedc333067",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794423888217,
-    "expiresAt": 1794424194537,
+    "expiresAt": 1794427500290,
     "patchId": "349cbf9385f4d9747bf398618d0045446d2ec26c"
   },
   "events": {
@@ -4736,6 +4745,34 @@
         "layer": "infra",
         "materialSha": "3f89c4132e2f1e9243df350f26aae849d275bc65",
         "phase": "sync"
+      }
+    },
+    "finish:04a3ed87-3f4b-448d-a0cc-623fa5b903d1:finish:3:s6-complete": {
+      "digest": "3ceac7d2df04d39d9ee9bed529c8a8c1927cde6d57e111a9573a43188f0fde74",
+      "issue": 1388,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1388,
+        "at": 1794423900290,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "3f89c4132e2f1e9243df350f26aae849d275bc65",
+        "phase": "review",
+        "evidence": {
+          "id": "20261111T190459341-e92cb1d3",
+          "name": "Тесты для задачи #1388 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T190459341-e92cb1d3/report.json",
+          "materialSha": "3f89c4132e2f1e9243df350f26aae849d275bc65",
+          "status": "passed",
+          "finishedAt": "2026-11-11T19:04:59.517Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "<details>\n<summary>Отчёт, источник измерений и ограничения</summary>\n\n### Материал и решение\n\nВетка `codex/1388-first-view-analysis`, материал `3f89c4132`, база dev `74a8de539`. Только пять документов в docs/analysis: отчёт, наблюдения JSON, точные тексты трёх одноразовых диагностических драйверов (.txt). Они не входят в product runtime или автоматический каталог. Выбран отчёт без спекулятивной оптимизации: отсутствие оригинальных входов не позволяет назвать независимую сцену воспроизведением всех CPU-симптомов.\n\n### Что фактически наблюдали\n\n- Ryzen9 7950X/32CPU, WSL, High performance; pinned Chromium151.0.7922.34; реальный HA2026.11.1, Docker digest сохранён. Установлен gzip-only ZIP от74a8de539, SHA2560b2365752a1f49233c080e922329eefe15fe77042f50ac69d3aa69718c21191a.22 hashed responses gzip, JS errors0, записей/сервисов0.\n- Модель11,14 комнат,19 проёмов,26 устройств,12 декоров,56 исходных сторон/36 уникальных физических сегментов. Реальные HA widgets/registry из публичного companion seed697314e, нет подмены WS/ha-icon. Геометрия не равна плану автора с56 сегментами; theme/device автора неизвестны.\n- После прогрева3 cold/warm пары, отдельно атрибуционная пара. Последовательный запуск без функциональных тестов/сборки. Cold LongTask236–239мс, warm257–309мс. Cold ready871.7/874.1/895.3мс, warm1156.8/1152.4/1103.1мс. Это подключение → полные данные/SVG+6RAF, не compositor first paint; LongTask пересекает окно и может начинаться раньше карточки. n3 не называется устойчивым p95 или release performance PASS.\n- Один экземпляр с двумя реальными masonry connect, всего1 model build во всех случаях, editor runtime не установлен. render23–26 не означает столько геометрических пересборок. Отдельные три тихих возврата по1000мс: full config/layout/registry0, builds1, одинаковая room geometry и готовый View. Сохраняется по одному model_version metadata preflight на attach.\n- CPU: getPropertyValue21/28,3.0/2.2мс, не256мс. _i в open-spans сопоставлен по телу с arrangeExact; его стэки ведут к wall union/inner room/light barriers, self12.7/22.3мс. Часть других функций — BigNumber; не повод менять точность. Decor self14.2/13.0мс; decor входит в render, суммы не складываются. _setLoadingCoordinates не найден в классе/этих profiles; отсутствие hook не записано как нулевой расход.\n- editor-shared/plan-graph/locale/summary зависимости действительно загружены. ViewRuntimes live/summary использует общие листья, это не основной editor. Intent preload ограничен nav pointerenter/focus/pointerdown и не удалён.\n- При первом входе две полные config/layout пары: первая начинается из hass intake, masonry прерывает pending чтение, connectedCallback начинает новое (busy=false/pending=true; user уже известен). Это явная граница, не скрытая победа. Принятие/физическая модель не дублируются. До первого adoption ещё нет config/layout event coverage; простой reuse старого ответа/TTL не гарантирует свежесть. Не ослаблял lifecycle guards ради уменьшения числа запросов.\n\n### Качество свидетельств и ограничения\n\nСырые CPU profiles/полный JSON локально в artifacts/issue1388; репозиторий содержит числовую сводку, hashes исходных файлов, условия и source text драйверов/порядок воспроизведения. Начальные диагностики сохранены отдельно: первый profile не зацепил реальный HA scoped registry и имел4 дополнительных auto groups, его timings не входят в итог. Подключён реальный registry hook, group_lights выключен, готовая серия имеет ровно26 устройств. Первый remount assertion считал metadata полным config/get; исходный FAIL/log сохранён, последующий строгий full-read oracle учитывает fields и проходит3 возврата. Это не ослабление product regression.\n\nТолько исследования на материале74a8de539 до документального изменения. Для текущих документов тесты/сборки/линтеры не запускались; S6 должен быть not-required. Новых продуктовых тестов без подтверждённого изменения нет. Повторная работа #1386 уже покрыта её257 Node/новым native/mutant и общим S6; реальный HA добавляет ограниченное свидетельство. Нужен содержательный review достоверности выводов и границ; не выдавать отсутствие воспроизведения за исправление исходной550мс паузы. Новых PNG нет, пользовательский HA не трогался, релиз не поручен.\n\n</details>",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
