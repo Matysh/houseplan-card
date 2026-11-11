@@ -102,6 +102,32 @@ try {
     checks.realReconnectRevalidates = await until(() => ready()
       && counts()['houseplan/config/get'] === beforeReconnect['houseplan/config/get'] + 1
       && counts()['config/entity_registry/list'] === beforeReconnect['config/entity_registry/list'] + 1);
+
+    const target = card._devices.find(device => Object.hasOwn(card.hass.devices || {}, device.id));
+    if (!target) throw Error('The reconnect fixture needs one real device');
+    const staticCard = document.createElement('houseplan-space-card');
+    staticCard.setConfig({ type: 'custom:houseplan-space-card', space: card._space, show_button: false });
+    staticCard.hass = card.hass; parent.append(staticCard);
+    await until(() => staticCard._loadedOnce && staticCard._devices.length > 0);
+    const beforeUser = counts()['config/entity_registry/list'];
+    const newUser = { ...card.hass, user: { ...card.hass.user, id: 'static-second-user' },
+      callWS: async request => {
+        requests.push(structuredClone(request));
+        const response = await original.callWS(request);
+        if (request.type === 'config/device_registry/list') return response.map(device =>
+          device.id === target.id ? { ...device, disabled_by: 'user' } : device);
+        return response;
+      } };
+    staticCard.hass = newUser;
+    checks.staticUserAuthorityRebound = await until(() => {
+      const device = staticCard._devices.find(device => device.id === target.id);
+      return counts()['config/entity_registry/list'] === beforeUser + 1 && staticCard._haRegistryRevision > 0
+        && (!device || device.bindingStatus?.kind === 'ha_disabled');
+    });
+    const mainDevice = card._devices.find(device => device.id === target.id);
+    checks.otherUserCannotDisableMainCard = !!mainDevice
+      && (!mainDevice.bindingStatus || mainDevice.bindingStatus.kind === 'active');
+    staticCard.remove();
     checks.noWrites = !requests.some(r => /\/(set|update|delete)$/.test(r.type));
     return { checks, initial, final: counts(), samples };
   });

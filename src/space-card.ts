@@ -140,6 +140,7 @@ class HouseplanSpaceCard extends LitElement {
   private _observedStage?: HTMLElement;
   private _haRegistryRelease?: () => void;
   private _haRegistryConnection: any = null;
+  private _haRegistryUser?: string;
   private _haRegistryRevision = -1;
   private _devices: DevItem[] = [];
   private _areaRelocationIds = new Set<string>();
@@ -192,9 +193,11 @@ class HouseplanSpaceCard extends LitElement {
 
   private _ensureHaRegistryAuthority(): void {
     const connection = this.hass?.connection || null;
-    if (!connection || connection === this._haRegistryConnection) return;
+    const user = this.hass?.user?.id;
+    if (!connection || (connection === this._haRegistryConnection && user === this._haRegistryUser)) return;
     this._haRegistryRelease?.();
     this._haRegistryConnection = connection;
+    this._haRegistryUser = user;
     this._haRegistryRevision = -1;
     this._haRegistryRelease = acquireHaRegistries(this.hass, this._onHaRegistryUpdate);
     this._onHaRegistryUpdate();
@@ -424,6 +427,7 @@ class HouseplanSpaceCard extends LitElement {
     this._haRegistryRelease?.();
     this._haRegistryRelease = undefined;
     this._haRegistryConnection = null;
+    this._haRegistryUser = undefined;
     this._connHooked?.removeEventListener?.('ready', this._onConnReady);
     this._connHooked?.removeEventListener?.('disconnected', this._onConnLost);
     this._connHooked?.removeEventListener?.('reconnect-error', this._onConnLost);
