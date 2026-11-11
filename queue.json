@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9467,
+  "revision": 9468,
   "nextTicket": 370,
   "nextFence": 370,
   "tasks": {
@@ -4814,6 +4814,10 @@
       "digest": "2ee53c5060b28afe1e5500dd0fb2b428ea3591fd52faeb8d8387b163eefb24d2",
       "issue": 1387
     },
+    "finish:bd97be4e-fd09-4657-92ec-03597a4161be:finish:3:s6-label": {
+      "digest": "e5328cc5b7efa3b4722b2b374f71ed04df9ccf663f8bcb9f163c4a13857aeccc",
+      "issue": 1387
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -5044,7 +5048,8 @@
         "resubmission": true,
         "reviewChanges": "<details>\n<summary>Реализация и исправления после первого ревью</summary>\n\n### Результат и решение\n\nМатериал `74a8de539e1aeabecc51cb651c7119cedc333067`, ветка `codex/1387-frontend-compression`, база dev `e4cd01609`. Генерируется только gzip-9 для hashed JS chunks. Добавочный manifest.encodings отделён от files/графов/initial View; raw остаётся для identity. Backend учитывает q=0/identity/wildcard, только перечисленные безопасные пути, Vary/MIME/nosniff/immutable, HEAD/ETag/304/range; компрессии в запросе нет. Старые manifests допустимы. Отдельный каталог не позволяет встроенному aiohttp .gz lookup обходить q=0. Стабильные facade URLs сохраняют прежний static-path контракт.\n\nSync, cleanup и package проверяют SHA и точный decode. Текущий frontend snapshot не менялся. Центральная таксономия нового HA HTTP теста runtime/task-release; собственные changed tests/readers и areaTests дополняют профиль. Общий S6 выполняет finish.\n\n### Исправления по предыдущему ревью\n\nПредыдущее [ревью — нужны исправления](https://github.com/Matysh/houseplan-card/actions/runs/43078089254), материал b97ce95fb.\n\n- **Двойной подсчёт transport variants →** measureFrontend исключает строго manifest-listed representations из canonical frontend totals, сохраняет их inventory в transportFiles и сумму в frontend_transport_bytes. ZIP измеряется целиком, POLICY/пороги/замороженный baseline не менялись. Регрессия проверяет точную сумму, исходный initial closure, missing variant и то, что реальный рост ZIP всё ещё требует решения.\n- **Не измеренный рост ZIP и выбор владельца →** реально пересобраны три архива из одних и тех же исходных байтов: без encoded 2,891,267 B; gzip 4,955,663 B; gzip+br 6,855,804 B. Владелец 11.11.2026 явно выбрал: «Только gzip: принять ZIP 4,96 МБ вместо 2,89 МБ (рекомендую)». Выбор получен в текущем чате; оставлен только gzip в генерации и HTTP negotiation, тесты/документация обновлены. Текущий финальный пакет после правок: **4,955,240 B**, canonical frontend gzip **2,059,860 B**, initial View gzip **419,796 B**, encoded overhead **2,042,768 B /83 файла**. Сравнение без копий: canonical frontend gzip 2,055,278 B, initial View419,808 B. Разница canonical metadata/исходников сохранена, 5%/32 KiB для полного ZIP не обходится. Это принятое изменение доставки; разрешения на выпуск нет.\n- **Outputs кеша demo-assets →** новый generated каталог включён в outputs; .gitignore уже включает его. Каталожные тесты проходят.\n\n### Фактические проверки и ограничения\n\nПосле правок fresh build/types + sync — OK. Node bundle-assets/sync/package/metrics **66/66 PASS**, HA/pure HTTP **18/18 PASS**, metrics/catalog отдельный набор **27/27 PASS**; 0 skip. Реальный packageCandidate на текущем SHA:279 файлов,83 gzip variants, SHA256 ZIP `0b2365752a1f49233c080e922329eefe15fe77042f50ac69d3aa69718c21191a`. Артефакты: artifacts/issue1387/{zip-metrics.json,zip-choices.json,install/,review-fixes-r2.log,http-gzip.log}. Финальная общая выборка ещё не объявляется пройденной заранее.\n\nДо выбора gzip production HTTP на тех же initial View байтах давал identity1,017,381 B; gzip285,871 B; br258,840 B. Исходный handler отдавал raw при всех запросах. Это сохранённые before/after измерения первого материала, не утверждение о byte-identical новом fingerprint. HTTP harness HA2026.8.3/Python3.14.7/aiohttp3.14.3. В отдельном изолированном HA2026.11.1 успешно загружен предыдущий двухформатный candidate,14 комнат/26 устройств/19 проёмов, без JS ошибок; CPU исследуется в #1388, не выдаётся за доказательство отсутствия исходных550ms.\n\nИстория: первый S6 остановлен до ревью для .gitignore (401/404 успешных, остальные cancelled); следующий S6 `20261111T182622789-d1257b08` прошёл (7861 известных кейсов,401 зачтённый шаг), после него первое содержательное ревью вернуло настоящий blocker метрик. Он исправлен выше. Продолжение CLI завершилось с fetch failed при кратком сетевом сбое; сохранённое ревью прочитано, coordinator подтвердил возврат на S6. Не новый модельный запуск для допубликации ленты. Текущий повтор выполняет только применимые проверки по новой версии.\n\nНеобязательные предложения кеша manifest/legacy scripts и восстановления encoded orphan при потерянном manifest не включены: закрытая allowlist/проверка дерева fail-closed, legacy маршрут не используется. Смежные HA E2E сохранены в Matysh/houseplan-e2e#43. Пользовательский HA/эталоны не менялись, релиз не поручен.\n\n</details>",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
