@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { digest } from './storage.mjs';
 import { listZipEntries, readZipEntries } from './zip.mjs';
+import { bundlePayloadFiles } from '../../scripts/bundle-tree.mjs';
 
 export const POLICY = Object.freeze({
   zip_bytes: { label: 'ZIP', fraction: .05, absolute: 32768, unit: 'B' },
@@ -26,14 +27,21 @@ export const median = values => {
 export function measureFrontend(entries, zipBytes) {
   const manifestBytes = entries.get('frontend/houseplan-assets.json');
   if (!manifestBytes || !(zipBytes > 0)) throw Error('Release ZIP/frontend manifest required');
-  const manifest = JSON.parse(manifestBytes), files = [];
+  const manifest = JSON.parse(manifestBytes), files = [], transportFiles = [];
+  // Compare each canonical frontend file once with historical releases.
+  // Precompressed alternatives are installation overhead, not more JS code.
+  if (manifest.encodings !== undefined) bundlePayloadFiles(manifest);
+  const encoded = new Set((manifest.encodings || []).map(file => file.path));
   for (const [path, bytes] of entries) if (path.startsWith('frontend/') && !path.endsWith('/')) {
-    files.push({ path: path.slice(9), raw: bytes.length, gzip: gzipSync(bytes, { level: 9 }).length, sha256: digest(bytes) });
+    const name = path.slice(9), target = encoded.has(name) ? transportFiles : files;
+    target.push({ path: name, raw: bytes.length, gzip: gzipSync(bytes, { level: 9 }).length, sha256: digest(bytes) });
   }
+  if (transportFiles.length !== encoded.size) throw Error('Incomplete encoded frontend inventory');
   const initial = new Set(manifest.initialViewFiles);
   if (!initial.size || initial.size !== manifest.initialViewFiles.length || [...initial].some(path => !files.some(f => f.path === path))) throw Error('Incomplete initial View dependency closure');
   return { buildFingerprint: manifest.fingerprint, size_metrics: { zip_bytes: zipBytes, frontend_all_files_raw_bytes: files.reduce((n, f) => n + f.raw, 0),
-    frontend_all_files_gzip_bytes: files.reduce((n, f) => n + f.gzip, 0), initial_view_gzip_bytes: files.filter(f => initial.has(f.path)).reduce((n, f) => n + f.gzip, 0) }, files };
+    frontend_all_files_gzip_bytes: files.reduce((n, f) => n + f.gzip, 0), initial_view_gzip_bytes: files.filter(f => initial.has(f.path)).reduce((n, f) => n + f.gzip, 0),
+    frontend_transport_bytes: transportFiles.reduce((n, f) => n + f.raw, 0) }, files, transportFiles };
 }
 export function measureZip(path) {
   const names = listZipEntries(path).filter(name => name.startsWith('frontend/') && !name.endsWith('/'));

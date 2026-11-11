@@ -141,7 +141,7 @@ async function checkedPaths(root, paths, tests = false) {
 function preparations(steps, { build = false, tests = false, browser = false } = {}) {
   if (build) steps.push(step('product-build', 'Сборка и типы продукта', helper('prepare', 'build'), buildInputs, [], { outputs: ['dist'] }));
   if (tests) steps.push(step('test-build', 'Подготовка модулей для тестов', helper('prepare', 'tests'), testBuildInputs, [], { outputs: ['test-build'] }));
-  if (browser) steps.push(step('demo-assets', 'Подготовка карточки для браузера', ['node', 'scripts/bundle-sync.mjs'], [...buildInputs, 'demo/gen_icons.mjs', 'scripts/bundle-sync.mjs', 'scripts/bundle-tree.mjs'], ['product-build'], { outputs: ['demo/srv/assets/houseplan-assets.json', 'demo/srv/assets/houseplan-card.js', 'demo/srv/assets/houseplan-assets', 'demo/srv/assets/icons.js'] }));
+  if (browser) steps.push(step('demo-assets', 'Подготовка карточки для браузера', ['node', 'scripts/bundle-sync.mjs'], [...buildInputs, 'demo/gen_icons.mjs', 'scripts/bundle-sync.mjs', 'scripts/bundle-tree.mjs'], ['product-build'], { outputs: ['demo/srv/assets/houseplan-assets.json', 'demo/srv/assets/houseplan-card.js', 'demo/srv/assets/houseplan-assets', 'demo/srv/assets/houseplan-encoded', 'demo/srv/assets/icons.js'] }));
 }
 
 function nodeStep(id, name, files, requires = []) {

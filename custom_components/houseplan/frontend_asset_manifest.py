@@ -90,7 +90,7 @@ def resolve_frontend_representation(
     if not isinstance(inventory, list):
         inventory = []
     choices = []
-    for encoding in ("br", "gzip"):
+    for encoding in ("gzip",):
         quality = qualities.get(encoding, qualities.get("*", 0.0))
         if quality <= 0 or ("identity" in qualities and identity > quality):
             continue

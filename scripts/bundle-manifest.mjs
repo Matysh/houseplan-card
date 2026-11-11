@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, posix, relative, resolve } from 'node:path';
-import { gzipSync, brotliCompressSync, constants as zlibConstants } from 'node:zlib';
+import { gzipSync } from 'node:zlib';
 import { coverageMapsEnabled, editMappedSource, replacementEdits, replaceChunkSource, hashMapRecipe } from './coverage-maps.mjs';
 
 const BUILD_FINGERPRINT_TOKEN = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
@@ -54,16 +54,13 @@ export const PANEL_ENTRY_FILE = 'houseplan-panel.js';
 /** Transport representations are separate from the executable import graph. */
 export function encodedBundleAssets(bundle) {
   return Object.values(bundle).filter(item => item.type === 'chunk'
-    && /^houseplan-assets\/[^/]+\.js$/.test(item.fileName)).flatMap(chunk => {
-    const bytes = Buffer.from(chunk.code, 'utf8');
-    return [
-      ['gzip', gzipSync(bytes, { level: 9 })],
-      ['br', brotliCompressSync(bytes, { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } })],
-    ].map(([encoding, contents]) => ({
-      source: chunk.fileName, encoding,
-      path: `houseplan-encoded/${encoding}/${posix.basename(chunk.fileName)}`,
+    && /^houseplan-assets\/[^/]+\.js$/.test(item.fileName)).map(chunk => {
+    const contents = gzipSync(Buffer.from(chunk.code, 'utf8'), { level: 9 });
+    return {
+      source: chunk.fileName, encoding: 'gzip',
+      path: `houseplan-encoded/gzip/${posix.basename(chunk.fileName)}`,
       sha256: sha256(contents), bytes: contents.length, contents,
-    }));
+    };
   }).sort((a, b) => a.path.localeCompare(b.path));
 }
 

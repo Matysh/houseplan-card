@@ -1,5 +1,4 @@
 """#1387: negotiate actual HTTP bytes through the production HA view."""
-import base64
 import gzip
 import json
 
@@ -14,9 +13,7 @@ from custom_components.houseplan.const import FRONTEND_ASSETS_URL
 async def assets(hass, hass_client, tmp_path, monkeypatch):
     root = tmp_path / "frontend"
     raw = b"export const answer=42;\n" * 1000
-    # Fixed Brotli fixture; build tests independently decode generated variants.
-    br = base64.b64decode("G79d+I3UYy0xWEpPlupDNs20ZKobglAogl6rE0xxfnMOwdpDilUBuIoB")
-    bodies = {None: raw, "gzip": gzip.compress(raw, mtime=0), "br": br}
+    bodies = {None: raw, "gzip": gzip.compress(raw, mtime=0)}
     rows = []
     for encoding, body in bodies.items():
         relative = (f"houseplan-encoded/{encoding}/main-HASH.js" if encoding
@@ -37,9 +34,9 @@ async def assets(hass, hass_client, tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize(("accept", "encoding"), [
-    ("", None), ("identity", None), ("gzip", "gzip"), ("gzip, br", "br"),
+    ("", None), ("identity", None), ("gzip", "gzip"), ("gzip, br", "gzip"),
     ("br;q=0.3, gzip;q=0.8", "gzip"), ("gzip;q=0, br;q=0", None),
-    ("GZip;Q=1", "gzip"), ("*;q=0.5, gzip;q=0", "br"),
+    ("GZip;Q=1", "gzip"), ("*;q=0.5, gzip;q=0", None), ("br", None),
     ("identity;q=1, gzip;q=0.5", None),
 ])
 async def test_negotiation_and_exact_wire_bytes(assets, accept, encoding):

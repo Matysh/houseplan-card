@@ -91,11 +91,12 @@ const minimalTwoEntryManifest = () => ({
 });
 
 test('#1387 emitted transport variants decode to exactly the executable JS and stay outside graphs', async () => {
-  const { gunzipSync, brotliDecompressSync } = await import('node:zlib');
+  const { gunzipSync } = await import('node:zlib');
   const bundle = minimalTwoEntryBundle(), emitted = [];
   bundleManifestPlugin('f'.repeat(64)).generateBundle.call({ emitFile: item => emitted.push(item) }, {}, bundle);
   const manifest = JSON.parse(emitted.find(item => item.fileName === 'houseplan-assets.json').source);
-  assert.equal(manifest.encodings.length, 2);
+  assert.equal(manifest.encodings.length, 1);
+  assert.ok(manifest.encodings.every(file => file.encoding === 'gzip'));
   assert.deepEqual(manifest.files, buildBundleManifest(bundle, 'f'.repeat(64)).files);
   const root = mkdtempSync(join(tmpdir(), 'hp-encoded-'));
   try {
@@ -114,7 +115,7 @@ test('#1387 emitted transport variants decode to exactly the executable JS and s
       const bytes = readFileSync(join(root, file.path));
       assert.equal(file.bytes, bytes.length);
       assert.equal(file.sha256, sha256Bytes(bytes));
-      assert.equal((file.encoding === 'gzip' ? gunzipSync : brotliDecompressSync)(bytes).toString(), bundle[file.source].code);
+      assert.equal(gunzipSync(bytes).toString(), bundle[file.source].code);
     }
     const file = manifest.encodings[0];
     writeFileSync(join(root, file.path), 'broken');
@@ -126,7 +127,7 @@ test('#1387 emitted transport variants decode to exactly the executable JS and s
     assert.throws(() => assertBundleManifest({ ...manifest, encodings: [{ ...file, path: '../outside.js' }] }), /invalid encoded/);
     assert.throws(() => assertBundleManifest({ ...manifest, encodings: [{ ...file, source: 'houseplan-card.js' }] }), /invalid encoded/);
   } finally { rmSync(root, { recursive: true, force: true }); }
-  assert.equal(encodedBundleAssets(bundle).length, 2);
+  assert.equal(encodedBundleAssets(bundle).length, 1);
 });
 
 test('CSS template minifier preserves semantic whitespace, strings and functions', () => {

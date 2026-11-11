@@ -5,7 +5,7 @@
   "category": "stable-fix",
   "rationale": "Negotiate precompressed immutable chunks without runtime compression work in HA; include verified variants in installed packages.",
   "summary": {
-    "ru": "JS-чанки Houseplan передаются со сжатием Brotli/gzip, подготовленным при сборке.",
-    "en": "Serve Houseplan JavaScript chunks with build-time Brotli/gzip compression."
+    "ru": "JS-чанки Houseplan передаются со сжатием gzip, подготовленным при сборке.",
+    "en": "Serve Houseplan JavaScript chunks with build-time gzip compression."
   }
 }

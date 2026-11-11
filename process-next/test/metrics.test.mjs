@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { gzipSync } from 'node:zlib';
+import { digest } from '../lib/storage.mjs';
 import { compareMeasurements, frozenBaseline, measureFrontend, POLICY, renderMetrics } from '../lib/metrics.mjs';
 import { runMeasurements } from '../catalog/measure.mjs';
 import { releaseReadiness } from '../lib/release.mjs';
@@ -47,6 +49,30 @@ test('size measurement counts actual delivered files once and only initial closu
   const r = measureFrontend(entries, 1000); assert.equal(r.files.length, 3); assert.equal(r.size_metrics.zip_bytes, 1000);
   assert.ok(r.size_metrics.frontend_all_files_gzip_bytes > r.size_metrics.initial_view_gzip_bytes);
   entries.delete('frontend/main.js'); assert.throws(() => measureFrontend(entries, 1000));
+});
+
+test('#1387 transport variants are separate diagnostics while actual ZIP growth still requires a decision', () => {
+  const raw = Buffer.from('export const n=42;'), encoded = gzipSync(raw, { level: 9 });
+  const manifest = { initialViewFiles: ['houseplan-assets/main-HASH.js'],
+    files: [{ path: 'houseplan-assets/main-HASH.js' }],
+    encodings: [{ source: 'houseplan-assets/main-HASH.js', path: 'houseplan-encoded/gzip/main-HASH.js',
+      encoding: 'gzip', bytes: encoded.length, sha256: digest(encoded) }] };
+  const metadata = Buffer.from(JSON.stringify(manifest));
+  const entries = new Map([['frontend/houseplan-assets.json', metadata],
+    ['frontend/houseplan-assets/main-HASH.js', raw], ['frontend/houseplan-encoded/gzip/main-HASH.js', encoded]]);
+  const measured = measureFrontend(entries, 2000000);
+  assert.equal(measured.files.length, 2);
+  assert.equal(measured.transportFiles.length, 1);
+  assert.equal(measured.size_metrics.frontend_all_files_raw_bytes, raw.length + metadata.length);
+  assert.equal(measured.size_metrics.frontend_all_files_gzip_bytes, gzipSync(raw, {level:9}).length + gzipSync(metadata, {level:9}).length);
+  assert.equal(measured.size_metrics.initial_view_gzip_bytes, encoded.length);
+  assert.equal(measured.size_metrics.frontend_transport_bytes, encoded.length);
+  assert.equal(measured.size_metrics.zip_bytes, 2000000);
+  const { base, candidate } = records();
+  base.size_metrics.zip_bytes = 1000000; candidate.size_metrics.zip_bytes = measured.size_metrics.zip_bytes;
+  assert.equal(compareMeasurements(candidate, base, base).requiresDecision, true);
+  entries.delete('frontend/houseplan-encoded/gzip/main-HASH.js');
+  assert.throws(() => measureFrontend(entries, 2000000), /Incomplete encoded/);
 });
 
 // Tiny stored ZIP fixture: real bytes consumed by measureZip, without Python or product builds.
