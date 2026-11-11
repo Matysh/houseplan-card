@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9291,
-  "nextTicket": 364,
+  "revision": 9292,
+  "nextTicket": 365,
   "nextFence": 364,
   "tasks": {
     "1170": {
@@ -4273,6 +4273,20 @@
         "status": "published",
         "sourceSha": "6c5b515d67cfe007016bbe141f8e842e15dd7115"
       }
+    },
+    "1386": {
+      "issue": 1386,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1386-card-reconnect",
+      "materialSha": "5fbbc5f1dec522b7566faf2be67eeed75efa8f54",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 364,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794415979071,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4502,7 +4516,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1386
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4654,6 +4670,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:20e7fa10-9703-4b16-8f69-86410bd3a806": {
+      "digest": "7d216f0bb2b5b28fe011979da03d33a58e71f0c105f30bcc6ecda91a94e92bc3",
+      "issue": 1386,
+      "message": {
+        "kind": "queued",
+        "issue": 1386,
+        "at": 1794415979071,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "5fbbc5f1dec522b7566faf2be67eeed75efa8f54"
       }
     }
   },
