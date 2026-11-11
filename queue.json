@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9415,
-  "nextTicket": 368,
+  "revision": 9416,
+  "nextTicket": 369,
   "nextFence": 368,
   "tasks": {
     "1170": {
@@ -4285,14 +4285,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1387-frontend-compression",
-      "materialSha": "4539f74d0e2c2e4b8ea4c5f636e39eedcb51a71c",
+      "materialSha": "b97ce95fb118a4009ff487027762a24f4f185f3b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 367,
-      "queued": false,
+      "ticket": 368,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794421093161,
-      "reviewEntry": 1,
+      "readyAt": 1794421566663,
+      "reviewEntry": 2,
       "patchId": "3099e257d3048b0970c28f9a438d17c3ff1a8051",
       "changedFiles": [
         "custom_components/houseplan/frontend_asset_manifest.py",
@@ -4311,7 +4311,6 @@
         "tests_backend/test_frontend_assets.py",
         "tests_backend/test_ha_frontend_assets.py"
       ],
-      "reason": "executor-stopped",
       "notice": {
         "key": "1:executor-stopped",
         "reason": "executor-stopped",
@@ -4551,7 +4550,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1387
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4778,6 +4779,19 @@
           "detail": "Before review: ignore the newly generated demo encoded folder like existing generated assets; preserve applicable receipts.",
           "eventId": "author-stop-1387-generated-ignore-20261111:return:1387"
         }
+      }
+    },
+    "finish:21b44f92-407b-46f8-9122-7cbf312e6d02": {
+      "digest": "af683d96aafa6b1644be478d2ade0b871cb6d3b8f07a38cbc524ca4e156030a2",
+      "issue": 1387,
+      "message": {
+        "kind": "queued",
+        "issue": 1387,
+        "at": 1794421566663,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b97ce95fb118a4009ff487027762a24f4f185f3b"
       }
     }
   },
