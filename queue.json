@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9062,
+  "revision": 9063,
   "nextTicket": 359,
   "nextFence": 359,
   "tasks": {
@@ -4286,7 +4286,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794401006035,
       "reviewEntry": 2,
-      "patchId": "49f0960ff9c998f419f26a35746f131f2170ee12",
+      "patchId": "a817901ce63643688e4a2b93215276bc71166e4a",
       "changedFiles": [
         "demo/fixtures/resize-junctions.mjs",
         "demo/golden/baselines/baselines-index.json",
@@ -4305,12 +4305,16 @@
         "demo/smoke_resize_junctions.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY-INVENTORY.md",
         "docs/RESIZE.md",
         "docs/release-ledger/v1.85.0/1383.json",
+        "scripts/config-compatibility-inventory.json",
         "src/graph-edit-intent.ts",
         "src/houseplan-editor-runtime.ts",
         "src/live-editor.ts",
         "src/resize.ts",
+        "test/fixtures/845-wall-corpus-current-identities.json",
+        "test/golden-matrix.test.mjs",
         "test/graph-edit-intent.test.mjs",
         "test/resize-junction-regression.test.mjs",
         "test/resize.test.mjs"
@@ -4561,10 +4565,11 @@
     "token": "358:finish:1cc76c56-c0a7-4122-85e5-a648f22499c2:finish:1:admit",
     "fence": 358,
     "materialSha": "41e852cbc365ac81595b3d618b8bb3be83e1c89b",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+    "phase": "testing",
     "admittedAt": 1794401010350,
-    "expiresAt": 1794401310350
+    "expiresAt": 1794401316705,
+    "patchId": "a817901ce63643688e4a2b93215276bc71166e4a"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4721,6 +4726,10 @@
     },
     "finish:99035b88-361b-4141-a0db-3b4a7b11eed4:finish:3:return": {
       "digest": "5b17b3213175d0fc343d1110e156b20cba0b258cb51297548a454e9d6911981b",
+      "issue": 1383
+    },
+    "finish:1cc76c56-c0a7-4122-85e5-a648f22499c2:finish:2:synchronized": {
+      "digest": "b3acde76540aaa0c18082933081b0383928bc996cad028a8a8c3c8ce6bdcffbb",
       "issue": 1383
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
