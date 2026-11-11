@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8987,
+  "revision": 8988,
   "nextTicket": 357,
   "nextFence": 357,
   "tasks": {
@@ -4288,7 +4288,7 @@
       "ownerDecision": null,
       "ticket": 356,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794383754603,
       "reviewEntry": 1,
       "patchId": "176b7ae90dd1120bbaf10efecc0d6274ebec644a",
@@ -4297,7 +4297,16 @@
         "docs/CHANGELOG.ru.md",
         "scripts/mutation-registry.mjs",
         "test/mutation-gate.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261111T075610385-1f8802c2",
+        "name": "Тесты для задачи #1382 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T075610385-1f8802c2/report.json",
+        "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+        "status": "passed",
+        "finishedAt": "2026-11-11T07:58:06.538Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4535,9 +4544,9 @@
     "fence": 356,
     "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
     "expectedBase": "412f1993843b72adf9311f908f552e7a419c4530",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794383758690,
-    "expiresAt": 1794384177322,
+    "expiresAt": 1794387487796,
     "patchId": "176b7ae90dd1120bbaf10efecc0d6274ebec644a"
   },
   "events": {
@@ -4739,6 +4748,34 @@
         "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:5d9df066-de1c-4cf3-931e-24a57f43532c:finish:3:s6-complete": {
+      "digest": "bd181ba749d4f71c7ea11fa900e7be89bebb645304847a49e29af51c3a62abbb",
+      "issue": 1382,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1382,
+        "at": 1794383887796,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+        "phase": "review",
+        "evidence": {
+          "id": "20261111T075610385-1f8802c2",
+          "name": "Тесты для задачи #1382 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T075610385-1f8802c2/report.json",
+          "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+          "status": "passed",
+          "finishedAt": "2026-11-11T07:58:06.538Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Ремонт согласованного подключения guard, не ослабление корректности продукта. Единственный performance flag уже существует и применяется в S6, сохраняет budgetFailures и все обязательные проверки. Изменены только команда/пояснение одного guard, адресная проверка его подключения и changelog RU/EN. Патч мутанта не изменён. Поднимать временные пороги или менять продукт не требуется.\n\nПроверено до передачи:\n\n- Новый тест подключения: красный до добавления флага, зелёный после (`artifacts/1382-before.log`, `1382-after.log`).\n- `node scripts/mutation-gate.mjs --execute-nightly --id=paired-history-rebuilds-floor-1093`: exit 0, чистый guard с диагностическим флагом прошёл, реальный мутант пойман заявленным тестом, `поймано 1 из 1` (`artifacts/1382-witness.log`). CLI отличает падение assertion от отказа компиляции/подготовки. Детальный stdout пойманного мутанта этот CLI не сохраняет; поэтому точный текст его отказа в данном логе не утверждается. Строгий `copy: unchanged scaled floor model` остаётся в native-сценарии неизменным.\n- `node --test test/selective-invalidation-timing.test.mjs`: 1/1 PASS; существующие negative cases проверяют trusted/persisted/single-write, нечисловые измерения, полноту и пустой набор. Этот файл не изменён. Отдельный добавленный дубликат timing-case исключён из итогового diff: иначе статический импорт browser benchmark требует продуктовый профиль, не относящийся к узкому ремонту guard. Обвязка выбора проверок не менялась.\n- План S6 infra: синтаксис и 20 выбранных читателей реестра/мутационного механизма; без сборки продукта, golden, HA E2E и фоновых шардов. Результат очередного S6 публикуется штатно через finish.\n\nПолный ночной шард и все пять частей не запускались; будущая зелень всех ночных прогонов этой адресной проверкой не обещается. Реальная установка владельца и релизы не затронуты. Основной риск — ошибочно скрыть обязательный отказ режимом diagnostic; для этого сохранены существующие negative cases, контракт команды и реальный mutant run. Логи адресной диагностики локальные, итог S6 передаётся координатором.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
