@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9361,
+  "revision": 9362,
   "nextTicket": 367,
   "nextFence": 367,
   "tasks": {
@@ -4945,6 +4945,10 @@
       "digest": "67d431a1a3a84dd5765643bb7410f2dc4f1ce2bc88a0c8f3ffd47722b20d289a",
       "issue": 1386
     },
+    "github:43073863301:1:completions:message:50d75ea927dd8646e76ae538fb70c7622b4ca214a74ec018028e7fb9b4699645": {
+      "digest": "fc9a61c37daf18a624420cdd46fab673327e51047cc772826fd28274a397052c",
+      "issue": 1386
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -5042,7 +5046,8 @@
           "entry": 1,
           "detail": "Поведение: test/icon-picker.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optimize-plans-dialog.test.mjs: failed; Браузер: readonly cold start: failed",
           "eventId": "finish:20e7fa10-9703-4b16-8f69-86410bd3a806:finish:3:return:return:1386"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:224bc278-f4f3-41ff-8c16-61b6e2824b30": {
