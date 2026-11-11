@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9212,
-  "nextTicket": 363,
+  "revision": 9213,
+  "nextTicket": 364,
   "nextFence": 363,
   "tasks": {
     "1170": {
@@ -4279,14 +4279,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/resize-pass-junction",
-      "materialSha": "0f303dddac0833f226cf15f7e0c4a8f187a0c98c",
+      "materialSha": "6c5b515d67cfe007016bbe141f8e842e15dd7115",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 362,
-      "queued": false,
+      "ticket": 363,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794409553900,
-      "reviewEntry": 3,
+      "readyAt": 1794410238728,
+      "reviewEntry": 4,
       "patchId": "87893d021d9fc211935ea193fcb2f5dd7bf73382",
       "changedFiles": [
         "demo/fixtures/resize-junctions.mjs",
@@ -4324,8 +4324,7 @@
       "reviewCorrection": {
         "requestId": "review:1384:2:e97e8703b572c541d01993c03c7afe884495f21c:20a8fec94a403520d4a38c7c9e8f0d5d9f535b3d",
         "at": 1794408426155
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4555,7 +4554,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1384
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -5051,6 +5052,28 @@
           "entry": 3,
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed",
           "eventId": "finish:2ea096cb-9ade-4bb3-be99-4034cda24c89:finish:3:return:return:1384"
+        }
+      }
+    },
+    "finish:9f751cfb-7a46-4750-8311-b10aadae7a76": {
+      "digest": "074da2bcff4851a8acf7fc5da74ea907c55168e81f2c667e0ecc9fd028cecaf5",
+      "issue": 1384,
+      "message": {
+        "kind": "queued",
+        "issue": 1384,
+        "at": 1794410238728,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6c5b515d67cfe007016bbe141f8e842e15dd7115",
+        "evidence": {
+          "id": "20261111T142812427-4fc93d2c",
+          "name": "Тесты для задачи #1384 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T142812427-4fc93d2c/report.json",
+          "materialSha": "9ac66c5bcd837a0d922c49feffc075274e29c7ba",
+          "status": "passed",
+          "finishedAt": "2026-11-11T14:37:37.446Z",
+          "failures": []
         }
       }
     }
