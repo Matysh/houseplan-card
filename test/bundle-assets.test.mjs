@@ -13,6 +13,7 @@ import {
   buildBundleManifest, buildFingerprintPlugin, editorRuntimeRetryUrlPlugin,
   entryFallbackPlugin, ENTRY_URL_SEAM, NAMESPACE_LOCALE_CHUNKS, VIEW_RUNTIME_RETRY_CHUNKS,
   waitForHaBootstrap,
+  encodedBundleAssets, bundleManifestPlugin,
 } from '../scripts/bundle-manifest.mjs';
 import {
   INITIAL_VIEW_CEILING_BAND,
@@ -87,6 +88,45 @@ const minimalTwoEntryManifest = () => ({
     { path: 'houseplan-card.js', gzipBytes: 5, isEntry: true },
     { path: 'houseplan-panel.js', gzipBytes: 3, isEntry: true },
   ],
+});
+
+test('#1387 emitted transport variants decode to exactly the executable JS and stay outside graphs', async () => {
+  const { gunzipSync, brotliDecompressSync } = await import('node:zlib');
+  const bundle = minimalTwoEntryBundle(), emitted = [];
+  bundleManifestPlugin('f'.repeat(64)).generateBundle.call({ emitFile: item => emitted.push(item) }, {}, bundle);
+  const manifest = JSON.parse(emitted.find(item => item.fileName === 'houseplan-assets.json').source);
+  assert.equal(manifest.encodings.length, 2);
+  assert.deepEqual(manifest.files, buildBundleManifest(bundle, 'f'.repeat(64)).files);
+  const root = mkdtempSync(join(tmpdir(), 'hp-encoded-'));
+  try {
+    for (const item of Object.values(bundle)) {
+      mkdirSync(join(root, item.fileName, '..'), { recursive: true });
+      writeFileSync(join(root, item.fileName), item.code);
+    }
+    for (const item of emitted) {
+      mkdirSync(join(root, item.fileName, '..'), { recursive: true });
+      writeFileSync(join(root, item.fileName), item.source);
+    }
+    verifyBundleTree(root);
+    for (const file of manifest.encodings) {
+      assert.ok(!manifest.initialViewFiles.includes(file.path));
+      assert.ok(orderedBundlePayload(manifest).includes(file.path));
+      const bytes = readFileSync(join(root, file.path));
+      assert.equal(file.bytes, bytes.length);
+      assert.equal(file.sha256, sha256Bytes(bytes));
+      assert.equal((file.encoding === 'gzip' ? gunzipSync : brotliDecompressSync)(bytes).toString(), bundle[file.source].code);
+    }
+    const file = manifest.encodings[0];
+    writeFileSync(join(root, file.path), 'broken');
+    assert.throws(() => verifyBundleTree(root), /hash mismatch/);
+    file.sha256 = sha256Bytes('broken');
+    writeFileSync(join(root, 'houseplan-assets.json'), JSON.stringify(manifest));
+    assert.throws(() => verifyBundleTree(root));
+    assert.throws(() => assertBundleManifest({ ...manifest, encodings: [file, file] }), /invalid encoded/);
+    assert.throws(() => assertBundleManifest({ ...manifest, encodings: [{ ...file, path: '../outside.js' }] }), /invalid encoded/);
+    assert.throws(() => assertBundleManifest({ ...manifest, encodings: [{ ...file, source: 'houseplan-card.js' }] }), /invalid encoded/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+  assert.equal(encodedBundleAssets(bundle).length, 2);
 });
 
 test('CSS template minifier preserves semantic whitespace, strings and functions', () => {

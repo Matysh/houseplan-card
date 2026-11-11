@@ -1055,7 +1055,14 @@ onboarding, 2.5D (#649), PDF, locale and furniture-art graphs are lazy, each
 passing the exact-build fingerprint handshake (one cache-busted retry, atomic
 install). The manifest distinguishes these graphs; an editor dependency in the
 initial graph changes the intended loading boundary. The backend serves only
-manifest-listed chunks. Build mechanics: [DEVELOPMENT.md](DEVELOPMENT.md).
+manifest-listed chunks. Build-time gzip/Brotli variants live separately in
+`houseplan-encoded/{gzip,br}/`, in the optional manifest `encodings` inventory,
+outside executable graphs. Sync and candidate packaging verify their hashes
+and decoded content. The same chunk URL negotiates these files with
+`Accept-Encoding` (including q=0), `Vary` and raw fallback; HA performs no
+per-request compression. Legacy manifests without variants remain valid.
+Stable facades keep their existing separate HA static-path contract.
+Build mechanics: [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Key decisions
 

@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, mkdirSync, copyFileSync, rmSync, existsSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { digest, within, writeJson } from './storage.mjs';
+import { bundlePayloadFiles, verifyEncodedBundleFile } from '../../scripts/bundle-tree.mjs';
 
 /** Stage an installable candidate without rewriting the checked source tree. */
 export function packageCandidate({ root, output = join(root, 'artifacts', 'process-next'), python = 'python3' }) {
@@ -21,9 +22,10 @@ export function packageCandidate({ root, output = join(root, 'artifacts', 'proce
   if (changes.trim()) throw Error('Commit the release candidate before packaging it; release SHA must identify the tested source');
   const paths = execFileSync('git', ['ls-files', '-z', '--', 'custom_components/houseplan', 'docs/data-hp-contract.json'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
   const files = paths.filter(path => !path.startsWith('custom_components/houseplan/frontend/')).map(path => [path, within(root, path)]);
-  for (const file of manifest.files) {
+  for (const file of bundlePayloadFiles(manifest)) {
     const source = within(join(root, 'dist'), file.path);
     if (digest(readFileSync(source)) !== file.sha256) throw Error(`Incomplete prepared frontend: ${file.path}`);
+    if (file.encoding) verifyEncodedBundleFile(join(root, 'dist'), file);
     files.push([`custom_components/houseplan/frontend/${file.path}`, source]);
   }
   files.push(['custom_components/houseplan/frontend/houseplan-assets.json', join(root, 'dist', 'houseplan-assets.json')]);

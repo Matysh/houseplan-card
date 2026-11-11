@@ -3,12 +3,30 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gunzipSync, brotliDecompressSync } from 'node:zlib';
 
 export const BUNDLE_MANIFEST = 'houseplan-assets.json';
 export const CARD_ENTRY = 'houseplan-card.js';
 export const PANEL_ENTRY = 'houseplan-panel.js';
 
 export const sha256Bytes = (contents) => createHash('sha256').update(contents).digest('hex');
+
+/** Optional additive inventory: old manifests still have only raw JS files. */
+export function bundlePayloadFiles(manifest) {
+  const encoded = manifest.encodings ?? [];
+  if (!Array.isArray(encoded)) throw new Error('invalid encoded bundle inventory');
+  const raw = new Set(manifest.files.map(file => file.path));
+  const seen = new Set();
+  for (const file of encoded) {
+    const match = /^houseplan-assets\/([a-zA-Z0-9._-]+\.js)$/.exec(file?.source);
+    if (!match || !raw.has(file.source) || !['gzip', 'br'].includes(file.encoding)
+        || file.path !== `houseplan-encoded/${file.encoding}/${match[1]}`
+        || !/^[a-f0-9]{64}$/.test(file.sha256) || !Number.isSafeInteger(file.bytes) || file.bytes <= 0
+        || seen.has(file.path)) throw new Error('invalid encoded bundle asset: ' + file?.path);
+    seen.add(file.path);
+  }
+  return [...manifest.files, ...encoded];
+}
 
 export function containedBundlePath(root, name) {
   if (typeof name !== 'string' || !name || name.includes('\\')) {
@@ -72,6 +90,7 @@ export function assertBundleManifest(manifest, label = BUNDLE_MANIFEST) {
   if (manifest.entry !== CARD_ENTRY || manifest.panelEntry !== PANEL_ENTRY) {
     throw new Error(`${label}: expected entries ${CARD_ENTRY} and ${PANEL_ENTRY}`);
   }
+  bundlePayloadFiles(manifest);
   const names = manifest.files.map((file) => file?.path);
   const listed = new Set(names);
   if (listed.size !== names.length || !listed.has(CARD_ENTRY) || !listed.has(PANEL_ENTRY)) {
@@ -125,7 +144,7 @@ export function assertBundleManifest(manifest, label = BUNDLE_MANIFEST) {
 /** Copy immutable dependencies first, then both replaceable stable entries. */
 export function orderedBundlePayload(manifest) {
   const stableEntries = new Set([manifest.entry, manifest.panelEntry]);
-  return manifest.files
+  return bundlePayloadFiles(manifest)
     .map((file) => file.path)
     .sort((left, right) => (stableEntries.has(left) ? 1 : 0)
       - (stableEntries.has(right) ? 1 : 0) || left.localeCompare(right));
@@ -138,9 +157,18 @@ export function readBundleManifest(root) {
   return assertBundleManifest(manifest, path);
 }
 
+export function verifyEncodedBundleFile(root, file) {
+  const bytes = readFileSync(containedBundlePath(root, file.path));
+  const raw = readFileSync(containedBundlePath(root, file.source));
+  const decode = file.encoding === 'gzip' ? gunzipSync : brotliDecompressSync;
+  if (bytes.length !== file.bytes || !decode(bytes, { maxOutputLength: raw.length + 1 }).equals(raw)) {
+    throw new Error(`encoded bundle content mismatch: ${file.path}`);
+  }
+}
+
 export function verifyBundleTree(root) {
   const manifest = readBundleManifest(root);
-  for (const file of manifest.files) {
+  for (const file of bundlePayloadFiles(manifest)) {
     if (typeof file?.path !== 'string' || !file.path.endsWith('.js')
         || !/^[a-zA-Z0-9._/-]+$/.test(file.path)) {
       throw new Error(`invalid manifest asset path: ${String(file?.path)}`);
@@ -150,6 +178,9 @@ export function verifyBundleTree(root) {
     const actual = sha256Bytes(readFileSync(path));
     if (actual !== file.sha256) {
       throw new Error(`manifest hash mismatch: ${file.path} (${actual} != ${file.sha256})`);
+    }
+    if (file.encoding) {
+      verifyEncodedBundleFile(root, file);
     }
   }
   // #353 K5 / #486: a managed chunk on disk that the manifest does not name is
@@ -169,6 +200,17 @@ export function verifyBundleTree(root) {
       }
     }
   }
+  const encodedRoot = resolve(root, 'houseplan-encoded');
+  const encodedPaths = new Set((manifest.encodings || []).map(file => file.path));
+  if (existsSync(encodedRoot)) {
+    for (const encoding of readdirSync(encodedRoot)) {
+      if (!['gzip', 'br'].includes(encoding)) throw new Error(`orphan bundle encoding: ${encoding}`);
+      for (const name of readdirSync(resolve(encodedRoot, encoding))) {
+        const path = `houseplan-encoded/${encoding}/${name}`;
+        if (!encodedPaths.has(path)) throw new Error(`orphan bundle asset: ${path}`);
+      }
+    }
+  }
   return manifest;
 }
 
@@ -178,7 +220,7 @@ export function compareBundleTrees(sourceRoot, targetRoot) {
   if (JSON.stringify(target) !== JSON.stringify(source)) {
     throw new Error('bundle manifests differ');
   }
-  for (const file of source.files) {
+  for (const file of bundlePayloadFiles(source)) {
     const left = readFileSync(containedBundlePath(sourceRoot, file.path));
     const right = readFileSync(containedBundlePath(targetRoot, file.path));
     if (!left.equals(right)) throw new Error(`bundle asset differs: ${file.path}`);

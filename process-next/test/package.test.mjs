@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { packageCandidate } from '../lib/package.mjs';
 import { collectMeasurement, measureZip } from '../lib/metrics.mjs';
 import { digest } from '../lib/storage.mjs';
+import { gzipSync } from 'node:zlib';
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'hp-package-')); t.after(() => rmSync(root, { recursive: true, force: true }));
   const write = (path, value) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), value); };
@@ -40,4 +41,29 @@ test('uncommitted release bytes and mismatched assets cannot be packaged as the 
   assert.throws(() => packageCandidate({ root }), /Commit the release candidate/);
   write('custom_components/houseplan/__init__.py', 'value = 1\n'); write('dist/houseplan-card.js', 'wrong');
   assert.throws(() => packageCandidate({ root }), /Incomplete prepared frontend/);
+});
+
+test('#1387 candidate includes encoded transport bytes and refuses missing or corrupted variants', t => {
+  const { root, write } = fixture(t);
+  const manifest = JSON.parse(readFileSync(join(root, 'dist/houseplan-assets.json')));
+  const raw = Buffer.from('export const n=42;'), bytes = gzipSync(raw);
+  write('dist/houseplan-assets/main-HASH.js', raw);
+  const path = 'houseplan-encoded/gzip/main-HASH.js';
+  write(`dist/${path}`, bytes);
+  manifest.files.push({ path: 'houseplan-assets/main-HASH.js', sha256: digest(raw) });
+  manifest.encodings = [{ source: 'houseplan-assets/main-HASH.js', encoding: 'gzip', path, sha256: digest(bytes), bytes: bytes.length }];
+  write('dist/houseplan-assets.json', JSON.stringify(manifest));
+  const result = packageCandidate({ root });
+  assert.deepEqual(readFileSync(join(result.candidateRoot, 'custom_components/houseplan/frontend', path)), bytes);
+  const zipPaths = execFileSync('python3', ['-c', 'import sys,zipfile;print("\\n".join(zipfile.ZipFile(sys.argv[1]).namelist()))', result.zip], { encoding: 'utf8' });
+  assert.ok(zipPaths.includes(`frontend/${path}`));
+  write(`dist/${path}`, 'corrupt');
+  assert.throws(() => packageCandidate({ root }), /Incomplete prepared frontend/);
+  rmSync(join(root, 'dist', path));
+  assert.throws(() => packageCandidate({ root }), /ENOENT/);
+  const wrong = gzipSync(Buffer.from('different source'));
+  write(`dist/${path}`, wrong);
+  manifest.encodings[0] = { ...manifest.encodings[0], sha256: digest(wrong), bytes: wrong.length };
+  write('dist/houseplan-assets.json', JSON.stringify(manifest));
+  assert.throws(() => packageCandidate({ root }), /encoded bundle content mismatch/);
 });

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Serve generated JavaScript chunks as negotiated build-time Brotli/gzip representations, preserving raw fallback, manifest gating and immutable caching. Ship and verify the encoded bytes through bundle sync and installation packages (#1387, #1385).
+
 - Reuse registry reads and physical floor models across temporary masonry card moves. Retain bounded event coverage, reconcile changes or real reconnects with one current config/layout pair, and fence obsolete registry replies and user authority (#1386, #1385).
 
 - Resize passes existing junctions in one gesture: the intermediate X needs no save and the whole edit has one Undo. Preserve support dependencies, openings and source materials; cover consecutive junctions, reverse traversal, cancellation and reload (#1384).

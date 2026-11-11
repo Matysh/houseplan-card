@@ -23,7 +23,7 @@ import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateDemoIcons } from '../demo/gen_icons.mjs';
 import {
-  assertBundleManifest, assertOwnBundleTopology, orderedBundlePayload, verifyBundleTree,
+  assertBundleManifest, assertOwnBundleTopology, orderedBundlePayload, verifyBundleTree, bundlePayloadFiles,
 } from './bundle-tree.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -47,7 +47,7 @@ const sourceManifest = assertBundleManifest(parseManifest(manifestPath), manifes
 // #537: this script materializes OUR dist, so the topology of the current
 // build is judged here and nowhere in the shared loader-side validator.
 assertOwnBundleTopology(sourceManifest, manifestPath);
-const managedFiles = [MANIFEST_NAME, ...sourceManifest.files.map((file) => file.path)];
+const managedFiles = [MANIFEST_NAME, ...bundlePayloadFiles(sourceManifest).map((file) => file.path)];
 const sha256 = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
 const contained = (root, name) => {
   const path = resolve(root, name);
@@ -58,7 +58,7 @@ const contained = (root, name) => {
   return path;
 };
 
-for (const file of sourceManifest.files) {
+for (const file of bundlePayloadFiles(sourceManifest)) {
   const path = contained(SOURCE_ROOT, file.path);
   if (!existsSync(path)) throw new Error(`manifest asset is missing: ${file.path}`);
   if (sha256(path) !== file.sha256) throw new Error(`manifest hash mismatch: ${file.path}`);
@@ -95,11 +95,11 @@ for (const target of TARGETS) {
     copyFileSync(source, destination);
   }
   copyFileSync(manifestPath, oldManifestPath);
-  for (const file of old?.files || []) {
+  for (const file of [...(old?.files || []), ...(old?.encodings || [])]) {
     if (!managedFiles.includes(file.path)) rmSync(contained(targetRoot, file.path), { force: true });
   }
   const copied = verifyBundleTree(targetRoot);
-  for (const file of copied.files) {
+  for (const file of bundlePayloadFiles(copied)) {
     if (sha256(contained(targetRoot, file.path)) !== file.sha256) {
       throw new Error(`${target}/${file.path}: copied hash mismatch`);
     }

@@ -7,6 +7,7 @@ import {
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
+import { gzipSync } from 'node:zlib';
 
 const sha256 = (contents) => createHash('sha256').update(contents).digest('hex');
 
@@ -47,6 +48,12 @@ const writeCurrentBundle = (root) => {
     initialPanelOnlyGzipBytes: 3,
     files,
   };
+  const encoded = gzipSync(Buffer.from(contents.get('houseplan-assets/card-HASH.js')));
+  const encodedPath = 'houseplan-encoded/gzip/card-HASH.js';
+  mkdirSync(join(root, 'dist/houseplan-encoded/gzip'), { recursive: true });
+  writeFileSync(join(root, 'dist', encodedPath), encoded);
+  manifest.encodings = [{ source: 'houseplan-assets/card-HASH.js', encoding: 'gzip',
+    path: encodedPath, sha256: sha256(encoded), bytes: encoded.length }];
   writeFileSync(join(root, 'dist/houseplan-assets.json'), `${JSON.stringify(manifest)}\n`);
   return manifest;
 };
@@ -57,6 +64,8 @@ const writeLegacyTarget = (root, target) => {
   writeFileSync(join(targetRoot, 'houseplan-card.js'), 'old card');
   writeFileSync(join(targetRoot, 'houseplan-legacy.js'), 'old root entry');
   writeFileSync(join(targetRoot, 'houseplan-assets/old-HASH.js'), 'old chunk');
+  mkdirSync(join(targetRoot, 'houseplan-encoded/gzip'), { recursive: true });
+  writeFileSync(join(targetRoot, 'houseplan-encoded/gzip/old-HASH.js'), 'old encoding');
   writeFileSync(join(targetRoot, 'houseplan-assets.json'), JSON.stringify({
     schema: 1,
     fingerprint: 'legacy',
@@ -66,6 +75,7 @@ const writeLegacyTarget = (root, target) => {
       { path: 'houseplan-legacy.js' },
       { path: 'houseplan-assets/old-HASH.js' },
     ],
+    encodings: [{ path: 'houseplan-encoded/gzip/old-HASH.js' }],
   }));
 };
 
@@ -122,6 +132,9 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
       );
       assert.equal(existsSync(join(root, target, 'houseplan-legacy.js')), false);
       assert.equal(existsSync(join(root, target, 'houseplan-assets/old-HASH.js')), false);
+      assert.equal(existsSync(join(root, target, 'houseplan-encoded/gzip/old-HASH.js')), false);
+      const file = manifest.encodings[0];
+      assert.equal(sha256(readFileSync(join(root, target, file.path))), file.sha256);
     }
 
     writeFileSync(join(root, 'dist/houseplan-orphan.js'), 'unlisted entry');

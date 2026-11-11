@@ -74,3 +74,35 @@ def test_hashed_chunks_are_immutably_cacheable() -> None:
     view_source = (_PATH.parent / "frontend_assets.py").read_text(encoding="utf-8")
     assert "ASSET_CACHE_CONTROL" in view_source
     assert '"no-cache"' not in view_source
+
+
+def test_encoded_variant_cannot_escape_or_bypass_raw_allowlist(tmp_path: Path) -> None:
+    root = _root(tmp_path)
+    encoded = root / "houseplan-encoded/gzip/editor-abc.js"
+    encoded.parent.mkdir(parents=True)
+    encoded.write_bytes(b"encoded")
+    manifest_path = root / "houseplan-assets.json"
+    manifest = json.loads(manifest_path.read_text())
+    row = {"source": "houseplan-assets/editor-abc.js", "encoding": "gzip",
+           "path": "houseplan-encoded/gzip/editor-abc.js"}
+    manifest["encodings"] = [row]
+    manifest_path.write_text(json.dumps(manifest))
+    resolve = _MODULE.resolve_frontend_representation
+    assert resolve(root, "editor-abc.js", "gzip") == (encoded.resolve(), "gzip")
+    outside = tmp_path / "outside.js"
+    outside.write_bytes(b"private")
+    encoded.unlink()
+    encoded.symlink_to(outside)
+    assert resolve(root, "editor-abc.js", "gzip")[1] is None
+    encoded.unlink()
+    encoded.write_bytes(b"encoded")
+    row["path"] = "../outside.js"
+    manifest_path.write_text(json.dumps(manifest))
+    assert resolve(root, "editor-abc.js", "gzip")[1] is None
+    manifest["files"] = []
+    row["path"] = "houseplan-encoded/gzip/editor-abc.js"
+    manifest_path.write_text(json.dumps(manifest))
+    assert resolve(root, "editor-abc.js", "gzip") == (None, None)
+    manifest["files"] = 1
+    manifest_path.write_text(json.dumps(manifest))
+    assert resolve(root, "editor-abc.js", "gzip") == (None, None)

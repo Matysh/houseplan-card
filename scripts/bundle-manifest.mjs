@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, posix, relative, resolve } from 'node:path';
-import { gzipSync } from 'node:zlib';
+import { gzipSync, brotliCompressSync, constants as zlibConstants } from 'node:zlib';
 import { coverageMapsEnabled, editMappedSource, replacementEdits, replaceChunkSource, hashMapRecipe } from './coverage-maps.mjs';
 
 const BUILD_FINGERPRINT_TOKEN = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
@@ -50,6 +50,22 @@ const isNamespaceLocaleModule = (id) => NAMESPACE_LOCALE_CHUNKS
 
 export const CARD_ENTRY_FILE = 'houseplan-card.js';
 export const PANEL_ENTRY_FILE = 'houseplan-panel.js';
+
+/** Transport representations are separate from the executable import graph. */
+export function encodedBundleAssets(bundle) {
+  return Object.values(bundle).filter(item => item.type === 'chunk'
+    && /^houseplan-assets\/[^/]+\.js$/.test(item.fileName)).flatMap(chunk => {
+    const bytes = Buffer.from(chunk.code, 'utf8');
+    return [
+      ['gzip', gzipSync(bytes, { level: 9 })],
+      ['br', brotliCompressSync(bytes, { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } })],
+    ].map(([encoding, contents]) => ({
+      source: chunk.fileName, encoding,
+      path: `houseplan-encoded/${encoding}/${posix.basename(chunk.fileName)}`,
+      sha256: sha256(contents), bytes: contents.length, contents,
+    }));
+  }).sort((a, b) => a.path.localeCompare(b.path));
+}
 
 const ENTRY_CONTRACTS = [
   {
@@ -262,6 +278,9 @@ export function bundleManifestPlugin(fingerprint) {
     name: 'houseplan-bundle-manifest',
     generateBundle(_options, bundle) {
       const manifest = buildBundleManifest(bundle, fingerprint);
+      const encoded = encodedBundleAssets(bundle);
+      manifest.encodings = encoded.map(({ contents, ...file }) => file);
+      for (const file of encoded) this.emitFile({ type: 'asset', fileName: file.path, source: file.contents });
       this.emitFile({
         type: 'asset',
         fileName: 'houseplan-assets.json',
@@ -658,7 +677,11 @@ export function cleanBundleOutputPlugin(outputRoot = 'dist') {
       }
       const manifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : null;
       const managed = new Set();
-      for (const file of manifest?.files || []) {
+      for (const encoding of ['', '/gzip', '/br']) {
+        const path = resolve(root, `houseplan-encoded${encoding}`);
+        if (existsSync(path) && lstatSync(path).isSymbolicLink()) throw new Error('encoded bundle directory is a symlink');
+      }
+      for (const file of [...(manifest?.files || []), ...(manifest?.encodings || [])]) {
         const path = resolve(root, String(file.path || ''));
         const rel = relative(root, path);
         if (!rel || rel.startsWith('..') || rel.includes(':')) {
