@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9159,
+  "revision": 9160,
   "nextTicket": 361,
   "nextFence": 361,
   "tasks": {
@@ -4297,7 +4297,17 @@
         "docs/testing/issue1384/opening-jump-analysis.md",
         "src/graph-edit-intent.ts",
         "test/resize-through-junction.test.mjs"
-      ]
+      ],
+      "reason": "executor-admission-expired",
+      "notice": {
+        "key": "1:executor-admission-expired",
+        "reason": "executor-admission-expired",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794407134320,
+        "entry": 1,
+        "eventId": "1384-expire-interrupted-1:return:1384"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4528,18 +4538,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1384,
-    "worker": "finish",
-    "token": "360:finish:713e4ac0-4314-4071-a44b-30c8727c75cc:finish:1:admit",
-    "fence": 360,
-    "materialSha": "9edc161b73836117f34465ed8f6ba494a61576dd",
-    "expectedBase": "20a8fec94a403520d4a38c7c9e8f0d5d9f535b3d",
-    "phase": "testing",
-    "admittedAt": 1794406448770,
-    "expiresAt": 1794406927912,
-    "patchId": "d036a0c10b10e6263a335e67bd3d0d376bed339a"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -4657,6 +4656,10 @@
       "digest": "7de0a3632160eb75e533027f1a3f837d9b451d46488427f8ea0d8981b3a6ef73",
       "issue": 1384
     },
+    "1384-expire-interrupted-1": {
+      "digest": "84cede0acdc74d430096d2485d78270ccc3a495e604b3e5abdfdad9232afb28d",
+      "issue": 1384
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4745,6 +4748,25 @@
         "layer": "product",
         "materialSha": "9edc161b73836117f34465ed8f6ba494a61576dd",
         "phase": "sync"
+      }
+    },
+    "1384-expire-interrupted-1:return:1384": {
+      "digest": "84cede0acdc74d430096d2485d78270ccc3a495e604b3e5abdfdad9232afb28d",
+      "issue": 1384,
+      "message": {
+        "kind": "return",
+        "issue": 1384,
+        "at": 1794407134320,
+        "entry": 1,
+        "notice": {
+          "key": "1:executor-admission-expired",
+          "reason": "executor-admission-expired",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794407134320,
+          "entry": 1,
+          "eventId": "1384-expire-interrupted-1:return:1384"
+        }
       }
     }
   },
