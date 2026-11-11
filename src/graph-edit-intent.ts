@@ -173,7 +173,7 @@ function resizeCrossingPath<T extends ResizePathSpace>(before:ResizePathSpace,dr
       if(!old||![old.x,old.y,opening.x,opening.y].every(Number.isFinite))continue;
       [opening.x,opening.y]=Q.pointToNumbers(Q.pointAt(authoredPoint([old.x,old.y]),authoredPoint([opening.x,opening.y]),t));
     }
-    // Compatibility/render polygons remain numeric; graph goals stay exact.
+    // Render polygons remain numeric; graph goals stay exact.
     // An intersection such as 3/7 must meet the same node, not its rounded ULP.
     return{draft:next,targets:goals};
   }};
