@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9419,
+  "revision": 9420,
   "nextTicket": 369,
   "nextFence": 369,
   "tasks": {
@@ -4290,7 +4290,7 @@
       "ownerDecision": null,
       "ticket": 368,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794421566663,
       "reviewEntry": 2,
       "patchId": "490b611ef5cc1aede418e06cdb261dac63f1e099",
@@ -4321,6 +4321,15 @@
         "entry": 1,
         "detail": "Before review: ignore the newly generated demo encoded folder like existing generated assets; preserve applicable receipts.",
         "eventId": "author-stop-1387-generated-ignore-20261111:return:1387"
+      },
+      "s6": {
+        "id": "20261111T182622789-d1257b08",
+        "name": "Тесты для задачи #1387 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T182622789-d1257b08/report.json",
+        "materialSha": "b97ce95fb118a4009ff487027762a24f4f185f3b",
+        "status": "passed",
+        "finishedAt": "2026-11-11T18:28:04.004Z",
+        "failures": []
       }
     }
   },
@@ -4559,9 +4568,9 @@
     "fence": 368,
     "materialSha": "b97ce95fb118a4009ff487027762a24f4f185f3b",
     "expectedBase": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794421570565,
-    "expiresAt": 1794421932174,
+    "expiresAt": 1794425285211,
     "patchId": "490b611ef5cc1aede418e06cdb261dac63f1e099"
   },
   "events": {
@@ -4824,6 +4833,34 @@
         "layer": "product",
         "materialSha": "b97ce95fb118a4009ff487027762a24f4f185f3b",
         "phase": "sync"
+      }
+    },
+    "finish:21b44f92-407b-46f8-9122-7cbf312e6d02:finish:3:s6-complete": {
+      "digest": "cf400fb17defcc4c6d1dafcd67748cd480e0363cb9a4efe3d2358ee304bfde41",
+      "issue": 1387,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1387,
+        "at": 1794421685211,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b97ce95fb118a4009ff487027762a24f4f185f3b",
+        "phase": "review",
+        "evidence": {
+          "id": "20261111T182622789-d1257b08",
+          "name": "Тесты для задачи #1387 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T182622789-d1257b08/report.json",
+          "materialSha": "b97ce95fb118a4009ff487027762a24f4f185f3b",
+          "status": "passed",
+          "finishedAt": "2026-11-11T18:28:04.004Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "<details>\n<summary>Реализация, проверенные пути и ограничения</summary>\n\n### Цель и решение\n\nМатериал `b97ce95fb` (продуктовый фикс `4539f74d0` + исключение generated demo directory из Git), ветка `codex/1387-frontend-compression`, база dev `e4cd01609`. Rollup создаёт gzip-9 и Brotli-5 для hashed JS chunks. Добавочный `encodings` inventory (source/path/encoding/sha256/bytes) отделён от raw `files` и графов импорта/бюджетов; старые manifests допустимы. Варианты находятся в `houseplan-encoded/{gzip,br}/<chunk>.js`, отдельно от raw, чтобы встроенный aiohttp поиск .gz не обходил q=0.\n\nBackend сначала проверяет raw allowlist, затем выбирает существующий перечисленный вариант с учётом q/identity/wildcard. Нет сжатия при запросе. Сохраняются immutable/nosniff, MIME JS, Vary; FileResponse обслуживает ETag/304/range, добавлен HEAD. Fallback — raw, при запрете всех доступных представлений 406. Контроль путей также отвергает symlink-выходы и malformed inventory. Stable card/panel facades остаются на прежнем отдельном HA static path; это исправление hashed chunks из #1385.\n\nSync, cleanup и candidate package включают inventory, проверяют SHA и точный decode в raw, удаляют прежние перечисленные варианты при обновлении. Текущий tracked frontend snapshot не менялся. Внимание ревью: HTTP negotiation/cache, containment, additive foreign-manifest compatibility и реальный пакетный путь; runtime-compression отвергнуто из-за повторной CPU-работы HA.\n\n### Проверки и ограничения\n\nСвежие build/types — OK. Node bundle-assets/sync/package — 54/54 PASS; после дополнительной проверки несовпадающего декодированного package payload адресный package — 3/3 PASS. HA/pure HTTP — 17/17 PASS плюс отдельный diagnostic на настоящих байтах dist (18 вместе), без skip. HA harness 2026.8.3, Python3.14.7, aiohttp3.14.3; это не HA2026.11.1 автора.\n\nProduction handler прежнего dev на том же текущем initial View main chunk `houseplan-card-BdhwxWKU.js` реально отдавал 1,017,381 байт без Content-Encoding/Vary даже при gzip/br. Исправленный handler: identity 1,017,381; gzip 285,871; br 258,840. q=0 возвращает raw. HTTP проверяет точные wire bytes, gzip decode, content length/type/nosniff/cache, q/identity/wildcard, ETag/304, переключение representation, HEAD/range, unknown paths, старый manifest и отсутствующий variant. Node независимо декодирует оба build-generated формата. Package regression проверяет ZIP/stage, отсутствующие/повреждённые и правильно хешированные, но неверно декодируемые байты.\n\nПервый HTTP fixture отказал до исполнения тестов из-за неинициализированного hass.http; добавлен штатный async_setup_component(http), checks не ослаблялись. Baseline/after JSON и логи в `artifacts/issue1387/`. Сравнение каталога MDI отдельно сохранено, но не выдаётся за initial View. Новый test_ha_frontend_assets classified runtime/task-release; changed tests/readers + areaTests дополняют центральную выборку (план до включения нового ledger:259 файлов; окончательный queued S6:404 исполняемых шага). Реальный packageCandidate на закоммиченном 4539f74d0 собрал installable ZIP/stage:362 файла,166 encoded representations; SHA256 ZIP 067f0c197db3a1847c8389adfe7903a716919237a3e9f17a6fa3909983c636be (`artifacts/issue1387/install/`). Это диагностика доставки, не публикация релиза. Первый queued S6 `20261111T181830212-19caf2e9` остановлен исполнителем перед ревью на 401/404 успешно завершённых шагах для добавления .gitignore нового generated каталога; оставшиеся шаги cancelled, это не полный PASS и не отрицательное ревью. Продуктовые байты не изменились; новый finish переиспользует только применимые квитанции и выполняет оставшиеся проверки. Результат заранее не утверждается. CPU браузера — отдельная #1388; пользовательский HA и эталоны не менялись, релиз не поручен.\n\n</details>",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
