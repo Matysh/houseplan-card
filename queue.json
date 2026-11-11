@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9315,
+  "revision": 9316,
   "nextTicket": 366,
   "nextFence": 366,
   "tasks": {
@@ -4287,17 +4287,20 @@
       "status": "S6-in-progress",
       "readyAt": 1794417633919,
       "reviewEntry": 2,
-      "patchId": "343eaf1de80641f63ed07c1b29b0d6f106ab6327",
+      "patchId": "68ef5129990acbd67d9c247e8c8fb6cf7511f655",
       "changedFiles": [
         "demo/smoke_card_reconnect.mjs",
+        "demo/smoke_readonly_cold_start.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/FILTERING.md",
         "docs/WARM-REMOUNT.md",
         "docs/release-ledger/v1.85.0/1386.json",
+        "scripts/mutation-registry.mjs",
         "src/ha-binding-status.ts",
         "src/houseplan-card.ts",
-        "test/ha-registry-lifecycle.test.mjs"
+        "test/ha-registry-lifecycle.test.mjs",
+        "test/late-context-replies.test.mjs"
       ],
       "notice": {
         "key": "1:checks-failed",
@@ -4545,10 +4548,11 @@
     "token": "365:finish:224bc278-f4f3-41ff-8c16-61b6e2824b30:finish:1:admit",
     "fence": 365,
     "materialSha": "89a2710b6ed85f7e4c438586921c27d382bbd9d8",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "6c5b515d67cfe007016bbe141f8e842e15dd7115",
+    "phase": "testing",
     "admittedAt": 1794417639033,
-    "expiresAt": 1794417939033
+    "expiresAt": 1794417944973,
+    "patchId": "68ef5129990acbd67d9c247e8c8fb6cf7511f655"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4729,6 +4733,10 @@
     },
     "finish:20e7fa10-9703-4b16-8f69-86410bd3a806:finish:3:return": {
       "digest": "85ba217bb087d350e8d1189ed2b4c4a3e582fd92072cb670388dca546f71724e",
+      "issue": 1386
+    },
+    "finish:224bc278-f4f3-41ff-8c16-61b6e2824b30:finish:2:synchronized": {
+      "digest": "b0079abe3681fda5919accd5af4853db31e650dd6ca35234472b035bbccf771f",
       "issue": 1386
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
