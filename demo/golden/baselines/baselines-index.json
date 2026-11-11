@@ -407,7 +407,16 @@
     "panel-opening-symbol-diagonal-partition-dark": "87552e08a66fc14d3ee2d370578f40e1cab94ad20d6b1ee802b23c00d4818ca1",
     "panel-device-icon-picker-dark-1375": "020573218037fe2edf329938afcb3e73f7c4fa5f540ba44e4c604853dc81a5d8",
     "panel-device-icon-picker-open-dark-1376": "1fac6c179775b9f221d825c07234013b4faaa3cccebdab89a3998834bfe74380",
-    "panel-device-icon-picker-clear-hover-light-1376": "ff904b1b5f8fdc61de7e532c9869d1f30510ef6d70646c00e527847de7819185"
+    "panel-device-icon-picker-clear-hover-light-1376": "ff904b1b5f8fdc61de7e532c9869d1f30510ef6d70646c00e527847de7819185",
+    "panel-resize-junction-tee-before": "47b41859e034ec5b7d9db34df0f97fcf244d327d69c019b771bbf227e3575c1c",
+    "panel-resize-junction-tee-during": "6be06b59f69c0dde9b3424e5f139e3ae1caa4c31a30283a29e4cbcab975e435a",
+    "panel-resize-junction-tee-after": "69ef675728bd71a240c4d47a408b7ee822504076c425a6c3c07d2633ac148f44",
+    "panel-resize-junction-cross-before": "5e77d5be122a4117ba4c4fd0e1fd96ed331e0bdd98209cee2b0133cdd846b96c",
+    "panel-resize-junction-cross-during": "e4ab77dab7a913d2c8bb3ef3326b0b40d0049c048fbbbc420a17046f532b123c",
+    "panel-resize-junction-cross-after": "7b22323cba0f4bd9473ee4fb5f94b14dbd98034c44cb0255ada34a6333ac6fa8",
+    "panel-resize-junction-partition-before": "89f0fc01138d700f464a2011e36579cd686ccf925d978e97b4374b4a80869d8d",
+    "panel-resize-junction-partition-during": "1214dc97f3121df2249a95c8547f78ab436d4361b9e12a315dcbf79789598bd6",
+    "panel-resize-junction-partition-after": "992fbbb80e627bdd8bc8f2df4a6761f4910d7d4c3a8727e002487e30ac8dc4de"
   },
   "scenarioProvenance": {
     "panel-wide-view-light-en": {
@@ -6704,6 +6713,186 @@
       },
       "host": "panel",
       "sourceSceneId": "panel-device-icon-picker-clear-hover-light-1376"
+    },
+    "panel-resize-junction-tee-before": {
+      "acceptedAt": "2026-11-11T12:24:04.035Z",
+      "decision": "Owner 11.11.2026: Принять все 9 кадров из issue-1383-resize-review/review.html; exact IDs and PNG hashes in frames.json.",
+      "reportSha256": "880cdb43089d3be2f4ed85f900c0465f0bceaeef180f00377ebed60bb0cb68c3",
+      "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+      "sourceFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+      "matrixVersion": 113,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+        "harnessIconsSha256": "56037a56beb82db57ce25e251d4d4b44b4b984ffb9b31c8f1a1da8ca5cb7960f",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-resize-junction-tee-before"
+    },
+    "panel-resize-junction-tee-during": {
+      "acceptedAt": "2026-11-11T12:24:04.106Z",
+      "decision": "Owner 11.11.2026: Принять все 9 кадров из issue-1383-resize-review/review.html; exact IDs and PNG hashes in frames.json.",
+      "reportSha256": "87db2d873e920cd63f832458d14f50d280723871a3fcd52fa91e7ac999b80bce",
+      "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+      "sourceFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+      "matrixVersion": 113,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+        "harnessIconsSha256": "56037a56beb82db57ce25e251d4d4b44b4b984ffb9b31c8f1a1da8ca5cb7960f",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-resize-junction-tee-during"
+    },
+    "panel-resize-junction-tee-after": {
+      "acceptedAt": "2026-11-11T12:24:04.174Z",
+      "decision": "Owner 11.11.2026: Принять все 9 кадров из issue-1383-resize-review/review.html; exact IDs and PNG hashes in frames.json.",
+      "reportSha256": "41f372a1325fe4c6d37e91be51610c64560699925eece76adbe40b7f2de48f23",
+      "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+      "sourceFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+      "matrixVersion": 113,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+        "harnessIconsSha256": "56037a56beb82db57ce25e251d4d4b44b4b984ffb9b31c8f1a1da8ca5cb7960f",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-resize-junction-tee-after"
+    },
+    "panel-resize-junction-cross-before": {
+      "acceptedAt": "2026-11-11T12:24:04.244Z",
+      "decision": "Owner 11.11.2026: Принять все 9 кадров из issue-1383-resize-review/review.html; exact IDs and PNG hashes in frames.json.",
+      "reportSha256": "246cdfb2069bac04728b9817d812600ed6d2e451bd17721a986b43c72b46e8f7",
+      "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+      "sourceFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+      "matrixVersion": 113,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+        "harnessIconsSha256": "56037a56beb82db57ce25e251d4d4b44b4b984ffb9b31c8f1a1da8ca5cb7960f",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-resize-junction-cross-before"
+    },
+    "panel-resize-junction-cross-during": {
+      "acceptedAt": "2026-11-11T12:24:04.313Z",
+      "decision": "Owner 11.11.2026: Принять все 9 кадров из issue-1383-resize-review/review.html; exact IDs and PNG hashes in frames.json.",
+      "reportSha256": "ea856e60f9e21eaf1e786c06b926d11cde3c1cc032a4adb70c69f5fc665c8863",
+      "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+      "sourceFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+      "matrixVersion": 113,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+        "harnessIconsSha256": "56037a56beb82db57ce25e251d4d4b44b4b984ffb9b31c8f1a1da8ca5cb7960f",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-resize-junction-cross-during"
+    },
+    "panel-resize-junction-cross-after": {
+      "acceptedAt": "2026-11-11T12:24:04.383Z",
+      "decision": "Owner 11.11.2026: Принять все 9 кадров из issue-1383-resize-review/review.html; exact IDs and PNG hashes in frames.json.",
+      "reportSha256": "20a34636084e55fdcad72b365904654e9158bbdfcd5f8641161441ff6b91551f",
+      "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+      "sourceFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+      "matrixVersion": 113,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+        "harnessIconsSha256": "56037a56beb82db57ce25e251d4d4b44b4b984ffb9b31c8f1a1da8ca5cb7960f",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-resize-junction-cross-after"
+    },
+    "panel-resize-junction-partition-before": {
+      "acceptedAt": "2026-11-11T12:24:04.453Z",
+      "decision": "Owner 11.11.2026: Принять все 9 кадров из issue-1383-resize-review/review.html; exact IDs and PNG hashes in frames.json.",
+      "reportSha256": "cd55f662e05bfffc12484faa06c218139682fd4d5dde11cebb962cfb418c4da4",
+      "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+      "sourceFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+      "matrixVersion": 113,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+        "harnessIconsSha256": "56037a56beb82db57ce25e251d4d4b44b4b984ffb9b31c8f1a1da8ca5cb7960f",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-resize-junction-partition-before"
+    },
+    "panel-resize-junction-partition-during": {
+      "acceptedAt": "2026-11-11T12:24:04.525Z",
+      "decision": "Owner 11.11.2026: Принять все 9 кадров из issue-1383-resize-review/review.html; exact IDs and PNG hashes in frames.json.",
+      "reportSha256": "dc16772a8ce81ce38f84fc91cabdd17efe77fc36f76c592a35442398ab807b38",
+      "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+      "sourceFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+      "matrixVersion": 113,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+        "harnessIconsSha256": "56037a56beb82db57ce25e251d4d4b44b4b984ffb9b31c8f1a1da8ca5cb7960f",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-resize-junction-partition-during"
+    },
+    "panel-resize-junction-partition-after": {
+      "acceptedAt": "2026-11-11T12:24:04.597Z",
+      "decision": "Owner 11.11.2026: Принять все 9 кадров из issue-1383-resize-review/review.html; exact IDs and PNG hashes in frames.json.",
+      "reportSha256": "3ea1d94b1a7cc0669b976099c5b47a31bf076661da9d91f678bd3e2b726c92cf",
+      "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+      "sourceFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+      "matrixVersion": 113,
+      "chromium": "151.0.7922.34",
+      "capture": {
+        "sourceSha": "37300f2f4f07382d454d89907f9e2e2314db110f",
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "4be4eae5bb1d9355e27a4b8d7c0482c365e3d33969020dfa6f38e4a29ee900a4",
+        "harnessIconsSha256": "56037a56beb82db57ce25e251d4d4b44b4b984ffb9b31c8f1a1da8ca5cb7960f",
+        "ci": null
+      },
+      "host": "panel",
+      "sourceSceneId": "panel-resize-junction-partition-after"
     }
   }
 }
