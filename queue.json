@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9089,
+  "revision": 9090,
   "nextTicket": 360,
   "nextFence": 360,
   "tasks": {
@@ -4286,7 +4286,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794402845471,
       "reviewEntry": 3,
-      "patchId": "a817901ce63643688e4a2b93215276bc71166e4a",
+      "patchId": "496dbd2c82948395b0e7560b6e8502942ae5daa6",
       "changedFiles": [
         "demo/fixtures/resize-junctions.mjs",
         "demo/golden/baselines/baselines-index.json",
@@ -4308,6 +4308,7 @@
         "docs/CONFIG-COMPATIBILITY-INVENTORY.md",
         "docs/RESIZE.md",
         "docs/release-ledger/v1.85.0/1383.json",
+        "docs/testing/issue1383/performance.json",
         "scripts/config-compatibility-inventory.json",
         "src/graph-edit-intent.ts",
         "src/houseplan-editor-runtime.ts",
@@ -4579,10 +4580,11 @@
     "token": "359:finish:ce4bb493-f9d1-4d78-8e07-cb9ea3eedeca:finish:1:admit",
     "fence": 359,
     "materialSha": "20a8fec94a403520d4a38c7c9e8f0d5d9f535b3d",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+    "phase": "testing",
     "admittedAt": 1794402901958,
-    "expiresAt": 1794403201958
+    "expiresAt": 1794403208972,
+    "patchId": "496dbd2c82948395b0e7560b6e8502942ae5daa6"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4819,6 +4821,10 @@
     },
     "github:43024740761:1:completions:metadata:c6d3e8b8-b46c-4efc-9085-d189f308995f:task-notice:1383::": {
       "digest": "8add4a46af80772e9abd91c7cd8015341aaeb3ec2156c84ea5a69d3325d271a8",
+      "issue": 1383
+    },
+    "finish:ce4bb493-f9d1-4d78-8e07-cb9ea3eedeca:finish:2:synchronized": {
+      "digest": "b60b11d8f55222cbb00e0e598d0051a1e0450cdefb9f9372c328f5443dca6b0c",
       "issue": 1383
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
