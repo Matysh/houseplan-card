@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9069,
+  "revision": 9070,
   "nextTicket": 359,
   "nextFence": 359,
   "tasks": {
@@ -4337,6 +4337,13 @@
         "status": "passed",
         "finishedAt": "2026-11-11T12:48:06.059Z",
         "failures": []
+      },
+      "reviewRound": null,
+      "reviewRequest": "review:1383:2:a817901ce63643688e4a2b93215276bc71166e4a:787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+      "reviewMaterial": {
+        "materialSha": "41e852cbc365ac81595b3d618b8bb3be83e1c89b",
+        "expectedBase": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+        "patchId": "a817901ce63643688e4a2b93215276bc71166e4a"
       }
     }
   },
@@ -4565,6 +4572,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "code:1383:review:1383:2:a817901ce63643688e4a2b93215276bc71166e4a:787f61dbcf11d4a5593369d7e98156ed4cf48a39": {
+      "issue": 1383,
+      "kind": "code",
+      "requestId": "review:1383:2:a817901ce63643688e4a2b93215276bc71166e4a:787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+      "materialSha": "41e852cbc365ac81595b3d618b8bb3be83e1c89b",
+      "expectedBase": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+      "patchId": "a817901ce63643688e4a2b93215276bc71166e4a",
+      "status": "pending",
+      "presentation": {
+        "round": null,
+        "occurredAt": "2026-11-11T12:48:16.466Z"
+      }
     }
   },
   "waiting": [],
@@ -4578,7 +4598,8 @@
     "phase": "review",
     "admittedAt": 1794401010350,
     "expiresAt": 1794404887421,
-    "patchId": "a817901ce63643688e4a2b93215276bc71166e4a"
+    "patchId": "a817901ce63643688e4a2b93215276bc71166e4a",
+    "reviewRequest": "review:1383:2:a817901ce63643688e4a2b93215276bc71166e4a:787f61dbcf11d4a5593369d7e98156ed4cf48a39"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4759,6 +4780,10 @@
     },
     "finish:1cc76c56-c0a7-4122-85e5-a648f22499c2:finish:3:s6-label": {
       "digest": "3e63a337925aad7757ae6b5c485ac93883075ce8081fc66225111c27fa7509e9",
+      "issue": 1383
+    },
+    "finish:1cc76c56-c0a7-4122-85e5-a648f22499c2:finish:4:review-requested": {
+      "digest": "3815021f3ff55d66d8a4d42c119b4c800546fb1ae1f089ad564332c5a71134d3",
       "issue": 1383
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
