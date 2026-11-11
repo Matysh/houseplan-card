@@ -452,6 +452,21 @@ test('#277 coincident independent wall disables the handle; a column is a hard s
   assert.equal(clampSafeResize([A()], [], resolution.plan, 150, 5, blocked), 70);
 });
 
+test('#1383 an external end-to-end continuation can separate from and rejoin the moving wall',()=>{
+  const opts={...SAFE,step:5,obstacles:[{kind:'segment',a:[400,400],b:[400,700],half:10}]};
+  const rooms=[A(),R()],result=resolveSafeResize(rooms,[],'A',1,opts);
+  assert.equal(result.enabled,true,'endpoint contact must not disable every first grid step');
+  assert.equal(validateSafeResize(rooms,[],result.plan,5,opts),true);
+  const moved=applySafeResize(rooms,[],result.plan,50);
+  const next=rooms.map(r=>({...r,poly:moved.polys[r.id]}));
+  const reverse=resolveSafeResize(next,[],'A',1,opts);
+  assert.equal(reverse.enabled,true);
+  assert.equal(validateSafeResize(next,[],reverse.plan,-50,opts),true,'exact endpoint meeting remains admissible');
+  assert.equal(clampSafeResize(next,[],reverse.plan,-50,5,opts),-50,'the final approach cannot be blocked before meeting');
+  const overlay={...opts,obstacles:[{kind:'segment',a:[400,300],b:[400,700],half:10}]};
+  assert.deepEqual(resolveSafeResize(rooms,[],'A',1,overlay),{enabled:false,reason:'duplicate-physical-wall'});
+});
+
 test('#277 pointer clamp memoizes exact deltas and bounds the active-plan cache', () => {
   const rooms = [A()];
   const resolution = resolveSafeResize(rooms, [], 'A', 1, SAFE);

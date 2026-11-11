@@ -1,15 +1,8 @@
 import { nothing, render, svg, type TemplateResult } from 'lit';
 import { cancelHouseplanPointerMove } from './pointer-move-queue';
-import { gridVisualUnits } from './grid-scale';
 import type { RenderOpening } from './interaction-types';
 import type { SpaceDisplay } from './logic';
-import type { SpaceModel, WallEntry } from './types';
-import {
-  wallBodyNeedsSolid, wallCmToUnits, wallEdgePathD,
-  wallHatchNeedsSolid, wallHatchStepUnits,
-  type WallEdgeBody,
-} from './wall-thickness';
-import { NORM_W } from './space-geometry';
+import type { SpaceModel } from './types';
 import { framePercent } from './view-frame';
 
 interface LiveEditorState {
@@ -19,7 +12,6 @@ interface LiveEditorState {
   waiters: { revision: number; resolve: () => void }[];
   hidden: HTMLElement[];
   transparent: HTMLElement[];
-  dimmed: HTMLElement[];
 }
 
 interface LiveEditorHost {
@@ -73,12 +65,7 @@ interface LiveEditorHost {
   _deviceContacts?: { move(id: string, x: number, y: number): void };
   _renderProjection: string;
   _spaceModel: () => SpaceModel | null;
-  _spaceWalls: WallEntry[];
-  _cellCm: number;
-  _gridPitch: number;
   _openingsR: RenderOpening[];
-  _stageEl: HTMLElement | null;
-  _fillColors: { wall_fill: { c: string; a: number } };
 }
 
 const states = new WeakMap<object, LiveEditorState>();
@@ -98,7 +85,7 @@ const stateOf = (host: object): LiveEditorState => {
   if (!state) {
     state = {
       raf: 0, requestedRevision: 0, paintedRevision: 0, waiters: [],
-      hidden: [], transparent: [], dimmed: [],
+      hidden: [], transparent: [],
     };
     states.set(host, state);
   }
@@ -177,80 +164,8 @@ const restore = (state: LiveEditorState): void => {
   state.hidden.length = 0;
   for (const element of state.transparent) element.style.removeProperty('opacity');
   state.transparent.length = 0;
-  for (const element of state.dimmed) element.style.removeProperty('opacity');
-  state.dimmed.length = 0;
 };
 
-/** Resize moves paint individual wall strips; pointerup still validates the canonical union. */
-const resizePreviewWalls = (
-  host: LiveEditorHost, display: SpaceDisplay, roomIds: readonly string[] = [],
-): TemplateResult => {
-  if (host._renderProjection === 'iso') return svg``;
-  const space = host._spaceModel();
-  if (!space) return svg``;
-  const affected = new Set(roomIds);
-  const boundary = (space.rooms || []).filter((room) => !!room.id && affected.has(room.id))
-    .flatMap((room) => {
-      const poly = room.poly || [];
-      return poly.map((point: number[], index: number) => [
-        point, poly[(index + 1) % poly.length],
-      ]);
-    });
-  const onSegment = (point: number[], segment: number[][]): boolean => {
-    const [a, b] = segment;
-    const dx = b[0] - a[0], dy = b[1] - a[1];
-    const length2 = dx * dx + dy * dy;
-    if (!(length2 > 0)) return false;
-    const t = ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / length2;
-    const clamped = Math.max(0, Math.min(1, t));
-    return Math.hypot(point[0] - a[0] - dx * clamped, point[1] - a[1] - dy * clamped) < 1e-4;
-  };
-  const edge = (a: number[], b: number[], cm: number, key: string): WallEdgeBody | null => {
-    const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    if (!(length > 1e-9) || !(cm > 0)) return null;
-    const half = wallCmToUnits(cm, host._cellCm, host._gridPitch) / 2;
-    const nx = -(b[1] - a[1]) / length * half;
-    const ny = (b[0] - a[0]) / length * half;
-    return {
-      key, kind: 'outer', cm, a, b, depthUnits: half * 2,
-      quad: [[a[0] + nx, a[1] + ny], [b[0] + nx, b[1] + ny],
-        [b[0] - nx, b[1] - ny], [a[0] - nx, a[1] - ny]],
-    };
-  };
-  const edges = [
-    ...host._spaceWalls.filter((wall) => {
-      const a = (wall.a || []).map((value: number) => value * NORM_W);
-      const b = (wall.b || []).map((value: number) => value * NORM_W);
-      return boundary.some((segment: number[][]) => onSegment(a, segment) && onSegment(b, segment));
-    }).map((wall, index) => edge(
-      (wall.a || []).map((value: number) => value * NORM_W),
-      (wall.b || []).map((value: number) => value * NORM_W),
-      wall.cm, wall.key || `wall-${index}`,
-    )),
-  ].filter((item): item is WallEdgeBody => !!item);
-  const openings = host._openingsR.map((opening) => ({
-    x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
-  }));
-  const paths = edges.map((edge) => wallEdgePathD(edge, openings)).filter(Boolean);
-  if (!paths.length) return svg``;
-  const depth = Math.max(...edges.map((edge) => edge.depthUnits), 0);
-  const view = host._viewOr(host._baseVb());
-  const px = host._stageEl?.clientWidth && view.w ? host._stageEl.clientWidth / view.w : 1;
-  const solid = wallBodyNeedsSolid(depth, px)
-    || wallHatchNeedsSolid(wallHatchStepUnits(host._cellCm), px);
-  const stroke = display?.color || '#607d8b';
-  const fill = display.wallFill;
-  const d = paths.join(' ');
-  return svg`<g class="wallbodies hp-resize-preview-walls"
-      style="--room-stroke:${stroke};--wall-fill:${fill.c};--wall-fill-op:${fill.a}">
-    <path class="wallbody-fill" data-component="preview" d=${d}
-      fill=${fill.c} fill-opacity=${fill.a} fill-rule="nonzero" stroke="none"></path>
-    <path class="wallbody ${solid ? 'solid' : ''}" data-hp="wall"
-      data-id="preview" data-kind="preview" d=${d}
-      fill=${solid ? 'none' : 'url(#hp-wall-hatch)'} fill-rule="nonzero"
-      stroke=${stroke} stroke-width=${gridVisualUnits(0.6, host._cellCm)}></path>
-  </g>`;
-};
 
 export const physicalOpeningIds = (
   drag: { kind: string; id: string; moved: boolean } | null | undefined, openings: readonly RenderOpening[],
@@ -270,7 +185,7 @@ const planTemplate = (host: LiveEditorHost): TemplateResult => {
     const display = host._spaceDisplayForRender();
     const plan = host._resize.plan;
     return svg`<g class="hp-live-resize" aria-hidden="true" pointer-events="none">
-      ${resizePreviewWalls(host, display, plan?.roomIds)}
+      ${host._renderWallBodies(display)}
       ${host._renderResizeMeasurements()}
       ${host._renderOpenings(display, plan?.movingOpeningIds)}
       ${host._renderResizeLayer(view, plan?.roomIds)}
@@ -366,14 +281,6 @@ const makeMovingOpeningsTransparent = (
   }
 };
 
-const dim = (state: LiveEditorState, root: ParentNode, selector: string): void => {
-  for (const element of root.querySelectorAll<HTMLElement>(selector)) {
-    if (element.closest('[data-hp-live-editor], [data-hp-live-stairs]')) continue;
-    element.style.opacity = '0.35';
-    state.dimmed.push(element);
-  }
-};
-
 /** One editor-only render root per card; the settled scene remains untouched. */
 export function paintHouseplanEditor(value: object): void {
   const host = value as LiveEditorHost;
@@ -408,7 +315,8 @@ export function paintHouseplanEditor(value: object): void {
     }
     if (host._opDrag) hide(state, root, '.wallbodies');
     if (host._resize?.dragging) {
-      dim(state, root, '.wallbodies');
+      makeTransparent(state, root, '.wallbodies');
+      makeTransparent(state, root, '.hp-plan-snap-layer');
       makeTransparent(state, root, '.resize-layer');
       makeMovingOpeningsTransparent(state, root, host._resize.plan?.movingOpeningIds || []);
     }

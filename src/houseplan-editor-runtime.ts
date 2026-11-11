@@ -3296,7 +3296,7 @@ public _rszRooms(): { id: string; poly: number[][]; wall_ids?: string[] }[] {
 public _rszOpenings(): SafeOpeningIn[] {
     return this.host._openingsR.map((o) => ({
       id: o.id, x: o.rx, y: o.ry, length: o.rlen,
-      hosted: !!o.host, angle: o.angle, type: o.type,
+      hosted: o.host?.kind === 'partition', angle: o.angle, type: o.type,
     }));
   }
 
@@ -3423,7 +3423,10 @@ public _rszProjectPreview(
       const r = sp.rooms.find((x: any) => x.id === id);
       if (!r) continue;
       let projected = poly;
-      if (Array.isArray(r.wall_ids)) {
+      // The graph bridge binds real corners to exact source nodes itself. The
+      // legacy catalogue adapter rejects a vanishing intermediate atom before
+      // the graph can reconcile two T junctions into one X (#1383).
+      if (!graphBaseSpace && Array.isArray(r.wall_ids)) {
         if (!Array.isArray(r.poly) || r.poly.length !== r.wall_ids.length) return { ok: false, reason: 'wall-metadata' };
         const source = sourceRooms.find(room => room.id === id);
         if (!source) return { ok: false, reason: 'wall-metadata' };
@@ -3642,6 +3645,7 @@ public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
       this.host._showToast(this._rszReasonText(resolution.reason), `resize.disabled.${resolution.reason}`);
       return;
     }
+    this._clearPlanSnapHover();
     capturePointer(ev);
     const plan = resolution.plan;
     try {
@@ -3727,6 +3731,7 @@ private _rszMoveNow(ev: PointerEvent): void {
 public _rszUp(ev: PointerEvent): void {
     flushHouseplanPointerMove(this.host, 'resize');
     if (!this.host._resize.ownsPointer(ev.pointerId)) return;
+    this._clearPlanSnapHover();
     ev.stopPropagation();
     const result = this.host._resize.finish({
       pointerId: ev.pointerId,
@@ -3776,6 +3781,7 @@ public _rszCancelDrag(pointerId?: number): void {
     this.rszBodiesUnion.clear();
     if (result.kind !== 'no-op') this._resizeAtomMap = null;
     if (result.kind === 'no-op') return;
+    this._clearPlanSnapHover();
     // An identical cancel reuses the pre-drag structural caches and writes nothing.
     if (result.restoreEpoch !== null) this.host._cfgEpoch = result.restoreEpoch;
     else this.host._cfgEpoch++;

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1383,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Repair Resize live masonry and local graph reconciliation without changing the stored model or wire schema.",
+  "summary": {
+    "ru": "Resize без следов прежних стен и лишних узлов; сохранены проёмы и реальные примыкания.",
+    "en": "Resize without stale wall paint or redundant nodes, preserving openings and real junctions."
+  }
+}

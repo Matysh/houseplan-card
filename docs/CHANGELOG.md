@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Resize paints one joined wall contour throughout the gesture, clears abandoned straight seams and preserves real T/X junction changes and opening hosts. Room-wall openings remain movable; native regression and before/during/after panel scenes cover the return gesture, cancellation, history and reload (#1383).
+
 - Keep the paired-history mutation guard strict on native persistence and floor-model reuse while reporting timing budgets diagnostically, as in S6; preserve the measured excess and original thresholds (#1382).
 
 - Plan optimization paints its waiting states, retains the applied report and distinguishes skipped repairs, rejection and unconfirmed saving. Its single postcheck never reapplies changes; diagnostics use existing Help, and closing the dialog does not cancel a sent request (#1170).

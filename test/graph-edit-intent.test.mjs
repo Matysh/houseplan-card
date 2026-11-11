@@ -177,15 +177,16 @@ test('both selected room owners keep shared edge IDs when they target the same l
   assert.deepEqual(result.plan_graph.edges.map(G.edgeKey),before.plan_graph.edges.map(G.edgeKey));
   assert.deepEqual(result.plan_graph.nodes.map(n=>n.id),before.plan_graph.nodes.map(n=>n.id));
 });
-test('Resize expands real-corner draft through exact stored atom ownership and dependencies',()=>{
+test('Resize expands real-corner draft and removes its now redundant straight atom',()=>{
   let before=base();const cycle=before.plan_graph.rooms[0],ref=cycle.edges[0];
   const split=G.applyGraphOperation(before.plan_graph,{kind:'insert-on-edge',edge:ref,t:['1','2'],node:'middle',newEdgeId:'child'});
   before=G.projectGraphSpace(before,split.graph).space;
   const draft=copy(before);draft.rooms[0].poly=[[0,.1],[1,.1],[1,1],[0,1]];
   const result=commitGraphEdit(before,draft,{kind:'resize',rooms:['a']});
-  const middle=result.plan_graph.nodes.find(n=>n.id==='middle');
-  assert.deepEqual(middle.p,['l','120','24']);
-  assert.ok(result.plan_graph.dependencies.some(d=>d.node==='middle'));
+  assert.equal(result.plan_graph.nodes.some(n=>n.id==='middle'),false,
+    '#1383 a straight seam without other dependents is not a persistent editing handle');
+  assert.equal(result.plan_graph.dependencies.some(d=>d.node==='middle'),false);
+  assert.deepEqual(result.rooms[0].poly,[[0,.1],[1,.1],[1,1],[0,1]]);
 });
 test('partition endpoint edit detaches only its own edge from a shared junction',()=>{
   const before=migrate({id:'p',rooms:[],partitions:[
@@ -236,9 +237,10 @@ test('#1264 a derived T seam slides twice on the fixed uniform neighbour without
   const draft=copy(authored);
   for(const room of draft.rooms)if(['a','b'].includes(room.id))room.poly=room.poly.map(([x,y])=>[x===.5?.51:x,y]);
   const held=commitGraphEdit(authored,draft,{kind:'resize',rooms:['a','b']});
-  assert.deepEqual(Q.pointToNumbers(G.graphIndex(held.plan_graph).points.get(node.id)),[.5,.5],
-    'an authored outside vertex never inherits the derived seam exception');
-  assert.ok(held.plan_graph.edges.length>original.plan_graph.edges.length);
+  assert.equal(G.graphIndex(held.plan_graph).points.has(node.id),false,
+    '#1383 the old straight seam is removed, rather than moved as an authored corner');
+  assert.equal(held.plan_graph.nodes.length,original.plan_graph.nodes.length);
+  assert.equal(G.validateGraph(held.plan_graph).ok,true);
 });
 
 test('#1264 sliding a T seam never moves a dependent corner of fixed rooms',()=>{

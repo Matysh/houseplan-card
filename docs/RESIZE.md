@@ -8,8 +8,12 @@ make all masonry disappear.
 ## User contract
 
 Resize moves one existing horizontal or vertical room wall parallel to itself.
-The two adjacent walls only change length. It never adds, removes, reorders or
-simplifies room vertices.
+The two adjacent walls only change length. Authored room corners are preserved.
+Derived graph atoms may split or coalesce where real junctions separate or meet
+(#1383): X → two T junctions can add a node, and the inverse can remove one.
+No abandoned, same-material straight seam is left as an extra editing handle.
+Material/ownership boundaries, independent bodies, dependency supports and
+opening hosts remain protected; this is local reconciliation, never Optimize.
 
 - A non-shared wall changes exactly one room.
 - An exactly shared endpoint-to-endpoint wall changes exactly two rooms.
@@ -137,6 +141,14 @@ never sent back through a coordinate-based legacy materializer. T dependencies
 evaluate after their supports; rational intersections are not rounded onto the
 coarse grid. Undo restores the accepted graph snapshot.
 
+The graph path consumes the real-corner draft directly. The legacy catalogue
+adapter is retained only for pre-graph plans: it must not reject a vanishing
+intermediate atom before the exact bridge can join its T junctions. A meeting
+endpoint is reused only on an originally incident source run; disappearing
+pieces compose their host mappings through the kernel's collapse operation.
+The same cleanup runs in preview and commit. Unrelated old seams are not swept
+on read, and other nodes supported by a seam prevent its removal.
+
 In the historical catalogue decoder, an actual side-wall ownership split at an unchanged neighbouring corner is
 distinct from moving that corner. Only overlapping same-carrier changes may
 cross the existing structural materializer on the changed-ID owner closure before live
@@ -159,7 +171,11 @@ other pointer ids and continues receiving movement outside its visible hit
 area. `pointercancel` or `lostpointercapture` aborts the gesture.
 
 The renderer consumes that exact overlay, so fills, masonry, openings, labels
-and measurements show one candidate. Before an overlay becomes visible it must
+and measurements show one candidate. Live Resize uses the canonical masonry
+union, including opening cuts and joined corners/T ends, just like the final
+frame. The settled wall layer is made transparent while that live copy owns
+paint; it is not dimmed underneath independent rectangular strips (#1383).
+Before an overlay becomes visible it must
 pass the same fail-closed physical-geometry barrier as persistence. A rejected
 candidate leaves the wall at the last safe visible position and shows one
 localized explanation per gesture. Its production wall/floor result is cached
@@ -236,6 +252,14 @@ Ordinary openings centred on the moving wall translate by the same vector.
 Their type, angle, length and compatibility fields stay unchanged. Hosted
 partition openings never move with a room wall. Openings on the two side walls
 stay fixed and limit the axis by `opening.length / 2 + movingWallHalfDepth`.
+
+In model 11, `host.kind:wall` is an ordinary room-wall opening and travels with
+its wall. Only `host.kind:partition` is the independent-body exclusion. An
+external partition ending on an existing side-wall run may form or separate a
+T/X junction; its axial interval must stay outside the moving wall. Its final
+approach is not mistaken for a positive-length overlay. Actual overlays,
+columns, room-role limits and the canonical physical/junction proofs still stop
+the gesture; the partition itself is never dragged along.
 
 ## Performance
 

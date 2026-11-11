@@ -1093,10 +1093,24 @@ function sideOpeningFits(
 
 function obstacleBlocksCandidate(
   obstacle: SafeResizeObstacle, a: number[], b: number[], opts: SafeResizeOptions,
+  sideWalls: readonly (readonly [number[], number[]])[],
 ): boolean {
   const half = opts.movingHalf || 0;
   if (obstacle.kind === 'circle') {
     return distPointToSpan(obstacle.center, a, b) < obstacle.radius + half - opts.eps;
+  }
+  const axis = axisOf(a, b, opts.eps);
+  if (axis && axisOf(obstacle.a, obstacle.b, opts.eps) === axis) {
+    const along=(p:number[])=>axisCoordinate(p,axis);
+    const overlap=Math.min(Math.max(along(a),along(b)),Math.max(along(obstacle.a),along(obstacle.b)))
+      -Math.max(Math.min(along(a),along(b)),Math.min(along(obstacle.a),along(obstacle.b)));
+    // An external branch ends on an existing side-wall run. Separating or
+    // meeting its T/X junction changes no axial overlap; it must remain
+    // approachable through the final grid steps, not just at the exact target.
+    // Other nearby bodies and positive-length overlays remain hard stops.
+    if(overlap<=opts.eps&&[obstacle.a,obstacle.b].some(foot=>
+      [a,b].some(end=>Math.abs(along(end)-along(foot))<=opts.eps)
+      &&sideWalls.some(([c,d])=>distPointToSpan(foot,c,d)<=opts.eps)))return false;
   }
   return segmentDistance(a, b, obstacle.a, obstacle.b)
     < (obstacle.half || 0) + half - opts.eps;
@@ -1115,6 +1129,7 @@ export function validateSafeResize(
   if (Object.keys(result.polys).length !== plan.roomIds.length) return false;
   if (!sideOwnershipPreserved(result, plan, eps)) return false;
   const changed = new Set(plan.roomIds);
+  const sideWalls: [number[], number[]][] = [];
   const polyOf = (room: RoomIn) => result.polys[room.id] || room.poly;
 
   for (const roomId of plan.roomIds) {
@@ -1143,6 +1158,7 @@ export function validateSafeResize(
     const sideAOld: [number[], number[]] = [original.poly[prev], original.poly[edge]];
     const sideANew: [number[], number[]] = [next[prev], next[edge]];
     const sideBOld: [number[], number[]] = [original.poly[(edge + 1) % n], original.poly[(edge + 2) % n]];
+    sideWalls.push(sideAOld,sideBOld);
     const sideBNew: [number[], number[]] = [next[(edge + 1) % n], next[(edge + 2) % n]];
     const movingAxis = axisOf(next[edge], next[(edge + 1) % n], eps);
     const sideAxis = movingAxis === 'h' ? 'v' : movingAxis === 'v' ? 'h' : null;
@@ -1191,7 +1207,7 @@ export function validateSafeResize(
   const mb = movingPoly[(movingEdge + 1) % movingPoly.length];
   if (Math.abs(d) > eps) {
     for (const obstacle of opts.obstacles || []) {
-      if (obstacleBlocksCandidate(obstacle, ma, mb, opts)) return false;
+      if (obstacleBlocksCandidate(obstacle, ma, mb, opts, sideWalls)) return false;
     }
   }
 

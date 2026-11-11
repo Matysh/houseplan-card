@@ -162,7 +162,13 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
     };
     for(const group of groups){
       const keep=Q.pointEq(group.p,old)||groups.length===1&&(!outside||moveShared)||seamMaySlide(group.p);
-      group.id=keep?id:allocation.id('node',['resize',id,group.rooms.slice().sort(codepoint)]);
+      // Meeting the stationary endpoint of our own incident run restores one
+      // junction (two T's -> X), not two coincident identities and a zero atom.
+      // Never weld an unrelated body merely because its coordinates match.
+      const meeting=!Q.pointEq(group.p,old)&&incident.filter(e=>e.kind==='wall').map(e=>e.from===id?e.to:e.from).find(node=>
+        Q.pointEq(index.points.get(node)!,group.p)
+        &&[...(targets.get(node)?.values()||[])].every(p=>Q.pointEq(p,index.points.get(node)!)));
+      group.id=meeting||(keep?id:allocation.id('node',['resize',id,group.rooms.slice().sort(codepoint)]));
       if(group.id!==id)addNode(plan,group.id,group.p);
       for(const room of group.rooms){const map=roomNodes.get(room)||new Map();map.set(id,group.id);roomNodes.set(room,map);}
     }
@@ -178,6 +184,7 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
   for(const[id,groups]of groupsByNode)for(const group of groups){
     const old=index.points.get(id)!;
     const dep=graph.dependencies.find(d=>d.node===id);
+    if(group.id!==id&&index.nodes.has(group.id))continue; // The meeting endpoint keeps its own dependency.
     if(dep){
       const refs=dep.refs.map(ref=>{
         const map=(node:string)=>group.rooms.map(room=>roomNodes.get(room)?.get(node)).find(Boolean)||node;
@@ -204,12 +211,15 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
     }
     roomCycles.set(cycle.room,[]);
   }
-  const refByRoomEdge=new Map<string,GraphEdgeRef>();
+  const refByRoomEdge=new Map<string,GraphEdgeRef>(),vanishing:GraphEdge[]=[];
   for(const[key,uses]of edgeUses){
     const old=index.edges.get(key)!,outside=(index.owners.get(key)||[]).some(room=>!selected.has(room));
     const groups:Array<{from:string;to:string;uses:typeof uses}>=[];
     for(const use of uses){let group=groups.find(g=>g.from===use.from&&g.to===use.to);if(!group){group={from:use.from,to:use.to,uses:[]};groups.push(group);}group.uses.push(use);}
     for(const group of groups){
+      // Only the selected owner's vanishing slice disappears; the outside
+      // owner still retains the source run until the abandoned seam compacts.
+      if(group.from===group.to){if(!outside)vanishing.push(old);continue;}
       const unchanged=group.from===old.from&&group.to===old.to;
       const keep=unchanged||!outside&&groups.length===1;
       const edge:GraphEdge={...clone(old),id:keep?old.id:allocation.id(old.kind,['resize-edge',key,group.uses.map(u=>u.room).sort(codepoint)]),from:group.from,to:group.to};
@@ -221,8 +231,34 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
     }
   }
   for(const cycle of graph.rooms)if(selected.has(cycle.room))plan.operations.push({kind:'replace-room-cycle',room:cycle.room,
-    edges:cycle.edges.map(e=>({...refByRoomEdge.get(JSON.stringify([cycle.room,edgeKey(e)]))!,reverse:e.reverse}))});
+    edges:cycle.edges.flatMap(e=>{const target=refByRoomEdge.get(JSON.stringify([cycle.room,edgeKey(e)]));
+      return target?[{...target,reverse:e.reverse}]:[];})});
   plan.operations.push(...cloneDeps.values());
+  for(const removed of vanishing){
+    // A disappearing slice between the two meeting T's is absorbed by its
+    // continuing source run. Keep the old seam until collapse-node executes,
+    // so host lineage and the kernel's dependency checks remain authoritative.
+    const moved=[removed.from,removed.to].find(node=>
+      [...(roomNodes.values())].some(map=>map.has(node)&&map.get(node)!==node));
+    const target=moved&&[...roomNodes.values()].map(map=>map.get(moved)).find(node=>node&&node!==moved);
+    const retained=moved&&target&&(index.incident.get(moved)||[]).find(edge=>{
+      if(edgeKey(edge)===edgeKey(removed)||edge.kind!==removed.kind||edge.cm!==removed.cm
+        ||!jsonValueEqual(edge.props||null,removed.props||null))return false;
+      const next=plan.newEdges.get(edgeKey(edge));
+      return next&&[next.from,next.to].includes(target)
+        &&!Q.pointEq(plan.nodePoints.get(next.from)!,plan.nodePoints.get(next.to)!)
+        &&!Q.orientation(index.points.get(removed.from)!,index.points.get(removed.to)!,
+          index.points.get(edge.from===moved?edge.to:edge.from)!).n;
+    });
+    if(!moved||!target||!retained)failure('resize-collapsed-edge',edgeKey(removed));
+    const retarget=plan.operations.find(op=>op.kind==='retarget-edge'&&edgeKey(op.edge)===edgeKey(retained));
+    if(!retarget||retarget.kind!=='retarget-edge')failure('resize-collapsed-edge',edgeKey(removed));
+    if(retarget.from===target)retarget.from=moved;
+    else if(retarget.to===target)retarget.to=moved;
+    else failure('resize-collapsed-edge',edgeKey(removed));
+    plan.operations.push({kind:'collapse-node',node:moved,retained:ref(retained),removed:ref(removed)});
+    plan.newEdges.delete(edgeKey(removed));plan.variants.set(edgeKey(removed),[ref(retained)]);
+  }
 }
 /** Node only the selected Resize's original room-wall incidence/run cohort.
  * A foreign run with no original incidence remains an independent body. */
@@ -248,14 +284,26 @@ function settleResizePlan(graph:PlanGraph,index:ReturnType<typeof graphIndex>,ro
   const sourcePairs=(a:string,b:string,predicate:(a:GraphEdge,b:GraphEdge)=>boolean):boolean=>{
     for(const x of origins.get(a)||[])for(const y of origins.get(b)||[]){
       const left=index.edges.get(x),right=index.edges.get(y);
-      if(left&&right&&roots.has(x)&&roots.has(y)&&predicate(left,right))return true;
+      if(left&&right&&predicate(left,right))return true;
     }
     return false;
   };
-  const sameRun=(a:string,b:string)=>sourcePairs(a,b,(x,y)=>root(edgeKey(x))===root(edgeKey(y)));
+  const sameRun=(a:string,b:string)=>sourcePairs(a,b,(x,y)=>roots.has(edgeKey(x))&&roots.has(edgeKey(y))
+    &&root(edgeKey(x))===root(edgeKey(y)));
   const incidentBefore=(a:string,b:string)=>sourcePairs(a,b,(x,y)=>[x.from,x.to].some(n=>n===y.from||n===y.to));
   const changed=new Set<string>();
-  const edges=[...plan.newEdges.values()].filter(e=>e.kind==='wall').sort((a,b)=>codepoint(edgeKey(a),edgeKey(b)));
+  // An external branch participates in its proved junction. A separate body
+  // laid over an existing room wall remains independent (#1264), even if its
+  // endpoint happens to share that junction's identity.
+  const branches=new Set(graph.edges.filter(e=>e.kind==='partition'&&![e.from,e.to]
+    .flatMap(node=>index.incident.get(node)||[]).filter(w=>roots.has(edgeKey(w))).some(w=>{
+    const a=index.points.get(e.from)!,b=index.points.get(e.to)!,c=index.points.get(w.from)!,d=index.points.get(w.to)!;
+    if(Q.orientation(a,b,c).n||Q.orientation(a,b,d).n)return false;
+    const tc=Q.projectParameter(c,a,b),td=Q.projectParameter(d,a,b);
+    return Q.cmp(Q.min(Q.ONE,Q.max(tc,td)),Q.max(Q.ZERO,Q.min(tc,td)))>0;
+  })).map(edgeKey));
+  const edges=[...plan.newEdges.values()].filter(e=>e.kind==='wall'||branches.has(edgeKey(e)))
+    .sort((a,b)=>codepoint(edgeKey(a),edgeKey(b)));
   for(const edge of edges){
     const key=edgeKey(edge),old=index.edges.get(key);
     const selected=[...(origins.get(key)||[])].some(source=>(index.owners.get(source)||[]).some(room=>selectedRooms.has(room)));
@@ -296,7 +344,7 @@ function settleResizePlan(graph:PlanGraph,index:ReturnType<typeof graphIndex>,ro
   for(const edge of edges){
     const key=edgeKey(edge),cuts=(tables.get(key)||[{t:Q.ZERO,node:edge.from},{t:Q.ONE,node:edge.to}]).sort((a,b)=>Q.cmp(a.t,b.t));
     const children:GraphEdge[]=cuts.slice(0,-1).map((cut,i)=>({...clone(edge),from:cut.node,to:cuts[i+1].node,
-      id:i===0?edge.id:allocation.id('wall',['resize-incidence',key,Q.encodeRational(cut.t)])}));
+      id:i===0?edge.id:allocation.id(edge.kind,['resize-incidence',key,Q.encodeRational(cut.t)])}));
     for(let i=cuts.length-2;i>0;i--){
       plan.operations.push({kind:'insert-on-edge',edge:ref(edge),node:cuts[i].node,
         t:Q.encodeRational(Q.div(cuts[i].t,cuts[i+1].t)),newEdgeId:children[i].id});
@@ -963,7 +1011,7 @@ export function commitGraphEditResult<T extends Record<string,any>>(beforeNormal
   // edits and can compact their abandoned incidence immediately.
   const compact=intent.kind==='partitions'||intent.kind==='segments'
     ?plan.operations.some(op=>op.kind==='retarget-edge'||op.kind==='delete-edge')
-    :['faces','delete-room','merge-rooms','thickness'].includes(intent.kind);
+    :['resize','faces','delete-room','merge-rooms','thickness'].includes(intent.kind);
   if(compact&&plan.operations.length){
     const nextIndex=graphIndex(result.graph),seeds=new Set<string>();
     for(const operation of plan.operations){

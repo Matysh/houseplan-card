@@ -26,6 +26,8 @@ import { makeVacuumHistoryFixture, prepareVacuumHistoryGolden } from './vacuum-h
 import { prepareViewDeviceMenu } from './view-device-menu.mjs';
 import { makeStaticWallOpeningsFixture } from '../fixtures/static-wall-openings.mjs';
 import { prepareStaticWallOpenings } from './static-wall-openings.mjs';
+import { makeResizeJunctionFixture } from '../fixtures/resize-junctions.mjs';
+import { prepareResizeJunctions } from './resize-junctions.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -66,7 +68,7 @@ const wallUnionIsolationFixture = JSON.parse(readFileSync(
 const cardVersion = '0.0.0-golden';
 const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
-const fixtureFor = (scenario) => scenario.staticWallOpenings ? {
+const fixtureFor = (scenario) => scenario.resizeJunction ? makeResizeJunctionFixture(scenario.resizeJunction.kind) : scenario.staticWallOpenings ? {
   config:makeStaticWallOpeningsFixture(scenario.staticWallOpenings),layout:{},devices:{},entities:{},states:{},areas:{},
 } : scenario.deviceAlerts ? makeMarkerAlertsFixture(scenario.deviceAlerts) : scenario.deviceIssues ? (() => {
   const fixture = makeVisualMatrixFixture(), sample = makeDeviceIssuesFixture();
@@ -1214,13 +1216,14 @@ export async function prepareGoldenScenario(page, scenario) {
         three: { floor_id: 'three', name: 'Three', level: 2 },
       },
       callWS: async (message) => {
-        if(scenario.decorGroupStyle&&message.type==='houseplan/config/set'){
+        if((scenario.decorGroupStyle||scenario.resizeJunction)&&message.type==='houseplan/config/set'){
+          if(scenario.resizeJunction)(window.__resizeJunctionWrites||=[]).push(structuredClone(message));
           fixture.config=structuredClone(message.config);return {ok:true,rev:++decorStyleRevision};
         }
         if (message.type === 'zha/devices' && fixture.zhaDevices) return structuredClone(fixture.zhaDevices);
         if (message.type === 'houseplan/config/get' && scenario.firstSpace === 'no-storage') throw Error('Integration unavailable');
         if (message.type === 'houseplan/config/get') return {
-          config: structuredClone(fixture.config), rev: scenario.decorGroupStyle?decorStyleRevision:1,
+          config: structuredClone(fixture.config), rev: (scenario.decorGroupStyle||scenario.resizeJunction)?decorStyleRevision:1,
           can_write: scenario.canWrite !== false,
           // Match the current server's public graph capabilities, including
           // fixtures that exercise native editor actions after the read.
@@ -3229,6 +3232,7 @@ export async function prepareGoldenScenario(page, scenario) {
   if(scenario.sunTransparent)result.sunTransparent=await prepareSunTransparent(page,!!scenario.sunTransparent.sealed);
   if (scenario.externalScreens) await prepareExternalScreens(page, scenario);
   if (scenario.staticWallOpenings) result.staticWallOpenings = await prepareStaticWallOpenings(page,scenario);
+  if (scenario.resizeJunction) result.resizeJunction = await prepareResizeJunctions(page,scenario);
   if (scenario.deviceIconPicker) result.deviceIconPicker=await prepareDeviceIconPicker(page,scenario.deviceIconPickerState);
   return result;
 }

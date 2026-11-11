@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 112;
+export const GOLDEN_MATRIX_VERSION = 113;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -674,6 +674,11 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'safe-resize-handles-clamp-light', fixture: 'visual', space: 'golden-safe-resize',
     safeResizeFixture: true, safeResizePreview: true, iconSize: 0.8, mode: 'plan',
     theme: 'light', viewport: { width: 1180, height: 900 }, ...page },
+  ...['tee','cross','partition'].flatMap(kind=>['before','during','after'].map(phase=>({
+    id:`panel-resize-junction-${kind}-${phase}`,fixture:'visual',space:'resize-junctions',panelHost:true,
+    resizeJunction:{kind,phase},mode:'plan',theme:'light',language:'ru',zoom:.65,zoomCenter:[500,500],
+    viewport:{width:1180,height:1000},...stage,
+  }))),
   { id: 'safe-resize-handles-clamp-dark', fixture: 'visual', space: 'golden-safe-resize',
     safeResizeFixture: true, safeResizePreview: true, iconSize: 0.8, mode: 'plan',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
