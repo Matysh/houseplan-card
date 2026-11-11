@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 8994,
+  "revision": 8995,
   "nextTicket": 357,
   "nextFence": 357,
   "tasks": {
@@ -4280,145 +4280,26 @@
     },
     "1382": {
       "issue": 1382,
+      "branch": "codex/history0-mutation-diagnostic-timing",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/history0-mutation-diagnostic-timing",
-      "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 356,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794383754603,
-      "reviewEntry": 1,
-      "patchId": "176b7ae90dd1120bbaf10efecc0d6274ebec644a",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "scripts/mutation-registry.mjs",
-        "test/mutation-gate.test.mjs"
-      ],
-      "s6": {
-        "id": "20261111T075610385-1f8802c2",
-        "name": "Тесты для задачи #1382 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T075610385-1f8802c2/report.json",
-        "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
-        "status": "passed",
-        "finishedAt": "2026-11-11T07:58:06.538Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "412f1993843b72adf9311f908f552e7a419c4530",
+      "mergedSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+      "mergedAt": 1794384063902,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1382:1:176b7ae90dd1120bbaf10efecc0d6274ebec644a:412f1993843b72adf9311f908f552e7a419c4530",
-      "reviewMaterial": {
-        "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
-        "expectedBase": "412f1993843b72adf9311f908f552e7a419c4530",
-        "patchId": "176b7ae90dd1120bbaf10efecc0d6274ebec644a"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1382,
-        "requestId": "review:1382:1:176b7ae90dd1120bbaf10efecc0d6274ebec644a:412f1993843b72adf9311f908f552e7a419c4530",
-        "kind": "code",
-        "base": "412f1993843b72adf9311f908f552e7a419c4530",
-        "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
-        "patchId": "176b7ae90dd1120bbaf10efecc0d6274ebec644a",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1382,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1382",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Ремонт согласованного подключения guard, не ослабление корректности продукта. Единственный performance flag уже существует и применяется в S6, сохраняет budgetFailures и все обязательные проверки. Изменены только команда/пояснение одного guard, адресная проверка его подключения и changelog RU/EN. Патч мутанта не изменён. Поднимать временные пороги или менять продукт не требуется.\n\nПроверено до передачи:\n\n- Новый тест подключения: красный до добавления флага, зелёный после (`artifacts/1382-before.log`, `1382-after.log`).\n- `node scripts/mutation-gate.mjs --execute-nightly --id=paired-history-rebuilds-floor-1093`: exit 0, чистый guard с диагностическим флагом прошёл, реальный мутант пойман заявленным тестом, `поймано 1 из 1` (`artifacts/1382-witness.log`). CLI отличает падение assertion от отказа компиляции/подготовки. Детальный stdout пойманного мутанта этот CLI не сохраняет; поэтому точный текст его отказа в данном логе не утверждается. Строгий `copy: unchanged scaled floor model` остаётся в native-сценарии неизменным.\n- `node --test test/selective-invalidation-timing.test.mjs`: 1/1 PASS; существующие negative cases проверяют trusted/persisted/single-write, нечисловые измерения, полноту и пустой набор. Этот файл не изменён. Отдельный добавленный дубликат timing-case исключён из итогового diff: иначе статический импорт browser benchmark требует продуктовый профиль, не относящийся к узкому ремонту guard. Обвязка выбора проверок не менялась.\n- План S6 infra: синтаксис и 20 выбранных читателей реестра/мутационного механизма; без сборки продукта, golden, HA E2E и фоновых шардов. Результат очередного S6 публикуется штатно через finish.\n\nПолный ночной шард и все пять частей не запускались; будущая зелень всех ночных прогонов этой адресной проверкой не обещается. Реальная установка владельца и релизы не затронуты. Основной риск — ошибочно скрыть обязательный отказ режимом diagnostic; для этого сохранены существующие negative cases, контракт команды и реальный mutant run. Логи адресной диагностики локальные, итог S6 передаётся координатором."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокеров нет, принимаю. В guard одного свидетеля `paired-history-rebuilds-floor-1093` добавлен уже существующий флаг `--diagnostic-timing`. В бенчмарке он делает ровно одно: превышения бюджетов времени не попадают в `failures`, но остаются в `budgetFailures`, `timingStatus` и отчёте. Обязательные отказы продолжают валить запуск: проверки native/persisted/single-write, нечисловые измерения, неполная выборка и пустой набор samples. Ловушка мутанта — assert `unchanged scaled floor model` в history-сценарии. Это исключение, оно попадает в `failures` до учёта режима и от флага не зависит. Порогов, патча мутанта и продуктового кода изменение не касается. Ночные шарды больше не должны останавливаться на чистом контроле из-за шумного long task на CI. Зелёных ночных прогонов в целом это не гарантирует, и автор об этом прямо пишет.",
-          "understanding": "Проблема. Ночной шард 4/5 остановился на чистом контроле guard `paired-history-rebuilds-floor-1093`. Причина — только тайминг: `history-copy: long task=211 >200`. Мутанты этого шарда так и не были применены. В S6 тот же smoke запускается с `--diagnostic-timing` (`process-next/lib/catalog.mjs:154-166`, набор `exclusiveSmokes`), а мутационный guard шёл без флага, то есть с жёсткими бюджетами времени.\n\nДо изменения: `compiledNodeSmoke('smoke_selective_invalidation_history0')` → `runSelectiveInvalidationGate({diagnosticTiming:false})`, и любое превышение бюджета давало exit 1. После: строка guard заканчивается на `node demo/smoke_selective_invalidation_history0.mjs --diagnostic-timing`. Флаг стоит после последнего `&&`, поэтому попадает только к smoke, а не к `tsc` или `fix-test-build`. Smoke читает его через `process.argv.includes` (`demo/smoke_selective_invalidation_history0.mjs:4`).\n\nЧто разобрано:\n1) `demo/benchmark_selective_invalidation.mjs:25-47, 91-104`. `timingVerdict` разделяет обязательные `failures` и `budgetFailures`. Режим diagnostic отключает только строку 93 (`failures.push(...budgetFailures)`). Исключения из `runScene` перехватываются в строке 94 и попадают в `failures` в любом режиме. Exit code задаёт `failures.length`.\n2) `demo/helpers/selective-invalidation-history.mjs:118-129`. Assert `${action}: unchanged scaled floor model` (стр. 124) проверяет равенство счётчика `spaceModels` до и после операции. Патч мутанта `if (false && previous?.key === key)` отключает повторное использование модели, поэтому счётчик меняется и срабатывает assert. Ловушка не зависит от времени.\n3) Разбор guard механизмом мутаций. `guardFiles` (`scripts/mutation-selection.mjs:28-39`) отбрасывает токены, которые начинаются с `-` и не заканчиваются на `.mjs`/`.py`, так что флаг не влияет ни на выбор входов, ни на `guardEnvironment` (`scripts/mutation-environment.mjs:84-94`). Других мутантов с тем же guard в реестре нет, общий чистый контроль не расщепляется.\n4) Соседний свидетель `paint-save-retains-accepted-exit-1093` на `smoke_selective_invalidation_visible` сознательно оставлен строгим. Его мутант (180 ms анимации закрытия) ловится именно бюджетом времени, поэтому сужать ремонт до одного свидетеля правильно.",
-          "analysis": [
-            {
-              "topic": "Не скрывает ли diagnostic обязательные отказы",
-              "assessment": "Нет. Режим работает в одной точке и снимает только бюджетные ошибки. Проверки trusted, persisted, requests===1, числовые и неотрицательные поля, полнота выборки (`row.n!==iterations`) и пустая матрица записываются в `failures` в `timingVerdict` при любом режиме. Assert'ы сценария (порядок input≤request≤ack≤paint, floor-ключи, `spaceModels`, persisted config/layout) выбрасывают исключения, которые тоже идут в `failures`. Риск, отмеченный автором, конструктивно закрыт.",
-              "evidence": "demo/benchmark_selective_invalidation.mjs:26-35 (обязательные ошибки), 37-44 (только budgetFailures), 93 (единственное ветвление по diagnosticTiming), 94 (catch → failures), 104 (exitCode по failures); demo/helpers/selective-invalidation-history.mjs:118-128."
-            },
-            {
-              "topic": "Мутант по-прежнему ловится по корректности, а не по времени",
-              "assessment": "Ловушка `unchanged scaled floor model` — строгий assert, режим на неё не влияет. Если бы мутант раньше ловился только превышением времени, после изменения он бы выжил, и мутационный прогон это показал бы. По словам автора, `--execute-nightly --id` дал «поймано 1 из 1». Точную причину отказа его CLI не сохраняет, но по коду это единственный нетайминговый путь, который реагирует на этот патч.",
-              "evidence": "Патч в scripts/mutation-registry.mjs:19260 не изменён; assert — demo/helpers/selective-invalidation-history.mjs:124. Результат прогона — со слов автора (artifacts/1382-witness.log), лог я не видел."
-            },
-            {
-              "topic": "Согласованность с S6 и механизмом мутаций",
-              "assessment": "Флаг тот же, что S6 передаёт этому smoke (`exclusiveSmokes`). Дублировать политику не пришлось. Склейка строк корректна: флаг относится к последней команде в цепочке `&&`. Выбор входов и окружения guard флаг не меняет.",
-              "evidence": "process-next/lib/catalog.mjs:156-166; scripts/mutation-registry.mjs:12-13 и 19257; scripts/mutation-selection.mjs:35."
-            },
-            {
-              "topic": "Адресная регрессия",
-              "assessment": "Тест закрепляет полную строку guard и сам патч, так что случайный откат флага или правка мутанта будут замечены. Тест сравнивает строку точно, поэтому изменение `compiledNodeSmoke` его сломает, но для фиксации контракта подключения это приемлемо.",
-              "evidence": "test/mutation-gate.test.mjs:32-39 (новый тест)."
-            },
-            {
-              "topic": "Объём и документация",
-              "assessment": "Затронуты только реестр, тест и changelog RU/EN. Продукт, пороги, бенчмарк и остальные guard не изменены, что соответствует AC3. Записи в changelog точно описывают суть: строгая корректность, диагностические бюджеты, пороги сохранены.",
-              "evidence": "diff: docs/CHANGELOG.md, docs/CHANGELOG.ru.md, scripts/mutation-registry.mjs, test/mutation-gate.test.mjs."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Необязательно. Если `compiledNodeSmoke` примет второй аргумент со списком дополнительных аргументов, флаг не придётся приклеивать конкатенацией, и это будет удобнее для следующих guard в том же положении. Пользы мало, пока такой guard один, поэтому текущий вариант тоже нормален."
-          ],
-          "boundaries": "Код изучен только по исходникам на head 787f61dbc: реестр, бенчмарк, history-helper, smoke-обёртка, разбор guard в mutation-selection и mutation-environment, политика S6 в catalog.mjs. Ничего не запускал. Опираюсь на квитанцию S6 20261111T075610385-1f8802c2 (passed, без отказов) и на заявленные автором локальные результаты: тест красный до флага и зелёный после, `mutation-gate --execute-nightly --id` с итогом «поймано 1 из 1», `selective-invalidation-timing.test.mjs` 1/1. Сами логи artifacts/1382-*.log я не видел. Полный ночной шард и все пять частей не запускались, поэтому зелёные ночные прогоны в будущем этим не подтверждены."
-        },
-        "usage": {
-          "input_tokens": 26,
-          "cache_creation_input_tokens": 38232,
-          "cache_read_input_tokens": 278597,
-          "output_tokens": 6472,
-          "output_tokens_details": {
-            "thinking_tokens": 1248
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 38232,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 848,
-              "cache_read_input_tokens": 33600,
-              "cache_creation_input_tokens": 8836,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 8836
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокеров нет, принимаю. В guard одного свидетеля `paired-history-rebuilds-floor-1093` добавлен уже существующий флаг `--diagnostic-timing`. В бенчмарке он делает ровно одно: превышения бюджетов времени не попадают в `failures`, но остаются в `budgetFailures`, `timingStatus` и отчёте. Обязательные отказы продолжают валить запуск: проверки native/persisted/single-write, нечисловые измерения, неполная выборка и пустой набор samples. Ловушка мутанта — assert `unchanged scaled floor model` в history-сценарии. Это исключение, оно попадает в `failures` до учёта режима и от флага не зависит. Порогов, патча мутанта и продуктового кода изменение не касается. Ночные шарды больше не должны останавливаться на чистом контроле из-за шумного long task на CI. Зелёных ночных прогонов в целом это не гарантирует, и автор об этом прямо пишет.\n\n## Понимание решения\n\nПроблема. Ночной шард 4/5 остановился на чистом контроле guard `paired-history-rebuilds-floor-1093`. Причина — только тайминг: `history-copy: long task=211 >200`. Мутанты этого шарда так и не были применены. В S6 тот же smoke запускается с `--diagnostic-timing` (`process-next/lib/catalog.mjs:154-166`, набор `exclusiveSmokes`), а мутационный guard шёл без флага, то есть с жёсткими бюджетами времени.\n\nДо изменения: `compiledNodeSmoke('smoke_selective_invalidation_history0')` → `runSelectiveInvalidationGate({diagnosticTiming:false})`, и любое превышение бюджета давало exit 1. После: строка guard заканчивается на `node demo/smoke_selective_invalidation_history0.mjs --diagnostic-timing`. Флаг стоит после последнего `&&`, поэтому попадает только к smoke, а не к `tsc` или `fix-test-build`. Smoke читает его через `process.argv.includes` (`demo/smoke_selective_invalidation_history0.mjs:4`).\n\nЧто разобрано:\n1) `demo/benchmark_selective_invalidation.mjs:25-47, 91-104`. `timingVerdict` разделяет обязательные `failures` и `budgetFailures`. Режим diagnostic отключает только строку 93 (`failures.push(...budgetFailures)`). Исключения из `runScene` перехватываются в строке 94 и попадают в `failures` в любом режиме. Exit code задаёт `failures.length`.\n2) `demo/helpers/selective-invalidation-history.mjs:118-129`. Assert `${action}: unchanged scaled floor model` (стр. 124) проверяет равенство счётчика `spaceModels` до и после операции. Патч мутанта `if (false && previous?.key === key)` отключает повторное использование модели, поэтому счётчик меняется и срабатывает assert. Ловушка не зависит от времени.\n3) Разбор guard механизмом мутаций. `guardFiles` (`scripts/mutation-selection.mjs:28-39`) отбрасывает токены, которые начинаются с `-` и не заканчиваются на `.mjs`/`.py`, так что флаг не влияет ни на выбор входов, ни на `guardEnvironment` (`scripts/mutation-environment.mjs:84-94`). Других мутантов с тем же guard в реестре нет, общий чистый контроль не расщепляется.\n4) Соседний свидетель `paint-save-retains-accepted-exit-1093` на `smoke_selective_invalidation_visible` сознательно оставлен строгим. Его мутант (180 ms анимации закрытия) ловится именно бюджетом времени, поэтому сужать ремонт до одного свидетеля правильно.\n\n## Разбор решения\n\n### Не скрывает ли diagnostic обязательные отказы\n\nНет. Режим работает в одной точке и снимает только бюджетные ошибки. Проверки trusted, persisted, requests===1, числовые и неотрицательные поля, полнота выборки (`row.n!==iterations`) и пустая матрица записываются в `failures` в `timingVerdict` при любом режиме. Assert'ы сценария (порядок input≤request≤ack≤paint, floor-ключи, `spaceModels`, persisted config/layout) выбрасывают исключения, которые тоже идут в `failures`. Риск, отмеченный автором, конструктивно закрыт.\n\nОснование: demo/benchmark_selective_invalidation.mjs:26-35 (обязательные ошибки), 37-44 (только budgetFailures), 93 (единственное ветвление по diagnosticTiming), 94 (catch → failures), 104 (exitCode по failures); demo/helpers/selective-invalidation-history.mjs:118-128.\n\n### Мутант по-прежнему ловится по корректности, а не по времени\n\nЛовушка `unchanged scaled floor model` — строгий assert, режим на неё не влияет. Если бы мутант раньше ловился только превышением времени, после изменения он бы выжил, и мутационный прогон это показал бы. По словам автора, `--execute-nightly --id` дал «поймано 1 из 1». Точную причину отказа его CLI не сохраняет, но по коду это единственный нетайминговый путь, который реагирует на этот патч.\n\nОснование: Патч в scripts/mutation-registry.mjs:19260 не изменён; assert — demo/helpers/selective-invalidation-history.mjs:124. Результат прогона — со слов автора (artifacts/1382-witness.log), лог я не видел.\n\n### Согласованность с S6 и механизмом мутаций\n\nФлаг тот же, что S6 передаёт этому smoke (`exclusiveSmokes`). Дублировать политику не пришлось. Склейка строк корректна: флаг относится к последней команде в цепочке `&&`. Выбор входов и окружения guard флаг не меняет.\n\nОснование: process-next/lib/catalog.mjs:156-166; scripts/mutation-registry.mjs:12-13 и 19257; scripts/mutation-selection.mjs:35.\n\n### Адресная регрессия\n\nТест закрепляет полную строку guard и сам патч, так что случайный откат флага или правка мутанта будут замечены. Тест сравнивает строку точно, поэтому изменение `compiledNodeSmoke` его сломает, но для фиксации контракта подключения это приемлемо.\n\nОснование: test/mutation-gate.test.mjs:32-39 (новый тест).\n\n### Объём и документация\n\nЗатронуты только реестр, тест и changelog RU/EN. Продукт, пороги, бенчмарк и остальные guard не изменены, что соответствует AC3. Записи в changelog точно описывают суть: строгая корректность, диагностические бюджеты, пороги сохранены.\n\nОснование: diff: docs/CHANGELOG.md, docs/CHANGELOG.ru.md, scripts/mutation-registry.mjs, test/mutation-gate.test.mjs.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Необязательно. Если `compiledNodeSmoke` примет второй аргумент со списком дополнительных аргументов, флаг не придётся приклеивать конкатенацией, и это будет удобнее для следующих guard в том же положении. Пользы мало, пока такой guard один, поэтому текущий вариант тоже нормален.\n\n## Границы анализа\n\nКод изучен только по исходникам на head 787f61dbc: реестр, бенчмарк, history-helper, smoke-обёртка, разбор guard в mutation-selection и mutation-environment, политика S6 в catalog.mjs. Ничего не запускал. Опираюсь на квитанцию S6 20261111T075610385-1f8802c2 (passed, без отказов) и на заявленные автором локальные результаты: тест красный до флага и зелёный после, `mutation-gate --execute-nightly --id` с итогом «поймано 1 из 1», `selective-invalidation-timing.test.mjs` 1/1. Сами логи artifacts/1382-*.log я не видел. Полный ночной шард и все пять частей не запускались, поэтому зелёные ночные прогоны в будущем этим не подтверждены.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 412f1993843b72adf9311f908f552e7a419c4530 → 787f61dbcf11d4a5593369d7e98156ed4cf48a39\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1382, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nРемонт согласованного подключения guard, не ослабление корректности продукта. Единственный performance flag уже существует и применяется в S6, сохраняет budgetFailures и все обязательные проверки. Изменены только команда/пояснение одного guard, адресная проверка его подключения и changelog RU/EN. Патч мутанта не изменён. Поднимать временные пороги или менять продукт не требуется.\n\nПроверено до передачи:\n\n- Новый тест подключения: красный до добавления флага, зелёный после (`artifacts/1382-before.log`, `1382-after.log`).\n- `node scripts/mutation-gate.mjs --execute-nightly --id=paired-history-rebuilds-floor-1093`: exit 0, чистый guard с диагностическим флагом прошёл, реальный мутант пойман заявленным тестом, `поймано 1 из 1` (`artifacts/1382-witness.log`). CLI отличает падение assertion от отказа компиляции/подготовки. Детальный stdout пойманного мутанта этот CLI не сохраняет; поэтому точный текст его отказа в данном логе не утверждается. Строгий `copy: unchanged scaled floor model` остаётся в native-сценарии неизменным.\n- `node --test test/selective-invalidation-timing.test.mjs`: 1/1 PASS; существующие negative cases проверяют trusted/persisted/single-write, нечисловые измерения, полноту и пустой набор. Этот файл не изменён. Отдельный добавленный дубликат timing-case исключён из итогового diff: иначе статический импорт browser benchmark требует продуктовый профиль, не относящийся к узкому ремонту guard. Обвязка выбора проверок не менялась.\n- План S6 infra: синтаксис и 20 выбранных читателей реестра/мутационного механизма; без сборки продукта, golden, HA E2E и фоновых шардов. Результат очередного S6 публикуется штатно через finish.\n\nПолный ночной шард и все пять частей не запускались; будущая зелень всех ночных прогонов этой адресной проверкой не обещается. Реальная установка владельца и релизы не затронуты. Основной риск — ошибочно скрыть обязательный отказ режимом diagnostic; для этого сохранены существующие negative cases, контракт команды и реальный mutant run. Логи адресной диагностики локальные, итог S6 передаётся координатором.\n```\n\n</details>\n",
-        "createdAt": "2026-11-11T08:00:30.233Z",
-        "artifactId": 13839040657,
-        "runId": 42983383968,
-        "runAttempt": 1,
-        "completedAt": "2026-11-11T07:58:29Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42983383968",
-        "runStatus": "in_progress",
-        "publicationPending": true,
-        "expectedBase": "412f1993843b72adf9311f908f552e7a419c4530"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1794384054982,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "not-required"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4663,19 +4544,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1382,
-    "worker": "finish",
-    "token": "356:finish:5d9df066-de1c-4cf3-931e-24a57f43532c:finish:1:admit",
-    "fence": 356,
-    "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
-    "expectedBase": "412f1993843b72adf9311f908f552e7a419c4530",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794383758690,
-    "expiresAt": 1794387646419,
-    "patchId": "176b7ae90dd1120bbaf10efecc0d6274ebec644a",
-    "reviewRequest": "review:1382:1:176b7ae90dd1120bbaf10efecc0d6274ebec644a:412f1993843b72adf9311f908f552e7a419c4530"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -4777,50 +4646,6 @@
       "digest": "fb4637786d495fc8ce43ce75f7a7eb1c2167af80d6ab3749599266002f7b48d5",
       "issue": 1024
     },
-    "finish:5d9df066-de1c-4cf3-931e-24a57f43532c:finish:2:synchronized": {
-      "digest": "f944433399e1e8adf64a973421f89e65bfb1086234b23f25bc5c08c51f599822",
-      "issue": 1382
-    },
-    "finish:e0f31e38-b204-4b27-9ac8-04175b7ccdfe": {
-      "digest": "b3f3aced17e0fd46e4af4a102fa371a09743a2c4abae746464de813dadecbddd",
-      "issue": 1382
-    },
-    "github:42983224463:1:completions:message:701bdc39a0e8b1cec7eec965795576bf85c15237c498bebedb01b0b6f4161501": {
-      "digest": "05129400418929e1a1e7583d65b30a239000436b72b740198fcba2f18c7321e8",
-      "issue": 1382
-    },
-    "github:42983224463:1:completions:message:c21c0ed12c1cfbcec6ba96a2b93a908ad247b1a6a6419c0661f0863d4dd79e98": {
-      "digest": "397044e437e6ed609a4d6d19eb6751a0f3a2baa4bb3a13f399992b296cd1746b",
-      "issue": 1382
-    },
-    "finish:f0888402-03f4-48eb-910e-9e5d619c8c55": {
-      "digest": "b3bfccd85e344d8e4b4fd8dfafdd7fe572f7f2b2f6303961e7fa0da61badc478",
-      "issue": 1382
-    },
-    "finish:5d9df066-de1c-4cf3-931e-24a57f43532c:finish:3:s6-label": {
-      "digest": "fc2bb5bab072b517f8fe6517db96b441bd11b97d2dd9f6832d3ca0fc3d7ffb9a",
-      "issue": 1382
-    },
-    "finish:5d9df066-de1c-4cf3-931e-24a57f43532c:finish:4:review-requested": {
-      "digest": "57035fa9e67cd441757d8189616d3206ae6172655df329d4ab13b251316e0964",
-      "issue": 1382
-    },
-    "github:42983361290:1:completions:message:9cd401c8a78974538d61d7b7060d053b594aa2dc7e6923cfbcb596aa85f1d809": {
-      "digest": "ea4a3864a27e0c984c22cdec78efab649a8cb22ad41323968ad54fada0dd0aa7",
-      "issue": 1382
-    },
-    "finish:5d9df066-de1c-4cf3-931e-24a57f43532c:finish:6:review-presentation": {
-      "digest": "8094806f20b8de646830cffec87abfc3b6dd6575bac7b70993a531789821f133",
-      "issue": 1382
-    },
-    "finish:5d9df066-de1c-4cf3-931e-24a57f43532c:finish:6:review-complete": {
-      "digest": "ca1180bb24d309a1b2145e71a4f28c1394c41e51f2dcecb4d75be499d31fe2c5",
-      "issue": 1382
-    },
-    "github:42983658734:1:tick:0:automation-pending": {
-      "digest": "639d4b96409331a8b10ae56b22beb7514968a39f0d1c8af0499c23403ca7ff10",
-      "issue": 1382
-    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4868,65 +4693,6 @@
         "reviewChanges": "### Цель и результат\n\nРедакция 3 после [второго ревью](https://github.com/Matysh/houseplan-card/issues/1024#issuecomment-6789623047). Согласованный владельцем объём сохранён. Первый раунд исправлений признан закрывшим прежние блокеры; теперь уточнены смена обоих векторов базиса при канонизации и копирование без живых привязок по #1227. Архитектура независимых створок/ставней, масок света и защиты writer сохранена. Реализация не начата.\n\n### Решение и альтернативы\n\nОриентир: dev `412f1993843b72adf9311f908f552e7a419c4530`, повторно сверенный при правках. Массив стабильных частей, равные доли и явное массовое действие сохраняются. Для ставней выбран единый условный угол 90° вместо смешанного правила 90°/180°: он не требует смены позы при изменении числа долей и не ложится поверх соседнего стекла. Для совпадающих линий окна/ставней задано единое символическое разнесение, не новая физическая геометрия.\n\nВыбран конечный локальный базис явного окна с удалением legacy contact/invert/flip при материализации. Альтернатива «родительские flip как ещё один трансформ всех частей» отклонена: обычное изменение «Открывания» иначе переносило бы наружные ставни внутрь. Настройка стороны оконного полотна отделена от настоящего отражения всего объекта. В config/set задан явный признак понимающего писателя; одного объявления capability сервером недостаточно. Геометрический model11 не повышается, перенос с расширением защищён новой portable-версией.\n\nВ редакции 3 канонизация рассматривается после предполагаемого физического преобразования: полуоборот меняет u и v вместе. Для откатного полотна физическая грань восстанавливается через соответствующий типу resolver, а не безусловным переключением flip_v — снаружи комнаты naturalSide может измениться сама. Для Copy выбран не новый режим копирования, а действующий контракт #1227 с очисткой вложенных контактов. Contact-источник после очистки остаётся явно неназначенным; автоматический перевод в manual отклонён, поскольку мог бы превратить сохранённое ручное «закрыто» в неожиданную световую маску.\n\n### Риски и места для внимания\n\nОсобенно проверить смену базиса у вертикальной стены во всех путях из добавленной матрицы, компенсацию физической грани с учётом !flip_v ворот и различий outer/shared/partition, отсутствие двойного reverse после ACK/проекции и совпадение двух проекций Copy. Перепроверены logic.snapToWall, рендер/face-resolver, wall_node_move/merge/attach, graph_node_write, coordinate_canonicalization, partition_promotion, обе space-copy и контракт #1227. Для остальных перечисленных модулей заданы обязательные контракты/план адресной проверки при реализации, а не заявлено выполненное доказательство. Это не ограничивает ревьюера; Sun/Glow, импорт/экспорт и безопасность данных по-прежнему требуют проверки по полному ТЗ.\n\n### Проверки и ограничения\n\nЭто исправление ТЗ на S3, прогонов продукта нет: тесты, сборки, lint и замеры не запускались. Авторская проверка структуры `node process-next/cli.mjs spec-check --file artifacts/issue1024/specification.md` на редакции 3: `applicable=true, ok=true, errors=[]`. Это проверка формы ТЗ, не подтверждение реализации. Исходники dev остались `412f1993843b72adf9311f908f552e7a419c4530`; новые физические сценарии пока являются планом тестов. Прежние отчёты и опубликованные снимки контекста не редактируются.\n\n### Исправления по предыдущему ревью\n\nОснование: [раунд 2 — changes_requested](https://github.com/Matysh/houseplan-card/issues/1024#issuecomment-6789623047), материал dev `412f1993843b72adf9311f908f552e7a419c4530`, run 42977597935. Новая передача — **редакция 3 тела issue**, подготовленная после подтверждённого возврата S4 → S3. Исправления первого раунда сохраняются в ТЗ и [снимке передачи редакции 2](https://github.com/Matysh/houseplan-card/issues/1024#issuecomment-6789530082); второе ревью признало их закрывшими прежние блокеры.\n\n1. **Блокер: полуоборот канонического базиса меняет и u, и v →** §1 задаёт полный reverse(leaves)+hinge start/end+side negative/positive у створок и ставней, включая неактивные; ID/контакты следуют целой записи. §2 меняет направление отката и сохраняет физическую грань активного откатного полотна через resolver, а не слепой toggle flip_v. Операция сначала переносит физическую позу, затем один раз выполняет перепараметризацию. AC12 и план п.3 добавляют 89→90→91°/обратный ход, узел вертикальной стены с наклоном 1°, оба типа/стороны/host, физические концы и нормали как независимый оракул, превью→ACK и Undo/Redo/reload без двойного reverse.\n2. **Блокер: Copy сохранял вложенные контакты вопреки #1227 →** §6/«Миграция» п.6/AC13/план п.6 теперь отделяют экспортное восстановление от копирования пространства. Обе space-copy очищают верхние и вложенные contact/lock, в том числе выключенные сохранённые ставни, при сохранении структуры/локальных ID/ориентации/manual-значения. Contact-источник без сущности валиден как «Датчик не назначен», нейтрален и без маски; manual остаётся прежним. Клиентская и серверная проекции сверяются целиком, источник/прежняя геометрическая совместимость #1227 не меняются. Реестр совместимости должен отразить это расширение правила, а не изменить смысл Copy.\n3. **Грань откатных ворот должна учитывать !flip_v →** §2 прямо фиксирует faceFlipV=flip_v для двери и !flip_v для ворот, общий resolver на всех поверхностях и неизменность выбранной грани при смене механизма на той же геометрии. Компенсация канонизации проверяется по физической нормали для наружной/shared/partition стены; безусловное инвертирование флага не требуется и могло бы дать ошибку на наружной стене.\n4. **Общий список специализированных путей был неопределённым →** в «Модели данных» дана конечная матрица wall_node_move/merge/attach/delete, graph_node_write/plan_graph, partition_promotion, opening_repair, coordinate_canonicalization, align-grid/placement и двух space-copy. Она задаёт сохранение/преобразование/удаление вложенных данных, отсутствие двойной компенсации и сохранение строгих серверных доказательств; п.3/6 плана ссылаются на эту матрицу.\n5. **Расхождение старой и новой формы при переходе вертикали нужно назвать →** §1/§2/AC12 сохраняют существующий некомпенсированный разворот у неявных и активных распашных проёмов, а компенсация обязательна у явного окна и откатного механизма. Исправление всего прежнего поведения не добавляется скрыто; для него в план заложен отдельный legacy-оракул. Документация совместимости должна явно назвать эту границу.\n\nОткрытых вопросов владельцу по этим замечаниям нет. Проектные решения редакции 3 подлежат повторному S4; разрешение на реализацию или положительный результат нового ревью не заявляются.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:5d9df066-de1c-4cf3-931e-24a57f43532c": {
-      "digest": "1badf13a66586445ad7aedaf83f4f9fee943a31044e706567a76d46f44bfdd6c",
-      "issue": 1382,
-      "message": {
-        "kind": "queued",
-        "issue": 1382,
-        "at": 1794383754603,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
-        "delivered": true
-      }
-    },
-    "finish:5d9df066-de1c-4cf3-931e-24a57f43532c:finish:1:admit": {
-      "digest": "3c99f02a3e77c037b21e110ab823d4e630a64fcfcf5660a007bf7e0dde515376",
-      "issue": 1382,
-      "message": {
-        "kind": "admitted",
-        "issue": 1382,
-        "at": 1794383758690,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:5d9df066-de1c-4cf3-931e-24a57f43532c:finish:3:s6-complete": {
-      "digest": "bd181ba749d4f71c7ea11fa900e7be89bebb645304847a49e29af51c3a62abbb",
-      "issue": 1382,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1382,
-        "at": 1794383887796,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
-        "phase": "review",
-        "evidence": {
-          "id": "20261111T075610385-1f8802c2",
-          "name": "Тесты для задачи #1382 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T075610385-1f8802c2/report.json",
-          "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
-          "status": "passed",
-          "finishedAt": "2026-11-11T07:58:06.538Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Ремонт согласованного подключения guard, не ослабление корректности продукта. Единственный performance flag уже существует и применяется в S6, сохраняет budgetFailures и все обязательные проверки. Изменены только команда/пояснение одного guard, адресная проверка его подключения и changelog RU/EN. Патч мутанта не изменён. Поднимать временные пороги или менять продукт не требуется.\n\nПроверено до передачи:\n\n- Новый тест подключения: красный до добавления флага, зелёный после (`artifacts/1382-before.log`, `1382-after.log`).\n- `node scripts/mutation-gate.mjs --execute-nightly --id=paired-history-rebuilds-floor-1093`: exit 0, чистый guard с диагностическим флагом прошёл, реальный мутант пойман заявленным тестом, `поймано 1 из 1` (`artifacts/1382-witness.log`). CLI отличает падение assertion от отказа компиляции/подготовки. Детальный stdout пойманного мутанта этот CLI не сохраняет; поэтому точный текст его отказа в данном логе не утверждается. Строгий `copy: unchanged scaled floor model` остаётся в native-сценарии неизменным.\n- `node --test test/selective-invalidation-timing.test.mjs`: 1/1 PASS; существующие negative cases проверяют trusted/persisted/single-write, нечисловые измерения, полноту и пустой набор. Этот файл не изменён. Отдельный добавленный дубликат timing-case исключён из итогового diff: иначе статический импорт browser benchmark требует продуктовый профиль, не относящийся к узкому ремонту guard. Обвязка выбора проверок не менялась.\n- План S6 infra: синтаксис и 20 выбранных читателей реестра/мутационного механизма; без сборки продукта, golden, HA E2E и фоновых шардов. Результат очередного S6 публикуется штатно через finish.\n\nПолный ночной шард и все пять частей не запускались; будущая зелень всех ночных прогонов этой адресной проверкой не обещается. Реальная установка владельца и релизы не затронуты. Основной риск — ошибочно скрыть обязательный отказ режимом diagnostic; для этого сохранены существующие negative cases, контракт команды и реальный mutant run. Логи адресной диагностики локальные, итог S6 передаётся координатором.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
       }
