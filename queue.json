@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9153,
-  "nextTicket": 360,
+  "revision": 9154,
+  "nextTicket": 361,
   "nextFence": 360,
   "tasks": {
     "1170": {
@@ -4273,6 +4273,20 @@
         "status": "published",
         "sourceSha": "20a8fec94a403520d4a38c7c9e8f0d5d9f535b3d"
       }
+    },
+    "1384": {
+      "issue": 1384,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/resize-pass-junction",
+      "materialSha": "9edc161b73836117f34465ed8f6ba494a61576dd",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 360,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794406444284,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4502,7 +4516,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1384
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4666,6 +4682,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "20a8fec94a403520d4a38c7c9e8f0d5d9f535b3d"
+      }
+    },
+    "finish:713e4ac0-4314-4071-a44b-30c8727c75cc": {
+      "digest": "a61a97e97744f1ba700fe717dc56d313b448bf909c31daa2e3b2e24f6721cb61",
+      "issue": 1384,
+      "message": {
+        "kind": "queued",
+        "issue": 1384,
+        "at": 1794406444284,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9edc161b73836117f34465ed8f6ba494a61576dd"
       }
     }
   },
