@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9414,
+  "revision": 9415,
   "nextTicket": 368,
   "nextFence": 368,
   "tasks": {
@@ -4310,7 +4310,18 @@
         "test/bundle-sync.test.mjs",
         "tests_backend/test_frontend_assets.py",
         "tests_backend/test_ha_frontend_assets.py"
-      ]
+      ],
+      "reason": "executor-stopped",
+      "notice": {
+        "key": "1:executor-stopped",
+        "reason": "executor-stopped",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794421524818,
+        "entry": 1,
+        "detail": "Before review: ignore the newly generated demo encoded folder like existing generated assets; preserve applicable receipts.",
+        "eventId": "author-stop-1387-generated-ignore-20261111:return:1387"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4541,18 +4552,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1387,
-    "worker": "finish",
-    "token": "367:finish:b3b18a91-915e-444c-8076-d1694e96713d:finish:1:admit",
-    "fence": 367,
-    "materialSha": "4539f74d0e2c2e4b8ea4c5f636e39eedcb51a71c",
-    "expectedBase": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
-    "phase": "testing",
-    "admittedAt": 1794421097380,
-    "expiresAt": 1794421816278,
-    "patchId": "3099e257d3048b0970c28f9a438d17c3ff1a8051"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -4678,6 +4678,10 @@
       "digest": "522a291eef0199298378a9bca738de3eaf92da4f83fa95ff30bad6044eee3fc6",
       "issue": 1387
     },
+    "author-stop-1387-generated-ignore-20261111": {
+      "digest": "e9dafb16bf8cc04e48c8cd6b462a4b19583a57f9132e148b2f716afa62617718",
+      "issue": 1387
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4754,6 +4758,26 @@
         "layer": "product",
         "materialSha": "4539f74d0e2c2e4b8ea4c5f636e39eedcb51a71c",
         "phase": "sync"
+      }
+    },
+    "author-stop-1387-generated-ignore-20261111:return:1387": {
+      "digest": "e9dafb16bf8cc04e48c8cd6b462a4b19583a57f9132e148b2f716afa62617718",
+      "issue": 1387,
+      "message": {
+        "kind": "return",
+        "issue": 1387,
+        "at": 1794421524818,
+        "entry": 1,
+        "notice": {
+          "key": "1:executor-stopped",
+          "reason": "executor-stopped",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794421524818,
+          "entry": 1,
+          "detail": "Before review: ignore the newly generated demo encoded folder like existing generated assets; preserve applicable receipts.",
+          "eventId": "author-stop-1387-generated-ignore-20261111:return:1387"
+        }
       }
     }
   },
