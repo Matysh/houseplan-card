@@ -656,6 +656,7 @@ export class HouseplanCard extends LitElement {
         this._haDeviceHistoryApi = null;
         this._editorRuntime?.deviceStructure.retire();
         this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
+        this._spaceModels.clear(); this._modelCache = null;
         this._liveSyncConnection = null;
         this._saveConfigDebounced.cancel(); this._adoption.resetContext();
         this._writeChain = Promise.resolve(); this._writesPending = 0;
@@ -1212,6 +1213,9 @@ export class HouseplanCard extends LitElement {
   private _liveSyncAttempt: Promise<void> | null = null;
   private _liveSyncGeneration = 0;
   private _liveSyncConnection: any = null;
+  private readonly _liveSyncReceivers = new Map<string, (event: unknown) => void | Promise<void>>();
+  private _liveSyncSubscriptionOwner = {};
+  private _detachSubscriptionsTimer?: number;
   /** #543: only the newest live-context config read may cross adoption. */
   private readonly _configReloadAuthority = new ConfigReloadAuthority();
   private readonly _read = new CardReadLifecycle();
@@ -3601,6 +3605,9 @@ export class HouseplanCard extends LitElement {
   };
 
   public connectedCallback(): void {
+    const shortReturn = this._detachSubscriptionsTimer !== undefined;
+    clearTimeout(this._detachSubscriptionsTimer); this._detachSubscriptionsTimer = undefined;
+    if (shortReturn && this._loadOk && (!this._unsubCfg || !this._unsubLayout)) this._read.defer();
     this._planHassProjection?.invalidate(); this._planHassMemo = null;
     window.addEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
     window.addEventListener('storage', this._rotationChanged);
@@ -3659,7 +3666,7 @@ export class HouseplanCard extends LitElement {
       this._glowScreenBlend = supported;
       if (this.isConnected) this.requestUpdate();
     });
-    if (this.hass) this._ensureHaRegistryAuthority();
+    if (this.hass) { this._ensureHaRegistryAuthority(); this._hookConnection(); }
     window.addEventListener('keydown', this._keyHandler);
     window.addEventListener('keydown', this._editorModifierHandler);
     window.addEventListener('keyup', this._editorModifierHandler);
@@ -3722,7 +3729,6 @@ export class HouseplanCard extends LitElement {
     this._rotationMotion.cancel();
     this._planHassProjection?.invalidate(); this._planHassMemo = null;
     this._deviceRosterState.clear();
-    this._spaceModels.clear(); this._modelCache = null;
     window.removeEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
     window.removeEventListener('storage', this._rotationChanged);
     ++this._routeKioskGeneration; this._routeKioskPending = null;
@@ -3804,13 +3810,10 @@ export class HouseplanCard extends LitElement {
     clearTimeout(this._reloadRetry);
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined; // a cleared id must not block a reschedule
-    this._connHooked?.removeEventListener?.('ready', this._onConnReady);
-    this._connHooked?.removeEventListener?.('disconnected', this._onConnLost);
-    this._connHooked?.removeEventListener?.('reconnect-error', this._onConnLost);
-    this._connHooked = null;
     this._haRegistryRelease?.();
     this._haRegistryRelease = undefined;
     this._haRegistryConnection = null;
+    this._haRegistryUser = undefined;
     this._signer.dispose();
     clearTimeout(this._toastTimer);
     this._toast = '';
@@ -3855,25 +3858,21 @@ export class HouseplanCard extends LitElement {
       window.removeEventListener('resize', this._onWinResize);
       this._onWinResize = undefined;
     }
-    if (this._unsubCfg) {
-      this._unsubCfg();
-      this._unsubCfg = null;
-    }
-    if (this._unsubLayout) {
-      this._unsubLayout();
-      this._unsubLayout = null;
-    }
-    if (this._unsubVirtual) {
-      this._unsubVirtual();
-      this._unsubVirtual = null;
-    }
-    if (this._unsubTrail) {
-      this._unsubTrail();
-      this._unsubTrail = undefined;
-    }
+    // Retire callbacks immediately; keep only event coverage for a masonry move.
+    // Events in the gap request a current paired read, never adopt detached data.
+    this._liveSyncReceivers.clear();
     this._liveSyncGeneration++;
     this._liveSyncAttempt = null;
-    this._liveSyncConnection = null;
+    clearTimeout(this._detachSubscriptionsTimer);
+    this._detachSubscriptionsTimer = window.setTimeout(() => {
+      this._detachSubscriptionsTimer = undefined;
+      this._retireLiveSyncSubscriptions();
+      this._connHooked?.removeEventListener?.('ready', this._onConnReady);
+      this._connHooked?.removeEventListener?.('disconnected', this._onConnLost);
+      this._connHooked?.removeEventListener?.('reconnect-error', this._onConnLost);
+      this._connHooked = null;
+      if (this._loadOk) this._read.defer();
+    }, 2000);
     clearTimeout(this._layoutSyncTimer);
     clearTimeout(this._duplicateColumnTimer);
     disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
@@ -5663,6 +5662,16 @@ export class HouseplanCard extends LitElement {
     }
   }
 
+  private _retireLiveSyncSubscriptions(): void {
+    this._unsubCfg?.(); this._unsubCfg = null;
+    this._unsubLayout?.(); this._unsubLayout = null;
+    this._unsubTrail?.(); this._unsubTrail = undefined;
+    this._unsubVirtual?.(); this._unsubVirtual = null;
+    this._liveSyncReceivers.clear(); this._liveSyncSubscriptionOwner = {};
+    this._liveSyncGeneration++; this._liveSyncAttempt = null;
+    this._liveSyncConnection = null;
+  }
+
   /** Best-effort live sync starts only after the initial snapshot is usable. */
   private _ensureLiveSyncSubscriptions(): void {
     const connection = this.hass?.connection;
@@ -5673,21 +5682,13 @@ export class HouseplanCard extends LitElement {
       for (const runtime of this._vacRt.values()) {
         if (runtime.livePending) { delete runtime.livePending; runtime.gap = true; }
       }
-      this._unsubCfg?.();
-      this._unsubCfg = null;
-      this._unsubLayout?.();
-      this._unsubLayout = null;
-      this._unsubTrail?.();
-      this._unsubTrail = undefined;
-      this._unsubVirtual?.();
-      this._unsubVirtual = null;
-      this._liveSyncGeneration++;
-      this._liveSyncAttempt = null;
+      this._retireLiveSyncSubscriptions();
       this._liveSyncConnection = connection;
     }
     if (this._liveSyncAttempt) return;
     const generation = this._liveSyncGeneration;
     const context = this._configWriteContext.claim();
+    const subscriptionOwner = this._liveSyncSubscriptionOwner;
     const ownsContext = () => generation === this._liveSyncGeneration && this.isConnected
       && this.hass?.connection === connection && this._configWriteContext.current(context, this.hass);
     const attempts: Array<() => Promise<void>> = [];
@@ -5697,9 +5698,20 @@ export class HouseplanCard extends LitElement {
       event: string,
       callback: (event: any) => void | Promise<void>,
     ): void => {
+      this._liveSyncReceivers.set(event, ev => { if (ownsContext()) return callback(ev); });
       if (current()) return;
       attempts.push(async () => {
-        const receive = (ev: unknown) => { if (ownsContext()) return callback(ev); };
+        const receive = (ev: unknown) => {
+          if (subscriptionOwner !== this._liveSyncSubscriptionOwner
+              || !this._configWriteContext.current(context, this.hass)) return;
+          if (!this.isConnected) {
+            const data = ev && typeof ev === 'object' && 'data' in ev ? ev.data : null;
+            if (data && typeof data === 'object' && 'kind' in data && data.kind === 'closed')
+              this._retireLiveSyncSubscriptions();
+            this._read.defer(); return;
+          }
+          return this._liveSyncReceivers.get(event)?.(ev);
+        };
         const unsubscribe = event === 'houseplan_config_updated'
           ? await subscribeExternalScreenConfig(connection, this.panelHost && this._haExternalScreensEventsApi === 1,
             this._cfgRev, data => receive({ data }))
@@ -5821,6 +5833,7 @@ export class HouseplanCard extends LitElement {
   /** Shared, page-level full HA registry authority (one fetch/subscription per connection). */
   private _haRegistryRelease?: () => void;
   private _haRegistryConnection: any = null;
+  private _haRegistryUser?: string;
   private _haRegistryRev = -1;
   private _haBindingCacheKey = '';
   private _planHassMemo: { hass: unknown; sig: string; active: unknown; full: unknown } | null = null;
@@ -5845,9 +5858,11 @@ export class HouseplanCard extends LitElement {
 
   private _ensureHaRegistryAuthority(): void {
     const connection = this.hass?.connection || null;
-    if (!connection || connection === this._haRegistryConnection) return;
+    const user = this.hass?.user?.id;
+    if (!connection || (connection === this._haRegistryConnection && user === this._haRegistryUser)) return;
     this._haRegistryRelease?.();
     this._haRegistryConnection = connection;
+    this._haRegistryUser = user;
     this._haRegistryRev = -1;
     this._haBindingCacheKey = '';
     this._renderLife.invalidate();
@@ -6009,6 +6024,10 @@ export class HouseplanCard extends LitElement {
     this._markerDialog = { ...d, hideFromPlan: !effectivelyHidden };
   }
   private _onConnReady = (): void => {
+    if (!this.isConnected) {
+      refreshHaRegistries(this.hass);
+      this._connectionWasLost = true; this._read.defer(); return;
+    }
     if (this._externalConfigStreamRecovery.blocked) {
       this._externalConfigStreamRecovery.reset(); this._liveSyncConnection = null; this._liveSyncGeneration++;
     }
@@ -6037,6 +6056,7 @@ export class HouseplanCard extends LitElement {
     this._loadFromServer();
   };
   private _onConnLost = (): void => {
+    if (!this.isConnected) { this._connectionWasLost = true; this._read.defer(); return; }
     if (this._booting && !this._continuity.hasCompleteFrame) return;
     this._connectionWasLost = true;
     this._continuityDataReady = false;

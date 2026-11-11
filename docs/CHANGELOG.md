@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reuse registry reads and physical floor models across temporary masonry card moves. Retain bounded event coverage, reconcile changes or real reconnects with one current config/layout pair, and fence obsolete registry replies and user authority (#1386, #1385).
+
 - Resize passes existing junctions in one gesture: the intermediate X needs no save and the whole edit has one Undo. Preserve support dependencies, openings and source materials; cover consecutive junctions, reverse traversal, cancellation and reload (#1384).
 
 - Resize paints one joined wall contour throughout the gesture, clears abandoned straight seams and preserves real T/X junction changes and opening hosts. Room-wall openings remain movable; native regression and before/during/after panel scenes cover the return gesture, cancellation, history and reload (#1383).

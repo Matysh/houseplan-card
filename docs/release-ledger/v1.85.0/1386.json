@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1386,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Retain bounded event coverage across temporary DOM moves without duplicate registry reads or floor rebuilds; preserve authority and reconnect revalidation.",
+  "summary": {
+    "ru": "Карточка сохраняет готовый план при кратких переподключениях masonry и не загружает реестры повторно без причины.",
+    "en": "Keep the ready plan across short masonry reconnects without redundant registry downloads."
+  }
+}

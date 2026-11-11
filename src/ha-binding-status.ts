@@ -37,12 +37,16 @@ interface RegistryCacheEntry {
   lastSuccess: number;
   error?: string;
   loading?: Promise<void>;
+  loadOwner?: object;
+  needsRefresh: boolean;
   listeners: Set<() => void>;
   refs: number;
   reloadTimer?: number;
+  releaseTimer?: number;
   unsubDevice?: () => void;
   unsubEntity?: () => void;
   subscribing?: Promise<void>;
+  subscriptionOwner?: object;
   /** Last live frontend registry projection observed beside a full snapshot. */
   liveDevices?: Record<string, any>;
   liveEntities?: Record<string, any>;
@@ -52,7 +56,8 @@ interface RegistryCacheEntry {
   projectedEntities?: Record<string, any>;
 }
 
-const registryCaches = new WeakMap<object, RegistryCacheEntry>();
+const registryCaches = new WeakMap<object, Map<string, RegistryCacheEntry>>();
+const DETACH_GRACE_MS = 2000;
 const registryObjectIds = new WeakMap<object, number>();
 let nextRegistryObjectId = 1;
 const BINDING_STATUS_LS = 'houseplan.ha-binding-status.v1';
@@ -82,16 +87,20 @@ function newEntry(): RegistryCacheEntry {
     lastSuccess: 0,
     listeners: new Set(),
     refs: 0,
+    needsRefresh: true,
   };
 }
 
 function entryOf(hass: any): RegistryCacheEntry | null {
   const key = connectionKey(hass);
   if (!key) return null;
-  let entry = registryCaches.get(key);
+  let users = registryCaches.get(key);
+  if (!users) { users = new Map(); registryCaches.set(key, users); }
+  const user = String(hass?.user?.id ?? '');
+  let entry = users.get(user);
   if (!entry) {
     entry = newEntry();
-    registryCaches.set(key, entry);
+    users.set(user, entry);
   }
   return entry;
 }
@@ -127,6 +136,8 @@ function notify(entry: RegistryCacheEntry): void {
 
 async function loadFullRegistries(hass: any, entry: RegistryCacheEntry): Promise<void> {
   if (entry.loading || !hass?.callWS) return entry.loading;
+  const owner = entry.loadOwner = {};
+  entry.needsRefresh = false;
   entry.loading = (async () => {
     try {
       const [deviceRows, entityRows] = await Promise.all([
@@ -136,6 +147,7 @@ async function loadFullRegistries(hass: any, entry: RegistryCacheEntry): Promise
       const devices = recordsById(deviceRows, 'id');
       const entities = recordsById(entityRows, 'entity_id');
       if (!devices || !entities) throw new Error('invalid_registry_response');
+      if (entry.loadOwner !== owner) return;
       entry.devices = devices;
       entry.entities = entities;
       entry.authoritative = true;
@@ -143,26 +155,35 @@ async function loadFullRegistries(hass: any, entry: RegistryCacheEntry): Promise
       entry.lastSuccess = Date.now();
       entry.error = undefined;
     } catch (error) {
+      if (entry.loadOwner !== owner) return;
       // Keep the last successful full picture. Access becomes limited so new
       // decisions use current frontend/state evidence, while cached disabled
       // bindings remain safely hidden until a successful refresh.
       entry.authoritative = false;
       entry.access = 'limited';
       entry.error = errorText(error);
+      entry.needsRefresh = true;
     } finally {
-      entry.revision++;
-      entry.loading = undefined;
-      notify(entry);
+      if (entry.loadOwner === owner) {
+        entry.revision++;
+        entry.loading = undefined;
+        entry.loadOwner = undefined;
+        notify(entry);
+      }
     }
   })();
   return entry.loading;
 }
 
 function scheduleReload(hass: any, entry: RegistryCacheEntry): void {
+  entry.needsRefresh = true;
+  entry.loadOwner = undefined;
+  entry.loading = undefined;
+  if (!entry.refs) return;
   if (entry.reloadTimer !== undefined) return;
   entry.reloadTimer = globalThis.setTimeout(() => {
     entry.reloadTimer = undefined;
-    void loadFullRegistries(hass, entry);
+    if (entry.refs && entry.needsRefresh) void loadFullRegistries(hass, entry);
   }, 80);
 }
 
@@ -170,34 +191,33 @@ async function ensureSubscriptions(hass: any, entry: RegistryCacheEntry): Promis
   if (entry.subscribing || (entry.unsubDevice && entry.unsubEntity)) return entry.subscribing;
   const subscribe = hass?.connection?.subscribeEvents;
   if (typeof subscribe !== 'function') return;
+  const owner = entry.subscriptionOwner ??= {};
   entry.subscribing = (async () => {
     try {
-      if (!entry.unsubDevice) {
-        entry.unsubDevice = await subscribe.call(
+      for (const [slot, event] of [['unsubDevice', 'device_registry_updated'],
+        ['unsubEntity', 'entity_registry_updated']] as const) {
+        if (entry[slot]) continue;
+        const unsubscribe = await subscribe.call(
           hass.connection,
-          () => scheduleReload(hass, entry),
-          'device_registry_updated',
+          () => { if (entry.subscriptionOwner === owner) scheduleReload(hass, entry); }, event,
         );
-      }
-      if (!entry.unsubEntity) {
-        entry.unsubEntity = await subscribe.call(
-          hass.connection,
-          () => scheduleReload(hass, entry),
-          'entity_registry_updated',
-        );
+        if (entry.subscriptionOwner !== owner || (!entry.refs && entry.releaseTimer === undefined)) {
+          unsubscribe?.(); return;
+        }
+        entry[slot] = unsubscribe;
       }
     } catch {
       // Some limited accounts cannot subscribe to registry events. Their hass
       // projection remains reactive; a connection-ready refresh retries full
       // access without turning this into a per-state-tick fetch.
     } finally {
-      if (entry.refs === 0) {
-        entry.unsubDevice?.();
-        entry.unsubEntity?.();
-        entry.unsubDevice = undefined;
-        entry.unsubEntity = undefined;
+      if (entry.subscriptionOwner === owner) {
+        if (entry.refs === 0 && entry.releaseTimer === undefined) {
+          entry.unsubDevice?.(); entry.unsubEntity?.();
+          entry.unsubDevice = undefined; entry.unsubEntity = undefined;
+        }
+        entry.subscribing = undefined;
       }
-      entry.subscribing = undefined;
     }
   })();
   return entry.subscribing;
@@ -208,11 +228,13 @@ export function acquireHaRegistries(hass: any, listener: () => void): () => void
   const entry = entryOf(hass);
   if (!entry) return () => undefined;
   const wasUnused = entry.refs === 0;
+  if (entry.releaseTimer !== undefined) globalThis.clearTimeout(entry.releaseTimer);
+  entry.releaseTimer = undefined;
   entry.refs++;
   entry.listeners.add(listener);
-  // The first card owns the page fetch. Additional full/static cards only
-  // attach listeners; a remount after the last release refreshes stale data.
-  if (entry.access === 'pending' || wasUnused) void loadFullRegistries(hass, entry);
+  // A short DOM move keeps event coverage. Missing coverage always revalidates.
+  if (entry.needsRefresh || (wasUnused && !(entry.unsubDevice && entry.unsubEntity)))
+    void loadFullRegistries(hass, entry);
   void ensureSubscriptions(hass, entry);
   let released = false;
   return () => {
@@ -221,12 +243,16 @@ export function acquireHaRegistries(hass: any, listener: () => void): () => void
     entry.listeners.delete(listener);
     entry.refs = Math.max(0, entry.refs - 1);
     if (entry.refs > 0) return;
-    entry.unsubDevice?.();
-    entry.unsubEntity?.();
-    entry.unsubDevice = undefined;
-    entry.unsubEntity = undefined;
     if (entry.reloadTimer !== undefined) globalThis.clearTimeout(entry.reloadTimer);
     entry.reloadTimer = undefined;
+    entry.releaseTimer = globalThis.setTimeout(() => {
+      entry.releaseTimer = undefined;
+      entry.unsubDevice?.(); entry.unsubEntity?.();
+      entry.unsubDevice = undefined; entry.unsubEntity = undefined;
+      entry.subscriptionOwner = undefined; entry.subscribing = undefined;
+      entry.needsRefresh = true;
+      entry.loadOwner = undefined; entry.loading = undefined;
+    }, DETACH_GRACE_MS);
   };
 }
 

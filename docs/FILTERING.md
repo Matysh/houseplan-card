@@ -208,6 +208,11 @@ the old behaviour until an editing client materialises it.
   `hidden: true` remains hidden.
 - Full entity/device registries are fetched and subscribed once per HA
   connection and shared by every full/static House Plan card on the page.
+  The authority is also scoped to the current HA user. A two-second grace
+  retains subscription coverage across DOM moves; gap events mark the cache
+  dirty without background reads. A longer absence, missing event coverage or
+  a real reconnect requires a fresh load. Superseded replies/subscription ACKs
+  cannot replace the current snapshot or release its subscriptions (#1386).
   Non-admin clients which cannot read them use positive current registry/state
   evidence only. Unknown absence is `unverified`, never guessed to be disabled
   or deleted. The last authoritative disabled result is cached separately from
