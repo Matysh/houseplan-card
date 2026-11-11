@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9233,
+  "revision": 9234,
   "nextTicket": 364,
   "nextFence": 364,
   "tasks": {
@@ -4928,6 +4928,10 @@
       "digest": "06de6e5d7c5f460d0056ed37fb8a75ff400adbc5a8b7ee2dad1c7117b19bdc2b",
       "issue": 1384
     },
+    "github:43048531270:1:completions:message:2543f524cdd7910c2abe194f64113ff6198ac4743a7d7dc6dde6caa36938d136": {
+      "digest": "feea9a97b950ca8f39a746ba54cb8367f3927a5f2ac701bfd6650a790da81058",
+      "issue": 1384
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -5151,7 +5155,8 @@
           "entry": 3,
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed",
           "eventId": "finish:2ea096cb-9ade-4bb3-be99-4034cda24c89:finish:3:return:return:1384"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:9f751cfb-7a46-4750-8311-b10aadae7a76": {
