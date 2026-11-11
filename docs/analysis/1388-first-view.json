@@ -1,0 +1,1137 @@
+{
+  "schema": 1,
+  "issue": 1388,
+  "date": "2026-11-11",
+  "source": "74a8de539e1aeabecc51cb651c7119cedc333067",
+  "browser": "151.0.7922.34",
+  "environment": {
+    "ha": "2026.11.1",
+    "imageDigest": "sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82",
+    "cpu": "AMD Ryzen 9 7950X",
+    "logicalCpus": 32,
+    "powerScheme": "High performance",
+    "runtime": "Ubuntu WSL / Node22.23.4",
+    "viewport": [
+      1280,
+      900
+    ]
+  },
+  "scene": {
+    "floors": 1,
+    "rooms": 14,
+    "devices": 26,
+    "openings": 19,
+    "partitions": 0,
+    "columns": 0,
+    "decor": 12,
+    "stairs": 0,
+    "model": 11,
+    "sourceRoomEdges": 56,
+    "physicalSegments": 36,
+    "source": "large-house.mjs with actual HA seed bindings",
+    "space": "perf-floor-1"
+  },
+  "protocol": {
+    "warmups": 1,
+    "measuredPairs": 3,
+    "attributedPairs": 1,
+    "ready": "connectedCallback to complete SVG/data plus six RAF; not compositor presentation",
+    "longTaskScope": "whole browser task overlapping the card window; may begin before card connect",
+    "timingGate": false
+  },
+  "evidenceHashes": {
+    "profile-ha.json": "74c28c0cab5560e43f82402816ef5d0083893e8c677bb39786aeb018e2026e18",
+    "cpu-cold.json": "fb6273da8646c08e30d0c6edc961e7b3db82a526dac3ceac76a8f8bc757d2885",
+    "cpu-warm.json": "b50bcb89b4d74a2654e8810faa298fa96ab3657a4b66af4ceb0409d5ab710adf",
+    "profile-ha.mjs": "1862b766d5fca4b60a46f8004400755cc98af211003dfd8a68b1ec20ca46aaf6",
+    "prepare-scene.mjs": "29689326f9f99cd245b137e0d189585f5daf1f0ed99dfb5584aca6a26134823c",
+    "quiet-remount.json": "e2b6cc4de94382b58d9f9cf7695c9b8d8fb3796c3a9d790f8f6dce3cdb33e0ff"
+  },
+  "samples": [
+    {
+      "run": 1,
+      "phase": "cold",
+      "attributed": false,
+      "cardReadyMs": 871.7000000029802,
+      "elapsedMs": 1343,
+      "firstConnect": 466.29999999701977,
+      "end": 1338,
+      "longTasks": [
+        {
+          "start": 518,
+          "duration": 239,
+          "startsBeforeCard": false
+        }
+      ],
+      "rafGapsMs": [
+        16.600000000000023,
+        16.69999999999999,
+        250,
+        33.299999999999955,
+        33.40000000000009,
+        16.59999999999991,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.600000000000136,
+        16.699999999999818,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991
+      ],
+      "calls": {
+        "_loadFromServer": {
+          "count": 2,
+          "ms": 0.3999999985098839,
+          "max": 0.3999999985098839
+        },
+        "willUpdate": {
+          "count": 24,
+          "ms": 33.19999998807907,
+          "max": 11.5
+        },
+        "render": {
+          "count": 24,
+          "ms": 54.69999999552965,
+          "max": 36.100000001490116
+        },
+        "updated": {
+          "count": 24,
+          "ms": 31.19999999552965,
+          "max": 8
+        },
+        "_renderDecorLayer": {
+          "count": 19,
+          "ms": 15.19999998062849,
+          "max": 4.200000002980232
+        }
+      },
+      "methods": {
+        "render": true,
+        "updated": true,
+        "willUpdate": true,
+        "_renderDecorLayer": true,
+        "_setLoadingCoordinates": false,
+        "_buildSpaces": false,
+        "_deriveSpaces": false,
+        "_applyCssVars": false,
+        "_loadFromServer": true
+      },
+      "connects": [
+        {
+          "host": 0,
+          "at": 466.29999999701977
+        },
+        {
+          "host": 0,
+          "at": 483.70000000298023
+        }
+      ],
+      "hostModels": [
+        {
+          "id": 0,
+          "builds": 1,
+          "connected": true
+        }
+      ],
+      "rooms": 14,
+      "devices": 26,
+      "openings": 19,
+      "editorLoaded": false,
+      "errors": [],
+      "writes": [],
+      "fullConfigReads": 2,
+      "layoutReads": 2,
+      "metadataReads": 2,
+      "gzipHashedResources": 22
+    },
+    {
+      "run": 1,
+      "phase": "warm",
+      "attributed": false,
+      "cardReadyMs": 1156.7999999970198,
+      "elapsedMs": 1400,
+      "firstConnect": 236.79999999701977,
+      "end": 1393.5999999940395,
+      "longTasks": [
+        {
+          "start": 219.69999999552965,
+          "duration": 309,
+          "startsBeforeCard": true
+        }
+      ],
+      "rafGapsMs": [
+        33.30000000000007,
+        16.699999999999932,
+        33.39999999999998,
+        33.30000000000007,
+        33.299999999999955,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.600000000000023,
+        16.700000000000045,
+        16.699999999999932,
+        16.600000000000023,
+        16.700000000000045,
+        16.699999999999932,
+        16.700000000000045,
+        16.699999999999932,
+        16.600000000000023,
+        16.600000000000023,
+        16.700000000000045,
+        16.699999999999932,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.600000000000023,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.699999999999818,
+        16.600000000000136,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.699999999999818,
+        16.600000000000136,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.799999999999955,
+        16.600000000000136,
+        16.59999999999991,
+        16.799999999999955,
+        16.600000000000136
+      ],
+      "calls": {
+        "_loadFromServer": {
+          "count": 2,
+          "ms": 0.3999999985098839,
+          "max": 0.29999999701976776
+        },
+        "willUpdate": {
+          "count": 23,
+          "ms": 37.89999997615814,
+          "max": 13.799999997019768
+        },
+        "render": {
+          "count": 23,
+          "ms": 68.6000000089407,
+          "max": 39.69999999552965
+        },
+        "_renderDecorLayer": {
+          "count": 23,
+          "ms": 13.50000000745058,
+          "max": 4.200000002980232
+        },
+        "updated": {
+          "count": 23,
+          "ms": 37.10000003874302,
+          "max": 8.200000002980232
+        }
+      },
+      "methods": {
+        "render": true,
+        "updated": true,
+        "willUpdate": true,
+        "_renderDecorLayer": true,
+        "_setLoadingCoordinates": false,
+        "_buildSpaces": false,
+        "_deriveSpaces": false,
+        "_applyCssVars": false,
+        "_loadFromServer": true
+      },
+      "connects": [
+        {
+          "host": 0,
+          "at": 236.79999999701977
+        },
+        {
+          "host": 0,
+          "at": 509.5
+        }
+      ],
+      "hostModels": [
+        {
+          "id": 0,
+          "builds": 1,
+          "connected": true
+        }
+      ],
+      "rooms": 14,
+      "devices": 26,
+      "openings": 19,
+      "editorLoaded": false,
+      "errors": [],
+      "writes": [],
+      "fullConfigReads": 2,
+      "layoutReads": 2,
+      "metadataReads": 2,
+      "gzipHashedResources": 22
+    },
+    {
+      "run": 2,
+      "phase": "cold",
+      "attributed": false,
+      "cardReadyMs": 874.1000000014901,
+      "elapsedMs": 1326,
+      "firstConnect": 446.29999999701977,
+      "end": 1320.3999999985099,
+      "longTasks": [
+        {
+          "start": 497.5,
+          "duration": 237,
+          "startsBeforeCard": false
+        }
+      ],
+      "rafGapsMs": [
+        16.69999999999999,
+        16.600000000000023,
+        249.89999999999998,
+        33.39999999999998,
+        33.40000000000009,
+        16.59999999999991,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.600000000000136,
+        16.699999999999818,
+        16.700000000000045,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991
+      ],
+      "calls": {
+        "_loadFromServer": {
+          "count": 2,
+          "ms": 0.4999999925494194,
+          "max": 0.3999999985098839
+        },
+        "willUpdate": {
+          "count": 24,
+          "ms": 34.29999999701977,
+          "max": 11.800000004470348
+        },
+        "render": {
+          "count": 24,
+          "ms": 55.400000005960464,
+          "max": 35.5
+        },
+        "updated": {
+          "count": 24,
+          "ms": 32.8999999910593,
+          "max": 7.699999995529652
+        },
+        "_renderDecorLayer": {
+          "count": 19,
+          "ms": 15,
+          "max": 4.299999997019768
+        }
+      },
+      "methods": {
+        "render": true,
+        "updated": true,
+        "willUpdate": true,
+        "_renderDecorLayer": true,
+        "_setLoadingCoordinates": false,
+        "_buildSpaces": false,
+        "_deriveSpaces": false,
+        "_applyCssVars": false,
+        "_loadFromServer": true
+      },
+      "connects": [
+        {
+          "host": 0,
+          "at": 446.29999999701977
+        },
+        {
+          "host": 0,
+          "at": 463.69999999552965
+        }
+      ],
+      "hostModels": [
+        {
+          "id": 0,
+          "builds": 1,
+          "connected": true
+        }
+      ],
+      "rooms": 14,
+      "devices": 26,
+      "openings": 19,
+      "editorLoaded": false,
+      "errors": [],
+      "writes": [],
+      "fullConfigReads": 2,
+      "layoutReads": 2,
+      "metadataReads": 2,
+      "gzipHashedResources": 22
+    },
+    {
+      "run": 2,
+      "phase": "warm",
+      "attributed": false,
+      "cardReadyMs": 1152.3999999985099,
+      "elapsedMs": 1399,
+      "firstConnect": 241,
+      "end": 1393.3999999985099,
+      "longTasks": [
+        {
+          "start": 224.19999999552965,
+          "duration": 294,
+          "startsBeforeCard": true
+        }
+      ],
+      "rafGapsMs": [
+        33.299999999999955,
+        16.700000000000045,
+        50,
+        33.299999999999955,
+        16.800000000000068,
+        16.600000000000023,
+        16.59999999999991,
+        16.800000000000068,
+        16.600000000000023,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.699999999999932,
+        16.600000000000023,
+        16.700000000000045,
+        16.699999999999932,
+        16.600000000000023,
+        16.700000000000045,
+        16.699999999999932,
+        16.600000000000023,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.600000000000136,
+        16.799999999999955,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991
+      ],
+      "calls": {
+        "_loadFromServer": {
+          "count": 2,
+          "ms": 0.29999999701976776,
+          "max": 0.19999999552965164
+        },
+        "willUpdate": {
+          "count": 23,
+          "ms": 40.60000003129244,
+          "max": 17.100000001490116
+        },
+        "render": {
+          "count": 23,
+          "ms": 64.89999996870756,
+          "max": 35.69999999552965
+        },
+        "_renderDecorLayer": {
+          "count": 23,
+          "ms": 12.899999998509884,
+          "max": 4.100000001490116
+        },
+        "updated": {
+          "count": 23,
+          "ms": 32.70000000298023,
+          "max": 7.299999997019768
+        }
+      },
+      "methods": {
+        "render": true,
+        "updated": true,
+        "willUpdate": true,
+        "_renderDecorLayer": true,
+        "_setLoadingCoordinates": false,
+        "_buildSpaces": false,
+        "_deriveSpaces": false,
+        "_applyCssVars": false,
+        "_loadFromServer": true
+      },
+      "connects": [
+        {
+          "host": 0,
+          "at": 241
+        },
+        {
+          "host": 0,
+          "at": 498.6000000014901
+        }
+      ],
+      "hostModels": [
+        {
+          "id": 0,
+          "builds": 1,
+          "connected": true
+        }
+      ],
+      "rooms": 14,
+      "devices": 26,
+      "openings": 19,
+      "editorLoaded": false,
+      "errors": [],
+      "writes": [],
+      "fullConfigReads": 2,
+      "layoutReads": 2,
+      "metadataReads": 2,
+      "gzipHashedResources": 22
+    },
+    {
+      "run": 3,
+      "phase": "cold",
+      "attributed": false,
+      "cardReadyMs": 895.2999999970198,
+      "elapsedMs": 1359,
+      "firstConnect": 458.1000000014901,
+      "end": 1353.3999999985099,
+      "longTasks": [
+        {
+          "start": 507.8999999985099,
+          "duration": 236,
+          "startsBeforeCard": false
+        }
+      ],
+      "rafGapsMs": [
+        16.599999999999966,
+        16.600000000000023,
+        250,
+        50.10000000000002,
+        33.19999999999993,
+        16.800000000000068,
+        16.600000000000023,
+        16.699999999999932,
+        16.600000000000023,
+        16.700000000000045,
+        16.699999999999932,
+        16.600000000000023,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.799999999999955,
+        16.600000000000136,
+        16.700000000000045,
+        16.699999999999818,
+        16.600000000000136,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.800000000000182,
+        16.59999999999991
+      ],
+      "calls": {
+        "_loadFromServer": {
+          "count": 2,
+          "ms": 0.5,
+          "max": 0.5
+        },
+        "willUpdate": {
+          "count": 26,
+          "ms": 31.700000017881393,
+          "max": 11.699999995529652
+        },
+        "render": {
+          "count": 26,
+          "ms": 55.79999999701977,
+          "max": 34.100000001490116
+        },
+        "updated": {
+          "count": 26,
+          "ms": 32.70000001043081,
+          "max": 8.300000004470348
+        },
+        "_renderDecorLayer": {
+          "count": 21,
+          "ms": 15.299999997019768,
+          "max": 4.299999997019768
+        }
+      },
+      "methods": {
+        "render": true,
+        "updated": true,
+        "willUpdate": true,
+        "_renderDecorLayer": true,
+        "_setLoadingCoordinates": false,
+        "_buildSpaces": false,
+        "_deriveSpaces": false,
+        "_applyCssVars": false,
+        "_loadFromServer": true
+      },
+      "connects": [
+        {
+          "host": 0,
+          "at": 458.1000000014901
+        },
+        {
+          "host": 0,
+          "at": 475.5
+        }
+      ],
+      "hostModels": [
+        {
+          "id": 0,
+          "builds": 1,
+          "connected": true
+        }
+      ],
+      "rooms": 14,
+      "devices": 26,
+      "openings": 19,
+      "editorLoaded": false,
+      "errors": [],
+      "writes": [],
+      "fullConfigReads": 2,
+      "layoutReads": 2,
+      "metadataReads": 2,
+      "gzipHashedResources": 22
+    },
+    {
+      "run": 3,
+      "phase": "warm",
+      "attributed": false,
+      "cardReadyMs": 1103.0999999940395,
+      "elapsedMs": 1315,
+      "firstConnect": 206.90000000596046,
+      "end": 1310,
+      "longTasks": [
+        {
+          "start": 203.90000000596046,
+          "duration": 257,
+          "startsBeforeCard": true
+        }
+      ],
+      "rafGapsMs": [
+        250.10000000000002,
+        33.30000000000001,
+        16.599999999999966,
+        33.400000000000034,
+        33.299999999999955,
+        16.600000000000023,
+        16.700000000000045,
+        33.39999999999998,
+        16.600000000000023,
+        16.699999999999932,
+        16.600000000000023,
+        16.799999999999955,
+        16.600000000000023,
+        16.700000000000045,
+        16.699999999999932,
+        16.600000000000023,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.600000000000023,
+        16.799999999999955,
+        16.600000000000023,
+        16.700000000000045,
+        16.699999999999932,
+        16.600000000000023,
+        16.600000000000023,
+        16.799999999999955,
+        16.600000000000023,
+        16.600000000000023,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.699999999999818,
+        16.600000000000136,
+        16.700000000000045,
+        16.699999999999818,
+        16.600000000000136,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.799999999999955,
+        16.600000000000136,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045
+      ],
+      "calls": {
+        "_loadFromServer": {
+          "count": 2,
+          "ms": 0.19999999552965164,
+          "max": 0.10000000149011612
+        },
+        "willUpdate": {
+          "count": 23,
+          "ms": 28.30000001192093,
+          "max": 7.5
+        },
+        "render": {
+          "count": 23,
+          "ms": 59.10000001639128,
+          "max": 32.400000005960464
+        },
+        "_renderDecorLayer": {
+          "count": 23,
+          "ms": 12.600000001490116,
+          "max": 4.299999997019768
+        },
+        "updated": {
+          "count": 23,
+          "ms": 27.299999997019768,
+          "max": 6.700000002980232
+        }
+      },
+      "methods": {
+        "render": true,
+        "updated": true,
+        "willUpdate": true,
+        "_renderDecorLayer": true,
+        "_setLoadingCoordinates": false,
+        "_buildSpaces": false,
+        "_deriveSpaces": false,
+        "_applyCssVars": false,
+        "_loadFromServer": true
+      },
+      "connects": [
+        {
+          "host": 0,
+          "at": 206.90000000596046
+        },
+        {
+          "host": 0,
+          "at": 443.90000000596046
+        }
+      ],
+      "hostModels": [
+        {
+          "id": 0,
+          "builds": 1,
+          "connected": true
+        }
+      ],
+      "rooms": 14,
+      "devices": 26,
+      "openings": 19,
+      "editorLoaded": false,
+      "errors": [],
+      "writes": [],
+      "fullConfigReads": 2,
+      "layoutReads": 2,
+      "metadataReads": 2,
+      "gzipHashedResources": 22
+    },
+    {
+      "run": 4,
+      "phase": "cold",
+      "attributed": true,
+      "cardReadyMs": 897.7000000029802,
+      "elapsedMs": 1392,
+      "firstConnect": 469.79999999701977,
+      "end": 1367.5,
+      "longTasks": [
+        {
+          "start": 526.3999999985099,
+          "duration": 262,
+          "startsBeforeCard": false
+        }
+      ],
+      "rafGapsMs": [
+        16.700000000000045,
+        33.299999999999955,
+        266.6,
+        33.39999999999998,
+        50,
+        16.600000000000023,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.700000000000045,
+        16.699999999999932,
+        16.600000000000023,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.800000000000182,
+        16.59999999999991,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045
+      ],
+      "calls": {
+        "_loadFromServer": {
+          "count": 2,
+          "ms": 0.6000000014901161,
+          "max": 0.5
+        },
+        "willUpdate": {
+          "count": 24,
+          "ms": 36.100000001490116,
+          "max": 13.5
+        },
+        "render": {
+          "count": 24,
+          "ms": 62.10000001639128,
+          "max": 42.100000001490116
+        },
+        "updated": {
+          "count": 24,
+          "ms": 34.80000001192093,
+          "max": 9.5
+        },
+        "_renderDecorLayer": {
+          "count": 19,
+          "ms": 15.199999988079071,
+          "max": 4.299999997019768
+        }
+      },
+      "methods": {
+        "render": true,
+        "updated": true,
+        "willUpdate": true,
+        "_renderDecorLayer": true,
+        "_setLoadingCoordinates": false,
+        "_buildSpaces": false,
+        "_deriveSpaces": false,
+        "_applyCssVars": false,
+        "_loadFromServer": true
+      },
+      "connects": [
+        {
+          "host": 0,
+          "at": 469.79999999701977
+        },
+        {
+          "host": 0,
+          "at": 489.8999999985099
+        }
+      ],
+      "hostModels": [
+        {
+          "id": 0,
+          "builds": 1,
+          "connected": true
+        }
+      ],
+      "rooms": 14,
+      "devices": 26,
+      "openings": 19,
+      "editorLoaded": false,
+      "errors": [],
+      "writes": [],
+      "fullConfigReads": 2,
+      "layoutReads": 2,
+      "metadataReads": 2,
+      "gzipHashedResources": 22,
+      "css": {
+        "count": 21,
+        "ms": 2.999999985098839
+      },
+      "loads": [
+        {
+          "at": 478.29999999701977,
+          "connected": true,
+          "busy": false,
+          "pending": false,
+          "userKnown": true,
+          "stack": "Error\n    at p.<computed> (<anonymous>:23:192)\n    at Bw (http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:495:16813)\n    at http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:574:6508\n    at qw.intake (http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:495:15988)\n    at qw.observe (http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:495:15933)\n    at v$.willUpdate (http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:574:6441)\n    at p.<computed> (<anonymous>:24:35)\n    at v$.performUpdate (http://127.0.0.1:18238/houseplan_files/houseplan-assets/lit-element-B8F3w3hv.js:1:13706)\n    at v$.scheduleUpdate (http://127.0.0.1:18238/houseplan_files/houseplan-assets/lit-element-B8F3w3hv.js:1:13285)\n    at v$._$EP (http://127.0.0.1:18238/houseplan_files/houseplan-assets/lit-element-B8F3w3hv.js:1:13193)"
+        },
+        {
+          "at": 490.8999999985099,
+          "connected": true,
+          "busy": false,
+          "pending": true,
+          "userKnown": true,
+          "stack": "Error\n    at p.<computed> (<anonymous>:23:192)\n    at v$.connectedCallback (http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:538:40453)\n    at p.connectedCallback (<anonymous>:19:137)\n    at t.connectedCallback (http://127.0.0.1:18238/frontend_latest/app.5ce0ede93b3f9512.js:2:8303)\n    at u._addCardToColumn (http://127.0.0.1:18238/frontend_latest/86920.c8c3826e90a8961b.js:2:25966)\n    at u._createColumns (http://127.0.0.1:18238/frontend_latest/86920.c8c3826e90a8961b.js:2:25676)"
+        }
+      ]
+    },
+    {
+      "run": 4,
+      "phase": "warm",
+      "attributed": true,
+      "cardReadyMs": 1152.8999999985099,
+      "elapsedMs": 1447,
+      "firstConnect": 268.5,
+      "end": 1421.3999999985099,
+      "longTasks": [
+        {
+          "start": 265.29999999701977,
+          "duration": 296,
+          "startsBeforeCard": true
+        }
+      ],
+      "rafGapsMs": [
+        300.00000000000006,
+        33.299999999999955,
+        16.700000000000045,
+        50,
+        33.39999999999998,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.600000000000023,
+        16.59999999999991,
+        16.800000000000068,
+        16.600000000000023,
+        16.699999999999932,
+        16.600000000000023,
+        16.700000000000045,
+        16.699999999999932,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.700000000000045,
+        16.600000000000023,
+        16.699999999999932,
+        16.600000000000023,
+        16.700000000000045,
+        16.700000000000045,
+        16.699999999999818,
+        16.600000000000136,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.700000000000045,
+        16.699999999999818,
+        16.600000000000136,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045,
+        16.700000000000045,
+        16.699999999999818,
+        16.600000000000136,
+        16.700000000000045,
+        16.59999999999991,
+        16.700000000000045
+      ],
+      "calls": {
+        "_loadFromServer": {
+          "count": 2,
+          "ms": 0.3999999910593033,
+          "max": 0.19999999552965164
+        },
+        "willUpdate": {
+          "count": 23,
+          "ms": 31.100000016391277,
+          "max": 8.600000001490116
+        },
+        "render": {
+          "count": 23,
+          "ms": 60.599999994039536,
+          "max": 32.599999994039536
+        },
+        "_renderDecorLayer": {
+          "count": 23,
+          "ms": 13.700000017881393,
+          "max": 4.4000000059604645
+        },
+        "updated": {
+          "count": 23,
+          "ms": 30.900000005960464,
+          "max": 5.600000001490116
+        }
+      },
+      "methods": {
+        "render": true,
+        "updated": true,
+        "willUpdate": true,
+        "_renderDecorLayer": true,
+        "_setLoadingCoordinates": false,
+        "_buildSpaces": false,
+        "_deriveSpaces": false,
+        "_applyCssVars": false,
+        "_loadFromServer": true
+      },
+      "connects": [
+        {
+          "host": 0,
+          "at": 268.5
+        },
+        {
+          "host": 0,
+          "at": 540.7000000029802
+        }
+      ],
+      "hostModels": [
+        {
+          "id": 0,
+          "builds": 1,
+          "connected": true
+        }
+      ],
+      "rooms": 14,
+      "devices": 26,
+      "openings": 19,
+      "editorLoaded": false,
+      "errors": [],
+      "writes": [],
+      "fullConfigReads": 2,
+      "layoutReads": 2,
+      "metadataReads": 2,
+      "gzipHashedResources": 22,
+      "css": {
+        "count": 28,
+        "ms": 2.2000000029802322
+      },
+      "loads": [
+        {
+          "at": 283.20000000298023,
+          "connected": true,
+          "busy": false,
+          "pending": false,
+          "userKnown": true,
+          "stack": "Error\n    at p.<computed> (<anonymous>:23:192)\n    at Bw (http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:495:16813)\n    at http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:574:6508\n    at qw.intake (http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:495:15988)\n    at qw.observe (http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:495:15933)\n    at v$.willUpdate (http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:574:6441)\n    at p.<computed> (<anonymous>:24:35)\n    at v$.performUpdate (http://127.0.0.1:18238/houseplan_files/houseplan-assets/lit-element-B8F3w3hv.js:1:13706)\n    at v$.scheduleUpdate (http://127.0.0.1:18238/houseplan_files/houseplan-assets/lit-element-B8F3w3hv.js:1:13285)\n    at v$._$EP (http://127.0.0.1:18238/houseplan_files/houseplan-assets/lit-element-B8F3w3hv.js:1:13193)"
+        },
+        {
+          "at": 546.2000000029802,
+          "connected": true,
+          "busy": false,
+          "pending": true,
+          "userKnown": true,
+          "stack": "Error\n    at p.<computed> (<anonymous>:23:192)\n    at v$.connectedCallback (http://127.0.0.1:18238/houseplan_files/houseplan-assets/houseplan-card-CJF4Ti-J.js:538:40453)\n    at p.connectedCallback (<anonymous>:19:137)\n    at t.connectedCallback (http://127.0.0.1:18238/frontend_latest/app.5ce0ede93b3f9512.js:2:8303)\n    at u._addCardToColumn (http://127.0.0.1:18238/frontend_latest/86920.c8c3826e90a8961b.js:2:25966)\n    at u._createColumns (http://127.0.0.1:18238/frontend_latest/86920.c8c3826e90a8961b.js:2:25676)"
+        }
+      ]
+    }
+  ],
+  "quietRemount": {
+    "beforeBuilds": 1,
+    "samples": [
+      {
+        "ready": true,
+        "builds": 1,
+        "rooms": 14,
+        "sameGeometry": true
+      },
+      {
+        "ready": true,
+        "builds": 1,
+        "rooms": 14,
+        "sameGeometry": true
+      },
+      {
+        "ready": true,
+        "builds": 1,
+        "rooms": 14,
+        "sameGeometry": true
+      }
+    ],
+    "extra": [
+      {
+        "type": "houseplan/config/get",
+        "fields": [
+          "model_version"
+        ]
+      },
+      {
+        "type": "houseplan/config/get",
+        "fields": [
+          "model_version"
+        ]
+      },
+      {
+        "type": "houseplan/config/get",
+        "fields": [
+          "model_version"
+        ]
+      }
+    ],
+    "fullReads": [],
+    "errors": []
+  },
+  "outcome": "Original 541-595ms CPU pause not reproduced on this independent scene; no speculative CPU code change; parent report remains unconfirmed."
+}

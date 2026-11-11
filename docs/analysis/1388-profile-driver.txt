@@ -1,0 +1,78 @@
+import { chromium } from 'playwright';
+import { readFileSync,writeFileSync } from 'node:fs';
+import { loginThroughUi } from '/home/sergey/hp-e2e-product-audit-20261110/tests/lib/ha-page.mjs';
+import { USERS } from '/home/sergey/hp-e2e-product-audit-20261110/scripts/users.mjs';
+import { enforcePinnedBrowser } from '../../scripts/browser-attestation.mjs';
+const baseURL='http://127.0.0.1:18238';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+await enforcePinnedBrowser(browser);
+const samples=[];
+const runs=Number(process.env.HP_PROFILE_RUNS||5);
+try {
+  const auth=await browser.newContext({baseURL});const authPage=await auth.newPage();
+  await loginThroughUi(authPage,USERS.admin);
+  const storageState=await auth.storageState();await auth.close();
+  for(let run=0;run<runs;run++){
+    const context=await browser.newContext({baseURL,storageState,viewport:{width:1280,height:900},locale:'en-US',timezoneId:'Europe/Moscow'});
+    const attributed=run===runs-1;
+    await context.addInitScript(({attributed})=>{
+      const out=window.__hpProfile={calls:{},methods:{},connects:[],loads:[],longTasks:[],raf:[],css:{count:0,ms:0,stacks:[]}};
+      window.__profileHosts=[];
+      new PerformanceObserver(list=>{for(const e of list.getEntries())out.longTasks.push({start:e.startTime,duration:e.duration});}).observe({type:'longtask',buffered:true});
+      let previous=0;
+      const raf=t=>{if(previous)out.raf.push({start:previous,ms:t-previous});previous=t;requestAnimationFrame(raf);};requestAnimationFrame(raf);
+      if(attributed){const css=CSSStyleDeclaration.prototype.getPropertyValue;CSSStyleDeclaration.prototype.getPropertyValue=function(...args){
+        const start=performance.now();try{return css.apply(this,args);}finally{out.css.count++;out.css.ms+=performance.now()-start;
+          if(out.css.stacks.length<6&&out.css.count%5===0)out.css.stacks.push(new Error().stack);}};}
+      const patched=new WeakSet();
+      const patch=registry=>{if(patched.has(registry))return;patched.add(registry);
+      const define=registry.define.bind(registry);
+      registry.define=function(name,klass,...rest){
+        if(name==='houseplan-card'&&typeof klass.prototype.render==='function'){
+          const p=klass.prototype,connect=p.connectedCallback;
+          p.connectedCallback=function(...a){out.firstConnect??=performance.now();out.connections=(out.connections||0)+1;
+            if(!window.__profileHosts.includes(this))window.__profileHosts.push(this);
+            out.connects.push({host:window.__profileHosts.indexOf(this),at:performance.now()});window.__profileCard=this;return connect.apply(this,a);};
+          for(const key of ['render','updated','willUpdate','_renderDecorLayer','_setLoadingCoordinates','_buildSpaces','_deriveSpaces','_applyCssVars','_loadFromServer']){
+            const original=p[key];out.methods[key]=typeof original==='function';if(typeof original!=='function')continue;
+            p[key]=function(...a){const start=performance.now();
+              if(attributed&&key==='_loadFromServer')out.loads.push({at:start,connected:this.isConnected,busy:this._read.busy,pending:this._read.pending,userKnown:!!this.hass?.user?.id,stack:new Error().stack});
+              try{return original.apply(this,a);}finally{const row=out.calls[key]??={count:0,ms:0,max:0};const ms=performance.now()-start;row.count++;row.ms+=ms;row.max=Math.max(row.max,ms);}};
+          }
+        }
+        return define(name,klass,...rest);
+      };};
+      patch(customElements);
+      customElements.whenDefined('home-assistant').then(()=>patch(customElements));
+    },{attributed});
+    const page=await context.newPage(), errors=[];page.on('pageerror',e=>errors.push(e.message));
+    const cdp=await context.newCDPSession(page);await cdp.send('Network.enable');
+    let network=[],requests=[],traffic=[];
+    cdp.on('Network.webSocketFrameSent',e=>{try{const m=JSON.parse(e.response.payloadData);if(m.type&&m.type!=='auth')traffic.push(m.type);if(m.type&&/^(config\/.*registry\/list(?:_for_display)?|houseplan\/.*\/get)$/.test(m.type))requests.push({type:m.type,id:m.id,fields:m.fields});}catch{}});
+    cdp.on('Network.responseReceived',e=>{if(e.response.url.includes('/houseplan_files/'))network.push({url:new URL(e.response.url).pathname,encoding:e.response.headers['Content-Encoding']||e.response.headers['content-encoding']||null,bytes:e.response.headers['Content-Length']||e.response.headers['content-length']||null,cache:e.response.fromDiskCache||false});});
+    for(const phase of ['cold','warm']){
+      network=[];requests=[];traffic=[];
+      if(attributed){await cdp.send('Profiler.enable');await cdp.send('Profiler.start');}
+      const started=Date.now();
+      if(phase==='cold')await page.goto('/house-plan/profile');else await page.reload();
+      await page.waitForFunction(()=>{const c=window.__profileCard;return c?._loadOk&&!c._loading&&!c._booting&&c.renderRoot.querySelector('svg.plan-svg')&&c.renderRoot.querySelectorAll('[data-hp="room"]').length>=14;},{},{timeout:60000});
+      await page.evaluate(async()=>{for(let i=0;i<6;i++)await new Promise(requestAnimationFrame);});
+      const result=await page.evaluate(()=>{
+        const c=window.__profileCard,p=window.__hpProfile,end=performance.now(),start=p.firstConnect||end;
+        return {...p,end,cardReadyMs:end-start,rooms:c.renderRoot.querySelectorAll('[data-hp="room"]').length,
+          devices:c.renderRoot.querySelectorAll('[data-hp="device"]').length,models:c._spaceModels?.work,
+          openings:c._serverCfg?.spaces?.find(s=>s.id===c._space)?.openings?.length,mode:c._mode,
+          deviceIds:[...c.renderRoot.querySelectorAll('[data-hp="device"]')].map(e=>e.getAttribute('data-id')),
+          cardLongTasks:p.longTasks.filter(e=>e.start+e.duration>=start),cardRaf:p.raf.filter(e=>e.start>=start),
+          resources:performance.getEntriesByType('resource').filter(e=>e.name.includes('/houseplan_files/')).map(e=>({url:new URL(e.name).pathname,transfer:e.transferSize,encoded:e.encodedBodySize,decoded:e.decodedBodySize})),
+          editorLoaded:!!c._editorRuntime,constructor:c.constructor.name};
+      });
+      result.hostModels=await page.evaluate(()=>window.__profileHosts.map((host,id)=>({id,builds:host._spaceModels?.work?.builds,connected:host.isConnected})));
+      if(attributed){const profile=await cdp.send('Profiler.stop');writeFileSync(new URL(`./cpu-${phase}.json`,import.meta.url),JSON.stringify(profile));}
+      samples.push({run,phase,attributed,warmup:run===0,elapsedMs:Date.now()-started,...result,network,requests,traffic,errors:[...errors]});
+      writeFileSync(new URL('./profile-ha.json',import.meta.url),JSON.stringify({source:JSON.parse(readFileSync(new URL('../issue1387/package-actual.json',import.meta.url))).sourceSha,browser:browser.version(),url:baseURL,scene:JSON.parse(readFileSync(new URL('./scene.json',import.meta.url))),samples},null,2));
+      console.log(JSON.stringify({run,phase,attributed,cardReadyMs:result.cardReadyMs,rooms:result.rooms,devices:result.devices,maxTask:Math.max(0,...result.cardLongTasks.map(e=>e.duration)),calls:result.calls,css:result.css.count,errors}));
+    }
+    await context.close();
+  }
+}finally{await browser.close();}

@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import {chromium}from'playwright';
+import{writeFileSync}from'node:fs';
+import{loginThroughUi}from'/home/sergey/hp-e2e-product-audit-20261110/tests/lib/ha-page.mjs';
+import{USERS}from'/home/sergey/hp-e2e-product-audit-20261110/scripts/users.mjs';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+try{
+ const context=await browser.newContext({baseURL:'http://127.0.0.1:18238',viewport:{width:1280,height:900}});
+ const page=await context.newPage(),requests=[],errors=[];
+ page.on('pageerror',e=>errors.push(e.message));const cdp=await context.newCDPSession(page);await cdp.send('Network.enable');
+ cdp.on('Network.webSocketFrameSent',e=>{try{const m=JSON.parse(e.response.payloadData);if(m.type&&/^(config\/.*registry\/list|houseplan\/.*\/get)$/.test(m.type))requests.push({type:m.type,fields:m.fields});}catch{}});
+ await loginThroughUi(page,USERS.admin);await page.goto('/house-plan/profile');
+ const card=page.locator('houseplan-card').first();await card.waitFor();
+ await card.evaluate(async c=>{const end=performance.now()+15000;while((!c._loadOk||c._booting||c._loading)&&performance.now()<end)await new Promise(r=>setTimeout(r,16));});
+ const before=requests.length;
+ const result=await card.evaluate(async c=>{
+  const parent=c.parentNode,builds=c._spaceModels.work.builds;
+  const geometry=()=>[...c.renderRoot.querySelectorAll('[data-hp="room"]')].map(e=>[e.getAttribute('d'),e.getAttribute('points')]);
+  const before=geometry(),samples=[];
+  for(let i=0;i<3;i++){
+   c.remove();await new Promise(r=>setTimeout(r,1000));parent.append(c);
+   for(let frame=0;frame<6;frame++)await new Promise(requestAnimationFrame);
+   samples.push({ready:c._loadOk&&!c._loading&&!c._booting,builds:c._spaceModels.work.builds,rooms:geometry().length,sameGeometry:JSON.stringify(geometry())===JSON.stringify(before)});
+  }
+  return{beforeBuilds:builds,samples};
+ });
+ const extra=requests.slice(before),fullReads=extra.filter(r=>!r.fields);
+ writeFileSync(new URL('./quiet-remount.json',import.meta.url),JSON.stringify({...result,extra,fullReads,errors},null,2));
+ assert.deepEqual(fullReads,[]);assert.ok(extra.every(r=>r.type==='houseplan/config/get'&&JSON.stringify(r.fields)==='["model_version"]'));
+ assert.deepEqual(errors,[]);assert.equal(result.beforeBuilds,1);
+ assert.ok(result.samples.every(x=>x.ready&&x.builds===1&&x.rooms===14&&x.sameGeometry));
+ console.log('3 actual-HA quiet remounts: no extra full reads/builds, same geometry; model_version preflight retained');
+}finally{await browser.close();}
