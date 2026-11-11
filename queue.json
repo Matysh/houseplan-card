@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9429,
+  "revision": 9430,
   "nextTicket": 369,
   "nextFence": 369,
   "tasks": {
@@ -4774,6 +4774,10 @@
       "digest": "ea43c48355424b6911194aa8107e470775aa2aec2a695f020e8e685535e18e40",
       "issue": 1387
     },
+    "github:43078054842:1:completions:message:0937569764e7532b63d40f6399cb25d8fa11be5279b1a4f4045b2b7e6a35403c": {
+      "digest": "c238d3ef9da2aa53f446e5d873f1cd2dbbdb5024d50c788abe5019abf6608122",
+      "issue": 1387
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4871,7 +4875,8 @@
           "entry": 1,
           "detail": "Before review: ignore the newly generated demo encoded folder like existing generated assets; preserve applicable receipts.",
           "eventId": "author-stop-1387-generated-ignore-20261111:return:1387"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:21b44f92-407b-46f8-9122-7cbf312e6d02": {
