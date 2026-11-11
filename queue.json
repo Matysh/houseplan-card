@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9350,
+  "revision": 9351,
   "nextTicket": 367,
   "nextFence": 367,
   "tasks": {
@@ -4284,7 +4284,7 @@
       "ownerDecision": null,
       "ticket": 366,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794419072818,
       "reviewEntry": 3,
       "patchId": "ee2ec5f2a52109e77785f8e12251c48547d989e3",
@@ -4312,6 +4312,15 @@
         "entry": 2,
         "detail": "Before review: finish registry user authority rebinding in the static card too; completed receipts remain applicable.",
         "eventId": "author-stop-1386-static-user-20261111:return:1386"
+      },
+      "s6": {
+        "id": "20261111T174525057-5906ff64",
+        "name": "Тесты для задачи #1386 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T174525057-5906ff64/report.json",
+        "materialSha": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
+        "status": "passed",
+        "finishedAt": "2026-11-11T18:02:01.904Z",
+        "failures": []
       }
     }
   },
@@ -4550,9 +4559,9 @@
     "fence": 366,
     "materialSha": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
     "expectedBase": "6c5b515d67cfe007016bbe141f8e842e15dd7115",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794419091137,
-    "expiresAt": 1794420346315,
+    "expiresAt": 1794423723398,
     "patchId": "ee2ec5f2a52109e77785f8e12251c48547d989e3"
   },
   "events": {
@@ -5038,6 +5047,34 @@
         "layer": "product",
         "materialSha": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
         "phase": "sync"
+      }
+    },
+    "finish:b56548e1-5d2c-4cf5-bf61-13455c4b1b0a:finish:3:s6-complete": {
+      "digest": "735d0e8d1a67d573a5648e514dfaf0301457406182442b035ef021d3cbd0c1d6",
+      "issue": 1386,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1386,
+        "at": 1794420123398,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
+        "phase": "review",
+        "evidence": {
+          "id": "20261111T174525057-5906ff64",
+          "name": "Тесты для задачи #1386 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261111T174525057-5906ff64/report.json",
+          "materialSha": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
+          "status": "passed",
+          "finishedAt": "2026-11-11T18:02:01.904Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "<details>\n<summary>Решение, риски и фактические проверки</summary>\n\n### Цель и результат\n\nМатериал `e4cd01609` (основная правка `5fbbc5f1d`, повтор/coalescing и свидетели `89a2710b6`, static user consumer `e4cd01609`), ветка `codex/1386-card-reconnect`, база dev `6c5b515d6`. Воспроизведён механизм #1385. Native baseline: три same-element detach/attach (0/1000/1000 мс) добавляли три пары полных реестров и три физических пересборки; config/layout на коротких возвратах уже не перечитывались. Новый результат: ни дополнительных registry/config/layout reads, ни физических пересборок; SVG совпадает. Закрыты пропуск config/layout события в промежутке и потеря ready-listener при возврате того же HA snapshot.\n\n### Решение и риски\n\n- Общая registry authority разделена по connection и HA user. Две секунды сохраняется event coverage последнего потребителя; событие в промежутке делает кеш dirty без сетевой работы вне DOM. Долгое отсутствие/неполные подписки/ошибка/reconnect требуют fresh read. Владение response и async subscribe ACK предотвращает позднюю перезапись снимка или чужих подписок.\n- Обычная ручная перепроверка присоединяется к текущей загрузке; настоящий ready явно заменяет прежний запрос. Дополнительная карточка не повторяет уже отказавший запрос; явный retry и remount после отсутствия повторяются. Подтверждённый equal-revision config/layout echo в промежутке не запускает чтение.\n- Физические модели того же элемента сохраняются на detach и очищаются при смене authority. Публичные config/layout запросы, ACL и write guards не заменены кешем.\n- Config/layout/trail/virtual subscriptions имеют ограниченную физическую lease. При detach handlers немедленно снимаются и generation старых async операций отменяется. Router сохраняет только потребность чтения; attach назначает новые handlers тем же подпискам. После двух секунд они освобождаются. Closed stream и true reconnect требуют актуальной пары; connection hook ставится явно при connect независимо от визуального hass dedupe.\n- Внимание: late read/subscribe ACK, несколько карточек/пользователей, события в промежутке, cleanup, protocol closed и сохранение write/read lifecycle guards. Полный реестр не заменён list_for_display. Сжатие #1387 и отдельный CPU-профиль #1388 сюда не включены.\n\n### Проверки и устранение отказов S6\n\n- Исходные Node-регрессии: 3 FAIL / 3 PASS; подтверждены duplicate remount, stalled old response и user isolation. После исправлений и дополнений адресный набор из 9 файлов — **257/257 PASS**, 0 skip: registry/binding/read/reload/render lifecycle, поздние ответы, Optimize, MDI и mutation registry.\n- Свежие build/types + bundle; `demo/smoke_card_reconnect.mjs` — **OK**. Три временных отключения, один shared load, отсутствие физической перестройки, точный SVG, equal-revision echo, config+layout событие в промежутке, reconnect вне DOM без запросов, одна пара при возврате и долгом отсутствии, настоящий ready, ноль записей. До правки native baseline имел 5 красных проверок. Измеренное время включает шесть RAF и не выдаётся за CPU-ускорение/общий performance PASS.\n- Прежние `smoke_view_recovery` и `smoke_warm_owners` — **OK**. После исправлений повторно выполнен `smoke_readonly_cold_start` — **OK**: права/готовый план/ноль записей и освобождение подписки в ограниченное окно.\n- Первый queued S6 `20261111T165316735-718192d5` завершён с 5 отказавшими шагами: отсутствовал установленный pinned @mdi/svg (восстановлен штатным npm ci без правки lockfile); макет late-context-replies не имел нового helper/полей (подключён настоящий prototype helper); устарел якорь мутанта; обычный registry retry дублировал pending fetch (исправлен coalescing); readonly smoke ждал немедленного cleanup вместо нового двухсекундного окна (сохранена проверка обязательного освобождения с наблюдением до 3.2 с).\n- Реальный адресный `mutation-gate --execute-nightly --id=config-old-subscription-interrupts-new-paired-load` — **пойман 1/1**, чистый native guard прошёл. Старый мутант только снимал одну из двух защит нового relay и выжил; определение теперь моделирует исходный дефект целиком: старый subscriber напрямую вызывает свой callback в обход owner и current-handler routing. Guard/его asserts не ослаблялись.\n- Catalog: новые файлы classified runtime/regression/task-release; Node выбран по читателю ha-binding-status и области runtime, native — как изменённый executable, не только areaTests. Полный обновлённый план по diff origin/dev: 685 файлов. Для текущего материала запускается повторный queued S6; прошлый FAILED не объявляется PASS.\n- Повторный queued S6 `20261111T172051330-5c8095b4` остановлен исполнителем до передачи на ревью для проверки второго consumer: static card использовал прежний connection-only guard и не перепривязывался к новому user-scoped registry. Допуск возвращён штатной командой, локальный runner прерван SIGINT; результат не считается полным PASS. Исправлен аналогичный guard в `space-card.ts`, fresh build/types и расширенный native **OK**: новый пользователь получает собственный full registry, отключённое устройство не остаётся активным в static card, а основная карточка прежнего пользователя не меняется. Успех Node 257/257 относится к материалу до этого небольшого static дополнения; текущий материал проверяет новый queued S6.\n- Синтетические транспорт и View; действующий пользовательский HA и реальная masonry-обёртка не проверены. Baseline/after JSON и логи: `artifacts/issue1386/`. Релиз не поручен.\n\n</details>",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
