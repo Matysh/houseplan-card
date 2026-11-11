@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9330,
+  "revision": 9331,
   "nextTicket": 366,
   "nextFence": 366,
   "tasks": {
@@ -4303,15 +4303,16 @@
         "test/late-context-replies.test.mjs"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
+        "key": "2:executor-stopped",
+        "reason": "executor-stopped",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794417101000,
-        "entry": 1,
-        "detail": "Поведение: test/icon-picker.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optimize-plans-dialog.test.mjs: failed; Браузер: readonly cold start: failed",
-        "eventId": "finish:20e7fa10-9703-4b16-8f69-86410bd3a806:finish:3:return:return:1386"
-      }
+        "at": 1794418665155,
+        "entry": 2,
+        "detail": "Before review: finish registry user authority rebinding in the static card too; completed receipts remain applicable.",
+        "eventId": "author-stop-1386-static-user-20261111:return:1386"
+      },
+      "reason": "executor-stopped"
     }
   },
   "ownerDecisions": {},
@@ -4542,18 +4543,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1386,
-    "worker": "finish",
-    "token": "365:finish:224bc278-f4f3-41ff-8c16-61b6e2824b30:finish:1:admit",
-    "fence": 365,
-    "materialSha": "89a2710b6ed85f7e4c438586921c27d382bbd9d8",
-    "expectedBase": "6c5b515d67cfe007016bbe141f8e842e15dd7115",
-    "phase": "testing",
-    "admittedAt": 1794417639033,
-    "expiresAt": 1794418957404,
-    "patchId": "68ef5129990acbd67d9c247e8c8fb6cf7511f655"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -4795,6 +4785,10 @@
       "digest": "465242e0085fca1d6979ddbaa8b4cce878ac12ba95d7ccc36354912022e0961f",
       "issue": 1386
     },
+    "author-stop-1386-static-user-20261111": {
+      "digest": "d9cdb2e22ac298d434c08aae40af10a896a8c6f107e95dcdc6ada5037c64367c",
+      "issue": 1386
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4918,6 +4912,26 @@
         "layer": "product",
         "materialSha": "89a2710b6ed85f7e4c438586921c27d382bbd9d8",
         "phase": "sync"
+      }
+    },
+    "author-stop-1386-static-user-20261111:return:1386": {
+      "digest": "d9cdb2e22ac298d434c08aae40af10a896a8c6f107e95dcdc6ada5037c64367c",
+      "issue": 1386,
+      "message": {
+        "kind": "return",
+        "issue": 1386,
+        "at": 1794418665155,
+        "entry": 2,
+        "notice": {
+          "key": "2:executor-stopped",
+          "reason": "executor-stopped",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794418665155,
+          "entry": 2,
+          "detail": "Before review: finish registry user authority rebinding in the static card too; completed receipts remain applicable.",
+          "eventId": "author-stop-1386-static-user-20261111:return:1386"
+        }
       }
     }
   },
