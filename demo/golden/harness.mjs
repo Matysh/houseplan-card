@@ -68,7 +68,7 @@ const wallUnionIsolationFixture = JSON.parse(readFileSync(
 const cardVersion = '0.0.0-golden';
 const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
-const fixtureFor = (scenario) => scenario.resizeJunction ? makeResizeJunctionFixture(scenario.resizeJunction.kind) : scenario.staticWallOpenings ? {
+const fixtureFor = (scenario) => scenario.resizeJunction ? makeResizeJunctionFixture(scenario.resizeJunction.kind,scenario.resizeJunction.obstacle) : scenario.staticWallOpenings ? {
   config:makeStaticWallOpeningsFixture(scenario.staticWallOpenings),layout:{},devices:{},entities:{},states:{},areas:{},
 } : scenario.deviceAlerts ? makeMarkerAlertsFixture(scenario.deviceAlerts) : scenario.deviceIssues ? (() => {
   const fixture = makeVisualMatrixFixture(), sample = makeDeviceIssuesFixture();

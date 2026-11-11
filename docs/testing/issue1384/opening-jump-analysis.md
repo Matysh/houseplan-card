@@ -25,9 +25,11 @@
 стен. Это проверка осуществимости конечного состояния, не готовый алгоритм
 Resize и не сквозной прогон на работающем HA. В HA данные не записывались.
 
-Команды: `node artifacts/resize-pass-junction/opening-study.mjs` и тот же
-скрипт с `--both`. Логи: `opening-study.log`, `opening-study-both.log` в этом
-локальном каталоге. Python запускается через существующий
+Воспроизведение из корня проекта с зависимостями из DEVELOPMENT.md:
+подготовить `test-build` командой `node process-next/catalog/prepare.mjs tests`,
+затем выполнить `node docs/testing/issue1384/opening-jump-study.mjs` и тот же
+[сохранённый скрипт](opening-jump-study.mjs) с `--both`. Результаты печатаются
+как JSON-строки. Python запускается через существующий
 `demo/helpers/room-write-python.mjs`: graph/config, passage/host, junction
 валидаторы обычного config/set, без режима Optimize.
 

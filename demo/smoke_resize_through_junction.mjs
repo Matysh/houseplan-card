@@ -65,4 +65,36 @@ try{
   for(const message of sequence)previous=validateOrdinaryRoomWrite(previous,message);
   check(`${name}.productionPythonAcceptsSequence`,previous.spaces[0].plan_graph,returned.spaces[0].plan_graph);
  }
+ const name='resize-through-junction.obstacle';
+ await prepareGoldenScenario(page,{id:name,fixture:'visual',space:'resize-junctions',panelHost:true,
+  resizeJunction:{kind:'cross',phase:'before',obstacle:true},mode:'plan',theme:'light',language:'ru',zoom:.65,zoomCenter:[500,500],
+  viewport:{width:1180,height:1000},capture:'stage'});
+ let previous=await config();
+ await resizeJunctionPointer(page,.5,.6,true);
+ const before=await config(),count=await writes();
+ const points=await page.evaluate(()=>{
+  const c=window.__goldenCard,h=[...c.renderRoot.querySelectorAll('.rszhandle')].find(h=>
+   h.getAttribute('aria-disabled')==='false'&&Math.abs(+h.getAttribute('cx')-600)<.01&&Math.abs(+h.getAttribute('cy')-300)<.01);
+  if(!h)throw Error('enabled obstacle-scene handle missing');
+  const matrix=h.getScreenCTM(),a=new DOMPoint(600,300).matrixTransform(matrix),b=new DOMPoint(400,300).matrixTransform(matrix);
+  return{a:{x:a.x,y:a.y},b:{x:b.x,y:b.y}};
+ });
+ await page.mouse.move(points.a.x,points.a.y);await page.mouse.down();await page.mouse.move(points.b.x,points.b.y,{steps:8});
+ await page.evaluate(()=>window.__goldenCard._editorRuntime._whenLiveEditorSettled());
+ const held=await page.evaluate(()=>({dragging:window.__goldenCard._resize.dragging,
+  space:window.__goldenCard._resize.preview?.sp}));
+ const x=held.space?.openings.find(o=>o.id==='moving-door').x;
+ check(`${name}.dragging`,held.dragging);check(`${name}.crossedJunction`,x<.5);
+ check(`${name}.notJumpedColumn`,(x-.44)*1000>=40/(2*5)*(1000/240)+10-1e-6);
+ check(`${name}.stationaryT`,degree(held.space,.5,.5),3);
+ check(`${name}.noIntermediateWrite`,await writes(),count);check(`${name}.sourceStillSaved`,await config(),before);
+ check(`${name}.columnUnchangedDuringDrag`,held.space.wall_columns,before.spaces[0].wall_columns);
+ await page.mouse.up();await waitResizeJunctionSaved(page,x);
+ const stopped=await config();
+ check(`${name}.onlySafeVisibleResultSaved`,stopped.spaces[0].plan_graph,held.space.plan_graph);
+ check(`${name}.oneWrite`,await writes(),count+1);
+ check(`${name}.columnUnchangedAfterSave`,stopped.spaces[0].wall_columns,before.spaces[0].wall_columns);
+ const sequence=await page.evaluate(()=>window.__resizeJunctionWrites);
+ for(const message of sequence)previous=validateOrdinaryRoomWrite(previous,message);
+ check(`${name}.productionPythonAcceptsSafeStop`,previous.spaces[0].plan_graph,stopped.spaces[0].plan_graph);
 }finally{await finish(browser);}

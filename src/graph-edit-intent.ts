@@ -94,28 +94,31 @@ function resizeTarget(raw:readonly number[],point:Q.ExactPoint,original?:readonl
     same(raw[1],before[1])||same(raw[1],original?.[1])?point[1]:authored[1],
   ];
 }
-function roomTargets(before:any,draft:any,raw:any,index:ReturnType<typeof graphIndex>,room:string):Map<string,Q.ExactPoint>{
+type ResizeExactPolys=ReadonlyMap<string,readonly Q.ExactPoint[]>;
+function roomTargets(before:any,draft:any,raw:any,index:ReturnType<typeof graphIndex>,room:string,
+ exactPoly?:readonly Q.ExactPoint[]):Map<string,Q.ExactPoint>{
   const cycle=before.plan_graph.rooms.find((r:any)=>r.room===room);if(!cycle)failure('room',room);
   const old=cycle.edges.map((r:any)=>{const e=index.edges.get(edgeKey(r))!;return r.reverse?e.to:e.from;});
   const points=old.map((id:string)=>index.points.get(id)!);
   const target=sourcePoly((draft.rooms||[]).find((r:any)=>r.id===room));
   if(target.length<3)failure('resize-target',room);
+  if(exactPoly&&exactPoly.length!==target.length)failure('resize-exact-target',room);
   const source=sourcePoly((raw?.rooms||[]).find((r:any)=>r.id===room));
   const result=new Map<string,Q.ExactPoint>();
   if(target.length===old.length){
-    old.forEach((id:string,i:number)=>result.set(id,resizeTarget(target[i],points[i],source.length===old.length?source[i]:undefined)));
+    old.forEach((id:string,i:number)=>result.set(id,exactPoly?.[i]||resizeTarget(target[i],points[i],source.length===old.length?source[i]:undefined)));
     return result;
   }
   // Fixed-topology Resize can expose only its real corners; stored run atoms
   // still belong to their exact node IDs and are expanded through this binding.
   const corners=points.flatMap((p:Q.ExactPoint,i:number)=>Q.orientation(points[(i+points.length-1)%points.length],p,points[(i+1)%points.length]).n?[i]:[]);
-  const targetExact=target.map(authoredPoint);
+  const targetExact=exactPoly||target.map(authoredPoint);
   const targetCorners=targetExact.flatMap((p,i)=>Q.orientation(targetExact[(i+target.length-1)%target.length],p,targetExact[(i+1)%target.length]).n?[i]:[]);
   if(corners.length!==targetCorners.length)failure('resize-topology',room);
   for(let run=0;run<corners.length;run++){
     const start=corners[run],end=corners[(run+1)%corners.length];
-    const a=resizeTarget(target[targetCorners[run]],points[start],source.length===old.length?source[start]:undefined);
-    const b=resizeTarget(target[targetCorners[(run+1)%corners.length]],points[end],source.length===old.length?source[end]:undefined);
+    const a=exactPoly?.[targetCorners[run]]||resizeTarget(target[targetCorners[run]],points[start],source.length===old.length?source[start]:undefined);
+    const b=exactPoly?.[targetCorners[(run+1)%corners.length]]||resizeTarget(target[targetCorners[(run+1)%corners.length]],points[end],source.length===old.length?source[end]:undefined);
     const da=Q.pointSub(a,points[start]),db=Q.pointSub(b,points[end]);
     result.set(old[start],a);
     for(let i=(start+1)%old.length;i!==end;i=(i+1)%old.length)
@@ -131,7 +134,7 @@ interface ResizePathSpace {plan_graph:PlanGraph;rooms?:ResizePathRoom[];openings
  * walk is published. Meeting an existing seam first prevents its old cycle
  * order from folding when the moving corner continues past it (#1384). */
 function resizeCrossingPath<T extends ResizePathSpace>(before:ResizePathSpace,draft:T,raw:object|undefined,
- index:ReturnType<typeof graphIndex>,rooms:readonly string[]):{steps:Q.Exact[];at:(t:Q.Exact)=>T}|null{
+ index:ReturnType<typeof graphIndex>,rooms:readonly string[]):{steps:Q.Exact[];at:(t:Q.Exact)=>{draft:T;targets:ResizeExactPolys}}|null{
   const inputs=rooms.map(room=>{
     const cycle=before.plan_graph.rooms.find(r=>r.room===room);if(!cycle)failure('room',room);
     const ids:string[]=cycle.edges.map((r:GraphEdgeRef&{reverse:boolean})=>{
@@ -159,23 +162,26 @@ function resizeCrossingPath<T extends ResizePathSpace>(before:ResizePathSpace,dr
   if(!crossings.size)return null;
   const originals=new Map((before.openings||[]).map(o=>[o.id,o]));
   return{steps:[...crossings.values()].sort(Q.cmp).concat(Q.ONE),at:t=>{
-    const next=clone(draft);
+    const next=clone(draft),goals=new Map<string,readonly Q.ExactPoint[]>();
     for(const input of inputs){
       const room=next.rooms!.find(r=>r.id===input.room)!;
-      room.poly=input.corners.map(i=>Q.pointToNumbers(Q.pointAt(input.points[i],input.targets.get(input.ids[i])!,t)));
+      const poly=input.corners.map(i=>Q.pointAt(input.points[i],input.targets.get(input.ids[i])!,t));
+      room.poly=poly.map(Q.pointToNumbers);goals.set(input.room,poly);
     }
     for(const opening of next.openings||[]){
       const old=originals.get(opening.id);
       if(!old||![old.x,old.y,opening.x,opening.y].every(Number.isFinite))continue;
       [opening.x,opening.y]=Q.pointToNumbers(Q.pointAt(authoredPoint([old.x,old.y]),authoredPoint([opening.x,opening.y]),t));
     }
-    return next;
+    // Compatibility/render polygons remain numeric; graph goals stay exact.
+    // An intersection such as 3/7 must meet the same node, not its rounded ULP.
+    return{draft:next,targets:goals};
   }};
 }
 function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'resize'}>,raw:any,
-  graph:PlanGraph,index:ReturnType<typeof graphIndex>,allocation:Allocation,plan:Plan):void{
+  graph:PlanGraph,index:ReturnType<typeof graphIndex>,allocation:Allocation,plan:Plan,exactPolys?:ResizeExactPolys):void{
   const selected=new Set(intent.rooms),targets=new Map<string,Map<string,Q.ExactPoint>>();
-  for(const room of selected)for(const[id,p]of roomTargets(before,draft,raw,index,room)){
+  for(const room of selected)for(const[id,p]of roomTargets(before,draft,raw,index,room,exactPolys?.get(room))){
     const list=targets.get(id)||new Map();list.set(room,p);targets.set(id,list);
   }
   const roomNodes=new Map<string,Map<string,string>>(),groupsByNode=new Map<string,Array<{p:Q.ExactPoint;rooms:string[];id:string}>>();
@@ -252,6 +258,8 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
       &&[...(targets.get(id)?.values()||[])].every(p=>Q.pointEq(p,index.points.get(id)!))
       &&Q.pointEq(index.points.get(id)!,plan.nodePoints.get(id)!))
       .map(id=>({id,t:Q.projectParameter(index.points.get(id)!,a,b)})).sort((x,y)=>Q.cmp(x.t,y.t)||codepoint(x.id,y.id));
+    // Outermost unchanged anchors survive later contacts on this run; using
+    // the next seam would immediately require another basis when it is met.
     const t=Q.projectParameter(point,a,b),left=anchors.find(p=>Q.cmp(p.t,t)<0),right=anchors.slice().reverse().find(p=>Q.cmp(p.t,t)>0);
     return left&&right?{from:left.id,to:right.id}:null;
   };
@@ -1038,7 +1046,7 @@ function compactEditSeams(graph:PlanGraph,seeds:ReadonlySet<string>,openings:rea
   return operations;
 }
 function commitGraphEditStep<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
-  sourceBefore?:Record<string,any>,crossJunctions=true):GraphEditResult<T>{
+  sourceBefore?:Record<string,any>,crossJunctions=true,exactResizePolys?:ResizeExactPolys):GraphEditResult<T>{
   assertFiniteColumnInputs(draftSpace);
   const prepared=prepareGraph(beforeNormalizedSpace.plan_graph as PlanGraph),graph=prepared.graph,index=prepared.index;
   const before:any=projectGraphSpace(beforeNormalizedSpace,graph).space,draft:any=clone(draftSpace);
@@ -1047,7 +1055,7 @@ function commitGraphEditStep<T extends Record<string,any>>(beforeNormalizedSpace
     if(path){
       const stages:GraphEditResult<T>[]=[];let current:T=before;
       for(const t of path.steps){
-        const stage=commitGraphEditStep(current,path.at(t),intent,current,false);
+        const target=path.at(t),stage=commitGraphEditStep(current,target.draft,intent,current,false,target.targets);
         stages.push(stage);current=stage.space;
       }
       const operations=stages.flatMap(stage=>stage.operations);
@@ -1079,7 +1087,7 @@ function commitGraphEditStep<T extends Record<string,any>>(beforeNormalizedSpace
       }
       break;
     }
-    case'resize':resizePlan(before,draft,intent,sourceBefore,graph,index,allocation,plan);settleResizePlan(graph,index,intent.rooms,allocation,plan);break;
+    case'resize':resizePlan(before,draft,intent,sourceBefore,graph,index,allocation,plan,exactResizePolys);settleResizePlan(graph,index,intent.rooms,allocation,plan);break;
     case'thickness':{
       const selected=new Map((intent.edges||[]).map(e=>[edgeKey(e),e]));
       for(const room of graph.rooms)if(intent.rooms?.includes(room.room))for(const e of room.edges)selected.set(edgeKey(e),e);

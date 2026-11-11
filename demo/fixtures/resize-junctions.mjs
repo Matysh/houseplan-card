@@ -2,7 +2,7 @@
 import { migrateGraphSpace } from '../../test-build/plan-graph.js';
 import { commitGraphEdit } from '../../test-build/graph-edit-intent.js';
 
-export function makeResizeJunctionFixture(kind='tee') {
+export function makeResizeJunctionFixture(kind='tee',obstacle=false) {
   const rect=(id,x0,y0,x1,y1)=>({id,name:id,area:null,poly:[[x0,y0],[x1,y0],[x1,y1],[x0,y1]]});
   let space=migrateGraphSpace({id:'resize-junctions',title:'Resize junctions',cell_cm:5,view_box:[0,0,1,1],
     rooms:[rect('left',.1,.1,.5,.5),rect('right',.5,.1,.9,.5),
@@ -24,6 +24,7 @@ export function makeResizeJunctionFixture(kind='tee') {
     return {...o,host:{kind:'wall',id:edge.id,t:((axis?o.y:o.x)-edge.a[axis])/(edge.b[axis]-edge.a[axis])}};
   });
   space=commitGraphEdit(space,{...space,openings},{kind:'openings',ids:openings.map(o=>o.id)});
+  if(obstacle)space.wall_columns=[{id:'fixed-obstacle',shape:'circle',center:[.44,.3],cm:40}];
   return {config:{model_version:11,spaces:[space],markers:[],settings:{volumetric_view:false}},
     layout:{},devices:{},entities:{},states:{},areas:{}};
 }

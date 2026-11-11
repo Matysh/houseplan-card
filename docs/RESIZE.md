@@ -17,8 +17,10 @@ opening hosts remain protected; this is local reconciliation, never Optimize.
 An existing side-run junction may be passed in one continuous gesture (#1384).
 The exact bridge visits its incidence events T→X→T internally, composing one
 replayable graph command and original-source material/host mappings. These
-events create no intermediate save or Undo entry. A stationary meeting node's
-line support may be rebased to unchanged anchors on its original connected
+events create no intermediate save or Undo entry. Exact rational corner goals
+survive between graph stages independently of their numeric render projection,
+including non-lattice intersection points. A stationary meeting node's line
+support may be rebased to unchanged anchors on its original connected
 room-wall run, retaining the constraint without introducing a self dependency.
 Real corners, opening clearances and other physical stops remain enforced.
 
