@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1384,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Reconcile existing side-run junctions inside one Resize edit without intermediate writes or weakening physical stops.",
+  "summary": {
+    "ru": "Проход Resize через узлы примыкания одним жестом, без промежуточного сохранения X-стыка.",
+    "en": "Resize through existing junctions in one gesture, without saving the intermediate X."
+  }
+}

@@ -14,6 +14,13 @@ Derived graph atoms may split or coalesce where real junctions separate or meet
 No abandoned, same-material straight seam is left as an extra editing handle.
 Material/ownership boundaries, independent bodies, dependency supports and
 opening hosts remain protected; this is local reconciliation, never Optimize.
+An existing side-run junction may be passed in one continuous gesture (#1384).
+The exact bridge visits its incidence events T→X→T internally, composing one
+replayable graph command and original-source material/host mappings. These
+events create no intermediate save or Undo entry. A stationary meeting node's
+line support may be rebased to unchanged anchors on its original connected
+room-wall run, retaining the constraint without introducing a self dependency.
+Real corners, opening clearances and other physical stops remain enforced.
 
 - A non-shared wall changes exactly one room.
 - An exactly shared endpoint-to-endpoint wall changes exactly two rooms.

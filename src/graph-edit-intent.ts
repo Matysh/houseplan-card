@@ -123,6 +123,52 @@ function roomTargets(before:any,draft:any,raw:any,index:ReturnType<typeof graphI
   }
   return result;
 }
+/** Exact incidence events on changing-length side runs. They are graph-only
+ * steps of one edit: no intermediate document, history entry or rounded grid
+ * walk is published. Meeting an existing seam first prevents its old cycle
+ * order from folding when the moving corner continues past it (#1384). */
+function resizeCrossingPath(before:any,draft:any,raw:any,index:ReturnType<typeof graphIndex>,rooms:readonly string[]):
+ {steps:Q.Exact[];at:(t:Q.Exact)=>any}|null{
+  const inputs=rooms.map(room=>{
+    const cycle=before.plan_graph.rooms.find((r:any)=>r.room===room);if(!cycle)failure('room',room);
+    const ids:string[]=cycle.edges.map((r:GraphEdgeRef&{reverse:boolean})=>{
+      const edge=index.edges.get(edgeKey(r))!;return r.reverse?edge.to:edge.from;
+    });
+    const points=ids.map(id=>index.points.get(id)!);
+    const corners=points.flatMap((p,i)=>Q.orientation(points[(i+points.length-1)%points.length],p,points[(i+1)%points.length]).n?[i]:[]);
+    return{room,ids,points,corners,targets:roomTargets(before,draft,raw,index,room)};
+  });
+  const crossings=new Map<string,Q.Exact>();
+  for(const{ids,points,corners,targets}of inputs)for(let run=0;run<corners.length;run++){
+    const start=corners[run],end=corners[(run+1)%corners.length];
+    for(const[moving,fixed]of[[start,end],[end,start]]){
+      const from=points[moving],to=targets.get(ids[moving])!;
+      if(Q.pointEq(from,to)||!Q.pointEq(points[fixed],targets.get(ids[fixed])!)
+        ||Q.orientation(from,points[fixed],to).n)continue;
+      for(let i=(start+1)%ids.length;i!==end;i=(i+1)%ids.length){
+        const point=points[i];
+        if(!Q.pointEq(point,targets.get(ids[i])!)||Q.orientation(from,to,point).n)continue;
+        const t=Q.projectParameter(point,from,to);
+        if(Q.cmp(t,Q.ZERO)>0&&Q.cmp(t,Q.ONE)<0)crossings.set(JSON.stringify(Q.encodeRational(t)),t);
+      }
+    }
+  }
+  if(!crossings.size)return null;
+  const originals=new Map<string,any>((before.openings||[]).map((o:any)=>[o.id,o]));
+  return{steps:[...crossings.values()].sort(Q.cmp).concat(Q.ONE),at:t=>{
+    const next=clone(draft);
+    for(const input of inputs){
+      const room=next.rooms.find((r:any)=>r.id===input.room);
+      room.poly=input.corners.map(i=>Q.pointToNumbers(Q.pointAt(input.points[i],input.targets.get(input.ids[i])!,t)));
+    }
+    for(const opening of next.openings||[]){
+      const old=originals.get(opening.id);
+      if(!old||![old.x,old.y,opening.x,opening.y].every(Number.isFinite))continue;
+      [opening.x,opening.y]=Q.pointToNumbers(Q.pointAt(authoredPoint([old.x,old.y]),authoredPoint([opening.x,opening.y]),t));
+    }
+    return next;
+  }};
+}
 function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'resize'}>,raw:any,
   graph:PlanGraph,index:ReturnType<typeof graphIndex>,allocation:Allocation,plan:Plan):void{
   const selected=new Set(intent.rooms),targets=new Map<string,Map<string,Q.ExactPoint>>();
@@ -176,6 +222,36 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
     for(const group of groups)if(group.id===id)plan.nodePoints.set(id,group.p);
   }
   const cloneDeps=new Map<string,GraphOperation>();
+  const mappedRefs=(refs:readonly {from:string;to:string}[],rooms:readonly string[])=>refs.map(reference=>{
+    const mapped=(node:string)=>rooms.map(room=>roomNodes.get(room)?.get(node)).find(Boolean)||node;
+    return{from:mapped(reference.from),to:mapped(reference.to)};
+  });
+  const supportRefs=new Map(graph.dependencies.map(d=>[d.node,d.refs]));
+  for(const[id,groups]of groupsByNode){
+    const dep=graph.dependencies.find(d=>d.node===id);if(!dep)continue;
+    for(const group of groups)if(group.id===id||!index.nodes.has(group.id))
+      supportRefs.set(group.id,mappedRefs(dep.refs,group.rooms));
+  }
+  const supportedBy=(id:string,node:string,seen=new Set<string>()):boolean=>{
+    if(id===node)return true;if(seen.has(id))return false;seen.add(id);
+    return(supportRefs.get(id)||[]).some(r=>supportedBy(r.from,node,seen)||supportedBy(r.to,node,seen));
+  };
+  const meetingSupport=(reference:{from:string;to:string},node:string,point:Q.ExactPoint):{from:string;to:string}|null=>{
+    const a=index.points.get(reference.from)!,b=index.points.get(reference.to)!;
+    if(Q.pointEq(a,b))return null;
+    const reached=new Set([reference.from,reference.to]),pending=[...reached];
+    for(let i=0;i<pending.length;i++)for(const edge of index.incident.get(pending[i])||[]){
+      if(edge.kind!=='wall'||!(index.owners.get(edgeKey(edge))||[]).length
+        ||Q.orientation(a,b,index.points.get(edge.from)!).n||Q.orientation(a,b,index.points.get(edge.to)!).n)continue;
+      for(const id of[edge.from,edge.to])if(!reached.has(id)){reached.add(id);pending.push(id);}
+    }
+    const anchors=[...reached].filter(id=>id!==node&&!supportedBy(id,node)
+      &&[...(targets.get(id)?.values()||[])].every(p=>Q.pointEq(p,index.points.get(id)!))
+      &&Q.pointEq(index.points.get(id)!,plan.nodePoints.get(id)!))
+      .map(id=>({id,t:Q.projectParameter(index.points.get(id)!,a,b)})).sort((x,y)=>Q.cmp(x.t,y.t)||codepoint(x.id,y.id));
+    const t=Q.projectParameter(point,a,b),left=anchors.find(p=>Q.cmp(p.t,t)<0),right=anchors.slice().reverse().find(p=>Q.cmp(p.t,t)>0);
+    return left&&right?{from:left.id,to:right.id}:null;
+  };
   for(const[id,groups]of groupsByNode)if(groups.some(g=>g.id!==id)){
     const dep=graph.dependencies.find(d=>d.node===id);
     if(dep&&dep.refs.some(r=>[r.from,r.to].some(node=>!Q.pointEq(index.points.get(node)!,plan.nodePoints.get(node)!))))
@@ -186,10 +262,15 @@ function resizePlan(before:any,draft:any,intent:Extract<GraphEditIntent,{kind:'r
     const dep=graph.dependencies.find(d=>d.node===id);
     if(group.id!==id&&index.nodes.has(group.id))continue; // The meeting endpoint keeps its own dependency.
     if(dep){
-      const refs=dep.refs.map(ref=>{
-        const map=(node:string)=>group.rooms.map(room=>roomNodes.get(room)?.get(node)).find(Boolean)||node;
-        return{from:map(ref.from)!,to:map(ref.to)!};
+      const refs=mappedRefs(dep.refs,group.rooms).map((reference,i)=>{
+        if(reference.from!==group.id&&reference.to!==group.id)return reference;
+        // A stationary meeting node may have used the moving corner as its
+        // line basis. Reusing that node must not turn its support into itself.
+        // Rebase only along the proved original connected wall run, using
+        // unchanged anchors with no dependency path back to this node.
+        return meetingSupport(dep.refs[i],group.id,group.p)||reference;
       });
+      supportRefs.set(group.id,refs);
       const params=refs.map(ref=>Q.projectParameter(group.p,plan.nodePoints.get(ref.from)!,plan.nodePoints.get(ref.to)!));
       if(refs.every((ref,i)=>Q.cmp(params[i],Q.ZERO)>=0&&Q.cmp(params[i],Q.ONE)<=0
           &&Q.pointEq(Q.pointAt(plan.nodePoints.get(ref.from)!,plan.nodePoints.get(ref.to)!,params[i]),group.p))){
@@ -953,11 +1034,33 @@ function compactEditSeams(graph:PlanGraph,seeds:ReadonlySet<string>,openings:rea
   }
   return operations;
 }
-export function commitGraphEditResult<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
-  sourceBefore?:Record<string,any>):GraphEditResult<T>{
+function commitGraphEditStep<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
+  sourceBefore?:Record<string,any>,crossJunctions=true):GraphEditResult<T>{
   assertFiniteColumnInputs(draftSpace);
   const prepared=prepareGraph(beforeNormalizedSpace.plan_graph as PlanGraph),graph=prepared.graph,index=prepared.index;
   const before:any=projectGraphSpace(beforeNormalizedSpace,graph).space,draft:any=clone(draftSpace);
+  if(intent.kind==='resize'&&crossJunctions){
+    const path=resizeCrossingPath(before,draft,sourceBefore,index,intent.rooms);
+    if(path){
+      const stages:GraphEditResult<T>[]=[];let current:T=before;
+      for(const t of path.steps){
+        const stage=commitGraphEditStep(current,path.at(t),intent,current,false);
+        stages.push(stage);current=stage.space;
+      }
+      const operations=stages.flatMap(stage=>stage.operations);
+      // The kernel composes the original host/range mappings over the entire
+      // replayable batch, including rehosts between the incidence events.
+      const combined=applyGraphOperation(graph,{kind:'batch',operations},{hosts:before.openings||[]});
+      const descendants:Record<string,string[]>=Object.create(null);
+      for(const edge of graph.edges){
+        const key=edgeKey(edge);let children=[key];
+        for(const stage of stages)children=[...new Set(children.flatMap(child=>stage.resizeWallRecords!.descendants[child]||[]))];
+        descendants[key]=children;
+      }
+      return{space:current,graph:combined.graph,mapping:combined.mapping,operations,
+        resizeWallRecords:{before:graph.edges,after:combined.graph.edges,descendants}};
+    }
+  }
   const allocation=new Allocation(graph),plan=newPlan(graph);
   switch(intent.kind){
     case'metadata':guardMetadata(before,draft,sourceBefore);break;
@@ -1084,6 +1187,10 @@ export function commitGraphEditResult<T extends Record<string,any>>(beforeNormal
     resizeWallRecords={before:graph.edges,after:result.graph.edges,descendants};
   }
   return{space:projected.space as T,graph:result.graph,mapping,operations,...(resizeWallRecords?{resizeWallRecords}:{})};
+}
+export function commitGraphEditResult<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
+  sourceBefore?:Record<string,any>):GraphEditResult<T>{
+  return commitGraphEditStep(beforeNormalizedSpace,draftSpace,intent,sourceBefore);
 }
 export function commitGraphEdit<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
   sourceBefore?:Record<string,any>):T{

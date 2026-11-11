@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Resize passes existing junctions in one gesture: the intermediate X needs no save and the whole edit has one Undo. Preserve support dependencies, openings and source materials; cover consecutive junctions, reverse traversal, cancellation and reload (#1384).
+
 - Resize paints one joined wall contour throughout the gesture, clears abandoned straight seams and preserves real T/X junction changes and opening hosts. Room-wall openings remain movable; native regression and before/during/after panel scenes cover the return gesture, cancellation, history and reload (#1383).
 
 - Keep the paired-history mutation guard strict on native persistence and floor-model reuse while reporting timing budgets diagnostically, as in S6; preserve the measured excess and original thresholds (#1382).
