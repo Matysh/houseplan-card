@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9160,
-  "nextTicket": 361,
+  "revision": 9161,
+  "nextTicket": 362,
   "nextFence": 361,
   "tasks": {
     "1170": {
@@ -4279,14 +4279,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/resize-pass-junction",
-      "materialSha": "9edc161b73836117f34465ed8f6ba494a61576dd",
+      "materialSha": "9ac66c5bcd837a0d922c49feffc075274e29c7ba",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 360,
-      "queued": false,
+      "ticket": 361,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794406444284,
-      "reviewEntry": 1,
+      "readyAt": 1794407272739,
+      "reviewEntry": 2,
       "patchId": "d036a0c10b10e6263a335e67bd3d0d376bed339a",
       "changedFiles": [
         "demo/smoke_resize_through_junction.mjs",
@@ -4298,7 +4298,6 @@
         "src/graph-edit-intent.ts",
         "test/resize-through-junction.test.mjs"
       ],
-      "reason": "executor-admission-expired",
       "notice": {
         "key": "1:executor-admission-expired",
         "reason": "executor-admission-expired",
@@ -4537,7 +4536,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1384
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4767,6 +4768,19 @@
           "entry": 1,
           "eventId": "1384-expire-interrupted-1:return:1384"
         }
+      }
+    },
+    "finish:637ebd6b-e54e-484c-867f-b99524bc986d": {
+      "digest": "6120ccb7fa1285e44e53365af61026d5b7a89e46868b6c01b8ed3b8f349bdc6d",
+      "issue": 1384,
+      "message": {
+        "kind": "queued",
+        "issue": 1384,
+        "at": 1794407272739,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9ac66c5bcd837a0d922c49feffc075274e29c7ba"
       }
     }
   },
