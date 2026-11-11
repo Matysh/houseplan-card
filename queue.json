@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9076,
+  "revision": 9077,
   "nextTicket": 359,
   "nextFence": 359,
   "tasks": {
@@ -4817,6 +4817,10 @@
       "digest": "278b53fa4d9149d59cf8f9f9ba7e7ef489b41259306511b33919a1763cb85322",
       "issue": 1383
     },
+    "github:43023492042:1:completions:message:1a55cf8dca903ffa59bd83215c80e4203916b5d99631fc3b9019926e2ec14294": {
+      "digest": "c07beebe5f9eabb85857eaba4772496fbac512b86ee5090392bbf277d5629017",
+      "issue": 1383
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4914,7 +4918,8 @@
           "entry": 1,
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
           "eventId": "finish:99035b88-361b-4141-a0db-3b4a7b11eed4:finish:3:return:return:1383"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:1cc76c56-c0a7-4122-85e5-a648f22499c2": {
