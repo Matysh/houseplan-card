@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9428,
+  "revision": 9429,
   "nextTicket": 369,
   "nextFence": 369,
   "tasks": {
@@ -4315,7 +4315,7 @@
       "notice": {
         "key": "1:executor-stopped",
         "reason": "executor-stopped",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1794421524818,
         "entry": 1,
@@ -4768,6 +4768,10 @@
     },
     "github:43078054842:1:completions:message:0ea04578ae15116e740bca6ca43ff4452155a24d2cb42061ec350835d2b8a0d1": {
       "digest": "e4d301e088bb160ce5153245dbddc470f2ba4941d730cb91c3983cca1c17855f",
+      "issue": 1387
+    },
+    "github:43078054842:1:completions:notice:0937569764e7532b63d40f6399cb25d8fa11be5279b1a4f4045b2b7e6a35403c": {
+      "digest": "ea43c48355424b6911194aa8107e470775aa2aec2a695f020e8e685535e18e40",
       "issue": 1387
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
