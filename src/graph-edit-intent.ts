@@ -123,14 +123,17 @@ function roomTargets(before:any,draft:any,raw:any,index:ReturnType<typeof graphI
   }
   return result;
 }
+interface ResizePathRoom {id:string;poly?:number[][]}
+interface ResizePathOpening {id:string;x:number;y:number}
+interface ResizePathSpace {plan_graph:PlanGraph;rooms?:ResizePathRoom[];openings?:ResizePathOpening[]}
 /** Exact incidence events on changing-length side runs. They are graph-only
  * steps of one edit: no intermediate document, history entry or rounded grid
  * walk is published. Meeting an existing seam first prevents its old cycle
  * order from folding when the moving corner continues past it (#1384). */
-function resizeCrossingPath(before:any,draft:any,raw:any,index:ReturnType<typeof graphIndex>,rooms:readonly string[]):
- {steps:Q.Exact[];at:(t:Q.Exact)=>any}|null{
+function resizeCrossingPath<T extends ResizePathSpace>(before:ResizePathSpace,draft:T,raw:object|undefined,
+ index:ReturnType<typeof graphIndex>,rooms:readonly string[]):{steps:Q.Exact[];at:(t:Q.Exact)=>T}|null{
   const inputs=rooms.map(room=>{
-    const cycle=before.plan_graph.rooms.find((r:any)=>r.room===room);if(!cycle)failure('room',room);
+    const cycle=before.plan_graph.rooms.find(r=>r.room===room);if(!cycle)failure('room',room);
     const ids:string[]=cycle.edges.map((r:GraphEdgeRef&{reverse:boolean})=>{
       const edge=index.edges.get(edgeKey(r))!;return r.reverse?edge.to:edge.from;
     });
@@ -154,11 +157,11 @@ function resizeCrossingPath(before:any,draft:any,raw:any,index:ReturnType<typeof
     }
   }
   if(!crossings.size)return null;
-  const originals=new Map<string,any>((before.openings||[]).map((o:any)=>[o.id,o]));
+  const originals=new Map((before.openings||[]).map(o=>[o.id,o]));
   return{steps:[...crossings.values()].sort(Q.cmp).concat(Q.ONE),at:t=>{
     const next=clone(draft);
     for(const input of inputs){
-      const room=next.rooms.find((r:any)=>r.id===input.room);
+      const room=next.rooms!.find(r=>r.id===input.room)!;
       room.poly=input.corners.map(i=>Q.pointToNumbers(Q.pointAt(input.points[i],input.targets.get(input.ids[i])!,t)));
     }
     for(const opening of next.openings||[]){
@@ -1188,8 +1191,8 @@ function commitGraphEditStep<T extends Record<string,any>>(beforeNormalizedSpace
   }
   return{space:projected.space as T,graph:result.graph,mapping,operations,...(resizeWallRecords?{resizeWallRecords}:{})};
 }
-export function commitGraphEditResult<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
-  sourceBefore?:Record<string,any>):GraphEditResult<T>{
+export function commitGraphEditResult<T extends object>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,
+  sourceBefore?:object):GraphEditResult<T>{
   return commitGraphEditStep(beforeNormalizedSpace,draftSpace,intent,sourceBefore);
 }
 export function commitGraphEdit<T extends Record<string,any>>(beforeNormalizedSpace:T,draftSpace:T,intent:GraphEditIntent,

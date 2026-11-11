@@ -46,7 +46,7 @@ test(`#1384 ${kind} passes a fixed junction in direction ${direction} and return
  for(const old of before.openings){
   const current=result.space.openings.find(o=>o.id===old.id);
   assert.equal(current.x,old.id==='moving-door'?end:old.x);assert.equal(current.y,old.y);
-  for(const key of ['length','type','contact','custom'])assert.deepEqual(current[key],old[key]);
+  for(const key of ['length','type','angle','contact','custom'])assert.deepEqual(current[key],old[key]);
  }
  const returned=move(result.space,end,start);checkResult(result.space,returned);
  assert.equal(degree(returned.space,end,.5),0);assert.equal(degree(returned.space,start,.5),3);
