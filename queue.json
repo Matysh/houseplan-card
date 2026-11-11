@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9151,
+  "revision": 9152,
   "nextTicket": 360,
   "nextFence": 360,
   "tasks": {
@@ -1022,43 +1022,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "c8216bb11a0a46477bfebf3c2c2154033f19294c"
-      }
-    },
-    "1279": {
-      "issue": 1279,
-      "branch": "fix/1279-single-shared-split-wall",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "4f431be3f244d7537ca9919253d495564f1edb09",
-      "mergedSha": "5d0af8bc304275882b185db7f336293075950205",
-      "mergedAt": 1793791365271,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "5d0af8bc304275882b185db7f336293075950205"
       }
     },
     "1280": {
@@ -4307,7 +4270,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "20a8fec94a403520d4a38c7c9e8f0d5d9f535b3d"
       }
     }
   },
@@ -4690,6 +4654,18 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "dev-build:43029419479:1:1383": {
+      "digest": "c2361263dcd2e81de3295bb459854f18c83d7dbe85326c61dee884ceafc38f70",
+      "issue": 1383,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1383,
+        "at": 1794403877872,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "20a8fec94a403520d4a38c7c9e8f0d5d9f535b3d"
       }
     }
   },
