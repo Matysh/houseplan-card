@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9333,
+  "revision": 9334,
   "nextTicket": 367,
   "nextFence": 367,
   "tasks": {
@@ -4287,7 +4287,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794419072818,
       "reviewEntry": 3,
-      "patchId": "68ef5129990acbd67d9c247e8c8fb6cf7511f655",
+      "patchId": "ee2ec5f2a52109e77785f8e12251c48547d989e3",
       "changedFiles": [
         "demo/smoke_card_reconnect.mjs",
         "demo/smoke_readonly_cold_start.mjs",
@@ -4299,6 +4299,7 @@
         "scripts/mutation-registry.mjs",
         "src/ha-binding-status.ts",
         "src/houseplan-card.ts",
+        "src/space-card.ts",
         "test/ha-registry-lifecycle.test.mjs",
         "test/late-context-replies.test.mjs"
       ],
@@ -4548,10 +4549,11 @@
     "token": "366:finish:b56548e1-5d2c-4cf5-bf61-13455c4b1b0a:finish:1:admit",
     "fence": 366,
     "materialSha": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "6c5b515d67cfe007016bbe141f8e842e15dd7115",
+    "phase": "testing",
     "admittedAt": 1794419091137,
-    "expiresAt": 1794419391137
+    "expiresAt": 1794419409005,
+    "patchId": "ee2ec5f2a52109e77785f8e12251c48547d989e3"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4796,6 +4798,10 @@
     },
     "author-stop-1386-static-user-20261111": {
       "digest": "d9cdb2e22ac298d434c08aae40af10a896a8c6f107e95dcdc6ada5037c64367c",
+      "issue": 1386
+    },
+    "finish:b56548e1-5d2c-4cf5-bf61-13455c4b1b0a:finish:2:synchronized": {
+      "digest": "0c8f6da62d8ab15c48f0f38f8a2e55c449464a2c93462a3c17331cfaf9ad7b0c",
       "issue": 1386
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
