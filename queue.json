@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 8980,
-  "nextTicket": 356,
+  "revision": 8981,
+  "nextTicket": 357,
   "nextFence": 356,
   "tasks": {
     "1170": {
@@ -4277,6 +4277,20 @@
         "status": "published",
         "sourceSha": "f1a94ef30fc1b8e24574de4d4cc9fcb65aa12caa"
       }
+    },
+    "1382": {
+      "issue": 1382,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/history0-mutation-diagnostic-timing",
+      "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 356,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794383754603,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4506,7 +4520,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1382
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4658,6 +4674,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:5d9df066-de1c-4cf3-931e-24a57f43532c": {
+      "digest": "1badf13a66586445ad7aedaf83f4f9fee943a31044e706567a76d46f44bfdd6c",
+      "issue": 1382,
+      "message": {
+        "kind": "queued",
+        "issue": 1382,
+        "at": 1794383754603,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "787f61dbcf11d4a5593369d7e98156ed4cf48a39"
       }
     }
   },
