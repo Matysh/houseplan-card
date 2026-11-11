@@ -29,6 +29,15 @@ const definition = id => {
   return found[0];
 };
 
+test('#1382 paired history guard keeps timing diagnostic and preserves the floor-rebuild mutation', () => {
+  const mutant = definition('paired-history-rebuilds-floor-1093');
+  assert.equal(mutant.guard, 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs'
+    + ' && node demo/smoke_selective_invalidation_history0.mjs --diagnostic-timing');
+  assert.deepEqual(mutant.patches, [{ file: 'src/demand-space-models.ts',
+    find: '        if (previous?.key === key) resolved = previous.model;',
+    replace: '        if (false && previous?.key === key) resolved = previous!.model;' }]);
+});
+
 test('#899 invalid nightly definitions retain runtime branches and pre-ES2022 indexing', () => {
   const alias = definition('signal-topology-entity-choice-follows-last-alias');
   assert.match(alias.patches[0].replace, /entities\[entities\.length - 1\]/);

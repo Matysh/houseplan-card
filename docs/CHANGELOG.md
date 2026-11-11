@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep the paired-history mutation guard strict on native persistence and floor-model reuse while reporting timing budgets diagnostically, as in S6; preserve the measured excess and original thresholds (#1382).
+
 - Plan optimization paints its waiting states, retains the applied report and distinguishes skipped repairs, rejection and unconfirmed saving. Its single postcheck never reapplies changes; diagnostics use existing Help, and closing the dialog does not cancel a sent request (#1170).
 
 - Repair all four blocked mutation clean controls: adaptive editor navigation, render-layout ownership, scoped lazy Python imports and exact TS/Python node parity. Index legacy wall overlays (cold 576-atom validation ~22 s → ~2 s without raising its budget); preserve exact hosted-opening centres, authored grid targets and graph-owned deletion identities (#1380).

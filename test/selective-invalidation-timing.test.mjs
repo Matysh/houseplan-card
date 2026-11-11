@@ -14,3 +14,17 @@ test('#1295 a measured slow series keeps diagnostic excess separate from require
   }
   assert.deepEqual(timingVerdict([]).failures,['empty timing matrix']);
 });
+
+test('#1382 history long tasks remain reported while invalid history samples still fail',()=>{
+  const samples=series().map(sample=>({...sample,case:'history-copy',ackToPaint:150,client:180,
+    longTasks:[{duration:211}]}));
+  const verdict=timingVerdict(samples);
+  assert.deepEqual(verdict.failures,[]);
+  assert.deepEqual(verdict.budgetFailures,['large/DPR1/history-copy/0ms: long task=211 >200']);
+  assert.deepEqual(timingFailures(samples),verdict.budgetFailures,'strict callers retain their original thresholds');
+  for(const change of [s=>s[0].trusted=false,s=>s[0].persisted=false,s=>s[0].requests=2,
+    s=>s[0].client=NaN,s=>s[0].longTasks[0].duration=NaN,s=>s.pop()]){
+    const invalid=structuredClone(samples);change(invalid);
+    assert.ok(timingVerdict(invalid).failures.length,'diagnostic budgets cannot excuse an invalid history sample');
+  }
+});
