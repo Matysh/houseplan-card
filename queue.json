@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9439,
+  "revision": 9440,
   "nextTicket": 369,
   "nextFence": 369,
   "tasks": {
@@ -4290,7 +4290,7 @@
       "ownerDecision": null,
       "ticket": 368,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1794421566663,
       "reviewEntry": 2,
       "patchId": "490b611ef5cc1aede418e06cdb261dac63f1e099",
@@ -4313,14 +4313,13 @@
         "tests_backend/test_ha_frontend_assets.py"
       ],
       "notice": {
-        "key": "1:executor-stopped",
-        "reason": "executor-stopped",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794421524818,
-        "entry": 1,
-        "detail": "Before review: ignore the newly generated demo encoded folder like existing generated assets; preserve applicable receipts.",
-        "eventId": "author-stop-1387-generated-ignore-20261111:return:1387"
+        "key": "2:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1794422108028,
+        "entry": 2,
+        "requestId": "review:1387:2:490b611ef5cc1aede418e06cdb261dac63f1e099:e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a"
       },
       "s6": {
         "id": "20261111T182622789-d1257b08",
@@ -4344,6 +4343,11 @@
         "at": 1794421704674,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1387:2:490b611ef5cc1aede418e06cdb261dac63f1e099:e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
+        "at": 1794422108028
       }
     }
   },
@@ -4589,19 +4593,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1387,
-    "worker": "finish",
-    "token": "368:finish:21b44f92-407b-46f8-9122-7cbf312e6d02:finish:1:admit",
-    "fence": 368,
-    "materialSha": "b97ce95fb118a4009ff487027762a24f4f185f3b",
-    "expectedBase": "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a",
-    "phase": "review",
-    "admittedAt": 1794421570565,
-    "expiresAt": 1794425293004,
-    "patchId": "490b611ef5cc1aede418e06cdb261dac63f1e099",
-    "reviewRequest": "review:1387:2:490b611ef5cc1aede418e06cdb261dac63f1e099:e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -4785,6 +4777,10 @@
     },
     "github:43079117489:1:tick:0:review-presentation": {
       "digest": "70835ad1056560366f4bd965d7106fe3420fad7ee6e192ad1c012b8a9e10e758",
+      "issue": 1387
+    },
+    "github:43079117489:1:tick:0:return": {
+      "digest": "e5eac6457a073fa06c5a9456cf42015c8c4790b58068111113352830bae6459a",
       "issue": 1387
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
