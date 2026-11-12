@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 711,
+  "revision": 712,
   "active": "1.86.0-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -74497,20 +74497,21 @@
       "kind": "beta",
       "branch": "release/1.86.0-beta.1",
       "sourceSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
-      "sha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
+      "sha": "4f8fad166f3f75f1f7a4435ddd11e55b09005c04",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
-        "tag": "v1.86.0-beta.1",
-        "candidate": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
+        "tag": null,
+        "candidate": "4f8fad166f3f75f1f7a4435ddd11e55b09005c04",
         "base": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
         "issues": [
           {
             "number": 1024,
             "commits": [
               "148c93fc096a49c812a2146aeca3ea757b9714b2",
+              "4f8fad166f3f75f1f7a4435ddd11e55b09005c04",
               "6057dcd21148e9992229e6151f4baa4681ef0052",
               "90a6ba130fc90706078d9f569c658d7859500fc2",
               "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
@@ -74645,7 +74646,14 @@
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
-      "portToDev": [],
+      "portToDev": [
+        {
+          "from": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
+          "to": "4f8fad166f3f75f1f7a4435ddd11e55b09005c04",
+          "syncMode": "merge",
+          "status": "pending"
+        }
+      ],
       "diagnostics": []
     }
   },
@@ -79339,7 +79347,8 @@
     "github:42770594504:1:complete:completion:9aabc3fc-519b-4c72-9d35-e88cf452cfc9": "328ffd3601edeccb6783851c87bb8c341ca060c209d7075fbd26a8d28aaf94c9",
     "github:42770594504:1:complete:completion:90f61ce6-100d-4f6f-bbc0-11a3101f0af7": "ff8110fadf259ac63437b58e49cc89c1e57c807935caad27c1938eaac03bdcd6",
     "github:42770594504:1:complete:completion:f6cfac67-1f9e-4efc-8f9d-200472d08cef": "c2d6092d499ed66c5bd18bba85a9f6cc158c2e0b868e9f94518d1b2cb263b7c0",
-    "release-1-86-0-beta-1-create-20261113": "1bf5814b0b089d1697c78e001f0c1f7fb6f975647c719faed84be3cd5fd12895"
+    "release-1-86-0-beta-1-create-20261113": "1bf5814b0b089d1697c78e001f0c1f7fb6f975647c719faed84be3cd5fd12895",
+    "release-1-86-0-beta-1-prepare-4f8fad166": "fc7c98348bfb3973fc8de906f19be58b43e2fc722a083a842c33dcaee0896c21"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
