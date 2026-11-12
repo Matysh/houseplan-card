@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9654,
+  "revision": 9655,
   "nextTicket": 373,
   "nextFence": 373,
   "tasks": {
@@ -4041,7 +4041,40 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794478048916,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "d433f45d62f3c94a1866741159fe6cb59b09e9c7",
+      "changedFiles": [
+        "demo/smoke_resize_labels.mjs",
+        "demo/smoke_wall_side_dimensions.mjs",
+        "demo/smoke_wall_side_dimensions_dense.mjs",
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/UX-MODES.md",
+        "docs/WALL-THICKNESS.md",
+        "docs/release-ledger/v1.85.0/1381.json",
+        "src/editors/properties/editor.ts",
+        "src/editors/properties/selection.ts",
+        "src/editors/properties/strings.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/live-editor.ts",
+        "src/logic.ts",
+        "src/wall-node-card-adapter.ts",
+        "src/wall-node-editor.ts",
+        "src/wall-side-dimension-editor.ts",
+        "src/wall-side-dimension-geometry.ts",
+        "src/wall-side-dimension-layout.ts",
+        "src/wall-side-dimension-render.ts",
+        "src/wall-side-dimensions.ts",
+        "test/properties-editor.test.mjs",
+        "test/wall-side-dimension-editor.test.mjs",
+        "test/wall-side-dimension-geometry.test.mjs",
+        "test/wall-side-dimension-labels.test.mjs",
+        "test/wall-side-dimensions.test.mjs"
+      ]
     },
     "1382": {
       "issue": 1382,
@@ -4529,10 +4562,11 @@
     "token": "372:finish:d7b92f8f-e240-45a1-806d-b9be2f0c459c:finish:1:admit",
     "fence": 372,
     "materialSha": "5352d5ab232688e6021f1b535e2645fdbd6dec8f",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c970836c383ce294aeec16069657c546ace2df1b",
+    "phase": "testing",
     "admittedAt": 1794478054864,
-    "expiresAt": 1794478354864
+    "expiresAt": 1794478362867,
+    "patchId": "d433f45d62f3c94a1866741159fe6cb59b09e9c7"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4634,6 +4668,10 @@
     "github:42980477516:1:completions:report:dc4a5da63a2c734ea4b0aad48faf91bfb257334eb9d6a55d3b9ff3060735a7fe": {
       "digest": "fb4637786d495fc8ce43ce75f7a7eb1c2167af80d6ab3749599266002f7b48d5",
       "issue": 1024
+    },
+    "finish:d7b92f8f-e240-45a1-806d-b9be2f0c459c:finish:2:synchronized": {
+      "digest": "5c62497357d1e71304201d27c42ba5c4f300534a4463b448c2c39277b36149d5",
+      "issue": 1381
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
