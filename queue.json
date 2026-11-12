@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10125,
+  "revision": 10126,
   "nextTicket": 386,
   "nextFence": 386,
   "tasks": {
@@ -144,7 +144,7 @@
       "notice": {
         "key": "2:author-found-nested-source-dependency",
         "reason": "author-found-nested-source-dependency",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S7-code-review",
         "at": 1794523764792,
         "entry": 2,
@@ -5089,6 +5089,10 @@
     },
     "github:43323487363:1:completions:report:6183ecf4aca79ab9b7f57e2a858af40e1f18b7e57a5e6c6f57178eac7e5a0d60": {
       "digest": "e27b2c63527b9aa2e31f6caa93a3c3bcd41bf70c485d9490225cff9d704a85bc",
+      "issue": 1024
+    },
+    "github:43323487363:1:completions:notice:abf33e29a12e26af59a0433784d23083e88bfb56a31f77c17c9b97cf7153a3b6": {
+      "digest": "0e5910a90f8eac2dcdfb0896ae95b10ebdc9f8ba0ac2969564aab613f66cdb4a",
       "issue": 1024
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
