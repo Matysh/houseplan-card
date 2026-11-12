@@ -559,6 +559,12 @@ rubber band with the already confirmed graph (each click already commits its
 edge), node moves use the native accepted candidate, and Resize uses its exact
 preview. Canonical uncut material ownership bounds the shared resolver; an
 invalid node outline hides measurements rather than reusing an obsolete face.
+Merge/attach hover intentionally has no measurement until the native tool has
+an admitted physical candidate; an uncomputed receiver never borrows old faces.
+Before exact material construction, the reader selects a bounded graph with
+complete nearby room cycles and one finite end-incidence halo (not a recursive
+flood of connected rooms). Its local signature reuses dimensions across remote
+graph edits. These partial graphs are read-only and never reach a writer.
 Geometry is cached independently of camera/language/HA state. Projection and
 collision layout use cached stage size and text metrics, keeping 1 CSS-pixel
 ink and horizontal 12px labels under zoom/rotation. Ordinary ink is pointer

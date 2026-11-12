@@ -308,6 +308,8 @@ node handles; it never repairs stored data or relaxes the write preflight.
   measures both affected rooms at once and retains their area labels. Selected
   walls keep A/B endpoint tags, not the old offset axis ruler. Whole-body drags
   hide selection dimensions; cancellation restores a fresh current selection.
+  An invalid/outline node preview or a merge/attach hover without an admitted
+  physical candidate hides dimensions rather than showing old, mismatched faces.
   Escape reaches an active native gesture before Properties deselects it.
   Thin screen-space rails/witnesses and a scroll-owned numbered fallback add
   no input, writes, history, View/kiosk behavior or new touch guarantee.

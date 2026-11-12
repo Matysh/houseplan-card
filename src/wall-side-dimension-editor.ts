@@ -153,7 +153,9 @@ export class WallSideDimensionEditor {
     const nodes=new Set<string>();
     for(const carrier of dimensionCarriers(request.candidate))for(const point of [carrier.a,carrier.b]) {
       const key=point.join(',');if(nodes.has(key))continue;nodes.add(key);
-      const p=project(point);obstacles.push({x:p[0]-8,y:p[1]-8,w:16,h:16});
+      const p=project(point);
+      if(p[0]>=-8&&p[0]<=width+8&&p[1]>=-8&&p[1]<=height+8)
+        obstacles.push({x:p[0]-8,y:p[1]-8,w:16,h:16});
     }
     if(request.kind==='resize')for(const room of request.candidate.rooms) {
       const poly=roomPoly(room);if(!poly)continue;

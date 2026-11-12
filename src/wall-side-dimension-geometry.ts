@@ -23,6 +23,27 @@ const wallBox=(w:DimensionCarrier,pad=0):Box=>[Math.min(w.a[0],w.b[0])-pad,Math.
 export const dimensionWallId=(wall:{kind:string;id:string}):string=>`${wall.kind}:${wall.id}`;
 const graphCarriers=new WeakMap<PlanGraph,DimensionCarrier[]>();
 
+/** Complete nearby room cycles preserve facade ownership/tapers. One finite
+ * incidence halo preserves their end joints; it does not flood-fill connected
+ * rooms/walls. Remote records never enter the exact material producer. */
+function localDimensionGraph(graph:PlanGraph,supports:readonly DimensionCarrier[],boxes:readonly Box[]):PlanGraph {
+  const byId=new Map(supports.map(w=>[w.id,w]));
+  const ids=new Set(supports.filter(w=>boxes.some(box=>overlaps(box,wallBox(w)))).map(w=>w.id));
+  const rooms=graph.rooms.filter(room=>{
+    const walls=room.edges.map(ref=>byId.get(dimensionWallId(ref))).filter((w):w is DimensionCarrier=>!!w);
+    if(!walls.length)return false;
+    const bounds:Box=[Math.min(...walls.flatMap(w=>[w.a[0],w.b[0]])),Math.min(...walls.flatMap(w=>[w.a[1],w.b[1]])),
+      Math.max(...walls.flatMap(w=>[w.a[0],w.b[0]])),Math.max(...walls.flatMap(w=>[w.a[1],w.b[1]]))];
+    return boxes.some(box=>overlaps(box,bounds));
+  });
+  for(const room of rooms)for(const ref of room.edges)ids.add(dimensionWallId(ref));
+  const ends=new Set(graph.edges.filter(edge=>ids.has(dimensionWallId(edge))).flatMap(edge=>[edge.from,edge.to]));
+  const edges=graph.edges.filter(edge=>ids.has(dimensionWallId(edge))||ends.has(edge.from)||ends.has(edge.to));
+  const nodes=new Set(edges.flatMap(edge=>[edge.from,edge.to]));
+  return {...graph,edges,rooms,nodes:graph.nodes.filter(node=>nodes.has(node.id)),
+    dependencies:graph.dependencies.filter(d=>nodes.has(d.node)&&d.refs.every(ref=>nodes.has(ref.from)&&nodes.has(ref.to)))};
+}
+
 export function dimensionCarriers(space:NodeMoveSpace):DimensionCarrier[] {
   // Read accepted records directly. Importing the Select command subsystem
   // here would invert its lazy boundary and change the editor retry facade.
@@ -80,7 +101,9 @@ export function affectedDimensionCarriers(before:NodeMoveSpace,candidate:NodeMov
  * Pan/zoom, translations of labels, language and HA state are not inputs. */
 export class WallDimensionGeometry {
   private cache=new WeakMap<object,Map<string,WallDimensionModel>>();
+  private localCache=new Map<string,WallDimensionModel>();
   public builds=0;
+  constructor(private readonly structure:typeof directStructure=directStructure) {}
   read(space:NodeMoveSpace,ids:readonly string[]):WallDimensionModel {
     const perUnitCm=(Number(space.cell_cm)||5)/GRID_PITCH;
     const supports=dimensionCarriers(space);
@@ -89,16 +112,24 @@ export class WallDimensionGeometry {
     let entries=this.cache.get(identity);
     if(!entries){entries=new Map();this.cache.set(identity,entries);}
     const cached=entries.get(key);if(cached)return cached;
-    this.builds++;
     const wanted=new Set(ids),carriers=supports.filter(w=>wanted.has(w.id));
+    const pad=Math.max(0,...supports.map(w=>w.cm))/perUnitCm*4;
+    const boxes=carriers.map(w=>wallBox(w,pad));
+    const graph=space.plan_graph&&localDimensionGraph(space.plan_graph,supports,boxes);
+    const columns=((Array.isArray(space.wall_columns)?space.wall_columns:[]) as WallColumnCfg[]).filter(column=>{
+      const [x,y]=column.center.map(value=>value*NORM_W),radius=column.cm/perUnitCm;
+      return boxes.some(box=>overlaps(box,[x-radius,y-radius,x+radius,y+radius]));
+    });
+    const localKey=JSON.stringify([perUnitCm,[...ids].sort(),graph||carriers,columns]);
+    let result=this.localCache.get(localKey);
+    if(result){entries.set(key,result);return result;}
+    this.builds++;
     let geometry:DimensionGeometry['geometry']=[],materials:DimensionGeometry['materials']=[],epsilon=1e-9;
-    if(space.plan_graph && carriers.length) {
+    if(graph && carriers.length) {
       try {
-        const structure=directStructure({graph:space.plan_graph,scale:NORM_W},Number(space.cell_cm)||5,GRID_PITCH);
+        const structure=this.structure({graph,scale:NORM_W},Number(space.cell_cm)||5,GRID_PITCH);
         epsilon=Math.max(structure.nodes.epsilon,1e-9);
-        const boxes=carriers.map(w=>wallBox(w,structure.depth*4));
         const local=structure.materials.filter(m=>boxes.some(box=>overlaps(box,A.bounds(m.poly))));
-        const columns=(Array.isArray(space.wall_columns)?space.wall_columns:[]) as WallColumnCfg[];
         const columnMaterials=columns.flatMap(column=>{
           const body=columnBody({...column,center:[column.center[0]*NORM_W,column.center[1]*NORM_W]},
             Number(space.cell_cm)||5,GRID_PITCH);
@@ -114,11 +145,15 @@ export class WallDimensionGeometry {
         }
       }catch { /* Unsupported legacy/failed proof remains an explicit axis fallback. */ }
     }
-    const result={carriers,epsilonCm:epsilon*perUnitCm,
-      intervals:resolveWallSideDimensions({carriers,supports,geometry,materials,perUnitCm,epsilon})};
+    const localIds=graph&&new Set(graph.edges.map(dimensionWallId));
+    result={carriers,epsilonCm:epsilon*perUnitCm,
+      intervals:resolveWallSideDimensions({carriers,supports:localIds?supports.filter(w=>localIds.has(w.id)):supports,
+        geometry,materials,perUnitCm,epsilon})};
     entries.set(key,result);
     if(entries.size>8)entries.delete(entries.keys().next().value!);
+    this.localCache.set(localKey,result);
+    if(this.localCache.size>16)this.localCache.delete(this.localCache.keys().next().value!);
     return result;
   }
-  clear():void {this.cache=new WeakMap();}
+  clear():void {this.cache=new WeakMap();this.localCache.clear();}
 }
