@@ -2,7 +2,7 @@
  * owning native paint calls render(); there are no observers, polls or writes. */
 import {nothing,type TemplateResult} from 'lit';
 import type {HouseplanEditorRuntime} from './houseplan-editor-runtime';
-import {NORM_W} from './canvas-constants';
+import {NORM_W,GRID_PITCH} from './canvas-constants';
 import {encodePoint,readAuthoredPoint} from './plan-exact';
 import type {PlanGraph} from './plan-graph';
 import type {NodeMoveSpace} from './wall-node-move';
@@ -14,7 +14,7 @@ import {propertiesT} from './editors/properties/strings';
 import {DRAW_WALL_DEFAULT_CM} from './wall-thickness';
 import {affectedDimensionCarriers,dimensionCarriers,WallDimensionGeometry} from './wall-side-dimension-geometry';
 import {changedWallSideDimensions,type DimensionInterval,type DimensionPoint} from './wall-side-dimensions';
-import {layoutWallSideDimensions,dimensionListBox,type DimensionBox} from './wall-side-dimension-layout';
+import {layoutWallSideDimensions,dimensionListBox,resizeHandleDimensionObstacle,type DimensionBox} from './wall-side-dimension-layout';
 import {renderWallSideDimensions} from './wall-side-dimension-render';
 
 interface Request {kind:'draw'|'node'|'resize'|'selection';before:NodeMoveSpace|null;candidate:NodeMoveSpace;ids:readonly string[];owner:object|string}
@@ -148,6 +148,15 @@ export class WallSideDimensionEditor {
     for(const carrier of dimensionCarriers(request.candidate))for(const point of [carrier.a,carrier.b]) {
       const key=point.join(',');if(nodes.has(key))continue;nodes.add(key);
       const p=project(point);obstacles.push({x:p[0]-8,y:p[1]-8,w:16,h:16});
+    }
+    if(request.kind==='resize')for(const room of request.candidate.rooms) {
+      const poly=roomPoly(room);if(!poly)continue;
+      for(let i=0;i<poly.length;i++) {
+        const a:DimensionPoint=[poly[i][0]*NORM_W,poly[i][1]*NORM_W];
+        const b:DimensionPoint=[poly[(i+1)%poly.length][0]*NORM_W,poly[(i+1)%poly.length][1]*NORM_W];
+        if(Math.hypot(b[0]-a[0],b[1]-a[1])<GRID_PITCH)continue;
+        const box=resizeHandleDimensionObstacle(a,b,project,view.w,width);if(box)obstacles.push(box);
+      }
     }
     const selected=this.runtime.properties.dimensionTarget;
     if(selected) {

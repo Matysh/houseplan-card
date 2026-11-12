@@ -2,6 +2,19 @@
  * for text; witness lines always leave those endpoints along the normal. */
 import type {DimensionInterval,DimensionPoint} from './wall-side-dimensions';
 export interface DimensionBox {x:number;y:number;w:number;h:number}
+/** Cached scene math for the visible Resize glyph, not its larger invisible
+ * hit disk. Matches _renderResizeLayer's half-size wall/arrows and neutral
+ * stroke; no live DOM layout read is needed for a measurement label. */
+export function resizeHandleDimensionObstacle(a:DimensionPoint,b:DimensionPoint,
+  project:(p:DimensionPoint)=>DimensionPoint,viewWidth:number,stageWidth:number):DimensionBox|null {
+  const p=project(a),q=project(b),length=Math.hypot(q[0]-p[0],q[1]-p[1]);
+  if(!(length>0)||!(viewWidth>0))return null;
+  const ux=Math.abs(q[0]-p[0])/length,uy=Math.abs(q[1]-p[1])/length;
+  const s=Math.max(viewWidth*.013,5)/2*stageWidth/viewWidth;
+  const center=project([Math.round((a[0]+b[0])*5)/10,Math.round((a[1]+b[1])*5)/10]);
+  const hw=s*(.7*ux+uy)+2,hh=s*(.7*uy+ux)+2;
+  return{x:center[0]-hw,y:center[1]-hh,w:2*hw,h:2*hh};
+}
 export interface DimensionPlacement {
   interval:DimensionInterval; number:number; label:string; lane:number;
   a:DimensionPoint;b:DimensionPoint;railA:DimensionPoint;railB:DimensionPoint;

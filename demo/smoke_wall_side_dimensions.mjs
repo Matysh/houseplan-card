@@ -7,19 +7,21 @@ import {wallKey} from '../test-build/wall-thickness.js';
 const rooms=[{id:'left',name:'Left',area:null,poly:[[.15,.15],[.5,.15],[.5,.65],[.15,.65]]},
   {id:'right',name:'Right',area:null,poly:[[.5,.15],[.85,.15],[.85,.65],[.5,.65]]}];
 const walls=new Map();
+const fixtureCm=Number(process.env.HP_DIMENSION_FIXTURE_CM||20);
+assert.ok(fixtureCm>=1&&fixtureCm<=100);
 const diagnosticCount=Number(process.env.HP_DIMENSION_DIAGNOSTIC_PARTITIONS||0);
 assert.ok(Number.isInteger(diagnosticCount)&&diagnosticCount>=0&&diagnosticCount<=1000);
 const extra=Array.from({length:diagnosticCount},(_,i)=>({id:`remote-${i}`,
   a:[1.5+(i%25)*.1,1.5+Math.floor(i/25)*.1],b:[1.55+(i%25)*.1,1.5+Math.floor(i/25)*.1],cm:20}));
 for(const room of rooms)for(let i=0;i<room.poly.length;i++) {
   const a=room.poly[i],b=room.poly[(i+1)%room.poly.length],key=wallKey(a,b,1/240);
-  walls.set(key,{key,a,b,cm:20});
+  walls.set(key,{key,a,b,cm:fixtureCm});
 }
 const initial=commitWallSegmentModel({spaces:[{id:'dimensions',title:'Dimensions',cell_cm:5,view_box:[0,0,1,1],rooms,
-  walls:[...walls.values()],partitions:[{id:'free',a:[.22,.8],b:[.6,.8],cm:20},...extra],openings:[]}],markers:[],
+  walls:[...walls.values()],partitions:[{id:'free',a:[.22,.8],b:[.6,.8],cm:fixtureCm},...extra],openings:[]}],markers:[],
   settings:{filter_seeded:true,known_devices:[],new_device_ids:[]}}).config;
 const {page,browser}=await launch({width:1440,height:1050});
-const output='artifacts/1381-native';mkdirSync(output,{recursive:true});
+const output=`artifacts/1381-native${fixtureCm===20?'':`-cm-${fixtureCm}`}`;mkdirSync(output,{recursive:true});
 const writes=[];
 let server=structuredClone(initial),revision=1,refuseNext=false;
 try {
@@ -144,6 +146,22 @@ try {
   assert.equal(resize.rows.length,8,'four changed bounded side walls, both physical sides');
   assert.equal(new Set(resize.rows.map(row=>row.carrier)).size,4);
   assert.ok(resize.rows.every(row=>row.source==='physical'));
+  const collisions=await page.evaluate(()=>{
+    const root=window.__card.renderRoot,visible=el=>{
+      for(let p=el;p instanceof Element;p=p.parentElement) {
+        const s=getComputedStyle(p);if(s.visibility==='hidden'||s.display==='none'||Number(s.opacity)===0)return false;
+      }
+      return true;
+    };
+    const labels=[...root.querySelectorAll('[data-hp="wall-side-dimension"] rect')].filter(visible);
+    const glyphs=[...root.querySelectorAll('.rszicon .rszink')].filter(visible);
+    return labels.flatMap(label=>{const a=label.getBoundingClientRect();return glyphs.flatMap(glyph=>{
+      const b=glyph.getBoundingClientRect();
+      return a.left<b.right+1&&b.left-1<a.right&&a.top<b.bottom+1&&b.top-1<a.bottom
+        ? [{label:label.parentElement.querySelector('text').textContent,glyph:glyph.parentElement.getAttribute('transform')}]:[];
+    });});
+  });
+  assert.deepEqual(collisions,[],'dimension labels never cover visible Resize arrows, including 1cm walls');
   report.resize=resize;await page.screenshot({path:`${output}/resize.png`});
   await page.keyboard.press('Escape');await page.mouse.up();await settle();
   assert.equal((await dimensions()).rows.length,0);

@@ -1,7 +1,7 @@
 // Read-only screen presentation: physical-length and interaction rules live in the sibling suites.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {layoutWallSideDimensions,dimensionListBox} from '../test-build/wall-side-dimension-layout.js';
+import {layoutWallSideDimensions,dimensionListBox,resizeHandleDimensionObstacle} from '../test-build/wall-side-dimension-layout.js';
 import {formatLength} from '../test-build/logic.js';
 import {propertiesT} from '../test-build/editors/properties/strings.js';
 const dimension={id:'wall:1:-1:0',carrier:'wall:1',side:-1,order:0,source:'physical',
@@ -24,6 +24,15 @@ test('#1381 diagonal rails retain the true interval, without rotating text upsid
   const rail=[placement.railB[0]-placement.railA[0],placement.railB[1]-placement.railA[1]];
   assert.ok(Math.abs(witness[0]*rail[0]+witness[1]*rail[1])<1e-8);
   assert.ok(Math.abs(Math.hypot(...witness)-12)<1e-8);
+});
+test('#1381 thin-wall labels avoid the real Resize arrow, without treating its hit disk as painted ink',()=>{
+  const thin={...dimension,from:[50,50.5],to:[250,50.5],normal:[0,1]};
+  const base=input([thin]),handle=resizeHandleDimensionObstacle([50,50],[250,50],p=>p,600,600);
+  const intersects=(a,b)=>a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;
+  assert.ok(intersects(layoutWallSideDimensions(base)[0].labelBox,handle),'precondition: the first thin-wall row collides');
+  const placed=layoutWallSideDimensions({...base,obstacles:[handle]})[0];
+  assert.ok(!intersects(placed.labelBox,handle));assert.ok(placed.lane>0);
+  assert.deepEqual(placed.a,thin.from);assert.deepEqual(placed.b,thin.to);
 });
 test('#1381 dense fallback retains every interval and stable numeric correspondence',()=>{
   const intervals=Array.from({length:23},(_,i)=>({...dimension,id:`wall:${i}:-1:0`,carrier:`wall:${i}`}));
