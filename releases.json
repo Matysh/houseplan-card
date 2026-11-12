@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 729,
+  "revision": 730,
   "active": "1.85.2-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -82519,24 +82519,28 @@
       "kind": "beta",
       "branch": "release/1.85.2-beta.1",
       "sourceSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
-      "sha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
+      "sha": "6b9b6a122922133dd4456336b7f5c05b56b4b19c",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
-        "tag": "v1.85.2-beta.1",
-        "candidate": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
+        "tag": null,
+        "candidate": "6b9b6a122922133dd4456336b7f5c05b56b4b19c",
         "base": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
         "issues": [
           {
             "number": 1024,
             "commits": [
               "148c93fc096a49c812a2146aeca3ea757b9714b2",
+              "3f92ebd791b9c4f5baaf034a319ab96309fd0526",
+              "4f8fad166f3f75f1f7a4435ddd11e55b09005c04",
               "6057dcd21148e9992229e6151f4baa4681ef0052",
+              "6b9b6a122922133dd4456336b7f5c05b56b4b19c",
               "90a6ba130fc90706078d9f569c658d7859500fc2",
               "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
-              "d4e0fe5c218256be98b330c6fa9ed55d053bef6f"
+              "d4e0fe5c218256be98b330c6fa9ed55d053bef6f",
+              "efb45d1f465f12e91e18e19e918d7514f45524bf"
             ]
           },
           {
@@ -82667,7 +82671,14 @@
       "review": null,
       "metrics": null,
       "metricsAcceptedSha": null,
-      "portToDev": [],
+      "portToDev": [
+        {
+          "from": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
+          "to": "6b9b6a122922133dd4456336b7f5c05b56b4b19c",
+          "syncMode": "merge",
+          "status": "pending"
+        }
+      ],
       "diagnostics": []
     }
   },
@@ -87379,7 +87390,8 @@
     "beta-1024-report:20261112T235134695-7ab49363": "1bfa1b0c03aaa61fef034f58ba0d9324d562afb8a2ab2b3820b765a57b3752bf",
     "beta-1024-metrics:20261112T235134695-7ab49363": "299d0efbb3133c9ab705da900d6c778f2ea97e8d5a4577db16ffd0d8dbf58571",
     "release-1-86-0-beta-1-wrong-milestone-line": "9f1c0a2b3fb243b72a2b029fe01752f19a8e3c3f0c4292320856e6dccb9e1801",
-    "release-1-85-2-beta-1-create-20261113": "a3540d6f969b797f3e14a461896b0ff593489a2358f26e7da2ef501415d2b09f"
+    "release-1-85-2-beta-1-create-20261113": "a3540d6f969b797f3e14a461896b0ff593489a2358f26e7da2ef501415d2b09f",
+    "release-1-85-2-beta-1-prepare-6b9b6a122": "3f985778cb0813d1880586c67cb5d41a54e0fbd24e4657d83d8ba1f427ddcace"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
