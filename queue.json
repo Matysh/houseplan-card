@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9966,
+  "revision": 9967,
   "nextTicket": 383,
   "nextFence": 383,
   "tasks": {
@@ -4367,15 +4367,16 @@
         "test/wall-side-dimension-labels.test.mjs"
       ],
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794504293036,
-        "entry": 2,
-        "detail": "Браузер: editor dimensions: failed",
-        "eventId": "finish:936de651-fa91-4b63-94c1-f2d9b310e8e4:finish:3:return:return:1398"
-      }
+        "at": 1794504755347,
+        "entry": 3,
+        "detail": "Браузер: view edit permissions: cancelled; Браузер: wall side dimensions: cancelled; Браузер: wall side dimensions dense: Подготовка не завершена успешно; Браузер: wall side dimensions thin: Подготовка не завершена успешно",
+        "eventId": "finish:82d77a79-790a-4724-b049-4ec1b8f569c7:finish:3:return:return:1398"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -4606,18 +4607,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1398,
-    "worker": "finish",
-    "token": "382:finish:82d77a79-790a-4724-b049-4ec1b8f569c7:finish:1:admit",
-    "fence": 382,
-    "materialSha": "1589429ab4d966bce514dda675f5e34d84000bba",
-    "expectedBase": "0b8b0d847f8c72182ef16494f5482c0dbc153d63",
-    "phase": "testing",
-    "admittedAt": 1794504387587,
-    "expiresAt": 1794505051749,
-    "patchId": "4438826662a93accca7117501bcc3bdac5af5455"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -4799,6 +4789,10 @@
       "digest": "71211c5879bffccbd5ed663f51f5d3f0751110f7804d29cb9a43fe0fe0f4e9f9",
       "issue": 1398
     },
+    "finish:82d77a79-790a-4724-b049-4ec1b8f569c7:finish:3:return": {
+      "digest": "e22679fbc0f5a9f555fbb4ea552b3d3980e976775e13ac1008983084ac8a855b",
+      "issue": 1398
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4954,6 +4948,26 @@
         "layer": "product",
         "materialSha": "1589429ab4d966bce514dda675f5e34d84000bba",
         "phase": "sync"
+      }
+    },
+    "finish:82d77a79-790a-4724-b049-4ec1b8f569c7:finish:3:return:return:1398": {
+      "digest": "e22679fbc0f5a9f555fbb4ea552b3d3980e976775e13ac1008983084ac8a855b",
+      "issue": 1398,
+      "message": {
+        "kind": "return",
+        "issue": 1398,
+        "at": 1794504755347,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794504755347,
+          "entry": 3,
+          "detail": "Браузер: view edit permissions: cancelled; Браузер: wall side dimensions: cancelled; Браузер: wall side dimensions dense: Подготовка не завершена успешно; Браузер: wall side dimensions thin: Подготовка не завершена успешно",
+          "eventId": "finish:82d77a79-790a-4724-b049-4ec1b8f569c7:finish:3:return:return:1398"
+        }
       }
     }
   },
