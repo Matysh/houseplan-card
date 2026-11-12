@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10042,
+  "revision": 10043,
   "nextTicket": 384,
   "nextFence": 384,
   "tasks": {
@@ -4363,18 +4363,12 @@
   "ownerDecisions": {},
   "specReviews": {
     "1024": {
-      "requestId": "spec:1024:ef2a19f71f857d8e5ece42e316e9594918faf3f5b62232717e66be0549d157e7",
-      "contextDigest": "ef2a19f71f857d8e5ece42e316e9594918faf3f5b62232717e66be0549d157e7",
-      "base": "412f1993843b72adf9311f908f552e7a419c4530",
-      "round": 3,
-      "status": "accepted",
-      "updatedAt": 1794382486580,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/42980055994",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S5-ready",
-        "confirmed": true
-      }
+      "requestId": "spec:1024:d387d215d5d89a7534b8fe0da6fc70e5544bfa3f4c6aa84d463f84c361a7ed54",
+      "contextDigest": "d387d215d5d89a7534b8fe0da6fc70e5544bfa3f4c6aa84d463f84c361a7ed54",
+      "base": "827cae041114db2a478951d658566a718e6f8393",
+      "round": 4,
+      "status": "pending",
+      "updatedAt": 1794512401019
     },
     "1153": {
       "requestId": "spec:1153:f175bacedec3d6144a63eceb79af5729088fad4282d7f99c1a317b49fe2591b7",
@@ -4585,6 +4579,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "spec:1024:spec:1024:d387d215d5d89a7534b8fe0da6fc70e5544bfa3f4c6aa84d463f84c361a7ed54": {
+      "issue": 1024,
+      "kind": "spec",
+      "requestId": "spec:1024:d387d215d5d89a7534b8fe0da6fc70e5544bfa3f4c6aa84d463f84c361a7ed54",
+      "materialSha": "827cae041114db2a478951d658566a718e6f8393",
+      "expectedBase": "827cae041114db2a478951d658566a718e6f8393",
+      "patchId": "d387d215d5d89a7534b8fe0da6fc70e5544bfa3f4c6aa84d463f84c361a7ed54",
+      "status": "pending",
+      "presentation": {
+        "round": 4,
+        "occurredAt": "2026-11-12T19:40:01.019Z"
+      }
     }
   },
   "waiting": [],
@@ -4648,6 +4655,10 @@
     },
     "github:42980477516:1:completions:report:dc4a5da63a2c734ea4b0aad48faf91bfb257334eb9d6a55d3b9ff3060735a7fe": {
       "digest": "fb4637786d495fc8ce43ce75f7a7eb1c2167af80d6ab3749599266002f7b48d5",
+      "issue": 1024
+    },
+    "github:43292413434:1:label:spec-request": {
+      "digest": "e0350f3f9266fff2d362317077a03369f1cd7ffd27d1042be885e0f78a86de05",
       "issue": 1024
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
