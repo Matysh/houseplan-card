@@ -17,8 +17,9 @@ export function renderWallSideDimensions(items:readonly DimensionPlacement[],wid
           [p[0]+(tangent[0]+normal[0])*2,p[1]+(tangent[1]+normal[1])*2]);
         const middle:DimensionPoint=[(railA[0]+railB[0])/2,(railA[1]+railB[1])/2];
         return svg`<g data-hp="wall-side-dimension" data-interval=${item.interval.id} data-carrier=${item.interval.carrier}
-          data-side=${item.interval.side} data-source=${item.interval.source} data-length-cm=${item.interval.lengthCm}
+          data-side=${item.interval.side??nothing} data-role=${item.interval.role??'wall-side'} data-source=${item.interval.source} data-length-cm=${item.interval.lengthCm}
           data-from=${JSON.stringify(item.interval.from)} data-to=${JSON.stringify(item.interval.to)}
+          data-reference-source=${item.interval.referenceSource??nothing} data-room=${item.interval.roomId??nothing}
           fill="none" stroke-width="1" pointer-events="none">
           ${item.interval.source==='unavailable'?nothing:svg`
             <g data-hp="dimension-witnesses">${line(a,beyond(railA))}${line(b,beyond(railB))}${tick(railA)}${tick(railB)}</g>

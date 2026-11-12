@@ -129,10 +129,13 @@ export function refreshOpeningReference(
   core: PropertiesOpeningCore, context: OpeningDimensionContext, frozen: OpeningDimension,
 ): OpeningDimension | null {
   const matching = resolveOpeningDimensions(core, context).filter(d => d.source === frozen.source
-    && d.roomId === frozen.roomId && d.roomSide === frozen.roomSide && same(d.to, frozen.to)
+    && d.roomId === frozen.roomId && same(d.to, frozen.to)
     && Math.abs(cross(d.axis, frozen.axis)) < EPS
-    && d.axis[0] * frozen.axis[0] + d.axis[1] * frozen.axis[1] > 0);
-  return matching.length === 1 ? matching[0] : null;
+    && d.labelNormal[0]*frozen.labelNormal[0]+d.labelNormal[1]*frozen.labelNormal[1] > 0);
+  // A native host may reverse its axis by 180° on first movement. Room-side
+  // signs then reverse too, but the physical side and frozen end do not.
+  return matching.length === 1 ? {...matching[0],axis:frozen.axis,roomSide:frozen.roomSide,
+    labelNormal:frozen.labelNormal} : null;
 }
 
 /** Width keeps centre; a gap edit translates along the frozen physical reference. */

@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  SPACING_R_IN, SPACING_R_OUT, SpacingMagnet, spacingMarkers, spacingRows, spacingTargets,
+  SPACING_R_IN, SPACING_R_OUT, SpacingMagnet, spacingMarkers, spacingChainGaps, spacingTargets,
 } from '../test-build/device-spacing.js';
 import { GRID_PITCH, NORM_W, clampCanvasN } from '../test-build/space-geometry.js';
 
@@ -189,30 +189,20 @@ test('#873 AC4 a point that continues an h and a v row shows both', () => {
   assert.deepEqual(m.hint.map((t) => t.axis), ['h', 'v']);
 });
 
-test('#873 AC4 drawing: both gaps one length, lines from centre to centre past the shells', () => {
+test('#1398 AC4: a proven row exposes all actual adjacent centres, without changing magnet targets', () => {
   const m = new SpacingMagnet([at(100, 200), at(150, 200), at(200, 100), at(200, 150)], place, 20);
   drop(m, { x: 200, y: 200 }, 0, 0, ZOOM.eight);
-  const fmt = (d) => `${(d / 100).toFixed(2)} m`;
-  const rows = spacingRows(m, fmt);
-  assert.equal(rows.length, 2);
-  for (const row of rows) {
-    assert.equal(row.text, fmt(50));
-    assert.equal(row.gaps.length, 2);
-    const off = 20 + 12 / ZOOM.eight;
-    for (const gap of row.gaps) {
-      // row frame: x along, y across — `M a y0-k V y0+k M a y0 H b M b y0-k V y0+k`
-      const n = gap.d.match(/-?[\d.e+-]+/g).map(Number);
-      assert.ok(near(n[4], 200 - off, 1e-6), `dimension line ${off.toFixed(2)} off the axis`);
-      assert.ok(n[0] === n[3] && n[6] === n[5], 'ticks at both centres');
-    }
-    const ends = row.gaps.map((gap) => { const n = gap.d.match(/-?[\d.e+-]+/g).map(Number); return [n[3], n[5]]; });
-    assert.deepEqual(ends.map((e) => e.map(Math.round)), [[100, 150], [150, 200]]);
-    assert.equal(row.fits, true, '50 units at zoom 8 is 234 px');
+  assert.deepEqual(m.hint.map(t=>spacingChainGaps(t).map(g=>g.map(Math.round))),
+    [[[100,150],[150,200]],[[100,150],[150,200]]]);
+  for(const axis of ['h','v']) {
+    const pts=[100,150,200,250].map(n=>axis==='h'?at(n,300):at(300,n));
+    const target=axis==='h'?{x:300,y:300}:{x:300,y:300};
+    const many=magnet(pts);drop(many,target,0,0);
+    assert.equal(many.hint.length,1);
+    assert.deepEqual(spacingChainGaps(many.hint[0]).map(g=>g.map(Math.round)),
+      [[100,150],[150,200],[200,250],[250,300]]);
+    assert.equal(many.builds,1);assert.equal(many.queries,1);
   }
-  // 50 units at zoom 1 is 29 px: the label does not fit — hidden on both gaps of the row
-  drop(m, { x: 200, y: 200 }, 0, 0, ZOOM.one);
-  assert.deepEqual(spacingRows(m, fmt).map((row) => row.fits), [false, false]);
-  assert.deepEqual(spacingRows(null, fmt), []);
 });
 
 test('#873 AC5 the pull is the same in CSS px at every zoom', () => {

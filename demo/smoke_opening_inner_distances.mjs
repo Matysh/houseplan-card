@@ -39,16 +39,16 @@ const result = await page.evaluate(async () => {
   const roomWalls = (room, values = [20, 20, 20, 20]) => room.poly.map((a, index) =>
     wall(`${room.id}-${index}`, a, room.poly[(index + 1) % room.poly.length], values[index]));
   const snapshot = () => ({
-    labels: [...root().querySelectorAll('.measurelabel.opdimension')].map((element) => ({
-      text: element.textContent.trim(),
-      source: element.getAttribute('data-dimension-source'),
-      room: element.getAttribute('data-dimension-room'),
+    labels: [...root().querySelectorAll('[data-role="opening-gap"]')].map((element) => ({
+      text: element.querySelector('text')?.textContent.trim(),
+      source: element.getAttribute('data-reference-source'),
+      room: element.getAttribute('data-room'),
     })),
-    groups: root().querySelectorAll('.opening-dimension').length,
-    lines: root().querySelectorAll('.opening-dimension-line').length,
-    ticks: root().querySelectorAll('.opening-dimension-tick').length,
-    inert: root().querySelector('.opening-dimensions')?.getAttribute('pointer-events') === 'none'
-      && root().querySelector('.opening-dimensions')?.getAttribute('aria-hidden') === 'true',
+    groups: root().querySelectorAll('[data-role="opening-gap"]').length,
+    lines: root().querySelectorAll('[data-role="opening-gap"] [data-hp="dimension-rail"] line').length,
+    ticks: root().querySelectorAll('[data-role="opening-gap"] [data-hp="dimension-witnesses"] line').length / 2,
+    inert: root().querySelector('[data-role="opening-gap"]')?.getAttribute('pointer-events') === 'none'
+      && root().querySelector('[data-hp="wall-side-dimensions"] svg')?.getAttribute('aria-hidden') === 'true',
     geometry: card._opMeasureView?.labels.map((label) => label.dimension && ({
       distance: label.dimension.distance,
       from: label.dimension.from,
@@ -88,7 +88,7 @@ const result = await page.evaluate(async () => {
     const staticContext = card._openingDimensionContextCache?.value;
     out.singleTwoLines = first.groups === 2 && first.lines === 2 && first.ticks === 4;
     out.singleLabels = first.labels.length === 2
-      && first.labels.every((label) => label.text === '1.85 m'
+      && first.labels.every((label) => label.text === '1.850 m'
         && label.source === 'room-face' && label.room === 'single');
     out.singleGeometry = first.geometry.length === 2
       && first.geometry.every((item) => Math.abs(item.distance - 154.1666666667) < 1e-5)
@@ -99,7 +99,7 @@ const result = await page.evaluate(async () => {
     await settle();
     const moved = snapshot();
     out.contextReused = card._openingDimensionContextCache?.value === staticContext;
-    out.liveUpdate = moved.labels.map((item) => item.text).sort().join('|') === '1.25 m|2.45 m'
+    out.liveUpdate = moved.labels.map((item) => item.text).sort().join('|') === '1.250 m|2.450 m'
       && moved.geometry.some((item) => Math.abs(item.distance - 104.1666666667) < 1e-5)
       && moved.geometry.some((item) => Math.abs(item.distance - 204.1666666667) < 1e-5);
 
@@ -118,8 +118,7 @@ const result = await page.evaluate(async () => {
     out.clickKeepsCandidate = !!expected && !!card._openingDialog
       && Math.abs(card._openingDialog.x - expected.x) < 1e-6
       && Math.abs(card._openingDialog.y - expected.y) < 1e-6
-      && root().querySelectorAll('.opening-dimension').length === 0
-      && root().querySelectorAll('.measurelabel.opdimension').length === 0;
+      && root().querySelectorAll('[data-role="opening-gap"]').length === 0;
     card._openingDialog = null;
   }
 
@@ -142,7 +141,7 @@ const result = await page.evaluate(async () => {
     out.sharedFourLines = shared.groups === 4 && shared.lines === 4 && shared.ticks === 8;
     out.sharedRoomOrder = shared.labels.map((item) => item.room).join('|') === 'a|b|a|b';
     out.sharedIndependentValues = shared.labels.map((item) => item.text).join('|')
-      === '1.85 m|1.65 m|1.85 m|1.75 m';
+      === '1.850 m|1.650 m|1.850 m|1.750 m';
     const roomYs = new Map(shared.geometry.map((item) => [
       `${item.roomId}:${item.distance.toFixed(3)}`, item.from[0],
     ]));
@@ -170,14 +169,14 @@ const result = await page.evaluate(async () => {
     const independent = await activate([300, 700]);
     out.partitionTwoLines = independent.groups === 2 && independent.ticks === 4;
     out.partitionPhysicalAndFallback = independent.labels.map((item) => `${item.text}:${item.source}`).join('|')
-      === '1.95 m:host-end|1.15 m:connected-face';
+      === '1.950 m:host-end|1.150 m:connected-face';
     out.partitionNearFace = independent.geometry.length === 2
       && Math.abs(independent.geometry[1].to[0] - 433.3333333333) < 1e-5;
   }
 
   card._cancelPath();
   await settle();
-  out.cleanup = root().querySelectorAll('.opening-dimension,.measurelabel.opdimension').length === 0;
+  out.cleanup = root().querySelectorAll('[data-role="opening-gap"]').length === 0;
   return out;
 });
 

@@ -795,28 +795,6 @@ export const planStyles = css`
       fill: var(--hp-accent);
       pointer-events: none;
     }
-    /* #873: two equal gaps of a row — thin dimension lines and their length;
-       a halo of the card background keeps both legible over fill and glow */
-    .spacingguides {
-      filter: drop-shadow(0 0 1px var(--hp-bg));
-      pointer-events: none;
-    }
-    .spacingline {
-      fill: none;
-      stroke: var(--hp-accent);
-      stroke-width: 1.5px;
-      vector-effect: non-scaling-stroke;
-    }
-    .spacinglabel {
-      fill: var(--hp-accent);
-      stroke: var(--hp-bg);
-      stroke-width: 0.3em;
-      paint-order: stroke;
-      font-weight: 600;
-      text-anchor: middle;
-      dominant-baseline: central;
-    }
-    .spacingguides.v .spacinglabel { text-anchor: end; }
     .measurelabel.on45 {
       color: #4bd28f;
       border-color: #4bd28f;
@@ -834,13 +812,6 @@ export const planStyles = css`
       pointer-events: none;
       user-select: none;
       z-index: 3;
-    }
-    .measurelabel.opdimension {
-      transform: translate(
-        calc(-50% + var(--op-label-shift-x, 0px)),
-        calc(-50% + var(--op-label-shift-y, -12px))
-      );
-      border: 1px solid var(--hp-open, #ff9800);
     }
     /* decor (background) layer */
     .decorlayer .dshape { pointer-events: none; }
@@ -1134,21 +1105,6 @@ export const planStyles = css`
     .opening-preview-dot {
       fill: var(--hp-open, #ff9800);
       pointer-events: none;
-    }
-    .opening-dimensions,
-    .opening-dimension {
-      pointer-events: none;
-    }
-    .opening-dimension-line,
-    .opening-dimension-tick {
-      fill: none;
-      stroke: var(--hp-open, #ff9800);
-      stroke-width: 1.5;
-      vector-effect: non-scaling-stroke;
-      pointer-events: none;
-    }
-    .opening-dimension-tick {
-      stroke-width: 2;
     }
     .stage.markup {
       cursor: crosshair;

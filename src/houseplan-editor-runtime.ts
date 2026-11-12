@@ -317,7 +317,7 @@ import { DeviceStructureHistory } from './device-structure-history';
 import { PropertiesEditor } from './editors/properties/editor';
 import { ExternalScreensEditor } from './editors/external-screens';
 import { MarkerAlertsEditor } from './editors/marker-alerts';
-import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; // #873
+import { SpacingMagnet, spacingMarkers } from './device-spacing'; // #873
 import { DeviceContactMagnet } from './device-contact-snap';
 import type { DeviceContactRenderer } from './device-contact-render';
 import { deviceContactAlt, deviceContactMaintenanceFaces, renderDeviceContactGuide } from './device-contact-editor';
@@ -6364,6 +6364,7 @@ public _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
       id: o.id, moved: false, sx: ev.clientX, sy: ev.clientY, dirty: false,
       before: this._geometrySnapshot(), pid: ev.pointerId, spaceId: this.host._space,
       epoch: this.host._cfgEpoch, source, preview: structuredClone(source),
+      dimensionReference: this.properties.openingReference(source),
     };
   }
 
@@ -10699,9 +10700,9 @@ public _renderAlignGuides(): TemplateResult {
     const contactGuide = renderDeviceContactGuide(this.host);
     if (contactGuide) return contactGuide;
     const pt = this.host._alignPoint;
-    // #873: equal-spacing rows are drawn and labelled here, in the guides layer
-    // (one owner, #521); a shown row replaces the alignment guide of its axis
-    const rows = spacingRows(this.host._deviceDrag?.spacing, (d) => this.host._fmtLen([0, 0], [d, 0]));
+    // The common dimension layer paints equal gaps. Retain native priority:
+    // a shown row replaces only the alignment guide of its own axis.
+    const rows = this.host._deviceDrag?.spacing?.hint ?? [];
     // exact node match for grid-snapped things; half a cell for free-moving cards
     const tol = this.host._drag?.id.startsWith('rl_') ? this.host._gridPitch * 0.5 : this.host._gridPitch * 0.05;
     const drawing = this.host._markup && this.host._tool === 'draw';
@@ -10711,11 +10712,7 @@ public _renderAlignGuides(): TemplateResult {
     if (!guides.length && !rows.length) return svg`` as unknown as TemplateResult;
     const g = this.host._gridPitch;
     const over = g * 1.5; // extend a little past the point
-    return svg`${rows.map((row) => svg`<g class="spacingguides ${row.axis}" aria-hidden="true">${
-      row.gaps.map((gap) => svg`<path class="spacingline" d=${gap.d} transform=${
-        row.axis === 'v' ? 'matrix(0 1 1 0 0 0)' : nothing}></path>${row.fits ? svg`<text class="spacinglabel" x=${
-        gap.mid[0]} y=${gap.mid[1]} font-size=${row.font}>${row.text}</text>` : nothing}`)}</g>`)}${
-      guides.length ? svg`<g class="alignguides">
+    return svg`${guides.length ? svg`<g class="alignguides">
       ${guides.map((gd: AlignGuide) => {
         const [x1, y1, x2, y2] = gd.axis === 'x'
           ? [gd.at, gd.from[1], gd.at, pt![1] + Math.sign(pt![1] - gd.from[1]) * over]
@@ -10734,28 +10731,6 @@ public _renderOpeningCenterTick(gd: { x: number; y: number; angle: number }): Te
     return svg`<line class="alignline opcentertick"
       x1="${gd.x - Math.cos(rad) * half}" y1="${gd.y - Math.sin(rad) * half}"
       x2="${gd.x + Math.cos(rad) * half}" y2="${gd.y + Math.sin(rad) * half}"></line>` as unknown as TemplateResult;
-  }
-
-public _renderOpeningDimensionGuides(measure: OpMeasure): TemplateResult {
-    const dimensions = measure.labels.flatMap((label) => label.dimension ? [label.dimension] : []);
-    if (!dimensions.length) return svg`` as unknown as TemplateResult;
-    const tickHalf = this._cssPxToRender(4);
-    return svg`<g class="opening-dimensions" aria-hidden="true" pointer-events="none">
-      ${dimensions.map((dimension) => {
-        const nx = -dimension.axis[1], ny = dimension.axis[0];
-        const tick = (point: [number, number], end: string) => svg`<line
-          class="opening-dimension-tick" data-end=${end}
-          x1=${point[0] - nx * tickHalf} y1=${point[1] - ny * tickHalf}
-          x2=${point[0] + nx * tickHalf} y2=${point[1] + ny * tickHalf}></line>`;
-        return svg`<g class="opening-dimension" data-source=${dimension.source}
-          data-room=${dimension.roomId || nothing}>
-          <line class="opening-dimension-line"
-            x1=${dimension.from[0]} y1=${dimension.from[1]}
-            x2=${dimension.to[0]} y2=${dimension.to[1]}></line>
-          ${tick(dimension.from, 'from')}${tick(dimension.to, 'to')}
-        </g>`;
-      })}
-    </g>` as unknown as TemplateResult;
   }
 
 public _renderOpeningPlacementPreview(): TemplateResult {

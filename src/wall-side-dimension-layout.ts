@@ -1,6 +1,6 @@
 /** Screen-space-only derivation. Physical endpoints never move to make room
  * for text; witness lines always leave those endpoints along the normal. */
-import type {DimensionInterval,DimensionPoint} from './wall-side-dimensions';
+import type {EditorDimensionRecord,DimensionPoint} from './editor-dimension-record';
 export interface DimensionBox {x:number;y:number;w:number;h:number}
 /** Cached scene math for the visible Resize glyph, not its larger invisible
  * hit disk. Matches _renderResizeLayer's half-size wall/arrows and neutral
@@ -16,7 +16,7 @@ export function resizeHandleDimensionObstacle(a:DimensionPoint,b:DimensionPoint,
   return{x:center[0]-hw,y:center[1]-hh,w:2*hw,h:2*hh};
 }
 export interface DimensionPlacement {
-  interval:DimensionInterval; number:number; label:string; lane:number;
+  interval:EditorDimensionRecord; number:number; label:string; lane:number;
   a:DimensionPoint;b:DimensionPoint;railA:DimensionPoint;railB:DimensionPoint;
   normal:DimensionPoint;tangent:DimensionPoint;
   labelCenter:DimensionPoint;labelBox:DimensionBox;listed:boolean;
@@ -26,7 +26,7 @@ const unit=(a:DimensionPoint):DimensionPoint=>{const l=Math.hypot(...a)||1;retur
 const overlaps=(a:DimensionBox,b:DimensionBox):boolean=>a.x<b.x+b.w+3&&b.x<a.x+a.w+3&&a.y<b.y+b.h+3&&b.y<a.y+a.h+3;
 const within=(box:DimensionBox,w:number,h:number):boolean=>box.x>=4&&box.y>=4&&box.x+box.w<=w-4&&box.y+box.h<=h-4;
 export interface DimensionLayoutInput {
-  intervals:readonly DimensionInterval[]; width:number;height:number;
+  intervals:readonly EditorDimensionRecord[]; width:number;height:number;
   project(point:DimensionPoint):DimensionPoint;
   format(cm:number):string;
   unavailable:string;
@@ -39,15 +39,20 @@ export function layoutWallSideDimensions(input:DimensionLayoutInput):DimensionPl
   const occupied=[...input.obstacles],out:DimensionPlacement[]=[];
   for(const interval of input.intervals) {
     const unavailable=interval.source==='unavailable';
-    if(!unavailable&&(!interval.from||!interval.to||interval.lengthCm===null))continue;
+    if(!unavailable&&(!interval.from||!interval.to||interval.lengthCm===null
+      ||!Number.isFinite(interval.lengthCm)||interval.lengthCm<0
+      ||![...interval.from,...interval.to,...interval.normal].every(Number.isFinite)))continue;
     if(!input.numbers.has(interval.id))input.numbers.set(interval.id,input.numbers.size+1);
     const number=input.numbers.get(interval.id)!,markerWidth=Math.max(24,input.textWidth(`[${number}]`)+8);
     const a=unavailable?(interval.anchor?input.project(interval.anchor):[input.width/2,input.height/2] as DimensionPoint):input.project(interval.from!);
     const b=unavailable?a:input.project(interval.to!);
-    const tangent=unit([b[0]-a[0],b[1]-a[1]]);
+    const direction=input.project(add(interval.from||[0,0],interval.direction||[1,0]));
+    const tangent=unit(a[0]===b[0]&&a[1]===b[1]?[direction[0]-a[0],direction[1]-a[1]]:[b[0]-a[0],b[1]-a[1]]);
     const projectedNormal=input.project(add(interval.from||interval.anchor||[0,0],interval.normal));
     const origin=input.project(interval.from||interval.anchor||[0,0]);
     const normal=unit([projectedNormal[0]-origin[0],projectedNormal[1]-origin[1]]);
+    const cleared=input.project(add(interval.from||interval.anchor||[0,0],interval.normal,interval.clearance||0));
+    const clearance=Math.hypot(cleared[0]-origin[0],cleared[1]-origin[1]);
     const label=unavailable?input.unavailable:input.format(interval.lengthCm!),labelWidth=Math.max(24,input.textWidth(label)+8);
     let lane=input.lanes.get(interval.id)||0,railA:DimensionPoint=a,railB:DimensionPoint=b;
     let center:DimensionPoint=a,box:DimensionBox={x:0,y:0,w:labelWidth,h:16},fits=false;
@@ -55,7 +60,7 @@ export function layoutWallSideDimensions(input:DimensionLayoutInput):DimensionPl
     const maxLane=Math.ceil(Math.hypot(input.width,input.height)/16);
     for(let attempt=0;attempt<=maxLane;attempt++) {
       const candidate=attempt===0?lane:attempt-1;
-      const offset=12+16*candidate;
+      const offset=clearance+12+16*candidate;
       railA=add(a,normal,offset);railB=add(b,normal,offset);
       center=[(railA[0]+railB[0])/2,(railA[1]+railB[1])/2];
       if(Math.hypot(b[0]-a[0],b[1]-a[1])<labelWidth+8) center=add(center,normal,18);
@@ -68,7 +73,7 @@ export function layoutWallSideDimensions(input:DimensionLayoutInput):DimensionPl
       // All values remain in the scroll-owned list. Keep short numbered
       // witnesses on the correct side, instead of dropping short intervals.
       lane=input.lanes.get(interval.id)||0;
-      railA=add(a,normal,12+16*lane);railB=add(b,normal,12+16*lane);
+      railA=add(a,normal,clearance+12+16*lane);railB=add(b,normal,clearance+12+16*lane);
       center=[(railA[0]+railB[0])/2,(railA[1]+railB[1])/2];
       center=[Math.max(markerWidth/2+4,Math.min(input.width-markerWidth/2-4,center[0])),Math.max(12,Math.min(input.height-12,center[1]))];
       box={x:center[0]-markerWidth/2,y:center[1]-8,w:markerWidth,h:16};

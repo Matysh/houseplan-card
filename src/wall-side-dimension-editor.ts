@@ -1,4 +1,4 @@
-/** Four read-only adapters, one resolver and one screen-space renderer. The
+/** Editor dimensions: read-only native adapters, one screen-space renderer. The
  * owning native paint calls render(); there are no observers, polls or writes. */
 import {html,nothing,type TemplateResult} from 'lit';
 import {AsyncDirective,directive} from 'lit/async-directive.js';
@@ -17,9 +17,12 @@ import {affectedDimensionCarriers,dimensionCarriers,WallDimensionGeometry} from 
 import {changedWallSideDimensions,type DimensionInterval,type DimensionPoint} from './wall-side-dimensions';
 import {layoutWallSideDimensions,dimensionListBox,resizeHandleDimensionObstacle,type DimensionBox} from './wall-side-dimension-layout';
 import {renderWallSideDimensions} from './wall-side-dimension-render';
+import type {EditorDimensionRecord} from './editor-dimension-record';
+import {openingDimensionRecord,lineDimensionRecord,spacingDimensionRecords} from './editor-dimension-adapters';
 
 interface Request {kind:'draw'|'node'|'resize'|'selection';before:NodeMoveSpace|null;candidate:NodeMoveSpace;ids:readonly string[];owner:object|string}
 interface View {x:number;y:number;w:number;h:number}
+interface Frame {kind:string;owner:object|string;intervals:readonly EditorDimensionRecord[]}
 interface CameraPort {
   subscribe(paint:(view:View)=>void):()=>void;
   content(view:View):TemplateResult|typeof nothing;
@@ -55,6 +58,8 @@ export class WallSideDimensionEditor {
   private basisEpoch=0;
   private hintListeners=new Set<()=>void>();
   private cameraPaint:((view:View)=>void)|null=null;
+  private nativeState:readonly unknown[]=[];
+  private nativeValue:Frame|null=null;
   private readonly cameraPort:CameraPort={
     content:view=>this.content(view),
     subscribe:paint=>{
@@ -140,6 +145,55 @@ export class WallSideDimensionEditor {
     const id=this.selected();
     return id&&host._tool==='select'?{kind:'selection',before:null,candidate:stored,ids:[id],owner:`${stored.id}:${id}`} : null;
   }
+  private nativeRead(state:readonly unknown[],read:()=>Frame):Frame {
+    if(state.length!==this.nativeState.length||state.some((value,index)=>value!==this.nativeState[index])) {
+      this.nativeState=state;this.nativeValue=read();
+    }
+    return this.nativeValue!;
+  }
+  private nativeFrame():Frame|null {
+    const host=this.runtime.host;
+    if(!host.isConnected||!host._canEdit||host._kiosk||host._modeTransitionBusy
+      ||host._openingDialog||host._roomDialog||host._editorSecondaryDialogBlocked)return null;
+    const perUnit=host._cellCm/host._gridPitch;
+    if(host._mode==='devices') {
+      const drag=host._deviceDrag,magnet=drag?.spacing;
+      if(!magnet?.hint.length||drag?.contact?.hint)return null;
+      return this.nativeRead([host._space,magnet.hint,magnet.clear,perUnit],()=>
+        ({kind:'device-spacing',owner:drag!,intervals:spacingDimensionRecords(magnet,perUnit)}));
+    }
+    if(host._mode==='decor') {
+      const draft=host._decorDraft;if(draft?.kind!=='line')return null;
+      return this.nativeRead([host._space,draft,perUnit],()=>{
+        const item=lineDimensionRecord([draft.a[0],draft.a[1]],[draft.b[0],draft.b[1]],perUnit);
+        return {kind:'decor-line',owner:`${host._space}:line:${draft.a.join(',')}`,intervals:item?[item]:[]};
+      });
+    }
+    if(host._mode!=='plan')return null;
+    const drag=host._opDrag;
+    const opening=drag?.preview??this.runtime.properties.selectedOpening;
+    if(drag&&opening) {
+      return this.nativeRead([host._space,host._cfgEpoch,opening.id,opening.x,opening.y,opening.angle,opening.length,
+        opening.host?.kind,opening.host?.id,drag.dimensionReference,perUnit],()=>{
+        const ref=this.runtime.properties.openingReference(opening,drag.dimensionReference??null);
+        return {kind:'opening',owner:`${host._space}:opening:${opening.id}`,
+          intervals:ref?[openingDimensionRecord(ref,'opening-reference',perUnit)]:[]};
+      });
+    }
+    const preview=host._openingPreview;
+    if(preview)return this.nativeRead([host._space,preview,perUnit],()=>
+      ({kind:'opening-placement',owner:`${host._space}:opening-placement`,
+        intervals:preview.measure.labels.flatMap((label,index)=>label.dimension?
+          [openingDimensionRecord(label.dimension,`opening:${index}`,perUnit)]:[])}));
+    if(host._tool==='select'&&opening) {
+      return this.nativeRead([host._space,host._cfgEpoch,opening,this.runtime.properties.openingReferenceEpoch,perUnit],()=>{
+        const ref=this.runtime.properties.openingReference(opening);
+        return {kind:'opening',owner:`${host._space}:opening:${opening.id}`,
+          intervals:ref?[openingDimensionRecord(ref,'opening-reference',perUnit)]:[]};
+      });
+    }
+    return null;
+  }
   private resetLayout():void {this.owner=null;this.lanes.clear();this.numbers.clear();}
   private publishBasis(notice:BasisNotice):void {
     if(this.basisNotice===notice)return;
@@ -173,11 +227,12 @@ export class WallSideDimensionEditor {
     if(!this.disposed&&this.runtime.host.isConnected)this.cameraPaint?.(view);
   }
   private content(view:View):TemplateResult|typeof nothing {
-    const request=this.request();
-    if(!request){this.publishBasis(null);this.resetLayout();return nothing;}
-    if(this.owner!==request.owner){this.resetLayout();this.owner=request.owner;}
-    const intervals=this.measurements(request);
-    this.publishBasis(basisNotice(intervals));
+    const native=this.nativeFrame(),request=native?null:this.request();
+    if(!native&&!request){this.publishBasis(null);this.resetLayout();return nothing;}
+    const frame=native??{kind:request!.kind,owner:request!.owner,intervals:this.measurements(request!)};
+    if(this.owner!==frame.owner){this.resetLayout();this.owner=frame.owner;}
+    const intervals=frame.intervals;
+    this.publishBasis(request?basisNotice(intervals as readonly DimensionInterval[]):null);
     const host=this.runtime.host,size=host._lastValidStageSize;
     if(!size||size[0]<=0||size[1]<=0)return nothing;
     const [width,height]=size;
@@ -186,13 +241,13 @@ export class WallSideDimensionEditor {
     };
     const obstacles:DimensionBox[]=[];
     const nodes=new Set<string>();
-    for(const carrier of dimensionCarriers(request.candidate))for(const point of [carrier.a,carrier.b]) {
+    for(const carrier of request?dimensionCarriers(request.candidate):[])for(const point of [carrier.a,carrier.b]) {
       const key=point.join(',');if(nodes.has(key))continue;nodes.add(key);
       const p=project(point);
       if(p[0]>=-8&&p[0]<=width+8&&p[1]>=-8&&p[1]<=height+8)
         obstacles.push({x:p[0]-8,y:p[1]-8,w:16,h:16});
     }
-    if(request.kind==='resize')for(const room of request.candidate.rooms) {
+    if(request?.kind==='resize')for(const room of request.candidate.rooms) {
       const poly=roomPoly(room);if(!poly)continue;
       for(let i=0;i<poly.length;i++) {
         const a:DimensionPoint=[poly[i][0]*NORM_W,poly[i][1]*NORM_W];
@@ -202,7 +257,7 @@ export class WallSideDimensionEditor {
       }
     }
     const selected=this.runtime.properties.dimensionTarget;
-    if(selected) {
+    if(selected&&request) {
       const carrier=dimensionCarriers(request.candidate).find(c=>c.id===this.selected());
       if(carrier)for(const point of [carrier.a,carrier.b]) {
         const p=project(point);
@@ -227,8 +282,15 @@ export class WallSideDimensionEditor {
         if(center) {const p=project([center[0],center[1]]);obstacles.push({x:p[0]-w/2,y:p[1]-h/2,w,h});}
       }
     }
-    if(request.kind==='draw'&&host._cursorPt) {
+    if(request?.kind==='draw'&&host._cursorPt) {
       const p=project([host._cursorPt[0],host._cursorPt[1]]);obstacles.push({x:p[0]-9,y:p[1]-9,w:18,h:18});
+    }
+    if(frame.kind==='decor-line') {
+      const draft=host._decorDraft!;
+      const p=project([(draft.a[0]+draft.b[0])/2,(draft.a[1]+draft.b[1])/2]);
+      // Native .dmeasure: 12px text, 1px vertical padding and -160%
+      // translation. Its label is separate from the linear dimension.
+      obstacles.push({x:p[0]-30,y:p[1]-30,w:60,h:22});
     }
     const language=langOf(host.hass,host._config?.language);
     const items=layoutWallSideDimensions({intervals,width,height,project,obstacles,lanes:this.lanes,numbers:this.numbers,
@@ -236,13 +298,13 @@ export class WallSideDimensionEditor {
       unavailable:propertiesT(language,'wall_dimension_unavailable'),
       textWidth:text=>[...text].reduce((sum,c)=>sum+(this.widths.get(c)??7),0)});
     return renderWallSideDimensions(items,width,height,dimensionListBox(items,width,height,obstacles),
-      propertiesT(language,'wall_dimensions'),request.kind,spaceDisplayOf(request.candidate,host._serverCfg?.settings).color);
+      propertiesT(language,'wall_dimensions'),frame.kind,spaceDisplayOf(request?.candidate??host._curSpaceCfg!,host._serverCfg?.settings).color);
   }
   public get sourceHint():BasisNotice {
     const request=this.request();return request?basisNotice(this.measurements(request)):null;
   }
   public get sourceFallback():boolean {return this.sourceHint==='axis';}
-  public get active():boolean {return !!this.request();}
-  public retire():void {this.publishBasis(null);this.resetLayout();this.source=null;this.geometry.clear();this.drawNext=null;}
+  public get active():boolean {return !!this.nativeFrame()||!!this.request();}
+  public retire():void {this.publishBasis(null);this.resetLayout();this.source=null;this.geometry.clear();this.drawNext=null;this.nativeState=[];this.nativeValue=null;}
   public dispose():void {this.disposed=true;this.retire();this.hintListeners.clear();this.cameraPaint=null;}
 }

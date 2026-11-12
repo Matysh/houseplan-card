@@ -1,4 +1,5 @@
 import { captureToast } from '../../toast-presentation';
+import type {OpeningCfg} from '../../types';
 import { waitForPriorConfigWrite } from '../../prior-config-write';
 import { html, nothing, type TemplateResult } from 'lit';
 import { dialogPresence } from '../../dialog-presence';
@@ -58,6 +59,7 @@ export class PropertiesEditor {
     patch: DecorGroupStylePatch | null; ids: ReadonlySet<string> } | null = null;
   private frozenReference: OpeningDimension | null = null;
   private referenceAttempted = false;
+  public openingReferenceEpoch = 0;
   private dimensionCache: { key: string; value: ReturnType<typeof buildOpeningDimensionContext> } | null = null;
   private observer: ResizeObserver | null = null;
   private observed: Element | null = null;
@@ -284,6 +286,7 @@ export class PropertiesEditor {
     this.fields.invalidate(); this.selected = identity; this.groupTarget = null;
     this.selectionContext = identity?.editor === 'decor' ? { authority: this.host._configWriteContext.claim(), adoption: this.host._adoption.adoptionEpoch } : null;
     this.frozenReference = null; this.referenceAttempted = false;
+    this.openingReferenceEpoch++;
     if (!identity && this.host._decorTool === 'backdrop') this.host._decorTool = 'select';
     this.ratioLocked = true;
     const target = this.target();
@@ -430,6 +433,22 @@ export class PropertiesEditor {
       if (target.value.host?.kind !== 'partition' && this.frozenReference?.source === 'host-end') this.frozenReference = null;
     }
     return this.frozenReference ? refreshOpeningReference(core, context, this.frozenReference) : null;
+  }
+  /** Read-only port for the common dimension layer. The field, selection and
+   * drag share a physical reference; a missing reference is never guessed. */
+  openingReference(opening: OpeningCfg, frozen?: OpeningDimension | null): OpeningDimension | null {
+    const selected=this.target();
+    if(frozen===undefined && selected?.kind==='opening' && selected.value.id===opening.id)
+      return this.reference({...selected,value:opening});
+    const space=this.host._curSpaceCfg as PropertiesSpace;
+    const core=openingPropertiesCore(opening,space.partitions??[],space.wall_segments??[],this.host._cellCm);
+    const context=this.dimensionContext();if(!core||!context)return null;
+    if(frozen!==undefined)return frozen?refreshOpeningReference(core,context,frozen):null;
+    const ref=selectOpeningReference(core,context);
+    return opening.host?.kind!=='partition'&&ref?.source==='host-end'?null:ref;
+  }
+  get selectedOpening(): OpeningCfg | null {
+    const target=this.target();return target?.kind==='opening'?target.value:null;
   }
   private openingSides(target: PropertiesTarget | null): { labels: [string,string]; fallback: boolean; rooms?: string[] } {
     if (target?.kind !== 'opening') return { labels: [this.t('side_a'),this.t('side_b')], fallback: true };
@@ -750,6 +769,8 @@ export class PropertiesEditor {
   selection(): TemplateResult | typeof nothing {
     if ((!this.wide && this.decorSelectionCount < 2) || !this.identity) return nothing;
     let target = this.target();
+    if(target?.kind==='opening'&&this.host._opDrag?.id===target.value.id&&this.host._opDrag.preview)
+      target={...target,value:this.host._opDrag.preview};
     const drag = this.runtime.physicalGesture.drag;
     if (target?.kind === 'partition' && drag?.kind === 'partition' && drag.id === target.value.id && drag.moved) {
       const { value } = target;

@@ -66,3 +66,30 @@ test('#1381 metric precision is opt-in; imperial and existing consumers retain t
   }
   assert.equal(propertiesT('ru','wall_dimensions_hint'),'Длина по оси. Размеры сторон показаны на плане.');
 });
+import {openingDimensionRecord,lineDimensionRecord,spacingDimensionRecords} from '../test-build/editor-dimension-adapters.js';
+import {SpacingMagnet} from '../test-build/device-spacing.js';
+
+test('#1398 all adapters use physical supports and the same screen-space rail contract, including zero',()=>{
+  const opening={from:[100,100],to:[100,100],axis:[1,0],labelNormal:[0,-1],distance:0};
+  const zero=openingDimensionRecord(opening,'gap',1.2);
+  const line=lineDimensionRecord([100,100],[400,300],1.2);
+  assert.equal(zero.lengthCm,0);assert.deepEqual(zero.direction,[1,0]);
+  assert.equal(line.lengthCm,Math.hypot(300,200)*1.2);
+  assert.ok(line.normal[1]<0);assert.equal(lineDimensionRecord([1,1],[1,1],1),null);
+  const m=new SpacingMagnet([{x:100,y:200},{x:200,y:200},{x:300,y:200}],
+    (x,y)=>({x,y,p:{x,y}}),20);
+  m.resolve(400,200,1,1);
+  const gaps=spacingDimensionRecords(m,1.2);
+  assert.deepEqual(gaps.map(d=>[d.from,d.to]),[[[100,200],[200,200]],[[200,200],[300,200]],[[300,200],[400,200]]]);
+  const layout=layoutWallSideDimensions({intervals:[zero,...gaps],width:800,height:600,project:p=>p,
+    format:cm=>formatLength(cm,false,3),unavailable:'unavailable',textWidth:t=>t.length*6,
+    obstacles:[],lanes:new Map(),numbers:new Map()});
+  assert.equal(layout.length,4);assert.equal(layout[0].label,'0.000 m');
+  assert.deepEqual(layout[0].tangent,[1,0]);assert.equal(layout[0].railA[1],88);
+  for(const item of layout.slice(1)) {
+    assert.equal(item.label,'1.200 m');assert.equal(item.railA[1],168);
+    assert.equal(item.labelBox.h,16);assert.deepEqual(item.a,item.interval.from);
+  }
+  for(const bad of [{lengthCm:NaN},{lengthCm:-1},{from:[NaN,0]},{to:null}])
+    assert.equal(layoutWallSideDimensions({...input(),intervals:[{...zero,...bad}]}).length,0,'no fake zero/NaN for an unavailable physical reference');
+});

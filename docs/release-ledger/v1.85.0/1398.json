@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1398,
+  "baseStable": "v1.85.0",
+  "category": "major",
+  "rationale": "Owner-approved editor feature: extend the common read-only wall dimension mechanism to openings, decor lines and complete equal-spacing device chains; no schema or writer change.",
+  "summary": {
+    "ru": "Единые размеры проёмов, линий подложки и равных интервалов устройств.",
+    "en": "Unified dimensions for openings, decor lines and equal device intervals."
+  }
+}

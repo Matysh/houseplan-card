@@ -50,6 +50,14 @@ export interface SpacingTarget<P = unknown> {
   gaps: [number, number][];
 }
 
+// Presentation metadata only: the existing maximal-run search proves these
+// neighbours. Keep their actual centres (including tolerated coordinate noise)
+// without synthesising intermediate markers or changing any magnet target.
+const chains=new WeakMap<SpacingTarget,readonly (readonly [number,number])[]>();
+export function spacingChainGaps(target:SpacingTarget):readonly (readonly [number,number])[] {
+  return chains.get(target)??[];
+}
+
 /** The fields of a device item read here. */
 export interface SpacingDevice {
   id: string;
@@ -88,12 +96,15 @@ export function spacingTargets<P>(
       while (j < byLine.length && byLine[j][o] - byLine[i][o] <= SPACING_EPS) j++;
       const c = byLine.slice(i, j).map((m) => m[u]).sort((a, b) => a - b);
       const line = byLine[i][o];
-      const add = (end: number, d: number, ref: [number, number]) => {
+      const add = (end: number, d: number, ref: [number, number], run: readonly number[]) => {
         const t = end + d;
         const q = axis === 'h' ? place(t, line) : place(line, t);
         // the line coordinate is a marker's: off the canvas the rounding would move it too
         if (Math.abs(q[u] - t) > SPACING_EPS || Math.abs(q[o] - line) > SPACING_EPS || clampCanvasR(t) !== t) return;
-        out.push({ ...q, axis, line, d: Math.abs(d), gaps: [ref, [end, t]] });
+        const target={ ...q, axis, line, d: Math.abs(d), gaps: [ref, [end, t]] as [number,number][] };
+        const centres=d<0?[t,...run]:[...run,t];
+        chains.set(target,centres.slice(1).map((b,i)=>[centres[i],b] as const));
+        out.push(target);
       };
       for (let s = 0; s + 1 < c.length; s++) {
         const d = c[s + 1] - c[s];
@@ -103,44 +114,12 @@ export function spacingTargets<P>(
         while (e + 1 < c.length && Math.abs(c[e + 1] - c[e] - d) <= SPACING_EPS) e++;
         if ((s > 0 && c[s] - c[s - 1] <= 2 * d + SPACING_EPS)
           || (e + 1 < c.length && c[e + 1] - c[e] <= 2 * d + SPACING_EPS)) continue;
-        add(c[s], -d, [c[e - 1], c[e]]);
-        add(c[e], d, [c[s], c[s + 1]]);
+        add(c[s], -d, [c[e - 1], c[e]], c.slice(s,e+1));
+        add(c[e], d, [c[s], c[s + 1]], c.slice(s,e+1));
       }
     }
   }
   return out;
-}
-
-/**
- * One shown row. A gap path is in the row's own frame — x along the row, y
- * across it — which a `v` row maps onto the plan by swapping x and y; the
- * label point is in plan units. `font` — 12 CSS px in plan units.
- */
-export interface SpacingRow {
-  axis: 'h' | 'v'; text: string; fits: boolean; font: number; gaps: { d: string; mid: number[] }[];
-}
-
-/**
- * The hint as drawn: per gap a dimension line from centre to centre, moved
- * off the row's axis (up for `h`, left for `v`) 12 CSS px past the marker
- * shells, with 4 px ticks at the centres; the label sits on an `h` line and
- * left of a `v` one. Both gaps have the one length `fmt(d)`; a label that
- * does not fit is hidden on both.
- */
-export function spacingRows(magnet: SpacingMagnet<unknown> | null | undefined, fmt: (d: number) => string): SpacingRow[] {
-  const px = magnet?.scale ?? 0;
-  return px > 0 ? magnet!.hint.map((t) => {
-    const text = fmt(t.d);
-    const at = t.line - magnet!.clear - 12 / px;
-    const k = 4 / px;
-    return {
-      axis: t.axis, text, fits: t.d * px >= text.length * 7 + 24, font: 12 / px,
-      gaps: t.gaps.map(([a, b]) => ({
-        d: `M${a} ${at - k}V${at + k}M${a} ${at}H${b}M${b} ${at - k}V${at + k}`,
-        mid: t.axis === 'h' ? [(a + b) / 2, at] : [at - 6 / px, (a + b) / 2],
-      })),
-    };
-  }) : [];
 }
 
 /** The magnet of one gesture. */

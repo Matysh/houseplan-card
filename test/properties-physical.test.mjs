@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { freePartitionEnds, patchPartitionEndpoint, openingPropertiesCore, selectOpeningReference, refreshOpeningReference, patchOpeningProperties, propertiesOpeningSides } from '../test-build/editors/properties/physical.js';
 import { buildOpeningDimensionContext } from '../test-build/opening-dimensions.js';
+import {wallKey} from '../test-build/wall-thickness.js';
 const wall = { id: 'wall', a: [0, 0], b: [1, 0], cm: 12 };
 const opening = { id: 'door', type: 'door', x: .3, y: 0, length: .1, angle: 0, host: { kind: 'partition', id: 'wall', t: .3 }, contact: 'binary_sensor.door', invert: true, future: null };
 
@@ -50,4 +51,16 @@ test('#931 opening side labels use containing rooms, outside or explicit A/B, ne
   assert.deepEqual(propertiesOpeningSides(core,[lower]),[{kind:'outside'},{kind:'room',name:'Kitchen'}]);
   for(const rooms of [[],[upper,lower,{...lower,id:'duplicate'}],[{...upper,name:''},lower],[upper,{...lower,name:upper.name}]])
     assert.deepEqual(propertiesOpeningSides(core,rooms),[{kind:'fallback',side:'A'},{kind:'fallback',side:'B'}]);
+});
+
+test('#1398 a reversed native host angle retains the physical end, normal and editable zero-gap direction',()=>{
+  const room={id:'r',poly:[[.1,.1],[.5,.1],[.5,.5],[.1,.5]]};
+  const walls=room.poly.map((a,i)=>({key:wallKey(a,room.poly[(i+1)%4],1/240),a:a.map(x=>x*1000),b:room.poly[(i+1)%4].map(x=>x*1000),cm:20}));
+  const context=buildOpeningDimensionContext({rooms:[{...room,poly:room.poly.map(p=>p.map(x=>x*1000))}],
+    walls,partitions:[],openCuts:[],pitch:1/240,cellCm:5,gridPitch:1000/240,coordScale:1000});
+  const core={x:500,y:250,angle:90,renderedLength:80,target:{a:[500,100],b:[500,500],physicalHalfWidth:20/1.2/2}};
+  const ref=selectOpeningReference(core,context);assert.ok(ref);
+  const next=refreshOpeningReference({...core,y:350,angle:-90},context,ref);
+  assert.ok(next);assert.deepEqual(next.to,ref.to);assert.deepEqual(next.labelNormal,ref.labelNormal);
+  assert.deepEqual(next.axis,ref.axis);assert.ok(Math.abs(next.distance-ref.distance-100)<1e-6);
 });

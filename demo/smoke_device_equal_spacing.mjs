@@ -113,25 +113,27 @@ const out = {};
       const layer = node.closest('.hp-editor-only-layer');
       return !layer || layer.style.opacity !== '0';
     });
-    const hint = () => visible('.spacingguides').map((group) => ({
-      axis: group.classList.contains('v') ? 'v' : 'h',
-      owner: group.closest('[data-hp-live-editor]') ? 'live' : 'settled',
-      ariaHidden: group.getAttribute('aria-hidden'),
-      gaps: [...group.querySelectorAll('.spacingline')].map((path) => {
-        // кадр ряда: x вдоль ряда, y поперёк — `M a y0-k V y0+k M a y0 H b M b …`
-        const n = path.getAttribute('d').match(/-?[\d.]+(?:e[-+]?\d+)?/g).map(Number);
-        const style = getComputedStyle(path);
-        return { a: n[3], b: n[5], across: n[4], cls: path.getAttribute('class'),
-          paint: `${style.stroke} ${style.strokeWidth} ${style.vectorEffect} ${style.fill}` };
-      }),
-      labels: [...group.querySelectorAll('.spacinglabel')].map((text) => text.textContent),
-    }));
+    const hint = () => {
+      const rows=new Map();
+      for(const group of visible('[data-role="device-spacing"]')) {
+        const a=JSON.parse(group.dataset.from),b=JSON.parse(group.dataset.to),axis=a[1]===b[1]?'h':'v';
+        const row=rows.get(axis)??{axis,owner:group.closest('[data-hp-live-editor-html]')?'live':'settled',
+          ariaHidden:group.closest('svg').getAttribute('aria-hidden'),gaps:[],labels:[]};
+        const rail=group.querySelector('[data-hp="dimension-rail"] line'),style=getComputedStyle(rail);
+        const screen=new DOMPoint(+rail.getAttribute('x1'),+rail.getAttribute('y1')).matrixTransform(rail.getScreenCTM());
+        const plan=screen.matrixTransform(sr().querySelector('svg.plan-svg').getScreenCTM().inverse());
+        row.gaps.push({a:a[axis==='h'?0:1],b:b[axis==='h'?0:1],across:axis==='h'?plan.y:plan.x,
+          cls:'common-dimension',paint:`${style.stroke} ${style.strokeWidth} ${style.fill}`});
+        row.labels.push(group.querySelector('text').textContent);rows.set(axis,row);
+      }
+      return [...rows.values()];
+    };
     const guideAxes = () => visible('.alignline')
       .map((line) => (line.getAttribute('x1') === line.getAttribute('x2') ? 'x' : 'y'));
     const span = (gap) => [Math.min(gap.a, gap.b), Math.max(gap.a, gap.b)];
     const near = (a, b, eps = 0.01) => Math.abs(a - b) <= eps;
     const gapsAre = (seen, axis, expected) => seen.length === 1 && seen[0].axis === axis
-      && seen[0].gaps.length === 2 && seen[0].gaps.every((gap, i) => {
+      && seen[0].gaps.length === expected.length && seen[0].gaps.every((gap, i) => {
         const [lo, hi] = span(gap);
         return near(lo, expected[i][0]) && near(hi, expected[i][1]);
       });
@@ -213,7 +215,7 @@ const out = {};
       && gC.hint[0].gaps[0].paint === gC.hint[0].gaps[1].paint
       && gC.hint[0].gaps[0].across === gC.hint[0].gaps[1].across;
     // 50 единиц при масштабе 1 — около 30 px: подпись не влезает ни в один промежуток.
-    res.ac4CLabelsHiddenOnBothWhenTheyDoNotFit = gC.hint[0]?.labels.length === 0;
+    res.ac4CShortIntervalsRetainBothLabels = gC.hint[0]?.labels.length === 2;
     res.ac4RowAxisGuideReplacedOtherAxisKept = !gC.guides.includes('y') && gC.guides.includes('x');
     res.ac4CNoHintAfterTheDrop = gC.after.length === 0 && gC.dragGone;
 
@@ -222,14 +224,14 @@ const out = {};
     res.ac1DStoredExactly = at(stored(D), 250, 200)
       && Math.abs((stored(D).x - stored(C).x) - (stored(B).x - stored(A).x)) <= 1e-6;
     res.ac1DOneWriteOneUndoStep = gD.writes.length === 1 && gD.history === 1;
-    res.ac4DReferenceIsABNotBC = gapsAre(gD.hint, 'h', [[100, 150], [200, 250]]);
+    res.ac4DAllNeighbours = gapsAre(gD.hint, 'h', [[100,150],[150,200],[200,250]]);
 
     // ---- AC1: другой конец, новый значок на автоматическом месте ----------------
     const gE = await gesture(E, { x: 50, y: 200 }, [-4, 0]);
     res.ac1NewMarkerStoredAtTheOtherEnd = at(stored(E), 50, 200)
       && Math.abs((stored(A).x - stored(E).x) - (stored(B).x - stored(A).x)) <= 1e-6;
     res.ac1NewMarkerOneWriteOneUndoStep = gE.writes.length === 1 && gE.writes[0].id === E && gE.history === 1;
-    res.ac4OtherEndReferenceIsTheFarGap = gapsAre(gE.hint, 'h', [[200, 250], [50, 100]]);
+    res.ac4OtherEndAllNeighbours = gapsAre(gE.hint, 'h', [[50,100],[100,150],[150,200],[200,250]]);
 
     // ---- AC1: вертикаль ------------------------------------------------------
     const gF = await gesture(F, { x: 700, y: 400 }, [0, 4]);
@@ -264,7 +266,7 @@ const out = {};
     res.ac4HandoverHappened = h.rendered >= 1;
     // Владение чередуется: осевой рендер отдаёт слой сцене (живой корень пуст),
     // следующий живой кадр забирает его обратно — видимая группа всегда одна.
-    res.ac4HandoverKeepsExactlyOneGroup = h.atSettled.length === 1 && h.atSettled[0].owner === 'settled'
+    res.ac4HandoverKeepsExactlyOneGroup = h.atSettled.length === 1 && h.atSettled[0].owner === 'live'
       && h.liveRootEmpty && h.nextFrame.length === 1;
     res.ac4NextMoveTakesTheLayerBack = h.afterMove.length === 1 && h.afterMove[0].owner === 'live';
 
@@ -339,12 +341,12 @@ const out = {};
     c._applyView(8, T.x, T.y);
     await c.updateComplete;
     await quiet();
-    const fmt50 = c._fmtLen([0, 0], [50, 0]);
+    const fmt50 = '0.600 m'; // 50 render units * 1.2 cm/unit, common three-decimal format
     {
       const g = await gesture(K, T, [4, 0]);
       res.ac5Zoom8FourPxCapturedAndStored = at(stored(K), T.x, T.y) && g.writes.length === 1
         && Math.abs((stored(K).x - stored(D).x) - (stored(B).x - stored(A).x)) <= 1e-6;
-      res.ac4Zoom8LabelsEqualAndFmtLen = g.hint.length === 1 && g.hint[0].labels.length === 2
+      res.ac4Zoom8LabelsEqualAndFmtLen = g.hint.length === 1 && g.hint[0].labels.length === 5
         && g.hint[0].labels.every((text) => text === fmt50);
       sr().querySelector('[data-device-position-history="undo"]').click();
       await idle();
@@ -390,7 +392,7 @@ const out = {};
         fire(el, 'pointermove', from.x + ((t.x - from.x) * i) / 8, from.y + ((t.y - from.y) * i) / 8, p, pointerType);
         await frame();
         if (JSON.stringify(c._layout[K]) !== JSON.stringify(before)) moved = true;
-        if (sr().querySelector('.spacingguides')) anyHint = true;
+        if (sr().querySelector('[data-role="device-spacing"]')) anyHint = true;
       }
       fire(el, 'pointerup', t.x, t.y, p, pointerType);
       await idle();

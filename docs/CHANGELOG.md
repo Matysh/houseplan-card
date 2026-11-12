@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reuse the wall drafting dimension mechanism for opening selection/drag/placement, decor lines and every adjacent equal device gap. Preserve physical references through reversed host angles, camera motion, zero gaps and native snapping; keep line angles separate (#1398).
+
 - Keep selected-wall dimensions attached throughout live pan and zoom instead of waiting for pointer release. Reproject only their screen-space layer from cached geometry, retaining fixed text/stroke size without writes or history (#1397).
 
 - Use one read-only two-sided wall dimension layer for drawing, node moves, room Resize and idle wall selection. Measure bounded physical faces before aperture cuts, retain asymmetric chains and both Resize owners, and keep screen-space drafting ink, honest fallbacks and existing history (#1381).

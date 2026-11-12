@@ -185,7 +185,7 @@ const res = await page.evaluate(async () => {
     && passagePreview?.getAttribute('pointer-events') === 'none'
     && passageCut?.getAttribute('pointer-events') === 'none'
     && passageBoundaries.every((boundary) => boundary.getAttribute('pointer-events') === 'none');
-  out.passagePreviewKeepsRulers = root().querySelectorAll('.measurelabel.opshoulder').length === 2
+  out.passagePreviewKeepsRulers = root().querySelectorAll('[data-role="opening-gap"]').length === 2
     && !!root().querySelector('.opcentertick');
   out.passagePreviewHasNoCommittedSymbolParts = !!passagePreview
     && passagePreview.querySelectorAll('.op-leaf,.op-arc,.op-glass').length === 0;

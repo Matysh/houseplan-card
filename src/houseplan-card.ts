@@ -12515,7 +12515,6 @@ export class HouseplanCard extends LitElement {
       { id: "zero-editor", inputs: [...sceneInputs, ...[this._editing, this._modeTransitionBusy]], render: () => svg`${this._editing || this._modeTransitionBusy ? this._renderZeroWalls(disp) : nothing}` },
       { id: "plan-ink", inputs: [...sceneInputs, ...[this._editing, this._markup, this._markup || this._modeTransitionBusy, this._tool, this._mergeSel, this._splitSel]], render: () => svg`${this._editorInk('hidden-walls', !!this._editorRuntime && this._canEdit && !this._kiosk, () => svg`<g class="hp-plan-only-layer">${this._renderHiddenWallDiagnosticOverlay(true)}</g>`)}
             ${this._editorInk('opening-preview', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderOpeningPlacementPreview()}</g>`)}
-            ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
             ${''/* Static architectural axes and endpoints are a Plan-editor
                    invariant. Tool-specific hover/snap state is resolved inside
@@ -12755,7 +12754,6 @@ export class HouseplanCard extends LitElement {
             ${this._editing ? this._renderZeroWalls(disp) : nothing}
             ${this._editorInk('hidden-walls', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderHiddenWallDiagnosticOverlay()}</g>`)}
             ${this._editorInk('opening-preview', this._markup, () => svg`<g class="hp-plan-only-layer">${this._renderOpeningPlacementPreview()}</g>`)}
-            ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
             ${''/* Static architectural axes and endpoints are a Plan-editor
                    invariant. Tool-specific hover/snap state is resolved inside
@@ -13877,7 +13875,7 @@ export class HouseplanCard extends LitElement {
   /** Pointer-owned HTML painted by the live child renderer, outside the host Lit tree. */
   public _renderLiveEditorMeasurements(value: unknown): TemplateResult | typeof nothing {
     const view = value as { x: number; y: number; w: number; h: number };
-    const opMeasure = this._opMeasureView, decorMeasure = this._decorMeasure, bdLive = this._editorRuntime?.backdropGesture.live,
+    const decorMeasure = this._decorMeasure, bdLive = this._editorRuntime?.backdropGesture.live,
       furnLive = this._editorRuntime?._furnLive() ?? null;
     return html`
       ${this._editorRuntime?.wallDimensions.render(view)??nothing}
@@ -13890,14 +13888,6 @@ export class HouseplanCard extends LitElement {
             data-hp=${l.kind === 'area' ? 'resize-area-label' : 'resize-length-label'} data-room=${l.kind === 'area' ? l.roomId : nothing} data-side=${l.kind === 'area' ? l.placement.side : nothing}
             style="${this._frameStyle([l.x, l.y], view)};${l.kind === 'area'
               ? `--rsz-label-x:${l.placement.offsetXPx.toFixed(2)}px;--rsz-label-y:${l.placement.offsetYPx.toFixed(2)}px;--rsz-label-tangent:${l.placement.tangentOffsetPx.toFixed(2)}px`
-              : ''}">${l.text}</div>`)}</div>`
-        : nothing}
-      ${opMeasure
-        ? html`<div class="measurelayer" data-hp-live-layer="camera">${opMeasure.labels.map((l) => html`<div
-            class="measurelabel opshoulder ${l.dimension ? 'opdimension' : ''}"
-            data-dimension-source=${l.dimension?.source || nothing} data-dimension-room=${l.dimension?.roomId || nothing}
-            style="${this._frameStyle([l.x, l.y], view)};${l.dimension
-              ? `--op-label-shift-x:${(l.dimension.labelNormal[0] * 12).toFixed(2)}px;--op-label-shift-y:${(l.dimension.labelNormal[1] * 12).toFixed(2)}px`
               : ''}">${l.text}</div>`)}</div>`
         : nothing}
       ${decorMeasure
@@ -13943,12 +13933,11 @@ export class HouseplanCard extends LitElement {
    * editor — owner 2026-08-04: «в редакторе подложки у линий писать длину,
    * как при рисовании комнат в редакторе плана».
    *
-   * A line gets exactly what a wall gets while a plan is drawn: length ·
-   * angle in the HA unit system, green on a 45° multiple — the same
-   * `_fmtLen` (`segmentCm` over `cell_cm`), the same `.measurelabel`. The
+   * Lines retain only the native angle/45° badge here; their physical length
+   * is painted by the shared screen-space dimension layer (#1398). The
    * only difference is WHERE it sits: a wall badge follows the cursor
    * because the cursor is the wall's free end, while a decor line is pulled
-   * out by both ends at once, so its badge rides the MIDDLE of the segment
+   * out by both ends at once, so its angle badge rides the MIDDLE of the segment
    * (owner: «плашка на середине линии»).
    *
    * Rectangles report «W × H» plus area; ellipses report one radius for a
@@ -13967,7 +13956,7 @@ export class HouseplanCard extends LitElement {
     if (d.kind === 'line') {
       const deg = segmentAngle(d.a, d.b);
       return { x, y, on45: is45(deg),
-        text: `${this._fmtLen(d.a, d.b)} · ${Math.round(deg * 10) / 10}°` };
+        text: `${Math.round(deg * 10) / 10}°` };
     }
     const wText = this._fmtLen([ax, ay], [bx, ay]);
     const hText = this._fmtLen([bx, ay], [bx, by]);
@@ -14035,12 +14024,6 @@ export class HouseplanCard extends LitElement {
    * about the wall stroke (2.5) × 6 to each side. */
   private _renderOpeningCenterTick(gd: { x: number; y: number; angle: number }): TemplateResult {
     return this._editorRuntimeOrThrow()._renderOpeningCenterTick(gd);
-  }
-
-  /** Physical dimension segments for a NEW-opening placement preview (#238).
-   * Existing-opening drag labels carry no `dimension` and render nothing here. */
-  private _renderOpeningDimensionGuides(measure: OpMeasure): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderOpeningDimensionGuides(measure);
   }
 
   private _roomCenter(r: RoomCfg): number[] {

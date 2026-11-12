@@ -13,6 +13,8 @@ export interface OpeningDragState {
   id: string; moved: boolean; sx: number; sy: number; dirty: boolean;
   before: SpaceGeometryState | null; pid: number; spaceId: string; epoch: number;
   source: OpeningCfg; preview: OpeningCfg | null;
+  /** Physical Properties reference captured before the first move, also for a direct drag. */
+  dimensionReference?: OpeningDimension | null;
 }
 
 /** Opening rulers shared by the card shell and lazy editor runtime. */

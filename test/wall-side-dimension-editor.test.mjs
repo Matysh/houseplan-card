@@ -83,3 +83,20 @@ test('#1381 the displayed source distinguishes proved zero-thickness boundaries 
   assert.equal(updates.length,2,'an unmounted hint is not refreshed');
   h.editor.retire();h.editor.dispose();
 });
+test('#1398 native adapters reuse references across camera frames and retire on blocked surfaces',()=>{
+  const h=harness();let reads=0;
+  const opening={id:'door',x:.3,y:.3,length:.08,angle:0,host:{kind:'partition',id:'w'}};
+  h.host._curSpaceCfg=h.space;h.host._gridPitch=1000/240;h.host._cfgEpoch=1;
+  h.runtime.properties.dimensionTarget=null;h.runtime.properties.selectedOpening=opening;
+  h.runtime.properties.openingReference=()=>{reads++;return {from:[260,300],to:[200,300],axis:[1,0],
+    labelNormal:[0,-1],distance:60,source:'host-end'};};
+  assert.notEqual(h.editor.render(h.view),nothing);
+  h.editor.render({...h.view,x:50});h.editor.render({...h.view,w:500});assert.equal(reads,1);
+  h.host._opDrag={preview:{...opening,x:.4},dimensionReference:{},id:'door'};
+  h.editor.render(h.view);assert.equal(reads,2);
+  h.editor.render({...h.view,y:90});assert.equal(reads,2,'held camera only projects cached records');
+  h.host._openingDialog={};assert.equal(h.editor.render(h.view),nothing);
+  h.host._openingDialog=null;h.host._opDrag=null;h.runtime.properties.selectedOpening=null;
+  assert.equal(h.editor.render(h.view),nothing);
+  h.editor.dispose();
+});

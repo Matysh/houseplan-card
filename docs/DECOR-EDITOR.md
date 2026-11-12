@@ -125,7 +125,10 @@ field before allowing a new drawing gesture and never redirects that draft.
 Compact drawing retains the native ID; Select exposes its normal transform frame.
 
 Line uses the Walls click-chain interaction (#1046). Each accepted endpoint
-saves one independent line and becomes the next anchor. The first click,
+saves one independent line and becomes the next anchor. The hover length uses
+the common editor dimension mechanism (#1398, CANVAS §9);
+the existing midpoint angle badge keeps its exact-45° emphasis. This is a
+presentation change only, not a new snapping or commit path. The first click,
 hover, repeated/too-short point and Esc do not save. Pan, pinch, second contact,
 pointer cancellation and compatibility clicks cannot add an endpoint; the next
 clean contact works again. Shift preview and commit share `snapSegment45`;

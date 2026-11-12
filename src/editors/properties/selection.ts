@@ -67,9 +67,5 @@ export function renderPropertiesSelection(target: PropertiesTarget | null, conte
     content = svg`<path d="M${x-ux*halfLength} ${y-uy*halfLength}L${x+ux*halfLength} ${y+uy*halfLength}" stroke-dasharray="4 3"></path>
       ${pivot(x,y)}${opening.type === 'door' ? svg`<circle cx=${x+ux*halfLength*h} cy=${y+uy*halfLength*h} r=${6*px} fill="#078a9e" stroke="white"></circle>` : nothing}`;
   }
-  const ref=context.reference;
-  return svg`<g class="hp-prop-selection" aria-hidden="true">${content}
-    ${ref ? svg`<path d="M${ref.from[0]} ${ref.from[1]}l${ref.labelNormal[0]*50*px} ${ref.labelNormal[1]*50*px}M${ref.to[0]} ${ref.to[1]}l${ref.labelNormal[0]*50*px} ${ref.labelNormal[1]*50*px}
-        M${ref.from[0]+ref.labelNormal[0]*42*px} ${ref.from[1]+ref.labelNormal[1]*42*px}L${ref.to[0]+ref.labelNormal[0]*42*px} ${ref.to[1]+ref.labelNormal[1]*42*px}"></path>
-      <circle cx=${ref.to[0]} cy=${ref.to[1]} r=${5*px} fill="white"></circle>` : nothing}</g>`;
+  return svg`<g class="hp-prop-selection" aria-hidden="true">${content}</g>`;
 }

@@ -71,7 +71,7 @@ const screenPt = (x, y) => page.evaluate(([x, y]) => {
   return [p.x, p.y];
 }, [x, y]);
 const badges = () => page.evaluate(() =>
-  [...window.__card.renderRoot.querySelectorAll('.measurelabel.opshoulder')].map((el) => el.textContent.trim()).sort());
+  [...window.__card.renderRoot.querySelectorAll('[data-role="opening-gap"] text')].map((el) => el.textContent.trim()).sort());
 const nums = async () => (await badges()).map((t) => parseFloat(t));
 const tick = () => page.evaluate(() => window.__card.renderRoot.querySelectorAll('.opcentertick').length);
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
@@ -109,12 +109,9 @@ await settle();
 // 420-40=380 u (4.56 m) and 550-500=50 u (0.60 m) — the old merged build
 // showed 960-500=460 u (5.52 m) on the right
 {
-  const [a, b] = await nums();
-  check('two_badges_visible', (await badges()).length, 2);
-  check('badge_right_0_60', near(a, 0.6, 0.04));
-  check('badge_left_4_56', near(b, 4.56, 0.04));
-  // exact invariant, immune to pointer rounding: shoulders + opening = wall
-  check('badges_sum_to_wall', near(a + b, 6.12 - 0.96, 0.021));
+  const [a] = await nums();
+  check('one_frozen_physical_gap', (await badges()).length, 1);
+  check('gap_from_original_left_inner_face', near(a, 4.485, 0.04));
 }
 check('no_tick_off_center', await tick(), 0);
 check('existing_drag_has_no_new_dimension_lines', await page.evaluate(() =>
@@ -126,9 +123,8 @@ await page.mouse.move(t2x, sy, { steps: 3 });
 await settle();
 // center 360 -> shoulders 320-40=280 u (3.36 m) and 550-400=150 u (1.80 m)
 {
-  const [a, b] = await nums();
-  check('badge_right_updates_1_80', near(a, 1.8, 0.04));
-  check('badge_left_updates_3_36', near(b, 3.36, 0.04));
+  const [a] = await nums();
+  check('same_left_reference_updates', near(a, 3.285, 0.04));
 }
 
 // ---------- near the OWN edge center (40+550)/2 = 295: tick + magnet ----------
@@ -138,7 +134,7 @@ await settle();
 check('tick_at_center', await tick(), 1);
 check('magnet_snaps_center', near(await paintedCoordinate('x', 'magnet_center'), 0.295, 1e-6));
 // both shoulders equal after the snap: (510 - 80) / 2 = 215 u -> 2.58 m
-check('badges_equal_at_center', await badges(), ['2.58 m', '2.58 m']);
+check('physical_gap_at_center', await badges(), ['2.505 m']);
 // the tick is perpendicular to the wall (horizontal wall -> a vertical dash)
 const geom = await page.evaluate(async () => {
   const el = window.__card.renderRoot.querySelector('.opcentertick');
@@ -177,7 +173,7 @@ await settle();
 check('tick_with_shift', await tick(), 1);
 const freeX = await paintedCoordinate('x', 'magnet_shift');
 check('magnet_with_shift', near(freeX, 0.295, 1e-6));
-check('badges_still_there_with_shift', (await badges()).length, 2);
+check('badges_still_there_with_shift', (await badges()).length, 1);
 await page.mouse.up();
 await page.keyboard.up('Shift');
 await settle();
@@ -215,10 +211,9 @@ await settle();
 // center 360 -> edges 320/400; r1's edge 140..460: 320-140=180 u (2.16 m) and
 // 460-400=60 u (0.72 m); the merged build showed 580-400=180 u (2.16 m) below
 {
-  const [a, b] = await nums();
-  check('shared_wall_two_badges', (await badges()).length, 2);
-  check('shared_wall_bottom_0_72', near(a, 0.72, 0.04));
-  check('shared_wall_top_2_16', near(b, 2.16, 0.04));
+  const [a] = await nums();
+  check('shared_wall_one_frozen_gap', (await badges()).length, 1);
+  check('shared_wall_top_physical_gap', near(a, 2.085, 0.04));
 }
 check('shared_wall_no_tick_off_center', await tick(), 0);
 await page.mouse.up();
@@ -232,7 +227,7 @@ await settle();
 check('shared_wall_tick_at_own_center', await tick(), 1);
 check('shared_wall_magnet_y_0_3', near(await paintedCoordinate('y', 'shared_wall_magnet'), 0.3, 1e-6));
 // equal shoulders on the own edge: (320 - 80) / 2 = 120 u -> 1.44 m
-check('shared_wall_badges_equal', await badges(), ['1.44 m', '1.44 m']);
+check('shared_wall_gap_at_center', await badges(), ['1.365 m']);
 await page.mouse.up();
 await settle();
 
@@ -292,7 +287,7 @@ const previews = () => page.evaluate(() =>
   await settle();
   check('place_tick_at_center', await tick(), 1);
   // Equal physical-face shoulders: 217.5 - 6.25 = 211.25 u -> 2.53 m.
-  check('place_badges_equal_at_center', await badges(), ['2.53 m', '2.53 m']);
+  check('place_badges_equal_at_center', await badges(), ['2.535 m', '2.535 m']);
   const g = await page.evaluate(async () => {
     const el = window.__card.renderRoot.querySelector('.opcentertick');
     return el && { x1: +el.getAttribute('x1'), x2: +el.getAttribute('x2'),

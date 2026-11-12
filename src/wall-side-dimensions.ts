@@ -1,6 +1,8 @@
 /** Editor-only read model. Geometry and material ownership come from the
  * canonical, uncut masonry producer; openings never become dimension stops. */
-export type DimensionPoint = readonly [number, number];
+import type {EditorDimensionRecord} from './editor-dimension-record';
+export type {DimensionPoint} from './editor-dimension-record';
+import type {DimensionPoint} from './editor-dimension-record';
 export type DimensionSide = -1 | 1;
 export interface DimensionCarrier {
   id: string; a: DimensionPoint; b: DimensionPoint; cm: number;
@@ -10,7 +12,7 @@ export interface DimensionCarrier {
 export interface DimensionMaterial {
   owners: readonly string[]; poly: readonly (readonly number[])[];
 }
-export interface DimensionInterval {
+export interface DimensionInterval extends EditorDimensionRecord {
   id: string; carrier: string; side: DimensionSide; order: number;
   source: 'physical' | 'boundary' | 'axis' | 'unavailable';
   from: DimensionPoint | null; to: DimensionPoint | null;

@@ -571,6 +571,30 @@ ink and horizontal 12px labels under zoom/rotation. Ordinary ink is pointer
 transparent; only the dense value list owns scrolling. No numeric input,
 document writes or additional Undo command comes from showing a measurement.
 
+Opening gaps, opening placement, decor-Line length and device equal spacing
+reuse this same record/layout/formatter/renderer and camera child part (#1398).
+`editor-dimension-record.ts` is the presentation contract;
+`editor-dimension-adapters.ts` reads native geometry. Historical `wall-side-`
+module names and test hooks remain compatible; there is no second renderer.
+Selected and dragged openings show one physical Properties gap, frozen before
+the first movement. A 180° host-axis reversal cannot change its physical end,
+side or row. New-opening placement retains the full native physical set.
+No trustworthy reference means no invented rail or zero. A legitimate zero
+keeps the opening axis for its ticks. Native selection/pivot/hinge/handles and
+the opening-centre magnet guide remain separate and unchanged.
+
+Every adjacent gap of the magnet's entire continuous equal-step horizontal or
+vertical row is shown centre-to-centre, including internal neighbours. Its
+native run search retains actual centres as presentation metadata; target
+choice, priority and capture/release remain unchanged. Shell clearance is
+added outside the supports. Short values move to another row or the scroll
+list, never disappear. Decor Line keeps its native angle/45° badge separately.
+The common layer uses 1px strokes, 12px horizontal text, metre precision of
+three decimals (existing imperial format), 12px initial offset plus 16px rows,
+4px witness overshoot and a theme-surface label only (16px high, radius2,
+opacity.94). Camera frames project cached records without resolving physical
+faces again. These are transient editor values, not new schema/history.
+
 ### 9.1 One bound, and it is the backend's
 
 The rule: **an editor gesture has exactly one bound, `±CANVAS_LIMIT`

@@ -51,7 +51,6 @@ interface LiveEditorHost {
   _renderMarkupLayer: (viewBox: number[]) => unknown;
   _renderHiddenWallDiagnosticOverlay: () => unknown;
   _renderOpeningPlacementPreview: () => unknown;
-  _renderOpeningDimensionGuides: (measure: unknown) => unknown;
   _renderOpeningCenterTick: (guide: unknown) => unknown;
   _renderActiveChainInk: () => unknown;
   _renderPlanSnapOverlay: () => unknown;
@@ -198,7 +197,6 @@ const planTemplate = (host: LiveEditorHost): TemplateResult => {
     ${host._renderMarkupLayer(vb)}
     ${host._renderHiddenWallDiagnosticOverlay()}
     ${host._renderOpeningPlacementPreview()}
-    ${measure ? host._renderOpeningDimensionGuides(measure) : nothing}
     ${measure?.guide ? host._renderOpeningCenterTick(measure.guide) : nothing}
     ${host._renderActiveChainInk()}
     ${''/* #521: the guides belong to whoever moves the point. The settled copy
