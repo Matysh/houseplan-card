@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10088,
-  "nextTicket": 385,
+  "revision": 10089,
+  "nextTicket": 386,
   "nextFence": 385,
   "tasks": {
     "1024": {
@@ -9,14 +9,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/opening-features-1024",
-      "materialSha": "90a6ba130fc90706078d9f569c658d7859500fc2",
+      "materialSha": "148c93fc096a49c812a2146aeca3ea757b9714b2",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 384,
-      "queued": false,
+      "ticket": 385,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794520383752,
-      "reviewEntry": 1,
+      "readyAt": 1794522087025,
+      "reviewEntry": 2,
       "patchId": "da26e214548a01467b12d9f982bfb35ae173c87b",
       "changedFiles": [
         ".gitattributes",
@@ -132,7 +132,6 @@
         "tests_backend/test_opening_orientation.py",
         "tests_backend/test_support_config_projection.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4727,7 +4726,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1024
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -5018,6 +5019,19 @@
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/i18n.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Backend: tests_backend/test_opening_repair.py: failed; Backend: tests_backend/test_sh3d_convert.py: failed; Браузер: opening entity search: failed; Браузер: static wall openings: failed",
           "eventId": "finish:215b7724-d0e5-4164-86e6-0d675f24bd6c:finish:3:return:return:1024"
         }
+      }
+    },
+    "finish:4f8696af-c1b2-4c6a-ab2f-6530a2744279": {
+      "digest": "0d79b17f9b0053d930c4482b2084980f44b1c66eaace049a263ab50ed0de4be8",
+      "issue": 1024,
+      "message": {
+        "kind": "queued",
+        "issue": 1024,
+        "at": 1794522087025,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "148c93fc096a49c812a2146aeca3ea757b9714b2"
       }
     }
   },
