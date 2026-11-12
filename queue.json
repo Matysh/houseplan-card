@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9746,
+  "revision": 9747,
   "nextTicket": 377,
   "nextFence": 377,
   "tasks": {
@@ -4084,15 +4084,16 @@
         "test/wall-side-dimensions.test.mjs"
       ],
       "notice": {
-        "key": "4:checks-failed",
+        "key": "5:checks-failed",
         "reason": "checks-failed",
-        "status": "delivered",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794481572742,
-        "entry": 4,
-        "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed; Браузер: dialog picker 998: cancelled; Браузер: edit walk: cancelled; Браузер: editor command latency: Подготовка не завершена успешно; Браузер: editor draft exit: Подготовка не завершена успешно; Браузер: editor gestures: Подготовка не завершена успешно; Браузер: editor nudge: Подготовка не завершена успешно; Браузер: geometry corpus: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: glass door sun: Подготовка не завершена успешно; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: household journeys: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: junction holes: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lattice write barrier: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: marker state source: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: moon phase direction: Подготовка не завершена успешно; Браузер: native grid draw: Подготовка не завершена успешно; Браузер: node dependency carrier: Подготовка не завершена успешно; Браузер: node history context: Подготовка не завершена успешно; Браузер: opening drag: Подготовка не завершена успешно; Браузер: opening drag graph: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: opening escape wide: Подготовка не завершена успешно; Браузер: opening light transparent: Подготовка не завершена успешно; Браузер: opening measure: Подготовка не завершена успешно; Браузер: opening mode fill: Подготовка не завершена успешно; Браузер: opening preview: Подготовка не завершена успешно; Браузер: opening tunnel fill: Подготовка не завершена успешно; Браузер: partition openings preview: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan graph cold: Подготовка не завершена успешно; Браузер: plan graph editor: Подготовка не завершена успешно; Браузер: plan rotation editors: Подготовка не завершена успешно; Браузер: plan snap overlay: Подготовка не завершена успешно; Браузер: properties panel: Подготовка не завершена успешно; Браузер: resize junctions: Подготовка не завершена успешно; Браузер: resize labels: Подготовка не завершена успешно; Браузер: resize through junction: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: room device discovery: Подготовка не завершена успешно; Браузер: room face select: Подготовка не завершена успешно; Браузер: room opening host: Подготовка не завершена успешно; Браузер: room resize: Подготовка не завершена успешно; Браузер: selective invalidation: Подготовка не завершена успешно; Браузер: space copy categories: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: stairs: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: static zoom sharpness: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall chain merge: Подготовка не завершена успешно; Браузер: wall corner join: Подготовка не завершена успешно; Браузер: wall draw click: Подготовка не завершена успешно; Браузер: wall end align: Подготовка не завершена успешно; Браузер: wall face lineage: Подготовка не завершена успешно; Браузер: wall face room split: Подготовка не завершена успешно; Браузер: wall guide ownership: Подготовка не завершена успешно; Браузер: wall node attach: Подготовка не завершена успешно; Браузер: wall node connected: Подготовка не завершена успешно; Браузер: wall node delete: Подготовка не завершена успешно; Браузер: wall node hit: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно; Браузер: wall node move: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно; Браузер: wall node reliability: Подготовка не завершена успешно; Браузер: wall node topology: Подготовка не завершена успешно; Браузер: wall preview handoff 1247: Подготовка не завершена успешно; Браузер: wall side dimensions: Подготовка не завершена успешно; Браузер: wall side dimensions dense: Подготовка не завершена успешно; Браузер: wall side dimensions thin: Подготовка не завершена успешно; Браузер: wall thickness: Подготовка не завершена успешно; Браузер: wallthick standalone: Подготовка не завершена успешно; Браузер: warm geometry camera: Подготовка не завершена успешно; Браузер: write authority: Подготовка не завершена успешно; Браузер: writer fixed point: Подготовка не завершена успешно",
-        "eventId": "finish:1707e311-543a-42a0-a1e2-4a4f14b4f3e6:finish:3:return:return:1381"
-      }
+        "at": 1794482799962,
+        "entry": 5,
+        "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed; Браузер: wall node merge: failed; Браузер: wall preview handoff 1247: failed",
+        "eventId": "finish:694a3206-e83a-456d-9e89-baef740322cc:finish:3:return:return:1381"
+      },
+      "reason": "checks-failed"
     },
     "1382": {
       "issue": 1382,
@@ -4574,18 +4575,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1381,
-    "worker": "finish",
-    "token": "376:finish:694a3206-e83a-456d-9e89-baef740322cc:finish:1:admit",
-    "fence": 376,
-    "materialSha": "58276f20e4c622569c3e3ebc8a6bae41ccdec840",
-    "expectedBase": "c970836c383ce294aeec16069657c546ace2df1b",
-    "phase": "testing",
-    "admittedAt": 1794481745879,
-    "expiresAt": 1794483044175,
-    "patchId": "5093b4ac9d6ed9550d7bb47e9a2618b90239f759"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -5015,6 +5005,10 @@
       "digest": "108760658ffb31d41defab5155c97a0e14b13aa0b8efe3327071726129412369",
       "issue": 1381
     },
+    "finish:694a3206-e83a-456d-9e89-baef740322cc:finish:3:return": {
+      "digest": "e0cbb7eb270c69ea531a8a87f125d9f559094ac3302416817d7a6ed2b4baab63",
+      "issue": 1381
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -5293,6 +5287,26 @@
         "materialSha": "58276f20e4c622569c3e3ebc8a6bae41ccdec840",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:694a3206-e83a-456d-9e89-baef740322cc:finish:3:return:return:1381": {
+      "digest": "e0cbb7eb270c69ea531a8a87f125d9f559094ac3302416817d7a6ed2b4baab63",
+      "issue": 1381,
+      "message": {
+        "kind": "return",
+        "issue": 1381,
+        "at": 1794482799962,
+        "entry": 5,
+        "notice": {
+          "key": "5:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794482799962,
+          "entry": 5,
+          "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed; Браузер: wall node merge: failed; Браузер: wall preview handoff 1247: failed",
+          "eventId": "finish:694a3206-e83a-456d-9e89-baef740322cc:finish:3:return:return:1381"
+        }
       }
     }
   },
