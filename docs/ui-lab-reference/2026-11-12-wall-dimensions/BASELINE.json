@@ -7,5 +7,10 @@
   "frontendVersion": "20260930.4",
   "approvedScope": "wall dimensions only",
   "otherPrototype": 1024,
-  "privateDataIncluded": false
+  "privateDataIncluded": false,
+  "approvedChanges": [
+    "UI-056",
+    "UI-057"
+  ],
+  "previousReference": "4076cb742a64f341a9cac9589bf54b6312741dce"
 }

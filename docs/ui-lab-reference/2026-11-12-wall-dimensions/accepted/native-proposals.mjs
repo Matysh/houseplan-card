@@ -4,6 +4,15 @@ globalThis.__hpNativePrototypes=true;
 if(new URL(location).searchParams.has('prototype')){const url=new URL(location);url.searchParams.delete('prototype');history.replaceState(null,'',url);}
 await card._ensureEditorRuntime();
 window.__nativeProposalCard=card;
+// The old native labels cover only the grabbed room. Retain the accepted
+// geometry passed to their builder so this layer can measure both owners.
+let resizeFrame;
+const nativeResizeLabels=card._editorRuntime._rszEdgeLabels;
+card._editorRuntime._rszEdgeLabels=function(result,plan,...args){
+  const labels=nativeResizeLabels.call(this,result,plan,...args);
+  resizeFrame={plan,polys:result.polys};
+  return labels;
+};
 
 const ns='http://www.w3.org/2000/svg';
 const layer=document.createElementNS(ns,'svg');layer.dataset.labNativeDimensions='1381';
@@ -139,14 +148,20 @@ function readContext(){
   const labels=card._resize?.liveLabels?.filter(l=>l.kind==='length');
   if(card._tool==='resize'&&labels?.length){
     const source=(card._spaceWalls||[]).filter(w=>w.a&&w.b).map(w=>({...w,a:point(w.a),b:point(w.b)}));
-    const room=card._curSpaceCfg.rooms?.find(r=>r.id===card._resize.plan?.roomId);
-    const poly=room?.poly||[],winding=Math.sign(poly.reduce((sum,p,i)=>sum+cross(p,poly[(i+1)%poly.length]),0));
-    const walls=labels.map(l=>{
-      const a=l.edge.a,b=l.edge.b,len=length(sub(b,a)),u=mul(sub(b,a),1/len);
+    const plan=card._resize.plan;
+    if(resizeFrame?.plan!==plan)return null;
+    const measured=plan.roomIds.flatMap(roomId=>{
+      const poly=resizeFrame.polys[roomId],moving=plan.edgeByRoom[roomId];
+      if(!poly?.length||moving==null)return [];
+      const winding=Math.sign(poly.reduce((sum,p,i)=>sum+cross(p,poly[(i+1)%poly.length]),0));
+      return [(moving-1+poly.length)%poly.length,(moving+1)%poly.length].map(edge=>({roomId,a:poly[edge],b:poly[(edge+1)%poly.length],winding}));
+    });
+    const walls=measured.map(({roomId,a,b,winding})=>{
+      const len=length(sub(b,a)),u=mul(sub(b,a),1/len);
       const matching=source.filter(w=>Math.abs(cross(u,sub(w.b,w.a)))<.1&&Math.abs(cross(u,sub(w.a,a)))<.1)
         .map(w=>({w,overlap:Math.min(len,Math.max(dot(sub(w.a,a),u),dot(sub(w.b,a),u)))-Math.max(0,Math.min(dot(sub(w.a,a),u),dot(sub(w.b,a),u)))}))
         .filter(x=>x.overlap>.1).sort((x,y)=>y.overlap-x.overlap);
-      return {a,b,cm:matching[0]?.w.cm??0,outerSign:winding?-winding:undefined};
+      return {roomId,a,b,cm:matching[0]?.w.cm??0,outerSign:winding?-winding:undefined};
     });
     return {kind:'resize',walls,supports:source,geom:globalThis.__hpLabResizeGeometry||card._wallUnionGeometry()?.roomGeom};
   }
@@ -198,13 +213,13 @@ function paint(){
   layer.style.cssText=`position:fixed;pointer-events:none;z-index:8;overflow:hidden;display:block;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px`;
   layer.setAttribute('viewBox',`0 0 ${rect.width} ${rect.height}`);layer.innerHTML=output+'</g>'+text;
   if(!layer.isConnected)card.shadowRoot.append(layer);
-  window.__hpLabDimensions={context:ctx.kind,count:uniq.size,segments:dims};
+  window.__hpLabDimensions={context:ctx.kind,count:uniq.size,segments:dims,...(ctx.kind==='resize'?{rooms:[...new Set(ctx.walls.map(w=>w.roomId))],measuredWalls:ctx.walls}:{})};
 }
 function safePaint(){try{paint();}catch(error){console.warn('Local dimension prototype:',error);layer.style.display='none';}}
 // Paint dimensions after each native DOM commit, before that frame reaches the
 // screen. Native scene layers use several SVGs; observe their shared stage.
 // The dimension overlay is outside it, so its writes cannot loop.
-const drawObserver=new MutationObserver(()=>{if(card._mode==='plan'&&(card._tool==='draw'||card._editorRuntime?.nodeMove?.dragging))safePaint();});
+const drawObserver=new MutationObserver(()=>{if(card._mode==='plan'&&(card._tool==='draw'||card._resize?.dragging||card._editorRuntime?.nodeMove?.dragging))safePaint();});
 let observedStage;
 function tick(){
   const stage=card.shadowRoot.querySelector('.stage');
