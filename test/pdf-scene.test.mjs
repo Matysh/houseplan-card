@@ -190,6 +190,31 @@ test('PDF scene includes architecture and respects names/dimensions switches', (
     'door leaf/arc is represented by vector lines');
 });
 
+test('#1024 PDF shows architectural leaf divisions and slide direction without live/manual state', () => {
+  const options = { dimensions:false, roomNames:false, decor:false, backdrop:false };
+  const raw = structuredClone(sharedRaw);
+  const window = { id:'window', type:'window', x:.3, y:.1, angle:0, length:.2,
+    opening_features:{ version:1, side:'positive', leaves:[{id:'leaf-1',hinge:'start',manual:'closed'}] } };
+  raw.openings = [window];
+  const one = buildRawPage(raw, options);
+  for (let index=2;index<=4;index++) window.opening_features.leaves.push({id:`leaf-${index}`,hinge:'top',manual:'open'});
+  const four = buildRawPage(raw, options);
+  assert.equal(four.commands.length-one.commands.length,3,'three internal mullions for four leaves');
+  const before = structuredClone(four);
+  for (const leaf of window.opening_features.leaves) {
+    leaf.manual='closed';leaf.contact='binary_sensor.private';
+    leaf.shade={enabled:true,manual:'closed'};
+  }
+  assert.deepEqual(buildRawPage(raw,options),before,'architectural PDF ignores leaf and shade live/manual positions');
+  raw.openings=[{id:'slide',type:'door',x:.3,y:.1,angle:0,length:.2,
+    opening_features:{version:1,mechanism:'slide',manual:'closed',slide_direction:'end'}}];
+  const end=buildRawPage(raw,options);
+  raw.openings[0].opening_features.manual='open';
+  assert.deepEqual(buildRawPage(raw,options),end,'slide notation is state-free');
+  raw.openings[0].opening_features.slide_direction='start';
+  assert.notDeepEqual(buildRawPage(raw,options).commands,end.commands,'the chosen physical slide direction is retained');
+});
+
 test('#1035 PDF emits decor in stored order after bringing an object forward', async () => {
   const { reorderDecor } = await import('../test-build/editors/decor/order.js');
   const decor = ['A', 'B', 'C'].map((text,i)=>({id:text,kind:'text',text,x:.3+i*.1,y:.4,size_cm:25}));

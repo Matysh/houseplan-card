@@ -65,6 +65,12 @@ zero-thickness walls and door, window, gate and passage openings. Device
 markers, Home Assistant states, Glow, sunlight, vacuum trails, room colours and
 Zigbee topology are intentionally excluded.
 
+Extended openings (#1024) keep architectural, state-free notation: a window
+shows its saved 1–4 leaf divisions, and a sliding door/gate shows one full-width
+panel in its saved direction and physical face. Live contact states, manual
+opening positions and per-leaf shade states do not change the PDF; they remain
+part of the current-view SVG instead.
+
 The dialog can additionally include:
 
 - room dimensions and clean floor areas;
