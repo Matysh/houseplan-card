@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9677,
+  "revision": 9678,
   "nextTicket": 374,
   "nextFence": 374,
   "tasks": {
@@ -4042,9 +4042,12 @@
       "status": "S6-in-progress",
       "readyAt": 1794479788211,
       "reviewEntry": 2,
-      "patchId": "d433f45d62f3c94a1866741159fe6cb59b09e9c7",
+      "patchId": "6c8b33f8489fc102b65ff7d31b45940372079c83",
       "changedFiles": [
+        "demo/golden/harness.mjs",
+        "demo/smoke_device_contact_editor_frame.mjs",
         "demo/smoke_resize_labels.mjs",
+        "demo/smoke_wall_end_align.mjs",
         "demo/smoke_wall_side_dimensions.mjs",
         "demo/smoke_wall_side_dimensions_dense.mjs",
         "docs/CANVAS.md",
@@ -4054,7 +4057,11 @@
         "docs/USER-GUIDE.ru.md",
         "docs/UX-MODES.md",
         "docs/WALL-THICKNESS.md",
+        "docs/data-hp-contract.json",
         "docs/release-ledger/v1.85.0/1381.json",
+        "scripts/config-compatibility-catalog.mjs",
+        "scripts/config-compatibility-inventory.json",
+        "scripts/mutation-registry.mjs",
         "src/editors/properties/editor.ts",
         "src/editors/properties/selection.ts",
         "src/editors/properties/strings.ts",
@@ -4572,10 +4579,11 @@
     "token": "373:finish:42e27f3d-6954-4134-80dc-dcbcf7a7da76:finish:1:admit",
     "fence": 373,
     "materialSha": "cac85b6de7b97cf3c8258027f17e4b7bb9531516",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c970836c383ce294aeec16069657c546ace2df1b",
+    "phase": "testing",
     "admittedAt": 1794479794883,
-    "expiresAt": 1794480094883
+    "expiresAt": 1794480102608,
+    "patchId": "6c8b33f8489fc102b65ff7d31b45940372079c83"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4760,6 +4768,10 @@
     },
     "finish:d7b92f8f-e240-45a1-806d-b9be2f0c459c:finish:3:return": {
       "digest": "4ec44eb0d7e81a70fcf12ec4cbd37070ed43d9a82107e15d2b08be5047010e52",
+      "issue": 1381
+    },
+    "finish:42e27f3d-6954-4134-80dc-dcbcf7a7da76:finish:2:synchronized": {
+      "digest": "51b465bded73c0d6286ded624166dd5b8c985db88247d3eafbac62ea5e062ac2",
       "issue": 1381
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
