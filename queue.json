@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9983,
+  "revision": 9984,
   "nextTicket": 384,
   "nextFence": 384,
   "tasks": {
@@ -4892,6 +4892,10 @@
       "digest": "bf88b9ff991ebf09c7d9f7eb292cf6d81032010ce84da2e02d8e7ee21ffdb76c",
       "issue": 1398
     },
+    "github:43272469225:1:completions:message:ae5cbba042684c88664c053c315062b8d92c7d128e196b4fa8283264eeae8d65": {
+      "digest": "182cba47ec9da8732107a686a879686e3e75aeb35da3282f3f0a3410f2b42ce6",
+      "issue": 1398
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4972,7 +4976,8 @@
           "entry": 1,
           "detail": "Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/opening-drag.test.mjs: failed; Браузер: device equal spacing: failed",
           "eventId": "finish:4bba4bb2-e568-4d19-9a64-75c64e098f7a:finish:3:return:return:1398"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:936de651-fa91-4b63-94c1-f2d9b310e8e4": {
