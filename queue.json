@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10090,
+  "revision": 10091,
   "nextTicket": 386,
   "nextFence": 386,
   "tasks": {
@@ -17,7 +17,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794522087025,
       "reviewEntry": 2,
-      "patchId": "da26e214548a01467b12d9f982bfb35ae173c87b",
+      "patchId": "aef9da151cc24574e3ae119644dcfdd026584599",
       "changedFiles": [
         ".gitattributes",
         "custom_components/houseplan/const.py",
@@ -38,8 +38,10 @@
         "custom_components/houseplan/wall_node_move.py",
         "custom_components/houseplan/websocket_api.py",
         "demo/golden/harness.mjs",
+        "demo/smoke_opening_entity_search.mjs",
         "demo/smoke_opening_features.mjs",
         "demo/smoke_settings_select.mjs",
+        "demo/smoke_static_wall_openings.mjs",
         "demo/srv/assets/icons.js",
         "demo/ui-lab/mock-ha.mjs",
         "docs/CHANGELOG.md",
@@ -71,6 +73,9 @@
         "scripts/config-compatibility-inventory.json",
         "scripts/config-field-registry.mjs",
         "scripts/config-schema.json",
+        "scripts/mutation-registry.mjs",
+        "scripts/sh3d-convert/dist/index.html",
+        "scripts/sh3d-convert/geometry-runtime.generated.mjs",
         "scripts/support-relay/hp_relay/support_wire_schema.py",
         "src/align-grid.ts",
         "src/coordinate-canonicalization.ts",
@@ -120,7 +125,10 @@
         "src/wall-segment-model.ts",
         "src/wall-shell-union.ts",
         "src/wall-thickness.ts",
+        "test/golden-matrix.test.mjs",
+        "test/i18n.test.mjs",
         "test/iso-openings.test.mjs",
+        "test/isometric-contract.test.mjs",
         "test/opening-features.test.mjs",
         "test/opening-optics.test.mjs",
         "test/opening-symbol.test.mjs",
@@ -130,6 +138,7 @@
         "tests_backend/test_ha_space_copy.py",
         "tests_backend/test_opening_features.py",
         "tests_backend/test_opening_orientation.py",
+        "tests_backend/test_sh3d_convert.py",
         "tests_backend/test_support_config_projection.py"
       ],
       "notice": {
@@ -4733,10 +4742,11 @@
     "token": "385:finish:4f8696af-c1b2-4c6a-ab2f-6530a2744279:finish:1:admit",
     "fence": 385,
     "materialSha": "148c93fc096a49c812a2146aeca3ea757b9714b2",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "827cae041114db2a478951d658566a718e6f8393",
+    "phase": "testing",
     "admittedAt": 1794522093335,
-    "expiresAt": 1794522393335
+    "expiresAt": 1794522401558,
+    "patchId": "aef9da151cc24574e3ae119644dcfdd026584599"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4929,6 +4939,10 @@
     },
     "finish:215b7724-d0e5-4164-86e6-0d675f24bd6c:finish:3:return": {
       "digest": "add3e4b7ed50aca7790cb1fbff2682cfc8fe5c162ecaf22a90552833f66c5322",
+      "issue": 1024
+    },
+    "finish:4f8696af-c1b2-4c6a-ab2f-6530a2744279:finish:2:synchronized": {
+      "digest": "43ca02260e988fe923a33c31f21cc0cee72fad95eed6185a31afd52b150fc8cd",
       "issue": 1024
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
