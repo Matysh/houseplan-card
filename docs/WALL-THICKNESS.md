@@ -684,8 +684,16 @@ invoke it.
   sector is the intersection of the doorway spans at the near and far inner
   faces. The two jamb returns therefore clip off-axis light. Zero-thickness
   walls cannot host openings.
-- Displayed **m²** = area of the inner contour (clean floor). Wall-length
-  rulers and opening anchors stay on the centreline.
+- Displayed **m²** = area of the inner contour (clean floor). Stored axes,
+  the Properties axis-length field and opening anchors stay on the centreline.
+  Editor wall dimensions (#1381) instead use bounded physical side faces from
+  uncut canonical masonry, with real junction/column stops and no door/window
+  jamb stops. Side chains may differ. A transverse endpoint support bounds a
+  continuing exterior facade at its physical side, not an artificial axis seam;
+  a finite local support section only clips an existing owned boundary edge,
+  never extends the painted wall to an infinite mitre. Zero thickness uses a
+  proved clear boundary or named axis fallback; absent proof never invents a
+  physical face. This read model changes no stored geometry or light policy.
 - With no thickness, inner = poly (parity with pre-thickness behaviour).
 - View room hover is a late plain-SVG wash plus wide/narrow accent strokes over
   the clean-floor geometry; the room information window shows the room's average

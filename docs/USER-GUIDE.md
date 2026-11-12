@@ -1131,7 +1131,7 @@ Other operations edit existing geometry:
 |---|---|
 | Merge | Joins adjacent rooms; a dialog chooses the surviving identity, name and area |
 | Split | Cuts a room from one wall to another; the larger part keeps the original room |
-| Resize | Moves one eligible horizontal/vertical wall without changing room topology. Live labels report the two changing **inner** side-wall dimensions, highlight those walls, and place each affected room's area beside its side of the moving wall |
+| Resize | Moves one eligible horizontal/vertical wall without changing room topology. The common dimension layer reports changing physical intervals on both sides of both rooms' side walls; each room retains its area beside the moving wall |
 | Thickness | Changes one span or every wall of a room, including zero-thickness walls |
 | Delete room | Deletes the room after choosing whether its exclusive physical walls remain; shared walls always remain |
 
@@ -1227,8 +1227,29 @@ or an interrupted pointer writes nothing.
 The moving wall has no redundant length badge. An outer wall shows one clean
 area; a shared wall shows two on opposite sides with short leaders. In a narrow
 room a label may extend outside the room rather than overlap the other area or
-the Room settings button. Live dimensions are measured to the inner faces of
-the two changing side walls and those walls are highlighted.
+the Room settings button. Both affected rooms' changing side-wall dimensions
+are displayed simultaneously, without the old axis highlights.
+
+### Dimensions on both sides of a wall
+
+Drawing walls, moving nodes and Resize share thin drafting dimensions for
+changing intervals. Click a wall with Select to inspect both sides without
+dragging. Values measure physical faces, not necessarily the distance between
+nodes. A junction may split one side into a chain while the opposite side
+remains continuous. Door and window cuts do not split the wall into pier lengths.
+
+Witnesses start at the measured supports, perpendicular to the wall; the
+parallel rail uses Home Assistant's accent colour. Metric lengths have three
+decimal places; imperial formatting follows HA. Font and stroke sizes stay
+constant while zooming. In dense scenes, stable numbered markers refer to a
+complete temporary list with its own scrolling.
+
+The Properties Length remains read-only and axis-based. Zero-thickness walls
+use a proved clear boundary interval or an explicitly explained axis fallback.
+An unprovable axis shows “Dimension unavailable”, never a fabricated zero.
+The layer writes nothing, adds no history and hides during whole-wall body
+drags. No numeric input is introduced; editors remain desktop-first and
+best-effort on touch.
 
 | Scenario | Result |
 |---|---|

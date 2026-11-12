@@ -4,6 +4,9 @@ import { t, langOf, type I18nKey } from '../../i18n';
 const reused = {title:'btn.properties',copy:'btn.copy',delete:'btn.delete',cancel:'btn.cancel',
   light_transparent:'opening.light_transparent',fill:'decor.fill',line:'decor.line',rect:'decor.rect',ellipse:'decor.ellipse',furniture:'decor.furniture'} as const satisfies Record<string,I18nKey>;
 const en = {
+  wall_dimensions:'Dimensions', wall_dimension_unavailable:'Dimension unavailable',
+  wall_dimensions_hint:'Length along the axis. Wall-side dimensions are shown on the plan.',
+  wall_dimensions_axis_hint:'Length along the axis. Wall-side dimensions are shown on the plan. Some sections show their axis length.',
   selection_count: 'Selected: {count}', mixed_values: 'Different values',
   group_incompatible: 'Select objects of one type to edit their shared appearance.',
   group_single_only: 'Available for one selected object.', select_all: 'Select all decor', select_furniture: 'Select all furniture',
@@ -55,6 +58,9 @@ const en = {
 };
 type Key = keyof typeof en;
 const ru: Record<Key, string> = {
+  wall_dimensions:'Размеры', wall_dimension_unavailable:'Размер не определён',
+  wall_dimensions_hint:'Длина по оси. Размеры сторон показаны на плане.',
+  wall_dimensions_axis_hint:'Длина по оси. Размеры сторон показаны на плане. Для части участков показана длина по оси.',
   selection_count: 'Выбрано: {count}', mixed_values: 'Разные значения',
   group_incompatible: 'Выберите объекты одного типа, чтобы изменить их общее оформление.',
   group_single_only: 'Доступно при выборе одного объекта.', select_all: 'Выделить весь декор', select_furniture: 'Выделить всю мебель',
@@ -106,8 +112,14 @@ const ru: Record<Key, string> = {
 };
 export type PropertiesString = Key;
 const localized: Record<string, Partial<Record<Key,string>>> = {
-  de: { contour_context: 'A und B sind die Endpunkte der ausgewählten Wand. Verschieben Sie ihre Knoten im Plan: Verbundene Nachbarwände werden mitbewegt.', into_room: 'In den Raum „{name}“', outside: 'Nach außen' },
-  fr: { contour_context: 'A et B sont les extrémités du mur sélectionné. Déplacez leurs nœuds sur le plan : les murs voisins qui y sont reliés se déplaceront aussi.', into_room: 'Vers la pièce « {name} »', outside: 'Vers l’extérieur' },
+  de: { wall_dimensions:'Maße',wall_dimension_unavailable:'Maß nicht bestimmbar',
+    wall_dimensions_hint:'Länge entlang der Achse. Die Maße beider Wandseiten werden im Plan angezeigt.',
+    wall_dimensions_axis_hint:'Länge entlang der Achse. Die Maße beider Wandseiten werden im Plan angezeigt. Für einige Abschnitte wird die Achsenlänge angezeigt.',
+    contour_context: 'A und B sind die Endpunkte der ausgewählten Wand. Verschieben Sie ihre Knoten im Plan: Verbundene Nachbarwände werden mitbewegt.', into_room: 'In den Raum „{name}“', outside: 'Nach außen' },
+  fr: { wall_dimensions:'Dimensions',wall_dimension_unavailable:'Dimension indéterminée',
+    wall_dimensions_hint:'Longueur selon l’axe. Les dimensions des deux côtés du mur sont affichées sur le plan.',
+    wall_dimensions_axis_hint:'Longueur selon l’axe. Les dimensions des deux côtés du mur sont affichées sur le plan. Certains tronçons affichent leur longueur selon l’axe.',
+    contour_context: 'A et B sont les extrémités du mur sélectionné. Déplacez leurs nœuds sur le plan : les murs voisins qui y sont reliés se déplaceront aussi.', into_room: 'Vers la pièce « {name} »', outside: 'Vers l’extérieur' },
 };
 export const PROPERTIES_KEYS = Object.keys(en) as Key[];
 export const propertiesT = (language: string, key: Key, vars?: Record<string, string | number>): string =>

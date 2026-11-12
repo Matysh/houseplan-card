@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1381,
+  "baseStable": "v1.85.0",
+  "category": "major",
+  "rationale": "Owner-approved editor feature: one read-only physical two-sided dimension layer across four wall measurement contexts, without a schema or writer change.",
+  "summary": {
+    "ru": "Размеры по двум сторонам стен при рисовании, переносе узлов, Resize и выборе стены.",
+    "en": "Two-sided wall dimensions while drawing, moving nodes, resizing rooms and selecting a wall."
+  }
+}

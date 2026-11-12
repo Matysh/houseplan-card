@@ -553,6 +553,18 @@ fits `all`.
 
 ## §9 Drag limits and the snap contract (dev, DEV-B58)
 
+Wall-side dimensions (#1381) are a read-only consumer of these admitted
+positions, never another snap/constraint solver. Drawing compares the current
+rubber band with the already confirmed graph (each click already commits its
+edge), node moves use the native accepted candidate, and Resize uses its exact
+preview. Canonical uncut material ownership bounds the shared resolver; an
+invalid node outline hides measurements rather than reusing an obsolete face.
+Geometry is cached independently of camera/language/HA state. Projection and
+collision layout use cached stage size and text metrics, keeping 1 CSS-pixel
+ink and horizontal 12px labels under zoom/rotation. Ordinary ink is pointer
+transparent; only the dense value list owns scrolling. No numeric input,
+document writes or additional Undo command comes from showing a measurement.
+
 ### 9.1 One bound, and it is the backend's
 
 The rule: **an editor gesture has exactly one bound, `±CANVAS_LIMIT`

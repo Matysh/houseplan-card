@@ -301,6 +301,16 @@ node handles; it never repairs stored data or relaxes the write preflight.
   The 12 CSS-pixel node hit wins there, while dragging a wall body outside it
   retains the existing rigid move. Nearby distinct nodes that cannot be
   distinguished request zoom instead of choosing arbitrarily.
+- Drawing, node moves, Resize and idle wall selection share one read-only
+  two-sided dimension model (#1381). During a gesture only physically changed
+  intervals and their positively overlapping opposite-side counterparts show;
+  this does not expand transitively or to unrelated collinear carriers. Resize
+  measures both affected rooms at once and retains their area labels. Selected
+  walls keep A/B endpoint tags, not the old offset axis ruler. Whole-body drags
+  hide selection dimensions; cancellation restores a fresh current selection.
+  Escape reaches an active native gesture before Properties deselects it.
+  Thin screen-space rails/witnesses and a scroll-owned numbered fallback add
+  no input, writes, history, View/kiosk behavior or new touch guarantee.
 - During a node drag the affected old walls remain visible at .35 opacity,
   including their hatch/axes and opening cuts; old opening symbols and active
   handles are hidden. One complete proposed position remains translucent;

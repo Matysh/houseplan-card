@@ -9485,20 +9485,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._rszEdgeLabels(res, plan, sourceRooms);
   }
 
-  /**
-   * Внутренние длины рёбер комнаты в сантиметрах, по одному числу на ребро.
-   *
-   * Толщины берутся из атомарного профиля (#233): `thicknessCmAt` по целому
-   * ребру возвращает 0 на ребре со сплит-толщиной, и подписи молча перестали бы
-   * сокращаться. `null` означает «профиля нет» — тогда вызывающий показывает
-   * осевую длину, как до правки.
-   */
-  private _rszInnerSpanCms(
-    roomId: string, own: number[][], polys: Record<string, number[][]>,
-  ): number[] | null {
-    return this._editorRuntimeOrThrow()._rszInnerSpanCms(roomId, own, polys);
-  }
-
   /** Pointer-inert measurement ink above masonry and below openings/handles. */
   private _renderResizeMeasurements(): TemplateResult | typeof nothing {
     return this._editorRuntimeOrThrow()._renderResizeMeasurements();
@@ -13894,6 +13880,7 @@ export class HouseplanCard extends LitElement {
     const opMeasure = this._opMeasureView, decorMeasure = this._decorMeasure, bdLive = this._editorRuntime?.backdropGesture.live,
       furnLive = this._editorRuntime?._furnLive() ?? null;
     return html`
+      ${this._editorRuntime?.wallDimensions.render(view)??nothing}
       ${this._measureAnchor
         ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderMeasureLabel(view)}</div>`
         : nothing}
@@ -13948,7 +13935,7 @@ export class HouseplanCard extends LitElement {
     const shown = Math.round(deg * 10) / 10;
     const on45 = isExact45Vector(a, b, this._gridPitch * 0.0002);
     return html`<div class="measurelabel ${on45 ? 'on45' : ''}" style="left:${left}%;top:${top}%">
-      ${this._fmtLen(a, b)} · ${shown}°</div>`;
+      ${this._tool==='draw'?'':`${this._fmtLen(a,b)} · `}${shown}°</div>`;
   }
 
   /**

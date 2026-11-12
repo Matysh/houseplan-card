@@ -1,5 +1,5 @@
-// #300: the production Resize gesture renders two side-wall measurements,
-// matching highlights and one area badge per owner beside the moving wall.
+// #300/#1381: Resize keeps one area per owner, while the common resolver
+// measures both sides of the changed side walls in both rooms.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch();
@@ -87,15 +87,15 @@ const result = await page.evaluate(async () => {
   await update();
 
   const live = card._resize?.liveLabels || [];
-  const lengths = live.filter((label) => label.kind === 'length');
+  const lengths = [...card.renderRoot.querySelectorAll('[data-hp="wall-side-dimension"]')];
   const areas = live.filter((label) => label.kind === 'area');
   out.dragStarted = card._resize?.dragging === true;
-  out.twoLengths = lengths.length === 2;
+  out.bothRoomsBothSides = lengths.length === 8;
   out.movingWallLengthAbsent = lengths.every((label) =>
-    Math.abs(label.edge.a[0] - label.edge.b[0]) > 1);
-  out.twoMeasuredEdges = card.renderRoot.querySelectorAll(
-    '[data-hp="resize-measured-edge"]',
-  ).length === 2;
+    Math.abs(JSON.parse(label.dataset.from)[0] - JSON.parse(label.dataset.to)[0]) > 1);
+  out.oldAxisHighlightRemoved = card.renderRoot.querySelectorAll(
+    '[data-hp="resize-measured-edge"],.rszmeasurehalo,.rszmeasureink',
+  ).length === 0;
   out.twoAreas = card.renderRoot.querySelectorAll('[data-hp="resize-area-label"]').length === 2;
   out.twoLeaders = card.renderRoot.querySelectorAll('[data-hp="resize-area-leader"]').length === 2;
   out.oppositeSides = new Set(areas.map((label) => label.placement.side)).size === 2;

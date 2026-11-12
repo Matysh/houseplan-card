@@ -29,12 +29,10 @@ export function renderPropertiesSelection(target: PropertiesTarget | null, conte
   if (target.kind === 'partition' || target.kind === 'contour') {
     const { a, b, cm } = target.value;
     const x1=a[0]*NORM_W, y1=a[1]*NORM_W, x2=b[0]*NORM_W, y2=b[1]*NORM_W;
-    const length=Math.hypot(x2-x1,y2-y1), nx=length?(y2-y1)/length:0, ny=length?-(x2-x1)/length:-1;
     content = svg`<path d="M${x1} ${y1}L${x2} ${y2}" stroke-width=${cm/context.cellCm*(NORM_W/240)+4*px} opacity=".2" vector-effect="none"></path>
       <path d="M${x1} ${y1}L${x2} ${y2}"></path>${handle(x1,y1)}${handle(x2,y2)}
       ${target.kind==='contour' ? svg`${tag(x1-14*px,y1-48*px,'A')}${tag(x2-14*px,y2-48*px,'B')}`
-        : svg`${tag(x1-23*px,y1+24*px,'A')}${tag(x2-22*px,y2+24*px,'B')}
-          <path d="M${x1+nx*25*px} ${y1+ny*25*px}l${nx*12*px} ${ny*12*px}M${x1+nx*31*px} ${y1+ny*31*px}L${x2+nx*31*px} ${y2+ny*31*px}M${x2+nx*25*px} ${y2+ny*25*px}l${nx*12*px} ${ny*12*px}"></path>`}`;
+        : svg`${tag(x1-23*px,y1+24*px,'A')}${tag(x2-22*px,y2+24*px,'B')}`}`;
   } else if (target.kind==='column') {
     const c=target.value, x=c.center[0]*NORM_W,y=c.center[1]*NORM_W,r=c.cm/context.cellCm*(NORM_W/240)/2;
     content=svg`<g transform=${c.shape==='square'&&c.angle?`rotate(${c.angle} ${x} ${y})`:nothing}>

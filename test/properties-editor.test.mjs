@@ -49,7 +49,7 @@ function harness(kind='rect') {
   const editor=new PropertiesEditor(runtime);editor.width=1200;
   editor.select(kind,kind==='device'?'light':'shape',kind==='device'?'virtual':undefined);
   const set=async(key,raw)=>{assert.equal(editor.fields.edit(key,raw),true);return editor.fields.finish();};
-  return {host,state,editor,adoption,context,set,config:structuredClone(config)};
+  return {host,state,editor,runtime,adoption,context,set,config:structuredClone(config)};
 }
 
 test('#1047 native decor selection follows a new object, preserving a dirty field until completion',async()=>{
@@ -94,6 +94,19 @@ test('#1263 Properties yields Escape to device drag without retiring its selecti
   assert.equal(prevented,1);
   await h.editor.fields.finishThen(()=>{});
   assert.equal(h.editor.identity,null);
+});
+
+test('#1381 Properties yields Escape to node, Resize and physical-body owners before clearing selection',()=>{
+  for(const owner of ['node','resize','body']) {
+    const h=harness();
+    h.host._resize={dragging:owner==='resize'};
+    h.runtime.nodeMove={dragging:owner==='node'};
+    h.runtime.physicalGesture={active:owner==='body'};
+    let prevented=false;
+    assert.equal(h.editor.escape({key:'Escape',preventDefault(){prevented=true;}}),false,owner);
+    assert.equal(prevented,false,owner);assert.equal(h.editor.identity.objectId,'shape',owner);
+    assert.deepEqual(h.state.writes,[]);
+  }
 });
 
 test('#1047 only the current wide text owner supplies a Properties text measurement',()=>{

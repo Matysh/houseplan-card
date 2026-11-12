@@ -212,8 +212,15 @@ export class PropertiesEditor {
     }
     return identity && space ? resolvePropertiesTarget(identity, space, this.host._devices, this.host._markers) : null;
   }
-  t = (key: PropertiesString, vars?: Record<string, string | number>): string =>
-    propertiesT(langOf(this.host.hass, this.host._config?.language), key, vars);
+  get dimensionTarget():{kind:'partition'|'contour';id:string}|null {
+    const target=this.identity?this.target():null;
+    return target?.kind==='partition'||target?.kind==='contour' ? {kind:target.kind,id:target.value.id} : null;
+  }
+  t = (key: PropertiesString, vars?: Record<string, string | number>): string => {
+    if((key==='wall_hint'||key==='contour_geometry_hint')&&this.dimensionTarget&&this.host._tool==='select')
+      key=this.runtime.wallDimensions?.sourceFallback?'wall_dimensions_axis_hint':'wall_dimensions_hint';
+    return propertiesT(langOf(this.host.hass, this.host._config?.language), key, vars);
+  };
 
   /** One observer on the owning card, not its shrinking canvas; no threshold feedback. */
   observe(): void {
@@ -390,7 +397,9 @@ export class PropertiesEditor {
   }
   escape(event: KeyboardEvent): boolean {
     if ((!this.wide && !this.decorSelectionCount) || !this.identity || this.host._editorSecondaryDialogBlocked) return false;
-    if (this.host._deviceDrag || this.host._opDrag || this.host._decorDraft || this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;
+    if (this.host._deviceDrag || this.host._opDrag || this.host._decorDraft || this.host._decorMove || this.host._dtDrag
+      || this.runtime.backdropGesture.active || this.host._resize?.dragging || this.runtime.nodeMove?.dragging
+      || this.runtime.physicalGesture?.active) return false;
     if (event.key !== 'Escape') return false;
     event.preventDefault(); this.clear(); return true;
   }

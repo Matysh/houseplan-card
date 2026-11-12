@@ -68,7 +68,7 @@ export function segmentCm(a: number[], b: number[], gridPitch: number, cellCm: n
 }
 
 /** Format a length (cm) for display: metric metres ("1.25 m") or imperial feet+inches ("4′ 1″"). */
-export function formatLength(cm: number, imperial: boolean): string {
+export function formatLength(cm: number, imperial: boolean, metricDigits = 2): string {
   if (imperial) {
     const totalIn = cm / 2.54;
     let ft = Math.floor(totalIn / 12);
@@ -76,7 +76,7 @@ export function formatLength(cm: number, imperial: boolean): string {
     if (inch === 12) { ft += 1; inch = 0; }
     return `${ft}′ ${inch}″`;
   }
-  return `${(cm / 100).toFixed(2)} m`;
+  return `${(cm / 100).toFixed(metricDigits)} m`;
 }
 
 /**

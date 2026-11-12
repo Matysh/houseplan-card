@@ -282,6 +282,12 @@ const makeMovingOpeningsTransparent = (
 };
 
 /** One editor-only render root per card; the settled scene remains untouched. */
+export function paintHouseplanMeasurements(value:object):void {
+  const host=value as LiveEditorHost;
+  const target=host.renderRoot?.querySelector<HTMLElement>('[data-hp-live-editor-html]');
+  if(target)render(host._renderLiveEditorMeasurements(host._viewOr(host._baseVb())),target);
+}
+
 export function paintHouseplanEditor(value: object): void {
   const host = value as LiveEditorHost;
   const root = host.renderRoot;

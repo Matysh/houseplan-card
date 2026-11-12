@@ -1,4 +1,6 @@
 import { ModeChromeLayouts, type ModeChromeProbe } from './mode-chrome-layout';
+import {WallSideDimensionEditor} from './wall-side-dimension-editor';
+import {paintHouseplanMeasurements} from './live-editor';
 import type { PanelHeaderMeasurement } from './panel-header-flow';
 let nodeEditorFactory: typeof import('./wall-node-card-adapter').createWallNodeEditor | null = null;
 let nodeEditorLoading: Promise<void> | null = null;
@@ -123,7 +125,7 @@ import {
 } from './draft-live-commit';
 import { wallChainLiveSeed } from './draft-live-preflight';
 import {
-  placeResizeAreaLabel, resizeMeasuredEdges,
+  placeResizeAreaLabel,
   type ResizeAreaPlacement,
 } from './resize-labels';
 import { RoomGearDragController } from './room-gear-drag';
@@ -149,7 +151,7 @@ import {
   drawWallPreviewD, linearWallJoinPatches, DRAW_WALL_DEFAULT_CM, wallIntervals,
   materializeWallIntervals, intervalCmAt, wallHatchStepUnits, HATCH_BASE_STEP_UNITS,
   type OpeningWallIndex, type LinearWallSegment, type WallEntry, type WallInterval,
-  type MultiWallNodeMap, innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
+  type MultiWallNodeMap, thicknessCmAt,
 } from './wall-thickness';
 import {
   junctionLimitViolations, increasedViolations, removesOnlyLimitSegments,
@@ -516,6 +518,7 @@ interface DeviceInboxDialogState {
 }
 
 export interface HouseplanEditorHostPort {
+  readonly ownerDocument:Document;
   _modeChromeKey(width:number):string;
   _modeChromeHeaderWidth():number;
   _measureModeHeader(mode:HouseplanMode,width:number):PanelHeaderMeasurement|null;
@@ -1015,6 +1018,7 @@ export class HouseplanEditorRuntime {
     },
   }, this.deviceStructure);
   public readonly properties = new PropertiesEditor(this);
+  public readonly wallDimensions = new WallSideDimensionEditor(this);
   public readonly externalScreens = new ExternalScreensEditor(this);
   public readonly markerAlerts = new MarkerAlertsEditor(this);
   public readonly decorOrder = new DecorOrderEditor(this);
@@ -1054,7 +1058,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this._decorRotationInput=null; this._clearRoomFaceHover(); this._cancelOpeningDrag(); this.externalScreens.close(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
+  public invalidateEditorNavigation(): void { this._decorRotationInput=null; this._clearRoomFaceHover(); this._cancelOpeningDrag(); this.externalScreens.close(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this.wallDimensions.retire(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -1269,6 +1273,7 @@ export class HouseplanEditorRuntime {
           this._junctionLimitsIntroduced(config, baseline, id, geometry, undefined, baselineGeometry),
         canShow: id => this.host._canCommitSpace(id),
         show: id => this._showGeometrySpace(id),
+        afterPaint:()=>paintHouseplanMeasurements(this.host),
         delete: {
           beforeIntent: retry => this.properties.beforeIntent(retry), navigation: () => this.navigationIntent,
           blocked: () => !this.host._loadOk || !this.host._norm || this.host._modeTransitionBusy
@@ -3816,27 +3821,9 @@ public _rszEdgeLabels(
   ): ResizeLiveLabel[] {
     const rooms = sourceRooms;
     const labels: ResizeLiveLabel[] = [];
-    const own = res.polys[plan.roomId] || rooms?.find((r) => r.id === plan.roomId)!.poly;
-    if (!own || !rooms) return labels;
-    const n = own.length;
-    // Длины — между внутренними гранями, как и площадь ниже (#233). Раньше
-    // здесь считалась осевая длина, и одно облачко подписей несло две разные
-    // конвенции: «3.00 × 4.00» по центрам стен рядом с площадью по полу.
-    const spanCms = this._rszInnerSpanCms(plan.roomId, own, res.polys);
-    // The moving wall is obvious under the pointer. Only its two side walls
-    // remain useful measurements, and each one owns the matching highlight.
-    for (const edge of resizeMeasuredEdges(own, plan.edge)) {
-      const a = own[edge], b = own[(edge + 1) % n];
-      const cm = spanCms?.[edge];
-      labels.push({
-        kind: 'length',
-        x: (a[0] + b[0]) / 2,
-        y: (a[1] + b[1]) / 2,
-        text: cm == null ? this.host._fmtLen(a, b)
-          : formatLength(cm, this.host.hass?.config?.unit_system?.length === 'mi'),
-        edge: { a: [a[0], a[1]], b: [b[0], b[1]] },
-      });
-    }
+    if (!rooms) return labels;
+    // Lengths use the common two-sided resolver. Areas retain their existing
+    // owner/placement and exact accepted Resize candidate.
     // Live areas sit beside the moving wall, one on each owner side. Placement
     // is pure screen-space math fed by the stage size cached by ResizeObserver;
     // no pointermove DOM measurement is allowed.
@@ -3907,38 +3894,11 @@ public _rszEdgeLabels(
     return labels;
   }
 
-public _rszInnerSpanCms(
-    roomId: string, own: number[][], polys: Record<string, number[][]>,
-  ): number[] | null {
-    const rooms = Object.keys(polys).length
-      ? Object.entries(polys).map(([id, poly]) => ({ id, poly }))
-      : this.host._spaceModel()?.rooms;
-    if (!rooms?.length) return null;
-    const walls = this.host._spaceWalls;
-    if (!walls.length) return null;
-    const openCuts = this.host._openCuts();
-    const offsets = ownEdgeOffsets(
-      rooms, roomId, walls, openCuts,
-      this.host._wallKeyPitch, this.host._cellCm, this.host._gridPitch, NORM_W,
-    );
-    if (!offsets || offsets.length !== own.length) return null;
-    const perUnitCm = this.host._cellCm / this.host._gridPitch;
-    return own.map((_, edge) => innerEdgeSpan(own, edge, offsets) * perUnitCm);
-  }
-
 public _renderResizeMeasurements(): TemplateResult | typeof nothing {
     const live = this.host._resize.liveLabels;
     if (!live?.length) return nothing;
-    const lengths = live.filter((label) => label.kind === 'length');
     const areas = live.filter((label) => label.kind === 'area');
     return svg`<g class="rszmeasurelayer" aria-hidden="true" pointer-events="none">
-      ${lengths.map((label, index) => svg`<g class="rszmeasuredge"
-          data-hp="resize-measured-edge" data-edge-index=${index}>
-        <line class="rszmeasurehalo" x1=${label.edge.a[0]} y1=${label.edge.a[1]}
-          x2=${label.edge.b[0]} y2=${label.edge.b[1]}></line>
-        <line class="rszmeasureink" x1=${label.edge.a[0]} y1=${label.edge.a[1]}
-          x2=${label.edge.b[0]} y2=${label.edge.b[1]}></line>
-      </g>`)}
       ${areas.map((label) => svg`<line class="rszleader" data-hp="resize-area-leader"
         data-room=${label.roomId}
         x1=${label.placement.leader.a[0]} y1=${label.placement.leader.a[1]}

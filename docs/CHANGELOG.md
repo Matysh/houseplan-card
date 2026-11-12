@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Use one read-only two-sided wall dimension layer for drawing, node moves, room Resize and idle wall selection. Measure bounded physical faces before aperture cuts, retain asymmetric chains and both Resize owners, and keep screen-space drafting ink, honest fallbacks and existing history (#1381).
+
 - Prepare the pinned HA frontend cache before the UI Lab mutation audit on fresh workers. Keep acquisition/integrity failures separate from the browser oracle and reuse an already verified cache (#1396).
 
 - Serve generated JavaScript chunks as negotiated build-time gzip representations, preserving raw fallback, manifest gating and immutable caching. Ship verified encoded bytes through bundle sync and installation packages; report their installation overhead separately from canonical frontend metrics (#1387, #1385).

@@ -52,6 +52,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     /** #843: the floor of a node history result can be shown / is shown like ordinary history. */
     canShow(space: string): boolean;
     show(space: string): void;
+    afterPaint?():void;
     delete?: { beforeIntent(retry: () => void): boolean; navigation(): number; blocked(): boolean };
   },
 ): WallNodeEditor {
@@ -171,7 +172,8 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
       // the generic layer through _commitLiveEditor before repainting nodes.
       if (!ownsLiveLayer) { commitHouseplanEditor(host); ownsLiveLayer = true; }
       editor.paint();
-    } else { ownsLiveLayer = false; geometry = null; context(); host.requestUpdate(); } },
+    } else { ownsLiveLayer = false; geometry = null; context(); host.requestUpdate(); }
+    callbacks.afterPaint?.(); },
     validate: (space, before) => validate(space, before, api()),
     refusal: () => refusal,
     scene: (space, before) => {

@@ -108,6 +108,11 @@ export class WallNodeEditor {
     return s?.moved && s.candidate ? { space: s.plan.source.id, sp: s.candidate } : null;
   }
   get activePointerId(): number | null { return this.session?.pointer ?? null; }
+  /** Read-only snapshot of the candidate already admitted by native paint. */
+  get dimensionContext():{before:NodeMoveSpace;candidate:NodeMoveSpace|null;moved:boolean}|null {
+    const s=this.session;
+    return s?{before:s.plan.source,candidate:s.invalid||s.outline?null:s.candidate,moved:s.moved}:null;
+  }
   get invalid(): NodeMoveReason | null { return this.session?.invalid || null; }
   get unitsPerPixel(): number { return this.port.unitsPerPixel(); }
 
