@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9711,
+  "revision": 9712,
   "nextTicket": 377,
   "nextFence": 377,
   "tasks": {
@@ -4042,7 +4042,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794481739896,
       "reviewEntry": 5,
-      "patchId": "b18d52fa54195aada6a4a88fd17f622c1bfeae08",
+      "patchId": "5093b4ac9d6ed9550d7bb47e9a2618b90239f759",
       "changedFiles": [
         "demo/golden/harness.mjs",
         "demo/smoke_device_contact_editor_frame.mjs",
@@ -4580,10 +4580,11 @@
     "token": "376:finish:694a3206-e83a-456d-9e89-baef740322cc:finish:1:admit",
     "fence": 376,
     "materialSha": "58276f20e4c622569c3e3ebc8a6bae41ccdec840",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c970836c383ce294aeec16069657c546ace2df1b",
+    "phase": "testing",
     "admittedAt": 1794481745879,
-    "expiresAt": 1794482045879
+    "expiresAt": 1794482054500,
+    "patchId": "5093b4ac9d6ed9550d7bb47e9a2618b90239f759"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4880,6 +4881,10 @@
     },
     "finish:1707e311-543a-42a0-a1e2-4a4f14b4f3e6:finish:3:return": {
       "digest": "25bb736f696129d36683cccc5760a56795093fe6d8c2fa9667006425fd5c404b",
+      "issue": 1381
+    },
+    "finish:694a3206-e83a-456d-9e89-baef740322cc:finish:2:synchronized": {
+      "digest": "a4e79c729866eabf0b25fae2ccae2a547e09f0240dce3f0ad172f18d7b8860cf",
       "issue": 1381
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
