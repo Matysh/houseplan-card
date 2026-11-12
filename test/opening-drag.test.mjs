@@ -20,7 +20,7 @@ const fixture = (partition = false) => {
         partitions: [{ id: 'p', a: [100, 300], b: [900, 300], cm: 20 }], wall_columns: [] };
     const host = { _mode: 'plan', _tool: 'select', _space: 'floor', _cfgEpoch: 7, _spaceH: 1000, _gridPitch: 10, _cellCm: 5,
         _serverCfg: { model_version: 8 }, _curSpaceCfg: cfg, _spaceModel: () => space, requestUpdate() { } };
-    const runtime = Object.assign(Object.create(HouseplanEditorRuntime.prototype), { host, properties: { select: () => true },
+    const runtime = Object.assign(Object.create(HouseplanEditorRuntime.prototype), { host, properties: { select: () => true, openingReference: () => null },
         _openingDragFallbackBuilds: 0, _geometrySnapshot: () => ({ spaceId: 'floor' }), _svgPoint: e => [e.clientX, e.clientY] });
     const commits = [];
     runtime._commitPhysicalGeometry = () => { commits.push(structuredClone(opening)); return true; };

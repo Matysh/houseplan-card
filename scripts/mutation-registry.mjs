@@ -2776,10 +2776,10 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'src/device-spacing.ts', find: '        keep ||= t === this.held;\n', replace: '        // mutant: nothing is held\n' }],
   },
   {
-    id: 'spacing-reference-is-the-near-gap',
+    id: 'spacing-chain-omits-internal-neighbours',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-spacing.test.mjs',
-    because: '#873 AC4: the reference is the far gap of the row (A–B for D), not the one next to the new gap (B–C)',
-    patches: [{ file: 'src/device-spacing.ts', find: '        add(c[e], d, [c[s], c[s + 1]]);', replace: '        add(c[e], d, [c[e - 1], c[e]]);' }],
+    because: '#1398 replaces the old two-gap presentation: retain every adjacent interval of the complete proven row, not only its far and new gaps.',
+    patches: [{ file: 'src/device-spacing.ts', find: '  return chains.get(target)??[];', replace: '  return target.gaps;' }],
   },
   {
     id: 'spacing-hint-from-the-raw-point',
@@ -12758,9 +12758,9 @@ const MUTANT_DEFINITIONS = [
       + 'placement preview must keep its dimension lines and endpoint ticks visible',
     patches: [
   {
-    "file": "src/houseplan-card.ts",
-    "find": "    return this._editorRuntimeOrThrow()._renderOpeningDimensionGuides(measure);",
-    "replace": "    return svg``;"
+    "file": "src/wall-side-dimension-editor.ts",
+    "find": "intervals:preview.measure.labels.flatMap((label,index)=>label.dimension?",
+    "replace": "intervals:preview.measure.labels.slice(0,0).flatMap((label,index)=>label.dimension?"
   }
 ],
   },
@@ -18573,7 +18573,7 @@ const MUTANT_DEFINITIONS = [
     id: 'properties-opening-reference-follows-nearest',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/properties-physical.test.mjs',
     because: '#931 AC6: the same physical corner remains the reference after passing the midpoint.',
-    patches: [{file:'src/editors/properties/physical.ts',find:'return matching.length === 1 ? matching[0] : null;',replace:'return selectOpeningReference(core, context);'}],
+    patches: [{file:'src/editors/properties/physical.ts',find:'return matching.length === 1 ? {...matching[0],axis:frozen.axis,roomSide:frozen.roomSide,\n    labelNormal:frozen.labelNormal} : null;',replace:'return selectOpeningReference(core, context);'}],
   },
   {
     id: 'properties-visual-history-rewinds-marker-siblings',

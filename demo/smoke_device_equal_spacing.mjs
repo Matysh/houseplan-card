@@ -123,8 +123,11 @@ const out = {};
         const screen=new DOMPoint(+rail.getAttribute('x1'),+rail.getAttribute('y1')).matrixTransform(rail.getScreenCTM());
         const plan=screen.matrixTransform(sr().querySelector('svg.plan-svg').getScreenCTM().inverse());
         row.gaps.push({a:a[axis==='h'?0:1],b:b[axis==='h'?0:1],across:axis==='h'?plan.y:plan.x,
-          cls:'common-dimension',paint:`${style.stroke} ${style.strokeWidth} ${style.fill}`});
-        row.labels.push(group.querySelector('text').textContent);rows.set(axis,row);
+          cls:'common-dimension',strokeWidth:style.strokeWidth,paint:`${style.stroke} ${style.strokeWidth} ${style.fill}`});
+        const text=group.querySelector('text').textContent;
+        const listed=[...sr().querySelectorAll('[data-hp="dimension-list"] div')]
+          .find(item=>item.dataset.interval===group.dataset.interval)?.textContent.trim().replace(/^\[\d+\]\s*/,'');
+        row.labels.push(/^\[\d+\]$/.test(text)?listed??text:text);rows.set(axis,row);
       }
       return [...rows.values()];
     };
@@ -213,7 +216,7 @@ const out = {};
     res.ac4CGapsLookTheSame = gC.hint.length === 1 && gC.hint[0].gaps.length === 2
       && gC.hint[0].gaps[0].cls === gC.hint[0].gaps[1].cls
       && gC.hint[0].gaps[0].paint === gC.hint[0].gaps[1].paint
-      && gC.hint[0].gaps[0].across === gC.hint[0].gaps[1].across;
+      && gC.hint[0].gaps.every(gap=>gap.strokeWidth==='1px'&&gap.across<200);
     // 50 единиц при масштабе 1 — около 30 px: подпись не влезает ни в один промежуток.
     res.ac4CShortIntervalsRetainBothLabels = gC.hint[0]?.labels.length === 2;
     res.ac4RowAxisGuideReplacedOtherAxisKept = !gC.guides.includes('y') && gC.guides.includes('x');
