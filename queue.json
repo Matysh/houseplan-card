@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9602,
+  "revision": 9603,
   "nextTicket": 372,
   "nextFence": 372,
   "tasks": {
@@ -4289,7 +4289,7 @@
       "ownerDecision": null,
       "ticket": 371,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794471999082,
       "reviewEntry": 1,
       "patchId": "9a91d5cf6079e12bce9515825ef2f1e42424e471",
@@ -4298,7 +4298,16 @@
         "docs/CHANGELOG.ru.md",
         "scripts/mutation-registry.mjs",
         "test/mutation-gate.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261112T082657996-2f55bbf5",
+        "name": "Тесты для задачи #1396 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261112T082657996-2f55bbf5/report.json",
+        "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
+        "status": "passed",
+        "finishedAt": "2026-11-12T08:29:05.801Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4536,9 +4545,9 @@
     "fence": 371,
     "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
     "expectedBase": "3f89c4132e2f1e9243df350f26aae849d275bc65",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794472004408,
-    "expiresAt": 1794472422202,
+    "expiresAt": 1794475747060,
     "patchId": "9a91d5cf6079e12bce9515825ef2f1e42424e471"
   },
   "events": {
@@ -4730,6 +4739,34 @@
         "layer": "infra",
         "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
         "phase": "sync"
+      }
+    },
+    "finish:4515014c-435b-4003-b05f-ea2a1f402795:finish:3:s6-complete": {
+      "digest": "4fa01aecf702c99344c12e4de41a4397ec412de4ec7906e0e6b1005928a06c09",
+      "issue": 1396,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1396,
+        "at": 1794472147060,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
+        "phase": "review",
+        "evidence": {
+          "id": "20261112T082657996-2f55bbf5",
+          "name": "Тесты для задачи #1396 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261112T082657996-2f55bbf5/report.json",
+          "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
+          "status": "passed",
+          "finishedAt": "2026-11-12T08:29:05.801Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Узкий ремонт отсутствующего prerequisite UI Lab. Изменение команды guard покрывает и чистое временное дерево, и дерево мутанта, без CI-only обхода. Shared cache уже реализован и проверяется существующим prepare-ha; изменение общей модели кэша не нужно. Альтернатива — безусловный сетевой шаг во всех фоновых запусках — расширяет стоимость и не чинит адресный CLI.\n\nРиски: не спутать отказ подготовки с чувствительностью теста; не ослабить проверки целостности runtime; подтвердить, что мутированный CSS действительно попадает в собранный bundle и ловится oracle. Реальный HA владельца не затрагивается.\n\n### Фактические проверки перед S7\n\n- Материал: `c970836c383ce294aeec16069657c546ace2df1b` от dev `3f89c4132`.\n- `node --test --test-name-pattern=\"#1396\" test/mutation-gate.test.mjs`: до правки guard 0/1 FAIL (отсутствует setup), после 1/1 PASS. Проверяются фактическое объявление, потребность bundle, порядок фаз, остановка на ошибке загрузки/целостности без запуска oracle и корректный assertion-killed только после успешной подготовки. Логи `artifacts/1396-before.log`, `1396-after.log`.\n- Настоящее адресное выполнение через существующие `runCleanGuards([registeredMutant])` и `runMutant(registeredMutant)` — PASS. Wrapper `artifacts/1396-witness.mjs` использует зарегистрированные команду и patch без подмен; сохраняет полный доступный outcome в `1396-witness.json` и лог `1396-witness.log`. Сборка чистого и мутированного bundle выполнена штатным mutation runner.\n- Чистая команда `node demo/ui-lab/prepare-ha.mjs && node demo/ui-lab/editor-kit-audit.mjs` прошла. Пригодный локальный HA runtime уже был в общем кэше и проверен; свежая загрузка в этом адресном запуске не требовалась. Холодный download настоящих 111 MB повторно не выполнялся; порядок холодной подготовки и её отрицательные исходы защищает тест команды, сам существующий downloader/manifest checker не менялся.\n- Соответствующий мутант `compact-danger-missing-theme-token-1150` получил `assertion-killed` именно в `editor-kit-audit.mjs`: `destructive ink survives a missing HA error token`, actual `rgb(33, 33, 33)`, expected `rgb(219, 84, 61)`. Ошибка компиляции/окружения не засчитана вместо проверки.\n- План штатного S6 infra: синтаксис и 20 файлов непосредственных читателей мутационного механизма, без пробелов классификации; итог S6 передаётся координатором через finish. Новый кейс — инфраструктурная регрессия механизма, не обязательный запуск каждой продуктовой задачи.\n\nСуществующий patch мутанта, продукты, сам audit, pinned HA runtime и проверки SHA/manifest не изменены; только команда guard, адресный Node-тест и RU/EN changelog. Пересъёмки golden/их приёмки, запусков всех пяти частей, публикации релиза и действий в HA владельца нет. Логи адресной диагностики локальные; S6/review/merge оформляет обычный координатор.\n\nДля доступа из WSL к GitHub потребовался временный локальный CONNECT-транспорт через Windows: прямой TLS из WSL сейчас недоступен, тогда как Windows-доступ исправен. Это не часть diff; сертификаты проверяются, шифрование не отключено, runtime/браузерные проверки выполнены обычным WSL runner. Транспорт не меняет запросы приложения и удаляется из исполнения по окончании задачи.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
