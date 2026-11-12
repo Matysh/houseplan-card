@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9967,
-  "nextTicket": 383,
+  "revision": 9968,
+  "nextTicket": 384,
   "nextFence": 383,
   "tasks": {
     "1170": {
@@ -4324,14 +4324,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/unified-editor-dimensions-1398",
-      "materialSha": "1589429ab4d966bce514dda675f5e34d84000bba",
+      "materialSha": "827cae041114db2a478951d658566a718e6f8393",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 382,
-      "queued": false,
+      "ticket": 383,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794504381064,
-      "reviewEntry": 3,
+      "readyAt": 1794504832954,
+      "reviewEntry": 4,
       "patchId": "4438826662a93accca7117501bcc3bdac5af5455",
       "changedFiles": [
         "demo/smoke_device_equal_spacing.mjs",
@@ -4375,8 +4375,7 @@
         "entry": 3,
         "detail": "Браузер: view edit permissions: cancelled; Браузер: wall side dimensions: cancelled; Браузер: wall side dimensions dense: Подготовка не завершена успешно; Браузер: wall side dimensions thin: Подготовка не завершена успешно",
         "eventId": "finish:82d77a79-790a-4724-b049-4ec1b8f569c7:finish:3:return:return:1398"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4606,7 +4605,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1398
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4968,6 +4969,19 @@
           "detail": "Браузер: view edit permissions: cancelled; Браузер: wall side dimensions: cancelled; Браузер: wall side dimensions dense: Подготовка не завершена успешно; Браузер: wall side dimensions thin: Подготовка не завершена успешно",
           "eventId": "finish:82d77a79-790a-4724-b049-4ec1b8f569c7:finish:3:return:return:1398"
         }
+      }
+    },
+    "finish:e0cc7c4a-36ee-42dc-9b22-e750f47b18db": {
+      "digest": "b3fea1af7b1d2588b80982584a74eb4d7c1873a6e6ccfa46c104f500de09795d",
+      "issue": 1398,
+      "message": {
+        "kind": "queued",
+        "issue": 1398,
+        "at": 1794504832954,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "827cae041114db2a478951d658566a718e6f8393"
       }
     }
   },
