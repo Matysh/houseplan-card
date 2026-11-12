@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9611,
+  "revision": 9612,
   "nextTicket": 372,
   "nextFence": 372,
   "tasks": {
@@ -4281,154 +4281,25 @@
     },
     "1396": {
       "issue": 1396,
+      "branch": "codex/mutation-ui-lab-ha-runtime",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/mutation-ui-lab-ha-runtime",
-      "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 371,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794471999082,
-      "reviewEntry": 1,
-      "patchId": "9a91d5cf6079e12bce9515825ef2f1e42424e471",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "scripts/mutation-registry.mjs",
-        "test/mutation-gate.test.mjs"
-      ],
-      "s6": {
-        "id": "20261112T082657996-2f55bbf5",
-        "name": "Тесты для задачи #1396 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261112T082657996-2f55bbf5/report.json",
-        "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
-        "status": "passed",
-        "finishedAt": "2026-11-12T08:29:05.801Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "3f89c4132e2f1e9243df350f26aae849d275bc65",
+      "mergedSha": "c970836c383ce294aeec16069657c546ace2df1b",
+      "mergedAt": 1794472342563,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1396:1:9a91d5cf6079e12bce9515825ef2f1e42424e471:3f89c4132e2f1e9243df350f26aae849d275bc65",
-      "reviewMaterial": {
-        "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
-        "expectedBase": "3f89c4132e2f1e9243df350f26aae849d275bc65",
-        "patchId": "9a91d5cf6079e12bce9515825ef2f1e42424e471"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1396:1:9a91d5cf6079e12bce9515825ef2f1e42424e471:3f89c4132e2f1e9243df350f26aae849d275bc65",
-        "eventId": "github:43183322285:1:tick:0:review-retry",
-        "at": 1794472167702,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1396,
-        "requestId": "review:1396:1:9a91d5cf6079e12bce9515825ef2f1e42424e471:3f89c4132e2f1e9243df350f26aae849d275bc65",
-        "kind": "code",
-        "base": "3f89c4132e2f1e9243df350f26aae849d275bc65",
-        "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
-        "patchId": "9a91d5cf6079e12bce9515825ef2f1e42424e471",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1396,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1396",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Узкий ремонт отсутствующего prerequisite UI Lab. Изменение команды guard покрывает и чистое временное дерево, и дерево мутанта, без CI-only обхода. Shared cache уже реализован и проверяется существующим prepare-ha; изменение общей модели кэша не нужно. Альтернатива — безусловный сетевой шаг во всех фоновых запусках — расширяет стоимость и не чинит адресный CLI.\n\nРиски: не спутать отказ подготовки с чувствительностью теста; не ослабить проверки целостности runtime; подтвердить, что мутированный CSS действительно попадает в собранный bundle и ловится oracle. Реальный HA владельца не затрагивается.\n\n### Фактические проверки перед S7\n\n- Материал: `c970836c383ce294aeec16069657c546ace2df1b` от dev `3f89c4132`.\n- `node --test --test-name-pattern=\"#1396\" test/mutation-gate.test.mjs`: до правки guard 0/1 FAIL (отсутствует setup), после 1/1 PASS. Проверяются фактическое объявление, потребность bundle, порядок фаз, остановка на ошибке загрузки/целостности без запуска oracle и корректный assertion-killed только после успешной подготовки. Логи `artifacts/1396-before.log`, `1396-after.log`.\n- Настоящее адресное выполнение через существующие `runCleanGuards([registeredMutant])` и `runMutant(registeredMutant)` — PASS. Wrapper `artifacts/1396-witness.mjs` использует зарегистрированные команду и patch без подмен; сохраняет полный доступный outcome в `1396-witness.json` и лог `1396-witness.log`. Сборка чистого и мутированного bundle выполнена штатным mutation runner.\n- Чистая команда `node demo/ui-lab/prepare-ha.mjs && node demo/ui-lab/editor-kit-audit.mjs` прошла. Пригодный локальный HA runtime уже был в общем кэше и проверен; свежая загрузка в этом адресном запуске не требовалась. Холодный download настоящих 111 MB повторно не выполнялся; порядок холодной подготовки и её отрицательные исходы защищает тест команды, сам существующий downloader/manifest checker не менялся.\n- Соответствующий мутант `compact-danger-missing-theme-token-1150` получил `assertion-killed` именно в `editor-kit-audit.mjs`: `destructive ink survives a missing HA error token`, actual `rgb(33, 33, 33)`, expected `rgb(219, 84, 61)`. Ошибка компиляции/окружения не засчитана вместо проверки.\n- План штатного S6 infra: синтаксис и 20 файлов непосредственных читателей мутационного механизма, без пробелов классификации; итог S6 передаётся координатором через finish. Новый кейс — инфраструктурная регрессия механизма, не обязательный запуск каждой продуктовой задачи.\n\nСуществующий patch мутанта, продукты, сам audit, pinned HA runtime и проверки SHA/manifest не изменены; только команда guard, адресный Node-тест и RU/EN changelog. Пересъёмки golden/их приёмки, запусков всех пяти частей, публикации релиза и действий в HA владельца нет. Логи адресной диагностики локальные; S6/review/merge оформляет обычный координатор.\n\nДля доступа из WSL к GitHub потребовался временный локальный CONNECT-транспорт через Windows: прямой TLS из WSL сейчас недоступен, тогда как Windows-доступ исправен. Это не часть diff; сертификаты проверяются, шифрование не отключено, runtime/браузерные проверки выполнены обычным WSL runner. Транспорт не меняет запросы приложения и удаляется из исполнения по окончании задачи."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Ремонт узкий и правильный. Guard `compact-danger-missing-theme-token-1150` теперь сначала выполняет штатный `prepare-ha.mjs`, затем браузерный oracle. Существующий механизм `runGuardPhases` относит любой ненулевой код возврата подготовки к `setup-failure`, поэтому ошибка загрузки или нарушение целостности HA runtime не будут засчитаны как пойманная мутация. Кэш общий: он лежит в `~/.cache/houseplan-ui-lab/<version>`, вне временных worktree, поэтому чистый прогон и прогон мутанта используют один и тот же runtime. Проверки размера, SHA и manifest не ослаблены. Блокеров нет. Остался один пробел доказательств: холодный путь, ради которого заведена задача, на настоящем чистом исполнителе не выполнялся. Его подтвердит только следующий реальный ночной шард.",
-          "understanding": "Проблема: ночной шард на чистом runner'е остановился на чистом прогоне `node demo/ui-lab/editor-kit-audit.mjs` с ошибкой «UI Lab HA runtime is missing». Ни CI, ни команда guard не готовили закреплённый HA frontend, а у разработчиков прогретый локальный кэш скрывал эту зависимость. После правки guard имеет вид `node demo/ui-lab/prepare-ha.mjs && node demo/ui-lab/editor-kit-audit.mjs`. `guardPhases` делит цепочку по `&&`: первая команда становится setup, последняя — oracle. `runCleanGuards` и `runMutant` выполняют обе фазы через `sh(command, dir)` во временном worktree, где `node_modules` подключён символической ссылкой. Окружение наследует `process.env`, поэтому `homedir()` и `DEFAULT_CACHE` указывают на общий пользовательский кэш. `prepareHa` при существующем каталоге только вызывает `verifyHaRuntime`. При его отсутствии он скачивает wheel, сверяет размер и SHA, распаковывает его в staging, сверяет manifest с пином и атомарно переименовывает staging в каталог кэша. Любая ошибка печатается в stderr и даёт exit 1. Разобранные пути: `scripts/mutation-guard-outcome.mjs` (guardPhases, classifyCommandResult, runGuardPhases), `scripts/mutation-execution.mjs` (sh, runMutant, runCleanGuards), `scripts/mutation-bundle-cache.mjs` (guardNeedsBundle, mutantBundleStrategy), `demo/ui-lab/prepare-ha.mjs`, `demo/ui-lab/config.mjs`, начало `editor-kit-audit.mjs`, политика browser guard и её инвентарь.",
-          "analysis": [
-            {
-              "topic": "Классификация отказа подготовки",
-              "assessment": "Решение опирается на уже существующее и проверенное разделение фаз, новый механизм не добавлен. Для фазы setup `classifyCommandResult` при любом ненулевом статусе возвращает `SETUP`, не разбирая текст ошибки. Поэтому «Unexpected official wheel response», «hash/size mismatch» и отказ `verifyHaRuntime` не могут превратиться в `assertion-killed`. Зависание или превышение времени даёт signal или status null, то есть `infrastructure-interruption`, и тоже не считается доказательством.",
-              "evidence": "`mutation-guard-outcome.mjs:290-292` (setup → SETUP), `:318-322` (остановка до oracle), `:93-98` (interruption); `prepare-ha.mjs:110-114` (catch → exitCode 1)."
-            },
-            {
-              "topic": "Общий кэш и повторное использование",
-              "assessment": "Кэш `DEFAULT_CACHE = ~/.cache/houseplan-ui-lab/<HA_LOCK.version>` не зависит от worktree. Чистый прогон один раз загружает runtime, прогоны мутантов дальше выполняют только `verifyHaRuntime`. `sh` не переопределяет HOME, так что путь действительно общий. Существующий, но испорченный кэш не перезаписывается, а возвращает setup-failure. Это консервативно и согласуется с ТЗ.",
-              "evidence": "`demo/ui-lab/config.mjs:9`, `prepare-ha.mjs:67`, `:100-101`, `mutation-execution.mjs:39-46`."
-            },
-            {
-              "topic": "Мутированный bundle попадает в oracle",
-              "assessment": "Guard содержит `demo/`, поэтому `guardNeedsBundle` = true. Patch затрагивает `src/styles/settings-action.styles.ts`, и стратегия для мутанта будет `build`, а не seed. Audit берёт `root` из своего же расположения в worktree и проверяет актуальность bundle через `assertFreshDemoBundle`. Новый тест закрепляет `guardNeedsBundle(...) === true`. По словам автора, адресный запуск дал assertion-killed с конкретным расхождением цвета `rgb(33,33,33)` и `rgb(219,84,61)`. Это ожидаемый эффект patch'а, удаляющего fallback `#db543d`.",
-              "evidence": "`mutation-bundle-cache.mjs:15-28`, `mutation-execution.mjs:178-182`, `editor-kit-audit.mjs:13-14,52`; результат witness из authorContext."
-            },
-            {
-              "topic": "Тест механизма",
-              "assessment": "Тест читает фактическое объявление из реестра и не повторяет его строку вручную. Он проверяет фазы, потребность в bundle, остановку до oracle при ошибке setup и assertion-killed только после успешной подготовки. Сообщения об ошибках в негативных ветках для классификатора не важны: setup классифицируется только по коду возврата. Ценность теста в том, что он закрепляет структуру зарегистрированного guard. Это достаточная адресная регрессия, и лишней сложности в ней нет.",
-              "evidence": "`test/mutation-gate.test.mjs:32-57` в head."
-            },
-            {
-              "topic": "Влияние на реестр и политики",
-              "assessment": "Инвентарь browser guard ключуется по id, поэтому изменение текста guard его не ломает. Других guard'ов, запускающих UI Lab без подготовки, в реестре нет: `ui-lab/` встречается только здесь. Смоки, которые сами вызывают `prepareHa` внутри oracle (`smoke_check_label`, `smoke_dialog_picker_998`), в реестре мутаций не используются. Изменение guard сменит его отпечаток, и мутант заново попадёт в выборку. Это ожидаемо.",
-              "evidence": "`mutation-browser-policy.mjs:28-37`, `docs/testing-notes/mutation-browser-guards.md:162`, поиск `ui-lab/` и имён смоков по `scripts/mutation-registry.mjs`."
-            },
-            {
-              "topic": "Холодный путь и бюджет времени",
-              "assessment": "Исходная проблема — именно чистый исполнитель, а реальный адресный прогон шёл с прогретым кэшем. Сам загрузчик проверен в прошлых ревью (#964) и не менялся, порядок фаз закреплён тестом. Но на холодном runner'е подготовка — это загрузка около 111 MB, распаковка и разбор AST всех чанков `frontend_latest`, и всё это внутри общего лимита команды `MUTATION_COMMAND_TIMEOUT_MS`, по умолчанию 180 с. У fetch свой таймаут 120 с. При превышении результатом будет `infrastructure-interruption`, а не ложный kill, то есть семантика безопасна. Однако измерений, подтверждающих, что подготовка укладывается в бюджет на CI, нет. Это граница доказательств, а не установленный дефект.",
-              "evidence": "`mutation-execution.mjs:42`, `prepare-ha.mjs:51,94`; authorContext: «Холодный download настоящих 111 MB повторно не выполнялся»."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "После следующего настоящего ночного шарда, в который попадёт этот мутант, стоит посмотреть в логе длительность `prepare-ha.mjs` на холодном runner'е. Если она близка к 180 с, лучше заранее задать `MUTATION_COMMAND_TIMEOUT_MS` для шарда или кешировать `~/.cache/houseplan-ui-lab` между запусками средствами CI. Иначе ошибка проявится как `infrastructure-interruption` и снова остановит шард, хотя и без ложного kill.",
-            "Если в реестре появятся новые guard'ы с UI Lab, их подготовку стоит оформлять так же, отдельной setup-командой. Готовить runtime внутри oracle, как это делают `smoke_check_label`/`smoke_dialog_picker_998`, хуже: там ошибка загрузки без `AssertionError` и без шаблона из `ORACLE_SETUP_FAILURE` была бы засчитана как `assertion-killed`. Сейчас эти смоки не используются как guard, поэтому дефекта нет."
-          ],
-          "boundaries": "Ревью выполнено по исходникам pinned head `c970836c` и base `3f89c413`. Сам я ничего не запускал: ни тесты, ни prepare-ha, ни audit, ни mutation runner. Использованы квитанция S6 «Тесты для задачи #1396 (перед ревью)» со статусом passed на том же SHA и описание адресных прогонов исполнителя: тест #1396 0/1 до правки и 1/1 после, witness с assertion-killed в `editor-kit-audit.mjs`. Локальные логи `artifacts/1396-*` мне недоступны, поэтому сведения о них приняты как заявление исполнителя. Холодная загрузка HA runtime на чистом CI runner'е никем не выполнялась. Её успех и время по отношению к лимиту 180 с не подтверждены и проявятся только в реальном ночном шарде. `verifyHaRuntime` и `ha-runtime.mjs` подробно не перечитывал, потому что они не менялись."
-        },
-        "usage": {
-          "input_tokens": 32,
-          "cache_creation_input_tokens": 55692,
-          "cache_read_input_tokens": 476055,
-          "output_tokens": 9119,
-          "output_tokens_details": {
-            "thinking_tokens": 2494
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 55692,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1109,
-              "cache_read_input_tokens": 43034,
-              "cache_creation_input_tokens": 12658,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 12658
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРемонт узкий и правильный. Guard `compact-danger-missing-theme-token-1150` теперь сначала выполняет штатный `prepare-ha.mjs`, затем браузерный oracle. Существующий механизм `runGuardPhases` относит любой ненулевой код возврата подготовки к `setup-failure`, поэтому ошибка загрузки или нарушение целостности HA runtime не будут засчитаны как пойманная мутация. Кэш общий: он лежит в `~/.cache/houseplan-ui-lab/<version>`, вне временных worktree, поэтому чистый прогон и прогон мутанта используют один и тот же runtime. Проверки размера, SHA и manifest не ослаблены. Блокеров нет. Остался один пробел доказательств: холодный путь, ради которого заведена задача, на настоящем чистом исполнителе не выполнялся. Его подтвердит только следующий реальный ночной шард.\n\n## Понимание решения\n\nПроблема: ночной шард на чистом runner'е остановился на чистом прогоне `node demo/ui-lab/editor-kit-audit.mjs` с ошибкой «UI Lab HA runtime is missing». Ни CI, ни команда guard не готовили закреплённый HA frontend, а у разработчиков прогретый локальный кэш скрывал эту зависимость. После правки guard имеет вид `node demo/ui-lab/prepare-ha.mjs && node demo/ui-lab/editor-kit-audit.mjs`. `guardPhases` делит цепочку по `&&`: первая команда становится setup, последняя — oracle. `runCleanGuards` и `runMutant` выполняют обе фазы через `sh(command, dir)` во временном worktree, где `node_modules` подключён символической ссылкой. Окружение наследует `process.env`, поэтому `homedir()` и `DEFAULT_CACHE` указывают на общий пользовательский кэш. `prepareHa` при существующем каталоге только вызывает `verifyHaRuntime`. При его отсутствии он скачивает wheel, сверяет размер и SHA, распаковывает его в staging, сверяет manifest с пином и атомарно переименовывает staging в каталог кэша. Любая ошибка печатается в stderr и даёт exit 1. Разобранные пути: `scripts/mutation-guard-outcome.mjs` (guardPhases, classifyCommandResult, runGuardPhases), `scripts/mutation-execution.mjs` (sh, runMutant, runCleanGuards), `scripts/mutation-bundle-cache.mjs` (guardNeedsBundle, mutantBundleStrategy), `demo/ui-lab/prepare-ha.mjs`, `demo/ui-lab/config.mjs`, начало `editor-kit-audit.mjs`, политика browser guard и её инвентарь.\n\n## Разбор решения\n\n### Классификация отказа подготовки\n\nРешение опирается на уже существующее и проверенное разделение фаз, новый механизм не добавлен. Для фазы setup `classifyCommandResult` при любом ненулевом статусе возвращает `SETUP`, не разбирая текст ошибки. Поэтому «Unexpected official wheel response», «hash/size mismatch» и отказ `verifyHaRuntime` не могут превратиться в `assertion-killed`. Зависание или превышение времени даёт signal или status null, то есть `infrastructure-interruption`, и тоже не считается доказательством.\n\nОснование: `mutation-guard-outcome.mjs:290-292` (setup → SETUP), `:318-322` (остановка до oracle), `:93-98` (interruption); `prepare-ha.mjs:110-114` (catch → exitCode 1).\n\n### Общий кэш и повторное использование\n\nКэш `DEFAULT_CACHE = ~/.cache/houseplan-ui-lab/<HA_LOCK.version>` не зависит от worktree. Чистый прогон один раз загружает runtime, прогоны мутантов дальше выполняют только `verifyHaRuntime`. `sh` не переопределяет HOME, так что путь действительно общий. Существующий, но испорченный кэш не перезаписывается, а возвращает setup-failure. Это консервативно и согласуется с ТЗ.\n\nОснование: `demo/ui-lab/config.mjs:9`, `prepare-ha.mjs:67`, `:100-101`, `mutation-execution.mjs:39-46`.\n\n### Мутированный bundle попадает в oracle\n\nGuard содержит `demo/`, поэтому `guardNeedsBundle` = true. Patch затрагивает `src/styles/settings-action.styles.ts`, и стратегия для мутанта будет `build`, а не seed. Audit берёт `root` из своего же расположения в worktree и проверяет актуальность bundle через `assertFreshDemoBundle`. Новый тест закрепляет `guardNeedsBundle(...) === true`. По словам автора, адресный запуск дал assertion-killed с конкретным расхождением цвета `rgb(33,33,33)` и `rgb(219,84,61)`. Это ожидаемый эффект patch'а, удаляющего fallback `#db543d`.\n\nОснование: `mutation-bundle-cache.mjs:15-28`, `mutation-execution.mjs:178-182`, `editor-kit-audit.mjs:13-14,52`; результат witness из authorContext.\n\n### Тест механизма\n\nТест читает фактическое объявление из реестра и не повторяет его строку вручную. Он проверяет фазы, потребность в bundle, остановку до oracle при ошибке setup и assertion-killed только после успешной подготовки. Сообщения об ошибках в негативных ветках для классификатора не важны: setup классифицируется только по коду возврата. Ценность теста в том, что он закрепляет структуру зарегистрированного guard. Это достаточная адресная регрессия, и лишней сложности в ней нет.\n\nОснование: `test/mutation-gate.test.mjs:32-57` в head.\n\n### Влияние на реестр и политики\n\nИнвентарь browser guard ключуется по id, поэтому изменение текста guard его не ломает. Других guard'ов, запускающих UI Lab без подготовки, в реестре нет: `ui-lab/` встречается только здесь. Смоки, которые сами вызывают `prepareHa` внутри oracle (`smoke_check_label`, `smoke_dialog_picker_998`), в реестре мутаций не используются. Изменение guard сменит его отпечаток, и мутант заново попадёт в выборку. Это ожидаемо.\n\nОснование: `mutation-browser-policy.mjs:28-37`, `docs/testing-notes/mutation-browser-guards.md:162`, поиск `ui-lab/` и имён смоков по `scripts/mutation-registry.mjs`.\n\n### Холодный путь и бюджет времени\n\nИсходная проблема — именно чистый исполнитель, а реальный адресный прогон шёл с прогретым кэшем. Сам загрузчик проверен в прошлых ревью (#964) и не менялся, порядок фаз закреплён тестом. Но на холодном runner'е подготовка — это загрузка около 111 MB, распаковка и разбор AST всех чанков `frontend_latest`, и всё это внутри общего лимита команды `MUTATION_COMMAND_TIMEOUT_MS`, по умолчанию 180 с. У fetch свой таймаут 120 с. При превышении результатом будет `infrastructure-interruption`, а не ложный kill, то есть семантика безопасна. Однако измерений, подтверждающих, что подготовка укладывается в бюджет на CI, нет. Это граница доказательств, а не установленный дефект.\n\nОснование: `mutation-execution.mjs:42`, `prepare-ha.mjs:51,94`; authorContext: «Холодный download настоящих 111 MB повторно не выполнялся».\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- После следующего настоящего ночного шарда, в который попадёт этот мутант, стоит посмотреть в логе длительность `prepare-ha.mjs` на холодном runner'е. Если она близка к 180 с, лучше заранее задать `MUTATION_COMMAND_TIMEOUT_MS` для шарда или кешировать `~/.cache/houseplan-ui-lab` между запусками средствами CI. Иначе ошибка проявится как `infrastructure-interruption` и снова остановит шард, хотя и без ложного kill.\n- Если в реестре появятся новые guard'ы с UI Lab, их подготовку стоит оформлять так же, отдельной setup-командой. Готовить runtime внутри oracle, как это делают `smoke_check_label`/`smoke_dialog_picker_998`, хуже: там ошибка загрузки без `AssertionError` и без шаблона из `ORACLE_SETUP_FAILURE` была бы засчитана как `assertion-killed`. Сейчас эти смоки не используются как guard, поэтому дефекта нет.\n\n## Границы анализа\n\nРевью выполнено по исходникам pinned head `c970836c` и base `3f89c413`. Сам я ничего не запускал: ни тесты, ни prepare-ha, ни audit, ни mutation runner. Использованы квитанция S6 «Тесты для задачи #1396 (перед ревью)» со статусом passed на том же SHA и описание адресных прогонов исполнителя: тест #1396 0/1 до правки и 1/1 после, witness с assertion-killed в `editor-kit-audit.mjs`. Локальные логи `artifacts/1396-*` мне недоступны, поэтому сведения о них приняты как заявление исполнителя. Холодная загрузка HA runtime на чистом CI runner'е никем не выполнялась. Её успех и время по отношению к лимиту 180 с не подтверждены и проявятся только в реальном ночном шарде. `verifyHaRuntime` и `ha-runtime.mjs` подробно не перечитывал, потому что они не менялись.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 3f89c4132e2f1e9243df350f26aae849d275bc65 → c970836c383ce294aeec16069657c546ace2df1b\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1396, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nУзкий ремонт отсутствующего prerequisite UI Lab. Изменение команды guard покрывает и чистое временное дерево, и дерево мутанта, без CI-only обхода. Shared cache уже реализован и проверяется существующим prepare-ha; изменение общей модели кэша не нужно. Альтернатива — безусловный сетевой шаг во всех фоновых запусках — расширяет стоимость и не чинит адресный CLI.\n\nРиски: не спутать отказ подготовки с чувствительностью теста; не ослабить проверки целостности runtime; подтвердить, что мутированный CSS действительно попадает в собранный bundle и ловится oracle. Реальный HA владельца не затрагивается.\n\n### Фактические проверки перед S7\n\n- Материал: `c970836c383ce294aeec16069657c546ace2df1b` от dev `3f89c4132`.\n- `node --test --test-name-pattern=\"#1396\" test/mutation-gate.test.mjs`: до правки guard 0/1 FAIL (отсутствует setup), после 1/1 PASS. Проверяются фактическое объявление, потребность bundle, порядок фаз, остановка на ошибке загрузки/целостности без запуска oracle и корректный assertion-killed только после успешной подготовки. Логи `artifacts/1396-before.log`, `1396-after.log`.\n- Настоящее адресное выполнение через существующие `runCleanGuards([registeredMutant])` и `runMutant(registeredMutant)` — PASS. Wrapper `artifacts/1396-witness.mjs` использует зарегистрированные команду и patch без подмен; сохраняет полный доступный outcome в `1396-witness.json` и лог `1396-witness.log`. Сборка чистого и мутированного bundle выполнена штатным mutation runner.\n- Чистая команда `node demo/ui-lab/prepare-ha.mjs && node demo/ui-lab/editor-kit-audit.mjs` прошла. Пригодный локальный HA runtime уже был в общем кэше и проверен; свежая загрузка в этом адресном запуске не требовалась. Холодный download настоящих 111 MB повторно не выполнялся; порядок холодной подготовки и её отрицательные исходы защищает тест команды, сам существующий downloader/manifest checker не менялся.\n- Соответствующий мутант `compact-danger-missing-theme-token-1150` получил `assertion-killed` именно в `editor-kit-audit.mjs`: `destructive ink survives a missing HA error token`, actual `rgb(33, 33, 33)`, expected `rgb(219, 84, 61)`. Ошибка компиляции/окружения не засчитана вместо проверки.\n- План штатного S6 infra: синтаксис и 20 файлов непосредственных читателей мутационного механизма, без пробелов классификации; итог S6 передаётся координатором через finish. Новый кейс — инфраструктурная регрессия механизма, не обязательный запуск каждой продуктовой задачи.\n\nСуществующий patch мутанта, продукты, сам audit, pinned HA runtime и проверки SHA/manifest не изменены; только команда guard, адресный Node-тест и RU/EN changelog. Пересъёмки golden/их приёмки, запусков всех пяти частей, публикации релиза и действий в HA владельца нет. Логи адресной диагностики локальные; S6/review/merge оформляет обычный координатор.\n\nДля доступа из WSL к GitHub потребовался временный локальный CONNECT-транспорт через Windows: прямой TLS из WSL сейчас недоступен, тогда как Windows-доступ исправен. Это не часть diff; сертификаты проверяются, шифрование не отключено, runtime/браузерные проверки выполнены обычным WSL runner. Транспорт не меняет запросы приложения и удаляется из исполнения по окончании задачи.\n```\n\n</details>\n",
-        "createdAt": "2026-11-12T08:31:51.820Z",
-        "artifactId": 13927067968,
-        "runId": 43183358141,
-        "runAttempt": 1,
-        "completedAt": "2026-11-12T08:31:58Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43183358141",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "3f89c4132e2f1e9243df350f26aae849d275bc65"
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -4674,19 +4545,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1396,
-    "worker": "finish",
-    "token": "371:finish:4515014c-435b-4003-b05f-ea2a1f402795:finish:1:admit",
-    "fence": 371,
-    "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
-    "expectedBase": "3f89c4132e2f1e9243df350f26aae849d275bc65",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794472004408,
-    "expiresAt": 1794475939990,
-    "patchId": "9a91d5cf6079e12bce9515825ef2f1e42424e471",
-    "reviewRequest": "review:1396:1:9a91d5cf6079e12bce9515825ef2f1e42424e471:3f89c4132e2f1e9243df350f26aae849d275bc65"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -4788,50 +4647,6 @@
       "digest": "fb4637786d495fc8ce43ce75f7a7eb1c2167af80d6ab3749599266002f7b48d5",
       "issue": 1024
     },
-    "finish:4515014c-435b-4003-b05f-ea2a1f402795:finish:2:synchronized": {
-      "digest": "0cf7991f04b42e54e5716b5b8a98b0bcd27b9ad621084801dbee904d7208fdf9",
-      "issue": 1396
-    },
-    "finish:7cda4c14-01b0-43e4-9f12-bac32e246031": {
-      "digest": "5dffa82327761445c5da9d090d536adaaaa47c2807e2e0142027b476cee92894",
-      "issue": 1396
-    },
-    "finish:ebe1399f-d289-40be-b955-d9dc8d6fe1b1": {
-      "digest": "30fafaa9cfd728736ed37f827584fca3c30208d869c2d7cfa2ac339c352899dc",
-      "issue": 1396
-    },
-    "finish:4515014c-435b-4003-b05f-ea2a1f402795:finish:3:s6-label": {
-      "digest": "9c2f44f5280958336227e4bbe6652f38c890571d43cbc0c5a260b619ca2358ca",
-      "issue": 1396
-    },
-    "finish:4515014c-435b-4003-b05f-ea2a1f402795:finish:4:review-requested": {
-      "digest": "6ea1cad23911754cbad68e4066093a8691efbff0496e2c55d615ff772da71684",
-      "issue": 1396
-    },
-    "github:43183322285:1:tick:0:review-retry": {
-      "digest": "78ccadba7ffc1dc02317169909f8301e563c73336418a9db0098595c329980cf",
-      "issue": 1396
-    },
-    "github:43183322285:1:completions:message:90329ddb08ebae825f3d9eed126704ce2d201b5aba92d1013a14ace6f65c9e81": {
-      "digest": "881c228473c8d9ce9d1c775d6e5cdaa9e90e0661098a8d764ef8c9bc3e592a83",
-      "issue": 1396
-    },
-    "github:43183322285:1:completions:message:d612f0af07de6027bf2edc4bcfa26c38fca00a5934d6f279eb50436f00ef94dc": {
-      "digest": "a81c1325d72187b7140d77bfee7fa263ea434ff4cf3d4799b1a4e6741e3acbbc",
-      "issue": 1396
-    },
-    "github:43183322285:1:completions:message:3eb95674cf52c542dfff8bacd6a4c14523f9bb0f8056f374c0c5d560c0ac50ba": {
-      "digest": "b0fa0dbc007c55bb6a444c5e1ea408eb3994fb7feeb3f74b3f705c931642b3ad",
-      "issue": 1396
-    },
-    "github:43183719901:1:tick:0:review-presentation": {
-      "digest": "58d292bc3fa5832d897fb5fa43836fc8c8766fd9fa53297dbb009896fe372e58",
-      "issue": 1396
-    },
-    "github:43183719901:1:tick:0:review-complete": {
-      "digest": "d7377512fc52fe7ace7e94d474f9f2f43b080daab4f4a5e7e4281f1c4d619189",
-      "issue": 1396
-    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4879,65 +4694,6 @@
         "reviewChanges": "### Цель и результат\n\nРедакция 3 после [второго ревью](https://github.com/Matysh/houseplan-card/issues/1024#issuecomment-6789623047). Согласованный владельцем объём сохранён. Первый раунд исправлений признан закрывшим прежние блокеры; теперь уточнены смена обоих векторов базиса при канонизации и копирование без живых привязок по #1227. Архитектура независимых створок/ставней, масок света и защиты writer сохранена. Реализация не начата.\n\n### Решение и альтернативы\n\nОриентир: dev `412f1993843b72adf9311f908f552e7a419c4530`, повторно сверенный при правках. Массив стабильных частей, равные доли и явное массовое действие сохраняются. Для ставней выбран единый условный угол 90° вместо смешанного правила 90°/180°: он не требует смены позы при изменении числа долей и не ложится поверх соседнего стекла. Для совпадающих линий окна/ставней задано единое символическое разнесение, не новая физическая геометрия.\n\nВыбран конечный локальный базис явного окна с удалением legacy contact/invert/flip при материализации. Альтернатива «родительские flip как ещё один трансформ всех частей» отклонена: обычное изменение «Открывания» иначе переносило бы наружные ставни внутрь. Настройка стороны оконного полотна отделена от настоящего отражения всего объекта. В config/set задан явный признак понимающего писателя; одного объявления capability сервером недостаточно. Геометрический model11 не повышается, перенос с расширением защищён новой portable-версией.\n\nВ редакции 3 канонизация рассматривается после предполагаемого физического преобразования: полуоборот меняет u и v вместе. Для откатного полотна физическая грань восстанавливается через соответствующий типу resolver, а не безусловным переключением flip_v — снаружи комнаты naturalSide может измениться сама. Для Copy выбран не новый режим копирования, а действующий контракт #1227 с очисткой вложенных контактов. Contact-источник после очистки остаётся явно неназначенным; автоматический перевод в manual отклонён, поскольку мог бы превратить сохранённое ручное «закрыто» в неожиданную световую маску.\n\n### Риски и места для внимания\n\nОсобенно проверить смену базиса у вертикальной стены во всех путях из добавленной матрицы, компенсацию физической грани с учётом !flip_v ворот и различий outer/shared/partition, отсутствие двойного reverse после ACK/проекции и совпадение двух проекций Copy. Перепроверены logic.snapToWall, рендер/face-resolver, wall_node_move/merge/attach, graph_node_write, coordinate_canonicalization, partition_promotion, обе space-copy и контракт #1227. Для остальных перечисленных модулей заданы обязательные контракты/план адресной проверки при реализации, а не заявлено выполненное доказательство. Это не ограничивает ревьюера; Sun/Glow, импорт/экспорт и безопасность данных по-прежнему требуют проверки по полному ТЗ.\n\n### Проверки и ограничения\n\nЭто исправление ТЗ на S3, прогонов продукта нет: тесты, сборки, lint и замеры не запускались. Авторская проверка структуры `node process-next/cli.mjs spec-check --file artifacts/issue1024/specification.md` на редакции 3: `applicable=true, ok=true, errors=[]`. Это проверка формы ТЗ, не подтверждение реализации. Исходники dev остались `412f1993843b72adf9311f908f552e7a419c4530`; новые физические сценарии пока являются планом тестов. Прежние отчёты и опубликованные снимки контекста не редактируются.\n\n### Исправления по предыдущему ревью\n\nОснование: [раунд 2 — changes_requested](https://github.com/Matysh/houseplan-card/issues/1024#issuecomment-6789623047), материал dev `412f1993843b72adf9311f908f552e7a419c4530`, run 42977597935. Новая передача — **редакция 3 тела issue**, подготовленная после подтверждённого возврата S4 → S3. Исправления первого раунда сохраняются в ТЗ и [снимке передачи редакции 2](https://github.com/Matysh/houseplan-card/issues/1024#issuecomment-6789530082); второе ревью признало их закрывшими прежние блокеры.\n\n1. **Блокер: полуоборот канонического базиса меняет и u, и v →** §1 задаёт полный reverse(leaves)+hinge start/end+side negative/positive у створок и ставней, включая неактивные; ID/контакты следуют целой записи. §2 меняет направление отката и сохраняет физическую грань активного откатного полотна через resolver, а не слепой toggle flip_v. Операция сначала переносит физическую позу, затем один раз выполняет перепараметризацию. AC12 и план п.3 добавляют 89→90→91°/обратный ход, узел вертикальной стены с наклоном 1°, оба типа/стороны/host, физические концы и нормали как независимый оракул, превью→ACK и Undo/Redo/reload без двойного reverse.\n2. **Блокер: Copy сохранял вложенные контакты вопреки #1227 →** §6/«Миграция» п.6/AC13/план п.6 теперь отделяют экспортное восстановление от копирования пространства. Обе space-copy очищают верхние и вложенные contact/lock, в том числе выключенные сохранённые ставни, при сохранении структуры/локальных ID/ориентации/manual-значения. Contact-источник без сущности валиден как «Датчик не назначен», нейтрален и без маски; manual остаётся прежним. Клиентская и серверная проекции сверяются целиком, источник/прежняя геометрическая совместимость #1227 не меняются. Реестр совместимости должен отразить это расширение правила, а не изменить смысл Copy.\n3. **Грань откатных ворот должна учитывать !flip_v →** §2 прямо фиксирует faceFlipV=flip_v для двери и !flip_v для ворот, общий resolver на всех поверхностях и неизменность выбранной грани при смене механизма на той же геометрии. Компенсация канонизации проверяется по физической нормали для наружной/shared/partition стены; безусловное инвертирование флага не требуется и могло бы дать ошибку на наружной стене.\n4. **Общий список специализированных путей был неопределённым →** в «Модели данных» дана конечная матрица wall_node_move/merge/attach/delete, graph_node_write/plan_graph, partition_promotion, opening_repair, coordinate_canonicalization, align-grid/placement и двух space-copy. Она задаёт сохранение/преобразование/удаление вложенных данных, отсутствие двойной компенсации и сохранение строгих серверных доказательств; п.3/6 плана ссылаются на эту матрицу.\n5. **Расхождение старой и новой формы при переходе вертикали нужно назвать →** §1/§2/AC12 сохраняют существующий некомпенсированный разворот у неявных и активных распашных проёмов, а компенсация обязательна у явного окна и откатного механизма. Исправление всего прежнего поведения не добавляется скрыто; для него в план заложен отдельный legacy-оракул. Документация совместимости должна явно назвать эту границу.\n\nОткрытых вопросов владельцу по этим замечаниям нет. Проектные решения редакции 3 подлежат повторному S4; разрешение на реализацию или положительный результат нового ревью не заявляются.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:4515014c-435b-4003-b05f-ea2a1f402795": {
-      "digest": "200b440c702f1d7d6f9398ac67dcf6b637c12df733034b4f42b58013d944c9f0",
-      "issue": 1396,
-      "message": {
-        "kind": "queued",
-        "issue": 1396,
-        "at": 1794471999082,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
-        "delivered": true
-      }
-    },
-    "finish:4515014c-435b-4003-b05f-ea2a1f402795:finish:1:admit": {
-      "digest": "84dcbcd5a000d1f76743d462ad8591503c81990e846c9b29974606ed9c25b4ab",
-      "issue": 1396,
-      "message": {
-        "kind": "admitted",
-        "issue": 1396,
-        "at": 1794472004408,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:4515014c-435b-4003-b05f-ea2a1f402795:finish:3:s6-complete": {
-      "digest": "4fa01aecf702c99344c12e4de41a4397ec412de4ec7906e0e6b1005928a06c09",
-      "issue": 1396,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1396,
-        "at": 1794472147060,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
-        "phase": "review",
-        "evidence": {
-          "id": "20261112T082657996-2f55bbf5",
-          "name": "Тесты для задачи #1396 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261112T082657996-2f55bbf5/report.json",
-          "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
-          "status": "passed",
-          "finishedAt": "2026-11-12T08:29:05.801Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Узкий ремонт отсутствующего prerequisite UI Lab. Изменение команды guard покрывает и чистое временное дерево, и дерево мутанта, без CI-only обхода. Shared cache уже реализован и проверяется существующим prepare-ha; изменение общей модели кэша не нужно. Альтернатива — безусловный сетевой шаг во всех фоновых запусках — расширяет стоимость и не чинит адресный CLI.\n\nРиски: не спутать отказ подготовки с чувствительностью теста; не ослабить проверки целостности runtime; подтвердить, что мутированный CSS действительно попадает в собранный bundle и ловится oracle. Реальный HA владельца не затрагивается.\n\n### Фактические проверки перед S7\n\n- Материал: `c970836c383ce294aeec16069657c546ace2df1b` от dev `3f89c4132`.\n- `node --test --test-name-pattern=\"#1396\" test/mutation-gate.test.mjs`: до правки guard 0/1 FAIL (отсутствует setup), после 1/1 PASS. Проверяются фактическое объявление, потребность bundle, порядок фаз, остановка на ошибке загрузки/целостности без запуска oracle и корректный assertion-killed только после успешной подготовки. Логи `artifacts/1396-before.log`, `1396-after.log`.\n- Настоящее адресное выполнение через существующие `runCleanGuards([registeredMutant])` и `runMutant(registeredMutant)` — PASS. Wrapper `artifacts/1396-witness.mjs` использует зарегистрированные команду и patch без подмен; сохраняет полный доступный outcome в `1396-witness.json` и лог `1396-witness.log`. Сборка чистого и мутированного bundle выполнена штатным mutation runner.\n- Чистая команда `node demo/ui-lab/prepare-ha.mjs && node demo/ui-lab/editor-kit-audit.mjs` прошла. Пригодный локальный HA runtime уже был в общем кэше и проверен; свежая загрузка в этом адресном запуске не требовалась. Холодный download настоящих 111 MB повторно не выполнялся; порядок холодной подготовки и её отрицательные исходы защищает тест команды, сам существующий downloader/manifest checker не менялся.\n- Соответствующий мутант `compact-danger-missing-theme-token-1150` получил `assertion-killed` именно в `editor-kit-audit.mjs`: `destructive ink survives a missing HA error token`, actual `rgb(33, 33, 33)`, expected `rgb(219, 84, 61)`. Ошибка компиляции/окружения не засчитана вместо проверки.\n- План штатного S6 infra: синтаксис и 20 файлов непосредственных читателей мутационного механизма, без пробелов классификации; итог S6 передаётся координатором через finish. Новый кейс — инфраструктурная регрессия механизма, не обязательный запуск каждой продуктовой задачи.\n\nСуществующий patch мутанта, продукты, сам audit, pinned HA runtime и проверки SHA/manifest не изменены; только команда guard, адресный Node-тест и RU/EN changelog. Пересъёмки golden/их приёмки, запусков всех пяти частей, публикации релиза и действий в HA владельца нет. Логи адресной диагностики локальные; S6/review/merge оформляет обычный координатор.\n\nДля доступа из WSL к GitHub потребовался временный локальный CONNECT-транспорт через Windows: прямой TLS из WSL сейчас недоступен, тогда как Windows-доступ исправен. Это не часть diff; сертификаты проверяются, шифрование не отключено, runtime/браузерные проверки выполнены обычным WSL runner. Транспорт не меняет запросы приложения и удаляется из исполнения по окончании задачи.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
       }
