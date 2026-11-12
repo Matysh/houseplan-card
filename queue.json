@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10121,
+  "revision": 10122,
   "nextTicket": 386,
   "nextFence": 386,
   "tasks": {
@@ -5098,6 +5098,10 @@
       "digest": "dac16c9a90bf9652d814f2f965ed72435ce1547a4db0f7ea0f604490efb4d8d8",
       "issue": 1024
     },
+    "github:43322461246:1:completions:message:ec9e571122f34aa81e9696c08dff34330a15ca0287da2f1fc0e98436c90a4bba": {
+      "digest": "4da5d0ef42f00e0a146e3e9fcf86560af115eade398fca83ab4bfdaa82676f20",
+      "issue": 1024
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -5195,7 +5199,8 @@
           "entry": 1,
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/i18n.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Backend: tests_backend/test_opening_repair.py: failed; Backend: tests_backend/test_sh3d_convert.py: failed; Браузер: opening entity search: failed; Браузер: static wall openings: failed",
           "eventId": "finish:215b7724-d0e5-4164-86e6-0d675f24bd6c:finish:3:return:return:1024"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:4f8696af-c1b2-4c6a-ab2f-6530a2744279": {
