@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9700,
+  "revision": 9701,
   "nextTicket": 376,
   "nextFence": 376,
   "tasks": {
@@ -4042,7 +4042,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794481130210,
       "reviewEntry": 4,
-      "patchId": "98c029138ba3e24b7e0bb8c8965493f0aa9b4cdc",
+      "patchId": "b18d52fa54195aada6a4a88fd17f622c1bfeae08",
       "changedFiles": [
         "demo/golden/harness.mjs",
         "demo/smoke_device_contact_editor_frame.mjs",
@@ -4050,6 +4050,7 @@
         "demo/smoke_wall_end_align.mjs",
         "demo/smoke_wall_side_dimensions.mjs",
         "demo/smoke_wall_side_dimensions_dense.mjs",
+        "demo/smoke_wall_side_dimensions_thin.mjs",
         "docs/CANVAS.md",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
@@ -4579,10 +4580,11 @@
     "token": "375:finish:1707e311-543a-42a0-a1e2-4a4f14b4f3e6:finish:1:admit",
     "fence": 375,
     "materialSha": "1087417b7e8d3e761a9e5140be0701afac0d21bd",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c970836c383ce294aeec16069657c546ace2df1b",
+    "phase": "testing",
     "admittedAt": 1794481136510,
-    "expiresAt": 1794481436510
+    "expiresAt": 1794481445287,
+    "patchId": "b18d52fa54195aada6a4a88fd17f622c1bfeae08"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4843,6 +4845,10 @@
     },
     "finish:4c3df9d1-ead8-45ba-828e-c3c869cae14b:finish:3:return": {
       "digest": "d587c39ea009bc30f380926228be1dfbe26263f87de59535dd16b178a6b0874b",
+      "issue": 1381
+    },
+    "finish:1707e311-543a-42a0-a1e2-4a4f14b4f3e6:finish:2:synchronized": {
+      "digest": "2b21c198324d079d5596cb8ad29adb07931e26a695023a0c364ed361c7b86f3e",
       "issue": 1381
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
