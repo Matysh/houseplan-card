@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10122,
+  "revision": 10123,
   "nextTicket": 386,
   "nextFence": 386,
   "tasks": {
@@ -5102,6 +5102,10 @@
       "digest": "4da5d0ef42f00e0a146e3e9fcf86560af115eade398fca83ab4bfdaa82676f20",
       "issue": 1024
     },
+    "github:43322461246:1:completions:message:791edc41da7d111049e4c1209fbf9b4e1ad7d4607325888981999c2b5beddace": {
+      "digest": "1d5df0d2f72ca42663b219cb6db71ebc336e78150f351ca182976c7dff6bf5e9",
+      "issue": 1024
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -5258,7 +5262,8 @@
         "reviewChanges": "### Цель и результат\n\nРеализована принятая редакция 5 (раунд 5): независимые 1–4 створки окна, top, опция штор на долю, ручные положения, swing/slide дверей и ворот, согласованный UI-059. Существующая неявная форма не материализуется при чтении или неизменённом сохранении. Ветка `codex/opening-features-1024`; запись в dev только через finish.\n\n### Решение и альтернативы\n\nОбщая типизированная модель и resolver используются renderer/preview/static/2.5D и оптикой. Sun сначала допускает целое окно, затем маскирует интервалы; Glow маскирует только доказанный внутренний проход. Шторы не добавляют физическую стену. Общая перепараметризация сохраняет физические части при смене базиса; TS/Python сравниваются по полной проекции, включая Copy.\n\nРасширение version1 защищено fresh capability, внешним writer marker и locked server guard до preservation/repair. Portable v3 используется только при наличии расширения; старые документы остаются v2. Copy рекурсивно очищает источники, импорт их сохраняет. Снимок UI-059 сохранён побайтно с исходными hashes; временные hooks/localStorage прототипа в продукт не переносились.\n\n### Риски и места для внимания\n\n- Полнота ориентационных путей: реальные move/merge/attach/delete, room↔partition, canonicalization, repair/optimizer, сохранение и ACK.\n- Оптическая маска не должна давать наружные утечки Glow или менять полную дальность Sun.\n- Guard должен защищать удаление/смену геометрии расширенного родителя, в том числе от старого writer и через optimize/large upload.\n- Unknown назначенной створки: закрытая нейтральная поза + ?, без manual fallback. Независимая неизвестность шторы не блокирует свет.\n- Вложенный черновик не должен воскрешать удалённый другим клиентом проём.\n- Исторический SPEC в replay-пакете не отменяет действующую редакцию 5.\n- PDF намеренно state-free; SVG получает актуальное View.\n\n### Проверки и ограничения\n\nАдресные результаты и метод сравнения описаны в `docs/testing/1024-acceptance.md`. Выполнены native формы/Done/Cancel/Escape/Save/Undo/Redo, отзыв capability, unknown и remote deletion; адресные model/optics/geometry, TS/Python basis, реальные HA writer/Copy/portable/ZIP и diagnostic allowlist. PDF: 29 тестов, включая новый контракт leaf count/direction/state-free. Светлая/тёмная тема сверена с отдельным синтетическим replay UI-059.\n\nОкончательный S6 выполняет очередь и передаёт собственный отчёт; предварительные адресные запуски не выдаются за завершённый S6. Платное код-ревью ещё не запускалось. Полный релизный golden/browser/HA E2E и замеры относятся к следующей бете, которую владелец явно поручил после S8; изменённые эталоны #1024 приняты владельцем, необъяснённые посторонние расхождения не принимаются автоматически. Частная HA и локальный стенд 8890 не изменялись.\n\n\n\n### Разбор первого S6\n\nПервый S6 `20261112T215325491-d6cea10f`: 730 файлов, 616 pass / 103 reuse / 11 fail, ревью не вызывалось. Исправлены обработка повреждённых старых записей в orientation adapter (строгая v1 schema не ослаблена), lifecycle текущего поля, дополнительные any, зависимый generated runtime конвертера и проверка по-прежнему поддержанного portable v2. Старые текстовые/Native ожидания приведены к принятому источнику цвета и вложенной форме; шесть мутантов переякорены с сохранением дефектов. Адресно: 137 Node, 98 repair/basis, 21 converter backend и 4 converter page PASS, native entity/Static/nested form PASS. Повтор S6 — через ту же очередь с текущим полным diff. Код: `148c93fc0`.\n\nCompanion: [HA E2E PR #45](https://github.com/Matysh/houseplan-e2e/pull/45), [impact #44](https://github.com/Matysh/houseplan-e2e/issues/44). Contract lint/discovery пройдены, реальное исполнение на кандидате беты ещё не заявлено.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
