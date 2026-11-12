@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9597,
-  "nextTicket": 371,
+  "revision": 9598,
+  "nextTicket": 372,
   "nextFence": 371,
   "tasks": {
     "1170": {
@@ -4278,6 +4278,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1396": {
+      "issue": 1396,
+      "track": "show",
+      "layer": "infra",
+      "branch": "codex/mutation-ui-lab-ha-runtime",
+      "materialSha": "c970836c383ce294aeec16069657c546ace2df1b",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 371,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794471999082,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4507,7 +4521,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1396
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4659,6 +4675,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:4515014c-435b-4003-b05f-ea2a1f402795": {
+      "digest": "200b440c702f1d7d6f9398ac67dcf6b637c12df733034b4f42b58013d944c9f0",
+      "issue": 1396,
+      "message": {
+        "kind": "queued",
+        "issue": 1396,
+        "at": 1794471999082,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "c970836c383ce294aeec16069657c546ace2df1b"
       }
     }
   },
