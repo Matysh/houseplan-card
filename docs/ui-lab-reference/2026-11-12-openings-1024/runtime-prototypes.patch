@@ -1,0 +1,593 @@
+diff --git a/src/editors/hp-icon-picker.ts b/src/editors/hp-icon-picker.ts
+index 87a93a495..48daf7de3 100644
+--- a/src/editors/hp-icon-picker.ts
++++ b/src/editors/hp-icon-picker.ts
+@@ -143,11 +143,7 @@ export class HpIconPicker extends LitElement {
+     if(this._open && e.key==='Tab' && this.floating.containsPath(e.composedPath()))this.close(true);
+   };
+   private focusout = ():void => { queueMicrotask(()=>{if(this._open&&!this.floating.ownsActiveElement())this.close();}); };
+-  private dismissScroll = (e:Event):void => {
+-    if(this.floating.containsPath(e.composedPath()))return;
+-    const bounds=this.renderRoot.querySelector('.field')?.getBoundingClientRect();
+-    if(bounds&&this.floating.anchorMoved(bounds))this.close();
+-  };
++
+   private async open():Promise<void> {
+     if(this._open)return;
+     const win=this.floating.window(); if(!win)return;
+@@ -163,7 +159,7 @@ export class HpIconPicker extends LitElement {
+     this.ownerDocument.addEventListener('keydown',this.tabAway,true);
+     this.ownerDocument.addEventListener('pointerdown',this.outside,true);
+     this.ownerDocument.addEventListener('focusout',this.focusout);
+-    this.floating.dialog()?.addEventListener('scroll',this.dismissScroll,true);
++    this.floating.followAnchor(this.position, () => this.close());
+     win.addEventListener('resize',this.position);win.visualViewport?.addEventListener('resize',this.position);win.visualViewport?.addEventListener('scroll',this.position);
+     surface?.querySelector<HTMLInputElement>('input')?.focus({preventScroll:true});
+     surface?.classList.add('visible');
+@@ -174,7 +170,7 @@ export class HpIconPicker extends LitElement {
+     const win=this.floating.window();
+     this.ownerDocument.removeEventListener('keydown',this.tabAway,true);
+     this.ownerDocument.removeEventListener('pointerdown',this.outside,true);this.ownerDocument.removeEventListener('focusout',this.focusout);
+-    this.floating.dialog()?.removeEventListener('scroll',this.dismissScroll,true);
++    this.floating.stopFollowing();
+     win?.removeEventListener('resize',this.position);win?.visualViewport?.removeEventListener('resize',this.position);win?.visualViewport?.removeEventListener('scroll',this.position);
+     if(this.closeTimer)win?.clearTimeout(this.closeTimer); this.closeTimer=undefined;
+     const surface=this.surface();this.motion?.cancel();this.motion=undefined;
+diff --git a/src/editors/properties/selection.ts b/src/editors/properties/selection.ts
+index f021750d0..75575fbe0 100644
+--- a/src/editors/properties/selection.ts
++++ b/src/editors/properties/selection.ts
+@@ -34,7 +34,7 @@ export function renderPropertiesSelection(target: PropertiesTarget | null, conte
+       <path d="M${x1} ${y1}L${x2} ${y2}"></path>${handle(x1,y1)}${handle(x2,y2)}
+       ${target.kind==='contour' ? svg`${tag(x1-14*px,y1-48*px,'A')}${tag(x2-14*px,y2-48*px,'B')}`
+         : svg`${tag(x1-23*px,y1+24*px,'A')}${tag(x2-22*px,y2+24*px,'B')}
+-          <path d="M${x1+nx*25*px} ${y1+ny*25*px}l${nx*12*px} ${ny*12*px}M${x1+nx*31*px} ${y1+ny*31*px}L${x2+nx*31*px} ${y2+ny*31*px}M${x2+nx*25*px} ${y2+ny*25*px}l${nx*12*px} ${ny*12*px}"></path>`}`;
++          ${(globalThis as any).__hpNativePrototypes ? nothing : svg`<path d="M${x1+nx*25*px} ${y1+ny*25*px}l${nx*12*px} ${ny*12*px}M${x1+nx*31*px} ${y1+ny*31*px}L${x2+nx*31*px} ${y2+ny*31*px}M${x2+nx*25*px} ${y2+ny*25*px}l${nx*12*px} ${ny*12*px}"></path>`}`}`;
+   } else if (target.kind==='column') {
+     const c=target.value, x=c.center[0]*NORM_W,y=c.center[1]*NORM_W,r=c.cm/context.cellCm*(NORM_W/240)/2;
+     content=svg`<g transform=${c.shape==='square'&&c.angle?`rotate(${c.angle} ${x} ${y})`:nothing}>
+diff --git a/src/floating-surface-controller.ts b/src/floating-surface-controller.ts
+index 3488f5c6c..22a7ead9b 100644
+--- a/src/floating-surface-controller.ts
++++ b/src/floating-surface-controller.ts
+@@ -7,6 +7,7 @@ export class FloatingSurfaceController {
+   private host: HTMLElement | null = null;
+   private root: ShadowRoot | null = null;
+   private anchorBounds: DOMRectReadOnly | null = null;
++  private followCleanup?: () => void;
+ 
+   constructor(
+     private readonly owner: HTMLElement,
+@@ -40,6 +41,46 @@ export class FloatingSurfaceController {
+       || bounds.right !== prior.right || bounds.bottom !== prior.bottom;
+   }
+ 
++  /** Follow actual scrolling ancestors, including slots inside HA's shadow DOM.
++   * Scroll is not composed, so listening only on hp-dialog misses HA's body.
++   * Work is event driven and coalesced; an idle open menu does not poll. */
++  public followAnchor(reposition: () => void, hidden: () => void): void {
++    this.stopFollowing();
++    const win=this.window(); if(!win)return;
++    const events=new AbortController(), roots=new Set<EventTarget>([win,this.owner.ownerDocument]);
++    const clips:{element:HTMLElement;x:boolean;y:boolean}[]=[];
++    const seen=new Set<Node>();
++    let node:Node|null=this.owner;
++    while(node&&!seen.has(node)) {
++      seen.add(node); roots.add(node.getRootNode());
++      if(node instanceof HTMLElement && node!==this.owner) {
++        const style=win.getComputedStyle(node);
++        const x=/^(auto|scroll|hidden|clip)$/.test(style.overflowX),y=/^(auto|scroll|hidden|clip)$/.test(style.overflowY);
++        if(style.display!=='contents'&&(x||y))clips.push({element:node,x,y});
++      }
++      node=node instanceof Element&&node.assignedSlot ? node.assignedSlot : node instanceof ShadowRoot ? node.host : node.parentNode;
++    }
++    let frame=0;
++    const scroll=(event:Event)=>{
++      if(this.containsPath(event.composedPath())||frame)return;
++      frame=win.requestAnimationFrame(()=>{
++        frame=0;
++        if(!this.owner.isConnected){hidden();return;}
++        const anchor=this.owner.getBoundingClientRect();
++        if(!this.anchorMoved(anchor))return;
++        const outside=anchor.bottom<=0||anchor.top>=win.innerHeight||clips.some(({element,x,y})=>{
++          const r=element.getBoundingClientRect();
++          return (x&&(anchor.right<=r.left||anchor.left>=r.right))||(y&&(anchor.bottom<=r.top||anchor.top>=r.bottom));
++        });
++        if(outside)hidden();else reposition();
++      });
++    };
++    for(const root of roots)root.addEventListener('scroll',scroll,{capture:true,passive:true,signal:events.signal});
++    this.followCleanup=()=>{events.abort();if(frame)win.cancelAnimationFrame(frame);};
++  }
++
++  public stopFollowing(): void { this.followCleanup?.();this.followCleanup=undefined; }
++
+   public containsPath(path: EventTarget[]): boolean {
+     return path.includes(this.owner) || (!!this.host && path.includes(this.host));
+   }
+@@ -70,6 +111,7 @@ export class FloatingSurfaceController {
+   }
+ 
+   public destroy(): void {
++    this.stopFollowing();
+     this.anchorBounds = null;
+     if (this.root) litRender(nothing, this.root);
+     this.host?.remove();
+diff --git a/src/houseplan-card.ts b/src/houseplan-card.ts
+index cf17f3ad4..3cfdf3eff 100755
+--- a/src/houseplan-card.ts
++++ b/src/houseplan-card.ts
+@@ -1,3 +1,4 @@
++import { labWindowHandleSides, labCloseLeaf, labManualOpeningAmount, labOpeningVisual, labSolarWindows, labShutterSegments } from './lab-native-opening';
+ import { live } from 'lit/directives/live.js';
+ import { styleMap } from 'lit/directives/style-map.js';
+ import { renderModeSceneLayers, type ModeSceneLayer } from './mode-scene-layers';
+@@ -3945,7 +3946,7 @@ export class HouseplanCard extends LitElement {
+       if (this._summary?.closeDialogIfIdle()) return;
+       if (this._markerDialog) { void this._editorRuntimeOrThrow()._requestMarkerDialogClose(); return; }
+       if (this._deviceInbox) { this._deviceInbox = null; return; }
+-      if (this._openingDialog) { this._openingDialog = null; return; }
++      if (this._openingDialog) { if(!labCloseLeaf(this))this._openingDialog = null; return; }
+       if (this._physicalDialog) { this._physicalDialog = null; return; }
+       if (this._backdropDialog) { this._backdropDialog = null; return; }
+       if (this._decorShapeDialog) { this._decorShapeDialog = null; return; }
+@@ -11319,6 +11320,7 @@ export class HouseplanCard extends LitElement {
+     // counterpart of Glow's visibility barrier and never affects floor area.
+     const occluders = [
+       ...this._physicalBodiesR(space),
++      ...labShutterSegments(this).map(s => [s.a, s.b]),
+       ...sunBarrierLines(rooms, access, zeroWalls.barriers, zeroWalls.contour)
+         .map((line) => [[line[0], line[1]], [line[2], line[3]]]),
+     ];
+@@ -11374,7 +11376,7 @@ export class HouseplanCard extends LitElement {
+     // A contour-wall host is stable identity metadata, not a different physical
+     // carrier. Only an independent partition window is excluded from exterior
+     // sunlight (#132, ADR 282 Stage 1).
+-    const windows = solarWindowOpenings(this._openingsR);
++    const windows = labSolarWindows(this, solarWindowOpenings(this._openingsR));
+     const key = sunGeometryKey(this._openingWallIndexFor(space, zeroWalls.contour).key,
+       physicalBodiesKey(this._floorKey(space.id), this._cellCm, this._gridPitch), windows,
+       [sun.azimuth, sun.elevation, north, origin, sunRoomSettingsKey(space.rooms)], zeroWalls);
+@@ -11790,7 +11792,9 @@ export class HouseplanCard extends LitElement {
+     occluders: LightSegment[]; floor: number[][][]; fingerprint: string;
+     masonryGeometry: any; opaqueBodies: number[][][];
+   } {
+-    return this._lightBarrierPass.read(space, () => this._resolveLightBarriers(space));
++    const scene = this._lightBarrierPass.read(space, () => this._resolveLightBarriers(space));
++    const shutters = labShutterSegments(this);
++    return shutters.length ? { ...scene, occluders: [...scene.occluders, ...shutters.map(s => [...s.a, ...s.b])], fingerprint: scene.fingerprint + JSON.stringify(shutters) } : scene;
+   }
+ 
+   private _resolveLightBarriers(space: SpaceModel) {
+@@ -13948,7 +13952,7 @@ export class HouseplanCard extends LitElement {
+     const shown = Math.round(deg * 10) / 10;
+     const on45 = isExact45Vector(a, b, this._gridPitch * 0.0002);
+     return html`<div class="measurelabel ${on45 ? 'on45' : ''}" style="left:${left}%;top:${top}%">
+-      ${this._fmtLen(a, b)} · ${shown}°</div>`;
++      ${(globalThis as any).__hpNativePrototypes && this._mode === 'plan' ? '' : this._fmtLen(a, b) + ' · '}${shown}°</div>`;
+   }
+ 
+   /**
+@@ -14066,6 +14070,8 @@ export class HouseplanCard extends LitElement {
+ 
+   /** Live state of an opening's contact, 0..1 drawn amount. */
+   private _openingAmt(o: OpeningCfg): number {
++    const manual = labManualOpeningAmount(this, o);
++    if (manual !== undefined) return manual;
+     const entity = o.contact && this._renderOpeningEntityAvailable(o.contact)
+       ? this._renderPlanHass.states[o.contact]
+       : null;
+@@ -14145,6 +14151,8 @@ export class HouseplanCard extends LitElement {
+         : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
+       const visibleSpec: OpeningVisibleSpec = {
+         type: o.type,
++        lab: labOpeningVisual(this, o),
++        labHandleSides: labWindowHandleSides(this, o, face.cm),
+         length: o.rlen,
+         angle: o.angle,
+         amount: amt,
+@@ -14153,6 +14161,7 @@ export class HouseplanCard extends LitElement {
+         base,
+         tone,
+         sensorActive: active,
++        sensorDriven: !!o.contact,
+         cellCm: this._cellCm,
+         gridPitch: this._gridPitch,
+         face,
+diff --git a/src/houseplan-editor-runtime.ts b/src/houseplan-editor-runtime.ts
+index f57b92c62..318333f08 100644
+--- a/src/houseplan-editor-runtime.ts
++++ b/src/houseplan-editor-runtime.ts
+@@ -1,3 +1,4 @@
++import { labWindowHandleSides, labCloseLeaf, labManualOpeningField, labNativeEnabled, labOpeningFields, labSaveOpening, labSliding } from './lab-native-opening';
+ import { ModeChromeLayouts, type ModeChromeProbe } from './mode-chrome-layout';
+ import type { PanelHeaderMeasurement } from './panel-header-flow';
+ let nodeEditorFactory: typeof import('./wall-node-card-adapter').createWallNodeEditor | null = null;
+@@ -3584,6 +3585,7 @@ public _rszProjectPreview(
+ public _rszAcceptPreview(
+     _preview: ResizePreview | null, _wallGeometry: ResizeWallArtifact | null,
+   ): void {
++    if (labNativeEnabled()) (globalThis as any).__hpLabResizeGeometry = _wallGeometry?.roomGeom || null;
+     this.host._cfgEpoch++;
+     if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key = physicalBodiesKey(
+       this.host._floorKey(this.host._space), this.host._cellCm, this.host._gridPitch);
+@@ -6706,6 +6708,7 @@ public _saveOpening(): void {
+       o.flip_h = d.type !== 'gate' && d.flipH || undefined;
+       o.flip_v = d.flipV || undefined;
+     }
++    labSaveOpening(this.host, d, o);
+     sp.openings = sp.openings || [];
+     const i = sp.openings.findIndex((x: OpeningCfg) => x.id === o.id);
+     if (i >= 0) sp.openings[i] = o;
+@@ -10803,6 +10806,7 @@ public _renderOpeningPlacementPreview(): TemplateResult {
+     if (!candidate) return svg``;
+     const visibleSpec: OpeningVisibleSpec = {
+       type: candidate.type,
++      labHandleSides: labWindowHandleSides(this.host, {...candidate,rx:candidate.x,ry:candidate.y},candidate.face.cm),
+       length: candidate.renderedLength,
+       angle: candidate.angle,
+       amount: openingAmount(candidate.type, null),
+@@ -10839,6 +10843,7 @@ public _renderOpeningPlacementPreview(): TemplateResult {
+ 
+ public _renderOpeningDialog(): TemplateResult {
+     const d = this.host._openingDialog!;
++    const leaf = labNativeEnabled() && d.type === 'window' ? (d as any)._labOpening?._editing : undefined;
+     const partitions = this.host._spaceModel()?.partitions || [];
+     const previous = d.id
+       ? this.host._curSpaceCfg?.openings?.find((item: OpeningCfg) => item.id === d.id)
+@@ -10920,10 +10925,10 @@ public _renderOpeningDialog(): TemplateResult {
+           : nothing}`;
+     };
+     return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host.hass} data-kind="opening" wide
+-      .title=${d.id ? this.host._t('opening.edit') : this.host._t('opening.new')} icon=${icon}
+-      @hp-close=${() => (this.host._openingDialog = null)}>
++      .title=${leaf ? `Створка ${leaf.index+1}` : d.type==='window' && labNativeEnabled() ? 'Настройки окна' : d.id ? this.host._t('opening.edit') : this.host._t('opening.new')} icon=${icon}
++      @hp-close=${() => {if(!labCloseLeaf(this.host))this.host._openingDialog = null;}}>
+         <div class="body">
+-          ${d.host ? html`<label>${this.host._t('opening.host_partition')}</label>
++          ${!leaf ? html`${d.host ? html`<label>${this.host._t('opening.host_partition')}</label>
+             <div class=${orphan || jambInvalid ? 'habindingbanner' : 'rhint'}
+               role=${orphan || jambInvalid ? 'status' : nothing}>
+               ${orphan || jambInvalid ? html`<ha-icon icon="mdi:alert-outline"></ha-icon>` : nothing}
+@@ -10951,6 +10956,8 @@ public _renderOpeningDialog(): TemplateResult {
+               if (n != null) this.host._openingDialog = { ...d, lengthCm: n, lengthTouched: true };
+             }} />
+ 
++          ` : nothing}
++          ${labOpeningFields(this.host, d)}
+           ${d.type === 'passage' && (d.contact || d.lock)
+             ? html`<div class="habindingbanner" role="status" aria-live="polite">
+                 <ha-icon icon="mdi:alert-outline"></ha-icon>
+@@ -10958,7 +10965,7 @@ public _renderOpeningDialog(): TemplateResult {
+               </div>`
+             : nothing}
+ 
+-          ${d.type !== 'passage'
++          ${d.type !== 'passage' && !(labNativeEnabled() && d.type === 'window')
+             ? html`<label>${this.host._t('opening.contact_label')}</label>
+                 ${picker('contact', this._contactCandidates())}
+                 ${d.contact
+@@ -10967,6 +10974,8 @@ public _renderOpeningDialog(): TemplateResult {
+                   : nothing}`
+             : nothing}
+ 
++          ${labManualOpeningField(this.host,d)}
++
+           ${d.type === 'door' || d.type === 'gate'
+             ? html`<label>${this.host._t('opening.lock_label')}</label>
+                 ${picker('lock', this._lockCandidates())}`
+@@ -10977,17 +10986,20 @@ public _renderOpeningDialog(): TemplateResult {
+                 <span>${this.host._t('opening.light_transparent')}</span></label>`
+             : nothing}
+ 
+-          ${d.type !== 'gate' && d.type !== 'passage'
++          ${d.type !== 'gate' && d.type !== 'passage' && !(labNativeEnabled() && d.type === 'window') && !labSliding(d)
+             ? html`<label class="hpf-check hpf-check-wrap srcrow">${this._boolInput(d.flipH, (v) => (this.host._openingDialog = { ...d, flipH: v }), false, 'opening-flip-horizontal')}
+                 <span>${this.host._t('opening.flip_h')}</span></label>`
+             : nothing}
+-          ${d.type !== 'passage'
++          ${d.type !== 'passage' && !(labNativeEnabled() && d.type === 'window')
+             ? html`<label class="hpf-check hpf-check-wrap srcrow">${this._boolInput(d.flipV, (v) => (this.host._openingDialog = { ...d, flipV: v }), false, 'opening-flip-vertical')}
+-                <span>${this.host._t('opening.flip_v')}</span></label>`
++                <span>${labSliding(d) ? 'Полотно с другой стороны стены' : this.host._t('opening.flip_v')}</span></label>`
+             : nothing}
+         </div>
+         <div class="row dialog-action-footer" slot="footer">
+-          ${d.id
++          ${leaf ? html`<div class="dialog-action-group dialog-action-commit">
++            <button class="btn ghost" data-lab-leaf-cancel @click=${()=>labCloseLeaf(this.host)}>Отмена</button>
++            <button class="btn on" data-lab-leaf-done @click=${()=>labCloseLeaf(this.host,true)}><ha-icon icon="mdi:check"></ha-icon>Готово</button>
++          </div>` : html`${d.id
+             ? html`<div class="dialog-action-group dialog-action-danger">
+                 <button data-hp="action" data-action="opening-delete" class="btn danger" @click=${() => this._deleteOpening()}>
+                   <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
+@@ -11004,7 +11016,7 @@ public _renderOpeningDialog(): TemplateResult {
+             <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveOpening()}>
+               <ha-icon icon="mdi:check"></ha-icon>${this.host._t('btn.save')}
+             </button>
+-          </div>
++          </div>`}
+         </div>
+     </hp-dialog>`;
+   }
+diff --git a/src/hp-settings-select.ts b/src/hp-settings-select.ts
+index 4f87e13b1..444bb11cd 100644
+--- a/src/hp-settings-select.ts
++++ b/src/hp-settings-select.ts
+@@ -119,14 +119,7 @@ export class HpSettingsSelect extends LitElement {
+     surface.style.left = `${place.left}px`; surface.style.top = `${place.top}px`;
+   };
+   private outside = (e: PointerEvent): void => { if (!this.floating.containsPath(e.composedPath())) this.close(); };
+-  private dismissScroll = (e: Event): void => {
+-    if (this.floating.containsPath(e.composedPath())) return;
+-    const anchor = this.renderRoot.querySelector('button')?.getBoundingClientRect();
+-    // A trigger click can scroll its pane before open(); the queued scroll
+-    // event arrives afterwards. Only movement since placement invalidates it.
+-    if (anchor && !this.floating.anchorMoved(anchor)) return;
+-    this.close();
+-  };
++
+   private focusout = (): void => { queueMicrotask(() => { if (this._open && !this.floating.ownsActiveElement()) this.close(); }); };
+   private async open(): Promise<void> {
+     if (this._open || !this.native || this.native.disabled) return;
+@@ -150,7 +143,7 @@ export class HpSettingsSelect extends LitElement {
+       close: reason => this.close(reason === 'escape') });
+     this.ownerDocument.addEventListener('pointerdown', this.outside, true);
+     this.ownerDocument.addEventListener('focusout', this.focusout);
+-    this.floating.dialog()?.addEventListener('scroll', this.dismissScroll, true);
++    this.floating.followAnchor(this.position, () => this.close());
+     win.addEventListener('resize', this.position); win.visualViewport?.addEventListener('resize', this.position);
+     win.visualViewport?.addEventListener('scroll', this.position);
+     this.surface()?.focus({preventScroll:true});
+@@ -167,7 +160,7 @@ export class HpSettingsSelect extends LitElement {
+     this._open = false; this.dispose?.(); this.dispose = undefined;
+     this.ownerDocument.removeEventListener('pointerdown', this.outside, true);
+     this.ownerDocument.removeEventListener('focusout', this.focusout);
+-    this.floating.dialog()?.removeEventListener('scroll', this.dismissScroll, true);
++    this.floating.stopFollowing();
+     const win = this.floating.window();
+     win?.removeEventListener('resize', this.position); win?.visualViewport?.removeEventListener('resize', this.position);
+     win?.visualViewport?.removeEventListener('scroll', this.position);
+diff --git a/src/render/opening-symbol.ts b/src/render/opening-symbol.ts
+index 4c5b2f986..c3622f800 100644
+--- a/src/render/opening-symbol.ts
++++ b/src/render/opening-symbol.ts
+@@ -1,4 +1,5 @@
+ import { svg, type TemplateResult } from 'lit';
++import { mdiWeatherSunny, mdiWeatherSunnyOff } from '@mdi/js';
+ import type { OpeningCfg } from '../types';
+ import { gridVisualScale, gridVisualUnits } from '../grid-scale';
+ import { openingSymbolOffset, type OpeningFaceOffset } from '../opening-symbol-placement';
+@@ -7,6 +8,10 @@ export type { OpeningFaceOffset } from '../opening-symbol-placement';
+ 
+ export interface OpeningVisibleSpec {
+   type: OpeningCfg['type'];
++  /** Local-only UI Lab extension, absent in normal rendering. */
++  lab?: { previewSelected?: number; movement: string; direction: string; leaves: { hinge: string; side: string; amount: number; active: boolean; sensorDriven?: boolean; light?: number | null }[] };
++  /** UI Lab: rooms on the negative/positive local Y sides of the closed window. */
++  labHandleSides?: readonly [boolean, boolean];
+   length: number;
+   angle: number;
+   amount: number;
+@@ -16,6 +21,8 @@ export interface OpeningVisibleSpec {
+   tone: string;
+   /** State paint is confined to a door's arc; other opening types keep tone. */
+   sensorActive?: boolean;
++  /** Guide paint follows the source of position, not the open/closed value. */
++  sensorDriven?: boolean;
+   cellCm: number;
+   gridPitch: number;
+   face: OpeningFaceOffset;
+@@ -36,6 +43,14 @@ export interface OpeningVisibleBounds {
+   maxY: number;
+ }
+ 
++/** Equal leaves meet directly; perspective changes only the open upper leaf. */
++export function labWindowLeafLayout(length:number,count:number) {
++  const width=length/count;
++  return {width,pitch:width};
++}
++
++export const openingGuideColor = (base:string,sensorDriven:boolean) => sensorDriven ? 'var(--primary-color, #03a9f4)' : base;
++
+ export function openingVisibleMetrics(spec: OpeningVisibleSpec): OpeningVisibleMetrics {
+   const half = spec.length / 2;
+   const jambHalf = spec.face.cm > 0
+@@ -188,8 +203,12 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
+   const { half, jambHalf } = openingVisibleMetrics(spec);
+   const visualScale = gridVisualScale(spec.cellCm);
+   const leafHalf = 1.75 * visualScale;
+-  const sx = spec.flipH ? -1 : 1;
+-  const sy = spec.flipV ? -1 : 1;
++  const lab = (globalThis as any).__hpNativePrototypes === true;
++  const windowLeaves = spec.lab?.leaves ?? (lab && spec.type==='window' ? [0,1].map(i=>({
++    hinge:(i===1)!==!!spec.flipH?'right':'left',side:spec.flipV?'back':'front',amount,active:false,sensorDriven:!!(spec.sensorDriven??spec.sensorActive),light:undefined,
++  })) : undefined);
++  const sx = windowLeaves && spec.type === 'window' ? 1 : spec.flipH ? -1 : 1;
++  const sy = windowLeaves && spec.type === 'window' ? 1 : spec.flipV ? -1 : 1;
+   // A gate is already symmetric around the wall axis. Its vertical flip is a
+   // direction command, not a mirror transform: face.side carries the resolved
+   // turn side and must remain observable instead of being cancelled by a
+@@ -199,31 +218,97 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
+   // Every symbol sits on the wall centreline. flip_v changes only leaf/swing
+   // direction; gates use face.side for their 10 degree turn (#250).
+   const [swingTx, swingTy] = bodyTranslation(spec);
++  const cornerRadius = lab ? .6 * visualScale : 0;
++  const handleOffset = (width: number) => Math.min(width * .15, 6 * visualScale) * 1.5;
++  const handleInset = handleOffset(spec.length);
++  // Attach the handle to the room-facing surface before rotating the leaf.
++  const handle = (x: number, y = 0, ySign = sy) => {
++    if(!lab || (spec.type !== 'door' && spec.type !== 'window'))return svg``;
++    const sides = spec.type === 'window' ? spec.labHandleSides || [false, false] : [true, true];
++    const negative = sides[ySign < 0 ? 1 : 0], positive = sides[ySign < 0 ? 0 : 1];
++    if(!negative && !positive)return svg``;
++    return svg`<line class="op-handle" x1=${x} x2=${x}
++      y1=${y - (negative ? leafHalf * 2 * 1.1 : 0)} y2=${y + (positive ? leafHalf * 2 * 1.1 : 0)}
++      stroke=${spec.base} stroke-width=${leafHalf * 2 / 1.5 * .9} stroke-linecap="round" pointer-events="none"></line>`;
++  };
+ 
+   let body: TemplateResult;
+-  if (spec.type === 'window') {
++  if (windowLeaves && spec.type === 'window') {
++    const count = windowLeaves.length, {width,pitch}=labWindowLeafLayout(spec.length,count), arcLen = Math.PI / 2 * width;
++    const pieces = windowLeaves.map((leaf, i) => {
++      const right = leaf.hinge === 'right', direction = right ? -1 : 1, side = leaf.side === 'back' ? -1 : 1;
++      const origin = -half + i*pitch + (right ? width : 0);
++      const transform = `translate(${origin} 0) scale(${direction} ${side})`;
++      const color = spec.base;
++      const arcColor = openingGuideColor(spec.base,!!(leaf.sensorDriven??spec.sensorDriven??spec.sensorActive));
++      const lift = 20 / spec.cellCm * spec.gridPitch;
++      const shrink=Math.min(3/spec.cellCm*spec.gridPitch,Math.max(0,(width-4*visualScale)/2));
++      const capInset=Math.min(1.35*visualScale,(width-2*shrink)*.2);
++      const openX=shrink+capInset;
++      // Bring the original diagonal ten degrees closer to the perpendicular.
++      const run=lift*Math.tan(Math.max(Math.PI/360,Math.atan(width*.10/lift)-10*Math.PI/180));
++      const inset=Math.min(width/2,openX+run);
++      const planePath=`M ${inset} 0 L ${openX} ${-lift} L ${width-openX} ${-lift} L ${width-inset} 0 Z`;
++      return {
++        plane: leaf.hinge==='top' ? svg`<g transform=${transform}><g class="op-leaf" style="transform:scaleY(${leaf.amount})">
++          <path class="op-top-plane" d=${planePath} fill="#42bfff" fill-opacity=".20" stroke="none"></path>
++        </g></g>` : svg``,
++        guides: svg`<g transform=${transform}>${leaf.hinge === 'top' ? svg`
++          <g class="op-leaf" style="transform:scaleY(${leaf.amount})">
++            <path class="op-arc op-top-connector" d="M ${inset} 0 L ${openX} ${-lift}" fill="none" stroke=${arcColor} stroke-width=${1.5*visualScale}></path>
++            <path class="op-arc op-top-connector" d="M ${width-inset} 0 L ${width-openX} ${-lift}" fill="none" stroke=${arcColor} stroke-width=${1.5*visualScale}></path>
++          </g>
++        ` : svg`<path class="op-arc" d="M ${width} 0 A ${width} ${width} 0 0 0 0 ${-width}" fill="none" stroke=${arcColor}
++          stroke-dasharray=${arcLen} stroke-dashoffset=${arcLen*(1-leaf.amount)}></path>`}</g>
++          ${i > 0 && spec.face.cm > 0 ? svg`<line class="op-glass" x1=${-half+i*pitch} y1=${-jambHalf} x2=${-half+i*pitch} y2=${jambHalf}
++            stroke=${spec.base} stroke-width=${1.5*visualScale}></line>` : svg``}`,
++        closedPosition:leaf.hinge==='top' ? svg`<g transform=${transform}><line class="op-arc op-top-closed-position"
++          x1="0" y1="0" x2=${width} y2="0" stroke=${color} stroke-width=${1.5*visualScale}></line></g>` : svg``,
++        leaf: svg`<g data-lab-leaf-kind=${leaf.hinge} transform=${transform}>
++          <g class="op-leaf" style=${leaf.hinge==='top' ? `transform:translateY(${-lift*leaf.amount}px)` : `transform:rotate(${-90*leaf.amount}deg)`}>
++            <rect rx=${cornerRadius} x=${leaf.hinge==='top'?shrink*leaf.amount:0} y=${-1.5*visualScale}
++              width=${width-(leaf.hinge==='top'?2*shrink*leaf.amount:0)} height=${3*visualScale} fill=${color}></rect>
++            ${handle(leaf.hinge==='top'?width/2:width-handleOffset(width),0,side)}
++          </g></g>`,
++        indicator: leaf.light !== undefined ? svg`<g class="lab-shade-indicator" data-leaf=${i} transform="translate(${-half+i*pitch+width/2} ${side*(jambHalf+12*visualScale)}) scale(${.55*visualScale})" fill="none" stroke=${spec.base} stroke-width="1.8" stroke-linecap="round" pointer-events="none">
++          <title>Створка ${i+1}: ${leaf.light===null?'нет данных о шторах':leaf.light===0?'свет перекрыт':'свет проходит'}</title>
++          ${leaf.light===null ? svg`<text text-anchor="middle" dominant-baseline="central" fill=${spec.base} stroke="none" font-size="19">?</text>` : svg`<path data-icon=${leaf.light===0?'mdi:weather-sunny-off':'mdi:weather-sunny'} d=${leaf.light===0?mdiWeatherSunnyOff:mdiWeatherSunny} transform="translate(-12 -12)" fill=${spec.base} stroke="none"></path>`}
++        </g>` : svg``,
++      };
++    });
++    // Paint every guide first: a neighbouring leaf must cover it regardless of leaf order.
++    body = svg`<g class="op-window-planes">${pieces.map(piece=>piece.plane)}</g>
++      <g class="op-window-guides">${pieces.map(piece=>piece.guides)}</g>
++      <g class="op-window-closed-positions">${pieces.map(piece=>piece.closedPosition)}</g>
++      <g class="op-window-leaves">${pieces.map(piece=>piece.leaf)}</g>${pieces.map(piece=>piece.indicator)}`;
++  } else if (spec.lab?.movement === 'slide' && (spec.type === 'door' || spec.type === 'gate')) {
++    const shift = (spec.lab.direction === 'right' ? 1 : -1) * spec.length * amount;
++    body = svg`<g class="op-leaf" style="transform:translateX(${shift}px)"><rect rx=${cornerRadius} x="${-half}" y="${-jambHalf-leafHalf}" width="${spec.length}" height="${leafHalf * 2}" fill="${spec.base}"></rect>${handle(spec.lab.direction === 'right' ? -half + handleInset : half - handleInset, -jambHalf)}</g>`;
++  } else if (spec.type === 'window') {
+     const arcLen = (Math.PI / 2) * half;
+     const glass = spec.face.cm > 0
+       ? svg`<line class="op-glass" x1="0" y1="${-jambHalf}" x2="0" y2="${jambHalf}"
+-          stroke="${spec.tone}" stroke-width="${1.5 * visualScale}"></line>`
++          stroke="${spec.base}" stroke-width="${1.5 * visualScale}"></line>`
+       : svg``;
+     body = svg`
+       <g transform="translate(${swingTx} ${swingTy})">
+       <path class="op-arc" d="M 0 0 A ${half} ${half} 0 0 0 ${-half} ${-half}" fill="none"
+-        stroke="${spec.tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amount)}"></path>
++        stroke="${openingGuideColor(spec.base,!!(spec.sensorDriven??spec.sensorActive))}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amount)}"></path>
+       <path class="op-arc" d="M 0 0 A ${half} ${half} 0 0 1 ${half} ${-half}" fill="none"
+-        stroke="${spec.tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amount)}"></path>
++        stroke="${openingGuideColor(spec.base,!!(spec.sensorDriven??spec.sensorActive))}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amount)}"></path>
++      ${glass}
+       <g transform="translate(${-half} 0)">
+         <g class="op-leaf" style="transform:rotate(${-90 * amount}deg)">
+-          <rect x="0" y="${-1.5 * visualScale}" width="${half}" height="${3 * visualScale}" fill="${spec.tone}"></rect>
++          <rect rx=${cornerRadius} x="0" y="${-1.5 * visualScale}" width="${half}" height="${3 * visualScale}" fill="${spec.base}"></rect>
++          ${handle(half - handleOffset(half))}
+         </g>
+       </g>
+       <g transform="translate(${half} 0)">
+         <g class="op-leaf" style="transform:rotate(${90 * amount}deg)">
+-          <rect x="${-half}" y="${-1.5 * visualScale}" width="${half}" height="${3 * visualScale}" fill="${spec.tone}"></rect>
++          <rect rx=${cornerRadius} x="${-half}" y="${-1.5 * visualScale}" width="${half}" height="${3 * visualScale}" fill="${spec.base}"></rect>
++          ${handle(-half + handleOffset(half))}
+         </g>
+       </g>
+-      ${glass}
+       </g>`;
+   } else if (spec.type === 'gate') {
+     // Gate leaves open only 10° towards the resolved face. Gate flip_v changes
+@@ -234,12 +319,12 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
+       <g transform="translate(${swingTx} ${swingTy})">
+       <g transform="translate(${-half} 0)">
+         <g class="op-leaf" style="transform:rotate(${gateAngle}deg)">
+-          <rect x="0" y="${-leafHalf}" width="${half}" height="${leafHalf * 2}" fill="${spec.tone}"></rect>
++          <rect rx=${cornerRadius} x="0" y="${-leafHalf}" width="${half}" height="${leafHalf * 2}" fill="${spec.tone}"></rect>
+         </g>
+       </g>
+       <g transform="translate(${half} 0)">
+         <g class="op-leaf" style="transform:rotate(${-gateAngle}deg)">
+-          <rect x="${-half}" y="${-leafHalf}" width="${half}" height="${leafHalf * 2}" fill="${spec.tone}"></rect>
++          <rect rx=${cornerRadius} x="${-half}" y="${-leafHalf}" width="${half}" height="${leafHalf * 2}" fill="${spec.tone}"></rect>
+         </g>
+       </g>
+       </g>`;
+@@ -248,16 +333,25 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
+     body = svg`
+       <g transform="translate(${swingTx} ${swingTy})">
+       <path class="op-arc" d="M ${half} 0 A ${spec.length} ${spec.length} 0 0 0 ${-half} ${-spec.length}" fill="none"
+-        stroke="${spec.sensorActive ? 'var(--primary-color, #03a9f4)' : spec.base}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amount)}"></path>
++        stroke="${openingGuideColor(spec.base,!!(spec.sensorDriven??spec.sensorActive))}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amount)}"></path>
+       <g transform="translate(${-half} 0)">
+         <g class="op-leaf" style="transform:rotate(${-90 * amount}deg)">
+-          <rect x="0" y="${-leafHalf}" width="${spec.length}" height="${leafHalf * 2}" fill="${spec.base}"></rect>
++          <rect rx=${cornerRadius} x="0" y="${-leafHalf}" width="${spec.length}" height="${leafHalf * 2}" fill="${spec.base}"></rect>
++          ${handle(spec.length - handleInset)}
+         </g>
+       </g>
+       </g>`;
+   }
+ 
+-  return svg`<g transform="scale(${sx} ${renderSy})">
++  return svg`<g transform="scale(${sx} ${renderSy})" stroke-linecap=${lab ? 'round' : 'butt'} stroke-linejoin=${lab ? 'round' : 'miter'}>
++    ${lab && spec.type==='window' ? svg`<g class="op-window-glass" stroke="none" pointer-events="none">
++      <rect class="op-window-tint" x=${-half} y=${-jambHalf} width=${spec.length} height=${jambHalf*2}
++        rx=${cornerRadius} fill="#42bfff" fill-opacity=".20"></rect>
++      <path class="op-window-glint" d="M ${-half+spec.length*.16} ${-jambHalf} L ${-half+spec.length*.32} ${-jambHalf} L ${-half+spec.length*.50} ${jambHalf} L ${-half+spec.length*.34} ${jambHalf} Z"
++        fill="#ffffff" fill-opacity=".26"></path>
++      <path class="op-window-glint" d="M ${-half+spec.length*.57} ${-jambHalf} L ${-half+spec.length*.61} ${-jambHalf} L ${-half+spec.length*.79} ${jambHalf} L ${-half+spec.length*.75} ${jambHalf} Z"
++        fill="#ffffff" fill-opacity=".32"></path>
++    </g>` : svg``}
+     <line x1="${-half}" y1="${-jambHalf}" x2="${-half}" y2="${jambHalf}"
+       stroke="${spec.base}" stroke-width="${2.5 * visualScale}"></line>
+     <line x1="${half}" y1="${-jambHalf}" x2="${half}" y2="${jambHalf}"
+diff --git a/src/space-render.ts b/src/space-render.ts
+index b3bb5d687..dea9368b0 100644
+--- a/src/space-render.ts
++++ b/src/space-render.ts
+@@ -474,7 +474,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
+   ): OpeningVisibleSpec => {
+     const face = staticOpeningFace(opening, openingIndex, walls.length > 0);
+     return { type: opening.type, length: opening.rlen, angle: opening.angle,
+-      amount, flipH: !!opening.flip_h, flipV: !!opening.flip_v,
++      amount, sensorDriven:!!opening.contact, flipH: !!opening.flip_h, flipV: !!opening.flip_v,
+       base, tone, cellCm, gridPitch: GRID_PITCH, face };
+   };
+   const openingBounds = disp.hideOpenings ? [] : projectedOpenings.flatMap((opening) => {
+diff --git a/src/wall-node-preview.ts b/src/wall-node-preview.ts
+index 4e23ab166..ed826f222 100644
+--- a/src/wall-node-preview.ts
++++ b/src/wall-node-preview.ts
+@@ -140,6 +140,7 @@ export interface NodePreviewScene {
+ export function nodePreviewScene(before: NodePreviewGeometry, next: NodePreviewGeometry,
+   options: { px: number; color: string; fill: string; opacity: number; amount(o: OpeningCfg): number }): NodePreviewScene {
+   const { model, input, geometry } = next;
++  if ((globalThis as any).__hpNativePrototypes) (globalThis as any).__hpLabNodeGeometry = { geom: geometry.roomGeom, model, source: next.space };
+   const united = wallBodiesGeometryPath(geometry);
+   const solid = wallBodyNeedsSolid(geometry.depthUnits, options.px)
+     || wallHatchNeedsSolid(wallHatchStepUnits(input.cellCm), options.px);
+@@ -183,7 +184,7 @@ export function nodePreviewScene(before: NodePreviewGeometry, next: NodePreviewG
+         const moving = !previous || Math.hypot(previous.rx - o.rx, previous.ry - o.ry) > 1e-6 || previous.angle !== o.angle;
+         return svg`<g class="opening" data-hp="opening" data-id=${o.id} opacity=${moving ? '.5' : '1'}
+           transform=${`translate(${o.rx} ${o.ry}) rotate(${o.angle})`}>${renderOpeningVisibleGeometry({
+-            type: o.type, length: o.rlen, angle: o.angle, amount: options.amount(o),
++            type: o.type, length: o.rlen, angle: o.angle, amount: options.amount(o), sensorDriven:!!o.contact,
+             flipH: !!o.flip_h, flipV: !!o.flip_v, base: options.color, tone: options.color,
+             cellCm: input.cellCm, gridPitch: GRID_PITCH, face,
+           })}</g>`;

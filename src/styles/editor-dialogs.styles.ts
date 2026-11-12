@@ -322,6 +322,29 @@ export const editorDialogsStyles = unsafeCSS(css`
       color: var(--text-primary-color, #fff);
     }
     .opening-entity-empty { cursor: default; }
+    .opening-leaf-list-section { margin-top:24px; border-top:1px solid var(--divider-color); padding-top:20px; }
+    .opening-leaf-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .opening-leaf-list { display:grid; gap:10px; }
+    .opening-leaf-row { display:flex; align-items:center; gap:8px; min-width:0; }
+    .opening-leaf-row .opening-leaf-open { display:flex!important; flex-direction:row; align-items:center; gap:12px; flex:1; min-width:0;
+      text-align:start; justify-content:flex-start; padding:12px; min-height:64px; }
+    .opening-leaf-copy { display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0; flex:1; }
+    .opening-leaf-copy strong { font-size:14px; }
+    .opening-leaf-copy small { font-size:12px; color:var(--secondary-text-color); font-weight:400; white-space:normal; line-height:1.4; }
+    .opening-leaf-row ha-icon { flex:none; --mdc-icon-size:20px; }
+    .opening-window-preview { margin:0; padding:12px; display:grid; gap:8px; justify-items:center;
+      background:var(--secondary-background-color); border-radius:var(--ha-card-border-radius,12px); }
+    .opening-window-preview svg { display:block; width:100%; height:130px; max-width:360px; overflow:visible; pointer-events:none; }
+    .opening-window-preview figcaption { font-size:12px; line-height:1.4; color:var(--secondary-text-color); }
+    .opening-leaf-form { display:flex; flex-direction:column; gap:20px; }
+    .opening-leaf-group { display:flex; flex-direction:column; gap:16px; min-width:0; }
+    .opening-leaf-group + .opening-leaf-group { border-top:1px solid var(--divider-color); padding-top:20px; }
+    .opening-leaf-form .hpf-check, .opening-leaf-form .rhint { margin:0; }
+    .opening-leaf-field { display:grid; gap:8px; min-width:0; }
+    .opening-leaf-field > label { display:block; margin:0!important; }
+    .opening-leaf-heading strong { font-size:16px; }
+    .opening-leaf-status { display:flex; align-items:center; gap:8px; color:var(--secondary-text-color); font-size:13px; }
+    .opening-leaf-limit { font-size:12px; margin-top:10px; }
     .rtest {
       display: flex;
       align-items: center;

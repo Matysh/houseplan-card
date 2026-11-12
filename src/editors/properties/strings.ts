@@ -2,8 +2,10 @@
 import { subst } from '../../logic';
 import { t, langOf, type I18nKey } from '../../i18n';
 const reused = {title:'btn.properties',copy:'btn.copy',delete:'btn.delete',cancel:'btn.cancel',
+  opening_features_unavailable:'opening.features.unavailable',
   light_transparent:'opening.light_transparent',fill:'decor.fill',line:'decor.line',rect:'decor.rect',ellipse:'decor.ellipse',furniture:'decor.furniture'} as const satisfies Record<string,I18nKey>;
 const en = {
+  opening_features_unavailable: 'Update House Plan and reload before editing an extended opening.',
   wall_dimensions:'Dimensions', wall_dimension_unavailable:'Dimension unavailable',
   wall_dimensions_axis_fallback:'Some sections show their axis length.',
   wall_dimensions_boundary:'Boundary-line dimensions of a zero-thickness wall are shown.',
@@ -61,6 +63,7 @@ const en = {
 };
 type Key = keyof typeof en;
 const ru: Record<Key, string> = {
+  opening_features_unavailable: 'Обновите House Plan и перезагрузите страницу перед редактированием расширенного проёма.',
   wall_dimensions:'Размеры', wall_dimension_unavailable:'Размер не определён',
   wall_dimensions_axis_fallback:'Для части участков показана длина по оси.',
   wall_dimensions_boundary:'Показаны размеры граничной линии стены нулевой толщины.',

@@ -1,5 +1,6 @@
 /** #1045: one local structural deletion, independent of render fragments and writers. */
 import { GRID_STEP_N } from './canvas-constants';
+import { transportOpeningOrientations } from './opening-orientation';
 import { compareCodePoints } from './codepoint-order';
 import { polygonArea, roomsOverlap, polyIsSimple } from './logic';
 import { sameNodePoint, structuralNodeWalls, structuralWallNodes,
@@ -147,8 +148,8 @@ export function applyNodeDelete(source: NodeMoveSpace, intent: NodeDeleteIntent)
         retained: { kind: keep.kind, id: keep.id }, removed: { kind: drop.kind, id: drop.id } },
       { hosts: source.openings || [] });
       for (const opening of out.openings || []) if (opening.id in result.mapping.hosts) opening.host = result.mapping.hosts[opening.id];
-      return { ok: true, space: projectGraphSpace(out, result.graph).space, retained: keep.id, removed: drop.id };
+      return { ok: true, space: transportOpeningOrientations(source, projectGraphSpace(out, result.graph).space), retained: keep.id, removed: drop.id };
     } catch (error) { return fail(error instanceof PlanGraphError && error.code === 'collapse-host-incidence' ? 'opening' : 'unsafe'); }
   }
-  return { ok: true, space: out, retained: keep.id, removed: drop.id };
+  return { ok: true, space: transportOpeningOrientations(source, out), retained: keep.id, removed: drop.id };
 }

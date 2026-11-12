@@ -21,3 +21,6 @@ docs/CHANGELOG.ru.md merge=union
 
 # #1120: immutable approved replay bytes include original CRLF; keep SHA-256 provenance.
 docs/design/1120-panel-header-overflow/2026-10-29/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# #1024: preserve the immutable UI-059 replay bytes and their published hashes.
+docs/ui-lab-reference/2026-11-12-openings-1024/** -text whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol

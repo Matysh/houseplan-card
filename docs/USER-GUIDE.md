@@ -1314,6 +1314,35 @@ axis.
 
 ## 9. Doors, windows, gates and locks
 
+### Independent leaves, shades and sliding openings (#1024)
+
+Window settings offer 1–4 equal leaves and one common opening side. Open a row
+to choose its sensor, manual position and left/right/top hinges. The preview
+follows plan orientation and highlights the selected leaf. Top opening is a
+symbolic 20 cm parallel shift, not a measured angle.
+
+A bound sensor takes precedence and disables manual position. An unavailable
+window sensor keeps a neutral closed pose with a separate `?`, never a saved
+manual fallback. Without a sensor, a window defaults to closed and a door/gate
+to open. Remove the binding to choose manually.
+
+Each leaf can have curtains, blinds or shutters with its own source and manual
+position. Confirmed closed shades block only their share of light; open,
+partly open and unknown shades allow it. A sun, crossed-out sun or `?` indicates
+the state. Shades have no physical panels. Glass-leaf position changes only
+the symbol, not light transmission.
+
+Doors and gates offer swing or one full-width sliding panel with an axis-local
+direction. These settings never send commands. Sensor-driven guides use the HA
+accent; manual guides use the symbol colour. Merely opening or saving an old
+window does not materialize independent-leaf settings.
+
+Nested **Done** changes only the draft; outer **Save** writes it. Cancel, close
+and Escape discard the current nested draft. Space Copy clears all leaf/shade
+bindings, including disabled shades, but keeps manual positions. Backup transfer
+preserves bindings. Update both the card and integration and reload before editing.
+
+
 An opening belongs to one room-wall segment or one completed independent Walls
 segment. Door and open passage default to 90 cm, window to 120 cm and gate to
 300 cm; the UI accepts 20–600 cm in 5 cm steps. **Opening** first opens a compact

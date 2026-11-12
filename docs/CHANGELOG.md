@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add independent 1–4 window leaves, top hinges, per-leaf shade light masks, manual positions and full-width sliding doors/gates. Share state resolution and symbols, retain volumetric materials, guard old writers, preserve portable v3 transfers and clear nested bindings only on space Copy (#1024, UI-059).
+
+
 - Reuse the wall drafting dimension mechanism for opening selection/drag/placement, decor lines and every adjacent equal device gap. Preserve physical references through reversed host angles, camera motion, zero gaps and native snapping; keep line angles separate (#1398).
 
 - Keep selected-wall dimensions attached throughout live pan and zoom instead of waiting for pointer release. Reproject only their screen-space layer from cached geometry, retaining fixed text/stroke size without writes or history (#1397).

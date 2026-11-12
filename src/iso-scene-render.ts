@@ -9,11 +9,13 @@ import { ISO_ICON_SCALE } from './iso-tiles';
 // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
 export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
+import { mdiWeatherSunny, mdiWeatherSunnyOff } from '@mdi/js';
+import type { ResolvedOpeningVisual } from './opening-features';
 import { clampScale, fitView, islandsOf, roomPoly, type SpaceDisplay } from './logic';
 import {
   ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT,
   ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT,
-  projectedFrame, isoCameraFor, type PlanPoint, type ScenePoint, type IsoCamera,
+  projectedFrame, isoCameraFor, projectPlanPoint, type PlanPoint, type ScenePoint, type IsoCamera,
 } from './iso-projection';
 import { planRotation, type PlanRotation } from './view-frame';
 import {
@@ -45,7 +47,7 @@ import { lruRead, lruWrite } from './card-runtime';
 import type { ResolvedDevicePresentation } from './device-presentation';
 import { deviceTextScale, legacySupplementalMetrics } from './device-face';
 import type { RenderOpening } from './interaction-types';
-import type { DevItem, RoomCfg, SpaceModel } from './types';
+import type { DevItem, RoomCfg, SpaceModel, OpeningFeatures } from './types';
 
 /** Exact-build handshake for the hidden lazy alpha runtime. */
 export const ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
@@ -418,6 +420,7 @@ export type IsoSourceOpening = {
   length: number;
   flipH: boolean;
   flipV: boolean;
+  opening_features?: OpeningFeatures;
 };
 
 export function isoSourceOpenings(
@@ -433,6 +436,7 @@ export function isoSourceOpenings(
     length: opening.rlen > 0 ? opening.rlen : 0.9 * coordinateScale,
     flipH: !!opening.flip_h,
     flipV: !!opening.flip_v,
+    ...(opening.opening_features ? { opening_features: opening.opening_features } : {}),
   }]);
 }
 
@@ -559,7 +563,8 @@ export function createIsoStructuralSource(
                 flip_v: faceFlipV,
               })
             : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
-        return buildIsoOpeningBasis({ ...opening, face }, wallHeight, openingGeometryPolicy);
+        return buildIsoOpeningBasis({ ...opening, face,
+          topShift: 20 / input.cellCm * input.gridPitch }, wallHeight, openingGeometryPolicy);
       });
       const frozenBases = Object.freeze(openingBases);
       return {
@@ -1074,11 +1079,14 @@ export function resolveIsoOpeningPanels(
   scene: IsoRenderScene | null,
   openings: readonly RenderOpening[],
   amountOf: (opening: RenderOpening) => number,
+  visualOf?: (opening: RenderOpening) => ResolvedOpeningVisual,
 ): IsoOpeningPanel[] {
   if (!layers.panels || !scene) return [];
   const panels = scene.openings.flatMap((basis) => {
     const opening = openings[basis.sourceIndex];
-    return opening ? projectIsoOpening(basis, amountOf(opening), scene?.camera) : [];
+    const visual = opening && visualOf?.(opening);
+    return opening && !visual?.unsupported
+      ? projectIsoOpening(basis, visual?.leaves?.map(leaf => leaf.amount) || amountOf(opening), scene?.camera) : [];
   });
   return panels.sort((a, b) => a.depth - b.depth
     || a.sourceIndex - b.sourceIndex || a.leaf - b.leaf);
@@ -1100,19 +1108,21 @@ export function resolveIsoFramePresentation(input: {
   scene: IsoRenderScene | null;
   openings: readonly RenderOpening[];
   amountOf: (opening: RenderOpening) => number;
+  visualOf?: (opening: RenderOpening) => ResolvedOpeningVisual;
   overlays: (layers: IsoDecorationLayers) => IsoOverlayRenderScene | null;
   cellCm: number;
 }): IsoFramePresentation {
   const layers = resolveIsoDecorationLayers(input.display);
   const panels = layers.panels
-    ? resolveIsoOpeningPanels(layers, input.scene, input.openings, input.amountOf)
+    ? resolveIsoOpeningPanels(layers, input.scene, input.openings, input.amountOf, input.visualOf)
     : [];
   const overlays = input.overlays(layers);
   const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => ({
     layers: renderLayers, panels, overlays,
     underlay: renderIsoUnderlay(renderLayers, input.scene?.floor, input.cellCm),
     shadows: renderIsoShadows(renderLayers, panels, input.scene?.geometry, input.cellCm),
-    walls: renderIsoWalls(input.projection, renderLayers, input.scene, panels, input.cellCm),
+    walls: svg`${renderIsoWalls(input.projection, renderLayers, input.scene, panels, input.cellCm)}
+      ${renderLayers.panels ? renderIsoOpeningIndicators(input.scene, input.openings, input.visualOf, input.cellCm, input.display.color) : nothing}`,
   });
   try { return render(layers); } catch (error) {
     // A material/shadow presentation failure loses only decorative nuance.
@@ -1124,6 +1134,32 @@ export function resolveIsoFramePresentation(input: {
 }
 
 const emptySvg = (): TemplateResult => svg`` as unknown as TemplateResult;
+
+function renderIsoOpeningIndicators(scene: IsoRenderScene | null, openings: readonly RenderOpening[],
+  visualOf: ((opening: RenderOpening) => ResolvedOpeningVisual) | undefined, cellCm: number, color: string): TemplateResult {
+  if (!scene || !visualOf) return emptySvg();
+  const scale = gridVisualScale(cellCm);
+  return svg`<g class="iso-opening-indicators" pointer-events="none" aria-hidden="true">${scene.openings.flatMap(basis => {
+    const opening = openings[basis.sourceIndex], visual = opening && visualOf(opening);
+    if (!visual?.leaves || basis.type !== 'window') return [];
+    const side = visual.side === 'negative' ? -1 : 1;
+    return visual.leaves.map((leaf, index) => {
+      const fraction = (index + .5) / visual.leaves!.length;
+      const center: PlanPoint = [basis.axis.start[0] + (basis.axis.end[0] - basis.axis.start[0]) * fraction,
+        basis.axis.start[1] + (basis.axis.end[1] - basis.axis.start[1]) * fraction];
+      const point = (sign: number) => projectPlanPoint([
+        center[0] + basis.axis.normal[0] * sign * (basis.face.depth / 2 + 12 * scale),
+        center[1] + basis.axis.normal[1] * sign * (basis.face.depth / 2 + 12 * scale),
+      ], basis.windowProfile?.frameBottom ?? 0, scene.camera);
+      const shade = point(-side), unknown = point(side);
+      return svg`${leaf.shade ? svg`<g class="op-shade-indicator" transform="translate(${shade[0]} ${shade[1]}) scale(${.55 * scale})" fill=${color}>
+        ${leaf.shade.amount === null ? svg`<text text-anchor="middle" dominant-baseline="central" font-size="19">?</text>`
+          : svg`<path d=${leaf.shade.amount === 0 ? mdiWeatherSunnyOff : mdiWeatherSunny} transform="translate(-12 -12)"></path>`}
+        </g>` : nothing}${leaf.unknown ? svg`<text class="op-leaf-unknown" x=${unknown[0]} y=${unknown[1]} fill=${color}
+          text-anchor="middle" dominant-baseline="central" font-size=${11 * scale}>?</text>` : nothing}`;
+    });
+  })}</g>`;
+}
 
 /** Scale-aware visual light vector for the one remaining building ambient shadow. */
 export function isoFixedLightTransform(cellCm: number): string {

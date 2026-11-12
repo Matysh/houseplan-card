@@ -10,8 +10,8 @@ from __future__ import annotations
 import json
 import math
 import re
-from fractions import Fraction
 from dataclasses import dataclass
+from fractions import Fraction
 from typing import Any
 
 
@@ -66,7 +66,7 @@ COUNT = "count"
 BOOL = bool
 RAW_REF = re.compile(r"[\s\S]{0,1024}\Z")
 REF = re.compile(
-    r"(?:space|room|area|wall|partition|node|column|opening|decor|stair|marker|device|entity|attribute|route|map|segment|installation|summary-block|summary-value|radar-slot|led|asset|integration|run|job)-[a-z0-9]{1,16}-[1-9][0-9]*\Z"
+    r"(?:space|room|area|wall|partition|node|column|opening|opening-leaf|decor|stair|marker|device|entity|attribute|route|map|segment|installation|summary-block|summary-value|radar-slot|led|asset|integration|run|job)-[a-z0-9]{1,16}-[1-9][0-9]*\Z"
 )
 REF_OR_NULL = nullable(REF)
 COLOR = re.compile(
@@ -470,6 +470,24 @@ SPACE = Object(
                     **fields("x y angle length", NUMBER),
                     **fields("invert flip_h flip_v light_transparent", BOOL),
                     **fields("contact lock", REF_OR_NULL),
+                    "opening_features": Object({
+                        "version": enum(1),
+                        "mechanism": enum("swing", "slide"),
+                        "slide_direction": enum("start", "end"),
+                        "manual": enum("open", "closed"),
+                        "side": enum("negative", "positive"),
+                        "leaves": Array(Object({
+                            "id": REF_OR_NULL,
+                            "hinge": enum("start", "end", "top"),
+                            "manual": enum("open", "closed"),
+                            "invert": BOOL,
+                            "contact": REF_OR_NULL,
+                            "shade": Object({
+                                "enabled": BOOL, "manual": enum("open", "closed"),
+                                "invert": BOOL, "contact": REF_OR_NULL,
+                            }),
+                        }), maximum=4),
+                    }),
                     "host": Object(
                         {
                             "kind": enum("wall", "partition"),

@@ -17,6 +17,11 @@ import { decodePoint, pointToNumbers, microRadius, toNumber } from './plan-exact
 import { graphOpeningRun, graphOpeningRunTarget } from './graph-opening-run';
 import { translateAuthoredCoordinate } from './authored-grid';
 import { sendHouseplanWrite } from './large-write-transport';
+import { resolveOpeningVisual, openingWindowHandleSides, motionOpeningFeatures, assertOpeningFeatures } from './opening-features';
+import { acceptOpeningLeafDraft, openingDraftObject, draftWindowFeatures, type OpeningDialogDraft } from './opening-dialog-model';
+import { openingFeatureFields, type OpeningFeatureFieldOptions } from './editors/opening-features-fields';
+import { transportOpeningOrientations } from './opening-orientation';
+import { openingPropertiesCore, propertiesOpeningSides } from './editors/properties/physical';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -218,7 +223,7 @@ import { removeMarkerAreaSnapshots } from './device-area-relocation';
 import { RoomDeviceDiscovery, type CreatedAreaRoom } from './room-device-discovery';
 import { type VirtualLightSnapshot } from './virtual-light-state';
 import type {
-  OpeningCfg, OpeningHost, RoomCfg, PartitionCfg, WallColumnCfg, SpaceModel, PdfRef,
+  OpeningCfg, RoomCfg, PartitionCfg, WallColumnCfg, SpaceModel, PdfRef,
   Marker, ServerConfig, DevItem, CardConfig, MarkerValueBadge, ValueBadgePosition,
   ValueBadgeSource,
 } from './types';
@@ -355,6 +360,7 @@ import {
 import { decorStyleToSettings } from './editors/decor/geometry';
 import {
   openingVisibleMetrics, renderOpeningVisibleGeometry,
+  openingVisibleBounds,
   type OpeningFaceOffset, type OpeningVisibleSpec,
 } from './render/opening-symbol';
 import {
@@ -576,6 +582,7 @@ export interface HouseplanEditorHostPort {
   _canEdit: boolean;
   _haWallNodeMoveApi: number | null;
   readonly _haPlanGraphApi: number | null;
+  readonly _haOpeningFeaturesApi: number | null;
   _haWallNodeDeleteApi: number | null;
   _haVacuumDockRestartApi: number | null;
   _haVacuumHistoryApi: number | null;
@@ -752,7 +759,7 @@ export interface HouseplanEditorHostPort {
   _openBindingInHa: (binding: string) => void;
   _openCuts: () => number[][];
   _openingAmt: (o: OpeningCfg) => number;
-  _openingDialog: { id?: string; type: "door" | "window" | "gate" | "passage"; lengthCm: number; lengthTouched?: boolean; contact: string; lock: string; contactOpen?: boolean; contactFilter?: string; lockOpen?: boolean; lockFilter?: string; invert: boolean; lightTransparent?: boolean; flipH: boolean; flipV: boolean; host?: OpeningHost; x: number; y: number; angle: number; } | null;
+  _openingDialog: OpeningDialogDraft | null;
   _openingDimensionContextCache: { key: string; value: OpeningDimensionContext; } | null;
   _openingEntityAvailable: (eid: string | null | undefined) => boolean;
   _openingFace: (opening: RenderOpening, index: OpeningWallIndex, flipV: boolean) => OpeningFaceOffset;
@@ -6255,6 +6262,7 @@ public _openingClick(raw: number[]): void {
         lengthTouched: false,
         contact: rebound.contact || '', lock: rebound.lock || '',
         invert: !!rebound.invert, lightTransparent: rebound.light_transparent === true, flipH: !!rebound.flip_h, flipV: !!rebound.flip_v,
+        ...(rebound.opening_features ? { openingFeatures: structuredClone(rebound.opening_features) } : {}),
       } : {
         type: place.type, lengthCm: place.lengthCm, contact: '', lock: '',
         invert: false, lightTransparent: false, flipH: place.flipH, flipV: place.flipV,
@@ -6262,6 +6270,16 @@ public _openingClick(raw: number[]): void {
       ...(place.host ? { host: place.host } : {}),
       x: place.x, y: place.y, angle: place.angle,
     };
+    if (rebound?.opening_features) {
+      const sp = this.host._curSpaceCfg!;
+      const draft = this.host._openingDialog;
+      const target = { ...rebound, x: place.x / NORM_W, y: place.y / this.host._spaceH,
+        angle: place.angle, host: place.host };
+      transportOpeningOrientations(sp, { ...sp, openings: [target] });
+      draft.openingFeatures = structuredClone(target.opening_features);
+      draft.flipV = !!target.flip_v;
+      draft.angle = target.angle;
+    }
     this.host._openingRebindId = null;
     // rulers, tick and ghost live only through the placement gesture
     this.host._openingHoverCandidate = null;
@@ -6285,6 +6303,7 @@ public _editOpening(o: RenderOpening): void {
       lightTransparent: o.light_transparent === true,
       flipH: !!o.flip_h,
       flipV: !!o.flip_v,
+      ...(o.opening_features ? { openingFeatures: structuredClone(o.opening_features) } : {}),
       ...(o.host?.kind === 'partition' ? { host: { ...o.host } } : {}),
       x: o.rx, y: o.ry, angle: o.angle,
     };
@@ -6427,6 +6446,7 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
       if (changed) drag.dirty = true;
       cfg.host = target.host;
       cfg.x = target.normalized[0]; cfg.y = target.normalized[1]; cfg.angle = angle;
+      transportOpeningOrientations(sp!, { ...sp!, openings: [cfg] });
       this.host._opMeasure = cfg.host?.kind === 'wall' ? this._opRuler({
         x: cfg.x * NORM_W, y: cfg.y * this.host._spaceH, angle,
       }, cfg.length * NORM_W, false).measure : null;
@@ -6462,6 +6482,7 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
       if (changed) this.host._opDrag.dirty = true;
       cfg.host = { kind: cfg.host.kind, id: cfg.host.id, t };
       cfg.x = nx; cfg.y = ny; cfg.angle = angle;
+      transportOpeningOrientations(sp!, { ...sp!, openings: [cfg] });
       this.host._opMeasure = null;
       this.host.requestUpdate();
       return;
@@ -6485,6 +6506,7 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
       if (host) cfg.host = host;
       else delete cfg.host;
     }
+    transportOpeningOrientations(sp!, { ...sp!, openings: [cfg] });
     // Only the transient projection moves. Saved floor keys and all warm
     // geometry pools remain the same until the existing release transaction.
     this.host.requestUpdate();
@@ -6586,6 +6608,14 @@ public _saveOpening(): void {
     const sp = this.host._curSpaceCfg;
     const model = this.host._spaceModel();
     if (!d || !sp || !model) return;
+    if (d.editingLeaf) {
+      this.host._openingDialog = acceptOpeningLeafDraft(d);
+      return;
+    }
+    if ((d.featuresTouched || d.openingFeatures) && this.host._haOpeningFeaturesApi !== 1) {
+      this.host._showToast(this.host._t('opening.features.unavailable'), 'opening.features.unavailable');
+      return;
+    }
     const before = this._geometrySnapshot();
     const H = this.host._spaceH;
     const previous = (sp.openings || []).find((item: OpeningCfg) => item.id === d.id);
@@ -6660,12 +6690,31 @@ public _saveOpening(): void {
       delete o.invert;
       delete o.flip_h;
       delete o.flip_v;
+      delete o.opening_features;
     } else {
       o.contact = d.contact || null;
       o.lock = d.type === 'door' || d.type === 'gate' ? d.lock || null : null;
       o.invert = d.invert || undefined;
       o.flip_h = d.type !== 'gate' && d.flipH || undefined;
       o.flip_v = d.flipV || undefined;
+    }
+    const features = d.openingFeatures || (previous?.type === d.type ? previous.opening_features : undefined);
+    if (d.type !== 'passage' && features) {
+      o.opening_features = structuredClone(features);
+      if (d.type === 'window') {
+        delete o.contact; delete o.lock; delete o.invert; delete o.flip_h; delete o.flip_v;
+      }
+    } else delete o.opening_features;
+    // The draft owns newly configured leaf settings. Transfer its basis only
+    // after host materialization, rather than resurrecting the old settings.
+    if (o.opening_features && o.angle !== d.angle) {
+      const intended = { ...o, angle: d.angle };
+      transportOpeningOrientations({ ...sp, openings: [intended] }, { ...sp, openings: [o] });
+    }
+    try { assertOpeningFeatures(o); }
+    catch {
+      this.host._showToast(this.host._t('opening.features.unavailable'), 'opening.features.unavailable');
+      return;
     }
     sp.openings = sp.openings || [];
     const i = sp.openings.findIndex((x: OpeningCfg) => x.id === o.id);
@@ -6677,6 +6726,27 @@ public _saveOpening(): void {
     );
     this.host._openingDialog = null;
     this.host.requestUpdate();
+  }
+
+public _closeOpeningDialog(): void {
+    const draft = this.host._openingDialog;
+    this.host._openingDialog = draft?.editingLeaf ? { ...draft, editingLeaf: undefined } : null;
+  }
+
+private async _changeOpeningType(type: OpeningCfg['type']): Promise<void> {
+    const d = this.host._openingDialog;
+    if (!d || type === d.type) return;
+    const compatibleMotion = ['door', 'gate'].includes(d.type) && ['door', 'gate'].includes(type);
+    if (d.openingFeatures && !compatibleMotion) {
+      const accepted = await this.host._confirmDanger({ key: 'opening-type-change', kind: 'warning',
+        title: this.host._t('opening.features.confirm_type_title'), message: this.host._t('opening.features.confirm_type_body'),
+        confirmLabel: this.host._t('btn.save'), cancelLabel: this.host._t('btn.cancel') });
+      if (!accepted || this.host._openingDialog !== d) return;
+    }
+    this.host._openingDialog = { ...d, type, lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm(type),
+      openingFeatures: compatibleMotion ? d.openingFeatures : undefined,
+      featuresTouched: d.featuresTouched || !!d.openingFeatures,
+      ...(type === 'gate' ? { flipH: false } : {}), contactOpen: false, lockOpen: false };
   }
 
 public _deleteOpening(): void {
@@ -10738,6 +10808,11 @@ public _renderOpeningPlacementPreview(): TemplateResult {
     if (!candidate) return svg``;
     const visibleSpec: OpeningVisibleSpec = {
       type: candidate.type,
+      visual: resolveOpeningVisual({ id: 'preview', type: candidate.type, x: candidate.x, y: candidate.y,
+        length: candidate.renderedLength, angle: candidate.angle, flip_h: candidate.flipH,
+        flip_v: candidate.flipV }, () => null, openingAmount(candidate.type, null)),
+      handleSides: openingWindowHandleSides({ type: candidate.type, rx: candidate.x, ry: candidate.y,
+        angle: candidate.angle }, this.host._spaceModel()?.rooms || [], candidate.face.cm, this.host._cellCm, this.host._gridPitch),
       length: candidate.renderedLength,
       angle: candidate.angle,
       amount: openingAmount(candidate.type, null),
@@ -10774,6 +10849,7 @@ public _renderOpeningPlacementPreview(): TemplateResult {
 
 public _renderOpeningDialog(): TemplateResult {
     const d = this.host._openingDialog!;
+    const leafEdit = d.editingLeaf;
     const partitions = this.host._spaceModel()?.partitions || [];
     const previous = d.id
       ? this.host._curSpaceCfg?.openings?.find((item: OpeningCfg) => item.id === d.id)
@@ -10808,6 +10884,71 @@ public _renderOpeningDialog(): TemplateResult {
     const icon = d.type === 'gate' ? 'mdi:gate'
       : d.type === 'window' ? 'mdi:window-closed-variant'
         : d.type === 'passage' ? 'mdi:arch' : 'mdi:door';
+    const raw = this.host._curSpaceCfg;
+    const model = this.host._spaceModel();
+    const core = raw ? openingPropertiesCore({ ...dialogOpening,
+      ...(previous?.host ? { host: previous.host } : {}) }, raw.partitions || [], raw.wall_segments || [], this.host._cellCm) : null;
+    const sides = core && model ? propertiesOpeningSides(core, model.rooms) : null;
+    const oneRoom = sides?.filter(side => side.kind === 'room').length === 1 && sides.some(side => side.kind === 'outside');
+    const directionOptions = (['negative', 'positive'] as const).map((value, index) => {
+      const side = sides?.[index];
+      return { value, label: side?.kind === 'room'
+        ? oneRoom ? this.host._t('opening.features.inside') : this.host._t('opening.features.into_room', { room: side.name })
+        : side?.kind === 'outside' ? this.host._t('opening.features.outside')
+          : this.host._t('opening.features.side', { side: index ? 'B' : 'A' }) };
+    });
+    let preview = html``;
+    if (leafEdit && model) {
+      const features = draftWindowFeatures(d);
+      const index = features.leaves.findIndex(leaf => leaf.id === leafEdit.id);
+      if (index >= 0) features.leaves[index] = leafEdit.value;
+      const candidate = openingDraftObject({ ...d, openingFeatures: features });
+      const rendered = this.host._openingsR.find(opening => opening.id === d.id);
+      const face = rendered ? this.host._openingFace(rendered,
+        this.host._openingWallIndexFor(model, this.host._openCuts()).value, !!d.flipV)
+        : { ox: 0, oy: 0, cm: 0, side: -1 as const };
+      const spec: OpeningVisibleSpec = { type: 'window', length: previous && !d.lengthTouched
+          ? previous.length * NORM_W : this.host._cmToUnits(d.lengthCm), angle: d.angle,
+        amount: 0, flipH: false, flipV: false, base: 'var(--secondary-text-color)', tone: 'var(--secondary-text-color)',
+        cellCm: this.host._cellCm, gridPitch: this.host._gridPitch, face,
+        visual: resolveOpeningVisual(candidate, eid => this.host._openingEntityAvailable(eid)
+          ? this.host.hass.states[eid] : null, 0),
+        handleSides: openingWindowHandleSides({ type: 'window', rx: d.x, ry: d.y, angle: d.angle },
+          model.rooms, face.cm, this.host._cellCm, this.host._gridPitch), selectedLeaf: leafEdit.id,
+      };
+      const angle = d.angle + this.host._rotation;
+      const bounds = openingVisibleBounds({ ...spec, angle });
+      if (bounds) preview = html`<figure class="opening-window-preview"><svg viewBox=${`${bounds.minX} ${bounds.minY} ${bounds.maxX - bounds.minX} ${bounds.maxY - bounds.minY}`}>
+        <g transform="rotate(${angle})">${renderOpeningVisibleGeometry(spec)}</g></svg>
+        <figcaption>${this.host._t('opening.features.preview_leaf', { number: index + 1, count: features.leaves.length })}</figcaption></figure>`;
+    }
+    const contacts = this._contactCandidates();
+    const shadeContacts = [...contacts];
+    for (const [id, entity] of Object.entries(this.host.hass.states) as [string, any][]) {
+      if (id.startsWith('cover.') && this.host._openingEntityAvailable(id) && !shadeContacts.some(item => item.value === id)) {
+        shadeContacts.push({ value: id, label: entity.attributes?.friendly_name || id });
+      }
+    }
+    const featureOptions: OpeningFeatureFieldOptions = { draft: d,
+      setDraft: value => { if (this.host._openingDialog === d) this.host._openingDialog = value; },
+      t: (key, params) => this.host._t(key as I18nKey, params),
+      read: eid => this.host._openingEntityAvailable(eid) ? this.host.hass.states[eid] : null,
+      sourceName: eid => this.host.hass.states[eid]?.attributes?.friendly_name || eid,
+      contacts, shadeContacts, directionOptions, preview,
+      bool: (value, change, disabled, field) => this._boolInput(value, change, disabled, field),
+      disabled: this.host._haOpeningFeaturesApi !== 1,
+      confirmRemove: async (leaf, index) => {
+        const configured = !!(leaf.contact || leaf.invert || leaf.shade || leaf.manual === 'open' || leaf.hinge === 'top');
+        const accepted = !configured || await this.host._confirmDanger({ key: 'opening-leaf-remove', kind: 'destructive',
+          title: this.host._t('opening.features.confirm_remove_title'),
+          message: this.host._t('opening.features.confirm_remove_body', { number: index + 1 }),
+          confirmLabel: this.host._t('btn.delete'), cancelLabel: this.host._t('btn.cancel') });
+        return accepted && this.host._openingDialog === d;
+      },
+    };
+    const featureFields = openingFeatureFields({ ...featureOptions, part: d.type === 'window' ? 'all' : 'mechanism' });
+    const positionFields = !leafEdit && (d.type === 'door' || d.type === 'gate')
+      ? openingFeatureFields({ ...featureOptions, part: 'position' }) : nothing;
     const picker = (kind: 'contact' | 'lock', list: { value: string; label: string }[]) => {
       const cur = kind === 'contact' ? d.contact : d.lock;
       const open = kind === 'contact' ? !!d.contactOpen : !!d.lockOpen;
@@ -10855,10 +10996,12 @@ public _renderOpeningDialog(): TemplateResult {
           : nothing}`;
     };
     return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host.hass} data-kind="opening" wide
-      .title=${d.id ? this.host._t('opening.edit') : this.host._t('opening.new')} icon=${icon}
-      @hp-close=${() => (this.host._openingDialog = null)}>
+      .title=${leafEdit ? this.host._t('opening.features.leaf', { number: draftWindowFeatures(d).leaves.findIndex(leaf => leaf.id === leafEdit.id) + 1 })
+        : d.type === 'window' ? this.host._t('opening.features.window_title')
+          : d.id ? this.host._t('opening.edit') : this.host._t('opening.new')} icon=${icon}
+      @hp-close=${() => this._closeOpeningDialog()}>
         <div class="body">
-          ${d.host ? html`<label>${this.host._t('opening.host_partition')}</label>
+          ${!leafEdit ? html`${d.host ? html`<label>${this.host._t('opening.host_partition')}</label>
             <div class=${orphan || jambInvalid ? 'habindingbanner' : 'rhint'}
               role=${orphan || jambInvalid ? 'status' : nothing}>
               ${orphan || jambInvalid ? html`<ha-icon icon="mdi:alert-outline"></ha-icon>` : nothing}
@@ -10871,12 +11014,7 @@ public _renderOpeningDialog(): TemplateResult {
           <label for="optype">${this.host._t('opening.type_label')}</label>
           ${selectControl({ name: 'optype', value: d.type,
             options: (['window', 'door', 'passage', 'gate'] as const).map(type => ({ value: type, label: this.host._t(`opening.${type}` as I18nKey) })),
-            onChange: type => {
-              this.host._openingDialog = {
-                ...d, type, lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm(type),
-                ...(type === 'gate' ? { flipH: false } : {}), contactOpen: false, lockOpen: false,
-              };
-            },
+            onChange: type => { void this._changeOpeningType(type); },
           })}
 
           <label>${this.host._t('opening.length_label')}</label>
@@ -10886,14 +11024,17 @@ public _renderOpeningDialog(): TemplateResult {
               if (n != null) this.host._openingDialog = { ...d, lengthCm: n, lengthTouched: true };
             }} />
 
-          ${d.type === 'passage' && (d.contact || d.lock)
+          ` : nothing}
+          ${featureFields}
+          ${this.host._haOpeningFeaturesApi !== 1 ? html`<div class="rhint">${this.host._t('opening.features.unavailable')}</div>` : nothing}
+          ${!leafEdit && d.type === 'passage' && (d.contact || d.lock)
             ? html`<div class="habindingbanner" role="status" aria-live="polite">
                 <ha-icon icon="mdi:alert-outline"></ha-icon>
                 <span>${this.host._t('opening.passage_binding_warning')}</span>
               </div>`
             : nothing}
 
-          ${d.type !== 'passage'
+          ${!leafEdit && d.type !== 'passage' && d.type !== 'window'
             ? html`<label>${this.host._t('opening.contact_label')}</label>
                 ${picker('contact', this._contactCandidates())}
                 ${d.contact
@@ -10902,27 +11043,29 @@ public _renderOpeningDialog(): TemplateResult {
                   : nothing}`
             : nothing}
 
-          ${d.type === 'door' || d.type === 'gate'
+          ${positionFields}
+          ${!leafEdit && (d.type === 'door' || d.type === 'gate')
             ? html`<label>${this.host._t('opening.lock_label')}</label>
                 ${picker('lock', this._lockCandidates())}`
             : nothing}
 
-          ${d.type === 'door'
+          ${!leafEdit && d.type === 'door'
             ? html`<label class="hpf-check hpf-check-wrap srcrow">${this._boolInput(d.lightTransparent === true, (v) => (this.host._openingDialog = { ...d, lightTransparent: v }), false, 'opening-light-transparent')}
                 <span>${this.host._t('opening.light_transparent')}</span></label>`
             : nothing}
 
-          ${d.type !== 'gate' && d.type !== 'passage'
+          ${!leafEdit && d.type === 'door' && motionOpeningFeatures(openingDraftObject(d))?.mechanism !== 'slide'
             ? html`<label class="hpf-check hpf-check-wrap srcrow">${this._boolInput(d.flipH, (v) => (this.host._openingDialog = { ...d, flipH: v }), false, 'opening-flip-horizontal')}
                 <span>${this.host._t('opening.flip_h')}</span></label>`
             : nothing}
-          ${d.type !== 'passage'
+          ${!leafEdit && d.type !== 'passage' && d.type !== 'window'
             ? html`<label class="hpf-check hpf-check-wrap srcrow">${this._boolInput(d.flipV, (v) => (this.host._openingDialog = { ...d, flipV: v }), false, 'opening-flip-vertical')}
-                <span>${this.host._t('opening.flip_v')}</span></label>`
+                <span>${this.host._t(motionOpeningFeatures(openingDraftObject(d))?.mechanism === 'slide'
+                  ? 'opening.features.slide_face' : 'opening.flip_v')}</span></label>`
             : nothing}
         </div>
         <div class="row dialog-action-footer" slot="footer">
-          ${d.id
+          ${d.id && !leafEdit
             ? html`<div class="dialog-action-group dialog-action-danger">
                 <button data-hp="action" data-action="opening-delete" class="btn danger" @click=${() => this._deleteOpening()}>
                   <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
@@ -10930,14 +11073,16 @@ public _renderOpeningDialog(): TemplateResult {
               </div>`
             : nothing}
           ${orphan
-            ? html`<button data-hp="action" data-action="opening-rebind" class="btn ghost" @click=${() => this._rebindPartitionOpening()}>
+            && !leafEdit ? html`<button data-hp="action" data-action="opening-rebind" class="btn ghost" @click=${() => this._rebindPartitionOpening()}>
                 ${this.host._t('opening.rebind_partition')}
               </button>`
             : nothing}
           <div class="dialog-action-group dialog-action-commit">
-            <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._openingDialog = null)}>${this.host._t('btn.cancel')}</button>
-            <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveOpening()}>
-              <ha-icon icon="mdi:check"></ha-icon>${this.host._t('btn.save')}
+            <button class="btn ghost" data-hp="dialog-cancel" @click=${() => this._closeOpeningDialog()}>${this.host._t('btn.cancel')}</button>
+            <button class="btn on" data-hp="dialog-confirm"
+              ?disabled=${!!d.openingFeatures && (d.openingFeatures.version !== 1 || this.host._haOpeningFeaturesApi !== 1)}
+              @click=${() => this._saveOpening()}>
+              <ha-icon icon="mdi:check"></ha-icon>${this.host._t(leafEdit ? 'opening.features.done' : 'btn.save')}
             </button>
           </div>
         </div>

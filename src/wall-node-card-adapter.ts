@@ -12,6 +12,7 @@ import type { ServerConfig } from './types';
 import { buildNodePreview, nodeMoveLocalSpaces, nodePreviewScene, nodePreviewJunctionGeometry, type NodePreviewGeometry } from './wall-node-preview';
 import { spaceDisplayOf } from './logic';
 import type { OpeningCfg } from './types';
+import { resolveOpeningVisual } from './opening-features';
 import { commitHouseplanEditor } from './live-editor';
 import type { JunctionSharedGeometry } from './junction-limits';
 import { withWallBooleanBaseline } from './wall-boolean-cache';
@@ -19,6 +20,7 @@ import { WallBooleanBaseline } from './wall-boolean-baseline';
 import { captureToast, type ToastContext } from './toast-presentation';
 
 interface NodeCardHost<TState> extends WallNodeWriteHost {
+  readonly hass: WallNodeWriteHost['hass'] & { states?: Record<string, import('./opening-features').OpeningEntityState> };
   readonly _mode: string; readonly _tool: string;
   readonly _space: string; readonly _canEdit: boolean; readonly _kiosk: boolean;
   readonly _haWallNodeMoveApi: number | null;
@@ -41,6 +43,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   _geometryHistory: NodeHistoryStack<TState> & { push(command: { name: string; before: TState; after: TState }): void };
   readonly _fillColors: { wall_fill: { c: string; a: number } };
   _openingAmt(opening: OpeningCfg): number;
+  _renderOpeningEntityAvailable?(entity: string): boolean;
   _configWriteGuard(): () => boolean;
 }
 export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHistory }>(
@@ -182,7 +185,9 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
       const display = spaceDisplayOf(before, host._serverCfg?.settings);
       return nodePreviewScene(geometry.before, geometry.next, { px: 1 / (editor.unitsPerPixel * NORM_W),
         color: display.color, fill: display.wallFill.c, opacity: display.wallFill.a,
-        amount: opening => host._openingAmt(opening) });
+        amount: opening => host._openingAmt(opening),
+        visual: opening => resolveOpeningVisual(opening, entity =>
+          host._renderOpeningEntityAvailable?.(entity) === false ? null : host.hass.states?.[entity], host._openingAmt(opening)) });
     },
     paintOpportunity: async () => { await host.updateComplete;
       await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))); },

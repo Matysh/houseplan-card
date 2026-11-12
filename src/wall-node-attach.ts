@@ -1,6 +1,7 @@
 /** Select's named dangling-end attach. Generic Move retains its old admission. */
 import { applyGraphOperation, edgeKey, graphIndex, projectGraphSpace, type PlanGraph, type GraphEdge, type GraphOperation } from './plan-graph';
 import * as Q from './plan-exact';
+import { openingAxisRotation, transportOpeningOrientations } from './opening-orientation';
 import { NodeMoveDependencies } from './wall-node-dependencies';
 import { graphDrawTargetRef } from './graph-draw-binding';
 import { quantizedPoint, type PlanSnapSegment } from './plan-snap-overlay';
@@ -122,6 +123,7 @@ export function applyNodeAttach(plan: NodeMovePlan, attach: NodeAttachEdge): Nod
     const a = index.points.get(host.from)!, b = index.points.get(host.to)!, target = Q.pointAt(a, b, t);
     if (Q.pointEq(target, index.points.get(source)!) || !Q.orientation(a, b, index.points.get(far)!).n) throw Error('target');
     const base = clone(plan.source), span = distance(Q.pointToNumbers(a), Q.pointToNumbers(b)), split = Q.toNumber(t) * span;
+    const openingRotations = new Map<string, number>();
     // The global length guard measures a whole collinear run. This named
     // split additionally requires each newly created child to be a valid
     // 20cm/material-length atom; the global Move/Draw rules are unchanged.
@@ -154,6 +156,7 @@ export function applyNodeAttach(plan: NodeMovePlan, attach: NodeAttachEdge): Nod
       if (along - opening.length / 2 < jamb - EPS || along + opening.length / 2 > length - jamb + EPS) { reason = 'merge_opening'; throw Error('arm opening'); }
       operations.push({ kind: 'rehost-opening', opening: opening.id, host: { kind: ref.kind, id: ref.id, t: Q.encodeRational(nt) } });
       opening.angle = canonicalizeNumber(Q.projectedAxisAngle(na, nb)) as number;
+      openingRotations.set(opening.id, openingAxisRotation(Q.pointToNumbers(oa), Q.pointToNumbers(ob), Q.pointToNumbers(na), Q.pointToNumbers(nb)));
     }
     operations.push({ kind: 'insert-on-edge', edge: { kind: host.kind, id: host.id }, t: attach.tq, node: source, newEdgeId: attach.new_edge_id });
     reason = 'merge_topology';
@@ -162,7 +165,7 @@ export function applyNodeAttach(plan: NodeMovePlan, attach: NodeAttachEdge): Nod
     reason = 'merge_dependency';
     for (const node of result.graph.nodes) if (node.id !== source && !Q.pointEq(Q.decodePoint(node.p), index.points.get(node.id)!)) throw Error('foreign point');
     for (const opening of base.openings || []) if (result.mapping.hosts[opening.id]) opening.host = result.mapping.hosts[opening.id];
-    return { ok: true, space: projectGraphSpace(base, result.graph).space, changed: true,
+    return { ok: true, space: transportOpeningOrientations(plan.source, projectGraphSpace(base, result.graph).space, openingRotations), changed: true,
       affected: [edgeKey(arm), edgeKey(host), `${host.kind}:${attach.new_edge_id}`] };
   } catch (e) {
     if (String(e).includes('dependency')) reason = 'merge_dependency';

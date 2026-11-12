@@ -58,5 +58,11 @@ export function physicalSpaceRecord(record: unknown, ...nonStructural: readonly 
     }
   }
   if (!structural || !Array.isArray(structural.rooms)) return structural;
-  return { ...structural, rooms: structural.rooms.map(room => physicalRecord(room, ['name', 'area'])) };
+  return { ...structural, rooms: structural.rooms.map(room => physicalRecord(room, ['name', 'area'])),
+    ...(Array.isArray(structural.openings) ? { openings: structural.openings.map(opening => {
+      const value = opening as Record<string, unknown> | null;
+      const features = value?.opening_features as { version?: unknown } | undefined;
+      return features?.version === 1 ? physicalRecord(value, ['opening_features']) : opening;
+    }) } : {}),
+  };
 }

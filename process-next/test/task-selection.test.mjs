@@ -25,6 +25,23 @@ async function fixture(files, run) {
     }
 }
 const select = (root, options = {}) => selectTaskTests({ root, inventory, track: 'ship', layer: 'product', ...options });
+test('#1024 opening writer/basis checks are critical and optical checks belong to lighting', async () => fixture({
+    'src/opening-features.ts': 'export const version=1;',
+    'test/opening-features.test.mjs': '',
+    'tests_backend/test_opening_orientation.py': '',
+    'test/opening-optics.test.mjs': '',
+}, async dir => {
+    const catalog = await testCatalog(dir, inventory);
+    for (const path of ['test/opening-features.test.mjs', 'tests_backend/test_opening_orientation.py']) {
+        const row = catalog.rows.find(row => row.path === path);
+        assert.equal(row.importance, 'critical');
+        assert.ok(row.domains.includes('openings'));
+    }
+    assert.ok(catalog.rows.find(row => row.path === 'test/opening-optics.test.mjs').domains.includes('lighting'));
+    const selected = await select(dir, { track:'ask', changedFiles:['src/opening-features.ts'] });
+    for (const path of ['test/opening-features.test.mjs', 'tests_backend/test_opening_orientation.py', 'test/opening-optics.test.mjs'])
+        assert.ok(selected.files.includes(path), path);
+}));
 test('catalog covers current active files/scenes/lifecycles and preserves explicit unknowns', async () => {
     const c = await testCatalog(root, inventory);
     assert.equal(new Set(c.rows.map(r => r.id)).size, c.rows.length);

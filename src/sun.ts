@@ -218,17 +218,21 @@ export function dayPhase(elevation: number): DayPhase {
 
 export type { SunRoom } from './sun-access';
 /** A window opening in render units: centre, wall angle°, full length. */
-export interface SunWindow { id: string; x: number; y: number; angle: number; length: number }
+export interface SunWindow {
+  id: string; x: number; y: number; angle: number; length: number;
+  /** Allowed fractions of the full parent source span, not shorter optical windows. */
+  mask?: readonly (readonly [number, number])[];
+}
 
 /** Exterior door glass uses the existing window aperture, compass and horizon rules. */
-export function solarWindowOpenings(openings: readonly {
+export function solarWindowOpenings<T extends {
   id: string; type: string; light_transparent?: boolean; host?: { kind: string };
   rx: number; ry: number; angle: number; rlen: number;
-}[]): SunWindow[] {
+}>(openings: readonly T[], mask?: (opening: T) => readonly (readonly [number, number])[]): SunWindow[] {
   return openings.filter(opening => opening.host?.kind !== 'partition'
     && (opening.type === 'window' || opening.type === 'door' && opening.light_transparent === true))
     .map(opening => ({ id: opening.id, x: opening.rx, y: opening.ry,
-      angle: opening.angle, length: opening.rlen }));
+      angle: opening.angle, length: opening.rlen, ...(mask ? { mask: mask(opening) } : {}) }));
 }
 
 /**
@@ -450,42 +454,48 @@ export function computeSunRays(
     const side = origin === 'outer' ? -1 : 1;
     const sourceX = w.x + normal[0] * d * side / 2;
     const sourceY = w.y + normal[1] * d * side / 2;
-    const a = [sourceX - hx, sourceY - hy];
-    const b = [sourceX + hx, sourceY + hy];
+    const fullA = [sourceX - hx, sourceY - hy];
+    const fullB = [sourceX + hx, sourceY + hy];
     const len = k * w.length;
-    const quad = rayQuad(a, b, away, len);
-    let polys = clipToRoom(quad, clipPoly);
-    let rimSources: number[][] | undefined;
-    if (origin === 'outer' && d > 0) {
-      const innerX = w.x + normal[0] * d / 2;
-      const innerY = w.y + normal[1] * d / 2;
-      const innerA = [innerX - hx, innerY - hy];
-      const innerB = [innerX + hx, innerY + hy];
-      const tunnel = [
-        [sourceX - hx, sourceY - hy],
-        [sourceX + hx, sourceY + hy],
-        [innerX + hx, innerY + hy],
-        [innerX - hx, innerY - hy],
-      ];
-      // The exterior span is fully bright at the facade, but only parallel
-      // trajectories which also pass through the inner span may continue on
-      // the room floor. Intersecting both ray strips models the jamb shadow at
-      // every window orientation without a direction-specific correction.
-      polys = [
-        ...intersectRings(quad, rayQuad(innerA, innerB, away, len), clipPoly),
-        ...intersectRings(quad, tunnel),
-      ];
-      // A clipped side can start at an inner jamb rather than either exterior
-      // corner. Let the rim extractor see all four possible ray-parallel
-      // boundary lines; it still emits only segments present in `polys`.
-      rimSources = [a, b, innerA, innerB];
+    // Eligibility, reach, jambs and gradient remain those of the full parent.
+    for (const [lo, hi] of w.mask ?? [[0, 1]]) {
+      if (![lo, hi].every(Number.isFinite) || lo < 0 || hi > 1 || !(hi > lo)) continue;
+      const a = lo === 0 ? fullA : [fullA[0] + 2 * hx * lo, fullA[1] + 2 * hy * lo];
+      const b = hi === 1 ? fullB : [fullA[0] + 2 * hx * hi, fullA[1] + 2 * hy * hi];
+      const quad = rayQuad(a, b, away, len);
+      let polys = clipToRoom(quad, clipPoly);
+      let rimSources: number[][] | undefined;
+      if (origin === 'outer' && d > 0) {
+        const innerX = w.x + normal[0] * d / 2;
+        const innerY = w.y + normal[1] * d / 2;
+        const innerA = [innerX - hx, innerY - hy];
+        const innerB = [innerX + hx, innerY + hy];
+        const tunnel = [
+          [sourceX - hx, sourceY - hy],
+          [sourceX + hx, sourceY + hy],
+          [innerX + hx, innerY + hy],
+          [innerX - hx, innerY - hy],
+        ];
+        // The exterior span is fully bright at the facade, but only parallel
+        // trajectories which also pass through the inner span may continue on
+        // the room floor. Intersecting both ray strips models the jamb shadow at
+        // every window orientation without a direction-specific correction.
+        polys = [
+          ...intersectRings(quad, rayQuad(innerA, innerB, away, len), clipPoly),
+          ...intersectRings(quad, tunnel),
+        ];
+        // A clipped side can start at an inner jamb rather than either exterior
+        // corner. Let the rim extractor see all four possible ray-parallel
+        // boundary lines; it still emits only segments present in `polys`.
+        rimSources = [a, b, innerA, innerB];
+      }
+      if (!polys.length) continue;
+      // inward normal + how deep the ray gets: cos of the incidence angle,
+      // which windowLit() has already found to be above RAY_MIN_COS
+      const cos = away[0] * normal[0] + away[1] * normal[1];
+      out.push({ openingId: w.id, roomId: info.roomId, polys, a, b, rimSources, dir: away, len,
+        normal, depth: len * cos });
     }
-    if (!polys.length) continue;
-    // inward normal + how deep the ray gets: cos of the incidence angle,
-    // which windowLit() has already found to be above RAY_MIN_COS
-    const cos = away[0] * normal[0] + away[1] * normal[1];
-    out.push({ openingId: w.id, roomId: info.roomId, polys, a, b, rimSources, dir: away, len,
-      normal, depth: len * cos });
   }
   return out;
 }

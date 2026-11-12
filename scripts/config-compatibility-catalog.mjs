@@ -19,6 +19,7 @@ const unknown = (reason) => ({ kind: 'unproven', reason });
 const stable = (commit, release) => ({ kind: 'stable', commit, release });
 const source = (path, symbol) => ({ path, symbol });
 const contractProofs = {
+  'opening-features': ['test/opening-features.test.mjs', 'tests_backend/test_opening_features.py', 'tests_backend/test_opening_orientation.py', 'tests_backend/test_ha_import_export.py', 'tests_backend/test_ha_space_copy.py'],
   'external-screen-views': ['test/external-screen-views.test.mjs', 'tests_backend/test_external_screens.py', 'tests_backend/test_ha_external_screens_websocket.py'],
   'wall-model-chain': ['tests_backend/test_wall_segment_model.py', 'test/wall-segment-model.test.mjs'],
   'zero-wall-boundaries': ['tests_backend/test_wall_segment_model.py', 'test/wall-segment-model.test.mjs'],
@@ -53,6 +54,13 @@ const record = (id, fields, oldForm, newForm, anchors, since, migration, reason,
 });
 
 export const COMPATIBILITY_BRANCHES = Object.freeze([
+  record('opening-features', ['spaces[].openings[].opening_features'],
+    'implicit two-leaf window or swing door/gate, parent contact/invert/flips',
+    'optional strict v1 independent leaves/shades or motion/manual namespace',
+    [source('src/opening-features.ts', 'materializeWindowFeatures'), source('custom_components/houseplan/opening_features.py', 'guard_opening_features_write')],
+    unknown('Introduced by #1024 implementation; no published stable or sunset is claimed.'),
+    'Explicit feature edit only; no read/Save migration. Nested bindings clear only under Copy/plan-only policy.',
+    'Keep implicit readers and safe old-backend refusal. Portable v3 prevents old importers silently losing the extension.'),
   record('external-screen-views', ['settings.external_screens.version=1'],
     'v1 flat presentation per profile', 'v2 default_view plus space_views by stable space ID',
     [source('src/external-screens.ts', 'externalScreensForEdit'), source('custom_components/houseplan/validation.py', 'EXTERNAL_SCREENS_SCHEMA')],

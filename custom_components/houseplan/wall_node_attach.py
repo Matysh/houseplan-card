@@ -2,14 +2,31 @@
 from __future__ import annotations
 
 import copy
-import re
 import math
+import re
+
 from .coordinate_canonicalization import canonicalize_number
-from .plan_graph import edge_key, validate_graph, project_graph_space, propagate_dependencies
-from .plan_graph_exact import (GraphError, cross, decode_point, decode_rational, encode_point,
-                               encode_rational, parse_decimal, point_at, project_parameter, to_numbers)
-from .wall_node_move import NodeMoveError, _length, _point
+from .opening_orientation import opening_axis_rotation, transport_opening_orientations
+from .plan_graph import (
+    edge_key,
+    project_graph_space,
+    propagate_dependencies,
+    validate_graph,
+)
+from .plan_graph_exact import (
+    GraphError,
+    cross,
+    decode_point,
+    decode_rational,
+    encode_point,
+    encode_rational,
+    parse_decimal,
+    point_at,
+    project_parameter,
+    to_numbers,
+)
 from .wall_node_merge import _contacts, _on
+from .wall_node_move import NodeMoveError, _length, _point
 
 _ID = re.compile(r"node-attach-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")
 EPS = 1e-9
@@ -92,6 +109,7 @@ def attach_graph_node_space(space, intent):
     min_child = max(20, host["cm"]) / ((base.get("cell_cm") or 5) * 240)
     if float(t) * span < min_child - EPS or (1 - float(t)) * span < min_child - EPS:
         _fail()
+    opening_rotations = {}
     for opening in base.get("openings", []):
         ref = opening.get("host")
         if not ref:
@@ -122,6 +140,7 @@ def attach_graph_node_space(space, intent):
                 _fail("opening")
             opening["host"] = {**ref, "tq": encode_rational(nt), "t": float(nt)}
             start, end = to_numbers(na), to_numbers(nb)
+            opening_rotations[opening["id"]] = opening_axis_rotation(to_numbers(oa), to_numbers(ob), start, end)
             angle = math.atan2(end[1] - start[1], end[0] - start[0]) * 180 / math.pi
             if angle >= 90:
                 angle -= 180
@@ -156,6 +175,6 @@ def attach_graph_node_space(space, intent):
             for p in hits:
                 if not (receiver and p == target and source in (edge["from"], edge["to"])) and p not in old_hits:
                     _fail()
-        return project_graph_space(base, graph)["space"]
+        return transport_opening_orientations(space, project_graph_space(base, graph)["space"], opening_rotations)
     except GraphError as error:
         _fail("dependency" if "dependenc" in str(error) else "topology")

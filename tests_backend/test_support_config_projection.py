@@ -28,6 +28,27 @@ def project(config):
     return result, ids
 
 
+def test_issue1024_nested_sources_share_pseudonyms_but_local_leaf_ids_are_parent_scoped():
+    from custom_components.houseplan.support_wire_schema import CONFIG, validate
+    from tests_backend.test_opening_features import window
+    first, second = window(), window()
+    first["id"], second["id"] = "private-window-one", "private-window-two"
+    first["opening_features"]["private"] = "secret"
+    first["opening_features"]["leaves"][0]["private"] = "secret"
+    config = {"spaces": [{"id": "private-floor", "openings": [first, second]}], "markers": []}
+    result, _ = project(config)
+    result["model_version"] = 11
+    validate(result, CONFIG)
+    a, b = [item["opening_features"]["leaves"] for item in result["spaces"][0]["openings"]]
+    assert a[0]["id"] != b[0]["id"]
+    assert a[0]["id"] != a[1]["id"]
+    assert a[0]["contact"] == b[0]["contact"]
+    assert a[0]["shade"]["contact"] == b[0]["shade"]["contact"]
+    encoded = json.dumps(result)
+    for private in ["private", "secret", "binary_sensor.leaf_0", "cover.shade_0", "leaf-0"]:
+        assert private not in encoded
+
+
 def test_issue1037_caption_and_wall_colors_survive_closed_support_projection():
     from custom_components.houseplan.support_wire_schema import CONFIG, validate
     color = {"c": "#123456", "a": 0, "private": "must disappear"}
@@ -303,7 +324,8 @@ def test_external_screens_projection_keeps_only_typed_fields_and_pseudonymizes_s
             "icon_scale": None, "font_scale": 1.5, "private": "secret",
         }]}}}
     before = copy.deepcopy(source)
-    projected, _ = project(source); projected["model_version"] = 10
+    projected, _ = project(source)
+    projected["model_version"] = 10
     validate(projected, CONFIG)
     screens = projected["settings"]["external_screens"]
     assert screens["screens"][0]["space"] == projected["spaces"][0]["id"]

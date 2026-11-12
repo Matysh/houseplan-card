@@ -8,6 +8,7 @@
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
 import { roomNameColorOf } from './room-appearance';
+import { resolvedOpeningAmount, resolveOpeningVisual, openingWindowHandleSides, openingTransmissionIntervals } from './opening-features';
 import { keyed } from 'lit/directives/keyed.js';
 import { repeat } from 'lit/directives/repeat.js';
 import {
@@ -17,7 +18,7 @@ import {
 import {
   spaceDisplayOf, fillColorsOf, roomFillModeOf, roomGlowOf,
   roomCustomFillOf, roomTempRangeOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
-  openingAmount, roomPoly, outlineWithout, islandsOf, pointInPolygon,
+  roomPoly, outlineWithout, islandsOf, pointInPolygon,
   type ResolvedRoomFill,
 } from './logic';
 import {
@@ -474,6 +475,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   ): OpeningVisibleSpec => {
     const face = staticOpeningFace(opening, openingIndex, walls.length > 0);
     return { type: opening.type, length: opening.rlen, angle: opening.angle,
+      visual: resolveOpeningVisual(opening, eid => renderOpeningEntityAvailable(planHass, eid)
+        ? planHass.states?.[eid] : null, amount),
+      handleSides: openingWindowHandleSides(opening, space.rooms, face.cm, cellCm, GRID_PITCH),
+      sensorDriven: !!opening.contact,
       amount, flipH: !!opening.flip_h, flipV: !!opening.flip_v,
       base, tone, cellCm, gridPitch: GRID_PITCH, face };
   };
@@ -801,12 +806,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       cellCm,
       gridPitch: GRID_PITCH,
       openingAmount: (opening) => {
-        const entity = opening.contact ? planHass.states?.[opening.contact] : null;
-        return openingAmount(
-          opening.type, entity?.state, !!opening.invert,
-          entity?.attributes?.current_position,
-        );
+        return resolvedOpeningAmount(opening, eid => renderOpeningEntityAvailable(planHass, eid)
+          ? planHass.states?.[eid] : null);
       },
+      openingIntervals: opening => openingTransmissionIntervals(opening,
+        eid => renderOpeningEntityAvailable(planHass, eid) ? planHass.states?.[eid] : null),
     });
     const scene = cachedStaticLightBarriers(
       o.cfg,
@@ -956,11 +960,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     projectedOpenings.filter((opening) => opening.type !== 'passage'),
     (opening, index) => opening.id || index, (opening) => {
     const available = renderOpeningEntityAvailable(planHass, opening.contact);
-    const entity = opening.type === 'passage' || !opening.contact || !available
-      ? null : planHass.states?.[opening.contact];
-    const amount = openingAmount(
-      opening.type, entity?.state, !!opening.invert, entity?.attributes?.current_position,
-    );
+    const amount = resolvedOpeningAmount(opening, eid => renderOpeningEntityAvailable(planHass, eid)
+      ? planHass.states?.[eid] : null);
     const active = amount > 0 && !!opening.contact && available;
     const spec = visibleSpec(opening, amount, wallStroke, active ? 'var(--hp-open)' : wallStroke);
     spec.sensorActive = active;

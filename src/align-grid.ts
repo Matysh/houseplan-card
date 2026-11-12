@@ -58,6 +58,7 @@
 import { GRID_N, GRID_STEP_N } from './space-geometry';
 import { snapToWall } from './logic';
 import { alignedWallPoints } from './align-wall-contacts';
+import { transportOpeningOrientations } from './opening-orientation';
 
 /** Anything closer than this to a node already counts as being on it. */
 const EPS = GRID_STEP_N * 1e-6;
@@ -344,6 +345,13 @@ export function alignAllToGrid(
       if (turned) rotated++;
       note(d, cell, sid, turned);
     }
+  }
+
+  // Snap/rehost may change the canonical axis or its room-facing normal.
+  // Transfer once from the untouched input, after all carrier projections.
+  for (const space of spaces) {
+    const before = spacesIn.find(item => item.id === space.id);
+    if (before) transportOpeningOrientations(before, space);
   }
 
   // ---- layout: device markers AND room labels (rl_<id>) ----------------

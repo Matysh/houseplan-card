@@ -8,6 +8,7 @@ from typing import Any
 
 from . import wall_node_move as graph
 from .coordinate_canonicalization import canonicalize_config_geometry
+from .opening_orientation import transport_opening_orientations
 from .wall_segment_model import (
     WALL_SEGMENT_MODEL_VERSION,
     _wall_key,
@@ -235,7 +236,7 @@ def delete_node_space(source: dict[str, Any], intent: dict[str, Any]) -> dict[st
     if "walls" in source:
         out["walls"] = [{"key": _wall_key(w["a"], w["b"]), "cm": w["cm"], "a": w["a"][:], "b": w["b"][:]}
                         for w in out.get("wall_segments", []) if w["cm"] > 0]
-    return out
+    return transport_opening_orientations(source, out)
 
 
 def _materialize_space(config: dict[str, Any], space: dict[str, Any]) -> dict[str, Any]:

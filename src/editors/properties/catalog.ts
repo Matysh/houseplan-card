@@ -1,4 +1,5 @@
 import { CANVAS_LIMIT, GRID_PITCH, NORM_W } from '../../canvas-constants';
+import { windowOpeningFeatures, motionOpeningFeatures } from '../../opening-features';
 import { planRect } from '../../space-geometry';
 import type { DevItem, LedStripModel, Marker, OpeningCfg, PartitionCfg, RoomCfg, WallColumnCfg, WallSegmentEntry } from '../../types';
 import type { DecorShape } from '../decor/types';
@@ -80,6 +81,7 @@ export interface PropertiesCatalogContext {
   openingReference: OpeningDimension | null;
   openingSides: [string, string];
   openingRooms?: readonly string[];
+  openingFeaturesEditable?: boolean;
   stairFallback?: StairVisualStyle;
   ratioLocked: boolean;
 }
@@ -154,8 +156,10 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
       if (opening.type !== 'passage') {
         featureTitle = opening.type === 'door' ? 'door_features' : opening.type;
         if (opening.type === 'door') features.push({ key: 'light_transparent', label: 'light_transparent', value: opening.light_transparent === true, control: 'toggle', wide: true });
-        if (opening.type === 'door') features.push({ key: 'flip_h', label: 'hinge', value: opening.flip_h === true, control: 'toggle', icon: 'swap', wide: true });
-        features.push(choice('flip_v', 'opening_side', opening.flip_v === true, context.openingSides.map((label, i) => ({ value: String(!!i), label }))));
+        if (opening.type === 'door' && motionOpeningFeatures(opening)?.mechanism !== 'slide') features.push({ key: 'flip_h', label: 'hinge', value: opening.flip_h === true, control: 'toggle', icon: 'swap', wide: true });
+        const window = windowOpeningFeatures(opening);
+        features.push(choice('flip_v', 'opening_side', window ? window.side === 'positive' : opening.flip_v === true,
+          context.openingSides.map((label, i) => ({ value: String(!!i), label }))));
       }
     } else if (target.kind === 'stair') {
       const stair = target.value; kind = stair.kind;
@@ -270,6 +274,13 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
   if (features.length || featureHint) groups.push({ key: 'features', title: featureTitle,
     icon: target?.kind==='opening' ? target.value.type : target?.kind==='decor' ? target.value.kind : undefined,
     fields: features, hint: featureHint });
+  if (target?.kind === 'opening' && target.value.opening_features
+      && (context.openingFeaturesEditable === false || target.value.opening_features.version !== 1)) {
+    for (const group of groups) for (const field of group.fields) {
+      field.mode = 'readonly'; field.reason = 'opening_features_unavailable';
+    }
+    for (const item of actions) item.disabled = 'opening_features_unavailable';
+  }
   const owners = target?.kind === 'contour' ? propertiesContourRooms(target.value, space.rooms ?? []) : [];
   const meta = !target ? '' : target.kind === 'partition' ? t('wall_meta', {space:space.title})
     : target.kind === 'contour' ? owners.length ? t('contour_named_meta', {room: owners.join(' — '), space:space.title}) : t('contour_meta', {space:space.title})

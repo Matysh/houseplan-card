@@ -7,6 +7,7 @@ export class FloatingSurfaceController {
   private host: HTMLElement | null = null;
   private root: ShadowRoot | null = null;
   private anchorBounds: DOMRectReadOnly | null = null;
+  private followCleanup?: () => void;
 
   constructor(
     private readonly owner: HTMLElement,
@@ -40,6 +41,53 @@ export class FloatingSurfaceController {
       || bounds.right !== prior.right || bounds.bottom !== prior.bottom;
   }
 
+  /** Follow composed scrolling ancestors once per frame, never poll an idle menu. */
+  public followAnchor(reposition: () => void, hidden: () => void,
+    anchor: () => DOMRectReadOnly | undefined = () => this.owner.getBoundingClientRect()): void {
+    this.stopFollowing();
+    const win = this.window();
+    if (!win) return;
+    const events = new AbortController(), roots = new Set<EventTarget>([win, this.owner.ownerDocument]);
+    const clips: { element: HTMLElement; x: boolean; y: boolean }[] = [];
+    const seen = new Set<Node>();
+    let node: Node | null = this.owner;
+    while (node && !seen.has(node)) {
+      seen.add(node); roots.add(node.getRootNode());
+      if (node instanceof HTMLElement && node !== this.owner) {
+        const style = win.getComputedStyle(node);
+        const x = /^(auto|scroll|hidden|clip)$/.test(style.overflowX);
+        const y = /^(auto|scroll|hidden|clip)$/.test(style.overflowY);
+        if (style.display !== 'contents' && (x || y)) clips.push({ element: node, x, y });
+      }
+      node = node instanceof Element && node.assignedSlot ? node.assignedSlot
+        : node instanceof ShadowRoot ? node.host : node.parentNode;
+    }
+    let frame = 0;
+    const scroll = (event: Event) => {
+      if (this.containsPath(event.composedPath()) || frame) return;
+      frame = win.requestAnimationFrame(() => {
+        frame = 0;
+        const bounds = anchor();
+        if (!this.owner.isConnected || !bounds) { hidden(); return; }
+        if (!this.anchorMoved(bounds)) return;
+        const outside = bounds.bottom <= 0 || bounds.top >= win.innerHeight
+          || bounds.right <= 0 || bounds.left >= win.innerWidth
+          || clips.some(({ element, x, y }) => {
+            const clip = element.getBoundingClientRect();
+            return x && (bounds.right <= clip.left || bounds.left >= clip.right)
+              || y && (bounds.bottom <= clip.top || bounds.top >= clip.bottom);
+          });
+        if (outside) hidden(); else reposition();
+      });
+    };
+    for (const root of roots) root.addEventListener('scroll', scroll, { capture: true, passive: true, signal: events.signal });
+    this.followCleanup = () => { events.abort(); if (frame) win.cancelAnimationFrame(frame); };
+  }
+
+  public stopFollowing(): void {
+    this.followCleanup?.(); this.followCleanup = undefined;
+  }
+
   public containsPath(path: EventTarget[]): boolean {
     return path.includes(this.owner) || (!!this.host && path.includes(this.host));
   }
@@ -70,6 +118,7 @@ export class FloatingSurfaceController {
   }
 
   public destroy(): void {
+    this.stopFollowing();
     this.anchorBounds = null;
     if (this.root) litRender(nothing, this.root);
     this.host?.remove();

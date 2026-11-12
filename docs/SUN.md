@@ -1,5 +1,19 @@
 # Sun on the plan — the spec (source of truth)
 
+## Per-leaf shade masks (#1024)
+
+The full parent window is tested for exterior/receiving-room eligibility first.
+Its full length determines ray reach, depth and gradient. Only then do merged
+normalized allowed intervals mask parallel trajectories. Adjacent open shares
+have no seam or internal jamb; the existing full-parent inner jamb/tunnel and
+receiving contour remain authoritative. Do not create short SunWindow objects.
+
+Only an enabled shade whose authoritative state resolves to zero blocks its
+share. Partial, open and unknown shades pass. Window-leaf pose does not block
+light. The effective mask is part of the solar key; source labels, leaf IDs,
+hinges and unrelated HA updates are not optical invalidations.
+
+
 ## Demand and invalidation (#1093)
 
 North, sun-ray and room transparency changes remain solar-consumer inputs and do not invalidate wall/contact physics merely by changing the common config epoch. Existing disabled-layer guards continue to prevent solar work; active lighting and hidden sources of a shown effect remain dependencies. Hidden document/route transitions retire visual work and reveal consumes the latest accepted inputs.

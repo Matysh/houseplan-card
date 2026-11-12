@@ -191,7 +191,7 @@ export class HpDialog extends LitElement {
     }
 
     dialog::backdrop {
-      background: rgb(0 0 0 / 0.45);
+      background: var(--mdc-dialog-scrim-color, rgb(0 0 0 / 0.45));
     }
 
     .surface {
@@ -821,8 +821,14 @@ export class HpDialog extends LitElement {
     const haHeading = heading('header');
 
     if (this._usesHaDialog()) {
+      // The real HA app normally supplies this token. Offline/card hosts may
+      // omit it; supply only the fallback on HA's own dialog, not a new scrim.
+      // Leave an explicit inherited theme token untouched.
+      const scrimStyle = getComputedStyle(this).getPropertyValue('--mdc-dialog-scrim-color').trim()
+        ? nothing : '--mdc-dialog-scrim-color:rgb(0 0 0 / .45)';
       if (this.describedBy) {
         return html`<ha-dialog ${haDialogMotion()}
+          style=${scrimStyle}
           .hass=${this.hass}
           .open=${live(!this._closing)}
           width=${this.wide ? 'medium' : 'small'}
@@ -840,6 +846,7 @@ export class HpDialog extends LitElement {
         </ha-dialog><div class="overlay-portal"></div>`;
       }
       return html`<ha-dialog ${haDialogMotion()}
+        style=${scrimStyle}
         .hass=${this.hass}
         .open=${live(!this._closing)}
         width=${this.wide ? 'medium' : 'small'}

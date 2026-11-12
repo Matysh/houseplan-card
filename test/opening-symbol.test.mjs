@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { resolveOpeningVisual } from '../test-build/opening-features.js';
 import {
   openingVisibleBounds,
   openingVisibleMetrics,
@@ -24,11 +25,46 @@ const templateText = (value) => {
   ), '');
 };
 
-test('#1207 only a sensor-active door arc uses the theme accent; leaves keep base in all states', () => {
+test('#1024 mixed 1–4 leaves use ordered layers, source ink, finite top planes and stable bounds', () => {
+  for(const count of [1,2,3,4]) for(const length of [.1,120]) {
+    const opening={type:'window',angle:0,opening_features:{version:1,side:'negative',leaves:
+      Array.from({length:count},(_,i)=>({id:`leaf-${i}`,hinge:i===0?'top':i%2?'end':'start',
+        manual:'open',...(i===0?{contact:'binary_sensor.missing',shade:{enabled:true,manual:'closed'}}:{})}))}};
+    const visual=resolveOpeningVisual(opening,()=>null,0),input=spec({type:'window',length,visual,handleSides:[true,true]});
+    const text=templateText(renderOpeningVisibleGeometry(input));
+    assert.equal((text.match(/data-hinge=/g)||[]).length,count);
+    assert.equal((text.match(/class="op-leaf-unknown"/g)||[]).length,1);
+    assert.match(text,/mdi:weather-sunny-off/);
+    assert.match(text,/var\(--hp-accent, var\(--primary-color/);
+    assert.equal(/NaN|Infinity|var\(--hp-open/.test(text),false);
+    const layers=['op-window-glass','op-window-planes','op-window-guides','op-window-closed-positions','op-window-leaves'];
+    for(let i=1;i<layers.length;i++) assert.ok(text.indexOf(layers[i-1])<text.indexOf(layers[i]));
+    const bounds=openingVisibleBounds(input);
+    assert.ok(Object.values(bounds).every(Number.isFinite));
+    const open={...input,visual:{...visual,leaves:visual.leaves.map(leaf=>({...leaf,amount:1,unknown:false}))}};
+    assert.deepEqual(openingVisibleBounds(open),bounds,'source state cannot change full-motion fit');
+    const widths=[...text.matchAll(/width=["']?([\d.e+-]+)/g)].map(match=>Number(match[1]));
+    assert.ok(widths.every(width=>width>0));
+  }
+});
+
+test('#1024 slide has one full panel, no swing arcs and one resolved face translation', () => {
+  for(const type of ['door','gate']) {
+    const visual={mechanism:'slide',direction:'end',side:'negative',unsupported:false};
+    const input=spec({type,amount:1,visual,face:{ox:0,oy:20,cm:20,side:1}});
+    const text=templateText(renderOpeningVisibleGeometry(input));
+    assert.equal((text.match(/class="op-leaf"/g)||[]).length,1);
+    assert.equal(text.includes('op-arc'),false);
+    assert.match(text,/translate\(0 20\)/);assert.match(text,/translateX\(100px\)/);
+    assert.ok(openingVisibleBounds(input).maxX>150);
+  }
+});
+
+test('#1207/#1024 door guides use the shared HA accent; leaves keep base in all states', () => {
   for (const amount of [0, 1]) for (const sensorActive of [false, true]) {
     const text = templateText(renderOpeningVisibleGeometry(spec({ amount, sensorActive, base: '#abcdef', tone: 'orange' })));
     assert.match(text, /width="100" height="[^"]+" fill="#abcdef"/);
-    assert.ok(text.includes(`stroke="${sensorActive ? 'var(--primary-color, #03a9f4)' : '#abcdef'}" stroke-dasharray`));
+    assert.ok(text.includes(`stroke="${sensorActive ? 'var(--hp-accent, var(--primary-color, #03a9f4))' : '#abcdef'}" stroke-dasharray`));
     assert.ok(!text.includes('orange'));
   }
   for (const type of ['window','gate']) {
@@ -115,7 +151,8 @@ test('shared renderer centres every flip while preserving opening direction', ()
     type: 'window', amount: 0.5,
     face: { ox: 0, oy: -20, cm: 20, side: -1 },
   })));
-  assert.match(centred, /translate\(0 0\)/);
+  assert.match(centred, /translate\(-50 0\) scale\(1 1\)/);
+  assert.match(centred, /translate\(50 0\) scale\(-1 1\)/);
 
   const flippedPositive = templateText(renderOpeningVisibleGeometry(spec({
     type: 'window', amount: 0.5, flipH: true, flipV: true,
@@ -127,9 +164,10 @@ test('shared renderer centres every flip while preserving opening direction', ()
   })));
   for (const text of [flippedPositive, flippedNegative]) {
     assert.match(text, /scale\(-1 -1\)/);
-    assert.match(text, /translate\(0 0\)/);
-    assert.match(text, /rotate\(45deg\)/);
-    assert.match(text, /stroke-dashoffset="39\.269/);
+    assert.match(text, /translate\(-50 0\) scale\(1 -1\)/);
+    assert.match(text, /translate\(50 0\) scale\(-1 -1\)/);
+    assert.equal((text.match(/rotate\(-45deg\)/g)||[]).length,2);
+    assert.match(text, /stroke-dashoffset=["']?39\.269/);
     assert.match(text, /op-glass/);
   }
 

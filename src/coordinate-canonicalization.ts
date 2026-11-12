@@ -10,12 +10,13 @@ import {
   type DecorBoxKind,
 } from './editors/decor/types';
 import { LATTICE_NOISE_STEPS } from './canvas-constants';
+import { transportOpeningOrientations } from './opening-orientation';
+import { canonicalizeNumber, canonicalizeLatticeCoordinate, LATTICE_GRID_N } from './coordinate-precision';
+export { COORDINATE_DECIMALS, COORDINATE_FACTOR, LATTICE_GRID_N,
+  canonicalizeNumber, canonicalizeLatticeCoordinate } from './coordinate-precision';
 
 export { DECOR_BOX_KINDS };
 
-export const COORDINATE_DECIMALS = 9;
-export const COORDINATE_FACTOR = 10 ** COORDINATE_DECIMALS;
-export const LATTICE_GRID_N = 240;
 export { LATTICE_NOISE_STEPS };
 
 type JsonRecord = Record<string, any>;
@@ -49,28 +50,6 @@ function cloneJson<T>(value: T): T {
     return out as T;
   }
   return value;
-}
-
-/** Existing scalar contract for transforms, angles, lengths and ratios. */
-export function canonicalizeNumber(value: unknown): unknown {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return value;
-  const sign = value < 0 || Object.is(value, -0) ? -1 : 1;
-  const result = sign
-    * (Math.floor(Math.abs(value) * COORDINATE_FACTOR + 0.5) / COORDINATE_FACTOR);
-  return result === 0 ? 0 : result;
-}
-
-/** Collapse only an unobservable tail around a 1/240 node. */
-export function canonicalizeLatticeCoordinate(value: unknown): unknown {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return value;
-  const scaled = value * LATTICE_GRID_N;
-  const nearest = Math.round(scaled);
-  const deviation = Math.abs(scaled - nearest);
-  if (deviation < LATTICE_NOISE_STEPS) {
-    const result = nearest / LATTICE_GRID_N;
-    return result === 0 ? 0 : result;
-  }
-  return canonicalizeNumber(value);
 }
 
 /** Three significant digits without turning a non-zero sub-millimetre shift into zero. */
@@ -375,12 +354,18 @@ export function canonicalizeConfigGeometryInPlace<T>(config: T): T {
       }
     }
 
+    const openingBasis = records(space.openings).some(opening => opening.opening_features?.version === 1)
+      ? cloneJson(space) : null;
+    let openingAngleChanged = false;
     for (const opening of records(space.openings)) {
+      const previousAngle = opening.angle;
       if (!exactGraph) latticeFields(opening, ['x', 'y']);
       scalarFields(opening, ['angle', 'length']);
+      openingAngleChanged ||= previousAngle !== opening.angle;
       const host = record(opening.host);
       if (host && !exactGraph) scalarFields(host, ['t']);
     }
+    if (openingBasis && openingAngleChanged) transportOpeningOrientations(openingBasis, space);
 
     for (const decor of records(space.decor)) {
       if (decor.kind === 'line') latticeFields(decor, ['x1', 'y1', 'x2', 'y2']);

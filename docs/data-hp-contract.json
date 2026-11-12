@@ -461,6 +461,9 @@
       },
       "attributes": {
         "data-action": [
+          "opening-leaf-add",
+          "opening-leaf-edit",
+          "opening-leaf-remove",
           "backdrop-reset",
           "backdrop-server-plans",
           "backdrop-upload-open",

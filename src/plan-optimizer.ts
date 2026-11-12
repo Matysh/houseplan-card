@@ -9,6 +9,7 @@
  */
 
 import { alignAllToGrid, type AlignReport } from './align-grid';
+import { transportOpeningOrientations } from './opening-orientation';
 import { contactPositionExceptions } from './device-contact-maintenance';
 import {
   canonicalizeConfigGeometryInPlace, canonicalizeLayoutGeometryInPlace,
@@ -765,6 +766,10 @@ function optimizePlanDraft(
   // canonical form look dirty again after the update event reloads it (#248).
   // Canonicalise the complete pair before both the diff and the return so the
   // preview, durable intent, live stores and next preview all see one target.
+  for (const space of config.spaces || []) {
+    const before = (configIn.spaces || []).find(item => item.id === space.id);
+    if (before) transportOpeningOrientations(before, space);
+  }
   const persistedConfig = canonicalizeConfigGeometryInPlace(config);
   const persistedLayout = canonicalizeLayoutGeometryInPlace(finalAligned.layout);
 

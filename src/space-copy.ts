@@ -1,4 +1,6 @@
 import type { ServerConfig } from './types';
+import { clearOpeningBindings } from './opening-features';
+import { transportOpeningOrientations } from './opening-orientation';
 import { projectGraphSpace, type PlanGraph } from './plan-graph';
 import { commitWallSegmentModel } from './wall-segment-model';
 
@@ -178,9 +180,7 @@ export function createSpaceCopyCandidate(
       id: nextId('co'),
       host: { ...clone(host), kind: 'partition', id: mapped },
     };
-    delete copied.contact;
-    delete copied.lock;
-    return copied;
+    return clearOpeningBindings(copied as any);
   });
   const copiedDecor = decor.map((item) => ({ ...clone(item), id: nextId('cd') }));
   const copiedColumns = columns.map((item) => ({ ...clone(item), id: nextId('cc') }));
@@ -229,6 +229,11 @@ export function createSpaceCopyCandidate(
     Object.assign(copiedSpace, projectGraphSpace(copiedSpace, copiedGraph).space);
   }
 
+  // Carrier kind changes from room-wall to partition. Resolve the same physical
+  // slide face in that new frame; clearing contacts never chooses its side.
+  transportOpeningOrientations({ ...source, openings: openings.map((opening, index) => ({
+    ...clearOpeningBindings(clone(opening) as any), id: copiedOpenings[index].id,
+  })) } as any, copiedSpace as any);
   const config = clone(input);
   config.spaces.splice(sourceIndex + 1, 0, copiedSpace);
   return { config, space: copiedSpace, sourceIndex };

@@ -2,6 +2,7 @@
 import { applyGraphOperation, edgeKey, graphIndex, prepareGraph, projectGraphSpace,
   type GraphEdge, type PlanGraph } from './plan-graph';
 import * as Q from './plan-exact';
+import { openingAxisRotation, transportOpeningOrientations } from './opening-orientation';
 import { NodeMoveDependencies } from './wall-node-dependencies';
 import { applyNodeDelete } from './wall-node-delete';
 import { graphSeamCrossedByOpening } from './graph-seam-opening';
@@ -111,6 +112,7 @@ export function applyNodeMerge(plan: NodeMovePlan, targetId: string, axis: strin
     const removed = new Set(before.edges.filter(e => [e.from, e.to].includes(sourceId)
       && [e.from, e.to].includes(targetId)).map(edgeKey));
     const base = clone(plan.source), graph = clone(before);
+    const openingRotations = new Map<string, number>();
     for (const opening of base.openings || []) if (opening.host && removed.has(edgeKey(opening.host))) refuse('merge_opening');
     // Preserve the original carrier's swept opening guard even if its atom disappears.
     if (plan.node.passing) {
@@ -164,6 +166,7 @@ export function applyNodeMerge(plan: NodeMovePlan, targetId: string, axis: strin
       if (along - opening.length / 2 < jamb - EPS || along + opening.length / 2 > span - jamb + EPS) refuse('merge_opening');
       opening.host = { ...host, tq: Q.encodeRational(nt), t: Q.toNumber(nt) };
       opening.angle = canonicalizeNumber(Q.projectedAxisAngle(na, nb)) as number;
+      openingRotations.set(opening.id, openingAxisRotation(Q.pointToNumbers(a), Q.pointToNumbers(b), Q.pointToNumbers(na), Q.pointToNumbers(nb)));
     }
     let result;
     try { result = applyGraphOperation(before, { kind: 'restore-graph', graph }, { hosts: base.openings || [] }); }
@@ -189,7 +192,7 @@ export function applyNodeMerge(plan: NodeMovePlan, targetId: string, axis: strin
         space = compact.space;
       }
     }
-    return { ok: true, space, changed: true, affected: [...new Set([...(old.incident.get(sourceId) || []),
+    return { ok: true, space: transportOpeningOrientations(plan.source, space, openingRotations), changed: true, affected: [...new Set([...(old.incident.get(sourceId) || []),
       ...(old.incident.get(targetId) || [])].map(edgeKey))] };
   } catch (error) {
     return { ok: false, reason: error instanceof MergeError ? error.reason : 'merge_topology' };

@@ -11,6 +11,7 @@ import {
   canonicalizeConfigGeometryInPlace, canonicalizeLatticeCoordinate, LATTICE_NOISE_STEPS,
 } from './coordinate-canonicalization';
 import { compareCodePoints } from './codepoint-order';
+import { transportOpeningOrientations } from './opening-orientation';
 import { jsonValueEqual } from './json-value-equal';
 import { assertFiniteColumnInputs } from './column-input';
 import { roomPoly, samePoint } from './logic';
@@ -1005,6 +1006,18 @@ export function commitWallSegmentModel<T>(
       if (error instanceof WallSegmentModelError) throw error;
       throw new WallSegmentModelError('invalid-room', String((error as Error).message || 'plan-graph'));
     }
+  }
+  // Room creation can consume a partition without changing physical geometry.
+  // Its new room-side resolver may have the opposite natural normal.
+  for (const space of config.spaces || []) {
+    const source = ((input as any)?.spaces || []).find((item: any) => item.id === space.id);
+    if (!source) continue;
+    const promoted = (space.openings || []).filter((opening: OpeningCfg) => {
+      const old = source.openings?.find((item: OpeningCfg) => item.id === opening.id);
+      return old?.host?.kind === 'partition' && opening.host?.kind === 'wall';
+    });
+    if (promoted.length) transportOpeningOrientations(source, { ...space, openings: promoted },
+      new Map(promoted.map((opening: OpeningCfg) => [opening.id, 0])));
   }
   config.model_version = WALL_SEGMENT_MODEL_VERSION;
   canonicalizeConfigGeometryInPlace(config);

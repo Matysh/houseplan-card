@@ -143,11 +143,6 @@ export class HpIconPicker extends LitElement {
     if(this._open && e.key==='Tab' && this.floating.containsPath(e.composedPath()))this.close(true);
   };
   private focusout = ():void => { queueMicrotask(()=>{if(this._open&&!this.floating.ownsActiveElement())this.close();}); };
-  private dismissScroll = (e:Event):void => {
-    if(this.floating.containsPath(e.composedPath()))return;
-    const bounds=this.renderRoot.querySelector('.field')?.getBoundingClientRect();
-    if(bounds&&this.floating.anchorMoved(bounds))this.close();
-  };
   private async open():Promise<void> {
     if(this._open)return;
     const win=this.floating.window(); if(!win)return;
@@ -163,7 +158,8 @@ export class HpIconPicker extends LitElement {
     this.ownerDocument.addEventListener('keydown',this.tabAway,true);
     this.ownerDocument.addEventListener('pointerdown',this.outside,true);
     this.ownerDocument.addEventListener('focusout',this.focusout);
-    this.floating.dialog()?.addEventListener('scroll',this.dismissScroll,true);
+    this.floating.followAnchor(this.position, () => this.close(),
+      () => this.renderRoot.querySelector('.field')?.getBoundingClientRect());
     win.addEventListener('resize',this.position);win.visualViewport?.addEventListener('resize',this.position);win.visualViewport?.addEventListener('scroll',this.position);
     surface?.querySelector<HTMLInputElement>('input')?.focus({preventScroll:true});
     surface?.classList.add('visible');
@@ -174,7 +170,7 @@ export class HpIconPicker extends LitElement {
     const win=this.floating.window();
     this.ownerDocument.removeEventListener('keydown',this.tabAway,true);
     this.ownerDocument.removeEventListener('pointerdown',this.outside,true);this.ownerDocument.removeEventListener('focusout',this.focusout);
-    this.floating.dialog()?.removeEventListener('scroll',this.dismissScroll,true);
+    this.floating.stopFollowing();
     win?.removeEventListener('resize',this.position);win?.visualViewport?.removeEventListener('resize',this.position);win?.visualViewport?.removeEventListener('scroll',this.position);
     if(this.closeTimer)win?.clearTimeout(this.closeTimer); this.closeTimer=undefined;
     const surface=this.surface();this.motion?.cancel();this.motion=undefined;

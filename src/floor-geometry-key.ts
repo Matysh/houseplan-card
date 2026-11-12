@@ -193,7 +193,8 @@ export const openingWallIndexKey = (
 ].join('|');
 
 /** #814: an exterior window of the sun layer, in render units (docs/SUN.md). */
-export interface SunWindow { id: string; x: number; y: number; angle: number; length: number }
+export type { SunWindow } from './sun';
+import type { SunWindow } from './sun';
 
 /**
  * #814: the key of the sun wedges (`_renderSunRays`; the 2.5D wash adds its
@@ -207,7 +208,9 @@ export const sunGeometryKey = (
   index: string, bodies: string, windows: readonly SunWindow[], sun: readonly unknown[],
   zero: { style: unknown; barriers: readonly number[][] },
 ): string => [
-  index, bodies, windows.map((w) => `${w.id}:${w.x},${w.y},${w.angle},${w.length}`).join(';'),
+  index, bodies, windows.map((w) => `${w.id}:${w.x},${w.y},${w.angle},${w.length}`
+    + (w.mask && !(w.mask.length === 1 && w.mask[0][0] === 0 && w.mask[0][1] === 1)
+      ? `:mask=${JSON.stringify(w.mask)}` : '')).join(';'),
   ...sun, zero.style, zero.barriers.join(';'),
 ].join('|');
 

@@ -1,4 +1,5 @@
 import { CANVAS_LIMIT } from '../../canvas-constants';
+import { windowOpeningFeatures } from '../../opening-features';
 import { normalizeHexColor } from '../../color-picker';
 import type { DecorShape } from '../decor/types';
 import { styleDecorSelection, type DecorGroupStylePatch } from '../decor/group-edit';
@@ -73,7 +74,11 @@ export function patchPropertiesTarget(
   if (target.kind === 'opening') {
     const opening = target.value;
     let patch = opening;
-    if ((field === 'flip_h' || field === 'flip_v') && typeof value === 'boolean' && opening.type !== 'passage'
+    if (field === 'flip_v' && typeof value === 'boolean' && windowOpeningFeatures(opening)) {
+      patch = structuredClone(opening);
+      windowOpeningFeatures(patch)!.side = value ? 'positive' : 'negative';
+    } else if ((field === 'flip_h' || field === 'flip_v') && typeof value === 'boolean' && opening.type !== 'passage'
+      && !windowOpeningFeatures(opening)
       && !(opening.type === 'gate' && field === 'flip_h')) patch = { ...opening, [field]: value };
     else if (field === 'light_transparent' && opening.type === 'door' && typeof value === 'boolean') {
       patch = { ...opening };

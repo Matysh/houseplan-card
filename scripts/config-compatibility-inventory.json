@@ -6,8 +6,68 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "17343514cef0e014c60bd72718be7e357e3c3acbc36065d6f8cda9b6b494cdf0",
+  "matchesSha256": "51733b0b6748a3d47454046c91176d1e528a6f727ea2073c8c3a69bf42fbf855",
   "hits": [
+    {
+      "id": "4f6df3dfd13b4fd045db561e",
+      "path": "custom_components/houseplan/opening_features.py",
+      "line": 55,
+      "text": "\"\"\"Select the strict schema by parent type, rejecting mixed legacy fields.\"\"\"",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "opening-features",
+      "reason": "#1024 explicitly materializes the old parent binding into two outer-hinged v1 leaves and rejects mixed representations; unchanged reads retain the implicit form."
+    },
+    {
+      "id": "d09b4f1f9eec8fe6257b19d4",
+      "path": "src/houseplan-editor-runtime.ts",
+      "line": 6739,
+      "text": "const compatibleMotion = ['door', 'gate'].includes(d.type) && ['door', 'gate'].includes(type);",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "#1024 preserves the compatible door/gate v1 draft on a type switch, confirming before discarding incompatible current settings; this is not a superseded storage decoder."
+    },
+    {
+      "id": "19f5e58b1d2f1aed8a645321",
+      "path": "src/houseplan-editor-runtime.ts",
+      "line": 6740,
+      "text": "if (d.openingFeatures && !compatibleMotion) {",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "#1024 preserves the compatible door/gate v1 draft on a type switch, confirming before discarding incompatible current settings; this is not a superseded storage decoder."
+    },
+    {
+      "id": "328859aace1f82e66775e79b",
+      "path": "src/houseplan-editor-runtime.ts",
+      "line": 6747,
+      "text": "openingFeatures: compatibleMotion ? d.openingFeatures : undefined,",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "#1024 preserves the compatible door/gate v1 draft on a type switch, confirming before discarding incompatible current settings; this is not a superseded storage decoder."
+    },
+    {
+      "id": "9f47fd30daa9d3745b943b79",
+      "path": "src/opening-features.ts",
+      "line": 144,
+      "text": "{ id: 'legacy-start', hinge: 'start', contact: opening.contact, invert: opening.invert },",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "opening-features",
+      "reason": "#1024 explicitly materializes the old parent binding into two outer-hinged v1 leaves and rejects mixed representations; unchanged reads retain the implicit form."
+    },
+    {
+      "id": "0fb3f6059bb2e2f884650777",
+      "path": "src/opening-features.ts",
+      "line": 145,
+      "text": "{ id: 'legacy-end', hinge: 'end', contact: opening.contact, invert: opening.invert },",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "opening-features",
+      "reason": "#1024 explicitly materializes the old parent binding into two outer-hinged v1 leaves and rejects mixed representations; unchanged reads retain the implicit form."
+    },
     {
       "id": "52ea779a5dfb9b0fa5232b9d",
       "path": "src/wall-side-dimension-geometry.ts",
@@ -2059,10 +2119,10 @@
       "reason": "Existing JSON/ZIP/HTTP/error response/old-client protocol compatibility; no persisted config selector."
     },
     {
-      "id": "ed7e4817db52d0cf06196db5",
+      "id": "09deaef4251f18027edc4933",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 2255,
-      "text": "from .graph_write import prepare_graph_candidate, preserve_legacy_structure",
+      "line": 2265,
+      "text": "preserve_legacy_structure,",
       "occurrence": 1,
       "kind": "branch",
       "owner": "wall-model-chain",
@@ -3643,16 +3703,6 @@
       "path": "src/houseplan-card.ts",
       "line": 2247,
       "text": "/** Compatibility aliases keep the performance/smoke diagnostic contract. */",
-      "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "current-feature",
-      "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
-    },
-    {
-      "id": "8e59cd319341d6caed024898",
-      "path": "src/houseplan-card.ts",
-      "line": 2294,
-      "text": "/** Avoid opting a rounded legacy length into strict geometry on a binding-only edit. */",
       "occurrence": 1,
       "kind": "exclusion",
       "owner": "current-feature",

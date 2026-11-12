@@ -8,7 +8,12 @@ and real HA websocket tests; [contract](CONFIG-COMPATIBILITY.md#per-space-presen
 
 Historical #1015 provenance: reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
 
-Current snapshot: **753 individually classified matching lines**, sha256:`08c5a7d79e4fc4a5e9930874a43c622b8d340811f703961b1794a6fee296a424`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+Current snapshot: **760 individually classified matching lines**, sha256:`51733b0b6748a3d47454046c91176d1e528a6f727ea2073c8c3a69bf42fbf855`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+
+#1024 adds the optional opening-features v1 reader/materialization branch. The
+three current door/gate type-switch records are current-feature exclusions,
+not new legacy migration permissions. Its first stable publication is pending;
+no implicit-reader removal or invented sunset is authorized.
 
 #1380 classifies three current graph-write/exact-coordinate safety comments as
 `current-feature` and the first-key-wins historical wall-overlay ABI as

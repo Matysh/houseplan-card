@@ -6,6 +6,8 @@ import re
 
 import voluptuous as vol
 
+from .opening_features import clear_opening_bindings
+from .opening_orientation import transport_opening_orientations
 
 COPY_KEYS = (
     "settings", "zero_wall_style", "cell_cm", "view_box", "plan_url", "plan_aspect",
@@ -59,8 +61,7 @@ def space_copy_candidate(config: dict, source_id: str, title: str, seed: str,
         mapping = walls if host["kind"] == "wall" else partitions
         item = {**copy.deepcopy(opening), "id": new_id("co"),
                 "host": {**copy.deepcopy(host), "kind": "partition", "id": mapping[host["id"]]}}
-        item.pop("contact", None)
-        item.pop("lock", None)
+        item = clear_opening_bindings(item)
         openings.append(item)
     decoration = [{**copy.deepcopy(item), "id": new_id("cd")}
                   for item in source.get("decor", [])
@@ -96,6 +97,10 @@ def space_copy_candidate(config: dict, source_id: str, title: str, seed: str,
         copied_graph["edges"].sort(key=lambda item: item["kind"] + ":" + item["id"])
         copied_graph["dependencies"].sort(key=lambda item: item["node"])
         target = project_graph_space(target, copied_graph)["space"]
+    transport_opening_orientations({**source, "openings": [
+        {**clear_opening_bindings(opening), "id": copied["id"]}
+        for opening, copied in zip(source.get("openings", []), openings, strict=True)
+    ]}, target)
     result = copy.deepcopy(config)
     result["spaces"].insert(source_index + 1, target)
     return result

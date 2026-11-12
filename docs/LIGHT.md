@@ -1,5 +1,20 @@
 # Light on the plan — the model (source of truth)
 
+## Per-leaf shade transmission and sliding apertures (#1024)
+
+Window shade intervals are applied only after proving existing interior
+floor-to-floor passages. Intersect with those intervals; never create an
+exterior/unhosted light route, a physical shade segment or a second barrier.
+Only confirmed closed enabled shades block. Glass-leaf pose is presentation.
+
+A sliding door/gate exposes its partial aperture opposite the panel movement;
+a swing opening keeps its existing centred aperture and door light-transparent
+rule. Known opening_features v1 is excluded from physical-structure keys;
+effective amount/mask and active slide direction participate in optical keys.
+No source update writes config or changes the structural graph. Static uses the
+same effective resolver; PDF remains state-free, SVG retains its supported View.
+
+
 Status: accepted by the owner after manual testing, 2026-08-11 (#71). Replaces
 the layered model of v1.61.0-beta.5 and earlier.
 

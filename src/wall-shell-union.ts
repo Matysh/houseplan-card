@@ -3,7 +3,7 @@
  * Keep the exact path; only its failure gets one canonical-coordinate retry.
  * This never edits a stored room, wall, opening or caller-owned polygon. */
 import { union } from './wall-boolean-cache';
-import { COORDINATE_FACTOR } from './coordinate-canonicalization';
+import { COORDINATE_FACTOR } from './coordinate-precision';
 import { sameWallOperandTopology } from './wall-operand-topology';
 
 type Multi = ReturnType<typeof union>;

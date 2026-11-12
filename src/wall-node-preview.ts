@@ -10,6 +10,7 @@ import { gridVisualUnits } from './grid-scale';
 import { partitionOpeningFace } from './partition-openings';
 import { openingInnerFaceOffsetFromIndex } from './wall-thickness';
 import { renderOpeningVisibleGeometry } from './render/opening-symbol';
+import { openingWindowHandleSides, type ResolvedOpeningVisual } from './opening-features';
 import { structuralNodeWalls, sameNodePoint, type NodeMoveSpace } from './wall-node-move';
 import type { OpeningCfg, ServerConfig } from './types';
 import { resolveZeroWalls } from './zero-walls';
@@ -138,7 +139,8 @@ export interface NodePreviewScene {
   roomIds: string[]; openingIds: string[]; oldZeroD: string[]; oldWallsD: string; oldPaperD: string;
 }
 export function nodePreviewScene(before: NodePreviewGeometry, next: NodePreviewGeometry,
-  options: { px: number; color: string; fill: string; opacity: number; amount(o: OpeningCfg): number }): NodePreviewScene {
+  options: { px: number; color: string; fill: string; opacity: number; amount(o: OpeningCfg): number;
+    visual?(o: OpeningCfg): ResolvedOpeningVisual }): NodePreviewScene {
   const { model, input, geometry } = next;
   const united = wallBodiesGeometryPath(geometry);
   const solid = wallBodyNeedsSolid(geometry.depthUnits, options.px)
@@ -184,6 +186,8 @@ export function nodePreviewScene(before: NodePreviewGeometry, next: NodePreviewG
         return svg`<g class="opening" data-hp="opening" data-id=${o.id} opacity=${moving ? '.5' : '1'}
           transform=${`translate(${o.rx} ${o.ry}) rotate(${o.angle})`}>${renderOpeningVisibleGeometry({
             type: o.type, length: o.rlen, angle: o.angle, amount: options.amount(o),
+            visual: options.visual?.(o), sensorDriven: !!o.contact,
+            handleSides: openingWindowHandleSides(o, model.rooms, face.cm, input.cellCm, GRID_PITCH),
             flipH: !!o.flip_h, flipV: !!o.flip_v, base: options.color, tone: options.color,
             cellCm: input.cellCm, gridPitch: GRID_PITCH, face,
           })}</g>`;

@@ -24,8 +24,6 @@ from homeassistant.helpers import issue_registry as ir
 
 from .asset_integrity import get_asset_integrity_verifier
 from .auth import may_write
-from .structural_websocket import structural_websocket_command
-from .plan_graph_exact import GraphError
 from .build_identity import UNKNOWN_BUILD, BuildIdentity
 from .const import (
     ASSETS_DIR,
@@ -68,6 +66,7 @@ from .decor_assets import (
     read_asset,
     read_catalog,
 )
+from .deletion_layout import deletion_layout_candidate
 from .import_export import (
     ImportFailure,
     content_manifest,
@@ -81,8 +80,9 @@ from .junction_limits import JunctionLimitError, validate_junction_limits
 from .led_strips import led_strip_link_report, preserve_led_strips
 from .marker_copy import marker_copy_candidate
 from .marker_history import HistoryError
-from .deletion_layout import deletion_layout_candidate
 from .marker_history_websocket import HISTORY_FIELDS
+from .opening_features import guard_opening_features_write
+from .plan_graph_exact import GraphError
 from .plans import (
     QuotaError,
     check_quota,
@@ -119,6 +119,7 @@ from .store import (
 from .store import (
     OPTIMIZE_PENDING as _OPTIMIZE_PENDING,
 )
+from .structural_websocket import structural_websocket_command
 from .support_package import (
     PACKAGE_VERSIONS,
     SupportPackageError,
@@ -131,8 +132,8 @@ from .vacuum_paths import public_trails
 from .validation import (
     CONFIG_SCHEMA,
     LAYOUT_SCHEMA,
-    MAX_LAYOUT,
     MAX_CONFIG_BYTES,
+    MAX_LAYOUT,
     MAX_PLAN_BYTES,
     PLAN_EXTENSIONS,
     POS_SCHEMA,
@@ -170,9 +171,7 @@ from .wall_node_delete import (
 )
 from .wall_node_move import NodeMoveError, node_move_candidate, node_move_host_baseline
 from .wall_segment_model import (
-    WALL_SEGMENT_MODEL_VERSION,
     WallSegmentMigrationError,
-    commit_wall_segment_model,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -1944,6 +1943,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "plan_graph_api": 1,
             "room_label_layout_api": 1,
             "graph_change_api": 2,
+            "opening_features_api": 1,
             "structural_upload_api": 1,
             **({"graph_migration": {"version": 1, "source_available": True}}
                if isinstance(layout_data.get("plan_graph_migration_backup"), dict) else {}),
@@ -2144,6 +2144,7 @@ def _readable_entity_ids(
         vol.Optional("room_label_layout"): vol.All(vol.Schema({str: vol.Any(None, POS_SCHEMA)}), vol.Length(max=MAX_LAYOUT)),
         vol.Optional("expected_layout_rev"): int,
         vol.Optional("graph_change"): dict,
+        vol.Optional("opening_features_api"): object,
     }
 )
 @websocket_api.async_response
@@ -2222,6 +2223,12 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         baseline = rt.junction_baseline
         baseline_counts = baseline[1] if baseline and baseline[0] == current_rev else None
         stored_config = data.get("config")
+        try:
+            # Judge the submitted whole record before any preservation or repair.
+            guard_opening_features_write(msg["config"], stored_config, msg.get("opening_features_api"))
+        except vol.Invalid as err:
+            connection.send_error(msg["id"], getattr(err, "code", "invalid_format"), str(err))
+            return
         # #1096: the loop-side registry/state walks run only when the write
         # can use their result. The summary validator looks up the entities
         # its own blocks reference; the radar validator reads the registry
@@ -2253,7 +2260,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 
             def _normalize(candidate):
                 nonlocal touched
-                from .graph_write import prepare_graph_candidate, preserve_legacy_structure
+                from .graph_write import (
+                    prepare_graph_candidate,
+                    preserve_legacy_structure,
+                )
                 candidate = prepare_graph_candidate(candidate, stored_config, msg.get("graph_change"), schema_will_validate=True)
                 # Judged after the preservation steps of
                 # `prepare_ordinary_summary_candidate`: an older client that
@@ -3016,6 +3026,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
     {
         vol.Required("type"): "houseplan/plan/optimize",
         vol.Required("config"): dict,
+        vol.Optional("opening_features_api"): object,
         vol.Optional("graph_change"): dict,
         vol.Required("layout"): LAYOUT_SCHEMA,
         vol.Required("expected_config_rev"): int,
@@ -3058,6 +3069,12 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
                 msg["id"], "conflict",
                 f"Plan changed elsewhere (config {config_rev}, layout {layout_rev})",
             )
+            return
+
+        try:
+            guard_opening_features_write(msg["config"], config_data.get("config"), msg.get("opening_features_api"))
+        except vol.Invalid as err:
+            connection.send_error(msg["id"], getattr(err, "code", "invalid_format"), str(err))
             return
 
         readable_entity_ids = _readable_entity_ids(hass, connection)

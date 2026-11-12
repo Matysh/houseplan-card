@@ -10,6 +10,16 @@ import { fieldLifecycle } from './config-compatibility-catalog.mjs';
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id: 'spaces[].openings[].opening_features', selector: { path: ['spaces', '*', 'openings', '*', 'opening_features'] },
+    enforcedBy: 'opening-features.ts + opening_features.py strict type-specific v1 schemas and locked writer guard',
+    storage: 'House Plan server config', type: 'version1 window side/leaves[1..4] with stable local id/hinge/manual/contact/invert/shade; or door/gate mechanism/slide_direction/manual',
+    default: 'absent (implicit old opening)', level: 'opening',
+    ui: 'Opening settings; detached nested leaf form', runtime: 'entity-over-manual resolver; normalized shade intervals; physical basis transfer',
+    introduced: '#1024 (implementation branch; publication pending)', status: 'current',
+    migration: 'explicit edit only; copy old bindings to two outer-hinged leaves, remove mixed parent fields; no read/untouched-Save materialization',
+    compatibility: 'old writer requires whole-parent identity; portable3 only when used; Copy clears nested bindings, backup retains; unknown version read-only/rejected by import',
+  },
+  {
     id: 'settings.external_screens', selector: { path: ['settings', 'external_screens'] },
     enforcedBy: 'external-screens.ts + validation.py EXTERNAL_SCREENS_SCHEMA',
     storage: 'House Plan server config', type: 'v2 per-space views | v1 read projection | bounded future object',

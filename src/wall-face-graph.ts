@@ -16,7 +16,7 @@
 import { NORM_W } from './canvas-constants';
 import { sameStoredWallPoint, storedWallContact } from './stored-wall-contact';
 import { WALL_INCIDENT_EPS } from './wall-incidence';
-import { COORDINATE_FACTOR } from './coordinate-canonicalization';
+import { COORDINATE_FACTOR } from './coordinate-precision';
 
 export interface WallGraphSourceSegment {
   a: readonly number[];

@@ -6,12 +6,32 @@ import math
 from types import SimpleNamespace
 
 from .coordinate_canonicalization import canonicalize_number
+from .opening_orientation import opening_axis_rotation, transport_opening_orientations
 from .plan_graph import edge_key, project_graph_space, validate_graph
 from .plan_graph_exact import (
-    GraphError, cross, decode_point, decode_rational, encode_rational,
-    intersection, parse_decimal, point_at, project_parameter, squared_distance, to_numbers,
+    GraphError,
+    cross,
+    decode_point,
+    decode_rational,
+    encode_rational,
+    intersection,
+    parse_decimal,
+    point_at,
+    project_parameter,
+    squared_distance,
+    to_numbers,
 )
-from .wall_node_move import NodeMoveError, _classify, _dot, _length, _point, _ref, _same, _sub, _walls
+from .wall_node_move import (
+    NodeMoveError,
+    _classify,
+    _dot,
+    _length,
+    _point,
+    _ref,
+    _same,
+    _sub,
+    _walls,
+)
 
 
 def _fail(reason="topology"):
@@ -147,6 +167,7 @@ def merge_graph_node_space(space, intent):
         dependencies.append({**copy.deepcopy(d), "kind": "on-edge" if len(refs) == 1 else d["kind"], "refs": refs, "parameters": [encode_rational(project_parameter(
             new.points[d["node"]], new.points[r["from"]], new.points[r["to"]])) for r in refs]})
     graph["dependencies"] = dependencies
+    opening_rotations = {}
     for opening in base.get("openings", []):
         host = opening.get("host")
         edge = old.edges.get(edge_key(host)) if host else None
@@ -170,6 +191,7 @@ def merge_graph_node_space(space, intent):
             _fail("opening")
         opening["host"] = {**host, "tq": encode_rational(nt), "t": float(nt)}
         start, end = to_numbers(na), to_numbers(nb)
+        opening_rotations[opening["id"]] = opening_axis_rotation(to_numbers(a), to_numbers(b), start, end)
         angle = math.atan2(end[1] - start[1], end[0] - start[0]) * 180 / math.pi
         if angle >= 90:
             angle -= 180
@@ -189,7 +211,9 @@ def merge_graph_node_space(space, intent):
         a, b = (index.edges[key] for key in incident)
         point = index.points[target]
         left, right = (index.points[e["to"] if e["from"] == target else e["from"]] for e in (a, b))
-        owners = lambda e: sorted(room for room, cycle in index.rooms.items() if any(edge_key(step) == edge_key(e) for step in cycle))
+        def owners(edge):
+            return sorted(room for room, cycle in index.rooms.items()
+                          if any(edge_key(step) == edge_key(edge) for step in cycle))
         protected = any(d["node"] != target and any(target in (r["from"], r["to"]) for r in d["refs"]) for d in graph["dependencies"])
         for opening in result.get("openings", []):
             host = opening.get("host")
@@ -208,4 +232,4 @@ def merge_graph_node_space(space, intent):
                 result = delete_graph_node_space(result, {"node_id": target, "point": wanted})
             except (GraphError, ValueError):
                 _fail()
-    return result
+    return transport_opening_orientations(space, result, opening_rotations)

@@ -10,6 +10,8 @@ import { nothing, svg, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { physicalSpaceRecord, PHYSICAL_PRESENTATION_FIELDS } from './structural-space-record';
 import { interiorWindowLightPassages } from './interior-window-light';
+import { maskProvenWindowPassages, opticalOpeningPosition } from './opening-optics';
+import { motionOpeningFeatures, openingSlideDirection, type OpeningInterval } from './opening-features';
 import {
   lightPass, resolvedLightSources, selectSpatialGlowSource,
 } from './devices';
@@ -79,7 +81,7 @@ export interface LightBarrierRevision {
   geometryFingerprint: string;
   fingerprint: string;
   polygons: LightRoomPolygon[];
-  passageStates: Array<{ opening: GeometryOpeningProjection; amount: number }>;
+  passageStates: Array<{ opening: GeometryOpeningProjection; amount: number; mask?: readonly OpeningInterval[] }>;
 }
 
 export interface LightBarrierScene {
@@ -267,6 +269,7 @@ export function resolveLightBarrierRevision(input: {
   cellCm: number;
   gridPitch: number;
   openingAmount: (opening: GeometryOpeningProjection) => number;
+  openingIntervals?: (opening: GeometryOpeningProjection) => readonly OpeningInterval[];
   /** #850: the architectural fingerprint the caller remembers for this raw config and scale. */
   geometryFingerprint?: string;
 }): LightBarrierRevision {
@@ -283,11 +286,12 @@ export function resolveLightBarrierRevision(input: {
   );
   const onFloor = (point: number[]): boolean =>
     polygons.some(({ poly }) => pointInPolygon(point, poly));
-  const passageStates = input.openings.flatMap((opening) => {
+  const passageStates = input.openings.flatMap<LightBarrierRevision['passageStates'][number]>((opening) => {
     if (!isInteriorLightOpeningType(String(opening.type))) return [];
     // Glass state never changes transport. Host/partial floor coverage is
     // proven on the structural cache miss below, before making any cut.
-    if (opening.type === 'window') return [{ opening, amount: 1 }];
+    if (opening.type === 'window') return [{ opening, amount: 1,
+      mask: input.openingIntervals?.(opening) ?? [[0, 1]] as const }];
     const rad = (opening.angle * Math.PI) / 180;
     const nx = -Math.sin(rad);
     const ny = Math.cos(rad);
@@ -308,7 +312,13 @@ export function resolveLightBarrierRevision(input: {
   );
   return {
     geometryFingerprint,
-    fingerprint: contentFingerprint([geometryFingerprint, openingStateSignature]),
+    fingerprint: contentFingerprint([geometryFingerprint, openingStateSignature,
+      passageStates.filter(({ opening }) => opening.opening_features !== undefined)
+        .map(({ opening, amount, mask }) => {
+          const motion = motionOpeningFeatures(opening);
+          return [opening.id, amount, mask, motion?.mechanism === 'slide' && amount > 0 && amount < 1
+            ? openingSlideDirection(motion) : null];
+        }).sort((a, b) => String(a[0]).localeCompare(String(b[0])))]),
     polygons,
     passageStates,
   };
@@ -341,10 +351,11 @@ export function buildLightBarrierScene(input: {
   ) : null;
   const openStates = revision.passageStates
     .filter(({ amount }) => amount > 0)
-    .flatMap(({ opening, amount }) => opening.type === 'window'
-      ? windowIndex ? interiorWindowLightPassages(opening, input.space, windowIndex)
+    .flatMap(({ opening, amount, mask }) => opening.type === 'window'
+      ? windowIndex ? maskProvenWindowPassages(opening,
+          interiorWindowLightPassages(opening, input.space, windowIndex), mask || [[0, 1]])
         .map(slice => ({ opening: slice, amount: 1 })) : []
-      : [{ opening, amount }]);
+      : [{ opening: opticalOpeningPosition(opening, amount), amount }]);
   const passages = openStates.map(({ opening, amount }) => ({
     ...opening, rlen: openingLightApertureLength(opening.rlen, amount),
   }));

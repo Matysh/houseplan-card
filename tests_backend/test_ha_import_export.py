@@ -55,7 +55,9 @@ from custom_components.houseplan.store import (
 )
 from custom_components.houseplan.vacuum_routes import effective_routes
 from custom_components.houseplan.validation import MAX_LAYOUT, MAX_MARKERS
-from custom_components.houseplan.wall_segment_model import commit_wall_segment_model, decode_legacy_wall_segment_model
+from custom_components.houseplan.wall_segment_model import (
+    commit_wall_segment_model,
+)
 
 
 def test_issue_51_missing_decor_asset_stays_as_repairable_geometry(tmp_path: Path) -> None:
@@ -164,6 +166,40 @@ def _config_with_decor_image(asset_id: str) -> tuple[dict, dict]:
     }
     config["spaces"][0]["decor"] = [shape]
     return config, shape
+
+
+@pytest.mark.parametrize("kind,plan_only", [("full", False), ("space", False), ("space", True)])
+def test_issue1024_portable_v3_preserves_features_and_plan_only_clears_nested_sources(tmp_path, kind, plan_only):
+    from tests_backend.test_opening_features import window
+    config = _config()
+    opening = window(3)
+    opening.update(x=.5, y=0, length=.2)
+    opening["opening_features"]["leaves"][1]["hinge"] = "top"
+    opening["opening_features"]["leaves"][1]["shade"]["enabled"] = False
+    config["spaces"][0]["openings"] = [opening]
+    original = copy.deepcopy(config)
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        plan_only=plan_only, card_version="review", config_root=tmp_path)
+    assert document["export_version"] == 3
+    parsed = parse_document(json.dumps(document).encode())
+    result = parsed["payload"]["config"]["spaces"][0]["openings"][0]
+    expected = copy.deepcopy(opening["opening_features"])
+    if plan_only:
+        for leaf in expected["leaves"]:
+            leaf.pop("contact")
+            leaf["shade"].pop("contact")
+    assert result["opening_features"] == expected
+    assert config == original
+    for version in [1, 2]:
+        old = copy.deepcopy(document)
+        old["export_version"] = version
+        with pytest.raises(ImportFailure):
+            parse_document(json.dumps(old).encode())
+    future = copy.deepcopy(document)
+    future["payload"]["config"]["spaces"][0]["openings"][0]["opening_features"]["version"] = 2
+    with pytest.raises(ImportFailure):
+        parse_document(json.dumps(future).encode())
 
 
 @pytest.mark.parametrize("kind", ["full", "space"])

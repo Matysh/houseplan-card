@@ -84,5 +84,35 @@ try {
  out.internalMenuScrollKeepsOpen=await scrolling.locator('button').getAttribute('aria-expanded')==='true';
  await scrolling.getByRole('option',{name:'Choice 10',exact:true}).click();
  out.nativeChoiceAfterInternalScroll=await scrolling.locator('select').inputValue()==='10';
+ // #1024: real composed ancestor scrolling follows the trigger, while a
+ // completely clipped anchor closes the menu. This uses the shared controller
+ // also consumed by the icon picker; no manual position callback is invoked.
+ await dialog.evaluate(el=>{
+  const wrapper=document.createElement('div');wrapper.dataset.followRegression='1024';
+  wrapper.style.cssText='height:160px;overflow:auto;position:relative;flex:none';
+  const shadowHost=document.createElement('div'),root=shadowHost.attachShadow({mode:'open'});
+  const top=document.createElement('div');top.style.height='50px';
+  const control=document.createElement('hp-settings-select');control.dataset.followControl='1024';
+  const select=document.createElement('select');select.setAttribute('aria-label','Follow regression');
+  for(let i=0;i<4;i++){const option=document.createElement('option');option.value=String(i);option.textContent='Follow '+i;select.append(option);}
+  control.append(select);const bottom=document.createElement('div');bottom.style.height='400px';
+  root.append(top,control,bottom);wrapper.append(shadowHost);el.querySelector('.hpf-settings-content').append(wrapper);
+  wrapper.scrollIntoView({block:'center'});
+ });
+ const following=dialog.locator('hp-settings-select[data-follow-control="1024"]'),wrapper=dialog.locator('[data-follow-regression="1024"]');
+ await following.locator('button').click();
+ const anchorBefore=await following.locator('button').boundingBox();
+ const wrapperBox=await wrapper.boundingBox();
+ await page.mouse.move(wrapperBox.x+5,wrapperBox.y+5);await page.mouse.wheel(0,30);
+ await page.waitForTimeout(200);
+ const anchorAfter=await following.locator('button').boundingBox();
+ out.composedScrollReallyMovesAnchor=anchorAfter.y<anchorBefore.y-10;
+ out.composedScrollKeepsMenuOpen=await following.locator('button').getAttribute('aria-expanded')==='true';
+ const menuAfter=await following.locator('[role="listbox"]').boundingBox();
+ out.composedMenuFollowsAnchor=!!menuAfter && (Math.abs(menuAfter.y-(anchorAfter.y+anchorAfter.height))<12
+   ||Math.abs(menuAfter.y+menuAfter.height-anchorAfter.y)<12);
+ await page.mouse.wheel(0,260);await page.waitForTimeout(220);
+ out.fullyClippedAnchorClosesMenu=await following.locator('button').getAttribute('aria-expanded')==='false';
+ await wrapper.evaluate(el=>el.remove());
 } catch(error){console.error(error);out.completed=false;}
 checkAll(out);await finish(browser,out);

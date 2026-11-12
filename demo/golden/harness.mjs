@@ -1227,7 +1227,7 @@ export async function prepareGoldenScenario(page, scenario) {
           can_write: scenario.canWrite !== false,
           // Match the current server's public graph capabilities, including
           // fixtures that exercise native editor actions after the read.
-          plan_graph_api: 1, graph_change_api: 2,
+          plan_graph_api: 1, graph_change_api: 2, opening_features_api: 1,
           ...(scenario.approvedUi === 'summary' ? { summary_panel_api: 1 } : {}),
           ...(scenario.nodeMenuTool ? { wall_node_move_api: 1, wall_node_delete_api: 1 } : {}),
           ...(scenario.vacuumHistory?{vacuum_history_api:1}:{}),

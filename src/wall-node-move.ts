@@ -2,6 +2,7 @@
  * The frozen structural graph deliberately ignores opening cuts and room-owner
  * multiplicity. Only the at-most-six incident rays change on pointermove. */
 import { GRID_STEP_N, GRID_N } from './canvas-constants';
+import { openingAxisRotation, transportOpeningOrientations } from './opening-orientation';
 import { compareCodePoints as compare } from './codepoint-order';
 import { alignWallEnd } from './wall-end-align';
 import { wallKey } from './wall-thickness';
@@ -411,6 +412,7 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
       }
     }
   }
+  const openingRotations = new Map<string, number>();
   for (const opening of out.openings || []) {
     const host = opening.host;
     if (!host) {
@@ -443,6 +445,7 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
     if (!(span > EPS) || t * span - half < jamb - EPS || t * span + half > span - jamb + EPS)
       return { ok: false, reason: 'opening_blocked' };
     const center = at(child.a, child.b, t);
+    openingRotations.set(opening.id, openingAxisRotation(old.a, old.b, child.a, child.b));
     opening.x = center[0]; opening.y = center[1]; opening.host = { ...host, id: child.id, t };
     let angle = Math.atan2(child.b[1] - child.a[1], child.b[0] - child.a[0]) * 180 / Math.PI;
     if (angle >= 90) angle -= 180; else if (angle < -90) angle += 180;
@@ -503,8 +506,8 @@ export function applyNodeMove(plan: NodeMovePlan, target: NodePoint, axisKey: st
       const result = applyGraphOperation(plan.graph || source.plan_graph,
         operations.length === 1 ? operations[0] : { kind: 'batch', operations }, { hosts: source.openings || [] });
       for (const opening of out.openings || []) if (opening.id in result.mapping.hosts) opening.host = result.mapping.hosts[opening.id];
-      return { ok: true, space: projectGraphSpace(out, result.graph).space, changed: result.changed, affected };
+      return { ok: true, space: transportOpeningOrientations(source, projectGraphSpace(out, result.graph).space, openingRotations), changed: result.changed, affected };
     } catch { return { ok: false, reason: 'invalid' }; }
   }
-  return { ok: true, space: out, changed: true, affected };
+  return { ok: true, space: transportOpeningOrientations(source, out, openingRotations), changed: true, affected };
 }

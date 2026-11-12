@@ -5,10 +5,25 @@ import copy
 import math
 
 from .coordinate_canonicalization import canonicalize_number
-from .plan_graph import validate_graph, project_graph_space, propagate_dependencies, edge_key
+from .plan_graph import (
+    edge_key,
+    project_graph_space,
+    propagate_dependencies,
+    validate_graph,
+)
 from .plan_graph_exact import (
-    GraphError, decode_point, decode_rational, encode_point, encode_rational,
-    parse_decimal, point_at, project_parameter, read_source_point, read_authored_point, squared_distance, to_numbers,
+    GraphError,
+    decode_point,
+    decode_rational,
+    encode_point,
+    encode_rational,
+    parse_decimal,
+    point_at,
+    project_parameter,
+    read_authored_point,
+    read_source_point,
+    squared_distance,
+    to_numbers,
 )
 
 
@@ -72,7 +87,7 @@ def _has_node_carrier(index, moved, support, via, target=None):
 
 
 def move_graph_node_space(space, intent):
-    from .wall_node_move import move_node_space, NodeMoveError, _point
+    from .wall_node_move import NodeMoveError, _point, move_node_space
 
     if "attach_edge" in intent:
         from .wall_node_attach import attach_graph_node_space
@@ -158,11 +173,19 @@ def move_graph_node_space(space, intent):
             t = 1 - (1 - before_t) * ratio if old["from"] == identity else before_t * ratio
         opening["host"] = {**host, "tq": encode_rational(t), "t": float(t)}
         opening["angle"] = canonicalize_number(proposed["angle"])
+        if "opening_features" in proposed:
+            # The independent physical phase already carried the v1 basis.
+            # Preserve its whole orientation alongside angle; never reverse twice.
+            opening["opening_features"] = copy.deepcopy(proposed["opening_features"])
+            if "flip_v" in proposed:
+                opening["flip_v"] = proposed["flip_v"]
+            else:
+                opening.pop("flip_v", None)
     return project_graph_space(base, graph)["space"]
 
 
 def delete_graph_node_space(space, intent):
-    from .wall_node_delete import _deletion, delete_node_space, NodeDeleteError
+    from .wall_node_delete import NodeDeleteError, _deletion, delete_node_space
 
     if not set(intent) <= {"point", "node_id"}:
         raise NodeDeleteError()
@@ -214,5 +237,7 @@ def delete_graph_node_space(space, intent):
         opening["host"] = {**host, "id": kept["id"], "kind": kept["kind"], "tq": encode_rational(t), "t": float(t)}
     # physical was evaluated for the unchanged angle, clearances and all room
     # overlaps; the graph projection is independently derived afterwards.
+    from .opening_orientation import transport_opening_orientations
+
     del physical
-    return project_graph_space(base, graph)["space"]
+    return transport_opening_orientations(space, project_graph_space(base, graph)["space"])

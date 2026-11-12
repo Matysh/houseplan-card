@@ -154,13 +154,24 @@ def canonicalize_config_geometry(config: Any) -> Any:
                 _lattice_point(segment.get("a"))
                 _lattice_point(segment.get("b"))
 
+        opening_basis = copy.deepcopy(space) if any(
+            isinstance(opening.get("opening_features"), dict)
+            and opening["opening_features"].get("version") == 1
+            for opening in _records(space.get("openings"))
+        ) else None
+        opening_angle_changed = False
         for opening in _records(space.get("openings")):
+            previous_angle = opening.get("angle")
             if not graph_owned:
                 _lattice_fields(opening, ("x", "y"))
             _scalar_fields(opening, ("angle", "length"))
+            opening_angle_changed |= previous_angle != opening.get("angle")
             host = _record(opening.get("host"))
             if host is not None and not graph_owned:
                 _scalar_fields(host, ("t",))
+        if opening_basis and opening_angle_changed:
+            from .opening_orientation import transport_opening_orientations
+            transport_opening_orientations(opening_basis, space)
 
         for decor in _records(space.get("decor")):
             kind = decor.get("kind")

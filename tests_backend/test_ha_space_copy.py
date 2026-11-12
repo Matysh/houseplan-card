@@ -11,7 +11,11 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.houseplan.const import DOMAIN
 from custom_components.houseplan.graph_write import normalize_graph_config
-from custom_components.houseplan.space_copy import is_saved_space_copy
+from custom_components.houseplan.room_appearance import normalize_room_appearance
+from custom_components.houseplan.space_copy import (
+    is_saved_space_copy,
+    space_copy_candidate,
+)
 from custom_components.houseplan.store import get_data
 from custom_components.houseplan.validation import CONFIG_SCHEMA
 from custom_components.houseplan.wall_segment_model import _wall_key
@@ -104,6 +108,63 @@ async def read(client):
     result = await client.receive_json()
     assert result["success"], result
     return result["result"]
+
+
+async def test_1024_writer_guard_is_under_cas_and_preserves_extended_openings(hass, hass_ws_client):
+    source = await setup_source(hass, "wall", 11)
+    source["spaces"][0]["openings"][0]["opening_features"] = {
+        "version": 1, "mechanism": "slide", "slide_direction": "end", "manual": "open"}
+    await get_data(hass).config_store.async_save({"rev": 7, "config": source})
+    client = await hass_ws_client(hass)
+    initial = await read(client)
+    assert initial["opening_features_api"] == 1
+    renamed = copy.deepcopy(source)
+    renamed["spaces"][0]["title"] = "Metadata only"
+    assert (await write(client, renamed, 7))["success"]
+    accepted = await read(client)
+    for mutate in ("position", "strip", "delete", "floor"):
+        candidate = copy.deepcopy(accepted["config"])
+        opening = candidate["spaces"][0]["openings"][0]
+        if mutate == "position":
+            opening["opening_features"]["manual"] = "closed"
+        elif mutate == "strip":
+            opening.pop("opening_features")
+        elif mutate == "delete":
+            candidate["spaces"][0]["openings"] = []
+        else:
+            candidate["spaces"] = []
+        answer = await write(client, candidate, accepted["rev"])
+        assert not answer["success"]
+        assert answer["error"]["code"] == "opening_features_client_outdated"
+        assert (await read(client))["config"] == accepted["config"]
+        assert (await read(client))["rev"] == accepted["rev"]
+    changed = copy.deepcopy(accepted["config"])
+    changed["spaces"][0]["openings"][0]["opening_features"]["manual"] = "closed"
+    await client.send_json_auto_id({"type": "houseplan/config/set", "config": changed,
+                                   "expected_rev": accepted["rev"], "opening_features_api": 1})
+    assert (await client.receive_json())["success"]
+    assert (await read(client))["config"]["spaces"][0]["openings"][0]["opening_features"]["manual"] == "closed"
+
+
+async def test_1024_frontend_copy_matches_server_and_clears_nested_disabled_bindings(hass, hass_ws_client):
+    # The ordinary frontend copy starts from config/get's materialized appearance.
+    source = normalize_room_appearance(await setup_source(hass, "wall", 11))
+    opening = source["spaces"][0]["openings"][0]
+    opening["type"] = "window"
+    opening["opening_features"] = {"version": 1, "side": "positive", "leaves": [
+        {"id": "first", "hinge": "start", "contact": "binary_sensor.shared", "manual": "closed",
+         "shade": {"enabled": False, "contact": "cover.shade", "manual": "closed", "invert": True}},
+        {"id": "upper", "hinge": "top", "contact": "binary_sensor.shared", "manual": "open"},
+    ]}
+    before = copy.deepcopy(source)
+    candidate = frontend_copy(source, seed="features")
+    assert source == before
+    assert candidate == CONFIG_SCHEMA(space_copy_candidate(source, "source", "Copy", "features"))
+    assert is_saved_space_copy(candidate, source)
+    leaves = candidate["spaces"][1]["openings"][0]["opening_features"]["leaves"]
+    assert [leaf["id"] for leaf in leaves] == ["first", "upper"]
+    assert all("contact" not in leaf for leaf in leaves)
+    assert leaves[0]["shade"] == {"enabled": False, "manual": "closed", "invert": True}
 
 
 @pytest.mark.parametrize("kind", ["wall", "partition"])

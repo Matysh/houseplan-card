@@ -29,6 +29,7 @@ the import reports what it left unhosted.
 """
 from __future__ import annotations
 
+import copy
 import math
 from typing import Any
 
@@ -37,13 +38,22 @@ from .coordinate_canonicalization import (
     canonicalize_lattice_coordinate,
     canonicalize_number,
 )
-from .validation import (
-    _angle_delta_mod_180, _reserve_host_interval,
-    partition_opening_host_fault, wall_opening_host_fault,
-)
 from .graph_host_continuity import GraphHostContinuity
 from .plan_graph import project_graph_opening
-from .plan_graph_exact import GraphError, decode_rational, encode_rational, project_parameter, read_source_point, to_numbers
+from .plan_graph_exact import (
+    GraphError,
+    decode_rational,
+    encode_rational,
+    project_parameter,
+    read_source_point,
+    to_numbers,
+)
+from .validation import (
+    _angle_delta_mod_180,
+    _reserve_host_interval,
+    partition_opening_host_fault,
+    wall_opening_host_fault,
+)
 from .wall_segment_model import (
     LEGACY_WALL_SEGMENT_MODEL_VERSION,
     opening_frame,
@@ -308,7 +318,10 @@ def repair_imported_openings(config: Any, model: int) -> dict[str, Any]:
         if (isinstance(space, dict) and isinstance(space.get("openings"), list)
                 and isinstance(view_space, dict)
                 and len(space["openings"]) == len(view_space.get("openings") or [])):
+            before = copy.deepcopy(space)
             _repair_space(space, view_space, model, report)
+            from .opening_orientation import transport_opening_orientations
+            transport_opening_orientations(before, space)
     return report
 
 

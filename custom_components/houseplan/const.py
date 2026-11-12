@@ -82,7 +82,7 @@ MAX_SUPPORT_CONTACT_CODEPOINTS = 320
 # Assistant Store version above: storage migrations and files exported by a
 # user have different compatibility lifecycles.
 PLAN_MODEL_VERSION = 11
-EXPORT_VERSION = 2
+EXPORT_VERSION = 3
 MAX_EXPORT_BYTES = 32 * 1024 * 1024
 IMPORT_PREVIEW_TTL_S = 10 * 60
 MAX_IMPORT_PREVIEWS_PER_USER = 3

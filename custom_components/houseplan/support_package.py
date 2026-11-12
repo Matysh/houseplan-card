@@ -417,6 +417,30 @@ def _project_marker(ids: _Pseudonyms, marker: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _project_opening_features(ids: _Pseudonyms, space: dict, opening: dict) -> dict | None:
+    features = opening.get("opening_features")
+    if not isinstance(features, dict) or type(features.get("version")) is not int or features["version"] != 1:
+        return None
+    out = _copy_keys(features, ("version", "mechanism", "slide_direction", "manual", "side"))
+    if opening.get("type") == "window":
+        out["leaves"] = []
+        for leaf in features.get("leaves", [])[:4]:
+            if not isinstance(leaf, dict):
+                continue
+            projected = _copy_keys(leaf, ("hinge", "manual", "invert"))
+            projected["id"] = ids.get("opening-leaf", json.dumps(
+                [space.get("id"), opening.get("id"), leaf.get("id")], separators=(",", ":")))
+            if leaf.get("contact"):
+                projected["contact"] = _entity_ref(ids, leaf["contact"])
+            shade = leaf.get("shade")
+            if isinstance(shade, dict):
+                projected["shade"] = _copy_keys(shade, ("enabled", "manual", "invert"))
+                if shade.get("contact"):
+                    projected["shade"]["contact"] = _entity_ref(ids, shade["contact"])
+            out["leaves"].append(projected)
+    return out
+
+
 def _project_space(
     ids: _Pseudonyms, space: dict[str, Any], index: int
 ) -> dict[str, Any]:
@@ -529,6 +553,9 @@ def _project_space(
         for key in ("contact", "lock"):
             if opening.get(key):
                 projected[key] = _entity_ref(ids, opening.get(key))
+        features = _project_opening_features(ids, space, opening)
+        if features is not None:
+            projected["opening_features"] = features
         host = opening.get("host")
         if isinstance(host, dict) and host.get("kind") in {"wall", "partition"}:
             kind = host["kind"]

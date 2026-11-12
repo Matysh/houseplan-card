@@ -30,6 +30,10 @@ from custom_components.houseplan.led_strips import (
     preserve_led_strips,
 )
 from custom_components.houseplan.marker_alerts import valid_marker_alerts
+from custom_components.houseplan.opening_features import (
+    OPENING_FEATURES_SCHEMA,
+    validate_opening_features,
+)
 from custom_components.houseplan.partition_promotion import (
     same_partition_wall_chain_promotion,
     same_partition_wall_promotion,
@@ -965,6 +969,25 @@ def validate_partition_opening_hosts(
                 # #996: Undo/recreation may promote the exact same physical
                 # carrier back into a room wall. This is not Optimize's broader
                 # rehost permission and cannot transfer or reshape a carrier.
+                promotion_old = old
+                if old_space is not None and old.get("opening_features"):
+                    # Compare against a server-computed basis transfer, never
+                    # ignore nested settings or trust the submitted flip flag.
+                    from .opening_orientation import transport_opening_orientations
+                    expected = copy.deepcopy(opening)
+                    expected["opening_features"] = copy.deepcopy(old["opening_features"])
+                    if "flip_v" in old:
+                        expected["flip_v"] = old["flip_v"]
+                    else:
+                        expected.pop("flip_v", None)
+                    transport_opening_orientations(
+                        old_space, {**space, "openings": [expected]}, {opening_id: 0},
+                    )
+                    promotion_old = {**old, "opening_features": expected["opening_features"]}
+                    if "flip_v" in expected:
+                        promotion_old["flip_v"] = expected["flip_v"]
+                    else:
+                        promotion_old.pop("flip_v", None)
                 same_wall = (
                     allow_room_wall_promotion and old_space is not None and isinstance(host, dict)
                     and host.get("kind") == "wall"
@@ -972,12 +995,12 @@ def validate_partition_opening_hosts(
                     and host.get("id") in room_wall_ids
                     and space.get("cell_cm", 5) == old_space.get("cell_cm", 5)
                     and (same_partition_wall_promotion(
-                        old, opening, old_partitions.get(str(old_host.get("id", ""))),
+                        promotion_old, opening, old_partitions.get(str(old_host.get("id", ""))),
                         walls.get(str(host.get("id", ""))),
                     ) or (
                         str(old_host.get("id", "")) not in partitions
                         and same_partition_wall_chain_promotion(
-                            old, opening, old_partitions.get(str(old_host.get("id", ""))),
+                            promotion_old, opening, old_partitions.get(str(old_host.get("id", ""))),
                             list(walls.values()), room_wall_ids,
                             [*old_partitions.values(), *((old_space or {}).get("wall_segments") or [])],
                         )
@@ -2234,7 +2257,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
         vol.Optional("decor"): vol.All([DECOR_SCHEMA], vol.Length(max=MAX_DECOR)),
         vol.Optional("stairs"): vol.All([STAIR_SCHEMA], vol.Length(max=MAX_STAIRS)),
         vol.Optional("openings"): vol.All([
-            vol.Schema(
+            vol.All(vol.Schema(
                 {
                     vol.Required("id"): str,
                     vol.Required("type"): vol.Any("door", "window", "gate", "passage"),
@@ -2250,10 +2273,11 @@ SPACE_SCHEMA = vol.All(vol.Schema(
                     vol.Optional("light_transparent"): bool,
                     vol.Optional("flip_h"): bool,
                     vol.Optional("flip_v"): bool,
+                    vol.Optional("opening_features"): OPENING_FEATURES_SCHEMA,
                     vol.Optional("host"): OPENING_HOST_SCHEMA,
                 },
                 extra=vol.ALLOW_EXTRA,
-            )
+            ), validate_opening_features)
         ], vol.Length(max=MAX_OPENINGS)),
         # Wall thickness (docs/WALL-THICKNESS.md): keyed by a segment identity
         # (midpoint + direction), thickness always in centimetres. Optional —

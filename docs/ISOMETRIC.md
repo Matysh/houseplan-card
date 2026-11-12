@@ -1,5 +1,18 @@
 # Isometric (2.5D) View internals
 
+## Independent opening leaves (#1024)
+
+Retain existing frame, reveal, glass and sill materials. An explicit window has
+1–4 equal independent sashes; side hinges retain the 65-degree conditional
+policy. A top sash translates parallel by 20 physical cm times its resolved
+amount, without a new tilt model. Unknown bound leaves stay closed with a
+separate neutral question mark. Shade sun/off/question glyphs sit at sill
+height on the opposite side; no physical shades, Flat arcs/handles or blue
+plan-plane overlays are added to volumes. Slide uses one full-width translated
+panel on the type-specific resolved face (gate is not door flip semantics).
+Fit bounds cover every pose, including translation, independent of live state.
+
+
 Issue [#89](https://github.com/Matysh/houseplan-card/issues/89) started a
 presentation-only volumetric View experiment; the normative Stage 1 contract is
 `docs/specs/089-isometric-view-stage1.md`, the fixed rendering decisions are in

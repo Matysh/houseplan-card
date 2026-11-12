@@ -90,6 +90,23 @@ def test_issue977_zip_preserves_state_source_without_granting_runtime_ownership(
     assert restored["payload"]["config"]["markers"][0]["state_source"] == state_source
 
 
+def test_issue1024_zip_keeps_nested_disabled_shade_bindings_and_leaf_identity(tmp_path):
+    from tests_backend.test_opening_features import window
+    source, target = tmp_path / "source", tmp_path / "target"
+    target.mkdir()
+    document, _ = sample(source)
+    document["export_version"] = 3
+    opening = window(4)
+    opening["opening_features"]["leaves"][2]["shade"]["enabled"] = False
+    document["payload"]["config"]["spaces"][0]["openings"] = [opening]
+    original = copy.deepcopy(document)
+    archive = tmp_path / "opening-features.zip"
+    build_archive(archive, document, source, {})
+    result = read_archive(archive, target).document
+    assert result["payload"] == document["payload"]
+    assert document == original
+
+
 def test_archive_missing_image_is_explicit_and_preserves_geometry(tmp_path: Path):
     source = tmp_path / "source"
     document, _ = sample(source)

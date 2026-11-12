@@ -10,7 +10,7 @@ import { union, difference, intersection, type Geom } from './wall-boolean-cache
 import { unionLocalWallGeometry, intersectLocalWallGeometry, subtractLocalWallGeometry } from './wall-local-boolean';
 import { polygonArea, roomPoly, roomEdges, sharedBoundary, paperRoomShapes } from './logic';
 import { NEAR_AXIS_MAX_DEGREES } from './near-axis';
-import { LATTICE_NOISE_STEPS } from './coordinate-canonicalization';
+import { LATTICE_NOISE_STEPS } from './canvas-constants';
 import { unionWallShellGeometry } from './wall-shell-union';
 import type { wallQuadCovered } from './wall-quad-coverage';
 import { unionClippedWallCornersSequential, subtractWallOpeningCuts } from './wall-geometry-batch';

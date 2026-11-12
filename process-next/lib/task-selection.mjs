@@ -23,7 +23,7 @@ export const DOMAINS = [
     ['integration', 'Сквозные контракты и обвязка', /(?:journey|parity|edge-case|e2e|harness|projection)/, ['storage', 'presentation'], ['household_journeys']],
     ['shared', 'Общие функции и типы', /(?:^|\/)(?:logic|types)\.(?:test\.)?(?:ts|mjs)$/, ['geometry', 'storage', 'history', 'editors', 'devices', 'presentation', 'lighting', 'navigation'], ['editor_gestures']],
     ['process', 'Очередь, ревью, релизы и исполнение проверок', /(?:process-next|workflow|process-state|coordinator|runner|toolchain)/, [], []],
-    ['lighting', 'Свет, солнце и окружение', /(?:sun|light|glow|moon|day-cycle|daycycle|shadow|visibility|led|dimming|light)/, ['geometry', 'openings', 'presentation'], ['light', 'sun']],
+    ['lighting', 'Свет, солнце и окружение', /(?:sun|light|glow|moon|day-cycle|daycycle|shadow|visibility|led|dimming|optics)/, ['geometry', 'openings', 'presentation'], ['light', 'sun']],
     ['climate', 'Климат и значения комнат', /(?:temp|humidity|co2|climate|room-card|state-value)/, ['devices', 'presentation'], ['room_co2']],
     ['decor', 'Декор, мебель, изображения и текст', /(?:decor|furniture|backdrop|rotation-angle|live-text|asset|text)/, ['editors', 'history', 'presentation'], ['decor_creation_selection', 'decor_rotation_shift']],
     ['summary', 'Сводная панель и погода', /(?:summary|weather|forecast)/, ['presentation', 'navigation', 'devices'], ['summary_panel', 'summary_weather']],
@@ -77,7 +77,7 @@ export async function testCatalog(root, inventory, { e2eRoot } = {}) {
                 domains.push('toolchain');
             if (!domains.length && converter)
                 domains.push('storage');
-            const importance = /(?:conflict|authority|rights|permission|invalid|reject|safety|atomic|graph|exact)/.test(path) ? 'critical' : /(?:edge|corner|boundary|degenerate|refusal|recovery|regress)/.test(path) ? 'boundary' : 'regression';
+            const importance = /(?:conflict|authority|rights|permission|invalid|reject|safety|atomic|graph|exact|opening[_-](?:features|orientation))/.test(path) ? 'critical' : /(?:edge|corner|boundary|degenerate|refusal|recovery|regress)/.test(path) ? 'boundary' : 'regression';
             rows.push({ id: path, path, type, layer: converter ? 'converter' : infrastructure ? 'infra' : 'product', domains, scenario: basename(path).replace(/(?:\.test)?\.(?:mjs|py)$/, '').replace(/^smoke_|^test_/, '').replaceAll(/[-_]/g, ' '), importance, lifecycle: converter ? 'diagnostic' : infrastructure || old?.decision === 'addressed' || old?.automaticReleaseRun === false ? 'addressed' : 'task-release', classified: domains.length > 0 || infrastructure || converter, executedCases: null });
         }
     for (const scene of prepareGoldenSelection(GOLDEN_SCENARIOS).all)

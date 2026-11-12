@@ -6,6 +6,8 @@ import { ModePresentation } from './mode-presentation';
 import { liveRuntimeCode } from './view-runtime-code';
 import { callout, field, rangeLine, ensureFormKitStyles } from './editors/form-kit';
 import { sendHouseplanWrite } from './large-write-transport';
+import { resolvedOpeningAmount, resolveOpeningVisual, openingWindowHandleSides, openingTransmissionIntervals } from './opening-features';
+import type { OpeningDialogDraft } from './opening-dialog-model';
 import { annotateSpaceGraphOpeningRuns } from './graph-opening-run';
 import { ensureCompactDialogStyles } from './compact-dialog-styles';
 import { subscribeExternalScreenConfig, ExternalConfigStreamRecovery } from './external-screens-events';
@@ -64,7 +66,6 @@ import {
   paperRoomShapes, islandsOf, distToSegment, outlineWithout, segmentAngle, is45, isExact45Vector,
   beginSpaceSwipePointer, classifySpaceDrag, spaceSwipeTargetForOwner, clampScale,
   roomFillModeOf, roomGlowOf,
-  openingAmount,
   fitView, declump, safeUrl, floorsOf, type FloorInfo, stateIcon, diffNewDevices,
   isControllable, spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, customFillOf,
   roomCustomFillOf, DEFAULT_CUSTOM_FILL, type FillColors, type FillColorEntry,
@@ -164,7 +165,7 @@ import {
 } from './virtual-light-state';
 import type { SpaceGeometryState } from './geometry-history-state';
 import type {
-  OpeningCfg, OpeningHost, RoomCfg, SpaceModel, PdfRef,
+  OpeningCfg, RoomCfg, SpaceModel, PdfRef,
   Marker, ServerConfig, DevItem, CardConfig, MarkerValueBadge, ValueBadgePosition,
   ValueBadgeSource,
 } from './types';
@@ -367,7 +368,7 @@ import {
 } from './editors/decor/geometry';
 import { buildRoomFloorPaint, roomFloorGeometry, type RoomFloorPaint } from './room-floor-paint';
 import {
-  openingVisibleMetrics, renderOpeningVisibleGeometry,
+  openingVisibleBounds, openingVisibleMetrics, renderOpeningVisibleGeometry,
   type OpeningFaceOffset, type OpeningVisibleSpec,
 } from './render/opening-symbol';
 import { openingLockFloorPlacement } from './opening-symbol-placement';
@@ -2674,25 +2675,7 @@ export class HouseplanCard extends LitElement {
   private _openingHoverCandidate: OpeningPlacementCandidate | null = null;
   /** Last pointer target rejected only because its independent-wall jamb was too small. */
   private _openingJambBlockCm: number | null = null;
-  private _openingDialog: {
-    id?: string;                 // editing an existing opening
-    type: 'door' | 'window' | 'gate' | 'passage';
-    lengthCm: number;
-    /** Avoid opting a rounded legacy length into strict geometry on a binding-only edit. */
-    lengthTouched?: boolean;
-    contact: string;
-    lock: string;
-    contactOpen?: boolean;
-    contactFilter?: string;
-    lockOpen?: boolean;
-    lockFilter?: string;
-    invert: boolean;
-    lightTransparent?: boolean;
-    flipH: boolean;
-    flipV: boolean;
-    host?: OpeningHost;
-    x: number; y: number; angle: number; // render units (from the wall snap)
-  } | null = null;
+  private _openingDialog: OpeningDialogDraft | null = null;
   private _openingInfo: OpeningCfg | null = null;
   private _openingInfoSpace: string | null = null;
   private _opDrag: import('./interaction-types').OpeningDragState | null = null;
@@ -2909,6 +2892,7 @@ export class HouseplanCard extends LitElement {
   private _haPlanGraphApi: number | null = null;
   private _haRoomLabelLayoutApi: number | null = null;
   private _haGraphChangeApi: number | null = null;
+  private _haOpeningFeaturesApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
   private _haVacuumHistoryApi: number | null = null;
   private _haDeviceHistoryApi: number | null = null;
@@ -3945,7 +3929,7 @@ export class HouseplanCard extends LitElement {
       if (this._summary?.closeDialogIfIdle()) return;
       if (this._markerDialog) { void this._editorRuntimeOrThrow()._requestMarkerDialogClose(); return; }
       if (this._deviceInbox) { this._deviceInbox = null; return; }
-      if (this._openingDialog) { this._openingDialog = null; return; }
+      if (this._openingDialog) { this._editorRuntime?._closeOpeningDialog(); return; }
       if (this._physicalDialog) { this._physicalDialog = null; return; }
       if (this._backdropDialog) { this._backdropDialog = null; return; }
       if (this._decorShapeDialog) { this._decorShapeDialog = null; return; }
@@ -7300,7 +7284,16 @@ export class HouseplanCard extends LitElement {
       extra.push({ minX: p.x, minY: p.y, maxX: p.x, maxY: p.y });
     }
     if (m.id === this._space) {
+      const index = this._openingWallIndexFor(m, this._openCuts()).value;
       for (const o of this._openingsR) {
+        if (!o.orphanReason && o.type !== 'passage') {
+          const face = this._openingFace(o, index, o.type === 'gate' ? !o.flip_v : !!o.flip_v);
+          const bounds = openingVisibleBounds({ type:o.type, length:o.rlen, angle:o.angle,
+            amount:0, flipH:!!o.flip_h, flipV:!!o.flip_v, base:'', tone:'', face,
+            cellCm:this._cellCm, gridPitch:this._gridPitch,
+            visual:resolveOpeningVisual(o, () => null, 0) }, [o.rx,o.ry]);
+          if (bounds) { extra.push(bounds); continue; }
+        }
         const rad = (Number(o.angle) * Math.PI) / 180;
         const dx = (Math.cos(rad) * o.rlen) / 2, dy = (Math.sin(rad) * o.rlen) / 2;
         const it = itemOf([[o.rx - dx, o.ry - dy], [o.rx + dx, o.ry + dy]]);
@@ -9185,6 +9178,7 @@ export class HouseplanCard extends LitElement {
       const writeHass = this.hass;
       const response = await sendHouseplanWrite<any>(writeHass, {
         type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: expectedRev,
+        ...(this._haOpeningFeaturesApi === 1 ? { opening_features_api: 1 } : {}),
         ...(graph_change ? {graph_change} : {}),
         ...(contactLayout?{contact_layout:contactLayout}:{}),
         ...(roomLabels?{room_label_layout:roomLabels}:{}),
@@ -11360,7 +11354,8 @@ export class HouseplanCard extends LitElement {
     // A contour-wall host is stable identity metadata, not a different physical
     // carrier. Only an independent partition window is excluded from exterior
     // sunlight (#132, ADR 282 Stage 1).
-    const windows = solarWindowOpenings(this._openingsR);
+    const windows = solarWindowOpenings(this._openingsR, opening => openingTransmissionIntervals(opening,
+      eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null));
     const key = sunGeometryKey(this._openingWallIndexFor(space, zeroWalls.contour).key,
       physicalBodiesKey(this._floorKey(space.id), this._cellCm, this._gridPitch), windows,
       [sun.azimuth, sun.elevation, north, origin, sunRoomSettingsKey(space.rooms)], zeroWalls);
@@ -11788,6 +11783,8 @@ export class HouseplanCard extends LitElement {
       cellCm: this._cellCm,
       gridPitch: this._gridPitch,
       openingAmount: (opening) => this._openingAmt(opening),
+      openingIntervals: opening => openingTransmissionIntervals(opening,
+        eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null),
       geometryFingerprint: this._liveRt?.geometry(raw), // #850: once per record, epoch and scale
     });
     const cacheKey = `${space.id}|${revision.fingerprint}`;
@@ -12246,6 +12243,9 @@ export class HouseplanCard extends LitElement {
       isoFrame = isoRuntime?.resolveIsoFramePresentation({
         projection, display: disp, scene: isoScene, openings: this._openingsR,
         amountOf: (opening) => this._openingAmt(opening), cellCm: this._cellCm,
+        visualOf: opening => resolveOpeningVisual(opening,
+          eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null,
+          this._openingAmt(opening)),
         overlays: (layers) => this._isoOverlayScene(
           space, devs, disp, layers, isoScene, iconPct, deviceBasePct, showLqi),
       }) ?? null;
@@ -14036,12 +14036,8 @@ export class HouseplanCard extends LitElement {
 
   /** Live state of an opening's contact, 0..1 drawn amount. */
   private _openingAmt(o: OpeningCfg): number {
-    const entity = o.contact && this._renderOpeningEntityAvailable(o.contact)
-      ? this._renderPlanHass.states[o.contact]
-      : null;
-    return openingAmount(
-      o.type, entity?.state, !!o.invert, entity?.attributes?.current_position,
-    );
+    return resolvedOpeningAmount(o, eid => this._renderOpeningEntityAvailable(eid)
+      ? this._renderPlanHass.states[eid] : null);
   }
 
   /** Deleted bindings are unavailable to every plan-level consumer. */
@@ -14115,6 +14111,9 @@ export class HouseplanCard extends LitElement {
         : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
       const visibleSpec: OpeningVisibleSpec = {
         type: o.type,
+        visual: resolveOpeningVisual(o, eid => this._renderOpeningEntityAvailable(eid)
+          ? this._renderPlanHass.states[eid] : null, amt),
+        handleSides: openingWindowHandleSides(o, space.rooms, face.cm, this._cellCm, this._gridPitch),
         length: o.rlen,
         angle: o.angle,
         amount: amt,
@@ -14123,6 +14122,7 @@ export class HouseplanCard extends LitElement {
         base,
         tone,
         sensorActive: active,
+        sensorDriven: !!o.contact,
         cellCm: this._cellCm,
         gridPitch: this._gridPitch,
         face,

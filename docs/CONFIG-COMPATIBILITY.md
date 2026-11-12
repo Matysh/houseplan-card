@@ -1,5 +1,46 @@
 # Config compatibility registry
 
+## Opening features v1 (#1024)
+
+Optional spaces[].openings[].opening_features version1 does not bump model11,
+graph or storage schema. Windows hold one side and 1–4 equal stable-ID leaves:
+hinge start/end/top, optional manual/contact/invert and shade
+enabled/manual/contact/invert. Explicit windows forbid parent contact/invert/
+flip_h/flip_v. Doors/gates hold swing/slide, retained slide_direction and manual;
+their parent contact/invert/lock remain authoritative.
+
+Absence keeps the implicit old representation. Reads, an untouched dialog and
+ordinary Save do not materialize it. Explicit leaf edits copy the old contact/
+invert to two outer-hinged leaves before removing forbidden parent fields.
+A bound unavailable source never falls back to manual. Known v1 is strictly
+validated; unknown versions remain opaque/read-only and cannot be partly imported.
+
+Physical axis normalization transfers whole leaf records once: reverse order,
+start/end hinges, common side and retained slide direction on odd half-turns.
+Active slides preserve the transported physical face using the type-specific
+resolver. Node operations use endpoint lineage, not nearest-angle guesses for
+large real rotations; unchanged reads and ACKs do not repeat the transfer.
+
+Fresh config/get advertises opening_features_api=1. Compatible whole-document
+and Optimize messages carry an outer marker of the same exact integer. Under
+the write lock, before preservation/normalization, older writers may change
+unrelated data only if every extended parent is semantically identical,
+including geometry and removal. Boolean/number substitution is not equality.
+Ordinary ACL/CAS/graph/fit checks still apply; no permission bypass is added.
+
+Portable documents containing the extension use export_version3; old documents
+remain version2 and versions1/2 are still read. ZIP container format is unchanged.
+Full/space transfer, recovery and history preserve nested settings. Plan-only
+uses its existing source-removal semantics. Space Copy clears every contact/
+lock, including disabled shades, retains local leaf IDs/manual values and proves
+the complete TS/Python projection against the trusted original (#1227). No copy
+geometry exemption is widened. Support uses a closed allowlist, scoped leaf
+pseudonyms and shared entity references, never source labels or arbitrary fields.
+
+Introduction is the #1024 implementation branch; no published stable or sunset
+is claimed before publication. Retain implicit readers and old-backend refusal.
+
+
 ## Exact structural graph, model 11 (#1167)
 
 `spaces[].plan_graph` version 1 is structural authority. `poly`, `wall_ids`,

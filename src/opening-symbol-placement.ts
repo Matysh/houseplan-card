@@ -13,6 +13,15 @@ export interface OpeningSymbolOffset {
   oy: number;
 }
 
+/** One physical slide placement for plan symbols and print geometry. */
+export function openingSlidePlacement(angle: number, length: number, direction: 'start' | 'end',
+  amount: number, face: Pick<OpeningFaceOffset, 'ox' | 'oy'>): { x: number; y: number; shift: number } {
+  const radians = angle * Math.PI / 180;
+  return { x: face.ox * Math.cos(radians) + face.oy * Math.sin(radians),
+    y: -face.ox * Math.sin(radians) + face.oy * Math.cos(radians),
+    shift: (direction === 'end' ? 1 : -1) * length * Math.max(0, Math.min(1, amount)) };
+}
+
 export interface OpeningLockAnchorInput {
   x: number;
   y: number;

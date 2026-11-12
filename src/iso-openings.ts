@@ -3,6 +3,8 @@ import {
   type IsoCamera, type PlanPoint, type ScenePoint,
 } from './iso-projection';
 import { openingSymbolOffset } from './opening-symbol-placement';
+import type { OpeningFeatures } from './types';
+import { openingSlideDirection } from './opening-features';
 
 export type IsoOpeningType = 'door' | 'window' | 'gate' | 'passage';
 
@@ -25,6 +27,9 @@ export interface IsoOpeningInput {
   flipH: boolean;
   flipV: boolean;
   face: IsoOpeningFace;
+  opening_features?: OpeningFeatures;
+  /** Physical 20cm converted with this space's grid, not a visual constant. */
+  topShift?: number;
 }
 
 export interface IsoOpeningLeafBasis {
@@ -35,6 +40,7 @@ export interface IsoOpeningLeafBasis {
   turnDeg: number;
   bottom: number;
   top: number;
+  translation?: PlanPoint;
 }
 
 export interface IsoOpeningAxisBasis {
@@ -303,8 +309,29 @@ export function buildIsoOpeningBasis(
     }),
   ];
   let leaves: IsoOpeningLeafBasis[];
+  const features = input.opening_features;
+  const explicitWindow = input.type === 'window' && features?.version === 1 && 'leaves' in features ? features : null;
+  const motion = (input.type === 'door' || input.type === 'gate') && features?.version === 1 && !('leaves' in features) ? features : null;
   if (input.type === 'passage') {
     leaves = [];
+  } else if (explicitWindow) {
+    const width = input.length / explicitWindow.leaves.length;
+    const side = explicitWindow.side === 'negative' ? 1 : -1;
+    const neutral = { ...input, flipH: false, flipV: false };
+    leaves = explicitWindow.leaves.map((leaf, index) => {
+      const end = leaf.hinge === 'end', top = leaf.hinge === 'top';
+      const basis = leafBasis(neutral, index, [-half + index * width + (end ? width : 0), 0],
+        [end ? -width : width, 0], top ? 0 : (end ? 1 : -1) * side * policy.windowTurnDeg,
+        wallHeight * policy.windowSashBottomRatio, wallHeight * policy.windowSashTopRatio);
+      if (top) basis.translation = transformVector([0, -side * (input.topShift ?? 20)], input.angle, 1, 1);
+      return basis;
+    });
+  } else if (motion?.mechanism === 'slide') {
+    const basis = leafBasis({ ...input, flipH: false, flipV: false }, 0,
+      [-half, 0], [input.length, 0], 0, 0,
+      wallHeight * (input.type === 'gate' ? policy.gateTopRatio : policy.doorTopRatio));
+    basis.translation = transformVector([input.length * (openingSlideDirection(motion) === 'end' ? 1 : -1), 0], input.angle, 1, 1);
+    leaves = [basis];
   } else if (input.type === 'gate') {
     const turn = input.face.side * policy.gateTurnDeg;
     leaves = [
@@ -583,11 +610,14 @@ function windowSashSurfaces(
 /** Apply live state after the structural cache: O(leaves), no topology work. */
 export function projectIsoOpening(
   basis: IsoOpeningBasis,
-  amount: number,
+  amount: number | readonly number[],
   camera: IsoCamera = ISO_CAMERA,
 ): IsoOpeningPanel[] {
-  const liveAmount = Math.max(0, Math.min(1, Number.isFinite(amount) ? amount : 0));
-  return basis.leaves.map((leaf) => {
+  return basis.leaves.map((storedLeaf) => {
+    const sourceAmount = typeof amount === 'number' ? amount : amount[storedLeaf.leaf] ?? 0;
+    const liveAmount = Math.max(0, Math.min(1, Number.isFinite(sourceAmount) ? sourceAmount : 0));
+    const leaf = storedLeaf.translation ? { ...storedLeaf,
+      hinge: add(storedLeaf.hinge, scaled(storedLeaf.translation, liveAmount)) } : storedLeaf;
     const tip = liveTip(leaf, liveAmount);
     const floorHinge = projectPlanPoint(leaf.hinge, leaf.bottom, camera);
     const floorTip = projectPlanPoint(tip, leaf.bottom, camera);
@@ -635,6 +665,7 @@ export function isoOpeningBounds(
       const radius = Math.hypot(leaf.closedVector[0], leaf.closedVector[1])
         + basis.leafThickness / 2;
       include(leaf.hinge, radius);
+      if (leaf.translation) include(add(leaf.hinge, leaf.translation), radius);
     }
   }
   return finite([minX, minY, maxX, maxY])

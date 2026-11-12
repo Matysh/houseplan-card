@@ -1105,6 +1105,106 @@
       "required": false,
       "type": "str"
     },
+    "config.spaces[].openings[].opening_features": {
+      "required": false
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves": {
+      "required": true
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves[].contact": {
+      "nullable": true,
+      "opaque": "<function _text>",
+      "required": false
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves[].hinge": {
+      "enum": [
+        "end",
+        "start",
+        "top"
+      ],
+      "required": true
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves[].id": {
+      "maxLength": 120,
+      "opaque": "<function _text>",
+      "required": true
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves[].invert": {
+      "required": false,
+      "type": "bool"
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves[].manual": {
+      "enum": [
+        "closed",
+        "open"
+      ],
+      "required": false
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves[].shade": {
+      "required": false
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves[].shade.contact": {
+      "nullable": true,
+      "opaque": "<function _text>",
+      "required": false
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves[].shade.enabled": {
+      "required": true,
+      "type": "bool"
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves[].shade.invert": {
+      "required": false,
+      "type": "bool"
+    },
+    "config.spaces[].openings[].opening_features<var0>.leaves[].shade.manual": {
+      "enum": [
+        "closed",
+        "open"
+      ],
+      "required": false
+    },
+    "config.spaces[].openings[].opening_features<var0>.side": {
+      "enum": [
+        "negative",
+        "positive"
+      ],
+      "required": true
+    },
+    "config.spaces[].openings[].opening_features<var0>.version": {
+      "enum": [
+        1
+      ],
+      "opaque": "<function _version>",
+      "required": true
+    },
+    "config.spaces[].openings[].opening_features<var1>.manual": {
+      "enum": [
+        "closed",
+        "open"
+      ],
+      "required": false
+    },
+    "config.spaces[].openings[].opening_features<var1>.mechanism": {
+      "enum": [
+        "slide",
+        "swing"
+      ],
+      "required": false
+    },
+    "config.spaces[].openings[].opening_features<var1>.slide_direction": {
+      "enum": [
+        "end",
+        "start"
+      ],
+      "required": false
+    },
+    "config.spaces[].openings[].opening_features<var1>.version": {
+      "enum": [
+        1
+      ],
+      "opaque": "<function _version>",
+      "required": true
+    },
     "config.spaces[].openings[].type": {
       "required": true,
       "variants": [

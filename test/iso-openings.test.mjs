@@ -15,6 +15,41 @@ const opening = (patch = {}) => ({
   face: { ox: 0, oy: 5, cm: 20, side: 1 }, ...patch,
 });
 
+test('#1024 mixed window leaves have independent volume poses and a parallel top translation', () => {
+  const input = opening({ type:'window', length:120, topShift:20, opening_features:{version:1,side:'negative',leaves:[
+    {id:'left',hinge:'start'}, {id:'upper',hinge:'top'}, {id:'right',hinge:'end'},
+  ]} });
+  const before = structuredClone(input), basis = buildIsoOpeningBasis(input);
+  assert.equal(basis.leaves.length, 3);
+  assert.deepEqual(basis.leaves.map(leaf=>leaf.closedVector), [[40,0],[40,0],[-40,0]]);
+  assert.equal(basis.leaves[0].turnDeg, -65);
+  assert.equal(basis.leaves[2].turnDeg, 65);
+  assert.equal(basis.leaves[1].turnDeg, 0);
+  assert.deepEqual(basis.leaves[1].translation, [0,-20]);
+  const closed = projectIsoOpening(basis,[0,0,0]);
+  const mixed = projectIsoOpening(basis,[0,1,0]);
+  assert.deepEqual(mixed[0],closed[0]); assert.deepEqual(mixed[2],closed[2]);
+  assert.notEqual(mixed[1].d,closed[1].d);
+  assert.deepEqual(input,before);
+  const bounds = isoOpeningBounds([basis]);
+  for(const leaf of basis.leaves) for(const point of [leaf.hinge, leaf.translation
+    ? leaf.hinge.map((value,i)=>value+leaf.translation[i]):leaf.hinge]) {
+    assert.ok(point[0]>=bounds.x && point[0]<=bounds.x+bounds.w);
+    assert.ok(point[1]>=bounds.y && point[1]<=bounds.y+bounds.h);
+  }
+});
+
+test('#1024 slide volume uses one full panel on the already resolved physical face', () => {
+  for(const type of ['door','gate']) for(const slide_direction of ['start','end']) {
+    const basis = buildIsoOpeningBasis(opening({type,opening_features:{version:1,mechanism:'slide',slide_direction}}));
+    assert.equal(basis.leaves.length,1);
+    assert.deepEqual(basis.leaves[0].hinge,basis.face.selectedStart);
+    assert.deepEqual(basis.leaves[0].closedVector,[60,0]);
+    assert.equal(basis.leaves[0].turnDeg,0);
+    assert.deepEqual(basis.leaves[0].translation,[slide_direction==='end'?60:-60,0]);
+  }
+});
+
 test('door basis is immutable and live amount preserves the exact jamb anchor', () => {
   const basis = buildIsoOpeningBasis(opening());
   assert.equal(Object.isFrozen(basis.leaves), true);

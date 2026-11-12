@@ -4,6 +4,9 @@ import { GENERATED_FURNITURE_ART } from '../furniture-plan-art.generated';
 import { canonicalFurnitureId } from '../furniture-id';
 import { formatArea } from '../area-format';
 import { roomPoly } from '../logic';
+import { windowOpeningFeatures, motionOpeningFeatures, openingSlideDirection } from '../opening-features';
+import { openingSlidePlacement, type OpeningFaceOffset } from '../opening-symbol-placement';
+import { partitionOpeningFace } from '../partition-openings';
 import { hasPaintableRingArea } from '../polygon-paint';
 import {
   floorMinusBodies, geometryAllRings, geometryOuterRings, physicalBodyParts,
@@ -186,14 +189,26 @@ function rotatedRectRing(x: number, y: number, w: number, h: number, rotationDeg
   ].map(([dx, dy]) => [cx + c * dx - s * dy, cy + s * dx + c * dy]);
 }
 
-function openingLines(opening: GeometryOpeningProjection, faceCm: number, cellCm: number): number[][][] {
+function openingLines(opening: GeometryOpeningProjection, face: OpeningFaceOffset, cellCm: number): number[][][] {
   if (opening.type === 'passage') return [];
   const half = opening.rlen / 2;
-  const depth = faceCm > 0 ? faceCm / cellCm * GRID_PITCH / 2 : 2;
+  const depth = face.cm > 0 ? face.cm / cellCm * GRID_PITCH / 2 : 2;
   const local: number[][][] = [];
-  if (opening.type === 'window') {
+  const motion = motionOpeningFeatures(opening);
+  if (motion?.mechanism === 'slide') {
+    // PDF is intentionally state-free architectural notation: depict the
+    // full opening movement, not an HA snapshot or a new light layer.
+    const panel = openingSlidePlacement(opening.angle, opening.rlen, openingSlideDirection(motion), 1, face);
+    local.push([[-half, -depth], [-half, depth]], [[half, -depth], [half, depth]],
+      [[-half + panel.x + panel.shift, panel.y], [half + panel.x + panel.shift, panel.y]]);
+  } else if (opening.type === 'window') {
     local.push([[-half, -depth], [half, -depth]], [[-half, depth], [half, depth]],
       [[-half, -depth], [-half, depth]], [[half, -depth], [half, depth]]);
+    const count = windowOpeningFeatures(opening)?.leaves.length;
+    if (count) for (let index = 1; index < count; index++) {
+      const x = -half + opening.rlen * index / count;
+      local.push([[x, -depth], [x, depth]]);
+    }
   } else if (opening.type === 'gate') {
     const turn = ((opening.flip_v ? -1 : 1) * 10) * Math.PI / 180;
     const leaves = [
@@ -423,13 +438,14 @@ function buildPdfCandidate(
 
   const wallIndexGeometry = built.geometry.openingIndex;
   for (const opening of built.openings) {
+    const faceFlip = opening.type === 'gate' ? !opening.flip_v : !!opening.flip_v;
     const face = opening.partitionHost
-      ? { cm: opening.partitionHost.partition.cm }
+      ? partitionOpeningFace(opening.partitionHost, faceFlip)
       : wallIndexGeometry
-        ? openingInnerFaceOffset(input.space.rooms, opening, built.walls,
+        ? openingInnerFaceOffset(input.space.rooms, { ...opening, flip_v:faceFlip }, built.walls,
             GRID_STEP_N, built.cellCm, GRID_PITCH, NORM_W, built.zero.contour)
-        : { cm: 0 };
-    for (const line of openingLines(opening, face.cm, built.cellCm)) commands.push({
+        : { ox:0, oy:0, side:-1 as const, cm:0 };
+    for (const line of openingLines(opening, face, built.cellCm)) commands.push({
       kind: 'line', points: line.map(pt), stroke: INK, width: 0.3 * MM,
     });
   }

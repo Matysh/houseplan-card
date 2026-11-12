@@ -11,6 +11,7 @@ import math
 from typing import Any
 
 from .coordinate_canonicalization import canonicalize_config_geometry
+from .opening_orientation import opening_axis_rotation, transport_opening_orientations
 from .wall_segment_model import _wall_key, commit_wall_segment_model
 
 EPS = 1e-9
@@ -286,6 +287,7 @@ def move_node_space(source: dict[str, Any], intent: dict[str, Any], *, graph_ind
                     if _on(end, b) and not _same(end, target) and (not old_a or not old_b
                             or not any(_same(q, end) and _on(q, old_b) for q in [old_a["a"], old_a["b"]])):
                         raise NodeMoveError()
+    opening_rotations = {}
     for opening in out.get("openings", []):
         host = opening.get("host")
         if not host:
@@ -322,12 +324,13 @@ def move_node_space(source: dict[str, Any], intent: dict[str, Any], *, graph_ind
             raise NodeMoveError("opening_blocked")
         opening["x"], opening["y"] = _at(child["a"], child["b"], t)
         opening["host"] = {**host, "id": child["id"], "t": t}
+        opening_rotations[opening["id"]] = opening_axis_rotation(old["a"], old["b"], child["a"], child["b"])
         angle = math.degrees(math.atan2(child["b"][1] - child["a"][1], child["b"][0] - child["a"][0]))
         opening["angle"] = angle - 180 if angle >= 90 else angle + 180 if angle < -90 else angle
     if "walls" in source:
         out["walls"] = [{"key": _wall_key(w["a"], w["b"]), "cm": w["cm"], "a": w["a"][:], "b": w["b"][:]}
                         for w in out.get("wall_segments", []) if w["cm"] > 0]
-    return out
+    return transport_opening_orientations(source, out, opening_rotations)
 
 
 def _node_current_basis(current, space_id, trusted_current):

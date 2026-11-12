@@ -119,14 +119,6 @@ export class HpSettingsSelect extends LitElement {
     surface.style.left = `${place.left}px`; surface.style.top = `${place.top}px`;
   };
   private outside = (e: PointerEvent): void => { if (!this.floating.containsPath(e.composedPath())) this.close(); };
-  private dismissScroll = (e: Event): void => {
-    if (this.floating.containsPath(e.composedPath())) return;
-    const anchor = this.renderRoot.querySelector('button')?.getBoundingClientRect();
-    // A trigger click can scroll its pane before open(); the queued scroll
-    // event arrives afterwards. Only movement since placement invalidates it.
-    if (anchor && !this.floating.anchorMoved(anchor)) return;
-    this.close();
-  };
   private focusout = (): void => { queueMicrotask(() => { if (this._open && !this.floating.ownsActiveElement()) this.close(); }); };
   private async open(): Promise<void> {
     if (this._open || !this.native || this.native.disabled) return;
@@ -150,7 +142,8 @@ export class HpSettingsSelect extends LitElement {
       close: reason => this.close(reason === 'escape') });
     this.ownerDocument.addEventListener('pointerdown', this.outside, true);
     this.ownerDocument.addEventListener('focusout', this.focusout);
-    this.floating.dialog()?.addEventListener('scroll', this.dismissScroll, true);
+    this.floating.followAnchor(this.position, () => this.close(),
+      () => this.renderRoot.querySelector('button')?.getBoundingClientRect());
     win.addEventListener('resize', this.position); win.visualViewport?.addEventListener('resize', this.position);
     win.visualViewport?.addEventListener('scroll', this.position);
     this.surface()?.focus({preventScroll:true});
@@ -167,7 +160,7 @@ export class HpSettingsSelect extends LitElement {
     this._open = false; this.dispose?.(); this.dispose = undefined;
     this.ownerDocument.removeEventListener('pointerdown', this.outside, true);
     this.ownerDocument.removeEventListener('focusout', this.focusout);
-    this.floating.dialog()?.removeEventListener('scroll', this.dismissScroll, true);
+    this.floating.stopFollowing();
     const win = this.floating.window();
     win?.removeEventListener('resize', this.position); win?.visualViewport?.removeEventListener('resize', this.position);
     win?.visualViewport?.removeEventListener('scroll', this.position);

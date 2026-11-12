@@ -484,7 +484,8 @@ export class PropertiesEditor {
         const entity = /\{([a-z_]+\.[\w]+)(?::[^}]*)?\}/i.exec(shape.text)?.[1];
         return entity ? host.hass.states?.[entity]?.attributes?.friendly_name || this.t('text') : shape.text.split('\n')[0];
       },
-      openingReference: this.reference(target), openingSides: openingSides.labels, openingRooms: openingSides.rooms, ratioLocked: this.ratioLocked,
+      openingReference: this.reference(target), openingSides: openingSides.labels, openingRooms: openingSides.rooms,
+      openingFeaturesEditable: host._haOpeningFeaturesApi === 1, ratioLocked: this.ratioLocked,
       stairFallback: { color: host._decorStyle.color, opacity: host._decorStyle.opacity, fillColor: host._decorStyle.color, fillOpacity: 0 },
     });
   }

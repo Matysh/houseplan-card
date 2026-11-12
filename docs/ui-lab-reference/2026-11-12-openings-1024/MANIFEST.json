@@ -1,0 +1,47 @@
+[
+  {
+    "path": "BASELINE.json",
+    "bytes": 590,
+    "sha256": "b6f6ab5a9c8d7163b4248b5932127ce485a56424f16efcf5c263c3bfa90f9307"
+  },
+  {
+    "path": "JOURNAL.md",
+    "bytes": 17370,
+    "sha256": "d8d404b10fcf74e1237c9702b5f7e8e378276452379cd2dca0efca2d57687ef2"
+  },
+  {
+    "path": "SPEC.md",
+    "bytes": 85926,
+    "sha256": "ab107fd4caad80c684cba3be3446d815b02694441e87e84ac28737c3f01d8478"
+  },
+  {
+    "path": "SPEC-before-UI059.md",
+    "bytes": 103967,
+    "sha256": "b806ac69bbd0d34f9f68bcaf8fbfd465757f4a2ffee1dd2a60e9142acceb1247"
+  },
+  {
+    "path": "README.md",
+    "bytes": 5309,
+    "sha256": "6d25ea03dfe6bf97b83e2fddb897c57f573f7ce2e7da7298738a38e6c18b134a"
+  },
+  {
+    "path": "runtime-prototypes.patch",
+    "bytes": 38309,
+    "sha256": "724137235a2279f3b202c2d6f907c3fcff2a1bde04352818f4ca18d228d8d3e9"
+  },
+  {
+    "path": "serve-reference.mjs",
+    "bytes": 2422,
+    "sha256": "8894f56587d9eb7549a4ff09a4214f2c0015312d071865b953aa2beb18b6ab99"
+  },
+  {
+    "path": "accepted/lab-native-opening.ts",
+    "bytes": 27164,
+    "sha256": "f2863a931031908270f8e85327420b54ef695bccc02d14be0f370b48c881ed5b"
+  },
+  {
+    "path": "accepted/native-proposals.mjs",
+    "bytes": 20718,
+    "sha256": "43bbad15f4df80394df43a9c625d36710a40fcbb930f5633653cbce434fdf6a6"
+  }
+]

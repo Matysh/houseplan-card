@@ -316,6 +316,35 @@ export type OpeningHost = PartitionOpeningHost | WallOpeningHost;
 export const OPENING_TYPES = ['door', 'window', 'gate', 'passage'] as const; // #33 parity
 export type OpeningType = (typeof OPENING_TYPES)[number];
 
+export type OpeningManualPosition = 'open' | 'closed';
+export interface OpeningShade {
+  enabled: boolean;
+  manual?: OpeningManualPosition;
+  contact?: string | null;
+  invert?: boolean;
+}
+export interface OpeningLeaf {
+  /** Local to this parent opening; never an array index. */
+  id: string;
+  hinge: 'start' | 'end' | 'top';
+  manual?: OpeningManualPosition;
+  contact?: string | null;
+  invert?: boolean;
+  shade?: OpeningShade;
+}
+export interface WindowOpeningFeatures {
+  version: 1;
+  side: 'negative' | 'positive';
+  leaves: OpeningLeaf[];
+}
+export interface MotionOpeningFeatures {
+  version: 1;
+  mechanism?: 'swing' | 'slide';
+  slide_direction?: 'start' | 'end';
+  manual?: OpeningManualPosition;
+}
+export type OpeningFeatures = WindowOpeningFeatures | MotionOpeningFeatures;
+
 export interface OpeningCfg {
   id: string;
   type: OpeningType;
@@ -330,6 +359,8 @@ export interface OpeningCfg {
   light_transparent?: boolean;
   flip_h?: boolean; // hinge on the other jamb
   flip_v?: boolean; // opens to the other side of the wall
+  /** Leaf presentation/optics, independent of the structural graph version. */
+  opening_features?: OpeningFeatures;
   /** Explicit owner for an opening cut into an independent wall. */
   host?: OpeningHost;
 }

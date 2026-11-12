@@ -38,11 +38,13 @@ from .const import (
 )
 from .geometry_migration import migrate_layout, pending_from_config
 from .led_strips import led_strip_link_report, plan_only_strips, unbind_strips
+from .opening_features import clear_opening_bindings, validate_opening_features
 from .opening_repair import (
     MAX_REPAIR_EXAMPLES,
     merge_repair_reports,
     repair_imported_openings,
 )
+from .plan_graph_exact import GraphError
 from .portable_recovery import prepare_portable_markers
 from .room_appearance import normalize_room_appearance
 from .store import HouseplanData
@@ -69,7 +71,6 @@ from .wall_segment_model import (
     WallSegmentMigrationError,
     commit_wall_segment_model,
 )
-from .plan_graph_exact import GraphError
 
 FORMAT = "houseplan-export"
 
@@ -351,13 +352,14 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
         projected["plan_graph"] = graph
     if "openings" in space:
         projected["openings"] = [
-            _pick_fields(
+            clear_opening_bindings(_pick_fields(
                 opening,
                 ("id", "type", "x", "y", "angle", "length")
                 + (() if opening.get("type") == "passage" else ("flip_h", "flip_v"))
                 + (("light_transparent",) if opening.get("type") == "door" else ())
+                + (("opening_features",) if "opening_features" in opening else ())
                 + (("host",) if opening.get("host") else ()),
-            )
+            ))
             for opening in space.get("openings") or []
         ]
     if "decor" in space:
@@ -699,7 +701,10 @@ def create_export(
     dropped_marker_links += recovery["counts"].get("controls", 0) + recovery["counts"].get("value", 0)
     document = {
         "format": FORMAT,
-        "export_version": EXPORT_VERSION,
+        "export_version": EXPORT_VERSION if any(
+            "opening_features" in opening for space in config.get("spaces", [])
+            for opening in space.get("openings", [])
+        ) else 2,
         "kind": kind,
         "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "source_fingerprint": source_fingerprint(runtime.instance_id),
@@ -776,7 +781,7 @@ def parse_document(
         raise ImportFailure("invalid_json", str(err)) from err
     if not isinstance(document, dict) or document.get("format") != FORMAT:
         raise ImportFailure("invalid_format", "Not a House Plan export")
-    if document.get("export_version") not in (1, EXPORT_VERSION):
+    if document.get("export_version") not in (1, 2, EXPORT_VERSION):
         raise ImportFailure("unsupported_export_version", "Unsupported export version")
     if document.get("kind") not in ("full", "space"):
         raise ImportFailure("invalid_format", "Export kind must be full or space")
@@ -790,6 +795,18 @@ def parse_document(
         raise ImportFailure("invalid_format", "Missing payload")
     try:
         config_candidate = _json_copy(payload.get("config"))
+        # A future or mixed extension must not disappear in import repair.
+        if not isinstance(config_candidate, dict):
+            raise vol.Invalid("Configuration must be an object")
+        for space in config_candidate.get("spaces", []):
+            if not isinstance(space, dict):
+                raise vol.Invalid("Space must be an object")
+            for opening in space.get("openings", []):
+                if not isinstance(opening, dict):
+                    raise vol.Invalid("Opening must be an object")
+                validate_opening_features(opening)
+                if "opening_features" in opening and document["export_version"] < 3:
+                    raise ImportFailure("unsupported_export_version", "Opening features require export version 3")
         # The envelope is authoritative. Export deliberately omits this field
         # inside payload.config, but v8 semantic validation still has to run
         # before an import token can be issued.
