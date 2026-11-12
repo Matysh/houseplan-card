@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 714,
+  "revision": 715,
   "active": "1.86.0-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -74662,7 +74662,7 @@
         "sha": "4f8fad166f3f75f1f7a4435ddd11e55b09005c04",
         "requestId": "ship-review:7580fed52d60951e3800e07502d18f0605ce57e0dbbe91437ed35b254b3880b9",
         "selectionDigest": "54be8c7e4c62c173dca06ad505363c12648e777e7ad78c147091ad8e9f82aef4",
-        "status": "pending",
+        "status": "accepted",
         "inventoryComplete": true
       }
     }
@@ -79360,7 +79360,8 @@
     "release-1-86-0-beta-1-create-20261113": "1bf5814b0b089d1697c78e001f0c1f7fb6f975647c719faed84be3cd5fd12895",
     "release-1-86-0-beta-1-prepare-4f8fad166": "fc7c98348bfb3973fc8de906f19be58b43e2fc722a083a842c33dcaee0896c21",
     "release-1-86-0-beta-1-run-4f8fad166": "70359a995d7822ca82bbadc3c28f41134ab87d4027423c411fe1900790835cc0",
-    "ship-review:prepare:bda3196f-5807-49d4-afde-9301b7f33c05": "a02f9cce15ddbd97372fb5b03f4ff769e778ebc9d84d4697789fed97628a18c6"
+    "ship-review:prepare:bda3196f-5807-49d4-afde-9301b7f33c05": "a02f9cce15ddbd97372fb5b03f4ff769e778ebc9d84d4697789fed97628a18c6",
+    "ship-review:result:6e7a8762-23b2-4356-ad6c-48429a3e173e": "2165dc9aebfe5837fdfab419f8128aacd59e7919ec5c96f2d89542763baf7f60"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -92695,7 +92696,100 @@
         "reused": [],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "version": 1,
+        "kind": "ship-batch",
+        "requestId": "ship-review:7580fed52d60951e3800e07502d18f0605ce57e0dbbe91437ed35b254b3880b9",
+        "candidateId": "1.86.0-beta.1",
+        "base": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
+        "materialSha": "4f8fad166f3f75f1f7a4435ddd11e55b09005c04",
+        "selectionDigest": "54be8c7e4c62c173dca06ad505363c12648e777e7ad78c147091ad8e9f82aef4",
+        "releaseVersion": "v1.86.0-beta.1",
+        "workflowRunId": 43329542237,
+        "workflowRunAttempt": 1,
+        "verdict": "accepted",
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Блокеров для беты по #1397 я не нашёл. Исправление точечное и подходит для задачи. Обе ветки `scheduleHouseplanViewport` (немедленная и объединённая через RAF) после покраски камеры передают текущий `view` контроллеру размеров стены. Тот через небольшой `AsyncDirective` перерисовывает только свою Lit-часть, пересчитывая проекцию закэшированной геометрии. Двойного смещения нет: контейнер `[data-hp-live-editor-html]` не входит в `data-hp-live-layer=\"camera\"`, поэтому CSS-трансформ к размерам не применяется. Шрифт и толщина линий остаются экранными. Записей, истории и новых таймеров нет. Жизненный цикл подписки (disconnect, смена владельца, dispose) разобран корректно. В кандидате head контроллер уже расширен задачей #1398 (native-кадры проёмов, decor-line, device-spacing). Механизм камеры из #1397 на них тоже распространяется, и регрессий от этого взаимодействия при чтении я не увидел. Остались только необязательные замечания о стоимости кадра.",
+          "understanding": "Проблема. Слой двусторонних размеров из #1381 — отдельный экранный SVG/HTML внутри `[data-hp-live-editor-html]`. Он рисовался только при paint редактора или полном рендере хоста. Лёгкие кадры камеры (`paintLiveViewport`) сдвигают сцену CSS-трансформом слоёв `data-hp-live-layer=\"camera\"`, а слой размеров в их число не входит. Поэтому во время pan размеры стояли на экране и догоняли план только после отпускания мыши.\n\nПосле исправления:\n1) `src/live-viewport.ts:333` и `:348` после `paintLiveViewport` вызывают `host._editorRuntime?.wallDimensions?.paintCamera(next.view)`. Через optional chaining холодный View без редактора не затрагивается, и импорта редактора в View нет.\n2) В `src/wall-side-dimension-editor.ts:26-44,63-69,225-231` метод `render()` оборачивает содержимое в директиву `cameraDimensions(this.cameraPort, content)`. Директива подписывает свой `paint` в единственный слот `cameraPaint`. `paintCamera` вызывает `this.content(view)` (тот же код, что у обычного рендера) и делает `setValue` только в эту дочернюю часть.\n3) Отписка: `disconnected()` или смена port вызывает release, который снимает callback, только если в слоте всё ещё этот же paint. Поэтому старая часть не снимет подписку новой. `dispose()` обнуляет слот, `paintCamera` проверяет `disposed` и `host.isConnected`.\n\nРазобранные пути: обычный pan и wheel/transition через `scheduleHouseplanViewport`; рендеры `_renderLiveEditorMeasurements` из `live-editor.ts:286,348,428`. Все три передают тот же `_viewOr(_baseVb())`, что и камера, так что их результаты согласованы. Терминальный `commitHouseplanViewport` → `commitHouseplanEditor` перерисовывает размеры с конечным видом. Режимные переходы: `request()` и `nativeFrame()` возвращают null при `_modeTransitionBusy`, и `_rebaseModeHtml` эту часть не трогает. Отдельно проверил, где смонтирован слой: `houseplan-card.ts:12835` — соседний элемент `devlayer`, а не его потомок.",
+          "analysis": [
+            {
+              "topic": "Отсутствие двойной проекции и сохранение экранного масштаба",
+              "assessment": "Это ключевой риск такого ремонта. Если бы слой размеров лежал внутри camera-слоя, `paintLiveViewport` сдвигал бы его трансформом, а директива ещё раз перепроецировала бы координаты. Здесь размеры смонтированы вне camera-слоёв, а в `renderWallSideDimensions` нет атрибутов `data-hp-live-*`. Поэтому единственный владелец позиции — проекция `_framePercent(point, view)` в `content()`. Шрифт 12px и `stroke-width=1` задаются в пикселях `viewBox 0 0 width height` и при масштабе не растут. Решение не масштабировать слой CSS, а перепроецировать его правильное: CSS scale раздул бы текст и линии, о чём и предупреждает ТЗ.",
+              "evidence": "src/houseplan-card.ts:12810-12835 (`devlayer` с `data-hp-live-layer=\"camera\"` закрывается до `<div data-hp-live-editor-html>`); src/wall-side-dimension-render.ts:10-12; src/wall-side-dimension-editor.ts:242-244; live-viewport.ts:298-303 трансформирует только `[data-hp-live-layer=\"camera\"]`."
+            },
+            {
+              "topic": "Жизненный цикл директивы и подписки",
+              "assessment": "Схема корректна и минимальна. Слот один, потому что `wallDimensions.render` вызывается ровно в одном месте (`_renderLiveEditorMeasurements`). Когда `content()` возвращает `nothing`, внешний `render()` тоже отдаёт `nothing`: Lit снимает дочернюю часть, вызывает `disconnected()`, и подписка освобождается, поэтому кадры камеры в холостом состоянии ничего не считают. Release сравнивает идентичность, поэтому порядок «новая подписалась → старая отключилась» безопасен. При смене экземпляра контроллера (новый port) `render()` сначала освобождает старую подписку. `reconnected()` подписывает заново. Если кадр камеры вызывает `setValue(nothing)` (например, `_lastValidStageSize` пуст), директива остаётся подписанной и восстановится в следующем кадре: это ожидаемое поведение.",
+              "evidence": "src/wall-side-dimension-editor.ts:32-43 (render/connect/disconnected/reconnected), 63-69 (subscribe с проверкой `disposed` и идентичности при release), 225-231, 312 (dispose обнуляет `cameraPaint`)."
+            },
+            {
+              "topic": "Согласованность с остальными путями рендера и устаревшие кадры",
+              "assessment": "Все пути рендера размеров берут вид из одного источника: `host._viewOr(host._baseVb())` в live-editor и `frameOf(host).view` в камере. Поэтому кадр камеры и случайно совпавший с ним live-editor RAF не дают расхождения, побеждает последний записанный, и оба верны. Объединённая ветка RAF берёт `state.pending`, то есть последний вид, а `disposeHouseplanViewport` отменяет отложенный RAF. Это покрыто unit-тестом. `content()` с побочными эффектами (`publishBasis`, `resetLayout` при смене owner) идентичен обычному рендеру и не создаёт нового состояния.",
+              "evidence": "src/live-editor.ts:286,347-348,427-428; src/live-viewport.ts:315-319,326-349,374-378; test/live-viewport.test.mjs, новый тест «#1397 screen-space dimensions paint after the same immediate/coalesced camera frame»."
+            },
+            {
+              "topic": "Взаимодействие с последующими коммитами #1398 в кандидате",
+              "assessment": "После #1397 в `content()` добавлены native-кадры (`device-spacing`, `decor-line`, `opening`, `opening-placement`) через `nativeFrame()` с мемоизацией `nativeRead`. Камера теперь перепроецирует и их. Это согласуется с целью: все экранные размеры привязаны к опорам. Кэш `nativeRead` сравнивает входы по идентичности, а вид в его ключ не входит, поэтому кадр камеры не пересобирает записи и только перепроецирует. Это тот же принцип, что и для стен. Регрессий от наложения двух задач при чтении я не нашёл.",
+              "evidence": "src/wall-side-dimension-editor.ts:148-199 (nativeRead/nativeFrame), 232-238; git_log: e6d83233 и 827cae04 (#1398) после 0b8b0d84."
+            },
+            {
+              "topic": "Доказательная база S6",
+              "assessment": "Native-регрессия построена правильно: сравнение идёт в каждом из шести удерживаемых кадров, а не только после mouseup (именно эту ошибку пропускал прежний скриншот). Сравниваются screen CTM опоры выносной линии и фактической стены с допуском ≤1 px, проверяются высота подписи 16 px, ноль host renders, отсутствие geometry builds, writes и Undo, а также колесо и переход камеры. Сам я тесты не запускал и опираюсь на заявленный отчёт S6 `20261112T132147693-b0170216` (347 шагов).",
+              "evidence": "demo/smoke_wall_side_dimensions.mjs, новые блоки `assertCameraAnchors` и цикл `for(let step=1;step<=6;step++)`; issue #1397, раздел «Контекст исполнителя»."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Стоимость кадра камеры. `content(view)` на каждом RAF pan повторяет весь layout: obstacles по узлам всех carriers, центры шестерёнок по всем комнатам через `roomGear.center`, `_spaceModel()`, `layoutWallSideDimensions`. Геометрия кэширована, но на больших планах это заметная работа в горячем пути. Если профилирование покажет проблему, obstacles и `lanes`/`numbers` можно считать в координатах плана один раз на рендер, а в кадре камеры только проецировать. Цена — разделение `content()` на две фазы. Сейчас это не дефект: native-проверка не нашла лишних builds.",
+            "Немного сопровождаемости. `paint` в директиве использует `this.port!`. Явная ранняя проверка (`if(!this.port)return;`) или краткий комментарий о том, что подписка существует только при заданном port, сделали бы инвариант очевиднее. Изменение косметическое, необязательное.",
+            "Smoke-тест в конце блока восстанавливает камеру прямым присваиванием `c._view=view; c.requestUpdate()`. Это допустимо для фикстуры, но обходит реальный путь камеры. Если последующие шаги начнут зависеть от состояния `live-viewport` (anchor/painted), лучше вернуть вид штатным жестом или явным `commitHouseplanViewport`."
+          ],
+          "boundaries": "Анализ только по исходникам: коммит 0b8b0d847f8c72182ef16494f5482c0dbc153d63 и текущий кандидат 4f8fad16. Прочитаны `src/live-viewport.ts` (schedule/commit/dispose), `src/wall-side-dimension-editor.ts` целиком, `src/wall-side-dimension-render.ts`, точки рендера в `src/live-editor.ts` и `src/houseplan-card.ts` (монтирование `[data-hp-live-editor-html]`, `_renderLiveEditorMeasurements`, `_rebaseModeHtml`), а также кэш `dimensionCarriers`. Сборку, unit, native и E2E я не запускал. Выводы о прохождении проверок основаны на заявленном отчёте S6 `20261112T132147693-b0170216` и описании исполнителя, независимо я их не подтверждал. Поведение на touch (pinch) отдельно не проверял: ТЗ определяет его как best effort, путь тот же `scheduleHouseplanViewport`. Производительность на больших планах не измерял."
+        },
+        "usage": {
+          "input_tokens": 24,
+          "cache_creation_input_tokens": 86701,
+          "cache_read_input_tokens": 608127,
+          "output_tokens": 10041,
+          "output_tokens_details": {
+            "thinking_tokens": 3419
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 86701,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 924,
+              "cache_read_input_tokens": 73501,
+              "cache_creation_input_tokens": 14921,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 14921
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Пакетное код-ревью ship перед v1.86.0-beta.1 — принято\n\n## Вывод\n\nБлокеров для беты по #1397 я не нашёл. Исправление точечное и подходит для задачи. Обе ветки `scheduleHouseplanViewport` (немедленная и объединённая через RAF) после покраски камеры передают текущий `view` контроллеру размеров стены. Тот через небольшой `AsyncDirective` перерисовывает только свою Lit-часть, пересчитывая проекцию закэшированной геометрии. Двойного смещения нет: контейнер `[data-hp-live-editor-html]` не входит в `data-hp-live-layer=\"camera\"`, поэтому CSS-трансформ к размерам не применяется. Шрифт и толщина линий остаются экранными. Записей, истории и новых таймеров нет. Жизненный цикл подписки (disconnect, смена владельца, dispose) разобран корректно. В кандидате head контроллер уже расширен задачей #1398 (native-кадры проёмов, decor-line, device-spacing). Механизм камеры из #1397 на них тоже распространяется, и регрессий от этого взаимодействия при чтении я не увидел. Остались только необязательные замечания о стоимости кадра.\n\n## Понимание решения\n\nПроблема. Слой двусторонних размеров из #1381 — отдельный экранный SVG/HTML внутри `[data-hp-live-editor-html]`. Он рисовался только при paint редактора или полном рендере хоста. Лёгкие кадры камеры (`paintLiveViewport`) сдвигают сцену CSS-трансформом слоёв `data-hp-live-layer=\"camera\"`, а слой размеров в их число не входит. Поэтому во время pan размеры стояли на экране и догоняли план только после отпускания мыши.\n\nПосле исправления:\n1) `src/live-viewport.ts:333` и `:348` после `paintLiveViewport` вызывают `host._editorRuntime?.wallDimensions?.paintCamera(next.view)`. Через optional chaining холодный View без редактора не затрагивается, и импорта редактора в View нет.\n2) В `src/wall-side-dimension-editor.ts:26-44,63-69,225-231` метод `render()` оборачивает содержимое в директиву `cameraDimensions(this.cameraPort, content)`. Директива подписывает свой `paint` в единственный слот `cameraPaint`. `paintCamera` вызывает `this.content(view)` (тот же код, что у обычного рендера) и делает `setValue` только в эту дочернюю часть.\n3) Отписка: `disconnected()` или смена port вызывает release, который снимает callback, только если в слоте всё ещё этот же paint. Поэтому старая часть не снимет подписку новой. `dispose()` обнуляет слот, `paintCamera` проверяет `disposed` и `host.isConnected`.\n\nРазобранные пути: обычный pan и wheel/transition через `scheduleHouseplanViewport`; рендеры `_renderLiveEditorMeasurements` из `live-editor.ts:286,348,428`. Все три передают тот же `_viewOr(_baseVb())`, что и камера, так что их результаты согласованы. Терминальный `commitHouseplanViewport` → `commitHouseplanEditor` перерисовывает размеры с конечным видом. Режимные переходы: `request()` и `nativeFrame()` возвращают null при `_modeTransitionBusy`, и `_rebaseModeHtml` эту часть не трогает. Отдельно проверил, где смонтирован слой: `houseplan-card.ts:12835` — соседний элемент `devlayer`, а не его потомок.\n\n## Разбор решения\n\n### Отсутствие двойной проекции и сохранение экранного масштаба\n\nЭто ключевой риск такого ремонта. Если бы слой размеров лежал внутри camera-слоя, `paintLiveViewport` сдвигал бы его трансформом, а директива ещё раз перепроецировала бы координаты. Здесь размеры смонтированы вне camera-слоёв, а в `renderWallSideDimensions` нет атрибутов `data-hp-live-*`. Поэтому единственный владелец позиции — проекция `_framePercent(point, view)` в `content()`. Шрифт 12px и `stroke-width=1` задаются в пикселях `viewBox 0 0 width height` и при масштабе не растут. Решение не масштабировать слой CSS, а перепроецировать его правильное: CSS scale раздул бы текст и линии, о чём и предупреждает ТЗ.\n\nОснование: src/houseplan-card.ts:12810-12835 (`devlayer` с `data-hp-live-layer=\"camera\"` закрывается до `<div data-hp-live-editor-html>`); src/wall-side-dimension-render.ts:10-12; src/wall-side-dimension-editor.ts:242-244; live-viewport.ts:298-303 трансформирует только `[data-hp-live-layer=\"camera\"]`.\n\n### Жизненный цикл директивы и подписки\n\nСхема корректна и минимальна. Слот один, потому что `wallDimensions.render` вызывается ровно в одном месте (`_renderLiveEditorMeasurements`). Когда `content()` возвращает `nothing`, внешний `render()` тоже отдаёт `nothing`: Lit снимает дочернюю часть, вызывает `disconnected()`, и подписка освобождается, поэтому кадры камеры в холостом состоянии ничего не считают. Release сравнивает идентичность, поэтому порядок «новая подписалась → старая отключилась» безопасен. При смене экземпляра контроллера (новый port) `render()` сначала освобождает старую подписку. `reconnected()` подписывает заново. Если кадр камеры вызывает `setValue(nothing)` (например, `_lastValidStageSize` пуст), директива остаётся подписанной и восстановится в следующем кадре: это ожидаемое поведение.\n\nОснование: src/wall-side-dimension-editor.ts:32-43 (render/connect/disconnected/reconnected), 63-69 (subscribe с проверкой `disposed` и идентичности при release), 225-231, 312 (dispose обнуляет `cameraPaint`).\n\n### Согласованность с остальными путями рендера и устаревшие кадры\n\nВсе пути рендера размеров берут вид из одного источника: `host._viewOr(host._baseVb())` в live-editor и `frameOf(host).view` в камере. Поэтому кадр камеры и случайно совпавший с ним live-editor RAF не дают расхождения, побеждает последний записанный, и оба верны. Объединённая ветка RAF берёт `state.pending`, то есть последний вид, а `disposeHouseplanViewport` отменяет отложенный RAF. Это покрыто unit-тестом. `content()` с побочными эффектами (`publishBasis`, `resetLayout` при смене owner) идентичен обычному рендеру и не создаёт нового состояния.\n\nОснование: src/live-editor.ts:286,347-348,427-428; src/live-viewport.ts:315-319,326-349,374-378; test/live-viewport.test.mjs, новый тест «#1397 screen-space dimensions paint after the same immediate/coalesced camera frame».\n\n### Взаимодействие с последующими коммитами #1398 в кандидате\n\nПосле #1397 в `content()` добавлены native-кадры (`device-spacing`, `decor-line`, `opening`, `opening-placement`) через `nativeFrame()` с мемоизацией `nativeRead`. Камера теперь перепроецирует и их. Это согласуется с целью: все экранные размеры привязаны к опорам. Кэш `nativeRead` сравнивает входы по идентичности, а вид в его ключ не входит, поэтому кадр камеры не пересобирает записи и только перепроецирует. Это тот же принцип, что и для стен. Регрессий от наложения двух задач при чтении я не нашёл.\n\nОснование: src/wall-side-dimension-editor.ts:148-199 (nativeRead/nativeFrame), 232-238; git_log: e6d83233 и 827cae04 (#1398) после 0b8b0d84.\n\n### Доказательная база S6\n\nNative-регрессия построена правильно: сравнение идёт в каждом из шести удерживаемых кадров, а не только после mouseup (именно эту ошибку пропускал прежний скриншот). Сравниваются screen CTM опоры выносной линии и фактической стены с допуском ≤1 px, проверяются высота подписи 16 px, ноль host renders, отсутствие geometry builds, writes и Undo, а также колесо и переход камеры. Сам я тесты не запускал и опираюсь на заявленный отчёт S6 `20261112T132147693-b0170216` (347 шагов).\n\nОснование: demo/smoke_wall_side_dimensions.mjs, новые блоки `assertCameraAnchors` и цикл `for(let step=1;step<=6;step++)`; issue #1397, раздел «Контекст исполнителя».\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Стоимость кадра камеры. `content(view)` на каждом RAF pan повторяет весь layout: obstacles по узлам всех carriers, центры шестерёнок по всем комнатам через `roomGear.center`, `_spaceModel()`, `layoutWallSideDimensions`. Геометрия кэширована, но на больших планах это заметная работа в горячем пути. Если профилирование покажет проблему, obstacles и `lanes`/`numbers` можно считать в координатах плана один раз на рендер, а в кадре камеры только проецировать. Цена — разделение `content()` на две фазы. Сейчас это не дефект: native-проверка не нашла лишних builds.\n- Немного сопровождаемости. `paint` в директиве использует `this.port!`. Явная ранняя проверка (`if(!this.port)return;`) или краткий комментарий о том, что подписка существует только при заданном port, сделали бы инвариант очевиднее. Изменение косметическое, необязательное.\n- Smoke-тест в конце блока восстанавливает камеру прямым присваиванием `c._view=view; c.requestUpdate()`. Это допустимо для фикстуры, но обходит реальный путь камеры. Если последующие шаги начнут зависеть от состояния `live-viewport` (anchor/painted), лучше вернуть вид штатным жестом или явным `commitHouseplanViewport`.\n\n## Границы анализа\n\nАнализ только по исходникам: коммит 0b8b0d847f8c72182ef16494f5482c0dbc153d63 и текущий кандидат 4f8fad16. Прочитаны `src/live-viewport.ts` (schedule/commit/dispose), `src/wall-side-dimension-editor.ts` целиком, `src/wall-side-dimension-render.ts`, точки рендера в `src/live-editor.ts` и `src/houseplan-card.ts` (монтирование `[data-hp-live-editor-html]`, `_renderLiveEditorMeasurements`, `_rebaseModeHtml`), а также кэш `dimensionCarriers`. Сборку, unit, native и E2E я не запускал. Выводы о прохождении проверок основаны на заявленном отчёте S6 `20261112T132147693-b0170216` и описании исполнителя, независимо я их не подтверждал. Поведение на touch (pinch) отдельно не проверял: ТЗ определяет его как best effort, путь тот же `scheduleHouseplanViewport`. Производительность на больших планах не измерял.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: fe1f3b3776eb75c168295c6dc7557cc80deab3d9 → 4f8fad166f3f75f1f7a4435ddd11e55b09005c04\n\n## Переданный контекст исполнителя\n\nЗамороженные требования и контекст исполнителей переданы отдельно для каждой задачи пакета.\n\nПроверены задачи: #1397.\n\nКоммиты: 0b8b0d847f8c72182ef16494f5482c0dbc153d63.\n\nРанее принятое ревью сохранено для задач: нет.\n\n</details>\n",
+        "createdAt": "2026-11-12T23:33:59.703Z",
+        "artifactId": 13994872023,
+        "runId": 43329542237,
+        "runAttempt": 1,
+        "completedAt": "2026-11-12T23:34:06Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43329542237"
+      }
     }
   }
 }
