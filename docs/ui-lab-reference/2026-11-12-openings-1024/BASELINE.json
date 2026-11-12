@@ -1,0 +1,19 @@
+{
+  "issue": 1024,
+  "acceptedOn": "2026-11-12",
+  "commit": "3f89c4132e2f1e9243df350f26aae849d275bc65",
+  "productVersion": "1.85.1",
+  "runtimeFingerprint": "940efcd9a3b0da79ea67598d9178bdf6e701d4e09c14549cb5ca03db42595f2c",
+  "frontendVersion": "20260930.4",
+  "approvedScope": "UI-059 window/door/gate prototype; product implementation pending",
+  "approvedChanges": [
+    "UI-059"
+  ],
+  "preservedOtherPrototypes": [
+    1381,
+    1398
+  ],
+  "previousReference": "4842078baa7a4d9427bf08fd9012876acba76c1f",
+  "privateDataIncluded": false,
+  "portableRunVerifiedOnAnotherPC": false
+}
