@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 727,
-  "active": "1.86.0-beta.1",
+  "revision": 728,
+  "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
       "id": "v1.84.0-beta.2",
@@ -74854,7 +74854,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "abandoned",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -87221,7 +87221,8 @@
     "ship-review:prepare:66ed9072-b0bd-480b-8699-02036ee3bd2e": "574921f0ecef4ab461c0fd007995d16653f808a92cf210f1771c096026ec3495",
     "ship-review:result:69c83da0-3ca5-4cdc-97be-3923f9190da4": "b15f218912872c867fa8da0f7652e0dcbec26aeef4e86ab6a86234ef9809c99d",
     "beta-1024-report:20261112T235134695-7ab49363": "1bfa1b0c03aaa61fef034f58ba0d9324d562afb8a2ab2b3820b765a57b3752bf",
-    "beta-1024-metrics:20261112T235134695-7ab49363": "299d0efbb3133c9ab705da900d6c778f2ea97e8d5a4577db16ffd0d8dbf58571"
+    "beta-1024-metrics:20261112T235134695-7ab49363": "299d0efbb3133c9ab705da900d6c778f2ea97e8d5a4577db16ffd0d8dbf58571",
+    "release-1-86-0-beta-1-wrong-milestone-line": "9f1c0a2b3fb243b72a2b029fe01752f19a8e3c3f0c4292320856e6dccb9e1801"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
