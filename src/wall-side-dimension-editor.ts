@@ -115,7 +115,9 @@ export class WallSideDimensionEditor {
     // Only a basis transition refreshes the existing Properties hint. A
     // normal held-pointer frame remains a measurement-only native paint.
     queueMicrotask(()=>{if(!this.disposed&&epoch===this.basisEpoch&&this.runtime.host.isConnected)
-      this.runtime.host.requestUpdate('_wallDimensionBasis');});
+      // This is a named invalidation token, not a stored Lit property: force
+      // its update explicitly, otherwise undefined === undefined is a no-op.
+      this.runtime.host.requestUpdate('_wallDimensionBasis',undefined,{hasChanged:()=>true});});
   }
   private measurements(request:Request):readonly DimensionInterval[] {
     const model=this.geometry.read(request.candidate,request.ids);

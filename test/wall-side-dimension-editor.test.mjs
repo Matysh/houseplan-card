@@ -52,7 +52,12 @@ test('#1381 draw adds only the active edge to confirmed material and never edits
 });
 
 test('#1381 axis-basis hint refreshes once per transition, never once per held frame or after disposal',async()=>{
-  const h=harness(),updates=[];h.host.requestUpdate=name=>updates.push(name);
+  const h=harness(),updates=[];
+  // Match Lit's real changed-property gate. Counting calls alone misses a
+  // named token whose current/old values are both undefined.
+  h.host.requestUpdate=(name,oldValue,options)=>{
+    if(name===undefined||(options?.hasChanged||((a,b)=>!Object.is(a,b)))(h.host[name],oldValue))updates.push(name);
+  };
   await Promise.resolve();updates.length=0;
   h.editor.render(h.view);await Promise.resolve();
   assert.deepEqual(updates,['_wallDimensionBasis']);
