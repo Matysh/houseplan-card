@@ -37,7 +37,7 @@ the complete TS/Python projection against the trusted original (#1227). No copy
 geometry exemption is widened. Support uses a closed allowlist, scoped leaf
 pseudonyms and shared entity references, never source labels or arbitrary fields.
 
-Introduction is the #1024 implementation branch; no published stable or sunset
+Introduction is #1024 commit6057dcd21148e9992229e6151f4baa4681ef0052; no published stable or sunset
 is claimed before publication. Retain implicit readers and old-backend refusal.
 
 

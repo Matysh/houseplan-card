@@ -58,7 +58,7 @@ export const COMPATIBILITY_BRANCHES = Object.freeze([
     'implicit two-leaf window or swing door/gate, parent contact/invert/flips',
     'optional strict v1 independent leaves/shades or motion/manual namespace',
     [source('src/opening-features.ts', 'materializeWindowFeatures'), source('custom_components/houseplan/opening_features.py', 'guard_opening_features_write')],
-    unknown('Introduced by #1024 implementation; no published stable or sunset is claimed.'),
+    unknown('Introduced by #1024 at 6057dcd21148e9992229e6151f4baa4681ef0052; no published stable or sunset is claimed.'),
     'Explicit feature edit only; no read/Save migration. Nested bindings clear only under Copy/plan-only policy.',
     'Keep implicit readers and safe old-backend refusal. Portable v3 prevents old importers silently losing the extension.'),
   record('external-screen-views', ['settings.external_screens.version=1'],
