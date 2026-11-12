@@ -1,9 +1,23 @@
 {
   "schema": 1,
-  "revision": 10063,
-  "nextTicket": 384,
+  "revision": 10064,
+  "nextTicket": 385,
   "nextFence": 384,
   "tasks": {
+    "1024": {
+      "issue": 1024,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/opening-features-1024",
+      "materialSha": "90a6ba130fc90706078d9f569c658d7859500fc2",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 384,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794520383752,
+      "reviewEntry": 1
+    },
     "1170": {
       "issue": 1170,
       "branch": "codex/issue-1170-optimize-results",
@@ -4587,7 +4601,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1024
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4739,6 +4755,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:215b7724-d0e5-4164-86e6-0d675f24bd6c": {
+      "digest": "0cf6108e84897032970047c28aa91c628d6318e87bb8039826393dc01af5026b",
+      "issue": 1024,
+      "message": {
+        "kind": "queued",
+        "issue": 1024,
+        "at": 1794520383752,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "90a6ba130fc90706078d9f569c658d7859500fc2"
       }
     }
   },
