@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9930,
-  "nextTicket": 380,
+  "revision": 9931,
+  "nextTicket": 381,
   "nextFence": 380,
   "tasks": {
     "1170": {
@@ -4318,6 +4318,20 @@
         "status": "published",
         "sourceSha": "0b8b0d847f8c72182ef16494f5482c0dbc153d63"
       }
+    },
+    "1398": {
+      "issue": 1398,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/unified-editor-dimensions-1398",
+      "materialSha": "e6d83233a9ef9cccdc716d3419c90260f2aad88e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 380,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794502925219,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4547,7 +4561,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1398
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4642,6 +4658,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:4bba4bb2-e568-4d19-9a64-75c64e098f7a": {
+      "digest": "fff7c208c34ae4374e3074757832109d860d022c6ba52a46c6ab072256a9ffac",
+      "issue": 1398,
+      "message": {
+        "kind": "queued",
+        "issue": 1398,
+        "at": 1794502925219,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e6d83233a9ef9cccdc716d3419c90260f2aad88e"
       }
     }
   },
