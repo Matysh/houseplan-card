@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10087,
+  "revision": 10088,
   "nextTicket": 385,
   "nextFence": 385,
   "tasks": {
@@ -131,7 +131,18 @@
         "tests_backend/test_opening_features.py",
         "tests_backend/test_opening_orientation.py",
         "tests_backend/test_support_config_projection.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794521670660,
+        "entry": 1,
+        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/i18n.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Backend: tests_backend/test_opening_repair.py: failed; Backend: tests_backend/test_sh3d_convert.py: failed; Браузер: opening entity search: failed; Браузер: static wall openings: failed",
+        "eventId": "finish:215b7724-d0e5-4164-86e6-0d675f24bd6c:finish:3:return:return:1024"
+      }
     },
     "1170": {
       "issue": 1170,
@@ -4717,18 +4728,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1024,
-    "worker": "finish",
-    "token": "384:finish:215b7724-d0e5-4164-86e6-0d675f24bd6c:finish:1:admit",
-    "fence": 384,
-    "materialSha": "90a6ba130fc90706078d9f569c658d7859500fc2",
-    "expectedBase": "827cae041114db2a478951d658566a718e6f8393",
-    "phase": "testing",
-    "admittedAt": 1794520389495,
-    "expiresAt": 1794521947126,
-    "patchId": "da26e214548a01467b12d9f982bfb35ae173c87b"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -4918,6 +4918,10 @@
       "digest": "a0ca82ef7b2549564dfd2a0cab841349483079fe8e0f194b72eae9a21678ec84",
       "issue": 1024
     },
+    "finish:215b7724-d0e5-4164-86e6-0d675f24bd6c:finish:3:return": {
+      "digest": "add3e4b7ed50aca7790cb1fbff2682cfc8fe5c162ecaf22a90552833f66c5322",
+      "issue": 1024
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4994,6 +4998,26 @@
         "layer": "product",
         "materialSha": "90a6ba130fc90706078d9f569c658d7859500fc2",
         "phase": "sync"
+      }
+    },
+    "finish:215b7724-d0e5-4164-86e6-0d675f24bd6c:finish:3:return:return:1024": {
+      "digest": "add3e4b7ed50aca7790cb1fbff2682cfc8fe5c162ecaf22a90552833f66c5322",
+      "issue": 1024,
+      "message": {
+        "kind": "return",
+        "issue": 1024,
+        "at": 1794521670660,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794521670660,
+          "entry": 1,
+          "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/i18n.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Backend: tests_backend/test_opening_repair.py: failed; Backend: tests_backend/test_sh3d_convert.py: failed; Браузер: opening entity search: failed; Браузер: static wall openings: failed",
+          "eventId": "finish:215b7724-d0e5-4164-86e6-0d675f24bd6c:finish:3:return:return:1024"
+        }
       }
     }
   },
