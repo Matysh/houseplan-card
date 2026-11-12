@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9957,
-  "nextTicket": 382,
+  "revision": 9958,
+  "nextTicket": 383,
   "nextFence": 382,
   "tasks": {
     "1170": {
@@ -4324,14 +4324,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/unified-editor-dimensions-1398",
-      "materialSha": "ed458e5c63efe1d987bb5e7785dd23e068ad2671",
+      "materialSha": "1589429ab4d966bce514dda675f5e34d84000bba",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 381,
-      "queued": false,
+      "ticket": 382,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794503841329,
-      "reviewEntry": 2,
+      "readyAt": 1794504381064,
+      "reviewEntry": 3,
       "patchId": "e05253a1f44b82a11d45d38b8b864b95b52700d9",
       "changedFiles": [
         "demo/smoke_device_equal_spacing.mjs",
@@ -4375,8 +4375,7 @@
         "entry": 2,
         "detail": "Браузер: editor dimensions: failed",
         "eventId": "finish:936de651-fa91-4b63-94c1-f2d9b310e8e4:finish:3:return:return:1398"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4606,7 +4605,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1398
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4889,6 +4890,19 @@
           "detail": "Браузер: editor dimensions: failed",
           "eventId": "finish:936de651-fa91-4b63-94c1-f2d9b310e8e4:finish:3:return:return:1398"
         }
+      }
+    },
+    "finish:82d77a79-790a-4724-b049-4ec1b8f569c7": {
+      "digest": "32dfa0f71c6e92798249c89d9059564a93a8c5b3af2485d463fdcbc75e4c3e63",
+      "issue": 1398,
+      "message": {
+        "kind": "queued",
+        "issue": 1398,
+        "at": 1794504381064,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "1589429ab4d966bce514dda675f5e34d84000bba"
       }
     }
   },
