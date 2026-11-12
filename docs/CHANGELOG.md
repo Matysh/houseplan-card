@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## v1.86.0-beta.1 — 2026-11-13
+## v1.85.2-beta.1 — 2026-11-13
 
 - Add independent 1–4 window leaves, top hinges, per-leaf shade light masks, manual positions and full-width sliding doors/gates. Share state resolution and symbols, retain volumetric materials, guard old writers, preserve portable v3 transfers and clear nested bindings only on space Copy (#1024, UI-059).
 

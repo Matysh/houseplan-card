@@ -1,5 +1,5 @@
-<!-- release: v1.86.0-beta.1 -->
-## House Plan 1.86.0-beta.1
+<!-- release: v1.85.2-beta.1 -->
+## House Plan 1.85.2-beta.1
 
 ### Русский
 
