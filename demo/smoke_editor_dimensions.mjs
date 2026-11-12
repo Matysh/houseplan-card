@@ -73,8 +73,11 @@ try {
   for(let i=1;i<=5;i++){await page.mouse.move(pan.x+i*10,pan.y+i*6);await settle();assert.ok(await cameraCheck());}
   await capture('opening-pan-held');await page.mouse.up();
   await page.mouse.wheel(0,-120);await settle();assert.ok(await cameraCheck());await capture('opening-zoom');
+  await page.waitForFunction(()=>!window.__card._cameraTransition?.active);assert.ok(await cameraCheck());
   await page.evaluate(()=>window.__card._activateOpeningPlacement('window'));
-  const hover=await screen([450,150]);await page.mouse.move(hover.x,hover.y);await settle();
+  // After zoom the top wall may be above the visible stage. Use the bottom
+  // physical wall, not a point which can land in the toolbar mid-animation.
+  const hover=await screen([450,650]);await page.mouse.move(hover.x,hover.y);await settle();
   assert.equal((await rows()).length,2);await capture('opening-placement');
   assert.equal(await page.locator('houseplan-card .opshoulder,houseplan-card .opening-dimension').count(),0);
   await page.keyboard.press('Escape');
