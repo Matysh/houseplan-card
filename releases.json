@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 732,
+  "revision": 733,
   "active": "1.85.2-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -82687,7 +82687,7 @@
         "sha": "6b9b6a122922133dd4456336b7f5c05b56b4b19c",
         "requestId": "ship-review:dbcf7f0bd9041dd5b30e0f2d6b46bc5294073c4edb006e02e384aa2b9295061b",
         "selectionDigest": "54be8c7e4c62c173dca06ad505363c12648e777e7ad78c147091ad8e9f82aef4",
-        "status": "pending",
+        "status": "not-required",
         "inventoryComplete": true
       }
     }
@@ -87403,7 +87403,8 @@
     "release-1-85-2-beta-1-create-20261113": "a3540d6f969b797f3e14a461896b0ff593489a2358f26e7da2ef501415d2b09f",
     "release-1-85-2-beta-1-prepare-6b9b6a122": "3f985778cb0813d1880586c67cb5d41a54e0fbd24e4657d83d8ba1f427ddcace",
     "release-1-85-2-beta-1-run-6b9b6a122": "cb75777ff51634e7d12871a0a53c9d02db58d3446d305662e004c35dabe0ea1c",
-    "ship-review:prepare:def624d9-c3c1-40c6-a54e-155e3360789d": "41c001d584d6c1f4d649a988b5cc20dc23e0eb7a87f654174ec38c6d151e34eb"
+    "ship-review:prepare:def624d9-c3c1-40c6-a54e-155e3360789d": "41c001d584d6c1f4d649a988b5cc20dc23e0eb7a87f654174ec38c6d151e34eb",
+    "ship-review:result:fd70275d-d55c-4a55-a78b-33081d1a12b8": "97886aa12f9c6657ff84c06517ad5b19614bd219c4727ff830d4369d1f3522a1"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -100911,7 +100912,17 @@
         ],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "kind": "ship-batch",
+        "requestId": "ship-review:dbcf7f0bd9041dd5b30e0f2d6b46bc5294073c4edb006e02e384aa2b9295061b",
+        "candidateId": "1.85.2-beta.1",
+        "materialSha": "6b9b6a122922133dd4456336b7f5c05b56b4b19c",
+        "base": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
+        "selectionDigest": "54be8c7e4c62c173dca06ad505363c12648e777e7ad78c147091ad8e9f82aef4",
+        "verdict": "not-required",
+        "createdAt": "2026-11-12T23:59:29.608Z",
+        "markdown": "Пакетное ревью ship перед v1.85.2-beta.1: новых непросмотренных изменений нет.\n\nЗадач ship в кандидате: 1; засчитано прежних принятых результатов: 1."
+      }
     }
   }
 }
