@@ -763,10 +763,18 @@ async function assertOpeningSymbolContract(page, contract) {
         }
         if (Math.hypot(rendered.rx - cfg.x * 1000, rendered.ry - cfg.y * 1000) > epsilon)
           throw new Error(`semantic golden opening left its wall centerline: ${item.id}`);
-        const scale = group.querySelector(':scope > g[transform^="scale("]');
-        const body = scale?.querySelector(':scope > g[transform^="translate("]');
+        // #1024 leaves own their local hinges, rather than sharing the old
+        // mirror/translation wrapper. Verify the actual rendered origin and
+        // full-depth jambs/glass in both architectures, without skipping windows.
+        const scale = item.type === 'window'
+          ? group.querySelector('.op-window-glass')?.parentElement
+          : group.querySelector(':scope > g[transform^="scale("]');
+        const body = item.type === 'window' ? scale
+          : scale?.querySelector(':scope > g[transform^="translate("]');
         if (!scale || !body) throw new Error(`semantic golden visible group is missing: ${item.id}`);
-        const translation = parsePair(body.getAttribute('transform'), 'translate');
+        const relative = item.type === 'window' ? group.getCTM().inverse().multiply(body.getCTM()) : null;
+        const translation = relative ? [relative.e, relative.f]
+          : parsePair(body.getAttribute('transform'), 'translate');
         const offset = Math.hypot(...translation);
         const expectedOffset = 0;
         if (Math.abs(offset - expectedOffset) > epsilon) {
@@ -780,8 +788,17 @@ async function assertOpeningSymbolContract(page, contract) {
         })) {
           throw new Error(`semantic golden full-depth jamb failed: ${item.id}`);
         }
-        if (item.type === 'window' && !body.querySelector('.op-glass'))
-          throw new Error(`semantic golden window group lost its glass: ${item.id}`);
+        if (item.type === 'window') {
+          const glass = body.querySelector('.op-window-tint');
+          const fullWidth = cfg.length * 1000;
+          if (!glass || !['x', 'y', 'width', 'height'].every(name => glass.hasAttribute(name)
+              && Number.isFinite(Number(glass.getAttribute(name))))
+            || Math.abs(Number(glass.getAttribute('width')) - fullWidth) > epsilon
+            || Math.abs(Number(glass.getAttribute('height')) - fullDepth) > epsilon
+            || Math.abs(Number(glass.getAttribute('x')) + fullWidth / 2) > epsilon
+            || Math.abs(Number(glass.getAttribute('y')) + fullDepth / 2) > epsilon)
+            throw new Error(`semantic golden window group lost its centred full-depth glass: ${item.id}`);
+        }
         let turn = null;
         if (item.type === 'gate') {
           const scalePair = parsePair(scale.getAttribute('transform'), 'scale');
