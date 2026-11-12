@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10126,
+  "revision": 10127,
   "nextTicket": 386,
   "nextFence": 386,
   "tasks": {
@@ -5273,7 +5273,8 @@
           "requestId": "review:1024:2:aef9da151cc24574e3ae119644dcfdd026584599:827cae041114db2a478951d658566a718e6f8393",
           "detail": "openingEntityReferences collects only parent contact/lock. Explicit per-leaf/shade sources outside represented devices/areas are omitted from the immutable render snapshot, so live state and light can remain unknown/stale. Author returns to S6 to repair the real dependency collector and add an off-plan-source witness; the current review request is not restarted.",
           "eventId": "return:1024:author-nested-source-dependency-20261113:return:1024"
-        }
+        },
+        "delivered": true
       }
     }
   },
