@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10131,
-  "nextTicket": 386,
+  "revision": 10132,
+  "nextTicket": 387,
   "nextFence": 386,
   "tasks": {
     "1024": {
@@ -9,14 +9,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/opening-features-1024",
-      "materialSha": "148c93fc096a49c812a2146aeca3ea757b9714b2",
+      "materialSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 385,
-      "queued": false,
+      "ticket": 386,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794522087025,
-      "reviewEntry": 2,
+      "readyAt": 1794524604829,
+      "reviewEntry": 3,
       "patchId": "aef9da151cc24574e3ae119644dcfdd026584599",
       "changedFiles": [
         ".gitattributes",
@@ -161,21 +161,7 @@
         "finishedAt": "2026-11-12T22:42:58.553Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewRequest": "review:1024:2:aef9da151cc24574e3ae119644dcfdd026584599:827cae041114db2a478951d658566a718e6f8393",
-      "reviewMaterial": {
-        "materialSha": "148c93fc096a49c812a2146aeca3ea757b9714b2",
-        "expectedBase": "827cae041114db2a478951d658566a718e6f8393",
-        "patchId": "aef9da151cc24574e3ae119644dcfdd026584599"
-      },
-      "reviewRetry": {
-        "requestId": "review:1024:2:aef9da151cc24574e3ae119644dcfdd026584599:827cae041114db2a478951d658566a718e6f8393",
-        "eventId": "github:43322461246:1:tick:0:review-retry",
-        "at": 1794523399609,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "author-found-nested-source-dependency"
+      "reviewRound": null
     },
     "1170": {
       "issue": 1170,
@@ -4760,7 +4746,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1024
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -5275,6 +5263,28 @@
           "eventId": "return:1024:author-nested-source-dependency-20261113:return:1024"
         },
         "delivered": true
+      }
+    },
+    "finish:04c5697c-d359-4eca-a70c-c36078771b2a": {
+      "digest": "eb6507f9cb178bb07d1967962a57b0fe911c3242b569e9f666e8e1c7f8840637",
+      "issue": 1024,
+      "message": {
+        "kind": "queued",
+        "issue": 1024,
+        "at": 1794524604829,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
+        "evidence": {
+          "id": "20261112T222149227-6ce239ee",
+          "name": "Тесты для задачи #1024 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261112T222149227-6ce239ee/report.json",
+          "materialSha": "148c93fc096a49c812a2146aeca3ea757b9714b2",
+          "status": "passed",
+          "finishedAt": "2026-11-12T22:42:58.553Z",
+          "failures": []
+        }
       }
     }
   },
