@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9698,
-  "nextTicket": 375,
+  "revision": 9699,
+  "nextTicket": 376,
   "nextFence": 375,
   "tasks": {
     "1170": {
@@ -4034,14 +4034,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/wall-side-dimensions-1381",
-      "materialSha": "351e3788d8dbae52a0a72e36255addc88f3fa70c",
+      "materialSha": "1087417b7e8d3e761a9e5140be0701afac0d21bd",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 374,
-      "queued": false,
+      "ticket": 375,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794480100591,
-      "reviewEntry": 3,
+      "readyAt": 1794481130210,
+      "reviewEntry": 4,
       "patchId": "98c029138ba3e24b7e0bb8c8965493f0aa9b4cdc",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -4091,8 +4091,7 @@
         "entry": 3,
         "detail": "Браузер: properties panel: cancelled; Браузер: resize junctions: cancelled; Браузер: resize labels: Подготовка не завершена успешно; Браузер: resize through junction: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: room device discovery: Подготовка не завершена успешно; Браузер: room face select: Подготовка не завершена успешно; Браузер: room opening host: Подготовка не завершена успешно; Браузер: room resize: Подготовка не завершена успешно; Браузер: selective invalidation: Подготовка не завершена успешно; Браузер: space copy categories: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: stairs: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: static zoom sharpness: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall chain merge: Подготовка не завершена успешно; Браузер: wall corner join: Подготовка не завершена успешно; Браузер: wall draw click: Подготовка не завершена успешно; Браузер: wall end align: Подготовка не завершена успешно; Браузер: wall face lineage: Подготовка не завершена успешно; Браузер: wall face room split: Подготовка не завершена успешно; Браузер: wall guide ownership: Подготовка не завершена успешно; Браузер: wall node attach: Подготовка не завершена успешно; Браузер: wall node connected: Подготовка не завершена успешно; Браузер: wall node delete: Подготовка не завершена успешно; Браузер: wall node hit: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно; Браузер: wall node move: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно; Браузер: wall node reliability: Подготовка не завершена успешно; Браузер: wall node topology: Подготовка не завершена успешно; Браузер: wall preview handoff 1247: Подготовка не завершена успешно; Браузер: wall side dimensions: Подготовка не завершена успешно; Браузер: wall side dimensions dense: Подготовка не завершена успешно; Браузер: wall thickness: Подготовка не завершена успешно; Браузер: wallthick standalone: Подготовка не завершена успешно; Браузер: warm geometry camera: Подготовка не завершена успешно; Браузер: write authority: Подготовка не завершена успешно; Браузер: writer fixed point: Подготовка не завершена успешно",
         "eventId": "finish:4c3df9d1-ead8-45ba-828e-c3c869cae14b:finish:3:return:return:1381"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1382": {
       "issue": 1382,
@@ -4573,7 +4572,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1381
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -5026,6 +5027,19 @@
           "detail": "Браузер: properties panel: cancelled; Браузер: resize junctions: cancelled; Браузер: resize labels: Подготовка не завершена успешно; Браузер: resize through junction: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: room device discovery: Подготовка не завершена успешно; Браузер: room face select: Подготовка не завершена успешно; Браузер: room opening host: Подготовка не завершена успешно; Браузер: room resize: Подготовка не завершена успешно; Браузер: selective invalidation: Подготовка не завершена успешно; Браузер: space copy categories: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: stairs: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: static zoom sharpness: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall chain merge: Подготовка не завершена успешно; Браузер: wall corner join: Подготовка не завершена успешно; Браузер: wall draw click: Подготовка не завершена успешно; Браузер: wall end align: Подготовка не завершена успешно; Браузер: wall face lineage: Подготовка не завершена успешно; Браузер: wall face room split: Подготовка не завершена успешно; Браузер: wall guide ownership: Подготовка не завершена успешно; Браузер: wall node attach: Подготовка не завершена успешно; Браузер: wall node connected: Подготовка не завершена успешно; Браузер: wall node delete: Подготовка не завершена успешно; Браузер: wall node hit: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно; Браузер: wall node move: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно; Браузер: wall node reliability: Подготовка не завершена успешно; Браузер: wall node topology: Подготовка не завершена успешно; Браузер: wall preview handoff 1247: Подготовка не завершена успешно; Браузер: wall side dimensions: Подготовка не завершена успешно; Браузер: wall side dimensions dense: Подготовка не завершена успешно; Браузер: wall thickness: Подготовка не завершена успешно; Браузер: wallthick standalone: Подготовка не завершена успешно; Браузер: warm geometry camera: Подготовка не завершена успешно; Браузер: write authority: Подготовка не завершена успешно; Браузер: writer fixed point: Подготовка не завершена успешно",
           "eventId": "finish:4c3df9d1-ead8-45ba-828e-c3c869cae14b:finish:3:return:return:1381"
         }
+      }
+    },
+    "finish:1707e311-543a-42a0-a1e2-4a4f14b4f3e6": {
+      "digest": "f3b6c3846f6a0150921b13d76b535020e46f0233c9c0cada07531a652f8d1fc0",
+      "issue": 1381,
+      "message": {
+        "kind": "queued",
+        "issue": 1381,
+        "at": 1794481130210,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "1087417b7e8d3e761a9e5140be0701afac0d21bd"
       }
     }
   },
