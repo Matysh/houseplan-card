@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10155,
+  "revision": 10156,
   "nextTicket": 387,
   "nextFence": 387,
   "tasks": {
@@ -14,7 +14,7 @@
       "ownerDecision": null,
       "ticket": 386,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794524604829,
       "reviewEntry": 3,
       "patchId": "ed50349ba0774fa1df145009db62c27c78a42ea3",
@@ -159,12 +159,12 @@
         "eventId": "return:1024:author-nested-source-dependency-20261113:return:1024"
       },
       "s6": {
-        "id": "20261112T222149227-6ce239ee",
-        "name": "Тесты для задачи #1024 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261112T222149227-6ce239ee/report.json",
-        "materialSha": "148c93fc096a49c812a2146aeca3ea757b9714b2",
+        "id": "20261112T230346536-3e3ed74a",
+        "name": "Тесты для задачи #1024 (правки после ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261112T230346536-3e3ed74a/report.json",
+        "materialSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
         "status": "passed",
-        "finishedAt": "2026-11-12T22:42:58.553Z",
+        "finishedAt": "2026-11-12T23:24:58.360Z",
         "failures": []
       },
       "reviewRound": null
@@ -4760,9 +4760,9 @@
     "fence": 386,
     "materialSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
     "expectedBase": "827cae041114db2a478951d658566a718e6f8393",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794524610489,
-    "expiresAt": 1794526168772,
+    "expiresAt": 1794529499609,
     "patchId": "ed50349ba0774fa1df145009db62c27c78a42ea3"
   },
   "events": {
@@ -5411,6 +5411,34 @@
           "finishedAt": "2026-11-12T22:42:58.553Z",
           "failures": []
         }
+      }
+    },
+    "finish:04c5697c-d359-4eca-a70c-c36078771b2a:finish:3:s6-complete": {
+      "digest": "2536665d1b75d52f59cca24f63a5bda8394a9d4ba5657e0c00096b920b296d66",
+      "issue": 1024,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1024,
+        "at": 1794525899609,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
+        "phase": "review",
+        "evidence": {
+          "id": "20261112T230346536-3e3ed74a",
+          "name": "Тесты для задачи #1024 (правки после ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261112T230346536-3e3ed74a/report.json",
+          "materialSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
+          "status": "passed",
+          "finishedAt": "2026-11-12T23:24:58.360Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\n\nРеализована принятая редакция 5 (раунд 5): независимые 1–4 створки окна, top, опция штор на долю, ручные положения, swing/slide дверей и ворот, согласованный UI-059. Существующая неявная форма не материализуется при чтении или неизменённом сохранении. Ветка `codex/opening-features-1024`; запись в dev только через finish.\n\n### Решение и альтернативы\n\nОбщая типизированная модель и resolver используются renderer/preview/static/2.5D и оптикой. Sun сначала допускает целое окно, затем маскирует интервалы; Glow маскирует только доказанный внутренний проход. Шторы не добавляют физическую стену. Общая перепараметризация сохраняет физические части при смене базиса; TS/Python сравниваются по полной проекции, включая Copy.\n\nРасширение version1 защищено fresh capability, внешним writer marker и locked server guard до preservation/repair. Portable v3 используется только при наличии расширения; старые документы остаются v2. Copy рекурсивно очищает источники, импорт их сохраняет. Снимок UI-059 сохранён побайтно с исходными hashes; временные hooks/localStorage прототипа в продукт не переносились.\n\n### Риски и места для внимания\n\n- Полнота ориентационных путей: реальные move/merge/attach/delete, room↔partition, canonicalization, repair/optimizer, сохранение и ACK.\n- Оптическая маска не должна давать наружные утечки Glow или менять полную дальность Sun.\n- Guard должен защищать удаление/смену геометрии расширенного родителя, в том числе от старого writer и через optimize/large upload.\n- Unknown назначенной створки: закрытая нейтральная поза + ?, без manual fallback. Независимая неизвестность шторы не блокирует свет.\n- Вложенный черновик не должен воскрешать удалённый другим клиентом проём.\n- Исторический SPEC в replay-пакете не отменяет действующую редакцию 5.\n- PDF намеренно state-free; SVG получает актуальное View.\n\n### Проверки и ограничения\n\nАдресные результаты и метод сравнения описаны в `docs/testing/1024-acceptance.md`. Выполнены native формы/Done/Cancel/Escape/Save/Undo/Redo, отзыв capability, unknown и remote deletion; адресные model/optics/geometry, TS/Python basis, реальные HA writer/Copy/portable/ZIP и diagnostic allowlist. PDF: 29 тестов, включая новый контракт leaf count/direction/state-free. Светлая/тёмная тема сверена с отдельным синтетическим replay UI-059.\n\nОкончательный S6 выполняет очередь и передаёт собственный отчёт; предварительные адресные запуски не выдаются за завершённый S6. Первое платное код-ревью завершилось changes_requested; его блокеры исправлены ниже. Полный релизный golden/browser/HA E2E и замеры относятся к следующей бете, которую владелец явно поручил после S8; изменённые эталоны #1024 приняты владельцем, необъяснённые посторонние расхождения не принимаются автоматически. Частная HA и локальный стенд 8890 не изменялись.\n\n\n\n### Разбор первого S6\n\nПервый S6 `20261112T215325491-d6cea10f`: 730 файлов, 616 pass / 103 reuse / 11 fail, ревью не вызывалось. Исправлены обработка повреждённых старых записей в orientation adapter (строгая v1 schema не ослаблена), lifecycle текущего поля, дополнительные any, зависимый generated runtime конвертера и проверка по-прежнему поддержанного portable v2. Старые текстовые/Native ожидания приведены к принятому источнику цвета и вложенной форме; шесть мутантов переякорены с сохранением дефектов. Адресно: 137 Node, 98 repair/basis, 21 converter backend и 4 converter page PASS, native entity/Static/nested form PASS. Повтор S6 — через ту же очередь с текущим полным diff. Код: `148c93fc0`.\n\nCompanion: [HA E2E PR #45](https://github.com/Matysh/houseplan-e2e/pull/45), [impact #44](https://github.com/Matysh/houseplan-e2e/issues/44). Contract lint/discovery пройдены, реальное исполнение на кандидате беты ещё не заявлено.\n\nШесть изменённых мутационных свидетелей дополнительно проверены на `148c93fc0`: все чистые гарды PASS, все соответствующие мутанты имеют `assertion-killed` (не отказ сборки/подготовки). Это адресный ремонт затронутых свидетелей, не полный ночной мутационный прогон. Первый локальный orchestration ошибся в имени enum уже после положительного результата первого мутанта; оставшиеся пять исполнены продолжением без повторения успешного clean-профиля.\n\n\n\n### Исправления по предыдущему ревью\n\n[Вердикт ревью 43322497480](https://github.com/Matysh/houseplan-card/issues/1024#issuecomment-6838105690): два High исправлены в `c1ed7d9a3`. Во время первого ревью автор самостоятельно вернул свой допуск в S6, чтобы не допустить слияния с неполным сборщиком источников.\n\n1. Общий openingEntityReferences теперь включает leaf.contact и включённые shade.contact. Это исправляет immutable frame, incremental HA updates/reuse и Static, а не только живой диалог. Проверены источники без area/device/marker: полный и инкрементальный снимок, изменение состояния, неизменность удержанного кадра; native View меняет створку/иконку шторы без записи конфига и сервисных вызовов.\n2. computeIsoSunBeams применяет mask после допуска и расчёта полного родителя. Все доли сохраняют полные depth/shift/gradient и исходные крайние streak anchors; одна общая маска ограничивает fill/sill/streaks. Пустая маска не даёт лучей, полная идентична отсутствующей, внутренних новых rims нет. Добавлены геометрические тесты half/middle/disjoint.\n3. Из необязательных замечаний реализованы: locked old-writer guard для удаления пространства (включая отсутствие/True/2 marker против 1, без изменения rev при отказе); отдельная ошибка newer-version для импорта будущего namespace, с локализациями. Ориентационные TS/Python таблицы из предыдущего материала сохранены.\n\nАдресные проверки: 177 snapshot/logic/reuse; 53 ISO/Sun/i18n; 3 real-HA space-delete и 3 import теста — PASS; Ruff, build+types, bundle sync и native opening_features — PASS. Новый окончательный S6 и повторное содержательное ревью запускаются через finish, их успех заранее не заявляется. Кандидат беты ещё не создан, публикации не было.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
