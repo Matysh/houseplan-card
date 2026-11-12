@@ -1,0 +1,11 @@
+{
+  "issue": 1381,
+  "acceptedOn": "2026-11-12",
+  "commit": "3f89c4132e2f1e9243df350f26aae849d275bc65",
+  "productVersion": "1.85.1",
+  "runtimeFingerprint": "094e06d68d680499d372264948663157061b4759bf251b4e9a7d3f1eabf2c4ac",
+  "frontendVersion": "20260930.4",
+  "approvedScope": "wall dimensions only",
+  "otherPrototype": 1024,
+  "privateDataIncluded": false
+}
