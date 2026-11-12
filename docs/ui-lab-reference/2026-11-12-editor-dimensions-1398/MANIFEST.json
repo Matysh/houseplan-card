@@ -1,0 +1,37 @@
+[
+  {
+    "path": "BASELINE.json",
+    "bytes": 514,
+    "sha256": "eac515b29711f0d7bc651c939393f09b568489456f0400f0a5ec13b766501ab4"
+  },
+  {
+    "path": "JOURNAL.md",
+    "bytes": 12330,
+    "sha256": "385666929d9974260a070c96fe4ab58c16ffa676f346a451fb1a671813ab39bd"
+  },
+  {
+    "path": "README.md",
+    "bytes": 4338,
+    "sha256": "8fc87990303b1c49b5b32b75db44e65385053a4da8224f5142242ea2568d48c5"
+  },
+  {
+    "path": "runtime-prototypes.patch",
+    "bytes": 11923,
+    "sha256": "cc01662641158eee1fe71a1020ecce9d4c1e6265c3eb85f74985cfb4783341b1"
+  },
+  {
+    "path": "serve-reference.mjs",
+    "bytes": 2415,
+    "sha256": "15b20b6e4d6163351e05ce6aecb733411429921200ba16228f04f130f13b1879"
+  },
+  {
+    "path": "accepted/lab-native-opening.ts",
+    "bytes": 9857,
+    "sha256": "a237f9f36791997779d1a65730252f911360cbfd237547ccb12887d0889ad44e"
+  },
+  {
+    "path": "accepted/native-proposals.mjs",
+    "bytes": 19920,
+    "sha256": "ea5f1a8f440eccc9d77cdd4807d50ad8131a701e9a48b613d898b01c1065c7c5"
+  }
+]
