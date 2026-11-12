@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9747,
-  "nextTicket": 377,
+  "revision": 9748,
+  "nextTicket": 378,
   "nextFence": 377,
   "tasks": {
     "1170": {
@@ -4034,14 +4034,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/wall-side-dimensions-1381",
-      "materialSha": "58276f20e4c622569c3e3ebc8a6bae41ccdec840",
+      "materialSha": "305db6871373c731cc8e38755820d3526412d265",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 376,
-      "queued": false,
+      "ticket": 377,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794481739896,
-      "reviewEntry": 5,
+      "readyAt": 1794483224351,
+      "reviewEntry": 6,
       "patchId": "5093b4ac9d6ed9550d7bb47e9a2618b90239f759",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -4092,8 +4092,7 @@
         "entry": 5,
         "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed; Браузер: wall node merge: failed; Браузер: wall preview handoff 1247: failed",
         "eventId": "finish:694a3206-e83a-456d-9e89-baef740322cc:finish:3:return:return:1381"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1382": {
       "issue": 1382,
@@ -4574,7 +4573,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1381
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -5307,6 +5308,19 @@
           "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed; Браузер: wall node merge: failed; Браузер: wall preview handoff 1247: failed",
           "eventId": "finish:694a3206-e83a-456d-9e89-baef740322cc:finish:3:return:return:1381"
         }
+      }
+    },
+    "finish:17fb671e-cad3-492e-90ec-3c19a88ffe94": {
+      "digest": "2c52b10f7f61001c8ffe56d316381300a87ea4843f01a0a4de63d22defeb2bf7",
+      "issue": 1381,
+      "message": {
+        "kind": "queued",
+        "issue": 1381,
+        "at": 1794483224351,
+        "entry": 6,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "305db6871373c731cc8e38755820d3526412d265"
       }
     }
   },
