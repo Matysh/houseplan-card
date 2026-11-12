@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9853,
-  "nextTicket": 379,
+  "revision": 9854,
+  "nextTicket": 380,
   "nextFence": 379,
   "tasks": {
     "1170": {
@@ -4303,6 +4303,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1397": {
+      "issue": 1397,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/wall-dimensions-live-camera",
+      "materialSha": "0b8b0d847f8c72182ef16494f5482c0dbc153d63",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 379,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794489683301,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4546,7 +4560,9 @@
       "runId": 43217581040
     }
   },
-  "waiting": [],
+  "waiting": [
+    1397
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4641,6 +4657,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:ee4ae1d5-5ab2-4d33-8822-ed9249edde1e": {
+      "digest": "9fa82aac11414e3d958376b5ca7c63f64c4a700b117c7d48b16acffbe6613684",
+      "issue": 1397,
+      "message": {
+        "kind": "queued",
+        "issue": 1397,
+        "at": 1794489683301,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "0b8b0d847f8c72182ef16494f5482c0dbc153d63"
       }
     }
   },
