@@ -70,3 +70,25 @@ full plan. The 2.5D synthetic capture shows four independently posed leaves,
 parallel top translation, shade/unknown glyphs and no Flat arcs or handles.
 Companion HA journey: `Matysh/houseplan-e2e#45`, impact record#44; actual
 execution on the immutable beta candidate remains pending.
+
+## First code review and repairs
+
+The second queue S6, `20261112T222149227-6ce239ee`, passed all730 files
+at148c93fc0. Code review43322497480 returned changes_requested, not approval.
+Both high findings are repaired: the shared immutable-snapshot dependency
+collector includes enabled nested sources even without a represented device or
+HA area; 2.5D Sun applies shade intervals after full-parent admission/depth.
+Partial masks clip fill, blurred sill and original outer streaks, without new
+internal rims; absent/full masks remain identical and an empty mask emits no beam.
+
+Addressed checks passed177 snapshot/logic/reuse tests,53 ISO/Sun/i18n tests,
+and six real-HA tests for current-writer space deletion and versioned import.
+Space deletion now uses the same locked guard and fresh-client marker; future
+portable opening versions report a specific newer-version error. The native
+opening scenario also covers source-only updates for unplaced leaf/shade
+entities, without configuration writes or device service calls.
+
+These repairs require a new queue S6 and substantive review of the changed
+material; the earlier successful S6 is evidence for its own SHA, not approval
+of the follow-up changes. The current companion journey remains additional to
+the fixed beta HA matrix.

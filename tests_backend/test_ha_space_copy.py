@@ -146,6 +146,29 @@ async def test_1024_writer_guard_is_under_cas_and_preserves_extended_openings(ha
     assert (await read(client))["config"]["spaces"][0]["openings"][0]["opening_features"]["manual"] == "closed"
 
 
+async def test_1024_space_delete_requires_a_current_opening_writer(hass, hass_ws_client):
+    source = await setup_source(hass, "wall", 11)
+    source["spaces"][0]["openings"][0]["opening_features"] = {"version": 1, "mechanism": "slide"}
+    await get_data(hass).config_store.async_save({"rev": 7, "config": source})
+    client = await hass_ws_client(hass)
+    before = await read(client)
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    layout = (await client.receive_json())["result"]
+    request = {"type": "houseplan/space/delete", "space_id": source["spaces"][0]["id"],
+               "expected_config_rev": before["rev"], "expected_layout_rev": layout["rev"]}
+    for marker in (None, True, 2):
+        await client.send_json_auto_id({**request, **({"opening_features_api": marker} if marker is not None else {})})
+        answer = await client.receive_json()
+        assert not answer["success"] and answer["error"]["code"] == "opening_features_client_outdated"
+        assert (await read(client))["config"] == before["config"]
+        assert (await read(client))["rev"] == before["rev"]
+        await client.send_json_auto_id({"type": "houseplan/layout/get"})
+        assert (await client.receive_json())["result"] == layout
+    await client.send_json_auto_id({**request, "opening_features_api": 1})
+    assert (await client.receive_json())["success"]
+    assert (await read(client))["config"]["spaces"] == []
+
+
 async def test_1024_frontend_copy_matches_server_and_clears_nested_disabled_bindings(hass, hass_ws_client):
     # The ordinary frontend copy starts from config/get's materialized appearance.
     source = normalize_room_appearance(await setup_source(hass, "wall", 11))

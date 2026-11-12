@@ -110,8 +110,17 @@ export function computeIsoSunBeams(input: IsoSunInput): IsoSunBeam[] {
     // Travel along the sun until the light is `depth` deep under the wall.
     const travel = depth / cos;
     const shift: [number, number] = [away[0] * travel, away[1] * travel];
-    const quad = [a, b, [b[0] + shift[0], b[1] + shift[1]], [a[0] + shift[0], a[1] + shift[1]]];
-    let polys = intersectRings(quad, clip);
+    const intervals = w.mask ?? [[0, 1]];
+    const masked = !(intervals.length === 1 && intervals[0][0] === 0 && intervals[0][1] === 1);
+    // Keep the parent eligibility, gradient, depth and outer streak anchors.
+    // Only its permitted aperture shares create illuminated geometry.
+    let polys = intervals.flatMap(([lo, hi]) => {
+      if (![lo, hi].every(Number.isFinite) || lo < 0 || hi > 1 || !(hi > lo)) return [];
+      const start = lo === 0 ? a : [a[0] + 2 * hx * lo, a[1] + 2 * hy * lo];
+      const end = hi === 1 ? b : [a[0] + 2 * hx * hi, a[1] + 2 * hy * hi];
+      return intersectRings([start, end, [end[0] + shift[0], end[1] + shift[1]],
+        [start[0] + shift[0], start[1] + shift[1]]], clip);
+    });
     if (polys.length && input.occluders?.length) {
       const shadows = directionalOccluders(input.occluders, away, travel);
       polys = polys.flatMap((poly) => geometryOuterRings(floorMinusBodies(poly, shadows)));
@@ -120,6 +129,9 @@ export function computeIsoSunBeams(input: IsoSunInput): IsoSunBeam[] {
     out.push({
       openingId: w.id, roomId: info.roomId, lightFloor: !!input.lightFloorRooms?.has(info.roomId),
       a, b, shift, normal, depth, clip, polys,
+      // Clip sill glow/blur and original outer streaks too; no new streaks
+      // are invented at an internal shade boundary.
+      ...(masked ? { clipPolys: polys } : {}),
     });
 
   }

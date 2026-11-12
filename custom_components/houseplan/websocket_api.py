@@ -2884,6 +2884,7 @@ async def _forget_deleted_markers(
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/space/delete",
+        vol.Optional("opening_features_api"): object,
         vol.Required("space_id"): str,
         vol.Required("expected_config_rev"): int,
         vol.Required("expected_layout_rev"): int,
@@ -2935,6 +2936,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                     current_config, current_layout, space_id,
                     remove_markers=msg["remove_markers"],
                 )
+                guard_opening_features_write(target_config, current_config, msg.get("opening_features_api"))
                 spaces = current_config.get("spaces") or []
                 deleting_last_space = (
                     len(spaces) == 1 and spaces[0].get("id") == space_id
@@ -3001,7 +3003,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
         connection.send_error(msg["id"], err.code, str(err))
         return
     except vol.Invalid as err:
-        connection.send_error(msg["id"], "invalid_config", str(err))
+        connection.send_error(msg["id"], getattr(err, "code", "invalid_config"), str(err))
         return
     except Exception:  # noqa: BLE001 - best-effort backup pruning never fails the request
         _LOGGER.exception("House Plan space delete failed")

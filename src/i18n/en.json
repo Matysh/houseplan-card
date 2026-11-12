@@ -1289,6 +1289,8 @@
   "backup.error.invalid_format": "The selected file is not a House Plan backup.",
   "backup.error.invalid_image": "The image is damaged or does not match its format.",
   "backup.error.unsupported_export_version": "This backup format is not supported by the installed version.",
+  "backup.error.unsupported_opening_features_version": "This backup uses a newer opening format. Update House Plan before importing it.",
+  "backup.error.opening_features_client_outdated": "Reload the updated House Plan before changing openings or deleting this space.",
   "backup.error.unsupported_image": "Use a supported PNG, JPEG, WebP or SVG image.",
   "backup.error.future_model": "The backup was created by a newer House Plan data model.",
   "backup.error.invalid_config": "The backup contains an invalid House Plan configuration.",

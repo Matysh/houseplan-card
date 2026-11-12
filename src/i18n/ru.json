@@ -1289,6 +1289,8 @@
   "backup.error.invalid_format": "Выбранный файл не является резервной копией House Plan.",
   "backup.error.invalid_image": "Изображение повреждено или не соответствует своему формату.",
   "backup.error.unsupported_export_version": "Эта версия формата резервной копии не поддерживается установленной версией.",
+  "backup.error.unsupported_opening_features_version": "В резервной копии используется более новый формат проёмов. Перед импортом обновите House Plan.",
+  "backup.error.opening_features_client_outdated": "Перезагрузите обновлённый House Plan перед изменением проёмов или удалением этого пространства.",
   "backup.error.unsupported_image": "Используйте поддерживаемое изображение PNG, JPEG, WebP или SVG.",
   "backup.error.future_model": "Резервная копия создана в более новой версии модели данных House Plan.",
   "backup.error.invalid_config": "Резервная копия содержит некорректную конфигурацию House Plan.",

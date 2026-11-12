@@ -13,6 +13,36 @@ import { resolveDevicePresentation } from '../test-build/device-presentation.js'
 import { classifyHassRenderChange } from '../test-build/render-invalidation.js';
 import { freezeVacuumPath } from '../test-build/vacuum-path-geometry.js';
 
+test('#1024 unplaced leaf/shade sources survive full and incremental frames and invalidate live state',async()=>{
+ const {captureHost,oracleFixture}=await import('./render-snapshot-fixture.mjs');
+ const {captureRenderDeviceSnapshot}=await import('../test-build/render-snapshot-capture.js');
+ const {RenderSnapshotReuseWindow}=await import('../test-build/render-snapshot-reuse.js');
+ const fixture=oracleFixture(),space=fixture.config.spaces[0];
+ const leaf='binary_sensor.only_opening',shade='cover.only_shade';
+ for(const id of [leaf,shade]){
+  fixture.entities[id]={entity_id:id,area_id:null,device_id:null};
+  fixture.states[id]={entity_id:id,state:id===leaf?'off':'closed',attributes:{}};
+ }
+ const opening={...space.openings[0],type:'window',opening_features:{version:1,side:'negative',leaves:[
+  {id:'leaf',hinge:'start',contact:leaf,shade:{enabled:true,contact:shade}},
+ ]}};
+ for(const field of ['contact','lock','invert','flip_h','flip_v'])delete opening[field];
+ space.openings=[opening];
+ const host=captureHost(fixture),reuse=new RenderSnapshotReuseWindow();host._space=space.id;host._mode='view';
+ const before=captureRenderDeviceSnapshot(host,reuse);
+ for(const id of [leaf,shade]){
+  assert.ok(before.entityIds.includes(id));assert.equal(before.hass.states[id].state,fixture.states[id].state);
+ }
+ const old=host.hass;
+ host.hass={...old,states:{...old.states,[leaf]:{...old.states[leaf],state:'on'},[shade]:{...old.states[shade],state:'open'}}};
+ host._hassSequence++;
+ assert.equal(classifyHassRenderChange(old,host.hass,before),'state');
+ const next=captureRenderDeviceSnapshot(host,reuse),complete=captureRenderDeviceSnapshot(host,null);
+ for(const id of [leaf,shade])assert.deepEqual(next.hass.states[id],complete.hass.states[id]);
+ assert.equal(next.hass.states[leaf].state,'on');assert.equal(next.hass.states[shade].state,'open');
+ assert.equal(before.hass.states[leaf].state,'off','the held old frame remains immutable');
+});
+
 test('#918 an external route camera remains in the painted frame and invalidates its state', () => {
   const root = 'camera.robot_map', route = 'camera.robot_map_1';
   const hass = { entities: { [root]: {}, [route]: {} }, devices: {}, states: {

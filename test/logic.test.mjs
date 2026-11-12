@@ -570,6 +570,16 @@ test('stale passage bindings stay inert while ordinary opening bindings remain l
   assert.deepEqual(openingEntityReferences({ type: 'window', contact: '', lock: null }), []);
 });
 
+test('#1024 active nested opening sources are explicit frame dependencies, without duplicates or disabled shades',()=>{
+ const opening={type:'window',opening_features:{version:1,side:'negative',leaves:[
+  {id:'a',hinge:'start',contact:'binary_sensor.off_plan',shade:{enabled:true,contact:'cover.off_plan'}},
+  {id:'b',hinge:'end',contact:'binary_sensor.off_plan',shade:{enabled:false,contact:'cover.inactive'}},
+ ]}};
+ assert.deepEqual(openingEntityReferences(opening),['binary_sensor.off_plan','cover.off_plan']);
+ assert.deepEqual(openingEntityReferences({...opening,type:'passage'}),[]);
+ assert.deepEqual(openingEntityReferences({...opening,opening_features:{version:2,leaves:opening.opening_features.leaves}}),[]);
+});
+
 test('snapToWall: the angle is normalized to [-90, 90) so opposite edge directions cannot flip a dragged opening', () => {
   // the same wall as seen from two neighbouring rooms (opposite winding)
   const a = [{ poly: [[0, 0], [10, 0], [10, 10], [0, 10]] }];

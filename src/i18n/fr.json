@@ -1289,6 +1289,8 @@
   "backup.error.invalid_format": "Le fichier sélectionné n’est pas une sauvegarde House Plan.",
   "backup.error.invalid_image": "L’image est endommagée ou ne correspond pas à son format.",
   "backup.error.unsupported_export_version": "Ce format de sauvegarde n’est pas pris en charge par la version installée.",
+  "backup.error.unsupported_opening_features_version": "Cette sauvegarde utilise un format d’ouvertures plus récent. Mettez House Plan à jour avant de l’importer.",
+  "backup.error.opening_features_client_outdated": "Rechargez House Plan après sa mise à jour avant de modifier les ouvertures ou de supprimer cet espace.",
   "backup.error.unsupported_image": "Utilisez une image PNG, JPEG, WebP ou SVG prise en charge.",
   "backup.error.future_model": "La sauvegarde a été créée avec un modèle de données House Plan plus récent.",
   "backup.error.invalid_config": "La sauvegarde contient une configuration House Plan invalide.",

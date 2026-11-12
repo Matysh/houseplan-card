@@ -198,8 +198,9 @@ def test_issue1024_portable_v3_preserves_features_and_plan_only_clears_nested_so
             parse_document(json.dumps(old).encode())
     future = copy.deepcopy(document)
     future["payload"]["config"]["spaces"][0]["openings"][0]["opening_features"]["version"] = 2
-    with pytest.raises(ImportFailure):
+    with pytest.raises(ImportFailure, match="newer House Plan") as error:
         parse_document(json.dumps(future).encode())
+    assert error.value.code == "unsupported_opening_features_version"
 
 
 @pytest.mark.parametrize("kind", ["full", "space"])

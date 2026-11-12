@@ -134,5 +134,35 @@ try {
   assert.equal(await dialog().count(),0,'remote parent deletion retires the nested draft');
   assert.equal((await saved()).some(opening=>opening.id==='window'),false);
   assert.equal(await writes(),beforeDelete,'retiring a remote-deleted draft cannot recreate its parent');
+  // These sources deliberately have no marker, HA Area or device sibling.
+  // They must enter the same immutable frame as the opening, not just dialogs.
+  await page.evaluate(async config=>{
+    const c=window.__card;
+    c.hass={...c.hass,states:{...c.hass.states,
+      'binary_sensor.only_opening':{state:'off',attributes:{}},
+      'cover.only_shade':{state:'closed',attributes:{}},
+    }};
+    const next=structuredClone(config);
+    next.spaces[0].openings[0].opening_features={version:1,side:'negative',leaves:[
+      {id:'off-plan-leaf',hinge:'start',contact:'binary_sensor.only_opening',
+        shade:{enabled:true,contact:'cover.only_shade'}},
+    ]};
+    await window.__hpTest.setServerConfig(next);await window.__hpTest.setMode('view');
+  },config);
+  await page.waitForFunction(()=>!window.__card._modeTransitionBusy);await settle();
+  const painted=()=>card.locator('[data-hp="opening"][data-id="window"]');
+  assert.equal(await painted().locator('.op-leaf-unknown').count(),0,'unplaced source is known on the actual plan');
+  const closed=await painted().locator('.op-leaf').first().getAttribute('style');
+  assert.equal(await painted().locator('.op-shade-indicator path').getAttribute('data-icon'),'mdi:weather-sunny-off');
+  const beforeForeign=await writes();
+  await page.evaluate(()=>{
+    const c=window.__card;c.hass={...c.hass,states:{...c.hass.states,
+      'binary_sensor.only_opening':{state:'on',attributes:{}},
+      'cover.only_shade':{state:'open',attributes:{}},
+    }};
+  });await settle();
+  assert.notEqual(await painted().locator('.op-leaf').first().getAttribute('style'),closed);
+  assert.equal(await painted().locator('.op-shade-indicator path').getAttribute('data-icon'),'mdi:weather-sunny');
+  assert.equal(await writes(),beforeForeign,'external source updates are read-only');
   assert.equal(await page.evaluate(() => window.__serviceCalls.length), 0, 'editing never commands a real entity');
 } finally { await finish(browser, {}); }

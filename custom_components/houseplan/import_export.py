@@ -804,6 +804,10 @@ def parse_document(
             for opening in space.get("openings", []):
                 if not isinstance(opening, dict):
                     raise vol.Invalid("Opening must be an object")
+                features = opening.get("opening_features")
+                if (isinstance(features, dict) and type(features.get("version")) is int
+                        and features["version"] > 1):
+                    raise ImportFailure("unsupported_opening_features_version", "This opening format needs a newer House Plan version")
                 validate_opening_features(opening)
                 if "opening_features" in opening and document["export_version"] < 3:
                     raise ImportFailure("unsupported_export_version", "Opening features require export version 3")

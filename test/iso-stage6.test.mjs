@@ -258,6 +258,25 @@ test('#649 п.2 beams: same exterior windows as Flat, parallelogram along the su
   assert.equal(Math.round(faced.a[1]), 390);
 });
 
+test('#1024 ISO sunlight masks shares without shortening the parent gradient or inventing internal rims',()=>{
+ const window={id:'south',x:200,y:400,angle:0,length:80};
+ const input={rooms:[{id:'r',poly:[[0,0],[400,0],[400,400],[0,400]]}],windows:[window],
+  azimuth:180,elevation:30,northDeg:0,wallHeight:84,lightFloorRooms:new Set(['r'])};
+ const [full]=computeIsoSunBeams(input);
+ const run=mask=>computeIsoSunBeams({...input,windows:[{...window,mask}]});
+ assert.deepEqual(run([[0,1]]),[full]);assert.deepEqual(run([]),[]);
+ const [half]=run([[0,.5]]),[middle]=run([[.25,.75]]);
+ for(const beam of [half,middle]){
+  for(const key of ['a','b','shift','normal','depth'])assert.deepEqual(beam[key],full[key]);
+  assert.deepEqual(beam.clipPolys,beam.polys,'the sill and outer streaks use the same mask as the fill');
+ }
+ assert.ok(half.polys.flat().every(([x])=>x<=200+1e-8));
+ assert.ok(half.polys.flat().some(([x])=>Math.abs(x-160)<1e-8));
+ assert.ok(middle.polys.flat().every(([x])=>x>=180-1e-8&&x<=220+1e-8));
+ const [separated]=run([[0,.25],[.75,1]]);
+ assert.equal(separated.polys.length,2);assert.deepEqual(separated.a,full.a);assert.deepEqual(separated.b,full.b);
+});
+
 /**
  * #732: an overlay fixture names only fields of the production input type;
  * test/iso-overlay-fixture-types.test.mjs typechecks this file.

@@ -5,6 +5,7 @@ import { union } from 'polyclip-ts';
 import { generatedRgbColor, safeStoredColor } from './color';
 import { spaceAppearanceOf } from './room-appearance';
 import { signalVisibilityModeOf, signalVisibilityOverrideOf } from './signal-visibility';
+import type { OpeningFeatures } from './types';
 
 /** Zigbee LQI color: ≤40 — red, ≥180 — green, in between — an hsl gradient. */
 export function lqiColor(lqi: number): string {
@@ -394,10 +395,20 @@ export function openingLightApertureLength(length: number, amount: number): numb
  * architectural, so stale legacy fields must never create HA subscriptions. */
 export function openingEntityReferences(opening: {
   type?: string; contact?: string | null; lock?: string | null;
+  opening_features?: OpeningFeatures;
 }): string[] {
   if (opening.type === 'passage') return [];
-  return [opening.contact, opening.lock]
-    .filter((entityId): entityId is string => typeof entityId === 'string' && entityId.length > 0);
+  const references = [opening.contact, opening.lock];
+  const features = opening.opening_features;
+  if (opening.type === 'window' && features?.version === 1 && 'leaves' in features
+      && Array.isArray(features.leaves)) {
+    for (const leaf of features.leaves) {
+      references.push(leaf.contact);
+      if (leaf.shade?.enabled) references.push(leaf.shade.contact);
+    }
+  }
+  return [...new Set(references.filter((entityId): entityId is string =>
+    typeof entityId === 'string' && entityId.length > 0))];
 }
 
 export interface OpeningEntityCandidate {
