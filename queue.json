@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9946,
-  "nextTicket": 381,
+  "revision": 9947,
+  "nextTicket": 382,
   "nextFence": 381,
   "tasks": {
     "1170": {
@@ -4324,14 +4324,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/unified-editor-dimensions-1398",
-      "materialSha": "e6d83233a9ef9cccdc716d3419c90260f2aad88e",
+      "materialSha": "ed458e5c63efe1d987bb5e7785dd23e068ad2671",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 380,
-      "queued": false,
+      "ticket": 381,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794502925219,
-      "reviewEntry": 1,
+      "readyAt": 1794503841329,
+      "reviewEntry": 2,
       "patchId": "5d39fc2b14f0ab5b03197b70bda3a7325d8386ba",
       "changedFiles": [
         "demo/smoke_device_equal_spacing.mjs",
@@ -4364,7 +4364,6 @@
         "test/wall-side-dimension-editor.test.mjs",
         "test/wall-side-dimension-labels.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4604,7 +4603,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1398
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4804,6 +4805,19 @@
           "detail": "Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/opening-drag.test.mjs: failed; Браузер: device equal spacing: failed",
           "eventId": "finish:4bba4bb2-e568-4d19-9a64-75c64e098f7a:finish:3:return:return:1398"
         }
+      }
+    },
+    "finish:936de651-fa91-4b63-94c1-f2d9b310e8e4": {
+      "digest": "ae0336161be2d71978c6ee7f9f97b012dfa71a1bacabec66c6aec07e6de01149",
+      "issue": 1398,
+      "message": {
+        "kind": "queued",
+        "issue": 1398,
+        "at": 1794503841329,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ed458e5c63efe1d987bb5e7785dd23e068ad2671"
       }
     }
   },
