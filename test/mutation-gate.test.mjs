@@ -12,7 +12,7 @@ import {
   anchorSpan, anchorRegion, parseDiffRanges, ANCHOR_RADIUS_LINES,
   witnessFingerprint, readLedger, recordCaught, splitByLedger, LEDGER_SCHEMA,
 } from '../scripts/mutation-gate.mjs';
-import { guardPhases, staticTestSelectionProblems } from '../scripts/mutation-guard-outcome.mjs';
+import { guardPhases, runGuardPhases, staticTestSelectionProblems } from '../scripts/mutation-guard-outcome.mjs';
 import { checkMutationRegistry } from '../scripts/mutation-registry-check.mjs';
 import {
   BROWSER_GUARD_LIMIT, browserGuardPolicy, documentedBrowserGuards,
@@ -28,6 +28,32 @@ const definition = id => {
   assert.equal(found.length, 1, `${id}: one declaration, no replacement of registry coverage`);
   return found[0];
 };
+
+test('#1396 UI Lab prepares its HA runtime before the oracle and never counts setup failure as a kill', () => {
+  const mutant = definition('compact-danger-missing-theme-token-1150');
+  const prepare = 'node demo/ui-lab/prepare-ha.mjs', oracle = 'node demo/ui-lab/editor-kit-audit.mjs';
+  assert.deepEqual(guardPhases(mutant.guard), { setup: [prepare], oracle, proof: 'assertion' });
+  assert.equal(guardNeedsBundle(mutant.guard), true, 'the audit must consume the rebuilt product');
+  for (const error of ['official wheel download failed', 'HA manifest integrity mismatch']) {
+    const calls = [];
+    const result = runGuardPhases(mutant.guard, { execute(command) {
+      calls.push(command);
+      return { status: 1, stdout: '', stderr: error };
+    } });
+    assert.equal(result.kind, 'setup-failure');
+    assert.equal(result.command, prepare);
+    assert.deepEqual(calls, [prepare], 'missing or corrupt runtime must stop before the browser oracle');
+  }
+  const calls = [];
+  const result = runGuardPhases(mutant.guard, { execute(command) {
+    calls.push(command);
+    return command === prepare ? { status: 0, stdout: 'Verified HA frontend', stderr: '' }
+      : { status: 1, stdout: '', stderr: 'AssertionError: destructive ink survives a missing HA error token' };
+  } });
+  assert.equal(result.kind, 'assertion-killed');
+  assert.equal(result.command, oracle);
+  assert.deepEqual(calls, [prepare, oracle]);
+});
 
 test('#1382 paired history guard keeps timing diagnostic and preserves the floor-rebuild mutation', () => {
   const mutant = definition('paired-history-rebuilds-floor-1093');

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Prepare the pinned HA frontend cache before the UI Lab mutation audit on fresh workers. Keep acquisition/integrity failures separate from the browser oracle and reuse an already verified cache (#1396).
+
 - Serve generated JavaScript chunks as negotiated build-time gzip representations, preserving raw fallback, manifest gating and immutable caching. Ship verified encoded bytes through bundle sync and installation packages; report their installation overhead separately from canonical frontend metrics (#1387, #1385).
 
 - Reuse registry reads and physical floor models across temporary masonry card moves. Retain bounded event coverage, reconcile changes or real reconnects with one current config/layout pair, and fence obsolete registry replies and user authority (#1386, #1385).

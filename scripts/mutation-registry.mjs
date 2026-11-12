@@ -19644,7 +19644,9 @@ const uiPolish1145Cases = [
 // #1150: declaration only; real missing-theme input is exercised by the native audit.
 const compactEditor1150Cases = [{
   id:'compact-danger-missing-theme-token-1150',
-  guard:'node demo/ui-lab/editor-kit-audit.mjs',
+  // #1396: fresh nightly workers need the pinned HA cache, not a local warm prerequisite.
+  // Keep acquisition in setup so a failed download/integrity check cannot count as a kill.
+  guard:'node demo/ui-lab/prepare-ha.mjs && node demo/ui-lab/editor-kit-audit.mjs',
   because:'#1150 AC3: only mounted Chromium can resolve absent HA CSS tokens, inherited ink and the completed paint transition on the actual destructive Properties action. Ordinary missing-token input is RED on pre-fix source; this declaration is not an executed/caught mutant.',
   patches:[{file:'src/styles/settings-action.styles.ts',
     find:'${selector}.danger{color:var(--hpf-danger,var(--error-color,#db543d));border-color:var(--hpf-danger,var(--error-color,#db543d));}',
