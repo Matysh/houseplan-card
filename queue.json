@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9772,
+  "revision": 9773,
   "nextTicket": 378,
   "nextFence": 378,
   "tasks": {
@@ -5146,6 +5146,10 @@
       "digest": "9cbe2fa7c391d53d826c03a59fe22e1688995dde4ad383b153d4f40dbb5a17db",
       "issue": 1381
     },
+    "github:43212711809:1:completions:message:c31b0a56ee2adc2f74124410043323375d8ef990ac5716a2004315b5cc6d0266": {
+      "digest": "de6b6017ea652b205351c62a1bd1f111fad5d04fa05cff9a56481994a82d1319",
+      "issue": 1381
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -5443,7 +5447,8 @@
           "entry": 5,
           "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed; Браузер: wall node merge: failed; Браузер: wall preview handoff 1247: failed",
           "eventId": "finish:694a3206-e83a-456d-9e89-baef740322cc:finish:3:return:return:1381"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:17fb671e-cad3-492e-90ec-3c19a88ffe94": {
