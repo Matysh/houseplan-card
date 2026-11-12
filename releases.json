@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 715,
+  "revision": 716,
   "active": "1.86.0-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -74498,12 +74498,360 @@
       "branch": "release/1.86.0-beta.1",
       "sourceSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
       "sha": "4f8fad166f3f75f1f7a4435ddd11e55b09005c04",
-      "runner": null,
-      "running": {
-        "id": null,
-        "sha": "4f8fad166f3f75f1f7a4435ddd11e55b09005c04"
+      "runner": {
+        "id": "20261112T233046525-d988e4e8",
+        "sha": "4f8fad166f3f75f1f7a4435ddd11e55b09005c04",
+        "event": "beta",
+        "status": "failed",
+        "path": "/home/sergey/houseplan-1227/.git/process-next/runs/20261112T233046525-d988e4e8/report.json",
+        "digest": "b481f13bc5f0195471974412a76edf079520b4c1ccf32d3464ef2c48e9466e67",
+        "finishedAt": "2026-11-12T23:38:14.703Z",
+        "materialClean": true,
+        "ready": false,
+        "required": 33,
+        "failed": [
+          "product-node:ui",
+          "golden-beta"
+        ],
+        "reused": 11,
+        "checks": [
+          {
+            "id": "product-build",
+            "name": "Сборка и типы продукта",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "test-build",
+            "name": "Подготовка модулей для тестов",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "demo-assets",
+            "name": "Подготовка карточки для браузера",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "product-node:devices",
+            "name": "Поведение: Устройства и действия",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 1079,
+              "passed": 1079,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:geometry",
+            "name": "Поведение: Геометрия и стены",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 1372,
+              "passed": 1371,
+              "failed": 0,
+              "skipped": 1,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:view",
+            "name": "Поведение: Отрисовка View",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 409,
+              "passed": 409,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:data",
+            "name": "Поведение: Данные и сохранение",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 371,
+              "passed": 371,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:new-product",
+            "name": "Поведение: Новые продуктовые проверки",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 574,
+              "passed": 574,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:core",
+            "name": "Поведение: Общие функции",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 246,
+              "passed": 246,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:editor",
+            "name": "Поведение: Редактор и история",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 377,
+              "passed": 377,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:ui",
+            "name": "Поведение: Интерфейс и ввод",
+            "status": "failed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 153,
+              "passed": 152,
+              "failed": 1,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:lighting",
+            "name": "Поведение: Свет и солнце",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 212,
+              "passed": 212,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:text",
+            "name": "Поведение: Текст и локализация",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 44,
+              "passed": 44,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:export",
+            "name": "Поведение: Экспорт и PDF",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 72,
+              "passed": 72,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-backend",
+            "name": "Backend и сбор покрытия",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 3260,
+              "passed": 3259,
+              "failed": 0,
+              "skipped": 1
+            }
+          },
+          {
+            "id": "release-package",
+            "name": "Подготовка проверяемого ZIP и кандидата",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "release-measurements",
+            "name": "Размеры и время относительно последнего stable",
+            "status": "passed",
+            "diagnostic": true
+          },
+          {
+            "id": "smoke:smoke_readonly_cold_start",
+            "name": "Браузер: Сохранённый план при первом открытии без прав редактирования",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "smoke:smoke_cold_view_toggle",
+            "name": "Браузер: Команда устройству сразу после холодного открытия View",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "smoke:smoke_view_edit_permissions",
+            "name": "Браузер: Поздний ответ и смена прав пользователя",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_toggle_confirmation",
+            "name": "Браузер: Подтверждение команды устройству",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "smoke:smoke_editor_gestures",
+            "name": "Браузер: Жесты редактора без случайного клика или команды",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "smoke:smoke_canvas_surface_gestures",
+            "name": "Браузер: Жесты на поверхности плана",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "smoke:smoke_editor_draft_exit",
+            "name": "Браузер: Выход из редактора и несохранённые изменения",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "smoke:smoke_geometry_history_refusal",
+            "name": "Браузер: Отказ операции и целостность истории геометрии",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "smoke:smoke_decor_creation_selection",
+            "name": "Браузер: Создание декора и выбор созданного объекта",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "smoke:smoke_space_switch_transitions",
+            "name": "Браузер: Переключение между этажами",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "smoke:smoke_live_text",
+            "name": "Браузер: Обновление живого текста",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_isometric_live_touch",
+            "name": "Браузер: Живое состояние и касания в изометрии",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "smoke:smoke_view_recovery",
+            "name": "Браузер: Восстановление View после задержки или сбоя",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261112T230346536-3e3ed74a"
+          },
+          {
+            "id": "golden-beta",
+            "name": "78 визуальных кадров: панель 64, Lovelace 13, Static 1",
+            "status": "failed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 78,
+              "passed": 21,
+              "failed": 57,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-beta-journeys",
+            "name": "HA E2E beta: journeys",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 10,
+              "passed": 10,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-beta-first-run",
+            "name": "HA E2E beta: first-run",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 2,
+              "passed": 2,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-beta-upgrade",
+            "name": "HA E2E beta: upgrade",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 1,
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0
+            }
+          }
+        ]
       },
-      "status": "testing",
+      "running": null,
+      "status": "results",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -79361,7 +79709,8 @@
     "release-1-86-0-beta-1-prepare-4f8fad166": "fc7c98348bfb3973fc8de906f19be58b43e2fc722a083a842c33dcaee0896c21",
     "release-1-86-0-beta-1-run-4f8fad166": "70359a995d7822ca82bbadc3c28f41134ab87d4027423c411fe1900790835cc0",
     "ship-review:prepare:bda3196f-5807-49d4-afde-9301b7f33c05": "a02f9cce15ddbd97372fb5b03f4ff769e778ebc9d84d4697789fed97628a18c6",
-    "ship-review:result:6e7a8762-23b2-4356-ad6c-48429a3e173e": "2165dc9aebfe5837fdfab419f8128aacd59e7919ec5c96f2d89542763baf7f60"
+    "ship-review:result:6e7a8762-23b2-4356-ad6c-48429a3e173e": "2165dc9aebfe5837fdfab419f8128aacd59e7919ec5c96f2d89542763baf7f60",
+    "beta-1024-report:20261112T233046525-d988e4e8": "276f619af8b0e07058aebfc311d3bd1ccb3d1fcfb652df58d727078b28030d95"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
