@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9652,
-  "nextTicket": 372,
+  "revision": 9653,
+  "nextTicket": 373,
   "nextFence": 372,
   "tasks": {
     "1170": {
@@ -4029,6 +4029,20 @@
         "sourceSha": "f1a94ef30fc1b8e24574de4d4cc9fcb65aa12caa"
       }
     },
+    "1381": {
+      "issue": 1381,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/wall-side-dimensions-1381",
+      "materialSha": "5352d5ab232688e6021f1b535e2645fdbd6dec8f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 372,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794478048916,
+      "reviewEntry": 1
+    },
     "1382": {
       "issue": 1382,
       "branch": "codex/history0-mutation-diagnostic-timing",
@@ -4508,7 +4522,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1381
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4660,6 +4676,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:d7b92f8f-e240-45a1-806d-b9be2f0c459c": {
+      "digest": "a507416e2cfa989396ca078820b3c18882f8cc444ad973fdf2e966588375d252",
+      "issue": 1381,
+      "message": {
+        "kind": "queued",
+        "issue": 1381,
+        "at": 1794478048916,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "5352d5ab232688e6021f1b535e2645fdbd6dec8f"
       }
     }
   },
