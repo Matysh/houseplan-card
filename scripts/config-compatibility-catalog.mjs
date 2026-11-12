@@ -115,6 +115,7 @@ export const COMPATIBILITY_BRANCHES = Object.freeze([
     'The model9 contract intentionally changes degraded opening/light behavior and may need host proof. A lossless transparent migration for every tolerated old geometry is not proven; old backend and read-only degraded plans remain supported.'),
   record('wall-model-chain', [], 'catalogue-less rooms, old drafts, midpoint-only thickness/host evidence', 'model11 exact graph with derived catalogue and proven hosts',
     [source('src/wall-segment-model.ts', 'commitWallSegmentModelInPlace'), source('src/wall-thickness.ts', 'exactCoveringWall'),
+      source('src/wall-side-dimension-geometry.ts', 'dimensionCarriers/WallDimensionGeometry'),
       source('custom_components/houseplan/wall_segment_model.py', 'commit_wall_segment_model'), source('custom_components/houseplan/validation.py', 'validate_wall_model_transition')],
     unknown('Multiple independent structural migrations; model number is not a scalar-field sunset date.'),
     'Existing versioned structural migration on import/explicit structural write; ownership proof may refuse',

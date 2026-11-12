@@ -51,7 +51,7 @@ test('#1381 metric precision is opt-in; imperial and existing consumers retain t
   assert.equal(formatLength(340.7,false,3),'3.407 m');
   assert.equal(formatLength(340.7,false),'3.41 m');
   assert.equal(formatLength(340.7,true,3),formatLength(340.7,true));
-  for(const language of ['ru','en','de','fr'])for(const key of ['wall_dimensions','wall_dimension_unavailable','wall_dimensions_hint','wall_dimensions_axis_hint']) {
+  for(const language of ['ru','en','de','fr'])for(const key of ['wall_dimensions','wall_dimension_unavailable','wall_dimensions_hint','wall_dimensions_axis_hint','wall_dimensions_axis_fallback']) {
     const label=propertiesT(language,key);
     assert.notEqual(label,key);assert.ok(label.length>0);
   }

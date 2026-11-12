@@ -1134,6 +1134,11 @@
     "zigbee-topology-"
   ],
   "internalExactValues": [
+    "wall-side-dimensions",
+    "wall-side-dimension",
+    "dimension-witnesses",
+    "dimension-rail",
+    "dimension-list",
     "alarm-add",
     "alarm-edit",
     "alarm-remove",

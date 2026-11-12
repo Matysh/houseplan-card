@@ -1,13 +1,33 @@
 {
   "schema": 1,
   "query": "legacy|deprecated|compat|fallback for old",
-  "sourceBase": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
+  "sourceBase": "5352d5ab232688e6021f1b535e2645fdbd6dec8f",
   "sourceScope": [
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "08c5a7d79e4fc4a5e9930874a43c622b8d340811f703961b1794a6fee296a424",
+  "matchesSha256": "17343514cef0e014c60bd72718be7e357e3c3acbc36065d6f8cda9b6b494cdf0",
   "hits": [
+    {
+      "id": "52ea779a5dfb9b0fa5232b9d",
+      "path": "src/wall-side-dimension-geometry.ts",
+      "line": 55,
+      "text": "carriers.push({id:`legacy:${room.id}:${i}`,cm:thicknessCmAt(space.walls,a,b,GRID_STEP_N),",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "Issue #1381 reads catalogue-less room axes for honest read-only fallback; it neither migrates geometry nor creates saved identities."
+    },
+    {
+      "id": "5d7b065307bb52bc148d8780",
+      "path": "src/wall-side-dimension-geometry.ts",
+      "line": 115,
+      "text": "}catch { /* Unsupported legacy/failed proof remains an explicit axis fallback. */ }",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "Issue #1381 retains readable old structure and failed physical-proof cases as explicitly named axis dimensions, without guessing a physical face or weakening write preflight."
+    },
     {
       "id": "5ccffe673ec4e6e1a4019520",
       "path": "src/optimize-feedback.ts",

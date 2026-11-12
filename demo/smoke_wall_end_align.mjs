@@ -94,13 +94,24 @@ const preview = await page.evaluate(([d]) => {
       { clientX: d.x, clientY: d.y }), false),
     axisEnd: visible.map(line => [+line.getAttribute('x2'), +line.getAttribute('y2')]),
     label: root.querySelector('.measurelabel')?.textContent?.trim().replace(/\s+/g, ' '),
-    expectedLabel: `${card._fmtLen(anchor, card._cursorPt)} · 180°`,
+    dimensions: [...root.querySelectorAll('[data-hp="wall-side-dimension"]')]
+      .filter(el=>el.dataset.carrier.startsWith('partition:__hp_dimension_draft'))
+      .map(el=>({cm:Number(el.dataset.lengthCm),from:JSON.parse(el.dataset.from),to:JSON.parse(el.dataset.to),source:el.dataset.source})),
+    axisCm:Math.hypot(card._cursorPt[0]-anchor[0],card._cursorPt[1]-anchor[1])*card._cellCm/card._gridPitch,
+    depth:card._drawWallCm,
   };
 }, [hover]);
 check('precondition: without the magnet the grid would place another x', preview.gridAlone[0] !== aligned[0]);
 check('hover preview point is exactly opposite the first corner', preview.cursor, aligned);
 check('the one visible rubber-band ends at the aligned point', preview.axisEnd, [aligned]);
-check('length label measures the aligned segment', preview.label, preview.expectedLabel);
+check('angle retains its independent aligned value without the duplicate axis length',preview.label,'180°');
+check('both physical sides measure the aligned active segment',preview.dimensions.length,2);
+check('both free physical ends use the aligned cursor x',preview.dimensions.every(d=>d.source==='physical'
+  &&[d.from,d.to].some(p=>Math.abs(p[0]-aligned[0])<1e-6)));
+// This one right-angle corner shortens/extends each side by half the known
+// depth; the other end is free. Do not obtain this oracle from the resolver.
+check('joined physical lengths retain the aligned axis and actual corner depth',
+  preview.dimensions.map(d=>d.cm).sort((a,b)=>a-b).map((n,i)=>Math.abs(n-(preview.axisCm+(i?1:-1)*preview.depth/2))<1e-6),[true,true]);
 await page.mouse.click(hover.x, hover.y); await frames();
 check('click persists the previewed point', await page.evaluate(() => window.__card._path.at(-1)), preview.cursor);
 const a = await screen(A); await page.mouse.click(a.x, a.y); await frames();

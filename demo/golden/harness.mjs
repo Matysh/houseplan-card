@@ -1839,15 +1839,32 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!card._resize?.preview || !card._resize?.liveLabels?.length || !(delta > 0 && delta < 250)) {
         throw new Error(`golden safe Resize opening clamp did not render: ${scenario.id}`);
       }
-      const resizeLengths = card._resize.liveLabels.filter((label) => label.kind === 'length');
+      const resizeLengths = [...card.renderRoot.querySelectorAll('[data-hp="wall-side-dimension"]')];
       const resizeAreas = card._resize.liveLabels.filter((label) => label.kind === 'area');
       const measuredEdges = card.renderRoot.querySelectorAll('[data-hp="resize-measured-edge"]');
       const areaLabels = card.renderRoot.querySelectorAll('[data-hp="resize-area-label"]');
       const leaders = card.renderRoot.querySelectorAll('[data-hp="resize-area-leader"]');
-      if (resizeLengths.length !== 2 || measuredEdges.length !== 2
+      const carriers = new Map();
+      for (const label of resizeLengths) {
+        const sides=carriers.get(label.dataset.carrier)||new Set();
+        sides.add(Number(label.dataset.side));carriers.set(label.dataset.carrier,sides);
+      }
+      if (resizeLengths.length !== card._resize.plan.roomIds.length * 4 || measuredEdges.length !== 0
+          || carriers.size !== card._resize.plan.roomIds.length * 2
+          || [...carriers.values()].some(sides=>sides.size!==2||!sides.has(-1)||!sides.has(1))
+          || resizeLengths.some(label=>!(Number(label.dataset.lengthCm)>0)
+            ||!(label.dataset.source==='physical'||label.dataset.source==='axis'&&label.dataset.carrier.startsWith('legacy:')))
           || resizeAreas.length !== card._resize.plan.roomIds.length
           || areaLabels.length !== resizeAreas.length || leaders.length !== resizeAreas.length) {
-        throw new Error(`golden Resize measurement contract is incomplete: ${scenario.id}`);
+        throw new Error(`golden Resize measurement contract is incomplete: ${scenario.id}; ${JSON.stringify({
+          rooms:card._resize.plan.roomIds,dimensions:resizeLengths.map(el=>({carrier:el.dataset.carrier,side:el.dataset.side,
+            source:el.dataset.source,cm:el.dataset.lengthCm})),oldAxes:measuredEdges.length,areas:resizeAreas.length,
+          areaLabels:areaLabels.length,leaders:leaders.length})}`);
+      }
+      if(resizeLengths.some(label=>label.dataset.source==='axis')) {
+        const hint=card._editorRuntime.properties.t('wall_dimensions_axis_fallback');
+        if(!card.renderRoot.querySelector('[data-hp="properties-panel"]')?.textContent.includes(hint))
+          throw Error(`Legacy Resize axis fallback must be explained in Properties: ${scenario.id}`);
       }
       const fullWalls = card.renderRoot.querySelector('.wallbodies:not(.hp-resize-preview-walls)');
       const fullHandles = card.renderRoot.querySelector('.resize-layer');

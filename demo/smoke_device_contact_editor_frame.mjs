@@ -10,13 +10,16 @@ for(const theme of ['light','dark']){
     await prepareGoldenScenario(page,GOLDEN_SCENARIOS.find(s=>s.id===`safe-resize-handles-clamp-${theme}`));
     const proof=await page.evaluate(()=>{
       const c=window.__goldenCard,r=c.renderRoot;
-      return {lengths:c._resize.liveLabels.filter(l=>l.kind==='length').length,
+      const dimensions=[...r.querySelectorAll('[data-hp="wall-side-dimension"]')];
+      return {lengths:dimensions.length,
+        layers:r.querySelectorAll('[data-hp="wall-side-dimensions"]').length,
+        unique:new Set(dimensions.map(el=>el.dataset.interval)).size===dimensions.length,
         rooms:c._resize.plan.roomIds.length,
         edges:r.querySelectorAll('[data-hp="resize-measured-edge"]').length,
         areas:r.querySelectorAll('[data-hp="resize-area-label"]').length,
         leaders:r.querySelectorAll('[data-hp="resize-area-leader"]').length};
     });
-    checkAll({[`${theme}:one-live-measurement-layer`]:proof.lengths===2&&proof.edges===2
+    checkAll({[`${theme}:one-live-measurement-layer`]:proof.lengths===proof.rooms*4&&proof.edges===0&&proof.layers===1&&proof.unique
       &&proof.areas===proof.rooms&&proof.leaders===proof.rooms});
   }finally{await finish(browser);}
 }

@@ -50,3 +50,16 @@ test('#1381 draw adds only the active edge to confirmed material and never edits
   assert.equal(JSON.stringify(h.host._serverCfg),original);
   h.host._path=[];assert.equal(h.editor.render(h.view),nothing);h.editor.dispose();
 });
+
+test('#1381 axis-basis hint refreshes once per transition, never once per held frame or after disposal',async()=>{
+  const h=harness(),updates=[];h.host.requestUpdate=name=>updates.push(name);
+  await Promise.resolve();updates.length=0;
+  h.editor.render(h.view);await Promise.resolve();
+  assert.deepEqual(updates,['_wallDimensionBasis']);
+  h.editor.render(h.view);h.editor.render({...h.view,w:900});await Promise.resolve();
+  assert.deepEqual(updates,['_wallDimensionBasis']);
+  assert.equal(h.editor.sourceFallback,true);
+  h.runtime.physicalGesture.active=true;h.editor.render(h.view);
+  h.editor.dispose();await Promise.resolve();
+  assert.deepEqual(updates,['_wallDimensionBasis'],'late hint callback cannot revive a retired editor');
+});

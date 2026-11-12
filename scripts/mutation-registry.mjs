@@ -636,8 +636,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/editors/properties/editor.ts",
-    "find": "if (this.host._deviceDrag || this.host._opDrag || this.host._decorDraft || this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;",
-    "replace": "if (this.host._deviceDrag || this.host._opDrag || this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;"
+    "find": "this.host._opDrag || this.host._decorDraft || this.host._decorMove",
+    "replace": "this.host._opDrag || this.host._decorMove"
   }
 ],
   },

@@ -28,6 +28,8 @@ export class WallSideDimensionEditor {
   private drawNext:{base:object;key:string;space:NodeMoveSpace}|null=null;
   private widths=new Map<string,number>();
   private disposed=false;
+  private basisFallback=false;
+  private basisEpoch=0;
   constructor(private readonly runtime:HouseplanEditorRuntime) {
     const measure=()=>{
       if(this.disposed)return;
@@ -107,10 +109,15 @@ export class WallSideDimensionEditor {
     return id&&host._tool==='select'?{kind:'selection',before:null,candidate:stored,ids:[id],owner:`${stored.id}:${id}`} : null;
   }
   private resetLayout():void {this.owner=null;this.lanes.clear();this.numbers.clear();}
-  public render(view:View):TemplateResult|typeof nothing {
-    const request=this.request();
-    if(!request){this.resetLayout();return nothing;}
-    if(this.owner!==request.owner){this.resetLayout();this.owner=request.owner;}
+  private publishBasis(fallback:boolean):void {
+    if(this.basisFallback===fallback)return;
+    this.basisFallback=fallback;const epoch=++this.basisEpoch;
+    // Only a basis transition refreshes the existing Properties hint. A
+    // normal held-pointer frame remains a measurement-only native paint.
+    queueMicrotask(()=>{if(!this.disposed&&epoch===this.basisEpoch&&this.runtime.host.isConnected)
+      this.runtime.host.requestUpdate('_wallDimensionBasis');});
+  }
+  private measurements(request:Request):readonly DimensionInterval[] {
     const model=this.geometry.read(request.candidate,request.ids);
     let intervals:readonly DimensionInterval[]=model.intervals;
     if(request.before) {
@@ -120,6 +127,14 @@ export class WallSideDimensionEditor {
         const selected=this.selected();intervals=selected?model.intervals.filter(i=>i.carrier===selected):[];
       }
     }
+    return intervals;
+  }
+  public render(view:View):TemplateResult|typeof nothing {
+    const request=this.request();
+    if(!request){this.publishBasis(false);this.resetLayout();return nothing;}
+    if(this.owner!==request.owner){this.resetLayout();this.owner=request.owner;}
+    const intervals=this.measurements(request);
+    this.publishBasis(intervals.some(i=>i.source==='axis'));
     const host=this.runtime.host,size=host._lastValidStageSize;
     if(!size||size[0]<=0||size[1]<=0)return nothing;
     const [width,height]=size;
@@ -170,8 +185,9 @@ export class WallSideDimensionEditor {
       propertiesT(language,'wall_dimensions'),request.kind,spaceDisplayOf(request.candidate,host._serverCfg?.settings).color);
   }
   public get sourceFallback():boolean {
-    const request=this.request();return !!request&&this.geometry.read(request.candidate,request.ids).intervals.some(i=>i.source==='axis');
+    const request=this.request();return !!request&&this.measurements(request).some(i=>i.source==='axis');
   }
-  public retire():void {this.resetLayout();this.source=null;this.geometry.clear();this.drawNext=null;}
+  public get active():boolean {return !!this.request();}
+  public retire():void {this.publishBasis(false);this.resetLayout();this.source=null;this.geometry.clear();this.drawNext=null;}
   public dispose():void {this.disposed=true;this.retire();}
 }
