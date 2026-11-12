@@ -92,3 +92,37 @@ These repairs require a new queue S6 and substantive review of the changed
 material; the earlier successful S6 is evidence for its own SHA, not approval
 of the follow-up changes. The current companion journey remains additional to
 the fixed beta HA matrix.
+
+## Accepted code and release visual handoff
+
+Queue S6 `20261112T230346536-3e3ed74a` passed730 selected files with8975
+known cases. Review43328714546 accepted the repaired material; the queue
+mergedc1ed7d9a3 into dev and setS8. No product changes followed that review.
+Companion PR45 is merged; the actual HA2026.11.1 journey passed4/4 including
+setup, as recorded in companion issue44/comment6838866601.
+
+Additional synthetic2.5D captures at sun elevations10°,30° and60° show two
+alternating illuminated shares, clipped sill/blur and unchanged full-parent
+depth. The original owner Lab remains unchanged.
+
+The beta capture set currently selects78 scenes. Its first run exposed an
+outdated count of shared dangerous confirmations and two semantic readers of
+the former window SVG wrapper. The witness now includes both new confirmation
+keys. The golden reader checks actual window-origin CTMs, full-depth jambs and
+centred full-size glass; door/gate checks remain intact. No pixel tolerance or
+product assertion was weakened. A direct capture before rebuilding correctly
+refused the stale fingerprint; the subsequent complete run prepared fresh assets.
+
+At release candidateefb45d1f4 all semantic checks pass:21 unchanged frames and
+57 different frames, with no capture errors. All selected comparisons were
+inspected, including Flat/Iso, narrow, forced-colours, dialogs, lighting and
+Static. Expected changes are UI-059 window paint, state-independent full-motion
+fit envelopes and the already accepted1381/1398 dimension layer. The Static
+height change is real fitting, not a100% pixel corruption. The two recovered
+opening scenes retain centred jamb/glass geometry and opposite gate turns.
+
+The owner's2026-11-13 chat explicitly accepts the changed beta baselines.
+Only those57 named frames are accepted; the remaining21 and global baseline
+metadata stay unchanged. Per-scene provenance records the exact captured SHA,
+browser, report hash and owner decision. The final beta readiness remains the
+completed runner report for its final immutable SHA, not this handoff note.
