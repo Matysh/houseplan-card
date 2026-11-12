@@ -170,6 +170,9 @@ export class WallSideDimensionEditor {
       });
     }
     if(host._mode!=='plan')return null;
+    // A retained Properties selection is idle context, not the owner of a
+    // later wall gesture. Refused node outlines must also hide that old gap.
+    if(this.runtime.nodeMove?.dimensionContext?.moved||host._resize.dragging||this.runtime.physicalGesture.active)return null;
     const drag=host._opDrag;
     const opening=drag?.preview??this.runtime.properties.selectedOpening;
     if(drag&&opening) {

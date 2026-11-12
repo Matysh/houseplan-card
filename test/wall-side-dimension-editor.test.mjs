@@ -100,3 +100,19 @@ test('#1398 native adapters reuse references across camera frames and retire on 
   assert.equal(h.editor.render(h.view),nothing);
   h.editor.dispose();
 });
+test('#1398 a retained opening selection cannot mask a later admitted/refused wall gesture',()=>{
+  const h=harness(),candidate={...h.space,partitions:[{...h.space.partitions[0],b:[.65,.3]}]};
+  h.runtime.properties.dimensionTarget=null;
+  h.runtime.properties.selectedOpening={id:'old-opening'};
+  h.runtime.properties.openingReference=()=>{throw Error('idle opening must not own a wall gesture');};
+  h.runtime.nodeMove={dimensionContext:{before:h.space,candidate,moved:true}};
+  assert.notEqual(h.editor.render(h.view),nothing,'node measurement is retained');
+  h.runtime.nodeMove.dimensionContext.candidate=null;
+  assert.equal(h.editor.render(h.view),nothing,'refused outline does not inherit the opening gap');
+  h.runtime.nodeMove=null;h.runtime.physicalGesture.active=true;
+  assert.equal(h.editor.render(h.view),nothing);
+  h.runtime.physicalGesture.active=false;h.host._tool='resize';
+  Object.assign(h.host._resize,{dragging:true,preview:{sp:candidate},plan:{}});
+  assert.notEqual(h.editor.render(h.view),nothing,'Resize measurement is retained');
+  h.editor.dispose();
+});
