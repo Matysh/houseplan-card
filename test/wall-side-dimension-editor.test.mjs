@@ -51,36 +51,35 @@ test('#1381 draw adds only the active edge to confirmed material and never edits
   h.host._path=[];assert.equal(h.editor.render(h.view),nothing);h.editor.dispose();
 });
 
-test('#1381 axis-basis hint refreshes once per transition, never once per held frame or after disposal',async()=>{
+test('#1381 basis refreshes only its mounted hint, never the host, held frame or disposed surface',async()=>{
   const h=harness(),updates=[];
-  // Match Lit's real changed-property gate. Counting calls alone misses a
-  // named token whose current/old values are both undefined.
-  h.host.requestUpdate=(name,oldValue,options)=>{
-    if(name===undefined||(options?.hasChanged||((a,b)=>!Object.is(a,b)))(h.host[name],oldValue))updates.push(name);
-  };
-  await Promise.resolve();updates.length=0;
+  await Promise.resolve();
+  h.host.requestUpdate=()=>assert.fail('basis must not hand native ink to a full host render');
+  h.editor.subscribeHint(()=>updates.push(h.editor.sourceHint));
   h.editor.render(h.view);await Promise.resolve();
-  assert.deepEqual(updates,['_wallDimensionBasis']);
+  assert.deepEqual(updates,['axis']);
   h.editor.render(h.view);h.editor.render({...h.view,w:900});await Promise.resolve();
-  assert.deepEqual(updates,['_wallDimensionBasis']);
+  assert.deepEqual(updates,['axis']);
   assert.equal(h.editor.sourceFallback,true);
   h.runtime.physicalGesture.active=true;h.editor.render(h.view);
   h.editor.dispose();await Promise.resolve();
-  assert.deepEqual(updates,['_wallDimensionBasis'],'late hint callback cannot revive a retired editor');
+  assert.deepEqual(updates,['axis'],'late hint callback cannot revive a retired editor');
 });
 
 test('#1381 the displayed source distinguishes proved zero-thickness boundaries from axis fallback',async()=>{
   const h=harness(),updates=[];
-  await Promise.resolve();h.host.requestUpdate=name=>updates.push(name);
+  await Promise.resolve();h.host.requestUpdate=()=>assert.fail('basis never requests a host render');
+  const unsubscribe=h.editor.subscribeHint(()=>updates.push(h.editor.sourceHint));
   let source='boundary';
   h.editor.geometry.read=()=>({intervals:[{id:'zero',carrier:'partition:w',side:1,order:0,
     source,from:[200,300],to:[500,300],normal:[0,1],low:0,high:300,lengthCm:360}],epsilonCm:1e-6});
   h.editor.render(h.view);await Promise.resolve();
   assert.equal(h.editor.sourceHint,'boundary');assert.equal(h.editor.sourceFallback,false);
-  assert.deepEqual(updates,['_wallDimensionBasis']);
+  assert.deepEqual(updates,['boundary']);
   source='axis';h.editor.render(h.view);await Promise.resolve();
   assert.equal(h.editor.sourceHint,'axis');assert.equal(h.editor.sourceFallback,true);
-  assert.deepEqual(updates,['_wallDimensionBasis','_wallDimensionBasis']);
-  h.editor.retire();h.editor.dispose();await Promise.resolve();
-  assert.equal(updates.length,2,'retired callbacks do not refresh the panel');
+  assert.deepEqual(updates,['boundary','axis']);
+  unsubscribe();h.runtime.physicalGesture.active=true;h.editor.render(h.view);await Promise.resolve();
+  assert.equal(updates.length,2,'an unmounted hint is not refreshed');
+  h.editor.retire();h.editor.dispose();
 });

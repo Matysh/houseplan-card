@@ -33,6 +33,7 @@ export class WallSideDimensionEditor {
   private disposed=false;
   private basisNotice:BasisNotice=null;
   private basisEpoch=0;
+  private hintListeners=new Set<()=>void>();
   constructor(private readonly runtime:HouseplanEditorRuntime) {
     const measure=()=>{
       if(this.disposed)return;
@@ -115,12 +116,14 @@ export class WallSideDimensionEditor {
   private publishBasis(notice:BasisNotice):void {
     if(this.basisNotice===notice)return;
     this.basisNotice=notice;const epoch=++this.basisEpoch;
-    // Only a basis transition refreshes the existing Properties hint. A
-    // normal held-pointer frame remains a measurement-only native paint.
+    // Only the hint's Lit part refreshes. A full host render here would hand
+    // native ink back to the settled scene in the middle of a held gesture.
     queueMicrotask(()=>{if(!this.disposed&&epoch===this.basisEpoch&&this.runtime.host.isConnected)
-      // This is a named invalidation token, not a stored Lit property: force
-      // its update explicitly, otherwise undefined === undefined is a no-op.
-      this.runtime.host.requestUpdate('_wallDimensionBasis',undefined,{hasChanged:()=>true});});
+      for(const listener of this.hintListeners)listener();});
+  }
+  public subscribeHint(listener:()=>void):()=>void {
+    if(!this.disposed)this.hintListeners.add(listener);
+    return()=>this.hintListeners.delete(listener);
   }
   private measurements(request:Request):readonly DimensionInterval[] {
     const model=this.geometry.read(request.candidate,request.ids);
@@ -204,5 +207,5 @@ export class WallSideDimensionEditor {
   public get sourceFallback():boolean {return this.sourceHint==='axis';}
   public get active():boolean {return !!this.request();}
   public retire():void {this.publishBasis(null);this.resetLayout();this.source=null;this.geometry.clear();this.drawNext=null;}
-  public dispose():void {this.disposed=true;this.retire();}
+  public dispose():void {this.disposed=true;this.retire();this.hintListeners.clear();}
 }

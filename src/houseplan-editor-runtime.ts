@@ -27,7 +27,7 @@ import { sendHouseplanWrite } from './large-write-transport';
  */
 import { callout, disclosure, unitInput } from './editors/form-kit';
 import { selectControl } from './settings-select-control';
-import { html, svg, nothing, TemplateResult, type PropertyDeclaration } from 'lit';
+import { html, svg, nothing, TemplateResult } from 'lit';
 import { difference, type Geom } from 'polyclip-ts';
 import { LazyBackupArchiveClient } from './backup-archive-lazy';
 import type { BackupExportState, ArchiveSummary } from './backup-archive-client';
@@ -925,7 +925,7 @@ export interface HouseplanEditorHostPort {
   hass: any;
   isConnected: boolean;
   renderRoot: HTMLElement | DocumentFragment;
-  requestUpdate: (name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration) => void;
+  requestUpdate: (name?: PropertyKey, oldValue?: unknown) => void;
   updateComplete: Promise<boolean>;
 }
 

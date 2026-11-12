@@ -7,7 +7,7 @@ import {wallKey} from '../test-build/wall-thickness.js';
 const rooms=[{id:'left',name:'Left',area:null,poly:[[.15,.15],[.5,.15],[.5,.65],[.15,.65]]},
   {id:'right',name:'Right',area:null,poly:[[.5,.15],[.85,.15],[.85,.65],[.5,.65]]}];
 const walls=new Map();
-const fixtureCm=Number(process.env.HP_DIMENSION_FIXTURE_CM||20);
+const fixtureCm=Number(process.env.HP_DIMENSION_FIXTURE_CM||(process.argv.includes('--thin-walls')?1:20));
 assert.ok(fixtureCm>=1&&fixtureCm<=100);
 const diagnosticCount=Number(process.env.HP_DIMENSION_DIAGNOSTIC_PARTITIONS||0);
 assert.ok(Number.isInteger(diagnosticCount)&&diagnosticCount>=0&&diagnosticCount<=1000);
@@ -49,6 +49,10 @@ try {
   await page.waitForFunction(()=>window.__card?._booting===false&&window.__card._space==='dimensions');
   await page.evaluate(async()=>{await window.__hpTest.setMode('plan');await window.__hpTest.setTool('select');});
   await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&window.__card.renderRoot.querySelector('.hp-node-handle'));
+  await page.evaluate(()=>{
+    const c=window.__card,render=c.render.bind(c);window.__dimensionHostRenders=0;
+    c.render=(...args)=>{window.__dimensionHostRenders++;return render(...args);};
+  });
   // Camera fixture only: initialize a square-unit viewport that contains all
   // test objects, before any action under test. Pan/zoom assertions use UI.
   await page.evaluate(async()=>{
@@ -249,17 +253,22 @@ try {
   const thickness=page.locator('houseplan-card .editor-secondary.kind-tool .drawwall input');
   await thickness.fill('0');await thickness.press('Tab');
   await page.waitForFunction(()=>window.__card._drawWallCm===0);
-  await click([.1,.6]);const zeroEnd=await screen([.1,.7]);await page.mouse.move(zeroEnd.x,zeroEnd.y,{steps:4});
+  await click([.1,.6]);const zeroEnd=await screen([.1,.7]);
+  const zeroRenders=await page.evaluate(()=>window.__dimensionHostRenders);
+  await page.mouse.move(zeroEnd.x,zeroEnd.y,{steps:4});
   await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-hp="properties-panel"]')?.textContent.includes('Some sections show their axis length.'));
   const zero=await dimensions();assert.equal(zero.rows.length,2);assert.ok(zero.rows.every(row=>row.source==='axis'));
+  assert.equal(await page.evaluate(()=>window.__dimensionHostRenders),zeroRenders,'axis hint does not render the host or transfer live ink');
   report.zeroAxis=zero;
   await page.keyboard.press('Escape');await settle();
   assert.equal((await dimensions()).rows.length,0);
   assert.equal(await page.locator('houseplan-card [data-hp="properties-panel"]').evaluate(el=>el.textContent.includes('Some sections show their axis length.')),false);
   await click([.4,.65]);const boundedEnd=await screen([.4,.8]);
+  const boundaryRenders=await page.evaluate(()=>window.__dimensionHostRenders);
   await page.mouse.move(boundedEnd.x,boundedEnd.y,{steps:4});
   await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-hp="properties-panel"]')?.textContent.includes('Boundary-line dimensions of a zero-thickness wall are shown.'));
   const boundary=await dimensions();assert.equal(boundary.rows.length,2);
+  assert.equal(await page.evaluate(()=>window.__dimensionHostRenders),boundaryRenders,'boundary hint does not render the host or transfer live ink');
   // Native mouse coordinates are device-pixel quantized. Use the admitted
   // axis direction, but independently fixed horizontal support faces.
   const direction=await page.evaluate(()=>{const c=window.__card,a=c._path.at(-1),b=c._cursorPt;return[b[0]-a[0],b[1]-a[1]];});

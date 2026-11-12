@@ -30,6 +30,7 @@ import { openingPropertiesCore, selectOpeningReference, refreshOpeningReference,
 import { patchPropertiesTarget, propertiesColor } from './patch';
 import { renderPropertiesSelection } from './selection';
 import { PropertiesSectionMotion } from './section-motion';
+import { wallDimensionHint } from './dimension-hint';
 import { parsePropertiesColor, propertiesColorDraft } from './color-draft';
 import type { DecorShape, DecorStyle } from '../decor/types';
 import type { DecorSelectionPress } from '../decor/group-press';
@@ -709,18 +710,20 @@ export class PropertiesEditor {
     if (!this.wide) { this.presentation = null; return nothing; }
     ensureFormKitStyles(this.host);
     const model = this.model(owner);
-    const geometry=model.groups.find(group=>group.key==='geometry');
-    if(!owner&&geometry&&this.runtime.wallDimensions?.active) {
-      const basis=this.runtime.wallDimensions.sourceHint;
-      if(basis==='axis')geometry.hint='wall_dimensions_axis_fallback';
-      else if(basis==='boundary')geometry.hint='wall_dimensions_boundary';
-    }
     const authority = this.host._configWriteContext.claim();
     const current = () => this.wide && !this.host._modeTransitionBusy && !this.variable && !this.host._editorSecondaryDialogBlocked
       && this.host._configWriteContext.current(authority, this.host.hass)
       && propertiesIdentityKey(this.identity) === propertiesIdentityKey(owner);
     const view = renderPropertiesSurface(model, {
       t: this.t, imperial: this.host._imperial, dark: this.host.hass?.themes?.darkMode,
+      geometryHint:this.runtime.wallDimensions?key=>wallDimensionHint(this.runtime.wallDimensions,()=>{
+        const dimensions=this.runtime.wallDimensions;
+        if(!this.identity&&dimensions.active) {
+          if(dimensions.sourceHint==='axis')return this.t('wall_dimensions_axis_fallback');
+          if(dimensions.sourceHint==='boundary')return this.t('wall_dimensions_boundary');
+        }
+        return key?this.t(key):null;
+      },()=>this.sectionMotion.update(this.wide?this.host.renderRoot.querySelector<HTMLElement>('.hp-properties'):null)):undefined,
       inlineColors: this.target(owner)?.kind === 'decor' || this.target(owner)?.kind === 'decor-group',
       decorShortcuts: this.host._mode === 'decor', controller: this.fields, pickerLabels: this.host._colorPickerLabels,
       action: key => { if (current()) void this.fields.finishThen(() => this.action(key)); },

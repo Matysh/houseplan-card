@@ -34,6 +34,7 @@ export interface PropertiesSurfacePort {
   t(key: PropertiesString, vars?: Record<string, string | number>): string;
   imperial: boolean; dark?: boolean; inlineColors: boolean; controller: PropertiesFieldController; pickerLabels: ColorPickerLabels;
   decorShortcuts?: boolean;
+  geometryHint?(key?:PropertiesString):unknown;
   action(key: string): void;
   edit(field: PropertiesField, raw: string, finish?: boolean): void;
   number(field: PropertiesField, value: number): string;
@@ -176,7 +177,8 @@ export function renderPropertiesSurface(model: PropertiesSurface, port: Properti
       ${repeat(model.groups, group => group.key, group => html`<section class="hp-prop-group ${group.key}">
         ${group.title ? html`<h3 class="hp-prop-group-title">${propertiesIcon(group.icon ?? group.key)}${t(group.title)}</h3>` : nothing}
         <div class="hp-prop-fields">${repeat(group.fields, field => field.key, field => fieldView(field, port))}</div>
-        ${group.hint ? html`<p class="hp-prop-hint">${t(group.hint)}</p>` : nothing}
+        ${group.key==='geometry'&&port.geometryHint?port.geometryHint(group.hint)
+          :group.hint ? html`<p class="hp-prop-hint">${t(group.hint)}</p>` : nothing}
       </section>`)}
     </div>
     <footer class="hp-prop-foot"><div class="hp-prop-actions ${model.actions.length === 1 ? 'solo' : ''}">
