@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10123,
+  "revision": 10124,
   "nextTicket": 386,
   "nextFence": 386,
   "tasks": {
@@ -14,7 +14,7 @@
       "ownerDecision": null,
       "ticket": 385,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1794522087025,
       "reviewEntry": 2,
       "patchId": "aef9da151cc24574e3ae119644dcfdd026584599",
@@ -142,14 +142,15 @@
         "tests_backend/test_support_config_projection.py"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794521670660,
-        "entry": 1,
-        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/editor-runtime-loader.test.mjs: failed; Поведение: test/golden-matrix.test.mjs: failed; Поведение: test/i18n.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Backend: tests_backend/test_opening_repair.py: failed; Backend: tests_backend/test_sh3d_convert.py: failed; Браузер: opening entity search: failed; Браузер: static wall openings: failed",
-        "eventId": "finish:215b7724-d0e5-4164-86e6-0d675f24bd6c:finish:3:return:return:1024"
+        "key": "2:author-found-nested-source-dependency",
+        "reason": "author-found-nested-source-dependency",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1794523764792,
+        "entry": 2,
+        "requestId": "review:1024:2:aef9da151cc24574e3ae119644dcfdd026584599:827cae041114db2a478951d658566a718e6f8393",
+        "detail": "openingEntityReferences collects only parent contact/lock. Explicit per-leaf/shade sources outside represented devices/areas are omitted from the immutable render snapshot, so live state and light can remain unknown/stale. Author returns to S6 to repair the real dependency collector and add an off-plan-source witness; the current review request is not restarted.",
+        "eventId": "return:1024:author-nested-source-dependency-20261113:return:1024"
       },
       "s6": {
         "id": "20261112T222149227-6ce239ee",
@@ -173,7 +174,8 @@
         "at": 1794523399609,
         "runId": null,
         "runAttempt": null
-      }
+      },
+      "reason": "author-found-nested-source-dependency"
     },
     "1170": {
       "issue": 1170,
@@ -4772,19 +4774,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1024,
-    "worker": "finish",
-    "token": "385:finish:4f8696af-c1b2-4c6a-ab2f-6530a2744279:finish:1:admit",
-    "fence": 385,
-    "materialSha": "148c93fc096a49c812a2146aeca3ea757b9714b2",
-    "expectedBase": "827cae041114db2a478951d658566a718e6f8393",
-    "phase": "review",
-    "admittedAt": 1794522093335,
-    "expiresAt": 1794526979801,
-    "patchId": "aef9da151cc24574e3ae119644dcfdd026584599",
-    "reviewRequest": "review:1024:2:aef9da151cc24574e3ae119644dcfdd026584599:827cae041114db2a478951d658566a718e6f8393"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -5106,6 +5096,10 @@
       "digest": "1d5df0d2f72ca42663b219cb6db71ebc336e78150f351ca182976c7dff6bf5e9",
       "issue": 1024
     },
+    "return:1024:author-nested-source-dependency-20261113": {
+      "digest": "c068c349bb9c47b5f04a69e6c3a99cfb17208b482970cea7ca2cb4a3b449cbd4",
+      "issue": 1024
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -5264,6 +5258,27 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "return:1024:author-nested-source-dependency-20261113:return:1024": {
+      "digest": "c068c349bb9c47b5f04a69e6c3a99cfb17208b482970cea7ca2cb4a3b449cbd4",
+      "issue": 1024,
+      "message": {
+        "kind": "return",
+        "issue": 1024,
+        "at": 1794523764792,
+        "entry": 2,
+        "notice": {
+          "key": "2:author-found-nested-source-dependency",
+          "reason": "author-found-nested-source-dependency",
+          "status": "pending",
+          "fromStatus": "S7-code-review",
+          "at": 1794523764792,
+          "entry": 2,
+          "requestId": "review:1024:2:aef9da151cc24574e3ae119644dcfdd026584599:827cae041114db2a478951d658566a718e6f8393",
+          "detail": "openingEntityReferences collects only parent contact/lock. Explicit per-leaf/shade sources outside represented devices/areas are omitted from the immutable render snapshot, so live state and light can remain unknown/stale. Author returns to S6 to repair the real dependency collector and add an off-plan-source witness; the current review request is not restarted.",
+          "eventId": "return:1024:author-nested-source-dependency-20261113:return:1024"
+        }
       }
     }
   },
