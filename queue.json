@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9945,
+  "revision": 9946,
   "nextTicket": 381,
   "nextFence": 381,
   "tasks": {
@@ -4363,7 +4363,18 @@
         "test/properties-physical.test.mjs",
         "test/wall-side-dimension-editor.test.mjs",
         "test/wall-side-dimension-labels.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794503509814,
+        "entry": 1,
+        "detail": "Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/opening-drag.test.mjs: failed; Браузер: device equal spacing: failed",
+        "eventId": "finish:4bba4bb2-e568-4d19-9a64-75c64e098f7a:finish:3:return:return:1398"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4594,18 +4605,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1398,
-    "worker": "finish",
-    "token": "380:finish:4bba4bb2-e568-4d19-9a64-75c64e098f7a:finish:1:admit",
-    "fence": 380,
-    "materialSha": "e6d83233a9ef9cccdc716d3419c90260f2aad88e",
-    "expectedBase": "0b8b0d847f8c72182ef16494f5482c0dbc153d63",
-    "phase": "testing",
-    "admittedAt": 1794502931586,
-    "expiresAt": 1794503769333,
-    "patchId": "5d39fc2b14f0ab5b03197b70bda3a7325d8386ba"
-  },
+  "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
       "digest": "3feae77c83f6a9ae8c1b1a5198aa6e3132be583298ae1dbd4c48d04a351f6816",
@@ -4719,6 +4719,10 @@
       "digest": "6c9a8aa55aedb2c39a4323c2970836b86b2ff4b23e75bd3f7368d24d20b75de0",
       "issue": 1398
     },
+    "finish:4bba4bb2-e568-4d19-9a64-75c64e098f7a:finish:3:return": {
+      "digest": "edb26e0f66d1b2b2a42c6a8e70bf2399c0dde2626b5d8807a800aa68985547c6",
+      "issue": 1398
+    },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
       "digest": "18d8f0059c442c6d484703389a81c75f5b7fd332205147e0790229304d26867b",
       "issue": 1024,
@@ -4780,6 +4784,26 @@
         "materialSha": "e6d83233a9ef9cccdc716d3419c90260f2aad88e",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:4bba4bb2-e568-4d19-9a64-75c64e098f7a:finish:3:return:return:1398": {
+      "digest": "edb26e0f66d1b2b2a42c6a8e70bf2399c0dde2626b5d8807a800aa68985547c6",
+      "issue": 1398,
+      "message": {
+        "kind": "return",
+        "issue": 1398,
+        "at": 1794503509814,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794503509814,
+          "entry": 1,
+          "detail": "Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/opening-drag.test.mjs: failed; Браузер: device equal spacing: failed",
+          "eventId": "finish:4bba4bb2-e568-4d19-9a64-75c64e098f7a:finish:3:return:return:1398"
+        }
       }
     }
   },
