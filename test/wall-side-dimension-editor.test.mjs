@@ -68,3 +68,19 @@ test('#1381 axis-basis hint refreshes once per transition, never once per held f
   h.editor.dispose();await Promise.resolve();
   assert.deepEqual(updates,['_wallDimensionBasis'],'late hint callback cannot revive a retired editor');
 });
+
+test('#1381 the displayed source distinguishes proved zero-thickness boundaries from axis fallback',async()=>{
+  const h=harness(),updates=[];
+  await Promise.resolve();h.host.requestUpdate=name=>updates.push(name);
+  let source='boundary';
+  h.editor.geometry.read=()=>({intervals:[{id:'zero',carrier:'partition:w',side:1,order:0,
+    source,from:[200,300],to:[500,300],normal:[0,1],low:0,high:300,lengthCm:360}],epsilonCm:1e-6});
+  h.editor.render(h.view);await Promise.resolve();
+  assert.equal(h.editor.sourceHint,'boundary');assert.equal(h.editor.sourceFallback,false);
+  assert.deepEqual(updates,['_wallDimensionBasis']);
+  source='axis';h.editor.render(h.view);await Promise.resolve();
+  assert.equal(h.editor.sourceHint,'axis');assert.equal(h.editor.sourceFallback,true);
+  assert.deepEqual(updates,['_wallDimensionBasis','_wallDimensionBasis']);
+  h.editor.retire();h.editor.dispose();await Promise.resolve();
+  assert.equal(updates.length,2,'retired callbacks do not refresh the panel');
+});

@@ -6,6 +6,8 @@ const reused = {title:'btn.properties',copy:'btn.copy',delete:'btn.delete',cance
 const en = {
   wall_dimensions:'Dimensions', wall_dimension_unavailable:'Dimension unavailable',
   wall_dimensions_axis_fallback:'Some sections show their axis length.',
+  wall_dimensions_boundary:'Boundary-line dimensions of a zero-thickness wall are shown.',
+  wall_dimensions_boundary_hint:'Length along the axis. Boundary-line dimensions are shown on the plan.',
   wall_dimensions_hint:'Length along the axis. Wall-side dimensions are shown on the plan.',
   wall_dimensions_axis_hint:'Length along the axis. Wall-side dimensions are shown on the plan. Some sections show their axis length.',
   selection_count: 'Selected: {count}', mixed_values: 'Different values',
@@ -61,6 +63,8 @@ type Key = keyof typeof en;
 const ru: Record<Key, string> = {
   wall_dimensions:'Размеры', wall_dimension_unavailable:'Размер не определён',
   wall_dimensions_axis_fallback:'Для части участков показана длина по оси.',
+  wall_dimensions_boundary:'Показаны размеры граничной линии стены нулевой толщины.',
+  wall_dimensions_boundary_hint:'Длина по оси. На плане показаны размеры граничной линии.',
   wall_dimensions_hint:'Длина по оси. Размеры сторон показаны на плане.',
   wall_dimensions_axis_hint:'Длина по оси. Размеры сторон показаны на плане. Для части участков показана длина по оси.',
   selection_count: 'Выбрано: {count}', mixed_values: 'Разные значения',
@@ -116,11 +120,15 @@ export type PropertiesString = Key;
 const localized: Record<string, Partial<Record<Key,string>>> = {
   de: { wall_dimensions:'Maße',wall_dimension_unavailable:'Maß nicht bestimmbar',
     wall_dimensions_axis_fallback:'Für einige Abschnitte wird die Achsenlänge angezeigt.',
+    wall_dimensions_boundary:'Die Maße der Grenzlinie einer Wand ohne Dicke werden angezeigt.',
+    wall_dimensions_boundary_hint:'Länge entlang der Achse. Die Maße der Grenzlinie werden im Plan angezeigt.',
     wall_dimensions_hint:'Länge entlang der Achse. Die Maße beider Wandseiten werden im Plan angezeigt.',
     wall_dimensions_axis_hint:'Länge entlang der Achse. Die Maße beider Wandseiten werden im Plan angezeigt. Für einige Abschnitte wird die Achsenlänge angezeigt.',
     contour_context: 'A und B sind die Endpunkte der ausgewählten Wand. Verschieben Sie ihre Knoten im Plan: Verbundene Nachbarwände werden mitbewegt.', into_room: 'In den Raum „{name}“', outside: 'Nach außen' },
   fr: { wall_dimensions:'Dimensions',wall_dimension_unavailable:'Dimension indéterminée',
     wall_dimensions_axis_fallback:'Certains tronçons affichent leur longueur selon l’axe.',
+    wall_dimensions_boundary:'Les dimensions de la ligne de délimitation d’un mur d’épaisseur nulle sont affichées.',
+    wall_dimensions_boundary_hint:'Longueur selon l’axe. Les dimensions de la ligne de délimitation sont affichées sur le plan.',
     wall_dimensions_hint:'Longueur selon l’axe. Les dimensions des deux côtés du mur sont affichées sur le plan.',
     wall_dimensions_axis_hint:'Longueur selon l’axe. Les dimensions des deux côtés du mur sont affichées sur le plan. Certains tronçons affichent leur longueur selon l’axe.',
     contour_context: 'A et B sont les extrémités du mur sélectionné. Déplacez leurs nœuds sur le plan : les murs voisins qui y sont reliés se déplaceront aussi.', into_room: 'Vers la pièce « {name} »', outside: 'Vers l’extérieur' },

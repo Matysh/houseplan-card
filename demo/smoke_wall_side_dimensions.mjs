@@ -256,6 +256,21 @@ try {
   await page.keyboard.press('Escape');await settle();
   assert.equal((await dimensions()).rows.length,0);
   assert.equal(await page.locator('houseplan-card [data-hp="properties-panel"]').evaluate(el=>el.textContent.includes('Some sections show their axis length.')),false);
+  await click([.4,.65]);const boundedEnd=await screen([.4,.8]);
+  await page.mouse.move(boundedEnd.x,boundedEnd.y,{steps:4});
+  await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-hp="properties-panel"]')?.textContent.includes('Boundary-line dimensions of a zero-thickness wall are shown.'));
+  const boundary=await dimensions();assert.equal(boundary.rows.length,2);
+  // Native mouse coordinates are device-pixel quantized. Use the admitted
+  // axis direction, but independently fixed horizontal support faces.
+  const direction=await page.evaluate(()=>{const c=window.__card,a=c._path.at(-1),b=c._cursorPt;return[b[0]-a[0],b[1]-a[1]];});
+  const expectedBoundary=(180-fixtureCm)*Math.hypot(...direction)/Math.abs(direction[1]);
+  assert.ok(boundary.rows.every(row=>row.source==='boundary'&&Math.abs(row.cm-expectedBoundary)<1e-6
+    &&Math.abs(row.from[1]-(650+fixtureCm/2.4))<1e-6
+    &&Math.abs(row.to[1]-(800-fixtureCm/2.4))<1e-6),JSON.stringify(boundary));
+  report.zeroBoundary=boundary;
+  await page.keyboard.press('Escape');await settle();
+  assert.equal((await dimensions()).rows.length,0);
+  assert.equal(await page.locator('houseplan-card [data-hp="properties-panel"]').evaluate(el=>el.textContent.includes('Boundary-line dimensions of a zero-thickness wall are shown.')),false);
   assert.equal(writes.length,writesBeforeZero,'basis explanation adds neither a confirmed zero wall nor a config write');
   assert.equal(await reportPageErrors(),false);
   writeFileSync(`${output}/report.json`,JSON.stringify(report,null,2)+'\n');

@@ -219,7 +219,8 @@ export class PropertiesEditor {
   t = (key: PropertiesString, vars?: Record<string, string | number>): string => {
     if((key==='wall_hint'||key==='contour_geometry_hint')&&this.dimensionTarget&&this.host._tool==='select'
       &&this.runtime.wallDimensions?.active)
-      key=this.runtime.wallDimensions?.sourceFallback?'wall_dimensions_axis_hint':'wall_dimensions_hint';
+      key=this.runtime.wallDimensions.sourceHint==='axis'?'wall_dimensions_axis_hint':
+        this.runtime.wallDimensions.sourceHint==='boundary'?'wall_dimensions_boundary_hint':'wall_dimensions_hint';
     return propertiesT(langOf(this.host.hass, this.host._config?.language), key, vars);
   };
 
@@ -709,8 +710,11 @@ export class PropertiesEditor {
     ensureFormKitStyles(this.host);
     const model = this.model(owner);
     const geometry=model.groups.find(group=>group.key==='geometry');
-    if(!owner&&geometry&&this.runtime.wallDimensions?.active&&this.runtime.wallDimensions.sourceFallback)
-      geometry.hint='wall_dimensions_axis_fallback';
+    if(!owner&&geometry&&this.runtime.wallDimensions?.active) {
+      const basis=this.runtime.wallDimensions.sourceHint;
+      if(basis==='axis')geometry.hint='wall_dimensions_axis_fallback';
+      else if(basis==='boundary')geometry.hint='wall_dimensions_boundary';
+    }
     const authority = this.host._configWriteContext.claim();
     const current = () => this.wide && !this.host._modeTransitionBusy && !this.variable && !this.host._editorSecondaryDialogBlocked
       && this.host._configWriteContext.current(authority, this.host.hass)
