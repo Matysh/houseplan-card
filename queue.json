@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 9675,
-  "nextTicket": 373,
+  "revision": 9676,
+  "nextTicket": 374,
   "nextFence": 373,
   "tasks": {
     "1170": {
@@ -4034,14 +4034,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/wall-side-dimensions-1381",
-      "materialSha": "5352d5ab232688e6021f1b535e2645fdbd6dec8f",
+      "materialSha": "cac85b6de7b97cf3c8258027f17e4b7bb9531516",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 372,
-      "queued": false,
+      "ticket": 373,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794478048916,
-      "reviewEntry": 1,
+      "readyAt": 1794479788211,
+      "reviewEntry": 2,
       "patchId": "d433f45d62f3c94a1866741159fe6cb59b09e9c7",
       "changedFiles": [
         "demo/smoke_resize_labels.mjs",
@@ -4075,7 +4075,6 @@
         "test/wall-side-dimension-labels.test.mjs",
         "test/wall-side-dimensions.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4566,7 +4565,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1381
+  ],
   "active": null,
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -4849,6 +4850,19 @@
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/room-write-python.test.mjs: failed; Backend: tests_backend/test_backend_translations.py: failed; Backend: tests_backend/test_config_migrations.py: failed; Backend: tests_backend/test_config_schema_manifest.py: failed; Backend: tests_backend/test_conftest_harness_notice.py: failed; Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_coordinate_canonicalization.py: failed; Backend: tests_backend/test_coordinate_canonicalization_pure.py: failed; Backend: tests_backend/test_decor_assets.py: failed; Backend: tests_backend/test_deletion_layout.py: failed; Backend: tests_backend/test_external_screens.py: failed; Backend: tests_backend/test_frontend_assets.py: failed; Backend: tests_backend/test_geometry_cleanup_842.py: failed; Backend: tests_backend/test_graph_host_continuity.py: failed; Backend: tests_backend/test_graph_node_write.py: failed; Backend: tests_backend/test_graph_write.py: failed; Backend: tests_backend/test_ha_backup_archive.py: failed; Backend: tests_backend/test_ha_build_identity.py: failed; Backend: tests_backend/test_ha_config_flow.py: failed; Backend: tests_backend/test_ha_config_migrations.py: failed; Backend: tests_backend/test_ha_config_set_scoped.py: failed; Backend: tests_backend/test_ha_decor_group_transfer.py: failed; Backend: tests_backend/test_ha_deletion_layout.py: failed; Backend: tests_backend/test_ha_device_contacts.py: failed; Backend: tests_backend/test_ha_diagnostics.py: failed; Backend: tests_backend/test_ha_editor_command_latency.py: failed; Backend: tests_backend/test_ha_external_screens_websocket.py: failed; Backend: tests_backend/test_ha_frontend_assets.py: failed; Backend: tests_backend/test_ha_frontend_registration.py: failed; Backend: tests_backend/test_ha_import_export.py: failed; Backend: tests_backend/test_ha_import_opening_repair.py: failed; Backend: tests_backend/test_ha_marker_alerts.py: failed; Backend: tests_backend/test_ha_marker_copy.py: failed; Backend: tests_backend/test_ha_marker_history.py: failed; Backend: tests_backend/test_ha_marker_signal.py: failed; Backend: tests_backend/test_ha_node_save_validation.py: failed; Backend: tests_backend/test_ha_panel_registration.py: failed; Backend: tests_backend/test_ha_plan_graph.py: failed; Backend: tests_backend/test_ha_portable_recovery.py: failed; Backend: tests_backend/test_ha_radar.py: failed; Backend: tests_backend/test_ha_radar_websocket.py: failed; Backend: tests_backend/test_ha_room_contact_grid.py: failed; Backend: tests_backend/test_ha_room_contact_storage.py: failed; Backend: tests_backend/test_ha_room_opening_host.py: failed; Backend: tests_backend/test_ha_setup.py: failed; Backend: tests_backend/test_ha_signal_visibility_low.py: failed; Backend: tests_backend/test_ha_space_copy.py: failed; Backend: tests_backend/test_ha_space_delete_executor.py: failed; Backend: tests_backend/test_ha_space_delete_routes.py: failed; Backend: tests_backend/test_ha_structural_upload.py: failed; Backend: tests_backend/test_ha_summary_weather.py: failed; Backend: tests_backend/test_ha_support_transport.py: failed; Backend: tests_backend/test_ha_support_v2.py: failed; Backend: tests_backend/test_ha_upload.py: failed; Backend: tests_backend/test_ha_vacuum_ecovacs.py: failed; Backend: tests_backend/test_ha_vacuum_history.py: failed; Backend: tests_backend/test_ha_vacuum_live_tail.py: failed; Backend: tests_backend/test_ha_vacuum_native_lifecycle.py: failed; Backend: tests_backend/test_ha_vacuum_paths.py: failed; Backend: tests_backend/test_ha_vacuum_source_first.py: failed; Backend: tests_backend/test_ha_vacuum_trail_style.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_ha_wall_node_attach.py: failed; Backend: tests_backend/test_ha_wall_node_delete.py: failed; Backend: tests_backend/test_ha_wall_node_dependency_carrier.py: failed; Backend: tests_backend/test_ha_wall_node_merge.py: failed; Backend: tests_backend/test_ha_wall_node_move_baseline.py: failed; Backend: tests_backend/test_ha_wall_removal_limits.py: failed; Backend: tests_backend/test_ha_websocket.py: failed; Backend: tests_backend/test_ha_zigbee_lqi.py: failed; Backend: tests_backend/test_ha_zigbee_lqi_performance.py: failed; Backend: tests_backend/test_ha_zigbee_topology.py: failed; Backend: tests_backend/test_junction_limits.py: failed; Backend: tests_backend/test_junction_parity.py: failed; Backend: tests_backend/test_led_strips.py: failed; Backend: tests_backend/test_marker_alerts.py: failed; Backend: tests_backend/test_marker_hide_battery.py: failed; Backend: tests_backend/test_marker_hide_signal.py: failed; Backend: tests_backend/test_marker_history.py: failed; Backend: tests_backend/test_node_save_validation.py: failed; Backend: tests_backend/test_opening_repair.py: failed; Backend: tests_backend/test_opening_repair_legacy10.py: failed; Backend: tests_backend/test_plan_graph.py: failed; Backend: tests_backend/test_plan_graph_migration.py: failed; Backend: tests_backend/test_plan_graph_source.py: failed; Backend: tests_backend/test_plan_graph_support.py: failed; Backend: tests_backend/test_plan_upload.py: failed; Backend: tests_backend/test_portable_recovery.py: failed; Backend: tests_backend/test_previous_data.py: failed; Backend: tests_backend/test_projection.py: failed; Backend: tests_backend/test_radar_geometry.py: failed; Backend: tests_backend/test_radar_validation.py: failed; Backend: tests_backend/test_room_appearance.py: failed; Backend: tests_backend/test_room_contact_grid.py: failed; Backend: tests_backend/test_room_opening_host.py: failed; Backend: tests_backend/test_settings_device_battery.py: failed; Backend: tests_backend/test_settings_moon.py: failed; Backend: tests_backend/test_settings_signal_visibility.py: failed; Backend: tests_backend/test_structural_upload.py: failed; Backend: tests_backend/test_summary_camera_settings.py: failed; Backend: tests_backend/test_summary_panel.py: failed; Backend: tests_backend/test_support_builds.py: failed; Backend: tests_backend/test_support_config_projection.py: failed; Backend: tests_backend/test_support_diagnostic_values.py: failed; Backend: tests_backend/test_support_lqi_wire.py: failed; Backend: tests_backend/test_support_package.py: failed; Backend: tests_backend/test_support_package_v2.py: failed; Backend: tests_backend/test_support_wire_schema.py: failed; Backend: tests_backend/test_trail_recorder.py: failed; Backend: tests_backend/test_trail_recorder_imports.py: failed; Backend: tests_backend/test_trails.py: failed; Backend: tests_backend/test_vacuum_ecovacs.py: failed; Backend: tests_backend/test_vacuum_history.py: failed; Backend: tests_backend/test_vacuum_live_tail.py: failed; Backend: tests_backend/test_vacuum_paths.py: failed; Backend: tests_backend/test_vacuum_route_validation.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed; Backend: tests_backend/test_vacuum_trail_style.py: failed; Backend: tests_backend/test_validation.py: failed; Backend: tests_backend/test_virtual_lights.py: failed; Backend: tests_backend/test_wall_contact_storage.py: failed; Backend: tests_backend/test_wall_face_lineage.py: failed; Backend: tests_backend/test_wall_node_attach.py: failed; Backend: tests_backend/test_wall_node_connected.py: failed; Backend: tests_backend/test_wall_node_delete.py: failed; Backend: tests_backend/test_wall_node_dependency_carrier.py: failed; Backend: tests_backend/test_wall_node_merge.py: failed; Backend: tests_backend/test_wall_node_move.py: failed; Backend: tests_backend/test_wall_node_parity.py: failed; Backend: tests_backend/test_wall_removal_proof.py: failed; Backend: tests_backend/test_wall_segment_model.py: failed; Backend: tests_backend/test_zigbee_lqi_model.py: failed; Браузер: device contact editor frame: failed; Браузер: node dependency carrier: failed; Браузер: resize junctions: failed; Браузер: resize through junction: failed; Браузер: wall end align: failed; Браузер: wall face lineage: failed; Браузер: wall face room split: failed; Браузер: wall node attach: failed; Браузер: wall node merge: failed; Браузер: wall node python roundtrip: failed",
           "eventId": "finish:d7b92f8f-e240-45a1-806d-b9be2f0c459c:finish:3:return:return:1381"
         }
+      }
+    },
+    "finish:42e27f3d-6954-4134-80dc-dcbcf7a7da76": {
+      "digest": "8771120f6b469226be00984371754954a587c199f69802d8a6dfcd1fc8daa4c0",
+      "issue": 1381,
+      "message": {
+        "kind": "queued",
+        "issue": 1381,
+        "at": 1794479788211,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "cac85b6de7b97cf3c8258027f17e4b7bb9531516"
       }
     }
   },
