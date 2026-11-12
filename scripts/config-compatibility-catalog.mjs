@@ -196,8 +196,10 @@ export const COMPATIBILITY_EXCLUSIONS = Object.freeze({
 
 export function fieldLifecycle(entry) {
   const branch = COMPATIBILITY_BRANCHES.find((item) => item.fields.includes(entry.id));
-  if (branch) return { branch: branch.id, since: branch.since, until: branch.until, provenance: branch.provenance };
-  if (entry.status !== 'current') throw new Error(`Unclassified compatibility field: ${entry.id}`);
+  if (entry.status !== 'current') {
+    if (branch) return { branch: branch.id, since: branch.since, until: branch.until, provenance: branch.provenance };
+    throw new Error(`Unclassified compatibility field: ${entry.id}`);
+  }
   const reason = 'Current supported representation/default; no superseding form or sunset applies.';
   return { since: { kind: 'not-applicable', reason }, until: { kind: 'not-applicable', reason },
     provenance: { kind: 'current', source: entry.enforcedBy || entry.runtime } };

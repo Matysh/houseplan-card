@@ -31,14 +31,14 @@ export interface ResolvedOpeningVisual {
   readonly leaves?: readonly ResolvedOpeningLeaf[];
   readonly unsupported: boolean;
 }
-const record = (value: unknown): value is Record<string, any> =>
+const record = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value);
 const own = (value: object, key: string) => Object.prototype.hasOwnProperty.call(value, key);
 const fail = (): never => { throw new Error('invalid_opening_features'); };
-function keys(value: unknown, allowed: string[]): asserts value is Record<string, any> {
+function keys(value: unknown, allowed: string[]): asserts value is Record<string, unknown> {
   if (!record(value) || Object.keys(value).some(key => !allowed.includes(key))) fail();
 }
-function positionFields(value: Record<string, any>): void {
+function positionFields(value: Record<string, unknown>): void {
   if (own(value, 'manual') && value.manual !== 'open' && value.manual !== 'closed') fail();
   if (own(value, 'invert') && typeof value.invert !== 'boolean') fail();
   if (own(value, 'contact') && value.contact !== null
@@ -46,7 +46,7 @@ function positionFields(value: Record<string, any>): void {
 }
 
 /** Reject mixed/future forms before any repair or normalization can erase them. */
-export function assertOpeningFeatures(opening: Pick<OpeningCfg, 'type'> & Record<string, any>): void {
+export function assertOpeningFeatures(opening: Pick<OpeningCfg, 'type'> & { opening_features?: unknown }): void {
   if (!own(opening, 'opening_features')) return;
   const f = opening.opening_features;
   if (!record(f) || f.version !== 1) fail();
@@ -56,11 +56,12 @@ export function assertOpeningFeatures(opening: Pick<OpeningCfg, 'type'> & Record
     if (!Array.isArray(f.leaves) || f.leaves.length < 1 || f.leaves.length > 4) fail();
     if (['contact', 'invert', 'flip_h', 'flip_v'].some(key => own(opening, key))) fail();
     const ids = new Set<string>();
-    for (const leaf of f.leaves) {
+    for (const leaf of f.leaves as unknown[]) {
       keys(leaf, ['id', 'hinge', 'manual', 'contact', 'invert', 'shade']);
-      if (typeof leaf.id !== 'string' || !leaf.id.trim() || leaf.id.length > 120 || ids.has(leaf.id)) fail();
-      ids.add(leaf.id);
-      if (!['start', 'end', 'top'].includes(leaf.hinge)) fail();
+      const id = leaf.id;
+      if (typeof id !== 'string' || !id.trim() || id.length > 120 || ids.has(id)) return fail();
+      ids.add(id);
+      if (typeof leaf.hinge !== 'string' || !['start', 'end', 'top'].includes(leaf.hinge)) fail();
       positionFields(leaf);
       if (own(leaf, 'shade')) {
         keys(leaf.shade, ['enabled', 'manual', 'contact', 'invert']);
@@ -70,8 +71,8 @@ export function assertOpeningFeatures(opening: Pick<OpeningCfg, 'type'> & Record
     }
   } else if (opening.type === 'door' || opening.type === 'gate') {
     keys(f, ['version', 'mechanism', 'slide_direction', 'manual']);
-    if (own(f, 'mechanism') && !['swing', 'slide'].includes(f.mechanism)) fail();
-    if (own(f, 'slide_direction') && !['start', 'end'].includes(f.slide_direction)) fail();
+    if (own(f, 'mechanism') && (typeof f.mechanism !== 'string' || !['swing', 'slide'].includes(f.mechanism))) fail();
+    if (own(f, 'slide_direction') && (typeof f.slide_direction !== 'string' || !['start', 'end'].includes(f.slide_direction))) fail();
     positionFields(f);
   } else fail();
 }
@@ -108,7 +109,7 @@ export function resolvedOpeningAmount(opening: OpeningCfg, read: OpeningStateRea
 
 export function openingWindowHandleSides(
   opening: { type: string; rx: number; ry: number; angle: number },
-  rooms: readonly any[], wallCm: number, cellCm: number, gridPitch: number,
+  rooms: readonly unknown[], wallCm: number, cellCm: number, gridPitch: number,
 ): readonly [boolean, boolean] {
   if (opening.type !== 'window') return [false, false];
   const angle = opening.angle * Math.PI / 180, offset = wallCm / cellCm * gridPitch / 2 + gridPitch * .1;

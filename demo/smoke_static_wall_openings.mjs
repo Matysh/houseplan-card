@@ -68,8 +68,8 @@ const out=await page.evaluate(async ({fixture,diagonalFixture,linePlanFixture,be
   const withoutContact={...c.hass.states};delete withoutContact['cover.synthetic_door'];
   const missingHass={...c.hass,states:withoutContact};c.hass=missingHass;el.hass=missingHass;await update();
   const leafFill=(r)=>opening('wall-door',r)?.querySelector('.op-leaf rect')?.getAttribute('fill');
-  result.missingContactHasFullPlanNeutralTone=!!shutTone&&shutTone!==activeTone
-    &&arcTone()===shutTone&&arcTone(c.shadowRoot)===shutTone
+  result.assignedMissingContactKeepsSourceGuidesAndFullPlanBody=!!shutTone&&shutTone===activeTone
+    &&arcTone()===activeTone&&arcTone(c.shadowRoot)===arcTone()
     &&leafFill(root())===leafFill(c.shadowRoot)&&box()===stableBox;
   await T.setServerConfig(cfg=>{cfg.spaces[0].openings[0].invert=true;});
   await until(()=>el._snap?.config?.spaces[0].openings[0].invert===true);

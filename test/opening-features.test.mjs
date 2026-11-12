@@ -4,6 +4,15 @@ import {
   assertOpeningFeatures, clearOpeningBindings, openingTransmissionIntervals,
   reparameterizeOpeningFeatures, resolveOpeningPosition,
 } from '../test-build/opening-features.js';
+import {transportOpeningOrientations} from '../test-build/opening-orientation.js';
+
+test('#1024 orientation adapter leaves malformed imported records to the existing validator',()=>{
+  for(const openings of [null,[null,3,{}],[{id:'bad',type:'window',opening_features:{version:1}}]]){
+    const source={openings},after=structuredClone(source);
+    assert.doesNotThrow(()=>transportOpeningOrientations(source,after));
+    assert.deepEqual(after,source);
+  }
+});
 
 const window = (count = 2) => ({ id: 'window', type: 'window', x: 0.5, y: 0, length: 0.2, angle: 0,
   opening_features: { version: 1, side: 'negative', leaves: Array.from({ length: count }, (_, i) => ({

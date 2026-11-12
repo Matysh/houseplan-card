@@ -1,11 +1,16 @@
 /** Physical-operation adapter around the single v1 basis transform. */
-import type { OpeningCfg } from './types';
+import type { OpeningCfg, RoomCfg, WallEntry, PartitionCfg } from './types';
 import { roomPoly } from './logic';
 import { openingInnerFaceOffset } from './wall-thickness';
 import { motionOpeningFeatures, reparameterizeOpeningFeatures } from './opening-features';
 
 type Point = readonly number[];
-type Space = { rooms?: any[]; walls?: any[]; partitions?: any[]; cell_cm?: number; openings?: OpeningCfg[] };
+export type OpeningOrientationSpace = { rooms?: Partial<RoomCfg>[]; walls?: WallEntry[];
+  partitions?: PartitionCfg[]; cell_cm?: number; openings?: OpeningCfg[] };
+type Space = OpeningOrientationSpace;
+const validOpening = (value: OpeningCfg | null | undefined): value is OpeningCfg =>
+  !!value && typeof value.id === 'string'
+  && [value.x, value.y, value.angle, value.length].every(item => typeof item === 'number' && Number.isFinite(item));
 export function openingAxisRotation(a: Point, b: Point, nextA: Point, nextB: Point): number {
   const ux = b[0] - a[0], uy = b[1] - a[1], vx = nextB[0] - nextA[0], vy = nextB[1] - nextA[1];
   return Math.atan2(ux * vy - uy * vx, ux * vx + uy * vy) * 180 / Math.PI;
@@ -40,13 +45,16 @@ export function openingFaceNormal(space: Space, opening: OpeningCfg, flipV = !!o
  * Reading/ACK never calls this adapter. Recomputing from the same before is idempotent. */
 export function transportOpeningOrientations<T extends Space>(before: Space, after: T,
   rotations: ReadonlyMap<string, number> = new Map()): T {
-  const old = new Map((before.openings || []).map(opening => [opening.id, opening]));
-  for (const opening of after.openings || []) {
+  const old = new Map((Array.isArray(before.openings) ? before.openings : [])
+    .filter(validOpening).map(opening => [opening.id, opening]));
+  for (const opening of Array.isArray(after.openings) ? after.openings : []) {
+    if (!validOpening(opening)) continue;
     const source = old.get(opening.id);
     if (source?.opening_features?.version !== 1 || source.type !== opening.type) continue;
     // Invalid documents still belong to the strict schema, not a geometry
     // reader exception before that schema can explain the malformed import.
-    if (source.type === 'window' && !Array.isArray((source.opening_features as any).leaves)) continue;
+    if (source.type === 'window' && (!('leaves' in source.opening_features)
+      || !Array.isArray(source.opening_features.leaves))) continue;
     let delta = rotations.get(opening.id);
     if (delta === undefined) {
       delta = opening.angle - source.angle;

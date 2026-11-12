@@ -1162,7 +1162,7 @@ test('a light source paints exactly one region: the floor it can see', () => {
   assert.match(glow,
     /const geometryFingerprint = input\.geometryFingerprint \?\? lightGeometryFingerprint\(\s*input\.rawSpaceConfig, input\.cellCm, input\.gridPitch/);
   assert.match(glow,
-    /fingerprint: contentFingerprint\(\[geometryFingerprint, openingStateSignature\]\)/);
+    /fingerprint: contentFingerprint\(\[geometryFingerprint, openingStateSignature,/);
   assert.match(glow,
     /const cacheKey = `\$\{input\.space\.id\}\|\$\{revision\.fingerprint\}`/);
   assert.match(glow, /sharedFingerprint === revision\.geometryFingerprint/,

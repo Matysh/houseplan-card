@@ -79,8 +79,19 @@ def opening_face_normal(space, opening, flip_v=None):
 
 def transport_opening_orientations(before, after, rotations=None):
     rotations = rotations or {}
-    old = {opening["id"]: opening for opening in before.get("openings", [])}
-    for opening in after.get("openings", []):
+    # Repair also accepts damaged legacy documents. Leave malformed records to
+    # that caller's validation/report rather than raising in this adapter.
+    def records(space):
+        values = space.get("openings")
+        if not isinstance(values, list):
+            return []
+        return [opening for opening in values if isinstance(opening, dict)
+                and isinstance(opening.get("id"), str)
+                and all(type(opening.get(key)) in (int, float)
+                        and math.isfinite(opening[key]) for key in ("x", "y", "angle", "length"))]
+
+    old = {opening["id"]: opening for opening in records(before)}
+    for opening in records(after):
         source = old.get(opening["id"])
         if (not source or not isinstance(source.get("opening_features"), dict)
                 or type(source["opening_features"].get("version")) is not int

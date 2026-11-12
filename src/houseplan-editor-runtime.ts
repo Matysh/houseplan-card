@@ -10924,7 +10924,7 @@ public _renderOpeningDialog(): TemplateResult {
     }
     const contacts = this._contactCandidates();
     const shadeContacts = [...contacts];
-    for (const [id, entity] of Object.entries(this.host.hass.states) as [string, any][]) {
+    for (const [id, entity] of Object.entries(this.host.hass.states) as [string, { attributes?: { friendly_name?: string } }][]) {
       if (id.startsWith('cover.') && this.host._openingEntityAvailable(id) && !shadeContacts.some(item => item.value === id)) {
         shadeContacts.push({ value: id, label: entity.attributes?.friendly_name || id });
       }

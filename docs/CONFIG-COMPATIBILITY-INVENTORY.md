@@ -8,7 +8,7 @@ and real HA websocket tests; [contract](CONFIG-COMPATIBILITY.md#per-space-presen
 
 Historical #1015 provenance: reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
 
-Current snapshot: **760 individually classified matching lines**, sha256:`51733b0b6748a3d47454046c91176d1e528a6f727ea2073c8c3a69bf42fbf855`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+Current snapshot: **761 individually classified matching lines**, sha256:`bd6ee4bff53c559eef6d125060319fdf5722b8a6412134a99f6e482ae65432d7`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
 
 #1024 adds the optional opening-features v1 reader/materialization branch. The
 three current door/gate type-switch records are current-feature exclusions,

@@ -50,3 +50,23 @@ windows, physical shade blockers, global hooks or localStorage architecture.
 The owner authorized accepting #1024's changed visual baselines and requested
 the next beta after completion on2026-11-13. That permission does not turn an
 unexplained unrelated golden difference into an accepted product change.
+
+## First queue S6 and addressed repairs
+
+Run `20261112T215325491-d6cea10f` completed730 files:616 passed,103 reused,
+11 failed. It did not reach code review or merge. The failures exposed a real
+damaged-import adapter exception, plus current-field lifecycle metadata,
+additional untyped boundaries, old source-text/translation/UI expectations,
+six stale mutation anchors and the dependent converter runtime/envelope check.
+The adapter now leaves malformed records to the existing validation/repair;
+this does not authorize accepting malformed v1 extensions. Type boundaries
+use unknown/explicit persisted shapes rather than growing the any budget.
+
+Addressed rechecks passed137 Node tests,98 repair/basis backend tests,21
+converter backend tests,4 converter-page tests and native opening entity,
+Static symbol and nested-form scenarios. Static retains the assigned source's
+accent independently of state/availability, with the same neutral body as the
+full plan. The 2.5D synthetic capture shows four independently posed leaves,
+parallel top translation, shade/unknown glyphs and no Flat arcs or handles.
+Companion HA journey: `Matysh/houseplan-e2e#45`, impact record#44; actual
+execution on the immutable beta candidate remains pending.

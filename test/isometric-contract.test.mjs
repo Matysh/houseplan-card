@@ -185,7 +185,7 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
     /input\.type === 'door' \|\| input\.type === 'gate'[\s\S]*?\? input\.face[\s\S]*?: openingSymbolOffset/,
   'door/gate volume uses the selected physical face while Flat/window geometry stays canonical');
   assert.match(source,
-    /buildIsoOpeningBasis\(\{ \.\.\.opening, face \}, wallHeight, openingGeometryPolicy\)/);
+    /buildIsoOpeningBasis\(\{ \.\.\.opening, face,\s*topShift: 20 \/ input\.cellCm \* input\.gridPitch \}, wallHeight, openingGeometryPolicy\)/);
   assert.match(openings, /policy\.gateTurnDeg[\s\S]*?policy\.gateTopRatio/);
   assert.match(openings, /policy\.windowSashBottomRatio[\s\S]*?policy\.windowSashTopRatio/);
   assert.match(openings, /policy\.windowGlassBottomRatio[\s\S]*?policy\.windowGlassTopRatio/);
@@ -200,7 +200,7 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   assert.doesNotMatch(source, /_openingAmt|openingAmount|\.hass|matchMedia|CSS\.supports|theme|hover|focus|selected|sunlight/);
   assert.match(card, /onBuild: \(\) => \{ this\._isoStructuralBuildCount \+= 1; \}/);
   assert.match(source, /projectIsoOpeningStructure\(basis\)/);
-  assert.match(sceneRender, /projectIsoOpening\(basis, amountOf\(opening\), scene\?\.camera\)/);
+  assert.match(sceneRender, /projectIsoOpening\(basis, visual\?\.leaves\?\.map\(leaf => leaf\.amount\) \|\| amountOf\(opening\), scene\?\.camera\)/);
   assert.match(sceneRender, /lruWrite\(input\.cache, input\.source\.key, value, 8\)/);
   assert.match(card, /data-hp-iso-structural-builds=\$\{iso \? this\._isoStructuralBuildCount : nothing\}/);
   // #724: the overlay caches are keyed by the structural wall geometry itself —

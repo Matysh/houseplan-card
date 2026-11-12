@@ -6,8 +6,18 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "51733b0b6748a3d47454046c91176d1e528a6f727ea2073c8c3a69bf42fbf855",
+  "matchesSha256": "bd6ee4bff53c559eef6d125060319fdf5722b8a6412134a99f6e482ae65432d7",
   "hits": [
+    {
+      "id": "d0b0da6d79f921221c964e60",
+      "path": "custom_components/houseplan/opening_orientation.py",
+      "line": 82,
+      "text": "# Repair also accepts damaged legacy documents. Leave malformed records to",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "opening-features",
+      "reason": "#1024 orientation transport ignores malformed legacy input records so the existing import repair/validation can report them; strict extension validation is unchanged."
+    },
     {
       "id": "4f6df3dfd13b4fd045db561e",
       "path": "custom_components/houseplan/opening_features.py",

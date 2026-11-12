@@ -53,7 +53,7 @@ def _source_constant(name: str) -> str:
 def test_issue_446_envelope_matches_the_import_contract(name: str, document: dict) -> None:
     """Конверт документа — ровно то, что требует `parse_document`."""
     assert document["format"] == "houseplan-export", name
-    assert document["export_version"] in (1, EXPORT_VERSION), name
+    assert document["export_version"] in (1, 2, EXPORT_VERSION), name
     assert document["kind"] == "space", name
     assert document["model_version"] == PLAN_MODEL_VERSION, name
     assert document["transfer"] == {"plan_only": True}, name
@@ -76,7 +76,7 @@ def test_issue_446_converter_declares_a_version_the_import_accepts() -> None:
         "import { WALL_SEGMENT_MODEL_VERSION } from './scripts/sh3d-convert/geometry-runtime.generated.mjs'; console.log(WALL_SEGMENT_MODEL_VERSION)"],
         cwd=REPO, check=True, capture_output=True, text=True)
     assert int(declared.stdout) == PLAN_MODEL_VERSION == WALL_SEGMENT_MODEL_VERSION
-    assert int(_source_constant("EXPORT_VERSION")) in (1, EXPORT_VERSION)
+    assert int(_source_constant("EXPORT_VERSION")) in (1, 2, EXPORT_VERSION)
 
 
 @pytest.mark.parametrize(("name", "document"), documents())

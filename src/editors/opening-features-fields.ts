@@ -94,7 +94,8 @@ export function openingFeatureFields(o: OpeningFeatureFieldOptions): TemplateRes
             <ha-icon icon=${state.amount ? 'mdi:window-open-variant' : 'mdi:window-closed-variant'}></ha-icon>
             <span class="opening-leaf-copy"><strong>${t('opening.features.leaf', { number: index + 1 })}</strong>
               <small>${positionLabel(state.amount)} · ${leaf.contact ? o.sourceName(leaf.contact) : t('opening.features.manual')}</small></span>
-            ${leaf.shade?.enabled ? html`<ha-icon icon=${shadeStatus(leaf).icon} title=${shadeStatus(leaf).text}></ha-icon>` : nothing}
+            ${leaf.shade?.enabled ? html`<ha-icon icon=${shadeStatus(leaf).icon}
+              data-hp-tooltip=${shadeStatus(leaf).text} aria-label=${shadeStatus(leaf).text}></ha-icon>` : nothing}
             <ha-icon icon="mdi:chevron-right"></ha-icon>
           </button>
           <span class="hpf-action-help"><button type="button" class="btn ghost hpf-action-icon" data-hp="action"

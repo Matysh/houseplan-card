@@ -18,211 +18,6 @@ const DECOR_BOX_KINDS = ['rect', 'ellipse', 'furniture', 'image'];
 /** Existing persisted-coordinate noise allowance, measured in lattice steps. */
 const LATTICE_NOISE_STEPS = 1e-4;
 
-/**
- * Stable, allow-listed persisted geometry.
- *
- * Mirrored by custom_components/houseplan/coordinate_canonicalization.py.
- * Keep the precision, lattice formula and field allow-list in lockstep.
- */
-const COORDINATE_DECIMALS = 9;
-const COORDINATE_FACTOR = 10 ** COORDINATE_DECIMALS;
-const LATTICE_GRID_N = 240;
-/** Existing scalar contract for transforms, angles, lengths and ratios. */
-function canonicalizeNumber(value) {
-    if (typeof value !== 'number' || !Number.isFinite(value))
-        return value;
-    const sign = value < 0 || Object.is(value, -0) ? -1 : 1;
-    const result = sign
-        * (Math.floor(Math.abs(value) * COORDINATE_FACTOR + 0.5) / COORDINATE_FACTOR);
-    return result === 0 ? 0 : result;
-}
-/** Collapse only an unobservable tail around a 1/240 node. */
-function canonicalizeLatticeCoordinate(value) {
-    if (typeof value !== 'number' || !Number.isFinite(value))
-        return value;
-    const scaled = value * LATTICE_GRID_N;
-    const nearest = Math.round(scaled);
-    const deviation = Math.abs(scaled - nearest);
-    if (deviation < LATTICE_NOISE_STEPS) {
-        const result = nearest / LATTICE_GRID_N;
-        return result === 0 ? 0 : result;
-    }
-    return canonicalizeNumber(value);
-}
-function record$1(value) {
-    return value !== null && typeof value === 'object' && !Array.isArray(value)
-        ? value : null;
-}
-function records(value) {
-    return Array.isArray(value)
-        ? value.filter((item) => record$1(item) !== null)
-        : [];
-}
-function isDecorBoxKind(value) {
-    return typeof value === 'string'
-        && DECOR_BOX_KINDS.includes(value);
-}
-function scalarFields(item, names) {
-    for (const name of names) {
-        if (Object.prototype.hasOwnProperty.call(item, name)) {
-            item[name] = canonicalizeNumber(item[name]);
-        }
-    }
-}
-function latticeFields(item, names) {
-    for (const name of names) {
-        if (Object.prototype.hasOwnProperty.call(item, name)) {
-            item[name] = canonicalizeLatticeCoordinate(item[name]);
-        }
-    }
-}
-function latticePoint(value) {
-    if (!Array.isArray(value))
-        return;
-    for (let index = 0; index < Math.min(2, value.length); index++) {
-        value[index] = canonicalizeLatticeCoordinate(value[index]);
-    }
-}
-function latticePoints(value) {
-    if (!Array.isArray(value))
-        return;
-    for (const item of value)
-        latticePoint(item);
-}
-function canonicalizeConfigGeometryInPlace(config) {
-    const result = config;
-    const root = record$1(result);
-    if (!root)
-        return result;
-    for (const space of records(root.spaces)) {
-        scalarFields(space, [
-            'plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle',
-        ]);
-        // Current structural carriers are correctly rounded projections of exact
-        // graph points. Applying the legacy nine-decimal/lattice policy here would
-        // move a point away from its canonical owner on an unrelated metadata Save.
-        const exactGraph = Number(root.model_version) >= 11 && record$1(space.plan_graph);
-        if (!exactGraph) {
-            for (const room of records(space.rooms)) {
-                latticeFields(room, ['x', 'y', 'w', 'h']);
-                latticePoints(room.poly);
-            }
-            for (const wall of records(space.walls)) {
-                latticePoint(wall.a);
-                latticePoint(wall.b);
-            }
-            for (const segment of records(space.wall_segments)) {
-                latticePoint(segment.a);
-                latticePoint(segment.b);
-            }
-        }
-        for (const opening of records(space.openings)) {
-            if (!exactGraph)
-                latticeFields(opening, ['x', 'y']);
-            scalarFields(opening, ['angle', 'length']);
-            const host = record$1(opening.host);
-            if (host && !exactGraph)
-                scalarFields(host, ['t']);
-        }
-        for (const decor of records(space.decor)) {
-            if (decor.kind === 'line')
-                latticeFields(decor, ['x1', 'y1', 'x2', 'y2']);
-            else if (isDecorBoxKind(decor.kind)) {
-                latticeFields(decor, ['x', 'y', 'w', 'h']);
-                scalarFields(decor, ['angle']);
-            }
-            else if (decor.kind === 'text') {
-                latticeFields(decor, ['x', 'y']);
-                scalarFields(decor, ['scale', 'angle']);
-            }
-        }
-        for (const stair of records(space.stairs)) {
-            // #663 stairs inherit furniture's continuous transform contract. A wall
-            // face may be an arbitrary half-thickness away from the grid, so only
-            // remove insignificant JSON noise; never pull the magnet result onto a
-            // lattice node.
-            scalarFields(stair, ['x', 'y', 'length', 'width', 'radius', 'angle']);
-        }
-        // Legacy-only read boundary; current v10 documents reject this field.
-        for (const draft of records(space.room_drafts))
-            latticePoints(draft.points);
-        if (!exactGraph)
-            for (const partition of records(space.partitions)) {
-                latticePoint(partition.a);
-                latticePoint(partition.b);
-            }
-        for (const column of records(space.wall_columns)) {
-            latticePoint(column.center);
-            if (column.shape === 'square')
-                scalarFields(column, ['angle']);
-        }
-        for (const span of records(space.open_spans)) {
-            latticePoint(span.a);
-            latticePoint(span.b);
-        }
-        // #780: LED strips snap to physical wall faces like stairs: JSON noise
-        // only, a face contact never moves onto a lattice node.
-        for (const strip of records(space.led_strips)) {
-            for (const point of Array.isArray(strip.points) ? strip.points : []) {
-                if (Array.isArray(point))
-                    scalarFields(point, ['0', '1']);
-            }
-        }
-    }
-    for (const marker of records(root.markers))
-        scalarFields(marker, ['angle']);
-    return result;
-}
-
-/** Python-compatible Unicode ordering for persisted identity, never locale/UTF-16. */
-function compareCodePoints(a, b) {
-    let i = 0, j = 0;
-    while (i < a.length && j < b.length) {
-        const left = a.codePointAt(i), right = b.codePointAt(j);
-        if (left !== right)
-            return left - right;
-        i += left > 0xffff ? 2 : 1;
-        j += right > 0xffff ? 2 : 1;
-    }
-    return (i < a.length ? 1 : 0) - (j < b.length ? 1 : 0);
-}
-
-/** Persisted JSON objects are unordered; array order and scalar values are not. */
-function jsonValueEqual(left, right) {
-    if (left === right)
-        return true;
-    if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object')
-        return false;
-    if (Array.isArray(left) || Array.isArray(right)) {
-        return Array.isArray(left) && Array.isArray(right) && left.length === right.length
-            && left.every((value, index) => jsonValueEqual(value, right[index]));
-    }
-    const a = left, b = right;
-    const keys = Object.keys(a);
-    return keys.length === Object.keys(b).length && keys.every(key => Object.prototype.hasOwnProperty.call(b, key) && jsonValueEqual(a[key], b[key]));
-}
-
-/** Validate the authored numeric carrier before JSON cloning can turn NaN into null. */
-const finiteNumeric = (value) => Number.isFinite(value)
-    || typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value));
-function assertFiniteColumnInputs(space) {
-    if (space.wall_columns === undefined)
-        return;
-    if (!Array.isArray(space.wall_columns))
-        throw new TypeError('invalid-column-geometry');
-    for (const column of space.wall_columns) {
-        if (!column || !Array.isArray(column.center) || column.center.length !== 2
-            || !finiteNumeric(column.center[0]) || !finiteNumeric(column.center[1])
-            // #842 permits old numeric strings and absent/null defaults. Their
-            // existing write normalization still owns the conversion; coordinates
-            // never get the Number(null) / Number('') shortcut to zero.
-            || (column.cm != null && !finiteNumeric(column.cm))
-            || (column.angle != null && !finiteNumeric(column.angle))) {
-            throw new TypeError('invalid-column-geometry');
-        }
-    }
-}
-
 /*
  *      bignumber.js v9.3.1
  *      A JavaScript library for arbitrary-precision arithmetic.
@@ -3150,6 +2945,18 @@ function roomPoly(r) {
 function samePoint(a, b, eps = 0.001) {
     return Math.abs(a[0] - b[0]) < eps && Math.abs(a[1] - b[1]) < eps;
 }
+/** Shoelace area of an outline (absolute value). */
+function polygonArea(poly) {
+    if (!poly || poly.length < 3)
+        return 0;
+    let s = 0;
+    for (let i = 0; i < poly.length; i++) {
+        const a = poly[i];
+        const b = poly[(i + 1) % poly.length];
+        s += a[0] * b[1] - b[0] * a[1];
+    }
+    return Math.abs(s) / 2;
+}
 // ---------------- open (virtual) boundaries ----------------
 /**
  * Collinear overlapping stretches of two room outlines — their shared
@@ -3187,6 +2994,29 @@ function sharedBoundary(a, b, eps = 1e-6) {
         }
     }
     return res;
+}
+
+/** Scalar precision shared by stored geometry and computed wall shells.
+ * Keep this dependency-free of wall geometry and document transformations. */
+const COORDINATE_DECIMALS = 9;
+const COORDINATE_FACTOR = 10 ** COORDINATE_DECIMALS;
+const LATTICE_GRID_N = 240;
+function canonicalizeNumber(value) {
+    if (typeof value !== 'number' || !Number.isFinite(value))
+        return value;
+    const sign = value < 0 || Object.is(value, -0) ? -1 : 1;
+    const result = sign * (Math.floor(Math.abs(value) * COORDINATE_FACTOR + 0.5) / COORDINATE_FACTOR);
+    return result === 0 ? 0 : result;
+}
+function canonicalizeLatticeCoordinate(value) {
+    if (typeof value !== 'number' || !Number.isFinite(value))
+        return value;
+    const scaled = value * LATTICE_GRID_N, nearest = Math.round(scaled);
+    if (Math.abs(scaled - nearest) < LATTICE_NOISE_STEPS) {
+        const result = nearest / LATTICE_GRID_N;
+        return result === 0 ? 0 : result;
+    }
+    return canonicalizeNumber(value);
 }
 
 /** Exact structural arithmetic. Floats are source decoders / render projections only. */
@@ -3391,6 +3221,19 @@ function exact(n, d = 1n) {
 }
 exact(0n); exact(1n);
 
+/** Python-compatible Unicode ordering for persisted identity, never locale/UTF-16. */
+function compareCodePoints(a, b) {
+    let i = 0, j = 0;
+    while (i < a.length && j < b.length) {
+        const left = a.codePointAt(i), right = b.codePointAt(j);
+        if (left !== right)
+            return left - right;
+        i += left > 0xffff ? 2 : 1;
+        j += right > 0xffff ? 2 : 1;
+    }
+    return (i < a.length ? 1 : 0) - (j < b.length ? 1 : 0);
+}
+
 /**
  * Wall thickness — pure geometry (docs/WALL-THICKNESS.md).
  *
@@ -3405,6 +3248,13 @@ function clampWallCm(cm) {
     if (!Number.isFinite(cm))
         return WALL_MIN_CM;
     return Math.max(WALL_MIN_CM, Math.min(WALL_MAX_CM, cm));
+}
+/** Real cm → length in the same units as the room polygon (via cell_cm). */
+function wallCmToUnits(cm, cellCm, gridPitch) {
+    if (!Number.isFinite(cm) || cm <= 0)
+        return 0;
+    const c = Number(cellCm) > 0 ? Number(cellCm) : 5;
+    return (clampWallCm(cm) / c) * gridPitch;
 }
 // ------------------------------- segment key --------------------------------
 function q(v, pitch) {
@@ -3623,6 +3473,268 @@ function wallAngleMatches(a, b, openingAngleDeg, tolDeg = 8) {
         d = Math.PI - d;
     return d <= (tolDeg * Math.PI) / 180;
 }
+/**
+ * Is this stretch virtual? Interval-exact (AUD-159B6-01): the midpoint must sit
+ * ON the cut, not merely near the cut's own midpoint. Atomic intervals never
+ * straddle a cut end (they are split there), so the test is unambiguous —
+ * a partial open span no longer has to cover the parent edge's midpoint to
+ * count, and no longer opens the parts it does not cover.
+ */
+function edgeIsOpen(a, b, cuts, pitch, coordScale = 1) {
+    if (!cuts.length)
+        return false;
+    const eps = openEps(pitch, coordScale);
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    const [dx, dy] = wallDir(a, b);
+    for (const c of cuts) {
+        const [ex, ey] = wallDir([c[0], c[1]], [c[2], c[3]]);
+        if (Math.abs(dx * ey - dy * ex) > 0.05)
+            continue; // not collinear
+        if (distToSeg(mx, my, c[0], c[1], c[2], c[3]) <= eps)
+            return true;
+    }
+    return false;
+}
+/** Collinearity / on-segment tolerance for interval work (plan units). */
+function openEps(pitch, coordScale) {
+    return Math.max(pitch * (coordScale > 0 ? coordScale : 1) * 0.04, 1e-9);
+}
+/** Inward unit normal for edge i (into the polygon). */
+function inwardNormal(poly, i) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const L = Math.hypot(dx, dy) || 1;
+    // left normal of edge direction; flip if it points outward
+    let nx = -dy / L, ny = dx / L;
+    const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const probe = [mid[0] + nx * 1e-3, mid[1] + ny * 1e-3];
+    // winding-agnostic: a probe that leaves the poly means we had the outward normal
+    if (!pointInPoly(probe, poly)) {
+        nx = -nx;
+        ny = -ny;
+    }
+    return [nx, ny];
+}
+function pointInPoly(p, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+        if ((yi > p[1]) !== (yj > p[1]) &&
+            p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi + 0) + xi)
+            inside = !inside;
+    }
+    return inside;
+}
+function atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale = 1, wallBreaks = []) {
+    const room = (rooms || []).find((r) => r?.id === roomId);
+    const orig = roomPoly(room);
+    if (!orig || orig.length < 3)
+        return null;
+    const eps = openEps(pitch, coordScale);
+    const breaks = [];
+    for (const other of rooms || []) {
+        if (!other || other.id === roomId)
+            continue;
+        const op = roomPoly(other);
+        if (!op)
+            continue;
+        for (const sg of sharedBoundary(orig, op, eps)) {
+            breaks.push([sg[0], sg[1]], [sg[2], sg[3]]);
+        }
+    }
+    for (const c of openCuts || [])
+        breaks.push([c[0], c[1]], [c[2], c[3]]);
+    // A closed virtual span may have been the only geometric breakpoint between
+    // two real intervals of different thickness. New wall entries retain their
+    // exact endpoints so deleting that span cannot erase the thickness boundary.
+    for (const w of wallBreaks || []) {
+        const span = entrySpan(w, coordScale);
+        if (span)
+            breaks.push(span[0], span[1]);
+    }
+    const poly = [];
+    const parent = [];
+    for (let i = 0; i < orig.length; i++) {
+        const a = orig[i], b = orig[(i + 1) % orig.length];
+        poly.push([a[0], a[1]]);
+        parent.push(i);
+        const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (L < eps * 2 || !breaks.length)
+            continue;
+        const gap = Math.min(0.499, (eps * 2) / L);
+        const ts = [];
+        for (const p of breaks) {
+            if (distToSeg(p[0], p[1], a[0], a[1], b[0], b[1]) > eps)
+                continue;
+            const t = ((p[0] - a[0]) * (b[0] - a[0]) + (p[1] - a[1]) * (b[1] - a[1])) / (L * L);
+            if (t <= gap || t >= 1 - gap)
+                continue;
+            if (ts.some((u) => Math.abs(u - t) * L <= eps * 2))
+                continue;
+            ts.push(t);
+        }
+        ts.sort((x, y) => x - y);
+        for (const t of ts) {
+            poly.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+            parent.push(i);
+        }
+    }
+    return { poly, parent, orig };
+}
+/** Shared-boundary stretches of one room against every other (plan units). */
+function sharedSegsOf(rooms, roomId, eps) {
+    const room = (rooms || []).find((r) => r?.id === roomId);
+    const poly = roomPoly(room);
+    if (!poly)
+        return [];
+    const out = [];
+    for (const other of rooms || []) {
+        if (!other || other.id === roomId)
+            continue;
+        const op = roomPoly(other);
+        if (!op)
+            continue;
+        for (const sg of sharedBoundary(poly, op, eps))
+            out.push(sg);
+    }
+    return out;
+}
+function kindsForPoly(poly, shared, openCuts, pitch, coordScale) {
+    const eps = openEps(pitch, coordScale);
+    const out = [];
+    for (let i = 0; i < poly.length; i++) {
+        const a = poly[i], b = poly[(i + 1) % poly.length];
+        if (edgeIsOpen(a, b, openCuts, pitch, coordScale)) {
+            out.push(null);
+            continue;
+        }
+        const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+        const onShared = shared.some((sg) => distToSeg(mx, my, sg[0], sg[1], sg[2], sg[3]) <= eps);
+        out.push(onShared ? 'shared' : 'outer');
+    }
+    return out;
+}
+/**
+ * Effective thickness (cm) per atomic interval.
+ *
+ * An interval first looks for its OWN key. What is left over is matched against
+ * keys written before the split — a pre-atomic key describes the whole parent
+ * edge, so its cm goes to the intervals of that edge nobody claimed. Without
+ * that, an existing plan would silently lose thickness the moment a neighbour
+ * or an open span cuts one of its walls in two.
+ */
+function cmsForPoly(walls, at, pitch, coordScale) {
+    const n = at.poly.length;
+    const cms = new Array(n).fill(0);
+    if (!walls?.length)
+        return cms;
+    const claimed = new Set();
+    const orphans = [];
+    for (let i = 0; i < n; i++) {
+        const a = at.poly[i], b = at.poly[(i + 1) % n];
+        const hit = lookupWall(walls, a, b, pitch, coordScale);
+        if (hit && hit.cm > 0) {
+            cms[i] = clampWallCm(hit.cm);
+            claimed.add(hit.key);
+        }
+        else {
+            orphans.push(i);
+        }
+    }
+    if (!orphans.length)
+        return cms;
+    const scale = coordScale > 0 ? coordScale : 1;
+    const tol = Math.max(pitch * 0.5, 1e-9) * scale;
+    const parsed = parseKeys(walls, scale).filter((e) => e.w.cm > 0);
+    // An exact run materialised before Split may cover only part of the new
+    // polygon parent edge. Resolve those lossless spans against each orphaned
+    // atomic child first: [0..6] must cover new child [4..6], but never [6..10].
+    for (let oi = orphans.length - 1; oi >= 0; oi--) {
+        const i = orphans[oi];
+        const a = at.poly[i], b = at.poly[(i + 1) % n];
+        const ang = segAngle(a, b);
+        let best = null;
+        for (const e of parsed) {
+            const span = entrySpan(e.w, scale);
+            if (!span || !angleClose(segAngle(span[0], span[1]), ang))
+                continue;
+            if (distToSeg(a[0], a[1], span[0][0], span[0][1], span[1][0], span[1][1]) > tol
+                || distToSeg(b[0], b[1], span[0][0], span[0][1], span[1][0], span[1][1]) > tol)
+                continue;
+            const childLen = Math.hypot(b[0] - a[0], b[1] - a[1]);
+            const spanLen = Math.hypot(span[1][0] - span[0][0], span[1][1] - span[0][1]);
+            const extra = Math.max(0, spanLen - childLen);
+            if (!best || extra < best.extra)
+                best = { cm: clampWallCm(e.w.cm), extra };
+        }
+        if (!best)
+            continue;
+        cms[i] = best.cm;
+        orphans.splice(oi, 1);
+    }
+    const byParent = new Map();
+    for (const i of orphans) {
+        const p = at.parent[i];
+        const list = byParent.get(p);
+        if (list)
+            list.push(i);
+        else
+            byParent.set(p, [i]);
+    }
+    for (const [pi, idxs] of byParent) {
+        const a = at.orig[pi], b = at.orig[(pi + 1) % at.orig.length];
+        const ang = segAngle(a, b);
+        const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+        let best = null;
+        const parentLen = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        for (const e of parsed) {
+            if (claimed.has(e.w.key))
+                continue;
+            if (!angleClose(e.ang, ang))
+                continue;
+            const span = entrySpan(e.w, scale);
+            let exact = false;
+            let d = 0;
+            if (span) {
+                // Normalisation may compact one equal-thickness run through several
+                // collinear room sides. Its midpoint can then lie outside a shorter
+                // child side, but the lossless endpoints still prove that the run
+                // covers that side. Require BOTH endpoints so a partial wall cannot
+                // leak into the rest of its parent edge (AUD-159B6-01).
+                if (!angleClose(segAngle(span[0], span[1]), ang))
+                    continue;
+                if (distToSeg(a[0], a[1], span[0][0], span[0][1], span[1][0], span[1][1]) > tol
+                    || distToSeg(b[0], b[1], span[0][0], span[0][1], span[1][0], span[1][1]) > tol)
+                    continue;
+                exact = true;
+                d = Math.max(0, Math.hypot(span[1][0] - span[0][0], span[1][1] - span[0][1]) - parentLen);
+            }
+            else {
+                if (distToSeg(e.x, e.y, a[0], a[1], b[0], b[1]) > tol)
+                    continue;
+                d = Math.hypot(e.x - mx, e.y - my);
+            }
+            if (!best || (exact && !best.exact) || (exact === best.exact && d < best.d)) {
+                best = { cm: clampWallCm(e.w.cm), d, exact };
+            }
+        }
+        if (!best)
+            continue;
+        for (const i of idxs)
+            cms[i] = best.cm;
+    }
+    return cms;
+}
+function roomWallProfile(rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale = 1) {
+    const at = atomicPolyForRoom(rooms, roomId, openCuts, pitch, coordScale, walls);
+    if (!at)
+        return null;
+    const shared = sharedSegsOf(rooms, roomId, openEps(pitch, coordScale));
+    const kinds = kindsForPoly(at.poly, shared, openCuts, pitch, coordScale);
+    const cms = cmsForPoly(walls, at, pitch, coordScale);
+    const offsets = cms.map((cm, i) => (kinds[i] && cm > 0 ? wallCmToUnits(cm, cellCm, gridPitch) / 2 : 0));
+    return { ...at, kinds, cms, offsets };
+}
 function distToSeg(px, py, ax, ay, bx, by) {
     const abx = bx - ax, aby = by - ay;
     const L2 = abx * abx + aby * aby;
@@ -3631,6 +3743,474 @@ function distToSeg(px, py, ax, ay, bx, by) {
     let t = ((px - ax) * abx + (py - ay) * aby) / L2;
     t = Math.max(0, Math.min(1, t));
     return Math.hypot(px - (ax + abx * t), py - (ay + aby * t));
+}
+function openingWallIndex(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale = 1) {
+    const edges = [];
+    for (const room of rooms || []) {
+        if (!room?.id)
+            continue;
+        const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+        if (!pr)
+            continue;
+        const area = Math.abs(polygonArea(pr.poly));
+        for (let i = 0; i < pr.poly.length; i++) {
+            // A virtual interval has no opening, inner face or physical tunnel.
+            if (!pr.kinds[i])
+                continue;
+            const a = pr.poly[i], b = pr.poly[(i + 1) % pr.poly.length];
+            edges.push({
+                roomId: room.id,
+                a, b,
+                inward: inwardNormal(pr.poly, i),
+                cm: pr.cms[i],
+                half: pr.offsets[i],
+                area,
+                key: keyOf(a, b, pitch, coordScale),
+            });
+        }
+    }
+    return { edges, adjacencyEps: openEps(pitch, coordScale) };
+}
+function tunnelCoverage(pieces, lo, hi, eps) {
+    const spans = pieces
+        .map((p) => [Math.max(lo, p.x0), Math.min(hi, p.x1)])
+        .filter((p) => p[1] - p[0] > eps)
+        .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    if (!spans.length)
+        return { coverage: 0, full: false };
+    let start = spans[0][0], end = spans[0][1], coverage = 0;
+    let full = start <= lo + eps;
+    for (let i = 1; i < spans.length; i++) {
+        const [a, b] = spans[i];
+        if (a <= end + eps) {
+            end = Math.max(end, b);
+            continue;
+        }
+        coverage += end - start;
+        full = false;
+        start = a;
+        end = b;
+    }
+    coverage += end - start;
+    full = full && end >= hi - eps;
+    return { coverage, full };
+}
+function compareOpeningSides(a, b) {
+    return Number(b.full) - Number(a.full)
+        || a.faceDistance - b.faceDistance
+        || a.area - b.area
+        || a.roomId.localeCompare(b.roomId);
+}
+/**
+ * Resolve adjacent room sides for one opening against a prebuilt wall index.
+ * A candidate must be genuinely collinear/adjacent (4% of one grid pitch), not
+ * merely the closest parallel wall within a whole cell. This keeps detached
+ * rooms and double-wall air gaps from becoming a phantom second room.
+ */
+function resolveOpeningWallCandidates(index, opening, physicalOnly = false) {
+    const x = Number(opening?.x), y = Number(opening?.y);
+    const angle = Number(opening?.angle), length = Number(opening?.length);
+    if (![x, y, angle, length].every(Number.isFinite) || !(length > 0)) {
+        return [];
+    }
+    const rad = angle * Math.PI / 180;
+    const ux = Math.cos(rad), uy = Math.sin(rad);
+    const nx = -uy, ny = ux;
+    const openingHalf = length / 2;
+    const eps = Math.max(1e-9, index.adjacencyEps);
+    const candidates = new Map();
+    let candidateOrder = 0;
+    for (const edge of index.edges) {
+        if (physicalOnly && !(edge.half > 0))
+            continue;
+        if (!wallAngleMatches(edge.a, edge.b, angle))
+            continue;
+        const [edgeUx, edgeUy] = wallDir(edge.a, edge.b);
+        // Adjacency is perpendicular distance to the wall line. Long legacy
+        // openings may have their centre just beyond an endpoint while still
+        // overlapping the real span; the projection clip below decides that part.
+        const lineDistance = Math.abs((x - edge.a[0]) * edgeUy - (y - edge.a[1]) * edgeUx);
+        if (lineDistance > eps)
+            continue;
+        const ta = (edge.a[0] - x) * ux + (edge.a[1] - y) * uy;
+        const tb = (edge.b[0] - x) * ux + (edge.b[1] - y) * uy;
+        const x0 = Math.max(-openingHalf, Math.min(ta, tb));
+        const x1 = Math.min(openingHalf, Math.max(ta, tb));
+        if (x1 - x0 <= eps)
+            continue;
+        const side = (edge.inward[0] * nx + edge.inward[1] * ny >= 0 ? 1 : -1);
+        // Signed centreline position matters: an edge just across the axis has an
+        // inner face closer by that offset, not farther by abs(offset) + half.
+        const mx = (edge.a[0] + edge.b[0]) / 2;
+        const my = (edge.a[1] + edge.b[1]) / 2;
+        const centreY = (mx - x) * nx + (my - y) * ny;
+        const faceDistance = Math.abs(centreY + side * edge.half);
+        const key = `${side}|${edge.roomId}`;
+        const piece = {
+            x0, x1, half: edge.half, cm: edge.cm, key: edge.key, axis: [edgeUx, edgeUy],
+        };
+        const previous = candidates.get(key);
+        if (previous) {
+            previous.pieces.push(piece);
+            previous.faceDistance = Math.min(previous.faceDistance, faceDistance);
+        }
+        else {
+            candidates.set(key, {
+                roomId: edge.roomId, side, order: candidateOrder++, pieces: [piece], faceDistance,
+                area: edge.area, coverage: 0, full: false,
+            });
+        }
+    }
+    for (const candidate of candidates.values()) {
+        const coverage = tunnelCoverage(candidate.pieces, -openingHalf, openingHalf, eps);
+        candidate.coverage = coverage.coverage;
+        candidate.full = coverage.full;
+    }
+    return [...candidates.values()];
+}
+/** Preferred sides for symbols/tunnels; preserve the historical ordering. */
+function resolveOpeningWallAssociation(index, opening, physicalOnly = false) {
+    const candidates = resolveOpeningWallCandidates(index, opening, physicalOnly);
+    const eps = Math.max(1e-9, index.adjacencyEps);
+    const pick = (side) => {
+        const list = candidates.filter((candidate) => (candidate.side === side && candidate.coverage > eps));
+        list.sort(compareOpeningSides);
+        return list[0] || null;
+    };
+    return { negative: pick(-1), positive: pick(1) };
+}
+function centrePiece(side) {
+    return [...side.pieces].sort((a, b) => {
+        const da = a.x0 <= 0 && a.x1 >= 0 ? 0 : Math.min(Math.abs(a.x0), Math.abs(a.x1));
+        const db = b.x0 <= 0 && b.x1 >= 0 ? 0 : Math.min(Math.abs(b.x0), Math.abs(b.x1));
+        return da - db || (b.x1 - b.x0) - (a.x1 - a.x0) || a.key.localeCompare(b.key);
+    })[0];
+}
+/**
+ * Physical half-depth and direction for an opening. Visible symbol placement
+ * is resolved separately and is always centred; flip_v changes only the
+ * opening direction (#250).
+ */
+function openingInnerFaceOffset(rooms, opening, walls, pitch, cellCm, gridPitch, coordScale = 1, openCuts = []) {
+    const index = openingWallIndex(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
+    return openingInnerFaceOffsetFromIndex(index, opening);
+}
+/** Cheap per-opening face resolution against a cached atomic wall index. */
+function openingInnerFaceOffsetFromIndex(index, opening) {
+    const association = resolveOpeningWallAssociation(index, opening);
+    const available = [association.negative, association.positive]
+        .filter((side) => !!side);
+    if (!available.length)
+        return { ox: 0, oy: 0, cm: 0, side: -1 };
+    // An exterior wall keeps its real room-side direction so gates still open
+    // outward. A shared wall has no exterior, so use the opening-local negative
+    // side instead of the first room in model order.
+    const naturalSide = association.negative && association.positive
+        ? -1
+        : available[0].side;
+    const selectedSide = (opening.flip_v ? -naturalSide : naturalSide);
+    const selected = (selectedSide === -1 ? association.negative : association.positive)
+        || available[0];
+    const piece = centrePiece(selected);
+    if (!(piece.half > 0) || !(piece.cm > 0))
+        return { ox: 0, oy: 0, cm: 0, side: selectedSide };
+    const rad = opening.angle * Math.PI / 180;
+    const nx = -Math.sin(rad), ny = Math.cos(rad);
+    return {
+        ox: nx * selectedSide * piece.half,
+        oy: ny * selectedSide * piece.half,
+        cm: piece.cm,
+        side: selectedSide,
+    };
+}
+
+const openingSlideDirection = (features) => features?.slide_direction === 'start' ? 'start' : 'end';
+function windowOpeningFeatures(opening) {
+    const f = opening.opening_features;
+    return opening.type === 'window' && f?.version === 1 && 'leaves' in f ? f : null;
+}
+function motionOpeningFeatures(opening) {
+    const f = opening.opening_features;
+    return (opening.type === 'door' || opening.type === 'gate') && f?.version === 1 && !('leaves' in f) ? f : null;
+}
+/** One basis half-turn; callers supply intended physical angle before normalization. */
+function reparameterizeOpeningFeatures(opening, intendedAngle) {
+    if (!Number.isFinite(intendedAngle))
+        throw new Error('invalid_opening_angle');
+    const turns = Math.floor((intendedAngle + 90) / 180);
+    const result = structuredClone(opening);
+    result.angle = intendedAngle - 180 * turns;
+    if (result.angle === 0)
+        result.angle = 0;
+    if (Math.abs(turns % 2) !== 1)
+        return result;
+    const window = windowOpeningFeatures(result);
+    if (window) {
+        window.leaves.reverse();
+        for (const leaf of window.leaves)
+            if (leaf.hinge !== 'top')
+                leaf.hinge = leaf.hinge === 'start' ? 'end' : 'start';
+        window.side = window.side === 'negative' ? 'positive' : 'negative';
+    }
+    const motion = motionOpeningFeatures(result);
+    // Retained inactive direction also changes. Physical face is resolved by the carrier caller.
+    if (motion && (motion.mechanism === 'slide' || motion.slide_direction))
+        motion.slide_direction = openingSlideDirection(motion) === 'start' ? 'end' : 'start';
+    return result;
+}
+
+const validOpening = (value) => !!value && typeof value.id === 'string'
+    && [value.x, value.y, value.angle, value.length].every(item => typeof item === 'number' && Number.isFinite(item));
+/** Use the real type-specific symbol resolver; do not blindly toggle flip_v. */
+function openingFaceNormal(space, opening, flipV = !!opening.flip_v) {
+    const faceFlip = opening.type === 'gate' ? !flipV : flipV;
+    if (opening.host?.kind === 'partition') {
+        const carrier = space.partitions?.find(item => item.id === opening.host.id);
+        if (carrier) {
+            const dx = carrier.b[0] - carrier.a[0], dy = carrier.b[1] - carrier.a[1], length = Math.hypot(dx, dy);
+            const side = faceFlip ? 1 : -1;
+            if (length)
+                return [-dy / length * side, dx / length * side];
+        }
+    }
+    const rooms = (space.rooms || []).map(room => ({ ...room,
+        poly: roomPoly(room)?.map(point => point.map(value => value * 1000)) }));
+    const face = openingInnerFaceOffset(rooms, {
+        x: opening.x * 1000, y: opening.y * 1000, angle: opening.angle,
+        length: opening.length * 1000, flip_v: faceFlip,
+    }, space.walls || [], 1 / 240, Number(space.cell_cm) || 5, 1000 / 240, 1000);
+    const length = Math.hypot(face.ox, face.oy);
+    if (length)
+        return [face.ox / length, face.oy / length];
+    const angle = opening.angle * Math.PI / 180;
+    return [-Math.sin(angle) * face.side, Math.cos(angle) * face.side];
+}
+/** Run after the existing physical projection, before validating its complete candidate.
+ * `rotations` uses endpoint lineage during node operations; nearest-axis rotation
+ * is reserved for small canonical cleanup/rehost, not a substitute for that lineage.
+ * Reading/ACK never calls this adapter. Recomputing from the same before is idempotent. */
+function transportOpeningOrientations(before, after, rotations = new Map()) {
+    const old = new Map((Array.isArray(before.openings) ? before.openings : [])
+        .filter(validOpening).map(opening => [opening.id, opening]));
+    for (const opening of Array.isArray(after.openings) ? after.openings : []) {
+        if (!validOpening(opening))
+            continue;
+        const source = old.get(opening.id);
+        if (source?.opening_features?.version !== 1 || source.type !== opening.type)
+            continue;
+        // Invalid documents still belong to the strict schema, not a geometry
+        // reader exception before that schema can explain the malformed import.
+        if (source.type === 'window' && (!('leaves' in source.opening_features)
+            || !Array.isArray(source.opening_features.leaves)))
+            continue;
+        let delta = rotations.get(opening.id);
+        if (delta === undefined) {
+            delta = opening.angle - source.angle;
+            delta -= 180 * Math.floor((delta + 90) / 180);
+        }
+        const expected = source.angle + delta;
+        const intended = opening.angle + 180 * Math.round((expected - opening.angle) / 180);
+        const transformed = reparameterizeOpeningFeatures(source, intended);
+        opening.angle = transformed.angle;
+        opening.opening_features = transformed.opening_features;
+        if (motionOpeningFeatures(source)?.mechanism !== 'slide')
+            continue;
+        const previous = openingFaceNormal(before, source), radians = delta * Math.PI / 180;
+        const desired = [previous[0] * Math.cos(radians) - previous[1] * Math.sin(radians),
+            previous[0] * Math.sin(radians) + previous[1] * Math.cos(radians)];
+        const negative = openingFaceNormal(after, opening, false), positive = openingFaceNormal(after, opening, true);
+        const dot = (vector) => vector[0] * desired[0] + vector[1] * desired[1];
+        if (dot(positive) > dot(negative))
+            opening.flip_v = true;
+        else
+            delete opening.flip_v;
+    }
+    return after;
+}
+
+/**
+ * Stable, allow-listed persisted geometry.
+ *
+ * Mirrored by custom_components/houseplan/coordinate_canonicalization.py.
+ * Keep the precision, lattice formula and field allow-list in lockstep.
+ */
+function cloneJson(value) {
+    if (Array.isArray(value))
+        return value.map((item) => cloneJson(item));
+    if (value !== null && typeof value === 'object') {
+        const out = {};
+        for (const [key, item] of Object.entries(value))
+            out[key] = cloneJson(item);
+        return out;
+    }
+    return value;
+}
+function record$1(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value)
+        ? value : null;
+}
+function records(value) {
+    return Array.isArray(value)
+        ? value.filter((item) => record$1(item) !== null)
+        : [];
+}
+function isDecorBoxKind(value) {
+    return typeof value === 'string'
+        && DECOR_BOX_KINDS.includes(value);
+}
+function scalarFields(item, names) {
+    for (const name of names) {
+        if (Object.prototype.hasOwnProperty.call(item, name)) {
+            item[name] = canonicalizeNumber(item[name]);
+        }
+    }
+}
+function latticeFields(item, names) {
+    for (const name of names) {
+        if (Object.prototype.hasOwnProperty.call(item, name)) {
+            item[name] = canonicalizeLatticeCoordinate(item[name]);
+        }
+    }
+}
+function latticePoint(value) {
+    if (!Array.isArray(value))
+        return;
+    for (let index = 0; index < Math.min(2, value.length); index++) {
+        value[index] = canonicalizeLatticeCoordinate(value[index]);
+    }
+}
+function latticePoints(value) {
+    if (!Array.isArray(value))
+        return;
+    for (const item of value)
+        latticePoint(item);
+}
+function canonicalizeConfigGeometryInPlace(config) {
+    const result = config;
+    const root = record$1(result);
+    if (!root)
+        return result;
+    for (const space of records(root.spaces)) {
+        scalarFields(space, [
+            'plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle',
+        ]);
+        // Current structural carriers are correctly rounded projections of exact
+        // graph points. Applying the legacy nine-decimal/lattice policy here would
+        // move a point away from its canonical owner on an unrelated metadata Save.
+        const exactGraph = Number(root.model_version) >= 11 && record$1(space.plan_graph);
+        if (!exactGraph) {
+            for (const room of records(space.rooms)) {
+                latticeFields(room, ['x', 'y', 'w', 'h']);
+                latticePoints(room.poly);
+            }
+            for (const wall of records(space.walls)) {
+                latticePoint(wall.a);
+                latticePoint(wall.b);
+            }
+            for (const segment of records(space.wall_segments)) {
+                latticePoint(segment.a);
+                latticePoint(segment.b);
+            }
+        }
+        const openingBasis = records(space.openings).some(opening => opening.opening_features?.version === 1)
+            ? cloneJson(space) : null;
+        let openingAngleChanged = false;
+        for (const opening of records(space.openings)) {
+            const previousAngle = opening.angle;
+            if (!exactGraph)
+                latticeFields(opening, ['x', 'y']);
+            scalarFields(opening, ['angle', 'length']);
+            openingAngleChanged ||= previousAngle !== opening.angle;
+            const host = record$1(opening.host);
+            if (host && !exactGraph)
+                scalarFields(host, ['t']);
+        }
+        if (openingBasis && openingAngleChanged)
+            transportOpeningOrientations(openingBasis, space);
+        for (const decor of records(space.decor)) {
+            if (decor.kind === 'line')
+                latticeFields(decor, ['x1', 'y1', 'x2', 'y2']);
+            else if (isDecorBoxKind(decor.kind)) {
+                latticeFields(decor, ['x', 'y', 'w', 'h']);
+                scalarFields(decor, ['angle']);
+            }
+            else if (decor.kind === 'text') {
+                latticeFields(decor, ['x', 'y']);
+                scalarFields(decor, ['scale', 'angle']);
+            }
+        }
+        for (const stair of records(space.stairs)) {
+            // #663 stairs inherit furniture's continuous transform contract. A wall
+            // face may be an arbitrary half-thickness away from the grid, so only
+            // remove insignificant JSON noise; never pull the magnet result onto a
+            // lattice node.
+            scalarFields(stair, ['x', 'y', 'length', 'width', 'radius', 'angle']);
+        }
+        // Legacy-only read boundary; current v10 documents reject this field.
+        for (const draft of records(space.room_drafts))
+            latticePoints(draft.points);
+        if (!exactGraph)
+            for (const partition of records(space.partitions)) {
+                latticePoint(partition.a);
+                latticePoint(partition.b);
+            }
+        for (const column of records(space.wall_columns)) {
+            latticePoint(column.center);
+            if (column.shape === 'square')
+                scalarFields(column, ['angle']);
+        }
+        for (const span of records(space.open_spans)) {
+            latticePoint(span.a);
+            latticePoint(span.b);
+        }
+        // #780: LED strips snap to physical wall faces like stairs: JSON noise
+        // only, a face contact never moves onto a lattice node.
+        for (const strip of records(space.led_strips)) {
+            for (const point of Array.isArray(strip.points) ? strip.points : []) {
+                if (Array.isArray(point))
+                    scalarFields(point, ['0', '1']);
+            }
+        }
+    }
+    for (const marker of records(root.markers))
+        scalarFields(marker, ['angle']);
+    return result;
+}
+
+/** Persisted JSON objects are unordered; array order and scalar values are not. */
+function jsonValueEqual(left, right) {
+    if (left === right)
+        return true;
+    if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object')
+        return false;
+    if (Array.isArray(left) || Array.isArray(right)) {
+        return Array.isArray(left) && Array.isArray(right) && left.length === right.length
+            && left.every((value, index) => jsonValueEqual(value, right[index]));
+    }
+    const a = left, b = right;
+    const keys = Object.keys(a);
+    return keys.length === Object.keys(b).length && keys.every(key => Object.prototype.hasOwnProperty.call(b, key) && jsonValueEqual(a[key], b[key]));
+}
+
+/** Validate the authored numeric carrier before JSON cloning can turn NaN into null. */
+const finiteNumeric = (value) => Number.isFinite(value)
+    || typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value));
+function assertFiniteColumnInputs(space) {
+    if (space.wall_columns === undefined)
+        return;
+    if (!Array.isArray(space.wall_columns))
+        throw new TypeError('invalid-column-geometry');
+    for (const column of space.wall_columns) {
+        if (!column || !Array.isArray(column.center) || column.center.length !== 2
+            || !finiteNumeric(column.center[0]) || !finiteNumeric(column.center[1])
+            // #842 permits old numeric strings and absent/null defaults. Their
+            // existing write normalization still owns the conversion; coordinates
+            // never get the Number(null) / Number('') shortcut to zero.
+            || (column.cm != null && !finiteNumeric(column.cm))
+            || (column.angle != null && !finiteNumeric(column.angle))) {
+            throw new TypeError('invalid-column-geometry');
+        }
+    }
 }
 
 /**
@@ -5760,6 +6340,20 @@ function commitWallSegmentModel(input, options = {}) {
                 throw error;
             throw new WallSegmentModelError('invalid-room', String(error.message || 'plan-graph'));
         }
+    }
+    // Room creation can consume a partition without changing physical geometry.
+    // Its new room-side resolver may have the opposite natural normal.
+    for (const space of config.spaces || []) {
+        const source = (input?.spaces || [])
+            .find(item => item.id === space.id);
+        if (!source)
+            continue;
+        const promoted = (space.openings || []).filter((opening) => {
+            const old = source.openings?.find((item) => item.id === opening.id);
+            return old?.host?.kind === 'partition' && opening.host?.kind === 'wall';
+        });
+        if (promoted.length)
+            transportOpeningOrientations(source, { ...space, openings: promoted }, new Map(promoted.map((opening) => [opening.id, 0])));
     }
     config.model_version = WALL_SEGMENT_MODEL_VERSION;
     canonicalizeConfigGeometryInPlace(config);

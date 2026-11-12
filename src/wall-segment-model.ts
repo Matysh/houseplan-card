@@ -1010,7 +1010,8 @@ export function commitWallSegmentModel<T>(
   // Room creation can consume a partition without changing physical geometry.
   // Its new room-side resolver may have the opposite natural normal.
   for (const space of config.spaces || []) {
-    const source = ((input as any)?.spaces || []).find((item: any) => item.id === space.id);
+    const source = ((input as { spaces?: { id?: string; openings?: OpeningCfg[] }[] })?.spaces || [])
+      .find(item => item.id === space.id);
     if (!source) continue;
     const promoted = (space.openings || []).filter((opening: OpeningCfg) => {
       const old = source.openings?.find((item: OpeningCfg) => item.id === opening.id);

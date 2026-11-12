@@ -100,7 +100,8 @@ const out = await page.evaluate(async () => {
     result[`${type}PreservesExistingLength`] = c._openingDialog.lengthCm === originalLength;
     result[`${type}ClosesBindingPickers`] = !c._openingDialog.contactOpen && !c._openingDialog.lockOpen;
     result[`${type}ShowsExpectedFields`] = sr().querySelectorAll('.opening-entity-drop').length
-      === (type === 'passage' ? 0 : type === 'window' ? 1 : 2);
+      === (type === 'passage' || type === 'window' ? 0 : 2)
+      && (type !== 'window' || sr().querySelectorAll('[data-action="opening-leaf-edit"]').length === 2);
     if (type === 'gate') result.gateResetsHinge = c._openingDialog.flipH === false;
   }
 

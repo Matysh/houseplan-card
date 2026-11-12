@@ -462,8 +462,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/interior-window-light.test.mjs',
     because: '#1079 AC1: a closed contact must not close internal glass; the actual visibility and opaque-source tests distinguish glass from a door. Nightly execution only.',
     patches: [{file:'src/glow-scene.ts',
-      find:"    if (opening.type === 'window') return [{ opening, amount: 1 }];",
-      replace:"    if (opening.type === 'window') return [{ opening, amount: input.openingAmount(opening) }];"}],
+      find:"    if (opening.type === 'window') return [{ opening, amount: 1,",
+      replace:"    if (opening.type === 'window') return [{ opening, amount: input.openingAmount(opening),"}],
   },
   {
     id: 'internal-window-opens-exterior-remainder-1079',
@@ -6238,9 +6238,9 @@ const MUTANT_DEFINITIONS = [
     guard: 'node --test --test-name-pattern="complete allowed physical surface" test/space-copy.test.mjs',
     because: 'copied openings are geometry only and must not control the source contact or lock (#456 AC7)',
     patches: [{
-      file: 'src/space-copy.ts',
-      find: '    delete copied.contact;',
-      replace: '',
+      file: 'src/opening-features.ts',
+      find: '  delete result.contact; delete result.lock;',
+      replace: '  delete result.lock;',
     }],
   },
   {
@@ -6466,8 +6466,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/hp-dialog.ts",
-    "find": "      return html`<ha-dialog ${haDialogMotion()}\n        .hass=${this.hass}\n        .open=${live(!this._closing)}",
-    "replace": "      return html`<ha-dialog ${haDialogMotion()}\n        .hass=${this.hass}\n        .open=${true}"
+    "find": "      return html`<ha-dialog ${haDialogMotion()}\n        style=${scrimStyle}\n        .hass=${this.hass}\n        .open=${live(!this._closing)}",
+    "replace": "      return html`<ha-dialog ${haDialogMotion()}\n        style=${scrimStyle}\n        .hass=${this.hass}\n        .open=${true}"
   }
 ],
   },
@@ -9944,13 +9944,9 @@ const MUTANT_DEFINITIONS = [
     because: 'truncating toward zero maps every negative and fractional node to the wrong exact '
       + 'double, recreating topology drift even though the output still looks grid-like (#291)',
     patches: [{
-      file: 'src/coordinate-canonicalization.ts',
-      find: '  const scaled = value * LATTICE_GRID_N;\n'
-        + '  const nearest = Math.round(scaled);\n'
-        + '  const deviation = Math.abs(scaled - nearest);',
-      replace: '  const scaled = value * LATTICE_GRID_N;\n'
-        + '  const nearest = Math.trunc(scaled);\n'
-        + '  const deviation = Math.abs(scaled - nearest);',
+      file: 'src/coordinate-precision.ts',
+      find: '  const scaled = value * LATTICE_GRID_N, nearest = Math.round(scaled);',
+      replace: '  const scaled = value * LATTICE_GRID_N, nearest = Math.trunc(scaled);',
     }],
   },
   {
@@ -10016,10 +10012,10 @@ const MUTANT_DEFINITIONS = [
       + 'is deliberately outside the persisted coordinate allow-list (#291)',
     patches: [{
       file: 'src/coordinate-canonicalization.ts',
-      find: '  }\n  return value;\n}\n\n/** Existing scalar contract',
+      find: '  }\n  return value;\n}\n\n/** Three significant digits',
       // `canonicalizeNumber` объявлен как `unknown`, а функция возвращает `T`:
       // без приведения мутант падал на компиляции, а не на тесте (#569).
-      replace: '  }\n  return canonicalizeNumber(value) as T;\n}\n\n/** Existing scalar contract',
+      replace: '  }\n  return canonicalizeNumber(value) as T;\n}\n\n/** Three significant digits',
     }],
   },
   {
@@ -18079,8 +18075,8 @@ const MUTANT_DEFINITIONS = [
       + 'in place; the cached wedges must equal an uncached computation',
     patches: [{
       file: 'src/floor-geometry-key.ts',
-      find: "  index, bodies, windows.map((w) => `${w.id}:${w.x},${w.y},${w.angle},${w.length}`).join(';'),\n",
-      replace: "  index, bodies, windows.map((w) => w.id).join(';'), // mutant: a moved window keeps the key\n",
+      find: "  index, bodies, windows.map((w) => `${w.id}:${w.x},${w.y},${w.angle},${w.length}`\n",
+      replace: "  index, bodies, windows.map((w) => `${w.id}`\n",
     }],
   },
   // #814: пулы тел и туннелей по этажам.
