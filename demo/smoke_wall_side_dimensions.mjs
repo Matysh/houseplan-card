@@ -76,6 +76,21 @@ try {
     retired:window.__card.renderRoot.querySelectorAll('.rszmeasurehalo,.rszmeasureink,[data-hp=resize-length-label]').length,
     areas:window.__card.renderRoot.querySelectorAll('[data-hp=resize-area-label]').length,
   }));
+  const assertCameraAnchors=async()=>{
+    const frame=await page.evaluate(()=>{
+      const c=window.__card,root=c.renderRoot,svg=root.querySelector('svg.plan-svg');
+      const floor=svg.querySelector('[data-hp-plan-rotation-frame]')||svg;
+      return [...root.querySelectorAll('[data-hp="wall-side-dimension"]')].map(row=>{
+        const line=row.querySelector('[data-hp="dimension-witnesses"] line');
+        const from=JSON.parse(row.dataset.from),expected=new DOMPoint(...from).matrixTransform(floor.getScreenCTM());
+        const actual=new DOMPoint(line.x1.baseVal.value,line.y1.baseVal.value).matrixTransform(line.getScreenCTM());
+        return{id:row.dataset.interval,error:Math.hypot(actual.x-expected.x,actual.y-expected.y),
+          labelHeight:row.querySelector('rect').getBoundingClientRect().height};
+      });
+    });
+    assert.equal(frame.length,2);
+    assert.ok(frame.every(row=>row.error<=1&&Math.abs(row.labelHeight-16)<.1),JSON.stringify(frame));
+  };
   const click=async point=>{const p=await screen(point);await page.mouse.click(p.x,p.y);await settle();};
   const report={diagnostic:{remotePartitions:diagnosticCount,timings:[]}};
   await click([.4,.8]);
@@ -109,6 +124,30 @@ try {
   await page.waitForFunction(before=>Math.abs(window.__card._view.w-before)<1e-5&&!window.__card._cameraTransition.active,beforeZoom);await settle();
   assert.equal(await page.evaluate(()=>window.__card._geometryHistory.size),initialHistory);
   assert.equal(writes.length,0);
+
+  // #1397: compare the dimension witness with the actually painted wall in
+  // EACH held camera frame. A screenshot after mouseup missed this regression.
+  const panStart=await screen([.72,.82]),viewBeforePan=await page.evaluate(()=>({...window.__card._view}));
+  await page.mouse.move(panStart.x,panStart.y);await page.mouse.down();await settle();
+  const panRenders=await page.evaluate(()=>window.__dimensionHostRenders),panBuilds=(await dimensions()).builds;
+  for(let step=1;step<=6;step++) {
+    await page.mouse.move(panStart.x+step*9,panStart.y+step*5);await settle();
+    assert.equal(await page.evaluate(()=>window.__card._pointers.size),1,'pointer is still held');
+    await assertCameraAnchors();
+  }
+  assert.ok(await page.evaluate(before=>Math.hypot(window.__card._view.x-before.x,window.__card._view.y-before.y)>10,viewBeforePan),'native empty-space drag really moved the camera');
+  assert.equal(await page.evaluate(()=>window.__dimensionHostRenders),panRenders,'camera updates never render the full card for dimensions');
+  assert.equal((await dimensions()).builds,panBuilds,'pan only reprojects cached geometry');
+  await page.mouse.up();await settle();await assertCameraAnchors();
+  assert.equal(writes.length,0);assert.equal(await page.evaluate(()=>window.__card._geometryHistory.size),initialHistory);
+  const cameraAnchor=await screen([.7,.75]);await page.mouse.move(cameraAnchor.x,cameraAnchor.y);
+  const cameraWidth=await page.evaluate(()=>window.__card._view.w);await page.mouse.wheel(0,-120);
+  await page.waitForFunction(before=>window.__card._view.w<before,cameraWidth);await settle();await assertCameraAnchors();
+  await page.waitForFunction(()=>!window.__card._cameraTransition.active);await settle();await assertCameraAnchors();
+  await page.mouse.wheel(0,120);
+  await page.waitForFunction(before=>Math.abs(window.__card._view.w-before)<1e-5&&!window.__card._cameraTransition.active,cameraWidth);await settle();await assertCameraAnchors();
+  // Restore only the test's camera fixture, before the existing geometry gestures.
+  await page.evaluate(async view=>{const c=window.__card;c._view=view;c.requestUpdate();await c.updateComplete;},viewBeforePan);await settle();
 
   const bodyStart=await screen([.4,.8]),bodyEnd=await screen([.4,.84]);
   await page.mouse.move(bodyStart.x,bodyStart.y);await page.mouse.down();await page.mouse.move(bodyEnd.x,bodyEnd.y,{steps:5});

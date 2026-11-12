@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1397,
+  "baseStable": "v1.85.0",
+  "category": "line-fix",
+  "rationale": "Repair the live camera projection of the not-yet-released two-sided wall dimensions from #1381; no change to stable data or writers.",
+  "summary": {
+    "ru": "Размеры выбранной стены следуют за планом во время перетаскивания и масштаба.",
+    "en": "Selected-wall dimensions follow the plan throughout live pan and zoom."
+  }
+}

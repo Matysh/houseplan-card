@@ -1,6 +1,7 @@
 /** Four read-only adapters, one resolver and one screen-space renderer. The
  * owning native paint calls render(); there are no observers, polls or writes. */
-import {nothing,type TemplateResult} from 'lit';
+import {html,nothing,type TemplateResult} from 'lit';
+import {AsyncDirective,directive} from 'lit/async-directive.js';
 import type {HouseplanEditorRuntime} from './houseplan-editor-runtime';
 import {NORM_W,GRID_PITCH} from './canvas-constants';
 import {encodePoint,readAuthoredPoint} from './plan-exact';
@@ -19,6 +20,25 @@ import {renderWallSideDimensions} from './wall-side-dimension-render';
 
 interface Request {kind:'draw'|'node'|'resize'|'selection';before:NodeMoveSpace|null;candidate:NodeMoveSpace;ids:readonly string[];owner:object|string}
 interface View {x:number;y:number;w:number;h:number}
+interface CameraPort {
+  subscribe(paint:(view:View)=>void):()=>void;
+  content(view:View):TemplateResult|typeof nothing;
+}
+/** The camera repaints only this mounted child part, not other measurement
+ * layers (which have their own camera transforms) or the host Lit tree. */
+class CameraDimensions extends AsyncDirective {
+  private port:CameraPort|null=null;
+  private release:(()=>void)|null=null;
+  private readonly paint=(view:View)=>this.setValue(this.port!.content(view));
+  private connect():void {if(this.isConnected&&!this.release&&this.port)this.release=this.port.subscribe(this.paint);}
+  render(port:CameraPort,content:TemplateResult) {
+    if(this.port!==port){this.release?.();this.release=null;this.port=port;}
+    this.connect();return content;
+  }
+  protected disconnected():void {this.release?.();this.release=null;}
+  protected reconnected():void {this.connect();}
+}
+const cameraDimensions=directive(CameraDimensions);
 type BasisNotice='axis'|'boundary'|null;
 const basisNotice=(intervals:readonly DimensionInterval[]):BasisNotice=>
   intervals.some(i=>i.source==='axis')?'axis':intervals.some(i=>i.source==='boundary')?'boundary':null;
@@ -34,6 +54,14 @@ export class WallSideDimensionEditor {
   private basisNotice:BasisNotice=null;
   private basisEpoch=0;
   private hintListeners=new Set<()=>void>();
+  private cameraPaint:((view:View)=>void)|null=null;
+  private readonly cameraPort:CameraPort={
+    content:view=>this.content(view),
+    subscribe:paint=>{
+      if(!this.disposed)this.cameraPaint=paint;
+      return()=>{if(this.cameraPaint===paint)this.cameraPaint=null;};
+    },
+  };
   constructor(private readonly runtime:HouseplanEditorRuntime) {
     const measure=()=>{
       if(this.disposed)return;
@@ -138,6 +166,13 @@ export class WallSideDimensionEditor {
     return intervals;
   }
   public render(view:View):TemplateResult|typeof nothing {
+    const content=this.content(view);
+    return content===nothing?nothing:html`${cameraDimensions(this.cameraPort,content)}`;
+  }
+  public paintCamera(view:View):void {
+    if(!this.disposed&&this.runtime.host.isConnected)this.cameraPaint?.(view);
+  }
+  private content(view:View):TemplateResult|typeof nothing {
     const request=this.request();
     if(!request){this.publishBasis(null);this.resetLayout();return nothing;}
     if(this.owner!==request.owner){this.resetLayout();this.owner=request.owner;}
@@ -209,5 +244,5 @@ export class WallSideDimensionEditor {
   public get sourceFallback():boolean {return this.sourceHint==='axis';}
   public get active():boolean {return !!this.request();}
   public retire():void {this.publishBasis(null);this.resetLayout();this.source=null;this.geometry.clear();this.drawNext=null;}
-  public dispose():void {this.disposed=true;this.retire();this.hintListeners.clear();}
+  public dispose():void {this.disposed=true;this.retire();this.hintListeners.clear();this.cameraPaint=null;}
 }

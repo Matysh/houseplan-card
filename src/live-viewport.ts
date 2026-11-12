@@ -43,6 +43,7 @@ interface LiveViewportHost {
   _zoom: number;
   readonly _zoomBadge?: { percent: number; hidden: boolean };
   readonly _modeSceneClip?: string | null;
+  _editorRuntime?: {wallDimensions?: {paintCamera(view:LiveViewBox):void}} | null;
   renderRoot: ParentNode;
 }
 
@@ -329,6 +330,7 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
     state.anchor = paintLiveViewport(
       host.renderRoot, state.painted, next, state.anchor, { keepSceneLayer: true, force, sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip },
     );
+    host._editorRuntime?.wallDimensions?.paintCamera(next.view);
     return;
   }
   state.pending = next;
@@ -343,6 +345,7 @@ export function scheduleHouseplanViewport(value: object, now = false, force = fa
     state.anchor = paintLiveViewport(
       root, state.painted, next, state.anchor, { keepSceneLayer: true, sceneExposureClip: host._modeSceneClip ?? undefined, lockSceneAnchor: !!host._modeSceneClip },
     );
+    host._editorRuntime?.wallDimensions?.paintCamera(next.view);
   });
 }
 

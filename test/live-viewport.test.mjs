@@ -8,7 +8,7 @@ import {
   liveViewBoxText,
   inheritedSceneClip,
   liveGridBounds,
-  paintLiveViewport, commitHouseplanViewport, paintedHouseplanViewBox, disposeHouseplanViewport,
+  paintLiveViewport, scheduleHouseplanViewport, commitHouseplanViewport, paintedHouseplanViewBox, disposeHouseplanViewport,
 } from '../test-build/live-viewport.js';
 
 test('live viewport projects pan and zoom from the last complete frame', () => {
@@ -86,6 +86,28 @@ const fakeRoot = () => {
 
 const frame = (x, y, w = 1000, h = 500) => ({
   view: { x, y, w, h }, floor: { x, y, w, h }, zoom: 1,
+});
+
+test('#1397 screen-space dimensions paint after the same immediate/coalesced camera frame',t=>{
+  const oldRaf=globalThis.requestAnimationFrame,oldCancel=globalThis.cancelAnimationFrame;
+  const queued=new Map();let id=0;
+  globalThis.requestAnimationFrame=callback=>{queued.set(++id,callback);return id;};
+  globalThis.cancelAnimationFrame=key=>queued.delete(key);
+  const root=fakeRoot(),seen=[],host={renderRoot:root,_zoom:1,view:frame(0,0).view,
+    _baseVb:()=>[0,0,1000,500],_viewOr:()=>host.view,_floorView:view=>view,
+    _editorRuntime:{wallDimensions:{paintCamera:view=>seen.push({view:{...view},projection:root.layer.style.transform})}}};
+  t.after(()=>{disposeHouseplanViewport(host);globalThis.requestAnimationFrame=oldRaf;globalThis.cancelAnimationFrame=oldCancel;});
+  commitHouseplanViewport(host);
+  host.view=frame(30,20).view;scheduleHouseplanViewport(host,true);
+  assert.deepEqual(seen,[{view:host.view,projection:'translate(-3%,-4%) scale(1,1)'}]);
+  host.view=frame(40,30).view;scheduleHouseplanViewport(host);
+  host.view=frame(60,40).view;scheduleHouseplanViewport(host);
+  assert.equal(queued.size,1);assert.equal(seen.length,1,'no independent measurement timer');
+  const [key,paint]=[...queued][0];queued.delete(key);paint();
+  assert.deepEqual(seen.at(-1),{view:host.view,projection:'translate(-6%,-8%) scale(1,1)'});
+  assert.equal(seen.length,2,'only the latest coalesced camera is projected');
+  host.view=frame(70,45).view;scheduleHouseplanViewport(host);disposeHouseplanViewport(host);
+  assert.equal(queued.size,0,'a retired camera cannot repaint dimensions later');
 });
 
 test('#1081 grid exposure covers incoming edges and changes only on the existing viewBox budget', () => {
