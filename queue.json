@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 9749,
+  "revision": 9750,
   "nextTicket": 378,
   "nextFence": 378,
   "tasks": {
@@ -4042,7 +4042,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794483224351,
       "reviewEntry": 6,
-      "patchId": "5093b4ac9d6ed9550d7bb47e9a2618b90239f759",
+      "patchId": "ceb3da8d09075edc7c000ce2b996a990023370f5",
       "changedFiles": [
         "demo/golden/harness.mjs",
         "demo/smoke_device_contact_editor_frame.mjs",
@@ -4063,9 +4063,11 @@
         "scripts/config-compatibility-catalog.mjs",
         "scripts/config-compatibility-inventory.json",
         "scripts/mutation-registry.mjs",
+        "src/editors/properties/dimension-hint.ts",
         "src/editors/properties/editor.ts",
         "src/editors/properties/selection.ts",
         "src/editors/properties/strings.ts",
+        "src/editors/properties/surface.ts",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts",
         "src/live-editor.ts",
@@ -4580,10 +4582,11 @@
     "token": "377:finish:17fb671e-cad3-492e-90ec-3c19a88ffe94:finish:1:admit",
     "fence": 377,
     "materialSha": "305db6871373c731cc8e38755820d3526412d265",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c970836c383ce294aeec16069657c546ace2df1b",
+    "phase": "testing",
     "admittedAt": 1794483230346,
-    "expiresAt": 1794483530346
+    "expiresAt": 1794483538545,
+    "patchId": "ceb3da8d09075edc7c000ce2b996a990023370f5"
   },
   "events": {
     "github:42975364468:1:label:spec-request": {
@@ -5016,6 +5019,10 @@
     },
     "finish:694a3206-e83a-456d-9e89-baef740322cc:finish:3:return": {
       "digest": "e0cbb7eb270c69ea531a8a87f125d9f559094ac3302416817d7a6ed2b4baab63",
+      "issue": 1381
+    },
+    "finish:17fb671e-cad3-492e-90ec-3c19a88ffe94:finish:2:synchronized": {
+      "digest": "f0f9fea5031badba763c981acd529756e05c1c423dd98f2ae5f80773d661f9b1",
       "issue": 1381
     },
     "github:42977538367:1:label:spec-request:spec-resubmitted:1024": {
