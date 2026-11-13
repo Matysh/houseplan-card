@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10571,
+  "revision": 10572,
   "nextTicket": 397,
   "nextFence": 397,
   "tasks": {
@@ -4481,7 +4481,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1401-stable-golden",
-      "materialSha": "f7fed70320f70d1358321ccc7bba7b807d64441f",
+      "materialSha": "24f98e2081b460f7b14a76a186155b574a6bbb45",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 396,
@@ -4489,7 +4489,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794554640436,
       "reviewEntry": 3,
-      "patchId": "22622cc3237d314a24273cc63374200f8da1a1b1",
+      "patchId": "b22d3e336d74fa50532349aa3f0a414c0552c4d9",
       "changedFiles": [
         "demo/golden/baselines/approved-ui-info-dark-1119.png",
         "demo/golden/baselines/approved-ui-info-light-1119.png",
@@ -4663,6 +4663,7 @@
         "demo/smoke_golden_harness_input.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
+        "docs/testing/1401-baseline-context.json",
         "docs/testing/1401-golden-review.json"
       ],
       "notice": {
@@ -5027,11 +5028,12 @@
     "worker": "finish",
     "token": "396:finish:fb78bf6f-6852-4a53-8c51-6a5a5690e650:finish:1:admit",
     "fence": 396,
-    "materialSha": "f7fed70320f70d1358321ccc7bba7b807d64441f",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "24f98e2081b460f7b14a76a186155b574a6bbb45",
+    "expectedBase": "b6109d28e371e2754202fd52f65bbe2bee3cadd4",
+    "phase": "testing",
     "admittedAt": 1794554644645,
-    "expiresAt": 1794554944645
+    "expiresAt": 1794554958570,
+    "patchId": "b22d3e336d74fa50532349aa3f0a414c0552c4d9"
   },
   "events": {
     "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:2:synchronized": {
@@ -5128,6 +5130,10 @@
     },
     "github:43384138819:1:completions:metadata:eb1b3b99-4c33-466b-9591-48aef50971a1:task-notice:1401::": {
       "digest": "6533bfa465b2b71015fe4b53a9cc01109b00299f572ed7b7dfebbf4d48201da5",
+      "issue": 1401
+    },
+    "finish:fb78bf6f-6852-4a53-8c51-6a5a5690e650:finish:2:synchronized": {
+      "digest": "23030acd5f22b13acc39d364158c1865fcc52665d7c8668290165e2db1020d27",
       "issue": 1401
     },
     "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d": {
