@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10569,
-  "nextTicket": 396,
+  "revision": 10570,
+  "nextTicket": 397,
   "nextFence": 396,
   "tasks": {
     "1024": {
@@ -4481,14 +4481,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1401-stable-golden",
-      "materialSha": "65ed437963bab21315af7c87f663e9485be2ae3d",
+      "materialSha": "f7fed70320f70d1358321ccc7bba7b807d64441f",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 394,
-      "queued": false,
+      "ticket": 396,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794553396994,
-      "reviewEntry": 2,
+      "readyAt": 1794554640436,
+      "reviewEntry": 3,
       "patchId": "22622cc3237d314a24273cc63374200f8da1a1b1",
       "changedFiles": [
         "demo/golden/baselines/approved-ui-info-dark-1119.png",
@@ -4685,20 +4685,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1401:2:22622cc3237d314a24273cc63374200f8da1a1b1:9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
-      "reviewMaterial": {
-        "materialSha": "65ed437963bab21315af7c87f663e9485be2ae3d",
-        "expectedBase": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
-        "patchId": "22622cc3237d314a24273cc63374200f8da1a1b1"
-      },
-      "reviewRetry": {
-        "requestId": "review:1401:2:22622cc3237d314a24273cc63374200f8da1a1b1:9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
-        "eventId": "github:43383130813:1:tick:0:review-retry",
-        "at": 1794553499752,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1401:2:22622cc3237d314a24273cc63374200f8da1a1b1:9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
         "at": 1794553978449
@@ -5035,7 +5021,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1401
+  ],
   "active": null,
   "events": {
     "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:2:synchronized": {
@@ -5253,6 +5241,28 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "b6109d28e371e2754202fd52f65bbe2bee3cadd4"
+      }
+    },
+    "finish:fb78bf6f-6852-4a53-8c51-6a5a5690e650": {
+      "digest": "9044b0e96cd4e7c72155be57a7fc83bb207aa7b544a8adb3e2a96a9f0a960b69",
+      "issue": 1401,
+      "message": {
+        "kind": "queued",
+        "issue": 1401,
+        "at": 1794554640436,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f7fed70320f70d1358321ccc7bba7b807d64441f",
+        "evidence": {
+          "id": "20261113T070333453-bcf36e7c",
+          "name": "Тесты для задачи #1401 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T070333453-bcf36e7c/report.json",
+          "materialSha": "65ed437963bab21315af7c87f663e9485be2ae3d",
+          "status": "passed",
+          "finishedAt": "2026-11-13T07:04:35.256Z",
+          "failures": []
+        }
       }
     }
   },
