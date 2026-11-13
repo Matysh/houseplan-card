@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11036,
+  "revision": 11037,
   "nextTicket": 407,
   "nextFence": 407,
   "tasks": {
@@ -5095,6 +5095,10 @@
       "digest": "2481118e4ed1902b025a4f04106983602808a80713b1f67be3879d2ff0b44b98",
       "issue": 1409
     },
+    "github:43423982826:1:completions:message:447c278d8a1a641bbc950e46d89f5b97317533903fbe180031bced91bcfc0758": {
+      "digest": "d9a19f2d99ba464c89a7913760e1dd06136af9a884d1a2ec53a2264f51d045a6",
+      "issue": 1409
+    },
     "finish:f76cc587-6ad7-40b8-a45d-f746b1499005": {
       "digest": "fb12ceba7357ab9bb07da491a355a7ed7584be7db860b7b820042acb52f0025e",
       "issue": 1409,
@@ -5141,7 +5145,8 @@
           "entry": 1,
           "detail": "Браузер: device battery tooltip: failed",
           "eventId": "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:3:return:return:1409"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:4b189f7f-c0f5-4477-b36a-8a79032d902b": {
