@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11679,
+  "revision": 11680,
   "nextTicket": 419,
   "nextFence": 419,
   "tasks": {
@@ -4983,7 +4983,8 @@
         "reviewChanges": "Исследованы прямые `host.hass` в editor runtime, Optimize и IO на dev `281365641`. Выбран набор портов, а не прокси полного HA. Переход ограничен plan-путём: smart-home методы общего монолита остаются в своих владельцах. Для ревью важнее всего authority identity, подписки и отсутствие обхода через presentation context. #1394 расширяет тот же контракт capabilities; второго контракта не создаёт. Продукт пока не менялся, продуктовые тесты не запускались.\n\n### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43515256909.\n- Блокер bootstrap без hass → включены _renderBody/_loadFromServer/retry/_renderLife/plan live sync; введён subscribeEnvironment и revision, один driver вместо параллельных hass/host ticks. Указаны ready/disconnect и семантика tick≠authority.\n- Блокер presentation/spy → задан точный HostPresentationContext (language/locale/localize/themes), разрешён только UI bridge .hass, перечислены запрещённые поля и наблюдаемый Proxy-spy/command log.\n- Приняты уточнения единого authorityKey и всех его потребителей, #890 reconnect, plan events/disposer, authoritative registry и переноса Bearer fallback внутрь адаптера.\nРедакция 2, продуктовых изменений и прогонов нет; после проверки формы новая редакция передаётся на S4.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     },
     "github:43517454379:1:spec:1391:spec-request:spec-resubmitted:1391": {
