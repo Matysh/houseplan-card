@@ -54,6 +54,7 @@ try {
   check('#896 component-owned adopted sheet remains active during capture', lazy.color, 'rgb(10, 20, 30)');
   const marker = page.locator('houseplan-card').locator('[data-hp="device"][data-id="d_light1"]');
   await marker.hover(); await page.evaluate(() => window.__hpTest.settled());
+  await page.locator('[data-hp="live-tooltip"]').waitFor({ state: 'visible' });
   // CSS static sheets cannot suppress the accepted JS/WAAPI tooltip enter.
   // Observe its actual finite completion without changing reduced-motion or pixels.
   await waitForUiKitPaint(page);
