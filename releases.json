@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 737,
+  "revision": 738,
   "active": "1.85.2-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -82521,8 +82521,11 @@
       "sourceSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
       "sha": "17d4d17b9973ffd53d59bb477eb353902f23de06",
       "runner": null,
-      "running": null,
-      "status": "prepared",
+      "running": {
+        "id": null,
+        "sha": "17d4d17b9973ffd53d59bb477eb353902f23de06"
+      },
+      "status": "testing",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -87513,7 +87516,8 @@
     "beta-1024-report:20261112T235858266-e7676a09": "f8ac0126da9e5632a0c1ab97d30b29fc8f6ce272d7e3d72b68333f29124abfbd",
     "beta-1024-metrics:20261112T235858266-e7676a09": "fc1029ef6ebaf0f15560b9515004bd14388e3e4321f6d7743e8cab3b8460916d",
     "release-1-85-2-beta-1-repairs-17d4d17b9973ffd53d59bb477eb353902f23de06": "53c2d0071c3e402a71197a826e081e3132c5f957b77c405fdea555d6b45ba671",
-    "release-1-85-2-beta-1-reused-fix-reviews-17d4d17b9973ffd53d59bb477eb353902f23de06": "01b1b424a230f744d873bccb02809d29455e2e32acd25ca876b89f2ae86d4050"
+    "release-1-85-2-beta-1-reused-fix-reviews-17d4d17b9973ffd53d59bb477eb353902f23de06": "01b1b424a230f744d873bccb02809d29455e2e32acd25ca876b89f2ae86d4050",
+    "release-1-85-2-beta-1-run-final-17d4d17b9973ffd53d59bb477eb353902f23de06": "b65232d2e023f5c1c1d8ee32042c84ad530050ce8eebb43406fb1d2940a2c751"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
