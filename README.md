@@ -21,7 +21,7 @@ the area's devices appear automatically. You can immediately see where a light
 is on, a door is open, a room is too cold, Zigbee signal is weak, or a leak
 sensor has fired.
 
-<img width="1000" height="1000" alt="houseplan-demo-v2" src="https://github.com/user-attachments/assets/8a7db08f-aca3-4b44-bc7b-46d79a928b45" />
+<img width="800" height="700" alt="houseplan-demo-v3-800x700" src="https://github.com/user-attachments/assets/23f21084-b94e-4108-b133-f13891e53dfd" />
 
 [▶ Watch the video on YouTube](https://www.youtube.com/watch?v=DAG92u8xZKY)
 
