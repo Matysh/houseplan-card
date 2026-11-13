@@ -94,7 +94,7 @@ try {
   await page.mouse.move(p.x,p.y); await page.keyboard.down('Shift');
   await page.waitForFunction(() => { const d=window.__card._decorDraft;
     return d && d.b[0]!==d.a[0] && d.b[1]!==d.a[1]
-      && Math.abs(d.b[0]-d.a[0])===Math.abs(d.b[1]-d.a[1]);
+      && Math.abs(Math.abs(d.b[0]-d.a[0])-Math.abs(d.b[1]-d.a[1]))<1e-8;
   });
   const boundaryPreview=[...(await state()).draft.b];
   await page.mouse.click(p.x,p.y); await page.keyboard.up('Shift'); await settle();
