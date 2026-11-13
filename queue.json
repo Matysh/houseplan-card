@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10259,
-  "nextTicket": 388,
+  "revision": 10260,
+  "nextTicket": 389,
   "nextFence": 388,
   "tasks": {
     "1024": {
@@ -4422,6 +4422,20 @@
         "status": "published",
         "sourceSha": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26"
       }
+    },
+    "1400": {
+      "issue": 1400,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1400-grid-paint",
+      "materialSha": "098e1eb656dcdf2478915476251449972232d814",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 388,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794546663013,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4665,7 +4679,9 @@
       "runId": 43369049570
     }
   },
-  "waiting": [],
+  "waiting": [
+    1400
+  ],
   "active": null,
   "events": {
     "dev-build:43369536476:1:1399": {
@@ -4678,6 +4694,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26"
+      }
+    },
+    "finish:e2637d67-d71b-4801-bf6e-9e7bccad8884": {
+      "digest": "f58df719cb44cd43d1c6516ce92b65c746da54504149644b0518bd7c55feb876",
+      "issue": 1400,
+      "message": {
+        "kind": "queued",
+        "issue": 1400,
+        "at": 1794546663013,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "098e1eb656dcdf2478915476251449972232d814"
       }
     }
   },
