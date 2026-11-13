@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 802,
+  "revision": 803,
   "active": "1.85.2-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -91451,7 +91451,7 @@
         "sha": "cd101b53c63eae4cfb41df5f24936c359c792cc3",
         "requestId": "ship-review:b413e7438855d7bcc9f31b59bc4b9b2e9e4da204f69c3089a82dc58f6a983492",
         "selectionDigest": "218785015c86f68f1918bb7f3abab5ad1e98e752731d2288adbb961d5e7daff6",
-        "status": "pending",
+        "status": "accepted",
         "inventoryComplete": true
       }
     }
@@ -96226,7 +96226,8 @@
     "beta2-20261113-create": "c21a575b7eb56761879b1f5847aed78fc740861893a29aa79fef4394df95b1fe",
     "beta2-20261113-versions": "070225c5397353cb1819832d6935c7697f9f9412a101674a5058a2df9b1226f2",
     "beta2-20261113-run-started": "813e031984121b80493278b9c2fcdd7e640476a395a08c29fa30082897673bfe",
-    "ship-review:prepare:afb08d90-9d25-4e46-8bcd-478f9057fc3c": "b016553e2dd116ac6d42a93e3bcc62089f07d9f2e68fd92ab6ece1ef8209f330"
+    "ship-review:prepare:afb08d90-9d25-4e46-8bcd-478f9057fc3c": "b016553e2dd116ac6d42a93e3bcc62089f07d9f2e68fd92ab6ece1ef8209f330",
+    "ship-review:result:6c280f7d-61a8-4cec-8988-3ca978a21293": "6b87e359edc29fc43528d5e865719ea1dc5c009dfd454d2442f2bef54fe241ff"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -110015,7 +110016,100 @@
         ],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "version": 1,
+        "kind": "ship-batch",
+        "requestId": "ship-review:b413e7438855d7bcc9f31b59bc4b9b2e9e4da204f69c3089a82dc58f6a983492",
+        "candidateId": "1.85.2-beta.2",
+        "base": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
+        "materialSha": "cd101b53c63eae4cfb41df5f24936c359c792cc3",
+        "selectionDigest": "218785015c86f68f1918bb7f3abab5ad1e98e752731d2288adbb961d5e7daff6",
+        "releaseVersion": "v1.85.2-beta.2",
+        "workflowRunId": 43445544459,
+        "workflowRunAttempt": 1,
+        "verdict": "accepted",
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Разобраны четыре pending-задачи пакета (#1402, #1410, #1411, #1412). Ни одна не содержит High-дефекта, бету они не задерживают. #1402 убирает действительно мёртвый экспорт и тест, который описывал уже несуществующее поведение. #1410 исправляет причину проблемы: общее правило `cursor:text` больше не применяется к кнопкам, поэтому у кнопки выбора источника снова работает собственное правило `.hpf-pick { cursor:pointer }`. #1411 склеивает неразрывными пробелами название показателя, значение и единицу. Аварийный перенос `overflow-wrap:anywhere` у тултипа сохраняется, горизонтального переполнения нет. Неблокирующий побочный эффект: NBSP применяется ко всему `valueBadge.fullText`, поэтому длинное свободное текстовое состояние сущности будет переноситься посреди слова, а не по пробелам. #1412 только добавляет `data-hp=\"live-tooltip\"` к существующему div; селектор `[data-hp-live-tip]`, через который работает runtime, остаётся, контракт и документация согласованы. Вердикт: accept, замечания вынесены в improvements.",
+          "understanding": "#1402: после #1170 функция `preflightVersionsDiffer` осталась без потребителей. Поиск по head находит её только в legacy-ревью и в устаревшем собранном HACS-бандле `custom_components/.../optimize-plans-dialog-*.js`, в src и test её нет. Коммит удаляет определение, импорт и тест; остальные тесты preflightDiagnostics не тронуты.\n\n#1410: `textFieldsCss` (src/styles/form-kit.styles.ts:169) в параметризованном и компактном режимах выдавал правило `:is(selectors):not(select):not(:disabled) { cursor:text; }`. Для диалогов селекторы включают `${form} .hpf-select` (строка 330), этому селектору соответствует и `button.hpf-select.hpf-pick`. Специфичность `:is(...)` с hp-dialog-веткой превосходила `${form} .hpf-pick { cursor:pointer }` (строка 557), поэтому на кнопке был I-beam. Теперь в правило добавлен `:not(button)`, и у кнопки побеждает `cursor:pointer` из .hpf-pick. Дочерние `b` и `.hpf-pick-ref` своего курсора не задают и наследуют pointer. Правила для disabled (строка 193 и formKitDisabledCss) не менялись.\n\n#1411: в `deviceTipContent` (src/live-hover.ts:112–136) `metricText` заменяет ASCII-пробелы на U+00A0 в `valueBadge.fullText`, в `LQI <n>` и в строке батареи. Модель и разделители ` · ` остаются обычными, поэтому перенос по-прежнему возможен между показателями. Второй коммит (4ee99d9e1) выносит `metricText` за пределы вызова `deviceBatteryTipText`, чтобы единственная точка мутации, на которую рассчитан mutation-gate, осталась прежней. Отображение в syncTip/appendMeta (строки 305–318) пишет строку в textContent; стиль `.tip[data-hp-live-tip]` берёт helpSurfaceStyle с `max-width:min(320px,…)`, `white-space:normal; overflow-wrap:anywhere` (src/styles/help-surface.styles.ts). Группа переносится целиком, а сверхдлинный токен рвётся аварийно.\n\n#1412: в шаблоне (src/houseplan-card.ts:12914) к div тултипа добавлен `data-hp=\"live-tooltip\"`, а `data-hp-live-tip` сохранён. Runtime находит элемент через `[data-hp-live-tip]` (live-hover.ts:266), CSS тоже (chrome.styles.ts:169). Запись в контракте (`elements:[\"div\"]`, since 1.85.2-beta.2, audience test) соответствует структурным проверкам test/data-hp-contract.test.mjs:70–94. Проверка «каждое публичное значение есть в src» выполняется: значение задано статически в шаблоне.",
+          "analysis": [
+            {
+              "topic": "#1402: удаление мёртвого экспорта",
+              "assessment": "Удаление корректно и полно для исходников. Потребителей нет ни в src, ни в test. Проверка отсутствия ложной подсказки preflight_update_hint, по словам исполнителя, остаётся в других тестах failed preflight. Устаревший HACS-бандл ещё экспортирует функцию, но это снимок прошлого релиза, который обновляется на шаге release; дефектом задачи это не является.",
+              "evidence": "search `preflightVersionsDiffer` по head: только legacy/reviews/*, legacy/specs/512-* и custom_components/houseplan/frontend/houseplan-assets/optimize-plans-dialog-DGgNZtaS.js; git_log по бандлу: последнее обновление в release-коммите v1.84.0-beta.1."
+            },
+            {
+              "topic": "#1410: курсор над кнопкой выбора источника",
+              "assessment": "Исправлена причина: общее правило текстовых полей перестало задавать курсор кнопкам. Вариант лучше, чем добавлять более специфичный override для marker-state-source, и соответствует требованию «исправить у владельца, без глобального переопределения input». Затронуты все вызовы textFieldsCss. Если в их selectors попадают другие button (например, `.hp-properties .hp-prop-control`), они теряют ошибочный `cursor:text` и показывают собственный или стандартный курсор кнопки. Это не регрессия: I-beam на кнопке всегда был ошибкой. Поле поиска (input) и disabled-ветки не затронуты.",
+              "evidence": "src/styles/form-kit.styles.ts:187 (`:not(button)`), :330 (селекторы `.hpf-input, .hpf-select` и hp-dialog-ветка), :554–557 (`.hpf-pick { cursor:pointer }`), :193 (disabled not-allowed для компактного режима). Нативный замер исполнителя: до правки text, после pointer; поиск text; disabled not-allowed (artifacts/issue1410, по описанию, сам не запускал)."
+            },
+            {
+              "topic": "#1411: неразрывная группа показателя",
+              "assessment": "Механизм простой и рабочий: внутри показателя NBSP, между показателями обычный пробел после «·». При `overflow-wrap:anywhere` браузер ломает токен произвольно только тогда, когда в строке нет обычных точек переноса, поэтому «LQI 172» переходит на следующую строку целиком, а горизонтального переполнения не бывает. Удачно, что NBSP применяется к выходному тексту, а `deviceBatteryTipText` остаётся чистой и единственной точкой мутации. Слабое место: `valueBadge.fullText` — это не только «число + единица», а любое отформатированное состояние или атрибут сущности, в том числе свободный текст text-сенсора. Такая строка целиком станет одним неразрывным токеном и при ширине больше примерно 320 px разорвётся посреди слова, тогда как раньше переносилась по пробелам. То же касается локализованной строки батареи «Low battery» и ей подобных: короткие фразы помещаются, проблем нет. Это Low: читаемость редкого случая, а не поломка и не переполнение.",
+              "evidence": "src/live-hover.ts:112–135; src/device-value-badge.ts:218, 250–251 (fullText = formatAttribute/состояние, произвольный текст); src/styles/help-surface.styles.ts:3,8 (max-width 320px, overflow-wrap:anywhere); тесты test/device-battery-tip.test.mjs обновлены под NBSP; demo/smoke_device_battery_tooltip.mjs нормализует NBSP при сравнении."
+            },
+            {
+              "topic": "#1412: публичный test hook тултипа",
+              "assessment": "Минимальное аддитивное изменение. Внутренний атрибут и все runtime-селекторы сохранены, поэтому поведение hover, анимации и размещение не меняются. Других потребителей generic `[data-hp]`, на которые мог бы повлиять новый атрибут, нет: единственный `closest('[data-hp]')` в houseplan-card.ts:1149 работает от activeElement, а тултип не фокусируется и имеет pointer-events:none. Контракт проходит структурные инварианты, документация §7.5 STYLING-HOOKS согласована с JSON.",
+              "evidence": "src/houseplan-card.ts:12914; src/live-hover.ts:266; src/styles/chrome.styles.ts:169; docs/data-hp-contract.json (hooks.live-tooltip); test/data-hp-contract.test.mjs:63–94."
+            },
+            {
+              "topic": "Взаимодействие задач пакета",
+              "assessment": "#1411 и #1412 затрагивают один тултип, но не конфликтуют: #1412 меняет только атрибут контейнера, #1411 — только текст строк. Companion-E2E #50, который читает видимый текст через новый hook, получит строки с U+00A0. Внешнему тесту нужно нормализовать NBSP так же, как это сделано в demo/smoke_device_battery_tooltip.mjs, иначе возможны ложные несовпадения при строгом сравнении строк. Это вопрос companion-тестов, а не продукта. #1410 и #1402 изолированы.",
+              "evidence": "demo/smoke_device_battery_tooltip.mjs (replace(/ /g,' ')); docs/STYLING-HOOKS.md (текст hook: «reading visible text»)."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "#1411: сузить применение NBSP для `valueBadge.fullText`. Можно склеивать только короткие строки, например не длиннее 24–32 символов, или только числовое значение с единицей; длинное свободное состояние text-сенсора тогда останется переносимым по пробелам. Выгода: длинный текст не рвётся посреди слова при ширине 320 px. Цена: одна дополнительная ветка в `metricText` и тест на длинную строку. Сейчас это Low: переполнения нет, страдает только читаемость редкого случая.",
+            "#1411/#1412: в документацию hook `live-tooltip` (docs/STYLING-HOOKS.md или description в контракте) стоит добавить, что видимый текст показателей содержит U+00A0. Тогда внешний HA E2E #50 будет нормализовать пробелы так же, как demo-smoke, и не получит ложных несовпадений текста.",
+            "#1410: для профилактики рядом с правилом можно оставить короткий комментарий: почему кнопки исключены (picker-кнопки задают свой pointer, а `:is()` с hp-dialog-веткой перебивает его специфичностью). Это сохранит неочевидную причину правки."
+          ],
+          "boundaries": "Анализ сделан только чтением pinned-исходников head cd101b53 и diff выбранных коммитов. Сборки, тесты, нативные и HA-проверки я не запускал. Нативные замеры курсора (#1410) и переноса на ширинах 220–320 px (#1411), а также результаты центрального S6 взяты из описаний исполнителей как предоставленные; сами артефакты я не открывал. Каскад CSS для #1410 разобран по исходнику form-kit.styles.ts; полный список кнопок, попадающих в selectors всех вызовов textFieldsCss, глубоко не перебирал, так как результат большого поиска по `hpf-pick` в инструменте был слишком большим. Задачи #1397, #1405 и #1406 переиспользованы из принятых ревью и заново не разбирались. Companion-репозиторий houseplan-e2e (#50) не проверялся. Устаревший собранный HACS-бандл в custom_components считаю артефактом шага release, а не частью задач."
+        },
+        "usage": {
+          "input_tokens": 38,
+          "cache_creation_input_tokens": 94628,
+          "cache_read_input_tokens": 1046670,
+          "output_tokens": 10669,
+          "output_tokens_details": {
+            "thinking_tokens": 3003
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 94628,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 914,
+              "cache_read_input_tokens": 81335,
+              "cache_creation_input_tokens": 15014,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 15014
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Пакетное код-ревью ship перед v1.85.2-beta.2 — принято\n\n## Вывод\n\nРазобраны четыре pending-задачи пакета (#1402, #1410, #1411, #1412). Ни одна не содержит High-дефекта, бету они не задерживают. #1402 убирает действительно мёртвый экспорт и тест, который описывал уже несуществующее поведение. #1410 исправляет причину проблемы: общее правило `cursor:text` больше не применяется к кнопкам, поэтому у кнопки выбора источника снова работает собственное правило `.hpf-pick { cursor:pointer }`. #1411 склеивает неразрывными пробелами название показателя, значение и единицу. Аварийный перенос `overflow-wrap:anywhere` у тултипа сохраняется, горизонтального переполнения нет. Неблокирующий побочный эффект: NBSP применяется ко всему `valueBadge.fullText`, поэтому длинное свободное текстовое состояние сущности будет переноситься посреди слова, а не по пробелам. #1412 только добавляет `data-hp=\"live-tooltip\"` к существующему div; селектор `[data-hp-live-tip]`, через который работает runtime, остаётся, контракт и документация согласованы. Вердикт: accept, замечания вынесены в improvements.\n\n## Понимание решения\n\n#1402: после #1170 функция `preflightVersionsDiffer` осталась без потребителей. Поиск по head находит её только в legacy-ревью и в устаревшем собранном HACS-бандле `custom_components/.../optimize-plans-dialog-*.js`, в src и test её нет. Коммит удаляет определение, импорт и тест; остальные тесты preflightDiagnostics не тронуты.\n\n#1410: `textFieldsCss` (src/styles/form-kit.styles.ts:169) в параметризованном и компактном режимах выдавал правило `:is(selectors):not(select):not(:disabled) { cursor:text; }`. Для диалогов селекторы включают `${form} .hpf-select` (строка 330), этому селектору соответствует и `button.hpf-select.hpf-pick`. Специфичность `:is(...)` с hp-dialog-веткой превосходила `${form} .hpf-pick { cursor:pointer }` (строка 557), поэтому на кнопке был I-beam. Теперь в правило добавлен `:not(button)`, и у кнопки побеждает `cursor:pointer` из .hpf-pick. Дочерние `b` и `.hpf-pick-ref` своего курсора не задают и наследуют pointer. Правила для disabled (строка 193 и formKitDisabledCss) не менялись.\n\n#1411: в `deviceTipContent` (src/live-hover.ts:112–136) `metricText` заменяет ASCII-пробелы на U+00A0 в `valueBadge.fullText`, в `LQI <n>` и в строке батареи. Модель и разделители ` · ` остаются обычными, поэтому перенос по-прежнему возможен между показателями. Второй коммит (4ee99d9e1) выносит `metricText` за пределы вызова `deviceBatteryTipText`, чтобы единственная точка мутации, на которую рассчитан mutation-gate, осталась прежней. Отображение в syncTip/appendMeta (строки 305–318) пишет строку в textContent; стиль `.tip[data-hp-live-tip]` берёт helpSurfaceStyle с `max-width:min(320px,…)`, `white-space:normal; overflow-wrap:anywhere` (src/styles/help-surface.styles.ts). Группа переносится целиком, а сверхдлинный токен рвётся аварийно.\n\n#1412: в шаблоне (src/houseplan-card.ts:12914) к div тултипа добавлен `data-hp=\"live-tooltip\"`, а `data-hp-live-tip` сохранён. Runtime находит элемент через `[data-hp-live-tip]` (live-hover.ts:266), CSS тоже (chrome.styles.ts:169). Запись в контракте (`elements:[\"div\"]`, since 1.85.2-beta.2, audience test) соответствует структурным проверкам test/data-hp-contract.test.mjs:70–94. Проверка «каждое публичное значение есть в src» выполняется: значение задано статически в шаблоне.\n\n## Разбор решения\n\n### #1402: удаление мёртвого экспорта\n\nУдаление корректно и полно для исходников. Потребителей нет ни в src, ни в test. Проверка отсутствия ложной подсказки preflight_update_hint, по словам исполнителя, остаётся в других тестах failed preflight. Устаревший HACS-бандл ещё экспортирует функцию, но это снимок прошлого релиза, который обновляется на шаге release; дефектом задачи это не является.\n\nОснование: search `preflightVersionsDiffer` по head: только legacy/reviews/*, legacy/specs/512-* и custom_components/houseplan/frontend/houseplan-assets/optimize-plans-dialog-DGgNZtaS.js; git_log по бандлу: последнее обновление в release-коммите v1.84.0-beta.1.\n\n### #1410: курсор над кнопкой выбора источника\n\nИсправлена причина: общее правило текстовых полей перестало задавать курсор кнопкам. Вариант лучше, чем добавлять более специфичный override для marker-state-source, и соответствует требованию «исправить у владельца, без глобального переопределения input». Затронуты все вызовы textFieldsCss. Если в их selectors попадают другие button (например, `.hp-properties .hp-prop-control`), они теряют ошибочный `cursor:text` и показывают собственный или стандартный курсор кнопки. Это не регрессия: I-beam на кнопке всегда был ошибкой. Поле поиска (input) и disabled-ветки не затронуты.\n\nОснование: src/styles/form-kit.styles.ts:187 (`:not(button)`), :330 (селекторы `.hpf-input, .hpf-select` и hp-dialog-ветка), :554–557 (`.hpf-pick { cursor:pointer }`), :193 (disabled not-allowed для компактного режима). Нативный замер исполнителя: до правки text, после pointer; поиск text; disabled not-allowed (artifacts/issue1410, по описанию, сам не запускал).\n\n### #1411: неразрывная группа показателя\n\nМеханизм простой и рабочий: внутри показателя NBSP, между показателями обычный пробел после «·». При `overflow-wrap:anywhere` браузер ломает токен произвольно только тогда, когда в строке нет обычных точек переноса, поэтому «LQI 172» переходит на следующую строку целиком, а горизонтального переполнения не бывает. Удачно, что NBSP применяется к выходному тексту, а `deviceBatteryTipText` остаётся чистой и единственной точкой мутации. Слабое место: `valueBadge.fullText` — это не только «число + единица», а любое отформатированное состояние или атрибут сущности, в том числе свободный текст text-сенсора. Такая строка целиком станет одним неразрывным токеном и при ширине больше примерно 320 px разорвётся посреди слова, тогда как раньше переносилась по пробелам. То же касается локализованной строки батареи «Low battery» и ей подобных: короткие фразы помещаются, проблем нет. Это Low: читаемость редкого случая, а не поломка и не переполнение.\n\nОснование: src/live-hover.ts:112–135; src/device-value-badge.ts:218, 250–251 (fullText = formatAttribute/состояние, произвольный текст); src/styles/help-surface.styles.ts:3,8 (max-width 320px, overflow-wrap:anywhere); тесты test/device-battery-tip.test.mjs обновлены под NBSP; demo/smoke_device_battery_tooltip.mjs нормализует NBSP при сравнении.\n\n### #1412: публичный test hook тултипа\n\nМинимальное аддитивное изменение. Внутренний атрибут и все runtime-селекторы сохранены, поэтому поведение hover, анимации и размещение не меняются. Других потребителей generic `[data-hp]`, на которые мог бы повлиять новый атрибут, нет: единственный `closest('[data-hp]')` в houseplan-card.ts:1149 работает от activeElement, а тултип не фокусируется и имеет pointer-events:none. Контракт проходит структурные инварианты, документация §7.5 STYLING-HOOKS согласована с JSON.\n\nОснование: src/houseplan-card.ts:12914; src/live-hover.ts:266; src/styles/chrome.styles.ts:169; docs/data-hp-contract.json (hooks.live-tooltip); test/data-hp-contract.test.mjs:63–94.\n\n### Взаимодействие задач пакета\n\n#1411 и #1412 затрагивают один тултип, но не конфликтуют: #1412 меняет только атрибут контейнера, #1411 — только текст строк. Companion-E2E #50, который читает видимый текст через новый hook, получит строки с U+00A0. Внешнему тесту нужно нормализовать NBSP так же, как это сделано в demo/smoke_device_battery_tooltip.mjs, иначе возможны ложные несовпадения при строгом сравнении строк. Это вопрос companion-тестов, а не продукта. #1410 и #1402 изолированы.\n\nОснование: demo/smoke_device_battery_tooltip.mjs (replace(/ /g,' ')); docs/STYLING-HOOKS.md (текст hook: «reading visible text»).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- #1411: сузить применение NBSP для `valueBadge.fullText`. Можно склеивать только короткие строки, например не длиннее 24–32 символов, или только числовое значение с единицей; длинное свободное состояние text-сенсора тогда останется переносимым по пробелам. Выгода: длинный текст не рвётся посреди слова при ширине 320 px. Цена: одна дополнительная ветка в `metricText` и тест на длинную строку. Сейчас это Low: переполнения нет, страдает только читаемость редкого случая.\n- #1411/#1412: в документацию hook `live-tooltip` (docs/STYLING-HOOKS.md или description в контракте) стоит добавить, что видимый текст показателей содержит U+00A0. Тогда внешний HA E2E #50 будет нормализовать пробелы так же, как demo-smoke, и не получит ложных несовпадений текста.\n- #1410: для профилактики рядом с правилом можно оставить короткий комментарий: почему кнопки исключены (picker-кнопки задают свой pointer, а `:is()` с hp-dialog-веткой перебивает его специфичностью). Это сохранит неочевидную причину правки.\n\n## Границы анализа\n\nАнализ сделан только чтением pinned-исходников head cd101b53 и diff выбранных коммитов. Сборки, тесты, нативные и HA-проверки я не запускал. Нативные замеры курсора (#1410) и переноса на ширинах 220–320 px (#1411), а также результаты центрального S6 взяты из описаний исполнителей как предоставленные; сами артефакты я не открывал. Каскад CSS для #1410 разобран по исходнику form-kit.styles.ts; полный список кнопок, попадающих в selectors всех вызовов textFieldsCss, глубоко не перебирал, так как результат большого поиска по `hpf-pick` в инструменте был слишком большим. Задачи #1397, #1405 и #1406 переиспользованы из принятых ревью и заново не разбирались. Companion-репозиторий houseplan-e2e (#50) не проверялся. Устаревший собранный HACS-бандл в custom_components считаю артефактом шага release, а не частью задач.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: fe1f3b3776eb75c168295c6dc7557cc80deab3d9 → cd101b53c63eae4cfb41df5f24936c359c792cc3\n\n## Переданный контекст исполнителя\n\nЗамороженные требования и контекст исполнителей переданы отдельно для каждой задачи пакета.\n\nПроверены задачи: #1402, #1410, #1411, #1412.\n\nКоммиты: ed16ef29d380e63f2bd12f0f29ba01c0164a863a, 9054a6f04bc030867f1d841663b91cdb262b172d, 579596c9bde36cff64ca25a9ad1a9f9dd99b63f2, 4ee99d9e17eb09cd0e16444f33fbc725ff5ec856, 9516d31de24a41bdf7a95bddc3bd3d7bb16f6222.\n\nРанее принятое ревью сохранено для задач: #1397, #1405, #1406.\n\n</details>\n",
+        "createdAt": "2026-11-13T14:46:49.787Z",
+        "artifactId": 14048320379,
+        "runId": 43445544459,
+        "runAttempt": 1,
+        "completedAt": "2026-11-13T14:46:53Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43445544459"
+      }
     }
   }
 }
