@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10430,
+  "revision": 10431,
   "nextTicket": 393,
   "nextFence": 393,
   "tasks": {
@@ -4821,6 +4821,10 @@
       "digest": "fd10b65c19bbc99b313b203f0787911caab61124ad7628b05f120d889a58bbbc",
       "issue": 1404
     },
+    "finish:7948f4eb-1074-45c1-a086-5d852429ffb0:finish:3:s6-label": {
+      "digest": "bef955084b2bc7e9d09a1aef52016380885e59f22a17a20ab3dad82c8f9f74d1",
+      "issue": 1404
+    },
     "finish:7948f4eb-1074-45c1-a086-5d852429ffb0": {
       "digest": "43723761285d4cfee54d1d854e988806d4db4bb62f3dcae9abc5ab6485fb78a0",
       "issue": 1404,
@@ -4873,7 +4877,8 @@
         "resubmission": false,
         "reviewChanges": "Выявлено при порученном владельцем ремонте отказов stable-профиля перед beta 1.85.2-beta.1. Точечный дефект read-only представления. Это новый ремонт после уже принятой #1403, а не повтор её зелёного ревью. Реальный HA и UI Lab не затрагиваются.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
