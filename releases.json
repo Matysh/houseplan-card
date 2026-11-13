@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 814,
+  "revision": 815,
   "active": "1.85.2-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -91521,7 +91521,7 @@
         ]
       },
       "running": null,
-      "status": "publishing",
+      "status": "publication-retry",
       "membership": {
         "schema": 1,
         "tag": "v1.85.2-beta.2",
@@ -99512,7 +99512,8 @@
         },
         "userChangelog": null
       },
-      "tag": "v1.85.2-beta.2"
+      "tag": "v1.85.2-beta.2",
+      "publicationError": "Existing release artifact differs: SHIP-REVIEW.json"
     }
   },
   "published": {
@@ -104297,7 +104298,8 @@
     "beta2-20261113-owner-size-accepted": "ef68d663f2b89a891efe78ee44488d4a6e756fff9bb6fbea34ee6ebf20cd1785",
     "beta2-20261113-publication-r2:prepared:18af0b3d-1f5d-40bb-b115-fcb4c49891e2": "3e3c86760515081b56b170dc0f18e9541263f5ecbd6d3bb9557c2a9db62adfae",
     "beta2-20261113-publication-r2:started:812": "d25e954dbc5a6352f43e174dcadcb281257be3e5d5867888ef54f0a42566b7be",
-    "beta2-20261113-publication-r2:prepared:224e3eac-eb3e-4dfe-a8bb-725a3cf995fd": "735757b1bf68bb12293b12a667a08f2f1d95e667d8d12a71995f5643532bf3dc"
+    "beta2-20261113-publication-r2:prepared:224e3eac-eb3e-4dfe-a8bb-725a3cf995fd": "735757b1bf68bb12293b12a667a08f2f1d95e667d8d12a71995f5643532bf3dc",
+    "beta2-20261113-publication-r2:failed:814": "8fdfdbfd616848c99c5080b121836f00ab2f90062220062d77c48c3f6ccce93d"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
