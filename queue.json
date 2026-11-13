@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10337,
-  "nextTicket": 389,
+  "revision": 10338,
+  "nextTicket": 390,
   "nextFence": 389,
   "tasks": {
     "1024": {
@@ -4475,6 +4475,20 @@
         "status": "published",
         "sourceSha": "098e1eb656dcdf2478915476251449972232d814"
       }
+    },
+    "1403": {
+      "issue": 1403,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1403-dimension-hud",
+      "materialSha": "fa5ef894bb98ebe907314fa038f0f2ab7c173331",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 389,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794548067477,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4704,9 +4718,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1403
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:2fdfaefd-14ed-4f74-842a-83e6483a33d2": {
+      "digest": "2c96992298ec26a536cb0d6fc8d5e1bb49355c549271c5d94798f734380a0327",
+      "issue": 1403,
+      "message": {
+        "kind": "queued",
+        "issue": 1403,
+        "at": 1794548067477,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "fa5ef894bb98ebe907314fa038f0f2ab7c173331"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "098e1eb656dcdf2478915476251449972232d814",
     "status": "delivered",
