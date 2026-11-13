@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11201,
+  "revision": 11202,
   "nextTicket": 410,
   "nextFence": 410,
   "tasks": {
@@ -4931,6 +4931,10 @@
       "digest": "5f6f68f84ba7862c613d82d2fd08c40753661f302ca7679e93a909e3528556b3",
       "issue": 1413
     },
+    "github:43444232844:1:completions:message:2bfc4df15adeecb2d9eb1fd2b6585ea7465bef4baf9a160e0185e3249055513a": {
+      "digest": "b5aa67584b55c2d5e213d4609300667a7a950ca110ec8734b0b19103097bad8e",
+      "issue": 1413
+    },
     "finish:22f7a3ed-e33b-4a76-9188-8188891dc099": {
       "digest": "8f42e7d5b35e7d76bc5e926ae7d04a9281056a89343e65a6d6aee490fd9c4228",
       "issue": 1413,
@@ -4977,7 +4981,8 @@
           "entry": 1,
           "detail": "Браузер: room co2: failed",
           "eventId": "finish:22f7a3ed-e33b-4a76-9188-8188891dc099:finish:3:return:return:1413"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:cb1a70d1-6126-44ae-a221-7a0b7a15dd1a": {
