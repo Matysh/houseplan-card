@@ -3166,6 +3166,9 @@ export async function prepareGoldenScenario(page, scenario) {
     }, scenario.hoverDevice);
     if (!point) throw new Error(`golden hover device missing: ${scenario.hoverDevice}`);
     await page.mouse.move(point.x, point.y);
+    // Device hover has a dwell period. Capture the shown state, not the
+    // pending visit; hiding it below must also retire an already shown tip.
+    await page.locator('[data-hp="live-tooltip"]').waitFor({ state: 'visible' });
     if (scenario.hideHoverTooltip) {
       await page.evaluate(async () => {
         const card = window.__goldenCard;
