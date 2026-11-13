@@ -12338,6 +12338,7 @@ export class HouseplanCard extends LitElement {
               if (!canonical) style += ';pointer-events:none!important';
               let areaText: string | null | undefined;
               const tip = (e: PointerEvent) => {
+                enterRoom(e);
                 if (!this._roomTipEnabledForPointer(e)) return;
                 if (areaText === undefined) areaText = this._roomArea(r);
                 this._showTip(
@@ -12353,7 +12354,8 @@ export class HouseplanCard extends LitElement {
               };
               const enterRoom = (event: PointerEvent) => {
                 this._notePointer(event);
-                if (this._pointerModality.hoverEnabled) {
+                if (this._pointerModality.hoverEnabled
+                    && (this._hoverRoom?.room !== r || this._hoverRoom.space !== sceneSpace.id)) {
                   this._hoverRoom = { space: sceneSpace.id, room: r };
                   this._syncLiveHover();
                 }
