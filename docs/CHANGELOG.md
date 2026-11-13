@@ -8,6 +8,8 @@
 
 ## Unreleased
 
+- Repair the external real-HA backdrop rotation witness's coordinate basis, retaining exact angle, Shift, history, cancellation and reload checks; product behavior and golden references are unchanged (#1405).
+
 - Declare the existing read-only dimension interval and painted rail as versioned test hooks for real HA E2E; keep the remaining renderer probes internal and the strict selector check unchanged (#1406).
 
 - Keep the shared dimension list and labels clear of the visible zoom badge; fixed editor controls take priority when a list corner is chosen (#1404).
