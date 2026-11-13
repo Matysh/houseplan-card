@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11497,
+  "revision": 11498,
   "nextTicket": 417,
   "nextFence": 417,
   "tasks": {
@@ -4546,7 +4546,16 @@
       "changedFiles": [
         "demo/golden/zigbee-led.mjs",
         "docs/release-ledger/v1.85.0/1419.json"
-      ]
+      ],
+      "s6": {
+        "id": "20261113T173435205-500f651b",
+        "name": "Тесты для задачи #1419 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T173435205-500f651b/report.json",
+        "materialSha": "460993a2c24dd3079191169a9f597e43fdf7602f",
+        "status": "passed",
+        "finishedAt": "2026-11-13T17:36:52.507Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4784,9 +4793,9 @@
     "fence": 416,
     "materialSha": "460993a2c24dd3079191169a9f597e43fdf7602f",
     "expectedBase": "e3319fe71ad51b9f02329f478f1608a1ef0f453b",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794591262296,
-    "expiresAt": 1794591683131,
+    "expiresAt": 1794595013738,
     "patchId": "39ca0744743bacee23e05a4ec73c20017edd1a78"
   },
   "events": {
@@ -4800,6 +4809,10 @@
     },
     "finish:9ec1ee12-d7b3-42ae-8045-231cce0740d9": {
       "digest": "7bb0179444b5480d67ff13780c20bb0124a4f2c56e25767f22ab59c8201cdeb3",
+      "issue": 1419
+    },
+    "finish:b63640aa-1ad6-4fab-8ce7-3e83ecf04361:finish:3:s6-complete": {
+      "digest": "41d30523f5069fab630a4007646e06e12eccdcebba1f5ab20665697407cde26f",
       "issue": 1419
     },
     "dev-build:43473245014:1:1417": {
