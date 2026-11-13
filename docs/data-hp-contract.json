@@ -6,6 +6,20 @@
     "additionsAreCompatible": true
   },
   "hooks": {
+    "wall-side-dimension": {
+      "elements": ["g"], "since": "1.85.2-beta.1", "audience": ["test"],
+      "description": "One read-only interval from the shared drafting dimension layer; presence follows the active editor measurement.",
+      "attributes": { "data-role": ["wall-side", "opening-gap", "decor-line", "device-spacing"], "data-source": ["physical", "boundary", "axis", "unavailable"] },
+      "attributeMetadata": {
+        "data-length-cm": { "since": "1.85.2-beta.1", "value": "string", "meaning": "finite nonnegative physical length in centimetres when data-source is not unavailable; empty for unavailable geometry, never coerce that state to zero", "audience": ["test"] },
+        "data-reference-source": { "since": "1.85.2-beta.1", "value": "string", "meaning": "opening support basis, such as room-face, connected-face or host-end; absent for unrelated intervals", "audience": ["test"] },
+        "data-room": { "since": "1.85.2-beta.1", "value": "string", "meaning": "owning room id when an opening interval is supported by that room face", "audience": ["test"] }
+      }
+    },
+    "dimension-rail": {
+      "elements": ["g"], "since": "1.85.2-beta.1", "audience": ["test"],
+      "description": "Painted drafting rail belonging to its enclosing wall-side-dimension; absence follows unavailable physical geometry. Its screen visibility/length may be observed without a hidden testing duplicate."
+    },
     "header-actions-trigger": { "elements": ["button"], "since": "1.85.1-beta.1", "audience": ["test"], "description": "Shared 44px vertical-ellipsis actions trigger after the ordinary layout needs more than two rows." },
     "header-actions-menu": { "elements": ["div"], "since": "1.85.1-beta.1", "audience": ["test"], "description": "Shared UI Kit touch menu presenting existing header commands." },
     "empty-plan": { "elements": ["div"], "since": "1.85.0", "audience": ["test"] },
@@ -1138,9 +1152,7 @@
   ],
   "internalExactValues": [
     "wall-side-dimensions",
-    "wall-side-dimension",
     "dimension-witnesses",
-    "dimension-rail",
     "dimension-list",
     "alarm-add",
     "alarm-edit",

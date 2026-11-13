@@ -448,6 +448,16 @@ broad secondary kind otherwise. A closed placeholder does not carry the hook.
 Undo/Redo, colour pickers and Save/Cancel controls inside a tray are not tools
 and are not assigned `data-tool`.
 
+Since `1.85.2-beta.1`, two existing read-only SVG surfaces are public for tests:
+`wall-side-dimension` identifies one shared drafting interval, and its
+`dimension-rail` identifies the painted measurement rail. The interval exposes
+`data-role`, measurement `data-source`, physical `data-length-cm`, and optional opening support
+`data-reference-source` / `data-room`. Unavailable geometry has no numeric
+length/rail; legitimate zero remains zero. Tests must observe actual visibility,
+not infer painted ink merely from DOM presence. This adds no rendered element,
+write surface or styling API. Label nesting, witness lines, list placement and
+the other dimension probes remain internal under §7.7 (#1406).
+
 ### 7.5 Dialogs
 
 Every `hp-dialog` host is `[data-hp="dialog"][data-kind="…"]`. `data-kind` is a

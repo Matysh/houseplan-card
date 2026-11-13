@@ -1,0 +1,1 @@
+{"schema":1,"issue":1406,"baseStable":"v1.85.0","category":"infra","rationale":"Declare two existing read-only dimension hooks for strict external HA E2E without allowing other internal probes or changing runtime.","summary":{"ru":"Согласован контракт размерных элементов для HA E2E.","en":"Align the dimension test-hook contract with real HA E2E."}}
