@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 794,
+  "revision": 795,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -91156,6 +91156,12 @@
           "status": "completed",
           "branch": "release/1.85.1-beta.3",
           "sha": "2892d28f49b424dc0668ad1203568532c68dff85"
+        },
+        "return-to-dev": {
+          "status": "running",
+          "issue": 1408,
+          "branch": "issue/1408-release-return-17d4d17b9973",
+          "worktree": "/home/sergey/hp-1380-witness-repairs/artifacts/process-next/return-worktrees/17d4d17b9973"
         }
       }
     }
@@ -95922,7 +95928,8 @@
     "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:96ea72ab-47f4-47e1-aea0-40907113f301": "05a1fab50c776cd70412a413caa2149bbbf44faf3b4a368b5e1daa0ad840a54e",
     "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:f7be690e-ccaf-43bf-8869-2a6faec10feb": "7bce2422ee097505d3847571e1d4e56b5e1ac0f6ecd46f2332d0d048ba697f57",
     "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:5f258f7b-66e0-40a1-8afc-c66ee533ba29": "cc04f6cebf0f81f3aa2c267b2499efd08d3e9e2d91d38d68b0a3148bff3833c5",
-    "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:07f9055f-4f60-4d74-9c2d-3707b6fbf936": "9117cb6c28d20e7b836a6a6168ab8a382bc295984d24efa63724292b78edb95e"
+    "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:07f9055f-4f60-4d74-9c2d-3707b6fbf936": "9117cb6c28d20e7b836a6a6168ab8a382bc295984d24efa63724292b78edb95e",
+    "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:622c7c3f-8f59-479a-b72e-6ae81c1b80b9": "38148be6afb66939531afb9df31bc7cec2981ad8d45614a5cfddb3214feb063b"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
