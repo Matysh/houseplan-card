@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10854,
+  "revision": 10855,
   "nextTicket": 402,
   "nextFence": 402,
   "tasks": {
@@ -4596,7 +4596,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794560316962,
       "reviewEntry": 2,
-      "patchId": "49a83ed2813915a2bfb3533ded1d5a3ea1d3971a",
+      "patchId": "b11f019adb8b8103ad81a42a0483a28defb0c5bc",
       "changedFiles": [
         "custom_components/houseplan/const.py",
         "custom_components/houseplan/manifest.json",
@@ -4928,10 +4928,11 @@
     "token": "401:finish:072e7ca7-140c-4137-a5d7-bd85f56bf12a:finish:1:admit",
     "fence": 401,
     "materialSha": "b51175c5a26569993be178aac91f9ecd3f640906",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "ed16ef29d380e63f2bd12f0f29ba01c0164a863a",
+    "phase": "testing",
     "admittedAt": 1794560321337,
-    "expiresAt": 1794560621337
+    "expiresAt": 1794560627660,
+    "patchId": "b11f019adb8b8103ad81a42a0483a28defb0c5bc"
   },
   "events": {
     "github:43392678739:1:completions:message:3943c44c47d8af9296c1840f9cf278c4d6c1923f60f7e37e2299d8715a2cdf81": {
@@ -5048,6 +5049,10 @@
     },
     "github:43395295110:1:completions:metadata:77c2d58d-aead-4d27-aca1-fbd8fea0102f:task-notice:1408::": {
       "digest": "dc7b58254e4b98bc5948553d62f8014886f9aa61919f3c3d61e6ceea1f539373",
+      "issue": 1408
+    },
+    "finish:072e7ca7-140c-4137-a5d7-bd85f56bf12a:finish:2:synchronized": {
+      "digest": "7dbe2005ad069976a0cb7532c2df05f6d07e5aa0aa7b367bdd7d7a783b1ea8ee",
       "issue": 1408
     },
     "release-return:6bfa94bb-88b7-46a6-a4f6-85239f922c42": {
