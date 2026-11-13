@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10516,
-  "nextTicket": 395,
+  "revision": 10517,
+  "nextTicket": 396,
   "nextFence": 395,
   "tasks": {
     "1024": {
@@ -4778,6 +4778,20 @@
         "status": "published",
         "sourceSha": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0"
       }
+    },
+    "1406": {
+      "issue": 1406,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1406-dimension-test-contract",
+      "materialSha": "b6109d28e371e2754202fd52f65bbe2bee3cadd4",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 395,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794553919255,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5020,7 +5034,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1406
+  ],
   "active": {
     "issue": 1401,
     "worker": "finish",
@@ -5218,6 +5234,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:d52e7c1c-a42b-4a64-8bb6-9959b0cd16ef": {
+      "digest": "03302c1dc8b66687b6374098f4491a824a762b93b66b50dde11f2754802bd4a9",
+      "issue": 1406,
+      "message": {
+        "kind": "queued",
+        "issue": 1406,
+        "at": 1794553919255,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "b6109d28e371e2754202fd52f65bbe2bee3cadd4"
       }
     }
   },
