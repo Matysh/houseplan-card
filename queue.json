@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11267,
+  "revision": 11268,
   "nextTicket": 412,
   "nextFence": 412,
   "tasks": {
@@ -4540,6 +4540,15 @@
         "entry": 1,
         "detail": "Браузер: capture stability: failed",
         "eventId": "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:3:return:return:1414"
+      },
+      "s6": {
+        "id": "20261113T145739962-88eaeaec",
+        "name": "Тесты для задачи #1414 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T145739962-88eaeaec/report.json",
+        "materialSha": "029393cfcfce8beb4ab60f47d872e7c0ef35c78e",
+        "status": "passed",
+        "finishedAt": "2026-11-13T14:59:24.111Z",
+        "failures": []
       }
     }
   },
@@ -4778,9 +4787,9 @@
     "fence": 411,
     "materialSha": "029393cfcfce8beb4ab60f47d872e7c0ef35c78e",
     "expectedBase": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794581847721,
-    "expiresAt": 1794582206632,
+    "expiresAt": 1794585565665,
     "patchId": "9667a634d516c064acf2311f2c79de15d309928b"
   },
   "events": {
@@ -4814,6 +4823,10 @@
     },
     "finish:e5b3993c-dd0a-4a0b-baff-8762f4ee856e": {
       "digest": "b2df418bb5d6be10567999601f41094a1c9c42b1bc0b11ca8edf903863d34fed",
+      "issue": 1414
+    },
+    "finish:e542f5b6-4d77-4d98-885e-37e831560c54:finish:3:s6-complete": {
+      "digest": "a069ee64fd01019c1e85231b2778d2360b47553b72daf7ce3e1070a4e614abd7",
       "issue": 1414
     },
     "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b": {
