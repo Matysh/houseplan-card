@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11417,
+  "revision": 11418,
   "nextTicket": 415,
   "nextFence": 415,
   "tasks": {
@@ -4516,7 +4516,7 @@
       "ownerDecision": null,
       "ticket": 414,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794590045051,
       "reviewEntry": 2,
       "patchId": "cfbb19e6e6d3298a09db2097896800289500088b",
@@ -4538,6 +4538,15 @@
         "entry": 1,
         "detail": "Браузер: decor line click: failed",
         "eventId": "finish:fea38776-a94f-4875-97e5-855e552dd363:finish:3:return:return:1418"
+      },
+      "s6": {
+        "id": "20261113T171422033-43afc3f1",
+        "name": "Тесты для задачи #1418 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T171422033-43afc3f1/report.json",
+        "materialSha": "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31",
+        "status": "passed",
+        "finishedAt": "2026-11-13T17:18:57.025Z",
+        "failures": []
       }
     }
   },
@@ -4776,9 +4785,9 @@
     "fence": 414,
     "materialSha": "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31",
     "expectedBase": "7f2f701713db065218dea84cb62b03ff64e97d5f",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794590049071,
-    "expiresAt": 1794590592209,
+    "expiresAt": 1794593938212,
     "patchId": "cfbb19e6e6d3298a09db2097896800289500088b"
   },
   "events": {
@@ -4914,6 +4923,34 @@
         "layer": "product",
         "materialSha": "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31",
         "phase": "sync"
+      }
+    },
+    "finish:edb04a51-c6a8-4ff1-8ff4-5aab5d73d5f2:finish:3:s6-complete": {
+      "digest": "ec61e50ba5035c3f19ed4c396f1285eb6b611ccdd9a1604ee4380830ff71ca22",
+      "issue": 1418,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1418,
+        "at": 1794590338212,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31",
+        "phase": "review",
+        "evidence": {
+          "id": "20261113T171422033-43afc3f1",
+          "name": "Тесты для задачи #1418 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T171422033-43afc3f1/report.json",
+          "materialSha": "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31",
+          "status": "passed",
+          "finishedAt": "2026-11-13T17:18:57.025Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Track show: исправление нативного ввода, требуется независимое ревью перед stable. Полный текущий прогон продолжается без изменения материала; затем исправление и новый кандидат с зачётом применимых успешных проверок. Логи: `artifacts/stable1852/line-boundary-diagnosis.log` (стабильная камера, воспроизведено), `line-diagnosis-camera-{1,2,3}.log` (исходная позиция прошла). Продукт пока не изменён.\n\n### Реализация и проверки перед ревью\n\nВетка `codex/1418-precise-line-click`, коммит `67298634f`: clean pointerup сохраняет точную плановую точку после проверки контекста/блокировки; click сохраняет прежние проверки владельца/подавления/расстояния и использует эту точку. Modifier и snap не менялись, DOM event в состоянии не удерживается.\n\nНовый unit на pointer `[100.9,41.9]` и click `[100,41]` **сначала RED** на прежнем коде: ожидалась диагональ `[70,70]`, сохранялась горизонталь `[100,0]` (остальные 7/8 PASS). В native-тесте сохранён исходный сценарий [443,328], добавлена граница [443,330] с прежним точным допуском; setup ждёт настоящего завершения fit, без произвольной задержки. Все проверки отмены, touch-tail, истории, persisted/reload и полномочий сохранены. Центральный S6 запущен; его receipt будет приложен автоматикой перед S7. Лог RED — `artifacts/issue1418/red.log` в checkout задачи. Замороженный stable-прогон не прерывался и не изменялся.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
