@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 748,
+  "revision": 749,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -91066,6 +91066,17 @@
           "status": "accepted",
           "inventoryComplete": true
         }
+      },
+      "delivery": {
+        "status": "verified",
+        "attempts": 1,
+        "discoveryAvailable": true,
+        "source": "github-release-feed",
+        "tag": "v1.85.2-beta.1",
+        "artifactDigest": "54d7dbf838ff39a1cc7954e191abdefa881176828c4d0a2d1a0bd9410385c415",
+        "assetName": "houseplan.zip",
+        "bytes": 5014629,
+        "observedAt": "2026-11-13T08:08:27.605Z"
       }
     }
   },
@@ -95785,7 +95796,8 @@
     "release-1-85-2-beta-1-publish-final-17d4d17b9:metrics": "04f2a8c5319b94b1a3b9b6a5c416cbb0599cd6b943d0cc80b15dd03e35304bbf",
     "release-1-85-2-beta-1-publish-final-17d4d17b9:prepared:09d7c2d4-f9a7-4fb4-b245-3f9c90653651": "c80974a67a976105ceaf1e62183e3d15333b32d83a7027f89804bb6242c45735",
     "release-1-85-2-beta-1-publish-final-17d4d17b9:started:746": "b7e049f864861984d0b05f1cb17a1c6964d9b906b023caa3933d0a6dca53d493",
-    "release-1-85-2-beta-1-publish-final-17d4d17b9:published": "c38ce62fcace6d941e3ab390fd590c125b6152ae2b9a844179a15fb2d0854c87"
+    "release-1-85-2-beta-1-publish-final-17d4d17b9:published": "c38ce62fcace6d941e3ab390fd590c125b6152ae2b9a844179a15fb2d0854c87",
+    "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:6fca995f-7995-4014-818b-41270b668f04": "bd49254acaa8fd8a0548eae3221771d172b267e5b99792bd3d60c469596b6a6c"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
