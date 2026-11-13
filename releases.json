@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 858,
+  "revision": 859,
   "active": "1.85.2-stable-20261113",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -104196,7 +104196,7 @@
       "status": "results",
       "membership": {
         "schema": 1,
-        "tag": null,
+        "tag": "v1.85.2",
         "candidate": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
         "base": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
         "issues": [
@@ -112091,7 +112091,301 @@
         "inventoryComplete": true
       },
       "tag": "v1.85.2",
-      "publicationError": "Release candidate does not contain the published stable/hotfix history; return that tag to dev through the queue and select a new candidate"
+      "publicationError": "Release candidate does not contain the published stable/hotfix history; return that tag to dev through the queue and select a new candidate",
+      "releaseData": {
+        "membership": {
+          "schema": 1,
+          "tag": "v1.85.2",
+          "candidate": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
+          "base": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
+          "issues": [
+            {
+              "number": 1024,
+              "commits": [
+                "148c93fc096a49c812a2146aeca3ea757b9714b2",
+                "3f92ebd791b9c4f5baaf034a319ab96309fd0526",
+                "4f8fad166f3f75f1f7a4435ddd11e55b09005c04",
+                "6057dcd21148e9992229e6151f4baa4681ef0052",
+                "6b9b6a122922133dd4456336b7f5c05b56b4b19c",
+                "90a6ba130fc90706078d9f569c658d7859500fc2",
+                "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
+                "d4e0fe5c218256be98b330c6fa9ed55d053bef6f",
+                "efb45d1f465f12e91e18e19e918d7514f45524bf"
+              ]
+            },
+            {
+              "number": 1170,
+              "commits": [
+                "18d3a48073afcf8e092aea732b64087e3bbed867",
+                "412f1993843b72adf9311f908f552e7a419c4530"
+              ]
+            },
+            {
+              "number": 1379,
+              "commits": [
+                "2043988b75548f3e130bb7d0f4074b8b20c52ce9",
+                "a05e6437f7a062f67c67200842698aef8987439f"
+              ]
+            },
+            {
+              "number": 1380,
+              "commits": [
+                "079dee2123c5ebce01defca908ab1227a5d2f7d2",
+                "564773f7548d295361349e93d58a16c66225bbb1",
+                "5b1d04fe0e304e4a66238f95b4c53a5fbb284be2",
+                "7cdf993fe5c9a395a3d6a899bfee81d8461a2e87",
+                "80bb14c52d66c16ae5f9cb397a9fc177f2f2ee64",
+                "b3530d1ee723f9aa10e5bec4200f2a126eec2e73",
+                "cb7cc2c5f2bab02d39b8a35fee40e95716f605b1",
+                "f1a94ef30fc1b8e24574de4d4cc9fcb65aa12caa"
+              ]
+            },
+            {
+              "number": 1381,
+              "commits": [
+                "1087417b7e8d3e761a9e5140be0701afac0d21bd",
+                "305db6871373c731cc8e38755820d3526412d265",
+                "351e3788d8dbae52a0a72e36255addc88f3fa70c",
+                "5352d5ab232688e6021f1b535e2645fdbd6dec8f",
+                "58276f20e4c622569c3e3ebc8a6bae41ccdec840",
+                "cac85b6de7b97cf3c8258027f17e4b7bb9531516",
+                "d67d7fd3b6d77aafd8c84f3e82d4890d59039d15"
+              ]
+            },
+            {
+              "number": 1382,
+              "commits": [
+                "0181fb2e99bdaacc7c2dcdf4a7deffce6fc4d4a9",
+                "787f61dbcf11d4a5593369d7e98156ed4cf48a39"
+              ]
+            },
+            {
+              "number": 1383,
+              "commits": [
+                "20a8fec94a403520d4a38c7c9e8f0d5d9f535b3d",
+                "37300f2f4f07382d454d89907f9e2e2314db110f",
+                "41e852cbc365ac81595b3d618b8bb3be83e1c89b",
+                "4e7a95c92f04250f5de4c561ef9dce5ef4045db5",
+                "c0206b72acd2b520a12c8960ad73d6c5fdfbdaa5"
+              ]
+            },
+            {
+              "number": 1384,
+              "commits": [
+                "0f303dddac0833f226cf15f7e0c4a8f187a0c98c",
+                "6c5b515d67cfe007016bbe141f8e842e15dd7115",
+                "9ac66c5bcd837a0d922c49feffc075274e29c7ba",
+                "9edc161b73836117f34465ed8f6ba494a61576dd"
+              ]
+            },
+            {
+              "number": 1386,
+              "commits": [
+                "5fbbc5f1dec522b7566faf2be67eeed75efa8f54",
+                "89a2710b6ed85f7e4c438586921c27d382bbd9d8",
+                "e4cd01609ebe7df7fcedcbe1f890e45255c3fe4a"
+              ]
+            },
+            {
+              "number": 1387,
+              "commits": [
+                "74a8de539e1aeabecc51cb651c7119cedc333067"
+              ]
+            },
+            {
+              "number": 1388,
+              "commits": [
+                "3f89c4132e2f1e9243df350f26aae849d275bc65"
+              ]
+            },
+            {
+              "number": 1396,
+              "commits": [
+                "c970836c383ce294aeec16069657c546ace2df1b"
+              ]
+            },
+            {
+              "number": 1397,
+              "commits": [
+                "0b8b0d847f8c72182ef16494f5482c0dbc153d63"
+              ]
+            },
+            {
+              "number": 1398,
+              "commits": [
+                "1589429ab4d966bce514dda675f5e34d84000bba",
+                "827cae041114db2a478951d658566a718e6f8393",
+                "e6d83233a9ef9cccdc716d3419c90260f2aad88e",
+                "ed458e5c63efe1d987bb5e7785dd23e068ad2671"
+              ]
+            },
+            {
+              "number": 1399,
+              "commits": [
+                "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26"
+              ]
+            },
+            {
+              "number": 1400,
+              "commits": [
+                "098e1eb656dcdf2478915476251449972232d814"
+              ]
+            },
+            {
+              "number": 1401,
+              "commits": [
+                "24f98e2081b460f7b14a76a186155b574a6bbb45",
+                "811baf6418849ecdbb566f0fc2643a37732ceb9b",
+                "c2c901ba14dd7c40724db4412ad90242cadcaf5c"
+              ]
+            },
+            {
+              "number": 1402,
+              "commits": [
+                "ed16ef29d380e63f2bd12f0f29ba01c0164a863a"
+              ]
+            },
+            {
+              "number": 1403,
+              "commits": [
+                "a90bcd6c733c19ce6d7117f550c27676fa902412"
+              ]
+            },
+            {
+              "number": 1404,
+              "commits": [
+                "9b2651c749177a7f1e6f9dab62e871ef5634b4c0"
+              ]
+            },
+            {
+              "number": 1405,
+              "commits": [
+                "3749fc755b4e9b1318f3770870a803f687cdd76a"
+              ]
+            },
+            {
+              "number": 1406,
+              "commits": [
+                "b6109d28e371e2754202fd52f65bbe2bee3cadd4"
+              ]
+            },
+            {
+              "number": 1407,
+              "commits": [
+                "2995e89fc7f5eae57abb188fae7b9f806cd29fd0"
+              ]
+            },
+            {
+              "number": 1408,
+              "commits": [
+                "b51175c5a26569993be178aac91f9ecd3f640906"
+              ]
+            },
+            {
+              "number": 1409,
+              "commits": [
+                "ba56062da9e034be763485ac8c81b1587a19eb7f",
+                "c250fcb4591a698481da3ccaa6a2261e2a0e04de"
+              ]
+            },
+            {
+              "number": 1410,
+              "commits": [
+                "9054a6f04bc030867f1d841663b91cdb262b172d"
+              ]
+            },
+            {
+              "number": 1411,
+              "commits": [
+                "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856",
+                "579596c9bde36cff64ca25a9ad1a9f9dd99b63f2"
+              ]
+            },
+            {
+              "number": 1412,
+              "commits": [
+                "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222"
+              ]
+            },
+            {
+              "number": 1413,
+              "commits": [
+                "517fa49e61c9e779a4a36ae9f5f17cb1012eca72",
+                "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76"
+              ]
+            },
+            {
+              "number": 1414,
+              "commits": [
+                "029393cfcfce8beb4ab60f47d872e7c0ef35c78e"
+              ]
+            },
+            {
+              "number": 1417,
+              "commits": [
+                "e3319fe71ad51b9f02329f478f1608a1ef0f453b"
+              ]
+            },
+            {
+              "number": 1418,
+              "commits": [
+                "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31"
+              ]
+            },
+            {
+              "number": 1419,
+              "commits": [
+                "460993a2c24dd3079191169a9f597e43fdf7602f"
+              ]
+            }
+          ]
+        },
+        "includedIssues": [
+          1024,
+          1170,
+          1379,
+          1380,
+          1381,
+          1382,
+          1383,
+          1384,
+          1386,
+          1387,
+          1388,
+          1396,
+          1397,
+          1398,
+          1399,
+          1400,
+          1401,
+          1402,
+          1403,
+          1404,
+          1405,
+          1406,
+          1407,
+          1408,
+          1409,
+          1410,
+          1411,
+          1412,
+          1413,
+          1414,
+          1417,
+          1418,
+          1419
+        ],
+        "version": "1.85.2",
+        "body": "<!-- release: v1.85.2 -->\n<!-- stable-notes: 1 -->\n<!-- base: v1.85.1 -->\n<!-- language: ru -->\n## Релиз Houseplan 1.85.2\n\nВ этом выпуске — новые возможности проёмов, единые размеры на плане и более устойчивое редактирование.\n\n🚪 **Новые возможности проёмов.** Окна поддерживают от одной до четырёх независимых створок, верхнее открывание, отдельные датчики и шторы. Шторы перекрывают долю света своей створки. У дверей и ворот появились откатный механизм и ручное положение без датчика. [#1024](https://github.com/Matysh/houseplan-card/issues/1024)\n\n📏 **Единые чертёжные размеры.** Двусторонние размеры при рисовании стен, переносе узлов, изменении размера комнаты и выборе стены. Тот же механизм показывает отступы проёмов, длину линий подложки и равные интервалы между устройствами. Размеры следуют за планом и остаются видимыми рядом с панелями инструментов. [#1381](https://github.com/Matysh/houseplan-card/issues/1381), [#1397](https://github.com/Matysh/houseplan-card/issues/1397), [#1398](https://github.com/Matysh/houseplan-card/issues/1398)\n\n↔️ **Resize через примыкания.** Стена проходит существующие узлы за один жест, без промежуточного сохранения. Сохраняются материалы, привязки проёмов и одна операция отмены. Убраны артефакты контура стен и лишние узлы на прямых участках. [#1383](https://github.com/Matysh/houseplan-card/issues/1383), [#1384](https://github.com/Matysh/houseplan-card/issues/1384)\n\n⚙️ **Понятный результат оптимизации.** Видно ожидание, итог остаётся доступен после сохранения; отдельно объясняются пропущенные исправления, отказ и неподтверждённое сохранение. [#1170](https://github.com/Matysh/houseplan-card/issues/1170)\n\n⚡ **Загрузка и повторный вход.** Повторные чтения реестров объединяются, краткое перемещение карточки не пересобирает модель этажа. Браузеры с поддержкой gzip получают заранее сжатые файлы интерфейса. [#1386](https://github.com/Matysh/houseplan-card/issues/1386), [#1387](https://github.com/Matysh/houseplan-card/issues/1387)\n\n💬 **Устойчивые подсказки устройств.** Короткая задержка, плавное появление и исчезновение; подсказка сохраняет позицию при движении внутри значка и обновлениях HA. Название показателя, значение и единица переносятся вместе. После переподключения карточки подсказка ждёт нового движения мыши. [#1409](https://github.com/Matysh/houseplan-card/issues/1409), [#1411](https://github.com/Matysh/houseplan-card/issues/1411), [#1413](https://github.com/Matysh/houseplan-card/issues/1413)\n\n🎨 **Исправления отображения.** SVG-подложки и их ручки одинаково рисуются на эквивалентных планах с сеткой 1 и 5 см. У Icon state source исправлен текстовый курсор. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1410](https://github.com/Matysh/houseplan-card/issues/1410)\n\n✏️ **Линия сохраняет показанное направление.** При рисовании подложки с Shift точный предпросмотр больше не меняется при клике из-за округления координат браузером. Следующий отрезок начинается в той же принятой точке. [#1418](https://github.com/Matysh/houseplan-card/issues/1418)\n\nПеред обновлением сохраните резервную копию плана. После обновления перезапустите Home Assistant и перезагрузите страницы Houseplan.\n\nВсе изменения: [1.85.2](https://github.com/Matysh/houseplan-card/milestone/17?closed=1)\n<!-- language: en -->\n## Houseplan 1.85.2 release\n\nThis release expands openings, unifies plan dimensions and makes everyday editing more reliable.\n\n🚪 **More capable openings.** Windows support one to four independent leaves, top opening, separate sensors and shades. Each shade blocks its leaf's share of light. Doors and gates support sliding mechanisms and manual positions without a sensor. [#1024](https://github.com/Matysh/houseplan-card/issues/1024)\n\n📏 **Shared drafting dimensions.** Two-sided dimensions while drawing walls, moving nodes, resizing rooms and selecting walls. The same mechanism covers opening offsets, background lines and equal device gaps. Dimensions follow the plan and stay clear of fixed tool controls. [#1381](https://github.com/Matysh/houseplan-card/issues/1381), [#1397](https://github.com/Matysh/houseplan-card/issues/1397), [#1398](https://github.com/Matysh/houseplan-card/issues/1398)\n\n↔️ **Resize across junctions.** Move a wall through existing nodes in one gesture, without an intermediate save. Preserve materials, opening hosts and one Undo operation. Preview contour artifacts and redundant straight-segment nodes are removed. [#1383](https://github.com/Matysh/houseplan-card/issues/1383), [#1384](https://github.com/Matysh/houseplan-card/issues/1384)\n\n⚙️ **Clear optimization outcomes.** Waiting states paint promptly and the report remains available after saving. Skipped repairs, rejection and unconfirmed saving are explained separately. [#1170](https://github.com/Matysh/houseplan-card/issues/1170)\n\n⚡ **Loading and returning to the plan.** Registry reads are coalesced and temporary card moves reuse the floor model. Browsers supporting gzip receive precompressed frontend files. [#1386](https://github.com/Matysh/houseplan-card/issues/1386), [#1387](https://github.com/Matysh/houseplan-card/issues/1387)\n\n💬 **Stable device tooltips.** A short hover delay and smooth appearance/disappearance. Tooltips stay anchored through pointer movement inside the icon and live HA updates. Metric labels, values and units wrap together. After the card reconnects, tooltips wait for fresh mouse movement. [#1409](https://github.com/Matysh/houseplan-card/issues/1409), [#1411](https://github.com/Matysh/houseplan-card/issues/1411), [#1413](https://github.com/Matysh/houseplan-card/issues/1413)\n\n🎨 **Display fixes.** Equivalent plans with 1 cm and 5 cm grids render imported SVG backdrops and handles consistently. Icon state source uses the correct picker cursor. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1410](https://github.com/Matysh/houseplan-card/issues/1410)\n\n✏️ **Lines keep their previewed direction.** When drawing with Shift in the Background editor, browser coordinate rounding no longer changes the preview when clicking. The next segment starts at the same accepted point. [#1418](https://github.com/Matysh/houseplan-card/issues/1418)\n\nSave a plan backup before updating. Restart Home Assistant and reload Houseplan pages after updating.\n\nAll changes: [1.85.2](https://github.com/Matysh/houseplan-card/milestone/17?closed=1)\n",
+        "technical": {
+          "ru": "## v1.85.2 — 2026-11-13\n\n- В stable объединены проверенные беты 1.85.2, исправления выпуска и прежние принятые визуальные эталоны.\n- Добавлены независимые створки окон, верхнее открывание, отдельные датчики и шторы, ручное положение и откатные двери/ворота (#1024).\n- Единые двусторонние размеры используются для стен, узлов, Resize, проёмов и декора; размеры следуют за камерой и не перекрываются фиксированными панелями (#1381, #1397, #1398, #1403, #1404).\n- Resize проходит существующие примыкания одним жестом с сохранением контура стен, привязки проёмов, материалов и одной операции Undo (#1383, #1384).\n- Сохраняются результаты оптимизации, переиспользуются чтения реестров и модели этажей; JS передаётся в проверенном gzip при поддержке браузером (#1170, #1386, #1387).\n- Отрисовка импортированной SVG-подложки и её ручек согласована для эквивалентных калибровок сетки (#1400).\n- Подсказки устройств получили задержку, устойчивую позицию, живое обновление и очистку при remount; показатели переносятся целиком, исправлен курсор picker-кнопок (#1409, #1410, #1411, #1413).\n- Сохранены строгие регрессии и прежние golden при актуализации ожиданий съёмки и объявленных HA test hooks (#1399, #1401, #1405, #1406, #1412, #1414, #1417, #1419).\n- При сохранении линии подложки сохраняется дробная точность финального pointer-события: округление click больше не меняет Shift-предпросмотр и начало следующего отрезка (#1418).",
+          "en": "## v1.85.2 — 2026-11-13\n\n- Promote the reviewed 1.85.2 betas with stable-release fixes and preserved visual references.\n- Add independent window leaves, top opening, per-leaf sensors and shades, and manual/sliding doors and gates (#1024).\n- Share two-sided drafting dimensions across walls, nodes, Resize, openings and decor; keep dimensions attached through camera motion and clear of fixed controls (#1381, #1397, #1398, #1403, #1404).\n- Resize across existing junctions in one gesture while preserving wall contours, opening hosts, materials and a single Undo (#1383, #1384).\n- Retain optimization outcomes, reuse registry reads and warm floor models, and negotiate verified gzip frontend chunks (#1170, #1386, #1387).\n- Keep imported SVG backdrop paint and handles consistent across equivalent grid calibrations (#1400).\n- Stabilize device tooltip dwell, anchoring, live updates and remount cleanup; group metric labels with values and restore picker cursors (#1409, #1410, #1411, #1413).\n- Preserve strict regression checks and existing golden references while updating capture waits and declared HA test hooks (#1399, #1401, #1405, #1406, #1412, #1414, #1417, #1419).\n- Preserve the final pointer's fractional coordinates when committing a decor line, so click rounding cannot change its Shift preview or continuation anchor (#1418)."
+        },
+        "userChangelog": {
+          "ru": "<!-- release: v1.85.2 -->\n<!-- base: v1.85.1 -->\n## Релиз Houseplan 1.85.2\n\nВ этом выпуске — новые возможности проёмов, единые размеры на плане и более устойчивое редактирование.\n\n🚪 **Новые возможности проёмов.** Окна поддерживают от одной до четырёх независимых створок, верхнее открывание, отдельные датчики и шторы. Шторы перекрывают долю света своей створки. У дверей и ворот появились откатный механизм и ручное положение без датчика. [#1024](https://github.com/Matysh/houseplan-card/issues/1024)\n\n📏 **Единые чертёжные размеры.** Двусторонние размеры при рисовании стен, переносе узлов, изменении размера комнаты и выборе стены. Тот же механизм показывает отступы проёмов, длину линий подложки и равные интервалы между устройствами. Размеры следуют за планом и остаются видимыми рядом с панелями инструментов. [#1381](https://github.com/Matysh/houseplan-card/issues/1381), [#1397](https://github.com/Matysh/houseplan-card/issues/1397), [#1398](https://github.com/Matysh/houseplan-card/issues/1398)\n\n↔️ **Resize через примыкания.** Стена проходит существующие узлы за один жест, без промежуточного сохранения. Сохраняются материалы, привязки проёмов и одна операция отмены. Убраны артефакты контура стен и лишние узлы на прямых участках. [#1383](https://github.com/Matysh/houseplan-card/issues/1383), [#1384](https://github.com/Matysh/houseplan-card/issues/1384)\n\n⚙️ **Понятный результат оптимизации.** Видно ожидание, итог остаётся доступен после сохранения; отдельно объясняются пропущенные исправления, отказ и неподтверждённое сохранение. [#1170](https://github.com/Matysh/houseplan-card/issues/1170)\n\n⚡ **Загрузка и повторный вход.** Повторные чтения реестров объединяются, краткое перемещение карточки не пересобирает модель этажа. Браузеры с поддержкой gzip получают заранее сжатые файлы интерфейса. [#1386](https://github.com/Matysh/houseplan-card/issues/1386), [#1387](https://github.com/Matysh/houseplan-card/issues/1387)\n\n💬 **Устойчивые подсказки устройств.** Короткая задержка, плавное появление и исчезновение; подсказка сохраняет позицию при движении внутри значка и обновлениях HA. Название показателя, значение и единица переносятся вместе. После переподключения карточки подсказка ждёт нового движения мыши. [#1409](https://github.com/Matysh/houseplan-card/issues/1409), [#1411](https://github.com/Matysh/houseplan-card/issues/1411), [#1413](https://github.com/Matysh/houseplan-card/issues/1413)\n\n🎨 **Исправления отображения.** SVG-подложки и их ручки одинаково рисуются на эквивалентных планах с сеткой 1 и 5 см. У Icon state source исправлен текстовый курсор. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1410](https://github.com/Matysh/houseplan-card/issues/1410)\n\n✏️ **Линия сохраняет показанное направление.** При рисовании подложки с Shift точный предпросмотр больше не меняется при клике из-за округления координат браузером. Следующий отрезок начинается в той же принятой точке. [#1418](https://github.com/Matysh/houseplan-card/issues/1418)\n\nПеред обновлением сохраните резервную копию плана. После обновления перезапустите Home Assistant и перезагрузите страницы Houseplan.\n\nВсе изменения: [1.85.2](https://github.com/Matysh/houseplan-card/milestone/17?closed=1)\n",
+          "en": "<!-- release: v1.85.2 -->\n<!-- base: v1.85.1 -->\n## Houseplan 1.85.2 release\n\nThis release expands openings, unifies plan dimensions and makes everyday editing more reliable.\n\n🚪 **More capable openings.** Windows support one to four independent leaves, top opening, separate sensors and shades. Each shade blocks its leaf's share of light. Doors and gates support sliding mechanisms and manual positions without a sensor. [#1024](https://github.com/Matysh/houseplan-card/issues/1024)\n\n📏 **Shared drafting dimensions.** Two-sided dimensions while drawing walls, moving nodes, resizing rooms and selecting walls. The same mechanism covers opening offsets, background lines and equal device gaps. Dimensions follow the plan and stay clear of fixed tool controls. [#1381](https://github.com/Matysh/houseplan-card/issues/1381), [#1397](https://github.com/Matysh/houseplan-card/issues/1397), [#1398](https://github.com/Matysh/houseplan-card/issues/1398)\n\n↔️ **Resize across junctions.** Move a wall through existing nodes in one gesture, without an intermediate save. Preserve materials, opening hosts and one Undo operation. Preview contour artifacts and redundant straight-segment nodes are removed. [#1383](https://github.com/Matysh/houseplan-card/issues/1383), [#1384](https://github.com/Matysh/houseplan-card/issues/1384)\n\n⚙️ **Clear optimization outcomes.** Waiting states paint promptly and the report remains available after saving. Skipped repairs, rejection and unconfirmed saving are explained separately. [#1170](https://github.com/Matysh/houseplan-card/issues/1170)\n\n⚡ **Loading and returning to the plan.** Registry reads are coalesced and temporary card moves reuse the floor model. Browsers supporting gzip receive precompressed frontend files. [#1386](https://github.com/Matysh/houseplan-card/issues/1386), [#1387](https://github.com/Matysh/houseplan-card/issues/1387)\n\n💬 **Stable device tooltips.** A short hover delay and smooth appearance/disappearance. Tooltips stay anchored through pointer movement inside the icon and live HA updates. Metric labels, values and units wrap together. After the card reconnects, tooltips wait for fresh mouse movement. [#1409](https://github.com/Matysh/houseplan-card/issues/1409), [#1411](https://github.com/Matysh/houseplan-card/issues/1411), [#1413](https://github.com/Matysh/houseplan-card/issues/1413)\n\n🎨 **Display fixes.** Equivalent plans with 1 cm and 5 cm grids render imported SVG backdrops and handles consistently. Icon state source uses the correct picker cursor. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1410](https://github.com/Matysh/houseplan-card/issues/1410)\n\n✏️ **Lines keep their previewed direction.** When drawing with Shift in the Background editor, browser coordinate rounding no longer changes the preview when clicking. The next segment starts at the same accepted point. [#1418](https://github.com/Matysh/houseplan-card/issues/1418)\n\nSave a plan backup before updating. Restart Home Assistant and reload Houseplan pages after updating.\n\nAll changes: [1.85.2](https://github.com/Matysh/houseplan-card/milestone/17?closed=1)\n"
+        }
+      }
     }
   },
   "published": {
@@ -116926,7 +117220,8 @@
     "stable1852-20261113-reviewed-product-fix-r3": "40b368ff181773509e681eab794f2ed5f427bb73157608cb73e05a460a17bc2b",
     "stable1852-20261113-run-started-r3": "d749a7d656661c8a9b4161d830579fc4a9cc9ba454345aa379f8678800591a33",
     "stable1852-20261113-report-r3": "e16462dd3d31d7d3b87f3694299b65a029b864c911d5fd5d199fecae768fd581",
-    "stable1852-20261113-metrics-r3": "1a84c9f463cf17992cd9df2aad9f454bff9dfccce53fcaa2055d8a3151374200"
+    "stable1852-20261113-metrics-r3": "1a84c9f463cf17992cd9df2aad9f454bff9dfccce53fcaa2055d8a3151374200",
+    "stable1852-20261113-publication-r3:prepared:6039b8bc-4823-4907-b175-6ec67294e2b4": "cee1f3d72e9be1161e2680fcf1a9f00804ec6dc52fc38289dd076579d7df1b07"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
