@@ -14929,9 +14929,10 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'furniture-art-eager-import',
-    guard: 'npm run build && node scripts/bundle-budget.mjs',
+      guard: 'npm run build && node scripts/furniture-art-lazy.mjs',
     because: 'a static import of the artwork anywhere in the View graph silently pulls ~10 KB gzip '
-      + 'back into the initial graph — the exact debt #474 removes; the budget must see the chunk as lazy',
+        + 'back into the initial graph — the exact debt #474 removes; #1407 checks emitted ownership '
+        + 'without conflating it with unrelated growth or retired byte ceilings',
     patches: [{
       file: 'src/furniture.ts',
       find: "import { FURNITURE_ART_RUNTIME, type FurnitureArtHost } from './furniture-art-runtime';",

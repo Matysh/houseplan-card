@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Route nightly mutation failures by failing check instead of appending unrelated reports to a completed task. Verify lazy furniture artwork by its emitted graph rather than retired bundle-size ceilings (#1407).
+
 - Preserve the stable visual witnesses after asynchronous optimization and shared opening/dimension changes; review each changed image and reject hidden dimension text (#1401, #1403).
 
 - Keep shared editor dimensions readable beside the floating tool tray, using the existing numbered-list fallback when needed (#1403).
