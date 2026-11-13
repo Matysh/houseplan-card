@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11204,
+  "revision": 11205,
   "nextTicket": 410,
   "nextFence": 410,
   "tasks": {
@@ -4569,6 +4569,109 @@
         "at": 1794580570509,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1413,
+        "requestId": "review:1413:2:9c6efa8f85f9dad8a4ebaf997466e41cf85fef7f:9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
+        "kind": "code",
+        "base": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
+        "materialSha": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
+        "patchId": "9c6efa8f85f9dad8a4ebaf997466e41cf85fef7f",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1413,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1413",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Доказательство на реальном HA: gate выключен и `_tip=null` сразу после detach/attach; затем browser `pointerover` с новым timestamp включает gate, без pointermove, и новый 150-мс dwell открывает tooltip. Диагностический лог `artifacts/issue1412/remount-diagnosis3.json` отделяет этот эффект от старого timer/callback. Основной E2E не использует приватное состояние; временная диагностика удалена.\n\nРешение: PointerModalityController не принимает pointerover/enter для восстановления выключенного gate. Обычный pointermove/down продолжает прежнюю revalidation; touch compatibility не менялась. Ранний отказ device-pointer теперь отменяет только pointer lease, не стирая валидный keyboard focus tooltip. Добавлены поведенческие Node-кейсы в существующих файлах; их текущая классификация и центральная выборка остаются presentation/editors/devices, дополнены адресными native hover/touch/room/Zigbee/keyboard смоуками. Типы и сборка, 11 адресных Node-кейсов успешны. Реальные HA E2E повторяются на исправленной сборке до беты. Goldens не менялись.\n\nРеальный HA 2026.11.1 на исправленном `517fa49e6`: **7/7 PASS** (4 business-сценария + auth admin/viewer и plan-model setup), 44.4 с. Обе поверхности (panel/masonry), реальные сервисы light и входящий state stream, pointer dwell/соседи/fade/reduced motion/resize, pending/visible mode/space/navigation/remount и новое движение после remount прошли. Лог `artifacts/issue1413/e2e50-fixed.log`. Продолжается центральный S6 перед ревью; beta-кандидат ещё не заморожен.\n\n### Повтор S6 после комнатной регрессии\n\nПервый S6: 532/533 успешны, отказ `smoke_room_co2` был корректным. После игнорирования cold boundary первое реальное движение показывало комнатный tooltip, но не заполняло `_hoverRoom` (он задавался только на enter), поэтому стационарное CO₂ оставалось старым. Room acquisition теперь вызывается из существующего move handler и не пересчитывает уже принадлежащий hover. Все формы комнаты используют тот же handler. Сборка/типы и **неизменённый** `smoke_room_co2.mjs` прошли. Проверки или ожидания CO₂ не ослаблялись. Повтор finish включает полный актуальный diff и адресный CO₂ smoke."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Исправление решает проблему из #1413 на уровне её причины. После lifecycle-сброса (connect, suspend, remount) `PointerModalityController.note` больше не включает выключенный hover gate по `pointerover`/`pointerenter` от мыши. Gate снова включает только реальный `pointermove` или `pointerdown`. Эти события ловит capture-обработчик карточки, поэтому пользователь не теряет hover: первое движение мыши возвращает обычное поведение. Сопутствующий регресс, найденный на первом прогоне S6 (`smoke_room_co2`), устранён так, как нужно. Комната теперь захватывает `_hoverRoom` и на `pointermove`, а не только на `pointerenter`, который после ремаунта игнорируется. Ранний отказ в `showDevicePointerTip` больше не стирает валидную подсказку клавиатурного фокуса. Блокеров не нашёл. Остался один редкий необязательный хвост: видимая pointer-подсказка после смены media query (подробности в improvements). Набор S6 на `72df17f1` прошёл; автор также сообщает о 7/7 PASS на реальном HA 2026.11.1, но на более раннем коммите `517fa49e6`.",
+          "understanding": "Проблема. Карточка гасит hover на границах жизненного цикла: `_clearTransientHover(true)` вызывает `_pointerModality.suspend()`, сбрасывает `_tip` и `_hoverRoom`, а `connect()` и `disconnect()` переводят модальность в `unknown` и выключают gate. Однако на реальном HA после remove/append браузер присылает доверенный `pointerover` с `pointerType: 'mouse'`, хотя мышь не двигалась. До исправления `note()` превращал такое событие в модальность `mouse`, `_syncGate` включал gate, и обработчик `@pointerover` маркера устройства запускал 150-мс dwell. В итоге тултип открывался при неподвижной мыши.\n\nРешение:\n1. `src/pointer-modality.ts:79-88`. Если gate выключен, а событие от мыши имеет тип `pointerover` или `pointerenter`, оно не меняет ни модальность, ни gate. Touch, pen и compatibility mouse (`firesTouchEvents`) обрабатываются как раньше: для них `next !== 'mouse'`. При включённом gate boundary-события работают как прежде.\n2. `src/live-hover.ts:141-145`. При выключенном gate `showDevicePointerTip` отменяет только отложенную pointer-заявку и снимает hit-hover. `resetHouseplanHover` здесь больше не вызывается, поэтому `focusTips` и `_tip` с `source: 'focus'` сохраняются. Остальные причины отказа (drag, неподходящий режим) по-прежнему вызывают полный reset.\n3. `src/houseplan-card.ts:12340-12362`. Обработчик `tip` на `pointermove` сначала вызывает `enterRoom`. Тот обновляет `_hoverRoom` только при смене комнаты или пространства, поэтому лишних sync на каждое движение нет. Это закрывает случай, когда `pointerenter` проигнорирован, а первое реальное движение уже показывает комнатную подсказку.\n\nРазобранные пути:\n- capture-guard `_touchGestureGuard` на pointerdown/move (`houseplan-card.ts:12565-12572` → `_guardTouchGesture` → `_notePointer`). Он ставит отметку о реальном вводе раньше дочерних обработчиков;\n- обработчики маркера устройства `@pointerover` и `@pointermove` (`13555-13565`) и `_pointerMove`, который в view/devices возвращает владельца;\n- `_showTip` и `_roomTipEnabledForPointer`;\n- `_clearTransientHover` и `clearDeviceFocus` → `resetHouseplanHover`;\n- `clearPointerHover` и восстановление focus-подсказки;\n- места, где сбрасывается `_hoverRoom` (`houseplan-card.ts:5112`, `houseplan-editor-runtime.ts:1514`), и `syncHouseplanHover` в режиме plan, где `_hoverRoom` не рисуется.",
+          "analysis": [
+            {
+              "topic": "Подходит ли место исправления",
+              "assessment": "Правило находится в единственном владельце gate, а не разбросано по обработчикам маркеров. Поэтому оно одинаково действует для устройств, комнат и вложенных целей `data-pointer-hover`. Условие узкое: только выключенный gate, только мышь и только boundary-типы событий. Обычный hover при включённом gate не затронут. Восстановление работает, потому что при реальном движении `pointermove` всегда проходит через capture-guard карточки до дочерних обработчиков. Значит, пользователь, который сдвинул мышь после remount, получает обычный dwell без перезагрузки. Комментарий в коде объясняет неочевидную причину, а не пересказывает строку. Его стоит сохранить.",
+              "evidence": "`src/pointer-modality.ts:83-84`. Цепочка `houseplan-card.ts:12566` (`@pointermove=${this._touchGestureGuard}` с `capture: true`, 2773-2776) → `_guardTouchGesture:8730` → `_notePointer`. Тест `test/pointer-modality.test.mjs` «#1413 boundary events cannot revive hover after mount or suspension» проверяет все три границы: connect, suspend и disconnect/connect."
+            },
+            {
+              "topic": "Сохранение подсказки клавиатурного фокуса",
+              "assessment": "Раньше любой вызов `showDevicePointerTip` при выключенном gate (теперь им может быть и проигнорированный pointerover) уходил в `resetHouseplanHover`. Тот удалял `focusTips` и `_tip`, то есть стирал видимую подсказку фокуса. Новая ветка отменяет только pointer-заявку. Это соответствует пункту 2 приёмки. Lifecycle-сбросы по-прежнему очищают фокус явно через `_clearTransientHover` → `clearDeviceFocus`, поэтому устаревшая focus-подсказка после remount не «воскреснет».",
+              "evidence": "`src/live-hover.ts:141-145` против прежнего общего условия. `src/live-interaction-runtime.ts:121`. Тест `test/device-tooltip-hover.test.mjs:88-95`."
+            },
+            {
+              "topic": "Захват комнаты при движении (исправление регресса CO₂)",
+              "assessment": "Причина первого отказа S6 разобрана верно: `_hoverRoom` задавался только на `pointerenter`, а именно его теперь игнорирует gate. Переносить захват на move правильно. Комнатный тултип уже отрисовывается из того же move-обработчика, и без этого изменения подсказка и подсветка периметра расходились бы. Проверка «та же комната и то же пространство» не даёт вызывать `_syncLiveHover` на каждое движение. Побочный эффект: после входа в режим, который сбрасывает `_hoverRoom` (`editor-runtime:1514`), подсветка вернётся при следующем движении внутри комнаты, а не только после повторного входа. Это не новая политика: тот же `enterRoom` и раньше срабатывал в этих режимах на enter. В plan `_hoverRoom` вообще не отрисовывается (`live-hover.ts:389-394`). Цепочка `enterRoom` → `_roomTipEnabledForPointer` → `_showTip` трижды вызывает `_notePointer` для одного события, но для move это идемпотентно и дёшево.",
+              "evidence": "`src/houseplan-card.ts:12340-12362`. Все пять форм комнаты (path с препятствиями, path с отверстиями, polygon ×2, rect) и `hit`-path используют один и тот же `tip` на `@pointermove` (12403-12442). По словам автора, неизменённый `smoke_room_co2.mjs` прошёл; это подтверждает и итоговый receipt S6."
+            },
+            {
+              "topic": "Touch, pen и compatibility mouse",
+              "assessment": "Для touch и pen `next !== 'mouse'`, поэтому событие проходит прежним путём, включая `_clearTransientHover` в `_notePointer`. Для compatibility mouse `nextPointerModality` возвращает текущую модальность, то есть `touch`. На гибридном устройстве первый `pointerover` мыши после касания теперь игнорируется, а gate включает ближайший `pointermove`. Видимое поведение (dwell после движения) не меняется.",
+              "evidence": "`src/pointer-modality.ts:21-29`, 83. `houseplan-card.ts:8694-8701`."
+            },
+            {
+              "topic": "Проверки",
+              "assessment": "Node-тесты бьют в суть изменения: контроллер на всех трёх границах и сохранение focus-подсказки. Отдельного Node-кейса для захвата комнаты на move нет, но его покрывает браузерный smoke CO₂, который этот регресс и поймал. Нативный E2E #50 проверяет поведение без приватного состояния. Я ничего не запускал.",
+              "evidence": "Receipt `20261113T142745917-17ee323e` на материале `72df17f1`: passed, failures пусты. Результат 7/7 на реальном HA автор указывает для `517fa49e6`, то есть до правки комнаты; лог `artifacts/issue1413/e2e50-fixed.log` я не видел."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Убирать устаревшую pointer-подсказку в новой ветке отказа. Gate может выключиться, не очистив `_tip`, только в одном случае: `_onMediaChange` (например, на гибридном устройстве пропал fine pointer). `_onGateChange` → `_syncPointerHoverTargets` трогает лишь атрибуты. Раньше следующий `showDevicePointerTip` при выключенном gate делал полный reset и убирал такую подсказку. Теперь она остаётся до `pointerleave`. Это редкий крайний случай, а не дефект основного сценария, поэтому не блокер. Минимальная правка: в ветке `!hoverEnabled` (`src/live-hover.ts:141-145`) делать то же, что в строках 163-166: `if (host._tip?.source === 'pointer') { host._tip = focusTips.get(host) || null; syncHouseplanHover(host); }`. Подсказка фокуса при этом сохраняется. Цена — три строки и один Node-кейс."
+          ],
+          "boundaries": "Изучено по исходникам на head `72df17f1`:\n- `src/pointer-modality.ts` целиком;\n- `src/live-hover.ts` целиком;\n- в `src/houseplan-card.ts` — пути pointer/hover: capture-guard, `_notePointer`, `_clearTransientHover`, `_showTip`, `_roomTipEnabledForPointer`, `_pointerMove`, разметка маркера устройства и форм комнаты;\n- в `src/live-interaction-runtime.ts` — обёртки над tip;\n- места, где сбрасывается `_hoverRoom`.\n\nСборку, тесты, smoke и E2E я не запускал. Опираюсь на receipt S6 `20261113T142745917-17ee323e` (passed на `72df17f1`) и на описание автора. Результат 7/7 на реальном HA относится к `517fa49e6`, а лог `e2e50-fixed.log` и диагностический `remount-diagnosis3.json` в pinned-материале не просматривались. Поведение Chromium (boundary-события без `pointermove` после layout или remount) принимаю по доказательству автора на реальном HA и сам не проверял.",
+          "outsideFindings": []
+        },
+        "usage": {
+          "input_tokens": 38,
+          "cache_creation_input_tokens": 69987,
+          "cache_read_input_tokens": 744952,
+          "output_tokens": 12522,
+          "output_tokens_details": {
+            "thinking_tokens": 5296
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 69987,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 721,
+              "cache_read_input_tokens": 53998,
+              "cache_creation_input_tokens": 15989,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 15989
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление решает проблему из #1413 на уровне её причины. После lifecycle-сброса (connect, suspend, remount) `PointerModalityController.note` больше не включает выключенный hover gate по `pointerover`/`pointerenter` от мыши. Gate снова включает только реальный `pointermove` или `pointerdown`. Эти события ловит capture-обработчик карточки, поэтому пользователь не теряет hover: первое движение мыши возвращает обычное поведение. Сопутствующий регресс, найденный на первом прогоне S6 (`smoke_room_co2`), устранён так, как нужно. Комната теперь захватывает `_hoverRoom` и на `pointermove`, а не только на `pointerenter`, который после ремаунта игнорируется. Ранний отказ в `showDevicePointerTip` больше не стирает валидную подсказку клавиатурного фокуса. Блокеров не нашёл. Остался один редкий необязательный хвост: видимая pointer-подсказка после смены media query (подробности в improvements). Набор S6 на `72df17f1` прошёл; автор также сообщает о 7/7 PASS на реальном HA 2026.11.1, но на более раннем коммите `517fa49e6`.\n\n## Понимание решения\n\nПроблема. Карточка гасит hover на границах жизненного цикла: `_clearTransientHover(true)` вызывает `_pointerModality.suspend()`, сбрасывает `_tip` и `_hoverRoom`, а `connect()` и `disconnect()` переводят модальность в `unknown` и выключают gate. Однако на реальном HA после remove/append браузер присылает доверенный `pointerover` с `pointerType: 'mouse'`, хотя мышь не двигалась. До исправления `note()` превращал такое событие в модальность `mouse`, `_syncGate` включал gate, и обработчик `@pointerover` маркера устройства запускал 150-мс dwell. В итоге тултип открывался при неподвижной мыши.\n\nРешение:\n1. `src/pointer-modality.ts:79-88`. Если gate выключен, а событие от мыши имеет тип `pointerover` или `pointerenter`, оно не меняет ни модальность, ни gate. Touch, pen и compatibility mouse (`firesTouchEvents`) обрабатываются как раньше: для них `next !== 'mouse'`. При включённом gate boundary-события работают как прежде.\n2. `src/live-hover.ts:141-145`. При выключенном gate `showDevicePointerTip` отменяет только отложенную pointer-заявку и снимает hit-hover. `resetHouseplanHover` здесь больше не вызывается, поэтому `focusTips` и `_tip` с `source: 'focus'` сохраняются. Остальные причины отказа (drag, неподходящий режим) по-прежнему вызывают полный reset.\n3. `src/houseplan-card.ts:12340-12362`. Обработчик `tip` на `pointermove` сначала вызывает `enterRoom`. Тот обновляет `_hoverRoom` только при смене комнаты или пространства, поэтому лишних sync на каждое движение нет. Это закрывает случай, когда `pointerenter` проигнорирован, а первое реальное движение уже показывает комнатную подсказку.\n\nРазобранные пути:\n- capture-guard `_touchGestureGuard` на pointerdown/move (`houseplan-card.ts:12565-12572` → `_guardTouchGesture` → `_notePointer`). Он ставит отметку о реальном вводе раньше дочерних обработчиков;\n- обработчики маркера устройства `@pointerover` и `@pointermove` (`13555-13565`) и `_pointerMove`, который в view/devices возвращает владельца;\n- `_showTip` и `_roomTipEnabledForPointer`;\n- `_clearTransientHover` и `clearDeviceFocus` → `resetHouseplanHover`;\n- `clearPointerHover` и восстановление focus-подсказки;\n- места, где сбрасывается `_hoverRoom` (`houseplan-card.ts:5112`, `houseplan-editor-runtime.ts:1514`), и `syncHouseplanHover` в режиме plan, где `_hoverRoom` не рисуется.\n\n## Разбор решения\n\n### Подходит ли место исправления\n\nПравило находится в единственном владельце gate, а не разбросано по обработчикам маркеров. Поэтому оно одинаково действует для устройств, комнат и вложенных целей `data-pointer-hover`. Условие узкое: только выключенный gate, только мышь и только boundary-типы событий. Обычный hover при включённом gate не затронут. Восстановление работает, потому что при реальном движении `pointermove` всегда проходит через capture-guard карточки до дочерних обработчиков. Значит, пользователь, который сдвинул мышь после remount, получает обычный dwell без перезагрузки. Комментарий в коде объясняет неочевидную причину, а не пересказывает строку. Его стоит сохранить.\n\nОснование: `src/pointer-modality.ts:83-84`. Цепочка `houseplan-card.ts:12566` (`@pointermove=${this._touchGestureGuard}` с `capture: true`, 2773-2776) → `_guardTouchGesture:8730` → `_notePointer`. Тест `test/pointer-modality.test.mjs` «#1413 boundary events cannot revive hover after mount or suspension» проверяет все три границы: connect, suspend и disconnect/connect.\n\n### Сохранение подсказки клавиатурного фокуса\n\nРаньше любой вызов `showDevicePointerTip` при выключенном gate (теперь им может быть и проигнорированный pointerover) уходил в `resetHouseplanHover`. Тот удалял `focusTips` и `_tip`, то есть стирал видимую подсказку фокуса. Новая ветка отменяет только pointer-заявку. Это соответствует пункту 2 приёмки. Lifecycle-сбросы по-прежнему очищают фокус явно через `_clearTransientHover` → `clearDeviceFocus`, поэтому устаревшая focus-подсказка после remount не «воскреснет».\n\nОснование: `src/live-hover.ts:141-145` против прежнего общего условия. `src/live-interaction-runtime.ts:121`. Тест `test/device-tooltip-hover.test.mjs:88-95`.\n\n### Захват комнаты при движении (исправление регресса CO₂)\n\nПричина первого отказа S6 разобрана верно: `_hoverRoom` задавался только на `pointerenter`, а именно его теперь игнорирует gate. Переносить захват на move правильно. Комнатный тултип уже отрисовывается из того же move-обработчика, и без этого изменения подсказка и подсветка периметра расходились бы. Проверка «та же комната и то же пространство» не даёт вызывать `_syncLiveHover` на каждое движение. Побочный эффект: после входа в режим, который сбрасывает `_hoverRoom` (`editor-runtime:1514`), подсветка вернётся при следующем движении внутри комнаты, а не только после повторного входа. Это не новая политика: тот же `enterRoom` и раньше срабатывал в этих режимах на enter. В plan `_hoverRoom` вообще не отрисовывается (`live-hover.ts:389-394`). Цепочка `enterRoom` → `_roomTipEnabledForPointer` → `_showTip` трижды вызывает `_notePointer` для одного события, но для move это идемпотентно и дёшево.\n\nОснование: `src/houseplan-card.ts:12340-12362`. Все пять форм комнаты (path с препятствиями, path с отверстиями, polygon ×2, rect) и `hit`-path используют один и тот же `tip` на `@pointermove` (12403-12442). По словам автора, неизменённый `smoke_room_co2.mjs` прошёл; это подтверждает и итоговый receipt S6.\n\n### Touch, pen и compatibility mouse\n\nДля touch и pen `next !== 'mouse'`, поэтому событие проходит прежним путём, включая `_clearTransientHover` в `_notePointer`. Для compatibility mouse `nextPointerModality` возвращает текущую модальность, то есть `touch`. На гибридном устройстве первый `pointerover` мыши после касания теперь игнорируется, а gate включает ближайший `pointermove`. Видимое поведение (dwell после движения) не меняется.\n\nОснование: `src/pointer-modality.ts:21-29`, 83. `houseplan-card.ts:8694-8701`.\n\n### Проверки\n\nNode-тесты бьют в суть изменения: контроллер на всех трёх границах и сохранение focus-подсказки. Отдельного Node-кейса для захвата комнаты на move нет, но его покрывает браузерный smoke CO₂, который этот регресс и поймал. Нативный E2E #50 проверяет поведение без приватного состояния. Я ничего не запускал.\n\nОснование: Receipt `20261113T142745917-17ee323e` на материале `72df17f1`: passed, failures пусты. Результат 7/7 на реальном HA автор указывает для `517fa49e6`, то есть до правки комнаты; лог `artifacts/issue1413/e2e50-fixed.log` я не видел.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Убирать устаревшую pointer-подсказку в новой ветке отказа. Gate может выключиться, не очистив `_tip`, только в одном случае: `_onMediaChange` (например, на гибридном устройстве пропал fine pointer). `_onGateChange` → `_syncPointerHoverTargets` трогает лишь атрибуты. Раньше следующий `showDevicePointerTip` при выключенном gate делал полный reset и убирал такую подсказку. Теперь она остаётся до `pointerleave`. Это редкий крайний случай, а не дефект основного сценария, поэтому не блокер. Минимальная правка: в ветке `!hoverEnabled` (`src/live-hover.ts:141-145`) делать то же, что в строках 163-166: `if (host._tip?.source === 'pointer') { host._tip = focusTips.get(host) || null; syncHouseplanHover(host); }`. Подсказка фокуса при этом сохраняется. Цена — три строки и один Node-кейс.\n\n## Границы анализа\n\nИзучено по исходникам на head `72df17f1`:\n- `src/pointer-modality.ts` целиком;\n- `src/live-hover.ts` целиком;\n- в `src/houseplan-card.ts` — пути pointer/hover: capture-guard, `_notePointer`, `_clearTransientHover`, `_showTip`, `_roomTipEnabledForPointer`, `_pointerMove`, разметка маркера устройства и форм комнаты;\n- в `src/live-interaction-runtime.ts` — обёртки над tip;\n- места, где сбрасывается `_hoverRoom`.\n\nСборку, тесты, smoke и E2E я не запускал. Опираюсь на receipt S6 `20261113T142745917-17ee323e` (passed на `72df17f1`) и на описание автора. Результат 7/7 на реальном HA относится к `517fa49e6`, а лог `e2e50-fixed.log` и диагностический `remount-diagnosis3.json` в pinned-материале не просматривались. Поведение Chromium (boundary-события без `pointermove` после layout или remount) принимаю по доказательству автора на реальном HA и сам не проверял.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 9516d31de24a41bdf7a95bddc3bd3d7bb16f6222 → 72df17f19c3ab7a0b9fead0e8929d2c68b97ae76\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1413, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nДоказательство на реальном HA: gate выключен и `_tip=null` сразу после detach/attach; затем browser `pointerover` с новым timestamp включает gate, без pointermove, и новый 150-мс dwell открывает tooltip. Диагностический лог `artifacts/issue1412/remount-diagnosis3.json` отделяет этот эффект от старого timer/callback. Основной E2E не использует приватное состояние; временная диагностика удалена.\n\nРешение: PointerModalityController не принимает pointerover/enter для восстановления выключенного gate. Обычный pointermove/down продолжает прежнюю revalidation; touch compatibility не менялась. Ранний отказ device-pointer теперь отменяет только pointer lease, не стирая валидный keyboard focus tooltip. Добавлены поведенческие Node-кейсы в существующих файлах; их текущая классификация и центральная выборка остаются presentation/editors/devices, дополнены адресными native hover/touch/room/Zigbee/keyboard смоуками. Типы и сборка, 11 адресных Node-кейсов успешны. Реальные HA E2E повторяются на исправленной сборке до беты. Goldens не менялись.\n\nРеальный HA 2026.11.1 на исправленном `517fa49e6`: **7/7 PASS** (4 business-сценария + auth admin/viewer и plan-model setup), 44.4 с. Обе поверхности (panel/masonry), реальные сервисы light и входящий state stream, pointer dwell/соседи/fade/reduced motion/resize, pending/visible mode/space/navigation/remount и новое движение после remount прошли. Лог `artifacts/issue1413/e2e50-fixed.log`. Продолжается центральный S6 перед ревью; beta-кандидат ещё не заморожен.\n\n### Повтор S6 после комнатной регрессии\n\nПервый S6: 532/533 успешны, отказ `smoke_room_co2` был корректным. После игнорирования cold boundary первое реальное движение показывало комнатный tooltip, но не заполняло `_hoverRoom` (он задавался только на enter), поэтому стационарное CO₂ оставалось старым. Room acquisition теперь вызывается из существующего move handler и не пересчитывает уже принадлежащий hover. Все формы комнаты используют тот же handler. Сборка/типы и **неизменённый** `smoke_room_co2.mjs` прошли. Проверки или ожидания CO₂ не ослаблялись. Повтор finish включает полный актуальный diff и адресный CO₂ smoke.\n```\n\n</details>\n",
+        "createdAt": "2026-11-13T14:39:09.440Z",
+        "artifactId": 14048155047,
+        "runId": 43444266089,
+        "runAttempt": 1,
+        "completedAt": "2026-11-13T14:39:13Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43444266089",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222"
       }
     }
   },
@@ -4821,9 +4924,9 @@
     "fence": 409,
     "materialSha": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
     "expectedBase": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1794580053719,
-    "expiresAt": 1794584147994,
+    "expiresAt": 1794584376755,
     "patchId": "9c6efa8f85f9dad8a4ebaf997466e41cf85fef7f",
     "reviewRequest": "review:1413:2:9c6efa8f85f9dad8a4ebaf997466e41cf85fef7f:9516d31de24a41bdf7a95bddc3bd3d7bb16f6222"
   },
@@ -4942,6 +5045,10 @@
     },
     "github:43444777129:1:tick:0:review-presentation": {
       "digest": "ca6d05925d28eed0090f92350ded7a79dc1b0f42d67f40bd438a9e264e92f3ef",
+      "issue": 1413
+    },
+    "github:43444777129:1:tick:0:review-complete": {
+      "digest": "0809376445348290fbd0f3b48b4fa55662f2867a5178b48b1db10ef0a4932638",
       "issue": 1413
     },
     "finish:22f7a3ed-e33b-4a76-9188-8188891dc099": {
