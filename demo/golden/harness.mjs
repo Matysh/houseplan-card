@@ -1122,6 +1122,24 @@ async function preparePlanKeyboardCapture(page, scenario) {
 
 export async function prepareGoldenScenario(page, scenario) {
   await stableEnvironment(page, scenario);
+  {
+    // Default capture entry is pointer input, independent of the preceding
+    // scene's Tab history. Explicit keyboard/device-focus scenes establish
+    // their own trusted precondition later; their rings remain observable.
+    // Reset UA modality with trusted input
+    // on a disposable harness button, not CSS suppressing product focus paint.
+    await page.evaluate(() => {
+      // Retire the previous fixture first, just as the setup below does.
+      // Its native top-layer modal must not intercept the neutral click.
+      window.__goldenPanel?.remove?.();window.__goldenCard?.remove?.();
+      window.__goldenEditor?.remove?.();window.__card?.remove?.();
+      const button=document.createElement('button');button.id='hp-golden-pointer-entry';
+      button.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;padding:0;border:0;z-index:2147483647';
+      button.textContent='Pointer entry';document.body.append(button);
+    });
+    try { await page.locator('#hp-golden-pointer-entry').click(); }
+    finally { await page.evaluate(() => document.getElementById('hp-golden-pointer-entry')?.remove()); }
+  }
   // Scenarios share one Playwright page, including its pointer position. A
   // scenario that deliberately hovers a marker must not leave the next one
   // capturing an unrelated room hover at the same viewport coordinates.
