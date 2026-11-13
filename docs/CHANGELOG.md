@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Inventory HA frontend components and record the owner-selected UI Kit/local-SVG direction, isolated bootstrap measurements and deferred standalone UI/entry tasks; installed HA behavior is unchanged (#1393).
+
 ## v1.85.2 — 2026-11-13
 
 - Promote the reviewed 1.85.2 betas with stable-release fixes and preserved visual references.

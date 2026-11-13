@@ -1,0 +1,1392 @@
+{
+  "schema": 1,
+  "issue": 1393,
+  "source": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
+  "date": "2026-11-13T22:01:30.424Z",
+  "kind": "bootstrap-probe-not-full-editor",
+  "environment": {
+    "node": "v22.23.2",
+    "browser": "151.0.7922.34",
+    "platform": "linux",
+    "release": "6.18.33.2-microsoft-standard-WSL2",
+    "cpu": "AMD Ryzen 9 7950X 16-Core Processor",
+    "cpus": 32,
+    "viewport": "1280x900",
+    "network": "loopback; no throttling; fresh browser context per sample; route interception disables HTTP cache",
+    "reducedMotion": true
+  },
+  "inventory": {
+    "sourceFiles": 588,
+    "mentionFiles": 90,
+    "tagFiles": 46,
+    "tags": {
+      "ha-card": [
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12141
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12152
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12167
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12553
+        },
+        {
+          "file": "src/space-card.ts",
+          "line": 893
+        },
+        {
+          "file": "src/space-card.ts",
+          "line": 1014
+        }
+      ],
+      "ha-circular-progress": [
+        {
+          "file": "src/i18n/language-runtime.ts",
+          "line": 171
+        }
+      ],
+      "ha-dialog": [
+        {
+          "file": "src/hp-dialog.ts",
+          "line": 830
+        },
+        {
+          "file": "src/hp-dialog.ts",
+          "line": 848
+        }
+      ],
+      "ha-form": [
+        {
+          "file": "src/editor.ts",
+          "line": 141
+        },
+        {
+          "file": "src/space-editor.ts",
+          "line": 89
+        }
+      ],
+      "ha-icon": [
+        {
+          "file": "src/catalog-context-menu.ts",
+          "line": 39
+        },
+        {
+          "file": "src/decor-image-editor.ts",
+          "line": 242
+        },
+        {
+          "file": "src/decor-image-editor.ts",
+          "line": 248
+        },
+        {
+          "file": "src/decor-image-editor.ts",
+          "line": 252
+        },
+        {
+          "file": "src/decor-image-editor.ts",
+          "line": 275
+        },
+        {
+          "file": "src/decor-image-editor.ts",
+          "line": 315
+        },
+        {
+          "file": "src/decor-image-editor.ts",
+          "line": 325
+        },
+        {
+          "file": "src/decor-image-editor.ts",
+          "line": 336
+        },
+        {
+          "file": "src/decor-image-editor.ts",
+          "line": 477
+        },
+        {
+          "file": "src/device-face.ts",
+          "line": 122
+        },
+        {
+          "file": "src/device-face.ts",
+          "line": 132
+        },
+        {
+          "file": "src/device-face.ts",
+          "line": 151
+        },
+        {
+          "file": "src/device-face.ts",
+          "line": 155
+        },
+        {
+          "file": "src/device-face.ts",
+          "line": 158
+        },
+        {
+          "file": "src/device-issues-view.ts",
+          "line": 32
+        },
+        {
+          "file": "src/editor-secondary.ts",
+          "line": 189
+        },
+        {
+          "file": "src/editor-secondary.ts",
+          "line": 190
+        },
+        {
+          "file": "src/editor-secondary.ts",
+          "line": 221
+        },
+        {
+          "file": "src/editors/external-screens.ts",
+          "line": 122
+        },
+        {
+          "file": "src/editors/external-screens.ts",
+          "line": 104
+        },
+        {
+          "file": "src/editors/external-screens.ts",
+          "line": 119
+        },
+        {
+          "file": "src/editors/external-screens.ts",
+          "line": 124
+        },
+        {
+          "file": "src/editors/form-kit.ts",
+          "line": 176
+        },
+        {
+          "file": "src/editors/form-kit.ts",
+          "line": 247
+        },
+        {
+          "file": "src/editors/form-kit.ts",
+          "line": 277
+        },
+        {
+          "file": "src/editors/form-kit.ts",
+          "line": 434
+        },
+        {
+          "file": "src/editors/form-kit.ts",
+          "line": 613
+        },
+        {
+          "file": "src/editors/form-kit.ts",
+          "line": 611
+        },
+        {
+          "file": "src/editors/general-settings-dialog.ts",
+          "line": 327
+        },
+        {
+          "file": "src/editors/general-settings-dialog.ts",
+          "line": 278
+        },
+        {
+          "file": "src/editors/general-settings-dialog.ts",
+          "line": 287
+        },
+        {
+          "file": "src/editors/general-settings-dialog.ts",
+          "line": 291
+        },
+        {
+          "file": "src/editors/hp-icon-picker.ts",
+          "line": 104
+        },
+        {
+          "file": "src/editors/marker-alerts.ts",
+          "line": 149
+        },
+        {
+          "file": "src/editors/marker-alerts.ts",
+          "line": 159
+        },
+        {
+          "file": "src/editors/marker-alerts.ts",
+          "line": 198
+        },
+        {
+          "file": "src/editors/marker-dialog.ts",
+          "line": 457
+        },
+        {
+          "file": "src/editors/marker-dialog.ts",
+          "line": 461
+        },
+        {
+          "file": "src/editors/marker-dialog.ts",
+          "line": 474
+        },
+        {
+          "file": "src/editors/marker-dialog.ts",
+          "line": 810
+        },
+        {
+          "file": "src/editors/marker-dialog.ts",
+          "line": 864
+        },
+        {
+          "file": "src/editors/marker-dialog.ts",
+          "line": 855
+        },
+        {
+          "file": "src/editors/marker-dialog.ts",
+          "line": 858
+        },
+        {
+          "file": "src/editors/marker-dialog.ts",
+          "line": 936
+        },
+        {
+          "file": "src/editors/marker-dialog.ts",
+          "line": 919
+        },
+        {
+          "file": "src/editors/marker-dialog.ts",
+          "line": 928
+        },
+        {
+          "file": "src/editors/opening-features-fields.ts",
+          "line": 85
+        },
+        {
+          "file": "src/editors/opening-features-fields.ts",
+          "line": 94
+        },
+        {
+          "file": "src/editors/opening-features-fields.ts",
+          "line": 99
+        },
+        {
+          "file": "src/editors/opening-features-fields.ts",
+          "line": 105
+        },
+        {
+          "file": "src/editors/opening-features-fields.ts",
+          "line": 97
+        },
+        {
+          "file": "src/editors/opening-features-fields.ts",
+          "line": 138
+        },
+        {
+          "file": "src/editors/radar-section.ts",
+          "line": 120
+        },
+        {
+          "file": "src/editors/radar-section.ts",
+          "line": 336
+        },
+        {
+          "file": "src/editors/radar-section.ts",
+          "line": 356
+        },
+        {
+          "file": "src/editors/radar-section.ts",
+          "line": 387
+        },
+        {
+          "file": "src/editors/radar-section.ts",
+          "line": 432
+        },
+        {
+          "file": "src/editors/radar-section.ts",
+          "line": 438
+        },
+        {
+          "file": "src/editors/radar-section.ts",
+          "line": 435
+        },
+        {
+          "file": "src/editors/radar-section.ts",
+          "line": 460
+        },
+        {
+          "file": "src/editors/room-card-preview.ts",
+          "line": 18
+        },
+        {
+          "file": "src/editors/room-card-preview.ts",
+          "line": 19
+        },
+        {
+          "file": "src/editors/room-card-preview.ts",
+          "line": 21
+        },
+        {
+          "file": "src/editors/room-card-preview.ts",
+          "line": 22
+        },
+        {
+          "file": "src/editors/room-card-preview.ts",
+          "line": 23
+        },
+        {
+          "file": "src/editors/room-settings-dialog.ts",
+          "line": 277
+        },
+        {
+          "file": "src/editors/room-settings-dialog.ts",
+          "line": 290
+        },
+        {
+          "file": "src/editors/room-settings-dialog.ts",
+          "line": 295
+        },
+        {
+          "file": "src/editors/space-form.ts",
+          "line": 193
+        },
+        {
+          "file": "src/editors/space-form.ts",
+          "line": 174
+        },
+        {
+          "file": "src/editors/space-form.ts",
+          "line": 182
+        },
+        {
+          "file": "src/editors/space-form.ts",
+          "line": 287
+        },
+        {
+          "file": "src/editors/space-form.ts",
+          "line": 295
+        },
+        {
+          "file": "src/editors/vacuum-history-section.ts",
+          "line": 23
+        },
+        {
+          "file": "src/editors/vacuum-history-section.ts",
+          "line": 25
+        },
+        {
+          "file": "src/editors/vacuum-history-section.ts",
+          "line": 27
+        },
+        {
+          "file": "src/floor-import-dialog.ts",
+          "line": 37
+        },
+        {
+          "file": "src/header-actions-menu.ts",
+          "line": 15
+        },
+        {
+          "file": "src/header-menu.ts",
+          "line": 8
+        },
+        {
+          "file": "src/header-menu.ts",
+          "line": 15
+        },
+        {
+          "file": "src/header-menu.ts",
+          "line": 19
+        },
+        {
+          "file": "src/header-menu.ts",
+          "line": 23
+        },
+        {
+          "file": "src/header-space-select.ts",
+          "line": 76
+        },
+        {
+          "file": "src/header-space-select.ts",
+          "line": 83
+        },
+        {
+          "file": "src/header-space-select.ts",
+          "line": 85
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 4926
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 4968
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 7677
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12146
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12143
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12160
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12157
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12181
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12178
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12188
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12193
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12296
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12582
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12615
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12620
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12621
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12603
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12604
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12901
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 12943
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 13467
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 13608
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 13787
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 13791
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 13797
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 13801
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 13813
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 13860
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 13861
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 14208
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 14292
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 14317
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 14322
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 14495
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 14527
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 14537
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 14548
+        },
+        {
+          "file": "src/houseplan-card.ts",
+          "line": 14552
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 5274
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 5276
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 5370
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 5372
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 5424
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 5507
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 5550
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 5532
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 5568
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 6070
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 8768
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 9400
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 9402
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 9408
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 9471
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 9475
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 9489
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 9526
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 9867
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10031
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10268
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10278
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10237
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10258
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10260
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10262
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10264
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10694
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10969
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11085
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11007
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11032
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11071
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11499
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11520
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11523
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11567
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11573
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11587
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11593
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11598
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11608
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11617
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11638
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11645
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11649
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11652
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11662
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11668
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11673
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11888
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11937
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11952
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 11978
+        },
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 12451
+        },
+        {
+          "file": "src/houseplan-onboarding-runtime.ts",
+          "line": 188
+        },
+        {
+          "file": "src/hp-confirm.ts",
+          "line": 72
+        },
+        {
+          "file": "src/hp-device-preview.ts",
+          "line": 405
+        },
+        {
+          "file": "src/hp-device-preview.ts",
+          "line": 412
+        },
+        {
+          "file": "src/hp-dialog.ts",
+          "line": 812
+        },
+        {
+          "file": "src/hp-dialog.ts",
+          "line": 814
+        },
+        {
+          "file": "src/hp-dialog.ts",
+          "line": 814
+        },
+        {
+          "file": "src/hp-dialog.ts",
+          "line": 814
+        },
+        {
+          "file": "src/hp-summary-weather.ts",
+          "line": 78
+        },
+        {
+          "file": "src/hp-summary-weather.ts",
+          "line": 91
+        },
+        {
+          "file": "src/hp-zigbee-topology-settings.ts",
+          "line": 368
+        },
+        {
+          "file": "src/hp-zigbee-topology-settings.ts",
+          "line": 422
+        },
+        {
+          "file": "src/led-strip-card.ts",
+          "line": 41
+        },
+        {
+          "file": "src/led-strip-card.ts",
+          "line": 66
+        },
+        {
+          "file": "src/led-strip-editor.ts",
+          "line": 773
+        },
+        {
+          "file": "src/led-strip-editor.ts",
+          "line": 786
+        },
+        {
+          "file": "src/led-strip-editor.ts",
+          "line": 837
+        },
+        {
+          "file": "src/led-strip-editor.ts",
+          "line": 831
+        },
+        {
+          "file": "src/led-strip-editor.ts",
+          "line": 903
+        },
+        {
+          "file": "src/optimize-plans-dialog.ts",
+          "line": 566
+        },
+        {
+          "file": "src/optimize-plans-dialog.ts",
+          "line": 570
+        },
+        {
+          "file": "src/optimize-plans-dialog.ts",
+          "line": 675
+        },
+        {
+          "file": "src/optimize-plans-dialog.ts",
+          "line": 694
+        },
+        {
+          "file": "src/optimize-plans-dialog.ts",
+          "line": 809
+        },
+        {
+          "file": "src/optimize-plans-dialog.ts",
+          "line": 830
+        },
+        {
+          "file": "src/optimize-plans-dialog.ts",
+          "line": 889
+        },
+        {
+          "file": "src/optimize-status.ts",
+          "line": 31
+        },
+        {
+          "file": "src/optimize-status.ts",
+          "line": 42
+        },
+        {
+          "file": "src/panel-header-menu.ts",
+          "line": 40
+        },
+        {
+          "file": "src/panel-header-menu.ts",
+          "line": 40
+        },
+        {
+          "file": "src/pdf/hp-pdf-dialog.ts",
+          "line": 215
+        },
+        {
+          "file": "src/radar-setup.ts",
+          "line": 462
+        },
+        {
+          "file": "src/radar-setup.ts",
+          "line": 492
+        },
+        {
+          "file": "src/space-card.ts",
+          "line": 928
+        },
+        {
+          "file": "src/space-copy-runtime.ts",
+          "line": 130
+        },
+        {
+          "file": "src/stairs-editor.ts",
+          "line": 765
+        },
+        {
+          "file": "src/stairs-editor.ts",
+          "line": 770
+        },
+        {
+          "file": "src/summary-panel-editor.ts",
+          "line": 348
+        },
+        {
+          "file": "src/vacuum-history-banner.ts",
+          "line": 7
+        },
+        {
+          "file": "src/version-recovery-card.ts",
+          "line": 313
+        },
+        {
+          "file": "src/view-frame-view.ts",
+          "line": 13
+        },
+        {
+          "file": "src/view-frame-view.ts",
+          "line": 20
+        },
+        {
+          "file": "src/view-frame-view.ts",
+          "line": 22
+        }
+      ],
+      "ha-slider": [
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10169
+        }
+      ],
+      "ha-switch": [
+        {
+          "file": "src/houseplan-editor-runtime.ts",
+          "line": 10156
+        }
+      ]
+    }
+  },
+  "lock": {
+    "version": "20260930.4",
+    "bytes": 110732939,
+    "sha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+    "url": "https://files.pythonhosted.org/packages/b4/ea/2074829fb00d53061804eae66303e2900319c348b4a92f239de7a537d6dc/home_assistant_frontend-20260930.4-py3-none-any.whl",
+    "manifestSha256": "0ab219a4a111d67c8e2573771749f3aa2097ca9d1a2fdb8db36081757292b936",
+    "app": "app.c430fdd756496c9c.js",
+    "entry": "o(26544);",
+    "modules": {
+      "theme": "3184",
+      "dialog": "37334",
+      "icon": "33396",
+      "card": "95788",
+      "contexts": "66572"
+    },
+    "translations": {
+      "en": "en-bde2221b5c81c706ba706840e394cca0.json",
+      "de": "de-9929532396bf804c2b18da38f7424b1b.json",
+      "fr": "fr-009a6e016520014f53d58754caa1bcd1.json",
+      "ru": "ru-b27f4a665b84ba27560f1d90c56bfd6a.json"
+    }
+  },
+  "staticClosures": {
+    "full": {
+      "modules": 149,
+      "files": [
+        "hass_frontend/frontend_latest/10498.e55c62affc15d232.js",
+        "hass_frontend/frontend_latest/11221.98e0424809df75c0.js",
+        "hass_frontend/frontend_latest/17332.cfc44d92e55e41b1.js",
+        "hass_frontend/frontend_latest/17572.2f45bb63e3bfe7b2.js",
+        "hass_frontend/frontend_latest/19258.ae354df13b92dd3b.js",
+        "hass_frontend/frontend_latest/25737.8d7c37fe2299042b.js",
+        "hass_frontend/frontend_latest/3359.109ebe89568e0ebc.js",
+        "hass_frontend/frontend_latest/3669.908a6415948819ff.js",
+        "hass_frontend/frontend_latest/37067.91eeb62d12bb7aac.js",
+        "hass_frontend/frontend_latest/38713.0910aaa8eae27439.js",
+        "hass_frontend/frontend_latest/45246.17aac0c90115b902.js",
+        "hass_frontend/frontend_latest/48601.ea5f5dcd68cfd1a4.js",
+        "hass_frontend/frontend_latest/51026.49b3959c132ab045.js",
+        "hass_frontend/frontend_latest/60732.6917feade5516b28.js",
+        "hass_frontend/frontend_latest/65819.c67beedb2569fde2.js",
+        "hass_frontend/frontend_latest/73455.5738fb943bc987ba.js",
+        "hass_frontend/frontend_latest/93302.f460afc7be1ae4e2.js",
+        "hass_frontend/frontend_latest/app.c430fdd756496c9c.js"
+      ],
+      "bytes": 984374,
+      "gzipBytes": 298370
+    },
+    "reduced": {
+      "modules": 148,
+      "files": [
+        "hass_frontend/frontend_latest/10498.e55c62affc15d232.js",
+        "hass_frontend/frontend_latest/11221.98e0424809df75c0.js",
+        "hass_frontend/frontend_latest/17332.cfc44d92e55e41b1.js",
+        "hass_frontend/frontend_latest/17572.2f45bb63e3bfe7b2.js",
+        "hass_frontend/frontend_latest/19258.ae354df13b92dd3b.js",
+        "hass_frontend/frontend_latest/25737.8d7c37fe2299042b.js",
+        "hass_frontend/frontend_latest/3359.109ebe89568e0ebc.js",
+        "hass_frontend/frontend_latest/3669.908a6415948819ff.js",
+        "hass_frontend/frontend_latest/37067.91eeb62d12bb7aac.js",
+        "hass_frontend/frontend_latest/38713.0910aaa8eae27439.js",
+        "hass_frontend/frontend_latest/48601.ea5f5dcd68cfd1a4.js",
+        "hass_frontend/frontend_latest/51026.49b3959c132ab045.js",
+        "hass_frontend/frontend_latest/60732.6917feade5516b28.js",
+        "hass_frontend/frontend_latest/65819.c67beedb2569fde2.js",
+        "hass_frontend/frontend_latest/73455.5738fb943bc987ba.js",
+        "hass_frontend/frontend_latest/93302.f460afc7be1ae4e2.js",
+        "hass_frontend/frontend_latest/app.c430fdd756496c9c.js"
+      ],
+      "bytes": 973609,
+      "gzipBytes": 294541
+    }
+  },
+  "probe": {
+    "bytes": 65828,
+    "gzipBytes": 19561
+  },
+  "summary": {
+    "full": {
+      "runs": 5,
+      "medianReadyMs": 143.19999998807907,
+      "medianResourceBytes": 1548459,
+      "medianRequests": 20
+    },
+    "reduced": {
+      "runs": 5,
+      "medianReadyMs": 128.40000000596046,
+      "medianResourceBytes": 1537661,
+      "medianRequests": 19
+    },
+    "native": {
+      "runs": 5,
+      "medianReadyMs": 39.19999998807907,
+      "medianResourceBytes": 198166,
+      "medianRequests": 5
+    }
+  },
+  "samples": [
+    {
+      "variant": "full",
+      "run": 1,
+      "readyMs": 195,
+      "resourceBytes": 1548459,
+      "requests": 20
+    },
+    {
+      "variant": "full",
+      "run": 2,
+      "readyMs": 139.30000001192093,
+      "resourceBytes": 1548459,
+      "requests": 20
+    },
+    {
+      "variant": "full",
+      "run": 3,
+      "readyMs": 143.60000002384186,
+      "resourceBytes": 1548459,
+      "requests": 20
+    },
+    {
+      "variant": "full",
+      "run": 4,
+      "readyMs": 128.7000000178814,
+      "resourceBytes": 1548459,
+      "requests": 20
+    },
+    {
+      "variant": "full",
+      "run": 5,
+      "readyMs": 143.19999998807907,
+      "resourceBytes": 1548459,
+      "requests": 20
+    },
+    {
+      "variant": "reduced",
+      "run": 1,
+      "readyMs": 128.40000000596046,
+      "resourceBytes": 1537661,
+      "requests": 19
+    },
+    {
+      "variant": "reduced",
+      "run": 2,
+      "readyMs": 144.30000001192093,
+      "resourceBytes": 1537661,
+      "requests": 19
+    },
+    {
+      "variant": "reduced",
+      "run": 3,
+      "readyMs": 140.80000001192093,
+      "resourceBytes": 1537661,
+      "requests": 19
+    },
+    {
+      "variant": "reduced",
+      "run": 4,
+      "readyMs": 128.30000001192093,
+      "resourceBytes": 1537661,
+      "requests": 19
+    },
+    {
+      "variant": "reduced",
+      "run": 5,
+      "readyMs": 127.7999999821186,
+      "resourceBytes": 1537661,
+      "requests": 19
+    },
+    {
+      "variant": "native",
+      "run": 1,
+      "readyMs": 30.5,
+      "resourceBytes": 198166,
+      "requests": 5
+    },
+    {
+      "variant": "native",
+      "run": 2,
+      "readyMs": 40.30000001192093,
+      "resourceBytes": 198166,
+      "requests": 5
+    },
+    {
+      "variant": "native",
+      "run": 3,
+      "readyMs": 39.19999998807907,
+      "resourceBytes": 198166,
+      "requests": 5
+    },
+    {
+      "variant": "native",
+      "run": 4,
+      "readyMs": 30.900000005960464,
+      "resourceBytes": 198166,
+      "requests": 5
+    },
+    {
+      "variant": "native",
+      "run": 5,
+      "readyMs": 39.400000005960464,
+      "resourceBytes": 198166,
+      "requests": 5
+    }
+  ],
+  "representativeResources": {
+    "full": [
+      {
+        "path": "/theme.css",
+        "bytes": 2222,
+        "duration": 6.800000011920929
+      },
+      {
+        "path": "/ha-bootstrap.mjs",
+        "bytes": 2592,
+        "duration": 6.4000000059604645
+      },
+      {
+        "path": "/ha-runtime.json",
+        "bytes": 358,
+        "duration": 4.800000011920929
+      },
+      {
+        "path": "/frontend_latest/app.c430fdd756496c9c.js",
+        "bytes": 577116,
+        "duration": 7.9000000059604645
+      },
+      {
+        "path": "/ha-modules.json",
+        "bytes": 452498,
+        "duration": 6.5
+      },
+      {
+        "path": "/frontend_latest/65819.c67beedb2569fde2.js",
+        "bytes": 14389,
+        "duration": 3.100000023841858
+      },
+      {
+        "path": "/frontend_latest/38713.0910aaa8eae27439.js",
+        "bytes": 9242,
+        "duration": 3
+      },
+      {
+        "path": "/frontend_latest/93302.f460afc7be1ae4e2.js",
+        "bytes": 10579,
+        "duration": 3.0999999940395355
+      },
+      {
+        "path": "/frontend_latest/17332.cfc44d92e55e41b1.js",
+        "bytes": 14891,
+        "duration": 2.9000000059604645
+      },
+      {
+        "path": "/frontend_latest/25737.8d7c37fe2299042b.js",
+        "bytes": 3705,
+        "duration": 2.699999988079071
+      },
+      {
+        "path": "/frontend_latest/49589.23a2870d61954701.js",
+        "bytes": 13433,
+        "duration": 6.5999999940395355
+      },
+      {
+        "path": "/static/locale-data/intl-displaynames/en.json",
+        "bytes": 43298,
+        "duration": 2.600000023841858
+      },
+      {
+        "path": "/frontend_latest/11221.98e0424809df75c0.js",
+        "bytes": 8400,
+        "duration": 2.7999999821186066
+      },
+      {
+        "path": "/frontend_latest/45246.17aac0c90115b902.js",
+        "bytes": 10765,
+        "duration": 2.7000000178813934
+      },
+      {
+        "path": "/static/translations/en-bde2221b5c81c706ba706840e394cca0.json",
+        "bytes": 134502,
+        "duration": 2.800000011920929
+      },
+      {
+        "path": "/1393-probe.js",
+        "bytes": 65828,
+        "duration": 1.699999988079071
+      },
+      {
+        "path": "/static/fonts/roboto/Roboto-Regular.woff2",
+        "bytes": 64632,
+        "duration": 9.5
+      },
+      {
+        "path": "/static/fonts/roboto/Roboto-Medium.woff2",
+        "bytes": 65484,
+        "duration": 9.599999994039536
+      },
+      {
+        "path": "/static/mdi/70d08c50ec4522dd75d11338db57846588263ee2.json",
+        "bytes": 54525,
+        "duration": 3.5999999940395355
+      }
+    ],
+    "reduced": [
+      {
+        "path": "/theme.css",
+        "bytes": 2222,
+        "duration": 3.9000000059604645
+      },
+      {
+        "path": "/ha-bootstrap.mjs",
+        "bytes": 2559,
+        "duration": 1.2999999821186066
+      },
+      {
+        "path": "/ha-runtime.json",
+        "bytes": 358,
+        "duration": 5
+      },
+      {
+        "path": "/frontend_latest/app.c430fdd756496c9c.js",
+        "bytes": 577116,
+        "duration": 6.300000011920929
+      },
+      {
+        "path": "/ha-modules.json",
+        "bytes": 452498,
+        "duration": 5.5
+      },
+      {
+        "path": "/frontend_latest/65819.c67beedb2569fde2.js",
+        "bytes": 14389,
+        "duration": 3
+      },
+      {
+        "path": "/frontend_latest/38713.0910aaa8eae27439.js",
+        "bytes": 9242,
+        "duration": 2.5999999940395355
+      },
+      {
+        "path": "/frontend_latest/93302.f460afc7be1ae4e2.js",
+        "bytes": 10579,
+        "duration": 2.699999988079071
+      },
+      {
+        "path": "/frontend_latest/17332.cfc44d92e55e41b1.js",
+        "bytes": 14891,
+        "duration": 2.4000000059604645
+      },
+      {
+        "path": "/frontend_latest/25737.8d7c37fe2299042b.js",
+        "bytes": 3705,
+        "duration": 2.2000000178813934
+      },
+      {
+        "path": "/frontend_latest/49589.23a2870d61954701.js",
+        "bytes": 13433,
+        "duration": 6.5
+      },
+      {
+        "path": "/static/locale-data/intl-displaynames/en.json",
+        "bytes": 43298,
+        "duration": 2.5
+      },
+      {
+        "path": "/frontend_latest/11221.98e0424809df75c0.js",
+        "bytes": 8400,
+        "duration": 2.5999999940395355
+      },
+      {
+        "path": "/static/translations/en-bde2221b5c81c706ba706840e394cca0.json",
+        "bytes": 134502,
+        "duration": 2.5999999940395355
+      },
+      {
+        "path": "/1393-probe.js",
+        "bytes": 65828,
+        "duration": 1.600000023841858
+      },
+      {
+        "path": "/static/fonts/roboto/Roboto-Regular.woff2",
+        "bytes": 64632,
+        "duration": 8.400000005960464
+      },
+      {
+        "path": "/static/fonts/roboto/Roboto-Medium.woff2",
+        "bytes": 65484,
+        "duration": 6.300000011920929
+      },
+      {
+        "path": "/static/mdi/70d08c50ec4522dd75d11338db57846588263ee2.json",
+        "bytes": 54525,
+        "duration": 3.300000011920929
+      }
+    ],
+    "native": [
+      {
+        "path": "/theme.css",
+        "bytes": 2222,
+        "duration": 3.699999988079071
+      },
+      {
+        "path": "/1393-probe.js",
+        "bytes": 65828,
+        "duration": 1.5999999940395355
+      },
+      {
+        "path": "/static/fonts/roboto/Roboto-Regular.woff2",
+        "bytes": 64632,
+        "duration": 7.300000011920929
+      },
+      {
+        "path": "/static/fonts/roboto/Roboto-Medium.woff2",
+        "bytes": 65484,
+        "duration": 7.5999999940395355
+      }
+    ]
+  }
+}
