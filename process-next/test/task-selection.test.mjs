@@ -6,7 +6,7 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { testCatalog, selectTaskTests, planRequirements, selectionText, chooseOptionalChecks } from '../lib/task-selection.mjs';
+import { testCatalog, selectTaskTests, planRequirements, selectionText, chooseOptionalChecks, domainsOf } from '../lib/task-selection.mjs';
 import { planProfile, inventory, CRITICAL_NODE } from '../lib/catalog.mjs';
 import { runPlan } from '../lib/runner.mjs';
 import { normalizeFallbackRequest } from '../templates/prepare-fallback.mjs';
@@ -25,6 +25,16 @@ async function fixture(files, run) {
     }
 }
 const select = (root, options = {}) => selectTaskTests({ root, inventory, track: 'ship', layer: 'product', ...options });
+test('#1391 extracted core owners and its addressed readers have inherited domains', () => {
+    for (const file of ['custom_components/houseplan/core/constants.py',
+        'custom_components/houseplan/core/ports.py', 'custom_components/houseplan/core/file_usage.py',
+        'tests_backend/test_core_boundary.py', 'tests_backend/test_sh3d_import_preview.py'])
+        assert.ok(domainsOf(file).includes('storage'), file);
+    for (const file of ['test/core-source-readers.test.mjs', 'test/backend-test-hygiene.test.mjs',
+        'tests_backend/test_backend_quality.py', 'pyproject.toml'])
+        assert.ok(domainsOf(file).includes('toolchain'), file);
+    assert.deepEqual(domainsOf('custom_components/houseplan/core/unmapped-feature.py'), []);
+});
 test('#1024 opening writer/basis checks are critical and optical checks belong to lighting', async () => fixture({
     'src/opening-features.ts': 'export const version=1;',
     'test/opening-features.test.mjs': '',
@@ -376,8 +386,8 @@ test('converter freshness reads its module-local artifact and canonical build in
  'scripts/sh3d-convert/tsconfig.json':'{}',
  'scripts/sh3d-convert/dist/index.html':'owned converter page',
  'src/plan-graph.ts':'export const graph=1;',
- 'custom_components/houseplan/validation.py':'LIMIT=1',
- 'custom_components/houseplan/led_strips.py':'LIMIT=1',
+ 'custom_components/houseplan/core/validation.py':'LIMIT=1',
+ 'custom_components/houseplan/core/led_strips.py':'LIMIT=1',
  'test/sh3d-convert-page.test.mjs':"import '../scripts/sh3d-convert/build-page.mjs';",
 },async dir=>{
  const file='test/sh3d-convert-page.test.mjs',artifact='scripts/sh3d-convert/dist/index.html';
@@ -386,7 +396,7 @@ test('converter freshness reads its module-local artifact and canonical build in
  assert.ok(consumer,'the actual converter artifact reader must be selected');
  assert.ok(consumer.inputs.includes(artifact));
  assert.ok(!local.steps.some(s=>s.id==='product-build'),'converter bundle is not the card dist');
- for(const changed of ['src/plan-graph.ts','custom_components/houseplan/validation.py','custom_components/houseplan/led_strips.py']){
+ for(const changed of ['src/plan-graph.ts','custom_components/houseplan/core/validation.py','custom_components/houseplan/core/led_strips.py']){
   assert.ok(consumer.inputs.includes(changed),'real compiler inputs invalidate artifact freshness: '+changed);
  }
 }));
