@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11645,
+  "revision": 11646,
   "nextTicket": 419,
   "nextFence": 419,
   "tasks": {
@@ -3648,7 +3648,7 @@
       "ownerDecision": null,
       "ticket": 418,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794607727656,
       "reviewEntry": 1,
       "patchId": "5395cb2888eb7fd79732b12be66805e57356baca",
@@ -3658,7 +3658,16 @@
         "docs/design/1393-ha-components-measurement.json",
         "docs/design/1393-ha-components.md",
         "docs/design/1393-probe-reproducer.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261113T220901993-d56fca1a",
+        "name": "Тесты для задачи #1393 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T220901993-d56fca1a/report.json",
+        "materialSha": "759ff053090317b430cdee3dca12fba18892de4b",
+        "status": "passed",
+        "finishedAt": "2026-11-13T22:09:02.082Z",
+        "failures": []
+      }
     },
     "1396": {
       "issue": 1396,
@@ -4830,9 +4839,9 @@
     "fence": 418,
     "materialSha": "759ff053090317b430cdee3dca12fba18892de4b",
     "expectedBase": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794607732010,
-    "expiresAt": 1794608037870,
+    "expiresAt": 1794611342745,
     "patchId": "5395cb2888eb7fd79732b12be66805e57356baca"
   },
   "events": {
@@ -4945,6 +4954,34 @@
         "layer": "infra",
         "materialSha": "759ff053090317b430cdee3dca12fba18892de4b",
         "phase": "sync"
+      }
+    },
+    "finish:66f16be6-ee8d-43ef-98b8-d57fe8e8ba98:finish:3:s6-complete": {
+      "digest": "c383ca288ca9dc9116db9fa35e7b85e58a0d382ff5536751f11fcc5a1ced5a57",
+      "issue": 1393,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1393,
+        "at": 1794607742745,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "759ff053090317b430cdee3dca12fba18892de4b",
+        "phase": "review",
+        "evidence": {
+          "id": "20261113T220901993-d56fca1a",
+          "name": "Тесты для задачи #1393 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T220901993-d56fca1a/report.json",
+          "materialSha": "759ff053090317b430cdee3dca12fba18892de4b",
+          "status": "passed",
+          "finishedAt": "2026-11-13T22:09:02.082Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Ветка `codex/1393-ha-component-inventory` от dev `281365641`. AST tagged-template inventory: 7 реальных тегов в 46 файлах; простые упоминания в 90 файлах включают CSS/комментарии. `ha-panel-custom` — комментарий о внешнем HA-контейнере, не восьмой тег renderer. Все 43 файла с `ha-icon` перечислены в JSON. Указаны также drawer/bottom-sheet/root/locale/theme/font зависимости.\n\n15 изолированных bootstrap samples (5 на вариант): нынешний HA 1 548 459 decoded resource bytes / 20 requests / 143,2 ms median; без card 1 537 661 / 19 / 128,4; native HpDialog + finite SVG 198 166 / 5 / 39,2. Нативный probe ещё использует локальные Roboto из HA cache для сопоставимости: это не утверждение о самостоятельной поставке шрифтов. 111 MB wheel не приравнивается к browser payload. Из `dist` в пробник не загружается код продукта.\n\nИзменены только документация и RU/EN changelog. Продуктовые тесты/build/lint/проверка ссылок не запускались. Исследовательский временный bundle/probe описан как measurement, не как проверка полного UI. При воспроизведении первый вспомогательный запуск остановился из-за отсутствующего необязательного esbuild (переведён на штатный Rollup), затем поправлена проверка видимости `display:contents` HA shell на реально видимое поле; это не изменение продуктового теста/допуска. Завершённые samples и ограничения сохранены.\n\nДля ревью: полнота инвентаря, границы сопоставимости измерений, различие wheel/реальных ресурсов, отсутствие заявления о pixel parity и отсутствие изменений продукта. Реализацию компонентов owner разрешил как направление, но её задачи этим отчётом не запускаются.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
