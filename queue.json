@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10522,
+  "revision": 10523,
   "nextTicket": 396,
   "nextFence": 396,
   "tasks": {
@@ -4805,7 +4805,16 @@
         "docs/data-hp-contract.json",
         "docs/release-ledger/v1.85.0/1406.json",
         "test/data-hp-contract.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261113T071318855-8b1b9d0c",
+        "name": "Тесты для задачи #1406 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T071318855-8b1b9d0c/report.json",
+        "materialSha": "b6109d28e371e2754202fd52f65bbe2bee3cadd4",
+        "status": "passed",
+        "finishedAt": "2026-11-13T07:13:25.224Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -5062,9 +5071,9 @@
     "fence": 395,
     "materialSha": "b6109d28e371e2754202fd52f65bbe2bee3cadd4",
     "expectedBase": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794553986118,
-    "expiresAt": 1794554292696,
+    "expiresAt": 1794557606433,
     "patchId": "cb4d263060fb4f0d27dbba2a306d19fdc011930e"
   },
   "events": {
@@ -5158,6 +5167,10 @@
     },
     "finish:d52e7c1c-a42b-4a64-8bb6-9959b0cd16ef:finish:2:synchronized": {
       "digest": "9b463c0ed08019cc42107459941bf46f0513352c38b302a953b9b71cbb83d15a",
+      "issue": 1406
+    },
+    "finish:d52e7c1c-a42b-4a64-8bb6-9959b0cd16ef:finish:3:s6-complete": {
+      "digest": "c54fa63c52e9f0c328a3f6b641e963ea63115300acbec9e14a0ed6f1bfc955ac",
       "issue": 1406
     },
     "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d": {
