@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 742,
+  "revision": 743,
   "active": "1.85.2-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -90461,7 +90461,7 @@
         "evidenceStatus": "complete",
         "diagnostics": []
       },
-      "metricsAcceptedSha": null,
+      "metricsAcceptedSha": "17d4d17b9973ffd53d59bb477eb353902f23de06",
       "portToDev": [
         {
           "from": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
@@ -90483,6 +90483,12 @@
         "selectionDigest": "2856214ca09cc67a2bad1dbcb5969b1b0e57713b86dc5068283908027988c1af",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "metricsDecision": {
+        "decisionId": "owner-size-accept-1-85-2-beta-1-17d4d17b9",
+        "source": "chat",
+        "sourceRef": "Codex chat reply request_user_input_async/call_b232405337cc4eb2ac9c153ef294dfe7/0, 2026-11-13",
+        "decisionText": "Владелец ответил: «Да, принять размер и выпустить бету» на вопрос о ZIP 5,01 МБ вместо 2,88 МБ (+74,1%, преимущественно сжатые JS-копии), при росте объёма фронтенда для браузера на 2,0%, и публикации 1.85.2-beta.1. Решение относится к проверенному SHA 17d4d17b9973ffd53d59bb477eb353902f23de06, ZIP 5014629 байт. Никакие проверки, внешний вид или другие версии этим решением не переопределяются."
       }
     }
   },
@@ -95207,7 +95213,8 @@
     "ship-review:prepare:e526b467-443f-4470-9d76-ab2e1b2a54a4": "c4a4654708fa70b47909bdadb9f03ff3c32461299cf94fc2ad9077abbc2cb69f",
     "ship-review:result:8ff72fad-ac1c-4369-aa66-779a62858e1a": "97613cf9b184178187a95ac8749efef7f21d374d5268a68fd1c27a99f83f0020",
     "final-beta-report:20261113T075020542-75b8b268": "7ba3510509ca43742fd22f1955c776d69aea39b280f31f40f759d16bad6ec3e4",
-    "final-beta-metrics:20261113T075020542-75b8b268": "dd795d62fa3176e692887897749cfa4bfb18b6898c84e6f531698ffa427a8633"
+    "final-beta-metrics:20261113T075020542-75b8b268": "dd795d62fa3176e692887897749cfa4bfb18b6898c84e6f531698ffa427a8633",
+    "owner-size-accept-1-85-2-beta-1-17d4d17b9": "db8e8ef3d824d4ca569c0af0d33650f1fa0be2a8f0b897b6b07990e4f455471f"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
