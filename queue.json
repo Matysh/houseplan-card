@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11018,
-  "nextTicket": 406,
+  "revision": 11019,
+  "nextTicket": 407,
   "nextFence": 406,
   "tasks": {
     "1024": {
@@ -4610,14 +4610,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1409-device-tooltip-hover",
-      "materialSha": "ba56062da9e034be763485ac8c81b1587a19eb7f",
+      "materialSha": "c250fcb4591a698481da3ccaa6a2261e2a0e04de",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 405,
-      "queued": false,
+      "ticket": 406,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794571230406,
-      "reviewEntry": 1,
+      "readyAt": 1794571955582,
+      "reviewEntry": 2,
       "patchId": "34c8cf6db670de81f9e7b2ee65676d8570fe48b0",
       "changedFiles": [
         "demo/smoke_device_battery_tooltip.mjs",
@@ -4637,7 +4637,6 @@
         "test/device-tooltip-hover.test.mjs",
         "test/live-hover-status.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4937,7 +4936,9 @@
       "runId": 43397778083
     }
   },
-  "waiting": [],
+  "waiting": [
+    1409
+  ],
   "active": null,
   "events": {
     "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:2:synchronized": {
@@ -5045,6 +5046,19 @@
           "detail": "Браузер: device battery tooltip: failed",
           "eventId": "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:3:return:return:1409"
         }
+      }
+    },
+    "finish:4b189f7f-c0f5-4477-b36a-8a79032d902b": {
+      "digest": "7c077bcf9feedcd1ebea343fc6ad4488150a1e5be2d02f92595ac0259ce217d9",
+      "issue": 1409,
+      "message": {
+        "kind": "queued",
+        "issue": 1409,
+        "at": 1794571955582,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c250fcb4591a698481da3ccaa6a2261e2a0e04de"
       }
     }
   },
