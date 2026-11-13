@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10270,
+  "revision": 10271,
   "nextTicket": 389,
   "nextFence": 389,
   "tasks": {
@@ -4433,7 +4433,7 @@
       "ownerDecision": null,
       "ticket": 388,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794546663013,
       "reviewEntry": 1,
       "patchId": "fe6d476e384a85cd7147fd3ac8c396269bb8fa5f",
@@ -4447,7 +4447,16 @@
         "src/houseplan-card.ts",
         "src/space-render.ts",
         "test/backdrop-paint.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261113T051118307-5ff705fb",
+        "name": "Тесты для задачи #1400 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T051118307-5ff705fb/report.json",
+        "materialSha": "098e1eb656dcdf2478915476251449972232d814",
+        "status": "passed",
+        "finishedAt": "2026-11-13T05:19:47.898Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4699,9 +4708,9 @@
     "fence": 388,
     "materialSha": "098e1eb656dcdf2478915476251449972232d814",
     "expectedBase": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794546666419,
-    "expiresAt": 1794547446045,
+    "expiresAt": 1794550789077,
     "patchId": "fe6d476e384a85cd7147fd3ac8c396269bb8fa5f"
   },
   "events": {
@@ -4778,6 +4787,34 @@
         "layer": "product",
         "materialSha": "098e1eb656dcdf2478915476251449972232d814",
         "phase": "sync"
+      }
+    },
+    "finish:e2637d67-d71b-4801-bf6e-9e7bccad8884:finish:3:s6-complete": {
+      "digest": "a32e9939243bd7a7613156bea0d508e1f3146901b8345007b51a73818a4b57ce",
+      "issue": 1400,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1400,
+        "at": 1794547189077,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "098e1eb656dcdf2478915476251449972232d814",
+        "phase": "review",
+        "evidence": {
+          "id": "20261113T051118307-5ff705fb",
+          "name": "Тесты для задачи #1400 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T051118307-5ff705fb/report.json",
+          "materialSha": "098e1eb656dcdf2478915476251449972232d814",
+          "status": "passed",
+          "finishedAt": "2026-11-13T05:19:47.898Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Причина установлена по actual/diff и эксперименту с теми же PNG: в dark View все существенные различия лежат на тексте внутри импортированного SVG; в Background — на пяти bdknob. При эквивалентной сетке размеры image и локальные радиусы увеличивались в 5 раз, меняя Chromium raster/font basis; дополнительно радиусы округлялись до разного физического шага. Общий backdropPaintBox нормализует только render-координаты к 5cm basis с компенсирующим scale, поворот остаётся вокруг мирового центра. Его используют оба full-render пути, Static и рамка подложки. Сохранённые данные, planRect/content bounds, hit testing, обработчики и история не меняются. Радиусы рамки больше не округляются в разных локальных единицах. После сборки исходный неизменённый grid smoke: darkView/background 0 changed pixels, maxDelta=1; Static 0/0; обе 2.5D и реальные отрицательные сдвиги 1px проходят. 35 unit-кейсов и native backdrop/guard (включая rotate/scale/move/cancel/lostcapture) прошли. Допуски, маски и PNG-эталоны не менялись. Новые unit-кейсы распознаны каталогом как decor и выбраны по импорту/области; изменённый общий card остаётся на предусмотренном полном быстром Node fallback. Для ревью важны порядок rotate/scale, геометрия нормализованных ручек и одинаковое применение к full/Static. S6 выполняется штатным finish, результаты отладки не подменяют его.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
