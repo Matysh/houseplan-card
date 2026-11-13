@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10964,
+  "revision": 10965,
   "nextTicket": 404,
   "nextFence": 404,
   "tasks": {
@@ -4649,7 +4649,18 @@
         "docs/release-ledger/v1.85.0/1411.json",
         "src/live-hover.ts",
         "test/device-battery-tip.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794570077966,
+        "entry": 1,
+        "detail": "Поведение: test/mutation-gate.test.mjs: failed",
+        "eventId": "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:3:return:return:1411"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4894,18 +4905,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1411,
-    "worker": "finish",
-    "token": "403:finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:1:admit",
-    "fence": 403,
-    "materialSha": "579596c9bde36cff64ca25a9ad1a9f9dd99b63f2",
-    "expectedBase": "9054a6f04bc030867f1d841663b91cdb262b172d",
-    "phase": "testing",
-    "admittedAt": 1794569673885,
-    "expiresAt": 1794570333094,
-    "patchId": "7d17515f2e02bf8d36d82c57370b23787086dbe1"
-  },
+  "active": null,
   "events": {
     "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:2:synchronized": {
       "digest": "d4a31dcf70872c2b167604061163b65dbac9a3b42dbeb5bcb2afadfe283af9b4",
@@ -4935,6 +4935,10 @@
       "digest": "fa03a61a12f85b329b9f16175c355bd9ed375c3f83582ae73b7efd063bfad0d9",
       "issue": 1411
     },
+    "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:3:return": {
+      "digest": "c558b105dbbd9e6dffc8591ae0000805fddc93649bc45e77056fbca263315e4f",
+      "issue": 1411
+    },
     "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2": {
       "digest": "e798bb1c222de57d419b8cb2f051ee728c263971c8ec7a32e5db649d44560212",
       "issue": 1411,
@@ -4960,6 +4964,26 @@
         "layer": "product",
         "materialSha": "579596c9bde36cff64ca25a9ad1a9f9dd99b63f2",
         "phase": "sync"
+      }
+    },
+    "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:3:return:return:1411": {
+      "digest": "c558b105dbbd9e6dffc8591ae0000805fddc93649bc45e77056fbca263315e4f",
+      "issue": 1411,
+      "message": {
+        "kind": "return",
+        "issue": 1411,
+        "at": 1794570077966,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794570077966,
+          "entry": 1,
+          "detail": "Поведение: test/mutation-gate.test.mjs: failed",
+          "eventId": "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:3:return:return:1411"
+        }
       }
     }
   },
