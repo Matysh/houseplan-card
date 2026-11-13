@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11550,
+  "revision": 11551,
   "nextTicket": 418,
   "nextFence": 418,
   "tasks": {
@@ -4529,7 +4529,30 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794598493923,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "1be56836b4ff67710d7bf5ad1ac327d79f1f5263",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
+        "tag": "v1.85.2",
+        "verdict": "accepted",
+        "patchId": "1be56836b4ff67710d7bf5ad1ac327d79f1f5263",
+        "materialSha": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9"
+      },
+      "changedFiles": [
+        "README.md",
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "docs/changelog_user_stable_en.md",
+        "docs/changelog_user_stable_ru.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4766,12 +4789,17 @@
     "token": "417:github:43493508642:1:tick:0:admit",
     "fence": 417,
     "materialSha": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "460993a2c24dd3079191169a9f597e43fdf7602f",
+    "phase": "testing",
     "admittedAt": 1794598499372,
-    "expiresAt": 1794598799372
+    "expiresAt": 1794598807700,
+    "patchId": "1be56836b4ff67710d7bf5ad1ac327d79f1f5263"
   },
   "events": {
+    "release-return-finish:0a88f005-42f8-459d-bb37-29adaf0a18ba:finish:2:synchronized": {
+      "digest": "246bf1491f68189bdb96d4da57674fe4e2a77119b1f7fb84d014c1c5967882eb",
+      "issue": 1420
+    },
     "release-return:0a88f005-42f8-459d-bb37-29adaf0a18ba": {
       "digest": "95ddf2e48334282d93103dd5a381b05738b835affa84e63789c5701ec40fc2a5",
       "issue": 1420,
