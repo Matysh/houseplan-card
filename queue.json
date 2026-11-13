@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10518,
+  "revision": 10519,
   "nextTicket": 396,
   "nextFence": 395,
   "tasks": {
@@ -4486,7 +4486,7 @@
       "ownerDecision": null,
       "ticket": 394,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1794553396994,
       "reviewEntry": 2,
       "patchId": "22622cc3237d314a24273cc63374200f8da1a1b1",
@@ -4666,14 +4666,13 @@
         "docs/testing/1401-golden-review.json"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794553203287,
-        "entry": 1,
-        "detail": "Браузер: resize junctions: failed; Браузер: resize through junction: failed",
-        "eventId": "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:3:return:return:1401"
+        "key": "2:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1794553978449,
+        "entry": 2,
+        "requestId": "review:1401:2:22622cc3237d314a24273cc63374200f8da1a1b1:9b2651c749177a7f1e6f9dab62e871ef5634b4c0"
       },
       "s6": {
         "id": "20261113T070333453-bcf36e7c",
@@ -4697,6 +4696,11 @@
         "at": 1794553499752,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1401:2:22622cc3237d314a24273cc63374200f8da1a1b1:9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
+        "at": 1794553978449
       }
     },
     "1403": {
@@ -5038,19 +5042,7 @@
   "waiting": [
     1406
   ],
-  "active": {
-    "issue": 1401,
-    "worker": "finish",
-    "token": "394:finish:9e585b58-3efe-4d3f-a0bc-4a51432c2aef:finish:1:admit",
-    "fence": 394,
-    "materialSha": "65ed437963bab21315af7c87f663e9485be2ae3d",
-    "expectedBase": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
-    "phase": "review",
-    "admittedAt": 1794553401221,
-    "expiresAt": 1794557078310,
-    "patchId": "22622cc3237d314a24273cc63374200f8da1a1b1",
-    "reviewRequest": "review:1401:2:22622cc3237d314a24273cc63374200f8da1a1b1:9b2651c749177a7f1e6f9dab62e871ef5634b4c0"
-  },
+  "active": null,
   "events": {
     "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:2:synchronized": {
       "digest": "d26018b9ce75e89b1a5c9b3b47b631ccf51aaab9e415cee0d7864b29173c8295",
@@ -5130,6 +5122,10 @@
     },
     "finish:9e585b58-3efe-4d3f-a0bc-4a51432c2aef:finish:11:review-presentation": {
       "digest": "578ed6763eb618638ba175d28f5b83dcb592451ddd69af565c45372058e94ada",
+      "issue": 1401
+    },
+    "finish:9e585b58-3efe-4d3f-a0bc-4a51432c2aef:finish:11:return": {
+      "digest": "5527a20f880ed7df39cafc8f7a3a3e8b02d7d64b56deeb4e83ee885fd2684aaa",
       "issue": 1401
     },
     "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d": {
