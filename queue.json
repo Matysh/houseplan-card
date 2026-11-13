@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11262,
+  "revision": 11263,
   "nextTicket": 411,
   "nextFence": 411,
   "tasks": {
@@ -4529,7 +4529,18 @@
       "changedFiles": [
         "demo/golden/harness.mjs",
         "docs/release-ledger/v1.85.0/1414.json"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794581768883,
+        "entry": 1,
+        "detail": "Браузер: capture stability: failed",
+        "eventId": "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:3:return:return:1414"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4760,18 +4771,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1414,
-    "worker": "finish",
-    "token": "410:finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:1:admit",
-    "fence": 410,
-    "materialSha": "90adb36524580477ee481e2477dae955157cfe00",
-    "expectedBase": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
-    "phase": "testing",
-    "admittedAt": 1794581630301,
-    "expiresAt": 1794582049028,
-    "patchId": "74185146009dd6f2d6a5f42fbff6ae8753e67d17"
-  },
+  "active": null,
   "events": {
     "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:2:synchronized": {
       "digest": "8d98d5c949137fff0b0ca2124ca3bc15a92aedb0371ad4cb7213c568ebf8d122",
@@ -4791,6 +4791,10 @@
     },
     "finish:56a237c0-c401-49c8-995c-c7ba049b914a": {
       "digest": "d2030c2e24cd01e32eb86c1c49b3802a62444c4b5811d0d3fe58cb51336b9fed",
+      "issue": 1414
+    },
+    "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:3:return": {
+      "digest": "dc260a7764a0767d66ae569219c57e005a66068d618b45c5a8b46c4e76faaacd",
       "issue": 1414
     },
     "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b": {
@@ -4820,6 +4824,26 @@
         "materialSha": "90adb36524580477ee481e2477dae955157cfe00",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:3:return:return:1414": {
+      "digest": "dc260a7764a0767d66ae569219c57e005a66068d618b45c5a8b46c4e76faaacd",
+      "issue": 1414,
+      "message": {
+        "kind": "return",
+        "issue": 1414,
+        "at": 1794581768883,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794581768883,
+          "entry": 1,
+          "detail": "Браузер: capture stability: failed",
+          "eventId": "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:3:return:return:1414"
+        }
       }
     }
   },
