@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11192,
+  "revision": 11193,
   "nextTicket": 410,
   "nextFence": 410,
   "tasks": {
@@ -4522,7 +4522,7 @@
       "ownerDecision": null,
       "ticket": 409,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794580049929,
       "reviewEntry": 2,
       "patchId": "9c6efa8f85f9dad8a4ebaf997466e41cf85fef7f",
@@ -4546,6 +4546,15 @@
         "entry": 1,
         "detail": "Браузер: room co2: failed",
         "eventId": "finish:22f7a3ed-e33b-4a76-9188-8188891dc099:finish:3:return:return:1413"
+      },
+      "s6": {
+        "id": "20261113T142745917-17ee323e",
+        "name": "Тесты для задачи #1413 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T142745917-17ee323e/report.json",
+        "materialSha": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
+        "status": "passed",
+        "finishedAt": "2026-11-13T14:35:47.256Z",
+        "failures": []
       }
     }
   },
@@ -4784,9 +4793,9 @@
     "fence": 409,
     "materialSha": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
     "expectedBase": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794580053719,
-    "expiresAt": 1794580832811,
+    "expiresAt": 1794584147994,
     "patchId": "9c6efa8f85f9dad8a4ebaf997466e41cf85fef7f"
   },
   "events": {
@@ -4934,6 +4943,34 @@
         "layer": "product",
         "materialSha": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
         "phase": "sync"
+      }
+    },
+    "finish:cb1a70d1-6126-44ae-a221-7a0b7a15dd1a:finish:3:s6-complete": {
+      "digest": "290f6507634c94ffd1b1e2d8bd1385d5d24743c89b1d68b269df32e226586339",
+      "issue": 1413,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1413,
+        "at": 1794580547994,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
+        "phase": "review",
+        "evidence": {
+          "id": "20261113T142745917-17ee323e",
+          "name": "Тесты для задачи #1413 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T142745917-17ee323e/report.json",
+          "materialSha": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
+          "status": "passed",
+          "finishedAt": "2026-11-13T14:35:47.256Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Доказательство на реальном HA: gate выключен и `_tip=null` сразу после detach/attach; затем browser `pointerover` с новым timestamp включает gate, без pointermove, и новый 150-мс dwell открывает tooltip. Диагностический лог `artifacts/issue1412/remount-diagnosis3.json` отделяет этот эффект от старого timer/callback. Основной E2E не использует приватное состояние; временная диагностика удалена.\n\nРешение: PointerModalityController не принимает pointerover/enter для восстановления выключенного gate. Обычный pointermove/down продолжает прежнюю revalidation; touch compatibility не менялась. Ранний отказ device-pointer теперь отменяет только pointer lease, не стирая валидный keyboard focus tooltip. Добавлены поведенческие Node-кейсы в существующих файлах; их текущая классификация и центральная выборка остаются presentation/editors/devices, дополнены адресными native hover/touch/room/Zigbee/keyboard смоуками. Типы и сборка, 11 адресных Node-кейсов успешны. Реальные HA E2E повторяются на исправленной сборке до беты. Goldens не менялись.\n\nРеальный HA 2026.11.1 на исправленном `517fa49e6`: **7/7 PASS** (4 business-сценария + auth admin/viewer и plan-model setup), 44.4 с. Обе поверхности (panel/masonry), реальные сервисы light и входящий state stream, pointer dwell/соседи/fade/reduced motion/resize, pending/visible mode/space/navigation/remount и новое движение после remount прошли. Лог `artifacts/issue1413/e2e50-fixed.log`. Продолжается центральный S6 перед ревью; beta-кандидат ещё не заморожен.\n\n### Повтор S6 после комнатной регрессии\n\nПервый S6: 532/533 успешны, отказ `smoke_room_co2` был корректным. После игнорирования cold boundary первое реальное движение показывало комнатный tooltip, но не заполняло `_hoverRoom` (он задавался только на enter), поэтому стационарное CO₂ оставалось старым. Room acquisition теперь вызывается из существующего move handler и не пересчитывает уже принадлежащий hover. Все формы комнаты используют тот же handler. Сборка/типы и **неизменённый** `smoke_room_co2.mjs` прошли. Проверки или ожидания CO₂ не ослаблялись. Повтор finish включает полный актуальный diff и адресный CO₂ smoke.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
