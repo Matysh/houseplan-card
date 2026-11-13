@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10680,
+  "revision": 10681,
   "nextTicket": 399,
   "nextFence": 399,
   "tasks": {
@@ -4601,7 +4601,7 @@
       "reviewEntry": 1,
       "automationError": "automation-error",
       "automationSince": 1794555928534,
-      "automationDetail": "Git rebase failed (exit 128)"
+      "automationDetail": "Queue remained busy; retry the same event ID"
     }
   },
   "ownerDecisions": {},
@@ -4850,6 +4850,10 @@
     },
     "github:43387874742:1:completions:message:9e90b536f2fbff02ebe3fa09b1f7752060866b8ea5340581e6017e2181231a11": {
       "digest": "e07fe11b500ad58aec5ddf4f64dc10e9c9014969a64e1c006e8cfefef21896b6",
+      "issue": 1407
+    },
+    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:3:automation-pending": {
+      "digest": "52f9986ef9a1193f159398eb8303568c4c2f08412cadc3c3f5000a1f7835dd1a",
       "issue": 1407
     },
     "finish:35e8bc3c-734f-4fb5-b24b-af877bffda3f": {
