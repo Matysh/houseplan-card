@@ -81,6 +81,13 @@ renderers share this classification. Full and static roots expose the factor as
 `--hp-cell-visual-scale`; 2.5D heights and user-space shadows include it in
 their structural cache inputs.
 
+Backdrop images and their editor frame use the same normalized local SVG paint
+basis (#1400). Their world-space rectangles remain unchanged: rotation is around
+the original world centre, followed by the visual-unit scale. This prevents a
+calibration change from rerasterizing imported SVG text or small frame circles
+in a different local resolution. Content bounds, hit testing and saved transforms
+still use `planRect()`; rendering never writes calibration or geometry.
+
 ### Persisted coordinate canonicalisation
 
 Model 11 structural geometry uses exact `l`/`q` points and stable identities in

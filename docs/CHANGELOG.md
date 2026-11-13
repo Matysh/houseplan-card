@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Normalize backdrop image/frame paint to the same local SVG basis across grid calibrations, preserving world bounds, rotation and native gestures. Equivalent 1/5cm plans no longer change imported SVG text hinting or handle rasterization; pixel tolerances remain unchanged (#1400).
+
 - Repair stable smoke/HA witnesses for shared drafting dimensions, asynchronous Optimize previews and anchor-following menus; retain numeric geometry, native Undo and independent prototype tolerances, and keep screenshot output out of tracked docs (#1399).
 
 - Add independent 1–4 window leaves, top hinges, per-leaf shade light masks, manual positions and full-width sliding doors/gates. Share state resolution and symbols, retain volumetric materials, guard old writers, preserve portable v3 transfers and clear nested bindings only on space Copy (#1024, UI-059).

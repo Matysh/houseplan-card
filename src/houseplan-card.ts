@@ -383,6 +383,7 @@ import type {
   DeviceDragState, OpeningPlacementCandidate, OpMeasure, RenderOpening,
 } from './interaction-types';
 import { gridVisualScale, gridVisualUnits, wallThickHoverHalfUnits } from './grid-scale';
+import {backdropPaintBox} from './backdrop-paint';
 import {
   applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
   reorderSpaceIds,
@@ -12268,6 +12269,7 @@ export class HouseplanCard extends LitElement {
     const editorChromeMode = this._mode === 'view' ? this._editorChromeMode : this._mode;
     const roomHover = this._roomHoverPaths(space);
     const backdropHref = space.bg ? this._display(space.bg.href) : '';
+    const backdropPaint = space.bg ? backdropPaintBox(space.bg,this._cellCm) : null;
     const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
       ? this._continuity.recoveryReason : null;
     const modeVisual = this._modeTransitionVisual;
@@ -12469,12 +12471,10 @@ export class HouseplanCard extends LitElement {
               ? svg`<rect data-hp-live-grid x="${liveGridBounds(floorView).x}" y="${liveGridBounds(floorView).y}" width="${liveGridBounds(floorView).w}" height="${liveGridBounds(floorView).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
               : nothing}` },
       { id: "backdrop", inputs: [...sceneInputs, ...[backdropHref]], render: () => svg`${space.bg && backdropHref
-              ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
+              ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${backdropPaint!.x}" y="${backdropPaint!.y}" width="${backdropPaint!.w}" height="${backdropPaint!.h}"
                   opacity="${space.bg.opacity ?? 1}"
                   @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}
-                  transform=${space.bg.angle
-                    ? `rotate(${space.bg.angle} ${space.bg.x + space.bg.w / 2} ${space.bg.y + space.bg.h / 2})`
-                    : nothing}
+                  transform=${backdropPaint!.transform ?? nothing}
                   @dblclick=${(e: Event) => this._openBackdropDialog(e)}
                   preserveAspectRatio="none" />`
               : nothing}` },
@@ -12709,12 +12709,10 @@ export class HouseplanCard extends LitElement {
               ? svg`<rect data-hp-live-grid x="${liveGridBounds(floorView).x}" y="${liveGridBounds(floorView).y}" width="${liveGridBounds(floorView).w}" height="${liveGridBounds(floorView).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
               : nothing}
             ${space.bg && backdropHref
-              ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
+              ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${backdropPaint!.x}" y="${backdropPaint!.y}" width="${backdropPaint!.w}" height="${backdropPaint!.h}"
                   opacity="${(space.bg.opacity ?? 1) * (modeVisual?.backdropOpacity ?? (this._mode === 'decor' && this._decorTool !== 'backdrop' ? 0.5 : 1))}"
                   @load=${() => this._onBackdropLoaded(space.bg!.href, backdropHref)}
-                  transform=${space.bg.angle
-                    ? `rotate(${space.bg.angle} ${space.bg.x + space.bg.w / 2} ${space.bg.y + space.bg.h / 2})`
-                    : nothing}
+                  transform=${backdropPaint!.transform ?? nothing}
                   @dblclick=${(e: Event) => this._openBackdropDialog(e)}
                   preserveAspectRatio="none" />`
               : nothing}

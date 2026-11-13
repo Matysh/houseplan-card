@@ -4,8 +4,10 @@ import { cancelHouseplanPointerMove, flushHouseplanPointerMove, queueHouseplanPo
 import { clampCanvasN, fitInSquare, NORM_W, planRect, PLAN_SCALE_MAX, PLAN_SCALE_MIN, type Rect } from './space-geometry';
 import { normalizeAngle, resizeDecorBox, resizedBoxTopLeft, type DecorBox } from './editors/decor/geometry';
 import type { SpaceGeometryState } from './geometry-history-state';
+import {backdropPaintBox} from './backdrop-paint';
 
 export interface BackdropPlan {
+  cell_cm?: number;
   plan_url?: string; plan_aspect?: number;
   plan_x?: number; plan_y?: number; plan_scale?: number;
   plan_scale_x?: number; plan_scale_y?: number; plan_angle?: number;
@@ -178,27 +180,28 @@ export class BackdropFrameGestureRuntime {
     this.port.publish('end');
   }
   public renderFrame(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
-    const r = this.rect;
-    if (!this.frameActive || !r) return nothing;
-    const hr = Math.max(view.w, view.h) * 0.02, kr = hr / 4;
-    const cx = r.x + r.w / 2, cy = r.y + r.h / 2, angle = normalizeAngle(r.angle), arm = this.port.rotationArm?.() ?? hr * 2.2;
+    const world = this.rect;
+    if (!this.frameActive || !world) return nothing;
+    const r=backdropPaintBox({...world,angle:normalizeAngle(world.angle)},this.port.plan()?.cell_cm);
+    const hr = Math.max(view.w, view.h) * 0.02/r.scale, kr = hr / 4;
+    const cx = r.x + r.w / 2, cy = r.y + r.h / 2, arm = (this.port.rotationArm?.() ?? hr*r.scale*2.2)/r.scale;
     const corners: [number, number, string][] = [[-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw']];
-    return svg`<g class="bdframe" transform=${angle ? `rotate(${angle} ${cx} ${cy})` : nothing}>
+    return svg`<g class="bdframe" transform=${r.transform ?? nothing}>
       <rect class="bdbox" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"></rect>
       <line class="dtstem" x1="${cx}" y1="${r.y}" x2="${cx}" y2="${r.y - arm}"></line>
-      <circle class="bdhandle dtrot" data-hp-tooltip=${this.port.rotationHint()} cx="${cx}" cy="${r.y - arm}" r="${hr.toFixed(1)}"
+      <circle class="bdhandle dtrot" data-hp-tooltip=${this.port.rotationHint()} cx="${cx}" cy="${r.y - arm}" r="${hr}"
         @pointerdown=${(e: PointerEvent) => {
           e.stopPropagation(); e.preventDefault(); this.begin(e, undefined, true);
         }}></circle>
-      <circle class="bdknob" cx="${cx}" cy="${r.y - arm}" r="${kr.toFixed(2)}"></circle>
+      <circle class="bdknob" cx="${cx}" cy="${r.y - arm}" r="${kr}"></circle>
       ${corners.map(([sx, sy, cur]) => {
         const cx = sx < 0 ? r.x : r.x + r.w, cy = sy < 0 ? r.y : r.y + r.h;
         return svg`<circle
           class="bdhandle bd-${cur}" data-corner="${sx + ',' + sy}"
-          cx="${cx}" cy="${cy}" r="${hr.toFixed(1)}"
+          cx="${cx}" cy="${cy}" r="${hr}"
           @pointerdown=${(e: PointerEvent) => {
             e.stopPropagation(); e.preventDefault(); this.begin(e, [sx, sy]);
-          }}></circle><circle class="bdknob" cx="${cx}" cy="${cy}" r="${kr.toFixed(2)}"></circle>`;
+          }}></circle><circle class="bdknob" cx="${cx}" cy="${cy}" r="${kr}"></circle>`;
       })}
     </g>` as unknown as TemplateResult;
   }
