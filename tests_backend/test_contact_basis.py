@@ -1,17 +1,10 @@
 """Pure reference-face validation and relocation; no HA stubs or migrations."""
 import copy
-import importlib.util
-from pathlib import Path
 
 import pytest
 import voluptuous as vol
 
-_SPEC = importlib.util.spec_from_file_location(
-    "contact_basis_pure_1003", Path(__file__).parents[1] / "custom_components/houseplan/contact_basis.py",
-)
-assert _SPEC and _SPEC.loader
-basis = importlib.util.module_from_spec(_SPEC)
-_SPEC.loader.exec_module(basis)
+from custom_components.houseplan.core import contact_basis as basis
 
 
 def entry():

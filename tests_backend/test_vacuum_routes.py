@@ -1,17 +1,10 @@
 """vacuum_routes.py — питоновское зеркало src/vacuum-routes.ts (#162)."""
 import json
 import pathlib
-import re
-import types
+
+from custom_components.houseplan.core import vacuum_routes as vr
 
 ROOT = pathlib.Path(__file__).parent.parent
-# Модуль читается текстом и исполняется в собственном пространстве имён: ни
-# sys.path, ни sys.modules не трогаются намеренно (#393, класс #389).
-_source = (ROOT / "custom_components" / "houseplan" / "vacuum_routes.py").read_text(
-    encoding="utf-8")
-vr = types.ModuleType("vacuum_routes_under_test")
-vr.__dict__["re"] = re
-exec(compile(_source, "vacuum_routes.py", "exec"), vr.__dict__)
 
 FIXTURES = ROOT / "test" / "fixtures" / "vacuum-routes"
 IDENTITY = [1, 0, 0, 0, 1, 0]

@@ -12,14 +12,23 @@ if TYPE_CHECKING:
 
     from .store import HouseplanConfigEntry
 
+_HA_ADAPTER: ModuleType | None = None
+
 
 async def _adapter(hass: HomeAssistant) -> ModuleType:
     """Keep first-time adapter imports off HA's loop, including direct setup_entry."""
+    global _HA_ADAPTER
+    if _HA_ADAPTER is not None:
+        # HA may unload after its executor has stopped. Cache only a completed
+        # import, never a partially initialized sys.modules entry or a hass.
+        return _HA_ADAPTER
     executor = getattr(hass, "async_add_import_executor_job", None)
     if executor is None:
         # Retain the supported old/test host interface without blocking its loop.
         executor = hass.async_add_executor_job
-    return await executor(importlib.import_module, f"{__name__}.ha_integration")
+    adapter = await executor(importlib.import_module, f"{__name__}.ha_integration")
+    _HA_ADAPTER = adapter
+    return adapter
 
 
 async def async_setup(hass: HomeAssistant, config) -> bool:

@@ -7,6 +7,9 @@ a copy for a future website. The real package parent is lazy and imports only
 core constants. HA entrypoints import `ha_integration` through HA's import
 executor (ordinary executor on older hosts); no HA lifecycle runs on a normal
 core import. HA still uses its own components and service/runtime coordinators.
+Only a completed adapter import is cached, without a HA instance: shutdown
+unload can reuse it after HA's import executor has stopped. A failed cold
+import remains retryable, and a partial `sys.modules` entry is never borrowed.
 
 The core contains these actual module owners:
 

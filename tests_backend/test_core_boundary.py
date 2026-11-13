@@ -41,7 +41,7 @@ assert core.__file__
 ''')
 
 
-def test_every_entrypoint_loads_the_adapter_through_import_executor():
+def test_first_load_uses_executor_and_shutdown_reuses_the_completed_adapter():
     _isolated('''
 import asyncio
 import importlib
@@ -52,7 +52,9 @@ import custom_components.houseplan as parent
 async def run():
     calls=[]
     class Host:
+        closed = False
         async def async_add_import_executor_job(self, target, name):
+            assert not self.closed, "executor already stopped"
             assert target is importlib.import_module
             assert name == "custom_components.houseplan.ha_integration"
             calls.append("import")
@@ -64,11 +66,12 @@ async def run():
     hass, entry=Host(), object()
     assert await parent.async_setup(hass, {}) is True
     assert await parent.async_setup_entry(hass, entry) is True
+    hass.closed = True
     assert await parent.async_unload_entry(hass, entry) is True
     await parent.async_remove_entry(hass, entry)
     await parent._async_flush_runtime(hass, entry)
-    assert len(calls)==10 and calls[::2]==["import"]*5
-    assert calls[3]==(hass, entry)
+    assert len(calls)==6 and calls.count("import")==1
+    assert calls[2]==(hass, entry)
     assert "custom_components.houseplan.ha_integration" not in sys.modules
 asyncio.run(run())
 ''')
@@ -87,6 +90,35 @@ class OldHost:
         assert name == "custom_components.houseplan.ha_integration"
         return "through-executor"
 assert asyncio.run(parent._adapter(OldHost())) == "through-executor"
+''')
+
+
+def test_failed_cold_import_is_not_cached():
+    _isolated('''
+import asyncio
+import sys
+sys.path.insert(0, sys.argv[1])
+import custom_components.houseplan as parent
+class Host:
+    calls = 0
+    async def async_add_import_executor_job(self, target, name):
+        self.calls += 1
+        if self.calls == 1:
+            raise ImportError("cold import failed")
+        return self
+async def run():
+    host = Host()
+    try:
+        await parent._adapter(host)
+    except ImportError as error:
+        assert str(error) == "cold import failed"
+    else:
+        raise AssertionError("failed import must propagate")
+    assert parent._HA_ADAPTER is None
+    assert await parent._adapter(host) is host
+    assert await parent._adapter(host) is host
+    assert host.calls == 2
+asyncio.run(run())
 ''')
 
 
