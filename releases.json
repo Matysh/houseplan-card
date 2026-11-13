@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 852,
+  "revision": 853,
   "active": "1.85.2-stable-20261113",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -103632,7 +103632,7 @@
         ]
       },
       "running": null,
-      "status": "publishing",
+      "status": "publication-retry",
       "membership": {
         "schema": 1,
         "tag": "v1.85.2",
@@ -111803,7 +111803,8 @@
           "en": "<!-- release: v1.85.2 -->\n<!-- base: v1.85.1 -->\n## Houseplan 1.85.2 release\n\nThis release expands openings, unifies plan dimensions and makes everyday editing more reliable.\n\n🚪 **More capable openings.** Windows support one to four independent leaves, top opening, separate sensors and shades. Each shade blocks its leaf's share of light. Doors and gates support sliding mechanisms and manual positions without a sensor. [#1024](https://github.com/Matysh/houseplan-card/issues/1024)\n\n📏 **Shared drafting dimensions.** Two-sided dimensions while drawing walls, moving nodes, resizing rooms and selecting walls. The same mechanism covers opening offsets, background lines and equal device gaps. Dimensions follow the plan and stay clear of fixed tool controls. [#1381](https://github.com/Matysh/houseplan-card/issues/1381), [#1397](https://github.com/Matysh/houseplan-card/issues/1397), [#1398](https://github.com/Matysh/houseplan-card/issues/1398)\n\n↔️ **Resize across junctions.** Move a wall through existing nodes in one gesture, without an intermediate save. Preserve materials, opening hosts and one Undo operation. Preview contour artifacts and redundant straight-segment nodes are removed. [#1383](https://github.com/Matysh/houseplan-card/issues/1383), [#1384](https://github.com/Matysh/houseplan-card/issues/1384)\n\n⚙️ **Clear optimization outcomes.** Waiting states paint promptly and the report remains available after saving. Skipped repairs, rejection and unconfirmed saving are explained separately. [#1170](https://github.com/Matysh/houseplan-card/issues/1170)\n\n⚡ **Loading and returning to the plan.** Registry reads are coalesced and temporary card moves reuse the floor model. Browsers supporting gzip receive precompressed frontend files. [#1386](https://github.com/Matysh/houseplan-card/issues/1386), [#1387](https://github.com/Matysh/houseplan-card/issues/1387)\n\n💬 **Stable device tooltips.** A short hover delay and smooth appearance/disappearance. Tooltips stay anchored through pointer movement inside the icon and live HA updates. Metric labels, values and units wrap together. After the card reconnects, tooltips wait for fresh mouse movement. [#1409](https://github.com/Matysh/houseplan-card/issues/1409), [#1411](https://github.com/Matysh/houseplan-card/issues/1411), [#1413](https://github.com/Matysh/houseplan-card/issues/1413)\n\n🎨 **Display fixes.** Equivalent plans with 1 cm and 5 cm grids render imported SVG backdrops and handles consistently. Icon state source uses the correct picker cursor. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1410](https://github.com/Matysh/houseplan-card/issues/1410)\n\n✏️ **Lines keep their previewed direction.** When drawing with Shift in the Background editor, browser coordinate rounding no longer changes the preview when clicking. The next segment starts at the same accepted point. [#1418](https://github.com/Matysh/houseplan-card/issues/1418)\n\nSave a plan backup before updating. Restart Home Assistant and reload Houseplan pages after updating.\n\nAll changes: [1.85.2](https://github.com/Matysh/houseplan-card/milestone/17?closed=1)\n"
         }
       },
-      "tag": "v1.85.2"
+      "tag": "v1.85.2",
+      "publicationError": "Release candidate does not contain the published stable/hotfix history; return that tag to dev through the queue and select a new candidate"
     }
   },
   "published": {
@@ -116632,7 +116633,8 @@
     "stable1852-20261113-report": "0b582a6d663202af30090dc562e8cdbe28b498163050cb82bf49e2afc4182c57",
     "stable1852-20261113-metrics": "7c033d20e8dae2c90e0e58b8941720b307e9e14c6341caf43cb5a5e46fd0c0ab",
     "stable1852-20261113-publication:prepared:d11a68d2-2e0c-4929-b8a9-a5aab1a16477": "bab368b5e879ffb906ab2e833e46ad7f2e74cd138a481a62863eaac0b1178175",
-    "stable1852-20261113-publication:started:851": "627725d33759108f563e598d213335a0ae055c349b92999aba342deea378466b"
+    "stable1852-20261113-publication:started:851": "627725d33759108f563e598d213335a0ae055c349b92999aba342deea378466b",
+    "stable1852-20261113-publication:failed:852": "6cd42d4dc3981381f18c47cf838ee95fdb6cc8953b5d37055fc34a41e2b64575"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
