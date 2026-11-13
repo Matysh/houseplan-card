@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 739,
+  "revision": 740,
   "active": "1.85.2-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -82802,7 +82802,7 @@
         "sha": "17d4d17b9973ffd53d59bb477eb353902f23de06",
         "requestId": "ship-review:0939867b8c438b09e55f48ba1ce57aba949fea48e432d8e4b153fbecd80081cb",
         "selectionDigest": "2856214ca09cc67a2bad1dbcb5969b1b0e57713b86dc5068283908027988c1af",
-        "status": "pending",
+        "status": "accepted",
         "inventoryComplete": true
       }
     }
@@ -87525,7 +87525,8 @@
     "release-1-85-2-beta-1-repairs-17d4d17b9973ffd53d59bb477eb353902f23de06": "53c2d0071c3e402a71197a826e081e3132c5f957b77c405fdea555d6b45ba671",
     "release-1-85-2-beta-1-reused-fix-reviews-17d4d17b9973ffd53d59bb477eb353902f23de06": "01b1b424a230f744d873bccb02809d29455e2e32acd25ca876b89f2ae86d4050",
     "release-1-85-2-beta-1-run-final-17d4d17b9973ffd53d59bb477eb353902f23de06": "b65232d2e023f5c1c1d8ee32042c84ad530050ce8eebb43406fb1d2940a2c751",
-    "ship-review:prepare:e526b467-443f-4470-9d76-ab2e1b2a54a4": "c4a4654708fa70b47909bdadb9f03ff3c32461299cf94fc2ad9077abbc2cb69f"
+    "ship-review:prepare:e526b467-443f-4470-9d76-ab2e1b2a54a4": "c4a4654708fa70b47909bdadb9f03ff3c32461299cf94fc2ad9077abbc2cb69f",
+    "ship-review:result:8ff72fad-ac1c-4369-aa66-779a62858e1a": "97613cf9b184178187a95ac8749efef7f21d374d5268a68fd1c27a99f83f0020"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -101103,7 +101104,99 @@
         ],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "version": 1,
+        "kind": "ship-batch",
+        "requestId": "ship-review:0939867b8c438b09e55f48ba1ce57aba949fea48e432d8e4b153fbecd80081cb",
+        "candidateId": "1.85.2-beta.1",
+        "base": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
+        "materialSha": "17d4d17b9973ffd53d59bb477eb353902f23de06",
+        "selectionDigest": "2856214ca09cc67a2bad1dbcb5969b1b0e57713b86dc5068283908027988c1af",
+        "releaseVersion": "v1.85.2-beta.1",
+        "workflowRunId": 43388753602,
+        "workflowRunAttempt": 1,
+        "verdict": "accepted",
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Блокеров High для беты в пакете нет. #1406 добавляет в канонический `docs/data-hp-contract.json` ровно два существующих hook — `wall-side-dimension` и `dimension-rail` — и убирает только их из `internalExactValues`. Объявленные значения атрибутов и правила присутствия я сверил по исходникам: они совпадают с тем, что реально рисует `src/wall-side-dimension-render.ts`. Остальные внутренние пробы (`wall-side-dimensions`, `dimension-witnesses`, `dimension-list`) остаются внутренними, строгая проверка селекторов не ослаблена. #1405 — только запись о ремонте внешнего HA-теста (JSON в `docs/testing/` и строки RU/EN changelog). Runtime продукта, golden PNG и сохранённые данные в пакете не меняются. Пользовательское поведение беты эти изменения не затрагивают. Риск пакета ограничен корректностью тестового контракта, а она подтверждается чтением кода.",
+          "understanding": "#1406. Companion-сценарий из #1399 обращался к `wall-side-dimension` и `dimension-rail`. До изменения оба значения числились в `internalExactValues`, поэтому строгий `contract:lint` companion их запрещал. Разрешить внешнему E2E все внутренние значения значило бы ослабить §7.7, и это отвергнуто. Выбранное решение — адресно объявить два существующих SVG-элемента `g` как hooks с `since: 1.85.2-beta.1` и `audience: [\"test\"]`, с описанием `data-role`, `data-source` и метаданных `data-length-cm`/`data-reference-source`/`data-room`, и удалить их из internal-списка. Новый тест фиксирует экспорт, версию, аудиторию, метаданные и то, что соседние пробы остаются внутренними. Существующий симметричный тест #489 (`validateValues`) по-прежнему требует, чтобы каждый публичный hook был в source, а каждое значение из source было либо публичным, либо внутренним. Также обновлены STYLING-HOOKS.md, ledger и changelog.\n\n#1405. Внешний HA-тест поворота подложки строил дугу мыши вокруг неверной точки. Pivot из `rotate()` принадлежит родительскому пространству, а тест пересчитывал его через CTM самой рамки, в котором после #1400 есть компенсирующий scale. Ремонт сделан в companion PR47. В продукт попали только `docs/testing/1405-ha-rotation.json` с причиной, ссылками и результатами (адресно 4/4, полный journeys 91/91, исходный провал 90/91 записан отдельно) и строки changelog.\n\nРазобранные пути: шаблон рендера интервала (`src/wall-side-dimension-render.ts:19-32`); типы `DimensionInterval`/`EditorDimensionRecord`, чтобы сверить перечисления `data-role`/`data-source` и nullable `lengthCm`; адаптер проёмов (`src/editor-dimension-adapters.ts`) и значения `source` в `src/opening-dimensions.ts` (room-face/host-end/connected-face); контрактный тест целиком.",
+          "analysis": [
+            {
+              "topic": "#1406: соответствие объявленного контракта реальному DOM",
+              "assessment": "Контракт описывает то, что реально рисуется, без выдуманных значений. `data-role` берётся из `item.interval.role??'wall-side'`, а `role` типизирован как 'opening-gap' | 'decor-line' | 'device-spacing'. Значит, перечисление из четырёх значений полное. `data-source` совпадает с union-типом из четырёх значений. Для unavailable `lengthCm` равен null; в Lit привязка атрибута к null даёт пустую строку, атрибут при этом не удаляется. Это соответствует фразе «empty for unavailable geometry, never coerce to zero». Законный ноль рендерится как «0». `dimension-rail` действительно отсутствует при `source==='unavailable'`, как и обещано в описании. `data-reference-source`/`data-room` выводятся через `??nothing`, то есть отсутствуют у интервалов, не относящихся к проёмам. Примеры значений в описании совпадают с источником `opening-dimensions.ts`.",
+              "evidence": "src/wall-side-dimension-render.ts:19-27; src/editor-dimension-record.ts:7-17; src/wall-side-dimensions.ts:17-19,105; src/editor-dimension-adapters.ts:7-8; src/opening-dimensions.ts:329,352,447"
+            },
+            {
+              "topic": "#1406: строгость селекторного гейта сохранена",
+              "assessment": "Публичными стали только два значения. Тест #1406 явно проверяет, что `wall-side-dimensions`, `dimension-witnesses` и `dimension-list` остались в `internalExactValues`. Это защищает от случайного продвижения всего рендерера. Тест #489 `validateValues` двусторонний: при переименовании или удалении DOM-элемента публичный hook даст ошибку «declared … missing from src». Значит, декларация не может незаметно отстать от кода. Конкурирующего internal-объявления нет: оба значения удалены из списка, и тест это проверяет. schemaVersion не менялся. Решение подходит задаче: это минимальное аддитивное объявление без нового поведения.",
+              "evidence": "test/data-hp-contract.test.mjs:24-39,59-68,92-94; docs/data-hp-contract.json:9-24,1153+"
+            },
+            {
+              "topic": "#1406: документация STYLING-HOOKS",
+              "assessment": "Абзац точно ограничивает объём: интервал и рейка — публичные, а вложенность подписи, выносные линии, размещение списка и прочие пробы остаются внутренними. Предупреждение «observe actual visibility, not infer painted ink merely from DOM presence» полезно. Рядом с рейкой в DOM есть подложка подписи (`rect` с fill-opacity), и присутствие узла не гарантирует видимость линии.",
+              "evidence": "docs/STYLING-HOOKS.md (новый абзац в §7.4 перед §7.5)"
+            },
+            {
+              "topic": "#1405: запись о внешнем ремонте",
+              "assessment": "Это чистая документационная запись: исполняемого кода продукта нет, тестов для неё не требуется. Причина изложена корректно и согласуется с изменением #1400: компенсирующий scale в CTM рамки. Исходный провал и полный повтор хранятся отдельно, так что адресный успех не выдаётся за полный прогон. Цифры и хэши companion-прогона я не могу проверить в этом репозитории; они приняты как данные исполнителя.",
+              "evidence": "docs/testing/1405-ha-rotation.json; docs/CHANGELOG.md:11; docs/CHANGELOG.ru.md"
+            },
+            {
+              "topic": "Взаимодействие с кандидатом и соседними задачами",
+              "assessment": "Обе записи в changelog кандидата перенесены в секцию `v1.85.2-beta.1`, порядок не нарушен. `since: 1.85.2-beta.1` совпадает с версией кандидата. Ledger-запись есть у #1406, но не у #1405. Это согласуется с прежними чисто тестовыми задачами #1399 и #1401, у которых записей тоже нет. Взаимной регрессии с #1397 (живая камера для того же слоя размеров) нет: #1406 не меняет рендер и только объявляет уже существующие атрибуты.",
+              "evidence": "docs/CHANGELOG.md:5-13; docs/release-ledger/v1.85.0/ (есть 1406.json, нет 1399/1401/1405)"
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "#1406, Low: новый тест проверяет `since` и `value` метаданных, но не сверяет перечисления `data-role`/`data-source` с union-типами в `src/editor-dimension-record.ts`. Если появится новая роль (например, ещё один потребитель размеров), контракт молча станет неполным, хотя `validateValues` по-прежнему пройдёт: он проверяет только значения `data-hp`. Дешёвый вариант — статически извлекать литералы типа или добавить комментарий у типа `role` о том, что публичный контракт нужно обновлять. Ценой будет небольшая связность теста с исходником; выгодой — то, что дрейф перечислений ловится до внешнего E2E.",
+            "#1406, Low: смысл «empty for unavailable geometry» опирается на то, как Lit сериализует null в атрибуте (пустая строка). Явный рендер `lengthCm??''` или комментарий в `wall-side-dimension-render.ts:20` закрепили бы это публичное обещание в коде, а не в семантике библиотеки. Это не дефект: текущее поведение соответствует контракту."
+          ],
+          "boundaries": "Разобраны только pending-задачи #1405 и #1406 и их коммиты b6109d28 и 3749fc75. #1397 переиспользован с принятым ревью и повторно не разбирался. Код и тесты я читал через read_file и search по кандидату 17d4d17b; тесты, сборку, contract:lint и E2E не запускал. Результаты S6 и внешних прогонов (product-план из 9 шагов, 12 pass / 1 fail до JSON и затем pass, companion `contract:lint` на 65 файлах, адресный HA 4/4, полный journeys 91/91, хэши отчётов) взяты из контекста исполнителя как данные и мной не воспроизводились. Код companion-репозитория houseplan-e2e (PR47, vendored-копия контракта) вне доступа: точность копии и корректность ремонта жеста по исходникам не проверены. Сериализацию null в атрибуте я оцениваю по известному поведению Lit 2/3, без запуска."
+        },
+        "usage": {
+          "input_tokens": 18,
+          "cache_creation_input_tokens": 48186,
+          "cache_read_input_tokens": 244254,
+          "output_tokens": 6721,
+          "output_tokens_details": {
+            "thinking_tokens": 1183
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 48186,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 873,
+              "cache_read_input_tokens": 36993,
+              "cache_creation_input_tokens": 12914,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 12914
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Пакетное код-ревью ship перед v1.85.2-beta.1 — принято\n\n## Вывод\n\nБлокеров High для беты в пакете нет. #1406 добавляет в канонический `docs/data-hp-contract.json` ровно два существующих hook — `wall-side-dimension` и `dimension-rail` — и убирает только их из `internalExactValues`. Объявленные значения атрибутов и правила присутствия я сверил по исходникам: они совпадают с тем, что реально рисует `src/wall-side-dimension-render.ts`. Остальные внутренние пробы (`wall-side-dimensions`, `dimension-witnesses`, `dimension-list`) остаются внутренними, строгая проверка селекторов не ослаблена. #1405 — только запись о ремонте внешнего HA-теста (JSON в `docs/testing/` и строки RU/EN changelog). Runtime продукта, golden PNG и сохранённые данные в пакете не меняются. Пользовательское поведение беты эти изменения не затрагивают. Риск пакета ограничен корректностью тестового контракта, а она подтверждается чтением кода.\n\n## Понимание решения\n\n#1406. Companion-сценарий из #1399 обращался к `wall-side-dimension` и `dimension-rail`. До изменения оба значения числились в `internalExactValues`, поэтому строгий `contract:lint` companion их запрещал. Разрешить внешнему E2E все внутренние значения значило бы ослабить §7.7, и это отвергнуто. Выбранное решение — адресно объявить два существующих SVG-элемента `g` как hooks с `since: 1.85.2-beta.1` и `audience: [\"test\"]`, с описанием `data-role`, `data-source` и метаданных `data-length-cm`/`data-reference-source`/`data-room`, и удалить их из internal-списка. Новый тест фиксирует экспорт, версию, аудиторию, метаданные и то, что соседние пробы остаются внутренними. Существующий симметричный тест #489 (`validateValues`) по-прежнему требует, чтобы каждый публичный hook был в source, а каждое значение из source было либо публичным, либо внутренним. Также обновлены STYLING-HOOKS.md, ledger и changelog.\n\n#1405. Внешний HA-тест поворота подложки строил дугу мыши вокруг неверной точки. Pivot из `rotate()` принадлежит родительскому пространству, а тест пересчитывал его через CTM самой рамки, в котором после #1400 есть компенсирующий scale. Ремонт сделан в companion PR47. В продукт попали только `docs/testing/1405-ha-rotation.json` с причиной, ссылками и результатами (адресно 4/4, полный journeys 91/91, исходный провал 90/91 записан отдельно) и строки changelog.\n\nРазобранные пути: шаблон рендера интервала (`src/wall-side-dimension-render.ts:19-32`); типы `DimensionInterval`/`EditorDimensionRecord`, чтобы сверить перечисления `data-role`/`data-source` и nullable `lengthCm`; адаптер проёмов (`src/editor-dimension-adapters.ts`) и значения `source` в `src/opening-dimensions.ts` (room-face/host-end/connected-face); контрактный тест целиком.\n\n## Разбор решения\n\n### #1406: соответствие объявленного контракта реальному DOM\n\nКонтракт описывает то, что реально рисуется, без выдуманных значений. `data-role` берётся из `item.interval.role??'wall-side'`, а `role` типизирован как 'opening-gap' | 'decor-line' | 'device-spacing'. Значит, перечисление из четырёх значений полное. `data-source` совпадает с union-типом из четырёх значений. Для unavailable `lengthCm` равен null; в Lit привязка атрибута к null даёт пустую строку, атрибут при этом не удаляется. Это соответствует фразе «empty for unavailable geometry, never coerce to zero». Законный ноль рендерится как «0». `dimension-rail` действительно отсутствует при `source==='unavailable'`, как и обещано в описании. `data-reference-source`/`data-room` выводятся через `??nothing`, то есть отсутствуют у интервалов, не относящихся к проёмам. Примеры значений в описании совпадают с источником `opening-dimensions.ts`.\n\nОснование: src/wall-side-dimension-render.ts:19-27; src/editor-dimension-record.ts:7-17; src/wall-side-dimensions.ts:17-19,105; src/editor-dimension-adapters.ts:7-8; src/opening-dimensions.ts:329,352,447\n\n### #1406: строгость селекторного гейта сохранена\n\nПубличными стали только два значения. Тест #1406 явно проверяет, что `wall-side-dimensions`, `dimension-witnesses` и `dimension-list` остались в `internalExactValues`. Это защищает от случайного продвижения всего рендерера. Тест #489 `validateValues` двусторонний: при переименовании или удалении DOM-элемента публичный hook даст ошибку «declared … missing from src». Значит, декларация не может незаметно отстать от кода. Конкурирующего internal-объявления нет: оба значения удалены из списка, и тест это проверяет. schemaVersion не менялся. Решение подходит задаче: это минимальное аддитивное объявление без нового поведения.\n\nОснование: test/data-hp-contract.test.mjs:24-39,59-68,92-94; docs/data-hp-contract.json:9-24,1153+\n\n### #1406: документация STYLING-HOOKS\n\nАбзац точно ограничивает объём: интервал и рейка — публичные, а вложенность подписи, выносные линии, размещение списка и прочие пробы остаются внутренними. Предупреждение «observe actual visibility, not infer painted ink merely from DOM presence» полезно. Рядом с рейкой в DOM есть подложка подписи (`rect` с fill-opacity), и присутствие узла не гарантирует видимость линии.\n\nОснование: docs/STYLING-HOOKS.md (новый абзац в §7.4 перед §7.5)\n\n### #1405: запись о внешнем ремонте\n\nЭто чистая документационная запись: исполняемого кода продукта нет, тестов для неё не требуется. Причина изложена корректно и согласуется с изменением #1400: компенсирующий scale в CTM рамки. Исходный провал и полный повтор хранятся отдельно, так что адресный успех не выдаётся за полный прогон. Цифры и хэши companion-прогона я не могу проверить в этом репозитории; они приняты как данные исполнителя.\n\nОснование: docs/testing/1405-ha-rotation.json; docs/CHANGELOG.md:11; docs/CHANGELOG.ru.md\n\n### Взаимодействие с кандидатом и соседними задачами\n\nОбе записи в changelog кандидата перенесены в секцию `v1.85.2-beta.1`, порядок не нарушен. `since: 1.85.2-beta.1` совпадает с версией кандидата. Ledger-запись есть у #1406, но не у #1405. Это согласуется с прежними чисто тестовыми задачами #1399 и #1401, у которых записей тоже нет. Взаимной регрессии с #1397 (живая камера для того же слоя размеров) нет: #1406 не меняет рендер и только объявляет уже существующие атрибуты.\n\nОснование: docs/CHANGELOG.md:5-13; docs/release-ledger/v1.85.0/ (есть 1406.json, нет 1399/1401/1405)\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- #1406, Low: новый тест проверяет `since` и `value` метаданных, но не сверяет перечисления `data-role`/`data-source` с union-типами в `src/editor-dimension-record.ts`. Если появится новая роль (например, ещё один потребитель размеров), контракт молча станет неполным, хотя `validateValues` по-прежнему пройдёт: он проверяет только значения `data-hp`. Дешёвый вариант — статически извлекать литералы типа или добавить комментарий у типа `role` о том, что публичный контракт нужно обновлять. Ценой будет небольшая связность теста с исходником; выгодой — то, что дрейф перечислений ловится до внешнего E2E.\n- #1406, Low: смысл «empty for unavailable geometry» опирается на то, как Lit сериализует null в атрибуте (пустая строка). Явный рендер `lengthCm??''` или комментарий в `wall-side-dimension-render.ts:20` закрепили бы это публичное обещание в коде, а не в семантике библиотеки. Это не дефект: текущее поведение соответствует контракту.\n\n## Границы анализа\n\nРазобраны только pending-задачи #1405 и #1406 и их коммиты b6109d28 и 3749fc75. #1397 переиспользован с принятым ревью и повторно не разбирался. Код и тесты я читал через read_file и search по кандидату 17d4d17b; тесты, сборку, contract:lint и E2E не запускал. Результаты S6 и внешних прогонов (product-план из 9 шагов, 12 pass / 1 fail до JSON и затем pass, companion `contract:lint` на 65 файлах, адресный HA 4/4, полный journeys 91/91, хэши отчётов) взяты из контекста исполнителя как данные и мной не воспроизводились. Код companion-репозитория houseplan-e2e (PR47, vendored-копия контракта) вне доступа: точность копии и корректность ремонта жеста по исходникам не проверены. Сериализацию null в атрибуте я оцениваю по известному поведению Lit 2/3, без запуска.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: fe1f3b3776eb75c168295c6dc7557cc80deab3d9 → 17d4d17b9973ffd53d59bb477eb353902f23de06\n\n## Переданный контекст исполнителя\n\nЗамороженные требования и контекст исполнителей переданы отдельно для каждой задачи пакета.\n\nПроверены задачи: #1405, #1406.\n\nКоммиты: b6109d28e371e2754202fd52f65bbe2bee3cadd4, 3749fc755b4e9b1318f3770870a803f687cdd76a.\n\nРанее принятое ревью сохранено для задач: #1397.\n\n</details>\n",
+        "createdAt": "2026-11-13T07:53:35.960Z",
+        "artifactId": 14020071206,
+        "runId": 43388753602,
+        "runAttempt": 1,
+        "completedAt": "2026-11-13T07:53:39Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43388753602"
+      }
     }
   }
 }
