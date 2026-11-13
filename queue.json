@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11248,
+  "revision": 11249,
   "nextTicket": 410,
   "nextFence": 410,
   "tasks": {
@@ -1280,44 +1280,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "750d351f902f30474018b646f5e55e2462ba1b88"
-      }
-    },
-    "1303": {
-      "issue": 1303,
-      "branch": "codex/1303-node-dependency-carrier",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "34631cb69c7b61327155c33d261811c0a9b66a9c",
-      "mergedSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373",
-      "mergedAt": 1793863189646,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1303:2:ca5cbb629949df525d280b807b7d8779a7d3c40f:34631cb69c7b61327155c33d261811c0a9b66a9c",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "ba1d05fc7a6eb86594e57cbacd333ededb603373"
       }
     },
     "1304": {
@@ -4526,10 +4488,24 @@
       "removedToRelease": false,
       "reviewRequest": "review:1413:2:9c6efa8f85f9dad8a4ebaf997466e41cf85fef7f:9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": 15,
+          "cycleMilestone": 15
+        },
+        "commentCurrent": true,
+        "commentDigest": "f05541086a4cb3bf0fd7",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": 15
+        }
       },
       "devBuild": {
         "status": "published",
