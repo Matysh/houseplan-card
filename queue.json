@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10512,
+  "revision": 10513,
   "nextTicket": 395,
   "nextFence": 395,
   "tasks": {
@@ -5095,6 +5095,10 @@
       "digest": "ca1e5f4f196b15efb2d36e4384b8853363c2f9955c88c6d9e4aa992a7543a757",
       "issue": 1401
     },
+    "github:43383130813:1:completions:message:83c0ddd305ef5020d0b3489040a7ab9aca5b2c620187db53a35091ecaa8c0775": {
+      "digest": "65a10a990832ce9d9c4aa9bfb2a75e7ae99ee94e28011e099f25b00142567d68",
+      "issue": 1401
+    },
     "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d": {
       "digest": "77adc3cd43252bdb83585fcd3484a8d5860458c786c8dbe849822238079e7014",
       "issue": 1401,
@@ -5141,7 +5145,8 @@
           "entry": 1,
           "detail": "Браузер: resize junctions: failed; Браузер: resize through junction: failed",
           "eventId": "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:3:return:return:1401"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:9e585b58-3efe-4d3f-a0bc-4a51432c2aef": {
