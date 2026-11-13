@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10752,
-  "nextTicket": 399,
+  "revision": 10753,
+  "nextTicket": 400,
   "nextFence": 399,
   "tasks": {
     "1024": {
@@ -4399,6 +4399,20 @@
         "sourceSha": "24f98e2081b460f7b14a76a186155b574a6bbb45"
       }
     },
+    "1402": {
+      "issue": 1402,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1402-remove-unused-version-helper",
+      "materialSha": "ed16ef29d380e63f2bd12f0f29ba01c0164a863a",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 399,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794557648431,
+      "reviewEntry": 1
+    },
     "1403": {
       "issue": 1403,
       "branch": "codex/1403-dimension-hud",
@@ -4809,9 +4823,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1402
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:3e4e735e-3f04-4e26-9567-9d876ac9977d": {
+      "digest": "c7c031d19f2e7329af87bbbeb3168cf84df28c3808b2ec7746c8dcd8d8eaee26",
+      "issue": 1402,
+      "message": {
+        "kind": "queued",
+        "issue": 1402,
+        "at": 1794557648431,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "ed16ef29d380e63f2bd12f0f29ba01c0164a863a"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "24f98e2081b460f7b14a76a186155b574a6bbb45",
     "status": "delivered",
