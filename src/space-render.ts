@@ -58,6 +58,7 @@ import { buildRoomFloorPaint, roomFloorGeometry, type RoomFloorPaint } from './r
 import { cleanFloorFingerprint } from './floor-geometry-key';
 import { renderPaperShapes, type PaperShape } from './render/paper-scene';
 import { gridVisualScale, gridVisualUnits } from './grid-scale';
+import {backdropPaintBox} from './backdrop-paint';
 import {
   spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, iconUnit, NORM_W,
   GRID_STEP_N, GRID_PITCH,
@@ -750,6 +751,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     : [];
 
   const bgHref = space.bg ? (o.displayUrl ? o.displayUrl(space.bg.href) : space.bg.href) : '';
+  const backdropPaint = space.bg ? backdropPaintBox(space.bg,cellCm) : null;
   const decorImages = (spCfg.decor || []).flatMap((shape: DecorShape) => {
     if (shape?.kind !== 'image' || disp.hideDecor) return [];
     const raw = o.decorAssetUrl?.(String(shape.asset_id || '')) || '';
@@ -1004,12 +1006,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         </defs>` : nothing}
         ${renderPaperShapes(paperShapes)}
         ${bgHref
-          ? svg`<image href="${bgHref}" x="${space.bg!.x}" y="${space.bg!.y}" width="${space.bg!.w}" height="${space.bg!.h}"
+          ? svg`<image href="${bgHref}" x="${backdropPaint!.x}" y="${backdropPaint!.y}" width="${backdropPaint!.w}" height="${backdropPaint!.h}"
               opacity=${space.bg!.opacity ?? 1}
               @load=${() => o.assetLoaded?.(space.bg!.href, bgHref)}
-              transform=${space.bg!.angle
-                ? `rotate(${space.bg!.angle} ${space.bg!.x + space.bg!.w / 2} ${space.bg!.y + space.bg!.h / 2})`
-                : nothing}
+              transform=${backdropPaint!.transform ?? nothing}
               preserveAspectRatio="none" />`
           : nothing}
         <g class=${floorEntry?.paint.size ? 'room-floor-paint-layer' : nothing}>${roomShapes}</g>

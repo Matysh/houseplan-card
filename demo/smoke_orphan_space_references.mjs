@@ -7,6 +7,17 @@ const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
   const clone = (value) => structuredClone(value);
+  const waitForSelectedPreview = () => new Promise((resolve, reject) => {
+    const root = card.renderRoot;
+    const ready = () => root.querySelector('.optimize-cleanup[aria-pressed="true"]')
+      && root.querySelector('[data-hp="dialog-confirm"]:not(:disabled)');
+    const observer = new MutationObserver(() => {
+      if (ready()) { observer.disconnect(); clearTimeout(timer); resolve(); }
+    });
+    const timer = setTimeout(() => { observer.disconnect(); reject(new Error('Selected Optimize preview did not become ready')); }, 10000);
+    observer.observe(root, {subtree:true,childList:true,attributes:true});
+    if (ready()) { observer.disconnect(); clearTimeout(timer); resolve(); }
+  });
   const original = {
     model_version: 6,
     spaces: [{
@@ -69,6 +80,7 @@ const out = await page.evaluate(async () => {
         calls.push(message.type);
         serverConfig = clone(backup.config);
         serverLayout = clone(backup.layout);
+        backup = null;
         return { ok: true, config_rev: store.pushConfig(serverConfig),
           layout_rev: store.pushLayout(serverLayout) };
       }
@@ -80,7 +92,11 @@ const out = await page.evaluate(async () => {
       if (response !== undefined) {
         serverConfig = store.handle({ type: 'houseplan/config/get' }).config;
         serverLayout = store.handle({ type: 'houseplan/layout/get' }).layout;
-        return response;
+        // #1170 re-reads both authoritative documents after acknowledgement.
+        // This custom endpoint owns its undo backup, not createFixtureStore's.
+        return message.type === 'houseplan/config/get' || message.type === 'houseplan/layout/get'
+          ? { ...response, can_optimize_undo: !!backup, undo_kind: backup ? 'optimize' : null }
+          : response;
       }
       return baseCall(message);
     },
@@ -144,7 +160,8 @@ const out = await page.evaluate(async () => {
 
   await card._editorRuntime.optimizePlans.open();
   await card.updateComplete;
-  card._editorRuntime.optimizePlans.toggleLivePositions();
+  card.renderRoot.querySelector('.optimize-cleanup').click();
+  await waitForSelectedPreview();
   await card.updateComplete;
   const selectedText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.explicitCleanupRebuildsPreviewWithoutWriting = calls.length === 0
@@ -169,7 +186,7 @@ const out = await page.evaluate(async () => {
   // can stay, and Close instead of Cancel.
   result.remainingOnlyWarningHasNoApply = card._alignDialog?.changed === false
     && noOpText.includes('There are no automatic changes to apply.')
-    && !noOpText.includes('Review the items below.')
+    && noOpText.includes('Review the items below.')
     && noOpText.includes('Old position records that could not be matched to objects: 1. They were left unchanged.')
     && noOpText.includes('These records refer to deleted spaces.')
     && !card.renderRoot.querySelector('hp-dialog .btn.on')

@@ -273,24 +273,33 @@ const res = await page.evaluate(async () => {
   c._decorDraft = { kind: 'rect', a: [g, g], b: [g * 5, g], pid: 1 };
   c._decorCommitDraft();
   out.flatRectSkipped = c._decorList.length === 3;
-  // 3b) живая плашка размера, пока фигуру ещё тянут (владелец 2026-08-04:
-  // «в редакторе подложки у линий писать длину, как при рисовании комнат в
-  // редакторе плана»). Та же .measurelabel, тот же formatLength/cell_cm.
+  // #1398/#1399: line length uses the shared drafting dimension; only the
+  // angle stays in dmeasure. Keep the original independent 12-cell/3-4-5 proof.
   const label = () => sr().querySelector('.measurelabel.dmeasure');
   const txt = () => (label() ? label().textContent.trim() : null);
+  const lineDimension = () => sr().querySelector('[data-hp="wall-side-dimension"][data-role="decor-line"]');
+  const lineLengthIs = cm => {
+    const row = lineDimension();
+    const full = sr().querySelector('[data-hp="dimension-list"] [data-interval="decor-line"]')
+      || row?.querySelector('text');
+    return !!row && Math.abs(Number(row.dataset.lengthCm)-cm)<1e-6
+      && full?.textContent.trim().endsWith(`${(cm/100).toFixed(3)} m`)
+      && full.getBoundingClientRect().height>0
+      && row.querySelector('[data-hp="dimension-rail"] line')?.getBoundingClientRect().width>0;
+  };
   const cellCm = 5;                                    // cell_cm по умолчанию
   const fmt = (px) => (((px / g) * cellCm) / 100).toFixed(2) + ' m';
   const vw = () => c._viewOr(c._baseVb());
   c._decorTool = 'line';
   c._decorDraft = { kind: 'line', a: [g * 4, g * 20], b: [g * 4, g * 20], pid: 3 };
   await settleLive();
-  out.noBadgeBeforeTheDrag = !label();                 // нулевая длина — молчим
+  out.noBadgeBeforeTheDrag = !label() && !lineDimension();
   c._decorDraft = { ...c._decorDraft, b: [g * 16, g * 20] };   // 12 клеток вправо
   await settleLive();
   out.lineBadgeShown = !!label();
   // 12 клеток × 5 см = 0.60 m, угол 0° — ровно то, что пишет плашка стены
   out.lineBadgeText = txt();
-  out.lineBadgeMatchesGeometry = txt() === fmt(g * 12) + ' · 0°';
+  out.lineBadgeMatchesGeometry = txt() === '0°' && lineLengthIs(60);
   // ...ровно на середине отрезка (владелец: «плашка на середине линии»)
   out.lineBadgeAtTheMiddle = !!label() && Math.abs(
     parseFloat(label().style.left) - ((g * 10 - vw().x) / vw().w) * 100) < 0.02;
@@ -299,7 +308,7 @@ const res = await page.evaluate(async () => {
   // косой отрезок 3-4-5: длина 5 клеток, угол 53.1° — не кратен 45°
   c._decorDraft = { kind: 'line', a: [g * 4, g * 20], b: [g * 7, g * 24], pid: 3 };
   await settleLive();
-  out.obliqueBadge = txt() === fmt(g * 5) + ' · 53.1°';
+  out.obliqueBadge = txt() === '53.1°' && lineLengthIs(25);
   out.obliqueNotGreen = !!label() && !label().classList.contains('on45');
   // прямоугольник показывает габарит и чистую площадь
   c._decorDraft = { kind: 'rect', a: [g * 4, g * 20], b: [g * 12, g * 26], pid: 3 };
@@ -708,5 +717,5 @@ Object.assign(res, await page.evaluate(async () => {
   };
 }));
 // значение плашки зафиксировано числом: 12 клеток × cell_cm 5 = 0.60 m, 0°
-checkAll(res, { lineBadgeText: '0.60 m · 0°' });
+checkAll(res, { lineBadgeText: '0°' });
 await finish(browser, res);

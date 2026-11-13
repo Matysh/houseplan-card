@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1400,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Repair calibration-dependent backdrop SVG/text and editor-handle rasterization without changing authored coordinates or increasing pixel tolerances.",
+  "summary": {
+    "ru": "Подложка и ручки её рамки сохраняют вид при изменении точности сетки.",
+    "en": "Backdrop images and frame handles preserve their paint across grid precision changes."
+  }
+}

@@ -202,6 +202,9 @@ await card.locator('[data-hp="settings"]').click();
 await page.locator('hp-dialog[icon="mdi:cog-outline"] [data-section-target="data"]').click();
 await page.locator('hp-dialog[icon="mdi:cog-outline"]').getByRole('button',{name:await page.evaluate(()=>window.__card._t('gs.align_all')),exact:true}).click();
 await page.locator('hp-dialog[icon="mdi:broom"]').waitFor();
+// #1399/#1170: the first painted shell is the asynchronous checking state.
+// Wait for the real preview body, not merely for the dialog to exist.
+await page.locator('hp-dialog[icon="mdi:broom"] .body:not(.optimize-status)').waitFor();
 check('native-optimize-preview-keeps-contact',await page.evaluate(()=>{
   const c=window.__card,layout=c._alignDialog.layout;
   return ['contact-a','contact-b','contact-m'].every(id=>layout[id].x===c._layout[id].x&&layout[id].y===c._layout[id].y)

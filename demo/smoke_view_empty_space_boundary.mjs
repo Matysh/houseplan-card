@@ -38,8 +38,8 @@ const layout = await page.evaluate(() => {
     && Math.abs(empty.y + empty.height / 2 - stage.y - stage.height / 2) < 1;
 });
 out.centredOnStage = layout;
-mkdirSync('docs/testing/issue1333', { recursive: true });
-await page.screenshot({ path: 'docs/testing/issue1333/empty-space-mobile.png' });
+mkdirSync('artifacts/issue1333', { recursive: true });
+await page.screenshot({ path: 'artifacts/issue1333/empty-space-mobile.png' });
 await button.tap();
 await page.waitForFunction(() => window.__card._mode === 'plan' && !window.__card._modeTransitionBusy);
 out.ctaOpensCurrentPlan = await page.evaluate(() => window.__card._space === 'empty1333');
