@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10638,
+  "revision": 10639,
   "nextTicket": 398,
   "nextFence": 398,
   "tasks": {
@@ -4573,7 +4573,16 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/testing/1405-ha-rotation.json"
-      ]
+      ],
+      "s6": {
+        "id": "20261113T074358645-a048a789",
+        "name": "Тесты для задачи #1405 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T074358645-a048a789/report.json",
+        "materialSha": "3749fc755b4e9b1318f3770870a803f687cdd76a",
+        "status": "passed",
+        "finishedAt": "2026-11-13T07:43:58.833Z",
+        "failures": []
+      }
     },
     "1406": {
       "issue": 1406,
@@ -4848,14 +4857,18 @@
     "fence": 397,
     "materialSha": "3749fc755b4e9b1318f3770870a803f687cdd76a",
     "expectedBase": "24f98e2081b460f7b14a76a186155b574a6bbb45",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794555824876,
-    "expiresAt": 1794556134136,
+    "expiresAt": 1794559439416,
     "patchId": "c9774bb318db949a252dce058efe00f8082e312c"
   },
   "events": {
     "finish:82021f04-9ea1-4d7b-bb69-29d0191d80cc:finish:2:synchronized": {
       "digest": "4dcc39ac0dca0d12b49628c45a66333f0f061e8c5cf31e62e43d813d2bb2f332",
+      "issue": 1405
+    },
+    "finish:82021f04-9ea1-4d7b-bb69-29d0191d80cc:finish:3:s6-complete": {
+      "digest": "8f103a838ea2bd5ae7b50eba5b0ae84b829f5f8faaa58deb5b1cf3539025ca9f",
       "issue": 1405
     },
     "finish:82021f04-9ea1-4d7b-bb69-29d0191d80cc": {
