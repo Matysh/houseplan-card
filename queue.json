@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11757,
+  "revision": 11758,
   "nextTicket": 423,
   "nextFence": 423,
   "tasks": {
@@ -5300,6 +5300,10 @@
       "digest": "86c5a5af364062c509392b7fdf8a3b18643c987efb0264df627ea4ff96bb1afb",
       "issue": 1391
     },
+    "github:43528414390:1:completions:message:26d8c2a313c62786152206607da8707a5be78f52fea97c513f9fd17aabd6d7d3": {
+      "digest": "6d318db42dff67cdbb70c9010cea56a59b37d5de4429dcf3599b6674a77fec8a",
+      "issue": 1391
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5447,7 +5451,8 @@
           "entry": 2,
           "detail": "Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_ha_build_identity.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_trail_recorder_imports.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed",
           "eventId": "finish:eb7308c8-afa6-4e2f-bbfc-0724d5d2d9a6:finish:3:return:return:1391"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2": {
