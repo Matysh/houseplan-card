@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10977,
+  "revision": 10978,
   "nextTicket": 405,
   "nextFence": 405,
   "tasks": {
@@ -4895,20 +4895,6 @@
   "waiting": [],
   "active": null,
   "events": {
-    "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:1:admit": {
-      "digest": "8b47c91204a8f847c97467238b30f76e1d642e6f6d1a8cbd4d813872721c9ea9",
-      "issue": 1411,
-      "message": {
-        "kind": "admitted",
-        "issue": 1411,
-        "at": 1794569673885,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "579596c9bde36cff64ca25a9ad1a9f9dd99b63f2",
-        "phase": "sync"
-      }
-    },
     "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:3:return:return:1411": {
       "digest": "c558b105dbbd9e6dffc8591ae0000805fddc93649bc45e77056fbca263315e4f",
       "issue": 1411,
