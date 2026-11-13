@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11410,
-  "nextTicket": 414,
+  "revision": 11411,
+  "nextTicket": 415,
   "nextFence": 414,
   "tasks": {
     "1024": {
@@ -4511,14 +4511,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1418-precise-line-click",
-      "materialSha": "67298634f0e858b07524e79cf1f3caf61cffb97a",
+      "materialSha": "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 413,
-      "queued": false,
+      "ticket": 414,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794589482480,
-      "reviewEntry": 1,
+      "readyAt": 1794590045051,
+      "reviewEntry": 2,
       "patchId": "76695663cc280f4dd2329bb4ede92bf13dcb3ecc",
       "changedFiles": [
         "demo/smoke_decor_line_click.mjs",
@@ -4529,7 +4529,6 @@
         "src/editors/decor/line-drawing.ts",
         "test/decor-line-drawing.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4769,7 +4768,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1418
+  ],
   "active": null,
   "events": {
     "finish:fea38776-a94f-4875-97e5-855e552dd363:finish:2:synchronized": {
@@ -4857,6 +4858,19 @@
           "detail": "Браузер: decor line click: failed",
           "eventId": "finish:fea38776-a94f-4875-97e5-855e552dd363:finish:3:return:return:1418"
         }
+      }
+    },
+    "finish:edb04a51-c6a8-4ff1-8ff4-5aab5d73d5f2": {
+      "digest": "45848ce69b60abbe8a0ddd746aa3b8f52dfdc5834fa1b86b839bbd3c41a15050",
+      "issue": 1418,
+      "message": {
+        "kind": "queued",
+        "issue": 1418,
+        "at": 1794590045051,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31"
       }
     }
   },
