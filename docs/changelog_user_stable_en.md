@@ -10,6 +10,30 @@ English. It does not rewrite the published release.
 Each entry's final link opens the milestone page by number with closed issues
 (`…/milestone/N?closed=1`), so it does not depend on the milestone title.
 
+<!-- release: v1.85.2 -->
+<!-- base: v1.85.1 -->
+## Houseplan 1.85.2 release
+
+This release expands openings, unifies plan dimensions and makes everyday editing more reliable.
+
+🚪 **More capable openings.** Windows support one to four independent leaves, top opening, separate sensors and shades. Each shade blocks its leaf's share of light. Doors and gates support sliding mechanisms and manual positions without a sensor. [#1024](https://github.com/Matysh/houseplan-card/issues/1024)
+
+📏 **Shared drafting dimensions.** Two-sided dimensions while drawing walls, moving nodes, resizing rooms and selecting walls. The same mechanism covers opening offsets, background lines and equal device gaps. Dimensions follow the plan and stay clear of fixed tool controls. [#1381](https://github.com/Matysh/houseplan-card/issues/1381), [#1397](https://github.com/Matysh/houseplan-card/issues/1397), [#1398](https://github.com/Matysh/houseplan-card/issues/1398)
+
+↔️ **Resize across junctions.** Move a wall through existing nodes in one gesture, without an intermediate save. Preserve materials, opening hosts and one Undo operation. Preview contour artifacts and redundant straight-segment nodes are removed. [#1383](https://github.com/Matysh/houseplan-card/issues/1383), [#1384](https://github.com/Matysh/houseplan-card/issues/1384)
+
+⚙️ **Clear optimization outcomes.** Waiting states paint promptly and the report remains available after saving. Skipped repairs, rejection and unconfirmed saving are explained separately. [#1170](https://github.com/Matysh/houseplan-card/issues/1170)
+
+⚡ **Loading and returning to the plan.** Registry reads are coalesced and temporary card moves reuse the floor model. Browsers supporting gzip receive precompressed frontend files. [#1386](https://github.com/Matysh/houseplan-card/issues/1386), [#1387](https://github.com/Matysh/houseplan-card/issues/1387)
+
+💬 **Stable device tooltips.** A short hover delay and smooth appearance/disappearance. Tooltips stay anchored through pointer movement inside the icon and live HA updates. Metric labels, values and units wrap together. After the card reconnects, tooltips wait for fresh mouse movement. [#1409](https://github.com/Matysh/houseplan-card/issues/1409), [#1411](https://github.com/Matysh/houseplan-card/issues/1411), [#1413](https://github.com/Matysh/houseplan-card/issues/1413)
+
+🎨 **Display fixes.** Equivalent plans with 1 cm and 5 cm grids render imported SVG backdrops and handles consistently. Icon state source uses the correct picker cursor. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1410](https://github.com/Matysh/houseplan-card/issues/1410)
+
+Save a plan backup before updating. Restart Home Assistant and reload Houseplan pages after updating.
+
+All changes: [1.85.2](https://github.com/Matysh/houseplan-card/milestone/17?closed=1)
+
 <!-- release: v1.85.1 -->
 <!-- base: v1.85.0 -->
 ## Houseplan 1.85.1 release
