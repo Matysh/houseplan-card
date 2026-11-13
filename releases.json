@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 807,
+  "revision": 808,
   "active": "1.85.2-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -91464,7 +91464,7 @@
         "sha": "86015ab8132a92ab6546eedda2f0421b01700355",
         "requestId": "ship-review:d36a10a5ff67b372c43f5b93a2ba0485177c9fde2dd78b234015ce49d3ba8381",
         "selectionDigest": "e84532fe8864a10b3d6dbe4b3a0eecdee3277bdbdcbbe29e51d088779ab08e29",
-        "status": "pending",
+        "status": "accepted",
         "inventoryComplete": true
       }
     }
@@ -96244,7 +96244,8 @@
     "beta2-20261113-first-report": "8fb353562db48befee6394f8fce27ae9caa45d57d01ac20c9eee483d36339373",
     "beta2-20261113-capture-fix": "31d7af0b79cf6cbae9795b6ddb1802d455b8512025445587ab7d794357b17b26",
     "beta2-20261113-run-r2": "8013dace701428a084222ee7b9c2f2d49732cccfe96dcbb911684fa348d5b695",
-    "ship-review:prepare:a801b1da-a011-4208-a587-9c26d515fd85": "d06087f8c48ea965648c41ae71d2074d6df30efbef23ec20e0e7b74ff36ef689"
+    "ship-review:prepare:a801b1da-a011-4208-a587-9c26d515fd85": "d06087f8c48ea965648c41ae71d2074d6df30efbef23ec20e0e7b74ff36ef689",
+    "ship-review:result:187b6a9f-9821-4539-ac20-4c7dbed4948f": "8eb811caa8c78196811c2b3c1f0ecb9ed127b0aed6e13bf7a01d7609b4ab1589"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -110278,7 +110279,94 @@
         ],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "version": 1,
+        "kind": "ship-batch",
+        "requestId": "ship-review:d36a10a5ff67b372c43f5b93a2ba0485177c9fde2dd78b234015ce49d3ba8381",
+        "candidateId": "1.85.2-beta.2",
+        "base": "fe1f3b3776eb75c168295c6dc7557cc80deab3d9",
+        "materialSha": "86015ab8132a92ab6546eedda2f0421b01700355",
+        "selectionDigest": "e84532fe8864a10b3d6dbe4b3a0eecdee3277bdbdcbbe29e51d088779ab08e29",
+        "releaseVersion": "v1.85.2-beta.2",
+        "workflowRunId": 43448608774,
+        "workflowRunAttempt": 1,
+        "verdict": "accepted",
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "В пакете на разбор только #1414: правка двух мест, где тесты снимают сцену с наведением на устройство, и запись в release-ledger. Продукт, эталонные PNG и допуски не менялись. Проблема в гонке: после #1409 подсказка появляется с задержкой 150 мс, а golden и smoke делали снимок раньше. Теперь оба места ждут, пока объявленный тестовый хук `[data-hp=\"live-tooltip\"]` станет видимым. Я разобрал по коду обе golden-сцены с `hoverDevice` и smoke и не нашёл поломок или новых рисков, которые мешали бы бете. Правка ещё и делает детерминированными сцены `device-icon-state-table-*`: раньше их отложенный таймер мог показать подсказку уже после принудительного скрытия. Блокеров High нет. Остальные задачи пакета (#1397, #1402, #1405, #1406, #1410–#1412) уже прошли ревью и повторно не разбирались.",
+          "understanding": "До правки: `prepareGoldenScenario` выполнял `page.mouse.move` на маркер и сразу возвращал управление. После #1409 `showDevicePointerTip` (src/live-hover.ts:138-181) не показывает подсказку сразу, а запускает таймер `pointerTipDelay = 150`. Поэтому сцена `isometric-stage6-hover-light` снималась без подсказки, хотя эталон её ожидает (77/78). В `smoke_capture_stability` по той же причине `waitForUiKitPaint` вызывался раньше, чем стартовала WAAPI-анимация появления, и два снимка расходились.\n\nПосле правки: в harness.mjs:3171 и smoke_capture_stability.mjs:57 добавлено `page.locator('[data-hp=\"live-tooltip\"]').waitFor({ state: 'visible' })`. Хук объявлен в #1412 (src/houseplan-card.ts:12914). Приватные поля не записываются, таймер не обходится. Проверку я провёл чтением трёх маршрутов:\n1) Сцена `isometric-stage6-hover-light` (matrix.mjs:268-278): ожидание, затем снимок.\n2) Сцены `device-icon-state-table-{light,dark}` (matrix.mjs:1174-1175, `hideHoverTooltip: true`): ожидание показа, затем `_tip = null` → `requestUpdate` → `updated` → `_liveRt.commit()` (houseplan-card.ts:5317) → `syncHouseplanHover` → `syncTip`. Там `motion.sync(false)` в `ControlSurfacePresentation.updated` при `prefers-reduced-motion: reduce` (harness.mjs:148) сразу делает `settle` и `repaint`, и элемент получает `hidden`. Сработавший таймер уже удалён из `pointerTips`, поэтому подсказка позже не появится снова.\n3) Smoke с `reducedMotion: 'no-preference'`: Playwright считает элемент видимым при `opacity: 0` в начале fade-анимации. Поэтому ожидание завершается при старте анимации, а затем `waitForUiKitPaint` ждёт её конца. Сравнение двух снимков сохранено.",
+          "analysis": [
+            {
+              "topic": "Правильность ожидания в golden-подготовке",
+              "assessment": "Golden ждёт объявленный тестовый хук (контракт #1412), а не внутренний `data-hp-live-tip` и не `_tip`. Такое ожидание соответствует требованию «без обхода таймера приватной записью». Ждать именно видимости правильно: `syncTip` снимает `hidden` только когда сработал таймер и `_tip` стал непустым.",
+              "evidence": "demo/golden/harness.mjs:3168-3171; src/live-hover.ts:167-180 (таймер 150 мс), 321-329 (снятие hidden); src/houseplan-card.ts:12914."
+            },
+            {
+              "topic": "Сцены с hideHoverTooltip — побочный эффект, проверенный отдельно",
+              "assessment": "Ожидание стоит и перед `hideHoverTooltip`, и в двух сценах `device-icon-state-table-*` это меняет поведение. Раньше `_tip = null` записывался, пока таймер ещё ждал. Через 150 мс подсказка всё равно появлялась, и пустой кадр получался лишь потому, что снимок успевал раньше (гонка). Теперь подсказка сначала показывается, затем скрывается через штатный `commit`. Под reduced motion скрытие выполняется сразу, без WAAPI-исчезновения, поэтому промежуточный кадр в снимок не попадает. Получилось детерминированнее прежнего. Автор адресно прогнал только stage6, но код этих сцен я считаю корректным.",
+              "evidence": "demo/golden/matrix.mjs:1174-1175; test/golden-matrix.test.mjs:826-828; demo/golden/harness.mjs:148 (reducedMotion: 'reduce'), 3172-3179; src/control-surface-presentation.ts:39-52; src/live-interaction-runtime.ts:129-135; src/houseplan-card.ts:5317."
+            },
+            {
+              "topic": "Smoke capture stability",
+              "assessment": "Порядок «ждём появления → ждём конца анимации → два снимка» устраняет гонку. Проверка стабильности снимка при этом не ослаблена: `first.equals(...)` и все lifecycle-проверки остались на месте. Строка в smoke повторяет строку из harness, и это оправдано: smoke наводит курсор через `marker.hover()` сам, не через `prepareGoldenScenario`.",
+              "evidence": "demo/smoke_capture_stability.mjs:55-62."
+            },
+            {
+              "topic": "Release-ledger",
+              "assessment": "Категория `infra` подходит: пользовательское поведение не меняется. Запись короткая и совпадает с сутью правки.",
+              "evidence": "docs/release-ledger/v1.85.0/1414.json."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Добавить к `waitFor` в harness.mjs:3171 понятное сообщение или явный короче timeout с id сцены и `hoverDevice`. Сейчас, если подсказка не появится (например, `avoidTopologyCaptions` скрыл её из-за нехватки места, или изменилась модальность указателя), прогон упадёт через стандартные 30 с с общей ошибкой Playwright, и придётся выяснять, какая сцена сломалась. Это дешёвая правка диагностики, на поведение не влияет.",
+            "При следующем полном golden-прогоне явно посмотреть на `device-icon-state-table-{light,dark}`: для них порядок «показать, затем скрыть» теперь работает по-новому. Адресно автор прогнал только stage6, хотя по коду я не вижу причин для расхождения с эталоном."
+          ],
+          "boundaries": "Разбор только по коду, без запуска. Я прочитал diff обоих коммитов #1414, harness.mjs вокруг hover-подготовки, smoke_capture_stability.mjs целиком, обе hover-сцены в matrix.mjs и их unit-описание, src/live-hover.ts, src/control-surface-presentation.ts, `commit` в live-interaction-runtime.ts и место его вызова в `updated` карточки. Опирался на результаты автора: адресный golden stage6 — 0 отличающихся пикселей при прежнем SHA-256, адресный smoke — PASS. Самостоятельно я их не проверял, полного отчёта golden после правки в материале нет. Задачи из batch.reused повторно не разбирались."
+        },
+        "usage": {
+          "input_tokens": 28,
+          "cache_creation_input_tokens": 57006,
+          "cache_read_input_tokens": 577965,
+          "output_tokens": 8364,
+          "output_tokens_details": {
+            "thinking_tokens": 2915
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 57006,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 947,
+              "cache_read_input_tokens": 54091,
+              "cache_creation_input_tokens": 8178,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 8178
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Пакетное код-ревью ship перед v1.85.2-beta.2 — принято\n\n## Вывод\n\nВ пакете на разбор только #1414: правка двух мест, где тесты снимают сцену с наведением на устройство, и запись в release-ledger. Продукт, эталонные PNG и допуски не менялись. Проблема в гонке: после #1409 подсказка появляется с задержкой 150 мс, а golden и smoke делали снимок раньше. Теперь оба места ждут, пока объявленный тестовый хук `[data-hp=\"live-tooltip\"]` станет видимым. Я разобрал по коду обе golden-сцены с `hoverDevice` и smoke и не нашёл поломок или новых рисков, которые мешали бы бете. Правка ещё и делает детерминированными сцены `device-icon-state-table-*`: раньше их отложенный таймер мог показать подсказку уже после принудительного скрытия. Блокеров High нет. Остальные задачи пакета (#1397, #1402, #1405, #1406, #1410–#1412) уже прошли ревью и повторно не разбирались.\n\n## Понимание решения\n\nДо правки: `prepareGoldenScenario` выполнял `page.mouse.move` на маркер и сразу возвращал управление. После #1409 `showDevicePointerTip` (src/live-hover.ts:138-181) не показывает подсказку сразу, а запускает таймер `pointerTipDelay = 150`. Поэтому сцена `isometric-stage6-hover-light` снималась без подсказки, хотя эталон её ожидает (77/78). В `smoke_capture_stability` по той же причине `waitForUiKitPaint` вызывался раньше, чем стартовала WAAPI-анимация появления, и два снимка расходились.\n\nПосле правки: в harness.mjs:3171 и smoke_capture_stability.mjs:57 добавлено `page.locator('[data-hp=\"live-tooltip\"]').waitFor({ state: 'visible' })`. Хук объявлен в #1412 (src/houseplan-card.ts:12914). Приватные поля не записываются, таймер не обходится. Проверку я провёл чтением трёх маршрутов:\n1) Сцена `isometric-stage6-hover-light` (matrix.mjs:268-278): ожидание, затем снимок.\n2) Сцены `device-icon-state-table-{light,dark}` (matrix.mjs:1174-1175, `hideHoverTooltip: true`): ожидание показа, затем `_tip = null` → `requestUpdate` → `updated` → `_liveRt.commit()` (houseplan-card.ts:5317) → `syncHouseplanHover` → `syncTip`. Там `motion.sync(false)` в `ControlSurfacePresentation.updated` при `prefers-reduced-motion: reduce` (harness.mjs:148) сразу делает `settle` и `repaint`, и элемент получает `hidden`. Сработавший таймер уже удалён из `pointerTips`, поэтому подсказка позже не появится снова.\n3) Smoke с `reducedMotion: 'no-preference'`: Playwright считает элемент видимым при `opacity: 0` в начале fade-анимации. Поэтому ожидание завершается при старте анимации, а затем `waitForUiKitPaint` ждёт её конца. Сравнение двух снимков сохранено.\n\n## Разбор решения\n\n### Правильность ожидания в golden-подготовке\n\nGolden ждёт объявленный тестовый хук (контракт #1412), а не внутренний `data-hp-live-tip` и не `_tip`. Такое ожидание соответствует требованию «без обхода таймера приватной записью». Ждать именно видимости правильно: `syncTip` снимает `hidden` только когда сработал таймер и `_tip` стал непустым.\n\nОснование: demo/golden/harness.mjs:3168-3171; src/live-hover.ts:167-180 (таймер 150 мс), 321-329 (снятие hidden); src/houseplan-card.ts:12914.\n\n### Сцены с hideHoverTooltip — побочный эффект, проверенный отдельно\n\nОжидание стоит и перед `hideHoverTooltip`, и в двух сценах `device-icon-state-table-*` это меняет поведение. Раньше `_tip = null` записывался, пока таймер ещё ждал. Через 150 мс подсказка всё равно появлялась, и пустой кадр получался лишь потому, что снимок успевал раньше (гонка). Теперь подсказка сначала показывается, затем скрывается через штатный `commit`. Под reduced motion скрытие выполняется сразу, без WAAPI-исчезновения, поэтому промежуточный кадр в снимок не попадает. Получилось детерминированнее прежнего. Автор адресно прогнал только stage6, но код этих сцен я считаю корректным.\n\nОснование: demo/golden/matrix.mjs:1174-1175; test/golden-matrix.test.mjs:826-828; demo/golden/harness.mjs:148 (reducedMotion: 'reduce'), 3172-3179; src/control-surface-presentation.ts:39-52; src/live-interaction-runtime.ts:129-135; src/houseplan-card.ts:5317.\n\n### Smoke capture stability\n\nПорядок «ждём появления → ждём конца анимации → два снимка» устраняет гонку. Проверка стабильности снимка при этом не ослаблена: `first.equals(...)` и все lifecycle-проверки остались на месте. Строка в smoke повторяет строку из harness, и это оправдано: smoke наводит курсор через `marker.hover()` сам, не через `prepareGoldenScenario`.\n\nОснование: demo/smoke_capture_stability.mjs:55-62.\n\n### Release-ledger\n\nКатегория `infra` подходит: пользовательское поведение не меняется. Запись короткая и совпадает с сутью правки.\n\nОснование: docs/release-ledger/v1.85.0/1414.json.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Добавить к `waitFor` в harness.mjs:3171 понятное сообщение или явный короче timeout с id сцены и `hoverDevice`. Сейчас, если подсказка не появится (например, `avoidTopologyCaptions` скрыл её из-за нехватки места, или изменилась модальность указателя), прогон упадёт через стандартные 30 с с общей ошибкой Playwright, и придётся выяснять, какая сцена сломалась. Это дешёвая правка диагностики, на поведение не влияет.\n- При следующем полном golden-прогоне явно посмотреть на `device-icon-state-table-{light,dark}`: для них порядок «показать, затем скрыть» теперь работает по-новому. Адресно автор прогнал только stage6, хотя по коду я не вижу причин для расхождения с эталоном.\n\n## Границы анализа\n\nРазбор только по коду, без запуска. Я прочитал diff обоих коммитов #1414, harness.mjs вокруг hover-подготовки, smoke_capture_stability.mjs целиком, обе hover-сцены в matrix.mjs и их unit-описание, src/live-hover.ts, src/control-surface-presentation.ts, `commit` в live-interaction-runtime.ts и место его вызова в `updated` карточки. Опирался на результаты автора: адресный golden stage6 — 0 отличающихся пикселей при прежнем SHA-256, адресный smoke — PASS. Самостоятельно я их не проверял, полного отчёта golden после правки в материале нет. Задачи из batch.reused повторно не разбирались.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: fe1f3b3776eb75c168295c6dc7557cc80deab3d9 → 86015ab8132a92ab6546eedda2f0421b01700355\n\n## Переданный контекст исполнителя\n\nЗамороженные требования и контекст исполнителей переданы отдельно для каждой задачи пакета.\n\nПроверены задачи: #1414.\n\nКоммиты: 90adb36524580477ee481e2477dae955157cfe00, 029393cfcfce8beb4ab60f47d872e7c0ef35c78e.\n\nРанее принятое ревью сохранено для задач: #1397, #1402, #1405, #1406, #1410, #1411, #1412.\n\n</details>\n",
+        "createdAt": "2026-11-13T15:05:21.891Z",
+        "artifactId": 14049995261,
+        "runId": 43448608774,
+        "runAttempt": 1,
+        "completedAt": "2026-11-13T15:05:27Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43448608774"
+      }
     }
   }
 }
