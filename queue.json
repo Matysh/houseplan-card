@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11043,
+  "revision": 11044,
   "nextTicket": 407,
   "nextFence": 407,
   "tasks": {
@@ -543,44 +543,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "418a72a888ea5662808e0eb8236e3f40111cc1b1"
-      }
-    },
-    "1254": {
-      "issue": 1254,
-      "branch": "issue/1254-summary-camera-animation",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "c79e51d426861a701b7fea047dfb8f0a23ee2e2f",
-      "mergedSha": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce",
-      "mergedAt": 1793845044255,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1254:1:b0076d9317d8d8c1030dc208afdc6d7b753ff231:c79e51d426861a701b7fea047dfb8f0a23ee2e2f",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "6184d6fa275e5d0ae8ed06a5d72eeedc2190c9ce"
       }
     },
     "1255": {
@@ -4417,12 +4379,10 @@
       "reviewRequest": "review:1404:1:2111099a00889e5def2b69e5eb67fa7a146c8e44:a90bcd6c733c19ce6d7117f550c27676fa902412",
       "completion": {
         "labels": true,
-        "milestone": false,
+        "milestone": true,
         "comment": true,
-        "status": "pending",
-        "errors": {
-          "milestone": "Issue already belongs to another milestone; keep it until the owner resolves the conflict"
-        },
+        "status": "complete",
+        "errors": {},
         "labelsFrom": "S7-code-review",
         "removedToRelease": false,
         "milestoneTarget": {
@@ -4430,10 +4390,10 @@
           "cycleMilestone": 15
         },
         "commentCurrent": true,
-        "commentDigest": "aac2fe83b173813c8b52",
+        "commentDigest": "f05541086a4cb3bf0fd7",
         "commentFacts": {
           "labels": true,
-          "milestone": false,
+          "milestone": true,
           "target": 15
         }
       },
