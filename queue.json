@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11759,
+  "revision": 11760,
   "nextTicket": 423,
   "nextFence": 423,
   "tasks": {
@@ -5308,6 +5308,10 @@
       "digest": "66679ec658dde30b29a9aa0ad56435ef8e8eac9e89891c646e1e8c92ea209ee9",
       "issue": 1391
     },
+    "github:43528414390:1:completions:message:3c2f1fcb8c5232505c6c18a795b39d6c0d3c245d7d1d1ba23f9be447d932e54f": {
+      "digest": "14eb63242ca31419dfdc01193c67bb158fd8aca49defd86f75bd4d27ae3f2510",
+      "issue": 1391
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5505,7 +5509,8 @@
           "entry": 3,
           "detail": "Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed",
           "eventId": "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:3:return:return:1391"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:166288dc-dc0e-46d0-9432-cbb85c5d2272": {
