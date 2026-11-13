@@ -9,6 +9,8 @@
 ## Unreleased
 
 ## v1.85.2-beta.1 — 2026-11-13
+- Keep the shared dimension list and labels clear of the visible zoom badge; fixed editor controls take priority when a list corner is chosen (#1404).
+
 - Normalize backdrop image/frame paint to the same local SVG basis across grid calibrations, preserving world bounds, rotation and native gestures. Equivalent 1/5cm plans no longer change imported SVG text hinting or handle rasterization; pixel tolerances remain unchanged (#1400).
 
 - Repair stable smoke/HA witnesses for shared drafting dimensions, asynchronous Optimize previews and anchor-following menus; retain numeric geometry, native Undo and independent prototype tolerances, and keep screenshot output out of tracked docs (#1399).

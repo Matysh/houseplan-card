@@ -109,11 +109,15 @@ export function layoutWallSideDimensions(input:DimensionLayoutInput):DimensionPl
 }
 
 export function dimensionListBox(items:readonly DimensionPlacement[],width:number,height:number,
-  obstacles:readonly DimensionBox[]):DimensionBox|null {
+  obstacles:readonly DimensionBox[],reserved:readonly DimensionBox[]=[]):DimensionBox|null {
   const listed=items.filter(item=>item.listed);if(!listed.length)return null;
   const w=Math.min(190,Math.max(100,width-16)),h=Math.min(height-16,Math.max(52,Math.min(height*.4,30+listed.length*24)));
   const choices=[{x:8,y:8,w,h},{x:Math.max(8,width-w-8),y:8,w,h},
     {x:8,y:Math.max(8,height-h-8),w,h},{x:Math.max(8,width-w-8),y:Math.max(8,height-h-8),w,h}];
+  // A fixed control paints above this read-only list. Prefer any free corner
+  // before comparing ordinary plan geometry; fewer wall/node intersections
+  // must not win at the cost of an unreadable value behind the zoom badge.
+  const free=choices.filter(box=>!reserved.some(control=>overlaps(box,control)));
   const score=(box:DimensionBox)=>obstacles.reduce((sum,obstacle)=>sum+(overlaps(box,obstacle)?1:0),0);
-  return choices.sort((a,b)=>score(a)-score(b))[0];
+  return (free.length?free:choices).sort((a,b)=>score(a)-score(b))[0];
 }

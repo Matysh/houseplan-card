@@ -243,14 +243,16 @@ export class WallSideDimensionEditor {
       const p=host._framePercent(point,view);return[p[0]*width/100,p[1]*height/100];
     };
     const obstacles:DimensionBox[]=[];
-    // Read the single fixed tray, not every label. Its screen footprint is
-    // independent of plan projection and applies to all native adapters.
+    // Read the two fixed UI surfaces, not every label. Their screen footprints
+    // are independent of plan projection and apply to all native adapters.
+    const reserved:DimensionBox[]=[];
     const stage=host.renderRoot?.querySelector('.stage')?.getBoundingClientRect();
-    const tray=host.renderRoot?.querySelector('.editor-secondary')?.getBoundingClientRect();
-    if(stage&&tray) {
+    for(const control of host.renderRoot?.querySelectorAll('.editor-secondary,.zoombadge:not([hidden])')||[]) {
+      if(!stage)break;
+      const tray=control.getBoundingClientRect();
       const box=screenDimensionObstacle({x:stage.x,y:stage.y,w:stage.width,h:stage.height},
         {x:tray.x,y:tray.y,w:tray.width,h:tray.height},width,height);
-      if(box)obstacles.push(box);
+      if(box){obstacles.push(box);reserved.push(box);}
     }
     const nodes=new Set<string>();
     for(const carrier of request?dimensionCarriers(request.candidate):[])for(const point of [carrier.a,carrier.b]) {
@@ -309,7 +311,7 @@ export class WallSideDimensionEditor {
       format:cm=>formatLength(cm,host._imperial,3),
       unavailable:propertiesT(language,'wall_dimension_unavailable'),
       textWidth:text=>[...text].reduce((sum,c)=>sum+(this.widths.get(c)??7),0)});
-    return renderWallSideDimensions(items,width,height,dimensionListBox(items,width,height,obstacles),
+    return renderWallSideDimensions(items,width,height,dimensionListBox(items,width,height,obstacles,reserved),
       propertiesT(language,'wall_dimensions'),frame.kind,spaceDisplayOf(request?.candidate??host._curSpaceCfg!,host._serverCfg?.settings).color);
   }
   public get sourceHint():BasisNotice {

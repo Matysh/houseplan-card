@@ -17,6 +17,17 @@ const dimension={id:'wall:1:-1:0',carrier:'wall:1',side:-1,order:0,source:'physi
   from:[50,50],to:[250,50],normal:[0,-1],low:0,high:200,lengthCm:200};
 const input=(intervals=[dimension])=>({intervals,width:600,height:400,project:p=>p,
   format:cm=>formatLength(cm,false,3),unavailable:'Dimension unavailable',textWidth:s=>s.length*6.3,obstacles:[],lanes:new Map(),numbers:new Map()});
+test('#1404 list gives fixed controls priority over plan geometry when choosing a corner',()=>{
+  const items=layoutWallSideDimensions({...input(),obstacles:[{x:0,y:0,w:600,h:400}]});
+  const tray={x:0,y:0,w:600,h:100},zoom={x:8,y:360,w:60,h:32};
+  const geometry=Array.from({length:8},()=>({x:400,y:310,w:180,h:80}));
+  const box=dimensionListBox(items,600,400,[tray,zoom,...geometry],[tray,zoom]);
+  assert.ok(box.x>=400&&box.y>=100,'free bottom-right corner wins even with more geometry there');
+});
+test('#1404 no reserved UI keeps the established deterministic list corner',()=>{
+  const items=layoutWallSideDimensions({...input(),obstacles:[{x:0,y:0,w:600,h:400}]});
+  assert.deepEqual(dimensionListBox(items,600,400,[]),{x:8,y:8,w:190,h:54});
+});
 test('#1403 vertical dimensions hidden by a top tray retain their exact value in an unobscured list',()=>{
   const edge={...dimension,from:[260,40],to:[260,120],normal:[1,0],lengthCm:120};
   const tray={x:0,y:0,w:600,h:100},base={...input([edge]),obstacles:[tray]};
