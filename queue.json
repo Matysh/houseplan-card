@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11736,
-  "nextTicket": 422,
+  "revision": 11737,
+  "nextTicket": 423,
   "nextFence": 422,
   "tasks": {
     "1024": {
@@ -3605,14 +3605,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1391-plan-core",
-      "materialSha": "64c2ef2dcae413765a394c9d09e2acbc674f2f2f",
+      "materialSha": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 421,
-      "queued": false,
+      "ticket": 422,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794612199654,
-      "reviewEntry": 3,
+      "readyAt": 1794612685419,
+      "reviewEntry": 4,
       "patchId": "3cf2d541fdd6e8478587c1ba8a5592fbcb49f53f",
       "changedFiles": [
         "custom_components/houseplan/__init__.py",
@@ -3762,8 +3762,7 @@
         "entry": 3,
         "detail": "Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed",
         "eventId": "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:3:return:return:1391"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1393": {
       "issue": 1393,
@@ -4960,7 +4959,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1391
+  ],
   "active": null,
   "events": {
     "github:43515037012:1:label:spec-request": {
@@ -5369,6 +5370,19 @@
           "detail": "Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed",
           "eventId": "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:3:return:return:1391"
         }
+      }
+    },
+    "finish:166288dc-dc0e-46d0-9432-cbb85c5d2272": {
+      "digest": "51742e9234e128b54735999a1ef9e64aa82c6de05addf37e0edd195291b18a84",
+      "issue": 1391,
+      "message": {
+        "kind": "queued",
+        "issue": 1391,
+        "at": 1794612685419,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a"
       }
     }
   },
