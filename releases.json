@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 805,
+  "revision": 806,
   "active": "1.85.2-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -91175,8 +91175,11 @@
       "sourceSha": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
       "sha": "86015ab8132a92ab6546eedda2f0421b01700355",
       "runner": null,
-      "running": null,
-      "status": "prepared",
+      "running": {
+        "id": null,
+        "sha": "86015ab8132a92ab6546eedda2f0421b01700355"
+      },
+      "status": "testing",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -96232,7 +96235,8 @@
     "ship-review:prepare:afb08d90-9d25-4e46-8bcd-478f9057fc3c": "b016553e2dd116ac6d42a93e3bcc62089f07d9f2e68fd92ab6ece1ef8209f330",
     "ship-review:result:6c280f7d-61a8-4cec-8988-3ca978a21293": "6b87e359edc29fc43528d5e865719ea1dc5c009dfd454d2442f2bef54fe241ff",
     "beta2-20261113-first-report": "8fb353562db48befee6394f8fce27ae9caa45d57d01ac20c9eee483d36339373",
-    "beta2-20261113-capture-fix": "31d7af0b79cf6cbae9795b6ddb1802d455b8512025445587ab7d794357b17b26"
+    "beta2-20261113-capture-fix": "31d7af0b79cf6cbae9795b6ddb1802d455b8512025445587ab7d794357b17b26",
+    "beta2-20261113-run-r2": "8013dace701428a084222ee7b9c2f2d49732cccfe96dcbb911684fa348d5b695"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
