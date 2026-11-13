@@ -47,7 +47,10 @@ const res = await page.evaluate(async () => {
     return help?.shadowRoot?.querySelector('.tooltip')
       || root().querySelector('hp-dialog')?.shadowRoot?.querySelector('[data-hp-overlay="help"]')?.shadowRoot?.querySelector('.tooltip');
   };
-  const enterWithRealMouse = (target) => {
+  const enterWithMouseMovement = (target) => {
+    target?.dispatchEvent(new PointerEvent('pointermove', {
+      pointerType: 'mouse', bubbles: true, composed: true,
+    }));
     target?.dispatchEvent(new PointerEvent('pointerover', {
       pointerType: 'mouse', bubbles: true, composed: true,
     }));
@@ -113,7 +116,7 @@ const res = await page.evaluate(async () => {
     && !roleButton.hasAttribute('aria-describedby');
 
   const beforeHoverGeometry = scrollGeometry();
-  enterWithRealMouse(roleButton);
+  enterWithMouseMovement(roleButton);
   await wait(330);
   out.mouseHover = roleButton?.getAttribute('aria-expanded') === 'true'
     && roleButton.getAttribute('aria-describedby') === roleDescription?.id
@@ -130,7 +133,7 @@ const res = await page.evaluate(async () => {
   // visible section selector while opening help in the Light pane.
   const nameInput = root().querySelector('hp-dialog .hpf-settings-mobile hp-settings-select')?.shadowRoot?.querySelector('button');
   nameInput?.focus();
-  enterWithRealMouse(roleButton);
+  enterWithMouseMovement(roleButton);
   await wait(330);
   nameInput?.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'Escape', bubbles: true, composed: true, cancelable: true,

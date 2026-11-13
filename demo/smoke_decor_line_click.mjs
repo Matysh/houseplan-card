@@ -25,7 +25,11 @@ const reset = async () => {
     await window.__hpTest.switchSpace('line'); await window.__hpTest.setMode('decor');
     window.__card._geometryHistory.clear();
   });
-  await card.locator('[data-hp="zoom-fit"]').click(); await tool('line');
+  await card.locator('[data-hp="zoom-fit"]').click();
+  await page.waitForFunction(() => { const c=window.__card;
+    return !c._cameraTransition.active && !c._modeTransitionBusy && !c._refitRaf && !c._pendingRefitSize;
+  });
+  await tool('line');
 };
 const esc = async () => { await card.locator('[data-editor-group="shapes"]').focus();
   await page.keyboard.press('Escape'); await settle(); };
@@ -84,6 +88,17 @@ try {
   check('line.shift_without_move',JSON.stringify(s.draft.b)!==JSON.stringify(ordinary));
   const preview=s.draft.b; await page.mouse.click(p.x,p.y); await page.keyboard.up('Shift'); await settle();
   s=await state();check('line.preview_equals_commit',closePoint([s.decor[0].x2*1000,s.decor[0].y2*1000],preview));
+  // Near the octant boundary, integer click coordinates used to turn a
+  // fractional pointer's diagonal preview into a horizontal saved line.
+  await reset(); await click(250,250); p=await point(443,330);
+  await page.mouse.move(p.x,p.y); await page.keyboard.down('Shift');
+  await page.waitForFunction(() => { const d=window.__card._decorDraft;
+    return d && d.b[0]!==d.a[0] && d.b[1]!==d.a[1]
+      && Math.abs(Math.abs(d.b[0]-d.a[0])-Math.abs(d.b[1]-d.a[1]))<1e-8;
+  });
+  const boundaryPreview=[...(await state()).draft.b];
+  await page.mouse.click(p.x,p.y); await page.keyboard.up('Shift'); await settle();
+  s=await state();check('line.octant_preview_equals_commit',closePoint([s.decor[0].x2*1000,s.decor[0].y2*1000],boundaryPreview));
   await esc(); await click(200,250); const before=await state(); await click(200,250);
   check('line.repeated_point_no_history',(await state()).history,before.history);
 

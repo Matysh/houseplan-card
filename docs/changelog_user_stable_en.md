@@ -30,6 +30,8 @@ This release expands openings, unifies plan dimensions and makes everyday editin
 
 🎨 **Display fixes.** Equivalent plans with 1 cm and 5 cm grids render imported SVG backdrops and handles consistently. Icon state source uses the correct picker cursor. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1410](https://github.com/Matysh/houseplan-card/issues/1410)
 
+✏️ **Lines keep their previewed direction.** When drawing with Shift in the Background editor, browser coordinate rounding no longer changes the preview when clicking. The next segment starts at the same accepted point. [#1418](https://github.com/Matysh/houseplan-card/issues/1418)
+
 Save a plan backup before updating. Restart Home Assistant and reload Houseplan pages after updating.
 
 All changes: [1.85.2](https://github.com/Matysh/houseplan-card/milestone/17?closed=1)

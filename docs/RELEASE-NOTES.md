@@ -20,6 +20,8 @@
 
 🎨 **Исправления отображения.** SVG-подложки и их ручки одинаково рисуются на эквивалентных планах с сеткой 1 и 5 см. У Icon state source исправлен текстовый курсор. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1410](https://github.com/Matysh/houseplan-card/issues/1410)
 
+✏️ **Линия сохраняет показанное направление.** При рисовании подложки с Shift точный предпросмотр больше не меняется при клике из-за округления координат браузером. Следующий отрезок начинается в той же принятой точке. [#1418](https://github.com/Matysh/houseplan-card/issues/1418)
+
 Перед обновлением сохраните резервную копию плана. После обновления перезапустите Home Assistant и перезагрузите страницы Houseplan.
 
 Все изменения: [1.85.2](https://github.com/Matysh/houseplan-card/milestone/17?closed=1)
@@ -41,6 +43,8 @@ This release expands openings, unifies plan dimensions and makes everyday editin
 💬 **Stable device tooltips.** A short hover delay and smooth appearance/disappearance. Tooltips stay anchored through pointer movement inside the icon and live HA updates. Metric labels, values and units wrap together. After the card reconnects, tooltips wait for fresh mouse movement. [#1409](https://github.com/Matysh/houseplan-card/issues/1409), [#1411](https://github.com/Matysh/houseplan-card/issues/1411), [#1413](https://github.com/Matysh/houseplan-card/issues/1413)
 
 🎨 **Display fixes.** Equivalent plans with 1 cm and 5 cm grids render imported SVG backdrops and handles consistently. Icon state source uses the correct picker cursor. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1410](https://github.com/Matysh/houseplan-card/issues/1410)
+
+✏️ **Lines keep their previewed direction.** When drawing with Shift in the Background editor, browser coordinate rounding no longer changes the preview when clicking. The next segment starts at the same accepted point. [#1418](https://github.com/Matysh/houseplan-card/issues/1418)
 
 Save a plan backup before updating. Restart Home Assistant and reload Houseplan pages after updating.
 

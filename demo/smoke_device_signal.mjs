@@ -121,8 +121,9 @@ try {
   out.saveSurvivesReopen = await dialog().locator('#marker-hide-signal').isChecked();
   await close(); await page.evaluate(() => window.__hpTest.setMode('view'));
   await dev('lg_sensor.living_temp').hover(); await settle();
+  await root.locator('[data-hp="live-tooltip"]').waitFor({ state: 'visible' });
   out.localHideRetainsOrdinaryTooltip = await page.evaluate(() => window.__card.shadowRoot
-    .querySelector('[data-hp-live-tip]')?.textContent.includes('LQI 55'));
+    .querySelector('[data-hp="live-tooltip"]')?.textContent.replace(/\s+/g, ' ').includes('LQI 55'));
   await page.mouse.move(2, 2);
   await patchSignalMarker({ value_badge: { enabled: true, source: { kind: 'derived_lqi' } } });
   out.localHideRetainsExplicitBadge = (await sample()).badge === '55' && (await sample()).lqi === null;

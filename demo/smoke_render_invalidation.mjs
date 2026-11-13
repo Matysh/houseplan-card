@@ -79,6 +79,10 @@ const result = await page.evaluate(async () => {
     }));
   }
   await frame();
+  if (device) await until(() => {
+    const tip = card.renderRoot.querySelector('[data-hp="live-tooltip"]');
+    return tip && !tip.hidden;
+  });
   const liveTip = card.renderRoot.querySelector('[data-hp-live-tip]');
   out.hoverUsesLightweightPaint = !!device && renders === hoverBefore
     && !!liveTip && !liveTip.hidden;

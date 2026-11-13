@@ -20,6 +20,10 @@ const result = await page.evaluate(async () => {
   const mouse = (type, relatedTarget = null) => new PointerEvent(type, {
     pointerType: 'mouse', bubbles: true, composed: true, clientX: 200, clientY: 200, relatedTarget,
   });
+  const enter = marker => {
+    marker.dispatchEvent(mouse('pointermove'));
+    marker.dispatchEvent(mouse('pointerover'));
+  };
   const out = {};
 
   await card.updateComplete;
@@ -132,7 +136,7 @@ const result = await page.evaluate(async () => {
   const isoTopologyGeometry = async () => {
     const sourceMarker = root().querySelector('.dev[data-id="d_light1"]');
     const neighborMarker = root().querySelector('.dev[data-id="d_lamp"]');
-    sourceMarker.dispatchEvent(mouse('pointerover'));
+    enter(sourceMarker);
     await wait(() => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
       ?.querySelector('line[data-direction="toward-neighbor"]'), 'Iso local route');
     const topology = root().querySelector('hp-zigbee-topology-overlay');
@@ -207,7 +211,7 @@ const result = await page.evaluate(async () => {
   knownNeighbor.style.left = '80%'; knownNeighbor.style.top = '68%';
   unrelated.style.left = '50%'; unrelated.style.top = '36%';
   if (roomLabel) { roomLabel.style.left = '65%'; roomLabel.style.top = '36%'; }
-  source.dispatchEvent(mouse('pointerover'));
+  enter(source);
   await wait(() => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
     ?.querySelector('[data-hp="zigbee-topology-lines"]'), 'local route');
   const overlay = root().querySelector('hp-zigbee-topology-overlay');
@@ -327,7 +331,7 @@ const result = await page.evaluate(async () => {
   await wait(() => overlay.shadowRoot.querySelector('line'), 'route restored after runtime invalidation');
 
   const noRoute = root().querySelector('.dev[data-id="d_kettle"]');
-  noRoute.dispatchEvent(mouse('pointerover'));
+  enter(noRoute);
   await wait(() => overlay.shadowRoot.querySelector('.route-status'), 'unknown route label');
   out.unknownRouteHasNoInventedLine = !overlay.shadowRoot.querySelector('line,polygon')
     && /no route data/i.test(overlay.shadowRoot.querySelector('.route-status').textContent)
@@ -349,14 +353,14 @@ const result = await page.evaluate(async () => {
     return { ...topology, uplinkEvidence: topology.uplinkEvidence.filter(evidence => evidence.from !== routerKey) };
   }) };
   overlay._acceptRuntime(incomingOnly);
-  root().querySelector('.dev[data-id="d_light1"]').dispatchEvent(mouse('pointerover'));
+  enter(root().querySelector('.dev[data-id="d_light1"]'));
   await wait(() => overlay.shadowRoot.querySelector('.route-status')?.getAttribute('data-outgoing') === 'unknown'
     && overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"][data-direction="toward-origin"]'), 'incoming-only route');
   out.visibleIncomingRetainsIncomplete = /no route data/i.test(overlay.shadowRoot.querySelector('.route-status').textContent)
     && /incomplete data/i.test(overlay.shadowRoot.querySelector('.route-status').textContent)
     && !overlay.shadowRoot.querySelector('[data-direction="toward-neighbor"]');
   overlay._acceptRuntime(runtimeBeforeInvalidation); await overlay.updateComplete;
-  unknownNeighbor.dispatchEvent(mouse('pointerover'));
+  enter(unknownNeighbor);
   await wait(() => overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]'), 'coordinator incoming route');
   out.coordinatorHasOnlyIncoming = !/no route data/i.test(
     overlay.shadowRoot.querySelector('.route-status')?.textContent || '',
@@ -373,7 +377,7 @@ const result = await page.evaluate(async () => {
   await wait(() => root().querySelector('.dev[data-id="d_mower"]'), 'garden marker');
   out.spaceChangeClears = !root().querySelector('[data-hp-zigbee-topology-endpoint]');
   const remoteChild = root().querySelector('.dev[data-id="d_mower"]');
-  remoteChild.dispatchEvent(mouse('pointerover'));
+  enter(remoteChild);
   await wait(() => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
     ?.querySelector('[data-hp="zigbee-topology-parent-bubble"]'), 'remote parent bubble');
   let activeOverlay = root().querySelector('hp-zigbee-topology-overlay');
@@ -394,7 +398,7 @@ const result = await page.evaluate(async () => {
   await card.updateComplete;
   await wait(() => root().querySelector('.dev[data-id="d_temp"]'), 'temperature marker');
   const temperature = root().querySelector('.dev[data-id="d_temp"]');
-  temperature.dispatchEvent(mouse('pointerover'));
+  enter(temperature);
   await wait(() => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
     ?.querySelector('[data-kind="unplaced-device"]'), 'unplaced device bubble');
   activeOverlay = root().querySelector('hp-zigbee-topology-overlay');
@@ -412,7 +416,7 @@ const result = await page.evaluate(async () => {
   ));
   await activeOverlay.updateComplete;
   const router = root().querySelector('.dev[data-id="d_light1"]');
-  router.dispatchEvent(mouse('pointerover'));
+  enter(router);
   await wait(() => activeOverlay.shadowRoot.querySelector('[data-kind="unplaced-coordinator"]'),
     'unplaced coordinator bubble');
   out.unplacedCoordinatorBubble = activeOverlay.shadowRoot
@@ -436,7 +440,7 @@ const result = await page.evaluate(async () => {
   await activeOverlay.updateComplete;
   out.leaveClears = !activeOverlay.shadowRoot.querySelector('line')
     && !root().querySelector('[data-hp-zigbee-topology-endpoint]');
-  router.dispatchEvent(mouse('pointerover'));
+  enter(router);
   await wait(() => activeOverlay.shadowRoot.querySelector('line'), 'route restored');
   activeOverlay.dispatchEvent(new PointerEvent('pointerdown', {
     pointerType: 'touch', bubbles: true, composed: true, pointerId: 7,
@@ -445,7 +449,7 @@ const result = await page.evaluate(async () => {
   out.touchClears = !activeOverlay.shadowRoot.querySelector('line')
     && !root().querySelector('[data-hp-zigbee-topology-endpoint]');
   card.setAttribute('data-pointer-hover', '');
-  router.dispatchEvent(mouse('pointerover'));
+  enter(router);
   await wait(() => activeOverlay.shadowRoot.querySelector('line'), 'route restored after touch');
   activeOverlay.dispatchEvent(new PointerEvent('pointerdown', {
     pointerType: 'pen', bubbles: true, composed: true, pointerId: 8,
@@ -453,7 +457,7 @@ const result = await page.evaluate(async () => {
   await wait(() => !activeOverlay.shadowRoot.querySelector('line'), 'pen clears');
   out.penClears = !root().querySelector('[data-hp-zigbee-topology-endpoint]');
   card.setAttribute('data-pointer-hover', '');
-  router.dispatchEvent(mouse('pointerover'));
+  enter(router);
   await wait(() => activeOverlay.shadowRoot.querySelector('line'), 'route restored before hover gate loss');
   card.removeAttribute('data-pointer-hover');
   await wait(() => !activeOverlay.shadowRoot.querySelector('line'), 'hover gate clears');
@@ -501,9 +505,11 @@ for (const theme of ['light', 'dark']) {
         await new Promise((resolve) => setTimeout(resolve, 20));
       }
     };
-    const hover = (marker) => marker.dispatchEvent(new PointerEvent('pointerover', {
-      pointerType: 'mouse', bubbles: true, composed: true, clientX: 200, clientY: 200,
-    }));
+    const hover = (marker) => {
+      for (const type of ['pointermove', 'pointerover']) marker.dispatchEvent(new PointerEvent(type, {
+        pointerType: 'mouse', bubbles: true, composed: true, clientX: 200, clientY: 200,
+      }));
+    };
     document.documentElement.style.colorScheme = theme;
     card.hass = { ...card.hass, user: { ...card.hass.user, is_admin: true },
       themes: { ...(card.hass.themes || {}), darkMode: theme === 'dark' } };
