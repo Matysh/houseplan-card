@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11675,
+  "revision": 11676,
   "nextTicket": 419,
   "nextFence": 419,
   "tasks": {
@@ -4781,18 +4781,12 @@
       }
     },
     "1395": {
-      "requestId": "spec:1395:cc2b50690ef385482fbf23a07b6608d6e09d7bdef6f818890cf02a79e6db16af",
-      "contextDigest": "cc2b50690ef385482fbf23a07b6608d6e09d7bdef6f818890cf02a79e6db16af",
-      "base": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1794607307636,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43515190357",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "requestId": "spec:1395:06640d28ad9e1ae890c5d4eb6e40a7c126f73123b9834957deac5944f4bfd85f",
+      "contextDigest": "06640d28ad9e1ae890c5d4eb6e40a7c126f73123b9834957deac5944f4bfd85f",
+      "base": "759ff053090317b430cdee3dca12fba18892de4b",
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1794608037786
     }
   },
   "reviewPublications": {
@@ -4835,6 +4829,19 @@
         "occurredAt": "2026-11-13T22:09:11.454Z"
       },
       "runId": 43516896610
+    },
+    "spec:1395:spec:1395:06640d28ad9e1ae890c5d4eb6e40a7c126f73123b9834957deac5944f4bfd85f": {
+      "issue": 1395,
+      "kind": "spec",
+      "requestId": "spec:1395:06640d28ad9e1ae890c5d4eb6e40a7c126f73123b9834957deac5944f4bfd85f",
+      "materialSha": "759ff053090317b430cdee3dca12fba18892de4b",
+      "expectedBase": "759ff053090317b430cdee3dca12fba18892de4b",
+      "patchId": "06640d28ad9e1ae890c5d4eb6e40a7c126f73123b9834957deac5944f4bfd85f",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-13T22:13:57.786Z"
+      }
     }
   },
   "waiting": [],
@@ -4919,6 +4926,26 @@
     "github:43515933499:1:completions:report:3692f4c761b610ac8ecbd8abe4a32436271a3df5bfb7f71751c6252912930d53": {
       "digest": "6923edc2dd083d159ddc5267e69b189bd51800bb52df83859d8ab23b1110f3a2",
       "issue": 1392
+    },
+    "github:43517454379:1:spec:1395:spec-request": {
+      "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
+      "issue": 1395
+    },
+    "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
+      "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
+      "issue": 1395,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1395,
+        "at": 1794608037786,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1395:06640d28ad9e1ae890c5d4eb6e40a7c126f73123b9834957deac5944f4bfd85f",
+        "reviewChanges": "Это аудит и адресные исправления, не декларация полной безопасности будущего сервера. Исходники уже содержат streaming ZIP/директории до ZipFile, счётчики и strict asset SVG; их нельзя игнорировать или переписать второй реализацией. Найденные реальные транзитивные HA-зависимости устраняет #1391. Различаются существующий HA-профиль и явный строгий потребитель ядра; нельзя незаметно запретить старый 2-GiB backup ради будущего анонимного сайта. Лимит времени над thread не принимается за остановку вычисления. Пока проведено чтение исходников; security experiments и продуктовые тесты ещё не выполнялись, High пока не классифицированы.\n\n### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43515190357.\n- Блокер SVG/#1033 → отдельно определены decor в обоих профилях, HA backdrop без content-whitelist и strict backdrop с явным reject-whitelist. HA bytes/ZIP сохраняются, CSP/image контекст проверяется, обратное ужесточение HA не включается без владельца.\n- JSON resource bounds → scanner до json.loads, учёт строк/escape и точное определение nodes; decoder остаётся каноническим.\n- Work units/clock → units первичны, время вторично, clock подменяется; AC3 явно относится к strict, Store/startup/save не получают новый бюджет молча.\n- Принято fail-closed при недоступном декодере strict raster и дополнение каталога structural/storage/SVG/raster пределами.\nРедакция 2. Продуктовые изменения и эксперименты не выполнялись. Отдельный запуск формы — перед S4.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
+      }
     }
   },
   "devWebhook": {
