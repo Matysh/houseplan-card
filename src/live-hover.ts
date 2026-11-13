@@ -104,12 +104,13 @@ const deviceTipContent = (
     presentation.lqiTipText != null ? metricText(`LQI ${presentation.lqiTipText}`) : '',
     presentation.lqiSource?.stale ? host._t('tip.signal_last_known') : '',
   ].filter(Boolean).join(' · ');
-  const battery = metricText(deviceBatteryTipText(device,
+  const battery = deviceBatteryTipText(device,
     createDeviceBatteryContext(host._renderPlanHass, host._fullRegistryHass), (key, vars) => host._t(key, vars),
-    presentation.valueBadge?.source));
+    presentation.valueBadge?.source);
   const status = presentation.offline ? host._t('device.presentation_unavailable')
     : presentation.powerOff ? host._t('device.power_off') : '';
-  return { title: device.name, meta: presentation.haDisabled ? ghostLabel : metrics, battery, status };
+  return { title: device.name, meta: presentation.haDisabled ? ghostLabel : metrics,
+    battery: metricText(battery), status };
 };
 
 export function showDevicePointerTip(value: object, event: PointerEvent, device: DevItem): void {
