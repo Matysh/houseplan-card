@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 838,
+  "revision": 839,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -99925,6 +99925,12 @@
           "status": "completed",
           "branch": "release/1.85.2-beta.1",
           "sha": "17d4d17b9973ffd53d59bb477eb353902f23de06"
+        },
+        "return-to-dev": {
+          "status": "running",
+          "issue": 1416,
+          "branch": "issue/1416-release-return-86015ab8132a",
+          "worktree": "/home/sergey/houseplan-1227/artifacts/process-next/return-worktrees/86015ab8132a"
         }
       }
     }
@@ -104741,7 +104747,8 @@
     "beta2-20261113-publication-r2:completion:8e45ecbd-6cf1-4204-84f5-5e2e0b00bdc4": "90fcbd1276348b4387e8d97538e9bb8e5f0b3282cc12d746decdb01a7d5069f7",
     "beta2-20261113-publication-r2:completion:6054a2f3-9cd0-42f5-a713-aeee28880fdb": "85d85ac70cf0664b7e53d01af9479540d813c3e9a6fbd4c61a1dd65698671d73",
     "beta2-20261113-publication-r2:completion:0665ba53-f9ea-4439-b12f-74ba15143e81": "1bbfb168119697713d6613d62a5cb1bcf7788136abfcb238154e0ddbd05b5d06",
-    "beta2-20261113-publication-r2:completion:2812fe6a-abb6-46c8-b11b-753538b4b414": "efcecf590e428f27e07cf33ce4dfd34d02a80b699d8a4daac084a396ba8e7ea6"
+    "beta2-20261113-publication-r2:completion:2812fe6a-abb6-46c8-b11b-753538b4b414": "efcecf590e428f27e07cf33ce4dfd34d02a80b699d8a4daac084a396ba8e7ea6",
+    "beta2-20261113-publication-r2:completion:7037ac37-faa9-4a34-8eeb-55f2cd0450ee": "b4a4688535d851aec4688e06e820776633b0d269f7a7d643f8724f3b2a49c1e0"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
