@@ -8,8 +8,6 @@
 
 - Keep shared editor dimensions readable beside the floating tool tray, using the existing numbered-list fallback when needed (#1403).
 
-## Unreleased
-
 - Repair the external real-HA backdrop rotation witness's coordinate basis, retaining exact angle, Shift, history, cancellation and reload checks; product behavior and golden references are unchanged (#1405).
 
 - Declare the existing read-only dimension interval and painted rail as versioned test hooks for real HA E2E; keep the remaining renderer probes internal and the strict selector check unchanged (#1406).
