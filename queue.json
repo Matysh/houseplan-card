@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10228,
+  "revision": 10229,
   "nextTicket": 388,
   "nextFence": 388,
   "tasks": {
@@ -4409,7 +4409,7 @@
       "ownerDecision": null,
       "ticket": 387,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794545779982,
       "reviewEntry": 1,
       "patchId": "120f4a5510e739b8eed715dda5d5fdc46a571a4d",
@@ -4425,7 +4425,16 @@
         "demo/smoke_view_empty_space_boundary.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261113T045635616-fbc916a2",
+        "name": "Тесты для задачи #1399 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T045635616-fbc916a2/report.json",
+        "materialSha": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26",
+        "status": "passed",
+        "finishedAt": "2026-11-13T04:59:23.325Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4663,9 +4672,9 @@
     "fence": 387,
     "materialSha": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26",
     "expectedBase": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794545783992,
-    "expiresAt": 1794546264557,
+    "expiresAt": 1794549566987,
     "patchId": "120f4a5510e739b8eed715dda5d5fdc46a571a4d"
   },
   "events": {
@@ -4710,6 +4719,34 @@
         "layer": "product",
         "materialSha": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26",
         "phase": "sync"
+      }
+    },
+    "finish:40dbddf2-03d9-45c7-a99b-4763aafa30cf:finish:3:s6-complete": {
+      "digest": "f1cbaeecdaf9aa665a891126da6979b56e41a8286532071914db2f6255e2597f",
+      "issue": 1399,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1399,
+        "at": 1794545966987,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26",
+        "phase": "review",
+        "evidence": {
+          "id": "20261113T045635616-fbc916a2",
+          "name": "Тесты для задачи #1399 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T045635616-fbc916a2/report.json",
+          "materialSha": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26",
+          "status": "passed",
+          "finishedAt": "2026-11-13T04:59:23.325Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Взято по поручению владельца после полного stable-аудита. Это ремонт тестовых контрактов, а не разрешение игнорировать отказы. Внимание: не потерять проверки длины после переноса в общие размеры, не замаскировать ошибку preview ожиданием private-флага, не выключить историю пылесоса из сценария. Разбор raster-parity и golden оформлены отдельно. Реализовано: все перечисленные native-сценарии прошли адресную отладку. Длина проверяется числом и видимым текстом общей размерной линии/списка; Resize — реальным жестом на прямоугольнике 300×400 см с толщиной 15 см, обеими гранями и чистой площадью. Optimize ждёт готовый DOM; fixture возвращает can_optimize_undo на postcheck. Проверки списка охватывают follow, Escape и уход якоря за clip. Геометрия макета сохраняет допуск 1 px, новая подсказка измерена в независимом reference. Product-профиль S6 выбран потому, что адресные browser-тесты исполняют настоящий bundle; infra-профиль не предназначен для них. Companion HA-правка сохраняет старые версии и проверяет 210 см с обеих сторон, центр, историю и reload; реальный HA-повтор будет выполнен на общем новом кандидате до выпуска. Golden и допуски не менялись. Предыдущих раундов ревью нет.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
