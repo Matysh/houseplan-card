@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 865,
+  "revision": 866,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -112408,18 +112408,36 @@
       },
       "completion": {
         "issues": {
-          "status": "running",
+          "status": "pending",
           "eligible": [
             1417,
             1418,
             1419
           ],
           "waitingForS8": [],
-          "completed": [],
           "closed": [
             1417,
+            1418,
+            1419
+          ],
+          "completed": [
             1418
-          ]
+          ],
+          "errors": [
+            {
+              "issue": 1417,
+              "reason": "The operation was aborted due to timeout"
+            },
+            {
+              "issue": 1418,
+              "reason": "The operation was aborted due to timeout"
+            },
+            {
+              "issue": 1419,
+              "reason": "The operation was aborted due to timeout"
+            }
+          ],
+          "reason": "The operation was aborted due to timeout"
         }
       }
     }
@@ -117912,7 +117930,8 @@
     "stable1852-20261113-publication-r3:published": "d4c6abd1859d52970290e1f56a79b38edb007adc892c0742a981189b6e33ba40",
     "stable1852-20261113-publication-r3:completion:d4719afc-11fb-4db8-8699-90c19ea0b882": "da8c99f25122f8af148197fdfb9eeb042719a8905c7c08cb1c2698ab680ae1ca",
     "stable1852-20261113-publication-r3:completion:072ef30e-53ed-43b5-a3b7-65a89a93559e": "1f39c2e655d83b9ff37fee548dd17b43c4e72e3681bbc512beb214c3121ccc1a",
-    "stable1852-20261113-publication-r3:completion:65134f59-067a-4560-a457-74d7cb92d35b": "a326f17ac09cf8bc98c58965ea297fa7a09fcdd4623aae082946921bf6bc331a"
+    "stable1852-20261113-publication-r3:completion:65134f59-067a-4560-a457-74d7cb92d35b": "a326f17ac09cf8bc98c58965ea297fa7a09fcdd4623aae082946921bf6bc331a",
+    "stable1852-20261113-publication-r3:completion:745a66ba-6ddb-41b1-8ef6-a9db6b9ca4c5": "1d8e1991ff1335cea764570517ab41694ab8792ddb06dff4154353fa52fb9fce"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
