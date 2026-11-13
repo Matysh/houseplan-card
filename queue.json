@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11468,
+  "revision": 11469,
   "nextTicket": 416,
   "nextFence": 416,
   "tasks": {
@@ -4490,7 +4490,16 @@
         "demo/smoke_signal_visibility_device_policy.mjs",
         "demo/smoke_zigbee_topology_hover.mjs",
         "docs/release-ledger/v1.85.0/1417.json"
-      ]
+      ],
+      "s6": {
+        "id": "20261113T172603105-9caa06d2",
+        "name": "Тесты для задачи #1417 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T172603105-9caa06d2/report.json",
+        "materialSha": "e3319fe71ad51b9f02329f478f1608a1ef0f453b",
+        "status": "passed",
+        "finishedAt": "2026-11-13T17:28:39.466Z",
+        "failures": []
+      }
     },
     "1418": {
       "issue": 1418,
@@ -4766,9 +4775,9 @@
     "fence": 415,
     "materialSha": "e3319fe71ad51b9f02329f478f1608a1ef0f453b",
     "expectedBase": "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794590738298,
-    "expiresAt": 1794591158325,
+    "expiresAt": 1794594520819,
     "patchId": "8ef069b491c5d25f504598c03da384c4940d92d2"
   },
   "events": {
@@ -4786,6 +4795,10 @@
     },
     "finish:1d926e23-a945-4ecb-b862-5e0ae8b38ce3": {
       "digest": "aa3f78655f5e0d8854560c29bfb3acbdbbde8cd57afb5f943dc19b2fac40bac7",
+      "issue": 1417
+    },
+    "finish:9e2486c9-4201-4c86-9cbf-8667b2633cd6:finish:3:s6-complete": {
+      "digest": "69690aac3eb35656267550829fab3bc2a766a8f5a57b5b5643fc2ef04dfee223",
       "issue": 1417
     },
     "dev-build:43471971122:1:1418": {
