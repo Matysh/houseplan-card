@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11251,
+  "revision": 11252,
   "nextTicket": 411,
   "nextFence": 411,
   "tasks": {
@@ -4524,7 +4524,12 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794581626094,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "74185146009dd6f2d6a5f42fbff6ae8753e67d17",
+      "changedFiles": [
+        "demo/golden/harness.mjs",
+        "docs/release-ledger/v1.85.0/1414.json"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4761,12 +4766,17 @@
     "token": "410:finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:1:admit",
     "fence": 410,
     "materialSha": "90adb36524580477ee481e2477dae955157cfe00",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
+    "phase": "testing",
     "admittedAt": 1794581630301,
-    "expiresAt": 1794581930301
+    "expiresAt": 1794581936841,
+    "patchId": "74185146009dd6f2d6a5f42fbff6ae8753e67d17"
   },
   "events": {
+    "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:2:synchronized": {
+      "digest": "8d98d5c949137fff0b0ca2124ca3bc15a92aedb0371ad4cb7213c568ebf8d122",
+      "issue": 1414
+    },
     "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b": {
       "digest": "5cd46781141d94d9b333e916da03e139230a45ddeec5924c311634ab7d719acd",
       "issue": 1414,
