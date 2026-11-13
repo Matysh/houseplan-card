@@ -93,6 +93,25 @@ try{
    // Derive its exact row/gap from the immutable prototype; keep every old
    // field, group and one-pixel geometry tolerance intact.
    const expected=structuredClone(approved);
+   if(scene==='wall'||scene==='contour'){
+    // #1381/#1399: only the approved explanation changed. Measure its fixed
+    // literal copy in the independent prototype's font/width, never sample
+    // current product geometry or loosen the one-pixel comparison.
+    const copy='Длина по оси. Размеры сторон показаны на плане. Для части участков показана длина по оси.';
+    const index=expected.groups.findIndex(group=>group.fields.some(field=>field.key==='length'));
+    const group=expected.groups[index],hint=group.hint[0];
+    const height=await reference.locator('.hp-prop-group').nth(index).locator('.hp-prop-hint').evaluate((el,text)=>{
+     const probe=el.cloneNode(true);probe.textContent=text;
+     Object.assign(probe.style,{position:'absolute',visibility:'hidden',width:`${el.getBoundingClientRect().width}px`,height:'auto'});
+     el.parentElement.append(probe);const height=probe.getBoundingClientRect().height;probe.remove();return height;
+    },copy);
+    const extra=height-hint.box[3];hint.text=copy;hint.box[3]=height;group.box[3]+=extra;
+    for(const after of expected.groups.slice(index+1)){
+     after.box[1]+=extra;for(const field of after.fields)field.box[1]+=extra;for(const h of after.hint)h.box[1]+=extra;
+    }
+    out[prefix+'_dimension_hint_copy_and_geometry']=actual.groups[index].hint.length===1
+     &&actual.groups[index].hint[0].text===copy&&near(hint.box,actual.groups[index].hint[0].box);
+   }
    if(scene==='door'){
     const group=expected.groups.find(g=>g.fields.some(f=>f.key==='flip_h'));
     if(group?.fields[0]?.key!=='flip_h')throw Error('Immutable door group must begin with flip_h');

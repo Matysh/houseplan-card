@@ -14,16 +14,30 @@ try{
  out.local_hint=await ui.history.getByText('The path is visible only on this device. You do not need to save settings.',{exact:true}).isVisible();
  await chooseVacuumHistory(page,ui.history,ids.a);
  out.selected_not_shown=!(await ui.show.isDisabled())&&!(await ui.show.getAttribute('class')).split(' ').includes('on')&&(await geometry())[0].current===original[0].current;
- // #1356: opening after native trigger reveal must allow selection; a later
- // actual pane scroll still dismisses the menu without changing that choice.
+ // #1024/#1399: a visible anchor keeps its menu attached while its pane
+ // scrolls; only an anchor outside the clipping pane dismisses the menu.
  const historyTrigger=ui.history.locator('hp-settings-select button');
  await historyTrigger.click();
+ const anchorBefore=await historyTrigger.boundingBox();
  const pane=ui.dialog.locator('.hpf-settings-content');
  const scrollBefore=await pane.evaluate(el=>el.scrollTop);
- await pane.hover({position:{x:20,y:20}});await page.mouse.wheel(0,scrollBefore>0?-160:160);
+ await pane.hover({position:{x:20,y:20}});await page.mouse.wheel(0,scrollBefore>0?-40:40);
  await page.waitForFunction(before=>window.__card.renderRoot.querySelector('hp-dialog[data-kind=marker] .hpf-settings-content').scrollTop!==before,scrollBefore);
+ await page.waitForFunction(before=>{
+  const picker=window.__card.renderRoot.querySelector('[data-hp=vacuum-history] hp-settings-select');
+  const button=picker.shadowRoot.querySelector('button'),menu=picker.shadowRoot.querySelector('.menu');
+  const a=button.getBoundingClientRect(),m=menu.getBoundingClientRect();
+  return button.getAttribute('aria-expanded')==='true'&&Math.abs(a.y-before.y)>1
+   &&Math.abs(m.left-a.left)<1&&(Math.abs(m.top-a.bottom-7)<2||Math.abs(m.bottom-a.top+7)<2);
+ },anchorBefore);
+ out.real_pane_scroll_follows_anchor_without_changing_choice=await ui.history.locator('select').inputValue()===ids.a;
+ await page.keyboard.press('Escape');
  await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-hp=vacuum-history] hp-settings-select').shadowRoot.querySelector('button').getAttribute('aria-expanded')==='false');
- out.real_pane_scroll_dismisses_without_changing_choice=await ui.history.locator('select').inputValue()===ids.a;
+ out.menu_escape_keeps_history_dialog=await ui.dialog.isVisible()&&await ui.history.locator('select').inputValue()===ids.a;
+ await historyTrigger.click();
+ await pane.hover({position:{x:20,y:20}});await page.mouse.wheel(0,-2000);
+ await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-hp=vacuum-history] hp-settings-select').shadowRoot.querySelector('button').getAttribute('aria-expanded')==='false');
+ out.clipped_anchor_closes_without_changing_choice=await ui.history.locator('select').inputValue()===ids.a;
  await ui.show.click();await waitHistory(ids.a);let frames=await geometry();const pathA=frames[0].history;
  out.genuine_raw_affine_path=pathA.startsWith('M 100 100')&&pathA.endsWith('200 200');
  out.replace_only_this_robot_paths=!!pathA&&!frames[0].current&&!frames[0].previous&&frames[0].puck&&frames[0].tips===0;

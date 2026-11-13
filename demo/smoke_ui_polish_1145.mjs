@@ -63,6 +63,7 @@ try {
  const optimizeName=await card.evaluate(c=>c._t('gs.align_all'));
  await settings.getByRole('button',{name:optimizeName,exact:true}).click();
  const optimize=card.locator('hp-dialog[data-kind=settings][icon="mdi:broom"]');await optimize.waitFor({state:'visible'});
+ await optimize.locator('.body:not(.optimize-status)').waitFor({state:'visible'});
  // A failed-result data fixture selects the diagnostics branch; no guard or function is replaced.
  await card.evaluate(async c=>{c._alignDialog={...c._alignDialog,changed:true,preflight:{ok:false,failures:[{displayName:'UI audit',reason:'wall-null'}]}};await window.__hpTest.settled();}); // private-ok: #1145 failed-result display data only, no geometry guard/function is replaced or Apply invoked.
  await inspectRows(optimize,'optimize');

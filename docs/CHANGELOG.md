@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Repair stable smoke/HA witnesses for shared drafting dimensions, asynchronous Optimize previews and anchor-following menus; retain numeric geometry, native Undo and independent prototype tolerances, and keep screenshot output out of tracked docs (#1399).
+
 - Add independent 1–4 window leaves, top hinges, per-leaf shade light masks, manual positions and full-width sliding doors/gates. Share state resolution and symbols, retain volumetric materials, guard old writers, preserve portable v3 transfers and clear nested bindings only on space Copy (#1024, UI-059).
 
 

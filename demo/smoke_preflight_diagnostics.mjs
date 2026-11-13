@@ -1,8 +1,8 @@
 /**
  * Issue #295: a failed optimize preflight names the reason per space, offers
  * a copyable diagnostics block (with an inline fallback when the clipboard is
- * unavailable), logs one structured dev record, and only advises updating
- * when the integration version actually differs.
+ * unavailable), logs one structured dev record, and explains that nothing was
+ * applied. #1170 replaces the old version-mismatch advice with actionable help.
  */
 import { launch, check, checkAll, finish } from './serve.mjs';
 
@@ -67,11 +67,13 @@ const out = await page.evaluate(async () => {
     && dialogText.includes(card._t('gs.preflight_reason_floor-null'));
   result.spaceNamed = dialogText.includes('Bad space') && dialogText.includes('Second');
   result.copyButton = dialogText.includes(card._t('gs.preflight_copy'));
-  // Same versions -> no «update» advice; differing -> shown
-  result.noUpdateHintSameVersion = !dialogText.includes(card._t('gs.preflight_update_hint'));
+  const explainsRefusal = text => text.includes('This optimization was not applied.')
+    && text.includes('Do not redraw walls at random; send diagnostics through Help and feedback.');
+  result.refusalExplainedSameVersion = explainsRefusal(dialogText);
   card._haIntegrationVersion = '0.0.1-other'; await update();
   const withHint = root().querySelector('hp-dialog')?.textContent || '';
-  result.updateHintOnDiff = withHint.includes(card._t('gs.preflight_update_hint'));
+  result.refusalExplainedOnVersionDiff = explainsRefusal(withHint);
+  result.refusalNeverOffersApply = !root().querySelector('hp-dialog [data-hp="dialog-confirm"]');
   card._haIntegrationVersion = null; await update();
 
   // Copy: clipboard success path
