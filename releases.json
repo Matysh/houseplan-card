@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 848,
+  "revision": 849,
   "active": "1.85.2-stable-20261113",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -99943,12 +99943,3696 @@
       "branch": "release/1.85.2",
       "sourceSha": "86015ab8132a92ab6546eedda2f0421b01700355",
       "sha": "dc5e69010ebc6f000bc7a709c3547f38e6008c1d",
-      "runner": null,
-      "running": {
-        "id": null,
-        "sha": "dc5e69010ebc6f000bc7a709c3547f38e6008c1d"
+      "runner": {
+        "id": "20261113T175201178-f2a09ad0",
+        "sha": "dc5e69010ebc6f000bc7a709c3547f38e6008c1d",
+        "event": "stable",
+        "status": "passed",
+        "path": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T175201178-f2a09ad0/report.json",
+        "digest": "02190d36b773955dfe9399a4eeb7d04a186738c50362981fcc4803911b1b20da",
+        "finishedAt": "2026-11-13T19:07:00.374Z",
+        "materialClean": true,
+        "ready": true,
+        "required": 579,
+        "failed": [],
+        "reused": 14,
+        "checks": [
+          {
+            "id": "product-build",
+            "name": "Сборка и типы продукта",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "test-build",
+            "name": "Подготовка модулей для тестов",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "demo-assets",
+            "name": "Подготовка карточки для браузера",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "product-node:devices",
+            "name": "Поведение: Устройства и действия",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 1079,
+              "passed": 1079,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:geometry",
+            "name": "Поведение: Геометрия и стены",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 1371,
+              "passed": 1370,
+              "failed": 0,
+              "skipped": 1,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:view",
+            "name": "Поведение: Отрисовка View",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 409,
+              "passed": 409,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:new-product",
+            "name": "Поведение: Новые продуктовые проверки",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 609,
+              "passed": 609,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:data",
+            "name": "Поведение: Данные и сохранение",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 371,
+              "passed": 371,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:core",
+            "name": "Поведение: Общие функции",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 246,
+              "passed": 246,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:editor",
+            "name": "Поведение: Редактор и история",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 378,
+              "passed": 378,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:ui",
+            "name": "Поведение: Интерфейс и ввод",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 154,
+              "passed": 154,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:lighting",
+            "name": "Поведение: Свет и солнце",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 212,
+              "passed": 212,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:text",
+            "name": "Поведение: Текст и локализация",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 44,
+              "passed": 44,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            }
+          },
+          {
+            "id": "product-node:export",
+            "name": "Поведение: Экспорт и PDF",
+            "status": "reused",
+            "diagnostic": false,
+            "counts": {
+              "tests": 72,
+              "passed": 72,
+              "failed": 0,
+              "skipped": 0,
+              "cancelled": 0,
+              "todo": 0
+            },
+            "sourceRun": "20261113T144314302-2d6c0c80"
+          },
+          {
+            "id": "product-backend",
+            "name": "Backend и сбор покрытия",
+            "status": "reused",
+            "diagnostic": false,
+            "counts": {
+              "tests": 3260,
+              "passed": 3259,
+              "failed": 0,
+              "skipped": 1
+            },
+            "sourceRun": "20261113T144314302-2d6c0c80"
+          },
+          {
+            "id": "release-package",
+            "name": "Подготовка проверяемого ZIP и кандидата",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "release-measurements",
+            "name": "Сохранение замера stable для следующей беты",
+            "status": "passed",
+            "diagnostic": true
+          },
+          {
+            "id": "smoke:smoke_readonly_cold_start",
+            "name": "Браузер: Сохранённый план при первом открытии без прав редактирования",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_cold_view_toggle",
+            "name": "Браузер: Команда устройству сразу после холодного открытия View",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_edit_permissions",
+            "name": "Браузер: Поздний ответ и смена прав пользователя",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_toggle_confirmation",
+            "name": "Браузер: Подтверждение команды устройству",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_gestures",
+            "name": "Браузер: Жесты редактора без случайного клика или команды",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_canvas_surface_gestures",
+            "name": "Браузер: Жесты на поверхности плана",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_draft_exit",
+            "name": "Браузер: Выход из редактора и несохранённые изменения",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_geometry_history_refusal",
+            "name": "Браузер: Отказ операции и целостность истории геометрии",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_creation_selection",
+            "name": "Браузер: Создание декора и выбор созданного объекта",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_switch_transitions",
+            "name": "Браузер: Переключение между этажами",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_live_text",
+            "name": "Браузер: Обновление живого текста",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_isometric_live_touch",
+            "name": "Браузер: Живое состояние и касания в изометрии",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_recovery",
+            "name": "Браузер: Восстановление View после задержки или сбоя",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "golden-beta",
+            "name": "78 визуальных кадров: панель 64, Lovelace 13, Static 1",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 78,
+              "passed": 78,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-beta-journeys",
+            "name": "HA E2E beta: journeys",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 10,
+              "passed": 10,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-beta-first-run",
+            "name": "HA E2E beta: first-run",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 2,
+              "passed": 2,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-beta-upgrade",
+            "name": "HA E2E beta: upgrade",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 1,
+              "passed": 1,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "smoke:smoke_active_chain_ink",
+            "name": "Браузер: active chain ink",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_activity_color_settings",
+            "name": "Браузер: activity color settings",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_align_guides",
+            "name": "Браузер: align guides",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_approved_ui",
+            "name": "Браузер: approved ui",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_approved_ui_1207",
+            "name": "Браузер: approved ui 1207",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_area_relocation",
+            "name": "Браузер: area relocation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_area_relocation_safety",
+            "name": "Браузер: area relocation safety",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_audit_1490",
+            "name": "Браузер: audit 1490",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_backdrop",
+            "name": "Браузер: backdrop",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_backdrop_guard",
+            "name": "Браузер: backdrop guard",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_backup_archive",
+            "name": "Браузер: backup archive",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_backup_transfer",
+            "name": "Браузер: backup transfer",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_bg_color",
+            "name": "Браузер: bg color",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_binding_picker",
+            "name": "Браузер: binding picker",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_binding_ui",
+            "name": "Браузер: binding ui",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_build_identity",
+            "name": "Браузер: build identity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_canvas_frame",
+            "name": "Браузер: canvas frame",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_capture_stability",
+            "name": "Браузер: capture stability",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_card_controls",
+            "name": "Браузер: card controls",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_card_picker_locale",
+            "name": "Браузер: card picker locale",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_card_reconnect",
+            "name": "Браузер: card reconnect",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_card_tool_conflict",
+            "name": "Браузер: card tool conflict",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_check_label",
+            "name": "Браузер: check label",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_climate_once",
+            "name": "Браузер: climate once",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_climate_temp",
+            "name": "Браузер: climate temp",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_cold_view_vacuum",
+            "name": "Браузер: cold view vacuum",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_color_picker",
+            "name": "Браузер: color picker",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_color_picker_consumers",
+            "name": "Браузер: color picker consumers",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_color_picker_presentation",
+            "name": "Браузер: color picker presentation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_compact_header_polish",
+            "name": "Браузер: compact header polish",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_config_authority",
+            "name": "Браузер: config authority",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_config_lifecycle",
+            "name": "Браузер: config lifecycle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_config_reload_race",
+            "name": "Браузер: config reload race",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_config_writer",
+            "name": "Браузер: config writer",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_continuity_stage_layout",
+            "name": "Браузер: continuity stage layout",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_controls",
+            "name": "Браузер: controls",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_cover_no_plate",
+            "name": "Браузер: cover no plate",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_cover_not_primary",
+            "name": "Браузер: cover not primary",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_cover_plate_precedence",
+            "name": "Браузер: cover plate precedence",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_cover_tap",
+            "name": "Браузер: cover tap",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_css_minifier_semantics",
+            "name": "Браузер: css minifier semantics",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_danger_confirm_branches",
+            "name": "Браузер: danger confirm branches",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_danger_confirmation",
+            "name": "Браузер: danger confirmation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_daycycle_layer_budget",
+            "name": "Браузер: daycycle layer budget",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_daycycle_outline_removed",
+            "name": "Браузер: daycycle outline removed",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_daycycle_raster",
+            "name": "Браузер: daycycle raster",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_daycycle_zoom_layers",
+            "name": "Браузер: daycycle zoom layers",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor",
+            "name": "Браузер: decor",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_default_persist",
+            "name": "Браузер: decor default persist",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_group_style_cache",
+            "name": "Браузер: decor group style cache",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_group_text_scale",
+            "name": "Браузер: decor group text scale",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_images",
+            "name": "Браузер: decor images",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_layer_order",
+            "name": "Браузер: decor layer order",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_line_click",
+            "name": "Браузер: decor line click",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_multiselect",
+            "name": "Браузер: decor multiselect",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_order",
+            "name": "Браузер: decor order",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_preview_ownership",
+            "name": "Браузер: decor preview ownership",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_rotation_shift",
+            "name": "Браузер: decor rotation shift",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_decor_text",
+            "name": "Браузер: decor text",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_deeplink",
+            "name": "Браузер: deeplink",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_detached_authority",
+            "name": "Браузер: detached authority",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_battery",
+            "name": "Браузер: device battery",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_battery_performance",
+            "name": "Браузер: device battery performance",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_battery_tooltip",
+            "name": "Браузер: device battery tooltip",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_battery_zigbee",
+            "name": "Браузер: device battery zigbee",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_contact_composition",
+            "name": "Браузер: device contact composition",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_contact_corners",
+            "name": "Браузер: device contact corners",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_contact_designer",
+            "name": "Браузер: device contact designer",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_contact_editor_frame",
+            "name": "Браузер: device contact editor frame",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_device_contact_live_drag",
+            "name": "Браузер: device contact live drag",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_contact_reflow",
+            "name": "Браузер: device contact reflow",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_contact_walls",
+            "name": "Браузер: device contact walls",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_contact_work",
+            "name": "Браузер: device contact work",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_contact_zoom",
+            "name": "Браузер: device contact zoom",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_contacts",
+            "name": "Браузер: device contacts",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_copy",
+            "name": "Браузер: device copy",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_equal_spacing",
+            "name": "Браузер: device equal spacing",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_hit_capsules",
+            "name": "Браузер: device hit capsules",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_icon_design",
+            "name": "Браузер: device icon design",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_icon_picker",
+            "name": "Браузер: device icon picker",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 9,
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "smoke:smoke_device_icon_pixel_alignment",
+            "name": "Браузер: device icon pixel alignment",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_inbox",
+            "name": "Браузер: device inbox",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_inbox_batch",
+            "name": "Браузер: device inbox batch",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_inbox_delete",
+            "name": "Браузер: device inbox delete",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_issue_reasons",
+            "name": "Браузер: device issue reasons",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_more_info",
+            "name": "Браузер: device more info",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_offline",
+            "name": "Браузер: device offline",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_position_history",
+            "name": "Браузер: device position history",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_preview_parity",
+            "name": "Браузер: device preview parity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_settings_947",
+            "name": "Браузер: device settings 947",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_settings_action",
+            "name": "Браузер: device settings action",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_settings_form",
+            "name": "Браузер: device settings form",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_settings_scroll",
+            "name": "Браузер: device settings scroll",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_signal",
+            "name": "Браузер: device signal",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_signal_settings",
+            "name": "Браузер: device signal settings",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_signal_topology",
+            "name": "Браузер: device signal topology",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_structure_history",
+            "name": "Браузер: device structure history",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_device_tooltip_hover",
+            "name": "Браузер: device tooltip hover",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_dialog_config_parity",
+            "name": "Браузер: dialog config parity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_dialog_footer_width",
+            "name": "Браузер: dialog footer width",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_dialog_help_clipping",
+            "name": "Браузер: dialog help clipping",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_dialog_modal_recovery",
+            "name": "Браузер: dialog modal recovery",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_dialog_picker_998",
+            "name": "Браузер: dialog picker 998",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 9,
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "smoke:smoke_dialog_polish_603",
+            "name": "Браузер: dialog polish 603",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_dialog_polish_605",
+            "name": "Браузер: dialog polish 605",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_dialog_segments_i18n",
+            "name": "Браузер: dialog segments i18n",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_dialog_ui_kit",
+            "name": "Браузер: dialog ui kit",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_dialog_zombie",
+            "name": "Браузер: dialog zombie",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_direct_signal_lifecycle",
+            "name": "Браузер: direct signal lifecycle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_direct_wall_geometry",
+            "name": "Браузер: direct wall geometry",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_direct_zigbee_lqi",
+            "name": "Браузер: direct zigbee lqi",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_disabled_device",
+            "name": "Браузер: disabled device",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_discard_copy",
+            "name": "Браузер: discard copy",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_discard_dialog_polish",
+            "name": "Браузер: discard dialog polish",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_discovery_filters",
+            "name": "Браузер: discovery filters",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_drag_bounds",
+            "name": "Браузер: drag bounds",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_draw_wall_thickness",
+            "name": "Браузер: draw wall thickness",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_e2e_hooks",
+            "name": "Браузер: e2e hooks",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_e2e_primitive_fields",
+            "name": "Браузер: e2e primitive fields",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_easy_converter_openings",
+            "name": "Браузер: easy converter openings",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_edge_cases",
+            "name": "Браузер: edge cases",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_edit_walk",
+            "name": "Браузер: edit walk",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_chrome_alignment",
+            "name": "Браузер: editor chrome alignment",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_command_latency",
+            "name": "Браузер: editor command latency",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_dimensions",
+            "name": "Браузер: editor dimensions",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_guides_lifecycle",
+            "name": "Браузер: editor guides lifecycle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_nudge",
+            "name": "Браузер: editor nudge",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_preload",
+            "name": "Браузер: editor preload",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_return_focus_1248",
+            "name": "Браузер: editor return focus 1248",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_styles_lazy",
+            "name": "Браузер: editor styles lazy",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_editor_tabs",
+            "name": "Браузер: editor tabs",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_empty_backup_import",
+            "name": "Браузер: empty backup import",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_entity_parent_dedup",
+            "name": "Браузер: entity parent dedup",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_entry_stale",
+            "name": "Браузер: entry stale",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_esc_dialogs",
+            "name": "Браузер: esc dialogs",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_external_screens",
+            "name": "Браузер: external screens",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_feedback_v2",
+            "name": "Браузер: feedback v2",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_first_space_converter",
+            "name": "Браузер: first space converter",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_first_space_large_plan",
+            "name": "Браузер: first space large plan",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_fixed_floor",
+            "name": "Браузер: fixed floor",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_fixture_contract",
+            "name": "Браузер: fixture contract",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_floor_cache_reuse",
+            "name": "Браузер: floor cache reuse",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_floor_geometry_cache",
+            "name": "Браузер: floor geometry cache",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_floor_snapshot_reuse",
+            "name": "Браузер: floor snapshot reuse",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_font_scales",
+            "name": "Браузер: font scales",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_free_walls",
+            "name": "Браузер: free walls",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_french_locale",
+            "name": "Браузер: french locale",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_furniture",
+            "name": "Браузер: furniture",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_furniture_lazy_art",
+            "name": "Браузер: furniture lazy art",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_furniture_pan",
+            "name": "Браузер: furniture pan",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_furniture_polish",
+            "name": "Браузер: furniture polish",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_gear_tabs",
+            "name": "Браузер: gear tabs",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_general_settings",
+            "name": "Браузер: general settings",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_general_settings_form",
+            "name": "Браузер: general settings form",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_geometry_cleanup_842",
+            "name": "Браузер: geometry cleanup 842",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_geometry_corpus",
+            "name": "Браузер: geometry corpus",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_german_locale",
+            "name": "Браузер: german locale",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_glass_door_sun",
+            "name": "Браузер: glass door sun",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_glow",
+            "name": "Браузер: glow",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_glow_blending",
+            "name": "Браузер: glow blending",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_glow_fail_dark",
+            "name": "Браузер: glow fail dark",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_glow_geometry_resilience",
+            "name": "Браузер: glow geometry resilience",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_golden_harness_input",
+            "name": "Браузер: golden harness input",
+            "status": "reused",
+            "diagnostic": false,
+            "counts": {
+              "tests": 9,
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0
+            },
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_grid_fade",
+            "name": "Браузер: grid fade",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_grid_scale_invariance",
+            "name": "Браузер: grid scale invariance",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_grid_snap",
+            "name": "Браузер: grid snap",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_gs_always",
+            "name": "Браузер: gs always",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ha_controls",
+            "name": "Браузер: ha controls",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ha_form_shell_parity",
+            "name": "Браузер: ha form shell parity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_header_actions_menu",
+            "name": "Браузер: header actions menu",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_header_compact_spaces",
+            "name": "Браузер: header compact spaces",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_header_mode_position_regression",
+            "name": "Браузер: header mode position regression",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_header_observer_retirement",
+            "name": "Браузер: header observer retirement",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_help_affordance",
+            "name": "Браузер: help affordance",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_hidden_device_toggle",
+            "name": "Браузер: hidden device toggle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_hidden_flag",
+            "name": "Браузер: hidden flag",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_hide_layers",
+            "name": "Браузер: hide layers",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_hide_room_names",
+            "name": "Браузер: hide room names",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_household_journeys",
+            "name": "Браузер: household journeys",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_houseplan_panel",
+            "name": "Браузер: houseplan panel",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_icon_center",
+            "name": "Браузер: icon center",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_icon_placeholder",
+            "name": "Браузер: icon placeholder",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_icon_scale",
+            "name": "Браузер: icon scale",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_inert_openings",
+            "name": "Браузер: inert openings",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_infinite_canvas",
+            "name": "Браузер: infinite canvas",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_info_card_confirm",
+            "name": "Браузер: info card confirm",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_info_card_context",
+            "name": "Браузер: info card context",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_interior_window_light",
+            "name": "Браузер: interior window light",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_island_rooms",
+            "name": "Браузер: island rooms",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_iso_first_frame",
+            "name": "Браузер: iso first frame",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_iso_flat_parity",
+            "name": "Браузер: iso flat parity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_iso_floor_switch",
+            "name": "Браузер: iso floor switch",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_iso_room_label_metrics",
+            "name": "Браузер: iso room label metrics",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_iso_sun",
+            "name": "Браузер: iso sun",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_iso_theme_walls",
+            "name": "Браузер: iso theme walls",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_iso_tiles",
+            "name": "Браузер: iso tiles",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_isometric_contract",
+            "name": "Браузер: isometric contract",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_junction_holes",
+            "name": "Браузер: junction holes",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_junction_limits",
+            "name": "Браузер: junction limits",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_junction_patch_resilience",
+            "name": "Браузер: junction patch resilience",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_kiosk",
+            "name": "Браузер: kiosk",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_kiosk_cycle_context",
+            "name": "Браузер: kiosk cycle context",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_kiosk_pan_lock",
+            "name": "Браузер: kiosk pan lock",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_kiosk_scale_no_editor",
+            "name": "Браузер: kiosk scale no editor",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_kiosk_space_navigation",
+            "name": "Браузер: kiosk space navigation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_kiosk_viewport_recovery",
+            "name": "Браузер: kiosk viewport recovery",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_lattice_write_barrier",
+            "name": "Браузер: lattice write barrier",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_layout_fixture_barrier",
+            "name": "Браузер: layout fixture barrier",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_layout_sync",
+            "name": "Браузер: layout sync",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_lazy_admin_locale",
+            "name": "Браузер: lazy admin locale",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_lazy_editor_chunk",
+            "name": "Браузер: lazy editor chunk",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_led_strip_bind",
+            "name": "Браузер: led strip bind",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_led_strip_draw",
+            "name": "Браузер: led strip draw",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_led_strip_field",
+            "name": "Браузер: led strip field",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_led_strip_glow",
+            "name": "Браузер: led strip glow",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_led_strip_tube",
+            "name": "Браузер: led strip tube",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_led_zoom_quality",
+            "name": "Браузер: led zoom quality",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_legacy_geometry",
+            "name": "Браузер: legacy geometry",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_light_badges",
+            "name": "Браузер: light badges",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_light_default_tap",
+            "name": "Браузер: light default tap",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_linked_virtual_light",
+            "name": "Браузер: linked virtual light",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_live_pan_coverage",
+            "name": "Браузер: live pan coverage",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_live_pan_viewbox",
+            "name": "Браузер: live pan viewbox",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_lock_action",
+            "name": "Браузер: lock action",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_lock_invariant",
+            "name": "Браузер: lock invariant",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_long_press_gesture",
+            "name": "Браузер: long press gesture",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_lovelace_editor_locale_1070",
+            "name": "Браузер: lovelace editor locale 1070",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_marker_alert_view",
+            "name": "Браузер: marker alert view",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_marker_alerts",
+            "name": "Браузер: marker alerts",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_marker_shadow_transitions",
+            "name": "Браузер: marker shadow transitions",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_marker_state_source",
+            "name": "Браузер: marker state source",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_marker_stay",
+            "name": "Браузер: marker stay",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_marker_write_rollback",
+            "name": "Браузер: marker write rollback",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_merge_highlight",
+            "name": "Браузер: merge highlight",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_merge_split",
+            "name": "Браузер: merge split",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_mobile_view_header",
+            "name": "Браузер: mobile view header",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_modal_toast_956",
+            "name": "Браузер: modal toast 956",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_mode_endpoints",
+            "name": "Браузер: mode endpoints",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_mode_transition",
+            "name": "Браузер: mode transition",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_modes",
+            "name": "Браузер: modes",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_moon",
+            "name": "Браузер: moon",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_moon_phase_direction",
+            "name": "Браузер: moon phase direction",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_moon_static",
+            "name": "Браузер: moon static",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_moon_status",
+            "name": "Браузер: moon status",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_motion_sense",
+            "name": "Браузер: motion sense",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_mounted_authority",
+            "name": "Браузер: mounted authority",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_multiwall_junction",
+            "name": "Браузер: multiwall junction",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_multiwall_strip_containment",
+            "name": "Браузер: multiwall strip containment",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_native_grid_draw",
+            "name": "Браузер: native grid draw",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_nav_persist",
+            "name": "Браузер: nav persist",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_near_axis_optimize",
+            "name": "Браузер: near axis optimize",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_near_orthogonal_junction",
+            "name": "Браузер: near orthogonal junction",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_new_device",
+            "name": "Браузер: new device",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_node_dependency_carrier",
+            "name": "Браузер: node dependency carrier",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_node_history_context",
+            "name": "Браузер: node history context",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_open_passage",
+            "name": "Браузер: open passage",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_binding",
+            "name": "Браузер: opening binding",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_drag",
+            "name": "Браузер: opening drag",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_drag_graph",
+            "name": "Браузер: opening drag graph",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_entity_search",
+            "name": "Браузер: opening entity search",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_escape_wide",
+            "name": "Браузер: opening escape wide",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_features",
+            "name": "Браузер: opening features",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_inner_distances",
+            "name": "Браузер: opening inner distances",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_light_transparent",
+            "name": "Браузер: opening light transparent",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_measure",
+            "name": "Браузер: opening measure",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_mode_fill",
+            "name": "Браузер: opening mode fill",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_preview",
+            "name": "Браузер: opening preview",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_opening_tunnel_fill",
+            "name": "Браузер: opening tunnel fill",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_optimize_cleanup",
+            "name": "Браузер: optimize cleanup",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_optimize_coincident_partition",
+            "name": "Браузер: optimize coincident partition",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_optimize_context",
+            "name": "Браузер: optimize context",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_optimize_coordinate_canonicalization",
+            "name": "Браузер: optimize coordinate canonicalization",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_optimize_geometry_preflight",
+            "name": "Браузер: optimize geometry preflight",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_optimize_micro_interval",
+            "name": "Браузер: optimize micro interval",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_optimize_outcomes",
+            "name": "Браузер: optimize outcomes",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_optimize_unverified",
+            "name": "Браузер: optimize unverified",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_optional_space_model",
+            "name": "Браузер: optional space model",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_orphan_space_references",
+            "name": "Браузер: orphan space references",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_pageshow_layout_ack",
+            "name": "Браузер: pageshow layout ack",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_pan_any_zoom",
+            "name": "Браузер: pan any zoom",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_panel_header_overflow",
+            "name": "Браузер: panel header overflow",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_panel_header_touch",
+            "name": "Браузер: panel header touch",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_panel_route_kiosk",
+            "name": "Браузер: panel route kiosk",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_partition_openings",
+            "name": "Браузер: partition openings",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_partition_openings_preview",
+            "name": "Браузер: partition openings preview",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_pdf_export",
+            "name": "Браузер: pdf export",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_physical_body_characterization",
+            "name": "Браузер: physical body characterization",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_picker_motion",
+            "name": "Браузер: picker motion",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_placement_context_message",
+            "name": "Браузер: placement context message",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_device_landmarks",
+            "name": "Браузер: plan device landmarks",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_drawing_repairs",
+            "name": "Браузер: plan drawing repairs",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_entry_tool",
+            "name": "Браузер: plan entry tool",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_graph_cold",
+            "name": "Браузер: plan graph cold",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_graph_editor",
+            "name": "Браузер: plan graph editor",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_picker",
+            "name": "Браузер: plan picker",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_rotation",
+            "name": "Браузер: plan rotation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_rotation_editors",
+            "name": "Браузер: plan rotation editors",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_rotation_mobile",
+            "name": "Браузер: plan rotation mobile",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_rotation_touch",
+            "name": "Браузер: plan rotation touch",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_signed",
+            "name": "Браузер: plan signed",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_snap_overlay",
+            "name": "Браузер: plan snap overlay",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_upload_limit",
+            "name": "Браузер: plan upload limit",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_upload_race",
+            "name": "Браузер: plan upload race",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_plan_upload_reject",
+            "name": "Браузер: plan upload reject",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_portable_recovery",
+            "name": "Браузер: portable recovery",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_post_write_adoption",
+            "name": "Браузер: post write adoption",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_preflight_diagnostics",
+            "name": "Браузер: preflight diagnostics",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_preloader",
+            "name": "Браузер: preloader",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_preloader_lifecycle",
+            "name": "Браузер: preloader lifecycle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_properties_panel",
+            "name": "Браузер: properties panel",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_radar_legacy_removal_947",
+            "name": "Браузер: radar legacy removal 947",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_radar_live",
+            "name": "Браузер: radar live",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_radar_setup",
+            "name": "Браузер: radar setup",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_range_line_draft",
+            "name": "Браузер: range line draft",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_real_plan_masonry",
+            "name": "Браузер: real plan masonry",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_registryless_opening",
+            "name": "Браузер: registryless opening",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_render_invalidation",
+            "name": "Браузер: render invalidation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_render_parity",
+            "name": "Браузер: render parity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_render_perf",
+            "name": "Браузер: render perf",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_resize_audit_1550",
+            "name": "Браузер: resize audit 1550",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_resize_inner_dimensions",
+            "name": "Браузер: resize inner dimensions",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_resize_junctions",
+            "name": "Браузер: resize junctions",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_resize_labels",
+            "name": "Браузер: resize labels",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_resize_outer_reconciliation",
+            "name": "Браузер: resize outer reconciliation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_resize_pointer_real_plan",
+            "name": "Браузер: resize pointer real plan",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_resize_through_junction",
+            "name": "Браузер: resize through junction",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_resize_wall_thickness",
+            "name": "Браузер: resize wall thickness",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_rgb_alarm",
+            "name": "Браузер: rgb alarm",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_appearance",
+            "name": "Браузер: room appearance",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_area_touch",
+            "name": "Браузер: room area touch",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_autoclose",
+            "name": "Браузер: room autoclose",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_cards",
+            "name": "Браузер: room cards",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_climate_placement",
+            "name": "Браузер: room climate placement",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_co2",
+            "name": "Браузер: room co2",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_contact_grid",
+            "name": "Браузер: room contact grid",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_contact_storage",
+            "name": "Браузер: room contact storage",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_device_discovery",
+            "name": "Браузер: room device discovery",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_dimming_removed",
+            "name": "Браузер: room dimming removed",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_face_select",
+            "name": "Браузер: room face select",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_fill_transitions",
+            "name": "Браузер: room fill transitions",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_fit",
+            "name": "Браузер: room fit",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_gear_drag",
+            "name": "Браузер: room gear drag",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_link",
+            "name": "Браузер: room link",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_metrics_alignment",
+            "name": "Браузер: room metrics alignment",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_opening_host",
+            "name": "Браузер: room opening host",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_resize",
+            "name": "Браузер: room resize",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_save_retry_946",
+            "name": "Браузер: room save retry 946",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_settings",
+            "name": "Браузер: room settings",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_settings_946",
+            "name": "Браузер: room settings 946",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_settings_form",
+            "name": "Браузер: room settings form",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_temperature_thresholds",
+            "name": "Браузер: room temperature thresholds",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_room_tooltip_toggle",
+            "name": "Браузер: room tooltip toggle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_save_race",
+            "name": "Браузер: save race",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_saved_plans",
+            "name": "Браузер: saved plans",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_screen_camera_1165",
+            "name": "Браузер: screen camera 1165",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_sections_resize",
+            "name": "Браузер: sections resize",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_selection_geometry_1207",
+            "name": "Браузер: selection geometry 1207",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_selective_invalidation",
+            "name": "Браузер: selective invalidation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_selective_invalidation_authority",
+            "name": "Браузер: selective invalidation authority",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_selective_invalidation_history0",
+            "name": "Браузер: selective invalidation history0",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_selective_invalidation_history320",
+            "name": "Браузер: selective invalidation history320",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_selective_invalidation_inactive",
+            "name": "Браузер: selective invalidation inactive",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_selective_invalidation_visible",
+            "name": "Браузер: selective invalidation visible",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_sensor_tick_freshness",
+            "name": "Браузер: sensor tick freshness",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_settings_button_alignment_955",
+            "name": "Браузер: settings button alignment 955",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_settings_dialog_cards",
+            "name": "Браузер: settings dialog cards",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_settings_mock_match_948",
+            "name": "Браузер: settings mock match 948",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_settings_native_select_947",
+            "name": "Браузер: settings native select 947",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_settings_navigation",
+            "name": "Браузер: settings navigation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_settings_polish_955",
+            "name": "Браузер: settings polish 955",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_settings_polish_led_climate_955",
+            "name": "Браузер: settings polish led climate 955",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_settings_polish_radar_vacuum_955",
+            "name": "Браузер: settings polish radar vacuum 955",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_settings_polish_room_sensor_955",
+            "name": "Браузер: settings polish room sensor 955",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_settings_select",
+            "name": "Браузер: settings select",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_sign_cap",
+            "name": "Браузер: sign cap",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_signal_low_only",
+            "name": "Браузер: signal low only",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_signal_visibility",
+            "name": "Браузер: signal visibility",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_signal_visibility_device_policy",
+            "name": "Браузер: signal visibility device policy",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_signal_visibility_lifecycle",
+            "name": "Браузер: signal visibility lifecycle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_signal_visibility_ui",
+            "name": "Браузер: signal visibility ui",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_signal_visibility_work",
+            "name": "Браузер: signal visibility work",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_size_angle_parity",
+            "name": "Браузер: size angle parity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_smooth_zoom",
+            "name": "Браузер: smooth zoom",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_battery_policy",
+            "name": "Браузер: space battery policy",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_card",
+            "name": "Браузер: space card",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_card_bg",
+            "name": "Браузер: space card bg",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_card_decor_capability",
+            "name": "Браузер: space card decor capability",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_card_identity",
+            "name": "Браузер: space card identity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_copy",
+            "name": "Браузер: space copy",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_copy_categories",
+            "name": "Браузер: space copy categories",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_create_display_defaults",
+            "name": "Браузер: space create display defaults",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_delete_with_devices",
+            "name": "Браузер: space delete with devices",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_scale_defaults",
+            "name": "Браузер: space scale defaults",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_settings",
+            "name": "Браузер: space settings",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_settings_form",
+            "name": "Браузер: space settings form",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_space_tab_reorder",
+            "name": "Браузер: space tab reorder",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_split_corner_wall",
+            "name": "Браузер: split corner wall",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_split_nonsnap",
+            "name": "Браузер: split nonsnap",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_split_polyline",
+            "name": "Браузер: split polyline",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_stair_arrival",
+            "name": "Браузер: stair arrival",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_stairs",
+            "name": "Браузер: stairs",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_state_value",
+            "name": "Браузер: state value",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_static_config_events",
+            "name": "Браузер: static config events",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_static_icon",
+            "name": "Браузер: static icon",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_static_wall_openings",
+            "name": "Браузер: static wall openings",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_static_zoom_sharpness",
+            "name": "Браузер: static zoom sharpness",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_styling_hooks",
+            "name": "Браузер: styling hooks",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_subarea",
+            "name": "Браузер: subarea",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_summary_camera",
+            "name": "Браузер: summary camera",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_summary_camera_cold",
+            "name": "Браузер: summary camera cold",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_summary_camera_motion",
+            "name": "Браузер: summary camera motion",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_summary_camera_restore",
+            "name": "Браузер: summary camera restore",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_summary_dialog_scroll",
+            "name": "Браузер: summary dialog scroll",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_summary_first_paint",
+            "name": "Браузер: summary first paint",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_summary_panel",
+            "name": "Браузер: summary panel",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_summary_panel_polish",
+            "name": "Браузер: summary panel polish",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_summary_warm_attach",
+            "name": "Браузер: summary warm attach",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_summary_weather",
+            "name": "Браузер: summary weather",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_sun",
+            "name": "Браузер: sun",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_sun_live_bg",
+            "name": "Браузер: sun live bg",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_sun_rim",
+            "name": "Браузер: sun rim",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_sun_soft",
+            "name": "Браузер: sun soft",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_sun_transparent",
+            "name": "Браузер: sun transparent",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_support_diagnostics",
+            "name": "Браузер: support diagnostics",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_support_feedback",
+            "name": "Браузер: support feedback",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_svg_export",
+            "name": "Браузер: svg export",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_svg_sandbox",
+            "name": "Браузер: svg sandbox",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_tap_ctx",
+            "name": "Браузер: tap ctx",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_tap_run",
+            "name": "Браузер: tap run",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_temp_fill",
+            "name": "Браузер: temp fill",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_test_facade",
+            "name": "Браузер: test facade",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_toast_ownership_1246",
+            "name": "Браузер: toast ownership 1246",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_toggle_entity",
+            "name": "Браузер: toggle entity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_toolbar_stable_width",
+            "name": "Браузер: toolbar stable width",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_touch_tips",
+            "name": "Браузер: touch tips",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_1051",
+            "name": "Браузер: ui 1051",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_1051_native",
+            "name": "Браузер: ui 1051 native",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_kit_motion",
+            "name": "Браузер: ui kit motion",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_lab_1081",
+            "name": "Браузер: ui lab 1081",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_lab_grid",
+            "name": "Браузер: ui lab grid",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_polish_1132",
+            "name": "Браузер: ui polish 1132",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_polish_1145",
+            "name": "Браузер: ui polish 1145",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_polish_963",
+            "name": "Браузер: ui polish 963",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_polish_963_reference",
+            "name": "Браузер: ui polish 963 reference",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_polish_963_touch",
+            "name": "Браузер: ui polish 963 touch",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ui_polish_976",
+            "name": "Браузер: ui polish 976",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_unified_wall_tool",
+            "name": "Браузер: unified wall tool",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ux_fixes",
+            "name": "Браузер: ux fixes",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_v8_draft_write",
+            "name": "Браузер: v8 draft write",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum",
+            "name": "Браузер: vacuum",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_camera",
+            "name": "Браузер: vacuum camera",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_dock_restart",
+            "name": "Браузер: vacuum dock restart",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_ecovacs",
+            "name": "Браузер: vacuum ecovacs",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_firstuse",
+            "name": "Браузер: vacuum firstuse",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_history",
+            "name": "Браузер: vacuum history",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_history_context",
+            "name": "Браузер: vacuum history context",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_history_geometry",
+            "name": "Браузер: vacuum history geometry",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_history_touch",
+            "name": "Браузер: vacuum history touch",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_live_tail",
+            "name": "Браузер: vacuum live tail",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_multifloor",
+            "name": "Браузер: vacuum multifloor",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_native_lifecycle",
+            "name": "Браузер: vacuum native lifecycle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_path_fidelity",
+            "name": "Браузер: vacuum path fidelity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_route_draft",
+            "name": "Браузер: vacuum route draft",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_route_recovery",
+            "name": "Браузер: vacuum route recovery",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_style_1002",
+            "name": "Браузер: vacuum style 1002",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_vacuum_tail_continuity",
+            "name": "Браузер: vacuum tail continuity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_value_face_source",
+            "name": "Браузер: value face source",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_value_format",
+            "name": "Браузер: value format",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_version_recovery",
+            "name": "Браузер: version recovery",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_device_menu",
+            "name": "Браузер: view device menu",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_device_menu_lifecycle",
+            "name": "Браузер: view device menu lifecycle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_empty_space_boundary",
+            "name": "Браузер: view empty space boundary",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_entry_recovery",
+            "name": "Браузер: view entry recovery",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_hold_lifecycle",
+            "name": "Браузер: view hold lifecycle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_runtime_dirty_reload",
+            "name": "Браузер: view runtime dirty reload",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_runtime_kiosk_recovery",
+            "name": "Браузер: view runtime kiosk recovery",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_view_runtime_recovery",
+            "name": "Браузер: view runtime recovery",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_virtual_light_toggle",
+            "name": "Браузер: virtual light toggle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_visual_continuity",
+            "name": "Браузер: visual continuity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_volumetric_setting",
+            "name": "Браузер: volumetric setting",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_adoption_alias",
+            "name": "Браузер: wall adoption alias",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_chain_history",
+            "name": "Браузер: wall chain history",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_chain_merge",
+            "name": "Браузер: wall chain merge",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_chain_thickness",
+            "name": "Браузер: wall chain thickness",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_corner_join",
+            "name": "Браузер: wall corner join",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_dimension_hud",
+            "name": "Браузер: wall dimension hud",
+            "status": "reused",
+            "diagnostic": false,
+            "counts": {
+              "tests": 9,
+              "passed": 9,
+              "failed": 0,
+              "skipped": 0
+            },
+            "sourceRun": "20261113T173435205-500f651b"
+          },
+          {
+            "id": "smoke:smoke_wall_draw_click",
+            "name": "Браузер: wall draw click",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_end_align",
+            "name": "Браузер: wall end align",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_face_lineage",
+            "name": "Браузер: wall face lineage",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_face_overlap",
+            "name": "Браузер: wall face overlap",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_face_room_split",
+            "name": "Браузер: wall face room split",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_guide_ownership",
+            "name": "Браузер: wall guide ownership",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_hatch_density",
+            "name": "Браузер: wall hatch density",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_junctions",
+            "name": "Браузер: wall junctions",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_key_roundtrip",
+            "name": "Браузер: wall key roundtrip",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_node_attach",
+            "name": "Браузер: wall node attach",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_node_connected",
+            "name": "Браузер: wall node connected",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_node_delete",
+            "name": "Браузер: wall node delete",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_node_hit",
+            "name": "Браузер: wall node hit",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_node_merge",
+            "name": "Браузер: wall node merge",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_node_move",
+            "name": "Браузер: wall node move",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_node_python_roundtrip",
+            "name": "Браузер: wall node python roundtrip",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_node_reliability",
+            "name": "Браузер: wall node reliability",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_node_topology",
+            "name": "Браузер: wall node topology",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_paper_corners",
+            "name": "Браузер: wall paper corners",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_preview_handoff_1247",
+            "name": "Браузер: wall preview handoff 1247",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_side_dimensions",
+            "name": "Браузер: wall side dimensions",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_side_dimensions_dense",
+            "name": "Браузер: wall side dimensions dense",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_side_dimensions_thin",
+            "name": "Браузер: wall side dimensions thin",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_smooth_joint",
+            "name": "Браузер: wall smooth joint",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_thickness",
+            "name": "Браузер: wall thickness",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_thickness_transition",
+            "name": "Браузер: wall thickness transition",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wall_union_isolation",
+            "name": "Браузер: wall union isolation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wallthick_hover_width",
+            "name": "Браузер: wallthick hover width",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wallthick_standalone",
+            "name": "Браузер: wallthick standalone",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_warm_dialogs",
+            "name": "Браузер: warm dialogs",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_warm_geometry_camera",
+            "name": "Браузер: warm geometry camera",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_warm_mode_adoption",
+            "name": "Браузер: warm mode adoption",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_warm_owners",
+            "name": "Браузер: warm owners",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_warm_remount",
+            "name": "Браузер: warm remount",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_warm_view_marker",
+            "name": "Браузер: warm view marker",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_wireless_controller_parity",
+            "name": "Браузер: wireless controller parity",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_write_authority",
+            "name": "Браузер: write authority",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_writer_fixed_point",
+            "name": "Браузер: writer fixed point",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_ws_resilience",
+            "name": "Браузер: ws resilience",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_yellow_principle",
+            "name": "Браузер: yellow principle",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zero_divider_taper",
+            "name": "Браузер: zero divider taper",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zero_wall_migration_unblocked",
+            "name": "Браузер: zero wall migration unblocked",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zero_walls",
+            "name": "Браузер: zero walls",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zigbee_enable_refresh",
+            "name": "Браузер: zigbee enable refresh",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zigbee_hidden_placement",
+            "name": "Браузер: zigbee hidden placement",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zigbee_incomplete_reasons",
+            "name": "Браузер: zigbee incomplete reasons",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zigbee_led_topology",
+            "name": "Браузер: zigbee led topology",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zigbee_map_explanation",
+            "name": "Браузер: zigbee map explanation",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zigbee_tooltip_layout",
+            "name": "Браузер: zigbee tooltip layout",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zigbee_topology_hover",
+            "name": "Браузер: zigbee topology hover",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zigbee_topology_job",
+            "name": "Браузер: zigbee topology job",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zoom_badge_visibility",
+            "name": "Браузер: zoom badge visibility",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zoom_flash",
+            "name": "Браузер: zoom flash",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:smoke_zoom_out",
+            "name": "Браузер: zoom out",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "smoke:permissions-full",
+            "name": "Браузер: view edit permissions",
+            "status": "passed",
+            "diagnostic": false
+          },
+          {
+            "id": "golden-rest",
+            "name": "Остальные визуальные эталоны",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 260,
+              "passed": 260,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "backend-coverage-threshold",
+            "name": "Порог backend coverage перед stable",
+            "status": "reused",
+            "diagnostic": false,
+            "sourceRun": "20261113T163406672-fb52d8e5"
+          },
+          {
+            "id": "e2e-remainder-journeys",
+            "name": "HA E2E remainder: journeys",
+            "status": "passed",
+            "diagnostic": false,
+            "counts": {
+              "tests": 95,
+              "passed": 95,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-remainder-first-run",
+            "name": "HA E2E remainder: first-run",
+            "status": "not-required",
+            "diagnostic": false,
+            "counts": {
+              "tests": 0,
+              "passed": 0,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "e2e-remainder-upgrade",
+            "name": "HA E2E remainder: upgrade",
+            "status": "not-required",
+            "diagnostic": false,
+            "counts": {
+              "tests": 0,
+              "passed": 0,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "id": "converters-stable",
+            "name": "Конвертеры перед stable: 3 формата → импорт в HA",
+            "status": "passed",
+            "diagnostic": true,
+            "counts": {
+              "tests": 3,
+              "passed": 3,
+              "failed": 0,
+              "skipped": 0
+            }
+          }
+        ]
       },
-      "status": "testing",
+      "running": null,
+      "status": "results",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -105138,7 +108822,8 @@
     "stable1852-20261113-first-report": "63a5743e535606f6ac30cff2b4e22e613c512ca0b05ef590317cff5c40679760",
     "stable1852-20261113-fixes": "495cbfce746e4e9d47528b680779e7d2663a6ea630456b89904d85534d3378fd",
     "stable1852-20261113-reviewed-product-fix": "2d3760bbc5782ef4bb79916f69107b71c3098662a4b27795e0e6b7ac065d840e",
-    "stable1852-20261113-run-started-r2": "a1b80166cd9b8f1fde4de672abb8a5279807cfd0105aee3ea2c54a0c83d34fe0"
+    "stable1852-20261113-run-started-r2": "a1b80166cd9b8f1fde4de672abb8a5279807cfd0105aee3ea2c54a0c83d34fe0",
+    "stable1852-20261113-report": "0b582a6d663202af30090dc562e8cdbe28b498163050cb82bf49e2afc4182c57"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
