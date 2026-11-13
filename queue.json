@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11738,
+  "revision": 11739,
   "nextTicket": 423,
   "nextFence": 423,
   "tasks": {
@@ -3613,7 +3613,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794612685419,
       "reviewEntry": 4,
-      "patchId": "3cf2d541fdd6e8478587c1ba8a5592fbcb49f53f",
+      "patchId": "d540e513eb583d345cd32376b17208823262d181",
       "changedFiles": [
         "custom_components/houseplan/__init__.py",
         "custom_components/houseplan/asset_integrity.py",
@@ -3734,6 +3734,7 @@
         "tests_backend/pure_imports.py",
         "tests_backend/test_backend_quality.py",
         "tests_backend/test_config_schema_manifest.py",
+        "tests_backend/test_contact_basis.py",
         "tests_backend/test_core_boundary.py",
         "tests_backend/test_graph_host_continuity.py",
         "tests_backend/test_ha_backup_archive.py",
@@ -3751,6 +3752,7 @@
         "tests_backend/test_sh3d_import_preview.py",
         "tests_backend/test_trail_recorder.py",
         "tests_backend/test_trail_recorder_imports.py",
+        "tests_backend/test_vacuum_routes.py",
         "tests_backend/test_validation.py"
       ],
       "notice": {
@@ -4966,10 +4968,11 @@
     "token": "422:finish:166288dc-dc0e-46d0-9432-cbb85c5d2272:finish:1:admit",
     "fence": 422,
     "materialSha": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "759ff053090317b430cdee3dca12fba18892de4b",
+    "phase": "testing",
     "admittedAt": 1794612689254,
-    "expiresAt": 1794612989254
+    "expiresAt": 1794612995377,
+    "patchId": "d540e513eb583d345cd32376b17208823262d181"
   },
   "events": {
     "github:43515037012:1:label:spec-request": {
@@ -5186,6 +5189,10 @@
     },
     "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:3:return": {
       "digest": "eac3e751294f587e125b80f8e9c03b6b45969f750f5e2439f1f579cbf94d8c0b",
+      "issue": 1391
+    },
+    "finish:166288dc-dc0e-46d0-9432-cbb85c5d2272:finish:2:synchronized": {
+      "digest": "308d3e577a38fa0c8bd09e58b1c52c9d123c4c055d07cceadc48ca159f7e7443",
       "issue": 1391
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
