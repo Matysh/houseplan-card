@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10955,
-  "nextTicket": 403,
+  "revision": 10956,
+  "nextTicket": 404,
   "nextFence": 403,
   "tasks": {
     "1024": {
@@ -4627,6 +4627,20 @@
         "status": "published",
         "sourceSha": "9054a6f04bc030867f1d841663b91cdb262b172d"
       }
+    },
+    "1411": {
+      "issue": 1411,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1411-tooltip-metric-wrap",
+      "materialSha": "579596c9bde36cff64ca25a9ad1a9f9dd99b63f2",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 403,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794569670329,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4870,9 +4884,25 @@
       "runId": 43397778083
     }
   },
-  "waiting": [],
+  "waiting": [
+    1411
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2": {
+      "digest": "e798bb1c222de57d419b8cb2f051ee728c263971c8ec7a32e5db649d44560212",
+      "issue": 1411,
+      "message": {
+        "kind": "queued",
+        "issue": 1411,
+        "at": 1794569670329,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "579596c9bde36cff64ca25a9ad1a9f9dd99b63f2"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "9054a6f04bc030867f1d841663b91cdb262b172d",
     "status": "delivered",
