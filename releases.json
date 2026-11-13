@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 854,
+  "revision": 855,
   "active": "1.85.2-stable-20261113",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -100229,7 +100229,71 @@
         1419
       ],
       "reviewRequired": false,
-      "review": null,
+      "review": {
+        "sha": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
+        "report": {
+          "source": "task-code-review",
+          "issue": 1418,
+          "verdict": "accepted",
+          "workflowRunId": 43471619607,
+          "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43471619607",
+          "reviewedSha": "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31",
+          "report": {
+            "verdict": "accept",
+            "summary": "Исправление решает проблему правильно и в нужном месте. Плановая точка теперь вычисляется по точным дробным координатам чистого `pointerup`, а `click` только подтверждает жест. Все прежние проверки при этом остаются: владелец press, порог в 4 px, подавление, `sync`/`blocked`. Поэтому Shift-предпросмотр и сохранённый отрезок больше не расходятся у границы октанта из-за того, что Chromium округляет координаты `click`. Модель полномочий и истории не изменилась, допуски не повышены. Регрессия покрывает unit-случай с разными дробными и округлёнными координатами и сценарий в настоящем браузере у границы. Центральный S6 на `f7677e9a` прошёл. Блокеров нет.",
+            "understanding": "Проблема. `DecorLineDrawing.click()` заново вызывал `port.point(event)` по событию `click`. В Chromium его `clientX/Y` округлены до целых, а у `pointermove`/`pointerup` остаются дробными. Предпросмотр строится по дробному `pointermove`. У границы октанта (около 22,5°) `snapSegment45` по округлённой точке выбирал соседний луч: предпросмотр показывал диагональ [387.5,387.5], а сохранялась горизонталь [441.67,250].\n\nПосле исправления `pointerUp` при чистом жесте (тот же `pointerId`, один контакт, сдвиг не больше 4 px) и при `sync() && !blocked()` сохраняет в `ready.point` копию `port.point(event)` по точным координатам `pointerup`. `click` по-прежнему проверяет `ready`, `suppressed`, `sync`, `blocked` и расстояние между `click` и `pointerup` (не больше 4 px), но берёт `raw` из `ready.point`. Shift по-прежнему читается из `event.shiftKey` у `click`, так что живой модификатор сохраняется. Snap, `decorLineEnd` и `commit` не менялись. DOM-событие в состоянии не хранится, хранится только массив.\n\nРазобранные пути: `_stagePointerUp` в `src/houseplan-card.ts:8374` вызывает `decorLine.pointerUp` первым. Порт в `src/houseplan-editor-runtime.ts:1033-1053`: `point` → `_svgPoint` (строки 1659-1663) зависит только от `clientX/Y`, rect сцены и текущего `_view`, то есть от целевого элемента события не зависит. Также прочитаны `pointerDown`/`pointerMove`/`cancel`/`reset`/`restore` в `line-drawing.ts` и unit-фикстура.",
+            "analysis": [
+              {
+                "topic": "Выбор места исправления",
+                "assessment": "Точную точку правильно фиксировать на `pointerup`: это последнее событие принятого жеста с дробными координатами, и браузер генерирует `click` из того же контакта. Варианты «брать последнюю точку `pointermove`» или «округлять предпросмотр» хуже. Первый ломается при сдвиге внутри порога press: при зажатой кнопке `pointerMove` не обновляет `raw`. Второй меняет геометрию и допуски. Выбранный вариант соответствует ТЗ: точная позиция финального pointer-события используется при commit.",
+                "evidence": "`src/editors/decor/line-drawing.ts:110-119`, `:124-129`. В `pointerMove` (строка 106) при `contacts.size > 0` выход происходит раньше, чем обновляется `raw`."
+              },
+              {
+                "topic": "Сохранение защитных инвариантов",
+                "assessment": "Все прежние условия отказа `click` остались. Из-за `ready = null` в начале `click` повторный или синтетический `click` без press по-прежнему ничего не делает. `cancel` и `reset` очищают `ready` вместе с точкой. Новые `sync()` и `blocked()` в `pointerUp` стоят за `clean &&`, поэтому вызываются только для чистого жеста. Ранний `reset` при смене контекста эквивалентен прежнему поведению: `click` тоже вызвал бы `sync()` и сбросил сессию. Полномочия и `owner` не ослаблены: `click` перепроверяет их перед записью, так что устаревшая точка из `pointerup` при смене контекста между событиями не будет записана.",
+                "evidence": "`line-drawing.ts:58-64` (`sync`), `:116-118`, `:125-127`; `test/decor-line-drawing.test.mjs:44-55` (drag/second pointer/cancel/synthetic) без изменений."
+              },
+              {
+                "topic": "Согласованность с камерой",
+                "assessment": "Точка теперь вычисляется на `pointerup`, а не на `click`. Между этими событиями нет кадра отрисовки, и изменить `_view` может только синхронный обработчик того же `pointerup`, что для линии не происходит. Кроме того, `_svgPoint` берёт текущий rect сцены и `_view`, как и раньше. Практически точка совпадает с той, что вычислялась бы на `click`, если бы его координаты не округлялись.",
+                "evidence": "`src/houseplan-editor-runtime.ts:1659-1663`; порядок в `_stagePointerUp` (`houseplan-card.ts:8372-8374`)."
+              },
+              {
+                "topic": "Регрессионные проверки",
+                "assessment": "Unit-тест точно моделирует дефект. От [0,0] угол на [100.9,41.9] больше 22,5°, а на [100,41] меньше, поэтому получаются разные лучи. Тест проверяет диагональ в предпросмотре, сохранение той же точки и якорь следующего отрезка. Native-сценарий сохраняет исходный случай [443,328] и добавляет границу [443,330]. Ожидание завершения fit проверяет реальные флаги камеры и режима, а не задержку. Предикат готовности диагонали с точностью 1e-8 нужен только как предусловие свидетеля (RAF-очередь предпросмотра), итоговое `closePoint` не ослаблено. Побочный эффект: если demo-геометрия изменится и предпросмотр перестанет быть диагональным, сценарий упадёт по таймауту ожидания, а не на понятном `check`. Для проверки-свидетеля это допустимо.",
+                "evidence": "`test/decor-line-drawing.test.mjs:57-69`; `demo/smoke_decor_line_click.mjs`, новые строки 27-33 и 91-102. S6 receipt `20261113T171422033-43afc3f1` passed на `f7677e9a…`."
+              },
+              {
+                "topic": "Документация и ledger",
+                "assessment": "Записи в CHANGELOG (en/ru) и `DECOR-EDITOR.md` точны и описывают поведение, а не реализацию. Ledger `v1.85.0/1418.json` оформлен так же, как соседние stable-fix записи. Комментарий в коде объясняет неочевидную причину (Chromium округляет `click`), такой комментарий полезен.",
+                "evidence": "`docs/DECOR-EDITOR.md:137-138`; `docs/release-ledger/v1.85.0/1418.json`; `line-drawing.ts:114-115`."
+              }
+            ],
+            "blockers": [],
+            "improvements": [
+              "Необязательно. В native-сценарии перед `waitForFunction` для диагонали можно добавить явный `check` или сообщение об ошибке. Тогда при будущем изменении demo-геометрии отказ будет называть предусловие («предпросмотр у границы не диагональный»), а не выглядеть как общий таймаут. Цена — одна строка. Польза — быстрее разбирать нестабильность."
+            ],
+            "boundaries": "Код изучен по исходникам на head: `line-drawing.ts` целиком, порт в `houseplan-editor-runtime.ts`, `_svgPoint`, вызов `pointerUp` из `_stagePointerUp`, unit-фикстура и изменённые части native-сценария. Сборку, тесты и браузерные прогоны я не запускал. Использован результат центрального S6 (`20261113T171422033-43afc3f1`, passed, материал `f7677e9a4094b6ef5c3e1242a1aa2691377a8f31`). RED-лог и диагностические логи из `artifacts/` в pinned-материале недоступны, о RED-фазе знаю только со слов автора. Что Chromium округляет координаты `click`, принимаю по воспроизведению из issue: независимо я это не проверял. Собранный бандл в `custom_components/.../frontend` в diff не входит; считаю, что его пересобирают при выпуске."
+          },
+          "applicationProof": {
+            "baseCandidate": "3f05fb65d0a4afb6ae6bd6401a617624dd1f732f",
+            "releaseCandidate": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
+            "changedProductPaths": [
+              "src/editors/decor/line-drawing.ts"
+            ],
+            "reviewedFileSha256": "d596984f9a4b64801a9dbbb5150b24ecb8454148f36a88abcb5806f485d9a2d2",
+            "releaseFileSha256": "d596984f9a4b64801a9dbbb5150b24ecb8454148f36a88abcb5806f485d9a2d2",
+            "notes": "The product delta is byte-identical to the independently accepted task fix. Release prose and ship test repairs #1417/#1419 are outside that code-review scope; stable inherits the accepted beta ship review.",
+            "documentationMerge": {
+              "previousCandidate": "dc5e69010ebc6f000bc7a709c3547f38e6008c1d",
+              "mainHead": "7c871c0277e49ec1d3a1cef9bebb9026ac03b222",
+              "changedPaths": [
+                "README.md"
+              ]
+            }
+          }
+        }
+      },
       "metrics": null,
       "metricsAcceptedSha": null,
       "portToDev": [
@@ -105092,7 +105156,8 @@
     "stable1852-20261113-publication:prepared:d11a68d2-2e0c-4929-b8a9-a5aab1a16477": "bab368b5e879ffb906ab2e833e46ad7f2e74cd138a481a62863eaac0b1178175",
     "stable1852-20261113-publication:started:851": "627725d33759108f563e598d213335a0ae055c349b92999aba342deea378466b",
     "stable1852-20261113-publication:failed:852": "6cd42d4dc3981381f18c47cf838ee95fdb6cc8953b5d37055fc34a41e2b64575",
-    "stable1852-20261113-main-readme-history": "2d2b509596c772a68d57eaccf14611ecbfcdd613c300c179adf95af15defe938"
+    "stable1852-20261113-main-readme-history": "2d2b509596c772a68d57eaccf14611ecbfcdd613c300c179adf95af15defe938",
+    "stable1852-20261113-reviewed-product-fix-r3": "40b368ff181773509e681eab794f2ed5f427bb73157608cb73e05a460a17bc2b"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
