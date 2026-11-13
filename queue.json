@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11020,
+  "revision": 11021,
   "nextTicket": 407,
   "nextFence": 407,
   "tasks": {
@@ -4618,7 +4618,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794571955582,
       "reviewEntry": 2,
-      "patchId": "34c8cf6db670de81f9e7b2ee65676d8570fe48b0",
+      "patchId": "2537a8c5095927fa8eaa248d5c9c055cba5a001d",
       "changedFiles": [
         "demo/smoke_device_battery_tooltip.mjs",
         "demo/smoke_device_tooltip_hover.mjs",
@@ -4943,10 +4943,11 @@
     "token": "406:finish:4b189f7f-c0f5-4477-b36a-8a79032d902b:finish:1:admit",
     "fence": 406,
     "materialSha": "c250fcb4591a698481da3ccaa6a2261e2a0e04de",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856",
+    "phase": "testing",
     "admittedAt": 1794571959553,
-    "expiresAt": 1794572259553
+    "expiresAt": 1794572265948,
+    "patchId": "2537a8c5095927fa8eaa248d5c9c055cba5a001d"
   },
   "events": {
     "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:2:synchronized": {
@@ -4995,6 +4996,10 @@
     },
     "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:3:return": {
       "digest": "ec3c8546ea4ad8d50e93f14dc8c9524e73903e80bc02937e6ef049467796bbee",
+      "issue": 1409
+    },
+    "finish:4b189f7f-c0f5-4477-b36a-8a79032d902b:finish:2:synchronized": {
+      "digest": "6f7347b1c34359c6b831d869de0368e80a6346f3093fac1cef7b7c39a05abda2",
       "issue": 1409
     },
     "dev-build:43420126997:1:1411": {
