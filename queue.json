@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10502,
+  "revision": 10503,
   "nextTicket": 394,
   "nextFence": 394,
   "tasks": {
@@ -4664,7 +4664,18 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/testing/1401-golden-review.json"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794553203287,
+        "entry": 1,
+        "detail": "Браузер: resize junctions: failed; Браузер: resize through junction: failed",
+        "eventId": "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:3:return:return:1401"
+      }
     },
     "1403": {
       "issue": 1403,
@@ -4975,18 +4986,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1401,
-    "worker": "finish",
-    "token": "393:finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:1:admit",
-    "fence": 393,
-    "materialSha": "e639f61c6249bf72881074323fb91ed53b3bbe2e",
-    "expectedBase": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
-    "phase": "testing",
-    "admittedAt": 1794552866755,
-    "expiresAt": 1794553465239,
-    "patchId": "522f940296aac0d99efbba00fee4f79406c7ce5b"
-  },
+  "active": null,
   "events": {
     "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:2:synchronized": {
       "digest": "d26018b9ce75e89b1a5c9b3b47b631ccf51aaab9e415cee0d7864b29173c8295",
@@ -5020,6 +5020,10 @@
       "digest": "40e9b8d35becafa761ef41de074d5be0b7dd8f85bf2f9265d5c8741c0e4df604",
       "issue": 1401
     },
+    "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:3:return": {
+      "digest": "7f5273cf4150c7ee77749c44287d5e0adc37e49bcca4ef8abbc265a07d9d6b92",
+      "issue": 1401
+    },
     "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d": {
       "digest": "77adc3cd43252bdb83585fcd3484a8d5860458c786c8dbe849822238079e7014",
       "issue": 1401,
@@ -5047,6 +5051,26 @@
         "materialSha": "6debd5150711cef36a8a496cbce7b528c80b81df",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:3:return:return:1401": {
+      "digest": "7f5273cf4150c7ee77749c44287d5e0adc37e49bcca4ef8abbc265a07d9d6b92",
+      "issue": 1401,
+      "message": {
+        "kind": "return",
+        "issue": 1401,
+        "at": 1794553203287,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794553203287,
+          "entry": 1,
+          "detail": "Браузер: resize junctions: failed; Браузер: resize through junction: failed",
+          "eventId": "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:3:return:return:1401"
+        }
       }
     }
   },
