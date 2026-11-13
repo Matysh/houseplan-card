@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11730,
-  "nextTicket": 421,
+  "revision": 11731,
+  "nextTicket": 422,
   "nextFence": 421,
   "tasks": {
     "1024": {
@@ -3605,14 +3605,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1391-plan-core",
-      "materialSha": "98a3e41ee8328583253a4dc9268b9a92df133fd3",
+      "materialSha": "64c2ef2dcae413765a394c9d09e2acbc674f2f2f",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 420,
-      "queued": false,
+      "ticket": 421,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794611473252,
-      "reviewEntry": 2,
+      "readyAt": 1794612199654,
+      "reviewEntry": 3,
       "patchId": "42accf7f229361630ef2b0ad4242e07db4239db6",
       "changedFiles": [
         "custom_components/houseplan/__init__.py",
@@ -3759,8 +3759,7 @@
         "entry": 2,
         "detail": "Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_ha_build_identity.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_trail_recorder_imports.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed",
         "eventId": "finish:eb7308c8-afa6-4e2f-bbfc-0724d5d2d9a6:finish:3:return:return:1391"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1393": {
       "issue": 1393,
@@ -4957,7 +4956,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1391
+  ],
   "active": null,
   "events": {
     "github:43515037012:1:label:spec-request": {
@@ -5303,6 +5304,19 @@
           "detail": "Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_ha_build_identity.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_trail_recorder_imports.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed",
           "eventId": "finish:eb7308c8-afa6-4e2f-bbfc-0724d5d2d9a6:finish:3:return:return:1391"
         }
+      }
+    },
+    "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2": {
+      "digest": "1757e04cbdc3fba86d20d6e49df2b05240e991faa9df43085e1ec8cb369cf804",
+      "issue": 1391,
+      "message": {
+        "kind": "queued",
+        "issue": 1391,
+        "at": 1794612199654,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "64c2ef2dcae413765a394c9d09e2acbc674f2f2f"
       }
     }
   },
