@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11676,
+  "revision": 11677,
   "nextTicket": 419,
   "nextFence": 419,
   "tasks": {
@@ -4753,18 +4753,12 @@
       }
     },
     "1392": {
-      "requestId": "spec:1392:d9bcb80a439340f89a582625c5e45e50314679721a33d63a20b635a54371d869",
-      "contextDigest": "d9bcb80a439340f89a582625c5e45e50314679721a33d63a20b635a54371d869",
-      "base": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1794607441243,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43515256909",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "requestId": "spec:1392:24308658c9f062385db869b9cab6888aa1ceea4be7611e58b87f1d08df31ba7f",
+      "contextDigest": "24308658c9f062385db869b9cab6888aa1ceea4be7611e58b87f1d08df31ba7f",
+      "base": "759ff053090317b430cdee3dca12fba18892de4b",
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1794608053468
     },
     "1394": {
       "requestId": "spec:1394:8ba80aa762186cdcffa4b6429e49358364584f374f160511571b82c4552dc3ba",
@@ -4841,6 +4835,19 @@
       "presentation": {
         "round": 2,
         "occurredAt": "2026-11-13T22:13:57.786Z"
+      }
+    },
+    "spec:1392:spec:1392:24308658c9f062385db869b9cab6888aa1ceea4be7611e58b87f1d08df31ba7f": {
+      "issue": 1392,
+      "kind": "spec",
+      "requestId": "spec:1392:24308658c9f062385db869b9cab6888aa1ceea4be7611e58b87f1d08df31ba7f",
+      "materialSha": "759ff053090317b430cdee3dca12fba18892de4b",
+      "expectedBase": "759ff053090317b430cdee3dca12fba18892de4b",
+      "patchId": "24308658c9f062385db869b9cab6888aa1ceea4be7611e58b87f1d08df31ba7f",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-13T22:14:13.468Z"
       }
     }
   },
@@ -4931,6 +4938,10 @@
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395
     },
+    "github:43517454379:1:spec:1392:spec-request": {
+      "digest": "fb1109795911cace80b5f9f1d15c2e678ea492d0f1129906e4ffc3ed11608ea0",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -4942,6 +4953,22 @@
         "round": 2,
         "requestId": "spec:1395:06640d28ad9e1ae890c5d4eb6e40a7c126f73123b9834957deac5944f4bfd85f",
         "reviewChanges": "Это аудит и адресные исправления, не декларация полной безопасности будущего сервера. Исходники уже содержат streaming ZIP/директории до ZipFile, счётчики и strict asset SVG; их нельзя игнорировать или переписать второй реализацией. Найденные реальные транзитивные HA-зависимости устраняет #1391. Различаются существующий HA-профиль и явный строгий потребитель ядра; нельзя незаметно запретить старый 2-GiB backup ради будущего анонимного сайта. Лимит времени над thread не принимается за остановку вычисления. Пока проведено чтение исходников; security experiments и продуктовые тесты ещё не выполнялись, High пока не классифицированы.\n\n### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43515190357.\n- Блокер SVG/#1033 → отдельно определены decor в обоих профилях, HA backdrop без content-whitelist и strict backdrop с явным reject-whitelist. HA bytes/ZIP сохраняются, CSP/image контекст проверяется, обратное ужесточение HA не включается без владельца.\n- JSON resource bounds → scanner до json.loads, учёт строк/escape и точное определение nodes; decoder остаётся каноническим.\n- Work units/clock → units первичны, время вторично, clock подменяется; AC3 явно относится к strict, Store/startup/save не получают новый бюджет молча.\n- Принято fail-closed при недоступном декодере strict raster и дополнение каталога structural/storage/SVG/raster пределами.\nРедакция 2. Продуктовые изменения и эксперименты не выполнялись. Отдельный запуск формы — перед S4.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
+      }
+    },
+    "github:43517454379:1:spec:1392:spec-request:spec-resubmitted:1392": {
+      "digest": "fb1109795911cace80b5f9f1d15c2e678ea492d0f1129906e4ffc3ed11608ea0",
+      "issue": 1392,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1392,
+        "at": 1794608053468,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1392:24308658c9f062385db869b9cab6888aa1ceea4be7611e58b87f1d08df31ba7f",
+        "reviewChanges": "Исследованы прямые `host.hass` в editor runtime, Optimize и IO на dev `281365641`. Выбран набор портов, а не прокси полного HA. Переход ограничен plan-путём: smart-home методы общего монолита остаются в своих владельцах. Для ревью важнее всего authority identity, подписки и отсутствие обхода через presentation context. #1394 расширяет тот же контракт capabilities; второго контракта не создаёт. Продукт пока не менялся, продуктовые тесты не запускались.\n\n### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43515256909.\n- Блокер bootstrap без hass → включены _renderBody/_loadFromServer/retry/_renderLife/plan live sync; введён subscribeEnvironment и revision, один driver вместо параллельных hass/host ticks. Указаны ready/disconnect и семантика tick≠authority.\n- Блокер presentation/spy → задан точный HostPresentationContext (language/locale/localize/themes), разрешён только UI bridge .hass, перечислены запрещённые поля и наблюдаемый Proxy-spy/command log.\n- Приняты уточнения единого authorityKey и всех его потребителей, #890 reconnect, plan events/disposer, authoritative registry и переноса Bearer fallback внутрь адаптера.\nРедакция 2, продуктовых изменений и прогонов нет; после проверки формы новая редакция передаётся на S4.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true
