@@ -1,0 +1,23 @@
+{
+  "schema":1,
+  "issue":1405,
+  "kind":"external-e2e-repair-record",
+  "productRuntimeChanged":false,
+  "cause":"The test read rotate's parent-space pivot through the frame's own CTM. The normalized backdrop frame includes a compensating scale, so this constructed a pointer arc about the wrong point.",
+  "repair":"Map the rotate pivot through the parent CTM and independently compare the backdrop pivot with the painted bdbox centre. Preserve exact angles, modifier edges, history, cancellation and durable reload.",
+  "companion":{"repository":"Matysh/houseplan-e2e","pr":"https://github.com/Matysh/houseplan-e2e/pull/47","head":"8e6698ec53b3a1090c8bd19ad5fd6e24044a6338","merge":"552217703df2ef8e552b825cc293fdb3aaed6949"},
+  "canonicalContractIssue":1406,
+  "addressedHa":{"haVersion":"2026.11.1","productVersion":"1.85.2-beta.1","businessCases":1,"families":6,"setupCases":3,"passed":4,"failed":0,"skipped":0,"retries":0},
+  "companionUnit":{"passed":67,"failed":0},
+  "strictContractLint":{"files":65,"status":"passed","linterChanged":false},
+  "originalFullJourneys":{"businessCases":91,"passed":90,"failed":1,"setupPassed":3,"failure":"Shift rotation is absolute 45 degrees for all decor families and backdrop with one history action"},
+  "fullJourneysAfterRepair":{
+    "status":"passed","businessCases":91,"passed":91,"failed":0,"skipped":0,"unexecuted":0,
+    "setupCases":3,"setupPassed":3,"retries":0,"suite":"journeys","selection":"remainder",
+    "haVersion":"2026.11.1","targetRef":"bc7a801bcaa011b34c43d474fa327aacb5353f86",
+    "companionCommit":"552217703df2ef8e552b825cc293fdb3aaed6949",
+    "packageDigest":"54d7dbf838ff39a1cc7954e191abdefa881176828c4d0a2d1a0bd9410385c415",
+    "reportSha256":"e27d1099ced70e4a5bff88f4e31cc4cecb2ea96b5a24286ae113284620b04ea9",
+    "note":"Official complete remainder journeys, exact selected test identities, owned loopback HA and normal cleanup; no grep, skipped cases or relaxed assertions. Original failed report retained separately."
+  }
+}
