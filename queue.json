@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11745,
+  "revision": 11746,
   "nextTicket": 423,
   "nextFence": 423,
   "tasks": {
@@ -5224,6 +5224,10 @@
       "digest": "f19a601750cf1138e3398adf8b3847378385885db241c418dbd938fb19ed1971",
       "issue": 1391
     },
+    "finish:166288dc-dc0e-46d0-9432-cbb85c5d2272:finish:3:s6-label": {
+      "digest": "f5c661aa1f7a1b3521912d5d0663d0db3dbbc7ee2daa763473f2ebee2ea4a486",
+      "issue": 1391
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5468,7 +5472,8 @@
         "resubmission": false,
         "reviewChanges": "### Цель и результат\nРеализовано выделение единственного исполняемого ядра в custom_components/houseplan/core/ по принятой редакции 2. Модель/протокол/форматы не менялись, самостоятельный сервер не создавался. Ветка codex/1391-plan-core; база 759ff053090317b430cdee3dca12fba18892de4b, текущий код 3c29bb9c7.\n\n### Решение и альтернативы\n45 core-модулей без HA: чистые схемы/граф/миграции/переносимые JSON и ZIP, проверка файлов и снимка Zigbee. Смешанные корневые модули сохраняют Store, MQTT, registry, locks и async cancellation shielding; один PortableRuntime Protocol вместо импорта HouseplanData. Корневые чистые пути — identity-фасады, не копии. VERSION остаётся буквальным в root const, export получает значение от хоста. Parent теперь импортирует только core.constants; первый lifecycle import выполняется через HA import executor.\n\n### Риски и места для внимания\nПроверьте реальные lookup sites после move, mixed adapter/core границы, отмену durable file job, source-before-paired-intent, root const/release readers и старые private exports. Все прежние source/text consumers перечислены в ARCHITECTURE: normal schema import, converter limits, 99 relocated mutation anchors, compatibility dispositions, recursive scans, реальный strict mypy охват и source-dependency graph. pure_imports больше не заменяет parent и не создаёт вторые классы; старые тесты обязательной подмены заменены проверкой реального identity/alias restoration. Один бывший HA test-file для SH3D preview теперь чистый и переименован; mixed opening-repair файл остался настоящим HA-тестом.\n\n### Проверки и ограничения\nЛокально: 22 import-boundary/identity/negative case прошёл; site-free subprocess с настоящим Voluptuous и без HA/Pillow импортирует все core modules, контролирует отсутствие записи/сокетов/фоновых потоков на import и выполняет validate, migrate/graph preparation, export/parse и ZIP round-trip. 351 portable/HA import/archive test прошёл; 263 schema/quality/validation test прошли (1 прежний skip); адресные source/store recovery, graph, structural upload, cancellation и asset tests пройдены после переноса patch lookup site. Финальный выбранный S6 передаётся штатной очереди; ранние промежуточные ошибки не выдаются за успешный итог.\nЧитатели: schema freshness, converter build-runtime --check, compatibility inventory 822 hits, уникальность всех 1790 mutation declarations проходят; execution=0, caught=unknown. Ruff зелёный. Strict mypy реально проверяет 17 owners вместо 10; остаются те же 18 замечаний в четырёх владельцах, воспроизведённые также на чистом исходном HEAD до extraction. Новых замечаний после relocation нет; это НЕ зелёный mypy и не ослабление strict. Отчёты artifacts/1391-*.log.\nПродуктовый UI/эталоны не менялись; установка/upgrade собранного ZIP в настоящем HA остаётся штатной проверкой ближайшей беты, не заявлена пройденной сейчас. Деплоя/релиза нет. Новых тестов реального HA E2E не требуется: существующие install/setup/upgrade сценарии сохраняются, E2E-решение записывается в companion.\n\n### Исправления по предыдущему ревью\nРевью ТЗ раунд 2 принято: https://github.com/Matysh/houseplan-card/actions/runs/43517661007.\nБлокер R1 о пустых фасадах вместо реализации закрыт миграцией реальных источников и исполнением дешёвых читателей. Сохранены VERSION root и type-check coverage. Учтено уточнение reviewer о patch-at-lookup-site: source-limit injection патчит core encoding, HA Store mocks остаются на adapter.\nПервое код-ревью ещё не запускалось; форматный/адресный PASS не заменяет его. Первый S6 остановлен при выявленном незаполненном taxonomy: новые core owners/readers и существующие соседние контракты размечены, регрессия source-dependency converter переведена на фактические core-пути. Второй S6 завершён с двумя отказами старых тестовых lookup/loader owners; оба исправлены: build identity патчится в ha_integration, а recorder HA-адаптер изолирован под прежним alias без кеширования fake HA в canonical namespace, со ссылкой на единственное core route schema. Адресные 75 проверок и 3 проверки scope/identity зелёные; S6 возобновляется с применимым reuse, прежние failed попытки не заявляются успешными.\n\n### Дополнение после третьего S6\nТретий S6 выявил ещё два старых file-loader, которые обходили canonical identity (contact_basis и vacuum_routes), и реальную регрессию teardown: повторный импорт адаптера через executor после shutdown. File-loader заменены обычными core imports; адаптер кеширует только полностью завершённый первый import, без hass. Failed cold import не кешируется. Адресные 51 проверки, включая реальную остановку HA, прошли; отдельно все 22 boundary/cache/identity проверки зелёные. Эти результаты не объявляются итогом всего S6: очередной finish использует применимый reuse, модель ещё не запускалась. Новый материал 3c29bb9c7.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
