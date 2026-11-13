@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11718,
+  "revision": 11719,
   "nextTicket": 421,
   "nextFence": 421,
   "tasks": {
@@ -3613,7 +3613,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794611473252,
       "reviewEntry": 2,
-      "patchId": "faba13288a1f4a6004ba1b80cfc3c0e374b430b7",
+      "patchId": "42accf7f229361630ef2b0ad4242e07db4239db6",
       "changedFiles": [
         "custom_components/houseplan/__init__.py",
         "custom_components/houseplan/asset_integrity.py",
@@ -3716,6 +3716,8 @@
         "docs/CHANGELOG.ru.md",
         "process-next/catalog/inventory.json",
         "process-next/lib/source-dependencies.mjs",
+        "process-next/lib/task-selection.mjs",
+        "process-next/test/task-selection.test.mjs",
         "pyproject.toml",
         "scripts/config-compatibility-catalog.mjs",
         "scripts/config-compatibility-inventory.json",
@@ -4961,10 +4963,11 @@
     "token": "420:finish:eb7308c8-afa6-4e2f-bbfc-0724d5d2d9a6:finish:1:admit",
     "fence": 420,
     "materialSha": "98a3e41ee8328583253a4dc9268b9a92df133fd3",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "759ff053090317b430cdee3dca12fba18892de4b",
+    "phase": "testing",
     "admittedAt": 1794611478304,
-    "expiresAt": 1794611778304
+    "expiresAt": 1794611784525,
+    "patchId": "42accf7f229361630ef2b0ad4242e07db4239db6"
   },
   "events": {
     "github:43515037012:1:label:spec-request": {
@@ -5117,6 +5120,10 @@
     },
     "finish:26d07955-c573-4959-bf53-b67bea7dfa7c:finish:3:return": {
       "digest": "a09a49baa98d9ed44df84465a590a17a700b7a1f5d18ff3964b9dbe5c8481af0",
+      "issue": 1391
+    },
+    "finish:eb7308c8-afa6-4e2f-bbfc-0724d5d2d9a6:finish:2:synchronized": {
+      "digest": "c327a2b2cf43757c3a577f9061c57399448fb649fa1ee8b5a2777919895f9734",
       "issue": 1391
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
