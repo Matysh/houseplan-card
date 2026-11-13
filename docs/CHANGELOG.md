@@ -1,10 +1,10 @@
 # Changelog
 
+## Unreleased
+
 - Preserve the stable visual witnesses after asynchronous optimization and shared opening/dimension changes; review each changed image and reject hidden dimension text (#1401, #1403).
 
 - Keep shared editor dimensions readable beside the floating tool tray, using the existing numbered-list fallback when needed (#1403).
-
-## Unreleased
 
 - Normalize backdrop image/frame paint to the same local SVG basis across grid calibrations, preserving world bounds, rotation and native gestures. Equivalent 1/5cm plans no longer change imported SVG text hinting or handle rasterization; pixel tolerances remain unchanged (#1400).
 
