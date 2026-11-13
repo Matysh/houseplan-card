@@ -2159,6 +2159,10 @@ export async function prepareGoldenScenario(page, scenario) {
         reason: 'wall-null',
       }));
       await card._editorRuntime.optimizePlans.open();
+      // #1170: opening the dialog first mounts the asynchronous status view.
+      // Inject display-only failure data only after the real preview is ready;
+      // otherwise the in-flight preview overwrites it before the screenshot.
+      await until(() => card.renderRoot.querySelector('hp-dialog[icon="mdi:broom"] .body:not(.optimize-status)'));
       card._alignDialog = {
         ...card._alignDialog,
         preflight: {
@@ -2171,12 +2175,23 @@ export async function prepareGoldenScenario(page, scenario) {
       };
       card.requestUpdate();
       await card.updateComplete;
-      const dialog = card.renderRoot.querySelector('hp-dialog');
+      const dialog = card.renderRoot.querySelector('hp-dialog[icon="mdi:broom"]');
       const body = dialog?.querySelector('.body');
-      if (!body?.textContent?.includes(names[0])
-          || !body.textContent.includes(card._t('gs.align_preflight_hint'))
-          || dialog.querySelector('.btn.on')) {
-        throw new Error('golden Optimize preflight failure dialog is incomplete');
+      const refusal = scenario.language === 'ru'
+        ? 'Эта оптимизация не применена.' : 'This optimization was not applied.';
+      // These new messages belong to the lazy settings dictionary, not _t.
+      // A literal refusal plus native support/copy controls is an independent
+      // observation of the failed-result branch, not a translated key fallback.
+      if (!names.every(name => body?.textContent?.includes(name))
+          || !body.textContent.includes(refusal)
+          || !body.textContent.includes(card._t('gs.preflight_reason_wall-null'))
+          || !dialog.querySelector('.optimize-support')
+          || !dialog.textContent.includes(card._t('gs.preflight_copy'))
+          || dialog.querySelector('[data-hp="dialog-confirm"]')) {
+        throw new Error('golden Optimize preflight failure dialog is incomplete: '
+          + JSON.stringify({ phase: card._alignDialog?.phase, text: body?.textContent,
+            confirm: !!dialog?.querySelector('[data-hp="dialog-confirm"]'),
+            support: !!dialog?.querySelector('.optimize-support') }));
       }
     } else if (scenario.dialog === 'icon-rules-invalid') {
       card._setMode('devices');
@@ -2721,6 +2736,15 @@ export async function prepareGoldenScenario(page, scenario) {
       if (moon.dataset.moonK !== scenario.moon.k || !parent || moon.parentElement !== parent || !staticSky) {
         throw new Error(`golden moon contract did not render: ${scenario.id} (k ${moon.dataset.moonK})`);
       }
+      // Both fixed dates in this matrix are waxing (#1006), including Sydney.
+      // Observe the rendered mask independently of moonPhasePath: the right
+      // limb must be illuminated, the left one dark, and the art unmirrored.
+      const mask = moon.querySelector('#hp-moon-phase path');
+      if (!mask?.isPointInFill(new DOMPoint(480, 256))
+          || mask.isPointInFill(new DOMPoint(32, 256))
+          || [...moon.querySelectorAll('use')].some(use => use.hasAttribute('transform'))) {
+        throw new Error(`golden waxing moon must change its mask, not mirror its art: ${scenario.id}`);
+      }
       await frame();
     }
     if (scenario.dayCycle) {
@@ -3168,6 +3192,10 @@ export async function prepareGoldenScenario(page, scenario) {
     await page.locator('hp-dialog[data-kind="info"] .device-issue').first().waitFor();
     const count = await page.locator('hp-dialog[data-kind="info"] .device-issue').count();
     if (count !== (scenario.deviceIssues === 'alarm' ? 2 : 1)) throw new Error('golden device issue explanation missing');
+    // The clicked marker moves when fit bounds change. Its old pointer point
+    // can then land on an unrelated disclosure inside the new modal. These
+    // scenes own the card content, not an accidental summary hover.
+    await page.mouse.move(0, 0);
   }
   if (scenario.batteryBoard) result.batteryBoard = await prepareBatteryBoard(page, scenario);
   if (scenario.deviceContacts) result.deviceContacts = await prepareDeviceContacts(page);
