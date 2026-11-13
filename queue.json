@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11508,
+  "revision": 11509,
   "nextTicket": 417,
   "nextFence": 417,
   "tasks": {
@@ -1711,38 +1711,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb"
-      }
-    },
-    "1321": {
-      "issue": 1321,
-      "branch": "codex/issue-1321-build-inputs",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "9b3fe4a5664f05c2fa2a75a726fff9513cb3b41f",
-      "mergedSha": "f873c3c9d152ce8e34579832480cb3fcb2bdc0b5",
-      "mergedAt": 1793888493350,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1322": {
@@ -4481,10 +4449,24 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 15
+        },
+        "commentCurrent": true,
+        "commentDigest": "d1c65df9ac3a3cbebb03",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "published",
