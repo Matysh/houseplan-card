@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11678,
+  "revision": 11679,
   "nextTicket": 419,
   "nextFence": 419,
   "tasks": {
@@ -4966,7 +4966,8 @@
         "reviewChanges": "Это аудит и адресные исправления, не декларация полной безопасности будущего сервера. Исходники уже содержат streaming ZIP/директории до ZipFile, счётчики и strict asset SVG; их нельзя игнорировать или переписать второй реализацией. Найденные реальные транзитивные HA-зависимости устраняет #1391. Различаются существующий HA-профиль и явный строгий потребитель ядра; нельзя незаметно запретить старый 2-GiB backup ради будущего анонимного сайта. Лимит времени над thread не принимается за остановку вычисления. Пока проведено чтение исходников; security experiments и продуктовые тесты ещё не выполнялись, High пока не классифицированы.\n\n### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43515190357.\n- Блокер SVG/#1033 → отдельно определены decor в обоих профилях, HA backdrop без content-whitelist и strict backdrop с явным reject-whitelist. HA bytes/ZIP сохраняются, CSP/image контекст проверяется, обратное ужесточение HA не включается без владельца.\n- JSON resource bounds → scanner до json.loads, учёт строк/escape и точное определение nodes; decoder остаётся каноническим.\n- Work units/clock → units первичны, время вторично, clock подменяется; AC3 явно относится к strict, Store/startup/save не получают новый бюджет молча.\n- Принято fail-closed при недоступном декодере strict raster и дополнение каталога structural/storage/SVG/raster пределами.\nРедакция 2. Продуктовые изменения и эксперименты не выполнялись. Отдельный запуск формы — перед S4.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     },
     "github:43517454379:1:spec:1392:spec-request:spec-resubmitted:1392": {
