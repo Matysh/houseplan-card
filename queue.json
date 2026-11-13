@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11680,
+  "revision": 11681,
   "nextTicket": 419,
   "nextFence": 419,
   "tasks": {
@@ -5000,7 +5000,8 @@
         "reviewChanges": "Авторизация фазы 0 получена от владельца 14.11.2026. Выбран подпакет внутри интеграции, не отдельный дистрибутив. Аналитика на `281365641` обнаружила реальные транзитивные HA-зависимости и eager parent; их разделение включено явно. Предпочтена одна реализация с адаптерами, а не копия ядра/HA-stubs. Особое внимание: сохранение lock/CAS, migration-source durability, отмены и полного ZIP. Пока это ТЗ: продукт не менялся и продуктовые проверки не запускались. #1395 исследует безопасность поверх выделенного ядра, #1392/#1394 — независимые frontend-границы.\n\n### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43515091979.\n- Блокер потери файловых/текстовых читателей → в скоуп и AC6 добавлены полный инвентарь и правило миграции каждого потребителя: recursive scans, real mypy owners, schema/converter/compatibility/mutation anchors и source-dependency mapping. Дешёвые читатели выполняются в S6, сами ночные мутанты — нет.\n- VERSION → единственный буквальный владелец остаётся в корневом const для прежних release/package читателей; core получает версию в export context, не импортирует адаптер.\n- Улучшения приняты: import executor для первого HA adapter import; AST + runtime boundary; удаление ненужных parent stubs; identity исключений и отсутствие двойного load_pure.\nРедакция 2. Изменилось только ТЗ; прогонов продукта нет. Проверка формы выполняется до повторной передачи.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
