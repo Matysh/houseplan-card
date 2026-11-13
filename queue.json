@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11735,
+  "revision": 11736,
   "nextTicket": 422,
   "nextFence": 422,
   "tasks": {
@@ -3754,15 +3754,16 @@
         "tests_backend/test_validation.py"
       ],
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794612109473,
-        "entry": 2,
-        "detail": "Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_ha_build_identity.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_trail_recorder_imports.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed",
-        "eventId": "finish:eb7308c8-afa6-4e2f-bbfc-0724d5d2d9a6:finish:3:return:return:1391"
-      }
+        "at": 1794612378383,
+        "entry": 3,
+        "detail": "Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed",
+        "eventId": "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:3:return:return:1391"
+      },
+      "reason": "checks-failed"
     },
     "1393": {
       "issue": 1393,
@@ -4960,18 +4961,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1391,
-    "worker": "finish",
-    "token": "421:finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:1:admit",
-    "fence": 421,
-    "materialSha": "64c2ef2dcae413765a394c9d09e2acbc674f2f2f",
-    "expectedBase": "759ff053090317b430cdee3dca12fba18892de4b",
-    "phase": "testing",
-    "admittedAt": 1794612203839,
-    "expiresAt": 1794612622751,
-    "patchId": "3cf2d541fdd6e8478587c1ba8a5592fbcb49f53f"
-  },
+  "active": null,
   "events": {
     "github:43515037012:1:label:spec-request": {
       "digest": "cb21826d11123623f046652b4b9274b4a4c592dda8f5cc1b92e0ce301c8cf9fb",
@@ -5185,6 +5175,10 @@
       "digest": "33bf140dcccf190085d152f6a413b3da5342de1b52dd417724bb659198e0b3e0",
       "issue": 1391
     },
+    "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:3:return": {
+      "digest": "eac3e751294f587e125b80f8e9c03b6b45969f750f5e2439f1f579cbf94d8c0b",
+      "issue": 1391
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5355,6 +5349,26 @@
         "layer": "product",
         "materialSha": "64c2ef2dcae413765a394c9d09e2acbc674f2f2f",
         "phase": "sync"
+      }
+    },
+    "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:3:return:return:1391": {
+      "digest": "eac3e751294f587e125b80f8e9c03b6b45969f750f5e2439f1f579cbf94d8c0b",
+      "issue": 1391,
+      "message": {
+        "kind": "return",
+        "issue": 1391,
+        "at": 1794612378383,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794612378383,
+          "entry": 3,
+          "detail": "Backend: tests_backend/test_contact_basis.py: failed; Backend: tests_backend/test_ha_virtual_lights.py: failed; Backend: tests_backend/test_vacuum_routes.py: failed",
+          "eventId": "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:3:return:return:1391"
+        }
       }
     }
   },
