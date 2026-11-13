@@ -184,7 +184,7 @@ export function textFieldsCss(options: FormKitCssOptions, selectors: string, den
     font-size: ${compact ? '14px' : options.parameterized ? '13px' : '.875rem'};
     line-height: ${options.parameterized && !compact ? '22px' : '1.4'};${compact ? '\n    font-variant-numeric:tabular-nums;' : ''}
   }${options.parameterized || compact ? `
-  :is(${selectors}):not(select):not(:disabled)${guard} { cursor:text; }
+  :is(${selectors}):not(select):not(button):not(:disabled)${guard} { cursor:text; }
   :is(${selectors}):not(:disabled)${guard}:hover { border-color:var(${tokens.accent}); }
   :is(${selectors}):not(:disabled)${guard}:focus { outline:none; border-color:var(${tokens.accent}); box-shadow:inset 0 0 0 1px var(${tokens.accent}); }
   :is(${selectors})[aria-invalid=true], :is(${selectors}).bad { border-color:var(${tokens.danger}); }

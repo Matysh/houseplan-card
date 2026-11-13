@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1410,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Prevent shared text-field cursor paint from overriding source-picker buttons.",
+  "summary": {
+    "ru": "У поля Icon state source исправлен текстовый курсор на курсор указателя.",
+    "en": "Show a pointer cursor on the Icon state source picker."
+  }
+}
