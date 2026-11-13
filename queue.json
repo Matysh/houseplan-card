@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11202,
+  "revision": 11203,
   "nextTicket": 410,
   "nextFence": 410,
   "tasks": {
@@ -4935,6 +4935,10 @@
       "digest": "b5aa67584b55c2d5e213d4609300667a7a950ca110ec8734b0b19103097bad8e",
       "issue": 1413
     },
+    "github:43444232844:1:completions:message:5763004943084919c354b085d378e7d90748c4e645d4adff36a7001870110a80": {
+      "digest": "c00245c32b3c5298a7950c60a0952e0298e1951bdac789bee474050cb7138b4d",
+      "issue": 1413
+    },
     "finish:22f7a3ed-e33b-4a76-9188-8188891dc099": {
       "digest": "8f42e7d5b35e7d76bc5e926ae7d04a9281056a89343e65a6d6aee490fd9c4228",
       "issue": 1413,
@@ -5040,7 +5044,8 @@
         "reviewChanges": "Доказательство на реальном HA: gate выключен и `_tip=null` сразу после detach/attach; затем browser `pointerover` с новым timestamp включает gate, без pointermove, и новый 150-мс dwell открывает tooltip. Диагностический лог `artifacts/issue1412/remount-diagnosis3.json` отделяет этот эффект от старого timer/callback. Основной E2E не использует приватное состояние; временная диагностика удалена.\n\nРешение: PointerModalityController не принимает pointerover/enter для восстановления выключенного gate. Обычный pointermove/down продолжает прежнюю revalidation; touch compatibility не менялась. Ранний отказ device-pointer теперь отменяет только pointer lease, не стирая валидный keyboard focus tooltip. Добавлены поведенческие Node-кейсы в существующих файлах; их текущая классификация и центральная выборка остаются presentation/editors/devices, дополнены адресными native hover/touch/room/Zigbee/keyboard смоуками. Типы и сборка, 11 адресных Node-кейсов успешны. Реальные HA E2E повторяются на исправленной сборке до беты. Goldens не менялись.\n\nРеальный HA 2026.11.1 на исправленном `517fa49e6`: **7/7 PASS** (4 business-сценария + auth admin/viewer и plan-model setup), 44.4 с. Обе поверхности (panel/masonry), реальные сервисы light и входящий state stream, pointer dwell/соседи/fade/reduced motion/resize, pending/visible mode/space/navigation/remount и новое движение после remount прошли. Лог `artifacts/issue1413/e2e50-fixed.log`. Продолжается центральный S6 перед ревью; beta-кандидат ещё не заморожен.\n\n### Повтор S6 после комнатной регрессии\n\nПервый S6: 532/533 успешны, отказ `smoke_room_co2` был корректным. После игнорирования cold boundary первое реальное движение показывало комнатный tooltip, но не заполняло `_hoverRoom` (он задавался только на enter), поэтому стационарное CO₂ оставалось старым. Room acquisition теперь вызывается из существующего move handler и не пересчитывает уже принадлежащий hover. Все формы комнаты используют тот же handler. Сборка/типы и **неизменённый** `smoke_room_co2.mjs` прошли. Проверки или ожидания CO₂ не ослаблялись. Повтор finish включает полный актуальный diff и адресный CO₂ smoke.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
