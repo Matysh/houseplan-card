@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 736,
+  "revision": 737,
   "active": "1.85.2-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -82719,7 +82719,65 @@
         1406
       ],
       "reviewRequired": true,
-      "review": null,
+      "review": {
+        "sha": "17d4d17b9973ffd53d59bb477eb353902f23de06",
+        "report": {
+          "kind": "reuse-of-accepted-independent-task-reviews",
+          "equivalentAcceptedS8Head": "3749fc755b4e9b1318f3770870a803f687cdd76a",
+          "verifiedProductScope": [
+            "src",
+            "assets",
+            "custom_components",
+            "package.json",
+            "package-lock.json",
+            "rollup.config.mjs",
+            "tsconfig.json",
+            "docs/data-hp-contract.json"
+          ],
+          "onlyDifferences": [
+            "custom_components/houseplan/const.py",
+            "custom_components/houseplan/manifest.json",
+            "package-lock.json",
+            "package.json",
+            "src/houseplan-card.ts",
+            "src/houseplan-editor-runtime.ts"
+          ],
+          "normalization": "Only explicit root/package and CARD_VERSION/VERSION release identifiers; all other source content is equal.",
+          "reviews": [
+            {
+              "issue": 1399,
+              "workflowRun": 43369049570,
+              "verdict": "accepted",
+              "mergedSha": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26"
+            },
+            {
+              "issue": 1400,
+              "workflowRun": 43371331730,
+              "verdict": "accepted",
+              "mergedSha": "098e1eb656dcdf2478915476251449972232d814"
+            },
+            {
+              "issue": 1403,
+              "workflowRun": 43374651326,
+              "verdict": "accepted",
+              "mergedSha": "a90bcd6c733c19ce6d7117f550c27676fa902412"
+            },
+            {
+              "issue": 1404,
+              "workflowRun": 43379068314,
+              "verdict": "accepted",
+              "mergedSha": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0"
+            },
+            {
+              "issue": 1401,
+              "workflowRun": 43385670711,
+              "verdict": "accepted",
+              "mergedSha": "24f98e2081b460f7b14a76a186155b574a6bbb45"
+            }
+          ],
+          "note": "No new substantive review is claimed. Reuse existing green reviews for unchanged accepted product fixes; new ship1405/1406 remain subject to normal release ship packet."
+        }
+      },
       "metrics": null,
       "metricsAcceptedSha": null,
       "portToDev": [
@@ -87454,7 +87512,8 @@
     "ship-review:result:fd70275d-d55c-4a55-a78b-33081d1a12b8": "97886aa12f9c6657ff84c06517ad5b19614bd219c4727ff830d4369d1f3522a1",
     "beta-1024-report:20261112T235858266-e7676a09": "f8ac0126da9e5632a0c1ab97d30b29fc8f6ce272d7e3d72b68333f29124abfbd",
     "beta-1024-metrics:20261112T235858266-e7676a09": "fc1029ef6ebaf0f15560b9515004bd14388e3e4321f6d7743e8cab3b8460916d",
-    "release-1-85-2-beta-1-repairs-17d4d17b9973ffd53d59bb477eb353902f23de06": "53c2d0071c3e402a71197a826e081e3132c5f957b77c405fdea555d6b45ba671"
+    "release-1-85-2-beta-1-repairs-17d4d17b9973ffd53d59bb477eb353902f23de06": "53c2d0071c3e402a71197a826e081e3132c5f957b77c405fdea555d6b45ba671",
+    "release-1-85-2-beta-1-reused-fix-reviews-17d4d17b9973ffd53d59bb477eb353902f23de06": "01b1b424a230f744d873bccb02809d29455e2e32acd25ca876b89f2ae86d4050"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
