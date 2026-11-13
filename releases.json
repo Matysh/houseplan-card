@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 812,
+  "revision": 813,
   "active": "1.85.2-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -91521,7 +91521,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.85.2-beta.2",
@@ -99511,7 +99511,8 @@
           "en": "## v1.85.2-beta.2 — 2026-11-13\n\n- Keep remount/layout boundary events from reviving a retired mouse tooltip without fresh movement; preserve keyboard focus tips and normal mouse recovery (#1413, houseplan-e2e#50).\n\n- Declare the existing live tooltip as a read-only HA E2E hook; preserve hover behavior and the strict selector contract (#1412, houseplan-e2e#50).\n\n- Show device tooltips after a short hover dwell, keep their anchor and animation across pointer movement and live HA updates, and fade with UI Kit timing. Retire stale visits at lifecycle boundaries and reclamp on real viewport resize (#1409).\n\n- Keep each device-tooltip metric's label, value and unit together when wrapping, while long model names and separate metrics still wrap within the viewport (#1411).\n\n- Keep the pointer cursor on source-picker buttons, including Icon state source, while search fields retain their text cursor and disabled controls keep their existing affordance (#1410).\n\n- Remove the unused Optimize version-comparison export and its obsolete update-advice test; current failure diagnostics remain covered (#1402).\n\n- Route nightly mutation failures by failing check instead of appending unrelated reports to a completed task. Verify lazy furniture artwork by its emitted graph rather than retired bundle-size ceilings (#1407)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.85.2-beta.2"
     }
   },
   "published": {
@@ -104294,7 +104295,8 @@
     "beta2-20261113-final-report": "c0c3a142fe94ef84aec64818b75f061881c344880c0281bc3fbdfb36b5951094",
     "beta2-20261113-final-metrics": "5726999aef217904a0d85946cd2000578fde1009740491b3a98b1b110fcaffa9",
     "beta2-20261113-owner-size-accepted": "ef68d663f2b89a891efe78ee44488d4a6e756fff9bb6fbea34ee6ebf20cd1785",
-    "beta2-20261113-publication-r2:prepared:18af0b3d-1f5d-40bb-b115-fcb4c49891e2": "3e3c86760515081b56b170dc0f18e9541263f5ecbd6d3bb9557c2a9db62adfae"
+    "beta2-20261113-publication-r2:prepared:18af0b3d-1f5d-40bb-b115-fcb4c49891e2": "3e3c86760515081b56b170dc0f18e9541263f5ecbd6d3bb9557c2a9db62adfae",
+    "beta2-20261113-publication-r2:started:812": "d25e954dbc5a6352f43e174dcadcb281257be3e5d5867888ef54f0a42566b7be"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
