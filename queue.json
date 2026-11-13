@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10855,
+  "revision": 10856,
   "nextTicket": 402,
   "nextFence": 402,
   "tasks": {
@@ -4593,7 +4593,7 @@
       "ownerDecision": null,
       "ticket": 401,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794560316962,
       "reviewEntry": 2,
       "patchId": "b11f019adb8b8103ad81a42a0483a28defb0c5bc",
@@ -4669,19 +4669,15 @@
         "test/danger-confirmation.test.mjs"
       ],
       "s6": {
-        "id": "20261113T082331827-e9a39aa0",
+        "id": "20261113T085854461-f161b2b3",
         "name": "Тесты для задачи #1408 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T082331827-e9a39aa0/report.json",
-        "materialSha": "9280e6617a5090932815b575c4289d71aadfa1c7",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T085854461-f161b2b3/report.json",
+        "materialSha": "b51175c5a26569993be178aac91f9ecd3f640906",
         "status": "passed",
-        "finishedAt": "2026-11-13T08:39:10.233Z",
+        "finishedAt": "2026-11-13T09:00:34.691Z",
         "failures": []
       },
       "reviewRound": 1,
-      "reviewCorrection": {
-        "requestId": "review:1408:1:49a83ed2813915a2bfb3533ded1d5a3ea1d3971a:ed16ef29d380e63f2bd12f0f29ba01c0164a863a",
-        "at": 1794559354532
-      },
       "notice": {
         "key": "1:review-findings",
         "reason": "review-findings",
@@ -4929,9 +4925,9 @@
     "fence": 401,
     "materialSha": "b51175c5a26569993be178aac91f9ecd3f640906",
     "expectedBase": "ed16ef29d380e63f2bd12f0f29ba01c0164a863a",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794560321337,
-    "expiresAt": 1794560627660,
+    "expiresAt": 1794564035931,
     "patchId": "b11f019adb8b8103ad81a42a0483a28defb0c5bc"
   },
   "events": {
@@ -5157,6 +5153,34 @@
           "finishedAt": "2026-11-13T08:39:10.233Z",
           "failures": []
         }
+      }
+    },
+    "finish:072e7ca7-140c-4137-a5d7-bd85f56bf12a:finish:3:s6-complete": {
+      "digest": "df047247dde8c34eb35d23871573b97441650cf4ad0475cf2ca50ea67fe9aafd",
+      "issue": 1408,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1408,
+        "at": 1794560435931,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "b51175c5a26569993be178aac91f9ecd3f640906",
+        "phase": "review",
+        "evidence": {
+          "id": "20261113T085854461-f161b2b3",
+          "name": "Тесты для задачи #1408 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T085854461-f161b2b3/report.json",
+          "materialSha": "b51175c5a26569993be178aac91f9ecd3f640906",
+          "status": "passed",
+          "finishedAt": "2026-11-13T09:00:34.691Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "Возвращаем точную историю опубликованного тега в dev, сохраняя новые изменения dev отдельно. Публичный тег, ZIP и принятые PNG не меняются.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43394930128.\n\n- Замечание: при автоматическом merge русские записи #1402 и #1407 попали в выпущенный раздел v1.85.2-beta.1, хотя этих изменений нет в теге. Исправление: обе записи возвращены в «Не выпущено» над заголовком беты; раздел беты снова начинается с #1405, соответствует опубликованному тегу и разграничению версий в английском changelog. Сами тексты записей сохранены. Других изменений после предыдущего ревью нет.\n- Продукт, тесты, эталоны и опубликованный архив не редактировались. Предыдущий S6 результата слияния 9280e6617a5090932815b575c4289d71aadfa1c7 прошёл все 671 шаг: `20261113T082331827-e9a39aa0`. Повторная передача использует применимые результаты через штатный кеш. Отдельных тестов, сборок или линтеров для перестановки текста не запускалось.\n\nНизкоприоритетное предложение поправить исторические пробелы в acceptance-документе не включено в служебный возврат.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
