@@ -2,13 +2,12 @@
 
 ## Unreleased
 
+## v1.85.2-beta.1 — 2026-11-13
+
 - Preserve the stable visual witnesses after asynchronous optimization and shared opening/dimension changes; review each changed image and reject hidden dimension text (#1401, #1403).
 
 - Keep shared editor dimensions readable beside the floating tool tray, using the existing numbered-list fallback when needed (#1403).
 
-## Unreleased
-
-## v1.85.2-beta.1 — 2026-11-13
 - Declare the existing read-only dimension interval and painted rail as versioned test hooks for real HA E2E; keep the remaining renderer probes internal and the strict selector check unchanged (#1406).
 
 - Keep the shared dimension list and labels clear of the visible zoom badge; fixed editor controls take priority when a list corner is chosen (#1404).
