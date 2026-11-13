@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11646,
+  "revision": 11647,
   "nextTicket": 419,
   "nextFence": 419,
   "tasks": {
@@ -4929,6 +4929,10 @@
       "digest": "6e6bc94786c9e5b71be4d6b7f2c0999e6b571332110e8d920be60e5673ba6eba",
       "issue": 1393
     },
+    "finish:66f16be6-ee8d-43ef-98b8-d57fe8e8ba98:finish:3:s6-label": {
+      "digest": "afc76b10bb6132b480bc0c51a687079249962b193e4a8ed2d5dd9e8529d540c6",
+      "issue": 1393
+    },
     "finish:66f16be6-ee8d-43ef-98b8-d57fe8e8ba98": {
       "digest": "8d9eaa86055cca3cd4566a96bb187ba6b435f347433eb8f74c75c689737f59b6",
       "issue": 1393,
@@ -4981,7 +4985,8 @@
         "resubmission": false,
         "reviewChanges": "Ветка `codex/1393-ha-component-inventory` от dev `281365641`. AST tagged-template inventory: 7 реальных тегов в 46 файлах; простые упоминания в 90 файлах включают CSS/комментарии. `ha-panel-custom` — комментарий о внешнем HA-контейнере, не восьмой тег renderer. Все 43 файла с `ha-icon` перечислены в JSON. Указаны также drawer/bottom-sheet/root/locale/theme/font зависимости.\n\n15 изолированных bootstrap samples (5 на вариант): нынешний HA 1 548 459 decoded resource bytes / 20 requests / 143,2 ms median; без card 1 537 661 / 19 / 128,4; native HpDialog + finite SVG 198 166 / 5 / 39,2. Нативный probe ещё использует локальные Roboto из HA cache для сопоставимости: это не утверждение о самостоятельной поставке шрифтов. 111 MB wheel не приравнивается к browser payload. Из `dist` в пробник не загружается код продукта.\n\nИзменены только документация и RU/EN changelog. Продуктовые тесты/build/lint/проверка ссылок не запускались. Исследовательский временный bundle/probe описан как measurement, не как проверка полного UI. При воспроизведении первый вспомогательный запуск остановился из-за отсутствующего необязательного esbuild (переведён на штатный Rollup), затем поправлена проверка видимости `display:contents` HA shell на реально видимое поле; это не изменение продуктового теста/допуска. Завершённые samples и ограничения сохранены.\n\nДля ревью: полнота инвентаря, границы сопоставимости измерений, различие wheel/реальных ресурсов, отсутствие заявления о pixel parity и отсутствие изменений продукта. Реализацию компонентов owner разрешил как направление, но её задачи этим отчётом не запускаются.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
