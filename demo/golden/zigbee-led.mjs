@@ -63,6 +63,8 @@ export async function prepareZigbeeLed(page) {
   await page.mouse.move(point.x, point.y);
   await page.waitForFunction(() => window.__goldenCard.renderRoot.querySelector('hp-zigbee-topology-overlay')
     ?.shadowRoot?.querySelectorAll('[data-hp="zigbee-topology-led-anchor"]').length === 2);
+  // These scenes also witness the ordinary tooltip, which opens after dwell.
+  await page.locator('[data-hp="live-tooltip"]').waitFor({ state: 'visible' });
   return page.evaluate(() => {
     const overlay = window.__goldenCard.renderRoot.querySelector('hp-zigbee-topology-overlay').shadowRoot;
     const anchors = [...overlay.querySelectorAll('[data-hp="zigbee-topology-led-anchor"]')].map(n => {

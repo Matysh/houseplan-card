@@ -1,0 +1,1 @@
+{"schema":1,"issue":1419,"baseStable":"v1.85.0","category":"infra","rationale":"Wait for the existing ordinary tooltip in the three Zigbee/LED capture scenes without changing their pixels or expectations.","summary":{"ru":"Zigbee/LED-сцены ждут появления обычной подсказки перед съёмкой.","en":"Wait for the ordinary tooltip before capturing Zigbee/LED scenes."}}
