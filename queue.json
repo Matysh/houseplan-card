@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11644,
+  "revision": 11645,
   "nextTicket": 419,
   "nextFence": 419,
   "tasks": {
@@ -3650,7 +3650,15 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794607727656,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "5395cb2888eb7fd79732b12be66805e57356baca",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/design/1393-ha-components-measurement.json",
+        "docs/design/1393-ha-components.md",
+        "docs/design/1393-probe-reproducer.md"
+      ]
     },
     "1396": {
       "issue": 1396,
@@ -4821,10 +4829,11 @@
     "token": "418:finish:66f16be6-ee8d-43ef-98b8-d57fe8e8ba98:finish:1:admit",
     "fence": 418,
     "materialSha": "759ff053090317b430cdee3dca12fba18892de4b",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
+    "phase": "testing",
     "admittedAt": 1794607732010,
-    "expiresAt": 1794608032010
+    "expiresAt": 1794608037870,
+    "patchId": "5395cb2888eb7fd79732b12be66805e57356baca"
   },
   "events": {
     "github:43515037012:1:label:spec-request": {
@@ -4906,6 +4915,10 @@
     "github:43515933499:1:completions:report:3692f4c761b610ac8ecbd8abe4a32436271a3df5bfb7f71751c6252912930d53": {
       "digest": "6923edc2dd083d159ddc5267e69b189bd51800bb52df83859d8ab23b1110f3a2",
       "issue": 1392
+    },
+    "finish:66f16be6-ee8d-43ef-98b8-d57fe8e8ba98:finish:2:synchronized": {
+      "digest": "6e6bc94786c9e5b71be4d6b7f2c0999e6b571332110e8d920be60e5673ba6eba",
+      "issue": 1393
     },
     "finish:66f16be6-ee8d-43ef-98b8-d57fe8e8ba98": {
       "digest": "8d9eaa86055cca3cd4566a96bb187ba6b435f347433eb8f74c75c689737f59b6",
