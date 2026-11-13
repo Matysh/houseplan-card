@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 855,
+  "revision": 856,
   "active": "1.85.2-stable-20261113",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -99944,8 +99944,11 @@
       "sourceSha": "86015ab8132a92ab6546eedda2f0421b01700355",
       "sha": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
       "runner": null,
-      "running": null,
-      "status": "prepared",
+      "running": {
+        "id": null,
+        "sha": "eeab22dee2af68426a3f7782f75c11428d6a98c4"
+      },
+      "status": "testing",
       "membership": {
         "schema": 1,
         "tag": null,
@@ -105157,7 +105160,8 @@
     "stable1852-20261113-publication:started:851": "627725d33759108f563e598d213335a0ae055c349b92999aba342deea378466b",
     "stable1852-20261113-publication:failed:852": "6cd42d4dc3981381f18c47cf838ee95fdb6cc8953b5d37055fc34a41e2b64575",
     "stable1852-20261113-main-readme-history": "2d2b509596c772a68d57eaccf14611ecbfcdd613c300c179adf95af15defe938",
-    "stable1852-20261113-reviewed-product-fix-r3": "40b368ff181773509e681eab794f2ed5f427bb73157608cb73e05a460a17bc2b"
+    "stable1852-20261113-reviewed-product-fix-r3": "40b368ff181773509e681eab794f2ed5f427bb73157608cb73e05a460a17bc2b",
+    "stable1852-20261113-run-started-r3": "d749a7d656661c8a9b4161d830579fc4a9cc9ba454345aa379f8678800591a33"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
