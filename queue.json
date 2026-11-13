@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11105,
-  "nextTicket": 407,
+  "revision": 11106,
+  "nextTicket": 408,
   "nextFence": 407,
   "tasks": {
     "1024": {
@@ -4507,6 +4507,20 @@
         "status": "published",
         "sourceSha": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856"
       }
+    },
+    "1412": {
+      "issue": 1412,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1412-tooltip-e2e-hook",
+      "materialSha": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 407,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794577447482,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4736,9 +4750,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1412
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:d283f8a5-a2d6-4a81-b8b0-7cfea249b786": {
+      "digest": "91878d0964795925d82a0c811cc22d4959b3134a126be19b0f578168a7f0b686",
+      "issue": 1412,
+      "message": {
+        "kind": "queued",
+        "issue": 1412,
+        "at": 1794577447482,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c250fcb4591a698481da3ccaa6a2261e2a0e04de",
     "status": "delivered",
