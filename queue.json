@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10848,
+  "revision": 10849,
   "nextTicket": 401,
   "nextFence": 401,
   "tasks": {
@@ -4593,7 +4593,7 @@
       "ownerDecision": null,
       "ticket": 400,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1794557809216,
       "reviewEntry": 1,
       "patchId": "49a83ed2813915a2bfb3533ded1d5a3ea1d3971a",
@@ -4690,6 +4690,20 @@
         "at": 1794559171313,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1408:1:49a83ed2813915a2bfb3533ded1d5a3ea1d3971a:ed16ef29d380e63f2bd12f0f29ba01c0164a863a",
+        "at": 1794559354532
+      },
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1794559354532,
+        "entry": 1,
+        "requestId": "review:1408:1:49a83ed2813915a2bfb3533ded1d5a3ea1d3971a:ed16ef29d380e63f2bd12f0f29ba01c0164a863a"
       }
     }
   },
@@ -4935,19 +4949,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1408,
-    "worker": "github-coordinator",
-    "token": "400:github:43392678739:1:tick:0:admit",
-    "fence": 400,
-    "materialSha": "9280e6617a5090932815b575c4289d71aadfa1c7",
-    "expectedBase": "ed16ef29d380e63f2bd12f0f29ba01c0164a863a",
-    "phase": "review",
-    "admittedAt": 1794558146830,
-    "expiresAt": 1794562754313,
-    "patchId": "49a83ed2813915a2bfb3533ded1d5a3ea1d3971a",
-    "reviewRequest": "review:1408:1:49a83ed2813915a2bfb3533ded1d5a3ea1d3971a:ed16ef29d380e63f2bd12f0f29ba01c0164a863a"
-  },
+  "active": null,
   "events": {
     "github:43392678739:1:completions:message:3943c44c47d8af9296c1840f9cf278c4d6c1923f60f7e37e2299d8715a2cdf81": {
       "digest": "d43c2274bc177591b130208945bfdf4b388bf7fbd6dd54005443002957b709ca",
@@ -5047,6 +5049,10 @@
     },
     "github:43395295110:1:tick:0:review-presentation": {
       "digest": "f17fe0d56feb602e88f7567e9d343224bfedd56ca4da8acd5c41fb27c1595df6",
+      "issue": 1408
+    },
+    "github:43395295110:1:tick:0:return": {
+      "digest": "526149802bc91c6ae92a5c8853510cd4f4db91993c89f59b8445cc92d7bb1dd1",
       "issue": 1408
     },
     "release-return:6bfa94bb-88b7-46a6-a4f6-85239f922c42": {
