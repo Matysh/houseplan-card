@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10429,
+  "revision": 10430,
   "nextTicket": 393,
   "nextFence": 393,
   "tasks": {
@@ -4510,7 +4510,7 @@
       "ownerDecision": null,
       "ticket": 392,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794550895575,
       "reviewEntry": 1,
       "patchId": "2111099a00889e5def2b69e5eb67fa7a146c8e44",
@@ -4522,7 +4522,16 @@
         "src/wall-side-dimension-editor.ts",
         "src/wall-side-dimension-layout.ts",
         "test/wall-side-dimension-labels.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261113T062152094-75e513b1",
+        "name": "Тесты для задачи #1404 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T062152094-75e513b1/report.json",
+        "materialSha": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
+        "status": "passed",
+        "finishedAt": "2026-11-13T06:29:19.547Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4774,9 +4783,9 @@
     "fence": 392,
     "materialSha": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
     "expectedBase": "a90bcd6c733c19ce6d7117f550c27676fa902412",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794550899399,
-    "expiresAt": 1794551618839,
+    "expiresAt": 1794554960845,
     "patchId": "2111099a00889e5def2b69e5eb67fa7a146c8e44"
   },
   "events": {
@@ -4837,6 +4846,34 @@
         "layer": "product",
         "materialSha": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
         "phase": "sync"
+      }
+    },
+    "finish:7948f4eb-1074-45c1-a086-5d852429ffb0:finish:3:s6-complete": {
+      "digest": "719eb739619c2a74839cd742b0a73f07aae665b49e0296d2c335649f3ed1a25f",
+      "issue": 1404,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1404,
+        "at": 1794551360845,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
+        "phase": "review",
+        "evidence": {
+          "id": "20261113T062152094-75e513b1",
+          "name": "Тесты для задачи #1404 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T062152094-75e513b1/report.json",
+          "materialSha": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0",
+          "status": "passed",
+          "finishedAt": "2026-11-13T06:29:19.547Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Выявлено при порученном владельцем ремонте отказов stable-профиля перед beta 1.85.2-beta.1. Точечный дефект read-only представления. Это новый ремонт после уже принятой #1403, а не повтор её зелёного ревью. Реальный HA и UI Lab не затрагиваются.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
