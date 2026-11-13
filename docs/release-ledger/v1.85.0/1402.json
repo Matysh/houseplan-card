@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1402,
+  "baseStable": "v1.85.0",
+  "category": "infra",
+  "rationale": "Remove an unreferenced internal Optimize helper and its obsolete-only test; no user-visible behavior or data changes.",
+  "summary": {
+    "ru": "Удалены неиспользуемое сравнение версий Optimize и устаревший тест.",
+    "en": "Remove the unused Optimize version comparison and obsolete test."
+  }
+}

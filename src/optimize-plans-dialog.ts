@@ -137,11 +137,6 @@ export function preflightDiagnostics(
   };
 }
 
-export function preflightVersionsDiffer(integration: string | null, cardVersion: string): boolean {
-  return typeof integration === 'string' && integration.length > 0
-    && integration !== cardVersion;
-}
-
 /**
  * #869: what the dialog takes from the runtime besides the port. The optimizer
  * is injected, not imported: this module is its own lazy chunk, and a static

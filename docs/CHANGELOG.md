@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Remove the unused Optimize version-comparison export and its obsolete update-advice test; current failure diagnostics remain covered (#1402).
+
 - Route nightly mutation failures by failing check instead of appending unrelated reports to a completed task. Verify lazy furniture artwork by its emitted graph rather than retired bundle-size ceilings (#1407).
 ## v1.85.2-beta.1 — 2026-11-13
 
