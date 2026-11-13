@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10976,
+  "revision": 10977,
   "nextTicket": 405,
   "nextFence": 405,
   "tasks": {
@@ -4895,19 +4895,6 @@
   "waiting": [],
   "active": null,
   "events": {
-    "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2": {
-      "digest": "e798bb1c222de57d419b8cb2f051ee728c263971c8ec7a32e5db649d44560212",
-      "issue": 1411,
-      "message": {
-        "kind": "queued",
-        "issue": 1411,
-        "at": 1794569670329,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "579596c9bde36cff64ca25a9ad1a9f9dd99b63f2"
-      }
-    },
     "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:1:admit": {
       "digest": "8b47c91204a8f847c97467238b30f76e1d642e6f6d1a8cbd4d813872721c9ea9",
       "issue": 1411,
