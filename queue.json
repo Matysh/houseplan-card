@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10689,
+  "revision": 10690,
   "nextTicket": 399,
   "nextFence": 399,
   "tasks": {
@@ -4628,7 +4628,14 @@
       },
       "automationError": "automation-error",
       "automationSince": 1794556225526,
-      "automationDetail": "GitHub POST failed (403)"
+      "automationDetail": "GitHub POST failed (403)",
+      "reviewRetry": {
+        "requestId": "review:1407:1:648bd81aec1f4c378aabbc326cbe5979a3eab7c2:3749fc755b4e9b1318f3770870a803f687cdd76a",
+        "eventId": "github:43388593252:1:tick:0:review-retry",
+        "at": 1794556227821,
+        "runId": null,
+        "runAttempt": null
+      }
     }
   },
   "ownerDecisions": {},
@@ -4924,6 +4931,10 @@
     },
     "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:6:automation-pending": {
       "digest": "0cbbe73c87886bbf2449cd6d70c25d8ba0722b95a224911ec3db7dd930dd0120",
+      "issue": 1407
+    },
+    "github:43388593252:1:tick:0:review-retry": {
+      "digest": "38aa88ca74a5d40caeb042c71fca365f44ab6b52ed97ce5370913554cb5a790d",
       "issue": 1407
     },
     "finish:35e8bc3c-734f-4fb5-b24b-af877bffda3f": {
