@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11270,
+  "revision": 11271,
   "nextTicket": 412,
   "nextFence": 412,
   "tasks": {
@@ -4765,26 +4765,6 @@
   "waiting": [],
   "active": null,
   "events": {
-    "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:3:return:return:1414": {
-      "digest": "dc260a7764a0767d66ae569219c57e005a66068d618b45c5a8b46c4e76faaacd",
-      "issue": 1414,
-      "message": {
-        "kind": "return",
-        "issue": 1414,
-        "at": 1794581768883,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1794581768883,
-          "entry": 1,
-          "detail": "Браузер: capture stability: failed",
-          "eventId": "finish:03576161-6b03-4363-aefa-bde0bc4a9c1b:finish:3:return:return:1414"
-        }
-      }
-    },
     "finish:e542f5b6-4d77-4d98-885e-37e831560c54": {
       "digest": "ce6d7c8086f11344d315a317098fa04316d49a26bdeac75cbdbb7ccba37ab71a",
       "issue": 1414,
