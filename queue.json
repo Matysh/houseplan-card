@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10978,
+  "revision": 10979,
   "nextTicket": 405,
   "nextFence": 405,
   "tasks": {
@@ -4913,19 +4913,6 @@
           "detail": "Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:3:return:return:1411"
         }
-      }
-    },
-    "finish:50df5f80-fd97-4e6c-b45a-f915f2d87426": {
-      "digest": "8a9e9e77c6226a9bc98a25b13664feb6782a75c1584580adc21d030e37940242",
-      "issue": 1411,
-      "message": {
-        "kind": "queued",
-        "issue": 1411,
-        "at": 1794570157150,
-        "entry": 2,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856"
       }
     },
     "finish:50df5f80-fd97-4e6c-b45a-f915f2d87426:finish:1:admit": {
