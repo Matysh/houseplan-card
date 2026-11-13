@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10373,
+  "revision": 10374,
   "nextTicket": 392,
   "nextFence": 392,
   "tasks": {
@@ -4905,6 +4905,10 @@
       "digest": "d24dfd1dbb7155eade6667f643daf12a48f9b3a3430f53aa7ea43688c042a247",
       "issue": 1403
     },
+    "github:43374626449:1:completions:message:77de1dd5a495a7a8a4c59cbe9f29f206daf8b6aa5900f57d4aa3568849f1abee": {
+      "digest": "e101d1c6555f87c91df5e8efaa3b50f74f138e7598205b79b56f0851f3fa1f6f",
+      "issue": 1403
+    },
     "finish:2fdfaefd-14ed-4f74-842a-83e6483a33d2": {
       "digest": "2c96992298ec26a536cb0d6fc8d5e1bb49355c549271c5d94798f734380a0327",
       "issue": 1403,
@@ -5060,7 +5064,8 @@
         "reviewChanges": "До исправления на снимке подписи закрыты HUD рисования. DOM содержит два интервала длиной 120 cm, экранные подписи находятся в полосе панели. Код wall-side-dimension-editor.ts передаёт препятствия только плана. Эталоны по этому случаю не обновлены.\n\n### Уточнение реализации и проверок\nИспользован общий layoutWallSideDimensions: одна экранная область плавающей editor-secondary добавляется в obstacles. При нехватке места используются существующие номер и список. Координаты стен и их сохранение не затронуты; проектируется только исходная геометрия, а не панель. До правки оба значения 120 cm закрыты HUD. Адресно прошли 16 unit-кейсов и три browser-варианта ширины 1180/900/780: реальные экранные прямоугольники подписей и списка не пересекают панель. Новый smoke_wall_dimension_hud распознан центральной taxonomy как geometry, unclassified=0; существующие dimension/editor проверки включены в S6. Снимки до/после сохраняются отдельно. Риск ревью: доступность DOM-геометрии панели при первой отрисовке, screen-space масштаб и общий fallback. Финальный S6 выполняется штатным finish, отладочные результаты его не заменяют.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
