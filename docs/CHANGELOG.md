@@ -1,5 +1,7 @@
 # Changelog
 
+- Keep shared editor dimensions readable beside the floating tool tray, using the existing numbered-list fallback when needed (#1403).
+
 ## Unreleased
 
 ## v1.85.2-beta.1 — 2026-11-13

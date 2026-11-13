@@ -2,6 +2,17 @@
  * for text; witness lines always leave those endpoints along the normal. */
 import type {EditorDimensionRecord,DimensionPoint} from './editor-dimension-record';
 export interface DimensionBox {x:number;y:number;w:number;h:number}
+/** Convert a fixed UI surface to the same CSS-pixel viewport as dimensions.
+ * The overlay is not plan geometry: camera pan/zoom must never project it. */
+export function screenDimensionObstacle(stage:DimensionBox,overlay:DimensionBox,
+  width:number,height:number):DimensionBox|null {
+  if(!(stage.w>0&&stage.h>0&&overlay.w>0&&overlay.h>0&&width>0&&height>0))return null;
+  const left=Math.max(stage.x,overlay.x),top=Math.max(stage.y,overlay.y);
+  const right=Math.min(stage.x+stage.w,overlay.x+overlay.w),bottom=Math.min(stage.y+stage.h,overlay.y+overlay.h);
+  if(!(right>left&&bottom>top))return null;
+  return{x:(left-stage.x)*width/stage.w,y:(top-stage.y)*height/stage.h,
+    w:(right-left)*width/stage.w,h:(bottom-top)*height/stage.h};
+}
 /** Cached scene math for the visible Resize glyph, not its larger invisible
  * hit disk. Matches _renderResizeLayer's half-size wall/arrows and neutral
  * stroke; no live DOM layout read is needed for a measurement label. */

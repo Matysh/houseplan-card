@@ -15,7 +15,7 @@ import {propertiesT} from './editors/properties/strings';
 import {DRAW_WALL_DEFAULT_CM} from './wall-thickness';
 import {affectedDimensionCarriers,dimensionCarriers,WallDimensionGeometry} from './wall-side-dimension-geometry';
 import {changedWallSideDimensions,type DimensionInterval,type DimensionPoint} from './wall-side-dimensions';
-import {layoutWallSideDimensions,dimensionListBox,resizeHandleDimensionObstacle,type DimensionBox} from './wall-side-dimension-layout';
+import {layoutWallSideDimensions,dimensionListBox,resizeHandleDimensionObstacle,screenDimensionObstacle,type DimensionBox} from './wall-side-dimension-layout';
 import {renderWallSideDimensions} from './wall-side-dimension-render';
 import type {EditorDimensionRecord} from './editor-dimension-record';
 import {openingDimensionRecord,lineDimensionRecord,spacingDimensionRecords} from './editor-dimension-adapters';
@@ -243,6 +243,15 @@ export class WallSideDimensionEditor {
       const p=host._framePercent(point,view);return[p[0]*width/100,p[1]*height/100];
     };
     const obstacles:DimensionBox[]=[];
+    // Read the single fixed tray, not every label. Its screen footprint is
+    // independent of plan projection and applies to all native adapters.
+    const stage=host.renderRoot?.querySelector('.stage')?.getBoundingClientRect();
+    const tray=host.renderRoot?.querySelector('.editor-secondary')?.getBoundingClientRect();
+    if(stage&&tray) {
+      const box=screenDimensionObstacle({x:stage.x,y:stage.y,w:stage.width,h:stage.height},
+        {x:tray.x,y:tray.y,w:tray.width,h:tray.height},width,height);
+      if(box)obstacles.push(box);
+    }
     const nodes=new Set<string>();
     for(const carrier of request?dimensionCarriers(request.candidate):[])for(const point of [carrier.a,carrier.b]) {
       const key=point.join(',');if(nodes.has(key))continue;nodes.add(key);
