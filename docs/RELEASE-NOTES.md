@@ -1,24 +1,20 @@
-<!-- release: v1.85.2-beta.1 -->
-## House Plan 1.85.2-beta.1
+<!-- release: v1.85.2-beta.2 -->
+## House Plan 1.85.2-beta.2
 
 ### Русский
 
-- **Окна с независимыми створками.** От одной до четырёх створок, открывание вверх, отдельные датчики и положения. Шторы настраиваются для каждой створки и перекрывают только свою долю света. Двери и ворота поддерживают раздвижной вариант и ручное положение без датчика. Новый вид согласован с UI-059; настройки сохраняются в резервных копиях. [#1024](https://github.com/Matysh/houseplan-card/issues/1024)
-- **Единые чертёжные размеры.** Размеры по обеим сторонам стены при рисовании, переносе узлов, изменении размера комнаты и выделении стены. Тот же механизм показывает отступы проёмов, длину линии подложки и равные интервалы между устройствами. Размеры следуют за планом при перемещении и масштабировании. [#1381](https://github.com/Matysh/houseplan-card/issues/1381), [#1397](https://github.com/Matysh/houseplan-card/issues/1397), [#1398](https://github.com/Matysh/houseplan-card/issues/1398)
-- **Изменение размера комнаты через примыкания.** Стена проходит существующие узлы за один жест; сохраняются материалы, проёмы и единая операция отмены. Убраны оставшиеся швы контура в предпросмотре. [#1383](https://github.com/Matysh/houseplan-card/issues/1383), [#1384](https://github.com/Matysh/houseplan-card/issues/1384)
-- **Понятный результат оптимизации.** Видно ожидание, результат остаётся доступен после сохранения; отдельно объясняются пропущенные исправления, отказ и неподтверждённое сохранение. [#1170](https://github.com/Matysh/houseplan-card/issues/1170)
-- **Загрузка и повторный вход.** Повторные чтения реестров объединяются, временные перемещения карточки не пересобирают модель этажа. Фронтенд отдаётся с заранее подготовленным gzip там, где браузер его поддерживает. [#1385](https://github.com/Matysh/houseplan-card/issues/1385), [#1386](https://github.com/Matysh/houseplan-card/issues/1386), [#1387](https://github.com/Matysh/houseplan-card/issues/1387)
-- **Исправления отображения.** Размеры больше не скрываются за панелью инструмента или индикатором масштаба; эквивалентные планы с сеткой 1 и 5 см одинаково рисуют импортированную SVG-подложку и её ручки. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1403](https://github.com/Matysh/houseplan-card/issues/1403), [#1404](https://github.com/Matysh/houseplan-card/issues/1404)
+- **Стабильные подсказки устройств.** Короткая задержка перед появлением, плавное появление и исчезновение. Подсказка остаётся на месте при движении указателя внутри значка и обновлении показаний HA. После переподключения карточки подсказка ждёт нового движения мыши. [#1409](https://github.com/Matysh/houseplan-card/issues/1409), [#1413](https://github.com/Matysh/houseplan-card/issues/1413)
+- **Понятные переносы.** Название показателя, значение и единица измерения переносятся вместе: например, «LQI 172» больше не разделяется между строками. [#1411](https://github.com/Matysh/houseplan-card/issues/1411)
+- **Курсор селектора.** У Icon state source исправлен текстовый курсор; поиск сохраняет привычное поведение. [#1410](https://github.com/Matysh/houseplan-card/issues/1410)
 
-После обновления перезапустите Home Assistant и перезагрузите открытые страницы House Plan. Это предварительная версия; перед редактированием важного плана сохраните полную резервную копию.
+Включены изменения [1.85.2-beta.1](https://github.com/Matysh/houseplan-card/releases/tag/v1.85.2-beta.1).
+После обновления перезапустите Home Assistant и перезагрузите страницы House Plan. Это предварительная версия; перед редактированием важного плана сохраните резервную копию.
 
 ### English
 
-- **Independent window leaves.** One to four leaves, top opening, separate sensors and positions. Each leaf can have its own shade, blocking only its share of light. Doors and gates support sliding mechanisms and manual positions without a sensor. The new appearance follows UI-059; backups preserve the new settings. [#1024](https://github.com/Matysh/houseplan-card/issues/1024)
-- **Shared drafting dimensions.** Two-sided wall dimensions while drawing, moving nodes, resizing rooms and selecting walls. The same mechanism covers opening offsets, background lines and equal device gaps. Dimensions follow live panning and zooming. [#1381](https://github.com/Matysh/houseplan-card/issues/1381), [#1397](https://github.com/Matysh/houseplan-card/issues/1397), [#1398](https://github.com/Matysh/houseplan-card/issues/1398)
-- **Room resizing across junctions.** Pass existing nodes in one gesture while preserving materials, openings and a single Undo operation. Preview wall contours no longer retain abandoned seams. [#1383](https://github.com/Matysh/houseplan-card/issues/1383), [#1384](https://github.com/Matysh/houseplan-card/issues/1384)
-- **Clear optimization outcomes.** Waiting states paint promptly and the saved report remains available; skipped repairs, rejection and unconfirmed saving are distinguished. [#1170](https://github.com/Matysh/houseplan-card/issues/1170)
-- **Loading and returning to the plan.** Registry reads are coalesced and temporary card moves reuse the floor model. Supported browsers receive precompressed frontend chunks. [#1385](https://github.com/Matysh/houseplan-card/issues/1385), [#1386](https://github.com/Matysh/houseplan-card/issues/1386), [#1387](https://github.com/Matysh/houseplan-card/issues/1387)
-- **Display fixes.** Dimensions stay clear of the tool tray and zoom badge; equivalent plans using 1 cm and 5 cm grids render imported SVG backdrops and their handles consistently. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1403](https://github.com/Matysh/houseplan-card/issues/1403), [#1404](https://github.com/Matysh/houseplan-card/issues/1404)
+- **Stable device tooltips.** A short hover delay and smooth appearance/disappearance. The tooltip stays anchored while the pointer moves inside the icon and HA readings update. After the card reconnects, the tooltip waits for fresh mouse movement. [#1409](https://github.com/Matysh/houseplan-card/issues/1409), [#1413](https://github.com/Matysh/houseplan-card/issues/1413)
+- **Readable wrapping.** Each metric label, value and unit wraps together; for example, “LQI 172” stays on one line. [#1411](https://github.com/Matysh/houseplan-card/issues/1411)
+- **Picker cursor.** Correct the text cursor on Icon state source while preserving normal search behavior. [#1410](https://github.com/Matysh/houseplan-card/issues/1410)
 
-Restart Home Assistant and reload open House Plan pages after updating. This is a prerelease; save a full backup before editing an important plan.
+Includes the changes from [1.85.2-beta.1](https://github.com/Matysh/houseplan-card/releases/tag/v1.85.2-beta.1).
+Restart Home Assistant and reload House Plan pages after updating. This is a prerelease; save a backup before editing an important plan.
