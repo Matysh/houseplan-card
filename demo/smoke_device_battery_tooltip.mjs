@@ -45,7 +45,8 @@ const sample = () => page.evaluate(() => {
   const rects = nodes.map((node) => node.getBoundingClientRect());
   return {
     visible,
-    rows: nodes.map((node) => node.textContent),
+    // #1411 joins metric words with NBSP; this witness checks the same visible content.
+    rows: nodes.map((node) => node.textContent.replace(/\u00a0/g, ' ')),
     separateLines: rects.every((rect, index) => rect.height > 0
       && (index === 0 || rect.top >= rects[index - 1].bottom - 0.5)),
   };

@@ -87,6 +87,9 @@ export function deviceBatteryTipText(
 const states = new WeakMap<object, HoverState>();
 const focusTips = new WeakMap<object, LiveTip>();
 
+// Wrap between metrics, keeping each label/value/unit together within a row.
+const metricText = (text: string): string => text.replace(/ /g, '\u00a0');
+
 const deviceTipContent = (
   host: DeviceTipHost, device: DevItem,
 ): { title: string; meta: string; battery: string; status: string } => {
@@ -97,13 +100,13 @@ const deviceTipContent = (
     : device.hidden && device.userHidden ? host._t('marker.hidden_ghost') : device.name;
   const metrics = [
     device.model,
-    presentation.valueBadge?.fullText || '',
-    presentation.lqiTipText != null ? `LQI ${presentation.lqiTipText}` : '',
+    metricText(presentation.valueBadge?.fullText || ''),
+    presentation.lqiTipText != null ? metricText(`LQI ${presentation.lqiTipText}`) : '',
     presentation.lqiSource?.stale ? host._t('tip.signal_last_known') : '',
   ].filter(Boolean).join(' · ');
-  const battery = deviceBatteryTipText(device,
+  const battery = metricText(deviceBatteryTipText(device,
     createDeviceBatteryContext(host._renderPlanHass, host._fullRegistryHass), (key, vars) => host._t(key, vars),
-    presentation.valueBadge?.source);
+    presentation.valueBadge?.source));
   const status = presentation.offline ? host._t('device.presentation_unavailable')
     : presentation.powerOff ? host._t('device.power_off') : '';
   return { title: device.name, meta: presentation.haDisabled ? ghostLabel : metrics, battery, status };

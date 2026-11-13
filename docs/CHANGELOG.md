@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep each device-tooltip metric's label, value and unit together when wrapping, while long model names and separate metrics still wrap within the viewport (#1411).
+
 - Keep the pointer cursor on source-picker buttons, including Icon state source, while search fields retain their text cursor and disabled controls keep their existing affordance (#1410).
 
 - Remove the unused Optimize version-comparison export and its obsolete update-advice test; current failure diagnostics remain covered (#1402).

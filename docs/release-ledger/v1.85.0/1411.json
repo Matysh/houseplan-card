@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1411,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Keep device-tooltip metric labels and values together during line wrapping.",
+  "summary": {
+    "ru": "Название показателя и его значение в тултипе устройства переносятся вместе.",
+    "en": "Wrap each device-tooltip metric label and value together."
+  }
+}

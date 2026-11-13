@@ -196,7 +196,7 @@ test('#817 AC2 the line stays when the plan indicator is off, low-only or hidden
     assert.equal(pointer.source, 'pointer');
     assert.equal(focus.source, 'focus');
     for (const tip of [pointer, focus]) {
-      assert.equal(tip.battery, 'Battery 80%', `${label}: ${tip.source}`);
+      assert.equal(tip.battery, 'Battery\u00a080%', `${label}: ${tip.source}`);
     }
   }
 });
@@ -206,7 +206,7 @@ test('#817 AC3 title and model row are unchanged; a non-battery or invalid devic
   const without = tips(tipHost(ha([])), marker());
   const invalid = tips(tipHost(ha([['sensor.battery', 'unavailable']])), marker());
   for (const source of ['pointer', 'focus']) {
-    assert.equal(withBattery[source].battery, 'Low battery');
+    assert.equal(withBattery[source].battery, 'Low\u00a0battery');
     assert.equal(without[source].battery, '');
     assert.equal(invalid[source].battery, '');
     for (const tip of [withBattery[source], without[source], invalid[source]]) {
@@ -228,14 +228,14 @@ test('#817 r1 tooltip: a badge on the same battery sensor is shown once, other b
   assert.match(presented.fullText, /37\.6/, 'the badge itself shows the battery sensor');
   for (const tip of Object.values(tips(host, same))) {
     assert.equal(tip.battery, '', tip.source);
-    assert.equal(tip.meta, `TS0201 · ${presented.fullText}`, tip.source);
+    assert.equal(tip.meta, `TS0201 · ${presented.fullText.replace(/ /g, '\u00a0')}`, tip.source);
   }
   for (const [label, device] of [
     ['badge on another entity', badge({ kind: 'entity_state', entity_id: 'sensor.temp' })],
     ['badge disabled', badge({ kind: 'entity_state', entity_id: 'sensor.battery' }, false)],
   ]) {
     for (const tip of Object.values(tips(tipHost(hass), device))) {
-      assert.equal(tip.battery, 'Battery 38%', `${label}: ${tip.source}`);
+      assert.equal(tip.battery, 'Battery\u00a038%', `${label}: ${tip.source}`);
     }
   }
 });
