@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10503,
-  "nextTicket": 394,
+  "revision": 10504,
+  "nextTicket": 395,
   "nextFence": 394,
   "tasks": {
     "1024": {
@@ -4481,14 +4481,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1401-stable-golden",
-      "materialSha": "e639f61c6249bf72881074323fb91ed53b3bbe2e",
+      "materialSha": "65ed437963bab21315af7c87f663e9485be2ae3d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 393,
-      "queued": false,
+      "ticket": 394,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794552862351,
-      "reviewEntry": 1,
+      "readyAt": 1794553396994,
+      "reviewEntry": 2,
       "patchId": "522f940296aac0d99efbba00fee4f79406c7ce5b",
       "changedFiles": [
         "demo/golden/baselines/approved-ui-info-dark-1119.png",
@@ -4665,7 +4665,6 @@
         "docs/CHANGELOG.ru.md",
         "docs/testing/1401-golden-review.json"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4985,7 +4984,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1401
+  ],
   "active": null,
   "events": {
     "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:2:synchronized": {
@@ -5071,6 +5072,19 @@
           "detail": "Браузер: resize junctions: failed; Браузер: resize through junction: failed",
           "eventId": "finish:8e45646b-77f8-4fda-ab37-fc3a23de186d:finish:3:return:return:1401"
         }
+      }
+    },
+    "finish:9e585b58-3efe-4d3f-a0bc-4a51432c2aef": {
+      "digest": "19a9692c9bc1153f3f4f56a2eb851671332a5ba9b0f01d2bc9ce0486b5e1b613",
+      "issue": 1401,
+      "message": {
+        "kind": "queued",
+        "issue": 1401,
+        "at": 1794553396994,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "65ed437963bab21315af7c87f663e9485be2ae3d"
       }
     }
   },
