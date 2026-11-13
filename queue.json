@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10222,
-  "nextTicket": 387,
+  "revision": 10223,
+  "nextTicket": 388,
   "nextFence": 387,
   "tasks": {
     "1024": {
@@ -4398,6 +4398,20 @@
         "status": "published",
         "sourceSha": "827cae041114db2a478951d658566a718e6f8393"
       }
+    },
+    "1399": {
+      "issue": 1399,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1399-stable-contracts",
+      "materialSha": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 387,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794545779982,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4627,9 +4641,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1399
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:40dbddf2-03d9-45c7-a99b-4763aafa30cf": {
+      "digest": "76b60273b88b6d0997aed604177ae0fa790059a46c886b1e6ecc7b6602e1ec40",
+      "issue": 1399,
+      "message": {
+        "kind": "queued",
+        "issue": 1399,
+        "at": 1794545779982,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
     "status": "delivered",
