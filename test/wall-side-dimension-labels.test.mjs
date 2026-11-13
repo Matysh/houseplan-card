@@ -1,13 +1,33 @@
 // Read-only screen presentation: physical-length and interaction rules live in the sibling suites.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {layoutWallSideDimensions,dimensionListBox,resizeHandleDimensionObstacle} from '../test-build/wall-side-dimension-layout.js';
+import {layoutWallSideDimensions,dimensionListBox,resizeHandleDimensionObstacle,screenDimensionObstacle} from '../test-build/wall-side-dimension-layout.js';
+
+test('#1403 fixed editor tray is a clipped screen obstacle, not projected plan geometry',()=>{
+  const stage={x:100,y:200,w:600,h:400};
+  assert.deepEqual(screenDimensionObstacle(stage,{x:90,y:190,w:640,h:100},600,400),{x:0,y:0,w:600,h:90});
+  assert.deepEqual(screenDimensionObstacle(stage,{x:100,y:200,w:600,h:90},1200,800),{x:0,y:0,w:1200,h:180});
+  assert.equal(screenDimensionObstacle(stage,{x:100,y:100,w:600,h:80},600,400),null);
+  assert.equal(screenDimensionObstacle(stage,{x:100,y:200,w:0,h:90},600,400),null);
+  assert.equal(screenDimensionObstacle({...stage,w:0},{x:100,y:200,w:600,h:90},600,400),null);
+});
 import {formatLength} from '../test-build/logic.js';
 import {propertiesT} from '../test-build/editors/properties/strings.js';
 const dimension={id:'wall:1:-1:0',carrier:'wall:1',side:-1,order:0,source:'physical',
   from:[50,50],to:[250,50],normal:[0,-1],low:0,high:200,lengthCm:200};
 const input=(intervals=[dimension])=>({intervals,width:600,height:400,project:p=>p,
   format:cm=>formatLength(cm,false,3),unavailable:'Dimension unavailable',textWidth:s=>s.length*6.3,obstacles:[],lanes:new Map(),numbers:new Map()});
+test('#1403 vertical dimensions hidden by a top tray retain their exact value in an unobscured list',()=>{
+  const edge={...dimension,from:[260,40],to:[260,120],normal:[1,0],lengthCm:120};
+  const tray={x:0,y:0,w:600,h:100},base={...input([edge]),obstacles:[tray]};
+  const before=layoutWallSideDimensions(input([edge]))[0];
+  assert.ok(before.labelBox.y<100,'the original value is behind the tray');
+  const items=layoutWallSideDimensions(base),placed=items[0];
+  assert.equal(placed.listed,true);assert.equal(placed.label,'1.200 m');
+  assert.ok(placed.labelBox.y>=103,'the numbered reference is below the tray');
+  const list=dimensionListBox(items,600,400,[tray]);assert.ok(list.y>=100);
+  assert.deepEqual(placed.a,edge.from);assert.deepEqual(placed.b,edge.to);
+});
 test('#1381 witnesses start at exact corners and remain normal; zoom only changes projection',()=>{
   const base=input(),first=layoutWallSideDimensions(base)[0];
   assert.deepEqual(first.a,[50,50]);assert.deepEqual(first.b,[250,50]);
