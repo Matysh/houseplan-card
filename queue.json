@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10690,
+  "revision": 10691,
   "nextTicket": 399,
   "nextFence": 399,
   "tasks": {
@@ -4937,6 +4937,10 @@
       "digest": "38aa88ca74a5d40caeb042c71fca365f44ab6b52ed97ce5370913554cb5a790d",
       "issue": 1407
     },
+    "github:43388593252:1:completions:message:9bf6f70cab2681aaa508bfeb15cdd3d840a7cbce8f4fe05ae458fe8e1d6d85b8": {
+      "digest": "59d595d82245ad08b7d75ecf4adf1c942f09411efb05c15d445ac63ce3115900",
+      "issue": 1407
+    },
     "finish:35e8bc3c-734f-4fb5-b24b-af877bffda3f": {
       "digest": "92ffc478c09dbe9af65fe4a365eab5e1f54bdb4b612fdfc7978b21a31ec551b1",
       "issue": 1407,
@@ -4992,7 +4996,8 @@
         "reviewChanges": "Материал: `55593b104cc58f95b87482509977a0bf93f4c7c5`, ветка `codex/1407-background-mutation-routing`. Изменения только инфраструктурные; текущие продуктовые лимиты, код и релиз не изменены.\n\nМаршрутизатор введён `b50d8805fc` 01.11.2026 при восстановлении фоновой автоматики. Он объединял все открытые задачи по одному префиксу; S8 по процессу остаётся открытой до выпуска. Поэтому первая завершённая #1379 продолжала считаться адресатом новых ошибок. Новый скрытый ключ описывает сортированный набор упавших guard/свидетелей; дата, SHA и номер шарда не дробят один активный отказ. S8/closed не принимают новый запуск. Отсутствующие/неопознанные причины получают отдельный инцидент. Тот же run-id не дублируется даже после завершения/закрытия. Старые отчёты без ключа не используются для новых запусков; их исходные записи не меняются.\n\nСтарый guard `furniture-art-eager-import` задевал общий rolling ceiling до своего профильного assertion. Теперь сохранён тот же реальный mutant patch, но его guard после сборки проверяет непустой lazy-artwork graph, отсутствие пересечения с initial View и SHA-256 всех файлов готового дерева. Общие ручные budget helpers и их тесты сохранены; отказ подготовки по-прежнему не считается пойманной мутацией.\n\nПроверено:\n- До изменения маршрутизатора новые три регрессионных кейса действительно красные, прежние 4 зелёные.\n- После изменения: `node --test process-next/test/background.test.mjs process-next/test/furniture-art-lazy.test.mjs` — 10/10 PASS, 0 FAIL/SKIP в Ubuntu WSL, Node 22.23.4. Синтетический большой initial graph не ломает проверку ownership; настоящий eager graph и испорченный файл отвергаются.\n- `node scripts/mutation-gate.mjs --execute-nightly --id=furniture-art-eager-import` — PASS: чистый `npm run build && node scripts/furniture-art-lazy.mjs` зелёный, реальный mutant пойман заявленным тестом, 1/1. Полный ночной набор не запускался.\n- Канонический план S6 infra выбирает 21 файл: обе новые/изменённые группы по прямым зависимостям и адресному выбору, читателей реестра и отчётов. Финальный S6 и независимое ревью выполняет общая очередь.\n- [Решение HA E2E](https://github.com/Matysh/houseplan-e2e/issues/48): не требуется, пользовательские сценарии не меняются.\n\nЛоги: `/home/sergey/hp-1407-background-repair/artifacts/1407/addressed.log`, `witness.log`; результирующий S6/review — штатные записи координатора. Основной риск — ошибочное объединение разных отказов; покрыты разные guards, legacy issue, строковая/объектная S8-метка, closed, повторы в теле и комментариях. Категория причины означает набор упавших проверок, не попытку автоматически угадать корневую техническую причину.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
