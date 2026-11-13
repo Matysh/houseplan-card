@@ -385,9 +385,31 @@
       "diffRatio": 0.1413109301973501,
       "dimensionsMatch": true,
       "reasons": [
-        "Plan fit reserves complete opening travel (#1024): uniform smaller/translated plan, with content, labels, devices and light unchanged relative to geometry. Fixed controls/modal geometry retained."
+        "Plan fit reserves complete opening travel (#1024): uniform smaller/translated plan, with content, labels, devices and light unchanged relative to geometry. Fixed controls/modal geometry retained.",
+        "Review clarification: the beta twin was already updated in the release-only #1024 acceptance, not passing against its old task-head PNG. Independent single-scene and complete-order captures are byte-identical; camera/viewBox values match its twin. Exact hashes, earlier provenance and numeric geometry are in docs/testing/1401-baseline-context.json. No PNG or tolerance changed after owner approval."
       ],
-      "decision": "accepted-by-owner"
+      "decision": "accepted-by-owner",
+      "pairedCameraEvidence": {
+        "view": {
+          "w": 1213.3981881456157,
+          "h": 1019.7970544679108,
+          "x": -106.69909407280784,
+          "y": -34.35441156672323
+        },
+        "zoom": 1,
+        "baseVb": [
+          -6.354411566723222,
+          -34.35441156672322,
+          1012.7088231334465,
+          1019.7970544679108
+        ],
+        "svgViewBox": "-106.69909407280784 -34.35441156672323 1213.3981881456157 1019.7970544679108",
+        "stage": [
+          984,
+          827
+        ],
+        "host": "lovelace"
+      }
     },
     {
       "id": "vacuum-live-tail-turn-dark",
@@ -1704,9 +1726,31 @@
       "diffRatio": 0.11473954081267276,
       "dimensionsMatch": true,
       "reasons": [
-        "Plan fit reserves complete opening travel (#1024): uniform smaller/translated plan, with content, labels, devices and light unchanged relative to geometry. Fixed controls/modal geometry retained."
+        "Plan fit reserves complete opening travel (#1024): uniform smaller/translated plan, with content, labels, devices and light unchanged relative to geometry. Fixed controls/modal geometry retained.",
+        "Review clarification: the beta twin was already updated in the release-only #1024 acceptance, not passing against its old task-head PNG. Independent single-scene and complete-order captures are byte-identical; camera/viewBox values match its twin. Exact hashes, earlier provenance and numeric geometry are in docs/testing/1401-baseline-context.json. No PNG or tolerance changed after owner approval."
       ],
-      "decision": "accepted-by-owner"
+      "decision": "accepted-by-owner",
+      "pairedCameraEvidence": {
+        "view": {
+          "w": 1362.9492041934077,
+          "h": 966.7071844222472,
+          "x": -181.4746020967038,
+          "y": -21.94123565555668
+        },
+        "zoom": 1,
+        "baseVb": [
+          26.05876434444331,
+          -21.94123565555669,
+          947.8824713111135,
+          966.7071844222472
+        ],
+        "svgViewBox": "-181.4746020967038 -21.94123565555668 1362.9492041934077 966.7071844222472",
+        "stage": [
+          884,
+          627
+        ],
+        "host": "lovelace"
+      }
     },
     {
       "id": "device-issues-alarm-card",
@@ -1894,9 +1938,26 @@
       "diffRatio": 0.11645295516304348,
       "dimensionsMatch": true,
       "reasons": [
-        "Plan fit reserves complete opening travel (#1024): uniform smaller/translated plan, with content, labels, devices and light unchanged relative to geometry. Fixed controls/modal geometry retained."
+        "Plan fit reserves complete opening travel (#1024): uniform smaller/translated plan, with content, labels, devices and light unchanged relative to geometry. Fixed controls/modal geometry retained.",
+        "Review clarification: the beta twin was already updated in the release-only #1024 acceptance, not passing against its old task-head PNG. Independent single-scene and complete-order captures are byte-identical; camera/viewBox values match its twin. Exact hashes, earlier provenance and numeric geometry are in docs/testing/1401-baseline-context.json. No PNG or tolerance changed after owner approval."
       ],
-      "decision": "accepted-by-owner"
+      "decision": "accepted-by-owner",
+      "pairedCameraEvidence": {
+        "view": null,
+        "zoom": 1,
+        "baseVb": [
+          -6.354411566723222,
+          -34.35441156672322,
+          1012.7088231334465,
+          1019.7970544679108
+        ],
+        "svgViewBox": "-209.42403789072057 -34.35441156672322 1418.8480757814411 1019.7970544679108",
+        "stage": [
+          1280,
+          920
+        ],
+        "host": "panel"
+      }
     },
     {
       "id": "panel-device-dialog-mobile-ru",
@@ -1929,6 +1990,15 @@
     "passed": 338,
     "failed": 0,
     "chromium": "151.0.7922.34",
-    "note": "Normal semantic and pixel verification after explicit selected acceptance; no threshold changes. Original captured report remains archived separately."
+    "note": "Normal semantic and pixel verification after explicit selected acceptance; no threshold changes. Original captured report remains archived separately.",
+    "baselineScope": "Release candidate ab85ca12, not the complete baseline set of the task head. The release additionally carries 56 earlier owner-accepted #1024 references from commit 3f92ebd7957; this task intentionally does not rewrite those dev PNGs.",
+    "baselinePartition": {
+      "newlyAccepted": 167,
+      "previouslyAcceptedInReleaseOnly": 56,
+      "identicalInBothActive": 115,
+      "retiredPreserved": 54,
+      "note": "The release already contains the owner-approved #1024 baseline commit 3f92ebd7957. The task intentionally preserves those earlier dev references; a release verify is not a claim that the old task-head PNGs pass. They return to dev with the exact published tag."
+    },
+    "baselineEvidence": "docs/testing/1401-baseline-context.json"
   }
 }
