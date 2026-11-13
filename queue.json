@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11006,
+  "revision": 11007,
   "nextTicket": 406,
   "nextFence": 406,
   "tasks": {
@@ -4617,7 +4617,26 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794571230406,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "34c8cf6db670de81f9e7b2ee65676d8570fe48b0",
+      "changedFiles": [
+        "demo/smoke_device_battery_tooltip.mjs",
+        "demo/smoke_device_tooltip_hover.mjs",
+        "demo/smoke_household_journeys.mjs",
+        "demo/smoke_room_tooltip_toggle.mjs",
+        "demo/smoke_zigbee_tooltip_layout.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/TOUCH-SUPPORT.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.85.0/1409.json",
+        "src/control-surface-presentation.ts",
+        "src/live-hover.ts",
+        "src/live-interaction-runtime.ts",
+        "test/device-battery-tip.test.mjs",
+        "test/device-tooltip-hover.test.mjs",
+        "test/live-hover-status.test.mjs"
+      ]
     },
     "1410": {
       "issue": 1410,
@@ -4914,12 +4933,17 @@
     "token": "405:finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:1:admit",
     "fence": 405,
     "materialSha": "ba56062da9e034be763485ac8c81b1587a19eb7f",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856",
+    "phase": "testing",
     "admittedAt": 1794571234757,
-    "expiresAt": 1794571534757
+    "expiresAt": 1794571542879,
+    "patchId": "34c8cf6db670de81f9e7b2ee65676d8570fe48b0"
   },
   "events": {
+    "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:2:synchronized": {
+      "digest": "5dbe9930dc6e54120577ff6e7c73b4e7a8c91e3f4d2ee76f8098a770f2141683",
+      "issue": 1409
+    },
     "dev-build:43420126997:1:1411": {
       "digest": "7afca994ab4c02b6aae3c0a32b2d7d4f3392a2a38dffc6776da04066afddaf0e",
       "issue": 1411,
