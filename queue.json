@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11017,
+  "revision": 11018,
   "nextTicket": 406,
   "nextFence": 406,
   "tasks": {
@@ -4636,7 +4636,18 @@
         "test/device-battery-tip.test.mjs",
         "test/device-tooltip-hover.test.mjs",
         "test/live-hover-status.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794571883700,
+        "entry": 1,
+        "detail": "Браузер: device battery tooltip: failed",
+        "eventId": "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:3:return:return:1409"
+      }
     },
     "1410": {
       "issue": 1410,
@@ -4927,18 +4938,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1409,
-    "worker": "finish",
-    "token": "405:finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:1:admit",
-    "fence": 405,
-    "materialSha": "ba56062da9e034be763485ac8c81b1587a19eb7f",
-    "expectedBase": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856",
-    "phase": "testing",
-    "admittedAt": 1794571234757,
-    "expiresAt": 1794572133428,
-    "patchId": "34c8cf6db670de81f9e7b2ee65676d8570fe48b0"
-  },
+  "active": null,
   "events": {
     "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:2:synchronized": {
       "digest": "5dbe9930dc6e54120577ff6e7c73b4e7a8c91e3f4d2ee76f8098a770f2141683",
@@ -4984,6 +4984,10 @@
       "digest": "6c58334244c82982c1b4c4dcf353cc8aceae293d42386d5c8c895324680e1ed8",
       "issue": 1409
     },
+    "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:3:return": {
+      "digest": "ec3c8546ea4ad8d50e93f14dc8c9524e73903e80bc02937e6ef049467796bbee",
+      "issue": 1409
+    },
     "dev-build:43420126997:1:1411": {
       "digest": "7afca994ab4c02b6aae3c0a32b2d7d4f3392a2a38dffc6776da04066afddaf0e",
       "issue": 1411,
@@ -5021,6 +5025,26 @@
         "layer": "product",
         "materialSha": "ba56062da9e034be763485ac8c81b1587a19eb7f",
         "phase": "sync"
+      }
+    },
+    "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:3:return:return:1409": {
+      "digest": "ec3c8546ea4ad8d50e93f14dc8c9524e73903e80bc02937e6ef049467796bbee",
+      "issue": 1409,
+      "message": {
+        "kind": "return",
+        "issue": 1409,
+        "at": 1794571883700,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794571883700,
+          "entry": 1,
+          "detail": "Браузер: device battery tooltip: failed",
+          "eventId": "finish:f76cc587-6ad7-40b8-a45d-f746b1499005:finish:3:return:return:1409"
+        }
       }
     }
   },
