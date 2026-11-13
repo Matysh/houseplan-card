@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10658,
+  "revision": 10659,
   "nextTicket": 399,
   "nextFence": 399,
   "tasks": {
@@ -4598,7 +4598,10 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794555877780,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "automationError": "automation-error",
+      "automationSince": 1794555928534,
+      "automationDetail": "Git rebase failed (exit 128)"
     }
   },
   "ownerDecisions": {},
@@ -4841,6 +4844,10 @@
     "expiresAt": 1794556221228
   },
   "events": {
+    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:2:automation-pending": {
+      "digest": "27f2816476f964441b3567b8eb47292582910b27237df2a5acfc7ac3b570deb0",
+      "issue": 1407
+    },
     "finish:35e8bc3c-734f-4fb5-b24b-af877bffda3f": {
       "digest": "92ffc478c09dbe9af65fe4a365eab5e1f54bdb4b612fdfc7978b21a31ec551b1",
       "issue": 1407,
