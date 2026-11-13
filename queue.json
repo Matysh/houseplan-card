@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10687,
+  "revision": 10688,
   "nextTicket": 399,
   "nextFence": 399,
   "tasks": {
@@ -4618,6 +4618,13 @@
         "status": "passed",
         "finishedAt": "2026-11-13T07:50:02.984Z",
         "failures": []
+      },
+      "reviewRound": 1,
+      "reviewRequest": "review:1407:1:648bd81aec1f4c378aabbc326cbe5979a3eab7c2:3749fc755b4e9b1318f3770870a803f687cdd76a",
+      "reviewMaterial": {
+        "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
+        "expectedBase": "3749fc755b4e9b1318f3770870a803f687cdd76a",
+        "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2"
       }
     }
   },
@@ -4846,6 +4853,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "code:1407:review:1407:1:648bd81aec1f4c378aabbc326cbe5979a3eab7c2:3749fc755b4e9b1318f3770870a803f687cdd76a": {
+      "issue": 1407,
+      "kind": "code",
+      "requestId": "review:1407:1:648bd81aec1f4c378aabbc326cbe5979a3eab7c2:3749fc755b4e9b1318f3770870a803f687cdd76a",
+      "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
+      "expectedBase": "3749fc755b4e9b1318f3770870a803f687cdd76a",
+      "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-13T07:50:15.075Z"
+      }
     }
   },
   "waiting": [],
@@ -4859,7 +4879,8 @@
     "phase": "review",
     "admittedAt": 1794555921228,
     "expiresAt": 1794559804093,
-    "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2"
+    "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2",
+    "reviewRequest": "review:1407:1:648bd81aec1f4c378aabbc326cbe5979a3eab7c2:3749fc755b4e9b1318f3770870a803f687cdd76a"
   },
   "events": {
     "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:2:automation-pending": {
@@ -4892,6 +4913,10 @@
     },
     "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:5:s6-label": {
       "digest": "ffd1ad76e69ea785f2b96a8ec4c98e3f62b83c711f04789aac5dab4272f98c39",
+      "issue": 1407
+    },
+    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:6:review-requested": {
+      "digest": "b882efcb6d04c89a923d419981fe53b11271ec26e5a5a3a98ba884805cd7a179",
       "issue": 1407
     },
     "finish:35e8bc3c-734f-4fb5-b24b-af877bffda3f": {
