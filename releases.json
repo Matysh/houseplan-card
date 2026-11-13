@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 746,
+  "revision": 747,
   "active": "1.85.2-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -82861,7 +82861,7 @@
         ]
       },
       "running": null,
-      "status": "results",
+      "status": "publishing",
       "membership": {
         "schema": 1,
         "tag": "v1.85.2-beta.1",
@@ -90693,7 +90693,8 @@
           "en": "## v1.85.2-beta.1 — 2026-11-13\n\n- Preserve the stable visual witnesses after asynchronous optimization and shared opening/dimension changes; review each changed image and reject hidden dimension text (#1401, #1403).\n\n- Keep shared editor dimensions readable beside the floating tool tray, using the existing numbered-list fallback when needed (#1403).\n\n- Repair the external real-HA backdrop rotation witness's coordinate basis, retaining exact angle, Shift, history, cancellation and reload checks; product behavior and golden references are unchanged (#1405).\n\n- Declare the existing read-only dimension interval and painted rail as versioned test hooks for real HA E2E; keep the remaining renderer probes internal and the strict selector check unchanged (#1406).\n\n- Keep the shared dimension list and labels clear of the visible zoom badge; fixed editor controls take priority when a list corner is chosen (#1404).\n\n- Normalize backdrop image/frame paint to the same local SVG basis across grid calibrations, preserving world bounds, rotation and native gestures. Equivalent 1/5cm plans no longer change imported SVG text hinting or handle rasterization; pixel tolerances remain unchanged (#1400).\n\n- Repair stable smoke/HA witnesses for shared drafting dimensions, asynchronous Optimize previews and anchor-following menus; retain numeric geometry, native Undo and independent prototype tolerances, and keep screenshot output out of tracked docs (#1399).\n\n- Add independent 1–4 window leaves, top hinges, per-leaf shade light masks, manual positions and full-width sliding doors/gates. Share state resolution and symbols, retain volumetric materials, guard old writers, preserve portable v3 transfers and clear nested bindings only on space Copy (#1024, UI-059).\n\n\n- Reuse the wall drafting dimension mechanism for opening selection/drag/placement, decor lines and every adjacent equal device gap. Preserve physical references through reversed host angles, camera motion, zero gaps and native snapping; keep line angles separate (#1398).\n\n- Keep selected-wall dimensions attached throughout live pan and zoom instead of waiting for pointer release. Reproject only their screen-space layer from cached geometry, retaining fixed text/stroke size without writes or history (#1397).\n\n- Use one read-only two-sided wall dimension layer for drawing, node moves, room Resize and idle wall selection. Measure bounded physical faces before aperture cuts, retain asymmetric chains and both Resize owners, and keep screen-space drafting ink, honest fallbacks and existing history (#1381).\n\n- Prepare the pinned HA frontend cache before the UI Lab mutation audit on fresh workers. Keep acquisition/integrity failures separate from the browser oracle and reuse an already verified cache (#1396).\n\n- Serve generated JavaScript chunks as negotiated build-time gzip representations, preserving raw fallback, manifest gating and immutable caching. Ship verified encoded bytes through bundle sync and installation packages; report their installation overhead separately from canonical frontend metrics (#1387, #1385).\n\n- Reuse registry reads and physical floor models across temporary masonry card moves. Retain bounded event coverage, reconcile changes or real reconnects with one current config/layout pair, and fence obsolete registry replies and user authority (#1386, #1385).\n\n- Resize passes existing junctions in one gesture: the intermediate X needs no save and the whole edit has one Undo. Preserve support dependencies, openings and source materials; cover consecutive junctions, reverse traversal, cancellation and reload (#1384).\n\n- Resize paints one joined wall contour throughout the gesture, clears abandoned straight seams and preserves real T/X junction changes and opening hosts. Room-wall openings remain movable; native regression and before/during/after panel scenes cover the return gesture, cancellation, history and reload (#1383).\n\n- Keep the paired-history mutation guard strict on native persistence and floor-model reuse while reporting timing budgets diagnostically, as in S6; preserve the measured excess and original thresholds (#1382).\n\n- Plan optimization paints its waiting states, retains the applied report and distinguishes skipped repairs, rejection and unconfirmed saving. Its single postcheck never reapplies changes; diagnostics use existing Help, and closing the dialog does not cancel a sent request (#1170).\n\n- Repair all four blocked mutation clean controls: adaptive editor navigation, render-layout ownership, scoped lazy Python imports and exact TS/Python node parity. Index legacy wall overlays (cold 576-atom validation ~22 s → ~2 s without raising its budget); preserve exact hosted-opening centres, authored grid targets and graph-owned deletion identities (#1380).\n\n- Repair the backend-quality mutation clean guard: remove the retired Validate assertion, follow local test-helper imports with cycle protection, and declare the graph-source tests’ HA dependency (#1379)."
         },
         "userChangelog": null
-      }
+      },
+      "tag": "v1.85.2-beta.1"
     }
   },
   "published": {
@@ -95421,7 +95422,8 @@
     "owner-size-accept-1-85-2-beta-1-17d4d17b9": "db8e8ef3d824d4ca569c0af0d33650f1fa0be2a8f0b897b6b07990e4f455471f",
     "release-1-85-2-beta-1-publish-final-17d4d17b9:runner-report": "3857d9425ebdc138b7f93e00c20df96e053b79affde4465397068829d3ab7e57",
     "release-1-85-2-beta-1-publish-final-17d4d17b9:metrics": "04f2a8c5319b94b1a3b9b6a5c416cbb0599cd6b943d0cc80b15dd03e35304bbf",
-    "release-1-85-2-beta-1-publish-final-17d4d17b9:prepared:09d7c2d4-f9a7-4fb4-b245-3f9c90653651": "c80974a67a976105ceaf1e62183e3d15333b32d83a7027f89804bb6242c45735"
+    "release-1-85-2-beta-1-publish-final-17d4d17b9:prepared:09d7c2d4-f9a7-4fb4-b245-3f9c90653651": "c80974a67a976105ceaf1e62183e3d15333b32d83a7027f89804bb6242c45735",
+    "release-1-85-2-beta-1-publish-final-17d4d17b9:started:746": "b7e049f864861984d0b05f1cb17a1c6964d9b906b023caa3933d0a6dca53d493"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
