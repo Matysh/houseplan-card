@@ -1919,5 +1919,16 @@
     "reportSha256": "382c7631b925587403647c9952fc3dc0c391cb9250de1b26f54521bd5490b8d0",
     "selectedCount": 167,
     "unchangedIndexed": 225
+  },
+  "verification": {
+    "sourceSha": "ab85ca121bfd7aaf9e5f7b92c503787442d816b4",
+    "buildFingerprint": "046e96fffc3a41e3130fe66b0fc64e02aa6bbaab73fa3c5fea5ea9dcdcb9bb3b",
+    "mode": "verify",
+    "reportSha256": "eff669154f642cef74cc56458324ecfe0a100ea066ac105de5c1c93f14a4dc20",
+    "total": 338,
+    "passed": 338,
+    "failed": 0,
+    "chromium": "151.0.7922.34",
+    "note": "Normal semantic and pixel verification after explicit selected acceptance; no threshold changes. Original captured report remains archived separately."
   }
 }
