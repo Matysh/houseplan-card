@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11492,
-  "nextTicket": 416,
+  "revision": 11493,
+  "nextTicket": 417,
   "nextFence": 416,
   "tasks": {
     "1024": {
@@ -4528,6 +4528,20 @@
         "status": "published",
         "sourceSha": "f7677e9a4094b6ef5c3e1242a1aa2691377a8f31"
       }
+    },
+    "1419": {
+      "issue": 1419,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1419-zigbee-golden-dwell",
+      "materialSha": "460993a2c24dd3079191169a9f597e43fdf7602f",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 416,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794591258619,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4757,7 +4771,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1419
+  ],
   "active": null,
   "events": {
     "dev-build:43473245014:1:1417": {
@@ -4770,6 +4786,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "e3319fe71ad51b9f02329f478f1608a1ef0f453b"
+      }
+    },
+    "finish:b63640aa-1ad6-4fab-8ce7-3e83ecf04361": {
+      "digest": "f42ef8c61797532999c30f5f69af173a002a78ef2621f9793a64b981c93cb18d",
+      "issue": 1419,
+      "message": {
+        "kind": "queued",
+        "issue": 1419,
+        "at": 1794591258619,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "460993a2c24dd3079191169a9f597e43fdf7602f"
       }
     }
   },
