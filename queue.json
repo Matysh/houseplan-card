@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11027,
+  "revision": 11028,
   "nextTicket": 407,
   "nextFence": 407,
   "tasks": {
@@ -5031,6 +5031,10 @@
       "digest": "d27c64b1852a888bbccd1608008444b29244c7573ed6058277db7b5f1ac2bef1",
       "issue": 1409
     },
+    "finish:4b189f7f-c0f5-4477-b36a-8a79032d902b:finish:3:s6-label": {
+      "digest": "3ff05d29a8329516d1ad4d4b597572d894570d4ed42ff69f835435edfb90528e",
+      "issue": 1409
+    },
     "dev-build:43420126997:1:1411": {
       "digest": "7afca994ab4c02b6aae3c0a32b2d7d4f3392a2a38dffc6776da04066afddaf0e",
       "issue": 1411,
@@ -5142,7 +5146,8 @@
         "resubmission": false,
         "reviewChanges": "### Цель и результат\n\nВетка `codex/1409-device-tooltip-hover`, материал — HEAD ветки, исходная реализация `ba56062da`, база dev после #1411 (`4ee99d9e1`). Независимое нативное воспроизведение: движение указателя на 3×2 px сдвигало тултип на 3×2 px, HA-обновление при удержании запускало вторую entry-анимацию. После исправления координаты неизменны и счётчик анимаций остаётся 1, а строка Off обновляется.\n\n### Решение и риски\n\nСуществующий `live-hover` владеет одной отменяемой 150-мс заявкой pointer hover: движение во время ожидания обновляет будущую точку, после показа точка фиксируется. Таймер проверяет текущие режим, пространство, binding, модальность, drag и подключение; фокус клавиатуры остаётся немедленным. Уход и существующий hard-reset отменяют заявку. Обычный commit теперь сохраняет presentation устройства; прежнее завершение room-tip сохранено отдельно. Неизменный контент не перестраивает DOM. Для устройства общий `ControlSurfacePresentation` получает opacity-only вариант со штатными 180/140 мс и reduced motion: измерение положения не зависит от анимированного translate. Остальные поверхности сохраняют прежний slide по умолчанию. Пока тултип активен, один coalesced resize listener пересчитывает границы; уход/reset удаляет listener и RAF. Размещение рядом с Zigbee-подписями остаётся прежним владельцем.\n\n### Проверки и ограничения\n\nСвежая сборка с типами и bundle sync успешны. 35 адресных Node-кейсов прошли. Новый нативный cold-View smoke прошёл: delay/pass-through, удержание, движение внутри значка, live updates, fade-in/out, соседи/возврат, края, реальное сужение viewport, reduced motion, mode/space, pagehide и remount. Для pagehide/pageshow сигнал доставляется стандартным PageTransitionEvent действительному visibility subscriber; hover — настоящим указателем Playwright. Старые проверки room-tip и двух провайдеров Zigbee layout прошли. Артефакты: `artifacts/issue1409/diagnose-{before,after}.json`, `artifacts/device-tooltip-hover-1409/evidence.json`, локальные логи.\n\nНовые Node/browser-файлы классифицированы каталогом как product/presentation/devices, task-release; включены в план по изменённому исполняемому файлу и дополнению автора. Полный текущий diff передан центральному S6 через finish, его итог ещё не заявляется. Эталоны не менялись. Реальный HA не запускался. **Надо перед следующей бетой**: [HA E2E #50](https://github.com/Matysh/houseplan-e2e/issues/50), сохранён сценарий настоящих HA updates, hover, viewport и lifecycle.\n\n### Уточнение по первому S6\n\nВ первом центральном прогоне успешны 603 из 604 шагов. Единственный сбой — старый battery smoke принимал ещё исчезающий tooltip прошлого устройства за завершение нового dwell (`flat/iso_sameSensorBadgeShownOnce`, pointer invisible; keyboard PASS). Его ожидание теперь требует актуальные `source=pointer`, `deviceId` и видимость. Орекулы текста, числа строк, источника батареи и дублей сохранены. Адресный полный `smoke_device_battery_tooltip.mjs` после этого прошёл, в том числе Flat/2.5D и RU. Повтор finish сохранит применимые успехи; продуктовый код после первого S6 не менялся.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
