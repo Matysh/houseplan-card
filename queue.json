@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10682,
+  "revision": 10683,
   "nextTicket": 399,
   "nextFence": 399,
   "tasks": {
@@ -4591,7 +4591,7 @@
       "track": "show",
       "layer": "infra",
       "branch": "codex/1407-background-mutation-routing",
-      "materialSha": "55593b104cc58f95b87482509977a0bf93f4c7c5",
+      "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 398,
@@ -4599,9 +4599,17 @@
       "status": "S6-in-progress",
       "readyAt": 1794555877780,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1794555928534,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2",
+      "changedFiles": [
+        "PROCESS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/lib/background.mjs",
+        "process-next/test/background.test.mjs",
+        "process-next/test/furniture-art-lazy.test.mjs",
+        "scripts/furniture-art-lazy.mjs",
+        "scripts/mutation-registry.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4837,11 +4845,12 @@
     "worker": "finish",
     "token": "398:finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:1:admit",
     "fence": 398,
-    "materialSha": "55593b104cc58f95b87482509977a0bf93f4c7c5",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
+    "expectedBase": "3749fc755b4e9b1318f3770870a803f687cdd76a",
+    "phase": "testing",
     "admittedAt": 1794555921228,
-    "expiresAt": 1794556340099
+    "expiresAt": 1794556387884,
+    "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2"
   },
   "events": {
     "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:2:automation-pending": {
@@ -4858,6 +4867,10 @@
     },
     "finish:7ee87548-3623-4ac0-a8c2-8e957ebd9e65": {
       "digest": "93f9aacbfd45e4a159ce7e956951e6da39c7ba46d01811eee1bb5f9764f4a564",
+      "issue": 1407
+    },
+    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:4:synchronized": {
+      "digest": "639ccefd02d5276ee94b6f3510d25a072eda8658c9d390a05871324c153bc244",
       "issue": 1407
     },
     "finish:35e8bc3c-734f-4fb5-b24b-af877bffda3f": {
