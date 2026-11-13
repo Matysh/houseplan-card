@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 828,
+  "revision": 829,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -99904,7 +99904,8 @@
             1402,
             1407,
             1409,
-            1410
+            1410,
+            1411
           ],
           "completed": [
             1402,
@@ -104718,7 +104719,8 @@
     "beta2-20261113-publication-r2:completion:2d407fdd-ab4a-4e60-a636-a702255159ea": "748ff26f8503c3bee33cf53fba47c3fc305fdbca91c645933cc1f9efd75bc36b",
     "beta2-20261113-publication-r2:completion:ee25cfbc-a172-44f7-bf6d-73a575533225": "3e04a2b573ca4d006377174fb93be93ad6022c75fccdb8833084ec5bf3b1e758",
     "beta2-20261113-publication-r2:completion:09517188-4ab4-437e-8ee4-619330c45595": "5f0b52b5e7cc141989cde6f7b5849e0da31fe1cc4b9148d4a3a2e9ac3134721b",
-    "beta2-20261113-publication-r2:completion:caf2cacc-3733-4876-8af8-c03d0f1121a2": "4e2d3bd9341edc778c116e8f3ddf143ae63c32dcf4643f2068aeb8ba9e1cf3af"
+    "beta2-20261113-publication-r2:completion:caf2cacc-3733-4876-8af8-c03d0f1121a2": "4e2d3bd9341edc778c116e8f3ddf143ae63c32dcf4643f2068aeb8ba9e1cf3af",
+    "beta2-20261113-publication-r2:completion:1fe2ec2e-cb6e-4e64-ab0b-e275d1c54d35": "480271c9456eb7b9c3136018b862f6f1746f577b81ebe64c371856e9497b4714"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
