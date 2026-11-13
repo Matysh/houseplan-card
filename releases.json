@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 859,
+  "revision": 860,
   "active": "1.85.2-stable-20261113",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -117221,7 +117221,8 @@
     "stable1852-20261113-run-started-r3": "d749a7d656661c8a9b4161d830579fc4a9cc9ba454345aa379f8678800591a33",
     "stable1852-20261113-report-r3": "e16462dd3d31d7d3b87f3694299b65a029b864c911d5fd5d199fecae768fd581",
     "stable1852-20261113-metrics-r3": "1a84c9f463cf17992cd9df2aad9f454bff9dfccce53fcaa2055d8a3151374200",
-    "stable1852-20261113-publication-r3:prepared:6039b8bc-4823-4907-b175-6ec67294e2b4": "cee1f3d72e9be1161e2680fcf1a9f00804ec6dc52fc38289dd076579d7df1b07"
+    "stable1852-20261113-publication-r3:prepared:6039b8bc-4823-4907-b175-6ec67294e2b4": "cee1f3d72e9be1161e2680fcf1a9f00804ec6dc52fc38289dd076579d7df1b07",
+    "stable1852-20261113-publication-r3:prepared:2d720e8a-b047-41eb-b9bf-faf82d688f4c": "efdc2d9ffbb5aa120f50218e54178d3d9fe0a4f2ee107caafe144de406cdb239"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
