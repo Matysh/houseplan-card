@@ -99,4 +99,3 @@ async def prepare_graph_pair(runtime, pending, rollback):
             reference = await save_source(runtime.hass, source)
         metadata[BACKUP_KEY] = reference
         metadata[PASSPORT_KEY] = {"version": 1, "source_sha256": reference["sha256"], "source_model": current_model, "target_model": 11}
-

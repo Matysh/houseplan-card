@@ -125,4 +125,3 @@ def radar_registry_evidence(hass: Any) -> dict[str, dict[str, dict[str, Any]]]:
         for entry in dr.async_get(hass).devices.values()
     }
     return {"entities": entities, "devices": devices}
-

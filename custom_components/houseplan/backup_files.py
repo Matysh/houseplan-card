@@ -136,4 +136,3 @@ async def durable_file_job(hass, callback, *args):
         except Exception:  # noqa: BLE001 - retain cancellation, after own work ended
             pass
         raise
-
