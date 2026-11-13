@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10685,
+  "revision": 10686,
   "nextTicket": 399,
   "nextFence": 399,
   "tasks": {
@@ -4596,7 +4596,7 @@
       "ownerDecision": null,
       "ticket": 398,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794555877780,
       "reviewEntry": 1,
       "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2",
@@ -4609,7 +4609,16 @@
         "process-next/test/furniture-art-lazy.test.mjs",
         "scripts/furniture-art-lazy.mjs",
         "scripts/mutation-registry.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261113T074812714-fd0b27aa",
+        "name": "Тесты для задачи #1407 (перед ревью)",
+        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261113T074812714-fd0b27aa/report.json",
+        "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
+        "status": "passed",
+        "finishedAt": "2026-11-13T07:50:02.984Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4847,9 +4856,9 @@
     "fence": 398,
     "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
     "expectedBase": "3749fc755b4e9b1318f3770870a803f687cdd76a",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794555921228,
-    "expiresAt": 1794556460042,
+    "expiresAt": 1794559804093,
     "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2"
   },
   "events": {
@@ -4908,6 +4917,34 @@
         "materialSha": "55593b104cc58f95b87482509977a0bf93f4c7c5",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:5:s6-complete": {
+      "digest": "d6c411a874402cc043610e251a7202b67eb9eb58778345bc6ea932cfcf3b2cdf",
+      "issue": 1407,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1407,
+        "at": 1794556204093,
+        "entry": 1,
+        "track": "show",
+        "layer": "infra",
+        "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
+        "phase": "review",
+        "evidence": {
+          "id": "20261113T074812714-fd0b27aa",
+          "name": "Тесты для задачи #1407 (перед ревью)",
+          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261113T074812714-fd0b27aa/report.json",
+          "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
+          "status": "passed",
+          "finishedAt": "2026-11-13T07:50:02.984Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Материал: `55593b104cc58f95b87482509977a0bf93f4c7c5`, ветка `codex/1407-background-mutation-routing`. Изменения только инфраструктурные; текущие продуктовые лимиты, код и релиз не изменены.\n\nМаршрутизатор введён `b50d8805fc` 01.11.2026 при восстановлении фоновой автоматики. Он объединял все открытые задачи по одному префиксу; S8 по процессу остаётся открытой до выпуска. Поэтому первая завершённая #1379 продолжала считаться адресатом новых ошибок. Новый скрытый ключ описывает сортированный набор упавших guard/свидетелей; дата, SHA и номер шарда не дробят один активный отказ. S8/closed не принимают новый запуск. Отсутствующие/неопознанные причины получают отдельный инцидент. Тот же run-id не дублируется даже после завершения/закрытия. Старые отчёты без ключа не используются для новых запусков; их исходные записи не меняются.\n\nСтарый guard `furniture-art-eager-import` задевал общий rolling ceiling до своего профильного assertion. Теперь сохранён тот же реальный mutant patch, но его guard после сборки проверяет непустой lazy-artwork graph, отсутствие пересечения с initial View и SHA-256 всех файлов готового дерева. Общие ручные budget helpers и их тесты сохранены; отказ подготовки по-прежнему не считается пойманной мутацией.\n\nПроверено:\n- До изменения маршрутизатора новые три регрессионных кейса действительно красные, прежние 4 зелёные.\n- После изменения: `node --test process-next/test/background.test.mjs process-next/test/furniture-art-lazy.test.mjs` — 10/10 PASS, 0 FAIL/SKIP в Ubuntu WSL, Node 22.23.4. Синтетический большой initial graph не ломает проверку ownership; настоящий eager graph и испорченный файл отвергаются.\n- `node scripts/mutation-gate.mjs --execute-nightly --id=furniture-art-eager-import` — PASS: чистый `npm run build && node scripts/furniture-art-lazy.mjs` зелёный, реальный mutant пойман заявленным тестом, 1/1. Полный ночной набор не запускался.\n- Канонический план S6 infra выбирает 21 файл: обе новые/изменённые группы по прямым зависимостям и адресному выбору, читателей реестра и отчётов. Финальный S6 и независимое ревью выполняет общая очередь.\n- [Решение HA E2E](https://github.com/Matysh/houseplan-e2e/issues/48): не требуется, пользовательские сценарии не меняются.\n\nЛоги: `/home/sergey/hp-1407-background-repair/artifacts/1407/addressed.log`, `witness.log`; результирующий S6/review — штатные записи координатора. Основной риск — ошибочное объединение разных отказов; покрыты разные guards, legacy issue, строковая/объектная S8-метка, closed, повторы в теле и комментариях. Категория причины означает набор упавших проверок, не попытку автоматически угадать корневую техническую причину.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
