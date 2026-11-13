@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11339,
+  "revision": 11340,
   "nextTicket": 413,
   "nextFence": 413,
   "tasks": {
@@ -4513,47 +4513,24 @@
     "1416": {
       "issue": 1416,
       "branch": "issue/1416-release-return-86015ab8132a",
-      "layer": "product",
       "track": "show",
-      "ownerAssigned": false,
-      "syncMode": "merge",
-      "mergeSourceSha": "86015ab8132a92ab6546eedda2f0421b01700355",
-      "releaseTag": "v1.85.2-beta.2",
-      "materialSha": "7f2f701713db065218dea84cb62b03ff64e97d5f",
-      "ownerDecision": null,
-      "ticket": 412,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1794583946554,
-      "reviewEntry": 1,
-      "patchId": "2980261a170baa5edae3de00129aea8ba6b2b130",
-      "review": {
-        "source": "published-release",
-        "sourceSha": "86015ab8132a92ab6546eedda2f0421b01700355",
-        "tag": "v1.85.2-beta.2",
-        "verdict": "accepted",
-        "patchId": "2980261a170baa5edae3de00129aea8ba6b2b130",
-        "materialSha": "7f2f701713db065218dea84cb62b03ff64e97d5f"
+      "layer": "product",
+      "status": "S8-merged",
+      "expectedBase": "029393cfcfce8beb4ab60f47d872e7c0ef35c78e",
+      "mergedSha": "7f2f701713db065218dea84cb62b03ff64e97d5f",
+      "mergedAt": 1794584812160,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "changedFiles": [
-        "custom_components/houseplan/const.py",
-        "custom_components/houseplan/manifest.json",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/RELEASE-NOTES.md",
-        "package-lock.json",
-        "package.json",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts"
-      ],
-      "s6": {
-        "id": "20261113T153352259-19da51e9",
-        "name": "Тесты для задачи #1416 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T153352259-19da51e9/report.json",
-        "materialSha": "7f2f701713db065218dea84cb62b03ff64e97d5f",
-        "status": "passed",
-        "finishedAt": "2026-11-13T15:46:44.055Z",
-        "failures": []
+      "releaseTag": "v1.85.2-beta.2",
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -4785,117 +4762,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1416,
-    "worker": "finish",
-    "token": "412:release-return-finish:b825d7c2-a397-4328-a235-dd6f6e66579d:finish:1:admit",
-    "fence": 412,
-    "materialSha": "7f2f701713db065218dea84cb62b03ff64e97d5f",
-    "expectedBase": "029393cfcfce8beb4ab60f47d872e7c0ef35c78e",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794583951782,
-    "expiresAt": 1794588408798,
-    "patchId": "2980261a170baa5edae3de00129aea8ba6b2b130"
-  },
-  "events": {
-    "github:43453504889:1:completions:message:e7ac6919ba4d1434707a1446c5d183fe158155d2e6db8bf43cf7250009a06550": {
-      "digest": "ee0bd0d5f894e136b593bed88ccee2204d924bc7f64115b7dbd0e4d9a96c6329",
-      "issue": 1416
-    },
-    "github:43453504889:1:completions:message:356fe69d59b81bde8e0260784a8e1c3bea346f85524d701a343479a409b7acc7": {
-      "digest": "6e059d57a93e50259bddecb5fffb6fbbbdfbc1a4709f5f4e4f3fa7adbe0132df",
-      "issue": 1416
-    },
-    "release-return-finish:b825d7c2-a397-4328-a235-dd6f6e66579d:finish:3:synchronized": {
-      "digest": "a55c047966e8dfc1587a05edce9315f9dca027a775f432bf8e66e27eef8a17db",
-      "issue": 1416
-    },
-    "finish:26d967cb-e884-4931-93ae-1be1e8206123": {
-      "digest": "040a152fc4db2033b84c5bcde4ff884f077126fc228ed5292b0ec33ee6aa4f53",
-      "issue": 1416
-    },
-    "finish:ffa7e119-33fc-427a-beba-2114b34358f7": {
-      "digest": "6ebf66a20650dfa4b11f4fd753ce3e3b29b8fec1cc320915f6a151afbbf56f39",
-      "issue": 1416
-    },
-    "finish:908708ae-0e7b-48b6-a54f-9642f1654398": {
-      "digest": "187680d3793747a459e5b4adef16b1a9e50edceca595959e75c771224d744283",
-      "issue": 1416
-    },
-    "finish:2528c815-6387-41a0-a4f4-0ec0d9258c96": {
-      "digest": "ab1b2f71b5a08375d4d5ddbd25a86b70ad3279cdc75ac1a8b316c0b0d444f12b",
-      "issue": 1416
-    },
-    "finish:86200e6b-c6bd-4ce3-b9a8-87e494bb5451": {
-      "digest": "3744633798b870e096d45c8c1370ba64381006eed3e36c3853a471711018fe78",
-      "issue": 1416
-    },
-    "finish:1cb6f765-dcec-4aea-b8fd-7812e69f4f4e": {
-      "digest": "d4cffad21a3bc3d0f8f003ab060614433b27329c18ef327fb986118afeef1830",
-      "issue": 1416
-    },
-    "finish:1d0db4f6-3438-46f0-93d5-4c0b9229a8ec": {
-      "digest": "f42ead132a4afaa0aa2eefc99ea9c106ccda3020aad1eac9b62a87230ee6420b",
-      "issue": 1416
-    },
-    "finish:7234f273-765d-4058-8102-8425a0405d63": {
-      "digest": "abfe36e0ac82b55fa9d6cee03f3fe8702ab075e24f1ea4dd700f7227e6872888",
-      "issue": 1416
-    },
-    "finish:03a4b134-b626-47c0-84c0-a72b5aa91e65": {
-      "digest": "2fe405731b8c4043689e3e23c3f8ba36eee80a79ed982edfb2030e7d171823dc",
-      "issue": 1416
-    },
-    "finish:73abe4aa-1432-4405-a2b9-326d4b802f90": {
-      "digest": "9ce83ca0efc3cd182c4353adbe1c509d91e7774155358cc215c75173efb316f0",
-      "issue": 1416
-    },
-    "finish:7b38dee3-08c5-4d91-8c11-62667213ba36": {
-      "digest": "56c90611794fbb0f5d113fadb72d8abfe7640913c3c1ef88011e25c46ca973d8",
-      "issue": 1416
-    },
-    "finish:b828f41e-6aac-44d2-b2c0-2c530b4605cb": {
-      "digest": "30dc3e008d94f10be35fe0b05587b1919b6d12f6e28f50edf9e120579c4386b2",
-      "issue": 1416
-    },
-    "release-return-finish:b825d7c2-a397-4328-a235-dd6f6e66579d:finish:4:s6-complete": {
-      "digest": "5e4c87615a231f3a7294d59128c947f0013df469d0096001b83835372a0be199",
-      "issue": 1416
-    },
-    "finish:71cc4cce-7d56-487c-bc6d-149ba48d461e": {
-      "digest": "4502f180418884badef2045df9e973891c742f72921879598d2073708dc5be92",
-      "issue": 1416
-    },
-    "release-return:b825d7c2-a397-4328-a235-dd6f6e66579d": {
-      "digest": "386fe67efd9d0d81eab301b7c2bbcac5378cf9a55f67f81bf3fddd8a4c086156",
-      "issue": 1416,
-      "message": {
-        "kind": "queued",
-        "issue": 1416,
-        "at": 1794583946554,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "7f2f701713db065218dea84cb62b03ff64e97d5f",
-        "delivered": true
-      }
-    },
-    "release-return-finish:b825d7c2-a397-4328-a235-dd6f6e66579d:finish:1:admit": {
-      "digest": "cf97d4b2cc0fdc12617f8022bb0b9f2aa18cee9d52537f900e8e13c2ef2eaa5b",
-      "issue": 1416,
-      "message": {
-        "kind": "admitted",
-        "issue": 1416,
-        "at": 1794583951782,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "7f2f701713db065218dea84cb62b03ff64e97d5f",
-        "phase": "sync",
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "029393cfcfce8beb4ab60f47d872e7c0ef35c78e",
     "status": "delivered",
