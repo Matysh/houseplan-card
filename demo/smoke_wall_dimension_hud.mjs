@@ -28,5 +28,6 @@ try {
   mkdirSync('artifacts/1403',{recursive:true});
   await page.screenshot({path:`artifacts/1403/hud-${width}.png`});
  }
- reportPageErrors(page);console.log('PROCESS_NEXT_RESULT '+JSON.stringify({tests:3,passed:3,failed:0,skipped:0,status:'passed'}));
+ assert.equal(await reportPageErrors(),false);
+ console.log('PROCESS_NEXT_RESULT '+JSON.stringify({tests:3,passed:3,failed:0,skipped:0,status:'passed'}));
 } finally {await browser.close();}
