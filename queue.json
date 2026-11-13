@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10277,
+  "revision": 10278,
   "nextTicket": 389,
   "nextFence": 389,
   "tasks": {
@@ -4802,6 +4802,10 @@
       "digest": "ade2b385a82d47364fc718c0889a2c1dbefc038534a1d0df9690c40635af01dd",
       "issue": 1400
     },
+    "github:43371308807:1:completions:message:1ca57748aaab23a1ad93fa77a5ff6592540696ed50b8faeeff6cdb31aa6820ca": {
+      "digest": "f824a4bc974a289d8cd233250ad98d7eb5cad4025600753dd3463d5f33dfd681",
+      "issue": 1400
+    },
     "finish:e2637d67-d71b-4801-bf6e-9e7bccad8884": {
       "digest": "f58df719cb44cd43d1c6516ce92b65c746da54504149644b0518bd7c55feb876",
       "issue": 1400,
@@ -4857,7 +4861,8 @@
         "reviewChanges": "Причина установлена по actual/diff и эксперименту с теми же PNG: в dark View все существенные различия лежат на тексте внутри импортированного SVG; в Background — на пяти bdknob. При эквивалентной сетке размеры image и локальные радиусы увеличивались в 5 раз, меняя Chromium raster/font basis; дополнительно радиусы округлялись до разного физического шага. Общий backdropPaintBox нормализует только render-координаты к 5cm basis с компенсирующим scale, поворот остаётся вокруг мирового центра. Его используют оба full-render пути, Static и рамка подложки. Сохранённые данные, planRect/content bounds, hit testing, обработчики и история не меняются. Радиусы рамки больше не округляются в разных локальных единицах. После сборки исходный неизменённый grid smoke: darkView/background 0 changed pixels, maxDelta=1; Static 0/0; обе 2.5D и реальные отрицательные сдвиги 1px проходят. 35 unit-кейсов и native backdrop/guard (включая rotate/scale/move/cancel/lostcapture) прошли. Допуски, маски и PNG-эталоны не менялись. Новые unit-кейсы распознаны каталогом как decor и выбраны по импорту/области; изменённый общий card остаётся на предусмотренном полном быстром Node fallback. Для ревью важны порядок rotate/scale, геометрия нормализованных ручек и одинаковое применение к full/Static. S6 выполняется штатным finish, результаты отладки не подменяют его.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
