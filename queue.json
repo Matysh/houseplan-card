@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10957,
+  "revision": 10958,
   "nextTicket": 404,
   "nextFence": 404,
   "tasks": {
@@ -4640,7 +4640,16 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794569670329,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "7d17515f2e02bf8d36d82c57370b23787086dbe1",
+      "changedFiles": [
+        "demo/smoke_device_battery_tooltip.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.85.0/1411.json",
+        "src/live-hover.ts",
+        "test/device-battery-tip.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4891,12 +4900,17 @@
     "token": "403:finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:1:admit",
     "fence": 403,
     "materialSha": "579596c9bde36cff64ca25a9ad1a9f9dd99b63f2",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "9054a6f04bc030867f1d841663b91cdb262b172d",
+    "phase": "testing",
     "admittedAt": 1794569673885,
-    "expiresAt": 1794569973885
+    "expiresAt": 1794569980041,
+    "patchId": "7d17515f2e02bf8d36d82c57370b23787086dbe1"
   },
   "events": {
+    "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:2:synchronized": {
+      "digest": "d4a31dcf70872c2b167604061163b65dbac9a3b42dbeb5bcb2afadfe283af9b4",
+      "issue": 1411
+    },
     "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2": {
       "digest": "e798bb1c222de57d419b8cb2f051ee728c263971c8ec7a32e5db649d44560212",
       "issue": 1411,
