@@ -1,5 +1,7 @@
 # Changelog
 
+- Preserve the stable visual witnesses after asynchronous optimization and shared opening/dimension changes; review each changed image and reject hidden dimension text (#1401, #1403).
+
 - Keep shared editor dimensions readable beside the floating tool tray, using the existing numbered-list fallback when needed (#1403).
 
 ## Unreleased
