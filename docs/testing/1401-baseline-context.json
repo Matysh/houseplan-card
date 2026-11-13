@@ -1,0 +1,658 @@
+{
+  "schema": 1,
+  "issue": 1401,
+  "purpose": "Resolve the review baseline-scope mismatch without accepting or changing a PNG",
+  "candidateSha": "ab85ca121bfd7aaf9e5f7b92c503787442d816b4",
+  "fullVerification": {
+    "sourceSha": "ab85ca121bfd7aaf9e5f7b92c503787442d816b4",
+    "reportSha256": "eff669154f642cef74cc56458324ecfe0a100ea066ac105de5c1c93f14a4dc20",
+    "passed": 338
+  },
+  "baselinePartition": {
+    "newlyAccepted": 167,
+    "previouslyAcceptedInReleaseOnly": 56,
+    "identicalInBothActive": 115,
+    "retiredPreserved": 54,
+    "note": "The release already contains the owner-approved #1024 baseline commit 3f92ebd7957. The task intentionally preserves those earlier dev references; a release verify is not a claim that the old task-head PNGs pass. They return to dev with the exact published tag."
+  },
+  "earlierAccepted": [
+    {
+      "id": "panel-narrow-kiosk-fixed",
+      "taskHeadSha256": "781e524ceaeb8163e4b86aa56478ac8bbca289883b9ec0405913815ab1d4f806",
+      "candidateSha256": "911b7d3b74af843ce560721206c23239ed941b4d37ad84257fbf7c6713f3316d",
+      "priorCandidateSha256": "911b7d3b74af843ce560721206c23239ed941b4d37ad84257fbf7c6713f3316d",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-wide-view-light-en",
+      "taskHeadSha256": "a16a56df6d527642e2c96d8f2fc3c6a5a189b2f460b17cbd65cc5e4d93a11030",
+      "candidateSha256": "51b66f7a3dacf6fe126df980c3c013f812415414c236128e69e5392fed5f5133",
+      "priorCandidateSha256": "51b66f7a3dacf6fe126df980c3c013f812415414c236128e69e5392fed5f5133",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-compact-ui-1132",
+      "taskHeadSha256": "70244f2965afcb843e97c9caf763e8a0515423c513dca04e1252c4a6082ea9f8",
+      "candidateSha256": "56b0230105551eed8327817c6d0feaaabb22192e3f62aab7625c58738234f586",
+      "priorCandidateSha256": "56b0230105551eed8327817c6d0feaaabb22192e3f62aab7625c58738234f586",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-three-rows-ui-1132",
+      "taskHeadSha256": "0d27a23068463e32e7173268deaf4774a85620469e93eb5776f21b914f52ad40",
+      "candidateSha256": "671f36ee0c49c0deb37ed30d03ae85fe2cbd9d095f1dfa29fcfc305ced54f8e2",
+      "priorCandidateSha256": "671f36ee0c49c0deb37ed30d03ae85fe2cbd9d095f1dfa29fcfc305ced54f8e2",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-wide-plan-editor-dark-en",
+      "taskHeadSha256": "e1bf1b661fc113046b0cb8ee9ae91fa3253ae95f4884466281b9c7ec491b9fff",
+      "candidateSha256": "0634aa14bcd250629829721e116a34268e777e2e41d0e21a57d057c724ad7593",
+      "priorCandidateSha256": "0634aa14bcd250629829721e116a34268e777e2e41d0e21a57d057c724ad7593",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "geometry-view-light-fit",
+      "taskHeadSha256": "d68380b3e4adebcf075f36913c53c1309e03f1965f80530775460dc5979b97e4",
+      "candidateSha256": "a58e2a1a020d8f9070d58964c62ab32c5eceff10ce43c101b2edb52aa8f5f994",
+      "priorCandidateSha256": "a58e2a1a020d8f9070d58964c62ab32c5eceff10ce43c101b2edb52aa8f5f994",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "geometry-plan-editor-dark",
+      "taskHeadSha256": "5fbd196498329a3c459d905367fd29424d1dcc2f10258f2cd93207060c28dafc",
+      "candidateSha256": "1268e199fe593e7159657daf2c53deb9f000c0d7f7925a1eb5547ca5f3a441ab",
+      "priorCandidateSha256": "1268e199fe593e7159657daf2c53deb9f000c0d7f7925a1eb5547ca5f3a441ab",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "static-wall-openings-house-phone-light",
+      "taskHeadSha256": "0a202a736f6934d00f6008165c2cb534a4ca11859f28b813bc568fab972e395c",
+      "candidateSha256": "78d982182ee61d343eed1bd42aa0045bc96a6e09ddcdb393c3a4a2b137fbf384",
+      "priorCandidateSha256": "78d982182ee61d343eed1bd42aa0045bc96a6e09ddcdb393c3a4a2b137fbf384",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-device-icon-picker-dark-1375",
+      "taskHeadSha256": "020573218037fe2edf329938afcb3e73f7c4fa5f540ba44e4c604853dc81a5d8",
+      "candidateSha256": "2ac3e30f7a7718d468a105d306a979892e1f703331319ef14a05cf1c5f2c8432",
+      "priorCandidateSha256": "2ac3e30f7a7718d468a105d306a979892e1f703331319ef14a05cf1c5f2c8432",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-device-icon-picker-open-dark-1376",
+      "taskHeadSha256": "1fac6c179775b9f221d825c07234013b4faaa3cccebdab89a3998834bfe74380",
+      "candidateSha256": "9fad04edae3715a874ac79321fe60709b87d9ad0f6b4201cad0d74c008c01928",
+      "priorCandidateSha256": "9fad04edae3715a874ac79321fe60709b87d9ad0f6b4201cad0d74c008c01928",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-device-icon-picker-clear-hover-light-1376",
+      "taskHeadSha256": "ff904b1b5f8fdc61de7e532c9869d1f30510ef6d70646c00e527847de7819185",
+      "candidateSha256": "7805e73cd2678910f9344f2ea881b5cb1a7c724f3baf665cbf78cf384c167d69",
+      "priorCandidateSha256": "7805e73cd2678910f9344f2ea881b5cb1a7c724f3baf665cbf78cf384c167d69",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "device-alert-maintenance-iso",
+      "taskHeadSha256": "22d75a9c061ff1847f56fb9114bb805a2c113f2d476bc4e95821c1649de7b6b2",
+      "candidateSha256": "273f0c82f7c422799c8a1356e66d92eccc5e49d9d14059988d82114dc8c4ce0c",
+      "priorCandidateSha256": "273f0c82f7c422799c8a1356e66d92eccc5e49d9d14059988d82114dc8c4ce0c",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "device-alert-alarm-flat",
+      "taskHeadSha256": "b4afd5bc4144ebc4de0313fd322b7bab5328df1724c437af61d87db69e10b81d",
+      "candidateSha256": "ce2352668d97c4b87983675efaedc86909da216a031b8af9f73b7a18f0e56117",
+      "priorCandidateSha256": "ce2352668d97c4b87983675efaedc86909da216a031b8af9f73b7a18f0e56117",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "device-alert-form-numeric",
+      "taskHeadSha256": "548f24742e19e82d8d4652fe4bb2ba7552ff00461cf6e319d32c9e2b0bad5dcd",
+      "candidateSha256": "313b7b3b25aa5ef5978633d2ba4bde1ae46639ff38cc96eef373f3a6d99439dd",
+      "priorCandidateSha256": "313b7b3b25aa5ef5978633d2ba4bde1ae46639ff38cc96eef373f3a6d99439dd",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "plan-rotation-phone-view-320-1070",
+      "taskHeadSha256": "d7b4e0eac81cb679601b8d72fbc75cd2d6787926fc331a97ffd08e5f4f7d9261",
+      "candidateSha256": "c5a5fc03f7de245f1098cc6b4d31262030d031232c6d2d6d6039be7fe055d233",
+      "priorCandidateSha256": "c5a5fc03f7de245f1098cc6b4d31262030d031232c6d2d6d6039be7fe055d233",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-kiosk-profile-no-controls",
+      "taskHeadSha256": "3db556537ba0c0a831291be0264929e45b2ccb2ab16bcdeb5f800192d96dbf45",
+      "candidateSha256": "1a758eef7d5410c326880e13d8af4e9f650bccb0df95692df0c73e685227c487",
+      "priorCandidateSha256": "1a758eef7d5410c326880e13d8af4e9f650bccb0df95692df0c73e685227c487",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-device-icon-state-table-light",
+      "taskHeadSha256": "86a21be652f1495eb4b0f6d44e6666dd857fc26882fa899f75773c5bb3165bbb",
+      "candidateSha256": "e5b3e35e1259f74d827f3da2801c88e0ffda2557cf87a0a6ba342aad08ad2ace",
+      "priorCandidateSha256": "e5b3e35e1259f74d827f3da2801c88e0ffda2557cf87a0a6ba342aad08ad2ace",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-device-icon-state-table-dark",
+      "taskHeadSha256": "ccacf0f0972958ecb1e228c06079a5146e1c05a90624b373f7dcb45ff651c8a5",
+      "candidateSha256": "2e1850cba8861fb3e804ec6a7c410a3c12e401031cb7d255f2c6dece968eebe8",
+      "priorCandidateSha256": "2e1850cba8861fb3e804ec6a7c410a3c12e401031cb7d255f2c6dece968eebe8",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-lighting-glow-sun-dark",
+      "taskHeadSha256": "a69ecfe0e2ac25f475b9954ef71f0d9f710b46a5333ff3fd43d040fa7f299671",
+      "candidateSha256": "6e67d2788228793b55b21898b4a06a05a9cb2f78186930935980c35b82f6c369",
+      "priorCandidateSha256": "6e67d2788228793b55b21898b4a06a05a9cb2f78186930935980c35b82f6c369",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-lighting-temp-glow-light",
+      "taskHeadSha256": "eda8de2d5ee2a8331c0f375c5f86d588310a0a02627d5121a80b8da5d13eac5b",
+      "candidateSha256": "3f6a88a0286b4454e8e65d799e0345a0421529ab0ad95c2c32c936a0bfbb96e1",
+      "priorCandidateSha256": "3f6a88a0286b4454e8e65d799e0345a0421529ab0ad95c2c32c936a0bfbb96e1",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-lighting-sun-transparent-chain-flat",
+      "taskHeadSha256": "24fe43ea0011a1f5a9b975658f37b1245e092357fcc4b4d23720625323e4cb61",
+      "candidateSha256": "b7579b040a5ba3e5bef04e05b22130fb74babb3684bb52b42c91181b733481d5",
+      "priorCandidateSha256": "b7579b040a5ba3e5bef04e05b22130fb74babb3684bb52b42c91181b733481d5",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-opening-symbol-flip-pairs-light",
+      "taskHeadSha256": "6427f08110e9319d1cbc2d479909e00a80b280a6fd85b55efecac5b6c5e134a9",
+      "candidateSha256": "8cbb24a723848d2aaeec2b505499591d0ca3272a5a38f37d04237912afd052b9",
+      "priorCandidateSha256": "8cbb24a723848d2aaeec2b505499591d0ca3272a5a38f37d04237912afd052b9",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-isometric-geometry-view-light",
+      "taskHeadSha256": "26d051b0a3d4b4a003f4a6d96b7d4d1a44931c138d47066b9239821e2a9f1d09",
+      "candidateSha256": "2468999f444ee73422bdca86c4b6b60e8cd35fc67ac38fe686e6c8122ee24dcc",
+      "priorCandidateSha256": "2468999f444ee73422bdca86c4b6b60e8cd35fc67ac38fe686e6c8122ee24dcc",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-isometric-stage3-overlays-dark",
+      "taskHeadSha256": "8c307ef189d7c75cc644eac80ffeb753aa723e8b605342bc90a63887d96d5f75",
+      "candidateSha256": "b2933514771af814c0a53efb6279d366d7306ccc017544bed453b66667dd80b5",
+      "priorCandidateSha256": "b2933514771af814c0a53efb6279d366d7306ccc017544bed453b66667dd80b5",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-geometry-devices-editor-dark",
+      "taskHeadSha256": "97d96930d3f39bd71f03432c452f255e14717bf0e22a34d77c9a12bcc40550b5",
+      "candidateSha256": "ddafe955b8b73120a269253b625fe4602a1b439058ecc8d55d6037219aa9059a",
+      "priorCandidateSha256": "ddafe955b8b73120a269253b625fe4602a1b439058ecc8d55d6037219aa9059a",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-geometry-decor-editor-dark",
+      "taskHeadSha256": "397f57dad36d7a497a9b12ac8ecb711b3ab3e78489f2306fb769099d4666f72f",
+      "candidateSha256": "afec17655e361a3e51fc4dd1d5c50866f5f84b8a18a82479845af05291ffd37c",
+      "priorCandidateSha256": "afec17655e361a3e51fc4dd1d5c50866f5f84b8a18a82479845af05291ffd37c",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-room-temperature-dialog-desktop-en",
+      "taskHeadSha256": "134c98d32d595fd8d198b3439b5f3adb803ca41434d43d74637914873c6f1f27",
+      "candidateSha256": "e5f7c8d1f6c3ee730a841bcc89e58601235d5117b59d4dc290c25e8e65a903c4",
+      "priorCandidateSha256": "e5f7c8d1f6c3ee730a841bcc89e58601235d5117b59d4dc290c25e8e65a903c4",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-view-device-menu-readonly-light-ru",
+      "taskHeadSha256": "6d9d4b5e7c42b8e378f0ab9bec71a7238b026e1b2decfb45db2908cd25cce4ce",
+      "candidateSha256": "c90070a26403f7d1c8080801fdf37bda320e974915651613191780594e2f75fa",
+      "priorCandidateSha256": "c90070a26403f7d1c8080801fdf37bda320e974915651613191780594e2f75fa",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-version-mismatch-touch-light-ru",
+      "taskHeadSha256": "c29baf2617dc1ed4838b6d1aacd966a10e7d871460db2f1c2b34660c12345032",
+      "candidateSha256": "afd64b68d55c0b203992f7729a278288053ca1a5292c82a1527ab20127b4b335",
+      "priorCandidateSha256": "afd64b68d55c0b203992f7729a278288053ca1a5292c82a1527ab20127b4b335",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-plan-snap-endpoint-light",
+      "taskHeadSha256": "b57bf2102ea1a4f1df5af83f414ea8a118e1704198f14808af1e3039ff385372",
+      "candidateSha256": "692b2598d98e37311a8d2bc8a13ad9d05816a40da63c9727511169c658effeee",
+      "priorCandidateSha256": "692b2598d98e37311a8d2bc8a13ad9d05816a40da63c9727511169c658effeee",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-opening-placement-door-thick-wall-dark",
+      "taskHeadSha256": "ccc180ad157a83961e7dff64b917c392f30b15bbfe0b26a7e8afc06994015d89",
+      "candidateSha256": "2f37558ac9280444e98eefc78ed7f5cbb84c887c6a58546b68b565dcc389fb44",
+      "priorCandidateSha256": "2f37558ac9280444e98eefc78ed7f5cbb84c887c6a58546b68b565dcc389fb44",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-tray-narrow-tool-ru",
+      "taskHeadSha256": "37c375327c85bc3d0707a6234ab3977c82fb4227444035d6daec62930dafd93e",
+      "candidateSha256": "668a27dcfbf10448d1bd372934f11eb0f66d1cd7d11ad4846129d27ad72df789",
+      "priorCandidateSha256": "668a27dcfbf10448d1bd372934f11eb0f66d1cd7d11ad4846129d27ad72df789",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-furniture-placement-preview-light",
+      "taskHeadSha256": "62cca2ed31788f02e1e333df46d5134a37b4b4f26548c0af508072ed11baa62f",
+      "candidateSha256": "ba7454e2fd3809543c035e6e15f3a0c386e4793de149806af99cd92386679a1a",
+      "priorCandidateSha256": "ba7454e2fd3809543c035e6e15f3a0c386e4793de149806af99cd92386679a1a",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-furniture-transform-dark",
+      "taskHeadSha256": "0ff168801552644406efe458f7b22f40ae1a8fc081b46c3c302092ab7c3d660c",
+      "candidateSha256": "7857db71fe13d44fdd38e5c40ac59592c4fbd01502d0b20d663512751b2050ab",
+      "priorCandidateSha256": "7857db71fe13d44fdd38e5c40ac59592c4fbd01502d0b20d663512751b2050ab",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-device-state-source-unknown-en",
+      "taskHeadSha256": "fa90cc1f9b4ac5cfde1b58087d4eafe8f0a4729dee082a69f7b5fd30da117b80",
+      "candidateSha256": "5a7f1040052d2ef407eb3d71c77b4e1f5dbdd7ea983b74f6dcff51f34a556341",
+      "priorCandidateSha256": "5a7f1040052d2ef407eb3d71c77b4e1f5dbdd7ea983b74f6dcff51f34a556341",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-hidden-devices-view-light",
+      "taskHeadSha256": "6c3f6d6613e6cb980e906b1e4ea6992b50d24f58511e502223d282fb4dba3e9c",
+      "candidateSha256": "5cb7b2a421419df0293163fbad9b8dfead36fd865f5c329e79380b17a7dde76f",
+      "priorCandidateSha256": "5cb7b2a421419df0293163fbad9b8dfead36fd865f5c329e79380b17a7dde76f",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-large-house-warm-remount-dark",
+      "taskHeadSha256": "945aef970bc193d6195f3ef5a87a2683f67cdb6524116a6df8fa68d640bd75a3",
+      "candidateSha256": "779011f40a6f17aa2012ce04908215b06f48dde5f84c538dffe2b246f7c11128",
+      "priorCandidateSha256": "779011f40a6f17aa2012ce04908215b06f48dde5f84c538dffe2b246f7c11128",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-isometric-large-warm-remount-dark",
+      "taskHeadSha256": "648548e7bda73b45f34550061fb40e04c15bc5e13e7c6320f54c57b5bacdd3ab",
+      "candidateSha256": "6317d638ee1cfc51e6ab99ef4b1084da5b865f7a0d9eb8eb9f7797e00a8c1c95",
+      "priorCandidateSha256": "6317d638ee1cfc51e6ab99ef4b1084da5b865f7a0d9eb8eb9f7797e00a8c1c95",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-stairs-flat-normal-light",
+      "taskHeadSha256": "0630259944a3ab56209635c6f91828cf514e0e4d077726c53b43a027f9af15fb",
+      "candidateSha256": "8dadb400ba9b75b9201dd65f2f012f7e8696e141d35d02797323007cf6c82a60",
+      "priorCandidateSha256": "8dadb400ba9b75b9201dd65f2f012f7e8696e141d35d02797323007cf6c82a60",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-stairs-isometric-dark",
+      "taskHeadSha256": "8acacb360751ed20f58b68b775a94f23024ef84d04bb94aca838a7e1d5a1f3d7",
+      "candidateSha256": "149c78265b0fe1f584b4b8dce479786dd8b0a9cf7541e2ac8904c49a0e57def5",
+      "priorCandidateSha256": "149c78265b0fe1f584b4b8dce479786dd8b0a9cf7541e2ac8904c49a0e57def5",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-isometric-stage3-forced-colors-dark",
+      "taskHeadSha256": "77ecb11ca682f8b570eca22462a62c8554510cfbf9f81449acc0bdaea3cc70c9",
+      "candidateSha256": "ff6c402c30128b29c409fa30b4adfa219842e5570d82f6811bbfcdbfab6533a6",
+      "priorCandidateSha256": "ff6c402c30128b29c409fa30b4adfa219842e5570d82f6811bbfcdbfab6533a6",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-isometric-stage6-hover-light",
+      "taskHeadSha256": "79c15e5d2add5d2f4150df39a49d9173eb34df9c5979dce4c157872da9427658",
+      "candidateSha256": "7c678cba557c8ab41bf657de6127f58c2b2cca62139e05293fdff023f37bfa45",
+      "priorCandidateSha256": "7c678cba557c8ab41bf657de6127f58c2b2cca62139e05293fdff023f37bfa45",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-day-cycle-dawn-dark",
+      "taskHeadSha256": "a733faca5658ef45c89e6698c30fd0bd3b1245fa4ce65c9cc62951b4e133957c",
+      "candidateSha256": "f51066ea48c9a324597eb32815d31a54076d9408671893410462fa4b49d75e84",
+      "priorCandidateSha256": "f51066ea48c9a324597eb32815d31a54076d9408671893410462fa4b49d75e84",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-day-cycle-night-moon-gibbous-dark",
+      "taskHeadSha256": "d9a0bfec31d12342063a99014d4a04e26c4761d8b1af15f4c01f9e844edcd70b",
+      "candidateSha256": "926be41f56f6339dd420f6a484b19abfa0ed84b1ac5cb8505ae0427b70ea7d79",
+      "priorCandidateSha256": "926be41f56f6339dd420f6a484b19abfa0ed84b1ac5cb8505ae0427b70ea7d79",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-lighting-interior-window-dark",
+      "taskHeadSha256": "60c763d71919d2454abf3243ad3a2ce6db0ec2577e5ad77903ff8492c985f99e",
+      "candidateSha256": "7fff0f290c25951a8df0af4745b3234b26a8300f1bb934c3f638fe937e4e6659",
+      "priorCandidateSha256": "7fff0f290c25951a8df0af4745b3234b26a8300f1bb934c3f638fe937e4e6659",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-lighting-sun-transparent-sealed",
+      "taskHeadSha256": "0534c923b3b9effb1093687792561f3dd6e57e7ca9fafdf41e993941b3afa068",
+      "candidateSha256": "f899fff1cb496d7bf78f46e61fe8aae712ebdc5d413c2fddf7da744ce1d1773d",
+      "priorCandidateSha256": "f899fff1cb496d7bf78f46e61fe8aae712ebdc5d413c2fddf7da744ce1d1773d",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-lighting-sun-window-outer-occluded-dpr2-dark",
+      "taskHeadSha256": "c5569fea63c83a676779494e7790965c3904354499b5c13a2aa955133705c278",
+      "candidateSha256": "10ed5225fc5b0fc51b51f2903d5ad7b4f052b1dcc8ef7462e465932c80ef6533",
+      "priorCandidateSha256": "10ed5225fc5b0fc51b51f2903d5ad7b4f052b1dcc8ef7462e465932c80ef6533",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-lighting-opaque-glow-two-doorways-dark",
+      "taskHeadSha256": "fdd11a5628a6ab7921459dcf52dd3c6e35baea7733e335b78601fb74c53e4622",
+      "candidateSha256": "cf3d58b1a56c86b75e67f357a0ac81cb6f98828688a260757b20ed2ec2131f9e",
+      "priorCandidateSha256": "cf3d58b1a56c86b75e67f357a0ac81cb6f98828688a260757b20ed2ec2131f9e",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-vacuum-trail-smoothing-dark",
+      "taskHeadSha256": "79299b3b74d1a1db88244917ce118a8ba167bc8fbbdd45f91b0ab5c4b52becea",
+      "candidateSha256": "8ff277299b3fef25373c622557abc5e7a1f528f5c1b2b77f917bd0bf17884751",
+      "priorCandidateSha256": "8ff277299b3fef25373c622557abc5e7a1f528f5c1b2b77f917bd0bf17884751",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-vacuum-live-tail-pending-dialog-dark",
+      "taskHeadSha256": "1d76b0738536beb24538c4e06b953d946858fbd4bf57bac65716fdcedb9e03a5",
+      "candidateSha256": "5805528840253c94d9285c51731f4187267d12fb5904234df7314818d317d010",
+      "priorCandidateSha256": "5805528840253c94d9285c51731f4187267d12fb5904234df7314818d317d010",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-room-co2-flat-light",
+      "taskHeadSha256": "73e945b9646c8c1ee94ac050d8b4555c8ca34166a5dd916a943ac1dcf266c445",
+      "candidateSha256": "80911efc5396e0b32f93f0644ce43063ea8c879008a76f0432755cd8c23c06d7",
+      "priorCandidateSha256": "80911efc5396e0b32f93f0644ce43063ea8c879008a76f0432755cd8c23c06d7",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-room-label-parity-plan-dark",
+      "taskHeadSha256": "8412c172c3fbd65369fb712641888f437f4f392f82e02f1fb72503a48b90351c",
+      "candidateSha256": "ed75353a74999bed9933e1e98896a23fe4cbd328bdaa0a5ef0f068b05c6c0f00",
+      "priorCandidateSha256": "ed75353a74999bed9933e1e98896a23fe4cbd328bdaa0a5ef0f068b05c6c0f00",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-approved-ui-summary-light-1119",
+      "taskHeadSha256": "e0e76434b36eae79812c3d4f3ef918d135b985e6e2914976cbe57554ecb0c4dc",
+      "candidateSha256": "7f35456340fd7c02137870ae568d62eaf37517192cdc9aeebc07f477bf4c8661",
+      "priorCandidateSha256": "7f35456340fd7c02137870ae568d62eaf37517192cdc9aeebc07f477bf4c8661",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-backup-full-preview-desktop-en",
+      "taskHeadSha256": "3319b09fa9a08dcdbcfde0808741ee9196a772c5e281d5a15d32548223603682",
+      "candidateSha256": "a87ed83b253097e87e80b10e8766d08f43cb61ca5715f6137e5f0579bc5ef0a1",
+      "priorCandidateSha256": "a87ed83b253097e87e80b10e8766d08f43cb61ca5715f6137e5f0579bc5ef0a1",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-support-relay-error-light-en",
+      "taskHeadSha256": "faf1d08f697e9b09345cde81449dbe57c7f520c169a065cc6a551edd2f74ba7d",
+      "candidateSha256": "10f813c8e444cc1495b2c4956b5469293dd7245bcdacfefa3be15232f989de28",
+      "priorCandidateSha256": "10f813c8e444cc1495b2c4956b5469293dd7245bcdacfefa3be15232f989de28",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    },
+    {
+      "id": "panel-opening-symbol-diagonal-partition-dark",
+      "taskHeadSha256": "87552e08a66fc14d3ee2d370578f40e1cab94ad20d6b1ee802b23c00d4818ca1",
+      "candidateSha256": "f2738b28a1d9a3190d78dc63a4edacb2f76e3410508ba6bc03a8526efeea8e12",
+      "priorCandidateSha256": "f2738b28a1d9a3190d78dc63a4edacb2f76e3410508ba6bc03a8526efeea8e12",
+      "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+      "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+    }
+  ],
+  "pairs": [
+    {
+      "id": "geometry-view-light-fit",
+      "singleStatus": "passed",
+      "singleSha256": "a58e2a1a020d8f9070d58964c62ab32c5eceff10ce43c101b2edb52aa8f5f994",
+      "fullSha256": "a58e2a1a020d8f9070d58964c62ab32c5eceff10ce43c101b2edb52aa8f5f994",
+      "candidateBaselineSha256": "a58e2a1a020d8f9070d58964c62ab32c5eceff10ce43c101b2edb52aa8f5f994",
+      "taskHeadBaselineSha256": "d68380b3e4adebcf075f36913c53c1309e03f1965f80530775460dc5979b97e4",
+      "candidateBaselineProvenance": {
+        "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+        "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+      },
+      "camera": {
+        "view": {
+          "w": 1213.3981881456157,
+          "h": 1019.7970544679108,
+          "x": -106.69909407280784,
+          "y": -34.35441156672323
+        },
+        "zoom": 1,
+        "baseVb": [
+          -6.354411566723222,
+          -34.35441156672322,
+          1012.7088231334465,
+          1019.7970544679108
+        ],
+        "svgViewBox": "-106.69909407280784 -34.35441156672323 1213.3981881456157 1019.7970544679108",
+        "stage": [
+          984,
+          827
+        ],
+        "host": "lovelace"
+      }
+    },
+    {
+      "id": "geometry-view-dark-fit",
+      "singleStatus": "passed",
+      "singleSha256": "053d8e2d00a88a10c5564d4a153a966e13dcbe2aec56552911d703b96fdb2183",
+      "fullSha256": "053d8e2d00a88a10c5564d4a153a966e13dcbe2aec56552911d703b96fdb2183",
+      "candidateBaselineSha256": "053d8e2d00a88a10c5564d4a153a966e13dcbe2aec56552911d703b96fdb2183",
+      "taskHeadBaselineSha256": "053d8e2d00a88a10c5564d4a153a966e13dcbe2aec56552911d703b96fdb2183",
+      "candidateBaselineProvenance": {
+        "decision": "https://github.com/Matysh/houseplan-card/issues/1401#issuecomment-6846341632",
+        "sourceSha": "8f814069d9827d78adfb22a4b89f719762a83ded"
+      },
+      "camera": {
+        "view": {
+          "w": 1213.3981881456157,
+          "h": 1019.7970544679108,
+          "x": -106.69909407280784,
+          "y": -34.35441156672323
+        },
+        "zoom": 1,
+        "baseVb": [
+          -6.354411566723222,
+          -34.35441156672322,
+          1012.7088231334465,
+          1019.7970544679108
+        ],
+        "svgViewBox": "-106.69909407280784 -34.35441156672323 1213.3981881456157 1019.7970544679108",
+        "stage": [
+          984,
+          827
+        ],
+        "host": "lovelace"
+      }
+    },
+    {
+      "id": "device-alert-alarm-flat",
+      "singleStatus": "passed",
+      "singleSha256": "ce2352668d97c4b87983675efaedc86909da216a031b8af9f73b7a18f0e56117",
+      "fullSha256": "ce2352668d97c4b87983675efaedc86909da216a031b8af9f73b7a18f0e56117",
+      "candidateBaselineSha256": "ce2352668d97c4b87983675efaedc86909da216a031b8af9f73b7a18f0e56117",
+      "taskHeadBaselineSha256": "b4afd5bc4144ebc4de0313fd322b7bab5328df1724c437af61d87db69e10b81d",
+      "candidateBaselineProvenance": {
+        "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+        "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+      },
+      "camera": {
+        "view": {
+          "w": 1362.9492041934077,
+          "h": 966.7071844222472,
+          "x": -181.4746020967038,
+          "y": -21.94123565555668
+        },
+        "zoom": 1,
+        "baseVb": [
+          26.05876434444331,
+          -21.94123565555669,
+          947.8824713111135,
+          966.7071844222472
+        ],
+        "svgViewBox": "-181.4746020967038 -21.94123565555668 1362.9492041934077 966.7071844222472",
+        "stage": [
+          884,
+          627
+        ],
+        "host": "lovelace"
+      }
+    },
+    {
+      "id": "device-issues-alarm-plan",
+      "singleStatus": "passed",
+      "singleSha256": "ce2352668d97c4b87983675efaedc86909da216a031b8af9f73b7a18f0e56117",
+      "fullSha256": "ce2352668d97c4b87983675efaedc86909da216a031b8af9f73b7a18f0e56117",
+      "candidateBaselineSha256": "ce2352668d97c4b87983675efaedc86909da216a031b8af9f73b7a18f0e56117",
+      "taskHeadBaselineSha256": "ce2352668d97c4b87983675efaedc86909da216a031b8af9f73b7a18f0e56117",
+      "candidateBaselineProvenance": {
+        "decision": "https://github.com/Matysh/houseplan-card/issues/1401#issuecomment-6846341632",
+        "sourceSha": "8f814069d9827d78adfb22a4b89f719762a83ded"
+      },
+      "camera": {
+        "view": {
+          "w": 1362.9492041934077,
+          "h": 966.7071844222472,
+          "x": -181.4746020967038,
+          "y": -21.94123565555668
+        },
+        "zoom": 1,
+        "baseVb": [
+          26.05876434444331,
+          -21.94123565555669,
+          947.8824713111135,
+          966.7071844222472
+        ],
+        "svgViewBox": "-181.4746020967038 -21.94123565555668 1362.9492041934077 966.7071844222472",
+        "stage": [
+          884,
+          627
+        ],
+        "host": "lovelace"
+      }
+    },
+    {
+      "id": "panel-kiosk-profile-no-controls",
+      "singleStatus": "passed",
+      "singleSha256": "1a758eef7d5410c326880e13d8af4e9f650bccb0df95692df0c73e685227c487",
+      "fullSha256": "1a758eef7d5410c326880e13d8af4e9f650bccb0df95692df0c73e685227c487",
+      "candidateBaselineSha256": "1a758eef7d5410c326880e13d8af4e9f650bccb0df95692df0c73e685227c487",
+      "taskHeadBaselineSha256": "3db556537ba0c0a831291be0264929e45b2ccb2ab16bcdeb5f800192d96dbf45",
+      "candidateBaselineProvenance": {
+        "decision": "Owner chat 2026-11-13: когда закончишь 1024 - выпусти бету, эталоны принимаю. Author reviewed all selected comparisons: UI-059 symbols, state-independent full-motion fit and accepted 1381/1398 dimensions.",
+        "sourceSha": "efb45d1f465f12e91e18e19e918d7514f45524bf"
+      },
+      "camera": {
+        "view": null,
+        "zoom": 1,
+        "baseVb": [
+          -6.354411566723222,
+          -34.35441156672322,
+          1012.7088231334465,
+          1019.7970544679108
+        ],
+        "svgViewBox": "-209.42403789072057 -34.35441156672322 1418.8480757814411 1019.7970544679108",
+        "stage": [
+          1280,
+          920
+        ],
+        "host": "panel"
+      }
+    },
+    {
+      "id": "panel-kiosk-profile-summary-on",
+      "singleStatus": "passed",
+      "singleSha256": "1a758eef7d5410c326880e13d8af4e9f650bccb0df95692df0c73e685227c487",
+      "fullSha256": "1a758eef7d5410c326880e13d8af4e9f650bccb0df95692df0c73e685227c487",
+      "candidateBaselineSha256": "1a758eef7d5410c326880e13d8af4e9f650bccb0df95692df0c73e685227c487",
+      "taskHeadBaselineSha256": "1a758eef7d5410c326880e13d8af4e9f650bccb0df95692df0c73e685227c487",
+      "candidateBaselineProvenance": {
+        "decision": "https://github.com/Matysh/houseplan-card/issues/1401#issuecomment-6846341632",
+        "sourceSha": "8f814069d9827d78adfb22a4b89f719762a83ded"
+      },
+      "camera": {
+        "view": null,
+        "zoom": 1,
+        "baseVb": [
+          -6.354411566723222,
+          -34.35441156672322,
+          1012.7088231334465,
+          1019.7970544679108
+        ],
+        "svgViewBox": "-209.42403789072057 -34.35441156672322 1418.8480757814411 1019.7970544679108",
+        "stage": [
+          1280,
+          920
+        ],
+        "host": "panel"
+      }
+    }
+  ]
+}
