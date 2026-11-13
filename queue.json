@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10965,
-  "nextTicket": 404,
+  "revision": 10966,
+  "nextTicket": 405,
   "nextFence": 404,
   "tasks": {
     "1024": {
@@ -4633,14 +4633,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1411-tooltip-metric-wrap",
-      "materialSha": "579596c9bde36cff64ca25a9ad1a9f9dd99b63f2",
+      "materialSha": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 403,
-      "queued": false,
+      "ticket": 404,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794569670329,
-      "reviewEntry": 1,
+      "readyAt": 1794570157150,
+      "reviewEntry": 2,
       "patchId": "7d17515f2e02bf8d36d82c57370b23787086dbe1",
       "changedFiles": [
         "demo/smoke_device_battery_tooltip.mjs",
@@ -4650,7 +4650,6 @@
         "src/live-hover.ts",
         "test/device-battery-tip.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4904,7 +4903,9 @@
       "runId": 43397778083
     }
   },
-  "waiting": [],
+  "waiting": [
+    1411
+  ],
   "active": null,
   "events": {
     "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:2:synchronized": {
@@ -4984,6 +4985,19 @@
           "detail": "Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:3:return:return:1411"
         }
+      }
+    },
+    "finish:50df5f80-fd97-4e6c-b45a-f915f2d87426": {
+      "digest": "8a9e9e77c6226a9bc98a25b13664feb6782a75c1584580adc21d030e37940242",
+      "issue": 1411,
+      "message": {
+        "kind": "queued",
+        "issue": 1411,
+        "at": 1794570157150,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856"
       }
     }
   },
