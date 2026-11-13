@@ -472,6 +472,11 @@ may produce more than one confirm button. A step which has no such visible
 button does not gain a synthetic one. The native fallback X is a cancel hook;
 Home Assistant's own close control stays inside HA's private shadow root.
 
+The existing shared device/room tooltip is `[data-hp="live-tooltip"]` since
+1.85.2-beta.2. This test-only hook allows reading visible text, bounds,
+`hidden`/`aria-hidden` and native animations. Internal hover state is not a
+test API; the hook adds no second tooltip surface (#1412).
+
 ### 7.6 Sidebar panel
 
 On the main page, `[data-hp="panel-menu"]` now lives in the nested

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Declare the existing live tooltip as a read-only HA E2E hook; preserve hover behavior and the strict selector contract (#1412, houseplan-e2e#50).
+
 - Show device tooltips after a short hover dwell, keep their anchor and animation across pointer movement and live HA updates, and fade with UI Kit timing. Retire stale visits at lifecycle boundaries and reclamp on real viewport resize (#1409).
 
 - Keep each device-tooltip metric's label, value and unit together when wrapping, while long model names and separate metrics still wrap within the viewport (#1411).

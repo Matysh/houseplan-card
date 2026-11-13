@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "issue": 1412,
+  "baseStable": "v1.85.0",
+  "category": "infra",
+  "rationale": "Expose the existing tooltip surface through the declared read-only test contract for real HA E2E.",
+  "summary": {"ru": "Объявлен read-only селектор тултипа для HA E2E.", "en": "Declare a read-only tooltip hook for HA E2E."}
+}

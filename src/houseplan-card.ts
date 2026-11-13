@@ -12909,7 +12909,7 @@ export class HouseplanCard extends LitElement {
         ${dialogPresence(this._backupExportDialog ? this._editorRuntime ? this._renderBackupExportDialog() : nothing : nothing)}
         ${dialogPresence(this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing)}
         ${dialogPresence(this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing)}
-        <div class="tip" data-hp-live-tip hidden></div>
+        <div class="tip" data-hp="live-tooltip" data-hp-live-tip hidden></div>
         ${dialogPresence(this._kioskDialog ? this._renderKioskDialog() : nothing)}
         ${dialogPresence(this._summary?.dialogOpen ? this._summary.renderDialog() : nothing)}
         ${this._vacFit ? html`<div class="vaccalbar" data-hp="vacuum-calibration" aria-busy=${String(!!this._vacFit.busy)}>

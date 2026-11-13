@@ -6,6 +6,10 @@
     "additionsAreCompatible": true
   },
   "hooks": {
+    "live-tooltip": {
+      "elements": ["div"], "since": "1.85.2-beta.2", "audience": ["test"],
+      "description": "Existing shared device/room tooltip surface. Observe visible text, bounds, hidden/aria-hidden and native animations; internal hover state is not a test API."
+    },
     "wall-side-dimension": {
       "elements": ["g"], "since": "1.85.2-beta.1", "audience": ["test"],
       "description": "One read-only interval from the shared drafting dimension layer; presence follows the active editor measurement.",
