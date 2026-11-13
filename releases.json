@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 840,
+  "revision": 841,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -99219,13 +99219,15 @@
           "from": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
           "to": "cd101b53c63eae4cfb41df5f24936c359c792cc3",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "86015ab8132a92ab6546eedda2f0421b01700355"
         },
         {
           "from": "cd101b53c63eae4cfb41df5f24936c359c792cc3",
           "to": "86015ab8132a92ab6546eedda2f0421b01700355",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "7f2f701713db065218dea84cb62b03ff64e97d5f"
         }
       ],
       "diagnostics": [],
@@ -99927,7 +99929,8 @@
           "sha": "17d4d17b9973ffd53d59bb477eb353902f23de06"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "7f2f701713db065218dea84cb62b03ff64e97d5f",
           "issue": 1416,
           "branch": "issue/1416-release-return-86015ab8132a",
           "worktree": "/home/sergey/houseplan-1227/artifacts/process-next/return-worktrees/86015ab8132a"
@@ -104749,7 +104752,8 @@
     "beta2-20261113-publication-r2:completion:0665ba53-f9ea-4439-b12f-74ba15143e81": "1bbfb168119697713d6613d62a5cb1bcf7788136abfcb238154e0ddbd05b5d06",
     "beta2-20261113-publication-r2:completion:2812fe6a-abb6-46c8-b11b-753538b4b414": "efcecf590e428f27e07cf33ce4dfd34d02a80b699d8a4daac084a396ba8e7ea6",
     "beta2-20261113-publication-r2:completion:7037ac37-faa9-4a34-8eeb-55f2cd0450ee": "b4a4688535d851aec4688e06e820776633b0d269f7a7d643f8724f3b2a49c1e0",
-    "beta2-20261113-publication-r2:completion:9dfd17c6-ed28-4cfb-b7d5-99e4a1a68c92": "97402895271c2c56c5cba20a5eb5e5f22259ca9d7cc18509f593e36aa0c6ca76"
+    "beta2-20261113-publication-r2:completion:9dfd17c6-ed28-4cfb-b7d5-99e4a1a68c92": "97402895271c2c56c5cba20a5eb5e5f22259ca9d7cc18509f593e36aa0c6ca76",
+    "beta2-20261113-publication-r2:completion:9da4c7a4-911d-4a76-aa2b-575c309f832f": "78eae8d14faf0beb77cabb4bb35f7c28e3f7899f81d61216780501e58aef58d7"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
