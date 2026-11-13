@@ -1,0 +1,8 @@
+{
+ "schema":1,
+ "issue":1414,
+ "baseStable":"v1.85.0",
+ "category":"infra",
+ "rationale":"Wait for the public tooltip surface before capturing a deliberate hover scene; keep existing visual expectations.",
+ "summary":{"ru":"Снимок hover-сцены ждёт появления подсказки.","en":"Wait for the tooltip before capturing hover scenes."}
+}
