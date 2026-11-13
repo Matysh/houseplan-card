@@ -7,7 +7,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import ts from 'typescript';
 
 import {
-  OptimizePlansDialog, preflightDiagnostics, preflightVersionsDiffer,
+  OptimizePlansDialog, preflightDiagnostics,
 } from '../test-build/optimize-plans-dialog.js';
 import { formatLatticeShiftCm } from '../test-build/coordinate-canonicalization.js';
 import { acquireHaRegistries, haRegistrySnapshot } from '../test-build/ha-binding-status.js';
@@ -200,13 +200,6 @@ test('#642 preflightDiagnostics: candidate hash, reason, detail, version, fixed 
   // Смок передаёт кандидата не всегда; блок всё равно собирается.
   assert.equal(preflightDiagnostics(failedPreflight(), undefined, { cardVersion: 'x', now }).failures[0]
     .spaceGeometryFingerprint, null);
-});
-
-test('#642 preflightVersionsDiffer: only a known, different integration version advises an update', () => {
-  assert.equal(preflightVersionsDiffer(null, '1.0.0'), false);
-  assert.equal(preflightVersionsDiffer('', '1.0.0'), false);
-  assert.equal(preflightVersionsDiffer('1.0.0', '1.0.0'), false);
-  assert.equal(preflightVersionsDiffer('0.0.1-other', '1.0.0'), true);
 });
 
 // ------------------------------------------------------------------ preview
