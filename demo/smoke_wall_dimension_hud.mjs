@@ -1,4 +1,4 @@
-// #1403: exact existing golden reproduction; do not accept hidden DOM text as visible ink.
+// #1403: wall geometry/editor witness; do not accept hidden DOM text as visible ink.
 import assert from 'node:assert/strict';
 import {mkdirSync} from 'node:fs';
 import {launch,reportPageErrors} from './serve.mjs';
