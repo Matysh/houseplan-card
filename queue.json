@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11181,
-  "nextTicket": 409,
+  "revision": 11182,
+  "nextTicket": 410,
   "nextFence": 409,
   "tasks": {
     "1024": {
@@ -4517,14 +4517,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1413-hover-boundary",
-      "materialSha": "517fa49e61c9e779a4a36ae9f5f17cb1012eca72",
+      "materialSha": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 408,
-      "queued": false,
+      "ticket": 409,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794579128347,
-      "reviewEntry": 1,
+      "readyAt": 1794580049929,
+      "reviewEntry": 2,
       "patchId": "8c4c4329a4e672006e0e0973b7a6c58e873df4ae",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -4536,7 +4536,6 @@
         "test/device-tooltip-hover.test.mjs",
         "test/pointer-modality.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4776,7 +4775,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1413
+  ],
   "active": null,
   "events": {
     "finish:22f7a3ed-e33b-4a76-9188-8188891dc099:finish:2:synchronized": {
@@ -4860,6 +4861,19 @@
           "detail": "Браузер: room co2: failed",
           "eventId": "finish:22f7a3ed-e33b-4a76-9188-8188891dc099:finish:3:return:return:1413"
         }
+      }
+    },
+    "finish:cb1a70d1-6126-44ae-a221-7a0b7a15dd1a": {
+      "digest": "cf412fa6f339c2891369ee86fda882e22235c4a1a5b4e766dbb8880a9d012adb",
+      "issue": 1413,
+      "message": {
+        "kind": "queued",
+        "issue": 1413,
+        "at": 1794580049929,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76"
       }
     }
   },
