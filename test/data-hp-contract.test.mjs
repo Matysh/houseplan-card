@@ -21,6 +21,23 @@ import { templateTags, templateAttributeValues, toolVocabularyFromSources, resol
 const root = new URL('../', import.meta.url);
 const contract = JSON.parse(readFileSync(new URL('docs/data-hp-contract.json', root), 'utf8'));
 
+test('#1406 external opening dimensions use versioned read-only hooks, not internal probes',()=>{
+  for(const id of ['wall-side-dimension','dimension-rail']){
+    const hook=contract.hooks[id];assert.ok(hook,`${id} must be public for external E2E`);
+    assert.deepEqual(hook.elements,['g']);assert.deepEqual(hook.audience,['test']);
+    assert.equal(hook.since,'1.85.2-beta.1');assert.ok(!contract.internalExactValues.includes(id));
+  }
+  const dimension=contract.hooks['wall-side-dimension'];
+  for(const attr of ['data-length-cm','data-reference-source','data-room']){
+    assert.equal(dimension.attributeMetadata[attr].since,'1.85.2-beta.1');
+    assert.equal(dimension.attributeMetadata[attr].value,'string');
+  }
+  assert.ok(dimension.attributes['data-role'].includes('opening-gap'));
+  assert.ok(dimension.attributes['data-source'].includes('unavailable'));
+  for(const id of ['wall-side-dimensions','dimension-witnesses','dimension-list'])
+    assert.ok(contract.internalExactValues.includes(id),'do not promote the whole renderer');
+});
+
 const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true })
   .flatMap((entry) => entry.isDirectory()
     ? sourceFiles(join(dir, entry.name))

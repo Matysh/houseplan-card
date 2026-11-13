@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Declare the existing read-only dimension interval and painted rail as versioned test hooks for real HA E2E; keep the remaining renderer probes internal and the strict selector check unchanged (#1406).
+
 - Keep the shared dimension list and labels clear of the visible zoom badge; fixed editor controls take priority when a list corner is chosen (#1404).
 
 - Normalize backdrop image/frame paint to the same local SVG basis across grid calibrations, preserving world bounds, rotation and native gestures. Equivalent 1/5cm plans no longer change imported SVG text hinting or handle rasterization; pixel tolerances remain unchanged (#1400).
