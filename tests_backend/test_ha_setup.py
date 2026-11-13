@@ -55,7 +55,7 @@ async def test_missing_frontend_bundle_does_not_skip_backend_setup(
     hass: HomeAssistant, monkeypatch
 ) -> None:
     """A packaging fault stays diagnosable without skipping repairs or sweep."""
-    import custom_components.houseplan as integration
+    from custom_components.houseplan import ha_integration as integration
     from custom_components.houseplan.frontend_registration import (
         FRONTEND_REGISTRATION_KEY,
     )
@@ -86,7 +86,7 @@ async def test_panel_registration_runs_after_repair_and_initial_housekeeping(
     hass: HomeAssistant, monkeypatch
 ) -> None:
     """The optional sidebar surface must be the final entry setup operation."""
-    import custom_components.houseplan as integration
+    from custom_components.houseplan import ha_integration as integration
 
     order: list[str] = []
 

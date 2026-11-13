@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Load the HA lifecycle adapter through its import executor so the package entry can expose a reusable plan core without eager Home Assistant imports; retain setup, recovery and shutdown ordering (#1391).
+
 - Inventory HA frontend components and record the owner-selected UI Kit/local-SVG direction, isolated bootstrap measurements and deferred standalone UI/entry tasks; installed HA behavior is unchanged (#1393).
 
 ## v1.85.2 — 2026-11-13
