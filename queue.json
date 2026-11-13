@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11562,
+  "revision": 11563,
   "nextTicket": 418,
   "nextFence": 418,
   "tasks": {
@@ -4552,7 +4552,16 @@
         "package.json",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261113T193518255-0112da11",
+        "name": "Тесты для задачи #1420 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T193518255-0112da11/report.json",
+        "materialSha": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
+        "status": "passed",
+        "finishedAt": "2026-11-13T19:44:17.944Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -4790,9 +4799,9 @@
     "fence": 417,
     "materialSha": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
     "expectedBase": "460993a2c24dd3079191169a9f597e43fdf7602f",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794598499372,
-    "expiresAt": 1794599359368,
+    "expiresAt": 1794602662571,
     "patchId": "1be56836b4ff67710d7bf5ad1ac327d79f1f5263"
   },
   "events": {
@@ -4842,6 +4851,10 @@
     },
     "finish:cda58985-fad5-456b-a576-7bb342355324": {
       "digest": "98131da9df5787361f8e2c7fb6e4b183503ebac0a799afd8965f66e30f1ec609",
+      "issue": 1420
+    },
+    "release-return-finish:0a88f005-42f8-459d-bb37-29adaf0a18ba:finish:3:s6-complete": {
+      "digest": "00a0248340300c55c5e4c26c4758b299fe1cfc7132b067386decc8415849d98d",
       "issue": 1420
     },
     "release-return:0a88f005-42f8-459d-bb37-29adaf0a18ba": {
