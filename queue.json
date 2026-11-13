@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10635,
-  "nextTicket": 397,
+  "revision": 10636,
+  "nextTicket": 398,
   "nextFence": 397,
   "tasks": {
     "1024": {
@@ -4555,6 +4555,20 @@
         "sourceSha": "9b2651c749177a7f1e6f9dab62e871ef5634b4c0"
       }
     },
+    "1405": {
+      "issue": 1405,
+      "track": "ship",
+      "layer": "infra",
+      "branch": "codex/1405-ha-rotation-record",
+      "materialSha": "cafbefd6346116130961758d1b825f36e69f4323",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 397,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794555821054,
+      "reviewEntry": 1
+    },
     "1406": {
       "issue": 1406,
       "branch": "codex/1406-dimension-test-contract",
@@ -4820,9 +4834,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1405
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:82021f04-9ea1-4d7b-bb69-29d0191d80cc": {
+      "digest": "cd45e36a962d6cb79b778014367300f28852c8fb9f627483d3902f6df7b4ca98",
+      "issue": 1405,
+      "message": {
+        "kind": "queued",
+        "issue": 1405,
+        "at": 1794555821054,
+        "entry": 1,
+        "track": "ship",
+        "layer": "infra",
+        "materialSha": "cafbefd6346116130961758d1b825f36e69f4323"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "24f98e2081b460f7b14a76a186155b574a6bbb45",
     "status": "delivered",
