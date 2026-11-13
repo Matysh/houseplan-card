@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11409,
+  "revision": 11410,
   "nextTicket": 414,
   "nextFence": 414,
   "tasks": {
@@ -4528,7 +4528,18 @@
         "docs/release-ledger/v1.85.0/1418.json",
         "src/editors/decor/line-drawing.ts",
         "test/decor-line-drawing.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794589998325,
+        "entry": 1,
+        "detail": "Браузер: decor line click: failed",
+        "eventId": "finish:fea38776-a94f-4875-97e5-855e552dd363:finish:3:return:return:1418"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4759,18 +4770,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1418,
-    "worker": "finish",
-    "token": "413:finish:fea38776-a94f-4875-97e5-855e552dd363:finish:1:admit",
-    "fence": 413,
-    "materialSha": "67298634f0e858b07524e79cf1f3caf61cffb97a",
-    "expectedBase": "7f2f701713db065218dea84cb62b03ff64e97d5f",
-    "phase": "testing",
-    "admittedAt": 1794589486583,
-    "expiresAt": 1794590265912,
-    "patchId": "76695663cc280f4dd2329bb4ede92bf13dcb3ecc"
-  },
+  "active": null,
   "events": {
     "finish:fea38776-a94f-4875-97e5-855e552dd363:finish:2:synchronized": {
       "digest": "31b615984e8ffb08c99b8cf042b3772f553d449d8a7f51fce7b9631bea4162cb",
@@ -4808,6 +4808,10 @@
       "digest": "b6b7b627c84bdaab5733bb9e31094238903586e72de249ec8a816eda849c577b",
       "issue": 1418
     },
+    "finish:fea38776-a94f-4875-97e5-855e552dd363:finish:3:return": {
+      "digest": "3980c55667df71de01c06d782adcbc5503625f2c3cd4e7c5fd604fd9ba0cd40a",
+      "issue": 1418
+    },
     "finish:fea38776-a94f-4875-97e5-855e552dd363": {
       "digest": "c7a1a502b60cd33f1531fe9191cfe19f55d8beed8ee05ea0de20a4745e5476e0",
       "issue": 1418,
@@ -4833,6 +4837,26 @@
         "layer": "product",
         "materialSha": "67298634f0e858b07524e79cf1f3caf61cffb97a",
         "phase": "sync"
+      }
+    },
+    "finish:fea38776-a94f-4875-97e5-855e552dd363:finish:3:return:return:1418": {
+      "digest": "3980c55667df71de01c06d782adcbc5503625f2c3cd4e7c5fd604fd9ba0cd40a",
+      "issue": 1418,
+      "message": {
+        "kind": "return",
+        "issue": 1418,
+        "at": 1794589998325,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794589998325,
+          "entry": 1,
+          "detail": "Браузер: decor line click: failed",
+          "eventId": "finish:fea38776-a94f-4875-97e5-855e552dd363:finish:3:return:return:1418"
+        }
       }
     }
   },
