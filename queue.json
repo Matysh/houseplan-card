@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10261,
+  "revision": 10262,
   "nextTicket": 389,
   "nextFence": 389,
   "tasks": {
@@ -4435,7 +4435,19 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794546663013,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "fe6d476e384a85cd7147fd3ac8c396269bb8fa5f",
+      "changedFiles": [
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.85.0/1400.json",
+        "src/backdrop-frame-gesture.ts",
+        "src/backdrop-paint.ts",
+        "src/houseplan-card.ts",
+        "src/space-render.ts",
+        "test/backdrop-paint.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4686,12 +4698,17 @@
     "token": "388:finish:e2637d67-d71b-4801-bf6e-9e7bccad8884:finish:1:admit",
     "fence": 388,
     "materialSha": "098e1eb656dcdf2478915476251449972232d814",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "893ca7a80b33a14a4a9b18ebc23cc507bbf07b26",
+    "phase": "testing",
     "admittedAt": 1794546666419,
-    "expiresAt": 1794546966419
+    "expiresAt": 1794546972155,
+    "patchId": "fe6d476e384a85cd7147fd3ac8c396269bb8fa5f"
   },
   "events": {
+    "finish:e2637d67-d71b-4801-bf6e-9e7bccad8884:finish:2:synchronized": {
+      "digest": "172a7689eec955975a6caa6e98320716b75b833a39658e28a0747721e419e8d8",
+      "issue": 1400
+    },
     "dev-build:43369536476:1:1399": {
       "digest": "1c517f8d60fbda796eee6ece1824fbc30599c146ddb6f1431cf58782cfd2e4fc",
       "issue": 1399,
