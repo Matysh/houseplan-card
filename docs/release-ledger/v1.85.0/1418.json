@@ -1,0 +1,1 @@
+{"schema":1,"issue":1418,"baseStable":"v1.85.0","category":"stable-fix","rationale":"Preserve the precise accepted pointer endpoint instead of reinterpreting rounded click coordinates.","summary":{"ru":"Линия подложки сохраняет точный Shift-предпросмотр при клике.","en":"Keep the precise Shift preview when committing a decor line."}}

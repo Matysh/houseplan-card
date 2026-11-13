@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve the final pointer's fractional coordinates when committing a decor line, so click rounding cannot change its Shift preview or continuation anchor (#1418).
+
 ## v1.85.2-beta.2 — 2026-11-13
 
 - Keep remount/layout boundary events from reviving a retired mouse tooltip without fresh movement; preserve keyboard focus tips and normal mouse recovery (#1413, houseplan-e2e#50).

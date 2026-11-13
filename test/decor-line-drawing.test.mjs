@@ -54,6 +54,19 @@ test('drag, second pointer, cancel, lost contact and synthetic clicks retain anc
   f.click(40, 20); assert.equal(f.state.commands.length, 1); f.drawing.reset();
 });
 
+test('#1418 fractional pointer position survives rounded click at an octant boundary', () => {
+  const f = fixture(); f.click(0, 0);
+  const precise = { ...f.event(100.9, 41.9), shiftKey: true };
+  f.drawing.pointerMove(precise);
+  const preview = [...f.state.preview.b];
+  assert.deepEqual(preview, [70, 70], 'the precise pointer selects the diagonal');
+  f.drawing.pointerDown(precise); f.drawing.pointerUp(precise);
+  f.drawing.click({ ...precise, clientX: 100, clientY: 41 }, false);
+  assert.deepEqual(f.state.commands[0].b, preview, 'click rounding must not choose a horizontal ray');
+  assert.deepEqual(f.drawing.snapshot.anchor, preview, 'the next segment starts at the accepted preview');
+  f.drawing.reset();
+});
+
 test('modifier without pointer movement updates preview; reset retires listeners and stale contact', () => {
   const f = fixture(); f.click(10, 10); f.drawing.pointerMove(f.event(42, 25));
   const shift = type => { const e = new Event(type); Object.assign(e, { key: 'Shift' }); f.events.dispatchEvent(e); };

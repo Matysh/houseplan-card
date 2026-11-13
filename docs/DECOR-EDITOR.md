@@ -134,6 +134,8 @@ pointer cancellation and compatibility clicks cannot add an endpoint; the next
 clean contact works again. Shift preview and commit share `snapSegment45`;
 incompatible magnets cannot pull an exact ray off its direction. Shift changes
 also refresh a stationary preview. Finishing retains Line and accepted objects.
+The accepted endpoint uses the precise final pointer position: a browser's
+rounded `click` coordinates cannot select a different ray or move the next anchor.
 Tool/mode/space/authority changes, external config adoption and disconnect retire
 the session. Its anchor is never stored in config or transferred to View.
 

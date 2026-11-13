@@ -42,7 +42,7 @@ export class DecorLineDrawing {
   private shift = false;
   private contacts = new Set<number>();
   private press: { id: number; x: number; y: number } | null = null;
-  private ready: { x: number; y: number; type: string } | null = null;
+  private ready: { x: number; y: number; type: string; point: number[] } | null = null;
   private readonly modifier = (event: Event): void => {
     const key = event as KeyboardEvent;
     if (key.key !== 'Shift' || !this.sync()) return;
@@ -111,7 +111,11 @@ export class DecorLineDrawing {
     const clean = this.press?.id === event.pointerId && this.contacts.size === 1
       && Math.abs(event.clientX - this.press.x) + Math.abs(event.clientY - this.press.y) <= 4;
     this.contacts.delete(event.pointerId); this.press = null;
-    this.ready = clean ? { x: event.clientX, y: event.clientY, type: event.pointerType || 'mouse' } : null;
+    // Chromium rounds click coordinates even when pointerup retains fractions.
+    // Capture the accepted contact before that rounding can change a snap ray.
+    this.ready = clean && this.sync() && !this.port.blocked()
+      ? { x: event.clientX, y: event.clientY, type: event.pointerType || 'mouse', point: [...this.port.point(event)] }
+      : null;
   }
   cancel(event: PointerEvent): void {
     this.contacts.delete(event.pointerId); this.press = null; this.ready = null;
@@ -121,7 +125,7 @@ export class DecorLineDrawing {
     const ready = this.ready; this.ready = null;
     if (!ready || suppressed || !this.sync() || this.port.blocked()
         || Math.abs(event.clientX - ready.x) + Math.abs(event.clientY - ready.y) > 4) return;
-    this.raw = this.port.point(event); this.pointerType = ready.type;
+    this.raw = [...ready.point]; this.pointerType = ready.type;
     this.shift = event.shiftKey;
     if (!this.session) {
       this.begin(this.port.snap(this.raw, this.pointerType)); this.paint(); return;
