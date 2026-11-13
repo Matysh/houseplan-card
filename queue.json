@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10698,
+  "revision": 10699,
   "nextTicket": 399,
   "nextFence": 399,
   "tasks": {
@@ -4588,160 +4588,25 @@
     },
     "1407": {
       "issue": 1407,
+      "branch": "codex/1407-background-mutation-routing",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/1407-background-mutation-routing",
-      "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 398,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794555877780,
-      "reviewEntry": 1,
-      "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2",
-      "changedFiles": [
-        "PROCESS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "process-next/lib/background.mjs",
-        "process-next/test/background.test.mjs",
-        "process-next/test/furniture-art-lazy.test.mjs",
-        "scripts/furniture-art-lazy.mjs",
-        "scripts/mutation-registry.mjs"
-      ],
-      "s6": {
-        "id": "20261113T074812714-fd0b27aa",
-        "name": "Тесты для задачи #1407 (перед ревью)",
-        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261113T074812714-fd0b27aa/report.json",
-        "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
-        "status": "passed",
-        "finishedAt": "2026-11-13T07:50:02.984Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "3749fc755b4e9b1318f3770870a803f687cdd76a",
+      "mergedSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
+      "mergedAt": 1794556502433,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1407:1:648bd81aec1f4c378aabbc326cbe5979a3eab7c2:3749fc755b4e9b1318f3770870a803f687cdd76a",
-      "reviewMaterial": {
-        "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
-        "expectedBase": "3749fc755b4e9b1318f3770870a803f687cdd76a",
-        "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1407:1:648bd81aec1f4c378aabbc326cbe5979a3eab7c2:3749fc755b4e9b1318f3770870a803f687cdd76a",
-        "eventId": "github:43388593252:1:tick:0:review-retry",
-        "at": 1794556227821,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1407,
-        "requestId": "review:1407:1:648bd81aec1f4c378aabbc326cbe5979a3eab7c2:3749fc755b4e9b1318f3770870a803f687cdd76a",
-        "kind": "code",
-        "base": "3749fc755b4e9b1318f3770870a803f687cdd76a",
-        "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
-        "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1407,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1407",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Материал: `55593b104cc58f95b87482509977a0bf93f4c7c5`, ветка `codex/1407-background-mutation-routing`. Изменения только инфраструктурные; текущие продуктовые лимиты, код и релиз не изменены.\n\nМаршрутизатор введён `b50d8805fc` 01.11.2026 при восстановлении фоновой автоматики. Он объединял все открытые задачи по одному префиксу; S8 по процессу остаётся открытой до выпуска. Поэтому первая завершённая #1379 продолжала считаться адресатом новых ошибок. Новый скрытый ключ описывает сортированный набор упавших guard/свидетелей; дата, SHA и номер шарда не дробят один активный отказ. S8/closed не принимают новый запуск. Отсутствующие/неопознанные причины получают отдельный инцидент. Тот же run-id не дублируется даже после завершения/закрытия. Старые отчёты без ключа не используются для новых запусков; их исходные записи не меняются.\n\nСтарый guard `furniture-art-eager-import` задевал общий rolling ceiling до своего профильного assertion. Теперь сохранён тот же реальный mutant patch, но его guard после сборки проверяет непустой lazy-artwork graph, отсутствие пересечения с initial View и SHA-256 всех файлов готового дерева. Общие ручные budget helpers и их тесты сохранены; отказ подготовки по-прежнему не считается пойманной мутацией.\n\nПроверено:\n- До изменения маршрутизатора новые три регрессионных кейса действительно красные, прежние 4 зелёные.\n- После изменения: `node --test process-next/test/background.test.mjs process-next/test/furniture-art-lazy.test.mjs` — 10/10 PASS, 0 FAIL/SKIP в Ubuntu WSL, Node 22.23.4. Синтетический большой initial graph не ломает проверку ownership; настоящий eager graph и испорченный файл отвергаются.\n- `node scripts/mutation-gate.mjs --execute-nightly --id=furniture-art-eager-import` — PASS: чистый `npm run build && node scripts/furniture-art-lazy.mjs` зелёный, реальный mutant пойман заявленным тестом, 1/1. Полный ночной набор не запускался.\n- Канонический план S6 infra выбирает 21 файл: обе новые/изменённые группы по прямым зависимостям и адресному выбору, читателей реестра и отчётов. Финальный S6 и независимое ревью выполняет общая очередь.\n- [Решение HA E2E](https://github.com/Matysh/houseplan-e2e/issues/48): не требуется, пользовательские сценарии не меняются.\n\nЛоги: `/home/sergey/hp-1407-background-repair/artifacts/1407/addressed.log`, `witness.log`; результирующий S6/review — штатные записи координатора. Основной риск — ошибочное объединение разных отказов; покрыты разные guards, legacy issue, строковая/объектная S8-метка, closed, повторы в теле и комментариях. Категория причины означает набор упавших проверок, не попытку автоматически угадать корневую техническую причину."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Обе причины из #1407 устранены, работу можно принимать. Свидетель `furniture-art-eager-import` больше не упирается в исторический потолок initial View. Он собирает бандл, сверяет SHA-256 готового дерева и требует непустой ленивый граф artwork вне initial View. Реальный патч мутанта сохранён. Маршрутизатор фоновых отказов теперь выбирает issue по скрытому ключу причины, то есть по набору упавших проверок, а не по префиксу заголовка. Отчёт дописывается только в открытую issue без `S8-merged` с тем же ключом. Повтор публикации того же запуска находится по маркеру run-id в теле или комментариях любой, в том числе закрытой, issue. Старые отчёты без ключа, включая #1379, новые события больше не получают. Блокеров нет. Есть два необязательных уточнения: повторяющиеся неопознанные отказы (таймаут или поломка подготовки) будут каждую ночь создавать новую issue, а проверка повтора со временем дорожает по числу API-запросов.",
-          "understanding": "**До изменения.** `publishBackgroundFailure` брала первую открытую issue с заголовком `[mutation-gate] отказ прогона по расписанию` и дописывала в неё любой новый отказ. Задача в S8 по процессу остаётся открытой до выпуска, поэтому принятая #1379 продолжала собирать чужие причины. Отдельно guard свидетеля `furniture-art-eager-import` запускал `scripts/bundle-budget.mjs`. Этот CLI сначала проверяет `initialViewCeilingViolation` и абсолютный бюджет, поэтому общий рост initial View до 428480 B валил чистый прогон ещё до профильной проверки.\n\n**После изменения.**\n1. `background.mjs` строит ключ причины: sha256 от отсортированного уникального набора `['clean', guard]`, `['escaped', id]`, `['unverifiable', id, reason]`, `['unparsed', line]` из `mutationGateReport`. Дата, SHA, шард и run-id в ключ не входят. Если отказ не опознан, ключ строится по `['incident', runId]`, то есть каждый такой запуск — отдельный инцидент. Порядок поиска такой: маркер run-id в теле любой фоновой issue (`state=all`), затем в её комментариях, затем открытая issue без `S8-merged` с тем же ключом, иначе создаётся новая issue.\n2. Новый `scripts/furniture-art-lazy.mjs` вызывает `verifyBundleTree(dist)`: проверка манифеста, хешей, encoded-копий и лишних файлов. Затем требует непустой `lazyFurnitureArtFiles` без пересечения с `initialViewFiles`. Guard в реестре заменён на `npm run build && node scripts/furniture-art-lazy.mjs`.\n\n**Что разобрано.**\n- Вызывающий путь `templates/background-job.mjs`: реестр передаётся как `guards`, при сломанном реестре строки FAIL уходят в `unparsed`.\n- Разбор логов в `scripts/mutation-gate-report.mjs` и форматы строк FAIL в `scripts/mutation-execution.mjs`: насколько стабилен ключ.\n- `inventory` и пагинация.\n- Построение `lazyFurnitureArtFiles` в `scripts/bundle-manifest.mjs`, `verifyBundleTree` в `scripts/bundle-tree.mjs`, прежняя логика `bundle-budget.mjs`, а также `guardNeedsBundle` и `mutantBundleStrategy` — для нового guard они не меняют стратегию подготовки.\n- Новые и изменённые тесты.",
-          "analysis": [
-            {
-              "topic": "Стабильность ключа причины",
-              "assessment": "Ключ собирается из тех же сущностей, которые отчёт показывает человеку. Номер шарда в ключ не входит: `unverifiable` и `unparsed` хранят shard, но в кортеж он не попадает. Поэтому один и тот же красный guard, общий для мутантов из разных шардов, даёт одну причину. Строки FAIL детерминированы: команда guard, id мутанта, фиксированная метка. `FAIL чистая подготовка: ${error.message}` берёт только первую строку многострочного сообщения, потому что разбор идёт по `\\n`. В худшем случае ключ раздробится на лишние issue, но разные причины никогда не склеятся. Для AC2 это правильная сторона ошибки.",
-              "evidence": "process-next/lib/background.mjs:66-76; scripts/mutation-gate-report.mjs:201-222; scripts/mutation-execution.mjs:157,167,217,228-233"
-            },
-            {
-              "topic": "Идемпотентность и завершённые задачи",
-              "assessment": "Повтор публикации ищется по маркеру run-id до выбора адресата и по всем состояниям issue. Поэтому повтор того же запуска не создаёт дубликат, даже если issue успели перевести в S8 или закрыть. Новый запуск в такую issue не попадает: при выборе адресата проверяются `state === 'open'` и отсутствие `S8-merged`, причём метка может быть строкой или объектом. Чужие статусы и тела issue код не меняет. #1379 без ключа не может стать адресатом. Если ответ на POST потерян, повтор найдёт созданную issue по маркеру в теле.",
-              "evidence": "process-next/lib/background.mjs:83-103; тесты process-next/test/background.test.mjs:73-113 (смена guard, повтор после S8, S8 и closed для строковой и объектной метки, старая issue без ключа)"
-            },
-            {
-              "topic": "Неопознанные отказы и надмножества причин",
-              "assessment": "Это сознательный компромисс, согласованный с текстом AC2. Отказ без строк FAIL (прерванный по таймауту шард, падение подготовки до лога, `unavailable`) каждый раз получает новую issue. Если такой отказ устойчив, будет одна issue за ночь или раз в 5 ночей для одного шарда. Точное совпадение набора также значит, что {X, Y} открывает новую issue, а не дополняет {X}. Объединять не хуже, чем раньше, это не будет, но шум возможен.",
-              "evidence": "process-next/lib/background.mjs:72; mutation-gate-report.mjs:225 (interrupted без FAIL даёт пустые списки)"
-            },
-            {
-              "topic": "Свидетель ленивой загрузки мебели",
-              "assessment": "Проверка ровно та же, что была в `assertBundleBudget` (строки 1077-1082), но без потолков и без посторонних графов. Добавлена проверка целостности готового дерева. Обратите внимание: `graphFrom` в bundle-manifest по построению исключает файлы initial, поэтому на настоящем манифесте пересечение невозможно. Реального мутанта ловит ветка «no lazy furniture artwork graph»: при статическом импорте chunk с artwork попадает в initial, и ленивый граф пустеет. Синтетический тест `bundle(true)` проходит через ту же ветку, регулярное выражение `/furniture artwork graph/` подходит к обоим сообщениям. Для настоящего eager-импорта проверка содержательная. Проверка пересечения служит только защитой для вручную собранных манифестов.",
-              "evidence": "scripts/furniture-art-lazy.mjs:8-13; scripts/bundle-manifest.mjs:185-228,257; scripts/bundle-budget.mjs:1077-1082,1155-1161; process-next/test/furniture-art-lazy.test.mjs:27-32"
-            },
-            {
-              "topic": "Подготовка мутанта не изменилась",
-              "assessment": "`guardNeedsBundle` смотрит на `demo/`, `golden-runner` и `bundle:sync`. Ни старый, ни новый guard под эти условия не подходят, поэтому стратегия `none` сохраняется, а сборку выполняет сам guard. Каталог `dist` по умолчанию тот же, что у `bundle-budget`.",
-              "evidence": "scripts/mutation-bundle-cache.mjs:15-28; scripts/furniture-art-lazy.mjs:16"
-            },
-            {
-              "topic": "Проверки",
-              "assessment": "S6 infra на материале 2995e89f пройден (receipt 20261113T074812714-fd0b27aa, failures пусто). Автор сообщает, что 10 из 10 адресных тестов зелёные, новые кейсы маршрутизации до исправления были красными, а `mutation-gate.mjs --execute-nightly --id=furniture-art-eager-import` прошёл с результатом 1 из 1. Последние два утверждения — слова автора. Состав S6 и путь к отчёту видны в receipt.",
-              "evidence": "receipts[0]; authorContext"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Устойчивые неопознанные отказы. Вместо `['incident', runId]` можно взять грубый, но стабильный ключ, например `['interrupted', shard]` для шарда без FAIL и без итоговой строки или нормализованный `result.reason` без путей и чисел. Тогда ночной таймаут одного шарда не будет каждый раз открывать новую issue. Цена — риск склеить два разных таймаута одного шарда. Поэтому вариант стоит выбирать по реальной частоте таких отказов, а не делать сразу.",
-            "Стоимость проверки повтора. Сейчас при каждом отказе запрашиваются все issue репозитория (`state=all`) и комментарии каждой фоновой issue за всю историю. Повтор доставки приходит в рамках того же запуска, поэтому проверку комментариев можно ограничить issue с `updated_at` после старта запуска (параметр `since=`) или фильтровать по метке `tests`. Число API-запросов не будет расти с историей.",
-            "Косметика. В `scripts/mutation-registry.mjs:14932-14935` отступ строки `guard:` и продолжения `because` больше, чем у соседних записей (6 и 8 пробелов вместо 4 и 6)."
-          ],
-          "boundaries": "Тесты, сборку и мутационный прогон я не запускал. Опирался на успешный S6 из receipt и на результаты, которые сообщил автор: адресные тесты 10 из 10 и `--execute-nightly --id=furniture-art-eager-import` 1 из 1. Логи из `/home/sergey/...` мне недоступны. По исходникам изучены: process-next/lib/background.mjs, process-next/templates/background-job.mjs, scripts/mutation-gate-report.mjs, нужные места scripts/mutation-execution.mjs, scripts/mutation-bundle-cache.mjs, scripts/bundle-tree.mjs, scripts/bundle-manifest.mjs (построение графов), хвост scripts/bundle-budget.mjs, запись в реестре и новые и изменённые тесты. Как ведёт себя настоящий GitHub API (поля `state`/`labels` в списке, пагинация комментариев), я не проверял. Принял, что API возвращает те же поля, что и mock в тестах; на этих полях уже построены соседние модули процесса. Что `npm run build` с мутантом на самом деле делает ленивый граф пустым, видно только из сообщения автора о прогоне; по исходникам это сходится с логикой `graphFrom`.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 40,
-          "cache_creation_input_tokens": 80557,
-          "cache_read_input_tokens": 898525,
-          "output_tokens": 12016,
-          "output_tokens_details": {
-            "thinking_tokens": 5001
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 80557,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 871,
-              "cache_read_input_tokens": 70305,
-              "cache_creation_input_tokens": 14456,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 14456
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nОбе причины из #1407 устранены, работу можно принимать. Свидетель `furniture-art-eager-import` больше не упирается в исторический потолок initial View. Он собирает бандл, сверяет SHA-256 готового дерева и требует непустой ленивый граф artwork вне initial View. Реальный патч мутанта сохранён. Маршрутизатор фоновых отказов теперь выбирает issue по скрытому ключу причины, то есть по набору упавших проверок, а не по префиксу заголовка. Отчёт дописывается только в открытую issue без `S8-merged` с тем же ключом. Повтор публикации того же запуска находится по маркеру run-id в теле или комментариях любой, в том числе закрытой, issue. Старые отчёты без ключа, включая #1379, новые события больше не получают. Блокеров нет. Есть два необязательных уточнения: повторяющиеся неопознанные отказы (таймаут или поломка подготовки) будут каждую ночь создавать новую issue, а проверка повтора со временем дорожает по числу API-запросов.\n\n## Понимание решения\n\n**До изменения.** `publishBackgroundFailure` брала первую открытую issue с заголовком `[mutation-gate] отказ прогона по расписанию` и дописывала в неё любой новый отказ. Задача в S8 по процессу остаётся открытой до выпуска, поэтому принятая #1379 продолжала собирать чужие причины. Отдельно guard свидетеля `furniture-art-eager-import` запускал `scripts/bundle-budget.mjs`. Этот CLI сначала проверяет `initialViewCeilingViolation` и абсолютный бюджет, поэтому общий рост initial View до 428480 B валил чистый прогон ещё до профильной проверки.\n\n**После изменения.**\n1. `background.mjs` строит ключ причины: sha256 от отсортированного уникального набора `['clean', guard]`, `['escaped', id]`, `['unverifiable', id, reason]`, `['unparsed', line]` из `mutationGateReport`. Дата, SHA, шард и run-id в ключ не входят. Если отказ не опознан, ключ строится по `['incident', runId]`, то есть каждый такой запуск — отдельный инцидент. Порядок поиска такой: маркер run-id в теле любой фоновой issue (`state=all`), затем в её комментариях, затем открытая issue без `S8-merged` с тем же ключом, иначе создаётся новая issue.\n2. Новый `scripts/furniture-art-lazy.mjs` вызывает `verifyBundleTree(dist)`: проверка манифеста, хешей, encoded-копий и лишних файлов. Затем требует непустой `lazyFurnitureArtFiles` без пересечения с `initialViewFiles`. Guard в реестре заменён на `npm run build && node scripts/furniture-art-lazy.mjs`.\n\n**Что разобрано.**\n- Вызывающий путь `templates/background-job.mjs`: реестр передаётся как `guards`, при сломанном реестре строки FAIL уходят в `unparsed`.\n- Разбор логов в `scripts/mutation-gate-report.mjs` и форматы строк FAIL в `scripts/mutation-execution.mjs`: насколько стабилен ключ.\n- `inventory` и пагинация.\n- Построение `lazyFurnitureArtFiles` в `scripts/bundle-manifest.mjs`, `verifyBundleTree` в `scripts/bundle-tree.mjs`, прежняя логика `bundle-budget.mjs`, а также `guardNeedsBundle` и `mutantBundleStrategy` — для нового guard они не меняют стратегию подготовки.\n- Новые и изменённые тесты.\n\n## Разбор решения\n\n### Стабильность ключа причины\n\nКлюч собирается из тех же сущностей, которые отчёт показывает человеку. Номер шарда в ключ не входит: `unverifiable` и `unparsed` хранят shard, но в кортеж он не попадает. Поэтому один и тот же красный guard, общий для мутантов из разных шардов, даёт одну причину. Строки FAIL детерминированы: команда guard, id мутанта, фиксированная метка. `FAIL чистая подготовка: ${error.message}` берёт только первую строку многострочного сообщения, потому что разбор идёт по `\\n`. В худшем случае ключ раздробится на лишние issue, но разные причины никогда не склеятся. Для AC2 это правильная сторона ошибки.\n\nОснование: process-next/lib/background.mjs:66-76; scripts/mutation-gate-report.mjs:201-222; scripts/mutation-execution.mjs:157,167,217,228-233\n\n### Идемпотентность и завершённые задачи\n\nПовтор публикации ищется по маркеру run-id до выбора адресата и по всем состояниям issue. Поэтому повтор того же запуска не создаёт дубликат, даже если issue успели перевести в S8 или закрыть. Новый запуск в такую issue не попадает: при выборе адресата проверяются `state === 'open'` и отсутствие `S8-merged`, причём метка может быть строкой или объектом. Чужие статусы и тела issue код не меняет. #1379 без ключа не может стать адресатом. Если ответ на POST потерян, повтор найдёт созданную issue по маркеру в теле.\n\nОснование: process-next/lib/background.mjs:83-103; тесты process-next/test/background.test.mjs:73-113 (смена guard, повтор после S8, S8 и closed для строковой и объектной метки, старая issue без ключа)\n\n### Неопознанные отказы и надмножества причин\n\nЭто сознательный компромисс, согласованный с текстом AC2. Отказ без строк FAIL (прерванный по таймауту шард, падение подготовки до лога, `unavailable`) каждый раз получает новую issue. Если такой отказ устойчив, будет одна issue за ночь или раз в 5 ночей для одного шарда. Точное совпадение набора также значит, что {X, Y} открывает новую issue, а не дополняет {X}. Объединять не хуже, чем раньше, это не будет, но шум возможен.\n\nОснование: process-next/lib/background.mjs:72; mutation-gate-report.mjs:225 (interrupted без FAIL даёт пустые списки)\n\n### Свидетель ленивой загрузки мебели\n\nПроверка ровно та же, что была в `assertBundleBudget` (строки 1077-1082), но без потолков и без посторонних графов. Добавлена проверка целостности готового дерева. Обратите внимание: `graphFrom` в bundle-manifest по построению исключает файлы initial, поэтому на настоящем манифесте пересечение невозможно. Реального мутанта ловит ветка «no lazy furniture artwork graph»: при статическом импорте chunk с artwork попадает в initial, и ленивый граф пустеет. Синтетический тест `bundle(true)` проходит через ту же ветку, регулярное выражение `/furniture artwork graph/` подходит к обоим сообщениям. Для настоящего eager-импорта проверка содержательная. Проверка пересечения служит только защитой для вручную собранных манифестов.\n\nОснование: scripts/furniture-art-lazy.mjs:8-13; scripts/bundle-manifest.mjs:185-228,257; scripts/bundle-budget.mjs:1077-1082,1155-1161; process-next/test/furniture-art-lazy.test.mjs:27-32\n\n### Подготовка мутанта не изменилась\n\n`guardNeedsBundle` смотрит на `demo/`, `golden-runner` и `bundle:sync`. Ни старый, ни новый guard под эти условия не подходят, поэтому стратегия `none` сохраняется, а сборку выполняет сам guard. Каталог `dist` по умолчанию тот же, что у `bundle-budget`.\n\nОснование: scripts/mutation-bundle-cache.mjs:15-28; scripts/furniture-art-lazy.mjs:16\n\n### Проверки\n\nS6 infra на материале 2995e89f пройден (receipt 20261113T074812714-fd0b27aa, failures пусто). Автор сообщает, что 10 из 10 адресных тестов зелёные, новые кейсы маршрутизации до исправления были красными, а `mutation-gate.mjs --execute-nightly --id=furniture-art-eager-import` прошёл с результатом 1 из 1. Последние два утверждения — слова автора. Состав S6 и путь к отчёту видны в receipt.\n\nОснование: receipts[0]; authorContext\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Устойчивые неопознанные отказы. Вместо `['incident', runId]` можно взять грубый, но стабильный ключ, например `['interrupted', shard]` для шарда без FAIL и без итоговой строки или нормализованный `result.reason` без путей и чисел. Тогда ночной таймаут одного шарда не будет каждый раз открывать новую issue. Цена — риск склеить два разных таймаута одного шарда. Поэтому вариант стоит выбирать по реальной частоте таких отказов, а не делать сразу.\n- Стоимость проверки повтора. Сейчас при каждом отказе запрашиваются все issue репозитория (`state=all`) и комментарии каждой фоновой issue за всю историю. Повтор доставки приходит в рамках того же запуска, поэтому проверку комментариев можно ограничить issue с `updated_at` после старта запуска (параметр `since=`) или фильтровать по метке `tests`. Число API-запросов не будет расти с историей.\n- Косметика. В `scripts/mutation-registry.mjs:14932-14935` отступ строки `guard:` и продолжения `because` больше, чем у соседних записей (6 и 8 пробелов вместо 4 и 6).\n\n## Границы анализа\n\nТесты, сборку и мутационный прогон я не запускал. Опирался на успешный S6 из receipt и на результаты, которые сообщил автор: адресные тесты 10 из 10 и `--execute-nightly --id=furniture-art-eager-import` 1 из 1. Логи из `/home/sergey/...` мне недоступны. По исходникам изучены: process-next/lib/background.mjs, process-next/templates/background-job.mjs, scripts/mutation-gate-report.mjs, нужные места scripts/mutation-execution.mjs, scripts/mutation-bundle-cache.mjs, scripts/bundle-tree.mjs, scripts/bundle-manifest.mjs (построение графов), хвост scripts/bundle-budget.mjs, запись в реестре и новые и изменённые тесты. Как ведёт себя настоящий GitHub API (поля `state`/`labels` в списке, пагинация комментариев), я не проверял. Принял, что API возвращает те же поля, что и mock в тестах; на этих полях уже построены соседние модули процесса. Что `npm run build` с мутантом на самом деле делает ленивый граф пустым, видно только из сообщения автора о прогоне; по исходникам это сходится с логикой `graphFrom`.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 3749fc755b4e9b1318f3770870a803f687cdd76a → 2995e89fc7f5eae57abb188fae7b9f806cd29fd0\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1407, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nМатериал: `55593b104cc58f95b87482509977a0bf93f4c7c5`, ветка `codex/1407-background-mutation-routing`. Изменения только инфраструктурные; текущие продуктовые лимиты, код и релиз не изменены.\n\nМаршрутизатор введён `b50d8805fc` 01.11.2026 при восстановлении фоновой автоматики. Он объединял все открытые задачи по одному префиксу; S8 по процессу остаётся открытой до выпуска. Поэтому первая завершённая #1379 продолжала считаться адресатом новых ошибок. Новый скрытый ключ описывает сортированный набор упавших guard/свидетелей; дата, SHA и номер шарда не дробят один активный отказ. S8/closed не принимают новый запуск. Отсутствующие/неопознанные причины получают отдельный инцидент. Тот же run-id не дублируется даже после завершения/закрытия. Старые отчёты без ключа не используются для новых запусков; их исходные записи не меняются.\n\nСтарый guard `furniture-art-eager-import` задевал общий rolling ceiling до своего профильного assertion. Теперь сохранён тот же реальный mutant patch, но его guard после сборки проверяет непустой lazy-artwork graph, отсутствие пересечения с initial View и SHA-256 всех файлов готового дерева. Общие ручные budget helpers и их тесты сохранены; отказ подготовки по-прежнему не считается пойманной мутацией.\n\nПроверено:\n- До изменения маршрутизатора новые три регрессионных кейса действительно красные, прежние 4 зелёные.\n- После изменения: `node --test process-next/test/background.test.mjs process-next/test/furniture-art-lazy.test.mjs` — 10/10 PASS, 0 FAIL/SKIP в Ubuntu WSL, Node 22.23.4. Синтетический большой initial graph не ломает проверку ownership; настоящий eager graph и испорченный файл отвергаются.\n- `node scripts/mutation-gate.mjs --execute-nightly --id=furniture-art-eager-import` — PASS: чистый `npm run build && node scripts/furniture-art-lazy.mjs` зелёный, реальный mutant пойман заявленным тестом, 1/1. Полный ночной набор не запускался.\n- Канонический план S6 infra выбирает 21 файл: обе новые/изменённые группы по прямым зависимостям и адресному выбору, читателей реестра и отчётов. Финальный S6 и независимое ревью выполняет общая очередь.\n- [Решение HA E2E](https://github.com/Matysh/houseplan-e2e/issues/48): не требуется, пользовательские сценарии не меняются.\n\nЛоги: `/home/sergey/hp-1407-background-repair/artifacts/1407/addressed.log`, `witness.log`; результирующий S6/review — штатные записи координатора. Основной риск — ошибочное объединение разных отказов; покрыты разные guards, legacy issue, строковая/объектная S8-метка, closed, повторы в теле и комментариях. Категория причины означает набор упавших проверок, не попытку автоматически угадать корневую техническую причину.\n```\n\n</details>\n",
-        "createdAt": "2026-11-13T07:54:35.800Z",
-        "artifactId": 14019543262,
-        "runId": 43388646619,
-        "runAttempt": 1,
-        "completedAt": "2026-11-13T07:54:39Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43388646619",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "3749fc755b4e9b1318f3770870a803f687cdd76a"
+      "devBuild": {
+        "status": "not-required"
       }
     }
   },
@@ -4987,144 +4852,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1407,
-    "worker": "finish",
-    "token": "398:finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:1:admit",
-    "fence": 398,
-    "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
-    "expectedBase": "3749fc755b4e9b1318f3770870a803f687cdd76a",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794555921228,
-    "expiresAt": 1794560099352,
-    "patchId": "648bd81aec1f4c378aabbc326cbe5979a3eab7c2",
-    "reviewRequest": "review:1407:1:648bd81aec1f4c378aabbc326cbe5979a3eab7c2:3749fc755b4e9b1318f3770870a803f687cdd76a"
-  },
-  "events": {
-    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:2:automation-pending": {
-      "digest": "27f2816476f964441b3567b8eb47292582910b27237df2a5acfc7ac3b570deb0",
-      "issue": 1407
-    },
-    "github:43387874742:1:completions:message:9e90b536f2fbff02ebe3fa09b1f7752060866b8ea5340581e6017e2181231a11": {
-      "digest": "e07fe11b500ad58aec5ddf4f64dc10e9c9014969a64e1c006e8cfefef21896b6",
-      "issue": 1407
-    },
-    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:3:automation-pending": {
-      "digest": "52f9986ef9a1193f159398eb8303568c4c2f08412cadc3c3f5000a1f7835dd1a",
-      "issue": 1407
-    },
-    "finish:7ee87548-3623-4ac0-a8c2-8e957ebd9e65": {
-      "digest": "93f9aacbfd45e4a159ce7e956951e6da39c7ba46d01811eee1bb5f9764f4a564",
-      "issue": 1407
-    },
-    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:4:synchronized": {
-      "digest": "639ccefd02d5276ee94b6f3510d25a072eda8658c9d390a05871324c153bc244",
-      "issue": 1407
-    },
-    "finish:d23d0ecd-4bc9-4eb0-9aba-8cfb49cd58d7": {
-      "digest": "02cd3f7d5336994e09427ed443bf85fde0361528d4e6b4a8a819f5df447f7d85",
-      "issue": 1407
-    },
-    "finish:fad902af-9e0f-4f96-8037-7f77654c3250": {
-      "digest": "c6062a6bf020082c4de61faaee07a58a90192180a32c3abb2a98a4abebd60222",
-      "issue": 1407
-    },
-    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:5:s6-label": {
-      "digest": "ffd1ad76e69ea785f2b96a8ec4c98e3f62b83c711f04789aac5dab4272f98c39",
-      "issue": 1407
-    },
-    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:6:review-requested": {
-      "digest": "b882efcb6d04c89a923d419981fe53b11271ec26e5a5a3a98ba884805cd7a179",
-      "issue": 1407
-    },
-    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:6:automation-pending": {
-      "digest": "0cbbe73c87886bbf2449cd6d70c25d8ba0722b95a224911ec3db7dd930dd0120",
-      "issue": 1407
-    },
-    "github:43388593252:1:tick:0:review-retry": {
-      "digest": "38aa88ca74a5d40caeb042c71fca365f44ab6b52ed97ce5370913554cb5a790d",
-      "issue": 1407
-    },
-    "github:43388593252:1:completions:message:9bf6f70cab2681aaa508bfeb15cdd3d840a7cbce8f4fe05ae458fe8e1d6d85b8": {
-      "digest": "59d595d82245ad08b7d75ecf4adf1c942f09411efb05c15d445ac63ce3115900",
-      "issue": 1407
-    },
-    "github:43388595524:1:tick:0:heartbeat": {
-      "digest": "9e145e6c83f15c9a1e7cdd3b8520a7f69d73fac6a1a25985062c026331762abc",
-      "issue": 1407
-    },
-    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:7:heartbeat": {
-      "digest": "17733b84ee0d6be091caec5809cdf00c426701ac512d7a69455137d12c1809be",
-      "issue": 1407
-    },
-    "github:43389140149:1:tick:0:review-presentation": {
-      "digest": "89b723e65b0578c52cd63976c34905b2123850f2c12034bb3b5936212df7fb1a",
-      "issue": 1407
-    },
-    "github:43389140149:1:tick:0:review-complete": {
-      "digest": "2e9accd0c4285d896f38668b27e660622cf8dafe4175e8852fd7571e527247da",
-      "issue": 1407
-    },
-    "finish:35e8bc3c-734f-4fb5-b24b-af877bffda3f": {
-      "digest": "92ffc478c09dbe9af65fe4a365eab5e1f54bdb4b612fdfc7978b21a31ec551b1",
-      "issue": 1407,
-      "message": {
-        "kind": "queued",
-        "issue": 1407,
-        "at": 1794555877780,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "55593b104cc58f95b87482509977a0bf93f4c7c5",
-        "delivered": true
-      }
-    },
-    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:1:admit": {
-      "digest": "f19f6340b32f21ce2db33000c98b4d2e73673ac5c532312b309b3ca498f8a1fd",
-      "issue": 1407,
-      "message": {
-        "kind": "admitted",
-        "issue": 1407,
-        "at": 1794555921228,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "55593b104cc58f95b87482509977a0bf93f4c7c5",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:e4260ae4-e42a-4d35-aed9-03adc9255d62:finish:5:s6-complete": {
-      "digest": "d6c411a874402cc043610e251a7202b67eb9eb58778345bc6ea932cfcf3b2cdf",
-      "issue": 1407,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1407,
-        "at": 1794556204093,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
-        "phase": "review",
-        "evidence": {
-          "id": "20261113T074812714-fd0b27aa",
-          "name": "Тесты для задачи #1407 (перед ревью)",
-          "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261113T074812714-fd0b27aa/report.json",
-          "materialSha": "2995e89fc7f5eae57abb188fae7b9f806cd29fd0",
-          "status": "passed",
-          "finishedAt": "2026-11-13T07:50:02.984Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Материал: `55593b104cc58f95b87482509977a0bf93f4c7c5`, ветка `codex/1407-background-mutation-routing`. Изменения только инфраструктурные; текущие продуктовые лимиты, код и релиз не изменены.\n\nМаршрутизатор введён `b50d8805fc` 01.11.2026 при восстановлении фоновой автоматики. Он объединял все открытые задачи по одному префиксу; S8 по процессу остаётся открытой до выпуска. Поэтому первая завершённая #1379 продолжала считаться адресатом новых ошибок. Новый скрытый ключ описывает сортированный набор упавших guard/свидетелей; дата, SHA и номер шарда не дробят один активный отказ. S8/closed не принимают новый запуск. Отсутствующие/неопознанные причины получают отдельный инцидент. Тот же run-id не дублируется даже после завершения/закрытия. Старые отчёты без ключа не используются для новых запусков; их исходные записи не меняются.\n\nСтарый guard `furniture-art-eager-import` задевал общий rolling ceiling до своего профильного assertion. Теперь сохранён тот же реальный mutant patch, но его guard после сборки проверяет непустой lazy-artwork graph, отсутствие пересечения с initial View и SHA-256 всех файлов готового дерева. Общие ручные budget helpers и их тесты сохранены; отказ подготовки по-прежнему не считается пойманной мутацией.\n\nПроверено:\n- До изменения маршрутизатора новые три регрессионных кейса действительно красные, прежние 4 зелёные.\n- После изменения: `node --test process-next/test/background.test.mjs process-next/test/furniture-art-lazy.test.mjs` — 10/10 PASS, 0 FAIL/SKIP в Ubuntu WSL, Node 22.23.4. Синтетический большой initial graph не ломает проверку ownership; настоящий eager graph и испорченный файл отвергаются.\n- `node scripts/mutation-gate.mjs --execute-nightly --id=furniture-art-eager-import` — PASS: чистый `npm run build && node scripts/furniture-art-lazy.mjs` зелёный, реальный mutant пойман заявленным тестом, 1/1. Полный ночной набор не запускался.\n- Канонический план S6 infra выбирает 21 файл: обе новые/изменённые группы по прямым зависимостям и адресному выбору, читателей реестра и отчётов. Финальный S6 и независимое ревью выполняет общая очередь.\n- [Решение HA E2E](https://github.com/Matysh/houseplan-e2e/issues/48): не требуется, пользовательские сценарии не меняются.\n\nЛоги: `/home/sergey/hp-1407-background-repair/artifacts/1407/addressed.log`, `witness.log`; результирующий S6/review — штатные записи координатора. Основной риск — ошибочное объединение разных отказов; покрыты разные guards, legacy issue, строковая/объектная S8-метка, closed, повторы в теле и комментариях. Категория причины означает набор упавших проверок, не попытку автоматически угадать корневую техническую причину.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "24f98e2081b460f7b14a76a186155b574a6bbb45",
     "status": "delivered",
