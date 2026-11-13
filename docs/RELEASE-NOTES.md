@@ -1,39 +1,24 @@
-<!-- release: v1.85.1 -->
-<!-- stable-notes: 1 -->
-<!-- base: v1.85.0 -->
-<!-- language: ru -->
-## Релиз Houseplan 1.85.1
+<!-- release: v1.85.2-beta.1 -->
+## House Plan 1.85.2-beta.1
 
-Обновление делает интерфейс удобнее на телефоне и исправляет повседневные сценарии редактирования.
+### Русский
 
-📱 **Шапка подстраивается под место.** Кнопки сохраняют два обычных ряда, а когда нужен третий — собираются в меню действий на всю доступную ширину. Выбор пространства остаётся доступен там, где он нужен; отдельная кнопка управляет боковой панелью Home Assistant. В узких редакторах кнопки закрытия, отмены и повтора расположены рядом в столбик. [#1347](https://github.com/Matysh/houseplan-card/issues/1347), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)
+- **Окна с независимыми створками.** От одной до четырёх створок, открывание вверх, отдельные датчики и положения. Шторы настраиваются для каждой створки и перекрывают только свою долю света. Двери и ворота поддерживают раздвижной вариант и ручное положение без датчика. Новый вид согласован с UI-059; настройки сохраняются в резервных копиях. [#1024](https://github.com/Matysh/houseplan-card/issues/1024)
+- **Единые чертёжные размеры.** Размеры по обеим сторонам стены при рисовании, переносе узлов, изменении размера комнаты и выделении стены. Тот же механизм показывает отступы проёмов, длину линии подложки и равные интервалы между устройствами. Размеры следуют за планом при перемещении и масштабировании. [#1381](https://github.com/Matysh/houseplan-card/issues/1381), [#1397](https://github.com/Matysh/houseplan-card/issues/1397), [#1398](https://github.com/Matysh/houseplan-card/issues/1398)
+- **Изменение размера комнаты через примыкания.** Стена проходит существующие узлы за один жест; сохраняются материалы, проёмы и единая операция отмены. Убраны оставшиеся швы контура в предпросмотре. [#1383](https://github.com/Matysh/houseplan-card/issues/1383), [#1384](https://github.com/Matysh/houseplan-card/issues/1384)
+- **Понятный результат оптимизации.** Видно ожидание, результат остаётся доступен после сохранения; отдельно объясняются пропущенные исправления, отказ и неподтверждённое сохранение. [#1170](https://github.com/Matysh/houseplan-card/issues/1170)
+- **Загрузка и повторный вход.** Повторные чтения реестров объединяются, временные перемещения карточки не пересобирают модель этажа. Фронтенд отдаётся с заранее подготовленным gzip там, где браузер его поддерживает. [#1385](https://github.com/Matysh/houseplan-card/issues/1385), [#1386](https://github.com/Matysh/houseplan-card/issues/1386), [#1387](https://github.com/Matysh/houseplan-card/issues/1387)
+- **Исправления отображения.** Размеры больше не скрываются за панелью инструмента или индикатором масштаба; эквивалентные планы с сеткой 1 и 5 см одинаково рисуют импортированную SVG-подложку и её ручки. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1403](https://github.com/Matysh/houseplan-card/issues/1403), [#1404](https://github.com/Matysh/houseplan-card/issues/1404)
 
-🎨 **Надёжный выбор иконки устройства.** Собственный MDI picker предлагает поиск и предпросмотр иконок без зависимости от компонента HA. Крестик сразу возвращает автоматическую иконку текущей привязки; поле и предпросмотр совпадают после сохранения. Выпадающие поля больше не перекрываются системной подсветкой тапа. [#1375](https://github.com/Matysh/houseplan-card/issues/1375), [#1376](https://github.com/Matysh/houseplan-card/issues/1376)
+После обновления перезапустите Home Assistant и перезагрузите открытые страницы House Plan. Это предварительная версия; перед редактированием важного плана сохраните полную резервную копию.
 
-🚪 **Стеклянные двери могут пропускать свет.** Новая настройка закрытой двери учитывается для искусственного света и внешних солнечных проёмов. Межкомнатные двери не расширяют солнечные лучи между комнатами. Свечение и LED-ленты плавно гаснут без преждевременного обрыва анимации. [#1377](https://github.com/Matysh/houseplan-card/issues/1377), [#1348](https://github.com/Matysh/houseplan-card/issues/1348)
+### English
 
-⚙️ **Удобнее настройки и переключение режимов.** Разделы настроек устройства остаются под рукой при прокрутке; подпись рядом с переключателем тоже переключает его. Меню и справка не закрываются из-за отложенной прокрутки. Переходы между просмотром и редакторами стали быстрее и устойчивее. [#1354](https://github.com/Matysh/houseplan-card/issues/1354), [#1350](https://github.com/Matysh/houseplan-card/issues/1350), [#1356](https://github.com/Matysh/houseplan-card/issues/1356), [#1360](https://github.com/Matysh/houseplan-card/issues/1360), [#1344](https://github.com/Matysh/houseplan-card/issues/1344), [#1358](https://github.com/Matysh/houseplan-card/issues/1358)
+- **Independent window leaves.** One to four leaves, top opening, separate sensors and positions. Each leaf can have its own shade, blocking only its share of light. Doors and gates support sliding mechanisms and manual positions without a sensor. The new appearance follows UI-059; backups preserve the new settings. [#1024](https://github.com/Matysh/houseplan-card/issues/1024)
+- **Shared drafting dimensions.** Two-sided wall dimensions while drawing, moving nodes, resizing rooms and selecting walls. The same mechanism covers opening offsets, background lines and equal device gaps. Dimensions follow live panning and zooming. [#1381](https://github.com/Matysh/houseplan-card/issues/1381), [#1397](https://github.com/Matysh/houseplan-card/issues/1397), [#1398](https://github.com/Matysh/houseplan-card/issues/1398)
+- **Room resizing across junctions.** Pass existing nodes in one gesture while preserving materials, openings and a single Undo operation. Preview wall contours no longer retain abandoned seams. [#1383](https://github.com/Matysh/houseplan-card/issues/1383), [#1384](https://github.com/Matysh/houseplan-card/issues/1384)
+- **Clear optimization outcomes.** Waiting states paint promptly and the saved report remains available; skipped repairs, rejection and unconfirmed saving are distinguished. [#1170](https://github.com/Matysh/houseplan-card/issues/1170)
+- **Loading and returning to the plan.** Registry reads are coalesced and temporary card moves reuse the floor model. Supported browsers receive precompressed frontend chunks. [#1385](https://github.com/Matysh/houseplan-card/issues/1385), [#1386](https://github.com/Matysh/houseplan-card/issues/1386), [#1387](https://github.com/Matysh/houseplan-card/issues/1387)
+- **Display fixes.** Dimensions stay clear of the tool tray and zoom badge; equivalent plans using 1 cm and 5 cm grids render imported SVG backdrops and their handles consistently. [#1400](https://github.com/Matysh/houseplan-card/issues/1400), [#1403](https://github.com/Matysh/houseplan-card/issues/1403), [#1404](https://github.com/Matysh/houseplan-card/issues/1404)
 
-🏠 **Исправлены действия на плане.** Замкнутые комнаты распознаются с висячими внутренними стенами; после выхода из редактора снова доступны действия LED-ленты. Сохраняются кнопки настроек комнаты при предпросмотре изменения размеров, а после двойного клика для вписывания план сразу можно перетаскивать. [#1346](https://github.com/Matysh/houseplan-card/issues/1346), [#1361](https://github.com/Matysh/houseplan-card/issues/1361), [#1359](https://github.com/Matysh/houseplan-card/issues/1359), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)
-
-После обновления перезапустите Home Assistant и перезагрузите открытые страницы Houseplan.
-
-Все изменения: [1.85.1](https://github.com/Matysh/houseplan-card/milestone/15?closed=1)
-<!-- language: en -->
-## Houseplan 1.85.1 release
-
-This update improves the phone interface and everyday editing workflows.
-
-📱 **A header that fits the available space.** Controls keep two ordinary rows and collapse into a full-width actions menu when a third would be needed. Space selection remains available where needed, and a separate button controls the Home Assistant sidebar. Close/Undo/Redo form a column in narrow editors. [#1347](https://github.com/Matysh/houseplan-card/issues/1347), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)
-
-🎨 **Reliable device icon selection.** The local MDI picker provides search and icon previews without relying on HA's picker component. Clear immediately restores the automatic icon for the current binding; the field and preview agree after saving. Dropdown controls no longer receive the browser's extra tap highlight. [#1375](https://github.com/Matysh/houseplan-card/issues/1375), [#1376](https://github.com/Matysh/houseplan-card/issues/1376)
-
-🚪 **Glass doors can transmit light.** A new option for closed doors affects artificial light and exterior solar apertures. Interior doors do not extend sunlight between rooms. Glow and LED strips fade out smoothly without cutting the animation short. [#1377](https://github.com/Matysh/houseplan-card/issues/1377), [#1348](https://github.com/Matysh/houseplan-card/issues/1348)
-
-⚙️ **Easier settings and mode changes.** Device settings sections remain reachable while scrolling, and clicking a switch label toggles the switch. Dropdowns and Help stay open after delayed scrolling. View/editor transitions are faster and more reliable. [#1354](https://github.com/Matysh/houseplan-card/issues/1354), [#1350](https://github.com/Matysh/houseplan-card/issues/1350), [#1356](https://github.com/Matysh/houseplan-card/issues/1356), [#1360](https://github.com/Matysh/houseplan-card/issues/1360), [#1344](https://github.com/Matysh/houseplan-card/issues/1344), [#1358](https://github.com/Matysh/houseplan-card/issues/1358)
-
-🏠 **Plan interactions repaired.** Closed rooms are recognized with dangling interior walls, LED strip actions work after returning from an editor, and room settings buttons remain available during resize preview. Dragging works immediately after a double-click fit. [#1346](https://github.com/Matysh/houseplan-card/issues/1346), [#1361](https://github.com/Matysh/houseplan-card/issues/1361), [#1359](https://github.com/Matysh/houseplan-card/issues/1359), [#1371](https://github.com/Matysh/houseplan-card/issues/1371)
-
-After updating, restart Home Assistant and reload open Houseplan pages.
-
-All changes: [1.85.1](https://github.com/Matysh/houseplan-card/milestone/15?closed=1)
+Restart Home Assistant and reload open House Plan pages after updating. This is a prerelease; save a full backup before editing an important plan.

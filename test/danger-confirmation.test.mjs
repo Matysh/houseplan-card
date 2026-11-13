@@ -111,9 +111,10 @@ test('all dangerous-action call sites use the shared confirmation contract', () 
   const sharedCalls = source.match(/await (?:this(?:\.host)?|host)\._confirmDanger\s*\(\{/g) || [];
 
   assert.equal(nativeCalls.length, 0, 'native browser confirmation must not return');
-  assert.equal(sharedCalls.length, 9, '#931 panel Delete uses the same confirmation and cleanup without a fabricated dialog');
+  assert.equal(sharedCalls.length, 11, '#931 panel Delete and #1024 opening changes use the same confirmation contract');
   for (const key of [
     'remove-marker', 'remove-markers', 'delete-plan', 'delete-space', 'unlock', 'close-support-busy',
+    'opening-type-change', 'opening-leaf-remove',
   ]) {
     assert.match(source, new RegExp(`key: '${key}'`));
   }
