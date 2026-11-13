@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10637,
+  "revision": 10638,
   "nextTicket": 398,
   "nextFence": 398,
   "tasks": {
@@ -4560,14 +4560,20 @@
       "track": "ship",
       "layer": "infra",
       "branch": "codex/1405-ha-rotation-record",
-      "materialSha": "cafbefd6346116130961758d1b825f36e69f4323",
+      "materialSha": "3749fc755b4e9b1318f3770870a803f687cdd76a",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 397,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794555821054,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c9774bb318db949a252dce058efe00f8082e312c",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/testing/1405-ha-rotation.json"
+      ]
     },
     "1406": {
       "issue": 1406,
@@ -4840,13 +4846,18 @@
     "worker": "finish",
     "token": "397:finish:82021f04-9ea1-4d7b-bb69-29d0191d80cc:finish:1:admit",
     "fence": 397,
-    "materialSha": "cafbefd6346116130961758d1b825f36e69f4323",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "3749fc755b4e9b1318f3770870a803f687cdd76a",
+    "expectedBase": "24f98e2081b460f7b14a76a186155b574a6bbb45",
+    "phase": "testing",
     "admittedAt": 1794555824876,
-    "expiresAt": 1794556124876
+    "expiresAt": 1794556134136,
+    "patchId": "c9774bb318db949a252dce058efe00f8082e312c"
   },
   "events": {
+    "finish:82021f04-9ea1-4d7b-bb69-29d0191d80cc:finish:2:synchronized": {
+      "digest": "4dcc39ac0dca0d12b49628c45a66333f0f061e8c5cf31e62e43d813d2bb2f332",
+      "issue": 1405
+    },
     "finish:82021f04-9ea1-4d7b-bb69-29d0191d80cc": {
       "digest": "cd45e36a962d6cb79b778014367300f28852c8fb9f627483d3902f6df7b4ca98",
       "issue": 1405,
