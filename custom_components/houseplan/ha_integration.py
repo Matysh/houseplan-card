@@ -85,8 +85,8 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
         HouseplanContentView,
         HouseplanDecorAssetUploadView,
         HouseplanImportPreviewView,
-        HouseplanStructuralUploadView,
         HouseplanPlanUploadView,
+        HouseplanStructuralUploadView,
         HouseplanUploadView,
     )
 

@@ -1,5 +1,6 @@
 """#1038: ordinary stored group results retain six-kind data through transfer."""
 from __future__ import annotations
+from custom_components.houseplan.const import VERSION as INTEGRATION_VERSION
 
 import copy
 import hashlib
@@ -63,7 +64,7 @@ def test_six_kind_group_results_round_trip_without_group_schema(tmp_path, mode):
     before = copy.deepcopy(config)
     kind = "space" if mode in {"space", "plan-only"} else "full"
     document, _ = create_export(
-        SimpleNamespace(instance_id="source"), {"config": config, "rev": 2}, {"layout": {}, "rev": 3},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source"), {"config": config, "rev": 2}, {"layout": {}, "rev": 3},
         kind=kind, space_id="ground" if kind == "space" else None, plan_only=mode == "plan-only",
         card_version="group-proof", config_root=source,
     )
@@ -84,7 +85,7 @@ def test_six_kind_group_results_round_trip_without_group_schema(tmp_path, mode):
         decoded = portable.document
     else:
         decoded = parse_document(json.dumps(document).encode())
-    runtime = SimpleNamespace(instance_id="target", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="target", import_previews={})
     preview = create_preview(
         runtime, json.dumps(decoded).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},

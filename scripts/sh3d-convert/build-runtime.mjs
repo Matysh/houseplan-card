@@ -22,10 +22,10 @@ function backendLimits() {
       return [name, value];
     }));
   };
-  return { ...from('custom_components/houseplan/validation.py', [
+  return { ...from('custom_components/houseplan/core/validation.py', [
     'MAX_ROOMS', 'MAX_MARKERS', 'MAX_OPENINGS', 'MAX_DECOR', 'MAX_PARTITIONS',
     'MAX_WALL_SEGMENTS', 'MAX_POLY_POINTS', 'MAX_LAYOUT', 'CANVAS_LIMIT', 'DECOR_TEXT_CM_MAX',
-  ]), ...from('custom_components/houseplan/led_strips.py', ['MAX_LED_STRIPS', 'MAX_LED_POINTS']) };
+  ]), ...from('custom_components/houseplan/core/led_strips.py', ['MAX_LED_STRIPS', 'MAX_LED_POINTS']) };
 }
 
 export async function buildGeometryRuntime() {

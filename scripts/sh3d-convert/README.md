@@ -107,7 +107,7 @@ node scripts/sh3d-convert/build-page.mjs
 node scripts/sh3d-convert/build-page.mjs --check
 npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs
 node --test test/sh3d-convert*.test.mjs test/easy-floorplan-*.test.mjs test/picture-elements-*.test.mjs test/converter*.test.mjs
-.venv-backend/bin/python -m pytest tests_backend/test_sh3d_convert.py tests_backend/test_easy_floorplan_convert.py tests_backend/test_picture_elements_convert.py tests_backend/test_ha_sh3d_convert.py tests_backend/test_ha_easy_floorplan_convert.py tests_backend/test_ha_picture_elements_convert.py -q
+.venv-backend/bin/python -m pytest tests_backend/test_sh3d_convert.py tests_backend/test_easy_floorplan_convert.py tests_backend/test_picture_elements_convert.py tests_backend/test_sh3d_import_preview.py tests_backend/test_ha_easy_floorplan_convert.py tests_backend/test_ha_picture_elements_convert.py -q
 node demo/smoke_plan_converter.mjs
 ```
 

@@ -1,4 +1,5 @@
 """#1238: transfer repairs openings while keeping current graph authority."""
+from custom_components.houseplan.const import VERSION as INTEGRATION_VERSION
 from copy import deepcopy
 import json
 from types import SimpleNamespace
@@ -11,6 +12,7 @@ from custom_components.houseplan.import_export import (
 )
 from custom_components.houseplan.plan_graph import project_graph_space, verify_projection
 from custom_components.houseplan.validation import CONFIG_SCHEMA
+from custom_components.houseplan.store import get_data
 from custom_components.houseplan.wall_segment_model import _wall_key, commit_wall_segment_model
 
 
@@ -32,7 +34,7 @@ def _document(tmp_path, model=11, *, kind="full", exact=True):
                           "contact": "binary_sensor.front"}],
         }], "markers": [], "settings": {},
     })
-    document, _ = create_export(SimpleNamespace(instance_id="source"), {"config": config},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source"), {"config": config},
         {"layout": {}}, kind=kind, space_id="floor" if kind == "space" else None,
         card_version="review", config_root=tmp_path)
     assert _door(document)["host"]["tq"]
@@ -50,7 +52,7 @@ def _door(document):
 
 
 def _preview(tmp_path, document, current=None):
-    runtime = SimpleNamespace(instance_id="target", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="target", import_previews={})
     data = {"config": current or {"spaces": [], "markers": [], "settings": {}}, "rev": 4}
     layout = {"layout": {}, "rev": 6}
     before = deepcopy((data, layout))
@@ -97,7 +99,7 @@ def test_offwall_opening_is_reported_confirmed_and_roundtrips(tmp_path, model, e
     verify_projection(config["spaces"][0])
     if graph and kind == "full":
         assert config["spaces"][0]["plan_graph"] == graph
-    exported, _ = create_export(SimpleNamespace(instance_id="target"), {"config": config},
+    exported, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="target"), {"config": config},
         {"layout": positions}, kind="full", space_id=None, card_version="review", config_root=tmp_path)
     reloaded = parse_document(json.dumps(exported).encode())
     assert _door(reloaded) == imported
@@ -170,7 +172,7 @@ def test_ambiguous_exact_opening_detaches_instead_of_guessing_a_carrier(tmp_path
     # validate_graph requires canonical edge identity order.
     graph["edges"].sort(key=lambda edge: edge["id"])
     space = project_graph_space({"id": "floor", "title": "Floor", "view_box": [0, 0, 1, 1], "rooms": []}, graph)["space"]
-    document, _ = create_export(SimpleNamespace(instance_id="source"), {"config": {
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source"), {"config": {
         "model_version": 11, "spaces": [space], "markers": [], "settings": {},
     }}, {"layout": {}}, kind="full", space_id=None, card_version="review", config_root=tmp_path)
     document["model_version"] = model
@@ -220,7 +222,6 @@ def test_current_partition_opening_off_its_graph_host_is_preserved_detached(tmp_
 async def test_confirmed_full_import_survives_actual_reload_and_undo(hass, tmp_path, model):
     from tests_backend.test_ha_import_export import _setup, _apply, _Connection
     from custom_components.houseplan import websocket_api as wsapi
-    from custom_components.houseplan.store import get_data
 
     entry = await _setup(hass)
     runtime = get_data(hass)
@@ -269,7 +270,7 @@ def _seam_document(tmp_path, carrier_kind="partition", export_kind="full"):
         current = project_graph_space(current, graph)["space"]
     config = {"model_version": 11, "spaces": [current], "markers": [], "settings": {}}
     CONFIG_SCHEMA(deepcopy(config))  # This is a valid existing host, not repair input.
-    document, _ = create_export(SimpleNamespace(instance_id="source"), {"config": config}, {"layout": {}},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source"), {"config": config}, {"layout": {}},
         kind=export_kind, space_id="s" if export_kind == "space" else None,
         card_version="review", config_root=tmp_path)
     return document

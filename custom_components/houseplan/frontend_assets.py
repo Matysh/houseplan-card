@@ -13,7 +13,9 @@ except ImportError:  # pragma: no cover - old HA compatibility
 
 from .const import FRONTEND_ASSETS_URL
 from .frontend_asset_manifest import (
-    ASSET_CACHE_CONTROL, NoAcceptableEncoding, resolve_frontend_representation,
+    ASSET_CACHE_CONTROL,
+    NoAcceptableEncoding,
+    resolve_frontend_representation,
 )
 
 _FRONTEND_ROOT = Path(__file__).parent / "frontend"

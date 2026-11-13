@@ -7,7 +7,7 @@ const safeRelative = value => typeof value === 'string' && value && !value.start
 // Runtime witnesses name their owner; dynamic scanners name the text trees they read.
 const DECLARED_SOURCE_SCOPES = new Map([
   // The converter tsc entry and backend literals are real build inputs, not card dist.
-  ['scripts/sh3d-convert/build-runtime.mjs', ['scripts/sh3d-convert/geometry-entry.ts', 'scripts/sh3d-convert/tsconfig.json', 'custom_components/houseplan/validation.py', 'custom_components/houseplan/led_strips.py']],
+  ['scripts/sh3d-convert/build-runtime.mjs', ['scripts/sh3d-convert/geometry-entry.ts', 'scripts/sh3d-convert/tsconfig.json', 'custom_components/houseplan/core/validation.py', 'custom_components/houseplan/core/led_strips.py']],
   ['demo/smoke_header_observer_retirement.mjs', ['src/houseplan-card.ts']],
   ['demo/smoke_modes.mjs', ['src/houseplan-card.ts', 'src/header-menu.ts', 'src/styles/panel-header.styles.ts']],
   ['demo/smoke_toolbar_stable_width.mjs', ['src/houseplan-card.ts', 'src/panel-header-flow.ts', 'src/header-actions-menu.ts', 'src/styles/panel-header.styles.ts']],

@@ -15,15 +15,10 @@ import { fileURLToPath } from 'node:url';
 
 const BACKEND = fileURLToPath(new URL('../tests_backend/', import.meta.url));
 
-/** Файлы, которым запись в `sys.modules` разрешена поимённо (#398 AC3).
- *
- *  Список короткий не случайно. `conftest.py` ставит пустышки родительских
- *  пакетов, когда Home Assistant недоступен, — по условию и осознанно (#394).
- *  `pure_imports.py` регистрирует загружаемый модуль ровно на время
- *  `exec_module` и снимает регистрацию в `finally`; статический разбор этого
- *  знать не может, поэтому файл назван здесь, а то, что он действительно
- *  убирает за собой, доказывает исполняемая проверка ниже. */
-const SYS_MODULES_WRITERS = ['conftest.py', 'pure_imports.py'];
+/** Only the scoped test alias helper may write package-related module keys.
+ * #1391: the real lazy parent no longer needs conftest package stand-ins.
+ * Runtime identity/cleanup is exercised in test_backend_quality.py. */
+const SYS_MODULES_WRITERS = ['pure_imports.py'];
 
 const files = () => readdirSync(BACKEND).filter((name) => name.endsWith('.py'));
 const read = (name) => readFileSync(new URL(name, `file://${BACKEND}`), 'utf8');
@@ -72,7 +67,9 @@ function sysModulesWrites(source) {
 }
 
 test('backend-тесты не правят sys.path (#393)', () => {
-  const offenders = files().filter((name) => /^\s*sys\.path\b/m.test(read(name)));
+  // Ignore literal subprocess programs/docstrings, not executable pytest code.
+  const moduleCode = source => source.replace(/("""|''')[\s\S]*?\1/g, '');
+  const offenders = files().filter((name) => /^\s*sys\.path\b/m.test(moduleCode(read(name))));
   assert.deepEqual(offenders, [],
     'sys.path, изменённый при коллекции, действует на всю сессию: модули пакета'
     + ' становятся импортируемыми ещё и как модули верхнего уровня, и один файл'
@@ -81,23 +78,8 @@ test('backend-тесты не правят sys.path (#393)', () => {
     + ' текст файла и exec нужного среза.');
 });
 
-test('пакет интеграции подменяет только conftest и только без HA (#394)', () => {
-  // Пустышка вместо `custom_components.houseplan` — единственный способ читать
-  // подмодули без Home Assistant, и запретить её нельзя. Но место у неё одно:
-  // conftest, где решение принимается по честному признаку «есть ли HA».
-  //
-  // Когда её ставили сами тесты под условием «если ещё не импортирован», в CI
-  // она не срабатывала лишь потому, что настоящий пакет успевал импортироваться
-  // из файла, который идёт раньше по алфавиту. Корректность харнесса держалась
-  // на именах файлов; чем это кончается, показал #389.
-  // #398: проверка смотрит на ФАКТ записи в `sys.modules`, а не на её запись
-  // строковым литералом. Прежняя регулярка искала `sys.modules['custom_...`
-  // и не видела `sys.modules[name] = module` в pure_imports.py — третий заход
-  // того же класса проехал мимо гварда, заведённого ради него.
-  //
-  // Разбор грубый и fail-closed: ключ, про который нельзя доказать, что он не
-  // из `custom_components`, считается нарушением. Догонять формы записи
-  // регуляркой — бесконечная гонка, отказывать на непонятном — нет.
+test('пакет интеграции не подменяется при коллекции (#394, #1391)', () => {
+  // Canonical imports now work without HA; only scoped caller aliases remain.
   const offenders = files()
     .filter((name) => !SYS_MODULES_WRITERS.includes(name))
     .filter((name) => sysModulesWrites(read(name)).length > 0);
@@ -107,11 +89,8 @@ test('пакет интеграции подменяет только conftest �
     + ' тем же вызовом). В остальных файлах она переживает свой тест и'
     + ' достаётся всей сессии (#389, #394, #398).');
 
-  const conftest = read('conftest.py');
-  assert.match(conftest, /if not HAS_HA:/,
-    'подмена в conftest обязана быть под условием отсутствия Home Assistant');
-  const stub = conftest.slice(conftest.indexOf('if not HAS_HA:'));
-  assert.match(stub, /sys\.modules\[_name\] = _module/);
+  assert.deepEqual(sysModulesWrites(read('conftest.py')), [],
+    'conftest must not replace the real lazy integration package');
 });
 
 // --- #398: сам гвард обязан ловить свой класс ----------------------------
@@ -156,7 +135,7 @@ test('#398 AC2: безопасное не объявляется нарушен�
 });
 
 test('#398 AC3: список файлов с правом записи закрыт', () => {
-  assert.deepEqual(SYS_MODULES_WRITERS, ['conftest.py', 'pure_imports.py'],
+  assert.deepEqual(SYS_MODULES_WRITERS, ['pure_imports.py'],
     'третий файл в списке — это новое исключение, а не правка: оно требует'
     + ' своего обоснования и отдельного решения, а не молчаливого добавления');
 });
@@ -166,11 +145,12 @@ test('#398 AC8: pure_imports снимает регистрацию, а не об
   // статический разбор не видит очистки. Значит очистку проверяет этот тест —
   // иначе исключение стало бы дырой ровно того размера, что #389.
   const source = read('pure_imports.py');
-  assert.match(source, /before = frozenset\(sys\.modules\)/,
-    'снимок берётся до загрузки');
-  assert.match(source, /finally:[\s\S]*del sys\.modules\[key\]/,
-    'разница снимается в finally — даже если exec_module бросил');
-  assert.match(source, /key\.startswith\(PACKAGE_ROOT\.name\)/,
-    'снимается вся разница под префиксом пакета, а не одно собственное имя:'
-    + ' относительные импорты подтягивают соседей');
+  assert.match(source, /module = importlib\.import_module\(canonical\)/,
+    'package modules have one real canonical identity');
+  assert.match(source, /previous = sys\.modules\.get\(name, _MISSING\)/,
+    'only the requested alias is snapshotted');
+  assert.match(source, /finally:[\s\S]*sys\.modules\.pop\(name, None\)/,
+    'an absent alias is removed even on a failed scope');
+  assert.match(source, /finally:[\s\S]*sys\.modules\[name\] = previous/,
+    'an existing alias is restored by identity');
 });

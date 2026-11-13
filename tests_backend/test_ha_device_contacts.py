@@ -1,4 +1,5 @@
 """#1003 real authenticated layout/basis CAS and durable config+layout commit."""
+from custom_components.houseplan.const import VERSION as INTEGRATION_VERSION
 import copy
 from types import SimpleNamespace
 
@@ -148,7 +149,7 @@ async def test_contact_basis_survives_real_transfer_and_space_remap(hass, hass_w
     config, layout = await _pair(client)
     original = copy.deepcopy(layout["layout"]["v_a"])
     document, _ = create_export(
-        SimpleNamespace(instance_id="contact-test"), config, layout, kind=kind,
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="contact-test"), config, layout, kind=kind,
         space_id="floor" if kind == "space" else None,
         card_version="1.82.0", config_root=tmp_path,
     )

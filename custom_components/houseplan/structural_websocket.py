@@ -9,7 +9,7 @@ from homeassistant.components import websocket_api
 
 from .auth import may_write
 from .store import get_data
-from .structural_upload import CONTROL_KEYS, UploadError, uploads, prepare_resolution
+from .structural_upload import CONTROL_KEYS, UploadError, prepare_resolution, uploads
 
 
 def structural_websocket_command(schema):

@@ -1,5 +1,67 @@
 # House Plan architecture
 
+## Portable plan core (#1391)
+
+`custom_components.houseplan.core` is the canonical Python implementation, not
+a copy for a future website. The real package parent is lazy and imports only
+core constants. HA entrypoints import `ha_integration` through HA's import
+executor (ordinary executor on older hosts); no HA lifecycle runs on a normal
+core import. HA still uses its own components and service/runtime coordinators.
+
+The core contains these actual module owners:
+
+| Area | Modules under `custom_components/houseplan/core/` |
+| --- | --- |
+| Values and schemas | `constants`, `ports`, `validation`, `coordinate_canonicalization`, `config_migrations`, `room_appearance`, `marker_alerts`, `vacuum_routes`, `radar_geometry`, `radar_validation`, `contact_basis`, `led_strips`, `led_strip_inventory` |
+| Canonical geometry | `plan_graph_exact`, `plan_graph`, `plan_graph_migration`, `plan_graph_spatial`, `geometry_migration`, `wall_segment_model`, `junction_limits`, `partition_promotion`, `graph_digest`, `graph_host_continuity`, `graph_validation_scope`, `graph_write`, `graph_node_write`, `plan_graph_source` |
+| Wall and opening operations | `wall_node_attach`, `wall_node_delete`, `wall_node_merge`, `wall_node_move`, `wall_removal_proof`, `opening_features`, `opening_features_model`, `opening_orientation`, `opening_repair` |
+| Portable documents and files | `import_export`, `portable_recovery`, `backup_archive`, `backup_files`, `structural_upload`, `decor_assets`, `asset_integrity`, `file_usage`, `zigbee_snapshot` |
+
+Allowed dependencies are the standard library and existing Voluptuous; Pillow
+is optional only where the existing image-validation contract permits it.
+The core may not import HA, even through a local/dynamic import, nor escape to
+an integration adapter. Ordinary import does not perform writes, open sockets
+or start workers. Explicit file operations receive a trusted host root and
+retain all existing path, link, content and archive checks.
+
+`PortableRuntime` supplies only instance identity, the existing preview-cache
+container and the host's integration version. `HouseplanData` implements it;
+core never receives `hass`, Store, auth, MQTT or registry objects. The single
+literal release `VERSION` remains in root `const.py`; model 11, portable
+versions 1–3, ZIP version 1 and storage versions are unchanged.
+
+Root pure modules are import-identity facades: historical and core imports
+resolve to the same module, functions and exception classes. The mixed roots
+remain adapters: `graph_write.prepare_graph_pair`, `plan_graph_source` Store
+reads/writes, `radar_validation.radar_registry_evidence`,
+`backup_files.durable_file_job`, `asset_integrity.get_asset_integrity_verifier`,
+`zigbee_topology` MQTT coordinator and the remaining `plans` management code.
+The adapter owns locks, CAS/revisions, user/TTL/consume, executor dispatch,
+source-backup durability, paired intents, rollback and event publication in
+the previous order. Cancellation shielding remains outside the pure file job,
+so cancelling the caller cannot unlock an unfinished durable write.
+
+Source-reading consumer migration (facades are not substitute coverage):
+
+| Consumer | Before → actual owner after extraction |
+| --- | --- |
+| Schema dumper/freshness | root `validation.py` loaded behind parent stubs → normal import of `core.validation`; one cached class identity |
+| Converter backend limits | root `validation.py`, `led_strips.py` → corresponding core files; generated runtime unchanged |
+| Compatibility catalog/inventory | root Python symbols → core definitions; moved dispositions retained, facades classified only as reexports |
+| Mutation declarations | 99 Python anchors → actual core/lifecycle files; remaining adapter anchors stay at root; scoped-alias cleanup anchor follows the new helper; static uniqueness check, not mutant execution |
+| Error-code/noqa/HA scans | root-only reads → canonical core error definitions and recursive Python scan |
+| mypy strict owners | root strict names retained, plus canonical `constants`, `coordinate_canonicalization`, `contact_basis`, `junction_limits`, `file_usage`, `led_strips`, `opening_repair` |
+| Source-dependency map | converter literal inputs → core paths; other Python imports are recursively followed, including facade→core |
+| Direct Node readers | passage import and upload-limit checks → core `import_export.py`/`validation.py` |
+| Pure test helpers | fake parents/file-loaded copies → real lazy package and scoped noncanonical aliases; HA harness remains real |
+| Release/package readers | keep root `const.py` version literal and recursively include the integration subtree, including `core/` |
+
+`test_core_boundary.py` checks all owners, negative import fixtures and a
+site-free Python process with only the real Voluptuous dependency available.
+Existing HA setup, import, cancellation, ownership and recovery tests retain
+their actual adapter routes. Packaging/install/upgrade acceptance belongs to
+the next beta's normal isolated HA route, not a claim made by these unit tests.
+
 Structural model 11 (#1167) uses one exact per-space graph: `plan-exact` owns
 bounded rational arithmetic, `plan-graph` owns validation/migration/explicit
 commands, and `graph-edit-intent` binds editor targets to frozen identities.

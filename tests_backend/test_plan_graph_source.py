@@ -58,8 +58,9 @@ async def test_original_pair_survives_lost_ack_and_is_never_rewritten(source_sto
 
 
 async def test_resource_refusal_precedes_store_write(source_store, monkeypatch):
+    from custom_components.houseplan.core import plan_graph_source as encoding
     hass, documents, writes, _ = source_store
-    monkeypatch.setattr(module, "MAX_SOURCE_BYTES", 20)
+    monkeypatch.setattr(encoding, "MAX_SOURCE_BYTES", 20)
     with pytest.raises(GraphError, match="source_limit"):
         await module.save_source(hass, {"config": {"name": "x" * 100}})
     assert not documents and not writes

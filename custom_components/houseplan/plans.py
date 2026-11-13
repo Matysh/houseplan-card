@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from .const import MIN_FREE_BYTES, PLAN_ORPHAN_TTL_S
+from .core.file_usage import dir_usage as dir_usage
 from .validation import MAX_FILENAME, PLAN_EXTENSIONS, sanitize_filename
 
 _LOGGER = logging.getLogger(__name__)
@@ -223,27 +224,6 @@ class QuotaError(Exception):
         self.detail = detail
 
 
-def dir_usage(path: Path, *, exclude: Path | None = None) -> tuple[int, int]:
-    """(bytes, files) below `path`, ignoring what we cannot read.
-
-    `exclude` is the caller's own staged upload: it already lives under `path`
-    and its size arrives separately as `incoming`, so counting it here would
-    charge the same bytes and the same file twice (#498). Any *other* staged
-    file stays in the count — it is about to become an attachment.
-    """
-    total = count = 0
-    if not path.is_dir():
-        return 0, 0
-    for item in path.rglob("*"):
-        if exclude is not None and item == exclude:
-            continue
-        try:
-            if item.is_file():
-                total += item.stat().st_size
-                count += 1
-        except OSError:
-            continue
-    return total, count
 
 
 def check_quota(

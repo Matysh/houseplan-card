@@ -4,7 +4,7 @@
  * Здесь проверяется наша половина цепочки: чтение `.sh3d` и маппинг. Вторая
  * половина — что полученный документ принимают настоящие `CONFIG_SCHEMA` и
  * путь предпросмотра импорта — живёт в `tests_backend/test_sh3d_convert.py`
- * и `tests_backend/test_ha_sh3d_convert.py`. Разрыв между этими половинами и
+ * и `tests_backend/test_sh3d_import_preview.py`. Разрыв между этими половинами и
  * есть тот дрейф версий, из-за которого инструмент на сайте гниёт незаметно.
  */
 import assert from 'node:assert/strict';

@@ -37,6 +37,13 @@ no_site_packages = false
 [[tool.mypy.overrides]]
 module = [
     "custom_components.houseplan.const",
+    "custom_components.houseplan.core.constants",
+    "custom_components.houseplan.core.coordinate_canonicalization",
+    "custom_components.houseplan.core.contact_basis",
+    "custom_components.houseplan.core.junction_limits",
+    "custom_components.houseplan.core.file_usage",
+    "custom_components.houseplan.core.led_strips",
+    "custom_components.houseplan.core.opening_repair",
     "custom_components.houseplan.projection",
     "custom_components.houseplan.coordinate_canonicalization",
     "custom_components.houseplan.contact_basis",

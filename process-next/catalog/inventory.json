@@ -7987,7 +7987,7 @@
       "sha256": "24e9507cac126c1fead42c7e1019e63db066c1f782bb7656b3a49888ccb43fd3"
     },
     {
-      "path": "tests_backend/test_ha_sh3d_convert.py",
+      "path": "tests_backend/test_sh3d_import_preview.py",
       "kind": "converter",
       "decision": "addressed",
       "reason": "External converter Python behavior; separate diagnostic.",

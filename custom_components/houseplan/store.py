@@ -29,6 +29,7 @@ from .const import (
     STORAGE_MINOR_VERSION,
     STORAGE_VERSION,
     STORAGE_VIRTUAL_LIGHTS_KEY,
+    VERSION,
 )
 from .coordinate_canonicalization import (
     canonicalize_config_geometry,
@@ -142,6 +143,11 @@ class HouseplanData:
     marker_history_owner: Any | None = None
     # #836: frontend fingerprint and dev label, read once at entry setup.
     build_identity: BuildIdentity = UNKNOWN_BUILD
+
+    @property
+    def integration_version(self) -> str:
+        """Supply portable metadata without a core dependency on this HA adapter."""
+        return VERSION
 
 
 HouseplanConfigEntry = ConfigEntry[HouseplanData]
@@ -270,7 +276,7 @@ async def async_save_config_state(
                         and config.get("model_version") == 11
                         and int((previous.get("config") or {}).get("model_version", 0) or 0) < 11)
     if not graph_pair and (not canonical or needs_graph_pair) and getattr(runtime, "hass", None) is not None:
-        from .graph_write import prepare_graph_candidate, normalize_graph_config
+        from .graph_write import normalize_graph_config, prepare_graph_candidate
         from .websocket_api import _commit_pair, _layout_metadata
 
         if canonical:

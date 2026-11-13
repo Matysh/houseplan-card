@@ -162,7 +162,7 @@ class HouseplanStructuralUploadView(HomeAssistantView):
     requires_auth = True
 
     async def post(self, request: web.Request) -> web.Response:
-        from .structural_upload import UploadError, uploads, prepare_finish
+        from .structural_upload import UploadError, prepare_finish, uploads
 
         hass = request.app[KEY_HASS]
         user = request.get("hass_user")

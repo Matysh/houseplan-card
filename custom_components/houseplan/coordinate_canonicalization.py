@@ -1,221 +1,66 @@
-"""Lossless, allow-listed canonicalisation of persisted geometry.
+"""Compatibility exports for the canonical plan core; no copied algorithms."""
+import sys
 
-The frontend mirrors this module in src/coordinate-canonicalization.ts.
-Keep the precision, lattice formula and field allow-list in lockstep; a shared
-fixture is exercised by both runtimes.
-"""
-from __future__ import annotations
+from .core import coordinate_canonicalization as _core
+from .core.coordinate_canonicalization import (
+    COORDINATE_DECIMALS as COORDINATE_DECIMALS,
+)
+from .core.coordinate_canonicalization import (
+    COORDINATE_FACTOR as COORDINATE_FACTOR,
+)
+from .core.coordinate_canonicalization import (
+    DECOR_BOX_KINDS as DECOR_BOX_KINDS,
+)
+from .core.coordinate_canonicalization import (
+    LATTICE_GRID_N as LATTICE_GRID_N,
+)
+from .core.coordinate_canonicalization import (
+    LATTICE_NOISE_STEPS as LATTICE_NOISE_STEPS,
+)
+from .core.coordinate_canonicalization import (
+    Any as Any,
+)
+from .core.coordinate_canonicalization import (
+    _lattice_fields as _lattice_fields,
+)
+from .core.coordinate_canonicalization import (
+    _lattice_point as _lattice_point,
+)
+from .core.coordinate_canonicalization import (
+    _lattice_points as _lattice_points,
+)
+from .core.coordinate_canonicalization import (
+    _record as _record,
+)
+from .core.coordinate_canonicalization import (
+    _records as _records,
+)
+from .core.coordinate_canonicalization import (
+    _scalar_fields as _scalar_fields,
+)
+from .core.coordinate_canonicalization import (
+    _scalar_points as _scalar_points,
+)
+from .core.coordinate_canonicalization import (
+    canonicalize_config_geometry as canonicalize_config_geometry,
+)
+from .core.coordinate_canonicalization import (
+    canonicalize_lattice_coordinate as canonicalize_lattice_coordinate,
+)
+from .core.coordinate_canonicalization import (
+    canonicalize_layout_geometry as canonicalize_layout_geometry,
+)
+from .core.coordinate_canonicalization import (
+    canonicalize_number as canonicalize_number,
+)
+from .core.coordinate_canonicalization import (
+    canonicalize_position as canonicalize_position,
+)
+from .core.coordinate_canonicalization import (
+    copy as copy,
+)
+from .core.coordinate_canonicalization import (
+    math as math,
+)
 
-import copy
-import math
-from typing import Any
-
-COORDINATE_DECIMALS = 9
-COORDINATE_FACTOR = 10**COORDINATE_DECIMALS
-LATTICE_GRID_N = 240
-LATTICE_NOISE_STEPS = 1e-4
-DECOR_BOX_KINDS = ("rect", "ellipse", "furniture", "image")
-
-
-def canonicalize_number(value: Any) -> Any:
-    """Return one stable IEEE-754 representation for an allow-listed scalar."""
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return value
-    number = float(value)
-    if not math.isfinite(number):
-        return value
-    sign = -1.0 if math.copysign(1.0, number) < 0 else 1.0
-    result = sign * (
-        math.floor(abs(number) * COORDINATE_FACTOR + 0.5)
-        / COORDINATE_FACTOR
-    )
-    if result == 0:
-        return 0.0
-    return result
-
-
-def canonicalize_lattice_coordinate(value: Any) -> Any:
-    """Collapse near-node noise while preserving authored off-grid values."""
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        return value
-    number = float(value)
-    if not math.isfinite(number):
-        return value
-    scaled = number * LATTICE_GRID_N
-    # JavaScript Math.round: ties go toward +infinity, unlike Python round().
-    nearest = math.floor(scaled + 0.5)
-    if abs(scaled - nearest) < LATTICE_NOISE_STEPS:
-        result = nearest / LATTICE_GRID_N
-        return 0.0 if result == 0 else result
-    return canonicalize_number(number)
-
-
-def _record(value: Any) -> dict[str, Any] | None:
-    return value if isinstance(value, dict) else None
-
-
-def _records(value: Any) -> list[dict[str, Any]]:
-    if not isinstance(value, list):
-        return []
-    return [item for item in value if isinstance(item, dict)]
-
-
-def _scalar_fields(record: dict[str, Any], names: tuple[str, ...]) -> None:
-    for name in names:
-        if name in record:
-            record[name] = canonicalize_number(record[name])
-
-
-def _lattice_fields(record: dict[str, Any], names: tuple[str, ...]) -> None:
-    for name in names:
-        if name in record:
-            record[name] = canonicalize_lattice_coordinate(record[name])
-
-
-def _lattice_point(value: Any) -> None:
-    if not isinstance(value, list):
-        return
-    for index in range(min(2, len(value))):
-        value[index] = canonicalize_lattice_coordinate(value[index])
-
-
-def _lattice_points(value: Any) -> None:
-    if not isinstance(value, list):
-        return
-    for point in value:
-        _lattice_point(point)
-
-
-def _scalar_points(value: Any) -> None:
-    if not isinstance(value, list):
-        return
-    for point in value:
-        if not isinstance(point, list):
-            continue
-        for index in range(min(2, len(point))):
-            point[index] = canonicalize_number(point[index])
-
-
-def canonicalize_position(position: Any) -> Any:
-    """Canonicalise lattice x/y in one layout record, preserving metadata."""
-    result = copy.deepcopy(position)
-    record = _record(result)
-    if record is not None:
-        _lattice_fields(record, ("x", "y"))
-    return result
-
-
-def canonicalize_layout_geometry(layout: Any) -> Any:
-    """Canonicalise lattice x/y in every layout record."""
-    result = copy.deepcopy(layout)
-    record = _record(result)
-    if record is None:
-        return result
-    for position in record.values():
-        item = _record(position)
-        if item is not None:
-            _lattice_fields(item, ("x", "y"))
-    return result
-
-
-def canonicalize_config_geometry(config: Any) -> Any:
-    """Canonicalise only the named persisted geometry fields."""
-    result = copy.deepcopy(config)
-    root = _record(result)
-    if root is None:
-        return result
-
-    for space in _records(root.get("spaces")):
-        graph_owned = root.get("model_version") == 11 and isinstance(space.get("plan_graph"), dict)
-        _scalar_fields(
-            space,
-            (
-                "plan_x",
-                "plan_y",
-                "plan_scale",
-                "plan_scale_x",
-                "plan_scale_y",
-                "plan_angle",
-            ),
-        )
-
-        for room in _records(space.get("rooms")):
-            if not graph_owned:
-                _lattice_fields(room, ("x", "y", "w", "h"))
-                _lattice_points(room.get("poly"))
-
-        for wall in _records(space.get("walls")):
-            if not graph_owned:
-                _lattice_point(wall.get("a"))
-                _lattice_point(wall.get("b"))
-
-        for segment in _records(space.get("wall_segments")):
-            if not graph_owned:
-                _lattice_point(segment.get("a"))
-                _lattice_point(segment.get("b"))
-
-        opening_basis = copy.deepcopy(space) if any(
-            isinstance(opening.get("opening_features"), dict)
-            and opening["opening_features"].get("version") == 1
-            for opening in _records(space.get("openings"))
-        ) else None
-        opening_angle_changed = False
-        for opening in _records(space.get("openings")):
-            previous_angle = opening.get("angle")
-            if not graph_owned:
-                _lattice_fields(opening, ("x", "y"))
-            _scalar_fields(opening, ("angle", "length"))
-            opening_angle_changed |= previous_angle != opening.get("angle")
-            host = _record(opening.get("host"))
-            if host is not None and not graph_owned:
-                _scalar_fields(host, ("t",))
-        if opening_basis and opening_angle_changed:
-            from .opening_orientation import transport_opening_orientations
-            transport_opening_orientations(opening_basis, space)
-
-        for decor in _records(space.get("decor")):
-            kind = decor.get("kind")
-            if kind == "line":
-                _lattice_fields(decor, ("x1", "y1", "x2", "y2"))
-            elif kind in DECOR_BOX_KINDS:
-                _lattice_fields(decor, ("x", "y", "w", "h"))
-                _scalar_fields(decor, ("angle",))
-            elif kind == "text":
-                _lattice_fields(decor, ("x", "y"))
-                _scalar_fields(decor, ("scale", "angle"))
-
-        for stair in _records(space.get("stairs")):
-            # #663: wall/stair magnet placement is continuous like furniture.
-            # Scalar cleanup removes JSON tails without moving an authored
-            # physical-face contact onto the plan grid.
-            _scalar_fields(stair, ("x", "y", "length", "width", "radius", "angle"))
-
-        # Legacy-only read boundary: v9 drafts are canonicalized before the
-        # wall-model migration turns their edges into current partitions.
-        for draft in _records(space.get("room_drafts")):
-            _lattice_points(draft.get("points"))
-
-        for partition in _records(space.get("partitions")):
-            if not graph_owned:
-                _lattice_point(partition.get("a"))
-                _lattice_point(partition.get("b"))
-
-        for column in _records(space.get("wall_columns")):
-            _lattice_point(column.get("center"))
-            if column.get("shape") == "square":
-                _scalar_fields(column, ("angle",))
-
-        for span in _records(space.get("open_spans")):
-            _lattice_point(span.get("a"))
-            _lattice_point(span.get("b"))
-
-        for strip in _records(space.get("led_strips")):
-            # #780: LED strips snap to physical wall faces, like stairs and
-            # furniture: remove JSON noise only, never pull a face contact
-            # onto a lattice node.
-            _scalar_points(strip.get("points"))
-
-    for marker in _records(root.get("markers")):
-        _scalar_fields(marker, ("angle",))
-
-    return result
+sys.modules[__name__] = _core

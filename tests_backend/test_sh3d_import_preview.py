@@ -2,13 +2,13 @@
 
 Самое сильное звено гейта против дрейфа: здесь документ, который получает
 пользователь со страницы `/convert`, скармливается той же функции
-`create_preview`, что и загрузка через интерфейс карточки. Модуль требует Home
-Assistant (импорт тянет `store`), поэтому файл назван `test_ha_*` и локально
-пропускается — в Linux CI он исполняется.
+`create_preview`, что и загрузка через интерфейс карточки. После #1391 это
+реальный переносимый core, и проверка работает также без Home Assistant.
 
 Чистая половина проверок — в `test_sh3d_convert.py`.
 """
 from __future__ import annotations
+from custom_components.houseplan.const import VERSION as INTEGRATION_VERSION
 
 import json
 from pathlib import Path
@@ -29,7 +29,7 @@ def golden_documents() -> list[tuple[str, dict]]:
 
 def _preview(document: dict, root: Path) -> dict:
     return create_preview(
-        SimpleNamespace(instance_id="target-instance", import_previews={}),
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="target-instance", import_previews={}),
         json.dumps(document).encode(),
         owner_id="alice",
         duplicate_policy="skip",

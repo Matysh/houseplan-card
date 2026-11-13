@@ -1,4 +1,5 @@
 """#1002: exercise the actual JSON/ZIP full and space backup boundaries."""
+from custom_components.houseplan.const import VERSION as INTEGRATION_VERSION
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -16,7 +17,7 @@ def test_vacuum_appearance_survives_json_and_full_zip(tmp_path: Path, kind: str,
     config = _config()
     style = {"trail_color": "#64B5F6", "trail_opacity": opacity}
     config["markers"][0]["vacuum"] = style
-    document, _ = create_export(SimpleNamespace(instance_id="ink"), {"config": config},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="ink"), {"config": config},
         {"layout": {}}, kind=kind, space_id="ground" if kind == "space" else None,
         card_version="review", config_root=tmp_path)
     parsed = parse_document(json.dumps(document).encode())

@@ -1,33 +1,18 @@
-"""Stdlib-only LED inventory shared by validation and support projection."""
+"""Compatibility exports for the canonical plan core; no copied algorithms."""
+import sys
 
-from __future__ import annotations
+from .core import led_strip_inventory as _core
+from .core.led_strip_inventory import (
+    Any as Any,
+)
+from .core.led_strip_inventory import (
+    Iterator as Iterator,
+)
+from .core.led_strip_inventory import (
+    iter_led_strips as iter_led_strips,
+)
+from .core.led_strip_inventory import (
+    led_strip_counts as led_strip_counts,
+)
 
-from collections.abc import Iterator
-from typing import Any
-
-
-def iter_led_strips(
-    config: dict[str, Any],
-) -> Iterator[tuple[dict[str, Any], dict[str, Any]]]:
-    for space in config.get("spaces") or []:
-        if not isinstance(space, dict):
-            continue
-        for strip in space.get("led_strips") or []:
-            if isinstance(strip, dict):
-                yield space, strip
-
-
-def led_strip_counts(config: dict[str, Any]) -> dict[str, int]:
-    """Support-package counters: no coordinates, names or HA identifiers."""
-    total = unbound = hidden = 0
-    for _space, strip in iter_led_strips(config):
-        total += 1
-        if not isinstance(strip.get("marker"), str):
-            unbound += 1
-        elif strip.get("active") is False:
-            hidden += 1
-    return {
-        "led_strips": total,
-        "led_strips_unbound": unbound,
-        "led_strips_hidden": hidden,
-    }
+sys.modules[__name__] = _core

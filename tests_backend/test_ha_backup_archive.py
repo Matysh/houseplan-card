@@ -1,5 +1,6 @@
 """Portable full backups: real HA boundaries, bytes and hostile inputs (#936)."""
 from __future__ import annotations
+from custom_components.houseplan.const import VERSION as INTEGRATION_VERSION
 
 import asyncio
 import base64
@@ -56,7 +57,7 @@ def sample(root: Path):
         "markers": [{"id": "lamp", "binding": "virtual", "pdfs": [
             {"url": "/api/houseplan/content/files/lamp/picture.png?v=2", "name": "Picture"}]}],
         "settings": {"filter_seeded": True}}
-    document, _ = create_export(SimpleNamespace(instance_id="source"), {"config": config},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source"), {"config": config},
         {"layout": {"lamp": {"s": "a", "x": .4, "y": .5}}}, kind="full", space_id=None,
         card_version="review", config_root=root)
     return document, raw
@@ -967,7 +968,7 @@ def plan_document(root: Path, files: dict[str, bytes], decor: bytes | None = Non
         (root / f"houseplan/assets/{aid}.json").write_text(json.dumps({"mime": "image/svg+xml"}))
         spaces[0]["decor"] = [{"id": "art", "kind": "image", "asset_id": aid,
                                "x": .2, "y": .3, "w": .25, "h": .35}]
-    document, _ = create_export(SimpleNamespace(instance_id="source"),
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source"),
         {"config": {"spaces": spaces, "markers": [], "settings": {}}}, {"layout": {}},
         kind="full", space_id=None, card_version="review", config_root=root)
     return document
@@ -1094,7 +1095,7 @@ async def test_issue1033_zip_with_a_door_off_its_wall_imports_after_confirmation
     from tests_backend.test_opening_repair import _door, _house
 
     config = _house(_door("d1", 0.3, lock="lock.front"), _door("w1", 0.5, 0.06))
-    document, _ = create_export(SimpleNamespace(instance_id="source"), {"config": config},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source"), {"config": config},
         {"layout": {}}, kind="full", space_id=None, card_version="review",
         config_root=tmp_path / "source")
     # Historical projection repair; current11 rejects stale projections.

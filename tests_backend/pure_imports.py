@@ -1,103 +1,63 @@
-"""Загрузка модуля интеграции по пути, без Home Assistant (issue #394).
+"""Canonical pure imports after #1391, without replacing the parent namespace.
 
-Зачем не обычный импорт: часть чистых тестов читает модуль под своим именем
-(`hp_validation`) либо под каноническим, чтобы работали относительные импорты
-внутри него. Родительские пакеты при этом должны существовать — в окружении с
-Home Assistant это настоящий пакет, без него пустышки ставит `conftest.py`.
-
-Здесь используется отдельный временный namespace. Он обязательно снимается в
-`finally`, после чего исходное состояние импорт-машины восстанавливается по
-идентичности объектов. Это принципиальное отличие от утечки пустышек из #389,
-из-за которой HA получал заглушку вместо интеграции и не мог её поднять.
+Integration modules are normal imports of the real lazy package. A requested
+test alias may be scoped, but core classes/functions are never loaded twice.
+Only standalone non-package fixtures retain a scoped file-loader fallback.
 """
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import sys
 from contextlib import contextmanager
 from pathlib import Path
-from types import ModuleType
 
 REPO = Path(__file__).resolve().parent.parent
 PACKAGE_ROOT = REPO / "custom_components"
 HOUSEPLAN_ROOT = PACKAGE_ROOT / "houseplan"
-
-
-def _is_custom_components_entry(key: str) -> bool:
-    """Принадлежит ли имя ровно namespace `custom_components`."""
-    return key == PACKAGE_ROOT.name or (
-        key.startswith(PACKAGE_ROOT.name)
-        and key[len(PACKAGE_ROOT.name):].startswith(".")
-    )
-
-
-def _namespace_package(name: str, path: Path) -> ModuleType:
-    """Минимальный package, достаточный для абсолютных/относительных импортов."""
-    module = ModuleType(name)
-    module.__package__ = name
-    module.__path__ = [str(path)]
-    return module
+_MISSING = object()
 
 
 @contextmanager
 def pure_module(name: str, file: Path):
-    """Загрузить модуль по пути под указанным именем и убрать за собой.
-
-    Имя значимо: относительные импорты внутри модуля резолвятся только тогда,
-    когда модуль знает, какому пакету принадлежит.
-
-    Регистрация в `sys.modules` обязательна на время `exec_module` и вредна
-    после (#398). Она переживала вызов и доставалась всей сессии — тот же
-    класс, что #389: загрузчик Home Assistant получал бы модуль, собранный
-    мимо него, а объекты классов одного файла оказывались бы разными.
-
-    В окружении с установленным HA нельзя позволять импорту соседнего модуля
-    запустить настоящий `houseplan/__init__.py`: он может вернуться к ещё не
-    исполненному pure-модулю и образовать цикл (#465). Поэтому весь namespace
-    `custom_components` временно заменяется двумя package-пустышками с
-    настоящими путями. В `finally` временное дерево удаляется, а полный снимок
-    исходных имён и объектов восстанавливается. Это сохраняет и пустышки
-    `conftest.py`, и уже загруженные настоящие модули без подмены по identity.
-    """
-    before = frozenset(sys.modules)
-    spec = importlib.util.spec_from_file_location(name, file)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"cannot create import spec for {name} from {file}")
-    module = importlib.util.module_from_spec(spec)
-
-    saved = {
-        key: sys.modules[key]
-        for key in before
-        if _is_custom_components_entry(key) or key == name
-    }
+    """Reuse the canonical owner; scope only a caller's noncanonical alias."""
+    file = file.resolve()
     try:
-        for key in tuple(saved):
-            sys.modules.pop(key, None)
+        relative = file.relative_to(HOUSEPLAN_ROOT)
+    except ValueError:
+        relative = None
+    if relative is not None:
+        parts = list(relative.with_suffix("").parts)
+        if parts[-1] == "__init__":
+            parts.pop()
+        canonical = ".".join(["custom_components", "houseplan", *parts])
+        module = importlib.import_module(canonical)
+        if name == canonical:
+            yield module
+            return
+    else:
+        spec = importlib.util.spec_from_file_location(name, file)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"cannot create import spec for {name} from {file}")
+        module = importlib.util.module_from_spec(spec)
 
-        package = _namespace_package(PACKAGE_ROOT.name, PACKAGE_ROOT)
-        houseplan = _namespace_package(
-            f"{PACKAGE_ROOT.name}.houseplan", HOUSEPLAN_ROOT)
-        package.houseplan = houseplan
-        sys.modules[PACKAGE_ROOT.name] = package
-        sys.modules[f"{PACKAGE_ROOT.name}.houseplan"] = houseplan
+    # Never shadow an actual canonical package/module with a test alias.
+    if name == "custom_components" or name == "custom_components.houseplan":
+        raise ImportError("A pure alias cannot replace the integration package")
+    previous = sys.modules.get(name, _MISSING)
+    try:
         sys.modules[name] = module
-        spec.loader.exec_module(module)
-        # Keep the namespace alive for lazy relative imports during the call,
-        # not merely during exec_module. Always restore the original objects.
+        if relative is None:
+            spec.loader.exec_module(module)
         yield module
     finally:
-        for key in [
-            key for key in sys.modules
-            if _is_custom_components_entry(key) or key == name
-        ]:
-            del sys.modules[key]
-        sys.modules.update(saved)
+        if previous is _MISSING:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = previous
 
 
 def load_pure(name: str, file: Path):
-    """Load eagerly and immediately restore imports, retaining the original API.
-
-    Callers executing lazy relative imports use the scoped pure_module instead.
-    """
+    """Return the single canonical implementation, preserving the helper API."""
     with pure_module(name, file) as module:
         return module

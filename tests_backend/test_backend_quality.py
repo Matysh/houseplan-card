@@ -4,6 +4,7 @@ Pure tests: no homeassistant import, runnable in any environment.
 """
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import json
 import re
@@ -13,19 +14,8 @@ REPO = Path(__file__).resolve().parent.parent
 BACKEND = REPO / "custom_components" / "houseplan"
 
 
-# Loading const.py by file path with a standalone module name deliberately
-# avoids stubbing "custom_components"/"custom_components.houseplan" in
-# sys.modules: leftover ModuleType stand-ins poison the Home Assistant harness
-# running later in the same pytest process — HA's loader then sees a package
-# without async_setup and every harness test fails with "No setup or config
-# entry setup function defined" (the exact #389 incident, caused by the schema
-# dump script). const.py imports nothing, so no package context is needed.
 def _const():
-    spec = importlib.util.spec_from_file_location(
-        "houseplan_quality_const", BACKEND / "const.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return importlib.import_module("custom_components.houseplan.const")
 
 
 def _emitted_codes() -> tuple[set[str], set[str]]:
@@ -37,8 +27,8 @@ def _emitted_codes() -> tuple[set[str], set[str]]:
     codes, the f-string families) — fail-closed for anything else.
     """
     api = (BACKEND / "websocket_api.py").read_text(encoding="utf-8")
-    validation = (BACKEND / "validation.py").read_text(encoding="utf-8")
-    junction = (BACKEND / "junction_limits.py").read_text(encoding="utf-8")
+    validation = (BACKEND / "core" / "validation.py").read_text(encoding="utf-8")
+    junction = (BACKEND / "core" / "junction_limits.py").read_text(encoding="utf-8")
 
     fixed: set[str] = set()
     fixed |= set(re.findall(r'send_error\(\s*[^,]+,\s*"([a-z0-9_]+)"', api))
@@ -70,7 +60,7 @@ def _emitted_codes() -> tuple[set[str], set[str]]:
         families |= {"value_badge_", "value_source_"}
     if re.search(r'f"junction_limit_\{', junction):
         families.add("junction_limit_")
-    node_move = (BACKEND / "wall_node_move.py").read_text(encoding="utf-8")
+    node_move = (BACKEND / "core" / "wall_node_move.py").read_text(encoding="utf-8")
     if re.search(r'f"node_move_\{', node_move):
         families.add("node_move_")
 
@@ -116,10 +106,17 @@ def test_issue_42_mypy_strict_allowlist_only_grows():
         "custom_components.houseplan.frontend_asset_manifest",
         "custom_components.houseplan.junction_limits",
         "custom_components.houseplan.plans",
+        "custom_components.houseplan.core.constants",
+        "custom_components.houseplan.core.coordinate_canonicalization",
+        "custom_components.houseplan.core.contact_basis",
+        "custom_components.houseplan.core.junction_limits",
+        "custom_components.houseplan.core.file_usage",
+        "custom_components.houseplan.core.led_strips",
+        "custom_components.houseplan.core.opening_repair",
     }
     pyproject = (REPO / "pyproject.toml").read_text(encoding="utf-8")
     section = pyproject.split("[[tool.mypy.overrides]]", 1)[1]
-    listed = set(re.findall(r'"(custom_components\.houseplan\.[a-z_]+)"', section))
+    listed = set(re.findall(r'"(custom_components\.houseplan\.[a-z_.]+)"', section))
     removed = committed - listed
     assert not removed, (
         f"strict modules were REMOVED from the mypy allowlist: {sorted(removed)} — "
@@ -127,7 +124,7 @@ def test_issue_42_mypy_strict_allowlist_only_grows():
 
 
 def test_issue_42_every_noqa_carries_a_reason():
-    for path in sorted(BACKEND.glob("*.py")):
+    for path in sorted(BACKEND.rglob("*.py")):
         for index, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if "# noqa" not in line:
                 continue
@@ -138,173 +135,77 @@ def test_issue_42_every_noqa_carries_a_reason():
                 f"{path.name}:{index}: a bare noqa hides a decision — add the reason")
 
 
-def test_issue_398_pure_imports_leaves_sys_modules_as_it_found_it():
-    """`load_pure` не оставляет следов в `sys.modules` (#398 AC4).
-
-    Статический гвард (`test/backend-test-hygiene.test.mjs`) разрешает этому
-    файлу писать в `sys.modules`, потому что не видит очистки. Значит очистку
-    обязан доказывать исполняемый тест — иначе разрешение стало бы дырой
-    ровно того размера, что #389: пустышка переживала свой тест, Home
-    Assistant не мог поднять интеграцию, и 85 тестов харнесса падали с голым
-    `assert False`.
-
-    Проверяется именно РАЗНИЦА, а не пустота: пустышки родительских пакетов
-    ставит conftest, они принадлежат ему и остаются.
-    """
+def test_issue_398_pure_imports_preserves_real_module_identity():
+    """Ordinary imports may cache modules, but never replace existing owners."""
     import sys
-
     from tests_backend.pure_imports import HOUSEPLAN_ROOT, load_pure
-
-    before = {
-        key: value for key, value in sys.modules.items()
-        if key == "custom_components" or key.startswith("custom_components.")
-    }
-
-    def assert_registry_unchanged() -> None:
-        after = {
-            key: value for key, value in sys.modules.items()
-            if key == "custom_components" or key.startswith("custom_components.")
-        }
-        assert after.keys() == before.keys(), (
-            "load_pure изменил набор custom_components-модулей: "
-            f"added={sorted(after.keys() - before.keys())}, "
-            f"removed={sorted(before.keys() - after.keys())}"
-        )
-        replaced = [key for key, value in before.items() if after[key] is not value]
-        assert replaced == [], (
-            "load_pure восстановил имена, но подменил объекты: "
-            f"{sorted(replaced)}"
-        )
-
-    module = load_pure(
-        "custom_components.houseplan.junction_limits",
-        HOUSEPLAN_ROOT / "junction_limits.py",
-    )
-    assert module.JunctionLimitError
-    assert module.validate_junction_limits
-    assert_registry_unchanged()
-
-    # Повторный вызов обязан работать так же: очистка не должна ломать
-    # следующий заход (тесты вызывают load_pure по нескольку раз за сессию).
-    again = load_pure(
-        "custom_components.houseplan.junction_limits",
-        HOUSEPLAN_ROOT / "junction_limits.py",
-    )
-    assert again.JunctionLimitError
-    assert_registry_unchanged()
-
-    # Standalone-имя тоже живёт только во время exec_module. Прежняя очистка
-    # следила лишь за custom_components и оставляла такой target в реестре.
-    standalone = "houseplan_quality_const_probe"
-    assert standalone not in sys.modules
-    const = load_pure(standalone, HOUSEPLAN_ROOT / "const.py")
-    assert const.DOMAIN == "houseplan"
-    assert standalone not in sys.modules
-    assert_registry_unchanged()
+    before = dict(sys.modules)
+    one = load_pure("quality_junction_alias", HOUSEPLAN_ROOT / "junction_limits.py")
+    two = load_pure("quality_junction_alias", HOUSEPLAN_ROOT / "junction_limits.py")
+    canonical = importlib.import_module("custom_components.houseplan.core.junction_limits")
+    assert one is two is canonical
+    assert one.JunctionLimitError is canonical.JunctionLimitError
+    assert "quality_junction_alias" not in sys.modules
+    assert all(sys.modules.get(k) is v for k, v in before.items())
+    parent = importlib.import_module("custom_components.houseplan")
+    assert parent.__file__ and callable(parent.async_setup)
 
 
 def test_issue_1380_scoped_pure_module_keeps_lazy_imports_and_restores_identity():
     import sys
-
     from tests_backend.pure_imports import HOUSEPLAN_ROOT, pure_module
-
-    def snapshot():
-        return {k: v for k, v in sys.modules.items() if k == "custom_components" or k.startswith("custom_components.")}
-
-    before = snapshot()
+    from wall_node_parity import commit
+    parent = importlib.import_module("custom_components.houseplan")
+    existing = dict(sys.modules)
+    config = {"spaces": [{"id": "f", "rooms": [], "partitions": [
+        {"id": "p", "a": [0, 0], "b": [1, 0], "cm": 10}]}], "markers": [], "settings": {}}
     for fail in (False, True):
         try:
-            with pure_module("custom_components.houseplan.wall_node_move", HOUSEPLAN_ROOT / "wall_node_move.py") as module:
-                config = {"spaces": [{"id": "f", "rooms": [], "partitions": [
-                    {"id": "p", "a": [0, 0], "b": [1, 0], "cm": 10}]}], "markers": [], "settings": {}}
+            with pure_module("quality_move_alias", HOUSEPLAN_ROOT / "wall_node_move.py") as module:
                 actual, _ = module.commit_wall_segment_model(config)
                 assert actual["model_version"] == 11
-                assert "custom_components.houseplan.graph_write" in sys.modules
-                # Nested scopes restore the already-active module identities.
-                active = snapshot()
-                with pure_module("custom_components.houseplan.const", HOUSEPLAN_ROOT / "const.py") as const:
+                assert sys.modules["quality_move_alias"] is module
+                canonical = importlib.import_module("custom_components.houseplan.core.wall_node_move")
+                assert module is canonical
+                with pure_module("quality_move_alias", HOUSEPLAN_ROOT / "const.py") as const:
                     assert const.DOMAIN == "houseplan"
-                assert snapshot().keys() == active.keys()
-                assert all(sys.modules[k] is v for k, v in active.items())
+                assert sys.modules["quality_move_alias"] is canonical
                 if fail:
                     raise RuntimeError("scope exit probe")
         except RuntimeError as error:
             assert fail and str(error) == "scope exit probe"
-        after = snapshot()
-        assert after.keys() == before.keys()
-        assert all(after[k] is v for k, v in before.items())
-
-    # The shared parity helper also supports callers without an active scope.
-    # Its lazy commit must not leak modules into later Home Assistant tests.
-    from wall_node_parity import commit
-
+        assert "quality_move_alias" not in sys.modules
+        assert sys.modules["custom_components.houseplan"] is parent
+        assert all(sys.modules.get(k) is v for k, v in existing.items())
     assert commit(config) == actual
-    after = snapshot()
-    assert after.keys() == before.keys()
-    assert all(after[k] is v for k, v in before.items())
 
 
 def test_issue_465_pure_imports_is_order_independent():
-    """Чистый процесс без parent package не должен запускать реальный __init__.
-
-    Отдельный процесс делает регрессию независимой от порядка collection:
-    именно общий прогон раньше случайно маскировал #465, заранее импортируя
-    настоящий пакет. Там же проверяется восстановление заранее существующих
-    sentinel-объектов по identity, а не только совпадение имён.
-    """
+    """Cold imports use the real parent without loading HA lifecycle."""
     import subprocess
     import sys
-    import textwrap
-
-    probe = textwrap.dedent(
-        """
-        import sys
-        from types import ModuleType
-        from tests_backend.pure_imports import HOUSEPLAN_ROOT, load_pure
-
-        modules = sys.modules
-        prefix = "custom_components"
-        target = "custom_components.houseplan.junction_limits"
-
-        for key in tuple(modules):
-            if key == prefix or key.startswith(prefix + "."):
-                modules.pop(key, None)
-
-        for _ in range(2):
-            loaded = load_pure(target, HOUSEPLAN_ROOT / "junction_limits.py")
-            assert loaded.JunctionLimitError
-            assert loaded.validate_junction_limits
-            assert not any(
-                key == prefix or key.startswith(prefix + ".")
-                for key in modules
-            )
-
-        sentinels = {
-            prefix: ModuleType(prefix),
-            f"{prefix}.houseplan": ModuleType(f"{prefix}.houseplan"),
-            target: ModuleType(target),
-        }
-        modules.update(sentinels)
-        loaded = load_pure(target, HOUSEPLAN_ROOT / "junction_limits.py")
-        assert loaded is not sentinels[target]
-        assert {
-            key for key in modules
-            if key == prefix or key.startswith(prefix + ".")
-        } == sentinels.keys()
-        assert all(modules[key] is value for key, value in sentinels.items())
-        """
-    )
-    result = subprocess.run(
-        [sys.executable, "-c", probe],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode == 0, (
-        "isolated pure import failed:\n"
-        f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
-    )
+    probe = """
+import importlib.abc
+import sys
+from tests_backend.pure_imports import HOUSEPLAN_ROOT, load_pure
+class BlockHA(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == 'homeassistant' or fullname.startswith('homeassistant.'):
+            raise AssertionError(fullname)
+sys.meta_path.insert(0, BlockHA())
+one = load_pure('isolated_alias', HOUSEPLAN_ROOT / 'junction_limits.py')
+import custom_components.houseplan as parent
+from custom_components.houseplan.core import junction_limits as owner
+assert parent.__file__ and callable(parent.async_setup)
+assert 'custom_components.houseplan.ha_integration' not in sys.modules
+two = load_pure('isolated_alias', HOUSEPLAN_ROOT / 'junction_limits.py')
+assert one is two is owner
+assert 'isolated_alias' not in sys.modules
+assert not any(k == 'homeassistant' or k.startswith('homeassistant.') for k in sys.modules)
+"""
+    result = subprocess.run([sys.executable, "-c", probe], cwd=REPO,
+                            capture_output=True, text=True, timeout=30, check=False)
+    assert result.returncode == 0, result.stdout + result.stderr
 
 # --- #436: файл, которому нужен Home Assistant, обязан это объявить ---------
 
@@ -327,7 +228,7 @@ def _toplevel_imports(path: Path) -> set[str]:
             elif isinstance(node, ast.ImportFrom):
                 base = node.module or ""
                 if node.level:  # from . import store / from .store import x
-                    base = f".{base}" if base else "."
+                    base = "." * node.level + base
                 names.add(base)
                 names.update(f"{base}.{alias.name}".replace("..", ".", 1)
                              if base == "." else f"{base}.{alias.name}"
@@ -354,14 +255,24 @@ def _ha_dependent_backend_modules(root: Path | None = None) -> set[str]:
     Прямые импортёры плюс замыкание по относительным импортам: `store` тянет HA
     сам, а всё, что импортирует `store` на уровне модуля, тянет его через него.
     """
+    base_root = root or BACKEND
     deps: dict[str, set[str]] = {}
-    for path in sorted((root or BACKEND).glob("*.py")):
-        imports = _toplevel_imports(path)
-        deps[path.stem] = {
-            name.lstrip(".").split(".")[0] for name in imports if name.startswith(".")
-        }
-        if any(name.split(".")[0] == "homeassistant" for name in imports):
-            deps[path.stem].add("homeassistant")
+    for path in sorted(base_root.rglob("*.py")):
+        key = ".".join(path.relative_to(base_root).with_suffix("").parts)
+        if key.endswith(".__init__"):
+            key = key.removesuffix(".__init__")
+            package = "custom_components.houseplan." + key
+        else:
+            package = ".".join(["custom_components", "houseplan", *key.split(".")[:-1]])
+        own = set()
+        for name in _toplevel_imports(path):
+            if name.startswith("."):
+                name = importlib.util.resolve_name(name, package)
+            if name.startswith("custom_components.houseplan."):
+                own.add(name.removeprefix("custom_components.houseplan."))
+            if name == "homeassistant" or name.startswith("homeassistant."):
+                own.add("homeassistant")
+        deps[key] = own
     needs = {name for name, own in deps.items() if "homeassistant" in own}
     changed = True
     while changed:  # обычно один проход; цикл — на случай цепочек длиннее одной
@@ -391,7 +302,7 @@ def _needs_home_assistant(
     for name in imports:
         parts = name.split(".")
         if parts[:2] == ["custom_components", "houseplan"] and len(parts) > 2:
-            touched.add(parts[2])
+            touched.update(".".join(parts[2:index]) for index in range(3, len(parts) + 1))
     if touched & ha_modules:
         return True
     # HA может прийти через общий setup соседнего теста, как в #1258.

@@ -1,5 +1,6 @@
 """Real portable document/archive boundaries for #973; all data synthetic."""
 from __future__ import annotations
+from custom_components.houseplan.const import VERSION as INTEGRATION_VERSION
 
 import base64
 import copy
@@ -50,7 +51,7 @@ def portable_config():
 
 def export(cfg, root, kind="full", plan_only=False):
     return create_export(
-        SimpleNamespace(instance_id="synthetic-source"), {"config": cfg, "rev": 5},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="synthetic-source"), {"config": cfg, "rev": 5},
         {"layout": {"radar": {"x": .3, "y": .4, "s": "floor"}}, "rev": 8},
         kind=kind, space_id="floor" if kind == "space" else None,
         plan_only=plan_only, card_version="test", config_root=root,
@@ -71,7 +72,7 @@ def broken_document(root, *, kind="full"):
 
 
 def preview(document, root, current=None, duplicate_policy="skip"):
-    runtime = SimpleNamespace(instance_id="synthetic-target", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="synthetic-target", import_previews={})
     cd = {"config": current or {"spaces": [], "markers": []}, "rev": 2}
     ld = {"layout": {}, "rev": 3}
     response = create_preview(
@@ -216,7 +217,7 @@ def test_native_wire_fixture_is_real_backend_recovery_not_an_invented_success(tm
         session = uuid4().hex
         payload = read_archive(path, new_stage(root, session))
         document, _, included = plan_files(payload, root, session)
-        runtime = SimpleNamespace(instance_id="synthetic-target", import_previews={})
+        runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="synthetic-target", import_previews={})
         response = create_preview(
             runtime, json.dumps(document).encode(), owner_id="test", duplicate_policy="skip",
             current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},

@@ -85,27 +85,14 @@ def test_issue_33_future_fields_round_trip_exactly():
     assert validated["markers"][0]["future_marker_field"] == {"nested": "kept"}
 
 
-def test_issue_389_the_dump_leaves_sys_modules_as_it_found_it():
-    """Подмена пакетов обязана быть обратимой.
-
-    Скрипт дампа подменяет `custom_components` и `custom_components.houseplan`
-    пустышками, чтобы прочитать схему без Home Assistant. Пока подмена
-    оставалась в `sys.modules`, HA получал пакет без `async_setup` и отказывался
-    поднимать интеграцию — 85 тестов харнесса падали с «assert False», и ни
-    один не указывал на причину. Тест держит именно обратимость, а не факт
-    подмены: без неё скрипт свою работу не сделает.
-    """
-    keys = (
-        "custom_components",
-        "custom_components.houseplan",
-        "custom_components.houseplan.validation",
-        "custom_components.houseplan.coordinate_canonicalization",
-    )
-    missing = object()
-    before = {name: sys.modules.get(name, missing) for name in keys}
-
-    _validation()
-
-    for name in keys:
-        after = sys.modules.get(name, missing)
-        assert after is before[name], f"{name}: подмена не возвращена на место"
+def test_issue_389_the_dump_preserves_real_package_and_schema_identity():
+    import importlib
+    parent = importlib.import_module("custom_components.houseplan")
+    core = importlib.import_module("custom_components.houseplan.core.validation")
+    before = {name: module for name, module in sys.modules.items()
+              if name == "custom_components" or name.startswith("custom_components.")}
+    assert _validation() is core
+    assert _validation() is core
+    assert sys.modules["custom_components.houseplan"] is parent
+    assert callable(parent.async_setup)
+    assert all(sys.modules.get(name) is module for name, module in before.items())

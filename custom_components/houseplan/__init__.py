@@ -5,7 +5,7 @@ import importlib
 from types import ModuleType
 from typing import TYPE_CHECKING
 
-from .const import DOMAIN as DOMAIN
+from .core.constants import DOMAIN as DOMAIN
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant

@@ -5,44 +5,49 @@ layout saves carry only its reference, not another complete configuration.
 """
 from __future__ import annotations
 
-import copy
 import hashlib
-import json
-import re
 
 from homeassistant.helpers.storage import Store
 
-from .plan_graph_exact import GraphError
-
-SOURCE_VERSION = 1
-MAX_SOURCE_BYTES = 32 * 1024 * 1024
-SOURCE_KEY_PREFIX = "houseplan.plan_graph_source."
-BACKUP_KEY = "plan_graph_migration_backup"
-PASSPORT_KEY = "plan_graph_migration"
-PREVIOUS_BACKUP_KEY = "previous_backup"
-_DIGEST = re.compile(r"[0-9a-f]{64}\Z")
-
-
-def source_bytes(source: dict) -> bytes:
-    try:
-        raw = json.dumps(source, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
-    except (TypeError, ValueError, RecursionError) as err:
-        raise GraphError("invalid_migration_source") from err
-    if len(raw) > MAX_SOURCE_BYTES:
-        raise GraphError("migration_source_limit", code="plan_graph_resource_limit")
-    return raw
-
-
-def logical_source(config_data: dict, layout_data: dict) -> dict:
-    source = {"version": SOURCE_VERSION,
-              "config": copy.deepcopy(config_data.get("config") or {}),
-              "layout": copy.deepcopy(layout_data.get("layout") or {}),
-              "config_rev": int(config_data.get("rev", 0)),
-              "layout_rev": int(layout_data.get("rev", 0)),
-              "model_version": (config_data.get("config") or {}).get("model_version", 0),
-              "passports": {key: copy.deepcopy(layout_data[key]) for key in ("config_migration", PASSPORT_KEY) if key in layout_data}}
-    source_bytes(source)
-    return source
+from .core.plan_graph_source import (
+    _DIGEST as _DIGEST,
+)
+from .core.plan_graph_source import (
+    BACKUP_KEY as BACKUP_KEY,
+)
+from .core.plan_graph_source import (
+    MAX_SOURCE_BYTES as MAX_SOURCE_BYTES,
+)
+from .core.plan_graph_source import (
+    PASSPORT_KEY as PASSPORT_KEY,
+)
+from .core.plan_graph_source import (
+    PREVIOUS_BACKUP_KEY as PREVIOUS_BACKUP_KEY,
+)
+from .core.plan_graph_source import (
+    SOURCE_KEY_PREFIX as SOURCE_KEY_PREFIX,
+)
+from .core.plan_graph_source import (
+    SOURCE_VERSION as SOURCE_VERSION,
+)
+from .core.plan_graph_source import (
+    GraphError as GraphError,
+)
+from .core.plan_graph_source import (
+    copy as copy,
+)
+from .core.plan_graph_source import (
+    json as json,
+)
+from .core.plan_graph_source import (
+    logical_source as logical_source,
+)
+from .core.plan_graph_source import (
+    re as re,
+)
+from .core.plan_graph_source import (
+    source_bytes as source_bytes,
+)
 
 
 def _store(hass, digest: str):

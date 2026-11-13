@@ -18,7 +18,7 @@ import {
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 const pythonPlanLimit = () => {
-  const match = read('custom_components/houseplan/validation.py')
+  const match = read('custom_components/houseplan/core/validation.py')
     .match(/^MAX_PLAN_BYTES = ([\d\s*]+)$/m);
   assert.ok(match, 'validation.py объявляет MAX_PLAN_BYTES произведением целых');
   return match[1].split('*').map((part) => Number(part.trim())).reduce((a, b) => a * b, 1);

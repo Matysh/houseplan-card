@@ -7,7 +7,7 @@ import { readHouseplanProductionSource } from './houseplan-source.mjs';
 const card = readHouseplanProductionSource();
 const styles = readAllStylesSource();
 const backend = readFileSync(new URL('../custom_components/houseplan/websocket_api.py', import.meta.url), 'utf8');
-const importer = readFileSync(new URL('../custom_components/houseplan/import_export.py', import.meta.url), 'utf8');
+const importer = readFileSync(new URL('../custom_components/houseplan/core/import_export.py', import.meta.url), 'utf8');
 const en = JSON.parse(readFileSync(new URL('../src/i18n/en.json', import.meta.url)));
 const ru = JSON.parse(readFileSync(new URL('../src/i18n/ru.json', import.meta.url)));
 

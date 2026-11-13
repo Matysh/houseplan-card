@@ -212,7 +212,7 @@ const MUTANT_DEFINITIONS = [
     id: 'config-source-export-drops-old-frame-intent-1015',
     guard: 'python3 -m pytest tests_backend/test_ha_config_migrations.py -q',
     because: '#1015: ordinary single/mixed-floor half-written geom_pending inputs must export a coherent original logical pair and import without missing or double coordinate conversion. Registered only; nightly execution.',
-    patches: [{ file: 'custom_components/houseplan/import_export.py',
+    patches: [{ file: "custom_components/houseplan/core/import_export.py",
       find: '    migrate_layout(layout, unfinished_layout)',
       replace: '    migrate_layout(layout, {})' }],
   },
@@ -236,7 +236,7 @@ const MUTANT_DEFINITIONS = [
     id: 'config-migration-widens-independent-text-floor-1015',
     guard: 'python3 -m pytest tests_backend/test_ha_config_migrations.py -q',
     because: '#1015: a corrupt501-character weather input must not be removed before the existing500-character schema bound can reject it. Registered only; nightly execution.',
-    patches: [{ file: 'custom_components/houseplan/const.py',
+    patches: [{ file: "custom_components/houseplan/core/constants.py",
       find: 'MAX_CONFIG_TEXT = 500  # persisted names/models/IDs; shared strict decoder bound',
       replace: 'MAX_CONFIG_TEXT = 501  # deliberately widened floor' }],
   },
@@ -261,7 +261,7 @@ const MUTANT_DEFINITIONS = [
     id: 'threshold-writer-skips-alert-validation-1000',
     guard: 'python3 -m pytest tests_backend/test_ha_marker_alerts.py -q',
     because: '#1000 AC6: authenticated config/set must reject a new malformed/fourth/external rule before changing either durable Store half or revision. Cheap codec negatives cover values but not this actual writer boundary and its unchanged-pair response. Registered only; nightly execution.',
-    patches: [{ file: 'custom_components/houseplan/validation.py',
+    patches: [{ file: "custom_components/houseplan/core/validation.py",
       find: 'if "alert_sources" in marker and (validate_all or old_marker is None',
       replace: 'if False and (validate_all or old_marker is None' }],
   },
@@ -505,7 +505,7 @@ const MUTANT_DEFINITIONS = [
     id:'room-sun-boolean-coercion-1078',
     guard:'python3 -m pytest tests_backend/test_validation.py -q -k issue1078',
     because:'#1078 AC1: reject null, numbers, strings and containers rather than coercing the room sunlight flag. Registered only; execution belongs to the nightly workflow.',
-    patches:[{file:'custom_components/houseplan/validation.py',
+    patches:[{file:"custom_components/houseplan/core/validation.py",
       find:'vol.Optional("sun_transparent"): bool,',replace:'vol.Optional("sun_transparent"): vol.Coerce(bool),'}],
   },
   {
@@ -799,7 +799,7 @@ const MUTANT_DEFINITIONS = [
     id: 'room-appearance-alpha-coerces-bool-1037',
     guard: 'python -m pytest tests_backend/test_room_appearance.py -q -k new_space_fields',
     because: '#1037: new appearance alpha is a strict JSON number; booleans/strings must not become accepted opacity.',
-    patches: [{ file: 'custom_components/houseplan/validation.py',
+    patches: [{ file: "custom_components/houseplan/core/validation.py",
       find: 'vol.Required("a"): vol.All(_finite_number, vol.Range(min=0.0, max=1.0))',
       replace: 'vol.Required("a"): vol.All(_finite, vol.Range(min=0.0, max=1.0))',
     }],
@@ -889,7 +889,7 @@ const MUTANT_DEFINITIONS = [
     id: 'vacuum-trail-alpha-string-1002',
     guard: 'node scripts/backend-test-guard.mjs invalid_alpha_rejected tests_backend/test_vacuum_trail_style.py',
     because: '#1002 AC3: the backend boundary must refuse booleans and numeric strings rather than coerce them into opacity.',
-    patches: [{file:'custom_components/houseplan/validation.py',
+    patches: [{file:"custom_components/houseplan/core/validation.py",
       find: 'vol.Optional("trail_opacity"): vol.Any(None, vol.All(_finite_number, vol.Range(min=0.0, max=1.0))),',
       replace: 'vol.Optional("trail_opacity"): vol.Any(None, vol.Coerce(float)),'}],
   },
@@ -937,7 +937,7 @@ const MUTANT_DEFINITIONS = [
     id: 'room-promotion-coerces-json-booleans-to-numbers',
     guard: 'python3 -m pytest tests_backend/test_room_opening_host.py -k compares_unknown_metadata -q',
     because: '#996 AC3: future opening fields must retain JSON booleans, including in nested lists/objects.',
-    patches: [{ file: 'custom_components/houseplan/partition_promotion.py',
+    patches: [{ file: "custom_components/houseplan/core/partition_promotion.py",
       find: 'if (isinstance(first, bool) or isinstance(second, bool)) and type(first) is not type(second):',
       replace: 'if False:',
     }],
@@ -948,7 +948,7 @@ const MUTANT_DEFINITIONS = [
     because: '#996 AC1/AC2: the real frontend candidates must pass ordinary same-ID restoration, not only Optimize.',
     patches: [
   {
-    "file": "custom_components/houseplan/validation.py",
+    "file": "custom_components/houseplan/core/validation.py",
     "find": "proved = same_partition or same_graph_run or same_wall or (",
     "replace": "proved = same_partition or ("
   }
@@ -958,7 +958,7 @@ const MUTANT_DEFINITIONS = [
     id: 'room-promotion-ignores-carrier-thickness',
     guard: 'python3 -m pytest tests_backend/test_room_opening_host.py -k rejects_changed_carrier -q',
     because: '#996 AC3: a representation-only transition cannot smuggle a new wall thickness.',
-    patches: [{ file: 'custom_components/houseplan/partition_promotion.py',
+    patches: [{ file: "custom_components/houseplan/core/partition_promotion.py",
       find: 'if not math.isfinite(cm) or cm <= 0 or cm != float(wall["cm"]):',
       replace: 'if not math.isfinite(cm) or cm <= 0:',
     }],
@@ -967,7 +967,7 @@ const MUTANT_DEFINITIONS = [
     id: 'icon-state-source-invalid-write-977',
     guard: 'python -m pytest tests_backend/test_validation.py -q -k issue977',
     because: '#977 AC4/AC10: structural server validation must reject changed invalid sources while retaining untouched future blocks; UI validation alone is not authority.',
-    patches: [{ file: 'custom_components/houseplan/validation.py',
+    patches: [{ file: "custom_components/houseplan/core/validation.py",
       find: 'if not valid:\n                raise MarkerControlError("invalid_state_source", "Invalid icon state source or active states")',
       replace: 'if False:\n                raise MarkerControlError("invalid_state_source", "Invalid icon state source or active states")',
     }],
@@ -976,7 +976,7 @@ const MUTANT_DEFINITIONS = [
     id: 'more-info-invalid-write-1087',
     guard: 'python -m pytest tests_backend/test_validation.py -q -k issue1087',
     because: '#1087 AC5: actual server writes/imports reject invalid targets while untouched historical data remains lossless.',
-    patches: [{ file: 'custom_components/houseplan/validation.py',
+    patches: [{ file: "custom_components/houseplan/core/validation.py",
       find: 'if not valid:\n                raise MarkerControlError("invalid_more_info_entity", "Invalid Home Assistant dialog entity")',
       replace: 'if False:\n                raise MarkerControlError("invalid_more_info_entity", "Invalid Home Assistant dialog entity")',
     }],
@@ -1279,7 +1279,7 @@ const MUTANT_DEFINITIONS = [
     id: 'portable-recovery-weakens-ordinary-radar-validation-973',
     guard: 'python -m pytest tests_backend/test_portable_recovery.py -q -k dormant_radar_reference_tolerance',
     because: '#973 AC4/AC8: transfer recovery may preserve dormant references, but normal Save/setup must still reject them.',
-    patches: [{ file: 'custom_components/houseplan/radar_validation.py',
+    patches: [{ file: "custom_components/houseplan/core/radar_validation.py",
       find: 'dormant_transfer = allow_inactive_spatial_refs and obj["enabled"] is False',
       replace: 'dormant_transfer = obj["enabled"] is False' }],
   },
@@ -1318,7 +1318,7 @@ const MUTANT_DEFINITIONS = [
     id: 'backup-zip-failed-publication-keeps-owned-hardlinks',
     guard: 'python -m pytest tests_backend/test_ha_backup_archive.py -q -k apply_target_write_failure',
     because: '#936 AC9: failure after publishing some images rolls back all four surfaces and removes only proven operation-owned links.',
-    patches: [{ file: 'custom_components/houseplan/backup_files.py',
+    patches: [{ file: "custom_components/houseplan/core/backup_files.py",
       find: '    """Unlink ONLY proven operation-owned hardlinks, never an inferred orphan."""\n    staged =',
       replace: '    """Unlink ONLY proven operation-owned hardlinks, never an inferred orphan."""\n    return\n    staged =' }],
   },
@@ -1976,7 +1976,7 @@ const MUTANT_DEFINITIONS = [
     id: 'signal-visibility-global-write-coerced',
     guard: 'python -m pytest tests_backend/test_settings_signal_visibility.py -q',
     because: '#876/#1130: a new shared signal write accepts a strict boolean or low, not a truthy legacy string.',
-    patches: [{ file: 'custom_components/houseplan/validation.py',
+    patches: [{ file: "custom_components/houseplan/core/validation.py",
       find: '                    vol.Optional("show_lqi"): vol.Any(bool, "low"),',
       replace: '                    vol.Optional("show_lqi"): vol.Coerce(bool),' }],
   },
@@ -1984,7 +1984,7 @@ const MUTANT_DEFINITIONS = [
     id: 'signal-visibility-plan-only-drops-mode',
     guard: 'python -m pytest tests_backend/test_ha_import_export.py -k issue_876 -q',
     because: '#876 AC4: the actual portable plan-only exporter must retain the explicit local signal mode and leave target global settings alone.',
-    patches: [{ file: 'custom_components/houseplan/import_export.py',
+    patches: [{ file: "custom_components/houseplan/core/import_export.py",
       find: '    "show_lqi", "show_lqi_mode", "hide_decor", "hide_openings", "label_temp", "label_hum",',
       replace: '    "show_lqi", "hide_decor", "hide_openings", "label_temp", "label_hum",' }],
   },
@@ -2617,7 +2617,7 @@ const MUTANT_DEFINITIONS = [
   "because": "#845 AC3: server rejects colliding current IDs and suffixes legacy migration",
   "patches": [
     {
-      "file": "custom_components/houseplan/wall_segment_model.py",
+      "file": "custom_components/houseplan/core/wall_segment_model.py",
       "find": "    for name in (\"rooms\", \"openings\", \"decor\", \"stairs\", \"room_drafts\", \"partitions\", \"wall_columns\"):",
       "replace": "    for name in (\"rooms\", \"openings\", \"decor\", \"room_drafts\", \"partitions\", \"wall_columns\"):"
     }
@@ -2677,7 +2677,7 @@ const MUTANT_DEFINITIONS = [
   "because": "#845 AC1: accepted browser 2.4/3.6mm T targets and stored 3.4mm edges survive server proof and Undo",
   "patches": [
     {
-      "file": "custom_components/houseplan/wall_segment_model.py",
+      "file": "custom_components/houseplan/core/wall_segment_model.py",
       "find": "            if length <= EPS:\n                raise WallSegmentMigrationError(\"zero-length\", room_id)",
       "replace": "            if length < epsilon * 2:\n                raise WallSegmentMigrationError(\"zero-length\", room_id)"
     }
@@ -2689,7 +2689,7 @@ const MUTANT_DEFINITIONS = [
   "because": "#845 AC2: shared room boundaries own nearby split points before legacy wall endpoints",
   "patches": [
     {
-      "file": "custom_components/houseplan/wall_segment_model.py",
+      "file": "custom_components/houseplan/core/wall_segment_model.py",
       "find": "        breaks = []\n        for other_id, other_poly in room_polys.items():",
       "replace": "        breaks = list(global_breaks)\n        for other_id, other_poly in room_polys.items():"
     }
@@ -2701,7 +2701,7 @@ const MUTANT_DEFINITIONS = [
   "because": "#845 AC2: legacy gap inherits browser thickness before previous cm; browser-baseline Undo remains exact",
   "patches": [
     {
-      "file": "custom_components/houseplan/wall_segment_model.py",
+      "file": "custom_components/houseplan/core/wall_segment_model.py",
       "find": "    resolved = _legacy_thickness_at(space.get(\"walls\") or [], atom[\"a\"], atom[\"b\"])",
       "replace": "    resolved = 0.0 # mutant: omit browser compatibility inheritance"
     }
@@ -2713,12 +2713,12 @@ const MUTANT_DEFINITIONS = [
   "because": "#845 AC7: nine-decimal canonicalization precedes deterministic seed keys, including odd 1/8192",
   "patches": [
     {
-      "file": "custom_components/houseplan/wall_segment_model.py",
+      "file": "custom_components/houseplan/core/wall_segment_model.py",
       "find": "    candidate = canonicalize_config_geometry(copy.deepcopy(config))",
       "replace": "    candidate = copy.deepcopy(config) # mutant: raw twelve-decimal seed"
     },
     {
-      "file": "custom_components/houseplan/wall_segment_model.py",
+      "file": "custom_components/houseplan/core/wall_segment_model.py",
       "find": "        poly = [[canonicalize_lattice_coordinate(p[0]),\n                 canonicalize_lattice_coordinate(p[1])] for p in poly]",
       "replace": "        poly = [[float(p[0]), float(p[1])] for p in poly]"
     }
@@ -2730,7 +2730,7 @@ const MUTANT_DEFINITIONS = [
   "because": "#845 room matrix: odd lattice midpoint keeps the same compatibility key after a nine-decimal echo",
   "patches": [
     {
-      "file": "custom_components/houseplan/wall_segment_model.py",
+      "file": "custom_components/houseplan/core/wall_segment_model.py",
       "find": "    a = [coordinate(float(v)) for v in a[:2]]\n    b = [coordinate(float(v)) for v in b[:2]]",
       "replace": "    a = [float(v) for v in a[:2]]\n    b = [float(v) for v in b[:2]]"
     }
@@ -3874,7 +3874,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node scripts/backend-test-guard.mjs 828_fixed_contacts tests_backend/test_wall_node_move.py',
     because: '#828 AC2: the independent Python proof must retain a new X child far contact '
       + 'via its derived parent only, while forged parent allocations and collisions still refuse',
-    patches: [{ file: 'custom_components/houseplan/wall_node_move.py',
+    patches: [{ file: "custom_components/houseplan/core/wall_node_move.py",
       find: '            old_a = old_by_ref.get(parent_refs.get(_ref(a), _ref(a)))',
       replace: '            old_a = old_by_ref.get(_ref(a))',
     }],
@@ -4354,7 +4354,7 @@ const MUTANT_DEFINITIONS = [
     id: 'node-server-trusts-forged-inverse',
     guard: 'node scripts/backend-test-guard.mjs forged_inverse tests_backend/test_wall_node_move.py',
     because: '#803 AC10: the independent server inverse proof refuses altered far ends, opening metadata, room and split identity',
-    patches: [{ file: 'custom_components/houseplan/wall_node_move.py',
+    patches: [{ file: "custom_components/houseplan/core/wall_node_move.py",
       find: '        if not _equal(canonicalize_config_geometry(proof), canonicalize_config_geometry(baseline)):',
       replace: '        if False and not _equal(canonicalize_config_geometry(proof), canonicalize_config_geometry(baseline)):',
     }],
@@ -4373,7 +4373,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node scripts/backend-test-guard.mjs "noisy_atomized or shared_angular_boundary" tests_backend/test_wall_node_move.py',
     because: '#803 H1 / #830: model canonicalization can straighten noisy atoms; include the '
       + 'unrounded angular-boundary classifier witness as well as reversed T/X moves and exact inverse',
-    patches: [{ file: 'custom_components/houseplan/wall_node_move.py',
+    patches: [{ file: "custom_components/houseplan/core/wall_node_move.py",
       find: '    return abs(_cross(a, b)) <= DIRECTION_EPS',
       replace: '    return abs(_cross(a, b)) <= EPS',
     }],
@@ -4400,7 +4400,7 @@ const MUTANT_DEFINITIONS = [
     id: 'node-host-ledger-trusts-result-identity',
     guard: 'node scripts/backend-test-guard.mjs independent_host_ledger tests_backend/test_wall_node_move.py',
     because: '#803 M3: independent original-interval host ledger rejects wrong child/carrier/inverse identities',
-    patches: [{ file: 'custom_components/houseplan/wall_node_move.py',
+    patches: [{ file: "custom_components/houseplan/core/wall_node_move.py",
       find: '            if identity(old[oid]) != expected_old or identity(new[oid]) != expected_new:',
       replace: '            if False:  # mutant: candidate host IDs authorize themselves',
     }],
@@ -4418,10 +4418,10 @@ const MUTANT_DEFINITIONS = [
     id: 'node-wire-host-ledger-is-circular',
     guard: 'node scripts/backend-test-guard.mjs issue_803_second_host_identity_gate tests_backend/test_ha_websocket.py',
     because: '#803 M3: real HA rejects a geometrically valid foreign rehost even if the first planner returns it',
-    patches: [{ file: 'custom_components/houseplan/wall_node_move.py',
+    patches: [{ file: "custom_components/houseplan/core/wall_node_move.py",
       find: '            if identity(old[oid]) != expected_old or identity(new[oid]) != expected_new:',
       replace: '            if False:  # mutant: trust candidate host IDs',
-    }, { file: 'custom_components/houseplan/wall_node_move.py',
+    }, { file: "custom_components/houseplan/core/wall_node_move.py",
       find: '                adjusted_openings[oid]["host"]["id"] = expected_new[1]',
       replace: '                adjusted_openings[oid]["host"]["id"] = new[oid]["host"]["id"]',
     }],
@@ -4432,7 +4432,7 @@ const MUTANT_DEFINITIONS = [
     because: '#803 AC11: the independent ledger must read-normalise legacy room-wall identities without writing the source',
     patches: [
   {
-    "file": "custom_components/houseplan/wall_node_move.py",
+    "file": "custom_components/houseplan/core/wall_node_move.py",
     "find": "    return commit_wall_segment_model(current)[0], False",
     "replace": "    return copy.deepcopy(current), False # mutant: skip legacy read normalization"
   }
@@ -4529,7 +4529,7 @@ const MUTANT_DEFINITIONS = [
     because: '#792 AC9, #807: the display preference stays a strict boolean or the exact '
       + 'string "low" across saves and imports; any other string must be refused.',
     patches: [{
-      file: 'custom_components/houseplan/validation.py',
+      file: "custom_components/houseplan/core/validation.py",
       find: '_DEVICE_BATTERY = vol.Any(bool, "low")',
       replace: '_DEVICE_BATTERY = object',
     }],
@@ -4814,7 +4814,7 @@ const MUTANT_DEFINITIONS = [
     because: '#663 AC11: a full import must remap a stair target through the exact space-id '
       + 'map instead of retaining the source document id.',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '            if mapped is not None:\n                stair["target_space_id"] = mapped\n',
       replace: '            if mapped is not None:\n                stair["target_space_id"] = target  # mutant\n',
     }],
@@ -4827,7 +4827,7 @@ const MUTANT_DEFINITIONS = [
     because: '#663 AC13: persisted stair collections are bounded at 250 before render and '
       + 'support/diagnostic paths can receive them.',
     patches: [{
-      file: 'custom_components/houseplan/validation.py',
+      file: "custom_components/houseplan/core/validation.py",
       find: '        vol.Optional("stairs"): vol.All([STAIR_SCHEMA], vol.Length(max=MAX_STAIRS)),\n',
       replace: '        vol.Optional("stairs"): vol.All([STAIR_SCHEMA], vol.Length(max=MAX_STAIRS + 1)),  # mutant\n',
     }],
@@ -6627,7 +6627,7 @@ const MUTANT_DEFINITIONS = [
       + 'write has to be refused at the boundary rather than discovered as a missing robot '
       + '(#162, M-D backend half)',
     patches: [{
-      file: 'custom_components/houseplan/vacuum_routes.py',
+      file: "custom_components/houseplan/core/vacuum_routes.py",
       find: '        elif space_ids is not None and space not in space_ids:\n            problems.append(issue(route_id, "unknown_space"))',
       replace: '        elif False:\n            problems.append(issue(route_id, "unknown_space"))',
     }],
@@ -6665,7 +6665,7 @@ const MUTANT_DEFINITIONS = [
     because: 'backend trail reconciliation must share the frontend empty-array authority; '
       + 'the old truthiness check otherwise assigns a deleted map again (#443, AC2)',
     patches: [{
-      file: 'custom_components/houseplan/vacuum_routes.py',
+      file: "custom_components/houseplan/core/vacuum_routes.py",
       find: '    if isinstance(explicit, list):',
       replace: '    if isinstance(explicit, list) and explicit:',
     }],
@@ -6678,7 +6678,7 @@ const MUTANT_DEFINITIONS = [
     because: 'single-space export must preserve an explicit empty list after filtering; '
       + 'writing null would make retained legacy calibration authoritative on import (#443, AC3)',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '                    vacuum["map_routes"] = kept_routes',
       replace: '                    vacuum["map_routes"] = kept_routes or None',
     }],
@@ -7785,7 +7785,7 @@ const MUTANT_DEFINITIONS = [
       + 'removes the entries again; without that the exemption is a hole (#398 AC8)',
     patches: [{
       file: 'tests_backend/pure_imports.py',
-      find: '            del sys.modules[key]',
+      find: '            sys.modules.pop(name, None)',
       replace: '            pass',
     }],
   },
@@ -7922,7 +7922,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a code emitted by the backend but missing from ERROR_CODES is exactly the '
       + 'unregistered-error hole #42 closes (AC5 m1)',
     patches: [{
-      file: 'custom_components/houseplan/const.py',
+      file: "custom_components/houseplan/core/constants.py",
       find: '    "invalid_space_id", "invalid_toggle_entity", "invalid_vacuum_map_route",',
       replace: '    "invalid_toggle_entity", "invalid_vacuum_map_route",',
     }],
@@ -7944,7 +7944,7 @@ const MUTANT_DEFINITIONS = [
     because: 'the variable-passed MarkerControlError subfamily must stay proven — dropping '
       + 'invalid_light_entity from ERROR_CODES has to redden AC5 (#42 m1c, spec rev6)',
     patches: [{
-      file: 'custom_components/houseplan/const.py',
+      file: "custom_components/houseplan/core/constants.py",
       find: '    "invalid_light_entity", "invalid_marker_control", "invalid_name",',
       replace: '    "invalid_marker_control", "invalid_name",',
     }],
@@ -8240,7 +8240,7 @@ const MUTANT_DEFINITIONS = [
       + '-k volumetric_view',
     because: '#649 AC10: the backend accepts only a boolean volumetric_view',
     patches: [{
-      file: 'custom_components/houseplan/validation.py',
+      file: "custom_components/houseplan/core/validation.py",
       find: '                    vol.Optional("volumetric_view"): bool,\n',
       replace: '',
     }],
@@ -8918,7 +8918,7 @@ const MUTANT_DEFINITIONS = [
       + 'violations" whatever its geometry and turns every inherited one into a refusal of '
       + 'an unrelated edit (#329 §3, code review r1 H1)',
     patches: [{
-      file: 'custom_components/houseplan/junction_limits.py',
+      file: "custom_components/houseplan/core/junction_limits.py",
       find: '        migrated, _ = commit_wall_segment_model(config)',
       replace: '        migrated = config  # mutant: judge the raw document',
     }],
@@ -9381,7 +9381,7 @@ const MUTANT_DEFINITIONS = [
       + 'отбивал структурную правку ещё до отправки на сервер и заодно ломал экспорт, '
       + 'то есть единственный способ вытащить бэкап и починить конфиг руками',
     patches: [{
-      file: 'custom_components/houseplan/wall_segment_model.py',
+      file: "custom_components/houseplan/core/wall_segment_model.py",
       find: '    if not drafts:\n'
         + '        space.pop("room_drafts", None)\n'
         + '        return 0, 0',
@@ -9398,7 +9398,7 @@ const MUTANT_DEFINITIONS = [
       + 'признаком служит сам носитель поверх чистого сохранённого конфига; сверка по '
       + 'номеру пропускала ровно тот случай, ради которого сторож и написан (#478 AC2)',
     patches: [{
-      file: 'custom_components/houseplan/validation.py',
+      file: "custom_components/houseplan/core/validation.py",
       find: '    if old_model >= 10 and not stored_drafts and any(',
       replace: '    if old_model >= 10 and new_model < 10 and any(',
     }],
@@ -9875,7 +9875,7 @@ const MUTANT_DEFINITIONS = [
     because: 'backend schemas are the public write door for cards, imports and manual clients; '
       + 'removing their canonicalisation would let the same ULP noise enter every future writer',
     patches: [{
-      file: 'custom_components/houseplan/validation.py',
+      file: "custom_components/houseplan/core/validation.py",
       find: 'CONFIG_SCHEMA = vol.All(\n    CONFIG_TYPE_SCHEMA,\n'
         + '    canonical_config,\n    canonicalize_config_geometry,\n    _config_wall_segment_invariants,\n',
       replace: 'CONFIG_SCHEMA = vol.All(\n    CONFIG_TYPE_SCHEMA,\n'
@@ -9918,7 +9918,7 @@ const MUTANT_DEFINITIONS = [
     because: 'the Python schema and storage boundary must mirror the complete frontend box '
       + 'catalog instead of accepting image floating-point tails from older clients (#431 AC4)',
     patches: [{
-      file: 'custom_components/houseplan/coordinate_canonicalization.py',
+      file: "custom_components/houseplan/core/coordinate_canonicalization.py",
       find: 'DECOR_BOX_KINDS = ("rect", "ellipse", "furniture", "image")',
       replace: 'DECOR_BOX_KINDS = ("rect", "ellipse", "furniture")',
     }],
@@ -9956,7 +9956,7 @@ const MUTANT_DEFINITIONS = [
     because: 'the backend must use the JavaScript Math.round tie direction and nearest-node '
       + 'semantics; truncation would make old-client writes diverge from the card (#291)',
     patches: [{
-      file: 'custom_components/houseplan/coordinate_canonicalization.py',
+      file: "custom_components/houseplan/core/coordinate_canonicalization.py",
       find: '    nearest = math.floor(scaled + 0.5)',
       replace: '    nearest = math.trunc(scaled)',
     }],
@@ -10024,7 +10024,7 @@ const MUTANT_DEFINITIONS = [
     because: 'an externally assembled backup is an independent source of noisy geometry and '
       + 'must enter preview and storage through the same canonical schema as the live card',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '        config = _appearance_config(config_candidate)',
       replace: '        config = config_candidate',
     }],
@@ -10239,7 +10239,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'python3 -m pytest tests_backend/test_settings_moon.py -q -p no:cacheprovider',
     because: '#661 AC9: the backend accepts only a boolean moon',
     patches: [{
-      file: 'custom_components/houseplan/validation.py',
+      file: "custom_components/houseplan/core/validation.py",
       find: '                    vol.Optional("moon"): bool,\n',
       replace: '                    vol.Optional("moon"): object,\n',
     }],
@@ -10707,7 +10707,7 @@ const MUTANT_DEFINITIONS = [
     because: 'the backend must reconstruct every removed partition atom independently; '
       + 'trusting the frontend candidate lets a no-opening partition disappear without masonry (#296)',
     patches: [{
-      file: 'custom_components/houseplan/validation.py',
+      file: "custom_components/houseplan/core/validation.py",
       find: 'def _safe_optimize_partition_delta(space: dict, old_partition: dict) -> bool:\n'
         + '    """Independently prove every removed atom of one old partition axis."""\n'
         + '    if not _known_optimize_partition(old_partition):',
@@ -10935,7 +10935,7 @@ const MUTANT_DEFINITIONS = [
     because: 'backend обязан отвергать неизвестный enum, иначе сохранённая опечатка расходится '
       + 'с UI и молча читается как inner; строгий validation-тест #577 должен покраснеть',
     patches: [{
-      file: 'custom_components/houseplan/validation.py',
+      file: "custom_components/houseplan/core/validation.py",
       find: '_SUN_RAY_ORIGIN = vol.In(["inner", "outer"])',
       replace: '_SUN_RAY_ORIGIN = str  # mutant: accept any string',
     }],
@@ -11001,7 +11001,7 @@ const MUTANT_DEFINITIONS = [
     because: 'возврат room.area нарушает основное обещание чистого шаблона; '
       + 'projection/roundtrip тест обязан увидеть HA Area даже при нулевых markers',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '_ROOM_PLAN_FIELDS = ("id", "name", "open_to", "x", "y", "w", "h", "poly", "wall_ids")',
       replace: '_ROOM_PLAN_FIELDS = ("id", "name", "area", "open_to", "x", "y", "w", "h", "poly", "wall_ids")',
     }],
@@ -11012,7 +11012,7 @@ const MUTANT_DEFINITIONS = [
     because: 'игнорирование request-флага возвращает markers и device layout; '
       + 'полный representative export обязан доказать, что true включает lossy projector',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '        if plan_only:\n            projected_space = _project_plan_only_space(space)',
       replace: '        if False and plan_only:\n            projected_space = _project_plan_only_space(space)',
     }],
@@ -11023,7 +11023,7 @@ const MUTANT_DEFINITIONS = [
     because: 'аддитивное поле не должно менять обычный space export даже значением false; '
       + 'fixed regression обязан сохранить прежнюю структуру документа',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '**({"plan_only": True} if plan_only else {}),',
       replace: '**({"plan_only": plan_only}),',
     }],
@@ -11034,7 +11034,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a copied vacuum route must follow the fresh space id on both foreign and '
       + 'same-instance imports instead of failing validation or silently targeting the source floor',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '                route["space"] = new_space_id\n'
         + '                _report_remap(',
       replace: '                route["space"] = old_space_id  # mutant: keep source floor\n'
@@ -11047,7 +11047,7 @@ const MUTANT_DEFINITIONS = [
     because: 'the second-pass target repair must apply its proven exact/lineage space mapping to '
       + 'vacuum routes as well as marker.space',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '                    route["space"] = mapped\n',
       replace: '                    route["space"] = route.get("space")  # mutant: ignore mapping\n',
     }],
@@ -11058,7 +11058,7 @@ const MUTANT_DEFINITIONS = [
     because: 'revalidate не имеет права превращать plan-only preview в обычный space preview; '
       + 'roundtrip test проверяет сохранение флага после обновления revisions',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '            "plan_only": _transfer_plan_only(document),\n            "counts":',
       replace: '            "plan_only": False,\n            "counts":',
     }],
@@ -11069,7 +11069,7 @@ const MUTANT_DEFINITIONS = [
     because: 'флаг файла не является доказательством приватности; negative parser matrix '
       + 'обязана покраснеть, если schema-aware проверка больше не вызывается',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '    if plan_only:\n        _validate_plan_only_document(document, config, layout, placement)',
       replace: '    if False and plan_only:\n        _validate_plan_only_document(document, config, layout, placement)',
     }],
@@ -11091,7 +11091,7 @@ const MUTANT_DEFINITIONS = [
     because: '#1033 К6: an opening moved onto a taken wall interval (heal, migration or '
       + 're-host) fails the schema overlap check on every later write; the shared fixture must turn red.',
     patches: [{
-      file: 'custom_components/houseplan/wall_segment_model.py',
+      file: "custom_components/houseplan/core/wall_segment_model.py",
       find: '            if segment is current or wall_interval_free(space, opening, segment, centre, half)\n',
       replace: '            if True\n',
     }],
@@ -11113,7 +11113,7 @@ const MUTANT_DEFINITIONS = [
     because: '#1033 AC4/AC5: a file with an opening off its wall must import repaired and '
       + 'reported, not be refused as invalid_config.',
     patches: [{
-      file: 'custom_components/houseplan/opening_repair.py',
+      file: "custom_components/houseplan/core/opening_repair.py",
       find: '        if fault:\n            broken.append(index)\n',
       replace: '        if False:\n            broken.append(index)\n',
     }],
@@ -11124,7 +11124,7 @@ const MUTANT_DEFINITIONS = [
     because: '#1033 К4: keeping an opening off its wall is a change the server must make '
       + 'the person confirm; the UI checkbox alone is no guarantee.',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '    return _document_opening_repairs(document)["detached"] > 0\n',
       replace: '    return False\n',
     }],
@@ -11135,7 +11135,7 @@ const MUTANT_DEFINITIONS = [
     because: '#1033 К2: an accepted SVG backdrop with labels must travel in the full ZIP; '
       + 'the decor whitelist dropped it as invalid (F125).',
     patches: [{
-      file: 'custom_components/houseplan/backup_archive.py',
+      file: "custom_components/houseplan/core/backup_archive.py",
       find: '    if ref.kind == "plan":\n        return raw, plan_image_ext(raw, path.name, ref.limit)\n',
       replace: '',
     }],
@@ -11146,7 +11146,7 @@ const MUTANT_DEFINITIONS = [
     because: '#1033 К2/AC3: a backdrop must still be what its name says; without the '
       + 'signature check JPEG bytes travel as PNG.',
     patches: [{
-      file: 'custom_components/houseplan/backup_archive.py',
+      file: "custom_components/houseplan/core/backup_archive.py",
       find: '    elif not _PLAN_SIGNATURES[ext](raw):\n',
       replace: '    elif False:\n',
     }],
@@ -11228,7 +11228,7 @@ const MUTANT_DEFINITIONS = [
     because: 'импорт является недоверенным новым content и не имеет broken-read исключения; '
       + 'forged contact/lock обязан быть отклонён до создания preview',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '        validate_opening_passages(incoming_config, validate_all=True)',
       replace: '        if False:\n            validate_opening_passages(incoming_config, validate_all=True)',
     }],
@@ -12674,7 +12674,7 @@ const MUTANT_DEFINITIONS = [
       + '?v=… делает имя файла не равным самому себе, ссылка читается как '
       + 'внутренняя-но-неканоническая, и бэкап с вложением снова не импортируется',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '    parsed = urlsplit(url)\n    if parsed.scheme or parsed.netloc:\n        return None\n    url = parsed.path',
       replace: '    url = url.split("?", 1)[0]',
     }],
@@ -12686,7 +12686,7 @@ const MUTANT_DEFINITIONS = [
       + '"https://evil.example/houseplan_files/files/m1/doc.pdf" разрешиться в локальный '
       + 'файл, хотя _looks_internal считает такую ссылку внешней (ревью r1, M1)',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '    if parsed.scheme or parsed.netloc:\n        return None',
       replace: '    if False:\n        return None',
     }],
@@ -12699,11 +12699,11 @@ const MUTANT_DEFINITIONS = [
       + 'защита эшелонирована (sanitize-сравнение ловит "..") и мутант был бы '
       + 'эквивалентным — выяснено прогоном при реализации',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '        if not raw_name or "/" in raw_name:\n            return None',
       replace: '        raw_name = raw_name.split("/")[-1]\n        if not raw_name:\n            return None',
     }, {
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '            tail = url[len(prefix):].split("/")\n            if len(tail) != 2:\n                return None',
       replace: '            tail = url[len(prefix):].split("/")[-2:]',
     }],
@@ -13101,7 +13101,7 @@ const MUTANT_DEFINITIONS = [
       + 'enters the authenticated store; header parsing answers w/h/mime and cannot answer '
       + 'whether the raster decodes at all (#51 AC, аудит #430 п.1)',
     patches: [{
-      file: 'custom_components/houseplan/decor_assets.py',
+      file: "custom_components/houseplan/core/decor_assets.py",
       find: '        with Image.open(BytesIO(data)) as image:\n'
         + '            image.load()\n'
         + '            if image.size != (width, height):\n'
@@ -13118,7 +13118,7 @@ const MUTANT_DEFINITIONS = [
     because: 'quota is a physical-storage boundary: malformed/missing sidecars cannot make '
       + 'promoted blobs invisible, while sidecars without blobs consume no blob quota (#434 AC1)',
     patches: [{
-      file: 'custom_components/houseplan/decor_assets.py',
+      file: "custom_components/houseplan/core/decor_assets.py",
       find: '        entries = list(root.iterdir())\n',
       replace: '        entries = list(root.glob("*.json"))\n',
     }],
@@ -13130,7 +13130,7 @@ const MUTANT_DEFINITIONS = [
     because: 'catalog/list/resolve remain strict projections; a valid-looking sidecar must not '
       + 'materialise an image whose matching blob is absent (#434 AC4)',
     patches: [{
-      file: 'custom_components/houseplan/decor_assets.py',
+      file: "custom_components/houseplan/core/decor_assets.py",
       find: '            or not blob.is_file()\n',
       replace: '',
     }],
@@ -13184,7 +13184,7 @@ const MUTANT_DEFINITIONS = [
       + 'the original bytes silently reinstates whatever the parser dropped — prologue, '
       + 'comments, exotic spelling of the same tree (#51 ТЗ §3, аудит #430 п.2)',
     patches: [{
-      file: 'custom_components/houseplan/decor_assets.py',
+      file: "custom_components/houseplan/core/decor_assets.py",
       find: 'return ValidatedAsset(canonical, "image/svg+xml"',
       replace: 'return ValidatedAsset(data, "image/svg+xml"',
     }],
@@ -13196,7 +13196,7 @@ const MUTANT_DEFINITIONS = [
       + 'limit must be re-applied to the canonical bytes: a 1.84 MiB upload otherwise lands '
       + 'as 7.35 MiB in the store (аудит #430 п.2)',
     patches: [{
-      file: 'custom_components/houseplan/decor_assets.py',
+      file: "custom_components/houseplan/core/decor_assets.py",
       find: '    _check_size(canonical)\n',
       replace: '',
     }],
@@ -13208,7 +13208,7 @@ const MUTANT_DEFINITIONS = [
       + 'tag are caught by this rule alone; every "external" case of the original corpus was '
       + 'caught by tag or attribute allowlists instead (аудит #430 п.3)',
     patches: [{
-      file: 'custom_components/houseplan/decor_assets.py',
+      file: "custom_components/houseplan/core/decor_assets.py",
       find: 'if any(token in low for token in ("javascript:", "data:", "http:", "https:", "//")):',
       replace: 'if False:',
     }],
@@ -13269,7 +13269,7 @@ const MUTANT_DEFINITIONS = [
     because: 'unchanged valid and corrupt files must reuse the actual digest instead of '
       + 're-reading the blob for every WS resolve or HTTP GET (#432 AC5)',
     patches: [{
-      file: 'custom_components/houseplan/asset_integrity.py',
+      file: "custom_components/houseplan/core/asset_integrity.py",
       find: '            if cached is not None and cached.signature == before:\n',
       replace: '            if False and cached is not None and cached.signature == before:\n',
     }],
@@ -13282,7 +13282,7 @@ const MUTANT_DEFINITIONS = [
     because: 'parallel requests for one file version must share one streaming hash and wake '
       + 'all waiters after success or failure (#432 AC6)',
     patches: [{
-      file: 'custom_components/houseplan/asset_integrity.py',
+      file: "custom_components/houseplan/core/asset_integrity.py",
       find: '            flight = self._inflight.get(key)\n',
       replace: '            flight = None\n',
     }],
@@ -13295,7 +13295,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a digest computed while the blob changes must fail dark and never become a '
       + 'trusted cache entry for either transport (#432 AC7)',
     patches: [{
-      file: 'custom_components/houseplan/asset_integrity.py',
+      file: "custom_components/houseplan/core/asset_integrity.py",
       find: '            stable = _signature(path) == before\n',
       replace: '            stable = True\n',
     }],
@@ -13308,7 +13308,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a FIFO or device with a valid asset filename can block an HA executor forever; '
       + 'only regular files may reach the streaming hasher (#440 AC1)',
     patches: [{
-      file: 'custom_components/houseplan/asset_integrity.py',
+      file: "custom_components/houseplan/core/asset_integrity.py",
       find: '    if not stat.S_ISREG(current.st_mode):\n'
         + '        raise OSError("asset is not a regular file")\n',
       replace: '',
@@ -13321,7 +13321,7 @@ const MUTANT_DEFINITIONS = [
     because: 'a follower must fail dark after a bounded wait even if an injected or wedged '
       + 'owner never signals its single-flight event (#440 AC1)',
     patches: [{
-      file: 'custom_components/houseplan/asset_integrity.py',
+      file: "custom_components/houseplan/core/asset_integrity.py",
       find: '            if not flight.event.wait(ASSET_INTEGRITY_FOLLOWER_TIMEOUT_SECONDS):\n',
       replace: '            if not flight.event.wait():\n',
     }],
@@ -16311,11 +16311,11 @@ const MUTANT_DEFINITIONS = [
     because: 'a reference chain must stop at MAX_SVG_REF_DEPTH with too_large; an unbounded walk '
       + 'accepts what rendering will choke on (#498 AC3)',
     patches: [{
-      file: 'custom_components/houseplan/decor_assets.py',
+      file: "custom_components/houseplan/core/decor_assets.py",
       find: '                if chain > MAX_SVG_REF_DEPTH:\n',
       replace: '                if False:  # mutant: no chain limit\n',
     }, {
-      file: 'custom_components/houseplan/decor_assets.py',
+      file: "custom_components/houseplan/core/decor_assets.py",
       find: '            if len(stack) > MAX_SVG_REF_DEPTH:\n',
       replace: '            if False:  # mutant: no stack limit\n',
     }],
@@ -16329,7 +16329,7 @@ const MUTANT_DEFINITIONS = [
       + 'traversal that reached it first lets a hostile id order cut a long chain into short '
       + 'segments (#498 spec review r1)',
     patches: [{
-      file: 'custom_components/houseplan/decor_assets.py',
+      file: "custom_components/houseplan/core/decor_assets.py",
       find: '                stack[-1] = (node_id, children, max(chain, longest[ref] + 1))\n',
       replace: '                stack[-1] = (node_id, children, chain)  # mutant: forget the memoised chain\n',
     }],
@@ -16342,7 +16342,7 @@ const MUTANT_DEFINITIONS = [
     because: 'the walk must be iterative: a recursive DFS over a flat 2500-link chain dies with '
       + 'RecursionError, which is not a DecorAssetError and reaches the client as a 500 (#498 AC3)',
     patches: [{
-      file: 'custom_components/houseplan/decor_assets.py',
+      file: "custom_components/houseplan/core/decor_assets.py",
       find: '    _walk_reference_graph(ids, ref_graph)\n',
       replace: '    visiting: set[str] = set()\n'
         + '    visited: set[str] = set()\n'
@@ -16463,11 +16463,11 @@ const MUTANT_DEFINITIONS = [
       + 'profile role removes both the HA subscription and the per-source read-permission check '
       + '(#545 AC1, AC4)',
     patches: [{
-      file: 'custom_components/houseplan/radar_validation.py',
+      file: "custom_components/houseplan/core/radar_validation.py",
       find: '    "range_v1": ("ranges", ("entity_id", "presence_entity")),',
       replace: '    "range_v1": ("ranges", ("presence_entity",)),',
     }, {
-      file: 'custom_components/houseplan/radar_validation.py',
+      file: "custom_components/houseplan/core/radar_validation.py",
       find: '    "zones_v1": ("zones", ("entity_id",)),',
       replace: '    "zones_v1": ("zones", ()),',
     }],
@@ -17286,7 +17286,7 @@ const MUTANT_DEFINITIONS = [
     because: '#655 AC1/AC2: the HA stop event must synchronously flush both deferred stores; '
       + 'otherwise the latest virtual-light toggle and vacuum-trail points disappear on restart',
     patches: [{
-      file: 'custom_components/houseplan/__init__.py',
+      file: "custom_components/houseplan/ha_integration.py",
       find: '        await _async_flush_runtime(hass, entry)\n\n    stop_listener = [',
       replace: '        return  # mutant: shutdown drops both pending stores\n\n    stop_listener = [',
     }],
@@ -17763,7 +17763,7 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_import_export.py',
     because: '#780 ТЗ §9: a transferred strip follows the marker-id remap; a coinciding old id never binds it',
     patches: [{
-      file: 'custom_components/houseplan/import_export.py',
+      file: "custom_components/houseplan/core/import_export.py",
       find: '    unbound_led_strips = unbind_strips(space, remap={\n        old_id: new_id for old_id, new_id in marker_map.items()',
       replace: '    unbound_led_strips = unbind_strips(space, remap={\n        old_id: old_id for old_id, new_id in marker_map.items()',
     }],
@@ -17825,7 +17825,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node scripts/backend-test-guard.mjs old_writer tests_backend/test_led_strips.py',
     because: '#780 r1 H1: an ordinary save without the unknown field keeps the stored shapes; only an explicit list deletes',
     patches: [{
-      file: 'custom_components/houseplan/validation.py',
+      file: "custom_components/houseplan/core/validation.py",
       find: '    preserve_summary_panel_namespace(candidate, previous)\n    preserve_external_screens_namespace(candidate, previous)\n    preserve_led_strips(candidate, previous)',
       replace: '    preserve_summary_panel_namespace(candidate, previous)\n    preserve_external_screens_namespace(candidate, previous)',
     }],
@@ -18582,7 +18582,7 @@ const MUTANT_DEFINITIONS = [
     id: 'properties-null-opacity-becomes-zero',
     guard: 'python -m pytest tests_backend/test_validation.py -q -k plan_opacity',
     because: '#931 AC8: absent is the only default; null/bool/string are not alpha values.',
-    patches: [{file:'custom_components/houseplan/validation.py',
+    patches: [{file:"custom_components/houseplan/core/validation.py",
       find:'vol.Optional("plan_opacity"): vol.All(_finite_number, vol.Range(min=0.0, max=1.0)),',
       replace:'vol.Optional("plan_opacity"): vol.All(lambda value: 0 if value is None else value, _finite_number, vol.Range(min=0.0, max=1.0)),'}],
   },
@@ -18590,7 +18590,7 @@ const MUTANT_DEFINITIONS = [
     id: 'properties-plan-only-export-drops-opacity',
     guard: 'python -m pytest tests_backend/test_ha_import_export.py -q -k plan_only_export_projects_geometry',
     because: '#931 AC8: plan-only transfer retains the image appearance as well as its transform.',
-    patches: [{file:'custom_components/houseplan/import_export.py',
+    patches: [{file:"custom_components/houseplan/core/import_export.py",
       find:'"plan_scale", "plan_scale_x", "plan_scale_y", "plan_angle", "plan_opacity", "view_box",',
       replace:'"plan_scale", "plan_scale_x", "plan_scale_y", "plan_angle", "view_box",'}],
   },
@@ -18969,7 +18969,7 @@ const wallNodeDelete1045Cases = [
   { id: 'node-delete-server-inverse-proof-bypassed-1045',
     guard: 'node scripts/backend-test-guard.mjs forged_inverse tests_backend/test_ha_wall_node_delete.py',
     because: '#1045 AC4/AC5: real authenticated Undo cannot use a forged before_space to change foreign fields, endpoints or opening size.',
-    patches: [{ file: 'custom_components/houseplan/wall_node_delete.py',
+    patches: [{ file: "custom_components/houseplan/core/wall_node_delete.py",
       find: 'if not _equal(canonicalize_config_geometry(proof), canonicalize_config_geometry(baseline)):', replace: 'if False:' }] },
   { id: 'node-delete-server-cas-bypassed-1045',
     guard: 'node scripts/backend-test-guard.mjs atomic_concurrency tests_backend/test_ha_wall_node_delete.py',
@@ -19157,7 +19157,7 @@ const editorLatency1075Cases = [
   {id:'node-delete-materializes-foreign-floors-1075',
     guard:'node scripts/backend-test-guard.mjs current_target_proof tests_backend/test_wall_node_delete.py',
     because:'#1075 AC5: passive accounting of the original materializer must see only the selected current floor, not unchanged foreign floors.',
-    patches:[{file:'custom_components/houseplan/wall_node_delete.py',find:'            return baseline, True',
+    patches:[{file:"custom_components/houseplan/core/wall_node_delete.py",find:'            return baseline, True',
       replace:'            return commit_wall_segment_model(current)[0], False'}]},
   {id:'node-delete-stale-junction-baseline-1075',
     guard:'node scripts/backend-test-guard.mjs exact_revision_authority tests_backend/test_ha_wall_node_delete.py',
@@ -19205,14 +19205,14 @@ const roomContact1061Cases = [
     id: 'optimize-arbitrary-carrier-trim-is-align-1061',
     guard: 'python3 -m pytest tests_backend/test_room_contact_grid.py -q',
     because: '#1061: a same-ID carrier still needs independent full removal proof unless its endpoints match the exact canonical Align result; ordinary short-cut/narrower/future inputs refuse.',
-    patches: [{file:'custom_components/houseplan/validation.py',
+    patches: [{file:"custom_components/houseplan/core/validation.py",
       find:'    if _exact_partition_align(old_partition, current, old_space, space):',replace:'    if True:'}],
   },
   {
     id: 'optimize-unknown-carrier-uses-align-1061',
     guard: 'python3 -m pytest tests_backend/test_room_contact_grid.py -q',
     because: '#1061: unknown carrier semantics are not proved by the known Align/storage formula, even when retained identically in before and after.',
-    patches: [{file:'custom_components/houseplan/validation.py',
+    patches: [{file:"custom_components/houseplan/core/validation.py",
       find:'    if set(before) != _OPTIMIZE_PARTITION_KEYS or set(after) != _OPTIMIZE_PARTITION_KEYS:',
       replace:'    if False:'}],
   },
@@ -19220,14 +19220,14 @@ const roomContact1061Cases = [
     id: 'optimize-align-ignores-original-hosted-fit-1061',
     guard: 'python3 -m pytest tests_backend/test_room_contact_grid.py -q',
     because: '#1061: the existing TS Align considers the original hosted openings; deleting a record in a crafted after cannot authorize the trim that this exact source would skip.',
-    patches: [{file:'custom_components/houseplan/validation.py',
+    patches: [{file:"custom_components/houseplan/core/validation.py",
       find:'    for opening in old_space.get("openings") or []:',replace:'    for opening in []:'}],
   },
   {
     id: 'optimize-align-drops-valid-original-opening-1061',
     guard: 'python3 -m pytest tests_backend/test_room_contact_grid.py -q',
     because: '#1061: original hostedFit alone is not a retained-record proof; exact same-ID Align cannot remove the valid central source opening from its submitted after.',
-    patches: [{file:'custom_components/houseplan/validation.py',
+    patches: [{file:"custom_components/houseplan/core/validation.py",
       find:'        if not opening.get("id") or len(retained) != 1:\n            return False',
       replace:'        if not opening.get("id") or len(retained) != 1:\n            continue'}],
   },
@@ -19395,7 +19395,7 @@ const externalScreens1113Cases = [
     "because": "#1113: A retired screen link cannot target a newly created profile. Registered only; execution belongs to nightly.",
     "patches": [
       {
-        "file": "custom_components/houseplan/validation.py",
+        "file": "custom_components/houseplan/core/validation.py",
         "find": "if before is None and screen[\"id\"] < old.get(\"next_id\", 1):",
         "replace": "if False:"
       }
@@ -19407,7 +19407,7 @@ const externalScreens1113Cases = [
     "because": "#1113: An older ordinary writer must preserve the accepted screen namespace. Registered only; execution belongs to nightly.",
     "patches": [
       {
-        "file": "custom_components/houseplan/validation.py",
+        "file": "custom_components/houseplan/core/validation.py",
         "find": "    preserve_external_screens_namespace(candidate, previous)",
         "replace": "    # omitted preservation"
       }
@@ -19419,7 +19419,7 @@ const externalScreens1113Cases = [
     "because": "#1113: Only unchanged dangling references survive an ordinary write. Registered only; execution belongs to nightly.",
     "patches": [
   {
-    "file": "custom_components/houseplan/validation.py",
+    "file": "custom_components/houseplan/core/validation.py",
     "find": "if (screen[\"space\"] is not None and screen[\"space\"] not in spaces",
     "replace": "if (False and screen[\"space\"] is not None and screen[\"space\"] not in spaces"
   }
@@ -19431,7 +19431,7 @@ const externalScreens1113Cases = [
     "because": "#1113: Mixed config changes cannot be represented as a complete profile-only event. Registered only; execution belongs to nightly.",
     "patches": [
       {
-        "file": "custom_components/houseplan/validation.py",
+        "file": "custom_components/houseplan/core/validation.py",
         "find": "    if before == after:\n        event[\"external_screens_update\"]",
         "replace": "    if True:\n        event[\"external_screens_update\"]"
       }
@@ -19662,10 +19662,10 @@ const wallContact1166Cases = [
     patches:[{file:'src/junction-limits.ts',find:'if (!sameRay && degrees > EPS && degrees < smallest)',replace:'if (degrees > EPS && degrees < smallest)'}]},
   {id:'carrier-chain-gap-proof-1166',guard:'python -m pytest -q tests_backend/test_wall_contact_storage.py',
     because:'#1166 an ordinary representation-only promotion must refuse a broken chain, changed host geometry or metadata.',
-    patches:[{file:'custom_components/houseplan/partition_promotion.py',find:'if abs(lo - covered) > _EPS:',replace:'if False:'}]},
+    patches:[{file:"custom_components/houseplan/core/partition_promotion.py",find:'if abs(lo - covered) > _EPS:',replace:'if False:'}]},
   {id:'existing-wall-ownership-proof-1166',guard:'python -m pytest -q tests_backend/test_wall_contact_storage.py',
     because:'#1166 a new room on existing physical walls is allowed only with a complete exact identity ring.',
-    patches:[{file:'custom_components/houseplan/validation.py',find:'if len(poly) < 3 or len(poly) != len(ids):',replace:'if False:'}]},
+    patches:[{file:"custom_components/houseplan/core/validation.py",find:'if len(poly) < 3 or len(poly) != len(ids):',replace:'if False:'}]},
 ];
 export const MUTANTS = [...compactEditor1150Cases,...wallContact1166Cases,...uiPolish1145Cases,...panelHeader1120Cases,...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
   ...mutant,

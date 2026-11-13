@@ -5,6 +5,7 @@ component executes its Home Assistant package initializer even when an
 individual test exercises an otherwise pure helper.
 """
 from __future__ import annotations
+from custom_components.houseplan.const import VERSION as INTEGRATION_VERSION
 
 import asyncio
 import copy
@@ -122,7 +123,7 @@ def test_issue1037_appearance_survives_transfer_without_target_global_leak(tmp_p
     source["spaces"][0]["settings"] = {"room_color": "#456789", "room_opacity": 0.2, "future": 7}
     source["spaces"][0]["rooms"][0]["settings"] = {"name_color": {"c": "#abcdef", "a": 0}}
     before = copy.deepcopy(source)
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": source, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": source, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         plan_only=plan_only, card_version="review", config_root=tmp_path)
     parsed = parse_document(json.dumps(document).encode())
@@ -145,7 +146,7 @@ def test_issue977_state_source_full_space_json_and_plan_only(tmp_path: Path, kin
     config = _config()
     source = {"entity_id": "binary_sensor.own_running", "active_states": ["on"], "future": {"v": 3}}
     config["markers"][0]["state_source"] = source
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         plan_only=plan_only, card_version="review", config_root=tmp_path)
     parsed = parse_document(json.dumps(document).encode())
@@ -178,7 +179,7 @@ def test_issue1024_portable_v3_preserves_features_and_plan_only_clears_nested_so
     opening["opening_features"]["leaves"][1]["shade"]["enabled"] = False
     config["spaces"][0]["openings"] = [opening]
     original = copy.deepcopy(config)
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         plan_only=plan_only, card_version="review", config_root=tmp_path)
     assert document["export_version"] == 3
@@ -211,12 +212,12 @@ def test_issue1050_settings_action_survives_export_parse_and_apply(tmp_path: Pat
         "description": "Preserved settings target", "future": {"kept": [1, 2]},
     })
     before = copy.deepcopy(config)
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         card_version="review", config_root=tmp_path)
     parsed = parse_document(json.dumps(document).encode())
     assert parsed["payload"]["config"]["markers"] == config["markers"]
-    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same", import_previews={})
     current = _config()
     current["markers"] = []
     preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
@@ -239,11 +240,11 @@ def test_issue_943_legacy_darkness_survives_full_backup_without_forced_migration
     }
     config["spaces"][0]["settings"] = {"fill_mode": "glow", "glow_enabled": False}
     before = copy.deepcopy(config)
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind="full", space_id=None, card_version="review", config_root=tmp_path)
     parsed = parse_document(json.dumps(document).encode())
     assert parsed["payload"]["config"]["settings"]["fill_colors"] == config["settings"]["fill_colors"]
-    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same", import_previews={})
     preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
     imported, _, _ = prepare_apply(get_candidate(runtime, preview["token"], "alice"), _config(), {}, confirm_missing_content=True)
@@ -259,18 +260,18 @@ def test_issue_943_legacy_darkness_survives_full_backup_without_forced_migration
 def test_issue940_dock_policy_survives_full_space_export_parse_and_import(tmp_path: Path, value: bool, kind: str) -> None:
     config = _config()
     config["markers"][0]["vacuum"] = {"new_run_after_dock": value, "trail_mode": "always"}
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         card_version="review", config_root=tmp_path)
     parsed = parse_document(json.dumps(document).encode())
     assert parsed["payload"]["config"]["markers"][0]["vacuum"]["new_run_after_dock"] is value
     if kind == "space":
-        plan, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        plan, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
             {"layout": {}, "rev": 3}, kind="space", space_id="ground", plan_only=True,
             card_version="review", config_root=tmp_path)
         assert plan["payload"]["config"]["markers"] == []
         assert "new_run_after_dock" not in json.dumps(plan["payload"]["config"])
-    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same", import_previews={})
     current = _config()
     current["markers"] = []
     preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
@@ -284,12 +285,12 @@ def test_issue940_dock_policy_survives_full_space_export_parse_and_import(tmp_pa
 def test_issue_867_signal_override_survives_export_parse_and_import(tmp_path: Path, value: bool, kind: str) -> None:
     config = _config()
     config["markers"][0].update({"hide_signal": value, "hide_battery": True})
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         card_version="review", config_root=tmp_path)
     parsed = parse_document(json.dumps(document).encode())
     assert parsed["payload"]["config"]["markers"][0]["hide_signal"] is value
-    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same", import_previews={})
     current = _config()
     current["markers"] = []  # No duplicate binding to skip during a space import.
     preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
@@ -306,14 +307,14 @@ def test_issue1078_room_sunlight_survives_transfer(tmp_path: Path, kind: str, pl
     config["spaces"][0]["rooms"][0].setdefault("settings", {}).update({
         "sun_transparent": value, "future_sun": {"keep": True},
     })
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         card_version="review", config_root=tmp_path, plan_only=plan_only)
     parsed = parse_document(json.dumps(document).encode())
     assert parsed["payload"]["config"]["spaces"][0]["rooms"][0]["settings"]["sun_transparent"] is value
     if not plan_only:
         assert parsed["payload"]["config"]["spaces"][0]["rooms"][0]["settings"]["future_sun"] == {"keep": True}
-    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same", import_previews={})
     current = _config()
     current["markers"] = []
     preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
@@ -335,14 +336,14 @@ def test_issue_920_co2_settings_survive_full_and_space_backup(tmp_path: Path, ki
     config["spaces"][0]["rooms"][0].setdefault("settings", {}).update({
         "co2_source": "entity:sensor.room_co2", "future_co2": {"keep": True},
     })
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         card_version="review", config_root=tmp_path)
     parsed = parse_document(json.dumps(document).encode())
     exported = parsed["payload"]["config"]["spaces"][0]
     assert exported["settings"]["label_co2"] is visible
     assert exported["rooms"][0]["settings"]["co2_source"] == "entity:sensor.room_co2"
-    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same", import_previews={})
     current = _config()
     current["markers"] = []
     preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
@@ -363,7 +364,7 @@ def test_issue_945_display_settings_survive_transfer(tmp_path: Path, kind: str, 
     if mode is not None:
         fields["show_device_battery_mode"] = mode
     config["spaces"][0].setdefault("settings", {}).update(fields)
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         plan_only=plan_only, card_version="review", config_root=tmp_path)
     parsed = parse_document(json.dumps(document).encode())
@@ -371,7 +372,7 @@ def test_issue_945_display_settings_survive_transfer(tmp_path: Path, kind: str, 
     for key, value in fields.items():
         assert settings[key] == value
     assert ("show_device_battery_mode" in settings) is (mode is not None)
-    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same", import_previews={})
     current = _config()
     current["markers"] = []
     preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
@@ -387,7 +388,7 @@ def _missing_decor_export(
 ) -> tuple[dict, dict]:
     config, shape = _config_with_decor_image(asset_id)
     document, _filename = create_export(
-        SimpleNamespace(instance_id="source-instance"),
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source-instance"),
         {"config": config, "rev": 2},
         {"layout": {}, "rev": 3},
         kind=kind,
@@ -411,12 +412,12 @@ def test_issue_1035_decor_order_and_shared_image_survive_transfer(tmp_path: Path
     config["spaces"][0]["decor"] = decor
     config["markers"] = []
     document, _ = create_export(
-        SimpleNamespace(instance_id="source"), {"config": config, "rev": 1}, {"layout": {}, "rev": 1},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source"), {"config": config, "rev": 1}, {"layout": {}, "rev": 1},
         kind=kind, space_id="ground" if kind == "space" else None, plan_only=plan_only, card_version="test", config_root=tmp_path / "source",
     )
     exported = document["payload"]["config"]["spaces"][0]["decor"]
     assert exported == decor
-    runtime = SimpleNamespace(instance_id="target", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="target", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
@@ -458,7 +459,7 @@ def test_issue_428_missing_decor_asset_round_trips_in_every_export_mode(
         "exists_at_export": False,
     }]
 
-    runtime = SimpleNamespace(instance_id="target-instance", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="target-instance", import_previews={})
     response = create_preview(
         runtime,
         json.dumps(document).encode(),
@@ -599,7 +600,7 @@ def test_issue_428_missing_source_reuses_only_exact_target_blob(tmp_path: Path) 
 
 
 def _document(tmp_path: Path, kind: str = "full") -> dict:
-    runtime = SimpleNamespace(instance_id="instance-a")
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")
     document, _filename = create_export(
         runtime,
         {"config": _config(), "rev": 2},
@@ -790,7 +791,7 @@ def test_issue_225_content_state_accepts_a_cache_busted_attachment(
     attachment.write_bytes(b"%PDF-1.4\n")
     config = _config()
     config["markers"][0]["pdfs"] = [{"name": "Manual", "url": url}]
-    runtime = SimpleNamespace(instance_id="instance-a")
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")
     document, _ = create_export(
         runtime, {"config": config}, {"layout": {}}, kind="full", space_id=None,
         card_version="1.61.0", config_root=tmp_path,
@@ -811,13 +812,13 @@ def test_issue_225_backup_with_an_attachment_survives_a_full_round_trip(
     attachment.write_bytes(b"%PDF-1.4\n")
     config = _config()
     config["markers"][0]["pdfs"] = [{"name": "Manual", "url": url}]
-    runtime = SimpleNamespace(instance_id="instance-a")
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")
     document, _ = create_export(
         runtime, {"config": config}, {"layout": {}}, kind="full", space_id=None,
         card_version="1.61.0", config_root=tmp_path,
     )
     response = create_preview(
-        SimpleNamespace(instance_id="instance-a", import_previews={}),
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={}),
         json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 1},
         current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
@@ -869,7 +870,7 @@ def test_issue_876_lqi_visibility_transfer_keeps_local_mode_without_changing_tar
     source["settings"]["future_namespace"] = {"kept": 2}
     source["spaces"][0]["settings"] = {"show_lqi_mode": mode, "show_lqi": mode == "on"}
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": source}, {"layout": {}},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": source}, {"layout": {}},
         kind=kind, space_id=None if kind == "full" else "ground", plan_only=plan_only,
         card_version="1.81.0", config_root=tmp_path,
     )
@@ -891,7 +892,7 @@ def test_issue_876_lqi_visibility_transfer_keeps_local_mode_without_changing_tar
 
 
 def test_background_mode_is_materialized_across_export_and_legacy_import(tmp_path: Path) -> None:
-    runtime = SimpleNamespace(instance_id="instance-a")
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")
     inherited = _config()
     inherited["settings"]["bg_mode"] = "daynight"
     inherited["spaces"][0].setdefault("settings", {}).pop("bg_mode", None)
@@ -923,7 +924,7 @@ def test_background_mode_is_materialized_across_export_and_legacy_import(tmp_pat
 
 
 def test_issue_577_full_export_preserves_sun_ray_origin(tmp_path: Path) -> None:
-    runtime = SimpleNamespace(instance_id="instance-a")
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")
     config = _config()
     config["settings"]["sun_ray_origin"] = "outer"
     document, _ = create_export(
@@ -941,7 +942,7 @@ def test_issue_792_full_export_and_import_preserve_device_battery(tmp_path: Path
     config = _config()
     config["settings"]["show_device_battery"] = value
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config}, {"layout": {}},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config}, {"layout": {}},
         kind="full", space_id=None, card_version="review", config_root=tmp_path,
     )
     assert document["payload"]["config"]["settings"]["show_device_battery"] is value
@@ -951,7 +952,7 @@ def test_issue_792_full_export_and_import_preserve_device_battery(tmp_path: Path
 
 def test_issue_661_full_export_and_import_preserve_the_moon(tmp_path: Path) -> None:
     """#661 AC9: `settings.moon` travels with a full backup both ways."""
-    runtime = SimpleNamespace(instance_id="instance-a")
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")
     for value in (True, False):
         config = _config()
         config["settings"]["moon"] = value
@@ -980,7 +981,7 @@ def test_493_import_authority_preserves_or_replaces_global_namespaces(
     })
     source["settings"].pop("summary_panel", None)
     document, _ = create_export(
-        SimpleNamespace(instance_id="source-instance"),
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source-instance"),
         {"config": source, "rev": 2}, {"layout": {}, "rev": 3},
         kind=kind, space_id="ground" if kind == "space" else None,
         plan_only=plan_only, card_version="review", config_root=tmp_path,
@@ -994,7 +995,7 @@ def test_493_import_authority_preserves_or_replaces_global_namespaces(
         "show_device_battery": False,
         "target_future": {"sentinel": "target"},
     })
-    runtime = SimpleNamespace(instance_id="target-instance", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="target-instance", import_previews={})
     preview = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice",
         duplicate_policy="skip", current_config_data={"config": current, "rev": 7},
@@ -1056,7 +1057,7 @@ def test_full_preview_drops_dormant_broken_and_duplicate_links(tmp_path: Path) -
             ],
         },
     ])
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 1},
@@ -1077,7 +1078,7 @@ def test_full_import_rejects_duplicate_active_marker_ids(tmp_path: Path) -> None
     })
     with pytest.raises(ImportFailure) as invalid:
         create_preview(
-            SimpleNamespace(instance_id="instance-a", import_previews={}),
+            SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={}),
             json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
             current_config_data={"config": _config(), "rev": 1},
             current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
@@ -1105,7 +1106,7 @@ def test_full_preview_repairs_self_and_cycle_but_ordinary_write_stays_strict(kin
     with pytest.raises(wsapi.MarkerControlError) as invalid:
         wsapi.validate_marker_controls(document["payload"]["config"], validate_all=True)
     assert invalid.value.code == expected
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 1},
@@ -1129,7 +1130,7 @@ def test_invalid_passage_import_is_rejected_before_preview(kind: str, tmp_path: 
     _downgrade_document_to_v7(document)
     with pytest.raises(ImportFailure) as invalid:
         create_preview(
-            SimpleNamespace(instance_id="instance-a", import_previews={}),
+            SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={}),
             json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
             current_config_data={"config": _config(), "rev": 1},
             current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
@@ -1145,7 +1146,7 @@ def test_canonical_passage_import_survives_space_id_remap(tmp_path: Path) -> Non
         "angle": 0, "length": 0.09, "future": {"kept": True},
     }]
     _downgrade_document_to_v7(document)
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 1},
@@ -1169,7 +1170,7 @@ def test_canonical_passage_full_preview_preserves_geometry_and_extensions(tmp_pa
         "angle": 0, "length": 0.12, "future": {"kept": True},
     }]
     _downgrade_document_to_v7(document)
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 1},
@@ -1202,7 +1203,7 @@ def test_full_preview_preserves_legacy_near_end_partition_opening(
         {"spaces": [], "markers": [], "settings": {}}
         if current_kind == "empty" else _config()
     )
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice",
         duplicate_policy="skip", current_config_data={"config": current, "rev": 1},
@@ -1239,7 +1240,7 @@ def test_export_is_not_locked_by_legacy_room_drafts(tmp_path: Path) -> None:
     config = _config()
     config["model_version"] = PLAN_MODEL_VERSION
     config["spaces"][0]["room_drafts"] = []
-    runtime = SimpleNamespace(instance_id="instance-a")
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")
 
     document, filename = create_export(
         runtime,
@@ -1257,7 +1258,7 @@ def test_export_is_not_locked_by_legacy_room_drafts(tmp_path: Path) -> None:
 def test_full_export_has_versioned_envelope_and_live_layout(tmp_path: Path) -> None:
     config = _config()
     config["markers"].append({"id": "gone", "binding": "virtual", "removed": True})
-    runtime = SimpleNamespace(instance_id="instance-a")
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")
     document, filename = create_export(
         runtime,
         {"config": config, "rev": 1},
@@ -1373,7 +1374,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     config, layout = _plan_only_source()
     config['spaces'][0]['settings']['label_co2'] = True
     config['spaces'][0]['rooms'][0]['settings']['co2_source'] = 'entity:sensor.room_co2'
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     document, _ = create_export(
         runtime, {"config": config}, {"layout": layout}, kind="space",
         space_id="ground", plan_only=True, card_version="review", config_root=tmp_path,
@@ -1466,7 +1467,7 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
 
 def test_ordinary_space_export_is_unchanged_when_plan_only_is_false(tmp_path: Path) -> None:
     config, layout = _plan_only_source()
-    runtime = SimpleNamespace(instance_id="instance-a")
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")
     implicit, _implicit_name = create_export(
         runtime, {"config": config}, {"layout": layout}, kind="space",
         space_id="ground", card_version="review", config_root=tmp_path,
@@ -1502,7 +1503,7 @@ def test_parser_rejects_forged_plan_only_privacy_claim(
 ) -> None:
     config, layout = _plan_only_source()
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config}, {"layout": layout},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config}, {"layout": layout},
         kind="space", space_id="ground", plan_only=True,
         card_version="review", config_root=tmp_path,
     )
@@ -1557,7 +1558,7 @@ def test_parser_requires_strict_plan_only_boolean(tmp_path: Path, value: Any) ->
 def test_plan_only_cannot_be_requested_for_full_export(tmp_path: Path) -> None:
     with pytest.raises(ImportFailure) as invalid:
         create_export(
-            SimpleNamespace(instance_id="instance-a"), {"config": _config()}, {"layout": {}},
+            SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": _config()}, {"layout": {}},
             kind="full", space_id=None, plan_only=True,
             card_version="review", config_root=tmp_path,
         )
@@ -1567,7 +1568,7 @@ def test_plan_only_cannot_be_requested_for_full_export(tmp_path: Path) -> None:
 def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) -> None:
     """The portable envelope version must return to the persisted config."""
     document = _document(tmp_path)
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
@@ -1584,7 +1585,7 @@ def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) ->
 def test_issue_836_dev_label_rides_the_envelope_and_imports(tmp_path: Path) -> None:
     """К8: `build` only with a label, next to integration_version; import accepts it."""
     source = "024b6595" + "1" * 32
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     data = ({"config": _config(), "rev": 2}, {"layout": {}, "rev": 3})
     plain, _ = create_export(runtime, *copy.deepcopy(data), kind="full", space_id=None,
                              card_version="1.80.1", config_root=tmp_path)
@@ -1638,7 +1639,7 @@ def test_v7_export_and_import_always_materialize_the_current_model(
             for segment in draft.get("segments") or []:
                 segment.pop("id", None)
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"),
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"),
         {"config": legacy}, {"layout": {}}, kind=kind,
         space_id="ground" if kind == "space" else None,
         card_version="review", config_root=tmp_path,
@@ -1647,7 +1648,7 @@ def test_v7_export_and_import_always_materialize_the_current_model(
     if kind == "space":
         target["spaces"] = []
         target["markers"] = []
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": target, "rev": 0},
@@ -1665,7 +1666,7 @@ def test_v7_export_and_import_always_materialize_the_current_model(
 def test_preview_tokens_are_bounded_owned_expiring_and_single_use(
     tmp_path: Path, monkeypatch,
 ) -> None:
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     raw = json.dumps(_document(tmp_path)).encode()
     # Separate the two equal production limits so this assertion still kills a
     # mutant that accidentally removes only the per-user eviction branch.
@@ -1704,7 +1705,7 @@ def test_preview_tokens_are_bounded_owned_expiring_and_single_use(
     assert expiring not in runtime.import_previews
 
     monkeypatch.setattr(import_export_api, "MAX_IMPORT_PREVIEWS_TOTAL", MAX_IMPORT_PREVIEWS_TOTAL)
-    global_runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    global_runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     global_tokens = [
         create_preview(
             global_runtime, raw, owner_id=f"owner-{index}", duplicate_policy="skip",
@@ -1729,7 +1730,7 @@ def test_export_materializes_supported_models_into_the_current_envelope(
     else:
         config["model_version"] = stored
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"),
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"),
         {"config": config}, {"layout": {}}, kind="full", space_id=None,
         card_version="1.61.0", config_root=tmp_path,
     )
@@ -1746,7 +1747,7 @@ def test_export_rejects_boolean_stored_model_before_schema_coercion(tmp_path: Pa
     config["model_version"] = True
     with pytest.raises(ImportFailure) as invalid:
         create_export(
-            SimpleNamespace(instance_id="instance-a"), {"config": config}, {"layout": {}},
+            SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config}, {"layout": {}},
             kind="full", space_id=None, card_version="1.61.0", config_root=tmp_path,
         )
     assert invalid.value.code == "invalid_config"
@@ -1757,7 +1758,7 @@ def test_export_copies_toggle_entity_literal(tmp_path: Path, kind: str) -> None:
     config = _config()
     config["markers"][0]["toggle_entity"] = "switch.channel_2"
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"),
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"),
         {"config": config}, {"layout": {}}, kind=kind,
         space_id="ground" if kind == "space" else None,
         card_version="1.65.0", config_root=tmp_path,
@@ -1770,7 +1771,7 @@ def test_export_copies_toggle_entity_literal(tmp_path: Path, kind: str) -> None:
 def test_issue1087_more_info_target_survives_real_transfer_and_virtual_copy_strips_it(tmp_path: Path, kind: str) -> None:
     config = _config()
     config["markers"][0].update(binding="device:floor", more_info_entity="climate.floor")
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     document, _ = create_export(
         runtime, {"config": config}, {"layout": {}}, kind=kind,
         space_id="ground" if kind == "space" else None,
@@ -1823,7 +1824,7 @@ def test_preview_is_owner_bound_and_foreign_full_drops_discovery_lists(tmp_path:
     }
     document["source_fingerprint"] = "sha256:foreign"
     raw = json.dumps(document).encode()
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, raw, owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 4},
@@ -1845,7 +1846,7 @@ def test_same_source_full_import_preserves_marker_area_snapshot(tmp_path: Path) 
     document = _document(tmp_path)
     snapshot = {"lamp": {"binding": "entity:light.living", "area": "living"}}
     document["payload"]["config"]["settings"]["marker_area_snapshot"] = snapshot
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 4},
@@ -1860,7 +1861,7 @@ def test_same_source_full_import_preserves_marker_area_snapshot(tmp_path: Path) 
 
 def test_preview_candidate_digest_and_global_memory_cap_are_enforced(tmp_path: Path) -> None:
     document = _document(tmp_path)
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     tokens = []
     for owner in range(MAX_IMPORT_PREVIEWS_TOTAL + 1):
         response = create_preview(
@@ -1886,10 +1887,10 @@ def test_foreign_content_never_binds_to_same_named_local_file(tmp_path: Path) ->
     config = _config()
     config["spaces"][0]["plan_url"] = "/api/houseplan/content/plans/_/portable.svg"
     document, _ = create_export(
-        SimpleNamespace(instance_id="source-instance"), {"config": config}, {"layout": {}},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source-instance"), {"config": config}, {"layout": {}},
         kind="full", space_id=None, card_version="review", config_root=tmp_path,
     )
-    runtime = SimpleNamespace(instance_id="target-instance", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="target-instance", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 1},
@@ -1909,7 +1910,7 @@ def test_preview_counts_only_stored_wall_entries(tmp_path: Path) -> None:
     document = _document(tmp_path)
     document["payload"]["config"].pop("model_version", None)
     response = create_preview(
-        SimpleNamespace(instance_id="instance-a", import_previews={}),
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={}),
         json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 1},
         current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
@@ -1930,7 +1931,7 @@ def test_parser_caps_placement_manifest_rows(tmp_path: Path) -> None:
 def test_preview_rejects_manifest_that_omits_a_payload_reference(tmp_path: Path) -> None:
     config = _config()
     config["spaces"][0]["plan_url"] = "/api/houseplan/content/plans/_/plan.svg"
-    runtime = SimpleNamespace(instance_id="instance-a")
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")
     document, _ = create_export(
         runtime, {"config": config}, {"layout": {}}, kind="full", space_id=None,
         card_version="1.61.0", config_root=tmp_path,
@@ -1938,7 +1939,7 @@ def test_preview_rejects_manifest_that_omits_a_payload_reference(tmp_path: Path)
     document["content_manifest"] = []
     with pytest.raises(ImportFailure) as invalid:
         create_preview(
-            SimpleNamespace(instance_id="instance-a", import_previews={}),
+            SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={}),
             json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
             current_config_data={"config": _config(), "rev": 1},
             current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
@@ -1948,7 +1949,7 @@ def test_preview_rejects_manifest_that_omits_a_payload_reference(tmp_path: Path)
 
 def test_revalidate_full_refreshes_revisions_and_registry_summary(tmp_path: Path) -> None:
     document = _document(tmp_path)
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": _config(), "rev": 1},
@@ -1994,7 +1995,7 @@ def _issue_611_space_document(tmp_path: Path) -> dict[str, Any]:
         }],
     }
     document, _filename = create_export(
-        SimpleNamespace(instance_id="instance-a"),
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"),
         {"config": config, "rev": 2},
         {"layout": {"lamp": {"x": 0.4, "y": 0.5, "s": "ground"}}, "rev": 3},
         kind="space", space_id="ground", card_version="review", config_root=tmp_path,
@@ -2394,7 +2395,7 @@ def test_issue_265_apply_uses_the_exact_materialized_preview_candidate(
     tmp_path: Path, monkeypatch,
 ) -> None:
     document = _document(tmp_path, "space")
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": {"spaces": [], "markers": []}, "rev": 2},
@@ -2531,7 +2532,7 @@ def test_space_export_drops_marker_links_outside_selection(tmp_path: Path) -> No
         "name": "Other lamp", "is_light": True,
     })
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config},
         {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
         kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
     )
@@ -2552,7 +2553,7 @@ def test_issue_90_space_export_disables_badge_link_outside_selection(tmp_path: P
         "name": "Other lamp", "is_light": True,
     })
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config},
         {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
         kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
     )
@@ -2571,7 +2572,7 @@ def test_issue_378_space_export_drops_value_face_link_outside_selection(tmp_path
         "name": "Other lamp", "is_light": True,
     })
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config},
         {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
         kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
     )
@@ -2602,7 +2603,7 @@ def test_issue_385_space_export_drops_badge_and_value_face_links_together(tmp_pa
         "name": "Other lamp", "is_light": True,
     })
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config},
         {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
         kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
     )
@@ -3429,7 +3430,7 @@ def test_issue_162_space_export_drops_map_routes_of_other_spaces(tmp_path: Path)
         ],
     }
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config},
         {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
         kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
     )
@@ -3451,7 +3452,7 @@ def test_issue_443_space_export_preserves_explicit_empty_routes(tmp_path: Path) 
         ],
     }
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config},
         {"layout": {}}, kind="space", space_id="ground", card_version="1.71.0",
         config_root=tmp_path,
     )
@@ -3472,7 +3473,7 @@ def test_issue_162_full_export_round_trips_every_map_route(tmp_path: Path) -> No
     ]
     config["markers"][0]["vacuum"] = {"source": "camera.robot", "map_routes": routes}
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config},
         {"layout": {}}, kind="full", space_id=None, card_version="1.61.0",
         config_root=tmp_path,
     )
@@ -3486,7 +3487,7 @@ def test_issue_162_space_export_keeps_legacy_calibration_untouched(tmp_path: Pat
         "source": "camera.robot", "calibration": {"m1": [1, 0, 0, 0, 1, 0]},
     }
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config},
         {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
         kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
     )
@@ -3508,7 +3509,7 @@ def _led_config() -> dict:
 
 def _led_document(tmp_path: Path, kind: str, *, plan_only: bool = False, config=None) -> dict:
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"),
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"),
         {"config": config or _led_config(), "rev": 2},
         {"layout": {"lamp": {"x": 0.4, "y": 0.5, "s": "ground"}}, "rev": 3},
         kind=kind, space_id="ground" if kind == "space" else None,
@@ -3521,7 +3522,7 @@ def test_issue_780_full_round_trip_keeps_geometry_links_and_hidden_shapes(tmp_pa
     config = _led_config()
     config["spaces"][0]["led_strips"][0]["active"] = False
     document = _led_document(tmp_path, "full", config=config)
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
@@ -3546,7 +3547,7 @@ def test_issue_780_full_import_unbinds_a_link_whose_marker_is_absent(tmp_path: P
     document["payload"]["config"]["markers"] = []
     document["payload"]["layout"] = {}
     document["placement_manifest"] = []
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
@@ -3621,7 +3622,7 @@ def _opening_house_document(tmp_path: Path, kind: str = "full") -> dict:
         _door("d1", 0.3, lock="lock.front"), _door("w1", 0.5, 0.06), _partition_door(),
     )
     document, _ = create_export(
-        SimpleNamespace(instance_id="instance-a"), {"config": config, "rev": 2},
+        SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         card_version="review", config_root=tmp_path,
     )
@@ -3673,7 +3674,7 @@ def _break_near(document: dict) -> str:
 
 
 def _preview(tmp_path: Path, document: dict, current: dict | None = None):
-    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": current or _config(), "rev": 1},
@@ -3835,7 +3836,7 @@ def test_issue1000_alert_definitions_full_space_json_and_plan_only(tmp_path: Pat
     config = _config()
     rules = [{"id": "a", "type": "threshold", "level": "attention", "entity_id": "sensor.co2", "operator": "gt", "value": 1000}]
     config["markers"][0]["alert_sources"] = rules
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         plan_only=plan_only, card_version="review", config_root=tmp_path)
     parsed = parse_document(json.dumps(document).encode())
@@ -3855,7 +3856,7 @@ def test_current_space_transfer_remaps_graph_and_exact_host_without_reconstructi
     from custom_components.houseplan.plan_graph import verify_projection
     config, layout = _plan_only_source()
     original = copy.deepcopy(config["spaces"][0])
-    document, _ = create_export(SimpleNamespace(instance_id="source"), {"config": config},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="source"), {"config": config},
                                {"layout": layout}, kind="space", space_id="ground",
                                card_version="review", config_root=tmp_path)
     merged, _, _ = build_space_merge(document, {"spaces": [], "markers": [], "settings": {}}, {}, "skip")
@@ -3887,7 +3888,7 @@ def test_issue1348_glass_door_survives_transfer(tmp_path, kind, plan_only, value
     from custom_components.houseplan.plan_graph import project_graph_space
     next(edge for edge in space["plan_graph"]["edges"] if edge["id"] == wall["id"])["cm"] = 20
     config["spaces"][0] = project_graph_space(space, space["plan_graph"])["space"]
-    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": config, "rev": 2},
         {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
         card_version="test", config_root=tmp_path, plan_only=plan_only)
     parsed = parse_document(json.dumps(document).encode())
@@ -3897,7 +3898,7 @@ def test_issue1348_glass_door_survives_transfer(tmp_path, kind, plan_only, value
     if not plan_only:
         assert restored["contact"] == door["contact"]
         assert restored["lock"] == door["lock"]
-    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same", import_previews={})
     current = _config()
     preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
         current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)

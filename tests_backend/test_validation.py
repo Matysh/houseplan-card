@@ -185,10 +185,7 @@ def test_issue_663_stair_schema_is_discriminated_bounded_and_forward_compatible(
 def test_backend_model_version_matches_frontend_constant():
     root = os.path.dirname(os.path.dirname(__file__))
     source = open(os.path.join(root, "src", "plan-optimizer.ts"), encoding="utf-8").read()
-    const_path = os.path.join(root, "custom_components", "houseplan", "const.py")
-    const_spec = importlib.util.spec_from_file_location("hp_const", const_path)
-    const = importlib.util.module_from_spec(const_spec)
-    const_spec.loader.exec_module(const)
+    from custom_components.houseplan import const
     assert f"PLAN_MODEL_VERSION = {const.PLAN_MODEL_VERSION}" in source
 
 
@@ -309,41 +306,12 @@ def test_issue_1096_config_schema_is_idempotent_on_its_own_output(name):
 
 
 def _load_pure(name):
-    """Load one pure module of the integration without importing the package.
-
-    custom_components/houseplan/__init__.py pulls in Home Assistant, which the
-    local sandbox does not have; but plans.py is deliberately pure, so a tiny
-    stub package lets it keep its normal relative imports.
-    """
-    import sys
-    import types
-
-    pkg_dir = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "custom_components", "houseplan"
-    )
-    pkg = sys.modules.get("hp_pure")
-    if pkg is None:
-        pkg = types.ModuleType("hp_pure")
-        pkg.__path__ = [pkg_dir]
-        sys.modules["hp_pure"] = pkg
-        for dep in ("const", "validation"):
-            sp = importlib.util.spec_from_file_location(
-                f"hp_pure.{dep}", os.path.join(pkg_dir, f"{dep}.py")
-            )
-            mod = importlib.util.module_from_spec(sp)
-            sys.modules[f"hp_pure.{dep}"] = mod
-            sp.loader.exec_module(mod)
-    sp = importlib.util.spec_from_file_location(
-        f"hp_pure.{name}", os.path.join(pkg_dir, f"{name}.py")
-    )
-    mod = importlib.util.module_from_spec(sp)
-    sys.modules[f"hp_pure.{name}"] = mod
-    sp.loader.exec_module(mod)
-    return mod
+    """Use the real lazy package and one canonical implementation."""
+    return importlib.import_module(f"custom_components.houseplan.{name}")
 
 
 plans = _load_pure("plans")
-const = importlib.import_module("hp_pure.const")
+const = _load_pure("const")
 
 
 def test_active_marker_id_uniqueness_is_delta_safe_for_legacy_documents():

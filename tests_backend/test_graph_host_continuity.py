@@ -1,4 +1,5 @@
 """Host continuity preserves physical spans without joining coincident nodes."""
+from custom_components.houseplan.const import VERSION as INTEGRATION_VERSION
 import copy
 
 import pytest
@@ -138,7 +139,7 @@ def test_current_plan_only_transfer_keeps_exact_host_parameter(tmp_path):
                       "host": host}]}, graph)["space"]
     config = _config(current)
     assert CONFIG_SCHEMA(config) == config
-    document, _ = create_export(SimpleNamespace(instance_id="exact-transfer"), {"config": config, "rev": 1},
+    document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="exact-transfer"), {"config": config, "rev": 1},
         {"layout": {}, "rev": 1}, kind="space", space_id="s", plan_only=True, card_version="test", config_root=tmp_path)
     assert document["payload"]["config"]["spaces"][0]["openings"][0]["host"] == host
     decoded = parse_document(json.dumps(document).encode())
