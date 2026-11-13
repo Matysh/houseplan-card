@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1409,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Retain the owned tooltip presentation across live commits and freeze its pointer anchor after a bounded dwell.",
+  "summary": {
+    "ru": "Тултипы устройств появляются с задержкой и плавно, не следуют за мышью и не мигают при обновлении HA.",
+    "en": "Delay and fade device tooltips while keeping them stable across pointer moves and HA updates."
+  }
+}

@@ -57,6 +57,8 @@ const pointerTip = async (id) => {
   const box = await marker(id).boundingBox();
   if (!box) throw new Error(`missing marker ${id}`);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  // #1409: wait for actual dwell completion, not just a few Lit/RAF frames.
+  await page.waitForFunction(() => !window.__card.shadowRoot.querySelector('[data-hp-live-tip]')?.hidden);
   await settle();
   const value = await sample();
   await page.mouse.move(2, 2);

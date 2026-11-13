@@ -83,6 +83,9 @@ for (const provider of ['z2m', 'zha']) {
     pointer = point;
     evidence.push({ provider, name: 'native-pointer-target', id, observation });
     await page.mouse.move(pointer.x, pointer.y);
+    // Dwell is independent of the card's Lit settlement. Topology may legitimately
+    // hide the tip when no full rectangle fits, so wait for its active data owner.
+    await page.waitForFunction(id => window.__card._tip?.deviceId === id, id);
     await settle();
   };
   const sample = async (id) => page.evaluate((id) => {

@@ -45,6 +45,8 @@ interface LiveHoverHost {
 }
 
 interface DeviceTipHost extends LiveHoverHost {
+  readonly isConnected?: boolean;
+  _space?: string;
   _devices: readonly DevItem[];
   _mode: string;
   _drag: unknown;
@@ -87,6 +89,26 @@ export function deviceBatteryTipText(
 const states = new WeakMap<object, HoverState>();
 const focusTips = new WeakMap<object, LiveTip>();
 
+interface PendingDeviceTip {
+  id: string;
+  binding: string;
+  mode: string;
+  space: string | undefined;
+  x: number;
+  y: number;
+  timer: ReturnType<typeof setTimeout>;
+}
+const pointerTips = new WeakMap<object, PendingDeviceTip>();
+const pointerTipDelay = 150;
+const tipBinding = (device: DevItem): string => JSON.stringify([
+  device.bindingKind, device.bindingRef, device.marker?.binding,
+]);
+const cancelPointerTip = (host: object): void => {
+  const pending = pointerTips.get(host);
+  if (pending) clearTimeout(pending.timer);
+  pointerTips.delete(host);
+};
+
 // Wrap between metrics, keeping each label/value/unit together within a row.
 const metricText = (text: string): string => text.replace(/ /g, '\u00a0');
 
@@ -116,20 +138,48 @@ const deviceTipContent = (
 export function showDevicePointerTip(value: object, event: PointerEvent, device: DevItem): void {
   const host = value as DeviceTipHost;
   host._notePointer(event);
-  if (!host._pointerModality.hoverEnabled || host._drag || host._deviceDrag) {
+  if (!host._pointerModality.hoverEnabled || host._drag || host._deviceDrag
+      || !['view', 'devices'].includes(host._mode)) {
+    resetHouseplanHover(host);
     host._deviceHits.hover(host.renderRoot, null);
     return;
   }
-  const tip = deviceTipContent(host, device);
   host._deviceHits.hover(host.renderRoot, device.id);
-  host._tip = { x: event.clientX, y: event.clientY, ...tip, room: false, source: 'pointer', deviceId: device.id };
-  syncHouseplanHover(host);
+  // Once shown, only a real layout/content change can move this surface.
+  if (host._tip?.source === 'pointer' && host._tip.deviceId === device.id) return;
+  const pending = pointerTips.get(host);
+  const binding = tipBinding(device);
+  if (pending?.id === device.id && pending.binding === binding
+      && pending.mode === host._mode && pending.space === host._space) {
+    pending.x = event.clientX; pending.y = event.clientY;
+    return;
+  }
+  cancelPointerTip(host);
+  if (host._tip?.source === 'pointer') {
+    host._tip = focusTips.get(host) || null;
+    syncHouseplanHover(host);
+  }
+  const next: PendingDeviceTip = { id: device.id, binding, mode: host._mode, space: host._space,
+    x: event.clientX, y: event.clientY, timer: setTimeout(() => {
+      if (pointerTips.get(host) !== next) return;
+      pointerTips.delete(host);
+      if (host.isConnected === false || !host._pointerModality.hoverEnabled
+          || host._drag || host._deviceDrag || host._mode !== next.mode || host._space !== next.space
+          || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) return;
+      const current = host._devices.find(item => item.id === next.id);
+      if (!current || tipBinding(current) !== next.binding) return;
+      host._tip = { x: next.x, y: next.y, ...deviceTipContent(host, current),
+        room: false, source: 'pointer', deviceId: current.id };
+      syncHouseplanHover(host);
+    }, pointerTipDelay) };
+  pointerTips.set(host, next);
 }
 
 export function showDeviceFocusTip(value: object, target: HTMLElement | null, device: DevItem): void {
   const host = value as DeviceTipHost;
   if (host._mode !== 'view' || host._drag || host._deviceDrag
       || !target?.matches(':focus-visible')) return;
+  cancelPointerTip(host);
   const rect = target.getBoundingClientRect();
   const tip: LiveTip = {
     x: rect.right, y: rect.top, ...deviceTipContent(host, device),
@@ -150,6 +200,7 @@ export function hideDeviceFocusTip(value: object, deviceId: string): void {
 
 export function clearPointerHover(value: object): void {
   const host = value as DeviceTipHost;
+  cancelPointerTip(host);
   host._deviceHits.hover(host.renderRoot, null);
   host._tip = focusTips.get(value) || null;
   host._hoverRoom = null;
@@ -201,42 +252,67 @@ const appendMeta = (tip: HTMLElement, label: string, value?: string, color?: str
   tip.append(row);
 };
 
-const tipPresentations = new WeakMap<object, { element:HTMLElement; motion:ControlSurfacePresentation }>();
+const tipPresentations = new WeakMap<object, {
+  element: HTMLElement; motion: ControlSurfacePresentation; fade: boolean; content?: string;
+  stopLayout?: () => void;
+}>();
 
 const syncTip = (host: LiveHoverHost, root: ParentNode): void => {
   const element = root.querySelector<HTMLElement>('[data-hp-live-tip]');
   if (!element) return;
   let state = tipPresentations.get(host);
-  if (state?.element !== element) {
+  const tip = host._tip as LiveTip | null;
+  const fade = tip ? !!tip.deviceId : state?.fade ?? false;
+  if (state?.element !== element || state.fade !== fade) {
+    state?.stopLayout?.();
     state?.motion.reset();
     const motion = new ControlSurfacePresentation(() => {
-      if (!motion.mounted) { element.hidden = true; element.replaceChildren(); }
-    });
-    state = { element, motion }; tipPresentations.set(host, state);
+      if (!motion.mounted) {
+        element.hidden = true; element.replaceChildren(); state!.content = undefined;
+      }
+    }, fade ? 'fade' : 'slide');
+    state = { element, motion, fade }; tipPresentations.set(host, state);
   }
-  const tip = host._tip as LiveTip | null;
   if (!tip) {
+    state.stopLayout?.(); state.stopLayout = undefined;
     element.setAttribute('aria-hidden', 'true');
     state.motion.sync(false, 'bottom'); state.motion.updated(element);
-    if (!state.motion.mounted) { element.hidden = true; element.replaceChildren(); }
+    if (!state.motion.mounted) { element.hidden = true; element.replaceChildren(); state.content = undefined; }
     return;
+  }
+  if (fade && !state.stopLayout) {
+    const view = element.ownerDocument.defaultView;
+    let frame: number | undefined;
+    const layout = () => {
+      if (!view || frame !== undefined) return;
+      frame = view.requestAnimationFrame(() => { frame = undefined; syncHouseplanHover(host); });
+    };
+    view?.addEventListener('resize', layout);
+    state.stopLayout = () => {
+      view?.removeEventListener('resize', layout);
+      if (frame !== undefined) view?.cancelAnimationFrame(frame);
+    };
   }
   const gap = 12;
   const margin = 8;
   element.style.left = `${tip.x + gap}px`;
   element.style.top = `${tip.y + gap}px`;
-  element.replaceChildren();
-  const title = document.createElement('b');
-  title.textContent = tip.title;
-  element.append(title);
-  appendMeta(element, '', tip.meta);
-  appendMeta(element, '', tip.status);
-  appendMeta(element, '', tip.battery);
-  appendMeta(element, host._t('tip.temp_avg'), tip.temp == null ? '' : `${tip.temp}°`);
-  appendMeta(element, host._t('tip.hum_avg'), tip.hum == null ? '' : `${tip.hum}%`);
-  appendMeta(element, host._t('space.label_co2'), tip.co2 == null ? '' : roomCo2Text(tip.co2));
-  appendMeta(element, host._t('tip.lqi'), tip.lqi == null ? '' : String(tip.lqi),
-    tip.lqi == null ? undefined : lqiColor(tip.lqi));
+  const content = JSON.stringify([tip.title, tip.meta, tip.status, tip.battery, tip.temp, tip.hum, tip.co2, tip.lqi]);
+  if (!fade || state.content !== content) {
+    element.replaceChildren();
+    const title = document.createElement('b');
+    title.textContent = tip.title;
+    element.append(title);
+    appendMeta(element, '', tip.meta);
+    appendMeta(element, '', tip.status);
+    appendMeta(element, '', tip.battery);
+    appendMeta(element, host._t('tip.temp_avg'), tip.temp == null ? '' : `${tip.temp}°`);
+    appendMeta(element, host._t('tip.hum_avg'), tip.hum == null ? '' : `${tip.hum}%`);
+    appendMeta(element, host._t('space.label_co2'), tip.co2 == null ? '' : roomCo2Text(tip.co2));
+    appendMeta(element, host._t('tip.lqi'), tip.lqi == null ? '' : String(tip.lqi),
+      tip.lqi == null ? undefined : lqiColor(tip.lqi));
+    state.content = content;
+  }
   element.hidden = false;
   element.removeAttribute('aria-hidden');
   const box = element.getBoundingClientRect();
@@ -316,10 +392,24 @@ export function syncHouseplanHover(value: object): void {
   setRoomPath(root, '[data-hp-live-room-hover="outline"]', paths?.outlineD || '');
 }
 
-export function resetHouseplanHover(host: object): void {
-  states.delete(host);
+const resetTipPresentation = (host: object): void => {
   const tip = tipPresentations.get(host);
+  tip?.stopLayout?.();
   tip?.motion.reset();
   if (tip) { tip.element.hidden = true; tip.element.replaceChildren(); }
   tipPresentations.delete(host);
+};
+
+export function resetHouseplanHover(host: object): void {
+  cancelPointerTip(host);
+  focusTips.delete(host);
+  (host as LiveHoverHost)._tip = null;
+  states.delete(host);
+  resetTipPresentation(host);
+}
+
+/** Keep device motion across commits; retain the existing room-tip retirement. */
+export function invalidateHouseplanHover(host: object): void {
+  states.delete(host);
+  if (!tipPresentations.get(host)?.fade) resetTipPresentation(host);
 }

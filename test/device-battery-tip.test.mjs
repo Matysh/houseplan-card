@@ -175,14 +175,17 @@ const tipHost = (hass, { showBattery = true, batteryLowOnly = false } = {}) => (
   _fullRegistryHass: hass,
 });
 const focusTarget = { matches: (selector) => selector === ':focus-visible', getBoundingClientRect: () => ({ right: 10, top: 20 }) };
-const tips = (host, device) => {
+const tips = (host, device, clock) => {
+  host._devices = [device];
   showDevicePointerTip(host, { clientX: 1, clientY: 2 }, device);
+  clock.tick(150);
   const pointer = host._tip;
   showDeviceFocusTip(host, focusTarget, device);
   return { pointer, focus: host._tip };
 };
 
-test('#817 AC2 the line stays when the plan indicator is off, low-only or hidden for this device', () => {
+test('#817 AC2 the line stays when the plan indicator is off, low-only or hidden for this device', t => {
+  t.mock.timers.enable({apis: ['setTimeout']});
   const hass = ha([['sensor.battery', '80']]);
   const hidden = marker({ marker: { id: 'd1', binding: 'device:d1', hide_battery: true } });
   for (const [label, settings, device] of [
@@ -192,7 +195,7 @@ test('#817 AC2 the line stays when the plan indicator is off, low-only or hidden
   ]) {
     const host = tipHost(hass, settings);
     assert.equal(host._devicePresentation(device, true).battery, null, `${label}: the plan indicator is hidden`);
-    const { pointer, focus } = tips(host, device);
+    const { pointer, focus } = tips(host, device, t.mock.timers);
     assert.equal(pointer.source, 'pointer');
     assert.equal(focus.source, 'focus');
     for (const tip of [pointer, focus]) {
@@ -201,10 +204,11 @@ test('#817 AC2 the line stays when the plan indicator is off, low-only or hidden
   }
 });
 
-test('#817 AC3 title and model row are unchanged; a non-battery or invalid device gets no line', () => {
-  const withBattery = tips(tipHost(ha([['binary_sensor.battery', 'on']])), marker());
-  const without = tips(tipHost(ha([])), marker());
-  const invalid = tips(tipHost(ha([['sensor.battery', 'unavailable']])), marker());
+test('#817 AC3 title and model row are unchanged; a non-battery or invalid device gets no line', t => {
+  t.mock.timers.enable({apis: ['setTimeout']});
+  const withBattery = tips(tipHost(ha([['binary_sensor.battery', 'on']])), marker(), t.mock.timers);
+  const without = tips(tipHost(ha([])), marker(), t.mock.timers);
+  const invalid = tips(tipHost(ha([['sensor.battery', 'unavailable']])), marker(), t.mock.timers);
   for (const source of ['pointer', 'focus']) {
     assert.equal(withBattery[source].battery, 'Low\u00a0battery');
     assert.equal(without[source].battery, '');
@@ -216,7 +220,8 @@ test('#817 AC3 title and model row are unchanged; a non-battery or invalid devic
   }
 });
 
-test('#817 r1 tooltip: a badge on the same battery sensor is shown once, other badges keep the line', () => {
+test('#817 r1 tooltip: a badge on the same battery sensor is shown once, other badges keep the line', t => {
+  t.mock.timers.enable({apis: ['setTimeout']});
   const hass = ha([['sensor.battery', '37.6']]);
   hass.states['sensor.battery'].attributes.unit_of_measurement = '%';
   const badge = (source, enabled = true) => marker({
@@ -226,7 +231,7 @@ test('#817 r1 tooltip: a badge on the same battery sensor is shown once, other b
   const host = tipHost(hass);
   const presented = host._devicePresentation(same, true).valueBadge;
   assert.match(presented.fullText, /37\.6/, 'the badge itself shows the battery sensor');
-  for (const tip of Object.values(tips(host, same))) {
+  for (const tip of Object.values(tips(host, same, t.mock.timers))) {
     assert.equal(tip.battery, '', tip.source);
     assert.equal(tip.meta, `TS0201 · ${presented.fullText.replace(/ /g, '\u00a0')}`, tip.source);
   }
@@ -234,7 +239,7 @@ test('#817 r1 tooltip: a badge on the same battery sensor is shown once, other b
     ['badge on another entity', badge({ kind: 'entity_state', entity_id: 'sensor.temp' })],
     ['badge disabled', badge({ kind: 'entity_state', entity_id: 'sensor.battery' }, false)],
   ]) {
-    for (const tip of Object.values(tips(tipHost(hass), device))) {
+    for (const tip of Object.values(tips(tipHost(hass), device, t.mock.timers))) {
       assert.equal(tip.battery, 'Battery\u00a038%', `${label}: ${tip.source}`);
     }
   }

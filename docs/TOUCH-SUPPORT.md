@@ -193,6 +193,13 @@ desktop hover without a reload. Space/mode changes, page hiding and remounts
 also discard transient hover. Keyboard focus and explicit click/tap surfaces
 remain independent of this visual hover gate.
 
+Device pointer tooltips wait 150 ms within one hover owner. Movement during
+that dwell updates the prospective anchor; after opening the anchor stays put.
+Live HA commits retain the current presentation and refresh its content without
+replaying entry. Device surfaces use UI Kit's 180/140 ms opacity reveal/leave,
+with immediate paint under reduced motion. Departure and hard lifecycle changes
+retire pending visits; a real viewport resize can reclamp an open tooltip.
+
 In View, a device reached with visible keyboard focus opens the same anchored
 device tooltip as mouse hover. It follows focus from marker to marker and closes
 on blur, space/mode changes, page hiding or remount. Touch and pen still never

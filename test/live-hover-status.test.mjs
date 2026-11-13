@@ -36,7 +36,8 @@ test('#1119 refreshing device status leaves room information unchanged', () => {
   assert.equal(host._tip,room);
 });
 
-test('#1119 retiring a pointer target does not retire a different valid focus tooltip', () => {
+test('#1119 retiring a pointer target does not retire a different valid focus tooltip', t => {
+  t.mock.timers.enable({apis: ['setTimeout']});
   const a = {id:'a',name:'Pointer',model:'',entities:[]};
   const b = {id:'b',name:'Keyboard',model:'',entities:[]};
   const host = {_devices:[a,b],_mode:'view',_drag:null,_deviceDrag:null,_tip:null,
@@ -47,6 +48,7 @@ test('#1119 retiring a pointer target does not retire a different valid focus to
       offline:false,powerOff:false})};
   showDeviceFocusTip(host,{matches:()=>true,getBoundingClientRect:()=>({right:42,top:18})},b);
   showDevicePointerTip(host,{clientX:90,clientY:60},a);
+  t.mock.timers.tick(150);
   host._devices=[b]; refreshDeviceTip(host);
   assert.equal(host._tip,null);
   clearPointerHover(host);

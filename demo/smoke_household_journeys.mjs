@@ -177,7 +177,7 @@ check('j4.focus_tooltip_is_anchored_in_viewport',
   j4.focusTooltip.source === 'focus' && j4.focusTooltip.inViewport, true);
 check('j4.enter_calls_service', j4.calls.length > 0, true);
 
-const j4DualInput = await page.evaluate((focusId) => {
+const j4DualInput = await page.evaluate(async (focusId) => {
   const card = window.__card;
   const root = card.renderRoot;
   const tip = root.querySelector('[data-hp-live-tip]');
@@ -202,6 +202,11 @@ const j4DualInput = await page.evaluate((focusId) => {
     clientX: (otherBox?.left || 0) + (otherBox?.width || 0) / 2,
     clientY: (otherBox?.top || 0) + (otherBox?.height || 0) / 2,
   }));
+  const pointerDeadline = performance.now() + 1500;
+  while (card._tip?.source !== 'pointer') {
+    if (performance.now() > pointerDeadline) throw Error('Pointer tooltip did not complete its dwell');
+    await new Promise(requestAnimationFrame);
+  }
   const afterDevice = {
     source: card._tip?.source || null,
     title: tip?.querySelector('b')?.textContent?.trim() || '',

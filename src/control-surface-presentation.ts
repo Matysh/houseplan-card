@@ -15,7 +15,8 @@ export class ControlSurfacePresentation {
   private media: MediaQueryList | null = null;
   private generation = 0;
 
-  public constructor(private readonly repaint: () => void) {}
+  public constructor(private readonly repaint: () => void,
+    private readonly effect: 'slide' | 'fade' = 'slide') {}
 
   public get mounted(): boolean { return this.phase !== 'hidden'; }
   public get interactive(): boolean { return this.wanted && this.mounted; }
@@ -60,7 +61,9 @@ export class ControlSurfacePresentation {
     this.media = media || null;
     this.media?.addEventListener('change', this.motionChanged);
     const timing = this.wanted ? controlMotion.appear : controlMotion.leave;
-    const animation = element.animate(controlSurfaceFrames(this.wanted, from), { ...timing, fill: 'both' });
+    const frames = controlSurfaceFrames(this.wanted, from);
+    const animation = element.animate(this.effect === 'fade' ? frames.map(({ opacity }) => ({ opacity })) : frames,
+      { ...timing, fill: 'both' });
     this.animation = animation;
     const finish = () => {
       if (token !== this.generation || animation !== this.animation) return;

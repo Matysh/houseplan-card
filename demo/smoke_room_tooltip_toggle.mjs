@@ -128,6 +128,11 @@ const result = await page.evaluate(async () => {
 
   root().querySelector('.dev').dispatchEvent(mouse('pointermove', 200, 200));
   await card.updateComplete;
+  const deviceDeadline = performance.now() + 1500;
+  while (card._tip?.room !== false) {
+    if (performance.now() > deviceDeadline) throw Error('Device tooltip did not complete its dwell');
+    await new Promise(requestAnimationFrame);
+  }
   const deviceTip = root().querySelector('.tip');
   out.deviceTipSurvives = card._tip?.room === false && !!deviceTip && !deviceTip.hidden
     && deviceTip.textContent.includes(card._tip.title);

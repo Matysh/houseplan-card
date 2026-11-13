@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Show device tooltips after a short hover dwell, keep their anchor and animation across pointer movement and live HA updates, and fade with UI Kit timing. Retire stale visits at lifecycle boundaries and reclamp on real viewport resize (#1409).
+
 - Keep each device-tooltip metric's label, value and unit together when wrapping, while long model names and separate metrics still wrap within the viewport (#1411).
 
 - Keep the pointer cursor on source-picker buttons, including Icon state source, while search fields retain their text cursor and disabled controls keep their existing affordance (#1410).
