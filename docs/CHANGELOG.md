@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep remount/layout boundary events from reviving a retired mouse tooltip without fresh movement; preserve keyboard focus tips and normal mouse recovery (#1413, houseplan-e2e#50).
+
 - Declare the existing live tooltip as a read-only HA E2E hook; preserve hover behavior and the strict selector contract (#1412, houseplan-e2e#50).
 
 - Show device tooltips after a short hover dwell, keep their anchor and animation across pointer movement and live HA updates, and fade with UI Kit timing. Retire stale visits at lifecycle boundaries and reclamp on real viewport resize (#1409).

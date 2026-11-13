@@ -84,3 +84,12 @@ test('#1409 visible keyboard focus is immediate and cancels a pending pointer cl
   t.mock.timers.tick(300); assert.equal(host._tip.deviceId, 'b');
   clearPointerHover(host); assert.equal(host._tip.deviceId, 'b');
 });
+
+test('#1413 an ignored mouse boundary does not retire a valid keyboard tooltip', t => {
+  const host = fixture(t), target = {matches: () => true, getBoundingClientRect: () => ({right: 42, top: 18})};
+  showDeviceFocusTip(host, target, host._devices[1]);
+  host._pointerModality.hoverEnabled = false;
+  showDevicePointerTip(host, {...point(), type: 'pointerover'}, host._devices[0]);
+  t.mock.timers.tick(300);
+  assert.equal(host._tip.source, 'focus'); assert.equal(host._tip.deviceId, 'b');
+});

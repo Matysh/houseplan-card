@@ -193,6 +193,10 @@ desktop hover without a reload. Space/mode changes, page hiding and remounts
 also discard transient hover. Keyboard focus and explicit click/tap surfaces
 remain independent of this visual hover gate.
 
+Browser-generated enter/over events after layout or remount cannot reactivate
+a retired mouse-hover gate. A new mouse move or press revalidates it; keyboard
+focus remains independent of ignored boundary events.
+
 Device pointer tooltips wait 150 ms within one hover owner. Movement during
 that dwell updates the prospective anchor; after opening the anchor stays put.
 Live HA commits retain the current presentation and refresh its content without

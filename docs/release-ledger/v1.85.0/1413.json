@@ -1,0 +1,1 @@
+{"schema":1,"issue":1413,"baseStable":"v1.85.0","category":"stable-fix","rationale":"Browser boundary events cannot restore hover authority after a lifecycle reset without new pointer input.","summary":{"ru":"Убран повторный показ тултипа после переподключения без движения мыши.","en":"Prevent tooltip revival after remount without fresh pointer input."}}

@@ -75,3 +75,22 @@ test('controllers isolate card instances and revalidate hybrid input', () => {
   first.disconnect();
   second.disconnect();
 });
+
+test('#1413 boundary events cannot revive hover after mount or suspension', () => {
+  const h = harness(), controller = new PointerModalityController(h.host);
+  const note = type => controller.note({type, pointerType: 'mouse'});
+  controller.connect(h.win);
+  for (const type of ['pointerover', 'pointerenter']) {
+    note(type); assert.equal(controller.hoverEnabled, false);
+  }
+  note('pointermove'); assert.equal(controller.hoverEnabled, true);
+  controller.suspend();
+  for (const type of ['pointerover', 'pointerenter']) {
+    note(type); assert.equal(controller.hoverEnabled, false);
+  }
+  note('pointerdown'); assert.equal(controller.hoverEnabled, true);
+  controller.disconnect(); controller.connect(h.win);
+  note('pointerover'); assert.equal(controller.hoverEnabled, false);
+  note('pointermove'); assert.equal(controller.hoverEnabled, true);
+  controller.disconnect();
+});

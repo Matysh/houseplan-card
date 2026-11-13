@@ -5,6 +5,7 @@ export type PointerModality = 'unknown' | 'mouse' | 'touch' | 'pen';
 export const POINTER_HOVER_QUERY = '(any-hover: hover) and (any-pointer: fine)';
 
 type PointerLike = {
+  type?: string;
   pointerType?: string;
   sourceCapabilities?: { firesTouchEvents?: boolean } | null;
 };
@@ -76,7 +77,12 @@ export class PointerModalityController {
   }
 
   note(event: PointerLike): PointerModality {
-    this._modality = nextPointerModality(this._modality, event);
+    const next = nextPointerModality(this._modality, event);
+    // Layout/remount can dispatch a trusted enter/over without mouse motion.
+    // It cannot revive a gate retired by a lifecycle or modality boundary.
+    if (!this._gate && next === 'mouse'
+        && (event.type === 'pointerover' || event.type === 'pointerenter')) return this._modality;
+    this._modality = next;
     this._syncGate();
     return this._modality;
   }

@@ -138,7 +138,12 @@ const deviceTipContent = (
 export function showDevicePointerTip(value: object, event: PointerEvent, device: DevItem): void {
   const host = value as DeviceTipHost;
   host._notePointer(event);
-  if (!host._pointerModality.hoverEnabled || host._drag || host._deviceDrag
+  if (!host._pointerModality.hoverEnabled) {
+    cancelPointerTip(host);
+    host._deviceHits.hover(host.renderRoot, null);
+    return;
+  }
+  if (host._drag || host._deviceDrag
       || !['view', 'devices'].includes(host._mode)) {
     resetHouseplanHover(host);
     host._deviceHits.hover(host.renderRoot, null);
