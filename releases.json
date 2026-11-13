@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 797,
+  "revision": 798,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -90467,13 +90467,15 @@
           "from": "c1ed7d9a32b8cdb22670dd51df45705d8b01f240",
           "to": "6b9b6a122922133dd4456336b7f5c05b56b4b19c",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "17d4d17b9973ffd53d59bb477eb353902f23de06"
         },
         {
           "from": "6b9b6a122922133dd4456336b7f5c05b56b4b19c",
           "to": "17d4d17b9973ffd53d59bb477eb353902f23de06",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "b51175c5a26569993be178aac91f9ecd3f640906"
         }
       ],
       "diagnostics": [],
@@ -91158,11 +91160,11 @@
           "sha": "2892d28f49b424dc0668ad1203568532c68dff85"
         },
         "return-to-dev": {
-          "status": "pending",
+          "status": "completed",
+          "alreadyIncluded": true,
+          "devSha": "b51175c5a26569993be178aac91f9ecd3f640906",
           "issue": 1408,
-          "branch": "issue/1408-release-return-17d4d17b9973",
-          "worktree": "/home/sergey/hp-1380-witness-repairs/artifacts/process-next/return-worktrees/17d4d17b9973",
-          "reason": "Return task is returned"
+          "branch": "issue/1408-release-return-17d4d17b9973"
         }
       }
     }
@@ -95932,7 +95934,8 @@
     "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:07f9055f-4f60-4d74-9c2d-3707b6fbf936": "9117cb6c28d20e7b836a6a6168ab8a382bc295984d24efa63724292b78edb95e",
     "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:622c7c3f-8f59-479a-b72e-6ae81c1b80b9": "38148be6afb66939531afb9df31bc7cec2981ad8d45614a5cfddb3214feb063b",
     "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:5314cb04-5d1e-41c2-abe9-e4155ff72ae0": "a4952aeb241100826d763d3314ec2f4fc5d6d17f01c062d20cc9c6200c1f6245",
-    "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:504f485b-c748-4177-a949-efc793da6827": "a82c58ad8a9b9a831fd4eb4d3074048786f9fc523563ff6abfb554d8f836d1ed"
+    "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:504f485b-c748-4177-a949-efc793da6827": "a82c58ad8a9b9a831fd4eb4d3074048786f9fc523563ff6abfb554d8f836d1ed",
+    "release-1-85-2-beta-1-publish-final-17d4d17b9:completion:27ccb5c4-7f70-43f2-bab9-9eaf13fc8406": "4a295579766f6c92b720c7e0f468ac84f3b24e56a06bde2de24e43ca3c595706"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
