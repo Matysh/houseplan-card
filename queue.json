@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11653,
+  "revision": 11654,
   "nextTicket": 419,
   "nextFence": 419,
   "tasks": {
@@ -3681,6 +3681,110 @@
         "at": 1794607762343,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1393,
+        "requestId": "review:1393:1:5395cb2888eb7fd79732b12be66805e57356baca:281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
+        "kind": "code",
+        "base": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
+        "materialSha": "759ff053090317b430cdee3dca12fba18892de4b",
+        "patchId": "5395cb2888eb7fd79732b12be66805e57356baca",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1393,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1393",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "Ветка `codex/1393-ha-component-inventory` от dev `281365641`. AST tagged-template inventory: 7 реальных тегов в 46 файлах; простые упоминания в 90 файлах включают CSS/комментарии. `ha-panel-custom` — комментарий о внешнем HA-контейнере, не восьмой тег renderer. Все 43 файла с `ha-icon` перечислены в JSON. Указаны также drawer/bottom-sheet/root/locale/theme/font зависимости.\n\n15 изолированных bootstrap samples (5 на вариант): нынешний HA 1 548 459 decoded resource bytes / 20 requests / 143,2 ms median; без card 1 537 661 / 19 / 128,4; native HpDialog + finite SVG 198 166 / 5 / 39,2. Нативный probe ещё использует локальные Roboto из HA cache для сопоставимости: это не утверждение о самостоятельной поставке шрифтов. 111 MB wheel не приравнивается к browser payload. Из `dist` в пробник не загружается код продукта.\n\nИзменены только документация и RU/EN changelog. Продуктовые тесты/build/lint/проверка ссылок не запускались. Исследовательский временный bundle/probe описан как measurement, не как проверка полного UI. При воспроизведении первый вспомогательный запуск остановился из-за отсутствующего необязательного esbuild (переведён на штатный Rollup), затем поправлена проверка видимости `display:contents` HA shell на реально видимое поле; это не изменение продуктового теста/допуска. Завершённые samples и ограничения сохранены.\n\nДля ревью: полнота инвентаря, границы сопоставимости измерений, различие wheel/реальных ресурсов, отсутствие заявления о pixel parity и отсутствие изменений продукта. Реализацию компонентов owner разрешил как направление, но её задачи этим отчётом не запускаются."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Исследование можно принять. Инвентарь `ha-*` в JSON сходится с отчётом, а утверждения о native-ветке `HpDialog` и fallback-ветках `ha-switch`/`ha-slider` подтверждаются исходниками. Числа bootstrap-probe внутренне согласованы: сумма ресурсов каждого варианта совпадает с медианой. Границы измерения названы честно: это не замер всего редактора, 111 МБ — размер wheel, шрифты в native-варианте временно берутся из HA cache, pixel parity не заявлен. Продукт не меняется: в diff только документация и changelog. Блокеров нет. Два полезных уточнения: (1) перечислить DOM-потребители `ha-icon`/`ha-card`/`ha-dialog`, найденные вне шаблонов, чтобы они не потерялись в #1422; (2) в таблице probe отметить, что часть разницы приходится на HA-локаль и module index самого UI Lab, а сохранённый JSON — сокращённая форма отчёта, который пишет reproducer.",
+          "understanding": "Задача фазы 0 (#1390): понять, какие HA-компоненты использует frontend, и записать решённое владельцем направление для будущего автономного редактора — UI Kit и локальные SVG, без замены HA-компонентов в интеграции. До изменения инвентаря не было, в issue фигурировало предварительное число «43». После изменения есть три документа: отчёт `docs/design/1393-ha-components.md` (таблица 7 тегов, косвенные зависимости, варианты, лицензии, задачи #1422/#1423), машинный `1393-ha-components-measurement.json` (места тегов по файлам и строкам, pin HA, статическое замыкание chunks, 15 samples) и `1393-probe-reproducer.md` с программой, которая выполняет AST-инвентаризацию и прогоняет три варианта оболочки в Playwright на UI Lab server. Что разобрано: подсчёт `ha-icon` в JSON (221 место в 43 файлах; вместе с `language-runtime`, `editor.ts` и `space-editor.ts` получается 46 файлов); выборочные строки (`hp-dialog.ts:812/814/830/848`, `language-runtime.ts:171`, `houseplan-editor-runtime.ts:10155-10172`); выбор ветки в `HpDialog` (`_useHaDialog = !!customElements.get('ha-dialog')`, стр. 436); `demo/ui-lab/ha-bootstrap.mjs` и `server.mjs` — существование `createLabServer`, совпадение заменяемых строк для reduced-варианта, требование валидного `dist`; `ha-lock.json`; поиск создания и поиска `ha-*` вне tagged templates (`createElement`, `customElements.get`, `localName`, `querySelector`).",
+          "analysis": [
+            {
+              "topic": "Полнота и корректность инвентаря тегов",
+              "assessment": "Метод — AST по сегментам `html`/`svg` вместо простого grep. Он правильно отделяет отрисовываемые теги от CSS и комментариев, а `ha-panel-custom` верно не засчитан восьмым тегом. Числа в JSON и в отчёте сходятся. Динамических способов отрисовать `ha-*` в `src` (`unsafeStatic`, `createElement('ha-…')`) нет, так что 7 тегов — полный перечень отрисовываемых компонентов. Утверждения о fallback-ветках проверяются по коду: у `_boolInput` и `_rangeInput` есть native-ветки на `<input>`, у `HpDialog` — полноценная native-ветка на `<dialog>`.",
+              "evidence": "JSON: 221 запись `ha-icon` в 43 файлах, плюс `src/i18n/language-runtime.ts:171`, `src/editor.ts`, `src/space-editor.ts` — итого 46 файлов. `src/hp-dialog.ts:436`, `:866`; `src/houseplan-editor-runtime.ts:10155-10172`. Поиск `unsafeStatic` и `createElement('ha-` по `src` ничего не нашёл."
+            },
+            {
+              "topic": "Косвенные DOM-зависимости",
+              "assessment": "Перечислены drawer, bottom-sheet, `home-assistant` root, `.hass`, тема, шрифты и локаль. Но часть DOM-потребителей конкретных тегов в отчёте и JSON по файлам и строкам не указана. Код находит `ha-icon` по имени тега: `header-actions-menu` копирует атрибут `icon`, `panel-header-flow` строит метрики, `external-screens` подменяет иконку после копирования. `ha-card` ищут читатели размеров. На выводы и направление это не влияет: отчёт прямо требует «перевести реальные DOM-потребители размеров, не просто переименовать тег». Однако #1422 придётся искать эти места заново.",
+              "evidence": "`src/header-actions-menu.ts:8-15`, `src/panel-header-flow.ts:90`, `src/editors/external-screens.ts:118`, `src/editors/properties/editor.ts:232`, `src/houseplan-editor-runtime.ts:1366`, `src/hp-dialog.ts:626`."
+            },
+            {
+              "topic": "Согласованность и границы измерений",
+              "assessment": "Числа внутренне согласованы. Отчёт не выдаёт probe за замер редактора и честно разделяет размер wheel, статическое замыкание chunks и реально загруженные ресурсы. Нужно понимать, что время 143/128 мс в HA-вариантах — во многом свойство bootstrap самого UI Lab: `prepare()` загружает chunks последовательно, а `/ha-modules.json` (452 КБ) существует только в UI Lab. Кроме того, HA-варианты загружают локаль HA (translations 134 КБ и intl displaynames 43 КБ), а native-вариант не загружает никакой локали. Отчёт формулирует это как «UI Lab bootstrap» и говорит, что паритет без локали не достигается, поэтому вывод не завышен. Но разница «1,55 МБ против 0,2 МБ» не равна цене самих HA-компонентов в настоящем HA.",
+              "evidence": "Сумма `representativeResources.full` = 1 548 459, `native` = 198 166; reduced = full − 10 765 (chunk 45246) − 33 (bootstrap). `demo/ui-lab/ha-bootstrap.mjs:10-31` (последовательные `await prepare`), `demo/ui-lab/server.mjs:100`."
+            },
+            {
+              "topic": "Воспроизводимость",
+              "assessment": "Программа полная, ресурсы, на которые она опирается, есть на исходном SHA. Заменяемые строки для reduced-варианта существуют в `ha-bootstrap.mjs:29,32`; подмена сработала, что видно по 19 запросам против 20 и размеру bootstrap 2559 против 2592 байт. Внешний трафик блокируется через route. Расхождение одно: reproducer пишет `artifacts/1393/report.json` с вложенными `ready`/`resources`/`requests`, а в репозитории лежит другая форма — с полями `schema`, `issue`, `representativeResources` и плоскими `readyMs`/`resourceBytes`. Как получена сохранённая форма, не описано. Кроме того, probe записывает в `__probeReady` флаги `native`/`ha`, но не проверяет, что каждый вариант действительно отрисовал свою ветку; косвенно это подтверждается различием ресурсов.",
+              "evidence": "`docs/design/1393-probe-reproducer.md` (финальный объект `report`) против верхнего уровня `1393-ha-components-measurement.json`; `demo/ui-lab/server.mjs:25-40,56`."
+            },
+            {
+              "topic": "Решение и последующие задачи",
+              "assessment": "Направление соответствует решению владельца из AC2. Отчёт верно строит его на существующей native-ветке `HpDialog` и fallback-ветках Form Kit, без второй modal-системы и второго набора редакторов. Лицензионная часть сформулирована осторожно (Apache-2.0 для HA frontend, существующие MDI notices) и не претендует на юридическое заключение. #1422/#1423 описаны как заблокированные стартом фазы; существование самих issue в GitHub я не проверял.",
+              "evidence": "`docs/design/1393-ha-components.md`, разделы «Решение», «Варианты и риски», «Последующие задачи»; `THIRD_PARTY_NOTICES.md:61`; `custom_components/houseplan/licenses/mdi.txt`."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Добавить в отчёт или JSON короткий список DOM-потребителей тегов вне шаблонов: `header-actions-menu.ts:8`, `panel-header-flow.ts:90`, `external-screens.ts:118` (`ha-icon`), `properties/editor.ts:232`, `houseplan-editor-runtime.ts:1366` (`ha-card`), `hp-dialog.ts:626` (`ha-dialog`). Цена — несколько строк. Польза: #1422 не потеряет код, который ищет иконки по имени тега, когда `ha-icon` будет заменён SVG painter.",
+            "Под таблицей probe одной фразой отметить, что около 177 КБ в HA-вариантах — локаль HA (translations и displaynames), которой нет в native-варианте, а 452 КБ `/ha-modules.json` и последовательная загрузка chunks относятся к bootstrap UI Lab. Это защитит от прочтения «HA-компоненты стоят 1,35 МБ и 100 мс».",
+            "Привести форму сохранённого JSON к выходу reproducer или описать преобразование `report.json` → `1393-ha-components-measurement.json`: как получены `representativeResources` и почему отброшены полные `requests`. Заодно в probe стоит явно проверять `__probeReady.native`/`ha` для каждого варианта, чтобы тихий выбор не той ветки не прошёл незамеченным."
+          ],
+          "boundaries": "Сборку, тесты, probe и reproducer я не запускал — это запрещено на S7. Числа samples проверены только на внутреннюю согласованность (суммы ресурсов против медиан, разница между вариантами), а не повторным прогоном. Использован успешный набор S6 `20261113T220901993-d56fca1a` на `759ff053`; продуктовые build и lint, по словам автора, не запускались, и для изменения только в документации это оправдано. По исходникам проверены `hp-dialog.ts`, `houseplan-editor-runtime.ts` (`_boolInput`/`_rangeInput`), `language-runtime.ts`, `demo/ui-lab/ha-bootstrap.mjs`, `server.mjs`, `ha-lock.json`, а также точечным поиском — `panel-sidebar-state.ts`, `houseplan-panel.ts`, `header-actions-menu.ts`, `panel-header-flow.ts` и `card-picker-registration.ts`. Не проверены: все 221 строку `ha-icon` по отдельности (проверены выборочно), содержимое HA cache (2892 файла, 3071 запись index), лицензии конкретного wheel, существование и статус #1422/#1423 в GitHub, решение владельца в чате (принимаю по снимку issue)."
+        },
+        "usage": {
+          "input_tokens": 24,
+          "cache_creation_input_tokens": 72530,
+          "cache_read_input_tokens": 597105,
+          "output_tokens": 14080,
+          "output_tokens_details": {
+            "thinking_tokens": 6622
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 72530,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 886,
+              "cache_read_input_tokens": 62956,
+              "cache_creation_input_tokens": 13778,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 13778
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсследование можно принять. Инвентарь `ha-*` в JSON сходится с отчётом, а утверждения о native-ветке `HpDialog` и fallback-ветках `ha-switch`/`ha-slider` подтверждаются исходниками. Числа bootstrap-probe внутренне согласованы: сумма ресурсов каждого варианта совпадает с медианой. Границы измерения названы честно: это не замер всего редактора, 111 МБ — размер wheel, шрифты в native-варианте временно берутся из HA cache, pixel parity не заявлен. Продукт не меняется: в diff только документация и changelog. Блокеров нет. Два полезных уточнения: (1) перечислить DOM-потребители `ha-icon`/`ha-card`/`ha-dialog`, найденные вне шаблонов, чтобы они не потерялись в #1422; (2) в таблице probe отметить, что часть разницы приходится на HA-локаль и module index самого UI Lab, а сохранённый JSON — сокращённая форма отчёта, который пишет reproducer.\n\n## Понимание решения\n\nЗадача фазы 0 (#1390): понять, какие HA-компоненты использует frontend, и записать решённое владельцем направление для будущего автономного редактора — UI Kit и локальные SVG, без замены HA-компонентов в интеграции. До изменения инвентаря не было, в issue фигурировало предварительное число «43». После изменения есть три документа: отчёт `docs/design/1393-ha-components.md` (таблица 7 тегов, косвенные зависимости, варианты, лицензии, задачи #1422/#1423), машинный `1393-ha-components-measurement.json` (места тегов по файлам и строкам, pin HA, статическое замыкание chunks, 15 samples) и `1393-probe-reproducer.md` с программой, которая выполняет AST-инвентаризацию и прогоняет три варианта оболочки в Playwright на UI Lab server. Что разобрано: подсчёт `ha-icon` в JSON (221 место в 43 файлах; вместе с `language-runtime`, `editor.ts` и `space-editor.ts` получается 46 файлов); выборочные строки (`hp-dialog.ts:812/814/830/848`, `language-runtime.ts:171`, `houseplan-editor-runtime.ts:10155-10172`); выбор ветки в `HpDialog` (`_useHaDialog = !!customElements.get('ha-dialog')`, стр. 436); `demo/ui-lab/ha-bootstrap.mjs` и `server.mjs` — существование `createLabServer`, совпадение заменяемых строк для reduced-варианта, требование валидного `dist`; `ha-lock.json`; поиск создания и поиска `ha-*` вне tagged templates (`createElement`, `customElements.get`, `localName`, `querySelector`).\n\n## Разбор решения\n\n### Полнота и корректность инвентаря тегов\n\nМетод — AST по сегментам `html`/`svg` вместо простого grep. Он правильно отделяет отрисовываемые теги от CSS и комментариев, а `ha-panel-custom` верно не засчитан восьмым тегом. Числа в JSON и в отчёте сходятся. Динамических способов отрисовать `ha-*` в `src` (`unsafeStatic`, `createElement('ha-…')`) нет, так что 7 тегов — полный перечень отрисовываемых компонентов. Утверждения о fallback-ветках проверяются по коду: у `_boolInput` и `_rangeInput` есть native-ветки на `<input>`, у `HpDialog` — полноценная native-ветка на `<dialog>`.\n\nОснование: JSON: 221 запись `ha-icon` в 43 файлах, плюс `src/i18n/language-runtime.ts:171`, `src/editor.ts`, `src/space-editor.ts` — итого 46 файлов. `src/hp-dialog.ts:436`, `:866`; `src/houseplan-editor-runtime.ts:10155-10172`. Поиск `unsafeStatic` и `createElement('ha-` по `src` ничего не нашёл.\n\n### Косвенные DOM-зависимости\n\nПеречислены drawer, bottom-sheet, `home-assistant` root, `.hass`, тема, шрифты и локаль. Но часть DOM-потребителей конкретных тегов в отчёте и JSON по файлам и строкам не указана. Код находит `ha-icon` по имени тега: `header-actions-menu` копирует атрибут `icon`, `panel-header-flow` строит метрики, `external-screens` подменяет иконку после копирования. `ha-card` ищут читатели размеров. На выводы и направление это не влияет: отчёт прямо требует «перевести реальные DOM-потребители размеров, не просто переименовать тег». Однако #1422 придётся искать эти места заново.\n\nОснование: `src/header-actions-menu.ts:8-15`, `src/panel-header-flow.ts:90`, `src/editors/external-screens.ts:118`, `src/editors/properties/editor.ts:232`, `src/houseplan-editor-runtime.ts:1366`, `src/hp-dialog.ts:626`.\n\n### Согласованность и границы измерений\n\nЧисла внутренне согласованы. Отчёт не выдаёт probe за замер редактора и честно разделяет размер wheel, статическое замыкание chunks и реально загруженные ресурсы. Нужно понимать, что время 143/128 мс в HA-вариантах — во многом свойство bootstrap самого UI Lab: `prepare()` загружает chunks последовательно, а `/ha-modules.json` (452 КБ) существует только в UI Lab. Кроме того, HA-варианты загружают локаль HA (translations 134 КБ и intl displaynames 43 КБ), а native-вариант не загружает никакой локали. Отчёт формулирует это как «UI Lab bootstrap» и говорит, что паритет без локали не достигается, поэтому вывод не завышен. Но разница «1,55 МБ против 0,2 МБ» не равна цене самих HA-компонентов в настоящем HA.\n\nОснование: Сумма `representativeResources.full` = 1 548 459, `native` = 198 166; reduced = full − 10 765 (chunk 45246) − 33 (bootstrap). `demo/ui-lab/ha-bootstrap.mjs:10-31` (последовательные `await prepare`), `demo/ui-lab/server.mjs:100`.\n\n### Воспроизводимость\n\nПрограмма полная, ресурсы, на которые она опирается, есть на исходном SHA. Заменяемые строки для reduced-варианта существуют в `ha-bootstrap.mjs:29,32`; подмена сработала, что видно по 19 запросам против 20 и размеру bootstrap 2559 против 2592 байт. Внешний трафик блокируется через route. Расхождение одно: reproducer пишет `artifacts/1393/report.json` с вложенными `ready`/`resources`/`requests`, а в репозитории лежит другая форма — с полями `schema`, `issue`, `representativeResources` и плоскими `readyMs`/`resourceBytes`. Как получена сохранённая форма, не описано. Кроме того, probe записывает в `__probeReady` флаги `native`/`ha`, но не проверяет, что каждый вариант действительно отрисовал свою ветку; косвенно это подтверждается различием ресурсов.\n\nОснование: `docs/design/1393-probe-reproducer.md` (финальный объект `report`) против верхнего уровня `1393-ha-components-measurement.json`; `demo/ui-lab/server.mjs:25-40,56`.\n\n### Решение и последующие задачи\n\nНаправление соответствует решению владельца из AC2. Отчёт верно строит его на существующей native-ветке `HpDialog` и fallback-ветках Form Kit, без второй modal-системы и второго набора редакторов. Лицензионная часть сформулирована осторожно (Apache-2.0 для HA frontend, существующие MDI notices) и не претендует на юридическое заключение. #1422/#1423 описаны как заблокированные стартом фазы; существование самих issue в GitHub я не проверял.\n\nОснование: `docs/design/1393-ha-components.md`, разделы «Решение», «Варианты и риски», «Последующие задачи»; `THIRD_PARTY_NOTICES.md:61`; `custom_components/houseplan/licenses/mdi.txt`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Добавить в отчёт или JSON короткий список DOM-потребителей тегов вне шаблонов: `header-actions-menu.ts:8`, `panel-header-flow.ts:90`, `external-screens.ts:118` (`ha-icon`), `properties/editor.ts:232`, `houseplan-editor-runtime.ts:1366` (`ha-card`), `hp-dialog.ts:626` (`ha-dialog`). Цена — несколько строк. Польза: #1422 не потеряет код, который ищет иконки по имени тега, когда `ha-icon` будет заменён SVG painter.\n- Под таблицей probe одной фразой отметить, что около 177 КБ в HA-вариантах — локаль HA (translations и displaynames), которой нет в native-варианте, а 452 КБ `/ha-modules.json` и последовательная загрузка chunks относятся к bootstrap UI Lab. Это защитит от прочтения «HA-компоненты стоят 1,35 МБ и 100 мс».\n- Привести форму сохранённого JSON к выходу reproducer или описать преобразование `report.json` → `1393-ha-components-measurement.json`: как получены `representativeResources` и почему отброшены полные `requests`. Заодно в probe стоит явно проверять `__probeReady.native`/`ha` для каждого варианта, чтобы тихий выбор не той ветки не прошёл незамеченным.\n\n## Границы анализа\n\nСборку, тесты, probe и reproducer я не запускал — это запрещено на S7. Числа samples проверены только на внутреннюю согласованность (суммы ресурсов против медиан, разница между вариантами), а не повторным прогоном. Использован успешный набор S6 `20261113T220901993-d56fca1a` на `759ff053`; продуктовые build и lint, по словам автора, не запускались, и для изменения только в документации это оправдано. По исходникам проверены `hp-dialog.ts`, `houseplan-editor-runtime.ts` (`_boolInput`/`_rangeInput`), `language-runtime.ts`, `demo/ui-lab/ha-bootstrap.mjs`, `server.mjs`, `ha-lock.json`, а также точечным поиском — `panel-sidebar-state.ts`, `houseplan-panel.ts`, `header-actions-menu.ts`, `panel-header-flow.ts` и `card-picker-registration.ts`. Не проверены: все 221 строку `ha-icon` по отдельности (проверены выборочно), содержимое HA cache (2892 файла, 3071 запись index), лицензии конкретного wheel, существование и статус #1422/#1423 в GitHub, решение владельца в чате (принимаю по снимку issue).\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 281365641f6194a26a3cfb5fffcc0fb20ed4dea9 → 759ff053090317b430cdee3dca12fba18892de4b\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1393, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nВетка `codex/1393-ha-component-inventory` от dev `281365641`. AST tagged-template inventory: 7 реальных тегов в 46 файлах; простые упоминания в 90 файлах включают CSS/комментарии. `ha-panel-custom` — комментарий о внешнем HA-контейнере, не восьмой тег renderer. Все 43 файла с `ha-icon` перечислены в JSON. Указаны также drawer/bottom-sheet/root/locale/theme/font зависимости.\n\n15 изолированных bootstrap samples (5 на вариант): нынешний HA 1 548 459 decoded resource bytes / 20 requests / 143,2 ms median; без card 1 537 661 / 19 / 128,4; native HpDialog + finite SVG 198 166 / 5 / 39,2. Нативный probe ещё использует локальные Roboto из HA cache для сопоставимости: это не утверждение о самостоятельной поставке шрифтов. 111 MB wheel не приравнивается к browser payload. Из `dist` в пробник не загружается код продукта.\n\nИзменены только документация и RU/EN changelog. Продуктовые тесты/build/lint/проверка ссылок не запускались. Исследовательский временный bundle/probe описан как measurement, не как проверка полного UI. При воспроизведении первый вспомогательный запуск остановился из-за отсутствующего необязательного esbuild (переведён на штатный Rollup), затем поправлена проверка видимости `display:contents` HA shell на реально видимое поле; это не изменение продуктового теста/допуска. Завершённые samples и ограничения сохранены.\n\nДля ревью: полнота инвентаря, границы сопоставимости измерений, различие wheel/реальных ресурсов, отсутствие заявления о pixel parity и отсутствие изменений продукта. Реализацию компонентов owner разрешил как направление, но её задачи этим отчётом не запускаются.\n```\n\n</details>\n",
+        "createdAt": "2026-11-13T22:12:29.013Z",
+        "artifactId": 14081670845,
+        "runId": 43516896610,
+        "runAttempt": 1,
+        "completedAt": "2026-11-13T22:12:32Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43516896610",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9"
       }
     },
     "1396": {
@@ -4867,9 +4971,9 @@
     "fence": 418,
     "materialSha": "759ff053090317b430cdee3dca12fba18892de4b",
     "expectedBase": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1794607732010,
-    "expiresAt": 1794611342745,
+    "expiresAt": 1794611572188,
     "patchId": "5395cb2888eb7fd79732b12be66805e57356baca",
     "reviewRequest": "review:1393:1:5395cb2888eb7fd79732b12be66805e57356baca:281365641f6194a26a3cfb5fffcc0fb20ed4dea9"
   },
@@ -4984,6 +5088,10 @@
     },
     "finish:66f16be6-ee8d-43ef-98b8-d57fe8e8ba98:finish:7:review-presentation": {
       "digest": "edd863f5980850329d09591a91af7d3639fcb8f5c18c1e414e8235efbf024aa5",
+      "issue": 1393
+    },
+    "finish:66f16be6-ee8d-43ef-98b8-d57fe8e8ba98:finish:7:review-complete": {
+      "digest": "a59e7efad75eee087954a044b70ff141c9f058e64fd8a1e34ad6d4ed3c2db9e1",
       "issue": 1393
     },
     "finish:66f16be6-ee8d-43ef-98b8-d57fe8e8ba98": {
