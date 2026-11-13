@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 10974,
+  "revision": 10975,
   "nextTicket": 405,
   "nextFence": 405,
   "tasks": {
@@ -4659,6 +4659,15 @@
         "entry": 1,
         "detail": "Поведение: test/mutation-gate.test.mjs: failed",
         "eventId": "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2:finish:3:return:return:1411"
+      },
+      "s6": {
+        "id": "20261113T114251971-1afd40c2",
+        "name": "Тесты для задачи #1411 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T114251971-1afd40c2/report.json",
+        "materialSha": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856",
+        "status": "passed",
+        "finishedAt": "2026-11-13T11:49:15.073Z",
+        "failures": []
       }
     }
   },
@@ -4911,9 +4920,9 @@
     "fence": 404,
     "materialSha": "4ee99d9e17eb09cd0e16444f33fbc725ff5ec856",
     "expectedBase": "9054a6f04bc030867f1d841663b91cdb262b172d",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794570160946,
-    "expiresAt": 1794570820427,
+    "expiresAt": 1794574156990,
     "patchId": "c1462e11e1100fa463bcb38c17d05744e2a7376b"
   },
   "events": {
@@ -4975,6 +4984,10 @@
     },
     "finish:c4b8f4fa-2606-429f-ab41-d5a9a819815c": {
       "digest": "069fabf03e592ee2acbc546de81a0c666c9fa57b44e90a13ca67099eaa56fe27",
+      "issue": 1411
+    },
+    "finish:50df5f80-fd97-4e6c-b45a-f915f2d87426:finish:3:s6-complete": {
+      "digest": "28d1b1d9584133be83d565c27ed0a33fe3345b36b9b518b4ddb7d487e413b2e3",
       "issue": 1411
     },
     "finish:10e1424f-1fa1-481f-a3bc-f92ea72970a2": {
