@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 810,
+  "revision": 811,
   "active": "1.85.2-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -99213,7 +99213,7 @@
         "evidenceStatus": "complete",
         "diagnostics": []
       },
-      "metricsAcceptedSha": null,
+      "metricsAcceptedSha": "86015ab8132a92ab6546eedda2f0421b01700355",
       "portToDev": [
         {
           "from": "72df17f19c3ab7a0b9fead0e8929d2c68b97ae76",
@@ -99235,6 +99235,12 @@
         "selectionDigest": "e84532fe8864a10b3d6dbe4b3a0eecdee3277bdbdcbbe29e51d088779ab08e29",
         "status": "accepted",
         "inventoryComplete": true
+      },
+      "metricsDecision": {
+        "decisionId": "owner-size-accept-1-85-2-beta-2-86015ab81",
+        "source": "chat",
+        "sourceRef": "Codex chat reply request_user_input_async/call_c427944335804646a08abf49475fe17d/0, 2026-11-13",
+        "decisionText": "Владелец ответил: «Принять размер и выпустить beta.2» на вопрос о ZIP 5,02 МБ (stable — 2,88 МБ; beta.1 — 5,01 МБ, основной прирост — gzip-копии). Принят проверенный кандидат 86015ab8132a92ab6546eedda2f0421b01700355, ZIP 5016923 байт, SHA-256 f7c64cf1e6d58a9281b39b4c3e39f6129ee1607ee7b3ce1c90e6a164e0856be2. Все тесты и пакетное ревью прошли."
       }
     }
   },
@@ -104016,7 +104022,8 @@
     "ship-review:prepare:a801b1da-a011-4208-a587-9c26d515fd85": "d06087f8c48ea965648c41ae71d2074d6df30efbef23ec20e0e7b74ff36ef689",
     "ship-review:result:187b6a9f-9821-4539-ac20-4c7dbed4948f": "8eb811caa8c78196811c2b3c1f0ecb9ed127b0aed6e13bf7a01d7609b4ab1589",
     "beta2-20261113-final-report": "c0c3a142fe94ef84aec64818b75f061881c344880c0281bc3fbdfb36b5951094",
-    "beta2-20261113-final-metrics": "5726999aef217904a0d85946cd2000578fde1009740491b3a98b1b110fcaffa9"
+    "beta2-20261113-final-metrics": "5726999aef217904a0d85946cd2000578fde1009740491b3a98b1b110fcaffa9",
+    "beta2-20261113-owner-size-accepted": "ef68d663f2b89a891efe78ee44488d4a6e756fff9bb6fbea34ee6ebf20cd1785"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
