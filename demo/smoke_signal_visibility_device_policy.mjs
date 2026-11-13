@@ -45,7 +45,9 @@ const hover = async id => {
   await page.mouse.move(2, 2);
   await root.locator(`[data-hp="device"][data-id="${id}"]`).hover();
   await settle();
-  return page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp-live-tip]')?.textContent || '');
+  await root.locator('[data-hp="live-tooltip"]').waitFor({ state: 'visible' });
+  return page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp="live-tooltip"]')
+    ?.textContent.replace(/\s+/g, ' ') || '');
 };
 try {
   await page.evaluate(async ids => {

@@ -42,6 +42,9 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   const preview = sr().querySelector('hp-device-preview');
   await preview?.updateComplete;
+  preview?.dispatchEvent(new PointerEvent('pointermove', {
+    pointerType: 'mouse', bubbles: true, composed: true,
+  }));
   preview?.dispatchEvent(new PointerEvent('pointerover', {
     pointerType: 'mouse', bubbles: true, composed: true,
   }));
