@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v1.85.2 — 2026-11-13
+
+- Promote the reviewed 1.85.2 betas with stable-release fixes and preserved visual references.
+- Add independent window leaves, top opening, per-leaf sensors and shades, and manual/sliding doors and gates (#1024).
+- Share two-sided drafting dimensions across walls, nodes, Resize, openings and decor; keep dimensions attached through camera motion and clear of fixed controls (#1381, #1397, #1398, #1403, #1404).
+- Resize across existing junctions in one gesture while preserving wall contours, opening hosts, materials and a single Undo (#1383, #1384).
+- Retain optimization outcomes, reuse registry reads and warm floor models, and negotiate verified gzip frontend chunks (#1170, #1386, #1387).
+- Keep imported SVG backdrop paint and handles consistent across equivalent grid calibrations (#1400).
+- Stabilize device tooltip dwell, anchoring, live updates and remount cleanup; group metric labels with values and restore picker cursors (#1409, #1410, #1411, #1413).
+- Preserve strict regression checks and existing golden references while updating capture waits and declared HA test hooks (#1399, #1401, #1405, #1406, #1412, #1414, #1417, #1419).
 - Preserve the final pointer's fractional coordinates when committing a decor line, so click rounding cannot change its Shift preview or continuation anchor (#1418).
 
 ## v1.85.2-beta.2 — 2026-11-13
