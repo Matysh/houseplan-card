@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11426,
+  "revision": 11427,
   "nextTicket": 415,
   "nextFence": 415,
   "tasks": {
@@ -4911,6 +4911,10 @@
       "digest": "f88889bad1db5eb7aa7920803e7f6a5dd5c8b526c41b0524c4ec6459d432ac8c",
       "issue": 1418
     },
+    "github:43471582907:1:completions:message:aa4df0770c241b7d0c06f7beaab5f3c72f6c485a0bf2f2902faa18fe626c3521": {
+      "digest": "746928d280900c28001b643b2767a5027df3fd462275e639c33286a3457aa57e",
+      "issue": 1418
+    },
     "finish:fea38776-a94f-4875-97e5-855e552dd363": {
       "digest": "c7a1a502b60cd33f1531fe9191cfe19f55d8beed8ee05ea0de20a4745e5476e0",
       "issue": 1418,
@@ -4957,7 +4961,8 @@
           "entry": 1,
           "detail": "Браузер: decor line click: failed",
           "eventId": "finish:fea38776-a94f-4875-97e5-855e552dd363:finish:3:return:return:1418"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:edb04a51-c6a8-4ff1-8ff4-5aab5d73d5f2": {
