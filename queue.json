@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 10352,
-  "nextTicket": 391,
+  "revision": 10353,
+  "nextTicket": 392,
   "nextFence": 391,
   "tasks": {
     "1024": {
@@ -4481,14 +4481,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1403-dimension-hud",
-      "materialSha": "91ca7b878dd3b7c09d12b1e97627f8086efd258a",
+      "materialSha": "a90bcd6c733c19ce6d7117f550c27676fa902412",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 390,
-      "queued": false,
+      "ticket": 391,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794548140293,
-      "reviewEntry": 2,
+      "readyAt": 1794548722789,
+      "reviewEntry": 3,
       "patchId": "f876b6991c10997654b4731e095442b57e4a9e2c",
       "changedFiles": [
         "demo/smoke_wall_dimension_hud.mjs",
@@ -4508,8 +4508,7 @@
         "entry": 2,
         "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed",
         "eventId": "finish:cf195c56-89a0-45b5-a4ab-af0dfa3e25a7:finish:3:return:return:1403"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4739,7 +4738,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1403
+  ],
   "active": null,
   "events": {
     "finish:2fdfaefd-14ed-4f74-842a-83e6483a33d2:finish:2:synchronized": {
@@ -4878,6 +4879,19 @@
           "detail": "Поведение: test/smoke-harness-contract.test.mjs: failed",
           "eventId": "finish:cf195c56-89a0-45b5-a4ab-af0dfa3e25a7:finish:3:return:return:1403"
         }
+      }
+    },
+    "finish:9f4b4066-4f76-4f3c-b484-3f309bac19db": {
+      "digest": "b093b57b0f241d3b6715df63e76d265212aa15864aa82cd6f841e4e29f79892d",
+      "issue": 1403,
+      "message": {
+        "kind": "queued",
+        "issue": 1403,
+        "at": 1794548722789,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a90bcd6c733c19ce6d7117f550c27676fa902412"
       }
     }
   },
