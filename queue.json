@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11113,
+  "revision": 11114,
   "nextTicket": 408,
   "nextFence": 408,
   "tasks": {
@@ -4510,34 +4510,24 @@
     },
     "1412": {
       "issue": 1412,
+      "branch": "codex/1412-tooltip-e2e-hook",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1412-tooltip-e2e-hook",
-      "materialSha": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 407,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1794577447482,
-      "reviewEntry": 1,
-      "patchId": "a0b519e6d9a6e2d3bbd9df7120f12529633ddf6e",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/STYLING-HOOKS.md",
-        "docs/data-hp-contract.json",
-        "docs/release-ledger/v1.85.0/1412.json",
-        "src/houseplan-card.ts"
-      ],
-      "s6": {
-        "id": "20261113T134423302-dc64eb28",
-        "name": "Тесты для задачи #1412 (перед слиянием)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261113T134423302-dc64eb28/report.json",
-        "materialSha": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
-        "status": "passed",
-        "finishedAt": "2026-11-13T13:48:53.845Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "c250fcb4591a698481da3ccaa6a2261e2a0e04de",
+      "mergedSha": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
+      "mergedAt": 1794577740659,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -4769,43 +4759,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1412,
-    "worker": "finish",
-    "token": "407:finish:d283f8a5-a2d6-4a81-b8b0-7cfea249b786:finish:1:admit",
-    "fence": 407,
-    "materialSha": "9516d31de24a41bdf7a95bddc3bd3d7bb16f6222",
-    "expectedBase": "c250fcb4591a698481da3ccaa6a2261e2a0e04de",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794577451237,
-    "expiresAt": 1794581334974,
-    "patchId": "a0b519e6d9a6e2d3bbd9df7120f12529633ddf6e"
-  },
+  "active": null,
   "events": {
-    "finish:d283f8a5-a2d6-4a81-b8b0-7cfea249b786:finish:2:synchronized": {
-      "digest": "2b06bc25ece363e9cf4035a5104224e735784a0f5a242a1a343729dbc4a15a7b",
-      "issue": 1412
-    },
-    "finish:71524a09-65a7-4fba-82ae-2c881cd748b3": {
-      "digest": "033fd8756460bc1fb3f90fd2cfe24d3c0ea724d9fbb1af566a02c5acf93ac3c5",
-      "issue": 1412
-    },
-    "finish:d1111da8-df9a-4595-9311-38c4092c38bf": {
-      "digest": "5e6874573567bf2521e88644312b3b33fc0971ea415c62d8f5a6a7da268755d1",
-      "issue": 1412
-    },
-    "finish:81a62e11-bb24-4215-9cfb-37b9a049a526": {
-      "digest": "2fb37f636aca65d2d33b11071dd692fd5ed8b173b94feee9b534e61e0cb3ee65",
-      "issue": 1412
-    },
-    "finish:52a9d4f7-c33d-42b9-8aec-2846b73f56c9": {
-      "digest": "eabd8f9c78aebbe4701714efc5416f8365435cdd8ce6c34bf6e9e01c0815f7ff",
-      "issue": 1412
-    },
-    "finish:d283f8a5-a2d6-4a81-b8b0-7cfea249b786:finish:3:s6-complete": {
-      "digest": "f3610bc97a5c29191539171bca32ea667c52be9cc5957d40bde3ce99b323bf6a",
-      "issue": 1412
-    },
     "finish:d283f8a5-a2d6-4a81-b8b0-7cfea249b786": {
       "digest": "91878d0964795925d82a0c811cc22d4959b3134a126be19b0f578168a7f0b686",
       "issue": 1412,
