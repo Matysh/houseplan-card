@@ -62,6 +62,12 @@ Existing HA setup, import, cancellation, ownership and recovery tests retain
 their actual adapter routes. Packaging/install/upgrade acceptance belongs to
 the next beta's normal isolated HA route, not a claim made by these unit tests.
 
+The recorder's isolated wiring test retains scoped HA stand-ins for the HA
+adapter only: it loads `trails.py` as `houseplan.trails`, restores those aliases
+on success/failure and borrows the already imported canonical core route
+schema. It neither replaces the real integration parent nor caches a
+stub-bound adapter in `custom_components.houseplan.trails`.
+
 Structural model 11 (#1167) uses one exact per-space graph: `plan-exact` owns
 bounded rational arithmetic, `plan-graph` owns validation/migration/explicit
 commands, and `graph-edit-intent` binds editor targets to frozen identities.

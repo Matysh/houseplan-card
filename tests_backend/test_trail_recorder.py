@@ -6,13 +6,14 @@ fake `homeassistant` modules globally poisons the real HA harness running in
 the same pytest session (it did, once).
 """
 import json
+import importlib.util
 import pathlib
 import sys
 import types
 
 import pytest
 
-from pure_imports import load_pure
+from custom_components.houseplan.core import vacuum_routes
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
@@ -50,9 +51,16 @@ def _load_trails():
         sys.modules["houseplan"] = pkg
         c = types.ModuleType("houseplan.const"); c.DOMAIN = "houseplan"
         sys.modules["houseplan.const"] = c
-        # Dependencies also use canonical absolute imports. The shared loader
-        # isolates those packages before fake HA can reach the real __init__.
-        return load_pure("houseplan.trails", ROOT / "custom_components" / "houseplan" / "trails.py")
+        # Only this HA adapter is isolated under a test alias. Its pure route
+        # schema is the real canonical core, loaded before the HA stand-ins;
+        # neither a second core nor a stub-bound canonical adapter may escape.
+        sys.modules["houseplan.vacuum_routes"] = vacuum_routes
+        spec = importlib.util.spec_from_file_location(
+            "houseplan.trails", ROOT / "custom_components" / "houseplan" / "trails.py")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["houseplan.trails"] = module
+        spec.loader.exec_module(module)
+        return module
     finally:
         for name in list(sys.modules):
             if name == "homeassistant" or name.startswith(("homeassistant.", "houseplan")):

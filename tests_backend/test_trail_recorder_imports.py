@@ -7,6 +7,15 @@ import pytest
 from test_trail_recorder import _load_trails
 
 
+def test_issue1391_scoped_adapter_never_caches_fake_ha_in_canonical_modules():
+    from custom_components.houseplan.core import vacuum_routes
+    from test_trail_recorder import trails
+    assert trails.__name__ == "houseplan.trails"
+    assert sys.modules.get("custom_components.houseplan.trails") is not trails
+    assert trails.effective_routes is vacuum_routes.effective_routes
+    assert "houseplan.core.vacuum_routes" not in sys.modules
+
+
 @pytest.mark.parametrize("fail_import", [False, True])
 def test_issue1057_loader_restores_module_identity_after_success_or_import_failure(monkeypatch, fail_import):
     def watched(name):

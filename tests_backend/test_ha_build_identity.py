@@ -15,6 +15,7 @@ from pytest_homeassistant_custom_component.typing import WebSocketGenerator
 import custom_components
 import custom_components.houseplan as houseplan
 from custom_components.houseplan import build_identity
+from custom_components.houseplan import ha_integration
 from custom_components.houseplan.build_identity import (
     UNKNOWN_BUILD,
     BuildIdentity,
@@ -152,7 +153,7 @@ async def test_issue_836_setup_reads_identity_once_off_the_loop_and_registers_ur
         reads.append(threading.get_ident())
         return read_build_identity(root)
 
-    monkeypatch.setattr(houseplan, "read_build_identity", counted)
+    monkeypatch.setattr(ha_integration, "read_build_identity", counted)
     await _setup(hass)
     client = await hass_ws_client(hass)
     for _ in range(2):
