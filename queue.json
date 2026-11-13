@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11732,
+  "revision": 11733,
   "nextTicket": 422,
   "nextFence": 422,
   "tasks": {
@@ -3613,7 +3613,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794612199654,
       "reviewEntry": 3,
-      "patchId": "42accf7f229361630ef2b0ad4242e07db4239db6",
+      "patchId": "3cf2d541fdd6e8478587c1ba8a5592fbcb49f53f",
       "changedFiles": [
         "custom_components/houseplan/__init__.py",
         "custom_components/houseplan/asset_integrity.py",
@@ -3737,6 +3737,7 @@
         "tests_backend/test_core_boundary.py",
         "tests_backend/test_graph_host_continuity.py",
         "tests_backend/test_ha_backup_archive.py",
+        "tests_backend/test_ha_build_identity.py",
         "tests_backend/test_ha_decor_group_transfer.py",
         "tests_backend/test_ha_device_contacts.py",
         "tests_backend/test_ha_import_export.py",
@@ -3748,6 +3749,8 @@
         "tests_backend/test_plan_graph_source.py",
         "tests_backend/test_sh3d_convert.py",
         "tests_backend/test_sh3d_import_preview.py",
+        "tests_backend/test_trail_recorder.py",
+        "tests_backend/test_trail_recorder_imports.py",
         "tests_backend/test_validation.py"
       ],
       "notice": {
@@ -4963,10 +4966,11 @@
     "token": "421:finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:1:admit",
     "fence": 421,
     "materialSha": "64c2ef2dcae413765a394c9d09e2acbc674f2f2f",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "759ff053090317b430cdee3dca12fba18892de4b",
+    "phase": "testing",
     "admittedAt": 1794612203839,
-    "expiresAt": 1794612503839
+    "expiresAt": 1794612510036,
+    "patchId": "3cf2d541fdd6e8478587c1ba8a5592fbcb49f53f"
   },
   "events": {
     "github:43515037012:1:label:spec-request": {
@@ -5167,6 +5171,10 @@
     },
     "finish:eb7308c8-afa6-4e2f-bbfc-0724d5d2d9a6:finish:3:return": {
       "digest": "d4703e6e463714d644068357b1236ddff47ff92c0adf379f223eca133ed3f0ec",
+      "issue": 1391
+    },
+    "finish:d4405c50-d9f4-4980-b9d0-a2df285a43e2:finish:2:synchronized": {
+      "digest": "484f5b7ad42d77bfb531e3e24f4cee5877dcc3521c585dc37750be445a19ec85",
       "issue": 1391
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
