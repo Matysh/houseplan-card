@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11708,
+  "revision": 11709,
   "nextTicket": 419,
   "nextFence": 419,
   "tasks": {
@@ -544,44 +544,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "3f778f3d9f3c1b691fce78891d71d095bb051a1e"
-      }
-    },
-    "1259": {
-      "issue": 1259,
-      "branch": "codex/issue-1259-node-hit",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe",
-      "mergedSha": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
-      "mergedAt": 1793907977194,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1259:1:408227b3ada85ae14b538867e98effaa921d429c:88360cc3590ce73c0bc9de9bf24d6ce82ab8e7fe",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 11,
-          "cycleMilestone": 11
-        },
-        "commentCurrent": true,
-        "commentDigest": "a297fdedf383f8af3187",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 11
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2"
       }
     },
     "1268": {
@@ -3652,10 +3614,20 @@
       "removedToRelease": false,
       "reviewRequest": "review:1393:1:5395cb2888eb7fd79732b12be66805e57356baca:281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
