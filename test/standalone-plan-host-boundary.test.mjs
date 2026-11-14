@@ -2,8 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createStandaloneHost, validateStandaloneHost, validateStandaloneHandshake, STANDALONE_REQUIRED_APIS } from '../test-build/standalone-plan-host.js';
 import { PLAN_ONLY_CAPABILITIES, HA_CAPABILITIES } from '../test-build/plan-capabilities.js';
+import { createCorePlanHost } from '../demo/standalone/host.js';
 
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
+test('#1423 synthetic transport refuses HTTP writes as well as commands after write revocation',async()=>{
+  const lab=createCorePlanHost(PLAN_ONLY_CAPABILITIES);
+  lab.permissions({read:true,write:false,admin:false});
+  await assert.rejects(lab.host.http.postJson('/api/houseplan/structural/upload',{type:'houseplan/config/set'}),{code:'unauthorized'});
+  await assert.rejects(lab.host.request({type:'houseplan/config/set',config:{}}),{code:'unauthorized'});
+});
 test('#1423 handshake requires actual source facts and every API used by the plan-only editor',()=>{
   const fingerprint='a'.repeat(64),version='1.85.2',reply={integration_version:version,frontend_fingerprint:fingerprint,rev:1,can_write:true,config:{},...STANDALONE_REQUIRED_APIS};
   assert.doesNotThrow(()=>validateStandaloneHandshake(reply,fingerprint,version));
@@ -32,6 +39,25 @@ test('#1423 only a frozen complete plan-only contract can be mounted',()=>{
   for(const source of [undefined,{}, {...f.source,capabilities:HA_CAPABILITIES},
     {...f.source,capabilities:{...PLAN_ONLY_CAPABILITIES}}, {...f.source,http:{}}, {...f.source,subscribeEnvironment:null}])
     assert.throws(()=>validateStandaloneHost(source));
+});
+test('#1423 every config read validates the host and a later mismatch retires only its mount',async()=>{
+  for(const patch of [{frontend_fingerprint:'b'.repeat(64)},{integration_version:'1.85.1'},{plan_graph_api:0}]){
+    const f=fixture(),fingerprint='a'.repeat(64),version='1.85.2';let rejected=0;
+    const local=createStandaloneHost(f.source,{}, {fingerprint,version,onIncompatible:()=>rejected++});
+    const other=createStandaloneHost(f.source,{});
+    await local.host.subscribe('houseplan_config_updated',()=>assert.fail('retired event'));
+    const good={integration_version:version,frontend_fingerprint:fingerprint,rev:1,can_write:true,config:{},...STANDALONE_REQUIRED_APIS};
+    const first=deferred();f.pending(first);first.resolve(good);
+    assert.deepEqual(await local.host.request({type:'houseplan/config/get'}),good);
+    const next=deferred();f.pending(next);next.resolve({...good,...patch});
+    await assert.rejects(local.host.request({type:'houseplan/config/get'}),{code:'standalone_host_incompatible'});
+    assert.equal(rejected,1);assert.equal(local.host.environment.ready,false);
+    assert.equal(local.host.environment.permissions.write,false);assert.equal(f.events.size,0);
+    await assert.rejects(local.host.request({type:'houseplan/config/set',config:{}}),{code:'context-changed'});
+    assert.equal(rejected,1);assert.equal(other.host.environment.ready,true);
+    assert.deepEqual(await other.host.request({type:'houseplan/config/get'}),{...good,...patch});
+    local.dispose();other.dispose();assert.equal(f.listeners.size,0);
+  }
 });
 test('#1423 presentation publication changes the environment, not write authority or the raw host',()=>{
   const f=fixture(),first=Object.freeze({language:'fr'}),local=createStandaloneHost(f.source,first);

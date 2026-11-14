@@ -10,8 +10,13 @@ export async function resourceProbes(page,capabilities,evidence,dir){
     await page.evaluate(async({capabilities,language})=>{
       window.__mountApi=await import('/standalone-dist/houseplan-standalone.js');
       const {createCorePlanHost}=await import('/standalone-host.js');window.__lab=createCorePlanHost(capabilities);
-      window.__mount=window.__mountApi.mountHouseplan(document.querySelector('#host'),window.__lab.host,{language,darkMode:false});window.__card=await window.__mount.ready;
+      window.__mount=window.__mountApi.mountHouseplan(document.querySelector('#host'),window.__lab.host,{language,darkMode:false});
+      window.__mountState='pending';
+      void window.__mount.ready.then(card=>{window.__card=card;window.__mountState='ready';},
+        error=>{window.__mountState='failed';window.__mountError=error.code||error.message;});
     },{capabilities,language});
+    await page.waitForFunction(()=>window.__mountState!=='pending');
+    assert.equal(await page.evaluate(()=>window.__mountState),'ready',await page.evaluate(()=>window.__mountError));
     await page.waitForFunction(()=>window.__card._loadOk&&!window.__card._booting&&!window.__card.inert);
   };
   await page.route('**/fonts/Roboto-Regular-*.ttf',route=>route.abort());

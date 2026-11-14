@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "341f26b28bdb00d96d6f2c0a13e08f39bdb4f01dfcd6a47b898412569734b2c0",
+  "matchesSha256": "65d158c654e535efecc64908e9ead275e7f2758168d29c4b019b189edbc96d90",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -6849,6 +6849,26 @@
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
     },
     {
+      "id": "a0f2b14b4f4a946ac4df95c6",
+      "path": "src/standalone-entry.ts",
+      "line": 40,
+      "text": "const incompatible=()=>{",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1423 runtime host handshake and per-mount revocation on build/API mismatch; not a persisted-config compatibility decoder."
+    },
+    {
+      "id": "daab230866341da2eb69c529",
+      "path": "src/standalone-entry.ts",
+      "line": 47,
+      "text": "control=createStandaloneHost(source,ui.context,{fingerprint:ENTRY_BUILD_FINGERPRINT,version:CARD_VERSION,onIncompatible:incompatible});",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1423 runtime host handshake and per-mount revocation on build/API mismatch; not a persisted-config compatibility decoder."
+    },
+    {
       "id": "4ab1d65fb2906ff6b03db92e",
       "path": "src/standalone-plan-host.ts",
       "line": 14,
@@ -6857,6 +6877,56 @@
       "kind": "exclusion",
       "owner": "provider-api",
       "reason": "#1423 fail-closed runtime provider version/fingerprint/API handshake, not a historical persisted-config decoder."
+    },
+    {
+      "id": "02b132ff07aa110e52f1078e",
+      "path": "src/standalone-plan-host.ts",
+      "line": 34,
+      "text": "compatibility?: { fingerprint: string; version: string; onIncompatible: () => void }) {",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1423 runtime host handshake and per-mount revocation on build/API mismatch; not a persisted-config compatibility decoder."
+    },
+    {
+      "id": "c0bf4abb15a18c4a90cfdaee",
+      "path": "src/standalone-plan-host.ts",
+      "line": 65,
+      "text": "if(compatibility && command.type==='houseplan/config/get'){",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1423 runtime host handshake and per-mount revocation on build/API mismatch; not a persisted-config compatibility decoder."
+    },
+    {
+      "id": "b595e6b19a50945547281b99",
+      "path": "src/standalone-plan-host.ts",
+      "line": 66,
+      "text": "try{validateStandaloneHandshake(value as Record<string,unknown>,compatibility.fingerprint,compatibility.version);}",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1423 runtime host handshake and per-mount revocation on build/API mismatch; not a persisted-config compatibility decoder."
+    },
+    {
+      "id": "01e2a405f3eb500b97a293ab",
+      "path": "src/standalone-plan-host.ts",
+      "line": 69,
+      "text": "// this mount before the renderer can adopt incompatible facts.",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1423 runtime host handshake and per-mount revocation on build/API mismatch; not a persisted-config compatibility decoder."
+    },
+    {
+      "id": "1dcccdcb9b3588c7eb7c42fa",
+      "path": "src/standalone-plan-host.ts",
+      "line": 70,
+      "text": "dispose();compatibility.onIncompatible();throw error;",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1423 runtime host handshake and per-mount revocation on build/API mismatch; not a persisted-config compatibility decoder."
     },
     {
       "id": "8800d686b981553e438426b6",

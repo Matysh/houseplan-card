@@ -30,7 +30,8 @@ export function validateStandaloneHost(source: PlanHost): void {
     throw hostError('standalone_host_invalid');
 }
 
-export function createStandaloneHost(source: PlanHost, initial: HostPresentationContext) {
+export function createStandaloneHost(source: PlanHost, initial: HostPresentationContext,
+  compatibility?: { fingerprint: string; version: string; onIncompatible: () => void }) {
   validateStandaloneHost(source);
   const guarded = capabilityHost(source), listeners = new Set<() => void>(), leases = new Set<Unsubscribe>();
   let disposed=false, revision=0, presentation=initial, snapshot: PlanHost['environment'] | undefined;
@@ -44,6 +45,7 @@ export function createStandaloneHost(source: PlanHost, initial: HostPresentation
     return value;
   };
   const releaseSource=once(guarded.subscribeEnvironment(notify));
+  const dispose=()=>{if(disposed)return;disposed=true;notify();releaseSource();for(const release of [...leases])release();listeners.clear();};
   const host: PlanHost = {
     capabilities:guarded.capabilities,
     get authorityKey(){return guarded.authorityKey;},
@@ -58,7 +60,18 @@ export function createStandaloneHost(source: PlanHost, initial: HostPresentation
       }
       return snapshot;
     },
-    request:command=>request(()=>guarded.request(command)),
+    async request<T>(command: Parameters<PlanHost['request']>[0]): Promise<T> {
+      const value=await request<T>(()=>guarded.request<T>(command));
+      if(compatibility && command.type==='houseplan/config/get'){
+        try{validateStandaloneHandshake(value as Record<string,unknown>,compatibility.fingerprint,compatibility.version);}
+        catch(error){
+          // A host can change builds while the document stays open. Revoke
+          // this mount before the renderer can adopt incompatible facts.
+          dispose();compatibility.onIncompatible();throw error;
+        }
+      }
+      return value;
+    },
     async subscribe(event,receive,options){
       const [key,epoch]=lease();
       const current=()=>!disposed && key===guarded.authorityKey && epoch===guarded.writeAuthorityRevision;
@@ -72,5 +85,5 @@ export function createStandaloneHost(source: PlanHost, initial: HostPresentation
       postJson:(path,value,signal)=>request(()=>guarded.http.postJson(path,value,signal))},
   };
   return {host,publish(value:HostPresentationContext){live();presentation=value;notify();},
-    dispose(){if(disposed)return;disposed=true;notify();releaseSource();for(const release of [...leases])release();listeners.clear();}};
+    dispose};
 }

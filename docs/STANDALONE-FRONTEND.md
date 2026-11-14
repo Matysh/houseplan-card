@@ -87,11 +87,16 @@ fingerprint for an incompatible host. This build requires the APIs declared by
 graph change v2, plan graph, room-label layout, decor assets, node move/delete/
 merge/attach. Merge and attach use the existing node-move intent route, not
 invented endpoints. Missing/mismatched facts produce the standalone notice
-before connecting a writable editor.
+before connecting a writable editor. Every later `config/get`, including after
+reconnection, repeats that check. A changed build/API retires this mount and its
+leases, removes the editor and shows the same localized host notice, never HA
+restart advice. Dispose the handle and create a fresh compatible mount to retry;
+the supplied source host and other mounts are not destroyed.
 
 The manifest records portable core model/export compatibility independently
-from the UI version. Its current values are read from the actual core
-constants, not guessed from a release number. The host must still validate
+from the UI version. Model/export versions come from core constants; the
+readable historical versions and minimum model are a tested snapshot of the
+core parser's current acceptance rules, not inferred from a release number. The host must still validate
 each persisted/imported document through that core. Frontend capability guards
 are not server authorization and are not a substitute for CAS/ACL/validation.
 
@@ -144,6 +149,28 @@ image validation. It owns only an in-memory revision pair, temporary files,
 preview tokens and one-deep Optimize intent. It does not prove production
 durability, quotas, authentication, concurrency across processes or HA service
 behavior. HA import is prohibited in that subprocess and asserted in snapshots.
+
+This finite dispatcher is not a complete implementation of every allowed port
+operation. In particular `space/delete`, `plans/delete` and `geometry/repair`
+return `fixture_unsupported`; its `config/set` does not implement HA's complete
+deletion-layout reconciliation, null room-label removal, LED preservation or
+no-op revision semantics. It is evidence for the journeys enumerated below,
+not a storage adapter to copy into production. Implement the complete allowed
+command contract for a real host; the shared capability guard grants a feature,
+not a promise that this test dispatcher implements all of its subcommands.
+
+For the actual request fields and responses, see the
+[WebSocket command table](ARCHITECTURE.md#integration-ws-api) and its handlers,
+`src/plan-capabilities.ts` (`permitsCommand`/`permitsHttp`) and
+`custom_components/houseplan/websocket_api.py`. Plan-only's base routes are
+`config/get|set`, `layout/get|set`, `space/delete`, node move/delete (including
+merge/attach intents), `export/create` with `kind: space, plan_only: true`,
+`import/revalidate|apply`, `backup/cancel`, `plan/optimize|optimize_undo`,
+`geometry/repair`, `plans/*` and `assets/*`. Existing HTTP routes are
+`/api/houseplan/plans/upload`, `/assets/upload`, `/import/preview` and
+`/structural/upload` under that same prefix. Installation-backup/marker/service
+routes remain refused. Consult the owning handler rather than inventing fields
+or returning acknowledgements without a validated, revisioned write.
 
 The separate `tests_backend/test_ha_standalone_core_transport.py` compares the
 dispatcher against authenticated real HA HTTP/WS/Stores on the same synthetic

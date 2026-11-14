@@ -10,7 +10,7 @@ export function createCorePlanHost(capabilities){
   const rpc=async value=>{
     const authority=key,sequence=epoch;
     if(!environment.ready||!environment.connected)throw error('not_ready');
-    if(value.op!=='snapshot'&&value.op==='request'&&!value.command.type.endsWith('/get')&&!environment.permissions.write)throw error('unauthorized');
+    if(!environment.permissions.write&&(value.op==='post'||value.op==='request'&&!value.command.type.endsWith('/get')))throw error('unauthorized');
     if(fail){const code=fail;fail=undefined;throw error(code);}
     if(hold){const wait=hold;hold=undefined;await wait;}
     if(authority!==key||sequence!==epoch)throw error('context-changed');

@@ -179,6 +179,23 @@ try{
   const errorCopy=await page.locator('#host [role="alert"]').textContent();
   assert.ok(errorCopy.includes('House Plan host'));assert.doesNotMatch(errorCopy,/HACS|Home Assistant/);
   await page.evaluate(()=>window.__mount.dispose());
+  for(const mismatch of [{frontend_fingerprint:'0'.repeat(64)},{integration_version:'0.0.1'},{plan_graph_api:0}]){
+    await page.evaluate(async()=>{window.__lab.handshake({});
+      window.__mount=window.__mountApi.mountHouseplan(document.querySelector('#host'),window.__lab.host,{language:'en',darkMode:false});
+      window.__card=await window.__mount.ready;});
+    await page.waitForFunction(()=>window.__card._loadOk&&!window.__card._booting);
+    await page.evaluate(patch=>{window.__lab.handshake(patch);window.__lab.connection(false);},mismatch);
+    await page.waitForFunction(()=>!window.__card.planHost.environment.connected);
+    await page.evaluate(()=>window.__lab.connection(true));
+    const notice=page.locator('#host [role="alert"]');await notice.waitFor();
+    const copy=await notice.textContent();assert.ok(copy.includes('House Plan host'));
+    assert.doesNotMatch(copy,/HACS|Home Assistant|Integration/);
+    assert.equal(await card.count(),0,'the incompatible mounted editor is disconnected');
+    assert.deepEqual(await page.evaluate(()=>[window.__lab.listenerCount,window.__lab.subscriptionCount]),[0,0]);
+    assert.equal(JSON.stringify((await core.rpc({op:'snapshot'})).result.config),beforeFailure);
+    await page.evaluate(()=>window.__mount.dispose());
+  }
+  evidence.checks.push('post-mount-reconnect-fingerprint-version-api-mismatch-retires-editor');
   await page.evaluate(async()=>{window.__lab.handshake({});
     window.__mount=window.__mountApi.mountHouseplan(document.querySelector('#host'),window.__lab.host,{language:'en',darkMode:false});window.__card=await window.__mount.ready;});
   await page.waitForFunction(()=>window.__card._loadOk&&!window.__card._booting);

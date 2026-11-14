@@ -3,7 +3,7 @@ import { html, nothing, render } from 'lit';
 import { HouseplanCard, CARD_VERSION } from './houseplan-card';
 import type { PlanHost } from './plan-host';
 import { hostError } from './plan-host';
-import { createStandaloneHost, validateStandaloneHost, validateStandaloneHandshake } from './standalone-plan-host';
+import { createStandaloneHost, validateStandaloneHost } from './standalone-plan-host';
 import { createStandalonePresentation, type StandalonePresentationOptions } from './standalone-presentation';
 import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 import { ensureLanguage } from './i18n/registry';
@@ -33,13 +33,20 @@ export function mountHouseplan(container: HTMLElement, source: PlanHost, options
   const style=document.createElement('style');style.textContent=noticeStyles.cssText;root.prepend(style);
   root.inert=true;root.setAttribute('aria-busy','true');
   render(html`<ha-circular-progress active></ha-circular-progress>`,status);
+  const showHostError=async()=>{
+    await ensureLanguage(langOf(ui.context));
+    if(!disposed)render(html`<div class="hpf-notice" role="alert">${t(langOf(ui.context),'standalone.host_error')}</div>`,status);
+  };
+  const incompatible=()=>{
+    card?.remove();card=undefined;
+    if(!disposed){root.append(status);void showHostError();}
+  };
   const ready=(async()=>{
     try{
       validateStandaloneHost(source);
-      control=createStandaloneHost(source,ui.context);
-      const response=await control.host.request<Record<string,unknown>>({type:'houseplan/config/get'});
+      control=createStandaloneHost(source,ui.context,{fingerprint:ENTRY_BUILD_FINGERPRINT,version:CARD_VERSION,onIncompatible:incompatible});
+      await control.host.request<Record<string,unknown>>({type:'houseplan/config/get'});
       if(disposed)throw hostError('context-changed');
-      validateStandaloneHandshake(response,ENTRY_BUILD_FINGERPRINT,CARD_VERSION);
       if(!ownedCard){customElements.define('houseplan-card',HouseplanCard);ownedCard=HouseplanCard;}
       card=document.createElement('houseplan-card') as HouseplanCard;
       // No hass assignment/default HaPlanHost construction before this injection.
@@ -48,10 +55,7 @@ export function mountHouseplan(container: HTMLElement, source: PlanHost, options
       render(nothing,status);status.remove();root.append(card);
       return card;
     }catch(error){
-      if(!disposed){
-        await ensureLanguage(langOf(ui.context));
-        if(!disposed)render(html`<div class="hpf-notice" role="alert">${t(langOf(ui.context),'standalone.host_error')}</div>`,status);
-      }
+      if(!disposed)await showHostError();
       throw error;
     }finally{root.inert=false;root.removeAttribute('aria-busy');}
   })();
