@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12542,
+  "revision": 12543,
   "nextTicket": 445,
   "nextFence": 445,
   "tasks": {
@@ -4876,18 +4876,12 @@
       }
     },
     "1422": {
-      "requestId": "spec:1422:52b8b48f45875891133fc4819e815685c1146786ef6b96d62ec06e2d3b769a3d",
-      "contextDigest": "52b8b48f45875891133fc4819e815685c1146786ef6b96d62ec06e2d3b769a3d",
+      "requestId": "spec:1422:3a1d32d740664ec2dd85d1ab72bc312d59b37997f75400ebc9cc1a80be197981",
+      "contextDigest": "3a1d32d740664ec2dd85d1ab72bc312d59b37997f75400ebc9cc1a80be197981",
       "base": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1794652410510,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43585316120",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1794652519183
     },
     "1423": {
       "requestId": "spec:1423:64422923de23e083e3ec15b695224a1628f205ec5bcbd9f225f6983a0fe722e3",
@@ -4936,6 +4930,19 @@
       "presentation": {
         "round": 1,
         "occurredAt": "2026-11-14T10:33:10.876Z"
+      }
+    },
+    "spec:1422:spec:1422:3a1d32d740664ec2dd85d1ab72bc312d59b37997f75400ebc9cc1a80be197981": {
+      "issue": 1422,
+      "kind": "spec",
+      "requestId": "spec:1422:3a1d32d740664ec2dd85d1ab72bc312d59b37997f75400ebc9cc1a80be197981",
+      "materialSha": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
+      "expectedBase": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
+      "patchId": "3a1d32d740664ec2dd85d1ab72bc312d59b37997f75400ebc9cc1a80be197981",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-14T10:35:19.183Z"
       }
     }
   },
@@ -4997,6 +5004,10 @@
       "digest": "646fe9a935ec6f7ae823dbbd03994f94f9b85117ae6727d1d3687f51bf1c83d6",
       "issue": 1421
     },
+    "github:43585981218:1:label:spec-request": {
+      "digest": "d998f9ec725ce29d87b3a07da777a510b97207d472a00cf0edb653c77f103841",
+      "issue": 1422
+    },
     "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651": {
       "digest": "de3a891914465aab40cb0cc764c1c1f63dd063b799b8f79278f1dc5e6cb8b3c9",
       "issue": 1421,
@@ -5024,6 +5035,22 @@
         "materialSha": "6cd0d49b4e5d1c76914ad75853245f0bce30c3b1",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "github:43585981218:1:label:spec-request:spec-resubmitted:1422": {
+      "digest": "d998f9ec725ce29d87b3a07da777a510b97207d472a00cf0edb653c77f103841",
+      "issue": 1422,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1422,
+        "at": 1794652519183,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1422:3a1d32d740664ec2dd85d1ab72bc312d59b37997f75400ebc9cc1a80be197981",
+        "reviewChanges": "### Решение и места для внимания\nПрочитаны #1393, текущие PlanHost/presentation contracts, HpDialog, язык загрузки и UI Kit. Реальные native ветки уже существуют. Отдельный владелец документа сохраняет 46 шаблонов и HA DOM; ревью подтвердило выбор совместимых имён при жёсткой document isolation. Продуктовой реализации этой задачи ещё нет.\n\n### Проверки и ограничения\nДо S4 — только авторская проверка формы ТЗ. Продуктовые прогоны этой задачи не запускались; probe #1393 не выдаётся за принятую реализацию. Владельцем утверждено направление UI Kit/local SVG, но не новые визуальные эталоны.\n\n### Исправления по предыдущему ревью\nОтчёт S4 r1: https://github.com/Matysh/houseplan-card/actions/runs/43585316120 (artifact review-result, spec-39fb169dd97c-1794652370997.md).\n- F1, языки/localize: pl исправлен на fr; конечный HA-key bridge ui.common.close и проверка ru/de accessible name добавлены.\n- F2, progress: выбран language-neutral вариант без текста; сохраняются inert/aria-busy общего runtime. Не обещается live announcement из inert-поддерева, HA DOM не меняется.\n- F3, тема: adapter владеет базовыми light/dark input tokens с provenance UI Lab, единый API синхронно меняет CSS и darkMode; добавлен oracle.\n- Улучшения: закрыт список из трёх primitives, явные collision cases branch-switch имён; отказ от самовольной hp-* альтернативы; нулевой fallback на известных динамических иконках; полный список plan-only поверхностей; поздний HA обозначен неподдерживаемым смешением; MDI 7.4.47 закреплён.\nМатериал повторной передачи — редакция 2 в теле issue. Выполнена только spec-check; продуктовых прогонов нет.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
