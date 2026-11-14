@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11969,
+  "revision": 11970,
   "nextTicket": 429,
   "nextFence": 429,
   "tasks": {
@@ -3818,7 +3818,7 @@
       "ownerDecision": null,
       "ticket": 428,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794627573366,
       "reviewEntry": 1,
       "patchId": "7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f",
@@ -3848,9 +3848,15 @@
         "tests_backend/test_input_archive_security.py",
         "tests_backend/test_input_policy.py"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1794628454320,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
+      "s6": {
+        "id": "20261114T035852242-cd6f6cf5",
+        "name": "Тесты для задачи #1395 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T035852242-cd6f6cf5/report.json",
+        "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
+        "status": "passed",
+        "finishedAt": "2026-11-14T04:04:36.776Z",
+        "failures": []
+      }
     },
     "1396": {
       "issue": 1396,
@@ -5022,9 +5028,9 @@
     "fence": 428,
     "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
     "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794628435667,
-    "expiresAt": 1794629378018,
+    "expiresAt": 1794632680879,
     "patchId": "7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f"
   },
   "events": {
@@ -5980,6 +5986,34 @@
         "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:7:s6-complete": {
+      "digest": "75cc01063838ad4ba6380674d676fe12908147133e999e9188ab0b26069fff69",
+      "issue": 1395,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1395,
+        "at": 1794629080879,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T035852242-cd6f6cf5",
+          "name": "Тесты для задачи #1395 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T035852242-cd6f6cf5/report.json",
+          "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
+          "status": "passed",
+          "finishedAt": "2026-11-14T04:04:36.776Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\nАудит ядра после #1391 и адресный ремонт подтверждённых отказов ввода, без изменения формата/model11/exportv3/ZIPv1 и без включения новых strict-ограничений в HA Store/startup/save. Подробный отчёт по шести классам угроз и всем перечисленным владельцам: docs/security/1395-input-audit.md.\n\n### Решение и альтернативы\nОдин core.input_policy с явным request-wide ContextVar scope; strict 256/512MiB ZIP/expanded, JSON/XML depth64/JSON1M nodes до decoder, geometry2M work units + secondary5s с injected clock. HA defaults сохраняются. Predicate/AABB/legacy geometry и отдельные migration inner loops списывают units до работы; вложенные вызовы не сбрасывают лимит. Это кооперативная защита, не thread timeout и не готовый публичный сервер.\nПодтверждённые ремонты: фактический central-directory count до ZipFile; safe RecursionError portable import/copy; finite parse_float (±1e999 обходил parse_constant); safe public protocol message вместо внутренних деталей. Strict требует raster decoder и reject-whitelist для backdrop; HA opaque XML/#1033 и оригинальные bytes не ужесточаются/не переписываются.\n\n### Риски и места для внимания\nСохранение HA SVG/backdrop совместимости и размеров; отсутствие дополнительного чтения внешних URL; request scope/cancellation через будущий executor; checks не прерывают внутренности native library/PIL/JSON/сортировки. Hard CPU/memory isolation/concurrency quotas будущего сайта остаются вне задачи. Обходы обычных HA ACL не добавлялись. Отчёт считает подтверждённые High закрытыми только в исследованном core-scope, не сертифицирует будущий endpoint.\nHA ошибки по-прежнему используют существующие локализуемые коды, details остаются локально. Source source-reader/mutation anchors не ослабляются. Модельное code review этого ремонта ещё не вызывалось.\n\n### Проверки и ограничения\nДо ремонта сохранены реальные reproductions: depth1500/10000 → RecursionError; 2 directory fixtures падали до actual-count фикса; ±1e999 принимались strict_json; WS probe отражал PRIVATE-FIXTURE detail, после не отражает.\nАдресные проверки: 440/440 backend/реальных HA pytest (новые fixtures, backup/import/structural/transaction/cancel/core boundary и SVG sandbox header). Ruff owned sources/tests/script PASS; mypy input_policy PASS; 31/31 task-selection tests. Каталог и план S6 подтверждают security/critical классификацию всех трёх новых файлов и выбор по actual core source readers, не только areaTests.\nBounded synthetic measurement script:400 rooms /441nodes/840edges strict95.18ms/29178units accepted;1600parallel strict3541ms/2M units → capacity_exceeded без мутации исходника. Это одна серия, не performance-медиана. Полные исходы/лимиты в отчёте. S6 финального SHA выполняет штатный finish.\nE2E: https://github.com/Matysh/houseplan-e2e/issues/53#issuecomment-6871102978 — новых browser journeys не нужно, существующие import/export/cancel/sandbox и установка/upgrade остаются на следующую бету. Baseline, живой HA и локальный стенд владельца не менялись; релиз не запускался.\n\n### Исправления по предыдущему ревью\nПринятая редакция2 ТЗ сохранена: по R1 https://github.com/Matysh/houseplan-card/actions/runs/43515190357 отдельно реализованы HA/strict backdrop, bytes pre-scan с keys/escape, общий deterministic work budget+clock и fail-closed strict raster. Требования не расширены до публичного сайта. Это первая передача реализации, предыдущего отрицательного code review нет.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
