@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13663,
+  "revision": 13664,
   "nextTicket": 475,
   "nextFence": 471,
   "tasks": {
@@ -4852,7 +4852,8 @@
         "docs/images/guide-2026-11/ru/space-settings.png",
         "docs/images/guide-2026-11/ru/summary.png",
         "docs/images/guide-2026-11/ru/view.png"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -5207,9 +5208,9 @@
     "fence": 470,
     "materialSha": "84c62b8a9aeca6d362a303fae292b37ac3b61cae",
     "expectedBase": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794689721420,
-    "expiresAt": 1794690299150,
+    "expiresAt": 1794693604321,
     "patchId": "2fd41d9424226d9b2d791fdf7e837234eccc7673"
   },
   "events": {
@@ -5247,6 +5248,10 @@
     },
     "finish:de816309-32d1-456f-b620-6202c0d2f921:finish:1:synchronized": {
       "digest": "3343d4e1ddee6810bc5e2ef0fa81cc56bab5a1ed971da7205723676ace7d30c4",
+      "issue": 1445
+    },
+    "finish:de816309-32d1-456f-b620-6202c0d2f921:finish:2:s6-complete": {
+      "digest": "c62f5e72f64970832798d5996ab0f5da74dd61a81681f9a19f800d147268953a",
       "issue": 1445
     },
     "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
