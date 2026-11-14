@@ -1,0 +1,1 @@
+{"schema":1,"issue":1431,"baseStable":"v1.85.0","category":"line-fix","rationale":"Repair layout growth introduced by the unreleased single-border change #1428; preserve existing toolbar and reading-action footprints.","summary":{"ru":"Сохранены размеры кнопок при добавлении единой рамки.","en":"Preserve button footprints when reserving the single border."}}

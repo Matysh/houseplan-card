@@ -45,8 +45,10 @@ const propertyAction = { ...standardAction, min: '36px', padding: '3px 6px', rad
 const actionDensity = {
   standard: standardAction,
   editor: editorAction,
-  history: { ...editorAction, border: '1px solid transparent' },
-  'editor-back': { ...editorAction, min:'34px', border:'1px solid transparent', gap:'5px' },
+  // Reserve the new border inside the former borderless footprint. Otherwise
+  // two history buttons can push the last tool onto another toolbar row.
+  history: { ...editorAction, padding:'5px 9px', border: '1px solid transparent' },
+  'editor-back': { ...editorAction, min:'34px', padding:'5px 9px', border:'1px solid transparent', gap:'5px' },
   'editor-delete': { ...editorAction, min:'30px', width:'30px', height:'30px', padding:'3px', border:'1px solid transparent' },
   'editor-close': { ...editorAction, min: '40px', padding: '0', gap: '0', line: '0', width: '40px', height: '40px' },
   property: propertyAction,
@@ -66,7 +68,7 @@ export function settingsActionsCss(selector: string, primary = '.on', { variant 
     ${selector}{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:${navigation ? 'flex-start' : 'center'};gap:${recipe.gap};min-height:${recipe.min};min-width:${density === 'editor-close' ? '40px' : density === 'editor-delete' ? '30px' : intrinsicWords ? 'auto' : '0'};max-width:100%;width:${recipe.width};height:${recipe.height};justify-self:var(--hpf-kit-action-justify-self,auto);padding:${navigation ? '9px 10px' : recipe.padding};border:${navigation ? '0' : recipe.border};border-radius:${recipe.radius};background:transparent;color:var(--primary-text-color);font:inherit;font-size:${navigation ? '12px' : recipe.font};line-height:${navigation ? '1.35' : recipe.line};${navigation ? 'text-align:start;' : ''}white-space:normal;overflow-wrap:${intrinsicWords ? 'normal' : 'anywhere'};${settingsActionTransition}}
     ${selector}${primary}{background:${tinted ? 'var(--hpf-tint,color-mix(in srgb,var(--primary-color) 10%,transparent))' : 'var(--hpf-accent,var(--primary-color))'};color:${tinted ? 'var(--hpf-accent,var(--primary-color))' : 'var(--text-primary-color,#fff)'};border-color:${tinted ? 'transparent' : 'var(--hpf-accent,var(--primary-color))'};${navigation ? 'font-weight:600;' : ''}}
     ${selector}.danger{color:var(--hpf-danger,var(--error-color,#db543d));border-color:var(--hpf-danger,var(--error-color,#db543d));}
-    ${selector}{outline:none;box-shadow:none;${navigation ? 'border:1px solid transparent;' : ''}}
+    ${selector}{outline:none;box-shadow:none;${navigation ? 'border:1px solid transparent;padding:8px 9px;' : ''}}
     ${selector}.danger:not(:hover):not(.hpf-tab-focus:focus):not(.hpf-keyboard-current:focus){border-color:var(--hpf-kit-action-idle-danger-border,var(--hpf-danger,var(--error-color,#db543d)));}
     ${enabled}{cursor:pointer;}
     ${enabled}:is(:hover,.hpf-tab-focus:focus,.hpf-keyboard-current:focus){${settingsActionHover}}
