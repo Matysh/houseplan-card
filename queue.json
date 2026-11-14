@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12178,
+  "revision": 12179,
   "nextTicket": 435,
   "nextFence": 435,
   "tasks": {
@@ -3650,9 +3650,8 @@
       "status": "S6-in-progress",
       "readyAt": 1794635313587,
       "reviewEntry": 2,
-      "patchId": "080f625cfe7505fc0fc4c27c55cc4d76ecaf909c",
+      "patchId": "67f29887dbd75e25afb4e6c3e87ff55b026a98d6",
       "changedFiles": [
-        "demo/smoke_plan_capabilities.mjs",
         "demo/smoke_plan_host.mjs",
         "demo/srv/plan-host-fixture.js",
         "docs/ARCHITECTURE.md",
@@ -3663,6 +3662,7 @@
         "process-next/lib/task-selection.mjs",
         "process-next/test/task-selection.test.mjs",
         "scripts/config-compatibility-inventory.json",
+        "scripts/mutation-registry.mjs",
         "src/backup-archive-client.ts",
         "src/decor-assets.ts",
         "src/decor-image-editor.ts",
@@ -3689,7 +3689,13 @@
         "src/plan-capabilities.ts",
         "src/plan-host.ts",
         "src/view-runtimes.ts",
+        "test/device-editor-permissions-runtime.test.mjs",
+        "test/header-menu.test.mjs",
+        "test/helpers/editor-write-host.mjs",
+        "test/late-context-replies.test.mjs",
+        "test/marker-activity-save-865.test.mjs",
         "test/plan-capability-permissions.test.mjs",
+        "test/render-device-snapshot.test.mjs",
         "tests_backend/test_ha_import_export.py"
       ],
       "notice": {
@@ -4910,10 +4916,11 @@
     "token": "434:finish:2037b335-ba7d-4f56-9106-129e25272687:finish:1:admit",
     "fence": 434,
     "materialSha": "eeb6e17ddbdd35d7225a37724bf3cc061ea58fdd",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3108fed9e23905a23044453c85be4e158dabaadc",
+    "phase": "testing",
     "admittedAt": 1794635317762,
-    "expiresAt": 1794635617762
+    "expiresAt": 1794635623975,
+    "patchId": "67f29887dbd75e25afb4e6c3e87ff55b026a98d6"
   },
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
@@ -4998,6 +5005,10 @@
     },
     "finish:aba9fde5-1710-4bdf-8752-192f651e747d:finish:3:return": {
       "digest": "8cf8225cf520f2c963ba7bfd1a58c044b3f6179fe5263beddc23f8e8bd362ae3",
+      "issue": 1394
+    },
+    "finish:2037b335-ba7d-4f56-9106-129e25272687:finish:2:synchronized": {
+      "digest": "151b1ed5dcdb77559fcc7f2864de47ffbd75a5662fddb29e9ee36376c20f5b98",
       "issue": 1394
     },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
