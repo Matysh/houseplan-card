@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13714,
+  "revision": 13715,
   "nextTicket": 476,
   "nextFence": 473,
   "tasks": {
@@ -4758,7 +4758,16 @@
         "demo/smoke_version_recovery.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261114T210847345-5344be7d",
+        "name": "Тесты для задачи #1442 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T210847345-5344be7d/report.json",
+        "materialSha": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
+        "status": "passed",
+        "finishedAt": "2026-11-14T21:09:55.765Z",
+        "failures": []
+      }
     },
     "1443": {
       "issue": 1443,
@@ -5185,9 +5194,9 @@
     "fence": 472,
     "materialSha": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
     "expectedBase": "9765111e4dc5d4ec24c8820cc4a307e1b4f73999",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794690472500,
-    "expiresAt": 1794690861512,
+    "expiresAt": 1794694197243,
     "patchId": "f1977e65abc0148e110ef4b9dd4fa4f46672e8ac"
   },
   "events": {
@@ -5201,6 +5210,10 @@
     },
     "finish:159a5505-b727-4a95-8f3f-c6ef2bcb6555": {
       "digest": "0f0b40af831a06aa8ae8ecbae6378f2d6b443ff973d1a0b1381b112b1a8e8220",
+      "issue": 1442
+    },
+    "finish:250a81d0-3a77-4a89-8684-cd043e231e38:finish:3:s6-complete": {
+      "digest": "9fd9d63e40bbe0cb5ca35c6efa491a06cf944d2926f6ba4f78038fe566fef837",
       "issue": 1442
     },
     "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
