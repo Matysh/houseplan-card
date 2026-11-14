@@ -168,7 +168,8 @@ const out = await page.evaluate(async () => {
   await c.updateComplete;
   c.hass = { ...currentA };
   for (let i = 0; i < 100 && (!c._loadOk || c._liveSyncAttempt); i++) await pause();
-  o.returnedAReadyBeforeCoalescedSwitch = c._loadOk && c._liveSyncConnection === currentA.connection;
+  o.returnedAReadyBeforeCoalescedSwitch = c._loadOk
+    && c._liveSyncConnection === c.planHost.authorityKey && c.hass.connection === currentA.connection;
   c.hass = { ...currentA, connection: foreignConnection() };
   c.hass = currentA;
   await c.updateComplete;

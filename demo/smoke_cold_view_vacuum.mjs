@@ -42,6 +42,9 @@ const out = await page.evaluate(async () => {
       d_realvac: { id: 'd_realvac', name: 'Робот', area_id: room.area },
     },
   });
+  window.__addRegistryDevice('d_realvac', 'Робот', 'Dreame', room.area);
+  window.__addRegistryEntity('vacuum.real', room.area, 'cleaning', 'tasshack',
+    {device_id:'d_realvac'}, vacState(120,340).attributes);
   const cfg = structuredClone(card._serverCfg);
   cfg.markers = [...(cfg.markers || []), {
     id: 'd_realvac', binding: 'device:d_realvac', name: 'Робот',
@@ -50,17 +53,14 @@ const out = await page.evaluate(async () => {
   // The decor guard (#358 К2): one shape rendered in View must be a quiet
   // no-op on pointerdown, not an exception behind CSS pointer-events.
   const sp = cfg.spaces.find((s) => s.id === space.id) || cfg.spaces[0];
-  sp.decor = [...(sp.decor || []), { id: 'dc_cold', kind: 'line', a: [200, 200], b: [400, 300] }];
-  const baseWS = card.hass.callWS.bind(card.hass);
+  sp.decor = [...(sp.decor || []), {
+    id: 'dc_cold', kind: 'line', x1: .2, y1: .2, x2: .4, y2: .3,
+  }];
   const hass = makeHass(120, 340);
-  hass.callWS = async (message) => message.type === 'houseplan/config/get'
-    ? {
-      config: cfg, rev: card._cfgRev, can_write: true,
-      virtual_lights: { rev: 0, config_rev: card._cfgRev, off: [] },
-    }
-    : baseWS(message);
   card.hass = hass;
-  await card._reloadConfigOnly(true);
+  // Install the fixture in the actual synthetic server, not a single GET
+  // reply that the next ordinary config event replaces with the old document.
+  await window.__hpTest.setServerConfig(() => cfg);
   card._regSignature = '';
   card._maybeRebuildDevices();
   card.requestUpdate();

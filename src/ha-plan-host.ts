@@ -400,7 +400,9 @@ export class HaPlanHost implements PlanHost {
     return { call: (domain, service, data, target) => {
       const lease = this.lease(), source = this.source;
       if (!source.callService) return Promise.reject(hostError('not_ready'));
-      return this.owned(lease, () => source.callService!.call(source, domain, service, data, target));
+      return this.owned(lease, () => target === undefined
+        ? source.callService!.call(source, domain, service, data)
+        : source.callService!.call(source, domain, service, data, target));
     } };
   }
 }
