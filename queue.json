@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13391,
+  "revision": 13392,
   "nextTicket": 470,
   "nextFence": 466,
   "tasks": {
@@ -4707,14 +4707,21 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1439-plan-picker-input",
-      "materialSha": "54edbc19fc538ebdf341bc07be56bc0dc7353a72",
+      "materialSha": "5bd501fa75658b97b4d18608dec89984cfba21a6",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 469,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794686598009,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "1f96aab5080c8cd099b4590fade34c273ac91908",
+      "changedFiles": [
+        "demo/smoke_plan_picker.mjs",
+        "demo/smoke_saved_plans.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md"
+      ]
     },
     "1440": {
       "issue": 1440,
@@ -5101,11 +5108,12 @@
     "worker": "finish",
     "token": "465:finish:7f894725-b6d7-4836-979e-667341d3ce27:finish:1:admit",
     "fence": 465,
-    "materialSha": "54edbc19fc538ebdf341bc07be56bc0dc7353a72",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "5bd501fa75658b97b4d18608dec89984cfba21a6",
+    "expectedBase": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
+    "phase": "testing",
     "admittedAt": 1794686901606,
-    "expiresAt": 1794687201606
+    "expiresAt": 1794687223311,
+    "patchId": "1f96aab5080c8cd099b4590fade34c273ac91908"
   },
   "events": {
     "github:43635074985:1:completions:message:5c199547c2b5ff056082a8d0fc08c4e69e5c49fe286134e4ed40db04aa429591": {
@@ -5163,6 +5171,10 @@
     "finish:c2098de2-f77b-4f8f-819d-e3117db86984:finish:2:return": {
       "digest": "e7d8fa021fceb7d5eb1eeb81587c04ecf94ede9c3c0267d5d98253c89c3c0d65",
       "issue": 1440
+    },
+    "finish:f399868b-aa1c-48ca-80ba-c8fc4c64dafa:finish:1:synchronized": {
+      "digest": "c390f7c00e362db3c71e5b1eccaabb3d47a0bebfb0e1bbe6ca4e9e2a502532cd",
+      "issue": 1439
     },
     "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450": {
       "digest": "5ec9b2a080864a4cfe8c328e367ac8bf12791c39e46dff967c7b546f7a1c5a40",
