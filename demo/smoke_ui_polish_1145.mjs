@@ -1,6 +1,7 @@
 /** #1145: real dialog/picker styles, native input and measured small controls. */
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {launch,check,finish,requirePinnedBrowser} from './serve.mjs';
+import {singleButtonBorder} from './helpers/button-paint-1440.mjs';
 requirePinnedBrowser('#1145 ten UI-kit findings');
 const output='artifacts/ui-polish-1145';mkdirSync(output,{recursive:true});
 const {page,browser}=await launch({width:1100,height:940},1,[],{hasTouch:true});
@@ -154,7 +155,21 @@ try {
   check('AC3 disabled desktop hover preserves paint',JSON.stringify(await inertButton.evaluate(paintOf))===JSON.stringify(disabledPaint));
   await desktop.page.locator('houseplan-card #disabled-hover1145').evaluate(e=>e.remove());
   await desktop.page.mouse.move(5,5);await toggle.focus();await desktop.page.keyboard.press('Tab');await desktop.page.keyboard.press('Shift+Tab');
-  check('AC6 keyboard retains focus-visible',await toggle.evaluate(e=>e.matches(':focus-visible')&&getComputedStyle(e).outlineStyle!=='none'));
+  // #1428 uses the ordinary accent border for real keyboard traversal, not a
+  // second outline. Wait for its completed paint, not an intermediate color.
+  const focusDeadline=Date.now()+2000;
+  let keyboardBorder=false;
+  do{
+   keyboardBorder=await toggle.evaluate(e=>e.getRootNode().activeElement===e&&e.classList.contains('hpf-tab-focus'))&&await toggle.evaluate(singleButtonBorder);
+   if(keyboardBorder)break;
+   await desktop.page.waitForTimeout(40);
+  }while(Date.now()<focusDeadline);
+  report.keyboard=await toggle.evaluate(e=>{const s=getComputedStyle(e);return{focused:e.getRootNode().activeElement===e,classes:e.className,border:s.borderTopColor,width:s.borderTopWidth,outline:s.outlineStyle,shadow:s.boxShadow};});
+  check('AC6 native Tab retains focus with one accent border',keyboardBorder);
+  const pressed=await toggle.getAttribute('aria-pressed');
+  await desktop.page.keyboard.press('Enter');
+  await desktop.page.waitForFunction(previous=>document.querySelector('houseplan-card').shadowRoot.querySelector('[data-hp=summary-toggle]').getAttribute('aria-pressed')!==previous,pressed);
+  check('AC6 focused summary action still activates',await toggle.getAttribute('aria-pressed')!==pressed);
  }finally{await desktop.browser.close();}
  // A deliberately long translated label uses the production farhint styles.
  await card.evaluate(c=>{const e=document.createElement('div');e.className='farhint';e.id='far1145';e.innerHTML='<ha-icon icon="mdi:map-marker-alert-outline"></ha-icon><span>Objects outside the plan — '+ 'long-label-'.repeat(20)+'</span><button class="btn ghost">Show</button>';c.shadowRoot.querySelector('.stage').append(e);});
