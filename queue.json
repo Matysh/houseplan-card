@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13793,
+  "revision": 13794,
   "nextTicket": 476,
   "nextFence": 475,
   "tasks": {
@@ -4646,14 +4646,23 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1438-kiosk-camera",
-      "materialSha": "a847e0a0a6690553f4bece5db5bf6eab5d218bda",
+      "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 468,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794686474377,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "24150e2851c51f085b8304cb2280c8e661a4aa33",
+      "changedFiles": [
+        "demo/smoke_kiosk_viewport_recovery.mjs",
+        "demo/smoke_view_runtime_kiosk_recovery.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.85.0/1438.json",
+        "src/houseplan-card.ts"
+      ]
     },
     "1439": {
       "issue": 1439,
@@ -5208,15 +5217,20 @@
     "worker": "github-coordinator",
     "token": "474:github:43642521401:1:tick:2:admit",
     "fence": 474,
-    "materialSha": "a847e0a0a6690553f4bece5db5bf6eab5d218bda",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
+    "expectedBase": "c5d7a23892c69ad0504cf3048589344e03525810",
+    "phase": "testing",
     "admittedAt": 1794691407122,
-    "expiresAt": 1794691707122
+    "expiresAt": 1794691791672,
+    "patchId": "24150e2851c51f085b8304cb2280c8e661a4aa33"
   },
   "events": {
     "github:43642521401:1:completions:message:de9c401bad284aa25cfc415f9735dcfba88884285335d3446c1d7987a2ef39b9": {
       "digest": "8ce703e00a41be6ba4aeddae513b09fd6d79047cdbf7cbd10471b75fc8077866",
+      "issue": 1438
+    },
+    "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f:finish:1:synchronized": {
+      "digest": "de54c1d3d0f5cbc972b480cbe80151a7b7439c0ab5623808b6239db34beae292",
       "issue": 1438
     },
     "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f": {
