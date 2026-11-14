@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12346,
+  "revision": 12347,
   "nextTicket": 441,
   "nextFence": 441,
   "tasks": {
@@ -3570,7 +3570,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1394-plan-capabilities",
-      "materialSha": "3460dfec1328ed19fe9641d3227a9f8b3b10b64b",
+      "materialSha": "2357f3f362481a2ec12afdc6e60126c7c499ed8d",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 440,
@@ -3578,7 +3578,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794639037569,
       "reviewEntry": 6,
-      "patchId": "b7411af254115204f3d6094f266cfc0916b7c377",
+      "patchId": "accf77595818c3ad2817987af47f084d4353595c",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
         "demo/srv/plan-host-fixture.js",
@@ -3594,6 +3594,7 @@
         "src/backup-archive-client.ts",
         "src/decor-assets.ts",
         "src/decor-image-editor.ts",
+        "src/device-contact-write.ts",
         "src/device-copy-editor.ts",
         "src/device-structure-history.ts",
         "src/editors/external-screens.ts",
@@ -3620,12 +3621,15 @@
         "src/plan-host.ts",
         "src/summary-panel-runtime-loaded.ts",
         "src/view-runtimes.ts",
+        "test/device-contact-write.test.mjs",
         "test/device-editor-permissions-runtime.test.mjs",
+        "test/editor-nudge.test.mjs",
         "test/header-menu.test.mjs",
         "test/helpers/editor-write-host.mjs",
         "test/late-context-replies.test.mjs",
         "test/marker-activity-save-865.test.mjs",
         "test/plan-capability-permissions.test.mjs",
+        "test/plan-host-boundary.test.mjs",
         "test/render-device-snapshot.test.mjs",
         "tests_backend/test_ha_import_export.py"
       ],
@@ -4924,11 +4928,12 @@
     "worker": "finish",
     "token": "440:finish:33b0de64-bd0b-4217-920c-ae07166a2f02:finish:1:admit",
     "fence": 440,
-    "materialSha": "3460dfec1328ed19fe9641d3227a9f8b3b10b64b",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "2357f3f362481a2ec12afdc6e60126c7c499ed8d",
+    "expectedBase": "4423d4dc9c725b24fe4a3d231bd0b72cadccff62",
+    "phase": "testing",
     "admittedAt": 1794639041558,
-    "expiresAt": 1794639341558
+    "expiresAt": 1794639351919,
+    "patchId": "accf77595818c3ad2817987af47f084d4353595c"
   },
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
@@ -5197,6 +5202,10 @@
     },
     "github:43567643010:1:completions:metadata:150cb98d-5fc4-4f65-a1d6-a826e0106eec:task-notice:1394::": {
       "digest": "1194190edacf564391505ee0fe4e855490896f0e50eeb7b2f204d1f790557315",
+      "issue": 1394
+    },
+    "finish:33b0de64-bd0b-4217-920c-ae07166a2f02:finish:2:synchronized": {
+      "digest": "97aa244dfb6765f1f95a1baeaa1ed15d342d740f50c68f7c6bca9d4f5b87c884",
       "issue": 1394
     },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
