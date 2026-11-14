@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13869,
+  "revision": 13870,
   "nextTicket": 476,
   "nextFence": 476,
   "tasks": {
@@ -4737,7 +4737,7 @@
       "ownerDecision": null,
       "ticket": 475,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794690103069,
       "reviewEntry": 1,
       "patchId": "12b15c2dc6916cf61fa83d7ba0209dd39647c08e",
@@ -4745,7 +4745,16 @@
         "demo/smoke_summary_weather.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "s6": {
+        "id": "20261114T213708232-3998e40b",
+        "name": "Тесты для задачи #1443 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T213708232-3998e40b/report.json",
+        "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
+        "status": "passed",
+        "finishedAt": "2026-11-14T21:38:24.040Z",
+        "failures": []
+      }
     },
     "1444": {
       "issue": 1444,
@@ -5164,9 +5173,9 @@
     "fence": 475,
     "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
     "expectedBase": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794692165360,
-    "expiresAt": 1794692598316,
+    "expiresAt": 1794695905165,
     "patchId": "12b15c2dc6916cf61fa83d7ba0209dd39647c08e"
   },
   "events": {
@@ -5233,6 +5242,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388"
+      }
+    },
+    "finish:e4428c91-9fe4-4445-b786-0ad62033f040:finish:3:s6-complete": {
+      "digest": "6542b7d793c0dbb78d95637cd357c2b2092985ed1efd28d84033529a34dde86e",
+      "issue": 1443,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1443,
+        "at": 1794692305165,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T213708232-3998e40b",
+          "name": "Тесты для задачи #1443 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T213708232-3998e40b/report.json",
+          "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
+          "status": "passed",
+          "finishedAt": "2026-11-14T21:38:24.040Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Причина подтверждена адресно: неизменённый native падает ru/false/mixed с blocks:[] и заголовком Погода. Fixture заменял connection целиком (теряя subscribeEvents), config/get всегда отдавал initial cfg, _sendConfigCandidate не сохранял документ, а сценарии меняли derived _settings/_serverCfg. Новый adoption закономерно возвращал настоящий сохранённый документ вместо этих мутаций.\n\nСохранён исходный connection и его subscribeEvents. Обёрнут только weather/subscribe_forecast; остальные subscribeMessage делегированы. Штатный synthetic fixture store обслуживает config/get/set, CAS, события и ACK; config/get лишь дополняется runtime capability summary_panel_api, принятые config/set записываются для существующего ассерта. Начальная конфигурация и все weather/blocks изменения приходят через __hpTest.setServerConfig, Save использует неизменённый product handler с ожиданием writes. Locale задаётся публичным setConfig. Сохранены ВСЕ прежние locale ru/en/de/fr, narrow/wide, hidden/all/mixed, unavailable/deleted, title, forecast/lifecycle и no-parent-render assertions; saved title и all-block дополнительно проверяются чтением wire config/get. Продукт и PNG не менялись.\n\nАдресный node demo/smoke_summary_weather.mjs: до FAIL mixed, после OK. Каталог/план относят изменённый native к summary и выбирают его одновременно как изменённый файл и native-контракт summary. Центральный runner не допускает browser-native в infra-профиле, поэтому штатный S6 использует layer product с существующими связями; это не изменение продукта и не повод для пользовательского milestone/release-ledger. Дополнительный HA E2E не нужен, решение добавлено комментарием в houseplan-e2e#67. Независимое код-ревью — по установленному track:show. Текущий S6 выполнит finish через очередь; до его завершения не заявляется PASS.\n### Уточнение причинности и границ\n\nПараллельный S6 #1437 смог пройти исходный weather smoke без этого ремонта. Это не два независимых продуктовых дефекта: #1437 меняет только bound value formatters в projected _planHass и не меняет read/adoption/config; summary/weather получает исходный host.hass напрямую. Старый fixture остаётся некорректным даже при отдельном зелёном прогоне: замена connection запускает authority reload, config/get всегда отдаёт initial blocks:[], Save не сохраняет wire документ, а mixed мутирует только локальные derived записи. Поздний reload может стереть mixed; изменение времени рендера способно скрыть гонку, но не исправить fake store. В собственном опыте один и тот же product bd4b27c дал FAIL ru/false/mixed blocks:[] до ремонта и PASS после изменения только fixture. #1443 устраняет гонку и ложное предусловие synthetic smoke, не заявляет новый продуктовый баг. Дополнительный прогон неизменённого кода ради этой аналитики не выполнялся.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
