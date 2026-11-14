@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11930,
-  "nextTicket": 428,
+  "revision": 11931,
+  "nextTicket": 429,
   "nextFence": 428,
   "tasks": {
     "1024": {
@@ -3780,6 +3780,20 @@
         "status": "not-required"
       }
     },
+    "1395": {
+      "issue": 1395,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1395-core-input-policy",
+      "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 428,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794627573366,
+      "reviewEntry": 1
+    },
     "1396": {
       "issue": 1396,
       "branch": "codex/mutation-ui-lab-ha-runtime",
@@ -4942,7 +4956,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1395
+  ],
   "active": {
     "issue": 1392,
     "worker": "finish",
@@ -5699,6 +5715,19 @@
         "layer": "product",
         "materialSha": "37dda5aed5d3f2b22df78fa2ec96728abb7767ff",
         "phase": "sync"
+      }
+    },
+    "finish:f1291587-cba5-486a-867a-626ba670e04f": {
+      "digest": "8ebda5a9ef9acbfc47a15a59d7aa31de136232e6f2a899d40b0fa8742935d805",
+      "issue": 1395,
+      "message": {
+        "kind": "queued",
+        "issue": 1395,
+        "at": 1794627573366,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd"
       }
     }
   },
