@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11970,
+  "revision": 11971,
   "nextTicket": 429,
   "nextFence": 429,
   "tasks": {
@@ -5666,6 +5666,10 @@
       "digest": "be85e27d654a8aca5270ff4e80d795413a25f8624c6a5e2badb1b3d5e4ae42bb",
       "issue": 1395
     },
+    "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:7:s6-label": {
+      "digest": "e4eac777e400333b5705a8261718266027badb96698c3acca902d43769505c37",
+      "issue": 1395
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -6013,7 +6017,8 @@
         "resubmission": false,
         "reviewChanges": "### Цель и результат\nАудит ядра после #1391 и адресный ремонт подтверждённых отказов ввода, без изменения формата/model11/exportv3/ZIPv1 и без включения новых strict-ограничений в HA Store/startup/save. Подробный отчёт по шести классам угроз и всем перечисленным владельцам: docs/security/1395-input-audit.md.\n\n### Решение и альтернативы\nОдин core.input_policy с явным request-wide ContextVar scope; strict 256/512MiB ZIP/expanded, JSON/XML depth64/JSON1M nodes до decoder, geometry2M work units + secondary5s с injected clock. HA defaults сохраняются. Predicate/AABB/legacy geometry и отдельные migration inner loops списывают units до работы; вложенные вызовы не сбрасывают лимит. Это кооперативная защита, не thread timeout и не готовый публичный сервер.\nПодтверждённые ремонты: фактический central-directory count до ZipFile; safe RecursionError portable import/copy; finite parse_float (±1e999 обходил parse_constant); safe public protocol message вместо внутренних деталей. Strict требует raster decoder и reject-whitelist для backdrop; HA opaque XML/#1033 и оригинальные bytes не ужесточаются/не переписываются.\n\n### Риски и места для внимания\nСохранение HA SVG/backdrop совместимости и размеров; отсутствие дополнительного чтения внешних URL; request scope/cancellation через будущий executor; checks не прерывают внутренности native library/PIL/JSON/сортировки. Hard CPU/memory isolation/concurrency quotas будущего сайта остаются вне задачи. Обходы обычных HA ACL не добавлялись. Отчёт считает подтверждённые High закрытыми только в исследованном core-scope, не сертифицирует будущий endpoint.\nHA ошибки по-прежнему используют существующие локализуемые коды, details остаются локально. Source source-reader/mutation anchors не ослабляются. Модельное code review этого ремонта ещё не вызывалось.\n\n### Проверки и ограничения\nДо ремонта сохранены реальные reproductions: depth1500/10000 → RecursionError; 2 directory fixtures падали до actual-count фикса; ±1e999 принимались strict_json; WS probe отражал PRIVATE-FIXTURE detail, после не отражает.\nАдресные проверки: 440/440 backend/реальных HA pytest (новые fixtures, backup/import/structural/transaction/cancel/core boundary и SVG sandbox header). Ruff owned sources/tests/script PASS; mypy input_policy PASS; 31/31 task-selection tests. Каталог и план S6 подтверждают security/critical классификацию всех трёх новых файлов и выбор по actual core source readers, не только areaTests.\nBounded synthetic measurement script:400 rooms /441nodes/840edges strict95.18ms/29178units accepted;1600parallel strict3541ms/2M units → capacity_exceeded без мутации исходника. Это одна серия, не performance-медиана. Полные исходы/лимиты в отчёте. S6 финального SHA выполняет штатный finish.\nE2E: https://github.com/Matysh/houseplan-e2e/issues/53#issuecomment-6871102978 — новых browser journeys не нужно, существующие import/export/cancel/sandbox и установка/upgrade остаются на следующую бету. Baseline, живой HA и локальный стенд владельца не менялись; релиз не запускался.\n\n### Исправления по предыдущему ревью\nПринятая редакция2 ТЗ сохранена: по R1 https://github.com/Matysh/houseplan-card/actions/runs/43515190357 отдельно реализованы HA/strict backdrop, bytes pre-scan с keys/escape, общий deterministic work budget+clock и fail-closed strict raster. Требования не расширены до публичного сайта. Это первая передача реализации, предыдущего отрицательного code review нет.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
