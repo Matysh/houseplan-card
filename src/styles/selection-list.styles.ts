@@ -15,7 +15,7 @@ export function selectionListCss(selector: string, selected: string, active?: st
     ${enabled}:is(button):hover { box-shadow:none; border-color:${accent}; }
   }
   ${enabled}:not(button):focus-visible${active ? `,${enabled}:not(button)${active}` : ''} { outline:2px solid ${accent}; outline-offset:-2px; }
-  ${enabled}:is(button) { box-sizing:border-box; border:1px solid transparent; outline:none; box-shadow:none; }
+  ${item}:is(button) { box-sizing:border-box; border:1px solid transparent; outline:none; box-shadow:none; }
   ${enabled}:is(button).hpf-tab-focus:focus${active ? `,${enabled}:is(button)${active}` : ''} { border-color:${accent}; }
   ${item}[aria-disabled=true],${item}:disabled { box-shadow:none; outline:none; }
   ${controlReducedMotionCss(item)}

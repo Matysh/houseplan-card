@@ -1,0 +1,1 @@
+{"schema":1,"issue":1447,"baseStable":"v1.85.0","category":"line-fix","rationale":"Restore source-picker row footprints unintentionally enlarged by the unreleased #1428 single-border change; preserve the approved focus paint.","summary":{"ru":"Сохранены прежние размеры строк выбора источника с единой рамкой.","en":"Preserve source-picker row footprints with the single border."}}
