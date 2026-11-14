@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11829,
-  "nextTicket": 424,
+  "revision": 11830,
+  "nextTicket": 425,
   "nextFence": 424,
   "tasks": {
     "1024": {
@@ -3629,14 +3629,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1392-plan-host",
-      "materialSha": "d762dc3d056b92f73bfe2e0cb8e1a185bde24e31",
+      "materialSha": "705ca6117a15b8532efbce28e1ba64a7e598027b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 423,
-      "queued": false,
+      "ticket": 424,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794619690999,
-      "reviewEntry": 1,
+      "readyAt": 1794622980495,
+      "reviewEntry": 2,
       "patchId": "434f6775628e5d4d57d03d95fea1e07408b8132c",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
@@ -3708,7 +3708,6 @@
         "test/signing.test.mjs",
         "tsconfig.test.json"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4929,7 +4928,9 @@
       "runId": 43528439169
     }
   },
-  "waiting": [],
+  "waiting": [
+    1392
+  ],
   "active": null,
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
@@ -5201,6 +5202,19 @@
           "detail": "Критичные данные, сохранение и права: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/graph-optimize-report.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/opening-drag.test.mjs: failed; Поведение: test/space-delete-dialog.test.mjs: failed; Поведение: test/version-recovery-card-contract.test.mjs: failed; Поведение: test/write-authority-snapshot.test.mjs: failed; Браузер: canvas surface gestures: failed; Браузер: direct wall geometry: failed; Браузер: isometric live touch: failed; Браузер: vacuum: failed; Браузер: view edit permissions: failed",
           "eventId": "finish:5ff8f6e8-5ec7-4a9c-88d6-6e69fb8d1375:finish:3:return:return:1392"
         }
+      }
+    },
+    "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6": {
+      "digest": "ffe47b9c9d2041c3062b97f7c5303d665540dc7b4bda4505b53b1aad3aae3030",
+      "issue": 1392,
+      "message": {
+        "kind": "queued",
+        "issue": 1392,
+        "at": 1794622980495,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "705ca6117a15b8532efbce28e1ba64a7e598027b"
       }
     }
   },
