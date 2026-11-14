@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11940,
+  "revision": 11941,
   "nextTicket": 429,
   "nextFence": 428,
   "tasks": {
@@ -5529,6 +5529,10 @@
       "digest": "80f2b27f92da34aa37aa91ca5b052f51423c1a455be1e785335715e3c5dab619",
       "issue": 1392
     },
+    "github:43553193193:1:completions:message:63b89455e261d508252311f1ee701d1abc03a5f700c7bd1839b66af41afd048f": {
+      "digest": "07b71c888bc35a12319f5e2db014ea8b327aefc7f0bab6e1c64206d7c2d0c23a",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5709,7 +5713,8 @@
           "entry": 3,
           "detail": "Поведение: test/route-kiosk.test.mjs: failed; Браузер: opening light transparent: failed; Браузер: plan host: failed; Браузер: wall preview handoff 1247: failed; Браузер: warm geometry camera: failed",
           "eventId": "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:3:return:return:1392"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7": {
