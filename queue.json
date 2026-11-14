@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13920,
-  "nextTicket": 476,
+  "revision": 13921,
+  "nextTicket": 477,
   "nextFence": 476,
   "tasks": {
     "1024": {
@@ -4819,6 +4819,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1446": {
+      "issue": 1446,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1446-integration-display-metadata",
+      "materialSha": "166fa0c576ad38abb400df862fa1eec24d1b261e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 476,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794693710936,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5174,9 +5188,25 @@
       "runId": 43643902515
     }
   },
-  "waiting": [],
+  "waiting": [
+    1446
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:1446-integration-display-metadata-20261115": {
+      "digest": "82a8163ec4fc0593dc2739b009fe0021dc402ddd59c9a6351753fe7a30b3f210",
+      "issue": 1446,
+      "message": {
+        "kind": "queued",
+        "issue": 1446,
+        "at": 1794693710936,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "166fa0c576ad38abb400df862fa1eec24d1b261e"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
     "status": "delivered",
