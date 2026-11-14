@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13820,
+  "revision": 13821,
   "nextTicket": 476,
   "nextFence": 475,
   "tasks": {
@@ -1786,43 +1786,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "0d127cd038f4110e7d90cac7004f508f07717fff"
-      }
-    },
-    "1352": {
-      "issue": 1352,
-      "branch": "codex/issue-1352-editor-chrome-alignment",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "0d127cd038f4110e7d90cac7004f508f07717fff",
-      "mergedSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e",
-      "mergedAt": 1794132276072,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 13,
-          "cycleMilestone": 13
-        },
-        "commentCurrent": true,
-        "commentDigest": "278d46ae00a5fa8a1f17",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 13
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "2f8be3041a4b8cb8c34cede5d145e02c86deef5e"
       }
     },
     "1353": {
@@ -4850,10 +4813,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
