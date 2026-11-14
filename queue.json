@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13482,
+  "revision": 13483,
   "nextTicket": 471,
   "nextFence": 468,
   "tasks": {
@@ -4766,14 +4766,22 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1444-context-menu-footprint",
-      "materialSha": "fb419868bdc49062ec69697d173508ff4a2712ff",
+      "materialSha": "75925bfe1019b343cfa0b04891b08dd1074abc7e",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 470,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794687283601,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "6c6b64a2a10c8bb2d79a57b36c9410c83815d110",
+      "changedFiles": [
+        "demo/smoke_context_menu_geometry_1444.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.85.0/1444.json",
+        "src/editor-context-menu.styles.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5125,11 +5133,12 @@
     "worker": "github-coordinator",
     "token": "467:github:43637430533:1:tick:2:admit",
     "fence": 467,
-    "materialSha": "fb419868bdc49062ec69697d173508ff4a2712ff",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "75925bfe1019b343cfa0b04891b08dd1074abc7e",
+    "expectedBase": "45faf4e7c16d5feb2e0f30727784d69a52429960",
+    "phase": "testing",
     "admittedAt": 1794687974213,
-    "expiresAt": 1794688274213
+    "expiresAt": 1794688328127,
+    "patchId": "6c6b64a2a10c8bb2d79a57b36c9410c83815d110"
   },
   "events": {
     "github:43635074985:1:completions:message:5c199547c2b5ff056082a8d0fc08c4e69e5c49fe286134e4ed40db04aa429591": {
@@ -5194,6 +5203,10 @@
     },
     "github:43637430533:1:completions:message:d0fe85d2e01f38dcb86763656d1c517a9c17680727ec4a1857bab5b2eb97ac43": {
       "digest": "be19e06b3bc7f6d1c331f548dd8e04ff2a7c26d25cbd3718db065b4194ceac19",
+      "issue": 1444
+    },
+    "finish:59a05686-9ef8-4262-a20f-98303218440d:finish:1:synchronized": {
+      "digest": "7a07840fb60cbc8e99b8ac7e964d8bbc467f9e2abb94fb657e2f279614d97e82",
       "issue": 1444
     },
     "finish:c2098de2-f77b-4f8f-819d-e3117db86984": {
