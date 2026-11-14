@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13388,
+  "revision": 13389,
   "nextTicket": 470,
   "nextFence": 465,
   "tasks": {
@@ -4737,7 +4737,18 @@
         "demo/smoke_settings_mock_match_948.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794686875591,
+        "entry": 1,
+        "detail": "Браузер: settings polish led climate 955: failed; Браузер: settings polish radar vacuum 955: failed",
+        "eventId": "finish:c2098de2-f77b-4f8f-819d-e3117db86984:finish:2:return:return:1440"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5086,18 +5097,7 @@
     1438,
     1439
   ],
-  "active": {
-    "issue": 1440,
-    "worker": "github-coordinator",
-    "token": "464:github:43635074985:1:tick:2:admit",
-    "fence": 464,
-    "materialSha": "3108d2506cb79a0ba1c055f738afeb8764fa25b9",
-    "expectedBase": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
-    "phase": "testing",
-    "admittedAt": 1794686420646,
-    "expiresAt": 1794687172440,
-    "patchId": "d5a090a2059a454d6286cf013f329efb5ecb0879"
-  },
+  "active": null,
   "events": {
     "github:43635074985:1:completions:message:5c199547c2b5ff056082a8d0fc08c4e69e5c49fe286134e4ed40db04aa429591": {
       "digest": "2c0e39f49bd6724c766271dc303eead2994ed0d3c781485035edf4fd976abdf4",
@@ -5149,6 +5149,10 @@
     },
     "finish:44f5748e-c0cf-491b-825f-32ea9ab79d16": {
       "digest": "fe26b62ec7ef39797653c7afe68d30c523a64fbf3feecff43b8994cda342ecbb",
+      "issue": 1440
+    },
+    "finish:c2098de2-f77b-4f8f-819d-e3117db86984:finish:2:return": {
+      "digest": "e7d8fa021fceb7d5eb1eeb81587c04ecf94ede9c3c0267d5d98253c89c3c0d65",
       "issue": 1440
     },
     "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450": {
@@ -5247,6 +5251,26 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "54edbc19fc538ebdf341bc07be56bc0dc7353a72"
+      }
+    },
+    "finish:c2098de2-f77b-4f8f-819d-e3117db86984:finish:2:return:return:1440": {
+      "digest": "e7d8fa021fceb7d5eb1eeb81587c04ecf94ede9c3c0267d5d98253c89c3c0d65",
+      "issue": 1440,
+      "message": {
+        "kind": "return",
+        "issue": 1440,
+        "at": 1794686875591,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794686875591,
+          "entry": 1,
+          "detail": "Браузер: settings polish led climate 955: failed; Браузер: settings polish radar vacuum 955: failed",
+          "eventId": "finish:c2098de2-f77b-4f8f-819d-e3117db86984:finish:2:return:return:1440"
+        }
       }
     }
   },
