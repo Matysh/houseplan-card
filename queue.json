@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14057,
+  "revision": 14058,
   "nextTicket": 481,
   "nextFence": 481,
   "tasks": {
@@ -5405,6 +5405,10 @@
       "digest": "1ee856450319dc9f8e15cc0c990486beaddacb0b8076d8ce1873056515ca4d5d",
       "issue": 1447
     },
+    "github:43649778019:1:completions:message:b74318920809971d9d8509bfbbf9cad17f2feb64a33af3e3705e62b3b0f710ee": {
+      "digest": "1f8b3ca9f2bbd18c91e088ac9d58411f45d703a7bc98d175b5e7d69d59ca96eb",
+      "issue": 1447
+    },
     "finish:1fc679d3-45b9-478e-bf50-a536193847e0": {
       "digest": "f1813563c0d35d70049b94ade465914b1e3d21e424432f0793e323a1a7e1ed9b",
       "issue": 1447,
@@ -5510,7 +5514,8 @@
         "reviewChanges": "В `selectionListCss` прозрачная рамка резервируется для всех кнопочных строк, а не только enabled; правила hover/фокуса остаются enabled-only. FormKit компенсирует рамку только у своих двух известных button/cand плотностей: 8/10px → 7/9px вне panel, 10/12px → 9/11px внутри panel, правый запас 36 → 35px. Абсолютная галочка получает inset11 вместо12, сохраняя прежнее положение с новым содержащим border-box. Не меняются цвета, single-border/Tab политика, API функций, min-height44 и некнопочные строки. Универсальное вычитание padding в selectionList отвергнуто: он не владеет плотностью произвольного потребителя.\n\nНовый `smoke_choice_row_geometry_1447` использует настоящий more-info picker исходной golden-сцены в четырёх сочетаниях mobile/desktop × light/dark. Проверяются прежние62px, координаты текста/галочки против независимого старого borderless CSS на этих же элементах, enabled/disabled/aria-disabled геометрия, настоящий hover/Tab/Shift+Tab без outline/box-shadow. Отдельно проверены длинная подпись без overflow и legacy генератор на кнопочных/некнопочных native-строках. Адресный native PASS, `test/form-kit.test.mjs` 9/9 PASS. Снимки legacy не пересняты: добавлена только явная ограниченная дельта border compensation к прежней совместимости.\n\nПрежний `panel-more-info-dialog-mobile-ru` golden: 0px diff, maxDelta0, SHA `dd704bedc41521c78351ecd0e20b2c756493a06b245c6146c2b2360d16632c97`, побайтовое совпадение с существующим PNG; actual просмотрен. Отчёт: `artifacts/process-next/golden-panel-more-info-dialog-mobile-ru/golden-report.json`. Никакие PNG/эталоны не менялись. Штатный S6 далее выполняется через finish, результаты поступают автоматически; этот адресный golden не выдается за полный выпуск.\n\nE2E после поиска: https://github.com/Matysh/houseplan-e2e/issues/69 — новый HA E2E не нужен для чистой CSS-геометрии, фиксированные beta E2E/visual сохраняются. Ledger line-fix: устранение непреднамеренного изменения невыпущенного #1428, без пользовательского milestone. Особое внимание ревью: каскад enabled/disabled и граница button vs non-button, абсолютная галочка, сохранение legacy API. Touch View поддерживается, редакторы остаются desktop-first/best effort; новых взаимодействий нет.\n\nПервый штатный S6 вернул задачу на S6 без код-ревью: `test/bundle-assets.test.mjs` #526 обнаружил поясняющий комментарий внутри динамической CSS-строки, который попадал в bundle. Комментарий перенесён за пределы генерируемой строки в TypeScript; CSS-правила и геометрия не менялись. Исторические snapshots по-прежнему не переписывались. Повторяются затронутые bundle/FormKit/native/golden и штатный S6; его итог передаётся автоматически. Исходный отказ не скрывается: run `20261114T221431556-b09ca965`.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
