@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12010,
+  "revision": 12011,
   "nextTicket": 431,
   "nextFence": 431,
   "tasks": {
@@ -3800,7 +3800,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1395-core-input-policy",
-      "materialSha": "116b8d41eb5adc9c0b3fe3e88c0e3fbe6be0764c",
+      "materialSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 430,
@@ -3808,16 +3808,18 @@
       "status": "S6-in-progress",
       "readyAt": 1794630090300,
       "reviewEntry": 2,
-      "patchId": "7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f",
+      "patchId": "37136a7702967c327436700564db207b57beba91",
       "changedFiles": [
         "custom_components/houseplan/core/backup_archive.py",
         "custom_components/houseplan/core/decor_assets.py",
         "custom_components/houseplan/core/import_export.py",
         "custom_components/houseplan/core/input_policy.py",
+        "custom_components/houseplan/core/opening_repair.py",
         "custom_components/houseplan/core/plan_graph_exact.py",
         "custom_components/houseplan/core/plan_graph_migration.py",
         "custom_components/houseplan/core/plan_graph_spatial.py",
         "custom_components/houseplan/core/structural_upload.py",
+        "custom_components/houseplan/core/validation.py",
         "custom_components/houseplan/core/wall_node_move.py",
         "custom_components/houseplan/core/wall_segment_model.py",
         "custom_components/houseplan/http_api.py",
@@ -5028,11 +5030,12 @@
     "worker": "finish",
     "token": "430:finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:1:admit",
     "fence": 430,
-    "materialSha": "116b8d41eb5adc9c0b3fe3e88c0e3fbe6be0764c",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
+    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+    "phase": "testing",
     "admittedAt": 1794630940570,
-    "expiresAt": 1794631240570
+    "expiresAt": 1794631246927,
+    "patchId": "37136a7702967c327436700564db207b57beba91"
   },
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
@@ -5810,6 +5813,10 @@
     "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:3:return": {
       "digest": "755e1c38b339c23a881c49fae42c2732dbc70527c284424bb4e33332a1475963",
       "issue": 1392
+    },
+    "finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:2:synchronized": {
+      "digest": "c6ac77841144d79230cdf047ab06e13451e9390e8169a80325c8dce38d1d5c29",
+      "issue": 1395
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
