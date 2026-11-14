@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13222,
+  "revision": 13223,
   "nextTicket": 461,
   "nextFence": 461,
   "tasks": {
@@ -1602,38 +1602,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb"
-      }
-    },
-    "1340": {
-      "issue": 1340,
-      "branch": "codex/1340-retired-chunk-entrypoint",
-      "track": "ship",
-      "layer": "docs",
-      "status": "S8-merged",
-      "expectedBase": "b01159e90270a4a454be4d7acbca9d90a51760f7",
-      "mergedSha": "b01159e90270a4a454be4d7acbca9d90a51760f7",
-      "mergedAt": 1793988093794,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1341": {
@@ -4611,7 +4579,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "1e83119d95d0acabbb45de022d9dac0756d085ce"
       }
     }
   },
@@ -4942,7 +4911,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:43632142396:1:1431": {
+      "digest": "ccf8fe3eaad886f712d86d9b0339960efdcfc81f4a187e15606b9b0d3712b8db",
+      "issue": 1431,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1431,
+        "at": 1794684556002,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "1e83119d95d0acabbb45de022d9dac0756d085ce"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "1e83119d95d0acabbb45de022d9dac0756d085ce",
     "status": "pending",
