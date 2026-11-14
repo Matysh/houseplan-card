@@ -73,7 +73,7 @@ test('#1103 position resolution waits for authority and follows the actual order
 
 test('#1103 panel internal paths retain read authority; other panels/users/connections and dashboard routes remain separate', () => {
   const previous = globalThis.location;
-  const connection = {}, hass = { connection, user: { id: 'a' } };
+  const connection = {}, callWS = async () => ({}), hass = { connection, user: { id: 'a' }, callWS };
   try {
     globalThis.location = { pathname: '/houseplan/kiosk/2' };
     const before = configReloadContext({ panelHost: true, hass });
@@ -84,7 +84,7 @@ test('#1103 panel internal paths retain read authority; other panels/users/conne
     globalThis.location.pathname = '/config';
     assert.notDeepEqual(configReloadContext({ panelHost: true, hass }), before);
     globalThis.location.pathname = '/houseplan';
-    assert.notDeepEqual(configReloadContext({ panelHost: true, hass: { connection, user: { id: 'b' } } }), before);
-    assert.notEqual(configReloadContext({ panelHost: true, hass: { connection: {}, user: { id: 'a' } } }).connection, before.connection);
+    assert.notDeepEqual(configReloadContext({ panelHost: true, hass: { connection, user: { id: 'b' }, callWS } }), before);
+    assert.notEqual(configReloadContext({ panelHost: true, hass: { connection: {}, user: { id: 'a' }, callWS } }).connection, before.connection);
   } finally { globalThis.location = previous; }
 });

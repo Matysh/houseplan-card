@@ -102,11 +102,20 @@ try {
   check('host.portable_adopted_document', await page.evaluate(() => window.__card._serverCfg.spaces[0].title), 'Imported through host ports');
   check('host.import_retires_old_geometry_history', await page.evaluate(() => window.__card._geometryHistory.size), 0);
 
-  const beforeOffline = await page.evaluate(() => window.__planHostLab.commands.length);
+  // The log includes local subscribe/disposer bookkeeping, not only IO.
+  const beforeOffline = await page.evaluate(() =>
+    window.__planHostLab.commands.filter(command => command.type || command.http).length);
+  const readsBeforeOffline = await page.evaluate(() =>
+    window.__planHostLab.commands.filter(command => command.type === 'houseplan/config/get').length);
   await page.evaluate(async () => { window.__planHostLab.connected(false); await window.__card._loadFromServer(); });
-  check('host.offline_defers_read', await page.evaluate(() => window.__planHostLab.commands.length), beforeOffline);
+  check('host.offline_defers_read', await page.evaluate(() =>
+    window.__planHostLab.commands.filter(command => command.type || command.http).length), beforeOffline);
+  check('host.offline_releases_subscriptions', await page.evaluate(() =>
+    window.__planHostLab.commands.filter(command => command.release).length > 0));
   await page.evaluate(() => window.__planHostLab.connected(true));
-  await page.waitForFunction(n => window.__planHostLab.commands.length > n && !window.__card._loading, beforeOffline);
+  await page.waitForFunction(n =>
+    window.__planHostLab.commands.filter(command => command.type === 'houseplan/config/get').length > n
+      && !window.__card._loading && !window.__card._read.busy, readsBeforeOffline);
   check('host.same_authority_reconnect', await page.evaluate(() => window.__card._loadOk));
   check('host.no_presentation_backdoor', await page.evaluate(() => window.__planHostLab.forbiddenReads.length), 0);
   await page.evaluate(() => window.__card.remove());
