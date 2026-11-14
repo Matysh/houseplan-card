@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12559,
+  "revision": 12560,
   "nextTicket": 445,
   "nextFence": 445,
   "tasks": {
@@ -5065,6 +5065,10 @@
       "digest": "955b505f0f112a6b6f761304eb888e13e02b0e64c73fc733dd6106e7a90015e3",
       "issue": 1423
     },
+    "github:43586364877:1:completions:message:c39d73a52cc58df96469fad443507e8d95567fda72fb1a313f8168b5b2043d4a": {
+      "digest": "072e1e7fb4722eb914b9b40e5e0db4701878fdb5c87ef47d80022a6b2ba87c42",
+      "issue": 1421
+    },
     "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651": {
       "digest": "de3a891914465aab40cb0cc764c1c1f63dd063b799b8f79278f1dc5e6cb8b3c9",
       "issue": 1421,
@@ -5124,7 +5128,8 @@
         "reviewChanges": "### Решение и ограничения\nНовая точка входа использует #1391 core, #1392 host ports, #1394 plan-only и #1422 presentation; общий renderer не дублируется. В документах #1393 и текущей UI Lab ещё есть HA bootstrap — они не доказательство результата. Сейчас согласуется реальная frontend-поставка/embedding API, не production backend и не сайт. Чистая версия 1.85.2 не содержит foundation из dev, поэтому стабильный pin нельзя обещать до выпуска включающей их версии. У владельца запрошено подтверждение локального dev-кандидата; вопрос не даёт разрешения на релиз.\n\n### Проверки\nДо S4 только авторская проверка формы. Продуктовых запусков #1423 пока нет. Предлагаемые сценарии будущие; проверки #1421 не относятся к этой задаче. Реализация начнётся после принятого ТЗ и S8 #1422.\n\n### Исправления по предыдущему ревью\nS4 r1: https://github.com/Matysh/houseplan-card/actions/runs/43585839409 (artifact review-result, spec-39fb169dd97c-1794652631045.md).\n- F1: ru/en/de/pl исправлено на ru/en/de/fr во всём ТЗ, польский не вводится.\n- F2: явно выбран вариант (a) — test transport к настоящему локальному Python core для положительного journey/геометрии/portable repair и apply; эхо-fixture только для фронтенд fault injection. Объявлять лишь фактически реализованные API. Не создаём публичный backend и не дублируем core на JS.\n- Улучшения: side-effect-free module обязателен, host до DOM connect и проверка отсутствия HaPlanHost/picker; конкретный Roboto Regular 400 + synth/fallback; описан config/get handshake и standalone recovery без HA/HACS текстов; сверка presentation API после S8 #1422 до реализации.\nНовая передача — редакция 2 в теле issue. Только spec-check, продуктовых прогонов нет.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
