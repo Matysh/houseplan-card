@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13809,
+  "revision": 13810,
   "nextTicket": 476,
   "nextFence": 475,
   "tasks": {
@@ -5323,6 +5323,10 @@
       "digest": "fc1572e4a5d126420ad61b523bd85a07c34740832b5e200a7d495aa7f01df8a9",
       "issue": 1438
     },
+    "github:43643380877:1:completions:message:25452805290d044080fee117ac90135ed5952247035887cfbd06a06e7715ffe9": {
+      "digest": "3c9d6bc6d69793d10d65e617d0286dded640aabf479ae399776206c17db42175",
+      "issue": 1438
+    },
     "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f": {
       "digest": "ce61402c6c2203dac6edbc477e30fa679a1e9fa2be42563711326929ccd8c5a6",
       "issue": 1438,
@@ -5392,7 +5396,8 @@
         "reviewChanges": "Причина: холодный authoritative afterAdopt вызывает `_restoreKioskViewport` до первого stage. Немедленный `_applyView` подменяет aspect реальной области fallback-пропорциями `_baseVb`. Первый ResizeObserver принимает размер без пересчёта уже существующей камеры. Диагностика: stage до/после одинаковый 780×850, view h 518.2388489 → 345.8560243, центр/zoom/w неизменны. Второй независимый smoke необязательного View runtime подтверждает тот же дефект.\n\nРешение: немедленно восстановить точные сохранённые числа камеры, сохранить существующий memo только пока stage отсутствует/нулевой и завершить `_applyView` в обычном `updated()` при доступной реальной области. Все проверки placement/account/config/route, kiosk/View, существования и идентичности этажа и non-carousel повторяются перед завершением; при отказе memo удаляется. Новых таймеров, обещаний или попыток reload нет. Screen-profile recovered флаг выставляется вместе с принятой камерой. Альтернатива просто удалить `_applyView` отвергнута: реальная изменившаяся область должна сохранять штатный пересчёт размеров вокруг центра.\n\nАдресные native `smoke_kiosk_viewport_recovery` и `smoke_view_runtime_kiosk_recovery` зелёные после исправления; добавлено наблюдение одинаковых реальных размеров stage. Точные допуски не менялись. Штатный S6 выполняется через finish; его фактический отчёт передаётся автоматически. Baseline не принимались, release не выполняется, редакторы/сервер/API не изменяются. E2E решение: https://github.com/Matysh/houseplan-e2e/issues/65 (новый отдельный HA E2E не нужен, фиксированный kiosk E2E беты остаётся).\n\nОсобое внимание: синхронный cold authority → первая реальная stage, инвалидирование memo при смене контекста; исключения deleted/fixed/single/carousel/same-version и необязательный runtime используют прежние guards. Touch View/kiosk contract сохраняется; editor touch не затрагивается.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
