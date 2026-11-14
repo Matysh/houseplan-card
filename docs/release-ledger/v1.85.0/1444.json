@@ -1,0 +1,1 @@
+{"schema":1,"issue":1444,"baseStable":"v1.85.0","category":"line-fix","rationale":"Compensate the horizontal footprint of the unreleased #1428 context-menu border without changing its new focus paint.","summary":{"ru":"Сохранена прежняя ширина контекстных меню с новой рамкой.","en":"Preserve context-menu widths with the new border."}}
