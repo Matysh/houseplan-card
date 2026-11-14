@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12466,
+  "revision": 12467,
   "nextTicket": 443,
   "nextFence": 443,
   "tasks": {
@@ -1640,38 +1640,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb"
-      }
-    },
-    "1328": {
-      "issue": 1328,
-      "branch": "codex/issue-1328-test-selection-duty",
-      "track": "ship",
-      "layer": "docs",
-      "status": "S8-merged",
-      "expectedBase": "94b43670bf58d49549a81a79b77e3b6dc37b0355",
-      "mergedSha": "be93fa714bfb253e1232d42e1c0b4c2c369cec7e",
-      "mergedAt": 1793942947294,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1329": {
@@ -4319,10 +4287,20 @@
       "branchDeleted": true,
       "removedToRelease": false,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S6-in-progress",
+        "removedToRelease": false,
+        "commentCurrent": true,
+        "commentDigest": "34c7bc28ce5c545336ab",
+        "commentFacts": {
+          "labels": true,
+          "milestone": "not-required",
+          "target": null
+        }
       },
       "devBuild": {
         "status": "not-required"
