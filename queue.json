@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12375,
+  "revision": 12376,
   "nextTicket": 442,
   "nextFence": 442,
   "tasks": {
@@ -5332,6 +5332,10 @@
       "digest": "dfecce82296e343065f0d5a433d81471befc1d36b2004970627d6778caec221a",
       "issue": 1394
     },
+    "github:43569948997:1:completions:message:2c9d1588a407fe1f9025e132643e89042b2f83583d5d0ee552a3e83952b02a6f": {
+      "digest": "f8001a4e1755f2d489b263ffef587e4e13b51d3a53a7735e4d18e80391cb44d6",
+      "issue": 1394
+    },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
       "digest": "da0a567c831444c6edf8188c369afccc9da568d6542dab5b8e8f2f028cdcb317",
       "issue": 1394,
@@ -5672,7 +5676,8 @@
           "entry": 6,
           "detail": "Браузер: summary weather: failed",
           "eventId": "finish:33b0de64-bd0b-4217-920c-ae07166a2f02:finish:3:return:return:1394"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:5a3f7a6b-d218-4597-9747-cb58c140d5f7": {
