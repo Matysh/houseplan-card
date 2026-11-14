@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12856,
+  "revision": 12857,
   "nextTicket": 453,
   "nextFence": 453,
   "tasks": {
@@ -1716,38 +1716,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "4d7b4cc103636e790788ab489845f735a4b5a6f3"
-      }
-    },
-    "1336": {
-      "issue": 1336,
-      "branch": "codex/1336-converter-runtime",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "86e4d9ff3ceb37f56ea370d9af4002c9b45e5cc7",
-      "mergedSha": "939eca1ea9fcb34c72307aba3781c77ce65027dd",
-      "mergedAt": 1793965507117,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1339": {
@@ -4500,10 +4468,24 @@
       "removedToRelease": false,
       "reviewRequest": "review:1423:3:42729b347ff7985c803c68f0ff1f94f120c35011:a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 15
+        },
+        "commentCurrent": true,
+        "commentDigest": "d1c65df9ac3a3cbebb03",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "published",
