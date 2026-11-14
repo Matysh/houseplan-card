@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13840,
+  "revision": 13841,
   "nextTicket": 476,
   "nextFence": 475,
   "tasks": {
@@ -4561,152 +4561,25 @@
     },
     "1438": {
       "issue": 1438,
+      "branch": "codex/1438-kiosk-camera",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1438-kiosk-camera",
-      "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 468,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794686474377,
-      "reviewEntry": 1,
-      "patchId": "24150e2851c51f085b8304cb2280c8e661a4aa33",
-      "changedFiles": [
-        "demo/smoke_kiosk_viewport_recovery.mjs",
-        "demo/smoke_view_runtime_kiosk_recovery.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.85.0/1438.json",
-        "src/houseplan-card.ts"
-      ],
-      "s6": {
-        "id": "20261114T212458686-806574fb",
-        "name": "Тесты для задачи #1438 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T212458686-806574fb/report.json",
-        "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-        "status": "passed",
-        "finishedAt": "2026-11-14T21:32:38.068Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "c5d7a23892c69ad0504cf3048589344e03525810",
+      "mergedSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
+      "mergedAt": 1794692159797,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1438:1:24150e2851c51f085b8304cb2280c8e661a4aa33:c5d7a23892c69ad0504cf3048589344e03525810",
-      "reviewMaterial": {
-        "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-        "expectedBase": "c5d7a23892c69ad0504cf3048589344e03525810",
-        "patchId": "24150e2851c51f085b8304cb2280c8e661a4aa33"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1438:1:24150e2851c51f085b8304cb2280c8e661a4aa33:c5d7a23892c69ad0504cf3048589344e03525810",
-        "eventId": "github:43643380877:1:tick:0:review-retry",
-        "at": 1794691979214,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1438,
-        "requestId": "review:1438:1:24150e2851c51f085b8304cb2280c8e661a4aa33:c5d7a23892c69ad0504cf3048589344e03525810",
-        "kind": "code",
-        "base": "c5d7a23892c69ad0504cf3048589344e03525810",
-        "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-        "patchId": "24150e2851c51f085b8304cb2280c8e661a4aa33",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1438,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1438",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Причина: холодный authoritative afterAdopt вызывает `_restoreKioskViewport` до первого stage. Немедленный `_applyView` подменяет aspect реальной области fallback-пропорциями `_baseVb`. Первый ResizeObserver принимает размер без пересчёта уже существующей камеры. Диагностика: stage до/после одинаковый 780×850, view h 518.2388489 → 345.8560243, центр/zoom/w неизменны. Второй независимый smoke необязательного View runtime подтверждает тот же дефект.\n\nРешение: немедленно восстановить точные сохранённые числа камеры, сохранить существующий memo только пока stage отсутствует/нулевой и завершить `_applyView` в обычном `updated()` при доступной реальной области. Все проверки placement/account/config/route, kiosk/View, существования и идентичности этажа и non-carousel повторяются перед завершением; при отказе memo удаляется. Новых таймеров, обещаний или попыток reload нет. Screen-profile recovered флаг выставляется вместе с принятой камерой. Альтернатива просто удалить `_applyView` отвергнута: реальная изменившаяся область должна сохранять штатный пересчёт размеров вокруг центра.\n\nАдресные native `smoke_kiosk_viewport_recovery` и `smoke_view_runtime_kiosk_recovery` зелёные после исправления; добавлено наблюдение одинаковых реальных размеров stage. Точные допуски не менялись. Штатный S6 выполняется через finish; его фактический отчёт передаётся автоматически. Baseline не принимались, release не выполняется, редакторы/сервер/API не изменяются. E2E решение: https://github.com/Matysh/houseplan-e2e/issues/65 (новый отдельный HA E2E не нужен, фиксированный kiosk E2E беты остаётся).\n\nОсобое внимание: синхронный cold authority → первая реальная stage, инвалидирование memo при смене контекста; исключения deleted/fixed/single/carousel/same-version и необязательный runtime используют прежние guards. Touch View/kiosk contract сохраняется; editor touch не затрагивается."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление точечное и устраняет установленную причину: при холодной authoritative-загрузке камеру больше не подгоняют под пропорции подложки (`_baseVb`) до того, как появилась stage. Сохранённые числа камеры выставляются сразу, а пересчёт `_applyView` откладывается до первого `updated()` с ненулевой stage. Перед ним заново проверяются все прежние guards. Для живого этажа, fixed и single возвращается контракт #894 с прежними допусками. Сценарии deleted, carousel и same-version проходят через те же guards, их поведение не меняется. Блокеров нет. Есть две необязательные доработки по краевым случаям, см. improvements. Штатный S6 на этом SHA прошёл со статусом passed. Отчёт S6 я знаю только по receipt и заявлению автора о зелёных адресных smoke, сами тесты не запускал.",
-          "understanding": "Проблема. На холодном reload `afterAdopt` в `_loadFromServer` (src/houseplan-card.ts:5736) вызывает `_restoreKioskViewport` раньше, чем отрисована первая `.stage`. В base функция сразу вызывала `_applyView`, а `_stageAspect()` (7875–7877) без stage возвращает `vb[2]/vb[3]`, то есть пропорции подложки. В результате `h` пересчитывается (518.24 → 345.86), `y` сдвигается. Затем первый ResizeObserver в `_refitView` (8138–8143) при `!previous` только запоминает размер и не трогает уже существующий `_view`, так что ошибочная камера закрепляется.\n\nПосле исправления `_restoreKioskViewport` (5068–5087) проверяет те же guards: ключ placement/account/config/route, kiosk, режим view, тот же space, этаж существует, non-carousel. Если guard не прошёл, memo удаляется. Если прошёл, функция сразу записывает точные `_zoom`/`_view` и флаг `_screenRecoveredCamera`. Когда stage нет или она нулевая, memo остаётся до вызова в `updated()` (5467). Этот вызов стоит раньше создания ResizeObserver, поэтому первая доставка RO видит `_view` уже подогнанным под реальную область и при одинаковом размере ничего не меняет. При тёплом reload (stage уже есть) путь прежний: немедленный `_applyView`.\n\nРазобранные пути: `_initialSpaceSelection` (4890–4917), который читает отложенный memo; `_applyView`/`_clampView`; `_refitView`, включая первую доставку и rAF-ветку; `_bootSettled`/`_finishBootSettled`; screen-камера `_syncScreenCamera` и флаг `_screenRecoveredCamera`; `_liveVp`; геттер `_stageEl` (запрос `.stage` при каждом обращении, устаревшей ссылки нет). Изменения smoke сводятся к фиксации размеров stage до и после reload и диагностическому выводу при расхождении. Допуски 1e-6 и 1e-4 не менялись.",
-          "analysis": [
-            {
-              "topic": "Соответствие причине и контракту #894",
-              "assessment": "Исправление действует ровно там, где возник дефект: убран пересчёт через `_baseVb`, пока stage нет. Отказ от простого удаления `_applyView` обоснован. Если реальная область изменилась, камеру по-прежнему нужно пересчитать вокруг сохранённого центра. При равной stage `_applyView` с реальным aspect даёт прежние w/h, потому что `fit` считается из того же vb и той же пропорции, а zoom совпадает. Новых таймеров, промисов и попыток reload нет, жизненный цикл обслуживает обычный `updated()`.",
-              "evidence": "src/houseplan-card.ts:5068–5087 (новая логика), 7991–8017 (`_applyView`: `fitView(vb, this._stageAspect())`), 7875–7877 (fallback на vb без stage), 8138–8143 (первая доставка RO не переписывает существующий `_view`)."
-            },
-            {
-              "topic": "Порядок в updated() и ResizeObserver",
-              "assessment": "Вызов `_restoreKioskViewport` стоит до блока, который создаёт `_roViewport`. Первая доставка RO происходит уже после подгонки и в ветке `!previous` только записывает `_lastValidStageSize`. Это и закрывает механизм «первый resize закрепляет неверный fit». Перед восстановлением на строке 5452 `commitHouseplanViewport` успевает закоммитить точные (ещё не подогнанные) числа. Затем `_applyView` → `_liveVp` запрашивает ещё один кадр. При одинаковой stage числа почти не меняются, видимого скачка нет. Изменение состояния внутри `updated()` здесь штатная практика: так же устроены `_refitView` и screen-камера.",
-              "evidence": "src/houseplan-card.ts:5452, 5467, 5484–5493, 5962."
-            },
-            {
-              "topic": "Отложенный memo и смена контекста",
-              "assessment": "Повторный вызов прогоняет полный набор guards заново. Если за время ожидания сменились space, режим, ключ (config/route/user), этаж удалён или kiosk стал carousel, memo удаляется. Пока memo ждёт, `_initialSpaceSelection` продолжает предпочитать recovery-space. Это совпадает с текущим `_space` и не противоречит остальным guards: если этаж исчез, `restoreRecovery` становится false, а memo затем очищается в `updated()`. Один нюанс: при отказе на отложенной стадии уже выставленные `_zoom`/`_view`/`_screenRecoveredCamera` не откатываются. На практике отказ означает смену space или режима, а у этих путей есть собственный владелец камеры. `_syncScreenCamera` сбрасывает флаг при первом пересчёте reference (3272). Дефектом это не считаю.",
-              "evidence": "src/houseplan-card.ts:4904–4907, 5070–5075, 3263, 3272."
-            },
-            {
-              "topic": "Исключения deleted/fixed/single/carousel/same-version и View runtime",
-              "assessment": "Логику guards не меняли, сменился только момент финального `_applyView`. Для deleted guard `_model.some(...)` по-прежнему отклоняет memo. Для carousel по-прежнему срабатывает `nonCarouselKiosk`. Same-version reload не происходит вовсе. Путь screen-profile (`_usesScreenCamera`) получает тот же `_applyView`, что и раньше, только на реальной области.",
-              "evidence": "diff src/houseplan-card.ts; demo/smoke_kiosk_viewport_recovery.mjs (цикл по всем вариантам, новая проверка `same-stage-geometry` для каждого)."
-            },
-            {
-              "topic": "Проверки",
-              "assessment": "Новые проверки в smoke полезны: они отделяют «камера сместилась из-за другой stage» от «камера сместилась при той же stage». Это прямо отвечает на требование из комментария владельца сверить фактическую высоту stage. Допуски точности не расширены, настоящий document reload не подменён. Добавленный `console.log` выводит диагностику только при провале и не ослабляет проверку.",
-              "evidence": "demo/smoke_kiosk_viewport_recovery.mjs (+stage до/после, `same-stage-geometry`); demo/smoke_view_runtime_kiosk_recovery.mjs (`assert.deepEqual(after.stage, before.stage, ...)`); receipt 20261114T212458686-806574fb, status passed, materialSha = head."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Если на первом `updated()` stage оказалась нулевой (скрытая вкладка, `display:none` предка), memo ждёт следующего Lit-обновления. При этом `_refitView` в ветке `!previous`, когда `_view` уже есть, не вызывает `requestUpdate`, поэтому до следующего hass-тика или другого обновления камера остаётся неподогнанной. Пути восстановления без ожидания внешнего кадра хватит одной строки в callback RO или в начале `_refitView`: `if (this._recoveryViewport) this._restoreKioskViewport();` либо `requestUpdate()`. Это гипотетический краевой случай: в штатном холодном kiosk stage при первом рендере ненулевая. Но так завершение memo перестанет зависеть от постороннего обновления.",
-            "При отказе guard на отложенной стадии можно также откатить ранее выставленный `_screenRecoveredCamera` (или выставлять его только при фактическом `_applyView`), чтобы флаг точно соответствовал принятой камере. Выгода — строгая симметрия «флаг ↔ принятая камера», о которой пишет автор. Цена — ещё одна ветка; сейчас флаг в любом случае сбрасывается `_syncScreenCamera`."
-          ],
-          "boundaries": "Код и smoke читал по pinned head/base, тесты, сборку и smoke сам не запускал. Использован только S6-receipt 20261114T212458686-806574fb (status passed, materialSha = head, без failures). Содержимое report.json мне недоступно, поэтому зелёные адресные `smoke_kiosk_viewport_recovery` и `smoke_view_runtime_kiosk_recovery` известны со слов автора и по факту прохождения набора. Числовые выкладки 518.24/345.86 и размеры stage 780×850 взяты из комментариев issue, сам я их не воспроизводил. Release ledger и CHANGELOG проверены только на соответствие смыслу изменения. HA E2E (houseplan-e2e#65) не изучал.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 24,
-          "cache_creation_input_tokens": 46384,
-          "cache_read_input_tokens": 308045,
-          "output_tokens": 9977,
-          "output_tokens_details": {
-            "thinking_tokens": 4051
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 46384,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 892,
-              "cache_read_input_tokens": 38371,
-              "cache_creation_input_tokens": 12217,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 12217
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление точечное и устраняет установленную причину: при холодной authoritative-загрузке камеру больше не подгоняют под пропорции подложки (`_baseVb`) до того, как появилась stage. Сохранённые числа камеры выставляются сразу, а пересчёт `_applyView` откладывается до первого `updated()` с ненулевой stage. Перед ним заново проверяются все прежние guards. Для живого этажа, fixed и single возвращается контракт #894 с прежними допусками. Сценарии deleted, carousel и same-version проходят через те же guards, их поведение не меняется. Блокеров нет. Есть две необязательные доработки по краевым случаям, см. improvements. Штатный S6 на этом SHA прошёл со статусом passed. Отчёт S6 я знаю только по receipt и заявлению автора о зелёных адресных smoke, сами тесты не запускал.\n\n## Понимание решения\n\nПроблема. На холодном reload `afterAdopt` в `_loadFromServer` (src/houseplan-card.ts:5736) вызывает `_restoreKioskViewport` раньше, чем отрисована первая `.stage`. В base функция сразу вызывала `_applyView`, а `_stageAspect()` (7875–7877) без stage возвращает `vb[2]/vb[3]`, то есть пропорции подложки. В результате `h` пересчитывается (518.24 → 345.86), `y` сдвигается. Затем первый ResizeObserver в `_refitView` (8138–8143) при `!previous` только запоминает размер и не трогает уже существующий `_view`, так что ошибочная камера закрепляется.\n\nПосле исправления `_restoreKioskViewport` (5068–5087) проверяет те же guards: ключ placement/account/config/route, kiosk, режим view, тот же space, этаж существует, non-carousel. Если guard не прошёл, memo удаляется. Если прошёл, функция сразу записывает точные `_zoom`/`_view` и флаг `_screenRecoveredCamera`. Когда stage нет или она нулевая, memo остаётся до вызова в `updated()` (5467). Этот вызов стоит раньше создания ResizeObserver, поэтому первая доставка RO видит `_view` уже подогнанным под реальную область и при одинаковом размере ничего не меняет. При тёплом reload (stage уже есть) путь прежний: немедленный `_applyView`.\n\nРазобранные пути: `_initialSpaceSelection` (4890–4917), который читает отложенный memo; `_applyView`/`_clampView`; `_refitView`, включая первую доставку и rAF-ветку; `_bootSettled`/`_finishBootSettled`; screen-камера `_syncScreenCamera` и флаг `_screenRecoveredCamera`; `_liveVp`; геттер `_stageEl` (запрос `.stage` при каждом обращении, устаревшей ссылки нет). Изменения smoke сводятся к фиксации размеров stage до и после reload и диагностическому выводу при расхождении. Допуски 1e-6 и 1e-4 не менялись.\n\n## Разбор решения\n\n### Соответствие причине и контракту #894\n\nИсправление действует ровно там, где возник дефект: убран пересчёт через `_baseVb`, пока stage нет. Отказ от простого удаления `_applyView` обоснован. Если реальная область изменилась, камеру по-прежнему нужно пересчитать вокруг сохранённого центра. При равной stage `_applyView` с реальным aspect даёт прежние w/h, потому что `fit` считается из того же vb и той же пропорции, а zoom совпадает. Новых таймеров, промисов и попыток reload нет, жизненный цикл обслуживает обычный `updated()`.\n\nОснование: src/houseplan-card.ts:5068–5087 (новая логика), 7991–8017 (`_applyView`: `fitView(vb, this._stageAspect())`), 7875–7877 (fallback на vb без stage), 8138–8143 (первая доставка RO не переписывает существующий `_view`).\n\n### Порядок в updated() и ResizeObserver\n\nВызов `_restoreKioskViewport` стоит до блока, который создаёт `_roViewport`. Первая доставка RO происходит уже после подгонки и в ветке `!previous` только записывает `_lastValidStageSize`. Это и закрывает механизм «первый resize закрепляет неверный fit». Перед восстановлением на строке 5452 `commitHouseplanViewport` успевает закоммитить точные (ещё не подогнанные) числа. Затем `_applyView` → `_liveVp` запрашивает ещё один кадр. При одинаковой stage числа почти не меняются, видимого скачка нет. Изменение состояния внутри `updated()` здесь штатная практика: так же устроены `_refitView` и screen-камера.\n\nОснование: src/houseplan-card.ts:5452, 5467, 5484–5493, 5962.\n\n### Отложенный memo и смена контекста\n\nПовторный вызов прогоняет полный набор guards заново. Если за время ожидания сменились space, режим, ключ (config/route/user), этаж удалён или kiosk стал carousel, memo удаляется. Пока memo ждёт, `_initialSpaceSelection` продолжает предпочитать recovery-space. Это совпадает с текущим `_space` и не противоречит остальным guards: если этаж исчез, `restoreRecovery` становится false, а memo затем очищается в `updated()`. Один нюанс: при отказе на отложенной стадии уже выставленные `_zoom`/`_view`/`_screenRecoveredCamera` не откатываются. На практике отказ означает смену space или режима, а у этих путей есть собственный владелец камеры. `_syncScreenCamera` сбрасывает флаг при первом пересчёте reference (3272). Дефектом это не считаю.\n\nОснование: src/houseplan-card.ts:4904–4907, 5070–5075, 3263, 3272.\n\n### Исключения deleted/fixed/single/carousel/same-version и View runtime\n\nЛогику guards не меняли, сменился только момент финального `_applyView`. Для deleted guard `_model.some(...)` по-прежнему отклоняет memo. Для carousel по-прежнему срабатывает `nonCarouselKiosk`. Same-version reload не происходит вовсе. Путь screen-profile (`_usesScreenCamera`) получает тот же `_applyView`, что и раньше, только на реальной области.\n\nОснование: diff src/houseplan-card.ts; demo/smoke_kiosk_viewport_recovery.mjs (цикл по всем вариантам, новая проверка `same-stage-geometry` для каждого).\n\n### Проверки\n\nНовые проверки в smoke полезны: они отделяют «камера сместилась из-за другой stage» от «камера сместилась при той же stage». Это прямо отвечает на требование из комментария владельца сверить фактическую высоту stage. Допуски точности не расширены, настоящий document reload не подменён. Добавленный `console.log` выводит диагностику только при провале и не ослабляет проверку.\n\nОснование: demo/smoke_kiosk_viewport_recovery.mjs (+stage до/после, `same-stage-geometry`); demo/smoke_view_runtime_kiosk_recovery.mjs (`assert.deepEqual(after.stage, before.stage, ...)`); receipt 20261114T212458686-806574fb, status passed, materialSha = head.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Если на первом `updated()` stage оказалась нулевой (скрытая вкладка, `display:none` предка), memo ждёт следующего Lit-обновления. При этом `_refitView` в ветке `!previous`, когда `_view` уже есть, не вызывает `requestUpdate`, поэтому до следующего hass-тика или другого обновления камера остаётся неподогнанной. Пути восстановления без ожидания внешнего кадра хватит одной строки в callback RO или в начале `_refitView`: `if (this._recoveryViewport) this._restoreKioskViewport();` либо `requestUpdate()`. Это гипотетический краевой случай: в штатном холодном kiosk stage при первом рендере ненулевая. Но так завершение memo перестанет зависеть от постороннего обновления.\n- При отказе guard на отложенной стадии можно также откатить ранее выставленный `_screenRecoveredCamera` (или выставлять его только при фактическом `_applyView`), чтобы флаг точно соответствовал принятой камере. Выгода — строгая симметрия «флаг ↔ принятая камера», о которой пишет автор. Цена — ещё одна ветка; сейчас флаг в любом случае сбрасывается `_syncScreenCamera`.\n\n## Границы анализа\n\nКод и smoke читал по pinned head/base, тесты, сборку и smoke сам не запускал. Использован только S6-receipt 20261114T212458686-806574fb (status passed, materialSha = head, без failures). Содержимое report.json мне недоступно, поэтому зелёные адресные `smoke_kiosk_viewport_recovery` и `smoke_view_runtime_kiosk_recovery` известны со слов автора и по факту прохождения набора. Числовые выкладки 518.24/345.86 и размеры stage 780×850 взяты из комментариев issue, сам я их не воспроизводил. Release ledger и CHANGELOG проверены только на соответствие смыслу изменения. HA E2E (houseplan-e2e#65) не изучал.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: c5d7a23892c69ad0504cf3048589344e03525810 → 662309e6efe19b5187841aa0eeaca0b6047f0388\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1438, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПричина: холодный authoritative afterAdopt вызывает `_restoreKioskViewport` до первого stage. Немедленный `_applyView` подменяет aspect реальной области fallback-пропорциями `_baseVb`. Первый ResizeObserver принимает размер без пересчёта уже существующей камеры. Диагностика: stage до/после одинаковый 780×850, view h 518.2388489 → 345.8560243, центр/zoom/w неизменны. Второй независимый smoke необязательного View runtime подтверждает тот же дефект.\n\nРешение: немедленно восстановить точные сохранённые числа камеры, сохранить существующий memo только пока stage отсутствует/нулевой и завершить `_applyView` в обычном `updated()` при доступной реальной области. Все проверки placement/account/config/route, kiosk/View, существования и идентичности этажа и non-carousel повторяются перед завершением; при отказе memo удаляется. Новых таймеров, обещаний или попыток reload нет. Screen-profile recovered флаг выставляется вместе с принятой камерой. Альтернатива просто удалить `_applyView` отвергнута: реальная изменившаяся область должна сохранять штатный пересчёт размеров вокруг центра.\n\nАдресные native `smoke_kiosk_viewport_recovery` и `smoke_view_runtime_kiosk_recovery` зелёные после исправления; добавлено наблюдение одинаковых реальных размеров stage. Точные допуски не менялись. Штатный S6 выполняется через finish; его фактический отчёт передаётся автоматически. Baseline не принимались, release не выполняется, редакторы/сервер/API не изменяются. E2E решение: https://github.com/Matysh/houseplan-e2e/issues/65 (новый отдельный HA E2E не нужен, фиксированный kiosk E2E беты остаётся).\n\nОсобое внимание: синхронный cold authority → первая реальная stage, инвалидирование memo при смене контекста; исключения deleted/fixed/single/carousel/same-version и необязательный runtime используют прежние guards. Touch View/kiosk contract сохраняется; editor touch не затрагивается.\n```\n\n</details>\n",
-        "createdAt": "2026-11-14T21:35:34.859Z",
-        "artifactId": 14132903070,
-        "runId": 43643399476,
-        "runAttempt": 1,
-        "completedAt": "2026-11-14T21:35:39Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43643399476",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "c5d7a23892c69ad0504cf3048589344e03525810"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1439": {
@@ -5279,106 +5152,8 @@
   "waiting": [
     1443
   ],
-  "active": {
-    "issue": 1438,
-    "worker": "github-coordinator",
-    "token": "474:github:43642521401:1:tick:2:admit",
-    "fence": 474,
-    "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-    "expectedBase": "c5d7a23892c69ad0504cf3048589344e03525810",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794691407122,
-    "expiresAt": 1794695757742,
-    "patchId": "24150e2851c51f085b8304cb2280c8e661a4aa33",
-    "reviewRequest": "review:1438:1:24150e2851c51f085b8304cb2280c8e661a4aa33:c5d7a23892c69ad0504cf3048589344e03525810"
-  },
+  "active": null,
   "events": {
-    "github:43642521401:1:completions:message:de9c401bad284aa25cfc415f9735dcfba88884285335d3446c1d7987a2ef39b9": {
-      "digest": "8ce703e00a41be6ba4aeddae513b09fd6d79047cdbf7cbd10471b75fc8077866",
-      "issue": 1438
-    },
-    "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f:finish:1:synchronized": {
-      "digest": "de54c1d3d0f5cbc972b480cbe80151a7b7439c0ab5623808b6239db34beae292",
-      "issue": 1438
-    },
-    "dev-build:43642521401:1:webhook": {
-      "digest": "8c608fe6b544eb5fcf79545ba1da2efff11dc80835a06586bccd1bb32b5c6166",
-      "issue": 1438
-    },
-    "dev-build:43642521401:1:webhook:13c7ae77-1cb8-4257-931d-57e0f1a7ed4c:delivered": {
-      "digest": "4a77946225a30e1fbb38e0c9c3698b84078dbcffe24fae99a6085ff38303cec3",
-      "issue": 1438
-    },
-    "finish:cbc77ab8-700a-45f5-abe9-4960b2209ee2": {
-      "digest": "2f925b7a91d08980c5a469e5d3f44c8223a930ad60038e7ce9d6bf6d36032cc4",
-      "issue": 1438
-    },
-    "finish:43193761-a5d4-46c6-975f-4335ba0c45d2": {
-      "digest": "f3220043328695e34d0378b250d0ec2d10d69d875809373a64ca640c11e4df69",
-      "issue": 1438
-    },
-    "finish:63692acf-dab2-4b2d-9823-32d969afe858": {
-      "digest": "46814a290d4bd4c20e60097f7ce407ee262dff645fddff22607ec08b9cecb125",
-      "issue": 1438
-    },
-    "finish:5d95925e-ffdf-4559-a110-195c91c67c3d": {
-      "digest": "ce59e1ecb76bcfb013d33d8094d783191edae66b389b82752fc7ec271e0210ac",
-      "issue": 1438
-    },
-    "finish:50847fc8-e022-4648-afbd-8e1f8e4f0e94": {
-      "digest": "de7003bd7396d8b08feb1d7406a68b5608ae5586e5d4b14485a6a9435cb46c0f",
-      "issue": 1438
-    },
-    "finish:1fc48b99-54d5-4062-babb-173c448afa8a": {
-      "digest": "431ea9c61c919a5bab08878509044245a293185f9fb224650f0b1051ad47f63a",
-      "issue": 1438
-    },
-    "finish:90afaa84-9006-4702-b657-33bf83a201eb": {
-      "digest": "f7d828bdf27b9cb616a906c96ba814f60f06ef2056d6491b5e3cca2140c04366",
-      "issue": 1438
-    },
-    "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f:finish:2:s6-label": {
-      "digest": "0110085b9292a81ed66afb80cd3c2974d39c4d3d51f02d46642e7d6d5beffc81",
-      "issue": 1438
-    },
-    "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f:finish:3:review-requested": {
-      "digest": "b650e86633b0e4c14b89d411961a1cb59f3fe96412a26d089de9b507d3c5fe46",
-      "issue": 1438
-    },
-    "github:43643380877:1:tick:0:review-retry": {
-      "digest": "163367b87a7c1dd8e69f267bac56f3e04cc9f7f41b7300ee49f99e8ad0cb0b4a",
-      "issue": 1438
-    },
-    "github:43643380877:1:completions:message:11397804dba03d2530aa487854cb66973185cbcb0e0b411e942b73f36bf1204d": {
-      "digest": "fc1572e4a5d126420ad61b523bd85a07c34740832b5e200a7d495aa7f01df8a9",
-      "issue": 1438
-    },
-    "github:43643380877:1:completions:message:25452805290d044080fee117ac90135ed5952247035887cfbd06a06e7715ffe9": {
-      "digest": "3c9d6bc6d69793d10d65e617d0286dded640aabf479ae399776206c17db42175",
-      "issue": 1438
-    },
-    "github:43643648458:1:tick:0:review-presentation": {
-      "digest": "eca497279fd2255b5f02de3be30b02efcf72568433877e38115603257ffce51e",
-      "issue": 1438
-    },
-    "github:43643648458:1:tick:0:review-complete": {
-      "digest": "911cbe676a4f5e3949be6122452b83146adbc5fb123cf2229cc94b0d929beb34",
-      "issue": 1438
-    },
-    "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f": {
-      "digest": "ce61402c6c2203dac6edbc477e30fa679a1e9fa2be42563711326929ccd8c5a6",
-      "issue": 1438,
-      "message": {
-        "kind": "queued",
-        "issue": 1438,
-        "at": 1794686474377,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a847e0a0a6690553f4bece5db5bf6eab5d218bda",
-        "delivered": true
-      }
-    },
     "finish:e4428c91-9fe4-4445-b786-0ad62033f040": {
       "digest": "9f6ca30f9ef2456409a5df2442d3d348ce013b4e18130f4fa638c4837f95dd3b",
       "issue": 1443,
@@ -5390,51 +5165,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "d823903ff5c3a684962843713c737ade0c26febe",
-        "delivered": true
-      }
-    },
-    "github:43642521401:1:tick:2:admit": {
-      "digest": "22611b97402bed14ff05f25cf9494b20cf9d989266e1071c5fa366002054b2d4",
-      "issue": 1438,
-      "message": {
-        "kind": "admitted",
-        "issue": 1438,
-        "at": 1794691407122,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "a847e0a0a6690553f4bece5db5bf6eab5d218bda",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f:finish:2:s6-complete": {
-      "digest": "1413225008f1904e00981470e26693b760d9392aec44274dd6ced0a1f8d3d9a7",
-      "issue": 1438,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1438,
-        "at": 1794691959418,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-        "phase": "review",
-        "evidence": {
-          "id": "20261114T212458686-806574fb",
-          "name": "Тесты для задачи #1438 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T212458686-806574fb/report.json",
-          "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-          "status": "passed",
-          "finishedAt": "2026-11-14T21:32:38.068Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Причина: холодный authoritative afterAdopt вызывает `_restoreKioskViewport` до первого stage. Немедленный `_applyView` подменяет aspect реальной области fallback-пропорциями `_baseVb`. Первый ResizeObserver принимает размер без пересчёта уже существующей камеры. Диагностика: stage до/после одинаковый 780×850, view h 518.2388489 → 345.8560243, центр/zoom/w неизменны. Второй независимый smoke необязательного View runtime подтверждает тот же дефект.\n\nРешение: немедленно восстановить точные сохранённые числа камеры, сохранить существующий memo только пока stage отсутствует/нулевой и завершить `_applyView` в обычном `updated()` при доступной реальной области. Все проверки placement/account/config/route, kiosk/View, существования и идентичности этажа и non-carousel повторяются перед завершением; при отказе memo удаляется. Новых таймеров, обещаний или попыток reload нет. Screen-profile recovered флаг выставляется вместе с принятой камерой. Альтернатива просто удалить `_applyView` отвергнута: реальная изменившаяся область должна сохранять штатный пересчёт размеров вокруг центра.\n\nАдресные native `smoke_kiosk_viewport_recovery` и `smoke_view_runtime_kiosk_recovery` зелёные после исправления; добавлено наблюдение одинаковых реальных размеров stage. Точные допуски не менялись. Штатный S6 выполняется через finish; его фактический отчёт передаётся автоматически. Baseline не принимались, release не выполняется, редакторы/сервер/API не изменяются. E2E решение: https://github.com/Matysh/houseplan-e2e/issues/65 (новый отдельный HA E2E не нужен, фиксированный kiosk E2E беты остаётся).\n\nОсобое внимание: синхронный cold authority → первая реальная stage, инвалидирование memo при смене контекста; исключения deleted/fixed/single/carousel/same-version и необязательный runtime используют прежние guards. Touch View/kiosk contract сохраняется; editor touch не затрагивается.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
