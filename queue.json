@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12025,
+  "revision": 12026,
   "nextTicket": 432,
   "nextFence": 431,
   "tasks": {
@@ -5890,6 +5890,10 @@
       "digest": "fb8cbc4400f3870f7fe5d807b1f0782145444a14cfe1e103e1238a13e5d616ee",
       "issue": 1392
     },
+    "github:43557879107:1:completions:message:32391074fdf45c6f17f82467b2bf78e78e64441e05ec2117adeacef688dfda4d": {
+      "digest": "79cbb08d78a9a9699db3afea8d85bf1945b1e4ef02f22dd7ed501b0181e0b7ed",
+      "issue": 1395
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -6346,7 +6350,8 @@
           "entry": 6,
           "detail": "Браузер: wall node connected: failed",
           "eventId": "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:3:return:return:1392"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:1:admit": {
