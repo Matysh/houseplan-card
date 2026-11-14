@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13664,
-  "nextTicket": 475,
+  "revision": 13665,
+  "nextTicket": 476,
   "nextFence": 471,
   "tasks": {
     "1024": {
@@ -4746,6 +4746,20 @@
       "readyAt": 1794689479988,
       "reviewEntry": 1
     },
+    "1443": {
+      "issue": 1443,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1443-summary-weather-fixture",
+      "materialSha": "d823903ff5c3a684962843713c737ade0c26febe",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 475,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794690103069,
+      "reviewEntry": 1
+    },
     "1444": {
       "issue": 1444,
       "branch": "codex/1444-context-menu-footprint",
@@ -5199,7 +5213,8 @@
     1437,
     1438,
     1441,
-    1442
+    1442,
+    1443
   ],
   "active": {
     "issue": 1445,
@@ -5337,6 +5352,19 @@
         "materialSha": "1a533a629321eef79c93b1f94677641866c633e1",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:e4428c91-9fe4-4445-b786-0ad62033f040": {
+      "digest": "9f6ca30f9ef2456409a5df2442d3d348ce013b4e18130f4fa638c4837f95dd3b",
+      "issue": 1443,
+      "message": {
+        "kind": "queued",
+        "issue": 1443,
+        "at": 1794690103069,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d823903ff5c3a684962843713c737ade0c26febe"
       }
     }
   },
