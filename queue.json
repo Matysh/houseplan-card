@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12048,
+  "revision": 12049,
   "nextTicket": 432,
   "nextFence": 432,
   "tasks": {
@@ -3737,14 +3737,13 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "6:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
+        "key": "7:rebase-conflict",
+        "reason": "rebase-conflict",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794630635711,
-        "entry": 6,
-        "detail": "Браузер: wall node connected: failed",
-        "eventId": "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:3:return:return:1392"
+        "at": 1794631560265,
+        "entry": 7,
+        "eventId": "finish:539cd7cd-cb9f-4eb4-aa49-5b5871788243:finish:1:return:return:1392"
       },
       "s6": {
         "id": "20261114T032938956-c5a63598",
@@ -3759,7 +3758,8 @@
       "reviewCorrection": {
         "requestId": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
         "at": 1794628411870
-      }
+      },
+      "reason": "rebase-conflict"
     },
     "1393": {
       "issue": 1393,
@@ -4994,17 +4994,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1392,
-    "worker": "github-coordinator",
-    "token": "431:github:43558163926:1:tick:1:admit",
-    "fence": 431,
-    "materialSha": "32c5516c1d6045a4bb95476ccd9b7cd5a4636186",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1794631513842,
-    "expiresAt": 1794631813842
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
       "digest": "12777e21751a9ed7739ddf636b9b3bee3ba44b51ffb7d393f4c581e85a28643e",
@@ -5654,6 +5644,10 @@
       "digest": "85dea31933f673270f5f8af7f163ecab584dea7db57a826b4817b55246e86866",
       "issue": 1392
     },
+    "finish:539cd7cd-cb9f-4eb4-aa49-5b5871788243:finish:1:return": {
+      "digest": "ada80e359b2f3665362721a55bb4898c549de1cef956c6247540e3f852c0e4f3",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1392:spec-request:spec-resubmitted:1392": {
       "digest": "fb1109795911cace80b5f9f1d15c2e678ea492d0f1129906e4ffc3ed11608ea0",
       "issue": 1392,
@@ -6060,6 +6054,25 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:539cd7cd-cb9f-4eb4-aa49-5b5871788243:finish:1:return:return:1392": {
+      "digest": "ada80e359b2f3665362721a55bb4898c549de1cef956c6247540e3f852c0e4f3",
+      "issue": 1392,
+      "message": {
+        "kind": "return",
+        "issue": 1392,
+        "at": 1794631560265,
+        "entry": 7,
+        "notice": {
+          "key": "7:rebase-conflict",
+          "reason": "rebase-conflict",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794631560265,
+          "entry": 7,
+          "eventId": "finish:539cd7cd-cb9f-4eb4-aa49-5b5871788243:finish:1:return:return:1392"
+        }
       }
     }
   },
