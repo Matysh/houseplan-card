@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13395,
+  "revision": 13396,
   "nextTicket": 470,
   "nextFence": 466,
   "tasks": {
@@ -4704,32 +4704,24 @@
     },
     "1439": {
       "issue": 1439,
+      "branch": "codex/1439-plan-picker-input",
       "track": "ship",
       "layer": "product",
-      "branch": "codex/1439-plan-picker-input",
-      "materialSha": "5bd501fa75658b97b4d18608dec89984cfba21a6",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 469,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1794686598009,
-      "reviewEntry": 1,
-      "patchId": "1f96aab5080c8cd099b4590fade34c273ac91908",
-      "changedFiles": [
-        "demo/smoke_plan_picker.mjs",
-        "demo/smoke_saved_plans.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
-      ],
-      "s6": {
-        "id": "20261114T200850785-ec6eca32",
-        "name": "Тесты для задачи #1439 (перед слиянием)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T200850785-ec6eca32/report.json",
-        "materialSha": "5bd501fa75658b97b4d18608dec89984cfba21a6",
-        "status": "passed",
-        "finishedAt": "2026-11-14T20:11:12.313Z",
-        "failures": []
+      "status": "S8-merged",
+      "expectedBase": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
+      "mergedSha": "5bd501fa75658b97b4d18608dec89984cfba21a6",
+      "mergedAt": 1794687080448,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1440": {
@@ -5112,18 +5104,7 @@
     1437,
     1438
   ],
-  "active": {
-    "issue": 1439,
-    "worker": "finish",
-    "token": "465:finish:7f894725-b6d7-4836-979e-667341d3ce27:finish:1:admit",
-    "fence": 465,
-    "materialSha": "5bd501fa75658b97b4d18608dec89984cfba21a6",
-    "expectedBase": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794686901606,
-    "expiresAt": 1794690673469,
-    "patchId": "1f96aab5080c8cd099b4590fade34c273ac91908"
-  },
+  "active": null,
   "events": {
     "github:43635074985:1:completions:message:5c199547c2b5ff056082a8d0fc08c4e69e5c49fe286134e4ed40db04aa429591": {
       "digest": "2c0e39f49bd6724c766271dc303eead2994ed0d3c781485035edf4fd976abdf4",
@@ -5180,22 +5161,6 @@
     "finish:c2098de2-f77b-4f8f-819d-e3117db86984:finish:2:return": {
       "digest": "e7d8fa021fceb7d5eb1eeb81587c04ecf94ede9c3c0267d5d98253c89c3c0d65",
       "issue": 1440
-    },
-    "finish:f399868b-aa1c-48ca-80ba-c8fc4c64dafa:finish:1:synchronized": {
-      "digest": "c390f7c00e362db3c71e5b1eccaabb3d47a0bebfb0e1bbe6ca4e9e2a502532cd",
-      "issue": 1439
-    },
-    "finish:c830fd27-d17c-4c93-85a3-34a2d77883de": {
-      "digest": "f0497ae19b3eabb3fb57c9f9f7091fadc4a906c82cb39082e412d04e73eabfe6",
-      "issue": 1439
-    },
-    "finish:6320c160-628d-44e2-aab5-31b59aea013a": {
-      "digest": "a18db35b126afa519b46ea2f1e345059ddb6e820137136bcdf3fab967f5d208a",
-      "issue": 1439
-    },
-    "finish:f399868b-aa1c-48ca-80ba-c8fc4c64dafa:finish:2:s6-complete": {
-      "digest": "1c44519465c5aeb6581965103cb88ad806291ce490b4dd8137b1dc3de9127d6f",
-      "issue": 1439
     },
     "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450": {
       "digest": "5ec9b2a080864a4cfe8c328e367ac8bf12791c39e46dff967c7b546f7a1c5a40",
@@ -5279,20 +5244,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "a847e0a0a6690553f4bece5db5bf6eab5d218bda",
-        "delivered": true
-      }
-    },
-    "finish:f399868b-aa1c-48ca-80ba-c8fc4c64dafa": {
-      "digest": "22740b9795bb37933246035d4e26fe2fa764560ca8fa8367b1843fcb51f23c63",
-      "issue": 1439,
-      "message": {
-        "kind": "queued",
-        "issue": 1439,
-        "at": 1794686598009,
-        "entry": 1,
-        "track": "ship",
-        "layer": "product",
-        "materialSha": "54edbc19fc538ebdf341bc07be56bc0dc7353a72",
         "delivered": true
       }
     },
