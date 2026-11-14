@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13324,
-  "nextTicket": 465,
+  "revision": 13325,
+  "nextTicket": 466,
   "nextFence": 464,
   "tasks": {
     "1024": {
@@ -4659,6 +4659,20 @@
       "status": "S6-in-progress",
       "readyAt": 1794685612407,
       "reviewEntry": 1
+    },
+    "1440": {
+      "issue": 1440,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1440-single-border-oracles",
+      "materialSha": "1861a31763287c3bd4a09f33fa3a1f56926da55e",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 465,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794685635844,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4987,7 +5001,8 @@
     }
   },
   "waiting": [
-    1435
+    1435,
+    1440
   ],
   "active": {
     "issue": 1432,
@@ -5074,6 +5089,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "f73faa19cc10d2c7e6fb802bb68f491d9fc7c520"
+      }
+    },
+    "finish:c2098de2-f77b-4f8f-819d-e3117db86984": {
+      "digest": "48799c9c36190f257da1b76ffaa07449b2569a8178f86b3e23de9e30ecde645d",
+      "issue": 1440,
+      "message": {
+        "kind": "queued",
+        "issue": 1440,
+        "at": 1794685635844,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "1861a31763287c3bd4a09f33fa3a1f56926da55e"
       }
     }
   },
