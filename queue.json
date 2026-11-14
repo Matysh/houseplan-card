@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12748,
+  "revision": 12749,
   "nextTicket": 451,
   "nextFence": 451,
   "tasks": {
@@ -5159,6 +5159,10 @@
       "digest": "694d296428a7dd846ea77c5aa5385c1ad4e1e6f9754eb129085c1a71ea61c8d0",
       "issue": 1423
     },
+    "github:43599789281:1:completions:message:948eeb2bc7fb8e77e02ca58871543e236edb5e1066f39c994d71ae4c1f96cc34": {
+      "digest": "aed735ba9f5765dd26c4cfad79388fe84051e72bd24febb7d0c5c18537f09b7c",
+      "issue": 1423
+    },
     "github:43586364877:1:label:spec-request:spec-resubmitted:1423": {
       "digest": "955b505f0f112a6b6f761304eb888e13e02b0e64c73fc733dd6106e7a90015e3",
       "issue": 1423,
@@ -5239,7 +5243,8 @@
           "entry": 1,
           "detail": "Поведение: process-next/test/furniture-art-lazy.test.mjs: failed; Поведение: test/card-version.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/houseplan-panel.test.mjs: failed; Поведение: test/pdf-compass.test.mjs: failed",
           "eventId": "finish:c860f98b-8922-44d5-a443-10de266d7359:finish:3:return:return:1423"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:731459ef-f5f9-46ab-9439-4896fb3f92a8": {
