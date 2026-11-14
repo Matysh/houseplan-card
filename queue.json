@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12650,
+  "revision": 12651,
   "nextTicket": 447,
   "nextFence": 447,
   "tasks": {
@@ -4498,7 +4498,17 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794656034825,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "reason": "rebase-conflict",
+      "notice": {
+        "key": "1:rebase-conflict",
+        "reason": "rebase-conflict",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794656044374,
+        "entry": 1,
+        "eventId": "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:2:return:return:1422"
+      }
     },
     "1424": {
       "issue": 1424,
@@ -4913,17 +4923,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1422,
-    "worker": "finish",
-    "token": "446:finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:1:admit",
-    "fence": 446,
-    "materialSha": "19832bc099caa43a3c94eb188ccecb42a7bb1a67",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1794656038336,
-    "expiresAt": 1794656338336
-  },
+  "active": null,
   "events": {
     "github:43585265383:1:label:spec-request": {
       "digest": "81645d13acef779d4c183ee979e266861230fe12f3534c0c98357a02f9051515",
@@ -5025,6 +5025,10 @@
       "digest": "9b6e2c2b1c3ad9e75a0f2182ee86660660d581f6da238cf61ae0c6f70ab93bbf",
       "issue": 1423
     },
+    "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:2:return": {
+      "digest": "1b9587e0cf31c8928f7f263c27e02065c3ccf2206efc7e81b3a419d358de321b",
+      "issue": 1422
+    },
     "github:43585981218:1:label:spec-request:spec-resubmitted:1422": {
       "digest": "d998f9ec725ce29d87b3a07da777a510b97207d472a00cf0edb653c77f103841",
       "issue": 1422,
@@ -5113,6 +5117,25 @@
         "layer": "product",
         "materialSha": "19832bc099caa43a3c94eb188ccecb42a7bb1a67",
         "phase": "sync"
+      }
+    },
+    "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:2:return:return:1422": {
+      "digest": "1b9587e0cf31c8928f7f263c27e02065c3ccf2206efc7e81b3a419d358de321b",
+      "issue": 1422,
+      "message": {
+        "kind": "return",
+        "issue": 1422,
+        "at": 1794656044374,
+        "entry": 1,
+        "notice": {
+          "key": "1:rebase-conflict",
+          "reason": "rebase-conflict",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794656044374,
+          "entry": 1,
+          "eventId": "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:2:return:return:1422"
+        }
       }
     }
   },
