@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13539,
+  "revision": 13540,
   "nextTicket": 472,
   "nextFence": 469,
   "tasks": {
@@ -1675,38 +1675,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "890a4ada80b4d379aaa523f0c18f96cbb6e046e5"
-      }
-    },
-    "1345": {
-      "issue": 1345,
-      "branch": "codex/1345-mutation-assets",
-      "track": "ship",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865",
-      "mergedSha": "b6151a40d7bc195db6dc5b10f9fa2fb26271f5fa",
-      "mergedAt": 1794051752176,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1347": {
@@ -4770,7 +4738,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "75925bfe1019b343cfa0b04891b08dd1074abc7e"
       }
     }
   },
@@ -5312,6 +5281,18 @@
         "materialSha": "b848e96baac3f652c322e30b95bca676c32b8099",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "dev-build:43638005473:1:1444": {
+      "digest": "b03019f23978d4e7cf4a3d67abcaa2259c0f7d57533aa12df51502cb408de80c",
+      "issue": 1444,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1444,
+        "at": 1794688485699,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "75925bfe1019b343cfa0b04891b08dd1074abc7e"
       }
     }
   },
