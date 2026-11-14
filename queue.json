@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12784,
+  "revision": 12785,
   "nextTicket": 451,
   "nextFence": 451,
   "tasks": {
@@ -4995,18 +4995,12 @@
       }
     },
     "1427": {
-      "requestId": "spec:1427:5a3e9046fd027780682b7aec8ecdd7706bdb75002fb79214c6dc0b369d7e50c0",
-      "contextDigest": "5a3e9046fd027780682b7aec8ecdd7706bdb75002fb79214c6dc0b369d7e50c0",
+      "requestId": "spec:1427:7e29c510c6c93c0d27ff05147c8b02f68a879f702985d4a8937892667adb06c6",
+      "contextDigest": "7e29c510c6c93c0d27ff05147c8b02f68a879f702985d4a8937892667adb06c6",
       "base": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1794663252648,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43600094324",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1794663328064
     }
   },
   "reviewPublications": {
@@ -5049,6 +5043,19 @@
         "occurredAt": "2026-11-14T11:47:22.647Z"
       },
       "runId": 43591690362
+    },
+    "spec:1427:spec:1427:7e29c510c6c93c0d27ff05147c8b02f68a879f702985d4a8937892667adb06c6": {
+      "issue": 1427,
+      "kind": "spec",
+      "requestId": "spec:1427:7e29c510c6c93c0d27ff05147c8b02f68a879f702985d4a8937892667adb06c6",
+      "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
+      "expectedBase": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
+      "patchId": "7e29c510c6c93c0d27ff05147c8b02f68a879f702985d4a8937892667adb06c6",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-14T13:35:28.064Z"
+      }
     }
   },
   "waiting": [],
@@ -5254,6 +5261,10 @@
       "digest": "c21b6b6f8e257933100cc881b78ad0f87fc2ac4dd0470d7b3878a13c56365f3c",
       "issue": 1423
     },
+    "github:43600519269:1:label:spec-request": {
+      "digest": "1d3b5f9a956a81616bc5cf7f9543fa0d6f41b7f6fbe796f1f9c2ac64ac7e729c",
+      "issue": 1427
+    },
     "github:43586364877:1:label:spec-request:spec-resubmitted:1423": {
       "digest": "955b505f0f112a6b6f761304eb888e13e02b0e64c73fc733dd6106e7a90015e3",
       "issue": 1423,
@@ -5395,6 +5406,22 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "github:43600519269:1:label:spec-request:spec-resubmitted:1427": {
+      "digest": "1d3b5f9a956a81616bc5cf7f9543fa0d6f41b7f6fbe796f1f9c2ac64ac7e729c",
+      "issue": 1427,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1427,
+        "at": 1794663328064,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1427:7e29c510c6c93c0d27ff05147c8b02f68a879f702985d4a8937892667adb06c6",
+        "reviewChanges": "Подготовка #1427 по общему поручению «1415 и более новые», установленный track:ask сохранён. Аудит начала документов выявил позднее оглавление, неверный v1.78 timestamp и накопленные частные вставки; просмотрены текущие разделы, названия и внешние ссылки из README/DEVICE-PRESENTATION. Подход — перестроить существующее богатое руководство, сохранив ценные пояснения и совместимые якоря, а не заменить его кратким рекламным FAQ. Главный риск — потеря уникальных ограничений при переводе; нужна содержательная parity, не равенство заголовков. На S6 только чтение/редактирование; никаких прогонов для docs. Продукт и внешние установки не меняются.\n\n### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43600094324. Замечание о текстовом читателе лимитов → контракт п.8 явно сохраняет RU-таблицу/EN-фразу и проверку истинного лимита чтением без запуска теста. Приняты полезные уточнения: старые 23 номерных якоря, фактические входящие ссылки, совпадающий набор markers без старого требования порядка, карта переноса в авторском контексте, понятная метка линии 1.85.x со сверенным SHA и обновлением при изменении материала. Убрано ошибочное упоминание DE/FR руководств. Документационный нулевой профиль сохранён; исходники/тесты не редактируются, прогонов нет. Редакция 2 подготовлена на S3, не во время S4.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
