@@ -8,209 +8,213 @@
 [![Telegram chat](https://img.shields.io/badge/Telegram-chat-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
 [![Support the project](https://img.shields.io/badge/Boosty-Support_the_project-F15F2C?logo=boosty&logoColor=white)](https://boosty.to/matysh/donate)
 
-📘 **[Full user guide](docs/USER-GUIDE.md)** · 🇷🇺 **[Русский](README.ru.md)** · 🗂 **[Project issues](https://github.com/Matysh/houseplan-card/issues)**
+<p>
+  <a href="docs/USER-GUIDE.md"><img width="149" alt="User guide in English" src="docs/images/readme/btn-guide-en.svg" /></a>
+  <a href="docs/USER-GUIDE.ru.md"><img width="227" alt="Полное руководство на русском" src="docs/images/readme/btn-guide-ru.svg" /></a>
+  <a href="README.ru.md"><img width="172" alt="Эта страница на русском" src="docs/images/readme/btn-readme-ru.svg" /></a>
+</p>
 
 <!-- docs-section: overview -->
 
 ## Your whole home at a glance
 
-House Plan turns Home Assistant into a live map of your home. Open the dedicated
-**House Plan** item in the Home Assistant sidebar, upload a plan or draw rooms,
-bind them to Home Assistant areas, and
-the area's devices appear automatically. You can immediately see where a light
-is on, a door is open, a room is too cold, Zigbee signal is weak, or a leak
-sensor has fired.
+House Plan shows your home on a floor plan, exactly as it is right now. Which
+lights are on, which door is open, which room is getting chilly, where the robot
+vacuum has wandered off to and which sensor has gone quiet — you see it all at
+once, without lists or tabs.
 
-<img width="1000" height="1000" alt="houseplan-demo-v2" src="https://github.com/user-attachments/assets/8a7db08f-aca3-4b44-bc7b-46d79a928b45" />
+Getting started is simple: upload a picture of your plan or draw the rooms right
+in the browser, link them to Home Assistant areas, and the devices take their
+places in the right rooms on their own. All that is left is to nudge the icons
+to where things really are.
+
+<img width="640" alt="A home plan with lights switching on room by room" src="https://github.com/user-attachments/assets/4b7359d8-6702-43f8-a339-8f4e568d1713" />
 
 [▶ Watch the video on YouTube](https://www.youtube.com/watch?v=DAG92u8xZKY)
 
-Setup is entirely graphical: no floor-plan YAML, Inkscape, or external editor.
-Plan data and device positions live on the Home Assistant server and stay in
-sync across screens.
+Everything is set up with the mouse — no YAML, no Inkscape, no external editors.
+The plan lives on your Home Assistant server, so it is the same on your
+computer, tablet and phone.
 
-> **Edit on a desktop computer.** View and kiosk are fully supported on phones
-> and tablets. The editors are designed primarily for a mouse and keyboard;
-> individual touch editing operations may be awkward or unavailable. See the
-> exact [touch support contract](docs/TOUCH-SUPPORT.md).
+<!-- docs-section: usage -->
+
+## Three ways to use the plan
+
+House Plan is not a single card but a whole app inside Home Assistant. You can
+use it in several ways: pick whichever suits you, or combine them.
+
+### A page of its own
+
+After installation, a **House Plan** item appears in the Home Assistant sidebar.
+This is the main screen: the plan fills the page, floors and editors sit along
+the top, and a summary of the home is at the side — temperatures, weather and
+any other readings you choose. You don't need to build a dashboard for it.
+
+![The main House Plan screen: the plan, floor tabs and the summary panel](docs/images/readme/main.webp)
+
+### Dashboard cards
+
+If you want the plan inside your own dashboard, next to charts and buttons, add
+a card. There are two:
+
+- **the full card** — the same live plan with everything it can do: tap
+  devices, switch floors and open the editors;
+- **the static card** — a compact picture of one floor. It shows states,
+  temperatures and alerts, but the only thing you can press is the button that
+  opens the full plan. Handy as a thumbnail on an overview dashboard.
+
+![Two cards on a dashboard: full and static](docs/images/readme/cards-en.webp)
+
+### Kiosk: a wall tablet, a phone, a TV
+
+For screens that simply hang there and show the home, there is kiosk mode:
+nothing but the plan, full screen, with no menus or editors. Swipe between
+floors or let them change on a timer; tapping devices works as usual.
+
+Each screen can be tuned separately: rotate the plan, set the zoom, enlarge
+icons and labels for a TV, show or hide the summary, pick one floor or all of
+them. The settings are saved as a screen profile — all that is left is to open
+its link on the device.
+
+![Kiosk mode and the settings of a single screen](docs/images/readme/kiosk-en.webp)
+
+![House Plan on a tablet](docs/images/readme/tablet.webp)
+
+> Drawing and setting up the plan is easier on a computer: the editors are built
+> for a mouse and keyboard. Viewing and control work on anything. More in
+> [touch support](docs/TOUCH-SUPPORT.md).
 
 <!-- docs-section: features -->
 
-## What House Plan provides
+## What House Plan can do
 
-- **Live state and safe actions.** Lights and other safe devices can toggle from
-  the plan; a lock cannot be opened by an accidental plan tap.
-- **Three built-in editors.** Plan creates rooms, walls and openings; Device
-  places and configures markers; Background adds lines, labels and furniture.
-- **Area-aware rooms.** New devices appear automatically, while room cards can
-  show temperature, humidity, light state and average LQI.
-- **Light and environment.** Room fills, lamp Glow, wall shadows, a day-cycle
-  backdrop and sunlight through windows.
-- **Flat or 2.5D.** One switch in General settings › Display shows the plan
-  with depth everywhere: raised device tiles with soft floor shadows and a soft
-  wash of sunlight; decor and wall colours stay as you set them.
-- **Doors, windows, gates and vacuums.** Openings follow real contacts and locks;
-  a robot can show its position, dock and travelled path.
-- **Several floors and screens.** Space tabs, swipe navigation, local viewport,
-  and a separate initial floor for each card.
-- **Wall-display kiosk.** A plan-only view with fullscreen navigation and icon
-  sizes saved for that display.
+- **Shows your home live.** Lights, plugs, climate, appliances, sensors — the
+  state of every device is right there on the plan, with the numbers that
+  matter, such as temperature, humidity or battery level, next to the icon.
+  Lights and other simple devices switch with a single tap.
+- **Doors, windows, gates, blinds and locks.** They are drawn into the walls and
+  mirror what is really happening: open, closed, locked.
+- **You see straight away where something is wrong.** A leak, smoke, an open
+  window, a device that has dropped offline, a weak Zigbee signal, a flat
+  battery. You can set your own thresholds for any device — for example, a
+  warning when the boiler room gets too hot.
+- **Rooms with climate.** Each room shows its temperature, humidity and lights.
+  A room can be tinted by temperature, light or signal quality, so you can tell
+  at a glance where it is cold.
+- **Light that behaves like light.** Lamps that are on light up the room, light
+  passes through doorways and stops at walls, and LED strips are drawn as
+  strips. The plan brightens during the day, sunbeams fall through the windows,
+  and the moon comes out at night.
+- **Flat or with depth.** One switch gives the plan volume: walls, doors and
+  windows rise up, and device icons lift off the floor.
+- **Robot vacuums.** See where the robot is now, where its dock is and the path
+  it has already covered. Past cleaning runs can be viewed too.
+- **Several floors and the yard.** Each floor has its own tab, and you can move
+  from floor to floor right from the stairs on the plan. The yard, a garage or
+  a sauna are plans of their own, just the same.
+- **Everything is drawn and set up in the browser.** One editor is for walls,
+  rooms, doors and windows; another for devices and how they look; a third for
+  furniture, labels and lines. A plan you already have in Sweet Home 3D, Easy
+  Floorplan or a picture-elements card can be brought over, and your own can be
+  saved as PDF or SVG.
 
-![Synthetic home in touch View mode](docs/images/02-view-touch.png)
+The plan is shared by the whole household: changes show up on every screen
+straight away, and by default only administrators can edit it. The interface is
+available in English, Russian, German and French.
 
-<!-- docs-section: first-run -->
-
-## Your first working room
-
-1. Install the integration and open **House Plan** in the Home Assistant sidebar.
-2. Create the first **space**: upload SVG/PNG/JPG/WebP, reuse an uploaded image,
-   or choose no image and draw the plan by hand.
-3. In Plan, select **Walls** and draw one continuous chain around the room: when
-   it closes an area, the room dialog opens.
-4. Name the room and bind it to a Home Assistant area. Use “No area” for a room
-   that has no devices.
-5. Open Device: devices from the bound area are already placed; drag their
-   markers to the correct positions.
-6. Optionally use Background for lines, text and furniture.
-7. Return to View. The plan now displays live state and accepts safe actions.
-
-![Creating the first space](docs/images/03-space-create.png)
-
-![Closing a room outline on its first point](docs/images/04-room-contour-close.png)
-
-![A selected partition and the Plan context tray](docs/images/05-plan-context-tray.png)
-
-![Device settings with binding provenance and the exact action result](docs/images/06-device-editor.png)
-
-![Live presentation preview for the same device](docs/images/06-device-display-preview.png)
-
-Every workflow and edge case is in the [full user guide](docs/USER-GUIDE.md).
-The [Background editor contract](docs/DECOR-EDITOR.md) and
-[vacuum guide](docs/VACUUM.md) are the authorities for those subsystems.
+<p>
+  <img width="49%" alt="A robot vacuum and its path on the plan" src="docs/images/readme/vacuum.webp" />
+  <img width="49%" alt="Room details: area, temperature, Zigbee signal" src="docs/images/readme/room-info.webp" />
+</p>
 
 <!-- docs-section: installation -->
 
 ## Installation
 
-### HACS
+House Plan is a Home Assistant integration, not just a card. So there are three
+steps, and the last one matters most.
 
-[![Open the repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Matysh&repository=houseplan-card&category=integration)
+1. **Install.** Open **Settings → Marketplace**, find **House Plan** and select
+   **Install**. On Home Assistant 2026.10 and older, do the same in HACS.
+2. **Restart Home Assistant** if it asks you to.
+3. **Add the integration.** Open **Settings → Devices & services → Add
+   integration** and choose **House Plan**.
 
-House Plan is in the HACS default catalog — no custom repository needed.
+<p align="center">
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=Matysh&repository=houseplan-card&category=integration"><img width="299" alt="Open House Plan in Marketplace" src="docs/images/readme/btn-marketplace-en.svg" /></a>
+</p>
 
-1. In HACS search for **House Plan** and install it.
-2. Restart Home Assistant.
-3. Open **Settings → Devices & services → Add integration → House Plan**.
+> [!IMPORTANT]
+> Don't skip step three. Until the integration is added, Home Assistant has
+> neither the House Plan page nor the cards — there is no point looking for them
+> in the dashboard card picker.
 
-The sidebar page and optional dashboard cards are registered automatically.
-After installing or updating House Plan,
-restart Home Assistant and fully reload the page: `Ctrl+F5` on Windows/Linux or
-`Cmd+Shift+R` on macOS.
+After that, a **House Plan** item appears in the sidebar — open it and create
+your first plan. If it is not there, hard-refresh the page: `Ctrl+F5`, or
+`Cmd+Shift+R` on a Mac.
 
-#### Storage mode (Home Assistant default)
+The rest is optional:
 
-No YAML is normally needed. If automatic registration did not make the card
-available, open **Settings → Dashboards → menu ⋮ → Resources → Add
-resource**, enter `/houseplan_files/houseplan-card.js`, and select **JavaScript
-module**.
+- **A dashboard card.** In the dashboard editor, add the
+  `custom:houseplan-card` card (full) or `custom:houseplan-space-card`
+  (static).
+- **Kiosk.** Open `/houseplan/kiosk` on the screen you want. Each device can
+  have its own address with parameters: choose a floor, rotate the plan,
+  enlarge the icons, turn on automatic floor switching. For example,
+  `/houseplan/kiosk/2?hprotate=90&hpicons=150` shows the second floor rotated
+  by 90° with icons one and a half times larger.
 
-#### YAML resources mode (Home Assistant 2026.2+)
+Home Assistant 2024.6 or newer is required. Manual installation, card options
+and what to do if the card does not show up are covered in the guide, section
+[Installation and access](docs/USER-GUIDE.md#2-installation-and-access).
 
-To manage resources in `configuration.yaml` independently of the dashboard
-mode, use:
+<!-- docs-section: first-run -->
 
-```yaml
-lovelace:
-  resource_mode: yaml
-  resources:
-    - url: /houseplan_files/houseplan-card.js
-      type: module
-```
+## Your first working room
 
-#### Legacy Home Assistant 2024.6–2026.1
+1. Open **House Plan** in the sidebar and create your first space — a floor, an
+   apartment or the yard. You can upload a picture of the plan or start from a
+   blank sheet.
+2. In the plan editor, outline a room with walls. As soon as the outline closes,
+   House Plan asks you to name the room.
+3. Name the room and choose its Home Assistant area — the devices from that
+   area appear on the plan straight away.
+4. In the device editor, move the icons to where they belong.
+5. Go back to the view. The plan is already live: tap a lamp and the light
+   comes on.
 
-Only for a full-YAML dashboard that is already managed in YAML, use:
+Furniture, labels and decoration can wait until you feel like it.
 
-```yaml
-lovelace:
-  mode: yaml
-  resources:
-    - url: /houseplan_files/houseplan-card.js
-      type: module
-```
+![Three dialogs along the way: a new space, a room and its area, device settings](docs/images/readme/first-room-en.webp)
 
-`mode: yaml` changes the dashboard itself to YAML mode. Do not switch a storage
-dashboard to legacy YAML just for House Plan; use the Storage mode instructions
-above instead. Do not use the on-disk path inside `custom_components`; Home
-Assistant does not serve that path as a JavaScript module.
-
-### Manual installation
-
-Copy the complete `custom_components/houseplan` release folder to
-`config/custom_components`, restart Home Assistant, and add the House Plan
-integration. Do not copy only `houseplan-card.js`: the card also uses an
-internal manifest and content-hashed modules from the same release.
-
-### Open House Plan
-
-After the integration is added, open **House Plan** in the Home Assistant
-sidebar. This full-page view is the primary entry point and needs no dashboard
-or YAML setup. It remembers the last space but always returns from another HA
-page in View rather than reopening an editor. Users without editing permission
-see the same live plan without editor controls.
-
-If the sidebar entry cannot be registered, the integration and existing
-dashboard cards continue to work; check **Settings → System → Repairs → System
-information → House Plan** after restarting and hard-refreshing HA.
-
-### Optional dashboard card
-
-Add the card only when House Plan must be embedded in a dashboard. In a Sections
-view it requests full width by default, while a manual size chosen in HA remains
-authoritative. Add it in the UI or as:
-
-```yaml
-type: custom:houseplan-card
-title: House plan
-```
-
-Different screens may start on different spaces:
-
-```yaml
-type: custom:houseplan-card
-default_floor: ground
-rotation: 90
-```
-
-All cards share server-side rooms and coordinates. Current mode, viewport and
-selected space remain local to the screen. Revision checks and live sync cover
-concurrent clients, but avoid editing the same object in two browsers at once.
-
-Both card types accept `rotation: 0|90|180|270` (clockwise). The header's rotate
-buttons remember a per-space choice on this device, overriding the card value.
-A kiosk uses only its card value; Static and PDF follow the effective orientation.
+Every tool and special case is described in the
+[full user guide](docs/USER-GUIDE.md).
 
 ## Detailed documentation
 
-- [Contributing and development](CONTRIBUTING.md) · [Development process](PROCESS.md)
 - [Full user guide](docs/USER-GUIDE.md)
-- [Mouse/touch/keyboard matrix](docs/USER-GUIDE.md#6-navigation-zoom-and-input)
-- [Plan tools](docs/USER-GUIDE.md#plan-tools-at-a-glance)
+- [Navigation, zoom and input](docs/USER-GUIDE.md#6-navigation-zoom-and-input)
+- [Plan editor tools](docs/USER-GUIDE.md#plan-tools-at-a-glance)
 - [Stairs and floor links](docs/STAIRS.md)
-- [Background editor](docs/DECOR-EDITOR.md)
+- [Furniture, labels and decoration](docs/DECOR-EDITOR.md)
 - [Robot vacuums](docs/VACUUM.md)
 - [Presence radars](docs/RADAR.md)
 - [PDF export](docs/PDF-EXPORT.md)
 - [Touch support](docs/TOUCH-SUPPORT.md)
+- [Contributing and development](CONTRIBUTING.md) · [Development process](PROCESS.md)
 
 <!-- docs-section: support -->
 
 ## Support and feedback
 
-- Questions and plan examples: [Telegram @ha_houseplan](https://t.me/ha_houseplan).
+- Questions, ideas and plan examples: [Telegram @ha_houseplan](https://t.me/ha_houseplan).
 - Bugs and proposals: [GitHub Issues](https://github.com/Matysh/houseplan-card/issues).
-- Before reporting, update House Plan, restart HA and hard-refresh the page.
-  Include the version, browser, logs and reproduction steps; private entity IDs
-  may be replaced with fictional ones.
+- Before reporting a bug, update House Plan, restart Home Assistant and
+  hard-refresh the page (`Ctrl+F5`). If something is wrong with the plan itself,
+  also try the **Optimize plans** button in General settings.
+- The easiest way to report a bug is from House Plan itself: the **Help &
+  feedback** button in the header. If the problem is in the plan, turn on
+  **Attach extended diagnostics** there — your plan is sent along with the
+  message in anonymised form.
 
 License: [MIT](LICENSE).
