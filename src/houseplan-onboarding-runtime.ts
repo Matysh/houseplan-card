@@ -64,6 +64,7 @@ export class HouseplanOnboardingRuntime {
   }
 
   public async _pickPlanFile(ev: Event): Promise<void> {
+    if (!this.host.planHost.capabilities.planImages) return;
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file || !this.host._spaceDialog) return;
@@ -90,12 +91,14 @@ export class HouseplanOnboardingRuntime {
   }
 
   public _toggleServerPlans = (): void => {
+    if (!this.host.planHost.capabilities.planImages) return;
     const d = this.host._spaceDialog;
     if (!d || !d.saved?.length || d.savedBusy) return;
     this.host._spaceDialog = { ...d, pickSaved: !d.pickSaved };
   };
 
   public _useServerPlan(url: string): void {
+    if (!this.host.planHost.capabilities.planImages) return;
     const dialog = this.host._spaceDialog;
     if (!dialog) return;
     this.host._spaceDialog = {
@@ -129,6 +132,7 @@ export class HouseplanOnboardingRuntime {
   }
 
   public async _deleteServerPlan(name: string): Promise<void> {
+    if (!this.host.planHost.capabilities.planImages) return;
     const showToast = captureToast(this.host);
     const dialog = this.host._spaceDialog;
     const plan = dialog?.saved?.find((candidate) => candidate.name === name);

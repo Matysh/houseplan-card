@@ -13,6 +13,8 @@ import {
 import { roomDirty, roomProblems } from './room-form-state';
 import { ensureSettingsDialogStyles } from './settings-styles';
 import { settingsSections, revealSettingsField } from './settings-sections';
+import { planHostOf } from '../ha-plan-host';
+import { permitsRoomFill } from '../plan-capabilities';
 import { roomCardPreview } from './room-card-preview';
 
 type RoomFillMode = typeof ROOM_FILL_MODES[number];
@@ -137,7 +139,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                 .value=${host._nameSel} aria-invalid=${nameProblem ? 'true' : nothing}
                 @input=${(e: Event) => { host._nameSel = (e.target as HTMLInputElement).value; host.requestUpdate(); }} />`,
             }),
-            field({
+            planHostOf(host).capabilities.haAreas ? field({
               label: st('room.area_optional'), htmlFor: 'room-area', help: shelp('room.group_basics.help'),
               hint: st('room.area_available_hint'),
               control: html`<hp-settings-select><select data-hp="field" data-field="room-area" id="room-area" class="hpf-select" aria-label=${t('room.area_label')}
@@ -149,7 +151,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                 <option value="">${t('room.no_area_option')}</option>
                 ${areas.map((a) => html`<option value=${a.area_id} ?selected=${a.area_id === host._areaSel}>${a.name}</option>`)}
               </select></hp-settings-select>`,
-            }),
+            }) : nothing,
           ], {stacked:true}),
         })}
         ${formCard({
@@ -161,7 +163,9 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
               control: selectControl<'' | RoomFillMode>({
                 name:'rfill',value:host._roomFill as '' | RoomFillMode,ariaLabel:t('room.fill_label'),
                 options:[{value:'',label:st('room.fill_inherited',{mode:fillLabel(spaceDisplay.fill)})},
-                  ...(['none','custom','lqi','light','temp'] as const).map(value=>({value,label:fillLabel(value)}))],
+                  ...(['none','custom','lqi','light','temp'] as const)
+                    .filter(value => permitsRoomFill(planHostOf(host).capabilities, value) || value === host._roomFill)
+                    .map(value=>({value,label:fillLabel(value),disabled:!permitsRoomFill(planHostOf(host).capabilities,value)}))],
                 onChange:setFill,
               }),
             }),
@@ -182,7 +186,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                   }),
                 })
               : nothing,
-          effectiveFill === 'temp'
+          planHostOf(host).capabilities.devices && effectiveFill === 'temp'
               ? html`<div class="hpf-field hpf-temprange">
                   <span class="hpf-label hpf-labelrow">${t('room.temp_range_label')}${shelp('room.temp_range.help')}</span>
                   <div class="hpf-temperature-range hpf-range-compact">${[
@@ -226,7 +230,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
             onChange: (value) => { host._roomSunTransparent = value; host.requestUpdate(); },
           }),
         })}
-        ${formCard({
+        ${planHostOf(host).capabilities.devices ? formCard({
           id: 'sources',
           title: st('room.group_sources'),
           help: shelp('room.group_sources.help'),
@@ -235,7 +239,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
           renderRoomSource(this, 'hum'),
           renderRoomSource(this, 'co2'),
         ]),
-        })}
+        }) : nothing}
         ${formCard({
           id: 'sizes',
           title: t('room.sizes_section'),

@@ -401,6 +401,12 @@ test('header retirement native witness is selected for its actual runtime owner'
  const catalog=await testCatalog(dir,inventory),row=catalog.rows.find(r=>r.path==='demo/smoke_header_observer_retirement.mjs');
  assert.equal(row.layer,'product');assert.ok(row.domains.includes('presentation'));assert.equal(row.lifecycle,'task-release');
 }));
+test('#1394 capability profiles and permission oracles own storage/runtime domains', () => {
+ for (const path of ['src/plan-capabilities.ts', 'test/plan-capability-permissions.test.mjs', 'demo/smoke_plan_capabilities.mjs']) {
+  assert.ok(domainsOf(path).includes('storage'), path);
+  assert.ok(domainsOf(path).includes('runtime'), path);
+ }
+});
 test('converter freshness reads its module-local artifact and canonical build inputs', async () => fixture({
  'scripts/sh3d-convert/build-page.mjs':await readFile(resolve(root,'scripts/sh3d-convert/build-page.mjs'),'utf8'),
  'scripts/sh3d-convert/build-runtime.mjs':await readFile(resolve(root,'scripts/sh3d-convert/build-runtime.mjs'),'utf8'),

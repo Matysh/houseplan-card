@@ -1,4 +1,5 @@
 {
+  "backup.single_space_limit": "Transfers only the current space. Stair links to other floors are cleared on import; the original home is unchanged.",
   "decor.color_caption": "Color:",
   "decor.transparency_summary": "transparency {n}%",
   "decor.bring_front": "Bring to front",

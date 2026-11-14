@@ -120,6 +120,7 @@ export class DecorImageEditor<Snapshot> {
   }
 
   public async uploadFromInput(ev: Event, replaceSelection = false): Promise<void> {
+    if (!this.host.planHost.capabilities.decorAssets) return;
     const showToast = captureToast(this.host);
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -145,6 +146,7 @@ export class DecorImageEditor<Snapshot> {
   }
 
   public async upload(file: Blob, name: string, replaceSelection: boolean): Promise<void> {
+    if (!this.host.planHost.capabilities.decorAssets) return;
     const showToast = captureToast(this.host);
     const current = captureWriteAuthority(this.host);
     if (this.host._decorAssetBusy) return;
@@ -189,6 +191,7 @@ export class DecorImageEditor<Snapshot> {
   }
 
   public async delete(asset: DecorAsset): Promise<void> {
+    if (!this.host.planHost.capabilities.decorAssets) return;
     const showToast = captureToast(this.host);
     const current = captureWriteAuthority(this.host);
     if (asset.used_by?.length) {
@@ -223,6 +226,7 @@ export class DecorImageEditor<Snapshot> {
   }
 
   public async loadCatalog(): Promise<void> {
+    if (!this.host.planHost.capabilities.decorAssets) return;
     const showToast = captureToast(this.host);
     const current = captureWriteAuthority(this.host);
     try {
@@ -464,7 +468,7 @@ export class DecorImageEditor<Snapshot> {
                   ${this._tool(`furn.sym_${symbol.id}` as ToolsI18nKey)}
                 </option>`)}
               </optgroup>`)}
-            </select></hp-settings-select>` : dialog.kind === 'image' ? html`
+            </select></hp-settings-select>` : dialog.kind === 'image' && this.host.planHost.capabilities.decorAssets ? html`
             <label>${this.host._t('decor.image_asset')}</label>
             <hp-settings-select><select data-hp="field" data-field="decor-asset" class=${inputClass} .value=${dialog.assetId || ''}
               @change=${(event: Event) => (this.host._decorShapeDialog = {

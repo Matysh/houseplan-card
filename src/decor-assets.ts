@@ -89,10 +89,7 @@ export async function resolveDecorAssets(
   if (cached?.[0] === key) return cached[1];
   const out = new Map<string, DecorAsset>();
   for (let offset = 0; offset < unique.length; offset += DECOR_ASSET_RESOLVE_BATCH) {
-    const response = await host.request({
-      type: 'houseplan/assets/resolve',
-      asset_ids: unique.slice(offset, offset + DECOR_ASSET_RESOLVE_BATCH),
-    });
+    const response = await host.content.resolveAssets(unique.slice(offset, offset + DECOR_ASSET_RESOLVE_BATCH));
     for (const [id, asset] of adoptDecorAssets(response)) out.set(id, asset);
   }
   resolveCache.set(owner, [key, out]);

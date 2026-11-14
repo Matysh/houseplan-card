@@ -1,4 +1,5 @@
 import type { PlanHost, HostPresentationContext } from './plan-host';
+import { hasMarkers } from './plan-capabilities';
 import { ModeChromeLayouts, type ModeChromeProbe } from './mode-chrome-layout';
 import {WallSideDimensionEditor} from './wall-side-dimension-editor';
 import {paintHouseplanMeasurements} from './live-editor';
@@ -1197,7 +1198,7 @@ export class HouseplanEditorRuntime {
       planHost: () => host.planHost,
       config: () => host._serverCfg,
       planReady: () => !!host._norm,
-      canWrite: () => host._canEdit && !host._kiosk,
+      canWrite: () => host.planHost.capabilities.planMaintenance && host._canEdit && !host._kiosk,
       source: optimizeSource,
       layout: () => host._layout,
       integrationVersion: () => host._haIntegrationVersion,
@@ -4470,6 +4471,7 @@ public _decorRememberTextSelection(el: HTMLTextAreaElement): void {
   }
 
 public _decorInsertLiveVariable(attr: string | null): void {
+    if (!this.host.planHost.capabilities.devices) return;
     const d = this.host._decorTextDialog;
     if (!d) return;
     const token = liveTextToken(d.pickerEntity, attr);
@@ -5520,7 +5522,7 @@ public _renderDecorBar(): TemplateResult {
       ['text', 'mdi:format-text', 'decor.text'],
       // the library sits next to the shapes it belongs with (docs/FURNITURE.md)
       ['furniture', 'mdi:sofa-outline', 'decor.furniture'],
-      ...(this.host._haDecorAssetsApi === DECOR_ASSETS_API_VERSION
+      ...(this.host.planHost.capabilities.decorAssets && this.host._haDecorAssetsApi === DECOR_ASSETS_API_VERSION
         ? [['image', 'mdi:image-plus-outline', 'decor.image'] as const] : []),
       ['erase', 'mdi:trash-can-outline', 'decor.erase'],
     ] as const;
@@ -5614,7 +5616,7 @@ public _renderDecorTextDialog(): TemplateResult {
           <input data-hp="field" data-field="decor-text-angle" class="namein" type="number" min="-180" max="180" step="1" .value=${d.angle}
             @input=${(e: Event) => (this.host._decorTextDialog = { ...d,
               angle: (e.target as HTMLInputElement).value })} />
-          <label class="dispsection">${this.host._t('decor.live_group')}</label>
+          ${this.host.planHost.capabilities.devices ? html`<label class="dispsection">${this.host._t('decor.live_group')}</label>
           <label>${this.host._t('decor.live_entity')}</label>
           <input data-hp="field" data-field="decor-text-entity" class="namein" type="text" list="hp-dtext-ents" placeholder=${this.host._t('decor.live_entity_ph')}
             .value=${d.pickerEntity || ''}
@@ -5637,7 +5639,7 @@ public _renderDecorTextDialog(): TemplateResult {
                 .filter((a) => !!liveTextToken(ent, a))
                 .map((a) => html`<option value=${a}>${a}</option>`)}
             </select></hp-settings-select>
-          ` : nothing}
+          ` : nothing}` : nothing}
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
@@ -7682,6 +7684,7 @@ public _roomDialogCancel(): void {
   }
 
 public _openDeviceInbox(): void {
+    if (!hasMarkers(this.host.planHost.capabilities)) return;
     this.host._deviceInboxReturn = null;
     this.host._deviceInbox = this.host._deviceInbox || {
       tab: 'on_plan', search: '', showEntities: false, onlyNew: false, limit: 100,
@@ -7830,6 +7833,7 @@ public _deviceInboxRows(): DeviceInboxRow[] {
         reasonByBinding[binding] = 'represented_by_parent';
       }
     }
+    const c = this.host.planHost.capabilities;
     const rows = buildDeviceInbox({
       devices: this.host._devices,
       markers: this.host._markers,
@@ -7838,7 +7842,7 @@ public _deviceInboxRows(): DeviceInboxRow[] {
       newDeviceIds: this.host._newIds,
       showHiddenOnPlan: this.host._showAll,
       areaNames, spaceNames, spaceByArea, spaces: this.host._model, integrationByBinding, reasonByBinding,
-    });
+    }).filter(row => row.kind === 'virtual' ? c.virtualDevices : c.devices);
     this.host._deviceInboxMemo = { key, rows };
     return rows;
   }
@@ -7974,6 +7978,8 @@ public _deviceInboxTabKey = (event: KeyboardEvent): void => {
   };
 
 public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): void {
+    const c = this.host.planHost.capabilities;
+    if (d ? (d.marker?.binding === 'virtual' || d.bindingKind === 'virtual' ? !c.virtualDevices : !c.devices) : !hasMarkers(c)) return;
     if (currentTarget) { const current = currentTarget(); if (!current) return; d = current; }
     if (!deviceEditorAllowed(this.host._canEdit, this.host._kiosk)) return;
     if (!this.properties.beforeIntent(() => {
@@ -8097,7 +8103,7 @@ public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): voi
       };
     } else {
       this.host._markerDialog = {
-        name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
+        name: '', binding: c.virtualDevices ? 'virtual' : '', bindingMode: c.virtualDevices ? 'virtual' : 'ha', bindingOpen: false,
         showEntities: false, bindingFilter: '', icon: '', autoIcon: this.host._autoIconForBinding('virtual'),
         display: 'badge', rippleColor: '', rippleSize: 1.5, size: 1, angle: 0,
         tapAction: 'info', tapActionTouched: false,
@@ -8297,6 +8303,7 @@ public async _saveMarker(): Promise<void> {
     const showToast = captureToast(this.host);
     const dlg = this.host._markerDialog;
     if (!dlg || dlg.busy) return;
+    if (dlg.bindingMode === 'virtual' ? !this.host.planHost.capabilities.virtualDevices : !this.host.planHost.capabilities.devices) return;
     if (moreInfoDraftInvalid(dlg, this.host._planHass, this.host._fullRegistryHass)) return;
       if (dlg.stateSourceTouched && dlg.stateSource != null && !normalizeMarkerStateSource(dlg.stateSource)) return;
     const effectiveTapAction = this._effectiveMarkerTapAction(dlg);
@@ -8594,6 +8601,8 @@ public async _saveMarker(): Promise<void> {
   }
 
 public async _deleteMarker(): Promise<void> {
+    const draft = this.host._markerDialog;
+    if (!draft || (draft.bindingMode === 'virtual' ? !this.host.planHost.capabilities.virtualDevices : !this.host.planHost.capabilities.devices)) return;
     const showToast = captureToast(this.host);
     const session = dialogSession(this.host, 'marker');
     const targetId = this.host._markerDialog?.devId;
@@ -8630,6 +8639,7 @@ public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
   }
 
 public async _pickPlanFile(ev: Event): Promise<void> {
+    if (!this.host.planHost.capabilities.planImages) return;
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file || !this.host._spaceDialog) return;
@@ -9367,7 +9377,7 @@ public _renderSupportDialog(): TemplateResult {
     const guideUrl = lang === 'ru'
       ? 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.ru.md'
       : 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.md';
-    const compatible = supportApiCompatible(this.host._haSupportApi);
+    const compatible = this.host.planHost.capabilities.supportDiagnostics && supportApiCompatible(this.host._haSupportApi);
     const packageVersion = supportConsentVersion(state.packageVersion, this.host._haSupportPackageVersions);
     const st = (key: SupportI18nKey, vars?: Record<string, string | number>): string =>
       supportT(lang, key, vars);
@@ -9613,6 +9623,7 @@ public _optimizeReferenceContext(
   }
 
 public async _undoPlanOptimization(): Promise<void> {
+    if (!this.host.planHost.capabilities.planMaintenance) return;
     if (!this.host._canEdit || this.host._kiosk) {
       this.host._showToast(settingsT(langOf(this.host._presentation, this.host._config?.language), 'gs.optimize_write_required'), 'gs.optimize_write_required');
       return;
@@ -9621,9 +9632,11 @@ public async _undoPlanOptimization(): Promise<void> {
   }
 
 public _openBackupExport = (): void => {
+    const c = this.host.planHost.capabilities;
+    if (!c.installationBackup && !c.planTransfer) return;
     this.backupTransfer.cancelExport();
     this.host._settingsDialog = null;
-    this.host._backupExportDialog = { kind: 'full', planOnly: false, busy: false, error: '' };
+    this.host._backupExportDialog = { kind: c.installationBackup ? 'full' : 'space', planOnly: !c.installationBackup, busy: false, error: '' };
   };
 
 public async _runBackupExport(): Promise<void> {
@@ -9832,17 +9845,18 @@ public _renderBackupExportDialog(): TemplateResult {
       icon="mdi:download" dismiss-on-scrim @hp-close=${() => this._closeBackupExport()}>
       <div class="body backupbody">
         <div class="rhint">${this.host._t('backup.export_hint')}</div>
-        <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="backup-kind" data-value="full" type="radio" name="backup-kind" value="full"
+        ${!this.host.planHost.capabilities.installationBackup ? callout({ text: this._toolsT('backup.single_space_limit') }) : nothing}
+        ${this.host.planHost.capabilities.installationBackup ? html`<label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="backup-kind" data-value="full" type="radio" name="backup-kind" value="full"
           .checked=${d.kind === 'full'}
           ?disabled=${d.busy} @change=${() => this.backupTransfer.selectKind('full')} />
-          <span>${this.host._t('backup.full')}</span></label>
-        <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="backup-kind" data-value="space" type="radio" name="backup-kind" value="space"
+          <span>${this.host._t('backup.full')}</span></label>` : nothing}
+        ${this.host.planHost.capabilities.planTransfer ? html`<label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="backup-kind" data-value="space" type="radio" name="backup-kind" value="space"
           .checked=${d.kind === 'space'} ?disabled=${d.busy || !currentSpace}
           @change=${() => this.backupTransfer.selectKind('space')} />
           <span>${currentSpace
             ? this.host._t('backup.current_space_title', { title: currentSpace.title || currentSpace.id })
-            : this.host._t('backup.no_current_space')}</span></label>
-        ${d.kind === 'space' && currentSpace ? html`<label class="hpf-check hpf-check-wrap srcrow backupplanonly">
+            : this.host._t('backup.no_current_space')}</span></label>` : nothing}
+        ${d.kind === 'space' && currentSpace && this.host.planHost.capabilities.installationBackup ? html`<label class="hpf-check hpf-check-wrap srcrow backupplanonly">
           <input data-hp="field" data-field="backup-plan-only" type="checkbox" .checked=${d.planOnly} ?disabled=${d.busy}
             @change=${(event: Event) => {
               this.backupTransfer.selectKind('space');
@@ -10174,6 +10188,7 @@ public _rangeInput(
 public _renderSettingsDialog(): TemplateResult { return renderGeneralSettingsDialog.call(this); }
 
 public _openRulesDialog = (): void => {
+    if (!this.host.planHost.capabilities.devices) return;
     if (!this.properties.beforeIntent(() => this._openRulesDialog(), true)) return;
     if (!this.host._norm) return;
     const custom = this.host._settings.icon_rules;
@@ -10929,6 +10944,7 @@ public _renderOpeningDialog(): TemplateResult {
       }
     }
     const featureOptions: OpeningFeatureFieldOptions = { draft: d,
+      sensors: this.host.planHost.capabilities.devices,
       setDraft: value => { if (this.host._openingDialog === d) this.host._openingDialog = value; },
       t: (key, params) => this.host._t(key as I18nKey, params),
       read: eid => this.host._openingEntityAvailable(eid) ? this.host.planHost.environment.states[eid] : null,
@@ -11033,7 +11049,7 @@ public _renderOpeningDialog(): TemplateResult {
               </div>`
             : nothing}
 
-          ${!leafEdit && d.type !== 'passage' && d.type !== 'window'
+          ${this.host.planHost.capabilities.devices && !leafEdit && d.type !== 'passage' && d.type !== 'window'
             ? html`<label>${this.host._t('opening.contact_label')}</label>
                 ${picker('contact', this._contactCandidates())}
                 ${d.contact
@@ -11043,7 +11059,7 @@ public _renderOpeningDialog(): TemplateResult {
             : nothing}
 
           ${positionFields}
-          ${!leafEdit && (d.type === 'door' || d.type === 'gate')
+          ${this.host.planHost.capabilities.devices && !leafEdit && (d.type === 'door' || d.type === 'gate')
             ? html`<label>${this.host._t('opening.lock_label')}</label>
                 ${picker('lock', this._lockCandidates())}`
             : nothing}
@@ -11647,9 +11663,9 @@ public _renderDevicesBar(): TemplateResult {
           data-hp-tooltip=${this.host._t('device_inbox.title')}>
           <ha-icon icon="mdi:devices"></ha-icon>${this.host._t('device_inbox.button')}
         </button>
-        <button class="btn" data-hp="tool" data-tool="icon-rules" data-editor-tool-intent @click=${() => this._openRulesDialog()} data-hp-tooltip=${this.host._t('title.icon_rules')}>
+        ${this.host.planHost.capabilities.devices ? html`<button class="btn" data-hp="tool" data-tool="icon-rules" data-editor-tool-intent @click=${() => this._openRulesDialog()} data-hp-tooltip=${this.host._t('title.icon_rules')}>
           <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this.host._t('devbar.rules')}
-        </button>
+        </button>` : nothing}
         ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
         ${this.deviceStructure.render()}
       </div>
@@ -11883,10 +11899,10 @@ public _renderDeviceInbox(): TemplateResult {
             @input=${(event: Event) => (this.host._deviceInbox = {
               ...dialog, search: (event.target as HTMLInputElement).value, limit: 100, selected: [],
             })} />
-          <button data-hp="action" data-action="device-catalog-add-virtual" type="button" class="btn" @click=${openVirtual}>
+          ${this.host.planHost.capabilities.virtualDevices ? html`<button data-hp="action" data-action="device-catalog-add-virtual" type="button" class="btn" @click=${openVirtual}>
             <ha-icon icon="mdi:map-marker-plus-outline"></ha-icon>
             ${this.host._t('device_inbox.add_virtual')}
-          </button>
+          </button>` : nothing}
         </div>
         <div class="device-inbox-tabs" role="tablist" @keydown=${(event: KeyboardEvent) => this._deviceInboxTabKey(event)}>
           ${(['on_plan', 'available', 'hidden', 'readd'] as DeviceInboxCategory[]).map((tab) => html`
@@ -11928,7 +11944,7 @@ public _renderDeviceInbox(): TemplateResult {
           </label>` : nothing}
         </div>
         ${renderInboxBatchPanel(this.host, this._inboxBatchDeps(), dialog, batch)}
-        ${dialog.tab === 'available' ? this._renderDiscoveryFilters(dialog) : nothing}
+        ${this.host.planHost.capabilities.devices && dialog.tab === 'available' ? this._renderDiscoveryFilters(dialog) : nothing}
         <div class="device-inbox-results" aria-live="polite">
           ${visible.length ? visible.map((row) => {
             const primary = row.category === 'on_plan'

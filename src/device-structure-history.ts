@@ -1,4 +1,5 @@
 import { planHostOf } from './ha-plan-host';
+import { hasMarkers } from './plan-capabilities';
 import { captureToast } from './toast-presentation';
 import { waitForPriorConfigWrite } from './prior-config-write';
 /** Confirmed structural commands share the existing Devices CommandStack. */
@@ -26,9 +27,9 @@ export class DeviceStructureHistory {
   private unresolved: { request: Record<string, unknown>; resolve: (reply: DeviceStructureReply, recovered?: boolean) => void | Promise<void> } | null = null;
   constructor(private readonly host: HouseplanEditorHostPort) {}
   private t(key: ToolsI18nKey, args?: Record<string, string | number>): string {
-    return toolsT(langOf(this.host.hass, this.host._config?.language), key, args);
+    return toolsT(langOf(this.host._presentation, this.host._config?.language), key, args);
   }
-  get available(): boolean { return this.host._haDeviceHistoryApi === 1; }
+  get available(): boolean { return hasMarkers(planHostOf(this.host).capabilities) && this.host._haDeviceHistoryApi === 1; }
   get needsResolution(): boolean { return !!this.unresolved && !this.resolving; }
   current(claim: object): boolean {
     const h = this.host;
@@ -53,7 +54,7 @@ export class DeviceStructureHistory {
   }
   retire(release = false): void {
     if (release && this.context && this.host._configWriteContext.current(this.context, planHostOf(this.host)))
-      void this.host.hass.callWS({ type: 'houseplan/marker/history/retain', history_session: this.session, tokens: [] }).catch(() => undefined);
+      void planHostOf(this.host).request({ type: 'houseplan/marker/history/retain', history_session: this.session, tokens: [] }).catch(() => undefined);
     if (this.heartbeat) clearTimeout(this.heartbeat);
     this.heartbeat = null; this.pending = null;
     this.lastRetention = null;
@@ -122,7 +123,7 @@ export class DeviceStructureHistory {
     this.prune();
   }
   private send(request: Record<string, unknown>): Promise<DeviceStructureReply> {
-    const host = this.host, hass = host.hass, claim = host._configWriteContext.claim();
+    const host = this.host, hass = planHostOf(host), claim = host._configWriteContext.claim();
     return sendHouseplanWrite(hass, request as HouseplanWriteMessage, {
       isCurrent: () => host.isConnected && host._configWriteContext.current(claim,planHostOf(host)),
       canDispatch: () => host._canEdit && !host._kiosk && host._mode === 'devices',
@@ -162,7 +163,7 @@ export class DeviceStructureHistory {
     const signature = this.session + ':' + tokens.join(':');
     if (renew || signature !== this.lastRetention) {
       this.lastRetention = signature;
-      void this.host.hass.callWS({ type: 'houseplan/marker/history/retain', history_session: this.session, tokens })
+      void planHostOf(this.host).request({ type: 'houseplan/marker/history/retain', history_session: this.session, tokens })
         .catch(() => { if (this.lastRetention === signature) this.lastRetention = null; });
     }
     if (!tokens.length && this.heartbeat) { clearTimeout(this.heartbeat); this.heartbeat = null; }

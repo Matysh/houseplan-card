@@ -1,4 +1,5 @@
 {
+  "backup.single_space_limit": "Seul l’espace actuel est transféré. À l’importation, les liens des escaliers vers d’autres étages sont effacés ; la maison d’origine reste inchangée.",
   "decor.color_caption": "Couleur :",
   "decor.transparency_summary": "transparence {n}%",
   "decor.bring_front": "Mettre au premier plan",

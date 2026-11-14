@@ -1,6 +1,7 @@
 /** HA is private to this adapter; plan consumers receive the ports in plan-host. */
 import { acquireHaRegistries, haRegistrySnapshot, refreshHaRegistries, reloadHaRegistriesBounded } from './ha-binding-status';
 import { subscribeExternalScreenConfig } from './external-screens-events';
+import { HA_CAPABILITIES, capabilityHost } from './plan-capabilities';
 import {
   hostAuthorityKey, hostError, once,
   type HostAuthorityKey, type HostContentPort, type HostDeviceServices,
@@ -56,6 +57,7 @@ function assertNotAborted(signal?: AbortSignal | null): void {
 }
 
 export class HaPlanHost implements PlanHost {
+  readonly capabilities = HA_CAPABILITIES;
   private source: HaSource = {};
   private readonly fallback = {};
   private key: HostAuthorityKey = hostAuthorityKey(undefined, undefined, this.fallback);
@@ -382,6 +384,7 @@ export class HaPlanHost implements PlanHost {
     },
   };
   readonly content: HostContentPort = {
+    resolveAssets: ids => this.request({ type: 'houseplan/assets/resolve', asset_ids: [...ids] }),
     resolve: async paths => {
       const result = await this.request<{ urls?: unknown }>({ type: 'houseplan/content/sign', paths: [...paths] });
       const urls = row(result?.urls) ? result.urls : EMPTY;
@@ -418,16 +421,16 @@ export function isPlanHost(value: unknown): value is PlanHost {
 }
 
 /** Normalize historical helper inputs at the HA boundary, not in plan logic. */
-export const planHostFrom = (value: unknown): PlanHost => isPlanHost(value) ? value : haPlanHost(value);
+export const planHostFrom = (value: unknown): PlanHost => capabilityHost(isPlanHost(value) ? value : haPlanHost(value));
 export interface PlanHostProvider { readonly planHost?: PlanHost; readonly hass?: unknown }
 const providerAdapters = new WeakMap<PlanHostProvider, HaPlanHost>();
 export function planHostOf(provider: PlanHostProvider): PlanHost {
   if (provider.planHost !== undefined) {
     if (!isPlanHost(provider.planHost)) throw hostError('not_ready');
-    return provider.planHost;
+    return capabilityHost(provider.planHost);
   }
   let host = providerAdapters.get(provider);
   if (!host) { host = new HaPlanHost(provider.hass); providerAdapters.set(provider, host); }
   else host.lend(provider.hass);
-  return host;
+  return capabilityHost(host);
 }

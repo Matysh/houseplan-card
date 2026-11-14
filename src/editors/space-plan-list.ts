@@ -8,6 +8,7 @@ interface PlanListHost extends PlanHostProvider {
 const requests = new WeakMap<object, object>();
 
 export function loadSpacePlanList(host: PlanListHost): void {
+  if (!planHostOf(host).capabilities.planImages) return;
   const draft = host._spaceDialog;
   if (!draft) return;
   const token = {};

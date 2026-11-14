@@ -7,6 +7,7 @@ import { openingSlideDirection, resolveOpeningPosition, type OpeningStateReader 
 import type { MotionOpeningFeatures, OpeningLeaf, OpeningManualPosition } from '../types';
 
 export interface OpeningFeatureFieldOptions {
+  sensors?: boolean;
   part?: 'all' | 'mechanism' | 'position';
   draft: OpeningDialogDraft;
   setDraft(value: OpeningDialogDraft): void;
@@ -119,8 +120,8 @@ export function openingFeatureFields(o: OpeningFeatureFieldOptions): TemplateRes
       disabled: o.disabled, onChange })}</div>`;
   return html`<div class="opening-leaf-form" data-kind="window-leaf">${o.preview || nothing}
     <div class="opening-leaf-group">
-      ${choose('contact', leaf.contact || '', o.contacts, contact => change({ contact: contact || null }))}
-      ${leaf.contact ? html`<label class="hpf-check hpf-check-wrap srcrow">${o.bool(!!leaf.invert,
+      ${o.sensors === false ? nothing : choose('contact', leaf.contact || '', o.contacts, contact => change({ contact: contact || null }))}
+      ${o.sensors !== false && leaf.contact ? html`<label class="hpf-check hpf-check-wrap srcrow">${o.bool(!!leaf.invert,
         invert => change({ invert }), o.disabled, 'opening-leaf-invert')}<span>${caption('invert')}</span></label>` : nothing}
       ${manualField(leaf, 'closed', 'opening-leaf-position', manual => change({ manual }))}
       <div class="opening-leaf-field">${label('hinge')}${selectControl({ name: 'opening-leaf-hinge', value: leaf.hinge,
@@ -131,8 +132,8 @@ export function openingFeatureFields(o: OpeningFeatureFieldOptions): TemplateRes
       <label class="hpf-check hpf-check-wrap srcrow">${o.bool(shade.enabled, enabled => change({ shade: { ...shade, enabled } }),
         o.disabled, 'opening-leaf-shade')}<span>${caption('shade')}</span></label>
       ${shade.enabled ? html`
-        ${choose('shade_contact', shade.contact || '', o.shadeContacts, contact => change({ shade: { ...shade, contact: contact || null } }))}
-        ${shade.contact ? html`<label class="hpf-check hpf-check-wrap srcrow">${o.bool(!!shade.invert,
+        ${o.sensors === false ? nothing : choose('shade_contact', shade.contact || '', o.shadeContacts, contact => change({ shade: { ...shade, contact: contact || null } }))}
+        ${o.sensors !== false && shade.contact ? html`<label class="hpf-check hpf-check-wrap srcrow">${o.bool(!!shade.invert,
           invert => change({ shade: { ...shade, invert } }), o.disabled, 'opening-shade-invert')}<span>${caption('invert')}</span></label>` : nothing}
         ${manualField(shade, 'open', 'opening-shade-position', manual => change({ shade: { ...shade, manual } }))}
         <div class="opening-leaf-status"><ha-icon icon=${shadeStatus(leaf).icon}></ha-icon><span>${shadeStatus(leaf).text}</span></div>

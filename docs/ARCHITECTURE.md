@@ -55,6 +55,62 @@ not a replacement for normal UI Lab sessions, a standalone website or HA ACL
 evidence. No format/data migration, HA-component replacement or release is
 part of this extraction.
 
+## Runtime capability profiles (#1394)
+
+`PlanHost.capabilities` is a required frozen `PlanCapabilities` catalog, created
+before mount. `src/plan-capabilities.ts` owns validation and the dispatch matrix;
+`HaPlanHost` explicitly selects all17 capabilities. Missing/partial catalogs
+are not guessed from imported data. Replacing a limited adapter creates a new
+authority generation, even if its underlying transport identity is reused.
+Capabilities never enter config/layout, export, schema versions or server ACL.
+
+| Capability | Optional surface / transport |
+| --- | --- |
+| devices / virtualDevices | Real / virtual marker presentation and editing independently; layout/update/delete, marker/copy/history/retain, files/migrate/cleanup and attachment upload require at least one marker family |
+| deviceServices | Device actuation and virtual_light/toggle; no implicit config-write permission |
+| haAreas | HA area selectors; automatic placement also requires devices |
+| zigbee / vacuum / radar / alarms | Their specialized UI, producers, subscriptions and request families; require devices |
+| summary / externalScreens | Summary controls / external-screen UI and scoped config subscription |
+| installationBackup | Full-installation JSON/ZIP and backup HTTP endpoints |
+| planTransfer | Existing single-space export/create and portable preview/revalidate/apply, independently of full backup |
+| printing | PDF/SVG entry and device option only when markers are available |
+| planImages | Plan image library/list/delete/upload and image onboarding; saved images remain readable |
+| decorAssets | Imported image library/list/delete/resolve/upload; built-in furniture, shapes and text remain |
+| planMaintenance | Optimize/Undo/repair UI and commands, with existing model/version checks |
+| supportDiagnostics | HA support form and diagnostics requests; ordinary help remains |
+
+Base transport is config/layout get/set, space/delete, wall/node operations,
+config/layout events and structural upload for large writes. Base content IO is
+`content.resolve(paths)` plus `content.resolveAssets(ids)` (saved decor metadata
+or explicit missing result). The latter deliberately belongs to the content
+port, not to optional asset-library editing. HA implements it through its
+existing assets/resolve and signer; local adapters resolve local bytes. No
+external URLs or HA credentials are introduced into the renderer.
+
+`PLAN_ONLY_CAPABILITIES` enables transfer, printing, planImages, decorAssets and
+planMaintenance. Partial profiles can disable these independently. Zigbee,
+vacuum, radar and alarms require real devices; services require real OR virtual
+devices. Areas are independent read metadata. The common `capabilityHost`
+wrapper refuses unsupported dispatch before transport; HA's full profile keeps
+existing protocol negotiation/ACL and does not pretend to authorize the user.
+UI combines this catalog with the existing API-version, writer and kiosk gates.
+
+Limited profiles filter presentation, not authoritative config/layout. Hidden
+markers/bindings remain in the saved document. Structural deletion still uses
+the existing server cascade. Empty/non-authoritative registry projections do
+not authorize cleanup or automatic placement. Saved decor resolves even when
+the asset library is disabled. Full JSON and ZIP are not single-space transfer:
+a transfer-only host refuses ZIP before upload and a full JSON preview before
+apply, discarding the opaque candidate.
+
+Transfer is **one current space**, not the whole multi-floor home. The existing
+importer clears stair links to floors not in that document; the source home and
+full HA backup are unchanged. This limitation is shown beside standalone
+transfer and documented here. No multi-floor portable format is added.
+Touch editors remain desktop-first/best effort. These profiles are a runtime
+foundation, not a shipped standalone site: UI Kit/local SVG replacement and
+entry bootstrap remain #1422/#1423. The owner's running UI Lab is untouched.
+
 ## Portable plan core (#1391)
 
 `custom_components.houseplan.core` is the canonical Python implementation, not

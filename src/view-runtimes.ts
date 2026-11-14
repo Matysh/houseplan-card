@@ -107,9 +107,9 @@ export class ViewRuntimes {
   connect(): void {
     this.active = true;
     this.deviceMenu.connect(false); this.menu?.connect();
-    this.host._summary?.connect();
+    if (planHostOf(this.host).capabilities.summary) this.host._summary?.connect();
     this.live.connect(false); this.summary.connect(false); this.zigbee.connect(false); this.converter.connect(false);
-    this.alerts.connect(false); this.host._alerts?.connect();
+    this.alerts.connect(false); if (planHostOf(this.host).capabilities.alarms) this.host._alerts?.connect();
     this.reconcile();
   }
   disconnect(): void {
@@ -123,11 +123,11 @@ export class ViewRuntimes {
   reconcile(): void {
     if (!this.active || this.host.ownerDocument.visibilityState === 'hidden') return;
     if (this.live.state !== 'ready') void this.live.ensure();
-    if (this.summary.state !== 'ready') void this.summary.ensure();
+    if (planHostOf(this.host).capabilities.summary && this.summary.state !== 'ready') void this.summary.ensure();
     if (this.zigbee.state !== 'ready' && this.wantsZigbee()) void this.zigbee.ensure();
     if (this.converter.state !== 'ready' && this.wantsConverter()) void this.converter.ensure();
     if (this.alerts.state !== 'ready' && this.wantsAlerts()) void this.alerts.ensure();
-    this.host._alerts?.reconcile();
+    if (planHostOf(this.host).capabilities.alarms) this.host._alerts?.reconcile();
     this.syncRecovery();
   }
   visibility(hidden: boolean): void {
@@ -137,7 +137,7 @@ export class ViewRuntimes {
       if (hidden) boundary.disconnect(); else boundary.connect(false);
     }
     if (hidden) this.menu?.disconnect(); else this.menu?.connect();
-    this.host._alerts?.reconcile();
+    if (planHostOf(this.host).capabilities.alarms) this.host._alerts?.reconcile();
     if (!hidden) this.reconcile();
   }
   withLive(run: (runtime: LiveRuntime) => void): void {
@@ -154,7 +154,7 @@ export class ViewRuntimes {
   renderDeviceMenu(): TemplateResult | typeof nothing { return this.menu?.render() ?? nothing; }
   private wantsZigbee(): boolean {
     const host = this.host;
-    return zigbeeTopologyOverlayRequested({ hass: host.hass, settings: host._settings,
+    return planHostOf(host).capabilities.zigbee && zigbeeTopologyOverlayRequested({ hass: host.hass, settings: host._settings,
       view: host._mode === 'view', kiosk: host._kiosk });
   }
   private wantsConverter(): boolean {
@@ -166,7 +166,7 @@ export class ViewRuntimes {
     // Presence is the import boundary. The sole strict codec lives inside the
     // optional graph; unsupported input never creates a producer or a timer.
     const host = this.host, devices = host._displayDevices || host._devices;
-    return host._markers.some(marker => !marker.removed && Array.isArray(marker.alert_sources) && marker.alert_sources.length > 0
+    return planHostOf(host).capabilities.alarms && host._markers.some(marker => !marker.removed && Array.isArray(marker.alert_sources) && marker.alert_sources.length > 0
       && (!devices || devices.some(device => device.id === marker.id
         && (host._space === undefined || device.space === host._space)
         && (!device.hidden || host._mode === 'devices' && host._showAll === true))));

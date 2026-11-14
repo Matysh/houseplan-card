@@ -58,11 +58,12 @@ const radiusInputs = new WeakMap<object, { owner: object | undefined; raw: strin
 const legacyRadarPanels = new WeakMap<object, { owner: object | undefined; open: boolean }>();
 
 export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult {
+    const c = this.host.planHost.capabilities;
   ensureSettingsDialogStyles(this.host);
     const d = this.host._markerDialog!;
     const t = this.host._t.bind(this.host);
     const { st, shelp } = settingsCopy(this.host);
-    const lang = langOf(this.host.hass, this.host._config?.language);
+    const lang = langOf(this.host._presentation, this.host._config?.language);
     const isVirtual = d.bindingMode === 'virtual';
     const cands = this._bindingCandidates();
     const bindingStatus = isVirtual ? null : this.host._bindingStatus(d.binding);
@@ -163,9 +164,9 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       if (found) return found.label;
       const [k, ref] = d.binding.split(':');
       if (k === 'device') return this.host._fullRegistryHass.devices[ref]?.name_by_user || this.host._fullRegistryHass.devices[ref]?.name || ref;
-      return this.host._fullRegistryHass.entities[ref]?.name || this.host.hass.states[ref]?.attributes?.friendly_name || ref;
+      return this.host._fullRegistryHass.entities[ref]?.name || this.host.planHost.environment.states[ref]?.attributes?.friendly_name || ref;
     })();
-    const entityName = (eid: string) => this.host.hass.states[eid]?.attributes?.friendly_name
+    const entityName = (eid: string) => this.host.planHost.environment.states[eid]?.attributes?.friendly_name
       || this.host._fullRegistryHass.entities[eid]?.name || eid;
     const unit = this.host._imperial ? t('gs.unit_ft') : t('gs.unit_m');
     /* К10 (Q1): в edit Save только при изменениях; в create черновик нового
@@ -274,8 +275,8 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             value: d.bindingMode,
             ariaLabel: t('marker.binding_label'),
             options: [
-              { value: 'virtual', label: st('marker.binding_virtual_short') },
-              { value: 'ha', label: 'Home Assistant' },
+              ...(c.virtualDevices ? [{ value: 'virtual' as const, label: st('marker.binding_virtual_short') }] : []),
+              ...(c.devices ? [{ value: 'ha' as const, label: 'Home Assistant' }] : []),
             ],
             onChange: (mode) => {
               if (mode === 'virtual') {
@@ -798,7 +799,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           // Q3 (решение владельца): hp-device-preview целиком — у него свой
           // заголовок «Display preview · Now» и свой блок на тинте, обёртка не нужна.
           ? html`<hp-device-preview
-              .hass=${this.host.hass}
+              .hass=${this.host._planHass}
               .language=${lang}
               .presentation=${previewPresentation}
               .registry=${this.host._haRegistry}
@@ -815,12 +816,12 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
     });
 
     // ------------------------------------------------------------ Details
-    const automaticRadar = !!previewDevice && !isVirtual && recognizeRadarBinding(previewDevice,this.host._fullRegistryHass).eligible;
+    const automaticRadar = c.radar && !!previewDevice && !isVirtual && recognizeRadarBinding(previewDevice,this.host._fullRegistryHass).eligible;
     const persistedMarker = this.host._markers.find(marker => marker.id === d.devId);
     const radarDevice = previewDevice && persistedMarker?.radar
       ? {...previewDevice,marker:{...(previewDevice.marker || persistedMarker),radar:persistedMarker.radar}}
       : previewDevice;
-    const legacyRadar = !automaticRadar && !!persistedMarker?.radar;
+    const legacyRadar = c.radar && !automaticRadar && !!persistedMarker?.radar;
     const legacyPanel = legacyRadarPanels.get(this.host);
     const details = formCard({
       id: 'details',
@@ -889,7 +890,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           : !!previewDevice?.area && room.area === previewDevice.area);
     const deviceTitle = d.name.trim() || previewDevice?.name || t('info.device_header');
     const specialized = automaticRadar || (!!previewDevice && this.host._isVacDev(previewDevice));
-    return html`<hp-dialog class="ui-dialog hpf-settings-dialog" id="marker-dialog" .hass=${this.host.hass} lang=${langOf(this.host.hass,this.host._config?.language)} data-kind="marker" form-shell settings-layout
+    return html`<hp-dialog class="ui-dialog hpf-settings-dialog" id="marker-dialog" .hass=${this.host._presentation} lang=${langOf(this.host._presentation,this.host._config?.language)} data-kind="marker" form-shell settings-layout
       .title=${d.devId ? specialized ? deviceTitle : st('marker.settings_title',{name:deviceTitle}) : t('marker.new_device')}
       .subtitle=${[contextSpace?.title,contextRoom?.name].filter(Boolean).join(' / ')}
       icon="mdi:cog-outline" icon-badge="mdi:devices" wide @hp-close=${requestClose}>
@@ -897,11 +898,11 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           ${settingsSections(this.host,'marker',[
             {id:'basics',title:st('marker.section_basics'),body:basics},
             {id:'appearance',title:st('marker.section_appearance'),body:appearance},
-            {id:'actions',title:st('marker.section_actions'),body:tap},
+            ...(c.deviceServices ? [{id:'actions',title:st('marker.section_actions'),body:tap}] : []),
             {id:'light',title:st('marker.section_light'),body:light},
             {id:'details',title:st('marker.section_details'),body:details},
-            {id:'alarms',title:st('marker.alerts.section'),body:this.markerAlerts.renderSection(),specialized:true},
-            ...(previewDevice && this.host._isVacDev(previewDevice) ? [{id:'vacuum',title:st('marker.section_vacuum'),body:html`${this._renderVacSection(d)}`,specialized:true}] : []),
+            ...(c.alarms ? [{id:'alarms',title:st('marker.alerts.section'),body:this.markerAlerts.renderSection(),specialized:true}] : []),
+            ...(c.vacuum && previewDevice && this.host._isVacDev(previewDevice) ? [{id:'vacuum',title:st('marker.section_vacuum'),body:html`${this._renderVacSection(d)}`,specialized:true}] : []),
             ...(automaticRadar ? [{id:'radar',title:st('marker.section_radar'),body:this._renderRadarSection(d,radarDevice,'main'),specialized:true}] : []),
           ],st('dialog.section'),owner)}
         </div>

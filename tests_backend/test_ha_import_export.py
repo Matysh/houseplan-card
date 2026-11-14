@@ -1465,6 +1465,35 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert parsed["transfer"]["plan_only"] is True
 
 
+def test_issue1394_single_space_transfer_keeps_original_multifloor_home(tmp_path: Path) -> None:
+    """Limited presentation is not permission to prune the original document."""
+    config, layout = _plan_only_source()
+    upper = copy.deepcopy(_config()["spaces"][0])
+    upper["id"] = "upper"
+    upper["title"] = "Upper"
+    config["spaces"].append(upper)
+    before, before_layout = copy.deepcopy(config), copy.deepcopy(layout)
+    runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a", import_previews={})
+    full, _ = create_export(runtime, {"config": config}, {"layout": layout}, kind="full", space_id=None,
+                            card_version="review", config_root=tmp_path)
+    assert full["payload"]["config"]["spaces"][0]["stairs"][0]["target_space_id"] == "upper"
+    for plan_only in (False, True):
+        document, _ = create_export(runtime, {"config": config}, {"layout": layout}, kind="space",
+                                    space_id="ground", plan_only=plan_only, card_version="review", config_root=tmp_path)
+        preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+                                 current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
+                                 current_layout_data={"layout": {}, "rev": 0}, config_root=tmp_path,
+                                 registry_snapshot={"areas": set()})
+        candidate = get_candidate(runtime, preview["token"], "alice")
+        imported, _, _ = prepare_apply(candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False)
+        assert len(imported["spaces"]) == 1
+        assert imported["spaces"][0]["stairs"][0]["target_space_id"] is None
+        imported["spaces"][0]["title"] = "Edited after import in HA"
+        assert commit_wall_segment_model(imported)[0]["spaces"][0]["title"] == "Edited after import in HA"
+    assert config == before
+    assert layout == before_layout
+
+
 def test_ordinary_space_export_is_unchanged_when_plan_only_is_false(tmp_path: Path) -> None:
     config, layout = _plan_only_source()
     runtime = SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="instance-a")

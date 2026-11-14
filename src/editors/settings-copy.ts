@@ -8,6 +8,7 @@
 import { html, nothing, type TemplateResult } from 'lit';
 
 import { langOf } from '../i18n';
+import { planHostOf } from '../ha-plan-host';
 import { hasSettingsTranslation, settingsT, type SettingsI18nKey } from '../i18n/settings';
 import type { HouseplanEditorHostPort } from '../houseplan-editor-runtime';
 
@@ -18,7 +19,7 @@ export interface SettingsCopy {
 }
 
 export function settingsCopy(host: Pick<HouseplanEditorHostPort, 'hass' | '_config'>): SettingsCopy {
-  const lang = langOf(host.hass, host._config?.language);
+  const lang = langOf(planHostOf(host).environment.presentation, host._config?.language);
   return {
     st: (key, vars) => settingsT(lang, key, vars),
     shelp: (key) => {

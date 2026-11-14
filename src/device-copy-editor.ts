@@ -1,4 +1,5 @@
 import { planHostOf } from './ha-plan-host';
+import { hasMarkers } from './plan-capabilities';
 import { captureToast } from './toast-presentation';
 import { waitForPriorConfigWrite } from './prior-config-write';
 import { sendHouseplanWrite } from './large-write-transport';
@@ -42,7 +43,7 @@ export class DeviceCopyEditor {
   private t(key: ToolsI18nKey): string { return toolsT(langOf(this.host.hass, this.host._config?.language), key); }
   private allowed(): boolean {
     const h = this.host;
-    return h.isConnected && h._mode === 'devices' && h._norm && h._loadOk && !!h._serverCfg && deviceEditorAllowed(h._canEdit, h._kiosk);
+    return hasMarkers(planHostOf(h).capabilities) && h.isConnected && h._mode === 'devices' && h._norm && h._loadOk && !!h._serverCfg && deviceEditorAllowed(h._canEdit, h._kiosk);
   }
   private contextCurrent(m: Menu): boolean {
     return this.allowed() && this.host._space === m.space
@@ -154,7 +155,7 @@ export class DeviceCopyEditor {
         if (migrated && !this.unchanged(m)) fail('device.copy_changed');
         let mapping: Record<string, string>;
         try {
-          const result = await h.hass.callWS({ type: 'houseplan/files/migrate', from_id: owner, to_id: id });
+          const result = await planHostOf(h).request<{ mapping?: Record<string, string> }>({ type: 'houseplan/files/migrate', from_id: owner, to_id: id });
           mapping = result?.mapping || {};
           if (!names.every(name => typeof mapping[name] === 'string' && mapping[name])) fail('device.copy_files_failed');
         } catch { fail('device.copy_files_failed'); }
@@ -181,7 +182,7 @@ export class DeviceCopyEditor {
         }
       };
       const response: CopyResponse = this.history?.available
-        ? await this.history.request(request, accept) : await sendHouseplanWrite(h.hass,request,
+        ? await this.history.request(request, accept) : await sendHouseplanWrite(planHostOf(h),request,
           {isCurrent:authority,canDispatch:()=>this.unchanged(m)});
       phase('server');
       if (!authority()) return;

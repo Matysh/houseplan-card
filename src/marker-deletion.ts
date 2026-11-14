@@ -109,13 +109,13 @@ async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly
   host._regSignature = ''; host._deviceInboxMemo = null; host._maybeRebuildDevices();
   // Bounded work: at most three independent cleanup requests in flight.
   const ids = cleanupIds.values();
-  const ws = host.hass.callWS.bind(host.hass);
+  const ws = planHostOf(host).request.bind(planHostOf(host));
   await Promise.all(Array.from({ length: Math.min(3, cleanupIds.size) }, async () => {
     for (const id of ids) {
       for (const [type, field] of [
         ['houseplan/layout/delete', 'device_id'], ['houseplan/files/cleanup', 'marker_id'],
         ['houseplan/trail/delete', 'marker_id'],
-      ]) {
+      ] as const) {
         if (!current()) return;
         // A concurrent explicit re-add owns its fresh attachments and position.
         if (host._serverCfg?.markers.some((marker) => marker.id === id && !marker.removed)) break;

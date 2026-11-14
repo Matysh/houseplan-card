@@ -103,9 +103,11 @@ export class BackupArchiveClient {
 
   public selectKind(kind: 'full' | 'space'): void {
     const state = this.host._backupExportDialog;
+    const c = planHostOf(this.host).capabilities;
+    if (kind === 'full' ? !c.installationBackup : !c.planTransfer) return;
     if (!state || state.busy) return;
     this.cancelExport();
-    this.host._backupExportDialog = { ...state, kind, planOnly: false, archive: undefined, preparedJson: undefined, error: '' };
+    this.host._backupExportDialog = { ...state, kind, planOnly: !c.installationBackup, archive: undefined, preparedJson: undefined, error: '' };
   }
 
   private async fetch(path: HouseplanHttpPath, init: RequestInit, owner: TransferOwner): Promise<Response> {
@@ -124,6 +126,7 @@ export class BackupArchiveClient {
     if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
     const magic = new Uint8Array(await file.slice(0, 4).arrayBuffer());
     const zip = (magic[0] === 0x50 && magic[1] === 0x4b) || file.name.toLowerCase().endsWith('.zip');
+    if (zip && !owner.port.capabilities.installationBackup) throw transferError('invalid_format');
     if (zip && !owner.port.environment.permissions.admin) throw transferError('zip_admin_only');
     if (zip) await this.flushImportCancels();
     if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
@@ -141,6 +144,10 @@ export class BackupArchiveClient {
       const data = await response.json().catch(() => { throw transferError(fallback); }) as PreviewReply & { error?: string };
       if (!this.current(owner)) throw transferError('context-changed');
       if (!response.ok || data.error) throw transferError(data.error || fallback);
+      if (!owner.port.capabilities.installationBackup && data.preview.kind !== 'space') {
+        this.discard(data.token, owner);
+        throw transferError('invalid_format');
+      }
       if (controller.signal.aborted) {
         if (zip) this.discard(data.token, owner);
         throw new DOMException('Cancelled', 'AbortError');
@@ -170,7 +177,7 @@ export class BackupArchiveClient {
       if (!owns()) return;
       const result = state.archive || state.preparedJson || await owner.port.request<ArchiveExport | LegacyExport>({
         type: 'houseplan/export/create', kind: state.kind,
-        ...(state.kind === 'space' ? { space_id: host._space, plan_only: state.planOnly } : {}),
+        ...(state.kind === 'space' ? { space_id: host._space, plan_only: !owner.port.capabilities.installationBackup || state.planOnly } : {}),
         ...(state.kind === 'full' && owner.port.environment.permissions.admin ? { archive: true } : {}),
         card_version: metadata.card_version,
       });

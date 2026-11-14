@@ -1,6 +1,8 @@
 /** Shared settings layout; existing general draft and operations (#948). */
 import { html, nothing, type TemplateResult } from 'lit';
 import { PLAN_CONVERTER, planConverterFormats } from '../plan-converter';
+import { planHostOf } from '../ha-plan-host';
+import { hasMarkers } from '../plan-capabilities';
 
 import {
   callout, colorField, colorRow, colorTile, colorTiles, field, footerStatus,
@@ -30,9 +32,10 @@ import type { HpDialog } from '../hp-dialog';
 export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): TemplateResult {
   ensureSettingsDialogStyles(this.host);
   const host = this.host;
+  const c = planHostOf(host).capabilities;
   const d = host._settingsDialog!;
   const t = host._t.bind(host);
-  const lang = langOf(host.hass, host._config?.language);
+  const lang = langOf(host._presentation, host._config?.language);
   const st = (key: SettingsI18nKey, vars?: Record<string, string | number>) => settingsT(lang, key, vars);
   const help = (text: string, label: string) => html`<hp-help instant .text=${text} .ariaLabel=${st('dialog.help_for',{name:label})}></hp-help>`;
   const set = (patch: Partial<GeneralSettingsDraft>) => { host._settingsDialog = { ...host._settingsDialog!, ...patch }; };
@@ -99,7 +102,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
   // #718 K7: the second caption line, once the moon chunk judged this opening.
   const moonStatus = moonStatusOf(host);
 
-  return html`<hp-dialog class="ui-dialog hpf-settings-dialog" .hass=${host.hass} lang=${lang} data-kind="settings" form-shell settings-layout wide
+  return html`<hp-dialog class="ui-dialog hpf-settings-dialog" .hass=${host._presentation} lang=${lang} data-kind="settings" form-shell settings-layout wide
       .title=${st('gs.title')} .subtitle=${st('gs.scope')} icon="mdi:cog-outline" @hp-close=${requestClose}>
     <div class="body hpf-form hpf-settings-form">
       ${settingsSections(host, 'general', [
@@ -112,12 +115,12 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             title: supportT(lang, 'gs.show_room_tooltip'), caption:st('gs.global_value_caption'), help: help(st('gs.show_room_tooltip_hint'),supportT(lang, 'gs.show_room_tooltip')),
             checked: d.showRoomTooltip, onChange: (v) => set({ showRoomTooltip: v }),
           }),
-          toggleRow({
+          c.radar ? toggleRow({
             id: 'gs-radar-live', icon: 'mdi:radar',
             title: st('gs.radar_show_live'), help: help(st('gs.radar_show_live_hint'),st('gs.radar_show_live')),
             checked: d.radarShowLive, onChange: (v) => set({ radarShowLive: v }),
-          }),
-          field({
+          }) : nothing,
+          c.devices ? field({
             label: st('gs.show_device_battery'), help:help(st('gs.battery_help'),st('gs.show_device_battery')),
             control: selectControl<DeviceBatteryMode>({
               name: 'gs-device-battery',
@@ -131,9 +134,9 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
               onChange: (deviceBattery) => set({ deviceBattery }),
             }),
 
-          }),
-          batteryOverrides.length ? callout({ text: st('gs.space_overrides', { names: batteryOverrides.join(', ') }) }) : nothing,
-          field({
+          }) : nothing,
+          c.devices && batteryOverrides.length ? callout({ text: st('gs.space_overrides', { names: batteryOverrides.join(', ') }) }) : nothing,
+          c.zigbee ? field({
             label: st('gs.show_lqi'), help:help(st('gs.signal_help'),st('gs.show_lqi')),
             control: selectControl<'on' | 'low' | 'off'>({
               name: 'gs-show-lqi', value: d.showLqi === 'low' ? 'low' : d.showLqi ? 'on' : 'off',
@@ -145,8 +148,8 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
               ],
               onChange: mode => set({ showLqi: mode === 'low' ? 'low' : mode === 'on' }),
             }),
-          }),
-          lqiOverrides.length ? callout({ text: st('gs.space_overrides', { names: lqiOverrides.join(', ') }) }) : nothing,
+          }) : nothing,
+          c.zigbee && lqiOverrides.length ? callout({ text: st('gs.space_overrides', { names: lqiOverrides.join(', ') }) }) : nothing,
         ]),
       })}` },
         { id: 'plan', title: st('gs.section_appearance'), body: html`${formCard({
@@ -158,11 +161,11 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             title: t('gs.volumetric_view'), help: help(st('gs.volumetric_view_hint'),t('gs.volumetric_view')),
             checked: d.volumetricView, onChange: (v) => set({ volumetricView: v }),
           }),
-          toggleRow({
+          c.summary ? toggleRow({
             id: 'gs-center-summary', icon: 'mdi:align-horizontal-center',
             title: st('gs.center_summary'), help: help(st('gs.center_summary_hint'), st('gs.center_summary')),
             checked: d.centerSummary, onChange: (v) => set({ centerSummary: v }),
-          }),
+          }) : nothing,
           field({
             label: st('gs.bg_mode'), help: this._help('gs.bg_mode.help'),
             control: selectControl({
@@ -191,17 +194,17 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             : settingsBackgroundPreviews([st('gs.phase_dawn'), st('gs.phase_day'), st('gs.phase_dusk'), st('gs.phase_night')], [st('gs.daynight_source'), st('gs.daynight_rules'), st('gs.daynight_clock')]),
         ]),
       })}` },
-        { id: 'fills', title: st('gs.section_fills'), body: html`${formCard({
+        ...(hasMarkers(c) ? [{ id: 'fills', title: st('gs.section_fills'), body: html`${formCard({
         id: 'fills',
         title: st('gs.section_fills'),
         help: nothing,
         body: formSections([
           html`<p class="hpf-hint">${st('gs.palette_shared')}</p>`,
           html`${subsection({ title: st('gs.light_group') })}${colorTiles([tile('light_on', 'gs.light_on'), tile('light_off', 'gs.light_off'), tile('light_none', 'gs.light_none')])}`,
-          html`${subsection({ title: st('gs.temp_group') })}${colorTiles([tile('temp_cold', 'gs.temp_cold'), tile('temp_ok', 'gs.temp_ok'), tile('temp_hot', 'gs.temp_hot')])}`,
-          html`${subsection({ title: st('gs.lqi_group') })}${colorTiles([tile('lqi_low', 'gs.lqi_low'), tile('lqi_high', 'gs.lqi_high')])}`,
+          c.devices ? html`${subsection({ title: st('gs.temp_group') })}${colorTiles([tile('temp_cold', 'gs.temp_cold'), tile('temp_ok', 'gs.temp_ok'), tile('temp_hot', 'gs.temp_hot')])}` : nothing,
+          c.zigbee ? html`${subsection({ title: st('gs.lqi_group') })}${colorTiles([tile('lqi_low', 'gs.lqi_low'), tile('lqi_high', 'gs.lqi_high')])}` : nothing,
         ], { dividers: false }),
-      })}` },
+      })}` }] : []),
         { id: 'sun', title: st('gs.section_light'), body: html`${formCard({ id: 'sun', title: st('gs.section_light'), body: formSections([
           colorRow({ label: st('gs.default_light'), help:html`<hp-help instant .text=${st('gs.default_light_help')} .ariaLabel=${st('gs.default_light_help.aria')}></hp-help>`, picker: colorField({
             hex: d.colors.glow_light.c, opacity: d.colors.glow_light.a, opacityLabel: st('gs.light_intensity'),
@@ -249,7 +252,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
             ? html`<span data-moon-status=${moonStatus.reason}>${moonStatusText(moonStatus, st)}</span>`
             : st('gs.moon_hint') })}`,
         ]), })}` },
-        { id: 'zigbee', title: st('gs.section_zigbee'), body: html`${formCard({
+        ...(c.zigbee ? [{ id: 'zigbee', title: st('gs.section_zigbee'), body: html`${formCard({
         id: 'zigbee',
         title: st('gs.section_zigbee'),
         body: formSections([
@@ -263,13 +266,13 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           }}
           @hp-topology-settings-change=${(event: CustomEvent<ZigbeeTopologySettings>) => set({ zigbeeTopology: event.detail })}></hp-zigbee-topology-settings>`,
         ]),
-      })}` },
-        ...(host._canEdit && !host._kiosk ? [{ id: 'external-screens', title: st('screens.title'), body: this.externalScreens.renderSection() }] : []),
+      })}` }] : []),
+        ...(c.externalScreens && host._canEdit && !host._kiosk ? [{ id: 'external-screens', title: st('screens.title'), body: this.externalScreens.renderSection() }] : []),
         { id: 'data', title: st('gs.section_maintenance'), body: html`${formCard({
         id: 'data',
         title: st('gs.section_maintenance'),
         body: formSections([
-          host._canEdit ? html`
+          host._canEdit && (c.planTransfer || c.installationBackup) ? html`
 
             <div class="hpf-actions">
               <span class="backupupload">
@@ -291,7 +294,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
                   <ha-icon icon="mdi:undo-variant"></ha-icon>${st('backup.undo_import')}
                 </button>` : nothing}
             </div>` : nothing,
-          html`<div class="hpf-actions">
+          c.planMaintenance ? html`<div class="hpf-actions">
             <button data-hp="action" data-action="plan-optimize" class="btn" @click=${() => this.optimizePlans.open()} ?disabled=${!host._canEdit || host._kiosk}>
               ${t('gs.align_all')}
             </button>
@@ -299,7 +302,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
               <button data-hp="action" data-action="plan-optimization-undo" class="btn" @click=${() => this._undoPlanOptimization()} ?disabled=${!host._canOptimizeUndo || host._undoKind === 'import' || host._optimizeUndoBusy || !host._canEdit || host._kiosk}>
                 ${st(host._undoKind === 'space_delete' ? 'space.undo_delete' : 'gs.optimize_undo')}
               </button>` : nothing}
-          </div>`,
+          </div>` : nothing,
           html`<div class="hpf-converter"><p class="hpf-hint">${st('gs.converter_description', { formats: planConverterFormats() })}</p>
             <a class="hpf-link" href=${PLAN_CONVERTER.url} target="_blank" rel="noopener noreferrer">${st('gs.converter_link')} ↗</a>
             <p class="hpf-hint">${st('gs.converter_result')}</p></div>`,

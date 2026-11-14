@@ -18,6 +18,7 @@ import { DeviceSignalController, directSignalReadings } from './device-signal-ru
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
 import { decorTextElementId } from './decor-text-element';
 import { headerContentWidth, renderHeaderSpaceNavigation } from './header-space-select';
+import { capabilityHost, hasMarkers } from './plan-capabilities';
 import { PanelHeaderMemo, measurePanelHeader, applyPanelHeaderChoice, panelHeaderWidth,
   type PanelHeaderMeasurement, type PanelHeaderSpaces } from './panel-header-flow';
 import { panelMenuKey, panelMenuState, renderPanelMenu } from './panel-header-menu';
@@ -951,10 +952,16 @@ export class HouseplanCard extends LitElement {
     return this._injectedPlanHost ?? (this._haPlanHost ??= new HaPlanHost(this.hass));
   }
   public set planHost(value: PlanHost | undefined) {
+    if (value) value = capabilityHost(value);
     if (this._injectedPlanHost === value) return;
+    if (this._driverHost && this._editorRuntime
+        && !this._editorRuntime._guardDraftNavigation(() => { this.planHost = value; })) return;
+    if (this.isConnected) this._viewRuntimes.disconnect();
     this._injectedPlanHost = value;
     this._connectPlanHost();
     this._intakePlanEnvironment();
+    if (this.isConnected) this._viewRuntimes.connect();
+    if (this._mode === 'devices' && !hasMarkers(this.planHost.capabilities)) this._setMode('plan');
   }
   public get _presentation(): HostPresentationContext { return this.planHost.environment.presentation; }
   private get planEnvironmentRevision(): number { return this.planHost.environmentRevision; }
@@ -1487,6 +1494,7 @@ export class HouseplanCard extends LitElement {
   private get _canEdit(): boolean { return this._norm && this._canManageConfiguration; }
 
   public get _canImportBackup(): boolean {
+    if (!this.planHost.capabilities.installationBackup && !this.planHost.capabilities.planTransfer) return false;
     return backupImportAllowed({ connected: this.isConnected, loaded: this._loadOk,
       server: this._serverStorage, writer: this._canManageConfiguration, kiosk: this._kiosk });
   }
@@ -3180,6 +3188,7 @@ export class HouseplanCard extends LitElement {
   /** Profiles own their explicit false as well as true. A bare kiosk keeps its
    * existing camera; the installation switch is only for ordinary View. */
   private get _centerSummary(): boolean {
+    if (!this.planHost.capabilities.summary) return false;
     return this._hasScreenProfile ? this._externalScreen.center_summary === true
       : !this._kiosk && this._settings.center_summary === true;
   }
@@ -5253,7 +5262,10 @@ export class HouseplanCard extends LitElement {
   private readonly _hiddenDevicePreference = new HiddenDevicePreference();
   private readonly _hiddenDeviceRoster = new HiddenDeviceRoster<DevItem>();
   private get _displayDevices(): readonly DevItem[] {
-    return this._hiddenDeviceRoster.read(this._devices, this._showHidden, this._cfgEpoch);
+    const devices = this._hiddenDeviceRoster.read(this._devices, this._showHidden, this._cfgEpoch);
+    const c = this.planHost.capabilities;
+    return c.devices && c.virtualDevices ? devices : devices.filter(device =>
+      device.bindingKind === 'virtual' || device.marker?.binding === 'virtual' ? c.virtualDevices : c.devices);
   }
 
   private get _showAll(): boolean {
@@ -5287,6 +5299,7 @@ export class HouseplanCard extends LitElement {
    * device would wait forever.
    */
   private _seedHiddenDevices(): void {
+    if (!this.planHost.capabilities.devices) return;
     // Cached config is paint-only until the authoritative config+layout pair
     // arrives. Seeding against that stale snapshot could overwrite newer
     // server filtering state during a slow cold start.
@@ -5590,14 +5603,14 @@ export class HouseplanCard extends LitElement {
     const settings = this._serverCfg?.settings?.radar;
     const configured = (this._serverCfg?.markers || [])
       .some((marker) => radarMarkerLiveInSpace(marker, this._space));
-    this._radarLive.sync(this._space, this._haRadarStage1Api === 1
+    this._radarLive.sync(this._space, this.planHost.capabilities.radar && this._haRadarStage1Api === 1
       && this._mode === 'view' && settings?.show_live !== false && configured
       && this.ownerDocument.visibilityState !== 'hidden');
   }
 
   private async _syncDecorAssets(cfg: ServerConfig | null): Promise<void> {
     const token = ++this._decorAssetSyncToken;
-    if (this._haDecorAssetsApi !== DECOR_ASSETS_API_VERSION || !this.planHost.environment.connected) {
+    if ((this.planHost.capabilities.decorAssets && this._haDecorAssetsApi !== DECOR_ASSETS_API_VERSION) || !this.planHost.environment.connected) {
       this._decorAssets = new Map();
       return;
     }
@@ -5944,8 +5957,9 @@ export class HouseplanCard extends LitElement {
     const sig = haRegistryBuildSignature(null, snapshot);
     const memo = this._planHassMemo;
     if (memo && memo.environment === environment && memo.sig === sig) return memo.active;
-    const source = { ...environment.presentation, states: environment.states,
-      devices: snapshot.devices, entities: snapshot.entities, areas: snapshot.areas,
+    const c = this.planHost.capabilities;
+    const source = { ...environment.presentation, states: c.devices ? environment.states : {},
+      devices: c.devices ? snapshot.devices : {}, entities: c.devices ? snapshot.entities : {}, areas: c.haAreas ? snapshot.areas : {},
       config: { time_zone: environment.timeZone, unit_system: environment.units } };
     const projected = (this._planHassProjection ??= new PlanHassProjection())
       .project(source, snapshot, this.planHost.authorityKey);
@@ -6152,7 +6166,7 @@ export class HouseplanCard extends LitElement {
 
   /** Optional HA vacuum enrichment does not participate in plan readiness. */
   private _refreshHaVacuumTrails(current: () => boolean): void {
-    if (!this.hass) return;
+    if (!this.hass || !this.planHost.capabilities.vacuum) return;
     const source = this.hass, key = this.planHost.authorityKey;
     void source.callWS({ type: 'houseplan/trail/get' })
       .then((result: unknown) => { if (current() && this.planHost.authorityKey === key) this._adoptVacuumTrails(result, source); })
@@ -6166,7 +6180,7 @@ export class HouseplanCard extends LitElement {
   }
   /** Existing HA Zigbee presentation; not a portable plan transport. */
   private _renderHaZigbeeTopology(spaceId: string, view: Parameters<typeof renderZigbeeTopologyOverlay>[0]['viewKey']): TemplateResult | typeof nothing {
-    if (!this.hass) return nothing;
+    if (!this.hass || !this.planHost.capabilities.zigbee) return nothing;
     return renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices,
       registry: this._haRegistry, currentSpace: spaceId, spaces: this._serverCfg?.spaces, viewKey: view,
       zoom: this._zoom, view: this._mode === 'view', kiosk: this._kiosk,
@@ -6178,6 +6192,14 @@ export class HouseplanCard extends LitElement {
   ) => void, ownsContext: () => boolean): void {
     const source = this.hass;
     if (!source) return;
+    const capabilities = this.planHost.capabilities;
+    const permitted = subscribe;
+    subscribe = (current, adopt, event, receive) => {
+      if (event === 'houseplan_trail_updated' && !capabilities.vacuum) return;
+      if (event === 'houseplan_virtual_light_updated' && !capabilities.virtualDevices) return;
+      if (event.includes('radar') && !capabilities.radar) return;
+      permitted(current, adopt, event, receive);
+    };
     subscribe(() => this._unsubTrail, release => { this._unsubTrail = release; }, 'houseplan_trail_updated',
       vacuumTrailRefresh(() => source.callWS({ type: 'houseplan/trail/get' }), ownsContext,
         result => this._adoptVacuumTrails(result, source)));
@@ -6469,6 +6491,7 @@ export class HouseplanCard extends LitElement {
    * so an upgrade never floods the plan with dots.
    */
   private _syncNewDevices(): void {
+    if (!this.planHost.capabilities.devices) return;
     if (!this._norm || !this._loadOk || !this._serverCfg || !this._canEdit) return;
     // only auto-appearing icons: area devices and light groups; markers are user-made
     const autoIds = this._devices.filter((d) => !d.marker && !d.virtual).map((d) => d.id).sort();
@@ -6494,6 +6517,7 @@ export class HouseplanCard extends LitElement {
    * Layout deletion is deliberately completed before provenance advances.
    */
   private _syncAreaRelocations(resolution: AreaRelocationResolution): void {
+    if (!this.planHost.capabilities.devices || !this.planHost.capabilities.haAreas) return;
     const showToast = this._captureToast();
     // A continuity-cache frame is renderable before the authoritative config
     // and layout pair has finished loading. Never let that stale frame drive a
@@ -7155,8 +7179,10 @@ export class HouseplanCard extends LitElement {
     // stable marker id before reading tap_action, controls or the binding.
     const actionDevice = this._displayDevices.find((item) => item.id === d.id && !item.hidden);
     if (!actionDevice || actionDevice.space !== this._space || d.space !== this._space) return;
+    const actionAuthority = this.planHost.authorityKey, actionRevision = this.planHost.writeAuthorityRevision;
     const actionSpace = this._space;
     const currentActionDevice = (): DevItem | null => {
+      if (this.planHost.authorityKey !== actionAuthority || this.planHost.writeAuthorityRevision !== actionRevision) return null;
       const current = currentMarkerActionDevice(this._displayDevices, this._space,
         { spaceId: actionSpace, id: actionDevice.id });
       if (current && !current.hidden) return current;
@@ -7186,11 +7212,12 @@ export class HouseplanCard extends LitElement {
         return; // other configured no-target outcomes remain intentional quiet no-ops
       }
       const execute = (intent: ResolvedToggleIntent): void => {
+        if (!this.planHost.capabilities.deviceServices) return;
         const operation = toggleOperation(intent);
         if (!operation) return;
         if (operation.kind === 'virtual-light') {
           this._startDevicePressFeedback(actionDevice.id);
-          this.hass.callWS({
+          this.planHost.request({
             type: 'houseplan/virtual_light/toggle',
             marker_id: operation.markerId,
           }).then((result: any) => {
@@ -7207,7 +7234,7 @@ export class HouseplanCard extends LitElement {
         }
         const { command } = operation;
         this._startDevicePressFeedback(actionDevice.id);
-        this.hass.callService(command.domain, command.service, command.data)
+        this.planHost.deviceServices?.call(command.domain, command.service, command.data)
           .catch((e: unknown) => showToast(this._t('toast.error', { err: this._errText(e) }), 'toast.error'));
       };
       const name = toggleIntentName(initial) || actionDevice.name;
@@ -7249,6 +7276,7 @@ export class HouseplanCard extends LitElement {
     }
     if (!this._deviceBindingActive(actionDevice)) return;
     if (action === 'run') {
+      if (!this.planHost.capabilities.deviceServices) return;
       const target = actionDevice.marker?.tap_target || '';
       const svc = runServiceFor(target);
       const st = this.hass.states[target];
@@ -7258,6 +7286,7 @@ export class HouseplanCard extends LitElement {
       }
       const name = st.attributes?.friendly_name || target;
       guarded(this._t('confirm.tap_run', { name }), () => {
+        if (!this.planHost.capabilities.deviceServices) return;
         const current = currentActionDevice();
         if (!current) return;
         if (current.marker?.tap_target !== target) {
@@ -7266,8 +7295,8 @@ export class HouseplanCard extends LitElement {
         }
         if (!this._deviceBindingActive(current) || !this._planEntityAvailable(target)) return;
         this._startDevicePressFeedback(actionDevice.id);
-        this.hass
-          .callService(svc.domain, svc.service, { entity_id: target })
+        this.planHost.deviceServices
+          ?.call(svc.domain, svc.service, { entity_id: target })
           .then(() => {
             this._stampActivity(
               actionDevice.id, 'event', this._activitySourceKey(actionDevice),
@@ -9111,6 +9140,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true, warm = false): void {
+    if (mode === 'devices' && !hasMarkers(this.planHost.capabilities)) return;
     if (!warm) this._cancelPendingWarmMode();
     if (mode !== this._mode) {
       this._rotationMotion.cancel();
@@ -10945,7 +10975,7 @@ export class HouseplanCard extends LitElement {
       for (const r of sp.rooms || []) if (r.area) used.add(r.area);
     for (const decision of this._wallFaceBatch?.decisions || [])
       if (decision.create && decision.area) used.add(decision.area);
-    return Object.values<any>(this.hass?.areas || {})
+    return Object.values<any>(this.planHost.environment.registry.areas)
       .filter((a) => !used.has(a.area_id))
       .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
@@ -11057,7 +11087,7 @@ export class HouseplanCard extends LitElement {
   private _autoIconForBinding(binding: string): string {
     return autoIconForBinding(
       this._fullRegistryHass, binding, () => this._bindingStatus(binding),
-      this._iconRules, this.hass.states,
+      this._iconRules, this.planHost.environment.states,
     );
   }
 
@@ -11699,8 +11729,10 @@ export class HouseplanCard extends LitElement {
   };
 
   private _openPdfDialog = (): void => {
+    if (!this.planHost.capabilities.printing) return;
+    const owner = this.planHost;
     void this._pdfRuntimeLoader.ensure().then((ready) => {
-      if (ready) {
+      if (ready && this.planHost === owner) {
         this._pdfDialog = true;
         this.requestUpdate();
       }
@@ -11720,6 +11752,7 @@ export class HouseplanCard extends LitElement {
     const openCuts = this._openCuts();
     const roomsById = new Map(space.rooms.flatMap((room) => room.id ? [[room.id, room]] : []));
     return runtime.render({
+      showDevices: hasMarkers(this.planHost.capabilities),
       rotation: this._rotation,
       config: this._serverCfg,
       rawSpace,
@@ -11728,7 +11761,7 @@ export class HouseplanCard extends LitElement {
       imperial: this._imperial,
       cardTitle: this._config?.title || this._t('card.title'),
       version: displayVersion(CARD_VERSION),
-      hass: this.hass,
+      hass: this._presentation,
       backdropUrl: space.bg ? this._display(space.bg.href) : '',
       decorAssets,
       svgSource: () => {
@@ -12720,7 +12753,7 @@ export class HouseplanCard extends LitElement {
           })}
           ${this._canEdit
             ? html`<div class="modes hpf-navigation hpf-nav-modes">
-                ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:chip'], ['decor', 'mdi:palette']] as const).map(
+                ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:chip'], ['decor', 'mdi:palette']] as const).filter(([mode]) => mode !== 'devices' || hasMarkers(this.planHost.capabilities)).map(
                   ([m, ic]) => html`<button class="modetab hpf-nav-item ${this._mode === m ? 'active' : ''}"
                     data-hp="mode-tab" data-mode=${m} data-editor-navigation=${m}
                     data-hp-tooltip=${this._t(('mode.' + m + '_tip') as any)}
@@ -12746,9 +12779,9 @@ export class HouseplanCard extends LitElement {
               data-hp-tooltip=${this._t('title.zoom_fit')} aria-label=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
             <button class="btn zb hpf-icon-action" data-hp="zoom-in" @click=${() => this._stepZoom(1)} data-hp-tooltip=${this._t('title.zoom_in')} aria-label=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
-          ${this._kiosk ? nothing : renderHiddenDevicesToggle((k) => this._t(k), this._showHidden, () => this._setShowHidden(!this._showHidden))}
-          ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog }) : nothing}
-          ${!this._kiosk ? this._summary?.renderControls() : nothing}
+          ${this._kiosk || !hasMarkers(this.planHost.capabilities) ? nothing : renderHiddenDevicesToggle((k) => this._t(k), this._showHidden, () => this._setShowHidden(!this._showHidden))}
+          ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this.planHost.capabilities.printing ? this._openPdfDialog : undefined, support: this._openSupportDialog }) : nothing}
+          ${!this._kiosk && this.planHost.capabilities.summary ? this._summary?.renderControls() : nothing}
           </div>
         </div>
         ${this._canEdit && !this._kiosk
@@ -12969,8 +13002,8 @@ export class HouseplanCard extends LitElement {
           ${this._renderEditorRuntimeLoading()}
           ${this._renderRecoveryOverlay()}
           ${this._renderEmptyViewSpace()}
-          ${this._summary?.renderMeasure()}
-          ${this._summary?.renderPanel()}
+          ${this.planHost.capabilities.summary ? this._summary?.renderMeasure() : nothing}
+          ${this.planHost.capabilities.summary ? this._summary?.renderPanel() : nothing}
           ${this._renderKioskNavigation()}
           ${this._booting || this._bootFading || isoFirstFramePending || this._usesScreenCamera && !this._screenReference
             ? html`<div class="bootveil hpf-boot hpf-motion ${this._booting || isoFirstFramePending || this._usesScreenCamera && !this._screenReference ? '' : 'off'}" aria-hidden="true">
@@ -13039,7 +13072,7 @@ export class HouseplanCard extends LitElement {
         ${dialogPresence(this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing)}
         <div class="tip" data-hp="live-tooltip" data-hp-live-tip hidden></div>
         ${dialogPresence(this._kioskDialog ? this._renderKioskDialog() : nothing)}
-        ${dialogPresence(this._summary?.dialogOpen ? this._summary.renderDialog() : nothing)}
+        ${dialogPresence(this.planHost.capabilities.summary && this._summary?.dialogOpen ? this._summary.renderDialog() : nothing)}
         ${this._vacFit ? html`<div class="vaccalbar" data-hp="vacuum-calibration" aria-busy=${String(!!this._vacFit.busy)}>
           <span>${this._t('vac.fit_hint')}</span>
           <button class="btn ghost" data-hp="vacuum-calibration-action" data-action="rotate" ?disabled=${this._vacFit.busy}
@@ -13944,7 +13977,7 @@ export class HouseplanCard extends LitElement {
     // icon remains part of the draggable label instead of becoming a link.
     const areaAffordance = roomAreaAffordance({ admin: this.hass?.user?.is_admin === true,
       writer: this._canEdit, kiosk: this._kiosk, plan: this._markup, view: this._mode === 'view' });
-    const showAreaLink = !!r.area && areaAffordance.visible;
+    const showAreaLink = this.planHost.capabilities.haAreas && !!r.area && areaAffordance.visible;
     const areaLinkInteractive = areaAffordance.interactive;
     const separateAreaAction = showAreaLink && areaLinkInteractive;
     const areaName = r.area && this.hass?.areas?.[r.area]?.name || r.name || r.area || '';
@@ -14356,6 +14389,8 @@ export class HouseplanCard extends LitElement {
   }
 
   private async _lockAction(entityId: string, action: 'lock' | 'unlock'): Promise<void> {
+    if (!this.planHost.capabilities.deviceServices) return;
+    const authority = this.planHost.authorityKey, revision = this.planHost.writeAuthorityRevision;
     // THE ONLY sanctioned lock actuation surface (review CR-1, 2026-07-27).
     // The invariant is "no lock or alarm panel is ever actuated by a TAP on the
     // plan" — icons, badges, controls[] and the device card all refuse. This
@@ -14365,6 +14400,7 @@ export class HouseplanCard extends LitElement {
     const context = this._openingInfo && this._openingInfoSpace
       ? { spaceId: this._openingInfoSpace, id: this._openingInfo.id } : null;
     const currentTarget = (): boolean => {
+      if (this.planHost.authorityKey !== authority || this.planHost.writeAuthorityRevision !== revision) return false;
       if (openingActionTargetCurrent(this._curSpaceCfg, this._space, context,
         this._openingInfo?.id, entityId)) return true;
       this._openingInfo = null; this._openingInfoSpace = null;
@@ -14383,10 +14419,11 @@ export class HouseplanCard extends LitElement {
         confirmLabel: this._t('opening.unlock_action'),
         cancelLabel: this._t('btn.cancel'),
       });
-      if (!accepted || !currentTarget() || !this._openingEntityAvailable(entityId)
+      if (!accepted || !this.planHost.capabilities.deviceServices || !currentTarget() || !this._openingEntityAvailable(entityId)
         || this.hass?.states?.[entityId]?.state !== 'locked') return;
     }
-    this.hass?.callService?.('lock', action, { entity_id: entityId });
+    try { await this.planHost.deviceServices?.call('lock', action, { entity_id: entityId }); }
+    catch (error) { this._showToast(this._t('toast.error', { err: this._errText(error) }), 'toast.error'); }
   }
 
   private _renderOpeningInfoCard(): TemplateResult {
@@ -14399,9 +14436,9 @@ export class HouseplanCard extends LitElement {
       && this._openingEntityAvailable(o.contact) ? o.contact : null;
     const lock = (o.type === 'door' || o.type === 'gate') && o.lock
       && this._openingEntityAvailable(o.lock) ? o.lock : null;
-    const cSt = contact ? this.hass.states[contact]?.state : null;
+    const cSt = contact ? this.planHost.environment.states[contact]?.state : null;
     const amt = this._openingAmt(o);
-    const lSt = lock ? this.hass.states[lock]?.state : null;
+    const lSt = lock ? this.planHost.environment.states[lock]?.state : null;
     const titleKey = o.type === 'door' ? 'opening.door'
       : o.type === 'gate' ? 'opening.gate'
         : o.type === 'passage' ? 'opening.passage' : 'opening.window';
@@ -14436,14 +14473,14 @@ export class HouseplanCard extends LitElement {
                   : this._t('opening.state_unknown'),
                 lSt === 'locked' ? 'ok' : 'warn')
             : nothing}
-          ${lock && (lSt === 'locked' || ['unlocked', 'open'].includes(String(lSt)))
+          ${this.planHost.capabilities.deviceServices && lock && (lSt === 'locked' || ['unlocked', 'open'].includes(String(lSt)))
             ? html`<button
                 class="btn hpf-action-fill lockact ${lSt === 'locked' ? 'danger' : ''}"
                 @click=${() => this._lockAction(lock, lSt === 'locked' ? 'unlock' : 'lock')}>
                 <ha-icon icon=${lSt === 'locked' ? 'mdi:lock-open-variant' : 'mdi:lock'}></ha-icon>
                 ${this._t(lSt === 'locked' ? 'opening.unlock_action' : 'opening.lock_action')}
               </button>`
-            : lock && ['locking', 'unlocking'].includes(String(lSt))
+            : this.planHost.capabilities.deviceServices && lock && ['locking', 'unlocking'].includes(String(lSt))
               ? html`<button class="btn hpf-action-fill lockact" disabled>
                   <ha-icon icon="mdi:timer-sand"></ha-icon>${this._t('opening.lock_pending')}
                 </button>`
@@ -14552,6 +14589,7 @@ export class HouseplanCard extends LitElement {
 
   /** The same safe action authority as a marker, with only the selected row as target. */
   private _cardToggle(eid: string): void {
+    if (!this.planHost.capabilities.deviceServices) return;
     const showToast = this._captureToast();
     if (this._mode !== 'view' || !this._infoCard) return;
     const context = { spaceId: this._space, id: this._infoCard.id };
@@ -14571,7 +14609,8 @@ export class HouseplanCard extends LitElement {
       const intent = resolveInfoRowToggleIntent(this._planHass, this._fullRegistryHass, eid);
       if (!intent.command || !sameToggleOperationTargets(initial, intent)) return;
       this._startDevicePressFeedback(current.id);
-      this.hass.callService(intent.command.domain, intent.command.service, intent.command.data)
+      if (!this.planHost.capabilities.deviceServices) return;
+      this.planHost.deviceServices?.call(intent.command.domain, intent.command.service, intent.command.data)
         .catch((error: unknown) => showToast(this._t('toast.error', { err: this._errText(error) }), 'toast.error'));
     };
     if (infoCardTapConfirmationRequired(device)) {
@@ -14623,7 +14662,7 @@ export class HouseplanCard extends LitElement {
                     est?.attributes?.device_class, est?.state, false,
                   )}></ha-icon>
                   <span class="en hpf-reading-label">${name}</span>
-                  ${kind === 'toggle'
+                  ${kind === 'toggle' && this.planHost.capabilities.deviceServices
                     ? html`<button class="btn hpf-action-wide entbtn ${on ? 'on' : 'ghost'}"
                         @click=${() => this._cardToggle(eid)}>${val}</button>`
                     : kind === 'open'

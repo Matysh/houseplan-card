@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1394,
+  "baseStable": "v1.85.0",
+  "category": "infra",
+  "rationale": "Runtime capability profiles prepare standalone plan editing; installed HA retains the full profile and persisted formats are unchanged.",
+  "summary": {
+    "ru": "Доступность функций определяется единым неизменяемым каталогом возможностей хоста.",
+    "en": "An immutable host capability catalog controls feature availability."
+  }
+}

@@ -2,6 +2,7 @@
  * No auth token, connection object or transport method belongs to presentation.
  * Responses retain their existing domain-specific runtime validation.
  */
+import type { PlanCapabilities } from './plan-capabilities';
 export type Unsubscribe = () => void;
 export type HostAuthorityKey = object;
 export type HouseplanCommand = Readonly<Record<string, unknown> & { type: `houseplan/${string}` }>;
@@ -121,6 +122,8 @@ export interface HostHttpPort {
 export interface HostContentPort {
   /** Local hosts can resolve to a local/blob URL; HA uses its existing signer. */
   resolve(paths: readonly string[]): Promise<Readonly<Record<string, string>>>;
+  /** Saved decor is readable even when asset-library editing is unavailable. */
+  resolveAssets(ids: readonly string[]): Promise<unknown>;
 }
 export interface HostDeviceServices {
   /** Existing intent/security decisions stay with the calling device owner. */
@@ -129,6 +132,7 @@ export interface HostDeviceServices {
 }
 
 export interface PlanHost {
+  readonly capabilities: PlanCapabilities;
   /** Connection-or-original-callWS plus user identity, opaque to the plan. */
   readonly authorityKey: HostAuthorityKey;
   /** Revokes writes on authority/permission changes, NOT ordinary state ticks. */

@@ -20,6 +20,7 @@ export interface PdfAssetReference { url: string; mime: string; }
 export interface PdfDialogHass { localize?: (key: string) => string | undefined; }
 
 export interface PdfDialogContext {
+  showDevices?: boolean;
   rotation?: PlanRotation;
   config: ServerConfig;
   rawSpace: PdfRawSpace;
@@ -135,7 +136,7 @@ export class HpPdfDialog extends LitElement {
     try {
       const request: ExportRequest = this.format === 'pdf'
         ? { format: 'pdf', options: { ...this.options } }
-        : { format: 'svg', options: { ...this.svgOptions } };
+        : { format: 'svg', options: { ...this.svgOptions, devices: this.context.showDevices === false ? false : this.svgOptions.devices } };
       if (this.format === 'pdf') {
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, ...this.options })); } catch { /* optional */ }
       }
@@ -179,7 +180,7 @@ export class HpPdfDialog extends LitElement {
             ariaLabel: t('export.format'), options: [{ value: 'pdf', label: t('export.pdf') }, { value: 'svg', label: t('export.svg') }],
             onChange: value => this.setFormat(value) })}
         </div>
-        ${option(firstKey, t(isSvg ? 'export.devices' : 'pdf.dimensions'), isSvg ? this.svgOptions.devices : (this.options || defaults()).dimensions, true)}
+        ${isSvg && this.context.showDevices === false ? nothing : option(firstKey, t(isSvg ? 'export.devices' : 'pdf.dimensions'), isSvg ? this.svgOptions.devices : (this.options || defaults()).dimensions, true)}
         ${option('decor', t('pdf.decor'), o.decor)}
         ${option('roomNames', t('pdf.room_names'), o.roomNames)}
         ${this.context.space.bg ? option('backdrop', t('pdf.backdrop'), o.backdrop) : nothing}

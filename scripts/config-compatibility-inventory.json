@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "0b10a141bf6f31efc0bac0188010e4b4c82bc58f04cb003da16494bd1b5f8585",
+  "matchesSha256": "6b6aac27a86aaee3180c1b79c7e5764b8416d9f6aa9966901cfdbce9bbb4d381",
   "hits": [
     {
       "id": "5f9d10e7f730e212aaca576f",
@@ -3689,10 +3689,10 @@
       "reason": "Browser localStorage, gesture/tool/UI state, session token or dialog state, outside server config/layout."
     },
     {
-      "id": "10aa50fbf93378af2e15aa76",
+      "id": "193177cf741afdc96ed81981",
       "path": "src/editors/marker-dialog.ts",
-      "line": 823,
-      "text": "const legacyRadar = !automaticRadar && !!persistedMarker?.radar;",
+      "line": 824,
+      "text": "const legacyRadar = c.radar && !automaticRadar && !!persistedMarker?.radar;",
       "occurrence": 1,
       "kind": "exclusion",
       "owner": "session-state",
@@ -5129,10 +5129,10 @@
       "reason": "Existing JSON/ZIP/HTTP/error response/old-client protocol compatibility; no persisted config selector."
     },
     {
-      "id": "0fb61e586141c330fd29d6ca",
+      "id": "caa6d3e68679cade90cbbccf",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 9376,
-      "text": "const compatible = supportApiCompatible(this.host._haSupportApi);",
+      "line": 9380,
+      "text": "const compatible = this.host.planHost.capabilities.supportDiagnostics && supportApiCompatible(this.host._haSupportApi);",
       "occurrence": 1,
       "kind": "exclusion",
       "owner": "transport",

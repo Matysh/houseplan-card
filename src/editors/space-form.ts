@@ -2,6 +2,8 @@
  * Persistence remains in their existing writers. Optional navigation and north
  * controls are injected by the editor, keeping its graph out of onboarding. */
 import { html, nothing, type TemplateResult } from 'lit';
+import { planHostOf } from '../ha-plan-host';
+import { permitsRoomFill } from '../plan-capabilities';
 
 import { ensureCompactDialogStyles } from '../compact-dialog-styles';
 import type { settingsNorth } from './settings-north';
@@ -248,7 +250,7 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
         }),
       ], { narrow: true, stacked:!!port.northControl }),
           scaleChanged ? callout({ kind: 'warning', text: st('space.scale_changed') }) : nothing,
-          port.northControl ? field({label:st('space.plan_source'),help:shelp('space.plan.help'),control:html`
+          !planHostOf(host).capabilities.planImages ? nothing : port.northControl ? field({label:st('space.plan_source'),help:shelp('space.plan.help'),control:html`
         <div id=${id('plan')} tabindex="-1" aria-invalid=${planProblem ? 'true' : nothing}>
           ${selectControl({name:id('plan-source'),value:d.source,ariaLabel:st('space.plan_source'),
             options:[{value:'file',label:t('space.source_file')},{value:'draw',label:t('space.source_draw')}],
@@ -260,7 +262,7 @@ function renderBasics(port: SpaceFormPort, d: SpaceDialogState, id: (n: string) 
           { value: 'file', title: t('space.source_file'), caption: st('space.source_file_hint') },
         ], (value) => set(port, switchSpacePlanSource(d, value)), st('space.plan_source'))}
       </div>`,
-          d.source === 'file' ? port.northControl
+          planHostOf(host).capabilities.planImages && d.source === 'file' ? port.northControl
         ? field({label:st('space.image_label'),help:shelp('space.image.help'),control:renderPlanUpload(port,d)})
         : renderPlanUpload(port,d) : nothing,
           d.source === 'draw' && d.planUrl ? callout({ text: st('space.plan_kept') }) : nothing,
@@ -347,10 +349,11 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
           color('wall-fill'),
           field({label:t('space.fill_label'),help:port.help('space.fill_mode.help'),control:selectControl({
       name:id('fill-mode'),value:d.fillMode === 'none' ? 'custom' : d.fillMode,ariaLabel:t('space.fill_label'),
-      options:SPACE_FILL_UI_MODES.map(value => ({value,label:st(`space.fill_${value}`)})),
+      options:SPACE_FILL_UI_MODES.filter(value => permitsRoomFill(planHostOf(host).capabilities,value) || value === d.fillMode)
+        .map(value => ({value,label:st(`space.fill_${value}`),disabled:!permitsRoomFill(planHostOf(host).capabilities,value)})),
       onChange:v => set(port,{...d,fillMode:v})})}),
           d.fillMode === 'custom' || d.fillMode === 'none' ? color('fill') : nothing,
-          d.fillMode === 'temp' ? html`<div class="hpf-field">
+          planHostOf(host).capabilities.devices && d.fillMode === 'temp' ? html`<div class="hpf-field">
       <span class="hpf-label hpf-labelrow">${st('space.temp_range')}${shelp('space.comfort.help')}</span>
       <div class="hpf-temperature-range">${temperature('min')}${temperature('max')}</div>
     </div>` : nothing,
@@ -359,6 +362,7 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
 
 function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string) => string): TemplateResult {
   const {host} = port, t = host._t.bind(host), {st,shelp} = settingsCopy(host);
+  const c = planHostOf(host).capabilities;
   const sizes = (['cardNameScale','cardLabelScale'] as const).map((key,index) => {
     const label = st(index === 0 ? 'space.name_size' : 'space.metrics_size'), value = Math.round(d[key]*100);
     const change = (n:number) => set(port,{...d,[key]:n/100});
@@ -377,24 +381,24 @@ function renderRoomCards(port: SpaceFormPort, d: SpaceDialogState, id: (n:string
   return formCard({id:'room-cards',title:st('space.section_metrics'),body:spaceFormSections(port, [
           toggleRow({id:id('show-names'),title:t('space.show_names'),help:shelp('space.names.help'),checked:d.showNames,
       onChange:v => set(port,touchSpaceDisplay(d,'showNames',v))}),
-          html`<div class="hpf-field">${subsection({title:st('space.room_metrics')})}
+          c.devices ? html`<div class="hpf-field">${subsection({title:st('space.room_metrics')})}
       <p class="hpf-hint">${st('space.metrics_source_hint')}</p>
-      <div class="hpf-room-metrics">${tiles.map(tile => toggleRow({id:tile.id,title:tile.label,help:shelp(tile.helpKey),checked:tile.checked,disabled:!d.showNames,onChange:tile.onChange}))}</div></div>`,
+      <div class="hpf-room-metrics">${tiles.filter(tile => !tile.id.endsWith('labelLqi') || c.zigbee).map(tile => toggleRow({id:tile.id,title:tile.label,help:shelp(tile.helpKey),checked:tile.checked,disabled:!d.showNames,onChange:tile.onChange}))}</div></div>` : nothing,
           html`${subsection({title:st('space.font_sizes')})}${sizes}`,
           html`<div class="hpf-tint hpf-preview">${roomCardPreview(t,st('preview.room_name'),d.cardNameScale,1,1,
       d.labelCo2 ? 820 : undefined,d.cardLabelScale,{temp:d.labelTemp,hum:d.labelHum,lqi:d.labelLqi,light:d.labelLight,showName:d.showNames},
       spaceDraftAppearanceOf(d,d.mode === 'edit' ? host._curSpaceCfg : undefined,host._settings).nameColor)}</div>`,
-          html`${subsection({title:st('space.device_metrics')})}${field({label:st('space.device_battery'),control:selectControl<SpaceDeviceBatteryMode>({
+          c.devices ? html`${subsection({title:st('space.device_metrics')})}${field({label:st('space.device_battery'),control:selectControl<SpaceDeviceBatteryMode>({
       name:id('battery-mode'),value:d.deviceBatteryMode,ariaLabel:st('space.device_battery'),
       options:[{value:'inherit',label:st('space.inherited_value',{v:batteryLabel(inheritedBattery)})},
         ...(['all','low','off'] as const).map(value => ({value,label:batteryLabel(value)}))],
-      onChange:deviceBatteryMode => set(port,{...d,deviceBatteryMode})})})}`,
-          html`${field({label:t('space.show_lqi'),help:shelp('gs.signal_help'),control:selectControl<SignalVisibilityMode>({
+      onChange:deviceBatteryMode => set(port,{...d,deviceBatteryMode})})})}` : nothing,
+          c.zigbee ? html`${field({label:t('space.show_lqi'),help:shelp('gs.signal_help'),control:selectControl<SignalVisibilityMode>({
       name:id('show-lqi'),value:d.showLqiMode,ariaLabel:t('space.show_lqi'),
       options:[{value:'inherit',label:st('space.inherited_value',{v:st(globalSignalVisibleOf(host._settings) === 'low' ? 'space.lqi_low' : globalSignalVisibleOf(host._settings) ? 'space.lqi_on' : 'space.lqi_off')})},
         {value:'on',label:st('space.lqi_on')},{value:'low',label:st('space.lqi_low')},{value:'off',label:st('space.lqi_off')}],
       onChange:showLqiMode => set(port,{...d,showLqiMode})})})}
-          ${port.openGeneral ? html`<div class="hpf-context-links">${sourceLink('display')}</div>` : nothing}`,
+          ${port.openGeneral ? html`<div class="hpf-context-links">${sourceLink('display')}</div>` : nothing}` : nothing,
         ])});
 }
 
