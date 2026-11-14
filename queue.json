@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13597,
-  "nextTicket": 473,
+  "revision": 13598,
+  "nextTicket": 474,
   "nextFence": 470,
   "tasks": {
     "1024": {
@@ -4716,6 +4716,20 @@
         "sourceSha": "e8ced3a76cb20bca2a710a858d55348d7ca471c8"
       }
     },
+    "1441": {
+      "issue": 1441,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1441-keyboard-focus-oracle",
+      "materialSha": "a62b9cb7b196f9d4ea7123cf90382263ab0ee99b",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 473,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794689310295,
+      "reviewEntry": 1
+    },
     "1444": {
       "issue": 1444,
       "branch": "codex/1444-context-menu-footprint",
@@ -5096,7 +5110,8 @@
   "waiting": [
     1437,
     1438,
-    1445
+    1445,
+    1441
   ],
   "active": {
     "issue": 1436,
@@ -5235,6 +5250,19 @@
         "track": "ship",
         "layer": "infra",
         "materialSha": "1a533a629321eef79c93b1f94677641866c633e1"
+      }
+    },
+    "finish:287ec329-1d6e-49f3-90fa-c5d007a3d785": {
+      "digest": "8115bde78ce1ad95663b839c618fd411ee65882554032dfe4912e0de42fb86b1",
+      "issue": 1441,
+      "message": {
+        "kind": "queued",
+        "issue": 1441,
+        "at": 1794689310295,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "a62b9cb7b196f9d4ea7123cf90382263ab0ee99b"
       }
     }
   },
