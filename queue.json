@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13949,
+  "revision": 13950,
   "nextTicket": 479,
   "nextFence": 478,
   "tasks": {
@@ -4850,7 +4850,7 @@
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1794694401314,
         "entry": 1,
@@ -5347,6 +5347,10 @@
     "github:43647389343:1:completions:message:73f26fcb650289eb3046e242c456577ee1aa4d7d92bae003707bfbf7ca217c27": {
       "digest": "8b69b55edf9de409f99e2e82fdc9c335a261484e43704257479ef9eb5da46146",
       "issue": 1447
+    },
+    "github:43647389343:1:completions:notice:4ed573edcaec35fff6719b4ffa29423c822a3911934f8b60dcc9199b337389be": {
+      "digest": "3cf50a4a5195514cc58a3fd26319ed96f9f5ab74fb29f0ad5287ac32a4a68f50",
+      "issue": 1446
     },
     "finish:1446-integration-display-metadata-20261115": {
       "digest": "82a8163ec4fc0593dc2739b009fe0021dc402ddd59c9a6351753fe7a30b3f210",
