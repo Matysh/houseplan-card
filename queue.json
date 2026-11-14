@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12923,
-  "nextTicket": 455,
+  "revision": 12924,
+  "nextTicket": 456,
   "nextFence": 455,
   "tasks": {
     "1024": {
@@ -4620,14 +4620,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1428-single-button-focus",
-      "materialSha": "f12cd9bb4846f752db2bee337aefec6ace2aa486",
+      "materialSha": "a34073c7a9b5b9658f36d69329d0b3fabbc5468a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 454,
-      "queued": false,
+      "ticket": 455,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794666925147,
-      "reviewEntry": 1,
+      "readyAt": 1794667708860,
+      "reviewEntry": 2,
       "patchId": "7098717f813d2cfe85dc986b2c2b472365e01281",
       "changedFiles": [
         "demo/smoke_editor_return_focus_1248.mjs",
@@ -4653,7 +4653,6 @@
         "src/ui-button-tab-focus.ts",
         "test/ui-button-tab-focus.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5005,7 +5004,9 @@
       "runId": 43604638377
     }
   },
-  "waiting": [],
+  "waiting": [
+    1428
+  ],
   "active": null,
   "events": {
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:2:synchronized": {
@@ -5097,6 +5098,19 @@
           "detail": "Поведение: test/houseplan-panel.test.mjs: failed; Браузер: compact header polish: failed; Браузер: discard dialog polish: failed; Браузер: toolbar stable width: failed",
           "eventId": "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:3:return:return:1428"
         }
+      }
+    },
+    "finish:bb81c14e-2842-4df5-9d91-930b18ac35f6": {
+      "digest": "305694df42fc427ccd6d841a3c80a99f9989a79648ebc89ece33dd877710692f",
+      "issue": 1428,
+      "message": {
+        "kind": "queued",
+        "issue": 1428,
+        "at": 1794667708860,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a34073c7a9b5b9658f36d69329d0b3fabbc5468a"
       }
     }
   },
