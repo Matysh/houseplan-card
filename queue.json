@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13752,
+  "revision": 13753,
   "nextTicket": 476,
   "nextFence": 474,
   "tasks": {
@@ -4655,6 +4655,13 @@
         "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
         "expectedBase": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
         "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083"
+      },
+      "reviewRetry": {
+        "requestId": "review:1437:1:f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083:d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
+        "eventId": "github:43642268735:1:tick:0:review-retry",
+        "at": 1794691233139,
+        "runId": null,
+        "runAttempt": null
       }
     },
     "1438": {
@@ -5279,6 +5286,10 @@
     },
     "finish:1437-ha-formatters-resume-20261114:finish:3:review-requested": {
       "digest": "7fe2c1cd6b5e4f00af1346b51998723b1fa0263dd8b091cae22ca6134701e2d8",
+      "issue": 1437
+    },
+    "github:43642268735:1:tick:0:review-retry": {
+      "digest": "1154b92468ddaa415f326ab43eb9712a8e71917531f74807cbb477e2214fa3b5",
       "issue": 1437
     },
     "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
