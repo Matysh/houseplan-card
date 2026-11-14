@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12601,
+  "revision": 12602,
   "nextTicket": 446,
   "nextFence": 446,
   "tasks": {
@@ -4496,7 +4496,7 @@
       "ownerDecision": null,
       "ticket": 445,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794653290073,
       "reviewEntry": 2,
       "patchId": "7f04662a3cef97085697f0fabd413a26e2799146",
@@ -4531,6 +4531,15 @@
         "at": 1794653262479,
         "entry": 1,
         "eventId": "finish:1f0a2ac9-bb03-4b19-9394-d25f28bd3409:finish:1:expire:return:1421"
+      },
+      "s6": {
+        "id": "20261114T104826659-57febbe1",
+        "name": "Тесты для задачи #1421 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T104826659-57febbe1/report.json",
+        "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
+        "status": "passed",
+        "finishedAt": "2026-11-14T10:53:08.867Z",
+        "failures": []
       }
     },
     "1424": {
@@ -4953,9 +4962,9 @@
     "fence": 445,
     "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
     "expectedBase": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794653293954,
-    "expiresAt": 1794653833035,
+    "expiresAt": 1794657190136,
     "patchId": "7f04662a3cef97085697f0fabd413a26e2799146"
   },
   "events": {
@@ -5282,6 +5291,34 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:a6aae011-a44b-4170-bd80-5f358354c234:finish:3:s6-complete": {
+      "digest": "62db5ca23b6023d28546b3982c575128381d9a04a00cafe1e421ca136208463c",
+      "issue": 1421,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1421,
+        "at": 1794653590136,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T104826659-57febbe1",
+          "name": "Тесты для задачи #1421 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T104826659-57febbe1/report.json",
+          "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
+          "status": "passed",
+          "finishedAt": "2026-11-14T10:53:08.867Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Реализация\nВетка `codex/1421-door-leaf-glow`. Только Glow: физический слот доказан существующим индексом стен/host, затем закрыт отрезком фактического полотна. Положение slide берётся из общего с renderer `openingSlidePlacement`; swing — ось стены. Добавлен только ограниченный пол тоннеля, а не наружный световой веер. Общая сцена обслуживает лампы, LED и Static. Частичное открытие сохраняет квантование 5%, стеклянные двери/ворота/окна не переопределяются. Явный host валидируется общим `physicalOpeningHostRange`; существующий window mutant перенесён к этому владельцу без смены guard/oracle.\n\n### Проверки и ограничения\n- `test/closed-door-light.test.mjs`: 72/72 — обе стороны, углы 0/27/90/180, flip_h/flip_v, swing/slide, wall/partition/exterior, explicit/invalid host, future features, source-on-leaf, partial/transparent и invalidation. `test/glow-scene.test.mjs` + `test/interior-window-light.test.mjs`: 23/23 на предварительном материале.\n- `demo/smoke_closed_door_glow.mjs`: настоящая панель, PNG on/off и фактические clip paths, Flat/2.5D, closed/open/closed, обе стороны, slide flips, partition/exterior, LED и Static. Перед полотном средняя разница RGB 67.67, за полотном 0 в обеих проекциях. Live contact/light не записывают config/layout. Это synthetic transport, не real HA.\n- Четыре новых panel golden-сцены сняты в capture: closed/open/iso/slide. Геометрические oracle пройдены, но все четыре честно имеют `missing-baseline`: принятых эталонов для новых сцен пока нет. PNG — кандидаты, старые эталоны/manifest не менялись. Будущая приёмка перед релизом отдельная; этим коммитом выпуск не запускается.\n- `node scripts/mutation-gate.mjs --check`: static readiness 1790 definitions, execution=0. Мутации при разработке этой задачи не исполнялись.\n- Сборка с типами пройдена. Финальный S6 выполняет очередь по show. Каталог новых unit/native: product, openings+lighting, regression; plan должен выбирать unit по области/import и native по изменённому исполняемому файлу/fixture, не только areaTests.\n- Решение о HA E2E: Matysh/houseplan-e2e#56; существующий релизный HA-набор сохраняется, нового HA backend контракта здесь нет.\n\n### Места для внимания\n\nПервый полный S6 нашёл пять служебных отказов, исправлены до ревью: перемещён ровно один compatibility inventory hit к общему host-proof owner; добавлен ровно один паспорт новой синтетической fixture при сохранении всех старых записей и immutable legacy oracle; новая pinned-browser проверка включена в полный allowlist и её cold-panel launch учитывается проверкой порядка; для четырёх новых lighting panel goldens добавлен собственный контракт вместо включения их в историческую тройку #486. Все пять упавших файлов затем прошли адресно, 91/91. Это не обновление визуальных эталонов. Предыдущий общий прогон имел 6451 известных кейсов, но не был зелёным; финальный S6 после ремонта выполняется заново с допустимым reuse.\nТочная граница наружного откатного полотна, нерасширение неподтверждённого host, closed-vs-zero-rounded-partial cache, повторный light-recut Static. Технические документы LIGHT и руководство обновлены; Sun и сохранённая модель не меняются.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
