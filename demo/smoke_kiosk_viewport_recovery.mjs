@@ -41,7 +41,9 @@ for (const kind of ['ordinary', 'fixed', 'single', 'deleted', 'carousel', 'same-
     await page.mouse.move(stage.x + 75, stage.y + 60, { steps: 4 }); await page.mouse.up();
     await page.waitForTimeout(500);
     const before = await page.evaluate(() => {
-      const c = window.__card; return { space: c._space, zoom: c._zoom, view: { ...c._view } };
+      const c = window.__card;
+      return { space: c._space, zoom: c._zoom, view: { ...c._view },
+        stage: [c._stageEl.clientWidth, c._stageEl.clientHeight] };
     });
     out[`${kind}:enlarged-camera-fixture`] = before.space === 'garden' && before.zoom > 2;
     await page.clock.install();
@@ -62,14 +64,17 @@ for (const kind of ['ordinary', 'fixed', 'single', 'deleted', 'carousel', 'same-
       const after = await page.evaluate(() => {
         const c = window.__card;
         return { space: c._space, zoom: c._zoom, view: c._view,
+          stage: [c._stageEl.clientWidth, c._stageEl.clientHeight],
           editor: !!c._editorRuntime || c._mode !== 'view', popup: !!c.renderRoot.querySelector('hp-dialog'),
           ownMemos: Object.keys(sessionStorage).filter(k => k.startsWith('houseplan_kiosk_recovery_v1:')).length };
       });
       out[`${kind}:one-real-reload-no-modal`] = reloads === 1 && !after.editor && !after.popup && after.ownMemos === 0;
+      out[`${kind}:same-stage-geometry`] = after.stage.every((size, index) => size === before.stage[index]);
       out[`${kind}:exact-camera-or-deleted-fallback`] = kind === 'deleted'
         ? after.space !== 'garden' && JSON.stringify(after.view) !== JSON.stringify(before.view)
         : after.space === before.space && Math.abs(after.zoom - before.zoom) < 1e-6
           && ['x', 'y', 'w', 'h'].every(key => Math.abs(after.view[key] - before.view[key]) < 1e-4);
+      if (!out[`${kind}:exact-camera-or-deleted-fallback`]) console.log('camera mismatch', kind, { before, after });
     }
   } finally { await browser.close(); }
 }

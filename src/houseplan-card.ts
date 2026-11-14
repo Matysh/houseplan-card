@@ -5066,13 +5066,22 @@ export class HouseplanCard extends LitElement {
     return kioskPlacementKey(this, location.pathname + location.search, contentFingerprint(this._config), this.hass?.user?.id || '');
   }
   private _restoreKioskViewport(): boolean {
-    const memo = this._recoveryViewport; this._recoveryViewport = null;
+    const memo = this._recoveryViewport;
     if (!memo || memo.key !== this._kioskRecoveryKey() || !this._kiosk || this._mode !== 'view' || memo.space !== this._space
         || !this._model.some((space) => space.id === memo.space)
-        || !nonCarouselKiosk(this._externalScreen.cycle ?? this._config?.cycle, this._hasFixedFloor, this._model.length)) return false;
+        || !nonCarouselKiosk(this._externalScreen.cycle ?? this._config?.cycle, this._hasFixedFloor, this._model.length)) {
+      this._recoveryViewport = null;
+      return false;
+    }
     this._zoom = memo.zoom; this._view = { ...memo.view };
-    this._applyView(memo.zoom, memo.view.x + memo.view.w / 2, memo.view.y + memo.view.h / 2);
     this._screenRecoveredCamera = this._hasScreenProfile;
+    // Cold authority arrives before the first stage. Keep the exact camera
+    // until updated() can fit it against the real placement, not _baseVb's
+    // fallback aspect. The first resize delivery otherwise blesses that fit.
+    const stage = this._stageEl;
+    if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return true;
+    this._recoveryViewport = null;
+    this._applyView(memo.zoom, memo.view.x + memo.view.w / 2, memo.view.y + memo.view.h / 2);
     return true;
   }
   /** One patchable seam shared by trusted manual and guarded automatic reload. */
@@ -5455,6 +5464,7 @@ export class HouseplanCard extends LitElement {
     if (this._editorRuntime) this._dtMeasure();
     const stage = this._stageEl;
     const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
+    if (this._recoveryViewport) this._restoreKioskViewport();
     // A mounted authority reload can replace the stage without disconnecting
     // the card. Retire the old element lease before binding the new surface.
     if (this._resizeTargets?.stage !== stage || this._resizeTargets?.header !== hdr) {
