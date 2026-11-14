@@ -75,6 +75,7 @@ export class HaPlanHost implements PlanHost {
   private snapshot!: HostEnvironment;
   private lastInput: unknown;
   private suspended = false;
+  private inputKey = {};
 
   constructor(source: unknown) { this.update(source); }
   get authorityKey(): HostAuthorityKey { return this.key; }
@@ -134,6 +135,7 @@ export class HaPlanHost implements PlanHost {
       return;
     }
     this.suspended = false;
+    if (value !== this.lastInput || (row(value) && this.snapshot?.states !== (value.states ?? EMPTY))) this.inputKey = {};
     const before = this.permissionSignature, previousKey = this.key;
     const previousAdmin = this.snapshot?.permissions.admin;
     this.lastInput = value;
@@ -158,6 +160,9 @@ export class HaPlanHost implements PlanHost {
     this.publish();
   }
 
+  /** Host-specific telemetry changed, not another HA input frame. */
+  invalidateData(): void { this.publish(); }
+
   private publish(): void {
     if (this.source.services !== this.metadataServices || this.source.config !== this.metadataConfig) this.smartHomeRevision++;
     this.metadataServices = this.source.services; this.metadataConfig = this.source.config;
@@ -169,6 +174,7 @@ export class HaPlanHost implements PlanHost {
       localize: this.source.localize ? this.localize : undefined, themes: this.source.themes,
     });
     this.snapshot = Object.freeze({
+      inputKey: this.inputKey,
       ready: !this.suspended && typeof this.source.callWS === 'function', connected: this.connected(),
       smartHomeRevision: this.smartHomeRevision,
       userId: this.source.user?.id, permissions: Object.freeze(this.permissions()),

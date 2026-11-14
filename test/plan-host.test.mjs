@@ -51,6 +51,19 @@ test('#1392 a temporary missing HA snapshot suspends dispatch without inventing 
   assert.ok(host.writeAuthorityRevision > revision);
 });
 
+test('#1392 permission and telemetry publications do not invent another HA input frame', () => {
+  const input = source(), host = new HaPlanHost(input);
+  const key = host.environment.inputKey, revision = host.environmentRevision;
+  host.setServerWrite(false);
+  host.invalidateData();
+  assert.equal(host.environment.inputKey, key);
+  assert.ok(host.environmentRevision > revision);
+  host.update(input);
+  assert.equal(host.environment.inputKey, key, 'the same reused HA object stays one input');
+  host.update({ ...input });
+  assert.notEqual(host.environment.inputKey, key, 'a new HA snapshot is consumed once');
+});
+
 for (const kind of ['connection', 'user', 'permissions']) test(`#1392 ${kind} A→B→A cannot revive an awaited response`, async () => {
   const pending = deferred(), a = {}, b = {}, raw = source({ connection: a, callWS: () => pending.promise });
   const host = new HaPlanHost(raw), result = host.request(command), initial = host.authorityKey;

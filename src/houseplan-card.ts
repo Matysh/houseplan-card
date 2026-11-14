@@ -960,7 +960,7 @@ export class HouseplanCard extends LitElement {
   private get planEnvironmentRevision(): number { return this.planHost.environmentRevision; }
 
   private _environmentRenderSnapshot(value: HostEnvironment): HassRenderSnapshot {
-    return { states: value.states, entities: value.registry.entities, devices: value.registry.devices,
+    return { inputKey: value.inputKey ?? value, states: value.states, entities: value.registry.entities, devices: value.registry.devices,
       areas: value.registry.areas, themes: value.presentation.themes, config: value.units,
       language: value.presentation.language, locale: value.presentation.locale ? { ...value.presentation.locale } : undefined };
   }
@@ -974,6 +974,16 @@ export class HouseplanCard extends LitElement {
     const before = this._consumedPlanEnvironment;
     this._consumedPlanEnvironment = current;
     const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+    if (before?.inputKey && before.inputKey === current.inputKey
+        && (before.registry.revision !== current.registry.revision
+          || before.registry.devices !== current.registry.devices || before.registry.entities !== current.registry.entities
+          || before.registry.areas !== current.registry.areas)) {
+      this._ensureHaRegistryAuthority();
+      this._hassSequence++;
+      if (this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled)
+        this._planHassProjection?.invalidate();
+      else this._maybeRebuildDevices();
+    }
     this._renderLife.observe(before && this._environmentRenderSnapshot(before), this._environmentRenderSnapshot(current),
       snapshot ? { entityIds: snapshot.entityIds } : null, () => intakeHass(this));
   }
@@ -1027,9 +1037,6 @@ export class HouseplanCard extends LitElement {
     const waiting = this._read.busy || this._read.pending;
     if (this._read.observe(context)) { this._loading = false; if (waiting) this._read.defer(); }
     if (authorityChanged) this._read.defer();
-    // Replacing permission-fenced subscriptions must also close the response /
-    // resubscribe gap. Keep demand if the accepting paired read is still busy.
-    if (revoked && !authorityChanged) this._read.defer();
     if (before && before.permissions.admin !== environment.permissions.admin) this._read.defer();
     if (!this.isConnected) return;
     if (before?.connected && !environment.connected) this._onConnLost();
@@ -5937,8 +5944,8 @@ export class HouseplanCard extends LitElement {
     queueMicrotask(() => {
       this._haSignalEnvironmentPending = false;
       if (!this.isConnected) return;
-      if (!this._injectedPlanHost && this._haPlanHost) this._haPlanHost.update(this.hass);
-      else this._hassSequence++;
+      this._hassSequence++;
+      if (!this._injectedPlanHost && this._haPlanHost) this._haPlanHost.invalidateData();
       this.requestUpdate();
     });
   }

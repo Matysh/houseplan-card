@@ -24,7 +24,7 @@ export class RenderLifecycle {
     intake: () => void,
   ): void {
     this.invalidateDiagnosticsForHass(before, after, dependencies);
-    this.intake(after, intake);
+    this.intake(after?.inputKey ?? after, intake);
   }
 
   intake(snapshot: unknown, run: () => void): void {

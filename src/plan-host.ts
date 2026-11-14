@@ -88,6 +88,8 @@ export interface HostUnits {
   readonly mass?: string;
 }
 export interface HostEnvironment {
+  /** Opaque input-frame identity; metadata/permission publications may reuse it. */
+  readonly inputKey?: object;
   readonly ready: boolean;
   readonly connected: boolean;
   /** Optional data-only invalidation for host-specific smart-home View bridges. */
