@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13624,
+  "revision": 13625,
   "nextTicket": 475,
   "nextFence": 470,
   "tasks": {
@@ -4604,7 +4604,7 @@
       "ownerDecision": null,
       "ticket": 466,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794686271802,
       "reviewEntry": 1,
       "patchId": "93f80d94e2a8b7cd6bf7e491c554b18ee3421ead",
@@ -4615,9 +4615,15 @@
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1794689408637,
-      "automationDetail": "fetch failed"
+      "s6": {
+        "id": "20261114T205115088-592cad96",
+        "name": "Тесты для задачи #1436 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T205115088-592cad96/report.json",
+        "materialSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
+        "status": "passed",
+        "finishedAt": "2026-11-14T20:52:02.109Z",
+        "failures": []
+      }
     },
     "1437": {
       "issue": 1437,
@@ -5138,9 +5144,9 @@
     "fence": 469,
     "materialSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
     "expectedBase": "e8ced3a76cb20bca2a710a858d55348d7ca471c8",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794688774121,
-    "expiresAt": 1794689769184,
+    "expiresAt": 1794693123181,
     "patchId": "93f80d94e2a8b7cd6bf7e491c554b18ee3421ead"
   },
   "events": {
@@ -5308,6 +5314,34 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "fa1bc9b556f30cf3b1180d0e01d061c68d87c61b"
+      }
+    },
+    "finish:7f894725-b6d7-4836-979e-667341d3ce27:finish:4:s6-complete": {
+      "digest": "d8a96ede97e7f22ef7a88704f8817c0cc4866a8db4954565fed63654cd388ec1",
+      "issue": 1436,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1436,
+        "at": 1794689523181,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T205115088-592cad96",
+          "name": "Тесты для задачи #1436 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T205115088-592cad96/report.json",
+          "materialSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
+          "status": "passed",
+          "finishedAt": "2026-11-14T20:52:02.109Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "До исправления `_routeLiveEditorUpdate` помечал базовый кадр как изменённый только при запросе полного обновления через публичный requestUpdate. После извлечения PlanHost metadata intake вызывает `super.requestUpdate` напрямую. Полный host кадр уже содержит preview, но Escape ошибочно выбирает terminal noChange и оставляет стены preview при сохранённых площадях.\n\nИнвалидация перенесена к фактическому потреблению геометрии в `_renderBody`, после terminal/locale/empty guards. `_beginResizeBaseFrame` меняет только имеющийся флаг при наличии Resize preview. Изолированная live-перерисовка не вызывает этот путь и сохраняет дешёвый cancel; кеши, writer, модель и пользовательские ожидания не меняются. Отключение terminal/caches целиком не применялось. Просьба проверить также прямые host обновления и ранние noChange возвраты. Touch editor: best effort; cancel по-прежнему не сохраняет геометрию.\n\nАдресно: `npm run bundle:sync` (build с типами) и `node demo/smoke_floor_geometry_cache.mjs`: до исправления единственный FAIL ac2cCancelRestoresTheStoredFrame, после OK; AC8 cancel/View builds [0,0,0,0]. Тесты и baselines не правились. Штатный S6 выполняет finish с центральной выборкой и тремя существующими native Resize/cache дополнениями. Новый реальный HA E2E не требуется: изменён лишь frontend кадр, решение записано отдельно в houseplan-e2e. Данные владельца и его HA не затрагивались.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
