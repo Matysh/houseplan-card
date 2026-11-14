@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11863,
+  "revision": 11864,
   "nextTicket": 426,
   "nextFence": 426,
   "tasks": {
@@ -5263,6 +5263,10 @@
       "digest": "8ab7763186bf39eea9525479324caac41d056a83e94d826b6e823b9bfd6aed9d",
       "issue": 1392
     },
+    "github:43548611842:1:completions:message:5f901f2278403fff0d8eea463da952944077dbf6936883120bb56a8c59f1f7a7": {
+      "digest": "0ff84087592aa80bbc2255ee6aebf3a713fb94d6bd243141615b5e73a1709ff6",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5393,7 +5397,8 @@
           "entry": 2,
           "detail": "Открытие сохранённого плана в View: failed; Поведение: test/houseplan-render-lifecycle.test.mjs: failed; Браузер: readonly cold start: failed; Браузер: view recovery: failed",
           "eventId": "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:3:return:return:1392"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237": {
