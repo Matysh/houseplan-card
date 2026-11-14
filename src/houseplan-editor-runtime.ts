@@ -1304,9 +1304,12 @@ private _publishGesture(phase: 'begin' | 'move' | 'end'): void {
 public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
     const gearSpace = this.host._mode === 'plan' ? this.host._spaceModel() : null;
     if (gearSpace) this.roomGear.adoptPlan(gearSpace);
-    const live = !this._gestureBoundary && routeHouseplanEditorUpdate(this.host, name, oldValue);
-    if (!live && this.host._resize.preview) this._resizeBaseFrameStable = false;
-    return live;
+    return !this._gestureBoundary && routeHouseplanEditorUpdate(this.host, name, oldValue);
+  }
+public _beginResizeBaseFrame(): void {
+    // Host intake can schedule Lit directly, bypassing the live-update route.
+    // Once the base scene consumes a preview, cancel must repaint stored geometry.
+    if (this.host._resize.preview) this._resizeBaseFrameStable = false;
   }
 public _commitLiveEditor(deviceId?: string): void {
   this.decorLine.sync();

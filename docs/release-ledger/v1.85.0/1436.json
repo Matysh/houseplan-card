@@ -1,0 +1,1 @@
+{"schema":1,"issue":1436,"baseStable":"v1.85.0","category":"line-fix","rationale":"Repair Resize base-frame ownership after the unreleased PlanHost extraction bypassed live-update routing for HA metadata renders.","summary":{"ru":"Отмена Resize возвращает сохранённый контур после полного кадра HA.","en":"Resize cancellation restores the stored contour after a full HA frame."}}

@@ -12390,6 +12390,7 @@ export class HouseplanCard extends LitElement {
     }
     const space = this._spaceModel();
     if (!space) return nothing;
+    this._editorRuntime?._beginResizeBaseFrame();
     const navigationSpaces = this._headerNavigationSpaces;
     const compactSpaces = this._compactSpaces && !this._kiosk && !!customElements.get('hp-settings-select');
     const vb = space.vb;
