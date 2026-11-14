@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12944,
+  "revision": 12945,
   "nextTicket": 456,
   "nextFence": 456,
   "tasks": {
@@ -5142,6 +5142,10 @@
       "digest": "7e06de6eb2365885131db2b77b38f252d4caac553489bc6beaf2325a502e81db",
       "issue": 1428
     },
+    "finish:bb81c14e-2842-4df5-9d91-930b18ac35f6:finish:3:s6-label": {
+      "digest": "9441224efb4e4b35d0c36a981dc079d9175811388cb14b2b4dffa332302168b0",
+      "issue": 1428
+    },
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8": {
       "digest": "5d222819e81ede9628f329e1f7cf41302954c0c912e32d245b13f830c70da079",
       "issue": 1428,
@@ -5246,7 +5250,8 @@
         "resubmission": false,
         "reviewChanges": "### Цель и результат\nКонтракт show задан владельцем непосредственно в #1428: одна обычная рамка UI Kit для hover/active/Tab; никаких дополнительных колец. Подсветку клавиатуры включает только реальный Tab/Shift+Tab. Escape, Enter/Space и автоматический возврат не включают её, но фактический фокус и клавиатурное управление остаются. Реализация общая для header/navigation/icon/actions, диалогов, context menu и кнопочных контролов. Поля ввода, не-кнопочные listbox-позиции и маркеры плана сохраняют прежние контракты.\n\n### Решение и альтернативы\nСтарая эвристика :focus-visible могла возобновлять подсветку после Esc, а общая hover-рецептура добавляла box-shadow поверх border. Вместо очередного исключения на Escape используется один document-session с независимыми leases Card/HpDialog: настоящий Tab keydown + его нативный результат на keyup, обход открытых shadow roots до кнопки, снятие на blur/другом вводе. Переходы внутри одного shadow host не доставляют focusin до document (подтверждено браузером), поэтому document focusin не принят за достаточный источник. Локальные listeners на всех внутренних формах не размножаются. Автоматический restore отзывает Tab-intent через общий helper; фокус не blur-ится и tabindex не меняется. Последний lease снимает document/window listeners, disposer идемпотентен.\n\nОбщие стили заменяют outline/box-shadow на border-color, включая hover danger и active navigation. У прежде borderless-кнопок зарезервирован прозрачный 1px border, чтобы hover не менял геометрию. Не изменяются палитры/тайминги/файлы личного стенда. Исторический непараметризованный Form Kit API сохранён побайтово; live parameterized branch отделяет фокус кнопок от фокуса полей.\n\n### Риски и места для внимания\nShadow retargeting, несколько карточек/диалогов, повторный Esc/автоматический restore и групповые границы. Узкие pickers имеют собственные shadow styles, поэтому их кнопки тоже обновлены; у input и non-button role=option прежняя навигация и outline остаются. Ужесточение native #1248 намеренно заменяет старое ожидание внешнего outline на фактический одиночный border: это согласованный новый контракт, не ослабление проверки. Снимки/голдены не обновлялись и не принимались.\n\n### Проверки и ограничения\nДо передачи: build/tsc PASS; адресный native #1248 PASS (реальные mouse/Tab/Shift+Tab/Enter/Escape, три редактора, возврат Support, повторные циклы, обе темы, 1440/430). Он измеряет computed border 1px/accent, outline none, box-shadow none и фактический DOM-focus. Первичный отказ поймал недостаточность document focusin; исправлен источник Tab-результата, повторён только адресный smoke. 12/12 unit PASS: исторический Form Kit + три новых поведенческих сценария runtime (shadow traversal, non-Tab/forged input/restore, multi-owner/disposal). После этого только переименован общий модуль по UI-области и сделан идемпотентный disposer; актуальный полный S6 выполняется обычным finish. HA E2E-решение — дополнить существующую Matysh/houseplan-e2e#23, не создавать дублирующий journey. Ни owner HA, ни release не затронуты.\n\n### Адресные исправления после первого S6\nПервый S6 закончился четырьмя отказами (run 20261114T143543756-c77924a1). Три свидетеля требовали прежний внешний outline: test/houseplan-panel, smoke_discard_dialog_polish и smoke_toolbar_stable_width. Они теперь проверяют настоящую Tab-позицию и единственную рамку (outline/box-shadow none, solid border 1px; discard дополнительно точный цвет обеих тем), с ожиданием завершения штатной анимации. Остальные проверки геометрии, безопасности draft, Escape и управления сохранены. Не менялись эталоны.\n\nЧетвёртый отказ — настоящая регрессия: новый зарезервированный border увеличил строку compact actions. Исправлены только вертикальные padding в общем EditorContextMenu, чтобы прежние 32px desktop и 44/46px touch-строки остались прежними; исходные геометрические ожидания smoke_compact_header_polish не менялись. Адресно выполнены: panel unit 5/5 PASS, compact header PASS, discard dialog PASS, toolbar stable width PASS. Повтор общего finish использует прежние применимые результаты и заново выполняет инвалидированные проверки. Это исправления до первого модельного код-ревью, не ответы несуществующему ревьюеру.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
