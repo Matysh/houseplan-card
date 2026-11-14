@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12008,
+  "revision": 12009,
   "nextTicket": 431,
   "nextFence": 430,
   "tasks": {
@@ -3737,14 +3737,14 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "5:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1794628411870,
-        "entry": 5,
-        "requestId": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-        "transitionConfirmed": true
+        "key": "6:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794630635711,
+        "entry": 6,
+        "detail": "Браузер: wall node connected: failed",
+        "eventId": "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:3:return:return:1392"
       },
       "s6": {
         "id": "20261114T032938956-c5a63598",
@@ -3759,7 +3759,8 @@
       "reviewCorrection": {
         "requestId": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
         "at": 1794628411870
-      }
+      },
+      "reason": "checks-failed"
     },
     "1393": {
       "issue": 1393,
@@ -5024,18 +5025,7 @@
   "waiting": [
     1395
   ],
-  "active": {
-    "issue": 1392,
-    "worker": "finish",
-    "token": "429:finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:1:admit",
-    "fence": 429,
-    "materialSha": "74ddc5d8f1e39400c2d39aa0fe0ba938b31c686d",
-    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-    "phase": "testing",
-    "admittedAt": 1794629524466,
-    "expiresAt": 1794630894943,
-    "patchId": "6e32c259d1b6534ee40b0607dab0ce9806bf0e4c"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
       "digest": "3608873f6034b21ea424821722398c159d16857cd52d8f7d9bb5b504dd59972c",
@@ -5809,6 +5799,10 @@
       "digest": "a042b407df576b56a536d0297354caa09b095174c2e4476c2ba2121ccd1595f6",
       "issue": 1392
     },
+    "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:3:return": {
+      "digest": "755e1c38b339c23a881c49fae42c2732dbc70527c284424bb4e33332a1475963",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -6244,6 +6238,26 @@
           "status": "passed",
           "finishedAt": "2026-11-14T04:04:36.776Z",
           "failures": []
+        }
+      }
+    },
+    "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:3:return:return:1392": {
+      "digest": "755e1c38b339c23a881c49fae42c2732dbc70527c284424bb4e33332a1475963",
+      "issue": 1392,
+      "message": {
+        "kind": "return",
+        "issue": 1392,
+        "at": 1794630635711,
+        "entry": 6,
+        "notice": {
+          "key": "6:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794630635711,
+          "entry": 6,
+          "detail": "Браузер: wall node connected: failed",
+          "eventId": "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:3:return:return:1392"
         }
       }
     }
