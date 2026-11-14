@@ -85,7 +85,7 @@ export const readingKitStyles = unsafeCSS(css`
   .hpf-reading-pair.hpf-reading-pair-compact > strong { font-weight:500; }
   .hpf-reading-action { display:block; width:100%; min-height:44px; box-sizing:border-box; border:0; padding:8px 11px 10px; border-radius:0 0 var(--rad-m,11px) var(--rad-m,11px); background:transparent; color:inherit; font:inherit; text-align:start; cursor:pointer; transition:background var(--hpf-paint-duration) var(--hpf-paint-easing); }
   .hpf-reading-action:hover { background:color-mix(in srgb,var(--primary-color) 7%,transparent); }
-  .hpf-reading-action { border:1px solid transparent; outline:none; box-shadow:none; }
+  .hpf-reading-action { border:1px solid transparent; padding:7px 10px 9px; outline:none; box-shadow:none; }
   .hpf-reading-action.hpf-tab-focus:focus { border-color:var(--primary-color); }
   .hpf-reading-pair > strong { font-weight:700; }
   .hpf-reading-pair > strong:not(.hpf-loading-value) { animation:hp-ui-appear var(--hpf-appear-duration) var(--hpf-appear-easing) both; }
