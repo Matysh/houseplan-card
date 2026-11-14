@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12183,
+  "revision": 12184,
   "nextTicket": 435,
   "nextFence": 435,
   "tasks": {
@@ -3699,15 +3699,16 @@
         "tests_backend/test_ha_import_export.py"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794635057465,
-        "entry": 1,
-        "detail": "Критичные данные, сохранение и права: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/geometry-cleanup-842.test.mjs: failed; Поведение: test/header-menu.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/marker-activity-save-865.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/render-device-snapshot.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
-        "eventId": "finish:aba9fde5-1710-4bdf-8752-192f651e747d:finish:3:return:return:1394"
-      }
+        "at": 1794635609096,
+        "entry": 2,
+        "detail": "Браузер: decor creation selection: cancelled; Браузер: decor rotation shift: cancelled; Браузер: device icon picker: Подготовка не завершена успешно; Браузер: dialog picker 998: Подготовка не завершена успешно; Браузер: direct wall geometry: Подготовка не завершена успешно; Браузер: editor draft exit: Подготовка не завершена успешно; Браузер: editor gestures: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: mounted authority: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan host: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall thickness: Подготовка не завершена успешно",
+        "eventId": "finish:2037b335-ba7d-4f56-9106-129e25272687:finish:3:return:return:1394"
+      },
+      "reason": "checks-failed"
     },
     "1395": {
       "issue": 1395,
@@ -4910,18 +4911,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1394,
-    "worker": "finish",
-    "token": "434:finish:2037b335-ba7d-4f56-9106-129e25272687:finish:1:admit",
-    "fence": 434,
-    "materialSha": "eeb6e17ddbdd35d7225a37724bf3cc061ea58fdd",
-    "expectedBase": "3108fed9e23905a23044453c85be4e158dabaadc",
-    "phase": "testing",
-    "admittedAt": 1794635317762,
-    "expiresAt": 1794635856519,
-    "patchId": "67f29887dbd75e25afb4e6c3e87ff55b026a98d6"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
       "digest": "12777e21751a9ed7739ddf636b9b3bee3ba44b51ffb7d393f4c581e85a28643e",
@@ -5027,6 +5017,10 @@
       "digest": "e4b8334308f6d77981e80520cb5ca9f23d5f582629f68a047ca85c41abef4256",
       "issue": 1394
     },
+    "finish:2037b335-ba7d-4f56-9106-129e25272687:finish:3:return": {
+      "digest": "7048489cf47359fdd0603b94792cf1e12a1de3adc45cce64301f5f97ce435da7",
+      "issue": 1394
+    },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
       "digest": "da0a567c831444c6edf8188c369afccc9da568d6542dab5b8e8f2f028cdcb317",
       "issue": 1394,
@@ -5128,6 +5122,26 @@
         "layer": "product",
         "materialSha": "eeb6e17ddbdd35d7225a37724bf3cc061ea58fdd",
         "phase": "sync"
+      }
+    },
+    "finish:2037b335-ba7d-4f56-9106-129e25272687:finish:3:return:return:1394": {
+      "digest": "7048489cf47359fdd0603b94792cf1e12a1de3adc45cce64301f5f97ce435da7",
+      "issue": 1394,
+      "message": {
+        "kind": "return",
+        "issue": 1394,
+        "at": 1794635609096,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794635609096,
+          "entry": 2,
+          "detail": "Браузер: decor creation selection: cancelled; Браузер: decor rotation shift: cancelled; Браузер: device icon picker: Подготовка не завершена успешно; Браузер: dialog picker 998: Подготовка не завершена успешно; Браузер: direct wall geometry: Подготовка не завершена успешно; Браузер: editor draft exit: Подготовка не завершена успешно; Браузер: editor gestures: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: mounted authority: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan host: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall thickness: Подготовка не завершена успешно",
+          "eventId": "finish:2037b335-ba7d-4f56-9106-129e25272687:finish:3:return:return:1394"
+        }
       }
     }
   },
