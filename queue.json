@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11956,
+  "revision": 11957,
   "nextTicket": 429,
   "nextFence": 429,
   "tasks": {
@@ -3847,7 +3847,10 @@
         "tests_backend/test_ha_input_security.py",
         "tests_backend/test_input_archive_security.py",
         "tests_backend/test_input_policy.py"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1794628454320,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     },
     "1396": {
       "issue": 1396,
@@ -5603,6 +5606,10 @@
     },
     "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:2:synchronized": {
       "digest": "0050ca238ee714d514a3734a85d3238497bfbffb0877a2516e97d3b172389c91",
+      "issue": 1395
+    },
+    "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:3:automation-pending": {
+      "digest": "e2740fde7bae11f8cc2891e646592cdc5028c1a8b95ed89c5630af8bb9d578b1",
       "issue": 1395
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
