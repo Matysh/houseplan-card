@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13038,
+  "revision": 13039,
   "nextTicket": 459,
   "nextFence": 459,
   "tasks": {
@@ -4625,7 +4625,7 @@
       "ownerDecision": null,
       "ticket": 458,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794671237430,
       "reviewEntry": 4,
       "patchId": "32250d54733ff9fc23d4ef8de050c83391373d84",
@@ -4672,19 +4672,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261114T152255057-8786e47c",
+        "id": "20261114T154740455-e7d63db6",
         "name": "Тесты для задачи #1428 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T152255057-8786e47c/report.json",
-        "materialSha": "0752afb2ecb554bb58548742b175feafaf346022",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T154740455-e7d63db6/report.json",
+        "materialSha": "54d3917034a0d13ea680b0ea182b086c732e9067",
         "status": "passed",
-        "finishedAt": "2026-11-14T15:33:54.710Z",
+        "finishedAt": "2026-11-14T15:58:05.932Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1428:3:9b7ec7dce6de531dbaea786fa9bc046536d050a1:dc739d2fee27c257627e15739094135a7c306bc0",
-        "at": 1794670733819
-      }
+      "reviewRound": null
     },
     "1429": {
       "issue": 1429,
@@ -5056,9 +5052,9 @@
     "fence": 458,
     "materialSha": "54d3917034a0d13ea680b0ea182b086c732e9067",
     "expectedBase": "e48eb720d353d31ce86848211e8063fc46334bab",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794671243141,
-    "expiresAt": 1794672140639,
+    "expiresAt": 1794675487074,
     "patchId": "32250d54733ff9fc23d4ef8de050c83391373d84"
   },
   "events": {
@@ -5575,6 +5571,34 @@
           "finishedAt": "2026-11-14T15:33:54.710Z",
           "failures": []
         }
+      }
+    },
+    "finish:1001037e-33fe-443b-bc9b-813eef9584c4:finish:3:s6-complete": {
+      "digest": "d7c93788b60c20b30b8f466853cfdd14b825f07defd9640cae0262c697de2433",
+      "issue": 1428,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1428,
+        "at": 1794671887074,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "54d3917034a0d13ea680b0ea182b086c732e9067",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T154740455-e7d63db6",
+          "name": "Тесты для задачи #1428 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T154740455-e7d63db6/report.json",
+          "materialSha": "54d3917034a0d13ea680b0ea182b086c732e9067",
+          "status": "passed",
+          "finishedAt": "2026-11-14T15:58:05.932Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "### Цель и результат\nКонтракт show задан владельцем непосредственно в #1428: одна обычная рамка UI Kit для hover/active/Tab; никаких дополнительных колец. Подсветку клавиатуры включает только реальный Tab/Shift+Tab. Escape, Enter/Space и автоматический возврат не включают её, но фактический фокус и клавиатурное управление остаются. Реализация общая для header/navigation/icon/actions, диалогов, context menu и кнопочных контролов. Поля ввода, не-кнопочные listbox-позиции и маркеры плана сохраняют прежние контракты.\n\nУточнение после ревью: обычная клавиатурная подсветка действительно остаётся Tab-only. В меню/группе отдельно сохраняется существующая семантика **текущего пункта**, явно вызываемая только их навигацией. Это не общее включение фокуса от стрелок/Enter и не возвращение браузерной эвристики; второй контур не появляется.\n\n### Решение и альтернативы\nСтарая эвристика :focus-visible могла возобновлять подсветку после Esc, а общая hover-рецептура добавляла box-shadow поверх border. Вместо очередного исключения на Escape используется один document-session с независимыми leases Card/HpDialog: настоящий Tab keydown + его нативный результат на keyup, обход открытых shadow roots до кнопки, снятие на blur/другом вводе. Переходы внутри одного shadow host не доставляют focusin до document (подтверждено браузером), поэтому document focusin не принят за достаточный источник. Локальные listeners на всех внутренних формах не размножаются. Автоматический restore отзывает Tab-intent через общий helper; фокус не blur-ится и tabindex не меняется. Последний lease снимает document/window listeners, disposer идемпотентен.\n\nОбщие стили заменяют outline/box-shadow на border-color, включая hover danger и active navigation. У прежде borderless-кнопок зарезервирован прозрачный 1px border, чтобы hover не менял геометрию. Не изменяются палитры/тайминги/файлы личного стенда. Исторический непараметризованный Form Kit API сохранён побайтово; live parameterized branch отделяет фокус кнопок от фокуса полей.\n\n### Риски и места для внимания\nShadow retargeting, несколько карточек/диалогов, повторный Esc/автоматический restore и групповые границы. Узкие pickers имеют собственные shadow styles, поэтому их кнопки тоже обновлены; у input и non-button role=option прежняя навигация и outline остаются. Ужесточение native #1248 намеренно заменяет старое ожидание внешнего outline на фактический одиночный border: это согласованный новый контракт, не ослабление проверки. Снимки/голдены не обновлялись и не принимались.\n\n### Проверки и ограничения\nДо передачи: build/tsc PASS; адресный native #1248 PASS (реальные mouse/Tab/Shift+Tab/Enter/Escape, три редактора, возврат Support, повторные циклы, обе темы, 1440/430). Он измеряет computed border 1px/accent, outline none, box-shadow none и фактический DOM-focus. Первичный отказ поймал недостаточность document focusin; исправлен источник Tab-результата, повторён только адресный smoke. 12/12 unit PASS: исторический Form Kit + три новых поведенческих сценария runtime (shadow traversal, non-Tab/forged input/restore, multi-owner/disposal). После этого только переименован общий модуль по UI-области и сделан идемпотентный disposer; актуальный полный S6 выполняется обычным finish. HA E2E-решение — дополнить существующую Matysh/houseplan-e2e#23, не создавать дублирующий journey. Ни owner HA, ни release не затронуты.\n\n### Адресные исправления после первого S6\nПервый S6 закончился четырьмя отказами (run 20261114T143543756-c77924a1). Три свидетеля требовали прежний внешний outline: test/houseplan-panel, smoke_discard_dialog_polish и smoke_toolbar_stable_width. Они теперь проверяют настоящую Tab-позицию и единственную рамку (outline/box-shadow none, solid border 1px; discard дополнительно точный цвет обеих тем), с ожиданием завершения штатной анимации. Остальные проверки геометрии, безопасности draft, Escape и управления сохранены. Не менялись эталоны.\n\nЧетвёртый отказ — настоящая регрессия: новый зарезервированный border увеличил строку compact actions. Исправлены только вертикальные padding в общем EditorContextMenu, чтобы прежние 32px desktop и 44/46px touch-строки остались прежними; исходные геометрические ожидания smoke_compact_header_polish не менялись. Адресно выполнены: panel unit 5/5 PASS, compact header PASS, discard dialog PASS, toolbar stable width PASS. Повтор общего finish использует прежние применимые результаты и заново выполняет инвалидированные проверки. Это исправления до первого модельного код-ревью, не ответы несуществующему ревьюеру.\n\n### Исправления по предыдущему ревью\nОтчёт: https://github.com/Matysh/houseplan-card/actions/runs/43607693825 (changes_requested). Перед ним полный S6 passed: 8540 известных кейсов, run 20261114T144845048-eaa984ed.\n\n- Static owner без Tab-paint → HouseplanSpaceCard теперь берёт/освобождает тот же lease; новый native проходит реальный Tab между независимыми full/static карточками и проверяет focus, маркер и одну рамку. Найденный при этой проверке сопутствующий дефект исправлен: window blur слушается без capture, чтобы element blur при переходе между shadow/card roots не отзывал pending Tab. Настоящий уход из окна по-прежнему сбрасывает состояние.\n- Потеря текущего пункта при стрелках → не расширял глобальный Tab-фокус обычных кнопок. EditorContextMenu и EditorSecondary явно используют focusCompositeButton для своей навигации: при доверенном keyboard intent пункт получает hpf-keyboard-current с той же одной рамкой. Enter/Space/ContextMenu/Shift+F10 могут открыть составное меню с текущим пунктом; стрелки/Home/End переводят его внутри меню/группы. Никакой общий ArrowRight/Enter на обычной кнопке не красит её. При обычном программном возврате этот helper не вызывается. Escape/мышь/blur отзывают состояние. Keyboard listener перенесён на window capture перед собственным window-handler меню, иначе menu.stopImmediatePropagation не дал бы document увидеть событие.\n- Охват остальных host → вручную прочитаны все 43 упоминания kit action/navigation/icon recipes. Рoster независимых owners и вложенных controls записан в DIALOG-UI-KIT; новый source-text gate не вводился. Дополнительное пожелание сохранять обычный Tab-paint при Enter/Space не реализовывалось: это изменило бы явный контракт владельца.\n\nАдресные результаты: build/tsc PASS; unit-сессия 4/4 PASS; расширенный smoke_editor_return_focus_1248 PASS — обе темы, настоящий responsive host (не только узкий viewport), static/full переход, компактное меню Enter→ArrowDown/Up/Home/End→Escape→новый Tab, Shapes ArrowDown→ArrowRight/Home/End→Escape. Он проверяет реальный focus и computed paint; новые классы сами по себе не выданы за визуальную проверку. Фикстура исправлена: fixed 780px demo host действительно ресайзится, тестовый preceding Tab stop не уводит клавиатуру в browser chrome, вход в редактор ожидает окончания штатной анимации. Эталоны не менялись. После адресного PASS добавлен только keyboard-context key в том же покрытом unit-механизме; актуальный материал проходит обычный S6 перед повторным ревью.\n\nСледующий отчёт: https://github.com/Matysh/houseplan-card/actions/runs/43610889422. Предыдущие два блокера подтверждены как устранённые. Один новый блокер — chip remove — исправлен: только live parameterized recipe теперь резервирует 1px transparent border + border-box, оставляя размер 28×28. Исторический default API и его замороженные фикстуры не менялись. Hover использует тот же существующий акцент, без дополнительного кольца.\n\nПо предложению отчёта прочитаны все 33 border:0/none в shared styles/Properties и найденные border-width/style:0/none (таких не найдено). Реальные дополнительные кнопки внутри hpf-form — north dial и radar .iconbtn — также получили transparent 1px/border-box при сохранённых размерах. hpf-cand уже покрыт selectionListCss; hpf-pick имеет рамку. Text links оставлены ink-only (не блокер отчёта); input/checkbox/container/plan-label/oplock/vacuum-history и legacy opening candidate не попадают под снятие outline параметризованной hpf-form. CSS для них не переписан под видом ремонта.\n\nНовый адресный demo/smoke_form_button_focus_1428.mjs использует настоящий marker-диалог и существующую approved synthetic fixture, а не вставляет поддельный chip. Реальным Tab/Shift+Tab проверяет marker-control-remove и marker-attachment-remove в обеих темах: focus, border 1px/accent, outline none, shadow none, наружный размер 28px. Затем проверяет настоящий north dial и неизменность server config после закрытия без сохранения. PASS; build/tsc и 9/9 исторических Form Kit unit PASS. У радара iconbtn исправление проверено по каскаду/размеру CSS, отдельный calibration wizard здесь не запускался. Новый native обнаруживается каталогом и явно добавлен к areaTests; неизвестные количества cases не объявляются известными. Baselines не менялись. S6 перед следующим ревью выполняется штатным finish.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
