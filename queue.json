@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13432,
+  "revision": 13433,
   "nextTicket": 471,
   "nextFence": 467,
   "tasks": {
@@ -4636,7 +4636,7 @@
       "ownerDecision": null,
       "ticket": 464,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794685612407,
       "reviewEntry": 1,
       "patchId": "75a9173f13c5480a1ce744161533c327f5d0ecfe",
@@ -4646,7 +4646,16 @@
         "docs/release-ledger/v1.85.0/1435.json",
         "src/ha-plan-host.ts",
         "test/plan-host.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261114T201227736-029ae795",
+        "name": "Тесты для задачи #1435 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T201227736-029ae795/report.json",
+        "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
+        "status": "passed",
+        "finishedAt": "2026-11-14T20:22:25.405Z",
+        "failures": []
+      }
     },
     "1436": {
       "issue": 1436,
@@ -5113,9 +5122,9 @@
     "fence": 466,
     "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
     "expectedBase": "5bd501fa75658b97b4d18608dec89984cfba21a6",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794687102544,
-    "expiresAt": 1794687984410,
+    "expiresAt": 1794691346776,
     "patchId": "75a9173f13c5480a1ce744161533c327f5d0ecfe"
   },
   "events": {
@@ -5379,6 +5388,34 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "fb419868bdc49062ec69697d173508ff4a2712ff"
+      }
+    },
+    "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450:finish:2:s6-complete": {
+      "digest": "b1f816bd3e5dcdf9314341a69149503cc6b7700ef488d58e7ead5a3c3c44c73e",
+      "issue": 1435,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1435,
+        "at": 1794687746776,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T201227736-029ae795",
+          "name": "Тесты для задачи #1435 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T201227736-029ae795/report.json",
+          "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
+          "status": "passed",
+          "finishedAt": "2026-11-14T20:22:25.405Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
