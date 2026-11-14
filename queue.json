@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11897,
+  "revision": 11898,
   "nextTicket": 426,
   "nextFence": 426,
   "tasks": {
@@ -3735,15 +3735,16 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
-        "status": "delivered",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794624097229,
-        "entry": 2,
-        "detail": "Открытие сохранённого плана в View: failed; Поведение: test/houseplan-render-lifecycle.test.mjs: failed; Браузер: readonly cold start: failed; Браузер: view recovery: failed",
-        "eventId": "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:3:return:return:1392"
-      }
+        "at": 1794625648572,
+        "entry": 3,
+        "detail": "Поведение: test/route-kiosk.test.mjs: failed; Браузер: opening light transparent: failed; Браузер: plan host: failed; Браузер: wall preview handoff 1247: failed; Браузер: warm geometry camera: failed",
+        "eventId": "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:3:return:return:1392"
+      },
+      "reason": "checks-failed"
     },
     "1393": {
       "issue": 1393,
@@ -4941,18 +4942,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1392,
-    "worker": "finish",
-    "token": "425:finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:1:admit",
-    "fence": 425,
-    "materialSha": "db6a5b6879c2dbb02b3bbe37db2dd5dd54202d14",
-    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-    "phase": "testing",
-    "admittedAt": 1794624553776,
-    "expiresAt": 1794625945900,
-    "patchId": "daec330f169c4acc56f317e45a7a2043bd520e6f"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
       "digest": "3608873f6034b21ea424821722398c159d16857cd52d8f7d9bb5b504dd59972c",
@@ -5326,6 +5316,10 @@
       "digest": "09b363f51d278044a51069fbfb721a3d0cbc22e5d25ca66319b1350db22f2453",
       "issue": 1392
     },
+    "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:3:return": {
+      "digest": "0e31ca8525aa6067645c1495518a930ea1a209749288b4c3108e80432eceab9c",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5487,6 +5481,26 @@
         "materialSha": "db6a5b6879c2dbb02b3bbe37db2dd5dd54202d14",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:3:return:return:1392": {
+      "digest": "0e31ca8525aa6067645c1495518a930ea1a209749288b4c3108e80432eceab9c",
+      "issue": 1392,
+      "message": {
+        "kind": "return",
+        "issue": 1392,
+        "at": 1794625648572,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794625648572,
+          "entry": 3,
+          "detail": "Поведение: test/route-kiosk.test.mjs: failed; Браузер: opening light transparent: failed; Браузер: plan host: failed; Браузер: wall preview handoff 1247: failed; Браузер: warm geometry camera: failed",
+          "eventId": "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:3:return:return:1392"
+        }
       }
     }
   },
