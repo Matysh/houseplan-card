@@ -104,11 +104,13 @@ test('страницы, созданные вне launch(), подписаны �
     + ' предмет проверки #353) и выносит вердикт через finish()');
 
   // Свои подписки допускаются только поверх общего гарда: страница обязана
-  // приходить из launch()/launchColdView(), иначе счётчик гарда её не видит.
+  // приходить из launch()/launchColdView()/launchPanelCold(), иначе счётчик гарда её не видит.
+  // Panel uses the same launchInternal owner, not an independent browser.
+  assert.match(read('demo/serve.mjs'), /export const launchPanelCold =[\s\S]*?=> launchInternal\(/);
   for (const name of smokes) {
     const text = readFileSync(demo + name, 'utf8');
     if (!/\.on\('pageerror'/.test(text) || name === 'smoke_entry_stale.mjs') continue;
-    assert.match(text, /launch(ColdView)?[,}]|launch(ColdView)?\(/,
+    assert.match(text, /launch(ColdView|PanelCold)?[,}]|launch(ColdView|PanelCold)?\(/,
       `${name}: своя подписка на pageerror поверх страницы, которую гард не знает`);
   }
 });
