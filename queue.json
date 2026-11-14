@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12584,
-  "nextTicket": 445,
+  "revision": 12585,
+  "nextTicket": 446,
   "nextFence": 445,
   "tasks": {
     "1024": {
@@ -4491,14 +4491,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1421-door-leaf-glow",
-      "materialSha": "6cd0d49b4e5d1c76914ad75853245f0bce30c3b1",
+      "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 444,
-      "queued": false,
+      "ticket": 445,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794652335784,
-      "reviewEntry": 1,
+      "readyAt": 1794653290073,
+      "reviewEntry": 2,
       "patchId": "de71fbfbf1766ed73af620c90731aa1c1d4444d9",
       "changedFiles": [
         "demo/fixtures/closed-door-light.mjs",
@@ -4519,7 +4519,6 @@
         "src/opening-optics.ts",
         "test/closed-door-light.test.mjs"
       ],
-      "reason": "executor-admission-expired",
       "notice": {
         "key": "1:executor-admission-expired",
         "reason": "executor-admission-expired",
@@ -4942,7 +4941,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1421
+  ],
   "active": null,
   "events": {
     "github:43585265383:1:label:spec-request": {
@@ -5161,6 +5162,19 @@
           "entry": 1,
           "eventId": "finish:1f0a2ac9-bb03-4b19-9394-d25f28bd3409:finish:1:expire:return:1421"
         }
+      }
+    },
+    "finish:a6aae011-a44b-4170-bd80-5f358354c234": {
+      "digest": "c867d81b2e959c5023350ca54bf26bd868150583496858745f3f4bad79ca88c8",
+      "issue": 1421,
+      "message": {
+        "kind": "queued",
+        "issue": 1421,
+        "at": 1794653290073,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f"
       }
     }
   },
