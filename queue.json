@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14145,
+  "revision": 14146,
   "nextTicket": 482,
   "nextFence": 482,
   "tasks": {
@@ -4819,7 +4819,24 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794698420808,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "22376e34c75b7d923924bd79c52ff7a8b9685d87",
+      "changedFiles": [
+        "demo/fixtures/closed-door-light.mjs",
+        "demo/golden/closed-door-light.mjs",
+        "demo/smoke_closed_door_glow.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/ISOMETRIC.md",
+        "docs/LIGHT.md",
+        "docs/release-ledger/v1.85.0/1449.json",
+        "src/closed-door-light.ts",
+        "src/glow-scene.ts",
+        "src/houseplan-card.ts",
+        "src/iso-openings.ts",
+        "src/opening-symbol-placement.ts",
+        "test/closed-door-light.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5154,12 +5171,17 @@
     "token": "481:finish:5ca48eb6-3be0-4967-a5dc-be32ebf72f63:finish:1:admit",
     "fence": 481,
     "materialSha": "58716f60ba507550a24f7286a1b00e92e6c8d6f4",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
+    "phase": "testing",
     "admittedAt": 1794698424667,
-    "expiresAt": 1794698724667
+    "expiresAt": 1794698731809,
+    "patchId": "22376e34c75b7d923924bd79c52ff7a8b9685d87"
   },
   "events": {
+    "finish:5ca48eb6-3be0-4967-a5dc-be32ebf72f63:finish:2:synchronized": {
+      "digest": "af02d7a762aafe9a2f32e57d15f5e28455f8d9d20119b6fb2363253f8e2ea388",
+      "issue": 1449
+    },
     "finish:5ca48eb6-3be0-4967-a5dc-be32ebf72f63": {
       "digest": "063e9e4123b0af05e8814e5855c58458229034a4643a70cddc0477e62b486382",
       "issue": 1449,
