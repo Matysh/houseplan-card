@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12912,
+  "revision": 12913,
   "nextTicket": 455,
   "nextFence": 455,
   "tasks": {
@@ -4620,14 +4620,39 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1428-single-button-focus",
-      "materialSha": "e3f0365bd25053a4ef4a8fe5fdc82d4e16e53428",
+      "materialSha": "f12cd9bb4846f752db2bee337aefec6ace2aa486",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 454,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794666925147,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "7098717f813d2cfe85dc986b2c2b472365e01281",
+      "changedFiles": [
+        "demo/smoke_editor_return_focus_1248.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DIALOG-UI-KIT.md",
+        "docs/release-ledger/v1.85.0/1428.json",
+        "src/dialog-return-focus.ts",
+        "src/editor-context-menu.styles.ts",
+        "src/editors/hp-icon-picker.ts",
+        "src/houseplan-card.ts",
+        "src/hp-color-opacity.ts",
+        "src/hp-dialog.ts",
+        "src/hp-help.ts",
+        "src/hp-settings-select.ts",
+        "src/styles/form-kit.styles.ts",
+        "src/styles/icon-action.styles.ts",
+        "src/styles/navigation.styles.ts",
+        "src/styles/panel-header.styles.ts",
+        "src/styles/reading-kit.styles.ts",
+        "src/styles/selection-list.styles.ts",
+        "src/styles/settings-action.styles.ts",
+        "src/ui-button-tab-focus.ts",
+        "test/ui-button-tab-focus.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4975,13 +5000,18 @@
     "worker": "finish",
     "token": "454:finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:1:admit",
     "fence": 454,
-    "materialSha": "e3f0365bd25053a4ef4a8fe5fdc82d4e16e53428",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "f12cd9bb4846f752db2bee337aefec6ace2aa486",
+    "expectedBase": "dc739d2fee27c257627e15739094135a7c306bc0",
+    "phase": "testing",
     "admittedAt": 1794666928598,
-    "expiresAt": 1794667228598
+    "expiresAt": 1794667237707,
+    "patchId": "7098717f813d2cfe85dc986b2c2b472365e01281"
   },
   "events": {
+    "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:2:synchronized": {
+      "digest": "e7c6a0c1d7c1710d3380dec51092169ac18de33eaa01ddc2125d9edc7819ee5f",
+      "issue": 1428
+    },
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8": {
       "digest": "5d222819e81ede9628f329e1f7cf41302954c0c912e32d245b13f830c70da079",
       "issue": 1428,
