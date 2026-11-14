@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12481,
-  "nextTicket": 443,
+  "revision": 12482,
+  "nextTicket": 444,
   "nextFence": 443,
   "tasks": {
     "1024": {
@@ -4549,6 +4549,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1426": {
+      "issue": 1426,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1426-empty-backup-guard",
+      "materialSha": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 443,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794650185555,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4834,9 +4848,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1426
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:3df8fd70-2db1-46bb-ac37-4f2cee7c63fc": {
+      "digest": "19931503b58ff8a2aee05f68abc68b868a3be5c2b76af3ee12a6f8c81342e644",
+      "issue": 1426,
+      "message": {
+        "kind": "queued",
+        "issue": 1426,
+        "at": 1794650185555,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "9ed0f88801ada63035ccafa464683960da8104e9",
     "status": "delivered",
