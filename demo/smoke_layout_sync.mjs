@@ -30,14 +30,12 @@ const res = await page.evaluate(async () => {
     } },
   };
   c.hass = hass;
-  c._serverStorage = true;
-  c._layout = JSON.parse(JSON.stringify(layout));
-  c._layoutRev = rev;
-  c._unsubLayout = await hass.connection.subscribeEvents(
-    (e) => c._onLayoutEvent(Number(e?.data?.rev ?? -1)),
-    'houseplan_layout_updated',
-  );
-  out.subscribed = subs.length === 1;
+  await c.updateComplete;
+  for (let attempt=0;attempt<100 && (!c._loadOk || c._liveSyncAttempt);++attempt)
+    await new Promise(resolve=>setTimeout(resolve,20));
+  // Exercise the product's owned subscription, not a second hand-installed
+  // callback whose count races the normal host connection lifecycle.
+  out.subscribed = subs.length === 1 && typeof c._unsubLayout === 'function';
 
   // 1) чужая карточка подвинула иконку — наша обязана подхватить без перезагрузки
   layout = { ...layout, dev_a: { x: 77, y: 88 } }; rev += 1;

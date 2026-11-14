@@ -152,7 +152,7 @@ out.backendAcceptsFarPayload = (() => {
     const code = [
       'import json,sys',
       'sys.path.insert(0, "custom_components/houseplan")',
-      'import validation as v',
+      'from core import validation as v',
       `d=json.load(open(${JSON.stringify(f)}))`,
       'v.CONFIG_SCHEMA(d["config"]); v.LAYOUT_SCHEMA(d["layout"])',
       'print("VALID")',
