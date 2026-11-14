@@ -28,7 +28,7 @@ in the browser, link them to Home Assistant areas, and the devices take their
 places in the right rooms on their own. All that is left is to nudge the icons
 to where things really are.
 
-<img width="640" alt="A home plan with lights switching on room by room" src="https://github.com/user-attachments/assets/444cac3a-1e93-4047-b2c2-213649b3aa6d" />
+<img width="640" alt="A home plan with lights switching on room by room" src="https://github.com/user-attachments/assets/4b7359d8-6702-43f8-a339-8f4e568d1713" />
 
 [▶ Watch the video on YouTube](https://www.youtube.com/watch?v=DAG92u8xZKY)
 
