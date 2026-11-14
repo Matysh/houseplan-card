@@ -636,7 +636,7 @@ export class HouseplanCard extends LitElement {
     for (const [name, previous] of changed) if (!this._hiddenRenderChanges.has(name))
       this._hiddenRenderChanges.set(name, previous);
     // Authority and transport intake are never contingent on a painted frame.
-    this._alerts?.reconcile();
+    this._consumePlanEnvironment(); this._alerts?.reconcile();
     return false;
   }
 
@@ -944,6 +944,8 @@ export class HouseplanCard extends LitElement {
   private _driverRevision = -1;
   private _driverAuthority?: object;
   private _previousEnvironment?: HostEnvironment;
+  private _pendingPlanEnvironment?: HostEnvironment;
+  private _consumedPlanEnvironment?: HostEnvironment;
   /** Optional runtime injection. The normal HA/Lovelace setConfig API is unchanged. */
   public get planHost(): PlanHost {
     return this._injectedPlanHost ?? (this._haPlanHost ??= new HaPlanHost(this.hass));
@@ -956,6 +958,25 @@ export class HouseplanCard extends LitElement {
   }
   public get _presentation(): HostPresentationContext { return this.planHost.environment.presentation; }
   private get planEnvironmentRevision(): number { return this.planHost.environmentRevision; }
+
+  private _environmentRenderSnapshot(value: HostEnvironment): HassRenderSnapshot {
+    return { states: value.states, entities: value.registry.entities, devices: value.registry.devices,
+      areas: value.registry.areas, themes: value.presentation.themes, config: value.units,
+      language: value.presentation.language, locale: value.presentation.locale ? { ...value.presentation.locale } : undefined };
+  }
+
+  /** Visible model work follows same-turn config/layout mutations, as in Lit's
+   * original ordering. Authority/read intent was already consumed synchronously. */
+  private _consumePlanEnvironment(): void {
+    const current = this._pendingPlanEnvironment;
+    if (!current) return;
+    this._pendingPlanEnvironment = undefined;
+    const before = this._consumedPlanEnvironment;
+    this._consumedPlanEnvironment = current;
+    const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+    this._renderLife.observe(before && this._environmentRenderSnapshot(before), this._environmentRenderSnapshot(current),
+      snapshot ? { entityIds: snapshot.entityIds } : null, () => intakeHass(this));
+  }
 
   private _connectPlanHost(): void {
     const host = this.planHost;
@@ -974,6 +995,7 @@ export class HouseplanCard extends LitElement {
     this._driverRevision = host.environmentRevision;
     const before = this._previousEnvironment;
     this._previousEnvironment = environment;
+    this._pendingPlanEnvironment = environment;
     const revoked = this._configWriteContext.observe(host);
     const authorityChanged = !!this._driverAuthority && this._driverAuthority !== host.authorityKey;
     this._driverAuthority = host.authorityKey;
@@ -1005,23 +1027,21 @@ export class HouseplanCard extends LitElement {
     const waiting = this._read.busy || this._read.pending;
     if (this._read.observe(context)) { this._loading = false; if (waiting) this._read.defer(); }
     if (authorityChanged) this._read.defer();
+    // Replacing permission-fenced subscriptions must also close the response /
+    // resubscribe gap. Keep demand if the accepting paired read is still busy.
+    if (revoked && !authorityChanged) this._read.defer();
     if (before && before.permissions.admin !== environment.permissions.admin) this._read.defer();
     if (!this.isConnected) return;
     if (before?.connected && !environment.connected) this._onConnLost();
     else if (before && !before.connected && environment.connected) this._onConnReady();
-    this._renderLife.intake(environment, () => intakeHass(this));
+    if (this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) this._consumePlanEnvironment();
     if (revoked && this._loadOk && environment.connected) this._ensureLiveSyncSubscriptions();
     if (this._read.pending && environment.connected) void this._loadFromServer();
     if (!revoked && before && this._liveRt && before.timeZone === environment.timeZone
         && before.connected === environment.connected && before.smartHomeRevision === environment.smartHomeRevision) {
-      const frame = (value: HostEnvironment): HassRenderSnapshot => ({
-        states: value.states, entities: value.registry.entities, devices: value.registry.devices,
-        areas: value.registry.areas, themes: value.presentation.themes, config: value.units,
-        language: value.presentation.language, locale: value.presentation.locale ? { ...value.presentation.locale } : undefined,
-      });
       const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
-      if (!this._liveRt.environment(frame(before), frame(environment),
-        snapshot ? { entityIds: snapshot.entityIds } : null, () => undefined)
+      if (!this._liveRt.environment(this._environmentRenderSnapshot(before), this._environmentRenderSnapshot(environment),
+        snapshot ? { entityIds: snapshot.entityIds } : null, () => this._consumePlanEnvironment())
           && !this._summary?.observeHassComposition()) return;
     }
     super.requestUpdate('planEnvironmentRevision', previousRevision);
@@ -4304,7 +4324,9 @@ export class HouseplanCard extends LitElement {
   }
 
   public setConfig(config: CardConfig): void {
+    const pendingConfigRead = this._read.pending || this._read.busy;
     this._read.invalidate(); this._loading = false;
+    if (pendingConfigRead) this._read.defer();
     this._configReloadAuthority.invalidateLifecycle();
     const previousConfig = this._config;
     const previousFixed = !!previousConfig
@@ -4360,6 +4382,9 @@ export class HouseplanCard extends LitElement {
       this._warmLongReturn = false;
     }
     this._syncVersionRecovery();
+    if (pendingConfigRead) queueMicrotask(() => {
+      if (this.isConnected && this._read.pending) void this._loadFromServer();
+    });
   }
 
   /**
@@ -5321,6 +5346,7 @@ export class HouseplanCard extends LitElement {
       this._renderLife.invalidate();
     }
     if (this.panelHost && this._routeKiosk.enabled) this._adoptInitialSpace(this._model, this._loadOk);
+    this._consumePlanEnvironment();
     this._syncEmptySpaceState();
     // #417: losing the only renderable space while a decision is pending must
     // settle it before render() clears hp-confirm with `nothing`.
@@ -5606,6 +5632,12 @@ export class HouseplanCard extends LitElement {
       this._maybeRebuildDevices();
     };
     try {
+      // Establish the event listener before sampling a foreign/new authority.
+      // Otherwise a server write between config/get and subscription is lost.
+      // Best-effort subscription failure still permits the mandatory read.
+      this._ensureLiveSyncSubscriptions();
+      await this._liveSyncAttempt;
+      if (!isCurrent()) return;
       const adopted = await this._layoutIO.reconcile(() => Promise.all([
         this._getAuthoritativeConfig(portHost, isCurrent),
         portHost.request<import('./config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' }),
@@ -5670,7 +5702,15 @@ export class HouseplanCard extends LitElement {
       const ownsTail = devicesRebuilt || isCurrent();
       if (!this._read.finish(loadClaim)) return;
       this._loading = false;
-      if (!ownsTail) return;
+      if (!ownsTail) {
+        // A config-only refresh may supersede the paired bootstrap read. Its
+        // success is not a completed config+layout handshake; retry that demand
+        // without waiting for another HA state tick (#1392).
+        if (!this._loadOk && this.isConnected && this.planHost.environment.connected) {
+          this._read.defer(); this._scheduleLoadRetry(true);
+        }
+        return;
+      }
       // Readiness belongs to the candidate attempt, including a bounded asset
       // failure. Leaving it false on an early return stranded the controller
       // before its own two-second barrier could ever start.
@@ -5679,7 +5719,7 @@ export class HouseplanCard extends LitElement {
       this.requestUpdate();
       // A second *real* overlapping write re-arms one read after settlement.
       // The finished transport claim still fences authority/route/detach here.
-      if (repeatLayoutRead) queueMicrotask(() => {
+      if (repeatLayoutRead || this._read.pending) queueMicrotask(() => {
         if (this.isConnected && this._read.isCurrent(loadClaim)) void this._loadFromServer();
       });
     }
@@ -5883,9 +5923,20 @@ export class HouseplanCard extends LitElement {
     return projectEcovacsSources(this, { ...projected, services: this.hass.services,
       zigbeeLqi: directSignalReadings(this.hass), config: this.hass.config }, this.hass);
   }
+  private _haSignalEnvironmentPending = false;
   private _publishHaSignalEnvironment(): void {
-    if (!this._injectedPlanHost && this._haPlanHost) this._haPlanHost.update(this.hass);
-    else this._hassSequence++;
+    // A radio cache can notify while retiring its old HA identity, before
+    // publishing the replacement cache. Re-entering projection synchronously
+    // would retire it again. Coalesce that notification after the cache settles.
+    if (this._haSignalEnvironmentPending) return;
+    this._haSignalEnvironmentPending = true;
+    queueMicrotask(() => {
+      this._haSignalEnvironmentPending = false;
+      if (!this.isConnected) return;
+      if (!this._injectedPlanHost && this._haPlanHost) this._haPlanHost.update(this.hass);
+      else this._hassSequence++;
+      this.requestUpdate();
+    });
   }
 
   private _captureRenderDeviceSnapshot(): void {
@@ -8906,7 +8957,7 @@ export class HouseplanCard extends LitElement {
   /** Human-readable length of a segment (render units) using the HA unit system. */
   private _fmtLen(a: number[], b: number[]): string {
     const cm = segmentCm(a, b, this._gridPitch, this._cellCm);
-    return formatLength(cm, this.hass?.config?.unit_system?.length === 'mi');
+    return formatLength(cm, this.planHost.environment.units.length === 'mi');
   }
 
   private get _curSpaceCfg(): any {
@@ -11748,7 +11799,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private get _imperial(): boolean {
-    return this.hass?.config?.unit_system?.length === 'mi';
+    return this.planHost.environment.units.length === 'mi';
   }
 
   private get _glowRadiusPlaceholder(): string {
@@ -14091,7 +14142,7 @@ export class HouseplanCard extends LitElement {
 
   /** Exact opening references ignore marker tombstones but keep HA status. */
   private _openingEntityAvailable(eid: string | null | undefined): boolean {
-    return openingEntityAvailable(this.hass, eid, this._haRegistry);
+    return openingEntityAvailable(this._planHass, eid, this._haRegistry);
   }
 
   /** Opening availability from the same immutable projection as the frame. */

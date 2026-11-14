@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { haPlanHost } from '../test-build/ha-plan-host.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { optimizePlans } from '../test-build/plan-optimizer.js';
@@ -19,7 +20,7 @@ const render = result => {
   const dialog = new OptimizePlansDialog({ dialog: () => ({ ...result,
     preflight: { ok: true, failures: [], fingerprint: contentFingerprint(result.config) }, cm: 0, where: '' }),
     t: (key, vars) => key + (vars ? JSON.stringify(vars) : ''), config: () => result.config,
-    hass: () => ({}), canWrite: () => true, ledNote: () => '', integrationVersion: () => 'test', cardVersion: () => 'test',
+    planHost: () => haPlanHost({}), canWrite: () => true, ledNote: () => '', integrationVersion: () => 'test', cardVersion: () => 'test',
   }, { optimize: optimizePlans, sourceMatches: () => true });
   return flatten(dialog.render());
 };

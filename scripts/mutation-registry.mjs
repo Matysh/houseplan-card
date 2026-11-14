@@ -1835,7 +1835,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_info_card_context.mjs',
     because: '#849 AC2: a retained mounted confirmation listener delivered in the same public foreign-HA frame must not dispatch into the new connection/user authority. Pure context units cannot prove the card captures and consumes that authority before Lit clears the old surface; accepted-B and fresh-native controls stay live.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: "      if (this._mode !== 'view' || !this.isConnected || !this._configWriteContext.current(authority, this.hass)",
+      find: "      if (this._mode !== 'view' || !this.isConnected || !this._configWriteContext.current(authority, this.planHost)",
       replace: "      if (this._mode !== 'view' || !this.isConnected" }],
   },
   {
@@ -2017,8 +2017,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC6: current A events must work after accepted B-to-A and a coalesced A-to-B-to-A plus a real next HA frame; pure identity checks cannot prove live resubscription.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '        this._liveSyncConnection = null;',
-      replace: '        // retain the retired subscription epoch' }],
+      find: '    this._unsubCfg?.(); this._unsubCfg = null;',
+      replace: '    this._unsubCfg?.(); // retain the retired subscription pointer' }],
   },
   {
     id: 'config-old-subscription-interrupts-new-paired-load',
@@ -2397,8 +2397,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC6: fast B mandatory reads and its own serialized save must not wait for the old A transport in either production writer.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '        this._writeChain = Promise.resolve(); this._writesPending = 0;',
-      replace: '        // retain foreign queue and pending count' }],
+      find: '      this._writeChain = Promise.resolve(); this._writesPending = 0;',
+      replace: '      // retain foreign queue and pending count' }],
   },
   {
     id: 'config-foreign-reply-decrements-new-context-count',
@@ -3584,8 +3584,8 @@ const MUTANT_DEFINITIONS = [
       + 'a long return before HA exists must defer exactly one real config/layout read without a page error.',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    if (typeof this.hass?.callWS !== 'function') { this._read.defer(); return; }",
-      replace: "    if (typeof this.hass?.callWS !== 'function') { return; }",
+      find: "    if (!this.planHost.environment.connected) { this._read.defer(); return; }",
+      replace: "    if (!this.planHost.environment.connected) { return; }",
     }],
   },
   ...['full', 'space'].map((kind) => ({
@@ -3606,8 +3606,8 @@ const MUTANT_DEFINITIONS = [
     because: '#1054 AC1: a foreign HA retires the accepted document off-DOM; the public reconnect must restore the current config, layers and live signal without another HA tick, including coalesced ABA.',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      if (authorityChanged) this._read.defer();',
-      replace: '      if (false) this._read.defer();',
+      find: '    if (authorityChanged) this._read.defer();',
+      replace: '    if (false) this._read.defer();',
     }],
   },
   {
@@ -3615,24 +3615,24 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_mounted_authority.mjs',
     because: '#1056 AC1/AC2: ordinary public reused-object connection/user inputs must perform current operational intake once, not only start a pending pair without registry/hook intake.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '        if (forceHass) this._renderLife.retireHass();',
-      replace: '        if (false) this._renderLife.retireHass();' }],
+      find: '    this._pendingPlanEnvironment = environment;',
+      replace: '    if (this._consumedPlanEnvironment?.states !== environment.states) this._pendingPlanEnvironment = environment;' }],
   },
   {
     id: 'mounted-authority-same-object-lit-dedup-1056',
     guard: 'node demo/smoke_mounted_authority.mjs',
     because: '#1056 AC1: a mounted reused HA object needs its existing Lit hass property update after known authority retirement, without an extra tick.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '    super.requestUpdate(name, oldValue, forceHass ? { ...options, hasChanged: () => true } : options);',
-      replace: '    super.requestUpdate(name, oldValue, options);' }],
+      find: "    super.requestUpdate('planEnvironmentRevision', previousRevision);",
+      replace: "    super.requestUpdate('planEnvironmentRevision', host.environmentRevision);" }],
   },
   {
     id: 'mounted-authority-intake-before-coalescing-1056',
     guard: 'node demo/smoke_mounted_authority.mjs',
     because: '#1056 AC2: same-turn A→B→A must defer current intake to Lit and never start an intermediate B mandatory read.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: "    if (name === 'hass' && this.hass && this._liveRt && !forceHass) {",
-      replace: "    if (name === 'hass' && this.hass && this._liveRt) {" }],
+      find: '    this._pendingPlanEnvironment = environment;',
+      replace: '    this._pendingPlanEnvironment = environment; this._consumePlanEnvironment();' }],
   },
   {
     id: 'full-reattach-pending-authority-not-started-1054',
@@ -6009,8 +6009,8 @@ const MUTANT_DEFINITIONS = [
       + 'capability would expose Add space and load onboarding for a household viewer (#486 AC10)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    if (this._serverCanWrite !== null) return this._serverCanWrite;',
-      replace: '    if (this._serverCanWrite !== null) return true; // mutant: read-only becomes writer',
+      find: '    return this.planHost.environment.permissions.write && this._serverCanWrite !== false;',
+      replace: '    return true; // mutant: read-only becomes writer',
     }],
   },
   {
@@ -6305,8 +6305,8 @@ const MUTANT_DEFINITIONS = [
       + 'a full Lit render; the production smoke owns this card/runtime wiring (#451)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      if (!render && !this._summary?.observeHassComposition()) return;',
-      replace: '      if (false && !render && !this._summary?.observeHassComposition()) return;',
+      find: '          && !this._summary?.observeHassComposition()) return;',
+      replace: '          && false && !this._summary?.observeHassComposition()) return;',
     }],
   },
   {
@@ -7483,7 +7483,7 @@ const MUTANT_DEFINITIONS = [
       + 'of the existing runtime indicator — a new interface state the contract rules out (#627 AC4)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      if (module.ONBOARDING_RUNTIME_FINGERPRINT === ENTRY_BUILD_FINGERPRINT) await module.ONBOARDING_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)); // #627\n',
+      find: '      if (module.ONBOARDING_RUNTIME_FINGERPRINT === ENTRY_BUILD_FINGERPRINT) await module.ONBOARDING_LANGUAGE_RUNTIME.ensure(langOf(this._presentation, this._config?.language)); // #627\n',
       replace: '',
     }],
   },
@@ -7640,10 +7640,10 @@ const MUTANT_DEFINITIONS = [
       file: 'src/houseplan-card.ts',
       find: "  /** Synchronize host/runtime language state and return the current branch. */\n"
         + '  private _syncDangerConfirmLocaleGate(): LanguageRenderGate {\n'
-        + "    if (!this._config || !this.hass) return 'ready';\n"
+        + "    if (!this._config || !this.planHost.environment.ready) return 'ready';\n"
         + '    return languageRenderGate( // #627: + dictionaries of the surfaces loaded on THIS host\n'
         + '      this, this._editorRuntime?.languageRuntime ?? this._onboardingRuntime?.languageRuntime ?? LANGUAGE_RUNTIME,\n'
-        + '      langOf(this.hass, this._config.language),\n'
+        + '      langOf(this._presentation, this._config.language),\n'
         + '    );\n'
         + '  }',
       replace: "  private _dangerConfirmLocaleGate: LanguageRenderGate = 'ready';\n"
@@ -11173,7 +11173,9 @@ const MUTANT_DEFINITIONS = [
     because: '#875: the production lazy runtime must not paint cancelled preview/error/Apply '
       + 'responses into a replacement hp-dialog; this crosses File input, Lit/custom-element and lazy lifecycle.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: 'return this.host.isConnected && this.host._backupImportIntent.owns(request);',
+      find: 'return this.host.isConnected && this.host._backupImportIntent.owns(request)\n'
+        + '      && (request !== this._backupImportRequest || !!owner && owner.key === port.authorityKey\n'
+        + '        && owner.revision === port.writeAuthorityRevision);',
       replace: 'return this.host.isConnected && request > 0;' }],
   },
   {
@@ -15696,8 +15698,8 @@ const MUTANT_DEFINITIONS = [
       + 'HA entity is added, removed or renamed (#493 AC3)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      if (!render && !this._summary?.observeHassComposition()) return;',
-      replace: '      if (!render) return; // mutant: the open picker never sees unplaced hot-adds',
+      find: '          && !this._summary?.observeHassComposition()) return;',
+      replace: '          ) return; // mutant: the open picker never sees unplaced hot-adds',
     }],
   },
   {
@@ -16367,8 +16369,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/layout-write-reload.test.mjs',
     because: '#902 r1 M1: after two real write/read overlaps, the actual card must re-arm exactly one full load and retain both accepted commands.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '      if (repeatLayoutRead) queueMicrotask(() => {',
-      replace: '      if (Boolean(false) && repeatLayoutRead) queueMicrotask(() => {' }],
+      find: '      if (repeatLayoutRead || this._read.pending) queueMicrotask(() => {',
+      replace: '      if (this._read.pending) queueMicrotask(() => {' }],
   },
   {
     id: 'config-adoption-echo-clears-history',
@@ -16434,9 +16436,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/config-adoption.ts',
       find: '  if (structuralChanged) {\n'
-        + '    const assetReady = await host._signer.prepareImage(host.hass, host._candidateBackdrop(candidateConfig));',
+        + '    const assetReady = await host._signer.prepareImage(planHostOf(host), host._candidateBackdrop(candidateConfig));',
       replace: "  if (structuralChanged && input.profile === 'reload') {\n"
-        + '    const assetReady = await host._signer.prepareImage(host.hass, host._candidateBackdrop(candidateConfig));',
+        + '    const assetReady = await host._signer.prepareImage(planHostOf(host), host._candidateBackdrop(candidateConfig));',
     }],
   },
   {
@@ -19294,8 +19296,8 @@ const planHass1111Cases = [
     because: '#1111 AC3: user replacement rebuilds the real projection once, then three unchanged frames retain it.',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/plan-hass-projection.test.mjs',
     patches: [{ file: 'src/plan-hass-projection.ts',
-      find: '      || previous.connection !== hass.connection || previous.user !== hass.user) {',
-      replace: '      || previous.connection !== hass.connection) {' }] },
+      find: '      || previous.authority !== authority) {',
+      replace: '      ) {' }] },
   { id: 'plan-hass-reuses-hidden-projection-1111',
     because: '#1111 AC3/7: actual hidden/departed intake must invalidate the per-card projection before the next visible consumer.',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/plan-hass-projection.test.mjs',

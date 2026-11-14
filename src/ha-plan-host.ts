@@ -74,6 +74,7 @@ export class HaPlanHost implements PlanHost {
   private runtimeOwner?: object;
   private snapshot!: HostEnvironment;
   private lastInput: unknown;
+  private suspended = false;
 
   constructor(source: unknown) { this.update(source); }
   get authorityKey(): HostAuthorityKey { return this.key; }
@@ -87,6 +88,7 @@ export class HaPlanHost implements PlanHost {
 
   /** Legacy getters do not turn every lookup into another environment tick. */
   synchronize(): void {
+    if (this.suspended) return;
     const registry = this.registrySnapshot();
     if (this.identity() !== this.key || this.rights() !== this.permissionSignature
         || this.connected() !== this.snapshot.connected
@@ -111,7 +113,7 @@ export class HaPlanHost implements PlanHost {
     return { read: typeof this.source.callWS === 'function', write: this.serverWrite ?? admin, admin };
   }
   private rights(): string { const p = this.permissions(); return `${p.read}:${p.write}:${p.admin}`; }
-  private connected(): boolean { return typeof this.source.callWS === 'function' && this.source.connection?.connected !== false; }
+  private connected(): boolean { return !this.suspended && typeof this.source.callWS === 'function' && this.source.connection?.connected !== false; }
   private registrySnapshot(): HostRegistrySnapshot {
     const registry = haRegistrySnapshot(this.source);
     return {
@@ -124,6 +126,14 @@ export class HaPlanHost implements PlanHost {
 
   /** Every HA assignment is an environment tick, including reused objects. */
   update(value: unknown): void {
+    // HA can briefly withdraw the snapshot without changing the signed-in
+    // authority. Refuse dispatch while absent, but do not invent A→B→A.
+    if (value == null) {
+      this.lastInput = value; this.suspended = true;
+      this.releaseSubscriptions(); this.releaseRuntime(); this.publish();
+      return;
+    }
+    this.suspended = false;
     const before = this.permissionSignature, previousKey = this.key;
     const previousAdmin = this.snapshot?.permissions.admin;
     this.lastInput = value;
@@ -159,7 +169,7 @@ export class HaPlanHost implements PlanHost {
       localize: this.source.localize ? this.localize : undefined, themes: this.source.themes,
     });
     this.snapshot = Object.freeze({
-      ready: typeof this.source.callWS === 'function', connected: this.connected(),
+      ready: !this.suspended && typeof this.source.callWS === 'function', connected: this.connected(),
       smartHomeRevision: this.smartHomeRevision,
       userId: this.source.user?.id, permissions: Object.freeze(this.permissions()),
       timeZone: this.source.config?.time_zone, units: this.source.config?.unit_system ?? EMPTY,
@@ -225,7 +235,7 @@ export class HaPlanHost implements PlanHost {
   private lease(httpResponse = false): Lease {
     // Historical upload helpers lend only HTTP credentials. A known offline
     // HA connection still forbids dispatch; no fake callWS is manufactured.
-    if (httpResponse ? this.source.connection?.connected === false : !this.connected()) throw hostError('not_ready');
+    if (this.suspended || (httpResponse ? this.source.connection?.connected === false : !this.connected())) throw hostError('not_ready');
     return { key: this.identity(), revision: this.writeRevision, rights: this.rights() };
   }
   private assert(lease: Lease): void {
@@ -236,7 +246,7 @@ export class HaPlanHost implements PlanHost {
     httpResponse = false): Promise<Result> {
     try {
       this.assert(lease); assertNotAborted(signal);
-      if (httpResponse ? this.source.connection?.connected === false : !this.connected()) throw hostError('not_ready');
+      if (this.suspended || (httpResponse ? this.source.connection?.connected === false : !this.connected())) throw hostError('not_ready');
       const result = await run();
       this.assert(lease);
       // A raw Response may contain a late opaque upload token. Its domain

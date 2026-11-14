@@ -31,6 +31,26 @@ test('#1392 ordinary ticks retain write authority and lend state/registry rows',
   assert.deepEqual(await response, { config: {} });
 });
 
+test('#1392 a temporary missing HA snapshot suspends dispatch without inventing a foreign authority', async () => {
+  const input = source({ connection: {} }), host = new HaPlanHost(input);
+  const key = host.authorityKey, revision = host.writeAuthorityRevision;
+  host.update(undefined);
+  assert.equal(host.environment.ready, false);
+  assert.equal(host.environment.connected, false);
+  assert.equal(host.authorityKey, key);
+  assert.equal(host.writeAuthorityRevision, revision);
+  await assert.rejects(host.request(command), { code: 'not_ready' });
+  host.update(input);
+  assert.equal(host.environment.ready, true);
+  assert.equal(host.authorityKey, key);
+  assert.equal(host.writeAuthorityRevision, revision);
+  await host.request(command);
+  host.update(null);
+  host.update(source({ connection: input.connection, user: { id: 'other', is_admin: true } }));
+  assert.notEqual(host.authorityKey, key);
+  assert.ok(host.writeAuthorityRevision > revision);
+});
+
 for (const kind of ['connection', 'user', 'permissions']) test(`#1392 ${kind} A→B→A cannot revive an awaited response`, async () => {
   const pending = deferred(), a = {}, b = {}, raw = source({ connection: a, callWS: () => pending.promise });
   const host = new HaPlanHost(raw), result = host.request(command), initial = host.authorityKey;

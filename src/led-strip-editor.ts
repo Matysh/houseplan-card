@@ -1,4 +1,5 @@
 import { captureToast } from './toast-presentation';
+import { planHostOf } from './ha-plan-host';
 /**
  * The LED strip tool of the Devices editor (#780, ТЗ §4, §5) — its own lazy
  * chunk, loaded by the editor runtime only on entry into the tool, when the
@@ -458,7 +459,7 @@ export class LedStripEditor {
   ): Promise<boolean> {
     const context = this.host._configWriteContext, claim = context?.claim();
     return record && this.rt._visualCommand ? this.rt._visualCommand(() => {
-      if (context && !context.current(claim!, this.host.hass)) return Promise.resolve(false);
+      if (context && !context.current(claim!, planHostOf(this.host))) return Promise.resolve(false);
       return this.writeNow(name, spaceId, stripId, next, record);
     })
       : this.writeNow(name, spaceId, stripId, next, record);

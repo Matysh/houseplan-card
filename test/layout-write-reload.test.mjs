@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { attachPlanHost } from './helpers/plan-host-fixture.mjs';
 import assert from 'node:assert/strict';
 import { LayoutWriteReload } from '../test-build/layout-write-reload.js';
 import { CardReadLifecycle } from '../test-build/card-read-lifecycle.js';
@@ -29,7 +30,7 @@ function harness() {
   const visualCommands = new PropertiesCommandLane();
   let holdRead = false, holdWrite = true, holdAsset = false;
   const store = { config: config('A'), layout: { point: pos(.1) }, cfgRev: 1, rev: 1 };
-  const transport = (saved, connection = {}, user = 'a') => ({ connection, user: { id: user }, callWS: async message => {
+  const transport = (saved, connection = {}, user = 'a') => ({ connection, user: { id: user, is_admin: true }, callWS: async message => {
     messages.push(message.type);
     if (message.type === 'houseplan/config/get') return { config: structuredClone(saved.config), rev: saved.cfgRev, can_write: true };
     if (message.type === 'houseplan/layout/get') {
@@ -87,13 +88,15 @@ function harness() {
       adoption.stageLocalLayout(next);
     },
     _configWriteGuard(pendingOnly) { return proto._configWriteGuard.call(host, pendingOnly); },
-    _getAuthoritativeConfig: (hass = host.hass) => hass.callWS({ type: 'houseplan/config/get' }),
+    _getAuthoritativeConfig: (port = host.planHost) => port.request({ type: 'houseplan/config/get' }),
+    _refreshHaVacuumTrails: (...args) => proto._refreshHaVacuumTrails.call(host, ...args),
     _adoptAuthoritative: input => adoptAuthoritativeGated(host, input),
     _persistDevicePlacement: (...args) => proto._persistDevicePlacement.call(host, ...args),
     _applyDevicePositionHistory: direction => proto._applyDevicePositionHistory.call(host, direction),
     _loadFromServer: () => proto._loadFromServer.call(host),
   };
-  context.observe(host.hass);
+  attachPlanHost(host);
+  context.observe(host.planHost);
   adoptStructuralResponses(host, { config: structuredClone(store.config), rev: 1 }, { layout: structuredClone(store.layout), rev: 1 });
   events.length = 0;
   const releaseDrag = (x = .4) => {
@@ -110,8 +113,8 @@ function harness() {
     host._devicePositionHistory.clear();
     const old = host.hass;
     const next = { config: config('B'), layout: { point: pos(.8) }, cfgRev: 30, rev: 40 };
-    host.hass = transport(next, mode === 'user' ? old.connection : {}, 'b'); context.observe(host.hass);
-    if (mode === 'aba') { host.hass = old; context.observe(old); }
+    host.hass = transport(next, mode === 'user' ? old.connection : {}, 'b'); context.observe(host.planHost);
+    if (mode === 'aba') { host.hass = old; context.observe(host.planHost); }
     adoptStructuralResponses(host, { config: next.config, rev: next.cfgRev }, { layout: next.layout, rev: next.rev });
   };
   const snapshot = () => ({ config: structuredClone(adoption.config), layout: structuredClone(adoption.layout),

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { attachPlanHost } from './helpers/plan-host-fixture.mjs';
 import assert from 'node:assert/strict';
 import { ExternalConfigStreamRecovery } from '../test-build/external-screens-events.js';
 import { ConfigWriteContext } from '../test-build/config-write-context.js';
@@ -163,7 +164,6 @@ for (const mode of ['connection', 'aba', 'detach']) test(`#901 wiring: public HA
   const context = new ConfigWriteContext(), handlers = new Map(), reply = deferred();
   const hass = { connection: { subscribeEvents: async (handler, event) => { handlers.set(event, handler); return () => {}; } },
     user: { id: 'a' }, callWS: () => reply.promise };
-  context.observe(hass);
   const host = { hass, isConnected: true, _configWriteContext: context,
     _liveSyncConnection: null, _liveSyncGeneration: 0, _liveSyncAttempt: null,
     _liveSyncReceivers: new Map(), _liveSyncSubscriptionOwner: {},
@@ -172,14 +172,18 @@ for (const mode of ['connection', 'aba', 'detach']) test(`#901 wiring: public HA
     _vacRt: new Map(),
     _vacSrvTrails: { fresh: { current: { points: [[1, 2]] } } }, _vacTrailFormat: 2,
     updates: 0, requestUpdate() { this.updates++; } };
+  attachPlanHost(host);
+  context.observe(host.planHost);
+  for (const method of ['_subscribeHaSmartHomeEvent', '_registerHaSmartHomeEvents', '_refreshHaVacuumTrails'])
+    host[method] = HouseplanCard.prototype[method];
   HouseplanCard.prototype._ensureLiveSyncSubscriptions.call(host);
   await tick();
   assert.ok(handlers.has('houseplan_trail_updated'), 'entered through the ordinary public HA subscription');
   const old = handlers.get('houseplan_trail_updated')({ data: {} });
   if (mode === 'detach') { host.isConnected = false; host._liveSyncGeneration++; }
   else {
-    host.hass = { ...hass, connection: {} }; context.observe(host.hass);
-    if (mode === 'aba') { host.hass = hass; context.observe(hass); }
+    host.hass = { ...hass, connection: {} }; context.observe(host.planHost);
+    if (mode === 'aba') { host.hass = hass; context.observe(host.planHost); }
   }
   const before = JSON.stringify([host._vacSrvTrails, host._vacTrailFormat, host.updates]);
   reply.resolve({ trails: { old: { current: { points: [[9, 9]] } } }, trail_format: 1 });

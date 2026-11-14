@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { attachPlanHost } from './helpers/plan-host-fixture.mjs';
 import assert from 'node:assert/strict';
 import { ConfigWriteContext, captureWriteAuthority } from '../test-build/config-write-context.js';
 import { sendHouseplanWrite, WS_DIRECT_LIMIT_BYTES } from '../test-build/large-write-transport.js';
@@ -19,16 +20,16 @@ const config = () => ({ model_version: 11, spaces: [floor('base')], markers: [],
 
 function owner() {
   const context = new ConfigWriteContext();
-  const host = { hass: { connection: {}, user: { id: 'owner' }, states: {}, async callWS() {} },
-    _configWriteGuard() { const claim = context.claim(); return () => context.current(claim, host.hass); } };
-  context.observe(host.hass);
+  const host = attachPlanHost({ hass: { connection: {}, user: { id: 'owner', is_admin: true }, states: {}, async callWS() {} },
+    _configWriteGuard() { const claim = context.claim(); return () => context.current(claim, host.planHost); } });
+  context.observe(host.planHost);
   const replace = (mode = 'snapshot') => {
     const original = host.hass;
     host.hass = { ...original, states: { tick: { state: 'new' } },
       ...(mode === 'connection' || mode === 'aba' ? { connection: {} } : {}),
-      ...(mode === 'user' ? { user: { id: 'other' } } : {}) };
-    context.observe(host.hass);
-    if (mode === 'aba') { host.hass = original; context.observe(original); }
+      ...(mode === 'user' ? { user: { id: 'other', is_admin: true } } : {}) };
+    context.observe(host.planHost);
+    if (mode === 'aba') { host.hass = original; context.observe(host.planHost); }
   };
   return { host, context, replace };
 }
@@ -40,9 +41,9 @@ test('#1220 snapshot replacement keeps authority, but connection/user/A→B→A 
     assert.equal(current(), mode === 'snapshot', mode);
   }
   const o = owner(), original = o.host.hass, current = captureWriteAuthority(o.host);
-  o.host.hass = null; o.context.observe(null);
+  o.host.hass = null; o.context.observe(o.host.planHost);
   assert.equal(current(), false, 'a disconnected host cannot dispatch');
-  o.host.hass = original; o.context.observe(original);
+  o.host.hass = original; o.context.observe(o.host.planHost);
   assert.equal(current(), true, 'temporary absence does not invent a foreign generation');
 });
 

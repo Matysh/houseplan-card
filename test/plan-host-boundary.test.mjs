@@ -10,9 +10,9 @@ const modules = ['config-write-context', 'config-reload-authority', 'large-write
   'editors/space-plan-list', 'editors/properties/editor', 'floor-import-dialog', 'houseplan-onboarding-runtime'];
 const owners = {
   'houseplan-card': ['_renderBody', '_renderRoot', '_loadFromServer', 'willUpdate', '_ensureLiveSyncSubscriptions',
-    '_intakePlanEnvironment', '_onConnReady', '_onConnLost', '_scheduleLoadRetry', '_ensureHaRegistryAuthority',
+    '_intakePlanEnvironment', '_consumePlanEnvironment', '_environmentRenderSnapshot', '_onConnReady', '_onConnLost', '_scheduleLoadRetry', '_ensureHaRegistryAuthority',
     '_haRegistry', '_planHass', '_bindingStatus', '_fullRegistryHass', '_canManageConfiguration',
-    '_syncDecorAssets', '_display', '_resign', '_sendConfigCandidate', '_reloadLayoutOnly', '_configWriteGuard'],
+    '_syncDecorAssets', '_display', '_resign', '_sendConfigCandidate', '_reloadLayoutOnly', '_configWriteGuard', '_fmtLen', '_imperial', '_openingEntityAvailable'],
   'houseplan-editor-runtime': ['_writeConfig', '_saveConfigNow', '_saveSpaceCopy', '_saveRoom', '_saveOpening',
     '_saveSpaceDialog', '_renderBackdropGuard', '_pickMarkerFiles', '_importBackupFile', '_applyBackupImport',
     '_ownsBackupImport', '_setBackupDuplicatePolicy', '_optimizeReferenceContext', '_renderOpeningDialog', '_toolsT'],

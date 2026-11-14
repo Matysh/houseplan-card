@@ -6,8 +6,38 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "75c3ed07fc4034af088c773b8ba444bc0ad230fb982adeae512c371d0d31db6d",
+  "matchesSha256": "0b10a141bf6f31efc0bac0188010e4b4c82bc58f04cb003da16494bd1b5f8585",
   "hits": [
+    {
+      "id": "5f9d10e7f730e212aaca576f",
+      "path": "src/config-write-context.ts",
+      "line": 9,
+      "text": "// Legacy helper callers replace HA state objects. Their adapter-local",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1392 adapter compatibility for historical HA helper inputs; no persisted House Plan config decoder."
+    },
+    {
+      "id": "97574713ce2ac732572582cb",
+      "path": "src/ha-plan-host.ts",
+      "line": 89,
+      "text": "/** Legacy getters do not turn every lookup into another environment tick. */",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1392 adapter compatibility for historical HA helper inputs; no persisted House Plan config decoder."
+    },
+    {
+      "id": "f98e072f71274541964d4857",
+      "path": "src/ha-plan-host.ts",
+      "line": 349,
+      "text": "/** Compatibility for remaining HA-only consumers; never hand its source back. */",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1392 adapter compatibility for historical HA helper inputs; no persisted House Plan config decoder."
+    },
     {
       "id": "d87c2cf8d9801a9970e5fad1",
       "path": "custom_components/houseplan/__init__.py",
@@ -2759,10 +2789,10 @@
       "reason": "Existing JSON/ZIP/HTTP/error response/old-client protocol compatibility; no persisted config selector."
     },
     {
-      "id": "d5c35bb2539117682429eb56",
+      "id": "fde46360280ddbc00d857f74",
       "path": "src/backup-archive-client.ts",
-      "line": 165,
-      "text": "const result = state.archive || state.preparedJson || await hass.callWS<ArchiveExport | LegacyExport>({",
+      "line": 171,
+      "text": "const result = state.archive || state.preparedJson || await owner.port.request<ArchiveExport | LegacyExport>({",
       "occurrence": 1,
       "kind": "exclusion",
       "owner": "transport",
@@ -5159,10 +5189,10 @@
       "reason": "Existing JSON/ZIP/HTTP/error response/old-client protocol compatibility; no persisted config selector."
     },
     {
-      "id": "1865934756602df8e07ee9e2",
+      "id": "344c807cbe8c3e79022ab375",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 9856,
-      "text": "${d.kind === 'full' ? html`<div class=\"rhint\">${this._toolsT(this.host.hass?.user?.is_admin === true ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}",
+      "line": 9855,
+      "text": "${d.kind === 'full' ? html`<div class=\"rhint\">${this._toolsT(this.host.planHost.environment.permissions.admin ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}",
       "occurrence": 1,
       "kind": "exclusion",
       "owner": "transport",

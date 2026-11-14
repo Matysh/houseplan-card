@@ -94,7 +94,7 @@ export class LiveRuntime {
     // legitimately finish other same-turn mutations after assigning `hass`.
     // Only a deliberately skipped update needs operational intake here.
     if (!render) {
-      (this.host as LiveRuntimeHost)._renderLife.observe(before, after, dependencies, intake);
+      intake();
     }
     return render;
   }

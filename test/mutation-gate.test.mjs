@@ -105,7 +105,9 @@ test('#917 preparation fixes preserve broad JSON typing and reachable callback n
   assert.equal(details.guard, 'node --test test/open-passage-contract.test.mjs');
   assert.ok(details.patches[0].replace.includes("const details = JSON.parse('{}'); void raw;"));
   const rearm = definition('layout-full-read-drops-real-overlap-rearm');
-  assert.ok(rearm.patches[0].replace.includes('if (Boolean(false) && repeatLayoutRead)'));
+  assert.ok(rearm.patches[0].find.includes('repeatLayoutRead || this._read.pending'));
+  assert.equal(rearm.patches[0].replace, '      if (this._read.pending) queueMicrotask(() => {',
+    'remove only overlap rearming, retaining independent authority/read demand');
   assert.doesNotMatch(rearm.patches[0].replace, /if \(false &&/,
     'a statically unreachable callback loses the load-claim narrowing before its oracle');
 });

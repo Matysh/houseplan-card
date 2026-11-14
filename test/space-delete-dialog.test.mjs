@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { attachPlanHost } from './helpers/plan-host-fixture.mjs';
+import { captureWriteAuthority } from '../test-build/config-write-context.js';
 import { completeSpaceDeletion } from '../test-build/editors/space-delete.js';
 import { collectSpaceMarkerDependencies } from '../test-build/space-deletion.js';
 
@@ -21,7 +23,7 @@ function harness(markers = []) {
       scrollIntoView: (options) => events.push(['scroll', options]),
       focus: (options) => events.push(['focus', options]),
     }) },
-    hass: { callWS: async (message) => {
+    hass: { user: { id: 'owner', is_admin: true }, callWS: async (message) => {
       calls.push(message);
       if (message.type === 'houseplan/space/delete') return { config_rev: 800, layout_rev: 900 };
       assert.equal(message.type, 'houseplan/layout/get');
@@ -45,6 +47,8 @@ function harness(markers = []) {
     _t: (key) => key,
     _errText: (error) => error.code || error.message,
   };
+  attachPlanHost(host);
+  host._configWriteGuard = () => captureWriteAuthority({ planHost: host.planHost });
   const dependencies = collectSpaceMarkerDependencies(host._serverCfg, host._layout, 'f1');
   return { host, calls, events, dependencies, configResponse, layoutResponse };
 }
@@ -57,7 +61,7 @@ test('#819 shared completion keeps ordinary delete and authoritative post-write 
     { type: 'houseplan/layout/get' },
   ]);
   assert.deepEqual(events[0], ['adopt', {
-    cfgResp: configResponse, layResp: layoutResponse, reason: 'space-delete', profile: 'post-write',
+    cfgResp: configResponse, layResp: layoutResponse, reason: 'space-delete', profile: 'post-write', isCurrent: events[0][1].isCurrent,
   }]);
   assert.equal(host._spaceDialog, null);
   assert.equal(host._space, 'f2');

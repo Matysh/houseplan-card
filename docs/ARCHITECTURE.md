@@ -11,11 +11,15 @@ helper-input normalization to the HA boundary. `HouseplanCard.planHost` is an
 optional runtime injection; Lovelace/panel `setConfig` is unchanged.
 
 One environment subscription drives bootstrap, read retry, authority retirement
-and render intake. HA assignments update the same adapter; there is no parallel
+and render intake. Authority is consumed synchronously; visible scene intake
+waits for same-turn config/layout changes before Lit paints (hidden/skipped
+frames still consume operational work). HA assignments update the same adapter; there is no parallel
 `changed.has('hass')` plan intake. State ticks do not renew write authority or
 plan subscriptions. Connection/original-callWS plus user is one opaque key;
 write-permission epochs separately fence A→B→A. Reconnect with the same key
-retains pending bookkeeping, but offline dispatch is refused. Config reload,
+retains pending bookkeeping, but offline or temporarily absent snapshots refuse
+dispatch. Paired reads establish event listeners before sampling; permission
+resubscriptions and setConfig preserve an interrupted read's demand. Config reload,
 write guards, signing, asset resolution and plan subscriptions use that key.
 An empty nonauthoritative registry is not evidence that bindings were deleted.
 

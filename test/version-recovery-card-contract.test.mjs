@@ -17,8 +17,8 @@ const occurrences = (source, fragment) => source.split(fragment).length - 1;
 const matches = (source, pattern) => source.match(pattern)?.length || 0;
 
 test('one host seam owns every full-card config/get request', () => {
-  const direct = /callWS(?:<[^>]+>)?\(\{ type: 'houseplan\/config\/get'/g;
-  assert.equal(matches(adapter, direct), 1, 'the adapter is the only WS request owner');
+  const direct = /(?:callWS|request)(?:<[^>]+>)?\(\{ type: 'houseplan\/config\/get'/g;
+  assert.equal(matches(adapter, direct), 1, 'the adapter is the only authoritative port request owner');
   assert.equal(matches(card, direct), 0, 'card flows must use the authoritative seam');
   assert.equal(matches(editor, direct), 0, 'lazy editor flows must use the host seam');
   assert.equal(matches(onboarding, direct), 0, 'onboarding flows must use the host seam');
@@ -32,7 +32,7 @@ test('one host seam owns every full-card config/get request', () => {
     'initial load and config-only reload both use the seam');
   assert.equal(occurrences(editor, 'this.host._getAuthoritativeConfig()')
     + occurrences(spaceDelete, 'host._getAuthoritativeConfig()')
-    + occurrences(optimizeUndo, 'host._getAuthoritativeConfig(hass, isCurrent)'), 3,
+    + occurrences(optimizeUndo, 'host._getAuthoritativeConfig(port, isCurrent)'), 3,
     'delete, optimization undo and backup import use the seam');
   assert.equal(occurrences(onboarding, 'this.host._getAuthoritativeConfig()')
     + occurrences(spaceDelete, 'host._getAuthoritativeConfig()'), 1,
