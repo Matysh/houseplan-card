@@ -23,11 +23,15 @@ try{
       const menuPhase=await card.locator('.hdr').getAttribute('data-panel-flow')==='5';
       const add=card.locator(menuPhase ? '[data-hp="header-actions-trigger"]' : '[data-hp="space-add"]');
       await add.focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');
-      const focusState=await add.evaluate(e=>({visible:e.matches(':focus-visible'),outlineWidth:getComputedStyle(e).outlineWidth,
-        outlineStyle:getComputedStyle(e).outlineStyle,active:e.getRootNode().activeElement?.getAttribute('data-hp')}));
+      await waitForUiKitPaint(page);
+      const focusState=await add.evaluate(e=>({visible:e.matches(':focus')&&e.classList.contains('hpf-tab-focus'),
+        borderWidth:getComputedStyle(e).borderTopWidth,borderStyle:getComputedStyle(e).borderTopStyle,
+        shadow:getComputedStyle(e).boxShadow,outlineStyle:getComputedStyle(e).outlineStyle,
+        active:e.getRootNode().activeElement?.getAttribute('data-hp')}));
       assert.ok(focusState.visible,JSON.stringify({lang,width,menuPhase,focusState}));
-      if(menuPhase)assert.equal(focusState.outlineStyle,'none','closed actions trigger must not retain an active focus frame');
-      else assert.ok(focusState.outlineWidth==='2px'&&focusState.outlineStyle==='solid',JSON.stringify({lang,width,menuPhase,focusState}));
+      assert.equal(focusState.outlineStyle,'none','Tab uses the ordinary border, not another outline');
+      assert.equal(focusState.shadow,'none');
+      assert.equal(focusState.borderWidth,'1px'); assert.equal(focusState.borderStyle,'solid');
       let previous=null;
       for(const mode of modes){
         const tab=card.locator(`[data-hp="mode-tab"][data-mode="${mode}"]`);

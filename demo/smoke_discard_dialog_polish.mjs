@@ -1,6 +1,7 @@
 // #990: actual native confirmation paint/input, not source-text inspection.
 import { mkdirSync } from 'node:fs';
 import { launch, checkAll, finish } from './serve.mjs';
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 
 const { page, browser } = await launch({ width: 1280, height: 900 });
 const results = {};
@@ -90,11 +91,15 @@ try {
     await page.screenshot({ path: `${captureDir}/${width}-${theme}-settled.png` });
     await page.keyboard.press('Tab');
     await page.keyboard.press('Shift+Tab');
-    results[`${width}_tabRestoresVisibleFocus`] = await back.evaluate(button => {
+    await waitForUiKitPaint(page);
+    results[`${width}_tabRestoresVisibleFocus`] = await back.evaluate((button, theme) => {
       const paint = getComputedStyle(button);
-      return button.matches(':focus-visible') && !button.classList.contains('hp-dialog-return-focus')
-        && (paint.outlineStyle !== 'none' || paint.boxShadow !== 'none');
-    });
+      return button.matches(':focus') && button.classList.contains('hpf-tab-focus')
+        && !button.classList.contains('hp-dialog-return-focus')
+        && paint.outlineStyle === 'none' && paint.boxShadow === 'none'
+        && paint.borderTopWidth === '1px' && paint.borderTopStyle === 'solid'
+        && paint.borderTopColor === (theme === 'light' ? 'rgb(0, 138, 165)' : 'rgb(103, 207, 232)');
+    }, theme);
     await page.mouse.move(2, 2);
     await close.hover();
     results[`${width}_standardCloseMotion`] = await close.locator('ha-icon').evaluate(async icon => {

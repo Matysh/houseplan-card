@@ -34,7 +34,12 @@ test('#1120 the full-height shell delegates the accessible HA menu to every ordi
   const action = parseRules(iconActionStyles.cssText).find(rule => rule.kind === 'rule' && rule.selectors.includes('button.hpf-icon-action'));
   for (const property of ['width', 'height', 'min-width', 'min-height'])
     assert.ok(action.declarations.includes(`${property}:44px`));
-  assert.match(iconActionStyles.cssText, /button\.hpf-icon-action:focus-visible/);
+  // #1428 deliberately retires the browser's sticky focus-visible ring. The
+  // native #1248 smoke verifies actual Tab traversal and single-border paint.
+  const tab = parseRules(iconActionStyles.cssText).find(rule => rule.kind === 'rule'
+    && rule.selectors.includes('button.hpf-icon-action.hpf-tab-focus:focus'));
+  assert.ok(tab.declarations.includes('border-color:var(--primary-color)'));
+  assert.ok(!tab.declarations.some(value => /^(outline|box-shadow):/.test(value)));
   assert.match(card, /private _renderPanelMenu\(\)[^{]*\{\s*if \(!this.panelHost\) return nothing;\s*return renderPanelMenu\(\{ \.\.\.panelMenuState\(this.hass, !!this.narrow, this._kiosk,/);
   assert.match(card, /private _renderEmptyPanelHeader\(\)[^{]*\{\s*if \(!this.panelHost \|\| this._kiosk\) return nothing;[\s\S]*?if \(!menu.visible\) return nothing;/);
   assert.equal((card.match(/\$\{this\.panelHost \? this\._renderEmptyPanelHeader\(\) :/g) || []).length, 3,
