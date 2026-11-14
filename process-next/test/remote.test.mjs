@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { executeRemoteCommand, WorkflowReviewAdapter, finishTask, initializeMissingTrack } from '../remote.mjs';
 import { MemoryQueueStore, QueueController, StateConflict, reduceQueue } from '../lib/queue.mjs';
-import { initialReleaseState, reduceRelease } from '../lib/release.mjs';
+import { initialReleaseState, reduceRelease, ReleasePublisher } from '../lib/release.mjs';
+import { prepareShipReviewArtifacts } from '../lib/ship-review-artifacts.mjs';
 import { reconcileQueue } from '../lib/coordinator.mjs';
 import { GitHubClient } from '../lib/github.mjs';
 
@@ -245,6 +246,74 @@ test('publication retry reuses checked candidate and actual evidence, including 
   await assert.rejects(call(), /Transient 1/); await assert.rejects(call(), /Transient 2/);
   assert.equal((await call()).state.candidates.beta1.status, 'published');
   assert.equal(publishes, 3); assert.equal((await store.read()).state.candidates.beta1.runner.id, 'r');
+});
+
+for (const legacy of [false, true]) test(`#1415 two real publication passes preserve frozen report bytes after a lost state response (legacy=${legacy})`, async t => {
+  const root = await mkdtemp(join(tmpdir(), 'hp-publication-report-retry-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const packet = { ...emptyShipPacket(), requestId: 'ship:accepted', pending: [15],
+    tasks: [{ issue: 15, track: 'ship', fingerprint: D, commits: [B] }] };
+  let initial = reduceRelease(readyRelease(), { id: 'accepted-selection', type: 'ship-review-prepared', candidate: 'beta1', packet });
+  initial = reduceRelease(initial, { id: 'accepted-result', type: 'ship-review-result', candidate: 'beta1', requestId: packet.requestId,
+    result: { kind: 'ship-batch', candidateId: 'beta1', requestId: packet.requestId, materialSha: B, base: A,
+      selectionDigest: packet.selectionDigest, verdict: 'accepted', markdown: 'Принятый неизменный отчёт.' } });
+  const receipt = structuredClone(initial.shipReviews[packet.requestId]);
+  const store = new MemoryQueueStore(initial), cas = store.compareAndSwap.bind(store);
+  let loseState = true, release = null, uploads = 0, refs = 0;
+  store.compareAndSwap = async (version, state) => {
+    if (loseState && state.candidates.beta1.status === 'published') {
+      loseState = false; throw Error('publication state response lost');
+    }
+    return cas(version, state);
+  };
+  const bytes = new Map(), digest = value => createHash('sha256').update(value).digest('hex');
+  const api = { activated: true, root: '/repos/owner/repo',
+    findRelease: async () => structuredClone(release),
+    createDraftRelease: async ({ tag, body }) => {
+      assert.equal(release, null); release = { id: 1, tag_name: tag, body, draft: true, assets: [] }; return structuredClone(release);
+    },
+    uploadReleaseAsset: async (_id, artifact) => {
+      assert.equal(release.draft, true); uploads++;
+      const id = uploads + 1; bytes.set(id, Buffer.from(artifact.bytes)); release.assets.push({ id, name: artifact.name });
+    },
+    downloadAsset: async id => Buffer.from(bytes.get(id)),
+    updateRelease: async (_id, patch) => { Object.assign(release, patch); return structuredClone(release); },
+    verifyPublication: async ({ tag, expectedSha, assetName, expectedDigest }) => {
+      assert.equal(release.draft, false); assert.equal(tag, release.tag_name); assert.equal(expectedSha, B); assert.ok(refs > 0);
+      assert.equal(digest(bytes.get(release.assets.find(a => a.name === assetName).id)), expectedDigest);
+      return { sha: expectedSha, tag, artifactDigest: expectedDigest };
+    } };
+  const git = { activated: true, publishCandidateRefs: async ({ materialSha, tag, checkOnly }) => {
+    assert.equal(materialSha, B); assert.equal(tag, 'v1-beta.1'); if (!checkOnly) refs++;
+  } };
+  const zip = Buffer.from('unchanged checked ZIP'), zipPath = join(root, 'houseplan.zip'); await writeFile(zipPath, zip);
+  const dependencies = { api, git, releaseStore: store, queue: new QueueController(new MemoryQueueStore()),
+    prepareReleaseData: async () => authoredRelease(), buildShipReviewPacket: async () => structuredClone(packet),
+    review: { requestReview: () => { throw Error('No paid review on publication retry'); } },
+    runPlan: () => { throw Error('No product tests on publication retry'); },
+    publisher: new ReleasePublisher({ github: api, git, activated: true }),
+    verifier: { verify: async () => ({ discoveryAvailable: true, tag: 'v1-beta.1', artifactDigest: digest(zip) }) },
+    returnToDev: async () => ({ status: 'completed', devSha: B }),
+  };
+  if (legacy) dependencies.prepareShipReviewArtifacts = input => prepareShipReviewArtifacts({
+    ...input, candidate: { ...input.candidate, tag: null } });
+  const call = id => executeRemoteCommand({ command: 'publish-prepared', config: { ...config, workspace: root }, env,
+    execute: true, dependencies, event: { id, candidate: 'beta1', tag: 'v1-beta.1',
+      artifacts: [{ name: 'houseplan.zip', path: zipPath, expectedDigest: digest(zip) }] } });
+  await assert.rejects(call('first-publication'), /publication state response lost/);
+  assert.equal(release.draft, false); assert.equal((await store.read()).state.candidates.beta1.status, 'publication-retry');
+  const publishedHashes = release.assets.map(a => [a.name, digest(bytes.get(a.id))]);
+  const json = JSON.parse(bytes.get(release.assets.find(a => a.name === 'SHIP-REVIEW.json').id));
+  assert.equal(json.candidate.tag, legacy ? null : 'v1-beta.1');
+  assert.deepEqual(json.current, receipt);
+  delete dependencies.prepareShipReviewArtifacts;
+  const result = await call('retry-publication');
+  assert.equal(result.published, true); assert.equal(result.state.candidates.beta1.status, 'published');
+  assert.equal(uploads, 3, 'the retry never uploads replacements');
+  assert.deepEqual(release.assets.map(a => [a.name, digest(bytes.get(a.id))]), publishedHashes);
+  assert.deepEqual((await store.read()).state.shipReviews[packet.requestId], receipt);
+  for (const asset of release.assets) if (asset.name.startsWith('SHIP-REVIEW.'))
+    assert.equal(digest(await readFile(join(root, 'artifacts/process-next/publication', asset.name))), digest(bytes.get(asset.id)));
 });
 
 test('release raw events cannot manufacture publication, HACS or batch review evidence', async () => {

@@ -21,7 +21,7 @@ import { completePublishedRelease } from './lib/release-completion.mjs';
 import { announceStableRelease } from './lib/notifications.mjs';
 import { returnPublishedHistory } from './lib/return-worker.mjs';
 import { ensureShipReview } from './lib/ship-review-host.mjs';
-import { prepareShipReviewArtifacts } from './lib/ship-review-artifacts.mjs';
+import { preparePublicationShipReviewArtifacts } from './lib/ship-review-artifacts.mjs';
 import { publishCiStatus } from './lib/ci-status.mjs';
 
 const sha = value => /^[a-f0-9]{40}$/.test(value ?? '');
@@ -668,7 +668,9 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
       candidate: candidate.id, sha: candidate.sha, data });
     candidate = state.candidates[candidate.id];
     if (candidate.kind === 'beta' && !resumingPublication) await shipReview();
-    const reviewArtifacts = (dependencies.prepareShipReviewArtifacts ?? prepareShipReviewArtifacts)({ root: config.workspace, candidate, records: state.shipReviews });
+    const reviewArtifacts = await (dependencies.prepareShipReviewArtifacts ?? preparePublicationShipReviewArtifacts)({
+      root: config.workspace, candidate: { ...candidate, tag }, records: state.shipReviews,
+      github: api, resuming: resumingPublication });
     const artifacts = [...(event.artifacts ?? preparePublicationArtifacts({ root: config.workspace,
       packageResult: JSON.parse(await readFile(resolve(config.workspace, event.packagePath ?? 'artifacts/process-next/package.json'), 'utf8')),
       candidate: { ...candidate, tag } })).filter(item => !reviewArtifacts.some(reviewArtifact => reviewArtifact.name === item.name)), ...reviewArtifacts];

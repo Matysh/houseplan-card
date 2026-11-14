@@ -21,8 +21,7 @@ function reportSection(record, label) {
   return lines.join('\n');
 }
 
-/** Release assets retain full reports even after the workflow artifact expires. */
-export function prepareShipReviewArtifacts({ root, candidate, records = {} }) {
+function shipReviewReports({ candidate, records = {} }) {
   if (!candidate.shipReview) return [];
   const pointer = candidate.shipReview, current = records[pointer.requestId];
   if (!current?.packet || current.packet.requestId !== pointer.requestId
@@ -51,12 +50,44 @@ export function prepareShipReviewArtifacts({ root, candidate, records = {} }) {
     reportSection(current, 'Полный отчёт текущего запроса')];
   for (const record of reused) lines.push('', reportSection(record,
     `Ранее принятое ревью: ${record.references.map(row => `#${row.issue}`).join(', ')}`));
+  return [['SHIP-REVIEW.json', JSON.stringify(data, null, 2) + '\n'], ['SHIP-REVIEW.md', lines.join('\n') + '\n']];
+}
+
+/** Release assets retain full reports even after the workflow artifact expires. */
+export function prepareShipReviewArtifacts({ root, candidate, records = {} }) {
+  const reports = shipReviewReports({ candidate, records });
+  if (!reports.length) return [];
   root = resolve(root);
   const output = within(root, join(root, 'artifacts/process-next/publication'));
   mkdirSync(output, { recursive: true });
-  return [['SHIP-REVIEW.json', JSON.stringify(data, null, 2) + '\n'], ['SHIP-REVIEW.md', lines.join('\n') + '\n']]
+  return reports
     .map(([name, text]) => {
       const path = within(root, join(output, name)); writeFileSync(path, text);
       return { name, path, expectedDigest: sha256(readFileSync(path)) };
     });
+}
+
+/** Older publishers emitted tag:null before publication-started. Reproduce
+ * that exact frozen receipt only when its published JSON proves the old format;
+ * the ordinary publisher still verifies BOTH assets and never replaces either.
+ */
+export async function preparePublicationShipReviewArtifacts({ root, candidate, records = {}, github, resuming = false }) {
+  const reports = shipReviewReports({ candidate, records });
+  if (!reports.length) return [];
+  let formatting = candidate;
+  if (resuming) {
+    const release = await github.findRelease(candidate.tag);
+    const matches = (release?.assets ?? []).filter(asset => asset.name === 'SHIP-REVIEW.json');
+    if (matches.length > 1) throw Error('Ambiguous release artifact');
+    if (matches.length) {
+      const digest = sha256(await github.downloadAsset(matches[0].id));
+      if (digest !== sha256(Buffer.from(reports[0][1]))) {
+        const legacy = { ...candidate, tag: null };
+        if (digest !== sha256(Buffer.from(shipReviewReports({ candidate: legacy, records })[0][1])))
+          throw Error('Existing release artifact differs: SHIP-REVIEW.json');
+        formatting = legacy;
+      }
+    }
+  }
+  return prepareShipReviewArtifacts({ root, candidate: formatting, records });
 }

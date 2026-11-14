@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { sha256 } from '../lib/github.mjs';
-import { prepareShipReviewArtifacts } from '../lib/ship-review-artifacts.mjs';
+import { prepareShipReviewArtifacts, preparePublicationShipReviewArtifacts } from '../lib/ship-review-artifacts.mjs';
 
 const A = 'a'.repeat(40), B = 'b'.repeat(40), D = 'd'.repeat(64);
 function fixture(t) {
@@ -80,4 +80,18 @@ test('an empty selection reports not-required without claiming that the model ac
   assert.match(markdown, /новое ревью не требуется/);
   assert.match(markdown, /В выборке: 0; передано на анализ: 0; засчитано ранее: 0/);
   assert.doesNotMatch(markdown, /Результат: \*\*принято/);
+});
+
+test('#1415 retry accepts only byte-identical frozen legacy JSON, not an edited report', async t => {
+  const input = fixture(t);
+  const legacy = prepareShipReviewArtifacts({ ...input, candidate: { ...input.candidate, tag: null } });
+  let existing = readFileSync(legacy[0].path);
+  const github = { findRelease: async () => ({ assets: [{ name: 'SHIP-REVIEW.json', id: 1 }] }),
+    downloadAsset: async () => existing };
+  const reports = await preparePublicationShipReviewArtifacts({ ...input, github, resuming: true });
+  assert.equal(reports[0].expectedDigest, sha256(existing));
+  const json = JSON.parse(existing); json.current.result.markdown += '\nUnreviewed addition';
+  existing = Buffer.from(JSON.stringify(json, null, 2) + '\n');
+  await assert.rejects(preparePublicationShipReviewArtifacts({ ...input, github, resuming: true }), /Existing release artifact differs/);
+  assert.equal(sha256(readFileSync(reports[0].path)), reports[0].expectedDigest, 'refusal never rewrites the prepared receipt');
 });
