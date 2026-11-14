@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13122,
-  "nextTicket": 459,
+  "revision": 13123,
+  "nextTicket": 460,
   "nextFence": 459,
   "tasks": {
     "1024": {
@@ -4580,6 +4580,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1430": {
+      "issue": 1430,
+      "track": "ship",
+      "layer": "docs",
+      "branch": "codex/docs-readme-guide-sync",
+      "materialSha": "e756b482350cf5589228d4d282642e5d8c03ced5",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 459,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794682578862,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4907,9 +4921,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1430
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:0e2353a6-64e3-4c53-b34a-ea6b4aea9139": {
+      "digest": "be9e2f147e1dca01eb41948a6d87fe05919bebbfe6e31b4016a4f9542b7727d7",
+      "issue": 1430,
+      "message": {
+        "kind": "queued",
+        "issue": 1430,
+        "at": 1794682578862,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "e756b482350cf5589228d4d282642e5d8c03ced5"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "54d3917034a0d13ea680b0ea182b086c732e9067",
     "status": "delivered",
