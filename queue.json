@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13373,
-  "nextTicket": 468,
+  "revision": 13374,
+  "nextTicket": 469,
   "nextFence": 465,
   "tasks": {
     "1024": {
@@ -4687,6 +4687,20 @@
       "readyAt": 1794686350630,
       "reviewEntry": 1
     },
+    "1438": {
+      "issue": 1438,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1438-kiosk-camera",
+      "materialSha": "a847e0a0a6690553f4bece5db5bf6eab5d218bda",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 468,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794686474377,
+      "reviewEntry": 1
+    },
     "1440": {
       "issue": 1440,
       "track": "ship",
@@ -5044,7 +5058,8 @@
   "waiting": [
     1435,
     1436,
-    1437
+    1437,
+    1438
   ],
   "active": {
     "issue": 1440,
@@ -5131,6 +5146,19 @@
         "materialSha": "1861a31763287c3bd4a09f33fa3a1f56926da55e",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f": {
+      "digest": "ce61402c6c2203dac6edbc477e30fa679a1e9fa2be42563711326929ccd8c5a6",
+      "issue": 1438,
+      "message": {
+        "kind": "queued",
+        "issue": 1438,
+        "at": 1794686474377,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a847e0a0a6690553f4bece5db5bf6eab5d218bda"
       }
     }
   },
