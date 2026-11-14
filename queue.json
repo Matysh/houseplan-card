@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12211,
+  "revision": 12212,
   "nextTicket": 437,
   "nextFence": 437,
   "tasks": {
@@ -4648,7 +4648,8 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/feature-notes.md"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -4942,9 +4943,9 @@
     "fence": 436,
     "materialSha": "a9e4a01420c02318a725157c49d4b9b2e23599c4",
     "expectedBase": "3108fed9e23905a23044453c85be4e158dabaadc",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794637204482,
-    "expiresAt": 1794637510501,
+    "expiresAt": 1794640814942,
     "patchId": "d0526d39152457da02f64f80ac6744d58669b16a"
   },
   "events": {
@@ -5106,6 +5107,10 @@
     },
     "issue1424-editorial-finish-20261114:finish:2:synchronized": {
       "digest": "be02375d320c6b34513e53a24e80eb22aee35a4ac7ee9f76db43f724c2adad67",
+      "issue": 1424
+    },
+    "issue1424-editorial-finish-20261114:finish:3:s6-complete": {
+      "digest": "258698b0d5aad5b28ee763d54ab8fed5174859cc152ad55c2e63ff39cafc7b49",
       "issue": 1424
     },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
