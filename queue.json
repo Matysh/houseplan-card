@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12029,
+  "revision": 12030,
   "nextTicket": 432,
   "nextFence": 431,
   "tasks": {
@@ -3796,187 +3796,25 @@
     },
     "1395": {
       "issue": 1395,
+      "branch": "codex/1395-core-input-policy",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/1395-core-input-policy",
-      "materialSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 430,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794630090300,
-      "reviewEntry": 2,
-      "patchId": "37136a7702967c327436700564db207b57beba91",
-      "changedFiles": [
-        "custom_components/houseplan/core/backup_archive.py",
-        "custom_components/houseplan/core/decor_assets.py",
-        "custom_components/houseplan/core/import_export.py",
-        "custom_components/houseplan/core/input_policy.py",
-        "custom_components/houseplan/core/opening_repair.py",
-        "custom_components/houseplan/core/plan_graph_exact.py",
-        "custom_components/houseplan/core/plan_graph_migration.py",
-        "custom_components/houseplan/core/plan_graph_spatial.py",
-        "custom_components/houseplan/core/structural_upload.py",
-        "custom_components/houseplan/core/validation.py",
-        "custom_components/houseplan/core/wall_node_move.py",
-        "custom_components/houseplan/core/wall_segment_model.py",
-        "custom_components/houseplan/http_api.py",
-        "custom_components/houseplan/websocket_api.py",
-        "docs/ARCHITECTURE.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/CONFIG-COMPATIBILITY.md",
-        "docs/release-ledger/v1.85.0/1395.json",
-        "docs/security/1395-input-audit.md",
-        "process-next/lib/task-selection.mjs",
-        "process-next/test/task-selection.test.mjs",
-        "scripts/security/input_capacity.py",
-        "tests_backend/test_ha_input_security.py",
-        "tests_backend/test_input_archive_security.py",
-        "tests_backend/test_input_policy.py"
-      ],
-      "s6": {
-        "id": "20261114T043553899-8aa97e0b",
-        "name": "Тесты для задачи #1395 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T043553899-8aa97e0b/report.json",
-        "materialSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
-        "status": "passed",
-        "finishedAt": "2026-11-14T04:41:10.368Z",
-        "failures": []
-      },
-      "reviewRound": 2,
-      "notice": {
-        "key": "1:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1794629513990,
-        "entry": 1,
-        "requestId": "review:1395:1:7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-        "transitionConfirmed": true
-      },
+      "status": "S8-merged",
+      "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+      "mergedSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
+      "mergedAt": 1794631510243,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1395:2:37136a7702967c327436700564db207b57beba91:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-      "reviewMaterial": {
-        "materialSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
-        "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-        "patchId": "37136a7702967c327436700564db207b57beba91"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1395:2:37136a7702967c327436700564db207b57beba91:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-        "eventId": "github:43557879107:1:tick:0:review-retry",
-        "at": 1794631293812,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1395,
-        "requestId": "review:1395:2:37136a7702967c327436700564db207b57beba91:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-        "kind": "code",
-        "base": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-        "materialSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
-        "patchId": "37136a7702967c327436700564db207b57beba91",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1395,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1395",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и результат\nАудит ядра после #1391 и адресный ремонт подтверждённых отказов ввода, без изменения формата/model11/exportv3/ZIPv1 и без включения новых strict-ограничений в HA Store/startup/save. Подробный отчёт по шести классам угроз и всем перечисленным владельцам: docs/security/1395-input-audit.md.\n\n### Решение и альтернативы\nОдин core.input_policy с явным request-wide ContextVar scope; strict 256/512MiB ZIP/expanded, JSON/XML depth64/JSON1M nodes до decoder, geometry2M work units + secondary5s с injected clock. HA defaults сохраняются. Predicate/AABB/legacy geometry и отдельные migration inner loops списывают units до работы; вложенные вызовы не сбрасывают лимит. Это кооперативная защита, не thread timeout и не готовый публичный сервер.\nПодтверждённые ремонты: фактический central-directory count до ZipFile; safe RecursionError portable import/copy; finite parse_float (±1e999 обходил parse_constant); safe public protocol message вместо внутренних деталей. Strict требует raster decoder и reject-whitelist для backdrop; HA opaque XML/#1033 и оригинальные bytes не ужесточаются/не переписываются.\n\n### Риски и места для внимания\nСохранение HA SVG/backdrop совместимости и размеров; отсутствие дополнительного чтения внешних URL; request scope/cancellation через будущий executor; checks не прерывают внутренности native library/PIL/JSON/сортировки. Hard CPU/memory isolation/concurrency quotas будущего сайта остаются вне задачи. Обходы обычных HA ACL не добавлялись. Отчёт считает подтверждённые High закрытыми только в исследованном core-scope, не сертифицирует будущий endpoint.\nHA ошибки по-прежнему используют существующие локализуемые коды, details остаются локально. Source source-reader/mutation anchors не ослабляются. Первое code review вернуло два блокера; исправления ниже.\n\n### Проверки и ограничения\nПосле code review:69/69 адресных fixtures, Ruff и mypy input_policy PASS. Восемь UTF-16/32 (LE/BE, с/без BOM) отрицательных cases до фикса доходили до spy-decoder; теперь отказ до loads, UTF-8 positive и HA alternate-encoding positive сохранены. Настоящий ZIP manifest UTF-16/32 подтверждает отсутствие staging writes в strict и прежний успешный HA-путь. Проверены также directory cancel/time → ImportFailure и code/reason, strict canonical SVG content refusal и unchanged HA acceptance. Полный parse_document:1×400комнат371213bytes →390.32ms/86544units;10×400комнат3708125bytes →4271.03ms/865440units, оба accepted.50×400source18,413,938bytes уже превышает прежние16MiB и не может быть создан для strict-замера; это явно не PASS. Эти серии диагностические, не timing guarantee. Первый S64c9221465 прошёл592/592; финальный изменённый SHA снова проходит finish, прежний PASS не приписывается новым исходникам.\n\nДо ремонта сохранены реальные reproductions: depth1500/10000 → RecursionError; 2 directory fixtures падали до actual-count фикса; ±1e999 принимались strict_json; WS probe отражал PRIVATE-FIXTURE detail, после не отражает.\nАдресные проверки: 440/440 backend/реальных HA pytest (новые fixtures, backup/import/structural/transaction/cancel/core boundary и SVG sandbox header). Ruff owned sources/tests/script PASS; mypy input_policy PASS; 31/31 task-selection tests. Каталог и план S6 подтверждают security/critical классификацию всех трёх новых файлов и выбор по actual core source readers, не только areaTests.\nBounded synthetic measurement script:400 rooms /441nodes/840edges strict95.18ms/29178units accepted;1600parallel strict3541ms/2M units → capacity_exceeded без мутации исходника. Это одна серия, не performance-медиана. Полные исходы/лимиты в отчёте. S6 финального SHA выполняет штатный finish.\nE2E: https://github.com/Matysh/houseplan-e2e/issues/53#issuecomment-6871102978 — новых browser journeys не нужно, существующие import/export/cancel/sandbox и установка/upgrade остаются на следующую бету. Baseline, живой HA и локальный стенд владельца не менялись; релиз не запускался.\n\n### Исправления по предыдущему ревью\nДополнительная S6 сверка F5 обнаружила неучтённые rejected branches: zero-thickness carrier до numeric predicates и overlap reservation inner loop. Два теста сначала красные, затем исправлены charge перед early refusal/каждой парой; neighbouring openings/repair intervals также считают несовпадающий host.106/106 адресных fixtures, включая HA opening repair, проходят. Это дополнение того же согласованного аудита, не новый security-gate и не изменение HA default profile.\n\nКод, раунд1: https://github.com/Matysh/houseplan-card/actions/runs/43554836349.\n- UTF-16/32 bypass → подтверждён8 red cases. Strict scanner теперь отклоняет raw NUL до loads, то есть не допускает alternate encodings JSON syntax; escaped U+0000 в UTF-8 не запрещается. HA без strict bounds сохраняет decoder encodings. Отказ передаёт фиксированный reason=json_encoding, включая реальный ZIP.\n- Неверный SVG capacity claim → выбран минимальный вариант(а): прежние decor content caps не расширяются. В отчёте явно записаны outer8MiB input vs canonical2MiB,5000elements,512000attrs chars/single65536/ref-depth64 и raster dimensions.3MiB comment roundtrip честно доказывает только bytes preservation;3MiB surviving desc fixture отдельно доказывает отказ strict при прежнем принятии HA. Strict backdrop refusal имеет capacity_exceeded/reason=strict_image_policy; отсутствующий decoder сохраняет not_ready.\n- Directory checkpoints → перенесены под archive-domain try, cancel/time дают ImportFailure с code и безопасным reason, не raw InputLimit.\n- Добавлены полные portable import замеры1/10/50×400 и описание machine-dependent secondary5s. Уточнено отсутствие pixel cap у HA backdrop. Сохранён исходный security scope, новых публичных endpoints/worker isolation не добавлено.\n\nПринятая редакция2 ТЗ сохранена: по S4R1 https://github.com/Matysh/houseplan-card/actions/runs/43515190357 отдельно реализованы HA/strict backdrop, bytes pre-scan с keys/escape, общий deterministic work budget+clock и fail-closed strict raster. Требования не расширены до публичного сайта."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Оба блокера первого раунда устранены по существу, новых существенных рисков исправления не принесли. Работу можно принять.\n\n1. Обход проверки JSON через UTF-16/32 закрыт. В строгом профиле `check_json_bounds` отклоняет сырой NUL ещё до `json.loads`. Любой корректный JSON в UTF-16 или UTF-32 обязательно содержит байт 0x00: каждый ASCII-символ синтаксиса (`{`, `[`, `\"`, цифры) кодируется с нулевым байтом. Значит, `json.detect_encoding` без NUL всегда выбирает UTF-8, и сканер с декодером видят одну и ту же грамматику. В допустимом UTF-8 JSON сырого NUL не бывает, поэтому корректный ввод не теряется. HA по-прежнему без ограничений структуры и принимает manifest в UTF-16/32, это проверено реальным ZIP.\n2. Ошибочное заявление о вместимости строгой SVG-подложки исправлено вариантом (а). В каталоге 8 MiB теперь описаны как предел исходных bytes, а не допустимого объёма SVG. Перечислены пределы decor для канонизированного вывода, тест на 3 MiB с комментарием честно подписан как проверка round-trip. Отказ строгого профиля теперь отличим от повреждённого файла: `capacity_exceeded` с reason `strict_image_policy`, а `not_ready` сохранён для отсутствующего декодера.\n\nПопутные улучшения тоже сделаны: проверки центрального каталога ZIP перенесены внутрь try, и отмена или время дают `ImportFailure` с кодом. Измерен полный `parse_document`, и отчёт честно признаёт, что импорт 50×400 не измерен.\n\nДля пользователя HA ничего не меняется: строгий профиль нигде не включён, `charge_work` и `checkpoint` без scope ничего не делают, правило #1033 для подложек и исходные bytes сохранены. Остались только необязательные уточнения отчёта. Главное — для полного импорта первым фактически срабатывает таймер, а не детерминированный бюджет единиц.",
-          "understanding": "Задача — аудит ядра на недоверенный ввод. Нужно было ввести явный строгий `InputPolicy` для будущего недоверенного caller, не меняя пределы и поведение HA-профиля, и исправить подтверждённые дефекты.\n\nВ первом раунде было два блокера:\n- UTF-16/32 обходил предварительный проход по bytes в `strict_json`;\n- отчёт и тест неверно описывали предел строгой SVG-подложки.\n\nЕщё три замечания были улучшениями:\n- сырой `InputLimit` из `_check_directory`;\n- неразличимый код отказа строгой подложки;\n- не измерен полный импорт.\n\nЧто изменилось в этом раунде:\n- `input_policy.check_json_bounds` при включённых пределах глубины и узлов отклоняет байт 0x00: `InputLimit(\"json_encoding\", code=\"invalid_json\")`. В `strict_json` это приходит через `read_archive` → `ImportFailure(invalid_json, reason=json_encoding)`, до записи в staging, потому что manifest читается в память.\n- `plan_image_ext` в строгом профиле превращает `DecorAssetError` в `InputLimit(\"strict_image_policy\")`, а `not_ready` пробрасывает без изменений. В `read_archive` `DecorAssetError` в строгом профиле даёт `ImportFailure` с исходным кодом, в HA — прежний `fail()`.\n- `_check_directory` вызывается внутри try в `expanded_size` и `read_archive`, `InputLimit` преобразуется в `ImportFailure` с reason.\n- Новые `charge_work` добавлены в `wall_carrier_eligible` (до отказа при нулевой толщине), в цикл `_reserve_host_interval` (вместо `any(...)`, семантика та же), в `wall_interval_free` и в `opening_repair._intervals`.\n\nЧто я разобрал:\n- полностью `read_archive` и `expanded_size` на head: порядок исключений, чтение manifest и `zigbee.json` через `strict_json`, путь подложки к `plan_image_ext`;\n- `_validate_svg` и `validate_asset`;\n- `structural_upload.parse_payload`;\n- тесты `test_input_policy.py` (строки 140–373) и новые тесты архива на кодировку и отмену или время каталога;\n- итоговый текст отчёта `docs/security/1395-input-audit.md`;\n- наличие кодов в `ERROR_CODES`;\n- отсутствие затронутых якорей в `scripts/mutation-registry.mjs`.",
-          "analysis": [
-            {
-              "topic": "Закрытие обхода через UTF-16/32",
-              "assessment": "Исправление минимальное и корректное. `json.loads(bytes)` поддерживает только UTF-8, UTF-8 с BOM, UTF-16 и UTF-32. В UTF-16/32 любой ASCII-символ синтаксиса JSON содержит нулевой байт, поэтому корректный документ в этих кодировках без 0x00 невозможен. Без NUL `detect_encoding` выбирает UTF-8, а для UTF-8 байтовый автомат синхронизирован с декодером: байты многобайтовых последовательностей ≥0x80 и не совпадают с `\"`/`\\\\`/скобками. Сканер проходит все bytes, если не отказал раньше, так что NUL нельзя спрятать за ранним успехом. Сырой NUL в UTF-8 JSON недопустим и вне строки, и внутри (strict decoder отклоняет управляющие символы), поэтому корректный ввод строгий профиль не теряет. HA не затронут: проверка выполняется только при заданных `json_depth`/`json_nodes`. Стоит сохранить, что `strict_json` по-прежнему передаёт bytes в тот же декодер, второй реализации разбора не появилось.",
-              "evidence": "input_policy.py `check_json_bounds` (ветка `char == 0`); backup_archive.py:486 и :546 (`strict_json` для manifest и zigbee); тесты `test_strict_zip_json_refuses_alternate_encoding_before_decoder`: 8 вариантов LE/BE, 16/32 бит, с BOM и без, spy на `json.loads`; `test_strict_manifest_encoding_refusal_preserves_ha_compatibility`: HA принимает, strict отказывает, staging пуст."
-            },
-            {
-              "topic": "Строгая SVG-подложка: каталог и код отказа",
-              "assessment": "Выбран дешёвый вариант (а), whitelist не расширен, что соответствует ТЗ. В каталоге 8 MiB описаны как предел исходных bytes, перечислены пределы канонизированного вывода (2 MiB), 5000 элементов, 512 000 символов атрибутов, 65 536 символов в одном атрибуте, глубина ссылок 64 и пределы растра 16384 / 32 Mpx для строгой подложки. Тест на 3 MiB с комментарием переименован и больше не выдаётся за доказательство вместимости. Отказ теперь `capacity_exceeded`/`strict_image_policy`, его можно отличить от повреждённого HA-бэкапа — это прямо просило ТЗ. Неточность: тест с `desc` на 3 MiB отклоняется не пределом канонизированного вывода 2 MiB, а более ранним правилом `_validate_svg`, где текст разрешён только в `title`/`desc` и не длиннее 4096 символов. Вывод теста («strict отказывает, HA принимает») верен, но фраза отчёта «сохраняется при канонизации и отвергается» намекает на другой предел. Ограничение текстового содержимого (нет `<text>`, `title`/`desc` ≤ 4096) в каталог не внесено, хотя именно оно отсечёт большинство реальных подложек Sweet Home 3D и LibreOffice в строгом профиле.",
-              "evidence": "backup_archive.py:262-270; decor_assets.py:257-259 (text ≤4096 только для title/desc), :315 `_check_size(canonical)`; tests_backend/test_input_policy.py:337-372; docs/security/1395-input-audit.md — строки каталога «Decor SVG / strict backdrop content caps» и раздел «Два SVG назначения»."
-            },
-            {
-              "topic": "Контракт ошибок архива",
-              "assessment": "`_check_directory` теперь внутри try: отмена даёт `zip_cancelled`, время — `capacity_exceeded`, оба с reason, без сырого `InputLimit`. В строгом профиле `DecorAssetError` из decor-блобов отдаётся как `ImportFailure` с исходным кодом (`unsupported_image`/`invalid_image`/`too_large`/`not_ready`). Все эти коды есть в каноническом `ERROR_CODES`, а `public_message` наружу отдаёт только код. В HA ветка `fail()` прежняя. Отказ строгой подложки происходит после записи `blob-{index}` в собственный staging операции. Это соответствует контракту «staging принадлежит операции, очищает адаптер», и отчёт не утверждает обратного: «до staging write» сказано только про manifest.",
-              "evidence": "backup_archive.py:425-436, 439-444, 550-580; core/constants.py:132; tests_backend/test_input_archive_security.py `test_directory_budget_errors_use_the_archive_domain_contract` (4 комбинации)."
-            },
-            {
-              "topic": "Дополнительные charge в отвергнутых ветвях",
-              "assessment": "Добавки корректны и не меняют результат. В `_reserve_host_interval` цикл с `charge_work()` эквивалентен прежнему `any(...)`, включая ранний возврат `overlap` и отсутствие мутации `occupied` при отказе (проверено тестом). В `wall_carrier_eligible` единица списывается до проверки нулевой толщины — это закрывает сканирование кандидатов, которые отбрасываются без числового предиката. Вне scope `charge_work` сводится к одному `ContextVar.get()`, поведение HA не меняется.",
-              "evidence": "validation.py `_reserve_host_interval`; wall_segment_model.py `wall_carrier_eligible`, `wall_interval_free`; opening_repair.py `_intervals`; тесты `test_rejected_zero_thickness_carriers_still_consume_work`, `test_opening_overlap_inner_loop_consumes_work_before_mutating_reservation`."
-            },
-            {
-              "topic": "Бюджет на полном импорте: какой предел срабатывает первым",
-              "assessment": "Новые замеры полезны и честны, но из них следует то, что отчёт формулирует слишком мягко. Полный `parse_document` 10×400 тратит 865 440 единиц (43% бюджета) за 4271 ms (85% вторичного таймера 5 s). Для `validate_graph` соотношение около 570 единиц/ms, для полного импорта около 200 единиц/ms: значительная линейная работа (схема, миграции, копии, canonicalization) единиц не списывает. Поэтому для больших нормальных импортов фактически первым срабатывает таймер, а детерминированный бюджет остаётся первичным только для патологической квадратичной геометрии. Это не нарушение ТЗ: первичный бюджет обещан для «дорогой геометрии», отказ по времени ограничен и безопасен, строгий профиль ещё ни у кого не включён, а отчёт признаёт, что «на более медленной машине вторичный 5s может сработать раньше». Но владельцу и будущему адаптеру стоит прямо знать, что исход импорта ~10+ этажей по 400 комнат зависит от машины уже на эталонном стенде.",
-              "evidence": "docs/security/1395-input-audit.md, раздел «Фактические измерения» (1×400: 390.32 ms / 86 544 units; 10×400: 4271.03 ms / 865 440 units; parallel1600: 3541 ms / 2 000 000 units); input_policy.py `InputPolicy.__post_init__`: seconds ≤ 5, поднять нельзя."
-            },
-            {
-              "topic": "Сохранённые удачные решения",
-              "assessment": "Без изменений относительно первого раунда и стоит сохранить: один `input_scope` с ContextVar; запрет подменять политику во вложенном scope; безусловные потолки в `__post_init__`; профиль HA по умолчанию без новых пределов; исходные bytes подложки вместо канонизированного вывода; `public_message` только с кодом.",
-              "evidence": "input_policy.py; поиск `input_scope(` в интеграции находит только определение; backup_archive.py:263-264 (комментарий о сохранении ORIGINAL bytes)."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Уточнить в отчёте, почему отклоняется тест с `desc` на 3 MiB: срабатывает правило «текст только в `title`/`desc`, не длиннее 4096 символов», а не предел канонизированного вывода 2 MiB. Добавить в каталог строку о текстовом содержимом строгой подложки: `<text>` не входит в whitelist, текст в `title`/`desc` ≤ 4096 символов. Польза: будущий caller заранее поймёт, что типичные подложки Sweet Home 3D и LibreOffice с подписями в строгом профиле не пройдут. Цена — одна строка документации.",
-            "Прямо записать в отчёте наблюдение из замеров: на полном импорте 10×400 использовано 43% единиц и 85% таймера, поэтому для больших нормальных планов первым срабатывает 5 s, и исход зависит от машины. Если владельцу нужен детерминированный исход и для них, дешевле всего списывать единицы в линейных проходах валидации и миграции по пространствам и комнатам (по одной на элемент), чем поднимать таймер. Это можно оставить отдельной задачей, раз строгий профиль пока никем не включён.",
-            "В `structural_upload.parse_payload` отказ сканера по кодировке приходит как `UploadError(\"invalid_json\")`, а все прочие ошибки декодирования там дают `invalid_format`. Это касается только строгого профиля, но единый код (`invalid_format` или явное сопоставление `json_encoding` → `invalid_format`) упростит контракт будущего адаптера."
-          ],
-          "boundaries": "Это ревью кода на S7. Сборку, pytest, ruff/mypy и скрипт замеров я не запускал. Использован успешный прогон «Тесты для задачи #1395 (перед ревью)» на финальном SHA 3832620122b454c2b1ed1b9cdc64ae4263616c06. Числа 69/69, 106/106, 440/440 и замеры времени — со слов исполнителя, я их не воспроизводил.\n\nТезис «любой корректный JSON в UTF-16/32 содержит NUL» выведен из устройства кодировок и поведения `json.detect_encoding`, без запуска. Его подтверждают 8 отрицательных тестов исполнителя.\n\nПрочитаны на head:\n- backup_archive.py:240-299 и 425-580;\n- decor_assets.py:226-415;\n- structural_upload.py:20-80;\n- tests_backend/test_input_policy.py:140-373;\n- итоговый diff отчёта `docs/security/1395-input-audit.md`.\n\nОстальные части diff прочитаны по сводному diff задачи. Поиском проверены `ERROR_CODES` и отсутствие якорей mutation registry на перенесённых строках.\n\nПовторно не прочитаны целиком: циклы `plan_graph.validate_graph`, `graph_write`, `wall_node_*` и HA-адаптеры транзакций и отмены. Для них использованы выводы первого раунда и регрессии S6. Внешние issue и живой HA не использовались."
-        },
-        "usage": {
-          "input_tokens": 20,
-          "cache_creation_input_tokens": 160857,
-          "cache_read_input_tokens": 1211809,
-          "output_tokens": 15231,
-          "output_tokens_details": {
-            "thinking_tokens": 7420
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 160857,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 989,
-              "cache_read_input_tokens": 144336,
-              "cache_creation_input_tokens": 20725,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 20725
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nОба блокера первого раунда устранены по существу, новых существенных рисков исправления не принесли. Работу можно принять.\n\n1. Обход проверки JSON через UTF-16/32 закрыт. В строгом профиле `check_json_bounds` отклоняет сырой NUL ещё до `json.loads`. Любой корректный JSON в UTF-16 или UTF-32 обязательно содержит байт 0x00: каждый ASCII-символ синтаксиса (`{`, `[`, `\"`, цифры) кодируется с нулевым байтом. Значит, `json.detect_encoding` без NUL всегда выбирает UTF-8, и сканер с декодером видят одну и ту же грамматику. В допустимом UTF-8 JSON сырого NUL не бывает, поэтому корректный ввод не теряется. HA по-прежнему без ограничений структуры и принимает manifest в UTF-16/32, это проверено реальным ZIP.\n2. Ошибочное заявление о вместимости строгой SVG-подложки исправлено вариантом (а). В каталоге 8 MiB теперь описаны как предел исходных bytes, а не допустимого объёма SVG. Перечислены пределы decor для канонизированного вывода, тест на 3 MiB с комментарием честно подписан как проверка round-trip. Отказ строгого профиля теперь отличим от повреждённого файла: `capacity_exceeded` с reason `strict_image_policy`, а `not_ready` сохранён для отсутствующего декодера.\n\nПопутные улучшения тоже сделаны: проверки центрального каталога ZIP перенесены внутрь try, и отмена или время дают `ImportFailure` с кодом. Измерен полный `parse_document`, и отчёт честно признаёт, что импорт 50×400 не измерен.\n\nДля пользователя HA ничего не меняется: строгий профиль нигде не включён, `charge_work` и `checkpoint` без scope ничего не делают, правило #1033 для подложек и исходные bytes сохранены. Остались только необязательные уточнения отчёта. Главное — для полного импорта первым фактически срабатывает таймер, а не детерминированный бюджет единиц.\n\n## Понимание решения\n\nЗадача — аудит ядра на недоверенный ввод. Нужно было ввести явный строгий `InputPolicy` для будущего недоверенного caller, не меняя пределы и поведение HA-профиля, и исправить подтверждённые дефекты.\n\nВ первом раунде было два блокера:\n- UTF-16/32 обходил предварительный проход по bytes в `strict_json`;\n- отчёт и тест неверно описывали предел строгой SVG-подложки.\n\nЕщё три замечания были улучшениями:\n- сырой `InputLimit` из `_check_directory`;\n- неразличимый код отказа строгой подложки;\n- не измерен полный импорт.\n\nЧто изменилось в этом раунде:\n- `input_policy.check_json_bounds` при включённых пределах глубины и узлов отклоняет байт 0x00: `InputLimit(\"json_encoding\", code=\"invalid_json\")`. В `strict_json` это приходит через `read_archive` → `ImportFailure(invalid_json, reason=json_encoding)`, до записи в staging, потому что manifest читается в память.\n- `plan_image_ext` в строгом профиле превращает `DecorAssetError` в `InputLimit(\"strict_image_policy\")`, а `not_ready` пробрасывает без изменений. В `read_archive` `DecorAssetError` в строгом профиле даёт `ImportFailure` с исходным кодом, в HA — прежний `fail()`.\n- `_check_directory` вызывается внутри try в `expanded_size` и `read_archive`, `InputLimit` преобразуется в `ImportFailure` с reason.\n- Новые `charge_work` добавлены в `wall_carrier_eligible` (до отказа при нулевой толщине), в цикл `_reserve_host_interval` (вместо `any(...)`, семантика та же), в `wall_interval_free` и в `opening_repair._intervals`.\n\nЧто я разобрал:\n- полностью `read_archive` и `expanded_size` на head: порядок исключений, чтение manifest и `zigbee.json` через `strict_json`, путь подложки к `plan_image_ext`;\n- `_validate_svg` и `validate_asset`;\n- `structural_upload.parse_payload`;\n- тесты `test_input_policy.py` (строки 140–373) и новые тесты архива на кодировку и отмену или время каталога;\n- итоговый текст отчёта `docs/security/1395-input-audit.md`;\n- наличие кодов в `ERROR_CODES`;\n- отсутствие затронутых якорей в `scripts/mutation-registry.mjs`.\n\n## Разбор решения\n\n### Закрытие обхода через UTF-16/32\n\nИсправление минимальное и корректное. `json.loads(bytes)` поддерживает только UTF-8, UTF-8 с BOM, UTF-16 и UTF-32. В UTF-16/32 любой ASCII-символ синтаксиса JSON содержит нулевой байт, поэтому корректный документ в этих кодировках без 0x00 невозможен. Без NUL `detect_encoding` выбирает UTF-8, а для UTF-8 байтовый автомат синхронизирован с декодером: байты многобайтовых последовательностей ≥0x80 и не совпадают с `\"`/`\\\\`/скобками. Сканер проходит все bytes, если не отказал раньше, так что NUL нельзя спрятать за ранним успехом. Сырой NUL в UTF-8 JSON недопустим и вне строки, и внутри (strict decoder отклоняет управляющие символы), поэтому корректный ввод строгий профиль не теряет. HA не затронут: проверка выполняется только при заданных `json_depth`/`json_nodes`. Стоит сохранить, что `strict_json` по-прежнему передаёт bytes в тот же декодер, второй реализации разбора не появилось.\n\nОснование: input_policy.py `check_json_bounds` (ветка `char == 0`); backup_archive.py:486 и :546 (`strict_json` для manifest и zigbee); тесты `test_strict_zip_json_refuses_alternate_encoding_before_decoder`: 8 вариантов LE/BE, 16/32 бит, с BOM и без, spy на `json.loads`; `test_strict_manifest_encoding_refusal_preserves_ha_compatibility`: HA принимает, strict отказывает, staging пуст.\n\n### Строгая SVG-подложка: каталог и код отказа\n\nВыбран дешёвый вариант (а), whitelist не расширен, что соответствует ТЗ. В каталоге 8 MiB описаны как предел исходных bytes, перечислены пределы канонизированного вывода (2 MiB), 5000 элементов, 512 000 символов атрибутов, 65 536 символов в одном атрибуте, глубина ссылок 64 и пределы растра 16384 / 32 Mpx для строгой подложки. Тест на 3 MiB с комментарием переименован и больше не выдаётся за доказательство вместимости. Отказ теперь `capacity_exceeded`/`strict_image_policy`, его можно отличить от повреждённого HA-бэкапа — это прямо просило ТЗ. Неточность: тест с `desc` на 3 MiB отклоняется не пределом канонизированного вывода 2 MiB, а более ранним правилом `_validate_svg`, где текст разрешён только в `title`/`desc` и не длиннее 4096 символов. Вывод теста («strict отказывает, HA принимает») верен, но фраза отчёта «сохраняется при канонизации и отвергается» намекает на другой предел. Ограничение текстового содержимого (нет `<text>`, `title`/`desc` ≤ 4096) в каталог не внесено, хотя именно оно отсечёт большинство реальных подложек Sweet Home 3D и LibreOffice в строгом профиле.\n\nОснование: backup_archive.py:262-270; decor_assets.py:257-259 (text ≤4096 только для title/desc), :315 `_check_size(canonical)`; tests_backend/test_input_policy.py:337-372; docs/security/1395-input-audit.md — строки каталога «Decor SVG / strict backdrop content caps» и раздел «Два SVG назначения».\n\n### Контракт ошибок архива\n\n`_check_directory` теперь внутри try: отмена даёт `zip_cancelled`, время — `capacity_exceeded`, оба с reason, без сырого `InputLimit`. В строгом профиле `DecorAssetError` из decor-блобов отдаётся как `ImportFailure` с исходным кодом (`unsupported_image`/`invalid_image`/`too_large`/`not_ready`). Все эти коды есть в каноническом `ERROR_CODES`, а `public_message` наружу отдаёт только код. В HA ветка `fail()` прежняя. Отказ строгой подложки происходит после записи `blob-{index}` в собственный staging операции. Это соответствует контракту «staging принадлежит операции, очищает адаптер», и отчёт не утверждает обратного: «до staging write» сказано только про manifest.\n\nОснование: backup_archive.py:425-436, 439-444, 550-580; core/constants.py:132; tests_backend/test_input_archive_security.py `test_directory_budget_errors_use_the_archive_domain_contract` (4 комбинации).\n\n### Дополнительные charge в отвергнутых ветвях\n\nДобавки корректны и не меняют результат. В `_reserve_host_interval` цикл с `charge_work()` эквивалентен прежнему `any(...)`, включая ранний возврат `overlap` и отсутствие мутации `occupied` при отказе (проверено тестом). В `wall_carrier_eligible` единица списывается до проверки нулевой толщины — это закрывает сканирование кандидатов, которые отбрасываются без числового предиката. Вне scope `charge_work` сводится к одному `ContextVar.get()`, поведение HA не меняется.\n\nОснование: validation.py `_reserve_host_interval`; wall_segment_model.py `wall_carrier_eligible`, `wall_interval_free`; opening_repair.py `_intervals`; тесты `test_rejected_zero_thickness_carriers_still_consume_work`, `test_opening_overlap_inner_loop_consumes_work_before_mutating_reservation`.\n\n### Бюджет на полном импорте: какой предел срабатывает первым\n\nНовые замеры полезны и честны, но из них следует то, что отчёт формулирует слишком мягко. Полный `parse_document` 10×400 тратит 865 440 единиц (43% бюджета) за 4271 ms (85% вторичного таймера 5 s). Для `validate_graph` соотношение около 570 единиц/ms, для полного импорта около 200 единиц/ms: значительная линейная работа (схема, миграции, копии, canonicalization) единиц не списывает. Поэтому для больших нормальных импортов фактически первым срабатывает таймер, а детерминированный бюджет остаётся первичным только для патологической квадратичной геометрии. Это не нарушение ТЗ: первичный бюджет обещан для «дорогой геометрии», отказ по времени ограничен и безопасен, строгий профиль ещё ни у кого не включён, а отчёт признаёт, что «на более медленной машине вторичный 5s может сработать раньше». Но владельцу и будущему адаптеру стоит прямо знать, что исход импорта ~10+ этажей по 400 комнат зависит от машины уже на эталонном стенде.\n\nОснование: docs/security/1395-input-audit.md, раздел «Фактические измерения» (1×400: 390.32 ms / 86 544 units; 10×400: 4271.03 ms / 865 440 units; parallel1600: 3541 ms / 2 000 000 units); input_policy.py `InputPolicy.__post_init__`: seconds ≤ 5, поднять нельзя.\n\n### Сохранённые удачные решения\n\nБез изменений относительно первого раунда и стоит сохранить: один `input_scope` с ContextVar; запрет подменять политику во вложенном scope; безусловные потолки в `__post_init__`; профиль HA по умолчанию без новых пределов; исходные bytes подложки вместо канонизированного вывода; `public_message` только с кодом.\n\nОснование: input_policy.py; поиск `input_scope(` в интеграции находит только определение; backup_archive.py:263-264 (комментарий о сохранении ORIGINAL bytes).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Уточнить в отчёте, почему отклоняется тест с `desc` на 3 MiB: срабатывает правило «текст только в `title`/`desc`, не длиннее 4096 символов», а не предел канонизированного вывода 2 MiB. Добавить в каталог строку о текстовом содержимом строгой подложки: `<text>` не входит в whitelist, текст в `title`/`desc` ≤ 4096 символов. Польза: будущий caller заранее поймёт, что типичные подложки Sweet Home 3D и LibreOffice с подписями в строгом профиле не пройдут. Цена — одна строка документации.\n- Прямо записать в отчёте наблюдение из замеров: на полном импорте 10×400 использовано 43% единиц и 85% таймера, поэтому для больших нормальных планов первым срабатывает 5 s, и исход зависит от машины. Если владельцу нужен детерминированный исход и для них, дешевле всего списывать единицы в линейных проходах валидации и миграции по пространствам и комнатам (по одной на элемент), чем поднимать таймер. Это можно оставить отдельной задачей, раз строгий профиль пока никем не включён.\n- В `structural_upload.parse_payload` отказ сканера по кодировке приходит как `UploadError(\"invalid_json\")`, а все прочие ошибки декодирования там дают `invalid_format`. Это касается только строгого профиля, но единый код (`invalid_format` или явное сопоставление `json_encoding` → `invalid_format`) упростит контракт будущего адаптера.\n\n## Границы анализа\n\nЭто ревью кода на S7. Сборку, pytest, ruff/mypy и скрипт замеров я не запускал. Использован успешный прогон «Тесты для задачи #1395 (перед ревью)» на финальном SHA 3832620122b454c2b1ed1b9cdc64ae4263616c06. Числа 69/69, 106/106, 440/440 и замеры времени — со слов исполнителя, я их не воспроизводил.\n\nТезис «любой корректный JSON в UTF-16/32 содержит NUL» выведен из устройства кодировок и поведения `json.detect_encoding`, без запуска. Его подтверждают 8 отрицательных тестов исполнителя.\n\nПрочитаны на head:\n- backup_archive.py:240-299 и 425-580;\n- decor_assets.py:226-415;\n- structural_upload.py:20-80;\n- tests_backend/test_input_policy.py:140-373;\n- итоговый diff отчёта `docs/security/1395-input-audit.md`.\n\nОстальные части diff прочитаны по сводному diff задачи. Поиском проверены `ERROR_CODES` и отсутствие якорей mutation registry на перенесённых строках.\n\nПовторно не прочитаны целиком: циклы `plan_graph.validate_graph`, `graph_write`, `wall_node_*` и HA-адаптеры транзакций и отмены. Для них использованы выводы первого раунда и регрессии S6. Внешние issue и живой HA не использовались.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 3c29bb9c7c6a8626a472c7d978f32963c704cc8a → 3832620122b454c2b1ed1b9cdc64ae4263616c06\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1395, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Цель и результат\nАудит ядра после #1391 и адресный ремонт подтверждённых отказов ввода, без изменения формата/model11/exportv3/ZIPv1 и без включения новых strict-ограничений в HA Store/startup/save. Подробный отчёт по шести классам угроз и всем перечисленным владельцам: docs/security/1395-input-audit.md.\n\n### Решение и альтернативы\nОдин core.input_policy с явным request-wide ContextVar scope; strict 256/512MiB ZIP/expanded, JSON/XML depth64/JSON1M nodes до decoder, geometry2M work units + secondary5s с injected clock. HA defaults сохраняются. Predicate/AABB/legacy geometry и отдельные migration inner loops списывают units до работы; вложенные вызовы не сбрасывают лимит. Это кооперативная защита, не thread timeout и не готовый публичный сервер.\nПодтверждённые ремонты: фактический central-directory count до ZipFile; safe RecursionError portable import/copy; finite parse_float (±1e999 обходил parse_constant); safe public protocol message вместо внутренних деталей. Strict требует raster decoder и reject-whitelist для backdrop; HA opaque XML/#1033 и оригинальные bytes не ужесточаются/не переписываются.\n\n### Риски и места для внимания\nСохранение HA SVG/backdrop совместимости и размеров; отсутствие дополнительного чтения внешних URL; request scope/cancellation через будущий executor; checks не прерывают внутренности native library/PIL/JSON/сортировки. Hard CPU/memory isolation/concurrency quotas будущего сайта остаются вне задачи. Обходы обычных HA ACL не добавлялись. Отчёт считает подтверждённые High закрытыми только в исследованном core-scope, не сертифицирует будущий endpoint.\nHA ошибки по-прежнему используют существующие локализуемые коды, details остаются локально. Source source-reader/mutation anchors не ослабляются. Первое code review вернуло два блокера; исправления ниже.\n\n### Проверки и ограничения\nПосле code review:69/69 адресных fixtures, Ruff и mypy input_policy PASS. Восемь UTF-16/32 (LE/BE, с/без BOM) отрицательных cases до фикса доходили до spy-decoder; теперь отказ до loads, UTF-8 positive и HA alternate-encoding positive сохранены. Настоящий ZIP manifest UTF-16/32 подтверждает отсутствие staging writes в strict и прежний успешный HA-путь. Проверены также directory cancel/time → ImportFailure и code/reason, strict canonical SVG content refusal и unchanged HA acceptance. Полный parse_document:1×400комнат371213bytes →390.32ms/86544units;10×400комнат3708125bytes →4271.03ms/865440units, оба accepted.50×400source18,413,938bytes уже превышает прежние16MiB и не может быть создан для strict-замера; это явно не PASS. Эти серии диагностические, не timing guarantee. Первый S64c9221465 прошёл592/592; финальный изменённый SHA снова проходит finish, прежний PASS не приписывается новым исходникам.\n\nДо ремонта сохранены реальные reproductions: depth1500/10000 → RecursionError; 2 directory fixtures падали до actual-count фикса; ±1e999 принимались strict_json; WS probe отражал PRIVATE-FIXTURE detail, после не отражает.\nАдресные проверки: 440/440 backend/реальных HA pytest (новые fixtures, backup/import/structural/transaction/cancel/core boundary и SVG sandbox header). Ruff owned sources/tests/script PASS; mypy input_policy PASS; 31/31 task-selection tests. Каталог и план S6 подтверждают security/critical классификацию всех трёх новых файлов и выбор по actual core source readers, не только areaTests.\nBounded synthetic measurement script:400 rooms /441nodes/840edges strict95.18ms/29178units accepted;1600parallel strict3541ms/2M units → capacity_exceeded без мутации исходника. Это одна серия, не performance-медиана. Полные исходы/лимиты в отчёте. S6 финального SHA выполняет штатный finish.\nE2E: https://github.com/Matysh/houseplan-e2e/issues/53#issuecomment-6871102978 — новых browser journeys не нужно, существующие import/export/cancel/sandbox и установка/upgrade остаются на следующую бету. Baseline, живой HA и локальный стенд владельца не менялись; релиз не запускался.\n\n### Исправления по предыдущему ревью\nДополнительная S6 сверка F5 обнаружила неучтённые rejected branches: zero-thickness carrier до numeric predicates и overlap reservation inner loop. Два теста сначала красные, затем исправлены charge перед early refusal/каждой парой; neighbouring openings/repair intervals также считают несовпадающий host.106/106 адресных fixtures, включая HA opening repair, проходят. Это дополнение того же согласованного аудита, не новый security-gate и не изменение HA default profile.\n\nКод, раунд1: https://github.com/Matysh/houseplan-card/actions/runs/43554836349.\n- UTF-16/32 bypass → подтверждён8 red cases. Strict scanner теперь отклоняет raw NUL до loads, то есть не допускает alternate encodings JSON syntax; escaped U+0000 в UTF-8 не запрещается. HA без strict bounds сохраняет decoder encodings. Отказ передаёт фиксированный reason=json_encoding, включая реальный ZIP.\n- Неверный SVG capacity claim → выбран минимальный вариант(а): прежние decor content caps не расширяются. В отчёте явно записаны outer8MiB input vs canonical2MiB,5000elements,512000attrs chars/single65536/ref-depth64 и raster dimensions.3MiB comment roundtrip честно доказывает только bytes preservation;3MiB surviving desc fixture отдельно доказывает отказ strict при прежнем принятии HA. Strict backdrop refusal имеет capacity_exceeded/reason=strict_image_policy; отсутствующий decoder сохраняет not_ready.\n- Directory checkpoints → перенесены под archive-domain try, cancel/time дают ImportFailure с code и безопасным reason, не raw InputLimit.\n- Добавлены полные portable import замеры1/10/50×400 и описание machine-dependent secondary5s. Уточнено отсутствие pixel cap у HA backdrop. Сохранён исходный security scope, новых публичных endpoints/worker isolation не добавлено.\n\nПринятая редакция2 ТЗ сохранена: по S4R1 https://github.com/Matysh/houseplan-card/actions/runs/43515190357 отдельно реализованы HA/strict backdrop, bytes pre-scan с keys/escape, общий deterministic work budget+clock и fail-closed strict raster. Требования не расширены до публичного сайта.\n```\n\n</details>\n",
-        "createdAt": "2026-11-14T04:44:47.042Z",
-        "artifactId": 14098769710,
-        "runId": 43557894892,
-        "runAttempt": 1,
-        "completedAt": "2026-11-14T04:41:32Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43557894892",
-        "runStatus": "in_progress",
-        "publicationPending": true,
-        "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1396": {
@@ -5158,24 +4996,8 @@
   "waiting": [
     1392
   ],
-  "active": {
-    "issue": 1395,
-    "worker": "finish",
-    "token": "430:finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:1:admit",
-    "fence": 430,
-    "materialSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
-    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794630940570,
-    "expiresAt": 1794635100884,
-    "patchId": "37136a7702967c327436700564db207b57beba91",
-    "reviewRequest": "review:1395:2:37136a7702967c327436700564db207b57beba91:3c29bb9c7c6a8626a472c7d978f32963c704cc8a"
-  },
+  "active": null,
   "events": {
-    "github:43515058065:1:spec:1395:spec-request": {
-      "digest": "3608873f6034b21ea424821722398c159d16857cd52d8f7d9bb5b504dd59972c",
-      "issue": 1395
-    },
     "github:43515058065:1:spec:1394:spec-request": {
       "digest": "12777e21751a9ed7739ddf636b9b3bee3ba44b51ffb7d393f4c581e85a28643e",
       "issue": 1394
@@ -5183,22 +5005,6 @@
     "github:43515058065:1:spec:1392:spec-request": {
       "digest": "0bb1339f9da7ab45b5f5a83f729b1cc99b9042a6d04f692fa1da81fb39cd47fe",
       "issue": 1392
-    },
-    "github:43515725918:1:spec:1395:spec-presentation": {
-      "digest": "2dcc9523b978bcb0623b8a81e3a574e5494deb04cac52a64584f7103d908b3f9",
-      "issue": 1395
-    },
-    "github:43515725918:1:spec:1395:spec-complete": {
-      "digest": "d1d5d4809f8ad629de9d1d31de13cd54118f1194dc864f055175f5f84712486b",
-      "issue": 1395
-    },
-    "github:43515725918:1:spec:1395:spec-label": {
-      "digest": "db19a522e731601acc8d8987758bb1deaa568ed1ea12b78343765b5c6c0b6d63",
-      "issue": 1395
-    },
-    "github:43515725918:1:completions:report:cc6c1e022a8e5e040251cb2f09bebddb93c58991384ec458bc1c261ba66602dd": {
-      "digest": "cdfada79292f0515aced8949e1b0a71387bd86a2f1c50e42398bdb65198324af",
-      "issue": 1395
     },
     "github:43515933499:1:spec:1394:spec-presentation": {
       "digest": "9720f3331a4c5e5ec5a62636247e526fb1b63ab5fa38f84b911f28428a21707d",
@@ -5232,25 +5038,9 @@
       "digest": "6923edc2dd083d159ddc5267e69b189bd51800bb52df83859d8ab23b1110f3a2",
       "issue": 1392
     },
-    "github:43517454379:1:spec:1395:spec-request": {
-      "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
-      "issue": 1395
-    },
     "github:43517454379:1:spec:1392:spec-request": {
       "digest": "fb1109795911cace80b5f9f1d15c2e678ea492d0f1129906e4ffc3ed11608ea0",
       "issue": 1392
-    },
-    "github:43517949751:1:spec:1395:spec-presentation": {
-      "digest": "9265279a48b5c9fbe9f092ac387e93dced523ae142ac70a657027de4b9be698a",
-      "issue": 1395
-    },
-    "github:43517949751:1:spec:1395:spec-complete": {
-      "digest": "61fed62e06ef63d0f887843eba47e22efb8f81d518a709dd0ff370643d1b4b90",
-      "issue": 1395
-    },
-    "github:43517949751:1:spec:1395:spec-label": {
-      "digest": "a5ccd2149de6fe12d341b57ff1c58ec1472d963a5c233c7c176efc27d59ce8ea",
-      "issue": 1395
     },
     "github:43517949751:1:spec:1392:spec-presentation": {
       "digest": "c0493985221ef84405751bae050303a96a7fef312acf567f9f055973b3ac53d9",
@@ -5263,10 +5053,6 @@
     "github:43517949751:1:spec:1392:spec-label": {
       "digest": "4ccdfe889e84f3902573a827ef08b7ad7780b6fc7f2a6994173ec6cc47910474",
       "issue": 1392
-    },
-    "github:43517949751:1:completions:report:8d88098c7cf5f8bf1982b2560c9d8f37df4c9c4245e6cac8c913633de048db88": {
-      "digest": "0483fb1530286e86707ce67807c366e2639325cdf5c3415aeb8242c7181e1d69",
-      "issue": 1395
     },
     "github:43517949751:1:completions:report:0d138b88b251101b6e13943b2a3cf6c795851304a913c2d6a08f37c7fa6241ab": {
       "digest": "6a5001a1d250dcd5010ca46a31ade304cf41b342112cbbc98113102c6083c1a3",
@@ -5748,109 +5534,13 @@
       "digest": "d65c1faed04de446e18ceb370d9bbd643825295790fc0ccb17ee3154f8598631",
       "issue": 1392
     },
-    "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:2:synchronized": {
-      "digest": "0050ca238ee714d514a3734a85d3238497bfbffb0877a2516e97d3b172389c91",
-      "issue": 1395
-    },
-    "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:3:automation-pending": {
-      "digest": "e2740fde7bae11f8cc2891e646592cdc5028c1a8b95ed89c5630af8bb9d578b1",
-      "issue": 1395
-    },
-    "github:43553916840:1:completions:message:1df6637c8749a785851a3c697651a40dfbf8be1b172ce2c471817345381e5b7e": {
-      "digest": "3b8a2ece75f361b216fd40367ea190fe9aab94a6a7826d3e3ae1ca804d8289c6",
-      "issue": 1395
-    },
-    "finish:562ab39b-64c4-4ec8-9204-6850f3228367": {
-      "digest": "9a90fe607e18978a8ee8390e725a205a683c4b222488a66da73bae5ea183955d",
-      "issue": 1395
-    },
-    "finish:de181c79-af97-4473-ba8d-859800fa09f1": {
-      "digest": "7be946f1efb8857a6ec20034f46ae9cb1e745d7466df56f8a754f16a5c036e46",
-      "issue": 1395
-    },
-    "finish:2bc5c35b-4ed8-4fc3-ba1d-bc0881c56288": {
-      "digest": "18a8717e7314930a327898c400e923af1c500b8749c6dcc8d725e5e678f50203",
-      "issue": 1395
-    },
-    "finish:dfe3cf0b-c922-4f10-9328-242d54614525": {
-      "digest": "c9b70bff42ba268c494583c1f153288873bfe604097f07c279bbf906df558405",
-      "issue": 1395
-    },
-    "finish:2a3325ee-2a7c-493e-860a-169e5e62f3de": {
-      "digest": "ae4f20b35aa08ef5aeff8af5fe56e7c932083b4a245897787b355e0e58e3f9c1",
-      "issue": 1395
-    },
-    "finish:0db426b6-1523-4132-9982-ae8219b32c56": {
-      "digest": "b30ac68382e6a66b2fb99596e67e42de4c8bc3f01996445868cdb93678517809",
-      "issue": 1395
-    },
-    "finish:fdde981b-d803-4245-9b0e-2c7aa8273443": {
-      "digest": "51991b481d461a4a0de8f5647576f5269ff66dcf9a13b76463b21e6627165378",
-      "issue": 1395
-    },
-    "finish:3727194a-7759-49c4-9361-d0625d430199": {
-      "digest": "d497eb4f793f3e6787df7103e3828d8d77b76725eaed104a8e57db56d178272c",
-      "issue": 1395
-    },
-    "finish:cebab7fe-d360-47f7-ab85-428d9e74bb3e": {
-      "digest": "ed517ee87fbbdb4bb9cb2055a8baedd6d01744270b38adeae2f5f40d55d103dc",
-      "issue": 1395
-    },
-    "finish:81de961e-7197-47ae-b084-76621ecbd949": {
-      "digest": "41dc9de436534981677b099ee5a0660f91f2ac5a9398c3d0b32dc2681341f536",
-      "issue": 1395
-    },
-    "finish:6cf96453-d7fb-4646-ad3c-eaf1a7176aef": {
-      "digest": "be85e27d654a8aca5270ff4e80d795413a25f8624c6a5e2badb1b3d5e4ae42bb",
-      "issue": 1395
-    },
-    "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:7:s6-label": {
-      "digest": "e4eac777e400333b5705a8261718266027badb96698c3acca902d43769505c37",
-      "issue": 1395
-    },
-    "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:8:review-requested": {
-      "digest": "8971453db24eefc4a67821af1a110fd590b7faa07fd8e0ecb20c0f38a9174e0f",
-      "issue": 1395
-    },
-    "github:43554820797:1:completions:message:1fef862edf8dbe31f9b96305a05109278e2ce3af39b8b547aea8b2f546cb4ce2": {
-      "digest": "f4f4a3d1238c0de8c68afd92c64bb17e4c856ece5751eceae38403f1ef630f6e",
-      "issue": 1395
-    },
-    "github:43554820797:1:completions:message:e94960dcdb22222f114d665039f5dbf16fdbf3de159112b895a5dcf2489130d2": {
-      "digest": "d4ad2f488693c8c449af4a5e7e9a070df255d122c399852bc0199f533bc371d6",
-      "issue": 1395
-    },
     "github:43555134078:1:spec:1394:spec-request": {
       "digest": "da0a567c831444c6edf8188c369afccc9da568d6542dab5b8e8f2f028cdcb317",
       "issue": 1394
     },
-    "github:43555134078:1:completions:message:8de3fef4406ff14cad30cbc63d4fdf6b15bbb13e03f8e284d54882b6a5056d83": {
-      "digest": "bf2deb6cfd74507bd08362646fcbe52c4467f5088f9490ed790562a051d6e16d",
-      "issue": 1395
-    },
-    "github:43555375015:1:tick:0:review-presentation": {
-      "digest": "814f227c7256c8a98a4f006080269958c273a43e6e95411da35f4ff88c865cd5",
-      "issue": 1395
-    },
-    "github:43555375015:1:tick:0:return": {
-      "digest": "927d6658dffbb5e53ec7b7e610e9853177137d0f7975cf43e4e6f10b14449f49",
-      "issue": 1395
-    },
-    "github:43555375015:1:tick:0:return-label": {
-      "digest": "9cdaabada5d41661512324c750529d4a3e65f2b70632c8399b962b5115739a95",
-      "issue": 1395
-    },
-    "github:43555375015:1:completions:report:ff4067e60fc13361aa2a4e439f131a0632f16bdafc298baef5442739ea5666c1": {
-      "digest": "bec9bbef76475c20d0987d2359a85ce08d7d287edc4bd971202e3830b821b107",
-      "issue": 1395
-    },
     "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:2:synchronized": {
       "digest": "2546533a83b1d907120455065297b2521ee026113038d838254f09bdaef17260",
       "issue": 1392
-    },
-    "github:43555375015:1:completions:metadata:72a69560-850b-4582-a449-7a38163e6d46:task-notice:1395::": {
-      "digest": "8e09fdf787678b4e240f4ce1c8290121429aecb5632c18786cf580753314e62a",
-      "issue": 1395
     },
     "github:43555427285:1:completions:message:86da7b949e9a7f3ec3b5eadde956904f9255b35c1ab05981adc87eab0723cc2e": {
       "digest": "2702ea65bc2131d17b7055d69dd077e0022f66fb5a510110d318abbd984da8f5",
@@ -5948,90 +5638,9 @@
       "digest": "755e1c38b339c23a881c49fae42c2732dbc70527c284424bb4e33332a1475963",
       "issue": 1392
     },
-    "finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:2:synchronized": {
-      "digest": "c6ac77841144d79230cdf047ab06e13451e9390e8169a80325c8dce38d1d5c29",
-      "issue": 1395
-    },
-    "finish:21bf81af-d208-453c-8518-f683b99da852": {
-      "digest": "232b7a6f50b8239db03babbbe73b681bd367042238dc91f3e46ff75a34815456",
-      "issue": 1395
-    },
-    "finish:b0c99c12-127b-4dfe-92fa-8ed2d3e3d27d": {
-      "digest": "c5f2fdaf17da2ebd7ebb8e355d8f44cd374ca5a715116d09c6fdb2e1ba5abd3f",
-      "issue": 1395
-    },
-    "finish:65e24cf6-6f64-4265-91b5-c99ae4531fc4": {
-      "digest": "30048f9da59fe8defa52aedc8b20152d96f064f4ceaf2d8e08710ef23d37a723",
-      "issue": 1395
-    },
-    "finish:1ad7918b-6c1d-4549-ba84-06c2a47399a7": {
-      "digest": "c3d89c2b2bb6b2ca1415e7dfddf2c3f05cc2101a71b42772859edbe6b2ce1afa",
-      "issue": 1395
-    },
-    "finish:174f3654-6034-48dc-bc54-2c7568e9f142": {
-      "digest": "52887a8e644b26a65a8dea99ea2c1f6e5692071e4922cacc82d3ea231a39762a",
-      "issue": 1395
-    },
-    "finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:3:s6-label": {
-      "digest": "eb37e5c3ab11c74d40f98cb835244b4942e8fddb80f8e2f05b30d3ddc5dbace4",
-      "issue": 1395
-    },
-    "finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:4:review-requested": {
-      "digest": "0ca123f39fd23efbb12329c9d529fd0bd166b6737cc5b963c4eb09fc26a68984",
-      "issue": 1395
-    },
-    "github:43557879107:1:tick:0:review-retry": {
-      "digest": "8f63e068bb4a5318b9fd10880aedeac9264cbcd1d40e53170a5349ed5857b1fd",
-      "issue": 1395
-    },
-    "github:43557879107:1:completions:message:1f2b483a5f405b10f7d94f77290e4a1b8df727a68f8ee0e7568656135af48fdc": {
-      "digest": "eb898ecc1e4033ac174603f27b6942c6c5930c82528c62995e01d377aa448501",
-      "issue": 1395
-    },
-    "github:43557879107:1:completions:message:27fc30656fde4beb8c96327518e9331ef769b2ec849c13c0f87e19649f6a21ab": {
-      "digest": "1769ca5f7a95fab5e82248e1b3c388c71b693c734b7218d766a60606401f8faa",
-      "issue": 1395
-    },
-    "github:43557879107:1:completions:message:ec35c21ce760a77e078f508fdca8cee7d59f834dce08571fb7889237b3cacd46": {
-      "digest": "0da85ea112a8bab7ca4fdc351e75bb066416e8f8e7fdd21cc4cbdbd0a965967a",
-      "issue": 1395
-    },
     "github:43557879107:1:completions:notice:32391074fdf45c6f17f82467b2bf78e78e64441e05ec2117adeacef688dfda4d": {
       "digest": "fb8cbc4400f3870f7fe5d807b1f0782145444a14cfe1e103e1238a13e5d616ee",
       "issue": 1392
-    },
-    "github:43557879107:1:completions:message:32391074fdf45c6f17f82467b2bf78e78e64441e05ec2117adeacef688dfda4d": {
-      "digest": "79cbb08d78a9a9699db3afea8d85bf1945b1e4ef02f22dd7ed501b0181e0b7ed",
-      "issue": 1395
-    },
-    "github:43557879107:1:completions:message:0b4a91516e1a54a08810cfd546efa1f828c2b38ff96e461723948e758bdb3993": {
-      "digest": "5a10a92d24e106a169952c3d2275eebb552f50f15e65fff265cce420190391a8",
-      "issue": 1395
-    },
-    "finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:7:review-presentation": {
-      "digest": "2e118c142e968b87a151712cdad85ea968eff53a7650230489b02c1de2b10523",
-      "issue": 1395
-    },
-    "finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:7:review-complete": {
-      "digest": "f101d1171a273cffef1a6fbe3a6b75031fac09ce745826a6abaec7bc6c534b9b",
-      "issue": 1395
-    },
-    "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
-      "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
-      "issue": 1395,
-      "message": {
-        "kind": "spec-resubmitted",
-        "issue": 1395,
-        "at": 1794608037786,
-        "previousRound": 1,
-        "round": 2,
-        "requestId": "spec:1395:06640d28ad9e1ae890c5d4eb6e40a7c126f73123b9834957deac5944f4bfd85f",
-        "reviewChanges": "Это аудит и адресные исправления, не декларация полной безопасности будущего сервера. Исходники уже содержат streaming ZIP/директории до ZipFile, счётчики и strict asset SVG; их нельзя игнорировать или переписать второй реализацией. Найденные реальные транзитивные HA-зависимости устраняет #1391. Различаются существующий HA-профиль и явный строгий потребитель ядра; нельзя незаметно запретить старый 2-GiB backup ради будущего анонимного сайта. Лимит времени над thread не принимается за остановку вычисления. Пока проведено чтение исходников; security experiments и продуктовые тесты ещё не выполнялись, High пока не классифицированы.\n\n### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43515190357.\n- Блокер SVG/#1033 → отдельно определены decor в обоих профилях, HA backdrop без content-whitelist и strict backdrop с явным reject-whitelist. HA bytes/ZIP сохраняются, CSP/image контекст проверяется, обратное ужесточение HA не включается без владельца.\n- JSON resource bounds → scanner до json.loads, учёт строк/escape и точное определение nodes; decoder остаётся каноническим.\n- Work units/clock → units первичны, время вторично, clock подменяется; AC3 явно относится к strict, Store/startup/save не получают новый бюджет молча.\n- Принято fail-closed при недоступном декодере strict raster и дополнение каталога structural/storage/SVG/raster пределами.\nРедакция 2. Продуктовые изменения и эксперименты не выполнялись. Отдельный запуск формы — перед S4.",
-        "fromStatus": "S3-spec",
-        "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
     },
     "github:43517454379:1:spec:1392:spec-request:spec-resubmitted:1392": {
       "digest": "fb1109795911cace80b5f9f1d15c2e678ea492d0f1129906e4ffc3ed11608ea0",
@@ -6279,20 +5888,6 @@
         "delivered": true
       }
     },
-    "finish:f1291587-cba5-486a-867a-626ba670e04f": {
-      "digest": "8ebda5a9ef9acbfc47a15a59d7aa31de136232e6f2a899d40b0fa8742935d805",
-      "issue": 1395,
-      "message": {
-        "kind": "queued",
-        "issue": 1395,
-        "at": 1794627573366,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
-        "delivered": true
-      }
-    },
     "finish:20af7055-57cc-4b06-909c-069978d292a7:finish:3:s6-complete": {
       "digest": "c7f368663daaf90edc7d628c3606c07eb20671d03462639286ed9179f75268c1",
       "issue": 1392,
@@ -6317,51 +5912,6 @@
         "newReview": true,
         "resubmission": false,
         "reviewChanges": "### Результат реализации\nОдин PlanHost без raw hass: запросы/события houseplan, HTTP/file upload, content resolution, readonly окружение/реестры/права и отдельный device-services порт. HA-адаптер сохраняет протокол и authenticated fallback. Опциональная инъекция card.planHost не меняет setConfig. Плановый bootstrap/render/retry, config/layout/CAS, node writes, Optimize/Undo, изображения, переносимые копии и space copy используют порты; общая identity — непрозрачный connection/original-callWS + user key, права отдельно отзывают leases. Обычный tick и reconnect не создают новую write authority.\n\n### Решение и места для внимания\nsubscribeEnvironment/environmentRevision — единственный plan intake; прежнего changed.has(hass) intake нет. Environment-сигнал работает и без hass, и при скрытой странице. Read-only presentation context — только language/locale/localize/themes; forbidden-read Proxy проверяет отсутствие transport/state/auth лазейки. Пустой неавторитетный реестр сохраняет bindings. В монолитах перечислены конкретные plan-owners; остальной device/radar/vacuum код и именованные HA smart-home мосты не объявляются переносимыми. Smart-home View сохраняет service catalog, direct Zigbee readings и отдельную data-only invalidation без смены write leases.\n\nОсобенно проверить смену authority/прав между dispatch и ACK, подпись/asset caches по пользователю, права не-admin writer после config/get, read deferral, возвращение из hidden и позднюю отмену ZIP. Raw HTTP Response намеренно не теряется после проигнорированного транспортом abort: доменный владелец читает opaque token и отменяет ресурс. Cleanup может повторяться при смене прав в той же authority, но никогда не направляет старый token в чужую сессию.\n\n### Проверки и границы\nТретий S6 завершил 735 шагов. Холодный старт/read-only/missing-HA/lifecycle предыдущего раунда прошли. Остались пять единиц: route fixture не объявлял callWS и потому был неготовым, а новый smoke ошибочно считал два локальных release-log entries сетевыми запросами. Исправлены только fixtures: готовые route contexts имеют transport; offline smoke считает фактические request/http, отдельно требует release и дожидается нового config/get после reconnect. Native opening-light, wall-preview-handoff и warm-camera прошли единственный адресный повтор на тех же продуктовых исходниках без изменения ожидаемого поведения/порогов. Причина их отказа под общим параллельным прогоном не установлена; это не объявлено исправленным дефектом продукта. Четвёртый finish повторяет отказавшее/изменённое с применимым кешем; продукт после db6a5b687 не менялся.\n\nВторой S6 завершил 734 шага и нашёл четыре отказывающих единицы: startup View/readonly cold-start (одна причина — повтор отвергнутых optional subscriptions), source lifecycle test (прежний callback ABI) и view recovery (missing HA read context). Они исправлены без ослабления ожиданий native сценариев: optional subscriptions dispatch до sampling, но их ACK никогда не блокирует обязательный load; повтор только при смене generation/режима scoped stream. Cold panel ждёт discovery API перед выбором own config stream. Missing snapshot обрывает read lifecycle, но не write authority/history. Актуальные адресные результаты: 102/102 Node, startup View, readonly cold-start, view recovery, восемь mounted-authority случаев и external screens — PASS. Добавлены исполняемые regression cases для hanging optional subscription, metadata-vs-input identity и missing read context при сохранённой write authority. UI Lab probe на окончательных исходниках повторён отдельно: noHass=true, model=2, mode=plan, driver=1, forbidden=[], errors=[], external=[]; настоящие HA icon/dialog bootstrap loaded. Static mutation anchors и classified compatibility inventory — PASS. Модельный S7 для #1392 ещё не запускался; третий финальный S6 берёт весь текущий diff и применимый кеш.\n\nПервый S6 завершил все 733 шага, но нашёл отказы; модельное ревью ещё не вызывалось. Разобраны реальные проблемы порядка кадров (2.5D/vacuum), LED write-lease, reentrant signal-cache notification, временно отсутствующего HA snapshot и потери read demand при смене authority/прав/setConfig. Видимый intake теперь следует за same-turn изменениями, authority проверяется сразу; paired read ждёт best-effort установки event listeners, а незавершённое чтение сохраняется при смене настроек карточки. Обновлены старые fake-host fixtures, source-contract readers, классифицированный compatibility inventory и перенесены прежние mutation anchors на фактических владельцев без удаления oracle. Адресный Node-набор: 219/219; canvas gestures, direct wall geometry, isometric live touch и vacuum прошли адресный повтор. View permissions и mounted-authority проверяются на окончательном неизменном кандидате перед повторным S6. Изменений эталонов нет; отказы не переобъявлялись ожидаемым поведением.\n\nАдресные диагностики: браузер без hass выполнил load → Optimize → wall/opening/room/decor edits → Save/reload → portable preview/apply; проверены сохранённый документ, история, deferred ready/retry, offline/reconnect, один environment driver и Proxy запретных полей. UI Lab /plan-host.html с настоящим закреплённым HA frontend открыл редактор без hass, page errors и внешних запросов. Обычный cold View toggle остался зелёным. Это synthetic wire store, НЕ доказательство серверных ACL/валидации и не pixel acceptance. Адресные TS/Node тесты проверяют authority, cancellation, cache isolation, no-op ticks и отрицательные AST fixtures. Финальный полный S6 по diff выполнит finish в общей очереди до S7; его фактический отчёт входит в передачу автоматически.\n\nПоследний полный адресный View-permissions прогон прошёл (включая неизвестный can_write, роли, kiosk, touch и late imports). Возвращён прежний admin-only fallback при неизвестном can_write для HA; injected host по-прежнему владеет собственным явным writer permission. Mounted-authority прошёл все восемь сценариев, включая reused object/ABA/held reply/initial missing input: один актуальный config+layout pair и один operational intake без промежуточного B. Для этого opaque inputKey отделён от environmentRevision: служебное permission/telemetry publication не становится вторым HA-кадром; registry rebuild остаётся отдельной видимой работой. Не добавлен второй environment driver. Финальные результаты S6 публикует координатор.\n\nФорматы/backend не менялись, новая сборка или сайт не опубликованы, пользовательский HA/действующий локальный стенд не изменены, PNG-эталоны не обновлялись. Нормальный UI Lab и его сохранённые сессии не заменяются: новый /plan-host.html — отдельный ephemeral diagnostic entry. Реальные HA journeys/golden остаются штатному выпуску; companion-решение: https://github.com/Matysh/houseplan-e2e/issues/53#issuecomment-6869344089.\n\n### Принятое ТЗ\nРедакция 2 принята в раунде S4 (run 43517627957). Исправления раунда 1: включены обязательные bootstrap/render owners, subscribeEnvironment + revision/один driver, точный presentation context и Proxy, единый authorityKey, #890 reconnect, disposer/external-screen events, authoritative registry и перенос Bearer fallback в адаптер. Scope сайта, замены HA-компонентов и capabilities не добавлен: это #1393/#1394 и последующие #1422/#1423.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:1:admit": {
-      "digest": "7f2e8158d85b996ee0466847f619ca00bd4e52347aa956216eef3ae2bd08df33",
-      "issue": 1395,
-      "message": {
-        "kind": "admitted",
-        "issue": 1395,
-        "at": 1794628435667,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:7:s6-complete": {
-      "digest": "75cc01063838ad4ba6380674d676fe12908147133e999e9188ab0b26069fff69",
-      "issue": 1395,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1395,
-        "at": 1794629080879,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
-        "phase": "review",
-        "evidence": {
-          "id": "20261114T035852242-cd6f6cf5",
-          "name": "Тесты для задачи #1395 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T035852242-cd6f6cf5/report.json",
-          "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
-          "status": "passed",
-          "finishedAt": "2026-11-14T04:04:36.776Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Цель и результат\nАудит ядра после #1391 и адресный ремонт подтверждённых отказов ввода, без изменения формата/model11/exportv3/ZIPv1 и без включения новых strict-ограничений в HA Store/startup/save. Подробный отчёт по шести классам угроз и всем перечисленным владельцам: docs/security/1395-input-audit.md.\n\n### Решение и альтернативы\nОдин core.input_policy с явным request-wide ContextVar scope; strict 256/512MiB ZIP/expanded, JSON/XML depth64/JSON1M nodes до decoder, geometry2M work units + secondary5s с injected clock. HA defaults сохраняются. Predicate/AABB/legacy geometry и отдельные migration inner loops списывают units до работы; вложенные вызовы не сбрасывают лимит. Это кооперативная защита, не thread timeout и не готовый публичный сервер.\nПодтверждённые ремонты: фактический central-directory count до ZipFile; safe RecursionError portable import/copy; finite parse_float (±1e999 обходил parse_constant); safe public protocol message вместо внутренних деталей. Strict требует raster decoder и reject-whitelist для backdrop; HA opaque XML/#1033 и оригинальные bytes не ужесточаются/не переписываются.\n\n### Риски и места для внимания\nСохранение HA SVG/backdrop совместимости и размеров; отсутствие дополнительного чтения внешних URL; request scope/cancellation через будущий executor; checks не прерывают внутренности native library/PIL/JSON/сортировки. Hard CPU/memory isolation/concurrency quotas будущего сайта остаются вне задачи. Обходы обычных HA ACL не добавлялись. Отчёт считает подтверждённые High закрытыми только в исследованном core-scope, не сертифицирует будущий endpoint.\nHA ошибки по-прежнему используют существующие локализуемые коды, details остаются локально. Source source-reader/mutation anchors не ослабляются. Модельное code review этого ремонта ещё не вызывалось.\n\n### Проверки и ограничения\nДо ремонта сохранены реальные reproductions: depth1500/10000 → RecursionError; 2 directory fixtures падали до actual-count фикса; ±1e999 принимались strict_json; WS probe отражал PRIVATE-FIXTURE detail, после не отражает.\nАдресные проверки: 440/440 backend/реальных HA pytest (новые fixtures, backup/import/structural/transaction/cancel/core boundary и SVG sandbox header). Ruff owned sources/tests/script PASS; mypy input_policy PASS; 31/31 task-selection tests. Каталог и план S6 подтверждают security/critical классификацию всех трёх новых файлов и выбор по actual core source readers, не только areaTests.\nBounded synthetic measurement script:400 rooms /441nodes/840edges strict95.18ms/29178units accepted;1600parallel strict3541ms/2M units → capacity_exceeded без мутации исходника. Это одна серия, не performance-медиана. Полные исходы/лимиты в отчёте. S6 финального SHA выполняет штатный finish.\nE2E: https://github.com/Matysh/houseplan-e2e/issues/53#issuecomment-6871102978 — новых browser journeys не нужно, существующие import/export/cancel/sandbox и установка/upgrade остаются на следующую бету. Baseline, живой HA и локальный стенд владельца не менялись; релиз не запускался.\n\n### Исправления по предыдущему ревью\nПринятая редакция2 ТЗ сохранена: по R1 https://github.com/Matysh/houseplan-card/actions/runs/43515190357 отдельно реализованы HA/strict backdrop, bytes pre-scan с keys/escape, общий deterministic work budget+clock и fail-closed strict raster. Требования не расширены до публичного сайта. Это первая передача реализации, предыдущего отрицательного code review нет.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
@@ -6432,29 +5982,6 @@
         "delivered": true
       }
     },
-    "finish:94d6c43f-a5ea-4a83-8f76-a06d3fac6fcf": {
-      "digest": "87bfabe9919f6cde14fe7f33d0d7562810a78cf11681aa29252390675f5f10c0",
-      "issue": 1395,
-      "message": {
-        "kind": "queued",
-        "issue": 1395,
-        "at": 1794630090300,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "116b8d41eb5adc9c0b3fe3e88c0e3fbe6be0764c",
-        "evidence": {
-          "id": "20261114T035852242-cd6f6cf5",
-          "name": "Тесты для задачи #1395 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T035852242-cd6f6cf5/report.json",
-          "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
-          "status": "passed",
-          "finishedAt": "2026-11-14T04:04:36.776Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
     "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:3:return:return:1392": {
       "digest": "755e1c38b339c23a881c49fae42c2732dbc70527c284424bb4e33332a1475963",
       "issue": 1392,
@@ -6472,30 +5999,6 @@
           "entry": 6,
           "detail": "Браузер: wall node connected: failed",
           "eventId": "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:3:return:return:1392"
-        },
-        "delivered": true
-      }
-    },
-    "finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:1:admit": {
-      "digest": "0d5a74526af915b1e11fc91cd6362d4329364940ad7707341feb984eaf776b1c",
-      "issue": 1395,
-      "message": {
-        "kind": "admitted",
-        "issue": 1395,
-        "at": 1794630940570,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "116b8d41eb5adc9c0b3fe3e88c0e3fbe6be0764c",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261114T035852242-cd6f6cf5",
-          "name": "Тесты для задачи #1395 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T035852242-cd6f6cf5/report.json",
-          "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
-          "status": "passed",
-          "finishedAt": "2026-11-14T04:04:36.776Z",
-          "failures": []
         },
         "delivered": true
       }
@@ -6520,36 +6023,6 @@
           "finishedAt": "2026-11-14T03:44:42.084Z",
           "failures": []
         },
-        "delivered": true
-      }
-    },
-    "finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:3:s6-complete": {
-      "digest": "3127044b6d11264f15fbad2ebcecba5da23034b7a72a71e9f042bdb57ea13e38",
-      "issue": 1395,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1395,
-        "at": 1794631271702,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
-        "phase": "review",
-        "evidence": {
-          "id": "20261114T043553899-8aa97e0b",
-          "name": "Тесты для задачи #1395 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T043553899-8aa97e0b/report.json",
-          "materialSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
-          "status": "passed",
-          "finishedAt": "2026-11-14T04:41:10.368Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "### Цель и результат\nАудит ядра после #1391 и адресный ремонт подтверждённых отказов ввода, без изменения формата/model11/exportv3/ZIPv1 и без включения новых strict-ограничений в HA Store/startup/save. Подробный отчёт по шести классам угроз и всем перечисленным владельцам: docs/security/1395-input-audit.md.\n\n### Решение и альтернативы\nОдин core.input_policy с явным request-wide ContextVar scope; strict 256/512MiB ZIP/expanded, JSON/XML depth64/JSON1M nodes до decoder, geometry2M work units + secondary5s с injected clock. HA defaults сохраняются. Predicate/AABB/legacy geometry и отдельные migration inner loops списывают units до работы; вложенные вызовы не сбрасывают лимит. Это кооперативная защита, не thread timeout и не готовый публичный сервер.\nПодтверждённые ремонты: фактический central-directory count до ZipFile; safe RecursionError portable import/copy; finite parse_float (±1e999 обходил parse_constant); safe public protocol message вместо внутренних деталей. Strict требует raster decoder и reject-whitelist для backdrop; HA opaque XML/#1033 и оригинальные bytes не ужесточаются/не переписываются.\n\n### Риски и места для внимания\nСохранение HA SVG/backdrop совместимости и размеров; отсутствие дополнительного чтения внешних URL; request scope/cancellation через будущий executor; checks не прерывают внутренности native library/PIL/JSON/сортировки. Hard CPU/memory isolation/concurrency quotas будущего сайта остаются вне задачи. Обходы обычных HA ACL не добавлялись. Отчёт считает подтверждённые High закрытыми только в исследованном core-scope, не сертифицирует будущий endpoint.\nHA ошибки по-прежнему используют существующие локализуемые коды, details остаются локально. Source source-reader/mutation anchors не ослабляются. Первое code review вернуло два блокера; исправления ниже.\n\n### Проверки и ограничения\nПосле code review:69/69 адресных fixtures, Ruff и mypy input_policy PASS. Восемь UTF-16/32 (LE/BE, с/без BOM) отрицательных cases до фикса доходили до spy-decoder; теперь отказ до loads, UTF-8 positive и HA alternate-encoding positive сохранены. Настоящий ZIP manifest UTF-16/32 подтверждает отсутствие staging writes в strict и прежний успешный HA-путь. Проверены также directory cancel/time → ImportFailure и code/reason, strict canonical SVG content refusal и unchanged HA acceptance. Полный parse_document:1×400комнат371213bytes →390.32ms/86544units;10×400комнат3708125bytes →4271.03ms/865440units, оба accepted.50×400source18,413,938bytes уже превышает прежние16MiB и не может быть создан для strict-замера; это явно не PASS. Эти серии диагностические, не timing guarantee. Первый S64c9221465 прошёл592/592; финальный изменённый SHA снова проходит finish, прежний PASS не приписывается новым исходникам.\n\nДо ремонта сохранены реальные reproductions: depth1500/10000 → RecursionError; 2 directory fixtures падали до actual-count фикса; ±1e999 принимались strict_json; WS probe отражал PRIVATE-FIXTURE detail, после не отражает.\nАдресные проверки: 440/440 backend/реальных HA pytest (новые fixtures, backup/import/structural/transaction/cancel/core boundary и SVG sandbox header). Ruff owned sources/tests/script PASS; mypy input_policy PASS; 31/31 task-selection tests. Каталог и план S6 подтверждают security/critical классификацию всех трёх новых файлов и выбор по actual core source readers, не только areaTests.\nBounded synthetic measurement script:400 rooms /441nodes/840edges strict95.18ms/29178units accepted;1600parallel strict3541ms/2M units → capacity_exceeded без мутации исходника. Это одна серия, не performance-медиана. Полные исходы/лимиты в отчёте. S6 финального SHA выполняет штатный finish.\nE2E: https://github.com/Matysh/houseplan-e2e/issues/53#issuecomment-6871102978 — новых browser journeys не нужно, существующие import/export/cancel/sandbox и установка/upgrade остаются на следующую бету. Baseline, живой HA и локальный стенд владельца не менялись; релиз не запускался.\n\n### Исправления по предыдущему ревью\nДополнительная S6 сверка F5 обнаружила неучтённые rejected branches: zero-thickness carrier до numeric predicates и overlap reservation inner loop. Два теста сначала красные, затем исправлены charge перед early refusal/каждой парой; neighbouring openings/repair intervals также считают несовпадающий host.106/106 адресных fixtures, включая HA opening repair, проходят. Это дополнение того же согласованного аудита, не новый security-gate и не изменение HA default profile.\n\nКод, раунд1: https://github.com/Matysh/houseplan-card/actions/runs/43554836349.\n- UTF-16/32 bypass → подтверждён8 red cases. Strict scanner теперь отклоняет raw NUL до loads, то есть не допускает alternate encodings JSON syntax; escaped U+0000 в UTF-8 не запрещается. HA без strict bounds сохраняет decoder encodings. Отказ передаёт фиксированный reason=json_encoding, включая реальный ZIP.\n- Неверный SVG capacity claim → выбран минимальный вариант(а): прежние decor content caps не расширяются. В отчёте явно записаны outer8MiB input vs canonical2MiB,5000elements,512000attrs chars/single65536/ref-depth64 и raster dimensions.3MiB comment roundtrip честно доказывает только bytes preservation;3MiB surviving desc fixture отдельно доказывает отказ strict при прежнем принятии HA. Strict backdrop refusal имеет capacity_exceeded/reason=strict_image_policy; отсутствующий decoder сохраняет not_ready.\n- Directory checkpoints → перенесены под archive-domain try, cancel/time дают ImportFailure с code и безопасным reason, не raw InputLimit.\n- Добавлены полные portable import замеры1/10/50×400 и описание machine-dependent secondary5s. Уточнено отсутствие pixel cap у HA backdrop. Сохранён исходный security scope, новых публичных endpoints/worker isolation не добавлено.\n\nПринятая редакция2 ТЗ сохранена: по S4R1 https://github.com/Matysh/houseplan-card/actions/runs/43515190357 отдельно реализованы HA/strict backdrop, bytes pre-scan с keys/escape, общий deterministic work budget+clock и fail-closed strict raster. Требования не расширены до публичного сайта.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
