@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12357,
-  "nextTicket": 441,
+  "revision": 12358,
+  "nextTicket": 442,
   "nextFence": 441,
   "tasks": {
     "1024": {
@@ -3570,14 +3570,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1394-plan-capabilities",
-      "materialSha": "2357f3f362481a2ec12afdc6e60126c7c499ed8d",
+      "materialSha": "9ed0f88801ada63035ccafa464683960da8104e9",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 440,
-      "queued": false,
+      "ticket": 441,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794639037569,
-      "reviewEntry": 6,
+      "readyAt": 1794639905537,
+      "reviewEntry": 7,
       "patchId": "accf77595818c3ad2817987af47f084d4353595c",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
@@ -3656,8 +3656,7 @@
       "reviewCorrection": {
         "requestId": "review:1394:5:b7411af254115204f3d6094f266cfc0916b7c377:a9e4a01420c02318a725157c49d4b9b2e23599c4",
         "at": 1794638558012
-      },
-      "reason": "checks-failed"
+      }
     },
     "1395": {
       "issue": 1395,
@@ -4923,7 +4922,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1394
+  ],
   "active": null,
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
@@ -5576,6 +5577,28 @@
           "entry": 6,
           "detail": "Браузер: summary weather: failed",
           "eventId": "finish:33b0de64-bd0b-4217-920c-ae07166a2f02:finish:3:return:return:1394"
+        }
+      }
+    },
+    "finish:5a3f7a6b-d218-4597-9747-cb58c140d5f7": {
+      "digest": "f28f0034891af915b4630c3abaf35326adca84a9ca3db00e096f20eb846b2dfa",
+      "issue": 1394,
+      "message": {
+        "kind": "queued",
+        "issue": 1394,
+        "at": 1794639905537,
+        "entry": 7,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "9ed0f88801ada63035ccafa464683960da8104e9",
+        "evidence": {
+          "id": "20261114T062645192-53956233",
+          "name": "Тесты для задачи #1394 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T062645192-53956233/report.json",
+          "materialSha": "ac441a9504b32f49a94b7a778569501672b4f26c",
+          "status": "passed",
+          "finishedAt": "2026-11-14T06:34:59.577Z",
+          "failures": []
         }
       }
     }
