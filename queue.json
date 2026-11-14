@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11947,
+  "revision": 11948,
   "nextTicket": 429,
   "nextFence": 428,
   "tasks": {
@@ -5557,6 +5557,10 @@
       "digest": "2957fa03cd35af5f7ed3e4d3d036c855e098b5643a0f6c1aa67b4677c42c36c3",
       "issue": 1392
     },
+    "github:43553193193:1:completions:message:1945438649c8ce0e8f2e4c26eeb919bc2e87c87d1585914abadc1ac9de4eb2c0": {
+      "digest": "51e2cfd61f61d265c690bfa9dd7829db0356cca361484e43cdd335f91478b93e",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5787,7 +5791,8 @@
           "entry": 4,
           "detail": "Браузер: wall preview handoff 1247: failed",
           "eventId": "finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7:finish:3:return:return:1392"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:20af7055-57cc-4b06-909c-069978d292a7": {
