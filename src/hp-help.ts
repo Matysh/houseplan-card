@@ -53,7 +53,7 @@ export class HpHelp extends LitElement {
       padding: 0;
       color: var(--secondary-text-color, #9aa4ad);
       background: transparent;
-      border: 0;
+      border: 1px solid transparent;
       border-radius: 50%;
       cursor: help;
       -webkit-tap-highlight-color: transparent;
@@ -69,18 +69,20 @@ export class HpHelp extends LitElement {
     :host([instant]) .trigger { cursor:pointer; transition:color 150ms,background 150ms; }
     :host([instant]) .trigger svg { width:20px; height:20px; }
     :host([data-pointer-hover]) .trigger:hover svg,
-    :host([instant]) .trigger:focus-visible svg { transform:scale(var(--hp-settings-help-scale,1)); }
+    :host([instant]) .trigger.hpf-tab-focus:focus svg { transform:scale(var(--hp-settings-help-scale,1)); }
 
     :host([data-pointer-hover]) .trigger:hover,
-    .trigger:focus-visible,
+    .trigger.hpf-tab-focus:focus,
     .trigger[aria-expanded='true'] {
       color: var(--primary-text-color, #fff);
       background: rgb(127 127 127 / 0.18);
       outline: none;
     }
 
-    .trigger:focus-visible {
-      box-shadow: 0 0 0 2px var(--primary-color, #03a9f4);
+    .trigger { outline:none; box-shadow:none; }
+    :host([data-pointer-hover]) .trigger:hover,
+    .trigger.hpf-tab-focus:focus {
+      border-color:var(--primary-color, #03a9f4);
     }
 
     .tooltip {

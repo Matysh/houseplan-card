@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Use one UI Kit button border for hover, selection and real Tab/Shift+Tab traversal; preserve native focus and activation without reviving an outer ring after Escape or automatic return (#1428).
+
 - Add a separate local standalone frontend distribution with explicit PlanHost mount/dispose, local UI/font/locale assets and a hashed manifest; retain HA entry registration/readiness, validate real-core Save/transfer journeys and report actual editor delivery measurements without publishing a website (#1423).
 - Reorganize and reconcile the RU/EN user guides around user journeys, scoped settings, editor tools and display profiles; retain legacy anchors, upload-limit text contracts and documentation-only delivery (#1427).
 - Bring the rewritten RU/EN README from main to dev: three ways of use, a three-step install that stresses adding the integration, new screenshots and button images under `docs/images/readme`; text and images match what is published (#1429).

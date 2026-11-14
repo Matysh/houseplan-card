@@ -11,7 +11,7 @@ export const navigationStyles = unsafeCSS(css`
     font:inherit; font-size:13px; font-weight:600; line-height:20px; cursor:pointer;
   }
   .hpf-navigation > .hpf-nav-item:disabled { opacity:.5; cursor:not-allowed; }
-  .hpf-navigation > .hpf-nav-item:not(:disabled):active { box-shadow:inset 0 0 0 2px var(--primary-color); }
+  .hpf-navigation > .hpf-nav-item:not(:disabled):active { border-color:var(--primary-color); }
   .hpf-nav-item ha-icon { --mdc-icon-size:20px; }
   .hpf-nav-item > .tabedit { --mdc-icon-size:20px; cursor:pointer; }
   .hpf-nav-compact > .hpf-nav-item { padding:0; }
@@ -31,8 +31,8 @@ export const navigationStyles = unsafeCSS(css`
   .hpf-nav-floating > .hpf-nav-item.active {
     color:var(--hp-accent); background:var(--hpf-tint, color-mix(in srgb, var(--hp-accent) 12%, transparent));
   }
-  .hpf-navigation > .hpf-nav-item:focus-visible, .hpf-nav-modes .closex:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
-  .hpf-navigation > .hpf-nav-item.hp-dialog-return-focus:focus-visible { outline:none; }
+  .hpf-navigation > .hpf-nav-item, .hpf-nav-modes .closex { outline:none; box-shadow:none; }
+  .hpf-navigation > .hpf-nav-item.hpf-tab-focus:focus, .hpf-nav-modes .closex.hpf-tab-focus:focus { border-color:var(--primary-color); z-index:2; }
   .hpf-nav-item > .tabtitle { line-height:42px; }
   .hpf-nav-item:has(> .tabedit) { padding:0; gap:0; }
   .hpf-nav-item:has(> .tabedit) > .tabtitle { padding-inline:12px; }

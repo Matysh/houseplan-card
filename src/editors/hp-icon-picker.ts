@@ -60,8 +60,10 @@ export class HpIconPicker extends LitElement {
     .arrow { position:absolute; inset-inline-end:14px; width:18px; height:18px; pointer-events:none; transform:rotate(0deg);
       transition:transform ${controlMotion.paint.duration}ms ${controlMotion.paint.easing}; }
     .trigger[aria-expanded=true] .arrow { transform:rotate(180deg); }
-    .field:focus-within { border-color:var(--hpf-accent,var(--primary-color)); box-shadow:none; }
-    .clear:focus-visible,[role=option].active { outline:2px solid var(--hpf-accent,var(--primary-color)); outline-offset:-3px; }
+    .field:has(input:focus),.field:has(.trigger.hpf-tab-focus:focus) { border-color:var(--hpf-accent,var(--primary-color)); box-shadow:none; }
+    .clear { border:1px solid transparent; outline:none; box-shadow:none; }
+    .clear.hpf-tab-focus:focus { border-color:var(--hpf-accent,var(--primary-color)); }
+    [role=option].active { outline:2px solid var(--hpf-accent,var(--primary-color)); outline-offset:-3px; }
     .trigger:focus-visible { outline:none; }
     .menu { position:fixed; inset:auto; margin:0; padding:5px; z-index:10000; width:320px;
       max-width:calc(100vw - 16px); max-height:360px; overflow:hidden; font:inherit; opacity:0; }

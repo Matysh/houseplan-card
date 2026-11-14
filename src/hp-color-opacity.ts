@@ -210,25 +210,23 @@ export class HpColorOpacity extends LitElement {
     .trigger.solid { background: none; }
     :host([cover-swatch]), :host([compact-swatch]) { display: block; width: 100%; height: 100%; }
     :host([cover-swatch]) .trigger, :host([compact-swatch]) .trigger {
-      width: 100%; height: 100%; padding: 0; border: 0; border-radius: 6px;
+      width: 100%; height: 100%; padding: 0; border: 1px solid transparent; border-radius: 6px;
     }
     :host([cover-swatch]) .swatch, :host([compact-swatch]) .swatch { border-radius: 6px; box-shadow: none; }
     :host([compact-swatch]:not([cover-swatch])) .trigger,
     :host([compact-swatch]:not([cover-swatch])) .swatch { border-radius: 3px; }
     :host([compact-swatch]:not([cover-swatch])) .swatch { box-shadow: inset 0 0 0 1px #00000010; }
-    :host([cover-swatch]) .trigger:focus-visible, :host([compact-swatch]) .trigger:focus-visible { outline-offset: -2px; }
+    .trigger { outline:none; box-shadow:none; }
     :host([data-pointer-hover]) .trigger:hover {
       border-color: var(--primary-color, #03a9f4);
     }
     .trigger[aria-expanded='true'] {
       border-color: var(--primary-color, #03a9f4);
       outline: none;
-      box-shadow: 0 0 0 1px var(--primary-color, #03a9f4);
+      box-shadow: none;
     }
-    .trigger:focus-visible {
+    .trigger.hpf-tab-focus:focus {
       border-color: var(--primary-color, #03a9f4);
-      outline: 2px solid var(--primary-color, #03a9f4);
-      outline-offset: 2px;
     }
     .trigger[data-restored-focus]:focus-visible {
       outline: none;

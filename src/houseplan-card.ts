@@ -1,4 +1,5 @@
 import { HaPlanHost } from './ha-plan-host';
+import { acquireButtonTabFocus } from './ui-button-tab-focus';
 import type { PlanHost, HostEnvironment, HostPresentationContext } from './plan-host';
 import { live } from 'lit/directives/live.js';
 import { styleMap } from 'lit/directives/style-map.js';
@@ -3740,6 +3741,8 @@ export class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.locale_load_failed'), 'toast.locale_load_failed', { owner: null });
     }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed'), 'toast.furniture_art_load_failed', { owner: null }))); // #474
     super.connectedCallback();
+    this._buttonTabFocusRelease?.();
+    this._buttonTabFocusRelease = acquireButtonTabFocus(this);
     for (const type of ['pointerenter', 'focus', 'pointerdown'])
       this.renderRoot.addEventListener(type, this._preloadEditorIntent, true);
     this._toastPresentation.connect(this.renderRoot as ShadowRoot);
@@ -3829,7 +3832,11 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
+  private _buttonTabFocusRelease: (() => void) | null = null;
+
   public disconnectedCallback(): void {
+    this._buttonTabFocusRelease?.();
+    this._buttonTabFocusRelease = null;
     ++this._headerActionsRequest; this._headerActionsMenu?.dispose();
     for (const type of ['pointerenter', 'focus', 'pointerdown'])
       this.renderRoot.removeEventListener(type, this._preloadEditorIntent, true);

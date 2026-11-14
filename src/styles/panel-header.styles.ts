@@ -80,13 +80,14 @@ export const panelHeaderStyles = css`
 :host([data-pointer-hover]) .hdr[data-panel-flow] .head > button.header-actions-trigger:not(:disabled):hover {
   background:var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,transparent));
   color:var(--hpf-accent,var(--primary-color,#03a9f4)); border-color:var(--hpf-accent,var(--primary-color,#03a9f4));
-  box-shadow:0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4)); filter:brightness(1.08); outline:none;
+  box-shadow:none; filter:brightness(1.08); outline:none;
 }
+.hdr[data-panel-flow] .head > button.header-actions-trigger.hpf-tab-focus:focus { border-color:var(--primary-color); }
 .hdr[data-panel-flow] .head > button.panel-menu { position:relative; transition:background var(--hpf-paint-duration) var(--hpf-paint-easing); }
 :host([data-pointer-hover]) .hdr[data-panel-flow] .head > button.panel-menu:not(:disabled):hover,
-.hdr[data-panel-flow] .head > button.panel-menu:not(:disabled):is(:active,:focus-visible) {
+.hdr[data-panel-flow] .head > button.panel-menu:not(:disabled):is(:active,.hpf-tab-focus:focus) {
   background:var(--ha-color-fill-neutral-quiet-hover,color-mix(in srgb,var(--primary-text-color) 10%,transparent));
-  color:var(--primary-text-color); border-color:transparent; box-shadow:none; outline:none; filter:none;
+  color:var(--primary-text-color); border-color:var(--primary-color); box-shadow:none; outline:none; filter:none;
 }
 .hdr[data-panel-flow] .head > button.panel-menu > ha-icon { opacity:1; transition:opacity var(--hpf-paint-duration) var(--hpf-paint-easing); pointer-events:none; }
 .hdr[data-panel-flow] .head > button.panel-menu > .panel-menu-open {

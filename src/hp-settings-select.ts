@@ -31,7 +31,9 @@ export class HpSettingsSelect extends LitElement {
     button span { flex:1; min-width:0; overflow-wrap:anywhere; }
     button svg { width:18px; height:18px; flex:none; fill:currentColor; }
     button[aria-expanded=true] svg { transform:rotate(180deg); }
-    button:focus-visible,.menu:focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color,#03a9f4)); outline-offset:2px; }
+    button { outline:none; box-shadow:none; }
+    button.hpf-tab-focus:focus { border-color:var(--hpf-accent,var(--primary-color,#03a9f4)); }
+    .menu:focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color,#03a9f4)); outline-offset:2px; }
     button:disabled { opacity:.45; cursor:not-allowed; }
     .menu { position:fixed; inset:auto; margin:0; box-sizing:border-box; z-index:10000;
       max-height:320px; overflow:auto; overscroll-behavior:contain; font:inherit; opacity:0; }

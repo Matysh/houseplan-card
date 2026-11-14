@@ -102,7 +102,16 @@ export function formKitCardsCss(options: FormKitCssOptions): string {
 }
 
 /** Обводка фокуса формы и её футера. */
-export function formKitFocusCss({ form, footer, tokens }: FormKitCssOptions): string {
+export function formKitFocusCss({ form, footer, tokens, parameterized }: FormKitCssOptions): string {
+  if (parameterized) return `  ${form} input:focus-visible,
+  ${form} select:focus-visible {
+    outline: 2px solid var(${tokens.accent});
+    outline-offset: 2px;
+  }
+  ${form} button, ${footer} button { outline:none; box-shadow:none; }
+  ${form} button.hpf-tab-focus:focus:not(.danger):not(:disabled), ${footer} button.hpf-tab-focus:focus:not(.danger):not(:disabled) {
+    border-color:var(${tokens.accent});
+  }`;
   return `  ${form} input:focus-visible,
   ${form} select:focus-visible,
   ${form} button:focus-visible,

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1428,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Stable can layer an outer focus ring over the button border and revive it after Escape or automatic focus return. Use one UI Kit border and real Tab traversal without altering native focus/activation.",
+  "summary": {
+    "ru": "Кнопки сохраняют одну рамку; возврат из редактора или диалога не добавляет кольцо фокуса.",
+    "en": "Keep one button border without reviving a focus ring after editor or dialog return."
+  }
+}

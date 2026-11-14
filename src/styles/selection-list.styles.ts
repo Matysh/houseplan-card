@@ -12,8 +12,11 @@ export function selectionListCss(selector: string, selected: string, active?: st
   ${item}${selected} { color:${accent}; background:${tint}; }
   @media (hover:hover) and (pointer:fine) {
     ${enabled}:hover { box-shadow:inset 0 0 0 1px ${accent}; }
+    ${enabled}:is(button):hover { box-shadow:none; border-color:${accent}; }
   }
-  ${enabled}:focus-visible${active ? `,${enabled}${active}` : ''} { outline:2px solid ${accent}; outline-offset:-2px; }
+  ${enabled}:not(button):focus-visible${active ? `,${enabled}:not(button)${active}` : ''} { outline:2px solid ${accent}; outline-offset:-2px; }
+  ${enabled}:is(button) { box-sizing:border-box; border:1px solid transparent; outline:none; box-shadow:none; }
+  ${enabled}:is(button).hpf-tab-focus:focus${active ? `,${enabled}:is(button)${active}` : ''} { border-color:${accent}; }
   ${item}[aria-disabled=true],${item}:disabled { box-shadow:none; outline:none; }
   ${controlReducedMotionCss(item)}
 `;

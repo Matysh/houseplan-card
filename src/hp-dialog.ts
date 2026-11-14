@@ -3,6 +3,7 @@ import { live } from 'lit/directives/live.js';
 import {setToastOwner, toastRootOf, type ToastOwner} from './toast-presentation';
 import {toastStyles} from './styles/toast.styles';
 import { prepareDialogReturnFocus } from './dialog-return-focus';
+import { acquireButtonTabFocus } from './ui-button-tab-focus';
 import { DialogExitController } from './dialog-exit';
 import { controlMotion, controlSurfaceFrames } from './ui-motion';
 import { controlMotionStyles } from './styles/ui-motion.styles';
@@ -337,9 +338,12 @@ export class HpDialog extends LitElement {
     dialog.exiting::backdrop { pointer-events:none; animation:hp-ui-leave var(--hpf-leave-duration) var(--hpf-leave-easing) both; }
 
     :host([data-pointer-hover]) .close:hover,
-    .close:focus-visible {
+    .close.hpf-tab-focus:focus {
       background: rgb(127 127 127 / 0.16);
     }
+    .close { outline:none; border:1px solid transparent; box-sizing:border-box; }
+    :host([data-pointer-hover]) .close:hover,
+    .close.hpf-tab-focus:focus { border-color:var(--primary-color); }
     :host([data-pointer-hover]) .close:hover ha-icon { transform:var(--hp-dialog-close-hover-transform,none); }
 
     .content {
@@ -421,12 +425,16 @@ export class HpDialog extends LitElement {
     return this._useHaDialog === true && !this.alert;
   }
 
+  private _buttonTabFocusRelease: (() => void) | null = null;
+
   connectedCallback(): void {
     // #489: the host itself is the stable cross-dialog selector.  Keep this
     // outside the rendered HA/native branch so consumers never have to pierce
     // a second shadow root or care which dialog implementation is active.
     this.setAttribute('data-hp', 'dialog');
     super.connectedCallback();
+    this._buttonTabFocusRelease?.();
+    this._buttonTabFocusRelease = acquireButtonTabFocus(this);
     this._opener = this._deepActiveElement();
     const root = this.getRootNode();
     this._focusRoot = root;
@@ -457,6 +465,8 @@ export class HpDialog extends LitElement {
   }
 
   disconnectedCallback(): void {
+    this._buttonTabFocusRelease?.();
+    this._buttonTabFocusRelease = null;
     const released = this._releasedModal;
     this.cancelExit();
     this._syncToastOwner(false);
