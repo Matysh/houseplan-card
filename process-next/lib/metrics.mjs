@@ -65,6 +65,17 @@ export function collectMeasurement({ zip, performance, host, runnerHash, release
     timing_protocol: { profile: performance?.profile, fixture: performance?.fixture, warmups: performance?.warmups, samples: performance?.samples, runtime: performance?.runtime, runner_sha256: runnerHash } };
 }
 const validSamples = samples => Array.isArray(samples) && samples.length >= 5 && samples.every(value => Number.isFinite(value) && value >= 0);
+function powerSchemeIdentity(value) {
+  if (typeof value !== 'string' || !value.trim() || /\b(?:unknown|unrecorded)\b/i.test(value)) return null;
+  // A Windows GUID identifies the plan; its label and observation date do not.
+  // Never infer an identity from partial or ambiguous GUID evidence.
+  const guids = [...value.matchAll(/(?<![a-z\d-])[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}(?![a-z\d-])/gi)];
+  const prefixes = value.match(/[a-f\d]{8}-/gi) || [];
+  if (guids.length === 1 && prefixes.length === 1) return `guid:${guids[0][0].toLowerCase()}`;
+  if (guids.length || prefixes.length || /\bguid\b/i.test(value) || /^\s*\{?[a-f\d-]{8,}\}?\s*$/i.test(value)) return null;
+  // Preserve the previous strict comparison for historical name-only records.
+  return `literal:${value.toLowerCase()}`;
+}
 function comparable(left, right) {
   const cpu = value => value.replace(/\((?:R|TM)\)/gi, '').replace(/\s+/g, ' ').trim().toLowerCase();
   const kernel = value => String(value ?? '').match(/\d+\.\d+\.\d+[^\s]*/)?.[0] ?? String(value ?? '');
@@ -72,9 +83,10 @@ function comparable(left, right) {
     : Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
   const signature = record => {
     const p = record?.timing_protocol, h = record?.host;
-    if (!p?.runner_sha256 || !p.runtime || typeof h?.cpu !== 'string' || !h.cpu || typeof h.power_scheme !== 'string' || !h.power_scheme || h.power_scheme === 'unrecorded') return null;
+    const power = powerSchemeIdentity(h?.power_scheme);
+    if (!p?.runner_sha256 || !p.runtime || typeof h?.cpu !== 'string' || !h.cpu || power === null) return null;
     return JSON.stringify(canonical({ profile: p.profile, fixture: p.fixture, warmups: p.warmups, samples: p.samples, runtime: p.runtime,
-      runner: p.runner_sha256, cpu: cpu(h.cpu), power: h.power_scheme.toLowerCase(), linux: kernel(h.linux) }));
+      runner: p.runner_sha256, cpu: cpu(h.cpu), power, linux: kernel(h.linux) }));
   };
   const a = signature(left), b = signature(right); return a !== null && a === b;
 }

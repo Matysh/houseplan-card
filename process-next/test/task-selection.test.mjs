@@ -209,6 +209,24 @@ test('fixture-owned generated files do not demand a product build; real consumer
     assert.equal(p.steps[0].fixtureArtifacts, true);
     await assert.rejects(planProfile({ root: dir, layer: 'infra', areaTests: ['test/real-consumer.test.mjs'] }), /prepared product artifacts/);
 }));
+test('#1448 metrics infra retains its actual package reader without preparing product artifacts', async () => {
+    const plan = await planProfile({ root, event: 'task', layer: 'infra', track: 'ship',
+        changedFiles: ['process-next/lib/metrics.mjs'], areaTests: ['process-next/test/metrics.test.mjs'] });
+    for (const file of ['process-next/test/metrics.test.mjs', 'process-next/test/package.test.mjs']) {
+        const check = plan.steps.find(step => step.command?.includes(file));
+        assert.ok(check, file);
+        assert.equal(check.fixtureArtifacts, true, file);
+        assert.ok(check.inputs.includes('process-next/lib/metrics.mjs'), file);
+    }
+    assert.ok(!plan.steps.some(step => ['product-build', 'test-build', 'demo-assets'].includes(step.id)));
+    await fixture({
+        'scripts/real-reader.mjs': "import {readFileSync} from 'node:fs'; export const read=()=>readFileSync('dist/houseplan-assets.json');",
+        'process-next/test/real-reader.test.mjs': "import '../../scripts/real-reader.mjs';",
+    }, async dir => {
+        await assert.rejects(planProfile({ root: dir, layer: 'infra',
+            changedFiles: ['scripts/real-reader.mjs'] }), /prepared product artifacts/);
+    });
+});
 test('optional budgets respect relevance priority and uncertainty, never trim mandatory units', () => {
     const candidates = [{ path: 'b', priority: 2, durationMs: 10 }, { path: 'a', priority: 1, durationMs: 20 }, { path: 'unknown', priority: 3 }];
     assert.deepEqual(chooseOptionalChecks(candidates, { budgetMs: 40, mandatoryMs: 20, mandatoryUnknown: 0 }).selected, ['a']);
