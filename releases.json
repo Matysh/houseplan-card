@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 881,
+  "revision": 882,
   "active": "1.85.3-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -112456,14 +112456,14 @@
       "kind": "beta",
       "branch": "release/1.85.3-beta.1",
       "sourceSha": "e756b482350cf5589228d4d282642e5d8c03ced5",
-      "sha": "386520b52cdc29fc0eda1878ecfa903fe0d1002f",
+      "sha": "44e20251ef386acb2aefea275fb7091c9ef037b6",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "386520b52cdc29fc0eda1878ecfa903fe0d1002f",
+        "candidate": "44e20251ef386acb2aefea275fb7091c9ef037b6",
         "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
         "issues": [
           {
@@ -112672,6 +112672,25 @@
             "commits": [
               "a6a0806b9bb4326582691f6587f3d8a76d1c5e8e"
             ]
+          },
+          {
+            "number": 1446,
+            "commits": [
+              "2ec0b71a8a409e10d4bb5770c7df03187537eebe"
+            ]
+          },
+          {
+            "number": 1447,
+            "commits": [
+              "5414cb9ed1be824251e1974d254c81a740ba873f",
+              "71845cd91214f206117af4a1d27e6d98856db1ab"
+            ]
+          },
+          {
+            "number": 1448,
+            "commits": [
+              "551cd6468e30003a29c70f2dd4d65d9e3fd4af31"
+            ]
           }
         ]
       },
@@ -112705,7 +112724,10 @@
         1441,
         1442,
         1443,
-        1444
+        1444,
+        1446,
+        1447,
+        1448
       ],
       "reviewRequired": true,
       "review": null,
@@ -112727,6 +112749,12 @@
         {
           "from": "9d0a023dc5bda930c15a386ae486f66a292f3dfa",
           "to": "386520b52cdc29fc0eda1878ecfa903fe0d1002f",
+          "syncMode": "merge",
+          "status": "pending"
+        },
+        {
+          "from": "386520b52cdc29fc0eda1878ecfa903fe0d1002f",
+          "to": "44e20251ef386acb2aefea275fb7091c9ef037b6",
           "syncMode": "merge",
           "status": "pending"
         }
@@ -118238,7 +118266,8 @@
     "beta1853-20261115-fix-ship-ready": "a85740351b53a45ab04760e3becefd6f3ee92b85faf5ac6700b3530c20a99ce0",
     "ship-review:prepare:1a48a941-5df5-414c-86db-46182c500ec8": "f15a5014c235db3ebc2b8b07f15863332b6c8678f60d750019a8d2bfd9c0d30a",
     "ship-review:result:b18562e2-c501-4a8a-b66d-a1519370de6a": "5a2ba11ba16d462e67d30d39be5743aadfd8b027e117f7e98afbd511c267ed2c",
-    "beta1853-20261115-fix-final": "42d5dc16b17ad73d8fe2ec52fd1316a126a9fc32b675b3227b0bbdaaa12e607d"
+    "beta1853-20261115-fix-final": "42d5dc16b17ad73d8fe2ec52fd1316a126a9fc32b675b3227b0bbdaaa12e607d",
+    "beta1853-20261115-fix-visual": "2bcb91dc352cf1b8568ee6dea4f46810e8766a7622d1fcac5fe4bc725d772f51"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
