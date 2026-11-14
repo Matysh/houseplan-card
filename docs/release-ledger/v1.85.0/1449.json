@@ -1,0 +1,1 @@
+{"schema":1,"issue":1449,"baseStable":"v1.85.0","category":"line-fix","rationale":"Complete the unreleased #1421 closed-door Glow fix for the existing derived Iso leaf placement without moving Flat symbols or saved geometry.","summary":{"ru":"Свет закрытой двери в 2.5D доходит до фактического полотна.","en":"Closed-door light reaches the actual leaf in 2.5D."}}

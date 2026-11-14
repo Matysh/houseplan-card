@@ -13,12 +13,25 @@ export interface OpeningSymbolOffset {
   oy: number;
 }
 
+export type OpeningLeafPresentation = 'flat' | 'iso-volume';
+
+/** Ground-plane origin of the actual leaf, independent of camera and state.
+ * Flat swing symbols retain #250's axis; sliding and volumetric leaves use
+ * the already-resolved host face. This never moves saved opening geometry. */
+export function openingLeafOriginOffset(type: OpeningCfg['type'],
+  face: Pick<OpeningFaceOffset, 'ox' | 'oy'>,
+  presentation: OpeningLeafPresentation = 'flat', sliding = false): OpeningSymbolOffset {
+  return (type === 'door' || type === 'gate') && (sliding || presentation === 'iso-volume')
+    ? { ox: face.ox, oy: face.oy } : { ox: 0, oy: 0 };
+}
+
 /** One physical slide placement for plan symbols and print geometry. */
 export function openingSlidePlacement(angle: number, length: number, direction: 'start' | 'end',
   amount: number, face: Pick<OpeningFaceOffset, 'ox' | 'oy'>): { x: number; y: number; shift: number } {
   const radians = angle * Math.PI / 180;
-  return { x: face.ox * Math.cos(radians) + face.oy * Math.sin(radians),
-    y: -face.ox * Math.sin(radians) + face.oy * Math.cos(radians),
+  const origin = openingLeafOriginOffset('door', face, 'flat', true);
+  return { x: origin.ox * Math.cos(radians) + origin.oy * Math.sin(radians),
+    y: -origin.ox * Math.sin(radians) + origin.oy * Math.cos(radians),
     shift: (direction === 'end' ? 1 : -1) * length * Math.max(0, Math.min(1, amount)) };
 }
 
@@ -41,12 +54,12 @@ export type OpeningLockFloorPlacement = [
  * separate inputs and must never move its origin (#250).
  */
 export function openingSymbolOffset(
-  _type: OpeningCfg['type'],
+  type: OpeningCfg['type'],
   _flipV: boolean,
   _angle: number,
-  _face: Pick<OpeningFaceOffset, 'ox' | 'oy'>,
+  face: Pick<OpeningFaceOffset, 'ox' | 'oy'>,
 ): OpeningSymbolOffset {
-  return { ox: 0, oy: 0 };
+  return openingLeafOriginOffset(type, face);
 }
 
 /** One Flat/Iso authority for an opening lock's immutable floor placement. */

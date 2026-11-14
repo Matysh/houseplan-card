@@ -232,6 +232,12 @@ without changing saved coordinates. Jamb/cut depth remains physical and
 independent of the Flat symbol. Panels are pointer- and ARIA-inert. Existing
 lock badges/cards and HA actions remain the only interactive opening surface.
 
+Closed opaque doors stop artificial light at this same selected ground-plane
+leaf (#1449), using the common optical builder and proven bounded wall pocket.
+This does not move Flat symbols or change Sun, masonry, saved data or camera
+physics. No-volume and failed-Iso fallback retain Flat placement; hiding panels
+alone leaves their light meaning unchanged.
+
 Door leaves turn by `50° × openingAmount`, paired window leaves by `65° ×
 openingAmount`, and gates retain their established 0–10° behaviour. The same
 canonical flips/host face that drive the floor symbol determine hinges and

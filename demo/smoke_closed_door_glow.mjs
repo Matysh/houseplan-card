@@ -31,9 +31,17 @@ try {
       const card = window.__card;
       const off = Object.fromEntries(Object.entries(card.hass.states).map(([id, state]) =>
         [id, id.startsWith('light.') ? { ...state, state: 'off' } : state]));
-      card.hass = { ...card.hass, states: { ...off, ...fixture.states } };
+      const transport=window.__mkHass();
+      card.hass = { ...card.hass, devices:fixture.devices, entities:fixture.entities, areas:fixture.areas,
+        states: { ...off, ...fixture.states }, callWS: message => {
+          if(message.type==='config/device_registry/list') return Promise.resolve(Object.values(fixture.devices));
+          if(message.type==='config/entity_registry/list') return Promise.resolve(Object.values(fixture.entities));
+          return transport.callWS(message);
+        } };
       await window.__hpTest.setServerConfig(() => fixture.config);
+      await window.__hpTest.waitForWrites();
       await window.__hpTest.setLayout(() => fixture.layout);
+      await window.__hpTest.waitForWrites();
       await window.__hpTest.setMode('view');
     }, fixture);
     await page.locator('houseplan-card [data-hp="zoom-fit"]').click();
@@ -93,8 +101,67 @@ try {
   // live contact/light updates; it is not a read-only camera operation.
   await page.evaluate(() => window.__hpTest.setVolumetricView(true)); await settle();
   const iso = await pixelProof(fixture, 'iso');
-  assert.deepEqual(iso.clip, flat.clip, '2.5D transports light through the same physical slot');
+  assert.notDeepEqual(iso.clip, flat.clip, 'Iso closes at its selected face, Flat at the saved axis');
+  const renderedLeaf = async f => {
+    const plane = await page.evaluate(() => {
+      const root=window.__card.shadowRoot;
+      return ['leaf-front','leaf-back'].map(surface=>{
+        const path=root.querySelector(`[data-id="closed-door"][data-surface="${surface}"]`);
+        if(!path) throw Error('actual rendered closed door leaf missing');
+        const numbers=path.getAttribute('d').match(/-?\d+(?:\.\d+)?/g).map(Number);
+        return numbers[0]; // First vertex is the unchanged z=0 ground hinge.
+      }).reduce((a,b)=>a+b)/2;
+    });
+    assert.ok(Math.abs(plane-f.doorLightIsoPanelX*1000)<.001,'light probe plane matches actual rendered leaf, not the wall axis');
+  };
+  await renderedLeaf(fixture);
+  const isoStored=await stored();
+  await page.locator('houseplan-card [data-hp="zoom-in"]').click(); await settle();
+  const stage=await page.locator('houseplan-card .stage').boundingBox();
+  await page.mouse.move(stage.x+stage.width*.25,stage.y+stage.height*.5); await page.mouse.down();
+  await page.mouse.move(stage.x+stage.width*.25+30,stage.y+stage.height*.5+20,{steps:3}); await page.mouse.up(); await settle();
+  await page.locator('houseplan-card [data-hp="rotate-right"]').click(); await settle();
+  assert.deepEqual((await prepareClosedDoorLight(page,fixture)).clip,iso.clip,'camera zoom/pan/quarter-turn never changes ground transport');
+  assert.equal(await stored(),isoStored,'camera-only actions write no plan');
   await page.evaluate(() => window.__hpTest.setVolumetricView(false)); await settle();
+  assert.deepEqual((await prepareClosedDoorLight(page,fixture)).clip,flat.clip,'switching back cannot retain Iso placement');
+  // Restore the camera before checking actual leaf ground vertices again.
+  await page.locator('houseplan-card [data-hp="rotate-left"]').click();
+  await settle();
+  for(const wallCm of [30,96]) for(const right of [false,true]) for(const flipV of [false,true]) for(const flipH of [false,true]) {
+    const f=await seed({wallCm,right,flipV,flipH});
+    const expectedFlat=(await prepareClosedDoorLight(page,f)).clip;
+    await page.evaluate(()=>window.__hpTest.setVolumetricView(true)); await settle();
+    await pixelProof(f,`iso-${wallCm}-${right}-${flipV}-${flipH}`); await renderedLeaf(f);
+    const retained=(await prepareClosedDoorLight(page,f)).clip;
+    await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{cfg.spaces[0].settings.hide_openings=true;})); await settle();
+    assert.deepEqual((await prepareClosedDoorLight(page,f)).clip,retained,'hiding opening paint never changes Glow');
+    await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{cfg.spaces[0].settings.show_borders=false;})); await settle();
+    assert.deepEqual((await prepareClosedDoorLight(page,f)).clip,expectedFlat,'no-volume branch restores Flat clipping');
+    await page.evaluate(()=>window.__hpTest.setVolumetricView(false)); await settle();
+  }
+  const fallbackFixture=await seed();
+  const fallbackFlat=(await prepareClosedDoorLight(page,fallbackFixture)).clip;
+  await page.evaluate(()=>window.__hpTest.setVolumetricView(true)); await settle();
+  await page.evaluate(()=>window.__hpTest.setMode('devices')); await settle();
+  assert.deepEqual((await prepareClosedDoorLight(page,fallbackFixture)).clip,fallbackFlat,'editor uses Flat placement despite saved Iso preference');
+  await page.evaluate(()=>window.__hpTest.setMode('view')); await settle();
+  await prepareClosedDoorLight(page,fallbackFixture);
+  await page.evaluate(()=>{
+    const card=window.__card, runtime=card._isoSceneRuntime;
+    window.__door1449Runtime=runtime;
+    // Controlled optional-render failure through the real existing boundary.
+    card._isoSceneRuntime={...runtime,resolveIsoFramePresentation:()=>{throw Error('controlled closed-leaf presentation refusal');}};
+    card.requestUpdate();
+  }); await settle();
+  assert.equal(await page.locator('houseplan-card [data-hp="iso-walls"]').count(),0);
+  assert.deepEqual((await prepareClosedDoorLight(page,fallbackFixture)).clip,fallbackFlat,'latched fallback must not retain Iso optical cache');
+  await page.evaluate(async()=>{
+    window.__card._isoSceneRuntime=window.__door1449Runtime; delete window.__door1449Runtime;
+    await window.__hpTest.setVolumetricView(false);
+  }); await settle();
+  evidence.checks.push('iso-rendered-leaf-ground-vertices', 'iso-ordinary-thick-both-sides-flips',
+    'camera-world-invariance', 'hidden-no-borders-editor-fallback');
   evidence.checks.push('panel-flat-pixels', 'panel-iso-pixels', 'closed-open-closed', 'no-writes');
   for (const options of [{ right: true }, { slide: true }, { slide: true, flipV: true },
     { partition: true }, { partition: true, slide: true }, { exterior: true }, { exterior: true, slide: true, flipV: true }]) {
