@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 11830,
+  "revision": 11831,
   "nextTicket": 425,
-  "nextFence": 424,
+  "nextFence": 425,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -3633,7 +3633,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 424,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794622980495,
       "reviewEntry": 2,
@@ -4928,10 +4928,18 @@
       "runId": 43528439169
     }
   },
-  "waiting": [
-    1392
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1392,
+    "worker": "finish",
+    "token": "424:finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:1:admit",
+    "fence": 424,
+    "materialSha": "705ca6117a15b8532efbce28e1ba64a7e598027b",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1794622984268,
+    "expiresAt": 1794623284268
+  },
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
       "digest": "3608873f6034b21ea424821722398c159d16857cd52d8f7d9bb5b504dd59972c",
@@ -5215,6 +5223,20 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "705ca6117a15b8532efbce28e1ba64a7e598027b"
+      }
+    },
+    "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:1:admit": {
+      "digest": "85583568a7fef437b907338d7ab1bf7be4e16c441ba4a8f6a8907152acbc8f46",
+      "issue": 1392,
+      "message": {
+        "kind": "admitted",
+        "issue": 1392,
+        "at": 1794622984268,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "705ca6117a15b8532efbce28e1ba64a7e598027b",
+        "phase": "sync"
       }
     }
   },
