@@ -25,7 +25,7 @@ This is documentation of that development snapshot, not a release announcement.
 - Images and captions are explanatory examples. Names, readings, selected
   values and exact layout can differ in a real home or another theme/window size.
 
-[`screenshots.json`](screenshots.json) records the source revision, build
+[Capture record](PROVENANCE.md) records the source revision, build
 fingerprint, browser and HA package provenance, language, viewport and SHA-256
 of each image. Refresh both languages together when these screens change;
 checking that a file exists does not establish that its interface is current.

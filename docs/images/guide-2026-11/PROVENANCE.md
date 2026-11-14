@@ -1,3 +1,6 @@
+# Screenshot provenance
+
+```json
 {
   "capturedAt": "2026-11-14T20:43:46.754Z",
   "sourceCommit": "45faf4e7c16d5feb2e0f30727784d69a52429960",
@@ -1470,3 +1473,4 @@
     }
   ]
 }
+```
