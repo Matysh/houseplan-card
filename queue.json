@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13501,
+  "revision": 13502,
   "nextTicket": 472,
   "nextFence": 469,
   "tasks": {
@@ -1707,44 +1707,6 @@
       },
       "devBuild": {
         "status": "not-required"
-      }
-    },
-    "1346": {
-      "issue": 1346,
-      "branch": "codex/issue-1346-room-face-spurs",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "dd8c78da81f79a3b28a772971d2aa971fb2d5ce4",
-      "mergedSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865",
-      "mergedAt": 1794051560010,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1346:2:95a88f4d839cd4c9416c8831967fc3db978a5328:dd8c78da81f79a3b28a772971d2aa971fb2d5ce4",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 13,
-          "cycleMilestone": 13
-        },
-        "commentCurrent": true,
-        "commentDigest": "278d46ae00a5fa8a1f17",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 13
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "fde95d8bd06c50a90963e11f8ba0a5b7c0dc8865"
       }
     },
     "1347": {
@@ -4640,10 +4602,24 @@
       "removedToRelease": false,
       "reviewRequest": "review:1435:1:75a9173f13c5480a1ce744161533c327f5d0ecfe:5bd501fa75658b97b4d18608dec89984cfba21a6",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 15
+        },
+        "commentCurrent": true,
+        "commentDigest": "d1c65df9ac3a3cbebb03",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "published",
