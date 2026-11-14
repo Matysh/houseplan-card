@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Refresh the RU/EN user guides with 24 current screenshots per language, paragraph indents and clearer, friendlier explanations; retain documented behavior, examples and anchors (#1445).
 - Align README and user-guide links, Marketplace installation guidance and diagnostic-data wording in RU/EN; retain legacy guide anchors (#1430).
 
 ## v1.85.2 — 2026-11-13
