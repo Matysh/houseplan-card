@@ -26,6 +26,15 @@ const ordinary = await page.evaluate(async (attemptKey) => {
   card._adoptConfigCapabilities({ integration_version: ' 462-browser-target ' });
   await card.updateComplete;
   await frame();
+  // Animation may still be at opacity 0 after two rAF under a loaded runner.
+  // Wait only for the same actual visible state; an absent/transparent banner
+  // still fails the original oracle once this bounded window expires.
+  const paintDeadline = performance.now() + 2000;
+  while (performance.now() < paintDeadline) {
+    const painted = root().querySelector('.version-recovery');
+    if (painted && getComputedStyle(painted).opacity !== '0') break;
+    await new Promise(done => setTimeout(done, 25));
+  }
   const relation = card._versionRecovery.relation;
   const banner = root().querySelector('.version-recovery');
   const button = root().querySelector('.version-recovery-reload');
