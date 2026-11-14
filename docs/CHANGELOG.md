@@ -4,6 +4,7 @@
 
 - Refresh the RU/EN user guides with 24 current screenshots per language, paragraph indents and clearer, friendlier explanations; retain documented behavior, examples and anchors (#1445).
 - Update the native keyboard-focus oracle to the approved single accent border; retain real Tab traversal, focus and activation (#1441).
+- Wait for actual version-banner paint in its browser smoke instead of assuming two animation frames suffice under load; retain all recovery and geometry checks (#1442).
 
 - Publish the synthetic HA transport before opening saved-plan dialogs in picker smoke fixtures; retain list geometry and file-management assertions (#1439).
 - Keep context-menu width unchanged when reserving the single 1px border, including touch rows (#1444).
