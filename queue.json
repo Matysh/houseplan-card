@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12196,
+  "revision": 12197,
   "nextTicket": 436,
   "nextFence": 436,
   "tasks": {
@@ -3702,15 +3702,16 @@
         "tests_backend/test_ha_import_export.py"
       ],
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794635609096,
-        "entry": 2,
-        "detail": "Браузер: decor creation selection: cancelled; Браузер: decor rotation shift: cancelled; Браузер: device icon picker: Подготовка не завершена успешно; Браузер: dialog picker 998: Подготовка не завершена успешно; Браузер: direct wall geometry: Подготовка не завершена успешно; Браузер: editor draft exit: Подготовка не завершена успешно; Браузер: editor gestures: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: mounted authority: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan host: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall thickness: Подготовка не завершена успешно",
-        "eventId": "finish:2037b335-ba7d-4f56-9106-129e25272687:finish:3:return:return:1394"
-      }
+        "at": 1794636696721,
+        "entry": 3,
+        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Браузер: summary panel: failed; Браузер: summary weather: failed",
+        "eventId": "finish:f95cc89b-03be-4ad4-99e0-6f05fe2facbf:finish:3:return:return:1394"
+      },
+      "reason": "checks-failed"
     },
     "1395": {
       "issue": 1395,
@@ -4913,18 +4914,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1394,
-    "worker": "finish",
-    "token": "435:finish:f95cc89b-03be-4ad4-99e0-6f05fe2facbf:finish:1:admit",
-    "fence": 435,
-    "materialSha": "3c1096ac2fa1757f4cb681be1b5d9e36dea209c0",
-    "expectedBase": "3108fed9e23905a23044453c85be4e158dabaadc",
-    "phase": "testing",
-    "admittedAt": 1794636124273,
-    "expiresAt": 1794636962804,
-    "patchId": "8978665047fad62b834d4293c3f8088351c99584"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
       "digest": "12777e21751a9ed7739ddf636b9b3bee3ba44b51ffb7d393f4c581e85a28643e",
@@ -5072,6 +5062,10 @@
     },
     "finish:5869ef3a-20aa-4d7a-a841-8177a6e8e580": {
       "digest": "1e722dcbabfd823ace089ae35122869c799415af293be74e9527f69db3ba7b5d",
+      "issue": 1394
+    },
+    "finish:f95cc89b-03be-4ad4-99e0-6f05fe2facbf:finish:3:return": {
+      "digest": "cacc6a6dbe2416e2f007009b4808672c8255281872492ae23fa2b154ff39e944",
       "issue": 1394
     },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
@@ -5222,6 +5216,26 @@
         "layer": "product",
         "materialSha": "3c1096ac2fa1757f4cb681be1b5d9e36dea209c0",
         "phase": "sync"
+      }
+    },
+    "finish:f95cc89b-03be-4ad4-99e0-6f05fe2facbf:finish:3:return:return:1394": {
+      "digest": "cacc6a6dbe2416e2f007009b4808672c8255281872492ae23fa2b154ff39e944",
+      "issue": 1394,
+      "message": {
+        "kind": "return",
+        "issue": 1394,
+        "at": 1794636696721,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794636696721,
+          "entry": 3,
+          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Браузер: summary panel: failed; Браузер: summary weather: failed",
+          "eventId": "finish:f95cc89b-03be-4ad4-99e0-6f05fe2facbf:finish:3:return:return:1394"
+        }
       }
     }
   },
