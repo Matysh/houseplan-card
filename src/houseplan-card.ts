@@ -973,7 +973,9 @@ export class HouseplanCard extends LitElement {
   private get planEnvironmentRevision(): number { return this.planHost.environmentRevision; }
 
   private _environmentRenderSnapshot(value: HostEnvironment): HassRenderSnapshot {
-    return { inputKey: value.inputKey ?? value, states: value.states, entities: value.registry.entities, devices: value.registry.devices,
+    // inputKey owns operational intake, not painted content. Passing it to
+    // the fail-open render classifier makes every HA tick structural.
+    return { states: value.states, entities: value.registry.entities, devices: value.registry.devices,
       areas: value.registry.areas, themes: value.presentation.themes, config: value.units,
       language: value.presentation.language, locale: value.presentation.locale ? { ...value.presentation.locale } : undefined };
   }
@@ -997,7 +999,8 @@ export class HouseplanCard extends LitElement {
         this._planHassProjection?.invalidate();
       else this._maybeRebuildDevices();
     }
-    this._renderLife.observe(before && this._environmentRenderSnapshot(before), this._environmentRenderSnapshot(current),
+    this._renderLife.observe(before && this._environmentRenderSnapshot(before),
+      { ...this._environmentRenderSnapshot(current), inputKey: current.inputKey ?? current },
       snapshot ? { entityIds: snapshot.entityIds } : null, () => intakeHass(this));
   }
 

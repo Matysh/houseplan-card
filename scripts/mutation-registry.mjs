@@ -15737,9 +15737,9 @@ const MUTANT_DEFINITIONS = [
       + 'adopt its config or local choice into the new lifecycle (#493 AC5)',
     patches: [{
       file: 'src/summary-panel-runtime-loaded.ts',
-      find: '    return this.connected && generation === this.lifecycleGeneration\n'
+      find: '    return planHostOf(this.host).capabilities.summary && this.connected && generation === this.lifecycleGeneration\n'
         + '      && this.lifecycleIdentity === this.identity();',
-      replace: '    return this.connected; // mutant: every async completion belongs to the current user',
+      replace: '    return planHostOf(this.host).capabilities.summary && this.connected; // mutant: every async completion belongs to the current user',
     }],
   },
   {
