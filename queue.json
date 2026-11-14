@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12807,
+  "revision": 12808,
   "nextTicket": 452,
   "nextFence": 452,
   "tasks": {
@@ -4496,7 +4496,7 @@
       "ownerDecision": null,
       "ticket": 451,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794664248372,
       "reviewEntry": 3,
       "patchId": "42729b347ff7985c803c68f0ff1f94f120c35011",
@@ -4559,19 +4559,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261114T132707109-9547927a",
+        "id": "20261114T135103534-240225e9",
         "name": "Тесты для задачи #1423 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T132707109-9547927a/report.json",
-        "materialSha": "57b416aaa549042855b0e99c54fc2affb109398c",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T135103534-240225e9/report.json",
+        "materialSha": "17e097cc5028767c96277023575ac2052d59ef8b",
         "status": "passed",
-        "finishedAt": "2026-11-14T13:28:16.293Z",
+        "finishedAt": "2026-11-14T14:00:48.057Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1423:2:c8a4dd75df2d754ba1fd02e21fb0295da9d7d8f9:a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-        "at": 1794663265000
-      }
+      "reviewRound": null
     },
     "1424": {
       "issue": 1424,
@@ -5007,9 +5003,9 @@
     "fence": 451,
     "materialSha": "17e097cc5028767c96277023575ac2052d59ef8b",
     "expectedBase": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794664251770,
-    "expiresAt": 1794665091178,
+    "expiresAt": 1794668449228,
     "patchId": "42729b347ff7985c803c68f0ff1f94f120c35011"
   },
   "events": {
@@ -5486,6 +5482,34 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:1e482125-b6d9-41c6-9777-9ed89268db79:finish:3:s6-complete": {
+      "digest": "9ba230cdaef55a662789629fd464a73fa4b6627b456ffeddb645a86e065fc9d6",
+      "issue": 1423,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1423,
+        "at": 1794664849228,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "17e097cc5028767c96277023575ac2052d59ef8b",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T135103534-240225e9",
+          "name": "Тесты для задачи #1423 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T135103534-240225e9/report.json",
+          "materialSha": "17e097cc5028767c96277023575ac2052d59ef8b",
+          "status": "passed",
+          "finishedAt": "2026-11-14T14:00:48.057Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43599936487. Единственный блокер — HA-совет после тёплого переподключения — исправлен в standalone facade: каждый config/get проверяет version/fingerprint/API до отдачи renderer; несовместимость немедленно отзывает только этот mount/leases, удаляет editor и показывает существующий локализованный host notice. HA version-recovery не меняется. Native проверяет реальное connection false→true отдельно для fingerprint, version и API, отсутствие HA/Integration текста, нулевые leases и неизменность core; Node проверяет те же три случая и независимость другого mount. Полный standalone native после правки — 26 содержательных checks PASS, включая 16 language/theme/width, реальные Save/transfer и resource failures. Во время адресной отладки устранён DevTools «promise garbage collected» в resource-probe: результат ready теперь имеет явного владельца/состояние и наблюдаемый отказ, а не висит удалённым await; изолированный resource-only повтор зелёный. Это не скрывает отсутствие ready и не ослабляет timeout/ошибки.\n\nНеобязательные замечания: README теперь перечисляет базовые команды/HTTP и ссылается на реальную WS-таблицу, честно перечисляет unsupported операции и неполную семантику тестового config/set, не рекламирует fixture как production adapter. Исправлена ложная фраза о чтении всех compatibility rules из constants: версии читаются, исторические пределы — проверяемый snapshot parser. Тестовый HTTP post теперь уважает write:false, как request. Полная новая backend-реализация удаления/LED/no-op и атомарный staging builder не добавлялись: это улучшения вне единственного блокера, ограничения отмечены. Остальное принятое решение и S6 reuse сохраняются. Новых эталонов/релиза нет.\n\n### Цель и результат\nОтдельный локально собираемый frontend настоящего редактора без HA application, а не сайт или production backend. Принятое ТЗ r3: https://github.com/Matysh/houseplan-card/actions/runs/43587103391. Зависимость #1422 уже S8. Проверено соответствие его API: отдельный document, явный presentation owner, четыре поля, общий native Form Kit. Публикация и будущий stable pin остаются отдельной командой; текущие артефакты честно маркированы dev/source SHA/dirty.\n\n### Решение\n`houseplan-card.ts` теперь implementation без HA-регистрации/picker/banner. Их прежнее поведение (включая Static card) перенесено в `houseplan-ha-card-entry.ts`; панель импортирует этот HA-wrapper. Фасады остаются content-hashed/readiness-guarded. Во время фактического cold запуска обнаружен ещё один импорт Static card из ленивого editor runtime — его HA side effect также остался только в wrapper. Общий renderer не скопирован.\n\n`standalone-entry.ts` явно монтирует PlanHost до подключения элемента, проверяет версии/fingerprint/API и показывает отдельное локализованное сообщение без HA/HACS рекомендаций при несовместимости. `ready` — handshake/подключение, не обещание завершённого первого paint. Отдельная per-mount facade владеет presentation и leases, отзывает старые результаты/команды и pending subscriptions при dispose/замене identity; исходный host и другие mount не уничтожаются. `hass`/HaPlanHost/picker в автономном запуске не создаются.\n\nBuilder пишет только своё отдельное дерево. Манифест перечисляет полный graph, SHA-256 и raw/gzip байты, source/dev identity, реальные core compatibility, font/CSS/licenses. При пересборке не удаляется каталог: вывод сначала проверяется на владение/хеши/ссылки, затем удаляются лишь прежние доказанные generated файлы. Roboto 400 локален, 500/600 синтезируются, fallback системный. CSS URL вычисляется от фактического emitted chunk; нельзя предполагать, что implementation находится рядом с facade. Icon inventory проверяется в каждой standalone сборке; provenance берётся из установленного @mdi/js. При визуальном разборе исправлено растяжение glyph до 44px click target: local SVG теперь соблюдает существующий `--mdc-icon-size` (20px для gear), target не уменьшен. Общая HA иконка не меняется.\n\n### Настоящий core и границы тестового транспорта\nПоложительный UI journey использует отдельный Python stdio process с настоящими pure-core schema/graph/portable/image/staging функциями. В нём запрещён импорт HA и проверен отсутствие HA в sys.modules. Это не echo-import и не алгоритмы core на JS. Dispatcher владеет только синтетической in-memory парой revisions, preview leases, temporary files и one-deep Optimize intent. Он не доказывает production durability/auth/quota/multiprocess concurrency. Browser host — явный test transport; публикация Python API/сайта вне задачи.\n\nФлаги узлов соответствуют реальным pure-core операциям: move/delete, merge/attach через node-move intent. Шесть отдельных сравнений прошли по реальным authenticated HA HTTP/WS/Stores на одинаковых входах: Save/CAS, paired Optimize/Undo, четыре node API, structural staging/compact commit. Старый wire fixture больше не объявляет по умолчанию node API, которые не умеет исполнять. Fingerprints native/Node/HA-parity включают сам Python dispatcher и его core-зависимости; добавлена адресная проверка.\n\n### Перенос и уточнения r3\nРеальный JSON export → preview → apply выполняется через обычные кнопки диалогов. Сравнение второго core-экспорта с первым проверяет всю проекцию пространства (geometry/graph dependencies/opening features/decor/appearance) после доказанного correspondence ID; отдельно — позицию/масштаб подписи комнаты. В fixture есть дверь, две оконные створки с contact/shade, колонки, лестница, живой текст, оформление и скрытый marker. HA данные очищаются в plan-only файле, но переживают обычный Save/remount в исходном host storage. `target_space_id` сохраняется в первом файле и обнуляется именно импортёром; название становится уникальным. Legacy v10 мигрирует настоящим core; скрытые bindings следуют remap. ZIP/full JSON/future model не применяются частично. Installation backup не включён.\n\n### Фактически проверено до штатного S6\n- Типы и обычная HA сборка прошли. Два прежних HA harness кадра: View 0 diff px; editor 426 px (0,0416%, существующий допуск). Эталоны не менялись.\n- Адресные Node проверки API/ownership/manifest/иконок/границ — 44/44 на соответствующем снимке; отдельный output safety 5/5 и bundle/readiness/fallback 64/64. Последнее расширение core round-trip — 4/4. Реальные HA сравнения — 6/6.\n- Native сценарий проходил 25 содержательных проверок, включая genuine UI Save/remount/transfer, false-save/ACL/authority/handshake, 16 сочетаний язык×тема×ширина, space/room native forms на 390px, пять resource failures/recovery и три fresh-context измерения. Расширенный fixture с дополнительными features/appearance/label equality включён в финальный S6; его core-пробы уже зелёные. Результат S6 передаёт координатор, а не эти адресные заявления.\n- Отдельная standalone сборка сохранила побайтово HA output (169 файлов, равные tree SHA до/после). Artifact `artifacts/standalone-entry/evidence.json` сохраняет request log, raw measurement samples, source/scene identities и candidate PNG. Missing entry показывает reference embedder (`demo/standalone/loader.js`): отсутствующий SDK физически не может рисовать свою ошибку. Ошибки host handshake после загрузки рисует сам SDK.\n\n### Измерения и ограничения\nПервый полный S6 прошёл native-сценарий с расширенным fixture, но остановился на шести механических свидетелях: старые synthetic facade/import anchors и version seam после выделения HA wrapper; один новый runtime-handshake hit в inventory; несинхронная копия notices. Свидетели адресно обновлены без ослабления границ: panel дополнительно проверяет фактическую регистрацию wrapper, version seam отдельно проверяет все raw uses в wrapper, прежние inventory записи сохранены. Notice синхронизирован в установленной интеграции. Адресный повтор шести файлов — 24/24 PASS, включая schema freshness в штатном Python окружении. Это не результаты модельного ревью.\n\nТри уже выполненных одинаковых fresh-context запуска настоящего editor: cold 832,59 / 829,93 / 833,71 мс; первое открытие editor дополнительно 259,82 / 259,57 / 269,03 мс. Доставка cold: 2 193 614 raw bytes, gzip-equivalent 768 233; через первый editor — 3 587 052 raw bytes, 46 фактических запросов. На wire identity encoding; gzip числа — эквивалент, не выдуманная HTTP-компрессия. Эти наблюдения относятся к своему зафиксированному synthetic snapshot, не являются бюджетом/обещанием; финальный S6 генерирует новые raw samples с SHA самой одинаковой сцены. Это не shell-probe #1393.\n\nНовые PNG — кандидаты для просмотра, не принятые эталоны. Ничего не установлено в HA владельца, личный UI Lab сохранён. Release-профиль/мутации не запускались. Решение по real-HA E2E — Matysh/houseplan-e2e#58: новый сценарий не нужен для отдельного no-HA SDK, обычный release installation/upgrade остаётся прежним.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
