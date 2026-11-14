@@ -8,6 +8,18 @@ const deferred = () => { let resolve, reject; const promise = new Promise((a, b)
 const source = (extra = {}) => ({ user: { id: 'a', is_admin: true }, states: {}, callWS: async () => ({}), ...extra });
 const command = { type: 'houseplan/config/get' };
 
+test('#1435 a present HA snapshot can paint passive information without transport', async () => {
+  const host=new HaPlanHost({user:{id:'a',is_admin:true},language:'en',states:{}});
+  assert.equal(host.environment.ready,true);
+  assert.equal(host.environment.connected,false);
+  assert.equal(host.environment.permissions.read,false);
+  assert.equal(host.environment.presentation.language,'en');
+  await assert.rejects(host.request(command),{code:'not_ready'});
+  host.update(undefined);assert.equal(host.environment.ready,false);
+  host.update({language:'ru'});assert.equal(host.environment.ready,true);
+  assert.equal(host.environment.connected,false);
+});
+
 test('#1433 service adapter preserves the three-argument HA call unless a target is supplied', async () => {
   const calls=[],raw=source({callService(...args){assert.equal(this,raw);calls.push(args);return Promise.resolve('ok');}});
   const host=new HaPlanHost(raw),data={entity_id:'light.ceiling'},target={area_id:'kitchen'};
