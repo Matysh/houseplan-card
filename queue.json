@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12176,
-  "nextTicket": 434,
+  "revision": 12177,
+  "nextTicket": 435,
   "nextFence": 434,
   "tasks": {
     "1024": {
@@ -3642,14 +3642,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1394-plan-capabilities",
-      "materialSha": "b64766907826daae43e4bba9352f6b94bcdb3b2b",
+      "materialSha": "eeb6e17ddbdd35d7225a37724bf3cc061ea58fdd",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 433,
-      "queued": false,
+      "ticket": 434,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794634462016,
-      "reviewEntry": 1,
+      "readyAt": 1794635313587,
+      "reviewEntry": 2,
       "patchId": "080f625cfe7505fc0fc4c27c55cc4d76ecaf909c",
       "changedFiles": [
         "demo/smoke_plan_capabilities.mjs",
@@ -3692,7 +3692,6 @@
         "test/plan-capability-permissions.test.mjs",
         "tests_backend/test_ha_import_export.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -4904,7 +4903,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1394
+  ],
   "active": null,
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
@@ -5065,6 +5066,19 @@
           "detail": "Критичные данные, сохранение и права: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/geometry-cleanup-842.test.mjs: failed; Поведение: test/header-menu.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/marker-activity-save-865.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/render-device-snapshot.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
           "eventId": "finish:aba9fde5-1710-4bdf-8752-192f651e747d:finish:3:return:return:1394"
         }
+      }
+    },
+    "finish:2037b335-ba7d-4f56-9106-129e25272687": {
+      "digest": "246f6aafd1ebf1a925715a5db32afd6014758face7ceda9c97e75474d93a46ec",
+      "issue": 1394,
+      "message": {
+        "kind": "queued",
+        "issue": 1394,
+        "at": 1794635313587,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "eeb6e17ddbdd35d7225a37724bf3cc061ea58fdd"
       }
     }
   },
