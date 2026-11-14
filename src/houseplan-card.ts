@@ -1447,6 +1447,10 @@ export class HouseplanCard extends LitElement {
    * open the editors (`=== true`, not `!== false`).
    */
   private get _canManageConfiguration(): boolean {
+    // HA without a current can_write reply keeps its original admin-only
+    // fallback. An injected host owns its explicit writer permission itself.
+    if (this._serverCanWrite === null && !this._injectedPlanHost)
+      return this.planHost.environment.permissions.admin;
     return this.planHost.environment.permissions.write && this._serverCanWrite !== false;
   }
   private get _canEdit(): boolean { return this._norm && this._canManageConfiguration; }
