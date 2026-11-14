@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11916,
+  "revision": 11917,
   "nextTicket": 427,
   "nextFence": 427,
   "tasks": {
@@ -3736,15 +3736,16 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "3:checks-failed",
+        "key": "4:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794625648572,
-        "entry": 3,
-        "detail": "Поведение: test/route-kiosk.test.mjs: failed; Браузер: opening light transparent: failed; Браузер: plan host: failed; Браузер: wall preview handoff 1247: failed; Браузер: warm geometry camera: failed",
-        "eventId": "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:3:return:return:1392"
-      }
+        "at": 1794626735758,
+        "entry": 4,
+        "detail": "Браузер: wall preview handoff 1247: failed",
+        "eventId": "finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7:finish:3:return:return:1392"
+      },
+      "reason": "checks-failed"
     },
     "1393": {
       "issue": 1393,
@@ -4942,18 +4943,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1392,
-    "worker": "finish",
-    "token": "426:finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7:finish:1:admit",
-    "fence": 426,
-    "materialSha": "5cc56bdc9634287ac94ab2b3b20d276b2e0fcddd",
-    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-    "phase": "testing",
-    "admittedAt": 1794625810971,
-    "expiresAt": 1794627010385,
-    "patchId": "68f87bb6314c83a65a79b93990ce92c20150f54e"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
       "digest": "3608873f6034b21ea424821722398c159d16857cd52d8f7d9bb5b504dd59972c",
@@ -5395,6 +5385,10 @@
       "digest": "c7d2b57b828f8c0f2e72cc6323c943bf08553144f27da81ccc3d74c337a3ee53",
       "issue": 1392
     },
+    "finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7:finish:3:return": {
+      "digest": "a2608d62ce5477ce0e328ec38218b5b04b1d15acff29636097873f1098a03bfc",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5603,6 +5597,26 @@
         "layer": "product",
         "materialSha": "5cc56bdc9634287ac94ab2b3b20d276b2e0fcddd",
         "phase": "sync"
+      }
+    },
+    "finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7:finish:3:return:return:1392": {
+      "digest": "a2608d62ce5477ce0e328ec38218b5b04b1d15acff29636097873f1098a03bfc",
+      "issue": 1392,
+      "message": {
+        "kind": "return",
+        "issue": 1392,
+        "at": 1794626735758,
+        "entry": 4,
+        "notice": {
+          "key": "4:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794626735758,
+          "entry": 4,
+          "detail": "Браузер: wall preview handoff 1247: failed",
+          "eventId": "finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7:finish:3:return:return:1392"
+        }
       }
     }
   },
