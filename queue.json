@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13753,
+  "revision": 13754,
   "nextTicket": 476,
   "nextFence": 474,
   "tasks": {
@@ -5292,6 +5292,10 @@
       "digest": "1154b92468ddaa415f326ab43eb9712a8e71917531f74807cbb477e2214fa3b5",
       "issue": 1437
     },
+    "github:43642268735:1:completions:message:48be9189b95d64933b41679aca1541e1760525601c80700fb39e3c9a0be3f901": {
+      "digest": "b2406e646e647105e75c81cbe2068293fe485059703a1aa98e0b5ddba3410bb1",
+      "issue": 1437
+    },
     "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
       "digest": "f63ad38f23c48cdc36eab5908922dbc577e7b6a710d05ab97b186e2437f621e4",
       "issue": 1437,
@@ -5375,7 +5379,8 @@
         "reviewChanges": "Причина: при извлечении PlanHost #1392 data-проекция сохранила language/locale/localize/themes, states и registry, но потеряла оба HA read-only форматтера. Это проявилось также в восьми проверках smoke_value_format (badge/live text/перевод/атрибуты/единицы).\n\nРешение: существующий HA-only _projectHaSmartHomeSources добавляет ровно formatEntityState и formatEntityAttributeValue через небольшой allowlist-helper haValueFormatters. Методы привязаны к конкретному исходному HA объекту, не к урезанной проекции; новый input/environment строит новую проекцию. Четырёхпольный HostPresentationContext, PlanHost и транспортные границы не меняются. Целый HA не передаётся доменным потребителям. Альтернатива расширить portable presentation отвергнута как нарушение установленного контракта; преобразовывать raw on/off в модели также нельзя.\n\nОсобое внимание: this/текущий источник, дополнительный value-аргумент weather formatter, fallback без метода/при исключении, единица ровно один раз и raw значения enum. Unit проверяет allowlist/привязку/смену источника и вызовы существующих consumer fallback. Исходные ожидания native smoke_marker_alerts и smoke_value_format не ослаблены. В S6 дополнительно включены оба smoke, summary_weather и plan-host-boundary. Реальный пользовательский HA, visual baselines и выпуск не меняются. Классификация line-fix: регрессия невыпущенного #1392, текущая привязка release-ledger оставлена без изменения версий.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
