@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11976,
+  "revision": 11977,
   "nextTicket": 430,
   "nextFence": 429,
   "tasks": {
@@ -5702,6 +5702,10 @@
       "digest": "da0a567c831444c6edf8188c369afccc9da568d6542dab5b8e8f2f028cdcb317",
       "issue": 1394
     },
+    "github:43555134078:1:completions:message:8de3fef4406ff14cad30cbc63d4fdf6b15bbb13e03f8e284d54882b6a5056d83": {
+      "digest": "bf2deb6cfd74507bd08362646fcbe52c4467f5088f9490ed790562a051d6e16d",
+      "issue": 1395
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -6090,7 +6094,8 @@
         "reviewChanges": "ТЗ использует один контракт #1392. Намеренно разделены installationBackup/planTransfer и real/virtual devices; иначе автономный редактор лишился бы собственного скачивания плана либо получил бы HA-зависимый редактор устройств. Защита dispatch обязательна, но не выдаётся за ACL. Решение владельца для #1393: UI Kit и локальные SVG на автономной поверхности, без замены HA-компонентов в интеграции. Здесь реализуется только доступность функций, не те компоненты. Продукт пока не менялся, запусков тестов не было.\n\n### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43515222519.\n- Блокер transport-зависимой базы → добавлены обязательные base ports и явная матрица planImages/decorAssets/planMaintenance/supportDiagnostics/planTransfer/content.resolve, включая onboarding и nested menus. Полный planOnly требует этих реализаций; partial profile скрывает отсутствующие группы, allowed command log строится из матрицы.\n- Уточнены immutable capabilities/generation, сочетание с прежними API-version gates и ACL, зависимости partial profiles, virtual actuation и preservation/cascades скрытых объектов.\n- Включены забываемые print-devices и HA support/fingerprint поверхности.\nРедакция 2. В отсутствие отдельного решения о расширении сохраняется предложенный консервативный вариант: существующий перенос по одному пространству и явное объяснение ограничения лестниц. Продукт и проверки #1394 не изменялись. #1392 ещё проходит code review, не объявляется слитой; реализация #1394 начнётся после её S8. Для независимой оценки ТЗ обязательная база и transport-матрица приведены здесь полностью, без требования доступа к соседней незавершённой ветке. Реализованный контракт #1392: PlanHost.request(HouseplanCommand), subscribe(config/layout), http.request/postJson, content.resolve, readonly environment{ready,connected,permissions,states,registry,presentation}, authorityKey/writeAuthorityRevision/environmentRevision/subscribeEnvironment и optional deviceServices/refreshRegistry. HA credential/connection не входят в presentation. Host capabilities дополнят именно этот контракт, не создают второй. Текстовое направление UI Kit/локальных SVG подтверждено владельцем; замена HA-компонентов остаётся за пределами этих пяти задач.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
