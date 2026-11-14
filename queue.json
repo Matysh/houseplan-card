@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12666,
+  "revision": 12667,
   "nextTicket": 449,
   "nextFence": 449,
   "tasks": {
@@ -4509,7 +4509,7 @@
         "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed",
         "eventId": "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return:return:1422"
       },
-      "patchId": "0efac24fd0193b4af85dcb5a17e68d0c61389da5",
+      "patchId": "ad54bb5d85e80865b5f1819342f4eff3e74a8a01",
       "changedFiles": [
         "demo/helpers/standalone-presentation-build.mjs",
         "demo/smoke_standalone_presentation.mjs",
@@ -4528,6 +4528,7 @@
         "src/standalone-presentation.ts",
         "src/standalone-theme.ts",
         "test/browser-attestation.test.mjs",
+        "test/smoke-exception-guard.test.mjs",
         "test/standalone-presentation-boundary.test.mjs",
         "tsconfig.test.json"
       ]
@@ -4951,10 +4952,11 @@
     "token": "448:finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:1:admit",
     "fence": 448,
     "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c0724ea4179e2c6971033c383ef37a441983960f",
+    "phase": "testing",
     "admittedAt": 1794656774156,
-    "expiresAt": 1794657074156
+    "expiresAt": 1794657080463,
+    "patchId": "ad54bb5d85e80865b5f1819342f4eff3e74a8a01"
   },
   "events": {
     "github:43585265383:1:label:spec-request": {
@@ -5103,6 +5105,10 @@
     },
     "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return": {
       "digest": "873dcec8ffb0b18674fb59fe6c25d33403f1a8b008b910272e6f267b480d963b",
+      "issue": 1422
+    },
+    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:2:synchronized": {
+      "digest": "fc95f22d089f146e3e1baa88abdded7a971860404f4b6e710a69d77944ca3933",
       "issue": 1422
     },
     "github:43585981218:1:label:spec-request:spec-resubmitted:1422": {
