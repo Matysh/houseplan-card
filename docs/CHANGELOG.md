@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Clarify stable announcement writing: let significant changes determine length without a feature quota, and exclude internal fixes to new functionality both as separate points and within feature descriptions (#1424).
 - Audit untrusted input boundaries: fix pre-allocation ZIP entry counting, uncontrolled deep-JSON failure, overflowing JSON numbers and reflected internal errors. Add an explicitly selected strict JSON/XML/geometry/decoder profile while preserving HA limits and backdrop SVG compatibility; record evidence and bounded synthetic measurements in `docs/security/1395-input-audit.md` (#1395).
 - Route plan bootstrap, edits, writes, Optimize, images and portable transfer through typed host ports with one environment driver and shared authority fencing; retain the HA adapter and add a no-hass editor/contract lab without changing persisted formats (#1392).
 

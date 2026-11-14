@@ -5571,29 +5571,36 @@ not since the last beta. Scripts never draft prose or classify issues. Russian
 comes first, English second with equivalent meaning. The canonical authored
 sources are `docs/changelog_user_stable_ru.md` and
 `docs/changelog_user_stable_en.md`, newest releases first. Start with the
-owner-approved 1.80.1 example in these files; its historical milestone link is
-only a style example, not evidence of retrospectively verified membership.
+owner-approved 1.80.1 example in these files for tone and formatting, not its
+number of points or length; its historical milestone link is only a style
+example, not evidence of retrospectively verified membership.
 Add a new section during stable preparation, not per task or beta.
 `docs/CHANGELOG.ru.md` and `docs/CHANGELOG.md` remain technical/commit-oriented
 history for tasks, betas and releases; never replace them with user prose.
 Each language contains:
 
-1. The heading `## Релиз Houseplan X.Y.Z` / `## Houseplan X.Y.Z release`, then a simple introductory paragraph (owner's shorter title, #841).
-2. 1–5 short, human major-feature paragraphs, each starting with a suitable emoji instead of a bullet and a **bold short title**, with issue-number links **at the end**.
-3. Optionally a short paragraph about fixes/polish of previous-stable behaviour.
+1. The heading `## Релиз Houseplan X.Y.Z` / `## Houseplan X.Y.Z release`, followed by concise user-facing prose (owner's shorter title, #841). A short announcement can consist of one paragraph and the collection link.
+2. Only genuinely significant new capabilities receive feature paragraphs, with a suitable emoji, a **bold short title**, and issue-number links **at the end**. Their count and length follow the content; there is no quota or minimum number of paragraphs, sentences or words.
+3. Notable fixes to previous-stable behaviour may be described briefly when useful. A separate fixes/polish block is optional; minor changes need not appear in the announcement.
 4. A compact link to all eligible issues in this release's GitHub milestone.
 
-Separate the heading, introduction, every feature, other-changes paragraph
-and collection link with a blank line. Prefer a few clear user actions over
-implementation details or long feature inventories.
+Separate the elements actually used with a blank line. Prefer a few clear user
+actions over implementation details or long feature inventories. Not every
+eligible issue needs a mention; the collection link carries the full list.
 
-If there are no major features, omit the list entirely: intro + short fixes
-paragraph. With no user-visible changes at all, don't invent fixes or filler.
+If there are no major features, a short paragraph about meaningful fixes is
+enough. With no significant user-visible changes, don't invent feature blocks,
+generic promises or filler. Fewer significant changes mean fewer, shorter
+paragraphs. The Telegram character limit is a transport ceiling, not a target.
+
 Infrastructure/documentation and repairs to newly introduced beta functionality
-are absent from stable prose and its milestone. Performance of behaviour that
-already existed in the previous stable is eligible `stable-fix` work. The final
-description of a major feature incorporates its beta refinements without
-advertising those repairs as separate stable changes.
+are absent from stable prose and its milestone. This also excludes sentences
+retelling an internal implementation bug inside a new feature's paragraph.
+For example, after fixing a beta overlap bug in new drafting dimensions,
+"stay clear of fixed tool controls" should not pad that feature's description.
+Describe the useful final capability, not its development history. Performance
+of behaviour that already existed in the previous stable remains eligible
+`stable-fix` work; it earns an announcement mention only when significant.
 
 Before S7, the author adds one reviewed JSON record per issue under
 `docs/release-ledger/<previous-stable>/<NN>.json`. Required: `schema: 1`, `issue`,
