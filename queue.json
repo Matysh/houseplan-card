@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12605,
+  "revision": 12606,
   "nextTicket": 446,
   "nextFence": 446,
   "tasks": {
@@ -5197,6 +5197,10 @@
       "digest": "83ab4cb2ddb7acdd96713907b478836d4a6a823acb2c7be1d2c1032bdc414d31",
       "issue": 1421
     },
+    "github:43587380345:1:completions:message:839abc3a3b2e3cfd38eb49c4d0fb16b90f8f0cf507328d93c1a4231961938997": {
+      "digest": "779425969c5c8582b1abe51bbb64d610db40f0f3f5c0d5b85d0906b05211e277",
+      "issue": 1421
+    },
     "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651": {
       "digest": "de3a891914465aab40cb0cc764c1c1f63dd063b799b8f79278f1dc5e6cb8b3c9",
       "issue": 1421,
@@ -5352,7 +5356,8 @@
         "reviewChanges": "### Реализация\nВетка `codex/1421-door-leaf-glow`. Только Glow: физический слот доказан существующим индексом стен/host, затем закрыт отрезком фактического полотна. Положение slide берётся из общего с renderer `openingSlidePlacement`; swing — ось стены. Добавлен только ограниченный пол тоннеля, а не наружный световой веер. Общая сцена обслуживает лампы, LED и Static. Частичное открытие сохраняет квантование 5%, стеклянные двери/ворота/окна не переопределяются. Явный host валидируется общим `physicalOpeningHostRange`; существующий window mutant перенесён к этому владельцу без смены guard/oracle.\n\n### Проверки и ограничения\n- `test/closed-door-light.test.mjs`: 72/72 — обе стороны, углы 0/27/90/180, flip_h/flip_v, swing/slide, wall/partition/exterior, explicit/invalid host, future features, source-on-leaf, partial/transparent и invalidation. `test/glow-scene.test.mjs` + `test/interior-window-light.test.mjs`: 23/23 на предварительном материале.\n- `demo/smoke_closed_door_glow.mjs`: настоящая панель, PNG on/off и фактические clip paths, Flat/2.5D, closed/open/closed, обе стороны, slide flips, partition/exterior, LED и Static. Перед полотном средняя разница RGB 67.67, за полотном 0 в обеих проекциях. Live contact/light не записывают config/layout. Это synthetic transport, не real HA.\n- Четыре новых panel golden-сцены сняты в capture: closed/open/iso/slide. Геометрические oracle пройдены, но все четыре честно имеют `missing-baseline`: принятых эталонов для новых сцен пока нет. PNG — кандидаты, старые эталоны/manifest не менялись. Будущая приёмка перед релизом отдельная; этим коммитом выпуск не запускается.\n- `node scripts/mutation-gate.mjs --check`: static readiness 1790 definitions, execution=0. Мутации при разработке этой задачи не исполнялись.\n- Сборка с типами пройдена. Финальный S6 выполняет очередь по show. Каталог новых unit/native: product, openings+lighting, regression; plan должен выбирать unit по области/import и native по изменённому исполняемому файлу/fixture, не только areaTests.\n- Решение о HA E2E: Matysh/houseplan-e2e#56; существующий релизный HA-набор сохраняется, нового HA backend контракта здесь нет.\n\n### Места для внимания\n\nПервый полный S6 нашёл пять служебных отказов, исправлены до ревью: перемещён ровно один compatibility inventory hit к общему host-proof owner; добавлен ровно один паспорт новой синтетической fixture при сохранении всех старых записей и immutable legacy oracle; новая pinned-browser проверка включена в полный allowlist и её cold-panel launch учитывается проверкой порядка; для четырёх новых lighting panel goldens добавлен собственный контракт вместо включения их в историческую тройку #486. Все пять упавших файлов затем прошли адресно, 91/91. Это не обновление визуальных эталонов. Предыдущий общий прогон имел 6451 известных кейсов, но не был зелёным; финальный S6 после ремонта выполняется заново с допустимым reuse.\nТочная граница наружного откатного полотна, нерасширение неподтверждённого host, closed-vs-zero-rounded-partial cache, повторный light-recut Static. Технические документы LIGHT и руководство обновлены; Sun и сохранённая модель не меняются.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
