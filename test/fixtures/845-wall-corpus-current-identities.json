@@ -323,6 +323,10 @@
       "configs": 0
     },
     {
+      "file": "demo/fixtures/closed-door-light.mjs",
+      "configs": 1
+    },
+    {
       "file": "demo/fixtures/device-contact-designer-866.mjs",
       "configs": 0
     },
@@ -24048,6 +24052,56 @@
         }
       ],
       "fullConfigSha256": "463a1b416e1dc1476b7dbfa581789d2293e24fdaa1be398929648659ffd2b394"
+    },
+    {
+      "label": "demo/fixtures/closed-door-light.mjs:makeClosedDoorFixture/config",
+      "fingerprint": "d84f418904870e8de6b790313c8b024c90217d7ff3d1fde7a2c7b9b34c725535",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-564cxjflgqcwklnxcm3t",
+            "wall-nufkl3rzpbkcheuvdhez",
+            "wall-ov4jhgqumkgluh2hjnyd",
+            "wall-tfaxzbywpizbz4rm37cb",
+            "wall-y467ws4ol6q5rbwexhat",
+            "wall-ziwniszv2n45yixd3djx",
+            "wall-zzbcxizt3q5vnwxl4va5"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-zzbcxizt3q5vnwxl4va5",
+                "wall-nufkl3rzpbkcheuvdhez",
+                "wall-y467ws4ol6q5rbwexhat",
+                "wall-ziwniszv2n45yixd3djx"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-ov4jhgqumkgluh2hjnyd",
+                "wall-tfaxzbywpizbz4rm37cb",
+                "wall-564cxjflgqcwklnxcm3t",
+                "wall-nufkl3rzpbkcheuvdhez"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "closed-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-nufkl3rzpbkcheuvdhez"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ],
+      "fullConfigSha256": "f3ab40d9f9adaf22f36ead6bc158149d6a1ba2cc7c3ee7a582c7f6f7f6ad85b3"
     },
     {
       "label": "demo/fixtures/resize-junctions.mjs:makeResizeJunctionFixture/config",

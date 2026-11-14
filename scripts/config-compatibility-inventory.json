@@ -6,38 +6,8 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "6b6aac27a86aaee3180c1b79c7e5764b8416d9f6aa9966901cfdbce9bbb4d381",
+  "matchesSha256": "7aeaa89e3f83a9745c9cb5a74d6728e47c39d33e3624c85fb312648ab1ab3c71",
   "hits": [
-    {
-      "id": "5f9d10e7f730e212aaca576f",
-      "path": "src/config-write-context.ts",
-      "line": 9,
-      "text": "// Legacy helper callers replace HA state objects. Their adapter-local",
-      "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "provider-api",
-      "reason": "#1392 adapter compatibility for historical HA helper inputs; no persisted House Plan config decoder."
-    },
-    {
-      "id": "97574713ce2ac732572582cb",
-      "path": "src/ha-plan-host.ts",
-      "line": 89,
-      "text": "/** Legacy getters do not turn every lookup into another environment tick. */",
-      "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "provider-api",
-      "reason": "#1392 adapter compatibility for historical HA helper inputs; no persisted House Plan config decoder."
-    },
-    {
-      "id": "f98e072f71274541964d4857",
-      "path": "src/ha-plan-host.ts",
-      "line": 349,
-      "text": "/** Compatibility for remaining HA-only consumers; never hand its source back. */",
-      "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "provider-api",
-      "reason": "#1392 adapter compatibility for historical HA helper inputs; no persisted House Plan config decoder."
-    },
     {
       "id": "d87c2cf8d9801a9970e5fad1",
       "path": "custom_components/houseplan/__init__.py",
@@ -2849,6 +2819,16 @@
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
     },
     {
+      "id": "5f9d10e7f730e212aaca576f",
+      "path": "src/config-write-context.ts",
+      "line": 9,
+      "text": "// Legacy helper callers replace HA state objects. Their adapter-local",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1392 adapter compatibility for historical HA helper inputs; no persisted House Plan config decoder."
+    },
+    {
       "id": "2f18dc59f3f5972627a6620a",
       "path": "src/coordinate-canonicalization.ts",
       "line": 154,
@@ -4219,6 +4199,26 @@
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
     },
     {
+      "id": "97574713ce2ac732572582cb",
+      "path": "src/ha-plan-host.ts",
+      "line": 89,
+      "text": "/** Legacy getters do not turn every lookup into another environment tick. */",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1392 adapter compatibility for historical HA helper inputs; no persisted House Plan config decoder."
+    },
+    {
+      "id": "f98e072f71274541964d4857",
+      "path": "src/ha-plan-host.ts",
+      "line": 349,
+      "text": "/** Compatibility for remaining HA-only consumers; never hand its source back. */",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1392 adapter compatibility for historical HA helper inputs; no persisted House Plan config decoder."
+    },
+    {
       "id": "b626bb591897adc19f86f99b",
       "path": "src/houseplan-card.ts",
       "line": 31,
@@ -5289,16 +5289,6 @@
       "reason": "Persisted representation: grp_<HA-area> and old/missing space references. A missing HA roster or ambiguous owner prevents a total migration. Current f1 hint alone is not ownership; keep refusal/proof paths."
     },
     {
-      "id": "bfbec892f296d05f08879189",
-      "path": "src/interior-window-light.ts",
-      "line": 6,
-      "text": "/** Explicit identity is authority. Legacy unhosted glass still needs real masonry. */",
-      "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "current-feature",
-      "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
-    },
-    {
       "id": "ce0960f4741e0358604c7f6d",
       "path": "src/iso-openings.ts",
       "line": 189,
@@ -5707,6 +5697,16 @@
       "kind": "branch",
       "owner": "opening-features",
       "reason": "#1024 explicitly materializes the old parent binding into two outer-hinged v1 leaves and rejects mixed representations; unchanged reads retain the implicit form."
+    },
+    {
+      "id": "71e8036f7704e908ecdf38ad",
+      "path": "src/opening-optics.ts",
+      "line": 6,
+      "text": "/** Shared optical host proof. Explicit identity wins; legacy unhosted",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
     },
     {
       "id": "d5d05dfdc020a3e4c5526844",

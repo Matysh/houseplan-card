@@ -201,7 +201,7 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
 });
 
 test('issue 486 keeps its three ordinary panel-host surfaces alongside route kiosk scenes', () => {
-  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.panelHost && !scenario.dialog && !scenario.panelKioskUrl && !scenario.resizeJunction && !scenario.id.endsWith('-ui-1132'));
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.panelHost && !scenario.dialog && !scenario.panelKioskUrl && !scenario.resizeJunction && !scenario.closedDoor && !scenario.id.endsWith('-ui-1132'));
   assert.deepEqual(scenarios.map((scenario) => scenario.id), [
     'panel-wide-view-light-en',
     'panel-wide-plan-editor-dark-en',
@@ -244,6 +244,18 @@ test('#1383 Resize golden covers whole rooms before, during and after each junct
     assert.deepEqual(space.openings.map(opening => opening.id).sort(), ['bottom-door', 'moving-door', 'side-window']);
     assert.equal(space.rooms.length, scene.resizeJunction.kind === 'cross' ? 4 : scene.resizeJunction.kind === 'partition' ? 2 : 3);
   }
+});
+
+test('#1421 closed-door goldens exercise actual panel clips and a contrasting open door', () => {
+  const scenes = GOLDEN_SCENARIOS.filter(scene => scene.closedDoor);
+  assert.deepEqual(scenes.map(scene => scene.id), [
+    'lighting-closed-door-panel-dark', 'lighting-open-door-panel-dark',
+    'lighting-closed-door-panel-iso-dark', 'lighting-closed-slide-door-panel-dark',
+  ]);
+  assert.ok(scenes.every(scene => scene.panelHost && scene.mode === 'view' && scene.theme === 'dark'));
+  assert.equal(scenes.filter(scene => scene.closedDoor.open).length, 1);
+  assert.equal(scenes.filter(scene => scene.closedDoor.slide).length, 1);
+  assert.equal(scenes.filter(scene => scene.projection === 'iso').length, 1);
 });
 
 test('issue 462 has reviewed desktop, narrow-touch and attempted-kiosk notices', () => {
