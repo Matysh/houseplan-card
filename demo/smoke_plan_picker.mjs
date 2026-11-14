@@ -34,10 +34,25 @@ for (const vp of VIEWPORTS) {
       }
       return base(m);
     } };
+    // Normal input goes through Lit/PlanHost intake before a user can open
+    // this dialog. Do not let a private fixture call race the old transport.
+    await c.updateComplete;
 
+    const listReady = async () => {
+      const deadline=performance.now()+3000;
+      while(c._spaceDialog?.savedBusy){
+        if(performance.now()>deadline)throw Error('saved-plan list did not finish loading');
+        await new Promise(resolve=>setTimeout(resolve,10));
+      }
+      if(!Array.isArray(c._spaceDialog?.saved))throw Error('saved-plan list was not loaded');
+      await c.updateComplete;
+    };
     const openPicker = async () => {
       c._spaceDialog = { ...c._spaceDialog, source: 'file' };
       await c.updateComplete;
+      // The native launcher is disabled while the async list is loading.
+      // A private test call must respect the same readiness precondition.
+      await listReady();
       await c._toggleServerPlans();
       await new Promise((r) => setTimeout(r, 80));
       await c.updateComplete;
@@ -77,10 +92,15 @@ for (const vp of VIEWPORTS) {
 
     // 3. пусто: аккуратная надпись, а не схлопнутая полоска
     serverPlans = [];
-    c._spaceDialog = { ...c._spaceDialog, pickSaved: false };
+    c._spaceDialog=null;await c.updateComplete;
+    c._openSpaceDialog('edit','f1');await c.updateComplete;
+    await listReady();
+    // Exercise the empty renderer with a genuinely empty server response,
+    // not the previous six rows (the empty native launcher stays disabled).
+    c._spaceDialog = { ...c._spaceDialog, source:'file', pickSaved:true };
     await c.updateComplete;
-    await openPicker();
     const empty = sr().querySelector('.savedplans');
+    o.emptyHasNoRows=sr().querySelectorAll('.savedplan').length===0&&c._spaceDialog.saved.length===0;
     o.emptyHasText = !!empty && empty.textContent.trim().length > 0;
     o.emptyTall = !!empty && empty.getBoundingClientRect().height >= 24;
     o.mode = mode;
