@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14052,
+  "revision": 14053,
   "nextTicket": 481,
   "nextFence": 481,
   "tasks": {
@@ -4834,7 +4834,7 @@
       "ownerDecision": null,
       "ticket": 480,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794695139102,
       "reviewEntry": 2,
       "patchId": "512658d95a820008acc96e8b767bd95df80399cf",
@@ -4856,6 +4856,15 @@
         "entry": 1,
         "detail": "Поведение: test/bundle-assets.test.mjs: failed",
         "eventId": "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:3:return:return:1447"
+      },
+      "s6": {
+        "id": "20261114T223809098-3491c29d",
+        "name": "Тесты для задачи #1447 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T223809098-3491c29d/report.json",
+        "materialSha": "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
+        "status": "passed",
+        "finishedAt": "2026-11-14T22:45:44.294Z",
+        "failures": []
       }
     },
     "1448": {
@@ -5242,9 +5251,9 @@
     "fence": 480,
     "materialSha": "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
     "expectedBase": "98ceda7f4d6517050c929536263c426f0dfbac1d",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794695829485,
-    "expiresAt": 1794696582835,
+    "expiresAt": 1794699945383,
     "patchId": "512658d95a820008acc96e8b767bd95df80399cf"
   },
   "events": {
@@ -5429,6 +5438,34 @@
         "materialSha": "ffcc44928c443204ce2065180d46f4d5939e0466",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:1bc94993-300d-4ddd-a378-b36c1a9ecd59:finish:2:s6-complete": {
+      "digest": "1d4945d515476de186b9c9ce9bb34625a2dc2202ff10f90254fe90d03f3d7249",
+      "issue": 1447,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1447,
+        "at": 1794696345383,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T223809098-3491c29d",
+          "name": "Тесты для задачи #1447 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T223809098-3491c29d/report.json",
+          "materialSha": "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
+          "status": "passed",
+          "finishedAt": "2026-11-14T22:45:44.294Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "В `selectionListCss` прозрачная рамка резервируется для всех кнопочных строк, а не только enabled; правила hover/фокуса остаются enabled-only. FormKit компенсирует рамку только у своих двух известных button/cand плотностей: 8/10px → 7/9px вне panel, 10/12px → 9/11px внутри panel, правый запас 36 → 35px. Абсолютная галочка получает inset11 вместо12, сохраняя прежнее положение с новым содержащим border-box. Не меняются цвета, single-border/Tab политика, API функций, min-height44 и некнопочные строки. Универсальное вычитание padding в selectionList отвергнуто: он не владеет плотностью произвольного потребителя.\n\nНовый `smoke_choice_row_geometry_1447` использует настоящий more-info picker исходной golden-сцены в четырёх сочетаниях mobile/desktop × light/dark. Проверяются прежние62px, координаты текста/галочки против независимого старого borderless CSS на этих же элементах, enabled/disabled/aria-disabled геометрия, настоящий hover/Tab/Shift+Tab без outline/box-shadow. Отдельно проверены длинная подпись без overflow и legacy генератор на кнопочных/некнопочных native-строках. Адресный native PASS, `test/form-kit.test.mjs` 9/9 PASS. Снимки legacy не пересняты: добавлена только явная ограниченная дельта border compensation к прежней совместимости.\n\nПрежний `panel-more-info-dialog-mobile-ru` golden: 0px diff, maxDelta0, SHA `dd704bedc41521c78351ecd0e20b2c756493a06b245c6146c2b2360d16632c97`, побайтовое совпадение с существующим PNG; actual просмотрен. Отчёт: `artifacts/process-next/golden-panel-more-info-dialog-mobile-ru/golden-report.json`. Никакие PNG/эталоны не менялись. Штатный S6 далее выполняется через finish, результаты поступают автоматически; этот адресный golden не выдается за полный выпуск.\n\nE2E после поиска: https://github.com/Matysh/houseplan-e2e/issues/69 — новый HA E2E не нужен для чистой CSS-геометрии, фиксированные beta E2E/visual сохраняются. Ledger line-fix: устранение непреднамеренного изменения невыпущенного #1428, без пользовательского milestone. Особое внимание ревью: каскад enabled/disabled и граница button vs non-button, абсолютная галочка, сохранение legacy API. Touch View поддерживается, редакторы остаются desktop-first/best effort; новых взаимодействий нет.\n\nПервый штатный S6 вернул задачу на S6 без код-ревью: `test/bundle-assets.test.mjs` #526 обнаружил поясняющий комментарий внутри динамической CSS-строки, который попадал в bundle. Комментарий перенесён за пределы генерируемой строки в TypeScript; CSS-правила и геометрия не менялись. Исторические snapshots по-прежнему не переписывались. Повторяются затронутые bundle/FormKit/native/golden и штатный S6; его итог передаётся автоматически. Исходный отказ не скрывается: run `20261114T221431556-b09ca965`.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
