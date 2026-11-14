@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12877,
-  "nextTicket": 453,
+  "revision": 12878,
+  "nextTicket": 454,
   "nextFence": 453,
   "tasks": {
     "1024": {
@@ -4597,14 +4597,14 @@
       "track": "ask",
       "layer": "docs",
       "branch": "codex/1427-user-guides",
-      "materialSha": "861880273ebcd36fd891537c15a4c3e85ccebd25",
+      "materialSha": "dc739d2fee27c257627e15739094135a7c306bc0",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 452,
-      "queued": false,
+      "ticket": 453,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794665615609,
-      "reviewEntry": 1,
+      "readyAt": 1794666193436,
+      "reviewEntry": 2,
       "patchId": "83d97d22b3cfb2f6329b4726dfab2104d813dec5",
       "changedFiles": [
         "docs/CHANGELOG.md",
@@ -4615,20 +4615,6 @@
       ],
       "s6": null,
       "reviewRound": 1,
-      "reviewRequest": "review:1427:1:83d97d22b3cfb2f6329b4726dfab2104d813dec5:17e097cc5028767c96277023575ac2052d59ef8b",
-      "reviewMaterial": {
-        "materialSha": "861880273ebcd36fd891537c15a4c3e85ccebd25",
-        "expectedBase": "17e097cc5028767c96277023575ac2052d59ef8b",
-        "patchId": "83d97d22b3cfb2f6329b4726dfab2104d813dec5"
-      },
-      "reviewRetry": {
-        "requestId": "review:1427:1:83d97d22b3cfb2f6329b4726dfab2104d813dec5:17e097cc5028767c96277023575ac2052d59ef8b",
-        "eventId": "github:43603781722:1:tick:0:review-retry",
-        "at": 1794665655115,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1427:1:83d97d22b3cfb2f6329b4726dfab2104d813dec5:17e097cc5028767c96277023575ac2052d59ef8b",
         "at": 1794665949504
@@ -4970,7 +4956,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1427
+  ],
   "active": null,
   "events": {
     "github:43600053849:1:label:spec-request": {
@@ -5130,6 +5118,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:b813476f-f804-4547-aeec-693473cfd9e9": {
+      "digest": "824d7f24205fba21f4bdebba7454a2f91ed36af6a3388c566a3180d5c317c31f",
+      "issue": 1427,
+      "message": {
+        "kind": "queued",
+        "issue": 1427,
+        "at": 1794666193436,
+        "entry": 2,
+        "track": "ask",
+        "layer": "docs",
+        "materialSha": "dc739d2fee27c257627e15739094135a7c306bc0"
       }
     }
   },
