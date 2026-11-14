@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13105,
+  "revision": 13106,
   "nextTicket": 459,
   "nextFence": 459,
   "tasks": {
@@ -4947,20 +4947,7 @@
   },
   "waiting": [],
   "active": null,
-  "events": {
-    "dev-build:43613288439:1:1428": {
-      "digest": "416a5a41b823e63343c0121d6ae38604a56de3af05ed93ec0bde52fcdbc449b8",
-      "issue": 1428,
-      "message": {
-        "kind": "dev-build",
-        "issue": 1428,
-        "at": 1794672239800,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "54d3917034a0d13ea680b0ea182b086c732e9067"
-      }
-    }
-  },
+  "events": {},
   "devWebhook": {
     "sourceSha": "54d3917034a0d13ea680b0ea182b086c732e9067",
     "status": "delivered",
