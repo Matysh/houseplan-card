@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12308,
+  "revision": 12309,
   "nextTicket": 440,
   "nextFence": 440,
   "tasks": {
@@ -5498,20 +5498,6 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
-      }
-    },
-    "issue1425-editorial-finish-20261114:finish:1:admit": {
-      "digest": "daf921b566a8d3356829fca3b5f553e42c52e059958a23b9bd7a13a47603f6fd",
-      "issue": 1425,
-      "message": {
-        "kind": "admitted",
-        "issue": 1425,
-        "at": 1794638608046,
-        "entry": 1,
-        "track": "ship",
-        "layer": "docs",
-        "materialSha": "4423d4dc9c725b24fe4a3d231bd0b72cadccff62",
-        "phase": "sync"
       }
     }
   },
