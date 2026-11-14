@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11978,
+  "revision": 11979,
   "nextTicket": 430,
   "nextFence": 429,
   "tasks": {
@@ -3804,7 +3804,7 @@
       "ownerDecision": null,
       "ticket": 428,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1794627573366,
       "reviewEntry": 1,
       "patchId": "7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f",
@@ -3849,6 +3849,20 @@
         "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
         "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
         "patchId": "7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f"
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1395:1:7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+        "at": 1794629513990
+      },
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1794629513990,
+        "entry": 1,
+        "requestId": "review:1395:1:7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f:3c29bb9c7c6a8626a472c7d978f32963c704cc8a"
       }
     },
     "1396": {
@@ -5037,19 +5051,7 @@
   "waiting": [
     1392
   ],
-  "active": {
-    "issue": 1395,
-    "worker": "finish",
-    "token": "428:finish:f1291587-cba5-486a-867a-626ba670e04f:finish:1:admit",
-    "fence": 428,
-    "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
-    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-    "phase": "review",
-    "admittedAt": 1794628435667,
-    "expiresAt": 1794632680879,
-    "patchId": "7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f",
-    "reviewRequest": "review:1395:1:7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f:3c29bb9c7c6a8626a472c7d978f32963c704cc8a"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
       "digest": "3608873f6034b21ea424821722398c159d16857cd52d8f7d9bb5b504dd59972c",
@@ -5709,6 +5711,10 @@
     },
     "github:43555375015:1:tick:0:review-presentation": {
       "digest": "814f227c7256c8a98a4f006080269958c273a43e6e95411da35f4ff88c865cd5",
+      "issue": 1395
+    },
+    "github:43555375015:1:tick:0:return": {
+      "digest": "927d6658dffbb5e53ec7b7e610e9853177137d0f7975cf43e4e6f10b14449f49",
       "issue": 1395
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
