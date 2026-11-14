@@ -9,16 +9,17 @@ import { visibilityPolygon } from '../test-build/light-visibility.js';
 
 const rect = (id, y0, y1) => ({ id, poly: [[0,y0],[100,y0],[100,y1],[0,y1]] });
 function fixture({ partition = false, exterior = false, angle = 0, flipH = false, flipV = false,
-  mechanism = 'swing', direction = 'start', glass = false, host, features } = {}) {
+  mechanism = 'swing', direction = 'start', glass = false, host, features,
+  presentation = 'flat', wallCm = 20 } = {}) {
   const rad = angle * Math.PI / 180;
   const point = ([x,y]) => [x*Math.cos(rad)-y*Math.sin(rad), x*Math.sin(rad)+y*Math.cos(rad)];
   const rooms = (partition ? [rect('one',0,200)] : exterior ? [rect('a',0,100)] : [rect('a',0,100),rect('b',100,200)])
     .map(r => ({ ...r, poly: r.poly.map(point) }));
   const walls = [...new Map(rooms.flatMap(r => r.poly.map((a,i) => {
     const b = r.poly[(i+1)%r.poly.length], key = wallKey(a,b,1);
-    return [key,{key,a,b,cm:20}];
+    return [key,{key,a,b,cm:wallCm}];
   }))).values()];
-  const partitions = partition ? [{ id:'p', a:point([0,100]), b:point([100,100]), cm:20 }] : [];
+  const partitions = partition ? [{ id:'p', a:point([0,100]), b:point([100,100]), cm:wallCm }] : [];
   const space = { id:'s',rooms,partitions,wall_columns:[],
     wall_segments:walls.map((w,i) => ({id:`w${i}`,a:w.a,b:w.b,cm:w.cm})) };
   const [x,y] = point([50,100]);
@@ -29,7 +30,7 @@ function fixture({ partition = false, exterior = false, angle = 0, flipH = false
   const raw = { ...space, walls, openings:[door] };
   const openings = geometryOpenings(raw,space,5,5,1);
   const revision = amount => resolveLightBarrierRevision({rawSpaceConfig:raw,space,openings,
-    cellCm:5,gridPitch:5,openingAmount:()=>amount});
+    cellCm:5,gridPitch:5,openingAmount:()=>amount,closedDoorPlacement:presentation});
   const scene = amount => buildLightBarrierScene({space,revision:revision(amount),walls,
     zeroWalls:{contour:[],barriers:[],transmissive:[]},wallKeyPitch:1,cellCm:5,gridPitch:5,coordScale:1,
     physicalBodies:cuts=>physicalBodyParts(space,5,5,.001,cuts).all});
@@ -40,6 +41,24 @@ function fixture({ partition = false, exterior = false, angle = 0, flipH = false
   };
   return {space,raw,door,revision,scene,point,lit};
 }
+
+for (const wallCm of [20,96]) for (const partition of [false,true])
+  for (const angle of [0,27,90,180]) for (const flipH of [false,true]) for (const flipV of [false,true]) {
+    test(`#1449 Iso closes at actual host face: cm=${wallCm}, partition=${partition}, angle=${angle}, flips=${flipH}/${flipV}`, () => {
+      const f=fixture({wallCm,partition,angle,flipH,flipV,presentation:'iso-volume'}), s=f.scene(0);
+      const plane=100+(flipV?1:-1)*wallCm/2;
+      for(const side of [-1,1]) {
+        const source=[50,side<0?50:150];
+        assert.equal(f.lit(s,[50,plane+side*2],source),true);
+        assert.equal(f.lit(s,[50,plane-side*2],source),false);
+      }
+      const flat=fixture({wallCm,partition,angle,flipH,flipV});
+      assert.deepEqual(s.floor,flat.scene(0).floor,'presentation never changes bounded physical floor');
+      assert.deepEqual(s.masonryGeometry,flat.scene(0).masonryGeometry,'same proven slot and masonry');
+      assert.notEqual(f.revision(0).fingerprint,flat.revision(0).fingerprint,'placement cannot reuse a stale optical clip');
+      assert.equal(f.revision(0).geometryFingerprint,flat.revision(0).geometryFingerprint);
+    });
+  }
 
 for (const partition of [false,true]) for (const angle of [0,27,90,180])
   for (const flipH of [false,true]) for (const flipV of [false,true]) for (const mechanism of ['swing','slide']) {
@@ -104,4 +123,18 @@ test('#1421 source exactly on the closed leaf fails dark; slide direction cannot
   const a = fixture({ mechanism:'slide', direction:'start' });
   const b = fixture({ mechanism:'slide', direction:'end' });
   assert.deepEqual(a.scene(0).occluders,b.scene(0).occluders);
+});
+
+test('#1449 presentation changes only actual closed opaque doors, not partial/open/glass transport', () => {
+  const flat=fixture(), iso=fixture({presentation:'iso-volume'});
+  for(const amount of [.01,.5,1]) {
+    assert.equal(flat.revision(amount).fingerprint,iso.revision(amount).fingerprint);
+    assert.deepEqual(flat.scene(amount).occluders,iso.scene(amount).occluders);
+  }
+  const glass=fixture({glass:true}), isoGlass=fixture({glass:true,presentation:'iso-volume'});
+  assert.equal(glass.revision(0).fingerprint,isoGlass.revision(0).fingerprint);
+  assert.deepEqual(glass.scene(0).occluders,isoGlass.scene(0).occluders);
+  const slide=fixture({mechanism:'slide'}), isoSlide=fixture({mechanism:'slide',presentation:'iso-volume'});
+  assert.deepEqual(slide.scene(0).occluders,isoSlide.scene(0).occluders);
+  assert.equal(iso.lit(iso.scene(0),[50,80],[50,90]),false,'source on actual Iso face fails dark');
 });

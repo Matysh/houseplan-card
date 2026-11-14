@@ -80,8 +80,15 @@ input is only a v8 read projection and migrates to ordinary `cm:0` atoms.
 
 A proven **closed opaque door** is different (#1421): its physical slot is cut
 through the masonry, then sealed at the drawn leaf. The source-side pocket is
-lit up to that leaf; the other side stays dark. Swing leaves seal the wall axis;
-sliding leaves use the renderer's shared face/flip placement, not the sweep arc,
+lit up to that leaf; the other side stays dark. Flat swing leaves seal the wall axis;
+an actually rendered Iso volume seals its selected physical face (#1449).
+Both consume the renderer's pure ground-plane leaf-placement authority. This
+changes only the closed leaf inside its proven bounded wall slot: masonry,
+tunnel floor and the common visibility algorithm remain shared. Pan, zoom and
+camera rotation never change ground placement; the optical key includes the
+leaf presentation, not camera state. Flat fallback, editors, no-borders and
+Static retain Flat placement. Hiding opening paint does not change Glow.
+Sliding leaves use the renderer's shared face/flip placement, not the sweep arc,
 handle or whole symbol bounds. This also applies to an exterior closed door:
 only its bounded tunnel floor is added, never an outdoor light fan. Invalid,
 ambiguous or non-physical hosts remain fail-dark. Gates keep their old policy.

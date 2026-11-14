@@ -23,8 +23,11 @@ export async function prepareClosedDoorLight(page, fixture, options = {}) {
     const root = (staticCard ? document.querySelector('houseplan-space-card') : window.__goldenCard || window.__card)?.shadowRoot;
     return root?.querySelector(led ? '.led-field-bands' : '[data-glow-source="light.ceiling"] .glow-pool');
   }, options);
-  const result = await inspectClosedDoorLight(page, fixture.doorLightProbes, options);
+  const volume = !options.staticCard && await page.evaluate(() => !!(window.__goldenCard || window.__card)
+    .shadowRoot.querySelector('[data-hp="iso-walls"]'));
+  const probes = volume ? fixture.doorLightIsoProbes : fixture.doorLightProbes;
+  const result = await inspectClosedDoorLight(page, probes, options);
   if (!result.pool || !result.paths || !result.target || result.shadow || options.exterior && result.outdoor)
-    throw new Error(`Closed door must light its source-side pocket, stop at the leaf and never invent outdoor floor: ${JSON.stringify({options,probes:fixture.doorLightProbes,result:{...result,clip:undefined}})}`);
+    throw new Error(`Closed door must light its source-side pocket, stop at the leaf and never invent outdoor floor: ${JSON.stringify({options,probes,result:{...result,clip:undefined}})}`);
   return result;
 }

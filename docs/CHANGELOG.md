@@ -4,6 +4,7 @@
 
 ## v1.85.3-beta.1 — 2026-11-15
 
+- Align closed-door Glow with the actual selected Iso leaf face inside its bounded wall slot; preserve Flat symbols, shared masonry, camera invariance and Sun (#1449).
 - Restore integration display names in device previews through a lazy read-only metadata reader; keep transport out of the plan projection and isolate cached metadata by HA user/role (#1446).
 - Compare a confirmed Windows power scheme by its single GUID, retaining raw observations, strict runtime/host conditions and existing measurement thresholds; keep its self-contained package-test reader build-free (#1448).
 - Keep source-picker choice rows and checkmarks at their original positions when reserving the single 1px border, including disabled states (#1447).

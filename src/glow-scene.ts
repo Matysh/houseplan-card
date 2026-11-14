@@ -11,6 +11,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import { physicalSpaceRecord, PHYSICAL_PRESENTATION_FIELDS } from './structural-space-record';
 import { interiorWindowLightPassages } from './interior-window-light';
 import { closedDoorLightGeometry } from './closed-door-light';
+import type { OpeningLeafPresentation } from './opening-symbol-placement';
 import { maskProvenWindowPassages, opticalOpeningPosition } from './opening-optics';
 import { motionOpeningFeatures, openingSlideDirection, type OpeningInterval } from './opening-features';
 import {
@@ -79,6 +80,7 @@ export interface LightRoomPolygon {
 }
 
 export interface LightBarrierRevision {
+  closedDoorPlacement?: OpeningLeafPresentation;
   geometryFingerprint: string;
   fingerprint: string;
   polygons: LightRoomPolygon[];
@@ -264,6 +266,7 @@ export function lightGeometryFingerprint(
  * opening. The fingerprint is intentionally available before structural work.
  */
 export function resolveLightBarrierRevision(input: {
+  closedDoorPlacement?: OpeningLeafPresentation;
   rawSpaceConfig: unknown;
   space: SpaceModel;
   openings: readonly GeometryOpeningProjection[];
@@ -317,6 +320,7 @@ export function resolveLightBarrierRevision(input: {
     })),
   );
   return {
+    closedDoorPlacement: input.closedDoorPlacement ?? 'flat',
     geometryFingerprint,
     fingerprint: contentFingerprint([geometryFingerprint, openingStateSignature,
       passageStates.filter(({ opening }) => opening.opening_features !== undefined)
@@ -326,7 +330,7 @@ export function resolveLightBarrierRevision(input: {
             ? openingSlideDirection(motion) : null];
         }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
       passageStates.filter(state => state.closedDoor).map(({ opening }) =>
-        [opening.id, motionOpeningFeatures(opening)?.mechanism || 'swing']).sort((a, b) => String(a[0]).localeCompare(String(b[0])))]),
+        [opening.id, motionOpeningFeatures(opening)?.mechanism || 'swing', input.closedDoorPlacement ?? 'flat']).sort((a, b) => String(a[0]).localeCompare(String(b[0])))]),
     polygons,
     passageStates,
   };
@@ -366,7 +370,7 @@ export function buildLightBarrierScene(input: {
         .map(slice => ({ opening: slice, amount: 1 })) : []
       : [{ opening: opticalOpeningPosition(opening, amount), amount }]);
   const closed = revision.passageStates.flatMap(({ opening, closedDoor }) => {
-    const geometry = closedDoor && windowIndex ? closedDoorLightGeometry(opening, input.space, windowIndex) : null;
+    const geometry = closedDoor && windowIndex ? closedDoorLightGeometry(opening, input.space, windowIndex, revision.closedDoorPlacement) : null;
     return geometry ? [{ opening, geometry }] : [];
   });
   const apertures = [...openStates, ...closed.map(({ opening }) => ({ opening, amount: 1 }))];

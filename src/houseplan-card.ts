@@ -11972,6 +11972,8 @@ export class HouseplanCard extends LitElement {
   private _resolveLightBarriers(space: SpaceModel) {
     const raw = this._curSpaceCfg;
     const revision = resolveLightBarrierRevision({
+      closedDoorPlacement: this._renderProjection === 'iso' && !!this._renderIsoScene
+        && this._spaceDisplayForRender().showBorders ? 'iso-volume' : 'flat',
       rawSpaceConfig: raw,
       space,
       openings: this._openingsR,

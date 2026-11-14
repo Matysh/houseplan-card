@@ -2,7 +2,7 @@ import {
   ISO_CAMERA, ISO_WALL_HEIGHT, projectPlanPoint, isoRotationBasis,
   type IsoCamera, type PlanPoint, type ScenePoint,
 } from './iso-projection';
-import { openingSymbolOffset } from './opening-symbol-placement';
+import { openingLeafOriginOffset } from './opening-symbol-placement';
 import type { OpeningFeatures } from './types';
 import { openingSlideDirection } from './opening-features';
 
@@ -241,9 +241,7 @@ function leafBasis(
   // makes half of the leaf look embedded in the wall. Only the derived Iso
   // leaf moves to that selected face; saved coordinates and the Flat symbol do
   // not change. Windows keep their frame/sash centred across the reveal.
-  const offset = input.type === 'door' || input.type === 'gate'
-    ? input.face
-    : openingSymbolOffset(input.type, input.flipV, input.angle, input.face);
+  const offset = openingLeafOriginOffset(input.type, input.face, 'iso-volume');
   const origin: PlanPoint = [input.x + offset.ox, input.y + offset.oy];
   const hinge = add(origin, transformVector(localHinge, input.angle, sx, sy));
   const closedVector = transformVector(localVector, input.angle, sx, sy);

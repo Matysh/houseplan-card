@@ -1,8 +1,8 @@
 /** A proven closed door cuts its physical slot and seals it at the drawn leaf.
  * No state lookup, camera geometry, second renderer or persistent model. */
-import { assertOpeningFeatures, motionOpeningFeatures, openingSlideDirection } from './opening-features';
+import { assertOpeningFeatures, motionOpeningFeatures } from './opening-features';
 import { physicalOpeningHostRange } from './opening-optics';
-import { openingSlidePlacement } from './opening-symbol-placement';
+import { openingLeafOriginOffset, type OpeningLeafPresentation } from './opening-symbol-placement';
 import { partitionOpeningFace } from './partition-openings';
 import { openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
   resolveOpeningWallCandidates, type OpeningWallIndex } from './wall-thickness';
@@ -11,7 +11,7 @@ import type { LightSegment } from './light-visibility';
 import type { SpaceModel } from './types';
 
 export function closedDoorLightGeometry(opening: GeometryOpeningProjection, space: SpaceModel,
-  index: OpeningWallIndex): { barrier: LightSegment; floor: number[][][] } | null {
+  index: OpeningWallIndex, presentation: OpeningLeafPresentation = 'flat'): { barrier: LightSegment; floor: number[][][] } | null {
   if (opening.type !== 'door' || opening.light_transparent === true
       || ![opening.rx, opening.ry, opening.rlen, opening.angle].every(Number.isFinite) || !(opening.rlen > 0)) return null;
   try { assertOpeningFeatures(opening); } catch { return null; }
@@ -28,9 +28,8 @@ export function closedDoorLightGeometry(opening: GeometryOpeningProjection, spac
   const motion = motionOpeningFeatures(opening);
   // This is the renderer's exact placement authority, not the sweep arc or
   // the bounds of the whole symbol (which include jambs and handles).
-  const panel = motion?.mechanism === 'slide'
-    ? openingSlidePlacement(opening.angle, opening.rlen, openingSlideDirection(motion), 0, face)
-    : { x: 0, y: 0 };
+  const origin = openingLeafOriginOffset('door', face, presentation, motion?.mechanism === 'slide');
+  const panel = { x: origin.ox * ux + origin.oy * uy, y: origin.ox * nx + origin.oy * ny };
   const world = (x: number, y: number) => [opening.rx + ux * x + nx * y, opening.ry + uy * x + ny * y];
   const seal = Math.max(1e-9, eps * .001), a = world(panel.x - half - seal, panel.y), b = world(panel.x + half + seal, panel.y);
   // The same physical tunnel that is painted already owns both halves at an
