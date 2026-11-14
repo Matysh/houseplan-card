@@ -5580,13 +5580,23 @@ history for tasks, betas and releases; never replace them with user prose.
 Each language contains:
 
 1. The heading `## Релиз Houseplan X.Y.Z` / `## Houseplan X.Y.Z release`, followed by concise user-facing prose (owner's shorter title, #841). A short announcement can consist of one paragraph and the collection link.
-2. Only genuinely significant new capabilities receive feature paragraphs, with a suitable emoji, a **bold short title**, and issue-number links **at the end**. Their count and length follow the content; there is no quota or minimum number of paragraphs, sentences or words.
-3. Notable fixes to previous-stable behaviour may be described briefly when useful. A separate fixes/polish block is optional; minor changes need not appear in the announcement.
+2. Only genuinely significant new capabilities or substantial developments of existing features receive feature paragraphs, with a suitable emoji, a **bold short title**, and issue-number links **at the end**. A bug fix never qualifies for such a paragraph. Their count and length follow the content; there is no quota or minimum number of paragraphs, sentences or words.
+3. Notable fixes to previous-stable behaviour may be described briefly in plain text after the features, without emoji or feature headings. This paragraph is optional; minor fixes need not appear in the announcement. A fixes-only release can use plain concise prose with no feature blocks.
 4. A compact link to all eligible issues in this release's GitHub milestone.
 
 Separate the elements actually used with a blank line. Prefer a few clear user
 actions over implementation details or long feature inventories. Not every
 eligible issue needs a mention; the collection link carries the full list.
+
+Each highlighted feature must make its meaningful difference from the previous
+stable clear. Describing what an already available tool does is not release
+news. State the concrete change and its user benefit without requiring a rigid
+"before/after" sentence template. For 1.85.2 dimensions, highlight their new
+shared design, consistent and more precise presentation across tools, and
+external/internal wall dimensions, rather than implying dimensions first
+appeared on the plan. Do not promote a minor repair with a feature-like title:
+"Resize in one gesture" based on a bug fix does not earn a headline paragraph.
+Issue categories and milestone membership alone do not make an item a feature.
 
 If there are no major features, a short paragraph about meaningful fixes is
 enough. With no significant user-visible changes, don't invent feature blocks,
@@ -5600,7 +5610,8 @@ For example, after fixing a beta overlap bug in new drafting dimensions,
 "stay clear of fixed tool controls" should not pad that feature's description.
 Describe the useful final capability, not its development history. Performance
 of behaviour that already existed in the previous stable remains eligible
-`stable-fix` work; it earns an announcement mention only when significant.
+`stable-fix` work; a significant fix may earn a brief plain-text mention, never
+an emoji feature block.
 
 Before S7, the author adds one reviewed JSON record per issue under
 `docs/release-ledger/<previous-stable>/<NN>.json`. Required: `schema: 1`, `issue`,
