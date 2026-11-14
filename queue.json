@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12544,
+  "revision": 12545,
   "nextTicket": 445,
   "nextFence": 445,
   "tasks": {
@@ -5012,6 +5012,10 @@
       "digest": "bde1d77719938fafae181642e111355dad5a625e26f72843f99e7607c778b232",
       "issue": 1421
     },
+    "github:43585981218:1:completions:message:82a96790472e6819bfe643457834ae58c7877733197d5dcc767f2f1026f8bf56": {
+      "digest": "08f4183a975c788e89fd3ccf6dcd3a826a6aaa4e9b2086afa4c8fe176e7f6428",
+      "issue": 1421
+    },
     "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651": {
       "digest": "de3a891914465aab40cb0cc764c1c1f63dd063b799b8f79278f1dc5e6cb8b3c9",
       "issue": 1421,
@@ -5054,7 +5058,8 @@
         "reviewChanges": "### Решение и места для внимания\nПрочитаны #1393, текущие PlanHost/presentation contracts, HpDialog, язык загрузки и UI Kit. Реальные native ветки уже существуют. Отдельный владелец документа сохраняет 46 шаблонов и HA DOM; ревью подтвердило выбор совместимых имён при жёсткой document isolation. Продуктовой реализации этой задачи ещё нет.\n\n### Проверки и ограничения\nДо S4 — только авторская проверка формы ТЗ. Продуктовые прогоны этой задачи не запускались; probe #1393 не выдаётся за принятую реализацию. Владельцем утверждено направление UI Kit/local SVG, но не новые визуальные эталоны.\n\n### Исправления по предыдущему ревью\nОтчёт S4 r1: https://github.com/Matysh/houseplan-card/actions/runs/43585316120 (artifact review-result, spec-39fb169dd97c-1794652370997.md).\n- F1, языки/localize: pl исправлен на fr; конечный HA-key bridge ui.common.close и проверка ru/de accessible name добавлены.\n- F2, progress: выбран language-neutral вариант без текста; сохраняются inert/aria-busy общего runtime. Не обещается live announcement из inert-поддерева, HA DOM не меняется.\n- F3, тема: adapter владеет базовыми light/dark input tokens с provenance UI Lab, единый API синхронно меняет CSS и darkMode; добавлен oracle.\n- Улучшения: закрыт список из трёх primitives, явные collision cases branch-switch имён; отказ от самовольной hp-* альтернативы; нулевой fallback на известных динамических иконках; полный список plan-only поверхностей; поздний HA обозначен неподдерживаемым смешением; MDI 7.4.47 закреплён.\nМатериал повторной передачи — редакция 2 в теле issue. Выполнена только spec-check; продуктовых прогонов нет.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
