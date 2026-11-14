@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11900,
+  "revision": 11901,
   "nextTicket": 427,
   "nextFence": 427,
   "tasks": {
@@ -3650,7 +3650,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794625806335,
       "reviewEntry": 4,
-      "patchId": "daec330f169c4acc56f317e45a7a2043bd520e6f",
+      "patchId": "68f87bb6314c83a65a79b93990ce92c20150f54e",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
         "demo/srv/plan-host-fixture.js",
@@ -3728,6 +3728,7 @@
         "test/plan-hass-projection.test.mjs",
         "test/plan-host-boundary.test.mjs",
         "test/plan-host.test.mjs",
+        "test/route-kiosk.test.mjs",
         "test/signing.test.mjs",
         "test/space-delete-dialog.test.mjs",
         "test/version-recovery-card-contract.test.mjs",
@@ -4947,10 +4948,11 @@
     "token": "426:finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7:finish:1:admit",
     "fence": 426,
     "materialSha": "5cc56bdc9634287ac94ab2b3b20d276b2e0fcddd",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+    "phase": "testing",
     "admittedAt": 1794625810971,
-    "expiresAt": 1794626110971
+    "expiresAt": 1794626117130,
+    "patchId": "68f87bb6314c83a65a79b93990ce92c20150f54e"
   },
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
@@ -5327,6 +5329,10 @@
     },
     "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:3:return": {
       "digest": "0e31ca8525aa6067645c1495518a930ea1a209749288b4c3108e80432eceab9c",
+      "issue": 1392
+    },
+    "finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7:finish:2:synchronized": {
+      "digest": "d3eb40309373a32d614ba503a5c943e29b017dd8deab97ad33bfb0781ef3ab6d",
       "issue": 1392
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
