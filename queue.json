@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12207,
+  "revision": 12208,
   "nextTicket": 436,
   "nextFence": 436,
   "tasks": {
@@ -5235,7 +5235,8 @@
           "entry": 3,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Браузер: summary panel: failed; Браузер: summary weather: failed",
           "eventId": "finish:f95cc89b-03be-4ad4-99e0-6f05fe2facbf:finish:3:return:return:1394"
-        }
+        },
+        "delivered": true
       }
     }
   },
