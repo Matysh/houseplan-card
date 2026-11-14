@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12175,
+  "revision": 12176,
   "nextTicket": 434,
   "nextFence": 434,
   "tasks": {
@@ -3691,7 +3691,18 @@
         "src/view-runtimes.ts",
         "test/plan-capability-permissions.test.mjs",
         "tests_backend/test_ha_import_export.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794635057465,
+        "entry": 1,
+        "detail": "Критичные данные, сохранение и права: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/geometry-cleanup-842.test.mjs: failed; Поведение: test/header-menu.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/marker-activity-save-865.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/render-device-snapshot.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
+        "eventId": "finish:aba9fde5-1710-4bdf-8752-192f651e747d:finish:3:return:return:1394"
+      }
     },
     "1395": {
       "issue": 1395,
@@ -4894,18 +4905,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1394,
-    "worker": "finish",
-    "token": "433:finish:aba9fde5-1710-4bdf-8752-192f651e747d:finish:1:admit",
-    "fence": 433,
-    "materialSha": "b64766907826daae43e4bba9352f6b94bcdb3b2b",
-    "expectedBase": "3108fed9e23905a23044453c85be4e158dabaadc",
-    "phase": "testing",
-    "admittedAt": 1794634466283,
-    "expiresAt": 1794635304792,
-    "patchId": "080f625cfe7505fc0fc4c27c55cc4d76ecaf909c"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
       "digest": "12777e21751a9ed7739ddf636b9b3bee3ba44b51ffb7d393f4c581e85a28643e",
@@ -4987,6 +4987,10 @@
       "digest": "fafba02cb84128c24ea383bf3086de506d62e7a723b9a1accd5637320a34de00",
       "issue": 1394
     },
+    "finish:aba9fde5-1710-4bdf-8752-192f651e747d:finish:3:return": {
+      "digest": "8cf8225cf520f2c963ba7bfd1a58c044b3f6179fe5263beddc23f8e8bd362ae3",
+      "issue": 1394
+    },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
       "digest": "da0a567c831444c6edf8188c369afccc9da568d6542dab5b8e8f2f028cdcb317",
       "issue": 1394,
@@ -5041,6 +5045,26 @@
         "layer": "product",
         "materialSha": "b64766907826daae43e4bba9352f6b94bcdb3b2b",
         "phase": "sync"
+      }
+    },
+    "finish:aba9fde5-1710-4bdf-8752-192f651e747d:finish:3:return:return:1394": {
+      "digest": "8cf8225cf520f2c963ba7bfd1a58c044b3f6179fe5263beddc23f8e8bd362ae3",
+      "issue": 1394,
+      "message": {
+        "kind": "return",
+        "issue": 1394,
+        "at": 1794635057465,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794635057465,
+          "entry": 1,
+          "detail": "Критичные данные, сохранение и права: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/geometry-cleanup-842.test.mjs: failed; Поведение: test/header-menu.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/marker-activity-save-865.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/render-device-snapshot.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
+          "eventId": "finish:aba9fde5-1710-4bdf-8752-192f651e747d:finish:3:return:return:1394"
+        }
       }
     }
   },
