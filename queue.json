@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14192,
+  "revision": 14193,
   "nextTicket": 483,
   "nextFence": 483,
   "tasks": {
@@ -5375,6 +5375,10 @@
       "digest": "898a54b00c8ebfb6d4e774127de34e2311b100344b07e780a434faadd4100849",
       "issue": 1449
     },
+    "github:43655292558:1:completions:message:9c93ce40bd17fdbbc01a53e252c8656c4285f9ec364c93352bbc67d1a9ff3db4": {
+      "digest": "e210234c9b26becac17d007cf0e32c7fd1a29fe1d66b992c064f112141f935af",
+      "issue": 1449
+    },
     "finish:5ca48eb6-3be0-4967-a5dc-be32ebf72f63": {
       "digest": "063e9e4123b0af05e8814e5855c58458229034a4643a70cddc0477e62b486382",
       "issue": 1449,
@@ -5480,7 +5484,8 @@
         "reviewChanges": "Реализован один pure `openingLeafOriginOffset` в существующем placement-owner. Его используют Flat symbol/slide, прежний Iso leafBasis и closed-door helper. Существующие размещения рендереров не менялись: Flat swing axis, Flat slide/Iso selected host face. В общий LightBarrierRevision добавлен только closedDoorPlacement, участвующий в optical fingerprint фактически закрытых непрозрачных doors. Геометрический fingerprint/host proof/masonry/slot/tunnel-floor, алгоритм visibility и Sun не изменялись. Card выбирает Iso только по фактической renderProjection+retained Iso scene+showBorders; fallback/editors/no-volume/Static — Flat. hide_openings не влияет на выбор. Pan/zoom/quarter-turn не входят в новый ключ.\n\nАдресные `test/closed-door-light.test.mjs`:137/137 PASS. Независимые ожидаемые координаты покрывают 20/96cm, обе стороны, room/partition, angles0/27/90/180 и оба flips; проверяются равенство masonry/floor и разный optical cache, source-on-leaf, неизменные partial/open/glass и совпадение Flat/Iso slide. Существующие 72 случая сохранены. Build с types PASS. Native `smoke_closed_door_glow` PASS: настоящая панель; первые z=0 вершины front/back реально нарисованного Iso leaf дают ожидаемую плоскость; 30/96cm×left/right×flipV×flipH, PNG on/off перед полотном ярче примерно на67 RGB, за ним0. Ошибочный iso.clip=flat.clip заменён правильными разными leaf planes; source-independent masonry/floor остаются равными по unit. Проверены zoom/pan/rotation без изменения world clip/сохранённого плана; Flat↔Iso, hide_openings/no-borders, Devices editor и реальная latch fallback-ветка с контролируемым отказом optional renderer. Прежние slide/partition/exterior/LED/Static сценарии проходят. Native iso-closed.png просмотрен: тёмной полосы между светом и полотном больше нет.\n\nПри расширении right-source witness прежний fixture имел left registry area, из-за чего сохранение Iso могло авто-переносить лампу назад. Fixture теперь согласует area с источником, seed доставляет соответствующие synthetic devices/entities/areas через HA transport и дожидается настоящих writers после config перед layout (без сброса очереди/подмены ACK). Неосмысленные отказы stale bundle и layout served-rev при отладке не выдаются за PASS; финальный native: artifacts/1449-native-r4.log, unit: artifacts/1449-unit-final.log. Это synthetic transport, не real HA.\n\nОбычный S6 далее выполняется через очередь с применимым reuse; это не полный релизный прогон. PNG baselines и frozen B386/A44 не менялись; новый immutable release capture делает ведущий агент после S8. E2E decision после поиска: https://github.com/Matysh/houseplan-e2e/issues/70 (новый отдельный HA case не требуется, прежний release real-HA набор сохраняется). Ledger line-fix — завершение невыпущенного #1421. Особое внимание: placement authority, proof до recut, invalidation при projection/fallback, отсутствие влияния на gates/windows/partial/Sun/saved data/ACL. Нового дизайна нет; View touch contract сохраняется, редакторы desktop-first/best effort.\n### Исправления после первого S6\n\nRun20261114T232038226-6e0300bc завершился failed до код-ревью:4 адресных файла, не проблема venv. core-source-readers и mutation-gate нашли один устаревший anchor `opening-symbol-flip-restores-edge-offset` после делегирования shared placement. Anchor перенесён на уникальный delegated return; сохранена физическая мутация смещения Flat symbol при flip. isometric-contract ожидал прежнюю inline ternary: теперь проверяет делегирование и фактические hinges buildIsoOpeningBasis для door/gate face, window/Flat axis. wall-identity-corpus обнаружил добавленный default flip_h:false в fixture: поле теперь добавляется только для true, прежний default stored document полностью сохранён. Corpus identities/passports/baselines не обновлялись.\n\nТолько эти4 упавших файла пройдены адресно:102/102 PASS. Ровно named physical mutant выполнен через существующий runner: clean guard PASS, opening-symbol-flip-restores-edge-offset caught1/1 (исполненный behavioral failure, не static readiness). Логи: artifacts/1449-addressed-s6-repairs.log и artifacts/1449-single-mutant.log. Успешные наборы вручную не повторялись; далее обычный finish с reuse на прежнем Node22.23.2.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
