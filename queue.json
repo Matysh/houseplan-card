@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12186,
+  "revision": 12187,
   "nextTicket": 436,
   "nextFence": 436,
   "tasks": {
@@ -3650,7 +3650,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794636119732,
       "reviewEntry": 3,
-      "patchId": "67f29887dbd75e25afb4e6c3e87ff55b026a98d6",
+      "patchId": "8978665047fad62b834d4293c3f8088351c99584",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
         "demo/srv/plan-host-fixture.js",
@@ -3668,7 +3668,9 @@
         "src/decor-image-editor.ts",
         "src/device-copy-editor.ts",
         "src/device-structure-history.ts",
+        "src/editors/external-screens.ts",
         "src/editors/general-settings-dialog.ts",
+        "src/editors/marker-alerts.ts",
         "src/editors/marker-dialog.ts",
         "src/editors/opening-features-fields.ts",
         "src/editors/room-settings-dialog.ts",
@@ -3688,6 +3690,7 @@
         "src/pdf/hp-pdf-dialog.ts",
         "src/plan-capabilities.ts",
         "src/plan-host.ts",
+        "src/summary-panel-runtime-loaded.ts",
         "src/view-runtimes.ts",
         "test/device-editor-permissions-runtime.test.mjs",
         "test/header-menu.test.mjs",
@@ -4916,10 +4919,11 @@
     "token": "435:finish:f95cc89b-03be-4ad4-99e0-6f05fe2facbf:finish:1:admit",
     "fence": 435,
     "materialSha": "3c1096ac2fa1757f4cb681be1b5d9e36dea209c0",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3108fed9e23905a23044453c85be4e158dabaadc",
+    "phase": "testing",
     "admittedAt": 1794636124273,
-    "expiresAt": 1794636424273
+    "expiresAt": 1794636430562,
+    "patchId": "8978665047fad62b834d4293c3f8088351c99584"
   },
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
@@ -5028,6 +5032,10 @@
     },
     "finish:2037b335-ba7d-4f56-9106-129e25272687:finish:3:return": {
       "digest": "7048489cf47359fdd0603b94792cf1e12a1de3adc45cce64301f5f97ce435da7",
+      "issue": 1394
+    },
+    "finish:f95cc89b-03be-4ad4-99e0-6f05fe2facbf:finish:2:synchronized": {
+      "digest": "b18ddbb0ef1eddede6f7dbd1eece6117705fba0b3ee0588532ab61c24b8faa53",
       "issue": 1394
     },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
