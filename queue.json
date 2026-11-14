@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12686,
+  "revision": 12687,
   "nextTicket": 449,
   "nextFence": 449,
   "tasks": {
@@ -4488,192 +4488,26 @@
     },
     "1422": {
       "issue": 1422,
+      "branch": "codex/1422-standalone-presentation",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/1422-standalone-presentation",
-      "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 448,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794656770077,
-      "reviewEntry": 3,
-      "notice": {
-        "key": "2:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794656660141,
-        "entry": 2,
-        "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed",
-        "eventId": "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return:return:1422"
-      },
-      "patchId": "ad54bb5d85e80865b5f1819342f4eff3e74a8a01",
-      "changedFiles": [
-        "demo/helpers/standalone-presentation-build.mjs",
-        "demo/smoke_standalone_presentation.mjs",
-        "demo/srv/plan-host-fixture.js",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/DIALOG-UI-KIT.md",
-        "docs/STANDALONE-PRESENTATION.md",
-        "docs/release-ledger/v1.85.0/1422.json",
-        "process-next/lib/task-selection.mjs",
-        "process-next/test/task-selection.test.mjs",
-        "scripts/standalone-icons.mjs",
-        "src/hp-dialog.ts",
-        "src/standalone-icons.generated.ts",
-        "src/standalone-presentation-policy.ts",
-        "src/standalone-presentation.ts",
-        "src/standalone-theme.ts",
-        "test/browser-attestation.test.mjs",
-        "test/smoke-exception-guard.test.mjs",
-        "test/standalone-presentation-boundary.test.mjs",
-        "tsconfig.test.json"
-      ],
-      "s6": {
-        "id": "20261114T114626395-c2bcad0c",
-        "name": "Тесты для задачи #1422 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T114626395-c2bcad0c/report.json",
-        "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-        "status": "passed",
-        "finishedAt": "2026-11-14T11:47:12.461Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "c0724ea4179e2c6971033c383ef37a441983960f",
+      "mergedSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
+      "mergedAt": 1794657144187,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1422:3:ad54bb5d85e80865b5f1819342f4eff3e74a8a01:c0724ea4179e2c6971033c383ef37a441983960f",
-      "reviewMaterial": {
-        "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-        "expectedBase": "c0724ea4179e2c6971033c383ef37a441983960f",
-        "patchId": "ad54bb5d85e80865b5f1819342f4eff3e74a8a01"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1422:3:ad54bb5d85e80865b5f1819342f4eff3e74a8a01:c0724ea4179e2c6971033c383ef37a441983960f",
-        "eventId": "github:43591673512:1:tick:0:review-retry",
-        "at": 1794656853909,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1422,
-        "requestId": "review:1422:3:ad54bb5d85e80865b5f1819342f4eff3e74a8a01:c0724ea4179e2c6971033c383ef37a441983960f",
-        "kind": "code",
-        "base": "c0724ea4179e2c6971033c383ef37a441983960f",
-        "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-        "patchId": "ad54bb5d85e80865b5f1819342f4eff3e74a8a01",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1422,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1422",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и результат\nРеализован отдельный opt-in presentation owner без HA frontend. Нормальные entrypoints его не импортируют. Полный standalone entry и положительный persistence/portable journey относятся к #1423, а не к этому wire fixture.\n\n### Решение и альтернативы\nРовно три локальных компонента с прежними совместимыми именами; native HpDialog/Form Kit остаются общими. Registry проверяется атомарно до define, чужие определения/HA root отвергаются. Theme API синхронно публикует только четыре разрешённых presentation поля и восстанавливает CSS при ошибке. Конечная карта MDI 7.4.47 генерируется из запертого пакета, без сетевого icon loader. Переписывать существующие шаблоны или заимствовать HA bootstrap не потребовалось.\n\n### Риски и места для внимания\nИзоляция custom-element registry, динамические SVG, границы theme ownership и native modal lifecycle. В native мобильной оболочке исправлено растяжение двухстрочного grid навигации: форма больше не делит свободную высоту поровну между селектором и содержимым; правило исключает ha-dialog-shell. HA ветка не меняется. Build helper — только диагностическая сборка общего графа, не будущая публичная поставка. В тестовом PlanHost зафиксировано синхронное обновление presentation/revision без hass.\n\n### Проверки и ограничения\nАдресные Node проверки — 57/57, включая 11 API/registry/theme/icon контрактов. Native browser проходит настоящие формы, четыре языка, темы/ширины, nested select/color, focus/dirty/discard/return, числовые поля/range/disabled, cold-language progress, reduced-motion, disposal и восемь независимых registry collisions. Лог и candidate PNG: artifacts/standalone-presentation; это не принятые эталоны. Два прежних HA harness кадра прошли verify: panel-wide-view-light-en (0 diff px), panel-wide-plan-editor-dark-en (426 px, 0.0416%, в существующем допуске). Нельзя выдавать их за проверку установленного реального HA.\n\nWire fixture доказывает UI/порты, не domain validation, долговечность или переносимость файлов. Мутации и release-профиль не запускались. Решение по real-HA E2E: Matysh/houseplan-e2e#57, новый сценарий не нужен для изолированного adapter. Никакие личные данные, UI Lab владельца, эталоны и установленный frontend snapshot не изменялись.\n\nПервый полный S6 после rebase: 635/636 шагов прошли. Единственный отказ — статический smoke-exception guard не распознавал уже существующую launchPanelCold как обёртку общего launchInternal/watchPage. Добавлено это конкретное имя и явная проверка владельца; исключения по-прежнему учитывает общий guard, новый bypass не вводился. Адресный красный результат воспроизведён, после исправления 4/4. В повторной передаче используется штатное повторное использование зелёных результатов.\n\n### Принятое ТЗ\nРедакция 2 принята в S4: https://github.com/Matysh/houseplan-card/actions/runs/43586014287. Исправления первого spec review сохранены в теле ТЗ: ru/en/de/fr, конечный localize bridge, language-neutral progress с исходным inert/aria-busy, общий UI Kit и строгая document isolation."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принять, блокеров нет. Реализация повторяет принятое ТЗ r2. Добавлен отдельный opt-in модуль `src/standalone-presentation.ts`, и его не импортирует ни один HA-entrypoint. Модуль регистрирует ровно три совместимых имени: `ha-icon`, `ha-card`, `ha-circular-progress`. Перед регистрацией он атомарно проверяет registry и HA-переключатели веток. Ещё он публикует тему и presentation (только language/locale/themes/localize) через callback владельца хоста, а fake `hass` не создаёт. Native `HpDialog` и Form Kit остаются общими, второго редактора нет. Браузерный сценарий S6 содержательный: реальная карточка без HA, обход plan-only поверхностей, ни одного fallback-значка, ни одного неопределённого элемента и внешнего запроса, ru/de/fr имя кнопки закрытия, вложенный Escape, dirty/discard, focus trap, восемь независимых collision-кейсов, cold-language progress и reduced-motion. Единственная правка общего кода — мобильное CSS-правило в `hp-dialog.ts`. Оно исправляет реальное растяжение native-оболочки. Однако native-ветку получает и HA-документ, пока `ha-dialog` лениво не зарегистрирован, поэтому формулировка «HA ветка не меняется» точна только для ветки `ha-dialog`. Это необязательные уточнения, а не причина возврата.",
-          "understanding": "Проблема. Будущему автономному хосту (#1423) нужно смонтировать настоящий `houseplan-card` с PlanHost и PLAN_ONLY_CAPABILITIES без HA frontend. Сейчас шаблоны рисуют `ha-icon`/`ha-card`/`ha-circular-progress`, а без HA эти элементы не определены. HpDialog и булевы/range-поля выбирают ветку по `ha-dialog`/`ha-switch`/`ha-slider`, и native-ветки у них уже есть.\n\nЧто было до: без HA не было ни иконок, ни контейнера, ни progress. Close label диалога брался из HA-ключа `ui.common.close` и в автономном документе упал бы в английский «Close».\n\nЧто стало:\n- `registerStandalonePresentation()` один раз проверяет весь набор через `assertStandaloneRegistry`: HA root, четыре HA-переключателя и чужие определения трёх примитивов. Только после этого синхронно вызывает три define. Повторный вызов идемпотентен через WeakMap по registry. Импорт модуля ничего не регистрирует.\n- `createStandalonePresentation(container, {language, darkMode}, publish)`:\n  - запоминает исходные inline-значения контейнера;\n  - ставит HA-совместимые входные токены из `standalone-theme.ts` (provenance — `demo/ui-lab/theme.css`, включая `color-scheme`);\n  - синхронно вызывает publish с замороженным снимком из четырёх полей;\n  - при исключении или асинхронном publish откатывает CSS;\n  - `localize` переводит только `ui.common.close` → `btn.close` в момент вызова;\n  - `dispose` восстанавливает только значения, которые сам поставил и которые с тех пор не менялись.\n- Иконка рендерит SVG из конечной карты `STANDALONE_ICON_PATHS`. Её генерирует `scripts/standalone-icons.mjs` из литералов `mdi:` в src по @mdi/js. Неизвестное имя получает `help-circle-outline` и атрибут-диагностику. Строка никогда не попадает в разметку: она используется только как ключ `hasOwnProperty`.\n- Card — слот с HA-совместимыми переменными. Progress — SVG с общим `hp-ui-spin` и статичной дугой при reduced-motion.\n\nРазобранные пути:\n- policy/theme/presentation целиком;\n- `t`/`langOf` в `src/i18n.ts` (ленивые de/fr и английский fallback);\n- выбор ветки и атрибут `ha-dialog-shell` в `hp-dialog.ts:439-448` и новое мобильное правило `:272-278` относительно `:263-264`;\n- мобильная раскладка `.hpf-settings-layout` в `settings-dialogs.styles.ts`;\n- `HostPresentationContext`/`HostThemes` в `plan-host.ts`;\n- изменения фикстуры PlanHost (throwing proxy сохранён, publish увеличивает revision);\n- `launchPanelCold`/`launchInternal` в `demo/serve.mjs` (общий watchPage);\n- поиск импортов адаптера в src, динамических имён иконок (`mdi:${…}` только в summary-weather, вне plan-only), потребителей `--mdc-icon-size`, переносов в `document.body`;\n- лицензионные файлы MDI.",
-          "analysis": [
-            {
-              "topic": "Изоляция registry и явный composition root",
-              "assessment": "Решение надёжно. Проверка выполняется до первого define. `customElements.define` синхронен, поэтому частичная регистрация возможна только при исключении самого define, а preflight его исключает. Свои определения отличаются от чужих по идентичности конструктора. Значит, второй экземпляр модуля, например из другого бандла, тоже получит отказ, и это правильно. Глобального перехвата define нет. `update()` повторно вызывает preflight, поэтому позднее появление HA приводит к отказу API, как требует контракт 5. Открытый HpDialog остаётся native по существующей неизменяемой ветке.",
-              "evidence": "src/standalone-presentation-policy.ts:5-15; src/standalone-presentation.ts:42-56, 75; в src нет импортов `standalone-presentation` (поиск). Unit: test/standalone-presentation-boundary.test.mjs:11-26. Браузер: smoke_standalone_presentation.mjs:281-297 — восемь коллизий в свежих документах, проверены inertImport/rejected/unchanged."
-            },
-            {
-              "topic": "Тема и публикация presentation",
-              "assessment": "Граница ответственности проведена верно. Адаптер не владеет PlanHost и только вызывает синхронный callback, который публикует новое environment с увеличенной revision. Учтены оба улучшения из S4: шов с PlanHost и `color-scheme`. Откат при ошибке публикации различает «предыдущее применённое» и «исходное» значение. Dispose не затирает чужие поздние правки. Тема ставится на mount container, а не на `:root`: native `<dialog>` в top layer наследует стили от DOM-предка, переносов UI в `document.body` нет (только временные anchor для скачивания).",
-              "evidence": "src/standalone-presentation.ts:69-117; src/standalone-theme.ts сверен с demo/ui-lab/theme.css:4-24 (значения совпадают); demo/srv/plan-host-fixture.js:28-31 и новый `presentation:` publish. Smoke: :104-117 (darkMode в environment и computed color-scheme на 1280/390), :245-266 (rollback, independent, preserved, retired)."
-            },
-            {
-              "topic": "Мост localize и язык",
-              "assessment": "Реализовано минимально и правильно. Перевод выполняется при вызове через `t(language,'btn.close')`, поэтому снимок, сделанный до загрузки de/fr, не «застывает» на английском. Если ключ ещё не загружен, срабатывает обычный fallback `FALLBACK_DICTIONARY`. Неизвестные ключи возвращают undefined. Если `config.language` карточки расходится с языком presentation, close label идёт по presentation. Это то же поведение, что в HA с `hass.localize`, а не регрессия.",
-              "evidence": "src/standalone-presentation.ts:77-82; src/i18n.ts:32-35. Smoke :119-127 находит кнопку по точному имени «Закрыть»/«Schließen»/«Fermer»."
-            },
-            {
-              "topic": "Конечная карта иконок",
-              "assessment": "Безопасность обеспечена конструкцией: имя используется только как ключ `hasOwnProperty`, `__proto__` не проходит, path попадает в атрибут `d` через Lit binding. Генератор собирает все литералы `mdi:` из src, включая не plan-only иконки устройств. Это чуть шире буквального «необходимого плановым поверхностям», но список конечен, воспроизводим, а лишние иконки попадают только в автономный бандл. Пробел статического сбора закрыт runtime-оракулом: ноль fallback на всех обойдённых поверхностях. Слабые места сопровождения: (1) имена, которых нет в @mdi/js, молча отбрасываются; (2) версия «MDI 7.4.47» в заголовке жёстко прописана, хотя в package.json стоит `^7.4.47`; (3) устаревание карты ловит только boundary-тест, а он запускается лишь при выборке домена presentation.",
-              "evidence": "src/standalone-presentation.ts:16-21; scripts/standalone-icons.mjs:15-23; package.json:68; test/standalone-presentation-boundary.test.mjs:35-46; smoke :226-232 (вредоносное имя: fallback есть, img/script отсутствуют)."
-            },
-            {
-              "topic": "Правка мобильной геометрии native HpDialog",
-              "assessment": "Причина реальная. Форма с `flex:1 0 auto` в column-flex растягивалась на всю высоту, а одноколоночный grid `.hpf-settings-layout` на ширине ≤550 px делил свободную высоту между auto-строками селектора и содержимого. Новое правило `flex:0 0 auto` исключает ветку `ha-dialog-shell`. Отдельная строка для marker восстанавливает прежний `1 1 0`: у правил одинаковая специфичность, и побеждает более позднее. Для ветки `ha-dialog` ничего не меняется. Неточность в описании: native-ветку HpDialog выбирает и HA-документ, если `ha-dialog` ещё не зарегистрирован (комментарий `hp-dialog.ts:439-441` прямо описывает ленивую регистрацию). Значит, на мобильной ширине исправление затрагивает и этот редкий HA-случай. По сути это та же починка, а не регрессия, но формулировка «HA ветка не меняется» точна только для ветки `ha-dialog`. В автономном smoke на 390 px проверен только общий диалог настроек. Space/room и другие settings-layout диалоги аудировались на 1280. Полная центральная выборка S6 их существующие мобильные смоки прошла.",
-              "evidence": "src/hp-dialog.ts:263-264, 272-278, 442-448; src/styles/settings-dialogs.styles.ts (mobile `.hpf-settings-layout{grid-template-columns:minmax(0,1fr)}`, sticky `.hpf-settings-mobile`); smoke :114-115 (высота навигации <90 px только для `data-kind=settings`)."
-            },
-            {
-              "topic": "Примитивы card/progress и accessibility",
-              "assessment": "Примитивы функциональные, а не пустые заглушки. Progress виден (48 px), фокуса не получает, использует общую keyframe и токены motion, а при reduced-motion показывает статичную дугу. Роль `status` и inert/aria-busy остаются у существующего language runtime, как выбрано в ТЗ. SVG иконки помечены `aria-hidden` и `focusable=false`, поэтому второе accessible name не возникает. `--mdc-icon-size:24px` в теме безопасен: в src нет потребителей `var(--mdc-icon-size, <другой fallback>)`, кроме самой иконки.",
-              "evidence": "src/standalone-presentation.ts:24-40; src/styles/ui-motion.styles.ts:21,58; smoke :61-68 (реальный cold-language gate карточки на fr с задержанным чанком), :233-241."
-            },
-            {
-              "topic": "Тестовая инфраструктура",
-              "assessment": "Правки guard-тестов узкие и обоснованные. `launchPanelCold` действительно является обёрткой `launchInternal` с общим `watchPage`. Guard теперь явно проверяет это в `serve.mjs`, а не просто добавляет имя в исключения. Диагностическая сборка переиспользует плагины основного rollup-конфига и пишет в artifacts, так что обычный frontend snapshot не трогается. Классификация в task-selection добавляет домен presentation, и для этого есть адресный тест.",
-              "evidence": "demo/serve.mjs:146-171, 223-225; test/smoke-exception-guard.test.mjs:105-115; demo/helpers/standalone-presentation-build.mjs; process-next/lib/task-selection.mjs (presentation regex)."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Уточнить в описании задачи, комментарии `hp-dialog.ts:273-275` или CHANGELOG, что мобильная починка native-оболочки применяется везде, где выбрана native-ветка, включая HA до ленивой регистрации `ha-dialog`. Не меняется только ветка `ha-dialog-shell`. Выгода: честная граница для AC6 и для будущего разбора регрессий. Цена — одна фраза.",
-            "Добавить в автономный smoke аудит хотя бы space- и room-диалога на 390 px, по аналогии с проверкой высоты `.hpf-settings-mobile`. Сейчас новое правило `flex:0 0 auto` на мобильной ширине проверено в автономном сценарии только для общего диалога настроек, хотя затрагивает все settings-layout формы кроме marker.",
-            "Генератору иконок стоит сообщать об отброшенных литералах (имя `mdi:x`, которого нет в @mdi/js) и брать версию из `@mdi/js/package.json` вместо жёсткой строки «MDI 7.4.47» в заголовке. Иначе при обновлении lock-файла provenance разойдётся с содержимым, а опечатка в имени тихо станет fallback, видимым только в автономном документе.",
-            "Проверка `--check` для актуальности карты сейчас живёт в boundary-тесте, а он запускается выборкой по домену presentation. Новая иконка, добавленная в задаче другого домена, может оставить карту устаревшей до следующей presentation-задачи. Дешевле включить `node scripts/standalone-icons.mjs --check` в общую сборку/типизацию или генерировать карту в сборке #1423, а не коммитить её.",
-            "Обновить заголовок раздела MDI в THIRD_PARTY_NOTICES.md: сейчас он называет только «local device icon picker», хотя пути MDI теперь использует и автономная карта."
-          ],
-          "boundaries": "Сборку, тесты, браузер и Validate не запускал, это ревью кода на S7.\n\nИспользованы результаты S6 из квитанции 20261114T114626395-c2bcad0c (passed, материал a927fbd3) и заявления исполнителя в authorContext: адресные Node-проверки 57/57, native browser-сценарий, два HA harness-кадра в допуске, починка guard-теста 4/4. Сами логи и candidate PNG в artifacts/standalone-presentation я не видел. Вывод о том, что сценарий проверяет, сделан по исходнику `demo/smoke_standalone_presentation.mjs`.\n\nПо исходникам изучено:\n- standalone-presentation/policy/theme;\n- генератор и выборочно сгенерированная карта;\n- hp-dialog (выбор ветки и мобильные правила);\n- settings-dialogs.styles;\n- i18n `t`/`langOf`;\n- plan-host-типы и фикстура PlanHost;\n- demo/serve.mjs;\n- изменения guard- и attestation-тестов;\n- task-selection;\n- документация и лицензионные файлы.\n\nНе проверял:\n- реальный установленный HA и прогон real-HA E2E (решение вынесено в houseplan-e2e#57);\n- пиксельное соответствие candidate-кадров;\n- поведение accessibility tree внутри inert;\n- полный построчный список всех 190+ иконок против всех plan-only шаблонов: опираюсь на runtime-оракул «ноль fallback» из S6.\n\nПоложительная переносимость и долговечность данных по ТЗ относятся к #1423 и здесь не проверялись."
-        },
-        "usage": {
-          "input_tokens": 54,
-          "cache_creation_input_tokens": 164251,
-          "cache_read_input_tokens": 3353510,
-          "output_tokens": 18252,
-          "output_tokens_details": {
-            "thinking_tokens": 8073
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 164251,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1094,
-              "cache_read_input_tokens": 147887,
-              "cache_creation_input_tokens": 20568,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 20568
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРаботу можно принять, блокеров нет. Реализация повторяет принятое ТЗ r2. Добавлен отдельный opt-in модуль `src/standalone-presentation.ts`, и его не импортирует ни один HA-entrypoint. Модуль регистрирует ровно три совместимых имени: `ha-icon`, `ha-card`, `ha-circular-progress`. Перед регистрацией он атомарно проверяет registry и HA-переключатели веток. Ещё он публикует тему и presentation (только language/locale/themes/localize) через callback владельца хоста, а fake `hass` не создаёт. Native `HpDialog` и Form Kit остаются общими, второго редактора нет. Браузерный сценарий S6 содержательный: реальная карточка без HA, обход plan-only поверхностей, ни одного fallback-значка, ни одного неопределённого элемента и внешнего запроса, ru/de/fr имя кнопки закрытия, вложенный Escape, dirty/discard, focus trap, восемь независимых collision-кейсов, cold-language progress и reduced-motion. Единственная правка общего кода — мобильное CSS-правило в `hp-dialog.ts`. Оно исправляет реальное растяжение native-оболочки. Однако native-ветку получает и HA-документ, пока `ha-dialog` лениво не зарегистрирован, поэтому формулировка «HA ветка не меняется» точна только для ветки `ha-dialog`. Это необязательные уточнения, а не причина возврата.\n\n## Понимание решения\n\nПроблема. Будущему автономному хосту (#1423) нужно смонтировать настоящий `houseplan-card` с PlanHost и PLAN_ONLY_CAPABILITIES без HA frontend. Сейчас шаблоны рисуют `ha-icon`/`ha-card`/`ha-circular-progress`, а без HA эти элементы не определены. HpDialog и булевы/range-поля выбирают ветку по `ha-dialog`/`ha-switch`/`ha-slider`, и native-ветки у них уже есть.\n\nЧто было до: без HA не было ни иконок, ни контейнера, ни progress. Close label диалога брался из HA-ключа `ui.common.close` и в автономном документе упал бы в английский «Close».\n\nЧто стало:\n- `registerStandalonePresentation()` один раз проверяет весь набор через `assertStandaloneRegistry`: HA root, четыре HA-переключателя и чужие определения трёх примитивов. Только после этого синхронно вызывает три define. Повторный вызов идемпотентен через WeakMap по registry. Импорт модуля ничего не регистрирует.\n- `createStandalonePresentation(container, {language, darkMode}, publish)`:\n  - запоминает исходные inline-значения контейнера;\n  - ставит HA-совместимые входные токены из `standalone-theme.ts` (provenance — `demo/ui-lab/theme.css`, включая `color-scheme`);\n  - синхронно вызывает publish с замороженным снимком из четырёх полей;\n  - при исключении или асинхронном publish откатывает CSS;\n  - `localize` переводит только `ui.common.close` → `btn.close` в момент вызова;\n  - `dispose` восстанавливает только значения, которые сам поставил и которые с тех пор не менялись.\n- Иконка рендерит SVG из конечной карты `STANDALONE_ICON_PATHS`. Её генерирует `scripts/standalone-icons.mjs` из литералов `mdi:` в src по @mdi/js. Неизвестное имя получает `help-circle-outline` и атрибут-диагностику. Строка никогда не попадает в разметку: она используется только как ключ `hasOwnProperty`.\n- Card — слот с HA-совместимыми переменными. Progress — SVG с общим `hp-ui-spin` и статичной дугой при reduced-motion.\n\nРазобранные пути:\n- policy/theme/presentation целиком;\n- `t`/`langOf` в `src/i18n.ts` (ленивые de/fr и английский fallback);\n- выбор ветки и атрибут `ha-dialog-shell` в `hp-dialog.ts:439-448` и новое мобильное правило `:272-278` относительно `:263-264`;\n- мобильная раскладка `.hpf-settings-layout` в `settings-dialogs.styles.ts`;\n- `HostPresentationContext`/`HostThemes` в `plan-host.ts`;\n- изменения фикстуры PlanHost (throwing proxy сохранён, publish увеличивает revision);\n- `launchPanelCold`/`launchInternal` в `demo/serve.mjs` (общий watchPage);\n- поиск импортов адаптера в src, динамических имён иконок (`mdi:${…}` только в summary-weather, вне plan-only), потребителей `--mdc-icon-size`, переносов в `document.body`;\n- лицензионные файлы MDI.\n\n## Разбор решения\n\n### Изоляция registry и явный composition root\n\nРешение надёжно. Проверка выполняется до первого define. `customElements.define` синхронен, поэтому частичная регистрация возможна только при исключении самого define, а preflight его исключает. Свои определения отличаются от чужих по идентичности конструктора. Значит, второй экземпляр модуля, например из другого бандла, тоже получит отказ, и это правильно. Глобального перехвата define нет. `update()` повторно вызывает preflight, поэтому позднее появление HA приводит к отказу API, как требует контракт 5. Открытый HpDialog остаётся native по существующей неизменяемой ветке.\n\nОснование: src/standalone-presentation-policy.ts:5-15; src/standalone-presentation.ts:42-56, 75; в src нет импортов `standalone-presentation` (поиск). Unit: test/standalone-presentation-boundary.test.mjs:11-26. Браузер: smoke_standalone_presentation.mjs:281-297 — восемь коллизий в свежих документах, проверены inertImport/rejected/unchanged.\n\n### Тема и публикация presentation\n\nГраница ответственности проведена верно. Адаптер не владеет PlanHost и только вызывает синхронный callback, который публикует новое environment с увеличенной revision. Учтены оба улучшения из S4: шов с PlanHost и `color-scheme`. Откат при ошибке публикации различает «предыдущее применённое» и «исходное» значение. Dispose не затирает чужие поздние правки. Тема ставится на mount container, а не на `:root`: native `<dialog>` в top layer наследует стили от DOM-предка, переносов UI в `document.body` нет (только временные anchor для скачивания).\n\nОснование: src/standalone-presentation.ts:69-117; src/standalone-theme.ts сверен с demo/ui-lab/theme.css:4-24 (значения совпадают); demo/srv/plan-host-fixture.js:28-31 и новый `presentation:` publish. Smoke: :104-117 (darkMode в environment и computed color-scheme на 1280/390), :245-266 (rollback, independent, preserved, retired).\n\n### Мост localize и язык\n\nРеализовано минимально и правильно. Перевод выполняется при вызове через `t(language,'btn.close')`, поэтому снимок, сделанный до загрузки de/fr, не «застывает» на английском. Если ключ ещё не загружен, срабатывает обычный fallback `FALLBACK_DICTIONARY`. Неизвестные ключи возвращают undefined. Если `config.language` карточки расходится с языком presentation, close label идёт по presentation. Это то же поведение, что в HA с `hass.localize`, а не регрессия.\n\nОснование: src/standalone-presentation.ts:77-82; src/i18n.ts:32-35. Smoke :119-127 находит кнопку по точному имени «Закрыть»/«Schließen»/«Fermer».\n\n### Конечная карта иконок\n\nБезопасность обеспечена конструкцией: имя используется только как ключ `hasOwnProperty`, `__proto__` не проходит, path попадает в атрибут `d` через Lit binding. Генератор собирает все литералы `mdi:` из src, включая не plan-only иконки устройств. Это чуть шире буквального «необходимого плановым поверхностям», но список конечен, воспроизводим, а лишние иконки попадают только в автономный бандл. Пробел статического сбора закрыт runtime-оракулом: ноль fallback на всех обойдённых поверхностях. Слабые места сопровождения: (1) имена, которых нет в @mdi/js, молча отбрасываются; (2) версия «MDI 7.4.47» в заголовке жёстко прописана, хотя в package.json стоит `^7.4.47`; (3) устаревание карты ловит только boundary-тест, а он запускается лишь при выборке домена presentation.\n\nОснование: src/standalone-presentation.ts:16-21; scripts/standalone-icons.mjs:15-23; package.json:68; test/standalone-presentation-boundary.test.mjs:35-46; smoke :226-232 (вредоносное имя: fallback есть, img/script отсутствуют).\n\n### Правка мобильной геометрии native HpDialog\n\nПричина реальная. Форма с `flex:1 0 auto` в column-flex растягивалась на всю высоту, а одноколоночный grid `.hpf-settings-layout` на ширине ≤550 px делил свободную высоту между auto-строками селектора и содержимого. Новое правило `flex:0 0 auto` исключает ветку `ha-dialog-shell`. Отдельная строка для marker восстанавливает прежний `1 1 0`: у правил одинаковая специфичность, и побеждает более позднее. Для ветки `ha-dialog` ничего не меняется. Неточность в описании: native-ветку HpDialog выбирает и HA-документ, если `ha-dialog` ещё не зарегистрирован (комментарий `hp-dialog.ts:439-441` прямо описывает ленивую регистрацию). Значит, на мобильной ширине исправление затрагивает и этот редкий HA-случай. По сути это та же починка, а не регрессия, но формулировка «HA ветка не меняется» точна только для ветки `ha-dialog`. В автономном smoke на 390 px проверен только общий диалог настроек. Space/room и другие settings-layout диалоги аудировались на 1280. Полная центральная выборка S6 их существующие мобильные смоки прошла.\n\nОснование: src/hp-dialog.ts:263-264, 272-278, 442-448; src/styles/settings-dialogs.styles.ts (mobile `.hpf-settings-layout{grid-template-columns:minmax(0,1fr)}`, sticky `.hpf-settings-mobile`); smoke :114-115 (высота навигации <90 px только для `data-kind=settings`).\n\n### Примитивы card/progress и accessibility\n\nПримитивы функциональные, а не пустые заглушки. Progress виден (48 px), фокуса не получает, использует общую keyframe и токены motion, а при reduced-motion показывает статичную дугу. Роль `status` и inert/aria-busy остаются у существующего language runtime, как выбрано в ТЗ. SVG иконки помечены `aria-hidden` и `focusable=false`, поэтому второе accessible name не возникает. `--mdc-icon-size:24px` в теме безопасен: в src нет потребителей `var(--mdc-icon-size, <другой fallback>)`, кроме самой иконки.\n\nОснование: src/standalone-presentation.ts:24-40; src/styles/ui-motion.styles.ts:21,58; smoke :61-68 (реальный cold-language gate карточки на fr с задержанным чанком), :233-241.\n\n### Тестовая инфраструктура\n\nПравки guard-тестов узкие и обоснованные. `launchPanelCold` действительно является обёрткой `launchInternal` с общим `watchPage`. Guard теперь явно проверяет это в `serve.mjs`, а не просто добавляет имя в исключения. Диагностическая сборка переиспользует плагины основного rollup-конфига и пишет в artifacts, так что обычный frontend snapshot не трогается. Классификация в task-selection добавляет домен presentation, и для этого есть адресный тест.\n\nОснование: demo/serve.mjs:146-171, 223-225; test/smoke-exception-guard.test.mjs:105-115; demo/helpers/standalone-presentation-build.mjs; process-next/lib/task-selection.mjs (presentation regex).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Уточнить в описании задачи, комментарии `hp-dialog.ts:273-275` или CHANGELOG, что мобильная починка native-оболочки применяется везде, где выбрана native-ветка, включая HA до ленивой регистрации `ha-dialog`. Не меняется только ветка `ha-dialog-shell`. Выгода: честная граница для AC6 и для будущего разбора регрессий. Цена — одна фраза.\n- Добавить в автономный smoke аудит хотя бы space- и room-диалога на 390 px, по аналогии с проверкой высоты `.hpf-settings-mobile`. Сейчас новое правило `flex:0 0 auto` на мобильной ширине проверено в автономном сценарии только для общего диалога настроек, хотя затрагивает все settings-layout формы кроме marker.\n- Генератору иконок стоит сообщать об отброшенных литералах (имя `mdi:x`, которого нет в @mdi/js) и брать версию из `@mdi/js/package.json` вместо жёсткой строки «MDI 7.4.47» в заголовке. Иначе при обновлении lock-файла provenance разойдётся с содержимым, а опечатка в имени тихо станет fallback, видимым только в автономном документе.\n- Проверка `--check` для актуальности карты сейчас живёт в boundary-тесте, а он запускается выборкой по домену presentation. Новая иконка, добавленная в задаче другого домена, может оставить карту устаревшей до следующей presentation-задачи. Дешевле включить `node scripts/standalone-icons.mjs --check` в общую сборку/типизацию или генерировать карту в сборке #1423, а не коммитить её.\n- Обновить заголовок раздела MDI в THIRD_PARTY_NOTICES.md: сейчас он называет только «local device icon picker», хотя пути MDI теперь использует и автономная карта.\n\n## Границы анализа\n\nСборку, тесты, браузер и Validate не запускал, это ревью кода на S7.\n\nИспользованы результаты S6 из квитанции 20261114T114626395-c2bcad0c (passed, материал a927fbd3) и заявления исполнителя в authorContext: адресные Node-проверки 57/57, native browser-сценарий, два HA harness-кадра в допуске, починка guard-теста 4/4. Сами логи и candidate PNG в artifacts/standalone-presentation я не видел. Вывод о том, что сценарий проверяет, сделан по исходнику `demo/smoke_standalone_presentation.mjs`.\n\nПо исходникам изучено:\n- standalone-presentation/policy/theme;\n- генератор и выборочно сгенерированная карта;\n- hp-dialog (выбор ветки и мобильные правила);\n- settings-dialogs.styles;\n- i18n `t`/`langOf`;\n- plan-host-типы и фикстура PlanHost;\n- demo/serve.mjs;\n- изменения guard- и attestation-тестов;\n- task-selection;\n- документация и лицензионные файлы.\n\nНе проверял:\n- реальный установленный HA и прогон real-HA E2E (решение вынесено в houseplan-e2e#57);\n- пиксельное соответствие candidate-кадров;\n- поведение accessibility tree внутри inert;\n- полный построчный список всех 190+ иконок против всех plan-only шаблонов: опираюсь на runtime-оракул «ноль fallback» из S6.\n\nПоложительная переносимость и долговечность данных по ТЗ относятся к #1423 и здесь не проверялись.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: c0724ea4179e2c6971033c383ef37a441983960f → a927fbd3bbcb856542cb0ff4cd4061ddf187df07\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1422, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Цель и результат\nРеализован отдельный opt-in presentation owner без HA frontend. Нормальные entrypoints его не импортируют. Полный standalone entry и положительный persistence/portable journey относятся к #1423, а не к этому wire fixture.\n\n### Решение и альтернативы\nРовно три локальных компонента с прежними совместимыми именами; native HpDialog/Form Kit остаются общими. Registry проверяется атомарно до define, чужие определения/HA root отвергаются. Theme API синхронно публикует только четыре разрешённых presentation поля и восстанавливает CSS при ошибке. Конечная карта MDI 7.4.47 генерируется из запертого пакета, без сетевого icon loader. Переписывать существующие шаблоны или заимствовать HA bootstrap не потребовалось.\n\n### Риски и места для внимания\nИзоляция custom-element registry, динамические SVG, границы theme ownership и native modal lifecycle. В native мобильной оболочке исправлено растяжение двухстрочного grid навигации: форма больше не делит свободную высоту поровну между селектором и содержимым; правило исключает ha-dialog-shell. HA ветка не меняется. Build helper — только диагностическая сборка общего графа, не будущая публичная поставка. В тестовом PlanHost зафиксировано синхронное обновление presentation/revision без hass.\n\n### Проверки и ограничения\nАдресные Node проверки — 57/57, включая 11 API/registry/theme/icon контрактов. Native browser проходит настоящие формы, четыре языка, темы/ширины, nested select/color, focus/dirty/discard/return, числовые поля/range/disabled, cold-language progress, reduced-motion, disposal и восемь независимых registry collisions. Лог и candidate PNG: artifacts/standalone-presentation; это не принятые эталоны. Два прежних HA harness кадра прошли verify: panel-wide-view-light-en (0 diff px), panel-wide-plan-editor-dark-en (426 px, 0.0416%, в существующем допуске). Нельзя выдавать их за проверку установленного реального HA.\n\nWire fixture доказывает UI/порты, не domain validation, долговечность или переносимость файлов. Мутации и release-профиль не запускались. Решение по real-HA E2E: Matysh/houseplan-e2e#57, новый сценарий не нужен для изолированного adapter. Никакие личные данные, UI Lab владельца, эталоны и установленный frontend snapshot не изменялись.\n\nПервый полный S6 после rebase: 635/636 шагов прошли. Единственный отказ — статический smoke-exception guard не распознавал уже существующую launchPanelCold как обёртку общего launchInternal/watchPage. Добавлено это конкретное имя и явная проверка владельца; исключения по-прежнему учитывает общий guard, новый bypass не вводился. Адресный красный результат воспроизведён, после исправления 4/4. В повторной передаче используется штатное повторное использование зелёных результатов.\n\n### Принятое ТЗ\nРедакция 2 принята в S4: https://github.com/Matysh/houseplan-card/actions/runs/43586014287. Исправления первого spec review сохранены в теле ТЗ: ru/en/de/fr, конечный localize bridge, language-neutral progress с исходным inert/aria-busy, общий UI Kit и строгая document isolation.\n```\n\n</details>\n",
-        "createdAt": "2026-11-14T11:51:47.597Z",
-        "artifactId": 14112488020,
-        "runId": 43591690362,
-        "runAttempt": 1,
-        "completedAt": "2026-11-14T11:51:51Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43591690362",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "c0724ea4179e2c6971033c383ef37a441983960f"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1794657136653,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1424": {
       "issue": 1424,
@@ -5102,47 +4936,11 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1422,
-    "worker": "finish",
-    "token": "448:finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:1:admit",
-    "fence": 448,
-    "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-    "expectedBase": "c0724ea4179e2c6971033c383ef37a441983960f",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794656774156,
-    "expiresAt": 1794660732354,
-    "patchId": "ad54bb5d85e80865b5f1819342f4eff3e74a8a01",
-    "reviewRequest": "review:1422:3:ad54bb5d85e80865b5f1819342f4eff3e74a8a01:c0724ea4179e2c6971033c383ef37a441983960f"
-  },
+  "active": null,
   "events": {
-    "github:43585265383:1:label:spec-request": {
-      "digest": "81645d13acef779d4c183ee979e266861230fe12f3534c0c98357a02f9051515",
-      "issue": 1422
-    },
     "github:43585804826:1:spec:1423:spec-request": {
       "digest": "ab106ad3748c893cb1880e545c3ae88dd90c322ece3453d525c07dfd9f287f59",
       "issue": 1423
-    },
-    "github:43585804826:1:spec:1422:spec-presentation": {
-      "digest": "801011cb83283fee7071791f47e5e49157198b7d9e8474bf8205d4585af1beef",
-      "issue": 1422
-    },
-    "github:43585804826:1:spec:1422:spec-complete": {
-      "digest": "37cbd6b9f562a597a7f535f707179e1b9beb2a58dd791695993ff63dbd941d78",
-      "issue": 1422
-    },
-    "github:43585804826:1:spec:1422:spec-label": {
-      "digest": "83acaa32a13910a5aaa05e16f78b1dca156bac45d71230dcb9d7aea33dbfd525",
-      "issue": 1422
-    },
-    "github:43585804826:1:completions:report:3f9304386c38d36ffe33f77070227b927e59862ef02edc24b0d69f5929f2f0de": {
-      "digest": "7b99c39097732731ec5e7a7b7ee333e1fdacdf2f9f56cf49ff833f34c23c5165",
-      "issue": 1422
-    },
-    "github:43585981218:1:label:spec-request": {
-      "digest": "d998f9ec725ce29d87b3a07da777a510b97207d472a00cf0edb653c77f103841",
-      "issue": 1422
     },
     "github:43586151896:1:spec:1423:spec-presentation": {
       "digest": "1b1e17677839c613113ffd1c870fbc8a57b9c89060d5eb64d1b492ff99fef644",
@@ -5159,22 +4957,6 @@
     "github:43586151896:1:completions:report:9e7bf5e1f3f162b2acf9571b05b2f780f259a45b40b05c530c33e1df3e85a53c": {
       "digest": "3a6343ca453f2e8acd470caf79df4157d10c1604c0a2b8a8e6f000f32b397af1",
       "issue": 1423
-    },
-    "github:43586271852:1:spec:1422:spec-presentation": {
-      "digest": "3c6af0284079db7d858682e7de15c81e0508b555e17daa346a0a6c64ce5c846c",
-      "issue": 1422
-    },
-    "github:43586271852:1:spec:1422:spec-complete": {
-      "digest": "676a2bb1d8564ec4eb7494d3f79a3aea58e03a732388b15faa878673be19606b",
-      "issue": 1422
-    },
-    "github:43586271852:1:spec:1422:spec-label": {
-      "digest": "5945916083b7f34ed45c7edf721e41bdb5e39094c7130ed593ad8eec3ca63fac",
-      "issue": 1422
-    },
-    "github:43586271852:1:completions:report:e8d67aab08b8a0f742afe5461f8c460de4e3c6009259fe33aecfe14f29fa1341": {
-      "digest": "49c616f8d4d219eebf2aec54989b6a542c609b6b66748ed011a47ee674ce72ef",
-      "issue": 1422
     },
     "github:43586364877:1:label:spec-request": {
       "digest": "955b505f0f112a6b6f761304eb888e13e02b0e64c73fc733dd6106e7a90015e3",
@@ -5216,147 +4998,6 @@
       "digest": "9b6e2c2b1c3ad9e75a0f2182ee86660660d581f6da238cf61ae0c6f70ab93bbf",
       "issue": 1423
     },
-    "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:2:return": {
-      "digest": "1b9587e0cf31c8928f7f263c27e02065c3ccf2206efc7e81b3a419d358de321b",
-      "issue": 1422
-    },
-    "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:2:synchronized": {
-      "digest": "9f4c7627e644d76c65e6a617bc5b6916932865371e14a1d8a91038cefe88e932",
-      "issue": 1422
-    },
-    "finish:dd517f19-5445-4b17-be69-ac0742bac520": {
-      "digest": "f14514704c758e418168a507b19fa328a30773a0500de8a4cf48cd42e657d292",
-      "issue": 1422
-    },
-    "finish:76ef3472-9eff-42c7-93a5-e5e9ed0aafc7": {
-      "digest": "c9462380cc5260f32817220bdc3f09ab5a464888bc9193f591c4ecf9db7e4a83",
-      "issue": 1422
-    },
-    "finish:871268ad-d862-4160-a0d4-fa5ab0b4553f": {
-      "digest": "4a60b6a63b3c6d15a046513e3964c282193cf507aa9995639dda05bdf3ecf31c",
-      "issue": 1422
-    },
-    "finish:943f2b1a-89a7-4ec4-a5f1-69b250b19a7d": {
-      "digest": "f3761cc7ab4031f3411a933cda07694ce2f2a2d416699967adc2b31063d1e7ea",
-      "issue": 1422
-    },
-    "finish:43543fe1-f8c3-4515-b57a-204a5bfed6e7": {
-      "digest": "815bd9c077dd12b334c284b541bd735e74956a1afa388b4cbae8226b95fc2c45",
-      "issue": 1422
-    },
-    "finish:b884b374-3bf6-4b15-ae5f-b6596823c9f5": {
-      "digest": "3631d6208a7688a64c1b8981fb94eafd7c435e3d82c3d3cbf102edb7a0eb745b",
-      "issue": 1422
-    },
-    "finish:49c00ca3-c996-4806-a26e-996131901d52": {
-      "digest": "df74cfba0b2f7efcc75d0f04adb31d14bdd044874393584383de7659f7ad3a8c",
-      "issue": 1422
-    },
-    "finish:fb88a1f1-69e7-401d-9885-b6f53ed32ffa": {
-      "digest": "bb793ac2336a51bec8ca852634c6a7c4e450f335a163d56e73cea9caadb1d438",
-      "issue": 1422
-    },
-    "finish:2f13d69c-c887-4421-82ba-0deee9c20880": {
-      "digest": "331e023c3c8d8d445ba87eb32a72709aa6fead1c13e1b6434c917fa9904d0edf",
-      "issue": 1422
-    },
-    "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return": {
-      "digest": "873dcec8ffb0b18674fb59fe6c25d33403f1a8b008b910272e6f267b480d963b",
-      "issue": 1422
-    },
-    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:2:synchronized": {
-      "digest": "fc95f22d089f146e3e1baa88abdded7a971860404f4b6e710a69d77944ca3933",
-      "issue": 1422
-    },
-    "finish:dfe14e09-706f-41f7-9324-f1be080fcaae": {
-      "digest": "4d6d896a8ec0513fa5bbb1007e7221618f36092eebc323433c8694aad27573ad",
-      "issue": 1422
-    },
-    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:3:s6-label": {
-      "digest": "bfeb1ebcc23afd36c59afb8bc2c2ad60c6d03e1687ec0c144eac552fac759e97",
-      "issue": 1422
-    },
-    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:4:review-requested": {
-      "digest": "bafeabd2515054ad64b3fc88a84d014a836fcee0c5981e4c159d4946da97f991",
-      "issue": 1422
-    },
-    "github:43591673512:1:tick:0:review-retry": {
-      "digest": "23400ff1220c3c67d689bd3efe079dbf9ed485a1f6c52e918a9373aa7c120c6f",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:message:7da4b00fb22c1d9660c8687847386ba21407a2b1fbba9f3271689fc2b982c319": {
-      "digest": "c9d1653d32ea790df703f357559ed4216de2d597910519794b39dbc39dc3d157",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:message:5a5672ff3895c7ddfbae66ba8bd8b1723dd7afc2ec7bf80c1e07c1e9c3cd328a": {
-      "digest": "5d70185e4a83dd976b1347a39122e853cf2c0ffeb5ffbe677c4131ed76599286",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:message:c85d24104e58e228f6b4eac30efd25b155403830b933be3f5ed4c2aa14c6c405": {
-      "digest": "1a40ad0773f356cb7ad98126f94ab1c640fc5e9b1ae69ee8c20fca7011bb0727",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:message:fb605c8665d5293c15f690ccd8033c33292fdb7d59971a8301d01d8c2931db09": {
-      "digest": "6378eff135fab1a33b85808aecb0d7814911ff9268eee71f27f4cb764b844707",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:message:6885111a02bc26f6ff1fef77e917389f94069a34e17311aeb6d2aa38ef7e48fd": {
-      "digest": "bcf07f8e8936e869a87a834a1982476b3f3ab992b40aee3d631fe6835dee0808",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:message:5cf2675a0417fa703c785dfabc4c8ad293d303b976525a7c4709a06351ed6eb1": {
-      "digest": "44970eb549f5770e93c2d2650620c26d17df996b9564a9bd2f85baf27854e562",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:message:4fb25e1bb186a17c112f89240ecae8e9c3fb4ea557ff29cb6c8a462de9fb9dcd": {
-      "digest": "5f200ab0573a696349e8787d3eef0e137e3daaab4d2c4359b7e24b8adbb8365b",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:message:905d04aff4fef0a4b259f38129807a57eadb043f76627acf325fa57487d4a1cb": {
-      "digest": "91e7b6bb6070321b7856a2943034a211bc648358c2bcd8c2d0a28a0c6978fb6a",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:notice:91493268282bc537690a322d7da2c37ba7aaa324045beb53f45b442cc843ec9d": {
-      "digest": "11b54f96dd7bb8cd39241c3e4a982cf0d96af01aafd657604f25e90e17e68eee",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:message:91493268282bc537690a322d7da2c37ba7aaa324045beb53f45b442cc843ec9d": {
-      "digest": "ff7dc61a61f7fb63fa5dfe01298f4e17c348cecb275287b22d6f98b29e595cec",
-      "issue": 1422
-    },
-    "github:43591673512:1:completions:message:98642b838d8c2cd3247195313b8005447b19c2516af763761aa48217ac5eda9a": {
-      "digest": "80da2590eb87e8ae1ac47fe825b718a033be631098057602a4aae347c941e22b",
-      "issue": 1422
-    },
-    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:8:review-presentation": {
-      "digest": "d0534195108a316ca6eecdf0caf41e5ef9a48ea62f8d6b04498b41e2235aaf32",
-      "issue": 1422
-    },
-    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:8:review-complete": {
-      "digest": "66caa3794cd684b6d95bcba5d746ab2bb8565a5eaa5722e0c12ed77a8d6cd5fe",
-      "issue": 1422
-    },
-    "github:43592027015:1:tick:0:automation-pending": {
-      "digest": "f058f9de672f171a7d348e79cb8a67b00239e602e1df769ceb9d7aa9e1423dbf",
-      "issue": 1422
-    },
-    "github:43585981218:1:label:spec-request:spec-resubmitted:1422": {
-      "digest": "d998f9ec725ce29d87b3a07da777a510b97207d472a00cf0edb653c77f103841",
-      "issue": 1422,
-      "message": {
-        "kind": "spec-resubmitted",
-        "issue": 1422,
-        "at": 1794652519183,
-        "previousRound": 1,
-        "round": 2,
-        "requestId": "spec:1422:3a1d32d740664ec2dd85d1ab72bc312d59b37997f75400ebc9cc1a80be197981",
-        "reviewChanges": "### Решение и места для внимания\nПрочитаны #1393, текущие PlanHost/presentation contracts, HpDialog, язык загрузки и UI Kit. Реальные native ветки уже существуют. Отдельный владелец документа сохраняет 46 шаблонов и HA DOM; ревью подтвердило выбор совместимых имён при жёсткой document isolation. Продуктовой реализации этой задачи ещё нет.\n\n### Проверки и ограничения\nДо S4 — только авторская проверка формы ТЗ. Продуктовые прогоны этой задачи не запускались; probe #1393 не выдаётся за принятую реализацию. Владельцем утверждено направление UI Kit/local SVG, но не новые визуальные эталоны.\n\n### Исправления по предыдущему ревью\nОтчёт S4 r1: https://github.com/Matysh/houseplan-card/actions/runs/43585316120 (artifact review-result, spec-39fb169dd97c-1794652370997.md).\n- F1, языки/localize: pl исправлен на fr; конечный HA-key bridge ui.common.close и проверка ru/de accessible name добавлены.\n- F2, progress: выбран language-neutral вариант без текста; сохраняются inert/aria-busy общего runtime. Не обещается live announcement из inert-поддерева, HA DOM не меняется.\n- F3, тема: adapter владеет базовыми light/dark input tokens с provenance UI Lab, единый API синхронно меняет CSS и darkMode; добавлен oracle.\n- Улучшения: закрыт список из трёх primitives, явные collision cases branch-switch имён; отказ от самовольной hp-* альтернативы; нулевой fallback на известных динамических иконках; полный список plan-only поверхностей; поздний HA обозначен неподдерживаемым смешением; MDI 7.4.47 закреплён.\nМатериал повторной передачи — редакция 2 в теле issue. Выполнена только spec-check; продуктовых прогонов нет.",
-        "fromStatus": "S3-spec",
-        "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
     "github:43586364877:1:label:spec-request:spec-resubmitted:1423": {
       "digest": "955b505f0f112a6b6f761304eb888e13e02b0e64c73fc733dd6106e7a90015e3",
       "issue": 1423,
@@ -5387,164 +5028,6 @@
         "reviewChanges": "### Решение и ограничения\nНовая точка входа использует #1391 core, #1392 host ports, #1394 plan-only и #1422 presentation; общий renderer не дублируется. В документах #1393 и текущей UI Lab ещё есть HA bootstrap — они не доказательство результата. Сейчас согласуется реальная frontend-поставка/embedding API, не production backend и не сайт. Чистая версия 1.85.2 не содержит foundation из dev, поэтому стабильный pin нельзя обещать до выпуска включающей их версии. У владельца запрошено подтверждение локального dev-кандидата; вопрос не даёт разрешения на релиз.\n\n### Проверки\nДо S4 только авторская проверка формы. Продуктовых запусков #1423 пока нет. Предлагаемые сценарии будущие; проверки #1421 не относятся к этой задаче. Реализация начнётся после принятого ТЗ и S8 #1422.\n\n### Исправления по предыдущему ревью\nS4 r2: https://github.com/Matysh/houseplan-card/actions/runs/43586404456 (artifact review-result, spec-39fb169dd97c-1794652631045.md).\n- F1 r2: перенос приведён к действительному #1394 — single-space plan_only JSON, ожидаемая очистка HA/межэтажных ссылок и live-текста, сравнение именно с core-проекцией; ZIP/full JSON — отрицательные пробы. Сохранность скрытых HA bindings вынесена в отдельную проверку authoritative config/set + remount.\n- Улучшения r2: и fault-injection fixture объявляет только реализованные API; revisions/CAS/Optimize intent/structural upload test dispatcher сверяется с действующими HA обработчиками, core не копируется.\nНовая передача — редакция 3, только spec-check, без продуктовых прогонов.\n\nИстория первого возврата:\nS4 r1: https://github.com/Matysh/houseplan-card/actions/runs/43585839409 (artifact review-result, spec-39fb169dd97c-1794652631045.md).\n- F1: ru/en/de/pl исправлено на ru/en/de/fr во всём ТЗ, польский не вводится.\n- F2: явно выбран вариант (a) — test transport к настоящему локальному Python core для положительного journey/геометрии/portable repair и apply; эхо-fixture только для фронтенд fault injection. Объявлять лишь фактически реализованные API. Не создаём публичный backend и не дублируем core на JS.\n- Улучшения: side-effect-free module обязателен, host до DOM connect и проверка отсутствия HaPlanHost/picker; конкретный Roboto Regular 400 + synth/fallback; описан config/get handshake и standalone recovery без HA/HACS текстов; сверка presentation API после S8 #1422 до реализации.\nНовая передача — редакция 2 в теле issue. Только spec-check, продуктовых прогонов нет.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:03c56e22-c903-4226-891c-df0869ff3eac": {
-      "digest": "313dcbc246617ec69d82c7a263456ce42811a0c7ee25791420494cc266fd5e92",
-      "issue": 1422,
-      "message": {
-        "kind": "queued",
-        "issue": 1422,
-        "at": 1794656034825,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "19832bc099caa43a3c94eb188ccecb42a7bb1a67",
-        "delivered": true
-      }
-    },
-    "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:1:admit": {
-      "digest": "f43b8cbad56e6edb7c872ff80761ab413436b2b28b163f395796f4578458431c",
-      "issue": 1422,
-      "message": {
-        "kind": "admitted",
-        "issue": 1422,
-        "at": 1794656038336,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "19832bc099caa43a3c94eb188ccecb42a7bb1a67",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:2:return:return:1422": {
-      "digest": "1b9587e0cf31c8928f7f263c27e02065c3ccf2206efc7e81b3a419d358de321b",
-      "issue": 1422,
-      "message": {
-        "kind": "return",
-        "issue": 1422,
-        "at": 1794656044374,
-        "entry": 1,
-        "notice": {
-          "key": "1:rebase-conflict",
-          "reason": "rebase-conflict",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1794656044374,
-          "entry": 1,
-          "eventId": "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:2:return:return:1422"
-        },
-        "delivered": true
-      }
-    },
-    "finish:3f6397d2-3a71-4259-a726-079803ce98b6": {
-      "digest": "aaf1ebb80970e120c9824de13792f2a94439652be6594a496cebc3fc9dc5bd89",
-      "issue": 1422,
-      "message": {
-        "kind": "queued",
-        "issue": 1422,
-        "at": 1794656094609,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "5169c189d8807db00348b15ddd3723006ca9c993",
-        "delivered": true
-      }
-    },
-    "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:1:admit": {
-      "digest": "7ea4dff53e75173ca5df004acabf9e7ebc0beea7365bf5fe68907cc85b53aec5",
-      "issue": 1422,
-      "message": {
-        "kind": "admitted",
-        "issue": 1422,
-        "at": 1794656098449,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "5169c189d8807db00348b15ddd3723006ca9c993",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return:return:1422": {
-      "digest": "873dcec8ffb0b18674fb59fe6c25d33403f1a8b008b910272e6f267b480d963b",
-      "issue": 1422,
-      "message": {
-        "kind": "return",
-        "issue": 1422,
-        "at": 1794656660141,
-        "entry": 2,
-        "notice": {
-          "key": "2:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1794656660141,
-          "entry": 2,
-          "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed",
-          "eventId": "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return:return:1422"
-        },
-        "delivered": true
-      }
-    },
-    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1": {
-      "digest": "113677d98e33e93e216cdc1b323243bc2e54d8febd011c797c3ab10751eb8ab0",
-      "issue": 1422,
-      "message": {
-        "kind": "queued",
-        "issue": 1422,
-        "at": 1794656770077,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-        "delivered": true
-      }
-    },
-    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:1:admit": {
-      "digest": "15828e9b4ec0558475a0c3a26a3f9481e013109a036301116a70bb08eb6fbbcb",
-      "issue": 1422,
-      "message": {
-        "kind": "admitted",
-        "issue": 1422,
-        "at": 1794656774156,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:3:s6-complete": {
-      "digest": "9bbeb53579aaacaab8305f0bb0a0fd3c5e7c53a099661731c6926b5918748aef",
-      "issue": 1422,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1422,
-        "at": 1794656833673,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-        "phase": "review",
-        "evidence": {
-          "id": "20261114T114626395-c2bcad0c",
-          "name": "Тесты для задачи #1422 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T114626395-c2bcad0c/report.json",
-          "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-          "status": "passed",
-          "finishedAt": "2026-11-14T11:47:12.461Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Цель и результат\nРеализован отдельный opt-in presentation owner без HA frontend. Нормальные entrypoints его не импортируют. Полный standalone entry и положительный persistence/portable journey относятся к #1423, а не к этому wire fixture.\n\n### Решение и альтернативы\nРовно три локальных компонента с прежними совместимыми именами; native HpDialog/Form Kit остаются общими. Registry проверяется атомарно до define, чужие определения/HA root отвергаются. Theme API синхронно публикует только четыре разрешённых presentation поля и восстанавливает CSS при ошибке. Конечная карта MDI 7.4.47 генерируется из запертого пакета, без сетевого icon loader. Переписывать существующие шаблоны или заимствовать HA bootstrap не потребовалось.\n\n### Риски и места для внимания\nИзоляция custom-element registry, динамические SVG, границы theme ownership и native modal lifecycle. В native мобильной оболочке исправлено растяжение двухстрочного grid навигации: форма больше не делит свободную высоту поровну между селектором и содержимым; правило исключает ha-dialog-shell. HA ветка не меняется. Build helper — только диагностическая сборка общего графа, не будущая публичная поставка. В тестовом PlanHost зафиксировано синхронное обновление presentation/revision без hass.\n\n### Проверки и ограничения\nАдресные Node проверки — 57/57, включая 11 API/registry/theme/icon контрактов. Native browser проходит настоящие формы, четыре языка, темы/ширины, nested select/color, focus/dirty/discard/return, числовые поля/range/disabled, cold-language progress, reduced-motion, disposal и восемь независимых registry collisions. Лог и candidate PNG: artifacts/standalone-presentation; это не принятые эталоны. Два прежних HA harness кадра прошли verify: panel-wide-view-light-en (0 diff px), panel-wide-plan-editor-dark-en (426 px, 0.0416%, в существующем допуске). Нельзя выдавать их за проверку установленного реального HA.\n\nWire fixture доказывает UI/порты, не domain validation, долговечность или переносимость файлов. Мутации и release-профиль не запускались. Решение по real-HA E2E: Matysh/houseplan-e2e#57, новый сценарий не нужен для изолированного adapter. Никакие личные данные, UI Lab владельца, эталоны и установленный frontend snapshot не изменялись.\n\nПервый полный S6 после rebase: 635/636 шагов прошли. Единственный отказ — статический smoke-exception guard не распознавал уже существующую launchPanelCold как обёртку общего launchInternal/watchPage. Добавлено это конкретное имя и явная проверка владельца; исключения по-прежнему учитывает общий guard, новый bypass не вводился. Адресный красный результат воспроизведён, после исправления 4/4. В повторной передаче используется штатное повторное использование зелёных результатов.\n\n### Принятое ТЗ\nРедакция 2 принята в S4: https://github.com/Matysh/houseplan-card/actions/runs/43586014287. Исправления первого spec review сохранены в теле ТЗ: ru/en/de/fr, конечный localize bridge, language-neutral progress с исходным inert/aria-busy, общий UI Kit и строгая document isolation.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
       }
