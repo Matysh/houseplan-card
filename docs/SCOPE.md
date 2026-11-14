@@ -62,8 +62,9 @@ deliberate degradation is allowed under `TOUCH-SUPPORT.md`.
   formatting only.
 - **Accessibility**: `prefers-reduced-motion` only; no keyboard navigation in
   editors, no ARIA labelling of the plan.
-- **Docs**: the English user guide covers less than the Russian one
-  ([#668](https://github.com/Matysh/houseplan-card/issues/668)).
+- **Docs maintenance**: the [English](USER-GUIDE.md) and
+  [Russian](USER-GUIDE.ru.md) guides describe the same verified product snapshot;
+  keep their scenarios and limitations in sync when behaviour changes (#1427).
 
 ## Known gaps that fit the mission (build only on owner's request)
 
