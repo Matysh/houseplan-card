@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13546,
+  "revision": 13547,
   "nextTicket": 472,
   "nextFence": 469,
   "tasks": {
@@ -4703,6 +4703,15 @@
         "entry": 1,
         "detail": "Браузер: settings polish led climate 955: failed; Браузер: settings polish radar vacuum 955: failed",
         "eventId": "finish:c2098de2-f77b-4f8f-819d-e3117db86984:finish:2:return:return:1440"
+      },
+      "s6": {
+        "id": "20261114T203324170-6d21350e",
+        "name": "Тесты для задачи #1440 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T203324170-6d21350e/report.json",
+        "materialSha": "e8ced3a76cb20bca2a710a858d55348d7ca471c8",
+        "status": "passed",
+        "finishedAt": "2026-11-14T20:39:09.135Z",
+        "failures": []
       }
     },
     "1444": {
@@ -5080,9 +5089,9 @@
     "fence": 468,
     "materialSha": "e8ced3a76cb20bca2a710a858d55348d7ca471c8",
     "expectedBase": "75925bfe1019b343cfa0b04891b08dd1074abc7e",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794688343340,
-    "expiresAt": 1794689042215,
+    "expiresAt": 1794692350101,
     "patchId": "a710d72f39254bac253d05f25c2de9ad54f33adc"
   },
   "events": {
@@ -5184,6 +5193,10 @@
     },
     "finish:2234c115-42a6-4a41-b5ac-cedf76167d36": {
       "digest": "0c70142e894f5c0203a7d23594d468e40778c1e6bd492ca32220af78f8f5f9cc",
+      "issue": 1440
+    },
+    "finish:67236145-f9bb-4fba-9862-bbecb827c101:finish:2:s6-complete": {
+      "digest": "9f8842362f3db3e593476571edfedf24ac3353ed6901402c23a437a6b657f979",
       "issue": 1440
     },
     "finish:c2098de2-f77b-4f8f-819d-e3117db86984": {
