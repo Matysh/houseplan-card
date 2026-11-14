@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12839,
+  "revision": 12840,
   "nextTicket": 452,
   "nextFence": 452,
   "tasks": {
@@ -4506,7 +4506,8 @@
         "comment": false
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "17e097cc5028767c96277023575ac2052d59ef8b"
       }
     },
     "1424": {
@@ -5007,6 +5008,18 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "dev-build:43602897788:1:1423": {
+      "digest": "e9a52023d7fd57493b6bb83929a69d4287f5d1e7569366a13929c0551aef6a04",
+      "issue": 1423,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1423,
+        "at": 1794665195773,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "17e097cc5028767c96277023575ac2052d59ef8b"
       }
     }
   },
