@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12443,
+  "revision": 12444,
   "nextTicket": 443,
   "nextFence": 443,
   "tasks": {
@@ -4327,7 +4327,16 @@
         "process-next/remote.mjs",
         "process-next/test/remote.test.mjs",
         "process-next/test/ship-review-artifacts.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261114T094658886-0e6b1af3",
+        "name": "Тесты для задачи #1415 (перед слиянием)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T094658886-0e6b1af3/report.json",
+        "materialSha": "746c8b9c77268d3e809c51221ccbfb46c5072499",
+        "status": "passed",
+        "finishedAt": "2026-11-14T09:47:02.827Z",
+        "failures": []
+      }
     },
     "1416": {
       "issue": 1416,
@@ -4865,14 +4874,18 @@
     "fence": 442,
     "materialSha": "746c8b9c77268d3e809c51221ccbfb46c5072499",
     "expectedBase": "9ed0f88801ada63035ccafa464683960da8104e9",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794649608600,
-    "expiresAt": 1794649914089,
+    "expiresAt": 1794653224093,
     "patchId": "e605a9a5bff78fbd8142124a284e4f3eea118164"
   },
   "events": {
     "finish:3fbaf9e1-c7b2-4077-aafb-410611a4af64:finish:2:synchronized": {
       "digest": "beca18d53e4d877c5ba791fd211409e757b622e41419a49a000721525573e242",
+      "issue": 1415
+    },
+    "finish:3fbaf9e1-c7b2-4077-aafb-410611a4af64:finish:3:s6-complete": {
+      "digest": "8e94e126b1ffce3699a22a0b668c35fd8016dca5b01141170d426e5ace6bc2b2",
       "issue": 1415
     },
     "finish:3fbaf9e1-c7b2-4077-aafb-410611a4af64": {
