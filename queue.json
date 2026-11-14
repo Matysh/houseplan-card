@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12983,
-  "nextTicket": 457,
+  "revision": 12984,
+  "nextTicket": 458,
   "nextFence": 457,
   "tasks": {
     "1024": {
@@ -4683,6 +4683,20 @@
         "requestId": "review:1428:2:2cdb25afc8dc9985e90a7e6e685aa02353d6cf57:dc739d2fee27c257627e15739094135a7c306bc0",
         "at": 1794668639434
       }
+    },
+    "1429": {
+      "issue": 1429,
+      "track": "ship",
+      "layer": "docs",
+      "branch": "claude/readme-main-to-dev",
+      "materialSha": "e48eb720d353d31ce86848211e8063fc46334bab",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 457,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794670112730,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5024,7 +5038,9 @@
       "runId": 43604638377
     }
   },
-  "waiting": [],
+  "waiting": [
+    1429
+  ],
   "active": {
     "issue": 1428,
     "worker": "finish",
@@ -5372,6 +5388,19 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:83bdc34f-95a9-42f2-b218-91f590a0d7f7": {
+      "digest": "538c5d4e2c5d7691e365b0db670b56f19c178b8963707385fddf7f216f7876e8",
+      "issue": 1429,
+      "message": {
+        "kind": "queued",
+        "issue": 1429,
+        "at": 1794670112730,
+        "entry": 1,
+        "track": "ship",
+        "layer": "docs",
+        "materialSha": "e48eb720d353d31ce86848211e8063fc46334bab"
       }
     }
   },
