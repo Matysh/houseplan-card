@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 12009,
+  "revision": 12010,
   "nextTicket": 431,
-  "nextFence": 430,
+  "nextFence": 431,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -3804,7 +3804,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 430,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794630090300,
       "reviewEntry": 2,
@@ -5022,10 +5022,18 @@
       }
     }
   },
-  "waiting": [
-    1395
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1395,
+    "worker": "finish",
+    "token": "430:finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:1:admit",
+    "fence": 430,
+    "materialSha": "116b8d41eb5adc9c0b3fe3e88c0e3fbe6be0764c",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1794630940570,
+    "expiresAt": 1794631240570
+  },
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
       "digest": "3608873f6034b21ea424821722398c159d16857cd52d8f7d9bb5b504dd59972c",
@@ -6258,6 +6266,29 @@
           "entry": 6,
           "detail": "Браузер: wall node connected: failed",
           "eventId": "finish:9f392890-4733-4da7-aa92-432bc90c3a7a:finish:3:return:return:1392"
+        }
+      }
+    },
+    "finish:5a82ee4b-b8dd-46a5-a10d-6fb9f2b24716:finish:1:admit": {
+      "digest": "0d5a74526af915b1e11fc91cd6362d4329364940ad7707341feb984eaf776b1c",
+      "issue": 1395,
+      "message": {
+        "kind": "admitted",
+        "issue": 1395,
+        "at": 1794630940570,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "116b8d41eb5adc9c0b3fe3e88c0e3fbe6be0764c",
+        "phase": "sync",
+        "evidence": {
+          "id": "20261114T035852242-cd6f6cf5",
+          "name": "Тесты для задачи #1395 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T035852242-cd6f6cf5/report.json",
+          "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
+          "status": "passed",
+          "finishedAt": "2026-11-14T04:04:36.776Z",
+          "failures": []
         }
       }
     }
