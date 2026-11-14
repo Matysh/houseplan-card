@@ -5,6 +5,7 @@
 - Update the native keyboard-focus oracle to the approved single accent border; retain real Tab traversal, focus and activation (#1441).
 - Wait for actual version-banner paint in its browser smoke instead of assuming two animation frames suffice under load; retain all recovery and geometry checks (#1442).
 
+- Keep the summary weather smoke on its real synthetic config events, CAS and Save ACK; verify all locale/layout title cases through accepted server documents (#1443).
 - Publish the synthetic HA transport before opening saved-plan dialogs in picker smoke fixtures; retain list geometry and file-management assertions (#1439).
 - Keep context-menu width unchanged when reserving the single 1px border, including touch rows (#1444).
 - Assert the approved single accent border in native button-hover oracles instead of retired inset/outer shadows; retain geometry, themes and surface shadows (#1440).

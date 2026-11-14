@@ -16,37 +16,46 @@ try {
       '--secondary-background-color': '#1e1e1e', '--primary-text-color': '#e1e1e1', '--secondary-text-color': '#aaa', '--divider-color': '#383838', '--primary-color': '#64b5f6' })) card.style.setProperty(key, value);
     const settle = async () => { await card.updateComplete; await new Promise(requestAnimationFrame); await card.updateComplete;
       await root().querySelector('hp-summary-weather')?.updateComplete; };
-    card._config = { ...card._config, language: 'ru', kiosk: false };
-    card._serverCanWrite = true; card._haSummaryPanelApi = 1; card.narrow = false;
+    card.setConfig({ ...card._config, language: 'ru', kiosk: false });
+    card.narrow = false;
     const subscriptions = [], opened = [], writes = [];
     const weather = { state: 'cloudy', attributes: { friendly_name: 'Дом', temperature: 8, apparent_temperature: 6,
       temperature_unit: '°C', wind_speed: 3.2, wind_speed_unit: 'm/s', wind_bearing: 225, humidity: 76, supported_features: 1 } };
-    const cfg = structuredClone(card._serverCfg), originalCallWS = card.hass.callWS;
-    cfg.settings = { ...cfg.settings, summary_panel: { version: 1, title: 'Обзор дома', show_on_mobile: true,
-      blocks: [], weather: { enabled: true, entity_id: 'weather.lab_home' } } };
-    const connection = { subscribeMessage(callback, message) {
+    const originalCallWS = card.hass.callWS, connection = card.hass.connection;
+    const originalSubscribeMessage = connection.subscribeMessage.bind(connection);
+    // Keep the original connection/subscribeEvents and its real fixture store:
+    // config events, CAS and Save ACK must still flow through normal adoption.
+    connection.subscribeMessage = (callback, message) => {
+      if (message.type !== 'weather/subscribe_forecast') return originalSubscribeMessage(callback, message);
       const sub = { callback, message, released: false }; subscriptions.push(sub);
       return Promise.resolve(() => { sub.released = true; });
-    } };
+    };
     card.hass = { ...card.hass, connection, language: 'ru', locale: { language: 'ru', number_format: 'decimal_comma' },
       formatEntityState: state => ({ cloudy: 'Облачно', sunny: 'Солнечно' })[state.state] || state.state,
-      callWS: async message => message.type === 'houseplan/config/get'
-        ? { config: structuredClone(cfg), rev: card._cfgRev, can_write: true, summary_panel_api: 1 } : originalCallWS(message),
+      callWS: async message => {
+        const reply = await originalCallWS(message);
+        if (message.type === 'houseplan/config/set') writes.push(structuredClone(message.config));
+        return message.type === 'houseplan/config/get' ? { ...reply, summary_panel_api: 1 } : reply;
+      },
       config: { ...card.hass.config, time_zone: 'Europe/Moscow', unit_system: { temperature: '°C' } },
       states: { ...card.hass.states, 'weather.lab_home': weather } };
-    card._serverCfg = cfg; card._settings = cfg.settings; card._cfgEpoch = (card._cfgEpoch || 0) + 1;
-    card._sendConfigCandidate = async candidate => { writes.push(structuredClone(candidate)); card._cfgRev++; };
     root().addEventListener('hass-more-info', event => opened.push(event.detail.entityId));
-    card._summary.updated(); card.requestUpdate(); await settle();
+    await window.__hpTest.setServerConfig(cfg => {
+      cfg.settings = { ...cfg.settings, summary_panel: { version: 1, title: 'Обзор дома', show_on_mobile: true,
+        blocks: [], weather: { enabled: true, entity_id: 'weather.lab_home' } } };
+    });
+    await settle();
     const toggle = root().querySelector('[data-hp="summary-toggle"]');
     if (toggle?.getAttribute('aria-pressed') !== 'true') toggle?.click();
     await settle();
     window.__weather1174 = { card, root, settle, weather, subscriptions, opened, writes,
       widget: () => root().querySelector('hp-summary-weather'),
       set: async values => { card.hass = { ...card.hass, states: { ...card.hass.states, ...values } }; await settle(); },
-      config: async weatherConfig => { const next = structuredClone(card._serverCfg);
-        next.settings.summary_panel.weather = weatherConfig; card._serverCfg = next; card._settings = next.settings;
-        card._summary.updated(); card.requestUpdate(); await settle(); },
+      config: async weatherConfig => {
+        await window.__hpTest.waitForWrites();
+        await window.__hpTest.setServerConfig(cfg => { cfg.settings.summary_panel.weather = weatherConfig; });
+        await settle();
+      },
     };
   }, { 'mdi:weather-cloudy': mdiWeatherCloudy, 'mdi:weather-partly-cloudy': mdiWeatherPartlyCloudy, 'mdi:weather-rainy': mdiWeatherRainy });
   await page.waitForFunction(() => window.__weather1174.widget()?.textContent.includes('+8°'));
@@ -148,6 +157,7 @@ try {
   await page.evaluate(async () => {
     const f = window.__weather1174;
     f.root().querySelector('hp-dialog[data-kind="summary"] [data-hp="dialog-confirm"]')?.click(); await f.settle();
+    await window.__hpTest.waitForWrites(); await f.settle();
   });
   // Saving through the real summary handler; the isolated server stub records its wire body.
   check('selected weather source is saved in the configuration', await page.evaluate(() =>
@@ -164,14 +174,23 @@ try {
     const f = window.__weather1174, card = f.card;
     if (f.root().querySelector('[data-hp="summary-toggle"]')?.getAttribute('aria-pressed') !== 'true') f.root().querySelector('[data-hp="summary-toggle"]')?.click();
     await f.config({ enabled: true, entity_id: 'weather.lab_home' }); await f.set({ 'weather.lab_home': f.weather });
-    const refresh = async () => { const config = structuredClone(card._serverCfg); config.settings = structuredClone(card._settings); card._serverCfg = config; card._settings = config.settings; card._cfgEpoch++; card._summary.updated(); card.requestUpdate(); await f.settle(); const deadline = performance.now() + 5000; while (['warm', 'cold'].includes(card._syncDangerConfirmLocaleGate())) { if (performance.now() > deadline) throw Error('locale did not become ready'); await new Promise(requestAnimationFrame); } await f.settle(); };
+    const refresh = async blocks => {
+      await window.__hpTest.waitForWrites();
+      await window.__hpTest.setServerConfig(cfg => { cfg.settings.summary_panel.blocks = structuredClone(blocks); });
+      await f.settle();
+      const deadline = performance.now() + 5000;
+      while (['warm', 'cold'].includes(card._syncDangerConfirmLocaleGate())) {
+        if (performance.now() > deadline) throw Error('locale did not become ready');
+        await new Promise(requestAnimationFrame);
+      }
+      await f.settle();
+    };
     const hidden = { id: 'other', title: 'Other', visible: true, scope: { type: 'space', space_id: 'another-space' }, values: [] };
     for (const [lang, title] of [['ru', 'Погода'], ['en', 'Weather'], ['de', 'Wetter'], ['fr', 'Météo']]) {
-      card._config = { ...card._config, language: lang };
+      card.setConfig({ ...card._config, language: lang });
       for (const narrow of [false, true]) {
         card.narrow = narrow;
-        card._settings.summary_panel.blocks = [hidden];
-        await refresh();
+        await refresh([hidden]);
         const panel = () => f.root().querySelector('[data-hp="summary-panel"]');
         const mismatch = phase => Error(`${lang}/${narrow}/${phase}: ${JSON.stringify({
           title: panel()?.querySelector('h2')?.textContent, weatherHeading: f.widget()?.querySelector('h3')?.textContent,
@@ -198,15 +217,16 @@ try {
         await f.set({ 'weather.lab_home': undefined });
         await ready(() => !f.widget()?.querySelector('h3') && !!f.widget()?.textContent, 'missing');
         await f.set({ 'weather.lab_home': f.weather });
-        card._settings.summary_panel.blocks = [{ ...hidden, scope: { type: 'all' } }];
-        await refresh();
+        await refresh([{ ...hidden, scope: { type: 'all' } }]);
         await ready(() => panel()?.querySelector('h2')?.textContent === 'Обзор дома'
           && f.widget()?.querySelector('h3')?.textContent === title, 'mixed');
-        if (card._settings.summary_panel.title !== 'Обзор дома') throw mismatch('saved-title');
+        const saved = (await card.hass.callWS({ type: 'houseplan/config/get' })).config.settings.summary_panel;
+        if (card._settings.summary_panel.title !== 'Обзор дома' || saved.title !== 'Обзор дома'
+          || saved.blocks.length !== 1 || saved.blocks[0].scope.type !== 'all') throw mismatch('saved-title');
       }
     }
-    card._config = { ...card._config, language: 'ru' }; card.narrow = false;
-    card._settings.summary_panel.blocks = []; await refresh();
+    card.setConfig({ ...card._config, language: 'ru' }); card.narrow = false;
+    await refresh([]);
     return true;
   }));
 } finally { await finish(browser); }
