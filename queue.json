@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12417,
+  "revision": 12418,
   "nextTicket": 442,
   "nextFence": 442,
   "tasks": {
@@ -433,39 +433,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "f4b8e2b38eafcfb3a1aa232f8d9d34c34eb6abe8"
-      }
-    },
-    "1239": {
-      "issue": 1239,
-      "branch": "codex/issue-1239-s6-selection",
-      "track": "ask",
-      "layer": "infra",
-      "status": "S8-merged",
-      "expectedBase": "3f778f3d9f3c1b691fce78891d71d095bb051a1e",
-      "mergedSha": "94b43670bf58d49549a81a79b77e3b6dc37b0355",
-      "mergedAt": 1793941451113,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1239:4:7242f162e533627058babbeadb5bb84e79534731:3f778f3d9f3c1b691fce78891d71d095bb051a1e",
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "not-required"
       }
     },
     "1253": {
@@ -3599,7 +3566,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "9ed0f88801ada63035ccafa464683960da8104e9"
       }
     },
     "1395": {
@@ -4868,7 +4836,20 @@
   },
   "waiting": [],
   "active": null,
-  "events": {},
+  "events": {
+    "dev-build:43570158345:1:1394": {
+      "digest": "be568afd00989052f004130c8fb7491edf0dc97d671377e3c093a0e9c3b18c5f",
+      "issue": 1394,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1394,
+        "at": 1794640645019,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "9ed0f88801ada63035ccafa464683960da8104e9"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "9ed0f88801ada63035ccafa464683960da8104e9",
     "status": "pending",
