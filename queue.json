@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12653,
+  "revision": 12654,
   "nextTicket": 448,
   "nextFence": 448,
   "tasks": {
@@ -4507,7 +4507,29 @@
         "at": 1794656044374,
         "entry": 1,
         "eventId": "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:2:return:return:1422"
-      }
+      },
+      "patchId": "0efac24fd0193b4af85dcb5a17e68d0c61389da5",
+      "changedFiles": [
+        "demo/helpers/standalone-presentation-build.mjs",
+        "demo/smoke_standalone_presentation.mjs",
+        "demo/srv/plan-host-fixture.js",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DIALOG-UI-KIT.md",
+        "docs/STANDALONE-PRESENTATION.md",
+        "docs/release-ledger/v1.85.0/1422.json",
+        "process-next/lib/task-selection.mjs",
+        "process-next/test/task-selection.test.mjs",
+        "scripts/standalone-icons.mjs",
+        "src/hp-dialog.ts",
+        "src/standalone-icons.generated.ts",
+        "src/standalone-presentation-policy.ts",
+        "src/standalone-presentation.ts",
+        "src/standalone-theme.ts",
+        "test/browser-attestation.test.mjs",
+        "test/standalone-presentation-boundary.test.mjs",
+        "tsconfig.test.json"
+      ]
     },
     "1424": {
       "issue": 1424,
@@ -4928,10 +4950,11 @@
     "token": "447:finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:1:admit",
     "fence": 447,
     "materialSha": "5169c189d8807db00348b15ddd3723006ca9c993",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "c0724ea4179e2c6971033c383ef37a441983960f",
+    "phase": "testing",
     "admittedAt": 1794656098449,
-    "expiresAt": 1794656398449
+    "expiresAt": 1794656404263,
+    "patchId": "0efac24fd0193b4af85dcb5a17e68d0c61389da5"
   },
   "events": {
     "github:43585265383:1:label:spec-request": {
@@ -5036,6 +5059,10 @@
     },
     "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:2:return": {
       "digest": "1b9587e0cf31c8928f7f263c27e02065c3ccf2206efc7e81b3a419d358de321b",
+      "issue": 1422
+    },
+    "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:2:synchronized": {
+      "digest": "9f4c7627e644d76c65e6a617bc5b6916932865371e14a1d8a91038cefe88e932",
       "issue": 1422
     },
     "github:43585981218:1:label:spec-request:spec-resubmitted:1422": {
