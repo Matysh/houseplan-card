@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12967,
+  "revision": 12968,
   "nextTicket": 456,
   "nextFence": 456,
   "tasks": {
@@ -4625,7 +4625,7 @@
       "ownerDecision": null,
       "ticket": 455,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1794667708860,
       "reviewEntry": 2,
       "patchId": "2cdb25afc8dc9985e90a7e6e685aa02353d6cf57",
@@ -4657,14 +4657,13 @@
         "test/ui-button-tab-focus.test.mjs"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794667523963,
-        "entry": 1,
-        "detail": "Поведение: test/houseplan-panel.test.mjs: failed; Браузер: compact header polish: failed; Браузер: discard dialog polish: failed; Браузер: toolbar stable width: failed",
-        "eventId": "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:3:return:return:1428"
+        "key": "2:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1794668639434,
+        "entry": 2,
+        "requestId": "review:1428:2:2cdb25afc8dc9985e90a7e6e685aa02353d6cf57:dc739d2fee27c257627e15739094135a7c306bc0"
       },
       "s6": {
         "id": "20261114T144845048-eaa984ed",
@@ -4688,6 +4687,11 @@
         "at": 1794668360294,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1428:2:2cdb25afc8dc9985e90a7e6e685aa02353d6cf57:dc739d2fee27c257627e15739094135a7c306bc0",
+        "at": 1794668639434
       }
     }
   },
@@ -5045,19 +5049,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1428,
-    "worker": "finish",
-    "token": "455:finish:bb81c14e-2842-4df5-9d91-930b18ac35f6:finish:1:admit",
-    "fence": 455,
-    "materialSha": "a34073c7a9b5b9658f36d69329d0b3fabbc5468a",
-    "expectedBase": "dc739d2fee27c257627e15739094135a7c306bc0",
-    "phase": "review",
-    "admittedAt": 1794667712632,
-    "expiresAt": 1794671939195,
-    "patchId": "2cdb25afc8dc9985e90a7e6e685aa02353d6cf57",
-    "reviewRequest": "review:1428:2:2cdb25afc8dc9985e90a7e6e685aa02353d6cf57:dc739d2fee27c257627e15739094135a7c306bc0"
-  },
+  "active": null,
   "events": {
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:2:synchronized": {
       "digest": "e7c6a0c1d7c1710d3380dec51092169ac18de33eaa01ddc2125d9edc7819ee5f",
@@ -5189,6 +5181,10 @@
     },
     "finish:bb81c14e-2842-4df5-9d91-930b18ac35f6:finish:8:review-presentation": {
       "digest": "b3191efe1c83ef97b0fe044562828543fa75e1c306617934850b85e5fb4fdaa7",
+      "issue": 1428
+    },
+    "finish:bb81c14e-2842-4df5-9d91-930b18ac35f6:finish:8:return": {
+      "digest": "e9209b34210237d46894e0b52f169b9e12f1dbcaeaeb6dbdb5a6db7e1c7849f7",
       "issue": 1428
     },
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8": {
