@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11972,
-  "nextTicket": 429,
+  "revision": 11973,
+  "nextTicket": 430,
   "nextFence": 429,
   "tasks": {
     "1024": {
@@ -3642,14 +3642,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1392-plan-host",
-      "materialSha": "37dda5aed5d3f2b22df78fa2ec96728abb7767ff",
+      "materialSha": "74ddc5d8f1e39400c2d39aa0fe0ba938b31c686d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 427,
-      "queued": false,
+      "ticket": 429,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794626961766,
-      "reviewEntry": 5,
+      "readyAt": 1794629091619,
+      "reviewEntry": 6,
       "patchId": "347f4a55a16beb3df5a3b64bb32a5d8973db060c",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
@@ -3756,20 +3756,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-      "reviewMaterial": {
-        "materialSha": "37dda5aed5d3f2b22df78fa2ec96728abb7767ff",
-        "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-        "patchId": "347f4a55a16beb3df5a3b64bb32a5d8973db060c"
-      },
-      "reviewRetry": {
-        "requestId": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-        "eventId": "github:43553193193:1:tick:0:review-retry",
-        "at": 1794627901628,
-        "runId": null,
-        "runAttempt": null
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
         "at": 1794628411870
@@ -5040,7 +5026,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1392
+  ],
   "active": {
     "issue": 1395,
     "worker": "finish",
@@ -6044,6 +6032,28 @@
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
         "transitionConfirmed": true
+      }
+    },
+    "finish:9f392890-4733-4da7-aa92-432bc90c3a7a": {
+      "digest": "c51f65a7a354e8b3a1c5f3205d5fec185c4e651687de7e9ab5c2481b3d11f9a6",
+      "issue": 1392,
+      "message": {
+        "kind": "queued",
+        "issue": 1392,
+        "at": 1794629091619,
+        "entry": 6,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "74ddc5d8f1e39400c2d39aa0fe0ba938b31c686d",
+        "evidence": {
+          "id": "20261114T032938956-c5a63598",
+          "name": "Тесты для задачи #1392 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T032938956-c5a63598/report.json",
+          "materialSha": "37dda5aed5d3f2b22df78fa2ec96728abb7767ff",
+          "status": "passed",
+          "finishedAt": "2026-11-14T03:44:42.084Z",
+          "failures": []
+        }
       }
     }
   },
