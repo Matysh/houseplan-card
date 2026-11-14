@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { readAllStylesSource } from './styles-source.mjs';
+import { buildIsoOpeningBasis } from '../test-build/iso-openings.js';
+import { openingSymbolOffset } from '../test-build/opening-symbol-placement.js';
 
 const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
 const labs = readFileSync(new URL('../src/labs.ts', import.meta.url), 'utf8');
@@ -181,9 +183,18 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   for (const field of ['hostId: resolved.host.id', 't: resolved.t', 'depth: resolved.depth',
     'face: partitionOpeningFace']) assert.ok(hostProjection.includes(field), `missing ${field}`);
   assert.match(openings, /ISO_OPENING_GEOMETRY_POLICY[\s\S]*?revision: 3/);
-  assert.match(openings,
-    /input\.type === 'door' \|\| input\.type === 'gate'[\s\S]*?\? input\.face[\s\S]*?: openingSymbolOffset/,
-  'door/gate volume uses the selected physical face while Flat/window geometry stays canonical');
+  assert.match(openings, /openingLeafOriginOffset\(input\.type, input\.face, 'iso-volume'\)/,
+    'Iso consumes the shared ground-plane placement authority');
+  for (const face of [{ ox:20, oy:0, cm:20, side:1 }, { ox:0, oy:20, cm:20, side:1 }]) {
+    for (const type of ['door','gate','window']) {
+      const basis=buildIsoOpeningBasis({id:'placement-contract',sourceIndex:0,type,
+        x:50,y:50,angle:0,length:100,flipH:false,flipV:false,face});
+      assert.deepEqual(basis.axis.center,[50,50]);
+      assert.deepEqual(basis.leaves[0].hinge,type==='window'?[0,50]:[face.ox,50+face.oy],
+        'door/gate volume uses selected host face; window remains centred');
+      assert.deepEqual(openingSymbolOffset(type,false,0,face),{ox:0,oy:0},'Flat remains on the saved axis');
+    }
+  }
   assert.match(source,
     /buildIsoOpeningBasis\(\{ \.\.\.opening, face,\s*topShift: 20 \/ input\.cellCm \* input\.gridPitch \}, wallHeight, openingGeometryPolicy\)/);
   assert.match(openings, /policy\.gateTurnDeg[\s\S]*?policy\.gateTopRatio/);

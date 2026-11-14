@@ -21,7 +21,8 @@ export function makeClosedDoorFixture({ partition = false, exterior = false, led
       return [key, { key, a, b, cm: 96 }];
     }))).values()];
   }
-  space.openings = [{ ...space.openings[0], id: 'closed-door', type: 'door', flip_v: flipV, flip_h: flipH,
+  space.openings = [{ ...space.openings[0], id: 'closed-door', type: 'door', flip_v: flipV,
+    ...(flipH ? { flip_h: true } : {}),
     ...(slide ? { opening_features: { version: 1, mechanism: 'slide', slide_direction: 'start', manual: 'closed' } } : {}) }];
   space.settings = { ...space.settings, fill_mode: 'custom', custom_fill: { c: '#26313d', a: 1 }, show_names: false };
   fixture.states['binary_sensor.window'].attributes.device_class = 'door';
