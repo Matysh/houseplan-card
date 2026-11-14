@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Align README and user-guide links, Marketplace installation guidance and diagnostic-data wording in RU/EN; retain legacy guide anchors (#1430).
+
 - Use one UI Kit button border for hover, selection and real Tab/Shift+Tab traversal; preserve native focus and activation without reviving an outer ring after Escape or automatic return (#1428).
 
 - Add a separate local standalone frontend distribution with explicit PlanHost mount/dispose, local UI/font/locale assets and a hashed manifest; retain HA entry registration/readiness, validate real-core Save/transfer journeys and report actual editor delivery measurements without publishing a website (#1423).

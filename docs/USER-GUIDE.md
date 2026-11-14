@@ -10,6 +10,8 @@ are optional ways to show the same data.
 Your installed stable may not contain every described feature yet. This is a
 source snapshot, not an announcement of a new release. [Русская версия](USER-GUIDE.ru.md).
 
+[Project overview and quick installation](../README.md).
+
 View and kiosk support phones, tablets and touch screens. Create and maintain
 plans on a desktop with a mouse and keyboard; touch editors are best effort.
 Plans stay in HA. Sending diagnostics through Help is a separate explicit action.
@@ -124,17 +126,24 @@ no floor until a bounded face is accepted as a room.
 | Browser | Web Components, SVG and Pointer Events |
 | Editing permission | Administrators by default |
 
-#### HACS
+<a id="hacs"></a>
 
-1. Search for **House Plan** in HACS and install it — the integration is in
-   the HACS default catalog, no custom repository needed.
-2. Restart Home Assistant.
+#### Marketplace / HACS
+
+1. On Home Assistant 2026.11 or newer, open **Settings → Marketplace**, find
+   **House Plan** and install it. On 2026.10 and older, use HACS. House Plan is
+   in the default catalog; no custom repository is needed. See
+   [Home Assistant's Marketplace documentation](https://www.home-assistant.io/integrations/marketplace/).
+2. Restart Home Assistant if requested.
 3. Open **Settings → Devices & services → Add integration → House Plan**.
 4. Keep “administrators only” enabled unless other users must edit the plan.
 
+Do not skip adding the integration: installing its files alone does not register
+the House Plan sidebar page or cards.
+
 The integration registers both the sidebar panel and its Lovelace resource
-automatically. After installing or updating House Plan, restart Home Assistant
-and fully reload the page:
+automatically. After installation or an update, complete any requested Home
+Assistant restart, then fully reload the page:
 `Ctrl+F5` on Windows/Linux or `Cmd+Shift+R` on macOS.
 
 ##### Storage mode (Home Assistant default)
@@ -1104,6 +1113,8 @@ While the **Thickness** dialog is open, its wall stays highlighted independently
 of the pointer or an unapplied field value. The band follows the physical wall
 when navigating the plan, not the dragged dialog. Closing the dialog or changing
 tool/floor removes the session-only selection.
+
+<a id="stairs"></a>
 
 Choose **Stairs → Straight** or **Stairs → Spiral**, then draw on the plan
 like a decor shape: press, drag and release. The drag direction is the
