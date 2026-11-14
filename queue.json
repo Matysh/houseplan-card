@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13964,
-  "nextTicket": 479,
+  "revision": 13965,
+  "nextTicket": 480,
   "nextFence": 479,
   "tasks": {
     "1024": {
@@ -4892,6 +4892,20 @@
         "detail": "Поведение: test/bundle-assets.test.mjs: failed",
         "eventId": "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:3:return:return:1447"
       }
+    },
+    "1448": {
+      "issue": 1448,
+      "track": "ship",
+      "layer": "infra",
+      "branch": "codex/1448-power-scheme-identity",
+      "materialSha": "6f3ca189f38f9879f3713c0d9fa333e32cac010d",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 479,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794695052419,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5247,7 +5261,9 @@
       "runId": 43643902515
     }
   },
-  "waiting": [],
+  "waiting": [
+    1448
+  ],
   "active": {
     "issue": 1446,
     "worker": "finish",
@@ -5510,6 +5526,19 @@
         "layer": "product",
         "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
         "phase": "sync"
+      }
+    },
+    "finish:0330c214-5568-4788-a8da-910eed865428": {
+      "digest": "e9131f56bf5ea55e9235c4cf1200c7a80c7f3b68ce626b1c0b04718686fc823d",
+      "issue": 1448,
+      "message": {
+        "kind": "queued",
+        "issue": 1448,
+        "at": 1794695052419,
+        "entry": 1,
+        "track": "ship",
+        "layer": "infra",
+        "materialSha": "6f3ca189f38f9879f3713c0d9fa333e32cac010d"
       }
     }
   },
