@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13003,
+  "revision": 13004,
   "nextTicket": 458,
   "nextFence": 458,
   "tasks": {
@@ -4726,7 +4726,8 @@
         "docs/images/readme/room-info.webp",
         "docs/images/readme/tablet.webp",
         "docs/images/readme/vacuum.webp"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -5076,9 +5077,9 @@
     "fence": 457,
     "materialSha": "e48eb720d353d31ce86848211e8063fc46334bab",
     "expectedBase": "dc739d2fee27c257627e15739094135a7c306bc0",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794670769428,
-    "expiresAt": 1794671091988,
+    "expiresAt": 1794674395926,
     "patchId": "0ec461f1a90b6e79f6f7af7868ff1c67b5285f37"
   },
   "events": {
@@ -5328,6 +5329,10 @@
     },
     "finish:83bdc34f-95a9-42f2-b218-91f590a0d7f7:finish:1:synchronized": {
       "digest": "8e72181d2427a327dc1878d15c1a68e57c73c347a7b2df5b5305ae83282a4203",
+      "issue": 1429
+    },
+    "finish:83bdc34f-95a9-42f2-b218-91f590a0d7f7:finish:2:s6-complete": {
+      "digest": "473e088e117075a9b31371063a39971cf0dcfb1cf2d56a3ad3cbc42cdfe6c722",
       "issue": 1429
     },
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8": {
