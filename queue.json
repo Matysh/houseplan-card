@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12205,
+  "revision": 12206,
   "nextTicket": 436,
   "nextFence": 436,
   "tasks": {
@@ -5181,7 +5181,8 @@
           "entry": 2,
           "detail": "Браузер: decor creation selection: cancelled; Браузер: decor rotation shift: cancelled; Браузер: device icon picker: Подготовка не завершена успешно; Браузер: dialog picker 998: Подготовка не завершена успешно; Браузер: direct wall geometry: Подготовка не завершена успешно; Браузер: editor draft exit: Подготовка не завершена успешно; Браузер: editor gestures: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: mounted authority: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan host: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall thickness: Подготовка не завершена успешно",
           "eventId": "finish:2037b335-ba7d-4f56-9106-129e25272687:finish:3:return:return:1394"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:f95cc89b-03be-4ad4-99e0-6f05fe2facbf": {
