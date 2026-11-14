@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12072,
+  "revision": 12073,
   "nextTicket": 432,
   "nextFence": 432,
   "tasks": {
@@ -1673,43 +1673,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "3e9402596333ea619fffad7d7ec9babe8dd77beb"
-      }
-    },
-    "1324": {
-      "issue": 1324,
-      "branch": "codex/issue-1324-node-hit-port",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "7f4da86910f7bd8a8df2d28b763bfc784a46eff2",
-      "mergedSha": "67eb0501db6141ca2d4c936a5c08a9d61bb369c8",
-      "mergedAt": 1793908732987,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        },
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 11
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "67eb0501db6141ca2d4c936a5c08a9d61bb369c8"
       }
     },
     "1325": {
@@ -3828,7 +3791,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06"
       }
     },
     "1396": {
@@ -6078,6 +6042,18 @@
           "eventId": "finish:539cd7cd-cb9f-4eb4-aa49-5b5871788243:finish:1:return:return:1392"
         },
         "delivered": true
+      }
+    },
+    "dev-build:43558163926:1:1395": {
+      "digest": "851042f9092b106e6c3007b186e515fdde1f39446655d9ad665bc373ef546b01",
+      "issue": 1395,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1395,
+        "at": 1794631645554,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "3832620122b454c2b1ed1b9cdc64ae4263616c06"
       }
     }
   },
