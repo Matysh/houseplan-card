@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 13961,
+  "revision": 13962,
   "nextTicket": 479,
-  "nextFence": 478,
+  "nextFence": 479,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -4829,7 +4829,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 478,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794694478922,
       "reviewEntry": 2,
@@ -5247,10 +5247,18 @@
       "runId": 43643902515
     }
   },
-  "waiting": [
-    1446
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1446,
+    "worker": "finish",
+    "token": "478:finish:1446-integration-display-metadata-20261115-r2:finish:1:admit",
+    "fence": 478,
+    "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1794694973002,
+    "expiresAt": 1794695273002
+  },
   "events": {
     "finish:1446-integration-display-metadata-20261115:finish:2:synchronized": {
       "digest": "77df3f2143bb45ba360e4e5e14a963fa4f219bcdacf4500a4eabe904514d1aca",
@@ -5479,6 +5487,20 @@
           "detail": "Поведение: test/bundle-assets.test.mjs: failed",
           "eventId": "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:3:return:return:1447"
         }
+      }
+    },
+    "finish:1446-integration-display-metadata-20261115-r2:finish:1:admit": {
+      "digest": "5eb51bc8e6bd3875538be4f32b2e2726e21cec3962ba346c571cf3b538b26bd4",
+      "issue": 1446,
+      "message": {
+        "kind": "admitted",
+        "issue": 1446,
+        "at": 1794694973002,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
+        "phase": "sync"
       }
     }
   },
