@@ -124,6 +124,19 @@ function harness() {
     holdRead: value => { holdRead = value; }, holdWrite: value => { holdWrite = value; }, holdAsset: value => { holdAsset = value; } };
 }
 
+test('#1392 a hanging optional subscription never blocks the mandatory pair', async () => {
+  const h = harness();
+  h.host._liveSyncAttempt = new Promise(() => {});
+  const result = await Promise.race([
+    h.host._loadFromServer().then(() => 'loaded'),
+    new Promise(resolve => setTimeout(() => resolve('blocked'), 100)),
+  ]);
+  assert.equal(result, 'loaded');
+  assert.equal(h.messages.filter(type => type === 'houseplan/config/get').length, 1);
+  assert.equal(h.messages.filter(type => type === 'houseplan/layout/get').length, 1);
+  assert.equal(h.host._loadOk, true);
+});
+
 for (const order of ['ack-before-pair', 'pair-before-ack', 'write-starts-during-read']) {
   test(`#902 AC1/AC2 exported card full read preserves ${order} and real history steps`, async () => {
     const h = harness(); h.holdRead(true);

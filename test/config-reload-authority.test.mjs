@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { ConfigReloadAuthority, reloadConfigOnly } from '../test-build/config-reload-authority.js';
+import { ConfigReloadAuthority, configReloadContext, reloadConfigOnly } from '../test-build/config-reload-authority.js';
+import { HaPlanHost } from '../test-build/ha-plan-host.js';
 
 const connectionA = {};
 const connectionB = {};
@@ -16,6 +17,23 @@ const state = (claim, overrides = {}) => ({
   baselineFingerprint: claim.baselineFingerprint,
   writePending: false,
   ...overrides,
+});
+
+test('#1392 missing input retires read claims without changing same-owner write authority', () => {
+  globalThis.location ??= { pathname: '/lovelace/home' };
+  const input = { connection: {}, user: { id: 'owner', is_admin: true }, callWS: async () => ({}) };
+  const port = new HaPlanHost(input), host = { planHost: port }, owner = new ConfigReloadAuthority();
+  const key = port.authorityKey, write = port.writeAuthorityRevision;
+  const original = configReloadContext(host);
+  const claim = owner.begin({ force: false, context: original, baselineRevision: 1, baselineFingerprint: 'saved' });
+  port.update(undefined);
+  owner.observeContext(configReloadContext(host));
+  port.update(input);
+  assert.equal(port.authorityKey, key);
+  assert.equal(port.writeAuthorityRevision, write);
+  assert.equal(owner.isCurrent(state(claim, { context: configReloadContext(host) })), false);
+  const next = owner.begin({ force: false, context: configReloadContext(host), baselineRevision: 1, baselineFingerprint: 'saved' });
+  assert.equal(owner.isCurrent(state(next, { context: configReloadContext(host) })), true);
 });
 
 test('#543 ordinary event high-water rejects a late lower observation without superseding the winner', () => {

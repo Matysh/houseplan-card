@@ -1039,7 +1039,16 @@ export class HouseplanCard extends LitElement {
     if (authorityChanged) this._read.defer();
     if (before && before.permissions.admin !== environment.permissions.admin) this._read.defer();
     if (!this.isConnected) return;
-    if (before?.connected && !environment.connected) this._onConnLost();
+    if (before?.connected && !environment.connected) {
+      // A transport gap retires reads, not the same owner's accepted writes.
+      // A→missing→A in one turn must not revive an old read's claim.
+      const pendingRead = this._read.busy || this._read.pending;
+      this._configReloadAuthority.invalidateLifecycle();
+      this._read.invalidate(); this._loading = false;
+      if (pendingRead) this._read.defer();
+      this._retireLiveSyncSubscriptions();
+      this._onConnLost();
+    }
     else if (before && !before.connected && environment.connected) this._onConnReady();
     if (this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) this._consumePlanEnvironment();
     if (revoked && this._loadOk && environment.connected) this._ensureLiveSyncSubscriptions();
@@ -5643,12 +5652,15 @@ export class HouseplanCard extends LitElement {
       this._maybeRebuildDevices();
     };
     try {
-      // Establish the event listener before sampling a foreign/new authority.
-      // Otherwise a server write between config/get and subscription is lost.
-      // Best-effort subscription failure still permits the mandatory read.
-      this._ensureLiveSyncSubscriptions();
-      await this._liveSyncAttempt;
+      // Dispatch listeners ahead of reads, without waiting for optional ACKs.
+      // A cold panel first discovers its scoped stream API; its resync then
+      // closes the gap without subscribing to HA's unscoped config bus.
+      const prepareSubscriptions = this._loadOk || !this.panelHost;
+      const ownConfigStream = this.panelHost && this._haExternalScreensEventsApi === 1;
+      if (prepareSubscriptions) this._ensureLiveSyncSubscriptions();
+      await Promise.resolve();
       if (!isCurrent()) return;
+      const subscriptionGeneration = this._liveSyncGeneration;
       const adopted = await this._layoutIO.reconcile(() => Promise.all([
         this._getAuthoritativeConfig(portHost, isCurrent),
         portHost.request<import('./config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' }),
@@ -5686,7 +5698,13 @@ export class HouseplanCard extends LitElement {
       // A read-only HA session may reject these; that must never roll the
       // accepted config back into the mandatory load catch.
       this._refreshHaVacuumTrails(() => this.isConnected && this._read.isCurrent(loadClaim));
-      this._ensureLiveSyncSubscriptions();
+      const streamChanged = ownConfigStream !== (this.panelHost && this._haExternalScreensEventsApi === 1);
+      if (streamChanged) {
+        // Retire a pending old-mode subscribe too, not just an adopted handle.
+        this._retireLiveSyncSubscriptions();
+      }
+      if (!prepareSubscriptions || streamChanged || subscriptionGeneration !== this._liveSyncGeneration)
+        this._ensureLiveSyncSubscriptions();
     } catch (e) {
       if (!isCurrent()) return;
       if (this._serverCfg) {

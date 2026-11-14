@@ -197,8 +197,10 @@ export const configReloadContext = (
   const port = planHostOf(host);
   return {
     // Historical field name, runtime-only: no connection is exposed to plan logic.
-    connection: port.authorityKey,
-    userId: port.environment.userId ?? null,
+    // A missing snapshot is a read lifecycle boundary, even though pending
+    // same-owner write bookkeeping deliberately keeps its authority key.
+    connection: port.environment.ready ? port.authorityKey : null,
+    userId: port.environment.ready ? port.environment.userId ?? null : null,
     route: presentationRouteOwner(location.pathname, host.panelHost),
   };
 };

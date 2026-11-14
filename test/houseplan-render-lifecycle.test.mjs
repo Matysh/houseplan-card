@@ -78,15 +78,31 @@ test('#1056 rendering snapshots retain willUpdate intake ordering and skip-path 
   const before = base(), after = { ...before, connection: {} };
   let intakes = 0;
   const intake = () => intakes++;
-  assert.equal(live.environment(before, after, { entityIds: ['light.plan'] }, intake), true);
+  const consume = (previous, current) =>
+    () => lifecycle.observe(previous, current, { entityIds: ['light.plan'] }, intake);
+  assert.equal(live.environment(before, after, { entityIds: ['light.plan'] }, consume(before, after)), true);
   assert.equal(intakes, 0, 'a rendering update allows remaining same-turn mutations before intake');
   lifecycle.observe(before, after, { entityIds: ['light.plan'] }, intake);
   assert.equal(intakes, 1);
   const unrelated = { ...after, states: { ...after.states, 'sensor.other': { state: '1' } } };
-  assert.equal(live.environment(after, unrelated, { entityIds: ['light.plan'] }, intake), false);
+  assert.equal(live.environment(after, unrelated, { entityIds: ['light.plan'] }, consume(after, unrelated)), false);
   assert.equal(intakes, 2, 'deliberately skipped visual updates still do operational intake');
   lifecycle.observe(after, unrelated, { entityIds: ['light.plan'] }, intake);
   assert.equal(intakes, 2, 'a later unrelated Lit update cannot duplicate that intake');
+});
+
+test('#1392 metadata publications retain one input identity without repeating intake', () => {
+  const lifecycle = new RenderLifecycle(), key = {};
+  const before = { ...base(), inputKey: key };
+  let intakes = 0;
+  lifecycle.observe(null, before, null, () => intakes++);
+  lifecycle.observe(before, { ...before }, null, () => intakes++);
+  assert.equal(intakes, 1);
+  lifecycle.observe(before, { ...before, inputKey: {} }, null, () => intakes++);
+  assert.equal(intakes, 2);
+  lifecycle.retireHass();
+  lifecycle.observe(before, before, null, () => intakes++);
+  assert.equal(intakes, 3, 'a foreign authority can consume a reused input once');
 });
 
 test('a relevant HA tick is deferred only while a continuous interaction is active', () => {
