@@ -64,6 +64,13 @@ try {
     check('capabilities.no_zigbee_section', await card.locator('[data-settings-section="zigbee"]').count(), 0);
     check('capabilities.no_screen_section', await card.locator('[data-settings-section="external-screens"]').count(), 0);
     check('capabilities.no_battery_field', await card.locator('[name="gs-device-battery"]').count(), 0);
+    check('capabilities.modal_host_replacement_preserves_draft', await page.evaluate(async capabilities => {
+      const c = window.__card, before = c.planHost;
+      const { createPlanHostFixture } = await import('/plan-host-fixture.js');
+      c._settingsDialog = { ...c._settingsDialog, bgColor: '#123456' };
+      c.planHost = createPlanHostFixture(window.__planHostLab.saved(), { capabilities }).host;
+      return c.planHost === before && c._settingsDialog.bgColor === '#123456';
+    }, planCapabilities([])));
     await page.evaluate(() => { window.__card._settingsDialog = null; window.__card._openSupportDialog(); });
     await card.locator('hp-dialog[data-kind="support"]').waitFor();
     check('capabilities.help_without_ha_form', await card.locator('.supportform').count(), 0);

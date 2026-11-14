@@ -51,7 +51,7 @@ export class MarkerAlertsEditor implements ReactiveController {
     return session && draft ? { session, binding: draft.binding, authority: this.host._configWriteContext.claim() } : null;
   }
   private current(draft: AlertEditOwner): boolean {
-    return this.host.isConnected && this.host._canEdit && !this.host._kiosk && !this.host._connectionWasLost && !this.host._markerDialog?.busy
+    return planHostOf(this.host).capabilities.alarms && this.host.isConnected && this.host._canEdit && !this.host._kiosk && !this.host._connectionWasLost && !this.host._markerDialog?.busy
       && this.host._markerDialog?.binding === draft.binding && dialogSession(this.host, 'marker') === draft.session
       && this.host._configWriteContext.current(draft.authority, planHostOf(this.host));
   }
@@ -68,7 +68,7 @@ export class MarkerAlertsEditor implements ReactiveController {
     if (this.previewSession !== session || this.previewOwner !== claim) {
       this.confirmations.update(claim, [], false); this.previewSession = session; this.previewOwner = claim;
     }
-    const enabled = !!device && !!session && host.isConnected && host._canEdit && !host._kiosk
+    const enabled = planHostOf(host).capabilities.alarms && !!device && !!session && host.isConnected && host._canEdit && !host._kiosk
       && host._config?.live_states !== false && !host._connectionWasLost
       && !displayIsNeutral(normalizeDeviceDisplay(device.marker?.display))
       && host._configWriteContext.current(claim, planHostOf(host));
@@ -141,6 +141,7 @@ export class MarkerAlertsEditor implements ReactiveController {
     this.cancel(instance);
   }
   renderSection() {
+    if (!planHostOf(this.host).capabilities.alarms) return nothing;
     const { st } = this.copy(), rows = this.rows();
     const owner = this.editOwner(), raw = this.host._markerDialog?.alertSources;
     const current = () => !!owner && this.current(owner);

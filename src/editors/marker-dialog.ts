@@ -901,7 +901,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             ...(c.deviceServices ? [{id:'actions',title:st('marker.section_actions'),body:tap}] : []),
             {id:'light',title:st('marker.section_light'),body:light},
             {id:'details',title:st('marker.section_details'),body:details},
-            ...(c.alarms ? [{id:'alarms',title:st('marker.alerts.section'),body:this.markerAlerts.renderSection(),specialized:true}] : []),
+            ...(c.alarms ? [{id:'alarms',title:st('marker.alerts.section'),body:html`${this.markerAlerts.renderSection()}`,specialized:true}] : []),
             ...(c.vacuum && previewDevice && this.host._isVacDev(previewDevice) ? [{id:'vacuum',title:st('marker.section_vacuum'),body:html`${this._renderVacSection(d)}`,specialized:true}] : []),
             ...(automaticRadar ? [{id:'radar',title:st('marker.section_radar'),body:this._renderRadarSection(d,radarDevice,'main'),specialized:true}] : []),
           ],st('dialog.section'),owner)}

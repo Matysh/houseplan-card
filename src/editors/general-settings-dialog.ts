@@ -267,7 +267,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           @hp-topology-settings-change=${(event: CustomEvent<ZigbeeTopologySettings>) => set({ zigbeeTopology: event.detail })}></hp-zigbee-topology-settings>`,
         ]),
       })}` }] : []),
-        ...(c.externalScreens && host._canEdit && !host._kiosk ? [{ id: 'external-screens', title: st('screens.title'), body: this.externalScreens.renderSection() }] : []),
+        ...(c.externalScreens && host._canEdit && !host._kiosk ? [{ id: 'external-screens', title: st('screens.title'), body: html`${this.externalScreens.renderSection()}` }] : []),
         { id: 'data', title: st('gs.section_maintenance'), body: html`${formCard({
         id: 'data',
         title: st('gs.section_maintenance'),

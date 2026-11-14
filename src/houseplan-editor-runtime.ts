@@ -1165,12 +1165,12 @@ export class HouseplanEditorRuntime {
       furnFieldToCm: (value) => this._furnFieldToCm(value),
     });
     this._radarSetup = new RadarSetupController({
-      hass: () => host.hass,
+      hass: () => host.planHost.capabilities.radar ? host.hass : undefined,
       requestUpdate: () => host.requestUpdate(),
       t: (key, vars) => host._t(key, vars),
-      configFromDraft: radarConfigFromDraft,
+      configFromDraft: (draft, cellCm) => host.planHost.capabilities.radar ? radarConfigFromDraft(draft, cellCm) : null,
       apply: (radar) => {
-        if (host._markerDialog) host._markerDialog = {
+        if (host.planHost.capabilities.radar && host._markerDialog) host._markerDialog = {
           ...host._markerDialog, radar, radarEligible: true, radarTouched: true, radarRemove: false,
         };
       },

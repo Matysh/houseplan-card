@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import { planHostOf } from './ha-plan-host';
 import { captureToast } from './toast-presentation';
 import { langOf, type I18nKey } from './i18n';
 import type {
@@ -170,6 +171,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   public connect(): void {
+    if (!planHostOf(this.host).capabilities.summary) return;
     this.ensureStyle();
     this.connected = true;
     this.host.ownerDocument.fonts?.addEventListener?.('loadingdone', this.profileFontsChanged);
@@ -322,6 +324,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   public renderPanel(): TemplateResult | typeof nothing {
+    if (!planHostOf(this.host).capabilities.summary) return nothing;
     const resolved = this.config();
     const config = resolved.config;
     this.syncPresentation();
@@ -377,6 +380,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   public renderControls(): TemplateResult | typeof nothing {
+    if (!planHostOf(this.host).capabilities.summary) return nothing;
     if (this.host._kiosk) return nothing;
     const toggleTitle = this.toggleTitle();
     const stop = (event: Event) => event.stopPropagation();
@@ -502,7 +506,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private current(generation: number): boolean {
-    return this.connected && generation === this.lifecycleGeneration
+    return planHostOf(this.host).capabilities.summary && this.connected && generation === this.lifecycleGeneration
       && this.lifecycleIdentity === this.identity();
   }
 
@@ -567,6 +571,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private async openDialog(): Promise<void> {
+    if (!planHostOf(this.host).capabilities.summary) return;
     const showToast = captureToast(this.host);
     const generation = this.lifecycleGeneration;
     this.loadLocal();
@@ -710,6 +715,7 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private async saveDialog(): Promise<void> {
+    if (!planHostOf(this.host).capabilities.summary) return;
     const dialog = this.dialog;
     if (!dialog || dialog.busy) return;
     const generation = this.lifecycleGeneration;

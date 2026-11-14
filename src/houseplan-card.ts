@@ -954,9 +954,15 @@ export class HouseplanCard extends LitElement {
   public set planHost(value: PlanHost | undefined) {
     if (value) value = capabilityHost(value);
     if (this._injectedPlanHost === value) return;
+    // There is no user-facing profile switch. Embedders retry after closing
+    // other modal forms; never carry a General/PDF/child draft into a new host.
+    if (this._driverHost && this._otherDialogsBlocked && !this._markerDialog && !this._roomDialog) return;
     if (this._driverHost && this._editorRuntime
         && !this._editorRuntime._guardDraftNavigation(() => { this.planHost = value; })) return;
     if (this.isConnected) this._viewRuntimes.disconnect();
+    this._editorRuntime?._radarSetup.reset();
+    this._editorRuntime?.externalScreens.close();
+    this._editorRuntime?.markerAlerts.close();
     this._injectedPlanHost = value;
     this._connectPlanHost();
     this._intakePlanEnvironment();

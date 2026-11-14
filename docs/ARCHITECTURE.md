@@ -94,6 +94,13 @@ devices. Areas are independent read metadata. The common `capabilityHost`
 wrapper refuses unsupported dispatch before transport; HA's full profile keeps
 existing protocol negotiation/ACL and does not pretend to authorize the user.
 UI combines this catalog with the existing API-version, writer and kiosk gates.
+Nested screen/alarm editors and the summary writer check the same capabilities
+at their own mutation boundary; hiding navigation alone is not sufficient for
+a feature which writes through base config/set. Radar setup cannot start or
+apply without its capability. Replacing a host retires optional producers and
+child contexts. Marker/room forms use their existing discard navigation guard;
+other modal forms keep the current adapter and draft until they close, then the
+embedder can retry the assignment. There is no new user-facing profile switch.
 
 Limited profiles filter presentation, not authoritative config/layout. Hidden
 markers/bindings remain in the saved document. Structural deletion still uses

@@ -6,6 +6,10 @@ import { HaPlanHost } from '../test-build/ha-plan-host.js';
 import { createPlanHostFixture } from '../demo/srv/plan-host-fixture.js';
 import { BackupArchiveClient } from '../test-build/backup-archive-client.js';
 import { resolveDecorAssets } from '../test-build/decor-assets.js';
+import { ExternalScreensEditor } from '../test-build/editors/external-screens.js';
+import { MarkerAlertsEditor } from '../test-build/editors/marker-alerts.js';
+import { LoadedSummaryPanelRuntime } from '../test-build/summary-panel-runtime-loaded.js';
+import { nothing } from 'lit';
 
 const config = () => ({ model_version: 11, spaces: [], markers: [], settings: {} });
 const fixture = capabilities => createPlanHostFixture(config(), { capabilities });
@@ -122,4 +126,21 @@ test('#1394 installation-backup alone does not implicitly enable single-space tr
   const client = new BackupArchiveClient({ planHost: lab.host, isConnected: true, _space: 'local', _t: key => key, _showToast() {} });
   await assert.rejects(client.preview(new File([JSON.stringify({ kind: 'space', config: config() })], 'space.json')), { code: 'invalid_format' });
   assert.equal(lab.commands.some(command => command.type === 'houseplan/import/apply'), false);
+});
+test('#1394 nested config writers independently refuse unavailable capabilities', async () => {
+  const lab = fixture(planCapabilities([])); let updates = 0;
+  const host = { planHost: lab.host, isConnected: true, _canEdit: true, _kiosk: false,
+    _connectionWasLost: false, _settingsDialog: { busy: false }, _markerDialog: { busy: false, binding: 'virtual' },
+    _configWriteContext: { current: () => true, claim: () => ({}) }, addController() {}, requestUpdate() { updates++; } };
+  const runtime = { host, _markerPreviewDevice: () => null };
+  const screens = new ExternalScreensEditor(runtime), alerts = new MarkerAlertsEditor(runtime);
+  assert.equal(screens.current({ session: {}, authority: {} }), false);
+  assert.equal(alerts.current({ session: {}, authority: {}, binding: 'virtual' }), false);
+  assert.equal(screens.renderSection(), nothing); assert.equal(alerts.renderSection(), nothing);
+  const summary = Object.create(LoadedSummaryPanelRuntime.prototype);
+  Object.assign(summary, { host, connected: true, dialog: { busy: false }, lifecycleGeneration: 1 });
+  assert.equal(summary.renderControls(), nothing); assert.equal(summary.renderPanel(), nothing);
+  await summary.openDialog(); await summary.saveDialog();
+  assert.equal(summary.editorLoad, undefined, 'no optional editor import or config writer starts');
+  assert.equal(updates, 0); assert.deepEqual(lab.commands, []);
 });

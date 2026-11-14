@@ -26,7 +26,7 @@ export class ExternalScreensEditor implements ReactiveController {
   }
   private rows() { const raw = this.host._settingsDialog?.externalScreens; return raw === undefined ? emptyExternalScreens() : externalScreensForEdit(raw); }
   private current(d: Pick<ScreenDraft, 'session' | 'authority'>): boolean {
-    return this.host.isConnected && this.host._canEdit && !this.host._kiosk && !this.host._connectionWasLost
+    return planHostOf(this.host).capabilities.externalScreens && this.host.isConnected && this.host._canEdit && !this.host._kiosk && !this.host._connectionWasLost
       && !!this.host._settingsDialog && !this.host._settingsDialog.busy
       && dialogSession(this.host, 'settings') === d.session
       && this.host._configWriteContext.current(d.authority, planHostOf(this.host));
@@ -88,6 +88,7 @@ export class ExternalScreensEditor implements ReactiveController {
   private time(n: number): string { return n === 0 ? this.t('off') : n < 60
     ? this.t('seconds', { n }) : this.t('minutes', { n: n / 60 }); }
   renderSection() {
+    if (!planHostOf(this.host).capabilities.externalScreens) return nothing;
     const raw = this.host._settingsDialog?.externalScreens, rows = this.rows() ?? emptyExternalScreens();
     const unsupported = raw !== undefined && !externalScreensForEdit(raw), backend = this.host._haExternalScreensApi !== 2;
     const spaces = this.host._serverCfg?.spaces ?? [];
