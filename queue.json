@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13424,
-  "nextTicket": 470,
+  "revision": 13425,
+  "nextTicket": 471,
   "nextFence": 467,
   "tasks": {
     "1024": {
@@ -4759,6 +4759,20 @@
         "detail": "Браузер: settings polish led climate 955: failed; Браузер: settings polish radar vacuum 955: failed",
         "eventId": "finish:c2098de2-f77b-4f8f-819d-e3117db86984:finish:2:return:return:1440"
       }
+    },
+    "1444": {
+      "issue": 1444,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1444-context-menu-footprint",
+      "materialSha": "fb419868bdc49062ec69697d173508ff4a2712ff",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 470,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794687283601,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5089,7 +5103,8 @@
   "waiting": [
     1436,
     1437,
-    1438
+    1438,
+    1444
   ],
   "active": {
     "issue": 1435,
@@ -5323,6 +5338,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "5bd501fa75658b97b4d18608dec89984cfba21a6"
+      }
+    },
+    "finish:59a05686-9ef8-4262-a20f-98303218440d": {
+      "digest": "b9c2bf1a934f56a68636e7cc4a83dcb595d41ce806bb8b762cf97f34508b75fd",
+      "issue": 1444,
+      "message": {
+        "kind": "queued",
+        "issue": 1444,
+        "at": 1794687283601,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "fb419868bdc49062ec69697d173508ff4a2712ff"
       }
     }
   },
