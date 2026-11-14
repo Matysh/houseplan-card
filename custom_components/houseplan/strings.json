@@ -1,0 +1,65 @@
+{
+  "config": {
+    "step": {
+      "previous_data": {
+        "title": "Previous installation found",
+        "description": "Found previous data: spaces — {spaces}, files — {files}, last modified — {modified}. {warning}\n\nStarting fresh moves all previous data to a permanent archive. No data is changed until you confirm the next form.",
+        "menu_options": {
+          "restore": "Restore previous plans",
+          "start_fresh": "Start fresh"
+        }
+      },
+      "user": {
+        "title": "House Plan",
+        "data": { "admin_only": "Only administrators may edit the layout" }
+      }
+    },
+    "create_entry": {
+      "panel_ready": "Open House Plan from the sidebar when the item is available. A desktop browser is recommended for editing. If the item is missing, use the House Plan dashboard card and check System Health."
+    },
+    "error": {
+      "previous_data_unreadable": "The previous configuration could not be read."
+    },
+    "abort": {
+      "single_instance_allowed": "Already configured — only one entry is allowed.",
+      "already_in_progress": "Another House Plan setup is already in progress.",
+      "previous_data_error": "Previous data could not be inspected. Check file permissions and the Home Assistant log; no data was changed.",
+      "archive_failed": "Previous data could not be archived. No entry was created. Check the Home Assistant log for the archive path and recovery details."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": { "admin_only": "Only administrators may edit the layout" }
+      }
+    }
+  },
+  "issues": {
+    "broken_plan": {
+      "title": "Floor plan image is missing",
+      "description": "The plan file `{file}` for space `{space}` was not found in `config/houseplan/plans/`. Open the space settings in the House Plan card and upload the plan again."
+    },
+    "frontend_reload_notice": {
+      "title": "House Plan is ready",
+      "description": "Open House Plan from the sidebar. After an update, fully reload the page to use the latest frontend (`Ctrl+F5` on Windows/Linux or `Cmd+Shift+R` on macOS). The dashboard card remains available; if you manage its resource manually in storage mode, open Settings → Dashboards → Resources. If the sidebar item is missing, check House Plan in System Health."
+    }
+  },
+  "system_health": {
+    "info": {
+      "card_file": "House Plan card file",
+      "static_path": "Static frontend path",
+      "resource_status": "Resource registration status",
+      "resource_loader": "Frontend resource loader",
+      "resource_url": "Frontend resource URL",
+      "resource_retry": "Resource registration retry",
+      "resource_error": "Frontend registration error",
+      "first_reload_notice": "First reload notice",
+      "panel_file": "House Plan panel file",
+      "panel_static_path": "Panel static frontend path",
+      "panel_status": "Panel registration status",
+      "panel_url": "House Plan panel URL",
+      "panel_module_url": "Panel module URL",
+      "panel_error": "Panel registration error"
+    }
+  }
+}
