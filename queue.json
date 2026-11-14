@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11919,
+  "revision": 11920,
   "nextTicket": 428,
   "nextFence": 428,
   "tasks": {
@@ -3650,9 +3650,10 @@
       "status": "S6-in-progress",
       "readyAt": 1794626961766,
       "reviewEntry": 5,
-      "patchId": "68f87bb6314c83a65a79b93990ce92c20150f54e",
+      "patchId": "347f4a55a16beb3df5a3b64bb32a5d8973db060c",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
+        "demo/smoke_wall_preview_handoff_1247.mjs",
         "demo/srv/plan-host-fixture.js",
         "demo/ui-lab/README.md",
         "demo/ui-lab/plan-host.html",
@@ -4948,10 +4949,11 @@
     "token": "427:finish:20af7055-57cc-4b06-909c-069978d292a7:finish:1:admit",
     "fence": 427,
     "materialSha": "37dda5aed5d3f2b22df78fa2ec96728abb7767ff",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+    "phase": "testing",
     "admittedAt": 1794626965949,
-    "expiresAt": 1794627265949
+    "expiresAt": 1794627272462,
+    "patchId": "347f4a55a16beb3df5a3b64bb32a5d8973db060c"
   },
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
@@ -5396,6 +5398,10 @@
     },
     "finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7:finish:3:return": {
       "digest": "a2608d62ce5477ce0e328ec38218b5b04b1d15acff29636097873f1098a03bfc",
+      "issue": 1392
+    },
+    "finish:20af7055-57cc-4b06-909c-069978d292a7:finish:2:synchronized": {
+      "digest": "17eb89939098368b30d923a05370cc133518546c87ed670ceb2bcb75e9104e0d",
       "issue": 1392
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
