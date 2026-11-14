@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11998,
-  "nextTicket": 430,
+  "revision": 11999,
+  "nextTicket": 431,
   "nextFence": 430,
   "tasks": {
     "1024": {
@@ -3799,14 +3799,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1395-core-input-policy",
-      "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
+      "materialSha": "116b8d41eb5adc9c0b3fe3e88c0e3fbe6be0764c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 428,
-      "queued": false,
+      "ticket": 430,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794627573366,
-      "reviewEntry": 1,
+      "readyAt": 1794630090300,
+      "reviewEntry": 2,
       "patchId": "7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f",
       "changedFiles": [
         "custom_components/houseplan/core/backup_archive.py",
@@ -3844,13 +3844,6 @@
         "failures": []
       },
       "reviewRound": 1,
-      "reviewRequest": "review:1395:1:7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-      "reviewMaterial": {
-        "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
-        "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-        "patchId": "7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1395:1:7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
         "at": 1794629513990
@@ -5028,7 +5021,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1395
+  ],
   "active": {
     "issue": 1392,
     "worker": "finish",
@@ -6192,6 +6187,28 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:94d6c43f-a5ea-4a83-8f76-a06d3fac6fcf": {
+      "digest": "87bfabe9919f6cde14fe7f33d0d7562810a78cf11681aa29252390675f5f10c0",
+      "issue": 1395,
+      "message": {
+        "kind": "queued",
+        "issue": 1395,
+        "at": 1794630090300,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "116b8d41eb5adc9c0b3fe3e88c0e3fbe6be0764c",
+        "evidence": {
+          "id": "20261114T035852242-cd6f6cf5",
+          "name": "Тесты для задачи #1395 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T035852242-cd6f6cf5/report.json",
+          "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
+          "status": "passed",
+          "finishedAt": "2026-11-14T04:04:36.776Z",
+          "failures": []
+        }
       }
     }
   },
