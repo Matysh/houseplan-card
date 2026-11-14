@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13002,
+  "revision": 13003,
   "nextTicket": 458,
   "nextFence": 458,
   "tasks": {
@@ -4703,7 +4703,30 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794670112730,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "0ec461f1a90b6e79f6f7af7868ff1c67b5285f37",
+      "changedFiles": [
+        "README.md",
+        "README.ru.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/images/readme/btn-guide-en.svg",
+        "docs/images/readme/btn-guide-ru.svg",
+        "docs/images/readme/btn-marketplace-en.svg",
+        "docs/images/readme/btn-marketplace-ru.svg",
+        "docs/images/readme/btn-readme-en.svg",
+        "docs/images/readme/btn-readme-ru.svg",
+        "docs/images/readme/cards-en.webp",
+        "docs/images/readme/cards-ru.webp",
+        "docs/images/readme/first-room-en.webp",
+        "docs/images/readme/first-room-ru.webp",
+        "docs/images/readme/kiosk-en.webp",
+        "docs/images/readme/kiosk-ru.webp",
+        "docs/images/readme/main.webp",
+        "docs/images/readme/room-info.webp",
+        "docs/images/readme/tablet.webp",
+        "docs/images/readme/vacuum.webp"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5052,10 +5075,11 @@
     "token": "457:github:43611303317:1:tick:0:admit",
     "fence": 457,
     "materialSha": "e48eb720d353d31ce86848211e8063fc46334bab",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "dc739d2fee27c257627e15739094135a7c306bc0",
+    "phase": "testing",
     "admittedAt": 1794670769428,
-    "expiresAt": 1794671069428
+    "expiresAt": 1794671091988,
+    "patchId": "0ec461f1a90b6e79f6f7af7868ff1c67b5285f37"
   },
   "events": {
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:2:synchronized": {
@@ -5300,6 +5324,10 @@
     },
     "github:43611303317:1:completions:message:513ce5a37ff83ec38846dcbaeb5a41025fe7d8372f94672354baee1af90d1c92": {
       "digest": "34e71855f3d0d1dcf6a77fc34fec23a1d82508fa0fff3c7a3588b51c92a3bc94",
+      "issue": 1429
+    },
+    "finish:83bdc34f-95a9-42f2-b218-91f590a0d7f7:finish:1:synchronized": {
+      "digest": "8e72181d2427a327dc1878d15c1a68e57c73c347a7b2df5b5305ae83282a4203",
       "issue": 1429
     },
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8": {
