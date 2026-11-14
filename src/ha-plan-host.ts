@@ -69,6 +69,7 @@ export class HaPlanHost implements PlanHost {
   private readonly listeners = new Set<() => void>();
   private readonly subscriptions = new Set<Unsubscribe>();
   private registryRelease?: Unsubscribe;
+  private registryNotify?: () => void;
   private connectionRelease?: Unsubscribe;
   private runtimeKey?: HostAuthorityKey;
   private runtimeOwner?: object;
@@ -209,13 +210,20 @@ export class HaPlanHost implements PlanHost {
       // Same two-second DOM-move grace as registry coverage. No consumer is
       // called while detached, but a lost→ready pair remains observable when
       // this same card returns; all adapter listeners are released afterward.
-      if (!this.listeners.size) this.runtimeReleaseTimer = globalThis.setTimeout(() => {
-        this.runtimeReleaseTimer = undefined; this.releaseRuntime();
-      }, 2000);
+      if (!this.listeners.size) {
+        // Keep only transport coverage. An old detached HA projection must
+        // not keep publishing against a shared live registry cache.
+        const registry = this.registryRelease; this.registryRelease = undefined; registry?.();
+        this.runtimeReleaseTimer = globalThis.setTimeout(() => {
+          this.runtimeReleaseTimer = undefined; this.releaseRuntime();
+        }, 2000);
+      }
     });
   }
   private acquireRuntime(): void {
     if (this.runtimeKey === this.key) {
+      if (!this.registryRelease && this.registryNotify && this.source.connection?.subscribeEvents)
+        this.registryRelease = acquireHaRegistries(this.source, this.registryNotify);
       if (this.registryRefreshPending) {
         this.registryRefreshPending = false;
         refreshHaRegistries(this.source, { connectionReady: true });
@@ -227,7 +235,19 @@ export class HaPlanHost implements PlanHost {
     const connection = this.source.connection, key = this.key, owner = {};
     this.runtimeOwner = owner;
     if (!connection) return;
-    const notify = () => { if (this.key === key && this.runtimeOwner === owner) this.publish(); };
+    const notify = () => {
+      if (this.key !== key || this.runtimeOwner !== owner) return;
+      if (this.listeners.size) this.publish();
+      else {
+        // Detached transport events update demand metadata only; reading an
+        // old registry projection here could invalidate the mounted card's
+        // shared cache and trigger background work during its gesture.
+        this.snapshot = Object.freeze({ ...this.snapshot, connected: this.connected(),
+          connectionRevision: this.connectionRevision });
+        this.revision++;
+      }
+    };
+    this.registryNotify = notify;
     const ready = () => {
       if (this.key !== key || this.runtimeOwner !== owner) return;
       this.connectionLost = false; this.connectionRevision++;
@@ -256,6 +276,7 @@ export class HaPlanHost implements PlanHost {
     this.registryRefreshPending = false;
     const registry = this.registryRelease, connection = this.connectionRelease;
     this.registryRelease = undefined;
+    this.registryNotify = undefined;
     this.connectionRelease = undefined;
     this.runtimeKey = undefined;
     this.runtimeOwner = undefined;
