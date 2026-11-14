@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13381,
-  "nextTicket": 469,
+  "revision": 13382,
+  "nextTicket": 470,
   "nextFence": 465,
   "tasks": {
     "1024": {
@@ -4702,6 +4702,20 @@
       "readyAt": 1794686474377,
       "reviewEntry": 1
     },
+    "1439": {
+      "issue": 1439,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1439-plan-picker-input",
+      "materialSha": "54edbc19fc538ebdf341bc07be56bc0dc7353a72",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 469,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794686598009,
+      "reviewEntry": 1
+    },
     "1440": {
       "issue": 1440,
       "track": "ship",
@@ -5069,7 +5083,8 @@
     1435,
     1436,
     1437,
-    1438
+    1438,
+    1439
   ],
   "active": {
     "issue": 1440,
@@ -5207,6 +5222,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172"
+      }
+    },
+    "finish:f399868b-aa1c-48ca-80ba-c8fc4c64dafa": {
+      "digest": "22740b9795bb37933246035d4e26fe2fa764560ca8fa8367b1843fcb51f23c63",
+      "issue": 1439,
+      "message": {
+        "kind": "queued",
+        "issue": 1439,
+        "at": 1794686598009,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "54edbc19fc538ebdf341bc07be56bc0dc7353a72"
       }
     }
   },
