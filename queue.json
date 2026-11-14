@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13322,
+  "revision": 13323,
   "nextTicket": 464,
   "nextFence": 464,
   "tasks": {
@@ -4568,7 +4568,10 @@
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.85.0/1432.json",
         "src/houseplan-card.ts"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1794685607581,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     },
     "1433": {
       "issue": 1433,
@@ -4997,6 +5000,10 @@
     },
     "finish:02d6ddc3-a918-4a81-a139-b0c5fef50b38": {
       "digest": "a598e07ea93a8a3a8d25cc57e91af9a5287e6f88f83d7013042707bff425421c",
+      "issue": 1432
+    },
+    "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee:finish:1:automation-pending": {
+      "digest": "c43a6446c9c1242329a11d7adc130208e1f212dd37f4d50ef5d4ffe7462776a8",
       "issue": 1432
     },
     "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee": {
