@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11955,
+  "revision": 11956,
   "nextTicket": 429,
   "nextFence": 429,
   "tasks": {
@@ -3820,7 +3820,34 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794627573366,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f",
+      "changedFiles": [
+        "custom_components/houseplan/core/backup_archive.py",
+        "custom_components/houseplan/core/decor_assets.py",
+        "custom_components/houseplan/core/import_export.py",
+        "custom_components/houseplan/core/input_policy.py",
+        "custom_components/houseplan/core/plan_graph_exact.py",
+        "custom_components/houseplan/core/plan_graph_migration.py",
+        "custom_components/houseplan/core/plan_graph_spatial.py",
+        "custom_components/houseplan/core/structural_upload.py",
+        "custom_components/houseplan/core/wall_node_move.py",
+        "custom_components/houseplan/core/wall_segment_model.py",
+        "custom_components/houseplan/http_api.py",
+        "custom_components/houseplan/websocket_api.py",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/release-ledger/v1.85.0/1395.json",
+        "docs/security/1395-input-audit.md",
+        "process-next/lib/task-selection.mjs",
+        "process-next/test/task-selection.test.mjs",
+        "scripts/security/input_capacity.py",
+        "tests_backend/test_ha_input_security.py",
+        "tests_backend/test_input_archive_security.py",
+        "tests_backend/test_input_policy.py"
+      ]
     },
     "1396": {
       "issue": 1396,
@@ -4991,10 +5018,11 @@
     "token": "428:finish:f1291587-cba5-486a-867a-626ba670e04f:finish:1:admit",
     "fence": 428,
     "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+    "phase": "testing",
     "admittedAt": 1794628435667,
-    "expiresAt": 1794628735667
+    "expiresAt": 1794628742448,
+    "patchId": "7e8e6bdb999a7597c8cc3f3c8dcdd39dd416438f"
   },
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
@@ -5572,6 +5600,10 @@
     "github:43553889982:1:completions:metadata:c82b3542-f727-4e76-a5d9-a61b9d64d61d:task-notice:1392::": {
       "digest": "d65c1faed04de446e18ceb370d9bbd643825295790fc0ccb17ee3154f8598631",
       "issue": 1392
+    },
+    "finish:f1291587-cba5-486a-867a-626ba670e04f:finish:2:synchronized": {
+      "digest": "0050ca238ee714d514a3734a85d3238497bfbffb0877a2516e97d3b172389c91",
+      "issue": 1395
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
