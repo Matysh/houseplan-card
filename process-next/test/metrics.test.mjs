@@ -44,6 +44,86 @@ test('different host, incomplete timing and missing size are never reported as a
   assert.equal(absent.requiresDecision, false); assert.equal(absent.needsMeasurement, true);
   assert.ok(absent.primary.every(row => row.status === 'missing'));
 });
+
+const powerGuid = '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c';
+function powerRecords() {
+  const pair = records();
+  pair.base.host.power_scheme = `High performance (${powerGuid}) (observed 2026-11-13)`;
+  pair.candidate.host.power_scheme = `Другая подпись {${powerGuid.toUpperCase()}} (observed 2026-11-14)`;
+  return pair;
+}
+const timingRows = (candidate, base) => compareMeasurements(candidate, base, base).primary.filter(row => row.unit === 'ms');
+
+test('#1448 one confirmed power GUID ignores names, observation dates and case without rewriting records', () => {
+  for (const value of [powerGuid, powerGuid.toUpperCase(), `Windows scheme GUID: {${powerGuid}} (Производительность)`,
+    `Renamed plan (${powerGuid}) (observed 2026-11-15)`]) {
+    const { base, candidate } = powerRecords(); candidate.host.power_scheme = value;
+    const before = structuredClone({ base, candidate });
+    assert.ok(timingRows(candidate, base).every(row => row.comparable && row.status === 'within-tolerance'), value);
+    assert.deepEqual({ base, candidate }, before, 'raw measurements are retained');
+  }
+});
+
+test('#1448 different, ambiguous, incomplete or explicitly unknown power plans remain incomparable', () => {
+  const invalid = ['381b4222-f694-41f0-9685-ff5bb260df2e', '', '   ', null, undefined, 'unknown', ' UNRECORDED ',
+    `unknown (${powerGuid})`, `unrecorded (${powerGuid})`, `${powerGuid} ${powerGuid}`,
+    `${powerGuid} 381b4222-f694-41f0-9685-ff5bb260df2e`, `${powerGuid} 381b4222-f694`,
+    powerGuid.slice(0, 8), powerGuid.slice(0, -1),
+    `${powerGuid}f`, `f${powerGuid}`];
+  for (const value of invalid) {
+    const { base, candidate } = powerRecords(); candidate.host.power_scheme = value;
+    assert.ok(timingRows(candidate, base).every(row => !row.comparable && row.status === 'incomparable'), value);
+    if (value !== invalid[0]) {
+      base.host.power_scheme = value;
+      assert.ok(timingRows(candidate, base).every(row => !row.comparable), `identical invalid evidence: ${value}`);
+    }
+  }
+});
+
+test('#1448 legacy name-only conditions keep strict equality instead of guessed GUID mappings', () => {
+  for (const value of ['Balanced', 'performance']) {
+    const { base, candidate } = records();
+    base.host.power_scheme = candidate.host.power_scheme = value;
+    assert.ok(timingRows(candidate, base).every(row => row.comparable), value);
+    candidate.host.power_scheme = value + ' (observed another day)';
+    assert.ok(timingRows(candidate, base).every(row => !row.comparable));
+  }
+  const { base, candidate } = records();
+  base.host.power_scheme = 'unknown free-form name A'; candidate.host.power_scheme = 'unknown free-form name B';
+  assert.ok(timingRows(candidate, base).every(row => !row.comparable));
+});
+
+test('#1448 GUID equality never masks genuinely different runtime, CPU, kernel or protocol conditions', () => {
+  const differences = [
+    candidate => { candidate.timing_protocol.runtime.node = 'v22.23.4'; },
+    candidate => { candidate.timing_protocol.runtime.chromium = '151.0.7922.35'; },
+    candidate => { candidate.timing_protocol.runtime.viewport.width++; },
+    candidate => { candidate.host.cpu = 'another CPU'; },
+    candidate => { candidate.host.linux = 'Linux 9.1.0'; },
+    candidate => { candidate.timing_protocol.runner_sha256 = 'another-runner'; },
+    candidate => { candidate.timing_protocol.profile = 'another-profile'; },
+    candidate => { candidate.timing_protocol.fixture.rooms++; },
+    candidate => { candidate.timing_protocol.warmups++; },
+    candidate => { candidate.timing_protocol.samples++; },
+  ];
+  for (const change of differences) {
+    const { base, candidate } = powerRecords(); change(candidate);
+    assert.ok(timingRows(candidate, base).every(row => !row.comparable && row.status === 'incomparable'), String(change));
+  }
+});
+
+test('#1448 comparable GUID annotations retain regression decisions and the two-halves noise rule', () => {
+  const { base, candidate } = powerRecords();
+  candidate.timing_metrics.firstStableRenderMs.samples = Array(7).fill(1200);
+  const regression = compareMeasurements(candidate, base, base);
+  assert.equal(regression.primary.find(row => row.key === 'firstStableRenderMs').status, 'regression');
+  assert.equal(regression.requiresDecision, true); assert.equal(regression.ready, false);
+  candidate.timing_metrics.firstStableRenderMs.samples = [960, 960, 960, 1200, 1200, 1200, 1200];
+  const noisy = compareMeasurements(candidate, base, base);
+  assert.equal(noisy.primary.find(row => row.key === 'firstStableRenderMs').status, 'noisy');
+  assert.equal(noisy.requiresDecision, false); assert.equal(noisy.needsMeasurement, true);
+});
+
 test('size measurement counts actual delivered files once and only initial closure for View', () => {
   const entries = new Map([['frontend/houseplan-assets.json', Buffer.from(JSON.stringify({ initialViewFiles: ['main.js'] }))], ['frontend/main.js', Buffer.from('main')], ['frontend/lazy.js', Buffer.from('lazy')], ['manifest.json', Buffer.from('{}')]]);
   const r = measureFrontend(entries, 1000); assert.equal(r.files.length, 3); assert.equal(r.size_metrics.zip_bytes, 1000);
