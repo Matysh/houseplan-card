@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12727,
+  "revision": 12728,
   "nextTicket": 450,
   "nextFence": 450,
   "tasks": {
@@ -4522,7 +4522,51 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794661875011,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "709ff3e852b4bc6093b1389b31187e62ad133f09",
+      "changedFiles": [
+        ".gitignore",
+        "THIRD_PARTY_NOTICES.md",
+        "demo/smoke_standalone_entry.mjs",
+        "demo/srv/plan-host-fixture.js",
+        "demo/standalone/core-process.mjs",
+        "demo/standalone/core_process.py",
+        "demo/standalone/fixture.mjs",
+        "demo/standalone/host.js",
+        "demo/standalone/index.html",
+        "demo/standalone/loader.js",
+        "demo/standalone/measure.mjs",
+        "demo/standalone/resource-probes.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/STANDALONE-FRONTEND.md",
+        "docs/release-ledger/v1.85.0/1423.json",
+        "package.json",
+        "process-next/lib/source-dependencies.mjs",
+        "process-next/test/standalone-source-scope.test.mjs",
+        "rollup.config.mjs",
+        "scripts/bundle-manifest.mjs",
+        "scripts/standalone-build.mjs",
+        "scripts/standalone-icons.mjs",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/houseplan-ha-card-entry.ts",
+        "src/houseplan-panel.ts",
+        "src/i18n/de.json",
+        "src/i18n/en.json",
+        "src/i18n/fr.json",
+        "src/i18n/ru.json",
+        "src/standalone-entry.ts",
+        "src/standalone-plan-host.ts",
+        "src/standalone-presentation.ts",
+        "test/browser-attestation.test.mjs",
+        "test/bundle-assets.test.mjs",
+        "test/standalone-core-import-boundary.test.mjs",
+        "test/standalone-entry-manifest.test.mjs",
+        "test/standalone-plan-host-boundary.test.mjs",
+        "tests_backend/test_ha_standalone_core_transport.py"
+      ]
     },
     "1424": {
       "issue": 1424,
@@ -4957,10 +5001,11 @@
     "token": "449:finish:c860f98b-8922-44d5-a443-10de266d7359:finish:1:admit",
     "fence": 449,
     "materialSha": "46eed6c62d78fc18d8fe52119affe06b7a9d2638",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
+    "phase": "testing",
     "admittedAt": 1794661878760,
-    "expiresAt": 1794662178760
+    "expiresAt": 1794662184978,
+    "patchId": "709ff3e852b4bc6093b1389b31187e62ad133f09"
   },
   "events": {
     "github:43585804826:1:spec:1423:spec-request": {
@@ -5021,6 +5066,10 @@
     },
     "github:43587302996:1:completions:report:c8eb1a1da4823a3bac8c3eb2f83324ca8a096c01f5ed9107ed9e8f7290549575": {
       "digest": "9b6e2c2b1c3ad9e75a0f2182ee86660660d581f6da238cf61ae0c6f70ab93bbf",
+      "issue": 1423
+    },
+    "finish:c860f98b-8922-44d5-a443-10de266d7359:finish:2:synchronized": {
+      "digest": "535d5efd7d07cfe14132c0c25ed427cf849308eba4af003484cd9d9af309658b",
       "issue": 1423
     },
     "github:43586364877:1:label:spec-request:spec-resubmitted:1423": {
