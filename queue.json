@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14189,
+  "revision": 14190,
   "nextTicket": 483,
   "nextFence": 483,
   "tasks": {
@@ -5363,6 +5363,10 @@
       "digest": "389bcaf772b049263a343f086d741a7fb26f741cb6cb4b6d843a5c8a884b76e6",
       "issue": 1449
     },
+    "github:43655292558:1:completions:message:9b6e99897fd2eb5830716e5487489f48ea5deeb9ce6836e9f11dd8a1b4419ba5": {
+      "digest": "2d029a15d72cecb1c7748f2db8dc47c9779f6a9ce2fccd456d76b2880495553f",
+      "issue": 1449
+    },
     "finish:5ca48eb6-3be0-4967-a5dc-be32ebf72f63": {
       "digest": "063e9e4123b0af05e8814e5855c58458229034a4643a70cddc0477e62b486382",
       "issue": 1449,
@@ -5409,7 +5413,8 @@
           "entry": 1,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
           "eventId": "finish:5ca48eb6-3be0-4967-a5dc-be32ebf72f63:finish:3:return:return:1449"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:bbe72bab-458f-40d5-ab44-62cbb79c27d7": {
