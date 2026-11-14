@@ -1197,6 +1197,18 @@ room a label may extend outside the room rather than overlap the other area or
 the Room settings button. Both affected rooms' changing side-wall dimensions
 are displayed simultaneously, without the old axis highlights.
 
+| Scenario | Result |
+|---|---|
+| Outer wall | Only the selected room changes |
+| Endpoint-to-endpoint shared wall | Exactly two rooms change |
+| Irregular room | Movement is allowed only until the first corner that would change the wall extent |
+| Opening on the moving wall | Follows the wall once |
+| Side-run T/X meeting | Can be passed in one drag when material and ownership remain valid; derived nodes split/join without intermediate saves or Undo steps |
+| Opening on a side wall | Masonry stops at the nearest jamb, including half its thickness |
+| Side material would switch between shared and outer | Movement stops at the exact role boundary; if neither direction has a safe step, the handle explains that only part of a shared wall cannot move |
+| Partial/diagonal shared wall, third room, overlapping partition or column | Handle remains visible but dimmed and explains why movement is unavailable |
+| Room becomes too small | Stops at the last position preserving the 30 cm minimum without deleting a vertex |
+
 ### Dimensions on both sides of a wall
 
 Drawing walls, moving nodes and Resize share thin drafting dimensions for
@@ -1217,17 +1229,6 @@ An unprovable axis shows “Dimension unavailable”, never a fabricated zero.
 The layer writes nothing, adds no history and hides during whole-wall body
 drags. No numeric input is introduced; editors remain desktop-first and
 best-effort on touch.
-
-| Scenario | Result |
-|---|---|
-| Outer wall | Only the selected room changes |
-| Endpoint-to-endpoint shared wall | Exactly two rooms change |
-| Irregular room | Movement is allowed only until the first corner that would change the wall extent |
-| Opening on the moving wall | Follows the wall once |
-| Opening on a side wall | Masonry stops at the nearest jamb, including half its thickness |
-| Side material would switch between shared and outer | Movement stops at the exact role boundary; if neither direction has a safe step, the handle explains that only part of a shared wall cannot move |
-| Partial/diagonal shared wall, third room, overlapping partition or column | Handle remains visible but dimmed and explains why movement is unavailable |
-| Room becomes too small | Stops at the last position preserving the 30 cm minimum without deleting a vertex |
 
 ### Wall thickness
 
@@ -2595,11 +2596,11 @@ the profile explicitly supplies them.
 
 ### External screens: a separate television or tablet view
 
-Use **General settings → External screens → Create** on a desktop. Choose one/all spaces, auto-advance and idle return globally. Each space has its own rotation, 10–1000% default scale, summary visibility/centering and icon/text scales. A one-space installation uses the shorter form. 100% fits all content into the available area; Reset changes only the selected space's scale. Manual camera changes are temporary; idle return and floor arrival restore its saved view. Kiosks always hide the control buttons over the plan; the summary itself remains available. **OK** changes the outer draft; **Save** applies it and closes with the shared animation. A save failure leaves the form open. Click **Screen N** to edit; deletion never reuses its number. Up to20 profiles are allowed. Copy produces your installation's complete URL.
+Use **General settings → External screens → Create** on a desktop. Choose one/all spaces, auto-advance and idle return globally. Each space has its own rotation, 10–1000% default scale, summary visibility/centering and icon/text scales. A one-space installation uses the shorter form. 100% fits all content into the available area; Reset changes only the selected space's scale. Manual camera changes are temporary; idle return and floor arrival restore its saved view. Kiosks always hide the control buttons over the plan; the summary itself remains available. **OK** changes the outer draft; **Save** applies it and closes with the shared animation. A save failure leaves the form open. Click **Screen N** to edit; deletion never reuses its number. Up to 20 profiles are allowed. Copy produces your installation's complete URL.
 
 Open `/houseplan?hpprofile=1` on the screen: it enters kiosk and receives later profile edits without reloading. Unknown/deleted numbers mean kiosk without a profile. A deleted referenced space means all spaces and warns in settings.
 
-Link overrides: `hprotate=0|90|180|270`; integer `hpcycle`/`hpidle`0–3600seconds; `hpsummary=0|1`; `hpicons`/`hptext`50–300percent rounded to5. Invalid values are ignored. `/kiosk/N` or `hpspace=N` selects space ahead of the profile. For example `/houseplan/kiosk/2?hpprofile=1` combines the second space and profile1. A fixed space does not auto-advance; cycling retains its60-second interaction pause, while independent idle return works without cycling. Hidden devices follow the ordinary House Plan local preference; retired hphidden/hpcontrols and their profile fields are inert.
+Link overrides: `hprotate=0|90|180|270`; integer `hpcycle`/`hpidle` 0–3600 seconds; `hpsummary=0|1`; `hpicons`/`hptext` 50–300 percent rounded to 5. Invalid values are ignored. `/kiosk/N` or `hpspace=N` selects space ahead of the profile. For example `/houseplan/kiosk/2?hpprofile=1` combines the second space and profile 1. A fixed space does not auto-advance; cycling retains its 60-second interaction pause, while independent idle return works without cycling. Hidden devices follow the ordinary House Plan local preference; retired hphidden/hpcontrols and their profile fields are inert.
 
 Priority is URL → profile → local choice → defaults. As on the main plan keeps local choice. Explicit profile/link values never overwrite browser preferences; removing the profile restores them. Main-panel route aliases share summary/hidden/scales preferences. Lovelace cards and YAML options retain their own identities.
 
@@ -2987,7 +2988,7 @@ bug, return N to real north after updating.
 | Any editor open | Rays are hidden |
 | Sun below 3° | No rays |
 | Crossing 3° | Layer fades in/out over 2 seconds |
-| Internal window or window facing away | No ray |
+| Internal window without an exterior-connected Lets sunlight through chain, or a window facing away | No ray |
 | Thick exterior wall, inner-corner mode | Ray starts on the room side of the tunnel |
 | Thick exterior wall, outer-corner mode | Ray starts at the facade and reaches the room only through the tunnel |
 | Zero-thickness wall | Both origin modes look the same |
