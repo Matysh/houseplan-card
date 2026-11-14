@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13339,
+  "revision": 13340,
   "nextTicket": 466,
   "nextFence": 464,
   "tasks": {
@@ -4559,7 +4559,7 @@
       "ownerDecision": null,
       "ticket": 462,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794684614647,
       "reviewEntry": 1,
       "patchId": "9b1f6f5f0aaa10039356e331d7289399d8384f9e",
@@ -4569,9 +4569,15 @@
         "docs/release-ledger/v1.85.0/1432.json",
         "src/houseplan-card.ts"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1794685607581,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
+      "s6": {
+        "id": "20261114T194908975-a771d735",
+        "name": "Тесты для задачи #1432 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T194908975-a771d735/report.json",
+        "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
+        "status": "passed",
+        "finishedAt": "2026-11-14T19:55:34.270Z",
+        "failures": []
+      }
     },
     "1433": {
       "issue": 1433,
@@ -5011,9 +5017,9 @@
     "fence": 463,
     "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
     "expectedBase": "891bdbb8d7153de0d5eb6ba7f864622332849878",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794685378123,
-    "expiresAt": 1794686384184,
+    "expiresAt": 1794689735364,
     "patchId": "9b1f6f5f0aaa10039356e331d7289399d8384f9e"
   },
   "events": {
@@ -5136,6 +5142,34 @@
         "layer": "product",
         "materialSha": "1861a31763287c3bd4a09f33fa3a1f56926da55e",
         "delivered": true
+      }
+    },
+    "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee:finish:3:s6-complete": {
+      "digest": "b1642b73e80506a0076efcfb27977ec35d593e282c05ace3a11efaed652f9489",
+      "issue": 1432,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1432,
+        "at": 1794686135364,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T194908975-a771d735",
+          "name": "Тесты для задачи #1432 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T194908975-a771d735/report.json",
+          "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
+          "status": "passed",
+          "finishedAt": "2026-11-14T19:55:34.270Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
