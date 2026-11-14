@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13460,
+  "revision": 13461,
   "nextTicket": 471,
   "nextFence": 467,
   "tasks": {
@@ -4628,144 +4628,25 @@
     },
     "1435": {
       "issue": 1435,
+      "branch": "codex/1435-empty-without-transport",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1435-empty-without-transport",
-      "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 464,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794685612407,
-      "reviewEntry": 1,
-      "patchId": "75a9173f13c5480a1ce744161533c327f5d0ecfe",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.85.0/1435.json",
-        "src/ha-plan-host.ts",
-        "test/plan-host.test.mjs"
-      ],
-      "s6": {
-        "id": "20261114T201227736-029ae795",
-        "name": "Тесты для задачи #1435 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T201227736-029ae795/report.json",
-        "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
-        "status": "passed",
-        "finishedAt": "2026-11-14T20:22:25.405Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "5bd501fa75658b97b4d18608dec89984cfba21a6",
+      "mergedSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
+      "mergedAt": 1794687967764,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1435:1:75a9173f13c5480a1ce744161533c327f5d0ecfe:5bd501fa75658b97b4d18608dec89984cfba21a6",
-      "reviewMaterial": {
-        "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
-        "expectedBase": "5bd501fa75658b97b4d18608dec89984cfba21a6",
-        "patchId": "75a9173f13c5480a1ce744161533c327f5d0ecfe"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1435,
-        "requestId": "review:1435:1:75a9173f13c5480a1ce744161533c327f5d0ecfe:5bd501fa75658b97b4d18608dec89984cfba21a6",
-        "kind": "code",
-        "base": "5bd501fa75658b97b4d18608dec89984cfba21a6",
-        "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
-        "patchId": "75a9173f13c5480a1ce744161533c327f5d0ecfe",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1435,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1435",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление точечное, и я его принимаю. Причина отказа найдена верно: в ещё не выпущенном `HaPlanHost` флаг `environment.ready` (данные для показа готовы) был привязан к наличию `callWS`. Поэтому при transport:false `_renderBody` сразу возвращал `nothing`, и пустой View вместе с `hp-plan-converter-info` не рисовался. Теперь `ready` означает «снимок HA есть и не приостановлен». Отправка запросов по-прежнему требует `connected()` в `lease()`/`owned()`, поэтому запись без транспорта невозможна. Загрузка конфигурации, live-подписки и кнопки записи в пустом состоянии закрыты собственными проверками `connected`/`_serverStorage`, так что пассивный режим не предлагает записи. Блокеров нет.",
-          "understanding": "Проблема: в полном stable-профиле кейс `{ transport: false }` из `demo/smoke_first_space_converter.mjs` не показывал `[data-hp=empty] hp-plan-converter-info`. Фикстура удаляет `hass.callWS` (`demo/helpers/first-space.mjs:23`). До исправления адаптер выставлял `ready: !suspended && typeof callWS === 'function'` (начиная с 193dcb85 / #1392). Карточка проверяет `!this.planHost.environment.ready` в `_renderBody` (houseplan-card.ts:12287), в `_confirmDanger` и в locale gate и возвращала пустой DOM. После исправления `ready: !this.suspended && row(this.lastInput)` (ha-plan-host.ts:189), а `connected`, `permissions.read` и `lease()` по-прежнему опираются на `callWS`. Просмотренные пути: построение снимка (`publish`), `update(undefined)` и приостановка, `lease`/`owned`, пустая ветка `_renderBody` (12342–12377: при `_serverStorage === false` показываются только `empty.install` и converter-info), реакция карточки на смену окружения (1063–1084: чтения и подписки запускаются только при `environment.connected`), а также потребители `ready`: `config-write-context.ts`, `config-reload-authority.ts:202`, `backup-archive-client.ts:167`, `large-write-transport.ts:61`, `_captureRenderDeviceSnapshot`.",
-          "analysis": [
-            {
-              "topic": "Разделение «готов к показу» и «готов к отправке»",
-              "assessment": "Решение верное и минимальное. Флаг показа больше не смешан с транспортом, а все пути отправки по-прежнему защищены через `connected()`. Так восстанавливается то, что требует issue: пассивная информация не исчезает, а запись не появляется. Новый слой проверок не понадобился.",
-              "evidence": "ha-plan-host.ts:189 — `ready` по наличию объекта; ha-plan-host.ts:124-125 — `connected()` требует `callWS`; ha-plan-host.ts:298 и 309 — `lease()`/`owned()` бросают `not_ready` без `connected`; ha-plan-host.ts:121 — `permissions.read` без `callWS` остаётся false."
-            },
-            {
-              "topic": "Пустое состояние без транспорта не предлагает запись",
-              "assessment": "Раньше пассивная ветка рендера при transport:false вообще не выполнялась, теперь она защищена своими условиями. Подсказка HA admin даёт `permissions.write=true`, но кнопки create-space/import-backup показываются только при `_serverStorage && _canManageConfiguration && !_kiosk`. Без транспорта сервер не прочитан, значит `_serverStorage` ложно, и выводится `empty.install` с converter-info. Smoke проверяет именно это: нет кнопок, editor/onboarding runtime не загружается, записей 0.",
-              "evidence": "houseplan-card.ts:12359-12376; demo/smoke_first_space_converter.mjs:41-50 и 56-71 (восстановление информационного модуля при transport:false)."
-            },
-            {
-              "topic": "Остальные потребители `ready`",
-              "assessment": "Я прошёл по всем потребителям. Ни один из них не превращает новое значение в фактическую отправку: `captureWriteAuthority`/`ConfigWriteContext` только разрешают попытку, а сама попытка падает в `lease()`. `configReloadContext` теперь отдаёт ключ без транспорта, но `_loadFromServer` и повторы загрузки запускаются только при `environment.connected` (1084, 5674, 3814). У `ConfigWriteContext.observe` поменялся один нюанс: снимок без транспорта теперь записывается, и при появлении `callWS` сменятся права (`read:false→true`) или ключ, после чего generation сбросится. Без транспорта ожидающих записей нет, так что вреда нет.",
-              "evidence": "config-write-context.ts:28,49,63; config-reload-authority.ts:202-203; houseplan-card.ts:1063-1084; large-write-transport.ts:61 (дополнительно проверяет `connected`); backup-archive-client.ts:167 (экспорт без транспорта дойдёт до `request` и получит `not_ready` вместо молчаливого выхода; реально достижимо только из диалога редактора)."
-            },
-            {
-              "topic": "Жизненный цикл и холодный старт",
-              "assessment": "Карточка создаёт адаптер через `new HaPlanHost(undefined)` / `new HaPlanHost(this.hass)`. Пока HA не передал `hass`, это `update(undefined)` → `suspended`, поэтому `ready=false`, и преждевременного рендера пустого состояния до прихода hass нет. Отсутствие `callWS` по-прежнему меняет `authorityKey` (`connection ?? callWS`), так что изоляция авторитета не ослаблена.",
-              "evidence": "houseplan-card.ts:646, 950; ha-plan-host.ts:137-161, 116-118."
-            },
-            {
-              "topic": "Тесты",
-              "assessment": "Новый unit-тест закрепляет весь контракт: без `callWS` `ready` равно true, а `connected`, `read` и `request` → `not_ready` остаются запрещёнными; после `undefined` `ready` снова false. Прежний тест #1392 о временном отсутствии снимка не изменён, эталоны smoke не ослаблены, timeout не превращён в skip.",
-              "evidence": "test/plan-host.test.mjs:11-22 (новый), 54-72 (#1392); receipt 20261114T201227736-029ae795 — passed."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Задокументировать смысл `HostEnvironment.ready` в `src/plan-host.ts:94`, например так: «снимок хоста есть и годен для показа; отправка требует `connected`». Сейчас поле без комментария, а `standalone-plan-host` и вспомогательные модули (`captureWriteAuthority`, экспорт архива) трактуют его сами. Ошибка в #1392 возникла как раз из-за того, что эти два понятия не разделены явно. Цена — одна строка комментария в контракте порта.",
-            "Необязательно: в `backup-archive-client.ts:167` проверять `environment.connected` вместе с `ready`, чтобы без транспорта экспорт тихо пропускался, а не показывал ошибку `not_ready`. Практической пользы немного: путь достижим только из редактора, а он без транспорта не загружается."
-          ],
-          "boundaries": "Сборку, тесты и smoke я не запускал: на этом этапе это не требуется. Опираюсь на receipt S6 20261114T201227736-029ae795 (status passed, failures пусты) и на комментарий исполнителя о том, что адресный smoke прошёл все passive/storage/permission/kiosk и recovery/link/locales кейсы. Я прочитал ha-plan-host.ts целиком в нужных местах и сравнил с исходной версией 193dcb85, а также посмотрел пустую ветку `_renderBody`, обработчик смены окружения в карточке, `config-write-context.ts`, `config-reload-authority.ts`, `backup-archive-client.ts`, сам smoke-сценарий и его helper. Как карточка вела себя в stable v1.85.0 до появления адаптера, я напрямую не сверял: исхожу из того, что `ready` = «hass есть» соответствует прежней проверке наличия hass. Изменения в CHANGELOG и release-ledger просмотрены, они описывают изменение корректно.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 40,
-          "cache_creation_input_tokens": 56526,
-          "cache_read_input_tokens": 696095,
-          "output_tokens": 9442,
-          "output_tokens_details": {
-            "thinking_tokens": 2976
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 56526,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 889,
-              "cache_read_input_tokens": 50443,
-              "cache_creation_input_tokens": 10287,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 10287
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление точечное, и я его принимаю. Причина отказа найдена верно: в ещё не выпущенном `HaPlanHost` флаг `environment.ready` (данные для показа готовы) был привязан к наличию `callWS`. Поэтому при transport:false `_renderBody` сразу возвращал `nothing`, и пустой View вместе с `hp-plan-converter-info` не рисовался. Теперь `ready` означает «снимок HA есть и не приостановлен». Отправка запросов по-прежнему требует `connected()` в `lease()`/`owned()`, поэтому запись без транспорта невозможна. Загрузка конфигурации, live-подписки и кнопки записи в пустом состоянии закрыты собственными проверками `connected`/`_serverStorage`, так что пассивный режим не предлагает записи. Блокеров нет.\n\n## Понимание решения\n\nПроблема: в полном stable-профиле кейс `{ transport: false }` из `demo/smoke_first_space_converter.mjs` не показывал `[data-hp=empty] hp-plan-converter-info`. Фикстура удаляет `hass.callWS` (`demo/helpers/first-space.mjs:23`). До исправления адаптер выставлял `ready: !suspended && typeof callWS === 'function'` (начиная с 193dcb85 / #1392). Карточка проверяет `!this.planHost.environment.ready` в `_renderBody` (houseplan-card.ts:12287), в `_confirmDanger` и в locale gate и возвращала пустой DOM. После исправления `ready: !this.suspended && row(this.lastInput)` (ha-plan-host.ts:189), а `connected`, `permissions.read` и `lease()` по-прежнему опираются на `callWS`. Просмотренные пути: построение снимка (`publish`), `update(undefined)` и приостановка, `lease`/`owned`, пустая ветка `_renderBody` (12342–12377: при `_serverStorage === false` показываются только `empty.install` и converter-info), реакция карточки на смену окружения (1063–1084: чтения и подписки запускаются только при `environment.connected`), а также потребители `ready`: `config-write-context.ts`, `config-reload-authority.ts:202`, `backup-archive-client.ts:167`, `large-write-transport.ts:61`, `_captureRenderDeviceSnapshot`.\n\n## Разбор решения\n\n### Разделение «готов к показу» и «готов к отправке»\n\nРешение верное и минимальное. Флаг показа больше не смешан с транспортом, а все пути отправки по-прежнему защищены через `connected()`. Так восстанавливается то, что требует issue: пассивная информация не исчезает, а запись не появляется. Новый слой проверок не понадобился.\n\nОснование: ha-plan-host.ts:189 — `ready` по наличию объекта; ha-plan-host.ts:124-125 — `connected()` требует `callWS`; ha-plan-host.ts:298 и 309 — `lease()`/`owned()` бросают `not_ready` без `connected`; ha-plan-host.ts:121 — `permissions.read` без `callWS` остаётся false.\n\n### Пустое состояние без транспорта не предлагает запись\n\nРаньше пассивная ветка рендера при transport:false вообще не выполнялась, теперь она защищена своими условиями. Подсказка HA admin даёт `permissions.write=true`, но кнопки create-space/import-backup показываются только при `_serverStorage && _canManageConfiguration && !_kiosk`. Без транспорта сервер не прочитан, значит `_serverStorage` ложно, и выводится `empty.install` с converter-info. Smoke проверяет именно это: нет кнопок, editor/onboarding runtime не загружается, записей 0.\n\nОснование: houseplan-card.ts:12359-12376; demo/smoke_first_space_converter.mjs:41-50 и 56-71 (восстановление информационного модуля при transport:false).\n\n### Остальные потребители `ready`\n\nЯ прошёл по всем потребителям. Ни один из них не превращает новое значение в фактическую отправку: `captureWriteAuthority`/`ConfigWriteContext` только разрешают попытку, а сама попытка падает в `lease()`. `configReloadContext` теперь отдаёт ключ без транспорта, но `_loadFromServer` и повторы загрузки запускаются только при `environment.connected` (1084, 5674, 3814). У `ConfigWriteContext.observe` поменялся один нюанс: снимок без транспорта теперь записывается, и при появлении `callWS` сменятся права (`read:false→true`) или ключ, после чего generation сбросится. Без транспорта ожидающих записей нет, так что вреда нет.\n\nОснование: config-write-context.ts:28,49,63; config-reload-authority.ts:202-203; houseplan-card.ts:1063-1084; large-write-transport.ts:61 (дополнительно проверяет `connected`); backup-archive-client.ts:167 (экспорт без транспорта дойдёт до `request` и получит `not_ready` вместо молчаливого выхода; реально достижимо только из диалога редактора).\n\n### Жизненный цикл и холодный старт\n\nКарточка создаёт адаптер через `new HaPlanHost(undefined)` / `new HaPlanHost(this.hass)`. Пока HA не передал `hass`, это `update(undefined)` → `suspended`, поэтому `ready=false`, и преждевременного рендера пустого состояния до прихода hass нет. Отсутствие `callWS` по-прежнему меняет `authorityKey` (`connection ?? callWS`), так что изоляция авторитета не ослаблена.\n\nОснование: houseplan-card.ts:646, 950; ha-plan-host.ts:137-161, 116-118.\n\n### Тесты\n\nНовый unit-тест закрепляет весь контракт: без `callWS` `ready` равно true, а `connected`, `read` и `request` → `not_ready` остаются запрещёнными; после `undefined` `ready` снова false. Прежний тест #1392 о временном отсутствии снимка не изменён, эталоны smoke не ослаблены, timeout не превращён в skip.\n\nОснование: test/plan-host.test.mjs:11-22 (новый), 54-72 (#1392); receipt 20261114T201227736-029ae795 — passed.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Задокументировать смысл `HostEnvironment.ready` в `src/plan-host.ts:94`, например так: «снимок хоста есть и годен для показа; отправка требует `connected`». Сейчас поле без комментария, а `standalone-plan-host` и вспомогательные модули (`captureWriteAuthority`, экспорт архива) трактуют его сами. Ошибка в #1392 возникла как раз из-за того, что эти два понятия не разделены явно. Цена — одна строка комментария в контракте порта.\n- Необязательно: в `backup-archive-client.ts:167` проверять `environment.connected` вместе с `ready`, чтобы без транспорта экспорт тихо пропускался, а не показывал ошибку `not_ready`. Практической пользы немного: путь достижим только из редактора, а он без транспорта не загружается.\n\n## Границы анализа\n\nСборку, тесты и smoke я не запускал: на этом этапе это не требуется. Опираюсь на receipt S6 20261114T201227736-029ae795 (status passed, failures пусты) и на комментарий исполнителя о том, что адресный smoke прошёл все passive/storage/permission/kiosk и recovery/link/locales кейсы. Я прочитал ha-plan-host.ts целиком в нужных местах и сравнил с исходной версией 193dcb85, а также посмотрел пустую ветку `_renderBody`, обработчик смены окружения в карточке, `config-write-context.ts`, `config-reload-authority.ts`, `backup-archive-client.ts`, сам smoke-сценарий и его helper. Как карточка вела себя в stable v1.85.0 до появления адаптера, я напрямую не сверял: исхожу из того, что `ready` = «hass есть» соответствует прежней проверке наличия hass. Изменения в CHANGELOG и release-ledger просмотрены, они описывают изменение корректно.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 5bd501fa75658b97b4d18608dec89984cfba21a6 → 45faf4e7c16d5feb2e0f30727784d69a52429960\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-14T20:25:30.259Z",
-        "artifactId": 14130865809,
-        "runId": 43637184520,
-        "runAttempt": 1,
-        "completedAt": "2026-11-14T20:25:35Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43637184520",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "5bd501fa75658b97b4d18608dec89984cfba21a6"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1436": {
@@ -5240,19 +5121,7 @@
     1438,
     1444
   ],
-  "active": {
-    "issue": 1435,
-    "worker": "github-coordinator",
-    "token": "466:github:43636159420:1:tick:0:admit",
-    "fence": 466,
-    "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
-    "expectedBase": "5bd501fa75658b97b4d18608dec89984cfba21a6",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794687102544,
-    "expiresAt": 1794691564917,
-    "patchId": "75a9173f13c5480a1ce744161533c327f5d0ecfe",
-    "reviewRequest": "review:1435:1:75a9173f13c5480a1ce744161533c327f5d0ecfe:5bd501fa75658b97b4d18608dec89984cfba21a6"
-  },
+  "active": null,
   "events": {
     "github:43635074985:1:completions:message:5c199547c2b5ff056082a8d0fc08c4e69e5c49fe286134e4ed40db04aa429591": {
       "digest": "2c0e39f49bd6724c766271dc303eead2994ed0d3c781485035edf4fd976abdf4",
@@ -5313,108 +5182,6 @@
     "github:43636159420:1:completions:notice:465d0519fc1bfe1f480b4ea41e59dfab97651db9548387e27ed3d5dcf43894d8": {
       "digest": "8095d833ab52b4bc81d56adbc0df2c4b690c96fb1c954f941d0ca6614cf434a5",
       "issue": 1440
-    },
-    "github:43636159420:1:completions:message:465d0519fc1bfe1f480b4ea41e59dfab97651db9548387e27ed3d5dcf43894d8": {
-      "digest": "2135db824061a47970a6b5d3ad38ab765c74a79d7107367660048c2fdf600350",
-      "issue": 1435
-    },
-    "github:43636159420:1:completions:message:99bb6dc32254524fb123e5e26fc50dad38225c978a73f97eb71f6a24da4d6cac": {
-      "digest": "72cac28c9983bb71978d5bcde0aabe7ee052f01288478a939701d03d0a808535",
-      "issue": 1435
-    },
-    "github:43636159420:1:completions:message:5c83ce6220e306e36dd59005da1d40a69fd99fb1cd30f02c073e2f254e3c83f0": {
-      "digest": "f4848a5b4ca53494d4ddf3ee15bf01972ba6ffc4e5fb3c960d33f554dd8b03a4",
-      "issue": 1435
-    },
-    "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450:finish:1:synchronized": {
-      "digest": "c90035b4f0f21e1e5d6118f91fc2f1369f3e232b0966146105502c1128427257",
-      "issue": 1435
-    },
-    "finish:3d8cf115-a143-424f-b476-eb3354557d04": {
-      "digest": "7a8a79b96b2ee0411019085b5895becd9c9a3b05c0e495797ee7ba6b4de9ee56",
-      "issue": 1435
-    },
-    "finish:0fedbefd-8fc8-4341-a4c5-c902ef0cf2aa": {
-      "digest": "a42646144c10bbbce1e9978ec53987f9b1c06975402d3ee97fcc348d01db9871",
-      "issue": 1435
-    },
-    "finish:9bb7bdb8-45de-480e-a6f6-c616a9bb4ca7": {
-      "digest": "ff40abaf939a04fb40328fcd4448b84b3c970c398eb15f24341b5655cc175c4c",
-      "issue": 1435
-    },
-    "finish:f225b0a8-bfa8-4534-bf9b-7e42c0325ac5": {
-      "digest": "da2c5efad07334badd1a535fc8577743785cc9f27701341f0cdbb6273f27aba0",
-      "issue": 1435
-    },
-    "finish:864e6655-f9d2-4438-9554-84236b8bda97": {
-      "digest": "3aee1a95b4fd7cc672caad4a04b3f3338731f09d5aad15130eb53037a39a79e3",
-      "issue": 1435
-    },
-    "finish:c3bc59f7-a736-4490-965c-cde656aaf12c": {
-      "digest": "66fd910afb5344b5ae102378cb95e8b8f7fb358dc71a2b8590b88df662f3c78b",
-      "issue": 1435
-    },
-    "finish:a32a951c-7a36-49fc-9ceb-cd80579f5468": {
-      "digest": "85129f61c9d6837bbacfb9557789d069302a519f75bbaee625db61204c80b54c",
-      "issue": 1435
-    },
-    "finish:1f925c96-669f-4f53-b7cb-f326060feef4": {
-      "digest": "6394146fca6af15c8110e758298f1a397bdbd681b96f9218348b0062d902fa62",
-      "issue": 1435
-    },
-    "finish:52e99672-935a-4c3e-a17e-babb39044f72": {
-      "digest": "8d79869a6d523f0376bb6ca7ed4361e33e05da78f68e4355cb9bfab3bfcf0f9b",
-      "issue": 1435
-    },
-    "finish:66cfd247-237e-4b3b-8966-a332e6ac186e": {
-      "digest": "0dd402142d3ec32d3f243d4ee94c7e18777904a95c1d4ed1d9bb22539286e3a2",
-      "issue": 1435
-    },
-    "finish:c7063d2f-5b28-4fdf-8c23-e56e04d57861": {
-      "digest": "ad8bd698c6cda70f73a377e12b1902165a94d529e283442ff9d92dfc79f55f94",
-      "issue": 1435
-    },
-    "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450:finish:2:s6-label": {
-      "digest": "a54359d8417b0c8566d508e17c5ffdf67d2b90605985a95e67492ddf01ac23cf",
-      "issue": 1435
-    },
-    "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450:finish:3:review-requested": {
-      "digest": "ad77a20effe42ddd5314dc449873e74c51cd417a145ecf07fc3cb43bde16c420",
-      "issue": 1435
-    },
-    "github:43637157148:1:completions:message:aacfddc24ff4ae2e43ef5f24eb71bda7ad3618838280c30c64b61f44e6893822": {
-      "digest": "d30c33f320bddf46dbc7bbad003f5c7285ca3bcdae778809631f6f57b70b32b1",
-      "issue": 1435
-    },
-    "github:43637157148:1:completions:message:ed9caed7e43b468b0763bda34aa123e8214c6e0172bcc7a33f1ba3fed4d8e935": {
-      "digest": "371829dc256bd444823a51dd74273b2d820d30173f10c39df377457fb58de7e1",
-      "issue": 1435
-    },
-    "github:43637157148:1:completions:message:72634c12c3573d2b6c27db899f7ee842c47eac284fa833b85a62982204719e5b": {
-      "digest": "82e94855fdb2c94ace9d16bd1577ab1571fcab6a1790ae2c3817cb662e25c6d4",
-      "issue": 1435
-    },
-    "github:43637430533:1:tick:0:review-presentation": {
-      "digest": "c34da8f763e0b18cc3e518372df37d2bc40140c8f6c04f8fb8944837df74382d",
-      "issue": 1435
-    },
-    "github:43637430533:1:tick:0:review-complete": {
-      "digest": "95b23ffe113bce2e569faa914cb8fa237486402f6560e106a63920ce0a0b42d7",
-      "issue": 1435
-    },
-    "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450": {
-      "digest": "5ec9b2a080864a4cfe8c328e367ac8bf12791c39e46dff967c7b546f7a1c5a40",
-      "issue": 1435,
-      "message": {
-        "kind": "queued",
-        "issue": 1435,
-        "at": 1794685612407,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "f73faa19cc10d2c7e6fb802bb68f491d9fc7c520",
-        "delivered": true
-      }
     },
     "finish:c2098de2-f77b-4f8f-819d-e3117db86984": {
       "digest": "48799c9c36190f257da1b76ffaa07449b2569a8178f86b3e23de9e30ecde645d",
@@ -5508,21 +5275,6 @@
         "delivered": true
       }
     },
-    "github:43636159420:1:tick:0:admit": {
-      "digest": "a66e45d85e12290c4bac1d5c658387ad6d5a95f1021394e315d83993ca2f697e",
-      "issue": 1435,
-      "message": {
-        "kind": "admitted",
-        "issue": 1435,
-        "at": 1794687102544,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "f73faa19cc10d2c7e6fb802bb68f491d9fc7c520",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:59a05686-9ef8-4262-a20f-98303218440d": {
       "digest": "b9c2bf1a934f56a68636e7cc4a83dcb595d41ce806bb8b762cf97f34508b75fd",
       "issue": 1444,
@@ -5534,36 +5286,6 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "fb419868bdc49062ec69697d173508ff4a2712ff",
-        "delivered": true
-      }
-    },
-    "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450:finish:2:s6-complete": {
-      "digest": "b1f816bd3e5dcdf9314341a69149503cc6b7700ef488d58e7ead5a3c3c44c73e",
-      "issue": 1435,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1435,
-        "at": 1794687746776,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
-        "phase": "review",
-        "evidence": {
-          "id": "20261114T201227736-029ae795",
-          "name": "Тесты для задачи #1435 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T201227736-029ae795/report.json",
-          "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
-          "status": "passed",
-          "finishedAt": "2026-11-14T20:22:25.405Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
