@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12532,
+  "revision": 12533,
   "nextTicket": 445,
   "nextFence": 445,
   "tasks": {
@@ -4498,7 +4498,27 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794652335784,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "de71fbfbf1766ed73af620c90731aa1c1d4444d9",
+      "changedFiles": [
+        "demo/fixtures/closed-door-light.mjs",
+        "demo/golden/closed-door-light.mjs",
+        "demo/golden/harness.mjs",
+        "demo/golden/matrix.mjs",
+        "demo/smoke_closed_door_glow.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/LIGHT.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.85.0/1421.json",
+        "scripts/mutation-registry.mjs",
+        "src/closed-door-light.ts",
+        "src/glow-scene.ts",
+        "src/interior-window-light.ts",
+        "src/opening-optics.ts",
+        "test/closed-door-light.test.mjs"
+      ]
     },
     "1424": {
       "issue": 1424,
@@ -4912,15 +4932,20 @@
     "token": "444:finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651:finish:1:admit",
     "fence": 444,
     "materialSha": "6cd0d49b4e5d1c76914ad75853245f0bce30c3b1",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
+    "phase": "testing",
     "admittedAt": 1794652339427,
-    "expiresAt": 1794652639427
+    "expiresAt": 1794652645477,
+    "patchId": "de71fbfbf1766ed73af620c90731aa1c1d4444d9"
   },
   "events": {
     "github:43585265383:1:label:spec-request": {
       "digest": "81645d13acef779d4c183ee979e266861230fe12f3534c0c98357a02f9051515",
       "issue": 1422
+    },
+    "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651:finish:2:synchronized": {
+      "digest": "4d33c079cb3163a006b0015f7db32883d0f62b03d669d93cceac89172cb6c040",
+      "issue": 1421
     },
     "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651": {
       "digest": "de3a891914465aab40cb0cc764c1c1f63dd063b799b8f79278f1dc5e6cb8b3c9",
