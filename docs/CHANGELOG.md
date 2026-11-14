@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Use the real core schema and product-owned live subscription in infinite-canvas/layout smoke fixtures (#1434).
 - Preserve borderless button footprints when reserving the single focus border, preventing extra editor toolbar wrapping (#1431).
 - Align cold View and authority smoke fixtures with canonical line coordinates and the PlanHost subscription identity; retain all behavioral oracles (#1433).
 - Align README and user-guide links, Marketplace installation guidance and diagnostic-data wording in RU/EN; retain legacy guide anchors (#1430).
