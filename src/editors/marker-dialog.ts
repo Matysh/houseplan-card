@@ -800,6 +800,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           // заголовок «Display preview · Now» и свой блок на тинте, обёртка не нужна.
           ? html`<hp-device-preview
               .hass=${this.host._planHass}
+              .integrationMetadata=${this.host._haIntegrationMetadata}
               .language=${lang}
               .presentation=${previewPresentation}
               .registry=${this.host._haRegistry}

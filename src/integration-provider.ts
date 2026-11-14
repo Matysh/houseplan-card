@@ -1,5 +1,6 @@
 /** Home Assistant integration provenance for the device preview. */
 import type { HaRegistrySnapshot } from './ha-binding-status';
+import { hostAuthorityKey } from './plan-host';
 
 export interface IntegrationProvider {
   domain: string;
@@ -15,6 +16,13 @@ export interface IntegrationMetadataSnapshot {
   entriesAvailable?: boolean;
   configEntries: Record<string, any>;
   manifests: Record<string, any>;
+}
+
+/** The device preview can observe provenance, never dispatch HA commands. */
+export interface IntegrationMetadataSource {
+  readonly identity: object;
+  snapshot(): IntegrationMetadataSnapshot;
+  acquire(listener: () => void): () => void;
 }
 
 interface MetadataCache {
@@ -34,8 +42,46 @@ interface MetadataCache {
 const caches = new WeakMap<object, MetadataCache>();
 
 function connectionKey(hass: any): object | null {
-  const key = hass?.connection || hass;
-  return key && (typeof key === 'object' || typeof key === 'function') ? key : null;
+  const key = hass?.connection || hass?.callWS || hass;
+  if (!key || typeof key !== 'object' && typeof key !== 'function') return null;
+  // An HA connection can survive a user/role change. Never lend that user's
+  // cached admin metadata or pending replies to the next authority.
+  return hostAuthorityKey(key, JSON.stringify([hass?.user?.id ?? '', hass?.user?.is_admin === true]), key);
+}
+
+const displaySources = new WeakMap<object, { update(source: any): void; port: IntegrationMetadataSource }>();
+
+/** HA-only adapter around the existing lazy, shared metadata owner. */
+export function haIntegrationMetadataSource(hass: any): IntegrationMetadataSource | undefined {
+  const identity = connectionKey(hass);
+  if (!identity || typeof hass?.callWS !== 'function') return undefined;
+  let entry = displaySources.get(identity);
+  if (!entry) {
+    let source = hass, revision = -1, snapshot: IntegrationMetadataSnapshot | undefined;
+    const port = Object.freeze({
+      identity,
+      acquire: (listener: () => void) => acquireIntegrationMetadata(source, listener),
+      snapshot: () => {
+        const value = integrationMetadataSnapshot(source);
+        if (!snapshot || value.revision !== revision) {
+          revision = value.revision;
+          // Only display facts cross into the preview, not raw config-entry
+          // or manifest records (and never connection/auth/callWS).
+          snapshot = Object.freeze({ revision, loaded: value.loaded, entriesAvailable: value.entriesAvailable,
+            configEntries: Object.freeze(Object.fromEntries(Object.entries(value.configEntries).map(([id, row]) =>
+              [id, Object.freeze({ entry_id: row.entry_id, domain: row.domain, title: row.title })]))),
+            manifests: Object.freeze(Object.fromEntries(Object.entries(value.manifests).map(([domain, row]) =>
+              [domain, Object.freeze({ domain: row.domain, name: row.name })]))),
+          });
+        }
+        return snapshot;
+      },
+    });
+    entry = { port, update: value => { source = value; } };
+    displaySources.set(identity, entry);
+  }
+  entry.update(hass);
+  return entry.port;
 }
 
 function cacheOf(hass: any): MetadataCache | null {
