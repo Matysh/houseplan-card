@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12593,
+  "revision": 12594,
   "nextTicket": 446,
   "nextFence": 446,
   "tasks": {
@@ -5130,6 +5130,10 @@
       "digest": "14f3c931cc954b1ba8cb1b1152da9b2383a39888e023e994e6aba4c033d6480b",
       "issue": 1421
     },
+    "github:43587059688:1:completions:message:054b00e4dc7374fd463111a40d54487d6312454f67ff089429d52e162c46b851": {
+      "digest": "6052413ee0d534f021574e182140eacd12be6360a4c55f52311d4b2a403d5e40",
+      "issue": 1421
+    },
     "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651": {
       "digest": "de3a891914465aab40cb0cc764c1c1f63dd063b799b8f79278f1dc5e6cb8b3c9",
       "issue": 1421,
@@ -5255,7 +5259,8 @@
         "reviewChanges": "### Решение и ограничения\nНовая точка входа использует #1391 core, #1392 host ports, #1394 plan-only и #1422 presentation; общий renderer не дублируется. В документах #1393 и текущей UI Lab ещё есть HA bootstrap — они не доказательство результата. Сейчас согласуется реальная frontend-поставка/embedding API, не production backend и не сайт. Чистая версия 1.85.2 не содержит foundation из dev, поэтому стабильный pin нельзя обещать до выпуска включающей их версии. У владельца запрошено подтверждение локального dev-кандидата; вопрос не даёт разрешения на релиз.\n\n### Проверки\nДо S4 только авторская проверка формы. Продуктовых запусков #1423 пока нет. Предлагаемые сценарии будущие; проверки #1421 не относятся к этой задаче. Реализация начнётся после принятого ТЗ и S8 #1422.\n\n### Исправления по предыдущему ревью\nS4 r2: https://github.com/Matysh/houseplan-card/actions/runs/43586404456 (artifact review-result, spec-39fb169dd97c-1794652631045.md).\n- F1 r2: перенос приведён к действительному #1394 — single-space plan_only JSON, ожидаемая очистка HA/межэтажных ссылок и live-текста, сравнение именно с core-проекцией; ZIP/full JSON — отрицательные пробы. Сохранность скрытых HA bindings вынесена в отдельную проверку authoritative config/set + remount.\n- Улучшения r2: и fault-injection fixture объявляет только реализованные API; revisions/CAS/Optimize intent/structural upload test dispatcher сверяется с действующими HA обработчиками, core не копируется.\nНовая передача — редакция 3, только spec-check, без продуктовых прогонов.\n\nИстория первого возврата:\nS4 r1: https://github.com/Matysh/houseplan-card/actions/runs/43585839409 (artifact review-result, spec-39fb169dd97c-1794652631045.md).\n- F1: ru/en/de/pl исправлено на ru/en/de/fr во всём ТЗ, польский не вводится.\n- F2: явно выбран вариант (a) — test transport к настоящему локальному Python core для положительного journey/геометрии/portable repair и apply; эхо-fixture только для фронтенд fault injection. Объявлять лишь фактически реализованные API. Не создаём публичный backend и не дублируем core на JS.\n- Улучшения: side-effect-free module обязателен, host до DOM connect и проверка отсутствия HaPlanHost/picker; конкретный Roboto Regular 400 + synth/fallback; описан config/get handshake и standalone recovery без HA/HACS текстов; сверка presentation API после S8 #1422 до реализации.\nНовая передача — редакция 2 в теле issue. Только spec-check, продуктовых прогонов нет.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
