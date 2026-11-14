@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13924,
-  "nextTicket": 477,
+  "revision": 13925,
+  "nextTicket": 478,
   "nextFence": 477,
   "tasks": {
     "1024": {
@@ -4847,6 +4847,20 @@
         "src/integration-provider.ts",
         "test/ha-device-integration-metadata.test.mjs"
       ]
+    },
+    "1447": {
+      "issue": 1447,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1447-choice-row-footprint",
+      "materialSha": "0cd38c2b254e9849507286c446fe810b9fe7006a",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 477,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794693783091,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5202,7 +5216,9 @@
       "runId": 43643902515
     }
   },
-  "waiting": [],
+  "waiting": [
+    1447
+  ],
   "active": {
     "issue": 1446,
     "worker": "finish",
@@ -5249,6 +5265,19 @@
         "layer": "product",
         "materialSha": "166fa0c576ad38abb400df862fa1eec24d1b261e",
         "phase": "sync"
+      }
+    },
+    "finish:1fc679d3-45b9-478e-bf50-a536193847e0": {
+      "digest": "f1813563c0d35d70049b94ade465914b1e3d21e424432f0793e323a1a7e1ed9b",
+      "issue": 1447,
+      "message": {
+        "kind": "queued",
+        "issue": 1447,
+        "at": 1794693783091,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0cd38c2b254e9849507286c446fe810b9fe7006a"
       }
     }
   },
