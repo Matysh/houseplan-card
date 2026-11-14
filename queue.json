@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13659,
+  "revision": 13660,
   "nextTicket": 475,
   "nextFence": 471,
   "tasks": {
@@ -4795,7 +4795,10 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794689199505,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "automationError": "automation-error",
+      "automationSince": 1794689889203,
+      "automationDetail": "Git push failed (exit 128)"
     }
   },
   "ownerDecisions": {},
@@ -5173,6 +5176,10 @@
     },
     "dev-build:43639986587:1:webhook:06f1fd83-b7e0-44c8-92c1-8108cdee11c5:delivered": {
       "digest": "e6648564158eddc2b5bc73732bb294258eb7163e2923252e66cfcb3b36a006d4",
+      "issue": 1445
+    },
+    "finish:811740db-cda2-42dd-a4af-964e3511e722:finish:1:automation-pending": {
+      "digest": "86a41b4a1280f0a079d120484135ff5b23c0a8e1210a17ce6f03dbf410e7706a",
       "issue": 1445
     },
     "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
