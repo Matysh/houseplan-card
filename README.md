@@ -78,7 +78,7 @@ its link on the device.
 
 ![Kiosk mode and the settings of a single screen](docs/images/readme/kiosk-en.webp)
 
-![House Plan on a tablet](docs/images/readme/tablet.jpg)
+![House Plan on a tablet](docs/images/readme/tablet.webp)
 
 > Drawing and setting up the plan is easier on a computer: the editors are built
 > for a mouse and keyboard. Viewing and control work on anything. More in
