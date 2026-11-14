@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12583,
+  "revision": 12584,
   "nextTicket": 445,
   "nextFence": 445,
   "tasks": {
@@ -4518,7 +4518,17 @@
         "src/interior-window-light.ts",
         "src/opening-optics.ts",
         "test/closed-door-light.test.mjs"
-      ]
+      ],
+      "reason": "executor-admission-expired",
+      "notice": {
+        "key": "1:executor-admission-expired",
+        "reason": "executor-admission-expired",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794653262479,
+        "entry": 1,
+        "eventId": "finish:1f0a2ac9-bb03-4b19-9394-d25f28bd3409:finish:1:expire:return:1421"
+      }
     },
     "1424": {
       "issue": 1424,
@@ -4933,18 +4943,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1421,
-    "worker": "finish",
-    "token": "444:finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651:finish:1:admit",
-    "fence": 444,
-    "materialSha": "6cd0d49b4e5d1c76914ad75853245f0bce30c3b1",
-    "expectedBase": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
-    "phase": "testing",
-    "admittedAt": 1794652339427,
-    "expiresAt": 1794653187196,
-    "patchId": "de71fbfbf1766ed73af620c90731aa1c1d4444d9"
-  },
+  "active": null,
   "events": {
     "github:43585265383:1:label:spec-request": {
       "digest": "81645d13acef779d4c183ee979e266861230fe12f3534c0c98357a02f9051515",
@@ -5143,6 +5142,25 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:1f0a2ac9-bb03-4b19-9394-d25f28bd3409:finish:1:expire:return:1421": {
+      "digest": "31580d3f2e34c01c73c0152413bdc26c96a007a08e32d1f53980eaa9fc2ff6d0",
+      "issue": 1421,
+      "message": {
+        "kind": "return",
+        "issue": 1421,
+        "at": 1794653262479,
+        "entry": 1,
+        "notice": {
+          "key": "1:executor-admission-expired",
+          "reason": "executor-admission-expired",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794653262479,
+          "entry": 1,
+          "eventId": "finish:1f0a2ac9-bb03-4b19-9394-d25f28bd3409:finish:1:expire:return:1421"
+        }
       }
     }
   },
