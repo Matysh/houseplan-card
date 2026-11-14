@@ -2,7 +2,7 @@
 
 **Passing:** продукт в main соответствует подтверждённому выпуску.
 
-Main: [`6c678fbc6b30226ecf302744e094b64808ccb859`](https://github.com/Matysh/houseplan-card/commit/6c678fbc6b30226ecf302744e094b64808ccb859).
+Main: [`d2c26eb929a86659eb002274c92cc83fb07f67cd`](https://github.com/Matysh/houseplan-card/commit/d2c26eb929a86659eb002274c92cc83fb07f67cd).
 Статус использует уже завершённые проверки выпуска. Новых тестов, сборок или гейтов этот отчёт не запускает.
 
 Проверенный коммит: [`eeab22dee2af68426a3f7782f75c11428d6a98c4`](https://github.com/Matysh/houseplan-card/commit/eeab22dee2af68426a3f7782f75c11428d6a98c4).
