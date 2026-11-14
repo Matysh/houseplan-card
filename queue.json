@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11950,
+  "revision": 11951,
   "nextTicket": 429,
   "nextFence": 428,
   "tasks": {
@@ -3647,7 +3647,7 @@
       "ownerDecision": null,
       "ticket": 427,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1794626961766,
       "reviewEntry": 5,
       "patchId": "347f4a55a16beb3df5a3b64bb32a5d8973db060c",
@@ -3737,14 +3737,13 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "4:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794626735758,
-        "entry": 4,
-        "detail": "Браузер: wall preview handoff 1247: failed",
-        "eventId": "finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7:finish:3:return:return:1392"
+        "key": "5:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1794628411870,
+        "entry": 5,
+        "requestId": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a"
       },
       "s6": {
         "id": "20261114T032938956-c5a63598",
@@ -3768,6 +3767,11 @@
         "at": 1794627901628,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+        "at": 1794628411870
       }
     },
     "1393": {
@@ -4996,19 +5000,7 @@
   "waiting": [
     1395
   ],
-  "active": {
-    "issue": 1392,
-    "worker": "finish",
-    "token": "427:finish:20af7055-57cc-4b06-909c-069978d292a7:finish:1:admit",
-    "fence": 427,
-    "materialSha": "37dda5aed5d3f2b22df78fa2ec96728abb7767ff",
-    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-    "phase": "review",
-    "admittedAt": 1794626965949,
-    "expiresAt": 1794631486000,
-    "patchId": "347f4a55a16beb3df5a3b64bb32a5d8973db060c",
-    "reviewRequest": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
       "digest": "3608873f6034b21ea424821722398c159d16857cd52d8f7d9bb5b504dd59972c",
@@ -5568,6 +5560,10 @@
     },
     "github:43553889982:1:tick:0:review-presentation": {
       "digest": "6475ddf221537c6d95ea647e10c0c5264c166b1ed2e67def483b768af9704145",
+      "issue": 1392
+    },
+    "github:43553889982:1:tick:0:return": {
+      "digest": "e719e8b4e374089de596666500ec5b86769d65285edb8b79f20b2bd0f59011ea",
       "issue": 1392
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
