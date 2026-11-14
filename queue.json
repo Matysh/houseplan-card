@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13631,
+  "revision": 13632,
   "nextTicket": 475,
   "nextFence": 470,
   "tasks": {
@@ -4630,6 +4630,108 @@
         "materialSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
         "expectedBase": "e8ced3a76cb20bca2a710a858d55348d7ca471c8",
         "patchId": "93f80d94e2a8b7cd6bf7e491c554b18ee3421ead"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1436,
+        "requestId": "review:1436:1:93f80d94e2a8b7cd6bf7e491c554b18ee3421ead:e8ced3a76cb20bca2a710a858d55348d7ca471c8",
+        "kind": "code",
+        "base": "e8ced3a76cb20bca2a710a858d55348d7ca471c8",
+        "materialSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
+        "patchId": "93f80d94e2a8b7cd6bf7e491c554b18ee3421ead",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1436,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1436",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "До исправления `_routeLiveEditorUpdate` помечал базовый кадр как изменённый только при запросе полного обновления через публичный requestUpdate. После извлечения PlanHost metadata intake вызывает `super.requestUpdate` напрямую. Полный host кадр уже содержит preview, но Escape ошибочно выбирает terminal noChange и оставляет стены preview при сохранённых площадях.\n\nИнвалидация перенесена к фактическому потреблению геометрии в `_renderBody`, после terminal/locale/empty guards. `_beginResizeBaseFrame` меняет только имеющийся флаг при наличии Resize preview. Изолированная live-перерисовка не вызывает этот путь и сохраняет дешёвый cancel; кеши, writer, модель и пользовательские ожидания не меняются. Отключение terminal/caches целиком не применялось. Просьба проверить также прямые host обновления и ранние noChange возвраты. Touch editor: best effort; cancel по-прежнему не сохраняет геометрию.\n\nАдресно: `npm run bundle:sync` (build с типами) и `node demo/smoke_floor_geometry_cache.mjs`: до исправления единственный FAIL ac2cCancelRestoresTheStoredFrame, после OK; AC8 cancel/View builds [0,0,0,0]. Тесты и baselines не правились. Штатный S6 выполняет finish с центральной выборкой и тремя существующими native Resize/cache дополнениями. Новый реальный HA E2E не требуется: изменён лишь frontend кадр, решение записано отдельно в houseplan-e2e. Данные владельца и его HA не затрагивались."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Исправление адресное, и его стоит принять. Флаг «базовый кадр Resize не тронут» (`_resizeBaseFrameStable`) теперь сбрасывается не при запросе обновления, а в момент, когда полный рендер действительно рисует сцену с активным preview. Раньше прямой `super.requestUpdate` из intake метаданных HA в PlanHost обходил `_routeLiveEditorUpdate`. Полный кадр уже рисовал стены preview, а Escape выбирал terminal `noChange`. В итоге на экране оставался контур preview при восстановленных площадях. Теперь любой полный рендер с активным preview, откуда бы он ни был запрошен, переводит отмену на полную перерисовку. Изолированная live-перерисовка через `_renderBody` не проходит, поэтому дешёвая отмена и тёплые кеши сохраняются. Блокеров не нашёл.",
+          "understanding": "Механизм дешёвой отмены такой. `_rszEdgeDown` ставит `_resizeBaseFrameStable = true`. Шаги drag идут через `host.requestUpdate()` → `_routeLiveEditorUpdate` → изолированный слой редактора, базовый DOM остаётся с сохранённой геометрией. В `_rszCancelDrag`, если epoch восстановлен, включён режим plan и флаг стабилен, ставится `_terminalFrame = 1`. Тогда `_renderBody` возвращает `noChange` и не перестраивает сцену, а union стен берётся из пула по сохранённому ключу.\n\nЧто было до исправления: флаг сбрасывался только в `_routeLiveEditorUpdate`, когда маршрут не был live и preview существовал. После выноса PlanHost intake (`requestUpdate('hass')` → `HaPlanHost.update` → `_intakePlanEnvironment`) полный рендер планируется напрямую через `super.requestUpdate`, минуя этот маршрут. Так же устроен `_flushHa`, который вызывает `super.requestUpdate()` напрямую. Полный кадр рисует стены preview в базовом DOM, флаг остаётся `true`, и Escape выдаёт terminal `noChange`: DOM стен от preview остаётся при уже восстановленной модели.\n\nЧто стало: сброс перенесён в `HouseplanEditorRuntime._beginResizeBaseFrame()`. Его вызывает `_renderBody` (`src/houseplan-card.ts:12393`) после ранних guard'ов (terminal, locale, fixed floor, пустая модель, `!space`) и до построения сцены. Сброс ставится по признаку «полный кадр реально строит план при активном `_resize.preview`», а не по пути запроса.\n\nРазобранные пути:\n- `requestUpdate` в карточке (642–671): обход для `hass`, отложенный рендер скрытой вкладки, обход для `panelHost` narrow/sidebar;\n- `_flushHa` (5954);\n- `_renderLightPass` и `_renderBody` (12275–12393);\n- `_rszEdgeDown`, `_rszMoveNow`, `_rszUp`, `_rszCancelDrag` (`houseplan-editor-runtime.ts` 3656–3823);\n- сценарий smoke `demo/smoke_floor_geometry_cache.mjs` 360–429: отложенный state tick, затем два кадра metadata во время drag, затем Escape и сравнение `ac2cCancelRestoresTheStoredFrame`.",
+          "analysis": [
+            {
+              "topic": "Сброс флага там, где кадр реально рисует preview, а не там, где запрошено обновление",
+              "assessment": "Это верное устранение причины, а не симптома. Инвариант «базовый DOM не содержит preview» нарушается только тогда, когда полный рендер строит план с активным preview. Привязка к `_renderBody` покрывает все источники полного рендера: прямой intake PlanHost, `_flushHa`, обход для `panelHost` narrow/sidebar, `_gestureBoundary`, отложенный рендер скрытой вкладки. Старая привязка к маршруту запроса покрывала только часть из них. Площади и модель не сравниваются, новый кадр не принимается, кеши не отключаются, то есть ограничения ТЗ соблюдены.",
+              "evidence": "`src/houseplan-card.ts:666-670`: ветка `name==='hass'` возвращается до маршрутизации; `:5954`: `_flushHa` вызывает `super.requestUpdate()` напрямую. `src/houseplan-editor-runtime.ts:1310-1314`: новый `_beginResizeBaseFrame`. `:3820-3821`: условие terminal-кадра при отмене."
+            },
+            {
+              "topic": "Ранние возвраты `noChange` и guard'ы до вызова",
+              "assessment": "Терминальный `noChange` (12290) срабатывает только после отмены, когда preview уже снят, так что вызов после него ничего не теряет. Тёплый locale gate с `noChange` DOM не меняет, и сбрасывать флаг там не нужно. Остальные guard'ы — холодная загрузка locale, pending/invalid для fixed floor, пустая модель, `!space` — подменяют тело карточки шаблоном без плана. Если такое случится посреди Resize, а затем будет Escape, terminal `noChange` один кадр сохранит этот шаблон. Старый код в таком случае сбросил бы флаг консервативно. Сценарий практически недостижим: preview привязан к текущему space, `_rszCandidateRenderable` требует `preview.space === host._space`. Следующий обычный рендер всё восстановит. Блокером это не считаю.",
+              "evidence": "`src/houseplan-card.ts:12286-12393`, порядок guard'ов перед `_beginResizeBaseFrame()`."
+            },
+            {
+              "topic": "Сохранение дешёвой отмены и отсутствие лишних построений",
+              "assessment": "Шаги drag идут через `host.requestUpdate()` без имени и уходят в live-маршрут, `_renderBody` не вызывается, флаг остаётся `true`. Поэтому изолированная отмена по-прежнему выбирает terminal-кадр и алиас union из пула. Сам вызов — проверка одного поля на каждом полном рендере, нагрузка незаметна. Если полный рендер случился в начале жеста, когда preview ещё нет, флаг не трогается. Ошибка в сторону сброса стоит только лишнего полного рендера при отмене и на корректность не влияет.",
+              "evidence": "`houseplan-editor-runtime.ts:3747` (`requestUpdate` после принятого шага), `:3658` (сброс флага в `true` в начале жеста). Автор сообщает, что AC8 cancel/View дают builds `[0,0,0,0]`; сам я этого не запускал."
+            },
+            {
+              "topic": "Соответствие регрессионной проверке",
+              "assessment": "Существующий smoke воспроизводит ровно описанный дефект. Во время drag идут отложенный state tick и два кадра metadata, проверено, что каждый из них даёт ровно один рендер (`ac2cMetadataActuallyRendersTwice`). Затем Escape и сравнение показанного кадра с сохранённым. Тест не правился, оракул прежний.",
+              "evidence": "`demo/smoke_floor_geometry_cache.mjs:370-415`."
+            },
+            {
+              "topic": "Комментарий и документация",
+              "assessment": "Комментарий в `_beginResizeBaseFrame` объясняет неочевидную причину (intake хоста планирует Lit напрямую, минуя маршрут) и строку кода не пересказывает. Записи в CHANGELOG и release-ledger соответствуют сути изменения.",
+              "evidence": "`src/houseplan-editor-runtime.ts:1311-1313`, `docs/release-ledger/v1.85.0/1436.json`."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Можно перенести вызов `_beginResizeBaseFrame()` выше, сразу за terminal guard (до locale/fixed-floor/empty), чтобы любой не-`noChange` полный кадр при активном preview тоже сбрасывал флаг. Это консервативнее для экзотических кадров-заглушек посреди Resize, а цена — лишний полный рендер при отмене в этих редких случаях. Название метода тогда стоит уточнить, потому что он будет отмечать не «потребление геометрии», а «замену базового DOM». Необязательно."
+          ],
+          "boundaries": "Ревью сделано по исходникам pinned head `bd4b27c` и diff относительно base. Сборку, smoke и native тесты я не запускал. Из результатов S6 использована квитанция `20261114T205115088-592cad96` (passed, без падений). Утверждения автора о FAIL до исправления и OK после, а также о builds `[0,0,0,0]` в AC8 приняты как его сообщение, сам я их не воспроизводил. Внутренности `routeHouseplanEditorUpdate`, `HaPlanHost`/`_intakePlanEnvironment` и того, как `_spaceModel` строится с preview, разобраны только в объёме вызывающих путей и не прочитаны целиком. Touch editor не проверялся (по договорённости best effort)."
+        },
+        "usage": {
+          "input_tokens": 20,
+          "cache_creation_input_tokens": 38723,
+          "cache_read_input_tokens": 193453,
+          "output_tokens": 8604,
+          "output_tokens_details": {
+            "thinking_tokens": 3286
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 38723,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 783,
+              "cache_read_input_tokens": 31535,
+              "cache_creation_input_tokens": 11392,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 11392
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление адресное, и его стоит принять. Флаг «базовый кадр Resize не тронут» (`_resizeBaseFrameStable`) теперь сбрасывается не при запросе обновления, а в момент, когда полный рендер действительно рисует сцену с активным preview. Раньше прямой `super.requestUpdate` из intake метаданных HA в PlanHost обходил `_routeLiveEditorUpdate`. Полный кадр уже рисовал стены preview, а Escape выбирал terminal `noChange`. В итоге на экране оставался контур preview при восстановленных площадях. Теперь любой полный рендер с активным preview, откуда бы он ни был запрошен, переводит отмену на полную перерисовку. Изолированная live-перерисовка через `_renderBody` не проходит, поэтому дешёвая отмена и тёплые кеши сохраняются. Блокеров не нашёл.\n\n## Понимание решения\n\nМеханизм дешёвой отмены такой. `_rszEdgeDown` ставит `_resizeBaseFrameStable = true`. Шаги drag идут через `host.requestUpdate()` → `_routeLiveEditorUpdate` → изолированный слой редактора, базовый DOM остаётся с сохранённой геометрией. В `_rszCancelDrag`, если epoch восстановлен, включён режим plan и флаг стабилен, ставится `_terminalFrame = 1`. Тогда `_renderBody` возвращает `noChange` и не перестраивает сцену, а union стен берётся из пула по сохранённому ключу.\n\nЧто было до исправления: флаг сбрасывался только в `_routeLiveEditorUpdate`, когда маршрут не был live и preview существовал. После выноса PlanHost intake (`requestUpdate('hass')` → `HaPlanHost.update` → `_intakePlanEnvironment`) полный рендер планируется напрямую через `super.requestUpdate`, минуя этот маршрут. Так же устроен `_flushHa`, который вызывает `super.requestUpdate()` напрямую. Полный кадр рисует стены preview в базовом DOM, флаг остаётся `true`, и Escape выдаёт terminal `noChange`: DOM стен от preview остаётся при уже восстановленной модели.\n\nЧто стало: сброс перенесён в `HouseplanEditorRuntime._beginResizeBaseFrame()`. Его вызывает `_renderBody` (`src/houseplan-card.ts:12393`) после ранних guard'ов (terminal, locale, fixed floor, пустая модель, `!space`) и до построения сцены. Сброс ставится по признаку «полный кадр реально строит план при активном `_resize.preview`», а не по пути запроса.\n\nРазобранные пути:\n- `requestUpdate` в карточке (642–671): обход для `hass`, отложенный рендер скрытой вкладки, обход для `panelHost` narrow/sidebar;\n- `_flushHa` (5954);\n- `_renderLightPass` и `_renderBody` (12275–12393);\n- `_rszEdgeDown`, `_rszMoveNow`, `_rszUp`, `_rszCancelDrag` (`houseplan-editor-runtime.ts` 3656–3823);\n- сценарий smoke `demo/smoke_floor_geometry_cache.mjs` 360–429: отложенный state tick, затем два кадра metadata во время drag, затем Escape и сравнение `ac2cCancelRestoresTheStoredFrame`.\n\n## Разбор решения\n\n### Сброс флага там, где кадр реально рисует preview, а не там, где запрошено обновление\n\nЭто верное устранение причины, а не симптома. Инвариант «базовый DOM не содержит preview» нарушается только тогда, когда полный рендер строит план с активным preview. Привязка к `_renderBody` покрывает все источники полного рендера: прямой intake PlanHost, `_flushHa`, обход для `panelHost` narrow/sidebar, `_gestureBoundary`, отложенный рендер скрытой вкладки. Старая привязка к маршруту запроса покрывала только часть из них. Площади и модель не сравниваются, новый кадр не принимается, кеши не отключаются, то есть ограничения ТЗ соблюдены.\n\nОснование: `src/houseplan-card.ts:666-670`: ветка `name==='hass'` возвращается до маршрутизации; `:5954`: `_flushHa` вызывает `super.requestUpdate()` напрямую. `src/houseplan-editor-runtime.ts:1310-1314`: новый `_beginResizeBaseFrame`. `:3820-3821`: условие terminal-кадра при отмене.\n\n### Ранние возвраты `noChange` и guard'ы до вызова\n\nТерминальный `noChange` (12290) срабатывает только после отмены, когда preview уже снят, так что вызов после него ничего не теряет. Тёплый locale gate с `noChange` DOM не меняет, и сбрасывать флаг там не нужно. Остальные guard'ы — холодная загрузка locale, pending/invalid для fixed floor, пустая модель, `!space` — подменяют тело карточки шаблоном без плана. Если такое случится посреди Resize, а затем будет Escape, terminal `noChange` один кадр сохранит этот шаблон. Старый код в таком случае сбросил бы флаг консервативно. Сценарий практически недостижим: preview привязан к текущему space, `_rszCandidateRenderable` требует `preview.space === host._space`. Следующий обычный рендер всё восстановит. Блокером это не считаю.\n\nОснование: `src/houseplan-card.ts:12286-12393`, порядок guard'ов перед `_beginResizeBaseFrame()`.\n\n### Сохранение дешёвой отмены и отсутствие лишних построений\n\nШаги drag идут через `host.requestUpdate()` без имени и уходят в live-маршрут, `_renderBody` не вызывается, флаг остаётся `true`. Поэтому изолированная отмена по-прежнему выбирает terminal-кадр и алиас union из пула. Сам вызов — проверка одного поля на каждом полном рендере, нагрузка незаметна. Если полный рендер случился в начале жеста, когда preview ещё нет, флаг не трогается. Ошибка в сторону сброса стоит только лишнего полного рендера при отмене и на корректность не влияет.\n\nОснование: `houseplan-editor-runtime.ts:3747` (`requestUpdate` после принятого шага), `:3658` (сброс флага в `true` в начале жеста). Автор сообщает, что AC8 cancel/View дают builds `[0,0,0,0]`; сам я этого не запускал.\n\n### Соответствие регрессионной проверке\n\nСуществующий smoke воспроизводит ровно описанный дефект. Во время drag идут отложенный state tick и два кадра metadata, проверено, что каждый из них даёт ровно один рендер (`ac2cMetadataActuallyRendersTwice`). Затем Escape и сравнение показанного кадра с сохранённым. Тест не правился, оракул прежний.\n\nОснование: `demo/smoke_floor_geometry_cache.mjs:370-415`.\n\n### Комментарий и документация\n\nКомментарий в `_beginResizeBaseFrame` объясняет неочевидную причину (intake хоста планирует Lit напрямую, минуя маршрут) и строку кода не пересказывает. Записи в CHANGELOG и release-ledger соответствуют сути изменения.\n\nОснование: `src/houseplan-editor-runtime.ts:1311-1313`, `docs/release-ledger/v1.85.0/1436.json`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Можно перенести вызов `_beginResizeBaseFrame()` выше, сразу за terminal guard (до locale/fixed-floor/empty), чтобы любой не-`noChange` полный кадр при активном preview тоже сбрасывал флаг. Это консервативнее для экзотических кадров-заглушек посреди Resize, а цена — лишний полный рендер при отмене в этих редких случаях. Название метода тогда стоит уточнить, потому что он будет отмечать не «потребление геометрии», а «замену базового DOM». Необязательно.\n\n## Границы анализа\n\nРевью сделано по исходникам pinned head `bd4b27c` и diff относительно base. Сборку, smoke и native тесты я не запускал. Из результатов S6 использована квитанция `20261114T205115088-592cad96` (passed, без падений). Утверждения автора о FAIL до исправления и OK после, а также о builds `[0,0,0,0]` в AC8 приняты как его сообщение, сам я их не воспроизводил. Внутренности `routeHouseplanEditorUpdate`, `HaPlanHost`/`_intakePlanEnvironment` и того, как `_spaceModel` строится с preview, разобраны только в объёме вызывающих путей и не прочитаны целиком. Touch editor не проверялся (по договорённости best effort).\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: e8ced3a76cb20bca2a710a858d55348d7ca471c8 → bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1436, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nДо исправления `_routeLiveEditorUpdate` помечал базовый кадр как изменённый только при запросе полного обновления через публичный requestUpdate. После извлечения PlanHost metadata intake вызывает `super.requestUpdate` напрямую. Полный host кадр уже содержит preview, но Escape ошибочно выбирает terminal noChange и оставляет стены preview при сохранённых площадях.\n\nИнвалидация перенесена к фактическому потреблению геометрии в `_renderBody`, после terminal/locale/empty guards. `_beginResizeBaseFrame` меняет только имеющийся флаг при наличии Resize preview. Изолированная live-перерисовка не вызывает этот путь и сохраняет дешёвый cancel; кеши, writer, модель и пользовательские ожидания не меняются. Отключение terminal/caches целиком не применялось. Просьба проверить также прямые host обновления и ранние noChange возвраты. Touch editor: best effort; cancel по-прежнему не сохраняет геометрию.\n\nАдресно: `npm run bundle:sync` (build с типами) и `node demo/smoke_floor_geometry_cache.mjs`: до исправления единственный FAIL ac2cCancelRestoresTheStoredFrame, после OK; AC8 cancel/View builds [0,0,0,0]. Тесты и baselines не правились. Штатный S6 выполняет finish с центральной выборкой и тремя существующими native Resize/cache дополнениями. Новый реальный HA E2E не требуется: изменён лишь frontend кадр, решение записано отдельно в houseplan-e2e. Данные владельца и его HA не затрагивались.\n```\n\n</details>\n",
+        "createdAt": "2026-11-14T20:54:44.075Z",
+        "artifactId": 14131661691,
+        "runId": 43639784381,
+        "runAttempt": 1,
+        "completedAt": "2026-11-14T20:54:48Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43639784381",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "e8ced3a76cb20bca2a710a858d55348d7ca471c8"
       }
     },
     "1437": {
@@ -5165,9 +5267,9 @@
     "fence": 469,
     "materialSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
     "expectedBase": "e8ced3a76cb20bca2a710a858d55348d7ca471c8",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1794688774121,
-    "expiresAt": 1794693130156,
+    "expiresAt": 1794693311090,
     "patchId": "93f80d94e2a8b7cd6bf7e491c554b18ee3421ead",
     "reviewRequest": "review:1436:1:93f80d94e2a8b7cd6bf7e491c554b18ee3421ead:e8ced3a76cb20bca2a710a858d55348d7ca471c8"
   },
@@ -5262,6 +5364,10 @@
     },
     "github:43639986587:1:tick:0:review-presentation": {
       "digest": "e6ddf64600ac7c5277b37a6d904c54351840e05529743c296b25f24a7cc3d1ae",
+      "issue": 1436
+    },
+    "github:43639986587:1:tick:0:review-complete": {
+      "digest": "7420e29ba2351de2e14ef30e8ab7465be1d027814113fd3ccec8a58692751faf",
       "issue": 1436
     },
     "finish:7f894725-b6d7-4836-979e-667341d3ce27": {
