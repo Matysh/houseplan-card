@@ -12923,10 +12923,10 @@ const MUTANT_DEFINITIONS = [
       + 'door/window edge translation moves the symbol off the wall centreline (#250)',
     patches: [{
       file: 'src/opening-symbol-placement.ts',
-      find: '  return { ox: 0, oy: 0 };',
-      replace: "  if (_flipV && (_type === 'door' || _type === 'window'))\n"
-        + "    return { ox: 0, oy: Math.hypot(_face.ox, _face.oy) };\n"
-        + '  return { ox: 0, oy: 0 };',
+      find: '  return openingLeafOriginOffset(type, face);',
+      replace: "  if (_flipV && (type === 'door' || type === 'window'))\n"
+        + "    return { ox: 0, oy: Math.hypot(face.ox, face.oy) };\n"
+        + '  return openingLeafOriginOffset(type, face);',
     }],
   },
   {
