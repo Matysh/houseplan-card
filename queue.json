@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13688,
+  "revision": 13689,
   "nextTicket": 476,
   "nextFence": 472,
   "tasks": {
@@ -4723,14 +4723,20 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1441-keyboard-focus-oracle",
-      "materialSha": "a62b9cb7b196f9d4ea7123cf90382263ab0ee99b",
+      "materialSha": "9765111e4dc5d4ec24c8820cc4a307e1b4f73999",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 473,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794689310295,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "70fc02e13bde9c9593fec3d1c836ffd8f726d295",
+      "changedFiles": [
+        "demo/smoke_ui_polish_1145.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md"
+      ]
     },
     "1442": {
       "issue": 1442,
@@ -5170,11 +5176,12 @@
     "worker": "github-coordinator",
     "token": "471:github:43640632004:1:tick:0:admit",
     "fence": 471,
-    "materialSha": "a62b9cb7b196f9d4ea7123cf90382263ab0ee99b",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "9765111e4dc5d4ec24c8820cc4a307e1b4f73999",
+    "expectedBase": "84c62b8a9aeca6d362a303fae292b37ac3b61cae",
+    "phase": "testing",
     "admittedAt": 1794690141301,
-    "expiresAt": 1794690441301
+    "expiresAt": 1794690495789,
+    "patchId": "70fc02e13bde9c9593fec3d1c836ffd8f726d295"
   },
   "events": {
     "github:43640632004:1:completions:message:b39c4a66774052e570a7095b7258fa70e74f20da7c33416a711ca5e4a4a9b907": {
@@ -5183,6 +5190,10 @@
     },
     "github:43640632004:1:completions:message:4629c4d4352847fc1b132c096e1626d6664b9cc913eca208a37da455db258f6c": {
       "digest": "c74786c10b60213d3407a89433b8b3749e0561a58d545843d5075de3d6a561df",
+      "issue": 1441
+    },
+    "finish:287ec329-1d6e-49f3-90fa-c5d007a3d785:finish:1:synchronized": {
+      "digest": "dd730d18a064ca97ce69087c5ac6fca5f28b42ea8644b207d455fba33fb20065",
       "issue": 1441
     },
     "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
