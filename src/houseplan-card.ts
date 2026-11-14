@@ -206,7 +206,6 @@ import {
 } from './wall-face-graph';
 import { type WallFaceRepairProposal } from './wall-face-repair';
 import { LightSegment } from './light-visibility';
-import './space-card';
 import { cardStyles } from './styles';
 import { type EditorSecondaryCopy, type EditorToolbarGroup } from './editor-secondary';
 import {
@@ -225,7 +224,6 @@ import {
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import type { CalibrationProposal, VacuumFit } from './vacuum-calibration-write';
 import { langOf, t, type I18nKey } from './i18n';
-import { registerPickerCard } from './card-picker-registration';
 import { LANGUAGE_RUNTIME, subscribeLanguageLoadFailures } from './i18n/registry';
 import {
   languageLoadingTemplate, languageRenderGate, type LanguageRenderGate,
@@ -270,7 +268,6 @@ import { cardInteractionIdleSnapshot, cardVersionReloadSafetySnapshot, createCar
   adoptCardConfigCapabilities, getAuthoritativeCardConfig, runningBuild,
   type AuthoritativeConfigResponse, type BackendBuildIdentity, type ConfigCapabilitiesCardPort,
   type VersionRecoveryCardPort } from './version-recovery-card';
-import { entryBuildLabel, formatBuild } from './build-identity';
 import { PointerModalityController } from './pointer-modality';
 import { type DeviceVisualState, type EntityVisualSample } from './device-visual';
 import {
@@ -14867,12 +14864,6 @@ export class HouseplanCard extends LitElement {
   static styles = [cardStyles]; // #805: editor-only sheets come with the editor runtime (src/editor-style-adoption.ts)
 }
 
-if (!customElements.get('houseplan-card')) {
-  customElements.define('houseplan-card', HouseplanCard);
-}
-
-registerPickerCard('houseplan-card');
-
-// eslint-disable-next-line no-console
-// #836: a dev build names its channel and SHA from the entry URL it was loaded by.
-console.info(`%c HOUSEPLAN-CARD %c v${formatBuild(CARD_VERSION, entryBuildLabel())} `, 'background:#3ea6ff;color:#04121f;font-weight:700', '');
+// The implementation has no entry registration/picker/banner side effects.
+// HA and the isolated standalone composition root own their explicit entries.
+export { CARD_VERSION };

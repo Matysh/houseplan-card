@@ -18,7 +18,7 @@ const DIAGNOSTIC_COVERAGE = coverageMapsEnabled();
 
 export default {
   input: {
-    'houseplan-card': 'src/houseplan-card.ts',
+    'houseplan-card': 'src/houseplan-ha-card-entry.ts',
     'houseplan-panel': 'src/houseplan-panel.ts',
   },
   output: {

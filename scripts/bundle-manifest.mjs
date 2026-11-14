@@ -67,7 +67,7 @@ export function encodedBundleAssets(bundle) {
 const ENTRY_CONTRACTS = [
   {
     fileName: CARD_ENTRY_FILE,
-    facade: 'src/houseplan-card.ts',
+    facade: 'src/houseplan-ha-card-entry.ts',
     element: 'houseplan-card',
     cardFallback: true,
   },

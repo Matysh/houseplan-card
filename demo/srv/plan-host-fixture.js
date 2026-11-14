@@ -1,7 +1,7 @@
 /** Synthetic wire storage for #1392. Not an HA emulator or backend validator. */
 import { createFixtureStore } from './fixture-state.js';
 
-export function createPlanHostFixture(config, { ready = true, capabilities, presentation: initialPresentation } = {}) {
+export function createPlanHostFixture(config, { ready = true, capabilities, presentation: initialPresentation, api = {} } = {}) {
   const commands = [], listeners = new Set(), events = new Map(), forbiddenReads = [];
   const assets = new Map(), plans = [];
   const pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
@@ -55,7 +55,7 @@ export function createPlanHostFixture(config, { ready = true, capabilities, pres
       else {
         result = store.handle(command);
         if (command.type === 'houseplan/config/get') result = { ...result, opening_features_api: 1, room_label_layout_api: 1,
-          decor_assets_api: 1, graph_change_api: 2, wall_node_move_api: 1, wall_node_delete_api: 1, wall_node_merge_api: 1, wall_node_attach_api: 1 };
+          decor_assets_api: 1, graph_change_api: 2, ...api };
         if (result === undefined) throw error('fixture_unsupported');
       }
       await Promise.resolve(); current(authority, epoch); return result;

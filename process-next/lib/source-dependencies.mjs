@@ -6,6 +6,9 @@ const safeRelative = value => typeof value === 'string' && value && !value.start
 // repository paths conservative for both selection and result fingerprints.
 // Runtime witnesses name their owner; dynamic scanners name the text trees they read.
 const DECLARED_SOURCE_SCOPES = new Map([
+  // #1423: this HA comparison imports the synthetic dispatcher as a Python
+  // namespace outside custom_components; its transitive core is still real.
+  ['tests_backend/test_ha_standalone_core_transport.py', ['demo/standalone/core_process.py']],
   // The converter tsc entry and backend literals are real build inputs, not card dist.
   ['scripts/sh3d-convert/build-runtime.mjs', ['scripts/sh3d-convert/geometry-entry.ts', 'scripts/sh3d-convert/tsconfig.json', 'custom_components/houseplan/core/validation.py', 'custom_components/houseplan/core/led_strips.py']],
   ['demo/smoke_header_observer_retirement.mjs', ['src/houseplan-card.ts']],

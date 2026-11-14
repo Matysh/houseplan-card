@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a separate local standalone frontend distribution with explicit PlanHost mount/dispose, local UI/font/locale assets and a hashed manifest; retain HA entry registration/readiness, validate real-core Save/transfer journeys and report actual editor delivery measurements without publishing a website (#1423).
+
 - Clip artificial light at the actual closed door leaf instead of the entire wall slot; share swing/slide placement, bounded exterior pockets and regression coverage across lamp, LED and Static Glow (#1421).
 - Add an explicit isolated-document presentation owner with finite local SVGs, UI Kit theme inputs, functional container/progress and shared native dialogs/controls; keep HA registration and stored models unchanged (#1422).
 

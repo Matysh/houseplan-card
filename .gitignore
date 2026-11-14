@@ -23,6 +23,7 @@ demo/ui-lab/evidence
 # Корневой dist — свежая сборка Rollup, demo/srv/assets — её копия для стенда.
 # Без слэша: игнорировать также ссылку с этим именем, но не dist конвертера.
 /dist
+/dist-standalone
 demo/srv/assets/houseplan-card.js
 demo/srv/assets/houseplan-panel.js
 demo/srv/assets/houseplan-assets.json

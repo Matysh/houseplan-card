@@ -57,6 +57,14 @@ part of this extraction.
 
 ## Runtime capability profiles (#1394)
 
+The isolated frontend distribution from #1423 is documented in
+[STANDALONE-FRONTEND](STANDALONE-FRONTEND.md): one explicit mount/dispose API,
+shared renderer, plan-only PlanHost, local presentation/font/locale assets and a
+separate manifest/output. HA discovery/readiness remains in its installed entry
+wrapper. This is a locally built dev SDK, not the future public server/site or
+a replacement for the personal UI Lab. Positive test journeys use the genuine
+Python core in a synthetic stdio process, separately compared with HA handlers.
+
 `PlanHost.capabilities` is a required frozen `PlanCapabilities` catalog, created
 before mount. `src/plan-capabilities.ts` owns validation and the dispatch matrix;
 `HaPlanHost` explicitly selects all17 capabilities. Missing/partial catalogs

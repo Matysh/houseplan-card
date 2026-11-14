@@ -1,4 +1,4 @@
-import './houseplan-card';
+import './houseplan-ha-card-entry';
 import { observePanelSidebar } from './panel-sidebar-state';
 import { parseRouteKiosk } from './panel-route-kiosk';
 import type { RouteKiosk } from './route-kiosk';

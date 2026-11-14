@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1423,
+  "baseStable": "v1.85.0",
+  "category": "infra",
+  "rationale": "Prepare a separately built local standalone frontend SDK on the accepted core/PlanHost/presentation foundations. No public standalone site or installed-HA user feature is released by this task.",
+  "summary": {
+    "ru": "Подготовлена отдельная frontend-поставка автономного плана без HA runtime.",
+    "en": "Prepare the separate standalone frontend distribution without HA runtime."
+  }
+}

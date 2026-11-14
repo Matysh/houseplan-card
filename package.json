@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && rollup -c",
+    "build:standalone": "tsc --noEmit && node scripts/standalone-build.mjs",
     "watch": "rollup -c --watch",
     "ui-lab:prepare": "node demo/ui-lab/prepare-ha.mjs",
     "ui-lab": "node demo/ui-lab/server.mjs",

@@ -261,7 +261,6 @@ import { parameterOnPartition, planRoomDeletion, roomTopologyLayoutCandidate,
 import {
   planWallFaceRepair, repairMovesHostedPartition, type WallFaceRepairProposal,
 } from './wall-face-repair';
-import './space-card';
 import {
   EditorSecondaryController,
   type EditorSecondaryCopy,

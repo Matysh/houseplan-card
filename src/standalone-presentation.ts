@@ -12,7 +12,8 @@ class StandaloneIcon extends LitElement {
   icon = '';
   static styles = css`:host{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;
     width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);flex:none;fill:currentColor}
-    svg{display:block;width:100%;height:100%;fill:currentColor}`;
+    svg{display:block;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);
+      max-width:100%;max-height:100%;flex:none;fill:currentColor}`;
   protected render() {
     const known = Object.prototype.hasOwnProperty.call(STANDALONE_ICON_PATHS, this.icon);
     this.toggleAttribute('data-hp-standalone-fallback', !known);

@@ -1,4 +1,5 @@
 {
+  "standalone.host_error": "Connexion impossible à cet hôte House Plan. Vérifiez sa disponibilité, sa version et les API prises en charge, puis reconnectez-vous.",
   "panel.actions": "Actions",
   "empty.plan_prompt": "Le plan est encore vide. Dessinons quelque chose.",
   "empty.plan_editor": "Éditeur de plan",

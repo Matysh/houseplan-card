@@ -61,7 +61,7 @@ const minimalTwoEntryBundle = () => ({
   },
   'houseplan-card.js': {
     type: 'chunk', fileName: 'houseplan-card.js', code: 'card', isEntry: true,
-    facadeModuleId: '/repo/src/houseplan-card.ts', imports: ['houseplan-assets/card-HASH.js'],
+    facadeModuleId: '/repo/src/houseplan-ha-card-entry.ts', imports: ['houseplan-assets/card-HASH.js'],
     dynamicImports: [], modules: { '/repo/src/houseplan-card.ts': {} },
   },
   'houseplan-assets/card-HASH.js': {
@@ -244,7 +244,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
     },
     'houseplan-card.js': {
       type: 'chunk', fileName: 'houseplan-card.js', code: 'entry', isEntry: true,
-      facadeModuleId: '/repo/src/houseplan-card.ts',
+      facadeModuleId: '/repo/src/houseplan-ha-card-entry.ts',
       imports: ['shared.js'], dynamicImports: [
         'houseplan-assets/editor.js', 'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
         'houseplan-assets/de-HASH.js', 'houseplan-assets/iso-scene-render-HASH.js',
@@ -395,7 +395,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
 test('#486 Rollup names both stable entries explicitly', async () => {
   const { default: config } = await import('../rollup.config.mjs');
   assert.deepEqual(config.input, {
-    'houseplan-card': 'src/houseplan-card.ts',
+    'houseplan-card': 'src/houseplan-ha-card-entry.ts',
     'houseplan-panel': 'src/houseplan-panel.ts',
   });
   assert.equal(config.output.entryFileNames, '[name].js');
@@ -1077,7 +1077,7 @@ test('#535 panel entry reaches the card implementation by its hashed name', () =
   // дистрибутива без версии. Входные файлы отдаются без Cache-Control, поэтому
   // браузер вправе держать копию часами, и устаревшая панель молча работала на
   // прошлой карточке против текущего бэкенда. Хешированное имя это исключает.
-  assert.match(panel, /try\{(?:await import\("\.\/houseplan-assets\/[^"']+\.js"\);)*await import\("\.\/houseplan-assets\/houseplan-card-[^"']+\.js"\)\}catch\(/);
+  assert.match(panel, /try\{(?:await import\("\.\/houseplan-assets\/[^"']+\.js"\);)*await import\("\.\/houseplan-assets\/houseplan-ha-card-entry-[^"']+\.js"\)\}catch\(/);
   assert.match(panel, /customElements\.define\("houseplan-panel",/);
   assert.match(panel, /reload the page/);
   assert.doesNotMatch(
@@ -1117,7 +1117,7 @@ test('#535 no built entry reaches the card by an address without a version', () 
       `${name}: ссылка на карточку по адресу без версии`);
   }
   const card = readFileSync(new URL('houseplan-card.js', dist), 'utf8');
-  assert.match(card, /try\{(?:await import\("\.\/houseplan-assets\/[^"']+\.js"\);)*await import\("\.\/houseplan-assets\/houseplan-card-[^"']+\.js"\)\}catch\(/,
+  assert.match(card, /try\{(?:await import\("\.\/houseplan-assets\/[^"']+\.js"\);)*await import\("\.\/houseplan-assets\/houseplan-ha-card-entry-[^"']+\.js"\)\}catch\(/,
     'сам фасад остаётся стабильным входом Lovelace-ресурса и тянет хешированный чанк');
 });
 
@@ -1566,7 +1566,7 @@ const expectMapAt1018 = (mapped, source, token) => {
 test('#1018 AC3 real fallback rewrite preserves panel source after inserted catch code and leaves fallback generated', () => {
   const cardSource = 'export{Card}from"./houseplan-assets/main-12345678.js";';
   const panelSource = 'const headSentinel=123;import"./houseplan-assets/main-12345678.js";const tailSentinel=456;';
-  const card = { type: 'chunk', isEntry: true, fileName: 'houseplan-card.js', facadeModuleId: '/src/houseplan-card.ts',
+  const card = { type: 'chunk', isEntry: true, fileName: 'houseplan-card.js', facadeModuleId: '/src/houseplan-ha-card-entry.ts',
     imports: [], ...editMappedSource(cardSource, [], { id: 'generated-facade', generated: true }) };
   const panel = { type: 'chunk', isEntry: true, fileName: 'houseplan-panel.js', facadeModuleId: '/src/houseplan-panel.ts',
     imports: [], ...editMappedSource(panelSource, [], { id: '/src/houseplan-panel.ts' }) };

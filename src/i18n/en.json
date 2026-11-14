@@ -1,4 +1,5 @@
 {
+  "standalone.host_error": "Cannot connect to this House Plan host. Check its availability, version and supported APIs, then reconnect.",
   "panel.actions": "Actions",
   "empty.plan_prompt": "The plan is empty. Let’s draw something.",
   "empty.plan_editor": "Plan editor",
