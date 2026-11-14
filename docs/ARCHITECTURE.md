@@ -72,7 +72,7 @@ Capabilities never enter config/layout, export, schema versions or server ACL.
 | zigbee / vacuum / radar / alarms | Their specialized UI, producers, subscriptions and request families; require devices |
 | summary / externalScreens | Summary controls / external-screen UI and scoped config subscription |
 | installationBackup | Full-installation JSON/ZIP and backup HTTP endpoints |
-| planTransfer | Existing single-space export/create and portable preview/revalidate/apply, independently of full backup |
+| planTransfer | Existing single-space export/create and portable preview/revalidate/apply, independently of full backup; a limited host also discards its refused portable candidate through backup/cancel |
 | printing | PDF/SVG entry and device option only when markers are available |
 | planImages | Plan image library/list/delete/upload and image onboarding; saved images remain readable |
 | decorAssets | Imported image library/list/delete/resolve/upload; built-in furniture, shapes and text remain |
@@ -101,7 +101,10 @@ the existing server cascade. Empty/non-authoritative registry projections do
 not authorize cleanup or automatic placement. Saved decor resolves even when
 the asset library is disabled. Full JSON and ZIP are not single-space transfer:
 a transfer-only host refuses ZIP before upload and a full JSON preview before
-apply, discarding the opaque candidate.
+apply, discarding the opaque candidate. An installation-backup-only profile
+likewise refuses a single-space preview. The future limited-host adapter owns
+portable candidate discard; HA's existing full profile does not enter either
+refusal branch or change its ZIP-only cancellation implementation.
 
 Transfer is **one current space**, not the whole multi-floor home. The existing
 importer clears stair links to floors not in that document; the source home and

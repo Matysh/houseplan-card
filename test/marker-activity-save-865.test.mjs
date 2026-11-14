@@ -1,5 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
+import { attachPlanHost } from './helpers/plan-host-fixture.mjs';
 
 const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
 globalThis.window = { customCards: [] };
@@ -30,6 +31,7 @@ function fixture(display = 'badge', save = async () => {}) {
     _cancelDeviceDrag: () => {}, _devicePositionHistory: { clear: () => {} },
     hass: { callWS: async () => ({ rev: 2 }) }, _noteLayoutRev: () => {},
   };
+  attachPlanHost(host);
   const runtime = Object.create(HouseplanEditorRuntime.prototype);
   Object.assign(runtime, { host, _effectiveMarkerTapAction: () => 'info', _effectiveStoredTapAction: () => 'info',
     _prepareConfigCandidate: candidate => candidate,

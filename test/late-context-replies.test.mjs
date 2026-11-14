@@ -106,6 +106,7 @@ function undoHarness(kind = 'optimize', seam = 'write') {
     _getAuthoritativeConfig: (hass, isCurrent) => getAuthoritativeCardConfig(host, hass, isCurrent),
     _adoptAuthoritative: input => adoptAuthoritativeGated(host, input),
   };
+  attachPlanHost(host);
   authority.observe(a);
   adoptStructuralResponses(host, { config: config('A accepted'), rev: 7, can_optimize_undo: true, undo_kind: kind }, { layout: {}, rev: 8 });
   const undo = new PlanOptimizationUndo(host, rec('clearGesture'));

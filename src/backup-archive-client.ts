@@ -144,7 +144,7 @@ export class BackupArchiveClient {
       const data = await response.json().catch(() => { throw transferError(fallback); }) as PreviewReply & { error?: string };
       if (!this.current(owner)) throw transferError('context-changed');
       if (!response.ok || data.error) throw transferError(data.error || fallback);
-      if (!owner.port.capabilities.installationBackup && data.preview.kind !== 'space') {
+      if (data.preview.kind === 'space' ? !owner.port.capabilities.planTransfer : !owner.port.capabilities.installationBackup) {
         this.discard(data.token, owner);
         throw transferError('invalid_format');
       }

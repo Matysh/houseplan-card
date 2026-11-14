@@ -5,6 +5,7 @@
 // (`debounce(…, 500)` + its background failure policy). Only the transport,
 // the timer and post-save UI teardown are substituted.
 import { installAdoption } from './adoption-host.mjs';
+import { attachPlanHost } from './plan-host-fixture.mjs';
 import { HpConfirmController } from '../../test-build/danger-confirm.js';
 import { canonicalizeConfigGeometry } from '../../test-build/coordinate-canonicalization.js';
 import { CommandStack } from '../../test-build/command-stack.js';
@@ -102,6 +103,7 @@ export function editorWriteHarness({ config, rev = 1, reject = null, marker = nu
     rollbacks.push(rolledBack);
     return rolledBack;
   };
+  attachPlanHost(host);
   Object.defineProperty(host, '_markers', { get: () => host._serverCfg?.markers || [] });
   const controller = new HpConfirmController((state) => { if (state) confirms.push(state); });
   host._confirmDanger = (request) => controller.confirm(request);

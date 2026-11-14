@@ -64,6 +64,7 @@ test('#1394 dispatch refuses before transport and does not lend registry/service
   await assert.rejects(host.request(cmd('support/submit')), { code: 'not_ready' });
   await assert.rejects(host.http.request('/api/houseplan/assets/upload'), { code: 'not_ready' });
   await assert.rejects(host.http.postJson('/api/houseplan/structural/upload', cmd('plan/optimize')), { code: 'not_ready' });
+  await assert.rejects(host.http.request('/api/houseplan/structural/upload'), { code: 'not_ready' });
   assert.equal(lab.commands.length, 0);
   assert.equal(permitsCommand(host.capabilities, cmd('marker/history')), true);
   assert.equal(permitsCommand(host.capabilities, cmd('virtual_light/toggle')), false);
@@ -73,6 +74,18 @@ test('#1394 replacement adapters with identical raw authority still retire old c
   const second = capabilityHost({ ...lab.host, capabilities: planCapabilities([]) });
   assert.notEqual(first.authorityKey, second.authorityKey);
   assert.equal(first.authorityKey, first.authorityKey);
+});
+test('#1394 metadata projection observes a reused environment object with a new revision', () => {
+  const lab = fixture(planCapabilities(['haAreas']));
+  let revision = 1;
+  const environment = { ...lab.host.environment, registry: { ...lab.host.environment.registry, areas: {} } };
+  const source = { ...lab.host, get environment() { return environment; }, get environmentRevision() { return revision; } };
+  const host = capabilityHost(source);
+  assert.deepEqual(host.environment.registry.areas, {});
+  environment.registry = { ...environment.registry, areas: { room: { area_id: 'room', name: 'New area' } } };
+  revision++;
+  assert.equal(host.environment.registry.areas.room.name, 'New area');
+  assert.deepEqual(host.environment.registry.devices, {});
 });
 test('#1394 HA capability never grants server write permission', async () => {
   const calls = [], host = new HaPlanHost({ user: { id: 'viewer', is_admin: false }, callWS: async value => {
@@ -103,4 +116,10 @@ test('#1394 transfer-only accepts a space preview but refuses full JSON and ZIP 
   assert.equal(lab.commands.some(command => command.type === 'houseplan/import/apply'), false);
   assert.equal(lab.commands.filter(command => command.http).length, 2, 'ZIP never reached transport');
   assert.ok(lab.commands.some(command => command.type === 'houseplan/backup/cancel'), 'rejected portable candidate discarded');
+});
+test('#1394 installation-backup alone does not implicitly enable single-space transfer', async () => {
+  const lab = fixture(planCapabilities(['installationBackup']));
+  const client = new BackupArchiveClient({ planHost: lab.host, isConnected: true, _space: 'local', _t: key => key, _showToast() {} });
+  await assert.rejects(client.preview(new File([JSON.stringify({ kind: 'space', config: config() })], 'space.json')), { code: 'invalid_format' });
+  assert.equal(lab.commands.some(command => command.type === 'houseplan/import/apply'), false);
 });

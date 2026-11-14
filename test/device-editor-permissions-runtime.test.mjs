@@ -1,5 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
+import { attachPlanHost } from './helpers/plan-host-fixture.mjs';
 
 const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
 globalThis.window = { customCards: [] };
@@ -13,6 +14,7 @@ test('#844 the real runtime refuses a forbidden entry before acknowledgement or 
       _vacAllCamerasFor: 'retained', _vacAllCameraCache: 'retained',
       _markerDialog: null, _ackNewDevice: id => acknowledgements.push(id),
       _showToast: key => notices.push(key), _t: key => key };
+    attachPlanHost(host);
     const runtime = Object.create(HouseplanEditorRuntime.prototype);
     runtime.host = host;
     runtime._openMarkerDialog({ id: 'new-device' });
@@ -31,6 +33,7 @@ test('#1050 actual dialog owner rechecks a retired current-target resolver after
   const host={_canEdit:true,_kiosk:false,_norm:false,_markerDialog:null,
     _vacAllCamerasFor:'retained',_vacAllCameraCache:'retained',
     _ackNewDevice:id=>acknowledgements.push(id),_showToast:()=>{},_t:key=>key};
+  attachPlanHost(host);
   const runtime=Object.create(HouseplanEditorRuntime.prototype);runtime.host=host;
   runtime.properties={beforeIntent:callback=>{retry=callback;return false;},selectDevice:d=>{selected.push(d);return true;}};
   runtime._openMarkerDialog(initial,()=>current);

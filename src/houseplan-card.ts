@@ -14423,7 +14423,10 @@ export class HouseplanCard extends LitElement {
         || this.hass?.states?.[entityId]?.state !== 'locked') return;
     }
     try { await this.planHost.deviceServices?.call('lock', action, { entity_id: entityId }); }
-    catch (error) { this._showToast(this._t('toast.error', { err: this._errText(error) }), 'toast.error'); }
+    catch (error) {
+      if (this.planHost.authorityKey === authority && this.planHost.writeAuthorityRevision === revision)
+        this._showToast(this._t('toast.error', { err: this._errText(error) }), 'toast.error');
+    }
   }
 
   private _renderOpeningInfoCard(): TemplateResult {

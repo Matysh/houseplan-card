@@ -8,7 +8,6 @@ import { planCapabilities, permitsCommand, permitsHttp } from '../test-build/pla
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 
 requirePinnedBrowser();
-const planOnly = process.argv.includes('--plan-only');
 const poly = [[.1, .1], [.9, .1], [.9, .75], [.1, .75]];
 const config = { model_version: 10, spaces: [{ id: 'local', title: 'Local plan', cell_cm: 5,
   view_box: [0, 0, 1, 1], rooms: [{ id: 'room', name: 'Room', poly }], wall_segments: [],
@@ -19,8 +18,8 @@ const config = { model_version: 10, spaces: [{ id: 'local', title: 'Local plan',
     host: { kind: 'partition', id: 'wall', t: 1 / 3 } }],
   decor: [{ id: 'rect', kind: 'rect', x: .2, y: .3, w: .2, h: .1, color: '#718b82', opacity: 1, width_cm: 2 }],
 }], markers: [{ id: 'keep', binding: 'entity:light.kept', space: 'local' }], settings: { filter_seeded: true } };
+async function runProfile(planOnly) {
 const { page, browser } = await launchPanelCold({ width: 1680, height: 1100 });
-page.on('pageerror', error => console.error('plan-host page error', error));
 page.setDefaultTimeout(12000);
 const card = page.locator('houseplan-card'), panel = card.locator('[data-hp="properties-panel"]');
 const settle = () => page.evaluate(() => window.__hpTest.settled());
@@ -261,3 +260,5 @@ try {
   await page.evaluate(() => window.__card.remove());
   check('host.driver_disposed', await page.evaluate(() => window.__planHostLab.listenerCount), 0);
 } finally { await finish(browser, { scenario: planOnly ? 'plan-only capabilities' : 'port-only plan host' }); }
+}
+for (const profile of process.argv.includes('--plan-only') ? [true] : [false, true]) await runProfile(profile);

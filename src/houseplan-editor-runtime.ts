@@ -9929,6 +9929,7 @@ public _renderBackupImportDialog(): TemplateResult {
     return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host._presentation} data-kind="backup" .title=${this.host._t('backup.import_title')}
       icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => this._closeBackupImport()}>
       <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
+        ${!this.host.planHost.capabilities.installationBackup ? callout({ text: this._toolsT('backup.single_space_limit') }) : nothing}
         <div class="backupfile hpf-reading-entry"><b>${d.filename}</b><span>${(d.size / 1024).toFixed(1)} KB</span></div>
         ${d.busy && !p ? html`<div class="rhint" role="status" aria-live="polite">${this.host._t('backup.reading')}</div>` : nothing}
         ${d.error ? html`${callout({ className:'backuperror', kind:'danger', role:'alert', body:html`${d.error}` })}` : nothing}

@@ -402,7 +402,7 @@ test('header retirement native witness is selected for its actual runtime owner'
  assert.equal(row.layer,'product');assert.ok(row.domains.includes('presentation'));assert.equal(row.lifecycle,'task-release');
 }));
 test('#1394 capability profiles and permission oracles own storage/runtime domains', () => {
- for (const path of ['src/plan-capabilities.ts', 'test/plan-capability-permissions.test.mjs', 'demo/smoke_plan_capabilities.mjs']) {
+ for (const path of ['src/plan-capabilities.ts', 'test/plan-capability-permissions.test.mjs', 'demo/smoke_plan_host.mjs']) {
   assert.ok(domainsOf(path).includes('storage'), path);
   assert.ok(domainsOf(path).includes('runtime'), path);
  }

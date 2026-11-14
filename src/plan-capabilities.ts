@@ -80,12 +80,12 @@ export function capabilityHost(source: PlanHost): PlanHost {
     if (rawAuthority !== source.authorityKey) { rawAuthority = source.authorityKey; localAuthority = {}; }
     return localAuthority;
   };
-  let previous: PlanHost['environment'] | undefined, projection: PlanHost['environment'];
+  let previous: PlanHost['environment'] | undefined, previousRevision = -1, projection: PlanHost['environment'];
   const environment = (): PlanHost['environment'] => {
     const current = source.environment;
     if (capabilities.devices && capabilities.haAreas) return current;
-    if (current !== previous) {
-      previous = current;
+    if (current !== previous || source.environmentRevision !== previousRevision) {
+      previous = current; previousRevision = source.environmentRevision;
       const empty = Object.freeze({});
       projection = Object.freeze({ ...current, states: capabilities.devices ? current.states : empty,
         registry: Object.freeze({ ...current.registry,
@@ -109,7 +109,13 @@ export function capabilityHost(source: PlanHost): PlanHost {
     subscribeEnvironment: receive => source.subscribeEnvironment(receive),
     content: source.content,
     http: {
-      async request(path, init) { allowed(permitsHttp(capabilities, path)); return source.http.request(path, init); },
+      async request(path, init) {
+        allowed(permitsHttp(capabilities, path));
+        // Structural bodies use postJson, where their command purpose can be
+        // checked before allocating staging, not an opaque multipart escape.
+        if (capabilities !== HA_CAPABILITIES && path === '/api/houseplan/structural/upload') allowed(false);
+        return source.http.request(path, init);
+      },
       async postJson(path, value, signal) {
         allowed(permitsHttp(capabilities, path));
         if (path === '/api/houseplan/structural/upload') allowed(typeof value.type === 'string'

@@ -1354,7 +1354,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_radar_setup.mjs',
     because: '#947 AC5: old manual profiles retain a real editable Details path and the existing on-plan setup; the browser independently checks projection and save boundaries through that entry',
     patches: [{file:'src/editors/marker-dialog.ts',
-      find:'    const legacyRadar = !automaticRadar && !!persistedMarker?.radar;',
+      find:'    const legacyRadar = c.radar && !automaticRadar && !!persistedMarker?.radar;',
       replace:'    const legacyRadar = false;',
     }],
   },
@@ -1859,8 +1859,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_info_card_confirm.mjs',
     because: '#849 AC1/AC2: the actual service port must receive exactly the secondary row entity, never the parent marker controls target; the resolver unit cannot prove the dispatch adapter.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '      this.hass.callService(intent.command.domain, intent.command.service, intent.command.data)',
-      replace: '      this.hass.callService(intent.command.domain, intent.command.service, { entity_id: current.controls?.[0] || eid })' }],
+      find: '      this.planHost.deviceServices?.call(intent.command.domain, intent.command.service, intent.command.data)',
+      replace: '      this.planHost.deviceServices?.call(intent.command.domain, intent.command.service, { entity_id: current.controls?.[0] || eid })' }],
   },
   {
     id: 'info-card-confirmation-imitates-dispatch-feedback',
@@ -2527,8 +2527,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-editor-permissions-runtime.test.mjs',
     because: '#844 AC4: the runtime independently rejects a denied port before acknowledgement.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: 'public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): void {\n    if (currentTarget) { const current = currentTarget(); if (!current) return; d = current; }\n    if (!deviceEditorAllowed(this.host._canEdit, this.host._kiosk)) return;',
-      replace: 'public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): void {\n    if (currentTarget) { const current = currentTarget(); if (!current) return; d = current; }' }],
+      find: 'public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): void {\n    const c = this.host.planHost.capabilities;\n    if (d ? (d.marker?.binding === \'virtual\' || d.bindingKind === \'virtual\' ? !c.virtualDevices : !c.devices) : !hasMarkers(c)) return;\n    if (currentTarget) { const current = currentTarget(); if (!current) return; d = current; }\n    if (!deviceEditorAllowed(this.host._canEdit, this.host._kiosk)) return;',
+      replace: 'public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): void {\n    const c = this.host.planHost.capabilities;\n    if (d ? (d.marker?.binding === \'virtual\' || d.bindingKind === \'virtual\' ? !c.virtualDevices : !c.devices) : !hasMarkers(c)) return;\n    if (currentTarget) { const current = currentTarget(); if (!current) return; d = current; }' }],
   },
   {
     id: 'view-settings-retired-intent-accepted',
@@ -2591,8 +2591,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_view_edit_permissions.mjs --only=lifecycle',
     because: '#844 AC4 inverse guard: kiosk writer still detects new registry devices automatically.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '  private _syncNewDevices(): void {\n    if (!this._norm || !this._loadOk || !this._serverCfg || !this._canEdit) return;',
-      replace: '  private _syncNewDevices(): void {\n    if (!this._norm || !this._loadOk || !this._serverCfg || !this._canEdit || this._kiosk) return;' }],
+      find: '  private _syncNewDevices(): void {\n    if (!this.planHost.capabilities.devices) return;\n    if (!this._norm || !this._loadOk || !this._serverCfg || !this._canEdit) return;',
+      replace: '  private _syncNewDevices(): void {\n    if (!this.planHost.capabilities.devices) return;\n    if (!this._norm || !this._loadOk || !this._serverCfg || !this._canEdit || this._kiosk) return;' }],
   },
 {
   "id": "wall-identity-ts-forgets-stairs",
@@ -11415,8 +11415,8 @@ const MUTANT_DEFINITIONS = [
       + 'условия снова убирает Area icon и сдвигает подпись относительно anchor',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    const showAreaLink = !!r.area && areaAffordance.visible;',
-      replace: '    const showAreaLink = !this._markup && !!r.area && areaAffordance.visible;',
+      find: '    const showAreaLink = this.planHost.capabilities.haAreas && !!r.area && areaAffordance.visible;',
+      replace: '    const showAreaLink = this.planHost.capabilities.haAreas && !this._markup && !!r.area && areaAffordance.visible;',
     }],
   },
   {

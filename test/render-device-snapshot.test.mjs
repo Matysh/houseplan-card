@@ -334,13 +334,14 @@ test('lock actuation remains guarded inside the one sanctioned opening-card meth
   const guardAt = action.indexOf('_openingEntityAvailable(entityId)');
   const confirmAt = action.indexOf('await this._confirmDanger');
   const recheckAt = action.indexOf('_openingEntityAvailable(entityId)', guardAt + 1);
-  const serviceAt = action.indexOf("callService?.('lock'");
+  const serviceAt = action.indexOf("deviceServices?.call('lock'");
   assert.ok(
     guardAt >= 0 && guardAt < confirmAt && confirmAt < recheckAt && recheckAt < serviceAt,
     'unlock revalidates the opening binding and entity after confirmation',
   );
   assert.match(action, /state !== 'locked'/);
-  assert.equal(source.match(/callService\?\.\('lock'/g)?.length, 1);
+  assert.equal(source.match(/deviceServices\?\.call\('lock'/g)?.length, 1);
+  assert.ok(action.includes('capabilities.deviceServices'), 'host availability is checked without replacing the binding/confirmation guards');
   assert.equal(source.match(/this\._lockAction\(/g)?.length, 1, 'only the opening card button calls it');
 });
 
