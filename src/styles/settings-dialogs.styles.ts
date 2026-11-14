@@ -83,7 +83,8 @@ hp-dialog[settings-layout] .hpf-footer-object .dialog-action-commit{grid-column:
 .hpf-settings-pane [data-card=data] .hpf-actions{gap:10px;}
 .hpf-converter .hpf-link{display:inline-block;margin-bottom:7px;}
 .hpf-north-control{display:grid;grid-template-columns:148px minmax(0,1fr);align-items:center;gap:18px;}
-.hpf-north-dial{width:148px;height:148px;min-width:0;border:0;padding:0;border-radius:50%;background:transparent;color:var(--primary-text-color);cursor:pointer;touch-action:none;}
+.hpf-north-dial{box-sizing:border-box;width:148px;height:148px;min-width:0;border:1px solid transparent;padding:0;border-radius:50%;background:transparent;color:var(--primary-text-color);cursor:pointer;touch-action:none;}
+:host([data-pointer-hover]) .hpf-north-dial:hover{border-color:var(--hpf-accent,var(--primary-color));}
 .hpf-north-dial svg{width:100%;height:100%;font-size:10px;}
 .hpf-north-dial.hpf-unset{opacity:.45;}
 .hpf-north-values{display:grid;gap:18px;min-width:0;}
@@ -97,8 +98,8 @@ hp-dialog[settings-layout] .hpf-footer-object .dialog-action-commit{grid-column:
 hp-dialog[data-kind=room][settings-layout] .hpf-grid{grid-template-columns:minmax(0,1fr);}
 .hpf-settings-form .cardpreview{border:0;width:100%;margin:0;color:var(--hpf-accent);}
 .hpf-settings-form .cardpreview .cpmeta > span{display:inline-flex;align-items:center;gap:.2em;white-space:nowrap;}
-.hpf-settings-form .iconbtn{width:44px;height:44px;min-width:44px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:50%;color:inherit;background:transparent;transition:background 160ms;}
-.hpf-settings-form .iconbtn:hover{background:var(--hpf-tint);}
+.hpf-settings-form .iconbtn{box-sizing:border-box;width:44px;height:44px;min-width:44px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:50%;color:inherit;background:transparent;transition:background 160ms;}
+.hpf-settings-form .iconbtn:hover{background:var(--hpf-tint);border-color:var(--hpf-accent,var(--primary-color));}
 .hpf-settings-form .hpf-seg:has(input[name=bmode]){grid-template-columns:repeat(2,minmax(0,1fr));}
 .hpf-settings-form .hpf-seg:has(input[name=bmode]) label{min-width:0;white-space:nowrap;font-size:12px;}
 .hpf-settings-form .led-representation > .row{justify-content:flex-start;border:0;padding:0;}

@@ -548,8 +548,8 @@ ${options.parameterized ? `  .${p}-callout.${p}-success { background:color-mix(i
   .${p}-chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .${p}-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 4px 0 10px; border: 1px solid var(${tokens.tintLine}); border-radius: 18px; background: var(${tokens.tint}); color: var(${tokens.accent}); font-size: .875rem; font-weight: 500; }
   .${p}-chip > ha-icon { --mdc-icon-size: 16px; }
-  .${p}-chip > button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; --mdc-icon-size: 14px; }
-  .${p}-chip > button:hover { background: color-mix(in srgb, var(${tokens.accent}) 15%, transparent); }
+  .${p}-chip > button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: ${options.parameterized ? '1px solid transparent; box-sizing:border-box' : '0'}; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; --mdc-icon-size: 14px; }
+  .${p}-chip > button:hover { background: color-mix(in srgb, var(${tokens.accent}) 15%, transparent);${options.parameterized ? ` border-color:var(${tokens.accent});` : ''} }
   .${p}-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .${p}-choice { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 5px; min-width: 0; min-height: 80px; padding: 13px 35px 13px 12px; border: 1px solid var(${tokens.line}); border-radius: 8px; cursor: pointer; }
   .${p}-choice input { position: absolute; right: 12px; top: 16px; width: 16px; height: 16px; margin: 0; accent-color: var(${tokens.accent}); }
