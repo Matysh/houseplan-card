@@ -35,6 +35,41 @@ def read(path, tmp_path, name="stage"):
     return archive.read_archive(path, stage)
 
 
+@pytest.mark.parametrize("encoding", ["utf-16", "utf-32"])
+def test_strict_manifest_encoding_refusal_preserves_ha_compatibility(tmp_path, encoding):
+    path, value = backup(tmp_path)
+    with zipfile.ZipFile(path) as source:
+        entries = {name: source.read(name) for name in source.namelist()}
+    entries["manifest.json"] = entries["manifest.json"].decode("utf-8").encode(encoding)
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as output:
+        for name, raw in entries.items():
+            output.writestr(name, raw)
+    assert read(path, tmp_path, "ha").document["kind"] == value["kind"]
+    with input_scope(STRICT_INPUT_POLICY, clock=lambda: 0):
+        with pytest.raises(ImportFailure) as error:
+            read(path, tmp_path, "strict")
+        assert error.value.code == "invalid_json"
+        assert error.value.reason == "json_encoding"
+    assert list((tmp_path / "strict").iterdir()) == []
+
+
+@pytest.mark.parametrize("operation", ["expanded", "read"])
+@pytest.mark.parametrize("reason", ["cancelled", "time"])
+def test_directory_budget_errors_use_the_archive_domain_contract(tmp_path, operation, reason):
+    path, _ = backup(tmp_path)
+    now, cancelled = [0.0], [False]
+    with pytest.raises(ImportFailure) as error:
+        with input_scope(STRICT_INPUT_POLICY, clock=lambda: now[0], cancel=lambda: cancelled[0]):
+            if reason == "cancelled":
+                cancelled[0] = True
+            else:
+                now[0] = 5.1
+            archive.expanded_size(path) if operation == "expanded" else read(path, tmp_path)
+    assert error.value.reason == reason
+    assert error.value.code == ("zip_cancelled" if reason == "cancelled" else "capacity_exceeded")
+    assert not (tmp_path / "stage").exists() or list((tmp_path / "stage").iterdir()) == []
+
+
 @pytest.mark.parametrize("name", [
     "../outside", "/absolute", "C:/file", "images//file", "images/./file",
     "images/../../file", "windows\\file", "nul\x00hidden",

@@ -36,6 +36,9 @@ thread/process. ContextVar переносит один бюджет через �
 `json.loads` и выделения дерева, и возвращает `capacity_exceeded`.
 Сканер считает контейнеры, скаляры и object keys; скобки/escape внутри строк
 инертны. Синтаксис, дубликаты и запрет prototype keys остаются у decoder.
+Strict scanner принимает только UTF-8: raw NUL отклоняется до decoder,
+исключая UTF-16/32 autodetection. Экранированный U+0000 остаётся обычными
+UTF-8 bytes. Без strict bounds HA сохраняет прежние кодировки ZIP JSON.
 
 Доказательства: `test_ha_deep_copy_failure_is_a_domain_error_without_new_depth64_cap`,
 `test_depth_guard_runs_before_the_json_decoder_and_preserves_source`, реальный
@@ -100,6 +103,25 @@ HA сохраняет прежний fallback без Pillow. Strict при не�
 `decor_assets.validate_asset`. Тест выключает import Pillow и различает оба
 профиля. Это не замена sandbox для native image decoder.
 
+### F7 — High: обход нового pre-scan через UTF-16/32 — исправлено после ревью
+
+Первое code review установило расхождение: `strict_json` сохранял auto-detect
+`json.loads(bytes)`, а scanner понимал ASCII bytes. Экранированная кавычка
+UTF-16/32 переворачивала учёт строки и скрывала последующую вложенность.
+До ремонта восемь fixtures (LE/BE,16/32bit, с/без BOM) достигали запрещённого
+spy-decoder вместо раннего отказа. Теперь raw NUL в strict scan даёт
+`invalid_json`, reason=`json_encoding`, до `json.loads`. HA без strict bounds
+сохранён: настоящий ZIP с UTF-16/32 manifest принимается HA, но отклоняется
+strict до staging write. UTF-8 имеет положительного соседа.
+
+После замечания о SVG исправлен и каталог:8MiB — предел исходных bytes
+строгой подложки, **не обещание допуска8MiB SVG-геометрии**. Она также проходит
+прежние decor content caps, включая canonical output2MiB; whitelist не расширен.
+Для HA-допустимого содержимого, запрещённого strict, caller получает
+`capacity_exceeded`, reason=`strict_image_policy`, вместо неразличимого общего
+invalid_image. Отсутствующий raster decoder по-прежнему даёт not_ready.
+Reason сохраняется в доменной ошибке архива, не автоматически в HA protocol.
+
 Подтверждённых открытых High в исследованном scope нет. Остаточные ограничения
 F5 относятся к реализации будущего сервиса, не объявлены выполненными здесь.
 
@@ -110,13 +132,13 @@ F5 относятся к реализации будущего сервиса, �
 | Portable JSON / config |32/16 MiB|те же|`import_export.parse_document`, config schema/Store|
 | ZIP / expanded total |2/2 GiB|256/512 MiB|`backup_archive._check_directory`, `expanded_size`, streaming `read`|
 | Central directory / entries |2 MiB/1600 actual|те же|pre-ZipFile header walk + `_validate_info`|
-| Manifest / plan / decor / attachment |2/8/2/50 MiB|те же|descriptors, actual bytes, typed image validation|
+| Manifest / plan / decor / attachment input bytes |2/8/2/50 MiB|те же внешние ceilings; ниже дополнительные content caps|descriptors, actual bytes, typed image validation|
 | Structural payload / staged total |32/64 MiB|те же + JSON bounds|`structural_upload.parse_payload`, manager append|
-| JSON depth / nodes |нет нового cap; безопасный отказ recursion|64/1,000,000|bytes pre-scan; keys + scalar/container values|
+| JSON depth / nodes |нет нового cap; безопасный отказ recursion|UTF-8 only,64/1,000,000|bytes pre-scan; keys + scalar/container values|
 | JSON суммарные строки |ограничены JSON bytes; имена500 chars|то же|bytes/schema, не новый отдельный string-tree allocator|
 | XML depth |decor64; backdrop XML opaque|64 + decor whitelist для backdrop|Expat до ElementTree, затем прежняя SVG validation|
-| Raster dimensions / pixels |16384 /33,554,432|те же, decoder обязателен|signature/header bounds + Pillow decode|
-| Decor SVG elements / attrs / ref depth |5000 /512000 total chars /64|те же|decor whitelist; single attr65536 chars|
+| Raster dimensions / pixels |decor16384 /33,554,432; backdrop только signature+8MiB, без pixel cap|decor и backdrop16384 /33,554,432, decoder обязателен|decor header bounds + Pillow decode; отдельный HA backdrop rule|
+| Decor SVG / strict backdrop content caps |decor: canonical output2MiB,5000elements,512000attrs chars,ref depth64; HA backdrop эти caps не получает|те же decor caps, в том числе для backdrop|reject whitelist; single attr65536chars; dimensions/pixels как у decor|
 | Graph nodes/edges / rooms |404000/202000 /400 per space|не выше HA|`validate_graph`, 200000 walls/2000 partitions, room cycle<=500|
 | Exact numeric intermediates |4096bits|то же|`plan_graph_exact.integer`/rational operations|
 | Geometry budget / time |нет нового cap|2,000,000units /5s|один `input_scope`, не timeout продолжающегося thread|
@@ -153,9 +175,13 @@ DTD/entity expansion, исходные Sweet Home3D/LibreOffice bytes и ZIP rou
 foreignObject внутри старой подложки не переименованы в «safe SVG content»:
 их обезвреживает image context и отдача `CSP: sandbox` + `nosniff`.
 Реальный HA тест `test_uploaded_svg_is_sandboxed_and_a_pdf_is_not` защищает headers.
-Future strict backdrop использует тот же decor whitelist как **reject**, не
-sanitizer: bytes/hash не переписываются. Безопасная3-MiB подложка проходит strict
-ZIP обратно неизменённой (не ошибочно ограничена decor2MiB).
+Future strict backdrop использует тот же decor whitelist и content caps как
+**reject**, не sanitizer: bytes/hash не переписываются.3-MiB comment-fixture
+подтверждает только round-trip оригинальных bytes: комментарий не входит в
+canonical SVG и не доказывает допуск3MiB геометрии.3-MiB `desc`-fixture
+сохраняется при канонизации и отвергается strict (`strict_image_policy`), но
+остаётся допустимой HA-подложкой.5000элементов/512000атрибутных символов также
+могут ограничить strict раньше8MiB.
 
 ### Файлы, отмена, атомарность
 
@@ -185,6 +211,18 @@ Ubuntu24.04 WSL2, Python3.14.7, kernel6.18.33.2-microsoft-standard-WSL2.
 5s/5s+epsilon проверяются детерминированно, отдельно от замера wall-clock.
 Реальный дом с изображениями/маркерными данными здесь не бенчмаркался.
 
+После ревью измерен **полный `parse_document`**, не только `validate_graph`:
+1этаж×400комнат,371213bytes →390.32ms/86544units/accepted;
+10этажей×400комнат,3708125bytes →4271.03ms/865440units/accepted.
+Генерация/project/create_export были вне таймера в HA default scope, сам import
+— в одном strict request scope.50×400fixture (18413938config bytes) превышает
+прежний16-MiB config ceiling уже при подготовке source: graph_document_limit.
+Его strict import **не измерен и не назван прошедшим**. Верхние counters не
+обещают допустимость любой комбинации максимумов. На более медленной машине
+вторичный5s может сработать раньше2M units; время не гарантирует успех одного
+большого файла на любой машине. Внешний watchdog для полной подготовки60s,
+он нигде не засчитан как защита ядра.
+
 ## Воспроизведение и тестовые границы
 
 Из подготовленного WSL, обычного checkout, без пользовательского HA:
@@ -192,6 +230,7 @@ Ubuntu24.04 WSL2, Python3.14.7, kernel6.18.33.2-microsoft-standard-WSL2.
 ```sh
 python scripts/security/input_capacity.py --profile strict
 python scripts/security/input_capacity.py --profile ha
+python scripts/security/input_capacity.py --profile strict --full-import
 python scripts/security/input_capacity.py --profile ha --root /path/to/pre-fix-checkout
 python -m pytest -q tests_backend/test_input_policy.py tests_backend/test_input_archive_security.py tests_backend/test_ha_input_security.py
 ```

@@ -262,7 +262,12 @@ def plan_image_ext(raw: bytes, name: str, limit: int = MAX_PLAN_BYTES) -> str:
     if current_policy().strict:
         # Reuse the decor validator, never its canonicalized output: a strict
         # backdrop is rejected or retains its ORIGINAL bytes/hash.
-        validate_asset(raw, name, max_bytes=limit)
+        try:
+            validate_asset(raw, name, max_bytes=limit)
+        except DecorAssetError as err:
+            if err.code == "not_ready":
+                raise
+            raise InputLimit("strict_image_policy") from err
     return ext
 
 
@@ -418,23 +423,25 @@ class ArchivePayload:
 
 
 def expanded_size(path: Path) -> int:
-    _check_directory(path)
     try:
+        _check_directory(path)
         with zipfile.ZipFile(path) as archive:
             size = sum(info.file_size for info in archive.infolist())
         if size > min(MAX_EXPANDED_BYTES, current_policy().expanded_bytes):
             raise fail("zip_limit")
         return size
+    except InputLimit as err:
+        raise ImportFailure(err.code, str(err), reason=err.reason) from err
     except (OSError, zipfile.BadZipFile) as err:
         raise fail() from err
 
 
 def read_archive(path: Path, staging: Path, check: Callable[[int], None] | None = None) -> ArchivePayload:
     """Only caller-owned private staging is written; archive names never select paths."""
-    _check_directory(path)
     expanded = 0
     maximum_expanded = min(MAX_EXPANDED_BYTES, current_policy().expanded_bytes)
     try:
+        _check_directory(path)
         with zipfile.ZipFile(path) as archive:
             infos = archive.infolist()
             names = [info.filename for info in infos]
@@ -563,7 +570,7 @@ def read_archive(path: Path, staging: Path, check: Callable[[int], None] | None 
                 blobs[name] = dest
             return ArchivePayload(document, manifest, topics, blobs)
     except InputLimit as err:
-        raise ImportFailure(err.code, str(err)) from err
+        raise ImportFailure(err.code, str(err), reason=err.reason) from err
     except DecorAssetError as err:
         if current_policy().strict:
             raise ImportFailure(err.code, str(err)) from err

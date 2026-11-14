@@ -169,6 +169,12 @@ def check_json_bounds(raw: bytes, limit: int) -> None:
         if index & 65535 == 0:
             checkpoint()
         char = raw[index]
+        # UTF16/32 autodetection is not an ASCII-byte grammar. Every encoding
+        # of JSON syntax in those forms contains NUL. UTF8 JSON permits only
+        # escaped U+0000, not this raw byte. Reject before tree allocation.
+        # HA without structural bounds retains its historical decoder path.
+        if char == 0:
+            raise InputLimit("json_encoding", code="invalid_json")
         if quoted:
             if escaped:
                 escaped = False

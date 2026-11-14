@@ -180,10 +180,11 @@ _DECOR_KIND_FIELDS = {
 class ImportFailure(Exception):
     """Stable public import error."""
 
-    def __init__(self, code: str, message: str = "") -> None:
+    def __init__(self, code: str, message: str = "", *, reason: str | None = None) -> None:
         super().__init__(message or code)
         self.code = code
         self.message = message or code
+        self.reason = reason
 
     @property
     def public_message(self) -> str:
@@ -783,7 +784,7 @@ def parse_document(
     try:
         check_json_bounds(raw, MAX_EXPORT_BYTES)
     except InputLimit as err:
-        raise ImportFailure(err.code, str(err)) from err
+        raise ImportFailure(err.code, str(err), reason=err.reason) from err
     try:
         # utf-8-sig accepts a BOM only at the very start.  A later U+FEFF is a
         # normal character and cannot disguise trailing JSON.
@@ -856,7 +857,7 @@ def parse_document(
         config = _appearance_config(config_candidate)
         config.pop("model_version", None)
     except InputLimit as err:
-        raise ImportFailure(err.code, str(err)) from err
+        raise ImportFailure(err.code, str(err), reason=err.reason) from err
     except RecursionError as err:
         raise ImportFailure("invalid_config", "The document structure cannot be processed") from err
     except (vol.Invalid, TypeError, ValueError) as err:

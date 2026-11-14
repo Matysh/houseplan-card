@@ -106,6 +106,27 @@ def test_json_string_escapes_are_not_structural_tokens():
         check_json_bounds(b'\xef\xbb\xbf' + raw, len(raw) + 3)
 
 
+@pytest.mark.parametrize("encoding", ["utf-16-le", "utf-16-be", "utf-32-le", "utf-32-be"])
+@pytest.mark.parametrize("bom", [False, True])
+def test_strict_zip_json_refuses_alternate_encoding_before_decoder(encoding, bom, monkeypatch):
+    # An escaped quote changes the ASCII-byte scanner's string state for
+    # UTF16/32, hiding the following containers from its old depth counter.
+    text = json.dumps({"escape": '"'})[:-1] + ',"x":' + '[' * 65 + '0' + ']' * 65 + '}'
+    raw = text.encode(encoding)
+    if bom:
+        raw = {"utf-16-le": b'\xff\xfe', "utf-16-be": b'\xfe\xff',
+               "utf-32-le": b'\xff\xfe\0\0', "utf-32-be": b'\0\0\xfe\xff'}[encoding] + raw
+    assert strict_json(raw, 4096)["escape"] == '"'  # Preserve the existing HA decoder contract.
+    with input_scope(STRICT_INPUT_POLICY, clock=lambda: 0):
+        assert strict_json(b'{"escape":"safe","x":[0]}', 4096)["x"] == [0]
+        def forbidden(*_args, **_kwargs):
+            raise AssertionError("alternate encoded tree reached json.loads")
+        monkeypatch.setattr(import_export.json, "loads", forbidden)
+        with pytest.raises(InputLimit) as error:
+            strict_json(raw, 4096)
+        assert error.value.reason == "json_encoding"
+
+
 def test_depth_guard_runs_before_the_json_decoder_and_preserves_source(tmp_path, monkeypatch):
     base = json.dumps(document(tmp_path)).encode()
     raw = base.replace(b'"extra": null', b'"extra":' + b'[' * 1500 + b'0' + b']' * 1500)
@@ -248,8 +269,9 @@ def test_strict_backdrop_rejects_active_svg_without_rewriting_ha_bytes():
     active = b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
     assert plan_image_ext(active, "plan.svg") == ".svg"
     with input_scope(STRICT_INPUT_POLICY, clock=lambda: 0):
-        with pytest.raises(DecorAssetError):
+        with pytest.raises(InputLimit) as error:
             plan_image_ext(active, "plan.svg")
+        assert error.value.reason == "strict_image_policy"
         assert plan_image_ext(b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2"><path d="M0 0L1 1"/></svg>', "plan.svg") == ".svg"
     assert b"<script>" in active
 
@@ -288,7 +310,7 @@ def test_xml_depth_is_checked_by_encoding_aware_streaming_parser(encoding):
             validate_asset(svg(64), "deep.svg")
 
 
-def test_strict_archive_roundtrip_preserves_large_safe_backdrop_original_bytes(tmp_path):
+def test_strict_archive_preserves_large_comment_bytes_without_claiming_larger_svg_content_limits(tmp_path):
     raw = b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2"><!--' + b'x' * (3 * 1024**2) + b'--><path d="M0 0L1 1"/></svg>'
     root = tmp_path / "source"
     plan = root / "houseplan/plans/source.svg"
@@ -312,3 +334,15 @@ def test_strict_archive_roundtrip_preserves_large_safe_backdrop_original_bytes(t
     assert plan.read_bytes() == raw
     assert exported["payload"]["config"]["spaces"][0]["plan_url"].endswith("source.svg")
     assert expanded_size(archive) > len(raw)
+
+
+def test_strict_backdrop_reports_decor_content_limit_without_changing_ha_acceptance():
+    # Unlike the round-trip comment fixture, desc text survives canonical XML.
+    raw = b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2"><desc>' + b'x' * (3 * 1024**2) + b'</desc></svg>'
+    assert plan_image_ext(raw, "plan.svg") == ".svg"
+    with input_scope(STRICT_INPUT_POLICY, clock=lambda: 0):
+        with pytest.raises(InputLimit) as error:
+            plan_image_ext(raw, "plan.svg")
+        assert error.value.reason == "strict_image_policy"
+        assert error.value.code == "capacity_exceeded"
+    assert raw.endswith(b'</desc></svg>')
