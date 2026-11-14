@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13350,
+  "revision": 13351,
   "nextTicket": 468,
   "nextFence": 464,
   "tasks": {
@@ -4551,147 +4551,25 @@
     },
     "1432": {
       "issue": 1432,
+      "branch": "codex/1432-area-cleanup",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1432-area-cleanup",
-      "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 462,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794684614647,
-      "reviewEntry": 1,
-      "patchId": "9b1f6f5f0aaa10039356e331d7289399d8384f9e",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.85.0/1432.json",
-        "src/houseplan-card.ts"
-      ],
-      "s6": {
-        "id": "20261114T194908975-a771d735",
-        "name": "Тесты для задачи #1432 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T194908975-a771d735/report.json",
-        "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
-        "status": "passed",
-        "finishedAt": "2026-11-14T19:55:34.270Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "891bdbb8d7153de0d5eb6ba7f864622332849878",
+      "mergedSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
+      "mergedAt": 1794686414434,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1432:1:9b1f6f5f0aaa10039356e331d7289399d8384f9e:891bdbb8d7153de0d5eb6ba7f864622332849878",
-      "reviewMaterial": {
-        "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
-        "expectedBase": "891bdbb8d7153de0d5eb6ba7f864622332849878",
-        "patchId": "9b1f6f5f0aaa10039356e331d7289399d8384f9e"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1432,
-        "requestId": "review:1432:1:9b1f6f5f0aaa10039356e331d7289399d8384f9e:891bdbb8d7153de0d5eb6ba7f864622332849878",
-        "kind": "code",
-        "base": "891bdbb8d7153de0d5eb6ba7f864622332849878",
-        "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
-        "patchId": "9b1f6f5f0aaa10039356e331d7289399d8384f9e",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "not-provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1432,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1432",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": ""
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Причина регрессии найдена верно, исправление минимальное и не ослабляет защиту. После выделения PlanHost в коммите 1b90acd62 (#1392) метод `_ensureHaRegistryAuthority` начал сбрасывать `_areaSnapshotCleanupCandidates` при каждой новой registry revision. Кандидат, найденный на первой авторитетной ревизии, терялся до второй, поэтому orphan никогда не подтверждался. До #1392 кандидаты сбрасывались только при смене connection/user. Исправление восстанавливает эту семантику через `planHost.authorityKey`, который вычисляется из тех же connection и user. Подтверждающее чтение теперь идёт через `PlanHost.refreshRegistry`, а не через прямой `refreshHaRegistries(this.hass)`. Чистая функция `resolveAreaSnapshotCleanup` не менялась. Остаются в силе все условия: две разные авторитетные ревизии, непустое пространство имён, отказ от удаления при limited/empty roster, сохранение живых и непроверенных привязок. Безопасный повтор после отказа записи provenance работает: кандидаты не стираются, и при следующей пересборке на той же подтверждающей ревизии та же привязка снова попадает в removeIds. Блокеров нет. Есть одно необязательное улучшение: на пути смены authority в `_intakePlanEnvironment` кандидаты явно не сбрасываются. Эта дыра появилась ещё в #1392, текущий diff её не создаёт.",
-          "understanding": "Проблема. В полном stable-профиле `demo/smoke_area_relocation.mjs` падал на authoritativeOrphanRemoved, confirmedOrphanRemovedAlone и confirmedCleanupRetriesAfterWriteFailure.\n\nМеханизм. `resolveAreaSnapshotCleanup` (src/device-area-relocation.ts:166-224) помнит для каждой отсутствующей привязки ревизию, на которой её отсутствие впервые увидели. Удаление разрешается только на другой авторитетной ревизии с непустым пространством имён. Карта кандидатов хранится в поле карточки `_areaSnapshotCleanupCandidates`.\n\nДо #1392 (v1.85.2, 3f05fb65:5847-5861) `_ensureHaRegistryAuthority` сбрасывал кандидатов только при смене `hass.connection` или `user.id`. В 1b90acd62 метод переписали на `planHost.authorityKey` и `snapshot.revision`: ранний выход срабатывает, только если не изменились обе величины, иначе выполняется общий блок со сбросом. Так кандидаты стали стираться на каждой новой ревизии.\n\nПосле исправления сброс выполняется только при `key !== this._haRegistryConnection`, остальная инвалидация (`_haBindingCacheKey`, `_renderLife`, `_planHassMemo`, `_regSignature`) остаётся на каждой ревизии. `HaPlanHost.identity()` (ha-plan-host.ts:116-118) строит ключ из `connection ?? callWS` и `user.id`. Это совпадает со старой семантикой и с ключом кэша реестров `entryOf` (ha-binding-status.ts:94-106), поэтому номера ревизий сравниваются в пределах одного счётчика.\n\nПодтверждающее чтение теперь идёт через `planHost.refreshRegistry(3000)` → `reloadHaRegistriesBounded` (ha-binding-status.ts:269-281). Он берёт ref на запись кэша, вызывает тот же `refreshHaRegistries` без supersede и завершается по таймауту. Capability-обёртка (plan-capabilities.ts:127) открывает порт только при `devices || haAreas`, а `HaPlanHost.refreshRegistry` проверяет `connected()`.\n\nЧто прослежено:\n- рост `entry.revision` только при завершении загрузки (ha-binding-status.ts:137-176). Projection-снимок ревизию не меняет, поэтому две разные ревизии означают два независимых `config/*_registry/list`. Неудачная загрузка даёт неавторитетную ревизию, она кандидата не продвигает;\n- вызов `_ensureHaRegistryAuthority` из `_consumePlanEnvironment` (houseplan-card.ts:983-1003);\n- путь `_maybeRebuildDevices` → `_resolveAreaRelocations` (6411-6413), который запускается только при `registry.authoritative`;\n- очередь записи `_syncAreaRelocations` (6536-6640) с повторным разрешением, сбросом `_areaRelocationSyncKey` и `_regSignature` после отказа и откатом удалённых точек;\n- блок `authorityChanged` в `_intakePlanEnvironment` (1049-1062);\n- проверки smoke-сценария (demo/smoke_area_relocation.mjs:380-511).",
-          "analysis": [
-            {
-              "topic": "Причина и соответствие исходной семантике",
-              "assessment": "Причина установлена точно, исправление возвращает поведение v1.85.2 и не придумывает новую модель. Сброс на каждой ревизии противоречил самому механизму двух ревизий: подтверждающая ревизия и была той «новой ревизией», которая стирала кандидата. Комментарий в коде объясняет неочевидную причину, а не пересказывает строку, его стоит сохранить.",
-              "evidence": "git_blame: строки 5956-5962 из 1b90acd62 (#1392); 3f05fb65:5847-5861 — до #1392 `_areaSnapshotCleanupCandidates.clear()` выполнялся только после проверки `connection === this._haRegistryConnection && user === this._haRegistryUser`. Head 5960: `if (key !== this._haRegistryConnection) ...clear()`."
-            },
-            {
-              "topic": "Ограничения на удаление не ослаблены",
-              "assessment": "Функция `resolveAreaSnapshotCleanup` не менялась. Удаление по-прежнему требует `authoritative`, непустого пространства имён и ревизии, отличной от ревизии кандидата. Живая привязка (маркер, реестр или live state) снимает кандидата. Независимость ревизий обеспечивает кэш реестров: `revision++` выполняется только в finally завершённой и не вытесненной загрузки, а аддитивная projection в `haRegistrySnapshot` номер ревизии не меняет. Если `refreshHaRegistries` с supersede=false видит идущую загрузку, повторного чтения он не планирует. Но такая загрузка обязательно началась после завершения предыдущей, иначе её не было бы, так что ответ всё равно независимый.",
-              "evidence": "src/device-area-relocation.ts:198-221; src/ha-binding-status.ts:137-189, 312-337."
-            },
-            {
-              "topic": "Повтор после отказа записи provenance",
-              "assessment": "Повтор работает без третьей ревизии реестра: кандидаты больше не сбрасываются, а после отказа `_areaRelocationSyncKey` и `_regSignature` обнуляются. Следующая пересборка на той же подтверждающей ревизии снова даёт removeIds для orphan и не трогает keep. Именно это проверяет confirmedCleanupRetriesAfterWriteFailure (`cleanupWrites >= 2`).",
-              "evidence": "houseplan-card.ts:6600-6625; demo/smoke_area_relocation.mjs:389-394, 407-409, 504-506."
-            },
-            {
-              "topic": "Подтверждающее чтение через PlanHost",
-              "assessment": "Переход на `planHost.refreshRegistry` правильно вписывается в границу #1392/#1394: карточка не трогает транспорт сама, порт закрыт capability-профилем и проверкой `connected()`. `reloadHaRegistriesBounded` ограничен таймаутом и не отклоняет промис, так что `.catch(() => false)` — лишь безвредная защита. Повторный запуск ограничен: refresh запрашивается только при появлении нового кандидата. Smoke-проверка confirmationRefreshRunsOnce фиксирует ровно одно дополнительное чтение, а emptyRegistryDoesNotReloadLoop — отсутствие цикла на пустом roster.",
-              "evidence": "houseplan-card.ts:6491-6492; ha-plan-host.ts:394-397; plan-capabilities.ts:127; demo/smoke_area_relocation.mjs:501-510."
-            },
-            {
-              "topic": "Ограждение при смене authority (ранее существовавшая слабость)",
-              "assessment": "Сброс кандидатов по authorityKey реализован только внутри `_ensureHaRegistryAuthority`, а он вызывается из одного места — `_consumePlanEnvironment`, при совпадающем `inputKey` и изменившемся реестре. Блок `authorityChanged` в `_intakePlanEnvironment` сбрасывает много состояния, но не кандидатов. Поэтому после смены connection/user первая пересборка может пройти со старыми кандидатами, если между кадрами пришёл state tick и `inputKey` сменился. Практический риск низкий: пересборка выполняется только на авторитетном roster новой authority, записи требуют `_loadOk` после перечитывания, а реестр того же HA подтвердил бы отсутствие и сам. Слабость появилась в #1392 и в base была такой же, этот diff её не порождает. Однако запись в ledger «retain ... authority fencing» обещает чуть больше, чем гарантирует код. Это не блокер.",
-              "evidence": "houseplan-card.ts:990-994 (единственный вызов), 1049-1062 (authorityChanged без `_areaSnapshotCleanupCandidates.clear()`), 1358; ha-plan-host.ts:146 (`inputKey = {}` при новом input)."
-            },
-            {
-              "topic": "Сопутствующие файлы",
-              "assessment": "Записи в CHANGELOG на RU и EN и запись release-ledger с категорией line-fix соответствуют сути: исправляется неопубликованная регрессия #1392. Изменение импорта `refreshHaRegistries` корректно, в карточке функция больше не используется.",
-              "evidence": "docs/CHANGELOG.md, docs/CHANGELOG.ru.md, docs/release-ledger/v1.85.0/1432.json; поиск: `refreshHaRegistries` в houseplan-card.ts больше не используется."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Добавить `this._areaSnapshotCleanupCandidates.clear()` в блок `if (authorityChanged)` в `_intakePlanEnvironment` (houseplan-card.ts:1049-1062), рядом с `_newSyncKey`/`_regSignature`. Тогда ограждение по authority не будет зависеть от того, попадёт ли первый кадр новой authority в узкое условие вызова `_ensureHaRegistryAuthority` (одинаковый `inputKey` и изменившийся реестр). Цена — одна строка, семантика не меняется. Выгода — гарантия, которую уже обещает запись в ledger. Проверять можно адресным unit/native сценарием: смена user/connection при сохранённом кандидате.",
-            "Связку карточки и порта сейчас покрывает только native smoke. Для быстрой обратной связи можно добавить небольшой unit-тест на уровне карточки или порта: две ревизии одного authorityKey сохраняют кандидата, смена authorityKey его сбрасывает. Необязательно, потому что smoke уже ловит именно эту регрессию."
-          ],
-          "boundaries": "Ревью выполнено только по исходникам pinned head 6a89dbe и истории (blame 1b90acd62, версия 3f05fb65 / v1.85.2). Сборку, тесты и smoke я не запускал. Использован результат S6: «Тесты для задачи #1432 (перед ревью)», run 20261114T194908975-a771d735, status passed, без failures на SHA 6a89dbe. Состав этого набора по снимку неизвестен: я исхожу из того, что в него входит адресный `demo/smoke_area_relocation.mjs`, но по снимку это не проверено. Сценарий смены authority с сохранённым кандидатом разобран только по коду, не воспроизведён. Как часто такая смена случается в реальной HA, я не проверял. Транспорт HA и данные владельца не затрагивались."
-        },
-        "usage": {
-          "input_tokens": 48,
-          "cache_creation_input_tokens": 79122,
-          "cache_read_input_tokens": 793498,
-          "output_tokens": 14650,
-          "output_tokens_details": {
-            "thinking_tokens": 5826
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 79122,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 880,
-              "cache_read_input_tokens": 64885,
-              "cache_creation_input_tokens": 14237,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 14237
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nПричина регрессии найдена верно, исправление минимальное и не ослабляет защиту. После выделения PlanHost в коммите 1b90acd62 (#1392) метод `_ensureHaRegistryAuthority` начал сбрасывать `_areaSnapshotCleanupCandidates` при каждой новой registry revision. Кандидат, найденный на первой авторитетной ревизии, терялся до второй, поэтому orphan никогда не подтверждался. До #1392 кандидаты сбрасывались только при смене connection/user. Исправление восстанавливает эту семантику через `planHost.authorityKey`, который вычисляется из тех же connection и user. Подтверждающее чтение теперь идёт через `PlanHost.refreshRegistry`, а не через прямой `refreshHaRegistries(this.hass)`. Чистая функция `resolveAreaSnapshotCleanup` не менялась. Остаются в силе все условия: две разные авторитетные ревизии, непустое пространство имён, отказ от удаления при limited/empty roster, сохранение живых и непроверенных привязок. Безопасный повтор после отказа записи provenance работает: кандидаты не стираются, и при следующей пересборке на той же подтверждающей ревизии та же привязка снова попадает в removeIds. Блокеров нет. Есть одно необязательное улучшение: на пути смены authority в `_intakePlanEnvironment` кандидаты явно не сбрасываются. Эта дыра появилась ещё в #1392, текущий diff её не создаёт.\n\n## Понимание решения\n\nПроблема. В полном stable-профиле `demo/smoke_area_relocation.mjs` падал на authoritativeOrphanRemoved, confirmedOrphanRemovedAlone и confirmedCleanupRetriesAfterWriteFailure.\n\nМеханизм. `resolveAreaSnapshotCleanup` (src/device-area-relocation.ts:166-224) помнит для каждой отсутствующей привязки ревизию, на которой её отсутствие впервые увидели. Удаление разрешается только на другой авторитетной ревизии с непустым пространством имён. Карта кандидатов хранится в поле карточки `_areaSnapshotCleanupCandidates`.\n\nДо #1392 (v1.85.2, 3f05fb65:5847-5861) `_ensureHaRegistryAuthority` сбрасывал кандидатов только при смене `hass.connection` или `user.id`. В 1b90acd62 метод переписали на `planHost.authorityKey` и `snapshot.revision`: ранний выход срабатывает, только если не изменились обе величины, иначе выполняется общий блок со сбросом. Так кандидаты стали стираться на каждой новой ревизии.\n\nПосле исправления сброс выполняется только при `key !== this._haRegistryConnection`, остальная инвалидация (`_haBindingCacheKey`, `_renderLife`, `_planHassMemo`, `_regSignature`) остаётся на каждой ревизии. `HaPlanHost.identity()` (ha-plan-host.ts:116-118) строит ключ из `connection ?? callWS` и `user.id`. Это совпадает со старой семантикой и с ключом кэша реестров `entryOf` (ha-binding-status.ts:94-106), поэтому номера ревизий сравниваются в пределах одного счётчика.\n\nПодтверждающее чтение теперь идёт через `planHost.refreshRegistry(3000)` → `reloadHaRegistriesBounded` (ha-binding-status.ts:269-281). Он берёт ref на запись кэша, вызывает тот же `refreshHaRegistries` без supersede и завершается по таймауту. Capability-обёртка (plan-capabilities.ts:127) открывает порт только при `devices || haAreas`, а `HaPlanHost.refreshRegistry` проверяет `connected()`.\n\nЧто прослежено:\n- рост `entry.revision` только при завершении загрузки (ha-binding-status.ts:137-176). Projection-снимок ревизию не меняет, поэтому две разные ревизии означают два независимых `config/*_registry/list`. Неудачная загрузка даёт неавторитетную ревизию, она кандидата не продвигает;\n- вызов `_ensureHaRegistryAuthority` из `_consumePlanEnvironment` (houseplan-card.ts:983-1003);\n- путь `_maybeRebuildDevices` → `_resolveAreaRelocations` (6411-6413), который запускается только при `registry.authoritative`;\n- очередь записи `_syncAreaRelocations` (6536-6640) с повторным разрешением, сбросом `_areaRelocationSyncKey` и `_regSignature` после отказа и откатом удалённых точек;\n- блок `authorityChanged` в `_intakePlanEnvironment` (1049-1062);\n- проверки smoke-сценария (demo/smoke_area_relocation.mjs:380-511).\n\n## Разбор решения\n\n### Причина и соответствие исходной семантике\n\nПричина установлена точно, исправление возвращает поведение v1.85.2 и не придумывает новую модель. Сброс на каждой ревизии противоречил самому механизму двух ревизий: подтверждающая ревизия и была той «новой ревизией», которая стирала кандидата. Комментарий в коде объясняет неочевидную причину, а не пересказывает строку, его стоит сохранить.\n\nОснование: git_blame: строки 5956-5962 из 1b90acd62 (#1392); 3f05fb65:5847-5861 — до #1392 `_areaSnapshotCleanupCandidates.clear()` выполнялся только после проверки `connection === this._haRegistryConnection && user === this._haRegistryUser`. Head 5960: `if (key !== this._haRegistryConnection) ...clear()`.\n\n### Ограничения на удаление не ослаблены\n\nФункция `resolveAreaSnapshotCleanup` не менялась. Удаление по-прежнему требует `authoritative`, непустого пространства имён и ревизии, отличной от ревизии кандидата. Живая привязка (маркер, реестр или live state) снимает кандидата. Независимость ревизий обеспечивает кэш реестров: `revision++` выполняется только в finally завершённой и не вытесненной загрузки, а аддитивная projection в `haRegistrySnapshot` номер ревизии не меняет. Если `refreshHaRegistries` с supersede=false видит идущую загрузку, повторного чтения он не планирует. Но такая загрузка обязательно началась после завершения предыдущей, иначе её не было бы, так что ответ всё равно независимый.\n\nОснование: src/device-area-relocation.ts:198-221; src/ha-binding-status.ts:137-189, 312-337.\n\n### Повтор после отказа записи provenance\n\nПовтор работает без третьей ревизии реестра: кандидаты больше не сбрасываются, а после отказа `_areaRelocationSyncKey` и `_regSignature` обнуляются. Следующая пересборка на той же подтверждающей ревизии снова даёт removeIds для orphan и не трогает keep. Именно это проверяет confirmedCleanupRetriesAfterWriteFailure (`cleanupWrites >= 2`).\n\nОснование: houseplan-card.ts:6600-6625; demo/smoke_area_relocation.mjs:389-394, 407-409, 504-506.\n\n### Подтверждающее чтение через PlanHost\n\nПереход на `planHost.refreshRegistry` правильно вписывается в границу #1392/#1394: карточка не трогает транспорт сама, порт закрыт capability-профилем и проверкой `connected()`. `reloadHaRegistriesBounded` ограничен таймаутом и не отклоняет промис, так что `.catch(() => false)` — лишь безвредная защита. Повторный запуск ограничен: refresh запрашивается только при появлении нового кандидата. Smoke-проверка confirmationRefreshRunsOnce фиксирует ровно одно дополнительное чтение, а emptyRegistryDoesNotReloadLoop — отсутствие цикла на пустом roster.\n\nОснование: houseplan-card.ts:6491-6492; ha-plan-host.ts:394-397; plan-capabilities.ts:127; demo/smoke_area_relocation.mjs:501-510.\n\n### Ограждение при смене authority (ранее существовавшая слабость)\n\nСброс кандидатов по authorityKey реализован только внутри `_ensureHaRegistryAuthority`, а он вызывается из одного места — `_consumePlanEnvironment`, при совпадающем `inputKey` и изменившемся реестре. Блок `authorityChanged` в `_intakePlanEnvironment` сбрасывает много состояния, но не кандидатов. Поэтому после смены connection/user первая пересборка может пройти со старыми кандидатами, если между кадрами пришёл state tick и `inputKey` сменился. Практический риск низкий: пересборка выполняется только на авторитетном roster новой authority, записи требуют `_loadOk` после перечитывания, а реестр того же HA подтвердил бы отсутствие и сам. Слабость появилась в #1392 и в base была такой же, этот diff её не порождает. Однако запись в ledger «retain ... authority fencing» обещает чуть больше, чем гарантирует код. Это не блокер.\n\nОснование: houseplan-card.ts:990-994 (единственный вызов), 1049-1062 (authorityChanged без `_areaSnapshotCleanupCandidates.clear()`), 1358; ha-plan-host.ts:146 (`inputKey = {}` при новом input).\n\n### Сопутствующие файлы\n\nЗаписи в CHANGELOG на RU и EN и запись release-ledger с категорией line-fix соответствуют сути: исправляется неопубликованная регрессия #1392. Изменение импорта `refreshHaRegistries` корректно, в карточке функция больше не используется.\n\nОснование: docs/CHANGELOG.md, docs/CHANGELOG.ru.md, docs/release-ledger/v1.85.0/1432.json; поиск: `refreshHaRegistries` в houseplan-card.ts больше не используется.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Добавить `this._areaSnapshotCleanupCandidates.clear()` в блок `if (authorityChanged)` в `_intakePlanEnvironment` (houseplan-card.ts:1049-1062), рядом с `_newSyncKey`/`_regSignature`. Тогда ограждение по authority не будет зависеть от того, попадёт ли первый кадр новой authority в узкое условие вызова `_ensureHaRegistryAuthority` (одинаковый `inputKey` и изменившийся реестр). Цена — одна строка, семантика не меняется. Выгода — гарантия, которую уже обещает запись в ledger. Проверять можно адресным unit/native сценарием: смена user/connection при сохранённом кандидате.\n- Связку карточки и порта сейчас покрывает только native smoke. Для быстрой обратной связи можно добавить небольшой unit-тест на уровне карточки или порта: две ревизии одного authorityKey сохраняют кандидата, смена authorityKey его сбрасывает. Необязательно, потому что smoke уже ловит именно эту регрессию.\n\n## Границы анализа\n\nРевью выполнено только по исходникам pinned head 6a89dbe и истории (blame 1b90acd62, версия 3f05fb65 / v1.85.2). Сборку, тесты и smoke я не запускал. Использован результат S6: «Тесты для задачи #1432 (перед ревью)», run 20261114T194908975-a771d735, status passed, без failures на SHA 6a89dbe. Состав этого набора по снимку неизвестен: я исхожу из того, что в него входит адресный `demo/smoke_area_relocation.mjs`, но по снимку это не проверено. Сценарий смены authority с сохранённым кандидатом разобран только по коду, не воспроизведён. Как часто такая смена случается в реальной HA, я не проверял. Транспорт HA и данные владельца не затрагивались.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 891bdbb8d7153de0d5eb6ba7f864622332849878 → 6a89dbe2673f6ae9a59b39c9ac8a93ae88673172\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
-        "createdAt": "2026-11-14T19:59:46.144Z",
-        "artifactId": 14129861466,
-        "runId": 43634749362,
-        "runAttempt": 1,
-        "completedAt": "2026-11-14T19:59:50Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43634749362",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "891bdbb8d7153de0d5eb6ba7f864622332849878"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1433": {
@@ -5169,145 +5047,8 @@
     1436,
     1437
   ],
-  "active": {
-    "issue": 1432,
-    "worker": "finish",
-    "token": "463:finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee:finish:2:admit",
-    "fence": 463,
-    "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
-    "expectedBase": "891bdbb8d7153de0d5eb6ba7f864622332849878",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794685378123,
-    "expiresAt": 1794690011526,
-    "patchId": "9b1f6f5f0aaa10039356e331d7289399d8384f9e",
-    "reviewRequest": "review:1432:1:9b1f6f5f0aaa10039356e331d7289399d8384f9e:891bdbb8d7153de0d5eb6ba7f864622332849878"
-  },
+  "active": null,
   "events": {
-    "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee:finish:3:synchronized": {
-      "digest": "1bbb60e968236caccf012437735cf148e83e119ffc17ca88d5e15ee5d281f2ae",
-      "issue": 1432
-    },
-    "github:43633582787:1:completions:message:31c82b64d277359c935081048283e6d2824841540de4be77e98a9d97ac0a7ad8": {
-      "digest": "b2080cee04b64f3ffc302c0728caa58a85ba90ae3c39e6d9aa79fa78badadf2b",
-      "issue": 1432
-    },
-    "github:43633582787:1:completions:message:748ae4d2b80cdc13a18ce73df8c199fb924b9193c495cfbae9bf7cd6144f5af5": {
-      "digest": "e36540cf43340040230cb519500aac140177a6dbec29e23176378bb7537949e3",
-      "issue": 1432
-    },
-    "finish:02d6ddc3-a918-4a81-a139-b0c5fef50b38": {
-      "digest": "a598e07ea93a8a3a8d25cc57e91af9a5287e6f88f83d7013042707bff425421c",
-      "issue": 1432
-    },
-    "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee:finish:1:automation-pending": {
-      "digest": "c43a6446c9c1242329a11d7adc130208e1f212dd37f4d50ef5d4ffe7462776a8",
-      "issue": 1432
-    },
-    "finish:a1bee716-3c77-4c66-9e18-7cd6bc76a7ec": {
-      "digest": "5ebef51e8ad4eaf5dba2aeaa2e5c271abb20fceb986eb69bafed98b26c2ae9da",
-      "issue": 1432
-    },
-    "finish:a896836c-5a73-4deb-8d46-c81fd712f4d5": {
-      "digest": "6f37227b7a1687241def94f34ef58531c166e72552c468987a7634928a69fff8",
-      "issue": 1432
-    },
-    "finish:fd2ec865-04fa-495e-998d-fcba0c4cb84a": {
-      "digest": "378e5ff53d79666d43db09c8038d510ef31b87875689d62dbf4066c354b067f0",
-      "issue": 1432
-    },
-    "finish:abbce4af-884b-4451-8210-15c42949280c": {
-      "digest": "25e50c8c3088fbd808f159c1a13a964f5ef9fa57c592e60ab5904497b2e57eb9",
-      "issue": 1432
-    },
-    "finish:69a09ff3-e5f2-4a42-be30-e0738b47e6ea": {
-      "digest": "a3922079033356de3d7302cd138bb3cf2573886b8bba3dae79e1bba34dc628c1",
-      "issue": 1432
-    },
-    "github:43634429517:1:completions:message:f8811dee2ad0fe640e466632ce747d8dea8c69dabb34e5ddb37aaada7891d3ce": {
-      "digest": "66f345369cc745d81a2f5896d3965e3056dd53644c316d86f59db4bfc758d976",
-      "issue": 1432
-    },
-    "github:43634429517:1:completions:message:10dda89d38f68c33b8d1e5c2b7cf1b676e43b82d0b48657de604b499b1783fef": {
-      "digest": "d79f02ef4bbb76c83ec601dd78da42e9b6fc04a531312f5bcd89f1720a4afb9e",
-      "issue": 1432
-    },
-    "github:43634429517:1:completions:message:637f0f875ac4e77d50be19a0e390172c4afc812220eb7c3fdf60c5ecdea7a84f": {
-      "digest": "c8c84cd7044602b2ba8d706be23e9a221cda1687e0a554c653362732ab33d1fa",
-      "issue": 1432
-    },
-    "finish:9395defc-8b09-4380-a8e5-0052d4ade9c1": {
-      "digest": "e9f8e846e0044dfd8d03a6aa7749ae1a465eda5eb8b84f41862db713ba7b189a",
-      "issue": 1432
-    },
-    "finish:1dd908d4-596b-4c95-a14f-9bcbd9eb6762": {
-      "digest": "c50ee0f342cde0b9931325dd49f5dbf91ba0ec786aaa967d934e70f35d4c49a7",
-      "issue": 1432
-    },
-    "finish:79a4dc28-195e-4c8d-8c62-81979d07362d": {
-      "digest": "4db194112739cc88f212ed845b59a0f122bbb06759d9e8acaa9506fb221adc11",
-      "issue": 1432
-    },
-    "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee:finish:3:s6-label": {
-      "digest": "3aa806e27d413473f7a098a7712f1424732e4fbe3fc9718d49191440708c9778",
-      "issue": 1432
-    },
-    "finish:f188819a-f555-48dc-ae8b-f31970262968": {
-      "digest": "05eb9d28ec2010d512ef3870974278dc1d1bc0344aa75ad82904f2c00bcda55c",
-      "issue": 1432
-    },
-    "github:43634725372:1:tick:0:review-requested": {
-      "digest": "fa0321fe120a85bef8445ee8f6532c95bf516030df004f69120ea1e57e5e716c",
-      "issue": 1432
-    },
-    "github:43634725372:1:completions:message:b33ef079d0a8e071913d324c6b0156a7c080d79ea12de1218719eadd35802934": {
-      "digest": "a8ffb544a0b929da8ce94cb57a7daf4601f2bb830aa36d44d8775a385a38e290",
-      "issue": 1432
-    },
-    "github:43634994180:1:completions:message:4465c5a9a2ab96dac295df3ab0b7f72d7032dd5306b11c0ecacb14315e29b7a8": {
-      "digest": "5c309dc12cb38a35a5c0ead1507190ba8fb8dddbfa2e307ec26229dc57e13137",
-      "issue": 1432
-    },
-    "github:43634994180:1:completions:message:1c937a14def41e1e83fd5dc8fdeb0fe685c58a3bbc9e65b856345baa2d9deeaf": {
-      "digest": "2470f60ff656cb2576379e0c6911dbc27f16fcd0c1a111443873cbd05612ef19",
-      "issue": 1432
-    },
-    "github:43635074985:1:tick:0:review-presentation": {
-      "digest": "c2758b130b8fbd32ada1360024b8b01fbeaac13f12b85da4e5f4428047f4d738",
-      "issue": 1432
-    },
-    "github:43635074985:1:tick:0:review-complete": {
-      "digest": "78efb8e4f50bb0c2746a7375862c7ffccf306e78ccdba5b9f772eef0c6b16fd4",
-      "issue": 1432
-    },
-    "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee": {
-      "digest": "49d041b6e79efd7da8a2747c885880ff7b80e787eead53556bfb8bffdef12c78",
-      "issue": 1432,
-      "message": {
-        "kind": "queued",
-        "issue": 1432,
-        "at": 1794684614647,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "039d034f28f9a0b39dac59ad78bff84158917a97",
-        "delivered": true
-      }
-    },
-    "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee:finish:2:admit": {
-      "digest": "201c70560d1a5f6dd2def450b1102e7b972f3640876daa59020645fcc6381261",
-      "issue": 1432,
-      "message": {
-        "kind": "admitted",
-        "issue": 1432,
-        "at": 1794685378123,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "039d034f28f9a0b39dac59ad78bff84158917a97",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450": {
       "digest": "5ec9b2a080864a4cfe8c328e367ac8bf12791c39e46dff967c7b546f7a1c5a40",
       "issue": 1435,
@@ -5333,36 +5074,6 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "1861a31763287c3bd4a09f33fa3a1f56926da55e",
-        "delivered": true
-      }
-    },
-    "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee:finish:3:s6-complete": {
-      "digest": "b1642b73e80506a0076efcfb27977ec35d593e282c05ace3a11efaed652f9489",
-      "issue": 1432,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1432,
-        "at": 1794686135364,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
-        "phase": "review",
-        "evidence": {
-          "id": "20261114T194908975-a771d735",
-          "name": "Тесты для задачи #1432 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T194908975-a771d735/report.json",
-          "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
-          "status": "passed",
-          "finishedAt": "2026-11-14T19:55:34.270Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     },
