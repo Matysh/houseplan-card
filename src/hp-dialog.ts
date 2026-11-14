@@ -269,6 +269,13 @@ export class HpDialog extends LitElement {
     :host([settings-layout][compact]) .surface { height:auto; max-height:calc(100dvh - 48px); }
     :host(.decor-properties-dialog) .header { gap:12px; }
     :host(.decor-properties-dialog) .title-text { line-height:24px; }
+    @media (max-width: 550px) {
+      /* The native flex shell must not stretch the form's mobile two-row
+         navigation grid: auto rows otherwise share hundreds of spare pixels.
+         HA owns its own content sizing; leave that branch untouched. */
+      :host([settings-layout]:not([ha-dialog-shell])) ::slotted(.hpf-settings-form) { flex:0 0 auto; }
+      :host([settings-layout][data-kind=marker]) ::slotted(.hpf-settings-form) { flex:1 1 0; }
+    }
     @media (max-width: 480px) {
       :host([settings-layout]) .surface { height:100dvh; max-height:100dvh; }
       :host([settings-layout]) ha-dialog { --ha-dialog-max-height:100dvh; }

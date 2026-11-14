@@ -47,6 +47,12 @@ test('#1392 plan host ports inherit transport/storage and environment lifecycle 
     }
     assert.deepEqual(domainsOf('src/future-host.ts'), []);
 });
+test('#1422 isolated presentation implementation and native witnesses inherit UI coverage', () => {
+    for (const path of ['src/standalone-presentation.ts', 'src/standalone-presentation-policy.ts',
+        'test/standalone-presentation-boundary.test.mjs', 'demo/smoke_standalone_presentation.mjs'])
+        assert.ok(domainsOf(path).includes('presentation'), path);
+    assert.deepEqual(domainsOf('src/future-unmapped-feature.ts'), []);
+});
 test('#1391 extracted core owners and its addressed readers have inherited domains', () => {
     for (const file of ['custom_components/houseplan/core/constants.py',
         'custom_components/houseplan/core/ports.py', 'custom_components/houseplan/core/file_usage.py',

@@ -1,5 +1,11 @@
 # Общий UI-кит диалогов
 
+Для изолированного автономного документа #1422 добавляет только базовые
+theme inputs и локальные icon/card/progress primitives. Формы, native-ветка
+`HpDialog`, focus/close и motion остаются общими; установленный HA-путь не
+подключает адаптер. Подключение, конечный icon map и границы доказательств —
+[STANDALONE-PRESENTATION.md](STANDALONE-PRESENTATION.md).
+
 ### Согласованная итерация beta.2 (#1207)
 
 `selectionListCss` задаёт общие состояния select и sourcePicker: выбранный пункт

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1422,
+  "baseStable": "v1.85.0",
+  "category": "infra",
+  "rationale": "Prepare an explicitly opt-in presentation owner for the future standalone entry. Installed HA entrypoints do not import it and no public standalone application is released here.",
+  "summary": {
+    "ru": "Подготовлен локальный presentation-адаптер будущего автономного редактора.",
+    "en": "Prepare the isolated presentation adapter for a future standalone editor."
+  }
+}

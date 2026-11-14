@@ -10,6 +10,7 @@
     "tsBuildInfoFile": "test-build/.tsbuildinfo"
   },
   "include": [
+    "src/standalone-*.ts",
     "src/plan-host.ts", "src/ha-plan-host.ts",
     "src/mdi-icon-catalog.ts",
     "src/marker-alert.ts",

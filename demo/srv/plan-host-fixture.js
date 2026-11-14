@@ -1,13 +1,13 @@
 /** Synthetic wire storage for #1392. Not an HA emulator or backend validator. */
 import { createFixtureStore } from './fixture-state.js';
 
-export function createPlanHostFixture(config, { ready = true, capabilities } = {}) {
+export function createPlanHostFixture(config, { ready = true, capabilities, presentation: initialPresentation } = {}) {
   const commands = [], listeners = new Set(), events = new Map(), forbiddenReads = [];
   const assets = new Map(), plans = [];
   const pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
   const empty = Object.freeze({});
   let key = {}, writeRevision = 1, revision = 1, failRead = false, preview;
-  const presentation = new Proxy(Object.freeze({ language: 'en', locale: { language: 'en' }, themes: { darkMode: false } }), {
+  const presentationBridge = value => new Proxy(Object.freeze(value || { language: 'en', locale: { language: 'en' }, themes: { darkMode: false } }), {
     get(target, name) {
       if (['states', 'registry', 'devices', 'entities', 'user', 'auth', 'connection', 'callWS', 'callService', 'fetchWithAuth'].includes(name)) {
         forbiddenReads.push(String(name)); throw Error(`forbidden presentation read: ${String(name)}`);
@@ -18,7 +18,7 @@ export function createPlanHostFixture(config, { ready = true, capabilities } = {
   let environment = Object.freeze({ ready, connected: ready, userId: 'local-owner',
     permissions: { read: true, write: true, admin: true }, timeZone: 'Europe/Moscow', units: { length: 'km' },
     states: empty, registry: { revision: 0, authoritative: false, access: 'limited', devices: empty,
-      entities: empty, areas: empty, lastSuccess: 0 }, presentation });
+      entities: empty, areas: empty, lastSuccess: 0 }, presentation: presentationBridge(initialPresentation) });
   const store = createFixtureStore(config, {}, (event, rev) => {
     for (const receive of [...events.get(event) || []]) receive({ data: { rev } });
   });
@@ -96,6 +96,7 @@ export function createPlanHostFixture(config, { ready = true, capabilities } = {
     },
   };
   return { host, commands, forbiddenReads,
+    presentation: value => publish({ presentation: presentationBridge(value) }),
     tick: () => publish({}), ready: () => publish({ ready: true, connected: true }),
     connected: value => publish({ connected: value }), failNextRead: () => { failRead = true; },
     permissions: value => { writeRevision++; publish({ permissions: { ...environment.permissions, ...value } }); },

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Clip artificial light at the actual closed door leaf instead of the entire wall slot; share swing/slide placement, bounded exterior pockets and regression coverage across lamp, LED and Static Glow (#1421).
+- Add an explicit isolated-document presentation owner with finite local SVGs, UI Kit theme inputs, functional container/progress and shared native dialogs/controls; keep HA registration and stored models unchanged (#1422).
 
 - Align the nightly import guard with confirmed writer revocation: require a closed dialog and inert retired Apply handler instead of reading pre-paint DOM (#1426).
 - Keep SHIP-REVIEW bytes stable across tag assignment and publication retries; reproduce legacy tag:null receipts only on an exact frozen-report match, without replacing published assets (#1415).
