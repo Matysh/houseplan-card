@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11853,
+  "revision": 11854,
   "nextTicket": 426,
   "nextFence": 426,
   "tasks": {
@@ -3637,7 +3637,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794624549895,
       "reviewEntry": 3,
-      "patchId": "b0c4100535253140ce53def14d10c4f2f95a16aa",
+      "patchId": "daec330f169c4acc56f317e45a7a2043bd520e6f",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
         "demo/srv/plan-host-fixture.js",
@@ -3700,6 +3700,7 @@
         "src/wall-node-card-adapter.ts",
         "src/wall-node-write.ts",
         "test/backup-archive-client.test.mjs",
+        "test/config-reload-authority.test.mjs",
         "test/decor-image-upload.test.mjs",
         "test/graph-optimize-report.test.mjs",
         "test/helpers/plan-host-boundary.mjs",
@@ -4947,10 +4948,11 @@
     "token": "425:finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:1:admit",
     "fence": 425,
     "materialSha": "db6a5b6879c2dbb02b3bbe37db2dd5dd54202d14",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+    "phase": "testing",
     "admittedAt": 1794624553776,
-    "expiresAt": 1794624853776
+    "expiresAt": 1794624859715,
+    "patchId": "daec330f169c4acc56f317e45a7a2043bd520e6f"
   },
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
@@ -5219,6 +5221,10 @@
     },
     "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:3:return": {
       "digest": "72ebcaad02f03e69951a65b29ee6832835851891c5dfe29ba2098abab12973f5",
+      "issue": 1392
+    },
+    "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:2:synchronized": {
+      "digest": "ba8c9662dfad2c179490fe6ee015e71aebc5e090ba896127d94835074d9a535b",
       "issue": 1392
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
