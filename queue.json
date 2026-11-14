@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13995,
+  "revision": 13996,
   "nextTicket": 481,
   "nextFence": 479,
   "tasks": {
@@ -4802,165 +4802,25 @@
     },
     "1446": {
       "issue": 1446,
+      "branch": "codex/1446-integration-display-metadata",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1446-integration-display-metadata",
-      "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 478,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794694478922,
-      "reviewEntry": 2,
-      "patchId": "8182a0014eb1f881fb4301c99620e094e1afc68b",
-      "changedFiles": [
-        "demo/smoke_device_integration_metadata.mjs",
-        "docs/ARCHITECTURE.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.85.0/1446.json",
-        "src/editors/marker-dialog.ts",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/hp-device-preview.ts",
-        "src/integration-provider.ts",
-        "test/ha-device-integration-metadata.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794694401314,
-        "entry": 1,
-        "detail": "Браузер: device integration metadata: failed",
-        "eventId": "finish:1446-integration-display-metadata-20261115:finish:3:return:return:1446"
-      },
-      "s6": {
-        "id": "20261114T222305345-a3a63448",
-        "name": "Тесты для задачи #1446 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T222305345-a3a63448/report.json",
-        "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
-        "status": "passed",
-        "finishedAt": "2026-11-14T22:31:02.799Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "56f51be8175594bb994bc9c5af159ab071dd0999",
+      "mergedSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
+      "mergedAt": 1794695651311,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1446:2:8182a0014eb1f881fb4301c99620e094e1afc68b:56f51be8175594bb994bc9c5af159ab071dd0999",
-      "reviewMaterial": {
-        "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
-        "expectedBase": "56f51be8175594bb994bc9c5af159ab071dd0999",
-        "patchId": "8182a0014eb1f881fb4301c99620e094e1afc68b"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1446:2:8182a0014eb1f881fb4301c99620e094e1afc68b:56f51be8175594bb994bc9c5af159ab071dd0999",
-        "eventId": "github:43648503104:1:tick:0:review-retry",
-        "at": 1794695485933,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1446,
-        "requestId": "review:1446:2:8182a0014eb1f881fb4301c99620e094e1afc68b:56f51be8175594bb994bc9c5af159ab071dd0999",
-        "kind": "code",
-        "base": "56f51be8175594bb994bc9c5af159ab071dd0999",
-        "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
-        "patchId": "8182a0014eb1f881fb4301c99620e094e1afc68b",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1446,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1446",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Причина подтверждена read-only сравнением actual/baseline/diff финального golden-beta на 386520b52: в двух provider-подписях House Plan Golden заменилось на houseplan golden. MarkerDialog передаёт hp-device-preview data-only _planHass; _ensureMetadata ожидал raw connection и не приобретал существующего metadata-owner, хотя manifest/list фикстуры по-прежнему отдаёт правильное name.\n\nРешение: отдельный _haIntegrationMetadata reader с ровно identity/snapshot/acquire передаётся в отдельное свойство preview. Это HA-only возможность вне _planHass и вне неизменённого четырёхпольного HostPresentationContext/PlanHost. Он не принимает команды/домены/HTTP, использует прежний lazy shared integration-provider owner и отдаёт только entry_id/domain/title и manifest domain/name. Просто получение reader/snapshot ничего не загружает. У raw-HA потребителей preview сохранён fallback-адаптер; standalone/injected PlanHost reader не получает. При смене/исчезновении reader и отключении preview observation освобождается, поздние callbacks другой identity не публикуются.\n\nСоседние читатели: resolveBindingProviders (общая строка интеграции) и resolveEntityProvider (подпись источника) используют один display snapshot. Zigbee settings по-прежнему передаёт настоящий HA своему существующему owner; общий metadata cache дополнительно разделён по пользователю и admin-role, поэтому поздние replies старой authority не попадают следующей. Существующая обработка ignored config entries Zigbee не менялась: source остаётся в raw owner snapshot и не переносится в display projection.\n\nАльтернативы: вернуть raw HA или callWS/connection в _planHass нельзя; выдавать расширенный транспорт preview не нужно; загружать metadata глобально при каждом HA tick вместо существующего lazy owner означало бы лишние запросы. Новый reader сохраняет прежнюю загрузку только при открытом preview.\n\nРиски для свежего взгляда: cache identity/user/role и поздние ответы, shared acquire/release с соседним HA consumer, замена/исчезновение reader, fallback при отсутствующем/бросающем HA API, отсутствие транспортных полей в обоих UI inputs. Unit и новый native включены адресно; также прежние device-preview-parity, zigbee-enable-refresh и plan-host-boundary. Состав S6 проверен планом: новые тесты классифицированы как devices/runtime/presentation; существующие неизвестные aggregation-source включают консервативный fast fallback. Ожидания и PNG не изменяются. Addressed golden panel-device-state-source-unknown-en проверяется по прежнему эталону из отдельного checkout; итоговый release B не меняется. E2E-решение будет записано отдельно; релиз/новая версия/приёмка рамок или Glow не входят.\n\n\n### Адресное визуальное подтверждение S6\nНа материале 166fa0c576ad38abb400df862fa1eec24d1b261e, после штатной подготовки S6, из отдельного checkout выполнен golden-runner --selection=beta --scenario=panel-device-state-source-unknown-en. Результат PASS: diff=0 pixels, ratio=0, maxDelta=1; прежний baseline не менялся. Отчёт artifacts/process-next/golden-panel-device-state-source-unknown-en/golden-report.json, actual SHA256 ca92b953d79ae0c1c332dee2cf4a121644e98835f2c56b332799216d24034f89. E2E-решение записано: Matysh/houseplan-e2e#68. Полный frozen release B не изменялся.\n\n### Уточнение предусловия native после первого S6\nПервый S6 20261114T220210399-1417dea0 завершён:647steps, один отказ нового smoke_device_integration_metadata по timeout ожидания manifest-name. Причина — стандартная demo-фикстура localize(component.demo.title) возвращает Demo integration, а локализация намеренно имеет приоритет над manifest-name. Продукт не менялся: на материале 24ef79346 в новом witness явно задан localize()=>null, как в воспроизводящем golden. Unit по-прежнему проверяет приоритет настоящей локализации. Адресный golden на166fa0c57 применим: единственная разница новой редакции — три строки предусловия этого native, ни один исходник/PNG не изменён. Успешные S6 результаты сохраняются; повторный вход в очередь с прежней адресной выборкой. Модельного ревью ещё не было."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление решает задачу, блокеров я не нашёл. Предпросмотр устройства снова показывает имя интеграции из manifest/list (или локализованное имя HA), а не технический domain. Для этого добавлен отдельный HA-only reader `_haIntegrationMetadata`, у которого всего три операции. `_planHass` и четырёхпольный `HostPresentationContext` транспорта по-прежнему не содержат. Reader использует прежнего ленивого владельца кеша: загрузка начинается только при открытии preview, обычный HA tick повторных запросов не вызывает. Дополнительно кеш разделён по пользователю и admin-роли, поэтому поздние ответы старой authority не попадают новой. Standalone и injected PlanHost reader не получают и показывают честный fallback. По S6 есть успешный прогон на 24ef79346 и адресный golden PASS по прежнему эталону на 166fa0c57. Между этими материалами отличается только предусловие native-теста.",
-          "understanding": "Проблема. После #1392 MarkerDialog передаёт в `hp-device-preview` только data-only `_planHass`. Старый `_ensureMetadata` ждал `this.hass.connection`, не находил его и не вызывал `acquireIntegrationMetadata`. Из-за этого `integrationDisplayName` доходил до последнего fallback `domain.replace(/_/g,' ')`, и в golden появилось «houseplan golden» вместо «House Plan Golden».\n\nКак стало. `HouseplanCard._haIntegrationMetadata` (houseplan-card.ts:973-977) возвращает `haIntegrationMetadataSource(this.hass)`, если хост не injected и у PlanHost есть capability devices. Иначе возвращается undefined. MarkerDialog передаёт этот reader отдельным свойством `.integrationMetadata` (marker-dialog.ts:803). Сам reader (integration-provider.ts:55-85) — замороженный объект с полями `identity`, `snapshot` и `acquire`. Он хранится в WeakMap по identity: на обычном tick возвращается тот же порт, меняется только последний hass внутри. `acquire` делегирует в прежний `acquireIntegrationMetadata`, где учитываются refs, ленивая загрузка, кеш на 5 минут и подписка `config_entries/subscribe`. `snapshot` мемоизирован по revision и выдаёт наружу только entry_id/domain/title и domain/name. Ключ общего кеша `connectionKey` теперь получается через `hostAuthorityKey(connection, JSON([userId, isAdmin]))`, поэтому для другого пользователя или роли на том же connection создаётся отдельный `MetadataCache`. Замыкания `loadMetadata` и подписки пишут в cache своей authority, так что поздний ответ не попадает в новую. Preview (hp-device-preview.ts:89-101) берёт `integrationMetadata ?? haIntegrationMetadataSource(this.hass)`. При смене identity он освобождает старое наблюдение, а listener публикует обновление, только пока identity совпадает. При disconnect наблюдение освобождается, при connect заново приобретается.\n\nКакие пути я разобрал: MarkerDialog → preview; `resolveBindingProviders` и `resolveEntityProvider` с display snapshot; соседний потребитель `hp-zigbee-topology-settings` (acquire/snapshot по настоящему hass, свой identity `userId:_admin` совпадает с новым ключом кеша, `zigbeeIntegrationPresence` по-прежнему видит сырые записи вместе с `source: 'ignore'`). Также проверил, что `_planHass` получает `localize` из presentation, поэтому приоритет локализации в реальном UI сохраняется.",
-          "analysis": [
-            {
-              "topic": "Граница полномочий: reader вне проекции плана",
-              "assessment": "Решение выбрано удачно. Возвращать callWS/connection в `_planHass` или расширять HostPresentationContext не понадобилось. Reader не умеет отправлять команды: `acquire` принимает только listener, а домены и типы команд закреплены внутри прежнего владельца. Проекция snapshot отбрасывает лишние поля записей. Опасение «просто получение reader что-то загружает» не подтвердилось: `haIntegrationMetadataSource` и `snapshot` только читают cache через `cacheOf`, сеть затрагивает лишь `acquire`.",
-              "evidence": "integration-provider.ts:61-79; houseplan-card.ts:5987-6003 (в `_planHass` только states/registry/presentation/formatters); smoke `noRawHaInDomainFrame`, `onlyFiniteMetadataOperations`, `onlyDisplayFacts`; unit «merely rendering the parent never fetches metadata»."
-            },
-            {
-              "topic": "Изоляция кеша по пользователю/роли и поздние ответы",
-              "assessment": "Механизм корректен. Ключ — объект из общего `hostAuthorityKey`, а строка `JSON.stringify([id,isAdmin])` не пересекается с userId-ключами PlanHost, так что общий WeakMap коллизий не даёт. Новый ключ меняет поведение и для Zigbee settings. Это безопасно: тот уже освобождает и заново приобретает метаданные при смене `userId:_admin`, а значит попадает в тот же раздельный cache. Удержания памяти я не нашёл: цепочка connection → authorityKeys → identity → displaySources → hass → connection замкнута через ephemeron-слоты WeakMap и собирается вместе с connection.",
-              "evidence": "integration-provider.ts:44-50, 112-149 (замыкание на `cache`); plan-host.ts:160-168; hp-zigbee-topology-settings.ts:117-133; unit «authority replacement isolates late replies/events, role changes and reconnects»."
-            },
-            {
-              "topic": "Жизненный цикл preview и общий владелец",
-              "assessment": "Acquire и release сбалансированы. Сравнение по identity исключает повторный acquire на каждом tick. При смене или исчезновении reader старое наблюдение освобождается до нового acquire. Release идемпотентен (`released`), а подписка снимается, только когда refs=0, поэтому соседний потребитель её не теряет. Ранний возврат по `isConnected` безопасен: `connectedCallback` вызывает `_ensureMetadata` после `super.connectedCallback()`.",
-              "evidence": "hp-device-preview.ts:60-101; integration-provider.ts:196-213; unit «release(); release(); ... the neighbour still owns the subscription»; smoke `dialogCloseReleasesMetadata`, `noExtraMetadataFetchOnTick`, `exactlyTwoDiscoveryReads`."
-            },
-            {
-              "topic": "Fallback и порядок имён",
-              "assessment": "Порядок «локализация → manifest.name → title записи → domain с пробелами» не изменился. Если HA недоступен, вызов бросает исключение или вернул не массив, всё деградирует до честного fallback. Standalone получает `integrationMetadataSnapshot(undefined)`, то есть пустой snapshot. Уточнение native-предусловия (`localize: () => null`) обосновано: приоритет локализации — намеренное поведение, и unit проверяет его отдельно.",
-              "evidence": "integration-provider.ts:239-250; hp-device-preview.ts:160, 228; unit «absent or denied metadata retains honest fallback»; demo/smoke_device_integration_metadata.mjs:10-12."
-            },
-            {
-              "topic": "Сопутствующее изменение connectionKey",
-              "assessment": "Фикстуры без `connection` раньше получали ключ по объекту hass, то есть новый cache на каждый tick. Теперь ключом служит функция `callWS`. Это побочное улучшение, на реальный HA оно не влияет: там `connection` всегда есть.",
-              "evidence": "integration-provider.ts:45."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Необязательно: порт хранит изменяемый `source`, который обновляется последним hass на каждом вызове `haIntegrationMetadataSource`. Сейчас это безопасно, потому что identity гарантирует тот же cache. Стоит одной строкой в комментарии закрепить, что `source` можно заменять только внутри одной identity, иначе будущий рефакторинг ключа может незаметно связать порт с чужим cache. Цена — одна строка."
-          ],
-          "boundaries": "Код я изучал по исходникам head/base через чтение и поиск. Сборку, unit, native и golden сам не запускал. Опирался на результаты S6: прогон 20261114T222305345-a3a63448 на 24ef79346 завершён со статусом passed и без отказов; адресный golden `panel-device-state-source-unknown-en` на 166fa0c57 дал PASS с diff=0 (данные из контекста исполнителя, сам отчёт я не открывал). Вывод о применимости golden к head сделан из того, что diff между материалами, по словам исполнителя, затрагивает только native-предусловие. Это согласуется со списком изменённых файлов, но построчно оба коммита я не сравнивал. Собранные ассеты в custom_components/frontend я не проверял. Issue E2E Matysh/houseplan-e2e#68 — внешний источник, я его не читал."
-        },
-        "usage": {
-          "input_tokens": 22,
-          "cache_creation_input_tokens": 48810,
-          "cache_read_input_tokens": 358433,
-          "output_tokens": 8078,
-          "output_tokens_details": {
-            "thinking_tokens": 2503
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 48810,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1038,
-              "cache_read_input_tokens": 43518,
-              "cache_creation_input_tokens": 9496,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 9496
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление решает задачу, блокеров я не нашёл. Предпросмотр устройства снова показывает имя интеграции из manifest/list (или локализованное имя HA), а не технический domain. Для этого добавлен отдельный HA-only reader `_haIntegrationMetadata`, у которого всего три операции. `_planHass` и четырёхпольный `HostPresentationContext` транспорта по-прежнему не содержат. Reader использует прежнего ленивого владельца кеша: загрузка начинается только при открытии preview, обычный HA tick повторных запросов не вызывает. Дополнительно кеш разделён по пользователю и admin-роли, поэтому поздние ответы старой authority не попадают новой. Standalone и injected PlanHost reader не получают и показывают честный fallback. По S6 есть успешный прогон на 24ef79346 и адресный golden PASS по прежнему эталону на 166fa0c57. Между этими материалами отличается только предусловие native-теста.\n\n## Понимание решения\n\nПроблема. После #1392 MarkerDialog передаёт в `hp-device-preview` только data-only `_planHass`. Старый `_ensureMetadata` ждал `this.hass.connection`, не находил его и не вызывал `acquireIntegrationMetadata`. Из-за этого `integrationDisplayName` доходил до последнего fallback `domain.replace(/_/g,' ')`, и в golden появилось «houseplan golden» вместо «House Plan Golden».\n\nКак стало. `HouseplanCard._haIntegrationMetadata` (houseplan-card.ts:973-977) возвращает `haIntegrationMetadataSource(this.hass)`, если хост не injected и у PlanHost есть capability devices. Иначе возвращается undefined. MarkerDialog передаёт этот reader отдельным свойством `.integrationMetadata` (marker-dialog.ts:803). Сам reader (integration-provider.ts:55-85) — замороженный объект с полями `identity`, `snapshot` и `acquire`. Он хранится в WeakMap по identity: на обычном tick возвращается тот же порт, меняется только последний hass внутри. `acquire` делегирует в прежний `acquireIntegrationMetadata`, где учитываются refs, ленивая загрузка, кеш на 5 минут и подписка `config_entries/subscribe`. `snapshot` мемоизирован по revision и выдаёт наружу только entry_id/domain/title и domain/name. Ключ общего кеша `connectionKey` теперь получается через `hostAuthorityKey(connection, JSON([userId, isAdmin]))`, поэтому для другого пользователя или роли на том же connection создаётся отдельный `MetadataCache`. Замыкания `loadMetadata` и подписки пишут в cache своей authority, так что поздний ответ не попадает в новую. Preview (hp-device-preview.ts:89-101) берёт `integrationMetadata ?? haIntegrationMetadataSource(this.hass)`. При смене identity он освобождает старое наблюдение, а listener публикует обновление, только пока identity совпадает. При disconnect наблюдение освобождается, при connect заново приобретается.\n\nКакие пути я разобрал: MarkerDialog → preview; `resolveBindingProviders` и `resolveEntityProvider` с display snapshot; соседний потребитель `hp-zigbee-topology-settings` (acquire/snapshot по настоящему hass, свой identity `userId:_admin` совпадает с новым ключом кеша, `zigbeeIntegrationPresence` по-прежнему видит сырые записи вместе с `source: 'ignore'`). Также проверил, что `_planHass` получает `localize` из presentation, поэтому приоритет локализации в реальном UI сохраняется.\n\n## Разбор решения\n\n### Граница полномочий: reader вне проекции плана\n\nРешение выбрано удачно. Возвращать callWS/connection в `_planHass` или расширять HostPresentationContext не понадобилось. Reader не умеет отправлять команды: `acquire` принимает только listener, а домены и типы команд закреплены внутри прежнего владельца. Проекция snapshot отбрасывает лишние поля записей. Опасение «просто получение reader что-то загружает» не подтвердилось: `haIntegrationMetadataSource` и `snapshot` только читают cache через `cacheOf`, сеть затрагивает лишь `acquire`.\n\nОснование: integration-provider.ts:61-79; houseplan-card.ts:5987-6003 (в `_planHass` только states/registry/presentation/formatters); smoke `noRawHaInDomainFrame`, `onlyFiniteMetadataOperations`, `onlyDisplayFacts`; unit «merely rendering the parent never fetches metadata».\n\n### Изоляция кеша по пользователю/роли и поздние ответы\n\nМеханизм корректен. Ключ — объект из общего `hostAuthorityKey`, а строка `JSON.stringify([id,isAdmin])` не пересекается с userId-ключами PlanHost, так что общий WeakMap коллизий не даёт. Новый ключ меняет поведение и для Zigbee settings. Это безопасно: тот уже освобождает и заново приобретает метаданные при смене `userId:_admin`, а значит попадает в тот же раздельный cache. Удержания памяти я не нашёл: цепочка connection → authorityKeys → identity → displaySources → hass → connection замкнута через ephemeron-слоты WeakMap и собирается вместе с connection.\n\nОснование: integration-provider.ts:44-50, 112-149 (замыкание на `cache`); plan-host.ts:160-168; hp-zigbee-topology-settings.ts:117-133; unit «authority replacement isolates late replies/events, role changes and reconnects».\n\n### Жизненный цикл preview и общий владелец\n\nAcquire и release сбалансированы. Сравнение по identity исключает повторный acquire на каждом tick. При смене или исчезновении reader старое наблюдение освобождается до нового acquire. Release идемпотентен (`released`), а подписка снимается, только когда refs=0, поэтому соседний потребитель её не теряет. Ранний возврат по `isConnected` безопасен: `connectedCallback` вызывает `_ensureMetadata` после `super.connectedCallback()`.\n\nОснование: hp-device-preview.ts:60-101; integration-provider.ts:196-213; unit «release(); release(); ... the neighbour still owns the subscription»; smoke `dialogCloseReleasesMetadata`, `noExtraMetadataFetchOnTick`, `exactlyTwoDiscoveryReads`.\n\n### Fallback и порядок имён\n\nПорядок «локализация → manifest.name → title записи → domain с пробелами» не изменился. Если HA недоступен, вызов бросает исключение или вернул не массив, всё деградирует до честного fallback. Standalone получает `integrationMetadataSnapshot(undefined)`, то есть пустой snapshot. Уточнение native-предусловия (`localize: () => null`) обосновано: приоритет локализации — намеренное поведение, и unit проверяет его отдельно.\n\nОснование: integration-provider.ts:239-250; hp-device-preview.ts:160, 228; unit «absent or denied metadata retains honest fallback»; demo/smoke_device_integration_metadata.mjs:10-12.\n\n### Сопутствующее изменение connectionKey\n\nФикстуры без `connection` раньше получали ключ по объекту hass, то есть новый cache на каждый tick. Теперь ключом служит функция `callWS`. Это побочное улучшение, на реальный HA оно не влияет: там `connection` всегда есть.\n\nОснование: integration-provider.ts:45.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Необязательно: порт хранит изменяемый `source`, который обновляется последним hass на каждом вызове `haIntegrationMetadataSource`. Сейчас это безопасно, потому что identity гарантирует тот же cache. Стоит одной строкой в комментарии закрепить, что `source` можно заменять только внутри одной identity, иначе будущий рефакторинг ключа может незаметно связать порт с чужим cache. Цена — одна строка.\n\n## Границы анализа\n\nКод я изучал по исходникам head/base через чтение и поиск. Сборку, unit, native и golden сам не запускал. Опирался на результаты S6: прогон 20261114T222305345-a3a63448 на 24ef79346 завершён со статусом passed и без отказов; адресный golden `panel-device-state-source-unknown-en` на 166fa0c57 дал PASS с diff=0 (данные из контекста исполнителя, сам отчёт я не открывал). Вывод о применимости golden к head сделан из того, что diff между материалами, по словам исполнителя, затрагивает только native-предусловие. Это согласуется со списком изменённых файлов, но построчно оба коммита я не сравнивал. Собранные ассеты в custom_components/frontend я не проверял. Issue E2E Matysh/houseplan-e2e#68 — внешний источник, я его не читал.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 56f51be8175594bb994bc9c5af159ab071dd0999 → 24ef793465e3262b3e6502f70c61dfb0cab62cdf\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1446, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПричина подтверждена read-only сравнением actual/baseline/diff финального golden-beta на 386520b52: в двух provider-подписях House Plan Golden заменилось на houseplan golden. MarkerDialog передаёт hp-device-preview data-only _planHass; _ensureMetadata ожидал raw connection и не приобретал существующего metadata-owner, хотя manifest/list фикстуры по-прежнему отдаёт правильное name.\n\nРешение: отдельный _haIntegrationMetadata reader с ровно identity/snapshot/acquire передаётся в отдельное свойство preview. Это HA-only возможность вне _planHass и вне неизменённого четырёхпольного HostPresentationContext/PlanHost. Он не принимает команды/домены/HTTP, использует прежний lazy shared integration-provider owner и отдаёт только entry_id/domain/title и manifest domain/name. Просто получение reader/snapshot ничего не загружает. У raw-HA потребителей preview сохранён fallback-адаптер; standalone/injected PlanHost reader не получает. При смене/исчезновении reader и отключении preview observation освобождается, поздние callbacks другой identity не публикуются.\n\nСоседние читатели: resolveBindingProviders (общая строка интеграции) и resolveEntityProvider (подпись источника) используют один display snapshot. Zigbee settings по-прежнему передаёт настоящий HA своему существующему owner; общий metadata cache дополнительно разделён по пользователю и admin-role, поэтому поздние replies старой authority не попадают следующей. Существующая обработка ignored config entries Zigbee не менялась: source остаётся в raw owner snapshot и не переносится в display projection.\n\nАльтернативы: вернуть raw HA или callWS/connection в _planHass нельзя; выдавать расширенный транспорт preview не нужно; загружать metadata глобально при каждом HA tick вместо существующего lazy owner означало бы лишние запросы. Новый reader сохраняет прежнюю загрузку только при открытом preview.\n\nРиски для свежего взгляда: cache identity/user/role и поздние ответы, shared acquire/release с соседним HA consumer, замена/исчезновение reader, fallback при отсутствующем/бросающем HA API, отсутствие транспортных полей в обоих UI inputs. Unit и новый native включены адресно; также прежние device-preview-parity, zigbee-enable-refresh и plan-host-boundary. Состав S6 проверен планом: новые тесты классифицированы как devices/runtime/presentation; существующие неизвестные aggregation-source включают консервативный fast fallback. Ожидания и PNG не изменяются. Addressed golden panel-device-state-source-unknown-en проверяется по прежнему эталону из отдельного checkout; итоговый release B не меняется. E2E-решение будет записано отдельно; релиз/новая версия/приёмка рамок или Glow не входят.\n\n\n### Адресное визуальное подтверждение S6\nНа материале 166fa0c576ad38abb400df862fa1eec24d1b261e, после штатной подготовки S6, из отдельного checkout выполнен golden-runner --selection=beta --scenario=panel-device-state-source-unknown-en. Результат PASS: diff=0 pixels, ratio=0, maxDelta=1; прежний baseline не менялся. Отчёт artifacts/process-next/golden-panel-device-state-source-unknown-en/golden-report.json, actual SHA256 ca92b953d79ae0c1c332dee2cf4a121644e98835f2c56b332799216d24034f89. E2E-решение записано: Matysh/houseplan-e2e#68. Полный frozen release B не изменялся.\n\n### Уточнение предусловия native после первого S6\nПервый S6 20261114T220210399-1417dea0 завершён:647steps, один отказ нового smoke_device_integration_metadata по timeout ожидания manifest-name. Причина — стандартная demo-фикстура localize(component.demo.title) возвращает Demo integration, а локализация намеренно имеет приоритет над manifest-name. Продукт не менялся: на материале 24ef79346 в новом witness явно задан localize()=>null, как в воспроизводящем golden. Unit по-прежнему проверяет приоритет настоящей локализации. Адресный golden на166fa0c57 применим: единственная разница новой редакции — три строки предусловия этого native, ни один исходник/PNG не изменён. Успешные S6 результаты сохраняются; повторный вход в очередь с прежней адресной выборкой. Модельного ревью ещё не было.\n```\n\n</details>\n",
-        "createdAt": "2026-11-14T22:33:47.656Z",
-        "artifactId": 14135695199,
-        "runId": 43648524746,
-        "runAttempt": 1,
-        "completedAt": "2026-11-14T22:33:50Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43648524746",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "56f51be8175594bb994bc9c5af159ab071dd0999"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1447": {
@@ -5369,72 +5229,8 @@
     1448,
     1447
   ],
-  "active": {
-    "issue": 1446,
-    "worker": "finish",
-    "token": "478:finish:1446-integration-display-metadata-20261115-r2:finish:1:admit",
-    "fence": 478,
-    "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
-    "expectedBase": "56f51be8175594bb994bc9c5af159ab071dd0999",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794694973002,
-    "expiresAt": 1794699249110,
-    "patchId": "8182a0014eb1f881fb4301c99620e094e1afc68b",
-    "reviewRequest": "review:1446:2:8182a0014eb1f881fb4301c99620e094e1afc68b:56f51be8175594bb994bc9c5af159ab071dd0999"
-  },
+  "active": null,
   "events": {
-    "finish:1446-integration-display-metadata-20261115:finish:2:synchronized": {
-      "digest": "77df3f2143bb45ba360e4e5e14a963fa4f219bcdacf4500a4eabe904514d1aca",
-      "issue": 1446
-    },
-    "finish:999a8132-2bef-4396-b420-dd021369b91e": {
-      "digest": "ff7dbf1e2ea9abedbd717cd1c650ff514b362363ddc87dc0f44eee903ea307c2",
-      "issue": 1446
-    },
-    "finish:5ce32f96-e0dc-4a10-817f-9c077ddc8fc0": {
-      "digest": "b3fcceb31f4c62f7158a1c01d1f43b2f8942d8fa83e9636be40083c1c0d8088e",
-      "issue": 1446
-    },
-    "finish:0256a1a6-fd3b-4a9c-a74d-3c2b425d001f": {
-      "digest": "3729e4b3e8461e2487b06a99c38b5d1bc18dfe23779abbf2cebf4aad5070694b",
-      "issue": 1446
-    },
-    "finish:6a0dcfca-7c5d-4cd4-b19b-354580640605": {
-      "digest": "3fe1e56d2519b5a98fb453b8c4170d489d532091505f87774cfb0b9b2c20555f",
-      "issue": 1446
-    },
-    "finish:db272865-2a95-49e6-bdc5-7d9a1abb8fe4": {
-      "digest": "8c729078ae7a205a98cb3d81ee665faf290879dd0d9859396211e82a613165fa",
-      "issue": 1446
-    },
-    "finish:23ae9d8f-0edf-4be6-a0fc-36e6dc41eeae": {
-      "digest": "6fce52bd848ed6dfa384e7f14e37597b42a61d7f41a5ad47ff51f3340f647ad4",
-      "issue": 1446
-    },
-    "finish:27577f0f-c52f-497c-974d-72b8a0bd1dde": {
-      "digest": "46a48dd8e1b08cbb2fbf13696dbca9be6f4f8895cd7958aafd2c6b110a86fba4",
-      "issue": 1446
-    },
-    "finish:d01b179d-051d-4825-8fd8-c905142e76ba": {
-      "digest": "59c96cfba628491f90bd465e639b0d26a01827710e138e9e75452b28553da7c7",
-      "issue": 1446
-    },
-    "finish:a04c8ed1-65c9-4de3-9f93-2bd3afb75098": {
-      "digest": "4b9d34a18bc749bd4ef7c8b93e8ac479801ac044e19efe5856a3262fd632f221",
-      "issue": 1446
-    },
-    "finish:54a07f59-d699-4d81-b343-1478092d15b1": {
-      "digest": "93cb4077ca1ee96bb823c50e62797f9a6f87dc5a14892a5bdba25b371b3709ab",
-      "issue": 1446
-    },
-    "finish:7845423e-cf76-4e58-a6dc-ffa8484a074c": {
-      "digest": "71a50d09bac53dfa351deaa8dcfc04bdb4b73a5411d7004aa3694c2a84d2a29d",
-      "issue": 1446
-    },
-    "finish:1446-integration-display-metadata-20261115:finish:3:return": {
-      "digest": "a9a58b3e542e1ccb2ff9dd6507e12d2ae77f73b3e448a1e970230ca502057e5c",
-      "issue": 1446
-    },
     "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:2:synchronized": {
       "digest": "dfecfbc657e4778bd4418497436495350855ec3fafa758049b9df2a0ef03ea39",
       "issue": 1447
@@ -5479,10 +5275,6 @@
       "digest": "8b69b55edf9de409f99e2e82fdc9c335a261484e43704257479ef9eb5da46146",
       "issue": 1447
     },
-    "github:43647389343:1:completions:notice:4ed573edcaec35fff6719b4ffa29423c822a3911934f8b60dcc9199b337389be": {
-      "digest": "3cf50a4a5195514cc58a3fd26319ed96f9f5ab74fb29f0ad5287ac32a4a68f50",
-      "issue": 1446
-    },
     "github:43647389343:1:completions:message:4ed573edcaec35fff6719b4ffa29423c822a3911934f8b60dcc9199b337389be": {
       "digest": "f1682525b5f0a493f3d148a172f4b2785bb8a87bf2fb1a59987e0fd4fd05668d",
       "issue": 1447
@@ -5499,114 +5291,9 @@
       "digest": "ba109be4234cc98c7c8c4bf1066bdc2d91f004a2004601f5eddaf70cff13d8d2",
       "issue": 1447
     },
-    "finish:1446-integration-display-metadata-20261115-r2:finish:2:synchronized": {
-      "digest": "a0821dc58b9fbcfe05769168d70029e30143ee7d385a803d09fd1208576c9b84",
-      "issue": 1446
-    },
-    "finish:a6b64e57-5134-4b88-aabc-ed009c5c39dc": {
-      "digest": "5b84099b1ddc6b2a10ef9ff43338d880f290a51b4524c67e760bff926c932d7a",
-      "issue": 1446
-    },
-    "finish:1d4b1966-b80f-4879-936f-9aacb156d9b8": {
-      "digest": "2dfbdce1900dbac4d0c348ec94fe69b764dea5e921c68847517bbf2b7aa2dcf7",
-      "issue": 1446
-    },
-    "finish:f7eb60a9-8d05-474b-9946-01fd5a13add9": {
-      "digest": "cdd4f0f530ddfc78e6796ba79db283d3de5be4cb0a3449d48a93ed215951f88a",
-      "issue": 1446
-    },
-    "finish:fb097c38-0197-4b3c-b023-2c4f769e2652": {
-      "digest": "f5c379eb027060dc4bac260674ee024f44f7f7622abbb116e5d8a3a83330215c",
-      "issue": 1446
-    },
-    "finish:15637043-1334-46a3-9476-494df3c0b218": {
-      "digest": "f18cec5f4cf4b7aa01cffe940d5802de7c9a7603177fa210e77ec137ef1d7a5a",
-      "issue": 1446
-    },
-    "finish:37d3be10-a997-4f44-90be-fc516af523ca": {
-      "digest": "9fa963628885aa30ff1fbe98e5e62fa880c18d4b0cf16189ecdd2cfdc9e7c8ff",
-      "issue": 1446
-    },
-    "finish:3aceaafd-88cb-45f8-bdfd-88dd339037f0": {
-      "digest": "8af66a04d62470a293d9e93927ef271c4a64ac2c6fe9f4d3ed27ba642ab37b04",
-      "issue": 1446
-    },
-    "finish:e6ec01e0-23a7-4c5e-a631-1efc560f1c38": {
-      "digest": "faa9dfa92d496e7450555905906d7cf4b5c7dbd5085daca69bd41f4a7047e297",
-      "issue": 1446
-    },
-    "finish:1446-integration-display-metadata-20261115-r2:finish:3:s6-label": {
-      "digest": "07dd74975e234e09330545e4e0a33daaf7cd85adb0265b33dc10d61a7ad2150d",
-      "issue": 1446
-    },
-    "finish:1446-integration-display-metadata-20261115-r2:finish:4:review-requested": {
-      "digest": "d95dba28c083f70a381be9317cc49832e76b3ecc689601714c88a743411e88fa",
-      "issue": 1446
-    },
-    "github:43648503104:1:tick:0:review-retry": {
-      "digest": "f0d34d71c52469a1065b542b8b040a7c6285e2e1ed01842aec5ca363b7837612",
-      "issue": 1446
-    },
     "github:43648503104:1:completions:notice:ad77cd6c44fed2390600b1988619282f011ea59cfb4cbed33027d3fff3b10754": {
       "digest": "90353bf5588a27566911078273334d8d26b8dc29a89df610937e5f3344ace224",
       "issue": 1447
-    },
-    "github:43648503104:1:completions:message:ad77cd6c44fed2390600b1988619282f011ea59cfb4cbed33027d3fff3b10754": {
-      "digest": "7d9849ae63833484ba1d7ca0636969ab9882baf7e2597c3ed94c07c8ad1e41ac",
-      "issue": 1446
-    },
-    "github:43648503104:1:completions:message:44b1bb27616d72cc51767b8fa839819c43b54a7d6db6efd6fdb9f2ceb8976e35": {
-      "digest": "22b6b6478969af3b4d49ad0d86fe5eb6040fa1d1922be026648dd5e256b089ce",
-      "issue": 1446
-    },
-    "github:43648503104:1:completions:message:575ff54aea3c90bdc35b150b9b8c818d9c6f339eb9669f62064397f0ea1311ee": {
-      "digest": "fd422da4ef2374039faa0666af568545a107dbf89101fbf66e5721d9db459996",
-      "issue": 1446
-    },
-    "github:43648503104:1:completions:message:bc345ea0c3bcb59b105b54f68680305ee7bce05860de71dd189b5e9fec500b49": {
-      "digest": "24433f532b5d538264a2e58d02ed6d1fcce07bdd0b38b6ef843dc30cb7513f09",
-      "issue": 1446
-    },
-    "github:43648503104:1:completions:message:66919b4555f7791445b73035f01dd9aaf37655e51bc12555431766e5c32d0cc6": {
-      "digest": "70a1d94947e7079c9e2000915fbf02927667b15e980f123eb06ce8cb9afacbac",
-      "issue": 1446
-    },
-    "github:43648751609:1:tick:0:review-presentation": {
-      "digest": "a9ae171f9f6e2ef7e4c243b6364c92481c4e4f92a08be3ef1f8c252caffb43f0",
-      "issue": 1446
-    },
-    "github:43648751609:1:tick:0:review-complete": {
-      "digest": "8bef10065ef1eeef6609015984c84b086fe7c6802758a82a52138d0317033567",
-      "issue": 1446
-    },
-    "finish:1446-integration-display-metadata-20261115": {
-      "digest": "82a8163ec4fc0593dc2739b009fe0021dc402ddd59c9a6351753fe7a30b3f210",
-      "issue": 1446,
-      "message": {
-        "kind": "queued",
-        "issue": 1446,
-        "at": 1794693710936,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "166fa0c576ad38abb400df862fa1eec24d1b261e",
-        "delivered": true
-      }
-    },
-    "finish:1446-integration-display-metadata-20261115:finish:1:admit": {
-      "digest": "26234fe808765937d93b0fa298a8911cccdce8f1ca829cf9d8e021ec51163cb2",
-      "issue": 1446,
-      "message": {
-        "kind": "admitted",
-        "issue": 1446,
-        "at": 1794693715301,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "166fa0c576ad38abb400df862fa1eec24d1b261e",
-        "phase": "sync",
-        "delivered": true
-      }
     },
     "finish:1fc679d3-45b9-478e-bf50-a536193847e0": {
       "digest": "f1813563c0d35d70049b94ade465914b1e3d21e424432f0793e323a1a7e1ed9b",
@@ -5622,27 +5309,6 @@
         "delivered": true
       }
     },
-    "finish:1446-integration-display-metadata-20261115:finish:3:return:return:1446": {
-      "digest": "a9a58b3e542e1ccb2ff9dd6507e12d2ae77f73b3e448a1e970230ca502057e5c",
-      "issue": 1446,
-      "message": {
-        "kind": "return",
-        "issue": 1446,
-        "at": 1794694401314,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1794694401314,
-          "entry": 1,
-          "detail": "Браузер: device integration metadata: failed",
-          "eventId": "finish:1446-integration-display-metadata-20261115:finish:3:return:return:1446"
-        },
-        "delivered": true
-      }
-    },
     "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:1:admit": {
       "digest": "7c7f96d646481edce8e399281878fb32a2127f17e0bdf99eafc281490f680cd1",
       "issue": 1447,
@@ -5655,20 +5321,6 @@
         "layer": "product",
         "materialSha": "0cd38c2b254e9849507286c446fe810b9fe7006a",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:1446-integration-display-metadata-20261115-r2": {
-      "digest": "46b00009db11a84feafb8af580e24d7a7876347df2fea51878711e2b2aa5eef8",
-      "issue": 1446,
-      "message": {
-        "kind": "queued",
-        "issue": 1446,
-        "at": 1794694478922,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
         "delivered": true
       }
     },
@@ -5690,21 +5342,6 @@
           "detail": "Поведение: test/bundle-assets.test.mjs: failed",
           "eventId": "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:3:return:return:1447"
         },
-        "delivered": true
-      }
-    },
-    "finish:1446-integration-display-metadata-20261115-r2:finish:1:admit": {
-      "digest": "5eb51bc8e6bd3875538be4f32b2e2726e21cec3962ba346c571cf3b538b26bd4",
-      "issue": 1446,
-      "message": {
-        "kind": "admitted",
-        "issue": 1446,
-        "at": 1794694973002,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
-        "phase": "sync",
         "delivered": true
       }
     },
@@ -5733,36 +5370,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "ffcc44928c443204ce2065180d46f4d5939e0466",
-        "delivered": true
-      }
-    },
-    "finish:1446-integration-display-metadata-20261115-r2:finish:3:s6-complete": {
-      "digest": "ca1867c0906d246d017fb20bb6a9470d694e44d64cdaf7e99fffcaa3f73825e6",
-      "issue": 1446,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1446,
-        "at": 1794695463899,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
-        "phase": "review",
-        "evidence": {
-          "id": "20261114T222305345-a3a63448",
-          "name": "Тесты для задачи #1446 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T222305345-a3a63448/report.json",
-          "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
-          "status": "passed",
-          "finishedAt": "2026-11-14T22:31:02.799Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Причина подтверждена read-only сравнением actual/baseline/diff финального golden-beta на 386520b52: в двух provider-подписях House Plan Golden заменилось на houseplan golden. MarkerDialog передаёт hp-device-preview data-only _planHass; _ensureMetadata ожидал raw connection и не приобретал существующего metadata-owner, хотя manifest/list фикстуры по-прежнему отдаёт правильное name.\n\nРешение: отдельный _haIntegrationMetadata reader с ровно identity/snapshot/acquire передаётся в отдельное свойство preview. Это HA-only возможность вне _planHass и вне неизменённого четырёхпольного HostPresentationContext/PlanHost. Он не принимает команды/домены/HTTP, использует прежний lazy shared integration-provider owner и отдаёт только entry_id/domain/title и manifest domain/name. Просто получение reader/snapshot ничего не загружает. У raw-HA потребителей preview сохранён fallback-адаптер; standalone/injected PlanHost reader не получает. При смене/исчезновении reader и отключении preview observation освобождается, поздние callbacks другой identity не публикуются.\n\nСоседние читатели: resolveBindingProviders (общая строка интеграции) и resolveEntityProvider (подпись источника) используют один display snapshot. Zigbee settings по-прежнему передаёт настоящий HA своему существующему owner; общий metadata cache дополнительно разделён по пользователю и admin-role, поэтому поздние replies старой authority не попадают следующей. Существующая обработка ignored config entries Zigbee не менялась: source остаётся в raw owner snapshot и не переносится в display projection.\n\nАльтернативы: вернуть raw HA или callWS/connection в _planHass нельзя; выдавать расширенный транспорт preview не нужно; загружать metadata глобально при каждом HA tick вместо существующего lazy owner означало бы лишние запросы. Новый reader сохраняет прежнюю загрузку только при открытом preview.\n\nРиски для свежего взгляда: cache identity/user/role и поздние ответы, shared acquire/release с соседним HA consumer, замена/исчезновение reader, fallback при отсутствующем/бросающем HA API, отсутствие транспортных полей в обоих UI inputs. Unit и новый native включены адресно; также прежние device-preview-parity, zigbee-enable-refresh и plan-host-boundary. Состав S6 проверен планом: новые тесты классифицированы как devices/runtime/presentation; существующие неизвестные aggregation-source включают консервативный fast fallback. Ожидания и PNG не изменяются. Addressed golden panel-device-state-source-unknown-en проверяется по прежнему эталону из отдельного checkout; итоговый release B не меняется. E2E-решение будет записано отдельно; релиз/новая версия/приёмка рамок или Glow не входят.\n\n\n### Адресное визуальное подтверждение S6\nНа материале 166fa0c576ad38abb400df862fa1eec24d1b261e, после штатной подготовки S6, из отдельного checkout выполнен golden-runner --selection=beta --scenario=panel-device-state-source-unknown-en. Результат PASS: diff=0 pixels, ratio=0, maxDelta=1; прежний baseline не менялся. Отчёт artifacts/process-next/golden-panel-device-state-source-unknown-en/golden-report.json, actual SHA256 ca92b953d79ae0c1c332dee2cf4a121644e98835f2c56b332799216d24034f89. E2E-решение записано: Matysh/houseplan-e2e#68. Полный frozen release B не изменялся.\n\n### Уточнение предусловия native после первого S6\nПервый S6 20261114T220210399-1417dea0 завершён:647steps, один отказ нового smoke_device_integration_metadata по timeout ожидания manifest-name. Причина — стандартная demo-фикстура localize(component.demo.title) возвращает Demo integration, а локализация намеренно имеет приоритет над manifest-name. Продукт не менялся: на материале 24ef79346 в новом witness явно задан localize()=>null, как в воспроизводящем golden. Unit по-прежнему проверяет приоритет настоящей локализации. Адресный golden на166fa0c57 применим: единственная разница новой редакции — три строки предусловия этого native, ни один исходник/PNG не изменён. Успешные S6 результаты сохраняются; повторный вход в очередь с прежней адресной выборкой. Модельного ревью ещё не было.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
