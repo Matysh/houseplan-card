@@ -173,17 +173,36 @@ try {
         card._settings.summary_panel.blocks = [hidden];
         await refresh();
         const panel = () => f.root().querySelector('[data-hp="summary-panel"]');
+        const mismatch = phase => Error(`${lang}/${narrow}/${phase}: ${JSON.stringify({
+          title: panel()?.querySelector('h2')?.textContent, weatherHeading: f.widget()?.querySelector('h3')?.textContent,
+          weatherText: f.widget()?.textContent, blocks: card._settings.summary_panel.blocks,
+          config: card._summary.config(), presentation: card._summary.presentation.phase,
+          pending: card._read.pending, busy: card._read.busy, language: card._config.language,
+        })}`);
+        // Parent geometry/ResizeObserver and child Lit updates can enqueue one
+        // another after the fixture's single-rAF settle. Observe the requested
+        // final heading, not an arbitrary intermediate frame. Keep the same
+        // bounded readiness deadline as locale loading above; never suppress
+        // a wrong final heading or mutate the product to make this check pass.
+        const ready = async (predicate, phase) => {
+          const deadline = performance.now() + 5000;
+          while (!predicate()) {
+            if (performance.now() > deadline) throw mismatch(phase);
+            await new Promise(requestAnimationFrame); await f.settle();
+          }
+        };
         if (panel()?.querySelector('h2')?.textContent !== title || panel()?.getAttribute('aria-label') !== title
           || f.widget()?.querySelector('h3') || f.root().querySelector('.summary-measure h2')?.textContent !== title) throw Error(`${lang}/${narrow}: ${JSON.stringify({ title: panel()?.querySelector('h2')?.textContent, aria: panel()?.getAttribute('aria-label'), widget: f.widget()?.querySelector('h3')?.textContent, measure: f.root().querySelector('.summary-measure h2')?.textContent, language: card._config.language, blocks:card._settings.summary_panel.blocks, mode:card._mode, sources: [...f.root().querySelectorAll('hp-summary-weather')].map(x=>({language:x.language, heading:x.showHeading})), current:card._summary.config() })}`);
         await f.set({ 'weather.lab_home': { ...f.weather, state: 'unavailable' } });
-        if (f.widget()?.querySelector('h3') || !f.widget()?.textContent) throw Error(`${lang}/${narrow}: weather/mixed state mismatch`);
+        await ready(() => !f.widget()?.querySelector('h3') && !!f.widget()?.textContent, 'unavailable');
         await f.set({ 'weather.lab_home': undefined });
-        if (f.widget()?.querySelector('h3') || !f.widget()?.textContent) throw Error(`${lang}/${narrow}: weather/mixed state mismatch`);
+        await ready(() => !f.widget()?.querySelector('h3') && !!f.widget()?.textContent, 'missing');
         await f.set({ 'weather.lab_home': f.weather });
         card._settings.summary_panel.blocks = [{ ...hidden, scope: { type: 'all' } }];
         await refresh();
-        if (panel()?.querySelector('h2')?.textContent !== 'Обзор дома' || f.widget()?.querySelector('h3')?.textContent !== title) throw Error(`${lang}/${narrow}: weather/mixed state mismatch`);
-        if (card._settings.summary_panel.title !== 'Обзор дома') throw Error(`${lang}/${narrow}: weather/mixed state mismatch`);
+        await ready(() => panel()?.querySelector('h2')?.textContent === 'Обзор дома'
+          && f.widget()?.querySelector('h3')?.textContent === title, 'mixed');
+        if (card._settings.summary_panel.title !== 'Обзор дома') throw mismatch('saved-title');
       }
     }
     card._config = { ...card._config, language: 'ru' }; card.narrow = false;
