@@ -11,7 +11,7 @@ export const editorContextMenuStyles = unsafeCSS(css`
   }
   .hpf-context-menu > button {
     box-sizing: border-box; display: flex; align-items: center; justify-content: flex-start; gap: 6px;
-    width: 100%; min-width: 0; min-height: 32px; margin: 0; padding: 5px 14px;
+    width: 100%; min-width: 0; min-height: 32px; margin: 0; padding: 5px 13px;
     border: 1px solid transparent; border-radius: 0; color: inherit; background: transparent;
     font: inherit; line-height: 18px; text-align: start; white-space:normal; cursor: pointer;
     box-shadow: none; outline: none; `.cssText + settingsActionTransition + css` }
@@ -24,7 +24,7 @@ export const editorContextMenuStyles = unsafeCSS(css`
   }
   .hpf-context-menu > button:disabled { opacity: 1; color: color-mix(in srgb,var(--primary-text-color,#222) 40%,transparent); cursor: not-allowed; }
   .hpf-context-menu-touch { font-size:13px; line-height:20px; }
-  .hpf-context-menu-touch > button { min-height:44px; padding:11px 14px; gap:10px; line-height:20px; }
+  .hpf-context-menu-touch > button { min-height:44px; padding:11px 13px; gap:10px; line-height:20px; }
   .hpf-context-menu-touch > button + button { padding-block-start:12px; }
   .hpf-context-menu-touch > button > :is(ha-icon, svg) { --mdc-icon-size:20px; width:20px; height:20px; flex:none; }
   .hpf-context-menu > button:is([aria-current='true'], [aria-pressed='true']) { color:var(--primary-color,#03a9f4); font-weight:600; }

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Publish the synthetic HA transport before opening saved-plan dialogs in picker smoke fixtures; retain list geometry and file-management assertions (#1439).
+- Keep context-menu width unchanged when reserving the single 1px border, including touch rows (#1444).
 - Use the real core schema and product-owned live subscription in infinite-canvas/layout smoke fixtures (#1434).
 - Keep passive installation/converter information visible when HA metadata is present but the integration transport is unavailable; dispatch remains unavailable (#1435).
 - Preserve borderless button footprints when reserving the single focus border, preventing extra editor toolbar wrapping (#1431).
