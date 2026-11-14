@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12843,
+  "revision": 12844,
   "nextTicket": 453,
   "nextFence": 453,
   "tasks": {
@@ -4615,14 +4615,22 @@
       "track": "ask",
       "layer": "docs",
       "branch": "codex/1427-user-guides",
-      "materialSha": "495a0d6e69cf43f3a9dd87a54836c8db431faf55",
+      "materialSha": "861880273ebcd36fd891537c15a4c3e85ccebd25",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 452,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794665615609,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "83d97d22b3cfb2f6329b4726dfab2104d813dec5",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/SCOPE.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4970,11 +4978,12 @@
     "worker": "finish",
     "token": "452:finish:c2557edd-3229-49a8-8a05-954300217dce:finish:1:admit",
     "fence": 452,
-    "materialSha": "495a0d6e69cf43f3a9dd87a54836c8db431faf55",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "861880273ebcd36fd891537c15a4c3e85ccebd25",
+    "expectedBase": "17e097cc5028767c96277023575ac2052d59ef8b",
+    "phase": "testing",
     "admittedAt": 1794665619585,
-    "expiresAt": 1794665919585
+    "expiresAt": 1794665929148,
+    "patchId": "83d97d22b3cfb2f6329b4726dfab2104d813dec5"
   },
   "events": {
     "github:43600053849:1:label:spec-request": {
@@ -5015,6 +5024,10 @@
     },
     "github:43600725372:1:completions:report:e1944ca802954416d4a18288cb5c3aca599c4eff35377358edbe0bc7a866fb2a": {
       "digest": "fe08031e3a480a59fdf0a60656ec257a05edd0288b3f9594af0d206eb3b25c62",
+      "issue": 1427
+    },
+    "finish:c2557edd-3229-49a8-8a05-954300217dce:finish:2:synchronized": {
+      "digest": "f43a80f1f2eab6d6d6ce8cbf51cfef4a9e0f48d6288f19770c43f786f49c89f9",
       "issue": 1427
     },
     "github:43600519269:1:label:spec-request:spec-resubmitted:1427": {
