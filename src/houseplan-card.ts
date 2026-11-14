@@ -1,4 +1,5 @@
 import { HaPlanHost } from './ha-plan-host';
+import { haValueFormatters } from './ha-value-formatters';
 import { acquireButtonTabFocus } from './ui-button-tab-focus';
 import type { PlanHost, HostEnvironment, HostPresentationContext } from './plan-host';
 import { live } from 'lit/directives/live.js';
@@ -5989,8 +5990,9 @@ export class HouseplanCard extends LitElement {
   private _projectHaSmartHomeSources(projected: Parameters<typeof projectEcovacsSources>[1]): unknown {
     if (!this.hass) return projected;
     // Smart-home intent resolution still needs HA's service catalog and direct
-    // radio readings. Lend data, not transport/auth, to the shared domain frame.
-    return projectEcovacsSources(this, { ...projected, services: this.hass.services,
+    // radio readings and read-only value formatters. Lend no transport/auth to
+    // the shared domain frame; the portable presentation bridge stays unchanged.
+    return projectEcovacsSources(this, { ...projected, ...haValueFormatters(this.hass), services: this.hass.services,
       zigbeeLqi: directSignalReadings(this.hass), config: this.hass.config }, this.hass);
   }
   private _haSignalEnvironmentPending = false;
