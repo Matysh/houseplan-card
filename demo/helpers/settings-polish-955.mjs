@@ -34,9 +34,15 @@ const section=async(d,id)=>{
  await settled();
 };
 const hoverButton=async b=>{
- await page.mouse.move(0,0);await b.hover();await page.waitForTimeout(180);
- return await b.evaluate(el=>{const s=getComputedStyle(el);return s.cursor==='pointer'&&s.backgroundColor!=='rgba(0, 0, 0, 0)';})
-   &&await b.evaluate(singleButtonBorder);
+ await page.mouse.move(0,0);await b.hover();
+ const deadline=Date.now()+2000;
+ do{
+   const visible=await b.evaluate(el=>{const s=getComputedStyle(el);return s.cursor==='pointer'&&s.backgroundColor!=='rgba(0, 0, 0, 0)';});
+   if(visible&&await b.evaluate(singleButtonBorder))return true;
+   await page.waitForTimeout(40);
+ }while(Date.now()<deadline);
+ console.log('diagnostic button hover',await b.evaluate(el=>{const s=getComputedStyle(el);return {text:el.textContent.trim(),hover:el.matches(':hover'),border:s.borderTopColor,width:s.borderTopWidth,outline:s.outlineStyle,shadow:s.boxShadow,background:s.backgroundColor,accent:s.getPropertyValue('--hpf-accent'),primary:s.getPropertyValue('--primary-color')};}));
+ return false;
 };
 try{
  await page.goto(fixture.url+'/product.html');
