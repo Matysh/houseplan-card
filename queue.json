@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12973,
+  "revision": 12974,
   "nextTicket": 457,
   "nextFence": 457,
   "tasks": {
@@ -4628,7 +4628,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794669758830,
       "reviewEntry": 3,
-      "patchId": "2cdb25afc8dc9985e90a7e6e685aa02353d6cf57",
+      "patchId": "9b7ec7dce6de531dbaea786fa9bc046536d050a1",
       "changedFiles": [
         "demo/smoke_discard_dialog_polish.mjs",
         "demo/smoke_editor_return_focus_1248.mjs",
@@ -4639,12 +4639,15 @@
         "docs/release-ledger/v1.85.0/1428.json",
         "src/dialog-return-focus.ts",
         "src/editor-context-menu.styles.ts",
+        "src/editor-context-menu.ts",
+        "src/editor-secondary.ts",
         "src/editors/hp-icon-picker.ts",
         "src/houseplan-card.ts",
         "src/hp-color-opacity.ts",
         "src/hp-dialog.ts",
         "src/hp-help.ts",
         "src/hp-settings-select.ts",
+        "src/space-card.ts",
         "src/styles/form-kit.styles.ts",
         "src/styles/icon-action.styles.ts",
         "src/styles/navigation.styles.ts",
@@ -5028,10 +5031,11 @@
     "token": "456:finish:bca35f35-f472-4e46-9225-b7e99a58d020:finish:1:admit",
     "fence": 456,
     "materialSha": "0752afb2ecb554bb58548742b175feafaf346022",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "dc739d2fee27c257627e15739094135a7c306bc0",
+    "phase": "testing",
     "admittedAt": 1794669762269,
-    "expiresAt": 1794670062269
+    "expiresAt": 1794670068735,
+    "patchId": "9b7ec7dce6de531dbaea786fa9bc046536d050a1"
   },
   "events": {
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:2:synchronized": {
@@ -5180,6 +5184,10 @@
     },
     "github:43608123943:1:completions:metadata:22191e94-43a8-4255-9318-186acadf934a:task-notice:1428::": {
       "digest": "9ded3790039674b91b655f937f6c531be80a7441e1144500d95b8f55470d22f0",
+      "issue": 1428
+    },
+    "finish:bca35f35-f472-4e46-9225-b7e99a58d020:finish:2:synchronized": {
+      "digest": "c58f8cbf25a0faf7552e7eaa1ac8a32c4c233c0a2778d8e2163b08f2a429d472",
       "issue": 1428
     },
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8": {
