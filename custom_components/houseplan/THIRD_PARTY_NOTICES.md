@@ -58,7 +58,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-## Material Design Icons — local device icon picker
+## Material Design Icons — local device icon picker and isolated presentation
 
 MDI 7.4.47, from @mdi/js and @mdi/svg (Pictogrammers / Templarian and contributors).
 Source: https://github.com/Templarian/MaterialDesign

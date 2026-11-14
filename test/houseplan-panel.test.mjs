@@ -8,7 +8,10 @@ const source = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'u
 
 test('#486 panel shell keeps one full card and forwards HA properties without inventing card config', () => {
   const panel = source('src/houseplan-panel.ts');
-  assert.match(panel, /import '\.\/houseplan-card';/);
+  assert.match(panel, /import '\.\/houseplan-ha-card-entry';/);
+  const entry = source('src/houseplan-ha-card-entry.ts');
+  assert.match(entry, /from '\.\/houseplan-card'/);
+  assert.match(entry, /customElements\.define\('houseplan-card', HouseplanCard\)/);
   assert.match(panel, /if \(this\._card \|\| !this\.shadowRoot\) return;/);
   assert.match(panel, /card\.setConfig\(\{ type: 'custom:houseplan-card' \}\);/);
   assert.match(panel, /if \(this\._card\) this\._card\.hass = value;/);

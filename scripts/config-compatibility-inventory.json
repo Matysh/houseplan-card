@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "7aeaa89e3f83a9745c9cb5a74d6728e47c39d33e3624c85fb312648ab1ab3c71",
+  "matchesSha256": "341f26b28bdb00d96d6f2c0a13e08f39bdb4f01dfcd6a47b898412569734b2c0",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -6847,6 +6847,16 @@
       "kind": "exclusion",
       "owner": "current-feature",
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
+    },
+    {
+      "id": "4ab1d65fb2906ff6b03db92e",
+      "path": "src/standalone-plan-host.ts",
+      "line": 14,
+      "text": "throw hostError('standalone_host_incompatible');",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "provider-api",
+      "reason": "#1423 fail-closed runtime provider version/fingerprint/API handshake, not a historical persisted-config decoder."
     },
     {
       "id": "8800d686b981553e438426b6",

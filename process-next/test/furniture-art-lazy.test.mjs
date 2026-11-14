@@ -12,7 +12,7 @@ function bundle(eager = false) {
   const art = 'furniture.js';
   const chunks = {
     'houseplan-card.js': { type: 'chunk', fileName: 'houseplan-card.js', code: 'view', isEntry: true,
-      facadeModuleId: '/repo/src/houseplan-card.ts',
+      facadeModuleId: '/repo/src/houseplan-ha-card-entry.ts',
       imports: eager ? [art] : [], dynamicImports: [art] },
     'houseplan-panel.js': { type: 'chunk', fileName: 'houseplan-panel.js', code: 'panel', isEntry: true,
       facadeModuleId: '/repo/src/houseplan-panel.ts',

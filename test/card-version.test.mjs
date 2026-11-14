@@ -30,8 +30,11 @@ test('#512: every DOM/request use of the version goes through the seam; cache-bu
   const cardBare = bare(card);
   assert.equal(cardBare.filter((line) => /const CARD_VERSION = '/.test(line)).length, 1);
   for (const line of cardBare) {
-    assert.match(line, /const CARD_VERSION = '|hp_retry|console\.info/, `card: bare CARD_VERSION outside the seam: ${line.trim()}`);
+    assert.match(line, /const CARD_VERSION = '|hp_retry|^export \{ CARD_VERSION \};$/, `card: bare CARD_VERSION outside the seam: ${line.trim()}`);
   }
+  const entry = readFileSync(new URL('../src/houseplan-ha-card-entry.ts', import.meta.url), 'utf8');
+  for (const line of bare(entry))
+    assert.match(line, /^import \{ HouseplanCard, CARD_VERSION \} from '\.\/houseplan-card';$|console\.info/, `HA entry: unexpected raw version use: ${line.trim()}`);
   const editorBare = bare(editor);
   assert.deepEqual(editorBare.map((line) => line.trim()), [`const CARD_VERSION = '${/const CARD_VERSION = '([^']+)'/.exec(editor)[1]}';`]);
   assert.match(card, /version: displayVersion\(CARD_VERSION\),/, 'PDF footer');
