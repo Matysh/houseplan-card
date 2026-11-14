@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12204,
+  "revision": 12205,
   "nextTicket": 436,
   "nextFence": 436,
   "tasks": {
@@ -5131,7 +5131,8 @@
           "entry": 1,
           "detail": "Критичные данные, сохранение и права: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/geometry-cleanup-842.test.mjs: failed; Поведение: test/header-menu.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/marker-activity-save-865.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/render-device-snapshot.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
           "eventId": "finish:aba9fde5-1710-4bdf-8752-192f651e747d:finish:3:return:return:1394"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:2037b335-ba7d-4f56-9106-129e25272687": {
