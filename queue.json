@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13025,
-  "nextTicket": 458,
+  "revision": 13026,
+  "nextTicket": 459,
   "nextFence": 458,
   "tasks": {
     "1024": {
@@ -4620,14 +4620,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1428-single-button-focus",
-      "materialSha": "0752afb2ecb554bb58548742b175feafaf346022",
+      "materialSha": "d3ca314f068fa79babf05b15388b8af9b5ec2095",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 456,
-      "queued": false,
+      "ticket": 458,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794669758830,
-      "reviewEntry": 3,
+      "readyAt": 1794671237430,
+      "reviewEntry": 4,
       "patchId": "9b7ec7dce6de531dbaea786fa9bc046536d050a1",
       "changedFiles": [
         "demo/smoke_discard_dialog_polish.mjs",
@@ -4679,13 +4679,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1428:3:9b7ec7dce6de531dbaea786fa9bc046536d050a1:dc739d2fee27c257627e15739094135a7c306bc0",
-      "reviewMaterial": {
-        "materialSha": "0752afb2ecb554bb58548742b175feafaf346022",
-        "expectedBase": "dc739d2fee27c257627e15739094135a7c306bc0",
-        "patchId": "9b7ec7dce6de531dbaea786fa9bc046536d050a1"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1428:3:9b7ec7dce6de531dbaea786fa9bc046536d050a1:dc739d2fee27c257627e15739094135a7c306bc0",
         "at": 1794670733819
@@ -5053,7 +5046,9 @@
       "runId": 43604638377
     }
   },
-  "waiting": [],
+  "waiting": [
+    1428
+  ],
   "active": null,
   "events": {
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:2:synchronized": {
@@ -5480,6 +5475,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:1001037e-33fe-443b-bc9b-813eef9584c4": {
+      "digest": "429ff98694e973e74763c13c91ec5bb190def1f7ec1a8a3d0f262c443096e356",
+      "issue": 1428,
+      "message": {
+        "kind": "queued",
+        "issue": 1428,
+        "at": 1794671237430,
+        "entry": 4,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d3ca314f068fa79babf05b15388b8af9b5ec2095",
+        "evidence": {
+          "id": "20261114T152255057-8786e47c",
+          "name": "Тесты для задачи #1428 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T152255057-8786e47c/report.json",
+          "materialSha": "0752afb2ecb554bb58548742b175feafaf346022",
+          "status": "passed",
+          "finishedAt": "2026-11-14T15:33:54.710Z",
+          "failures": []
+        }
       }
     }
   },
