@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11975,
+  "revision": 11976,
   "nextTicket": 430,
   "nextFence": 429,
   "tasks": {
@@ -4957,18 +4957,12 @@
       }
     },
     "1394": {
-      "requestId": "spec:1394:8ba80aa762186cdcffa4b6429e49358364584f374f160511571b82c4552dc3ba",
-      "contextDigest": "8ba80aa762186cdcffa4b6429e49358364584f374f160511571b82c4552dc3ba",
-      "base": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1794607424254,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43515222519",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "requestId": "spec:1394:e80c707fd85bf77bc6d49723d7ee93ebcaddce6e9163a0a2fbbe92941a6f0cc5",
+      "contextDigest": "e80c707fd85bf77bc6d49723d7ee93ebcaddce6e9163a0a2fbbe92941a6f0cc5",
+      "base": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1794629325915
     },
     "1395": {
       "requestId": "spec:1395:06640d28ad9e1ae890c5d4eb6e40a7c126f73123b9834957deac5944f4bfd85f",
@@ -5023,6 +5017,19 @@
       "presentation": {
         "round": 1,
         "occurredAt": "2026-11-14T04:04:48.914Z"
+      }
+    },
+    "spec:1394:spec:1394:e80c707fd85bf77bc6d49723d7ee93ebcaddce6e9163a0a2fbbe92941a6f0cc5": {
+      "issue": 1394,
+      "kind": "spec",
+      "requestId": "spec:1394:e80c707fd85bf77bc6d49723d7ee93ebcaddce6e9163a0a2fbbe92941a6f0cc5",
+      "materialSha": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+      "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+      "patchId": "e80c707fd85bf77bc6d49723d7ee93ebcaddce6e9163a0a2fbbe92941a6f0cc5",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-14T04:08:45.915Z"
       }
     }
   },
@@ -5691,6 +5698,10 @@
       "digest": "d4ad2f488693c8c449af4a5e7e9a070df255d122c399852bc0199f533bc371d6",
       "issue": 1395
     },
+    "github:43555134078:1:spec:1394:spec-request": {
+      "digest": "da0a567c831444c6edf8188c369afccc9da568d6542dab5b8e8f2f028cdcb317",
+      "issue": 1394
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -6064,6 +6075,22 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
+      "digest": "da0a567c831444c6edf8188c369afccc9da568d6542dab5b8e8f2f028cdcb317",
+      "issue": 1394,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1394,
+        "at": 1794629325915,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1394:e80c707fd85bf77bc6d49723d7ee93ebcaddce6e9163a0a2fbbe92941a6f0cc5",
+        "reviewChanges": "ТЗ использует один контракт #1392. Намеренно разделены installationBackup/planTransfer и real/virtual devices; иначе автономный редактор лишился бы собственного скачивания плана либо получил бы HA-зависимый редактор устройств. Защита dispatch обязательна, но не выдаётся за ACL. Решение владельца для #1393: UI Kit и локальные SVG на автономной поверхности, без замены HA-компонентов в интеграции. Здесь реализуется только доступность функций, не те компоненты. Продукт пока не менялся, запусков тестов не было.\n\n### Исправления по предыдущему ревью\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/43515222519.\n- Блокер transport-зависимой базы → добавлены обязательные base ports и явная матрица planImages/decorAssets/planMaintenance/supportDiagnostics/planTransfer/content.resolve, включая onboarding и nested menus. Полный planOnly требует этих реализаций; partial profile скрывает отсутствующие группы, allowed command log строится из матрицы.\n- Уточнены immutable capabilities/generation, сочетание с прежними API-version gates и ACL, зависимости partial profiles, virtual actuation и preservation/cascades скрытых объектов.\n- Включены забываемые print-devices и HA support/fingerprint поверхности.\nРедакция 2. В отсутствие отдельного решения о расширении сохраняется предложенный консервативный вариант: существующий перенос по одному пространству и явное объяснение ограничения лестниц. Продукт и проверки #1394 не изменялись. #1392 ещё проходит code review, не объявляется слитой; реализация #1394 начнётся после её S8. Для независимой оценки ТЗ обязательная база и transport-матрица приведены здесь полностью, без требования доступа к соседней незавершённой ветке. Реализованный контракт #1392: PlanHost.request(HouseplanCommand), subscribe(config/layout), http.request/postJson, content.resolve, readonly environment{ready,connected,permissions,states,registry,presentation}, authorityKey/writeAuthorityRevision/environmentRevision/subscribeEnvironment и optional deviceServices/refreshRegistry. HA credential/connection не входят в presentation. Host capabilities дополнят именно этот контракт, не создают второй. Текстовое направление UI Kit/локальных SVG подтверждено владельцем; замена HA-компонентов остаётся за пределами этих пяти задач.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
