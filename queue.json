@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 13936,
+  "revision": 13937,
   "nextTicket": 478,
-  "nextFence": 477,
+  "nextFence": 478,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -4868,7 +4868,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 477,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794693783091,
       "reviewEntry": 1
@@ -5227,10 +5227,18 @@
       "runId": 43643902515
     }
   },
-  "waiting": [
-    1447
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1447,
+    "worker": "finish",
+    "token": "477:finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:1:admit",
+    "fence": 477,
+    "materialSha": "0cd38c2b254e9849507286c446fe810b9fe7006a",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1794694459750,
+    "expiresAt": 1794694759750
+  },
   "events": {
     "finish:1446-integration-display-metadata-20261115:finish:2:synchronized": {
       "digest": "77df3f2143bb45ba360e4e5e14a963fa4f219bcdacf4500a4eabe904514d1aca",
@@ -5342,6 +5350,20 @@
           "detail": "Браузер: device integration metadata: failed",
           "eventId": "finish:1446-integration-display-metadata-20261115:finish:3:return:return:1446"
         }
+      }
+    },
+    "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:1:admit": {
+      "digest": "7c7f96d646481edce8e399281878fb32a2127f17e0bdf99eafc281490f680cd1",
+      "issue": 1447,
+      "message": {
+        "kind": "admitted",
+        "issue": 1447,
+        "at": 1794694459750,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "0cd38c2b254e9849507286c446fe810b9fe7006a",
+        "phase": "sync"
       }
     }
   },
