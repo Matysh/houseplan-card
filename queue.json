@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12369,
+  "revision": 12370,
   "nextTicket": 442,
   "nextFence": 442,
   "tasks": {
@@ -3659,6 +3659,13 @@
         "materialSha": "9ed0f88801ada63035ccafa464683960da8104e9",
         "expectedBase": "4423d4dc9c725b24fe4a3d231bd0b72cadccff62",
         "patchId": "2212f8a600a9ff6d29b53eb2d57ff9a5061439c7"
+      },
+      "reviewRetry": {
+        "requestId": "review:1394:7:2212f8a600a9ff6d29b53eb2d57ff9a5061439c7:4423d4dc9c725b24fe4a3d231bd0b72cadccff62",
+        "eventId": "github:43569948997:1:tick:0:review-retry",
+        "at": 1794640331757,
+        "runId": null,
+        "runAttempt": null
       }
     },
     "1395": {
@@ -5299,6 +5306,10 @@
     },
     "finish:5a3f7a6b-d218-4597-9747-cb58c140d5f7:finish:4:review-requested": {
       "digest": "dace642acb0605c683981a3ba9d5cf12e6646f8b8ce1c8d6972e53ebfb82a283",
+      "issue": 1394
+    },
+    "github:43569948997:1:tick:0:review-retry": {
+      "digest": "838b9a7808fb9f23582fa6e732b2f2ac04db07f78dc1bc4cdd78ec47d8149f48",
       "issue": 1394
     },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
