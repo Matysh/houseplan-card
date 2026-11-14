@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12910,
-  "nextTicket": 454,
+  "revision": 12911,
+  "nextTicket": 455,
   "nextFence": 454,
   "tasks": {
     "1024": {
@@ -4614,6 +4614,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1428": {
+      "issue": 1428,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1428-single-button-focus",
+      "materialSha": "e3f0365bd25053a4ef4a8fe5fdc82d4e16e53428",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 454,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794666925147,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4955,9 +4969,25 @@
       "runId": 43604638377
     }
   },
-  "waiting": [],
+  "waiting": [
+    1428
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8": {
+      "digest": "5d222819e81ede9628f329e1f7cf41302954c0c912e32d245b13f830c70da079",
+      "issue": 1428,
+      "message": {
+        "kind": "queued",
+        "issue": 1428,
+        "at": 1794666925147,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "e3f0365bd25053a4ef4a8fe5fdc82d4e16e53428"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "17e097cc5028767c96277023575ac2052d59ef8b",
     "status": "delivered",
