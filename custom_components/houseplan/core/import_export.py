@@ -37,6 +37,7 @@ from .constants import PLANS_DIR as PLANS_DIR
 from .constants import PLANS_URL as PLANS_URL
 from .geometry_migration import migrate_layout as migrate_layout
 from .geometry_migration import pending_from_config as pending_from_config
+from .input_policy import InputLimit, check_json_bounds, checkpoint, finite_json_float
 from .led_strips import led_strip_link_report as led_strip_link_report
 from .led_strips import plan_only_strips as plan_only_strips
 from .led_strips import unbind_strips as unbind_strips
@@ -184,6 +185,11 @@ class ImportFailure(Exception):
         self.code = code
         self.message = message or code
 
+    @property
+    def public_message(self) -> str:
+        """Protocol text never reflects raw validation input or local paths."""
+        return self.code
+
 
 def source_fingerprint(instance_id: str) -> str:
     raw = "houseplan-export-v1|" + instance_id
@@ -191,7 +197,13 @@ def source_fingerprint(instance_id: str) -> str:
 
 
 def _json_copy(value: Any) -> Any:
-    return json.loads(json.dumps(value, ensure_ascii=False, allow_nan=False))
+    checkpoint()
+    try:
+        result = json.loads(json.dumps(value, ensure_ascii=False, allow_nan=False))
+    except RecursionError as err:
+        raise ImportFailure("invalid_config", "The document structure cannot be processed") from err
+    checkpoint()
+    return result
 
 
 def _background_mode(settings: Any) -> str | None:
@@ -235,13 +247,18 @@ def _stored_model_version(config: dict[str, Any]) -> int:
 
 def _document_digest(document: dict[str, Any]) -> str:
     """Digest the normalized candidate a preview token is allowed to apply."""
-    raw = json.dumps(
-        document,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-        allow_nan=False,
-    ).encode("utf-8")
+    checkpoint()
+    try:
+        raw = json.dumps(
+            document,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+            allow_nan=False,
+        ).encode("utf-8")
+    except RecursionError as err:
+        raise ImportFailure("invalid_config", "The document structure cannot be processed") from err
+    checkpoint()
     return hashlib.sha256(raw).hexdigest()
 
 
@@ -764,6 +781,10 @@ def parse_document(
     if len(raw) > MAX_EXPORT_BYTES:
         raise ImportFailure("too_large", "Import exceeds the portable document limit")
     try:
+        check_json_bounds(raw, MAX_EXPORT_BYTES)
+    except InputLimit as err:
+        raise ImportFailure(err.code, str(err)) from err
+    try:
         # utf-8-sig accepts a BOM only at the very start.  A later U+FEFF is a
         # normal character and cannot disguise trailing JSON.
         text = raw.decode("utf-8-sig")
@@ -772,13 +793,14 @@ def parse_document(
         document = json.loads(
             text,
             object_pairs_hook=_strict_object,
+            parse_float=finite_json_float,
             parse_constant=lambda value: (_ for _ in ()).throw(
                 ImportFailure("invalid_json", f"Non-finite number: {value}")
             ),
         )
     except ImportFailure:
         raise
-    except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as err:
+    except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError, RecursionError) as err:
         raise ImportFailure("invalid_json", str(err)) from err
     if not isinstance(document, dict) or document.get("format") != FORMAT:
         raise ImportFailure("invalid_format", "Not a House Plan export")
@@ -833,6 +855,10 @@ def parse_document(
         )
         config = _appearance_config(config_candidate)
         config.pop("model_version", None)
+    except InputLimit as err:
+        raise ImportFailure(err.code, str(err)) from err
+    except RecursionError as err:
+        raise ImportFailure("invalid_config", "The document structure cannot be processed") from err
     except (vol.Invalid, TypeError, ValueError) as err:
         raise ImportFailure("invalid_config", str(err)) from err
     if document["kind"] == "full":
@@ -843,6 +869,8 @@ def parse_document(
                 _materialize_space_background(space, "static")
     try:
         layout = LAYOUT_SCHEMA(_json_copy(payload.get("layout") or {}))
+    except RecursionError as err:
+        raise ImportFailure("invalid_layout", "The document structure cannot be processed") from err
     except (vol.Invalid, TypeError, ValueError) as err:
         raise ImportFailure("invalid_layout", str(err)) from err
     document["payload"] = {"config": config, "layout": layout}

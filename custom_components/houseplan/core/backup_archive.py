@@ -28,6 +28,13 @@ from .import_export import ImportFailure as ImportFailure
 from .import_export import _internal_path as _internal_path
 from .import_export import _strict_object as _strict_object
 from .import_export import parse_document as parse_document
+from .input_policy import (
+    InputLimit,
+    check_json_bounds,
+    checkpoint,
+    current_policy,
+    finite_json_float,
+)
 from .validation import MAX_FILE_BYTES as MAX_FILE_BYTES
 from .validation import MAX_PLAN_BYTES as MAX_PLAN_BYTES
 from .validation import PLAN_EXTENSIONS as PLAN_EXTENSIONS
@@ -66,8 +73,10 @@ def json_bytes(value: Any, limit: int) -> bytes:
 def strict_json(raw: bytes, limit: int) -> dict[str, Any]:
     if len(raw) > limit:
         raise fail("zip_limit")
+    check_json_bounds(raw, limit)
     try:
         value = json.loads(raw, object_pairs_hook=_strict_object,
+                           parse_float=finite_json_float,
                            parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
     except (ValueError, UnicodeError, RecursionError, ImportFailure) as err:
         raise fail() from err
@@ -183,6 +192,8 @@ def _check_plan_svg(raw: bytes) -> None:
     """
     parser = expat.ParserCreate(namespace_separator=" ")
     root: list[str] = []
+    depth = elements = 0
+    max_depth = current_policy().xml_depth
 
     def reject(*_args: Any) -> None:
         raise fail()
@@ -192,8 +203,20 @@ def _check_plan_svg(raw: bytes) -> None:
             raise fail()
 
     def start(name: str, _attrs: Any) -> None:
+        nonlocal depth, elements
+        if max_depth is not None:
+            depth += 1
+            elements += 1
+            if depth > max_depth:
+                raise InputLimit("xml_depth")
+            if elements & 255 == 0:
+                checkpoint()
         if not root:
             root.append(name)
+
+    def end(_name: str) -> None:
+        nonlocal depth
+        depth -= 1
 
     parser.StartDoctypeDeclHandler = doctype
     parser.EntityDeclHandler = reject
@@ -201,8 +224,11 @@ def _check_plan_svg(raw: bytes) -> None:
     parser.NotationDeclHandler = reject
     parser.ExternalEntityRefHandler = reject
     parser.StartElementHandler = start
+    if max_depth is not None:
+        parser.EndElementHandler = end
     try:
         parser.Parse(raw, True)
+        checkpoint()
     except (expat.ExpatError, UnicodeError, ValueError) as err:
         raise fail() from err
     if root not in (["svg"], [f"{_SVG_NAMESPACE} svg"]):
@@ -233,6 +259,10 @@ def plan_image_ext(raw: bytes, name: str, limit: int = MAX_PLAN_BYTES) -> str:
         _check_plan_svg(raw)
     elif not _PLAN_SIGNATURES[ext](raw):
         raise fail()
+    if current_policy().strict:
+        # Reuse the decor validator, never its canonicalized output: a strict
+        # backdrop is rejected or retains its ORIGINAL bytes/hash.
+        validate_asset(raw, name, max_bytes=limit)
     return ext
 
 
@@ -320,8 +350,9 @@ def build_archive(path: Path, document: dict[str, Any], root: Path,
 def _check_directory(path: Path) -> None:
     """Bound directory allocations BEFORE ZipFile constructs ZipInfo objects."""
     size = path.stat().st_size
-    if size > MAX_ARCHIVE_BYTES or size < 22:
-        raise fail("zip_limit" if size > MAX_ARCHIVE_BYTES else "zip_invalid")
+    maximum = min(MAX_ARCHIVE_BYTES, current_policy().archive_bytes)
+    if size > maximum or size < 22:
+        raise fail("zip_limit" if size > maximum else "zip_invalid")
     with path.open("rb") as source:
         source.seek(max(0, size - 65557))
         tail = source.read(65557)
@@ -333,6 +364,29 @@ def _check_directory(path: Path) -> None:
     if (disk or central_disk or count != count_disk or not 1 <= count <= MAX_ENTRIES
             or central_size > MAX_MANIFEST_BYTES or pos + 22 + comment_len != len(tail)
             or offset + central_size != size - len(tail) + pos):
+        raise fail()
+    # EOCD count is attacker-controlled. ZipFile reads the whole directory,
+    # not merely that count: prove its ACTUAL entries before ZipInfo allocation.
+    checkpoint()
+    with path.open("rb") as source:
+        source.seek(offset)
+        central = source.read(central_size)
+    if len(central) != central_size:
+        raise fail()
+    at = actual = 0
+    while at < central_size:
+        if at + 46 > central_size or central[at:at + 4] != b"PK\x01\x02":
+            raise fail()
+        name_size, extra_size, comment_size = struct.unpack_from("<3H", central, at + 28)
+        at += 46 + name_size + extra_size + comment_size
+        actual += 1
+        if actual > MAX_ENTRIES:
+            raise fail("zip_limit")
+        if at > central_size:
+            raise fail()
+        if actual & 255 == 0:
+            checkpoint()
+    if actual != count:
         raise fail()
 
 
@@ -368,7 +422,7 @@ def expanded_size(path: Path) -> int:
     try:
         with zipfile.ZipFile(path) as archive:
             size = sum(info.file_size for info in archive.infolist())
-        if size > MAX_EXPANDED_BYTES:
+        if size > min(MAX_EXPANDED_BYTES, current_policy().expanded_bytes):
             raise fail("zip_limit")
         return size
     except (OSError, zipfile.BadZipFile) as err:
@@ -379,6 +433,7 @@ def read_archive(path: Path, staging: Path, check: Callable[[int], None] | None 
     """Only caller-owned private staging is written; archive names never select paths."""
     _check_directory(path)
     expanded = 0
+    maximum_expanded = min(MAX_EXPANDED_BYTES, current_policy().expanded_bytes)
     try:
         with zipfile.ZipFile(path) as archive:
             infos = archive.infolist()
@@ -393,18 +448,19 @@ def read_archive(path: Path, staging: Path, check: Callable[[int], None] | None 
             def read(name: str, limit: int, dest: Path | None = None) -> bytes:
                 nonlocal expanded
                 info = archive.getinfo(name)
-                if info.file_size > limit or expanded + info.file_size > MAX_EXPANDED_BYTES:
+                if info.file_size > limit or expanded + info.file_size > maximum_expanded:
                     raise fail("zip_limit")
                 size, blocks = 0, []
                 output = dest.open("xb") if dest else None
                 try:
                     with archive.open(info) as source:
                         while block := source.read(CHUNK):
+                            checkpoint()
                             if check is not None:
                                 check(0)
                             size += len(block)
                             expanded += len(block)
-                            if size > limit or expanded > MAX_EXPANDED_BYTES:
+                            if size > limit or expanded > maximum_expanded:
                                 raise fail("zip_limit")
                             if output:
                                 output.write(block)
@@ -506,6 +562,12 @@ def read_archive(path: Path, staging: Path, check: Callable[[int], None] | None 
                     raise fail()
                 blobs[name] = dest
             return ArchivePayload(document, manifest, topics, blobs)
+    except InputLimit as err:
+        raise ImportFailure(err.code, str(err)) from err
+    except DecorAssetError as err:
+        if current_policy().strict:
+            raise ImportFailure(err.code, str(err)) from err
+        raise fail() from err
     except (OSError, EOFError, ValueError, KeyError, TypeError, zipfile.BadZipFile, zlib.error,
-            NotImplementedError, RuntimeError, DecorAssetError) as err:
+            NotImplementedError, RuntimeError) as err:
         raise fail() from err

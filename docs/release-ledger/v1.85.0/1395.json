@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1395,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Fix existing HA JSON/ZIP ingress and protocol error disclosure defects; explicit stricter core execution policy does not lower installed HA compatibility limits.",
+  "summary": {
+    "ru": "Защита импорта JSON/ZIP от неконтролируемых отказов и раскрытия внутренних сообщений; явные лимиты недоверенного ядра.",
+    "en": "Harden JSON/ZIP import failures and protocol messages; add explicit untrusted-core resource limits."
+  }
+}

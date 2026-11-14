@@ -426,7 +426,9 @@ def _connection_user_id(connection) -> str:
 
 
 def _send_import_error(connection, msg_id: int, err: ImportFailure) -> None:
-    connection.send_error(msg_id, err.code, err.message)
+    # Validation details may include arbitrary input or server-local paths.
+    # Frontend localization already uses the stable code, as support does.
+    connection.send_error(msg_id, err.code, err.public_message)
 
 
 def _send_support_error(connection, msg_id: int, code: str) -> None:

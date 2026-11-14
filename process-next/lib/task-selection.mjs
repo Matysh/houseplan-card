@@ -19,7 +19,7 @@ export const DOMAINS = [
     ['devices', 'Устройства и действия', /(?:device|marker|toggle|entity|battery|offline|alert|pin-action|value|state|washer|wireless-controller|danger-confirm|control|icon|cover|sensor|signal|discovery|subarea|area-relocation|rgb-alarm|binding)/, ['storage', 'presentation', 'climate'], ['cold_view_toggle', 'toggle_confirmation']],
     ['runtime', 'Загрузка, жизненный цикл и соединение', /(?:activity|lifecycle|registration|initial|startup|bootstrap|loader|entry|card-version|version|hass|resilience|live-read|card-read|sync|connect|recovery|init|setup|websocket|ha-|readonly|detached|mounted)/, ['storage', 'presentation', 'navigation'], ['readonly_cold_start', 'view_recovery']],
     ['toolchain', 'Инструменты, fixtures и лаборатории', /(?:fixture|facade|labs?|golden|bundle|capture|probe|contract|audit|conftest|backend-test-hygiene|backend-quality|core-source-readers|(?:^|\/)pyproject\.toml$)/, [], []],
-    ['security', 'Авторизация, подпись и защищённые действия', /(?:signing|sign-cap|readonly|authority|lock|sandbox|permission|protected)/, ['storage', 'devices'], ['view_edit_permissions']],
+    ['security', 'Авторизация, подпись и защищённые действия', /(?:signing|sign-cap|readonly|authority|lock|sandbox|permission|protected|input-policy|input-archive-security|ha-input-security)/, ['storage', 'devices'], ['view_edit_permissions']],
     ['integration', 'Сквозные контракты и обвязка', /(?:journey|parity|edge-case|e2e|harness|projection)/, ['storage', 'presentation'], ['household_journeys']],
     ['shared', 'Общие функции и типы', /(?:^|\/)(?:logic|types)\.(?:test\.)?(?:ts|mjs)$/, ['geometry', 'storage', 'history', 'editors', 'devices', 'presentation', 'lighting', 'navigation'], ['editor_gestures']],
     ['process', 'Очередь, ревью, релизы и исполнение проверок', /(?:process-next|workflow|process-state|coordinator|runner|toolchain)/, [], []],
@@ -77,7 +77,7 @@ export async function testCatalog(root, inventory, { e2eRoot } = {}) {
                 domains.push('toolchain');
             if (!domains.length && converter)
                 domains.push('storage');
-            const importance = /(?:conflict|authority|rights|permission|invalid|reject|safety|atomic|graph|exact|opening[_-](?:features|orientation))/.test(path) ? 'critical' : /(?:edge|corner|boundary|degenerate|refusal|recovery|regress)/.test(path) ? 'boundary' : 'regression';
+            const importance = /(?:conflict|authority|rights|permission|invalid|reject|safety|atomic|graph|exact|input_(?:policy|archive_security|security)|opening[_-](?:features|orientation))/.test(path) ? 'critical' : /(?:edge|corner|boundary|degenerate|refusal|recovery|regress)/.test(path) ? 'boundary' : 'regression';
             rows.push({ id: path, path, type, layer: converter ? 'converter' : infrastructure ? 'infra' : 'product', domains, scenario: basename(path).replace(/(?:\.test)?\.(?:mjs|py)$/, '').replace(/^smoke_|^test_/, '').replaceAll(/[-_]/g, ' '), importance, lifecycle: converter ? 'diagnostic' : infrastructure || old?.decision === 'addressed' || old?.automaticReleaseRun === false ? 'addressed' : 'task-release', classified: domains.length > 0 || infrastructure || converter, executedCases: null });
         }
     for (const scene of prepareGoldenSelection(GOLDEN_SCENARIOS).all)

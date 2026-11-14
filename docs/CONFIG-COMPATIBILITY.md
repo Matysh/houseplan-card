@@ -1,5 +1,18 @@
 # Config compatibility registry
 
+## Explicit input profiles (#1395)
+
+No schema/model/ZIP version changes. Installed HA keeps existing byte, storage,
+backdrop SVG and geometry limits; the core's new `input_scope(STRICT_INPUT_POLICY)`
+is an explicit opt-in for a future untrusted caller, not a Store/startup/save
+default. It adds pre-decoder JSON/XML bounds and request-wide cooperative work
+and time budgets, rejects non-whitelisted backdrop SVG without rewriting it,
+and requires a full raster decoder. Deep-copy failures become safe domain
+errors; overflowing JSON floats and malformed ZIP directories are refused at
+ingress. No existing files are removed or sanitized. See
+[audit and exact limits](security/1395-input-audit.md), including the requirement
+for separate worker isolation/quotas before exposing a public server.
+
 ## Opening features v1 (#1024)
 
 Optional spaces[].openings[].opening_features version1 does not bump model11,

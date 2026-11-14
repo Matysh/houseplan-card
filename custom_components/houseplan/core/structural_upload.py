@@ -18,6 +18,8 @@ from datetime import timezone as timezone
 from typing import Any as Any
 from typing import Callable as Callable
 
+from .input_policy import InputLimit, check_json_bounds, finite_json_float
+
 INLINE_BYTES = 3 * 1024 * 1024
 MAX_UPLOAD_BYTES = 32 * 1024 * 1024
 MAX_STAGED_BYTES = 64 * 1024 * 1024
@@ -44,8 +46,15 @@ def _pairs(items):
 
 
 def parse_payload(raw: bytes) -> dict:
+    if len(raw) > MAX_UPLOAD_BYTES:
+        raise UploadError("too_large")
+    try:
+        check_json_bounds(raw, MAX_UPLOAD_BYTES)
+    except InputLimit as err:
+        raise UploadError(err.code) from err
     try:
         message = json.loads(raw.decode("utf-8"), object_pairs_hook=_pairs,
+            parse_float=finite_json_float,
             parse_constant=lambda _: (_ for _ in ()).throw(UploadError("invalid_format")))
     except (UnicodeError, ValueError, RecursionError) as err:
         raise UploadError("invalid_format") from err

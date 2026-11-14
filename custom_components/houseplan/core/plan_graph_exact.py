@@ -13,6 +13,7 @@ from fractions import Fraction as Fraction
 from typing import Any as Any
 
 from .coordinate_canonicalization import LATTICE_NOISE_STEPS as LATTICE_NOISE_STEPS
+from .input_policy import charge_work
 
 MAX_BITS = 4096
 CANVAS_LIMIT = 5000
@@ -93,6 +94,7 @@ def check_point(point: ExactPoint) -> ExactPoint:
 
 
 def read_source_point(x: Any, y: Any = None) -> ExactPoint:
+    charge_work()
     if y is None and isinstance(x, (list, tuple)) and len(x) == 2:
         x, y = x
     return check_point(ExactPoint(parse_decimal(x), parse_decimal(y)))
@@ -122,6 +124,7 @@ def encode_point(point: ExactPoint) -> list[str]:
 
 
 def decode_point(value: Any) -> ExactPoint:
+    charge_work()
     if not isinstance(value, list) or not value:
         raise GraphError("invalid_point")
     if value[0] == "l" and len(value) == 3:
@@ -142,10 +145,12 @@ def to_numbers(point: ExactPoint) -> list[float]:
 
 
 def cross(a: ExactPoint, b: ExactPoint, c: ExactPoint) -> Fraction:
+    charge_work()
     return checked((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x))
 
 
 def squared_distance(a: ExactPoint, b: ExactPoint) -> Fraction:
+    charge_work()
     return checked((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
 
 
@@ -157,6 +162,7 @@ def point_at(a: ExactPoint, b: ExactPoint, t: Fraction) -> ExactPoint:
 
 
 def project_parameter(p: ExactPoint, a: ExactPoint, b: ExactPoint) -> Fraction:
+    charge_work()
     dx, dy = b.x - a.x, b.y - a.y
     length = dx * dx + dy * dy
     if not length:
@@ -165,6 +171,7 @@ def project_parameter(p: ExactPoint, a: ExactPoint, b: ExactPoint) -> Fraction:
 
 
 def intersection(a: ExactPoint, b: ExactPoint, c: ExactPoint, d: ExactPoint) -> tuple[ExactPoint, Fraction, Fraction] | None:
+    charge_work()
     dx, dy, ex, ey = b.x - a.x, b.y - a.y, d.x - c.x, d.y - c.y
     determinant = dx * ey - dy * ex
     if not determinant:

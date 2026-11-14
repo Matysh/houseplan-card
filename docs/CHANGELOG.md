@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Audit untrusted input boundaries: fix pre-allocation ZIP entry counting, uncontrolled deep-JSON failure, overflowing JSON numbers and reflected internal errors. Add an explicitly selected strict JSON/XML/geometry/decoder profile while preserving HA limits and backdrop SVG compatibility; record evidence and bounded synthetic measurements in `docs/security/1395-input-audit.md` (#1395).
+
 - Extract one HA-independent plan core for validation, geometry, migration and portable JSON/ZIP; retain import/exception identity and the HA-owned setup, locking, durability and recovery order. Load lifecycle through the import executor and migrate source readers to the actual core owners (#1391).
 
 - Inventory HA frontend components and record the owner-selected UI Kit/local-SVG direction, isolated bootstrap measurements and deferred standalone UI/entry tasks; installed HA behavior is unchanged (#1393).

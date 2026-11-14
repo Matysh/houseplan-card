@@ -21,6 +21,7 @@ from .coordinate_canonicalization import (
 from .coordinate_canonicalization import (
     canonicalize_lattice_coordinate as canonicalize_lattice_coordinate,
 )
+from .input_policy import charge_work
 
 WALL_SEGMENT_MODEL_VERSION = 11
 LEGACY_WALL_SEGMENT_MODEL_VERSION = 10
@@ -78,10 +79,12 @@ def _canonical_span(a: list[float], b: list[float]) -> tuple[list[float], list[f
 
 
 def _length(a: list[float], b: list[float]) -> float:
+    charge_work()
     return math.hypot(float(b[0]) - float(a[0]), float(b[1]) - float(a[1]))
 
 
 def _project_t(point: list[float], a: list[float], b: list[float]) -> float:
+    charge_work()
     dx, dy = float(b[0]) - float(a[0]), float(b[1]) - float(a[1])
     denominator = dx * dx + dy * dy
     if denominator <= EPS * EPS:
@@ -101,6 +104,7 @@ def _distance_to_segment(point: list[float], a: list[float], b: list[float]) -> 
 def _collinear_overlap(
     a: list[float], b: list[float], c: list[float], d: list[float], epsilon: float = EPS,
 ) -> float:
+    charge_work()
     dx, dy = float(b[0]) - float(a[0]), float(b[1]) - float(a[1])
     length = math.hypot(dx, dy)
     if length <= epsilon:
@@ -137,6 +141,7 @@ def _shared_boundaries(first: list[list[float]], second: list[list[float]]) -> l
             continue
         ux, uy = dx / length, dy / length
         for other_index, other_start in enumerate(second):
+            charge_work()
             other_end = second[(other_index + 1) % len(second)]
             tolerance = max(epsilon, length * 1e-6)
             distances = [

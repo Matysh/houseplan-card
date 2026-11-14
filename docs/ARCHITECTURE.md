@@ -22,6 +22,12 @@ The core contains these actual module owners:
 
 Allowed dependencies are the standard library and existing Voluptuous; Pillow
 is optional only where the existing image-validation contract permits it.
+The explicit `core.input_policy` execution scope (#1395) is separate from the
+persisted model: HA defaults retain existing limits, while future untrusted
+callers opt into pre-decoder depth/node bounds and one cooperative geometry
+budget for the whole request. Strict raster input requires Pillow. This does
+not supply public-server worker isolation or quotas; see
+[the input audit](security/1395-input-audit.md).
 The core may not import HA, even through a local/dynamic import, nor escape to
 an integration adapter. Ordinary import does not perform writes, open sockets
 or start workers. Explicit file operations receive a trusted host root and

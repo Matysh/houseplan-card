@@ -13,6 +13,7 @@ from typing import Any as Any
 from .coordinate_canonicalization import (
     canonicalize_config_geometry as canonicalize_config_geometry,
 )
+from .input_policy import charge_work
 from .opening_orientation import opening_axis_rotation as opening_axis_rotation
 from .opening_orientation import (
     transport_opening_orientations as transport_opening_orientations,
@@ -42,6 +43,7 @@ def _dot(a, b):
 
 
 def _cross(a, b):
+    charge_work()
     return a[0] * b[1] - a[1] * b[0]
 
 
@@ -51,6 +53,7 @@ def _parallel(a, b):
 
 
 def _length(a, b):
+    charge_work()
     return math.hypot(a[0] - b[0], a[1] - b[1])
 
 
@@ -64,6 +67,7 @@ def _unit(a):
 
 
 def _fraction(p, a, b):
+    charge_work()
     d = _sub(b, a)
     return _dot(_sub(p, a), d) / _dot(d, d)
 

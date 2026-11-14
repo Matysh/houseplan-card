@@ -15,6 +15,7 @@ from fractions import Fraction as Q
 from urllib.parse import quote as quote
 
 from .coordinate_canonicalization import LATTICE_NOISE_STEPS as LATTICE_NOISE_STEPS
+from .input_policy import charge_work
 from .junction_limits import _stored_wall_contact as _stored_wall_contact
 from .plan_graph import MAX_EDGES as MAX_EDGES
 from .plan_graph import project_graph_space as project_graph_space
@@ -206,6 +207,7 @@ class _Tree:
             self.children = (_Tree(ordered[:middle], depth+1), _Tree(ordered[middle:], depth+1))
 
     def query(self, lo, hi):
+        charge_work()
         if self.hi.x < lo.x or self.hi.y < lo.y or self.lo.x > hi.x or self.lo.y > hi.y:
             return []
         if self.items is not None:
@@ -241,11 +243,13 @@ def migrate_graph_space(space, options=None):
             # Same ordered DFS cycle entry as TS, without Python recursion limits.
             # A reciprocal source contact becomes a free anchor; no point moves.
             while True:
+                charge_work()
                 by_node = {d["node"]: d for d in graph["dependencies"]}
                 active, done, cycle = set(), set(), None
                 for start in by_node:
                     stack = [(start, False)]
                     while stack:
+                        charge_work()
                         node, leaving = stack.pop()
                         if leaving:
                             active.remove(node)
@@ -349,6 +353,7 @@ def migrate_graph_space(space, options=None):
             rooms = space.get("rooms", [])
             for i, first in enumerate(rooms):
                 for second in rooms[i+1:]:
+                    charge_work()
                     if second["id"] in first.get("open_to", []) or first["id"] in second.get("open_to", []):
                         legacy_cuts.extend(_shared_boundaries(_poly(first), _poly(second)))
         # A finite accepted interval must intersect the source AABB expanded by
@@ -383,6 +388,7 @@ def migrate_graph_space(space, options=None):
                     for t in span:
                         cut_point(s, t)
             for opening in space.get("openings", []) if zeros else []:
+                charge_work()
                 if opening.get("host", {}).get("kind") == "partition" or opening.get("length", 0) <= 0:
                     continue
                 if not _angle_matches(to_numbers(s["a"]), to_numbers(s["b"]), opening.get("angle", 0)):
@@ -681,6 +687,7 @@ def migrate_graph_space(space, options=None):
         def free(s, t, opening):
             p = point_at(s["a"], s["b"], t)
             for old in occupied:
+                charge_work()
                 if old["id"] == opening["id"] or old["source"] != _key(s):
                     continue
                 half = (old["length"]+parse_decimal(opening.get("length", 0)))/2-parse_decimal("1e-9")

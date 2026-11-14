@@ -25,6 +25,21 @@ async function fixture(files, run) {
     }
 }
 const select = (root, options = {}) => selectTaskTests({ root, inventory, track: 'ship', layer: 'product', ...options });
+test('#1395 explicit input policies select critical security ingress regressions', async () => fixture({
+    'custom_components/houseplan/core/input_policy.py': 'STRICT=True',
+    'tests_backend/test_input_policy.py': '',
+    'tests_backend/test_input_archive_security.py': '',
+    'tests_backend/test_ha_input_security.py': '',
+}, async dir => {
+    const catalog = await testCatalog(dir, inventory);
+    const selection = await select(dir, { track: 'ask', changedFiles: ['custom_components/houseplan/core/input_policy.py'] });
+    for (const path of ['tests_backend/test_input_policy.py', 'tests_backend/test_input_archive_security.py', 'tests_backend/test_ha_input_security.py']) {
+        const row = catalog.rows.find(row => row.path === path);
+        assert.ok(row.domains.includes('security'), path);
+        assert.equal(row.importance, 'critical', path);
+        assert.ok(JSON.stringify(selection).includes(path), path);
+    }
+}));
 test('#1391 extracted core owners and its addressed readers have inherited domains', () => {
     for (const file of ['custom_components/houseplan/core/constants.py',
         'custom_components/houseplan/core/ports.py', 'custom_components/houseplan/core/file_usage.py',

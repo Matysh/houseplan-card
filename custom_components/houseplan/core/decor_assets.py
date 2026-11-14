@@ -21,6 +21,7 @@ from xml.parsers import expat as expat
 
 from .constants import CONTENT_URL as CONTENT_URL
 from .constants import MAX_DECOR_ASSET_BYTES as MAX_DECOR_ASSET_BYTES
+from .input_policy import InputLimit, checkpoint, current_policy
 
 ASSET_ID_RE = re.compile(r"^[0-9a-f]{64}$")
 ASSET_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".webp", ".svg"})
@@ -185,6 +186,21 @@ def _validate_svg_unit_interval(name: str, value: str) -> None:
 def _reject_svg_declarations(data: bytes) -> None:
     """Parse with encoding-aware expat guards before building an XML tree."""
     parser = expat.ParserCreate()
+    depth = elements = 0
+    maximum = current_policy().xml_depth
+
+    def start(_name: str, _attrs: Any) -> None:
+        nonlocal depth, elements
+        depth += 1
+        elements += 1
+        if maximum is not None and depth > maximum:
+            raise InputLimit("xml_depth")
+        if elements & 255 == 0:
+            checkpoint()
+
+    def end(_name: str) -> None:
+        nonlocal depth
+        depth -= 1
 
     def reject(*_args: Any) -> None:
         raise DecorAssetError(
@@ -195,8 +211,12 @@ def _reject_svg_declarations(data: bytes) -> None:
     parser.EntityDeclHandler = reject
     parser.ExternalEntityRefHandler = reject
     parser.ProcessingInstructionHandler = reject
+    if maximum is not None:
+        parser.StartElementHandler = start
+        parser.EndElementHandler = end
     try:
         parser.Parse(data, True)
+        checkpoint()
     except DecorAssetError:
         raise
     except (expat.ExpatError, UnicodeError) as err:
@@ -366,6 +386,7 @@ def validate_asset(
     # independently testable, while a full decode here catches valid-looking
     # but truncated/corrupt payloads before they enter the authenticated store.
     try:
+        checkpoint()
         from io import BytesIO
 
         from PIL import Image
@@ -380,12 +401,16 @@ def validate_asset(
         # The Home Assistant runtime includes Pillow. Keeping the pure parser
         # usable without the full HA dependency set lets repository-local
         # security tests still exercise signatures, dimensions and SVG.
-        pass
+        if current_policy().strict:
+            raise DecorAssetError("not_ready", "This profile requires a complete raster decoder") from None
     except DecorAssetError:
+        raise
+    except InputLimit:
         raise
     except Exception as err:  # noqa: BLE001 - decoder failures are one public error
         raise DecorAssetError("invalid_image", "The raster image cannot be decoded") from err
     mime = expected_mime
+    checkpoint()
     return ValidatedAsset(data, mime, EXT_BY_MIME[mime], width, height)
 
 

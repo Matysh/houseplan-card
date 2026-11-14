@@ -1,4 +1,5 @@
 """Exact, bounded AABB candidate index shared by graph checks and migration."""
+from .input_policy import charge_work
 from .plan_graph_exact import ExactPoint as P
 
 
@@ -16,6 +17,7 @@ class SegmentTree:
             self.children = (SegmentTree(ordered[:middle], depth+1), SegmentTree(ordered[middle:], depth+1))
 
     def query(self, lo, hi):
+        charge_work()
         if self.hi.x < lo.x or self.hi.y < lo.y or self.lo.x > hi.x or self.lo.y > hi.y:
             return []
         if self.items is not None:

@@ -147,7 +147,7 @@ class HouseplanImportPreviewView(HomeAssistantView):
             )
         except ImportFailure as err:
             status = 413 if err.code == "too_large" else 400
-            return web.json_response({"error": err.code, "message": err.message}, status=status)
+            return web.json_response({"error": err.code, "message": err.public_message}, status=status)
         except Exception:  # noqa: BLE001 - the HTTP boundary must answer 400, never leak a traceback
             _LOGGER.exception("House Plan import preview failed")
             return web.json_response({"error": "invalid_format"}, status=400)
