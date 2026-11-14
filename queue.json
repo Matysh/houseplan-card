@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12841,
-  "nextTicket": 452,
+  "revision": 12842,
+  "nextTicket": 453,
   "nextFence": 452,
   "tasks": {
     "1024": {
@@ -4609,6 +4609,20 @@
         "status": "published",
         "sourceSha": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0"
       }
+    },
+    "1427": {
+      "issue": 1427,
+      "track": "ask",
+      "layer": "docs",
+      "branch": "codex/1427-user-guides",
+      "materialSha": "495a0d6e69cf43f3a9dd87a54836c8db431faf55",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 452,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794665615609,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4950,7 +4964,9 @@
       "runId": 43602650565
     }
   },
-  "waiting": [],
+  "waiting": [
+    1427
+  ],
   "active": null,
   "events": {
     "github:43600053849:1:label:spec-request": {
@@ -5020,6 +5036,19 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "17e097cc5028767c96277023575ac2052d59ef8b"
+      }
+    },
+    "finish:c2557edd-3229-49a8-8a05-954300217dce": {
+      "digest": "abc5697e2f1f155c124aed10fc604696f0648a05412b93fc80d302c641b241f0",
+      "issue": 1427,
+      "message": {
+        "kind": "queued",
+        "issue": 1427,
+        "at": 1794665615609,
+        "entry": 1,
+        "track": "ask",
+        "layer": "docs",
+        "materialSha": "495a0d6e69cf43f3a9dd87a54836c8db431faf55"
       }
     }
   },
