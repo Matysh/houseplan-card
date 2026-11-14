@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13226,
+  "revision": 13227,
   "nextTicket": 462,
   "nextFence": 462,
   "tasks": {
@@ -4588,14 +4588,24 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1433-host-smoke-oracles",
-      "materialSha": "91a80098f1a9a8133c6decb4bbb8eeadecf1b4a9",
+      "materialSha": "b29f59a34cea0e60fd984af21cdfbf94e40785ae",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 461,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794684570849,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "ce2bce8719a2e8af45c1a250ae41567825ff0524",
+      "changedFiles": [
+        "demo/smoke_cold_view_vacuum.mjs",
+        "demo/smoke_config_authority.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.85.0/1433.json",
+        "src/ha-plan-host.ts",
+        "test/plan-host.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -4929,13 +4939,18 @@
     "worker": "finish",
     "token": "461:finish:e3d4d69c-373e-49f9-9777-8c43e51fef30:finish:1:admit",
     "fence": 461,
-    "materialSha": "91a80098f1a9a8133c6decb4bbb8eeadecf1b4a9",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "b29f59a34cea0e60fd984af21cdfbf94e40785ae",
+    "expectedBase": "1e83119d95d0acabbb45de022d9dac0756d085ce",
+    "phase": "testing",
     "admittedAt": 1794684575623,
-    "expiresAt": 1794684875623
+    "expiresAt": 1794684887817,
+    "patchId": "ce2bce8719a2e8af45c1a250ae41567825ff0524"
   },
   "events": {
+    "finish:e3d4d69c-373e-49f9-9777-8c43e51fef30:finish:2:synchronized": {
+      "digest": "2df42bb0fb987cda658517c179324790b1a61b8d221f573cf8e59ee154e9f26b",
+      "issue": 1433
+    },
     "dev-build:43632142396:1:1431": {
       "digest": "ccf8fe3eaad886f712d86d9b0339960efdcfc81f4a187e15606b9b0d3712b8db",
       "issue": 1431,
