@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13804,
+  "revision": 13805,
   "nextTicket": 476,
   "nextFence": 475,
   "tasks": {
@@ -4652,7 +4652,7 @@
       "ownerDecision": null,
       "ticket": 468,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794686474377,
       "reviewEntry": 1,
       "patchId": "24150e2851c51f085b8304cb2280c8e661a4aa33",
@@ -4663,7 +4663,16 @@
         "docs/CHANGELOG.ru.md",
         "docs/release-ledger/v1.85.0/1438.json",
         "src/houseplan-card.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261114T212458686-806574fb",
+        "name": "Тесты для задачи #1438 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T212458686-806574fb/report.json",
+        "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
+        "status": "passed",
+        "finishedAt": "2026-11-14T21:32:38.068Z",
+        "failures": []
+      }
     },
     "1439": {
       "issue": 1439,
@@ -5220,9 +5229,9 @@
     "fence": 474,
     "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
     "expectedBase": "c5d7a23892c69ad0504cf3048589344e03525810",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794691407122,
-    "expiresAt": 1794692208594,
+    "expiresAt": 1794695559418,
     "patchId": "24150e2851c51f085b8304cb2280c8e661a4aa33"
   },
   "events": {
@@ -5323,6 +5332,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810"
+      }
+    },
+    "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f:finish:2:s6-complete": {
+      "digest": "1413225008f1904e00981470e26693b760d9392aec44274dd6ced0a1f8d3d9a7",
+      "issue": 1438,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1438,
+        "at": 1794691959418,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T212458686-806574fb",
+          "name": "Тесты для задачи #1438 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T212458686-806574fb/report.json",
+          "materialSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
+          "status": "passed",
+          "finishedAt": "2026-11-14T21:32:38.068Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Причина: холодный authoritative afterAdopt вызывает `_restoreKioskViewport` до первого stage. Немедленный `_applyView` подменяет aspect реальной области fallback-пропорциями `_baseVb`. Первый ResizeObserver принимает размер без пересчёта уже существующей камеры. Диагностика: stage до/после одинаковый 780×850, view h 518.2388489 → 345.8560243, центр/zoom/w неизменны. Второй независимый smoke необязательного View runtime подтверждает тот же дефект.\n\nРешение: немедленно восстановить точные сохранённые числа камеры, сохранить существующий memo только пока stage отсутствует/нулевой и завершить `_applyView` в обычном `updated()` при доступной реальной области. Все проверки placement/account/config/route, kiosk/View, существования и идентичности этажа и non-carousel повторяются перед завершением; при отказе memo удаляется. Новых таймеров, обещаний или попыток reload нет. Screen-profile recovered флаг выставляется вместе с принятой камерой. Альтернатива просто удалить `_applyView` отвергнута: реальная изменившаяся область должна сохранять штатный пересчёт размеров вокруг центра.\n\nАдресные native `smoke_kiosk_viewport_recovery` и `smoke_view_runtime_kiosk_recovery` зелёные после исправления; добавлено наблюдение одинаковых реальных размеров stage. Точные допуски не менялись. Штатный S6 выполняется через finish; его фактический отчёт передаётся автоматически. Baseline не принимались, release не выполняется, редакторы/сервер/API не изменяются. E2E решение: https://github.com/Matysh/houseplan-e2e/issues/65 (новый отдельный HA E2E не нужен, фиксированный kiosk E2E беты остаётся).\n\nОсобое внимание: синхронный cold authority → первая реальная stage, инвалидирование memo при смене контекста; исключения deleted/fixed/single/carousel/same-version и необязательный runtime используют прежние guards. Touch View/kiosk contract сохраняется; editor touch не затрагивается.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
