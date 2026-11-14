@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 12358,
+  "revision": 12359,
   "nextTicket": 442,
-  "nextFence": 441,
+  "nextFence": 442,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -3574,7 +3574,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 441,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794639905537,
       "reviewEntry": 7,
@@ -4922,10 +4922,18 @@
       }
     }
   },
-  "waiting": [
-    1394
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1394,
+    "worker": "finish",
+    "token": "441:finish:5a3f7a6b-d218-4597-9747-cb58c140d5f7:finish:1:admit",
+    "fence": 441,
+    "materialSha": "9ed0f88801ada63035ccafa464683960da8104e9",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1794639910441,
+    "expiresAt": 1794640210441
+  },
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
       "digest": "12777e21751a9ed7739ddf636b9b3bee3ba44b51ffb7d393f4c581e85a28643e",
@@ -5591,6 +5599,29 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "9ed0f88801ada63035ccafa464683960da8104e9",
+        "evidence": {
+          "id": "20261114T062645192-53956233",
+          "name": "Тесты для задачи #1394 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T062645192-53956233/report.json",
+          "materialSha": "ac441a9504b32f49a94b7a778569501672b4f26c",
+          "status": "passed",
+          "finishedAt": "2026-11-14T06:34:59.577Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:5a3f7a6b-d218-4597-9747-cb58c140d5f7:finish:1:admit": {
+      "digest": "a65e078ec9524331081447fa121610dd027a2fb5a02d2e273e7f755a84a1118b",
+      "issue": 1394,
+      "message": {
+        "kind": "admitted",
+        "issue": 1394,
+        "at": 1794639910441,
+        "entry": 7,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "9ed0f88801ada63035ccafa464683960da8104e9",
+        "phase": "sync",
         "evidence": {
           "id": "20261114T062645192-53956233",
           "name": "Тесты для задачи #1394 (перед ревью)",
