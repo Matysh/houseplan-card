@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12012,
-  "nextTicket": 431,
+  "revision": 12013,
+  "nextTicket": 432,
   "nextFence": 431,
   "tasks": {
     "1024": {
@@ -3642,14 +3642,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1392-plan-host",
-      "materialSha": "74ddc5d8f1e39400c2d39aa0fe0ba938b31c686d",
+      "materialSha": "32c5516c1d6045a4bb95476ccd9b7cd5a4636186",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 429,
-      "queued": false,
+      "ticket": 431,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794629091619,
-      "reviewEntry": 6,
+      "readyAt": 1794631002507,
+      "reviewEntry": 7,
       "patchId": "6e32c259d1b6534ee40b0607dab0ce9806bf0e4c",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
@@ -3759,8 +3759,7 @@
       "reviewCorrection": {
         "requestId": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
         "at": 1794628411870
-      },
-      "reason": "checks-failed"
+      }
     },
     "1393": {
       "issue": 1393,
@@ -5024,7 +5023,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1392
+  ],
   "active": {
     "issue": 1395,
     "worker": "finish",
@@ -6299,6 +6300,28 @@
           "materialSha": "4c9221465557971947ea98dfdb81fbb2ce4021cd",
           "status": "passed",
           "finishedAt": "2026-11-14T04:04:36.776Z",
+          "failures": []
+        }
+      }
+    },
+    "finish:539cd7cd-cb9f-4eb4-aa49-5b5871788243": {
+      "digest": "aa1f1346c6aabf9f9e30e57f20646fdd981adff3da0f637179d5c5a8e1eb9697",
+      "issue": 1392,
+      "message": {
+        "kind": "queued",
+        "issue": 1392,
+        "at": 1794631002507,
+        "entry": 7,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "32c5516c1d6045a4bb95476ccd9b7cd5a4636186",
+        "evidence": {
+          "id": "20261114T032938956-c5a63598",
+          "name": "Тесты для задачи #1392 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T032938956-c5a63598/report.json",
+          "materialSha": "37dda5aed5d3f2b22df78fa2ec96728abb7767ff",
+          "status": "passed",
+          "finishedAt": "2026-11-14T03:44:42.084Z",
           "failures": []
         }
       }
