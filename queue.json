@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12681,
+  "revision": 12682,
   "nextTicket": 449,
   "nextFence": 449,
   "tasks": {
@@ -5200,6 +5200,10 @@
       "digest": "11b54f96dd7bb8cd39241c3e4a982cf0d96af01aafd657604f25e90e17e68eee",
       "issue": 1422
     },
+    "github:43591673512:1:completions:message:91493268282bc537690a322d7da2c37ba7aaa324045beb53f45b442cc843ec9d": {
+      "digest": "ff7dc61a61f7fb63fa5dfe01298f4e17c348cecb275287b22d6f98b29e595cec",
+      "issue": 1422
+    },
     "github:43585981218:1:label:spec-request:spec-resubmitted:1422": {
       "digest": "d998f9ec725ce29d87b3a07da777a510b97207d472a00cf0edb653c77f103841",
       "issue": 1422,
@@ -5346,7 +5350,8 @@
           "entry": 2,
           "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed",
           "eventId": "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return:return:1422"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1": {
