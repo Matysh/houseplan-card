@@ -709,6 +709,7 @@ def wall_carrier_eligible(
     segment: dict[str, Any], centre: list[float], angle: float, half: float,
 ) -> bool:
     """#316: an in-place carrier — body, centre on it, same angle, room to fit."""
+    charge_work()  # Even a zero-thickness refusal is one candidate in the inner scan.
     if float(segment.get("cm", 0)) <= 0:
         return False
     t = _project_t(centre, segment["a"], segment["b"])
@@ -749,6 +750,7 @@ def wall_interval_free(
     span = _length(carrier["a"], carrier["b"])
     along = wall_host_t(carrier, centre) * span
     for other in space.get("openings") or []:
+        charge_work()
         host = other.get("host") if isinstance(other, dict) else None
         if (other is opening or not isinstance(host, dict) or host.get("kind") != "wall"
                 or host.get("id") != carrier["id"]):

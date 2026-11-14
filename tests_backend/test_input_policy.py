@@ -206,6 +206,30 @@ def test_request_budget_is_shared_and_never_reset_by_nested_calls():
                 pytest.fail("nested policy replacement was accepted")
 
 
+def test_rejected_zero_thickness_carriers_still_consume_work():
+    from custom_components.houseplan.core.wall_segment_model import (
+        wall_carrier_eligible,
+    )
+    segment = {"id": "zero", "a": [0, 0], "b": [1, 0], "cm": 0}
+    assert wall_carrier_eligible(segment, [0.5, 0], 0, 0.1) is False
+    with pytest.raises(InputLimit):
+        with input_scope(replace(STRICT_INPUT_POLICY, geometry_units=1), clock=lambda: 0):
+            wall_carrier_eligible(segment, [0.5, 0], 0, 0.1)
+            wall_carrier_eligible(segment, [0.5, 0], 0, 0.1)
+    assert segment["cm"] == 0
+
+
+def test_opening_overlap_inner_loop_consumes_work_before_mutating_reservation():
+    from custom_components.houseplan.core.validation import _reserve_host_interval
+    occupied = [(float(i), float(i) + 0.1) for i in range(100)]
+    before = list(occupied)
+    with pytest.raises(InputLimit):
+        with input_scope(replace(STRICT_INPUT_POLICY, geometry_units=10), clock=lambda: 0):
+            _reserve_host_interval({"length": 0.1}, 300, 200, occupied, fit="fit", overlap="overlap")
+    assert occupied == before
+    assert _reserve_host_interval({"length": 0.1}, 300, 200, occupied, fit="fit", overlap="overlap") is None
+
+
 def test_time_is_secondary_injected_and_checked_within_256_units():
     now = [0.0]
     with pytest.raises(InputLimit) as error:

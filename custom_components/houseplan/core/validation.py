@@ -26,6 +26,7 @@ from .coordinate_canonicalization import (
 )
 from .coordinate_canonicalization import canonicalize_number as canonicalize_number
 from .coordinate_canonicalization import canonicalize_position as canonicalize_position
+from .input_policy import charge_work
 from .led_strips import LED_STRIPS_SCHEMA as LED_STRIPS_SCHEMA
 from .led_strips import config_led_strip_links as config_led_strip_links
 from .led_strips import preserve_led_strips as preserve_led_strips
@@ -2084,8 +2085,10 @@ def _reserve_host_interval(
     if length > span or along - length / 2 < -1e-9 or along + length / 2 > span + 1e-9:
         return fit
     lo, hi = along - length / 2, along + length / 2
-    if any(max(lo, old_lo) < min(hi, old_hi) - 1e-9 for old_lo, old_hi in occupied):
-        return overlap
+    for old_lo, old_hi in occupied:
+        charge_work()
+        if max(lo, old_lo) < min(hi, old_hi) - 1e-9:
+            return overlap
     occupied.append((lo, hi))
     return None
 

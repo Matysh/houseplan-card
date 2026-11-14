@@ -87,6 +87,11 @@ charge выполняется до exact predicates, legacy numeric geometry, AA
 и отдельных migration dependency/room/opening inner loops. Проверка отмены/
 времени при первом unit и не реже следующих256; повторная валидация, миграция
 и следующий этаж не получают новый бюджет. Bit-limit4096 не ослаблен.
+Дополнительная сверка rejected branches нашла два пропуска: zero-thickness
+carrier возвращал False до числового предиката, а reservation overlap сканировал
+occupied без charge. Оба адресных теста были красными и исправлены: теперь
+charge идёт до early refusal/каждой пары. Сканы соседних openings и repair
+intervals также считают каждый элемент, в том числе несовпадающий host.
 
 Покрытие не объявляется preemptive CPU/memory isolation: сортировка, JSON/XML/PIL
 library call и отдельная большая bigint-операция не могут прерываться посередине.

@@ -41,6 +41,7 @@ from .coordinate_canonicalization import (
 )
 from .coordinate_canonicalization import canonicalize_number as canonicalize_number
 from .graph_host_continuity import GraphHostContinuity as GraphHostContinuity
+from .input_policy import charge_work
 from .plan_graph import project_graph_opening as project_graph_opening
 from .plan_graph_exact import GraphError as GraphError
 from .plan_graph_exact import decode_rational as decode_rational
@@ -107,6 +108,7 @@ def _intervals(openings: list[Any], carrier: dict[str, Any], skip: Any) -> list[
             + (carrier["b"][1] - carrier["a"][1]) ** 2) ** 0.5
     taken = []
     for other in openings:
+        charge_work()
         host = other.get("host") if isinstance(other, dict) else None
         if other is skip or not isinstance(host, dict) or host.get("kind") != "wall" \
                 or host.get("id") != carrier["id"]:
