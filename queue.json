@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12105,
+  "revision": 12106,
   "nextTicket": 433,
   "nextFence": 433,
   "tasks": {
@@ -3610,7 +3610,7 @@
       "ownerDecision": null,
       "ticket": 432,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794631656313,
       "reviewEntry": 8,
       "patchId": "2a25792849f812f4196f7290efc4bea1af4022a8",
@@ -3709,19 +3709,15 @@
         "eventId": "finish:539cd7cd-cb9f-4eb4-aa49-5b5871788243:finish:1:return:return:1392"
       },
       "s6": {
-        "id": "20261114T032938956-c5a63598",
+        "id": "20261114T044753110-10263dbf",
         "name": "Тесты для задачи #1392 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T032938956-c5a63598/report.json",
-        "materialSha": "37dda5aed5d3f2b22df78fa2ec96728abb7767ff",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T044753110-10263dbf/report.json",
+        "materialSha": "3108fed9e23905a23044453c85be4e158dabaadc",
         "status": "passed",
-        "finishedAt": "2026-11-14T03:44:42.084Z",
+        "finishedAt": "2026-11-14T05:06:01.891Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1392:5:347f4a55a16beb3df5a3b64bb32a5d8973db060c:3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-        "at": 1794628411870
-      }
+      "reviewRound": null
     },
     "1393": {
       "issue": 1393,
@@ -4964,9 +4960,9 @@
     "fence": 432,
     "materialSha": "3108fed9e23905a23044453c85be4e158dabaadc",
     "expectedBase": "3832620122b454c2b1ed1b9cdc64ae4263616c06",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794631660377,
-    "expiresAt": 1794632979230,
+    "expiresAt": 1794636363111,
     "patchId": "2a25792849f812f4196f7290efc4bea1af4022a8"
   },
   "events": {
@@ -6183,6 +6179,34 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:dafdd26a-6f3d-4dd4-b441-36b41c59d6ec:finish:3:s6-complete": {
+      "digest": "5b4aa1b2c32632d9c30e1fbab82fbd50bc8424c2618c08254dc41e49b6db339a",
+      "issue": 1392,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1392,
+        "at": 1794632763111,
+        "entry": 8,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "3108fed9e23905a23044453c85be4e158dabaadc",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T044753110-10263dbf",
+          "name": "Тесты для задачи #1392 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T044753110-10263dbf/report.json",
+          "materialSha": "3108fed9e23905a23044453c85be4e158dabaadc",
+          "status": "passed",
+          "finishedAt": "2026-11-14T05:06:01.891Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "### Результат реализации\nОдин PlanHost без raw hass: запросы/события houseplan, HTTP/file upload, content resolution, readonly окружение/реестры/права и отдельный device-services порт. HA-адаптер сохраняет протокол и authenticated fallback. Опциональная инъекция card.planHost не меняет setConfig. Плановый bootstrap/render/retry, config/layout/CAS, node writes, Optimize/Undo, изображения, переносимые копии и space copy используют порты; общая identity — непрозрачный connection/original-callWS + user key, права отдельно отзывают leases. Обычный tick и reconnect не создают новую write authority.\n\n### Решение и места для внимания\nsubscribeEnvironment/environmentRevision — единственный plan intake; прежнего changed.has(hass) intake нет. Environment-сигнал работает и без hass, и при скрытой странице. Read-only presentation context — только language/locale/localize/themes; forbidden-read Proxy проверяет отсутствие transport/state/auth лазейки. Пустой неавторитетный реестр сохраняет bindings. В монолитах перечислены конкретные plan-owners; остальной device/radar/vacuum код и именованные HA smart-home мосты не объявляются переносимыми. Smart-home View сохраняет service catalog, direct Zigbee readings и отдельную data-only invalidation без смены write leases.\n\nОсобенно проверить смену authority/прав между dispatch и ACK, подпись/asset caches по пользователю, права не-admin writer после config/get, read deferral, возвращение из hidden и позднюю отмену ZIP. Raw HTTP Response намеренно не теряется после проигнорированного транспортом abort: доменный владелец читает opaque token и отменяет ресурс. Cleanup может повторяться при смене прав в той же authority, но никогда не направляет старый token в чужую сессию.\n\n### Проверки и границы\nШестой S6:735/736 прошли, отказ только wall-node-connected по точным counters first gesture (5 лишних snapshot/light builds, не timing threshold). При расширении grace adapter оставлял старого registry observer без подписчика окружения; notify старой HA-проекции вмешивался в общий cache следующей mounted card. Grace теперь только для transport events, registry observer освобождается сразу; detached notify обновляет только connection metadata, без чтения устаревшего registry. При remount registry observer reacquire использует прежнюю ограниченную cache grace. Адресно23/23 port unit, native wall-node-connected (восемь жестов, exact work=0) и весь reconnect smoke PASS. Новый S6 повторяет затронутые входы; ожидания/лимиты не менялись.\n\nПосле первого код-ревью воспроизведены оба отказа: held config ACK + queued edit + permissions() оставляли pending=2 и старую optimistic title; reconnect smoke давал false для detached/обычного recovery. После исправления port-only smoke полностью PASS (включая pending=0, authoritative reconciliation и новую запись после возврата прав); card-reconnect smoke полностью PASS без изменения ожиданий/порогов. Адресно:23/23 plan-host unit +39 прежних surrounding cases без изменения входов; classified compatibility inventory PASS. Финальный S6 нового SHA выполняет finish в очереди, старый зелёный735-step отчёт не выдаётся за проверку изменённого кода.\n\nЧетвёртый S6: 734/735 прошли; повторно отказал только wall-preview-handoff (ожидание live-root). Причина не установлена. Сценарий прошёл изолированно, а отдельная диагностическая серия20 переключений15/0cm при CPU throttle6 также прошла; это не доказательство устранения гонки. В 37dda5aed добавлено только сохранение состояния при следующем отказе, без изменения assert/timeout или продукта. Пятый S6 завершил735/735 без отказов. Не выдаю неустановленный источник нестабильности за исправленный продуктовый дефект; сохранённые логи предыдущих прогонов доступны. Это первая передача реализации на модельное code review.\n\nТретий S6 завершил 735 шагов. Холодный старт/read-only/missing-HA/lifecycle предыдущего раунда прошли. Остались пять единиц: route fixture не объявлял callWS и потому был неготовым, а новый smoke ошибочно считал два локальных release-log entries сетевыми запросами. Исправлены только fixtures: готовые route contexts имеют transport; offline smoke считает фактические request/http, отдельно требует release и дожидается нового config/get после reconnect. Native opening-light, wall-preview-handoff и warm-camera прошли единственный адресный повтор на тех же продуктовых исходниках без изменения ожидаемого поведения/порогов. Причина их отказа под общим параллельным прогоном не установлена; это не объявлено исправленным дефектом продукта. Четвёртый finish повторяет отказавшее/изменённое с применимым кешем; продукт после db6a5b687 не менялся.\n\nВторой S6 завершил 734 шага и нашёл четыре отказывающих единицы: startup View/readonly cold-start (одна причина — повтор отвергнутых optional subscriptions), source lifecycle test (прежний callback ABI) и view recovery (missing HA read context). Они исправлены без ослабления ожиданий native сценариев: optional subscriptions dispatch до sampling, но их ACK никогда не блокирует обязательный load; повтор только при смене generation/режима scoped stream. Cold panel ждёт discovery API перед выбором own config stream. Missing snapshot обрывает read lifecycle, но не write authority/history. Актуальные адресные результаты: 102/102 Node, startup View, readonly cold-start, view recovery, восемь mounted-authority случаев и external screens — PASS. Добавлены исполняемые regression cases для hanging optional subscription, metadata-vs-input identity и missing read context при сохранённой write authority. UI Lab probe на окончательных исходниках повторён отдельно: noHass=true, model=2, mode=plan, driver=1, forbidden=[], errors=[], external=[]; настоящие HA icon/dialog bootstrap loaded. Static mutation anchors и classified compatibility inventory — PASS. Модельный S7 для #1392 ещё не запускался; третий финальный S6 берёт весь текущий diff и применимый кеш.\n\nПервый S6 завершил все 733 шага, но нашёл отказы; модельное ревью ещё не вызывалось. Разобраны реальные проблемы порядка кадров (2.5D/vacuum), LED write-lease, reentrant signal-cache notification, временно отсутствующего HA snapshot и потери read demand при смене authority/прав/setConfig. Видимый intake теперь следует за same-turn изменениями, authority проверяется сразу; paired read ждёт best-effort установки event listeners, а незавершённое чтение сохраняется при смене настроек карточки. Обновлены старые fake-host fixtures, source-contract readers, классифицированный compatibility inventory и перенесены прежние mutation anchors на фактических владельцев без удаления oracle. Адресный Node-набор: 219/219; canvas gestures, direct wall geometry, isometric live touch и vacuum прошли адресный повтор. View permissions и mounted-authority проверяются на окончательном неизменном кандидате перед повторным S6. Изменений эталонов нет; отказы не переобъявлялись ожидаемым поведением.\n\nАдресные диагностики: браузер без hass выполнил load → Optimize → wall/opening/room/decor edits → Save/reload → portable preview/apply; проверены сохранённый документ, история, deferred ready/retry, offline/reconnect, один environment driver и Proxy запретных полей. UI Lab /plan-host.html с настоящим закреплённым HA frontend открыл редактор без hass, page errors и внешних запросов. Обычный cold View toggle остался зелёным. Это synthetic wire store, НЕ доказательство серверных ACL/валидации и не pixel acceptance. Адресные TS/Node тесты проверяют authority, cancellation, cache isolation, no-op ticks и отрицательные AST fixtures. Финальный полный S6 по diff выполнит finish в общей очереди до S7; его фактический отчёт входит в передачу автоматически.\n\nПоследний полный адресный View-permissions прогон прошёл (включая неизвестный can_write, роли, kiosk, touch и late imports). Возвращён прежний admin-only fallback при неизвестном can_write для HA; injected host по-прежнему владеет собственным явным writer permission. Mounted-authority прошёл все восемь сценариев, включая reused object/ABA/held reply/initial missing input: один актуальный config+layout pair и один operational intake без промежуточного B. Для этого opaque inputKey отделён от environmentRevision: служебное permission/telemetry publication не становится вторым HA-кадром; registry rebuild остаётся отдельной видимой работой. Не добавлен второй environment driver. Финальные результаты S6 публикует координатор.\n\nФорматы/backend не менялись, новая сборка или сайт не опубликованы, пользовательский HA/действующий локальный стенд не изменены, PNG-эталоны не обновлялись. Нормальный UI Lab и его сохранённые сессии не заменяются: новый /plan-host.html — отдельный ephemeral diagnostic entry. Реальные HA journeys/golden остаются штатному выпуску; companion-решение: https://github.com/Matysh/houseplan-e2e/issues/53#issuecomment-6869344089.\n\n### Исправления по предыдущему ревью\nФинальная актуализация после влитой #1395: очередь обнаружила конфликт добавлений в process-next/test/task-selection.test.mjs. Сохранены оба независимых теста — security ingress #1395 и host domains #1392. Rebase продолжен штатно, ни guard, ни проверка не удалены. Backend #1395 наследуется из dev, не входит повторно в diff #1392. Новый финальный S6 выполняется после этой актуализации.\n\nПервое код-ревью: https://github.com/Matysh/houseplan-card/actions/runs/43553213416.\n- Pending ownership/blocker → любой отзыв write generation теперь синхронно очищает config/layout pending accounting, cancels unsent debounce/queue and physical pending; late finally остаётся fenced. Перечитывание сверяет сервер после возможного accepted send. Live config/layout fingerprints перепривязываются, иначе ответ, равный held send, не заменял бы более новый никогда не отправленный optimistic successor. Реальный card regression удерживает ACK, ставит вторую запись в очередь, меняет write permission, требует0 pending/оба stale отказы/согласованный документ/успешную следующую запись.\n- Окно событий при отзыве → paired re-read планируется после loaded/потенциально pending отзыва, не только после admin/user changes; первоначальный permission discovery в ещё не загруженной паре не создаёт лишнего reread.\n- Detached reconnect гипотеза → подтверждена запуском smoke_card_reconnect без ослабления checks. HA transport listeners имеют ограниченный2-second grace, data-only connectionRevision сохраняет lost→ready пока card detached; никаких запросов до remount. Ready/lost events учитываются даже без изменения connection.connected у тестового EventTarget. Следующий attach получает demand и один актуальный read; foreign authority и write epoch не смешиваются с reconnect. Добавлен unit, native smoke явно в areaTests; каталог обнаруживает его как runtime, не исключённый legacy test.\n- Комментарий reconnect обновлён под явное retire/restore подписок.\n- Дополнение S6 → grace сохраняет только транспортное наблюдение, не старый registry observer/projection. Исправлен подтверждённый native отказ exact work counters первой node gesture, без изменения oracle.\n- Signing по-прежнему строже проверяет write revision; это необязательное улучшение, не blocker, security fence не ослаблен. Предположение о синхронном callback в reloadHaRegistriesBounded не подтвердилось по текущему acquire: listener только регистрируется, load уведомляет после await. Обобщённый helper без подтверждённого дефекта здесь не переделывался.\nЭталоны/реальный HA/сайт не менялись. Причина исторической wall-preview нестабильности остаётся неустановленной, диагностика сохранена, ожидания не ослаблены.\n\n### Принятое ТЗ\nРедакция 2 принята в раунде S4 (run 43517627957). Исправления раунда 1: включены обязательные bootstrap/render owners, subscribeEnvironment + revision/один driver, точный presentation context и Proxy, единый authorityKey, #890 reconnect, disposer/external-screen events, authoritative registry и перенос Bearer fallback в адаптер. Scope сайта, замены HA-компонентов и capabilities не добавлен: это #1393/#1394 и последующие #1422/#1423.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
