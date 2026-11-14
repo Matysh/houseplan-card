@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13691,
+  "revision": 13692,
   "nextTicket": 476,
   "nextFence": 472,
   "tasks": {
@@ -4745,7 +4745,10 @@
         "status": "passed",
         "finishedAt": "2026-11-14T21:04:20.190Z",
         "failures": []
-      }
+      },
+      "automationError": "automation-error",
+      "automationSince": 1794690419154,
+      "automationDetail": "Git fetch failed (exit 128)"
     },
     "1442": {
       "issue": 1442,
@@ -5211,6 +5214,10 @@
     },
     "finish:287ec329-1d6e-49f3-90fa-c5d007a3d785:finish:2:s6-complete": {
       "digest": "dc85c50378333e1df2e68a2059e743aaf68e515ea60eb2b09b266cb80510b98b",
+      "issue": 1441
+    },
+    "finish:287ec329-1d6e-49f3-90fa-c5d007a3d785:finish:3:automation-pending": {
+      "digest": "96e2660266da144a426f99015955d7eb728868240831963cbbb4d01c2a72476a",
       "issue": 1441
     },
     "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
