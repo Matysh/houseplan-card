@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12770,
+  "revision": 12771,
   "nextTicket": 451,
   "nextFence": 451,
   "tasks": {
@@ -2488,7 +2488,8 @@
         "comment": true,
         "status": "pending",
         "errors": {
-          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)"
+          "milestone": "Release bookkeeping is not available: Git show failed (exit 128)",
+          "issue": "GitHub GET failed (502)"
         },
         "labelsFrom": "S6-in-progress",
         "removedToRelease": false,
