@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12307,
+  "revision": 12308,
   "nextTicket": 440,
   "nextFence": 440,
   "tasks": {
@@ -4649,28 +4649,25 @@
     },
     "1425": {
       "issue": 1425,
+      "branch": "codex/stable-note-feature-highlights",
       "track": "ship",
       "layer": "docs",
-      "branch": "codex/stable-note-feature-highlights",
-      "materialSha": "4423d4dc9c725b24fe4a3d231bd0b72cadccff62",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 439,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1794637868236,
-      "reviewEntry": 1,
-      "patchId": "49ee6703539427633a0bbd8378cbabb18fde9afe",
-      "changedFiles": [
-        "PROCESS.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/feature-notes.md"
-      ],
-      "s6": null,
-      "automationError": "automation-error",
-      "automationSince": 1794638621503,
-      "automationDetail": "S6 needs its successful selected set; documentation has no runs"
+      "status": "S8-merged",
+      "expectedBase": "a9e4a01420c02318a725157c49d4b9b2e23599c4",
+      "mergedSha": "4423d4dc9c725b24fe4a3d231bd0b72cadccff62",
+      "mergedAt": 1794638623596,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
+      }
     }
   },
   "ownerDecisions": {},
@@ -4957,18 +4954,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1425,
-    "worker": "finish",
-    "token": "439:issue1425-editorial-finish-20261114:finish:1:admit",
-    "fence": 439,
-    "materialSha": "4423d4dc9c725b24fe4a3d231bd0b72cadccff62",
-    "expectedBase": "a9e4a01420c02318a725157c49d4b9b2e23599c4",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794638608046,
-    "expiresAt": 1794642218548,
-    "patchId": "49ee6703539427633a0bbd8378cbabb18fde9afe"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
       "digest": "12777e21751a9ed7739ddf636b9b3bee3ba44b51ffb7d393f4c581e85a28643e",
@@ -5238,18 +5224,6 @@
       "digest": "1194190edacf564391505ee0fe4e855490896f0e50eeb7b2f204d1f790557315",
       "issue": 1394
     },
-    "issue1425-editorial-finish-20261114:finish:2:synchronized": {
-      "digest": "d1d285dc9ce9df1a0e87b98efca4e1c56ab9d88b4ed82b40cdcd7f58bb103903",
-      "issue": 1425
-    },
-    "issue1425-editorial-finish-20261114:finish:3:s6-complete": {
-      "digest": "903b0e211d018f713e8d16fe16563829367261a33e875cb7740996752f7f23d4",
-      "issue": 1425
-    },
-    "github:43567670446:1:tick:0:automation-pending": {
-      "digest": "6e89f7290ddb12dcc807179890e0c3872b1e4f04ada7a549beb548f536db0cf8",
-      "issue": 1425
-    },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
       "digest": "da0a567c831444c6edf8188c369afccc9da568d6542dab5b8e8f2f028cdcb317",
       "issue": 1394,
@@ -5493,20 +5467,6 @@
         "layer": "product",
         "materialSha": "ac441a9504b32f49a94b7a778569501672b4f26c",
         "phase": "sync",
-        "delivered": true
-      }
-    },
-    "issue1425-editorial-finish-20261114": {
-      "digest": "4f3f1401dc2f923d03e3ca07a26227c2f5cf6ca23342778054144484f5941d27",
-      "issue": 1425,
-      "message": {
-        "kind": "queued",
-        "issue": 1425,
-        "at": 1794637868236,
-        "entry": 1,
-        "track": "ship",
-        "layer": "docs",
-        "materialSha": "4423d4dc9c725b24fe4a3d231bd0b72cadccff62",
         "delivered": true
       }
     },
