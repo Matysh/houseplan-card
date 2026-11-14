@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12530,
-  "nextTicket": 444,
+  "revision": 12531,
+  "nextTicket": 445,
   "nextFence": 444,
   "tasks": {
     "1024": {
@@ -4486,6 +4486,20 @@
         "sourceSha": "281365641f6194a26a3cfb5fffcc0fb20ed4dea9"
       }
     },
+    "1421": {
+      "issue": 1421,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1421-door-leaf-glow",
+      "materialSha": "6cd0d49b4e5d1c76914ad75853245f0bce30c3b1",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 444,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794652335784,
+      "reviewEntry": 1
+    },
     "1424": {
       "issue": 1424,
       "branch": "codex/stable-note-editorial-rules",
@@ -4891,12 +4905,27 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1421
+  ],
   "active": null,
   "events": {
     "github:43585265383:1:label:spec-request": {
       "digest": "81645d13acef779d4c183ee979e266861230fe12f3534c0c98357a02f9051515",
       "issue": 1422
+    },
+    "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651": {
+      "digest": "de3a891914465aab40cb0cc764c1c1f63dd063b799b8f79278f1dc5e6cb8b3c9",
+      "issue": 1421,
+      "message": {
+        "kind": "queued",
+        "issue": 1421,
+        "at": 1794652335784,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6cd0d49b4e5d1c76914ad75853245f0bce30c3b1"
+      }
     }
   },
   "devWebhook": {
