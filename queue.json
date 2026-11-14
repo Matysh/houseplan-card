@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13749,
+  "revision": 13750,
   "nextTicket": 476,
   "nextFence": 474,
   "tasks": {
@@ -4628,7 +4628,7 @@
       "ownerDecision": null,
       "ticket": 467,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794686350630,
       "reviewEntry": 1,
       "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083",
@@ -4639,7 +4639,16 @@
         "src/ha-value-formatters.ts",
         "src/houseplan-card.ts",
         "test/ha-value-formatters.test.mjs"
-      ]
+      ],
+      "s6": {
+        "id": "20261114T211243169-5919ff44",
+        "name": "Тесты для задачи #1437 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T211243169-5919ff44/report.json",
+        "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
+        "status": "passed",
+        "finishedAt": "2026-11-14T21:20:08.968Z",
+        "failures": []
+      }
     },
     "1438": {
       "issue": 1438,
@@ -5197,9 +5206,9 @@
     "fence": 473,
     "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
     "expectedBase": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794690622653,
-    "expiresAt": 1794691472971,
+    "expiresAt": 1794694810171,
     "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083"
   },
   "events": {
@@ -5298,6 +5307,34 @@
         "materialSha": "3dcbebfc95df1f71c808525fb082abf310eb67b4",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:1437-ha-formatters-resume-20261114:finish:2:s6-complete": {
+      "digest": "1a8f57d0132a846d8d6efee776c5e6acdfb91942f0e7ba31950669fb84fb10dc",
+      "issue": 1437,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1437,
+        "at": 1794691210171,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T211243169-5919ff44",
+          "name": "Тесты для задачи #1437 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T211243169-5919ff44/report.json",
+          "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
+          "status": "passed",
+          "finishedAt": "2026-11-14T21:20:08.968Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Причина: при извлечении PlanHost #1392 data-проекция сохранила language/locale/localize/themes, states и registry, но потеряла оба HA read-only форматтера. Это проявилось также в восьми проверках smoke_value_format (badge/live text/перевод/атрибуты/единицы).\n\nРешение: существующий HA-only _projectHaSmartHomeSources добавляет ровно formatEntityState и formatEntityAttributeValue через небольшой allowlist-helper haValueFormatters. Методы привязаны к конкретному исходному HA объекту, не к урезанной проекции; новый input/environment строит новую проекцию. Четырёхпольный HostPresentationContext, PlanHost и транспортные границы не меняются. Целый HA не передаётся доменным потребителям. Альтернатива расширить portable presentation отвергнута как нарушение установленного контракта; преобразовывать raw on/off в модели также нельзя.\n\nОсобое внимание: this/текущий источник, дополнительный value-аргумент weather formatter, fallback без метода/при исключении, единица ровно один раз и raw значения enum. Unit проверяет allowlist/привязку/смену источника и вызовы существующих consumer fallback. Исходные ожидания native smoke_marker_alerts и smoke_value_format не ослаблены. В S6 дополнительно включены оба smoke, summary_weather и plan-host-boundary. Реальный пользовательский HA, visual baselines и выпуск не меняются. Классификация line-fix: регрессия невыпущенного #1392, текущая привязка release-ledger оставлена без изменения версий.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
