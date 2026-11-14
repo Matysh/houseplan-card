@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12664,
-  "nextTicket": 448,
+  "revision": 12665,
+  "nextTicket": 449,
   "nextFence": 448,
   "tasks": {
     "1024": {
@@ -4491,14 +4491,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1422-standalone-presentation",
-      "materialSha": "5169c189d8807db00348b15ddd3723006ca9c993",
+      "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 447,
-      "queued": false,
+      "ticket": 448,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794656094609,
-      "reviewEntry": 2,
+      "readyAt": 1794656770077,
+      "reviewEntry": 3,
       "notice": {
         "key": "2:checks-failed",
         "reason": "checks-failed",
@@ -4530,8 +4530,7 @@
         "test/browser-attestation.test.mjs",
         "test/standalone-presentation-boundary.test.mjs",
         "tsconfig.test.json"
-      ],
-      "reason": "checks-failed"
+      ]
     },
     "1424": {
       "issue": 1424,
@@ -4945,7 +4944,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1422
+  ],
   "active": null,
   "events": {
     "github:43585265383:1:label:spec-request": {
@@ -5250,6 +5251,19 @@
           "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed",
           "eventId": "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return:return:1422"
         }
+      }
+    },
+    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1": {
+      "digest": "113677d98e33e93e216cdc1b323243bc2e54d8febd011c797c3ab10751eb8ab0",
+      "issue": 1422,
+      "message": {
+        "kind": "queued",
+        "issue": 1422,
+        "at": 1794656770077,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07"
       }
     }
   },
