@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12778,
+  "revision": 12779,
   "nextTicket": 451,
   "nextFence": 451,
   "tasks": {
@@ -4521,7 +4521,7 @@
       "ownerDecision": null,
       "ticket": 450,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1794662811163,
       "reviewEntry": 2,
       "patchId": "c8a4dd75df2d754ba1fd02e21fb0295da9d7d8f9",
@@ -4574,14 +4574,13 @@
         "tests_backend/test_ha_standalone_core_transport.py"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794662566093,
-        "entry": 1,
-        "detail": "Поведение: process-next/test/furniture-art-lazy.test.mjs: failed; Поведение: test/card-version.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/houseplan-panel.test.mjs: failed; Поведение: test/pdf-compass.test.mjs: failed",
-        "eventId": "finish:c860f98b-8922-44d5-a443-10de266d7359:finish:3:return:return:1423"
+        "key": "2:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1794663265000,
+        "entry": 2,
+        "requestId": "review:1423:2:c8a4dd75df2d754ba1fd02e21fb0295da9d7d8f9:a927fbd3bbcb856542cb0ff4cd4061ddf187df07"
       },
       "s6": {
         "id": "20261114T132707109-9547927a",
@@ -4605,6 +4604,11 @@
         "at": 1794662918126,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1423:2:c8a4dd75df2d754ba1fd02e21fb0295da9d7d8f9:a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
+        "at": 1794663265000
       }
     },
     "1424": {
@@ -5081,19 +5085,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1423,
-    "worker": "finish",
-    "token": "450:finish:731459ef-f5f9-46ab-9439-4896fb3f92a8:finish:1:admit",
-    "fence": 450,
-    "materialSha": "57b416aaa549042855b0e99c54fc2affb109398c",
-    "expectedBase": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
-    "phase": "review",
-    "admittedAt": 1794662815364,
-    "expiresAt": 1794666499875,
-    "patchId": "c8a4dd75df2d754ba1fd02e21fb0295da9d7d8f9",
-    "reviewRequest": "review:1423:2:c8a4dd75df2d754ba1fd02e21fb0295da9d7d8f9:a927fbd3bbcb856542cb0ff4cd4061ddf187df07"
-  },
+  "active": null,
   "events": {
     "github:43585804826:1:spec:1423:spec-request": {
       "digest": "ab106ad3748c893cb1880e545c3ae88dd90c322ece3453d525c07dfd9f287f59",
@@ -5273,6 +5265,10 @@
     },
     "github:43600396404:1:tick:0:review-presentation": {
       "digest": "36810782f5bed4637dbb23f571edd56e9f30016e4d8df772a38a5bdd9ce176f0",
+      "issue": 1423
+    },
+    "github:43600396404:1:tick:0:return": {
+      "digest": "e1e1c117e171968c59ce0e03e485699deb066bbddb2dfbf42a35476d7dcb8e83",
       "issue": 1423
     },
     "github:43586364877:1:label:spec-request:spec-resubmitted:1423": {
