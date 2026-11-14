@@ -770,6 +770,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id:'lighting-interior-window-iso-dark',interiorWindow:{},fixture:'visual',space:'f1',mode:'view',
     projection:'iso',language:'en',theme:'dark',viewport:{width:1100,height:1000},...stage },
   ...[
+    ['lighting-closed-door-panel-dark', {}, 'flat'],
+    ['lighting-open-door-panel-dark', { open: true }, 'flat'],
+    ['lighting-closed-door-panel-iso-dark', {}, 'iso'],
+    ['lighting-closed-slide-door-panel-dark', { slide: true }, 'flat'],
+  ].map(([id, closedDoor, projection]) => ({ id, closedDoor, projection, panelHost: true,
+    fixture: 'visual', space: 'f1', mode: 'view', language: 'en', theme: 'dark',
+    viewport: { width: 1100, height: 1000 }, ...stage })),
+  ...[
     ['lighting-sun-transparent-chain-flat',{},'flat'],
     ['lighting-sun-transparent-chain-iso',{},'iso'],
     ['lighting-sun-transparent-sealed',{sealed:true},'flat'],

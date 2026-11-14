@@ -477,7 +477,7 @@ const MUTANT_DEFINITIONS = [
     id: 'internal-window-missing-host-falls-back-1079',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/interior-window-light.test.mjs',
     because: '#1079 AC3: missing or ambiguous explicit host identity stays fail-closed even with a plausible floor-to-floor line. Nightly execution only.',
-    patches: [{file:'src/interior-window-light.ts',
+    patches: [{file:'src/opening-optics.ts',
       find:'  if (carriers.length !== 1) return null;',
       replace:'  if (carriers.length !== 1) return [-half, half];'}],
   },

@@ -74,9 +74,19 @@ input is only a v8 read projection and migrates to ordinary `cm:0` atoms.
 - exterior, one-sided, unhosted-in-space or invalid window portions: an indoor
   lamp must not wash the street. A mixed aperture opens only its proven
   interior intervals; a vertex contact is not an interval;
-- a door, gate or `passage` with no floor behind it. An opening is transparent only where BOTH
+- a gate, `passage` or non-closed door with no floor behind it. These are transparent only where BOTH
   sides are floor; otherwise a front door glows halfway — up to the centreline,
   where the room polygon ends — and the plan shows a lit doorway to nowhere.
+
+A proven **closed opaque door** is different (#1421): its physical slot is cut
+through the masonry, then sealed at the drawn leaf. The source-side pocket is
+lit up to that leaf; the other side stays dark. Swing leaves seal the wall axis;
+sliding leaves use the renderer's shared face/flip placement, not the sweep arc,
+handle or whole symbol bounds. This also applies to an exterior closed door:
+only its bounded tunnel floor is added, never an outdoor light fan. Invalid,
+ambiguous or non-physical hosts remain fail-dark. Gates keep their old policy.
+An actually closed door differs from a small partial aperture rounded to zero
+by the existing 5% optical quantisation; partial openings are unchanged.
 
 The classifier is an explicit `door | gate | passage | window` allowlist.
 Window eligibility alone is not transparency: the structural pass intersects
@@ -98,18 +108,20 @@ purpose from the drawn one.
 The rule is identical for a passage hosted by a finished independent wall.
 Only its explicit partition body (plus an exactly collinear covering room wall)
 is cut. Internal glass follows the same sliced physical cuts, including
-partition hosts; exterior glass and one-sided door/gate/passage cuts remain
+partition hosts; exterior glass and one-sided non-closed door/gate/passage cuts remain
 opaque, and an invalid host fails dark. A window hosted by an independent
 wall never becomes a sunlight source; sunlight sources still belong to exterior room
 windows and flagged glass doors (see SUN.md).
 
 Source placement follows the same geometry, fail-dark. If the source centre is
-inside an opaque wall body, an exterior/invalid window tunnel, or an exterior door/gate opening,
+inside an opaque wall body, an exterior/invalid window tunnel, or an uncut exterior door/gate opening,
 the source produces no Glow at all. It does not light the indoor half of the
 opening. An interior glass/door/gate/saved-passage opening remains a real hole and is therefore a
 valid source position. This is an intentional placement rule, not a temporary
 availability state: move the source marker onto the clean room floor to make it
 emit Glow again ([#92](https://github.com/Matysh/houseplan-card/issues/92)).
+A proven closed-door pocket is real bounded floor too; its leaf still blocks
+visibility, including when the source lies exactly on the leaf.
 
 ## From barriers to a lit region
 

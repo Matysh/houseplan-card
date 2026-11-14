@@ -10,6 +10,7 @@ import { nothing, svg, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { physicalSpaceRecord, PHYSICAL_PRESENTATION_FIELDS } from './structural-space-record';
 import { interiorWindowLightPassages } from './interior-window-light';
+import { closedDoorLightGeometry } from './closed-door-light';
 import { maskProvenWindowPassages, opticalOpeningPosition } from './opening-optics';
 import { motionOpeningFeatures, openingSlideDirection, type OpeningInterval } from './opening-features';
 import {
@@ -81,7 +82,7 @@ export interface LightBarrierRevision {
   geometryFingerprint: string;
   fingerprint: string;
   polygons: LightRoomPolygon[];
-  passageStates: Array<{ opening: GeometryOpeningProjection; amount: number; mask?: readonly OpeningInterval[] }>;
+  passageStates: Array<{ opening: GeometryOpeningProjection; amount: number; closedDoor?: true; mask?: readonly OpeningInterval[] }>;
 }
 
 export interface LightBarrierScene {
@@ -295,11 +296,16 @@ export function resolveLightBarrierRevision(input: {
     const rad = (opening.angle * Math.PI) / 180;
     const nx = -Math.sin(rad);
     const ny = Math.cos(rad);
-    const interior = onFloor([opening.rx + nx * probe, opening.ry + ny * probe])
-      && onFloor([opening.rx - nx * probe, opening.ry - ny * probe]);
-    return interior ? [{
+    const positive = onFloor([opening.rx + nx * probe, opening.ry + ny * probe]);
+    const negative = onFloor([opening.rx - nx * probe, opening.ry - ny * probe]);
+    const opticalAmount = openingLightAmount(opening, input.openingAmount(opening));
+    // Distinguish an actually closed leaf from a small partial aperture which
+    // rounds to zero under the unchanged optical quantisation policy.
+    const closedDoor = opening.type === 'door' && opticalAmount === 0;
+    return (positive && negative || closedDoor && (positive || negative)) ? [{
       opening,
-      amount: quantizeOpeningLightAmount(openingLightAmount(opening, input.openingAmount(opening))),
+      amount: quantizeOpeningLightAmount(opticalAmount),
+      ...(closedDoor ? { closedDoor: true as const } : {}),
     }] : [];
   });
   const openingStateSignature = openingLightStateSignature(
@@ -318,7 +324,9 @@ export function resolveLightBarrierRevision(input: {
           const motion = motionOpeningFeatures(opening);
           return [opening.id, amount, mask, motion?.mechanism === 'slide' && amount > 0 && amount < 1
             ? openingSlideDirection(motion) : null];
-        }).sort((a, b) => String(a[0]).localeCompare(String(b[0])))]),
+        }).sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+      passageStates.filter(state => state.closedDoor).map(({ opening }) =>
+        [opening.id, motionOpeningFeatures(opening)?.mechanism || 'swing']).sort((a, b) => String(a[0]).localeCompare(String(b[0])))]),
     polygons,
     passageStates,
   };
@@ -345,7 +353,8 @@ export function buildLightBarrierScene(input: {
   const cacheKey = `${input.space.id}|${revision.fingerprint}`;
   const outlineCuts: number[][] = [...input.zeroWalls.transmissive];
   const hasWindows = revision.passageStates.some(({ opening }) => opening.type === 'window');
-  const windowIndex = hasWindows ? input.sharedWallGeometry?.openingIndex || openingWallIndex(
+  const windowIndex = hasWindows || revision.passageStates.some(state => state.closedDoor)
+    ? input.sharedWallGeometry?.openingIndex || openingWallIndex(
     input.space.rooms, [...input.walls], input.zeroWalls.contour,
     input.wallKeyPitch, input.cellCm, input.gridPitch, input.coordScale,
   ) : null;
@@ -356,7 +365,12 @@ export function buildLightBarrierScene(input: {
           interiorWindowLightPassages(opening, input.space, windowIndex), mask || [[0, 1]])
         .map(slice => ({ opening: slice, amount: 1 })) : []
       : [{ opening: opticalOpeningPosition(opening, amount), amount }]);
-  const passages = openStates.map(({ opening, amount }) => ({
+  const closed = revision.passageStates.flatMap(({ opening, closedDoor }) => {
+    const geometry = closedDoor && windowIndex ? closedDoorLightGeometry(opening, input.space, windowIndex) : null;
+    return geometry ? [{ opening, geometry }] : [];
+  });
+  const apertures = [...openStates, ...closed.map(({ opening }) => ({ opening, amount: 1 }))];
+  const passages = apertures.map(({ opening, amount }) => ({
     ...opening, rlen: openingLightApertureLength(opening.rlen, amount),
   }));
   const roomPassages = geometryRoomOpeningInputs(
@@ -378,7 +392,7 @@ export function buildLightBarrierScene(input: {
       opening.x + dx, opening.y + dy,
     ]);
   }
-  const partitionCuts = openStates.flatMap(({ opening, amount }) => opening.partitionHost
+  const partitionCuts = apertures.flatMap(({ opening, amount }) => opening.partitionHost
     ? [scalePartitionOpeningCut(partitionOpeningCut(opening.partitionHost), amount)] : []);
   const opaqueBodies = input.physicalBodies(partitionCuts, cacheKey);
   const occluders: LightSegment[] = [];
@@ -426,9 +440,10 @@ export function buildLightBarrierScene(input: {
   for (const barrier of input.zeroWalls.barriers) {
     occluders.push(barrier as LightSegment);
   }
+  for (const { geometry } of closed) occluders.push(geometry.barrier);
   return {
     occluders: splitAtIntersections(occluders),
-    floor: revision.polygons.map(({ poly }) => poly),
+    floor: [...revision.polygons.map(({ poly }) => poly), ...closed.flatMap(({ geometry }) => geometry.floor)],
     fingerprint: revision.fingerprint,
     masonryGeometry: masonry && (masonry.status === 'ok' || masonry.status === 'degraded-extra')
       ? masonry.components.flatMap((component) => component.geom)

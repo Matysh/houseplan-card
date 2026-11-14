@@ -9,6 +9,8 @@ import { prepareApprovedUi } from './approved-ui.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
 import { makeInteriorWindowFixture } from '../fixtures/interior-window-light.mjs';
+import { makeClosedDoorFixture } from '../fixtures/closed-door-light.mjs';
+import { prepareClosedDoorLight, inspectClosedDoorLight } from './closed-door-light.mjs';
 import { prepareInteriorWindowLight } from './interior-window-light.mjs';
 import { makeSunTransparentFixture } from '../fixtures/sun-transparent.mjs';
 import { prepareSunTransparent } from './sun-transparent.mjs';
@@ -96,6 +98,7 @@ const fixtureFor = (scenario) => scenario.resizeJunction ? makeResizeJunctionFix
   : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
   : scenario.batteryZigbeeOverlap ? makeBatteryZigbeeFixture()
   : scenario.interiorWindow ? makeInteriorWindowFixture(scenario.interiorWindow)
+  : scenario.closedDoor ? makeClosedDoorFixture(scenario.closedDoor)
   : scenario.sunTransparent ? makeSunTransparentFixture(scenario.sunTransparent)
   : scenario.zigbeeLed ? makeZigbeeLedFixture()
   : scenario.fixture === 'large'
@@ -3295,6 +3298,12 @@ export async function prepareGoldenScenario(page, scenario) {
   if (scenario.interiorWindow) result.interiorWindowLight = await prepareInteriorWindowLight(
     page, fixture.windowLightProbes, !!scenario.interiorWindow.led,
   );
+  if (scenario.closedDoor) {
+    if (scenario.closedDoor.open) {
+      result.closedDoorLight = await inspectClosedDoorLight(page, fixture.doorLightProbes);
+      if (!result.closedDoorLight.target || !result.closedDoorLight.shadow) throw new Error('Open door must light both sides');
+    } else result.closedDoorLight = await prepareClosedDoorLight(page, fixture, scenario.closedDoor);
+  }
   if(scenario.sunTransparent)result.sunTransparent=await prepareSunTransparent(page,!!scenario.sunTransparent.sealed);
   if (scenario.externalScreens) await prepareExternalScreens(page, scenario);
   if (scenario.staticWallOpenings) result.staticWallOpenings = await prepareStaticWallOpenings(page,scenario);

@@ -2,31 +2,7 @@
 import { resolveOpeningWallCandidates, type OpeningWallIndex } from './wall-thickness';
 import type { GeometryOpeningProjection } from './plan-geometry-preflight';
 import type { SpaceModel } from './types';
-
-/** Explicit identity is authority. Legacy unhosted glass still needs real masonry. */
-function hostRange(
-  opening: GeometryOpeningProjection, space: SpaceModel, ux: number, uy: number, eps: number,
-): [number, number] | null {
-  const half = opening.rlen / 2;
-  if (!opening.host) return [-half, half];
-  const host = opening.host;
-  if (host.kind !== 'wall' && host.kind !== 'partition') return null;
-  if (!Number.isFinite(host.t) || host.t < 0 || host.t > 1) return null;
-  const carriers = (host.kind === 'partition' ? space.partitions : space.wall_segments || [])
-    .filter(carrier => carrier.id === host.id);
-  if (carriers.length !== 1) return null;
-  const carrier = carriers[0];
-  if (!(carrier.cm > 0) || ![...carrier.a, ...carrier.b].every(Number.isFinite)) return null;
-  if (host.kind === 'partition' && (!opening.partitionHost
-      || opening.partitionHost.partition.id !== host.id)) return null;
-  const [ax, ay] = carrier.a, [bx, by] = carrier.b;
-  const dx = bx - ax, dy = by - ay, length = Math.hypot(dx, dy);
-  if (!(length > eps) || Math.abs(dx * uy - dy * ux) > length * 1e-6) return null;
-  if (Math.hypot(ax + dx * host.t - opening.rx, ay + dy * host.t - opening.ry) > eps) return null;
-  const a = (ax - opening.rx) * ux + (ay - opening.ry) * uy;
-  const b = (bx - opening.rx) * ux + (by - opening.ry) * uy;
-  return [Math.max(-half, Math.min(a, b)), Math.min(half, Math.max(a, b))];
-}
+import { physicalOpeningHostRange } from './opening-optics';
 
 /**
  * Split at actual room-side ends, then admit only an unambiguous pair of
@@ -41,7 +17,7 @@ export function interiorWindowLightPassages(
     .every(Number.isFinite) || !(opening.rlen > 0)) return [];
   const rad = opening.angle * Math.PI / 180, ux = Math.cos(rad), uy = Math.sin(rad);
   const eps = Math.max(1e-9, index.adjacencyEps);
-  const range = hostRange(opening, space, ux, uy, eps);
+  const range = physicalOpeningHostRange(opening, space, ux, uy, eps);
   if (!range || range[1] - range[0] <= eps) return [];
   const candidates = resolveOpeningWallCandidates(index, {
     x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,

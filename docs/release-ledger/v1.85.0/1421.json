@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1421,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Closed opaque doors leave the entire thick-wall slot unlit in the existing stable product. Seal at the rendered leaf while retaining partial, transparent and invalid-host rules.",
+  "summary": {
+    "ru": "Свет в дверном проёме доходит до закрытого полотна двери.",
+    "en": "Light reaches the closed door leaf inside thick wall openings."
+  }
+}

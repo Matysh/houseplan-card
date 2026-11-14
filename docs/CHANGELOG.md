@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Clip artificial light at the actual closed door leaf instead of the entire wall slot; share swing/slide placement, bounded exterior pockets and regression coverage across lamp, LED and Static Glow (#1421).
+
 - Align the nightly import guard with confirmed writer revocation: require a closed dialog and inert retired Apply handler instead of reading pre-paint DOM (#1426).
 - Keep SHIP-REVIEW bytes stable across tag assignment and publication retries; reproduce legacy tag:null receipts only on an exact frozen-report match, without replacing published assets (#1415).
 - Reserve stable announcement emoji highlights for features, explain their concrete difference from the previous stable, and keep notable bug fixes in optional plain prose (#1425).
