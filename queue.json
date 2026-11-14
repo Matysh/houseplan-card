@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13751,
+  "revision": 13752,
   "nextTicket": 476,
   "nextFence": 474,
   "tasks": {
@@ -4648,6 +4648,13 @@
         "status": "passed",
         "finishedAt": "2026-11-14T21:20:08.968Z",
         "failures": []
+      },
+      "reviewRound": 1,
+      "reviewRequest": "review:1437:1:f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083:d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
+      "reviewMaterial": {
+        "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
+        "expectedBase": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
+        "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083"
       }
     },
     "1438": {
@@ -5193,6 +5200,19 @@
         "occurredAt": "2026-11-14T20:52:19.394Z"
       },
       "runId": 43639784381
+    },
+    "code:1437:review:1437:1:f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083:d0c538de59b5413b6d4d31fd2a1ca15e18943fc6": {
+      "issue": 1437,
+      "kind": "code",
+      "requestId": "review:1437:1:f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083:d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
+      "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
+      "expectedBase": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
+      "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-14T21:20:18.038Z"
+      }
     }
   },
   "waiting": [
@@ -5209,7 +5229,8 @@
     "phase": "review",
     "admittedAt": 1794690622653,
     "expiresAt": 1794694810171,
-    "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083"
+    "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083",
+    "reviewRequest": "review:1437:1:f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083:d0c538de59b5413b6d4d31fd2a1ca15e18943fc6"
   },
   "events": {
     "github:43641364833:1:completions:message:c824bc1f7b99d80c2e4db43a1ed129ab227e38c928cea50da1dfd544bd0f4ca3": {
@@ -5254,6 +5275,10 @@
     },
     "finish:1437-ha-formatters-resume-20261114:finish:2:s6-label": {
       "digest": "18fa52e8ca3ad8778f43a46cb52e145a7061da2e35a057857ddb3f8a0be24e4e",
+      "issue": 1437
+    },
+    "finish:1437-ha-formatters-resume-20261114:finish:3:review-requested": {
+      "digest": "7fe2c1cd6b5e4f00af1346b51998723b1fa0263dd8b091cae22ca6134701e2d8",
       "issue": 1437
     },
     "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
