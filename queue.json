@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13974,
+  "revision": 13975,
   "nextTicket": 481,
   "nextFence": 479,
   "tasks": {
@@ -5438,6 +5438,10 @@
       "digest": "faa9dfa92d496e7450555905906d7cf4b5c7dbd5085daca69bd41f4a7047e297",
       "issue": 1446
     },
+    "finish:1446-integration-display-metadata-20261115-r2:finish:3:s6-label": {
+      "digest": "07dd74975e234e09330545e4e0a33daaf7cd85adb0265b33dc10d61a7ad2150d",
+      "issue": 1446
+    },
     "finish:1446-integration-display-metadata-20261115": {
       "digest": "82a8163ec4fc0593dc2739b009fe0021dc402ddd59c9a6351753fe7a30b3f210",
       "issue": 1446,
@@ -5616,7 +5620,8 @@
         "resubmission": false,
         "reviewChanges": "Причина подтверждена read-only сравнением actual/baseline/diff финального golden-beta на 386520b52: в двух provider-подписях House Plan Golden заменилось на houseplan golden. MarkerDialog передаёт hp-device-preview data-only _planHass; _ensureMetadata ожидал raw connection и не приобретал существующего metadata-owner, хотя manifest/list фикстуры по-прежнему отдаёт правильное name.\n\nРешение: отдельный _haIntegrationMetadata reader с ровно identity/snapshot/acquire передаётся в отдельное свойство preview. Это HA-only возможность вне _planHass и вне неизменённого четырёхпольного HostPresentationContext/PlanHost. Он не принимает команды/домены/HTTP, использует прежний lazy shared integration-provider owner и отдаёт только entry_id/domain/title и manifest domain/name. Просто получение reader/snapshot ничего не загружает. У raw-HA потребителей preview сохранён fallback-адаптер; standalone/injected PlanHost reader не получает. При смене/исчезновении reader и отключении preview observation освобождается, поздние callbacks другой identity не публикуются.\n\nСоседние читатели: resolveBindingProviders (общая строка интеграции) и resolveEntityProvider (подпись источника) используют один display snapshot. Zigbee settings по-прежнему передаёт настоящий HA своему существующему owner; общий metadata cache дополнительно разделён по пользователю и admin-role, поэтому поздние replies старой authority не попадают следующей. Существующая обработка ignored config entries Zigbee не менялась: source остаётся в raw owner snapshot и не переносится в display projection.\n\nАльтернативы: вернуть raw HA или callWS/connection в _planHass нельзя; выдавать расширенный транспорт preview не нужно; загружать metadata глобально при каждом HA tick вместо существующего lazy owner означало бы лишние запросы. Новый reader сохраняет прежнюю загрузку только при открытом preview.\n\nРиски для свежего взгляда: cache identity/user/role и поздние ответы, shared acquire/release с соседним HA consumer, замена/исчезновение reader, fallback при отсутствующем/бросающем HA API, отсутствие транспортных полей в обоих UI inputs. Unit и новый native включены адресно; также прежние device-preview-parity, zigbee-enable-refresh и plan-host-boundary. Состав S6 проверен планом: новые тесты классифицированы как devices/runtime/presentation; существующие неизвестные aggregation-source включают консервативный fast fallback. Ожидания и PNG не изменяются. Addressed golden panel-device-state-source-unknown-en проверяется по прежнему эталону из отдельного checkout; итоговый release B не меняется. E2E-решение будет записано отдельно; релиз/новая версия/приёмка рамок или Glow не входят.\n\n\n### Адресное визуальное подтверждение S6\nНа материале 166fa0c576ad38abb400df862fa1eec24d1b261e, после штатной подготовки S6, из отдельного checkout выполнен golden-runner --selection=beta --scenario=panel-device-state-source-unknown-en. Результат PASS: diff=0 pixels, ratio=0, maxDelta=1; прежний baseline не менялся. Отчёт artifacts/process-next/golden-panel-device-state-source-unknown-en/golden-report.json, actual SHA256 ca92b953d79ae0c1c332dee2cf4a121644e98835f2c56b332799216d24034f89. E2E-решение записано: Matysh/houseplan-e2e#68. Полный frozen release B не изменялся.\n\n### Уточнение предусловия native после первого S6\nПервый S6 20261114T220210399-1417dea0 завершён:647steps, один отказ нового smoke_device_integration_metadata по timeout ожидания manifest-name. Причина — стандартная demo-фикстура localize(component.demo.title) возвращает Demo integration, а локализация намеренно имеет приоритет над manifest-name. Продукт не менялся: на материале 24ef79346 в новом witness явно задан localize()=>null, как в воспроизводящем golden. Unit по-прежнему проверяет приоритет настоящей локализации. Адресный golden на166fa0c57 применим: единственная разница новой редакции — три строки предусловия этого native, ни один исходник/PNG не изменён. Успешные S6 результаты сохраняются; повторный вход в очередь с прежней адресной выборкой. Модельного ревью ещё не было.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
