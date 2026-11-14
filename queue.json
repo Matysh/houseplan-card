@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12667,
+  "revision": 12668,
   "nextTicket": 449,
   "nextFence": 449,
   "tasks": {
@@ -4496,7 +4496,7 @@
       "ownerDecision": null,
       "ticket": 448,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794656770077,
       "reviewEntry": 3,
       "notice": {
@@ -4531,7 +4531,16 @@
         "test/smoke-exception-guard.test.mjs",
         "test/standalone-presentation-boundary.test.mjs",
         "tsconfig.test.json"
-      ]
+      ],
+      "s6": {
+        "id": "20261114T114626395-c2bcad0c",
+        "name": "Тесты для задачи #1422 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T114626395-c2bcad0c/report.json",
+        "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
+        "status": "passed",
+        "finishedAt": "2026-11-14T11:47:12.461Z",
+        "failures": []
+      }
     },
     "1424": {
       "issue": 1424,
@@ -4953,9 +4962,9 @@
     "fence": 448,
     "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
     "expectedBase": "c0724ea4179e2c6971033c383ef37a441983960f",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794656774156,
-    "expiresAt": 1794657080463,
+    "expiresAt": 1794660433673,
     "patchId": "ad54bb5d85e80865b5f1819342f4eff3e74a8a01"
   },
   "events": {
@@ -5292,6 +5301,34 @@
         "layer": "product",
         "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
         "phase": "sync"
+      }
+    },
+    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:3:s6-complete": {
+      "digest": "9bbeb53579aaacaab8305f0bb0a0fd3c5e7c53a099661731c6926b5918748aef",
+      "issue": 1422,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1422,
+        "at": 1794656833673,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
+        "phase": "review",
+        "evidence": {
+          "id": "20261114T114626395-c2bcad0c",
+          "name": "Тесты для задачи #1422 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T114626395-c2bcad0c/report.json",
+          "materialSha": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
+          "status": "passed",
+          "finishedAt": "2026-11-14T11:47:12.461Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\nРеализован отдельный opt-in presentation owner без HA frontend. Нормальные entrypoints его не импортируют. Полный standalone entry и положительный persistence/portable journey относятся к #1423, а не к этому wire fixture.\n\n### Решение и альтернативы\nРовно три локальных компонента с прежними совместимыми именами; native HpDialog/Form Kit остаются общими. Registry проверяется атомарно до define, чужие определения/HA root отвергаются. Theme API синхронно публикует только четыре разрешённых presentation поля и восстанавливает CSS при ошибке. Конечная карта MDI 7.4.47 генерируется из запертого пакета, без сетевого icon loader. Переписывать существующие шаблоны или заимствовать HA bootstrap не потребовалось.\n\n### Риски и места для внимания\nИзоляция custom-element registry, динамические SVG, границы theme ownership и native modal lifecycle. В native мобильной оболочке исправлено растяжение двухстрочного grid навигации: форма больше не делит свободную высоту поровну между селектором и содержимым; правило исключает ha-dialog-shell. HA ветка не меняется. Build helper — только диагностическая сборка общего графа, не будущая публичная поставка. В тестовом PlanHost зафиксировано синхронное обновление presentation/revision без hass.\n\n### Проверки и ограничения\nАдресные Node проверки — 57/57, включая 11 API/registry/theme/icon контрактов. Native browser проходит настоящие формы, четыре языка, темы/ширины, nested select/color, focus/dirty/discard/return, числовые поля/range/disabled, cold-language progress, reduced-motion, disposal и восемь независимых registry collisions. Лог и candidate PNG: artifacts/standalone-presentation; это не принятые эталоны. Два прежних HA harness кадра прошли verify: panel-wide-view-light-en (0 diff px), panel-wide-plan-editor-dark-en (426 px, 0.0416%, в существующем допуске). Нельзя выдавать их за проверку установленного реального HA.\n\nWire fixture доказывает UI/порты, не domain validation, долговечность или переносимость файлов. Мутации и release-профиль не запускались. Решение по real-HA E2E: Matysh/houseplan-e2e#57, новый сценарий не нужен для изолированного adapter. Никакие личные данные, UI Lab владельца, эталоны и установленный frontend snapshot не изменялись.\n\nПервый полный S6 после rebase: 635/636 шагов прошли. Единственный отказ — статический smoke-exception guard не распознавал уже существующую launchPanelCold как обёртку общего launchInternal/watchPage. Добавлено это конкретное имя и явная проверка владельца; исключения по-прежнему учитывает общий guard, новый bypass не вводился. Адресный красный результат воспроизведён, после исправления 4/4. В повторной передаче используется штатное повторное использование зелёных результатов.\n\n### Принятое ТЗ\nРедакция 2 принята в S4: https://github.com/Matysh/houseplan-card/actions/runs/43586014287. Исправления первого spec review сохранены в теле ТЗ: ru/en/de/fr, конечный localize bridge, language-neutral progress с исходным inert/aria-busy, общий UI Kit и строгая document isolation.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
