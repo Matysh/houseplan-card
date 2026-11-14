@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12935,
+  "revision": 12936,
   "nextTicket": 456,
   "nextFence": 456,
   "tasks": {
@@ -5105,6 +5105,10 @@
       "digest": "77aa0a6b26bc298106bab5972a36fdb6b3335822b7ad8422fa77dfce329667d1",
       "issue": 1428
     },
+    "github:43607138821:1:completions:message:869ff99330090c300b1b15744f0e03a97a2cc85979640507b51a016c9a8d7705": {
+      "digest": "79b9b4ca7cb171df0ea2a82da666b2299688cf039b31d9a7c43d320a419fc9ee",
+      "issue": 1428
+    },
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8": {
       "digest": "5d222819e81ede9628f329e1f7cf41302954c0c912e32d245b13f830c70da079",
       "issue": 1428,
@@ -5151,7 +5155,8 @@
           "entry": 1,
           "detail": "Поведение: test/houseplan-panel.test.mjs: failed; Браузер: compact header polish: failed; Браузер: discard dialog polish: failed; Браузер: toolbar stable width: failed",
           "eventId": "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:3:return:return:1428"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:bb81c14e-2842-4df5-9d91-930b18ac35f6": {
