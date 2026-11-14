@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13665,
+  "revision": 13666,
   "nextTicket": 476,
   "nextFence": 471,
   "tasks": {
@@ -4799,75 +4799,25 @@
     },
     "1445": {
       "issue": 1445,
+      "branch": "codex/guide-screenshot-refresh",
       "track": "ship",
       "layer": "docs",
-      "branch": "codex/guide-screenshot-refresh",
-      "materialSha": "84c62b8a9aeca6d362a303fae292b37ac3b61cae",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 472,
-      "queued": false,
-      "status": "S6-in-progress",
-      "readyAt": 1794689199505,
-      "reviewEntry": 1,
-      "patchId": "2fd41d9424226d9b2d791fdf7e837234eccc7673",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/images/guide-2026-11/PROVENANCE.md",
-        "docs/images/guide-2026-11/README.md",
-        "docs/images/guide-2026-11/en/appearance.png",
-        "docs/images/guide-2026-11/en/background-properties.png",
-        "docs/images/guide-2026-11/en/backup.png",
-        "docs/images/guide-2026-11/en/colour-picker.png",
-        "docs/images/guide-2026-11/en/device-actions.png",
-        "docs/images/guide-2026-11/en/device-alarms.png",
-        "docs/images/guide-2026-11/en/device-display.png",
-        "docs/images/guide-2026-11/en/device-editor.png",
-        "docs/images/guide-2026-11/en/device-info.png",
-        "docs/images/guide-2026-11/en/device-settings.png",
-        "docs/images/guide-2026-11/en/furniture.png",
-        "docs/images/guide-2026-11/en/general-settings.png",
-        "docs/images/guide-2026-11/en/help.png",
-        "docs/images/guide-2026-11/en/kiosk.png",
-        "docs/images/guide-2026-11/en/opening-settings.png",
-        "docs/images/guide-2026-11/en/plan-properties.png",
-        "docs/images/guide-2026-11/en/print.png",
-        "docs/images/guide-2026-11/en/room-card.png",
-        "docs/images/guide-2026-11/en/room-contour.png",
-        "docs/images/guide-2026-11/en/room-settings.png",
-        "docs/images/guide-2026-11/en/space-create.png",
-        "docs/images/guide-2026-11/en/space-settings.png",
-        "docs/images/guide-2026-11/en/summary.png",
-        "docs/images/guide-2026-11/en/view.png",
-        "docs/images/guide-2026-11/ru/appearance.png",
-        "docs/images/guide-2026-11/ru/background-properties.png",
-        "docs/images/guide-2026-11/ru/backup.png",
-        "docs/images/guide-2026-11/ru/colour-picker.png",
-        "docs/images/guide-2026-11/ru/device-actions.png",
-        "docs/images/guide-2026-11/ru/device-alarms.png",
-        "docs/images/guide-2026-11/ru/device-display.png",
-        "docs/images/guide-2026-11/ru/device-editor.png",
-        "docs/images/guide-2026-11/ru/device-info.png",
-        "docs/images/guide-2026-11/ru/device-settings.png",
-        "docs/images/guide-2026-11/ru/furniture.png",
-        "docs/images/guide-2026-11/ru/general-settings.png",
-        "docs/images/guide-2026-11/ru/help.png",
-        "docs/images/guide-2026-11/ru/kiosk.png",
-        "docs/images/guide-2026-11/ru/opening-settings.png",
-        "docs/images/guide-2026-11/ru/plan-properties.png",
-        "docs/images/guide-2026-11/ru/print.png",
-        "docs/images/guide-2026-11/ru/room-card.png",
-        "docs/images/guide-2026-11/ru/room-contour.png",
-        "docs/images/guide-2026-11/ru/room-settings.png",
-        "docs/images/guide-2026-11/ru/space-create.png",
-        "docs/images/guide-2026-11/ru/space-settings.png",
-        "docs/images/guide-2026-11/ru/summary.png",
-        "docs/images/guide-2026-11/ru/view.png"
-      ],
-      "s6": null
+      "status": "S8-merged",
+      "expectedBase": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
+      "mergedSha": "84c62b8a9aeca6d362a303fae292b37ac3b61cae",
+      "mergedAt": 1794690118517,
+      "mergedFromStatus": "S6-in-progress",
+      "branchDeleted": true,
+      "removedToRelease": false,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
+      },
+      "devBuild": {
+        "status": "not-required"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5216,59 +5166,8 @@
     1442,
     1443
   ],
-  "active": {
-    "issue": 1445,
-    "worker": "github-coordinator",
-    "token": "470:github:43639986587:1:tick:2:admit",
-    "fence": 470,
-    "materialSha": "84c62b8a9aeca6d362a303fae292b37ac3b61cae",
-    "expectedBase": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794689721420,
-    "expiresAt": 1794693604321,
-    "patchId": "2fd41d9424226d9b2d791fdf7e837234eccc7673"
-  },
+  "active": null,
   "events": {
-    "github:43639986587:1:completions:message:bffd2d04db3ad31fbc2ca6123851af33d93260e3d74b69480ec14dda9736f924": {
-      "digest": "5bdf9dfb5485ea5ed49c005ec6263af504dc41fb9d10414d92b302ccc9bd7571",
-      "issue": 1445
-    },
-    "finish:eec18784-8259-4917-83b2-e5698bf49e57": {
-      "digest": "d279fb3984686d810597907db447f5ae0c3fbe287fbe07f9f2672d3dca2df7e5",
-      "issue": 1445
-    },
-    "finish:b86aa6dd-4aa8-4ed5-bdc6-2dda5559e74f": {
-      "digest": "033ccb420ff3088218daeb37151a00bacf628b53292363decdff57f586969640",
-      "issue": 1445
-    },
-    "dev-build:43639986587:1:webhook": {
-      "digest": "fe0a85ea22f2d2e37345de9568db8e44642cc31e60f4294409cfb019b03da513",
-      "issue": 1445
-    },
-    "dev-build:43639986587:1:webhook:06f1fd83-b7e0-44c8-92c1-8108cdee11c5:delivered": {
-      "digest": "e6648564158eddc2b5bc73732bb294258eb7163e2923252e66cfcb3b36a006d4",
-      "issue": 1445
-    },
-    "finish:811740db-cda2-42dd-a4af-964e3511e722:finish:1:automation-pending": {
-      "digest": "86a41b4a1280f0a079d120484135ff5b23c0a8e1210a17ce6f03dbf410e7706a",
-      "issue": 1445
-    },
-    "finish:aa3579c5-24cb-443b-9a23-f9baaeb4ce7e": {
-      "digest": "dd45d5826f8db7e8897cbe228ecaedff10aee98988806cd9e45db99cf70316f7",
-      "issue": 1445
-    },
-    "github:43640285675:1:completions:message:5bd3982a2c385aa4069108454203bfa61fc47238bc65801385ed6d86a7fbe546": {
-      "digest": "af986922a09e1b6ad8c8eaad0328869a011894870875a1397efc6b1e6359e947",
-      "issue": 1445
-    },
-    "finish:de816309-32d1-456f-b620-6202c0d2f921:finish:1:synchronized": {
-      "digest": "3343d4e1ddee6810bc5e2ef0fa81cc56bab5a1ed971da7205723676ace7d30c4",
-      "issue": 1445
-    },
-    "finish:de816309-32d1-456f-b620-6202c0d2f921:finish:2:s6-complete": {
-      "digest": "c62f5e72f64970832798d5996ab0f5da74dd61a81681f9a19f800d147268953a",
-      "issue": 1445
-    },
     "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
       "digest": "f63ad38f23c48cdc36eab5908922dbc577e7b6a710d05ab97b186e2437f621e4",
       "issue": 1437,
@@ -5297,20 +5196,6 @@
         "delivered": true
       }
     },
-    "finish:3ddbfcb1-95bd-4086-8338-6ab06df055c2": {
-      "digest": "ea996caf949f488c51227e2a048cc81b70eb3ca2173381df2de3ef54c5d81f32",
-      "issue": 1445,
-      "message": {
-        "kind": "queued",
-        "issue": 1445,
-        "at": 1794689199505,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "1a533a629321eef79c93b1f94677641866c633e1",
-        "delivered": true
-      }
-    },
     "finish:287ec329-1d6e-49f3-90fa-c5d007a3d785": {
       "digest": "8115bde78ce1ad95663b839c618fd411ee65882554032dfe4912e0de42fb86b1",
       "issue": 1441,
@@ -5336,21 +5221,6 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "fa1bc9b556f30cf3b1180d0e01d061c68d87c61b",
-        "delivered": true
-      }
-    },
-    "github:43639986587:1:tick:2:admit": {
-      "digest": "9dd615f6b58ac6e93e1d792a8092e914177a0655afc08ec5e74e0298efe37806",
-      "issue": 1445,
-      "message": {
-        "kind": "admitted",
-        "issue": 1445,
-        "at": 1794689721420,
-        "entry": 1,
-        "track": "ship",
-        "layer": "infra",
-        "materialSha": "1a533a629321eef79c93b1f94677641866c633e1",
-        "phase": "sync",
         "delivered": true
       }
     },
