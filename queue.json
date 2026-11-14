@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12742,
+  "revision": 12743,
   "nextTicket": 451,
   "nextFence": 451,
   "tasks": {
@@ -4523,10 +4523,11 @@
       "status": "S6-in-progress",
       "readyAt": 1794662811163,
       "reviewEntry": 2,
-      "patchId": "709ff3e852b4bc6093b1389b31187e62ad133f09",
+      "patchId": "c8a4dd75df2d754ba1fd02e21fb0295da9d7d8f9",
       "changedFiles": [
         ".gitignore",
         "THIRD_PARTY_NOTICES.md",
+        "custom_components/houseplan/THIRD_PARTY_NOTICES.md",
         "demo/smoke_standalone_entry.mjs",
         "demo/srv/plan-host-fixture.js",
         "demo/standalone/core-process.mjs",
@@ -4544,9 +4545,11 @@
         "docs/release-ledger/v1.85.0/1423.json",
         "package.json",
         "process-next/lib/source-dependencies.mjs",
+        "process-next/test/furniture-art-lazy.test.mjs",
         "process-next/test/standalone-source-scope.test.mjs",
         "rollup.config.mjs",
         "scripts/bundle-manifest.mjs",
+        "scripts/config-compatibility-inventory.json",
         "scripts/standalone-build.mjs",
         "scripts/standalone-icons.mjs",
         "src/houseplan-card.ts",
@@ -4562,6 +4565,8 @@
         "src/standalone-presentation.ts",
         "test/browser-attestation.test.mjs",
         "test/bundle-assets.test.mjs",
+        "test/card-version.test.mjs",
+        "test/houseplan-panel.test.mjs",
         "test/standalone-core-import-boundary.test.mjs",
         "test/standalone-entry-manifest.test.mjs",
         "test/standalone-plan-host-boundary.test.mjs",
@@ -5011,10 +5016,11 @@
     "token": "450:finish:731459ef-f5f9-46ab-9439-4896fb3f92a8:finish:1:admit",
     "fence": 450,
     "materialSha": "57b416aaa549042855b0e99c54fc2affb109398c",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "a927fbd3bbcb856542cb0ff4cd4061ddf187df07",
+    "phase": "testing",
     "admittedAt": 1794662815364,
-    "expiresAt": 1794663115364
+    "expiresAt": 1794663121028,
+    "patchId": "c8a4dd75df2d754ba1fd02e21fb0295da9d7d8f9"
   },
   "events": {
     "github:43585804826:1:spec:1423:spec-request": {
@@ -5127,6 +5133,10 @@
     },
     "finish:c860f98b-8922-44d5-a443-10de266d7359:finish:3:return": {
       "digest": "812ae0984744f948aab98f19aa76245566319ca5ad85adc65216711744e0dbb7",
+      "issue": 1423
+    },
+    "finish:731459ef-f5f9-46ab-9439-4896fb3f92a8:finish:2:synchronized": {
+      "digest": "870d0f881cae13fcc6724ad88e94640f98c629aded5cfd80a499a2e04a02181e",
       "issue": 1423
     },
     "github:43586364877:1:label:spec-request:spec-resubmitted:1423": {
