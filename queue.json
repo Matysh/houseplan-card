@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12925,
+  "revision": 12926,
   "nextTicket": 456,
   "nextFence": 456,
   "tasks": {
@@ -4628,9 +4628,11 @@
       "status": "S6-in-progress",
       "readyAt": 1794667708860,
       "reviewEntry": 2,
-      "patchId": "7098717f813d2cfe85dc986b2c2b472365e01281",
+      "patchId": "2cdb25afc8dc9985e90a7e6e685aa02353d6cf57",
       "changedFiles": [
+        "demo/smoke_discard_dialog_polish.mjs",
         "demo/smoke_editor_return_focus_1248.mjs",
+        "demo/smoke_toolbar_stable_width.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "docs/DIALOG-UI-KIT.md",
@@ -4651,6 +4653,7 @@
         "src/styles/selection-list.styles.ts",
         "src/styles/settings-action.styles.ts",
         "src/ui-button-tab-focus.ts",
+        "test/houseplan-panel.test.mjs",
         "test/ui-button-tab-focus.test.mjs"
       ],
       "notice": {
@@ -5011,10 +5014,11 @@
     "token": "455:finish:bb81c14e-2842-4df5-9d91-930b18ac35f6:finish:1:admit",
     "fence": 455,
     "materialSha": "a34073c7a9b5b9658f36d69329d0b3fabbc5468a",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "dc739d2fee27c257627e15739094135a7c306bc0",
+    "phase": "testing",
     "admittedAt": 1794667712632,
-    "expiresAt": 1794668012632
+    "expiresAt": 1794668018865,
+    "patchId": "2cdb25afc8dc9985e90a7e6e685aa02353d6cf57"
   },
   "events": {
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:2:synchronized": {
@@ -5059,6 +5063,10 @@
     },
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:3:return": {
       "digest": "3f51fcc8f3d1a9562f228cca26c7782b0f915322331f7f9135b144641d2bd03c",
+      "issue": 1428
+    },
+    "finish:bb81c14e-2842-4df5-9d91-930b18ac35f6:finish:2:synchronized": {
+      "digest": "cbaf8027a6dc05b8fff400a991e57fb6e3a21c6848bad23a9aa18019e0eea2ab",
       "issue": 1428
     },
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8": {
