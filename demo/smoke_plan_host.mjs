@@ -89,6 +89,51 @@ try {
   assert.deepEqual(await page.evaluate(() => structuredClone(window.__card._serverCfg)), edited);
   check('host.reload_actual_saved_document', true);
 
+  const permissionWrite = await page.evaluate(async () => {
+    const c = window.__card, lab = window.__planHostLab, request = lab.host.request.bind(lab.host);
+    let release, dispatched;
+    const held = new Promise(resolve => { release = resolve; });
+    const started = new Promise(resolve => { dispatched = resolve; });
+    let hold = true;
+    lab.host.request = async command => {
+      const response = await request(command);
+      if (hold && command.type === 'houseplan/config/set') { hold = false; dispatched(); await held; }
+      return response;
+    };
+    c._serverCfg = structuredClone(c._serverCfg);
+    c._serverCfg.spaces[0].title = 'Accepted before rights changed';
+    const first = c._writeConfig().then(() => 'accepted', error => error.code);
+    await started;
+    c._serverCfg.spaces[0].title = 'Queued stale optimistic edit';
+    const second = c._writeConfig().then(() => 'accepted', error => error.code);
+    lab.permissions({ write: false });
+    release();
+    const results = await Promise.all([first, second]);
+    lab.host.request = request;
+    return { results, pending: c._writesPending };
+  });
+  check('host.permission_change_retires_pending_writes', permissionWrite.pending, 0);
+  assert.deepEqual(permissionWrite.results, ['context-changed', 'context-changed']);
+  await page.waitForFunction(() => !window.__card._loading && !window.__card._read.busy
+    && window.__card._serverCfg.spaces[0].title === 'Accepted before rights changed').catch(async error => {
+      console.error('permission reconciliation', await page.evaluate(() => {
+        const c = window.__card;
+        return { title: c._serverCfg?.spaces[0].title, saved: window.__planHostLab.saved().spaces[0].title,
+          pending: c._writesPending, writing: c._cfgWriting, loading: c._loading,
+          read: c._read, commands: window.__planHostLab.commands.slice(-12) };
+      }));
+      throw error;
+    });
+  check('host.permission_change_reconciles_optimistic_edit', true);
+  await page.evaluate(() => window.__planHostLab.permissions({ write: true }));
+  await page.waitForFunction(() => !window.__card._loading && !window.__card._read.busy);
+  await page.evaluate(async () => {
+    const c = window.__card;
+    c._serverCfg = structuredClone(c._serverCfg); c._serverCfg.spaces[0].title = 'Writable after rights restore';
+    await c._writeConfig();
+  });
+  check('host.permission_restore_accepts_new_write', (await saved()).spaces[0].title, 'Writable after rights restore');
+
   await page.evaluate(async () => {
     const c = window.__card, document = window.__planHostLab.saved();
     document.spaces[0].title = 'Imported through host ports';

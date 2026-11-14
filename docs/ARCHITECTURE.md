@@ -22,6 +22,12 @@ dispatch. Paired reads establish event listeners before sampling; permission
 resubscriptions and setConfig preserve an interrupted read's demand. Config reload,
 write guards, signing, asset resolution and plan subscriptions use that key.
 An empty nonauthoritative registry is not evidence that bindings were deleted.
+Permission-generation retirement also clears pending config/layout accounting
+and re-pairs live fingerprints before revalidation: an old ACK cannot strand
+the writer or preserve a revoked optimistic successor. HA transport coverage
+has the same bounded two-second DOM-move grace as registry coverage, with a
+data-only connection revision; detached events preserve demand but do not read
+until remount. This transport revision does not renew write authority.
 
 The exact converted modules and monolith method owners are checked by
 `test/plan-host-boundary.test.mjs` (including negative alias/computed-access

@@ -92,6 +92,8 @@ export interface HostEnvironment {
   readonly inputKey?: object;
   readonly ready: boolean;
   readonly connected: boolean;
+  /** Transport event sequence, including a short disconnect while unmounted. */
+  readonly connectionRevision?: number;
   /** Optional data-only invalidation for host-specific smart-home View bridges. */
   readonly smartHomeRevision?: number;
   readonly userId?: string;

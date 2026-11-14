@@ -109,6 +109,30 @@ test('#1392 a same-connection reconnect is not a foreign authority, but offline 
   await host.request(command); assert.equal(calls, 1);
 });
 
+test('#1392 short detached transport events preserve recovery demand without detached reads', async () => {
+  const connection = new EventTarget(); connection.connected = true;
+  connection.subscribeEvents = async () => () => undefined;
+  let requests = 0, deliveries = 0;
+  const raw = source({ connection, devices: {}, entities: {}, areas: {}, callWS: async () => { requests++; return []; } });
+  const host = new HaPlanHost(raw), key = host.authorityKey, write = host.writeAuthorityRevision;
+  const release = host.subscribeEnvironment(() => { deliveries++; });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  release(); const before = requests, previousDeliveries = deliveries, previous = host.environment.connectionRevision;
+  connection.dispatchEvent(new Event('disconnected'));
+  assert.equal(host.environment.connected, false);
+  connection.dispatchEvent(new Event('ready'));
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(host.environment.connected, true);
+  assert.ok(host.environment.connectionRevision > previous);
+  assert.equal(requests, before); assert.equal(deliveries, previousDeliveries);
+  assert.equal(host.authorityKey, key); assert.equal(host.writeAuthorityRevision, write);
+  const again = host.subscribeEnvironment(() => { deliveries++; });
+  for (let attempt = 0; requests <= before && attempt < 50; attempt++)
+    await new Promise(resolve => setTimeout(resolve, 20));
+  assert.ok(requests > before);
+  again(); host.update(null); // Immediately retire this test's private grace timer/listeners.
+});
+
 test('#1392 an obsolete asynchronous subscription is released and cannot deliver A→B→A data', async () => {
   const pending = deferred(); let forward, removes = 0, deliveries = 0;
   const connection = { subscribeEvents(receive) { forward = receive; return pending.promise; } };

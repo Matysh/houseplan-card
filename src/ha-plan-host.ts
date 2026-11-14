@@ -76,6 +76,10 @@ export class HaPlanHost implements PlanHost {
   private lastInput: unknown;
   private suspended = false;
   private inputKey = {};
+  private connectionRevision = 0;
+  private connectionLost = false;
+  private runtimeReleaseTimer?: number;
+  private registryRefreshPending = false;
 
   constructor(source: unknown) { this.update(source); }
   get authorityKey(): HostAuthorityKey { return this.key; }
@@ -114,7 +118,8 @@ export class HaPlanHost implements PlanHost {
     return { read: typeof this.source.callWS === 'function', write: this.serverWrite ?? admin, admin };
   }
   private rights(): string { const p = this.permissions(); return `${p.read}:${p.write}:${p.admin}`; }
-  private connected(): boolean { return !this.suspended && typeof this.source.callWS === 'function' && this.source.connection?.connected !== false; }
+  private connected(): boolean { return !this.suspended && !this.connectionLost
+    && typeof this.source.callWS === 'function' && this.source.connection?.connected !== false; }
   private registrySnapshot(): HostRegistrySnapshot {
     const registry = haRegistrySnapshot(this.source);
     return {
@@ -144,6 +149,7 @@ export class HaPlanHost implements PlanHost {
     if (this.key !== previousKey || previousAdmin !== (this.source.user?.is_admin === true)) this.serverWrite = null;
     if (this.key !== previousKey || before !== this.rights()) this.writeRevision++;
     if (this.key !== previousKey) {
+      this.connectionLost = false; this.connectionRevision = 0;
       this.releaseSubscriptions();
       this.releaseRuntime();
     }
@@ -176,6 +182,7 @@ export class HaPlanHost implements PlanHost {
     this.snapshot = Object.freeze({
       inputKey: this.inputKey,
       ready: !this.suspended && typeof this.source.callWS === 'function', connected: this.connected(),
+      connectionRevision: this.connectionRevision,
       smartHomeRevision: this.smartHomeRevision,
       userId: this.source.user?.id, permissions: Object.freeze(this.permissions()),
       timeZone: this.source.config?.time_zone, units: this.source.config?.unit_system ?? EMPTY,
@@ -190,6 +197,8 @@ export class HaPlanHost implements PlanHost {
     this.source.localize?.call(this.source, key, ...args);
 
   subscribeEnvironment(receive: () => void): Unsubscribe {
+    if (this.runtimeReleaseTimer !== undefined) globalThis.clearTimeout(this.runtimeReleaseTimer);
+    this.runtimeReleaseTimer = undefined;
     let live = true;
     const listener = () => { if (live) receive(); };
     this.listeners.add(listener);
@@ -197,11 +206,22 @@ export class HaPlanHost implements PlanHost {
     return once(() => {
       live = false;
       this.listeners.delete(listener);
-      if (!this.listeners.size) this.releaseRuntime();
+      // Same two-second DOM-move grace as registry coverage. No consumer is
+      // called while detached, but a lost→ready pair remains observable when
+      // this same card returns; all adapter listeners are released afterward.
+      if (!this.listeners.size) this.runtimeReleaseTimer = globalThis.setTimeout(() => {
+        this.runtimeReleaseTimer = undefined; this.releaseRuntime();
+      }, 2000);
     });
   }
   private acquireRuntime(): void {
-    if (this.runtimeKey === this.key) return;
+    if (this.runtimeKey === this.key) {
+      if (this.registryRefreshPending) {
+        this.registryRefreshPending = false;
+        refreshHaRegistries(this.source, { connectionReady: true });
+      }
+      return;
+    }
     this.releaseRuntime();
     this.runtimeKey = this.key;
     const connection = this.source.connection, key = this.key, owner = {};
@@ -210,21 +230,30 @@ export class HaPlanHost implements PlanHost {
     const notify = () => { if (this.key === key && this.runtimeOwner === owner) this.publish(); };
     const ready = () => {
       if (this.key !== key || this.runtimeOwner !== owner) return;
-      refreshHaRegistries(this.source, { connectionReady: true });
+      this.connectionLost = false; this.connectionRevision++;
+      if (this.listeners.size) refreshHaRegistries(this.source, { connectionReady: true });
+      else this.registryRefreshPending = true;
       notify();
     };
+    const lost = () => {
+      if (this.key !== key || this.runtimeOwner !== owner) return;
+      this.connectionLost = true; this.connectionRevision++; notify();
+    };
     connection.addEventListener?.('ready', ready);
-    connection.addEventListener?.('disconnected', notify);
-    connection.addEventListener?.('reconnect-error', notify);
+    connection.addEventListener?.('disconnected', lost);
+    connection.addEventListener?.('reconnect-error', lost);
     this.connectionRelease = once(() => {
       connection.removeEventListener?.('ready', ready);
-      connection.removeEventListener?.('disconnected', notify);
-      connection.removeEventListener?.('reconnect-error', notify);
+      connection.removeEventListener?.('disconnected', lost);
+      connection.removeEventListener?.('reconnect-error', lost);
     });
     if (typeof connection.subscribeEvents === 'function')
       this.registryRelease = acquireHaRegistries(this.source, notify);
   }
   private releaseRuntime(): void {
+    if (this.runtimeReleaseTimer !== undefined) globalThis.clearTimeout(this.runtimeReleaseTimer);
+    this.runtimeReleaseTimer = undefined;
+    this.registryRefreshPending = false;
     const registry = this.registryRelease, connection = this.connectionRelease;
     this.registryRelease = undefined;
     this.connectionRelease = undefined;
@@ -241,7 +270,7 @@ export class HaPlanHost implements PlanHost {
   private lease(httpResponse = false): Lease {
     // Historical upload helpers lend only HTTP credentials. A known offline
     // HA connection still forbids dispatch; no fake callWS is manufactured.
-    if (this.suspended || (httpResponse ? this.source.connection?.connected === false : !this.connected())) throw hostError('not_ready');
+    if (this.suspended || (httpResponse ? this.connectionLost || this.source.connection?.connected === false : !this.connected())) throw hostError('not_ready');
     return { key: this.identity(), revision: this.writeRevision, rights: this.rights() };
   }
   private assert(lease: Lease): void {
@@ -252,7 +281,7 @@ export class HaPlanHost implements PlanHost {
     httpResponse = false): Promise<Result> {
     try {
       this.assert(lease); assertNotAborted(signal);
-      if (this.suspended || (httpResponse ? this.source.connection?.connected === false : !this.connected())) throw hostError('not_ready');
+      if (this.suspended || (httpResponse ? this.connectionLost || this.source.connection?.connected === false : !this.connected())) throw hostError('not_ready');
       const result = await run();
       this.assert(lease);
       // A raw Response may contain a late opaque upload token. Its domain

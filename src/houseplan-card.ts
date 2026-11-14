@@ -1010,6 +1010,23 @@ export class HouseplanCard extends LitElement {
     const authorityChanged = !!this._driverAuthority && this._driverAuthority !== host.authorityKey;
     this._driverAuthority = host.authorityKey;
     if (revoked) {
+      // Every revoked write generation owns fresh pending accounting, even
+      // when the user/connection is unchanged and only permissions changed.
+      // Old finally callbacks are fenced; an authoritative read reconciles
+      // a possibly accepted send and drops any unsent optimistic successor.
+      const reconcile = this._loadOk || this._cfgWriting || this._saveConfigDebounced.pending();
+      this._saveConfigDebounced.cancel();
+      this._writeChain = Promise.resolve(); this._writesPending = 0;
+      this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
+      this._layoutIO.retire(); this._devicePositionBusy = false;
+      this._pendingPhysicalWrites.clear();
+      if (reconcile) {
+        // A queued edit can differ from the fingerprint of the held send.
+        // Re-pair with live bodies so an equal-to-send server response still
+        // replaces that revoked, never-dispatched optimistic successor.
+        this._adoption.refreshConfigFingerprint(); this._adoption.refreshLayoutFingerprint();
+        this._read.defer();
+      }
       this._retireLiveSyncSubscriptions();
       this._backupImportIntent.cancel(false);
       this._editorRuntime?.backupTransfer.dispose();
@@ -1024,13 +1041,10 @@ export class HouseplanCard extends LitElement {
       this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
       this._spaceModels.clear(); this._modelCache = null;
       this._retireLiveSyncSubscriptions();
-      this._saveConfigDebounced.cancel(); this._adoption.resetContext();
-      this._writeChain = Promise.resolve(); this._writesPending = 0;
-      this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
-      this._layoutIO.retire(); this._devicePositionBusy = false;
+      this._adoption.resetContext();
       this._editorRuntime?.roomDeviceDiscovery.clear(); this._editorRuntime?.optimizationUndo.retire();
       this._geometryHistory.clear(); this._devicePositionHistory.clear();
-      this._pendingPhysicalWrites.clear(); this._newSyncKey = ''; this._regSignature = '';
+      this._newSyncKey = ''; this._regSignature = '';
     }
     const context = configReloadContext(this);
     this._configReloadAuthority.observeContext(context);
@@ -1049,7 +1063,8 @@ export class HouseplanCard extends LitElement {
       this._retireLiveSyncSubscriptions();
       this._onConnLost();
     }
-    else if (before && !before.connected && environment.connected) this._onConnReady();
+    else if (before && environment.connected && (!before.connected
+        || before.connectionRevision !== environment.connectionRevision)) this._onConnReady();
     if (this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) this._consumePlanEnvironment();
     if (revoked && this._loadOk && environment.connected) this._ensureLiveSyncSubscriptions();
     if (this._read.pending && environment.connected) void this._loadFromServer();
@@ -5894,13 +5909,9 @@ export class HouseplanCard extends LitElement {
     }, delay);
   }
 
-  /** DEV-B703-02: revalidate the moment the socket comes back. The event
-   *  subscriptions (houseplan_config_updated / layout / trail) survive a
-   *  reconnect on their own — home-assistant-js-websocket keeps the
-   *  Connection object alive and replays its subscription commands on
-   *  'ready' — but a LOAD that burned its retry budget while the socket was
-   *  down would never run again. 'ready' fires on every (re)connect: reset
-   *  the budget and quietly re-read the config. */
+  /** Revalidate after transport recovery. The host driver retires scoped
+   * subscriptions on loss; paired load restores them before sampling, then
+   * adopts current revisions without relying on replay of an old lease. */
   private _connectionWasLost = false;
   /** Shared, page-level full HA registry authority (one fetch/subscription per connection). */
   private _haRegistryConnection: any = null;
