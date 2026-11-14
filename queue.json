@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 11898,
-  "nextTicket": 426,
+  "revision": 11899,
+  "nextTicket": 427,
   "nextFence": 426,
   "tasks": {
     "1024": {
@@ -3642,14 +3642,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1392-plan-host",
-      "materialSha": "db6a5b6879c2dbb02b3bbe37db2dd5dd54202d14",
+      "materialSha": "5cc56bdc9634287ac94ab2b3b20d276b2e0fcddd",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 425,
-      "queued": false,
+      "ticket": 426,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794624549895,
-      "reviewEntry": 3,
+      "readyAt": 1794625806335,
+      "reviewEntry": 4,
       "patchId": "daec330f169c4acc56f317e45a7a2043bd520e6f",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
@@ -3743,8 +3743,7 @@
         "entry": 3,
         "detail": "Поведение: test/route-kiosk.test.mjs: failed; Браузер: opening light transparent: failed; Браузер: plan host: failed; Браузер: wall preview handoff 1247: failed; Браузер: warm geometry camera: failed",
         "eventId": "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:3:return:return:1392"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1393": {
       "issue": 1393,
@@ -4941,7 +4940,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1392
+  ],
   "active": null,
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
@@ -5501,6 +5502,19 @@
           "detail": "Поведение: test/route-kiosk.test.mjs: failed; Браузер: opening light transparent: failed; Браузер: plan host: failed; Браузер: wall preview handoff 1247: failed; Браузер: warm geometry camera: failed",
           "eventId": "finish:fce0ac2a-9c37-4ae1-955b-7e0ad7004237:finish:3:return:return:1392"
         }
+      }
+    },
+    "finish:dfbb9917-96fe-4bb8-b4a1-f2039f3393c7": {
+      "digest": "7c698aeb741e42dbe3673a914ed57f286f13e345babac4eca7e7128dd971c4d2",
+      "issue": 1392,
+      "message": {
+        "kind": "queued",
+        "issue": 1392,
+        "at": 1794625806335,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "5cc56bdc9634287ac94ab2b3b20d276b2e0fcddd"
       }
     }
   },
