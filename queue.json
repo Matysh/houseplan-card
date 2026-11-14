@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13459,
+  "revision": 13460,
   "nextTicket": 471,
   "nextFence": 467,
   "tasks": {
@@ -4662,6 +4662,110 @@
         "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
         "expectedBase": "5bd501fa75658b97b4d18608dec89984cfba21a6",
         "patchId": "75a9173f13c5480a1ce744161533c327f5d0ecfe"
+      },
+      "review": {
+        "version": 1,
+        "issue": 1435,
+        "requestId": "review:1435:1:75a9173f13c5480a1ce744161533c327f5d0ecfe:5bd501fa75658b97b4d18608dec89984cfba21a6",
+        "kind": "code",
+        "base": "5bd501fa75658b97b4d18608dec89984cfba21a6",
+        "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
+        "patchId": "75a9173f13c5480a1ce744161533c327f5d0ecfe",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "not-provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1435,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1435",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": ""
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Исправление точечное, и я его принимаю. Причина отказа найдена верно: в ещё не выпущенном `HaPlanHost` флаг `environment.ready` (данные для показа готовы) был привязан к наличию `callWS`. Поэтому при transport:false `_renderBody` сразу возвращал `nothing`, и пустой View вместе с `hp-plan-converter-info` не рисовался. Теперь `ready` означает «снимок HA есть и не приостановлен». Отправка запросов по-прежнему требует `connected()` в `lease()`/`owned()`, поэтому запись без транспорта невозможна. Загрузка конфигурации, live-подписки и кнопки записи в пустом состоянии закрыты собственными проверками `connected`/`_serverStorage`, так что пассивный режим не предлагает записи. Блокеров нет.",
+          "understanding": "Проблема: в полном stable-профиле кейс `{ transport: false }` из `demo/smoke_first_space_converter.mjs` не показывал `[data-hp=empty] hp-plan-converter-info`. Фикстура удаляет `hass.callWS` (`demo/helpers/first-space.mjs:23`). До исправления адаптер выставлял `ready: !suspended && typeof callWS === 'function'` (начиная с 193dcb85 / #1392). Карточка проверяет `!this.planHost.environment.ready` в `_renderBody` (houseplan-card.ts:12287), в `_confirmDanger` и в locale gate и возвращала пустой DOM. После исправления `ready: !this.suspended && row(this.lastInput)` (ha-plan-host.ts:189), а `connected`, `permissions.read` и `lease()` по-прежнему опираются на `callWS`. Просмотренные пути: построение снимка (`publish`), `update(undefined)` и приостановка, `lease`/`owned`, пустая ветка `_renderBody` (12342–12377: при `_serverStorage === false` показываются только `empty.install` и converter-info), реакция карточки на смену окружения (1063–1084: чтения и подписки запускаются только при `environment.connected`), а также потребители `ready`: `config-write-context.ts`, `config-reload-authority.ts:202`, `backup-archive-client.ts:167`, `large-write-transport.ts:61`, `_captureRenderDeviceSnapshot`.",
+          "analysis": [
+            {
+              "topic": "Разделение «готов к показу» и «готов к отправке»",
+              "assessment": "Решение верное и минимальное. Флаг показа больше не смешан с транспортом, а все пути отправки по-прежнему защищены через `connected()`. Так восстанавливается то, что требует issue: пассивная информация не исчезает, а запись не появляется. Новый слой проверок не понадобился.",
+              "evidence": "ha-plan-host.ts:189 — `ready` по наличию объекта; ha-plan-host.ts:124-125 — `connected()` требует `callWS`; ha-plan-host.ts:298 и 309 — `lease()`/`owned()` бросают `not_ready` без `connected`; ha-plan-host.ts:121 — `permissions.read` без `callWS` остаётся false."
+            },
+            {
+              "topic": "Пустое состояние без транспорта не предлагает запись",
+              "assessment": "Раньше пассивная ветка рендера при transport:false вообще не выполнялась, теперь она защищена своими условиями. Подсказка HA admin даёт `permissions.write=true`, но кнопки create-space/import-backup показываются только при `_serverStorage && _canManageConfiguration && !_kiosk`. Без транспорта сервер не прочитан, значит `_serverStorage` ложно, и выводится `empty.install` с converter-info. Smoke проверяет именно это: нет кнопок, editor/onboarding runtime не загружается, записей 0.",
+              "evidence": "houseplan-card.ts:12359-12376; demo/smoke_first_space_converter.mjs:41-50 и 56-71 (восстановление информационного модуля при transport:false)."
+            },
+            {
+              "topic": "Остальные потребители `ready`",
+              "assessment": "Я прошёл по всем потребителям. Ни один из них не превращает новое значение в фактическую отправку: `captureWriteAuthority`/`ConfigWriteContext` только разрешают попытку, а сама попытка падает в `lease()`. `configReloadContext` теперь отдаёт ключ без транспорта, но `_loadFromServer` и повторы загрузки запускаются только при `environment.connected` (1084, 5674, 3814). У `ConfigWriteContext.observe` поменялся один нюанс: снимок без транспорта теперь записывается, и при появлении `callWS` сменятся права (`read:false→true`) или ключ, после чего generation сбросится. Без транспорта ожидающих записей нет, так что вреда нет.",
+              "evidence": "config-write-context.ts:28,49,63; config-reload-authority.ts:202-203; houseplan-card.ts:1063-1084; large-write-transport.ts:61 (дополнительно проверяет `connected`); backup-archive-client.ts:167 (экспорт без транспорта дойдёт до `request` и получит `not_ready` вместо молчаливого выхода; реально достижимо только из диалога редактора)."
+            },
+            {
+              "topic": "Жизненный цикл и холодный старт",
+              "assessment": "Карточка создаёт адаптер через `new HaPlanHost(undefined)` / `new HaPlanHost(this.hass)`. Пока HA не передал `hass`, это `update(undefined)` → `suspended`, поэтому `ready=false`, и преждевременного рендера пустого состояния до прихода hass нет. Отсутствие `callWS` по-прежнему меняет `authorityKey` (`connection ?? callWS`), так что изоляция авторитета не ослаблена.",
+              "evidence": "houseplan-card.ts:646, 950; ha-plan-host.ts:137-161, 116-118."
+            },
+            {
+              "topic": "Тесты",
+              "assessment": "Новый unit-тест закрепляет весь контракт: без `callWS` `ready` равно true, а `connected`, `read` и `request` → `not_ready` остаются запрещёнными; после `undefined` `ready` снова false. Прежний тест #1392 о временном отсутствии снимка не изменён, эталоны smoke не ослаблены, timeout не превращён в skip.",
+              "evidence": "test/plan-host.test.mjs:11-22 (новый), 54-72 (#1392); receipt 20261114T201227736-029ae795 — passed."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Задокументировать смысл `HostEnvironment.ready` в `src/plan-host.ts:94`, например так: «снимок хоста есть и годен для показа; отправка требует `connected`». Сейчас поле без комментария, а `standalone-plan-host` и вспомогательные модули (`captureWriteAuthority`, экспорт архива) трактуют его сами. Ошибка в #1392 возникла как раз из-за того, что эти два понятия не разделены явно. Цена — одна строка комментария в контракте порта.",
+            "Необязательно: в `backup-archive-client.ts:167` проверять `environment.connected` вместе с `ready`, чтобы без транспорта экспорт тихо пропускался, а не показывал ошибку `not_ready`. Практической пользы немного: путь достижим только из редактора, а он без транспорта не загружается."
+          ],
+          "boundaries": "Сборку, тесты и smoke я не запускал: на этом этапе это не требуется. Опираюсь на receipt S6 20261114T201227736-029ae795 (status passed, failures пусты) и на комментарий исполнителя о том, что адресный smoke прошёл все passive/storage/permission/kiosk и recovery/link/locales кейсы. Я прочитал ha-plan-host.ts целиком в нужных местах и сравнил с исходной версией 193dcb85, а также посмотрел пустую ветку `_renderBody`, обработчик смены окружения в карточке, `config-write-context.ts`, `config-reload-authority.ts`, `backup-archive-client.ts`, сам smoke-сценарий и его helper. Как карточка вела себя в stable v1.85.0 до появления адаптера, я напрямую не сверял: исхожу из того, что `ready` = «hass есть» соответствует прежней проверке наличия hass. Изменения в CHANGELOG и release-ledger просмотрены, они описывают изменение корректно.",
+          "outsideFindings": []
+        },
+        "usage": {
+          "input_tokens": 40,
+          "cache_creation_input_tokens": 56526,
+          "cache_read_input_tokens": 696095,
+          "output_tokens": 9442,
+          "output_tokens_details": {
+            "thinking_tokens": 2976
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 56526,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 889,
+              "cache_read_input_tokens": 50443,
+              "cache_creation_input_tokens": 10287,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 10287
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление точечное, и я его принимаю. Причина отказа найдена верно: в ещё не выпущенном `HaPlanHost` флаг `environment.ready` (данные для показа готовы) был привязан к наличию `callWS`. Поэтому при transport:false `_renderBody` сразу возвращал `nothing`, и пустой View вместе с `hp-plan-converter-info` не рисовался. Теперь `ready` означает «снимок HA есть и не приостановлен». Отправка запросов по-прежнему требует `connected()` в `lease()`/`owned()`, поэтому запись без транспорта невозможна. Загрузка конфигурации, live-подписки и кнопки записи в пустом состоянии закрыты собственными проверками `connected`/`_serverStorage`, так что пассивный режим не предлагает записи. Блокеров нет.\n\n## Понимание решения\n\nПроблема: в полном stable-профиле кейс `{ transport: false }` из `demo/smoke_first_space_converter.mjs` не показывал `[data-hp=empty] hp-plan-converter-info`. Фикстура удаляет `hass.callWS` (`demo/helpers/first-space.mjs:23`). До исправления адаптер выставлял `ready: !suspended && typeof callWS === 'function'` (начиная с 193dcb85 / #1392). Карточка проверяет `!this.planHost.environment.ready` в `_renderBody` (houseplan-card.ts:12287), в `_confirmDanger` и в locale gate и возвращала пустой DOM. После исправления `ready: !this.suspended && row(this.lastInput)` (ha-plan-host.ts:189), а `connected`, `permissions.read` и `lease()` по-прежнему опираются на `callWS`. Просмотренные пути: построение снимка (`publish`), `update(undefined)` и приостановка, `lease`/`owned`, пустая ветка `_renderBody` (12342–12377: при `_serverStorage === false` показываются только `empty.install` и converter-info), реакция карточки на смену окружения (1063–1084: чтения и подписки запускаются только при `environment.connected`), а также потребители `ready`: `config-write-context.ts`, `config-reload-authority.ts:202`, `backup-archive-client.ts:167`, `large-write-transport.ts:61`, `_captureRenderDeviceSnapshot`.\n\n## Разбор решения\n\n### Разделение «готов к показу» и «готов к отправке»\n\nРешение верное и минимальное. Флаг показа больше не смешан с транспортом, а все пути отправки по-прежнему защищены через `connected()`. Так восстанавливается то, что требует issue: пассивная информация не исчезает, а запись не появляется. Новый слой проверок не понадобился.\n\nОснование: ha-plan-host.ts:189 — `ready` по наличию объекта; ha-plan-host.ts:124-125 — `connected()` требует `callWS`; ha-plan-host.ts:298 и 309 — `lease()`/`owned()` бросают `not_ready` без `connected`; ha-plan-host.ts:121 — `permissions.read` без `callWS` остаётся false.\n\n### Пустое состояние без транспорта не предлагает запись\n\nРаньше пассивная ветка рендера при transport:false вообще не выполнялась, теперь она защищена своими условиями. Подсказка HA admin даёт `permissions.write=true`, но кнопки create-space/import-backup показываются только при `_serverStorage && _canManageConfiguration && !_kiosk`. Без транспорта сервер не прочитан, значит `_serverStorage` ложно, и выводится `empty.install` с converter-info. Smoke проверяет именно это: нет кнопок, editor/onboarding runtime не загружается, записей 0.\n\nОснование: houseplan-card.ts:12359-12376; demo/smoke_first_space_converter.mjs:41-50 и 56-71 (восстановление информационного модуля при transport:false).\n\n### Остальные потребители `ready`\n\nЯ прошёл по всем потребителям. Ни один из них не превращает новое значение в фактическую отправку: `captureWriteAuthority`/`ConfigWriteContext` только разрешают попытку, а сама попытка падает в `lease()`. `configReloadContext` теперь отдаёт ключ без транспорта, но `_loadFromServer` и повторы загрузки запускаются только при `environment.connected` (1084, 5674, 3814). У `ConfigWriteContext.observe` поменялся один нюанс: снимок без транспорта теперь записывается, и при появлении `callWS` сменятся права (`read:false→true`) или ключ, после чего generation сбросится. Без транспорта ожидающих записей нет, так что вреда нет.\n\nОснование: config-write-context.ts:28,49,63; config-reload-authority.ts:202-203; houseplan-card.ts:1063-1084; large-write-transport.ts:61 (дополнительно проверяет `connected`); backup-archive-client.ts:167 (экспорт без транспорта дойдёт до `request` и получит `not_ready` вместо молчаливого выхода; реально достижимо только из диалога редактора).\n\n### Жизненный цикл и холодный старт\n\nКарточка создаёт адаптер через `new HaPlanHost(undefined)` / `new HaPlanHost(this.hass)`. Пока HA не передал `hass`, это `update(undefined)` → `suspended`, поэтому `ready=false`, и преждевременного рендера пустого состояния до прихода hass нет. Отсутствие `callWS` по-прежнему меняет `authorityKey` (`connection ?? callWS`), так что изоляция авторитета не ослаблена.\n\nОснование: houseplan-card.ts:646, 950; ha-plan-host.ts:137-161, 116-118.\n\n### Тесты\n\nНовый unit-тест закрепляет весь контракт: без `callWS` `ready` равно true, а `connected`, `read` и `request` → `not_ready` остаются запрещёнными; после `undefined` `ready` снова false. Прежний тест #1392 о временном отсутствии снимка не изменён, эталоны smoke не ослаблены, timeout не превращён в skip.\n\nОснование: test/plan-host.test.mjs:11-22 (новый), 54-72 (#1392); receipt 20261114T201227736-029ae795 — passed.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Задокументировать смысл `HostEnvironment.ready` в `src/plan-host.ts:94`, например так: «снимок хоста есть и годен для показа; отправка требует `connected`». Сейчас поле без комментария, а `standalone-plan-host` и вспомогательные модули (`captureWriteAuthority`, экспорт архива) трактуют его сами. Ошибка в #1392 возникла как раз из-за того, что эти два понятия не разделены явно. Цена — одна строка комментария в контракте порта.\n- Необязательно: в `backup-archive-client.ts:167` проверять `environment.connected` вместе с `ready`, чтобы без транспорта экспорт тихо пропускался, а не показывал ошибку `not_ready`. Практической пользы немного: путь достижим только из редактора, а он без транспорта не загружается.\n\n## Границы анализа\n\nСборку, тесты и smoke я не запускал: на этом этапе это не требуется. Опираюсь на receipt S6 20261114T201227736-029ae795 (status passed, failures пусты) и на комментарий исполнителя о том, что адресный smoke прошёл все passive/storage/permission/kiosk и recovery/link/locales кейсы. Я прочитал ha-plan-host.ts целиком в нужных местах и сравнил с исходной версией 193dcb85, а также посмотрел пустую ветку `_renderBody`, обработчик смены окружения в карточке, `config-write-context.ts`, `config-reload-authority.ts`, `backup-archive-client.ts`, сам smoke-сценарий и его helper. Как карточка вела себя в stable v1.85.0 до появления адаптера, я напрямую не сверял: исхожу из того, что `ready` = «hass есть» соответствует прежней проверке наличия hass. Изменения в CHANGELOG и release-ledger просмотрены, они описывают изменение корректно.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 5bd501fa75658b97b4d18608dec89984cfba21a6 → 45faf4e7c16d5feb2e0f30727784d69a52429960\n\n## Переданный контекст исполнителя\n\nОтдельный контекст исполнителя не предоставлен. Ревью опирается на задачу, материал и доступные результаты проверок.\n\n</details>\n",
+        "createdAt": "2026-11-14T20:25:30.259Z",
+        "artifactId": 14130865809,
+        "runId": 43637184520,
+        "runAttempt": 1,
+        "completedAt": "2026-11-14T20:25:35Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43637184520",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "5bd501fa75658b97b4d18608dec89984cfba21a6"
       }
     },
     "1436": {
@@ -5143,9 +5247,9 @@
     "fence": 466,
     "materialSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
     "expectedBase": "5bd501fa75658b97b4d18608dec89984cfba21a6",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1794687102544,
-    "expiresAt": 1794691349444,
+    "expiresAt": 1794691564917,
     "patchId": "75a9173f13c5480a1ce744161533c327f5d0ecfe",
     "reviewRequest": "review:1435:1:75a9173f13c5480a1ce744161533c327f5d0ecfe:5bd501fa75658b97b4d18608dec89984cfba21a6"
   },
@@ -5292,6 +5396,10 @@
     },
     "github:43637430533:1:tick:0:review-presentation": {
       "digest": "c34da8f763e0b18cc3e518372df37d2bc40140c8f6c04f8fb8944837df74382d",
+      "issue": 1435
+    },
+    "github:43637430533:1:tick:0:review-complete": {
+      "digest": "95b23ffe113bce2e569faa914cb8fa237486402f6560e106a63920ce0a0b42d7",
       "issue": 1435
     },
     "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450": {
