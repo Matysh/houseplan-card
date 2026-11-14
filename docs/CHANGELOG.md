@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Refresh the RU/EN user guides with 24 current screenshots per language, paragraph indents and clearer, friendlier explanations; retain documented behavior, examples and anchors (#1445).
 - Publish the synthetic HA transport before opening saved-plan dialogs in picker smoke fixtures; retain list geometry and file-management assertions (#1439).
 - Keep context-menu width unchanged when reserving the single 1px border, including touch rows (#1444).
 - Assert the approved single accent border in native button-hover oracles instead of retired inset/outer shadows; retain geometry, themes and surface shadows (#1440).
