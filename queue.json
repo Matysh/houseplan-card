@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12163,
-  "nextTicket": 433,
+  "revision": 12164,
+  "nextTicket": 434,
   "nextFence": 433,
   "tasks": {
     "1024": {
@@ -3637,6 +3637,20 @@
         "status": "not-required"
       }
     },
+    "1394": {
+      "issue": 1394,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1394-plan-capabilities",
+      "materialSha": "b64766907826daae43e4bba9352f6b94bcdb3b2b",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 433,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794634462016,
+      "reviewEntry": 1
+    },
     "1395": {
       "issue": 1395,
       "branch": "codex/1395-core-input-policy",
@@ -4837,7 +4851,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1394
+  ],
   "active": null,
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
@@ -4907,6 +4923,19 @@
         "track": "ask",
         "layer": "product",
         "materialSha": "3108fed9e23905a23044453c85be4e158dabaadc"
+      }
+    },
+    "finish:aba9fde5-1710-4bdf-8752-192f651e747d": {
+      "digest": "a6a9c4a9513bcbb177e71f797fd6d034d0e1150f7b788bf7efc8bd634a90e18a",
+      "issue": 1394,
+      "message": {
+        "kind": "queued",
+        "issue": 1394,
+        "at": 1794634462016,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "b64766907826daae43e4bba9352f6b94bcdb3b2b"
       }
     }
   },
