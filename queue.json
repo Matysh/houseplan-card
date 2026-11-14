@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 14143,
-  "nextTicket": 481,
+  "revision": 14144,
+  "nextTicket": 482,
   "nextFence": 481,
   "tasks": {
     "1024": {
@@ -4806,6 +4806,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1449": {
+      "issue": 1449,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1449-iso-closed-leaf-light",
+      "materialSha": "58716f60ba507550a24f7286a1b00e92e6c8d6f4",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 481,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794698420808,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5133,9 +5147,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1449
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:5ca48eb6-3be0-4967-a5dc-be32ebf72f63": {
+      "digest": "063e9e4123b0af05e8814e5855c58458229034a4643a70cddc0477e62b486382",
+      "issue": 1449,
+      "message": {
+        "kind": "queued",
+        "issue": 1449,
+        "at": 1794698420808,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "58716f60ba507550a24f7286a1b00e92e6c8d6f4"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
     "status": "delivered",
