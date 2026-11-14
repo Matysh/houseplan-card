@@ -232,8 +232,13 @@ try {
     await page.evaluate(async capabilities => {
       const { createPlanHostFixture } = await import('/plan-host-fixture.js');
       const config = window.__planHostLab.saved();
-      config.markers.push({ id: 'virtual', binding: 'virtual', space: config.spaces[0].id, name: 'Virtual lamp', icon: 'mdi:lightbulb' });
+      config.markers.push(...['v_virtual', 'v_virtual_peer'].map(id => ({ id, binding: 'virtual', space: config.spaces[0].id,
+        name: id, icon: 'mdi:lightbulb', display: 'static_icon' })));
       const lab = window.__planHostLab = createPlanHostFixture(config, { capabilities });
+      await lab.host.request({ type: 'houseplan/layout/set', layout: {
+        v_virtual: { s: config.spaces[0].id, x: .3, y: .4 },
+        v_virtual_peer: { s: config.spaces[0].id, x: .55, y: .4 },
+      }, expected_rev: 1, expected_config_rev: 1 });
       window.__card.planHost = lab.host;
     }, planCapabilities(['virtualDevices']));
     await page.waitForFunction(() => window.__card._loadOk && !window.__card._loading);
@@ -247,6 +252,46 @@ try {
     check('capabilities.virtual_without_actions', await card.locator('[data-settings-section="actions"]').count(), 0);
     check('capabilities.virtual_without_alarm', await card.locator('[data-settings-section="alarms"]').count(), 0);
     await page.evaluate(() => { window.__card._markerDialog = null; });
+    await page.waitForFunction(() => !window.__card._modeTransitionBusy && !window.__card._modeTransitionPreparing
+      && window.__card._deviceContacts?.scene?.shapes.has('v_virtual_peer'));
+    const contactPoints = await page.evaluate(() => {
+      const c = window.__card, scene = c._deviceContacts.scene;
+      const a = scene.shapes.get('v_virtual').marker, b = scene.shapes.get('v_virtual_peer').marker;
+      const rect = c.renderRoot.querySelector('.stage').getBoundingClientRect(), view = c._viewOr(c._baseVb());
+      const client = (x, y) => ({ x: rect.left + (x - view.x) / view.w * rect.width,
+        y: rect.top + (y - view.y) / view.h * rect.height });
+      window.__contactLogStart = window.__planHostLab.commands.length;
+      return { from: client(b.x, b.y), to: client(a.x + a.diameter * 1.125, a.y) };
+    });
+    await page.mouse.move(contactPoints.from.x, contactPoints.from.y); await page.mouse.down();
+    await page.mouse.move(contactPoints.to.x, contactPoints.to.y, { steps: 12 }); await page.mouse.up();
+    await page.waitForFunction(() => !window.__card._devicePositionBusy
+      && window.__planHostLab.commands.slice(window.__contactLogStart).some(c => c.type === 'houseplan/layout/set'));
+    check('capabilities.virtual_contact_drag_without_ha', await page.evaluate(() => {
+      const c = window.__card, commands = window.__planHostLab.commands.slice(window.__contactLogStart);
+      return c.hass === undefined && c._devicePositionHistory.size > 0
+        && c._deviceContacts.scene.component('v_virtual').includes('v_virtual_peer')
+        && commands.some(c => c.type === 'houseplan/layout/get')
+        && commands.filter(c => c.type).every(c => ['houseplan/layout/get', 'houseplan/layout/set', 'houseplan/config/get'].includes(c.type));
+    }));
+    // A legacy contact group has no persisted basis. Its metric Save must
+    // obtain the capability and materialise the pair through the same port.
+    await page.evaluate(async () => {
+      const c = window.__card, lab = window.__planHostLab, port = c.planHost;
+      const response = await port.request({ type: 'houseplan/layout/get' });
+      for (const id of ['v_virtual', 'v_virtual_peer']) delete response.layout[id].contact_basis;
+      await port.request({ type: 'houseplan/layout/set', layout: response.layout, expected_rev: response.rev,
+        expected_config_rev: c._cfgRev });
+      await c._reloadLayoutOnly(); await c.updateComplete;
+      c._editorRuntime._openMarkerDialog(c._devices.find(device => device.id === 'v_virtual'));
+    });
+    await card.locator('hp-dialog[data-kind="marker"]').waitFor();
+    await page.evaluate(async () => { const c = window.__card; c._markerDialog.size = 1.4; await c._editorRuntime._saveMarker(); });
+    check('capabilities.virtual_contact_size_without_ha', await page.evaluate(() => {
+      const lab = window.__planHostLab, write = [...lab.commands].reverse().find(c => c.type === 'houseplan/config/set');
+      return window.__card.hass === undefined && lab.saved().markers.find(m => m.id === 'v_virtual')?.size === 1.4
+        && ['v_virtual', 'v_virtual_peer'].every(id => write?.contact_layout?.[id]?.contact_basis?.legacy === true);
+    }));
     await page.evaluate(async capabilities => {
       const { createPlanHostFixture } = await import('/plan-host-fixture.js');
       const lab = window.__planHostLab = createPlanHostFixture(window.__planHostLab.saved(), { capabilities });

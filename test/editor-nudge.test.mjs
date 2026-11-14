@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { attachPlanHost } from './helpers/plan-host-fixture.mjs';
 import { nudgePlan } from '../test-build/editors/plan-nudge.js';
 import { KeyboardNudge, arrowControl } from '../test-build/editors/keyboard-nudge.js';
 import { prepareContactMove, persistContactPlacements } from '../test-build/device-contact-write.js';
@@ -91,10 +92,11 @@ function setup(options={}){
   h._pos=()=>({x:h._layout.a.x*1000,y:h._layout.a.y*1000});h._devicePlacementForCanvas=(d,x,y)=>({x:x/1000,y:y/1000,s:'floor'});
   h._previewDevicePlacement=(id,p)=>h._layout=applyDevicePlacement(h._layout,id,p);
   h._reloadLayoutOnly=async()=>{h._layout=structuredClone(server);h._layoutRev=revision;accepted=structuredClone(server);};
-  h.hass={callWS:async message=>{calls.push(structuredClone(message));if(message.type.endsWith('/get')){await options.beforeRead?.();return{layout:structuredClone(server),rev:revision};}
+  h.hass={user:{id:'nudge-owner',is_admin:true},callWS:async message=>{calls.push(structuredClone(message));if(message.type.endsWith('/get')){await options.beforeRead?.();return{layout:structuredClone(server),rev:revision};}
     assert.equal(message.expected_rev,revision);assert.equal(message.expected_config_rev,1);if(options.reject)throw Object.assign(new Error('refused'),{code:'conflict'});
     server=structuredClone(message.layout);const response={rev:++revision},wait=held;held=null;if(wait)await wait;if(options.transportLoss)throw new Error('connection lost after commit');return response;}};
   h._persistDevicePlacement=(id,placement,related,guard)=>persistContactPlacements(h,{deviceId:id,spaceId:'floor',placement,related},guard);
+  attachPlanHost(h);
   const lane=new PropertiesCommandLane(),runtime={host:h,navigationIntent:0,properties:{identity:null,fields:{draft:null},command:run=>lane.run(run)},physicalGesture:{drag:null},stairs:{dragging:false}};
   const nudge=new KeyboardNudge(runtime);runtime.keyboardNudge=nudge;
   const key={composedPath:()=>[],defaultPrevented:false,ctrlKey:false,altKey:false,metaKey:false};

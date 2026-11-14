@@ -4,6 +4,9 @@ import {persistContactPlacements,prepareContactMove,contactConfigPatch} from '..
 import {DeviceContactScene} from '../test-build/device-contact-scene.js';
 import {LayoutWriteReload} from '../test-build/layout-write-reload.js';
 import {sameDevicePlacement} from '../test-build/device-position-history.js';
+import {attachPlanHost} from './helpers/plan-host-fixture.mjs';
+import {createPlanHostFixture} from '../demo/srv/plan-host-fixture.js';
+import {planCapabilities,capabilityHost} from '../test-build/plan-capabilities.js';
 const initial={a:{s:'floor',x:.2,y:.2,future:{keep:1}},b:{s:'floor',x:.245,y:.2},foreign:{s:'upstairs',x:.8,y:.9,opaque:42}};
 const change={deviceId:'a',spaceId:'floor',placement:{s:'floor',x:.3,y:.3},
   related:[{deviceId:'b',spaceId:'floor',placement:{s:'floor',x:.345,y:.3}}]};
@@ -15,13 +18,14 @@ function fixture(){
     _adoption:{snapshot:()=>({layout:accepted,config:{markers:[{id:'a',size:1}]}}),
       acceptLayoutPosition:(id,pos)=>{accepted[id]=structuredClone(pos);},refreshLayoutFingerprint:()=>{},
       stageLocalLayout:layout=>{host._layout=layout;}},
-    _cacheSnapshot:()=>{},requestUpdate:()=>{},_persistLocalLayout:()=>{},hass:{callWS:async message=>{
+    _cacheSnapshot:()=>{},requestUpdate:()=>{},_persistLocalLayout:()=>{},hass:{user:{id:'contact-owner',is_admin:true},callWS:async message=>{
       calls.push(structuredClone(message));
       if(message.type==='houseplan/layout/get')return {layout:structuredClone(saved),rev:7};
       if(message.type==='houseplan/layout/set'){saved=structuredClone(message.layout);return {rev:8};}
       if(message.type==='houseplan/config/get')return {rev:3,device_contact_api:1};
       throw new Error('unexpected message');
     }}};
+  attachPlanHost(host);
   return {host,calls,saved:()=>saved,setSaved:v=>{saved=v;},retire:()=>{active=false;}};
 }
 test('#1003 complete fresh layout CAS preserves foreign floors and unknown siblings',async()=>{
@@ -105,4 +109,30 @@ test('#1003 metric-only Save materialises only its legacy component and checks s
   assert.equal(await contactConfigPatch(f.host,{markers:[{id:'a',size:1,name:'Renamed'}]}),undefined);
   f.host.hass.callWS=async()=>({rev:3});
   assert.equal(await contactConfigPatch(f.host,{markers:[{id:'a',size:2}]}),undefined,'old backend is not sent an unsupported extension');
+});
+
+test('#1394 virtual-only contact placement and metric save use only the injected port without HA',async()=>{
+  const f=fixture();
+  const lab=createPlanHostFixture({model_version:11,spaces:[],settings:{},markers:[{id:'a',binding:'virtual',size:1}]},
+    {capabilities:planCapabilities(['virtualDevices'])});
+  const port=capabilityHost(lab.host);
+  await port.request({type:'houseplan/layout/set',layout:structuredClone(initial),expected_rev:1,expected_config_rev:1});
+  Object.defineProperty(f.host,'planHost',{value:port,configurable:true});delete f.host.hass;
+  f.host._cfgRev=1;f.host._layoutRev=2;lab.commands.length=0;
+  await persistContactPlacements(f.host,change);
+  assert.deepEqual(lab.commands.map(c=>c.type),['houseplan/layout/get','houseplan/layout/set']);
+  assert.equal(f.host._layout.a.x,.3);assert.equal(f.host._layout.b.x,.345);
+  const marker=(id,x)=>({id,x,y:300,diameter:40,box:{left:-25.375,right:25.375,top:-25.375,bottom:25.375}});
+  const scene=new DeviceContactScene([marker('a',300),marker('b',345)],[],[],true);
+  f.host._deviceContacts={scene,reference:id=>scene.shapes.get(id)?.marker};
+  lab.commands.length=0;
+  const patch=await contactConfigPatch(f.host,{markers:[{id:'a',binding:'virtual',size:2}]});
+  assert.deepEqual(Object.keys(patch).sort(),['a','b']);
+  assert.deepEqual(lab.commands.map(c=>c.type),['houseplan/config/get']);
+  assert.equal(f.host.hass,undefined);
+  const disabled=createPlanHostFixture({model_version:11,spaces:[],markers:[],settings:{}},{capabilities:planCapabilities([])});
+  Object.defineProperty(f.host,'planHost',{value:capabilityHost(disabled.host),configurable:true});
+  await assert.rejects(persistContactPlacements(f.host,change),{code:'not_ready'});
+  await assert.rejects(contactConfigPatch(f.host,{markers:[{id:'a',binding:'virtual',size:2}]}),{code:'not_ready'});
+  assert.deepEqual(disabled.commands,[],'base layout/set must not bypass marker-feature availability');
 });

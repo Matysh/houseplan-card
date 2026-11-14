@@ -94,6 +94,10 @@ devices. Areas are independent read metadata. The common `capabilityHost`
 wrapper refuses unsupported dispatch before transport; HA's full profile keeps
 existing protocol negotiation/ACL and does not pretend to authorize the user.
 UI combines this catalog with the existing API-version, writer and kiosk gates.
+Contact-group layout CAS and metric-save preparation also use the injected
+PlanHost, including recovery reads. These marker-specific writers require a
+real or virtual marker capability even though layout/get/set are base commands;
+they retain full-layout CAS, foreign-floor preservation and late-reply fencing.
 Nested screen/alarm editors and the summary writer check the same capabilities
 at their own mutation boundary; hiding navigation alone is not sufficient for
 a feature which writes through base config/set. Radar setup cannot start or

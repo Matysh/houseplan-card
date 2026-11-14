@@ -7,11 +7,14 @@ import type {ConfigAdoption} from './config-adoption';
 import type {LayoutWriteReload} from './layout-write-reload';
 import type {ServerConfig} from './types';
 import {sendHouseplanWrite} from './large-write-transport';
+import {planHostOf} from './ha-plan-host';
+import {hostError,type PlanHost} from './plan-host';
+import {hasMarkers} from './plan-capabilities';
 interface ContactWriter {
   _layout:DeviceLayout;_layoutRev:number;_cfgRev:number;_space:string;
   _deviceContacts?:DeviceContactRenderer;_adoption:ConfigAdoption;_layoutIO:LayoutWriteReload;
   _serverStorage:boolean;_loadOk:boolean;
-  hass:{callWS<T>(message:Record<string,unknown>):Promise<T>};
+  readonly planHost:PlanHost;
   _sentPos:Map<string,DeviceLayout[string]|null>;
   _cacheSnapshot():void;_persistLocalLayout():void;requestUpdate():void;
 }
@@ -40,8 +43,10 @@ export async function contactConfigPatch(value:object,candidate:ServerConfig):Pr
     patch[member]={...pos,contact_basis:{...basis,at:{x:pos.x,y:pos.y,s:pos.s}}};
   }
   if(!Object.keys(patch).length)return;
+  const writeHost=planHostOf(host);
+  if(!hasMarkers(writeHost.capabilities))throw hostError('not_ready');
   const current=host._layoutIO.guard(),revision=host._cfgRev,layoutRevision=host._layoutRev;
-  const capability=record(await host.hass.callWS({type:'houseplan/config/get',fields:[]}));
+  const capability=record(await writeHost.request({type:'houseplan/config/get',fields:[]}));
   if(!current()||revision!==host._cfgRev||layoutRevision!==host._layoutRev)throw new Error('contact write context changed');
   if(capability?.device_contact_api!==1)return;
   if(capability.rev!==revision)throw Object.assign(new Error('configuration changed elsewhere'),{code:'conflict'});
@@ -81,6 +86,8 @@ export function prepareContactMove(value:object,drag:{id:string;spaceId:string;b
 export interface PlacementCommandGuard { current(revision?:number):boolean; accepted(revision:number):boolean }
 export async function persistContactPlacements(value:object,state:DevicePositionState,guard?:PlacementCommandGuard):Promise<void> {
   const host=value as ContactWriter;
+  const writeHost=planHostOf(host);
+  if(!hasMarkers(writeHost.capabilities))throw hostError('not_ready');
   // Canonicalise only the named edits, never the fresh snapshot's foreign floors.
   const changes=[state,...state.related??[]].map(c=>({...c,
     placement:c.placement===null?null:canonicalizePosition(c.placement)}));
@@ -97,7 +104,7 @@ export async function persistContactPlacements(value:object,state:DevicePosition
     const accepted=host._adoption.snapshot(undefined)?.layout;
     if(!accepted)throw new Error('no accepted layout authority');
     const expected=new Map(changes.map(c=>[c.deviceId,devicePlacement(accepted,c.deviceId)]));
-    const snapshot=record(await host.hass.callWS({type:'houseplan/layout/get'}));
+    const snapshot=record(await writeHost.request({type:'houseplan/layout/get'}));
     if(!current()||typeof snapshot?.rev!=='number'||!record(snapshot.layout))throw new Error('invalid complete layout snapshot');
     if(guard&&!guard.current(snapshot.rev))throw Object.assign(new Error('contact command changed before dispatch'),
       {code:guard.current()?'conflict':'context-changed'});
@@ -111,15 +118,14 @@ export async function persistContactPlacements(value:object,state:DevicePosition
     }
     let response:Record<string,unknown>|null;
     try {
-      const writeHass=host.hass;
-      response=record(await sendHouseplanWrite(writeHass,{type:'houseplan/layout/set',layout,expected_rev:snapshot.rev,
+      response=record(await sendHouseplanWrite(writeHost,{type:'houseplan/layout/set',layout,expected_rev:snapshot.rev,
         expected_config_rev:configRevision},{isCurrent:current,
           canDispatch:()=>host._cfgRev===configRevision&&(!guard||guard.current(snapshot.rev as number))}));
     } catch(error) {
       // A transport failure is not proof that the server rejected the write.
       // Reconcile only our named placements; never replay the full snapshot.
       if(!current()||record(error)?.code)throw error;
-      const recovered=record(await host.hass.callWS({type:'houseplan/layout/get'}));
+      const recovered=record(await writeHost.request({type:'houseplan/layout/get'}));
       const saved=record(recovered?.layout) as DeviceLayout|null;
       if(!saved||!changes.every(c=>sameDevicePlacement(devicePlacement(saved,c.deviceId),c.placement)))throw error;
       response=recovered;

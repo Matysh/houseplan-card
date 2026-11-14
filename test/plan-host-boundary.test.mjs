@@ -6,7 +6,7 @@ import { inspectPlanHostBoundary } from './helpers/plan-host-boundary.mjs';
 const modules = ['config-write-context', 'config-reload-authority', 'large-write-transport', 'signing',
   'plan-hass-projection', 'plan-optimize-write', 'plan-optimize-undo', 'optimize-reload', 'optimize-plans-dialog', 'optimize-status',
   'backdrop-pick', 'backup-archive-client', 'decor-assets', 'decor-image-editor', 'space-copy-runtime',
-  'wall-node-write', 'wall-node-card-adapter', 'config-adoption', 'houseplan-render-lifecycle',
+  'wall-node-write', 'wall-node-card-adapter', 'device-contact-write', 'config-adoption', 'houseplan-render-lifecycle',
   'editors/space-plan-list', 'editors/properties/editor', 'floor-import-dialog', 'houseplan-onboarding-runtime'];
 const owners = {
   'houseplan-card': ['_renderBody', '_renderRoot', '_loadFromServer', 'willUpdate', '_ensureLiveSyncSubscriptions',
