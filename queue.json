@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14017,
+  "revision": 14018,
   "nextTicket": 481,
   "nextFence": 480,
   "tasks": {
@@ -4862,7 +4862,7 @@
       "track": "ship",
       "layer": "infra",
       "branch": "codex/1448-power-scheme-identity",
-      "materialSha": "6f3ca189f38f9879f3713c0d9fa333e32cac010d",
+      "materialSha": "98ceda7f4d6517050c929536263c426f0dfbac1d",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 479,
@@ -4870,9 +4870,15 @@
       "status": "S6-in-progress",
       "readyAt": 1794695052419,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1794695697825,
-      "automationDetail": "Queue remained busy; retry the same event ID"
+      "patchId": "629f55dbf2fc684d70511c43b26875167c212ff7",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/lib/metrics.mjs",
+        "process-next/lib/task-selection.mjs",
+        "process-next/test/metrics.test.mjs",
+        "process-next/test/task-selection.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5236,11 +5242,12 @@
     "worker": "github-coordinator",
     "token": "479:github:43648751609:1:tick:2:admit",
     "fence": 479,
-    "materialSha": "6f3ca189f38f9879f3713c0d9fa333e32cac010d",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "98ceda7f4d6517050c929536263c426f0dfbac1d",
+    "expectedBase": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
+    "phase": "testing",
     "admittedAt": 1794695656312,
-    "expiresAt": 1794696015963
+    "expiresAt": 1794696064319,
+    "patchId": "629f55dbf2fc684d70511c43b26875167c212ff7"
   },
   "events": {
     "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:2:synchronized": {
@@ -5317,6 +5324,10 @@
     },
     "finish:d10369e6-1f52-4a65-8b8f-6833d9b005bf": {
       "digest": "ab87fc420fea9617be48ec1944432227639b56dc31db58188034b7f4c36dd007",
+      "issue": 1448
+    },
+    "finish:0330c214-5568-4788-a8da-910eed865428:finish:2:synchronized": {
+      "digest": "19b2df5a05199642525b048f6e98fa24775e033cbd6b26cfd353e906dbd1d023",
       "issue": 1448
     },
     "finish:1fc679d3-45b9-478e-bf50-a536193847e0": {
