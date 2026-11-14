@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13027,
+  "revision": 13028,
   "nextTicket": 459,
   "nextFence": 459,
   "tasks": {
@@ -4620,7 +4620,7 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1428-single-button-focus",
-      "materialSha": "d3ca314f068fa79babf05b15388b8af9b5ec2095",
+      "materialSha": "54d3917034a0d13ea680b0ea182b086c732e9067",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 458,
@@ -4628,10 +4628,11 @@
       "status": "S6-in-progress",
       "readyAt": 1794671237430,
       "reviewEntry": 4,
-      "patchId": "9b7ec7dce6de531dbaea786fa9bc046536d050a1",
+      "patchId": "32250d54733ff9fc23d4ef8de050c83391373d84",
       "changedFiles": [
         "demo/smoke_discard_dialog_polish.mjs",
         "demo/smoke_editor_return_focus_1248.mjs",
+        "demo/smoke_form_button_focus_1428.mjs",
         "demo/smoke_toolbar_stable_width.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
@@ -4655,6 +4656,7 @@
         "src/styles/reading-kit.styles.ts",
         "src/styles/selection-list.styles.ts",
         "src/styles/settings-action.styles.ts",
+        "src/styles/settings-dialogs.styles.ts",
         "src/ui-button-tab-focus.ts",
         "test/houseplan-panel.test.mjs",
         "test/ui-button-tab-focus.test.mjs"
@@ -5052,11 +5054,12 @@
     "worker": "finish",
     "token": "458:finish:1001037e-33fe-443b-bc9b-813eef9584c4:finish:1:admit",
     "fence": 458,
-    "materialSha": "d3ca314f068fa79babf05b15388b8af9b5ec2095",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "54d3917034a0d13ea680b0ea182b086c732e9067",
+    "expectedBase": "e48eb720d353d31ce86848211e8063fc46334bab",
+    "phase": "testing",
     "admittedAt": 1794671243141,
-    "expiresAt": 1794671543141
+    "expiresAt": 1794671553908,
+    "patchId": "32250d54733ff9fc23d4ef8de050c83391373d84"
   },
   "events": {
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8:finish:2:synchronized": {
@@ -5297,6 +5300,10 @@
     },
     "github:43611270736:1:completions:metadata:3b6538a2-62f6-414c-802e-92b7c679bceb:task-notice:1428::": {
       "digest": "27cb6fcd8e01de8ab4efe0d93cf7c8ea2cca7d5edd1353c87f3894c89c93bbc6",
+      "issue": 1428
+    },
+    "finish:1001037e-33fe-443b-bc9b-813eef9584c4:finish:2:synchronized": {
+      "digest": "1c90faa6ef115eedf7c52e1fa50b09a88383bfb6b25cd8d26e8df86b4db3e982",
       "issue": 1428
     },
     "finish:da407950-8bf9-48e8-bcf0-4ffd3e3b66b8": {
