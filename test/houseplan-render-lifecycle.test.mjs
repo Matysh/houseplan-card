@@ -11,7 +11,7 @@ test('#1093 hidden intake retains authority and transport without derived work',
     ownerDocument: { visibilityState: 'hidden' }, _hassSequence: 0,
     _continuity: { note: () => calls.push('continuity') },
     _ensureHaRegistryAuthority: () => calls.push('authority'),
-    _planHassMemo: { hass: {} }, _hookConnection: () => calls.push('connection'),
+    _planHassMemo: { environment: {} }, _hookConnection: () => calls.push('connection'),
     _loadOk: false, _loading: false, _loadTries: 0,
     _loadFromServer: () => calls.push('load'),
     _maybeRebuildDevices: () => calls.push('roster'),
@@ -19,7 +19,7 @@ test('#1093 hidden intake retains authority and transport without derived work',
   };
   intakeHass(host);
   assert.deepEqual(calls, ['continuity', 'authority', 'connection', 'load']);
-  assert.equal(host._hassSequence, 1); assert.equal(host._planHassMemo.hass, null);
+  assert.equal(host._hassSequence, 1); assert.equal(host._planHassMemo.environment, null);
   calls.length = 0; host.ownerDocument.visibilityState = 'visible';
   intakeHass(host);
   assert.deepEqual(calls, ['continuity', 'authority', 'connection', 'load', 'roster', 'vacuum', 'activity']);
@@ -78,12 +78,12 @@ test('#1056 rendering snapshots retain willUpdate intake ordering and skip-path 
   const before = base(), after = { ...before, connection: {} };
   let intakes = 0;
   const intake = () => intakes++;
-  assert.equal(live.hass(before, after, { entityIds: ['light.plan'] }, intake), true);
+  assert.equal(live.environment(before, after, { entityIds: ['light.plan'] }, intake), true);
   assert.equal(intakes, 0, 'a rendering update allows remaining same-turn mutations before intake');
   lifecycle.observe(before, after, { entityIds: ['light.plan'] }, intake);
   assert.equal(intakes, 1);
   const unrelated = { ...after, states: { ...after.states, 'sensor.other': { state: '1' } } };
-  assert.equal(live.hass(after, unrelated, { entityIds: ['light.plan'] }, intake), false);
+  assert.equal(live.environment(after, unrelated, { entityIds: ['light.plan'] }, intake), false);
   assert.equal(intakes, 2, 'deliberately skipped visual updates still do operational intake');
   lifecycle.observe(after, unrelated, { entityIds: ['light.plan'] }, intake);
   assert.equal(intakes, 2, 'a later unrelated Lit update cannot duplicate that intake');
@@ -96,12 +96,12 @@ test('a relevant HA tick is deferred only while a continuous interaction is acti
   const before = base();
   const after = { ...before, states: { ...before.states, 'light.plan': row('on') } };
   host._pointers.set(1, {});
-  assert.equal(live.hass(before, after, { entityIds: ['light.plan'] }, () => {}), false);
+  assert.equal(live.environment(before, after, { entityIds: ['light.plan'] }, () => {}), false);
   assert.equal(live.take(), true);
   assert.equal(live.take(), false);
   host._pointers.clear();
   const final = { ...after, states: { ...after.states, 'light.plan': row('off') } };
-  assert.equal(live.hass(after, final, { entityIds: ['light.plan'] }, () => {}), true);
+  assert.equal(live.environment(after, final, { entityIds: ['light.plan'] }, () => {}), true);
 });
 
 test('gesture reconciliation is last-wins and a normal full update subsumes it', () => {
@@ -112,12 +112,12 @@ test('gesture reconciliation is last-wins and a normal full update subsumes it',
   const first = { ...before, states: { ...before.states, 'light.plan': row('on') } };
   const second = { ...first, states: { ...first.states, 'light.plan': row('unavailable') } };
   host._pointers.set(1, {});
-  assert.equal(live.hass(before, first, { entityIds: ['light.plan'] }, () => {}), false);
-  assert.equal(live.hass(first, second, { entityIds: ['light.plan'] }, () => {}), false);
+  assert.equal(live.environment(before, first, { entityIds: ['light.plan'] }, () => {}), false);
+  assert.equal(live.environment(first, second, { entityIds: ['light.plan'] }, () => {}), false);
   assert.equal(live.take(), true);
   assert.equal(live.take(), false);
 
-  live.hass(second, first, { entityIds: ['light.plan'] }, () => {});
+  live.environment(second, first, { entityIds: ['light.plan'] }, () => {});
   live.clear();
   assert.equal(live.take(), false);
 });

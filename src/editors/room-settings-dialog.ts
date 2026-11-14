@@ -93,7 +93,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
   // the free-areas list must include the edited room's CURRENT area
   const areas = [...host._freeAreas];
   if (edit && host._areaSel && !areas.some((a) => a.area_id === host._areaSel)) {
-    const cur = host.hass.areas[host._areaSel];
+    const cur = host.planHost.environment.registry.areas[host._areaSel];
     if (cur) areas.unshift(cur);
   }
   const requestClose = () => { void this._requestRoomDialogClose(); };
@@ -119,7 +119,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
     ['label', 'room.label_scale', host._roomLabelScale, (v) => { host._roomLabelScale = v; }],
   ];
 
-  return html`<hp-dialog class="ui-dialog hpf-settings-dialog roomdialog" .hass=${host.hass} lang=${langOf(host.hass,host._config?.language)} data-kind="room" form-shell settings-layout wide
+  return html`<hp-dialog class="ui-dialog hpf-settings-dialog roomdialog" .hass=${host._presentation} lang=${langOf(host._presentation,host._config?.language)} data-kind="room" form-shell settings-layout wide
     .title=${edit ? st('room.title', {name:host._nameSel || t('room.settings_title')}) : batchProgress || t('room.new')}
     .subtitle=${st('room.context', {space:host._spaceModel()?.title ?? ''})}
     icon="mdi:cog-outline" icon-badge="mdi:door-open" @hp-close=${requestClose}>
@@ -143,7 +143,7 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
               control: html`<hp-settings-select><select data-hp="field" data-field="room-area" id="room-area" class="hpf-select" aria-label=${t('room.area_label')}
                 @change=${(e: Event) => {
                   host._areaSel = (e.target as HTMLSelectElement).value;
-                  if (!host._nameSel && host._areaSel) host._nameSel = host.hass.areas[host._areaSel]?.name || '';
+                  if (!host._nameSel && host._areaSel) host._nameSel = host.planHost.environment.registry.areas[host._areaSel]?.name || '';
                   host.requestUpdate();
                 }}>
                 <option value="">${t('room.no_area_option')}</option>

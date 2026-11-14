@@ -1,3 +1,4 @@
+import { planHostOf } from './ha-plan-host';
 import { captureToast } from './toast-presentation';
 import { waitForPriorConfigWrite } from './prior-config-write';
 /** #930: one candidate and post-commit cleanup for single and catalog Delete. */
@@ -40,7 +41,7 @@ async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly
   const cfg = host._serverCfg;
   if (!cfg || !host._canEdit || host._kiosk || !host.isConnected) throw new Error('Delete unavailable');
   const claim = host._configWriteContext.claim();
-  const current = () => host.isConnected && host._configWriteContext.current(claim, host.hass);
+  const current = () => host.isConnected && host._configWriteContext.current(claim, planHostOf(host));
   if (host._mode === 'devices' && runtime.deviceStructure.available) {
     if (host._devicePositionBusy) return;
     const space = host._space;
@@ -143,7 +144,7 @@ export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: stri
   if (host._devicePositionBusy) return;
   const claim = host._configWriteContext.claim();
   const current = () => (!candidateCurrent || candidateCurrent()) && host.isConnected && host._canEdit && !host._kiosk
-    && host._configWriteContext.current(claim, host.hass) && targetForId(runtime, id)?.binding === binding;
+    && host._configWriteContext.current(claim, planHostOf(host)) && targetForId(runtime, id)?.binding === binding;
   if (!current()) return;
   const device = host._devices.find(d => d.id === id);
   const accepted = await host._confirmDanger({
@@ -154,7 +155,7 @@ export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: stri
   if (!accepted || !current()) return;
   try {
     await commitDeletion(runtime, [{ id, binding }], candidateCurrent);
-    if (host._configWriteContext.current(claim, host.hass)) showToast(host._t('toast.marker_removed'), 'toast.marker_removed');
+    if (host._configWriteContext.current(claim, planHostOf(host))) showToast(host._t('toast.marker_removed'), 'toast.marker_removed');
   } catch (error) {
     if (current() && !runtime.deviceStructure?.needsResolution && !isGeometryCleanupRefusal(error)) showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   }
@@ -169,7 +170,7 @@ export async function deleteMarker(runtime: HouseplanEditorRuntime): Promise<voi
   if (!target) return;
   const session = dialogSession(host, 'marker');
   const claim = host._configWriteContext.claim();
-  const current = () => host.isConnected && host._configWriteContext.current(claim, host.hass);
+  const current = () => host.isConnected && host._configWriteContext.current(claim, planHostOf(host));
   const accepted = await host._confirmDanger({
     key: 'remove-marker', kind: 'destructive', title: host._t('confirm.remove_marker_title'),
     message: host._t('confirm.remove_marker_body'), objectName: dialog.name || host._t('device.fallback'),
@@ -216,7 +217,7 @@ export async function deleteInboxSelection(
   const signature = inboxDeletionSignature(rows);
   const claim = host._configWriteContext.claim();
   const navigation = runtime.navigationIntent;
-  const current = () => host.isConnected && host._configWriteContext.current(claim, host.hass);
+  const current = () => host.isConnected && host._configWriteContext.current(claim, planHostOf(host));
   const pending = { ...dialog, busy: '__delete__' };
   host._deviceInbox = pending;
   const accepted = await host._confirmDanger({

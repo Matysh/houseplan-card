@@ -1,3 +1,4 @@
+import type { PlanHost, HostPresentationContext } from './plan-host';
 import { ModeChromeLayouts, type ModeChromeProbe } from './mode-chrome-layout';
 import {WallSideDimensionEditor} from './wall-side-dimension-editor';
 import {paintHouseplanMeasurements} from './live-editor';
@@ -524,6 +525,8 @@ interface DeviceInboxDialogState {
 }
 
 export interface HouseplanEditorHostPort {
+  readonly planHost: PlanHost;
+  readonly _presentation: HostPresentationContext;
   readonly ownerDocument:Document;
   _modeChromeKey(width:number):string;
   _modeChromeHeaderWidth():number;
@@ -692,7 +695,7 @@ export interface HouseplanEditorHostPort {
   _furnTouchPending: FurniturePlacementPress | null;
   _gearPtCache: WeakMap<number[][], number[]>;
   _geometryHistory: CommandStack<SpaceGeometryState>;
-  _getAuthoritativeConfig: (hass?: UndoHass, isCurrent?: () => boolean) => Promise<AuthoritativeConfigResponse>;
+  _getAuthoritativeConfig: (input?: UndoHass | PlanHost, isCurrent?: () => boolean) => Promise<AuthoritativeConfigResponse>;
   _glowRadiusCm: number;
   _glowRadiusPlaceholder: string;
   _gridPitch: number;
@@ -1032,7 +1035,7 @@ export class HouseplanEditorRuntime {
   private readonly catalogMenu = new CatalogContextMenu(this);
   public readonly decorLine = new DecorLineDrawing({
     context: () => this.host.isConnected && this.host._mode === 'decor' && this.host._decorTool === 'line'
-      && this.host._canEdit && !this.host._kiosk && this.host._curSpaceCfg && this.host.hass?.connection?.connected !== false
+      && this.host._canEdit && !this.host._kiosk && this.host._curSpaceCfg && this.host.planHost.environment.connected
       ? `${this.host._space}|${this.host._decorH}|${this.host._gridPitch}|${this.host._adoption.adoptionEpoch}` : null,
     blocked: () => this.host._editorSecondaryDialogBlocked,
     current: () => this.host._configWriteGuard(),
@@ -1181,17 +1184,17 @@ export class HouseplanEditorRuntime {
         revision: host._haRegistry.revision, authoritative: host._haRegistry.authoritative,
         deviceIds: Object.keys(host._haRegistry.devices || {}).sort(),
         entityIds: Object.keys(host._haRegistry.entities || {}).sort(),
-        stateIds: Object.keys(host.hass?.states || {}).sort(),
+        stateIds: Object.keys(host.planHost.environment.states || {}).sort(),
         effectiveAreas: host._devices.map((device) => [device.id, device.virtual, device.area]),
       }),
-      connection: host.hass?.connection,
+      connection: host.planHost.authorityKey,
       authorityCurrent: host._configWriteGuard(),
     });
     this.optimizePlans = new LazyOptimizePlansDialog({
       dialog: () => host._alignDialog,
       setDialog: (next) => { host._alignDialog = next; },
       t: (key, vars) => host._t(key, vars),
-      hass: () => host.hass,
+      planHost: () => host.planHost,
       config: () => host._serverCfg,
       planReady: () => !!host._norm,
       canWrite: () => host._canEdit && !host._kiosk,
@@ -1212,14 +1215,14 @@ export class HouseplanEditorRuntime {
       clearGeometryGesture: () => this._clearGeometryGesture(),
       commit: (config, layout, guard) => commitPlanOptimization(host, config, layout, guard),
       reloadAfterConflict: () => reloadOptimizePair({
-        hass: host.hass, source: optimizeSource, layoutIO: host._layoutIO,
+        planHost: host.planHost, source: optimizeSource, layoutIO: host._layoutIO,
         pending: () => host._writesPending > 0 || host._saveConfigDebounced.pending()
           || host._dirtyPos.size > 0 || host._sentPos.size > 0,
         read: (hass, current) => host._getAuthoritativeConfig(hass, current),
         adopt: input => host._adoptAuthoritative(input),
       }),
       ledNote: () => host._ledNote(),
-    }, () => langOf(host.hass, host._config?.language));
+    }, () => langOf(host._presentation, host._config?.language));
     host._editorSecondary = new EditorSecondaryController({
       root: () => host.renderRoot as ShadowRoot,
       requestUpdate: () => host.requestUpdate(),
@@ -1258,7 +1261,7 @@ export class HouseplanEditorRuntime {
     const enabled = this.host._mode === 'plan' && this.host._tool === 'select';
     const visible = enabled || this.host._mode !== 'plan' && this.host._modeTransitionBusy && this._planNodeInkVisible;
     this._planNodeInkVisible = visible;
-    const view = this.host._viewOr(this.host._baseVb()), language = langOf(this.host.hass, this.host._config?.language);
+    const view = this.host._viewOr(this.host._baseVb()), language = langOf(this.host._presentation, this.host._config?.language);
     const inputs = [nodes, this.host._floorKey(this.host._space), this.host._renderPixelsPerUnit(view),
       nodes.activePointerId, nodes.preview?.sp, nodes.invalid, nodes.busy,
       this.host._haWallNodeMoveApi, this.host._haPlanGraphApi,
@@ -1326,7 +1329,7 @@ public _flushPointerMove(key: string): void { flushHouseplanPointerMove(this.hos
 public _cancelPointerMove(key?: string): void { cancelHouseplanPointerMove(this.host, key); }
 public _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing {
     const ariaKey = `${key}.aria` as I18nKey;
-    const lang = langOf(this.host.hass, this.host._config?.language);
+    const lang = langOf(this.host._presentation, this.host._config?.language);
     if (!hasTranslation(lang, key) || !hasTranslation(lang, ariaKey)) return nothing;
     return html`<hp-help instant data-help-key=${key}
       .text=${t(lang, key)} .ariaLabel=${t(lang, ariaKey)}></hp-help>`;
@@ -3834,7 +3837,7 @@ public _rszEdgeLabels(
     // Live areas sit beside the moving wall, one on each owner side. Placement
     // is pure screen-space math fed by the stage size cached by ResizeObserver;
     // no pointermove DOM measurement is allowed.
-    const imperial = this.host.hass?.config?.unit_system?.length === 'mi';
+    const imperial = this.host.planHost.environment.units.length === 'mi';
     const ids = plan.roomIds;
     const walls = this.host._spaceWalls;
     const physical = this.host._physicalBodiesR();
@@ -4304,7 +4307,7 @@ private _decorSelectionPressCurrent(press: DecorSelectionPress): boolean {
     return this.host.isConnected && this.host._mode === 'decor' && this.host._decorTool === 'select'
       && this.host._canEdit && !this.host._kiosk && press.space === this.host._space
       && press.adoption === this.host._adoption.adoptionEpoch
-      && this.host._configWriteContext.current(press.authority, this.host.hass);
+      && this.host._configWriteContext.current(press.authority, this.host.planHost);
   }
 
 private _decorGroupMove(ev: PointerEvent): void {
@@ -5041,7 +5044,7 @@ private _furnMouseCurrent(pending: FurniturePlacementPress): boolean {
     return !!mouse && this.host.isConnected && this.host._canEdit && !this.host._kiosk
       && this.host._mode === 'decor' && this.host._decorTool === 'furniture'
       && this.host._space === mouse.space && this.host._furnPalette === mouse.palette
-      && this.host._configWriteContext.current(mouse.claim, this.host.hass)
+      && this.host._configWriteContext.current(mouse.claim, this.host.planHost)
       && (!mouse.captured || !!mouse.target?.hasPointerCapture(pending.pid));
   }
 
@@ -5556,7 +5559,7 @@ public _renderDecorEraseConfirm(): TemplateResult {
     ensureSettingsDialogStyles(this.host);
     const pending = this.host._decorEraseConfirm!;
     const kind = this.host._t(`decor.${pending.kind}` as I18nKey);
-    return html`<hp-dialog .hass=${this.host.hass} class="ui-dialog" form-shell settings-layout compact wide data-kind="confirm" .title=${this.host._t('decor.erase_confirm_title')}
+    return html`<hp-dialog .hass=${this.host._presentation} class="ui-dialog" form-shell settings-layout compact wide data-kind="confirm" .title=${this.host._t('decor.erase_confirm_title')}
       icon="mdi:trash-can-outline" dismiss-on-scrim @hp-close=${() => (this.host._decorEraseConfirm = null)}>
         <div class="body"><p>${this.host._t('confirm.erase_decor', { kind })}</p></div>
         <div class="row" slot="footer">
@@ -5574,8 +5577,8 @@ public _renderDecorEraseConfirm(): TemplateResult {
 public _renderDecorTextDialog(): TemplateResult {
     const d = this.host._decorTextDialog!;
     const ent = (d.pickerEntity || '').trim();
-    const st = ent ? this.host.hass?.states?.[ent] : null;
-    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="decor" .title=${this.host._t('decor.text_title')}
+    const st = ent ? this.host.planHost.environment.states?.[ent] : null;
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host._presentation} data-kind="decor" .title=${this.host._t('decor.text_title')}
       icon="mdi:format-text" dismiss-on-scrim @hp-close=${() => (this.host._decorTextDialog = null)}>
         <div class="body">
           <label>${this.host._t('decor.text_label')}</label>
@@ -5619,7 +5622,7 @@ public _renderDecorTextDialog(): TemplateResult {
               ...d, pickerEntity: (e.target as HTMLInputElement).value,
             })} />
           <datalist id="hp-dtext-ents">
-            ${Object.keys(this.host.hass?.states || {}).map((id) => html`<option value=${id}></option>`)}
+            ${Object.keys(this.host.planHost.environment.states || {}).map((id) => html`<option value=${id}></option>`)}
           </datalist>
           ${ent ? html`
             <label>${this.host._t('decor.live_attr')}</label>
@@ -5651,7 +5654,7 @@ public _renderDecorShapeDialog(): TemplateResult {
 public _renderBackdropDialog(): TemplateResult {
     const d = this.host._backdropDialog!;
     const unit = this.host._t(this.host._imperial ? 'gs.unit_ft' : 'gs.unit_m');
-    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="decor" .title=${this.host._t('decor.backdrop_properties')}
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host._presentation} data-kind="decor" .title=${this.host._t('decor.backdrop_properties')}
       icon="mdi:image-edit-outline" dismiss-on-scrim @hp-close=${() => (this.host._backdropDialog = null)}>
       <div class="body">
         <label>${this.host._t('decor.size')}</label>
@@ -6186,7 +6189,7 @@ public _resolveOpeningPlacement(raw: readonly number[]): OpeningPlacementCandida
         { x: core.x, y: core.y, angle: core.angle, length: core.renderedLength, flip_v: faceFlipV },
       );
     }
-    const imperial = this.host.hass?.config?.unit_system?.length === 'mi';
+    const imperial = this.host.planHost.environment.units.length === 'mi';
     // #238: placement labels are physical dimensions. They consume the ONE
     // resolved candidate above and never re-run pointer snap; existing-opening
     // drag deliberately keeps `_opRuler`/`openingShoulders` below.
@@ -6544,7 +6547,7 @@ public _opRuler(
       }
     }
     if (!sh) return { x: cx, y: cy, angle: snap.angle, measure: null };
-    const imperial = this.host.hass?.config?.unit_system?.length === 'mi';
+    const imperial = this.host.planHost.environment.units.length === 'mi';
     const lbl = (d: number, m: number[]) =>
       ({ x: m[0], y: m[1], text: formatLength((d / this.host._gridPitch) * this.host._cellCm, imperial) });
     return {
@@ -6784,15 +6787,15 @@ public _rebindPartitionOpening = (): void => {
 
 public _contactCandidates(): { value: string; label: string }[] {
     const out: [string, string, number][] = [];
-    for (const eid of Object.keys(this.host.hass.states)) {
+    for (const eid of Object.keys(this.host.planHost.environment.states)) {
       if (!this.host._openingEntityAvailable(eid)) continue;
       const dom = eid.split('.')[0];
       if (dom !== 'binary_sensor' && dom !== 'cover') continue;
-      const st = this.host.hass.states[eid];
-      const dc = st?.attributes?.device_class || '';
+      const st = this.host.planHost.environment.states[eid];
+      const dc = String(st?.attributes?.device_class || '');
       const doorish = ['door', 'window', 'opening', 'garage_door', 'garage'].includes(dc);
       if (dom === 'cover' && !doorish) continue;
-      out.push([eid, st?.attributes?.friendly_name || eid, doorish ? 0 : 1]);
+      out.push([eid, String(st?.attributes?.friendly_name || eid), doorish ? 0 : 1]);
     }
     return out
       .sort((a, b) => a[2] - b[2] || a[1].localeCompare(b[1]))
@@ -6800,9 +6803,9 @@ public _contactCandidates(): { value: string; label: string }[] {
   }
 
 public _lockCandidates(): { value: string; label: string }[] {
-    return Object.keys(this.host.hass.states)
+    return Object.keys(this.host.planHost.environment.states)
       .filter((eid) => eid.startsWith('lock.') && this.host._openingEntityAvailable(eid))
-      .map((eid) => ({ value: eid, label: this.host.hass.states[eid]?.attributes?.friendly_name || eid }))
+      .map((eid) => ({ value: eid, label: String(this.host.planHost.environment.states[eid]?.attributes?.friendly_name || eid) }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
@@ -7266,7 +7269,7 @@ public _applyWallFaceBatch(): void {
     const seed = Date.now().toString(36);
     const newRooms: Array<{ room: any; decision: WallFaceDecision }> = [];
     accepted.forEach((decision, index) => {
-      const areaName = decision.area ? this.host.hass.areas[decision.area]?.name : '';
+      const areaName = decision.area ? this.host.planHost.environment.registry.areas[decision.area]?.name : '';
       const room = {
         id: `r${seed}-${index}`,
         name: decision.name || areaName || this.host._t('room.default_name'),
@@ -7478,7 +7481,7 @@ public _commitRoom(): void {
       if (!this.host._contourClosed) return;
       verts = this.host._path.slice(0, -1); // without the duplicated closing vertex
     }
-    const areaName = this.host._areaSel ? this.host.hass.areas[this.host._areaSel]?.name : '';
+    const areaName = this.host._areaSel ? this.host.planHost.environment.registry.areas[this.host._areaSel]?.name : '';
     const newRoom: any = {
       id: 'r' + Date.now().toString(36),
       name: this.host._nameSel || areaName || this.host._t('room.default_name'),
@@ -7762,7 +7765,7 @@ public _deviceInboxRows(): DeviceInboxRow[] {
     const key = [
       this.host._haRegistry.revision, this.host._cfgRev, this.host._cfgEpoch, this.host._regSignature,
       this.host._newSyncKey, showEntities ? 1 : 0, this.host._showAll ? 1 : 0,
-      langOf(this.host.hass, this.host._config?.language),
+      langOf(this.host._presentation, this.host._config?.language),
     ].join('|');
     if (this.host._deviceInboxMemo?.key === key) return this.host._deviceInboxMemo.rows;
     const candidates = this._deviceInboxCandidates(showEntities);
@@ -7778,7 +7781,7 @@ public _deviceInboxRows(): DeviceInboxRow[] {
 
     const areaMap = this.host._areaToSpace;
     const areaNames: Record<string, string> = {};
-    for (const [id, area] of Object.entries<any>(this.host.hass?.areas || {})) {
+    for (const [id, area] of Object.entries<any>(this.host.planHost.environment.registry.areas || {})) {
       areaNames[id] = areaMap[id]?.room?.name || area?.name || id;
     }
     // A room may keep a valid HA area reference even when the current user has
@@ -7917,7 +7920,7 @@ private _inboxBatchDeps(): InboxBatchDeps {
         try {
           const { deleteInboxSelection } = await import('./marker-deletion');
           if (!this.host.isConnected || this.host._deviceInbox !== owner
-              || !this.host._configWriteContext.current(claim, this.host.hass)) return;
+              || !this.host._configWriteContext.current(claim, this.host.planHost)) return;
           await deleteInboxSelection(this, () => {
         const dialog = this.host._deviceInbox;
         if (!dialog) return [];
@@ -7927,7 +7930,7 @@ private _inboxBatchDeps(): InboxBatchDeps {
         : this.host._model.find((space) => `space:${space.id}` === this.host._deviceInbox?.spaceFilter)?.title
           || inboxT(this.host, 'device_inbox.all_spaces'));
         } catch (error) {
-          if (this.host._deviceInbox === owner && this.host._configWriteContext.current(claim, this.host.hass))
+          if (this.host._deviceInbox === owner && this.host._configWriteContext.current(claim, this.host.planHost))
             showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
         }
       },
@@ -8128,7 +8131,7 @@ public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): voi
 public _runCandidates(): { value: string; label: string; sub: string }[] {
     const out: { value: string; label: string; sub: string }[] = [];
     for (const dom of RUN_TARGET_DOMAINS) {
-      for (const [eid, st] of Object.entries<any>(this.host.hass.states)) {
+      for (const [eid, st] of Object.entries<any>(this.host.planHost.environment.states)) {
         if (!eid.startsWith(dom + '.')) continue;
         if (!this.host._planEntityAvailable(eid)) continue;
         out.push({
@@ -8185,7 +8188,7 @@ public _keepClosedAsPartitions = (): void => {
   };
 
 private _toolsT(key: ToolsI18nKey, vars?: Record<string, string>): string {
-    return toolsT(langOf(this.host.hass, this.host._config?.language), key, vars);
+    return toolsT(langOf(this.host._presentation, this.host._config?.language), key, vars);
   }
 
 public _backupErrorText(e: any): string {
@@ -8213,16 +8216,7 @@ public async _pickMarkerFiles(ev: Event): Promise<void> {
         const fd = new FormData();
         fd.append('marker_id', mid);
         fd.append('file', file, file.name);
-        // fetchWithAuth refreshes a stale access_token itself; the fallback is the raw token
-        const resp: Response = this.host.hass?.fetchWithAuth
-          ? await this.host.hass.fetchWithAuth('/api/houseplan/upload', { method: 'POST', body: fd })
-          : await fetch('/api/houseplan/upload', {
-              method: 'POST',
-              body: fd,
-              headers: this.host.hass?.auth?.data?.access_token
-                ? { authorization: `Bearer ${this.host.hass.auth.data.access_token}` }
-                : {},
-            });
+        const resp = await this.host.planHost.http.request('/api/houseplan/upload', { method: 'POST', body: fd });
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok || json.error) {
           const map: Record<string, string> = {
@@ -8461,7 +8455,7 @@ public async _saveMarker(): Promise<void> {
       const fileSrc = dlg.uploadId || oldId;
       if (fileSrc && fileSrc !== id && marker.pdfs?.length) {
         try {
-          const res: any = await this.host.hass.callWS({
+          const res: any = await this.host.planHost.request({
             type: 'houseplan/files/migrate', from_id: fileSrc, to_id: id,
           });
           const mapping = res?.mapping || {};
@@ -8550,7 +8544,7 @@ public async _saveMarker(): Promise<void> {
       if (newPos) {
         const pos = canonicalizePosition(newPos);
         this.host._layout = { ...this.host._layout, [id]: pos };
-        const writeHass = this.host.hass, current = this.host._configWriteGuard();
+        const writeHass = this.host.planHost, current = this.host._configWriteGuard();
         this.host._noteLayoutRev(await sendHouseplanWrite(writeHass, {
           type: 'houseplan/layout/update', device_id: id, pos,
         }, {isCurrent:current}));
@@ -8561,13 +8555,13 @@ public async _saveMarker(): Promise<void> {
       for (const obsoleteId of obsoleteIds) {
         // Rebinding or replacing a legacy tombstone changed the icon id.
         delete this.host._layout[obsoleteId];
-        await this.host.hass.callWS({ type: 'houseplan/layout/delete', device_id: obsoleteId })
+        await this.host.planHost.request({ type: 'houseplan/layout/delete', device_id: obsoleteId })
           .then((r: any) => this.host._noteLayoutRev(r)).catch(() => undefined);
       }
       // the config is committed — now it is safe to drop the old folder
       if (cleanupOldFiles && fileSrc) {
-        await this.host.hass
-          .callWS({ type: 'houseplan/files/cleanup', marker_id: fileSrc })
+        await this.host.planHost
+          .request({ type: 'houseplan/files/cleanup', marker_id: fileSrc })
           .catch(() => undefined); // leftovers are harmless; broken links are not
       }
       if (this.host._markerDialog === savingDraft) {
@@ -8608,10 +8602,10 @@ public async _deleteMarker(): Promise<void> {
       const { deleteMarker } = await import('./marker-deletion');
       if (!this.host.isConnected || dialogSession(this.host, 'marker') !== session
           || this.host._markerDialog?.devId !== targetId
-          || !this.host._configWriteContext.current(claim, this.host.hass)) return;
+          || !this.host._configWriteContext.current(claim, this.host.planHost)) return;
       await deleteMarker(this);
     } catch (error) {
-      if (this.host._configWriteContext.current(claim, this.host.hass))
+      if (this.host._configWriteContext.current(claim, this.host.planHost))
         showToast(this.host._t('toast.error', { err: this.host._errText(error) }), 'toast.error');
     }
   }
@@ -8659,7 +8653,7 @@ public _renderBackdropGuard(): TemplateResult | typeof nothing {
           this.host._backdropGuard = null;
           this._decorAssetGuardReplace = null;
         },
-        this.host.hass,
+        this.host._presentation,
         (blob, name) => this._uploadDecorImage(blob, name, decorReplace),
         (this.host._backdropGuard?.file.size || 0) <= 2 * 1024 * 1024,
       ) ?? nothing;
@@ -8672,7 +8666,7 @@ public _renderBackdropGuard(): TemplateResult | typeof nothing {
         }
       },
       () => { this.host._backdropGuard = null; },
-      this.host.hass,
+      this.host._presentation,
     ) ?? nothing;
   }
 
@@ -8736,7 +8730,7 @@ public async _deleteServerPlan(name: string): Promise<void> {
       || currentPlan.url !== plan.url || currentPlan.modified !== plan.modified
       || currentPlan.used_by.length || currentPlan.url === currentDialog.planUrl) return;
     try {
-      await this.host.hass.callWS({ type: 'houseplan/plans/delete', name });
+      await this.host.planHost.request({ type: 'houseplan/plans/delete', name });
       const d = this.host._spaceDialog;
       if (d?.saved) this.host._spaceDialog = { ...d, saved: d.saved.filter((p) => p.name !== name) };
     } catch (e: any) {
@@ -8799,7 +8793,7 @@ public async _saveSpaceDialog(): Promise<void> {
       if (d.source === 'file' && d.planFile) {
         // #617: over HTTP, never WebSocket — a big plan used to close the socket.
         const resp = await uploadPlanFile(
-          this.host.hass, (key, vars) => this.host._t(key, vars), spaceId, d.planFile,
+          this.host.planHost, (key, vars) => this.host._t(key, vars), spaceId, d.planFile,
         );
         uploaded = { url: resp.url, aspect: d.planFile.aspect };
       }
@@ -9113,7 +9107,7 @@ private _updateSupportDraft(field: 'contact' | 'message', value: string): void {
 public async _discardSupportPreview(token: string): Promise<void> {
     if (!token) return;
     try {
-      await this.host.hass.callWS({ type: 'houseplan/support/preview/discard', token });
+      await this.host.planHost.request({ type: 'houseplan/support/preview/discard', token });
     } catch {
       // Cleanup is best-effort; backend TTL is the final privacy guard.
     }
@@ -9123,7 +9117,7 @@ public async _closeSupportDialog(): Promise<void> {
     let dialog = this.host._supportDialog;
     if (!dialog) return;
     if (dialog.status === 'building' || dialog.status === 'sending') {
-      const lang = langOf(this.host.hass, this.host._config?.language);
+      const lang = langOf(this.host._presentation, this.host._config?.language);
       const accepted = await this.host._confirmDanger({
         key: 'close-support-busy',
         kind: 'warning',
@@ -9171,7 +9165,7 @@ private _supportFacts(): ReturnType<typeof supportRuntimeFacts> {
     const registry = this.host._haRegistry;
     return supportRuntimeFacts({
       userAgent: globalThis.navigator?.userAgent || '',
-      language: langOf(this.host.hass, this.host._config?.language),
+      language: langOf(this.host._presentation, this.host._config?.language),
       registryAccess: registry.access,
       registryLastSuccess: registry.lastSuccess,
     });
@@ -9196,7 +9190,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
       const diagnostics = requestedVersion === 2
         ? (await import('./support-diagnostics')).collectSupportDiagnostics(this.host) : null;
       if (!this._supportPreviewRequestIsCurrent(draftId, generation)) return;
-      const response: unknown = await this.host.hass.callWS({
+      const response: unknown = await this.host.planHost.request({
         type: 'houseplan/support/preview',
         card_version: displayVersion(CARD_VERSION),
         ...this._supportFacts(),
@@ -9288,7 +9282,7 @@ public _downloadSupportPreview(): void {
 
 private async _copySupportText(text: string, successKey: SupportI18nKey): Promise<void> {
     const showToast = captureToast(this.host);
-    const lang = langOf(this.host.hass, this.host._config?.language);
+    const lang = langOf(this.host._presentation, this.host._config?.language);
     try {
       await navigator.clipboard.writeText(text);
       showToast(supportT(lang, successKey), successKey);
@@ -9319,7 +9313,7 @@ public async _submitSupport(): Promise<void> {
     });
     if (!sending) return;
     try {
-      const response: unknown = await this.host.hass.callWS({
+      const response: unknown = await this.host.planHost.request({
         type: 'houseplan/support/submit',
         message: sending.message.trim(),
         contact: sending.contact.trim(),
@@ -9349,7 +9343,7 @@ public async _submitSupport(): Promise<void> {
   }
 
 private _supportErrorText(state: SupportDialogState): string {
-    const lang = langOf(this.host.hass, this.host._config?.language);
+    const lang = langOf(this.host._presentation, this.host._config?.language);
     if (state.errorCode.startsWith('validation.')) {
       const suffix = state.errorCode.slice('validation.'.length);
       return supportT(lang, `support.validation.${suffix}` as SupportI18nKey);
@@ -9369,7 +9363,7 @@ private _supportMessageKeydown(event: KeyboardEvent): void {
 public _renderSupportDialog(): TemplateResult {
     ensureSettingsDialogStyles(this.host);
     const state = this.host._supportDialog!;
-    const lang = langOf(this.host.hass, this.host._config?.language);
+    const lang = langOf(this.host._presentation, this.host._config?.language);
     const guideUrl = lang === 'ru'
       ? 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.ru.md'
       : 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.md';
@@ -9388,7 +9382,7 @@ public _renderSupportDialog(): TemplateResult {
     const contactInvalid = state.errorCode === 'validation.contact_too_long';
     const messageInvalid = state.errorCode === 'validation.message_required'
       || state.errorCode === 'validation.message_too_long';
-    return html`<hp-dialog id="support-dialog" class="ui-dialog" form-shell settings-layout .hass=${this.host.hass} data-kind="support"
+    return html`<hp-dialog id="support-dialog" class="ui-dialog" form-shell settings-layout .hass=${this.host._presentation} data-kind="support"
       .title=${this.host._t('support.title')} icon="mdi:help-circle-outline" wide dismiss-on-scrim
       @hp-close=${() => void this._closeSupportDialog()}>
         <div class="body supportbody hpf-form">
@@ -9574,7 +9568,7 @@ public _optimizeReferenceContext(
     }
     for (const [entityId, entity] of Object.entries<any>(registry.entities || {})) {
       names[`lg_${entityId}`] = humanName(
-        this.host.hass?.states?.[entityId]?.attributes?.friendly_name,
+        this.host.planHost.environment.states?.[entityId]?.attributes?.friendly_name,
         entity?.name,
         entity?.original_name,
       );
@@ -9591,7 +9585,7 @@ public _optimizeReferenceContext(
         marker.name,
         kind === 'device' ? bound?.name_by_user : null,
         bound?.name,
-        kind === 'entity' ? this.host.hass?.states?.[ref]?.attributes?.friendly_name : null,
+        kind === 'entity' ? this.host.planHost.environment.states?.[ref]?.attributes?.friendly_name : null,
         names[marker.id],
       );
     }
@@ -9609,7 +9603,7 @@ public _optimizeReferenceContext(
         // an authoritative Entity Registry cannot list them.
         entityIds: [...new Set([
           ...Object.keys(registry.entities || {}),
-          ...Object.keys(this.host.hass?.states || {}),
+          ...Object.keys(this.host.planHost.environment.states || {}),
         ])],
         names,
       },
@@ -9620,7 +9614,7 @@ public _optimizeReferenceContext(
 
 public async _undoPlanOptimization(): Promise<void> {
     if (!this.host._canEdit || this.host._kiosk) {
-      this.host._showToast(settingsT(langOf(this.host.hass, this.host._config?.language), 'gs.optimize_write_required'), 'gs.optimize_write_required');
+      this.host._showToast(settingsT(langOf(this.host._presentation, this.host._config?.language), 'gs.optimize_write_required'), 'gs.optimize_write_required');
       return;
     }
     return this.optimizationUndo.run();
@@ -9642,6 +9636,7 @@ public _closeBackupExport(): void {
   }
 
 private _backupImportRequest = 0;
+private _backupImportAuthority?: { key: object; revision: number };
 
 public _closeBackupImport(): void {
     this.backupTransfer.cancelImport();
@@ -9650,7 +9645,10 @@ public _closeBackupImport(): void {
   }
 
 private _ownsBackupImport(request: number): boolean {
-    return this.host.isConnected && this.host._backupImportIntent.owns(request);
+    const port = this.host.planHost, owner = this._backupImportAuthority;
+    return this.host.isConnected && this.host._backupImportIntent.owns(request)
+      && (request !== this._backupImportRequest || !!owner && owner.key === port.authorityKey
+        && owner.revision === port.writeAuthorityRevision);
   }
 
 public async _pickBackupImport(ev: Event): Promise<void> {
@@ -9664,6 +9662,7 @@ public async _pickBackupImport(ev: Event): Promise<void> {
 public async _importBackupFile(file: File, request = this.host._backupImportIntent.begin()): Promise<void> {
     if (!this._ownsBackupImport(request) || !this.host._canImportBackup) return;
     this._backupImportRequest = request;
+    this._backupImportAuthority = { key: this.host.planHost.authorityKey, revision: this.host.planHost.writeAuthorityRevision };
     this.host._backupImportIntent.opened(request);
     this.host._settingsDialog = null;
     this.host._backupImportDialog = {
@@ -9704,7 +9703,7 @@ public async _setBackupDuplicatePolicy(policy: 'skip' | 'virtual'): Promise<void
       || !d || d.busy || !d.token || policy === d.duplicatePolicy) return;
     this.host._backupImportDialog = { ...d, duplicatePolicy: policy, busy: true, error: '' };
     try {
-      const response: any = await this.host.hass.callWS({
+      const response: any = await this.host.planHost.request({
         type: 'houseplan/import/revalidate', token: d.token, duplicate_policy: policy,
       });
       if (this._ownsBackupImport(request) && this.host._backupImportDialog) {
@@ -9741,7 +9740,7 @@ public async _applyBackupImport(): Promise<void> {
     this.host._backupImportDialog = { ...d, busy: true, error: '' };
     const previousSpace = this.host._space;
     try {
-      const result: any = await this.host.hass.callWS({
+      const result: any = await this.host.planHost.request({
         type: 'houseplan/import/apply',
         token: d.token,
         expected_config_rev: d.expectedConfigRev,
@@ -9753,7 +9752,7 @@ public async _applyBackupImport(): Promise<void> {
       if (!this._ownsBackupImport(request)) return;
       const [configResponse, layoutResponse] = await Promise.all([
         this.host._getAuthoritativeConfig(),
-        this.host.hass.callWS({ type: 'houseplan/layout/get' }),
+        this.host.planHost.request<import('./config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' }),
       ]);
       if (!this._ownsBackupImport(request)) return;
       const adopted = await this.host._adoptAuthoritative({ cfgResp: configResponse, layResp: layoutResponse, reason: 'import-apply', profile: 'post-write' });
@@ -9775,7 +9774,7 @@ public async _applyBackupImport(): Promise<void> {
       this.host._stagedDeviceSnapshotToken = -1;
       this.host._capturedSnapshotConfigEpoch = -1;
       this.host._regSignature = '';
-      this.host._signer.invalidate(this.host.hass);
+      this.host._signer.invalidate(this.host.planHost);
       this.host._resign();
       this.host._maybeRebuildDevices();
       const spaces = this.host._serverCfg?.spaces || [];
@@ -9800,7 +9799,7 @@ public async _applyBackupImport(): Promise<void> {
       if (error?.code === 'conflict' && this.host._backupImportDialog?.token) {
         try {
           const current = this.host._backupImportDialog;
-          const refreshed: any = await this.host.hass.callWS({
+          const refreshed: any = await this.host.planHost.request({
             type: 'houseplan/import/revalidate', token: current.token,
             duplicate_policy: current.duplicatePolicy,
           });
@@ -9829,7 +9828,7 @@ public _renderBackupExportDialog(): TemplateResult {
     const d = this.host._backupExportDialog!;
     const recovery = d.archive?.recovery || d.preparedJson?.recovery;
     const currentSpace = (this.host._serverCfg?.spaces || []).find((space) => space.id === this.host._space);
-    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.export_title')}
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host._presentation} data-kind="backup" .title=${this.host._t('backup.export_title')}
       icon="mdi:download" dismiss-on-scrim @hp-close=${() => this._closeBackupExport()}>
       <div class="body backupbody">
         <div class="rhint">${this.host._t('backup.export_hint')}</div>
@@ -9853,10 +9852,10 @@ public _renderBackupExportDialog(): TemplateResult {
             }} />
           <span><b>${this.host._t('backup.plan_only')}</b><small>${this.host._t('backup.plan_only_hint')}</small></span>
         </label>` : nothing}
-        ${d.kind === 'full' ? html`<div class="rhint">${this._toolsT(this.host.hass?.user?.is_admin === true ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}
+        ${d.kind === 'full' ? html`<div class="rhint">${this._toolsT(this.host.planHost.environment.permissions.admin ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}
         ${this.backupTransfer.renderSummary((key, values) => this._toolsT(key, values), d.archive)}
         ${this.backupTransfer.renderRecovery((key, values) => this._toolsT(key, values), recovery, true)}
-        ${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${d.kind === 'full' && this.host.hass?.user?.is_admin === true ? this._toolsT('backup.zip_privacy_warning') : this.host._t('backup.privacy_warning')}` })}
+        ${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${d.kind === 'full' && this.host.planHost.environment.permissions.admin ? this._toolsT('backup.zip_privacy_warning') : this.host._t('backup.privacy_warning')}` })}
         ${d.error ? html`${callout({ className:'backuperror', kind:'danger', role:'alert', body:html`${d.error}` })}` : nothing}
       </div>
       <div class="row" slot="footer">
@@ -9913,7 +9912,7 @@ public _renderBackupImportDialog(): TemplateResult {
       : this.host._t(missingDecor.length ? 'backup.confirm_missing_images' : 'backup.confirm_detach');
     const confirmText = detachedOpenings && !contentConfirm ? this._toolsT('backup.confirm_openings')
       : detachedOpenings ? `${contentConfirmText} ${this._toolsT('backup.confirm_openings')}` : contentConfirmText;
-    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.import_title')}
+    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host._presentation} data-kind="backup" .title=${this.host._t('backup.import_title')}
       icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => this._closeBackupImport()}>
       <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
         <div class="backupfile hpf-reading-entry"><b>${d.filename}</b><span>${(d.size / 1024).toFixed(1)} KB</span></div>
@@ -10078,8 +10077,8 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
     if (generalProblems(d).length) return false;
     const owner = dialogSession(this.host, 'settings');
     const contextCurrent = this.host._configWriteGuard?.() ?? (() => true);
-    const connection = this.host.hass?.connection || this.host.hass;
-    const user = this.host.hass?.user?.id;
+    const authority = this.host.planHost.authorityKey;
+    const revision = this.host.planHost.writeAuthorityRevision;
     this.host._settingsDialog = { ...d, busy: true };
     let attempt: OptimisticAttempt<ServerConfig> | null = null;
     try {
@@ -10125,7 +10124,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
       if (!contextCurrent()) return false;
       if (!d.showRoomTooltip && this.host._tip?.room) this.host._tip = null;
       const current = !!this.host._settingsDialog && dialogSession(this.host, 'settings') === owner
-        && (this.host.hass?.connection || this.host.hass) === connection && this.host.hass?.user?.id === user;
+        && this.host.planHost.authorityKey === authority && this.host.planHost.writeAuthorityRevision === revision;
       if (current) {
         if (options.keepOpen) {
           acceptGeneralBaseline(this.host, d, owner);
@@ -10226,7 +10225,7 @@ public _renderRulesDialog(): TemplateResult {
       [r[i], r[j]] = [r[j], r[i]];
       this._rulesSet(r);
     };
-    return html`<hp-dialog .hass=${this.host.hass} class="ui-dialog rules-dialog" form-shell settings-layout data-kind="rules" .title=${this.host._t('rules.title')}
+    return html`<hp-dialog .hass=${this.host._presentation} class="ui-dialog rules-dialog" form-shell settings-layout data-kind="rules" .title=${this.host._t('rules.title')}
       icon="mdi:shape-plus-outline" wide @hp-close=${() => (this.host._rulesDialog = null)}>
         <div class="body">
           <div class="rhint">${this.host._t('rules.hint')}</div>
@@ -10316,7 +10315,7 @@ public async _vacAutoCalibrate(d: DevItem): Promise<void> {
     const showToast = captureToast(this.host);
     if (this.host._markerDialog?.busy) return;
     const src = this.host._vacSource(d);
-    const tele = src ? readVacTelemetry(this.host.hass?.states[src]?.attributes) : null;
+    const tele = src ? readVacTelemetry(this.host.planHost.environment.states[src]?.attributes) : null;
     if (!src || !tele || tele.rooms.length < 3) {
       showToast(this.host._t('vac.autocal_no_rooms'), 'vac.autocal_no_rooms');
       return;
@@ -10336,7 +10335,7 @@ public async _vacAutoCalibrate(d: DevItem): Promise<void> {
       this.host._vacCalConfirm = {
         markerId: d.id, source: src, mapId, routeId: target.routeId, space: target.space, matrix: res.matrix,
         rooms: res.matched.length,
-        error: formatLength(residualCm, this.host.hass?.config?.unit_system?.length === 'mi'),
+        error: formatLength(residualCm, this.host.planHost.environment.units.length === 'mi'),
       };
       return;
     }
@@ -10563,7 +10562,7 @@ public _roomSrcLabel(src: string): string {
         || this.host._fullRegistryHass.devices[ref]?.name || ref;
     }
     return this.host._fullRegistryHass.entities[ref]?.name
-      || this.host.hass.states[ref]?.attributes?.friendly_name || ref;
+      || this.host.planHost.environment.states[ref]?.attributes?.friendly_name || ref;
   }
 
 public _labelPos(r: RoomCfg, spaceId: string): { x: number; y: number } {
@@ -10912,7 +10911,7 @@ public _renderOpeningDialog(): TemplateResult {
         amount: 0, flipH: false, flipV: false, base: 'var(--secondary-text-color)', tone: 'var(--secondary-text-color)',
         cellCm: this.host._cellCm, gridPitch: this.host._gridPitch, face,
         visual: resolveOpeningVisual(candidate, eid => this.host._openingEntityAvailable(eid)
-          ? this.host.hass.states[eid] : null, 0),
+          ? this.host.planHost.environment.states[eid] : null, 0),
         handleSides: openingWindowHandleSides({ type: 'window', rx: d.x, ry: d.y, angle: d.angle },
           model.rooms, face.cm, this.host._cellCm, this.host._gridPitch), selectedLeaf: leafEdit.id,
       };
@@ -10924,7 +10923,7 @@ public _renderOpeningDialog(): TemplateResult {
     }
     const contacts = this._contactCandidates();
     const shadeContacts = [...contacts];
-    for (const [id, entity] of Object.entries(this.host.hass.states) as [string, { attributes?: { friendly_name?: string } }][]) {
+    for (const [id, entity] of Object.entries(this.host.planHost.environment.states) as [string, { attributes?: { friendly_name?: string } }][]) {
       if (id.startsWith('cover.') && this.host._openingEntityAvailable(id) && !shadeContacts.some(item => item.value === id)) {
         shadeContacts.push({ value: id, label: entity.attributes?.friendly_name || id });
       }
@@ -10932,8 +10931,8 @@ public _renderOpeningDialog(): TemplateResult {
     const featureOptions: OpeningFeatureFieldOptions = { draft: d,
       setDraft: value => { if (this.host._openingDialog === d) this.host._openingDialog = value; },
       t: (key, params) => this.host._t(key as I18nKey, params),
-      read: eid => this.host._openingEntityAvailable(eid) ? this.host.hass.states[eid] : null,
-      sourceName: eid => this.host.hass.states[eid]?.attributes?.friendly_name || eid,
+      read: eid => this.host._openingEntityAvailable(eid) ? this.host.planHost.environment.states[eid] : null,
+      sourceName: eid => String(this.host.planHost.environment.states[eid]?.attributes?.friendly_name || eid),
       contacts, shadeContacts, directionOptions, preview,
       bool: (value, change, disabled, field) => this._boolInput(value, change, disabled, field),
       disabled: this.host._haOpeningFeaturesApi !== 1,
@@ -10955,7 +10954,7 @@ public _renderOpeningDialog(): TemplateResult {
       const filter = kind === 'contact' ? d.contactFilter || '' : d.lockFilter || '';
       const selected = list.find((candidate) => candidate.value === cur);
       const selectedLabel = selected?.label
-        || this.host.hass.states[cur]?.attributes?.friendly_name
+        || this.host.planHost.environment.states[cur]?.attributes?.friendly_name
         || this.host._fullRegistryHass.entities[cur]?.name
         || cur;
       const filtered = filterOpeningEntityCandidates(list, filter);
@@ -10995,7 +10994,7 @@ public _renderOpeningDialog(): TemplateResult {
             </div>`
           : nothing}`;
     };
-    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host.hass} data-kind="opening" wide
+    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host._presentation} data-kind="opening" wide
       .title=${leafEdit ? this.host._t('opening.features.leaf', { number: draftWindowFeatures(d).leaves.findIndex(leaf => leaf.id === leafEdit.id) + 1 })
         : d.type === 'window' ? this.host._t('opening.features.window_title')
           : d.id ? this.host._t('opening.edit') : this.host._t('opening.new')} icon=${icon}
@@ -11469,8 +11468,8 @@ public _renderActiveChainInk(): TemplateResult {
 
 public _renderPartitionDeleteDialog(): TemplateResult {
     const dialog = this.host._partitionDeleteDialog!;
-    const imperial = this.host.hass?.config?.unit_system?.length === 'mi';
-    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="confirm"
+    const imperial = this.host.planHost.environment.units.length === 'mi';
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host._presentation} data-kind="confirm"
       .title=${this.host._t('confirm.delete_partition_openings_title')}
       icon="mdi:wall" dismiss-on-scrim
       @hp-close=${() => (this.host._partitionDeleteDialog = null)}>
@@ -11504,7 +11503,7 @@ public _renderPartitionDeleteDialog(): TemplateResult {
 
 public _renderRoomDeleteDialog(): TemplateResult {
     const dialog = this.host._roomDeleteDialog!;
-    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="confirm"
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host._presentation} data-kind="confirm"
       .title=${this.host._t('confirm.delete_room_title', { name: dialog.name })}
       icon="mdi:floor-plan" dismiss-on-scrim
       @hp-close=${() => (this.host._roomDeleteDialog = null)}>
@@ -11529,7 +11528,7 @@ public _renderRoomDeleteDialog(): TemplateResult {
 public _renderPhysicalDialog(): TemplateResult {
     const d = this.host._physicalDialog!;
     const column = d.kind === 'column';
-    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host.hass} data-kind="physical" wide
+    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host._presentation} data-kind="physical" wide
       .title=${this.host._t(column ? 'physical.column_properties' : 'physical.partition_properties')}
       icon=${column ? 'mdi:vector-square' : 'mdi:wall'}
       @hp-close=${() => (this.host._physicalDialog = null)}>
@@ -11626,11 +11625,11 @@ public _renderDevicesBar(): TemplateResult {
     const undoTitle = undoName
       ? this.host._t('history.undo_named', { name: undoName })
       : this.deviceStructure.available ? this.host._t('history.undo_empty')
-        : toolsT(langOf(this.host.hass, this.host._config?.language), 'history.device_backend_unavailable');
+        : toolsT(langOf(this.host._presentation, this.host._config?.language), 'history.device_backend_unavailable');
     const redoTitle = redoName
       ? this.host._t('history.redo_named', { name: redoName })
       : this.deviceStructure.available ? this.host._t('history.redo_empty')
-        : toolsT(langOf(this.host.hass, this.host._config?.language), 'history.device_backend_unavailable');
+        : toolsT(langOf(this.host._presentation, this.host._config?.language), 'history.device_backend_unavailable');
     return html`<div class="editbar devbar" data-hp="toolbar" data-kind="device">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
         <button class="btn" data-hp="tool" data-tool="add-device" data-editor-tool-intent @click=${() => this._openMarkerDialog()}
@@ -11640,9 +11639,9 @@ public _renderDevicesBar(): TemplateResult {
         ${this.host._ledButton()}
         <button class="btn ${this.host._deviceMagnets ? 'on' : ''}" data-hp="tool" data-tool="device-magnets" data-editor-tool-intent
           ?disabled=${!this.host._deviceContacts}
-          aria-pressed=${this.host._deviceMagnets ? 'true' : 'false'} data-hp-tooltip=${toolsT(langOf(this.host.hass, this.host._config?.language), 'editor.device_magnets_help')}
+          aria-pressed=${this.host._deviceMagnets ? 'true' : 'false'} data-hp-tooltip=${toolsT(langOf(this.host._presentation, this.host._config?.language), 'editor.device_magnets_help')}
           @click=${() => { this.host._deviceMagnets = !this.host._deviceMagnets; this.host.requestUpdate(); }}>
-          <ha-icon icon="mdi:magnet"></ha-icon>${toolsT(langOf(this.host.hass, this.host._config?.language), 'editor.device_magnets')}
+          <ha-icon icon="mdi:magnet"></ha-icon>${toolsT(langOf(this.host._presentation, this.host._config?.language), 'editor.device_magnets')}
         </button>
         <button class="btn ${this.host._showAll ? 'on' : ''}" data-hp="tool" data-tool="device-inbox" data-editor-tool-intent @click=${() => this._openDeviceInbox()}
           data-hp-tooltip=${this.host._t('device_inbox.title')}>
@@ -11873,7 +11872,7 @@ public _renderDeviceInbox(): TemplateResult {
       this._openMarkerDialog();
       if (!this.host._markerDialog) this._closeMarkerDialog();
     };
-    return html`<hp-dialog class="device-inbox-dialog ui-dialog" form-shell settings-layout .hass=${this.host.hass}
+    return html`<hp-dialog class="device-inbox-dialog ui-dialog" form-shell settings-layout .hass=${this.host._presentation}
       data-kind="device-inbox"
       .title=${this.host._t('device_inbox.title')} icon="mdi:devices" wide
       @hp-close=${() => { this.catalogMenu.dispose(); this.host._deviceInbox = null; }}>
@@ -12268,7 +12267,7 @@ public _controlRefInfo(ref: string): { label: string; sub: string; icon: string;
         || !!deviceId && marker.binding === `device:${deviceId}`);
       return {
         label: saved?.name || registryDevice?.name_by_user || registryDevice?.name
-          || this.host.hass.states[ref]?.attributes?.friendly_name || ref,
+          || this.host.planHost.environment.states[ref]?.attributes?.friendly_name || ref,
         sub: ref,
         icon: ref.startsWith('light.') ? 'mdi:lightbulb' : 'mdi:toggle-switch',
         warning: !this.host._planEntityAvailable(ref),
@@ -12304,7 +12303,7 @@ public _valueBadgeCandidateLabel(candidate: ValueBadgeCandidate): string {
     if (source.kind === 'entity_state') {
       return this.host._t('marker.value_badge_state', { name: candidate.label });
     }
-    const entityName = this.host.hass.states[source.entity_id]?.attributes?.friendly_name
+    const entityName = this.host.planHost.environment.states[source.entity_id]?.attributes?.friendly_name
       || this.host._fullRegistryHass.entities[source.entity_id]?.name || source.entity_id;
     return this.host._t(`marker.value_badge_attr_${source.attribute}` as I18nKey, { name: entityName });
   }
@@ -12327,7 +12326,7 @@ public _controlCandidates(d: NonNullable<HouseplanEditorHostPort['_markerDialog'
         search: `${info.label} ${info.sub} ${marker.id} ${ownControllableEntities(device).join(' ')}`.toLowerCase(),
       });
     }
-    const ha = Object.keys(this.host.hass.states || {})
+    const ha = Object.keys(this.host.planHost.environment.states || {})
       .filter((eid) => isControllable(eid) && !coveredEntities.has(eid)
         && effectiveMarkerControls(d.binding, [eid], this.host._bindingEntities(d.binding)).length > 0
         && this.host._planEntityAvailable(eid))
@@ -12429,14 +12428,14 @@ public _renderMergeDialog(): TemplateResult {
     const rooms = this.host._spaceModel()?.rooms || [];
     const opt = (id: string, key: 'a' | 'b') => {
       const r = rooms.find((x) => x.id === id);
-      const area = r?.area ? this.host.hass.areas[r.area]?.name : null;
+      const area = r?.area ? this.host.planHost.environment.registry.areas[r.area]?.name : null;
       return html`<label class="hpf-check hpf-check-wrap srcrow">
         <input data-hp="field" data-field="mergekeep" data-value=${key} type="radio" name="mergekeep" .checked=${d.pick === key}
           @change=${() => (this.host._mergeDialog = { ...d, pick: key })} />
         <span>${r?.name || ''} <span class="muted">· ${area || this.host._t('merge.no_area')}</span></span>
       </label>`;
     };
-    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="room" .title=${this.host._t('merge.header')} icon="mdi:vector-union"
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host._presentation} data-kind="room" .title=${this.host._t('merge.header')} icon="mdi:vector-union"
       @hp-close=${() => (this.host._mergeDialog = null)}>
         <div class="body">
           <p class="muted">${this.host._t('merge.hint')}</p>

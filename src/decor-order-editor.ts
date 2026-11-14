@@ -1,3 +1,4 @@
+import { planHostOf } from './ha-plan-host';
 /** Background-only commands and menu. No asset/file operation belongs here. */
 import { nothing, type TemplateResult } from 'lit';
 import { EditorContextMenu, menuPoint } from './editor-context-menu';
@@ -16,9 +17,9 @@ export class DecorOrderEditor {
   private readonly presentation = new EditorContextMenu(() => this.host.requestUpdate());
   constructor(private readonly runtime: HouseplanEditorRuntime) {}
   private get host() { return this.runtime.host; }
-  private t(key: ToolsI18nKey): string { return toolsT(langOf(this.host.hass, this.host._config?.language), key); }
+  private t(key: ToolsI18nKey): string { return toolsT(langOf(this.host._presentation, this.host._config?.language), key); }
   label(command: Command): string {
-    return command === 'delete' ? propertiesT(langOf(this.host.hass, this.host._config?.language), 'delete')
+    return command === 'delete' ? propertiesT(langOf(this.host._presentation, this.host._config?.language), 'delete')
       : this.t(command === 'front' ? 'decor.bring_front' : command === 'back' ? 'decor.send_back' : 'decor.copy');
   }
   private get allowed(): boolean {
@@ -38,7 +39,7 @@ export class DecorOrderEditor {
   private current(target: Target, revision = false): boolean {
     return this.allowed && !this.gesturing && target.space === this.host._space
       && target.navigation === this.runtime.navigationIntent
-      && this.host._configWriteContext.current(target.context, this.host.hass)
+      && this.host._configWriteContext.current(target.context, planHostOf(this.host))
       && (!revision || target.revision === this.host._cfgRev)
       && this.host._decorList.some(shape => shape.id === target.id);
   }

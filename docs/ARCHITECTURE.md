@@ -1,5 +1,50 @@
 # House Plan architecture
 
+## Plan host ports (#1392)
+
+`src/plan-host.ts` is the runtime boundary for the existing plan editor. It
+contains Houseplan request/event, authenticated file HTTP, content resolution,
+read-only state/registry/presentation, authority and optional device-service
+ports; it never exposes a connection, auth token or raw HA object.
+`src/ha-plan-host.ts` supplies the default implementation and confines legacy
+helper-input normalization to the HA boundary. `HouseplanCard.planHost` is an
+optional runtime injection; Lovelace/panel `setConfig` is unchanged.
+
+One environment subscription drives bootstrap, read retry, authority retirement
+and render intake. HA assignments update the same adapter; there is no parallel
+`changed.has('hass')` plan intake. State ticks do not renew write authority or
+plan subscriptions. Connection/original-callWS plus user is one opaque key;
+write-permission epochs separately fence A→B→A. Reconnect with the same key
+retains pending bookkeeping, but offline dispatch is refused. Config reload,
+write guards, signing, asset resolution and plan subscriptions use that key.
+An empty nonauthoritative registry is not evidence that bindings were deleted.
+
+The exact converted modules and monolith method owners are checked by
+`test/plan-host-boundary.test.mjs` (including negative alias/computed-access
+fixtures). They cover initial config/layout reads, plan intake/render, config
+and physical/node writes, Optimize/Undo, images, portable transfer, space copy
+and the associated plan/decor dialogs/properties. `HostPresentationContext`
+contains exactly language/locale/localize/themes; `.hass` on an existing HA UI
+element is only that presentation bridge, not a second transport.
+
+The remainder of the application is deliberately **not** declared HA-free.
+HA ingress, panel menu, device/radar/vacuum runtime and the explicitly named
+`_projectHaSmartHomeSources`, `_publishHaSignalEnvironment`,
+`_refreshHaVacuumTrails`, `_subscribeHaSmartHomeEvent`,
+`_registerHaSmartHomeEvents` and `_renderHaZigbeeTopology` bridges retain their
+HA context. Smart-home View metadata invalidation is data-only and does not
+renew write leases; direct radio updates use the same environment driver.
+
+`demo/srv/plan-host-fixture.js` is a synthetic wire store, not a backend
+validator. `demo/smoke_plan_host.mjs` edits actual wall/opening/room/decor
+controls, checks persisted documents/history, Optimize, opaque portable
+preview/apply and environment lifecycle without assigning `hass`. Its Proxy
+rejects forbidden presentation reads. UI Lab `/plan-host.html` uses the same
+host with the existing HA component bootstrap. It is an ephemeral contract lab,
+not a replacement for normal UI Lab sessions, a standalone website or HA ACL
+evidence. No format/data migration, HA-component replacement or release is
+part of this extraction.
+
 ## Portable plan core (#1391)
 
 `custom_components.houseplan.core` is the canonical Python implementation, not

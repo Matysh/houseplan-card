@@ -1,3 +1,4 @@
+import { planHostOf } from './ha-plan-host';
 import { captureToast } from './toast-presentation';
 import { waitForPriorConfigWrite } from './prior-config-write';
 /** Confirmed structural commands share the existing Devices CommandStack. */
@@ -32,11 +33,11 @@ export class DeviceStructureHistory {
   current(claim: object): boolean {
     const h = this.host;
     return h.isConnected && h._canEdit && !h._kiosk && h._mode === 'devices'
-      && h._configWriteContext.current(claim, h.hass);
+      && h._configWriteContext.current(claim, planHostOf(h));
   }
   fields(create = false): { history_session: string; operation_id: string; retained_tokens?: string[] } | Record<string, never> {
     if (!this.available) return {};
-    if (!this.context || !this.host._configWriteContext.current(this.context, this.host.hass)) {
+    if (!this.context || !this.host._configWriteContext.current(this.context, planHostOf(this.host))) {
       this.session = randomId(); this.context = this.host._configWriteContext.claim(); this.unresolved = null;
       this.lastRetention = null;
     }
@@ -51,7 +52,7 @@ export class DeviceStructureHistory {
     this.host.requestUpdate();
   }
   retire(release = false): void {
-    if (release && this.context && this.host._configWriteContext.current(this.context, this.host.hass))
+    if (release && this.context && this.host._configWriteContext.current(this.context, planHostOf(this.host)))
       void this.host.hass.callWS({ type: 'houseplan/marker/history/retain', history_session: this.session, tokens: [] }).catch(() => undefined);
     if (this.heartbeat) clearTimeout(this.heartbeat);
     this.heartbeat = null; this.pending = null;
@@ -123,7 +124,7 @@ export class DeviceStructureHistory {
   private send(request: Record<string, unknown>): Promise<DeviceStructureReply> {
     const host = this.host, hass = host.hass, claim = host._configWriteContext.claim();
     return sendHouseplanWrite(hass, request as HouseplanWriteMessage, {
-      isCurrent: () => host.isConnected && host._configWriteContext.current(claim,host.hass),
+      isCurrent: () => host.isConnected && host._configWriteContext.current(claim,planHostOf(host)),
       canDispatch: () => host._canEdit && !host._kiosk && host._mode === 'devices',
     });
   }
@@ -154,7 +155,7 @@ export class DeviceStructureHistory {
     }
   }
   prune(renew = false): void {
-    if (!this.context || !this.host._configWriteContext.current(this.context, this.host.hass)) return;
+    if (!this.context || !this.host._configWriteContext.current(this.context, planHostOf(this.host))) return;
     const tokens = [...new Set(this.host._devicePositionHistory.commands().flatMap(command =>
       'kind' in command.before && command.before.kind === 'structure' ? [command.before.token] : []))].sort();
     const claim = this.context;
@@ -203,7 +204,7 @@ export class DeviceStructureHistory {
       const key = code === 'device_history_unavailable' ? 'history.device_restore_unavailable' : 'history.device_structure_conflict';
       showToast(this.t(key), key);
     } finally {
-      if (h._configWriteContext.current(claim, h.hass)) {
+      if (h._configWriteContext.current(claim, planHostOf(h))) {
         h._devicePositionBusy = this.needsResolution;
         if (!this.needsResolution) this.status(null); else h.requestUpdate();
       }

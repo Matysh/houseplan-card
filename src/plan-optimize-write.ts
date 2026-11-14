@@ -1,6 +1,7 @@
 import type { ConfigAdoption } from './config-adoption';
 import { sendHouseplanWrite } from './large-write-transport';
 import { captureWriteAuthority } from './config-write-context';
+import { planHostOf, type PlanHostProvider } from './ha-plan-host';
 import type { DeviceLayout } from './device-position-history';
 import type { ServerConfig } from './types';
 import { OptimizePreviewChangedError, sameOptimizeSource, type OptimizeWriteGuard } from './optimize-source';
@@ -9,8 +10,7 @@ import { optimizeReceipt, OptimizeWriteFailure, type OptimizeReceipt, type Optim
 interface Clearable { clear(): void }
 interface Flushable { pending(): boolean; flush(): void }
 
-export interface PlanOptimizeWriteHost {
-  hass: { callWS<T>(message: Record<string, unknown>): Promise<T> };
+export interface PlanOptimizeWriteHost extends PlanHostProvider {
   _configWriteGuard?: () => () => boolean;
   _saveConfigDebounced: Flushable;
   _writeChain: Promise<void>;
@@ -54,13 +54,13 @@ export async function commitPlanOptimization(
   if (guard && (!guard.canWrite() || !sameOptimizeSource(guard.source, guard.current()))) {
     throw new OptimizePreviewChangedError();
   }
-  const writeHass = host.hass, authorityCurrent = captureWriteAuthority(host);
+  const writeHost = planHostOf(host), authorityCurrent = captureWriteAuthority(host);
   const expectedConfigRev = guard?.source.configRev ?? host._cfgRev;
   const expectedLayoutRev = guard?.source.layoutRev ?? host._layoutRev;
   const accepted = host._adoption.snapshot(null)?.config;
   const graph_change = Number(config.model_version) === 11 && Number(accepted?.model_version || 0) < 11
     ? (await import('./graph-write-change')).legacyGraphWriteChange(accepted, config, host._haGraphChangeApi===2?2:1) : undefined;
-  const response = await sendHouseplanWrite<Record<string, unknown>>(writeHass, {
+  const response = await sendHouseplanWrite<Record<string, unknown>>(writeHost, {
     type: 'houseplan/plan/optimize',
     ...(host._haOpeningFeaturesApi === 1 ? { opening_features_api: 1 } : {}),
     config,

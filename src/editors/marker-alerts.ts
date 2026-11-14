@@ -1,3 +1,4 @@
+import { planHostOf } from '../ha-plan-host';
 /** Local nested form, outer marker draft and the actual preview share the pure producer. */
 import { html, nothing, type ReactiveController, type ReactiveControllerHost } from 'lit';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
@@ -52,7 +53,7 @@ export class MarkerAlertsEditor implements ReactiveController {
   private current(draft: AlertEditOwner): boolean {
     return this.host.isConnected && this.host._canEdit && !this.host._kiosk && !this.host._connectionWasLost && !this.host._markerDialog?.busy
       && this.host._markerDialog?.binding === draft.binding && dialogSession(this.host, 'marker') === draft.session
-      && this.host._configWriteContext.current(draft.authority, this.host.hass);
+      && this.host._configWriteContext.current(draft.authority, planHostOf(this.host));
   }
   close(): void { this.constructorDraft = null; this.previewSession = undefined; this.previewOwner = null;
     this.confirmations.update(this.host._configWriteContext.claim(), [], false); }
@@ -70,7 +71,7 @@ export class MarkerAlertsEditor implements ReactiveController {
     const enabled = !!device && !!session && host.isConnected && host._canEdit && !host._kiosk
       && host._config?.live_states !== false && !host._connectionWasLost
       && !displayIsNeutral(normalizeDeviceDisplay(device.marker?.display))
-      && host._configWriteContext.current(claim, host.hass);
+      && host._configWriteContext.current(claim, planHostOf(host));
     const inputs: AlertObservation[] = enabled ? (this.rows() || []).map(rule => {
       const signature = JSON.stringify(rule);
       return { key: JSON.stringify([device!.id, rule.id]), identity: JSON.stringify([session, device!.id, device!.marker?.binding, device!.space]), rule,
@@ -79,7 +80,7 @@ export class MarkerAlertsEditor implements ReactiveController {
           if (!current || this.previewSession !== session || dialogSession(host, 'marker') !== session
             || !host.isConnected || !host._canEdit || host._kiosk || host._connectionWasLost
             || host._config?.live_states === false || displayIsNeutral(normalizeDeviceDisplay(current.marker?.display))
-            || !host._configWriteContext.current(claim, host.hass)
+            || !host._configWriteContext.current(claim, planHostOf(host))
             || current.id !== device!.id || current.marker?.binding !== device!.marker?.binding || current.space !== device!.space
             || !(this.rows() || []).some(candidate => candidate.id === rule.id && JSON.stringify(candidate) === signature)) return { permitted: false };
           return readMarkerAlertSource(host._planHass, host._fullRegistryHass, current, rule);

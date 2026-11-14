@@ -85,7 +85,7 @@ export function renderSpaceCopyDialog(
       host._spaceDialog = { ...current, copy: { ...current.copy, [key]: (event.target as HTMLInputElement).checked } };
     }
   };
-  return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${host.hass} data-kind="space"
+  return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${host._presentation} data-kind="space"
     .title=${host._t('space.copy_title')}
     icon="mdi:content-copy" @hp-close=${close}>
       <div class="body hpf-form">

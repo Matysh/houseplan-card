@@ -1,3 +1,5 @@
+import { HaPlanHost } from './ha-plan-host';
+import type { PlanHost, HostEnvironment, HostPresentationContext } from './plan-host';
 import { live } from 'lit/directives/live.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { renderModeSceneLayers, type ModeSceneLayer } from './mode-scene-layers';
@@ -12,7 +14,7 @@ import { annotateSpaceGraphOpeningRuns } from './graph-opening-run';
 import { ensureCompactDialogStyles } from './compact-dialog-styles';
 import { subscribeExternalScreenConfig, ExternalConfigStreamRecovery } from './external-screens-events';
 import { renderDeviceIssues } from './device-issues-view';
-import { DeviceSignalController } from './device-signal-runtime';
+import { DeviceSignalController, directSignalReadings } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
 import { decorTextElementId } from './decor-text-element';
 import { headerContentWidth, renderHeaderSpaceNavigation } from './header-space-select';
@@ -621,7 +623,7 @@ const HANDLE_PAINT_ORDER = ['edges', 'corners'] as const;
 export class HouseplanCard extends LitElement {
   constructor() {
     super();
-    new DeviceSignalController(this, () => this.hass, () => { this._hassSequence++; });
+    new DeviceSignalController(this, () => this.hass, () => this._publishHaSignalEnvironment());
     new LazyChromeTooltips(this, () => this._mode === 'view' ? `view:${this._space}`
       : `${this._editorSecondaryContextId}:${JSON.stringify(this._editorRuntime?.properties.identity)}`);
   }
@@ -634,77 +636,39 @@ export class HouseplanCard extends LitElement {
     for (const [name, previous] of changed) if (!this._hiddenRenderChanges.has(name))
       this._hiddenRenderChanges.set(name, previous);
     // Authority and transport intake are never contingent on a painted frame.
-    if (changed.has('hass') && this.hass) this._renderLife.intake(this.hass, () => intakeHass(this));
-    else this._alerts?.reconcile();
+    this._alerts?.reconcile();
     return false;
   }
 
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
+    if (name === 'hass') {
+      // The HA bridge publishes the same signal as an injected host. No
+      // second changed.has('hass') intake runs during the later Lit pass.
+      this._haPlanHost ??= new HaPlanHost(undefined);
+      this._haPlanHost.update(this.hass);
+      if (!this._injectedPlanHost) { this._connectPlanHost(); this._intakePlanEnvironment(); }
+      if (this.panelHost) {
+        const key = panelMenuKey(this.hass, !!this.narrow, this._t('panel.sidebar_menu'));
+        if (key !== this._panelMenuHassKey) {
+          this._panelMenuHassKey = key;
+          super.requestUpdate('panelMenu', oldValue);
+        }
+      }
+      return;
+    }
     if (name === undefined && !this._modeScenePhaseRequest
         && (this._modeTransitionPreparing || this._modeSceneFinishPending || this._modeTransition?.active))
       this._modeSceneRefreshRequested = true;
-    let forceHass = false;
-    let panelMenuChanged = false;
-    if (name === 'hass') {
-      const authorityChanged = this._configWriteContext.observe(this.hass);
-      if (authorityChanged) {
-        // A mounted foreign authority needs one coalesced Lit intake even if
-        // HA reused its object. Detached demand stays with the read owner.
-        forceHass = this.isConnected;
-        if (forceHass) this._renderLife.retireHass();
-        this._haWallNodeAttachApi = null;
-        this._haVacuumDockRestartApi = null;
-        this._haVacuumHistoryApi = null;
-        this._haDeviceHistoryApi = null;
-        this._editorRuntime?.deviceStructure.retire();
-        this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
-        this._spaceModels.clear(); this._modelCache = null;
-        this._liveSyncConnection = null;
-        this._saveConfigDebounced.cancel(); this._adoption.resetContext();
-        this._writeChain = Promise.resolve(); this._writesPending = 0;
-        this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
-        this._layoutIO.retire(); this._devicePositionBusy = false;
-        this._editorRuntime?.roomDeviceDiscovery.clear();
-        this._editorRuntime?.optimizationUndo.retire();
-        this._geometryHistory.clear(); this._devicePositionHistory.clear();
-        this._pendingPhysicalWrites.clear(); this._newSyncKey = ''; this._regSignature = '';
-      }
-      if (this.panelHost) {
-        const key = panelMenuKey(this.hass, !!this.narrow, this._t('panel.sidebar_menu'));
-        panelMenuChanged = key !== this._panelMenuHassKey;
-        this._panelMenuHassKey = key;
-        if (panelMenuChanged) forceHass = true;
-      }
-      // Every assignment counts, even A→B→A coalesced into one Lit update.
-      this._configReloadAuthority.observeContext(configReloadContext(this));
-      const waiting = this._read.busy || this._read.pending;
-      if (this._read.observe(configReloadContext(this))) {
-        this._loading = false; if (waiting) this._read.defer();
-      }
-      // A foreign HA retires the accepted document even while detached. Keep
-      // its new read intent independently of Lit/visual snapshot deduplication.
-      if (authorityChanged) this._read.defer();
-    }
     if ((this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) && this._hiddenRenderChanges) {
       this._hiddenRenderDeferred = true;
       if (name !== undefined && !this._hiddenRenderChanges.has(name)) this._hiddenRenderChanges.set(name, oldValue);
-      if (name === 'hass' && this.hass && this._renderLife) this._renderLife.intake(this.hass, () => intakeHass(this));
       return;
     }
-    if (name === 'hass' && this.hass && this._liveRt && !forceHass) {
-      const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
-      const render = this._liveRt.hass(
-        oldValue as HassRenderSnapshot | null | undefined, this.hass,
-        snapshot ? { entityIds: snapshot.entityIds } : null,
-        () => intakeHass(this),
-      );
-      if (!render && !this._summary?.observeHassComposition()) return;
-    }
     if (name !== undefined) this._terminalFrame = 0;
-    if (!panelMenuChanged && !(this.panelHost && (name === 'narrow' || name === 'panelSidebarOpen'))
+    if (!(this.panelHost && (name === 'narrow' || name === 'panelSidebarOpen'))
         && this._editorRuntime?._routeLiveEditorUpdate(name, oldValue)) return;
     this._liveRt?.clear();
-    super.requestUpdate(name, oldValue, forceHass ? { ...options, hasChanged: () => true } : options);
+    super.requestUpdate(name, oldValue, options);
   }
 
   public _editorRuntime: import('./houseplan-editor-runtime').HouseplanEditorRuntime | null = null;
@@ -747,8 +711,8 @@ export class HouseplanCard extends LitElement {
       return {
         fingerprint: module.EDITOR_RUNTIME_FINGERPRINT,
         prepare: (quiet = false) => Promise.all([
-          quiet ? module.EDITOR_LANGUAGE_RUNTIME.preload?.(langOf(this.hass, this._config?.language))
-            : module.EDITOR_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)),
+          quiet ? module.EDITOR_LANGUAGE_RUNTIME.preload?.(langOf(this._presentation, this._config?.language))
+            : module.EDITOR_LANGUAGE_RUNTIME.ensure(langOf(this._presentation, this._config?.language)),
           liveRuntimeCode.ensure(),
           module.HouseplanEditorRuntime.prepareSceneCode(attempt === 1 || !!fresh,
             () => String(++hpLazyRetrySeq)),
@@ -784,7 +748,7 @@ export class HouseplanCard extends LitElement {
             url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
             return url.href;
           })()) as typeof import('./houseplan-onboarding-runtime');
-      if (module.ONBOARDING_RUNTIME_FINGERPRINT === ENTRY_BUILD_FINGERPRINT) await module.ONBOARDING_LANGUAGE_RUNTIME.ensure(langOf(this.hass, this._config?.language)); // #627
+      if (module.ONBOARDING_RUNTIME_FINGERPRINT === ENTRY_BUILD_FINGERPRINT) await module.ONBOARDING_LANGUAGE_RUNTIME.ensure(langOf(this._presentation, this._config?.language)); // #627
       return {
         fingerprint: module.ONBOARDING_RUNTIME_FINGERPRINT,
         create: () => new module.HouseplanOnboardingRuntime(
@@ -973,6 +937,95 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
   public hass?: any;
+  private _haPlanHost?: HaPlanHost;
+  private _injectedPlanHost?: PlanHost;
+  private _planHostRelease?: () => void;
+  private _driverHost?: PlanHost;
+  private _driverRevision = -1;
+  private _driverAuthority?: object;
+  private _previousEnvironment?: HostEnvironment;
+  /** Optional runtime injection. The normal HA/Lovelace setConfig API is unchanged. */
+  public get planHost(): PlanHost {
+    return this._injectedPlanHost ?? (this._haPlanHost ??= new HaPlanHost(this.hass));
+  }
+  public set planHost(value: PlanHost | undefined) {
+    if (this._injectedPlanHost === value) return;
+    this._injectedPlanHost = value;
+    this._connectPlanHost();
+    this._intakePlanEnvironment();
+  }
+  public get _presentation(): HostPresentationContext { return this.planHost.environment.presentation; }
+  private get planEnvironmentRevision(): number { return this.planHost.environmentRevision; }
+
+  private _connectPlanHost(): void {
+    const host = this.planHost;
+    if (this._driverHost === host && this._planHostRelease) return;
+    this._planHostRelease?.(); this._planHostRelease = undefined;
+    this._driverHost = host; this._driverRevision = -1;
+    if (this.isConnected) this._planHostRelease = host.subscribeEnvironment(this._intakePlanEnvironment);
+  }
+
+  /** One operational driver, independent of Lit rendering/visibility. */
+  private _intakePlanEnvironment = (): void => {
+    if (!this._configWriteContext) return; // Lit may request an update during construction.
+    const host = this.planHost, environment = host.environment;
+    if (this._driverHost === host && this._driverRevision === host.environmentRevision) return;
+    const previousRevision = this._driverRevision;
+    this._driverRevision = host.environmentRevision;
+    const before = this._previousEnvironment;
+    this._previousEnvironment = environment;
+    const revoked = this._configWriteContext.observe(host);
+    const authorityChanged = !!this._driverAuthority && this._driverAuthority !== host.authorityKey;
+    this._driverAuthority = host.authorityKey;
+    if (revoked) {
+      this._retireLiveSyncSubscriptions();
+      this._backupImportIntent.cancel(false);
+      this._editorRuntime?.backupTransfer.dispose();
+      this._backupImportDialog = null; this._backupExportDialog = null;
+    }
+    if (authorityChanged) {
+      this._decorAssetSyncToken++;
+      this._renderLife.retireHass();
+      this._haWallNodeAttachApi = null;
+      this._haVacuumDockRestartApi = null; this._haVacuumHistoryApi = null; this._haDeviceHistoryApi = null;
+      this._editorRuntime?.deviceStructure.retire();
+      this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
+      this._spaceModels.clear(); this._modelCache = null;
+      this._retireLiveSyncSubscriptions();
+      this._saveConfigDebounced.cancel(); this._adoption.resetContext();
+      this._writeChain = Promise.resolve(); this._writesPending = 0;
+      this._persistLayout.cancel(); this._dirtyPos.clear(); this._sentPos.clear();
+      this._layoutIO.retire(); this._devicePositionBusy = false;
+      this._editorRuntime?.roomDeviceDiscovery.clear(); this._editorRuntime?.optimizationUndo.retire();
+      this._geometryHistory.clear(); this._devicePositionHistory.clear();
+      this._pendingPhysicalWrites.clear(); this._newSyncKey = ''; this._regSignature = '';
+    }
+    const context = configReloadContext(this);
+    this._configReloadAuthority.observeContext(context);
+    const waiting = this._read.busy || this._read.pending;
+    if (this._read.observe(context)) { this._loading = false; if (waiting) this._read.defer(); }
+    if (authorityChanged) this._read.defer();
+    if (before && before.permissions.admin !== environment.permissions.admin) this._read.defer();
+    if (!this.isConnected) return;
+    if (before?.connected && !environment.connected) this._onConnLost();
+    else if (before && !before.connected && environment.connected) this._onConnReady();
+    this._renderLife.intake(environment, () => intakeHass(this));
+    if (revoked && this._loadOk && environment.connected) this._ensureLiveSyncSubscriptions();
+    if (this._read.pending && environment.connected) void this._loadFromServer();
+    if (!revoked && before && this._liveRt && before.timeZone === environment.timeZone
+        && before.connected === environment.connected && before.smartHomeRevision === environment.smartHomeRevision) {
+      const frame = (value: HostEnvironment): HassRenderSnapshot => ({
+        states: value.states, entities: value.registry.entities, devices: value.registry.devices,
+        areas: value.registry.areas, themes: value.presentation.themes, config: value.units,
+        language: value.presentation.language, locale: value.presentation.locale ? { ...value.presentation.locale } : undefined,
+      });
+      const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+      if (!this._liveRt.environment(frame(before), frame(environment),
+        snapshot ? { entityIds: snapshot.entityIds } : null, () => undefined)
+          && !this._summary?.observeHassComposition()) return;
+    }
+    super.requestUpdate('planEnvironmentRevision', previousRevision);
+  };
   public panelSidebarOpen = false;
   public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
   /** Stable owner supplied by the HA shell, even while another route is active. */
@@ -1001,10 +1054,10 @@ export class HouseplanCard extends LitElement {
     const generation = ++this._routeKioskGeneration;
     if (this._routeKioskPending) this._cancelDangerConfirm();
     this._routeKioskPending = next;
-    const connection = this.hass?.connection, user = this.hass?.user?.id;
+    const authority = this.planHost.authorityKey, revision = this.planHost.writeAuthorityRevision;
     const apply = () => {
       if (generation !== this._routeKioskGeneration
-          || this.hass?.connection !== connection || this.hass?.user?.id !== user) return;
+          || this.planHost.authorityKey !== authority || this.planHost.writeAuthorityRevision !== revision) return;
       const before = this._routeKiosk;
       this._routeKiosk = next;
       this._routeKioskPending = null;
@@ -1082,7 +1135,7 @@ export class HouseplanCard extends LitElement {
         key: [style.fontFamily, style.fontSize, style.fontWeight, style.letterSpacing] };
     }
     return JSON.stringify([mode, this._space, this._canEdit, this._norm, this._hasFixedFloor, this.panelHost,
-      langOf(this.hass, this._config?.language), this.narrow, this._panelMenuHassKey,
+      langOf(this._presentation, this._config?.language), this.narrow, this._panelMenuHassKey,
       ...typography.key,
       this._panelHeaderSpaces.spaces.map(space => [space.id, space.title]),
       Array.from(head.querySelector('.header-actions')?.children || [])
@@ -1374,8 +1427,7 @@ export class HouseplanCard extends LitElement {
    * open the editors (`=== true`, not `!== false`).
    */
   private get _canManageConfiguration(): boolean {
-    if (this._serverCanWrite !== null) return this._serverCanWrite;
-    return this.hass?.user?.is_admin === true;
+    return this.planHost.environment.permissions.write && this._serverCanWrite !== false;
   }
   private get _canEdit(): boolean { return this._norm && this._canManageConfiguration; }
 
@@ -2812,10 +2864,10 @@ export class HouseplanCard extends LitElement {
   private _dangerConfirmAnimateExit = true;
   /** Synchronize host/runtime language state and return the current branch. */
   private _syncDangerConfirmLocaleGate(): LanguageRenderGate {
-    if (!this._config || !this.hass) return 'ready';
+    if (!this._config || !this.planHost.environment.ready) return 'ready';
     return languageRenderGate( // #627: + dictionaries of the surfaces loaded on THIS host
       this, this._editorRuntime?.languageRuntime ?? this._onboardingRuntime?.languageRuntime ?? LANGUAGE_RUNTIME,
-      langOf(this.hass, this._config.language),
+      langOf(this._presentation, this._config.language),
     );
   }
   private readonly _dangerConfirmController = new HpConfirmController((state) => {
@@ -2838,7 +2890,7 @@ export class HouseplanCard extends LitElement {
     // the honest answer — the alternative is a promise nobody will ever
     // resolve. Keep the guards aligned with `_renderBody`'s two unrenderable
     // branches instead of registering a controller request with no DOM owner.
-    if (!this._config || !this.hass) return Promise.resolve(false);
+    if (!this._config || !this.planHost.environment.ready) return Promise.resolve(false);
     if (this._syncDangerConfirmLocaleGate() === 'warm') return Promise.resolve(false);
     if (this._dangerConfirmMissingSpace()) return Promise.resolve(false);
     this._dangerConfirmAnimateExit = true;
@@ -3273,7 +3325,8 @@ export class HouseplanCard extends LitElement {
       this._renderLife.retireHass();
       for (const [name, previous] of this._hiddenRenderChanges) super.requestUpdate(name, previous);
       this._hiddenRenderChanges.clear();
-      super.requestUpdate('hass', undefined, { hasChanged: () => true });
+      this._driverRevision = -1; this._intakePlanEnvironment();
+      super.requestUpdate('planEnvironmentRevision', undefined, { hasChanged: () => true });
     }
     if (!this._vacRaf && this.renderRoot.querySelector('.vactrail line.tip')) this._vacRafLoop();
     this._syncRadarLive();
@@ -3651,7 +3704,8 @@ export class HouseplanCard extends LitElement {
       this._glowScreenBlend = supported;
       if (this.isConnected) this.requestUpdate();
     });
-    if (this.hass) { this._ensureHaRegistryAuthority(); this._hookConnection(); }
+    this._connectPlanHost();
+    this._intakePlanEnvironment();
     window.addEventListener('keydown', this._keyHandler);
     window.addEventListener('keydown', this._editorModifierHandler);
     window.addEventListener('keyup', this._editorModifierHandler);
@@ -3661,7 +3715,7 @@ export class HouseplanCard extends LitElement {
     window.addEventListener('pointercancel', this._onViewPointerTerminal, true);
     window.addEventListener('lostpointercapture', this._onViewPointerTerminal, true);
     // signatures expire (24 h); refresh well before that on long-lived screens
-    this._signer.start(() => this.hass, () => this._referencedContentUrls());
+    this._signer.start(() => this.planHost, () => this._referencedContentUrls());
     this._syncCycleTimer();
     window.addEventListener('hashchange', this._onHashChange);
     this._labsUnsub?.();
@@ -3684,7 +3738,7 @@ export class HouseplanCard extends LitElement {
     }
     // DEV-B703-02: a reattach mid-outage must keep revalidating — the retry
     // timer died in disconnectedCallback
-    if (!this._loadOk && this._serverCfg && this.hass) this._scheduleLoadRetry();
+    if (!this._loadOk && this._serverCfg && this.planHost.environment.connected) this._scheduleLoadRetry();
     // AUD-159B1-01: the placement is only knowable once we are IN the DOM.
     if (!this._warmSlot && this._config) this._warmAdopt();
     if (this._loadOk) this._ensureLiveSyncSubscriptions();
@@ -3795,10 +3849,8 @@ export class HouseplanCard extends LitElement {
     clearTimeout(this._reloadRetry);
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined; // a cleared id must not block a reschedule
-    this._haRegistryRelease?.();
-    this._haRegistryRelease = undefined;
-    this._haRegistryConnection = null;
-    this._haRegistryUser = undefined;
+    this._planHostRelease?.(); this._planHostRelease = undefined;
+    this._driverRevision = -1;
     this._signer.dispose();
     clearTimeout(this._toastTimer);
     this._toast = '';
@@ -3852,10 +3904,6 @@ export class HouseplanCard extends LitElement {
     this._detachSubscriptionsTimer = window.setTimeout(() => {
       this._detachSubscriptionsTimer = undefined;
       this._retireLiveSyncSubscriptions();
-      this._connHooked?.removeEventListener?.('ready', this._onConnReady);
-      this._connHooked?.removeEventListener?.('disconnected', this._onConnLost);
-      this._connHooked?.removeEventListener?.('reconnect-error', this._onConnLost);
-      this._connHooked = null;
       if (this._loadOk) this._read.defer();
     }, 2000);
     clearTimeout(this._layoutSyncTimer);
@@ -4753,7 +4801,7 @@ export class HouseplanCard extends LitElement {
     // config was still being projected.
     if (!this._model.length) return false;
     const space = this._model.length ? this._spaceModel() : null;
-    return !space?.bg?.href || this._signer.isReady(this.hass, space.bg.href);
+    return !space?.bg?.href || this._signer.isReady(this.planHost, space.bg.href);
   }
 
   private _initialSpaceSelection(
@@ -4822,7 +4870,7 @@ export class HouseplanCard extends LitElement {
       this._view,
       size,
       this._glowScreenBlend ? 'screen' : 'normal',
-      this.hass?.themes?.darkMode ?? this.hass?.themes?.default_theme ?? '',
+      this._presentation.themes?.darkMode ?? this._presentation.themes?.default_theme ?? '',
     ]);
   }
 
@@ -4877,7 +4925,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _onBackdropLoaded(raw: string, paintedUrl?: string): void {
-    this._signer.markLoaded(this.hass, raw, paintedUrl);
+    this._signer.markLoaded(this.planHost, raw, paintedUrl);
     this._continuity.note('asset-ready');
     this._continuity.resetPaint();
     if (this._continuity.state !== 'steady') this.requestUpdate();
@@ -5247,19 +5295,14 @@ export class HouseplanCard extends LitElement {
     // A phase-only commit keeps common scene parts. Every ordinary update,
     // accepted HA/config/layout change, or floor change invalidates this reuse.
     if (this._modeSceneRefreshRequested || (!this._modeTransitionBusy && !this._modeSceneFinishPending)
-        || ['hass', '_config', '_serverCfg', '_cfgRev', '_cfgEpoch', '_layoutRev', '_layout', '_space']
+      || ['planEnvironmentRevision', '_config', '_serverCfg', '_cfgRev', '_cfgEpoch', '_layoutRev', '_layout', '_space']
           .some(key => changed.has(key)))
       this._modeSceneRevision++;
     this._modeSceneRefreshRequested = false;
     this._warmMarker.reconcile();
     if (changed.has('_serverCfg') || changed.has('_space') || changed.has('_openingInfo')) this._syncOpeningInfo();
     this._viewRuntimes.reconcile();
-    this._cfgPass.begin(); this._isoProjectionSnapshot = null; this._isoFirstFrame.prepare(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes)); this._syncVolumetricSetting(); this._summary?.willUpdate();
-    if (changed.has('hass')) {
-      // A reused HA object can be deduplicated by visual intake after detach.
-      // Deferred transport intent is independent of that frame identity.
-      if (this._read.pending) void this._loadFromServer();
-    }
+    this._cfgPass.begin(); this._isoProjectionSnapshot = null; this._isoFirstFrame.prepare(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this._presentation.themes)); this._syncVolumetricSetting(); this._summary?.willUpdate();
     // `_serverCfg` is the root of every geometry cache. Keep the epoch
     // invariant local to that reactive assignment so imports, reconnects and
     // demo harnesses cannot accidentally reuse an older config object's data.
@@ -5286,11 +5329,6 @@ export class HouseplanCard extends LitElement {
     )) {
       this._cancelDangerConfirm();
     }
-    if (changed.has('hass') && this.hass) {
-      const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
-      this._renderLife.observe(changed.get('hass') as HassRenderSnapshot | null | undefined, this.hass,
-        snapshot ? { entityIds: snapshot.entityIds } : null, () => intakeHass(this));
-    }
     if (changed.has('_space')) this._syncActivityRuntime();
     if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
       this._continuity.refreshCompleteFrame(this._visualFrameFingerprint());
@@ -5314,7 +5352,7 @@ export class HouseplanCard extends LitElement {
     this._toastPresentation.refresh();
     if (this._tip?.room && this._hoverRoom) this._tip.co2 = this._roomCo2(this._hoverRoom.room);
     this._syncCycleTimer();
-    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this.hass?.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); if (!this._modeProjectionSource && !this._modeTransitionPreparing) { if (this._liveRt) this._liveRt.commit(); else commitHouseplanViewport(this); }
+    if (this._isoFirstFrame.sync(this._desiredProjection, isoPaperContext(this._space, this._mode, !!this._spaceModel()?.bg, this._presentation.themes), () => parseCssColor(this._cssColor('var(--ha-card-background, var(--card-background-color, #111))', 'rgb(17, 17, 17)')) ?? [17, 17, 17])) this.requestUpdate(); this._summary?.updated(); if (!this._modeProjectionSource && !this._modeTransitionPreparing) { if (this._liveRt) this._liveRt.commit(); else commitHouseplanViewport(this); }
     if (!this._modeTransitionBusy) this._editorRuntime?._commitLiveEditor();
     if (!this._modeTransitionBusy) {
       this._editorRuntime?.prepareModeScene();
@@ -5482,6 +5520,8 @@ export class HouseplanCard extends LitElement {
 
   private _adoptConfigCapabilities(response: unknown): void {
     adoptCardConfigCapabilities(this as unknown as ConfigCapabilitiesCardPort, response);
+    if (!this._injectedPlanHost && response && typeof response === 'object' && 'can_write' in response
+        && typeof response.can_write === 'boolean') this._haPlanHost?.setServerWrite(response.can_write);
   }
   /** Live presence exists only in ordinary View and only when both display
    * switches and the freshly advertised backend protocol allow it. */
@@ -5496,11 +5536,11 @@ export class HouseplanCard extends LitElement {
 
   private async _syncDecorAssets(cfg: ServerConfig | null): Promise<void> {
     const token = ++this._decorAssetSyncToken;
-    if (this._haDecorAssetsApi !== DECOR_ASSETS_API_VERSION || !this.hass) {
+    if (this._haDecorAssetsApi !== DECOR_ASSETS_API_VERSION || !this.planHost.environment.connected) {
       this._decorAssets = new Map();
       return;
     }
-    const resolved = await resolveDecorAssets(this.hass, decorAssetIds(cfg), this._cfgRev);
+    const resolved = await resolveDecorAssets(this.planHost, decorAssetIds(cfg), this._cfgRev);
     if (token !== this._decorAssetSyncToken) return;
     this._decorAssets = resolved;
     this._resign();
@@ -5538,16 +5578,16 @@ export class HouseplanCard extends LitElement {
     return true;
   }
 
-  private _getAuthoritativeConfig(hass?: UndoHass, isCurrent?: () => boolean): Promise<AuthoritativeConfigResponse> {
-    return getAuthoritativeCardConfig(this as unknown as ConfigCapabilitiesCardPort, hass, isCurrent);
+  private _getAuthoritativeConfig(input: UndoHass | PlanHost = this.planHost, isCurrent?: () => boolean): Promise<AuthoritativeConfigResponse> {
+    return getAuthoritativeCardConfig(this as unknown as ConfigCapabilitiesCardPort, input, isCurrent);
   }
 
   private async _loadFromServer(): Promise<void> {
     if (!this.isConnected) return;
-    if (typeof this.hass?.callWS !== 'function') { this._read.defer(); return; }
+    if (!this.planHost.environment.connected) { this._read.defer(); return; }
     const loadClaim = this._read.begin(configReloadContext(this));
     if (!loadClaim) return;
-    const hass = this.hass;
+    const portHost = this.planHost;
     const port = this as unknown as ConfigReloadHostPort;
     const claim = beginConfigReload(port);
     const isCurrent = () => this._read.isCurrent(loadClaim) && configReloadClaimCurrent(port, claim);
@@ -5567,8 +5607,8 @@ export class HouseplanCard extends LitElement {
     };
     try {
       const adopted = await this._layoutIO.reconcile(() => Promise.all([
-        this._getAuthoritativeConfig(hass, isCurrent),
-        hass.callWS({ type: 'houseplan/layout/get' }),
+        this._getAuthoritativeConfig(portHost, isCurrent),
+        portHost.request<import('./config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' }),
       ]), ([cfgResp, layResp], pairCurrent) => this._adoptAuthoritative({
         cfgResp, layResp, reason: 'structural-response', profile: 'reload', isCurrent: pairCurrent,
         beforeAdopt: () => {
@@ -5602,9 +5642,7 @@ export class HouseplanCard extends LitElement {
       // Trails and event subscriptions enrich an already complete snapshot.
       // A read-only HA session may reject these; that must never roll the
       // accepted config back into the mandatory load catch.
-      void hass.callWS({ type: 'houseplan/trail/get' })
-        .then((r: unknown) => { if (this.isConnected && this._read.isCurrent(loadClaim) && this.hass?.connection === hass.connection) this._adoptVacuumTrails(r, hass); })
-        .catch(() => undefined);
+      this._refreshHaVacuumTrails(() => this.isConnected && this._read.isCurrent(loadClaim));
       this._ensureLiveSyncSubscriptions();
     } catch (e) {
       if (!isCurrent()) return;
@@ -5659,8 +5697,8 @@ export class HouseplanCard extends LitElement {
 
   /** Best-effort live sync starts only after the initial snapshot is usable. */
   private _ensureLiveSyncSubscriptions(): void {
-    const connection = this.hass?.connection;
-    if (!connection) return;
+    const host = this.planHost, connection = host.authorityKey;
+    if (!host.environment.connected) return;
     if (this._externalConfigStreamRecovery.blocked && connection === this._liveSyncConnection) return;
     if (connection !== this._liveSyncConnection) {
       this._externalConfigStreamRecovery.reset();
@@ -5675,7 +5713,7 @@ export class HouseplanCard extends LitElement {
     const context = this._configWriteContext.claim();
     const subscriptionOwner = this._liveSyncSubscriptionOwner;
     const ownsContext = () => generation === this._liveSyncGeneration && this.isConnected
-      && this.hass?.connection === connection && this._configWriteContext.current(context, this.hass);
+      && this.planHost.authorityKey === connection && this._configWriteContext.current(context, this.planHost);
     const attempts: Array<() => Promise<void>> = [];
     const subscribe = (
       current: () => (() => void) | null | undefined,
@@ -5688,7 +5726,7 @@ export class HouseplanCard extends LitElement {
       attempts.push(async () => {
         const receive = (ev: unknown) => {
           if (subscriptionOwner !== this._liveSyncSubscriptionOwner
-              || !this._configWriteContext.current(context, this.hass)) return;
+              || !this._configWriteContext.current(context, this.planHost)) return;
           if (!this.isConnected) {
             const data = ev && typeof ev === 'object' && 'data' in ev ? ev.data : null;
             if (data && typeof data === 'object' && 'kind' in data && data.kind === 'closed')
@@ -5700,10 +5738,11 @@ export class HouseplanCard extends LitElement {
           }
           return this._liveSyncReceivers.get(event)?.(ev);
         };
-        const unsubscribe = event === 'houseplan_config_updated'
-          ? await subscribeExternalScreenConfig(connection, this.panelHost && this._haExternalScreensEventsApi === 1,
-            this._cfgRev, data => receive({ data }))
-          : await connection.subscribeEvents(receive, event);
+        const unsubscribe = event === 'houseplan_config_updated' || event === 'houseplan_layout_updated'
+          ? await host.subscribe(event, receive, {
+            externalScreens: { enabled: this.panelHost && this._haExternalScreensEventsApi === 1, baseRevision: this._cfgRev },
+          })
+          : await this._subscribeHaSmartHomeEvent(event, receive);
         const valid = ownsContext() && !current();
         if (valid) adopt(unsubscribe);
         else unsubscribe?.();
@@ -5722,7 +5761,7 @@ export class HouseplanCard extends LitElement {
           this._externalConfigStreamRecovery.closed(ev.data.reason, {
             retire: () => { this._liveSyncGeneration++; this._unsubCfg?.(); this._unsubCfg = null; },
             refresh: afterApplied => { void this._reloadConfigOnly(false, undefined, afterApplied); },
-            canResume: () => this.isConnected && this.hass?.connection === connection && this._haExternalScreensEventsApi === 1,
+            canResume: () => this.isConnected && this.planHost.authorityKey === connection && this._haExternalScreensEventsApi === 1,
             resume: () => { this._liveSyncConnection = null; this._ensureLiveSyncSubscriptions(); },
           });
           return;
@@ -5744,36 +5783,13 @@ export class HouseplanCard extends LitElement {
         if (observedRev !== this._cfgRev) void this._reloadConfigOnly(false, observedRev);
       },
     );
-    const trailHass = this.hass;
-    subscribe(
-      () => this._unsubTrail,
-      (unsubscribe) => { this._unsubTrail = unsubscribe; },
-      'houseplan_trail_updated',
-      vacuumTrailRefresh(
-        () => trailHass.callWS({ type: 'houseplan/trail/get' }),
-        ownsContext,
-        (r: unknown) => this._adoptVacuumTrails(r, trailHass),
-      ),
-    );
     subscribe(
       () => this._unsubLayout,
       (unsubscribe) => { this._unsubLayout = unsubscribe; },
       'houseplan_layout_updated',
       (ev: any) => this._onLayoutEvent(Number(ev?.data?.rev ?? -1)),
     );
-    subscribe(
-      () => this._unsubVirtual,
-      (unsubscribe) => { this._unsubVirtual = unsubscribe; },
-      'houseplan_virtual_light_updated',
-      (ev: any) => {
-        const next = applyVirtualLightEvent(this._virtualLights, ev?.data);
-        if (next === this._virtualLights) return;
-        this._virtualLights = next;
-        this._capturedSnapshotVirtual = '';
-        this._cacheSnapshot();
-        this.requestUpdate();
-      },
-    );
+    this._registerHaSmartHomeEvents(subscribe, ownsContext);
 
     if (!attempts.length) return;
     const task = settleBestEffort(attempts).then(() => undefined);
@@ -5805,7 +5821,7 @@ export class HouseplanCard extends LitElement {
     const delay = Math.min(8000, 500 * 2 ** Math.min(4, Math.max(1, this._loadTries - 7)));
     this._loadRetryTimer = window.setTimeout(() => {
       this._loadRetryTimer = undefined;
-      if ((force || !this._loadOk) && !this._loading && this.hass) this._loadFromServer();
+      if ((force || !this._loadOk) && !this._loading && this.planHost.environment.connected) this._loadFromServer();
     }, delay);
   }
 
@@ -5816,15 +5832,12 @@ export class HouseplanCard extends LitElement {
    *  'ready' — but a LOAD that burned its retry budget while the socket was
    *  down would never run again. 'ready' fires on every (re)connect: reset
    *  the budget and quietly re-read the config. */
-  private _connHooked: { removeEventListener?: (t: string, cb: () => void) => void } | null = null;
   private _connectionWasLost = false;
   /** Shared, page-level full HA registry authority (one fetch/subscription per connection). */
-  private _haRegistryRelease?: () => void;
   private _haRegistryConnection: any = null;
-  private _haRegistryUser?: string;
   private _haRegistryRev = -1;
   private _haBindingCacheKey = '';
-  private _planHassMemo: { hass: unknown; sig: string; active: unknown; full: unknown } | null = null;
+  private _planHassMemo: { environment: unknown; sig: string; active: unknown; full: unknown } | null = null;
   private _planHassProjection?: PlanHassProjection;
   private _renderLife = new RenderLifecycle();
   private _liveEditorPaintCount = 0;
@@ -5833,54 +5846,50 @@ export class HouseplanCard extends LitElement {
   private _syncLiveHover(): void { this._liveRt ? this._liveRt.hover() : this.requestUpdate(); }
   /** Bypass live routing so a gesture terminal publishes the last HA frame. */
   private _flushHa(): void { if (this._liveRt?.take()) { this._terminalFrame = 2; super.requestUpdate(); } }
-  private _onHaRegistryUpdate = (): void => {
-    const snapshot = haRegistrySnapshot(this.hass);
-    if (snapshot.revision === this._haRegistryRev && this._devices.length) return;
-    this._haRegistryRev = snapshot.revision;
-    this._renderLife.invalidate();
-    this._planHassMemo = null;
-    this._regSignature = '';
-    this._maybeRebuildDevices();
-    this.requestUpdate();
-  };
-
   private _ensureHaRegistryAuthority(): void {
-    const connection = this.hass?.connection || null;
-    const user = this.hass?.user?.id;
-    if (!connection || (connection === this._haRegistryConnection && user === this._haRegistryUser)) return;
-    this._haRegistryRelease?.();
-    this._haRegistryConnection = connection;
-    this._haRegistryUser = user;
-    this._haRegistryRev = -1;
-    this._haBindingCacheKey = '';
-    this._renderLife.invalidate();
-    this._areaSnapshotCleanupCandidates.clear();
-    this._planHassMemo = null;
-    this._haRegistryRelease = acquireHaRegistries(this.hass, this._onHaRegistryUpdate);
-    this._onHaRegistryUpdate();
+    const snapshot = this._haRegistry, key = this.planHost.authorityKey;
+    if (key === this._haRegistryConnection && snapshot.revision === this._haRegistryRev) return;
+    this._haRegistryConnection = key; this._haRegistryRev = snapshot.revision;
+    this._haBindingCacheKey = ''; this._renderLife.invalidate();
+    this._areaSnapshotCleanupCandidates.clear(); this._planHassMemo = null; this._regSignature = '';
   }
 
   private get _haRegistry(): HaRegistrySnapshot {
-    return haRegistrySnapshot(this.hass);
+    return this.planHost.environment.registry;
   }
 
-  /** Active-only projection for every plan-level state/data/action consumer. */
+  /** Domain projection: states/metadata, never transport, auth or connection. */
   private get _planHass(): any {
-    const snapshot = this._haRegistry;
-    const sig = haRegistryBuildSignature(this.hass, snapshot);
+    const environment = this.planHost.environment, snapshot = environment.registry;
+    const sig = haRegistryBuildSignature(null, snapshot);
     const memo = this._planHassMemo;
-    if (memo && memo.hass === this.hass && memo.sig === sig) {
-      return memo.active;
-    }
-    const projected = (this._planHassProjection ??= new PlanHassProjection()).project(this.hass, snapshot);
-    const active = projectEcovacsSources(this, projected, this.hass);
-    const full = fullRegistryHass(this.hass, snapshot);
-    this._planHassMemo = { hass: this.hass, sig, active, full };
+    if (memo && memo.environment === environment && memo.sig === sig) return memo.active;
+    const source = { ...environment.presentation, states: environment.states,
+      devices: snapshot.devices, entities: snapshot.entities, areas: snapshot.areas,
+      config: { time_zone: environment.timeZone, unit_system: environment.units } };
+    const projected = (this._planHassProjection ??= new PlanHassProjection())
+      .project(source, snapshot, this.planHost.authorityKey);
+    const active = this._projectHaSmartHomeSources(projected);
+    const full = fullRegistryHass(source, snapshot);
+    this._planHassMemo = { environment, sig, active, full };
     return active;
   }
 
+  /** HA-only enrichment, outside the portable plan boundary. */
+  private _projectHaSmartHomeSources(projected: Parameters<typeof projectEcovacsSources>[1]): unknown {
+    if (!this.hass) return projected;
+    // Smart-home intent resolution still needs HA's service catalog and direct
+    // radio readings. Lend data, not transport/auth, to the shared domain frame.
+    return projectEcovacsSources(this, { ...projected, services: this.hass.services,
+      zigbeeLqi: directSignalReadings(this.hass), config: this.hass.config }, this.hass);
+  }
+  private _publishHaSignalEnvironment(): void {
+    if (!this._injectedPlanHost && this._haPlanHost) this._haPlanHost.update(this.hass);
+    else this._hassSequence++;
+  }
+
   private _captureRenderDeviceSnapshot(): void {
-    if (!this.hass) return;
+    if (!this.planHost.environment.ready) return;
     const now = Date.now();
     const activity = [...this._activityRt.entries()]
       .map(([id, runtime]) => `${id}:${runtime.gen}:${runtime.flashTs}:`
@@ -5946,11 +5955,11 @@ export class HouseplanCard extends LitElement {
    */
   private get _fullRegistryHass(): any {
     void this._planHass;
-    return this._planHassMemo?.full || this.hass;
+    return this._planHassMemo?.full || this._planHass;
   }
 
   private _bindingStatus(binding: string): HaBindingStatus {
-    return resolveHaBindingStatus(this.hass, binding, this._haRegistry);
+    return resolveHaBindingStatus(this._planHass, binding, this._haRegistry);
   }
 
   /** Redacted client-side support data; no states, names or marker metadata. */
@@ -5959,7 +5968,7 @@ export class HouseplanCard extends LitElement {
     bindings: Record<HaBindingStatus['kind'], number>;
   } {
     const { registry, bindings } = this._renderLife.diagnostics(
-      this.hass, this._markers, (binding) => this._bindingStatus(binding),
+      this._planHass, this._markers, (binding) => this._bindingStatus(binding), this._haRegistry,
     );
     return {
       registry: {
@@ -6013,7 +6022,6 @@ export class HouseplanCard extends LitElement {
   }
   private _onConnReady = (): void => {
     if (!this.isConnected) {
-      refreshHaRegistries(this.hass, { connectionReady: true });
       this._connectionWasLost = true; this._read.defer(); return;
     }
     if (this._externalConfigStreamRecovery.blocked) {
@@ -6022,7 +6030,6 @@ export class HouseplanCard extends LitElement {
     this._loadTries = 0;
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined;
-    refreshHaRegistries(this.hass, { connectionReady: true });
     if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
     if (this._cfgWriting) {
       clearTimeout(this._reloadRetry);
@@ -6050,16 +6057,45 @@ export class HouseplanCard extends LitElement {
     this._continuityDataReady = false;
     this._continuity.connectionLost();
   };
-  private _hookConnection(): void {
-    const conn = (this.hass as any)?.connection;
-    if (!conn || conn === this._connHooked) return;
-    this._connHooked?.removeEventListener?.('ready', this._onConnReady);
-    this._connHooked?.removeEventListener?.('disconnected', this._onConnLost);
-    this._connHooked?.removeEventListener?.('reconnect-error', this._onConnLost);
-    conn.addEventListener?.('ready', this._onConnReady);
-    conn.addEventListener?.('disconnected', this._onConnLost);
-    conn.addEventListener?.('reconnect-error', this._onConnLost);
-    this._connHooked = conn;
+  private _hookConnection(): void { this._connectPlanHost(); }
+
+  /** Optional HA vacuum enrichment does not participate in plan readiness. */
+  private _refreshHaVacuumTrails(current: () => boolean): void {
+    if (!this.hass) return;
+    const source = this.hass, key = this.planHost.authorityKey;
+    void source.callWS({ type: 'houseplan/trail/get' })
+      .then((result: unknown) => { if (current() && this.planHost.authorityKey === key) this._adoptVacuumTrails(result, source); })
+      .catch(() => undefined);
+  }
+
+  /** Optional smart-home channels deliberately remain outside PlanHost's plan events. */
+  private _subscribeHaSmartHomeEvent(event: string, receive: (event: unknown) => void): Promise<() => void> {
+    const connection = this.hass?.connection;
+    return connection?.subscribeEvents ? connection.subscribeEvents(receive, event) : Promise.resolve(() => undefined);
+  }
+  /** Existing HA Zigbee presentation; not a portable plan transport. */
+  private _renderHaZigbeeTopology(spaceId: string, view: Parameters<typeof renderZigbeeTopologyOverlay>[0]['viewKey']): TemplateResult | typeof nothing {
+    if (!this.hass) return nothing;
+    return renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices,
+      registry: this._haRegistry, currentSpace: spaceId, spaces: this._serverCfg?.spaces, viewKey: view,
+      zoom: this._zoom, view: this._mode === 'view', kiosk: this._kiosk,
+      ready: this._viewRuntimes.zigbee.state === 'ready', onLayout: () => this._liveRt?.hover() });
+  }
+  private _registerHaSmartHomeEvents(subscribe: (
+    current: () => (() => void) | null | undefined, adopt: (release: () => void) => void,
+    event: string, receive: (event: any) => void | Promise<void>,
+  ) => void, ownsContext: () => boolean): void {
+    const source = this.hass;
+    if (!source) return;
+    subscribe(() => this._unsubTrail, release => { this._unsubTrail = release; }, 'houseplan_trail_updated',
+      vacuumTrailRefresh(() => source.callWS({ type: 'houseplan/trail/get' }), ownsContext,
+        result => this._adoptVacuumTrails(result, source)));
+    subscribe(() => this._unsubVirtual, release => { this._unsubVirtual = release; }, 'houseplan_virtual_light_updated', ev => {
+      const next = applyVirtualLightEvent(this._virtualLights, ev?.data);
+      if (next === this._virtualLights) return;
+      this._virtualLights = next; this._capturedSnapshotVirtual = '';
+      this._cacheSnapshot(); this.requestUpdate();
+    });
   }
   /**
    * Signed urls for the content endpoint (audit follow-up B1 regression).
@@ -6071,7 +6107,7 @@ export class HouseplanCard extends LitElement {
 
   /** Display url: a signature we hold and still trust, else nothing. */
   private _display(url: string | null | undefined): string {
-    return this._signer.display(this.hass, url);
+    return this._signer.display(this.planHost, url);
   }
 
   private _referencedContentUrls(): Set<string> {
@@ -6082,7 +6118,7 @@ export class HouseplanCard extends LitElement {
 
   /** Re-sign what the live config still references (wall tablets outlive one). */
   private _resign(): void {
-    this._signer.resign(this.hass, this._referencedContentUrls());
+    this._signer.resign(this.planHost, this._referencedContentUrls());
   }
 
   private _layoutSyncTimer?: number;
@@ -6121,7 +6157,7 @@ export class HouseplanCard extends LitElement {
    * for a stale UI must not turn into a lost drag.
    */
   private async _reloadLayoutOnly(): Promise<void> {
-    if (!this._serverStorage || !this.hass?.callWS) return;
+    if (!this._serverStorage || !this.planHost.environment.connected) return;
     this._beginContinuityCandidate('layout-reload', false);
     // Snapshot BEFORE flushing. `flush()` runs the debounced writer
     // synchronously, and the first thing that does is empty `_dirtyPos` — so
@@ -6136,7 +6172,7 @@ export class HouseplanCard extends LitElement {
     // server acknowledges a position, this card is the authority on it.
     for (const [id, pos] of this._sentPos) mine.set(id, pos);
     try {
-      const resp = await this.hass.callWS({ type: 'houseplan/layout/get' });
+      const resp = await this.planHost.request<import('./config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' });
       const remote = resp?.layout || {};
       const merged: Record<string, any> = { ...remote };
       for (const [id, pos] of mine) {
@@ -6196,8 +6232,7 @@ export class HouseplanCard extends LitElement {
       this._regSignature = '';
       return;
     }
-    const h = this.hass;
-    if (!h?.devices || !h?.entities || !h?.areas) return;
+    const h = this._planHass;
     const registry = this._haRegistry;
     const sig =
       haRegistryBuildSignature(h, registry) + ':' + Object.keys(h.areas).length + ':' +
@@ -6214,9 +6249,9 @@ export class HouseplanCard extends LitElement {
     const settings = this._settings;
     const buildKey = JSON.stringify([sig, this._markers, areaToSpace, this._serverCfg?.spaces[0]?.id,
       settings.group_lights, settings.filter_seeded, settings.show_all, settings.exclude_integrations, settings.icon_rules]);
-    const reuseRoster = sameStateMetadata && this._deviceBuildKey === buildKey && this._deviceBuildOwner === h.connection && this._devices.length;
+    const reuseRoster = sameStateMetadata && this._deviceBuildKey === buildKey && this._deviceBuildOwner === this.planHost.authorityKey && this._devices.length;
     this._deviceBuildKey = buildKey;
-    this._deviceBuildOwner = h.connection;
+    this._deviceBuildOwner = this.planHost.authorityKey;
     const previousDevices = this._devices;
     const before = new Map(this._devices.map((d) => [d.id, d.bindingStatus?.kind || 'active']));
     if (!reuseRoster) this._devices = this._deviceRosterState.capture(h, observed => buildDevices({
@@ -6658,7 +6693,7 @@ export class HouseplanCard extends LitElement {
           pending = null;
           this._sentPos.set(deviceId, pending);
           registered = true;
-          response = await this.hass.callWS({
+          response = await this.planHost.request({
             type: 'houseplan/layout/delete', device_id: deviceId,
           });
         } else {
@@ -6671,7 +6706,7 @@ export class HouseplanCard extends LitElement {
           pending = pos;
           this._sentPos.set(deviceId, pending);
           registered = true;
-          const writeHass = this.hass;
+          const writeHass = this.planHost;
           response = await sendHouseplanWrite(writeHass, {
             type: 'houseplan/layout/update', device_id: deviceId, pos,
           }, { isCurrent });
@@ -7243,7 +7278,7 @@ export class HouseplanCard extends LitElement {
 
   /** Translate a key in the card's current language. */
   private _t(key: I18nKey, vars?: Record<string, string | number>): string {
-    return t(langOf(this.hass, this._config?.language), key, vars);
+    return t(langOf(this._presentation, this._config?.language), key, vars);
   }
 
   /** Per-card copy keeps presentation-only pickers independent across languages. */
@@ -7703,7 +7738,7 @@ export class HouseplanCard extends LitElement {
     current: () => {
       const owner = this._configWriteContext.claim(), space = this._space, mode = this._mode;
       return () => this.isConnected && !this._kiosk && space === this._space && mode === this._mode
-        && this._configWriteContext.current(owner, this.hass);
+        && this._configWriteContext.current(owner, this.planHost);
     },
     stage: () => this.renderRoot.querySelector<HTMLElement>('.stage'),
     changed: direction => {
@@ -9176,7 +9211,7 @@ export class HouseplanCard extends LitElement {
     const finish=contactLayout || roomLabels ? this._layoutIO.begin():()=>undefined;
     const layoutBeforeSend = structuredClone(this._layout);
     try {
-      const writeHass = this.hass;
+      const writeHass = this.planHost;
       const response = await sendHouseplanWrite<any>(writeHass, {
         type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: expectedRev,
         ...(this._haOpeningFeaturesApi === 1 ? { opening_features_api: 1 } : {}),
@@ -9209,7 +9244,7 @@ export class HouseplanCard extends LitElement {
 
   public _configWriteGuard(pendingOnly = false): () => boolean {
     const claim = this._configWriteContext.claim();
-    return () => pendingOnly ? this._configWriteContext.owns(claim) : this._configWriteContext.current(claim, this.hass);
+    return () => pendingOnly ? this._configWriteContext.owns(claim) : this._configWriteContext.current(claim, this.planHost);
   }
 
   private _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, showToast = this._captureToast()): Promise<void> {
@@ -9958,7 +9993,7 @@ export class HouseplanCard extends LitElement {
         return svg`<image class="${cls} dimage" data-hp="decor" data-id=${sh.id}
           data-kind="image" href=${href} x=${x} y=${y} width=${w} height=${h}
           opacity=${opacity} preserveAspectRatio="none" transform=${transform}
-          @load=${() => this._signer.markLoaded(this._renderPlanHass, asset.url, href)}
+          @load=${() => this._signer.markLoaded(this.planHost, asset.url, href)}
           @pointerdown=${down} @dblclick=${dbl}></image>
           ${erasing ? svg`<rect class="dshape derasehit" data-hp="decor" data-id=${sh.id}
             data-kind="image" x=${x} y=${y} width=${w} height=${h} transform=${transform}
@@ -12027,7 +12062,7 @@ export class HouseplanCard extends LitElement {
           slider:html`<input id=${`kiosk-scale-${key}`} type="range" min="50" max="300" step="5"
             .value=${String(value)} @input=${input} aria-label=${label} ?disabled=${locked[key]} />` }) });
     };
-    return html`<hp-dialog .hass=${this.hass} data-kind="kiosk" class="ui-dialog" compact settings-layout .title=${this._t('kiosk.title')} icon="mdi:tablet"
+    return html`<hp-dialog .hass=${this._presentation} data-kind="kiosk" class="ui-dialog" compact settings-layout .title=${this._t('kiosk.title')} icon="mdi:tablet"
       dismiss-on-scrim @hp-close=${() => (this._kioskDialog = false)}>
         <div class="body hpf-form">
           ${callout({ text:this._t('kiosk.hint') })}
@@ -12069,7 +12104,7 @@ export class HouseplanCard extends LitElement {
   private _renderDangerConfirm(): TemplateResult | typeof nothing {
     if (!this._dangerConfirm) return nothing;
     ensureFormKitStyles(this); // Shared footer composition also owns a cold View confirmation.
-    return html`<hp-confirm .hass=${this.hass}
+    return html`<hp-confirm .hass=${this._presentation}
         .request=${this._dangerConfirm.request}
         .token=${this._dangerConfirm.token}
         @hp-confirm-decision=${this._onDangerConfirmDecision}>
@@ -12108,7 +12143,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
-    if (!this._config || !this.hass) return nothing;
+    if (!this._config || !this.planHost.environment.ready) return nothing;
     const terminalFrame = this._terminalFrame;
     this._terminalFrame = 0;
     if (terminalFrame === 1) return noChange;
@@ -12134,7 +12169,7 @@ export class HouseplanCard extends LitElement {
     if (editorRuntimeRequested && !this._editorRuntime) void this._editorRuntimeLoader.ensure('reconcile');
     const model = this._model;
     const diagnostics = this._renderLife.diagnostics(
-      this.hass, this._markers, (binding) => this._bindingStatus(binding),
+      this._planHass, this._markers, (binding) => this._bindingStatus(binding), this._haRegistry,
     );
     const fixed = this._fixedFloorState(model);
     if (fixed.kind === 'pending') {
@@ -12197,7 +12232,7 @@ export class HouseplanCard extends LitElement {
                 </span>` : nothing}
                 </div>`
             : html`<p class="muted">${this._t(this._serverStorage ? 'empty.read_only' : 'empty.install')}</p>`}
-          <hp-plan-converter-info placement="empty" .language=${langOf(this.hass, this._config?.language)}></hp-plan-converter-info>
+          <hp-plan-converter-info placement="empty" .language=${langOf(this._presentation, this._config?.language)}></hp-plan-converter-info>
         </div>
         ${dialogPresence(this._spaceDialog
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
@@ -12830,7 +12865,7 @@ export class HouseplanCard extends LitElement {
               : nothing}
             ${this._editorRuntime && this._canEdit && !this._kiosk ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
             ${''/* #649: one floor-shadow layer (z below every tile), after the markers in DOM order */}${iso ? html`<div class="iso-tile-shadows" aria-hidden="true">${repeat(devs, (d) => d.id, (d) => this._renderDevice(d, view, showLqi, isoOverlays?.devices.get(d.id), true))}${this._renderOpeningLocks(view, isoOverlays?.locks, true)}</div>` : nothing}
-            ${renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices, registry: this._haRegistry, currentSpace: space.id, spaces: this._serverCfg?.spaces, viewKey: view, zoom: this._zoom, view: this._mode === 'view', kiosk: this._kiosk, ready: this._viewRuntimes.zigbee.state === 'ready', onLayout: () => this._liveRt?.hover() })}
+            ${this._renderHaZigbeeTopology(space.id, view)}
           </div>
           <div data-hp-live-editor-html></div>
           `}
@@ -12883,7 +12918,7 @@ export class HouseplanCard extends LitElement {
             ? this._editorRuntime._renderBackdropGuard()
             : this._onboardingRuntime?._renderBackdropGuard() ?? nothing)
           : nothing)}
-        ${dialogPresence(this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.hass} data-kind="vacuum"
+        ${dialogPresence(this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this._presentation} data-kind="vacuum"
           .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
           dismiss-on-scrim aria-busy=${String(!!this._vacCalConfirm.busy)}
           @hp-close=${() => { if (!this._vacCalConfirm?.busy) this._vacCalConfirm = null; }}>
@@ -12926,7 +12961,7 @@ export class HouseplanCard extends LitElement {
             @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
         </div>` : nothing}
         ${dialogPresence(this._tapConfirm
-          ? html`<hp-dialog .hass=${this.hass} data-kind="confirm" class="ui-dialog" compact settings-layout
+          ? html`<hp-dialog .hass=${this._presentation} data-kind="confirm" class="ui-dialog" compact settings-layout
               .title=${this._tapConfirm.kind === 'toggle' ? this._tapConfirm.text : this._t('btn.run')}
               icon="mdi:alert-outline"
               dismiss-on-scrim @hp-close=${() => (this._tapConfirm = null)}>
@@ -14290,7 +14325,7 @@ export class HouseplanCard extends LitElement {
       : (amt > 0 ? 'mdi:door-open' : 'mdi:door-closed');
     const row = (icon: string, label: string, value: string, cls = '') =>
       html`<div class="oprow hpf-reading-row"><ha-icon icon=${icon}></ha-icon><span class="hpf-reading-label">${label}</span><b class="hpf-reading-value hpf-state-${cls}">${value}</b></div>`;
-    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.hass} data-kind="opening"
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this._presentation} data-kind="opening"
       .title=${title} icon=${openingIcon} dismiss-on-scrim
       @hp-close=${() => (this._openingInfo = null)}>
         <div class="body">
@@ -14437,7 +14472,7 @@ export class HouseplanCard extends LitElement {
     if (!initial.command) return;
     const execute = (): void => {
       const current = currentMarkerActionDevice(this._devices, this._space, context);
-      if (this._mode !== 'view' || !this.isConnected || !this._configWriteContext.current(authority, this.hass)
+      if (this._mode !== 'view' || !this.isConnected || !this._configWriteContext.current(authority, this.planHost)
           || !current || this._infoCard?.id !== context.id
           || infoCardRowContextKey(current, this._cardEntities(current)) !== key) {
         showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
@@ -14474,7 +14509,7 @@ export class HouseplanCard extends LitElement {
     const radarHealthKey = radar ? radarHealthI18nKey(radar, radarFrame?.health) : null;
     const controls = (d.controls ?? d.marker?.controls ?? [])
       .filter(isControllable).filter((eid) => this._planEntityAvailable(eid));
-    return html`<hp-dialog .hass=${this.hass} data-kind="info" class="ui-dialog" form-shell settings-layout compact
+    return html`<hp-dialog .hass=${this._presentation} data-kind="info" class="ui-dialog" form-shell settings-layout compact
       .title=${d.name} .subtitle=${this._t('device.card_subtitle')} .icon=${d.icon} wide
       dismiss-on-scrim @hp-close=${this._closeInfoCard}>
         <div class="body hpf-form">

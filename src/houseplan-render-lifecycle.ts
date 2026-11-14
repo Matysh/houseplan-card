@@ -1,6 +1,7 @@
 import {
   haRegistryDiagnostics,
   type HaBindingStatus,
+  type HaRegistrySnapshot,
 } from './ha-binding-status';
 import type { HassRenderDependencies, HassRenderSnapshot } from './render-invalidation';
 
@@ -59,6 +60,7 @@ export class RenderLifecycle {
     hass: unknown,
     markers: readonly DiagnosticMarker[],
     resolve: (binding: string) => HaBindingStatus,
+    registry?: HaRegistrySnapshot,
   ): HouseplanDiagnosticsCore {
     if (this.diagnosticsCache) return this.diagnosticsCache;
     const bindings: Record<HaBindingStatus['kind'], number> = {
@@ -68,7 +70,7 @@ export class RenderLifecycle {
       if (marker.removed || marker.binding === 'virtual') continue;
       bindings[resolve(marker.binding).kind]++;
     }
-    this.diagnosticsCache = { registry: haRegistryDiagnostics(hass), bindings };
+    this.diagnosticsCache = { registry: haRegistryDiagnostics(hass, registry), bindings };
     return this.diagnosticsCache;
   }
 }
@@ -81,7 +83,7 @@ interface HassIntakeHost {
   _renderSnapshotAt: number;
   _continuity: { note: (reason: string) => void };
   _ensureHaRegistryAuthority: () => void;
-  _planHassMemo: { hass: unknown } | null;
+  _planHassMemo: { environment: unknown } | null;
   _planHassProjection?: { invalidate(): void };
   _hookConnection: () => void;
   _loadOk: boolean;
@@ -101,7 +103,7 @@ export function intakeHass(value: object): void {
   host._continuity.note('hass-snapshot');
   host._ensureHaRegistryAuthority();
   // Re-observe the frame lazily; its projection retains unchanged state rows.
-  if (host._planHassMemo) host._planHassMemo.hass = null;
+  if (host._planHassMemo) host._planHassMemo.environment = null;
   host._hookConnection();
   if (!host._loadOk && !host._loading && host._loadTries < 8) host._loadFromServer();
   // Existing threshold confirmation keeps authoritative condition edges while
@@ -110,7 +112,7 @@ export function intakeHass(value: object): void {
   // Keep authority/transport live, coalesce visual activity until the next show.
   if (host.ownerDocument?.visibilityState === 'hidden' || host._routeDepartureHandled) {
     host._planHassProjection?.invalidate();
-    if (host._planHassMemo) host._planHassMemo.hass = null;
+    if (host._planHassMemo) host._planHassMemo.environment = null;
     return;
   }
   host._maybeRebuildDevices();

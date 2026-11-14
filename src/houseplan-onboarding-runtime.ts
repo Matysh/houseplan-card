@@ -40,7 +40,7 @@ export class HouseplanOnboardingRuntime {
 
   private _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing {
     const ariaKey = `${key}.aria` as I18nKey;
-    const lang = langOf(this.host.hass, this.host._config?.language);
+    const lang = langOf(this.host._presentation, this.host._config?.language);
     if (!hasTranslation(lang, key) || !hasTranslation(lang, ariaKey)) return nothing;
     return html`<hp-help data-help-key=${key}
       .text=${t(lang, key)} .ariaLabel=${t(lang, ariaKey)}></hp-help>`;
@@ -85,7 +85,7 @@ export class HouseplanOnboardingRuntime {
         }
       },
       () => { this.host._backdropGuard = null; },
-      this.host.hass,
+      this.host._presentation,
     ) ?? nothing;
   }
 
@@ -148,7 +148,7 @@ export class HouseplanOnboardingRuntime {
       || currentPlan.url !== plan.url || currentPlan.modified !== plan.modified
       || currentPlan.used_by.length || currentPlan.url === currentDialog.planUrl) return;
     try {
-      await this.host.hass.callWS({ type: 'houseplan/plans/delete', name });
+      await this.host.planHost.request({ type: 'houseplan/plans/delete', name });
       const dialog = this.host._spaceDialog;
       if (dialog?.saved) this.host._spaceDialog = {
         ...dialog, saved: dialog.saved.filter((plan) => plan.name !== name),
@@ -221,7 +221,7 @@ export class HouseplanOnboardingRuntime {
       if (dialog.source === 'file' && dialog.planFile) {
         // #617: over HTTP, never WebSocket — a big plan used to close the socket.
         const response = await uploadPlanFile(
-          this.host.hass, (key, vars) => this.host._t(key, vars), spaceId, dialog.planFile,
+          this.host.planHost, (key, vars) => this.host._t(key, vars), spaceId, dialog.planFile,
         );
         uploaded = { url: response.url, aspect: dialog.planFile.aspect };
       }
@@ -376,7 +376,7 @@ export class HouseplanOnboardingRuntime {
       save: () => this._saveSpaceDialog(),
       skipImport: () => this._skipImport(),
     });
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="onboarding" class="ui-dialog" form-shell settings-layout wide
+    return html`<hp-dialog .hass=${this.host._presentation} data-kind="onboarding" class="ui-dialog" form-shell settings-layout wide
         .title=${form.title} .badge=${form.badge} icon="mdi:floor-plan" @hp-close=${form.requestClose}>
       ${form.body}${form.footer}
     </hp-dialog>`;

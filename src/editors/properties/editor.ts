@@ -1,3 +1,4 @@
+import { planHostOf } from '../../ha-plan-host';
 import { captureToast } from '../../toast-presentation';
 import type {OpeningCfg} from '../../types';
 import { waitForPriorConfigWrite } from '../../prior-config-write';
@@ -174,7 +175,7 @@ export class PropertiesEditor {
     const value = this.selected;
     if (value?.editor === 'decor' && this.selectionContext
       && (this.selectionContext.adoption !== this.host._adoption.adoptionEpoch
-        || !this.host._configWriteContext.current(this.selectionContext.authority, this.host.hass))) return null;
+        || !this.host._configWriteContext.current(this.selectionContext.authority, planHostOf(this.host)))) return null;
     return value && this.allowed && value.spaceId === this.host._space && value.editor === this.host._mode
       && this.target(value) ? value : null;
   }
@@ -224,7 +225,7 @@ export class PropertiesEditor {
       &&this.runtime.wallDimensions?.active)
       key=this.runtime.wallDimensions.sourceHint==='axis'?'wall_dimensions_axis_hint':
         this.runtime.wallDimensions.sourceHint==='boundary'?'wall_dimensions_boundary_hint':'wall_dimensions_hint';
-    return propertiesT(langOf(this.host.hass, this.host._config?.language), key, vars);
+    return propertiesT(langOf(this.host._presentation, this.host._config?.language), key, vars);
   };
 
   /** One observer on the owning card, not its shrinking canvas; no threshold feedback. */
@@ -386,7 +387,7 @@ export class PropertiesEditor {
     void this.fields.finishThen(async () => {
       await waitForPriorConfigWrite(this.host);
       if (this.handoff !== receipt || this.identity !== identity
-        || !this.host._configWriteContext.current(authority, this.host.hass)) return;
+        || !this.host._configWriteContext.current(authority, planHostOf(this.host))) return;
       this.handoff = null;
       this.closeTransient();
       if (modal) this.fields.invalidate();
@@ -482,7 +483,7 @@ export class PropertiesEditor {
       textName: shape => {
         if (shape.kind !== 'text') return '';
         const entity = /\{([a-z_]+\.[\w]+)(?::[^}]*)?\}/i.exec(shape.text)?.[1];
-        return entity ? host.hass.states?.[entity]?.attributes?.friendly_name || this.t('text') : shape.text.split('\n')[0];
+        return entity ? String(host.planHost.environment.states[entity]?.attributes?.friendly_name || this.t('text')) : shape.text.split('\n')[0];
       },
       openingReference: this.reference(target), openingSides: openingSides.labels, openingRooms: openingSides.rooms,
       openingFeaturesEditable: host._haOpeningFeaturesApi === 1, ratioLocked: this.ratioLocked,
@@ -622,12 +623,12 @@ export class PropertiesEditor {
     const authority = host._configWriteContext.claim();
     try {
       await this.runtime._saveConfigNow(attempt, () => this.allowed && !!this.target(identity)
-        && host._configWriteContext.current(authority, host.hass) && contentFingerprint(host._serverCfg) === attempt.attemptedFingerprint);
-      if (!host._configWriteContext.current(authority, host.hass) || !this.allowed || !this.target(identity)) return failure('external_change');
+        && host._configWriteContext.current(authority, planHostOf(host)) && contentFingerprint(host._serverCfg) === attempt.attemptedFingerprint);
+      if (!host._configWriteContext.current(authority, planHostOf(host)) || !this.allowed || !this.target(identity)) return failure('external_change');
       this.runtime._recordGeometry(name, snapshot);
       host._cfgEpoch++; host.requestUpdate(); return ok;
     } catch (error) {
-      if (host._configWriteContext.current(authority, host.hass)) {
+      if (host._configWriteContext.current(authority, planHostOf(host))) {
         const rolledBack = host._rollbackOptimistic(attempt);
         if (rolledBack) host._decorStyle = previousStyle;
         restoreDeferred(rolledBack);
@@ -641,7 +642,7 @@ export class PropertiesEditor {
     const host = this.host;
     if (!current() || device.bindingStatus?.kind === 'ha_disabled' || typeof value !== 'number') return failure('external_change');
     const authority = host._configWriteContext.claim();
-    const owned = () => this.allowed && host._configWriteContext.current(authority, host.hass) && !!this.target(identity);
+    const owned = () => this.allowed && host._configWriteContext.current(authority, planHostOf(host)) && !!this.target(identity);
     const name = this.t('history', { name: device.name });
     if (field === 'x' || field === 'y') {
       const before = devicePlacement(host._layout, device.id), raw = host._livePos(device);
@@ -699,14 +700,14 @@ export class PropertiesEditor {
     const restoreDeferred = supersedeDeferredWrite(host._saveConfigDebounced);
     host._devicePositionBusy = true;
     try {
-      await this.runtime._saveConfigNow(attempt, () => this.allowed && host._configWriteContext.current(authority, host.hass)
+      await this.runtime._saveConfigNow(attempt, () => this.allowed && host._configWriteContext.current(authority, planHostOf(host))
         && host._devices.some(d=>d.id===target.deviceId && d.space===target.spaceId && bindingOf(d)===target.binding)
         && contentFingerprint(host._serverCfg) === attempt.attemptedFingerprint);
-      if (!host._configWriteContext.current(authority, host.hass)) return;
+      if (!host._configWriteContext.current(authority, planHostOf(host))) return;
       if (host._space !== target.spaceId) { host._commitSpace(target.spaceId); host._restoreZoom(); }
       showToast(host._t(direction === 'undo' ? 'history.undone' : 'history.redone', { name: command.name }), direction === 'undo' ? 'history.undone' : 'history.redone');
     } catch {
-      if (host._configWriteContext.current(authority, host.hass)) {
+      if (host._configWriteContext.current(authority, planHostOf(host))) {
         restoreDeferred(host._rollbackOptimistic(attempt)); restoreCursor(); showToast(this.t('save_error'), 'save_error');
       }
     } finally { if (host._configWriteContext.owns(authority)) { host._devicePositionBusy = false; host.requestUpdate(); } }
@@ -732,10 +733,10 @@ export class PropertiesEditor {
     const model = this.model(owner);
     const authority = this.host._configWriteContext.claim();
     const current = () => this.wide && !this.host._modeTransitionBusy && !this.variable && !this.host._editorSecondaryDialogBlocked
-      && this.host._configWriteContext.current(authority, this.host.hass)
+      && this.host._configWriteContext.current(authority, planHostOf(this.host))
       && propertiesIdentityKey(this.identity) === propertiesIdentityKey(owner);
     const view = renderPropertiesSurface(model, {
-      t: this.t, imperial: this.host._imperial, dark: this.host.hass?.themes?.darkMode,
+      t: this.t, imperial: this.host._imperial, dark: this.host._presentation.themes?.darkMode,
       geometryHint:this.runtime.wallDimensions?key=>wallDimensionHint(this.runtime.wallDimensions,()=>{
         const dimensions=this.runtime.wallDimensions;
         if(!this.identity&&dimensions.active) {
@@ -848,8 +849,8 @@ export class PropertiesEditor {
     const dialog = this.variable;
     if (!dialog) return nothing;
     if (!this.allowed || propertiesIdentityKey(this.identity) !== dialog.identity
-      || !this.host._configWriteContext.current(dialog.authority, this.host.hass)) { this.variable = null; return nothing; }
-    const states = this.host.hass?.states ?? {};
+      || !this.host._configWriteContext.current(dialog.authority, planHostOf(this.host))) { this.variable = null; return nothing; }
+    const states = this.host.planHost.environment.states;
     const current = states[dialog.entity];
     const token = liveTextToken(dialog.entity, dialog.attribute || null);
     const text = dialog.original.slice(0, dialog.start) + token + dialog.original.slice(dialog.end);
@@ -864,10 +865,10 @@ export class PropertiesEditor {
     const preview = liveText(text, null, this.host._renderPlanHass, id => this.host._planEntityAvailable(id));
     const error = this.fields.draft?.error;
     return html`<hp-dialog form-shell settings-layout compact class="ui-dialog hp-properties-variable" data-kind="properties-variable" wide
-      .hass=${this.host.hass} .title=${this.t('insert_variable')} @hp-close=${() => this.closeVariable()}>
+      .hass=${this.host._presentation} .title=${this.t('insert_variable')} @hp-close=${() => this.closeVariable()}>
       <div class="hp-prop-variable-body hpf-form">
         <div class="hp-prop-variable-label">${this.t('entity')}</div>
-        ${sourcePicker({ fieldId: 'properties-variable-entity', open: dialog.open, current: current ? { label: current.attributes?.friendly_name || dialog.entity, sub: dialog.entity } : null,
+        ${sourcePicker({ fieldId: 'properties-variable-entity', open: dialog.open, current: current ? { label: String(current.attributes?.friendly_name || dialog.entity), sub: dialog.entity } : null,
           leading: propertiesIcon(current?.attributes?.device_class === 'temperature' || dialog.entity.includes('temperature') ? 'temperature' : 'settings'),
           placeholder: this.t('entity'), ariaLabel: this.t('entity'), filter: dialog.filter, filterPlaceholder: this.t('variable_search'),
           candidates, selected: dialog.entity, emptyText: this.t('none'),

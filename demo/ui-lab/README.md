@@ -1,5 +1,21 @@
 # House Plan UI Lab
 
+## Plan-host contract entry (#1392)
+
+Open `/plan-host.html` on the same **separately started** UI Lab server to use
+the current plan editor with a minimal `PlanHost`, without assigning `hass` to
+the card. The usual HA UI-component bootstrap still supplies fonts and UI
+elements; replacing those belongs to #1422/#1423. The entry reads a cloned
+plan from the configured local fixture, uses an empty nonauthoritative registry
+and synthetic in-page wire storage, and never controls HA devices.
+
+This is an ephemeral diagnostic entry: edits disappear on reload. It does not
+replace `/`, normal saved styling sessions or the owner's running stand. Its
+opaque preview/apply fixture is not the production backup parser or server ACL.
+`node demo/smoke_plan_host.mjs` checks the same port-only editing path with
+synthetic browser UI elements; normal UI Lab continues to use the pinned real
+HA components. No website or new deployed service is created.
+
 Отдельный локальный инструмент для быстрых итераций интерфейса: настоящая сборка
 House Plan, настоящие закреплённые компоненты Home Assistant и синтетические данные
 вместо подключённого сервера. Это не новый renderer и не замена существующего `demo/`.

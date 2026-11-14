@@ -1,3 +1,4 @@
+import { planHostOf } from '../ha-plan-host';
 import { captureToast } from '../toast-presentation';
 /** Commands belong to the existing editor selection/lane; no listener, capture or writer of their own. */
 import { CANVAS_LIMIT, NORM_W } from '../canvas-constants';
@@ -68,7 +69,7 @@ export class KeyboardNudge {
   private dataCurrent(owner: Owner): boolean {
     const h = this.host;
     return h.isConnected && h._canEdit && !h._kiosk && h._loadOk && h._adoption.adoptionEpoch === owner.epoch
-      && h._configWriteContext.current(owner.authority, h.hass);
+      && h._configWriteContext.current(owner.authority, planHostOf(h));
   }
   private current(owner: Owner): boolean {
     const selected = this.selection();

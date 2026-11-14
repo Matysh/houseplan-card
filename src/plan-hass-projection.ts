@@ -1,10 +1,9 @@
 import { activeRegistryHass, haRegistryBuildSignature, registryStateEnabled,
   type HaRegistrySnapshot } from './ha-binding-status';
+import { planHostFrom } from './ha-plan-host';
 
 interface HassFrame {
   states?: Record<string, unknown>;
-  connection?: unknown;
-  user?: unknown;
 }
 type ActiveFrame<T> = T & {
   states: Record<string, unknown>;
@@ -18,14 +17,15 @@ export class PlanHassProjection {
   readonly counters = { processed: 0, comparisons: 0, fullBuilds: 0 };
   private invalidated = false;
   private previous?: {
-    states: Record<string, unknown>; connection: unknown; user: unknown;
+    states: Record<string, unknown>; authority: object;
     sig: string; authoritative: boolean; active: ActiveFrame<HassFrame>;
   };
 
   /** Hidden/departed frames retain authority; their next visible consumer rebuilds once. */
   invalidate(): void { this.invalidated = true; }
 
-  project<T extends HassFrame>(hass: T, snapshot: HaRegistrySnapshot): ActiveFrame<T> {
+  project<T extends HassFrame>(hass: T, snapshot: HaRegistrySnapshot,
+    authority = planHostFrom(hass).authorityKey): ActiveFrame<T> {
     hass ??= {} as T;
     const sig = haRegistryBuildSignature(hass, snapshot);
     const source = hass.states ?? EMPTY_STATES;
@@ -33,7 +33,7 @@ export class PlanHassProjection {
     let active: ActiveFrame<T>;
     if (!previous || this.invalidated || previous.sig !== sig
       || previous.authoritative !== snapshot.authoritative
-      || previous.connection !== hass.connection || previous.user !== hass.user) {
+      || previous.authority !== authority) {
       active = activeRegistryHass(hass, snapshot);
       this.counters.fullBuilds++;
       this.counters.processed += Object.keys(source).length;
@@ -61,7 +61,7 @@ export class PlanHassProjection {
         entities: previous.active.entities, states: changed ?? previous.active.states };
     }
     this.invalidated = false;
-    this.previous = { states: source, connection: hass.connection, user: hass.user,
+    this.previous = { states: source, authority,
       sig, authoritative: snapshot.authoritative, active };
     return active;
   }

@@ -4,6 +4,8 @@ import type { I18nKey } from './i18n';
 import type { PlanOptimizeWriteHost } from './plan-optimize-write';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
 import { sendHouseplanWrite } from './large-write-transport';
+import { planHostOf, type PlanHostProvider } from './ha-plan-host';
+import type { PlanHost } from './plan-host';
 
 export interface UndoHass {
   callWS<T>(message: Record<string, unknown>): Promise<T>;
@@ -12,12 +14,11 @@ export interface UndoHass {
 interface UndoHost extends Pick<PlanOptimizeWriteHost,
   '_cfgRev' | '_layoutRev' | '_geometryHistory' | '_devicePositionHistory' | '_cancelDeviceDrag'
   | '_canOptimizeUndo' | '_undoKind' | '_cfgEpoch' | '_modelCache' | '_frame' | '_regSignature'
-  | '_maybeRebuildDevices' | '_cacheSnapshot' | 'requestUpdate'> {
-  readonly hass: UndoHass;
+  | '_maybeRebuildDevices' | '_cacheSnapshot' | 'requestUpdate'>, PlanHostProvider {
   readonly isConnected: boolean;
   _optimizeUndoBusy: boolean;
   _configWriteGuard(pendingOnly?: boolean): () => boolean;
-  _getAuthoritativeConfig(hass?: UndoHass, isCurrent?: () => boolean): Promise<AuthoritativeConfigResponse>;
+  _getAuthoritativeConfig(input?: UndoHass | PlanHost, isCurrent?: () => boolean): Promise<AuthoritativeConfigResponse>;
   _adoptAuthoritative(input: GatedAdoptionInput): Promise<GatedAdoptionResult>;
   _showToast(message: string, id?: string): void;
   _t(key: I18nKey, vars?: Record<string, string | number>): string;
@@ -46,21 +47,21 @@ export class PlanOptimizationUndo {
     const ownsPending = host._configWriteGuard(true);
     const isCurrent = () => lifecycle === this.lifecycle && host.isConnected && authorityCurrent();
     if (!isCurrent()) return;
-    const hass = host.hass;
+    const port = planHostOf(host);
     const undoKind = host._undoKind;
     this.clearGesture();
     host._optimizeUndoBusy = true;
     host.requestUpdate();
     try {
-      await sendHouseplanWrite(hass, {
+      await sendHouseplanWrite(port, {
         type: 'houseplan/plan/optimize_undo',
         expected_config_rev: host._cfgRev,
         expected_layout_rev: host._layoutRev,
       }, { isCurrent });
       if (!isCurrent()) return;
       const [cfgResp, layResp] = await Promise.all([
-        host._getAuthoritativeConfig(hass, isCurrent),
-        hass.callWS<LayoutResponse>({ type: 'houseplan/layout/get' }),
+        host._getAuthoritativeConfig(port, isCurrent),
+        port.request<LayoutResponse>({ type: 'houseplan/layout/get' }),
       ]);
       if (!isCurrent()) return;
       // The adopter checks this same owner around its own backdrop await.

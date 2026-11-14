@@ -1,3 +1,6 @@
+import { planHostFrom } from './ha-plan-host';
+import type { HouseplanCommand, PlanHost } from './plan-host';
+
 /** Bounded transport only: upload tokens never replace server ACL/CAS/domain validation. */
 export const WS_DIRECT_LIMIT_BYTES = 3 * 1024 * 1024;
 export const STRUCTURAL_UPLOAD_LIMIT_BYTES = 32 * 1024 * 1024;
@@ -33,13 +36,6 @@ const error = (code: string) => Object.assign(new Error(code), { code });
 const own = (value: object, key: string) => Object.prototype.hasOwnProperty.call(value, key);
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 
-function responseError(data: unknown, status?: number): Error & { code: string } {
-  if (status === 401 || status === 403) return error('unauthorized');
-  if (status === 413) return error('too_large');
-  const code = object(data) ? data.error ?? data.code : undefined;
-  return error(typeof code === 'string' && /^[a-z][a-z0-9_-]{0,63}$/.test(code)
-    ? code : status === 404 ? 'upload_unavailable' : 'upload_failed');
-}
 function uploadReply(data: unknown, purpose: string): UploadReply {
   if (!object(data) || typeof data.token !== 'string' || !data.token || data.token.length > 512
       || typeof data.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(data.sha256)
@@ -59,15 +55,15 @@ function uploadReply(data: unknown, purpose: string): UploadReply {
  * HA owns auth refresh. No access token is read, logged or stored here.
  */
 export async function sendHouseplanWrite<T = unknown>(
-  hass: HouseplanWriteHass, message: HouseplanWriteMessage, options: HouseplanWriteOptions,
+  input: HouseplanWriteHass | PlanHost, message: HouseplanWriteMessage, options: HouseplanWriteOptions,
 ): Promise<T> {
-  if (!hass || typeof hass.callWS !== 'function') throw error('not_ready');
-  const authority = hass.connection ?? hass.callWS, user = hass.user?.id;
-  const callWS = hass.callWS.bind(hass) as HouseplanWriteHass['callWS'];
-  const fetchWithAuth = hass.fetchWithAuth?.bind(hass), callApi = hass.callApi?.bind(hass);
+  const host = planHostFrom(input);
+  if (!host.environment.ready || !host.environment.connected) throw error('not_ready');
+  const authority = host.authorityKey, revision = host.writeAuthorityRevision;
   const assertCurrent = () => {
     if (options.signal?.aborted) throw new DOMException('Houseplan write cancelled', 'AbortError');
-    if (!options.isCurrent() || (hass.connection ?? hass.callWS) !== authority || hass.user?.id !== user) {
+    const current = planHostFrom(input);
+    if (!options.isCurrent() || current.authorityKey !== authority || current.writeAuthorityRevision !== revision) {
       throw error('context-changed');
     }
   };
@@ -93,40 +89,15 @@ export async function sendHouseplanWrite<T = unknown>(
   assertCurrent();
   const assertDispatch = () => {
     assertCurrent();
-    if (options.canDispatch && !options.canDispatch()) throw error('context-changed');
+    if (!host.environment.connected || options.canDispatch && !options.canDispatch()) throw error('context-changed');
   };
   assertDispatch();
   if (bytes <= WS_DIRECT_LIMIT_BYTES) {
     options.onDispatch?.();
-    return current(callWS<T>(snapshot));
+    return current(host.request<T>(snapshot as HouseplanCommand));
   }
 
-  let reply: unknown;
-  if (fetchWithAuth) {
-    // Preserve HA's receiver/auth context instead of falling back to a raw bearer.
-    const response = await current(fetchWithAuth(STRUCTURAL_UPLOAD_PATH, {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body, signal: options.signal,
-    }));
-    let data: unknown;
-    try { data = await current(response.json()); }
-    catch (failure) {
-      assertCurrent();
-      if ((failure as Error)?.name === 'AbortError') throw failure;
-      throw responseError(undefined, response.status);
-    }
-    if (!response.ok) throw responseError(data, response.status);
-    reply = data;
-  } else if (callApi) {
-    // HA callApi prefixes /api/, serializes JSON and performs its own auth refresh.
-    // It has no AbortSignal argument; the completion fence still prevents WS commit.
-    try { reply = await current(callApi('POST', 'houseplan/structural/upload', snapshot)); }
-    catch (failure) {
-      assertCurrent();
-      const http = failure as { status_code?: number; body?: unknown };
-      if (http?.status_code !== undefined || http?.body !== undefined) throw responseError(http.body, http.status_code);
-      throw failure;
-    }
-  } else throw error('upload_unavailable');
+  const reply = await current(host.http.postJson(STRUCTURAL_UPLOAD_PATH, snapshot, options.signal));
   assertCurrent();
   const staged = uploadReply(reply, snapshot.type);
   const compact: HouseplanWriteMessage = {
@@ -136,5 +107,5 @@ export async function sendHouseplanWrite<T = unknown>(
   if (new TextEncoder().encode(JSON.stringify(compact)).byteLength > WS_DIRECT_LIMIT_BYTES) throw error('too_large');
   assertDispatch();
   options.onDispatch?.();
-  return current(callWS<T>(compact));
+  return current(host.request<T>(compact as HouseplanCommand));
 }

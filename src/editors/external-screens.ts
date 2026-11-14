@@ -1,3 +1,4 @@
+import { planHostOf } from '../ha-plan-host';
 /** Outer General settings draft owns persistence; this controller owns one child. */
 import { html, nothing, type ReactiveController, type ReactiveControllerHost } from 'lit';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
@@ -28,7 +29,7 @@ export class ExternalScreensEditor implements ReactiveController {
     return this.host.isConnected && this.host._canEdit && !this.host._kiosk && !this.host._connectionWasLost
       && !!this.host._settingsDialog && !this.host._settingsDialog.busy
       && dialogSession(this.host, 'settings') === d.session
-      && this.host._configWriteContext.current(d.authority, this.host.hass);
+      && this.host._configWriteContext.current(d.authority, planHostOf(this.host));
   }
   hostUpdate(): void { if (this.draft && !this.current(this.draft)) this.draft = null; }
   hostDisconnected(): void { this.draft = null; }

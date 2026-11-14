@@ -4,6 +4,8 @@ import { callout, disclosure } from './editors/form-kit';
 import { html, nothing, type TemplateResult } from 'lit';
 import type { I18nKey } from './i18n';
 import type { ToolsI18nKey } from './i18n/tools';
+import { planHostOf, type PlanHostProvider } from './ha-plan-host';
+import type { PlanHost, HouseplanHttpPath } from './plan-host';
 
 export type RecoveryKind = 'radar' | 'vacuum' | 'controls' | 'value';
 export interface RecoveryReport {
@@ -24,14 +26,7 @@ export interface BackupExportState {
   kind: 'full' | 'space'; planOnly: boolean; busy: boolean; error: string; archive?: ArchiveExport;
   preparedJson?: LegacyExport;
 }
-interface TransferHass {
-  user?: { is_admin?: boolean };
-  callWS<T>(message: Record<string, unknown>): Promise<T>;
-  fetchWithAuth?(path: string, init: RequestInit): Promise<Response>;
-  auth?: { data?: { access_token?: string } };
-}
-interface TransferHost {
-  hass?: TransferHass;
+interface TransferHost extends PlanHostProvider {
   isConnected: boolean;
   _space: string;
   _backupExportDialog: BackupExportState | null;
@@ -42,6 +37,7 @@ interface LegacyExport { archive?: false; document: unknown; filename: string; r
 interface PreviewReply {
   token: string; preview: Record<string, unknown>; expected_config_rev: number; expected_layout_rev: number;
 }
+interface TransferOwner { port: PlanHost; key: object; revision: number }
 
 function transferError(code: string): Error & { code: string } {
   return Object.assign(new Error(code), { code });
@@ -54,41 +50,51 @@ export class BackupArchiveClient {
   private exportToken?: string;
   private importToken?: string;
   private importOperation?: string;
-  private pendingImportCancels = new Set<string>();
+  private pendingImportCancels = new Map<string, TransferOwner>();
+  private exportOwner?: TransferOwner;
+  private importOwner?: TransferOwner;
   private cleanup: Promise<void> = Promise.resolve();
 
   public constructor(private readonly host: TransferHost) {}
 
-  public discard(token: string): void {
+  private owner(): TransferOwner {
+    const port = planHostOf(this.host);
+    return { port, key: port.authorityKey, revision: port.writeAuthorityRevision };
+  }
+  private current(owner: TransferOwner, cleanup = false): boolean {
+    const port = planHostOf(this.host);
+    return port.authorityKey === owner.key && (cleanup || port.writeAuthorityRevision === owner.revision);
+  }
+
+  public discard(token: string, owner = this.owner()): void {
     if (token) this.cleanup = this.cleanup.then(async () => {
-      await this.host.hass?.callWS({ type: 'houseplan/backup/cancel', token });
+      if (this.current(owner, true)) await owner.port.request({ type: 'houseplan/backup/cancel', token });
     }).catch(() => undefined);
   }
 
   public cancelExport(): void {
     this.exportEpoch++;
     this.exportAbort?.abort();
-    if (this.exportToken) this.discard(this.exportToken);
+    if (this.exportToken) this.discard(this.exportToken, this.exportOwner);
     this.exportToken = undefined;
   }
 
   public cancelImport(): void {
     this.importAbort?.abort();
     if (this.importOperation) this.discardImport(this.importOperation);
-    else if (this.importToken) this.discard(this.importToken);
+    else if (this.importToken) this.discard(this.importToken, this.importOwner);
     this.importToken = undefined;
     this.importOperation = undefined;
   }
 
-  private discardImport(operation: string): void {
-    this.pendingImportCancels.add(operation);
+  private discardImport(operation: string, owner = this.importOwner ?? this.owner()): void {
+    this.pendingImportCancels.set(operation, owner);
     this.cleanup = this.cleanup.then(() => this.flushImportCancels()).catch(() => undefined);
   }
 
   private async flushImportCancels(): Promise<void> {
-    for (const operation_id of this.pendingImportCancels) {
-      if (!this.host.hass) throw transferError('not_ready');
-      await this.host.hass.callWS({ type: 'houseplan/backup/cancel', operation_id });
+    for (const [operation_id, owner] of this.pendingImportCancels) {
+      if (this.current(owner, true)) await owner.port.request({ type: 'houseplan/backup/cancel', operation_id });
       this.pendingImportCancels.delete(operation_id);
     }
   }
@@ -102,25 +108,23 @@ export class BackupArchiveClient {
     this.host._backupExportDialog = { ...state, kind, planOnly: false, archive: undefined, preparedJson: undefined, error: '' };
   }
 
-  private fetch(path: string, init: RequestInit): Promise<Response> {
-    const hass = this.host.hass;
-    if (!hass) return Promise.reject(transferError('not_ready'));
-    if (hass.fetchWithAuth) return hass.fetchWithAuth(path, init);
-    const token = hass.auth?.data?.access_token;
-    const headers = new Headers(init.headers);
-    if (token) headers.set('authorization', `Bearer ${token}`);
-    return fetch(path, { ...init, headers });
+  private async fetch(path: HouseplanHttpPath, init: RequestInit, owner: TransferOwner): Promise<Response> {
+    if (!this.current(owner)) throw transferError('context-changed');
+    const response = await owner.port.http.request(path, init);
+    if (!this.current(owner)) throw transferError('context-changed');
+    return response;
   }
 
   public async preview(file: File): Promise<PreviewReply> {
     this.cancelImport();
     const controller = new AbortController();
     this.importAbort = controller;
+    const owner = this.owner(); this.importOwner = owner;
     await this.cleanup;
     if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
     const magic = new Uint8Array(await file.slice(0, 4).arrayBuffer());
     const zip = (magic[0] === 0x50 && magic[1] === 0x4b) || file.name.toLowerCase().endsWith('.zip');
-    if (zip && this.host.hass?.user?.is_admin !== true) throw transferError('zip_admin_only');
+    if (zip && !owner.port.environment.permissions.admin) throw transferError('zip_admin_only');
     if (zip) await this.flushImportCancels();
     if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
     const operation = zip ? Array.from(crypto.getRandomValues(new Uint8Array(16)),
@@ -132,18 +136,19 @@ export class BackupArchiveClient {
         method: 'POST', body: file, signal: controller.signal,
         headers: { 'content-type': zip ? 'application/zip' : 'application/json',
           ...(operation ? { 'x-houseplan-operation': operation } : {}) },
-      });
+      }, owner);
       const fallback = response.status === 413 ? 'zip_limit' : zip ? 'zip_invalid' : 'invalid_format';
       const data = await response.json().catch(() => { throw transferError(fallback); }) as PreviewReply & { error?: string };
+      if (!this.current(owner)) throw transferError('context-changed');
       if (!response.ok || data.error) throw transferError(data.error || fallback);
       if (controller.signal.aborted) {
-        if (zip) this.discard(data.token);
+        if (zip) this.discard(data.token, owner);
         throw new DOMException('Cancelled', 'AbortError');
       }
       if (zip) this.importToken = data.token;
       return data;
     } catch (error: unknown) {
-      if (operation) this.discardImport(operation);
+      if (operation) this.discardImport(operation, owner);
       if (this.importOperation === operation) this.importOperation = undefined;
       throw error;
     }
@@ -151,25 +156,26 @@ export class BackupArchiveClient {
 
   public async export(metadata: { card_version: string }, errorText: (error: unknown) => string): Promise<void> {
     const showToast = captureToast(this.host);
-    const host = this.host, state = host._backupExportDialog, hass = host.hass;
-    if (!state || state.busy || !hass) return;
+    const host = this.host, state = host._backupExportDialog, owner = this.owner();
+    if (!state || state.busy || !owner.port.environment.ready) return;
+    this.exportOwner = owner;
     const epoch = ++this.exportEpoch;
     this.exportAbort?.abort();
     const controller = new AbortController();
     this.exportAbort = controller;
-    const owns = () => this.exportEpoch === epoch && host.isConnected && !!host._backupExportDialog;
+    const owns = () => this.exportEpoch === epoch && host.isConnected && !!host._backupExportDialog && this.current(owner);
     host._backupExportDialog = { ...state, busy: true, error: '' };
     try {
       await this.cleanup;
       if (!owns()) return;
-      const result = state.archive || state.preparedJson || await hass.callWS<ArchiveExport | LegacyExport>({
+      const result = state.archive || state.preparedJson || await owner.port.request<ArchiveExport | LegacyExport>({
         type: 'houseplan/export/create', kind: state.kind,
         ...(state.kind === 'space' ? { space_id: host._space, plan_only: state.planOnly } : {}),
-        ...(state.kind === 'full' && hass.user?.is_admin === true ? { archive: true } : {}),
+        ...(state.kind === 'full' && owner.port.environment.permissions.admin ? { archive: true } : {}),
         card_version: metadata.card_version,
       });
       if (!owns()) {
-        if (result.archive === true) this.discard(result.token);
+        if (result.archive === true) this.discard(result.token, owner);
         return;
       }
       let blob: Blob;
@@ -182,7 +188,7 @@ export class BackupArchiveClient {
         const response = await this.fetch(`/api/houseplan/backup/export/${encodeURIComponent(result.token)}`, {
           method: 'POST', signal: controller.signal, headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ confirm_missing_content: !result.complete }),
-        });
+        }, owner);
         if (!response.ok) {
           const error = await response.json().catch(() => ({})) as { error?: string };
           throw transferError(error.error || (response.status === 413 ? 'zip_limit' : 'zip_invalid'));
@@ -207,7 +213,7 @@ export class BackupArchiveClient {
       showToast(host._t('backup.export_done'), 'backup.export_done');
     } catch (error: unknown) {
       if (owns()) {
-        if (this.exportToken) this.discard(this.exportToken);
+        if (this.exportToken) this.discard(this.exportToken, owner);
         this.exportToken = undefined;
         host._backupExportDialog = { ...state, archive: undefined, preparedJson: undefined, busy: false, error: errorText(error) };
       }

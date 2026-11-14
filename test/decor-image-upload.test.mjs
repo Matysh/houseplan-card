@@ -16,6 +16,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { classifyPlanFile, planFileExt, renderBackdropGuard } from '../test-build/backdrop-pick.js';
 import { DecorImageEditor } from '../test-build/decor-image-editor.js';
+import { planHostOf } from '../test-build/ha-plan-host.js';
 
 const ASSET_LIMIT = 2 * 1024 * 1024;
 const id = (char) => char.repeat(64);
@@ -60,7 +61,8 @@ const guardHost = (guard) => ({
   requestUpdate: () => {},
 });
 
-const editorHost = (over = {}) => ({
+const editorHost = (over = {}) => {
+ const host = {
   _t: (key, vars) => (vars ? `${key} ${JSON.stringify(vars)}` : key),
   _errText: (error) => String(error?.message ?? error),
   _showToast(text) { this.toasts.push(text); },
@@ -74,7 +76,13 @@ const editorHost = (over = {}) => ({
   requestUpdate: () => {},
   hass: {},
   ...over,
-});
+ };
+ host.hass.callWS ??= async () => ({});
+ Object.defineProperty(host, 'planHost', { get() { return planHostOf(legacy); } });
+ const legacy = { get hass() { return host.hass; } };
+ Object.defineProperty(host, '_presentation', { get() { return host.planHost.environment.presentation; } });
+ return host;
+};
 
 const editorOf = (host, hooks = {}) => new DecorImageEditor(host, {
   decorSnap: (raw) => raw,

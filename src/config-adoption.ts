@@ -1,3 +1,4 @@
+import { planHostOf, type PlanHostProvider } from './ha-plan-host';
 import { externalScreenOnlyCandidate } from './external-screens';
 /**
  * Config/layout adoption boundary (#500).
@@ -396,8 +397,7 @@ export const createConfigAdoption = (
 
 interface Clearable { clear(): void }
 
-export interface ConfigAdoptionHostPort {
-  hass: unknown;
+export interface ConfigAdoptionHostPort extends PlanHostProvider {
   _adoption: ConfigAdoption;
   _space: string;
   _model: unknown[];
@@ -558,7 +558,7 @@ export async function adoptAuthoritativeGated(
       && contentFingerprint(candidateConfig) !== adoption.currentConfigFingerprint())
     || (layResp != null && contentFingerprint(layResp.layout ?? {}) !== adoption.currentLayoutFingerprint());
   if (structuralChanged) {
-    const assetReady = await host._signer.prepareImage(host.hass, host._candidateBackdrop(candidateConfig));
+    const assetReady = await host._signer.prepareImage(planHostOf(host), host._candidateBackdrop(candidateConfig));
     if (!isCurrent()) return { status: 'superseded' };
     if (!assetReady) {
       host._continuity.note('asset-failed');

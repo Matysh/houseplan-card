@@ -1,4 +1,5 @@
 import { wallNodeHitRadius } from './grid-scale';
+import { planHostOf } from './ha-plan-host';
 /** Lazy subsystem port: keeps node transactions out of the View/card core. */
 import { NORM_W } from './canvas-constants';
 import { langOf, type I18nKey } from './i18n';
@@ -20,7 +21,6 @@ import { WallBooleanBaseline } from './wall-boolean-baseline';
 import { captureToast, type ToastContext } from './toast-presentation';
 
 interface NodeCardHost<TState> extends WallNodeWriteHost {
-  readonly hass: WallNodeWriteHost['hass'] & { states?: Record<string, import('./opening-features').OpeningEntityState> };
   readonly _mode: string; readonly _tool: string;
   readonly _space: string; readonly _canEdit: boolean; readonly _kiosk: boolean;
   readonly _haWallNodeMoveApi: number | null;
@@ -59,7 +59,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     delete?: { beforeIntent(retry: () => void): boolean; navigation(): number; blocked(): boolean };
   },
 ): WallNodeEditor {
-  const language = () => langOf(host.hass, host._config?.language);
+  const language = () => langOf(planHostOf(host).environment.presentation, host._config?.language);
   let geometry: { source: NodeMoveSpace; candidate: NodeMoveSpace; before: NodePreviewGeometry; next: NodePreviewGeometry;
     signature: string; refusal: string | null } | null = null;
   let ownsLiveLayer = false;
@@ -71,7 +71,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   // capture and handles additionally require Plan/Select.
   const writer = () => host._canEdit && !host._kiosk && host.isConnected;
   const deleteEnabled = () => host._mode === 'plan' && writer()
-    && host._haPlanGraphApi !== null && host.hass.connection?.connected !== false && !callbacks.delete?.blocked();
+    && host._haPlanGraphApi !== null && planHostOf(host).environment.connected && !callbacks.delete?.blocked();
   const api = () => host._haWallNodeMoveApi === 1 && host._haPlanGraphApi !== null;
   const context = () => {
     const result = { enabled: host._mode === 'plan' && host._tool === 'select' && writer(),
@@ -93,7 +93,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     const merging = history.kind !== 'delete' && !!history.intent.merge_node_id;
     const attaching = history.kind !== 'delete' && !!history.intent.attach_edge;
     const claim = history.kind === 'delete' || merging || attaching ? host._configWriteGuard() : null;
-    const authority = () => host.isConnected && host.hass.connection?.connected !== false && !!claim?.();
+    const authority = () => host.isConnected && planHostOf(host).environment.connected && !!claim?.();
     return writeWallNode(host, history, basis ?? nodeWriteBasis(host, history.beforeSpace.id), claim ? {
       send: () => authority() && writer() && ['plan', 'decor'].includes(host._mode)
         && (merging ? host._haWallNodeMergeApi === 1 : attaching ? host._haWallNodeAttachApi === 1 : host._haWallNodeDeleteApi === 1) && current(),
@@ -187,7 +187,7 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
         color: display.color, fill: display.wallFill.c, opacity: display.wallFill.a,
         amount: opening => host._openingAmt(opening),
         visual: opening => resolveOpeningVisual(opening, entity =>
-          host._renderOpeningEntityAvailable?.(entity) === false ? null : host.hass.states?.[entity], host._openingAmt(opening)) });
+          host._renderOpeningEntityAvailable?.(entity) === false ? null : planHostOf(host).environment.states[entity], host._openingAmt(opening)) });
     },
     paintOpportunity: async () => { await host.updateComplete;
       await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))); },

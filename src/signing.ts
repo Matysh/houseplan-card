@@ -1,5 +1,6 @@
 import { contentUrl, chunk, MAX_SIGN_PATHS, SIGN_TTL_MS, SIGN_REFRESH_MS } from './logic';
 import { PAINT_BARRIER_MAX_MS } from './visual-continuity';
+import { planHostFrom } from './ha-plan-host';
 
 /** A request older than this is presumed lost, and the url may be asked again. */
 export const SIGN_INFLIGHT_MS = 15000;
@@ -32,16 +33,6 @@ const sharedSignerRuntimes = new WeakMap<object, SharedSignerRuntime>();
 // retain the complete referenced set. Keep it bounded, but comfortably above
 // the 201-item regression contract (and ordinary multi-card plans).
 const SHARED_SIGNED_MAX = 512;
-
-const signerAuthority = (hass: any, fallback: object): object => {
-  // `hass` itself is commonly replaced on every HA state tick. Keying the
-  // shared signer by it discarded the cache continuously in reduced/demo
-  // environments without a Connection object. The transport function is the
-  // next stable authority; a per-signer fallback is the final option.
-  const authority = hass?.connection || hass?.callWS || fallback;
-  return authority && (typeof authority === 'object' || typeof authority === 'function')
-    ? authority : fallback;
-};
 
 const signerRuntime = (authority: object): SharedSignerRuntime => {
   let runtime = sharedSignerRuntimes.get(authority);
@@ -81,7 +72,6 @@ const signerRuntime = (authority: object): SharedSignerRuntime => {
  *   forever, and a failure backs off instead of retrying on the next frame.
  */
 export class ContentSigner {
-  private readonly fallbackAuthority = {};
   private readonly referenceOwner = {};
   private shared?: SharedSignerRuntime;
   private authority?: object;
@@ -101,10 +91,13 @@ export class ContentSigner {
    */
   constructor(private onUpdate: () => void, private now: () => number = () => Date.now()) {}
 
-  private bind(hass: any): SharedSignerRuntime {
-    const authority = signerAuthority(hass, this.fallbackAuthority);
+  private bind(input: unknown): SharedSignerRuntime {
+    const authority = planHostFrom(input).authorityKey;
     if (this.shared && this.authority === authority) return this.shared;
     if (this.shared) {
+      clearTimeout(this.batchTimer);
+      for (const path of this.queued) this.shared.queued.delete(path);
+      this.queued.clear();
       this.shared.listeners.delete(this.sharedUpdate);
       this.shared.references.delete(this.referenceOwner);
     }
@@ -118,14 +111,14 @@ export class ContentSigner {
   }
 
   /** Start the periodic re-sign. `referenced` prunes the cache on each tick. */
-  start(hass: () => any, referenced: () => Set<string>): void {
+  start(input: () => unknown, referenced: () => Set<string>): void {
     this.disposed = false; // an element can be reconnected after a disconnect
     this.referenced = new Set(referenced());
-    const shared = this.bind(hass());
+    const shared = this.bind(input());
     shared.listeners.add(this.sharedUpdate);
     shared.references.set(this.referenceOwner, new Set(this.referenced));
     this.stopTimer();
-    this.resignTimer = setInterval(() => this.resign(hass(), referenced()), SIGN_REFRESH_MS / 2);
+    this.resignTimer = setInterval(() => this.resign(input(), referenced()), SIGN_REFRESH_MS / 2);
   }
 
   /** Release every timer; the cache survives a reconnect, the timers must not. */
@@ -142,8 +135,8 @@ export class ContentSigner {
   }
 
   /** Drop signed/runtime state after a whole-model replacement. */
-  invalidate(hass: any): void {
-    const shared = this.bind(hass);
+  invalidate(input: unknown): void {
+    const shared = this.bind(input);
     clearTimeout(this.batchTimer);
     this.queued.clear();
     shared.queued.clear();
@@ -158,10 +151,10 @@ export class ContentSigner {
   }
 
   /** The url to put in the DOM: a signature we hold and still trust, else ''. */
-  display(hass: any, url: string | null | undefined): string {
+  display(input: unknown, url: string | null | undefined): string {
     const u = contentUrl(url);
     if (!u.startsWith('/api/houseplan/content/')) return u;
-    const shared = this.bind(hass);
+    const shared = this.bind(input);
     this.referenced.add(u);
     shared.references.set(this.referenceOwner, new Set(this.referenced));
     const hit = shared.signed[u];
@@ -169,19 +162,19 @@ export class ContentSigner {
     if (age < SIGN_REFRESH_MS) return hit.url;
     if (age < SIGN_TTL_MS) {
       // aging but still valid: keep showing it while a fresh one is fetched
-      if (!hit.pending) this.request(hass, u);
+      if (!hit.pending) this.request(input, u);
       return hit.url;
     }
     if (hit) delete shared.signed[u];
-    this.request(hass, u);
+    this.request(input, u);
     // Empty, NOT the plain path: an unsigned request to a `requires_auth` view
     // returns 401 and Home Assistant raises a "failed login attempt".
     return '';
   }
 
-  private request(hass: any, url: string): void {
-    if (!hass?.callWS || this.queued.has(url)) return;
-    const shared = this.bind(hass);
+  private request(input: unknown, url: string): void {
+    if (!planHostFrom(input).environment.connected || this.queued.has(url)) return;
+    const shared = this.bind(input);
     const now = this.now();
     const sent = shared.inFlight.get(url);
     if (sent !== undefined && now - sent < SIGN_INFLIGHT_MS) return; // already asking
@@ -196,13 +189,15 @@ export class ContentSigner {
       const paths = [...this.queued];
       this.queued.clear();
       for (const path of paths) shared.queued.delete(path);
-      this.sign(hass, paths);
+      this.sign(input, paths);
     }, 30);
   }
 
-  private sign(hass: any, paths: string[]): void {
-    if (!paths.length || !hass?.callWS) return;
-    const shared = this.bind(hass);
+  private sign(input: unknown, paths: string[]): void {
+    const host = planHostFrom(input);
+    if (!paths.length || !host.environment.connected) return;
+    const key = host.authorityKey, revision = host.writeAuthorityRevision;
+    const shared = this.bind(host);
     for (const batch of chunk(paths, MAX_SIGN_PATHS)) {
       const sentAt = this.now();
       const claimed = batch.filter((p) => {
@@ -212,9 +207,9 @@ export class ContentSigner {
         return true;
       });
       if (!claimed.length) continue;
-      hass
-        .callWS({ type: 'houseplan/content/sign', paths: claimed })
-        .then((r: any) => {
+      host.content.resolve(claimed)
+        .then((urls) => {
+          if (host.authorityKey !== key || host.writeAuthorityRevision !== revision) return;
           // A successful call does NOT mean every path was signed: the backend
           // skips a path it cannot sign, logs it and still answers `{urls: …}`
           // with the rest. Treating the whole batch as done then cleared the
@@ -224,7 +219,7 @@ export class ContentSigner {
           let accepted = 0;
           let notifyNow = false;
           for (const p of claimed) {
-            const url = r?.urls?.[p];              // only keys we asked for
+            const url = urls[p];              // only keys we asked for
             if (typeof url === 'string' && url) {
               const previous = shared.signed[p];
               if (previous?.loaded && previous.url !== url) {
@@ -351,16 +346,16 @@ export class ContentSigner {
    * Sign and decode a protected image before a structural candidate adopts it.
    * The current frame can therefore keep its old backdrop for the whole wait.
    */
-  prepareImage(hass: any, url: string | null | undefined): Promise<boolean> {
+  prepareImage(input: unknown, url: string | null | undefined): Promise<boolean> {
     const path = contentUrl(url);
     if (!path.startsWith('/api/houseplan/content/')) return Promise.resolve(true);
-    const shared = this.bind(hass);
+    const shared = this.bind(input);
     const attempt = (): Promise<boolean> | null => {
       const entry = shared.signed[path];
       if (entry && this.now() - entry.at < SIGN_TTL_MS) {
         return this.preloadCurrentImage(shared, path, entry);
       }
-      this.display(hass, path);
+      this.display(input, path);
       const retry = shared.retry.get(path);
       if (retry && retry.notBefore > this.now()
           && !shared.inFlight.has(path) && !shared.queued.has(path)) {
@@ -432,8 +427,8 @@ export class ContentSigner {
    * entry for a plan replaced months ago must not consume a slot in the capped
    * request — so prune to the urls the live config still references.
    */
-  resign(hass: any, referenced: Set<string>): void {
-    const shared = this.bind(hass);
+  resign(input: unknown, referenced: Set<string>): void {
+    const shared = this.bind(input);
     this.referenced = new Set(referenced);
     shared.references.set(this.referenceOwner, new Set(this.referenced));
     const now = this.now();
@@ -445,27 +440,27 @@ export class ContentSigner {
     }
     shared.signed = kept;
     shared.retry.clear(); // a scheduled refresh is a fresh chance for everything
-    this.sign(hass, [...referenced].filter((path) => !!kept[path] && !kept[path].pending));
+    this.sign(input, [...referenced].filter((path) => !!kept[path] && !kept[path].pending));
   }
 
   /** Mark a protected image as decoded/paintable; shared warm mounts inherit it. */
-  markLoaded(hass: any, url: string | null | undefined, paintedUrl?: string): void {
+  markLoaded(input: unknown, url: string | null | undefined, paintedUrl?: string): void {
     const path = contentUrl(url);
     if (!path.startsWith('/api/houseplan/content/')) return;
-    const entry = this.bind(hass).signed[path];
+    const entry = this.bind(input).signed[path];
     // A late load event from an expired/re-signed URL must not bless the newer
     // entry that happens to share the same raw content path.
     if (entry && (!paintedUrl || entry.url === paintedUrl) && !entry.loaded) {
       entry.loaded = true;
-      for (const listener of [...this.bind(hass).listeners]) listener();
+      for (const listener of [...this.bind(input).listeners]) listener();
     }
   }
 
   /** Required protected assets are ready only after signing and image load. */
-  isReady(hass: any, url: string | null | undefined): boolean {
+  isReady(input: unknown, url: string | null | undefined): boolean {
     const path = contentUrl(url);
     if (!path.startsWith('/api/houseplan/content/')) return true;
-    const entry = this.bind(hass).signed[path];
+    const entry = this.bind(input).signed[path];
     return !!entry && this.now() - entry.at < SIGN_TTL_MS && entry.loaded;
   }
 

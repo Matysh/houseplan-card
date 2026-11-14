@@ -3,10 +3,10 @@ import { html } from 'lit';
 import { callout, ensureFormKitStyles } from './editors/form-kit';
 import { ensureCompactDialogStyles, type CompactDialogHost } from './compact-dialog-styles';
 import { langOf, type I18nKey } from './i18n';
+import { planHostOf, type PlanHostProvider } from './ha-plan-host';
 
 interface FloorChoice { id: string; name: string; level?: number | null; checked: boolean }
-interface FloorImportHost extends CompactDialogHost {
-  hass: unknown;
+interface FloorImportHost extends CompactDialogHost, PlanHostProvider {
   _config?: { language?: string } | null;
   _importDialog: { floors: FloorChoice[] } | null;
   _t(key: I18nKey, vars?: Record<string, string | number>): string;
@@ -16,7 +16,7 @@ export function renderFloorImportDialog(host: FloorImportHost, manual: () => voi
   ensureCompactDialogStyles(host);
   ensureFormKitStyles(host);
   const dialog = host._importDialog!, selected = dialog.floors.filter(floor => floor.checked).length;
-  return html`<hp-dialog .hass=${host.hass} data-kind="import" class="ui-dialog" form-shell settings-layout compact wide
+  return html`<hp-dialog .hass=${planHostOf(host).environment.presentation} data-kind="import" class="ui-dialog" form-shell settings-layout compact wide
     .title=${host._t('import.title')} icon="mdi:home-floor-1" @hp-close=${() => (host._importDialog = null)}>
     <div class="body">
       ${callout({ text:host._t('import.hint'), className:'floorhint' })}
@@ -28,7 +28,7 @@ export function renderFloorImportDialog(host: FloorImportHost, manual: () => voi
           }} />
         <span>${floor.name}</span>${floor.level != null ? html`<span class="floorlvl hpf-state-chip">L${floor.level}</span>` : null}
       </label>`)}
-      <hp-plan-converter-info .language=${langOf(host.hass, host._config?.language)}></hp-plan-converter-info>
+      <hp-plan-converter-info .language=${langOf(planHostOf(host).environment.presentation, host._config?.language)}></hp-plan-converter-info>
     </div>
     <div class="row hpf-footer" slot="footer">
       <button data-hp="action" data-action=${manualAction} class="btn ghost" @click=${manual}>${host._t('import.manual')}</button>

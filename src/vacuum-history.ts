@@ -1,3 +1,4 @@
+import { planHostOf } from './ha-plan-host';
 /** One memory-only history owner per card; Show intent outlives its dialog. */
 import type {ReactiveControllerHost} from 'lit';
 import type {DevItem,ServerConfig} from './types';
@@ -76,7 +77,7 @@ export class VacuumHistory {
   }
   private synchronize():boolean {
     const context=this.readContext(),old=this.context;
-    if(old&&(!context||old.key!==context.key||!this.host._configWriteContext.current(old.claim,this.host.hass))){
+    if(old&&(!context||old.key!==context.key||!this.host._configWriteContext.current(old.claim,planHostOf(this.host)))){
       this.hide('retired');this.listGeneration++;this.catalog=null;this.loaded=false;this.loadingList=false;
       this.observedEpoch=null;this.openDialog=null;
     }
@@ -160,7 +161,7 @@ export class VacuumHistory {
     const endedAtStart=this.reason==='retired';
     this.loaded=true;this.loadingList=true;this.reason=null;this.host.requestUpdate();
     const current=()=>generation===this.listGeneration&&this.synchronize()&&this.context?.key===context.key
-      &&this.host._configWriteContext.current(context.claim,this.host.hass);
+      &&this.host._configWriteContext.current(context.claim,planHostOf(this.host));
     try {
       const raw=await this.host.hass.callWS({type:'houseplan/vacuum/history/list',marker_id:this.markerId});
       if(!current())return;
@@ -192,7 +193,7 @@ export class VacuumHistory {
     const current=()=>this.requested===intent&&this.synchronize()&&this.context?.key===context.key
       &&this.catalog?.revision===catalog.revision&&this.catalog.epoch===catalog.epoch
       &&this.catalog.records.some(row=>row.id===requested.id&&row.timestamp===requested.timestamp)
-      &&this.host._configWriteContext.current(context.claim,this.host.hass);
+      &&this.host._configWriteContext.current(context.claim,planHostOf(this.host));
     try {
       const raw=await this.host.hass.callWS({type:'houseplan/vacuum/history/get',marker_id:this.markerId,
         record_id:requested.id,revision:catalog.revision});

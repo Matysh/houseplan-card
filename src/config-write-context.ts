@@ -1,25 +1,32 @@
-/** Runtime-only identity fence: card options and same-connection reconnects are not a new HA (#890). */
-interface WriteHass {
-  connection?: unknown;
-  callWS?: unknown;
-  user?: { id?: string };
-}
+import { isPlanHost, planHostFrom, planHostOf, type PlanHostProvider } from './ha-plan-host';
+
+/** Runtime-only identity fence: options and same-authority reconnects are not a new host (#890). */
+const authority = (input: unknown) => {
+  const host = planHostFrom(input);
+  return {
+    key: host.authorityKey,
+    ready: host.environment.ready,
+    // Legacy helper callers replace HA state objects. Their adapter-local
+    // counter is not an epoch; the card supplies its stable PlanHost instead.
+    revision: isPlanHost(input) ? host.writeAuthorityRevision : undefined,
+    rights: JSON.stringify(host.environment.permissions),
+  };
+};
 
 /** Capture the existing authority generation, never a replaceable HA state snapshot.
  * Small standalone writer ports may omit the card's generation owner; their
  * fallback still fences the captured connection/user (or connection-less WS).
  */
-export function captureWriteAuthority(host: {
-  readonly hass: WriteHass;
+export function captureWriteAuthority(host: PlanHostProvider & {
   _configWriteGuard?: () => () => boolean;
 }): () => boolean {
   const generationCurrent = host._configWriteGuard?.();
-  const authority = host.hass?.connection ?? host.hass?.callWS;
-  const user = host.hass?.user?.id;
+  const captured = planHostOf(host);
+  const key = captured.authorityKey, revision = captured.writeAuthorityRevision;
   return () => {
-    const hass = host.hass;
-    return generationCurrent?.() !== false && !!hass && typeof hass.callWS === 'function'
-      && (hass.connection ?? hass.callWS) === authority && hass.user?.id === user;
+    const current = planHostOf(host);
+    return generationCurrent?.() !== false && current.environment.ready
+      && current.authorityKey === key && current.writeAuthorityRevision === revision;
   };
 }
 
@@ -34,24 +41,26 @@ export function configWriteErrorKey(error: unknown): 'err.config_write_unauthori
 }
 
 export class ConfigWriteContext {
-  private authority: unknown;
-  private user: string | undefined;
+  private observed?: ReturnType<typeof authority>;
   private generation = {};
 
-  observe(hass: WriteHass | null | undefined): boolean {
-    if (!hass || typeof hass.callWS !== 'function') return false;
-    const authority = hass.connection ?? hass.callWS;
-    if (this.authority === undefined) { this.authority = authority; this.user = hass.user?.id; return false; }
-    if (this.authority === authority && this.user === hass.user?.id) return false;
-    this.authority = authority; this.user = hass.user?.id; this.generation = {};
+  observe(input: unknown): boolean {
+    const next = authority(input);
+    if (!next.ready) return false;
+    const previous = this.observed;
+    this.observed = next;
+    if (!previous || (previous.key === next.key && previous.revision === next.revision
+        && previous.rights === next.rights)) return false;
+    this.generation = {};
     return true;
   }
 
   claim(): object { return this.generation; }
   /** Pending bookkeeping survives a temporary disconnect, but not a foreign HA. */
   owns(claim: object): boolean { return claim === this.generation; }
-  current(claim: object, hass: WriteHass | null | undefined): boolean {
-    return !!hass && typeof hass.callWS === 'function' && this.owns(claim)
-      && (hass.connection ?? hass.callWS) === this.authority && hass.user?.id === this.user;
+  current(claim: object, input: unknown): boolean {
+    const next = authority(input), previous = this.observed;
+    return next.ready && this.owns(claim) && previous?.key === next.key
+      && (previous.revision === undefined || previous.revision === next.revision) && previous.rights === next.rights;
   }
 }

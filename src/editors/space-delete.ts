@@ -30,11 +30,13 @@ export async function completeSpaceDeletion(
     return;
   }
   host._spaceDialog = { ...currentDialog, deleteBlockers: 0, busy: true };
+  const current = host._configWriteGuard();
   try {
     if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.flush();
     if (host._persistLayout.pending()) host._persistLayout.flush();
     await host._writeChain;
-    await host.hass.callWS({
+    if (!current()) return;
+    await host.planHost.request({
       type: 'houseplan/space/delete',
       space_id: spaceId,
       expected_config_rev: host._cfgRev,
@@ -45,11 +47,11 @@ export async function completeSpaceDeletion(
     });
     const [configResponse, layoutResponse] = await Promise.all([
       host._getAuthoritativeConfig(),
-      host.hass.callWS({ type: 'houseplan/layout/get' }),
+      host.planHost.request<import('../config-adoption').LayoutResponse>({ type: 'houseplan/layout/get' }),
     ]);
     // #500: revisions come with re-read bodies, never from the delete reply.
     const adopted = await host._adoptAuthoritative({
-      cfgResp: configResponse, layResp: layoutResponse, reason: 'space-delete', profile: 'post-write',
+      cfgResp: configResponse, layResp: layoutResponse, reason: 'space-delete', profile: 'post-write', isCurrent: current,
     });
     // Asset wait: the scheduled reload owns the tail; nothing has been adopted.
     if (adopted.status !== 'adopted') {
@@ -63,6 +65,7 @@ export async function completeSpaceDeletion(
     host._maybeRebuildDevices();
     showToast(host._t('toast.space_deleted'), 'toast.space_deleted');
   } catch (error: unknown) {
+    if (!current()) return;
     const failure = error as { code?: string };
     if (failure?.code === 'conflict' || failure?.code === 'space_in_use') {
       await Promise.all([host._reloadConfigOnly(true), host._reloadLayoutOnly()]);

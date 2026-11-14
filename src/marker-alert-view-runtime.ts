@@ -1,3 +1,4 @@
+import { planHostOf } from './ha-plan-host';
 /** Optional #1000 View feature. No subscriptions, writes, editor or dictionaries. */
 import { ConfirmedMarkerAlerts, type AlertClock, type AlertObservation, type ConfirmedMarkerAlert } from './marker-alert-runtime';
 import { normalizeMarkerAlerts, type MarkerThresholdAlert } from './marker-alert';
@@ -59,7 +60,7 @@ export class MarkerAlertViewRuntime {
   private permitted(owner: object): boolean {
     const host = this.host;
     return this.connected && host.isConnected && !host._connectionWasLost
-      && host._config?.live_states !== false && host._configWriteContext.current(owner, host.hass);
+      && host._config?.live_states !== false && host._configWriteContext.current(owner, planHostOf(host));
   }
 
   private demanded(device: DevItem): boolean {

@@ -11,6 +11,8 @@ import {
   HARD_DIMENSION, downscaleDimensions, probeBackdrop, type BackdropProbe,
 } from './backdrop-probe';
 import type { I18nKey } from './i18n';
+import { planHostFrom } from './ha-plan-host';
+import type { PlanHost } from './plan-host';
 
 export interface PlanFilePayload {
   ext: string;
@@ -115,7 +117,7 @@ export interface PlanUploadHass {
  * still names the limit.
  */
 export async function uploadPlanFile(
-  hass: PlanUploadHass | null | undefined,
+  input: PlanUploadHass | PlanHost | null | undefined,
   t: BackdropPickHost['_t'],
   spaceId: string,
   payload: PlanFilePayload,
@@ -124,15 +126,7 @@ export async function uploadPlanFile(
   body.append('space_id', spaceId);
   body.append('ext', payload.ext);
   body.append('file', payload.blob, payload.name || `plan.${payload.ext}`);
-  // fetchWithAuth refreshes a stale access_token itself; the fallback is the raw token
-  const response: Response = hass?.fetchWithAuth
-    ? await hass.fetchWithAuth(PLAN_UPLOAD_PATH, { method: 'POST', body })
-    : await fetch(PLAN_UPLOAD_PATH, {
-      method: 'POST',
-      body,
-      headers: hass?.auth?.data?.access_token
-        ? { authorization: `Bearer ${hass.auth.data.access_token}` } : {},
-    });
+  const response = await planHostFrom(input).http.request(PLAN_UPLOAD_PATH, { method: 'POST', body });
   const json: { error?: string; max_mb?: number; url?: string } =
     await response.json().catch(() => ({}));
   if (!response.ok || json.error || typeof json.url !== 'string') {

@@ -1,5 +1,6 @@
 import { captureToast } from './toast-presentation';
 import { presentationRouteOwner } from './route-kiosk';
+import { planHostOf, type PlanHostProvider } from './ha-plan-host';
 /**
  * Ownership for overlapping authoritative config reads (#543).
  *
@@ -170,8 +171,7 @@ interface FlushableDebounce {
 }
 
 /** Narrow host surface for the complete config-only reload transaction. */
-export interface ConfigReloadHostPort {
-  hass?: unknown;
+export interface ConfigReloadHostPort extends PlanHostProvider {
   readonly isConnected: boolean;
   readonly _configReloadAuthority: ConfigReloadAuthority;
   readonly _adoption: ConfigAdoption;
@@ -192,16 +192,13 @@ export interface ConfigReloadHostPort {
 }
 
 export const configReloadContext = (
-  host: { readonly hass?: unknown; readonly panelHost?: boolean },
+  host: PlanHostProvider & { readonly panelHost?: boolean },
 ): ConfigReloadContext => {
-  const hass = host.hass as {
-    readonly connection?: unknown;
-    readonly user?: { readonly id?: unknown } | null;
-  } | null | undefined;
-  const userId = hass?.user?.id;
+  const port = planHostOf(host);
   return {
-    connection: hass?.connection ?? null,
-    userId: typeof userId === 'string' ? userId : null,
+    // Historical field name, runtime-only: no connection is exposed to plan logic.
+    connection: port.authorityKey,
+    userId: port.environment.userId ?? null,
     route: presentationRouteOwner(location.pathname, host.panelHost),
   };
 };

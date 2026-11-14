@@ -95,7 +95,7 @@ function fakePort(overrides = {}, registryRetryMs = undefined) {
     dialog: () => state.dialog,
     setDialog: (next) => { state.dialog = next; },
     t: (key, vars) => (vars ? `${key}${JSON.stringify(vars)}` : key),
-    hass: () => ({}),
+    planHost: () => haPlanHost({}),
     config: () => state.config,
     planReady: () => true,
     canWrite: () => true,
@@ -614,7 +614,7 @@ const roster = (authoritative, deviceIds = []) => ({
 function realPort({ dictionary = RU, config, layout, context, hass = {}, retryMs } = {}) {
   const made = fakePort({
     t: translator(dictionary),
-    hass: () => hass,
+    planHost: () => haPlanHost(hass),
     layout: () => layout,
     referenceContext: (removeLive, removeInvalid) => {
       made.calls.referenceContext.push(removeLive);
@@ -910,7 +910,7 @@ test('#869 AC6 Details show a known name first, then the id; legacy groups are l
   const tr = translator(RU);
   const { dialog, state } = fakePort({
     t: tr,
-    hass: () => ({ areas: { detskaia_elina: { area_id: 'detskaia_elina', name: 'Детская Элины' } } }),
+    planHost: () => haPlanHost({ areas: { detskaia_elina: { area_id: 'detskaia_elina', name: 'Детская Элины' } } }),
   });
   state.dialog = dialogOf({ changed: false, preflight: null, report: report({
     liveMissingPositions: [{ id: 'm1', kind: 'device', name: 'Торшер', spaceId: 'gone' }],
@@ -948,7 +948,7 @@ test('#869 legacy group name comes only from the HA Area with exactly that id', 
   const areas = {
     kids: { area_id: 'kids', name: 'Kids room' }, kids_2: { area_id: 'kids_2', name: 'Other' },
   };
-  const { dialog, state } = fakePort({ t: tr, hass: () => ({ areas }) });
+  const { dialog, state } = fakePort({ t: tr, planHost: () => haPlanHost({ areas }) });
   const item = (id) => ({ id, spaceId: 'f2', kind: 'legacy_group', name: '', reason: 'legacy_group' });
   state.dialog = dialogOf({ changed: false, preflight: null, report: report({
     unverifiedPositions: [item('grp_kids'), item('grp_kid'), item('grp_constructor'), item('grp___proto__')],
@@ -1293,3 +1293,4 @@ test('#1170 no-op with retained observations cannot say the plan is completely o
     assert.equal(h.calls.commit.length, 0);
   }
 });
+import { haPlanHost } from '../test-build/ha-plan-host.js';

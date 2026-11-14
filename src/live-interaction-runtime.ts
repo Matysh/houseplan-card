@@ -78,7 +78,7 @@ export class LiveRuntime {
     if (owner) this.fingerprints.set(owner, [epoch, cellCm, gridPitch, value]);
     return value;
   }
-  public hass(
+  public environment(
     before: HassRenderSnapshot | null | undefined,
     after: HassRenderSnapshot | null | undefined,
     dependencies: HassRenderDependencies | null,

@@ -1,5 +1,6 @@
 import type { DecorShape } from './editors/decor/types';
 import { clamp01, normalizeAngle } from './editors/decor/geometry';
+import { planHostFrom } from './ha-plan-host';
 
 export const DECOR_ASSETS_API_VERSION = 1;
 export const DECOR_ASSET_ID_RE = /^[0-9a-f]{64}$/;
@@ -77,21 +78,18 @@ export function adoptDecorAssets(value: unknown): Map<string, DecorAsset> {
 
 /** Resolve every unique id without ever exceeding the backend message cap. */
 export async function resolveDecorAssets(
-  hass: {
-    callWS: (message: Record<string, unknown>) => Promise<unknown>;
-    connection?: object;
-  },
+  input: unknown,
   assetIds: readonly string[],
   configEpoch: number | string,
 ): Promise<Map<string, DecorAsset>> {
   const unique = [...new Set(assetIds.filter((id) => DECOR_ASSET_ID_RE.test(id)))].sort();
-  const owner = hass.connection || hass;
+  const host = planHostFrom(input), owner = host.authorityKey;
   const key = JSON.stringify([configEpoch, unique]);
   const cached = resolveCache.get(owner);
   if (cached?.[0] === key) return cached[1];
   const out = new Map<string, DecorAsset>();
   for (let offset = 0; offset < unique.length; offset += DECOR_ASSET_RESOLVE_BATCH) {
-    const response = await hass.callWS({
+    const response = await host.request({
       type: 'houseplan/assets/resolve',
       asset_ids: unique.slice(offset, offset + DECOR_ASSET_RESOLVE_BATCH),
     });

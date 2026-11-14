@@ -1,3 +1,4 @@
+import { planHostOf } from './ha-plan-host';
 import { captureToast } from './toast-presentation';
 import { waitForPriorConfigWrite } from './prior-config-write';
 import { sendHouseplanWrite } from './large-write-transport';
@@ -45,7 +46,7 @@ export class DeviceCopyEditor {
   }
   private contextCurrent(m: Menu): boolean {
     return this.allowed() && this.host._space === m.space
-      && this.host._configWriteContext.current(m.context, this.host.hass);
+      && this.host._configWriteContext.current(m.context, planHostOf(this.host));
   }
   private unchanged(m: Menu): boolean {
     const h = this.host;
@@ -117,7 +118,7 @@ export class DeviceCopyEditor {
     let phaseStart = performance.now();
     const phase = (name: string) => { const now = performance.now(); phases[name] = now - phaseStart; phaseStart = now; };
     this.lastProfile = { phases, markers: h._serverCfg?.markers?.length || 0, files: false, outcome: 'pending' };
-    const authority = () => h.isConnected && h._configWriteContext.current(m.context, h.hass);
+    const authority = () => h.isConnected && h._configWriteContext.current(m.context, planHostOf(h));
     const fail = (key: ToolsI18nKey): never => { throw { copyKey: key }; };
     let sent = false;
     try {

@@ -6,9 +6,7 @@
  * exactly and offers the actions that really exist. Nothing here writes: no
  * cleanup, no change of the optimizer's statuses or removal rules.
  */
-import {
-  acquireHaRegistries, haRegistrySnapshot, refreshHaRegistries,
-} from './ha-binding-status';
+export { reloadHaRegistriesBounded } from './ha-binding-status';
 import type { SpaceReferencePositionDetail } from './space-reference-repair';
 
 export type UnverifiedGroup = 'legacy_group' | 'unknown_owner' | 'registry_unavailable';
@@ -77,21 +75,3 @@ export function unverifiedDiagnostics(input: UnverifiedDiagnosticsInput): object
  * bounded by `timeoutMs`. Resolves whether the registry is complete now; a
  * hung or refused load resolves `false` instead of waiting forever.
  */
-export function reloadHaRegistriesBounded(hass: unknown, timeoutMs: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const before = haRegistrySnapshot(hass).revision;
-    let release: () => void = () => undefined;
-    const timer = globalThis.setTimeout(() => {
-      release();
-      resolve(false);
-    }, timeoutMs);
-    release = acquireHaRegistries(hass, () => {
-      const snapshot = haRegistrySnapshot(hass);
-      if (snapshot.revision === before) return;
-      globalThis.clearTimeout(timer);
-      release();
-      resolve(snapshot.authoritative);
-    });
-    refreshHaRegistries(hass);
-  });
-}

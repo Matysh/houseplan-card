@@ -12,6 +12,7 @@
  * не принадлежали: инлайн-фолбэк буфера обмена и дедуп dev-лога.
  */
 import { html, nothing, type TemplateResult } from 'lit';
+import type { PlanHost } from './plan-host';
 
 import { formatLatticeShiftCm } from './coordinate-canonicalization';
 import type { DeviceLayout } from './device-position-history';
@@ -19,7 +20,7 @@ import { haRegistryDiagnostics } from './ha-binding-status';
 import type { I18nKey } from './i18n';
 import type { SettingsI18nKey } from './i18n/settings';
 import {
-  reloadHaRegistriesBounded, unverifiedDiagnostics, unverifiedGroup, unverifiedName,
+  unverifiedDiagnostics, unverifiedGroup, unverifiedName,
   type UnverifiedGroup,
 } from './optimize-unverified';
 import {
@@ -82,7 +83,7 @@ export interface OptimizePlansDialogPort {
   setDialog(next: OptimizePlansDialogState | null): void;
   /** #869: the dialog's own strings live in the lazy `settings` dictionary. */
   t(key: I18nKey | SettingsI18nKey, vars?: Record<string, string | number>): string;
-  hass(): unknown;
+  planHost(): PlanHost;
   config(): ServerConfig | null;
   /** the normalised plan exists — the preview has something to optimise */
   planReady(): boolean;
@@ -158,6 +159,7 @@ export interface OptimizePlansDialogOptions {
 }
 
 export class OptimizePlansDialog {
+  private planPort(): PlanHost { return this.port.planHost(); }
   /**
    * CODE-REVIEW-295-r1 M2: the inline clipboard fallback belongs to one
    * dialog showing. Keyed by the dialog object, a reopened dialog — always a
@@ -247,7 +249,7 @@ export class OptimizePlansDialog {
       return JSON.stringify(this.diagnostics(dialog.preflight, dialog.config ?? null), null, 2);
     const report = dialog.afterReport ?? dialog.report;
     if (report.unverifiedPositions.length) return JSON.stringify(unverifiedDiagnostics({
-      items: report.unverifiedPositions, registry: haRegistryDiagnostics(this.port.hass()),
+      items: report.unverifiedPositions, registry: haRegistryDiagnostics(null, this.planPort().environment.registry),
       analysisAuthoritative: report.registryAuthoritative === true,
       cardVersion: this.port.cardVersion(), integrationVersion: this.port.integrationVersion(), now: new Date(),
     }), null, 2);
@@ -387,7 +389,7 @@ export class OptimizePlansDialog {
     if (!previewState(dialog) || dialog.busy || dialog.retrying) return;
     const pending = { ...dialog, retrying: true, retryFailed: false };
     this.port.setDialog(pending);
-    const complete = await reloadHaRegistriesBounded(this.port.hass(), this.registryRetryMs);
+    const complete = await (this.planPort().refreshRegistry?.(this.registryRetryMs) ?? Promise.resolve(false));
     if (this.port.dialog() !== pending) return;
     // New evidence requires a new opt-in; never carry deletion consent across a refresh.
     if (complete) await this.preview(false, false, (!!dialog.outcome && dialog.canUndo === true) || !!dialog.replacesUndo);
@@ -536,7 +538,7 @@ export class OptimizePlansDialog {
       legacy_group: [], unknown_owner: [], registry_unavailable: [],
     };
     for (const item of items) groups[unverifiedGroup(item)].push(item);
-    const hass = this.port.hass();
+    const hass = { areas: this.planPort().environment.registry.areas };
     const names = groups.legacy_group.map((item) => unverifiedName(hass, item)).filter(Boolean);
     const more = Math.max(0, names.length - 3);
     const legacyNames = names.length
@@ -635,7 +637,7 @@ export class OptimizePlansDialog {
             ? this.port.t('gs.optimize_reference_more', { n: String(remainingLiveNames) }) : '',
         })
       : '';
-    const hass = this.port.hass();
+    const hass = { areas: this.planPort().environment.registry.areas };
     const detailStatus = (item: typeof r.removedPositions[number]): string => {
       if (r.removedPositions.some((removedItem) => removedItem.id === item.id)) {
         return this.port.t('gs.optimize_detail_removed');
@@ -669,7 +671,7 @@ export class OptimizePlansDialog {
     ];
     const visibleDetails = referenceDetails.slice(0, 10);
     const remainingDetails = Math.max(0, referenceDetails.length - visibleDetails.length);
-    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.port.hass()} data-kind="settings" .title=${this.port.t('gs.align_title')} icon="mdi:broom"
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.planPort().environment.presentation} data-kind="settings" .title=${this.port.t('gs.align_title')} icon="mdi:broom"
       dismiss-on-scrim @hp-close=${this.close}>
         <div class="body">
           ${d.busy ? html`<p class="alignmsg" role="status" aria-live="polite"><ha-icon class="hpf-spinner" icon="mdi:loading"></ha-icon>${this.port.t(d.phase === 'verifying' ? 'gs.optimize_verifying' : 'gs.optimize_saving')}</p>

@@ -83,7 +83,7 @@ test('#1111 registry, connection, user and visibility boundaries each rebuild on
   for (const update of [
     () => { host._haRegistry = { ...host._haRegistry, revision: 2 }; },
     () => { host.hass = { ...host.hass, connection: {} }; },
-    () => { host.hass = { ...host.hass, user: {} }; },
+    () => { host.hass = { ...host.hass, user: { id: 'other-projection-user' } }; },
     () => { host.ownerDocument.visibilityState = 'hidden'; intakeHass(host);
       host.ownerDocument.visibilityState = 'visible'; },
     () => { host._routeDepartureHandled = true; intakeHass(host); host._routeDepartureHandled = false; },

@@ -1,3 +1,4 @@
+import { planHostFrom, planHostOf, type PlanHostProvider } from './ha-plan-host';
 /** Full-card adapter for the pure runtime-version controller (#462). */
 import { html, nothing, type TemplateResult } from 'lit';
 import type { I18nKey } from './i18n';
@@ -36,8 +37,7 @@ export interface BackendBuildIdentity {
   readonly build: DevBuildLabel | null;
 }
 
-export interface ConfigCapabilitiesCardPort {
-  readonly hass: { callWS<T>(message: { type: string }): Promise<T> };
+export interface ConfigCapabilitiesCardPort extends PlanHostProvider {
   _haIntegrationVersion: string | null;
   _haBackendBuild?: BackendBuildIdentity | null;
   _haSupportApi: number | null;
@@ -145,11 +145,11 @@ export const runningBuild = (): RuntimeBuildFacts => ({
 
 export function getAuthoritativeCardConfig(
   host: ConfigCapabilitiesCardPort,
-  hass = host.hass,
+  input: unknown = planHostOf(host),
   isCurrent: () => boolean = () => true,
 ): Promise<AuthoritativeConfigResponse> {
   return fetchAuthoritativeConfig(
-    () => hass.callWS<AuthoritativeConfigResponse>({ type: 'houseplan/config/get' }),
+    () => planHostFrom(input).request<AuthoritativeConfigResponse>({ type: 'houseplan/config/get' }),
     (response) => { if (isCurrent()) adoptCardConfigCapabilities(host, response); },
   );
 }

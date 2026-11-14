@@ -10,7 +10,8 @@ import { HA_LOCK, digest, safeFile, verifyHaRuntime } from './ha-runtime.mjs';
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png',
   '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff': 'font/woff', '.woff2': 'font/woff2' };
-const labFiles = new Set(['index.html', 'app.mjs', 'mock-ha.mjs', 'session.mjs', 'ha-bootstrap.mjs', 'theme.css', 'lab.css']);
+const labFiles = new Set(['index.html', 'app.mjs', 'mock-ha.mjs', 'session.mjs', 'ha-bootstrap.mjs', 'theme.css', 'lab.css',
+  'plan-host.html', 'plan-host.mjs']);
 const overrides = new Set(['houseplan-card.css', 'houseplan-panel.css', 'hp-dialog.css', 'ha-dialog.css']);
 const csp = "default-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'none'; object-src 'none'; worker-src 'none'; frame-src 'none'; frame-ancestors 'none'; form-action 'none'; base-uri 'none'";
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
@@ -121,6 +122,7 @@ export function createLabServer(options = {}) {
           if (reply && digest(reply.body) !== expected) throw new Error('Product bundle changed; restart UI Lab');
         }
       } else if (path === '/fixture-state.js') reply = fileReply(resolve(config.repoRoot, 'demo/srv'), 'fixture-state.js');
+      else if (path === '/plan-host-fixture.js') reply = fileReply(resolve(config.repoRoot, 'demo/srv'), 'plan-host-fixture.js');
       else if (config.assets && /^\/api\/houseplan\/content\/assets\/_\/[a-f0-9]{64}\.(png|jpg|webp|svg)$/.test(path)) reply = fileReply(config.assets, path.split('/').pop());
       else if (path === '/') reply = fileReply(config.labRoot, 'index.html');
       else if (labFiles.has(path.slice(1))) reply = fileReply(config.labRoot, path.slice(1));

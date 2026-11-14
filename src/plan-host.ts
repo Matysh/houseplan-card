@@ -90,6 +90,8 @@ export interface HostUnits {
 export interface HostEnvironment {
   readonly ready: boolean;
   readonly connected: boolean;
+  /** Optional data-only invalidation for host-specific smart-home View bridges. */
+  readonly smartHomeRevision?: number;
   readonly userId?: string;
   readonly permissions: HostPermissions;
   readonly timeZone?: string;
@@ -132,6 +134,8 @@ export interface PlanHost {
   readonly http: HostHttpPort;
   readonly content: HostContentPort;
   readonly deviceServices?: HostDeviceServices;
+  /** Optional smart-home metadata refresh; never implies plan read/write authority. */
+  refreshRegistry?(timeoutMs: number): Promise<boolean>;
   request<Result = unknown>(command: HouseplanCommand): Promise<Result>;
   subscribe(event: PlanEventName, receive: (event: HostEvent) => void | Promise<void>,
     options?: HostSubscriptionOptions): Promise<Unsubscribe>;

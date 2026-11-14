@@ -1,5 +1,5 @@
 /** HA is private to this adapter; plan consumers receive the ports in plan-host. */
-import { acquireHaRegistries, haRegistrySnapshot, refreshHaRegistries } from './ha-binding-status';
+import { acquireHaRegistries, haRegistrySnapshot, refreshHaRegistries, reloadHaRegistriesBounded } from './ha-binding-status';
 import { subscribeExternalScreenConfig } from './external-screens-events';
 import {
   hostAuthorityKey, hostError, once,
@@ -23,6 +23,7 @@ interface HaSource {
   callApi?: (method: string, path: string, value?: UnknownRow) => Promise<unknown>;
   fetchWithAuth?: (path: string, init?: RequestInit) => Promise<Response>;
   callService?: (domain: string, service: string, data?: Readonly<UnknownRow>, target?: Readonly<UnknownRow>) => Promise<unknown>;
+  services?: Readonly<Record<string, unknown>>;
   auth?: { data?: { access_token?: string } };
   user?: { id?: string; is_admin?: boolean };
   states?: HostEnvironment['states'];
@@ -60,6 +61,9 @@ export class HaPlanHost implements PlanHost {
   private key: HostAuthorityKey = hostAuthorityKey(undefined, undefined, this.fallback);
   private writeRevision = 0;
   private revision = 0;
+  private smartHomeRevision = 0;
+  private metadataServices?: HaSource['services'];
+  private metadataConfig?: HaSource['config'];
   private serverWrite: boolean | null = null;
   private permissionSignature = '';
   private readonly listeners = new Set<() => void>();
@@ -69,12 +73,17 @@ export class HaPlanHost implements PlanHost {
   private runtimeKey?: HostAuthorityKey;
   private runtimeOwner?: object;
   private snapshot!: HostEnvironment;
+  private lastInput: unknown;
 
   constructor(source: unknown) { this.update(source); }
   get authorityKey(): HostAuthorityKey { return this.key; }
   get writeAuthorityRevision(): number { return this.writeRevision; }
   get environmentRevision(): number { return this.revision; }
   get environment(): HostEnvironment { return this.snapshot; }
+  lend(source: unknown): void {
+    if (source !== this.lastInput) this.update(source);
+    else this.synchronize();
+  }
 
   /** Legacy getters do not turn every lookup into another environment tick. */
   synchronize(): void {
@@ -86,6 +95,7 @@ export class HaPlanHost implements PlanHost {
         || this.source.language !== this.snapshot.presentation.language
         || this.source.locale !== this.snapshot.presentation.locale
         || this.source.themes !== this.snapshot.presentation.themes
+        || this.source.services !== this.metadataServices || this.source.config !== this.metadataConfig
         || this.source.config?.time_zone !== this.snapshot.timeZone
         || (this.source.config?.unit_system ?? EMPTY) !== this.snapshot.units
         || registry.revision !== this.snapshot.registry.revision
@@ -115,9 +125,11 @@ export class HaPlanHost implements PlanHost {
   /** Every HA assignment is an environment tick, including reused objects. */
   update(value: unknown): void {
     const before = this.permissionSignature, previousKey = this.key;
+    const previousAdmin = this.snapshot?.permissions.admin;
+    this.lastInput = value;
     this.source = row(value) ? value as HaSource : {};
     this.key = this.identity();
-    if (this.key !== previousKey) this.serverWrite = null;
+    if (this.key !== previousKey || previousAdmin !== (this.source.user?.is_admin === true)) this.serverWrite = null;
     if (this.key !== previousKey || before !== this.rights()) this.writeRevision++;
     if (this.key !== previousKey) {
       this.releaseSubscriptions();
@@ -137,6 +149,8 @@ export class HaPlanHost implements PlanHost {
   }
 
   private publish(): void {
+    if (this.source.services !== this.metadataServices || this.source.config !== this.metadataConfig) this.smartHomeRevision++;
+    this.metadataServices = this.source.services; this.metadataConfig = this.source.config;
     this.permissionSignature = this.rights();
     const registry = this.registrySnapshot();
     // Never spread source: this exact four-field value is the UI bridge.
@@ -146,6 +160,7 @@ export class HaPlanHost implements PlanHost {
     });
     this.snapshot = Object.freeze({
       ready: typeof this.source.callWS === 'function', connected: this.connected(),
+      smartHomeRevision: this.smartHomeRevision,
       userId: this.source.user?.id, permissions: Object.freeze(this.permissions()),
       timeZone: this.source.config?.time_zone, units: this.source.config?.unit_system ?? EMPTY,
       states: this.source.states ?? EMPTY,
@@ -207,20 +222,27 @@ export class HaPlanHost implements PlanHost {
     }
   }
 
-  private lease(): Lease {
-    if (!this.connected()) throw hostError('not_ready');
+  private lease(httpResponse = false): Lease {
+    // Historical upload helpers lend only HTTP credentials. A known offline
+    // HA connection still forbids dispatch; no fake callWS is manufactured.
+    if (httpResponse ? this.source.connection?.connected === false : !this.connected()) throw hostError('not_ready');
     return { key: this.identity(), revision: this.writeRevision, rights: this.rights() };
   }
   private assert(lease: Lease): void {
     if (this.identity() !== lease.key || this.writeRevision !== lease.revision || this.rights() !== lease.rights)
       throw hostError('context-changed');
   }
-  private async owned<Result>(lease: Lease, run: () => Promise<Result>, signal?: AbortSignal | null): Promise<Result> {
+  private async owned<Result>(lease: Lease, run: () => Promise<Result>, signal?: AbortSignal | null,
+    httpResponse = false): Promise<Result> {
     try {
       this.assert(lease); assertNotAborted(signal);
-      if (!this.connected()) throw hostError('not_ready');
+      if (httpResponse ? this.source.connection?.connected === false : !this.connected()) throw hostError('not_ready');
       const result = await run();
-      this.assert(lease); assertNotAborted(signal); return result;
+      this.assert(lease);
+      // A raw Response may contain a late opaque upload token. Its domain
+      // owner must read/discard it before reporting cancellation (#971).
+      if (!httpResponse) assertNotAborted(signal);
+      return result;
     }
     catch (error) { this.assert(lease); assertNotAborted(signal); throw error; }
   }
@@ -263,11 +285,11 @@ export class HaPlanHost implements PlanHost {
     request: async (path, init) => {
       checkedPath(path);
       assertNotAborted(init?.signal);
-      const lease = this.lease(), source = this.source;
-      if (source.fetchWithAuth) return this.owned(lease, () => source.fetchWithAuth!.call(source, path, init), init?.signal);
+      const lease = this.lease(true), source = this.source;
+      if (source.fetchWithAuth) return this.owned(lease, () => source.fetchWithAuth!.call(source, path, init), init?.signal, true);
       const headers = new Headers(init?.headers), token = source.auth?.data?.access_token;
       if (token) headers.set('authorization', `Bearer ${token}`);
-      return this.owned(lease, () => fetch(path, { ...init, headers }), init?.signal);
+      return this.owned(lease, () => fetch(path, { ...init, headers }), init?.signal, true);
     },
     postJson: async (path, value, signal) => {
       checkedPath(path);
@@ -300,6 +322,10 @@ export class HaPlanHost implements PlanHost {
       return Object.fromEntries(paths.flatMap(path => typeof urls[path] === 'string' && urls[path] ? [[path, urls[path] as string]] : []));
     },
   };
+  refreshRegistry(timeoutMs: number): Promise<boolean> {
+    if (!this.connected()) return Promise.resolve(false);
+    return reloadHaRegistriesBounded(this.source, timeoutMs);
+  }
   get deviceServices(): HostDeviceServices | undefined {
     if (typeof this.source.callService !== 'function') return undefined;
     return { call: (domain, service, data, target) => {
@@ -317,5 +343,25 @@ export function haPlanHost(source: unknown): HaPlanHost {
   let host = adapters.get(source);
   if (!host) { host = new HaPlanHost(source); adapters.set(source, host); }
   else host.synchronize();
+  return host;
+}
+
+export function isPlanHost(value: unknown): value is PlanHost {
+  return row(value) && typeof value.request === 'function' && typeof value.environmentRevision === 'number'
+    && typeof value.writeAuthorityRevision === 'number' && !!value.authorityKey && row(value.environment);
+}
+
+/** Normalize historical helper inputs at the HA boundary, not in plan logic. */
+export const planHostFrom = (value: unknown): PlanHost => isPlanHost(value) ? value : haPlanHost(value);
+export interface PlanHostProvider { readonly planHost?: PlanHost; readonly hass?: unknown }
+const providerAdapters = new WeakMap<PlanHostProvider, HaPlanHost>();
+export function planHostOf(provider: PlanHostProvider): PlanHost {
+  if (provider.planHost !== undefined) {
+    if (!isPlanHost(provider.planHost)) throw hostError('not_ready');
+    return provider.planHost;
+  }
+  let host = providerAdapters.get(provider);
+  if (!host) { host = new HaPlanHost(provider.hass); providerAdapters.set(provider, host); }
+  else host.lend(provider.hass);
   return host;
 }

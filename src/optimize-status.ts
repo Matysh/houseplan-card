@@ -3,10 +3,11 @@ import { html, nothing, type TemplateResult } from 'lit';
 import type { I18nKey } from './i18n';
 import type { SettingsI18nKey } from './i18n/settings';
 import type { OptimizeStatusState } from './optimize-feedback';
+import type { PlanHost } from './plan-host';
 
 export interface OptimizeStatusActions {
   t(key: I18nKey | SettingsI18nKey, vars?: Record<string, string | number>): string;
-  hass(): unknown;
+  planHost(): Pick<PlanHost, 'environment'>;
   close(): void;
   refresh?(): unknown;
   copy?(): unknown;
@@ -25,7 +26,7 @@ export function renderOptimizeStatus(state: OptimizeStatusState, actions: Optimi
     : failure?.code.includes('host') ? 'gs.optimize_geometry_host' : null;
   const title = busy ? t(state.phase === 'refreshing' ? 'gs.optimize_refreshing' : 'gs.optimize_checking')
     : t(unknown ? 'gs.optimize_unknown_title' : 'gs.optimize_failed_title');
-  return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${actions.hass()}
+  return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${actions.planHost().environment.presentation}
     data-kind="settings" .title=${t('gs.align_title')} icon="mdi:broom" dismiss-on-scrim @hp-close=${actions.close}>
     <div class="body optimize-status" aria-busy=${busy ? 'true' : 'false'}>
       <p class="alignmsg" role="status">${busy ? html`<ha-icon class="hpf-spinner" icon="mdi:loading"></ha-icon>` : nothing}${title}</p>

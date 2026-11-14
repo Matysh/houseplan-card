@@ -1,4 +1,5 @@
 import { captureToast } from './toast-presentation';
+import { captureWriteAuthority } from './config-write-context';
 import { html, nothing, svg, type TemplateResult } from 'lit';
 
 import { classifyPlanFile } from './backdrop-pick';
@@ -47,7 +48,7 @@ export class DecorImageEditor<Snapshot> {
 
   /** #780: furniture names live in the lazy `tools` dictionary. */
   private _tool(key: ToolsI18nKey, vars?: Record<string, string | number>): string {
-    return toolsT(langOf(this.host.hass, this.host._config?.language), key, vars);
+    return toolsT(langOf(this.host._presentation, this.host._config?.language), key, vars);
   }
 
   public place(raw: number[], pointerType = 'mouse'): void {
@@ -145,19 +146,15 @@ export class DecorImageEditor<Snapshot> {
 
   public async upload(file: Blob, name: string, replaceSelection: boolean): Promise<void> {
     const showToast = captureToast(this.host);
+    const current = captureWriteAuthority(this.host);
     if (this.host._decorAssetBusy) return;
     this.host._decorAssetBusy = true;
     try {
       const body = new FormData();
       body.append('file', file, name);
-      const response: Response = this.host.hass?.fetchWithAuth
-        ? await this.host.hass.fetchWithAuth('/api/houseplan/assets/upload', { method: 'POST', body })
-        : await fetch('/api/houseplan/assets/upload', {
-            method: 'POST', body,
-            headers: this.host.hass?.auth?.data?.access_token
-              ? { authorization: `Bearer ${this.host.hass.auth.data.access_token}` } : {},
-          });
+      const response = await this.host.planHost.http.request('/api/houseplan/assets/upload', { method: 'POST', body });
       const data = await response.json().catch(() => ({}));
+      if (!current()) return;
       if (!response.ok || data.error || !data.asset) {
         const messages: Record<string, I18nKey> = {
           invalid_format: 'backup.error.invalid_image',
@@ -182,6 +179,7 @@ export class DecorImageEditor<Snapshot> {
       }
       this.host.requestUpdate();
     } catch (error) {
+      if (!current()) return;
       showToast(this.host._t('decor.image_upload_failed', {
         err: this.host._errText(error),
       }), 'decor.image_upload_failed');
@@ -192,6 +190,7 @@ export class DecorImageEditor<Snapshot> {
 
   public async delete(asset: DecorAsset): Promise<void> {
     const showToast = captureToast(this.host);
+    const current = captureWriteAuthority(this.host);
     if (asset.used_by?.length) {
       showToast(this.host._t('decor.image_in_use'), 'decor.image_in_use');
       return;
@@ -204,9 +203,10 @@ export class DecorImageEditor<Snapshot> {
       confirmLabel: this.host._t('btn.delete'),
       cancelLabel: this.host._t('btn.cancel'),
     });
-    if (!accepted) return;
+    if (!accepted || !current()) return;
     try {
-      await this.host.hass.callWS({ type: 'houseplan/assets/delete', asset_id: asset.asset_id });
+      await this.host.planHost.request({ type: 'houseplan/assets/delete', asset_id: asset.asset_id });
+      if (!current()) return;
       this.host._decorAssetCatalog = this.host._decorAssetCatalog.filter(
         (item) => item.asset_id !== asset.asset_id,
       );
@@ -216,6 +216,7 @@ export class DecorImageEditor<Snapshot> {
       }
       this.host.requestUpdate();
     } catch (error) {
+      if (!current()) return;
       showToast((error as { code?: string })?.code === 'in_use'
         ? this.host._t('decor.image_in_use') : this.host._t('backup.error.io_error'), ((error as { code?: string })?.code === 'in_use') ? ('decor.image_in_use') : ('backup.error.io_error'));
     }
@@ -223,13 +224,16 @@ export class DecorImageEditor<Snapshot> {
 
   public async loadCatalog(): Promise<void> {
     const showToast = captureToast(this.host);
+    const current = captureWriteAuthority(this.host);
     try {
-      const response = await this.host.hass.callWS({ type: 'houseplan/assets/list' });
+      const response = await this.host.planHost.request({ type: 'houseplan/assets/list' });
+      if (!current()) return;
       const catalog = adoptDecorAssets(response);
       this.host._decorAssetCatalog = [...catalog.values()];
       this.host._decorAssets = new Map([...this.host._decorAssets, ...catalog]);
       this.host.requestUpdate();
     } catch {
+      if (!current()) return;
       showToast(this.host._t('backup.error.io_error'), 'backup.error.io_error');
     }
   }
@@ -438,7 +442,7 @@ export class DecorImageEditor<Snapshot> {
       ? this.host._decorAssetCatalog.find((asset) => asset.asset_id === dialog.assetId)
         || this.host._decorAssets.get(dialog.assetId || '')
       : null;
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="decor" class="ui-dialog ${kit ? 'decor-properties-dialog' : ''}"
+    return html`<hp-dialog .hass=${this.host._presentation} data-kind="decor" class="ui-dialog ${kit ? 'decor-properties-dialog' : ''}"
       form-shell settings-layout compact wide
       .title=${this.host._t('decor.object_title', { kind: kindLabel })} icon="mdi:pencil-outline"
       dismiss-on-scrim @hp-close=${() => (this.host._decorShapeDialog = null)}>

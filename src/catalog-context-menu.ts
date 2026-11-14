@@ -1,3 +1,4 @@
+import { planHostOf } from './ha-plan-host';
 import { html, nothing, type TemplateResult } from 'lit';
 import { EditorContextMenu, type EditorMenuModel, type EditorMenuItem } from './editor-context-menu';
 import { inboxMenuViewport } from './device-inbox-menu';
@@ -42,7 +43,7 @@ export class CatalogContextMenu {
     const token = {}, current = () => this.owner?.model.token === token && this.owner.active
       && this.host.isConnected && this.host._deviceInbox === dialog && !dialog.busy && this.host._canEdit && !this.host._kiosk
       && this.host._cfgRev === revision && this.runtime.navigationIntent === navigation && target.isConnected
-      && this.host._configWriteContext.current(authority, this.host.hass);
+      && this.host._configWriteContext.current(authority, planHostOf(this.host));
     this.owner = { key: row.key, active: true, model: { token, hp: 'catalog-context-menu', items,
       anchor: () => target.getBoundingClientRect(), localTo: local, gap: 4, minWidth: 180, returnFocus: target,
       current, close: () => this.close(), viewport: () => {

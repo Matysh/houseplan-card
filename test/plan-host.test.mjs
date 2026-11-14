@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HaPlanHost, haPlanHost } from '../test-build/ha-plan-host.js';
 import { hostAuthorityKey, once } from '../test-build/plan-host.js';
+import { ConfigWriteContext, captureWriteAuthority } from '../test-build/config-write-context.js';
 
 const deferred = () => { let resolve, reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; };
 const source = (extra = {}) => ({ user: { id: 'a', is_admin: true }, states: {}, callWS: async () => ({}), ...extra });
@@ -150,4 +151,46 @@ test('#1392 compatibility lookups synchronize changed state without duplicate no
 test('#1392 once retires its lease even if transport cleanup throws', () => {
   let calls = 0; const release = once(() => { calls++; throw new Error('cleanup'); });
   assert.throws(release, /cleanup/); release(); assert.equal(calls, 1);
+});
+
+test('#1392 common write owner revokes role A→B→A but preserves ordinary ticks and reconnect bookkeeping', () => {
+  const raw = source({ connection: { connected: true } }), port = new HaPlanHost(raw);
+  const context = new ConfigWriteContext(), provider = { planHost: port };
+  context.observe(port); const claim = context.claim(), current = captureWriteAuthority(provider);
+  port.update({ ...raw, states: {} }); context.observe(port);
+  assert.equal(context.current(claim, port), true); assert.equal(current(), true);
+  raw.connection.connected = false; port.update(raw); context.observe(port);
+  assert.equal(context.owns(claim), true); assert.equal(current(), true);
+  raw.connection.connected = true; raw.user.is_admin = false; port.update(raw); context.observe(port);
+  raw.user.is_admin = true; port.update(raw); context.observe(port);
+  assert.equal(context.current(claim, port), false); assert.equal(current(), false);
+});
+
+test('#1392 cached server permission is invalidated when HA admin rights change', () => {
+  const raw = source(), port = new HaPlanHost(raw);
+  port.setServerWrite(true); assert.equal(port.environment.permissions.write, true);
+  raw.user.is_admin = false; port.update(raw);
+  assert.equal(port.environment.permissions.write, false);
+  port.setServerWrite(true); // An explicitly permitted non-admin writer remains supported.
+  port.update({ ...raw, states: {} });
+  assert.equal(port.environment.permissions.write, true);
+});
+
+test('#1392 smart-home metadata invalidates View without renewing write authority', () => {
+  const raw = source({ services: { light: {} }, config: { time_zone: 'UTC' } }), port = new HaPlanHost(raw);
+  const key = port.authorityKey, write = port.writeAuthorityRevision, before = port.environment.smartHomeRevision;
+  port.update({ ...raw, states: {} });
+  assert.equal(port.environment.smartHomeRevision, before);
+  port.update({ ...raw, services: { switch: {} } });
+  assert.ok(port.environment.smartHomeRevision > before);
+  assert.equal(port.authorityKey, key); assert.equal(port.writeAuthorityRevision, write);
+});
+
+test('#1392 an ignored HTTP abort retains the late Response for domain-owned token cleanup', async () => {
+  const pending = deferred(), controller = new AbortController();
+  const port = new HaPlanHost(source({ fetchWithAuth: () => pending.promise }));
+  const reply = port.http.request('/api/houseplan/backup/import/preview', { signal: controller.signal });
+  controller.abort(); pending.resolve(Response.json({ token: 'late-opaque-fixture' }));
+  assert.deepEqual(await (await reply).json(), { token: 'late-opaque-fixture' });
+  await assert.rejects(port.http.request('/api/houseplan/upload', { signal: controller.signal }), { name: 'AbortError' });
 });

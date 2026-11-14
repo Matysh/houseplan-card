@@ -2,10 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ContentSigner, SIGN_INFLIGHT_MS, SIGN_BACKOFF_MIN_MS } from '../test-build/signing.js';
 import { SIGN_TTL_MS, SIGN_REFRESH_MS } from '../test-build/logic.js';
+import { HaPlanHost } from '../test-build/ha-plan-host.js';
 
 const URL_A = '/api/houseplan/content/plans/_/f1.tok.svg';
 const URL_B = '/api/houseplan/content/files/m1/manual.pdf';
 const tick = () => new Promise((r) => setTimeout(r, 45)); // > the 30 ms batch timer
+
+test('#1392 the shared signer partitions users but reuses the same connection/user across cards', async () => {
+  const connection = {}, calls = [];
+  const transport = id => new HaPlanHost({ connection, user: { id },
+    callWS: async message => { calls.push([id, message.paths]); return { urls: { [URL_A]: `${URL_A}?fixture=${id}` } }; } });
+  const a = transport('a'), b = transport('b'), sibling = transport('a');
+  const first = new ContentSigner(() => {}), second = new ContentSigner(() => {});
+  first.display(a, URL_A); await tick();
+  assert.equal(second.display(sibling, URL_A), `${URL_A}?fixture=a`);
+  assert.equal(calls.length, 1);
+  assert.equal(second.display(b, URL_A), ''); await tick();
+  assert.equal(second.display(b, URL_A), `${URL_A}?fixture=b`);
+  assert.equal(calls.length, 2);
+  first.dispose(); second.dispose();
+});
 
 /** hass whose sign call is resolved/rejected by hand. */
 function makeHass() {

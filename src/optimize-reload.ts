@@ -4,14 +4,15 @@ import type { LayoutWriteReload } from './layout-write-reload';
 import { sameOptimizeSource, type OptimizeSource } from './optimize-source';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
 import type { UndoHass } from './plan-optimize-undo';
+import { planHostOf, type PlanHostProvider } from './ha-plan-host';
+import type { PlanHost } from './plan-host';
 
 export type OptimizeReloadResult = 'adopted' | 'superseded' | 'failed';
-interface OptimizeReloadPort {
-  hass: UndoHass;
+interface OptimizeReloadPort extends PlanHostProvider {
   source(): OptimizeSource;
   pending(): boolean;
   layoutIO: LayoutWriteReload;
-  read(hass: UndoHass, current: () => boolean): Promise<AuthoritativeConfigResponse>;
+  read(input: UndoHass | PlanHost, current: () => boolean): Promise<AuthoritativeConfigResponse>;
   adopt(input: GatedAdoptionInput): Promise<GatedAdoptionResult>;
 }
 
@@ -23,7 +24,7 @@ export async function reloadOptimizePair(port: OptimizeReloadPort): Promise<Opti
   if (!current()) return 'superseded';
   try {
     const result = await port.layoutIO.reconcile(() => Promise.all([
-      port.read(port.hass, current), port.hass.callWS<LayoutResponse>({ type: 'houseplan/layout/get' }),
+      port.read(planHostOf(port), current), planHostOf(port).request<LayoutResponse>({ type: 'houseplan/layout/get' }),
     ]), async ([cfgResp, layResp], pairCurrent) => {
       // A fulfilled void refresh or a local dirty overlay is not server evidence.
       if (!cfgResp?.config || !Array.isArray(cfgResp.config.spaces)

@@ -1,3 +1,4 @@
+import { planHostOf, type PlanHostProvider } from './ha-plan-host';
 /** #803: serialize with existing writers without optimistic geometry adoption.
  * #843: the expected revision is read after this tab's own write queue. */
 import type { ConfigAdoption } from './config-adoption';
@@ -7,8 +8,7 @@ import type { ServerConfig } from './types';
 import type { NodeCommandHistory } from './wall-node-editor';
 import { contentFingerprint } from './visual-continuity';
 
-export interface WallNodeWriteHost {
-  hass: { callWS<T>(message: Record<string, unknown>): Promise<T>; connection?: { connected?: boolean } };
+export interface WallNodeWriteHost extends PlanHostProvider {
   _configWriteGuard?: () => () => boolean;
   readonly _serverCfg: ServerConfig | null;
   readonly _cfgRev: number;
@@ -98,7 +98,7 @@ export async function writeWallNode(
     if (!nodeBasisHolds(host, basis)) throw new Error('stale-node-snapshot');
     if (guard && !guard.send()) throw new Error('stale-node-snapshot');
     const revision = host._cfgRev, identity = live();
-    const writeHass = host.hass, authorityCurrent = captureWriteAuthority(host);
+    const writeHass = planHostOf(host), authorityCurrent = captureWriteAuthority(host);
     const response = await sendHouseplanWrite<{ config: ServerConfig; rev: number }>(writeHass, {
       type: history.kind === 'delete' ? 'houseplan/wall/node_delete' : 'houseplan/wall/node_move', space_id: history.beforeSpace.id,
       expected_rev: revision, intent: history.intent, direction: history.direction,

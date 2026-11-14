@@ -3,6 +3,7 @@ import test from 'node:test';
 import { BackupArchiveClient } from '../test-build/backup-archive-client.js';
 import * as archiveModule from '../test-build/backup-archive-client.js';
 import { LazyBackupArchiveClient } from '../test-build/backup-archive-lazy.js';
+import { HaPlanHost } from '../test-build/ha-plan-host.js';
 
 const prepared = (complete = true) => ({ archive: true, token: 'owned', filename: 'copy.zip',
   complete, images: 1, missing: complete ? [] : [{ name: 'Kitchen', reason: 'missing' }], snapshot: [] });
@@ -13,6 +14,18 @@ function host(hass) {
   return { hass, isConnected: true, _space: 'one', _backupExportDialog: state(),
     _showToast() {}, _t: key => key };
 }
+
+test('#1392 pending ZIP cleanup never sends a former user token to the replacement authority', async () => {
+  const calls = [], raw = { connection: {}, user: { id: 'a', is_admin: true },
+    callWS: async command => { calls.push(structuredClone(command)); return {}; },
+    fetchWithAuth: async () => Response.json({ token: 'a-only', preview: {} }) };
+  const port = new HaPlanHost(raw), provider = { ...host(undefined), planHost: port };
+  const client = new BackupArchiveClient(provider);
+  await client.preview(new File(['PK'], 'fixture.zip'));
+  port.update({ ...raw, user: { id: 'b', is_admin: true } });
+  client.cancelImport(); await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(calls, []);
+});
 function downloads(t) {
   const oldDocument = globalThis.document, oldWindow = globalThis.window;
   const oldCreate = URL.createObjectURL, oldRevoke = URL.revokeObjectURL;

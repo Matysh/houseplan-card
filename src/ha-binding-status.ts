@@ -265,6 +265,21 @@ export function refreshHaRegistries(hass: any, options: { connectionReady?: bool
   void ensureSubscriptions(hass, entry);
 }
 
+/** One explicitly requested metadata refresh, bounded even when HA never replies. */
+export function reloadHaRegistriesBounded(hass: unknown, timeoutMs: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const before = haRegistrySnapshot(hass).revision;
+    let release: () => void = () => undefined;
+    const timer = globalThis.setTimeout(() => { release(); resolve(false); }, timeoutMs);
+    release = acquireHaRegistries(hass, () => {
+      const snapshot = haRegistrySnapshot(hass);
+      if (snapshot.revision === before) return;
+      globalThis.clearTimeout(timer); release(); resolve(snapshot.authoritative);
+    });
+    refreshHaRegistries(hass);
+  });
+}
+
 /** Current shared picture; limited mode follows the live hass projection. */
 export function haRegistrySnapshot(hass: any): HaRegistrySnapshot {
   const entry = entryOf(hass);
@@ -584,11 +599,10 @@ export function renderOpeningEntityAvailable(
     && !!projectedHass?.states?.[entityId];
 }
 
-export function haRegistryDiagnostics(hass: any): {
+export function haRegistryDiagnostics(hass: any, snapshot = haRegistrySnapshot(hass)): {
   access: HaRegistrySnapshot['access']; authoritative: boolean; revision: number;
   lastSuccess: number; error?: string;
 } {
-  const snapshot = haRegistrySnapshot(hass);
   return {
     access: snapshot.access,
     authoritative: snapshot.authoritative,

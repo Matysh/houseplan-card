@@ -1,3 +1,4 @@
+import { planHostOf } from './ha-plan-host';
 /** Per-card optional View boundaries. No editor chunk or second reload budget. */
 import { html, nothing, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
@@ -81,7 +82,7 @@ export class ViewRuntimes {
     const port = <Runtime>(install: (runtime: Runtime) => void, informational = false, demanded = () => true) => ({
       owner: () => informational ? host : host._configWriteContext.claim(),
       current: (owner: object) => this.active && host.isConnected && host.ownerDocument.visibilityState !== 'hidden' && demanded()
-        && (informational ? owner === host : host._configWriteContext.current(owner, host.hass)),
+        && (informational ? owner === host : host._configWriteContext.current(owner, planHostOf(host))),
       install,
       changed: () => {
         if (!host.isConnected) return;
@@ -143,7 +144,7 @@ export class ViewRuntimes {
     const host = this.host, owner = host._configWriteContext.claim();
     void this.live.ensure().then(ready => {
       if (ready && this.active && host.isConnected && host.ownerDocument.visibilityState !== 'hidden'
-          && host._configWriteContext.current(owner, host.hass) && host._liveRt) run(host._liveRt);
+          && host._configWriteContext.current(owner, planHostOf(host)) && host._liveRt) run(host._liveRt);
     });
   }
   openDeviceMenu(request: ViewDeviceMenuRequest): void {
@@ -192,7 +193,7 @@ export class ViewRuntimes {
     if (!event.isTrusted || !this.failures().length) return;
     const host = this.host, owner = host._configWriteContext.claim();
     guardedViewRuntimeReload({
-      current: () => host.isConnected && host._configWriteContext.current(owner, host.hass),
+      current: () => host.isConnected && host._configWriteContext.current(owner, planHostOf(host)),
       guard: host._editorRuntime ? resume => host._editorRuntime!._guardDraftNavigation(resume) : undefined,
       reload: () => host._reloadDocument(),
     });
