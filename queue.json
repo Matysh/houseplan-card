@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13228,
-  "nextTicket": 463,
+  "revision": 13229,
+  "nextTicket": 464,
   "nextFence": 462,
   "tasks": {
     "1024": {
@@ -4620,6 +4620,20 @@
         "src/ha-plan-host.ts",
         "test/plan-host.test.mjs"
       ]
+    },
+    "1434": {
+      "issue": 1434,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1434-fixture-import-subscribe",
+      "materialSha": "2814bb39526e40323d490c871a2d983aba935b80",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 463,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794684623559,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -4948,7 +4962,8 @@
     }
   },
   "waiting": [
-    1432
+    1432,
+    1434
   ],
   "active": {
     "issue": 1433,
@@ -5017,6 +5032,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "039d034f28f9a0b39dac59ad78bff84158917a97"
+      }
+    },
+    "finish:7079618b-5474-4e8d-b179-6b0ea9c8d7c8": {
+      "digest": "a66b8589e330b6378c54c00d2726549be6ff3148527c8d318d2c35340507a338",
+      "issue": 1434,
+      "message": {
+        "kind": "queued",
+        "issue": 1434,
+        "at": 1794684623559,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "2814bb39526e40323d490c871a2d983aba935b80"
       }
     }
   },
