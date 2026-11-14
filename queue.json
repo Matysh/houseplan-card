@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12236,
+  "revision": 12237,
   "nextTicket": 438,
   "nextFence": 438,
   "tasks": {
@@ -3642,7 +3642,7 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1394-plan-capabilities",
-      "materialSha": "9ddab17f693dfc5d1d3d598803ffb779ca288157",
+      "materialSha": "ac441a9504b32f49a94b7a778569501672b4f26c",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 437,
@@ -3650,7 +3650,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794637422040,
       "reviewEntry": 4,
-      "patchId": "8978665047fad62b834d4293c3f8088351c99584",
+      "patchId": "b7411af254115204f3d6094f266cfc0916b7c377",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
         "demo/srv/plan-host-fixture.js",
@@ -4940,11 +4940,12 @@
     "worker": "finish",
     "token": "437:finish:1280d371-3f47-4e62-bd34-b0590cf586bb:finish:1:admit",
     "fence": 437,
-    "materialSha": "9ddab17f693dfc5d1d3d598803ffb779ca288157",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "ac441a9504b32f49a94b7a778569501672b4f26c",
+    "expectedBase": "a9e4a01420c02318a725157c49d4b9b2e23599c4",
+    "phase": "testing",
     "admittedAt": 1794637425563,
-    "expiresAt": 1794637725563
+    "expiresAt": 1794637734830,
+    "patchId": "b7411af254115204f3d6094f266cfc0916b7c377"
   },
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
@@ -5101,6 +5102,10 @@
     },
     "github:43565502585:1:completions:notice:91eb082a7950f891095e1e5971f3c50b52fa02770f31a53e763f5f5fbbd11b9a": {
       "digest": "fea882beea6944178d7ebafce5ac2e9ae3ba133405c99230af4f9162ccce7982",
+      "issue": 1394
+    },
+    "finish:1280d371-3f47-4e62-bd34-b0590cf586bb:finish:2:synchronized": {
+      "digest": "fd3c4f8fdcddce6f8de84e0caaa9fc84acaa373f4e7e14868a89afe34159e960",
       "issue": 1394
     },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
