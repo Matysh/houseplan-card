@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13773,
+  "revision": 13774,
   "nextTicket": 476,
   "nextFence": 474,
   "tasks": {
@@ -4620,150 +4620,25 @@
     },
     "1437": {
       "issue": 1437,
+      "branch": "codex/1437-ha-formatters",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1437-ha-formatters",
-      "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 467,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794686350630,
-      "reviewEntry": 1,
-      "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/release-ledger/v1.85.0/1437.json",
-        "src/ha-value-formatters.ts",
-        "src/houseplan-card.ts",
-        "test/ha-value-formatters.test.mjs"
-      ],
-      "s6": {
-        "id": "20261114T211243169-5919ff44",
-        "name": "Тесты для задачи #1437 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T211243169-5919ff44/report.json",
-        "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
-        "status": "passed",
-        "finishedAt": "2026-11-14T21:20:08.968Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
+      "mergedSha": "c5d7a23892c69ad0504cf3048589344e03525810",
+      "mergedAt": 1794691401375,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1437:1:f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083:d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
-      "reviewMaterial": {
-        "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
-        "expectedBase": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
-        "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1437:1:f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083:d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
-        "eventId": "github:43642268735:1:tick:0:review-retry",
-        "at": 1794691233139,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1437,
-        "requestId": "review:1437:1:f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083:d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
-        "kind": "code",
-        "base": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
-        "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
-        "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1437,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1437",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Причина: при извлечении PlanHost #1392 data-проекция сохранила language/locale/localize/themes, states и registry, но потеряла оба HA read-only форматтера. Это проявилось также в восьми проверках smoke_value_format (badge/live text/перевод/атрибуты/единицы).\n\nРешение: существующий HA-only _projectHaSmartHomeSources добавляет ровно formatEntityState и formatEntityAttributeValue через небольшой allowlist-helper haValueFormatters. Методы привязаны к конкретному исходному HA объекту, не к урезанной проекции; новый input/environment строит новую проекцию. Четырёхпольный HostPresentationContext, PlanHost и транспортные границы не меняются. Целый HA не передаётся доменным потребителям. Альтернатива расширить portable presentation отвергнута как нарушение установленного контракта; преобразовывать raw on/off в модели также нельзя.\n\nОсобое внимание: this/текущий источник, дополнительный value-аргумент weather formatter, fallback без метода/при исключении, единица ровно один раз и raw значения enum. Unit проверяет allowlist/привязку/смену источника и вызовы существующих consumer fallback. Исходные ожидания native smoke_marker_alerts и smoke_value_format не ослаблены. В S6 дополнительно включены оба smoke, summary_weather и plan-host-boundary. Реальный пользовательский HA, visual baselines и выпуск не меняются. Классификация line-fix: регрессия невыпущенного #1392, текущая привязка release-ledger оставлена без изменения версий."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Исправление точечное и подходит для задачи. Исходная проблема: после #1392 из `_planHass` пропали `formatEntityState` и `formatEntityAttributeValue`. Теперь оба форматтера возвращаются только в HA-only обогащении `_projectHaSmartHomeSources`. Каждый метод привязан к своему исходному HA-объекту. Остальные поля HA в проекцию не попадают. Четырёхпольный `HostPresentationContext` и PlanHost не меняются. Значения `on`/`off` в модели остаются сырыми, локализуется только подпись. Без форматтера или при исключении потребители по-прежнему показывают сырые значения. При каждом новом HA-объекте форматтеры привязываются заново, потому что ключ мемо-кеша — идентичность `environment`, а `HaPlanHost` создаёт новый `environment` при каждом обновлении. Блокеров не нашёл. По данным квитанции S6 набор задачи прошёл. Сам я ничего не запускал.",
-          "understanding": "Проблема: #1392 вынес PlanHost. Из полей HA проекция `_planHass` сохранила только presentation (language/locale/localize/themes), states, registry и config, а методы форматирования HA потеряла. Затронутые потребители проверяют наличие метода и молча переходят на сырой fallback. Это `marker-alert-source.markerAlertValueControl` (подписи enum/binary), `logic.hassValue`/`valueWithUnit` (badge/live text, атрибуты, удаление дублированной единицы) и `marker-state-source`. Поэтому падали `smoke_marker_alerts` (подписи «Открыто/Закрыто») и восемь проверок `smoke_value_format`.\n\nПосле исправления новый модуль `src/ha-value-formatters.ts` возвращает объект ровно из двух ключей. Каждый ключ содержит `bind(source)` или `undefined`, если метода нет или это не функция. В `_projectHaSmartHomeSources` (houseplan-card.ts:5990–5997) этот объект разворачивается в проекцию вместе с уже существующими `services`/`zigbeeLqi`/`config`, и только при наличии `this.hass`. Целый HA, `callWS`/`connection`/`auth` в доменный кадр не передаются.\n\nКакие пути я разобрал:\n- `requestUpdate('hass')` → `HaPlanHost.update` → `publish()` создаёт новый замороженный snapshot. Мемо-кеш `_planHass` (5972–5987) сравнивает `environment` по идентичности, поэтому каждый новый HA-объект даёт новую проекцию и новую привязку. Устаревший `this` у форматтера на этом пути невозможен.\n- Потребители вызывают форматтеры по-разному. `hassValue` делает `f.call(hass, st)`; привязка перекрывает `this`, в итоге это исходный HA, как и до #1392. `markerAlertValueControl` вызывает метод на объекте проекции; благодаря `bind` HA-метод получает настоящий `this` с `locale`/`entities`. Виджет погоды получает `host.hass` напрямую и от проекции не зависит. Дополнительный аргумент value для `formatEntityAttributeValue` после `bind` передаётся без изменений.\n- Fallback: `try/catch` и проверки `typeof === 'function'` у потребителей сохранены. Для `undefined` и не-функций хелпер возвращает `undefined`, а не значение-заглушку.",
-          "analysis": [
-            {
-              "topic": "Граница: что именно отдаётся доменному кадру",
-              "assessment": "Решение узкое и правильно расположено. Allowlist из двух методов не копирует остальные поля источника, а `bind` не делает поля HA доступными через проекцию. Изменение находится в уже существующей HA-only точке рядом с `services`/`config`, поэтому новая граница не появляется, а portable presentation не расширяется. Расширение `HostPresentationContext` автор отверг обоснованно: оно нарушило бы контракт #1392. Это решение стоит сохранить.",
-              "evidence": "src/ha-value-formatters.ts:7–16; src/houseplan-card.ts:5995; src/ha-plan-host.ts:180–184 (presentation по-прежнему из четырёх полей, без spread источника)."
-            },
-            {
-              "topic": "Актуальность привязки и мемоизация",
-              "assessment": "Привязка к конкретному HA-объекту не устаревает, потому что мемо-кеш `_planHass` сравнивает `environment` по идентичности. `HaPlanHost.update` при каждом присвоении HA, в том числе того же объекта, вызывает `publish()` и создаёт новый snapshot. `synchronize()` тоже вызывает `update` при смене language/locale/states. Следовательно, смена языка или пользователя даёт новую проекцию с новым `bind`. Unit-тест отдельно проверяет, что уже принятый кадр сохраняет свой источник, а новый источник даёт новую привязку.",
-              "evidence": "src/houseplan-card.ts:643–649, 5975–5986; src/ha-plan-host.ts:98–114, 137–161, 175–199; test/ha-value-formatters.test.mjs:21–23."
-            },
-            {
-              "topic": "Сырые значения enum и fallback",
-              "assessment": "Модель остаётся сырой: в `markerAlertValueControl` в `value` всегда лежит литерал `on`/`off`/option, а форматтер влияет только на `label`. `readMarkerAlertSource` сравнивает `rule.value` с `option.value`, поэтому локализация не может сломать сопоставление правила. Тест покрывает четыре варианта fallback: источника нет, пустой объект, не-функции и бросающие методы. Во всех случаях получаются сырые `text`/`label`, как требует ТЗ.",
-              "evidence": "src/marker-alert-source.ts:49–56, 74–75; src/logic.ts:1117–1137; test/ha-value-formatters.test.mjs:30–44."
-            },
-            {
-              "topic": "Единица ровно один раз",
-              "assessment": "`valueWithUnit` срезает собственную единицу только при `formatted=true`, а с восстановленным форматтером `formatted` снова равен true. Тест проверяет замену на явную единицу без дублирования («ru:68.42 проц.»). Логику единиц исправление не меняло, оно лишь вернуло ей входные данные.",
-              "evidence": "src/logic.ts:1162–1168; test/ha-value-formatters.test.mjs:18."
-            },
-            {
-              "topic": "Покрытие тестами",
-              "assessment": "Unit-тесты проверяют хелпер и реальные функции потребителей, но не собранную проекцию `_planHass` и `_projectHaSmartHomeSources`. Это покрывают native smoke (`smoke_marker_alerts`, `smoke_value_format`), которые по контексту автора включены в S6. Ожидания native-проверок не ослаблены: в diff тестовые smoke не менялись.",
-              "evidence": "Список изменённых файлов не содержит smoke-ов; квитанция 20261114T211243169-5919ff44 имеет статус passed, failures: []."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Можно добавить в существующий `test/plan-hass-fixture.mjs` (он уже вызывает `HouseplanCard.prototype._projectHaSmartHomeSources` через геттер `_planHass`) короткую проверку: после замены `host.hass` проекция содержит форматтеры, привязанные к новому источнику, и не содержит `callWS`/`connection`/`auth`. Польза: регрессия на уровне сборки проекции, как в #1392, ловилась бы быстрым unit-тестом, а не только полным stable smoke. Цена — несколько строк в уже готовой фикстуре."
-          ],
-          "boundaries": "Тесты, сборку и smoke я не запускал. Как результат S6 использована только квитанция «Тесты для задачи #1437 (перед ревью)», 20261114T211243169-5919ff44, статус passed, на `c5d7a23`. Утверждение автора о том, что в набор входят `smoke_marker_alerts`, `smoke_value_format`, `summary_weather` и `plan-host-boundary`, я состав набора не сверял. По исходникам изучены `_planHass` и мемоизация, `_projectHaSmartHomeSources`, `HaPlanHost.update/synchronize/publish`, путь `requestUpdate('hass')`, потребители `hassValue`/`valueWithUnit`, `markerAlertValueControl`/`readMarkerAlertSource`, `hp-summary-weather`, `plan-hass-fixture`. Поведение с внедрённым `planHost` при одновременно заданном `this.hass` (форматтеры HA применяются к states внедрённого хоста) унаследовано от прежней схемы с `services`/`config` и в этой задаче не менялось. Реальный HA и визуальные эталоны не проверялись."
-        },
-        "usage": {
-          "input_tokens": 38,
-          "cache_creation_input_tokens": 61426,
-          "cache_read_input_tokens": 544199,
-          "output_tokens": 8786,
-          "output_tokens_details": {
-            "thinking_tokens": 2299
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 61426,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 930,
-              "cache_read_input_tokens": 55876,
-              "cache_creation_input_tokens": 9754,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 9754
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nИсправление точечное и подходит для задачи. Исходная проблема: после #1392 из `_planHass` пропали `formatEntityState` и `formatEntityAttributeValue`. Теперь оба форматтера возвращаются только в HA-only обогащении `_projectHaSmartHomeSources`. Каждый метод привязан к своему исходному HA-объекту. Остальные поля HA в проекцию не попадают. Четырёхпольный `HostPresentationContext` и PlanHost не меняются. Значения `on`/`off` в модели остаются сырыми, локализуется только подпись. Без форматтера или при исключении потребители по-прежнему показывают сырые значения. При каждом новом HA-объекте форматтеры привязываются заново, потому что ключ мемо-кеша — идентичность `environment`, а `HaPlanHost` создаёт новый `environment` при каждом обновлении. Блокеров не нашёл. По данным квитанции S6 набор задачи прошёл. Сам я ничего не запускал.\n\n## Понимание решения\n\nПроблема: #1392 вынес PlanHost. Из полей HA проекция `_planHass` сохранила только presentation (language/locale/localize/themes), states, registry и config, а методы форматирования HA потеряла. Затронутые потребители проверяют наличие метода и молча переходят на сырой fallback. Это `marker-alert-source.markerAlertValueControl` (подписи enum/binary), `logic.hassValue`/`valueWithUnit` (badge/live text, атрибуты, удаление дублированной единицы) и `marker-state-source`. Поэтому падали `smoke_marker_alerts` (подписи «Открыто/Закрыто») и восемь проверок `smoke_value_format`.\n\nПосле исправления новый модуль `src/ha-value-formatters.ts` возвращает объект ровно из двух ключей. Каждый ключ содержит `bind(source)` или `undefined`, если метода нет или это не функция. В `_projectHaSmartHomeSources` (houseplan-card.ts:5990–5997) этот объект разворачивается в проекцию вместе с уже существующими `services`/`zigbeeLqi`/`config`, и только при наличии `this.hass`. Целый HA, `callWS`/`connection`/`auth` в доменный кадр не передаются.\n\nКакие пути я разобрал:\n- `requestUpdate('hass')` → `HaPlanHost.update` → `publish()` создаёт новый замороженный snapshot. Мемо-кеш `_planHass` (5972–5987) сравнивает `environment` по идентичности, поэтому каждый новый HA-объект даёт новую проекцию и новую привязку. Устаревший `this` у форматтера на этом пути невозможен.\n- Потребители вызывают форматтеры по-разному. `hassValue` делает `f.call(hass, st)`; привязка перекрывает `this`, в итоге это исходный HA, как и до #1392. `markerAlertValueControl` вызывает метод на объекте проекции; благодаря `bind` HA-метод получает настоящий `this` с `locale`/`entities`. Виджет погоды получает `host.hass` напрямую и от проекции не зависит. Дополнительный аргумент value для `formatEntityAttributeValue` после `bind` передаётся без изменений.\n- Fallback: `try/catch` и проверки `typeof === 'function'` у потребителей сохранены. Для `undefined` и не-функций хелпер возвращает `undefined`, а не значение-заглушку.\n\n## Разбор решения\n\n### Граница: что именно отдаётся доменному кадру\n\nРешение узкое и правильно расположено. Allowlist из двух методов не копирует остальные поля источника, а `bind` не делает поля HA доступными через проекцию. Изменение находится в уже существующей HA-only точке рядом с `services`/`config`, поэтому новая граница не появляется, а portable presentation не расширяется. Расширение `HostPresentationContext` автор отверг обоснованно: оно нарушило бы контракт #1392. Это решение стоит сохранить.\n\nОснование: src/ha-value-formatters.ts:7–16; src/houseplan-card.ts:5995; src/ha-plan-host.ts:180–184 (presentation по-прежнему из четырёх полей, без spread источника).\n\n### Актуальность привязки и мемоизация\n\nПривязка к конкретному HA-объекту не устаревает, потому что мемо-кеш `_planHass` сравнивает `environment` по идентичности. `HaPlanHost.update` при каждом присвоении HA, в том числе того же объекта, вызывает `publish()` и создаёт новый snapshot. `synchronize()` тоже вызывает `update` при смене language/locale/states. Следовательно, смена языка или пользователя даёт новую проекцию с новым `bind`. Unit-тест отдельно проверяет, что уже принятый кадр сохраняет свой источник, а новый источник даёт новую привязку.\n\nОснование: src/houseplan-card.ts:643–649, 5975–5986; src/ha-plan-host.ts:98–114, 137–161, 175–199; test/ha-value-formatters.test.mjs:21–23.\n\n### Сырые значения enum и fallback\n\nМодель остаётся сырой: в `markerAlertValueControl` в `value` всегда лежит литерал `on`/`off`/option, а форматтер влияет только на `label`. `readMarkerAlertSource` сравнивает `rule.value` с `option.value`, поэтому локализация не может сломать сопоставление правила. Тест покрывает четыре варианта fallback: источника нет, пустой объект, не-функции и бросающие методы. Во всех случаях получаются сырые `text`/`label`, как требует ТЗ.\n\nОснование: src/marker-alert-source.ts:49–56, 74–75; src/logic.ts:1117–1137; test/ha-value-formatters.test.mjs:30–44.\n\n### Единица ровно один раз\n\n`valueWithUnit` срезает собственную единицу только при `formatted=true`, а с восстановленным форматтером `formatted` снова равен true. Тест проверяет замену на явную единицу без дублирования («ru:68.42 проц.»). Логику единиц исправление не меняло, оно лишь вернуло ей входные данные.\n\nОснование: src/logic.ts:1162–1168; test/ha-value-formatters.test.mjs:18.\n\n### Покрытие тестами\n\nUnit-тесты проверяют хелпер и реальные функции потребителей, но не собранную проекцию `_planHass` и `_projectHaSmartHomeSources`. Это покрывают native smoke (`smoke_marker_alerts`, `smoke_value_format`), которые по контексту автора включены в S6. Ожидания native-проверок не ослаблены: в diff тестовые smoke не менялись.\n\nОснование: Список изменённых файлов не содержит smoke-ов; квитанция 20261114T211243169-5919ff44 имеет статус passed, failures: [].\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Можно добавить в существующий `test/plan-hass-fixture.mjs` (он уже вызывает `HouseplanCard.prototype._projectHaSmartHomeSources` через геттер `_planHass`) короткую проверку: после замены `host.hass` проекция содержит форматтеры, привязанные к новому источнику, и не содержит `callWS`/`connection`/`auth`. Польза: регрессия на уровне сборки проекции, как в #1392, ловилась бы быстрым unit-тестом, а не только полным stable smoke. Цена — несколько строк в уже готовой фикстуре.\n\n## Границы анализа\n\nТесты, сборку и smoke я не запускал. Как результат S6 использована только квитанция «Тесты для задачи #1437 (перед ревью)», 20261114T211243169-5919ff44, статус passed, на `c5d7a23`. Утверждение автора о том, что в набор входят `smoke_marker_alerts`, `smoke_value_format`, `summary_weather` и `plan-host-boundary`, я состав набора не сверял. По исходникам изучены `_planHass` и мемоизация, `_projectHaSmartHomeSources`, `HaPlanHost.update/synchronize/publish`, путь `requestUpdate('hass')`, потребители `hassValue`/`valueWithUnit`, `markerAlertValueControl`/`readMarkerAlertSource`, `hp-summary-weather`, `plan-hass-fixture`. Поведение с внедрённым `planHost` при одновременно заданном `this.hass` (форматтеры HA применяются к states внедрённого хоста) унаследовано от прежней схемы с `services`/`config` и в этой задаче не менялось. Реальный HA и визуальные эталоны не проверялись.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: d0c538de59b5413b6d4d31fd2a1ca15e18943fc6 → c5d7a23892c69ad0504cf3048589344e03525810\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1437, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПричина: при извлечении PlanHost #1392 data-проекция сохранила language/locale/localize/themes, states и registry, но потеряла оба HA read-only форматтера. Это проявилось также в восьми проверках smoke_value_format (badge/live text/перевод/атрибуты/единицы).\n\nРешение: существующий HA-only _projectHaSmartHomeSources добавляет ровно formatEntityState и formatEntityAttributeValue через небольшой allowlist-helper haValueFormatters. Методы привязаны к конкретному исходному HA объекту, не к урезанной проекции; новый input/environment строит новую проекцию. Четырёхпольный HostPresentationContext, PlanHost и транспортные границы не меняются. Целый HA не передаётся доменным потребителям. Альтернатива расширить portable presentation отвергнута как нарушение установленного контракта; преобразовывать raw on/off в модели также нельзя.\n\nОсобое внимание: this/текущий источник, дополнительный value-аргумент weather formatter, fallback без метода/при исключении, единица ровно один раз и raw значения enum. Unit проверяет allowlist/привязку/смену источника и вызовы существующих consumer fallback. Исходные ожидания native smoke_marker_alerts и smoke_value_format не ослаблены. В S6 дополнительно включены оба smoke, summary_weather и plan-host-boundary. Реальный пользовательский HA, visual baselines и выпуск не меняются. Классификация line-fix: регрессия невыпущенного #1392, текущая привязка release-ledger оставлена без изменения версий.\n```\n\n</details>\n",
-        "createdAt": "2026-11-14T21:22:53.005Z",
-        "artifactId": 14132841474,
-        "runId": 43642289425,
-        "runAttempt": 1,
-        "completedAt": "2026-11-14T21:22:56Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43642289425",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1438": {
@@ -5329,98 +5204,8 @@
     1438,
     1443
   ],
-  "active": {
-    "issue": 1437,
-    "worker": "github-coordinator",
-    "token": "473:github:43641364833:1:tick:0:admit",
-    "fence": 473,
-    "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
-    "expectedBase": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794690622653,
-    "expiresAt": 1794694998912,
-    "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083",
-    "reviewRequest": "review:1437:1:f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083:d0c538de59b5413b6d4d31fd2a1ca15e18943fc6"
-  },
+  "active": null,
   "events": {
-    "github:43641364833:1:completions:message:c824bc1f7b99d80c2e4db43a1ed129ab227e38c928cea50da1dfd544bd0f4ca3": {
-      "digest": "f298185de3167cb33399ac2e03728b2aa568969f39815d17f6167b7777ad7caf",
-      "issue": 1437
-    },
-    "finish:1437-ha-formatters-resume-20261114:finish:1:synchronized": {
-      "digest": "43b664fe148a68bc25d62386d2a51495e0864528fc0609323966e53ebe3170c1",
-      "issue": 1437
-    },
-    "finish:90ba36f9-6d86-46d2-892c-fccaf4730e45": {
-      "digest": "f0a58742933b8ae80fe6e23165d79fcab52670596ca2c8ee9b35da07fd50faa3",
-      "issue": 1437
-    },
-    "finish:663bcb1c-9a61-4ddb-a6e0-571ee65debb0": {
-      "digest": "4775b6c41906f56b695430f5c6ca378dfa93f044f95f3c756d7e85aec4a4fbce",
-      "issue": 1437
-    },
-    "finish:5b79a175-3409-441b-9abb-5693c323ff29": {
-      "digest": "166fd6979007524b8d93a81accb60f1acb5e6b658dd90463e235073893fae4d3",
-      "issue": 1437
-    },
-    "github:43641869561:1:completions:message:be497a9dc19c4989f040b9c95479c8cb156abac34a300e6c8122543567d1d8c1": {
-      "digest": "b8faa163077f2a4c44c50d59eb92c89bd06b004f1b8d811e9c6ad90b41fcf565",
-      "issue": 1437
-    },
-    "finish:8a251f77-e439-4070-96f9-977468566975": {
-      "digest": "91daf28899de137ac83c2d8eaf67ce826cd0bc4001f5b3c793fcd644d9347336",
-      "issue": 1437
-    },
-    "finish:eb01817d-c0ce-4c5e-8e60-90198488adec": {
-      "digest": "17b279fb178116c98354e79a6ce4d0cfcad93225384bad2bb3206ad290e3518f",
-      "issue": 1437
-    },
-    "finish:1e2c8425-915b-45ad-a1a9-0811044087a3": {
-      "digest": "498046f8c1feeb11db81a40f7091576e77e19fb816b8c1c44001426204a0c7b8",
-      "issue": 1437
-    },
-    "finish:c0d432de-3abc-4562-a227-c29d77503571": {
-      "digest": "88dc17923aa09d46328e133bb8757d7595754415f2e410dc4f4f3ceb54b7c1d6",
-      "issue": 1437
-    },
-    "finish:1437-ha-formatters-resume-20261114:finish:2:s6-label": {
-      "digest": "18fa52e8ca3ad8778f43a46cb52e145a7061da2e35a057857ddb3f8a0be24e4e",
-      "issue": 1437
-    },
-    "finish:1437-ha-formatters-resume-20261114:finish:3:review-requested": {
-      "digest": "7fe2c1cd6b5e4f00af1346b51998723b1fa0263dd8b091cae22ca6134701e2d8",
-      "issue": 1437
-    },
-    "github:43642268735:1:tick:0:review-retry": {
-      "digest": "1154b92468ddaa415f326ab43eb9712a8e71917531f74807cbb477e2214fa3b5",
-      "issue": 1437
-    },
-    "github:43642268735:1:completions:message:48be9189b95d64933b41679aca1541e1760525601c80700fb39e3c9a0be3f901": {
-      "digest": "b2406e646e647105e75c81cbe2068293fe485059703a1aa98e0b5ddba3410bb1",
-      "issue": 1437
-    },
-    "github:43642521401:1:tick:0:review-presentation": {
-      "digest": "b331c136dbf3aecb0d6c570e8848059a5850d15625ebe2f87c769a2c0c218217",
-      "issue": 1437
-    },
-    "github:43642521401:1:tick:0:review-complete": {
-      "digest": "46284d440f253e3e907f35f5f01e4dbc213489a24e0c7e0a9af0faf298d3cfdf",
-      "issue": 1437
-    },
-    "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
-      "digest": "f63ad38f23c48cdc36eab5908922dbc577e7b6a710d05ab97b186e2437f621e4",
-      "issue": 1437,
-      "message": {
-        "kind": "queued",
-        "issue": 1437,
-        "at": 1794686350630,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3dcbebfc95df1f71c808525fb082abf310eb67b4",
-        "delivered": true
-      }
-    },
     "finish:45968a7d-04b9-448f-8b3e-76a621da2a7f": {
       "digest": "ce61402c6c2203dac6edbc477e30fa679a1e9fa2be42563711326929ccd8c5a6",
       "issue": 1438,
@@ -5446,51 +5231,6 @@
         "track": "show",
         "layer": "product",
         "materialSha": "d823903ff5c3a684962843713c737ade0c26febe",
-        "delivered": true
-      }
-    },
-    "github:43641364833:1:tick:0:admit": {
-      "digest": "11a0cbe29f16f75fbbf7f52ba8e134f724d1c0d864a1eb052b0d825761edd6dd",
-      "issue": 1437,
-      "message": {
-        "kind": "admitted",
-        "issue": 1437,
-        "at": 1794690622653,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "3dcbebfc95df1f71c808525fb082abf310eb67b4",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:1437-ha-formatters-resume-20261114:finish:2:s6-complete": {
-      "digest": "1a8f57d0132a846d8d6efee776c5e6acdfb91942f0e7ba31950669fb84fb10dc",
-      "issue": 1437,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1437,
-        "at": 1794691210171,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
-        "phase": "review",
-        "evidence": {
-          "id": "20261114T211243169-5919ff44",
-          "name": "Тесты для задачи #1437 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T211243169-5919ff44/report.json",
-          "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
-          "status": "passed",
-          "finishedAt": "2026-11-14T21:20:08.968Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Причина: при извлечении PlanHost #1392 data-проекция сохранила language/locale/localize/themes, states и registry, но потеряла оба HA read-only форматтера. Это проявилось также в восьми проверках smoke_value_format (badge/live text/перевод/атрибуты/единицы).\n\nРешение: существующий HA-only _projectHaSmartHomeSources добавляет ровно formatEntityState и formatEntityAttributeValue через небольшой allowlist-helper haValueFormatters. Методы привязаны к конкретному исходному HA объекту, не к урезанной проекции; новый input/environment строит новую проекцию. Четырёхпольный HostPresentationContext, PlanHost и транспортные границы не меняются. Целый HA не передаётся доменным потребителям. Альтернатива расширить portable presentation отвергнута как нарушение установленного контракта; преобразовывать raw on/off в модели также нельзя.\n\nОсобое внимание: this/текущий источник, дополнительный value-аргумент weather formatter, fallback без метода/при исключении, единица ровно один раз и raw значения enum. Unit проверяет allowlist/привязку/смену источника и вызовы существующих consumer fallback. Исходные ожидания native smoke_marker_alerts и smoke_value_format не ослаблены. В S6 дополнительно включены оба smoke, summary_weather и plan-host-boundary. Реальный пользовательский HA, visual baselines и выпуск не меняются. Классификация line-fix: регрессия невыпущенного #1392, текущая привязка release-ledger оставлена без изменения версий.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
