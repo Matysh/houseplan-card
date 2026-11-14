@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12740,
-  "nextTicket": 450,
+  "revision": 12741,
+  "nextTicket": 451,
   "nextFence": 450,
   "tasks": {
     "1024": {
@@ -4515,14 +4515,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1423-standalone-entry",
-      "materialSha": "46eed6c62d78fc18d8fe52119affe06b7a9d2638",
+      "materialSha": "57b416aaa549042855b0e99c54fc2affb109398c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 449,
-      "queued": false,
+      "ticket": 450,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794661875011,
-      "reviewEntry": 1,
+      "readyAt": 1794662811163,
+      "reviewEntry": 2,
       "patchId": "709ff3e852b4bc6093b1389b31187e62ad133f09",
       "changedFiles": [
         ".gitignore",
@@ -4567,7 +4567,6 @@
         "test/standalone-plan-host-boundary.test.mjs",
         "tests_backend/test_ha_standalone_core_transport.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5005,7 +5004,9 @@
       "runId": 43591690362
     }
   },
-  "waiting": [],
+  "waiting": [
+    1423
+  ],
   "active": null,
   "events": {
     "github:43585804826:1:spec:1423:spec-request": {
@@ -5199,6 +5200,19 @@
           "detail": "Поведение: process-next/test/furniture-art-lazy.test.mjs: failed; Поведение: test/card-version.test.mjs: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/houseplan-panel.test.mjs: failed; Поведение: test/pdf-compass.test.mjs: failed",
           "eventId": "finish:c860f98b-8922-44d5-a443-10de266d7359:finish:3:return:return:1423"
         }
+      }
+    },
+    "finish:731459ef-f5f9-46ab-9439-4896fb3f92a8": {
+      "digest": "8d1f2641a5a2b7ee59eafd011017c65516491441b94d018b9e5f6a0d067c4498",
+      "issue": 1423,
+      "message": {
+        "kind": "queued",
+        "issue": 1423,
+        "at": 1794662811163,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "57b416aaa549042855b0e99c54fc2affb109398c"
       }
     }
   },
