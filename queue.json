@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11831,
+  "revision": 11832,
   "nextTicket": 425,
   "nextFence": 425,
   "tasks": {
@@ -3637,7 +3637,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794622980495,
       "reviewEntry": 2,
-      "patchId": "434f6775628e5d4d57d03d95fea1e07408b8132c",
+      "patchId": "b0c4100535253140ce53def14d10c4f2f95a16aa",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
         "demo/srv/plan-host-fixture.js",
@@ -3651,6 +3651,8 @@
         "docs/release-ledger/v1.85.0/1392.json",
         "process-next/lib/task-selection.mjs",
         "process-next/test/task-selection.test.mjs",
+        "scripts/config-compatibility-inventory.json",
+        "scripts/mutation-registry.mjs",
         "src/backdrop-pick.ts",
         "src/backup-archive-client.ts",
         "src/catalog-context-menu.ts",
@@ -3678,6 +3680,7 @@
         "src/houseplan-onboarding-runtime.ts",
         "src/houseplan-render-lifecycle.ts",
         "src/large-write-transport.ts",
+        "src/led-strip-editor.ts",
         "src/live-interaction-runtime.ts",
         "src/marker-alert-view-runtime.ts",
         "src/marker-deletion.ts",
@@ -3698,14 +3701,23 @@
         "src/wall-node-write.ts",
         "test/backup-archive-client.test.mjs",
         "test/decor-image-upload.test.mjs",
+        "test/graph-optimize-report.test.mjs",
         "test/helpers/plan-host-boundary.mjs",
+        "test/helpers/plan-host-fixture.mjs",
         "test/houseplan-render-lifecycle.test.mjs",
+        "test/late-context-replies.test.mjs",
+        "test/layout-write-reload.test.mjs",
+        "test/mutation-gate.test.mjs",
+        "test/opening-drag.test.mjs",
         "test/optimize-plans-dialog.test.mjs",
         "test/plan-hass-fixture.mjs",
         "test/plan-hass-projection.test.mjs",
         "test/plan-host-boundary.test.mjs",
         "test/plan-host.test.mjs",
         "test/signing.test.mjs",
+        "test/space-delete-dialog.test.mjs",
+        "test/version-recovery-card-contract.test.mjs",
+        "test/write-authority-snapshot.test.mjs",
         "tsconfig.test.json"
       ],
       "notice": {
@@ -4935,10 +4947,11 @@
     "token": "424:finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:1:admit",
     "fence": 424,
     "materialSha": "705ca6117a15b8532efbce28e1ba64a7e598027b",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
+    "phase": "testing",
     "admittedAt": 1794622984268,
-    "expiresAt": 1794623284268
+    "expiresAt": 1794623290869,
+    "patchId": "b0c4100535253140ce53def14d10c4f2f95a16aa"
   },
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
@@ -5127,6 +5140,10 @@
     },
     "finish:5ff8f6e8-5ec7-4a9c-88d6-6e69fb8d1375:finish:3:return": {
       "digest": "5743f151c1e25b81f06ee8a6729e586497d8e07905fcc5838d46b15b9e2e19a1",
+      "issue": 1392
+    },
+    "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:2:synchronized": {
+      "digest": "657bf3c9ed531b7f18fa46812ec7ba1a3cddf60372363007f09b26d6afea985d",
       "issue": 1392
     },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
