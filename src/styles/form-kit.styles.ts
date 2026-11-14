@@ -308,6 +308,8 @@ export function calloutSurfaceCss(options: FormKitCssOptions, selector: string, 
 `;
 }
 
+// Candidate button padding reserves its 1px border inside the two historical
+// FormKit densities; non-button listbox rows retain their own focus/geometry.
 function extrasCss(options: FormKitCssOptions): string {
   const { form, prefix, tokens } = options;
   const p = prefix;
@@ -587,8 +589,6 @@ ${options.parameterized ? floatingSurfaceCss(`.${p}-panel`, '5px') + `  .${p}-pa
   ${selectionListCss(`.${p}-cand`, '.sel', undefined, { accent: `var(${tokens.accent})`, tint: `var(${tokens.tint})` })}
   .${p}-panel .${p}-cand { position:relative; padding-inline-end:36px; }
   .${p}-cand > .${p}-choice-check { position:absolute; inset-inline-end:12px; top:50%; translate:0 -50%; pointer-events:none; }
-  /* Reserve the choice border inside these two historical FormKit densities.
-     Non-button listbox items keep their existing padding and focus policy. */
   .${p}-cand:is(button) { padding:7px 9px; }
   .${p}-panel .${p}-cand:is(button) { padding:9px 35px 9px 11px; }
   .${p}-panel .${p}-cand:is(button) > .${p}-choice-check { inset-inline-end:11px; }

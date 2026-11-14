@@ -62,8 +62,6 @@ function acceptedDialogCss(text) {
     // #1207 UI-015/016 replaces only source-list selection/hover/focus paint.
     [`  .hpf-cand.sel { background: transparent; color: var(--hpf-accent); }\n  .hpf-cand:is(:hover, :focus-visible) { background: var(--hpf-tint); }\n  .hpf-cand:focus-visible { outline: 2px solid var(--hpf-accent); outline-offset: -2px; }`,
       `  ${selectionListCss('.hpf-cand', '.sel', undefined, {accent:'var(--hpf-accent)',tint:'var(--hpf-tint)'})}\n  .hpf-panel .hpf-cand { position:relative; padding-inline-end:36px; }\n  .hpf-cand > .hpf-choice-check { position:absolute; inset-inline-end:12px; top:50%; translate:0 -50%; pointer-events:none; }
-  /* Reserve the choice border inside these two historical FormKit densities.
-     Non-button listbox items keep their existing padding and focus policy. */
   .hpf-cand:is(button) { padding:7px 9px; }
   .hpf-panel .hpf-cand:is(button) { padding:9px 35px 9px 11px; }
   .hpf-panel .hpf-cand:is(button) > .hpf-choice-check { inset-inline-end:11px; }`],
