@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12608,
+  "revision": 12609,
   "nextTicket": 446,
   "nextFence": 446,
   "tasks": {
@@ -4488,149 +4488,25 @@
     },
     "1421": {
       "issue": 1421,
+      "branch": "codex/1421-door-leaf-glow",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1421-door-leaf-glow",
-      "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 445,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794653290073,
-      "reviewEntry": 2,
-      "patchId": "7f04662a3cef97085697f0fabd413a26e2799146",
-      "changedFiles": [
-        "demo/fixtures/closed-door-light.mjs",
-        "demo/golden/closed-door-light.mjs",
-        "demo/golden/harness.mjs",
-        "demo/golden/matrix.mjs",
-        "demo/smoke_closed_door_glow.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/LIGHT.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/release-ledger/v1.85.0/1421.json",
-        "scripts/config-compatibility-inventory.json",
-        "scripts/mutation-registry.mjs",
-        "src/closed-door-light.ts",
-        "src/glow-scene.ts",
-        "src/interior-window-light.ts",
-        "src/opening-optics.ts",
-        "test/browser-attestation.test.mjs",
-        "test/closed-door-light.test.mjs",
-        "test/fixtures/845-wall-corpus-current-identities.json",
-        "test/golden-matrix.test.mjs"
-      ],
-      "notice": {
-        "key": "1:executor-admission-expired",
-        "reason": "executor-admission-expired",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794653262479,
-        "entry": 1,
-        "eventId": "finish:1f0a2ac9-bb03-4b19-9394-d25f28bd3409:finish:1:expire:return:1421"
-      },
-      "s6": {
-        "id": "20261114T104826659-57febbe1",
-        "name": "Тесты для задачи #1421 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T104826659-57febbe1/report.json",
-        "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
-        "status": "passed",
-        "finishedAt": "2026-11-14T10:53:08.867Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
+      "mergedSha": "c0724ea4179e2c6971033c383ef37a441983960f",
+      "mergedAt": 1794653979687,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1421:2:7f04662a3cef97085697f0fabd413a26e2799146:39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
-      "reviewMaterial": {
-        "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
-        "expectedBase": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
-        "patchId": "7f04662a3cef97085697f0fabd413a26e2799146"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1421,
-        "requestId": "review:1421:2:7f04662a3cef97085697f0fabd413a26e2799146:39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
-        "kind": "code",
-        "base": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
-        "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
-        "patchId": "7f04662a3cef97085697f0fabd413a26e2799146",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1421,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1421",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Реализация\nВетка `codex/1421-door-leaf-glow`. Только Glow: физический слот доказан существующим индексом стен/host, затем закрыт отрезком фактического полотна. Положение slide берётся из общего с renderer `openingSlidePlacement`; swing — ось стены. Добавлен только ограниченный пол тоннеля, а не наружный световой веер. Общая сцена обслуживает лампы, LED и Static. Частичное открытие сохраняет квантование 5%, стеклянные двери/ворота/окна не переопределяются. Явный host валидируется общим `physicalOpeningHostRange`; существующий window mutant перенесён к этому владельцу без смены guard/oracle.\n\n### Проверки и ограничения\n- `test/closed-door-light.test.mjs`: 72/72 — обе стороны, углы 0/27/90/180, flip_h/flip_v, swing/slide, wall/partition/exterior, explicit/invalid host, future features, source-on-leaf, partial/transparent и invalidation. `test/glow-scene.test.mjs` + `test/interior-window-light.test.mjs`: 23/23 на предварительном материале.\n- `demo/smoke_closed_door_glow.mjs`: настоящая панель, PNG on/off и фактические clip paths, Flat/2.5D, closed/open/closed, обе стороны, slide flips, partition/exterior, LED и Static. Перед полотном средняя разница RGB 67.67, за полотном 0 в обеих проекциях. Live contact/light не записывают config/layout. Это synthetic transport, не real HA.\n- Четыре новых panel golden-сцены сняты в capture: closed/open/iso/slide. Геометрические oracle пройдены, но все четыре честно имеют `missing-baseline`: принятых эталонов для новых сцен пока нет. PNG — кандидаты, старые эталоны/manifest не менялись. Будущая приёмка перед релизом отдельная; этим коммитом выпуск не запускается.\n- `node scripts/mutation-gate.mjs --check`: static readiness 1790 definitions, execution=0. Мутации при разработке этой задачи не исполнялись.\n- Сборка с типами пройдена. Финальный S6 выполняет очередь по show. Каталог новых unit/native: product, openings+lighting, regression; plan должен выбирать unit по области/import и native по изменённому исполняемому файлу/fixture, не только areaTests.\n- Решение о HA E2E: Matysh/houseplan-e2e#56; существующий релизный HA-набор сохраняется, нового HA backend контракта здесь нет.\n\n### Места для внимания\n\nПервый полный S6 нашёл пять служебных отказов, исправлены до ревью: перемещён ровно один compatibility inventory hit к общему host-proof owner; добавлен ровно один паспорт новой синтетической fixture при сохранении всех старых записей и immutable legacy oracle; новая pinned-browser проверка включена в полный allowlist и её cold-panel launch учитывается проверкой порядка; для четырёх новых lighting panel goldens добавлен собственный контракт вместо включения их в историческую тройку #486. Все пять упавших файлов затем прошли адресно, 91/91. Это не обновление визуальных эталонов. Предыдущий общий прогон имел 6451 известных кейсов, но не был зелёным; финальный S6 после ремонта выполняется заново с допустимым reuse.\nТочная граница наружного откатного полотна, нерасширение неподтверждённого host, closed-vs-zero-rounded-partial cache, повторный light-recut Static. Технические документы LIGHT и руководство обновлены; Sun и сохранённая модель не меняются."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокирующих замечаний нет, работу можно принимать. Закрытая непрозрачная дверь больше не превращает весь проём в непрозрачную стену. Если физический слот подтверждён, он вырезается из кладки, а на месте нарисованного полотна ставится отрезок-преграда. Для распашной двери полотно лежит на оси стены, для откатной — на грани стены, вычисленной той же функцией `openingSlidePlacement`, что и у рендерера. Изменение сделано в общем расчёте преград `buildLightBarrierScene`, поэтому лампы, LED, Flat, 2.5D и Static получают одинаковый результат без отдельных веток. Отдельно разобраны правила частичного открытия, `light_transparent`, ворот, окон и недействительного host, а также различение закрытой двери и малого приоткрытия в ключе кэша: всё это сохранено. Перед выпуском остаётся процессный шаг: у четырёх новых панельных golden-сцен статус `missing-baseline`, принять эталоны должен владелец. Есть одно продуктовое следствие, которое стоит осознанно подтвердить: у наружной двери в закрытом состоянии часть проёма до полотна освещается, а в открытом — нет, потому что открытая наружная дверь, как и раньше, проём не прорезает (см. improvements).",
-          "understanding": "Проблема. В v1.85.2 `resolveLightBarrierRevision` записывала закрытую дверь с amount=0, а `buildLightBarrierScene` отбирала в `openStates` только amount>0. Поэтому кладка в проёме оставалась целой, и свет обрывался у грани стены, а не у полотна. Наружная дверь вообще не попадала в расчёт: проём учитывается только когда пол есть с обеих сторон.\n\nЧто изменилось:\n1) В `resolveLightBarrierRevision` появился признак `closedDoor` — тип door и openingLightAmount ровно 0 до квантования. Поэтому стеклянная дверь (light_transparent) и приоткрытие, округлённое до 0, сюда не попадают. Закрытая дверь теперь участвует в расчёте, даже если пол есть только с одной стороны (наружная дверь). В fingerprint добавлен список закрытых дверей с механизмом.\n2) В `buildLightBarrierScene` для таких дверей вызывается новая `closedDoorLightGeometry`. Она проверяет тип, `assertOpeningFeatures`, общий `physicalOpeningHostRange`: дверь должна целиком лежать на подтверждённом носителе. Для дверей в стене дополнительно требуется полностью закрывающая сторона без неоднозначных комнат. Результат — отрезок-полотно и ограниченный пол тоннеля (грани `openingTunnelGeometriesFromIndex` либо прямоугольник толщины перегородки).\n3) Такие двери добавляются к `apertures` с amount=1: тот же вырез кладки, контура и перегородки, что у открытой двери. Полотно попадает в `occluders`, пол тоннеля — в `floor`.\n4) `hostRange` перенесён из interior-window-light в `opening-optics.physicalOpeningHostRange` без изменений; мутант и инвентарь перенесены вслед за ним.\n\nРазобранные пути:\n- полная карточка: `_resolveLightBarriers` (ключ — `revision.fingerprint`, кэш физических тел, проверка источника внутри кладки `glowSourceInOpaqueBody`, кэш clip с fingerprint сцены);\n- Static: `space-render.ts` с `resolvedOpeningAmount` и `cachedStaticLightBarriers`;\n- рендер откатного полотна в `render/opening-symbol.ts` и выбор грани `_openingFace` в карточке;\n- `recutWallBodiesGeometry` (вырез по нормали на ±pad, по длине ровно rlen);\n- `geometryRoomOpeningInputs` (длина не меняется);\n- `intersectionPaths` (границы пола объединяются, поэтому перекрытие пола комнаты и тоннеля безопасно);\n- `physicalSpaceRecord` (flip_v остаётся в геометрическом fingerprint, opening_features v1 — в fingerprint состояния).",
-          "analysis": [
-            {
-              "topic": "Совпадение преграды с нарисованным полотном",
-              "assessment": "Решение корректное и опирается на общий источник положения, без копии логики. Распашная дверь при amount=0 рисуется на оси (символ проёма всегда центрирован, #250), поэтому преграда {0,0} совпадает с полотном. Откатная дверь рисуется со сдвигом (tx,ty) из `openingSlidePlacement(..., spec.face)`, а грань берётся из той же `openingInnerFaceOffsetFromIndex`/`partitionOpeningFace` с flip_v, что у `_openingFace`. Направление сдвига при закрытой двери не влияет на результат (shift=0), и тест это проверяет. Дуга открывания, ручка и рамка символа не используются — как и требует ТЗ.",
-              "evidence": "src/closed-door-light.ts:27-34; src/render/opening-symbol.ts:321-327; src/houseplan-card.ts:9729-9738, 14274-14278; test/closed-door-light.test.mjs:101-107"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Наружная дверь ведёт себя непоследовательно. Закрытая освещает часть проёма до полотна, а открытая или частично открытая (пол только с одной стороны) по-прежнему не прорезает кладку, и свет обрывается у внутренней грани. В итоге открытие входной двери делает проём темнее. Это соответствует букве AC2 («сохраняются правила открытой двери»), но выглядит странно. Естественное продолжение: использовать ту же ограниченную геометрию пола тоннеля из `closedDoorLightGeometry` (без полотна) и для открытой наружной двери — уличный световой веер при этом не появится, потому что пол ограничен тоннелем. Цена — отдельное решение владельца и новая задача. Предлагаю зафиксировать это как известное поведение или завести продолжение.",
-            "`buildGlowClipGeometry` в запасном пути по отдельным границам сообщает об ошибке через `input.polygons[boundIndex]`. Но `scene.floor` теперь длиннее `polygons` на число граней тоннелей закрытых дверей. Если сбой случится на пол тоннеля, в диагностике будет `#N` вместо понятного id. На поведение это не влияет; при желании можно помечать такие границы явно (например, `closed-door:<id>`).",
-            "Тест экзотического случая для наружной откатной двери с flipV (полотно на наружной грани) не отличает работу полотна: точка за ним тёмная просто потому, что там нет пола. Распашная наружная дверь и внутренние варианты проверяют это содержательно, так что пробел небольшой. Если понадобится усилить проверку, можно поставить источник снаружи, у наружной грани, и убедиться, что внутренняя часть тоннеля за полотном не освещается."
-          ],
-          "boundaries": "Сборку, тесты, смоук, golden и мутации я не запускал — по правилам S7. Опирался на квитанцию S6 `20261114T104826659-57febbe1` (passed, материал c0724ea4, без отказов) и на описание проверок исполнителя: 72/72 unit, смоук с пиксельными дельтами 67.67 и 0, адресные 91/91. Цифры смоука и PNG сам не видел. Четыре новые golden-сцены имеют `missing-baseline`: их геометрические проверки встроены в harness, но визуальные эталоны не приняты, и до выпуска их должен принять владелец. Мутации не исполнялись (execution=0), поэтому устойчивость новых тестов к мутантам не доказана. Не проверены: реальный HA (транспорт синтетический), отрисовка в 2.5D с выдавленными стенами поверх света (её подтверждает только смоук автора), производительность пересчёта преград в доме с множеством закрытых дверей с датчиками. По исходникам изучены: glow-scene.ts, closed-door-light.ts, opening-optics.ts, interior-window-light.ts, logic.ts (openingAmount, openingLightAmount, квантование, подпись), opening-features.ts, opening-symbol-placement.ts, render/opening-symbol.ts, houseplan-card.ts (_resolveLightBarriers, _openingFace, _renderOpenings), space-render.ts, wall-thickness.ts (recut, кандидаты, тоннель), plan-geometry-preflight.ts, structural-space-record.ts, physical-geometry.ts (intersectionPaths), фикстура, смоук и golden-хелперы."
-        },
-        "usage": {
-          "input_tokens": 76,
-          "cache_creation_input_tokens": 125703,
-          "cache_read_input_tokens": 2953728,
-          "output_tokens": 26851,
-          "output_tokens_details": {
-            "thinking_tokens": 19286
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 125703,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1027,
-              "cache_read_input_tokens": 120350,
-              "cache_creation_input_tokens": 9557,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 9557
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокирующих замечаний нет, работу можно принимать. Закрытая непрозрачная дверь больше не превращает весь проём в непрозрачную стену. Если физический слот подтверждён, он вырезается из кладки, а на месте нарисованного полотна ставится отрезок-преграда. Для распашной двери полотно лежит на оси стены, для откатной — на грани стены, вычисленной той же функцией `openingSlidePlacement`, что и у рендерера. Изменение сделано в общем расчёте преград `buildLightBarrierScene`, поэтому лампы, LED, Flat, 2.5D и Static получают одинаковый результат без отдельных веток. Отдельно разобраны правила частичного открытия, `light_transparent`, ворот, окон и недействительного host, а также различение закрытой двери и малого приоткрытия в ключе кэша: всё это сохранено. Перед выпуском остаётся процессный шаг: у четырёх новых панельных golden-сцен статус `missing-baseline`, принять эталоны должен владелец. Есть одно продуктовое следствие, которое стоит осознанно подтвердить: у наружной двери в закрытом состоянии часть проёма до полотна освещается, а в открытом — нет, потому что открытая наружная дверь, как и раньше, проём не прорезает (см. improvements).\n\n## Понимание решения\n\nПроблема. В v1.85.2 `resolveLightBarrierRevision` записывала закрытую дверь с amount=0, а `buildLightBarrierScene` отбирала в `openStates` только amount>0. Поэтому кладка в проёме оставалась целой, и свет обрывался у грани стены, а не у полотна. Наружная дверь вообще не попадала в расчёт: проём учитывается только когда пол есть с обеих сторон.\n\nЧто изменилось:\n1) В `resolveLightBarrierRevision` появился признак `closedDoor` — тип door и openingLightAmount ровно 0 до квантования. Поэтому стеклянная дверь (light_transparent) и приоткрытие, округлённое до 0, сюда не попадают. Закрытая дверь теперь участвует в расчёте, даже если пол есть только с одной стороны (наружная дверь). В fingerprint добавлен список закрытых дверей с механизмом.\n2) В `buildLightBarrierScene` для таких дверей вызывается новая `closedDoorLightGeometry`. Она проверяет тип, `assertOpeningFeatures`, общий `physicalOpeningHostRange`: дверь должна целиком лежать на подтверждённом носителе. Для дверей в стене дополнительно требуется полностью закрывающая сторона без неоднозначных комнат. Результат — отрезок-полотно и ограниченный пол тоннеля (грани `openingTunnelGeometriesFromIndex` либо прямоугольник толщины перегородки).\n3) Такие двери добавляются к `apertures` с amount=1: тот же вырез кладки, контура и перегородки, что у открытой двери. Полотно попадает в `occluders`, пол тоннеля — в `floor`.\n4) `hostRange` перенесён из interior-window-light в `opening-optics.physicalOpeningHostRange` без изменений; мутант и инвентарь перенесены вслед за ним.\n\nРазобранные пути:\n- полная карточка: `_resolveLightBarriers` (ключ — `revision.fingerprint`, кэш физических тел, проверка источника внутри кладки `glowSourceInOpaqueBody`, кэш clip с fingerprint сцены);\n- Static: `space-render.ts` с `resolvedOpeningAmount` и `cachedStaticLightBarriers`;\n- рендер откатного полотна в `render/opening-symbol.ts` и выбор грани `_openingFace` в карточке;\n- `recutWallBodiesGeometry` (вырез по нормали на ±pad, по длине ровно rlen);\n- `geometryRoomOpeningInputs` (длина не меняется);\n- `intersectionPaths` (границы пола объединяются, поэтому перекрытие пола комнаты и тоннеля безопасно);\n- `physicalSpaceRecord` (flip_v остаётся в геометрическом fingerprint, opening_features v1 — в fingerprint состояния).\n\n## Разбор решения\n\n### Совпадение преграды с нарисованным полотном\n\nРешение корректное и опирается на общий источник положения, без копии логики. Распашная дверь при amount=0 рисуется на оси (символ проёма всегда центрирован, #250), поэтому преграда {0,0} совпадает с полотном. Откатная дверь рисуется со сдвигом (tx,ty) из `openingSlidePlacement(..., spec.face)`, а грань берётся из той же `openingInnerFaceOffsetFromIndex`/`partitionOpeningFace` с flip_v, что у `_openingFace`. Направление сдвига при закрытой двери не влияет на результат (shift=0), и тест это проверяет. Дуга открывания, ручка и рамка символа не используются — как и требует ТЗ.\n\nОснование: src/closed-door-light.ts:27-34; src/render/opening-symbol.ts:321-327; src/houseplan-card.ts:9729-9738, 14274-14278; test/closed-door-light.test.mjs:101-107\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Наружная дверь ведёт себя непоследовательно. Закрытая освещает часть проёма до полотна, а открытая или частично открытая (пол только с одной стороны) по-прежнему не прорезает кладку, и свет обрывается у внутренней грани. В итоге открытие входной двери делает проём темнее. Это соответствует букве AC2 («сохраняются правила открытой двери»), но выглядит странно. Естественное продолжение: использовать ту же ограниченную геометрию пола тоннеля из `closedDoorLightGeometry` (без полотна) и для открытой наружной двери — уличный световой веер при этом не появится, потому что пол ограничен тоннелем. Цена — отдельное решение владельца и новая задача. Предлагаю зафиксировать это как известное поведение или завести продолжение.\n- `buildGlowClipGeometry` в запасном пути по отдельным границам сообщает об ошибке через `input.polygons[boundIndex]`. Но `scene.floor` теперь длиннее `polygons` на число граней тоннелей закрытых дверей. Если сбой случится на пол тоннеля, в диагностике будет `#N` вместо понятного id. На поведение это не влияет; при желании можно помечать такие границы явно (например, `closed-door:<id>`).\n- Тест экзотического случая для наружной откатной двери с flipV (полотно на наружной грани) не отличает работу полотна: точка за ним тёмная просто потому, что там нет пола. Распашная наружная дверь и внутренние варианты проверяют это содержательно, так что пробел небольшой. Если понадобится усилить проверку, можно поставить источник снаружи, у наружной грани, и убедиться, что внутренняя часть тоннеля за полотном не освещается.\n\n## Границы анализа\n\nСборку, тесты, смоук, golden и мутации я не запускал — по правилам S7. Опирался на квитанцию S6 `20261114T104826659-57febbe1` (passed, материал c0724ea4, без отказов) и на описание проверок исполнителя: 72/72 unit, смоук с пиксельными дельтами 67.67 и 0, адресные 91/91. Цифры смоука и PNG сам не видел. Четыре новые golden-сцены имеют `missing-baseline`: их геометрические проверки встроены в harness, но визуальные эталоны не приняты, и до выпуска их должен принять владелец. Мутации не исполнялись (execution=0), поэтому устойчивость новых тестов к мутантам не доказана. Не проверены: реальный HA (транспорт синтетический), отрисовка в 2.5D с выдавленными стенами поверх света (её подтверждает только смоук автора), производительность пересчёта преград в доме с множеством закрытых дверей с датчиками. По исходникам изучены: glow-scene.ts, closed-door-light.ts, opening-optics.ts, interior-window-light.ts, logic.ts (openingAmount, openingLightAmount, квантование, подпись), opening-features.ts, opening-symbol-placement.ts, render/opening-symbol.ts, houseplan-card.ts (_resolveLightBarriers, _openingFace, _renderOpenings), space-render.ts, wall-thickness.ts (recut, кандидаты, тоннель), plan-geometry-preflight.ts, structural-space-record.ts, physical-geometry.ts (intersectionPaths), фикстура, смоук и golden-хелперы.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 39fb169dd97c34ecb4e56c885e67d54e7f5b94c0 → c0724ea4179e2c6971033c383ef37a441983960f\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1421, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Реализация\nВетка `codex/1421-door-leaf-glow`. Только Glow: физический слот доказан существующим индексом стен/host, затем закрыт отрезком фактического полотна. Положение slide берётся из общего с renderer `openingSlidePlacement`; swing — ось стены. Добавлен только ограниченный пол тоннеля, а не наружный световой веер. Общая сцена обслуживает лампы, LED и Static. Частичное открытие сохраняет квантование 5%, стеклянные двери/ворота/окна не переопределяются. Явный host валидируется общим `physicalOpeningHostRange`; существующий window mutant перенесён к этому владельцу без смены guard/oracle.\n\n### Проверки и ограничения\n- `test/closed-door-light.test.mjs`: 72/72 — обе стороны, углы 0/27/90/180, flip_h/flip_v, swing/slide, wall/partition/exterior, explicit/invalid host, future features, source-on-leaf, partial/transparent и invalidation. `test/glow-scene.test.mjs` + `test/interior-window-light.test.mjs`: 23/23 на предварительном материале.\n- `demo/smoke_closed_door_glow.mjs`: настоящая панель, PNG on/off и фактические clip paths, Flat/2.5D, closed/open/closed, обе стороны, slide flips, partition/exterior, LED и Static. Перед полотном средняя разница RGB 67.67, за полотном 0 в обеих проекциях. Live contact/light не записывают config/layout. Это synthetic transport, не real HA.\n- Четыре новых panel golden-сцены сняты в capture: closed/open/iso/slide. Геометрические oracle пройдены, но все четыре честно имеют `missing-baseline`: принятых эталонов для новых сцен пока нет. PNG — кандидаты, старые эталоны/manifest не менялись. Будущая приёмка перед релизом отдельная; этим коммитом выпуск не запускается.\n- `node scripts/mutation-gate.mjs --check`: static readiness 1790 definitions, execution=0. Мутации при разработке этой задачи не исполнялись.\n- Сборка с типами пройдена. Финальный S6 выполняет очередь по show. Каталог новых unit/native: product, openings+lighting, regression; plan должен выбирать unit по области/import и native по изменённому исполняемому файлу/fixture, не только areaTests.\n- Решение о HA E2E: Matysh/houseplan-e2e#56; существующий релизный HA-набор сохраняется, нового HA backend контракта здесь нет.\n\n### Места для внимания\n\nПервый полный S6 нашёл пять служебных отказов, исправлены до ревью: перемещён ровно один compatibility inventory hit к общему host-proof owner; добавлен ровно один паспорт новой синтетической fixture при сохранении всех старых записей и immutable legacy oracle; новая pinned-browser проверка включена в полный allowlist и её cold-panel launch учитывается проверкой порядка; для четырёх новых lighting panel goldens добавлен собственный контракт вместо включения их в историческую тройку #486. Все пять упавших файлов затем прошли адресно, 91/91. Это не обновление визуальных эталонов. Предыдущий общий прогон имел 6451 известных кейсов, но не был зелёным; финальный S6 после ремонта выполняется заново с допустимым reuse.\nТочная граница наружного откатного полотна, нерасширение неподтверждённого host, closed-vs-zero-rounded-partial cache, повторный light-recut Static. Технические документы LIGHT и руководство обновлены; Sun и сохранённая модель не меняются.\n```\n\n</details>\n",
-        "createdAt": "2026-11-14T10:59:12.000Z",
-        "artifactId": 14110754926,
-        "runId": 43587396377,
-        "runAttempt": 1,
-        "completedAt": "2026-11-14T10:59:15Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43587396377",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1424": {
@@ -5060,35 +4936,15 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1421,
-    "worker": "finish",
-    "token": "445:finish:a6aae011-a44b-4170-bd80-5f358354c234:finish:1:admit",
-    "fence": 445,
-    "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
-    "expectedBase": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794653293954,
-    "expiresAt": 1794657576711,
-    "patchId": "7f04662a3cef97085697f0fabd413a26e2799146",
-    "reviewRequest": "review:1421:2:7f04662a3cef97085697f0fabd413a26e2799146:39fb169dd97c34ecb4e56c885e67d54e7f5b94c0"
-  },
+  "active": null,
   "events": {
     "github:43585265383:1:label:spec-request": {
       "digest": "81645d13acef779d4c183ee979e266861230fe12f3534c0c98357a02f9051515",
       "issue": 1422
     },
-    "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651:finish:2:synchronized": {
-      "digest": "4d33c079cb3163a006b0015f7db32883d0f62b03d669d93cceac89172cb6c040",
-      "issue": 1421
-    },
     "github:43585804826:1:spec:1423:spec-request": {
       "digest": "ab106ad3748c893cb1880e545c3ae88dd90c322ece3453d525c07dfd9f287f59",
       "issue": 1423
-    },
-    "finish:ece9898f-96cb-4790-a726-8e31619af984": {
-      "digest": "569071bbe7cfe83c086f457c51707c6c082b3f4df0b4d21609cf0f08eae68c55",
-      "issue": 1421
     },
     "github:43585804826:1:spec:1422:spec-presentation": {
       "digest": "801011cb83283fee7071791f47e5e49157198b7d9e8474bf8205d4585af1beef",
@@ -5106,37 +4962,9 @@
       "digest": "7b99c39097732731ec5e7a7b7ee333e1fdacdf2f9f56cf49ff833f34c23c5165",
       "issue": 1422
     },
-    "github:43585804826:1:completions:message:731b555498e913df49022dc25ef28449f23b1ea71ce1c2cb56c5f99c3bc71056": {
-      "digest": "f8475dd81a0bac8fe62faaccf2fb5476169b947834cfe6b9548b9fcfdb7b106b",
-      "issue": 1421
-    },
-    "github:43585804826:1:completions:message:73be6e1f45aede521a5467d2ee756d24d77234d1ddd33ce52a9a6c0ffd351716": {
-      "digest": "20c2e563072531b84e45508886f6034c465852810203bdfd15e7a95628b93565",
-      "issue": 1421
-    },
-    "finish:43ece9af-8ffc-4705-b67c-eab881260d9a": {
-      "digest": "646fe9a935ec6f7ae823dbbd03994f94f9b85117ae6727d1d3687f51bf1c83d6",
-      "issue": 1421
-    },
     "github:43585981218:1:label:spec-request": {
       "digest": "d998f9ec725ce29d87b3a07da777a510b97207d472a00cf0edb653c77f103841",
       "issue": 1422
-    },
-    "finish:c167b774-471a-4c09-a632-31ce3ae2f49a": {
-      "digest": "bde1d77719938fafae181642e111355dad5a625e26f72843f99e7607c778b232",
-      "issue": 1421
-    },
-    "github:43585981218:1:completions:message:82a96790472e6819bfe643457834ae58c7877733197d5dcc767f2f1026f8bf56": {
-      "digest": "08f4183a975c788e89fd3ccf6dcd3a826a6aaa4e9b2086afa4c8fe176e7f6428",
-      "issue": 1421
-    },
-    "finish:c51fc98f-95c9-42f2-a58d-439bb17660fd": {
-      "digest": "b2a471923375092ed8c98a892c3a16cf349f8e674ed724275a17d66885517433",
-      "issue": 1421
-    },
-    "finish:d75d91ed-a832-49c3-8c49-c2dbe8ff2777": {
-      "digest": "90a0ec80e3a369d3dd6ad2a702314b45b4a28f55baa87bd8349ff3d3d1b93756",
-      "issue": 1421
     },
     "github:43586151896:1:spec:1423:spec-presentation": {
       "digest": "1b1e17677839c613113ffd1c870fbc8a57b9c89060d5eb64d1b492ff99fef644",
@@ -5154,10 +4982,6 @@
       "digest": "3a6343ca453f2e8acd470caf79df4157d10c1604c0a2b8a8e6f000f32b397af1",
       "issue": 1423
     },
-    "finish:8eeece3a-94bc-47fb-8b88-f47f7acb104d": {
-      "digest": "6453c24ced154b5c9a1437f004034089133d645a4560c92746bd62adeb9a7566",
-      "issue": 1421
-    },
     "github:43586271852:1:spec:1422:spec-presentation": {
       "digest": "3c6af0284079db7d858682e7de15c81e0508b555e17daa346a0a6c64ce5c846c",
       "issue": 1422
@@ -5170,29 +4994,13 @@
       "digest": "5945916083b7f34ed45c7edf721e41bdb5e39094c7130ed593ad8eec3ca63fac",
       "issue": 1422
     },
-    "finish:a6f6491e-ae10-4f9b-9194-f019d22cbf52": {
-      "digest": "607ba7c79a7da2ccae79e2f2e73c5edcaa14fa798060c074406a35092431a7a2",
-      "issue": 1421
-    },
     "github:43586271852:1:completions:report:e8d67aab08b8a0f742afe5461f8c460de4e3c6009259fe33aecfe14f29fa1341": {
       "digest": "49c616f8d4d219eebf2aec54989b6a542c609b6b66748ed011a47ee674ce72ef",
       "issue": 1422
     },
-    "finish:9f9f3f3b-003d-4601-baf4-1b601e30eedc": {
-      "digest": "2b42d60748f8ef0347386999ab655f170f4ab4997e775395d6601af18e3aad86",
-      "issue": 1421
-    },
     "github:43586364877:1:label:spec-request": {
       "digest": "955b505f0f112a6b6f761304eb888e13e02b0e64c73fc733dd6106e7a90015e3",
       "issue": 1423
-    },
-    "github:43586364877:1:completions:message:c39d73a52cc58df96469fad443507e8d95567fda72fb1a313f8168b5b2043d4a": {
-      "digest": "072e1e7fb4722eb914b9b40e5e0db4701878fdb5c87ef47d80022a6b2ba87c42",
-      "issue": 1421
-    },
-    "finish:8e1b1995-4a50-458a-8ecb-ec1b49b30b36": {
-      "digest": "74026d864c7dda59dbc7f2117a170854d4c0497b3ec8a5dacd192a2fb753bb31",
-      "issue": 1421
     },
     "github:43586681644:1:spec:1423:spec-presentation": {
       "digest": "8f2438c98082876021f5b035ced80a4ea3fbeb95ed13451d5539bcee38b5d595",
@@ -5210,49 +5018,9 @@
       "digest": "9f8bfa716bac23d3c43a2505e9fd8503070e814c57790b463190d7e459d547cf",
       "issue": 1423
     },
-    "finish:a6aae011-a44b-4170-bd80-5f358354c234:finish:2:synchronized": {
-      "digest": "3037c819b8450e647002f0c3be895afd917b5f91e7c29dc7ba356b768eddaeac",
-      "issue": 1421
-    },
-    "finish:217da3a5-5bfe-42c0-a382-0c18f21a7dc9": {
-      "digest": "08ea669e6b6b19bb2cc57cdbc781bfcb5da65319930186140f17b6585f06d06b",
-      "issue": 1421
-    },
     "github:43587059688:1:label:spec-request": {
       "digest": "24662d0f6c4b153167e05982ec43febaf79e846c51c2c2d0fb9004fe311e7de4",
       "issue": 1423
-    },
-    "github:43587059688:1:completions:notice:e99eab65d2adad8f77a7ebab215f9599f36a817e035f963af57108ad59d76fbe": {
-      "digest": "d9ad15acd053b609cf772ea5b9a14cbe7d2a6f92136ad0ad37d7a5153e23db1b",
-      "issue": 1421
-    },
-    "github:43587059688:1:completions:message:e99eab65d2adad8f77a7ebab215f9599f36a817e035f963af57108ad59d76fbe": {
-      "digest": "b6f32614ba0f762a90e87c1e8c9debfc76cc9e749d0819c425ba521703641ff0",
-      "issue": 1421
-    },
-    "github:43587059688:1:completions:message:4bb6fe38ce454bdb90f84d1dc47d36583652b33209727645a8c976911c5dfc44": {
-      "digest": "bcec457fe1bfb828481eb54194056b02a65b30e1b73771182dac6d20060c1675",
-      "issue": 1421
-    },
-    "github:43587059688:1:completions:message:5b0d4ffe3fabc55cd23f3d9583d46f5e378051c895e8cbebcf2b579355a7b502": {
-      "digest": "14f3c931cc954b1ba8cb1b1152da9b2383a39888e023e994e6aba4c033d6480b",
-      "issue": 1421
-    },
-    "github:43587059688:1:completions:message:054b00e4dc7374fd463111a40d54487d6312454f67ff089429d52e162c46b851": {
-      "digest": "6052413ee0d534f021574e182140eacd12be6360a4c55f52311d4b2a403d5e40",
-      "issue": 1421
-    },
-    "finish:9d8488bd-cae5-4ed4-9ebb-bbd6bf0f5256": {
-      "digest": "1aabcd686b9ad2e2093b5d8d095e9887c5e7cd219ffeec96d0fd11127c97e425",
-      "issue": 1421
-    },
-    "finish:c5779239-3d7d-40a3-b0bc-8a730c6e6d86": {
-      "digest": "c3eefa3fe2af0f2ca45b4744679feaa0e2342c2eac2639f72220cf49bf0ef202",
-      "issue": 1421
-    },
-    "finish:9f773034-d136-42bd-a3be-592498fd011d": {
-      "digest": "f0e97b793247c8b921985f01b11f0af52328a591d48a78dc96d2051980fe4020",
-      "issue": 1421
     },
     "github:43587302996:1:spec:1423:spec-presentation": {
       "digest": "03ea2d6c3c6c929f282377ed51c5dc0034d1ec58ff343e1069623a906bf04ede",
@@ -5269,59 +5037,6 @@
     "github:43587302996:1:completions:report:c8eb1a1da4823a3bac8c3eb2f83324ca8a096c01f5ed9107ed9e8f7290549575": {
       "digest": "9b6e2c2b1c3ad9e75a0f2182ee86660660d581f6da238cf61ae0c6f70ab93bbf",
       "issue": 1423
-    },
-    "finish:c3b5defd-46f9-4c95-a2ef-a4affe543622": {
-      "digest": "c87d4e17a2ba26bddda5b0dbfe1a9f52f351594bfaef1d09d9436d9431639845",
-      "issue": 1421
-    },
-    "finish:a6aae011-a44b-4170-bd80-5f358354c234:finish:3:s6-label": {
-      "digest": "f8bcb0d217563699a65c88ef5f7d6200261d08c947c11d63f3df0fab3f9c17bc",
-      "issue": 1421
-    },
-    "finish:a6aae011-a44b-4170-bd80-5f358354c234:finish:4:review-requested": {
-      "digest": "83ab4cb2ddb7acdd96713907b478836d4a6a823acb2c7be1d2c1032bdc414d31",
-      "issue": 1421
-    },
-    "github:43587380345:1:completions:message:839abc3a3b2e3cfd38eb49c4d0fb16b90f8f0cf507328d93c1a4231961938997": {
-      "digest": "779425969c5c8582b1abe51bbb64d610db40f0f3f5c0d5b85d0906b05211e277",
-      "issue": 1421
-    },
-    "github:43587832066:1:tick:0:review-presentation": {
-      "digest": "7ab7017a95ed47d4b177fc387f9de765011a0c935f2cd9e66d41bf40fa53e4a7",
-      "issue": 1421
-    },
-    "github:43587832066:1:tick:0:review-complete": {
-      "digest": "c1cd2b9d77dee5f24adb4c8d7e49bb2522d711d7899b24b694398bf83f06aeea",
-      "issue": 1421
-    },
-    "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651": {
-      "digest": "de3a891914465aab40cb0cc764c1c1f63dd063b799b8f79278f1dc5e6cb8b3c9",
-      "issue": 1421,
-      "message": {
-        "kind": "queued",
-        "issue": 1421,
-        "at": 1794652335784,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "6cd0d49b4e5d1c76914ad75853245f0bce30c3b1",
-        "delivered": true
-      }
-    },
-    "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651:finish:1:admit": {
-      "digest": "6ab3b5cdb81dbb29c30db76a3e3ca6c80682be2ef84414ffd911afef3b8b1edf",
-      "issue": 1421,
-      "message": {
-        "kind": "admitted",
-        "issue": 1421,
-        "at": 1794652339427,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "6cd0d49b4e5d1c76914ad75853245f0bce30c3b1",
-        "phase": "sync",
-        "delivered": true
-      }
     },
     "github:43585981218:1:label:spec-request:spec-resubmitted:1422": {
       "digest": "d998f9ec725ce29d87b3a07da777a510b97207d472a00cf0edb653c77f103841",
@@ -5357,55 +5072,6 @@
         "delivered": true
       }
     },
-    "finish:1f0a2ac9-bb03-4b19-9394-d25f28bd3409:finish:1:expire:return:1421": {
-      "digest": "31580d3f2e34c01c73c0152413bdc26c96a007a08e32d1f53980eaa9fc2ff6d0",
-      "issue": 1421,
-      "message": {
-        "kind": "return",
-        "issue": 1421,
-        "at": 1794653262479,
-        "entry": 1,
-        "notice": {
-          "key": "1:executor-admission-expired",
-          "reason": "executor-admission-expired",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1794653262479,
-          "entry": 1,
-          "eventId": "finish:1f0a2ac9-bb03-4b19-9394-d25f28bd3409:finish:1:expire:return:1421"
-        },
-        "delivered": true
-      }
-    },
-    "finish:a6aae011-a44b-4170-bd80-5f358354c234": {
-      "digest": "c867d81b2e959c5023350ca54bf26bd868150583496858745f3f4bad79ca88c8",
-      "issue": 1421,
-      "message": {
-        "kind": "queued",
-        "issue": 1421,
-        "at": 1794653290073,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
-        "delivered": true
-      }
-    },
-    "finish:a6aae011-a44b-4170-bd80-5f358354c234:finish:1:admit": {
-      "digest": "925e359a2a3ed62a4360a4e391c13899e14578a1e6cd8602047e4881586ae6b1",
-      "issue": 1421,
-      "message": {
-        "kind": "admitted",
-        "issue": 1421,
-        "at": 1794653293954,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
     "github:43587059688:1:label:spec-request:spec-resubmitted:1423": {
       "digest": "24662d0f6c4b153167e05982ec43febaf79e846c51c2c2d0fb9004fe311e7de4",
       "issue": 1423,
@@ -5419,36 +5085,6 @@
         "reviewChanges": "### Решение и ограничения\nНовая точка входа использует #1391 core, #1392 host ports, #1394 plan-only и #1422 presentation; общий renderer не дублируется. В документах #1393 и текущей UI Lab ещё есть HA bootstrap — они не доказательство результата. Сейчас согласуется реальная frontend-поставка/embedding API, не production backend и не сайт. Чистая версия 1.85.2 не содержит foundation из dev, поэтому стабильный pin нельзя обещать до выпуска включающей их версии. У владельца запрошено подтверждение локального dev-кандидата; вопрос не даёт разрешения на релиз.\n\n### Проверки\nДо S4 только авторская проверка формы. Продуктовых запусков #1423 пока нет. Предлагаемые сценарии будущие; проверки #1421 не относятся к этой задаче. Реализация начнётся после принятого ТЗ и S8 #1422.\n\n### Исправления по предыдущему ревью\nS4 r2: https://github.com/Matysh/houseplan-card/actions/runs/43586404456 (artifact review-result, spec-39fb169dd97c-1794652631045.md).\n- F1 r2: перенос приведён к действительному #1394 — single-space plan_only JSON, ожидаемая очистка HA/межэтажных ссылок и live-текста, сравнение именно с core-проекцией; ZIP/full JSON — отрицательные пробы. Сохранность скрытых HA bindings вынесена в отдельную проверку authoritative config/set + remount.\n- Улучшения r2: и fault-injection fixture объявляет только реализованные API; revisions/CAS/Optimize intent/structural upload test dispatcher сверяется с действующими HA обработчиками, core не копируется.\nНовая передача — редакция 3, только spec-check, без продуктовых прогонов.\n\nИстория первого возврата:\nS4 r1: https://github.com/Matysh/houseplan-card/actions/runs/43585839409 (artifact review-result, spec-39fb169dd97c-1794652631045.md).\n- F1: ru/en/de/pl исправлено на ru/en/de/fr во всём ТЗ, польский не вводится.\n- F2: явно выбран вариант (a) — test transport к настоящему локальному Python core для положительного journey/геометрии/portable repair и apply; эхо-fixture только для фронтенд fault injection. Объявлять лишь фактически реализованные API. Не создаём публичный backend и не дублируем core на JS.\n- Улучшения: side-effect-free module обязателен, host до DOM connect и проверка отсутствия HaPlanHost/picker; конкретный Roboto Regular 400 + synth/fallback; описан config/get handshake и standalone recovery без HA/HACS текстов; сверка presentation API после S8 #1422 до реализации.\nНовая передача — редакция 2 в теле issue. Только spec-check, продуктовых прогонов нет.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:a6aae011-a44b-4170-bd80-5f358354c234:finish:3:s6-complete": {
-      "digest": "62db5ca23b6023d28546b3982c575128381d9a04a00cafe1e421ca136208463c",
-      "issue": 1421,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1421,
-        "at": 1794653590136,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
-        "phase": "review",
-        "evidence": {
-          "id": "20261114T104826659-57febbe1",
-          "name": "Тесты для задачи #1421 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T104826659-57febbe1/report.json",
-          "materialSha": "c0724ea4179e2c6971033c383ef37a441983960f",
-          "status": "passed",
-          "finishedAt": "2026-11-14T10:53:08.867Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Реализация\nВетка `codex/1421-door-leaf-glow`. Только Glow: физический слот доказан существующим индексом стен/host, затем закрыт отрезком фактического полотна. Положение slide берётся из общего с renderer `openingSlidePlacement`; swing — ось стены. Добавлен только ограниченный пол тоннеля, а не наружный световой веер. Общая сцена обслуживает лампы, LED и Static. Частичное открытие сохраняет квантование 5%, стеклянные двери/ворота/окна не переопределяются. Явный host валидируется общим `physicalOpeningHostRange`; существующий window mutant перенесён к этому владельцу без смены guard/oracle.\n\n### Проверки и ограничения\n- `test/closed-door-light.test.mjs`: 72/72 — обе стороны, углы 0/27/90/180, flip_h/flip_v, swing/slide, wall/partition/exterior, explicit/invalid host, future features, source-on-leaf, partial/transparent и invalidation. `test/glow-scene.test.mjs` + `test/interior-window-light.test.mjs`: 23/23 на предварительном материале.\n- `demo/smoke_closed_door_glow.mjs`: настоящая панель, PNG on/off и фактические clip paths, Flat/2.5D, closed/open/closed, обе стороны, slide flips, partition/exterior, LED и Static. Перед полотном средняя разница RGB 67.67, за полотном 0 в обеих проекциях. Live contact/light не записывают config/layout. Это synthetic transport, не real HA.\n- Четыре новых panel golden-сцены сняты в capture: closed/open/iso/slide. Геометрические oracle пройдены, но все четыре честно имеют `missing-baseline`: принятых эталонов для новых сцен пока нет. PNG — кандидаты, старые эталоны/manifest не менялись. Будущая приёмка перед релизом отдельная; этим коммитом выпуск не запускается.\n- `node scripts/mutation-gate.mjs --check`: static readiness 1790 definitions, execution=0. Мутации при разработке этой задачи не исполнялись.\n- Сборка с типами пройдена. Финальный S6 выполняет очередь по show. Каталог новых unit/native: product, openings+lighting, regression; plan должен выбирать unit по области/import и native по изменённому исполняемому файлу/fixture, не только areaTests.\n- Решение о HA E2E: Matysh/houseplan-e2e#56; существующий релизный HA-набор сохраняется, нового HA backend контракта здесь нет.\n\n### Места для внимания\n\nПервый полный S6 нашёл пять служебных отказов, исправлены до ревью: перемещён ровно один compatibility inventory hit к общему host-proof owner; добавлен ровно один паспорт новой синтетической fixture при сохранении всех старых записей и immutable legacy oracle; новая pinned-browser проверка включена в полный allowlist и её cold-panel launch учитывается проверкой порядка; для четырёх новых lighting panel goldens добавлен собственный контракт вместо включения их в историческую тройку #486. Все пять упавших файлов затем прошли адресно, 91/91. Это не обновление визуальных эталонов. Предыдущий общий прогон имел 6451 известных кейсов, но не был зелёным; финальный S6 после ремонта выполняется заново с допустимым reuse.\nТочная граница наружного откатного полотна, нерасширение неподтверждённого host, closed-vs-zero-rounded-partial cache, повторный light-recut Static. Технические документы LIGHT и руководство обновлены; Sun и сохранённая модель не меняются.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
       }
