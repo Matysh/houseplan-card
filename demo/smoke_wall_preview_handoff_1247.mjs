@@ -27,6 +27,16 @@ try {
       await page.waitForFunction(() => {
         const r = window.__card.shadowRoot;
         return !!r.querySelector('[data-hp-live-editor] :is(.drawwall-preview,.drawwall-zero-preview)');
+      }).catch(async error => {
+        console.error('wall preview handoff state', { cm, point, state: await page.evaluate(() => {
+          const c = window.__card;
+          return { mode: c._mode, tool: c._tool, space: c._space, path: c._path,
+            hover: c._hover, cursor: c._cursorPt, toast: c._toast, loading: c._loading,
+            paints: c._liveEditorPaintCount, renders: c._renderLife,
+            live: c.shadowRoot.querySelector('[data-hp-live-editor]')?.innerHTML,
+            stage: c.shadowRoot.querySelector('.stage')?.getBoundingClientRect().toJSON() };
+        }) });
+        throw error;
       });
       assert.equal(await page.evaluate(() => {
         const r = window.__card.shadowRoot;
