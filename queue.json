@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12558,
+  "revision": 12559,
   "nextTicket": 445,
   "nextFence": 445,
   "tasks": {
@@ -4890,18 +4890,12 @@
       }
     },
     "1423": {
-      "requestId": "spec:1423:64422923de23e083e3ec15b695224a1628f205ec5bcbd9f225f6983a0fe722e3",
-      "contextDigest": "64422923de23e083e3ec15b695224a1628f205ec5bcbd9f225f6983a0fe722e3",
+      "requestId": "spec:1423:ebf896e43b02242938b0a5de5fcd4a6de4205b383dce79580ce8340441b41795",
+      "contextDigest": "ebf896e43b02242938b0a5de5fcd4a6de4205b383dce79580ce8340441b41795",
       "base": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1794652659046,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43585839409",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1794652828422
     }
   },
   "reviewPublications": {
@@ -4929,6 +4923,19 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
+      }
+    },
+    "spec:1423:spec:1423:ebf896e43b02242938b0a5de5fcd4a6de4205b383dce79580ce8340441b41795": {
+      "issue": 1423,
+      "kind": "spec",
+      "requestId": "spec:1423:ebf896e43b02242938b0a5de5fcd4a6de4205b383dce79580ce8340441b41795",
+      "materialSha": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
+      "expectedBase": "39fb169dd97c34ecb4e56c885e67d54e7f5b94c0",
+      "patchId": "ebf896e43b02242938b0a5de5fcd4a6de4205b383dce79580ce8340441b41795",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-14T10:40:28.422Z"
       }
     }
   },
@@ -5054,6 +5061,10 @@
       "digest": "2b42d60748f8ef0347386999ab655f170f4ab4997e775395d6601af18e3aad86",
       "issue": 1421
     },
+    "github:43586364877:1:label:spec-request": {
+      "digest": "955b505f0f112a6b6f761304eb888e13e02b0e64c73fc733dd6106e7a90015e3",
+      "issue": 1423
+    },
     "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651": {
       "digest": "de3a891914465aab40cb0cc764c1c1f63dd063b799b8f79278f1dc5e6cb8b3c9",
       "issue": 1421,
@@ -5098,6 +5109,22 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "github:43586364877:1:label:spec-request:spec-resubmitted:1423": {
+      "digest": "955b505f0f112a6b6f761304eb888e13e02b0e64c73fc733dd6106e7a90015e3",
+      "issue": 1423,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1423,
+        "at": 1794652828422,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1423:ebf896e43b02242938b0a5de5fcd4a6de4205b383dce79580ce8340441b41795",
+        "reviewChanges": "### Решение и ограничения\nНовая точка входа использует #1391 core, #1392 host ports, #1394 plan-only и #1422 presentation; общий renderer не дублируется. В документах #1393 и текущей UI Lab ещё есть HA bootstrap — они не доказательство результата. Сейчас согласуется реальная frontend-поставка/embedding API, не production backend и не сайт. Чистая версия 1.85.2 не содержит foundation из dev, поэтому стабильный pin нельзя обещать до выпуска включающей их версии. У владельца запрошено подтверждение локального dev-кандидата; вопрос не даёт разрешения на релиз.\n\n### Проверки\nДо S4 только авторская проверка формы. Продуктовых запусков #1423 пока нет. Предлагаемые сценарии будущие; проверки #1421 не относятся к этой задаче. Реализация начнётся после принятого ТЗ и S8 #1422.\n\n### Исправления по предыдущему ревью\nS4 r1: https://github.com/Matysh/houseplan-card/actions/runs/43585839409 (artifact review-result, spec-39fb169dd97c-1794652631045.md).\n- F1: ru/en/de/pl исправлено на ru/en/de/fr во всём ТЗ, польский не вводится.\n- F2: явно выбран вариант (a) — test transport к настоящему локальному Python core для положительного journey/геометрии/portable repair и apply; эхо-fixture только для фронтенд fault injection. Объявлять лишь фактически реализованные API. Не создаём публичный backend и не дублируем core на JS.\n- Улучшения: side-effect-free module обязателен, host до DOM connect и проверка отсутствия HaPlanHost/picker; конкретный Roboto Regular 400 + synth/fallback; описан config/get handshake и standalone recovery без HA/HACS текстов; сверка presentation API после S8 #1422 до реализации.\nНовая передача — редакция 2 в теле issue. Только spec-check, продуктовых прогонов нет.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
