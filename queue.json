@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13282,
+  "revision": 13283,
   "nextTicket": 464,
   "nextFence": 464,
   "tasks": {
@@ -4588,14 +4588,21 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1432-area-cleanup",
-      "materialSha": "039d034f28f9a0b39dac59ad78bff84158917a97",
+      "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 462,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794684614647,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "9b1f6f5f0aaa10039356e331d7289399d8384f9e",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.85.0/1432.json",
+        "src/houseplan-card.ts"
+      ]
     },
     "1433": {
       "issue": 1433,
@@ -4974,13 +4981,18 @@
     "worker": "finish",
     "token": "463:finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee:finish:2:admit",
     "fence": 463,
-    "materialSha": "039d034f28f9a0b39dac59ad78bff84158917a97",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
+    "expectedBase": "891bdbb8d7153de0d5eb6ba7f864622332849878",
+    "phase": "testing",
     "admittedAt": 1794685378123,
-    "expiresAt": 1794685678123
+    "expiresAt": 1794685688553,
+    "patchId": "9b1f6f5f0aaa10039356e331d7289399d8384f9e"
   },
   "events": {
+    "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee:finish:3:synchronized": {
+      "digest": "1bbb60e968236caccf012437735cf148e83e119ffc17ca88d5e15ee5d281f2ae",
+      "issue": 1432
+    },
     "finish:5f81d8e8-443f-470e-b56f-7a80ebf4e5ee": {
       "digest": "49d041b6e79efd7da8a2747c885880ff7b80e787eead53556bfb8bffdef12c78",
       "issue": 1432,
