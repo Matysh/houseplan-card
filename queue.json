@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11857,
+  "revision": 11858,
   "nextTicket": 426,
   "nextFence": 426,
   "tasks": {
@@ -5239,6 +5239,10 @@
       "digest": "598d373ce9b9a2fa7ab07274cb31a825fccbaddde094fe0fc0e98ef3e65a3cb2",
       "issue": 1392
     },
+    "github:43548611842:1:completions:message:1318840efe8a161c92254f6b0a1e1c9309346985345e8cf1a6d4bbb4729222bd": {
+      "digest": "88ec58c72a8b7b64c5f4e86fa3c94991fb27492d4edf1e0673fedb1316f34826",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5319,7 +5323,8 @@
           "entry": 1,
           "detail": "Критичные данные, сохранение и права: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/graph-optimize-report.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/opening-drag.test.mjs: failed; Поведение: test/space-delete-dialog.test.mjs: failed; Поведение: test/version-recovery-card-contract.test.mjs: failed; Поведение: test/write-authority-snapshot.test.mjs: failed; Браузер: canvas surface gestures: failed; Браузер: direct wall geometry: failed; Браузер: isometric live touch: failed; Браузер: vacuum: failed; Браузер: view edit permissions: failed",
           "eventId": "finish:5ff8f6e8-5ec7-4a9c-88d6-6e69fb8d1375:finish:3:return:return:1392"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6": {
