@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13516,
+  "revision": 13517,
   "nextTicket": 472,
   "nextFence": 469,
   "tasks": {
@@ -4709,7 +4709,7 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1440-single-border-oracles",
-      "materialSha": "b848e96baac3f652c322e30b95bca676c32b8099",
+      "materialSha": "e8ced3a76cb20bca2a710a858d55348d7ca471c8",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 471,
@@ -4717,7 +4717,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794688079307,
       "reviewEntry": 2,
-      "patchId": "d5a090a2059a454d6286cf013f329efb5ecb0879",
+      "patchId": "a710d72f39254bac253d05f25c2de9ad54f33adc",
       "changedFiles": [
         "demo/helpers/button-paint-1440.mjs",
         "demo/helpers/settings-polish-955.mjs",
@@ -5109,11 +5109,12 @@
     "worker": "github-coordinator",
     "token": "468:github:43638005473:1:tick:0:admit",
     "fence": 468,
-    "materialSha": "b848e96baac3f652c322e30b95bca676c32b8099",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "e8ced3a76cb20bca2a710a858d55348d7ca471c8",
+    "expectedBase": "75925bfe1019b343cfa0b04891b08dd1074abc7e",
+    "phase": "testing",
     "admittedAt": 1794688343340,
-    "expiresAt": 1794688643340
+    "expiresAt": 1794688697303,
+    "patchId": "a710d72f39254bac253d05f25c2de9ad54f33adc"
   },
   "events": {
     "github:43635074985:1:completions:message:5c199547c2b5ff056082a8d0fc08c4e69e5c49fe286134e4ed40db04aa429591": {
@@ -5178,6 +5179,10 @@
     },
     "github:43638005473:1:completions:message:05f0b771b3618da9838e33e19ab2a3e65f72cb2ddb2821cc57466107679ac71d": {
       "digest": "f85bf006c0fcbfb84a76fbe712279506cdfd7cf45cbbd1141efb80782405c670",
+      "issue": 1440
+    },
+    "finish:67236145-f9bb-4fba-9862-bbecb827c101:finish:1:synchronized": {
+      "digest": "8b3525842ec5ab7e64cd248c909ebdd7c46db09c1b885660e883bd5f36177f08",
       "issue": 1440
     },
     "finish:c2098de2-f77b-4f8f-819d-e3117db86984": {
