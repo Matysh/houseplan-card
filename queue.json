@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13966,
-  "nextTicket": 480,
+  "revision": 13967,
+  "nextTicket": 481,
   "nextFence": 479,
   "tasks": {
     "1024": {
@@ -4863,14 +4863,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1447-choice-row-footprint",
-      "materialSha": "0cd38c2b254e9849507286c446fe810b9fe7006a",
+      "materialSha": "ffcc44928c443204ce2065180d46f4d5939e0466",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 477,
-      "queued": false,
+      "ticket": 480,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794693783091,
-      "reviewEntry": 1,
+      "readyAt": 1794695139102,
+      "reviewEntry": 2,
       "patchId": "9dc7eccedc4eb52a95801bb5b35b30be0ed18a39",
       "changedFiles": [
         "demo/smoke_choice_row_geometry_1447.mjs",
@@ -4881,7 +4881,6 @@
         "src/styles/selection-list.styles.ts",
         "test/form-kit.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5262,7 +5261,8 @@
     }
   },
   "waiting": [
-    1448
+    1448,
+    1447
   ],
   "active": {
     "issue": 1446,
@@ -5543,6 +5543,19 @@
         "track": "ship",
         "layer": "infra",
         "materialSha": "6f3ca189f38f9879f3713c0d9fa333e32cac010d"
+      }
+    },
+    "finish:1bc94993-300d-4ddd-a378-b36c1a9ecd59": {
+      "digest": "5c6a714bae86005d520de6767392a41169e14a904e1dbc2fdc54a3ec8885b39e",
+      "issue": 1447,
+      "message": {
+        "kind": "queued",
+        "issue": 1447,
+        "at": 1794695139102,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "ffcc44928c443204ce2065180d46f4d5939e0466"
       }
     }
   },
