@@ -348,7 +348,7 @@ import type {
 import {
   acquireHaRegistries, cacheHaBindingStatuses,
   fullRegistryHass, haRegistryBuildSignature, haRegistryDiagnostics, haRegistrySnapshot,
-  openingEntityAvailable, refreshHaRegistries, renderOpeningEntityAvailable,
+  openingEntityAvailable, renderOpeningEntityAvailable,
   resolveHaBindingStatus,
   type HaBindingStatus, type HaRegistrySnapshot,
 } from './ha-binding-status';
@@ -5955,9 +5955,12 @@ export class HouseplanCard extends LitElement {
   private _ensureHaRegistryAuthority(): void {
     const snapshot = this._haRegistry, key = this.planHost.authorityKey;
     if (key === this._haRegistryConnection && snapshot.revision === this._haRegistryRev) return;
+    // A second authoritative roster revision confirms absence. Retiring its
+    // candidates on every refresh prevents any orphan from ever confirming.
+    if (key !== this._haRegistryConnection) this._areaSnapshotCleanupCandidates.clear();
     this._haRegistryConnection = key; this._haRegistryRev = snapshot.revision;
     this._haBindingCacheKey = ''; this._renderLife.invalidate();
-    this._areaSnapshotCleanupCandidates.clear(); this._planHassMemo = null; this._regSignature = '';
+    this._planHassMemo = null; this._regSignature = '';
   }
 
   private get _haRegistry(): HaRegistrySnapshot {
@@ -6485,7 +6488,8 @@ export class HouseplanCard extends LitElement {
       previousCandidates: this._areaSnapshotCleanupCandidates,
     });
     this._areaSnapshotCleanupCandidates = cleanup.candidates;
-    if (cleanup.needsConfirmationRefresh && this._canEdit) refreshHaRegistries(this.hass);
+    if (cleanup.needsConfirmationRefresh && this._canEdit)
+      void this.planHost.refreshRegistry?.(3000).catch(() => false);
     return resolveDeviceAreaRelocations({
       devices: this._devices,
       model: this._model,

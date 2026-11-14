@@ -1,0 +1,1 @@
+{"schema":1,"issue":1432,"baseStable":"v1.85.0","category":"line-fix","rationale":"Repair cleanup confirmation invalidated by the unreleased PlanHost extraction; retain two independent authoritative rosters and authority fencing.","summary":{"ru":"Восстановлено безопасное подтверждение удалённых HA-привязок.","en":"Restore safe confirmation of removed HA bindings."}}

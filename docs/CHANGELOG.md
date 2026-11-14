@@ -5,6 +5,7 @@
 - Use the real core schema and product-owned live subscription in infinite-canvas/layout smoke fixtures (#1434).
 - Preserve borderless button footprints when reserving the single focus border, preventing extra editor toolbar wrapping (#1431).
 - Align cold View and authority smoke fixtures with canonical line coordinates and the PlanHost subscription identity; retain all behavioral oracles (#1433).
+- Keep orphan snapshot candidates across registry revisions of the same host authority; request confirmation through the host registry port (#1432).
 - Align README and user-guide links, Marketplace installation guidance and diagnostic-data wording in RU/EN; retain legacy guide anchors (#1430).
 
 - Use one UI Kit button border for hover, selection and real Tab/Shift+Tab traversal; preserve native focus and activation without reviving an outer ring after Escape or automatic return (#1428).
