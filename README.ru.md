@@ -26,7 +26,8 @@ House Plan показывает ваш дом на плане — таким, к
 браузере, свяжите их с зонами Home Assistant — и устройства сами встанут по
 своим комнатам. Останется подвинуть значки туда, где они висят на самом деле.
 
-<img width="640" alt="План дома: свет включается по комнатам" src="https://github.com/user-attachments/assets/444cac3a-1e93-4047-b2c2-213649b3aa6d" />
+<img width="640" alt="План дома: свет включается по комнатам" src="https://github.com/user-attachments/assets/5cb18029-4203-4a8b-8f3a-8f07a4f28b49" />
+
 
 [▶ Смотреть видео на YouTube](https://www.youtube.com/watch?v=DAG92u8xZKY)
 
