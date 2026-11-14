@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12356,
+  "revision": 12357,
   "nextTicket": 441,
   "nextFence": 441,
   "tasks": {
@@ -3634,14 +3634,14 @@
         "tests_backend/test_ha_import_export.py"
       ],
       "notice": {
-        "key": "5:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1794638558012,
-        "entry": 5,
-        "requestId": "review:1394:5:b7411af254115204f3d6094f266cfc0916b7c377:a9e4a01420c02318a725157c49d4b9b2e23599c4",
-        "transitionConfirmed": true
+        "key": "6:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794639624741,
+        "entry": 6,
+        "detail": "Браузер: summary weather: failed",
+        "eventId": "finish:33b0de64-bd0b-4217-920c-ae07166a2f02:finish:3:return:return:1394"
       },
       "s6": {
         "id": "20261114T062645192-53956233",
@@ -3656,7 +3656,8 @@
       "reviewCorrection": {
         "requestId": "review:1394:5:b7411af254115204f3d6094f266cfc0916b7c377:a9e4a01420c02318a725157c49d4b9b2e23599c4",
         "at": 1794638558012
-      }
+      },
+      "reason": "checks-failed"
     },
     "1395": {
       "issue": 1395,
@@ -4923,18 +4924,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1394,
-    "worker": "finish",
-    "token": "440:finish:33b0de64-bd0b-4217-920c-ae07166a2f02:finish:1:admit",
-    "fence": 440,
-    "materialSha": "2357f3f362481a2ec12afdc6e60126c7c499ed8d",
-    "expectedBase": "4423d4dc9c725b24fe4a3d231bd0b72cadccff62",
-    "phase": "testing",
-    "admittedAt": 1794639041558,
-    "expiresAt": 1794639883237,
-    "patchId": "accf77595818c3ad2817987af47f084d4353595c"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
       "digest": "12777e21751a9ed7739ddf636b9b3bee3ba44b51ffb7d393f4c581e85a28643e",
@@ -5242,6 +5232,10 @@
     },
     "finish:a490b36f-7ac6-425c-ad58-66541b535a57": {
       "digest": "ad54fb3b33ca149ca90810333d30a4f8a56d17075a4bb5c08afd79229d1f1386",
+      "issue": 1394
+    },
+    "finish:33b0de64-bd0b-4217-920c-ae07166a2f02:finish:3:return": {
+      "digest": "deb9598ad3a8a767f2c84f23ed1bea70b5910a62dab31892133f8d79bd65ad71",
       "issue": 1394
     },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
@@ -5562,6 +5556,26 @@
           "status": "passed",
           "finishedAt": "2026-11-14T06:34:59.577Z",
           "failures": []
+        }
+      }
+    },
+    "finish:33b0de64-bd0b-4217-920c-ae07166a2f02:finish:3:return:return:1394": {
+      "digest": "deb9598ad3a8a767f2c84f23ed1bea70b5910a62dab31892133f8d79bd65ad71",
+      "issue": 1394,
+      "message": {
+        "kind": "return",
+        "issue": 1394,
+        "at": 1794639624741,
+        "entry": 6,
+        "notice": {
+          "key": "6:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794639624741,
+          "entry": 6,
+          "detail": "Браузер: summary weather: failed",
+          "eventId": "finish:33b0de64-bd0b-4217-920c-ae07166a2f02:finish:3:return:return:1394"
         }
       }
     }
