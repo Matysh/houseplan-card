@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13484,
-  "nextTicket": 471,
+  "revision": 13485,
+  "nextTicket": 472,
   "nextFence": 468,
   "tasks": {
     "1024": {
@@ -4732,14 +4732,14 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1440-single-border-oracles",
-      "materialSha": "3108d2506cb79a0ba1c055f738afeb8764fa25b9",
+      "materialSha": "b848e96baac3f652c322e30b95bca676c32b8099",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 465,
-      "queued": false,
+      "ticket": 471,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794685635844,
-      "reviewEntry": 1,
+      "readyAt": 1794688079307,
+      "reviewEntry": 2,
       "patchId": "d5a090a2059a454d6286cf013f329efb5ecb0879",
       "changedFiles": [
         "demo/helpers/button-paint-1440.mjs",
@@ -4749,7 +4749,6 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5126,7 +5125,8 @@
   "waiting": [
     1436,
     1437,
-    1438
+    1438,
+    1440
   ],
   "active": {
     "issue": 1444,
@@ -5332,6 +5332,19 @@
         "materialSha": "fb419868bdc49062ec69697d173508ff4a2712ff",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:67236145-f9bb-4fba-9862-bbecb827c101": {
+      "digest": "ae443cbb2fba1577f502b126257d7cc1fe48c0e0363491ed5c3cee4a06a919a5",
+      "issue": 1440,
+      "message": {
+        "kind": "queued",
+        "issue": 1440,
+        "at": 1794688079307,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "b848e96baac3f652c322e30b95bca676c32b8099"
       }
     }
   },
