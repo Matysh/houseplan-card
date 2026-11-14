@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12213,
+  "revision": 12214,
   "nextTicket": 437,
   "nextFence": 437,
   "tasks": {
@@ -5259,19 +5259,6 @@
           "eventId": "finish:f95cc89b-03be-4ad4-99e0-6f05fe2facbf:finish:3:return:return:1394"
         },
         "delivered": true
-      }
-    },
-    "issue1424-editorial-finish-20261114": {
-      "digest": "395d1944e419f9233cb315b6410dd05ec6d9d122f7c95078a6c92845476eb3ef",
-      "issue": 1424,
-      "message": {
-        "kind": "queued",
-        "issue": 1424,
-        "at": 1794637200074,
-        "entry": 1,
-        "track": "ship",
-        "layer": "docs",
-        "materialSha": "a9e4a01420c02318a725157c49d4b9b2e23599c4"
       }
     },
     "issue1424-editorial-finish-20261114:finish:1:admit": {
