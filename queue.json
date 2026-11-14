@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12359,
+  "revision": 12360,
   "nextTicket": 442,
   "nextFence": 442,
   "tasks": {
@@ -3578,9 +3578,10 @@
       "status": "S6-in-progress",
       "readyAt": 1794639905537,
       "reviewEntry": 7,
-      "patchId": "accf77595818c3ad2817987af47f084d4353595c",
+      "patchId": "2212f8a600a9ff6d29b53eb2d57ff9a5061439c7",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
+        "demo/smoke_summary_weather.mjs",
         "demo/srv/plan-host-fixture.js",
         "docs/ARCHITECTURE.md",
         "docs/CHANGELOG.md",
@@ -4929,10 +4930,11 @@
     "token": "441:finish:5a3f7a6b-d218-4597-9747-cb58c140d5f7:finish:1:admit",
     "fence": 441,
     "materialSha": "9ed0f88801ada63035ccafa464683960da8104e9",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "4423d4dc9c725b24fe4a3d231bd0b72cadccff62",
+    "phase": "testing",
     "admittedAt": 1794639910441,
-    "expiresAt": 1794640210441
+    "expiresAt": 1794640216681,
+    "patchId": "2212f8a600a9ff6d29b53eb2d57ff9a5061439c7"
   },
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
@@ -5245,6 +5247,10 @@
     },
     "finish:33b0de64-bd0b-4217-920c-ae07166a2f02:finish:3:return": {
       "digest": "deb9598ad3a8a767f2c84f23ed1bea70b5910a62dab31892133f8d79bd65ad71",
+      "issue": 1394
+    },
+    "finish:5a3f7a6b-d218-4597-9747-cb58c140d5f7:finish:2:synchronized": {
+      "digest": "b6233e281ca24bc0c93d009e54b6f34c3440b12ff277f8412e5438ea981afcf0",
       "issue": 1394
     },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
