@@ -12,8 +12,7 @@ export const settingsPrimaryActionHover = `${settingsActionHover}background:colo
 
 export function settingsInteractiveCss(selector: string): string {
   return `${selector}{cursor:pointer;${settingsActionTransition}}
-    ${selector}{outline:none;box-shadow:none;}
-    ${selector}:is(:hover,.hpf-tab-focus:focus){${settingsActionHover}text-decoration:none;}`;
+    ${selector}:is(:hover,:focus-visible:not(.hp-dialog-return-focus)){${settingsActionHover}outline:none;text-decoration:none;}`;
 }
 
 /** Text links change ink only, including in a compact dialog or an empty view. */
