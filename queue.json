@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13738,
+  "revision": 13739,
   "nextTicket": 476,
   "nextFence": 474,
   "tasks": {
@@ -4623,14 +4623,23 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1437-ha-formatters",
-      "materialSha": "3dcbebfc95df1f71c808525fb082abf310eb67b4",
+      "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 467,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794686350630,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.85.0/1437.json",
+        "src/ha-value-formatters.ts",
+        "src/houseplan-card.ts",
+        "test/ha-value-formatters.test.mjs"
+      ]
     },
     "1438": {
       "issue": 1438,
@@ -5184,15 +5193,20 @@
     "worker": "github-coordinator",
     "token": "473:github:43641364833:1:tick:0:admit",
     "fence": 473,
-    "materialSha": "3dcbebfc95df1f71c808525fb082abf310eb67b4",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "c5d7a23892c69ad0504cf3048589344e03525810",
+    "expectedBase": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
+    "phase": "testing",
     "admittedAt": 1794690622653,
-    "expiresAt": 1794690922653
+    "expiresAt": 1794691056706,
+    "patchId": "f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083"
   },
   "events": {
     "github:43641364833:1:completions:message:c824bc1f7b99d80c2e4db43a1ed129ab227e38c928cea50da1dfd544bd0f4ca3": {
       "digest": "f298185de3167cb33399ac2e03728b2aa568969f39815d17f6167b7777ad7caf",
+      "issue": 1437
+    },
+    "finish:1437-ha-formatters-resume-20261114:finish:1:synchronized": {
+      "digest": "43b664fe148a68bc25d62386d2a51495e0864528fc0609323966e53ebe3170c1",
       "issue": 1437
     },
     "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
