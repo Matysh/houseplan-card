@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 12030,
+  "revision": 12031,
   "nextTicket": 432,
-  "nextFence": 431,
+  "nextFence": 432,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -3646,7 +3646,7 @@
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 431,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794631002507,
       "reviewEntry": 7,
@@ -4993,10 +4993,18 @@
       "runId": 43557894892
     }
   },
-  "waiting": [
-    1392
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1392,
+    "worker": "github-coordinator",
+    "token": "431:github:43558163926:1:tick:1:admit",
+    "fence": 431,
+    "materialSha": "32c5516c1d6045a4bb95476ccd9b7cd5a4636186",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1794631513842,
+    "expiresAt": 1794631813842
+  },
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
       "digest": "12777e21751a9ed7739ddf636b9b3bee3ba44b51ffb7d393f4c581e85a28643e",
@@ -6024,6 +6032,29 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "github:43558163926:1:tick:1:admit": {
+      "digest": "78cb8bcdbe86efe718c9bfef33ed53fe5e20a99f6957ef24820ae34947af04bb",
+      "issue": 1392,
+      "message": {
+        "kind": "admitted",
+        "issue": 1392,
+        "at": 1794631513842,
+        "entry": 7,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "32c5516c1d6045a4bb95476ccd9b7cd5a4636186",
+        "phase": "sync",
+        "evidence": {
+          "id": "20261114T032938956-c5a63598",
+          "name": "Тесты для задачи #1392 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T032938956-c5a63598/report.json",
+          "materialSha": "37dda5aed5d3f2b22df78fa2ec96728abb7767ff",
+          "status": "passed",
+          "finishedAt": "2026-11-14T03:44:42.084Z",
+          "failures": []
+        }
       }
     }
   },
