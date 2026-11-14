@@ -184,7 +184,9 @@ export class HaPlanHost implements PlanHost {
     });
     this.snapshot = Object.freeze({
       inputKey: this.inputKey,
-      ready: !this.suspended && typeof this.source.callWS === 'function', connected: this.connected(),
+      // Presentation is available even when the integration transport is not.
+      // Keep the passive install/empty UI; dispatch still requires connected.
+      ready: !this.suspended && row(this.lastInput), connected: this.connected(),
       connectionRevision: this.connectionRevision,
       smartHomeRevision: this.smartHomeRevision,
       userId: this.source.user?.id, permissions: Object.freeze(this.permissions()),
