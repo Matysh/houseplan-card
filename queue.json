@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12663,
+  "revision": 12664,
   "nextTicket": 448,
   "nextFence": 448,
   "tasks": {
@@ -4500,13 +4500,14 @@
       "readyAt": 1794656094609,
       "reviewEntry": 2,
       "notice": {
-        "key": "1:rebase-conflict",
-        "reason": "rebase-conflict",
+        "key": "2:checks-failed",
+        "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794656044374,
-        "entry": 1,
-        "eventId": "finish:03c56e22-c903-4226-891c-df0869ff3eac:finish:2:return:return:1422"
+        "at": 1794656660141,
+        "entry": 2,
+        "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed",
+        "eventId": "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return:return:1422"
       },
       "patchId": "0efac24fd0193b4af85dcb5a17e68d0c61389da5",
       "changedFiles": [
@@ -4529,7 +4530,8 @@
         "test/browser-attestation.test.mjs",
         "test/standalone-presentation-boundary.test.mjs",
         "tsconfig.test.json"
-      ]
+      ],
+      "reason": "checks-failed"
     },
     "1424": {
       "issue": 1424,
@@ -4944,18 +4946,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1422,
-    "worker": "finish",
-    "token": "447:finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:1:admit",
-    "fence": 447,
-    "materialSha": "5169c189d8807db00348b15ddd3723006ca9c993",
-    "expectedBase": "c0724ea4179e2c6971033c383ef37a441983960f",
-    "phase": "testing",
-    "admittedAt": 1794656098449,
-    "expiresAt": 1794656937818,
-    "patchId": "0efac24fd0193b4af85dcb5a17e68d0c61389da5"
-  },
+  "active": null,
   "events": {
     "github:43585265383:1:label:spec-request": {
       "digest": "81645d13acef779d4c183ee979e266861230fe12f3534c0c98357a02f9051515",
@@ -5101,6 +5092,10 @@
       "digest": "331e023c3c8d8d445ba87eb32a72709aa6fead1c13e1b6434c917fa9904d0edf",
       "issue": 1422
     },
+    "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return": {
+      "digest": "873dcec8ffb0b18674fb59fe6c25d33403f1a8b008b910272e6f267b480d963b",
+      "issue": 1422
+    },
     "github:43585981218:1:label:spec-request:spec-resubmitted:1422": {
       "digest": "d998f9ec725ce29d87b3a07da777a510b97207d472a00cf0edb653c77f103841",
       "issue": 1422,
@@ -5235,6 +5230,26 @@
         "layer": "product",
         "materialSha": "5169c189d8807db00348b15ddd3723006ca9c993",
         "phase": "sync"
+      }
+    },
+    "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return:return:1422": {
+      "digest": "873dcec8ffb0b18674fb59fe6c25d33403f1a8b008b910272e6f267b480d963b",
+      "issue": 1422,
+      "message": {
+        "kind": "return",
+        "issue": 1422,
+        "at": 1794656660141,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794656660141,
+          "entry": 2,
+          "detail": "Поведение: test/smoke-exception-guard.test.mjs: failed",
+          "eventId": "finish:3f6397d2-3a71-4259-a726-079803ce98b6:finish:3:return:return:1422"
+        }
       }
     }
   },
