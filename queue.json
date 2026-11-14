@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13625,
+  "revision": 13626,
   "nextTicket": 475,
   "nextFence": 470,
   "tasks": {
@@ -5218,6 +5218,10 @@
       "digest": "40fa2661318f559de9c97caa1feed1122939dcc2735e6520a18fa7a79a9e3faf",
       "issue": 1436
     },
+    "finish:7f894725-b6d7-4836-979e-667341d3ce27:finish:4:s6-label": {
+      "digest": "3f5cbd6f9b4fd75ff9f39050156900be97b8a2acee56dcd00e7cbbe17bbf7dd1",
+      "issue": 1436
+    },
     "finish:7f894725-b6d7-4836-979e-667341d3ce27": {
       "digest": "0e544be3b316f82adc58e887525ef6daebceb59fe4a48f9c4a2810b826e24135",
       "issue": 1436,
@@ -5341,7 +5345,8 @@
         "resubmission": false,
         "reviewChanges": "До исправления `_routeLiveEditorUpdate` помечал базовый кадр как изменённый только при запросе полного обновления через публичный requestUpdate. После извлечения PlanHost metadata intake вызывает `super.requestUpdate` напрямую. Полный host кадр уже содержит preview, но Escape ошибочно выбирает terminal noChange и оставляет стены preview при сохранённых площадях.\n\nИнвалидация перенесена к фактическому потреблению геометрии в `_renderBody`, после terminal/locale/empty guards. `_beginResizeBaseFrame` меняет только имеющийся флаг при наличии Resize preview. Изолированная live-перерисовка не вызывает этот путь и сохраняет дешёвый cancel; кеши, writer, модель и пользовательские ожидания не меняются. Отключение terminal/caches целиком не применялось. Просьба проверить также прямые host обновления и ранние noChange возвраты. Touch editor: best effort; cancel по-прежнему не сохраняет геометрию.\n\nАдресно: `npm run bundle:sync` (build с типами) и `node demo/smoke_floor_geometry_cache.mjs`: до исправления единственный FAIL ac2cCancelRestoresTheStoredFrame, после OK; AC8 cancel/View builds [0,0,0,0]. Тесты и baselines не правились. Штатный S6 выполняет finish с центральной выборкой и тремя существующими native Resize/cache дополнениями. Новый реальный HA E2E не требуется: изменён лишь frontend кадр, решение записано отдельно в houseplan-e2e. Данные владельца и его HA не затрагивались.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
