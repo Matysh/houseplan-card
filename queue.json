@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13960,
+  "revision": 13961,
   "nextTicket": 479,
   "nextFence": 478,
   "tasks": {
@@ -4880,7 +4880,18 @@
         "src/styles/form-kit.styles.ts",
         "src/styles/selection-list.styles.ts",
         "test/form-kit.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794694924997,
+        "entry": 1,
+        "detail": "Поведение: test/bundle-assets.test.mjs: failed",
+        "eventId": "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:3:return:return:1447"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5239,18 +5250,7 @@
   "waiting": [
     1446
   ],
-  "active": {
-    "issue": 1447,
-    "worker": "finish",
-    "token": "477:finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:1:admit",
-    "fence": 477,
-    "materialSha": "0cd38c2b254e9849507286c446fe810b9fe7006a",
-    "expectedBase": "56f51be8175594bb994bc9c5af159ab071dd0999",
-    "phase": "testing",
-    "admittedAt": 1794694459750,
-    "expiresAt": 1794695166312,
-    "patchId": "9dc7eccedc4eb52a95801bb5b35b30be0ed18a39"
-  },
+  "active": null,
   "events": {
     "finish:1446-integration-display-metadata-20261115:finish:2:synchronized": {
       "digest": "77df3f2143bb45ba360e4e5e14a963fa4f219bcdacf4500a4eabe904514d1aca",
@@ -5364,6 +5364,10 @@
       "digest": "e3b9996ec8bdce0aa7fecd2575cb5a795ba5ec6afaa81779b094fda7206ebc9d",
       "issue": 1447
     },
+    "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:3:return": {
+      "digest": "ba109be4234cc98c7c8c4bf1066bdc2d91f004a2004601f5eddaf70cff13d8d2",
+      "issue": 1447
+    },
     "finish:1446-integration-display-metadata-20261115": {
       "digest": "82a8163ec4fc0593dc2739b009fe0021dc402ddd59c9a6351753fe7a30b3f210",
       "issue": 1446,
@@ -5455,6 +5459,26 @@
         "layer": "product",
         "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
         "delivered": true
+      }
+    },
+    "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:3:return:return:1447": {
+      "digest": "ba109be4234cc98c7c8c4bf1066bdc2d91f004a2004601f5eddaf70cff13d8d2",
+      "issue": 1447,
+      "message": {
+        "kind": "return",
+        "issue": 1447,
+        "at": 1794694924997,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794694924997,
+          "entry": 1,
+          "detail": "Поведение: test/bundle-assets.test.mjs: failed",
+          "eventId": "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:3:return:return:1447"
+        }
       }
     }
   },
