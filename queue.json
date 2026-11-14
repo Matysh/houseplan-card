@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12306,
+  "revision": 12307,
   "nextTicket": 440,
   "nextFence": 440,
   "tasks": {
@@ -4667,7 +4667,10 @@
         "docs/CHANGELOG.ru.md",
         "docs/feature-notes.md"
       ],
-      "s6": null
+      "s6": null,
+      "automationError": "automation-error",
+      "automationSince": 1794638621503,
+      "automationDetail": "S6 needs its successful selected set; documentation has no runs"
     }
   },
   "ownerDecisions": {},
@@ -5241,6 +5244,10 @@
     },
     "issue1425-editorial-finish-20261114:finish:3:s6-complete": {
       "digest": "903b0e211d018f713e8d16fe16563829367261a33e875cb7740996752f7f23d4",
+      "issue": 1425
+    },
+    "github:43567670446:1:tick:0:automation-pending": {
+      "digest": "6e89f7290ddb12dcc807179890e0c3872b1e4f04ada7a549beb548f536db0cf8",
       "issue": 1425
     },
     "github:43555134078:1:spec:1394:spec-request:spec-resubmitted:1394": {
