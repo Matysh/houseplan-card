@@ -1,5 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { controlMotion, controlSurfaceFrames } from './ui-motion';
+import { focusCompositeButton } from './ui-button-tab-focus';
 
 export type EditorSecondaryKind =
   | 'selection'
@@ -181,9 +182,9 @@ export class EditorSecondaryController {
         if (event.key !== 'ArrowDown') return;
         event.preventDefault();
         if (!open) this.toggleGroup(groups, group.id);
-        void this.host.updateComplete().then(() =>
+        void this.host.updateComplete().then(() => focusCompositeButton(
           this.host.root()
-            .querySelector<HTMLButtonElement>('.editor-group-item:not([disabled])')?.focus());
+            .querySelector<HTMLButtonElement>('.editor-group-item:not([disabled])')));
       }}
       data-hp-tooltip=${activeItem ? copy.groupActive(group.label, activeItem.label) : nothing} aria-label=${group.label}>
       <ha-icon icon=${group.icon}></ha-icon><span class="ml">${group.label}</span>
@@ -383,7 +384,7 @@ export class EditorSecondaryController {
     const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1
       : event.key === 'ArrowLeft' ? (current <= 0 ? items.length - 1 : current - 1)
       : (current + 1) % items.length;
-    items[next]?.focus();
+    focusCompositeButton(items[next]);
   }
 
   private _clearDismissClick(): void {

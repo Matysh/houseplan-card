@@ -13,12 +13,28 @@ async function singleBorder(button, label, accent) {
   }), {message:label}).toEqual({outline:'none', shadow:'none', border:'1px', color:accent});
 }
 async function tabTo(button) {
-  await button.focus(); // Establish a cursor only; this must not paint focus.
-  await page.keyboard.press('Shift+Tab');
+  // A real preceding Tab stop avoids crossing browser chrome when this is the
+  // only header button. Focus the test cursor, never the button under assertion.
+  await button.evaluate(el=>{
+    const cursor=document.createElement('span');cursor.tabIndex=0;
+    cursor.style.cssText='position:fixed;width:1px;height:1px;opacity:0;pointer-events:none';
+    el.before(cursor);el.__tabCursor=cursor;cursor.focus();
+  });
   await page.keyboard.press('Tab');
   await expect(button).toBeFocused();
+  await button.evaluate(el=>{el.__tabCursor?.remove();delete el.__tabCursor;});
+}
+async function settled() {
+  await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._modeTransitionPreparing);
+  await page.evaluate(async()=>{
+    await window.__hpTest.settled();
+    for(let i=0;i<5;++i)await new Promise(requestAnimationFrame);
+  });
 }
 try {
+  await page.evaluate(()=>{
+    document.getElementById('host').style.cssText='width:100%;box-sizing:border-box;margin:0;padding:8px';
+  });
   await page.locator('[data-hp="support"]').click();
   const dialog = page.locator('hp-dialog[data-kind="support"]');
   await expect(dialog).toBeVisible();
@@ -78,6 +94,7 @@ try {
     // Joined zoom segments and compact mode/navigation use the same border.
     for (const width of [1440, 430]) {
       await page.setViewportSize({width, height:900});
+      await settled();
       const buttons = page.locator('.hdr button.hpf-icon-action:visible, .hdr button.hpf-nav-item:visible');
       for (let index = 0; index < await buttons.count(); ++index) {
         const button = buttons.nth(index);
@@ -87,5 +104,63 @@ try {
       }
     }
     await page.setViewportSize({width:1440, height:900});
+    await page.evaluate(async dark => {
+      await customElements.whenDefined('houseplan-space-card');
+      const card=document.createElement('houseplan-space-card');
+      card.id='focus-static'; card.style.cssText='display:block;width:320px';
+      card.style.setProperty('--primary-color',dark?'#64b5f6':'#1976d2');
+      card.setConfig({type:'custom:houseplan-space-card',space:'f1',show_button:true});
+      card.hass=window.__card.hass; document.body.append(card); await card.updateComplete;
+    },dark);
+    const staticButton=page.locator('#focus-static button.hp-static-btn.on');
+    await expect(staticButton).toBeVisible();
+    await tabTo(staticButton);
+    await expect(staticButton).toHaveClass(/hpf-tab-focus/);
+    await singleBorder(staticButton,'independent Static owner',accent);
+    await page.keyboard.press('Escape');
+    await expect(staticButton).not.toHaveClass(/hpf-tab-focus/);
+    await page.evaluate(()=>document.getElementById('focus-static').remove());
+
+    await page.setViewportSize({width:320,height:900});
+    await page.evaluate(()=>document.getElementById('host').style.width='260px');
+    await settled();
+    const trigger=page.locator('[data-hp="header-actions-trigger"]');
+    await expect(trigger).toBeVisible();
+    await tabTo(trigger); await page.keyboard.press('Enter');
+    const menu=page.locator('[data-hp="header-actions-menu"]:not([inert])');
+    await expect(menu).toBeVisible();
+    for(const key of [null,'ArrowDown','End','Home','ArrowUp']){
+      if(key) await page.keyboard.press(key);
+      const current=menu.locator('button.hpf-keyboard-current');
+      await expect(current).toHaveCount(1); await expect(current).toBeFocused();
+      await expect.poll(()=>current.evaluate(el=>{
+        const s=getComputedStyle(el);return [s.borderLeftWidth,s.borderLeftColor,s.outlineStyle,s.boxShadow];
+      })).toEqual(['1px',accent,'none','none']);
+      await expect(current).not.toHaveClass(/hpf-tab-focus/);
+    }
+    await page.keyboard.press('Escape'); await expect(menu).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+    await expect(trigger).not.toHaveClass(/hpf-(tab-focus|keyboard-current)/);
+    await tabTo(trigger); await singleBorder(trigger,'Tab after composite close',accent);
+
+    await page.setViewportSize({width:1440,height:900});
+    await page.evaluate(()=>document.getElementById('host').style.width='100%');
+    await settled();
+    await page.locator('[data-hp="mode-tab"][data-mode="decor"]').click();
+    await settled();
+    const shapes=page.locator('[data-editor-group="shapes"]');
+    await expect(shapes).toBeVisible();
+    await tabTo(shapes); await page.keyboard.press('ArrowDown');
+    for(const key of [null,'ArrowRight','End','Home']){
+      if(key) await page.keyboard.press(key);
+      const item=page.locator('.editor-group-item.hpf-keyboard-current');
+      await expect(item).toHaveCount(1); await expect(item).toBeFocused();
+      await singleBorder(item,'composite editor group current',accent);
+    }
+    await page.keyboard.press('Escape');
+    await expect(shapes).toBeFocused();
+    await expect(shapes).not.toHaveClass(/hpf-(tab-focus|keyboard-current)/);
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(()=>window.__card._mode==='view');
   }
 } finally { await finish(browser); }

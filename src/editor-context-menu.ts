@@ -1,5 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
+import { focusCompositeButton } from './ui-button-tab-focus';
 import { floatingViewport, placeFloatingSurface, type FloatingViewport, type RectLike } from './floating-surface';
 import { controlMotion, controlMotionReduced, controlSurfaceFrames, controlDisclosureFrames } from './ui-motion';
 
@@ -75,7 +76,7 @@ export class EditorContextMenu {
         ? (this.element.getRootNode() as ShadowRoot).activeElement as HTMLButtonElement : document.activeElement as HTMLButtonElement);
       const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1
         : (index + (event.key === 'ArrowUp' ? -1 : 1) + items.length) % items.length;
-      items[next].focus();
+      focusCompositeButton(items[next]);
     }
   };
   private readonly reposition = (): void => {
@@ -119,7 +120,7 @@ export class EditorContextMenu {
       }
       queueMicrotask(() => {
         if (this.active && this.model?.token === token && element.isConnected) {
-          this.place(); element.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true });
+          this.place(); focusCompositeButton(element.querySelector<HTMLButtonElement>('button:not(:disabled)'));
         }
       });
     }

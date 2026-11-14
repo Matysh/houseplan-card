@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {acquireButtonTabFocus, retireButtonTabFocus} from '../test-build/ui-button-tab-focus.js';
+import {acquireButtonTabFocus, retireButtonTabFocus, focusCompositeButton} from '../test-build/ui-button-tab-focus.js';
 
 function target() {
   const events = new Map();
@@ -17,9 +17,17 @@ function target() {
 }
 function fixture() {
   const document = {...target(), defaultView:target(), activeElement:null};
+  const emit = document.emit;
+  document.emit = (type, event = {}) => {
+    event.composedPath ??= () => [document.activeElement];
+    document.defaultView.emit(type,event); emit(type,event);
+  };
+  const count = document.count;
+  document.count = type => ['keydown','keyup'].includes(type) ? document.defaultView.count(type) : count(type);
   const owner = {ownerDocument:document, shadowRoot:{activeElement:null}};
   const classes = new Set();
   const button = {...target(), localName:'button', isConnected:true,
+    ownerDocument:document, focus(){},
     classList:{add:value=>classes.add(value), remove:value=>classes.delete(value)}, matches:()=>false};
   document.activeElement = owner; owner.shadowRoot.activeElement = button;
   const marked = () => classes.has('hpf-tab-focus');
@@ -27,7 +35,7 @@ function fixture() {
     document.emit('keydown', {key:'Tab', isTrusted:true});
     document.emit('keyup', {key:'Tab', isTrusted:true});
   };
-  return {document, owner, button, marked, tab};
+  return {document, owner, button, marked, tab, composite:()=>classes.has('hpf-keyboard-current')};
 }
 
 test('#1428 native Tab result reaches nested shadow buttons; blur and non-Tab input retire paint', () => {
@@ -68,4 +76,20 @@ test('#1428 document leases are shared, disposed and idempotent across a fresh m
   f.tab(); assert.equal(f.marked(),true);
   f.document.defaultView.emit('blur'); assert.equal(f.marked(),false);
   fresh(); assert.equal(f.document.count('keydown'),0);
+});
+test('#1428 only explicit composite navigation paints an arrow/current item; return never does',()=>{
+  const f=fixture(), release=acquireButtonTabFocus(f.owner);
+  f.document.emit('keydown',{key:'ArrowDown',isTrusted:true});
+  f.document.emit('keyup',{key:'ArrowDown',isTrusted:true});
+  assert.equal(f.marked(),false); assert.equal(f.composite(),false);
+  focusCompositeButton(f.button); assert.equal(f.composite(),true); assert.equal(f.marked(),false);
+  f.document.emit('keydown',{key:'Escape',isTrusted:true});
+  focusCompositeButton(f.button); assert.equal(f.composite(),false);
+  f.document.emit('pointerdown');focusCompositeButton(f.button);assert.equal(f.composite(),false);
+  f.document.emit('keydown',{key:'Enter',isTrusted:true});
+  focusCompositeButton(f.button);assert.equal(f.composite(),true);
+  retireButtonTabFocus(f.owner);assert.equal(f.composite(),false);
+  f.document.emit('keydown',{key:'F10',shiftKey:true,isTrusted:true});
+  focusCompositeButton(f.button);assert.equal(f.composite(),true);
+  release();
 });

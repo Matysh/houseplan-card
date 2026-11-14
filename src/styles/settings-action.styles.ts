@@ -67,11 +67,11 @@ export function settingsActionsCss(selector: string, primary = '.on', { variant 
     ${selector}${primary}{background:${tinted ? 'var(--hpf-tint,color-mix(in srgb,var(--primary-color) 10%,transparent))' : 'var(--hpf-accent,var(--primary-color))'};color:${tinted ? 'var(--hpf-accent,var(--primary-color))' : 'var(--text-primary-color,#fff)'};border-color:${tinted ? 'transparent' : 'var(--hpf-accent,var(--primary-color))'};${navigation ? 'font-weight:600;' : ''}}
     ${selector}.danger{color:var(--hpf-danger,var(--error-color,#db543d));border-color:var(--hpf-danger,var(--error-color,#db543d));}
     ${selector}{outline:none;box-shadow:none;${navigation ? 'border:1px solid transparent;' : ''}}
-    ${selector}.danger:not(:hover):not(.hpf-tab-focus:focus){border-color:var(--hpf-kit-action-idle-danger-border,var(--hpf-danger,var(--error-color,#db543d)));}
+    ${selector}.danger:not(:hover):not(.hpf-tab-focus:focus):not(.hpf-keyboard-current:focus){border-color:var(--hpf-kit-action-idle-danger-border,var(--hpf-danger,var(--error-color,#db543d)));}
     ${enabled}{cursor:pointer;}
-    ${enabled}:is(:hover,.hpf-tab-focus:focus){${settingsActionHover}}
-    ${selector}${primary}:not(:disabled):not([aria-disabled=true]):is(:hover,.hpf-tab-focus:focus){${tinted ? settingsActionHover : settingsPrimaryActionHover}}
-    ${selector}.danger:not(:disabled):not([aria-disabled=true]):is(:hover,.hpf-tab-focus:focus){background:color-mix(in srgb,var(--hpf-danger,var(--error-color,#db543d)) 10%,transparent);color:var(--hpf-danger,var(--error-color,#db543d));border-color:var(--hpf-danger,var(--error-color,#db543d));box-shadow:none;}
+    ${enabled}:is(:hover,.hpf-tab-focus:focus,.hpf-keyboard-current:focus){${settingsActionHover}}
+    ${selector}${primary}:not(:disabled):not([aria-disabled=true]):is(:hover,.hpf-tab-focus:focus,.hpf-keyboard-current:focus){${tinted ? settingsActionHover : settingsPrimaryActionHover}}
+    ${selector}.danger:not(:disabled):not([aria-disabled=true]):is(:hover,.hpf-tab-focus:focus,.hpf-keyboard-current:focus){background:color-mix(in srgb,var(--hpf-danger,var(--error-color,#db543d)) 10%,transparent);color:var(--hpf-danger,var(--error-color,#db543d));border-color:var(--hpf-danger,var(--error-color,#db543d));box-shadow:none;}
     ${selector}:is(:disabled,[aria-disabled=true]){cursor:not-allowed;opacity:.5;}
     ${selector} ha-icon{display:${density === 'standard' ? 'inline-flex' : 'inline-block'};align-items:center;line-height:${density === 'standard' ? '1' : 'normal'};margin:0;flex:none;--mdc-icon-size:${recipe.icon};}
     ${selector} ha-icon.hpf-action-chevron{--mdc-icon-size:16px;transition:transform var(--hpf-appear-duration,180ms) var(--hpf-appear-easing,ease-out);}

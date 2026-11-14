@@ -18,6 +18,23 @@ Hover, выбранное/нажатое состояние и клавиату�
 Сам DOM-фокус, порядок Tab и активация остаются нативными. Поля ввода,
 listbox-позиция и выделение объектов на плане сохраняют свои правила.
 
+Обычная кнопка по-прежнему не получает подсветку от стрелок/Enter/Space.
+Отдельное исключение по смыслу, а не по эвристике браузера — **текущий пункт
+составного меню/группы**: `EditorContextMenu` и `EditorSecondary` явно вызывают
+`focusCompositeButton` при клавиатурном открытии или переходе стрелками/Home/End.
+Это состояние `hpf-keyboard-current`, не Tab-фокус. Оно использует ту же одну
+рамку, снимается на blur/закрытие/Escape/мышь и никогда не применяется при
+возврате на кнопку открытия. Указатель не включает это состояние.
+
+Владельцы lease: `HouseplanCard` (основной план, панель, киоск и автономный
+renderer), `HouseplanSpaceCard` (независимая Static-карточка, включая Open/retry),
+`HpDialog` (также подтверждения/PDF). Их дочерние Properties/toolbar/notice и
+`hp-color-opacity`, `hp-device-preview`, `hp-zigbee-topology-settings`,
+`hp-settings-select`, `hp-icon-picker`, `hp-help` используют сеанс владельца
+через открытые shadow roots. Отдельные Lovelace config editors не подключают
+эти изменённые kit-контролы. Новый независимый host kit-кнопок должен владеть
+lease; это контракт компонента, не новый source-text gate.
+
 ### Согласованная итерация beta.2 (#1207)
 
 `selectionListCss` задаёт общие состояния select и sourcePicker: выбранный пункт

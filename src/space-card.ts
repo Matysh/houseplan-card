@@ -1,5 +1,6 @@
 import { unsafeCSS } from 'lit';
 import { settingsActionsCss } from './styles/settings-action.styles';
+import { acquireButtonTabFocus } from './ui-button-tab-focus';
 /**
  * houseplan-space-card — a READ-ONLY, static schematic of a single houseplan space,
  * embeddable on any dashboard. Renders exactly what is configured (plan + configured
@@ -371,6 +372,8 @@ class HouseplanSpaceCard extends LitElement {
     this._snap = this._snap || cachedSnapshot();
   }
 
+  private _buttonTabFocusRelease: (() => void) | null = null;
+
   public connectedCallback(): void {
     window.addEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
     window.addEventListener('storage', this._rotationChanged);
@@ -379,6 +382,8 @@ class HouseplanSpaceCard extends LitElement {
       this._continuityDisposed = false;
     }
     super.connectedCallback();
+    this._buttonTabFocusRelease?.();
+    this._buttonTabFocusRelease = acquireButtonTabFocus(this);
     this._contactBoundary.connect();
     this._attachReload = true;
     this._pointerModality.connect(this.ownerDocument.defaultView);
@@ -400,6 +405,8 @@ class HouseplanSpaceCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._buttonTabFocusRelease?.();
+    this._buttonTabFocusRelease = null;
     window.removeEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
     window.removeEventListener('storage', this._rotationChanged);
     this._contactBoundary.disconnect(); this._deviceContacts?.clear();
