@@ -2,6 +2,7 @@
 // Functional smoke success alone does not establish visual acceptance.
 import {readFileSync,mkdirSync} from 'node:fs';
 import {launch,watchPage,checkAll,finish} from './serve.mjs';
+import {singleButtonBorder} from './helpers/button-paint-1440.mjs';
 const {page,browser}=await launch({width:1280,height:900});
 const output={},dir='artifacts/settings-mock-match-948';mkdirSync(dir,{recursive:true});
 const ctx=page.context();
@@ -42,7 +43,7 @@ for(const dark of [false,true]){
  await page.mouse.move(0,0);await page.waitForTimeout(180);
  const before=await cancel.evaluate(el=>getComputedStyle(el).backgroundColor);
  await cancel.hover();await page.waitForTimeout(180);
- output[`footerVisibleHover${dark?'Dark':'Light'}`]=await cancel.evaluate((el,before)=>{const s=getComputedStyle(el);return s.cursor==='pointer'&&s.backgroundColor!==before&&s.backgroundColor!=='rgba(0, 0, 0, 0)'&&s.boxShadow!=='none';},before);
+ output[`footerVisibleHover${dark?'Dark':'Light'}`]=await cancel.evaluate((el,before)=>{const s=getComputedStyle(el);return s.cursor==='pointer'&&s.backgroundColor!==before&&s.backgroundColor!=='rgba(0, 0, 0, 0)';},before)&&await cancel.evaluate(singleButtonBorder);
 }
 await page.mouse.move(0,0);
 await dialog.evaluate(el=>{const host=el.getRootNode().host;host.style.setProperty('--card-background-color','#fff');host.style.setProperty('--primary-text-color','#223039');host.style.setProperty('--primary-color','#008aa5');});

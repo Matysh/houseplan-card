@@ -1,4 +1,5 @@
 import {launch,checkAll,finish} from './serve.mjs';
+import {singleButtonBorder} from './helpers/button-paint-1440.mjs';
 const {page,browser}=await launch({width:1100,height:850});
 await page.evaluate(async()=>{await window.__hpTest.setMode('devices');await window.__hpTest.openMarkerDialog('d_light1');});
 const dialog=page.locator('houseplan-card hp-dialog[data-kind=marker]');
@@ -16,5 +17,5 @@ const target=list.locator('[role=option]:not([aria-selected=true])').last();awai
 const box=await target.boundingBox();await target.hover();await page.waitForTimeout(180);
 const hover=await target.evaluate(el=>({outline:getComputedStyle(el).boxShadow,background:getComputedStyle(el).backgroundColor,selected:el.getAttribute('aria-selected')}));
 const after=await geometry(),end=await target.boundingBox();
-const out={populated:before.count>1,twoLines:before.twoLines,contentsInside:before.contentsInside&&after.contentsInside,noOverlap:before.noOverlap&&after.noOverlap,noShrink:before.noShrink,hoverInset:hover.outline.includes('inset'),hoverSeparate:hover.selected==='true'||hover.background==='rgba(0, 0, 0, 0)',stableSize:box.width===end.width&&box.height===end.height};
+const out={populated:before.count>1,twoLines:before.twoLines,contentsInside:before.contentsInside&&after.contentsInside,noOverlap:before.noOverlap&&after.noOverlap,noShrink:before.noShrink,hoverSingleBorder:await target.evaluate(singleButtonBorder),hoverSeparate:hover.selected==='true'||hover.background==='rgba(0, 0, 0, 0)',stableSize:box.width===end.width&&box.height===end.height};
 console.log(JSON.stringify({before,after,hover}));checkAll(out);await finish(browser,out);

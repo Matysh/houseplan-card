@@ -5,6 +5,7 @@ import {ensureHarnessEditorRuntime} from '../editor-runtime-compat.mjs';
 import {installSettingsDeviceFixture,openSettingsDeviceDialog} from './settings-device-947-fixture.mjs';
 import {installSettingsSpaceFixture} from './settings-space-945-fixture.mjs';
 import {buttonPaint,approvedSavePaint} from './button-paint.mjs';
+import {singleButtonBorder} from './button-paint-1440.mjs';
 import {assertFreshDemoBundle} from '../bundle-freshness.mjs';
 import {checkAll,watchPage} from '../serve.mjs';
 import {mkdirSync,writeFileSync} from 'node:fs';
@@ -34,7 +35,8 @@ const section=async(d,id)=>{
 };
 const hoverButton=async b=>{
  await page.mouse.move(0,0);await b.hover();await page.waitForTimeout(180);
- return b.evaluate(el=>{const s=getComputedStyle(el);return s.cursor==='pointer'&&s.boxShadow!=='none'&&s.backgroundColor!=='rgba(0, 0, 0, 0)';});
+ return await b.evaluate(el=>{const s=getComputedStyle(el);return s.cursor==='pointer'&&s.backgroundColor!=='rgba(0, 0, 0, 0)';})
+   &&await b.evaluate(singleButtonBorder);
 };
 try{
  await page.goto(fixture.url+'/product.html');
