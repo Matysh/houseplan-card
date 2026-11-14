@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13571,
+  "revision": 13572,
   "nextTicket": 472,
   "nextFence": 470,
   "tasks": {
@@ -4599,14 +4599,22 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1436-resize-cancel",
-      "materialSha": "2edf709afd9aa7ba945da79ec5a9a610f88e77d8",
+      "materialSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 466,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794686271802,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "93f80d94e2a8b7cd6bf7e491c554b18ee3421ead",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/release-ledger/v1.85.0/1436.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     },
     "1437": {
       "issue": 1437,
@@ -5066,11 +5074,12 @@
     "worker": "github-coordinator",
     "token": "469:github:43638639932:1:tick:0:admit",
     "fence": 469,
-    "materialSha": "2edf709afd9aa7ba945da79ec5a9a610f88e77d8",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
+    "expectedBase": "e8ced3a76cb20bca2a710a858d55348d7ca471c8",
+    "phase": "testing",
     "admittedAt": 1794688774121,
-    "expiresAt": 1794689074121
+    "expiresAt": 1794689126125,
+    "patchId": "93f80d94e2a8b7cd6bf7e491c554b18ee3421ead"
   },
   "events": {
     "github:43638639932:1:completions:message:d8f5cceba92af1f796ab1bca1738dc14a083bee710fa1db1caf04eb4ea42e414": {
@@ -5079,6 +5088,10 @@
     },
     "github:43638639932:1:completions:message:1d081433046a50d2c3c8d05afdc67fb64ff0b524089ad7ce77f5057d8e6c55e3": {
       "digest": "45539dbc2d50614d62034b058e552dc64619de46184cdc51f9520e42207bf1c0",
+      "issue": 1436
+    },
+    "finish:7f894725-b6d7-4836-979e-667341d3ce27:finish:2:synchronized": {
+      "digest": "21a80798425cbb91ae2e7a784c41e8345011c28f72e78a9df2870042c79b08b1",
       "issue": 1436
     },
     "finish:7f894725-b6d7-4836-979e-667341d3ce27": {
