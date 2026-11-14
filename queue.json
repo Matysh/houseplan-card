@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13345,
-  "nextTicket": 467,
+  "revision": 13346,
+  "nextTicket": 468,
   "nextFence": 464,
   "tasks": {
     "1024": {
@@ -4687,6 +4687,20 @@
       "readyAt": 1794686271802,
       "reviewEntry": 1
     },
+    "1437": {
+      "issue": 1437,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1437-ha-formatters",
+      "materialSha": "3dcbebfc95df1f71c808525fb082abf310eb67b4",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 467,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794686350630,
+      "reviewEntry": 1
+    },
     "1440": {
       "issue": 1440,
       "track": "ship",
@@ -5043,7 +5057,8 @@
   "waiting": [
     1435,
     1440,
-    1436
+    1436,
+    1437
   ],
   "active": {
     "issue": 1432,
@@ -5237,6 +5252,19 @@
         "track": "show",
         "layer": "product",
         "materialSha": "2edf709afd9aa7ba945da79ec5a9a610f88e77d8"
+      }
+    },
+    "finish:6b4669ce-5809-4882-a93b-6a103d5d9079": {
+      "digest": "f63ad38f23c48cdc36eab5908922dbc577e7b6a710d05ab97b186e2437f621e4",
+      "issue": 1437,
+      "message": {
+        "kind": "queued",
+        "issue": 1437,
+        "at": 1794686350630,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "3dcbebfc95df1f71c808525fb082abf310eb67b4"
       }
     }
   },
