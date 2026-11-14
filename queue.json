@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13978,
+  "revision": 13979,
   "nextTicket": 481,
   "nextFence": 479,
   "tasks": {
@@ -5482,6 +5482,10 @@
       "digest": "90353bf5588a27566911078273334d8d26b8dc29a89df610937e5f3344ace224",
       "issue": 1447
     },
+    "github:43648503104:1:completions:message:ad77cd6c44fed2390600b1988619282f011ea59cfb4cbed33027d3fff3b10754": {
+      "digest": "7d9849ae63833484ba1d7ca0636969ab9882baf7e2597c3ed94c07c8ad1e41ac",
+      "issue": 1446
+    },
     "finish:1446-integration-display-metadata-20261115": {
       "digest": "82a8163ec4fc0593dc2739b009fe0021dc402ddd59c9a6351753fe7a30b3f210",
       "issue": 1446,
@@ -5592,7 +5596,8 @@
           "entry": 1,
           "detail": "Поведение: test/bundle-assets.test.mjs: failed",
           "eventId": "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:3:return:return:1447"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:1446-integration-display-metadata-20261115-r2:finish:1:admit": {
