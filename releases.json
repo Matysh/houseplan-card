@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 883,
+  "revision": 884,
   "active": "1.85.3-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -112764,7 +112764,7 @@
         "sha": "44e20251ef386acb2aefea275fb7091c9ef037b6",
         "requestId": "ship-review:46dda7544b3850691cfe08c9ac9433338154b25f0a61438709a685d836247d03",
         "selectionDigest": "ead5321eb4154988f1329be55dbb0535e8fec7f39d72b8420ba55d54617f027c",
-        "status": "pending",
+        "status": "accepted",
         "inventoryComplete": true
       }
     }
@@ -118275,7 +118275,8 @@
     "ship-review:result:b18562e2-c501-4a8a-b66d-a1519370de6a": "5a2ba11ba16d462e67d30d39be5743aadfd8b027e117f7e98afbd511c267ed2c",
     "beta1853-20261115-fix-final": "42d5dc16b17ad73d8fe2ec52fd1316a126a9fc32b675b3227b0bbdaaa12e607d",
     "beta1853-20261115-fix-visual": "2bcb91dc352cf1b8568ee6dea4f46810e8766a7622d1fcac5fe4bc725d772f51",
-    "ship-review:prepare:c62a69b8-1072-4c3b-918e-e6cba2ab2507": "f3a9ddc946fb9f43b0c611c7f0d7328cf419cfaf2e39dee1938ae31b68fcd214"
+    "ship-review:prepare:c62a69b8-1072-4c3b-918e-e6cba2ab2507": "f3a9ddc946fb9f43b0c611c7f0d7328cf419cfaf2e39dee1938ae31b68fcd214",
+    "ship-review:result:7508b49b-6e03-46c5-a030-24b5e4927f03": "c4d25eacbd3b716dc00b3569c08997c7c6e52a1f4556a4b6a55e8430d82d58fc"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
@@ -132946,7 +132947,99 @@
         ],
         "unclassified": []
       },
-      "result": null
+      "result": {
+        "version": 1,
+        "kind": "ship-batch",
+        "requestId": "ship-review:46dda7544b3850691cfe08c9ac9433338154b25f0a61438709a685d836247d03",
+        "candidateId": "1.85.3-beta.1",
+        "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
+        "materialSha": "44e20251ef386acb2aefea275fb7091c9ef037b6",
+        "selectionDigest": "ead5321eb4154988f1329be55dbb0535e8fec7f39d72b8420ba55d54617f027c",
+        "releaseVersion": "1.85.3-beta.1",
+        "workflowRunId": 43652190763,
+        "workflowRunAttempt": 1,
+        "verdict": "accepted",
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "В пакете на новое ревью одна задача — #1448. Блокеров для беты нет. Схема питания Windows теперь считается совпадающей, если в строке есть ровно один полный GUID, а название, дата наблюдения и регистр на сравнение не влияют. Устроено это консервативно: неполные, неоднозначные и явно unknown/unrecorded значения делают сравнение невозможным. Строки без GUID по-прежнему сравниваются строго. Остальные условия замера (runtime Node/Chromium, CPU, kernel, runner, profile, fixture, warmups, samples), пороги POLICY и правило двух половин не изменились. Тесты #1448 меняют каждое из этих полей по отдельности и проверяют, что одинаковый GUID не скрывает такую разницу. Для пользователя релиза это значит, что метрики v1.85.2 и 1.85.3-beta.1 с одинаковым GUID становятся сопоставимыми, а реальное расхождение версий Node по-прежнему даёт incomparable. Запись `process-next/test/package.test.mjs` в FIXTURE_ARTIFACTS подтверждается чтением теста: весь dist/ZIP создаётся во временном fixture-каталоге.",
+          "understanding": "Проблема: `comparable()` в `process-next/lib/metrics.mjs` сравнивал `host.power_scheme.toLowerCase()` как есть. Записи с одним и тем же GUID 8c5e7fda-… отличались только пометкой «(observed 2026-11-13/14)» и поэтому всегда считались несопоставимыми. В итоге первичное сравнение с последним stable никогда не давало зелёного или красного итога по времени. До изменения: сравнивался полный текст строки, а исключалось только точное значение 'unrecorded'. После: новая функция `powerSchemeIdentity` (строки 68–78) возвращает `guid:<lower>`, если в строке ровно один изолированный GUID и ровно один 8-hex префикс. Она возвращает null при пустом значении, словах unknown/unrecorded, нескольких или обрезанных GUID, слове «guid» без полного GUID или строке, похожей на голый hex. В остальных случаях она возвращает `literal:<lower>`, то есть прежнее строгое равенство для старых записей вида «Balanced». В `signature()` результат null делает запись несопоставимой, а остальные поля подписи не тронуты. Вторая часть: в `FIXTURE_ARTIFACTS` (`task-selection.mjs`) добавлен `package.test.mjs`. Благодаря этому `catalog.mjs:97` не требует product-build для infra-плана, который выбирает этот статический читатель metrics. Разобраны: `compareOne`/`compareMeasurements`, состав подписи, frozen baseline v1.83.1 (Node v22.23.2, «Balanced»), источники значения `power_scheme` (`catalog/measure.mjs` с умолчанием 'unrecorded', `prepare-fallback` с 'github-hosted-unmanaged'), `package.test.mjs` и `package.mjs` (весь доступ к dist идёт через root, переданный вызывающим), обработка `fixtureArtifacts` в `catalog.mjs:75–100`, а также новые тесты.",
+          "analysis": [
+            {
+              "topic": "Строгость определения GUID",
+              "assessment": "Решение работает и намеренно консервативно. Лукбихайнд и лукахед `[a-z\\d-]` отсекают GUID внутри более длинного hex-токена, это проверено тестами `${guid}f` и `f${guid}`. Дополнительный счётчик префиксов `[a-f\\d]{8}-` отказывает, когда рядом с полным GUID есть обрезанный (`${guid} 381b4222-f694`). Даты вида 2026-11-13 под префикс не попадают. Типичный вывод `powercfg` «Power Scheme GUID: … (High performance)» распознаётся: ветка с GUID проверяется раньше запрета на слово «guid». Ложное склеивание возможно только если две разные схемы записаны с одинаковым GUID, но это противоречит самой семантике GUID.",
+              "evidence": "`process-next/lib/metrics.mjs:68-78`; `process-next/test/metrics.test.mjs`: тесты #1448 с перечнем invalid и вариантами с фигурными скобками и кириллической подписью."
+            },
+            {
+              "topic": "Обратная совместимость и отсутствие ослабления",
+              "assessment": "Для строк без GUID итог прежний (`literal:` + lower-case). Два случая стали строже: любые строки со словами unknown/unrecorded и строки, похожие на голый hex, теперь несопоставимы. Это безопасно: строгость только растёт, а сравнение меняется лишь для записей с подтверждённым GUID. 'github-hosted-unmanaged' из fallback остаётся literal и ведёт себя как раньше. Якорь v1.83.1 «Balanced» против GUID-кандидата по-прежнему даёт incomparable только в неблокирующей диагностике. Сами записи не меняются: тест сравнивает structuredClone до и после.",
+              "evidence": "`metrics.mjs:86-89`; `process-next/catalog/measure.mjs:31`; `process-next/templates/prepare-fallback.mjs:150`; `process-next/baselines/v1.83.1.json:100,122`."
+            },
+            {
+              "topic": "Различия runtime и хоста не маскируются",
+              "assessment": "GUID заменяет только поле power, остальные части подписи не тронуты. Тест на разницу Node действительно меняет данные: в baseline стоит v22.23.2, а тест ставит v22.23.4, то есть воспроизводит реальную пару версий из задачи. Пороговые проверки regression/noisy при сопоставимой GUID-аннотации тоже проверены.",
+              "evidence": "`metrics.test.mjs`: тесты «GUID equality never masks…» и «retain regression decisions and the two-halves noise rule»; `metrics.mjs:98-113` не менялся."
+            },
+            {
+              "topic": "FIXTURE_ARTIFACTS для package.test.mjs",
+              "assessment": "Обоснование верно. `fixture(t)` создаёт `dist/houseplan-card.js` и `houseplan-assets.json` в mkdtemp, а `packageCandidate({ root })` читает dist только через `join(root,'dist',…)`. Путей к продуктовому dist через import.meta.url нет ни в тесте, ни в `package.mjs`. Новый тест в `task-selection.test.mjs` проверяет реальный план метрик (без product-build/test-build/demo-assets) и отдельно показывает, что настоящий читатель dist в fixture по-прежнему отклоняется, то есть общий гейт не ослаблен.",
+              "evidence": "`process-next/test/package.test.mjs:11-26`; `process-next/lib/package.mjs:18,26,31`; `process-next/lib/catalog.mjs:97-98,216`; `task-selection.test.mjs`: тест #1448."
+            },
+            {
+              "topic": "Использованные результаты S6",
+              "assessment": "Опираюсь на заявление исполнителя: 17/17 по metrics, 52/52 вместе с task-selection, ожидаемые 3 FAIL до реализации. Сам я тесты не запускал. Чтение кода согласуется с этими результатами.",
+              "evidence": "authorContext задачи #1448."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "Можно уйти от разбора свободного текста. В части записей уже есть отдельное поле `power_scheme_guid` (`docs/testing/issue1344/pipeline-measurement.json:571`). Если измерительная обвязка (`process-next/templates/request-metrics.json` и `catalog/measure.mjs`) будет записывать GUID в отдельное поле, а `comparable` станет предпочитать его, regex-эвристика понадобится только для старых записей. Цена: изменение формата запроса замера и поддержка двух источников. Выгода: однозначность без разбора подписи. Сейчас это не обязательно, текущий разбор достаточно строг.",
+            "Ограничение существующего механизма FIXTURE_ARTIFACTS, а не дефект этой задачи: флаг `fixtureArtifacts` отменяет требование подготовки для всего транзитивного замыкания шага (`catalog.mjs:97`). Если `package.mjs` или `scripts/bundle-tree.mjs` когда-нибудь начнут читать продуктовый dist напрямую, исключение это скроет. Можно сузить исключение до совпадений путей dist внутри самого файла теста. Цена: дополнительная логика в анализе зависимостей. Срочности нет."
+          ],
+          "boundaries": "Новому разбору подлежала только задача #1448 (коммит 551cd6468e30003a29c70f2dd4d65d9e3fd4af31). Остальные задачи пакета (#1415, #1424–#1444) уже приняты ранее и заново не разбирались. Изучено чтением кода кандидата 44e20251: `metrics.mjs` целиком, `package.test.mjs`, `package.mjs`, соответствующие места в `catalog.mjs`, frozen baseline v1.83.1, места записи `power_scheme`, новые тесты. Тесты, сборку и Validate я не запускал и реальные measurement-файлы v1.85.2/1.85.3 не открывал. Пример GUID-строк взят из описания задачи. Результаты S6 (17/17, 52/52) приняты со слов исполнителя."
+        },
+        "usage": {
+          "input_tokens": 16,
+          "cache_creation_input_tokens": 64768,
+          "cache_read_input_tokens": 325658,
+          "output_tokens": 7869,
+          "output_tokens_details": {
+            "thinking_tokens": 2533
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 64768,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 891,
+              "cache_read_input_tokens": 54821,
+              "cache_creation_input_tokens": 11668,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 11668
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Пакетное код-ревью ship перед 1.85.3-beta.1 — принято\n\n## Вывод\n\nВ пакете на новое ревью одна задача — #1448. Блокеров для беты нет. Схема питания Windows теперь считается совпадающей, если в строке есть ровно один полный GUID, а название, дата наблюдения и регистр на сравнение не влияют. Устроено это консервативно: неполные, неоднозначные и явно unknown/unrecorded значения делают сравнение невозможным. Строки без GUID по-прежнему сравниваются строго. Остальные условия замера (runtime Node/Chromium, CPU, kernel, runner, profile, fixture, warmups, samples), пороги POLICY и правило двух половин не изменились. Тесты #1448 меняют каждое из этих полей по отдельности и проверяют, что одинаковый GUID не скрывает такую разницу. Для пользователя релиза это значит, что метрики v1.85.2 и 1.85.3-beta.1 с одинаковым GUID становятся сопоставимыми, а реальное расхождение версий Node по-прежнему даёт incomparable. Запись `process-next/test/package.test.mjs` в FIXTURE_ARTIFACTS подтверждается чтением теста: весь dist/ZIP создаётся во временном fixture-каталоге.\n\n## Понимание решения\n\nПроблема: `comparable()` в `process-next/lib/metrics.mjs` сравнивал `host.power_scheme.toLowerCase()` как есть. Записи с одним и тем же GUID 8c5e7fda-… отличались только пометкой «(observed 2026-11-13/14)» и поэтому всегда считались несопоставимыми. В итоге первичное сравнение с последним stable никогда не давало зелёного или красного итога по времени. До изменения: сравнивался полный текст строки, а исключалось только точное значение 'unrecorded'. После: новая функция `powerSchemeIdentity` (строки 68–78) возвращает `guid:<lower>`, если в строке ровно один изолированный GUID и ровно один 8-hex префикс. Она возвращает null при пустом значении, словах unknown/unrecorded, нескольких или обрезанных GUID, слове «guid» без полного GUID или строке, похожей на голый hex. В остальных случаях она возвращает `literal:<lower>`, то есть прежнее строгое равенство для старых записей вида «Balanced». В `signature()` результат null делает запись несопоставимой, а остальные поля подписи не тронуты. Вторая часть: в `FIXTURE_ARTIFACTS` (`task-selection.mjs`) добавлен `package.test.mjs`. Благодаря этому `catalog.mjs:97` не требует product-build для infra-плана, который выбирает этот статический читатель metrics. Разобраны: `compareOne`/`compareMeasurements`, состав подписи, frozen baseline v1.83.1 (Node v22.23.2, «Balanced»), источники значения `power_scheme` (`catalog/measure.mjs` с умолчанием 'unrecorded', `prepare-fallback` с 'github-hosted-unmanaged'), `package.test.mjs` и `package.mjs` (весь доступ к dist идёт через root, переданный вызывающим), обработка `fixtureArtifacts` в `catalog.mjs:75–100`, а также новые тесты.\n\n## Разбор решения\n\n### Строгость определения GUID\n\nРешение работает и намеренно консервативно. Лукбихайнд и лукахед `[a-z\\d-]` отсекают GUID внутри более длинного hex-токена, это проверено тестами `${guid}f` и `f${guid}`. Дополнительный счётчик префиксов `[a-f\\d]{8}-` отказывает, когда рядом с полным GUID есть обрезанный (`${guid} 381b4222-f694`). Даты вида 2026-11-13 под префикс не попадают. Типичный вывод `powercfg` «Power Scheme GUID: … (High performance)» распознаётся: ветка с GUID проверяется раньше запрета на слово «guid». Ложное склеивание возможно только если две разные схемы записаны с одинаковым GUID, но это противоречит самой семантике GUID.\n\nОснование: `process-next/lib/metrics.mjs:68-78`; `process-next/test/metrics.test.mjs`: тесты #1448 с перечнем invalid и вариантами с фигурными скобками и кириллической подписью.\n\n### Обратная совместимость и отсутствие ослабления\n\nДля строк без GUID итог прежний (`literal:` + lower-case). Два случая стали строже: любые строки со словами unknown/unrecorded и строки, похожие на голый hex, теперь несопоставимы. Это безопасно: строгость только растёт, а сравнение меняется лишь для записей с подтверждённым GUID. 'github-hosted-unmanaged' из fallback остаётся literal и ведёт себя как раньше. Якорь v1.83.1 «Balanced» против GUID-кандидата по-прежнему даёт incomparable только в неблокирующей диагностике. Сами записи не меняются: тест сравнивает structuredClone до и после.\n\nОснование: `metrics.mjs:86-89`; `process-next/catalog/measure.mjs:31`; `process-next/templates/prepare-fallback.mjs:150`; `process-next/baselines/v1.83.1.json:100,122`.\n\n### Различия runtime и хоста не маскируются\n\nGUID заменяет только поле power, остальные части подписи не тронуты. Тест на разницу Node действительно меняет данные: в baseline стоит v22.23.2, а тест ставит v22.23.4, то есть воспроизводит реальную пару версий из задачи. Пороговые проверки regression/noisy при сопоставимой GUID-аннотации тоже проверены.\n\nОснование: `metrics.test.mjs`: тесты «GUID equality never masks…» и «retain regression decisions and the two-halves noise rule»; `metrics.mjs:98-113` не менялся.\n\n### FIXTURE_ARTIFACTS для package.test.mjs\n\nОбоснование верно. `fixture(t)` создаёт `dist/houseplan-card.js` и `houseplan-assets.json` в mkdtemp, а `packageCandidate({ root })` читает dist только через `join(root,'dist',…)`. Путей к продуктовому dist через import.meta.url нет ни в тесте, ни в `package.mjs`. Новый тест в `task-selection.test.mjs` проверяет реальный план метрик (без product-build/test-build/demo-assets) и отдельно показывает, что настоящий читатель dist в fixture по-прежнему отклоняется, то есть общий гейт не ослаблен.\n\nОснование: `process-next/test/package.test.mjs:11-26`; `process-next/lib/package.mjs:18,26,31`; `process-next/lib/catalog.mjs:97-98,216`; `task-selection.test.mjs`: тест #1448.\n\n### Использованные результаты S6\n\nОпираюсь на заявление исполнителя: 17/17 по metrics, 52/52 вместе с task-selection, ожидаемые 3 FAIL до реализации. Сам я тесты не запускал. Чтение кода согласуется с этими результатами.\n\nОснование: authorContext задачи #1448.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Можно уйти от разбора свободного текста. В части записей уже есть отдельное поле `power_scheme_guid` (`docs/testing/issue1344/pipeline-measurement.json:571`). Если измерительная обвязка (`process-next/templates/request-metrics.json` и `catalog/measure.mjs`) будет записывать GUID в отдельное поле, а `comparable` станет предпочитать его, regex-эвристика понадобится только для старых записей. Цена: изменение формата запроса замера и поддержка двух источников. Выгода: однозначность без разбора подписи. Сейчас это не обязательно, текущий разбор достаточно строг.\n- Ограничение существующего механизма FIXTURE_ARTIFACTS, а не дефект этой задачи: флаг `fixtureArtifacts` отменяет требование подготовки для всего транзитивного замыкания шага (`catalog.mjs:97`). Если `package.mjs` или `scripts/bundle-tree.mjs` когда-нибудь начнут читать продуктовый dist напрямую, исключение это скроет. Можно сузить исключение до совпадений путей dist внутри самого файла теста. Цена: дополнительная логика в анализе зависимостей. Срочности нет.\n\n## Границы анализа\n\nНовому разбору подлежала только задача #1448 (коммит 551cd6468e30003a29c70f2dd4d65d9e3fd4af31). Остальные задачи пакета (#1415, #1424–#1444) уже приняты ранее и заново не разбирались. Изучено чтением кода кандидата 44e20251: `metrics.mjs` целиком, `package.test.mjs`, `package.mjs`, соответствующие места в `catalog.mjs`, frozen baseline v1.83.1, места записи `power_scheme`, новые тесты. Тесты, сборку и Validate я не запускал и реальные measurement-файлы v1.85.2/1.85.3 не открывал. Пример GUID-строк взят из описания задачи. Результаты S6 (17/17, 52/52) приняты со слов исполнителя.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: eeab22dee2af68426a3f7782f75c11428d6a98c4 → 44e20251ef386acb2aefea275fb7091c9ef037b6\n\n## Переданный контекст исполнителя\n\nЗамороженные требования и контекст исполнителей переданы отдельно для каждой задачи пакета.\n\nПроверены задачи: #1448.\n\nКоммиты: 551cd6468e30003a29c70f2dd4d65d9e3fd4af31.\n\nРанее принятое ревью сохранено для задач: #1415, #1424, #1425, #1426, #1429, #1430, #1431, #1433, #1434, #1439, #1440, #1441, #1442, #1444.\n\n</details>\n",
+        "createdAt": "2026-11-14T23:16:12.005Z",
+        "artifactId": 14136731071,
+        "runId": 43652190763,
+        "runAttempt": 1,
+        "completedAt": "2026-11-14T23:16:16Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43652190763"
+      }
     }
   }
 }
