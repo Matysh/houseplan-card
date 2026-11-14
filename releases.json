@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 884,
+  "revision": 885,
   "active": "1.85.3-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -112456,14 +112456,14 @@
       "kind": "beta",
       "branch": "release/1.85.3-beta.1",
       "sourceSha": "e756b482350cf5589228d4d282642e5d8c03ced5",
-      "sha": "44e20251ef386acb2aefea275fb7091c9ef037b6",
+      "sha": "57c1b95bddff8ad9a1e637e5563f367f720a5ee4",
       "runner": null,
       "running": null,
       "status": "prepared",
       "membership": {
         "schema": 1,
         "tag": null,
-        "candidate": "44e20251ef386acb2aefea275fb7091c9ef037b6",
+        "candidate": "57c1b95bddff8ad9a1e637e5563f367f720a5ee4",
         "base": "eeab22dee2af68426a3f7782f75c11428d6a98c4",
         "issues": [
           {
@@ -112691,6 +112691,13 @@
             "commits": [
               "551cd6468e30003a29c70f2dd4d65d9e3fd4af31"
             ]
+          },
+          {
+            "number": 1449,
+            "commits": [
+              "8814cc56d1a75a5b4b4a49087195799aceffe9eb",
+              "d4f163e3a451dbacec1d19ee594b29b071c34c46"
+            ]
           }
         ]
       },
@@ -112727,7 +112734,8 @@
         1444,
         1446,
         1447,
-        1448
+        1448,
+        1449
       ],
       "reviewRequired": true,
       "review": null,
@@ -112757,16 +112765,15 @@
           "to": "44e20251ef386acb2aefea275fb7091c9ef037b6",
           "syncMode": "merge",
           "status": "pending"
+        },
+        {
+          "from": "44e20251ef386acb2aefea275fb7091c9ef037b6",
+          "to": "57c1b95bddff8ad9a1e637e5563f367f720a5ee4",
+          "syncMode": "merge",
+          "status": "pending"
         }
       ],
-      "diagnostics": [],
-      "shipReview": {
-        "sha": "44e20251ef386acb2aefea275fb7091c9ef037b6",
-        "requestId": "ship-review:46dda7544b3850691cfe08c9ac9433338154b25f0a61438709a685d836247d03",
-        "selectionDigest": "ead5321eb4154988f1329be55dbb0535e8fec7f39d72b8420ba55d54617f027c",
-        "status": "accepted",
-        "inventoryComplete": true
-      }
+      "diagnostics": []
     }
   },
   "published": {
@@ -118276,7 +118283,8 @@
     "beta1853-20261115-fix-final": "42d5dc16b17ad73d8fe2ec52fd1316a126a9fc32b675b3227b0bbdaaa12e607d",
     "beta1853-20261115-fix-visual": "2bcb91dc352cf1b8568ee6dea4f46810e8766a7622d1fcac5fe4bc725d772f51",
     "ship-review:prepare:c62a69b8-1072-4c3b-918e-e6cba2ab2507": "f3a9ddc946fb9f43b0c611c7f0d7328cf419cfaf2e39dee1938ae31b68fcd214",
-    "ship-review:result:7508b49b-6e03-46c5-a030-24b5e4927f03": "c4d25eacbd3b716dc00b3569c08997c7c6e52a1f4556a4b6a55e8430d82d58fc"
+    "ship-review:result:7508b49b-6e03-46c5-a030-24b5e4927f03": "c4d25eacbd3b716dc00b3569c08997c7c6e52a1f4556a4b6a55e8430d82d58fc",
+    "beta1853-20261115-fix-accepted-final": "dee1b0fe6324b91c09dad3eb537c7d8262d03b2cb3bf5058af0d99b52bb82a74"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
