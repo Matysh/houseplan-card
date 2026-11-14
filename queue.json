@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11828,
+  "revision": 11829,
   "nextTicket": 424,
   "nextFence": 424,
   "tasks": {
@@ -3707,7 +3707,18 @@
         "test/plan-host.test.mjs",
         "test/signing.test.mjs",
         "tsconfig.test.json"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794620805301,
+        "entry": 1,
+        "detail": "Критичные данные, сохранение и права: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/graph-optimize-report.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/opening-drag.test.mjs: failed; Поведение: test/space-delete-dialog.test.mjs: failed; Поведение: test/version-recovery-card-contract.test.mjs: failed; Поведение: test/write-authority-snapshot.test.mjs: failed; Браузер: canvas surface gestures: failed; Браузер: direct wall geometry: failed; Браузер: isometric live touch: failed; Браузер: vacuum: failed; Браузер: view edit permissions: failed",
+        "eventId": "finish:5ff8f6e8-5ec7-4a9c-88d6-6e69fb8d1375:finish:3:return:return:1392"
+      }
     },
     "1393": {
       "issue": 1393,
@@ -4919,18 +4930,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1392,
-    "worker": "finish",
-    "token": "423:finish:5ff8f6e8-5ec7-4a9c-88d6-6e69fb8d1375:finish:1:admit",
-    "fence": 423,
-    "materialSha": "d762dc3d056b92f73bfe2e0cb8e1a185bde24e31",
-    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-    "phase": "testing",
-    "admittedAt": 1794619695171,
-    "expiresAt": 1794621074034,
-    "patchId": "434f6775628e5d4d57d03d95fea1e07408b8132c"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
       "digest": "3608873f6034b21ea424821722398c159d16857cd52d8f7d9bb5b504dd59972c",
@@ -5116,6 +5116,10 @@
       "digest": "cdfb91f426c2611611e710b498ddf42d0312303698fa75266b7fa70bd83ba7c1",
       "issue": 1392
     },
+    "finish:5ff8f6e8-5ec7-4a9c-88d6-6e69fb8d1375:finish:3:return": {
+      "digest": "5743f151c1e25b81f06ee8a6729e586497d8e07905fcc5838d46b15b9e2e19a1",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5177,6 +5181,26 @@
         "materialSha": "d762dc3d056b92f73bfe2e0cb8e1a185bde24e31",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:5ff8f6e8-5ec7-4a9c-88d6-6e69fb8d1375:finish:3:return:return:1392": {
+      "digest": "5743f151c1e25b81f06ee8a6729e586497d8e07905fcc5838d46b15b9e2e19a1",
+      "issue": 1392,
+      "message": {
+        "kind": "return",
+        "issue": 1392,
+        "at": 1794620805301,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794620805301,
+          "entry": 1,
+          "detail": "Критичные данные, сохранение и права: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/graph-optimize-report.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/opening-drag.test.mjs: failed; Поведение: test/space-delete-dialog.test.mjs: failed; Поведение: test/version-recovery-card-contract.test.mjs: failed; Поведение: test/write-authority-snapshot.test.mjs: failed; Браузер: canvas surface gestures: failed; Браузер: direct wall geometry: failed; Браузер: isometric live touch: failed; Браузер: vacuum: failed; Браузер: view edit permissions: failed",
+          "eventId": "finish:5ff8f6e8-5ec7-4a9c-88d6-6e69fb8d1375:finish:3:return:return:1392"
+        }
       }
     }
   },
