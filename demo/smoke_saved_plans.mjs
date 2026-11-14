@@ -29,8 +29,15 @@ const res = await page.evaluate(async () => {
     }
     return base(m);
   } };
+  await c.updateComplete; // Publish the fixture transport before opening the real dialog.
   // пространство без плана — как после отцепления
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
+  const deadline=performance.now()+3000;
+  while(c._spaceDialog?.savedBusy){
+    if(performance.now()>deadline)throw Error('saved-plan list did not finish loading');
+    await new Promise(resolve=>setTimeout(resolve,10));
+  }
+  if(!Array.isArray(c._spaceDialog?.saved))throw Error('saved-plan list was not loaded');
   c._spaceDialog = { ...c._spaceDialog, source: 'file', planUrl: null, planFile: null };
   await c.updateComplete;
   out.saveBlockedWithoutPlan = !!sr().querySelector('hp-dialog .btn.on[disabled]');
