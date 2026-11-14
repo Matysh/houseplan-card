@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.85.3-beta.1 — 2026-11-15
+
 - Update the native keyboard-focus oracle to the approved single accent border; retain real Tab traversal, focus and activation (#1441).
 - Wait for actual version-banner paint in its browser smoke instead of assuming two animation frames suffice under load; retain all recovery and geometry checks (#1442).
 
