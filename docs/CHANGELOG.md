@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Restore integration display names in device previews through a lazy read-only metadata reader; keep transport out of the plan projection and isolate cached metadata by HA user/role (#1446).
 - Refresh the RU/EN user guides with 24 current screenshots per language, paragraph indents and clearer, friendlier explanations; retain documented behavior, examples and anchors (#1445).
 - Update the native keyboard-focus oracle to the approved single accent border; retain real Tab traversal, focus and activation (#1441).
 - Wait for actual version-banner paint in its browser smoke instead of assuming two animation frames suffice under load; retain all recovery and geometry checks (#1442).

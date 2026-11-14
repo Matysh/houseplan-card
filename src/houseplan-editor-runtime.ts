@@ -791,6 +791,7 @@ export interface HouseplanEditorHostPort {
   _pinchStart: { dist: number; zoom: number; } | null;
   _planEntityAvailable: (eid: string | null | undefined) => boolean;
   _planHass: any;
+  readonly _haIntegrationMetadata: import('./integration-provider').IntegrationMetadataSource | undefined;
   _planSnapGeometryCache: { key: string; value: PlanSnapGeometry; } | null;
   _planSnapHover: { contextKey: string; candidate: PlanSnapCandidate | null; conflicts: PlanSnapEndpoint[]; } | null;
   _planStructuralGeometryCache: { key: string; value: PlanSnapGeometry; } | null;

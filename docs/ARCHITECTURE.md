@@ -45,6 +45,13 @@ HA ingress, panel menu, device/radar/vacuum runtime and the explicitly named
 HA context. Smart-home View metadata invalidation is data-only and does not
 renew write leases; direct radio updates use the same environment driver.
 
+Device-preview provenance uses a separate finite HA-only metadata reader
+(`_haIntegrationMetadata`), never transport in `_planHass` or PlanHost.
+It reuses the lazy shared integration-provider owner and lends only entry
+identity/domain/title and manifest domain/name. User/role changes isolate the
+cache; removing/replacing the reader releases preview observation and late
+metadata cannot publish into a different authority.
+
 `demo/srv/plan-host-fixture.js` is a synthetic wire store, not a backend
 validator. `demo/smoke_plan_host.mjs` edits actual wall/opening/room/decor
 controls, checks persisted documents/history, Optimize, opaque portable

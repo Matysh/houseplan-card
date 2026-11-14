@@ -1,5 +1,6 @@
 import { HaPlanHost } from './ha-plan-host';
 import { haValueFormatters } from './ha-value-formatters';
+import { haIntegrationMetadataSource, type IntegrationMetadataSource } from './integration-provider';
 import { acquireButtonTabFocus } from './ui-button-tab-focus';
 import type { PlanHost, HostEnvironment, HostPresentationContext } from './plan-host';
 import { live } from 'lit/directives/live.js';
@@ -969,6 +970,11 @@ export class HouseplanCard extends LitElement {
     if (this._mode === 'devices' && !hasMarkers(this.planHost.capabilities)) this._setMode('plan');
   }
   public get _presentation(): HostPresentationContext { return this.planHost.environment.presentation; }
+  /** HA-only provenance reader, separate from both portable presentation and _planHass. */
+  public get _haIntegrationMetadata(): IntegrationMetadataSource | undefined {
+    return !this._injectedPlanHost && this.planHost.capabilities.devices
+      ? haIntegrationMetadataSource(this.hass) : undefined;
+  }
   private get planEnvironmentRevision(): number { return this.planHost.environmentRevision; }
 
   private _environmentRenderSnapshot(value: HostEnvironment): HassRenderSnapshot {

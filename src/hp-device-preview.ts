@@ -19,8 +19,8 @@ import {
 import { withDemoPulse } from './device-pulse';
 import { valueBadgeTitle } from './device-value-badge';
 import {
-  acquireIntegrationMetadata, integrationMetadataSnapshot,
-  resolveBindingProviders, resolveEntityProvider, type IntegrationProvider,
+  haIntegrationMetadataSource, integrationMetadataSnapshot,
+  resolveBindingProviders, resolveEntityProvider, type IntegrationProvider, type IntegrationMetadataSource,
 } from './integration-provider';
 import type { HaRegistrySnapshot } from './ha-binding-status';
 import { langOf, t, type I18nKey, type Lang } from './i18n';
@@ -33,9 +33,10 @@ class HpDevicePreview extends LitElement {
   public registry?: HaRegistrySnapshot;
   public deviceName = '';
   public language?: Lang;
+  public integrationMetadata?: IntegrationMetadataSource;
 
   private _metadataRelease?: () => void;
-  private _metadataConnection: any = null;
+  private _metadataSource?: IntegrationMetadataSource;
   private _demoUntil = 0;
   private _demoTimer = 0;
   private _demoGeneration = 1;
@@ -53,6 +54,7 @@ class HpDevicePreview extends LitElement {
     registry: { attribute: false },
     deviceName: { attribute: false },
     language: { attribute: false },
+    integrationMetadata: { attribute: false },
   };
 
   public connectedCallback(): void {
@@ -66,7 +68,7 @@ class HpDevicePreview extends LitElement {
   public disconnectedCallback(): void {
     this._metadataRelease?.();
     this._metadataRelease = undefined;
-    this._metadataConnection = null;
+    this._metadataSource = undefined;
     this._clearDemo();
     this._motionMedia?.removeEventListener?.('change', this._onMotionChange);
     this._motionMedia = undefined;
@@ -74,7 +76,7 @@ class HpDevicePreview extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues): void {
-    if (changed.has('hass')) this._ensureMetadata();
+    if (changed.has('hass') || changed.has('integrationMetadata')) this._ensureMetadata();
     const p = this.presentation;
     const previous = changed.get('presentation') as ResolvedDevicePresentation | undefined;
     if (changed.has('presentation') && previous?.binding !== p?.binding) this._clearDemo();
@@ -85,11 +87,17 @@ class HpDevicePreview extends LitElement {
   }
 
   private _ensureMetadata(): void {
-    const connection = this.hass?.connection || null;
-    if (!connection || connection === this._metadataConnection) return;
+    if (!this.isConnected) return;
+    // Direct HA consumers retain their old path; the plan's data projection
+    // receives a dedicated finite reader rather than a transport back door.
+    const source = this.integrationMetadata ?? haIntegrationMetadataSource(this.hass);
+    if (source?.identity === this._metadataSource?.identity) return;
     this._metadataRelease?.();
-    this._metadataConnection = connection;
-    this._metadataRelease = acquireIntegrationMetadata(this.hass, () => this.requestUpdate());
+    this._metadataRelease = undefined;
+    this._metadataSource = source;
+    this._metadataRelease = source?.acquire(() => {
+      if (this.isConnected && this._metadataSource?.identity === source.identity) this.requestUpdate();
+    });
   }
 
   private _clearDemo(): void {
@@ -149,7 +157,7 @@ class HpDevicePreview extends LitElement {
       this.hass,
       this.presentation.binding,
       this.registry,
-      integrationMetadataSnapshot(this.hass),
+      this._metadataSource?.snapshot() ?? integrationMetadataSnapshot(undefined),
     );
   }
 
@@ -217,7 +225,7 @@ class HpDevicePreview extends LitElement {
   private _sourceProvider(eid: string): string {
     if (!this.registry) return this._t('marker.preview.unknown_provider');
     const provider = resolveEntityProvider(
-      this.hass, eid, this.registry, integrationMetadataSnapshot(this.hass),
+      this.hass, eid, this.registry, this._metadataSource?.snapshot() ?? integrationMetadataSnapshot(undefined),
     );
     return provider ? this._providerText(provider) : this._t('marker.preview.unknown_provider');
   }
