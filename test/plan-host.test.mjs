@@ -8,6 +8,14 @@ const deferred = () => { let resolve, reject; const promise = new Promise((a, b)
 const source = (extra = {}) => ({ user: { id: 'a', is_admin: true }, states: {}, callWS: async () => ({}), ...extra });
 const command = { type: 'houseplan/config/get' };
 
+test('#1433 service adapter preserves the three-argument HA call unless a target is supplied', async () => {
+  const calls=[],raw=source({callService(...args){assert.equal(this,raw);calls.push(args);return Promise.resolve('ok');}});
+  const host=new HaPlanHost(raw),data={entity_id:'light.ceiling'},target={area_id:'kitchen'};
+  assert.equal(await host.deviceServices.call('light','turn_on',data),'ok');
+  await host.deviceServices.call('light','turn_off',data,target);
+  assert.deepEqual(calls,[['light','turn_on',data],['light','turn_off',data,target]]);
+});
+
 test('#1392 opaque authority keeps original transport/user identity and multi-card reuse', () => {
   const connection = {}, fallback = {};
   assert.equal(hostAuthorityKey(connection, 'a', fallback), hostAuthorityKey(connection, 'a', {}));
