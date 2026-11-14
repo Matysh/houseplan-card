@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Align the nightly import guard with confirmed writer revocation: require a closed dialog and inert retired Apply handler instead of reading pre-paint DOM (#1426).
 - Keep SHIP-REVIEW bytes stable across tag assignment and publication retries; reproduce legacy tag:null receipts only on an exact frozen-report match, without replacing published assets (#1415).
 - Reserve stable announcement emoji highlights for features, explain their concrete difference from the previous stable, and keep notable bug fixes in optional plain prose (#1425).
 - Clarify stable announcement writing: let significant changes determine length without a feature quota, and exclude internal fixes to new functionality both as separate points and within feature descriptions (#1424).

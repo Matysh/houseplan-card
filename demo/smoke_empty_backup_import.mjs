@@ -329,15 +329,25 @@ try {
   out.disconnectedResponseIgnored = true;
 
   const lost = await start(); await choose(lost.page, fixture()); await ready(lost.page);
+  const retiredApply = await dialog(lost.page).locator('[data-hp="dialog-confirm"]').elementHandle();
   await lost.page.evaluate(async () => {
     window.emptyImportFixture.writer = false;
     // Deliver the actual advertised can_write revocation through an HA config reload.
     window.notifyImportConfig();
     window.__card.hass = { ...window.importHass, states: { ...window.importHass.states } };
   });
-  await lost.page.waitForFunction(() => !window.__card._canImportBackup);
-  assert.equal(await dialog(lost.page).locator('[data-hp="dialog-confirm"]').isDisabled(), true);
-  assert.equal(await applies(lost.page), 0); await cancel(lost.page);
+  // PlanHost revocation retires the import owner and closes its draft (#1392).
+  // A false availability getter precedes Lit paint; it is not a DOM-ready event.
+  // Wait for the actual advertised denial, then exercise the retired DOM handler
+  // as a labelled negative probe, not a claimed native click through the scrim.
+  await lost.page.waitForFunction(() => window.__card._serverCanWrite === false
+    && window.__card.planHost.environment.permissions.write === false);
+  await retiredApply.evaluate(el => el.click());
+  await lost.page.evaluate(() => window.__card.updateComplete);
+  await dialog(lost.page).waitFor({ state: 'detached' });
+  assert.equal(await importButton(lost.page).count(), 0);
+  assert.equal(await lost.page.evaluate(() => window.__card._backupImportDialog), null);
+  assert.equal(await applies(lost.page), 0, 'a retired Apply handler cannot dispatch after writer revocation');
   for (const options of [{ writer: false }, { writer: false, admin: false }, { kiosk: true },
     { fixed: true }, { loading: true }, { unavailable: true }]) {
     const s = await start(options); assert.equal(await importButton(s.page).count(), 0);
