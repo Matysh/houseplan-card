@@ -10,6 +10,7 @@
     "tsBuildInfoFile": "test-build/.tsbuildinfo"
   },
   "include": [
+    "src/plan-host.ts", "src/ha-plan-host.ts",
     "src/mdi-icon-catalog.ts",
     "src/marker-alert.ts",
     "src/marker-alert-config.ts", "src/marker-alert-runtime.ts", "src/marker-alert-source.ts", "src/marker-alert-view-runtime.ts",

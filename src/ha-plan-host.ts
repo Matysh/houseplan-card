@@ -1,0 +1,321 @@
+/** HA is private to this adapter; plan consumers receive the ports in plan-host. */
+import { acquireHaRegistries, haRegistrySnapshot, refreshHaRegistries } from './ha-binding-status';
+import { subscribeExternalScreenConfig } from './external-screens-events';
+import {
+  hostAuthorityKey, hostError, once,
+  type HostAuthorityKey, type HostContentPort, type HostDeviceServices,
+  type HostEnvironment, type HostEvent, type HostHttpPort, type HostPermissions,
+  type HostPresentationContext, type HostRegistrySnapshot, type HostSubscriptionOptions,
+  type HouseplanCommand, type HouseplanHttpPath, type PlanEventName, type PlanHost, type Unsubscribe,
+} from './plan-host';
+
+type UnknownRow = Record<string, unknown>;
+interface HaConnection {
+  connected?: boolean;
+  subscribeEvents?: (receive: (event: unknown) => void, event: string) => Promise<Unsubscribe>;
+  subscribeMessage?: (receive: (event: unknown) => void, command: object) => Promise<Unsubscribe>;
+  addEventListener?: (event: string, receive: () => void) => void;
+  removeEventListener?: (event: string, receive: () => void) => void;
+}
+interface HaSource {
+  connection?: HaConnection;
+  callWS?: (command: object) => Promise<unknown>;
+  callApi?: (method: string, path: string, value?: UnknownRow) => Promise<unknown>;
+  fetchWithAuth?: (path: string, init?: RequestInit) => Promise<Response>;
+  callService?: (domain: string, service: string, data?: Readonly<UnknownRow>, target?: Readonly<UnknownRow>) => Promise<unknown>;
+  auth?: { data?: { access_token?: string } };
+  user?: { id?: string; is_admin?: boolean };
+  states?: HostEnvironment['states'];
+  devices?: HostRegistrySnapshot['devices'];
+  entities?: HostRegistrySnapshot['entities'];
+  areas?: HostRegistrySnapshot['areas'];
+  language?: string;
+  locale?: HostPresentationContext['locale'];
+  localize?: HostPresentationContext['localize'];
+  themes?: HostPresentationContext['themes'];
+  config?: { time_zone?: string; unit_system?: HostEnvironment['units'] };
+}
+interface Lease { key: HostAuthorityKey; revision: number; rights: string }
+const EMPTY = Object.freeze({});
+const row = (value: unknown): value is UnknownRow => !!value && typeof value === 'object' && !Array.isArray(value);
+const httpError = (value: unknown, status: number): Error & { code: string } => {
+  if (status === 401 || status === 403) return hostError('unauthorized');
+  if (status === 413) return hostError('too_large');
+  const code = row(value) ? value.error ?? value.code : undefined;
+  return hostError(typeof code === 'string' && /^[a-z][a-z0-9_-]{0,63}$/.test(code)
+    ? code : status === 404 ? 'upload_unavailable' : 'upload_failed');
+};
+function checkedPath(path: HouseplanHttpPath): void {
+  const url = new URL(path, 'https://houseplan.invalid');
+  if (url.origin !== 'https://houseplan.invalid' || !url.pathname.startsWith('/api/houseplan/') || url.hash)
+    throw hostError('invalid_payload');
+}
+function assertNotAborted(signal?: AbortSignal | null): void {
+  if (signal?.aborted) throw new DOMException('Houseplan request cancelled', 'AbortError');
+}
+
+export class HaPlanHost implements PlanHost {
+  private source: HaSource = {};
+  private readonly fallback = {};
+  private key: HostAuthorityKey = hostAuthorityKey(undefined, undefined, this.fallback);
+  private writeRevision = 0;
+  private revision = 0;
+  private serverWrite: boolean | null = null;
+  private permissionSignature = '';
+  private readonly listeners = new Set<() => void>();
+  private readonly subscriptions = new Set<Unsubscribe>();
+  private registryRelease?: Unsubscribe;
+  private connectionRelease?: Unsubscribe;
+  private runtimeKey?: HostAuthorityKey;
+  private runtimeOwner?: object;
+  private snapshot!: HostEnvironment;
+
+  constructor(source: unknown) { this.update(source); }
+  get authorityKey(): HostAuthorityKey { return this.key; }
+  get writeAuthorityRevision(): number { return this.writeRevision; }
+  get environmentRevision(): number { return this.revision; }
+  get environment(): HostEnvironment { return this.snapshot; }
+
+  /** Legacy getters do not turn every lookup into another environment tick. */
+  synchronize(): void {
+    const registry = this.registrySnapshot();
+    if (this.identity() !== this.key || this.rights() !== this.permissionSignature
+        || this.connected() !== this.snapshot.connected
+        || (this.source.states ?? EMPTY) !== this.snapshot.states
+        || (this.source.areas ?? EMPTY) !== this.snapshot.registry.areas
+        || this.source.language !== this.snapshot.presentation.language
+        || this.source.locale !== this.snapshot.presentation.locale
+        || this.source.themes !== this.snapshot.presentation.themes
+        || this.source.config?.time_zone !== this.snapshot.timeZone
+        || (this.source.config?.unit_system ?? EMPTY) !== this.snapshot.units
+        || registry.revision !== this.snapshot.registry.revision
+        || registry.devices !== this.snapshot.registry.devices || registry.entities !== this.snapshot.registry.entities)
+      this.update(this.source);
+  }
+
+  private identity(): HostAuthorityKey {
+    return hostAuthorityKey(this.source.connection ?? this.source.callWS, this.source.user?.id, this.fallback);
+  }
+  private permissions(): HostPermissions {
+    const admin = this.source.user?.is_admin === true;
+    return { read: typeof this.source.callWS === 'function', write: this.serverWrite ?? admin, admin };
+  }
+  private rights(): string { const p = this.permissions(); return `${p.read}:${p.write}:${p.admin}`; }
+  private connected(): boolean { return typeof this.source.callWS === 'function' && this.source.connection?.connected !== false; }
+  private registrySnapshot(): HostRegistrySnapshot {
+    const registry = haRegistrySnapshot(this.source);
+    return {
+      ...registry,
+      devices: registry.authoritative ? registry.devices : this.source.devices ?? EMPTY,
+      entities: registry.authoritative ? registry.entities : this.source.entities ?? EMPTY,
+      areas: this.source.areas ?? EMPTY,
+    };
+  }
+
+  /** Every HA assignment is an environment tick, including reused objects. */
+  update(value: unknown): void {
+    const before = this.permissionSignature, previousKey = this.key;
+    this.source = row(value) ? value as HaSource : {};
+    this.key = this.identity();
+    if (this.key !== previousKey) this.serverWrite = null;
+    if (this.key !== previousKey || before !== this.rights()) this.writeRevision++;
+    if (this.key !== previousKey) {
+      this.releaseSubscriptions();
+      this.releaseRuntime();
+    }
+    this.publish();
+    if (this.listeners.size) this.acquireRuntime();
+  }
+
+  /** The accepted server permission is distinct from an HA admin hint. */
+  setServerWrite(value: boolean | null): void {
+    if (this.serverWrite === value) return;
+    const before = this.permissionSignature;
+    this.serverWrite = value;
+    if (before !== this.rights()) this.writeRevision++;
+    this.publish();
+  }
+
+  private publish(): void {
+    this.permissionSignature = this.rights();
+    const registry = this.registrySnapshot();
+    // Never spread source: this exact four-field value is the UI bridge.
+    const presentation: HostPresentationContext = Object.freeze({
+      language: this.source.language, locale: this.source.locale,
+      localize: this.source.localize ? this.localize : undefined, themes: this.source.themes,
+    });
+    this.snapshot = Object.freeze({
+      ready: typeof this.source.callWS === 'function', connected: this.connected(),
+      userId: this.source.user?.id, permissions: Object.freeze(this.permissions()),
+      timeZone: this.source.config?.time_zone, units: this.source.config?.unit_system ?? EMPTY,
+      states: this.source.states ?? EMPTY,
+      registry: Object.freeze(registry),
+      presentation,
+    });
+    this.revision++;
+    for (const receive of [...this.listeners]) receive();
+  }
+  private readonly localize = (key: string, ...args: unknown[]): string | undefined =>
+    this.source.localize?.call(this.source, key, ...args);
+
+  subscribeEnvironment(receive: () => void): Unsubscribe {
+    let live = true;
+    const listener = () => { if (live) receive(); };
+    this.listeners.add(listener);
+    this.acquireRuntime();
+    return once(() => {
+      live = false;
+      this.listeners.delete(listener);
+      if (!this.listeners.size) this.releaseRuntime();
+    });
+  }
+  private acquireRuntime(): void {
+    if (this.runtimeKey === this.key) return;
+    this.releaseRuntime();
+    this.runtimeKey = this.key;
+    const connection = this.source.connection, key = this.key, owner = {};
+    this.runtimeOwner = owner;
+    if (!connection) return;
+    const notify = () => { if (this.key === key && this.runtimeOwner === owner) this.publish(); };
+    const ready = () => {
+      if (this.key !== key || this.runtimeOwner !== owner) return;
+      refreshHaRegistries(this.source, { connectionReady: true });
+      notify();
+    };
+    connection.addEventListener?.('ready', ready);
+    connection.addEventListener?.('disconnected', notify);
+    connection.addEventListener?.('reconnect-error', notify);
+    this.connectionRelease = once(() => {
+      connection.removeEventListener?.('ready', ready);
+      connection.removeEventListener?.('disconnected', notify);
+      connection.removeEventListener?.('reconnect-error', notify);
+    });
+    if (typeof connection.subscribeEvents === 'function')
+      this.registryRelease = acquireHaRegistries(this.source, notify);
+  }
+  private releaseRuntime(): void {
+    const registry = this.registryRelease, connection = this.connectionRelease;
+    this.registryRelease = undefined;
+    this.connectionRelease = undefined;
+    this.runtimeKey = undefined;
+    this.runtimeOwner = undefined;
+    try { registry?.(); } finally { connection?.(); }
+  }
+  private releaseSubscriptions(): void {
+    for (const release of [...this.subscriptions]) {
+      try { release(); } catch { /* Retire other owners even if one transport cleanup failed. */ }
+    }
+  }
+
+  private lease(): Lease {
+    if (!this.connected()) throw hostError('not_ready');
+    return { key: this.identity(), revision: this.writeRevision, rights: this.rights() };
+  }
+  private assert(lease: Lease): void {
+    if (this.identity() !== lease.key || this.writeRevision !== lease.revision || this.rights() !== lease.rights)
+      throw hostError('context-changed');
+  }
+  private async owned<Result>(lease: Lease, run: () => Promise<Result>, signal?: AbortSignal | null): Promise<Result> {
+    try {
+      this.assert(lease); assertNotAborted(signal);
+      if (!this.connected()) throw hostError('not_ready');
+      const result = await run();
+      this.assert(lease); assertNotAborted(signal); return result;
+    }
+    catch (error) { this.assert(lease); assertNotAborted(signal); throw error; }
+  }
+  async request<Result = unknown>(command: HouseplanCommand): Promise<Result> {
+    if (!row(command) || typeof command.type !== 'string' || !command.type.startsWith('houseplan/'))
+      throw hostError('invalid_payload');
+    const lease = this.lease(), source = this.source;
+    return this.owned(lease, () => source.callWS!.call(source, command)) as Promise<Result>;
+  }
+
+  async subscribe(event: PlanEventName, receive: (event: HostEvent) => void | Promise<void>,
+    options?: HostSubscriptionOptions): Promise<Unsubscribe> {
+    const lease = this.lease(), connection = this.source.connection;
+    if (!connection?.subscribeEvents) throw hostError('not_ready');
+    let live = true, remove: Unsubscribe | undefined;
+    const release = once(() => {
+      live = false; this.subscriptions.delete(release); remove?.();
+    });
+    const forward = (value: unknown) => {
+      if (live && this.identity() === lease.key && this.writeRevision === lease.revision
+          && this.rights() === lease.rights) return receive(value as HostEvent);
+    };
+    const port = {
+      subscribeEvents: (callback: (event: unknown) => void, name: string) => connection.subscribeEvents!.call(connection, callback, name),
+      subscribeMessage: connection.subscribeMessage
+        ? (callback: (event: unknown) => void, command: object) => connection.subscribeMessage!.call(connection, callback, command) : undefined,
+    };
+    try {
+      remove = event === 'houseplan_config_updated'
+        ? await subscribeExternalScreenConfig(port, options?.externalScreens?.enabled === true,
+          options?.externalScreens?.baseRevision ?? 0, data => forward({ data }))
+        : await port.subscribeEvents(forward, event);
+      this.assert(lease);
+      this.subscriptions.add(release);
+      return release;
+    } catch (error) { release(); throw error; }
+  }
+
+  readonly http: HostHttpPort = {
+    request: async (path, init) => {
+      checkedPath(path);
+      assertNotAborted(init?.signal);
+      const lease = this.lease(), source = this.source;
+      if (source.fetchWithAuth) return this.owned(lease, () => source.fetchWithAuth!.call(source, path, init), init?.signal);
+      const headers = new Headers(init?.headers), token = source.auth?.data?.access_token;
+      if (token) headers.set('authorization', `Bearer ${token}`);
+      return this.owned(lease, () => fetch(path, { ...init, headers }), init?.signal);
+    },
+    postJson: async (path, value, signal) => {
+      checkedPath(path);
+      assertNotAborted(signal);
+      const lease = this.lease(), source = this.source;
+      if (source.fetchWithAuth) {
+        const response = await this.owned(lease, () => source.fetchWithAuth!.call(source, path, {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(value), signal,
+        }), signal);
+        let data: unknown;
+        try { data = await this.owned(lease, () => response.json(), signal); }
+        catch (error) { this.assert(lease); if ((error as Error)?.name === 'AbortError') throw error; throw httpError(undefined, response.status); }
+        if (!response.ok) throw httpError(data, response.status);
+        return data;
+      }
+      if (!source.callApi) throw hostError('upload_unavailable');
+      try { return await this.owned(lease, () => source.callApi!.call(source, 'POST', path.slice('/api/'.length), value), signal); }
+      catch (error) {
+        this.assert(lease);
+        if (row(error) && (error.status_code !== undefined || error.body !== undefined))
+          throw httpError(error.body, typeof error.status_code === 'number' ? error.status_code : 0);
+        throw error;
+      }
+    },
+  };
+  readonly content: HostContentPort = {
+    resolve: async paths => {
+      const result = await this.request<{ urls?: unknown }>({ type: 'houseplan/content/sign', paths: [...paths] });
+      const urls = row(result?.urls) ? result.urls : EMPTY;
+      return Object.fromEntries(paths.flatMap(path => typeof urls[path] === 'string' && urls[path] ? [[path, urls[path] as string]] : []));
+    },
+  };
+  get deviceServices(): HostDeviceServices | undefined {
+    if (typeof this.source.callService !== 'function') return undefined;
+    return { call: (domain, service, data, target) => {
+      const lease = this.lease(), source = this.source;
+      if (!source.callService) return Promise.reject(hostError('not_ready'));
+      return this.owned(lease, () => source.callService!.call(source, domain, service, data, target));
+    } };
+  }
+}
+
+/** Compatibility for remaining HA-only consumers; never hand its source back. */
+const adapters = new WeakMap<object, HaPlanHost>();
+export function haPlanHost(source: unknown): HaPlanHost {
+  if (!row(source)) return new HaPlanHost(source);
+  let host = adapters.get(source);
+  if (!host) { host = new HaPlanHost(source); adapters.set(source, host); }
+  else host.synchronize();
+  return host;
+}

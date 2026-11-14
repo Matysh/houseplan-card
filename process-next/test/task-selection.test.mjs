@@ -40,6 +40,13 @@ test('#1395 explicit input policies select critical security ingress regressions
         assert.ok(JSON.stringify(selection).includes(path), path);
     }
 }));
+test('#1392 plan host ports inherit transport/storage and environment lifecycle coverage', () => {
+    for (const path of ['src/plan-host.ts', 'src/ha-plan-host.ts', 'test/plan-host.test.mjs']) {
+        assert.ok(domainsOf(path).includes('storage'), path);
+        assert.ok(domainsOf(path).includes('runtime'), path);
+    }
+    assert.deepEqual(domainsOf('src/future-host.ts'), []);
+});
 test('#1391 extracted core owners and its addressed readers have inherited domains', () => {
     for (const file of ['custom_components/houseplan/core/constants.py',
         'custom_components/houseplan/core/ports.py', 'custom_components/houseplan/core/file_usage.py',
