@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12669,
+  "revision": 12670,
   "nextTicket": 449,
   "nextFence": 449,
   "tasks": {
@@ -5124,6 +5124,10 @@
       "digest": "4d6d896a8ec0513fa5bbb1007e7221618f36092eebc323433c8694aad27573ad",
       "issue": 1422
     },
+    "finish:0b329fa5-5a14-4391-bbc5-8c822ad894a1:finish:3:s6-label": {
+      "digest": "bfeb1ebcc23afd36c59afb8bc2c2ad60c6d03e1687ec0c144eac552fac759e97",
+      "issue": 1422
+    },
     "github:43585981218:1:label:spec-request:spec-resubmitted:1422": {
       "digest": "d998f9ec725ce29d87b3a07da777a510b97207d472a00cf0edb653c77f103841",
       "issue": 1422,
@@ -5332,7 +5336,8 @@
         "resubmission": false,
         "reviewChanges": "### Цель и результат\nРеализован отдельный opt-in presentation owner без HA frontend. Нормальные entrypoints его не импортируют. Полный standalone entry и положительный persistence/portable journey относятся к #1423, а не к этому wire fixture.\n\n### Решение и альтернативы\nРовно три локальных компонента с прежними совместимыми именами; native HpDialog/Form Kit остаются общими. Registry проверяется атомарно до define, чужие определения/HA root отвергаются. Theme API синхронно публикует только четыре разрешённых presentation поля и восстанавливает CSS при ошибке. Конечная карта MDI 7.4.47 генерируется из запертого пакета, без сетевого icon loader. Переписывать существующие шаблоны или заимствовать HA bootstrap не потребовалось.\n\n### Риски и места для внимания\nИзоляция custom-element registry, динамические SVG, границы theme ownership и native modal lifecycle. В native мобильной оболочке исправлено растяжение двухстрочного grid навигации: форма больше не делит свободную высоту поровну между селектором и содержимым; правило исключает ha-dialog-shell. HA ветка не меняется. Build helper — только диагностическая сборка общего графа, не будущая публичная поставка. В тестовом PlanHost зафиксировано синхронное обновление presentation/revision без hass.\n\n### Проверки и ограничения\nАдресные Node проверки — 57/57, включая 11 API/registry/theme/icon контрактов. Native browser проходит настоящие формы, четыре языка, темы/ширины, nested select/color, focus/dirty/discard/return, числовые поля/range/disabled, cold-language progress, reduced-motion, disposal и восемь независимых registry collisions. Лог и candidate PNG: artifacts/standalone-presentation; это не принятые эталоны. Два прежних HA harness кадра прошли verify: panel-wide-view-light-en (0 diff px), panel-wide-plan-editor-dark-en (426 px, 0.0416%, в существующем допуске). Нельзя выдавать их за проверку установленного реального HA.\n\nWire fixture доказывает UI/порты, не domain validation, долговечность или переносимость файлов. Мутации и release-профиль не запускались. Решение по real-HA E2E: Matysh/houseplan-e2e#57, новый сценарий не нужен для изолированного adapter. Никакие личные данные, UI Lab владельца, эталоны и установленный frontend snapshot не изменялись.\n\nПервый полный S6 после rebase: 635/636 шагов прошли. Единственный отказ — статический smoke-exception guard не распознавал уже существующую launchPanelCold как обёртку общего launchInternal/watchPage. Добавлено это конкретное имя и явная проверка владельца; исключения по-прежнему учитывает общий guard, новый bypass не вводился. Адресный красный результат воспроизведён, после исправления 4/4. В повторной передаче используется штатное повторное использование зелёных результатов.\n\n### Принятое ТЗ\nРедакция 2 принята в S4: https://github.com/Matysh/houseplan-card/actions/runs/43586014287. Исправления первого spec review сохранены в теле ТЗ: ru/en/de/fr, конечный localize bridge, language-neutral progress с исходным inert/aria-busy, общий UI Kit и строгая document isolation.",
         "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review"
+        "toStatus": "S7-code-review",
+        "transitionConfirmed": true
       }
     }
   },
