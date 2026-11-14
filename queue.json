@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 12344,
-  "nextTicket": 440,
+  "revision": 12345,
+  "nextTicket": 441,
   "nextFence": 440,
   "tasks": {
     "1024": {
@@ -3570,14 +3570,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1394-plan-capabilities",
-      "materialSha": "ac441a9504b32f49a94b7a778569501672b4f26c",
+      "materialSha": "3460dfec1328ed19fe9641d3227a9f8b3b10b64b",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 438,
-      "queued": false,
+      "ticket": 440,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794637588347,
-      "reviewEntry": 5,
+      "readyAt": 1794639037569,
+      "reviewEntry": 6,
       "patchId": "b7411af254115204f3d6094f266cfc0916b7c377",
       "changedFiles": [
         "demo/smoke_plan_host.mjs",
@@ -3649,13 +3649,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1394:5:b7411af254115204f3d6094f266cfc0916b7c377:a9e4a01420c02318a725157c49d4b9b2e23599c4",
-      "reviewMaterial": {
-        "materialSha": "ac441a9504b32f49a94b7a778569501672b4f26c",
-        "expectedBase": "a9e4a01420c02318a725157c49d4b9b2e23599c4",
-        "patchId": "b7411af254115204f3d6094f266cfc0916b7c377"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1394:5:b7411af254115204f3d6094f266cfc0916b7c377:a9e4a01420c02318a725157c49d4b9b2e23599c4",
         "at": 1794638558012
@@ -4925,7 +4918,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1394
+  ],
   "active": null,
   "events": {
     "github:43515058065:1:spec:1394:spec-request": {
@@ -5470,6 +5465,28 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:33b0de64-bd0b-4217-920c-ae07166a2f02": {
+      "digest": "bb928a8d5660d36c3c3f3064b9d06d30fb88ac0bca037da951954d6f152d4fac",
+      "issue": 1394,
+      "message": {
+        "kind": "queued",
+        "issue": 1394,
+        "at": 1794639037569,
+        "entry": 6,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "3460dfec1328ed19fe9641d3227a9f8b3b10b64b",
+        "evidence": {
+          "id": "20261114T062645192-53956233",
+          "name": "Тесты для задачи #1394 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T062645192-53956233/report.json",
+          "materialSha": "ac441a9504b32f49a94b7a778569501672b4f26c",
+          "status": "passed",
+          "finishedAt": "2026-11-14T06:34:59.577Z",
+          "failures": []
+        }
       }
     }
   },
