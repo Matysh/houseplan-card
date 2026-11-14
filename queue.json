@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14081,
+  "revision": 14082,
   "nextTicket": 481,
   "nextFence": 481,
   "tasks": {
@@ -4831,6 +4831,110 @@
         "at": 1794696364055,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1447,
+        "requestId": "review:1447:2:512658d95a820008acc96e8b767bd95df80399cf:98ceda7f4d6517050c929536263c426f0dfbac1d",
+        "kind": "code",
+        "base": "98ceda7f4d6517050c929536263c426f0dfbac1d",
+        "materialSha": "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
+        "patchId": "512658d95a820008acc96e8b767bd95df80399cf",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1447,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1447",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "В `selectionListCss` прозрачная рамка резервируется для всех кнопочных строк, а не только enabled; правила hover/фокуса остаются enabled-only. FormKit компенсирует рамку только у своих двух известных button/cand плотностей: 8/10px → 7/9px вне panel, 10/12px → 9/11px внутри panel, правый запас 36 → 35px. Абсолютная галочка получает inset11 вместо12, сохраняя прежнее положение с новым содержащим border-box. Не меняются цвета, single-border/Tab политика, API функций, min-height44 и некнопочные строки. Универсальное вычитание padding в selectionList отвергнуто: он не владеет плотностью произвольного потребителя.\n\nНовый `smoke_choice_row_geometry_1447` использует настоящий more-info picker исходной golden-сцены в четырёх сочетаниях mobile/desktop × light/dark. Проверяются прежние62px, координаты текста/галочки против независимого старого borderless CSS на этих же элементах, enabled/disabled/aria-disabled геометрия, настоящий hover/Tab/Shift+Tab без outline/box-shadow. Отдельно проверены длинная подпись без overflow и legacy генератор на кнопочных/некнопочных native-строках. Адресный native PASS, `test/form-kit.test.mjs` 9/9 PASS. Снимки legacy не пересняты: добавлена только явная ограниченная дельта border compensation к прежней совместимости.\n\nПрежний `panel-more-info-dialog-mobile-ru` golden: 0px diff, maxDelta0, SHA `dd704bedc41521c78351ecd0e20b2c756493a06b245c6146c2b2360d16632c97`, побайтовое совпадение с существующим PNG; actual просмотрен. Отчёт: `artifacts/process-next/golden-panel-more-info-dialog-mobile-ru/golden-report.json`. Никакие PNG/эталоны не менялись. Штатный S6 далее выполняется через finish, результаты поступают автоматически; этот адресный golden не выдается за полный выпуск.\n\nE2E после поиска: https://github.com/Matysh/houseplan-e2e/issues/69 — новый HA E2E не нужен для чистой CSS-геометрии, фиксированные beta E2E/visual сохраняются. Ledger line-fix: устранение непреднамеренного изменения невыпущенного #1428, без пользовательского milestone. Особое внимание ревью: каскад enabled/disabled и граница button vs non-button, абсолютная галочка, сохранение legacy API. Touch View поддерживается, редакторы остаются desktop-first/best effort; новых взаимодействий нет.\n\nПервый штатный S6 вернул задачу на S6 без код-ревью: `test/bundle-assets.test.mjs` #526 обнаружил поясняющий комментарий внутри динамической CSS-строки, который попадал в bundle. Комментарий перенесён за пределы генерируемой строки в TypeScript; CSS-правила и геометрия не менялись. Исторические snapshots по-прежнему не переписывались. Повторяются затронутые bundle/FormKit/native/golden и штатный S6; его итог передаётся автоматически. Исходный отказ не скрывается: run `20261114T221431556-b09ca965`."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Принимаю: исправление решает задачу и не задевает другие пути, блокеров нет. После #1428 у кнопочных строк `.hpf-cand` появилась рамка 1px, и строки стали на 2px выше (в панели 62→64px). Теперь FormKit уменьшает отступы своих кнопочных строк ровно на ширину рамки. Получились прежние 62px в панели, на прежних местах текст и галочка, сохранён min-height 44. Заодно устранено расхождение между enabled и disabled: раньше рамку получали только включённые строки, и disabled/aria-disabled строки были на 2px ниже. Теперь рамка зарезервирована у всех кнопочных строк, а hover и Tab по-прежнему работают только для включённых. Другие потребители `selectionListCss` (`hp-settings-select`, `hp-icon-picker`) используют `div[role=option]`, поэтому изменение их не затрагивает. Единственный побочный эффект — снижение специфичности правила `outline:none`. Он проявляется только в legacy-форме FormKit без параметризации, которую продукт не использует; описан в improvements.",
+          "understanding": "Проблема: в #1428 `selectionListCss` начал задавать `border:1px solid transparent` включённым кнопочным строкам. FormKit при этом сохранил прежние отступы: 8/10px вне панели, 10/12px (+36px справа) внутри `.hpf-panel`. Рамка добавила 2px к высоте, и golden `panel-more-info-dialog-mobile-ru` разошёлся с эталоном на 2.28%. Выключенные строки рамки не получали, то есть размер зависел от состояния.\n\nЧто изменилось:\n1) В `selection-list.styles.ts:18` правило с рамкой, `box-sizing`, `outline:none` и `box-shadow:none` перенесено с `${enabled}:is(button)` на `${item}:is(button)`. Рамка теперь есть у всех кнопочных строк. Подсветка при hover и фокусе (строки 14–15, 19) по-прежнему только для `enabled`.\n2) В `form-kit.styles.ts:592–594` FormKit компенсирует рамку в двух своих плотностях: `.hpf-cand:is(button){padding:7px 9px}` и `.hpf-panel .hpf-cand:is(button){padding:9px 35px 9px 11px}`. Абсолютная галочка сдвинута на `inset-inline-end:11px`: она отсчитывается от padding-box, поэтому 1px рамки + 11px дают прежние 12px от края. По вертикали `top:50%` от padding-box высотой 60px совпадает с центром строки высотой 62px.\n\nЧто я разобрал:\n- Специфичность и порядок правил: `.hpf-cand` (0,1,0) с `border:0`, `.hpf-panel .hpf-cand` (0,2,0), правило рамки (0,1,1), компенсирующие правила (0,1,1) и (0,2,1). Компенсация в панели перекрывает и `padding:10px 12px`, и более позднее `padding-inline-end:36px`, независимо от порядка листов.\n- Граница между кнопочными и некнопочными строками: `div[role=option]` не попадает ни под рамку, ни под компенсацию.\n- Другие потребители `selectionListCss`: `hp-settings-select.ts:104` и `hp-icon-picker.ts:120` строят строки из `div`, их геометрия не меняется.\n- Места, где строки отрисовываются: `form-kit.ts:709` (сюда входит more-info picker из `marker-more-info.ts`) и `marker-dialog.ts:395/473`.\n- Совместное подключение листа настроек (`ensureSettingsDialogStyles` в `marker-dialog.ts:62`). `settingsFormKitCss` вызывает `formKitCss` с `recipes` и потому содержит только токены и рецепты (`form-kit.styles.ts:653`), а не общие и extras-правила. Он не возвращает ни `padding:10px 12px`, ни `button:focus-visible{outline}`.",
+          "analysis": [
+            {
+              "topic": "Каскад enabled/disabled и граница button / non-button",
+              "assessment": "Решение корректное. Рамку резервирует общий компонент для любого кнопочного `item`, а hover и Tab остаются только для включённых строк, поэтому состояние больше не влияет на размер. Специфичность (0,1,1) выше, чем у `.hpf-cand{border:0}` (0,1,0), так что рамка не сбрасывается и в листе настроек, который подключается позже. Некнопочные `role=option` в select и icon picker не затронуты: их потребители строят строки из `div`.",
+              "evidence": "`src/styles/selection-list.styles.ts:7,14-20`; `src/styles/form-kit.styles.ts:585,587`; `src/hp-settings-select.ts:104`; `src/editors/hp-icon-picker.ts:120`."
+            },
+            {
+              "topic": "Владелец плотности и компенсация отступов",
+              "assessment": "Компенсация сделана в FormKit, которому принадлежат обе плотности. Это правильнее, чем универсально вычитать отступ в `selectionListCss`: тот не знает, какие отступы у произвольного потребителя. Добавление `:is(button)` поднимает специфичность (0,1,1)/(0,2,1) над исходными (0,1,0)/(0,2,0), поэтому правила работают при любом порядке листов и перекрывают отдельное `padding-inline-end:36px` на строке 590. Цена — второе место, где записаны числа 8/10 и 10/12: если исходный отступ изменят, компенсацию придётся править вручную. Риск ограничен, его ловит снимок в `test/form-kit.test.mjs`.",
+              "evidence": "`src/styles/form-kit.styles.ts:585,587,590-594`; `test/form-kit.test.mjs:64-68`."
+            },
+            {
+              "topic": "Абсолютная галочка",
+              "assessment": "Положение сохранено. Абсолютно позиционированный элемент отсчитывается от padding-box строки (`position:relative` в панели), поэтому после появления рамки нужно `inset-inline-end:11px`, чтобы до внешнего края осталось 12px. По вертикали: центр padding-box высотой 60px смещён на 1px рамки и совпадает с центром border-box высотой 62px. Смещение применяется только к кнопочным строкам в панели — там же, где есть рамка.",
+              "evidence": "`src/styles/form-kit.styles.ts:590-591,594`; smoke сравнивает координаты галочки с прежним CSS без рамки (`demo/smoke_choice_row_geometry_1447.mjs:35-44`)."
+            },
+            {
+              "topic": "Снижение специфичности `outline:none`/`box-shadow:none`",
+              "assessment": "Вместе с рамкой эти свойства перенесены на селектор (0,1,1) с прежнего (0,3,1). В продуктовой параметризованной форме это ничего не меняет: `hp-dialog .hpf-form button{outline:none}` даёт то же значение, а лист настроек не содержит generic focus-правил. В legacy-форме без параметризации `formKitFocusCss` задаёт `hp-dialog .hpf-form button:focus-visible{outline:2px}` (0,2,2), и теперь это правило перебивает подавление outline у строк `.hpf-cand`. В продукте такой лист не применяется: его используют только тесты и demo. До #1428 legacy-снимок и так рисовал outline у `.hpf-cand`, поэтому это не регрессия продукта, а неточность совместимости.",
+              "evidence": "`src/styles/form-kit.styles.ts:105-121,653`; `src/form-kit-styles.ts:10` (`parameterized: true`); `src/styles/form-kit-settings.styles.ts:4` (только `recipes`)."
+            },
+            {
+              "topic": "Проверки",
+              "assessment": "Smoke построен удачно, его стоит сохранить. Он работает с настоящим more-info picker на четырёх сочетаниях: mobile/desktop × светлая/тёмная тема. В качестве эталона он берёт прежний CSS без рамки на тех же DOM-элементах, а не новый PNG. Проверяются disabled/aria-disabled, hover, Tab и Shift+Tab без outline/box-shadow, длинная подпись и min 44px, а в отдельном iframe — legacy-генератор на кнопочной и некнопочной строке. Адресный golden, по словам автора, совпадает побайтово. Штатный S6 `20261114T223809098-3491c29d` завершился со статусом passed на `705bc3f`.",
+              "evidence": "`demo/smoke_choice_row_geometry_1447.mjs:28-92`; квитанция S6 в снимке задачи."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "В `selection-list.styles.ts:18` можно разделить правило на два: `${item}:is(button){box-sizing:border-box;border:1px solid transparent}` для резервирования рамки и прежнее `${enabled}:is(button){outline:none;box-shadow:none}` (у disabled-строк подавление и так есть на строке 20). Тогда подавление outline сохранит прежнюю специфичность (0,3,1), и в legacy-генераторе `formKitCss(CARD_DIALOG_FORM_KIT)` у кнопочных `.hpf-cand` не вернётся outline с `button:focus-visible`. Цена — одно дополнительное правило. Выгода — точное сохранение прежнего фокусного поведения в legacy API, о сохранении которого просит ТЗ. Продукт этот случай не затрагивает.",
+            "Комментарий о компенсации стоит над функцией `extrasCss` (`form-kit.styles.ts:311-312`), почти в 300 строках от самих правил (592–594). Его можно перенести в TypeScript-разметку рядом с местом генерации правил, не внутрь CSS-строки (#526), или дописать в нём числа (8/10 и 10/12 → минус 1px рамки), чтобы при правке исходного отступа было видно, что компенсацию нужно обновить."
+          ],
+          "boundaries": "Сборку, тесты, smoke и golden я не запускал: на S7 ревью делается только по исходникам. Использован результат S6 `20261114T223809098-3491c29d` (passed на `705bc3fd`). Отчёт адресного golden автора (0px diff) я не открывал и пересказываю как его утверждение. Каскад и специфичность разобраны по исходникам: `selection-list.styles.ts`, `form-kit.styles.ts` (фокус, extras, `formKitCss` с `recipes`), `form-kit-settings.styles.ts`, `settings-styles.ts`, `settings-dialogs.styles.ts` (правила для кнопок), потребители `hp-settings-select.ts`, `hp-icon-picker.ts`, а также `marker-dialog.ts` и `form-kit.ts`, где отрисовываются строки. Вывод о том, что по умолчанию у `button` в Chromium `box-sizing:border-box`, на этом снимке не проверял; он не важен, потому что правило рамки само задаёт border-box. Поведение в HA и в других браузерах не проверялось.",
+          "outsideFindings": []
+        },
+        "usage": {
+          "input_tokens": 46,
+          "cache_creation_input_tokens": 72373,
+          "cache_read_input_tokens": 987088,
+          "output_tokens": 17038,
+          "output_tokens_details": {
+            "thinking_tokens": 9522
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 72373,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 832,
+              "cache_read_input_tokens": 63318,
+              "cache_creation_input_tokens": 13259,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 13259
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nПринимаю: исправление решает задачу и не задевает другие пути, блокеров нет. После #1428 у кнопочных строк `.hpf-cand` появилась рамка 1px, и строки стали на 2px выше (в панели 62→64px). Теперь FormKit уменьшает отступы своих кнопочных строк ровно на ширину рамки. Получились прежние 62px в панели, на прежних местах текст и галочка, сохранён min-height 44. Заодно устранено расхождение между enabled и disabled: раньше рамку получали только включённые строки, и disabled/aria-disabled строки были на 2px ниже. Теперь рамка зарезервирована у всех кнопочных строк, а hover и Tab по-прежнему работают только для включённых. Другие потребители `selectionListCss` (`hp-settings-select`, `hp-icon-picker`) используют `div[role=option]`, поэтому изменение их не затрагивает. Единственный побочный эффект — снижение специфичности правила `outline:none`. Он проявляется только в legacy-форме FormKit без параметризации, которую продукт не использует; описан в improvements.\n\n## Понимание решения\n\nПроблема: в #1428 `selectionListCss` начал задавать `border:1px solid transparent` включённым кнопочным строкам. FormKit при этом сохранил прежние отступы: 8/10px вне панели, 10/12px (+36px справа) внутри `.hpf-panel`. Рамка добавила 2px к высоте, и golden `panel-more-info-dialog-mobile-ru` разошёлся с эталоном на 2.28%. Выключенные строки рамки не получали, то есть размер зависел от состояния.\n\nЧто изменилось:\n1) В `selection-list.styles.ts:18` правило с рамкой, `box-sizing`, `outline:none` и `box-shadow:none` перенесено с `${enabled}:is(button)` на `${item}:is(button)`. Рамка теперь есть у всех кнопочных строк. Подсветка при hover и фокусе (строки 14–15, 19) по-прежнему только для `enabled`.\n2) В `form-kit.styles.ts:592–594` FormKit компенсирует рамку в двух своих плотностях: `.hpf-cand:is(button){padding:7px 9px}` и `.hpf-panel .hpf-cand:is(button){padding:9px 35px 9px 11px}`. Абсолютная галочка сдвинута на `inset-inline-end:11px`: она отсчитывается от padding-box, поэтому 1px рамки + 11px дают прежние 12px от края. По вертикали `top:50%` от padding-box высотой 60px совпадает с центром строки высотой 62px.\n\nЧто я разобрал:\n- Специфичность и порядок правил: `.hpf-cand` (0,1,0) с `border:0`, `.hpf-panel .hpf-cand` (0,2,0), правило рамки (0,1,1), компенсирующие правила (0,1,1) и (0,2,1). Компенсация в панели перекрывает и `padding:10px 12px`, и более позднее `padding-inline-end:36px`, независимо от порядка листов.\n- Граница между кнопочными и некнопочными строками: `div[role=option]` не попадает ни под рамку, ни под компенсацию.\n- Другие потребители `selectionListCss`: `hp-settings-select.ts:104` и `hp-icon-picker.ts:120` строят строки из `div`, их геометрия не меняется.\n- Места, где строки отрисовываются: `form-kit.ts:709` (сюда входит more-info picker из `marker-more-info.ts`) и `marker-dialog.ts:395/473`.\n- Совместное подключение листа настроек (`ensureSettingsDialogStyles` в `marker-dialog.ts:62`). `settingsFormKitCss` вызывает `formKitCss` с `recipes` и потому содержит только токены и рецепты (`form-kit.styles.ts:653`), а не общие и extras-правила. Он не возвращает ни `padding:10px 12px`, ни `button:focus-visible{outline}`.\n\n## Разбор решения\n\n### Каскад enabled/disabled и граница button / non-button\n\nРешение корректное. Рамку резервирует общий компонент для любого кнопочного `item`, а hover и Tab остаются только для включённых строк, поэтому состояние больше не влияет на размер. Специфичность (0,1,1) выше, чем у `.hpf-cand{border:0}` (0,1,0), так что рамка не сбрасывается и в листе настроек, который подключается позже. Некнопочные `role=option` в select и icon picker не затронуты: их потребители строят строки из `div`.\n\nОснование: `src/styles/selection-list.styles.ts:7,14-20`; `src/styles/form-kit.styles.ts:585,587`; `src/hp-settings-select.ts:104`; `src/editors/hp-icon-picker.ts:120`.\n\n### Владелец плотности и компенсация отступов\n\nКомпенсация сделана в FormKit, которому принадлежат обе плотности. Это правильнее, чем универсально вычитать отступ в `selectionListCss`: тот не знает, какие отступы у произвольного потребителя. Добавление `:is(button)` поднимает специфичность (0,1,1)/(0,2,1) над исходными (0,1,0)/(0,2,0), поэтому правила работают при любом порядке листов и перекрывают отдельное `padding-inline-end:36px` на строке 590. Цена — второе место, где записаны числа 8/10 и 10/12: если исходный отступ изменят, компенсацию придётся править вручную. Риск ограничен, его ловит снимок в `test/form-kit.test.mjs`.\n\nОснование: `src/styles/form-kit.styles.ts:585,587,590-594`; `test/form-kit.test.mjs:64-68`.\n\n### Абсолютная галочка\n\nПоложение сохранено. Абсолютно позиционированный элемент отсчитывается от padding-box строки (`position:relative` в панели), поэтому после появления рамки нужно `inset-inline-end:11px`, чтобы до внешнего края осталось 12px. По вертикали: центр padding-box высотой 60px смещён на 1px рамки и совпадает с центром border-box высотой 62px. Смещение применяется только к кнопочным строкам в панели — там же, где есть рамка.\n\nОснование: `src/styles/form-kit.styles.ts:590-591,594`; smoke сравнивает координаты галочки с прежним CSS без рамки (`demo/smoke_choice_row_geometry_1447.mjs:35-44`).\n\n### Снижение специфичности `outline:none`/`box-shadow:none`\n\nВместе с рамкой эти свойства перенесены на селектор (0,1,1) с прежнего (0,3,1). В продуктовой параметризованной форме это ничего не меняет: `hp-dialog .hpf-form button{outline:none}` даёт то же значение, а лист настроек не содержит generic focus-правил. В legacy-форме без параметризации `formKitFocusCss` задаёт `hp-dialog .hpf-form button:focus-visible{outline:2px}` (0,2,2), и теперь это правило перебивает подавление outline у строк `.hpf-cand`. В продукте такой лист не применяется: его используют только тесты и demo. До #1428 legacy-снимок и так рисовал outline у `.hpf-cand`, поэтому это не регрессия продукта, а неточность совместимости.\n\nОснование: `src/styles/form-kit.styles.ts:105-121,653`; `src/form-kit-styles.ts:10` (`parameterized: true`); `src/styles/form-kit-settings.styles.ts:4` (только `recipes`).\n\n### Проверки\n\nSmoke построен удачно, его стоит сохранить. Он работает с настоящим more-info picker на четырёх сочетаниях: mobile/desktop × светлая/тёмная тема. В качестве эталона он берёт прежний CSS без рамки на тех же DOM-элементах, а не новый PNG. Проверяются disabled/aria-disabled, hover, Tab и Shift+Tab без outline/box-shadow, длинная подпись и min 44px, а в отдельном iframe — legacy-генератор на кнопочной и некнопочной строке. Адресный golden, по словам автора, совпадает побайтово. Штатный S6 `20261114T223809098-3491c29d` завершился со статусом passed на `705bc3f`.\n\nОснование: `demo/smoke_choice_row_geometry_1447.mjs:28-92`; квитанция S6 в снимке задачи.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- В `selection-list.styles.ts:18` можно разделить правило на два: `${item}:is(button){box-sizing:border-box;border:1px solid transparent}` для резервирования рамки и прежнее `${enabled}:is(button){outline:none;box-shadow:none}` (у disabled-строк подавление и так есть на строке 20). Тогда подавление outline сохранит прежнюю специфичность (0,3,1), и в legacy-генераторе `formKitCss(CARD_DIALOG_FORM_KIT)` у кнопочных `.hpf-cand` не вернётся outline с `button:focus-visible`. Цена — одно дополнительное правило. Выгода — точное сохранение прежнего фокусного поведения в legacy API, о сохранении которого просит ТЗ. Продукт этот случай не затрагивает.\n- Комментарий о компенсации стоит над функцией `extrasCss` (`form-kit.styles.ts:311-312`), почти в 300 строках от самих правил (592–594). Его можно перенести в TypeScript-разметку рядом с местом генерации правил, не внутрь CSS-строки (#526), или дописать в нём числа (8/10 и 10/12 → минус 1px рамки), чтобы при правке исходного отступа было видно, что компенсацию нужно обновить.\n\n## Границы анализа\n\nСборку, тесты, smoke и golden я не запускал: на S7 ревью делается только по исходникам. Использован результат S6 `20261114T223809098-3491c29d` (passed на `705bc3fd`). Отчёт адресного golden автора (0px diff) я не открывал и пересказываю как его утверждение. Каскад и специфичность разобраны по исходникам: `selection-list.styles.ts`, `form-kit.styles.ts` (фокус, extras, `formKitCss` с `recipes`), `form-kit-settings.styles.ts`, `settings-styles.ts`, `settings-dialogs.styles.ts` (правила для кнопок), потребители `hp-settings-select.ts`, `hp-icon-picker.ts`, а также `marker-dialog.ts` и `form-kit.ts`, где отрисовываются строки. Вывод о том, что по умолчанию у `button` в Chromium `box-sizing:border-box`, на этом снимке не проверял; он не важен, потому что правило рамки само задаёт border-box. Поведение в HA и в других браузерах не проверялось.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 98ceda7f4d6517050c929536263c426f0dfbac1d → 705bc3fd6f2ddc0804153aa989a138b6fb57c491\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1447, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nВ `selectionListCss` прозрачная рамка резервируется для всех кнопочных строк, а не только enabled; правила hover/фокуса остаются enabled-only. FormKit компенсирует рамку только у своих двух известных button/cand плотностей: 8/10px → 7/9px вне panel, 10/12px → 9/11px внутри panel, правый запас 36 → 35px. Абсолютная галочка получает inset11 вместо12, сохраняя прежнее положение с новым содержащим border-box. Не меняются цвета, single-border/Tab политика, API функций, min-height44 и некнопочные строки. Универсальное вычитание padding в selectionList отвергнуто: он не владеет плотностью произвольного потребителя.\n\nНовый `smoke_choice_row_geometry_1447` использует настоящий more-info picker исходной golden-сцены в четырёх сочетаниях mobile/desktop × light/dark. Проверяются прежние62px, координаты текста/галочки против независимого старого borderless CSS на этих же элементах, enabled/disabled/aria-disabled геометрия, настоящий hover/Tab/Shift+Tab без outline/box-shadow. Отдельно проверены длинная подпись без overflow и legacy генератор на кнопочных/некнопочных native-строках. Адресный native PASS, `test/form-kit.test.mjs` 9/9 PASS. Снимки legacy не пересняты: добавлена только явная ограниченная дельта border compensation к прежней совместимости.\n\nПрежний `panel-more-info-dialog-mobile-ru` golden: 0px diff, maxDelta0, SHA `dd704bedc41521c78351ecd0e20b2c756493a06b245c6146c2b2360d16632c97`, побайтовое совпадение с существующим PNG; actual просмотрен. Отчёт: `artifacts/process-next/golden-panel-more-info-dialog-mobile-ru/golden-report.json`. Никакие PNG/эталоны не менялись. Штатный S6 далее выполняется через finish, результаты поступают автоматически; этот адресный golden не выдается за полный выпуск.\n\nE2E после поиска: https://github.com/Matysh/houseplan-e2e/issues/69 — новый HA E2E не нужен для чистой CSS-геометрии, фиксированные beta E2E/visual сохраняются. Ledger line-fix: устранение непреднамеренного изменения невыпущенного #1428, без пользовательского milestone. Особое внимание ревью: каскад enabled/disabled и граница button vs non-button, абсолютная галочка, сохранение legacy API. Touch View поддерживается, редакторы остаются desktop-first/best effort; новых взаимодействий нет.\n\nПервый штатный S6 вернул задачу на S6 без код-ревью: `test/bundle-assets.test.mjs` #526 обнаружил поясняющий комментарий внутри динамической CSS-строки, который попадал в bundle. Комментарий перенесён за пределы генерируемой строки в TypeScript; CSS-правила и геометрия не менялись. Исторические snapshots по-прежнему не переписывались. Повторяются затронутые bundle/FormKit/native/golden и штатный S6; его итог передаётся автоматически. Исходный отказ не скрывается: run `20261114T221431556-b09ca965`.\n```\n\n</details>\n",
+        "createdAt": "2026-11-14T22:49:48.895Z",
+        "artifactId": 14135961755,
+        "runId": 43649799873,
+        "runAttempt": 1,
+        "completedAt": "2026-11-14T22:49:52Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43649799873",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "98ceda7f4d6517050c929536263c426f0dfbac1d"
       }
     },
     "1448": {
@@ -5213,9 +5317,9 @@
     "fence": 480,
     "materialSha": "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
     "expectedBase": "98ceda7f4d6517050c929536263c426f0dfbac1d",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1794695829485,
-    "expiresAt": 1794699947875,
+    "expiresAt": 1794700212318,
     "patchId": "512658d95a820008acc96e8b767bd95df80399cf",
     "reviewRequest": "review:1447:2:512658d95a820008acc96e8b767bd95df80399cf:98ceda7f4d6517050c929536263c426f0dfbac1d"
   },
@@ -5346,6 +5450,10 @@
     },
     "github:43650124917:1:tick:0:review-presentation": {
       "digest": "4ae9f4aa394926b49ceff9952779367b2c864f2f900bc7fe26d4e8917cb01e9f",
+      "issue": 1447
+    },
+    "github:43650124917:1:tick:0:review-complete": {
+      "digest": "11f46d35987a13b89954c88db5f1bea4d961adb9384c295c36ce5918e524018f",
       "issue": 1447
     },
     "finish:1fc679d3-45b9-478e-bf50-a536193847e0": {
