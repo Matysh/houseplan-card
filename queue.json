@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13374,
+  "revision": 13375,
   "nextTicket": 469,
   "nextFence": 465,
   "tasks": {
@@ -4706,14 +4706,23 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/1440-single-border-oracles",
-      "materialSha": "1861a31763287c3bd4a09f33fa3a1f56926da55e",
+      "materialSha": "3108d2506cb79a0ba1c055f738afeb8764fa25b9",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 465,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794685635844,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "d5a090a2059a454d6286cf013f329efb5ecb0879",
+      "changedFiles": [
+        "demo/helpers/button-paint-1440.mjs",
+        "demo/helpers/settings-polish-955.mjs",
+        "demo/smoke_selection_geometry_1207.mjs",
+        "demo/smoke_settings_mock_match_948.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5066,15 +5075,20 @@
     "worker": "github-coordinator",
     "token": "464:github:43635074985:1:tick:2:admit",
     "fence": 464,
-    "materialSha": "1861a31763287c3bd4a09f33fa3a1f56926da55e",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "3108d2506cb79a0ba1c055f738afeb8764fa25b9",
+    "expectedBase": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
+    "phase": "testing",
     "admittedAt": 1794686420646,
-    "expiresAt": 1794686720646
+    "expiresAt": 1794686778598,
+    "patchId": "d5a090a2059a454d6286cf013f329efb5ecb0879"
   },
   "events": {
     "github:43635074985:1:completions:message:5c199547c2b5ff056082a8d0fc08c4e69e5c49fe286134e4ed40db04aa429591": {
       "digest": "2c0e39f49bd6724c766271dc303eead2994ed0d3c781485035edf4fd976abdf4",
+      "issue": 1440
+    },
+    "finish:c2098de2-f77b-4f8f-819d-e3117db86984:finish:1:synchronized": {
+      "digest": "093ec52b70246db15077b760f70c88c9e1be9e3e3dd2cbf1710b384a33d756c2",
       "issue": 1440
     },
     "finish:b48caebc-f3b9-4b05-9471-e3f4a1364450": {
