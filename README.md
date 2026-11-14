@@ -166,7 +166,7 @@ The rest is optional:
 
 Home Assistant 2024.6 or newer is required. Manual installation, card options
 and what to do if the card does not show up are covered in the guide, section
-[Installation and access](docs/USER-GUIDE.md#2-installation-and-access).
+[Installation and access](docs/USER-GUIDE.md#installation-and-access).
 
 <!-- docs-section: first-run -->
 
@@ -193,13 +193,13 @@ Every tool and special case is described in the
 ## Detailed documentation
 
 - [Full user guide](docs/USER-GUIDE.md)
-- [Navigation, zoom and input](docs/USER-GUIDE.md#6-navigation-zoom-and-input)
+- [Navigation, zoom and input](docs/USER-GUIDE.md#navigation-zoom-and-input)
 - [Plan editor tools](docs/USER-GUIDE.md#plan-tools-at-a-glance)
-- [Stairs and floor links](docs/STAIRS.md)
-- [Furniture, labels and decoration](docs/DECOR-EDITOR.md)
-- [Robot vacuums](docs/VACUUM.md)
-- [Presence radars](docs/RADAR.md)
-- [PDF export](docs/PDF-EXPORT.md)
+- [Stairs and floor links](docs/USER-GUIDE.md#stairs)
+- [Furniture, labels and decoration](docs/USER-GUIDE.md#background-editor)
+- [Robot vacuums](docs/USER-GUIDE.md#robot-vacuums)
+- [Presence radars](docs/USER-GUIDE.md#presence-radars)
+- [PDF and SVG export](docs/USER-GUIDE.md#download-a-file-for-printing-pdf-or-svg)
 - [Touch support](docs/TOUCH-SUPPORT.md)
 - [Contributing and development](CONTRIBUTING.md) · [Development process](PROCESS.md)
 
@@ -214,7 +214,8 @@ Every tool and special case is described in the
   also try the **Optimize plans** button in General settings.
 - The easiest way to report a bug is from House Plan itself: the **Help &
   feedback** button in the header. If the problem is in the plan, turn on
-  **Attach extended diagnostics** there — your plan is sent along with the
-  message in anonymised form.
+  **Attach extended diagnostics** there. Names and Home Assistant IDs are
+  excluded, but exact room geometry and home dimensions remain. Inspect the
+  preview before sending; see [diagnostic contents](docs/USER-GUIDE.md#help--feedback).
 
 License: [MIT](LICENSE).
