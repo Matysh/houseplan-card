@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13815,
+  "revision": 13816,
   "nextTicket": 476,
   "nextFence": 475,
   "tasks": {
@@ -1786,43 +1786,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "0d127cd038f4110e7d90cac7004f508f07717fff"
-      }
-    },
-    "1351": {
-      "issue": 1351,
-      "branch": "codex/issue-1351-opening-type-select",
-      "track": "ship",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "6cedac4193d114c7eea822f6e06b4fb65181bd9d",
-      "mergedSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f",
-      "mergedAt": 1794121352661,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": 13,
-          "cycleMilestone": 13
-        },
-        "commentCurrent": true,
-        "commentDigest": "278d46ae00a5fa8a1f17",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": 13
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "60199f149e7653417447ab7b82a0cda6d9a0a86f"
       }
     },
     "1352": {
@@ -4609,10 +4572,24 @@
       "removedToRelease": false,
       "reviewRequest": "review:1437:1:f5cc161f9a5aaf9e9689797b01fa0f5ae6b6e083:d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": true,
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "labelsFrom": "S7-code-review",
+        "removedToRelease": false,
+        "milestoneTarget": {
+          "milestone": null,
+          "cycleMilestone": 15
+        },
+        "commentCurrent": true,
+        "commentDigest": "d1c65df9ac3a3cbebb03",
+        "commentFacts": {
+          "labels": true,
+          "milestone": true,
+          "target": null
+        }
       },
       "devBuild": {
         "status": "published",
