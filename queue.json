@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13950,
+  "revision": 13951,
   "nextTicket": 479,
   "nextFence": 478,
   "tasks": {
@@ -5352,6 +5352,10 @@
       "digest": "3cf50a4a5195514cc58a3fd26319ed96f9f5ab74fb29f0ad5287ac32a4a68f50",
       "issue": 1446
     },
+    "github:43647389343:1:completions:message:4ed573edcaec35fff6719b4ffa29423c822a3911934f8b60dcc9199b337389be": {
+      "digest": "f1682525b5f0a493f3d148a172f4b2785bb8a87bf2fb1a59987e0fd4fd05668d",
+      "issue": 1447
+    },
     "finish:1446-integration-display-metadata-20261115": {
       "digest": "82a8163ec4fc0593dc2739b009fe0021dc402ddd59c9a6351753fe7a30b3f210",
       "issue": 1446,
@@ -5412,7 +5416,8 @@
           "entry": 1,
           "detail": "Браузер: device integration metadata: failed",
           "eventId": "finish:1446-integration-display-metadata-20261115:finish:3:return:return:1446"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:1fc679d3-45b9-478e-bf50-a536193847e0:finish:1:admit": {
