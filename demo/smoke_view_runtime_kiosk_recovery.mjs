@@ -36,6 +36,7 @@ const sample = async (phase) => {
       documentProbe: !!window.__hp848DocumentProbe,
       navigation: performance.getEntriesByType('navigation')[0]?.type,
       space: c._space, zoom: c._zoom, view: { ...c._view },
+      stage: [c._stageEl.clientWidth, c._stageEl.clientHeight],
       pause: c._cyclePausedUntil, now: Date.now(), pointers: c._pointers.size,
       pan: !!c._panStart, touches: c._touchContacts.size,
       notice: !!c.renderRoot.querySelector('[data-hp="view-runtime-notice"]'),
@@ -132,6 +133,7 @@ try {
   trace.push({ phase: 'browser-native-navigation', transition });
   assert.equal(transition, 'reload');
   assert.equal(after.space, before.space);
+  assert.deepEqual(after.stage, before.stage, 'document recovery retains the actual stage geometry');
   assert.ok(Math.abs(after.zoom - before.zoom) < 1e-6);
   for (const key of ['x', 'y', 'w', 'h']) assert.ok(Math.abs(after.view[key] - before.view[key]) < 1e-4,
     `real document recovery preserves camera ${key}`);
