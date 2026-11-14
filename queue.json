@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 13938,
-  "nextTicket": 478,
+  "revision": 13939,
+  "nextTicket": 479,
   "nextFence": 478,
   "tasks": {
     "1024": {
@@ -4825,14 +4825,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1446-integration-display-metadata",
-      "materialSha": "166fa0c576ad38abb400df862fa1eec24d1b261e",
+      "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 476,
-      "queued": false,
+      "ticket": 478,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794693710936,
-      "reviewEntry": 1,
+      "readyAt": 1794694478922,
+      "reviewEntry": 2,
       "patchId": "45799f8b4b987aaf9f6621617f52da137b24d988",
       "changedFiles": [
         "demo/smoke_device_integration_metadata.mjs",
@@ -4847,7 +4847,6 @@
         "src/integration-provider.ts",
         "test/ha-device-integration-metadata.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5237,7 +5236,9 @@
       "runId": 43643902515
     }
   },
-  "waiting": [],
+  "waiting": [
+    1446
+  ],
   "active": {
     "issue": 1447,
     "worker": "finish",
@@ -5379,6 +5380,19 @@
         "layer": "product",
         "materialSha": "0cd38c2b254e9849507286c446fe810b9fe7006a",
         "phase": "sync"
+      }
+    },
+    "finish:1446-integration-display-metadata-20261115-r2": {
+      "digest": "46b00009db11a84feafb8af580e24d7a7876347df2fea51878711e2b2aa5eef8",
+      "issue": 1446,
+      "message": {
+        "kind": "queued",
+        "issue": 1446,
+        "at": 1794694478922,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf"
       }
     }
   },
