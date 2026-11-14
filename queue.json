@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13125,
+  "revision": 13126,
   "nextTicket": 460,
   "nextFence": 460,
   "tasks": {
@@ -4602,7 +4602,8 @@
         "docs/CHANGELOG.ru.md",
         "docs/USER-GUIDE.md",
         "docs/USER-GUIDE.ru.md"
-      ]
+      ],
+      "s6": null
     }
   },
   "ownerDecisions": {},
@@ -4938,14 +4939,18 @@
     "fence": 459,
     "materialSha": "e756b482350cf5589228d4d282642e5d8c03ced5",
     "expectedBase": "54d3917034a0d13ea680b0ea182b086c732e9067",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1794682582804,
-    "expiresAt": 1794682888399,
+    "expiresAt": 1794686192280,
     "patchId": "edc368d8afe2ec9b1f24205878f04a9297716c9f"
   },
   "events": {
     "finish:0e2353a6-64e3-4c53-b34a-ea6b4aea9139:finish:2:synchronized": {
       "digest": "8f1f4be1726f0c36d76928bb7cef82212f17c64576a1f945b16d61c6526ac4ba",
+      "issue": 1430
+    },
+    "finish:0e2353a6-64e3-4c53-b34a-ea6b4aea9139:finish:3:s6-complete": {
+      "digest": "5e43834a7c5eae01233ac47a196b557f2da6ef8da991f58d3df427e1a0611480",
       "issue": 1430
     },
     "finish:0e2353a6-64e3-4c53-b34a-ea6b4aea9139": {
