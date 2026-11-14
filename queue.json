@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 13877,
+  "revision": 13878,
   "nextTicket": 476,
   "nextFence": 476,
   "tasks": {
@@ -4729,154 +4729,25 @@
     },
     "1443": {
       "issue": 1443,
+      "branch": "codex/1443-summary-weather-fixture",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1443-summary-weather-fixture",
-      "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 475,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794690103069,
-      "reviewEntry": 1,
-      "patchId": "12b15c2dc6916cf61fa83d7ba0209dd39647c08e",
-      "changedFiles": [
-        "demo/smoke_summary_weather.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md"
-      ],
-      "s6": {
-        "id": "20261114T213708232-3998e40b",
-        "name": "Тесты для задачи #1443 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T213708232-3998e40b/report.json",
-        "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
-        "status": "passed",
-        "finishedAt": "2026-11-14T21:38:24.040Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "662309e6efe19b5187841aa0eeaca0b6047f0388",
+      "mergedSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
+      "mergedAt": 1794692542866,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1443:1:12b15c2dc6916cf61fa83d7ba0209dd39647c08e:662309e6efe19b5187841aa0eeaca0b6047f0388",
-      "reviewMaterial": {
-        "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
-        "expectedBase": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-        "patchId": "12b15c2dc6916cf61fa83d7ba0209dd39647c08e"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1443:1:12b15c2dc6916cf61fa83d7ba0209dd39647c08e:662309e6efe19b5187841aa0eeaca0b6047f0388",
-        "eventId": "github:43643885536:1:tick:0:review-retry",
-        "at": 1794692326217,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1443,
-        "requestId": "review:1443:1:12b15c2dc6916cf61fa83d7ba0209dd39647c08e:662309e6efe19b5187841aa0eeaca0b6047f0388",
-        "kind": "code",
-        "base": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-        "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
-        "patchId": "12b15c2dc6916cf61fa83d7ba0209dd39647c08e",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1443,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1443",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Причина подтверждена адресно: неизменённый native падает ru/false/mixed с blocks:[] и заголовком Погода. Fixture заменял connection целиком (теряя subscribeEvents), config/get всегда отдавал initial cfg, _sendConfigCandidate не сохранял документ, а сценарии меняли derived _settings/_serverCfg. Новый adoption закономерно возвращал настоящий сохранённый документ вместо этих мутаций.\n\nСохранён исходный connection и его subscribeEvents. Обёрнут только weather/subscribe_forecast; остальные subscribeMessage делегированы. Штатный synthetic fixture store обслуживает config/get/set, CAS, события и ACK; config/get лишь дополняется runtime capability summary_panel_api, принятые config/set записываются для существующего ассерта. Начальная конфигурация и все weather/blocks изменения приходят через __hpTest.setServerConfig, Save использует неизменённый product handler с ожиданием writes. Locale задаётся публичным setConfig. Сохранены ВСЕ прежние locale ru/en/de/fr, narrow/wide, hidden/all/mixed, unavailable/deleted, title, forecast/lifecycle и no-parent-render assertions; saved title и all-block дополнительно проверяются чтением wire config/get. Продукт и PNG не менялись.\n\nАдресный node demo/smoke_summary_weather.mjs: до FAIL mixed, после OK. Каталог/план относят изменённый native к summary и выбирают его одновременно как изменённый файл и native-контракт summary. Центральный runner не допускает browser-native в infra-профиле, поэтому штатный S6 использует layer product с существующими связями; это не изменение продукта и не повод для пользовательского milestone/release-ledger. Дополнительный HA E2E не нужен, решение добавлено комментарием в houseplan-e2e#67. Независимое код-ревью — по установленному track:show. Текущий S6 выполнит finish через очередь; до его завершения не заявляется PASS.\n### Уточнение причинности и границ\n\nПараллельный S6 #1437 смог пройти исходный weather smoke без этого ремонта. Это не два независимых продуктовых дефекта: #1437 меняет только bound value formatters в projected _planHass и не меняет read/adoption/config; summary/weather получает исходный host.hass напрямую. Старый fixture остаётся некорректным даже при отдельном зелёном прогоне: замена connection запускает authority reload, config/get всегда отдаёт initial blocks:[], Save не сохраняет wire документ, а mixed мутирует только локальные derived записи. Поздний reload может стереть mixed; изменение времени рендера способно скрыть гонку, но не исправить fake store. В собственном опыте один и тот же product bd4b27c дал FAIL ru/false/mixed blocks:[] до ремонта и PASS после изменения только fixture. #1443 устраняет гонку и ложное предусловие synthetic smoke, не заявляет новый продуктовый баг. Дополнительный прогон неизменённого кода ради этой аналитики не выполнялся."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Ремонт сделан правильно и в нужном объёме. Причина в fixture: smoke обходил настоящий синтетический сервер и меры против устаревшего состояния. Продуктовой потери сохранения не видно. Старый сценарий менял `card.hass.connection` на объект без `subscribeEvents`. Из-за этого у HA-хоста менялась идентичность authority: `hostAuthorityKey` строится по `connection`. Кроме того, `config/get` всегда отдавал начальный `blocks: []`, Save ничего не сохранял на «сервере», а mixed-сценарий менял только производные `_settings`/`_serverCfg`. Любое последующее штатное чтение конфига честно стирало эти мутации, и получался заголовок «Погода» вместо «Обзор дома». Теперь сохраняется исходный `connection`. Подменяется только `weather/subscribe_forecast`, а все изменения конфига идут через `__hpTest.setServerConfig` → `server.pushConfig` → событие → штатное чтение и adoption. Save проходит через настоящий `config/set` с CAS. Требования к погодному заголовку не ослаблены, а проверка сохранённого title стала строже: теперь сверяется и документ на wire. Блокеров нет.",
-          "understanding": "Проблема (#1443). Сценарий #1243 в `demo/smoke_summary_weather.mjs` на ru/false/mixed падал с `blocks: []` и заголовком «Погода». Нужно было выяснить, теряет ли продукт сохранённые данные или fixture обходит adoption.\n\nКак было: fixture собирал новый `connection` с одним `subscribeMessage`. Подменял `callWS` для `houseplan/config/get` так, что тот всегда возвращал замороженный `cfg`. Заменял `_sendConfigCandidate` записью в массив и `_cfgRev++` без сохранения документа. Капабилити выставлял напрямую (`_serverCanWrite`, `_haSummaryPanelApi`), язык — через `_config`. Mixed и hidden получались мутацией `card._settings`/`_serverCfg` и вызовом `_summary.updated()`. `HaPlanHost.identity()` в `src/ha-plan-host.ts:116-118` строит ключ authority по `source.connection`. Поэтому новый `connection` давал смену authority и перечитывание. Сервер возвращал исходный документ, и локальные мутации в любой момент могли быть перезаписаны: это гонка по времени.\n\nКак стало:\n- `connection` остаётся тем же объектом (`CONNECTION` из `demo/srv/demo.html:123`). Метод `subscribeMessage` перехватывает только `weather/subscribe_forecast`, остальное делегирует. `subscribeEvents` на `houseplan_config_updated` сохраняется.\n- `callWS` оборачивает исходный обработчик: store из `demo/srv/fixture-state.js` обслуживает get/set/CAS/события. К ответу `config/get` добавляется `summary_panel_api: 1`, принятые `config/set` записываются в `writes` (уже после `await`, то есть только принятые сервером).\n- Начальный документ, смена weather-источника и blocks доставляются через `__hpTest.setServerConfig`. Перед этим `waitForWrites` дожидается окончания записей, поэтому staged-кандидат не попадает в базу.\n- Save идёт через неизменённый `saveDialog` → `_sendConfigCandidate` → `houseplan/config/set` с `expected_rev`.\n- Язык задаётся публичным `setConfig`.\n- В фазе mixed дополнительно читается `config/get` и проверяются `saved.title` и `saved.blocks[0].scope.type === 'all'`.\n\nРазобранные пути:\n- `setServerConfig` (`demo/helpers/hp-test.mjs:343-354`) и `pushConfig`/`config/set`/`cas` (`demo/srv/fixture-state.js:25-35, 109-120`).\n- `SERVED.config` выставляется в исходном `callWS` (`demo.html:189`) и потому работает и через обёртку.\n- `setConfig` карточки (`src/houseplan-card.ts:4384-4446`): `restoreCached` (`src/config-adoption.ts:316-317`) при уже принятом конфиге ничего не делает, отложенное чтение перезапускается.\n- `saveDialog` (`src/summary-panel-runtime-loaded.ts:717-774`) и `_sendConfigCandidate` (`src/houseplan-card.ts:9347-9392`).\n- `summaryPanelApi` берётся из ответа чтения (`src/config-store.ts:97`).",
-          "analysis": [
-            {
-              "topic": "Причина и ответ на вопрос задачи",
-              "assessment": "Объяснение автора сходится с кодом. Новый объект `connection` сменял ключ authority у `HaPlanHost`, и карточка перечитывала конфиг с «сервера», который всегда возвращал `blocks: []`. Локальные мутации `_settings` новый adoption законно перезаписывал. Так что это дефект синтетического сценария, а не потеря сохранения в продукте. Это объясняет и нестабильность: в #1437 тот же smoke мог пройти, если перечитывание успевало до мутаций.",
-              "evidence": "`src/ha-plan-host.ts:116-118` (`hostAuthorityKey(this.source.connection ?? this.source.callWS, …)`). Старый diff: `const connection = { subscribeMessage… }`, `callWS` с `structuredClone(cfg)`, `card._settings.summary_panel.blocks = [hidden]`."
-            },
-            {
-              "topic": "Fixture теперь использует штатный store и ACK",
-              "assessment": "Это и требовало ТЗ: документ попадает в карточку через событие сервера и штатное чтение, а не через производные поля. `writes` пополняется только после успешного `originalCallWS`, поэтому конфликт CAS не даст ложно-зелёного «сохранено». Перехват подписки сужен до одного типа сообщения, `external_screens/subscribe` и прочие подписки идут штатным путём. Перед каждой доставкой стоит `waitForWrites`, чтобы `setServerConfig`, который клонирует `c._serverCfg`, не превратил неподтверждённый оптимистичный кандидат в серверный документ.",
-              "evidence": "`demo/smoke_summary_weather.mjs:24-46, 54-58, 177-187`. `demo/srv/fixture-state.js:109-120` (CAS и `configRev++` только при изменении). `demo/helpers/hp-test.mjs:188-228, 343-354`."
-            },
-            {
-              "topic": "Сохранность и усиление проверок",
-              "assessment": "Имена и предикаты `check` не изменились: локали ru/en/de/fr, narrow/wide, hidden (scope другого пространства), all/mixed, unavailable/missing, forecast/lifecycle и отсутствие рендера родителя. Проверка `saved-title` усилена: кроме `card._settings` читается документ на wire, проверяются `title` и единственный блок со `scope.type === 'all'`. Пустые blocks больше не могут сойти за корректный mixed. Утверждение «selected weather source is saved» теперь проверяет принятый сервером документ, а не перехваченный кандидат, и стало строже.",
-              "evidence": "`demo/smoke_summary_weather.mjs:163-164, 189-225`. В diff нет удалённых `check(...)`."
-            },
-            {
-              "topic": "Публичный `setConfig` вместо `_config`",
-              "assessment": "Подход разумный: язык меняется так же, как в превью редактора Lovelace. Побочные эффекты `setConfig` (инвалидация чтения, `restoreCached`, `_warmAdopt`) не ломают сценарий: `restoreCached` при уже принятом конфиге возвращает false, а отложенное чтение перезапускается. Следующий за этим `refresh` ждёт ревизию через `setServerConfig`.",
-              "evidence": "`src/houseplan-card.ts:4384-4446`, `src/config-adoption.ts:316-317`."
-            },
-            {
-              "topic": "Остаточная тестовая инженерия",
-              "assessment": "Две мелочи, без влияния на корректность. (1) `summary_panel_api` добавляется обёрткой `callWS`, а не опцией store, как сделано для `externalScreens`/`markerHistory`; это рабочее решение на уровне wire-ответа. (2) `CONNECTION.subscribeMessage` подменяется на общем объекте страницы и не восстанавливается. В этом smoke ремаунта нет и страница закрывается, так что вреда нет, но при переносе приёма в другой smoke стоит помнить, что он действует на всю страницу.",
-              "evidence": "`demo/smoke_summary_weather.mjs:24-32, 38`. `demo/srv/demo.html:118, 123-134`."
-            },
-            {
-              "topic": "CHANGELOG",
-              "assessment": "Записи EN/RU по смыслу совпадают и оформлены как соседние записи о тестовых ремонтах (#1439, #1442). Продукт и PNG не менялись, что соответствует changedFiles.",
-              "evidence": "`docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`, changedFiles."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Капабилити `summary_panel_api` можно включать опцией `createFixtureStore` (по образцу `externalScreens`/`markerHistory`) или параметром страницы, а не дописывать обёрткой `callWS`. Тогда весь ответ `config/get` будет описан в одном месте и его смогут переиспользовать другие summary-smoke. Цена — правка общего fixture и согласование с другими сценариями. Текущий вариант тоже корректен.",
-            "Если приём с перехватом `connection.subscribeMessage` будут копировать, стоит вынести его в helper, который восстанавливает исходный метод. Сейчас патч на общем `CONNECTION` безвреден только потому, что страница одноразовая."
-          ],
-          "boundaries": "Ревью сделано только по исходникам: diff, `demo/smoke_summary_weather.mjs` целиком, `demo/helpers/hp-test.mjs` (`waitForWrites`, `setServerConfig`), `demo/srv/demo.html` (`CONNECTION`, `mkHass`, `__pushServerConfig`), `demo/srv/fixture-state.js` (get/set/CAS/`pushConfig`), а также продуктовые `setConfig`, `restoreCached`, `saveDialog`, `_sendConfigCandidate`, `HaPlanHost.identity/synchronize` и источник `summaryPanelApi`. Smoke и тесты я не запускал. Опираюсь на квитанцию S6 `20261114T213708232-3998e40b` (passed, материал `56f51be`, без failures) и на утверждение автора об адресных прогонах (до ремонта FAIL mixed, после OK). Неизменённый код автор повторно не прогонял, и я этого тоже не проверял. Решение не добавлять HA E2E (комментарий в houseplan-e2e#67) внешний источник, я его не проверял. С учётом объёма задачи (только fixture) считаю его обоснованным.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 70,
-          "cache_creation_input_tokens": 99875,
-          "cache_read_input_tokens": 2126320,
-          "output_tokens": 13246,
-          "output_tokens_details": {
-            "thinking_tokens": 4741
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 99875,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 995,
-              "cache_read_input_tokens": 92458,
-              "cache_creation_input_tokens": 11621,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 11621
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРемонт сделан правильно и в нужном объёме. Причина в fixture: smoke обходил настоящий синтетический сервер и меры против устаревшего состояния. Продуктовой потери сохранения не видно. Старый сценарий менял `card.hass.connection` на объект без `subscribeEvents`. Из-за этого у HA-хоста менялась идентичность authority: `hostAuthorityKey` строится по `connection`. Кроме того, `config/get` всегда отдавал начальный `blocks: []`, Save ничего не сохранял на «сервере», а mixed-сценарий менял только производные `_settings`/`_serverCfg`. Любое последующее штатное чтение конфига честно стирало эти мутации, и получался заголовок «Погода» вместо «Обзор дома». Теперь сохраняется исходный `connection`. Подменяется только `weather/subscribe_forecast`, а все изменения конфига идут через `__hpTest.setServerConfig` → `server.pushConfig` → событие → штатное чтение и adoption. Save проходит через настоящий `config/set` с CAS. Требования к погодному заголовку не ослаблены, а проверка сохранённого title стала строже: теперь сверяется и документ на wire. Блокеров нет.\n\n## Понимание решения\n\nПроблема (#1443). Сценарий #1243 в `demo/smoke_summary_weather.mjs` на ru/false/mixed падал с `blocks: []` и заголовком «Погода». Нужно было выяснить, теряет ли продукт сохранённые данные или fixture обходит adoption.\n\nКак было: fixture собирал новый `connection` с одним `subscribeMessage`. Подменял `callWS` для `houseplan/config/get` так, что тот всегда возвращал замороженный `cfg`. Заменял `_sendConfigCandidate` записью в массив и `_cfgRev++` без сохранения документа. Капабилити выставлял напрямую (`_serverCanWrite`, `_haSummaryPanelApi`), язык — через `_config`. Mixed и hidden получались мутацией `card._settings`/`_serverCfg` и вызовом `_summary.updated()`. `HaPlanHost.identity()` в `src/ha-plan-host.ts:116-118` строит ключ authority по `source.connection`. Поэтому новый `connection` давал смену authority и перечитывание. Сервер возвращал исходный документ, и локальные мутации в любой момент могли быть перезаписаны: это гонка по времени.\n\nКак стало:\n- `connection` остаётся тем же объектом (`CONNECTION` из `demo/srv/demo.html:123`). Метод `subscribeMessage` перехватывает только `weather/subscribe_forecast`, остальное делегирует. `subscribeEvents` на `houseplan_config_updated` сохраняется.\n- `callWS` оборачивает исходный обработчик: store из `demo/srv/fixture-state.js` обслуживает get/set/CAS/события. К ответу `config/get` добавляется `summary_panel_api: 1`, принятые `config/set` записываются в `writes` (уже после `await`, то есть только принятые сервером).\n- Начальный документ, смена weather-источника и blocks доставляются через `__hpTest.setServerConfig`. Перед этим `waitForWrites` дожидается окончания записей, поэтому staged-кандидат не попадает в базу.\n- Save идёт через неизменённый `saveDialog` → `_sendConfigCandidate` → `houseplan/config/set` с `expected_rev`.\n- Язык задаётся публичным `setConfig`.\n- В фазе mixed дополнительно читается `config/get` и проверяются `saved.title` и `saved.blocks[0].scope.type === 'all'`.\n\nРазобранные пути:\n- `setServerConfig` (`demo/helpers/hp-test.mjs:343-354`) и `pushConfig`/`config/set`/`cas` (`demo/srv/fixture-state.js:25-35, 109-120`).\n- `SERVED.config` выставляется в исходном `callWS` (`demo.html:189`) и потому работает и через обёртку.\n- `setConfig` карточки (`src/houseplan-card.ts:4384-4446`): `restoreCached` (`src/config-adoption.ts:316-317`) при уже принятом конфиге ничего не делает, отложенное чтение перезапускается.\n- `saveDialog` (`src/summary-panel-runtime-loaded.ts:717-774`) и `_sendConfigCandidate` (`src/houseplan-card.ts:9347-9392`).\n- `summaryPanelApi` берётся из ответа чтения (`src/config-store.ts:97`).\n\n## Разбор решения\n\n### Причина и ответ на вопрос задачи\n\nОбъяснение автора сходится с кодом. Новый объект `connection` сменял ключ authority у `HaPlanHost`, и карточка перечитывала конфиг с «сервера», который всегда возвращал `blocks: []`. Локальные мутации `_settings` новый adoption законно перезаписывал. Так что это дефект синтетического сценария, а не потеря сохранения в продукте. Это объясняет и нестабильность: в #1437 тот же smoke мог пройти, если перечитывание успевало до мутаций.\n\nОснование: `src/ha-plan-host.ts:116-118` (`hostAuthorityKey(this.source.connection ?? this.source.callWS, …)`). Старый diff: `const connection = { subscribeMessage… }`, `callWS` с `structuredClone(cfg)`, `card._settings.summary_panel.blocks = [hidden]`.\n\n### Fixture теперь использует штатный store и ACK\n\nЭто и требовало ТЗ: документ попадает в карточку через событие сервера и штатное чтение, а не через производные поля. `writes` пополняется только после успешного `originalCallWS`, поэтому конфликт CAS не даст ложно-зелёного «сохранено». Перехват подписки сужен до одного типа сообщения, `external_screens/subscribe` и прочие подписки идут штатным путём. Перед каждой доставкой стоит `waitForWrites`, чтобы `setServerConfig`, который клонирует `c._serverCfg`, не превратил неподтверждённый оптимистичный кандидат в серверный документ.\n\nОснование: `demo/smoke_summary_weather.mjs:24-46, 54-58, 177-187`. `demo/srv/fixture-state.js:109-120` (CAS и `configRev++` только при изменении). `demo/helpers/hp-test.mjs:188-228, 343-354`.\n\n### Сохранность и усиление проверок\n\nИмена и предикаты `check` не изменились: локали ru/en/de/fr, narrow/wide, hidden (scope другого пространства), all/mixed, unavailable/missing, forecast/lifecycle и отсутствие рендера родителя. Проверка `saved-title` усилена: кроме `card._settings` читается документ на wire, проверяются `title` и единственный блок со `scope.type === 'all'`. Пустые blocks больше не могут сойти за корректный mixed. Утверждение «selected weather source is saved» теперь проверяет принятый сервером документ, а не перехваченный кандидат, и стало строже.\n\nОснование: `demo/smoke_summary_weather.mjs:163-164, 189-225`. В diff нет удалённых `check(...)`.\n\n### Публичный `setConfig` вместо `_config`\n\nПодход разумный: язык меняется так же, как в превью редактора Lovelace. Побочные эффекты `setConfig` (инвалидация чтения, `restoreCached`, `_warmAdopt`) не ломают сценарий: `restoreCached` при уже принятом конфиге возвращает false, а отложенное чтение перезапускается. Следующий за этим `refresh` ждёт ревизию через `setServerConfig`.\n\nОснование: `src/houseplan-card.ts:4384-4446`, `src/config-adoption.ts:316-317`.\n\n### Остаточная тестовая инженерия\n\nДве мелочи, без влияния на корректность. (1) `summary_panel_api` добавляется обёрткой `callWS`, а не опцией store, как сделано для `externalScreens`/`markerHistory`; это рабочее решение на уровне wire-ответа. (2) `CONNECTION.subscribeMessage` подменяется на общем объекте страницы и не восстанавливается. В этом smoke ремаунта нет и страница закрывается, так что вреда нет, но при переносе приёма в другой smoke стоит помнить, что он действует на всю страницу.\n\nОснование: `demo/smoke_summary_weather.mjs:24-32, 38`. `demo/srv/demo.html:118, 123-134`.\n\n### CHANGELOG\n\nЗаписи EN/RU по смыслу совпадают и оформлены как соседние записи о тестовых ремонтах (#1439, #1442). Продукт и PNG не менялись, что соответствует changedFiles.\n\nОснование: `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`, changedFiles.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Капабилити `summary_panel_api` можно включать опцией `createFixtureStore` (по образцу `externalScreens`/`markerHistory`) или параметром страницы, а не дописывать обёрткой `callWS`. Тогда весь ответ `config/get` будет описан в одном месте и его смогут переиспользовать другие summary-smoke. Цена — правка общего fixture и согласование с другими сценариями. Текущий вариант тоже корректен.\n- Если приём с перехватом `connection.subscribeMessage` будут копировать, стоит вынести его в helper, который восстанавливает исходный метод. Сейчас патч на общем `CONNECTION` безвреден только потому, что страница одноразовая.\n\n## Границы анализа\n\nРевью сделано только по исходникам: diff, `demo/smoke_summary_weather.mjs` целиком, `demo/helpers/hp-test.mjs` (`waitForWrites`, `setServerConfig`), `demo/srv/demo.html` (`CONNECTION`, `mkHass`, `__pushServerConfig`), `demo/srv/fixture-state.js` (get/set/CAS/`pushConfig`), а также продуктовые `setConfig`, `restoreCached`, `saveDialog`, `_sendConfigCandidate`, `HaPlanHost.identity/synchronize` и источник `summaryPanelApi`. Smoke и тесты я не запускал. Опираюсь на квитанцию S6 `20261114T213708232-3998e40b` (passed, материал `56f51be`, без failures) и на утверждение автора об адресных прогонах (до ремонта FAIL mixed, после OK). Неизменённый код автор повторно не прогонял, и я этого тоже не проверял. Решение не добавлять HA E2E (комментарий в houseplan-e2e#67) внешний источник, я его не проверял. С учётом объёма задачи (только fixture) считаю его обоснованным.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 662309e6efe19b5187841aa0eeaca0b6047f0388 → 56f51be8175594bb994bc9c5af159ab071dd0999\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1443, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nПричина подтверждена адресно: неизменённый native падает ru/false/mixed с blocks:[] и заголовком Погода. Fixture заменял connection целиком (теряя subscribeEvents), config/get всегда отдавал initial cfg, _sendConfigCandidate не сохранял документ, а сценарии меняли derived _settings/_serverCfg. Новый adoption закономерно возвращал настоящий сохранённый документ вместо этих мутаций.\n\nСохранён исходный connection и его subscribeEvents. Обёрнут только weather/subscribe_forecast; остальные subscribeMessage делегированы. Штатный synthetic fixture store обслуживает config/get/set, CAS, события и ACK; config/get лишь дополняется runtime capability summary_panel_api, принятые config/set записываются для существующего ассерта. Начальная конфигурация и все weather/blocks изменения приходят через __hpTest.setServerConfig, Save использует неизменённый product handler с ожиданием writes. Locale задаётся публичным setConfig. Сохранены ВСЕ прежние locale ru/en/de/fr, narrow/wide, hidden/all/mixed, unavailable/deleted, title, forecast/lifecycle и no-parent-render assertions; saved title и all-block дополнительно проверяются чтением wire config/get. Продукт и PNG не менялись.\n\nАдресный node demo/smoke_summary_weather.mjs: до FAIL mixed, после OK. Каталог/план относят изменённый native к summary и выбирают его одновременно как изменённый файл и native-контракт summary. Центральный runner не допускает browser-native в infra-профиле, поэтому штатный S6 использует layer product с существующими связями; это не изменение продукта и не повод для пользовательского milestone/release-ledger. Дополнительный HA E2E не нужен, решение добавлено комментарием в houseplan-e2e#67. Независимое код-ревью — по установленному track:show. Текущий S6 выполнит finish через очередь; до его завершения не заявляется PASS.\n### Уточнение причинности и границ\n\nПараллельный S6 #1437 смог пройти исходный weather smoke без этого ремонта. Это не два независимых продуктовых дефекта: #1437 меняет только bound value formatters в projected _planHass и не меняет read/adoption/config; summary/weather получает исходный host.hass напрямую. Старый fixture остаётся некорректным даже при отдельном зелёном прогоне: замена connection запускает authority reload, config/get всегда отдаёт initial blocks:[], Save не сохраняет wire документ, а mixed мутирует только локальные derived записи. Поздний reload может стереть mixed; изменение времени рендера способно скрыть гонку, но не исправить fake store. В собственном опыте один и тот же product bd4b27c дал FAIL ru/false/mixed blocks:[] до ремонта и PASS после изменения только fixture. #1443 устраняет гонку и ложное предусловие synthetic smoke, не заявляет новый продуктовый баг. Дополнительный прогон неизменённого кода ради этой аналитики не выполнялся.\n```\n\n</details>\n",
-        "createdAt": "2026-11-14T21:42:07.811Z",
-        "artifactId": 14132708899,
-        "runId": 43643902515,
-        "runAttempt": 1,
-        "completedAt": "2026-11-14T21:38:46Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43643902515",
-        "runStatus": "in_progress",
-        "publicationPending": true,
-        "expectedBase": "662309e6efe19b5187841aa0eeaca0b6047f0388"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1444": {
@@ -5303,132 +5174,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1443,
-    "worker": "github-coordinator",
-    "token": "475:github:43643648458:1:tick:2:admit",
-    "fence": 475,
-    "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
-    "expectedBase": "662309e6efe19b5187841aa0eeaca0b6047f0388",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794692165360,
-    "expiresAt": 1794696138016,
-    "patchId": "12b15c2dc6916cf61fa83d7ba0209dd39647c08e",
-    "reviewRequest": "review:1443:1:12b15c2dc6916cf61fa83d7ba0209dd39647c08e:662309e6efe19b5187841aa0eeaca0b6047f0388"
-  },
-  "events": {
-    "github:43643648458:1:completions:message:f32547d56b581e7bacb4bb38a4cbef8194651497465d711784c7aa7a3103d0f0": {
-      "digest": "46de08963254ff24142dd6d0d0ff513e305984af6228fd5672efdf1ac833a511",
-      "issue": 1443
-    },
-    "finish:e4428c91-9fe4-4445-b786-0ad62033f040:finish:2:synchronized": {
-      "digest": "e0e90e5a1287ca9a582ac881ad7849563c068071db3420616b3e83ae900271ed",
-      "issue": 1443
-    },
-    "finish:d3d002b4-7518-4d8d-8adf-0b566a8c8ecb": {
-      "digest": "b6fa58aea1c6c3c716c5ab9531305fa0d13a1440e4230d59dbcd3c20e29aa922",
-      "issue": 1443
-    },
-    "dev-build:43643648458:1:webhook": {
-      "digest": "1ce1b53bfbe39ee09af6f2849f24e3434f642a59aeb978dd4f7333a8ed398b29",
-      "issue": 1443
-    },
-    "dev-build:43643648458:1:webhook:15217edb-a16f-47a8-903d-49af3806fc03:delivered": {
-      "digest": "9a1ef409e9954f0c96b820f24634a80e4623b8821995b0fe6eda2ad231a5fce6",
-      "issue": 1443
-    },
-    "finish:4ac31b92-5034-422a-ad5d-6d9435d98fa6": {
-      "digest": "752784e6ef4ff2c11bc369946a91606f947b6db7e16fbf2747552596c41a9324",
-      "issue": 1443
-    },
-    "finish:e4428c91-9fe4-4445-b786-0ad62033f040:finish:3:s6-label": {
-      "digest": "6b28cab0828fda304fdf0875d8156b3ee0fcc38a3c75fb4050f0eb9cc75c0e8f",
-      "issue": 1443
-    },
-    "finish:e4428c91-9fe4-4445-b786-0ad62033f040:finish:4:review-requested": {
-      "digest": "edf2ae17b5e7ad268ee14e1d978f021d40f0c4db75fc208958d93136fc564474",
-      "issue": 1443
-    },
-    "github:43643885536:1:tick:0:review-retry": {
-      "digest": "ac91f35bb3b20777983591178de43f70030278359ea238aaf894035125568a4b",
-      "issue": 1443
-    },
-    "github:43643885536:1:completions:message:db38c9dd4467b84518c9222a54bd3ad1a503bca479d0068856ca822876b4c9e6": {
-      "digest": "b2ffc11f99d25b34471ae3779eccf679ca57a9a50b373e3fb20ea94b34d6e8a6",
-      "issue": 1443
-    },
-    "github:43643885536:1:completions:message:c3b66e5d76e3b90cdecf8dfeebd06eb1cfeaa69acd5c9149b9543b4856d1d5ba": {
-      "digest": "ca67d22b49b5a998b23506e1a63e017a09a1bb39a55ab346b9182243df836c78",
-      "issue": 1443
-    },
-    "finish:e4428c91-9fe4-4445-b786-0ad62033f040:finish:7:review-presentation": {
-      "digest": "d890908f77b9d44ebe4f19f5cf4aada8ca235308c5caf6e71e57ff089717ed7f",
-      "issue": 1443
-    },
-    "finish:e4428c91-9fe4-4445-b786-0ad62033f040:finish:7:review-complete": {
-      "digest": "e943c6216c88098babe9b2251ab636a5becd12ab788e76c1fa17a2b2e2f059b9",
-      "issue": 1443
-    },
-    "finish:e4428c91-9fe4-4445-b786-0ad62033f040": {
-      "digest": "9f6ca30f9ef2456409a5df2442d3d348ce013b4e18130f4fa638c4837f95dd3b",
-      "issue": 1443,
-      "message": {
-        "kind": "queued",
-        "issue": 1443,
-        "at": 1794690103069,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d823903ff5c3a684962843713c737ade0c26febe",
-        "delivered": true
-      }
-    },
-    "github:43643648458:1:tick:2:admit": {
-      "digest": "3c659e0fb54cc1c2acde4008e77829865eaaad0cf82bf3a7ba326916b4ecca2e",
-      "issue": 1443,
-      "message": {
-        "kind": "admitted",
-        "issue": 1443,
-        "at": 1794692165360,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "d823903ff5c3a684962843713c737ade0c26febe",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:e4428c91-9fe4-4445-b786-0ad62033f040:finish:3:s6-complete": {
-      "digest": "6542b7d793c0dbb78d95637cd357c2b2092985ed1efd28d84033529a34dde86e",
-      "issue": 1443,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1443,
-        "at": 1794692305165,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
-        "phase": "review",
-        "evidence": {
-          "id": "20261114T213708232-3998e40b",
-          "name": "Тесты для задачи #1443 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261114T213708232-3998e40b/report.json",
-          "materialSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
-          "status": "passed",
-          "finishedAt": "2026-11-14T21:38:24.040Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Причина подтверждена адресно: неизменённый native падает ru/false/mixed с blocks:[] и заголовком Погода. Fixture заменял connection целиком (теряя subscribeEvents), config/get всегда отдавал initial cfg, _sendConfigCandidate не сохранял документ, а сценарии меняли derived _settings/_serverCfg. Новый adoption закономерно возвращал настоящий сохранённый документ вместо этих мутаций.\n\nСохранён исходный connection и его subscribeEvents. Обёрнут только weather/subscribe_forecast; остальные subscribeMessage делегированы. Штатный synthetic fixture store обслуживает config/get/set, CAS, события и ACK; config/get лишь дополняется runtime capability summary_panel_api, принятые config/set записываются для существующего ассерта. Начальная конфигурация и все weather/blocks изменения приходят через __hpTest.setServerConfig, Save использует неизменённый product handler с ожиданием writes. Locale задаётся публичным setConfig. Сохранены ВСЕ прежние locale ru/en/de/fr, narrow/wide, hidden/all/mixed, unavailable/deleted, title, forecast/lifecycle и no-parent-render assertions; saved title и all-block дополнительно проверяются чтением wire config/get. Продукт и PNG не менялись.\n\nАдресный node demo/smoke_summary_weather.mjs: до FAIL mixed, после OK. Каталог/план относят изменённый native к summary и выбирают его одновременно как изменённый файл и native-контракт summary. Центральный runner не допускает browser-native в infra-профиле, поэтому штатный S6 использует layer product с существующими связями; это не изменение продукта и не повод для пользовательского milestone/release-ledger. Дополнительный HA E2E не нужен, решение добавлено комментарием в houseplan-e2e#67. Независимое код-ревью — по установленному track:show. Текущий S6 выполнит finish через очередь; до его завершения не заявляется PASS.\n### Уточнение причинности и границ\n\nПараллельный S6 #1437 смог пройти исходный weather smoke без этого ремонта. Это не два независимых продуктовых дефекта: #1437 меняет только bound value formatters в projected _planHass и не меняет read/adoption/config; summary/weather получает исходный host.hass напрямую. Старый fixture остаётся некорректным даже при отдельном зелёном прогоне: замена connection запускает authority reload, config/get всегда отдаёт initial blocks:[], Save не сохраняет wire документ, а mixed мутирует только локальные derived записи. Поздний reload может стереть mixed; изменение времени рендера способно скрыть гонку, но не исправить fake store. В собственном опыте один и тот же product bd4b27c дал FAIL ru/false/mixed blocks:[] до ремонта и PASS после изменения только fixture. #1443 устраняет гонку и ложное предусловие synthetic smoke, не заявляет новый продуктовый баг. Дополнительный прогон неизменённого кода ради этой аналитики не выполнялся.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
     "status": "delivered",
