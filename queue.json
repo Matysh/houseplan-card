@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 11850,
+  "revision": 11851,
   "nextTicket": 425,
   "nextFence": 425,
   "tasks": {
@@ -3721,15 +3721,16 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794620805301,
-        "entry": 1,
-        "detail": "Критичные данные, сохранение и права: failed; Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/graph-optimize-report.test.mjs: failed; Поведение: test/late-context-replies.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/opening-drag.test.mjs: failed; Поведение: test/space-delete-dialog.test.mjs: failed; Поведение: test/version-recovery-card-contract.test.mjs: failed; Поведение: test/write-authority-snapshot.test.mjs: failed; Браузер: canvas surface gestures: failed; Браузер: direct wall geometry: failed; Браузер: isometric live touch: failed; Браузер: vacuum: failed; Браузер: view edit permissions: failed",
-        "eventId": "finish:5ff8f6e8-5ec7-4a9c-88d6-6e69fb8d1375:finish:3:return:return:1392"
-      }
+        "at": 1794624097229,
+        "entry": 2,
+        "detail": "Открытие сохранённого плана в View: failed; Поведение: test/houseplan-render-lifecycle.test.mjs: failed; Браузер: readonly cold start: failed; Браузер: view recovery: failed",
+        "eventId": "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:3:return:return:1392"
+      },
+      "reason": "checks-failed"
     },
     "1393": {
       "issue": 1393,
@@ -4941,18 +4942,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1392,
-    "worker": "finish",
-    "token": "424:finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:1:admit",
-    "fence": 424,
-    "materialSha": "705ca6117a15b8532efbce28e1ba64a7e598027b",
-    "expectedBase": "3c29bb9c7c6a8626a472c7d978f32963c704cc8a",
-    "phase": "testing",
-    "admittedAt": 1794622984268,
-    "expiresAt": 1794624363566,
-    "patchId": "b0c4100535253140ce53def14d10c4f2f95a16aa"
-  },
+  "active": null,
   "events": {
     "github:43515058065:1:spec:1395:spec-request": {
       "digest": "3608873f6034b21ea424821722398c159d16857cd52d8f7d9bb5b504dd59972c",
@@ -5218,6 +5208,10 @@
       "digest": "3e3245f35d5451b67e23b66870bfe4e1ce2f464b2171370cdebf4de395ac454e",
       "issue": 1392
     },
+    "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:3:return": {
+      "digest": "72ebcaad02f03e69951a65b29ee6832835851891c5dfe29ba2098abab12973f5",
+      "issue": 1392
+    },
     "github:43517454379:1:spec:1395:spec-request:spec-resubmitted:1395": {
       "digest": "089596683564cc2108ae3c49cc07d85169089ac56348c6e56d2149e1760a0824",
       "issue": 1395,
@@ -5326,6 +5320,26 @@
         "layer": "product",
         "materialSha": "705ca6117a15b8532efbce28e1ba64a7e598027b",
         "phase": "sync"
+      }
+    },
+    "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:3:return:return:1392": {
+      "digest": "72ebcaad02f03e69951a65b29ee6832835851891c5dfe29ba2098abab12973f5",
+      "issue": 1392,
+      "message": {
+        "kind": "return",
+        "issue": 1392,
+        "at": 1794624097229,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794624097229,
+          "entry": 2,
+          "detail": "Открытие сохранённого плана в View: failed; Поведение: test/houseplan-render-lifecycle.test.mjs: failed; Браузер: readonly cold start: failed; Браузер: view recovery: failed",
+          "eventId": "finish:7dc540ae-5f8a-4679-a20a-26d2347f5ba6:finish:3:return:return:1392"
+        }
       }
     }
   },
