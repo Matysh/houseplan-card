@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 12599,
+  "revision": 12600,
   "nextTicket": 446,
   "nextFence": 446,
   "tasks": {
@@ -4909,7 +4909,12 @@
       "round": 3,
       "status": "accepted",
       "updatedAt": 1794653554518,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43587103391"
+      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43587103391",
+      "transition": {
+        "from": "S4-spec-review",
+        "to": "S5-ready",
+        "confirmed": true
+      }
     }
   },
   "reviewPublications": {
@@ -4949,7 +4954,12 @@
       "status": "pending",
       "presentation": {
         "round": 3,
-        "occurredAt": "2026-11-14T10:49:30.427Z"
+        "occurredAt": "2026-11-14T10:49:30.427Z",
+        "transition": {
+          "from": "S4-spec-review",
+          "to": "S5-ready",
+          "confirmed": true
+        }
       },
       "runId": 43587103391
     }
@@ -5154,6 +5164,10 @@
     },
     "github:43587302996:1:spec:1423:spec-complete": {
       "digest": "fd731941cc9b1677280d874eb41e8737e46abf8a724e87c7ea938e0f03fbcb7e",
+      "issue": 1423
+    },
+    "github:43587302996:1:spec:1423:spec-label": {
+      "digest": "a1ee9f1262f3175f474fc70aaa6252bfa1ac91440da80679d0b1724bc27165cc",
       "issue": 1423
     },
     "finish:dd11fcf0-f79f-4d22-a9c9-f3763dd19651": {
