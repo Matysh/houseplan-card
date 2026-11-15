@@ -48,7 +48,10 @@ const out=await page.evaluate(async ({fixture,diagonalFixture,linePlanFixture,be
     &&(window.__serviceCalls?.length||0)===servicesBefore&&JSON.stringify(fixture)===before;
 
   // Config events use the same public path as another HA client's save.
-  await T.setServerConfig(cfg=>{cfg.spaces[0].openings[0].contact='cover.synthetic_door';});
+  await T.setServerConfig(cfg=>{
+    cfg.spaces[0].openings[0].contact='cover.synthetic_door';
+    cfg.spaces[0].openings.find(o=>o.id==='outer-gate').contact='cover.synthetic_door';
+  });
   await until(()=>el._snap?.config?.spaces?.[0]?.openings?.[0]?.contact==='cover.synthetic_door');
   const contact=id=>({entity_id:'cover.synthetic_door',state:id,attributes:{current_position:0}});
   const states=async(state,pos)=>{
@@ -57,16 +60,23 @@ const out=await page.evaluate(async ({fixture,diagonalFixture,linePlanFixture,be
     c.hass=hass;el.hass=hass;await update();
   };
   const arcTone=(r=root())=>opening('wall-door',r)?.querySelector('.op-arc')?.getAttribute('stroke');
+  const gateFill=(r=root())=>{
+    const leaf=opening('outer-gate',r)?.querySelector('.op-leaf rect');
+    return leaf ? getComputedStyle(leaf).fill : null;
+  };
   const stableBox=box();
   await states('closed',0);const shutTone=arcTone();const shut=opening('wall-door')?.querySelector('.op-leaf')?.getAttribute('style');
+  const shutGateFill=gateFill();
   await states('open',50);const partial=opening('wall-door')?.querySelector('.op-leaf')?.getAttribute('style');
   await states('open',100);const activeTone=arcTone();const open=opening('wall-door')?.querySelector('.op-leaf')?.getAttribute('style');
+  result.availableGateShowsActivePaint=!!shutGateFill&&gateFill()!==shutGateFill;
   result.contactMovesLeafWithoutRefit=!!shut&&shut!==partial&&partial!==open&&box()===stableBox&&sameSymbol('wall-door');
   const geometryBefore=root().querySelector('.wallbodies')?.innerHTML;
   await states('unavailable',null);
   result.contactDoesNotChangeMasonry=root().querySelector('.wallbodies')?.innerHTML===geometryBefore&&box()===stableBox;
   const withoutContact={...c.hass.states};delete withoutContact['cover.synthetic_door'];
   const missingHass={...c.hass,states:withoutContact};c.hass=missingHass;el.hass=missingHass;await update();
+  result.missingGateContactKeepsNeutralPaint=gateFill()===shutGateFill&&gateFill(c.shadowRoot)===shutGateFill;
   const leafFill=(r)=>opening('wall-door',r)?.querySelector('.op-leaf rect')?.getAttribute('fill');
   result.assignedMissingContactKeepsSourceGuidesAndFullPlanBody=!!shutTone&&shutTone===activeTone
     &&arcTone()===activeTone&&arcTone(c.shadowRoot)===arcTone()
