@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14550,
+  "revision": 14551,
   "nextTicket": 489,
   "nextFence": 489,
   "tasks": {
@@ -4889,15 +4889,16 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794741046132,
-        "entry": 1,
-        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optional-space-model-contract.test.mjs: failed; Поведение: test/room-write-python.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed; Поведение: test/standalone-core-import-boundary.test.mjs: failed; Браузер: capture stability: failed; Браузер: choice row geometry 1447: failed; Браузер: context menu geometry 1444: failed; Браузер: decor group style cache: failed; Браузер: device contact editor frame: failed; Браузер: device icon picker: failed; Браузер: dialog picker 998: failed; Браузер: direct wall geometry: failed; Браузер: editor draft exit: cancelled; Браузер: editor gestures: cancelled; Браузер: editor guides lifecycle: Подготовка не завершена успешно; Браузер: editor nudge: Подготовка не завершена успешно; Браузер: floor cache storage: Подготовка не завершена успешно; Браузер: floor persistent cache: Подготовка не завершена успешно; Браузер: floor persistent cache isometric: Подготовка не завершена успешно; Браузер: geometry corpus: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: glass door sun: Подготовка не завершена успешно; Браузер: golden harness input: Подготовка не завершена успешно; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: junction holes: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lattice write barrier: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: led strip glow: Подготовка не завершена успешно; Браузер: marker state source: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: moon phase direction: Подготовка не завершена успешно; Браузер: native grid draw: Подготовка не завершена успешно; Браузер: node dependency carrier: Подготовка не завершена успешно; Браузер: node history context: Подготовка не завершена успешно; Браузер: opening drag: Подготовка не завершена успешно; Браузер: opening drag graph: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: opening escape wide: Подготовка не завершена успешно; Браузер: opening features: Подготовка не завершена успешно; Браузер: opening light transparent: Подготовка не завершена успешно; Браузер: opening measure: Подготовка не завершена успешно; Браузер: opening mode fill: Подготовка не завершена успешно; Браузер: opening preview: Подготовка не завершена успешно; Браузер: opening tunnel fill: Подготовка не завершена успешно; Браузер: partition openings preview: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan graph cold: Подготовка не завершена успешно; Браузер: plan graph editor: Подготовка не завершена успешно; Браузер: plan host: Подготовка не завершена успешно; Браузер: plan rotation editors: Подготовка не завершена успешно; Браузер: plan snap overlay: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: resize inner dimensions: Подготовка не завершена успешно; Браузер: resize junctions: Подготовка не завершена успешно; Браузер: resize through junction: Подготовка не завершена успешно; Браузер: room context menu: Подготовка не завершена успешно; Браузер: room device discovery: Подготовка не завершена успешно; Браузер: room face select: Подготовка не завершена успешно; Браузер: room opening host: Подготовка не завершена успешно; Браузер: selective invalidation: Подготовка не завершена успешно; Браузер: space copy categories: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: stairs: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: static zoom sharpness: Подготовка не завершена успешно; Браузер: summary panel: Подготовка не завершена успешно; Браузер: summary weather: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui button geometry 1431: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall chain merge: Подготовка не завершена успешно; Браузер: wall corner join: Подготовка не завершена успешно; Браузер: wall dimension hud: Подготовка не завершена успешно; Браузер: wall end align: Подготовка не завершена успешно; Браузер: wall face lineage: Подготовка не завершена успешно; Браузер: wall face room split: Подготовка не завершена успешно; Браузер: wall guide ownership: Подготовка не завершена успешно; Браузер: wall node attach: Подготовка не завершена успешно; Браузер: wall node connected: Подготовка не завершена успешно; Браузер: wall node delete: Подготовка не завершена успешно; Браузер: wall node hit: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно; Браузер: wall node move: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно; Браузер: wall node reliability: Подготовка не завершена успешно; Браузер: wall node topology: Подготовка не завершена успешно; Браузер: wall preview handoff 1247: Подготовка не завершена успешно; Браузер: wall side dimensions: Подготовка не завершена успешно; Браузер: wall side dimensions dense: Подготовка не завершена успешно; Браузер: wall side dimensions thin: Подготовка не завершена успешно; Браузер: wall thickness: Подготовка не завершена успешно; Браузер: wallthick standalone: Подготовка не завершена успешно; Браузер: warm geometry camera: Подготовка не завершена успешно; Браузер: write authority: Подготовка не завершена успешно; Браузер: writer fixed point: Подготовка не завершена успешно",
-        "eventId": "finish:38847d0c-2968-4745-b1dc-f34a1c491b6d:finish:3:return:return:1454"
-      }
+        "at": 1794745525919,
+        "entry": 2,
+        "detail": "Браузер: active chain ink: failed; Браузер: audit 1490: failed; Браузер: bg color: failed; Браузер: binding picker: failed; Браузер: canvas frame: failed; Браузер: card reconnect: failed; Браузер: climate temp: failed; Браузер: config authority: failed; Браузер: config reload race: failed; Браузер: cover tap: failed; Браузер: decor default persist: failed; Браузер: decor group style cache: failed; Браузер: decor layer order: failed; Браузер: decor order: failed; Браузер: detached authority: failed; Браузер: device settings action: failed; Браузер: external screens: failed; Браузер: first space converter: failed; Браузер: floor cache reuse: failed; Браузер: floor cache storage: failed; Браузер: floor geometry cache: failed; Браузер: font scales: failed; Браузер: furniture: failed; Браузер: general settings: failed; Браузер: glow blending: failed; Браузер: hidden flag: failed; Браузер: hide layers: failed; Браузер: inert openings: failed; Браузер: infinite canvas: failed; Браузер: iso first frame: failed; Браузер: iso flat parity: failed; Браузер: iso floor switch: failed; Браузер: isometric contract: failed; Браузер: isometric live touch: failed; Браузер: junction limits: failed; Браузер: junction patch resilience: failed; Браузер: kiosk: failed; Браузер: kiosk viewport recovery: failed; Браузер: lazy editor chunk: failed; Браузер: lock action: failed; Браузер: multiwall junction: failed; Браузер: multiwall strip containment: failed; Браузер: nav persist: failed; Браузер: near orthogonal junction: failed; Браузер: open passage: failed; Браузер: opening drag: failed; Браузер: opening drag graph: failed; Браузер: opening entity search: failed; Браузер: opening inner distances: failed; Браузер: optimize coordinate canonicalization: failed; Браузер: optimize outcomes: failed; Браузер: panel route kiosk: failed; Браузер: partition openings: failed; Браузер: plan entry tool: failed; Браузер: plan rotation: failed; Браузер: plan signed: failed; Браузер: plan snap overlay: failed; Браузер: post write adoption: failed; Браузер: preflight diagnostics: failed; Браузер: preloader: failed; Браузер: preloader lifecycle: failed; Браузер: registryless opening: failed; Браузер: render parity: failed; Браузер: render perf: failed; Браузер: resize outer reconciliation: failed; Браузер: room autoclose: failed; Браузер: room climate placement: failed; Браузер: room dimming removed: failed; Браузер: room settings: failed; Браузер: space switch transitions: failed; Браузер: space tab reorder: failed; Браузер: styling hooks: failed; Браузер: summary camera: failed; Браузер: summary camera restore: failed; Браузер: summary first paint: failed; Браузер: summary panel: failed; Браузер: sun: failed; Браузер: sun live bg: failed; Браузер: sun rim: failed; Браузер: sun soft: failed; Браузер: svg export: failed; Браузер: toggle confirmation: failed; Браузер: unified wall tool: failed; Браузер: v8 draft write: failed; Браузер: vacuum: failed; Браузер: vacuum route recovery: failed; Браузер: view recovery: failed; Браузер: view runtime kiosk recovery: failed; Браузер: virtual light toggle: failed; Браузер: wall chain thickness: failed; Браузер: wall face overlap: failed; Браузер: wall junctions: failed; Браузер: wall key roundtrip: failed; Браузер: wall node reliability: failed; Браузер: wall paper corners: failed; Браузер: wall thickness: failed; Браузер: wall union isolation: failed; Браузер: wallthick hover width: failed; Браузер: warm dialogs: failed; Браузер: warm geometry camera: failed; Браузер: warm mode adoption: failed; Браузер: warm remount: failed; Браузер: zero walls: failed; Браузер: zoom flash: failed; Браузер: zoom out: failed",
+        "eventId": "finish:e46dd4cc-9075-419a-a206-3ed09b72f10b:finish:3:return:return:1454"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -5240,18 +5241,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1454,
-    "worker": "finish",
-    "token": "488:finish:e46dd4cc-9075-419a-a206-3ed09b72f10b:finish:1:admit",
-    "fence": 488,
-    "materialSha": "57c21e67ab249d779f8a04945ef3c8455c1d294e",
-    "expectedBase": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-    "phase": "testing",
-    "admittedAt": 1794741732816,
-    "expiresAt": 1794745696148,
-    "patchId": "a0979c9e28323e703849b0ab36889a6d2bfe3409"
-  },
+  "active": null,
   "events": {
     "github:43692634249:1:label:spec-request": {
       "digest": "be23c2d8528929891849728e337b326730ffe9e71f61f86425d4a615c34ae29a",
@@ -5581,6 +5571,10 @@
       "digest": "b47f86d4817458af3a35e6c65af6fcb0deb4d5b978262cd1ca7395ed6dbe77a8",
       "issue": 1454
     },
+    "finish:e46dd4cc-9075-419a-a206-3ed09b72f10b:finish:3:return": {
+      "digest": "d23ee5f0dd2b49d5d9f5655ca71f4898c6e352d2c3d7869843c60eca6f2486c6",
+      "issue": 1454
+    },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
       "digest": "a7f53fa9906dee3c79c8556d9b9c92e8d7cd413dfbb3f5810a2156cf677086a2",
       "issue": 1454,
@@ -5670,6 +5664,26 @@
         "layer": "product",
         "materialSha": "57c21e67ab249d779f8a04945ef3c8455c1d294e",
         "phase": "sync"
+      }
+    },
+    "finish:e46dd4cc-9075-419a-a206-3ed09b72f10b:finish:3:return:return:1454": {
+      "digest": "d23ee5f0dd2b49d5d9f5655ca71f4898c6e352d2c3d7869843c60eca6f2486c6",
+      "issue": 1454,
+      "message": {
+        "kind": "return",
+        "issue": 1454,
+        "at": 1794745525919,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794745525919,
+          "entry": 2,
+          "detail": "Браузер: active chain ink: failed; Браузер: audit 1490: failed; Браузер: bg color: failed; Браузер: binding picker: failed; Браузер: canvas frame: failed; Браузер: card reconnect: failed; Браузер: climate temp: failed; Браузер: config authority: failed; Браузер: config reload race: failed; Браузер: cover tap: failed; Браузер: decor default persist: failed; Браузер: decor group style cache: failed; Браузер: decor layer order: failed; Браузер: decor order: failed; Браузер: detached authority: failed; Браузер: device settings action: failed; Браузер: external screens: failed; Браузер: first space converter: failed; Браузер: floor cache reuse: failed; Браузер: floor cache storage: failed; Браузер: floor geometry cache: failed; Браузер: font scales: failed; Браузер: furniture: failed; Браузер: general settings: failed; Браузер: glow blending: failed; Браузер: hidden flag: failed; Браузер: hide layers: failed; Браузер: inert openings: failed; Браузер: infinite canvas: failed; Браузер: iso first frame: failed; Браузер: iso flat parity: failed; Браузер: iso floor switch: failed; Браузер: isometric contract: failed; Браузер: isometric live touch: failed; Браузер: junction limits: failed; Браузер: junction patch resilience: failed; Браузер: kiosk: failed; Браузер: kiosk viewport recovery: failed; Браузер: lazy editor chunk: failed; Браузер: lock action: failed; Браузер: multiwall junction: failed; Браузер: multiwall strip containment: failed; Браузер: nav persist: failed; Браузер: near orthogonal junction: failed; Браузер: open passage: failed; Браузер: opening drag: failed; Браузер: opening drag graph: failed; Браузер: opening entity search: failed; Браузер: opening inner distances: failed; Браузер: optimize coordinate canonicalization: failed; Браузер: optimize outcomes: failed; Браузер: panel route kiosk: failed; Браузер: partition openings: failed; Браузер: plan entry tool: failed; Браузер: plan rotation: failed; Браузер: plan signed: failed; Браузер: plan snap overlay: failed; Браузер: post write adoption: failed; Браузер: preflight diagnostics: failed; Браузер: preloader: failed; Браузер: preloader lifecycle: failed; Браузер: registryless opening: failed; Браузер: render parity: failed; Браузер: render perf: failed; Браузер: resize outer reconciliation: failed; Браузер: room autoclose: failed; Браузер: room climate placement: failed; Браузер: room dimming removed: failed; Браузер: room settings: failed; Браузер: space switch transitions: failed; Браузер: space tab reorder: failed; Браузер: styling hooks: failed; Браузер: summary camera: failed; Браузер: summary camera restore: failed; Браузер: summary first paint: failed; Браузер: summary panel: failed; Браузер: sun: failed; Браузер: sun live bg: failed; Браузер: sun rim: failed; Браузер: sun soft: failed; Браузер: svg export: failed; Браузер: toggle confirmation: failed; Браузер: unified wall tool: failed; Браузер: v8 draft write: failed; Браузер: vacuum: failed; Браузер: vacuum route recovery: failed; Браузер: view recovery: failed; Браузер: view runtime kiosk recovery: failed; Браузер: virtual light toggle: failed; Браузер: wall chain thickness: failed; Браузер: wall face overlap: failed; Браузер: wall junctions: failed; Браузер: wall key roundtrip: failed; Браузер: wall node reliability: failed; Браузер: wall paper corners: failed; Браузер: wall thickness: failed; Браузер: wall union isolation: failed; Браузер: wallthick hover width: failed; Браузер: warm dialogs: failed; Браузер: warm geometry camera: failed; Браузер: warm mode adoption: failed; Браузер: warm remount: failed; Браузер: zero walls: failed; Браузер: zoom flash: failed; Браузер: zoom out: failed",
+          "eventId": "finish:e46dd4cc-9075-419a-a206-3ed09b72f10b:finish:3:return:return:1454"
+        }
       }
     }
   },
