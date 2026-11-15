@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14743,
+  "revision": 14744,
   "nextTicket": 494,
   "nextFence": 494,
   "tasks": {
@@ -4817,7 +4817,7 @@
       "ownerDecision": null,
       "ticket": 493,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794760297411,
       "reviewEntry": 6,
       "patchId": "99b77709353f96818ebb44d656979546238164fa",
@@ -4997,6 +4997,15 @@
         "at": 1794760166402,
         "entry": 5,
         "eventId": "finish:c01979c8-e3af-4b4d-a9f0-dd0ea7c51851:finish:4:expire:return:1454"
+      },
+      "s6": {
+        "id": "20261115T163158283-90750ea5",
+        "name": "Тесты для задачи #1454 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261115T163158283-90750ea5/report.json",
+        "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
+        "status": "passed",
+        "finishedAt": "2026-11-15T16:37:13.054Z",
+        "failures": []
       }
     },
     "1455": {
@@ -5370,9 +5379,9 @@
     "fence": 493,
     "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
     "expectedBase": "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794760301015,
-    "expiresAt": 1794760917661,
+    "expiresAt": 1794764234628,
     "patchId": "99b77709353f96818ebb44d656979546238164fa"
   },
   "events": {
@@ -6566,6 +6575,34 @@
         "layer": "product",
         "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
         "phase": "sync"
+      }
+    },
+    "finish:06a2b354-2da4-4cd9-b7a7-bc4b7d769fa6:finish:3:s6-complete": {
+      "digest": "0347755092e605714240821eec8906672ad4864e50be03a863afa1fcf18e7ea9",
+      "issue": 1454,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1454,
+        "at": 1794760634628,
+        "entry": 6,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
+        "phase": "review",
+        "evidence": {
+          "id": "20261115T163158283-90750ea5",
+          "name": "Тесты для задачи #1454 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261115T163158283-90750ea5/report.json",
+          "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
+          "status": "passed",
+          "finishedAt": "2026-11-15T16:37:13.054Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\n\nРеализовано принятое ТЗ редакции 2, трек ask: ранний полноценный View из scoped cold hint и L2, пассивный L1 при задержке L2, worker miss и demanded summary scalar. Это передача кода, не новое ревью ТЗ. Полный скоуп сохранён; серверная SVG остаётся разобранной альтернативой, не реализацией. Релиз не запрашивался.\n\n### Решение и альтернативы\n\nОдин owner на mount: scope/authority/connection/navigation fences, память → IDB → canonical worker → ограниченный честный fallback. L1 — строгий data-only SVG vocabulary и рассчитанный из полного кадра canonical/projected fit; L2 сохраняет точные числа, shared refs, non-enumerable и retained direct/iso side-tables. Семейства гидратируются в существующие читатели. Свет считается по текущим HA states, не берётся из диска; light-only job сохраняет идентичность frame/wire/payload и потребителей. Площади этажей запрашиваются по одной с меньшим приоритетом, сохраняются после accepted paint.\n\nLegacy global LS_CFG остаётся для старых читателей; cold load доверяет только отдельному versioned scope-envelope. Hint не даёт _loadOk или write authority. Новый экземпляр может показать scoped cached-full до fresh pair; уже показанный экземпляр при смене authority не засеивается старым hint повторно. Издатели проверяют фактические config/layout fingerprints, отсутствие deferred writes и актуальный fit/paint token после paint await.\n\nWorker-граф собирает те же чистые алгоритмы без Lit/DOM bootstrap и доставляется lazy manifest edge. Из iso-scene-render механически выделена чистая iso-scene-geometry, публичные экспорты сохранены. После измеренного miss regression существующий exact local boolean исключает далёкие floor-clipping operands; независимый differential oracle сохраняет старый full sweep.\n\nОтложенный вход также захватывает authority владельца: новый owner/отозванное write-разрешение не может продолжить старый editor intent; его refit-hold освобождается. Прямая queued команда перепроверяет свежие права перед входом.\n\nУдерживается только пространственная сцена, не меню/диалоги. Отложенный editor intent хранит всю синхронную warm-транзакцию и параметры, а явный выбор пользователя отзывает старое восстановление до geometry gate. Warm camera не проходит повторный cold fit при позднем определении проекции; промежуточный View не портит согласованную пару header/stage редактора. Placement-memo хранит последнее принятое L1 только для точного scope/floor/structural/fit key. Его SVG viewBox синхронизируется с поздно принятой камерой без refit или update loop.\n\n### Риски и места для внимания\n\nОсобенно важны реальные retained recut/iso consumers после decode, dependency keys всех семейств, publication между optimistic body и ACK, поздний ответ прежнего пользователя, повторные worker errors, приоритет навигации над площадями, восстановление камеры и отсутствие native device targets в quarantine. L1 не содержит устройств, имён, света, состояний проёмов и картинок. Fit берётся из полного кадра, не из архитектурного bbox. Это не ограничивает область ревьюера.\n\n### Проверки и ограничения\n\nПредыдущие S6 не объявлены PASS: первый остановлен после отказов, второй завершён целиком и выявил 105 browser-file отказов; быстрые Node/подготовительные единицы прошли. Причины разобраны, адресные исправления сохраняют исходные числовые/геометрические/authority/camera оракулы. Общие harness и старые драйверы теперь ждут фактический полный кадр либо committed mode, а не одну updateComplete. Static/mutation/compatibility readers следуют реальным владельцам; runtime конвертера штатно пересобран. Python — подготовленный venv 3.14.7.\n\nВсе 105 ранее упавших browser-file сценариев повторены адресно и прошли после разбора. Последние 48 cache/foundation Node-кейсов прошли; старые failed/aborted отчёты сохранены.\n\nСледующий полный S6 завершён 15.11.2026 15:00:47 UTC: 1224 единицы, 978 passed, 238 reused, 8 failed; это не PASS. Все восемь затем прошли адресно. Пять golden-harness сценариев наследовали warm Devices между независимыми preparation: initial View позже сменялся восстановленным Devices. Reset сделан один раз между независимыми сценами, не внутри mount; отдельный proof подтверждает reset=1 и настоящее восстановление второго внутреннего warmRemount из первого. Независимые node-delete/topology boot аналогично изолированы: topology воспроизводимо наследовал камеру, оставлявшую центр узла за границей stage. Его строгая camera-ready проверка, 100 циклов и same-owner disconnect не изменены. Static-card fixed pause заменён bounded ожиданием точно принятого/показанного SIG3 candidate; исходные URL/backoff/немедленные expiry/aging оракулы сохранены. Старый timing-тест в спокойном повторе прошёл: таймерная причина подтверждается кодом/трассировкой, но не заявляется детерминированно воспроизведённой. Новых продуктовых изменений в этом ремонте нет. Материал перед повторным входом: 561196ce835feb0bdcb2b31d8a26b46cfda5dbf4.\n\nNode-проверки исполняют реальные publication/intent/preview-camera/hint методы, lossless DTO, retained geometry и scheduler. Native Chromium использует настоящий Worker/IDB: новый документ до delayed fresh pair, quarter turns/narrow/2x DPR, фактическая SVG CTM ≤1px, текущая дверь во время worker, summary preemption/foreign-floor stairs при том же rev, storage/corruption/Worker-asset failures. Новые проверки классифицированы и входят в фактический профиль. Main-only положительные controls заменены реальными producer witnesses, cleanFloorGeometry считает actual miss в обоих realms. Восстановление потребительского LRU из уже готового L2 не выдаётся за canonical rebuild; нулевое worker masonry work для любого structural edit не заявлено.\n\n[Отчёт и исходные/повторные сырые серии](https://github.com/Matysh/houseplan-card/tree/7918081415a5d28f20b13b9656878c30112784a6/docs/performance/issue-1454). После ремонта consumer journeys повторены одинаковые парные условия: base 532.9ms → disk 290.7ms (−45.4%), miss 495.3ms, memory 66.5/82.5ms против 49.9ms. Все 7 samples каждой серии сохранены, все три согласованных решения PASS. Исторические серии, включая первоначальный miss FAIL 576.2ms, не затёрты. Slow CPU — отдельная диагностика, не парная приёмка. Пакет/размер за владельца не принят, релиз не выпускается.\n\nВ старом wall-node raster witness найдена ложная положительная проверка вне скриншота. Исправленная compositing-fixture требует реально видимых/непрозрачных проб, фиксирует native path/paint/screenCTM и отделяет декоративную штриховку/размерные подписи от проверки прозрачности. Actual ghost alpha, маски/владельцы, старый проём и cleanup остаются отдельными строгими оракулами; эталоны и численные пороги не расширяются.\n\nФактический финальный S6 по полному diff и содержательный ask-verdict добавляет штатная общая очередь. Полный stable/golden и реальные HA ACL здесь не заявлены; эталоны не менялись. [Нужность реальных HA E2E до беты](https://github.com/Matysh/houseplan-e2e/issues/71) зафиксирована отдельно.\n\n\nЕщё один полный S6 завершён 15.11.2026 16:18:36 UTC на 561196ce8: 614 passed, 609 reused, один timeout smoke_gear_tabs:93 (ожидание compact space-select). Остальные восемь предыдущих отказов прошли в общем прогоне. Адресная диагностическая копия с сохранёнными исходными assertions прошла. Один детерминированный boundary probe также прошёл: native resize 1800→600 при actual mode-transition.active, затем тот же public setMode завершился с phase4/compact/select, шириной 584px и актуальным observer lease, без второго resize/force-measure. Предположение о потерянном измерении не подтверждено; продукт и тест не менялись. Далее — один официальный адресный повтор исходного gear_tabs с неизменными входами и reuse применимых 1223 результатов, не серия повторов до зелёного.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
