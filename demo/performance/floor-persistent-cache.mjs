@@ -26,6 +26,12 @@ const evaluate = async(index,seed=false)=>page.evaluate(async({fixture,index,see
     if(performance.now()-start>30_000)throw Error(label+JSON.stringify(window.__benchCard?.houseplanFloorCacheDiagnostics?.()));
     await new Promise(resolve=>setTimeout(resolve,5));}};
   localStorage.clear();
+  const databaseOpenMs=[], nativeOpen=IDBFactory.prototype.open;
+  IDBFactory.prototype.open=function(...args){
+    const started=performance.now(),request=nativeOpen.apply(this,args);let recorded=false;
+    const record=()=>{if(!recorded){recorded=true;databaseOpenMs.push(performance.now()-started);}};
+    request.addEventListener('success',record);request.addEventListener('error',record);request.addEventListener('blocked',record);return request;
+  };
   if(mode==='miss'||seed)await new Promise(resolve=>{const r=indexedDB.deleteDatabase('houseplan-derived-floors-v1');r.onsuccess=r.onerror=r.onblocked=resolve;});
   const source=structuredClone(fixture);
   const card=document.createElement('houseplan-card');window.__benchCard=card;
@@ -69,8 +75,8 @@ const evaluate = async(index,seed=false)=>page.evaluate(async({fixture,index,see
   if(seed&&card._floorPreparation){card.requestUpdate();await until(()=>card._floorPreparation.diagnostic.store.writes>=2,'seed publication');}
   await navigation(source.config.spaces[0].id);
   const memory=await navigation(source.config.spaces[1].id);
-  const report={index,mountReady,cold,memory,freshReadCount:calls.filter(([,type])=>type==='houseplan/config/get').length};
-  card.remove();return report;
+  const report={index,mountReady,cold,memory,databaseOpenMs,freshReadCount:calls.filter(([,type])=>type==='houseplan/config/get').length};
+  card.remove();IDBFactory.prototype.open=nativeOpen;return report;
 },{fixture,index,seed,mode});
 try {
   await evaluate(-1,true); // one declared warm-up/seed, not one of the seven

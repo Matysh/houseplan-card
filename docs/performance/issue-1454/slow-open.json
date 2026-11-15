@@ -1,0 +1,12 @@
+{
+  "purpose": "Additional open/read instrumentation, not a repeat-for-green acceptance series",
+  "cpuRate": 4,
+  "samples": 1,
+  "warmups": 1,
+  "productSha": "1189148792b454f9d98f11eacd19821a85e85573",
+  "databaseOpenMs": [388.1000000014901],
+  "readElapsedMs": [267.79999999701977,267.20000000298023,141.39999999850988,90.39999999850988,78.29999999701977,114.39999999850988],
+  "timeouts": 4,
+  "readyCurrentFrameMs": 985.6999999955297,
+  "diskHits": 0
+}
