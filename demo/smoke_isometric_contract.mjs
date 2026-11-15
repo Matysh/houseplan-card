@@ -14,7 +14,7 @@ const out = await page.evaluate(async () => {
         || !(await card._ensureIsoSceneRuntime())) {
       throw new Error('isometric smoke runtime did not load');
     }
-    await card.updateComplete;
+    await window.__hpTest.settled();
     await frame();
   };
   const center = (element) => {
@@ -82,17 +82,17 @@ const out = await page.evaluate(async () => {
   ];
   card._cfgEpoch++;
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   // #649 AC11: the alpha switch no longer enables 2.5D and loads nothing.
   history.replaceState(null, '', '#space=f1&hp_alpha=1');
   dispatchEvent(new HashChangeEvent('hashchange'));
-  await card.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   result.alphaDoesNotEnableIso = window.__hpAlpha === true && JSON.stringify(window.__hpLabs) === '[]'
     && !root().querySelector('[data-hp="iso-walls"]') && isoRuntimeRequests() === 0;
   history.replaceState(null, '', '#space=f1&hp_alpha=0');
   dispatchEvent(new HashChangeEvent('hashchange'));
-  await card.updateComplete;
+  await window.__hpTest.settled();
   await enable();
   result.settingLoadsIsoRuntimeOnce = isoRuntimeRequests() === 1;
   const openingBases = card._isoSource()?.build().openings || [];
@@ -249,7 +249,7 @@ const out = await page.evaluate(async () => {
   card._isoScene = (...args) => { sceneCalls++; return sceneMethod.apply(card, args); };
   card.hass = { ...card.hass, states: { ...card.hass.states } };
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   result.oneStructuralResolvePerFrame = sourceCalls === 1 && sceneCalls === 1
     && Number(root().querySelector('.stage')?.getAttribute('data-hp-iso-structural-builds'))
       === buildsBeforeLive;
@@ -263,7 +263,7 @@ const out = await page.evaluate(async () => {
   const room = card._spaceModel('f1')?.rooms?.[0];
   card._hoverRoom = room ? { space: 'f1', room } : null;
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   const fingerprintAfterHover = root().querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint;
   const buildsAfterHover = Number(root().querySelector('.stage')
@@ -275,7 +275,7 @@ const out = await page.evaluate(async () => {
     && card._isoGeometryCache.size === 1;
   card._hoverRoom = null;
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
 
   const originalRoomConfig = configSpace.rooms[0];
   const roomSourceBeforePresentation = card._isoSource();
@@ -296,7 +296,7 @@ const out = await page.evaluate(async () => {
   configSpace.rooms[0] = presentationRoomConfig;
   card._cfgEpoch++;
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   const roomSourceAfterPresentation = card._isoSource();
   const buildsAfterRoomPresentation = Number(root().querySelector('.stage')
@@ -307,6 +307,7 @@ const out = await page.evaluate(async () => {
     && card._isoGeometryCache.get(roomSourceAfterPresentation.key)?.geometry
       === roomGeometryBeforePresentation;
 
+  const workerJobsBeforeRoomGeometry = card.houseplanFloorCacheDiagnostics().cache.scheduler.workerJobs;
   const geometryRoomConfig = {
     ...presentationRoomConfig,
     poly: presentationRoomConfig.poly.map((point, index) =>
@@ -315,20 +316,24 @@ const out = await page.evaluate(async () => {
   configSpace.rooms[0] = geometryRoomConfig;
   card._cfgEpoch++;
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   const roomSourceAfterGeometry = card._isoSource();
   const buildsAfterRoomGeometry = Number(root().querySelector('.stage')
     ?.getAttribute('data-hp-iso-structural-builds'));
   result.roomGeometryUpdateInvalidatesStructuralCache =
     roomSourceAfterGeometry.key !== roomSourceAfterPresentation.key
-    && buildsAfterRoomGeometry === buildsAfterRoomPresentation + 1
+    // Canonical structural preparation now runs in the actual worker.
+    && buildsAfterRoomGeometry === buildsAfterRoomPresentation
+    && card.houseplanFloorCacheDiagnostics().cache.scheduler.workerJobs === workerJobsBeforeRoomGeometry + 1
+    && card.houseplanFloorCacheDiagnostics().cache.producers.at(-1)?.owner === 'worker'
+    && card.houseplanFloorCacheDiagnostics().cache.producers.at(-1)?.counts.wallBodiesGeometry > 0
     && card._isoGeometryCache.get(roomSourceAfterGeometry.key)?.geometry
       !== roomGeometryBeforePresentation;
   configSpace.rooms[0] = originalRoomConfig;
   card._cfgEpoch++;
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   await frame();
 
   const roomFitLabel = root().querySelector('.roomlabel[data-id="r1"]');
@@ -336,7 +341,7 @@ const out = await page.evaluate(async () => {
     key: 'Enter', bubbles: true, composed: true,
   }));
   for (let guard = 0; card._cameraTransition.active && guard < 90; guard++) await frame();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   const ownedEntries = (card._renderIsoScene?.overlayFitEntries || [])
     .filter((entry) => entry.placement.owner?.id === 'r1');
   const ownedRoots = ownedEntries.map((entry) => entry.kind === 'device'
@@ -357,7 +362,7 @@ const out = await page.evaluate(async () => {
     bubbles: true, composed: true, cancelable: true, button: 2,
   });
   sensorDevice?.dispatchEvent(deviceContext);
-  await card.updateComplete;
+  await window.__hpTest.settled();
   // #1089: the raised marker owns the context menu and its explicit Settings command.
   const menuStarted = performance.now();
   while (!root().querySelector('[data-hp="device-context-menu"]:not([inert])')
@@ -366,11 +371,11 @@ const out = await page.evaluate(async () => {
   const settingsCommand = contextMenu?.querySelector('[data-action="view-device-settings"]');
   const contextOwned = deviceContext.defaultPrevented && settingsCommand && !settingsCommand.disabled
     && card._markerDialog === null && moreInfoCalls === 0;
-  settingsCommand?.click(); await frame(); await card.updateComplete;
+  settingsCommand?.click(); await frame(); await window.__hpTest.settled();
   const contextOpenedDeviceSettings = deviceContext.defaultPrevented
     && contextOwned && card._markerDialog?.devId === 'd_temp' && card._mode === 'view' && moreInfoCalls === 0;
   root().querySelector('hp-dialog[data-kind="marker"] [data-hp="dialog-cancel"]')?.click();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   sensorDevice?.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'Enter', bubbles: true, composed: true,
   }));
@@ -384,7 +389,7 @@ const out = await page.evaluate(async () => {
   history.replaceState(null, '', cardPath);
   // #1093: returning from HA must notify the mounted card through the same public route event.
   window.dispatchEvent(new CustomEvent('location-changed', { detail: { replace: true } }));
-  await frame(); await card.updateComplete;
+  await frame(); await window.__hpTest.settled();
   // The first post-navigation action is a new physical press, not an abandoned click tail.
   await window.__isoClickOpeningLock();
   result.raisedActionsRemainOwned = contextOpenedDeviceSettings && moreInfoCalls === 0 && keyboardOpenedDeviceCard
@@ -393,7 +398,7 @@ const out = await page.evaluate(async () => {
   card._openingInfo = null;
 
   card._setMode('plan');
-  await card.updateComplete;
+  await window.__hpTest.settled();
   while (card._modeTransitionBusy) await frame();
   result.editorIsFlat = card._mode === 'plan'
     && !root().querySelector('[data-hp="projection-toggle"]')
@@ -401,7 +406,7 @@ const out = await page.evaluate(async () => {
     && ![...root().querySelector('.stage').classList]
       .some((name) => name.startsWith('projection-'));
   card._setMode('view');
-  await card.updateComplete;
+  await window.__hpTest.settled();
   while (card._modeTransitionBusy) await frame();
   result.viewRestoresIso = !!root().querySelector('.stage.projection-iso')
     && !!root().querySelector('[data-hp="iso-walls"]');
@@ -410,7 +415,7 @@ const out = await page.evaluate(async () => {
   const fallbackCountBeforeCapabilityProbe = card._isoFallback.size;
   CSS.supports = () => { throw new Error('injected decoration capability failure'); };
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   result.throwingCapabilityProbeStaysSolidIso = card._effectiveProjection() === 'iso'
     && card._isoFallback.size === fallbackCountBeforeCapabilityProbe
@@ -422,7 +427,7 @@ const out = await page.evaluate(async () => {
     && !root().querySelector('.iso-ambient-shadow');
   CSS.supports = nativeCssSupports;
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   result.capabilityProbeRecoveryRestoresNuance = card._effectiveProjection() === 'iso'
     && !!root().querySelector('[data-hp-iso-material-def]')
@@ -437,9 +442,9 @@ const out = await page.evaluate(async () => {
   };
   const firstInvalidKey = card._isoInvalidKey();
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   card.hass = { ...card.hass, states: { ...card.hass.states } };
-  await card.updateComplete;
+  await window.__hpTest.settled();
   const flatView = (root().querySelector('[data-hp-live-viewbox="floor"]')
     ?.getAttribute('viewBox') || '').split(/\s+/).map(Number);
   result.invalidSourceFallbackLatchedAndRefit = invalidAttempts === 1
@@ -448,7 +453,7 @@ const out = await page.evaluate(async () => {
   const fallbackFlatCamera = { x: 80, y: 90, w: 700, h: 620 };
   card._view = { ...fallbackFlatCamera };
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   result.latchedFallbackKeepsFlatCamera = JSON.stringify(card._view) === JSON.stringify(fallbackFlatCamera);
   card._isoSource = healthySource;
   await window.__hpTest.setVolumetricView(false);
@@ -465,15 +470,15 @@ const out = await page.evaluate(async () => {
   };
   const epochInvalidKey = card._isoInvalidKey();
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   card.hass = { ...card.hass, states: { ...card.hass.states } };
-  await card.updateComplete;
+  await window.__hpTest.settled();
   card._isoSource = healthySource;
   configSpace.partitions[0] = { ...originalSmokeWall, cm: originalSmokeWall.cm + 1 };
   card._cfgEpoch++;
   const nextEpochInvalidKey = card._isoInvalidKey();
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   const sourceKeyAfterEpochRecovery = card._isoSource()?.key;
   result.invalidSourceNewFingerprintRestoresIso = invalidAttempts === 2
@@ -485,7 +490,7 @@ const out = await page.evaluate(async () => {
   configSpace.partitions[0] = originalSmokeWall;
   card._cfgEpoch++;
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
 
   const source = card._isoSource;
   let attempts = 0;
@@ -502,9 +507,9 @@ const out = await page.evaluate(async () => {
   });
   card._view = { x: 123456, y: 234567, w: 3456, h: 4567 };
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   card.hass = { ...card.hass, states: { ...card.hass.states } };
-  await card.updateComplete;
+  await window.__hpTest.settled();
   result.fallbackLatched = attempts === 1
     && !root().querySelector('.stage.projection-iso')
     && !root().querySelector('[data-hp="iso-walls"]')
@@ -520,7 +525,7 @@ const out = await page.evaluate(async () => {
   card._isoGeometryCache.delete(fallbackKey);
   card._isoFallback.delete(fallbackKey);
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
 
   const runtime = card._isoSceneRuntime;
   const warning = console.warn;
@@ -552,7 +557,7 @@ const out = await page.evaluate(async () => {
   card._isoSceneRuntimeLoader.options.failed(
     new Error(`${privateAsset}\nprivate stack sensor.private_identifier`), { terminal: false },
   );
-  await card.updateComplete;
+  await window.__hpTest.settled();
   result.isoDiagnosticsAreRedacted = isoDiagnostics.length === 2
     && isoDiagnostics.every((text) => /"kind":|kind=/.test(text)
       && /"fingerprint":|fingerprint=/.test(text) && /"terminal":|terminal=/.test(text))
@@ -569,9 +574,9 @@ const out = await page.evaluate(async () => {
     },
   };
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   card.hass = { ...card.hass, states: { ...card.hass.states } };
-  await card.updateComplete;
+  await window.__hpTest.settled();
   result.lateFailureIsRedactedAndLatched = lateTransitionStarted && !card._cameraTransition.active
     && lateAttempts === 1 && fallbackWarnings.length === 1
     && /"kind":"structural"/.test(fallbackWarnings[0])

@@ -12,7 +12,7 @@ const res = await page.evaluate(async () => {
   out.floorImportUsesDaynight = c._spaceDialog?.bgMode === 'daynight';
   c._spaceDialog = null;
   // 1) диалог общих настроек: инвентарь строк и групп (обновлён фичей «Солнце»)
-  c._openSettingsDialog(); await c.updateComplete;
+  c._openSettingsDialog(); await window.__hpTest.settled();
   // #1037: wall fill is now in Space settings, not a General colour row.
   // Radius and background remain here. The old `.gsrow`
   // считал всё подряд, теперь каждая поверхность считается своим классом.
@@ -45,7 +45,9 @@ const res = await page.evaluate(async () => {
       const row=sr().querySelector(`hp-dialog #${id}`)?.closest('.hpf-toggle');
       const caption=row?.querySelector('.hpf-toggle-caption');
       return !!row?.querySelector('hp-help[instant]') && (id==='gs-room-tooltip'
-        ? caption?.textContent.trim()==='Global value for the whole installation' : !caption);
+        ? caption?.textContent.trim()==='Global value for the whole installation'
+        : id==='gs-volumetric-view'
+          ? caption?.textContent.trim()==='This feature is under development. Some rendering issues may occur.' : !caption);
     });
   // И ни одного абзаца-пояснения (`.rhint`) в форме не осталось вовсе (#600 AC7).
   out.noMovedHintParagraphs = sr().querySelectorAll('hp-dialog .rhint').length === 0;
@@ -55,12 +57,12 @@ const res = await page.evaluate(async () => {
     && sr().querySelectorAll('hp-dialog a.aboutlink').length === 0;
   // 2) сменить цвет light_on и сохранить
   c._setFillColor('light_on', { c: '#ff00ff', a: 0.5 });
-  await c._saveSettingsDialog(); await c.updateComplete;
+  await c._saveSettingsDialog(); await window.__hpTest.settled();
   out.saved = c._serverCfg.settings.fill_colors?.light_on;
   // 3) заливка light использует кастомный цвет
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({ ...s,
     settings: { ...(s.settings||{}), show_borders: true, fill_mode: 'light' } })) };
-  c.requestUpdate(); await c.updateComplete;
+  c.requestUpdate(); await window.__hpTest.settled();
   const styledRooms = [...sr().querySelectorAll('.room.styled')];
   out.customFillUsed = styledRooms.some((room) => (
     room.style.getPropertyValue('--room-fill').trim() === '#ff00ff'
@@ -70,7 +72,7 @@ const res = await page.evaluate(async () => {
   out.lqiBefore = sr().querySelectorAll('.dev .lqi').length;
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : ({ ...s,
     settings: { ...(s.settings||{}), show_lqi: false } })) };
-  c.requestUpdate(); await c.updateComplete;
+  c.requestUpdate(); await window.__hpTest.settled();
   out.lqiAfter = sr().querySelectorAll('.dev .lqi').length;
   // #876: historical true now inherits; only the new explicit On mode may
   // override YAML false. Keep both sides of the contrast on the accepted bus.

@@ -101,11 +101,12 @@ out.devicesStretchFrame = await page.evaluate(async () => {
   const cfg = JSON.parse(JSON.stringify(c._serverCfg));
   cfg.spaces[0].plan_url = null; cfg.spaces[0].plan_aspect = null;
   c._serverCfg = cfg; c._model = null;
+  c.requestUpdate(); await window.__hpTest.settled();
   const before = c._baseVb();
   // walk one lamp far outside every room
   c._layout = { ...c._layout, d_lamp: { s: 'f1', x: 0.99, y: 0.5 } };
   c.requestUpdate();
-  await c.updateComplete;
+  await window.__hpTest.settled();
   const after = c._baseVb();
   return after[0] + after[2] > before[0] + before[2] + 20; // right edge follows the lamp
 });

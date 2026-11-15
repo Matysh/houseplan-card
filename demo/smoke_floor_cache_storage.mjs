@@ -52,7 +52,11 @@ try{
       capped.filter(row=>row.scope===scope).reduce((n,row)=>n+row.bytes,0)<=32*1024**2);
     db.close();left.close();right.close();forbidden.close();iframe.remove();
     const upgraded=await new Promise((resolve,reject)=>{const r=indexedDB.open('houseplan-derived-floors-v1',2);
-      r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('versionchange did not close cache connection'));});
+      // close() is close-pending until already accepted transactions finish.
+      // A transient blocked event is legal; an upgrade that never completes is not.
+      const deadline=setTimeout(()=>reject(Error('versionchange did not close cache connection')),3000);
+      r.onsuccess=()=>{clearTimeout(deadline);resolve(r.result);};
+      r.onerror=()=>{clearTimeout(deadline);reject(r.error);};});
     const versionMiss=await original.read(zero,'preview')===null;
     card.requestUpdate();await card.updateComplete;
     const versionSafe=versionMiss&&original.closed&&!!card.renderRoot.querySelector('.dev');upgraded.close();

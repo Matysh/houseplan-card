@@ -37,7 +37,7 @@ const load = (cfg, layout, space) => page.evaluate(async ([c2, l2, sp]) => {
   c._view = null;
   c._zoom = 1;
   c.requestUpdate();
-  await c.updateComplete;
+  await window.__hpTest.settled();
   c._resetZoom();
   await c.updateComplete;
   const started = performance.now();
@@ -142,8 +142,7 @@ Object.assign(out, await page.evaluate(async () => {
   const round = () => c._baseVb().map((n) => Math.round(n));
   o.viewFrameBefore = JSON.stringify(round()) === JSON.stringify([60, 60, 880, 880]);
   // move the only room 5 canvases to the right, inside the Plan editor
-  c._setMode('plan');
-  await c.updateComplete;
+  await window.__hpTest.setMode('plan');
   const cfg = JSON.parse(JSON.stringify(c._serverCfg));
   cfg.spaces[0].rooms[0].poly = [[5.1, 0.1], [5.9, 0.1], [5.9, 0.9], [5.1, 0.9]];
   c._serverCfg = cfg;
@@ -155,18 +154,15 @@ Object.assign(out, await page.evaluate(async () => {
   // inside the editor the frame is the UNION — that is deliberate: it bounds
   // pan and defines zoom 1, and it must not shrink under a live gesture
   o.editorFrameOnlyGrows = inEditor[2] > 5000;
-  c._setMode('view');
-  await c.updateComplete;
+  await window.__hpTest.setMode('view');
   const back = round();
   o.viewFrameFollowsTheRoomAgain = JSON.stringify(back) === JSON.stringify([5060, 60, 880, 880]);
   if (!o.viewFrameFollowsTheRoomAgain) console.log('frame after exit', back, 'editor', inEditor);
   // and back into an editor it starts from the CURRENT geometry, not the old union
-  c._setMode('plan');
-  await c.updateComplete;
+  await window.__hpTest.setMode('plan');
   o.reenteringTheEditorDoesNotResurrectTheUnion =
     JSON.stringify(round()) === JSON.stringify([5060, 60, 880, 880]);
-  c._setMode('view');
-  await c.updateComplete;
+  await window.__hpTest.setMode('view');
   return o;
 }));
 

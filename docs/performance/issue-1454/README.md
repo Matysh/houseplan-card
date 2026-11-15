@@ -39,4 +39,23 @@ Addressed Node tests exercise lossless exact/hidden/WeakMap semantics, actual re
 - Summary scalar demand is preempted by navigation; all-floor areas equal the original canonical calculation. A foreign-floor stair change at equal server revision invalidates the scalar; persisted accepted scalars avoid hidden-floor main-thread geometry.
 - Corrupt payload, storage getter SecurityError, absent Worker and a truly missing worker asset all retain a complete View with one honestly reported degraded fallback.
 
+The expanded Ask selection also exercised the older native consumer journeys.
+Its first complete pass was retained, not treated as a successful qualification.
+Repairs keep menus/dialogs live while only spatial presentation is held, retain
+the entire synchronous warm editor/tool intent, preserve geometry identity on
+light-only jobs, restore a camera against the actual destination projection and
+coherent header/stage dimensions, and prevent an already shown owner from being
+reseeded by a hint after an authority change. A placement-owned, exact-key L1
+avoids empty warm frames; its actual SVG viewport follows late camera adoption
+without another fit or update loop.
+
+Legacy synchronous test drivers now wait for the actual full scene or committed
+mode, not one Lit update. Their numerical geometry/camera/authority oracles stay
+strict. Worker producer witnesses replace main-thread-only positive controls;
+`cleanFloorGeometry` counts the real clean-floor miss in either realm, rather
+than confusing it with masonry floor-footprint work. Restoring an evicted
+consumer pool from an already prepared L2 frame is a positive memory hit, not a
+required canonical rebuild. These controls do not claim zero worker masonry
+work for every structural edit.
+
 The shared Ask S6 result and substantive code-review verdict are published by the normal queue, not claimed by this evidence file. No full stable/golden set or real HA ACL test is implied. Real HA follow-up before beta is recorded in [houseplan-e2e#71](https://github.com/Matysh/houseplan-e2e/issues/71). Backend format, backups, source images and legacy global LS_CFG wire stay unchanged; the unscoped legacy hint is not interactive cold-load authority. Server SVG remains a theoretical alternative, not implemented.

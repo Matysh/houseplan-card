@@ -16,7 +16,7 @@ const out = await page.evaluate(async () => {
     rooms: [{ id: 'r', name: 'R', area: null, poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.4], [0.1, 0.4]] }],
   }], markers: [], settings: {} };
   card._layout = {}; card._space = 'bad'; card._modelCache = null; card._frame = null;
-  card._cfgEpoch++; card._setMode('plan'); await update();
+  card._cfgEpoch++; await window.__hpTest.setMode('plan'); await update();
 
   const result = {};
   const warns = [];

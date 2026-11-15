@@ -90,7 +90,7 @@ Object.assign(out, await page.evaluate(async () => {
   const c = window.__card;
   await c.updateComplete;
   o.clickTicksState = c._markerDialog?.useClimateTemp === true;
-  await c._saveMarker(); await c.updateComplete;
+  await c._saveMarker(); await c.updateComplete; await window.__hpTest.settled();
   const m = (c._serverCfg.markers || []).find((x) => x.binding === 'device:d_ac');
   o.savedInMarker = m?.use_climate_temp === true;
   return o;
@@ -111,7 +111,7 @@ Object.assign(out, await page.evaluate(async () => {
   // и на КАРТОЧКЕ КОМНАТЫ: включаем метрику температуры и читаем текст
   const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
   sp.settings = { ...(sp.settings || {}), label_temp: true, show_names: true };
-  c.requestUpdate(); await c.updateComplete;
+  c.requestUpdate(); await c.updateComplete; await window.__hpTest.settled();
   const labels = [...sr().querySelectorAll('.roomlabel .rlm')].map((el) => el.textContent.trim());
   o.roomCardShowsAvg = labels.some((t) => t.includes('21.8°'));
   return o;

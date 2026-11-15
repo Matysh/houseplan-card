@@ -76,7 +76,8 @@ const out = await page.evaluate(async () => {
   // ---- the dialog offers one universal action -----------------------------
   await setCover('closed', { device_class: 'curtain' });
   await setMarker('cover');
-  c._setMode('devices'); await c.updateComplete;
+  await window.__hpTest.settled();
+  await window.__hpTest.setMode('devices');
   const optionValues = () => [...sr().querySelectorAll('hp-dialog option')].map((e) => e.value);
   c._openMarkerDialog(gate()); await c.updateComplete;
   o.dialogOffersOnlyUnifiedToggle = optionValues().includes('toggle')

@@ -14,11 +14,11 @@ Object.assign(out, await page.evaluate(async () => {
   cfg.spaces[0].rooms = [{ id: 'r1', name: 'One', area: 'living_room',
     poly: [[0.4, 0.4], [0.6, 0.4], [0.6, 0.6], [0.4, 0.6]] }];
   c._serverCfg = cfg; c._model = null; c._view = null; c.requestUpdate();
-  await c.updateComplete;
+  await window.__hpTest.settled();
   await new Promise((r) => requestAnimationFrame(r));
   const inView = c._baseVb();
   o.viewIsContentFit = inView[2] < 999; // меньше холста (устройства тоже содержимое)
-  c._setMode('plan'); await c.updateComplete;
+  await window.__hpTest.setMode('plan');
   await new Promise((r) => requestAnimationFrame(r));
   const inPlan = c._baseVb();
   // docs/CANVAS.md: холста-квадрата больше нет, поэтому «редактор видит весь
@@ -43,7 +43,7 @@ Object.assign(out, await page.evaluate(async () => {
     const pt = c._screenToVb(stage.clientWidth - 1, stage.clientHeight - 1);
     return pt[0] > inPlan[0] + inPlan[2] * 0.9 || pt[1] > inPlan[1] + inPlan[3] * 0.9;
   })();
-  c._setMode('view'); await c.updateComplete;
+  await window.__hpTest.setMode('view');
   await new Promise((r) => requestAnimationFrame(r));
   const back = c._baseVb();
   o.contentFitRestored = back[2] < 999;

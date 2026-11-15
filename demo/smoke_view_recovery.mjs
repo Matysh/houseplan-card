@@ -258,7 +258,7 @@ reports.races = await races.page.evaluate(async () => {
   const held = [];
   const calls = [];
   const connection = () => ({ ...original.connection });
-  const oldAuthority = { ...original, connection: connection(), callWS: async (message) => {
+  const oldAuthority = { ...original, user: { ...original.user, id: 'recovery-old-authority' }, connection: connection(), callWS: async (message) => {
     if (!metadata(message)) calls.push(message.type);
     const response = await original.callWS(message);
     if (message.type !== 'houseplan/config/get' || metadata(message)) return response;
@@ -272,7 +272,7 @@ reports.races = await races.page.evaluate(async () => {
   const twoReads = await until(() => held.length === 2);
   let holdLatest = true;
   const latestReads = [];
-  const latest = { ...original, connection: connection(), callWS: async (message) => {
+  const latest = { ...original, user: { ...original.user, id: 'recovery-latest-authority' }, connection: connection(), callWS: async (message) => {
     if (!metadata(message)) calls.push(message.type);
     const response = await original.callWS(message);
     if (message.type === 'houseplan/config/get' && !metadata(message) && holdLatest)

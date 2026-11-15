@@ -7,6 +7,12 @@
 // с собственного IP пользователя.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
+const unsignedRequests = [];
+page.on('request', request => {
+  const url = new URL(request.url());
+  if (url.pathname === '/api/houseplan/content/plans/_/f1.svg' && !url.searchParams.has('authSig'))
+    unsignedRequests.push(request.url());
+});
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -32,18 +38,20 @@ const res = await page.evaluate(async () => {
     return base(m);
   } };
 
+  const previousAcceptedHref = bgHref();
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== 'f1' ? s : {
     ...s, plan_url: '/api/houseplan/content/plans/_/f1.svg?v=17831509',
   })};
   c._cfgEpoch++;
   c.requestUpdate(); await c.updateComplete;
 
-  // до подписи ничего не рисуем: неподписанный запрос вернул бы 401
-  out.hrefBeforeSign = bgHref();
+  // Until signing, either no image or exactly the already accepted old frame
+  // may remain. The new unsigned path must never reach the browser.
+  out.noUnsignedHrefBeforeSign = bgHref() === null
+    || (bgHref() === previousAcceptedHref && c._floorHolding === true);
 
   release();
-  await new Promise((r) => setTimeout(r, 150));
-  await c.updateComplete;
+  await window.__hpTest.settled();
 
   // подпись доехала до атрибута, а не осела в кэше модели
   out.signRequested = signCalls;
@@ -65,7 +73,7 @@ const res = await page.evaluate(async () => {
 });
 // зафиксировано прогоном на v1.44.7 и сверено с кодом
 checkAll(res, {
-  hrefBeforeSign: null,
+  noUnsignedHrefBeforeSign: true,
   signRequested: 1,
   hrefSigned: '/api/houseplan/content/plans/_/f1.svg?authSig=SIG1',
   hrefAfterRerender: '/api/houseplan/content/plans/_/f1.svg?authSig=SIG1',
@@ -73,4 +81,5 @@ checkAll(res, {
   resignKeepsPlan: true,
   hrefAfterResign: '/api/houseplan/content/plans/_/f1.svg?authSig=SIG2',
 });
+checkAll({ noUnsignedHttpRequests: unsignedRequests.length === 0 });
 await finish(browser);

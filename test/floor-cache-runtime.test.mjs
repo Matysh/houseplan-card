@@ -85,3 +85,42 @@ test('#1454 fit-only changes reuse an in-flight geometry job and reacquire only 
   h.jobs[0].resolve(await result(a.input));await flush();assert.equal(h.owner.pending,false);assert.deepEqual(h.hydrated,['A']);
   h.owner.dispose();
 });
+test('#1454 a placement-owned matching preview paints synchronously while IDB is pending, never under another fit',()=>{
+  const a=selection('A',{}),h=harness(a),box={x:0,y:0,w:100,h:100};
+  const preview=captureFloorPreview({querySelectorAll:()=>[]},{frame:{rect:box,all:box,outliers:0,hasContent:true},
+    base:[0,0,100,100],display:box,projection:'flat',rotation:0},a.fitKey);
+  h.owner.host.preview=()=>preview;
+  assert.equal(h.owner.ensure(),false);assert.equal(h.owner.preview,preview);
+  h.set({...a,fitKey:cacheSha256('different-metric-profile')});h.owner.ensure();
+  assert.equal(h.owner.preview,null);h.set(null);h.owner.ensure();assert.equal(h.owner.preview,null);h.owner.dispose();
+});
+test('#1454 live light refresh retains the accepted geometry frame, wire and persistent payload',async()=>{
+  const a=selection('A',{}),h=harness(a);h.owner.ensure();h.reads[0].resolve(null);await flush();
+  h.jobs[0].resolve(await result(a.input));await flush();
+  const accepted=h.owner.memory.get(a.persistentKey),reads=h.reads.length;
+  const b={...a,light:{...a.light,fingerprint:'light-B'}};h.set(b);
+  assert.equal(h.owner.ensure(),false);await flush();
+  assert.equal(h.reads.length,reads,'accepted geometry does not reread disk');
+  assert.equal(h.jobs[1].job.kind,'light');assert.equal(h.jobs[1].job.memory,accepted.wire);
+  const light={fingerprint:'light-B',occluders:[],floor:[],opaqueBodies:[],masonryGeometry:[]};
+  h.jobs[1].resolve({light:encodeGeometryValue(light),ms:1});await flush();
+  const refreshed=h.owner.memory.get(a.persistentKey);
+  for(const key of ['frame','wire','payload'])assert.equal(refreshed[key],accepted[key],`${key} keeps identity`);
+  assert.deepEqual(refreshed.light,light);assert.equal(refreshed.lightKey,'light-B');
+  assert.equal(h.owner.pending,false);assert.equal(h.owner.metrics.memoryHits,1);
+  assert.equal(h.owner.metrics.misses,1);assert.equal(h.owner.metrics.diskHits,0);
+  assert.equal(h.owner.metrics.familyFallbacks,0,'light-only response needs no geometry wire');
+  h.owner.dispose();
+});
+test('#1454 a late light-only refresh cannot cross navigation or authority retirement',async()=>{
+  const a=selection('A',{}),h=harness(a);h.owner.ensure();h.reads[0].resolve(null);await flush();
+  h.jobs[0].resolve(await result(a.input));await flush();
+  h.set({...a,light:{...a.light,fingerprint:'light-B'}});h.owner.ensure();await flush();
+  assert.equal(h.jobs[1].job.kind,'light');
+  const retired=h.owner.memory.get(a.persistentKey),next=selection('B',{},'user-B');
+  h.set(next);h.owner.ensure();h.jobs[1].resolve({light:encodeGeometryValue({fingerprint:'light-B'}),ms:1});await flush();
+  assert.deepEqual(h.hydrated,['A']);assert.equal(h.owner.memory.has(a.persistentKey),false);
+  assert.equal(retired.lightKey,'current-light');assert.equal(h.owner.pending,true);
+  h.reads[1].resolve(null);await flush();h.jobs[2].resolve(await result(next.input));await flush();
+  assert.deepEqual(h.hydrated,['A','B']);assert.equal(h.owner.pending,false);h.owner.dispose();
+});

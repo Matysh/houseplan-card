@@ -84,7 +84,7 @@ const out = await page.evaluate(async () => {
   original._cfgEpoch++;
   original._regSignature = '';
   original.requestUpdate();
-  await original.updateComplete;
+  await window.__hpTest.settled();
   await frame();
 
   const count = (selector) => root(original).querySelectorAll(selector).length;
@@ -112,7 +112,7 @@ const out = await page.evaluate(async () => {
   await window.__hpTest.setVolumetricView(true);
   configSpace = original._serverCfg.spaces.find((space) => space.id === 'f1');
   await ensureIsoRuntime(original);
-  await original.updateComplete;
+  await window.__hpTest.settled();
   await frame();
 
   const before = layers();
@@ -142,7 +142,7 @@ const out = await page.evaluate(async () => {
       return nativeCallWs(message);
     },
   };
-  await original.updateComplete;
+  await window.__hpTest.settled();
   const light = original.hass.states['light.ceiling'];
   const openingPanelBefore = root(original)
     .querySelector('[data-hp="iso-openings"] [data-id="iso-door"][data-surface="leaf-front"]')
@@ -159,7 +159,7 @@ const out = await page.evaluate(async () => {
       },
     },
   };
-  await original.updateComplete;
+  await window.__hpTest.settled();
   const after = layers();
   const afterSpillParts = [...root(original).querySelectorAll('.glow-pool')]
     .map((node) => node.getAttribute('data-lit-parts'));
@@ -174,7 +174,7 @@ const out = await page.evaluate(async () => {
       },
     },
   };
-  await original.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   const ordered = [
     root(original).querySelector('.iso-underlay-svg'),
@@ -263,7 +263,7 @@ const out = await page.evaluate(async () => {
   configSpace.settings.hide_openings = true;
   original._cfgEpoch++;
   original.requestUpdate();
-  await original.updateComplete;
+  await window.__hpTest.settled();
   // #945: a legacy hide_openings override no longer defeats visible borders.
   result.legacyOpeningFlagKeepsVisibleStructure = !!root(original).querySelector('[data-hp="iso-walls"]')
     && !!root(original).querySelector('[data-hp="iso-openings"]')
@@ -298,7 +298,7 @@ const out = await page.evaluate(async () => {
   configSpace.settings.show_borders = false;
   original._cfgEpoch++;
   original.requestUpdate();
-  await original.updateComplete;
+  await window.__hpTest.settled();
   const noBordersFloor = root(original).querySelector('.plan-svg .iso-floor-scene');
   const noBordersDevice = root(original).querySelector('[data-hp="device"]');
   const noBordersRoom = root(original).querySelector('[data-hp="room-label"]');
@@ -323,7 +323,7 @@ const out = await page.evaluate(async () => {
   configSpace.settings.hide_openings = true;
   original._cfgEpoch++;
   original.requestUpdate();
-  await original.updateComplete;
+  await window.__hpTest.settled();
   result.noBordersHideOpeningsKeepsOnlyFloorSemantics = original._effectiveProjection() === 'iso'
     && root(original).querySelectorAll('[data-hp="opening"]').length === 0
     && !!root(original).querySelector('.oplock:not([data-hp-iso-raised])')
@@ -336,7 +336,7 @@ const out = await page.evaluate(async () => {
   configSpace.settings.show_borders = true;
   original._cfgEpoch++;
   original.requestUpdate();
-  await original.updateComplete;
+  await window.__hpTest.settled();
   result.visibleBordersRestoreStage4 = !!root(original).querySelector('[data-hp="iso-openings"]')
     && !!root(original).querySelector('[data-hp-iso-raised="true"]')
     && root(original).querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '4'
@@ -344,11 +344,11 @@ const out = await page.evaluate(async () => {
 
   original._hoverRoom = null;
   original.requestUpdate();
-  await original.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   original._hoverRoom = { space: 'f1', room: original._spaceModel('f1').rooms[0] };
   original.requestUpdate();
-  await original.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   result.haAndHoverKeepStructuralCache = Number(root(original).querySelector('.stage')
     ?.getAttribute('data-hp-iso-structural-builds')) === structuralBuildsBeforeLive
@@ -367,11 +367,11 @@ const out = await page.evaluate(async () => {
     ...original.hass,
     callService: async (domain, service, data) => fallbackCalls.push({ domain, service, data }),
   };
-  await original.updateComplete;
+  await window.__hpTest.settled();
   const supports = CSS.supports;
   CSS.supports = () => false;
   original.requestUpdate();
-  await original.updateComplete;
+  await window.__hpTest.settled();
   const fallbackRaised = root(original).querySelector('[data-hp-iso-raised="true"][data-id]');
   const fallbackId = fallbackRaised?.getAttribute('data-id');
   root(original).querySelector('[data-hp="device"][data-entity="light.ceiling"]')?.click();
@@ -388,14 +388,14 @@ const out = await page.evaluate(async () => {
   result.unsupportedDecorationKeepsActions = fallbackCalls.length === 1;
   CSS.supports = supports;
   original.requestUpdate();
-  await original.updateComplete;
+  await window.__hpTest.settled();
 
   const calls = [];
   original.hass = {
     ...original.hass,
     callService: async (domain, service, data) => calls.push({ domain, service, data }),
   };
-  await original.updateComplete;
+  await window.__hpTest.settled();
   root(original).querySelector('[data-hp="device"][data-entity="light.ceiling"]')?.click();
   await frame();
   await window.__hpTest.setVolumetricView(false);
@@ -428,7 +428,7 @@ const out = await page.evaluate(async () => {
   stage.dispatchEvent(pointer('pointermove', 8903, stageRect.left + 305, cy, 1));
   stage.dispatchEvent(pointer('pointerup', 8902, stageRect.left + 115, cy, 0));
   stage.dispatchEvent(pointer('pointerup', 8903, stageRect.left + 305, cy, 0));
-  await original.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   result.touchPinchKeepsIso = original._zoom > zoomBefore
     && !!root(original).querySelector('[data-hp="iso-walls"]');
@@ -465,7 +465,7 @@ const out = await page.evaluate(async () => {
   // #649: one installation-wide switch — every space is 2.5D, no per-space choice.
   original._pickSpace('garden');
   await wait(230);
-  await original.updateComplete;
+  await window.__hpTest.settled();
   const gardenIso = original._space === 'garden'
     && !!root(original).querySelector('.stage.projection-iso');
   original._pickSpace('f1');
@@ -479,7 +479,7 @@ const out = await page.evaluate(async () => {
   Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
   document.dispatchEvent(new Event('visibilitychange'));
   window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
-  await original.updateComplete;
+  await window.__hpTest.settled();
   await frame();
   const recoveryStarted = performance.now();
   while (root(original).querySelector('.recoveryoverlay')

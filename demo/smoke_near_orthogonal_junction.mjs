@@ -13,7 +13,7 @@ const result = await page.evaluate(async (source) => {
   const frame = () => new Promise((done) =>
     requestAnimationFrame(() => requestAnimationFrame(done)));
   const settle = async () => {
-    await card.updateComplete;
+    await window.__hpTest.settled();
     while (card._modeTransitionBusy) await frame();
     await frame();
   };

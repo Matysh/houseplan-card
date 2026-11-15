@@ -174,16 +174,16 @@ const chunkRequests = async (session, name, plain = 'abort') => {
   });
   return { seen, net };
 };
-/** Toast nodes as the user sees them: each appearance is one notice. */
+/** Contiguous visible messages are notices, even if a passive root is replaced. */
 const installNoticeCounter = (page) => page.evaluate(() => {
   window.__hpWatchNotices = (card) => {
     window.__hpNotices = 0;
-    new MutationObserver((records) => {
-      for (const record of records) {
-        for (const node of record.addedNodes) {
-          if (node.nodeType === 1 && node.matches('[data-hp="toast"]')) window.__hpNotices += 1;
-        }
-      }
+    let previousText = '';
+    new MutationObserver(() => {
+      const text = (card.shadowRoot || card.renderRoot)
+        .querySelector('[data-hp="toast"]')?.textContent.trim() || '';
+      if (text && text !== previousText) window.__hpNotices += 1;
+      previousText = text;
     }).observe(card.shadowRoot || card.renderRoot, { childList: true, subtree: true });
   };
 });
@@ -209,7 +209,9 @@ await kiosk.page.evaluate(async () => {
 });
 await kiosk.page.waitForFunction(() => {
   const card = document.querySelector('#hp-kiosk');
-  return !card._booting && (card.shadowRoot || card.renderRoot).querySelector('.stage');
+  const root = card.shadowRoot || card.renderRoot;
+  return !card._booting && root.querySelector('.stage:not([data-hp-floor-cache])')
+    && !root.querySelector('[data-hp-floor-cache="pending"]');
 });
 await watchToasts(kiosk.page, '#hp-kiosk');
 await kiosk.page.evaluate(() => {

@@ -322,6 +322,7 @@ Object.assign(out, await page.evaluate(async () => {
   c._layout = {}; c._modelCache = null; c._frame = null;
   c._devices = [];
   c.requestUpdate(); await c.updateComplete;
+  await window.__hpTest.settled();
   const e = c._baseVb();
   o.emptySpaceUsesViewBoxHint = JSON.stringify(e.map(Math.round)) === '[100,200,500,400]';
   return o;

@@ -7,7 +7,7 @@ const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
-  const update = async () => { card.requestUpdate(); await card.updateComplete; };
+  const update = async () => { card.requestUpdate(); await window.__hpTest.settled(); };
   const clone = (value) => JSON.parse(JSON.stringify(value));
   const baseSpace = {
     id: 'autoclose', title: 'Autoclose', cell_cm: 5, view_box: [0, 0, 1, 0.7],
@@ -40,7 +40,7 @@ const out = await page.evaluate(async () => {
     card._pendingSplit = null;
     card._toast = '';
     card._drawWallField = '15';
-    card._setMode('plan');
+    await window.__hpTest.setMode('plan');
     card._tool = 'draw';
     card._clearPlanSnapHover();
     await update();

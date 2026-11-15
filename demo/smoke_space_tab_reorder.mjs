@@ -306,9 +306,7 @@ out.touchDidNotReorder = JSON.stringify(await ids()) === JSON.stringify(touchBef
 
 await page.evaluate(async () => {
   const c = window.__card;
-  c._mode = 'view';
-  c.requestUpdate();
-  await c.updateComplete;
+  await window.__hpTest.setMode('view');
 });
 out.notReorderableInView = await page.evaluate(() => !window.__card.renderRoot
   .querySelector('[data-hp="space-tab"]')?.hasAttribute('data-reorderable'));

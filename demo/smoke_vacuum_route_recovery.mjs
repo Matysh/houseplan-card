@@ -116,6 +116,7 @@ for (const [screen, viewport] of [['desktop', { width: 1200, height: 900 }],
     const reloaded = await page.evaluate(() => window.__route918.geometry());
     checks[`${screen}:freshClientRestoresPathWithoutEditor`] = reloaded.mode === 'view'
       && reloaded.visible && reloaded.hasTip && reloaded.puckError <= 1 && reloaded.reads >= 2;
+    if (!checks[`${screen}:freshClientRestoresPathWithoutEditor`]) console.error('fresh recovery scene',screen,reloaded);
 
     await page.evaluate(() => window.__hpTest.switchSpace('garden'));
     const otherFloor = await page.evaluate(() => window.__route918.geometry());

@@ -38,10 +38,10 @@ async function openLargePlan(page, { reducedMotion = false } = {}) {
       ...next.settings,
       summary_panel: { version: 1, title: 'Summary', show_on_mobile: true, blocks: [block] },
     };
-    card._serverCfg = next;
-    card._settings = next.settings;
-    card._cfgEpoch = (card._cfgEpoch || 0) + 1;
-    card._sendConfigCandidate = async () => {};
+    // Use the real server adoption: the large fixture has different floor IDs,
+    // so direct body assignment would leave the old active floor nonexistent.
+    // Preparation finishes before the measured first-panel-paint window.
+    await window.__hpTest.setServerConfig(() => next);
     card._summary.updated();
     card.requestUpdate();
     await settle();

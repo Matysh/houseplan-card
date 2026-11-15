@@ -15,6 +15,7 @@ const out = await page.evaluate(async () => {
     c.requestUpdate();
     await c.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await window.__hpTest.settled();
   };
   const settleMode = async () => {
     const started = performance.now();
@@ -91,7 +92,7 @@ const out = await page.evaluate(async () => {
   sp.openings[0].type = 'passage';
   await settle();
 
-  c._setMode('plan');
+  await window.__hpTest.setMode('plan');
   await settleMode();
   c._activateOpeningPlacement('passage');
   await settle();

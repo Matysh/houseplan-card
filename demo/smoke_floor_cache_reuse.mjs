@@ -136,6 +136,8 @@ await page.evaluate(async (fixture) => {
     host.appendChild(fresh);
     const deadline = performance.now() + 15000;
     while (performance.now() < deadline && !(fresh._loadOk && fresh._booting === false
+      && !fresh._bootFading && !fresh._floorPreparation?.pending && !fresh._floorPassive
+      && !!fresh.renderRoot.querySelector('.stage:not([data-hp-floor-cache]) svg.plan-svg:not([data-hp-cache-preview])')
       && fresh._cfgRev === rev && fresh._spaceModel()?.id === spaceId)) {
       await new Promise((done) => setTimeout(done, 30));
     }
@@ -330,20 +332,25 @@ const ac2 = await page.evaluate(async () => {
     && !card._physicalBodiesPool.has(garden[0]) && !card._openingTunnelPool.has(garden[1]);
   const sizesBefore = guard.snapshot(card);
   const plantedBefore = guard.builds(card);
+  const preparedHitsBefore = card.houseplanFloorCacheDiagnostics().cache.memoryHits;
   for (let index = 0; index < 4; index++) await hp.switchSpace(index % 2 ? 'f1' : 'garden');
   const planted = guard.judge({ before: plantedBefore, after: guard.builds(card), switches: 4, pooled: true });
   out.evictingMissIsCounted = planted.failures;
+  out.evictedConsumersRestoreFromPreparedFrame = card.houseplanFloorCacheDiagnostics().cache.memoryHits > preparedHitsBefore
+    && card._physicalBodiesCache.key === f1[0] && card._openingTunnelCache.key === f1[1];
   out.everySizeStays = JSON.stringify(guard.snapshot(card)) === JSON.stringify(sizesBefore);
   out.gardenIsBackInBothPools = card._physicalBodiesPool.has(garden[0]) && card._openingTunnelPool.has(garden[1]);
 
   // A geometry change builds the current value: a partition pushed while the loft is shown.
   await hp.switchSpace('loft');
   const loftBefore = builds();
+  const workerBefore = card.houseplanFloorCacheDiagnostics().cache.producers.reduce((n,p)=>n+(p.counts.wallBodiesGeometry||0),0);
   await hp.setServerConfig((cfg) => {
     cfg.spaces.find((space) => space.id === 'loft').partitions[0].a = [0.55, 0.45];
     return cfg;
   });
-  out.movedPartitionBuildsTheLoftBodiesOnce = grew(loftBefore, builds(), ['physicalBodies']).physicalBodies;
+  out.movedPartitionBuildsTheLoftBodiesOnce = grew(loftBefore, builds(), ['physicalBodies']).physicalBodies
+    + card.houseplanFloorCacheDiagnostics().cache.producers.reduce((n,p)=>n+(p.counts.wallBodiesGeometry||0),0) - workerBefore;
   out.movedPartitionIsTheFreshCards = await sameAsFresh();
   out.poolsStayWithinEight = pools().every((size) => size <= 8);
   return out;
@@ -351,7 +358,8 @@ const ac2 = await page.evaluate(async () => {
 checkAll(ac2, {
   warmCycleVerdict: [],
   warmCycleBuildsNoBodiesOrTunnels: [0, 0],
-  evictingMissIsCounted: ['physical bodies +1', 'opening tunnel +1'],
+  evictingMissIsCounted: [],
+  evictedConsumersRestoreFromPreparedFrame: true,
   movedPartitionBuildsTheLoftBodiesOnce: 1,
   movedPartitionIsTheFreshCards: [],
 });

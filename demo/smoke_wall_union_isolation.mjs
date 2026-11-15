@@ -13,7 +13,7 @@ const result = await page.evaluate(async (fixtureConfig) => {
   const card = window.__card;
   const root = () => card.renderRoot || card.shadowRoot;
   const frame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-  const settle = async () => { await card.updateComplete; await frame(); };
+  const settle = async () => { await window.__hpTest.settled(); await frame(); };
   const cfg = structuredClone(fixtureConfig);
   cfg.spaces[0].settings = {
     ...(cfg.spaces[0].settings || {}), show_borders: true, fill_mode: 'none',
@@ -27,7 +27,7 @@ const result = await page.evaluate(async (fixtureConfig) => {
   card._wallUnionCache = null;
   card._physicalBodiesCache = null;
   card._lightBarrierCache = null;
-  card._setMode('plan');
+  await window.__hpTest.setMode('plan');
   card._tool = 'select';
   card.requestUpdate();
   await settle();
@@ -51,7 +51,7 @@ const result = await page.evaluate(async (fixtureConfig) => {
     === canonical.components.reduce((sum, component) => sum + component.geom.length, 0)
     && barriers.occluders.length > 0;
 
-  card._setMode('view');
+  await window.__hpTest.setMode('view');
   card.requestUpdate();
   await settle();
   out.viewMatchesPlan = JSON.stringify([...root().querySelectorAll('.wallbody[data-component]')]
@@ -93,7 +93,7 @@ const result = await page.evaluate(async (fixtureConfig) => {
     return baseCall(message);
   } };
   await window.__hpHarnessProjection(card, 'flat');
-  card._setMode('plan');
+  await window.__hpTest.setMode('plan');
   await settle();
   card._geometryHistory.clear();
   const before = card._geometrySnapshot();

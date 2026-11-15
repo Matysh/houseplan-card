@@ -139,6 +139,7 @@ const out = await page.evaluate(async () => {
     && !card.renderRoot.querySelector('hp-dialog')?.textContent.includes('0 records maintained');
 
   await Promise.all([card._reloadConfigOnly(true), card._reloadLayoutOnly()]);
+  await window.__hpTest.settled();
   await card._editorRuntime.optimizePlans.open(); await card.updateComplete;
   result.serverEventReloadIsExactNoOp = card._alignDialog?.changed === false
     && card._alignDialog.report.latticeCoordinatesCanonicalized === 0

@@ -14,7 +14,7 @@ const result = await page.evaluate(async (source) => {
   const frame = () => new Promise((done) =>
     requestAnimationFrame(() => requestAnimationFrame(done)));
   const settle = async () => {
-    await card.updateComplete;
+    await window.__hpTest.settled();
     while (card._modeTransitionBusy) await frame();
     await frame();
   };
@@ -47,7 +47,7 @@ const result = await page.evaluate(async (source) => {
     card._layout = {};
     card._space = space.id;
     await window.__hpHarnessProjection(card, 'flat');
-    card._setMode('plan');
+    await window.__hpTest.setMode('plan');
     card._tool = 'select';
     await update(true);
 
@@ -72,7 +72,7 @@ const result = await page.evaluate(async (source) => {
     out[`${prefix}light_uses_same_masonry`] = barriers.masonryGeometry.flat(2).length > 0
       && barriers.occluders.length > 0 && !!barriers.fingerprint;
 
-    card._setMode('view');
+    await window.__hpTest.setMode('view');
     await update(false);
     out[`${prefix}view_matches_plan`] = root().querySelector('[data-hp="wall"]')
       ?.getAttribute('d') === planD;

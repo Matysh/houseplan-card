@@ -133,7 +133,7 @@ const res = await page.evaluate(async () => {
     // toward +Y. The two compact leaves therefore rotate +10° / -10°.
     { id: 'op_g', type: 'gate', x: 0.3, y: 0.58, angle: 0, length: 0.3 },
   ];
-  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete; await window.__hpTest.settled();
   out.openingHookFindsEveryType = qa('[data-hp="opening"]').length === 3;
   const door = q('[data-hp="opening"][data-kind="door"]');
   const win = q('[data-hp="opening"][data-kind="window"]');
@@ -155,7 +155,7 @@ const res = await page.evaluate(async () => {
     { id: 'dc_e', kind: 'ellipse', x: 0.3, y: 0.2, w: 0.1, h: 0.08, color: '#123456', width: 2 },
     { id: 'dc_t', kind: 'text', x: 0.5, y: 0.92, text: 'Подпись', color: '#123456' },
   ];
-  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete; await window.__hpTest.settled();
   const decorIds = [...new Set(qa('[data-hp="decor"]').map(el=>el.getAttribute('data-id')))].sort();
   out.decorHookFindsEveryShape = JSON.stringify(decorIds) === JSON.stringify(['dc_e','dc_l','dc_r','dc_t']);
   out.decorKindLine = q('[data-hp="decor"][data-kind="line"]')?.getAttribute('data-id') === 'dc_l';
@@ -181,7 +181,7 @@ const res = await page.evaluate(async () => {
   c._serverCfg = { ...c._serverCfg, markers: [
     { id: 'm_virt', binding: 'virtual', space: c._space, name: 'Вентиль' },
   ] };
-  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete; await window.__hpTest.settled();
   const virt = q('[data-hp="device"][data-id="m_virt"]');
   out.virtualMarkerRendered = !!virt;
   out.virtualHasNoEntityAttr = !!virt && !virt.hasAttribute('data-entity');
@@ -191,7 +191,7 @@ const res = await page.evaluate(async () => {
   c._curSpaceCfg.rooms = [...c._curSpaceCfg.rooms,
     { id: 'r_sub', name: 'Кладовка', area: null, poly: [[0.06, 0.6], [0.2, 0.6], [0.2, 0.7], [0.06, 0.7]] }];
   disp.show_borders = true;
-  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete; await window.__hpTest.settled();
   const sub = q('[data-hp="room"][data-id="r_sub"]');
   out.roomWithoutAreaRendered = !!sub;
   out.roomWithoutAreaHasNoAreaAttr = !!sub && !sub.hasAttribute('data-area');

@@ -42,7 +42,7 @@ const res = await page.evaluate(async (fadeMs) => {
   sp.plan_url = null;              // plain white paper under the wedge
   cfg.settings = { ...(cfg.settings || {}), north_deg: 0, bg_mode: 'static', sun_rays: true };
   c._cfgEpoch++;
-  const upd = async () => { c.requestUpdate(); await c.updateComplete; };
+  const upd = async () => { c.requestUpdate(); await c.updateComplete; await window.__hpTest.settled(); };
   const setSun = async (az, el) => {
     c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
       entity_id: 'sun.sun', state: 'above_horizon', attributes: { azimuth: az, elevation: el } } } };

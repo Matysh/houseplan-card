@@ -43,7 +43,7 @@ const result = await page.evaluate(async () => {
   delete space.open_spans;
   for (const room of space.rooms || []) delete room.open_to;
 
-  card._setMode('plan');
+  await window.__hpTest.setMode('plan');
   card._tool = 'wallthick';
   await settle(true);
 

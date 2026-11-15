@@ -2,6 +2,7 @@ import { floorMinusBodies, geometryArea, polyclipPathD } from './physical-geomet
 import { geometryAreaMinusStairs } from './stairs';
 import type { RoomCfg, SpaceModel } from './types';
 import { lruRead, lruWrite } from './card-runtime';
+import { geometryWork } from './geometry-work';
 import type { Geom } from 'polyclip-ts';
 
 export type CleanFloorResult = {
@@ -56,6 +57,7 @@ export function cleanFloorForRoom(input: {
     const cached = lruRead(input.cache, key);
     if (cached.hit) return cached.value;
   }
+  geometryWork('cleanFloorGeometry');
   input.onBuild?.();
   const xs = floor.map((point) => point[0]);
   const ys = floor.map((point) => point[1]);

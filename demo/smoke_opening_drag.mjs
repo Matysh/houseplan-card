@@ -26,6 +26,10 @@ const { page, browser } = await launch({ width: 1280, height: 1000 }, Number(pro
 const out = {}, trace = [];
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 const writesSettled = () => page.evaluate(() => window.__hpTest.waitForWrites());
+const workerPhysical = () => page.evaluate(() => window.__card.houseplanFloorCacheDiagnostics().cache.producers
+    .reduce((n,row)=>n+(row.owner==='worker'?(row.counts.wallBodiesGeometry||0):0),0));
+const workerGeometry = () => page.evaluate(() => window.__card.houseplanFloorCacheDiagnostics().cache.producers
+    .reduce((n,row)=>n+(row.owner==='worker'?Object.values(row.counts).reduce((a,b)=>a+b,0):0),0));
 const at = (x, y) => page.evaluate(([x, y]) => {
     const svg = window.__card.renderRoot.querySelector('.stage svg');
     const p = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM());
@@ -337,13 +341,14 @@ try {
         await coverage.send('Profiler.enable');
         await coverage.send('Profiler.startPreciseCoverage',{callCount:true,detailed:true});
         await writesSettled();
+        const workerBefore=await workerPhysical();
         await page.evaluate(async cfg=>{
             const hp=window.__hpTest;await hp.setServerConfig(cfg);await hp.switchSpace('history-opening-interop');
             await hp.setMode('plan');await hp.setTool('select');await hp.waitForWrites();await hp.settled();
         },interop);
         await cameraSettled();
         const cold=callsFor((await coverage.send('Profiler.takePreciseCoverage')).result,targets.physical);
-        assert.ok(cold>0,'the exact physical producer has a real cold positive');
+        assert.ok(cold>0||await workerPhysical()>workerBefore,'the exact physical producer has a real page or worker cold positive');
         const initial=await interopAt(420,400), committed=await interopAt(480,400);
         await page.mouse.move(initial.x,initial.y);await page.mouse.down();
         await page.mouse.move(committed.x,committed.y,{steps:5});await page.mouse.up();
@@ -354,6 +359,7 @@ try {
             await page.keyboard.press(direction==='undo'?'Control+z':'Control+Shift+z');
             await writesSettled();await cameraSettled();
             const warm=await interopSnapshot();
+            const workerBeforeDrag=await workerGeometry();
             assert.equal(warm.saved.x,direction === 'undo' ? .42 : edited.saved.x,'history restores the accepted physical state');
             // Discard the legitimate history safety/render work. The next held
             // native drag must not call an uncounted full physical producer.
@@ -369,6 +375,7 @@ try {
             for(const family of families)assert.equal(held.builds[family],warm.builds[family],family);
             assert.equal(held.fallbacks,warm.fallbacks,'history retains the local route');
             assert.equal(physical,0,'retained joins prevent a hidden physicalBodyParts call');
+            assert.equal(await workerGeometry(),workerBeforeDrag,'retained joins prevent hidden worker structural work');
             assert.equal(constructors,1,'one local preparation owns the entire drag');
             assert.deepEqual(held.cut,{centerEmpty:true,shoulderSolid:true,oldApertureSolid:true},
                 'the next aperture is empty, its shoulder is solid, and the old aperture is filled');

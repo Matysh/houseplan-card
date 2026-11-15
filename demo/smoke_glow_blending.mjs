@@ -49,6 +49,9 @@ try {
     await until(() => card._glowScreenBlend === true, 3000, `screen probe (${card._glowScreenBlend})`);
     await card.updateComplete;
     await frame();
+    // The colour capability probe can finish before the actual floor worker.
+    await until(() => !!card.renderRoot.querySelector('.glow-pools')
+      && !card.renderRoot.querySelector('[data-hp-floor-cache="pending"]'), 10000, 'canonical Glow floor');
     const poolGroup = card.renderRoot.querySelector('.glow-pools');
 
     const raster = async (

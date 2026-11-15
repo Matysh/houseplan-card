@@ -14,7 +14,7 @@ const out = await page.evaluate(async () => {
     card._wallUnionCache = null;
     card._lightBarrierCache = null;
     card.requestUpdate();
-    await card.updateComplete;
+    await window.__hpTest.settled();
   };
   const entry = (a, b, cm) => ({
     // The smoke needs an exact persisted span; the renderer resolves the key
@@ -46,7 +46,7 @@ const out = await page.evaluate(async () => {
   card._serverCfg = structuredClone(cfg);
   card._layout = {};
   card._space = 'junctions';
-  card._setMode('plan');
+  await window.__hpTest.setMode('plan');
   card._tool = 'select';
   await update();
 
@@ -113,7 +113,7 @@ const out = await page.evaluate(async () => {
   card._cursorPt = null;
   card._path = [];
   card._tool = 'select';
-  card._setMode('view');
+  await window.__hpTest.setMode('view');
   await update();
   result.planViewParity = !!planD && root().querySelector('.wallbody')?.getAttribute('d') === planD;
 

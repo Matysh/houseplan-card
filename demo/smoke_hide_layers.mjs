@@ -19,7 +19,7 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
-  const upd = async () => { c._cfgEpoch++; c.requestUpdate(); await c.updateComplete; };
+  const upd = async () => { c._cfgEpoch++; c.requestUpdate(); await window.__hpTest.settled(); };
   const sp = () => c._serverCfg.spaces.find((s) => s.id === c._space);
   const set = async (patch) => {
     const s = sp();
@@ -30,10 +30,10 @@ const res = await page.evaluate(async () => {
   const n = (sel) => sr().querySelectorAll(sel).length;
   const setThickness = async (point, value) => {
     c._setMode('plan'); c._tool = 'wallthick'; await upd();
-    c._wallThickClick(point); await c.updateComplete;
+    c._wallThickClick(point); await window.__hpTest.settled();
     if (!c._wallDialog) return false;
     c._wallDialog = { ...c._wallDialog, value: String(value) };
-    c._wallThickApply(false); await c.updateComplete;
+    c._wallThickApply(false); await window.__hpTest.settled();
     return true;
   };
 
@@ -148,7 +148,7 @@ const rad = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   c._setMode('decor'); c._decorTool = 'backdrop';
-  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c.requestUpdate(); await window.__hpTest.settled();
   const hit = sr().querySelector('.bdframe .bdhandle');
   const knob = sr().querySelector('.bdframe .bdknob');
   const view = c._viewOr(c._baseVb());
@@ -167,7 +167,7 @@ const rad = await page.evaluate(async () => {
   // own independent handle/bead contract above.
   c._setMode('plan'); c._tool = 'resize';
   c._resize.selectRoom((c._curSpaceCfg.rooms || [])[0]?.id || null);
-  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c.requestUpdate(); await window.__hpTest.settled();
   o.rszLegacyCornersAbsent = !sr().querySelector('.rszcorner, .rszknob, .rszframe');
   c._setMode('view');
   return o;

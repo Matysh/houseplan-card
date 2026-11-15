@@ -77,6 +77,8 @@ for (const scenario of ['short', 'long', 'same-object', 'ABA', 'held-return']) {
       a.messages.full.length = 0;
       card.remove(); parent.append(card);
       await card.updateComplete;
+      const currentSceneReady = () => !!card.renderRoot.querySelector('ha-card[data-hp-state="ready"] .stage.mode-view')
+        && !card.renderRoot.querySelector('[data-hp-floor-cache="pending"], [data-hp-cache-preview], .stage[inert]');
       for (let i = 0; i < 6; i++) await new Promise(requestAnimationFrame);
       out.sameContextShortReturnDoesNotReload = fullReads(a) === 0 && layoutReads(a) === 0;
       card.remove();
@@ -112,9 +114,10 @@ for (const scenario of ['short', 'long', 'same-object', 'ABA', 'held-return']) {
       // The held case has one retired pair and one current pair, never a duplicate current read.
       const expectedPairs = scenario === 'held-return' ? 2 : 1;
       out.oneCurrentMandatoryPair = fullReads(target) === expectedPairs && layoutReads(target) === expectedPairs;
-      out.currentPlanAndDeviceLayersReturn = card.renderRoot.querySelectorAll('.room').length === 4
-        && !!card.renderRoot.querySelector('[data-hp="device"][data-id="d_temp"]');
-      out.currentLiveSignalReturns = signal(card) === (target === a ? '137' : '83');
+      out.currentPlanAndDeviceLayersReturn = await until(() => currentSceneReady()
+        && card.renderRoot.querySelectorAll('.room').length === 4
+        && !!card.renderRoot.querySelector('[data-hp="device"][data-id="d_temp"]'));
+      out.currentLiveSignalReturns = await until(() => currentSceneReady() && signal(card) === (target === a ? '137' : '83'));
       out.oldWritePermissionDoesNotReturn = card._serverCanWrite === false;
       out.viewRecoveryDoesNotLoadEditor = !card._editorRuntime;
       out.noWritesOrRadioCommands = [...a.messages.full, ...a.messages.space, ...b.messages.full, ...b.messages.space]

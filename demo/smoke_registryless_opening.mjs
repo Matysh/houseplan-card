@@ -9,7 +9,7 @@ const out = await page.evaluate(async () => {
   const root = () => card.shadowRoot || card.renderRoot;
   const settle = async () => {
     card.requestUpdate();
-    await card.updateComplete;
+    await window.__hpTest.settled();
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   };
   const contactId = 'binary_sensor.hp117_yaml_contact';

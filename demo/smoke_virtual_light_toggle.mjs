@@ -90,7 +90,7 @@ const result = await page.evaluate(async () => {
   first._regSignature = '';
   first._maybeRebuildDevices();
   first._ensureLiveSyncSubscriptions();
-  await first.updateComplete;
+  await window.__hpTest.settled();
 
   const second = document.createElement('houseplan-card');
   second.setConfig({ type: 'custom:houseplan-card', icon_size: 3.4 });
@@ -110,6 +110,8 @@ const result = await page.evaluate(async () => {
     return !!predicate();
   };
   await waitFor(() => second._devices?.some((device) => device.id === markerId));
+  if (!await waitFor(() => !second._floorPreparation?.pending && !second._floorPassive
+    && !!second.renderRoot?.querySelector(`.dev[data-id="${markerId}"]`))) throw Error('second full virtual-light scene');
   await waitFor(() => staticCard.renderRoot?.querySelector(`[data-id="${markerId}"]`));
   await second.updateComplete;
   await staticCard.updateComplete;

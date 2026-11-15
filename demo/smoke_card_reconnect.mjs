@@ -22,7 +22,8 @@ try {
       return !!predicate();
     };
     const ready = () => card._loadOk && !card._loading && !card._booting
-      && card._continuity.state === 'steady' && !!card.renderRoot.querySelector('svg.plan-svg');
+      && card._continuity.state === 'steady' && !!card.renderRoot.querySelector('ha-card[data-hp-state="ready"] .stage.mode-view svg.plan-svg')
+      && !card.renderRoot.querySelector('[data-hp-floor-cache="pending"], [data-hp-cache-preview], .stage[inert]');
     const counts = () => Object.fromEntries(['config/entity_registry/list', 'config/device_registry/list',
       'houseplan/config/get', 'houseplan/layout/get'].map(type => [type, requests.filter(r => r.type === type
         && !(type === 'houseplan/config/get' && r.fields)).length]));
@@ -33,6 +34,7 @@ try {
     } };
     parent.append(card);
     checks.freshAuthorityReady = await until(ready);
+    for (let i = 0; i < 2; i++) await new Promise(requestAnimationFrame);
     const initial = counts(), builds = card._spaceModels.work.builds;
     const fingerprint = card.renderRoot.querySelector('svg.plan-svg')?.outerHTML;
     const samples = [];

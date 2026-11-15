@@ -19,6 +19,10 @@ const targets=bundledProducers(fileURLToPath(new URL('../dist',import.meta.url))
 const session=await page.context().newCDPSession(page);
 const settle=()=>page.evaluate(()=>window.__hpTest.settled());
 const writes=()=>page.evaluate(()=>window.__hpTest.waitForWrites());
+const workerPhysical=()=>page.evaluate(()=>window.__card.houseplanFloorCacheDiagnostics().cache.producers
+ .reduce((n,row)=>n+(row.owner==='worker'?(row.counts.wallBodiesGeometry||0):0),0));
+const workerGeometry=()=>page.evaluate(()=>window.__card.houseplanFloorCacheDiagnostics().cache.producers
+ .reduce((n,row)=>n+(row.owner==='worker'?Object.values(row.counts).reduce((a,b)=>a+b,0):0),0));
 const point=(x,y)=>page.evaluate(([x,y])=>{const p=new DOMPoint(x,y).matrixTransform(window.__card.renderRoot.querySelector('.stage svg').getScreenCTM());return{x:p.x,y:p.y};},[x,y]);
 const sample=id=>page.evaluate(id=>{
  const c=window.__card,root=c.renderRoot,o=c._openingsR.find(o=>o.id===id),proof=window.__local1236;
@@ -27,14 +31,16 @@ const sample=id=>page.evaluate(id=>{
 },id);
 try{
  await session.send('Profiler.enable');await session.send('Profiler.startPreciseCoverage',{callCount:true,detailed:true});
+ const workerBefore=await workerPhysical();
  await page.evaluate(async config=>{await window.__hpTest.setServerConfig(cfg=>Object.assign(cfg,structuredClone(config)));await window.__hpTest.switchSpace('opening-local-1236');await window.__hpTest.setMode('plan');await window.__hpTest.setTool('select');},config);
  await page.waitForFunction(()=>!window.__card.renderRoot.querySelector('.stage.mode-transition'));await writes();await settle();
  const cold=(await session.send('Profiler.takePreciseCoverage')).result;
- assert.ok(callsFor(cold,targets.physical)>0,'cold positive proves the real saved physical producer is observable');
+ assert.ok(callsFor(cold,targets.physical)>0||await workerPhysical()>workerBefore,
+  'cold positive proves the real saved physical producer ran in the page or geometry worker');
  await page.evaluate(()=>{const c=window.__card;window.__local1236={writes:0,accepted:0,downs:[]};const call=c.hass.callWS.bind(c.hass);c.hass={...c.hass,callWS:async m=>{const write=m.type==='houseplan/config/set';if(write)window.__local1236.writes++;const r=await call(m);if(write)window.__local1236.accepted++;return r;}};c.renderRoot.querySelector('.stage').addEventListener('pointerdown',e=>window.__local1236.downs.push({trusted:e.isTrusted,id:e.target.closest('[data-hp="opening"]')?.dataset.id}),{capture:true});});
  for(const id of ['wall-door','partition-window']){
   for(const terminal of ['cancel','release']){
-   const before=await sample(id),o=before.opening,start=await point(o.rx,o.ry);
+   const before=await sample(id),o=before.opening,start=await point(o.rx,o.ry),workerBeforeDrag=await workerGeometry();
    await session.send('Profiler.takePreciseCoverage');
    await page.mouse.move(start.x,start.y);await page.mouse.down();await settle();
    const down=await sample(id);assert.equal(down.drag?.id,id);assert.deepEqual(down.downs.at(-1),{trusted:true,id});
@@ -49,6 +55,7 @@ try{
    const held=await sample(id);
    const heldCoverage=(await session.send('Profiler.takePreciseCoverage')).result;
    assert.equal(callsFor(heldCoverage,targets.physical),0,'held input never calls the real full-floor producer');
+   assert.equal(await workerGeometry(),workerBeforeDrag,'held input never moves structural work into the worker');
    assert.equal(callsFor(heldCoverage,targets.constructor),1,'one observed retained-preview constructor per native drag');
    if(terminal==='cancel'){await page.keyboard.press('Escape');await settle();await page.mouse.up();await writes();await settle();const cancelled=await sample(id);assert.deepEqual(cancelled.space,before.space);assert.equal(cancelled.writes,before.writes);assert.equal(cancelled.history,before.history);assert.equal(cancelled.drag,null);}
    else{

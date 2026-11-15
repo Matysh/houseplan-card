@@ -8,7 +8,7 @@ const out=await page.evaluate(async cfg=>{
  c._serverCfg=cfg;c._layout={};c._space=cfg.spaces[0].id;c._cfgEpoch++;c._modelCache=null;c._frame=null;c._wallUnionCache=null;
  const before=JSON.stringify(cfg.spaces[0].plan_graph),out={};
  for(const mode of ['view','plan']){
-  c._setMode(mode);c.requestUpdate();await c.updateComplete;
+  await window.__hpTest.setMode(mode);c.requestUpdate();await c.updateComplete;
   for(const zoom of [1,2.65]){
    c._applyView(zoom,2250,-850);c.requestUpdate();await c.updateComplete;
    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));

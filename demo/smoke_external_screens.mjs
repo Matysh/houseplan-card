@@ -19,6 +19,10 @@ const out=await page.evaluate(async()=>{
   await until(()=>panel.shadowRoot?.querySelector('houseplan-card')?._loadOk,'cold profile');
   const admin=panel.shadowRoot.querySelector('houseplan-card');await admin.updateComplete;
   result.coldProfileEnablesKioskAndRotation=admin._kiosk&&admin._rotation===90&&new URLSearchParams(location.search).get('foreign')==='keep';
+  // The initial passive floor is not the accepted card whose identity the
+  // profile-only navigation oracle below protects.
+  await until(()=>admin.renderRoot.querySelector('.stage.mode-view:not([inert])')
+    && !admin.renderRoot.querySelector('[data-hp-floor-cache="pending"]'),'canonical cold profile floor');
   const root=admin.renderRoot,element=root.querySelector('ha-card');
   await until(()=>root.querySelector('.summary-overlay:not([inert])'),'visible kiosk summary');
   result.legacyProfileAndURLCannotEnableButtons=!!root.querySelector('.summary-overlay')&&!root.querySelector('.summary-control,[data-hp="summary-settings"],[data-hp="summary-toggle"]');

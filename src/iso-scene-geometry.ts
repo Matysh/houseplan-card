@@ -12,7 +12,7 @@ import { clampScale, fitView, islandsOf, roomPoly, type SpaceDisplay } from './l
 import {
   ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT,
   ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT,
-  projectedFrame, isoCameraFor, projectPlanPoint, type PlanPoint, type ScenePoint, type IsoCamera,
+  projectedFrame, isoCameraFor, type PlanPoint, type ScenePoint, type IsoCamera,
 } from './iso-projection';
 import { planRotation, type PlanRotation } from './view-frame';
 import {
@@ -38,7 +38,7 @@ import {
 import { partitionOpeningFace } from './partition-openings';
 import { openingLockFloorPlacement } from './opening-symbol-placement';
 import { physicalBodyParts, type PartitionOpeningCut } from './physical-geometry';
-import { gridVisualScale, gridVisualUnits } from './grid-scale';
+import { gridVisualUnits } from './grid-scale';
 import { iconUnit, type Rect } from './space-geometry';
 import { lruRead, lruWrite } from './card-runtime';
 import type { ResolvedDevicePresentation } from './device-presentation';

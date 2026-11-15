@@ -8,7 +8,7 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
-  const upd = async () => { c.requestUpdate(); await c.updateComplete; };
+  const upd = async () => { c.requestUpdate(); await c.updateComplete; await window.__hpTest.settled(); };
   const settleMode = async () => {
     const started = performance.now();
     while (c._modeTransitionBusy && performance.now() - started < 1800) {
@@ -175,6 +175,7 @@ await page.evaluate(async () => {
   c._openSettingsDialog();
   c.requestUpdate();
   await c.updateComplete;
+  await window.__hpTest.settled();
   c.shadowRoot.querySelector('[data-section-target="sun"]').click(); await c.updateComplete;
   c.shadowRoot.querySelector('.hpf-north-dial').scrollIntoView({ block: 'center' });
 });
@@ -247,8 +248,15 @@ const screenPt = (x, y) => page.evaluate(([x, y]) => {
   const [vx, vy, vw, vh] = svgEl.getAttribute('viewBox').split(' ').map(Number);
   return [r.left + ((x - vx) / vw) * r.width, r.top + ((y - vy) / vh) * r.height];
 }, [x, y]);
-const rayInfo = () => page.evaluate(() => {
+const rayInfo = () => page.evaluate(async () => {
   const c = window.__card;
+  const deadline = performance.now() + 8000;
+  do {
+    await c.updateComplete;
+    if (!c._floorPreparation?.pending && !c._floorHolding) break;
+    if (performance.now() > deadline) throw new Error('current edited floor did not present its rays');
+    await new Promise(requestAnimationFrame);
+  } while (true);
   const rays = c._sunRaysCache?.rays || [];
   const r = rays.find((q) => q.openingId === 'wE');
   const space = c._serverCfg.spaces.find((s) => s.id === 'f1');
@@ -368,7 +376,7 @@ await page.evaluate(async () => {
 // the real drag: enter the opening editor and pull wE down the east wall
 await page.evaluate(async () => {
   const c = window.__card;
-  c._setMode('plan'); c._tool = 'opening';
+  await window.__hpTest.setMode('plan'); c._tool = 'opening';
   c.requestUpdate(); await c.updateComplete;
 });
 // The mode/chrome transition owns the stage geometry. Wait for its public

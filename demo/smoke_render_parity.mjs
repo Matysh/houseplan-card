@@ -23,7 +23,7 @@ const res = await page.evaluate(async () => {
 
   main._serverCfg = cfg;
   main._cfgEpoch++;
-  main.requestUpdate(); await main.updateComplete;
+  main.requestUpdate(); await window.__hpTest.settled();
 
   const host = document.createElement('div');
   document.body.appendChild(host);
@@ -62,7 +62,7 @@ const res = await page.evaluate(async () => {
   const f1cfg = cfg.spaces.find((s) => s.id === 'f1');
   f1cfg.rooms[0].open_to = [f1cfg.rooms[1].id];
   main._cfgEpoch++;
-  main.requestUpdate(); await main.updateComplete;
+  main.requestUpdate(); await window.__hpTest.settled();
   const outlines = [...(main.shadowRoot || main.renderRoot).querySelectorAll('.room-outline')];
   out.trimmedOutlineDrawn = outlines.length > 0;
   out.trimmedOutlineRound = outlines.every((el) => {

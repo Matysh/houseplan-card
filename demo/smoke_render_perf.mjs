@@ -22,7 +22,7 @@ const res = await page.evaluate(async () => {
   const otherId = [...choices].map(choice => choice.value || choice.dataset.id).find(id => id !== startSpace);
   for (const id of [otherId, startSpace]) {
     await window.__hpTest.switchSpace(id);
-    await c.updateComplete; await frames(); await c.updateComplete;
+    await window.__hpTest.settled(); await frames(); await window.__hpTest.settled();
   }
   out.floorSwitchRoundTrip = !!otherId && c._space === startSpace && passBuilds.length >= 2;
   out.fingerprintBuildsPerPass = Math.max(0, ...passBuilds);
@@ -35,12 +35,12 @@ const res = await page.evaluate(async () => {
   c._buildModel = (...a) => { buildCalls++; return origBuild(...a); };
   const sp = c._curSpaceCfg;
   sp.zero_wall_style = 'dashed';
-  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c.requestUpdate(); await window.__hpTest.settled();
   zeroCalls = 0; buildCalls = 0;
   const devicesBeforeHassTicks = c._devices;
   for (let i = 0; i < 10; i++) {
     c.hass = { ...c.hass, states: { ...c.hass.states } };
-    await c.updateComplete;
+    await window.__hpTest.settled();
   }
   out.zeroResolutionBounded = zeroCalls <= 30;
   out.modelBuildsPer10Renders = buildCalls;
@@ -55,7 +55,7 @@ const res = await page.evaluate(async () => {
   const statesWithoutSun = { ...c.hass.states };
   delete statesWithoutSun['sun.sun'];
   c.hass = { ...c.hass, states: statesWithoutSun };
-  c.requestUpdate(); await c.updateComplete;
+  c.requestUpdate(); await window.__hpTest.settled();
   const clockModel = c._model;
   const clockDevices = c._devices;
   const clockWallUnion = c._wallUnionCache;
@@ -63,7 +63,7 @@ const res = await page.evaluate(async () => {
   buildCalls = 0;
   c._dayCycleClockKey = 'force-next-clock-tick';
   c._dayCycleTick();
-  await c.updateComplete;
+  await window.__hpTest.settled();
   out.fallbackClockActive = (c.shadowRoot || c.renderRoot)
     .querySelector('.hp-day-cycle-env')?.dataset.dayCycleSource === 'clock';
   out.clockTickModelBuilds = buildCalls;
@@ -74,7 +74,7 @@ const res = await page.evaluate(async () => {
 
   const before = zeroCalls;
   sp.zero_wall_style = 'solid';
-  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c.requestUpdate(); await window.__hpTest.settled();
   out.invalidatesOnEdit = zeroCalls > before;
   // The shared demo has no zero wall by default. Add one independent axis so
   // the paint assertion exercises #306 instead of passing only when another
@@ -83,7 +83,7 @@ const res = await page.evaluate(async () => {
   sp.partitions.push({ id: 'perf-zero-wall', a: [0.1, 0.95], b: [0.2, 0.95], cm: 0 });
   sp.zero_wall_style = 'dashed';
   sp.settings = { ...(sp.settings || {}), show_borders: true };
-  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c.requestUpdate(); await window.__hpTest.settled();
   out.dashesStillRendered = (c.shadowRoot || c.renderRoot).querySelectorAll('.zero-wall').length > 0;
   return out;
 });

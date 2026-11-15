@@ -32,6 +32,7 @@ const fixture = await page.evaluate(async () => {
     c.requestUpdate();
     await c.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await window.__hpTest.settled();
   };
   const roomPoly = [[0.1, 0.15], [0.9, 0.15], [0.9, 0.85], [0.1, 0.85]];
   const imageAssetId = '7'.repeat(64);
@@ -147,7 +148,7 @@ const glow = await page.evaluate(async () => {
       glow_base: { c: '#2255cc', a: 1 },
     },
   };
-  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete; await window.__hpTest.settled();
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const base = root.querySelector('.glow-base-layer');
   const tunnel = root.querySelector(

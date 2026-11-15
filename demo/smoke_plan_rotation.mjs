@@ -156,7 +156,9 @@ try {
     staticCard.setConfig({ type: 'custom:houseplan-space-card', space: 'f1', rotation: 270 });
     document.getElementById('host').append(staticCard); staticCard.hass = main.hass;
   });
-  await page.waitForFunction(() => document.getElementById('rotation-kiosk').renderRoot.querySelector('.stage')
+  await page.waitForFunction(() => !document.getElementById('rotation-kiosk')._booting
+    && !document.getElementById('rotation-kiosk')._floorPreparation?.pending
+    && document.getElementById('rotation-kiosk').renderRoot.querySelector('.stage')
     && document.getElementById('rotation-static').renderRoot.querySelector('.hp-static-stage'));
   check('kiosk ignores the device choice and has no rotation controls', await page.locator('#rotation-kiosk .stage').getAttribute('data-hp-plan-rotation') === '180'
     && await page.locator('#rotation-kiosk [data-hp="rotate-right"]').count() === 0);

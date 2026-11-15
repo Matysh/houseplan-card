@@ -29,6 +29,9 @@ const state=()=>page.evaluate(async()=>{
   const c=window.__card;
   return {config:(await c.hass.callWS({type:'houseplan/config/get'})).config,
     builds:{...c._floorCacheBuilds},history:c._geometryHistory.size,writes:window.__1071Writes,
+    workerMisses:c.houseplanFloorCacheDiagnostics().cache.misses,
+    physicalWarm:!!c._physicalBodiesCache?.all.length&&!!c._wallUnionCache?.value,
+    lightWarm:!!c._lightBarrierCache?.value.occluders.length&&!!c._lightBarrierCache?.value.opaqueBodies.length,
     defaults:structuredClone(c._decorStyle),ids:[...c._editorRuntime.properties.decorSelectionIds],
     walls:[...c.renderRoot.querySelectorAll('.wallbodies path')].map(el=>el.getAttribute('d')),
     paint:[...c.renderRoot.querySelectorAll('.decorlayer path.dshape[data-kind="furniture"][stroke]')]
@@ -37,6 +40,7 @@ const state=()=>page.evaluate(async()=>{
 const checkWarm=(name,before,after)=>{
   for(const key of ['wallUnion','physicalBodies','innerContour','lightBarrier','lightPhysicalBodies'])
     check(`${name}.${key}.no_rebuild`,after.builds[key],before.builds[key]);
+  check(`${name}.worker.no_rebuild`,after.workerMisses,before.workerMisses);
   check(`${name}.walls_identical`,after.walls,before.walls);
 };
 try {
@@ -58,8 +62,8 @@ try {
   await card().locator('[data-hp="zoom-fit"]').click();await card().locator('[data-hp="zoom-fit"]').focus();
   await page.keyboard.press('Control+m');await settle();
   const before=await state();check('sidebar.two_furniture_selected',before.ids,['a','b']);
-  check('sidebar.physical_fixture_is_warm',before.builds.wallUnion>0&&before.walls.length>0,true);
-  check('sidebar.light_fixture_is_warm',before.builds.lightBarrier>0&&before.builds.lightPhysicalBodies>0,true);
+  check('sidebar.physical_fixture_is_warm',before.physicalWarm&&before.walls.length>0,true);
+  check('sidebar.light_fixture_is_warm',before.lightWarm,true);
   await picker().locator('.trigger').click();await picker().locator('[data-field="colour-hex"]').fill('#CA24EF');
   await page.waitForFunction(()=>[...window.__card.renderRoot.querySelectorAll('.decorlayer path.dshape[data-kind="furniture"][stroke]')]
     .every(el=>el.getAttribute('stroke')==='#ca24ef'));

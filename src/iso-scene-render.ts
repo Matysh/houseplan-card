@@ -5,48 +5,17 @@
  * module owns the presentation-only structural cache, overlay projection and
  * SVG volume layers so the main Lit shell does not also become a renderer.
  */
-import { ISO_ICON_SCALE } from './iso-tiles';
 // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
 export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
 import { mdiWeatherSunny, mdiWeatherSunnyOff } from '@mdi/js';
 import type { ResolvedOpeningVisual } from './opening-features';
-import { clampScale, fitView, islandsOf, roomPoly, type SpaceDisplay } from './logic';
-import {
-  ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT,
-  ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT,
-  projectedFrame, isoCameraFor, projectPlanPoint, type PlanPoint, type ScenePoint, type IsoCamera,
-} from './iso-projection';
-import { planRotation, type PlanRotation } from './view-frame';
-import {
-  buildIsoFloorGeometry, buildIsoWallGeometry, isoGeometryFingerprint,
-  type IsoFloorGeometry, type IsoWallFace, type IsoWallGeometry, type IsoWallTopFace,
-} from './iso-walls';
-import {
-  ISO_OPENING_GEOMETRY_POLICY, buildIsoOpeningBasis, isoOpeningBounds, projectIsoOpening,
-  projectIsoOpeningStructure, resolveIsoDecoration,
-  type IsoDecorationLayers, type IsoOpeningBasis, type IsoOpeningPanel,
-  type IsoOpeningGeometryPolicy, type IsoOpeningSurface,
-} from './iso-openings';
-import {
-  resolveIsoOverlayOwner, resolveIsoOverlayPlacement,
-  type IsoOverlayPlacement, type IsoOverlayRoom, type IsoRaisedOverlayKind,
-} from './iso-overlays';
-import {
-  floorFootprintGeometry, openingInnerFaceOffsetFromIndex,
-  openingWallIndex as buildOpeningWallIndex, resolveOpeningWallAssociation,
-  wallBodiesGeometry,
-  type OpeningWallIndex, type WallEntry,
-} from './wall-thickness';
-import { partitionOpeningFace } from './partition-openings';
-import { openingLockFloorPlacement } from './opening-symbol-placement';
-import { physicalBodyParts, type PartitionOpeningCut } from './physical-geometry';
+import type { SpaceDisplay } from './logic';
+import { projectPlanPoint, type PlanPoint } from './iso-projection';
+import type { IsoFloorGeometry, IsoWallGeometry } from './iso-walls';
+import type { IsoDecorationLayers, IsoOpeningPanel } from './iso-openings';
 import { gridVisualScale, gridVisualUnits } from './grid-scale';
-import { iconUnit, type Rect } from './space-geometry';
-import { lruRead, lruWrite } from './card-runtime';
-import type { ResolvedDevicePresentation } from './device-presentation';
 import type { RenderOpening } from './interaction-types';
-import type { DevItem, RoomCfg, SpaceModel, OpeningFeatures } from './types';
 
 export * from './iso-scene-geometry';
 import { buildIsoWallDepthQueue, resolveIsoDecorationLayers, resolveIsoOpeningPanels,

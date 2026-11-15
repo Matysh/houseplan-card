@@ -66,6 +66,12 @@ const res = await evaluateRetainedAction(page, async () => {
           veil: !!sr2().querySelector('.bootveil'),
           planVisible: !!zw && getComputedStyle(zw).visibility === 'visible',
           rooms: stage.querySelectorAll('.room').length,
+          previewShapes: stage.querySelector('[data-hp-cache-preview]')?.querySelectorAll('path, polygon, polyline, rect, circle, ellipse, line, image').length || 0,
+          previewPassive: stage.dataset.hpFloorCache === 'preview'
+            && !!zw?.hasAttribute('inert')
+            && stage.querySelector('[data-hp-cache-preview]')?.getAttribute('aria-hidden') === 'true'
+            && !stage.querySelector('[data-hp="device"], [data-hp="opening"], .roomlabel'),
+          preparation: stage.dataset.hpFloorCache || '',
           stageH: stage.clientHeight,
           hdrH: c2._hdrH,
           memo: c2._warmSlot ? [c2._warmSlot.hdrH, c2._warmSlot.stageH] : null,
@@ -87,7 +93,13 @@ const res = await evaluateRetainedAction(page, async () => {
   out.warmZoomEveryFrame = frames.every((f) => Math.abs(f.zoom - zoomSaved) < 0.01)
     ? true : 'a frame at a non-saved zoom';
   // the server config reload on a warm mount must not blank the plan
-  out.warmNeverEmptyPlan = frames.every((f) => f.rooms > 0) ? true : 'a frame rendered no rooms';
+  // L1 uses plain architectural SVG, not interactive `.room` DOM. It is a
+  // valid painted plan only when populated and strictly passive; an empty
+  // preparation SVG still fails the original no-blank-frame guarantee.
+  const hasPlan = f => f.rooms > 0 || f.previewShapes > 0 && f.previewPassive;
+  out.warmNeverEmptyPlan = frames.every(hasPlan) ? true
+    : `a frame rendered no architecture: ${JSON.stringify(frames.filter(f => !hasPlan(f)).slice(0, 4))}`;
+  out.warmPreviewNeverExposesLiveLayers = frames.filter(f => f.previewShapes > 0).every(f => f.previewPassive);
   c2.remove();
   wrap.remove();
   return out;

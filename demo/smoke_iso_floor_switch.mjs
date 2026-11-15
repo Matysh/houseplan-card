@@ -1,5 +1,5 @@
 // #739: in 2.5D a floor switch between floors with a backdrop image keeps the
-// known theme paper. The card renders once per switch: no second update pass,
+// known theme paper. The prepared card renders once per warm switch: no second update pass,
 // no new computed-colour probe and no first-frame veil (#654) in the click's
 // task, and the light floors are the ones the floor had on its first show.
 // The cold path (first paper after load, theme change, chunk failure) stays
@@ -37,6 +37,10 @@ const out = await page.evaluate(async () => {
   result.isoReadyWithResolvedPaper = !!stage()?.classList.contains('projection-iso')
     && stage()?.dataset.hpIsoReadiness === 'ready' && !root.querySelector('.bootveil:not(.off)');
 
+  // First visits may prepare a passive floor asynchronously. The strict
+  // one-render contract below measures already prepared floor switches.
+  await hp.switchSpace('garden'); await hp.settled();
+  await hp.switchSpace('f1'); await hp.settled();
   let updates = 0;
   const update = card.update.bind(card);
   card.update = (changed) => { updates += 1; return update(changed); };

@@ -21,6 +21,21 @@ const out = await page.evaluate(async () => {
     const promise = new Promise((done) => { resolve = done; });
     return { promise, resolve };
   };
+  // The fake image URLs deliberately never load. Wait for real asynchronous
+  // geometry/DOM adoption, not an asset-ready continuity frame or write rights.
+  const settleGeometry = async () => {
+    const end = performance.now() + 9000;
+    for (;;) {
+      await card.updateComplete;
+      await new Promise(requestAnimationFrame);
+      if (!card._floorPreparation?.pending && !card._floorPassive
+          && !card.renderRoot.querySelector('[data-hp-floor-cache="pending"]')) {
+        await new Promise(requestAnimationFrame);
+        return;
+      }
+      if (performance.now() > end) throw Error('#543 current geometry did not settle');
+    }
+  };
 
   const original = {
     get: card._getAuthoritativeConfig,
@@ -65,7 +80,7 @@ const out = await page.evaluate(async () => {
     card._getAuthoritativeConfig = async () => ({ config: base, rev: 2, can_write: true });
     card._signer.prepareImage = async () => true;
     await card._reloadConfigOnly(true);
-    await card.updateComplete;
+    await settleGeometry();
     tails.cache.length = 0;
     tails.rebuild = 0;
     tails.continuity = 0;
@@ -105,7 +120,7 @@ const out = await page.evaluate(async () => {
   const olderAssetReload = card._reloadConfigOnly(false, 3);
   await assetEntered.promise;
   await card._reloadConfigOnly(false, 4);
-  await card.updateComplete;
+  await settleGeometry();
   const assetWinner = {
     title: firstTitle(card._serverCfg),
     rev: card._cfgRev,
@@ -119,7 +134,7 @@ const out = await page.evaluate(async () => {
   };
   assetGate.resolve(true);
   await olderAssetReload;
-  await card.updateComplete;
+  await settleGeometry();
   const assetFinal = {
     title: firstTitle(card._serverCfg),
     rev: card._cfgRev,
@@ -146,7 +161,7 @@ const out = await page.evaluate(async () => {
   const olderNetworkReload = card._reloadConfigOnly(false, 3);
   await Promise.resolve();
   await card._reloadConfigOnly(false, 4);
-  await card.updateComplete;
+  await settleGeometry();
   const networkWinner = {
     title: firstTitle(card._serverCfg),
     rev: card._cfgRev,
@@ -158,7 +173,7 @@ const out = await page.evaluate(async () => {
   };
   networkGate.resolve({ config: olderNetwork, rev: 3, can_write: true });
   await olderNetworkReload;
-  await card.updateComplete;
+  await settleGeometry();
   const networkFinal = {
     title: firstTitle(card._serverCfg),
     rev: card._cfgRev,
@@ -183,14 +198,14 @@ const out = await page.evaluate(async () => {
   card._adoption.acceptConfigWrite(localWinner, { rev: 3 });
   card._cacheSnapshot();
   card.requestUpdate();
-  await card.updateComplete;
+  await settleGeometry();
   const writeWinner = {
     title: firstTitle(card._serverCfg), rev: card._cfgRev, cache: clone(cache()),
   };
   const writeTail = tailSnapshot();
   writeGate.resolve({ config: olderWrite, rev: 3, can_write: true });
   await staleAfterWrite;
-  await card.updateComplete;
+  await settleGeometry();
   const writeFinal = {
     title: firstTitle(card._serverCfg), rev: card._cfgRev, cache: clone(cache()),
     tail: tailSnapshot(),

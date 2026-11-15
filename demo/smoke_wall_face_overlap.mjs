@@ -6,7 +6,7 @@ const { page, browser } = await launch({ width: 1100, height: 820 }, 1);
 const result = await page.evaluate(async () => {
   const out = {};
   const card = window.__card;
-  const update = async () => { card.requestUpdate(); await card.updateComplete; };
+  const update = async () => { card.requestUpdate(); await window.__hpTest.settled(); };
   const ring = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
   const closed = (points) => [...points, [...points[0]]];
   const roomAt = (name, points) => ({
@@ -27,7 +27,7 @@ const result = await page.evaluate(async () => {
     card._path = []; card._activeWallChainId = null;
     card._activeWallChainPartitionIds = []; card._wallChainSegmentCms = [];
     card._wallFaceBatch = null; card._roomDialog = false;
-    card._setMode('plan'); card._tool = 'draw'; await update();
+    await window.__hpTest.setMode('plan'); card._tool = 'draw'; await update();
   };
   const click = async (x, y) => {
     const stage = (card.shadowRoot || card.renderRoot).querySelector('.stage');

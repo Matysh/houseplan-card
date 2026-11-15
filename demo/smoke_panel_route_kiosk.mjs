@@ -236,7 +236,7 @@ try {
       const card = panel.shadowRoot.querySelector('houseplan-card');
       await until(() => card.renderRoot.querySelector('[data-fixed-floor-state="pending"]'));
       const out = {
-        staleRosterCannotChoosePosition: card._model[0].id === stale.spaces[0].id
+        staleRosterCannotChoosePosition: card._model.length === 0
           && !card.renderRoot.querySelector('.stage'),
         pendingDoesNotLoadEditors: !card._editorRuntime && !card._onboardingRuntime,
       };

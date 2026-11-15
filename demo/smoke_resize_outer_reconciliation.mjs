@@ -39,13 +39,13 @@ const out = await page.evaluate(async (fixture) => {
   };
 
   const resetResize = async () => {
-    card._setMode('plan');
+    await window.__hpTest.setMode('plan');
     card._tool = 'resize';
     card._resize.reset();
     card._modelCache = null;
     card._frame = null;
     card.requestUpdate();
-    await card.updateComplete;
+    await window.__hpTest.settled();
     await new Promise((resolve) => requestAnimationFrame(resolve));
   };
   const targetHandles = () => [...card.renderRoot.querySelectorAll('.rszhandle')]
@@ -81,7 +81,7 @@ const out = await page.evaluate(async (fixture) => {
     && card._geometryHistory.size === 0;
 
   await card._editorRuntime.optimizePlans.open();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   const previewSpace = card._alignDialog?.config?.spaces?.[0];
   result.previewProvesOuterRewrite = card._alignDialog?.changed === true
     && card._alignDialog?.preflight?.ok === true
@@ -91,7 +91,7 @@ const out = await page.evaluate(async (fixture) => {
     && Array.isArray(previewSpace?.partitions) && previewSpace.partitions.length === 0
     && previewSpace?.openings?.every((opening) => wallHostResolves(previewSpace, opening));
   await card._editorRuntime.optimizePlans.run();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   result.optimizeUsesOneWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   const optimized = card._serverCfg.spaces[0];
   result.optimizePreservesOpeningFields = Array.isArray(optimized.partitions) && optimized.partitions.length === 0

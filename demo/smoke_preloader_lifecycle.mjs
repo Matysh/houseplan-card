@@ -131,11 +131,14 @@ for (const shiftMs of shifts) {
         if (stage) {
           const veil = sr().querySelector('.bootveil');
           const wrapEl = stage.querySelector(':scope > .zoomwrap');
+          const preview = !!stage.querySelector('[data-hp-cache-preview]');
           const planHidden =
             !wrapEl ||
             getComputedStyle(wrapEl).visibility === 'hidden' ||
             (veil && !veil.classList.contains('off') && getComputedStyle(veil).opacity !== '0');
-          frames.push({ t: Math.round(t), planVisible: !planHidden, stageH: stage.clientHeight });
+          frames.push({ t: Math.round(t), planVisible: !planHidden && !preview, stageH: stage.clientHeight,
+            previewSafe: !preview || (!!wrapEl?.inert && getComputedStyle(wrapEl).pointerEvents === 'none'
+              && !stage.querySelector('[data-hp="device"],.roomlabel,[data-hp-live-editor],.glowlayer')) });
         }
         if (t < 1900) requestAnimationFrame(sample);
         else done();
@@ -144,6 +147,7 @@ for (const shiftMs of shifts) {
     });
     const seen = frames;
     const finalH = seen[seen.length - 1].stageH;
+    out.cachedPreviewIsPassiveWithoutLiveLayersOrNames = seen.every(f => f.previewSafe);
     // THE assertion: no frame may show the plan at a stale (pre-panel) height
     const bad = seen.filter((f) => f.planVisible && Math.abs(f.stageH - finalH) > 2);
     out.noStaleFrame = bad.length === 0
@@ -159,6 +163,7 @@ for (const shiftMs of shifts) {
   outB[`shift${shiftMs}_planShown`] = res.planShown;
   outB[`shift${shiftMs}_heightReacted`] = res.heightReacted;
   check(`shift${shiftMs}_noStaleFrame`, res.noStaleFrame);
+  check(`shift${shiftMs}_cachedPreviewIsPassiveWithoutLiveLayersOrNames`, res.cachedPreviewIsPassiveWithoutLiveLayersOrNames);
   check(`shift${shiftMs}_planShown`, res.planShown);
   check(`shift${shiftMs}_heightReacted`, res.heightReacted);
 }

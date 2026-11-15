@@ -64,7 +64,8 @@ async function scenario(name, sameSnapshot, fastRead) {
       await page.waitForFunction(zoom => window.__card._zoom > zoom, initialZoom);
       await page.waitForFunction(() => !window.__card._cameraTransition.active);
       await page.waitForFunction(ready);
-      savedCamera = await page.evaluate(() => ({ view: { ...window.__card._view }, zoom: window.__card._zoom }));
+      savedCamera = await page.evaluate(() => ({ view: { ...window.__card._view }, zoom: window.__card._zoom,
+        stage: [window.__card._stageEl.clientWidth, window.__card._stageEl.clientHeight], header: window.__card._hdrH }));
     }
     store.pushConfig(sameSnapshot ? before : after); slowRead = !fastRead;
     await mount(); // Observe real readiness; never force a refit from the fixture.
@@ -72,7 +73,11 @@ async function scenario(name, sameSnapshot, fastRead) {
     if (sameSnapshot) out[`${name}:user-camera-preserved`] = await page.evaluate(saved => {
       const c = window.__card;
       return Math.abs(c._zoom - saved.zoom) < 1e-9
-        && ['x', 'y', 'w', 'h'].every(key => Math.abs(c._view[key] - saved.view[key]) < 1e-6);
+        && ['x', 'y', 'w', 'h'].every(key => Math.abs(c._view[key] - saved.view[key]) < 1e-6)
+        || JSON.stringify({ expected: saved, actual: { zoom: c._zoom, view: c._view },
+          stage: [c._stageEl.clientWidth, c._stageEl.clientHeight], header: c._hdrH,
+          lastSize: c._lastValidStageSize, memoSize: [c._warmSlot?.hdrH, c._warmSlot?.stageH],
+          memo: c._warmVp, pendingRestore: c._floorRestoreZoom });
     }, savedCamera);
     out[`${name}:final-stage-is-camera-baseline`] = await page.evaluate(() => {
       const c = window.__card, s = c._stageEl;

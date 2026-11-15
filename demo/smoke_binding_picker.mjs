@@ -104,7 +104,7 @@ Object.assign(out, await page.evaluate(async () => {
   const childPos = childMarker && c._layout[childMarker.id];
   o.childGetsFreshLayoutPosition = !!childPos
     && Number.isFinite(childPos.x) && Number.isFinite(childPos.y) && !!childPos.s;
-  c._setMode('view');
+  await window.__hpTest.setMode('view');
   await c.updateComplete;
   o.childDrawnInView = !!c.renderRoot.querySelector(
     `.dev[data-id="${CSS.escape(childMarker.id)}"]`,

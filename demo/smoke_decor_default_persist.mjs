@@ -3,7 +3,14 @@
 // and a card born with the key draws new objects with the saved style (AC5).
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
-const res = await page.evaluate(async () => {
+const scopedHintKey = await page.evaluate(() => {
+  const scope = window.__card.planHost.cacheScope;
+  return Object.keys(localStorage).find(key => {
+    if (!key.startsWith('houseplan_scoped_hint_v1:')) return false;
+    try { return JSON.parse(localStorage.getItem(key))?.scope === scope; } catch { return false; }
+  }) || null;
+});
+const res = await page.evaluate(async scopedHintKey => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
@@ -64,6 +71,9 @@ const res = await page.evaluate(async () => {
   // Чистый reload: кэш мгновенного рендера убираем, чтобы посев шёл из
   // серверного конфига (после настоящей записи кэш нёс бы тот же ключ).
   localStorage.removeItem('houseplan_card_cfg_v1');
+  // #1454 adds an owner-scoped first-config hint. This scenario deliberately
+  // tests a cold authoritative seed, not the separate early-cache contract.
+  localStorage.removeItem(scopedHintKey);
   const fresh = document.createElement('houseplan-card');
   fresh.setConfig({ type: 'custom:houseplan-card' });
   fresh.hass = { ...c.hass, callWS: async (m) => {
@@ -78,13 +88,14 @@ const res = await page.evaluate(async () => {
   } };
   document.body.appendChild(fresh);
   const t0 = Date.now();
-  while (!fresh._serverCfg && Date.now() - t0 < 6000) await new Promise((r) => setTimeout(r, 60));
+  while (!fresh._loadOk && Date.now() - t0 < 6000) await new Promise((r) => setTimeout(r, 60));
+  out.freshAuthoritativePair = fresh._loadOk && fresh._serverCfg.settings.decor_default_style.color === '#8b0000';
   out.seeded = fresh._decorStyle.color === '#8b0000'
     && fresh._decorStyle.widthCm === 5
     && fresh._decorStyle.fillColor === '#607d8b'; // частичный ключ наследует дефолт
   fresh.remove();
   return out;
-});
+}, scopedHintKey);
 checkAll(res, ['decorMode', 'hasRuntime', 'instantStyle', 'noEagerWrite',
   'stillNoWriteBeforeDebounce', 'oneWrite',
   'writeCarriesKey', 'defaultRemovesKey', 'seeded']);

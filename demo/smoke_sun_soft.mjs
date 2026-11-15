@@ -37,7 +37,7 @@ const res = await page.evaluate(async () => {
   const setSun = async (az, el) => {
     c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
       entity_id: 'sun.sun', state: 'above_horizon', attributes: { azimuth: az, elevation: el } } } };
-    c.requestUpdate(); await c.updateComplete;
+    c.requestUpdate(); await c.updateComplete; await window.__hpTest.settled();
   };
   const grads = () => [...sr().querySelectorAll('linearGradient[id^=hp-sun-]')];
   const stopsOf = (g) => [...g.querySelectorAll('stop')].map((s) => [

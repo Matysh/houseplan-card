@@ -71,7 +71,7 @@ const out = await page.evaluate(async () => {
     id: 'hp301-door', type: 'door', x: 0.22, y: 0.14, angle: 0, length: 0.09,
   }];
   c._cfgEpoch++;
-  c._setMode('plan');
+  await window.__hpTest.setMode('plan');
   await settle();
   const opening = c._openingsR.find((item) => item.type === 'door');
   if (!opening) return { realDoorFixtureExists: false };

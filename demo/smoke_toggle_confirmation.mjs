@@ -65,6 +65,7 @@ const out = await page.evaluate(async () => {
     card._setMode('view');
     card.requestUpdate();
     await card.updateComplete;
+    await window.__hpTest.settled();
   };
   const gate = () => card._devices.find((item) => item.bindingRef === 'd_gate');
   const tap = async () => {

@@ -17,7 +17,11 @@ const ZOOM = 1.8;
 // ---- phase 1: prime the config cache exactly the way production does ------
 const { page, browser } = await launch();
 await page.waitForFunction(() => !!localStorage.getItem('houseplan_card_cfg_v1'), { timeout: 9000 });
-const cfgCache = await page.evaluate(() => localStorage.getItem('houseplan_card_cfg_v1'));
+const cfgCaches = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage)
+  .filter(key => key === 'houseplan_card_cfg_v1' || key.startsWith('houseplan_scoped_hint_v1:'))
+  .map(key => [key, localStorage.getItem(key)])));
+if (!Object.keys(cfgCaches).some(key => key.startsWith('houseplan_scoped_hint_v1:')))
+  throw Error('Saved zoom fixture did not produce a trusted scoped hint');
 // default fit width at zoom 1 (clean LS): the yardstick for "default scale"
 const defaultFitW = await page.evaluate(() => window.__card._view.w);
 await page.close();
@@ -33,8 +37,8 @@ await ctx.route('**/*', (r) => {
     ? r.fulfill({ status: 200, headers: { 'content-type': CT[p.slice(p.lastIndexOf('.'))] || 'application/octet-stream' }, body: readFileSync(f) })
     : r.fulfill({ status: 404, body: 'nf' });
 });
-await ctx.addInitScript(([cache, zoom]) => {
-  localStorage.setItem('houseplan_card_cfg_v1', cache);
+await ctx.addInitScript(([caches, zoom]) => {
+  for (const [key, value] of Object.entries(caches)) localStorage.setItem(key, value);
   localStorage.setItem('houseplan_card_zoom_v1', JSON.stringify({ f1: zoom }));
   localStorage.removeItem('houseplan_card_nav_v1');
   window.__frames = [];
@@ -75,7 +79,8 @@ await ctx.addInitScript(([cache, zoom]) => {
         const r = stage.getBoundingClientRect();
         const vb = (svgEl.getAttribute('viewBox') || '').split(/\s+/).map(Number);
         const hidden = [cs, cw, cv].some((c) => c.opacity === '0' || c.visibility === 'hidden' || c.display === 'none');
-        window.__frames.push({ visible: !hidden && r.width > 1 && r.height > 1, vbW: vb[2] || 0, zoom: el._zoom });
+        const painted = !!svgEl.querySelector('path, polygon, polyline, rect, circle, ellipse, line, image');
+        window.__frames.push({ visible: painted && !hidden && r.width > 1 && r.height > 1, vbW: vb[2] || 0, zoom: el._zoom });
       } else {
         window.__frames.push(null);
       }
@@ -85,7 +90,7 @@ await ctx.addInitScript(([cache, zoom]) => {
     requestAnimationFrame(sample);
     return el;
   };
-}, [cfgCache, ZOOM]);
+}, [cfgCaches, ZOOM]);
 
 // #404: своя подписка печатала EXC2 мимо счётчика — страница считалась
 // проверенной, а её исключения не видел никто. Теперь через общий гард.

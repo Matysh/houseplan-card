@@ -100,6 +100,7 @@ const out = await page.evaluate(async () => {
     toasts.length = 0;
     retries = 0;
     await card.updateComplete;
+    await window.__hpTest.settled();
   };
   // Review r1 M1: a refused backdrop gate adopts nothing and skips the caller's
   // tail (no toast, no space switch, dialog released), exactly like every

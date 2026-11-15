@@ -142,6 +142,7 @@ for (const iso of [false, true]) {
     card.hass = { ...card.hass, states: { ...card.hass.states,
       'light.ceiling': { ...card.hass.states['light.ceiling'], state: 'off' } } };
     await card.updateComplete;
+    await window.__hpTest.settled();
   });
   await ready();
   await page.mouse.move(995, 5);
@@ -149,11 +150,23 @@ for (const iso of [false, true]) {
     config: JSON.stringify(window.__card._serverCfg), layout: JSON.stringify(window.__card._layout),
     view: document.querySelector('houseplan-card').shadowRoot.querySelector('.plan-svg').getAttribute('viewBox'),
   }));
-  const original = await page.locator('houseplan-card .stage').screenshot();
+  const zoomUi = await page.locator('houseplan-card .zoombadge').evaluate(el => {
+    const rect = el.getBoundingClientRect(), css = getComputedStyle(el);
+    return { visible: !el.hidden && css.visibility !== 'hidden' && css.display !== 'none',
+      width: rect.width, height: rect.height, text: el.textContent.trim() };
+  });
+  check(`live-zoom-ui-has-native-bounds-${iso}`, !zoomUi.visible
+    || (zoomUi.width > 0 && zoomUi.height > 0 && /^\d+%$/.test(zoomUi.text)));
+  // SVG exports the plan, not floating UI. Hide only the actual badge during
+  // this screenshot so geometry underneath is still compared at the same pixels.
+  const original = await page.locator('houseplan-card .stage').screenshot({
+    style: '.zoombadge { visibility:hidden !important; }',
+  });
   await open(); await selectSvg(); await field('svg-devices').check();
   await field('export-background').selectOption('current');
   const saved = await download();
   const f = await facts(saved.xml);
+  check(`svg-has-no-zoom-ui-${iso}`, !saved.xml.includes('zoombadge'));
   check(`devices-${iso ? 'iso' : 'flat'}`, f.devices > 0);
   check(`vacuum-led-radar-${iso}`, f.vacuum > 0 && f.led > 0 && f.radar > 0);
   check(`#1043 off LED cutout survives standalone SVG-${iso}`, f.ledCutouts, iso ? 1 : 0);

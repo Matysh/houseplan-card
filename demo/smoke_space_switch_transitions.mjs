@@ -25,6 +25,16 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const root = () => c.shadowRoot || c.renderRoot;
   const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  const firstFullFrame = async () => {
+    const deadline = performance.now() + 10000;
+    do {
+      await c.updateComplete;
+      if (!c._floorPreparation?.pending && !c._floorHolding
+        && root().querySelector('.stage:not([data-hp-floor-cache])')) return;
+      if (performance.now() > deadline) throw new Error('new floor did not present its complete frame');
+      await frame();
+    } while (true);
+  };
   const settle = async (frames = 10, ms = 500) => {
     for (let i = 0; i < frames; i++) await frame();
     await new Promise((resolve) => setTimeout(resolve, ms));
@@ -34,6 +44,10 @@ const res = await page.evaluate(async () => {
     const found = [];
     const walk = (node) => {
       for (const element of node.querySelectorAll('*')) {
+        // The off-screen, inert typography ruler never paints. Its shared
+        // reading-value animation must not be mistaken for a visible floor flash.
+        const measure = element.closest('.summary-measure[aria-hidden="true"][inert]');
+        if (measure && getComputedStyle(element).visibility === 'hidden') continue;
         const list = element.getAnimations ? element.getAnimations() : [];
         for (const animation of list) {
           if (animation.playState !== 'running') continue;
@@ -91,6 +105,7 @@ const res = await page.evaluate(async () => {
   const pickSpace = async (id) => {
     c._pickSpace(id);
     await c.updateComplete;
+    await firstFullFrame();
     await settle();
   };
   /** Сменить пространство и снять первый кадр после смены. */
@@ -99,6 +114,7 @@ const res = await page.evaluate(async () => {
     const tagBefore = before[0]?.node.tagName.toLowerCase();
     c._pickSpace(to);
     await c.updateComplete;
+    await firstFullFrame();
     await frame();
     const head = roomNodes()[0];
     const style = head ? getComputedStyle(head) : null;
@@ -228,8 +244,12 @@ const res = await page.evaluate(async () => {
 
   c._pickSpace(ids[1]);
   await c.updateComplete;
+  await firstFullFrame();
   await frame();
   const afterSwitch = runningAnimations();
+  const measures = [...root().querySelectorAll('.summary-measure')];
+  out.summaryMeasureIsInertAndNonvisual = measures.length > 0 && measures.every(el =>
+    el.inert && el.getAttribute('aria-hidden') === 'true' && getComputedStyle(el).visibility === 'hidden');
   const leafAfter = root().querySelector('.op-leaf');
   out.doorIsDrawnInTheSecondSpace = !!leafAfter;
   out.theTwoDoorsDifferInState = !!transformBefore && transformBefore !== leafTransform(leafAfter);

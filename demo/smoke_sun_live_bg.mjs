@@ -22,6 +22,7 @@ const res = await page.evaluate(async () => {
       attributes: { azimuth, elevation, rising },
     } } };
     await c.updateComplete;
+    await window.__hpTest.settled();
   };
   const stage = () => sr().querySelector('.stage');
   const env = () => sr().querySelector('.hp-day-cycle-env');

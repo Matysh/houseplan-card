@@ -44,7 +44,7 @@ const result = await page.evaluate(async (spaceFixture) => {
       && !(polygon.slice(1) || []).some((hole) => ringContains(hole, point)));
   const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
   const settle = async () => {
-    await card.updateComplete;
+    await window.__hpTest.settled();
     while (card._modeTransitionBusy) await frame();
     await frame();
   };

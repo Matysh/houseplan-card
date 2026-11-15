@@ -186,6 +186,9 @@ for (const denial of ['no-write', 'kiosk', 'unloaded']) {
         } };
       });
       await page.waitForFunction(() => !window.__card._loadOk);
+      // Load invalidation precedes the Lit quarantine commit. Observe the
+      // actual retired target, not just the synchronous authority flag.
+      await marker(page).waitFor({ state: 'detached' });
     }
     // A foreign unloaded context quarantines the old markers completely. There
     // is no native target to click; do not fabricate a detached/private action.

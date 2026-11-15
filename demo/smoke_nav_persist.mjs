@@ -21,7 +21,7 @@ const res = await page.evaluate(async () => {
   delete c._setMode;
   c._setMode('view', false); await c.updateComplete;
   // выбрать f2 и редактор устройств
-  c._space = 'garden'; c._setMode('devices'); await c.updateComplete;
+  await window.__hpTest.switchSpace('garden'); await window.__hpTest.setMode('devices');
   const nav = JSON.parse(localStorage.getItem('houseplan_card_nav_v1'));
   out.saved = nav.space === 'garden' && !Object.hasOwn(nav, 'mode');
   c._setMode('devices'); await c.updateComplete;

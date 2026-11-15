@@ -647,7 +647,7 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.eraseRemovesIt = !!sofaId && !c._decorList.some((s) => s.id === sofaId);
   // а в режиме просмотра мебель видна и не кликается
-  c._setMode('view'); await c.updateComplete; await sleep(30);
+  await window.__hpTest.setMode('view');
   const left = c._decorList.find((s) => s.kind === 'furniture');
   out.visibleInView = !!left && !!el(left.id);
   out.inertInView = !!left && pe(left.id) === 'none';
@@ -660,14 +660,14 @@ const res = await page.evaluate(async () => {
     x: 0.3, y: 0.3, w: 0.17, h: 0.29, angle: 30,
     flip_h: true, color: '#123456', opacity: 0.8, width_cm: 2,
   };
-  c._curSpaceCfg.decor = [legacy]; c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._curSpaceCfg.decor = [legacy]; c._cfgEpoch++; c.requestUpdate(); await window.__hpTest.settled();
   const legacyDrawing = attr(legacy.id, 'd');
   out.savedCactusDrawsInView = typeof legacyDrawing === 'string' && legacyDrawing.length > 20;
   c._curSpaceCfg.decor = [{ ...legacy, symbol: 'exercise' }];
-  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  c._cfgEpoch++; c.requestUpdate(); await window.__hpTest.settled();
   out.savedCactusUsesExerciseArtwork = legacyDrawing === attr(legacy.id, 'd');
-  c._curSpaceCfg.decor = [legacy]; c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
-  sr().querySelectorAll('.modetab')[2].click(); await c.updateComplete;
+  c._curSpaceCfg.decor = [legacy]; c._cfgEpoch++; c.requestUpdate(); await window.__hpTest.settled();
+  await window.__hpTest.setMode('decor');
   while (c._modeTransitionBusy || c._refitRaf || c._pendingRefitSize) await new Promise(requestAnimationFrame);
   c._decorTool = 'select'; c._decorShapeDbl({ preventDefault() {}, stopPropagation() {} }, legacy);
   await c.updateComplete;

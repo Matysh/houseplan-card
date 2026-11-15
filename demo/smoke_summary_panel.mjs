@@ -166,7 +166,12 @@ const pickerWitnessSetup = await page.evaluate(async () => {
     extra._serverCanWrite = true;
     await extra._summary.openDialog();
     extra._summary.openSource('block-0', 'value-0');
-    await extra.updateComplete;
+    const pickerDeadline = performance.now() + 5000;
+    while (!extra.renderRoot.querySelector('.summary-source-picker')) {
+      if (performance.now() > pickerDeadline) throw Error('Summary witness picker did not reach the actual DOM');
+      await new Promise(resolve => setTimeout(resolve, 10));
+      await extra.updateComplete;
+    }
     extras.push(extra);
   }
   window.__summaryWitnessExtras = extras;

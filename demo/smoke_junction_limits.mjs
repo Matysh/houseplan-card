@@ -10,7 +10,7 @@ const { page, browser } = await launch({ width: 1000, height: 900 }, 1);
 const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
-  const update = async () => { card.requestUpdate(); await card.updateComplete; };
+  const update = async () => { card.requestUpdate(); await window.__hpTest.settled(); };
   const toasts = [];
   card._showToast = (text) => { toasts.push(String(text)); };
   const CELL = 5;
@@ -163,7 +163,7 @@ await page.evaluate(async () => {
   card._space = 'limits'; card._layout = {};
   card._cfgEpoch++; card._modelCache = null; card._frame = null;
   card._setMode('plan'); card._tool = 'draw'; card._drawWallField = '15';
-  card.requestUpdate(); await card.updateComplete;
+  card.requestUpdate(); await window.__hpTest.settled();
   const draw = (points, name) => {
     card._path = [...points, points[0]];
     card._nameSel = name; card._areaSel = '';
@@ -175,7 +175,7 @@ await page.evaluate(async () => {
   draw([[200 + cm(210), 700], [200 + cm(400), 700],
     [200 + cm(400), 700 - cm(200)], [200 + cm(210), 700 - cm(200)]], 'B');
   card._tool = 'resize';
-  card.requestUpdate(); await card.updateComplete;
+  card.requestUpdate(); await window.__hpTest.settled();
   window.__toasts.length = 0;
 });
 await settle();

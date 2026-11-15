@@ -10,10 +10,10 @@ const res = await page.evaluate(async () => {
   const update = async () => {
     c._cfgEpoch++;
     c.requestUpdate();
-    await c.updateComplete;
+    await window.__hpTest.settled();
   };
   const setThickness = async (point, value) => {
-    c._setMode('plan');
+    await window.__hpTest.setMode('plan');
     c._tool = 'wallthick';
     await update();
     c._wallThickClick(point);
@@ -93,7 +93,7 @@ const res = await page.evaluate(async () => {
   });
 
   sp().zero_wall_style = 'dashed';
-  c._setMode('view');
+  await window.__hpTest.setMode('view');
   await update();
   out.dashedPaint = !!sr().querySelector('.zero-walls.dashed .zero-wall');
   out.dashedTransmits = isLit(centre2);
@@ -106,7 +106,7 @@ const res = await page.evaluate(async () => {
   sp().settings.show_borders = false;
   await update();
   out.hiddenInView = sr().querySelectorAll('.zero-wall').length === 0;
-  c._setMode('plan');
+  await window.__hpTest.setMode('plan');
   await update();
   out.visibleInEditor = sr().querySelectorAll('.zero-wall').length > 0;
 

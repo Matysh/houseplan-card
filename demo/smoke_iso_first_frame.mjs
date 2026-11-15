@@ -3,6 +3,7 @@
 // a failed lazy chunk must release to the existing safe Flat fallback.
 import { assertFreshDemoBundleUnlessAllowed } from './bundle-freshness.mjs';
 import { checkAll, finish, launchPanelCold } from './serve.mjs';
+import { createHash } from 'node:crypto';
 
 async function observe({ volumetric = true, kiosk = false, delay = 0, fail = false }) {
   const { page, browser } = await launchPanelCold({ width: 900, height: 760 });
@@ -11,7 +12,17 @@ async function observe({ volumetric = true, kiosk = false, delay = 0, fail = fal
     if (fail) await route.fulfill({ status: 503, body: 'injected iso runtime failure' });
     else await route.fallback();
   });
-  await page.evaluate(async ({ wantsIso, isKiosk }) => {
+  // Derive the real trusted adapter scope without mounting a card (which would
+  // preload the very lazy ISO chunk whose first paint this test observes).
+  const scope = await page.evaluate(async () => {
+    await import('/assets/houseplan-card.js');
+    const probe = document.createElement('houseplan-card'); probe.hass = window.__mkHass();
+    return probe.planHost.cacheScope;
+  });
+  if (!scope) throw Error('#654 fixture has no trusted cache scope');
+  // canonicalCacheInput(string) is JSON.stringify(string).
+  const scopedKey = 'houseplan_scoped_hint_v1:' + createHash('sha256').update(JSON.stringify(scope)).digest('hex');
+  await page.evaluate(async ({ wantsIso, isKiosk, scope, scopedKey }) => {
     document.documentElement.style.setProperty('--ha-card-background', '#fff');
     const hass = window.__mkHass();
     const configResult = await hass.callWS({ type: 'houseplan/config/get' });
@@ -19,9 +30,11 @@ async function observe({ volumetric = true, kiosk = false, delay = 0, fail = fal
     const config = structuredClone(configResult.config);
     config.settings = { ...(config.settings || {}), ...(wantsIso ? { volumetric_view: true } : {}) };
     const rev = window.__pushServerConfig(config);
-    localStorage.setItem('houseplan_card_cfg_v1', JSON.stringify({
+    const snapshot = {
       config, rev, layout: layoutResult.layout, layout_rev: layoutResult.rev,
-    }));
+    };
+    localStorage.setItem('houseplan_card_cfg_v1', JSON.stringify(snapshot));
+    localStorage.setItem(scopedKey, JSON.stringify({ version: 1, scope, snapshot }));
     await import('/assets/houseplan-card.js');
     const card = document.createElement('houseplan-card');
     card.setConfig({ type: 'custom:houseplan-card', title: 'House Plan', icon_size: 3.4,
@@ -29,7 +42,7 @@ async function observe({ volumetric = true, kiosk = false, delay = 0, fail = fal
     document.getElementById('host').appendChild(card);
     card.hass = hass;
     window.__card = card;
-  }, { wantsIso: volumetric, isKiosk: kiosk });
+  }, { wantsIso: volumetric, isKiosk: kiosk, scope, scopedKey });
   await page.waitForFunction(() => window.__card?._model?.length > 0, { timeout: 9000 });
   await assertFreshDemoBundleUnlessAllowed(page);
   const result = await page.evaluate(async (expectFailure) => {
@@ -38,7 +51,10 @@ async function observe({ volumetric = true, kiosk = false, delay = 0, fail = fal
     const read = () => {
       const stage = card.renderRoot.querySelector('.stage');
       const wrap = stage?.querySelector(':scope > .zoomwrap');
-      const visible = !!wrap && getComputedStyle(wrap).visibility !== 'hidden';
+      // An empty preparation SVG is not an intermediate Flat plan. Any actual
+      // architectural L1 pixels still count; do not skip a populated preview.
+      const painted = !!wrap?.querySelector('path, polygon, polyline, rect, circle, ellipse, line, image');
+      const visible = painted && getComputedStyle(wrap).visibility !== 'hidden';
       const iso = !!stage?.classList.contains('projection-iso');
       const light = !!stage?.querySelector('.dev.iso-floor-light');
       const shadow = stage?.querySelector('.iso-tile-shadow');

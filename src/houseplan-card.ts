@@ -907,12 +907,23 @@ export class HouseplanCard extends LitElement {
       if (adopt && request === this._editorModeRequest && this.isConnected) this._warmReviveDialog(true, true);
       return;
     }
-    if (adopt === 'resume') {
-      this._editorRuntime!.resumeWarmMode(mode, animate);
-    } else if (adopt) {
-      this._adoptMode(mode);
-      this._editorRuntime!.finishWarmModeAdoption(request);
-    } else this._setMode(mode, animate);
+    const commit = () => {
+      if (request !== this._editorModeRequest || !this.isConnected
+        || mode !== 'view' && (!this._canEdit || this._kiosk)) return;
+      if (adopt === 'resume') {
+        this._editorRuntime!.resumeWarmMode(mode, animate);
+      } else if (adopt) {
+        this._adoptMode(mode);
+        this._editorRuntime!.finishWarmModeAdoption(request);
+      } else this._setMode(mode, animate);
+    };
+    // Warm adoption restores tools/drafts synchronously around the actual
+    // mode commit. Defer that entire transaction, not only its mode string.
+    if (mode !== 'view' && (!this._ensureFloorPreparation() || !this._loadOk)) {
+      this._floorPendingMode = { mode, animate, warm: !!adopt, resume: commit };
+      return;
+    }
+    commit();
   }
   /** Explicit navigation supersedes permission/runtime-delayed restoration. */
   private _cancelPendingWarmMode(): void {
@@ -2383,6 +2394,7 @@ export class HouseplanCard extends LitElement {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
       this._floorPendingMode = null;
+      if (!authority) { this._warmViewportPending = null; this._warmCameraAdopted = false; this._warmVp = null; }
       this._stairsView.clearArrival();
       this._modeEditorInk.clear();
       this._modeProjectionScene = null;
@@ -2771,7 +2783,7 @@ export class HouseplanCard extends LitElement {
   private _floorPrepareMemo: { raw: unknown; model: unknown; epoch: number; keys: ReturnType<typeof floorCacheKeys> } | null = null;
   private _floorFitMemo: { signature: unknown[]; key: string } | null = null;
   private _floorLightMemo: { signature: unknown[]; value: ReturnType<typeof resolveLightBarrierRevision> } | null = null;
-  private _floorPendingMode: 'plan' | 'devices' | 'decor' | null = null;
+  private _floorPendingMode: { mode: 'plan' | 'devices' | 'decor'; animate: boolean; warm: boolean; resume?: () => void } | null = null;
   private _floorPublishing = false;
   private _floorPaintObserving = false;
   private _floorRestoreZoom: boolean | null = null;
@@ -2832,16 +2844,20 @@ export class HouseplanCard extends LitElement {
     if (!this._floorPreparation) this._floorPreparation = new FloorCacheRuntime({
       selection: () => this._floorCacheSelection(),
       hydrate: (frame, light) => this._hydrateFloorGeometry(frame, light),
-      contains: (frame, light) => this._physicalBodiesPool.get(frame.bodies.key) === frame.bodies
-        && this._wallUnionPool.get(frame.union.key) === frame.union
-        && this._openingWallIndexCache.get(frame.openingIndex.key) === frame.openingIndex.value
-        && this._openingTunnelPool.get(frame.tunnels.key) === frame.tunnels
-        && this._roomFloorPaintPool.get(frame.floorPaint.key) === frame.floorPaint
-        && (!frame.iso || !this._isoSceneRuntime || this._isoGeometryCache.has(frame.iso.key))
+      contains: (frame, light) => this._floorGeometryPresent(frame)
         && (!light || this._lightBarrierCache?.value === light),
+      preview: (fitKey, scope, key) => {
+        const warm = this._warmSlot?.floorPreview;
+        return warm && scope && warm.scope === scope && warm.floor === this._space
+          && warm.key === key && warm.preview.fitKey === fitKey ? warm.preview : null;
+      },
       changed: () => {
         this._isoProjectionSnapshot = null;
-        if (!this._floorPreparation?.pending && this._floorRestoreZoom !== null) {
+        if (!this._floorPreparation?.pending && this._warmViewportPending === 'projection') {
+          this._floorRestoreZoom = null; // updated() owns the complete projection, not a passive/provisional base
+        } else if (!this._floorPreparation?.pending && this._recoveryViewport) {
+          this._floorRestoreZoom = null; // the measured stage will consume its exact camera
+        } else if (!this._floorPreparation?.pending && this._floorRestoreZoom !== null) {
           const carousel = this._floorRestoreZoom; this._floorRestoreZoom = null; this._restoreZoom(carousel);
         } else if (!this._floorPreparation?.pending) this._refitView();
         this.requestUpdate();
@@ -2849,22 +2865,35 @@ export class HouseplanCard extends LitElement {
     });
     return this._floorPreparation.ensure();
   }
+  private _floorGeometryPresent(frame: FloorGeometryFrame): boolean {
+    return this._floorPreparedRooms?.frame === frame
+      && this._physicalBodiesPool.get(frame.bodies.key) === frame.bodies
+      && this._wallUnionPool.get(frame.union.key) === frame.union
+      && this._openingWallIndexCache.get(frame.openingIndex.key) === frame.openingIndex.value
+      && this._openingTunnelPool.get(frame.tunnels.key) === frame.tunnels
+      && this._roomFloorPaintPool.get(frame.floorPaint.key) === frame.floorPaint
+      && (!frame.iso || !this._isoSceneRuntime || this._isoGeometryCache.has(frame.iso.key));
+  }
   private _hydrateFloorGeometry(frame: FloorGeometryFrame, light: unknown): void {
     const raw = this._curSpaceCfg, space = this._spaceModel();
     if (!raw || !space || space.id !== frame.id) return;
-    restoreFloorGeometrySemantics(frame, raw);
-    lruWrite(this._physicalBodiesPool, frame.bodies.key, frame.bodies, 8); this._physicalBodiesCache = frame.bodies;
-    writeWallUnionPool(this._wallUnionPool, frame.union); this._wallUnionCache = frame.union;
-    for (const [key, value] of frame.inner) lruWrite(this._innerContourCache, key, value, 600);
-    const clean = new Map(frame.clean.map(([key, value]) => [key, cleanFloorFromData(value, space.stairs)]));
-    this._floorPreparedRooms = { frame, clean };
-    for (const [key, value] of clean) lruWrite(this._cleanFloorCache, key, value, 600);
-    lruWrite(this._openingWallIndexCache, frame.openingIndex.key, frame.openingIndex.value, 4);
-    lruWrite(this._openingTunnelPool, frame.tunnels.key, frame.tunnels, 8); this._openingTunnelCache = frame.tunnels;
-    lruWrite(this._roomFloorPaintPool, frame.floorPaint.key, frame.floorPaint, 8); this._roomFloorPaintCache = frame.floorPaint;
-    if (frame.iso && this._isoSceneRuntime) {
-      const entry = this._isoSceneRuntime.restoreIsoCache(frame.iso.value);
-      lruWrite(this._isoGeometryCache, frame.iso.key, entry, 8);
+    // A light-only refresh must preserve the objects already used by scene
+    // consumers (including lazy clean-floor and isometric projection maps).
+    if (!this._floorGeometryPresent(frame)) {
+      restoreFloorGeometrySemantics(frame, raw);
+      lruWrite(this._physicalBodiesPool, frame.bodies.key, frame.bodies, 8); this._physicalBodiesCache = frame.bodies;
+      writeWallUnionPool(this._wallUnionPool, frame.union); this._wallUnionCache = frame.union;
+      for (const [key, value] of frame.inner) lruWrite(this._innerContourCache, key, value, 600);
+      const clean = new Map(frame.clean.map(([key, value]) => [key, cleanFloorFromData(value, space.stairs)]));
+      this._floorPreparedRooms = { frame, clean };
+      for (const [key, value] of clean) lruWrite(this._cleanFloorCache, key, value, 600);
+      lruWrite(this._openingWallIndexCache, frame.openingIndex.key, frame.openingIndex.value, 4);
+      lruWrite(this._openingTunnelPool, frame.tunnels.key, frame.tunnels, 8); this._openingTunnelCache = frame.tunnels;
+      lruWrite(this._roomFloorPaintPool, frame.floorPaint.key, frame.floorPaint, 8); this._roomFloorPaintCache = frame.floorPaint;
+      if (frame.iso && this._isoSceneRuntime && !this._isoGeometryCache.has(frame.iso.key)) {
+        const entry = this._isoSceneRuntime.restoreIsoCache(frame.iso.value);
+        lruWrite(this._isoGeometryCache, frame.iso.key, entry, 8);
+      }
     }
     if (light && typeof light === 'object' && 'fingerprint' in light) {
       const entry = { key: `${space.id}|${light.fingerprint}`, value: light as NonNullable<typeof this._lightBarrierCache>['value'] };
@@ -3306,6 +3335,8 @@ export class HouseplanCard extends LitElement {
    *  _restoreZoom) or applied twice (the dialog revival). */
   private _warmVp: WarmViewport | null = null;
   private _warmVpArmed = false;
+  private _warmViewportPending: 'adopt' | 'projection' | null = null;
+  private _warmCameraAdopted = false;
   private _recoveryViewport: (KioskViewport & { key: string }) | null = null;
   private _recoveryViewportTaken = false;
   private _warmLongReturn = false;
@@ -3368,6 +3399,7 @@ export class HouseplanCard extends LitElement {
 
   /** One reference owner. State values never enter the geometry key. */
   private _syncScreenCamera(): void {
+    if (this._warmVp && (this._warmViewportPending || this._floorPassive || this._floorPreparation?.pending)) return;
     if (!this._usesScreenCamera) {
       // Editor handoff owns its world camera. Retain the View reference so
       // returning from an editor does not look like a fresh opening fit.
@@ -3666,6 +3698,9 @@ export class HouseplanCard extends LitElement {
 
   private _convertProjectionView(from: 'flat' | 'iso', to: 'flat' | 'iso'): void {
     if (from === to) return;
+    // Intake can discover the requested projection after a warm camera has
+    // already been restored in that destination. It is not a second cold fit.
+    if (this._warmCameraAdopted && this._view && this._projectionShown === to) return;
     this._clearRoomFocus(true);
     // A structural change: a running camera tween stops on its presented frame.
     this._cancelCameraTransition(false);
@@ -4722,14 +4757,20 @@ export class HouseplanCard extends LitElement {
   private _warmAdoptViewport(config: CardConfig): void {
     const vp = this._warmVp;
     if (!vp || this._warmSlot?.path !== location.pathname) {
-      this._warmVp = null;
+      this._warmVp = null; this._warmViewportPending = null; this._warmCameraAdopted = false;
       return;
     }
     const fixed = this._fixedFloorState();
+    // connectedCallback can claim the slot before HA supplies its scoped
+    // read authority. Absence of that model is not proof the floor was deleted.
+    if ((!this._model.length || fixed.kind === 'pending') && !this._loadOk) {
+      this._zoom = vp.zoom; this._view = vp.view ? { ...vp.view } : null;
+      this._warmViewportPending = 'adopt'; return;
+    }
     if (this._hashApplied || !this._model.find((sp) => sp.id === vp.space)
         || fixed.kind === 'valid' && fixed.id !== vp.space
         || this._hasFixedFloor && fixed.kind !== 'valid') {
-      this._warmVp = null; // another space is on screen — the memo is not about it
+      this._warmVp = null; this._warmViewportPending = null; this._warmCameraAdopted = false; // another space is on screen
       return;
     }
     this._commitSpace(vp.space, true);
@@ -4754,10 +4795,9 @@ export class HouseplanCard extends LitElement {
     // saved camera is valid in either projection; only zoom is re-read.
     this._view = vp.view ? { ...vp.view } : null;
     this._screenRecoveredCamera = !!this._view && this._usesScreenCamera;
-    if (!sameProjection) {
-      if (this._view) this._rezoom();
-      else if (vp.logicalCenter) this._applyView(vp.zoom, vp.logicalCenter.x, vp.logicalCenter.y);
-    }
+    this._floorRestoreZoom = null;
+    this._warmCameraAdopted = true;
+    this._warmViewportPending = !sameProjection ? 'projection' : null;
     this._projectionShown = projection;
     this._tool = normalizeMarkupTool(vp.tool);
     this._decorTool = vp.decorTool;
@@ -4774,6 +4814,9 @@ export class HouseplanCard extends LitElement {
    *  but the boot settle: a memo may only be BORN from a settled geometry. */
   private _warmPatch(patch: Partial<WarmEntry>, create = false): void {
     if (this._kiosk) return;
+    // Temporary View chrome while an editor is being revived must not replace
+    // the very viewport/stage/header tuple that revival is still consuming.
+    if (this._warmViewportPending || this._warmModeRequest || this._floorPendingMode?.warm) return;
     const k = warmBootKey(this._config);
     // The key carries the window size and the view path: once either changes
     // under a LIVE card, its slot describes a geometry that is no longer on
@@ -5000,6 +5043,10 @@ export class HouseplanCard extends LitElement {
   private _restoreScopedFloorHint(): void {
     const scope = this.planHost.cacheScope, environment = this.planHost.environment;
     if (!scope || !environment.ready || !environment.permissions.read || this._serverCfg) return;
+    // A cold instance may show its own scoped hint before the first read.
+    // A live instance changing owners must not re-seed the just-quarantined
+    // model from disk before that new owner's config/layout pair arrives.
+    if (this._floorCompleteAuthority && this._floorCompleteAuthority !== this.planHost.authorityKey) return;
     try {
       const text = localStorage.getItem(`houseplan_scoped_hint_v1:${cacheSha256(scope)}`);
       if (!text || text.length > 16 * 1024 ** 2) return;
@@ -5034,6 +5081,7 @@ export class HouseplanCard extends LitElement {
     const paintToken = runtime.paintToken;
     const current = () => {
       return this.isConnected && this.planHost.authorityKey === owner && this._space === space && this._mode === 'view'
+        && runtime === this._floorPreparation && runtime.paintToken === paintToken
         && this._loadOk && !this._modeTransitionBusy
         && !this._rotationMotion.running
         && !this._settingsDialog && !this._spaceDialog && !this._markerDialog && !this._roomDialog
@@ -5048,9 +5096,17 @@ export class HouseplanCard extends LitElement {
           const base = this._baseVb();
           const fit = { frame: this._frameOf(), base, display: this._displayBase(base), projection: this._renderProjection, rotation: this._rotation };
           const preview = captureFloorPreview(this.renderRoot, fit, selection.fitKey, diagnostic => { this._floorPreviewDiagnostic = diagnostic; });
-          if (preview) runtime.publish(preview, accepted);
+          if (preview) {
+            runtime.publish(preview, accepted);
+            if (selection.scope) this._warmPatch({ floorPreview: {
+              scope: selection.scope, floor: space, key: selection.persistentKey, preview,
+            } });
+          }
         }
-        if (this._floorPendingMode) { const mode = this._floorPendingMode; this._floorPendingMode = null; this._setMode(mode); }
+        if (this._floorPendingMode) {
+          const intent = this._floorPendingMode; this._floorPendingMode = null;
+          if (intent.resume) intent.resume(); else this._setMode(intent.mode, intent.animate, intent.warm);
+        }
       }).finally(() => { this._floorPublishing = false;
         if (this.isConnected && runtime === this._floorPreparation
           && (paintToken !== runtime.paintToken || raw !== this._curSpaceCfg)) this.requestUpdate(); });
@@ -5274,13 +5330,15 @@ export class HouseplanCard extends LitElement {
       this._recoveryViewport = null;
       return false;
     }
+    this._floorRestoreZoom = null;
     this._zoom = memo.zoom; this._view = { ...memo.view };
     this._screenRecoveredCamera = this._hasScreenProfile;
     // Cold authority arrives before the first stage. Keep the exact camera
     // until updated() can fit it against the real placement, not _baseVb's
     // fallback aspect. The first resize delivery otherwise blesses that fit.
     const stage = this._stageEl;
-    if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return true;
+    if (!this._loadOk || !this._floorCacheSelection() || !this._ensureFloorPreparation() || this._floorPassive
+      || !stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return true;
     this._recoveryViewport = null;
     this._applyView(memo.zoom, memo.view.x + memo.view.w / 2, memo.view.y + memo.view.h / 2);
     return true;
@@ -5656,7 +5714,9 @@ export class HouseplanCard extends LitElement {
         const next = this._lastValidStageSize;
         if (next && (!size || next[0] !== size[0] || next[1] !== size[1])) this.requestUpdate();
       }
-      if (this._floorHolding) this._stageEl?.setAttribute('inert', '');
+      this._syncFloorPreviewCamera();
+      this._stageEl?.setAttribute('inert', '');
+      if (this._tip || this._hoverRoom) this._clearTransientHover(true);
       const runtime = this._floorPreparation, token = runtime?.paintToken;
       if (this._floorPassive && runtime && token) void this.updateComplete.then(() =>
         new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
@@ -5664,6 +5724,12 @@ export class HouseplanCard extends LitElement {
           && this.renderRoot.querySelector('[data-hp-cache-preview]')) runtime.markPreviewPaint(token); });
       return;
     }
+    if (this._warmViewportPending === 'projection' && this._renderProjection === this._desiredProjection
+      && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)) {
+      this._warmViewportPending = null; this._floorRestoreZoom = null; this._rezoom();
+    }
+    if (this._renderProjection === this._desiredProjection
+      && !this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime)) this._warmCameraAdopted = false;
     if (!this._floorPaintObserving && this._mode === 'view') {
       const runtime = this._floorPreparation, token = runtime?.paintToken, space = this._space, owner = this.planHost.authorityKey;
       this._floorPaintObserving = true;
@@ -5731,7 +5797,7 @@ export class HouseplanCard extends LitElement {
   private _syncPlanViewportObservers(): HTMLElement | null {
     const stage = this._stageEl;
     const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
-    if (!this._floorPreparation?.pending && this._recoveryViewport) this._restoreKioskViewport();
+    if (!this._floorPreparation?.pending && !this._floorPassive && this._recoveryViewport) this._restoreKioskViewport();
     // A mounted authority reload can replace the stage without disconnecting
     // the card. Retire the old element lease before binding the new surface.
     if (this._resizeTargets?.stage !== stage || this._resizeTargets?.header !== hdr) {
@@ -5973,6 +6039,7 @@ export class HouseplanCard extends LitElement {
           // the instance that was thrown away; the centred restore here IS
           // the reported jerk. Only a genuine navigation (the hash/nav landed
           // us on another space) still needs it.
+          if (this._warmViewportPending === 'adopt') this._warmAdoptViewport(this._config!);
           if (this._restoreKioskViewport()) { /* one-shot document recovery owns this camera */ }
           else if (this._warmVpArmed && this._space === this._warmVp?.space) this._warmVpArmed = false;
           else if (!hadViewport || this._space !== visibleSpace) this._restoreZoom();
@@ -8361,6 +8428,7 @@ export class HouseplanCard extends LitElement {
 
   /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
+    if (this._recoveryViewport || this._warmViewportPending) return;
     if (this._floorPreparation?.pending && !this._floorPreparation.fit) return;
     if (this._modeTransitionBusy || this._warmModeRequest) return;
     if (this._usesScreenCamera) { this._summary?.resized(); this.requestUpdate(); return; }
@@ -9425,12 +9493,12 @@ export class HouseplanCard extends LitElement {
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true, warm = false): void {
+    if (!warm) this._cancelPendingWarmMode();
     if (mode !== 'view' && (!this._ensureFloorPreparation() || !this._loadOk)) {
-      this._floorPendingMode = mode; return;
+      this._floorPendingMode = { mode, animate, warm }; return;
     }
     this._floorPendingMode = null;
     if (mode === 'devices' && !hasMarkers(this.planHost.capabilities)) return;
-    if (!warm) this._cancelPendingWarmMode();
     if (mode !== this._mode) {
       this._rotationMotion.cancel();
       this._stairsView.clearArrival();
@@ -12656,6 +12724,16 @@ export class HouseplanCard extends LitElement {
         </div>`;
   }
 
+  private _syncFloorPreviewCamera(): void {
+    const svg = this.renderRoot.querySelector<SVGSVGElement>('[data-hp-cache-preview]');
+    if (!svg) return;
+    // Warm viewport adoption can follow Lit's template evaluation. Pending
+    // frames deliberately skip the live-layer writer, so update only this
+    // anonymous passive viewport without another render/fit or live targets.
+    const view = this._viewOr(this._baseVb());
+    const value = `${view.x} ${view.y} ${view.w} ${view.h}`;
+    if (svg.getAttribute('viewBox') !== value) svg.setAttribute('viewBox', value);
+  }
   /** No ordinary scene/pull producer runs behind this passive preparation
    * surface. Navigation remains live; old marker DOM is not retained below it. */
   private _renderPendingFloor(): TemplateResult {
@@ -12664,8 +12742,7 @@ export class HouseplanCard extends LitElement {
     const base = preview?.fit.base || [0, 0, NORM_W, NORM_W];
     const view = this._viewOr(base);
     const disp = this._spaceDisplayForRender();
-    return html`<ha-card data-hp-state="booting" data-hp-mode="view" data-hp-floor-cache="pending">
-      ${this._renderPlanHeader()}
+    return this._renderPreparedFloorFrame(html`
       <div class="stage mode-view" data-hp-floor-cache=${preview ? 'preview' : 'preparing'}
         style=${styleMap({ height: this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`,
           background: this._stageBg(disp) || undefined, '--wall-fill': disp.wallFill.c })}>
@@ -12679,15 +12756,15 @@ export class HouseplanCard extends LitElement {
         </div>
         ${this.planHost.capabilities.summary ? this._summary?.renderMeasure() : nothing}
         ${this.planHost.capabilities.summary ? this._summary?.renderPanel() : nothing}
-      </div><div data-hp="toast-portal"></div>
-    </ha-card>`;
+      </div>
+    `);
   }
-
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
     this._floorHolding = false; this._floorPassive = false;
-    if (!this._config || !this.planHost.environment.ready || !this.planHost.environment.permissions.read) {
+    if (!this._config || !this.planHost.environment.ready) {
       this._floorPreparation?.invalidate(); this._floorPendingMode = null; return nothing;
     }
+    if (!this.planHost.environment.permissions.read) this._floorPreparation?.invalidate();
     this._floorPreparation?.ensure();
     const terminalFrame = this._terminalFrame;
     this._terminalFrame = 0;
@@ -12792,12 +12869,13 @@ export class HouseplanCard extends LitElement {
         <div data-hp="toast-portal"></div>
       </ha-card>`;
     }
+    if (!this.planHost.environment.permissions.read) return nothing;
     const space = this._spaceModel();
     if (!space) return nothing;
     if (!this._ensureFloorPreparation()) {
       if (this._floorCompleteSpace === space.id && this._floorCompleteAuthority === this.planHost.authorityKey
-        && this._mode === 'view' && this.renderRoot.querySelector('.stage:not([data-hp-floor-cache])')) {
-        this._floorHolding = true; return noChange;
+        && this._loadOk && this._mode === 'view' && this.renderRoot.querySelector('.stage:not([data-hp-floor-cache])')) {
+        this._floorHolding = true; return this._renderPreparedFloorFrame(noChange, diagnostics);
       }
       return this._renderPendingFloor();
     }
@@ -12806,8 +12884,6 @@ export class HouseplanCard extends LitElement {
     if (this._booting && this._floorPreparation?.preview) return this._renderPendingFloor();
     this._floorCompleteSpace = space.id; this._floorCompleteAuthority = this.planHost.authorityKey;
     this._editorRuntime?._beginResizeBaseFrame();
-    const navigationSpaces = this._headerNavigationSpaces;
-    const compactSpaces = this._compactSpaces && !this._kiosk && !!customElements.get('hp-settings-select');
     const vb = space.vb;
     let projection = this._effectiveProjection();
     this._renderProjection = projection;
@@ -12821,7 +12897,6 @@ export class HouseplanCard extends LitElement {
     const devs = visibleIconMarkers(this._renderDevices, space.id, leds, showGhosts);
     // #780 r1 M1: a strip keeps its value badge at the anchor; no icon, pulse or slot.
     const ledDevs = leds.size ? this._renderDevices.filter((d) => d.space === space.id && !d.hidden && leds.has(d.id)) : [];
-    const deviceSnapshot = this._renderDeviceSnapshot;
     const disp = this._spaceDisplayForRender();
     const roomFills = this._resolvedRoomFills(space, disp);
     this._isoLightFloors = iso ? this._isoFirstFrame.lightFloors(roomFills.byId) : null;
@@ -12858,15 +12933,11 @@ export class HouseplanCard extends LitElement {
     const stageBg = this._editing ? '' : this._stageBg(disp);
     // opening rulers: the drag of an existing one OR the placement preview
     const opMeasure = this._opMeasureView;
-    const editorChromeMode = this._mode === 'view' ? this._editorChromeMode : this._mode;
     const roomHover = this._roomHoverPaths(space);
     const backdropHref = space.bg ? this._display(space.bg.href) : '';
     const backdropPaint = space.bg ? backdropPaintBox(space.bg,this._cellCm) : null;
-    const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
-      ? this._continuity.recoveryReason : null;
+
     const modeVisual = this._modeTransitionVisual;
-    const warmHeaderHeight = (this._pendingNavMode || this._warmModeRequest)
-      && warmCameraUnchanged(this._view, this._warmVp) && this._warmSlot?.ownHdrH;
     const dayCycle = this._dayCycleState();
     const dayCycleWeight = modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0);
     const paperShapes = this._paperShapes(space.rooms); const isoFirstFramePending = !this._modeProjectionCrossing && this._isoFirstFrame.pending(this._desiredProjection, !!this._isoSceneRuntime);
@@ -13137,28 +13208,7 @@ export class HouseplanCard extends LitElement {
     ];
     const stageClass = `stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}` + (this._modeTransition.active ? ' mode-transition' : '');
     this._modePreparedStageClass = stageClass;
-    return html`
-      <ha-card
-        ?data-hp-properties-wide=${this._editorRuntime?.properties.wide}
-        data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
-        data-continuity-state=${this._continuity.state}
-        data-continuity-token=${this._continuity.token}
-        data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
-        data-device-snapshot-sequence=${deviceSnapshot?.sourceSequence ?? nothing}
-        data-recovery-reason=${recoveryReason || nothing}
-        data-ha-registry-access=${diagnostics.registry.access}
-        data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
-        data-ha-unverified-bindings=${diagnostics.bindings.unverified}
-        @pointerover=${(event: PointerEvent) => this._notePointer(event)}
-        @pointerdown=${this._touchGestureGuard}
-        @pointermove=${this._touchGestureGuard}
-        @pointerup=${this._touchGestureGuard}
-        @pointercancel=${this._touchGestureGuard}
-        @lostpointercapture=${this._touchGestureGuard}
-        @keydown=${this._touchGestureGuard}
-        @contextmenu=${this._touchGestureGuard}
-        @click=${this._touchGestureGuard}>
-        ${this._renderPlanHeader()}
+    const stage = html`
 
         <div class=${this._modeTransitionPreparing && this._modePreparingStageClass ? this._modePreparingStageClass : stageClass}
           data-hp-plan-rotation=${this._rotation}
@@ -13368,7 +13418,42 @@ export class HouseplanCard extends LitElement {
                 <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
               </div>`
             : nothing}
-        </div>
+        </div>`;
+    return this._renderPreparedFloorFrame(stage, diagnostics);
+  }
+
+  private _renderPreparedFloorFrame(stage: TemplateResult | typeof noChange,
+    diagnostics = this._renderLife.diagnostics(
+      this._planHass, this._markers, (binding) => this._bindingStatus(binding), this._haRegistry,
+    )): TemplateResult {
+    const pending = !!this._floorPreparation?.pending || this._floorPassive;
+    const deviceSnapshot = this._renderDeviceSnapshot;
+    const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
+      ? this._continuity.recoveryReason : null;
+    return html`
+      <ha-card
+        ?data-hp-properties-wide=${this._editorRuntime?.properties.wide}
+        data-hp-state=${this._booting || pending ? 'booting' : 'ready'}
+        data-hp-floor-cache=${pending ? 'pending' : nothing} data-hp-mode=${this._mode}
+        data-continuity-state=${this._continuity.state}
+        data-continuity-token=${this._continuity.token}
+        data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
+        data-device-snapshot-sequence=${pending ? nothing : deviceSnapshot?.sourceSequence ?? nothing}
+        data-recovery-reason=${recoveryReason || nothing}
+        data-ha-registry-access=${diagnostics.registry.access}
+        data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
+        data-ha-unverified-bindings=${diagnostics.bindings.unverified}
+        @pointerover=${(event: PointerEvent) => this._notePointer(event)}
+        @pointerdown=${this._touchGestureGuard}
+        @pointermove=${this._touchGestureGuard}
+        @pointerup=${this._touchGestureGuard}
+        @pointercancel=${this._touchGestureGuard}
+        @lostpointercapture=${this._touchGestureGuard}
+        @keydown=${this._touchGestureGuard}
+        @contextmenu=${this._touchGestureGuard}
+        @click=${this._touchGestureGuard}>
+        ${this._renderPlanHeader()}
+        ${stage}
 
         ${this._headerActionsMenu?.render() ?? nothing}
         ${this._editorRuntime?.properties.render()}
@@ -13467,6 +13552,7 @@ export class HouseplanCard extends LitElement {
       </ha-card>
     `;
   }
+
 
   // ---------------- live robot vacuums (docs/VACUUM.md) ----------------
 

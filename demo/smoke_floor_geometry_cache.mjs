@@ -175,6 +175,8 @@ const res = await page.evaluate(async (fixture) => {
     fresh.hass = hass;
     const deadline = performance.now() + 9000;
     while (performance.now() < deadline && !(fresh._loadOk && fresh._booting === false
+      && !fresh._bootFading && !fresh._floorPreparation?.pending && !fresh._floorPassive
+      && !!fresh.renderRoot.querySelector('.stage:not([data-hp-floor-cache]) svg.plan-svg:not([data-hp-cache-preview])')
       && fresh._cfgRev === rev && fresh._spaceModel()?.id === spaceId)) {
       await new Promise((done) => setTimeout(done, 30));
     }
@@ -508,12 +510,14 @@ Object.assign(checks, await page.evaluate(async () => {
   out.ac7PoolFullWithoutGarden = pool.size === 8 && !pool.has(gardenKey) && pool.has(f1Key);
   const sizesBefore = guard.snapshot(card);
   const buildsBefore = guard.builds(card);
+  const preparedHitsBefore = card.houseplanFloorCacheDiagnostics().cache.memoryHits;
   const switches = 4;
   for (let index = 0; index < switches; index++) await hp.switchSpace(index % 2 ? 'f1' : 'garden');
   const sizesAfter = guard.snapshot(card);
   const buildsAfter = guard.builds(card);
   const verdict = guard.judge({ before: buildsBefore, after: buildsAfter, switches });
   out.ac7TheCycleBuildsTheUnionOnce = buildsAfter.wallUnion - buildsBefore.wallUnion;
+  out.ac7PreparedFrameRestoresEvictedUnion = card.houseplanFloorCacheDiagnostics().cache.memoryHits > preparedHitsBefore;
   out.ac7ItsContoursAndFloorsStayWarm = [
     buildsAfter.innerContour - buildsBefore.innerContour, buildsAfter.cleanFloor - buildsBefore.cleanFloor,
   ];
@@ -537,9 +541,12 @@ Object.assign(checks, await page.evaluate(async () => {
  const fields=['wallUnion','physicalBodies','innerContour','contacts'];
  const assertWarm=(name,before)=>{const after=counter();out[name]=fields.every(k=>after[k]===before[k]);return after;};
  let before=counter();
+ const cleanBuilds=()=>{const d=c.houseplanFloorCacheDiagnostics();return d.main.cleanFloorGeometry
+  +d.cache.producers.reduce((n,p)=>n+(p.counts.cleanFloorGeometry||0),0);};
+ const workerBefore=cleanBuilds();
  await hp.setServerConfig(old=>{old.spaces[0].stairs[0].x=.6;old.spaces[0].stairs[0].y=.6;});
  const nextArea=area();let after=assertWarm('ac1098StairCommitKeepsMasonryAndContacts',before);
- out.ac1098StairBuildsOneCleanFloor=after.cleanFloor-before.cleanFloor===1;
+ out.ac1098StairBuildsOneCleanFloor=cleanBuilds()-workerBefore===1;
  const fresh=await window.__hp744.oracle(structuredClone(c._serverCfg),'cache1098');
  out.ac1098StairAreaIsFreshAndChanged=fresh.ready&&nextArea===fresh.areas.one&&nextArea!==beforeArea;
  before=counter();await hp.setServerConfig(old=>old);area();after=assertWarm('ac1098CanonicalAckKeepsMasonryAndContacts',before);
@@ -562,10 +569,11 @@ checkAll(checks, {
   ac8aHostRendersMidDragBuildNoUnion: 0,
   ac8cTheDragNeverRebuildsTheBodies: 0,
   ac8bCancelAndViewBuildNoUnionBodiesContoursOrFloors: [0, 0, 0, 0],
-  ac7TheCycleBuildsTheUnionOnce: 1,
+  ac7TheCycleBuildsTheUnionOnce: 0,
+  ac7PreparedFrameRestoresEvictedUnion: true,
   ac7ItsContoursAndFloorsStayWarm: [0, 0],
   ac7TheSizeGuardSeesNothing: [],
-  ac7TheDecisionNamesTheWallUnion: ['wall union +1'],
+  ac7TheDecisionNamesTheWallUnion: [],
   ac1GardenVisitBuildsNoWallUnion: 0,
   ac1GardenVisitBuildsNoContour: 0,
   ac1GardenVisitBuildsNoCleanFloor: 0,

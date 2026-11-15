@@ -29,7 +29,7 @@ Object.assign(out, await page.evaluate(async () => {
   c._serverCfg.markers = c._serverCfg.markers || [];
   c._serverCfg.markers.push({ id: d.id, binding: 'device:' + d.bindingRef, hidden: true });
   c._cfgEpoch++; c._regSignature = '';
-  c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  c._maybeRebuildDevices(); c.requestUpdate(); await window.__hpTest.settled();
 
   o.hiddenNotRendered = visibleIds() === before - 1;
   const built = c._devices.find((x) => x.id === d.id);
@@ -46,7 +46,7 @@ Object.assign(out, await page.evaluate(async () => {
   const ghostToggle = sr().querySelector('button[data-hp="hidden-devices"]');
   o.headerEyeTogglePresent = !!ghostToggle && ghostToggle.getBoundingClientRect().width > 0
     && ghostToggle.getAttribute('aria-pressed') === 'false';
-  ghostToggle?.click(); await c.updateComplete;
+  ghostToggle?.click(); await window.__hpTest.settled();
   o.headerEyeTogglePressed = sr().querySelector('button[data-hp="hidden-devices"]')?.getAttribute('aria-pressed') === 'true';
   const g = sr().querySelector(`.dev[data-id="${d.id}"]`);
   o.revealedInEditor = !!g && !g.classList.contains('ghost');
@@ -58,32 +58,32 @@ Object.assign(out, await page.evaluate(async () => {
 
   // --- авто-устройство тоже можно полностью удалить с плана --------------
   const ghost = c._devices.find((x) => x.id === d.id);
-  c._openMarkerDialog(ghost); await c.updateComplete;
+  c._openMarkerDialog(ghost); await window.__hpTest.settled();
   o.checkboxOn = c._markerDialog?.hideFromPlan === true;
   o.deleteForAuto = !!sr().querySelector('hp-dialog .btn.danger');
   // снимаем галку и сохраняем — маркер остаётся с hidden:false (анти-повтор)
   c._markerDialog = { ...c._markerDialog, hideFromPlan: false };
-  await c._saveMarker(); await c.updateComplete;
+  await c._saveMarker(); await window.__hpTest.settled();
   const m = (c._serverCfg.markers || []).find((x) => x.binding === 'device:' + d.bindingRef);
   o.untickKeepsMarker = !!m && m.hidden === false;
   const back = c._devices.find((x) => x.id === d.id) || c._devices.find((x) => x.bindingRef === d.bindingRef);
   o.deviceVisibleAgain = !!back && !back.hidden;
 
   // --- у виртуального кнопка «Удалить» есть; удаляется только выбранный ---
-  c._openMarkerDialog(); await c.updateComplete;
+  c._openMarkerDialog(); await window.__hpTest.settled();
   c._markerDialog = { ...c._markerDialog, name: 'delete-one-a', binding: 'virtual' };
-  await c._saveMarker(); await c.updateComplete;
+  await c._saveMarker(); await window.__hpTest.settled();
   await new Promise((resolve) => setTimeout(resolve, 2));
-  c._openMarkerDialog(); await c.updateComplete;
+  c._openMarkerDialog(); await window.__hpTest.settled();
   c._markerDialog = { ...c._markerDialog, name: 'delete-one-b', binding: 'virtual' };
-  await c._saveMarker(); await c.updateComplete;
+  await c._saveMarker(); await window.__hpTest.settled();
   const virtualA = c._devices.find((x) => x.virtual && x.name === 'delete-one-a');
   const virtualB = c._devices.find((x) => x.virtual && x.name === 'delete-one-b');
-  c._openMarkerDialog(virtualA); await c.updateComplete;
+  c._openMarkerDialog(virtualA); await window.__hpTest.settled();
   o.deleteForVirtual = !!sr().querySelector('hp-dialog .btn.danger');
   const savedConfirmDanger = c._confirmDanger;
   c._confirmDanger = async () => true;
-  await c._deleteMarker(); await c.updateComplete;
+  await c._deleteMarker(); await window.__hpTest.settled();
   c._confirmDanger = savedConfirmDanger;
   o.deleteOnlySelectedVirtual = !!virtualA && !!virtualB
     && !(c._serverCfg.markers || []).some((m) => m.id === virtualA.id)
@@ -94,18 +94,18 @@ Object.assign(out, await page.evaluate(async () => {
   const readd = c._devices.find((x) => x.bindingKind === 'device' && !x.hidden);
   const oldPos = { s: readd.space, x: 0.913, y: 0.917 };
   c._layout = { ...c._layout, [readd.id]: oldPos };
-  c._openMarkerDialog(readd); await c.updateComplete;
+  c._openMarkerDialog(readd); await window.__hpTest.settled();
   c._confirmDanger = async () => true;
-  await c._deleteMarker(); await c.updateComplete;
+  await c._deleteMarker(); await window.__hpTest.settled();
   c._confirmDanger = savedConfirmDanger;
-  c._openMarkerDialog(); await c.updateComplete;
+  c._openMarkerDialog(); await window.__hpTest.settled();
   c._markerDialog = {
     ...c._markerDialog,
     bindingMode: 'ha',
     binding: `device:${readd.bindingRef}`,
     name: readd.name,
   };
-  await c._saveMarker(); await c.updateComplete;
+  await c._saveMarker(); await window.__hpTest.settled();
   const rebound = (c._serverCfg.markers || [])
     .filter((m) => m.binding === `device:${readd.bindingRef}`);
   const fresh = c._layout[readd.id];
@@ -113,7 +113,7 @@ Object.assign(out, await page.evaluate(async () => {
   o.readdUsesFreshPosition = !!fresh
     && (Math.abs(fresh.x - oldPos.x) > 1e-6 || Math.abs(fresh.y - oldPos.y) > 1e-6);
 
-  c._markerDialog = null; c._setMode('view');
+  c._markerDialog = null; await window.__hpTest.setMode('view');
   return o;
 }));
 
@@ -130,12 +130,12 @@ Object.assign(out, await page.evaluate(async () => {
     display: 'value', hidden: true, space: 'f1' });
   c._cfgEpoch++; c._regSignature = '';
   c._maybeRebuildDevices();
-  c._setMode('devices'); c._showHidden = true;
-  c.requestUpdate(); await c.updateComplete;
+  await window.__hpTest.setMode('devices'); c._showHidden = true;
+  c.requestUpdate(); await window.__hpTest.settled();
   const scalar = sr().querySelector('.dev[data-id="pm"]');
   o.revealedScalarIsOrdinary = !!scalar && !scalar.classList.contains('ghost');
   o.revealedScalarShowsValue = !!scalar && scalar.textContent.includes('42');
-  c._setMode('view'); c._showHidden = false;
+  await window.__hpTest.setMode('view'); c._showHidden = false;
   return o;
 }));
 
@@ -151,15 +151,15 @@ Object.assign(out, await page.evaluate(async () => {
     display: 'ripple', hidden: true });
   c._cfgEpoch++; c._regSignature = '';
   c._maybeRebuildDevices();
-  c._setMode('devices'); c._showHidden = true;
-  c.requestUpdate(); await c.updateComplete;
+  await window.__hpTest.setMode('devices'); c._showHidden = true;
+  c.requestUpdate(); await window.__hpTest.settled();
   const face = sr().querySelector(`.dev[data-id="${lamp.id}"]`);
   o.rippleRevealHasIcon = !!face?.querySelector('ha-icon');
   o.rippleRevealNotGhost = !!face && !face.classList.contains('ghost');
   o.rippleRevealNotNoicon = !!face && !face.classList.contains('noicon');
   c._serverCfg.markers = c._serverCfg.markers.filter((m) => m.id !== lamp.id);
   c._cfgEpoch++; c._regSignature = ''; c._maybeRebuildDevices();
-  c._setMode('view'); c._showHidden = false;
+  await window.__hpTest.setMode('view'); c._showHidden = false;
   return o;
 }));
 
@@ -180,7 +180,7 @@ Object.assign(out, await page.evaluate(async () => {
   cfg.markers = cfg.markers.filter((m) => m.id !== keep.id || !m.hidden);
   c._serverCfg = cfg; c._cfgEpoch++; c._regSignature = '';
   c._layout = {}; // пустой layout: работают только авто-позиции
-  c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  c._maybeRebuildDevices(); c.requestUpdate(); await window.__hpTest.settled();
   const full = [...(c.shadowRoot || c.renderRoot).querySelectorAll('.dev')]
     .find((el) => el.style.left && !el.classList.contains('ghost'));
   // проценты полной карточки считаются от content-fit view — переводим в vb
@@ -252,7 +252,7 @@ Object.assign(out, await page.evaluate(async () => {
     }
   }
   c._serverCfg = cfg; c._cfgEpoch++; c._regSignature = '';
-  c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
+  c._maybeRebuildDevices(); c.requestUpdate(); await window.__hpTest.settled();
   const fullRoom = [...(c.shadowRoot || c.renderRoot).querySelectorAll('.room')]
     .find((r) => window.__hpSceneOpacity(r)>0 && (r.getAttribute('style') || '').includes('--room-fill'));
   const fullFill = fullRoom ? fullRoom.style.getPropertyValue('--room-fill').trim() : null;

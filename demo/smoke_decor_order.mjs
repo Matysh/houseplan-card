@@ -20,6 +20,8 @@ const state = () => page.evaluate(() => ({
 }));
 const settle = () => page.evaluate(async () => { await window.__hpTest.waitForWrites(); await window.__card.updateComplete; });
 const select = async id => {
+  await page.evaluate(()=>window.__hpTest.settled());
+  await page.waitForFunction(()=>!window.__card.renderRoot.querySelector('hp-dialog[inert],[role=menu][inert]'));
   const p=await point(id,id==='red'?.1:.8,id==='red'?.1:.8);
   await page.mouse.click(p.x,p.y);
   await page.evaluate(()=>window.__card.updateComplete);
@@ -261,6 +263,7 @@ try {
     replacement.setConfig({...c._config});replacement.hass=c.hass;c.replaceWith(replacement);window.__card=replacement;
   });
   await page.waitForFunction(()=>window.__card._loadOk&&window.__card._decorList.length>0);
+  await page.evaluate(()=>window.__hpTest.settled());
   await page.waitForFunction(()=>!window.__card.renderRoot.querySelector('.stage.hpboot, .stage.mode-transition'));
   check('order.server_reload_keeps_array',(await state()).decor,preReload.decor);
   const persisted=await page.evaluate(async()=>{

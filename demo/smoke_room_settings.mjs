@@ -8,12 +8,12 @@ const res = await page.evaluate(async () => {
   // включить имена + temp-заливку на пространстве
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
     ...s, settings: { ...(s.settings || {}), show_names: true, fill_mode: 'temp', label_temp: true } })) };
-  c._setMode('plan'); c.requestUpdate(); await c.updateComplete;
+  await window.__hpTest.setMode('plan'); c.requestUpdate(); await window.__hpTest.settled();
   // 1) шестерёнка на карточке комнаты в редакторе плана
   const gear = sr().querySelector('.rlgearbtn');
   out.gearShown = !!gear;
   gear.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
-  await c.updateComplete;
+  await window.__hpTest.settled();
   out.dialogOpens = c._roomDialog === true && !!c._roomEditId;
   out.namePrefilled = c._nameSel.length > 0;
   // 2) задать источники температуры/влажности + оверрайд заливки
@@ -26,18 +26,18 @@ const res = await page.evaluate(async () => {
     'sensor.custom_room_temp': {},
     'sensor.custom_room_hum': {},
   } };
-  await c.updateComplete;
+  await window.__hpTest.settled();
   const editedId = c._roomEditId;
   c._roomFill = 'none';
   c._roomTempSrc = 'entity:sensor.custom_room_temp';
   c._roomHumSrc = 'entity:sensor.custom_room_hum';
-  await c._saveRoomEdit(); await c.updateComplete; // #851: await this form's accepted Save before View.
+  await c._saveRoomEdit(); await window.__hpTest.settled(); // #851: await this form's accepted Save before View.
   const room = c._curSpaceCfg.rooms.find((r) => r.id === editedId);
   out.saved = room.settings?.fill_mode === 'none'
     && room.settings?.temp_source === 'entity:sensor.custom_room_temp'
     && room.settings?.hum_source === 'entity:sensor.custom_room_hum';
   // 3) в Просмотре: источники работают и для комнаты без HA area
-  c._setMode('view'); c.requestUpdate(); await c.updateComplete;
+  await window.__hpTest.setMode('view'); c.requestUpdate(); await window.__hpTest.settled();
   const model = c._spaceModel().rooms.find((r) => r.id === editedId);
   model.area = undefined;
   out.tempFromSource = c._roomTemp(model) === 30.2;
@@ -48,14 +48,14 @@ const res = await page.evaluate(async () => {
   [...sr().querySelectorAll('.room')][modelIndex].dispatchEvent(new PointerEvent('pointermove', {
     pointerType: 'mouse', bubbles: true, composed: true, clientX: 200, clientY: 200,
   }));
-  await c.updateComplete;
+  await window.__hpTest.settled();
   out.tooltipShowsHumiditySource = c._tip?.hum === 47
     && (sr().querySelector('.tip')?.textContent || '').includes(`${c._t('tip.hum_avg')} 47%`);
   model.settings = { ...model.settings, hum_source: 'entity:sensor.missing_room_hum' };
   [...sr().querySelectorAll('.room')][modelIndex].dispatchEvent(new PointerEvent('pointermove', {
     pointerType: 'mouse', bubbles: true, composed: true, clientX: 210, clientY: 210,
   }));
-  await c.updateComplete;
+  await window.__hpTest.settled();
   out.invalidHumiditySourceIsOmitted = c._tip?.hum == null
     && !(sr().querySelector('.tip')?.textContent || '').includes(c._t('tip.hum_avg'));
   // 4) оверрайд 'none': комната без заливки при temp-пространстве
@@ -67,8 +67,8 @@ const res = await page.evaluate(async () => {
     return true;
   })();
   // 5) создание новой комнаты: в диалоге есть секция настроек
-  c._setMode('plan'); c._tool = 'draw'; await c.updateComplete;
-  c._resetRoomDialogFields(); c._roomDialog = true; c.requestUpdate(); await c.updateComplete;
+  await window.__hpTest.setMode('plan'); c._tool = 'draw'; await window.__hpTest.settled();
+  c._resetRoomDialogFields(); c._roomDialog = true; c.requestUpdate(); await window.__hpTest.settled();
   // #594/#1078: пять карточек, включая отдельное солнечное освещение.
   const groups = [...sr().querySelectorAll('hp-dialog .hpf-card')]
     .filter((g) => g.querySelector('.hpf-head h3'));
@@ -98,11 +98,11 @@ const res = await page.evaluate(async () => {
   firstSeg?.focus();
   out.sourceSegmentTakesFocus = !!firstSeg
     && (sr().activeElement === firstSeg || document.activeElement !== document.body);
-  c._roomDialogCancel(); await c.updateComplete;
+  c._roomDialogCancel(); await window.__hpTest.settled();
   // 6) room fill:none не выключает независимый Glow пространства
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
     ...s, settings: { ...(s.settings || {}), fill_mode: 'glow' } })) };
-  c._setMode('view'); c.requestUpdate(); await c.updateComplete;
+  await window.__hpTest.setMode('view'); c.requestUpdate(); await window.__hpTest.settled();
   await new Promise((r) => setTimeout(r, 250));
   out.fillDoesNotOptOutGlow = !sr().querySelector('clipPath#hp-glow-enabled')
     && sr().querySelectorAll('.glow-base-layer .glow-base').length === 0
@@ -117,13 +117,13 @@ const res = await page.evaluate(async () => {
   const B = { c: '#abcdef', a: 0.61 };
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
     ...s, settings: { ...(s.settings || {}), fill_mode: 'custom', custom_fill: A, glow_enabled: false } })) };
-  c._setMode('plan'); c.requestUpdate(); await c.updateComplete;
+  await window.__hpTest.setMode('plan'); c.requestUpdate(); await window.__hpTest.settled();
   const frameFill = (id) => c._resolvedRoomFills(c._spaceModel(), c._spaceDisplayForRender()).byId.get(id);
   const resolves = (id, fill) => { const f = frameFill(id); return !!f && f.mode === 'custom' && f.color === fill.c && f.opacity === fill.a; };
   const paintsInView = async (id, fill) => {
-    c._setMode('view'); c.requestUpdate(); await c.updateComplete;
+    await window.__hpTest.setMode('view'); c.requestUpdate(); await window.__hpTest.settled();
     const style = sr().querySelector(`.room[data-id="${id}"]`)?.getAttribute('style') || '';
-    c._setMode('plan'); c.requestUpdate(); await c.updateComplete;
+    await window.__hpTest.setMode('plan'); c.requestUpdate(); await window.__hpTest.settled();
     return style.includes(`--room-fill:${fill.c}`) && style.includes(`--room-fill-op:${fill.a}`);
   };
   const colorRow = () => !!sr().querySelector('hp-dialog hp-color-opacity');
@@ -131,38 +131,38 @@ const res = await page.evaluate(async () => {
   const fillSelect = () => sr().querySelector('hp-dialog select[name="rfill"]');
   const cfgRoom = () => c._curSpaceCfg.rooms.find((r) => r.id === editedId);
   // own colour: mode + colour stored, plan paints B
-  c._openRoomEdit(cfgRoom()); await c.updateComplete;
+  c._openRoomEdit(cfgRoom()); await window.__hpTest.settled();
   out.ownColourRowHiddenWhileInheriting = !colorRow();
-  c._roomFill = 'custom'; c._roomCustomFill = { ...B }; c.requestUpdate(); await c.updateComplete;
+  c._roomFill = 'custom'; c._roomCustomFill = { ...B }; c.requestUpdate(); await window.__hpTest.settled();
   out.ownColourRowShownForCustom = colorRow();
   out.ownColourDraftResolves = resolves(editedId, B);
-  await c._saveRoomEdit(); await c.updateComplete;
+  await c._saveRoomEdit(); await window.__hpTest.settled();
   out.ownColourStored = cfgRoom().settings?.fill_mode === 'custom' && cfgRoom().settings?.custom_fill?.c === B.c;
   out.ownColourPaintsInView = await paintsInView(editedId, B);
   // AC5: back to "as the space" in the open dialog — the frame resolver answers A at once
-  c._openRoomEdit(cfgRoom()); await c.updateComplete;
+  c._openRoomEdit(cfgRoom()); await window.__hpTest.settled();
   out.reopenedWithOwnColour = c._roomFill === 'custom' && c._roomCustomFill?.c === B.c && colorRow();
   fillSelect().value = ''; fillSelect().dispatchEvent(new Event('change', { bubbles: true }));
-  await c.updateComplete;
+  await window.__hpTest.settled();
   out.inheritClearsDraft = c._roomFill === '' && c._roomCustomFill === null && !colorRow();
   out.inheritDraftResolvesSpace = resolves(editedId, A);
   // AC3: saved — neither the mode nor the colour survives, the plan paints A
-  await c._saveRoomEdit(); await c.updateComplete;
+  await c._saveRoomEdit(); await window.__hpTest.settled();
   out.inheritForgetsColour = !('fill_mode' in (cfgRoom().settings || {})) && !('custom_fill' in (cfgRoom().settings || {}));
   out.inheritPaintsSpaceInView = await paintsInView(editedId, A);
-  c._openRoomEdit(cfgRoom()); await c.updateComplete;
+  c._openRoomEdit(cfgRoom()); await window.__hpTest.settled();
   out.inheritReopensWithoutColourRow = c._roomFill === '' && c._roomCustomFill === null && !colorRow();
-  c._roomDialogCancel(); await c.updateComplete;
+  c._roomDialogCancel(); await window.__hpTest.settled();
   // AC4: an orphan saved by an older editor (Cabinet on the dacha) — paints A,
   //      opens as "as the space" without a colour row, and a plain save drops it
   c._serverCfg = { ...c._serverCfg, spaces: c._serverCfg.spaces.map((s) => s.id !== spId ? s : ({
     ...s, rooms: s.rooms.map((r) => r.id !== editedId ? r : ({ ...r,
       settings: { ...(r.settings || {}), custom_fill: { c: '#182a32', a: 0.59 }, name_scale: 1.35, label_scale: 1.2 } })) })) };
-  c.requestUpdate(); await c.updateComplete;
+  c.requestUpdate(); await window.__hpTest.settled();
   out.orphanPaintsSpaceInView = await paintsInView(editedId, A) && !(await paintsInView(editedId, { c: '#182a32', a: 0.59 }));
-  c._openRoomEdit(cfgRoom()); await c.updateComplete;
+  c._openRoomEdit(cfgRoom()); await window.__hpTest.settled();
   out.orphanOpensAsInherit = c._roomFill === '' && c._roomCustomFill === null && !colorRow();
-  await c._saveRoomEdit(); await c.updateComplete;
+  await c._saveRoomEdit(); await window.__hpTest.settled();
   out.orphanDroppedOnSave = !('custom_fill' in (cfgRoom().settings || {}))
     && cfgRoom().settings?.name_scale === 1.35 && cfgRoom().settings?.label_scale === 1.2;
   out.orphanStillPaintsSpaceAfterSave = await paintsInView(editedId, A);
@@ -171,7 +171,7 @@ const res = await page.evaluate(async () => {
   // Соседа ловит не взгляд, а снимок: меняем один контрол и сравниваем все
   // остальные поля с тем, что было. Раньше два источника были двумя одинаковыми
   // радиосписками — перепутать их местами в одной строке ничего не стоит.
-  c._openRoomEdit(cfgRoom()); await c.updateComplete;
+  c._openRoomEdit(cfgRoom()); await window.__hpTest.settled();
   const draft = () => JSON.stringify({
     name: c._nameSel, area: c._areaSel, fill: c._roomFill, custom: c._roomCustomFill,
     tempMin: c._roomTempMin, tempMax: c._roomTempMax,
@@ -194,14 +194,14 @@ const res = await page.evaluate(async () => {
   const nameInput = sr().querySelector('hp-dialog #room-name');
   nameInput.value = 'Кабинет-594';
   nameInput.dispatchEvent(new Event('input', { bubbles: true }));
-  await c.updateComplete;
+  await window.__hpTest.settled();
   out.nameWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['name']);
   // Масштаб названия: меняется только он.
   before = draft();
   const range = sr().querySelector('hp-dialog .hpf-card input[type="range"]');
   range.value = String(Number(range.value) + 10);
   range.dispatchEvent(new Event('input', { bubbles: true }));
-  await c.updateComplete;
+  await window.__hpTest.settled();
   out.scaleWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['nameScale']);
   // Область: меняется только область (и имя, если оно было пустым, — это
   // давнее поведение селектора, а не набора).
@@ -215,7 +215,7 @@ const res = await page.evaluate(async () => {
   out.areaOptionAvailable = otherArea !== undefined;
   areaSelect.value = otherArea;
   areaSelect.dispatchEvent(new Event('change', { bubbles: true }));
-  await c.updateComplete;
+  await window.__hpTest.settled();
   out.areaWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['area']);
   // #946: one select includes inheritance and five own modes.
   before = draft();
@@ -223,7 +223,7 @@ const res = await page.evaluate(async () => {
   out.fillOptionAvailable = [...fillSelect().options].some(o => o.value === 'temp');
   fillSelect().value = 'temp';
   fillSelect().dispatchEvent(new Event('change', { bubbles: true }));
-  await c.updateComplete;
+  await window.__hpTest.settled();
   out.fillWritesOnlyItsOwnKey = JSON.stringify(changedFields(before, draft())) === JSON.stringify(['fill'])
     && c._roomFill === 'temp';
   // Источник влажности: сегмент открывает список и не трогает температуру.
@@ -231,14 +231,14 @@ const res = await page.evaluate(async () => {
   const humSeg = segmentOf('hum');
   out.humiditySegmentFound = !!humSeg;
   pickSecond(humSeg);
-  await c.updateComplete;
+  await window.__hpTest.settled();
   const humCand = [...sr().querySelectorAll('hp-dialog .hpf-panel .hpf-cand')][0];
   out.humidityCandidateOffered = !!humCand;
   humCand?.click();
-  await c.updateComplete;
+  await window.__hpTest.settled();
   const humChanged = changedFields(before, draft());
   out.humiditySourceWritesOnlyItsOwnKey = JSON.stringify(humChanged) === JSON.stringify(['humSrc']);
-  c._roomDialogCancel(); await c.updateComplete;
+  c._roomDialogCancel(); await window.__hpTest.settled();
   return out;
 });
 checkAll(res);

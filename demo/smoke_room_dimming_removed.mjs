@@ -208,6 +208,7 @@ try {
       // Harness subject selection, not a product-private field.
       window.__card = card;
     });
+    await page.evaluate(() => window.__hpTest.settled());
     await waitForKioskViewport(page);
   };
   for (const iso of [false, true]) {

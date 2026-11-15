@@ -39,7 +39,7 @@ const out = await page.evaluate(async () => {
   card._modelCache = null;
   card._frame = null;
   card._cfgEpoch++;
-  card._setMode('plan');
+  await window.__hpTest.setMode('plan');
   card._tool = 'draw';
   card._path = chain.map((p) => [p[0] * NORM_W, p[1] * NORM_W]);
   card._activeWallChainId = 'chain-307';

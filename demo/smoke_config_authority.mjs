@@ -57,9 +57,14 @@ const out = await page.evaluate(async () => {
   c._cacheSnapshot();
   c._serverCfg.settings.unknown_890 = 'unsaved'; c._cacheSnapshot(); // private-ok: #890 seed unsent unknown-field content to test the cache boundary, no UI equivalent.
   o.cacheNeverAcceptsDraft = JSON.parse(localStorage.getItem(key)).config.settings.unknown_890 === 'quota accepted';
-  // A cold cache can paint, but never authorizes a write.
-  const cold = document.createElement('houseplan-card'); cold.setConfig(options);
-  o.coldHintPaintsWithoutWriter = !!cold._serverCfg && !cold._loadOk && !cold._canEdit;
+  // A legacy global hint cannot paint before a trusted HA read scope exists.
+  const unscoped = document.createElement('houseplan-card'); unscoped.setConfig(options);
+  o.unscopedLegacyHintDoesNotPaint = !unscoped._serverCfg && !unscoped._loadOk && !unscoped._canEdit;
+  // A same-owner scoped hint can paint, but never authorizes a write.
+  const cold = document.createElement('houseplan-card'); cold.hass = c.hass; cold.setConfig(options);
+  // Admin editor visibility comes from the actual HA identity, not this hint;
+  // the hint must not supply a fresh server grant or usable write authority.
+  o.coldHintPaintsWithoutWriter = !!cold._serverCfg && !cold._loadOk && cold._serverCanWrite === null;
   let coldRejected = false; try { await cold._sendConfigCandidate(cold._serverCfg); } catch { coldRejected = true; }
   o.coldWriteRefused = coldRejected;
   await hp.setServerConfig((cfg) => { cfg.settings.new_device_ids = ['d_mower', '890-other']; return cfg; });
@@ -90,7 +95,7 @@ const out = await page.evaluate(async () => {
   // The already installed A subscription still receives the explicit late
   // server push below; isolating B must not hide that delivery.
   const foreignConnection = () => ({ ...c.hass.connection, subscribeEvents: async () => () => {} });
-  c.hass = { ...c.hass, connection: foreignConnection(), callWS: async (message) => {
+  c.hass = { ...c.hass, user: { ...c.hass.user, id: 'foreign-authority-890' }, connection: foreignConnection(), callWS: async (message) => {
     if (message.type === 'houseplan/config/get') { bConfigReads++; await waitB; return { config: copy(configB), rev: 3, can_write: true }; }
     if (message.type === 'houseplan/layout/get') { bLayoutReads++; await waitB; return { layout: {}, rev: 2 }; }
     if (message.type === 'houseplan/config/set') { bWrites++; return { rev: 4 }; }

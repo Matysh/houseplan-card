@@ -6,7 +6,7 @@ const { page, browser } = await launch({ width: 900, height: 760 });
 const result = await page.evaluate(async () => {
   const out = {};
   const card = window.__card;
-  const update = async () => { card.requestUpdate(); await card.updateComplete; };
+  const update = async () => { card.requestUpdate(); await window.__hpTest.settled(); };
   card._serverCfg = {
     model_version: 10,
     spaces: [{
@@ -18,7 +18,7 @@ const result = await page.evaluate(async () => {
   };
   card._space = 'thickness'; card._layout = {}; card._cfgEpoch++;
   card._modelCache = null; card._frame = null; card._geometryHistory.clear();
-  card._setMode('plan'); card._tool = 'draw';
+  await window.__hpTest.setMode('plan'); card._tool = 'draw';
   card._path = []; card._activeWallChainId = null;
   card._activeWallChainPartitionIds = []; card._wallChainSegmentCms = [];
   await update();

@@ -16,7 +16,7 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
-  const upd = async () => { c._cfgEpoch++; c.requestUpdate(); await c.updateComplete; };
+  const upd = async () => { c._cfgEpoch++; c.requestUpdate(); await window.__hpTest.settled(); };
   const sp = () => c._serverCfg.spaces.find((s) => s.id === c._space);
   const opaque = { nested: ['preserve', { scalar: 7, optional: null }] };
   const authored = async (intent, change) => {
@@ -99,7 +99,7 @@ const res = await page.evaluate(async () => {
 
   const areaBefore = floorAreaOf('r1');
 
-  c._setMode('plan');
+  await window.__hpTest.setMode('plan');
   c._tool = 'wallthick';
   await upd();
   out.toolArmed = c._tool === 'wallthick';
@@ -132,7 +132,7 @@ const res = await page.evaluate(async () => {
     entity_id: 'sun.sun', state: 'above_horizon',
     attributes: { azimuth: 240, elevation: 60 },
   } } };
-  c._setMode('view');
+  await window.__hpTest.setMode('view');
   await upd();
   const sunRay = (c._sunRaysCache?.rays || []).find((r) => r.openingId === 'wtSun');
   const sunDepth = (20 / c._cellCm) * c._gridPitch;
@@ -142,7 +142,7 @@ const res = await page.evaluate(async () => {
     && Math.abs(sunRay.b[0] - (40 + sunDepth / 2)) < 1e-6;
   out.sunStartsInnerCorners = !!sunRay
     && Math.abs(ys[0] - 205) < 1e-6 && Math.abs(ys[1] - 295) < 1e-6;
-  c._setMode('plan');
+  await window.__hpTest.setMode('plan');
   c._tool = 'wallthick';
   await upd();
 
@@ -219,7 +219,7 @@ const res = await page.evaluate(async () => {
   await upd();
 
   sp().settings = { ...(sp().settings || {}), hide_openings: true, show_borders: false };
-  c._setMode('view');
+  await window.__hpTest.setMode('view');
   await upd();
   const hiddenSymbols = sr().querySelectorAll('[data-hp="opening"]').length === 0;
   // #945 hides boundaries and symbols together. Restoring boundaries must
@@ -230,7 +230,7 @@ const res = await page.evaluate(async () => {
   out.hideKeepsCut = hiddenSymbols && sr().querySelectorAll('[data-hp="opening"]').length > 0
     && (cutD.match(/\bM\b/g) || []).length >= 2;
 
-  c._setMode('plan');
+  await window.__hpTest.setMode('plan');
   c._tool = 'wallthick';
   await upd();
   c._wallThickClick(outer);
@@ -286,7 +286,7 @@ const res = await page.evaluate(async () => {
   // #277: this shared wall deliberately contains 25/30 cm atomic records.
   // The handle remains visible but Resize must refuse it without creating a
   // history command or changing any persisted thickness record.
-  c._setMode('plan');
+  await window.__hpTest.setMode('plan');
   c._tool = 'resize';
   c._wallDialog = null;
   await upd();
@@ -342,7 +342,7 @@ const res = await page.evaluate(async () => {
   // AUD-159B7-04: the same screen-depth policy owns both cards. At 1 cm the
   // hatch must be suppressed in full and static views; at 20 cm both restore
   // it. The static card measures its actual stage width via ResizeObserver.
-  c._setMode('view');
+  await window.__hpTest.setMode('view');
   sp().settings = { ...(sp().settings || {}), show_borders: true };
   const positiveEdges = sp().plan_graph.edges.filter(edge => edge.cm > 0).map(({ kind, id }) => ({ kind, id }));
   const parityThickness = async cm => authored({ kind: 'thickness', edges: positiveEdges, cm }, space => {

@@ -40,13 +40,16 @@ const res = await page.evaluate(async () => {
       if (stage) {
         const veil = sr().querySelector('.bootveil');
         const wrapEl = stage.querySelector(':scope > .zoomwrap');
+        const preview = !!stage.querySelector('[data-hp-cache-preview]');
         const planHidden =
           !wrapEl ||
           getComputedStyle(wrapEl).visibility === 'hidden' ||
           (veil && !veil.classList.contains('off') && getComputedStyle(veil).opacity !== '0');
         frames.push({
           t: Math.round(t),
-          planVisible: !planHidden,
+          planVisible: !planHidden && !preview,
+          previewSafe: !preview || (!!wrapEl?.inert && getComputedStyle(wrapEl).pointerEvents === 'none'
+            && !stage.querySelector('[data-hp="device"],.roomlabel,[data-hp-live-editor],.glowlayer')),
           veil: !!veil,
           veilBg: veil ? getComputedStyle(veil).backgroundColor : null,
           house: !!(veil && veil.querySelector('.boothouse path')),
@@ -64,6 +67,7 @@ const res = await page.evaluate(async () => {
   const seen = frames.filter(Boolean);
   const finalH = seen[seen.length - 1].stageH;
   out.sampledFrames = seen.length > 40;
+  out.cachedPreviewIsPassiveWithoutLiveLayersOrNames = seen.every(f => f.previewSafe);
   out.veilShownWhileSettling = seen.some((f) => f.veil && !f.planVisible && f.house);
   out.veilIsDark = (() => {
     const f = seen.find((x) => x.veilBg);

@@ -19,6 +19,7 @@ const res = await page.evaluate(async () => {
   const stageBg = async () => {
     c.requestUpdate();
     await c.updateComplete;
+    await window.__hpTest.settled();
     return getComputedStyle(sr().querySelector('.stage')).backgroundColor;
   };
   const waitStageBg = async (accept) => {
@@ -302,6 +303,7 @@ const drawn = await page.evaluate(async () => {
   c._cfgRev = (c._cfgRev || 0) + 1;
   c._cfgEpoch++;
   await upd();
+  await window.__hpTest.settled();
   const papers = () => [...sr().querySelectorAll('.stage.noplan svg .hp-paper')].filter(el=>window.__hpSceneOpacity(el)>0);
   let ps = papers();
   out.paperPerRoom = ps.length === sp.rooms.length;
@@ -349,9 +351,11 @@ const drawn = await page.evaluate(async () => {
     measure: () => [],
   });
   await upd();
+  await window.__hpTest.settled();
   out.previewMovesPaper = (papers()[0]?.getAttribute('points') || '').includes('687.5,125');
   c._rszCancelDrag();
   await upd();
+  await window.__hpTest.settled();
   out.previewRestores = (papers()[0]?.getAttribute('points') || '').includes('625,125');
   // screen coords for the pixel probes (svg user units -> viewport px)
   const svgEl = sr().querySelector('.stage svg');

@@ -102,6 +102,7 @@ export type WarmEntry = {
   stageH: number;
   vp: WarmViewport | null;
   frameFingerprint: string;
+  floorPreview?: { scope: string; floor: string; key: string; preview: import('./floor-cache-preview').FloorPreview };
   devices: readonly DevItem[] | null;
   dlg: WarmDialog | null;
   freed: number;

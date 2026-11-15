@@ -45,7 +45,7 @@ const result = await page.evaluate(async () => {
     card._modelCache = null; card._frame = null; card._path = [];
     card._activeWallChainId = null; card._activeWallChainPartitionIds = [];
     card._wallChainSegmentCms = []; card._wallChainRedo = [];
-    card._setMode('plan'); card._tool = 'draw'; card._drawWallField = '15';
+    await window.__hpTest.setMode('plan'); card._tool = 'draw'; card._drawWallField = '15';
     card.requestUpdate(); await card.updateComplete;
   };
   const settle = async () => {

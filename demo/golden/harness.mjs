@@ -1167,7 +1167,7 @@ export async function prepareGoldenScenario(page, scenario) {
         await wait(15);
       }
     };
-    const settleMode = async (card, expected = card._floorPendingMode || card._mode) => {
+    const settleMode = async (card, expected = card._floorPendingMode?.mode || card._mode) => {
       // A Lit update may now show passive L1 while the real mode command is
       // queued behind floor preparation. Wait for the requested user surface,
       // not merely for the absence of an animation that has not started yet.

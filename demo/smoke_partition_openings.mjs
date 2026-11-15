@@ -15,7 +15,7 @@ const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
-  const update = async () => { card.requestUpdate(); await card.updateComplete; };
+  const update = async () => { card.requestUpdate(); await card.updateComplete; await window.__hpTest.settled(); };
   // Fixture setup crosses the same explicit current writer as the UI. Never
   // edit a derived carrier or numeric t while retaining a contradictory graph/tq.
   const authored = async (intent, change) => {
@@ -83,7 +83,7 @@ const out = await page.evaluate(async () => {
     card._planSnapGeometryCache = null;
     card.requestUpdate();
   };
-  await card._requestMode('plan');
+  await window.__hpTest.setMode('plan');
   card._activateOpeningPlacement('door');
   await update();
 

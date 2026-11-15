@@ -14,6 +14,7 @@ export interface FloorRuntimeHost {
   selection(): Selection | null;
   hydrate(frame: FloorGeometryFrame, light: unknown): void;
   contains?(frame: FloorGeometryFrame, light: unknown): boolean;
+  preview?(fitKey: string, scope: string | undefined, persistentKey: string): FloorPreview | null;
   changed(): void;
 }
 interface Entry { frame: FloorGeometryFrame; wire: GeometryWire; payload?: CachePayload; lightKey: string; light: unknown }
@@ -72,6 +73,9 @@ export class FloorCacheRuntime {
     return selection.scope ? { scope: selection.scope, floor: String(selection.input.raw.id), key: selection.persistentKey } : null;
   }
   private readPreview(selection: Selection, sequence: number): void {
+    const warm = this.host.preview?.(selection.fitKey, selection.scope, selection.persistentKey);
+    if (warm && validFloorPreview(warm, selection.fitKey) && warm.fit.projection === selection.input.projection)
+      this.preview = warm;
     const address = this.address(selection);
     if (!address) return;
     void this.store.read(address, 'preview').then(payload => {
@@ -128,8 +132,11 @@ export class FloorCacheRuntime {
       try {
         const disk = !warm && address ? await this.store.read(address, 'geometry') : null;
         if (!isCurrent()) return;
-        const result = await this.scheduler.run({ kind: 'geometry', input: selection.input,
-          disk, memory: warm?.wire, light: selection.light });
+        // A live HA/light revision does not replace immutable geometry. The
+        // worker returns only new light tables for an already accepted frame.
+        const result = await this.scheduler.run(warm
+          ? { kind: 'light', input: selection.input, memory: warm.wire, light: selection.light }
+          : { kind: 'geometry', input: selection.input, disk, light: selection.light });
         if (!isCurrent()) return;
         if (!result) {
           this.failed.add(this.key); this.metrics.familyFallbacks++; this.preview = null; this.host.changed(); return;
@@ -138,15 +145,15 @@ export class FloorCacheRuntime {
         if (this.metrics.workerMs.length > 100) this.metrics.workerMs.shift();
         if (result.producer) this.metrics.producers.push(result.producer);
         if (this.metrics.producers.length > 50) this.metrics.producers.shift();
-        const start = performance.now(), frame = decodeGeometryValue(result.wire);
+        const start = performance.now(), frame = warm?.frame ?? decodeGeometryValue(result.wire);
         if (!isFloorGeometryFrame(frame, selection.input)) throw new Error('floor-cache:frame');
         const light = result.light ? decodeGeometryValue(result.light) : undefined;
         if (!isCurrent()) return;
-        const entry: Entry = { frame, wire: result.wire!, payload: result.payload || warm?.payload,
+        const entry: Entry = { frame, wire: warm?.wire ?? result.wire!, payload: warm?.payload ?? result.payload,
           lightKey: selection.light.fingerprint, light };
         this.memory.set(memoryKey, entry);
         while (this.memory.size > 8) this.memory.delete(this.memory.keys().next().value!);
-        if (result.hit) this.metrics.diskHits++; else if (warm) this.metrics.memoryHits++; else this.metrics.misses++;
+        if (warm) this.metrics.memoryHits++; else if (result.hit) this.metrics.diskHits++; else this.metrics.misses++;
         this.host.hydrate(frame, light); this.readyKey = this.key;
         this.metrics.hydrationMs.push(performance.now() - start);
         if (this.metrics.hydrationMs.length > 100) this.metrics.hydrationMs.shift();

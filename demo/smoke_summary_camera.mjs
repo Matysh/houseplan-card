@@ -136,6 +136,10 @@ out.warmRemountKeepsManualCamera = await page.evaluate(async () => {
   const next = document.createElement('houseplan-card'); next.setConfig(config); next.hass = hass; parent.appendChild(next);
   await until(() => next._loadOk && next._screenReference && !next._booting && next._continuity.state === 'steady');
   await sleep(250);
-  return ['x', 'y', 'w', 'h'].every(key => Math.abs(next._view[key] - view[key]) < 1e-7);
+  return ['x', 'y', 'w', 'h'].every(key => Math.abs(next._view[key] - view[key]) < 1e-7)
+    || JSON.stringify({ expected: view, actual: next._view, zoom: next._zoom,
+      recovered: next._screenRecoveredCamera, warm: next._warmVp, pendingRestore: next._floorRestoreZoom,
+      stage: [next._stageEl.clientWidth, next._stageEl.clientHeight], header: next._hdrH,
+      lastSize: next._lastValidStageSize, warmPending: next._warmViewportPending, warmMode: next._warmModeRequest });
 });
 checkAll(out); await finish(browser, out);

@@ -115,13 +115,16 @@ test('#489 every hp-dialog call site declares a documented broad kind', () => {
 test('#489 root readiness and mode attributes cover every full-card ha-card branch', () => {
   const card = sources.find((entry) => entry.relative === 'houseplan-card.ts')?.text || '';
   const cards = [...card.matchAll(/<ha-card\b/g)].length;
-  assert.equal(cards, 5, 'new root render branches must extend this contract test');
+  assert.equal(cards, 4, 'new root render branches must extend this contract test');
   assert.equal([...card.matchAll(/\bdata-hp-state=/g)].length, cards);
   assert.equal([...card.matchAll(/\bdata-hp-mode=/g)].length, cards);
   assert.deepEqual(contract.rootAttributes['data-hp-state'].values, ['booting', 'ready']);
   assert.deepEqual(contract.rootAttributes['data-hp-mode'].values, ['view', 'plan', 'devices', 'decor']);
   const passive = card.slice(card.indexOf('private _renderPendingFloor()'), card.indexOf('private _renderBody()'));
-  assert.match(passive, /<ha-card data-hp-state="booting" data-hp-mode="view" data-hp-floor-cache="pending">/);
+  assert.match(passive, /_renderPreparedFloorFrame\(html/);
+  const frame = card.slice(card.indexOf('private _renderPreparedFloorFrame('), card.indexOf('// ---------------- live robot vacuums'));
+  assert.match(frame, /data-hp-state=\$\{this\._booting \|\| pending \? 'booting' : 'ready'\}/);
+  assert.match(frame, /data-hp-floor-cache=\$\{pending \? 'pending' : nothing\}/);
   assert.doesNotMatch(passive, /data-hp-state="ready"/, 'a passive cached basis is never a ready interactive scene');
   assert.match(card, /_mode:\s*'view'\s*\|\s*'plan'\s*\|\s*'devices'\s*\|\s*'decor'\s*=\s*'view'/);
 });

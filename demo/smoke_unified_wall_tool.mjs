@@ -47,7 +47,7 @@ const result = await page.evaluate(async () => {
     card._path = []; card._activeWallChainId = null;
     card._activeWallChainPartitionIds = []; card._wallChainSegmentCms = [];
     card._wallChainRedo = []; card._wallFaceBatch = null; card._roomDialog = false;
-    card._toast = ''; card._setMode('plan'); card._tool = 'draw';
+    card._toast = ''; await window.__hpTest.setMode('plan'); card._tool = 'draw';
     await update();
   };
   const draw = async (points, cms = []) => {

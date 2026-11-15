@@ -1,9 +1,18 @@
 /** #1242 Cached config + fast summary + delayed server must retain saved zoom. */
 import { launchColdView, requirePinnedBrowser, checkAll, finish } from './serve.mjs';
+import { createHash } from 'node:crypto';
 requirePinnedBrowser('#1242 cold saved summary camera');
 const { page, browser } = await launchColdView({ width: 1280, height: 920 }, 1, [], {}, undefined, undefined,
   '/demo.html?panel-cold=1&external-screens=1', false);
-const out = await page.evaluate(async () => {
+const scope = await page.evaluate(async () => {
+  await import('/assets/houseplan-card.js');
+  const probe = document.createElement('houseplan-card'); probe.hass = window.__mkHass();
+  return probe.planHost.cacheScope;
+});
+if (!scope) throw Error('#1242 fixture has no trusted cache scope');
+// canonicalCacheInput(string) is JSON.stringify(string).
+const scopedKey = 'houseplan_scoped_hint_v1:' + createHash('sha256').update(JSON.stringify(scope)).digest('hex');
+const out = await page.evaluate(async ({ scope, scopedKey }) => {
   const out = {}, sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const until = async (probe, label) => { const end = performance.now() + 12000;
     while (!probe()) { if (performance.now() > end) throw Error('#1242 saved camera: ' + label); await sleep(20); } };
@@ -15,8 +24,9 @@ const out = await page.evaluate(async () => {
         id: 'v', label: 'Clock', source: { type: 'system', key: 'datetime' } }],
     }] } };
   const rev = window.__pushServerConfig(initial.config);
-  localStorage.setItem('houseplan_card_cfg_v1', JSON.stringify({ config: initial.config, rev,
-    layout: layout.layout, layout_rev: layout.rev }));
+  const snapshot = { config: initial.config, rev, layout: layout.layout, layout_rev: layout.rev };
+  localStorage.setItem('houseplan_card_cfg_v1', JSON.stringify(snapshot));
+  localStorage.setItem(scopedKey, JSON.stringify({ version: 1, scope, snapshot }));
   const saved = JSON.stringify(Object.fromEntries(initial.config.spaces.map(space => [space.id, 1.5])));
   localStorage.setItem('houseplan_card_zoom_v1', saved);
   const get = Storage.prototype.getItem, set = Storage.prototype.setItem;
@@ -46,5 +56,5 @@ const out = await page.evaluate(async () => {
   out.automaticFollowDoesNotWritePreference = zoomWrites === writesBeforeAuto && localStorage.getItem('houseplan_card_zoom_v1') === beforeAuto;
   Storage.prototype.getItem = get; Storage.prototype.setItem = set;
   return out;
-});
+}, { scope, scopedKey });
 checkAll(out); await finish(browser, out);

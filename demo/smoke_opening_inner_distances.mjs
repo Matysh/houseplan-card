@@ -58,7 +58,7 @@ const result = await page.evaluate(async () => {
     })).filter(Boolean) || [],
   });
   const activate = async (point) => {
-    card._setMode('plan');
+    await window.__hpTest.setMode('plan');
     // Entering Plan owns an asynchronous editor-chrome transition which may
     // clear transient hover state at completion. Arm the placement tool only
     // after that transition settles so slower CI runners exercise the same

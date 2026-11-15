@@ -34,7 +34,7 @@ const out = await page.evaluate(async () => {
   card._maybeRebuildDevices();
   card.hass = { ...baseHass };
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
   const localKey = '@room/f1/local-climate';
@@ -52,7 +52,7 @@ const out = await page.evaluate(async () => {
   localShape?.dispatchEvent(new PointerEvent('pointermove', {
     bubbles: true, pointerType: 'mouse', clientX: 120, clientY: 180,
   }));
-  await card.updateComplete;
+  await window.__hpTest.settled();
   result.tooltipSharesAutomatic = card._tip?.title === 'Local climate'
     && card._tip?.temp === 22.4;
 
@@ -101,7 +101,7 @@ const out = await page.evaluate(async () => {
     },
   };
   card.requestUpdate();
-  await card.updateComplete;
+  await window.__hpTest.settled();
   result.explicitSourceWins = card._roomTemp(card._spaceModel().rooms
     .find((room) => room.id === localRoom.id)) === 17;
 

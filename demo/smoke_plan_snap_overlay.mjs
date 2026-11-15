@@ -22,7 +22,7 @@ const out = await page.evaluate(async () => {
   const settlePaint = async () => { await card.updateComplete; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); };
   const update = async () => { card.requestUpdate(); await settlePaint();
     while (card._modeTransitionBusy) await new Promise(resolve => requestAnimationFrame(resolve));
-    await settlePaint(); };
+    await settlePaint(); await window.__hpTest.settled(); };
   const cfg = {
     model_version: 10,
     spaces: [{
@@ -65,7 +65,7 @@ const out = await page.evaluate(async () => {
   card._modelCache = null;
   card._frame = null;
   card._cfgEpoch++;
-  card._setMode('plan');
+  await window.__hpTest.setMode('plan');
   card._tool = 'draw';
   card._path = [];
   card._activeWallChainId = null;
@@ -387,7 +387,7 @@ const out = await page.evaluate(async () => {
   card._activeWallChainPartitionIds = [];
   card._path = [];
   card._cfgEpoch++;
-  card._setMode('plan');
+  await window.__hpTest.setMode('plan');
   await update();
 
   const staticSnapshot = () => {
@@ -457,6 +457,7 @@ await page.emulateMedia({ forcedColors: 'active' });
 out.forcedColorsStayReadable = await page.evaluate(async () => {
   const card = window.__card;
   card._setMode('plan');
+  await window.__hpTest.settled();
   card._tool = 'draw';
   card._path = [];
   card.requestUpdate();
