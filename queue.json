@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14757,
+  "revision": 14758,
   "nextTicket": 494,
   "nextFence": 494,
   "tasks": {
@@ -6361,6 +6361,10 @@
       "digest": "f4ce0de0a73f20725a9cd84e3127a2a732bd522639642fd0a37fcf169cbee8ee",
       "issue": 1454
     },
+    "github:43736506557:1:completions:message:68af79cd800ab183c249f323adde0b12a49defb7f8c2fa43d03a011e485fecb8": {
+      "digest": "c7518f97eae46e5349e33cff9e1af23f7b2192ce36789db0a0bc7924bdfdbc7b",
+      "issue": 1454
+    },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
       "digest": "a7f53fa9906dee3c79c8556d9b9c92e8d7cd413dfbb3f5810a2156cf677086a2",
       "issue": 1454,
@@ -6524,7 +6528,8 @@
           "entry": 3,
           "detail": "Браузер: choice row geometry 1447: failed; Браузер: golden harness input: failed; Браузер: resize junctions: failed; Браузер: resize through junction: failed; Браузер: space card bg: failed; Браузер: wall dimension hud: failed; Браузер: wall node delete: failed; Браузер: wall node topology: failed",
           "eventId": "finish:6d30c3ac-6a6e-419b-9272-85b61be9e306:finish:3:return:return:1454"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113": {
