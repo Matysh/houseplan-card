@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14561,
+  "revision": 14562,
   "nextTicket": 490,
   "nextFence": 490,
   "tasks": {
@@ -4923,7 +4923,10 @@
         "scripts/mutation-preparation.mjs",
         "scripts/mutation-registry.mjs",
         "test/mutation-gate.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1794749531148,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     }
   },
   "ownerDecisions": {},
@@ -5617,6 +5620,10 @@
     },
     "finish:33ed4230-095d-4b59-bb99-720f6d26c3bf:finish:2:synchronized": {
       "digest": "560b9dbd43df503d81acf1fbfc81cc9f44e96fb64d71b0075944cd21ea39877d",
+      "issue": 1455
+    },
+    "finish:33ed4230-095d-4b59-bb99-720f6d26c3bf:finish:3:automation-pending": {
+      "digest": "ce99a171777bda4e511a1b5803bd084a3aa4140c9a0a5ef451e6e2390c0ebfb3",
       "issue": 1455
     },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
