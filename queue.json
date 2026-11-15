@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14729,
+  "revision": 14730,
   "nextTicket": 493,
   "nextFence": 493,
   "tasks": {
@@ -4990,15 +4990,15 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "4:checks-failed",
-        "reason": "checks-failed",
+        "key": "5:executor-admission-expired",
+        "reason": "executor-admission-expired",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794759522409,
-        "entry": 4,
-        "detail": "Браузер: gear tabs: failed",
-        "eventId": "finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:3:return:return:1454"
-      }
+        "at": 1794760166402,
+        "entry": 5,
+        "eventId": "finish:c01979c8-e3af-4b4d-a9f0-dd0ea7c51851:finish:4:expire:return:1454"
+      },
+      "reason": "executor-admission-expired"
     },
     "1455": {
       "issue": 1455,
@@ -5364,18 +5364,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1454,
-    "worker": "finish",
-    "token": "492:finish:c01979c8-e3af-4b4d-a9f0-dd0ea7c51851:finish:1:admit",
-    "fence": 492,
-    "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
-    "expectedBase": "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa",
-    "phase": "testing",
-    "admittedAt": 1794759767676,
-    "expiresAt": 1794760076730,
-    "patchId": "99b77709353f96818ebb44d656979546238164fa"
-  },
+  "active": null,
   "events": {
     "github:43692634249:1:label:spec-request": {
       "digest": "be23c2d8528929891849728e337b326730ffe9e71f61f86425d4a615c34ae29a",
@@ -6477,6 +6466,25 @@
         "layer": "product",
         "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
         "phase": "sync"
+      }
+    },
+    "finish:c01979c8-e3af-4b4d-a9f0-dd0ea7c51851:finish:4:expire:return:1454": {
+      "digest": "bb3fdb443ffc7965c985b1a65af4c95b95e4b07e2f67644f9111f3c1ba441c0a",
+      "issue": 1454,
+      "message": {
+        "kind": "return",
+        "issue": 1454,
+        "at": 1794760166402,
+        "entry": 5,
+        "notice": {
+          "key": "5:executor-admission-expired",
+          "reason": "executor-admission-expired",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794760166402,
+          "entry": 5,
+          "eventId": "finish:c01979c8-e3af-4b4d-a9f0-dd0ea7c51851:finish:4:expire:return:1454"
+        }
       }
     }
   },
