@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 14594,
-  "nextTicket": 490,
+  "revision": 14595,
+  "nextTicket": 491,
   "nextFence": 490,
   "tasks": {
     "1024": {
@@ -4812,14 +4812,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1454-floor-cache",
-      "materialSha": "57c21e67ab249d779f8a04945ef3c8455c1d294e",
+      "materialSha": "837bb4de23314f9a5e01c7ffa1d45a21ce54ee7d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 488,
-      "queued": false,
+      "ticket": 490,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794741727491,
-      "reviewEntry": 2,
+      "readyAt": 1794750916068,
+      "reviewEntry": 3,
       "patchId": "a0979c9e28323e703849b0ab36889a6d2bfe3409",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -4897,8 +4897,7 @@
         "entry": 2,
         "detail": "Браузер: active chain ink: failed; Браузер: audit 1490: failed; Браузер: bg color: failed; Браузер: binding picker: failed; Браузер: canvas frame: failed; Браузер: card reconnect: failed; Браузер: climate temp: failed; Браузер: config authority: failed; Браузер: config reload race: failed; Браузер: cover tap: failed; Браузер: decor default persist: failed; Браузер: decor group style cache: failed; Браузер: decor layer order: failed; Браузер: decor order: failed; Браузер: detached authority: failed; Браузер: device settings action: failed; Браузер: external screens: failed; Браузер: first space converter: failed; Браузер: floor cache reuse: failed; Браузер: floor cache storage: failed; Браузер: floor geometry cache: failed; Браузер: font scales: failed; Браузер: furniture: failed; Браузер: general settings: failed; Браузер: glow blending: failed; Браузер: hidden flag: failed; Браузер: hide layers: failed; Браузер: inert openings: failed; Браузер: infinite canvas: failed; Браузер: iso first frame: failed; Браузер: iso flat parity: failed; Браузер: iso floor switch: failed; Браузер: isometric contract: failed; Браузер: isometric live touch: failed; Браузер: junction limits: failed; Браузер: junction patch resilience: failed; Браузер: kiosk: failed; Браузер: kiosk viewport recovery: failed; Браузер: lazy editor chunk: failed; Браузер: lock action: failed; Браузер: multiwall junction: failed; Браузер: multiwall strip containment: failed; Браузер: nav persist: failed; Браузер: near orthogonal junction: failed; Браузер: open passage: failed; Браузер: opening drag: failed; Браузер: opening drag graph: failed; Браузер: opening entity search: failed; Браузер: opening inner distances: failed; Браузер: optimize coordinate canonicalization: failed; Браузер: optimize outcomes: failed; Браузер: panel route kiosk: failed; Браузер: partition openings: failed; Браузер: plan entry tool: failed; Браузер: plan rotation: failed; Браузер: plan signed: failed; Браузер: plan snap overlay: failed; Браузер: post write adoption: failed; Браузер: preflight diagnostics: failed; Браузер: preloader: failed; Браузер: preloader lifecycle: failed; Браузер: registryless opening: failed; Браузер: render parity: failed; Браузер: render perf: failed; Браузер: resize outer reconciliation: failed; Браузер: room autoclose: failed; Браузер: room climate placement: failed; Браузер: room dimming removed: failed; Браузер: room settings: failed; Браузер: space switch transitions: failed; Браузер: space tab reorder: failed; Браузер: styling hooks: failed; Браузер: summary camera: failed; Браузер: summary camera restore: failed; Браузер: summary first paint: failed; Браузер: summary panel: failed; Браузер: sun: failed; Браузер: sun live bg: failed; Браузер: sun rim: failed; Браузер: sun soft: failed; Браузер: svg export: failed; Браузер: toggle confirmation: failed; Браузер: unified wall tool: failed; Браузер: v8 draft write: failed; Браузер: vacuum: failed; Браузер: vacuum route recovery: failed; Браузер: view recovery: failed; Браузер: view runtime kiosk recovery: failed; Браузер: virtual light toggle: failed; Браузер: wall chain thickness: failed; Браузер: wall face overlap: failed; Браузер: wall junctions: failed; Браузер: wall key roundtrip: failed; Браузер: wall node reliability: failed; Браузер: wall paper corners: failed; Браузер: wall thickness: failed; Браузер: wall union isolation: failed; Браузер: wallthick hover width: failed; Браузер: warm dialogs: failed; Браузер: warm geometry camera: failed; Браузер: warm mode adoption: failed; Браузер: warm remount: failed; Браузер: zero walls: failed; Браузер: zoom flash: failed; Браузер: zoom out: failed",
         "eventId": "finish:e46dd4cc-9075-419a-a206-3ed09b72f10b:finish:3:return:return:1454"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1455": {
       "issue": 1455,
@@ -5263,7 +5262,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1454
+  ],
   "active": null,
   "events": {
     "github:43692634249:1:label:spec-request": {
@@ -5729,6 +5730,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa"
+      }
+    },
+    "finish:6d30c3ac-6a6e-419b-9272-85b61be9e306": {
+      "digest": "fe05816c6f060416842c4c1533c44fb8107e4a74e3eb75a04588b552d056c1be",
+      "issue": 1454,
+      "message": {
+        "kind": "queued",
+        "issue": 1454,
+        "at": 1794750916068,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "837bb4de23314f9a5e01c7ffa1d45a21ce54ee7d"
       }
     }
   },
