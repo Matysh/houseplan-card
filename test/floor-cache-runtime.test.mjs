@@ -112,6 +112,16 @@ test('#1454 live light refresh retains the accepted geometry frame, wire and per
   assert.equal(h.owner.metrics.familyFallbacks,0,'light-only response needs no geometry wire');
   h.owner.dispose();
 });
+test('#1454 repeated demanded area jobs keep their redacted producer diagnostics bounded',async()=>{
+  const a=selection('A',{}),h=harness(a);h.owner.ensure();h.reads[0].resolve(null);await flush();
+  h.jobs[0].resolve(await result(a.input));await flush();
+  h.owner.store.area=async()=>undefined;let calls=0;
+  h.owner.scheduler.run=async job=>{assert.equal(job.kind,'area');return{area:42,ms:1,
+    producer:{owner:'worker',counts:{sample:++calls}}};};
+  for(let i=0;i<70;i++)assert.equal(await h.owner.area(a.input.raw,'area-'+i,()=>true),42);
+  assert.equal(h.owner.metrics.producers.length,50);assert.equal(h.owner.metrics.producers.at(-1).counts.sample,70);
+  h.owner.dispose();
+});
 test('#1454 a late light-only refresh cannot cross navigation or authority retirement',async()=>{
   const a=selection('A',{}),h=harness(a);h.owner.ensure();h.reads[0].resolve(null);await flush();
   h.jobs[0].resolve(await result(a.input));await flush();

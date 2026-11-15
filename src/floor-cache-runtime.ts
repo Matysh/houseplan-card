@@ -203,6 +203,7 @@ export class FloorCacheRuntime {
     const result = await this.scheduler.run({ kind: 'area', raw }, 'summary');
     if (!result || !current() || result.area === undefined) return undefined;
     if (result.producer) this.metrics.producers.push(result.producer);
+    if (this.metrics.producers.length > 50) this.metrics.producers.shift();
     this.rememberArea(key, result.area);
     return result.area;
   }
