@@ -9,6 +9,8 @@
  * a physical area/coordinate epsilon, so genuine narrow holes remain holes.
  */
 const exactPaintRings=new WeakMap<object,boolean>();
+/** #1454: transport the semantic area proof, not the WeakMap itself. */
+export const exactPaintRingProof = (ring: object): boolean | undefined => exactPaintRings.get(ring);
 /** A direct arrangement proves its final binary64 ring exactly. It must not
  * lose a real narrow hole to the legacy floating roundoff heuristic. */
 export function registerExactPaintRing(ring:object,nonzero:boolean):void{exactPaintRings.set(ring,nonzero);}

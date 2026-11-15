@@ -881,6 +881,44 @@ face graph that offers rooms after a closed chain are wall contracts:
 `WALL-THICKNESS.md`, sections «Architectural connection overlay» and «Planar
 wall faces».
 
+## Derived floor preparation (#1454)
+
+Mounted View/card/kiosk surfaces prepare one requested floor before any pull
+reader can enter a heavy cache miss. `floor-cache-runtime.ts` owns navigation
+and authority fencing, `floor-geometry-frame.ts` uses the existing canonical
+algorithms, and `floor-cache-scheduler.ts` owns one isolated module worker.
+The current navigation preempts obsolete work and demanded summary-area jobs;
+unrequested hidden floors are not warmed eagerly. A blocked/crashed worker has
+one observable canonical synchronous fallback, not an unbounded retry loop.
+
+Hydration feeds the existing bodies, union, inner-contour, clean-floor,
+opening-index/tunnel, floor-paint and isometric LRUs. The lossless graph codec
+retains exact integers, shared references, non-enumerable topology and the
+direct/exact-paint/isometric semantic side tables. Clean-floor area remains
+lazy; serializing a frame must not trigger stair subtraction. The renderer's
+current-state light scene is prepared separately and never persisted.
+`geometry-work.ts` counts actual producer entries in each realm, including
+hidden full-union fallbacks; cache-hit counters alone are insufficient proof.
+
+L1 is an inert, bounded shape vocabulary, not saved SVG markup. It carries
+anonymous **calculated** frame/fit extents from the same completed view,
+including outliers and isometric overlay envelopes. Architectural bounding
+boxes cannot replace that packet. The independent SHA-256 fit key includes
+layout, decor, marker metric profiles, rotation and display dependencies.
+Nested built-in SVG viewports are flattened through their native matrices;
+images, text labels, device/live layers and executable/URL attributes are not
+serialized. The normal header/viewport measuring controller also runs during
+passive preparation. Matching fit inputs use the same camera; preview is not
+marked complete or editable. A same-floor coherent complete frame has priority
+over replacing it with L1 while a new current-state candidate is prepared.
+
+The local IndexedDB generation is optional and separate from canonical data,
+backups and assets. See `WARM-REMOUNT.md` for scope, cold hints and failure
+behavior. Targeted witnesses are `floor-cache-*.test.mjs`,
+`smoke_floor_persistent_cache.mjs`, `smoke_floor_cache_storage.mjs` and
+`performance/floor-persistent-cache.mjs`; the benchmark distinguishes cached
+display from fresh accepted current readiness and retains every sample.
+
 ## Stairs/LED editor demand (#1098)
 
 Stair previews and LED vertex points belong to the gesture until pointerup;

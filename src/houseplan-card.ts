@@ -1,4 +1,10 @@
 import { HaPlanHost } from './ha-plan-host';
+import { FloorCacheRuntime } from './floor-cache-runtime';
+import { floorCacheKeys, cacheSha256 } from './floor-cache-key';
+import { captureFloorPreview, renderFloorPreview } from './floor-cache-preview';
+import { restoreFloorGeometrySemantics, type FloorGeometryFrame } from './floor-geometry-frame';
+import { cleanFloorFromData } from './clean-floor';
+import { geometryWorkSnapshot } from './geometry-work';
 import { haValueFormatters } from './ha-value-formatters';
 import { haIntegrationMetadataSource, type IntegrationMetadataSource } from './integration-provider';
 import { acquireButtonTabFocus } from './ui-button-tab-focus';
@@ -794,6 +800,7 @@ export class HouseplanCard extends LitElement {
     install: (runtime) => {
       const from = this._effectiveProjection(); this._isoFirstFrame.runtimeReady();
       this._isoSceneRuntime = runtime;
+      this._floorPreparation?.rehydrate();
       this._isoProjectionSnapshot = null;
       const to = this._effectiveProjection();
       this._convertProjectionView(from, to);
@@ -1072,6 +1079,12 @@ export class HouseplanCard extends LitElement {
     const waiting = this._read.busy || this._read.pending;
     if (this._read.observe(context)) { this._loading = false; if (waiting) this._read.defer(); }
     if (authorityChanged) this._read.defer();
+    if (before && before.permissions.read !== environment.permissions.read) {
+      this._floorPreparation?.invalidate(); this._floorPendingMode = null;
+      this._loadOk = false;
+      if (environment.permissions.read) this._read.defer();
+    }
+    this._restoreScopedFloorHint();
     if (before && before.permissions.admin !== environment.permissions.admin) this._read.defer();
     if (!this.isConnected) return;
     if (before?.connected && !environment.connected) {
@@ -2369,6 +2382,7 @@ export class HouseplanCard extends LitElement {
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
+      this._floorPendingMode = null;
       this._stairsView.clearArrival();
       this._modeEditorInk.clear();
       this._modeProjectionScene = null;
@@ -2753,6 +2767,130 @@ export class HouseplanCard extends LitElement {
   private _cleanFloorCache = new Map<string, CleanFloorResult>();
   private _innerContourCache = new Map<string, number[][] | null>();
   private readonly _cleanFloorKey = floorGeometryKeyReader(this as unknown as FloorKeySource, cleanFloorFingerprint);
+  private _floorPreparation: FloorCacheRuntime | null = null;
+  private _floorPrepareMemo: { raw: unknown; model: unknown; epoch: number; keys: ReturnType<typeof floorCacheKeys> } | null = null;
+  private _floorFitMemo: { signature: unknown[]; key: string } | null = null;
+  private _floorLightMemo: { signature: unknown[]; value: ReturnType<typeof resolveLightBarrierRevision> } | null = null;
+  private _floorPendingMode: 'plan' | 'devices' | 'decor' | null = null;
+  private _floorPublishing = false;
+  private _floorPaintObserving = false;
+  private _floorRestoreZoom: boolean | null = null;
+  private _floorCompleteSpace = '';
+  private _floorCompleteAuthority?: object;
+  private _floorHolding = false;
+  private _floorPassive = false;
+  private _floorPreparedRooms: { frame: FloorGeometryFrame; clean: Map<string, CleanFloorResult> } | null = null;
+  private _floorPreviewDiagnostic: { shapes: number; invalid: string[] } | null = null;
+  public houseplanFloorCacheDiagnostics() { return { cache: this._floorPreparation?.diagnostic, main: geometryWorkSnapshot(), preview: this._floorPreviewDiagnostic }; }
+  private _floorCacheSelection() {
+    const env = this.planHost.environment;
+    if (!this.isConnected || !env.ready || !env.permissions.read || this._mode !== 'view'
+      || !this._serverCfg || this._fixedFloorState().kind === 'pending'
+      || this._fixedFloorState().kind === 'invalid') return null;
+    const raw = this._curSpaceCfg, space = this._spaceModel();
+    const model = this._renderCfg?.spaces.find(record => record.id === space?.id);
+    if (!raw || !space || !model) return null;
+    let memo = this._floorPrepareMemo;
+    if (!memo || memo.raw !== raw || memo.model !== model || memo.epoch !== this._cfgEpoch)
+      memo = this._floorPrepareMemo = { raw, model, epoch: this._cfgEpoch,
+        keys: floorCacheKeys(model, raw, this._cellCm, this._gridPitch) };
+    const projection = this._desiredProjection;
+    const summaryFit = this._summary?.cacheFitInputs() ?? null;
+    const signature = [raw, this._layout, this._devices, this.planHost.capabilities, this._config, this._settings,
+      this._rotation, this._showFar, this._effectiveKioskScale.icon, this._effectiveKioskScale.font, this._decorAssets.size,
+      this._presentation.themes, this._presentation.language, summaryFit, this.ownerDocument.fonts?.status,
+      window.innerWidth, window.innerHeight, window.devicePixelRatio];
+    let fit = this._floorFitMemo;
+    if (!fit || signature.some((value, index) => value !== fit!.signature[index])) {
+      fit = this._floorFitMemo = { signature, key: cacheSha256([memo.keys.geometry,
+        // Fit depends on positions and metric profiles, never saved HA values.
+        this._layout, this._displayDevices.filter(d => d.space === space.id).map(d => [d.id, d.hidden, this._pos(d), d.name]),
+        raw, this._markers, this._config, this._settings, this._rotation, this._showFar,
+        this._effectiveKioskScale, [...this._decorAssets.keys()].sort(), this._externalScreen,
+        this._presentation.themes, this._presentation.language, summaryFit, this.ownerDocument.fonts?.status,
+        window.innerWidth, window.innerHeight, window.devicePixelRatio]) };
+    }
+    const lightSignature = [raw, space, this._cfgEpoch, this._renderPlanHass.states, this._renderDeviceSnapshot,
+      projection, this._spaceDisplayForRender().showBorders];
+    let lightMemo = this._floorLightMemo;
+    if (!lightMemo || lightSignature.some((value, index) => value !== lightMemo!.signature[index])) {
+      lightMemo = this._floorLightMemo = { signature: lightSignature, value: resolveLightBarrierRevision({ rawSpaceConfig: raw, space, openings: this._openingsR,
+      cellCm: this._cellCm, gridPitch: this._gridPitch,
+      closedDoorPlacement: projection === 'iso' && this._spaceDisplayForRender().showBorders ? 'iso-volume' : 'flat',
+      openingAmount: opening => this._openingAmt(opening),
+      openingIntervals: opening => openingTransmissionIntervals(opening,
+        eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null),
+      geometryFingerprint: this._liveRt?.geometry(raw),
+      }) };
+    }
+    return { authority: this.planHost.authorityKey, connection: env.connectionRevision || 0,
+      scope: this.planHost.cacheScope,
+      input: { raw: model, floorKey: this._floorKey(space.id), cleanKey: this._cleanFloorKey(space.id), projection },
+      persistentKey: `${memo.keys.geometry}|${projection}${projection === 'iso' ? '|' + memo.keys.iso : ''}`, fitKey: fit.key, light: lightMemo.value };
+  }
+  private _ensureFloorPreparation(): boolean {
+    if (!this._floorPreparation) this._floorPreparation = new FloorCacheRuntime({
+      selection: () => this._floorCacheSelection(),
+      hydrate: (frame, light) => this._hydrateFloorGeometry(frame, light),
+      contains: (frame, light) => this._physicalBodiesPool.get(frame.bodies.key) === frame.bodies
+        && this._wallUnionPool.get(frame.union.key) === frame.union
+        && this._openingWallIndexCache.get(frame.openingIndex.key) === frame.openingIndex.value
+        && this._openingTunnelPool.get(frame.tunnels.key) === frame.tunnels
+        && this._roomFloorPaintPool.get(frame.floorPaint.key) === frame.floorPaint
+        && (!frame.iso || !this._isoSceneRuntime || this._isoGeometryCache.has(frame.iso.key))
+        && (!light || this._lightBarrierCache?.value === light),
+      changed: () => {
+        this._isoProjectionSnapshot = null;
+        if (!this._floorPreparation?.pending && this._floorRestoreZoom !== null) {
+          const carousel = this._floorRestoreZoom; this._floorRestoreZoom = null; this._restoreZoom(carousel);
+        } else if (!this._floorPreparation?.pending) this._refitView();
+        this.requestUpdate();
+      },
+    });
+    return this._floorPreparation.ensure();
+  }
+  private _hydrateFloorGeometry(frame: FloorGeometryFrame, light: unknown): void {
+    const raw = this._curSpaceCfg, space = this._spaceModel();
+    if (!raw || !space || space.id !== frame.id) return;
+    restoreFloorGeometrySemantics(frame, raw);
+    lruWrite(this._physicalBodiesPool, frame.bodies.key, frame.bodies, 8); this._physicalBodiesCache = frame.bodies;
+    writeWallUnionPool(this._wallUnionPool, frame.union); this._wallUnionCache = frame.union;
+    for (const [key, value] of frame.inner) lruWrite(this._innerContourCache, key, value, 600);
+    const clean = new Map(frame.clean.map(([key, value]) => [key, cleanFloorFromData(value, space.stairs)]));
+    this._floorPreparedRooms = { frame, clean };
+    for (const [key, value] of clean) lruWrite(this._cleanFloorCache, key, value, 600);
+    lruWrite(this._openingWallIndexCache, frame.openingIndex.key, frame.openingIndex.value, 4);
+    lruWrite(this._openingTunnelPool, frame.tunnels.key, frame.tunnels, 8); this._openingTunnelCache = frame.tunnels;
+    lruWrite(this._roomFloorPaintPool, frame.floorPaint.key, frame.floorPaint, 8); this._roomFloorPaintCache = frame.floorPaint;
+    if (frame.iso && this._isoSceneRuntime) {
+      const entry = this._isoSceneRuntime.restoreIsoCache(frame.iso.value);
+      lruWrite(this._isoGeometryCache, frame.iso.key, entry, 8);
+    }
+    if (light && typeof light === 'object' && 'fingerprint' in light) {
+      const entry = { key: `${space.id}|${light.fingerprint}`, value: light as NonNullable<typeof this._lightBarrierCache>['value'] };
+      lruWrite(this._lightBarrierPool, entry.key, entry, 8); this._lightBarrierCache = entry;
+    }
+  }
+  public _prepareSummaryFloorArea(raw: ServerConfig['spaces'][number], accepted: () => boolean) {
+    const key = floorCacheKeys(raw, raw, raw.cell_cm || 5, GRID_PITCH).clean;
+    return this._floorPreparation?.area(raw, key, accepted) ?? Promise.resolve(undefined);
+  }
+  public _publishSummaryFloorAreas(values: Array<{ raw: ServerConfig['spaces'][number]; value: number | null }>, epoch: number): void {
+    const owner = this.planHost.authorityKey, runtime = this._floorPreparation;
+    if (!runtime) return;
+    this.requestUpdate();
+    void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+      .then(() => {
+        const accepted = () => this.isConnected && this.planHost.authorityKey === owner && this._loadOk
+          && this._cfgEpoch === epoch && !this._cfgWriting && !this._writesPending && this._mode === 'view'
+          && !!this._adoption.snapshot(null) && runtime === this._floorPreparation;
+        if (!accepted()) return;
+        for (const { raw, value } of values) if (this._serverCfg?.spaces.includes(raw)) {
+          const key = floorCacheKeys(raw, raw, raw.cell_cm || 5, GRID_PITCH).clean;
+          runtime.persistArea(raw, key, value, accepted);
+        }
+      });
+  }
   private readonly _floorKey = floorGeometryKeyReader(this as unknown as FloorKeySource); // #744: key of the four caches above
   private readonly _glowRuntimeState: GlowRuntimeState = createGlowRuntimeState();
   private readonly _lightBarrierPass = new LightBarrierPass();
@@ -3721,6 +3859,7 @@ export class HouseplanCard extends LitElement {
   };
 
   public connectedCallback(): void {
+    this._floorPreparation = null;
     const shortReturn = this._detachSubscriptionsTimer !== undefined;
     clearTimeout(this._detachSubscriptionsTimer); this._detachSubscriptionsTimer = undefined;
     if (shortReturn && this._loadOk && (!this._unsubCfg || !this._unsubLayout)) this._read.defer();
@@ -3842,6 +3981,7 @@ export class HouseplanCard extends LitElement {
   private _buttonTabFocusRelease: (() => void) | null = null;
 
   public disconnectedCallback(): void {
+    this._floorPreparation?.dispose(); this._floorPreparation = null; this._floorPendingMode = null;
     this._buttonTabFocusRelease?.();
     this._buttonTabFocusRelease = null;
     ++this._headerActionsRequest; this._headerActionsMenu?.dispose();
@@ -4415,17 +4555,9 @@ export class HouseplanCard extends LitElement {
       const ks = JSON.parse(localStorage.getItem(LS_KIOSK) || 'null');
       this._kioskScale = { icon: clampScale(ks?.icon), font: clampScale(ks?.font) };
     } catch { /* defaults */ }
-    // instant render from cache (stale-while-revalidate): show the plan and icons
-    // right away, without waiting for the server response — fresh data will load in the background.
-    try {
-      const c = JSON.parse(localStorage.getItem(LS_CFG) || 'null');
-      if (this._adoption.restoreCached(c)) {
-        this._seedDecorStyle(this._serverCfg);
-        this._cfgEpoch++;
-        this._virtualLights = virtualLightSnapshot(c.virtual_lights, this._cfgRev);
-        this._serverStorage = true;
-      }
-    } catch { /* ignore */ }
+    // The global LS_CFG stays wire-compatible for the static card and rollback,
+    // but only a proven user/installation-scoped hint may paint before fresh IO.
+    this._restoreScopedFloorHint();
     this._adoptInitialSpace(this._model, this._loadOk);
     // HP-1551: the saved per-space zoom used to be applied only by
     // _restoreZoom()'s rAF after the server round-trip, so the cached config
@@ -4855,10 +4987,62 @@ export class HouseplanCard extends LitElement {
       );
       // Only server-confirmed bodies enter the cold display hint (#890).
       const snapshot = this._adoption.snapshot(virtualLightWire(this._virtualLights));
-      if (snapshot) localStorage.setItem(LS_CFG, JSON.stringify(snapshot));
+      if (snapshot) {
+        localStorage.setItem(LS_CFG, JSON.stringify(snapshot));
+        const scope = this.planHost.cacheScope;
+        if (scope) localStorage.setItem(`houseplan_scoped_hint_v1:${cacheSha256(scope)}`,
+          JSON.stringify({ version: 1, scope, snapshot }));
+      }
     } catch {
       /* ignore */
     }
+  }
+
+  private _restoreScopedFloorHint(): void {
+    const scope = this.planHost.cacheScope, environment = this.planHost.environment;
+    if (!scope || !environment.ready || !environment.permissions.read || this._serverCfg) return;
+    try {
+      const text = localStorage.getItem(`houseplan_scoped_hint_v1:${cacheSha256(scope)}`);
+      if (!text || text.length > 16 * 1024 ** 2) return;
+      const hint = JSON.parse(text);
+      if (hint?.version !== 1 || hint.scope !== scope || !this._adoption.restoreCached(hint.snapshot)) return;
+      this._seedDecorStyle(this._serverCfg); this._cfgEpoch++;
+      this._virtualLights = virtualLightSnapshot(hint.snapshot.virtual_lights, this._cfgRev);
+      this._serverStorage = true;
+      this._adoptInitialSpace(this._model, false);
+    } catch { /* missing/private/legacy unscoped data is a one-time miss */ }
+  }
+
+  private _publishFloorCacheAfterPaint(): void {
+    const runtime = this._floorPreparation;
+    if (!runtime || runtime.pending || this._floorPublishing || !this._loadOk || this._mode !== 'view'
+      || !runtime.publicationNeeded && !this._floorPendingMode
+      || this._booting || this._bootFading || this._modeTransitionBusy || this._continuity.state !== 'steady'
+      || !this._continuity.hasCompleteFrame || !this._continuityAssetsReady()) return;
+    const raw = this._curSpaceCfg, space = this._space, owner = this.planHost.authorityKey;
+    const selection = this._floorCacheSelection(); if (!selection) return;
+    const accepted = () => {
+      const snapshot = this._adoption.snapshot(null);
+      return this.isConnected && this.planHost.authorityKey === owner && this._space === space && this._mode === 'view'
+        && this._loadOk && !this._cfgWriting && !this._writesPending && !this._modeTransitionBusy
+        && !this._rotationMotion.running
+        && !this._settingsDialog && !this._spaceDialog && !this._markerDialog && !this._roomDialog
+        && this._curSpaceCfg === raw && !!snapshot
+        && snapshot.config_fingerprint === this._adoption.configFingerprint
+        && snapshot.layout_fingerprint === this._adoption.layoutFingerprint;
+    };
+    this._floorPublishing = true;
+    void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+      .then(() => {
+        if (!accepted() || runtime !== this._floorPreparation || runtime.pending) return;
+        if (runtime.publicationNeeded) {
+          const base = this._baseVb();
+          const fit = { frame: this._frameOf(), base, display: this._displayBase(base), projection: this._renderProjection, rotation: this._rotation };
+          const preview = captureFloorPreview(this.renderRoot, fit, selection.fitKey, diagnostic => { this._floorPreviewDiagnostic = diagnostic; });
+          if (preview) runtime.publish(preview, accepted);
+        }
+        if (this._floorPendingMode) { const mode = this._floorPendingMode; this._floorPendingMode = null; this._setMode(mode); }
+      }).finally(() => { this._floorPublishing = false; });
   }
 
   private _beginContinuityCandidate(
@@ -5446,6 +5630,40 @@ export class HouseplanCard extends LitElement {
     this._cfgPass.run(() => this._updatedModeReadScope(changed));
   }
   private _updatedModeReadScope(changed: PropertyValues): void {
+    if (this._floorPreparation?.pending || this._floorPassive) {
+      this._syncPlanViewportObservers();
+      this._summary?.updated();
+      if (this._floorPreparation?.preview) {
+        // The first observer delivery can precede L1. Reuse the ordinary
+        // measured camera once the fit packet arrives; do not paint a square
+        // provisional aspect on a narrow/quarter-turned stage.
+        const size = this._lastValidStageSize;
+        const stage = this._stageEl;
+        if (!this._usesScreenCamera && stage && (!size
+          || Math.abs(size[0] - stage.clientWidth) > .5 || Math.abs(size[1] - stage.clientHeight) > .5)) this._refitView();
+        this._syncScreenCamera();
+        const next = this._lastValidStageSize;
+        if (next && (!size || next[0] !== size[0] || next[1] !== size[1])) this.requestUpdate();
+      }
+      if (this._floorHolding) this._stageEl?.setAttribute('inert', '');
+      const runtime = this._floorPreparation, token = runtime?.paintToken;
+      if (this._floorPassive && runtime && token) void this.updateComplete.then(() =>
+        new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+        .then(() => { if (this._floorPassive && runtime === this._floorPreparation
+          && this.renderRoot.querySelector('[data-hp-cache-preview]')) runtime.markPreviewPaint(token); });
+      return;
+    }
+    if (!this._floorPaintObserving && this._mode === 'view') {
+      const runtime = this._floorPreparation, token = runtime?.paintToken, space = this._space, owner = this.planHost.authorityKey;
+      this._floorPaintObserving = true;
+      void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+        .then(() => { if (this.isConnected && runtime === this._floorPreparation && token === runtime?.paintToken && space === this._space
+          && owner === this.planHost.authorityKey && !this._booting && !this._bootFading
+          && this._continuity.state === 'steady' && this._continuity.hasCompleteFrame && this._continuityAssetsReady()) runtime?.markPaint(this._loadOk); })
+        .finally(() => { this._floorPaintObserving = false;
+          if (this.isConnected && runtime === this._floorPreparation && token !== runtime?.paintToken) this.requestUpdate(); });
+    }
+    this._publishFloorCacheAfterPaint();
     this._modePresentationNodes.clear();
     this._modePresentation.adoptRenderedStyles();
     this._syncModeRoomHooks();
@@ -5468,9 +5686,41 @@ export class HouseplanCard extends LitElement {
     this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
     // Decor selection cannot exist before the lazy editor runtime is ready.
     if (this._editorRuntime) this._dtMeasure();
+    const stage = this._syncPlanViewportObservers();
+    this._syncScreenCamera();
+    if (!this._usesScreenCamera && stage && !this._view) this._refitView();
+    this._editorSecondary?.afterRender();
+    this._settleContinuityFrame(!changed.has('_continuityEpoch') || changed.size > 1);
+    // onboarding: on an empty server config, open the space dialog right away
+    if (
+      this._serverStorage &&
+      this._loadOk &&
+      this._canManageConfiguration && !this._kiosk &&
+      this._model.length === 0 &&
+      !this._spaceDialog &&
+      !this._importDialog &&
+      !this._backupImportDialog &&
+      !this._backupImportIntent.loading &&
+      !this._onboardingShown
+    ) {
+      this._onboardingShown = true;
+      const floors = floorsOf(this.hass);
+      if (floors.length) {
+        this._importDialog = { floors: floors.map((f) => ({ ...f, checked: true })) };
+      } else {
+        this._openSpaceDialog('create');
+      }
+    }
+    if (this._modeTransition.state && this._modeTransitionVisual)
+      this._paintModePresentation(this._modeTransitionVisual);
+    this._modeSceneFinishPending = false;
+    this._editorRuntime?.scheduleModeLayouts();
+  }
+
+  private _syncPlanViewportObservers(): HTMLElement | null {
     const stage = this._stageEl;
     const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
-    if (this._recoveryViewport) this._restoreKioskViewport();
+    if (!this._floorPreparation?.pending && this._recoveryViewport) this._restoreKioskViewport();
     // A mounted authority reload can replace the stage without disconnecting
     // the card. Retire the old element lease before binding the new surface.
     if (this._resizeTargets?.stage !== stage || this._resizeTargets?.header !== hdr) {
@@ -5590,34 +5840,7 @@ export class HouseplanCard extends LitElement {
         }
       }
     }
-    this._syncScreenCamera();
-    if (!this._usesScreenCamera && stage && !this._view) this._refitView();
-    this._editorSecondary?.afterRender();
-    this._settleContinuityFrame(!changed.has('_continuityEpoch') || changed.size > 1);
-    // onboarding: on an empty server config, open the space dialog right away
-    if (
-      this._serverStorage &&
-      this._loadOk &&
-      this._canManageConfiguration && !this._kiosk &&
-      this._model.length === 0 &&
-      !this._spaceDialog &&
-      !this._importDialog &&
-      !this._backupImportDialog &&
-      !this._backupImportIntent.loading &&
-      !this._onboardingShown
-    ) {
-      this._onboardingShown = true;
-      const floors = floorsOf(this.hass);
-      if (floors.length) {
-        this._importDialog = { floors: floors.map((f) => ({ ...f, checked: true })) };
-      } else {
-        this._openSpaceDialog('create');
-      }
-    }
-    if (this._modeTransition.state && this._modeTransitionVisual)
-      this._paintModePresentation(this._modeTransitionVisual);
-    this._modeSceneFinishPending = false;
-    this._editorRuntime?.scheduleModeLayouts();
+    return stage;
   }
 
   // ================= server: config + layout =================
@@ -7539,6 +7762,11 @@ export class HouseplanCard extends LitElement {
   private _contentFrameMemo: { model: SpaceModel; layout: unknown; devs: unknown; missingDecor: boolean;
     value: ReturnType<typeof contentFrame> } | null = null;
   private _frameOf(): { rect: Rect; all: Rect; outliers: number; hasContent: boolean } {
+    if (this._floorPassive && this._floorPreparation?.preview) return this._floorPreparation.preview.fit.frame;
+    if (!this._ensureFloorPreparation()) {
+      const fallback = { x: 0, y: 0, w: NORM_W, h: NORM_W };
+      return this._floorPreparation?.fit?.frame || { rect: fallback, all: fallback, outliers: 0, hasContent: false };
+    }
     const m = this._spaceModel();
     if (!m) {
       this._frame = null;
@@ -7665,6 +7893,8 @@ export class HouseplanCard extends LitElement {
     console.warn('HOUSEPLAN ISO FALLBACK: #89/#160', safeRuntimeDiagnostic('structural', fingerprint, true));
   }
   private _effectiveProjection(): 'flat' | 'iso' {
+    if (this._floorPassive && this._floorPreparation?.preview) return this._floorPreparation.preview.fit.projection;
+    if (!this._ensureFloorPreparation()) return this._desiredProjection;
     if (this._isoProjectionSnapshot) return this._isoProjectionSnapshot;
     const finish = (value: 'flat' | 'iso') => this._isoProjectionSnapshot = value;
     const fallback = () => { if (this._renderProjection === 'iso') { this._cancelCameraTransition(false); this._view = null;  } return finish('flat'); };
@@ -7728,6 +7958,8 @@ export class HouseplanCard extends LitElement {
     projection: 'flat' | 'iso' = this._effectiveProjection(),
     scene: IsoRenderScene | null = this._renderIsoScene,
   ): number[] {
+    if (this._floorPassive && this._floorPreparation?.preview) return this._floorPreparation.preview.fit.base;
+    if (!this._ensureFloorPreparation()) return this._floorPreparation?.fit?.base || [0, 0, NORM_W, NORM_W];
     if (projection === 'iso') {
       // No-borders is the accepted no-volume scene. Stage 2/3/4 structure and
       // raised overlays are absent there, so invisible wall/opening/overlay
@@ -7921,6 +8153,7 @@ export class HouseplanCard extends LitElement {
     this._rotationMotion.rotate(direction);
   }
   private _displayBase(vb = this._baseVb()): FrameRect {
+    if (this._floorPassive && this._floorPreparation?.preview) return this._floorPreparation.preview.fit.display;
     if (this._effectiveProjection() === 'iso') {
       if (this._renderIsoScene) return this._renderIsoScene.frame;
       return projectedFrame({ rect: this._frameOf().rect, wallHeight: 0 }, isoCameraFor(this._rotation));
@@ -8116,6 +8349,7 @@ export class HouseplanCard extends LitElement {
 
   /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
+    if (this._floorPreparation?.pending && !this._floorPreparation.fit) return;
     if (this._modeTransitionBusy || this._warmModeRequest) return;
     if (this._usesScreenCamera) { this._summary?.resized(); this.requestUpdate(); return; }
     const stage = this._stageEl;
@@ -8297,6 +8531,10 @@ export class HouseplanCard extends LitElement {
 
   /** Restore the saved space zoom and center the plan. */
   private _restoreZoom(carousel = false): void {
+    if (!this._ensureFloorPreparation()) {
+      this._floorRestoreZoom = carousel;
+      this._zoom = this._zoomBySpace[this._space] || 1; this._view = null; this.requestUpdate(); return;
+    }
     if (this._hasScreenProfile) { this._restoreScreenReference(); return; }
     this._clearRoomFocus(true);
     this._cancelCameraTransition(false);
@@ -9175,6 +9413,10 @@ export class HouseplanCard extends LitElement {
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true, warm = false): void {
+    if (mode !== 'view' && (!this._ensureFloorPreparation() || !this._loadOk)) {
+      this._floorPendingMode = mode; return;
+    }
+    this._floorPendingMode = null;
     if (mode === 'devices' && !hasMarkers(this.planHost.capabilities)) return;
     if (!warm) this._cancelPendingWarmMode();
     if (mode !== this._mode) {
@@ -10469,6 +10711,10 @@ export class HouseplanCard extends LitElement {
   ): number[][] | null {
     const cutsKey = openCuts.map((cut) => cut.join(',')).join(';');
     const key = `${this._floorKey(space.id)}|${roomId}|${cutsKey}`;
+    if (this._mode === 'view' && this._floorPreparedRooms?.frame.floorKey === this._floorKey(space.id)) {
+      const prepared = this._floorPreparedRooms.frame.inner.find(([candidate]) => candidate === key);
+      if (prepared) return prepared[1];
+    }
     // #744: one answer per floor content (a resize preview is its own record).
     const cached = lruRead(this._innerContourCache, key);
     if (cached.hit) return cached.value;
@@ -11109,6 +11355,11 @@ export class HouseplanCard extends LitElement {
   private _cleanFloor(
     room: RoomCfg, floor: number[][], space: SpaceModel | undefined = this._spaceModel(),
   ): CleanFloorResult {
+    if (this._mode === 'view' && space && this._floorPreparedRooms?.frame.cleanKey === this._cleanFloorKey(space.id)) {
+      const key = `${this._floorPreparedRooms.frame.cleanKey}|${room.id || '#' + space.rooms.indexOf(room)}`;
+      const prepared = this._floorPreparedRooms.clean.get(key);
+      if (prepared) return prepared;
+    }
     return cleanFloorForRoom({
       room, floor, space, floorKey: this._cleanFloorKey,
       resizePreview: !!this._resize?.preview,
@@ -12276,7 +12527,9 @@ export class HouseplanCard extends LitElement {
    * while the independent confirmation child is removed during a warm gate. */
   private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
     if (this._tapConfirm || this._kioskDialog || this._backdropGuard) ensureCompactDialogStyles(this);
-    return html`${body}${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;
+    return html`${body}${this._floorHolding ? html`<div class="editorloading hpf-loading-pill hpf-motion" role="status" aria-live="polite">
+      <ha-icon icon="mdi:loading"></ha-icon><span>${this._t('plan.updating')}</span></div>` : nothing}
+      ${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {
@@ -12303,8 +12556,127 @@ export class HouseplanCard extends LitElement {
     } // The fingerprint pass includes lazy Lit directives, and ends before updated().
   }
 
+  /** One chrome template for passive preparation and the complete scene. */
+  private _renderPlanHeader(): TemplateResult {
+    const navigationSpaces = this._headerNavigationSpaces;
+    const compactSpaces = this._compactSpaces && !this._kiosk && !!customElements.get('hp-settings-select');
+    const modeVisual = this._modeTransitionVisual;
+    const editorChromeMode = this._mode === 'view' ? this._editorChromeMode : this._mode;
+    const warmHeaderHeight = (this._pendingNavMode || this._warmModeRequest)
+      && warmCameraUnchanged(this._view, this._warmVp) && this._warmSlot?.ownHdrH;
+    const editorClose = html`<span class="editor-close-slot" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>${this._mode !== 'view' ? html`<button
+          class="closex" data-hp-tooltip=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')} data-hp="editor-close" data-editor-navigation="view"
+          @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`
+      : nothing}</span>`;
+    return html`
+        <div class="hdr ${this._kiosk ? 'kioskhide' : ''}"
+          data-panel-flow=${this._panelHeaderChoice.phase}
+          ?data-panel-phone=${this._panelHeaderChoice.phone}
+          data-panel-mode=${this._mode} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
+        <div class="head hpf-chrome-group" ?data-hp-properties-wide=${this._editorRuntime?.properties.wide} style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
+          ${this._renderPanelMenu()}
+          <button type="button" class="btn hpf-icon-action header-actions-trigger" data-hp="header-actions-trigger"
+            aria-haspopup="menu" aria-expanded=${this._headerActionsMenu?.open ? 'true' : 'false'}
+            @click=${this._openHeaderActions} aria-label=${this._t('panel.actions')} data-hp-tooltip=${this._t('panel.actions')}>
+            <ha-icon icon="mdi:dots-vertical"></ha-icon>
+          </button>
+          ${renderHeaderSpaceNavigation({
+            spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces, collapsed: this._panelHeaderChoice.phase === 5,
+            labels: { spaces: this._t('nav.spaces'), configure: this._t('title.configure_space'), add: this._t('title.add_space') },
+            reorderable: this._canReorderTabs && navigationSpaces.length > 1 && this._mode !== 'view', drag: this._tabDrag,
+            pick: id => this._pickSpace(id), tabClick: id => this._tabClick(id),
+            pointerMove: event => this._tabPointerMove(event), pointerDown: (event, id) => this._tabPointerDown(event, id),
+            pointerUp: event => this._tabPointerUp(event), cancelDrag: () => this._endTabDrag(),
+            configure: this._norm && this._canEdit ? id => this._openSpaceDialog('edit', id) : null,
+            // Add-space remains navigation in every mode; kiosk and fixed-floor omit it.
+            create: this._canEdit && !this._kiosk && !this._hasFixedFloor ? () => this._openSpaceDialog('create') : null,
+          })}
+          ${this._canEdit
+            ? html`<div class="modes hpf-navigation hpf-nav-modes">
+                ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:chip'], ['decor', 'mdi:palette']] as const).filter(([mode]) => mode !== 'devices' || hasMarkers(this.planHost.capabilities)).map(
+                  ([m, ic]) => html`<button class="modetab hpf-nav-item ${this._mode === m ? 'active' : ''}"
+                    data-hp="mode-tab" data-mode=${m} data-editor-navigation=${m}
+                    data-hp-tooltip=${this._t(('mode.' + m + '_tip') as any)}
+                    aria-label=${this._t(`mode.${m}` as const)}
+                    @click=${() => this._setMode(m)}>
+                    <ha-icon class="panel-mode-compact" icon=${ic}></ha-icon>
+                    <ha-icon class="panel-mode-full" icon="mdi:pencil" aria-hidden="true"></ha-icon>
+                    <span class="panel-mode-full">${this._t(('mode.' + m + '_short') as I18nKey)}</span>
+                  </button>${this._mode === m ? editorClose : nothing}`,
+                )}
+                ${this._mode === 'view' ? editorClose : nothing}
+              </div>`
+            : nothing}
+          <span class="spacer"></span>
+          <div class="header-actions" ?inert=${!!this._floorPreparation?.pending}>
+          <div class="zoomctl hpf-icon-group hpf-camera-group">
+            ${this._kiosk ? nothing : renderPlanRotationControls(key => this._t(key), direction => this._rotatePlan(direction))}
+            <button class="btn zb hpf-icon-action" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} data-hp-tooltip=${this._t('title.zoom_out')} aria-label=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
+            ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
+                   zoom" renamed rather than duplicated. No longer disabled at
+                   zoom 1: at zoom 1 panned off to the side it still has work. */}
+            <button class="btn zb hpf-icon-action" data-hp="zoom-fit" @click=${() => this._fitAll()}
+              data-hp-tooltip=${this._t('title.zoom_fit')} aria-label=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
+            <button class="btn zb hpf-icon-action" data-hp="zoom-in" @click=${() => this._stepZoom(1)} data-hp-tooltip=${this._t('title.zoom_in')} aria-label=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
+          </div>
+          ${this._kiosk || !hasMarkers(this.planHost.capabilities) ? nothing : renderHiddenDevicesToggle((k) => this._t(k), this._showHidden, () => this._setShowHidden(!this._showHidden))}
+          ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this.planHost.capabilities.printing ? this._openPdfDialog : undefined, support: this._openSupportDialog }) : nothing}
+          ${!this._kiosk && this.planHost.capabilities.summary ? this._summary?.renderControls() : nothing}
+          </div>
+        </div>
+        ${this._canEdit && !this._kiosk
+          ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"
+              style=${modeVisual ? `height:${modeVisual.editorChromeHeight}px;opacity:${modeVisual.editorWeight}` : nothing}
+              aria-hidden=${this._editing ? 'false' : 'true'}
+              ?inert=${!this._editing}>
+              <div class="editorchrome-inner"
+                style=${modeVisual ? `opacity:${modeVisual.toolbarContentOpacity}` : nothing}>
+                ${this._editorRuntime
+                  ? editorChromeMode === 'plan'
+                    ? this._renderMarkupBar()
+                    : editorChromeMode === 'devices'
+                      ? this._renderDevicesBar()
+                      : this._renderDecorBar()
+                  : nothing}
+              </div>
+            </div>`
+          : nothing}
+        </div>`;
+  }
+
+  /** No ordinary scene/pull producer runs behind this passive preparation
+   * surface. Navigation remains live; old marker DOM is not retained below it. */
+  private _renderPendingFloor(): TemplateResult {
+    this._floorPassive = true;
+    const preview = this._floorPreparation?.preview || null;
+    const base = preview?.fit.base || [0, 0, NORM_W, NORM_W];
+    const view = this._viewOr(base);
+    const disp = this._spaceDisplayForRender();
+    return html`<ha-card data-hp-state="preparing" data-hp-mode="view" data-hp-floor-cache="pending">
+      ${this._renderPlanHeader()}
+      <div class="stage mode-view" data-hp-floor-cache=${preview ? 'preview' : 'preparing'}
+        style=${styleMap({ height: this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`,
+          background: this._stageBg(disp) || undefined, '--wall-fill': disp.wallFill.c })}>
+        <div class="zoomwrap" inert style="pointer-events:none">
+          <svg class="plan-svg" data-hp-cache-preview data-hp-live-viewbox="camera" aria-hidden="true" viewBox="${view.x} ${view.y} ${view.w} ${view.h}">
+            ${renderFloorPreview(preview)}
+          </svg>
+        </div>
+        <div class="editorloading hpf-loading-pill hpf-motion" role="status" aria-live="polite">
+          <ha-icon icon="mdi:loading"></ha-icon><span>${this._t('plan.updating')}</span>
+        </div>
+        ${this.planHost.capabilities.summary ? this._summary?.renderMeasure() : nothing}
+        ${this.planHost.capabilities.summary ? this._summary?.renderPanel() : nothing}
+      </div><div data-hp="toast-portal"></div>
+    </ha-card>`;
+  }
+
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
-    if (!this._config || !this.planHost.environment.ready) return nothing;
+    this._floorHolding = false; this._floorPassive = false;
+    if (!this._config || !this.planHost.environment.ready || !this.planHost.environment.permissions.read) {
+      this._floorPreparation?.invalidate(); this._floorPendingMode = null; return nothing;
+    }
+    this._floorPreparation?.ensure();
     const terminalFrame = this._terminalFrame;
     this._terminalFrame = 0;
     if (terminalFrame === 1) return noChange;
@@ -12410,6 +12782,17 @@ export class HouseplanCard extends LitElement {
     }
     const space = this._spaceModel();
     if (!space) return nothing;
+    if (!this._ensureFloorPreparation()) {
+      if (this._floorCompleteSpace === space.id && this._floorCompleteAuthority === this.planHost.authorityKey
+        && this._mode === 'view' && this.renderRoot.querySelector('.stage:not([data-hp-floor-cache])')) {
+        this._floorHolding = true; return noChange;
+      }
+      return this._renderPendingFloor();
+    }
+    // L1 stays visible until the existing boot window can reveal the complete
+    // frame; swapping it for hpboot-hidden live DOM would introduce a blank gap.
+    if (this._booting && this._floorPreparation?.preview) return this._renderPendingFloor();
+    this._floorCompleteSpace = space.id; this._floorCompleteAuthority = this.planHost.authorityKey;
     this._editorRuntime?._beginResizeBaseFrame();
     const navigationSpaces = this._headerNavigationSpaces;
     const compactSpaces = this._compactSpaces && !this._kiosk && !!customElements.get('hp-settings-select');
@@ -12488,10 +12871,6 @@ export class HouseplanCard extends LitElement {
     const stripe = 2 * (hatchStep / HATCH_BASE_STEP_UNITS);
     const wallHatch = svg`<defs><pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
         width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)"><path d="M0 0 L0 ${hatchStep}" stroke="${disp.color || '#607d8b'}" stroke-width="${stripe}"></path></pattern></defs>`;
-    const editorClose = html`<span class="editor-close-slot" aria-hidden=${this._mode === 'view' ? 'true' : nothing}>${this._mode !== 'view' ? html`<button
-          class="closex" data-hp-tooltip=${this._t('title.close_editor')} aria-label=${this._t('title.close_editor')} data-hp="editor-close" data-editor-navigation="view"
-          @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}><ha-icon icon="mdi:close"></ha-icon></button>`
-      : nothing}</span>`;
     const sceneSpace = space;
     const renderRooms = (roomMode: HouseplanMode, canonical = true): TemplateResult => {
       const planRoom = roomMode === 'plan';
@@ -12767,79 +13146,7 @@ export class HouseplanCard extends LitElement {
         @keydown=${this._touchGestureGuard}
         @contextmenu=${this._touchGestureGuard}
         @click=${this._touchGestureGuard}>
-        <div class="hdr ${this._kiosk ? 'kioskhide' : ''}"
-          data-panel-flow=${this._panelHeaderChoice.phase}
-          ?data-panel-phone=${this._panelHeaderChoice.phone}
-          data-panel-mode=${this._mode} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
-        <div class="head hpf-chrome-group" ?data-hp-properties-wide=${this._editorRuntime?.properties.wide} style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
-          ${this._renderPanelMenu()}
-          <button type="button" class="btn hpf-icon-action header-actions-trigger" data-hp="header-actions-trigger"
-            aria-haspopup="menu" aria-expanded=${this._headerActionsMenu?.open ? 'true' : 'false'}
-            @click=${this._openHeaderActions} aria-label=${this._t('panel.actions')} data-hp-tooltip=${this._t('panel.actions')}>
-            <ha-icon icon="mdi:dots-vertical"></ha-icon>
-          </button>
-          ${renderHeaderSpaceNavigation({
-            spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces, collapsed: this._panelHeaderChoice.phase === 5,
-            labels: { spaces: this._t('nav.spaces'), configure: this._t('title.configure_space'), add: this._t('title.add_space') },
-            reorderable: this._canReorderTabs && navigationSpaces.length > 1 && this._mode !== 'view', drag: this._tabDrag,
-            pick: id => this._pickSpace(id), tabClick: id => this._tabClick(id),
-            pointerMove: event => this._tabPointerMove(event), pointerDown: (event, id) => this._tabPointerDown(event, id),
-            pointerUp: event => this._tabPointerUp(event), cancelDrag: () => this._endTabDrag(),
-            configure: this._norm && this._canEdit ? id => this._openSpaceDialog('edit', id) : null,
-            // Add-space remains navigation in every mode; kiosk and fixed-floor omit it.
-            create: this._canEdit && !this._kiosk && !this._hasFixedFloor ? () => this._openSpaceDialog('create') : null,
-          })}
-          ${this._canEdit
-            ? html`<div class="modes hpf-navigation hpf-nav-modes">
-                ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:chip'], ['decor', 'mdi:palette']] as const).filter(([mode]) => mode !== 'devices' || hasMarkers(this.planHost.capabilities)).map(
-                  ([m, ic]) => html`<button class="modetab hpf-nav-item ${this._mode === m ? 'active' : ''}"
-                    data-hp="mode-tab" data-mode=${m} data-editor-navigation=${m}
-                    data-hp-tooltip=${this._t(('mode.' + m + '_tip') as any)}
-                    aria-label=${this._t(`mode.${m}` as const)}
-                    @click=${() => this._setMode(m)}>
-                    <ha-icon class="panel-mode-compact" icon=${ic}></ha-icon>
-                    <ha-icon class="panel-mode-full" icon="mdi:pencil" aria-hidden="true"></ha-icon>
-                    <span class="panel-mode-full">${this._t(('mode.' + m + '_short') as I18nKey)}</span>
-                  </button>${this._mode === m ? editorClose : nothing}`,
-                )}
-                ${this._mode === 'view' ? editorClose : nothing}
-              </div>`
-            : nothing}
-          <span class="spacer"></span>
-          <div class="header-actions">
-          <div class="zoomctl hpf-icon-group hpf-camera-group">
-            ${this._kiosk ? nothing : renderPlanRotationControls(key => this._t(key), direction => this._rotatePlan(direction))}
-            <button class="btn zb hpf-icon-action" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} data-hp-tooltip=${this._t('title.zoom_out')} aria-label=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
-            ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
-                   zoom" renamed rather than duplicated. No longer disabled at
-                   zoom 1: at zoom 1 panned off to the side it still has work. */}
-            <button class="btn zb hpf-icon-action" data-hp="zoom-fit" @click=${() => this._fitAll()}
-              data-hp-tooltip=${this._t('title.zoom_fit')} aria-label=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
-            <button class="btn zb hpf-icon-action" data-hp="zoom-in" @click=${() => this._stepZoom(1)} data-hp-tooltip=${this._t('title.zoom_in')} aria-label=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
-          </div>
-          ${this._kiosk || !hasMarkers(this.planHost.capabilities) ? nothing : renderHiddenDevicesToggle((k) => this._t(k), this._showHidden, () => this._setShowHidden(!this._showHidden))}
-          ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this.planHost.capabilities.printing ? this._openPdfDialog : undefined, support: this._openSupportDialog }) : nothing}
-          ${!this._kiosk && this.planHost.capabilities.summary ? this._summary?.renderControls() : nothing}
-          </div>
-        </div>
-        ${this._canEdit && !this._kiosk
-          ? html`<div class="editorchrome ${this._editing || this._modeTransitionBusy ? 'open' : ''}${this._modeTransitionBusy ? ' transitioning' : ''}"
-              style=${modeVisual ? `height:${modeVisual.editorChromeHeight}px;opacity:${modeVisual.editorWeight}` : nothing}
-              aria-hidden=${this._editing ? 'false' : 'true'}
-              ?inert=${!this._editing}>
-              <div class="editorchrome-inner"
-                style=${modeVisual ? `opacity:${modeVisual.toolbarContentOpacity}` : nothing}>
-                ${this._editorRuntime
-                  ? editorChromeMode === 'plan'
-                    ? this._renderMarkupBar()
-                    : editorChromeMode === 'devices'
-                      ? this._renderDevicesBar()
-                      : this._renderDecorBar()
-                  : nothing}
-              </div>
-            </div>`
-          : nothing}
-        </div>
+        ${this._renderPlanHeader()}
 
         <div class=${this._modeTransitionPreparing && this._modePreparingStageClass ? this._modePreparingStageClass : stageClass}
           data-hp-plan-rotation=${this._rotation}

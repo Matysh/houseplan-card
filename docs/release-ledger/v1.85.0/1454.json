@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1454,
+  "baseStable": "v1.85.0",
+  "category": "stable-fix",
+  "rationale": "Floor navigation already existed in v1.85.0. Reusing derived geometry and moving cache-miss computation off the UI thread improves that existing operation; it does not add a user-facing editor or document format.",
+  "summary": {
+    "ru": "Ускорено повторное открытие этажей; подготовка геометрии меньше мешает работе интерфейса.",
+    "en": "Reopening floors is faster, with geometry preparation causing less disruption to the interface."
+  }
+}

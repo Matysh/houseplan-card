@@ -5,6 +5,7 @@ import terser from '@rollup/plugin-terser';
 import { sourceFingerprint } from './scripts/source-fingerprint.mjs';
 import { cssTemplateMinifier } from './scripts/css-template-minifier.mjs';
 import { coverageMapsEnabled, coverageTypeScriptOptions, diagnosticMapAssetsPlugin } from './scripts/coverage-maps.mjs';
+import { floorWorkerBundlePlugin } from './scripts/floor-worker-bundle.mjs';
 import {
   buildFingerprintPlugin,
   bundleManifestPlugin,
@@ -69,6 +70,7 @@ export default {
   },
   plugins: [
     cleanBundleOutputPlugin(),
+    floorWorkerBundlePlugin(SOURCE_FINGERPRINT),
     buildFingerprintPlugin(SOURCE_FINGERPRINT),
     cssTemplateMinifier(),
     resolve(),

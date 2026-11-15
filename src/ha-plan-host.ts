@@ -25,7 +25,7 @@ interface HaSource {
   fetchWithAuth?: (path: string, init?: RequestInit) => Promise<Response>;
   callService?: (domain: string, service: string, data?: Readonly<UnknownRow>, target?: Readonly<UnknownRow>) => Promise<unknown>;
   services?: Readonly<Record<string, unknown>>;
-  auth?: { data?: { access_token?: string } };
+  auth?: { data?: { access_token?: string; hassUrl?: string } };
   user?: { id?: string; is_admin?: boolean };
   states?: HostEnvironment['states'];
   devices?: HostRegistrySnapshot['devices'];
@@ -89,6 +89,16 @@ export class HaPlanHost implements PlanHost {
   get writeAuthorityRevision(): number { return this.writeRevision; }
   get environmentRevision(): number { return this.revision; }
   get environment(): HostEnvironment { return this.snapshot; }
+  get cacheScope(): string | undefined {
+    const user = this.snapshot.userId;
+    if (!this.snapshot.ready || !this.snapshot.permissions.read || typeof user !== 'string' || !user || user.length > 256) return undefined;
+    try {
+      const url = new URL(this.source.auth?.data?.hassUrl || globalThis.location.origin);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined;
+      const scope = JSON.stringify(['ha-houseplan-v1', url.origin, url.pathname.replace(/\/+$/, '') + '/api/houseplan/', user]);
+      return scope.length <= 2048 ? scope : undefined;
+    } catch { return undefined; }
+  }
   lend(source: unknown): void {
     if (source !== this.lastInput) this.update(source);
     else this.synchronize();

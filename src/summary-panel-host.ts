@@ -39,6 +39,10 @@ export interface SummaryPanelHost extends Node {
   isConnected: boolean;
   updateComplete: Promise<unknown>;
   requestUpdate(): void;
+  /** Optional mounted View worker owner; absence keeps standalone/legacy
+   * metric callers compatible without requiring browser persistence. */
+  _prepareSummaryFloorArea?(raw: ServerConfig['spaces'][number], accepted: () => boolean): Promise<number | null | undefined>;
+  _publishSummaryFloorAreas?(values: Array<{ raw: ServerConfig['spaces'][number]; value: number | null }>, epoch: number): void;
 
   _mode: 'view' | 'plan' | 'devices' | 'decor';
   _space: string;

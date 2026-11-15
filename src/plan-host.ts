@@ -133,6 +133,9 @@ export interface HostDeviceServices {
 
 export interface PlanHost {
   readonly capabilities: PlanCapabilities;
+  /** Optional data-only persistent namespace, adapter-proven installation,
+   * document source and user. Never the ephemeral authorityKey or a token. */
+  readonly cacheScope?: string;
   /** Connection-or-original-callWS plus user identity, opaque to the plan. */
   readonly authorityKey: HostAuthorityKey;
   /** Revokes writes on authority/permission changes, NOT ordinary state ticks. */

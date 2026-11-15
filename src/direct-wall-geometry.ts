@@ -1,3 +1,4 @@
+import { geometryWork } from './geometry-work';
 /** ADR #282 stage 4: accepted graph -> finite material domains -> one boundary.
  * No room-ring offsets, topology reconstruction by epsilon, or polygon booleans.
  */
@@ -18,6 +19,35 @@ export interface DirectOpening {x:number;y:number;angle:number;length:number;hos
 const extras=new WeakMap<object,ExtraInput>();
 const retained=new WeakMap<object,{structure:Structure;openings:DirectOpening[];extra:ExtraInput}>();
 const cache=new WeakMap<PlanGraph,Map<string,Structure>>();
+/** Lossless retained state for the derived cache/worker boundary (#1454).
+ * ComponentCache is only an acceleration memo. Materials, exact coordinates,
+ * run ownership and the relationship to roomGeom are not optional. */
+export interface DirectGeometrySnapshot {
+  structure: Omit<Structure, 'componentCache'>;
+  openings: DirectOpening[];
+  extra: ExtraInput;
+}
+export function captureDirectGeometry(roomGeom: object): DirectGeometrySnapshot | undefined {
+  const value = retained.get(roomGeom);
+  if (!value) return undefined;
+  const { componentCache: _memo, ...structure } = value.structure;
+  // This optional memo can contain an earlier current-state light recut.
+  // Semantic materials/topology remain; memo entries must not reach disk.
+  return { structure: { ...structure, geometryCache: new Map() }, openings: value.openings, extra: value.extra };
+}
+export function restoreDirectGeometry(roomGeom: object, value: DirectGeometrySnapshot,
+  source?: WallGraphSource, cellCm?: number, gridPitch?: number): void {
+  const structure: Structure = { ...value.structure, componentCache: new WeakMap() };
+  retained.set(roomGeom, { structure, openings: value.openings, extra: value.extra });
+  if (source && cellCm !== undefined && gridPitch !== undefined) {
+    let entries = cache.get(source.graph);
+    if (!entries) { entries = new Map(); cache.set(source.graph, entries); }
+    entries.set([source.scale, cellCm, gridPitch].join('|'), structure);
+    while (entries.size > 4) entries.delete(entries.keys().next().value!);
+  }
+}
+export const captureDirectParts = (bodies: object): ExtraInput | undefined => extras.get(bodies);
+export function restoreDirectParts(bodies: object, value: ExtraInput): void { extras.set(bodies, value); }
 const edgeKey=(e:{kind:string;id:string})=>e.kind+':'+e.id;
 const xy=(p:Q.ExactPoint,scale:number):number[]=>p.map(q=>Q.toNumber(q)*scale);
 const between=(t:Q.Exact)=>Q.cmp(t,Q.ZERO)>=0&&Q.cmp(t,Q.ONE)<=0;
@@ -216,7 +246,7 @@ function buildStructure(source:WallGraphSource,cellCm:number,gridPitch:number):S
 export function directStructure(source:WallGraphSource,cellCm:number,gridPitch:number):Structure {
   let entries=cache.get(source.graph);if(!entries){entries=new Map();cache.set(source.graph,entries);}
   const key=[source.scale,cellCm,gridPitch].join('|');let result=entries.get(key);
-  if(!result){result=buildStructure(source,cellCm,gridPitch);entries.set(key,result);if(entries.size>4)entries.delete(entries.keys().next().value!);}
+  if(!result){geometryWork('directStructure');result=buildStructure(source,cellCm,gridPitch);entries.set(key,result);if(entries.size>4)entries.delete(entries.keys().next().value!);}
   return result;
 }
 function slot(a:number[],b:number[],pad:number):A.Polygon {
@@ -318,6 +348,7 @@ export function directRoomFloor(source:WallGraphSource,cellCm:number,gridPitch:n
   return A.arrange([A.polygon(room)],structure.materials.filter(m=>m.room).map(m=>m.poly));
 }
 export function directRecut(roomGeom:object,openings:DirectOpening[],extraBodies:number[][][]):{status:'ok'|'degraded-extra';geom:any;components:any[]}|null {
+  geometryWork('directRecut');
   const base=retained.get(roomGeom);if(!base)return null;
   const extra=extras.get(extraBodies)||{columns:extraBodies,partitionCuts:[]};
   try{

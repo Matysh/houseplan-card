@@ -99,6 +99,8 @@ export function capabilityHost(source: PlanHost): PlanHost {
   const allowed = (yes: boolean): void => { if (!yes) throw hostError('not_ready'); };
   const host: PlanHost = {
     capabilities,
+    get cacheScope() { const value = source.cacheScope;
+      return typeof value === 'string' && value.length > 0 && value.length <= 2048 ? value : undefined; },
     get authorityKey() { return authority(); },
     get writeAuthorityRevision() { return source.writeAuthorityRevision; },
     get environmentRevision() { return source.environmentRevision; },

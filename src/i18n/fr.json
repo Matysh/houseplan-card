@@ -71,6 +71,7 @@
   "editor.group_active": "{group} — actif : {item}",
   "editor.disabled_action": "{action} est indisponible : {reason}",
   "editor.loading": "Chargement…",
+  "plan.updating": "Mise à jour du plan",
   "editor.loading_aria": "L'éditeur de plan est en cours de chargement",
   "editor.load_failed": "Impossible de charger l'éditeur.",
   "editor.refresh_advice": "Actualisez la page et réessayez.",

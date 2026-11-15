@@ -20,6 +20,7 @@ export class PlanRotationMotion {
   private frame: number | null = null;
   private restore: (() => void) | null = null;
   private active = false;
+  get running(): boolean { return this.active; }
   constructor(private readonly port: PlanRotationMotionPort) {}
   rotate(direction: -1 | 1): void {
     this.queue.push({ direction, current: this.port.current() });

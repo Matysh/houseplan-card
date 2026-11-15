@@ -37,12 +37,19 @@ export function annotateSpaceGraphOpeningRuns<T extends Record<string, any>>(spa
   annotatedSpaces.set(space,{graph,walls:space.wall_segments,partitions:space.partitions});
   return space;
 }
-interface RunMetadata {
+export interface RunMetadata {
   run: GraphOpeningRun;
   /** Only a carrier must still match the projection that was annotated. */
   checkCarrier: boolean;
 }
 const RUN = Symbol('houseplan.graph-opening-run');
+/** #1454: this symbol is semantic input, unlike the disposable lookup memo. */
+export function captureGraphOpeningRun(value: object): RunMetadata | undefined {
+  return graphOpeningRun(value) ? (value as { [RUN]?: RunMetadata })[RUN] : undefined;
+}
+export function restoreGraphOpeningRun(value: object, metadata: RunMetadata): void {
+  Object.defineProperty(value, RUN, { value: metadata, enumerable: true, configurable: true });
+}
 // Accepted graph reducers replace identity. Projecting the same graph again
 // must not rebuild and retain one run descriptor per model/carrier copy.
 const runCache = new WeakMap<PlanGraph, Map<string, ReadonlyMap<string, GraphOpeningRun>>>();

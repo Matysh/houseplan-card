@@ -13,6 +13,24 @@ export type CleanFloorResult = {
 };
 
 type StairAreaFn = (source: Geom, stairs: SpaceModel['stairs'] | undefined) => number;
+export interface CleanFloorData { floor: number[][]; geom: Geom | null; path: string; area?: number }
+const retainedArea = new WeakMap<CleanFloorResult, { value?: number }>();
+/** #1454: do not invoke the lazy stair subtraction while encoding a frame. */
+export function cleanFloorData(result: CleanFloorResult): CleanFloorData {
+  const area = retainedArea.get(result)?.value;
+  return { floor: result.floor, geom: result.geom, path: result.path, ...(area === undefined ? {} : { area }) };
+}
+export function cleanFloorFromData(data: CleanFloorData, stairs: SpaceModel['stairs'] | undefined,
+  areaMinusStairs: StairAreaFn = geometryAreaMinusStairs): CleanFloorResult {
+  const memo = { value: data.area };
+  const subject = (data.geom || [[[...data.floor, data.floor[0]]]]) as Geom;
+  const result: CleanFloorResult = {
+    floor: data.floor, geom: data.geom, path: data.path,
+    get area() { return memo.value ??= areaMinusStairs(subject, stairs); },
+  };
+  retainedArea.set(result, memo);
+  return result;
+}
 
 export function cleanFloorForRoom(input: {
   room: RoomCfg;
@@ -49,22 +67,10 @@ export function cleanFloorForRoom(input: {
       && Math.max(...by) >= box[1] && Math.min(...by) <= box[3];
   });
   const geom = candidates.length ? floorMinusBodies(floor, candidates) : null;
-  const subject = (geom || [[[...floor, floor[0]]]]) as Geom;
   const stairs = space.stairs;
   const areaMinusStairs: StairAreaFn = input.areaMinusStairs ?? geometryAreaMinusStairs;
-  let area: number | undefined;
-  const result: CleanFloorResult = {
-    floor,
-    geom,
-    path: geom ? polyclipPathD(geom) : '',
-    // #669: four render paths read only `path`; the room tooltip and the PDF
-    // read the area. Subtracting up to 250 stair footprints per room belongs
-    // to that first read, not to every render of the floor.
-    get area() {
-      if (area === undefined) area = areaMinusStairs(subject, stairs);
-      return area;
-    },
-  };
+  // #669/#1454: subtraction stays lazy through a cache/worker round trip.
+  const result = cleanFloorFromData({ floor, geom, path: geom ? polyclipPathD(geom) : '' }, stairs, areaMinusStairs);
   if (!input.resizePreview) lruWrite(input.cache, key, result, 600);
   return result;
 }

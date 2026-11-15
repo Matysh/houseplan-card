@@ -10,6 +10,19 @@ ports; it never exposes a connection, auth token or raw HA object.
 helper-input normalization to the HA boundary. `HouseplanCard.planHost` is an
 optional runtime injection; Lovelace/panel `setConfig` is unchanged.
 
+The optional data-only `cacheScope` is a persistent namespace, distinct from
+ephemeral authority. The HA adapter derives it from installation/API path,
+document source and user; other adapters must explicitly supply it or stay
+memory-only. `floor-cache-runtime.ts` owns the disposable L1/L2 store and one
+navigation-priority module-worker scheduler. Its accepted derived frames hydrate
+existing consumers, not an alternative geometry model. `iso-scene-geometry.ts`
+contains the shared DOM-free isometric calculations; `iso-scene-render.ts`
+retains the lazy render facade. The worker is an isolated hashed module in the
+ordinary asset manifest, with a build handshake and no host/transport ingress.
+Summary demands per-floor area scalars through the same owner instead of
+performing a hidden wall union on the UI thread. See `CANVAS.md` and
+`WARM-REMOUNT.md` for the preparation, fit, publication and lifecycle contracts.
+
 One environment subscription drives bootstrap, read retry, authority retirement
 and render intake. Authority is consumed synchronously; visible scene intake
 waits for same-turn config/layout changes before Lit paints (hidden/skipped

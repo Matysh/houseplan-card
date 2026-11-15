@@ -85,6 +85,17 @@ export class LoadedSummaryPanelRuntime {
   private local: SummaryPanelLocalPreferences = {
     version: 1, show: false, icon_scale: 1, font_scale: 1,
   };
+  private cacheFitMemo: { signature: unknown[]; value: unknown } | null = null;
+  /** Stable pre-layout inputs, not live metric text or measured animation boxes.
+   * The cache can select a saved fit before rendering a summary panel. */
+  public cacheFitInputs(): unknown {
+    const raw = this.host._settings.summary_panel;
+    const signature = [raw, this.effectiveShow, this.host.narrow, this.host._settings.center_summary];
+    if (!this.cacheFitMemo || signature.some((value, index) => value !== this.cacheFitMemo!.signature[index]))
+      this.cacheFitMemo = { signature, value: { config: raw === undefined ? 'default-v1' : raw, show: this.effectiveShow, narrow: this.host.narrow,
+        centered: this.host._settings.center_summary === true } };
+    return this.cacheFitMemo.value;
+  }
   private storageKey: string | null = null;
   private stage: SummaryLayoutState = {
     width: 0, height: 0, minimumHeight: 162, controlTop: 0,
@@ -104,6 +115,7 @@ export class LoadedSummaryPanelRuntime {
    * holds the keys of the current floors only; the total is summed anew.
    */
   private readonly areaFloors = new Map<string, number | null>();
+  private areaFlight: { key: string; epoch: number } | null = null;
   /** #769: the floor record key, one fingerprint per floor and epoch (test seam). */
   private areaKeys = floorRecordKeyMemo(cleanFloorFingerprint);
   private storageUnavailable = false;
@@ -895,6 +907,36 @@ export class LoadedSummaryPanelRuntime {
       return true;
     }
     if (this.areaMemo && this.areaMemo.cfgEpoch === this.host._cfgEpoch) return true;
+    if (this.host._prepareSummaryFloorArea) {
+      const epoch = this.host._cfgEpoch, records = this.host._renderCfg?.spaces ?? [];
+      const readyFloors: Array<{ raw: ServerConfig['spaces'][number]; value: number | null }> = [];
+      let total = 0, failed = false;
+      for (let index = 0; index < this.host._model.length; index++) {
+        const space = this.host._model[index];
+        const raw = this.host._serverCfg.spaces.find(record => String(record.id) === space.id);
+        if (!raw) continue;
+        const key = this.areaKeys(epoch, String(index), space.id, records[index] ?? null, raw);
+        if (!this.areaFloors.has(key)) {
+          if (!this.areaFlight || this.areaFlight.epoch !== epoch) {
+            const flight = this.areaFlight = { key, epoch };
+            const current = () => this.host.isConnected && this.host._cfgEpoch === epoch
+              && this.areaFlight === flight && this.host._serverCfg?.spaces.includes(raw) === true;
+            void this.host._prepareSummaryFloorArea(raw, current).then(value => {
+              if (current() && value !== undefined) this.areaFloors.set(key, value);
+            }).finally(() => {
+              if (this.areaFlight === flight) { this.areaFlight = null; this.host.requestUpdate(); }
+            });
+          }
+          return false;
+        }
+        const value = this.areaFloors.get(key);
+        readyFloors.push({ raw, value: value ?? null });
+        if (value === null) failed = true; else total += value || 0;
+      }
+      this.areaMemo = { cfgEpoch: epoch, value: failed ? null : total };
+      this.host._publishSummaryFloorAreas?.(readyFloors, epoch);
+      return true;
+    }
     if (!this.areaSteps || this.areaStepsEpoch !== this.host._cfgEpoch) {
       // #769: per floor. A floor whose records kept their content keeps its
       // area; a floor that changed is computed again in the same portions, and
@@ -943,6 +985,7 @@ export class LoadedSummaryPanelRuntime {
 
   /** Синхронный расчёт целиком — тесты и окружения без кадров (#509). */
   public computeMetrics(): void {
+    if (this.host._prepareSummaryFloorArea) { this.advanceMetrics(); return; }
     while (!this.advanceMetrics(Number.POSITIVE_INFINITY)) { /* до конца */ }
   }
 

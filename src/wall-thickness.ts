@@ -1,3 +1,4 @@
+import { geometryWork } from './geometry-work';
 /**
  * Wall thickness — pure geometry (docs/WALL-THICKNESS.md).
  *
@@ -3456,6 +3457,7 @@ export function floorFootprintGeometry(
   gridPitch: number,
   coordScale = 1,
 ): any | null {
+  geometryWork('floorFootprintGeometry');
   try {
     const graphSource=wallGraphSource(rooms);
     if(graphSource)return directWallGeometry(graphSource,cellCm,gridPitch,[],[]).paperGeom;
@@ -3779,6 +3781,7 @@ export function wallBodiesGeometry(
   extraBodies: number[][][] = [],
   operations: WallGeometryOperations = {},
 ): WallBodiesGeometryResult {
+  geometryWork('wallBodiesGeometry');
   const graphSource=wallGraphSource(rooms);
   if(graphSource){
     try{
@@ -4166,6 +4169,7 @@ export function recutWallBodiesGeometry(
   extraBodies: number[][][] = [],
   operations: WallGeometryOperations = {},
 ): { status: 'ok' | 'degraded-extra'; geom: any; components: readonly WallGeometryComponent[] } | null {
+  geometryWork('recut');
   if (base.status === 'failed-core' || base.status === 'not-applicable') return null;
   const direct=base.roomGeom&&directRecut(base.roomGeom,openings,extraBodies);
   if(direct)return direct;
