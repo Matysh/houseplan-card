@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 887,
+  "revision": 888,
   "active": "1.85.3-beta.1",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -112738,7 +112738,453 @@
         1449
       ],
       "reviewRequired": true,
-      "review": null,
+      "review": {
+        "sha": "57c1b95bddff8ad9a1e637e5563f367f720a5ee4",
+        "report": {
+          "kind": "reuse-of-existing-review-evidence",
+          "scope": {
+            "initialPreparedCandidate": "145c369fd38ad8ce26205cff5d09958bd75723ee",
+            "finalCandidate": "57c1b95bddff8ad9a1e637e5563f367f720a5ee4",
+            "description": "Reuse actual accepted review receipts for release-audit repairs since initial prepared candidate. Original dev task reviews and both ship batches remain in ordinary process history. This manifest is not a new model review."
+          },
+          "ordinaryReviews": [
+            {
+              "issue": 1432,
+              "source": "ordinary accepted task code-review and actual S8",
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43634749362",
+              "patches": [
+                {
+                  "issue": 1432,
+                  "reviewedSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
+                  "candidateCommit": "11a99eea7f7eb193c3c9985dd32d2814c66a4f6e",
+                  "reviewedPatch": "7633f116e570f9e2566f4df95082b6243d32948a",
+                  "candidatePatch": "7633f116e570f9e2566f4df95082b6243d32948a",
+                  "equivalent": true
+                }
+              ]
+            },
+            {
+              "issue": 1435,
+              "source": "ordinary accepted task code-review and actual S8",
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43637184520",
+              "patches": [
+                {
+                  "issue": 1435,
+                  "reviewedSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
+                  "candidateCommit": "0c828e730a564f5489ec217bb77f8a5f52a7085a",
+                  "reviewedPatch": "984d1fe7d3c36d78fa0cef53d42840abc702ef42",
+                  "candidatePatch": "984d1fe7d3c36d78fa0cef53d42840abc702ef42",
+                  "equivalent": true
+                }
+              ]
+            },
+            {
+              "issue": 1436,
+              "source": "ordinary accepted task code-review and actual S8",
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43639784381",
+              "patches": [
+                {
+                  "issue": 1436,
+                  "reviewedSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
+                  "candidateCommit": "8f7b0ffcf9ae282e2af24ee8d4dd7bd78b50591e",
+                  "reviewedPatch": "219ef8ac9640eabd58d2d6afa000c48f8ea0955a",
+                  "candidatePatch": "219ef8ac9640eabd58d2d6afa000c48f8ea0955a",
+                  "equivalent": true
+                }
+              ]
+            },
+            {
+              "issue": 1437,
+              "source": "ordinary accepted task code-review and actual S8",
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43642289425",
+              "patches": [
+                {
+                  "issue": 1437,
+                  "reviewedSha": "c5d7a23892c69ad0504cf3048589344e03525810",
+                  "candidateCommit": "9f5ffe2b99c5c9432b03ae7e0647eb014ca3064a",
+                  "reviewedPatch": "39eb3e8d445eedf64ba133bf8d262587d3fbe384",
+                  "candidatePatch": "39eb3e8d445eedf64ba133bf8d262587d3fbe384",
+                  "equivalent": true
+                }
+              ]
+            },
+            {
+              "issue": 1438,
+              "source": "ordinary accepted task code-review and actual S8",
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43643399476",
+              "patches": [
+                {
+                  "issue": 1438,
+                  "reviewedSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
+                  "candidateCommit": "88f4ccddd0f71e703a627b97c54ae1ca21be0c5b",
+                  "reviewedPatch": "96f86243648e0ed6be5f8b7868c3def375c3fc42",
+                  "candidatePatch": "96f86243648e0ed6be5f8b7868c3def375c3fc42",
+                  "equivalent": true
+                }
+              ]
+            },
+            {
+              "issue": 1443,
+              "source": "ordinary accepted task code-review and actual S8",
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43643902515",
+              "patches": [
+                {
+                  "issue": 1443,
+                  "reviewedSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
+                  "candidateCommit": "b656e79faf2344aafd031fae8373fc5bb3d834ed",
+                  "reviewedPatch": "c67ed8ef6afd557ce9a305a5cbab3930fcd3645e",
+                  "candidatePatch": "c67ed8ef6afd557ce9a305a5cbab3930fcd3645e",
+                  "equivalent": true
+                }
+              ]
+            },
+            {
+              "issue": 1446,
+              "source": "ordinary accepted task code-review and actual S8",
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43648524746",
+              "patches": [
+                {
+                  "issue": 1446,
+                  "reviewedSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
+                  "candidateCommit": "2ec0b71a8a409e10d4bb5770c7df03187537eebe",
+                  "reviewedPatch": "c4d1f442af097b2b9d0b3ecb29b2f427203fbae0",
+                  "candidatePatch": "c4d1f442af097b2b9d0b3ecb29b2f427203fbae0",
+                  "equivalent": true
+                }
+              ]
+            },
+            {
+              "issue": 1447,
+              "source": "ordinary accepted task code-review and actual S8",
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43649799873",
+              "patches": [
+                {
+                  "issue": 1447,
+                  "reviewedSha": "cc435c07eacd939f3f53a4067b087d9918f13e6d",
+                  "candidateCommit": "71845cd91214f206117af4a1d27e6d98856db1ab",
+                  "reviewedPatch": "9f53ad864790bfe691a6505ed7ab85deb2982e05",
+                  "candidatePatch": "9f53ad864790bfe691a6505ed7ab85deb2982e05",
+                  "equivalent": true
+                },
+                {
+                  "issue": 1447,
+                  "reviewedSha": "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
+                  "candidateCommit": "5414cb9ed1be824251e1974d254c81a740ba873f",
+                  "reviewedPatch": "8b4b56dd8eda41e7bf039e2d7a993a37911940c6",
+                  "candidatePatch": "8b4b56dd8eda41e7bf039e2d7a993a37911940c6",
+                  "equivalent": true
+                }
+              ]
+            },
+            {
+              "issue": 1449,
+              "source": "ordinary accepted task code-review and actual S8",
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43655310530",
+              "patches": [
+                {
+                  "issue": 1449,
+                  "reviewedSha": "58716f60ba507550a24f7286a1b00e92e6c8d6f4",
+                  "candidateCommit": "8814cc56d1a75a5b4b4a49087195799aceffe9eb",
+                  "reviewedPatch": "7a135cf1abb0330c552d8e57d378904070534bed",
+                  "candidatePatch": "7a135cf1abb0330c552d8e57d378904070534bed",
+                  "equivalent": true
+                },
+                {
+                  "issue": 1449,
+                  "reviewedSha": "2adee31b34799943d8e5d613b18dc40f426148f7",
+                  "candidateCommit": "d4f163e3a451dbacec1d19ee594b29b071c34c46",
+                  "reviewedPatch": "0ad2f46eb4b97d5cc3a448422b48825cf1b80756",
+                  "candidatePatch": "0ad2f46eb4b97d5cc3a448422b48825cf1b80756",
+                  "equivalent": true
+                }
+              ]
+            }
+          ],
+          "shipReviews": [
+            {
+              "workflow": 43641630735,
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43641630735",
+              "request": "ship-review:2c367a12abef8f8fb198dcac65a755d57b9bf50ea591ced337c8697653095916",
+              "materialSha": "9d0a023dc5bda930c15a386ae486f66a292f3dfa",
+              "tasks": [
+                1415,
+                1424,
+                1425,
+                1426,
+                1429,
+                1430,
+                1431,
+                1433,
+                1434,
+                1439,
+                1440,
+                1441,
+                1442,
+                1444
+              ]
+            },
+            {
+              "workflow": 43652190763,
+              "url": "https://github.com/Matysh/houseplan-card/actions/runs/43652190763",
+              "request": "ship-review:46dda7544b3850691cfe08c9ac9433338154b25f0a61438709a685d836247d03",
+              "materialSha": "44e20251ef386acb2aefea275fb7091c9ef037b6",
+              "tasks": [
+                1448
+              ]
+            }
+          ],
+          "equivalence": {
+            "candidate": "57c1b95bddff8ad9a1e637e5563f367f720a5ee4",
+            "method": "git patch-id --stable, excluding only RU/EN technical changelog; each picked commit is ancestor of candidate",
+            "rows": [
+              {
+                "issue": 1431,
+                "reviewedSha": "1e83119d95d0acabbb45de022d9dac0756d085ce",
+                "candidateCommit": "1728c928b3b7efe869adbe3bb1b05da8bc5f365d",
+                "reviewedPatch": "3ec91d8c56e6269ebfcda0e7523b86b9a879e07a",
+                "candidatePatch": "3ec91d8c56e6269ebfcda0e7523b86b9a879e07a",
+                "equivalent": true
+              },
+              {
+                "issue": 1433,
+                "reviewedSha": "b29f59a34cea0e60fd984af21cdfbf94e40785ae",
+                "candidateCommit": "9ac718166c29162576bfff6c0ce6907dcacf4469",
+                "reviewedPatch": "0f3ad547fac83f7fdf19a6587551f91fa53a0cc7",
+                "candidatePatch": "0f3ad547fac83f7fdf19a6587551f91fa53a0cc7",
+                "equivalent": true
+              },
+              {
+                "issue": 1434,
+                "reviewedSha": "891bdbb8d7153de0d5eb6ba7f864622332849878",
+                "candidateCommit": "4cf51781e2ccfbf18406be02abcd2676edebdabc",
+                "reviewedPatch": "7d3fb40aa31e4c2dbb7333cf415b69eb3ca26007",
+                "candidatePatch": "7d3fb40aa31e4c2dbb7333cf415b69eb3ca26007",
+                "equivalent": true
+              },
+              {
+                "issue": 1432,
+                "reviewedSha": "6a89dbe2673f6ae9a59b39c9ac8a93ae88673172",
+                "candidateCommit": "11a99eea7f7eb193c3c9985dd32d2814c66a4f6e",
+                "reviewedPatch": "7633f116e570f9e2566f4df95082b6243d32948a",
+                "candidatePatch": "7633f116e570f9e2566f4df95082b6243d32948a",
+                "equivalent": true
+              },
+              {
+                "issue": 1439,
+                "reviewedSha": "5bd501fa75658b97b4d18608dec89984cfba21a6",
+                "candidateCommit": "b7a01fee27860d87e087d3220ed76b372e0c4a0d",
+                "reviewedPatch": "5288ff0bee0c19034f17dde437fe90d36ccc7db4",
+                "candidatePatch": "5288ff0bee0c19034f17dde437fe90d36ccc7db4",
+                "equivalent": true
+              },
+              {
+                "issue": 1435,
+                "reviewedSha": "45faf4e7c16d5feb2e0f30727784d69a52429960",
+                "candidateCommit": "0c828e730a564f5489ec217bb77f8a5f52a7085a",
+                "reviewedPatch": "984d1fe7d3c36d78fa0cef53d42840abc702ef42",
+                "candidatePatch": "984d1fe7d3c36d78fa0cef53d42840abc702ef42",
+                "equivalent": true
+              },
+              {
+                "issue": 1444,
+                "reviewedSha": "75925bfe1019b343cfa0b04891b08dd1074abc7e",
+                "candidateCommit": "a6a0806b9bb4326582691f6587f3d8a76d1c5e8e",
+                "reviewedPatch": "42f7cc4c147fe177d7b4eb61db826a6e9534e330",
+                "candidatePatch": "42f7cc4c147fe177d7b4eb61db826a6e9534e330",
+                "equivalent": true
+              },
+              {
+                "issue": 1440,
+                "reviewedSha": "23f03a74108fe62e800c07627c22458701c572f0",
+                "candidateCommit": "e6dab650a19cd3d26db88e43b6d2ba0f42d68cc3",
+                "reviewedPatch": "55f4f30d4e5f85d20301efe5d14aa1da866f9ad6",
+                "candidatePatch": "55f4f30d4e5f85d20301efe5d14aa1da866f9ad6",
+                "equivalent": true
+              },
+              {
+                "issue": 1440,
+                "reviewedSha": "e8ced3a76cb20bca2a710a858d55348d7ca471c8",
+                "candidateCommit": "13232743353ca326fb8bfa6dd0904347ea7cdfe4",
+                "reviewedPatch": "83a9edb5146a1bf4439a021e2fe7c5780419cfb0",
+                "candidatePatch": "83a9edb5146a1bf4439a021e2fe7c5780419cfb0",
+                "equivalent": true
+              },
+              {
+                "issue": 1436,
+                "reviewedSha": "bd4b27ccd29254d84d02fd1b6721e9fdf9f47ff7",
+                "candidateCommit": "8f7b0ffcf9ae282e2af24ee8d4dd7bd78b50591e",
+                "reviewedPatch": "219ef8ac9640eabd58d2d6afa000c48f8ea0955a",
+                "candidatePatch": "219ef8ac9640eabd58d2d6afa000c48f8ea0955a",
+                "equivalent": true
+              },
+              {
+                "issue": 1441,
+                "reviewedSha": "9765111e4dc5d4ec24c8820cc4a307e1b4f73999",
+                "candidateCommit": "a08a3cac4940c2042442421ce88830f6a6685d5c",
+                "reviewedPatch": "f675db5078e1595cb6f445dbb69c362401478fef",
+                "candidatePatch": "f675db5078e1595cb6f445dbb69c362401478fef",
+                "equivalent": true
+              },
+              {
+                "issue": 1442,
+                "reviewedSha": "d0c538de59b5413b6d4d31fd2a1ca15e18943fc6",
+                "candidateCommit": "00700679c90fda1d58fe537122b8dc81c9aa4e9e",
+                "reviewedPatch": "e4b637a2bc727eeaafb0a61af2a1d269c540366e",
+                "candidatePatch": "e4b637a2bc727eeaafb0a61af2a1d269c540366e",
+                "equivalent": true
+              },
+              {
+                "issue": 1437,
+                "reviewedSha": "c5d7a23892c69ad0504cf3048589344e03525810",
+                "candidateCommit": "9f5ffe2b99c5c9432b03ae7e0647eb014ca3064a",
+                "reviewedPatch": "39eb3e8d445eedf64ba133bf8d262587d3fbe384",
+                "candidatePatch": "39eb3e8d445eedf64ba133bf8d262587d3fbe384",
+                "equivalent": true
+              },
+              {
+                "issue": 1438,
+                "reviewedSha": "662309e6efe19b5187841aa0eeaca0b6047f0388",
+                "candidateCommit": "88f4ccddd0f71e703a627b97c54ae1ca21be0c5b",
+                "reviewedPatch": "96f86243648e0ed6be5f8b7868c3def375c3fc42",
+                "candidatePatch": "96f86243648e0ed6be5f8b7868c3def375c3fc42",
+                "equivalent": true
+              },
+              {
+                "issue": 1443,
+                "reviewedSha": "56f51be8175594bb994bc9c5af159ab071dd0999",
+                "candidateCommit": "b656e79faf2344aafd031fae8373fc5bb3d834ed",
+                "reviewedPatch": "c67ed8ef6afd557ce9a305a5cbab3930fcd3645e",
+                "candidatePatch": "c67ed8ef6afd557ce9a305a5cbab3930fcd3645e",
+                "equivalent": true
+              },
+              {
+                "issue": 1446,
+                "reviewedSha": "24ef793465e3262b3e6502f70c61dfb0cab62cdf",
+                "candidateCommit": "2ec0b71a8a409e10d4bb5770c7df03187537eebe",
+                "reviewedPatch": "c4d1f442af097b2b9d0b3ecb29b2f427203fbae0",
+                "candidatePatch": "c4d1f442af097b2b9d0b3ecb29b2f427203fbae0",
+                "equivalent": true
+              },
+              {
+                "issue": 1448,
+                "reviewedSha": "98ceda7f4d6517050c929536263c426f0dfbac1d",
+                "candidateCommit": "551cd6468e30003a29c70f2dd4d65d9e3fd4af31",
+                "reviewedPatch": "83d22ac18a464a6fec98891666c6f29fd97d7340",
+                "candidatePatch": "83d22ac18a464a6fec98891666c6f29fd97d7340",
+                "equivalent": true
+              },
+              {
+                "issue": 1447,
+                "reviewedSha": "cc435c07eacd939f3f53a4067b087d9918f13e6d",
+                "candidateCommit": "71845cd91214f206117af4a1d27e6d98856db1ab",
+                "reviewedPatch": "9f53ad864790bfe691a6505ed7ab85deb2982e05",
+                "candidatePatch": "9f53ad864790bfe691a6505ed7ab85deb2982e05",
+                "equivalent": true
+              },
+              {
+                "issue": 1447,
+                "reviewedSha": "705bc3fd6f2ddc0804153aa989a138b6fb57c491",
+                "candidateCommit": "5414cb9ed1be824251e1974d254c81a740ba873f",
+                "reviewedPatch": "8b4b56dd8eda41e7bf039e2d7a993a37911940c6",
+                "candidatePatch": "8b4b56dd8eda41e7bf039e2d7a993a37911940c6",
+                "equivalent": true
+              },
+              {
+                "issue": 1449,
+                "reviewedSha": "58716f60ba507550a24f7286a1b00e92e6c8d6f4",
+                "candidateCommit": "8814cc56d1a75a5b4b4a49087195799aceffe9eb",
+                "reviewedPatch": "7a135cf1abb0330c552d8e57d378904070534bed",
+                "candidatePatch": "7a135cf1abb0330c552d8e57d378904070534bed",
+                "equivalent": true
+              },
+              {
+                "issue": 1449,
+                "reviewedSha": "2adee31b34799943d8e5d613b18dc40f426148f7",
+                "candidateCommit": "d4f163e3a451dbacec1d19ee594b29b071c34c46",
+                "reviewedPatch": "0ad2f46eb4b97d5cc3a448422b48825cf1b80756",
+                "candidatePatch": "0ad2f46eb4b97d5cc3a448422b48825cf1b80756",
+                "equivalent": true
+              }
+            ]
+          },
+          "nonCodeChanges": [
+            {
+              "commit": "57c1b95bddff8ad9a1e637e5563f367f720a5ee4",
+              "subject": "release: accept twelve reviewed visual frames",
+              "paths": [
+                "demo/golden/baselines/baselines-index.json",
+                "demo/golden/baselines/general-color-popover-desktop-en.png",
+                "demo/golden/baselines/lighting-closed-door-panel-dark.png",
+                "demo/golden/baselines/lighting-closed-door-panel-iso-dark.png",
+                "demo/golden/baselines/lighting-closed-slide-door-panel-dark.png",
+                "demo/golden/baselines/lighting-open-door-panel-dark.png",
+                "demo/golden/baselines/panel-device-icon-picker-clear-hover-light-1376.png",
+                "demo/golden/baselines/panel-device-icon-picker-dark-1375.png",
+                "demo/golden/baselines/panel-lighting-opaque-glow-two-doorways-dark.png",
+                "demo/golden/baselines/settings-help-zoom-200-en-light.png",
+                "demo/golden/baselines/settings-help-zoom-200-ru-dark.png",
+                "demo/golden/baselines/vacuum-history-shown-dark.png",
+                "demo/golden/baselines/vacuum-history-shown-light.png"
+              ]
+            },
+            {
+              "commit": "44e20251ef386acb2aefea275fb7091c9ef037b6",
+              "subject": "release: prepare reviewed visual candidate",
+              "paths": [
+                "docs/CHANGELOG.md",
+                "docs/CHANGELOG.ru.md"
+              ]
+            },
+            {
+              "commit": "386520b52cdc29fc0eda1878ecfa903fe0d1002f",
+              "subject": "release: freeze audited 1.85.3 beta candidate",
+              "paths": [
+                "docs/CHANGELOG.md",
+                "docs/CHANGELOG.ru.md"
+              ]
+            },
+            {
+              "commit": "9d0a023dc5bda930c15a386ae486f66a292f3dfa",
+              "subject": "release: retain only frozen candidate changelog entries",
+              "paths": [
+                "docs/CHANGELOG.md",
+                "docs/CHANGELOG.ru.md"
+              ]
+            },
+            {
+              "commit": "7ee6eeb54eafabd029f5ecfd92a85f3a9fe945a7",
+              "subject": "release: stage audited repairs before final changelog freeze",
+              "paths": [
+                "docs/CHANGELOG.md",
+                "docs/CHANGELOG.ru.md"
+              ]
+            }
+          ],
+          "ownerBaselineDecision": {
+            "decision": "owner-chat-call_545261b45c124c03afcfa4d15e73c71d-8d629b99",
+            "question": "Принимаете обновление только этих 12 разобранных кадров из галереи и review.json (SHA256 начинается 8d629b99), сохраняя остальные 330 эталонов без изменений?",
+            "answer": "Да, принять эти 12 кадров",
+            "reviewSha256": "8d629b99c57ccbd2cfd8b0f72ff74762292202abb48f18ab93790a712c79658b",
+            "captureSha": "d4f163e3a451dbacec1d19ee594b29b071c34c46",
+            "acceptanceCommit": "57c1b95bddff8ad9a1e637e5563f367f720a5ee4",
+            "scenes": [
+              "vacuum-history-shown-dark",
+              "vacuum-history-shown-light",
+              "lighting-closed-door-panel-dark",
+              "lighting-open-door-panel-dark",
+              "lighting-closed-door-panel-iso-dark",
+              "lighting-closed-slide-door-panel-dark",
+              "panel-device-icon-picker-dark-1375",
+              "panel-device-icon-picker-clear-hover-light-1376",
+              "general-color-popover-desktop-en",
+              "settings-help-zoom-200-en-light",
+              "settings-help-zoom-200-ru-dark",
+              "panel-lighting-opaque-glow-two-doorways-dark"
+            ]
+          },
+          "notes": "Only RU/EN technical changelog is excluded from stable patch-id comparison, because Git union merges copied unrelated changelog context which explicit Release metadata removed. Actual product, tests, canonical docs, mutation anchors and ledger patches match accepted task material. The five additional commits only stage/freeze those changelogs and record the twelve owner-approved PNG/index entries. Final ship membership/fingerprints are independently checked and reused by normal release publish."
+        }
+      },
       "metrics": null,
       "metricsAcceptedSha": null,
       "portToDev": [
@@ -118293,7 +118739,8 @@
     "ship-review:result:7508b49b-6e03-46c5-a030-24b5e4927f03": "c4d25eacbd3b716dc00b3569c08997c7c6e52a1f4556a4b6a55e8430d82d58fc",
     "beta1853-20261115-fix-accepted-final": "dee1b0fe6324b91c09dad3eb537c7d8262d03b2cb3bf5058af0d99b52bb82a74",
     "ship-review:prepare:412e99c2-0cd4-441a-a0e3-22e742ea7320": "1c7001d6de102232c6e6f4710a2e6097283e0f74461baae683610dd19056ccca",
-    "ship-review:result:969dc4aa-8c79-4088-bdc3-e1d9bca429d9": "299f74802af06c973410c08a017e8b2a04ba45bf1e764d64b225e3aa2c9dc5cb"
+    "ship-review:result:969dc4aa-8c79-4088-bdc3-e1d9bca429d9": "299f74802af06c973410c08a017e8b2a04ba45bf1e764d64b225e3aa2c9dc5cb",
+    "release:existing-review-evidence:57c1b95bddff8ad9a1e637e5563f367f720a5ee4": "a24d9bcf7dc15dd344aa206261af0cfb9f59e072b01b0bf1496f10d31e54145c"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
