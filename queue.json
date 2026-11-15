@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14417,
+  "revision": 14418,
   "nextTicket": 487,
   "nextFence": 487,
   "tasks": {
@@ -4809,177 +4809,25 @@
     },
     "1453": {
       "issue": 1453,
+      "branch": "codex/1453-room-context-menu",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1453-room-context-menu",
-      "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 486,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1794729879415,
-      "reviewEntry": 2,
-      "patchId": "b8ccd252fcb52457d960230527a46d83dd240e44",
-      "changedFiles": [
-        "demo/smoke_room_context_menu.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/USER-GUIDE.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/data-hp-contract.json",
-        "docs/release-ledger/v1.85.0/1453.json",
-        "scripts/mutation-registry.mjs",
-        "src/editor-context-menu.ts",
-        "src/editors/room-settings-dialog.ts",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/i18n/de.json",
-        "src/i18n/en.json",
-        "src/i18n/fr.json",
-        "src/i18n/ru.json",
-        "src/room-context-menu.ts"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1794729810978,
-        "entry": 1,
-        "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
-        "eventId": "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:5:return:return:1453"
-      },
-      "s6": {
-        "id": "20261115T080455936-2d380e23",
-        "name": "Тесты для задачи #1453 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261115T080455936-2d380e23/report.json",
-        "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-        "status": "passed",
-        "finishedAt": "2026-11-15T08:14:17.187Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
+      "mergedSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
+      "mergedAt": 1794730763440,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1453:2:b8ccd252fcb52457d960230527a46d83dd240e44:98806c06ec8eb601c8e8774ceeb748e1a4511982",
-      "reviewMaterial": {
-        "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-        "expectedBase": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
-        "patchId": "b8ccd252fcb52457d960230527a46d83dd240e44"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1453,
-        "requestId": "review:1453:2:b8ccd252fcb52457d960230527a46d83dd240e44:98806c06ec8eb601c8e8774ceeb748e1a4511982",
-        "kind": "code",
-        "base": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
-        "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-        "patchId": "b8ccd252fcb52457d960230527a46d83dd240e44",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1453,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1453",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и решение\n\nРеализованы пять согласованных пунктов и кнопка удаления в настройках существующей комнаты. Новый `RoomContextMenu` владеет только выбором цели/переходом к инструменту; рендер и клавиатура переиспользуют `EditorContextMenu`. Геометрию сохраняют прежние Resize/Split/Merge/Delete, удаление использует общий `_openRoomDelete` и существующий диалог выбора. RU/EN/DE/FR и оба руководства обновлены; лишние два пункта не добавлены.\n\n### Риски и места для внимания\n\nПравый pointerdown в Plan больше не начинает pan: иначе native contextmenu приходил во время ложного жеста. При dismiss на площади комнаты поглощается только соответствующий click; новый физический ввод снимает барьер. В меню проверяются пространство, revision/epoch, навигация и writer context; смена режима/документа отзывает старые callbacks. Удаление из настроек проходит существующий `requestRoomClose`, включая защиту черновика и асинхронного продолжения. Сам алгоритм удаления/правила сохранения стен не перерабатывались.\n\n### Проверки и ограничения\n\nЛокально прошли сборка/типы, подготовка модулей и браузерной карточки, критичные данные/сохранение/права (153 кейса), startup View и новый native smoke `demo/smoke_room_context_menu.mjs` (отчёт `20261115T074809875-2dd3b253`). Smoke проверяет пять команд, предварительный выбор комнаты, отмену без записи, сохранение физических стен/двери и Undo, чистую/грязную форму, приоритет стены/проёма/узла, dismiss без рисования, следующий рабочий клик, защиту активного рисования, stale callback после server update и ухода в View. Проверки S6 на актуальном dev и код-ревью запускаются штатным `finish`; полный выпуск и real-HA E2E не требуются этой задачей и не объявляются выполненными.\n\n\n### Уточнение после первого полного S6\n\nПервый полный прогон `20261115T075339655-88b175a8`: 274 шага passed, 347 reused, три failed. Все браузерные проверки, включая новую регрессию, форму комнаты и ширину footer, прошли. Причины трёх отказов и изменения в `4f2d52534`:\n- `geometry-history-refusal`: завершение runtime в Node обращалось к `window.removeEventListener`, хотя меню не регистрировало dismiss-listeners. Теперь `clearDismissTail` сразу выходит при отсутствии владельца; зарегистрированные обработчики по-прежнему снимаются.\n- `core-source-readers` и `mutation-gate`: прежний текстовый якорь проверки secondary mouse button не учитывал добавленный режим Plan. Якорь обновлён к актуальной общей проверке; смысл мутации и native guard сохранены.\n\nДополнительно визуально проверены меню и кнопка удаления на 1100/390 px в RU/EN/DE/FR: все 16 проверок размещения/видимости прошли. Скриншоты синтетического плана и журнала находятся локально в `artifacts/task-1453/`. Повторный S6 выполняется штатным `finish`; эти адресные исправления не объявлены прошедшими до результата."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Блокеров не нашёл, решение можно принимать. Оно добавляет две новые точки входа в уже существующие операции. Первая — контекстное меню комнаты в Plan из пяти согласованных пунктов. Вторая — кнопка «Удалить комнату…» в настройках существующей комнаты. Геометрию, сохранение и Undo по-прежнему выполняют только прежние Resize, Split, Merge и `_confirmRoomDelete`. Новый `RoomContextMenu` лишь выбирает комнату, проверяет, что контекст ещё актуален, и включает инструмент. Обе точки удаления открывают один общий диалог через `_openRoomDelete`. Приоритет узла, стены, проёма и лестницы обеспечен порядком событий: меню узла перехватывает событие раньше и отменяет его, а для остальных объектов используется существующий `_roomFaceObjectHit`. При удалении из настроек несохранённые правки проходят через штатный `requestRoomClose`. Набор проверок S6 `20261115T080455936-2d380e23` на этом SHA завершился успешно. Есть одно заметное изменение поведения: в Plan правая кнопка больше не начинает перемещение плана (pan). Автор сделал это сознательно, и это приемлемо.",
-          "understanding": "**Проблема.** Удаление комнаты, Resize, Split и Merge были доступны только с панели инструментов: сначала выбрать инструмент, потом кликнуть по комнате. В настройках комнаты кнопки удаления не было, а правый клик по комнате ничего не делал: показывалось обычное меню браузера.\n\n**Как стало.**\n- В Plan на SVG-сцене обработчик `@contextmenu` вызывает `roomMenu.open` (`houseplan-card.ts:12859`).\n- `open` пропускает событие, если он уже отменён (так делает меню узла в `wall-node-editor.ts:149-156`), если действие недоступно (нет права редактирования, киоск, открыт другой диалог, нет права записи), если идёт жест (`gesturing`) или если устройство не мышь.\n- Объекты (wall/opening/stair/label/physical-hit/planHit) отсекаются через ставший публичным `_roomFaceObjectHit`. Затем выбирается самая верхняя комната под точкой — так же, как в существующих `_mergeClick`, `_splitClick` и `_deleteRoomClick`.\n- При открытии меню запоминаются space, writer context, navigationIntent, `_cfgRev` и `_cfgEpoch`. Каждый рендер и каждая команда сверяют их через `current()`. Смена режима, документа или навигации отзывает меню через `invalidateEditorNavigation` и `dispose`.\n- Что делают команды:\n  - settings → `_openRoomEdit`;\n  - delete → новый `_openRoomDelete`, его теперь вызывает и `_deleteRoomClick`;\n  - resize/split/merge → `_activateMarkupTool`, затем повторная проверка без учёта navigationIntent (активация инструмента его намеренно увеличивает). После неё выставляется `_resize.selectRoom(id)`, `_splitSel = {roomId, pts: []}` или `_mergeSel = id` — это ровно те состояния, которые создаёт первый клик в существующих инструментах (`houseplan-editor-runtime.ts:2773`, `6861`, `6917`).\n- Рендер, клавиатуру, фокус и закрытие по клику снаружи даёт общий `EditorContextMenu`. Как и в `DecorOrderEditor`, обработчик `outside` поглощает pointerdown на сцене. Сверх этого добавлен временный барьер, который поглощает только парный click: иначе выбранный инструмент рисования получил бы точку.\n- В `_stagePointerDown` правая кнопка в Plan теперь сразу выходит, как раньше в Decor. Иначе `_panStart` на pointerdown делал `gesturing` истинным, и contextmenu (в Linux/macOS он приходит на mousedown) отбрасывался.\n- В настройках комнаты при `edit && _mode === 'plan'` в footer есть кнопка. `deleteFromSettings` запоминает цель и вызывает `requestRoomClose(runtime, after)`:\n  - чистая форма закрывается сразу;\n  - для грязной формы показывается штатный запрос об отмене правок: отказ оставляет форму, согласие закрывает её через `_roomDialogCancel`;\n  - только после этого `after` заново проверяет `current(target)` и открывает тот же диалог удаления.\n\n**Что разобрал.** `room-context-menu.ts` полностью, `editor-context-menu.ts` полностью, `decor-order-editor.ts` как образец, `draft-actions.ts` и `draft-close.ts`, `_activateMarkupTool`, `_markupClick` в части resize/delroom/merge, `_mergeClick` и `_splitClick`, `_deleteRoomClick`, `_openRoomDelete`, начало `_confirmRoomDelete`, `_roomDialogCancel`, `_openRoomEdit`, `_stagePointerDown`, `_guardTouchGesture`, `wall-node-editor.guardEvent` и `down`, `_otherDialogsBlocked`, footer `room-settings-dialog.ts`, smoke `demo/smoke_room_context_menu.mjs`.",
-          "analysis": [
-            {
-              "topic": "Переиспользование операций вместо новой логики",
-              "assessment": "Удачное решение, его стоит сохранить. Меню ничего не пишет. Состояния предварительного выбора совпадают с теми, что создаёт первый клик в существующем инструменте, поэтому все дальнейшие ограничения (подходящие для Resize стены, проверка соседства в Merge, путь от стены до стены в Split, диалог выбора сохраняемой комнаты в Merge) работают без изменений. Удаление из меню и из настроек идёт через один `_openRoomDelete` → `_roomDeleteDialog` → `_confirmRoomDelete`. Требование ТЗ «одно поведение, а не отдельные реализации» выполнено буквально.",
-              "evidence": "`room-context-menu.ts:93-101`; `houseplan-editor-runtime.ts:2773` (клик в Resize → `selectRoom`), `6860-6862` (`_mergeSel`), `6914-6918` (`_splitSel {roomId, pts: []}`), `5700-5717` (`_deleteRoomClick` теперь вызывает `_openRoomDelete`)."
-            },
-            {
-              "topic": "Приоритет объектов над площадью комнаты",
-              "assessment": "Узел обрабатывается раньше: `nodeMove.guardEvent` в window-capture отменяет contextmenu и открывает своё меню, а `open` проверяет `event.defaultPrevented`. Стены, проёмы, лестницы, подписи и `planHit` отсекаются тем же `_roomFaceObjectHit`, который уже использует Select для подсказки по грани стены, так что набор объектов единый. Устройства в Plan — пассивные ориентиры (`_ctxDevice` в Plan ничего не делает), поэтому меню комнаты над ними допустимо. Правый клик по подписи комнаты меню не открывает. Это согласуется с формулировкой «на свободной площади», но владелец может ожидать обратного.",
-              "evidence": "`wall-node-editor.ts:149-156`; `houseplan-card.ts:8913-8918`; `houseplan-editor-runtime.ts:3072-3076`; `houseplan-card.ts:7174-7177`; в smoke проверки `wallKeepsPriority`, `openingKeepsPriority` и `nodeKeepsPriority`."
-            },
-            {
-              "topic": "Жизненный цикл, устаревшие callbacks и права",
-              "assessment": "Проверки актуальности сделаны тщательнее, чем у меню фона: дополнительно сверяются `_cfgEpoch`, `_modeTransitionBusy` и наличие комнаты. Команда проверяет `current` до `beforeIntent` и после него. После активации инструмента проверка повторяется без navigationIntent, и это обосновано: `_activateMarkupTool` всегда вызывает `invalidateEditorNavigation`. Если активация отложена асинхронной защитой (`beforeIntent`, `_guardDraftNavigation`, `_finishWallChainForNavigation`), проверка `h._tool !== command` прекращает выбор комнаты. Инструмент позже включится, но без предвыбора — ошибочного выбора не будет. Практически этот путь почти недостижим: открытые диалоги блокируют меню через `_editorSecondaryDialogBlocked`, а незаконченная цепочка стен — через `gesturing` (`_path.length`).",
-              "evidence": "`room-context-menu.ts:18-39`, `86-101`; `houseplan-editor-runtime.ts:1639-1656`, `1076` (`roomMenu.close` в `invalidateEditorNavigation`), `1323` (`dispose`); в smoke проверки `serverUpdateRetiresOldCommand`, `modeChangeRetiresOldCommand` и `viewHasNoRoomMenu`."
-            },
-            {
-              "topic": "Закрытие меню и барьер для click",
-              "assessment": "Обработчик `outside` повторяет решение `DecorOrderEditor`: pointerdown на сцене поглощается в window-capture, поэтому не начинаются ни pan, ни инструмент. Дополнительный `dismissTail` нужен, потому что в Plan выбранный инструмент (draw/split/merge) срабатывает по click, а не по pointerdown. Барьер ограничен: он поглощает только click с тем же target в composedPath и снимается при следующем pointerdown или keydown. Залипнуть он не может: всякому пользовательскому click предшествует pointerdown или keydown. Listener, добавленный во время обработки события, на это же событие не срабатывает, и, кроме того, вызван `stopImmediatePropagation`. Исправление из второго коммита (ранний выход в `clearDismissTail` без зарегистрированного владельца) корректно и не мешает снимать реальные listeners. Обратная сторона: поглощённый pointerdown не доходит до `_guardTouchGesture` и `_notePointer`. Для одиночного клика мышью это безвредно, и меню фона устроено так же.",
-              "evidence": "`room-context-menu.ts:45-66`; `editor-context-menu.ts:56-62`; `decor-order-editor.ts:81-85`; в smoke проверки `outsideDismissDoesNotDraw` и `nextDeliberateClickStillDraws`."
-            },
-            {
-              "topic": "Отказ от pan правой кнопкой в Plan",
-              "assessment": "Необходимое следствие: без этого `_panStart` на правом pointerdown делал `gesturing` истинным, а на Linux/macOS contextmenu приходит раньше pointerup, и меню не открывалось бы. Перемещение левой и средней кнопкой и жесты касанием сохраняются, а раньше правый drag в Plan сопровождался обычным меню браузера, так что потеря невелика. Заодно правая кнопка больше не доходит до `stairs.stagePointerDown`, `_bootSoftCancel` и `_cancelCameraTransition`. Якорь мутации в `scripts/mutation-registry.mjs` обновлён под новую строку: мутант по-прежнему пропускает правую кнопку дальше в Decor.",
-              "evidence": "`houseplan-card.ts:8341`, `8373-8393`; `scripts/mutation-registry.mjs:8497`; автор указал это в разделе рисков."
-            },
-            {
-              "topic": "Удаление из настроек и несохранённые правки",
-              "assessment": "Сделано правильно и без лишней сложности: используется тот же `requestRoomClose`, что и для кнопки Cancel. Проверка сессии диалога (`dialogSession`) и `current()` защищают от устаревшего подтверждения. Удаление не сохраняет правки, а отказ оставляет форму вместе с введёнными значениями. Цель удаления запоминается до закрытия, поэтому открывается диалог для исходного `_roomEditId`. Если, пока висит вопрос о несохранённых правках, придёт обновление от сервера (`_cfgRev`), форма закроется, а удаление молча не откроется. Это безопасный отказ, а не потеря данных. Кнопка показывается только для существующей комнаты в Plan (`edit && host._mode === 'plan'`) и неактивна, пока идёт сохранение.",
-              "evidence": "`room-context-menu.ts:103-111`; `editors/draft-actions.ts:45-58`; `editors/draft-close.ts:17-27`; `room-settings-dialog.ts:278-283`; в smoke проверки `dirtySettingsAskBeforeDelete`, `keepDraftDoesNotDelete`, `discardThenDeleteTargetsOriginalRoom` и `cleanSettingsOpenSameDeleteChoice`."
-            },
-            {
-              "topic": "Регрессионная проверка и S6",
-              "assessment": "Новый smoke покрывает всё, что ТЗ требует проверить: пять команд и их порядок, предварительный выбор в Resize/Split/Merge, отсутствие записи при открытии меню и отмене, удаление с сохранением трёх собственных стен и двери, восстановление через Undo, чистую и грязную форму, приоритет объектов, защиту активного рисования, устаревшие callbacks и отсутствие меню в View. Smoke подхватывается автоматически по шаблону `demo/smoke_*.mjs` (`process-next/lib/task-selection.mjs`, `test/browser-attestation.test.mjs`). Итоговый набор S6 на этом SHA завершился успешно.",
-              "evidence": "`demo/smoke_room_context_menu.mjs`; результат S6 `20261115T080455936-2d380e23` (status passed, failures: [])."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Если выбор Resize, Split или Merge из меню попадёт на асинхронную ветку `_activateMarkupTool` (отложенный `beforeIntent` или защита черновика), инструмент включится, но комната выбрана не будет. Можно вынести установку выбора в отдельный шаг и вызывать его из продолжения: дать `_activateMarkupTool` необязательный callback `after`, срабатывающий после фактической смены инструмента. Выгода — поведение не зависит от тайминга. Цена — небольшое изменение сигнатуры общего метода. Сейчас путь почти недостижим, поэтому это необязательно.",
-            "В USER-GUIDE стоит одной фразой отметить, что в Plan правая кнопка больше не перемещает план (вместо неё — левая или средняя кнопка). Изменение сознательное и разумное, но пользователь, привыкший к правому drag, его заметит.",
-            "Стоит уточнить у владельца, должен ли правый клик по подписи комнаты (`.roomlabel`) тоже открывать меню комнаты. Сейчас подпись считается объектом и показывает обычное меню браузера. Если да, это одна поправка в `open` (исключить `.roomlabel` из проверки объекта для меню) без влияния на перетаскивание подписи."
-          ],
-          "boundaries": "Ревью выполнено только по исходникам на SHA `4f2d52534f1f4be398d2f6d5f2ab871a0afed383`. Сборку, тесты и smoke сам не запускал — так требует S7. Опирался на итоговый набор S6 `20261115T080455936-2d380e23` (passed) и описание автором первого прогона с тремя отказами и их исправлений. Визуальную проверку на 1100/390 px в RU/EN/DE/FR (скриншоты в `artifacts/task-1453/`) не видел: эти файлы не в репозитории, поэтому вёрстку footer и меню оцениваю только по коду. Порядок событий pointerdown/contextmenu в разных браузерах оценивал по коду и спецификации DOM. Отдельно не проверял Firefox/Safari, где contextmenu приходит как MouseEvent без `pointerType` (так же устроено и меню фона), и ввод касанием долгим нажатием. Алгоритм `planRoomDeletion` и правила сохранения стен не менялись и не перепроверялись по существу; изменилось только то, как открывается диалог.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 58,
-          "cache_creation_input_tokens": 100804,
-          "cache_read_input_tokens": 1661676,
-          "output_tokens": 18265,
-          "output_tokens_details": {
-            "thinking_tokens": 8066
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 100804,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1024,
-              "cache_read_input_tokens": 84191,
-              "cache_creation_input_tokens": 20817,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 20817
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокеров не нашёл, решение можно принимать. Оно добавляет две новые точки входа в уже существующие операции. Первая — контекстное меню комнаты в Plan из пяти согласованных пунктов. Вторая — кнопка «Удалить комнату…» в настройках существующей комнаты. Геометрию, сохранение и Undo по-прежнему выполняют только прежние Resize, Split, Merge и `_confirmRoomDelete`. Новый `RoomContextMenu` лишь выбирает комнату, проверяет, что контекст ещё актуален, и включает инструмент. Обе точки удаления открывают один общий диалог через `_openRoomDelete`. Приоритет узла, стены, проёма и лестницы обеспечен порядком событий: меню узла перехватывает событие раньше и отменяет его, а для остальных объектов используется существующий `_roomFaceObjectHit`. При удалении из настроек несохранённые правки проходят через штатный `requestRoomClose`. Набор проверок S6 `20261115T080455936-2d380e23` на этом SHA завершился успешно. Есть одно заметное изменение поведения: в Plan правая кнопка больше не начинает перемещение плана (pan). Автор сделал это сознательно, и это приемлемо.\n\n## Понимание решения\n\n**Проблема.** Удаление комнаты, Resize, Split и Merge были доступны только с панели инструментов: сначала выбрать инструмент, потом кликнуть по комнате. В настройках комнаты кнопки удаления не было, а правый клик по комнате ничего не делал: показывалось обычное меню браузера.\n\n**Как стало.**\n- В Plan на SVG-сцене обработчик `@contextmenu` вызывает `roomMenu.open` (`houseplan-card.ts:12859`).\n- `open` пропускает событие, если он уже отменён (так делает меню узла в `wall-node-editor.ts:149-156`), если действие недоступно (нет права редактирования, киоск, открыт другой диалог, нет права записи), если идёт жест (`gesturing`) или если устройство не мышь.\n- Объекты (wall/opening/stair/label/physical-hit/planHit) отсекаются через ставший публичным `_roomFaceObjectHit`. Затем выбирается самая верхняя комната под точкой — так же, как в существующих `_mergeClick`, `_splitClick` и `_deleteRoomClick`.\n- При открытии меню запоминаются space, writer context, navigationIntent, `_cfgRev` и `_cfgEpoch`. Каждый рендер и каждая команда сверяют их через `current()`. Смена режима, документа или навигации отзывает меню через `invalidateEditorNavigation` и `dispose`.\n- Что делают команды:\n  - settings → `_openRoomEdit`;\n  - delete → новый `_openRoomDelete`, его теперь вызывает и `_deleteRoomClick`;\n  - resize/split/merge → `_activateMarkupTool`, затем повторная проверка без учёта navigationIntent (активация инструмента его намеренно увеличивает). После неё выставляется `_resize.selectRoom(id)`, `_splitSel = {roomId, pts: []}` или `_mergeSel = id` — это ровно те состояния, которые создаёт первый клик в существующих инструментах (`houseplan-editor-runtime.ts:2773`, `6861`, `6917`).\n- Рендер, клавиатуру, фокус и закрытие по клику снаружи даёт общий `EditorContextMenu`. Как и в `DecorOrderEditor`, обработчик `outside` поглощает pointerdown на сцене. Сверх этого добавлен временный барьер, который поглощает только парный click: иначе выбранный инструмент рисования получил бы точку.\n- В `_stagePointerDown` правая кнопка в Plan теперь сразу выходит, как раньше в Decor. Иначе `_panStart` на pointerdown делал `gesturing` истинным, и contextmenu (в Linux/macOS он приходит на mousedown) отбрасывался.\n- В настройках комнаты при `edit && _mode === 'plan'` в footer есть кнопка. `deleteFromSettings` запоминает цель и вызывает `requestRoomClose(runtime, after)`:\n  - чистая форма закрывается сразу;\n  - для грязной формы показывается штатный запрос об отмене правок: отказ оставляет форму, согласие закрывает её через `_roomDialogCancel`;\n  - только после этого `after` заново проверяет `current(target)` и открывает тот же диалог удаления.\n\n**Что разобрал.** `room-context-menu.ts` полностью, `editor-context-menu.ts` полностью, `decor-order-editor.ts` как образец, `draft-actions.ts` и `draft-close.ts`, `_activateMarkupTool`, `_markupClick` в части resize/delroom/merge, `_mergeClick` и `_splitClick`, `_deleteRoomClick`, `_openRoomDelete`, начало `_confirmRoomDelete`, `_roomDialogCancel`, `_openRoomEdit`, `_stagePointerDown`, `_guardTouchGesture`, `wall-node-editor.guardEvent` и `down`, `_otherDialogsBlocked`, footer `room-settings-dialog.ts`, smoke `demo/smoke_room_context_menu.mjs`.\n\n## Разбор решения\n\n### Переиспользование операций вместо новой логики\n\nУдачное решение, его стоит сохранить. Меню ничего не пишет. Состояния предварительного выбора совпадают с теми, что создаёт первый клик в существующем инструменте, поэтому все дальнейшие ограничения (подходящие для Resize стены, проверка соседства в Merge, путь от стены до стены в Split, диалог выбора сохраняемой комнаты в Merge) работают без изменений. Удаление из меню и из настроек идёт через один `_openRoomDelete` → `_roomDeleteDialog` → `_confirmRoomDelete`. Требование ТЗ «одно поведение, а не отдельные реализации» выполнено буквально.\n\nОснование: `room-context-menu.ts:93-101`; `houseplan-editor-runtime.ts:2773` (клик в Resize → `selectRoom`), `6860-6862` (`_mergeSel`), `6914-6918` (`_splitSel {roomId, pts: []}`), `5700-5717` (`_deleteRoomClick` теперь вызывает `_openRoomDelete`).\n\n### Приоритет объектов над площадью комнаты\n\nУзел обрабатывается раньше: `nodeMove.guardEvent` в window-capture отменяет contextmenu и открывает своё меню, а `open` проверяет `event.defaultPrevented`. Стены, проёмы, лестницы, подписи и `planHit` отсекаются тем же `_roomFaceObjectHit`, который уже использует Select для подсказки по грани стены, так что набор объектов единый. Устройства в Plan — пассивные ориентиры (`_ctxDevice` в Plan ничего не делает), поэтому меню комнаты над ними допустимо. Правый клик по подписи комнаты меню не открывает. Это согласуется с формулировкой «на свободной площади», но владелец может ожидать обратного.\n\nОснование: `wall-node-editor.ts:149-156`; `houseplan-card.ts:8913-8918`; `houseplan-editor-runtime.ts:3072-3076`; `houseplan-card.ts:7174-7177`; в smoke проверки `wallKeepsPriority`, `openingKeepsPriority` и `nodeKeepsPriority`.\n\n### Жизненный цикл, устаревшие callbacks и права\n\nПроверки актуальности сделаны тщательнее, чем у меню фона: дополнительно сверяются `_cfgEpoch`, `_modeTransitionBusy` и наличие комнаты. Команда проверяет `current` до `beforeIntent` и после него. После активации инструмента проверка повторяется без navigationIntent, и это обосновано: `_activateMarkupTool` всегда вызывает `invalidateEditorNavigation`. Если активация отложена асинхронной защитой (`beforeIntent`, `_guardDraftNavigation`, `_finishWallChainForNavigation`), проверка `h._tool !== command` прекращает выбор комнаты. Инструмент позже включится, но без предвыбора — ошибочного выбора не будет. Практически этот путь почти недостижим: открытые диалоги блокируют меню через `_editorSecondaryDialogBlocked`, а незаконченная цепочка стен — через `gesturing` (`_path.length`).\n\nОснование: `room-context-menu.ts:18-39`, `86-101`; `houseplan-editor-runtime.ts:1639-1656`, `1076` (`roomMenu.close` в `invalidateEditorNavigation`), `1323` (`dispose`); в smoke проверки `serverUpdateRetiresOldCommand`, `modeChangeRetiresOldCommand` и `viewHasNoRoomMenu`.\n\n### Закрытие меню и барьер для click\n\nОбработчик `outside` повторяет решение `DecorOrderEditor`: pointerdown на сцене поглощается в window-capture, поэтому не начинаются ни pan, ни инструмент. Дополнительный `dismissTail` нужен, потому что в Plan выбранный инструмент (draw/split/merge) срабатывает по click, а не по pointerdown. Барьер ограничен: он поглощает только click с тем же target в composedPath и снимается при следующем pointerdown или keydown. Залипнуть он не может: всякому пользовательскому click предшествует pointerdown или keydown. Listener, добавленный во время обработки события, на это же событие не срабатывает, и, кроме того, вызван `stopImmediatePropagation`. Исправление из второго коммита (ранний выход в `clearDismissTail` без зарегистрированного владельца) корректно и не мешает снимать реальные listeners. Обратная сторона: поглощённый pointerdown не доходит до `_guardTouchGesture` и `_notePointer`. Для одиночного клика мышью это безвредно, и меню фона устроено так же.\n\nОснование: `room-context-menu.ts:45-66`; `editor-context-menu.ts:56-62`; `decor-order-editor.ts:81-85`; в smoke проверки `outsideDismissDoesNotDraw` и `nextDeliberateClickStillDraws`.\n\n### Отказ от pan правой кнопкой в Plan\n\nНеобходимое следствие: без этого `_panStart` на правом pointerdown делал `gesturing` истинным, а на Linux/macOS contextmenu приходит раньше pointerup, и меню не открывалось бы. Перемещение левой и средней кнопкой и жесты касанием сохраняются, а раньше правый drag в Plan сопровождался обычным меню браузера, так что потеря невелика. Заодно правая кнопка больше не доходит до `stairs.stagePointerDown`, `_bootSoftCancel` и `_cancelCameraTransition`. Якорь мутации в `scripts/mutation-registry.mjs` обновлён под новую строку: мутант по-прежнему пропускает правую кнопку дальше в Decor.\n\nОснование: `houseplan-card.ts:8341`, `8373-8393`; `scripts/mutation-registry.mjs:8497`; автор указал это в разделе рисков.\n\n### Удаление из настроек и несохранённые правки\n\nСделано правильно и без лишней сложности: используется тот же `requestRoomClose`, что и для кнопки Cancel. Проверка сессии диалога (`dialogSession`) и `current()` защищают от устаревшего подтверждения. Удаление не сохраняет правки, а отказ оставляет форму вместе с введёнными значениями. Цель удаления запоминается до закрытия, поэтому открывается диалог для исходного `_roomEditId`. Если, пока висит вопрос о несохранённых правках, придёт обновление от сервера (`_cfgRev`), форма закроется, а удаление молча не откроется. Это безопасный отказ, а не потеря данных. Кнопка показывается только для существующей комнаты в Plan (`edit && host._mode === 'plan'`) и неактивна, пока идёт сохранение.\n\nОснование: `room-context-menu.ts:103-111`; `editors/draft-actions.ts:45-58`; `editors/draft-close.ts:17-27`; `room-settings-dialog.ts:278-283`; в smoke проверки `dirtySettingsAskBeforeDelete`, `keepDraftDoesNotDelete`, `discardThenDeleteTargetsOriginalRoom` и `cleanSettingsOpenSameDeleteChoice`.\n\n### Регрессионная проверка и S6\n\nНовый smoke покрывает всё, что ТЗ требует проверить: пять команд и их порядок, предварительный выбор в Resize/Split/Merge, отсутствие записи при открытии меню и отмене, удаление с сохранением трёх собственных стен и двери, восстановление через Undo, чистую и грязную форму, приоритет объектов, защиту активного рисования, устаревшие callbacks и отсутствие меню в View. Smoke подхватывается автоматически по шаблону `demo/smoke_*.mjs` (`process-next/lib/task-selection.mjs`, `test/browser-attestation.test.mjs`). Итоговый набор S6 на этом SHA завершился успешно.\n\nОснование: `demo/smoke_room_context_menu.mjs`; результат S6 `20261115T080455936-2d380e23` (status passed, failures: []).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Если выбор Resize, Split или Merge из меню попадёт на асинхронную ветку `_activateMarkupTool` (отложенный `beforeIntent` или защита черновика), инструмент включится, но комната выбрана не будет. Можно вынести установку выбора в отдельный шаг и вызывать его из продолжения: дать `_activateMarkupTool` необязательный callback `after`, срабатывающий после фактической смены инструмента. Выгода — поведение не зависит от тайминга. Цена — небольшое изменение сигнатуры общего метода. Сейчас путь почти недостижим, поэтому это необязательно.\n- В USER-GUIDE стоит одной фразой отметить, что в Plan правая кнопка больше не перемещает план (вместо неё — левая или средняя кнопка). Изменение сознательное и разумное, но пользователь, привыкший к правому drag, его заметит.\n- Стоит уточнить у владельца, должен ли правый клик по подписи комнаты (`.roomlabel`) тоже открывать меню комнаты. Сейчас подпись считается объектом и показывает обычное меню браузера. Если да, это одна поправка в `open` (исключить `.roomlabel` из проверки объекта для меню) без влияния на перетаскивание подписи.\n\n## Границы анализа\n\nРевью выполнено только по исходникам на SHA `4f2d52534f1f4be398d2f6d5f2ab871a0afed383`. Сборку, тесты и smoke сам не запускал — так требует S7. Опирался на итоговый набор S6 `20261115T080455936-2d380e23` (passed) и описание автором первого прогона с тремя отказами и их исправлений. Визуальную проверку на 1100/390 px в RU/EN/DE/FR (скриншоты в `artifacts/task-1453/`) не видел: эти файлы не в репозитории, поэтому вёрстку footer и меню оцениваю только по коду. Порядок событий pointerdown/contextmenu в разных браузерах оценивал по коду и спецификации DOM. Отдельно не проверял Firefox/Safari, где contextmenu приходит как MouseEvent без `pointerType` (так же устроено и меню фона), и ввод касанием долгим нажатием. Алгоритм `planRoomDeletion` и правила сохранения стен не менялись и не перепроверялись по существу; изменилось только то, как открывается диалог.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 98806c06ec8eb601c8e8774ceeb748e1a4511982 → 4f2d52534f1f4be398d2f6d5f2ab871a0afed383\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1453, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Цель и решение\n\nРеализованы пять согласованных пунктов и кнопка удаления в настройках существующей комнаты. Новый `RoomContextMenu` владеет только выбором цели/переходом к инструменту; рендер и клавиатура переиспользуют `EditorContextMenu`. Геометрию сохраняют прежние Resize/Split/Merge/Delete, удаление использует общий `_openRoomDelete` и существующий диалог выбора. RU/EN/DE/FR и оба руководства обновлены; лишние два пункта не добавлены.\n\n### Риски и места для внимания\n\nПравый pointerdown в Plan больше не начинает pan: иначе native contextmenu приходил во время ложного жеста. При dismiss на площади комнаты поглощается только соответствующий click; новый физический ввод снимает барьер. В меню проверяются пространство, revision/epoch, навигация и writer context; смена режима/документа отзывает старые callbacks. Удаление из настроек проходит существующий `requestRoomClose`, включая защиту черновика и асинхронного продолжения. Сам алгоритм удаления/правила сохранения стен не перерабатывались.\n\n### Проверки и ограничения\n\nЛокально прошли сборка/типы, подготовка модулей и браузерной карточки, критичные данные/сохранение/права (153 кейса), startup View и новый native smoke `demo/smoke_room_context_menu.mjs` (отчёт `20261115T074809875-2dd3b253`). Smoke проверяет пять команд, предварительный выбор комнаты, отмену без записи, сохранение физических стен/двери и Undo, чистую/грязную форму, приоритет стены/проёма/узла, dismiss без рисования, следующий рабочий клик, защиту активного рисования, stale callback после server update и ухода в View. Проверки S6 на актуальном dev и код-ревью запускаются штатным `finish`; полный выпуск и real-HA E2E не требуются этой задачей и не объявляются выполненными.\n\n\n### Уточнение после первого полного S6\n\nПервый полный прогон `20261115T075339655-88b175a8`: 274 шага passed, 347 reused, три failed. Все браузерные проверки, включая новую регрессию, форму комнаты и ширину footer, прошли. Причины трёх отказов и изменения в `4f2d52534`:\n- `geometry-history-refusal`: завершение runtime в Node обращалось к `window.removeEventListener`, хотя меню не регистрировало dismiss-listeners. Теперь `clearDismissTail` сразу выходит при отсутствии владельца; зарегистрированные обработчики по-прежнему снимаются.\n- `core-source-readers` и `mutation-gate`: прежний текстовый якорь проверки secondary mouse button не учитывал добавленный режим Plan. Якорь обновлён к актуальной общей проверке; смысл мутации и native guard сохранены.\n\nДополнительно визуально проверены меню и кнопка удаления на 1100/390 px в RU/EN/DE/FR: все 16 проверок размещения/видимости прошли. Скриншоты синтетического плана и журнала находятся локально в `artifacts/task-1453/`. Повторный S6 выполняется штатным `finish`; эти адресные исправления не объявлены прошедшими до результата.\n```\n\n</details>\n",
-        "createdAt": "2026-11-15T08:18:52.646Z",
-        "artifactId": 14152908860,
-        "runId": 43693575487,
-        "runAttempt": 1,
-        "completedAt": "2026-11-15T08:18:57Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43693575487",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "98806c06ec8eb601c8e8774ceeb748e1a4511982"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -5344,119 +5192,11 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1453,
-    "worker": "finish",
-    "token": "486:finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:1:admit",
-    "fence": 486,
-    "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-    "expectedBase": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
-    "phase": "ready-to-merge",
-    "admittedAt": 1794729883326,
-    "expiresAt": 1794734357908,
-    "patchId": "b8ccd252fcb52457d960230527a46d83dd240e44",
-    "reviewRequest": "review:1453:2:b8ccd252fcb52457d960230527a46d83dd240e44:98806c06ec8eb601c8e8774ceeb748e1a4511982"
-  },
+  "active": null,
   "events": {
-    "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:2:synchronized": {
-      "digest": "34fa29108c37b62da50fe65111e09a8be02583214938f5a91e89c29e7fd8aee1",
-      "issue": 1453
-    },
-    "github:43691763992:1:completions:message:9c76dad491891d659f8ec0f7b27cec95fcac20963fcef3971d80a0bad933e711": {
-      "digest": "c7b746edb76cd5d9b142f106c28b900aacc790f4b50991f66faaaf23a7c26e90",
-      "issue": 1453
-    },
-    "github:43691763992:1:completions:message:ab8a5c2584cb4a325145178e0933540c210e17e27c3059a68f430f94c317b1e7": {
-      "digest": "2edb528a3dbcce95179d6e2eae9594da7132709b5c431f1328a1d967c0172f7c",
-      "issue": 1453
-    },
-    "github:43691763992:1:completions:message:cd6df528904d78c1cb0b80fe3258faa0af2840c1d0ccd23491b71f7b6113fc15": {
-      "digest": "c697ae630eb52046ef7b6e839e4530ebd8159bd54b0de7eadfc449636185e42a",
-      "issue": 1453
-    },
-    "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:3:automation-pending": {
-      "digest": "1d7fe76e90b4f1061d0a7cb10dc3302ed47394fe87a0da45696e99890602aa14",
-      "issue": 1453
-    },
-    "finish:4b93efd4-57a4-468a-a24a-4e993a3bfadb": {
-      "digest": "f0320de5a4f470957875829d280e3d5c19434ebe26cbf3bd735c823d97df2beb",
-      "issue": 1453
-    },
-    "finish:8923e02b-282f-418b-8444-33252a4bbfcc": {
-      "digest": "e43df640f2614c864c9de209cc558c2ff38294abf07093389662d868624c4e70",
-      "issue": 1453
-    },
-    "finish:cd9a3279-2679-471f-886b-df98e4c55fdd": {
-      "digest": "cbd6d288a2c603fd6e1f21ca2af353e2b60613a892c1582816491874de64b77a",
-      "issue": 1453
-    },
-    "finish:6fc56d1f-5283-4dad-ba83-41470c1ba8e8": {
-      "digest": "c6a5e829a0bd6c0e0cf0c38ae94321773909a936f950aa5f1e068dbe48953108",
-      "issue": 1453
-    },
-    "finish:1e45bf90-910b-4ab9-9803-249c6f009f3d": {
-      "digest": "adbd78992ed9dd0a85724d6087bd1d5f2a8c9a2cddef5b67403faaa4d401faa9",
-      "issue": 1453
-    },
-    "finish:b8cfaba9-eb4d-41dd-ac20-aeab61e3868a": {
-      "digest": "636613d64d75419f059225e5c68dfeaef006ada7aa23026bfc1488e7d5a821a2",
-      "issue": 1453
-    },
-    "finish:e8ff4ae3-f90b-419e-b3dc-00853c663a28": {
-      "digest": "cce1d78d525290a158d288fc2bf6da2c4d7e127fa0bc7b28794aff7fa50cf97a",
-      "issue": 1453
-    },
-    "finish:1a8a4f95-20c5-48dc-8409-0636bfdfe606": {
-      "digest": "7e5152bbfe034ff6192a3443bf44100a66683d7a41987c1506a9ea2a64497124",
-      "issue": 1453
-    },
-    "finish:b7e3e8fc-a6a2-4769-9d64-df421f2a837a": {
-      "digest": "be1350a0479fe3d52c3a78fdf0147e8a345d1ed5fc3f8ed02a8c33d6e83619af",
-      "issue": 1453
-    },
-    "finish:f63183cc-d77a-4fe5-93c2-6812e19f6bd5": {
-      "digest": "6065a6a44d07bc1ca11af0d560463436fcb6dfb3f5300890a2cfc1405cbe5971",
-      "issue": 1453
-    },
-    "finish:1a04e5fa-3a53-4e09-b985-f65d947f80f8": {
-      "digest": "1b50e5210792107f6b45a1cceefe44f0dabb6fef18b052ef636aa7a3e9e6e400",
-      "issue": 1453
-    },
     "github:43692634249:1:label:spec-request": {
       "digest": "be23c2d8528929891849728e337b326730ffe9e71f61f86425d4a615c34ae29a",
       "issue": 1454
-    },
-    "finish:afff4948-99e6-4bd0-afd6-857adb669c1b": {
-      "digest": "cf5c04c3475901f656174b9dc609438c1a16194d385dc1984a18ab7c09fd041a",
-      "issue": 1453
-    },
-    "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:5:return": {
-      "digest": "4b4304f2eaeefe043bb4588095c3496240355fda8df996f3518d8ab34022352f",
-      "issue": 1453
-    },
-    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:2:synchronized": {
-      "digest": "f707083f83d8a1c1a4df4a92028371b218731bd655e6c6f93b6d544f59694c9e",
-      "issue": 1453
-    },
-    "finish:06e40b10-793f-43ef-a5cb-044c4819fdc4": {
-      "digest": "a518b370566a235f997fe2a2226d49f20adea016b691e24ac275fefc712f9268",
-      "issue": 1453
-    },
-    "finish:afcaad80-90db-4bc2-ae5d-d2d4a1af613c": {
-      "digest": "da14fddd93e382b1a70980265ee1c4262455ce089c10f80dd0401b1bf67fc1fe",
-      "issue": 1453
-    },
-    "finish:0ae9ae08-8ab7-45a1-aa72-4cb4e86d975d": {
-      "digest": "f57272beed5119e50b53bbba7c6db924976decdbb210678b83f6e40c96f7fc39",
-      "issue": 1453
-    },
-    "finish:9dd53707-3462-480e-b4f4-1f33ff18b298": {
-      "digest": "a195495941b5a735f26f9984000214946069bc0f1616faf79abcba0a684dad80",
-      "issue": 1453
-    },
-    "finish:c23c7b57-2924-4270-a9c5-f2e06acaa4eb": {
-      "digest": "ba802a3e0f15acacc5cf246aa723d59842d5dcf3ff34639c71acec7061dba3e9",
-      "issue": 1453
     },
     "github:43693198626:1:spec:1454:spec-presentation": {
       "digest": "426f71bf52d18bdc24616c43e75a968d299f00bb0f97730419d5acd3d62c410c",
@@ -5474,166 +5214,9 @@
       "digest": "6e14d82e2545208e3dacab62473daf1fd3296c668c7cf4da5bdd5760744f1723",
       "issue": 1454
     },
-    "github:43693198626:1:completions:notice:6b611ec122a773b4e613ec9d50dc1fbf4a5740aad6413ed6e56ad7b7a9532890": {
-      "digest": "ea303b5ca7b08c666dffd4bce44a73897dd669ab1b11b6fd4a6587e69a425167",
-      "issue": 1453
-    },
-    "github:43693198626:1:completions:message:6b611ec122a773b4e613ec9d50dc1fbf4a5740aad6413ed6e56ad7b7a9532890": {
-      "digest": "38e1a0ef2d2652dec0afb86cbf3cfac4382ff07fc085a4b8688ff84aec7d251d",
-      "issue": 1453
-    },
-    "github:43693198626:1:completions:message:4d48178820cf5767809bf40b40545f0bc328de7ab6f3ea8b7f2b74852fc42c9a": {
-      "digest": "48b0a773cc78548a59bf16b5a6cb80c8d46f2fa8881d8ee1d929460b99c24953",
-      "issue": 1453
-    },
-    "github:43693198626:1:completions:message:f26716e252b131d06ad2b85a91eab1f36bc63c3739276120e3eb62de07c73b1a": {
-      "digest": "4f40eb495c32c46b73d813a05a658335837723f2ae38251b6646662c002e8c97",
-      "issue": 1453
-    },
-    "finish:1080dd12-557f-49bf-ae1a-0ae62966f7b7": {
-      "digest": "a2a0e5870fcce66d3ee15dc772c9c724bfad071b8074e6456d220b83de1367cd",
-      "issue": 1453
-    },
-    "finish:dcd95a1f-d3cb-40f5-b977-c41ff04fc343": {
-      "digest": "fdb180e4066f8f651dd77ec9d0c07c03ed5adbe3c2aafe19ac63077a7969eb53",
-      "issue": 1453
-    },
-    "finish:81f44aad-6a8c-4eb0-9f18-fb73f2a287b3": {
-      "digest": "0a6e4a8dbf1d3ee802822a82e475f4ae18753863d958d4ae3f965b02d9184a99",
-      "issue": 1453
-    },
-    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:3:s6-label": {
-      "digest": "cab597b5b70212461577e0e0372b881cb4537bb4c9a621cfc1b6244d87834049",
-      "issue": 1453
-    },
-    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:4:review-requested": {
-      "digest": "8bc02e442003f625c96035d80a27eb832826ef1d02cf5a58cf23cfd1229f1aa1",
-      "issue": 1453
-    },
-    "github:43693558661:1:completions:message:6bae2a79a55196f226e7593274fdc39caaf353643fca2cd8fb9bd4445bc03e9c": {
-      "digest": "828f1ba9b9c237fd38b06d13079bd7fb3546fc1add23a7dcc13f99e5d4847308",
-      "issue": 1453
-    },
     "github:43693917941:1:spec:1454:spec-request": {
       "digest": "a7f53fa9906dee3c79c8556d9b9c92e8d7cd413dfbb3f5810a2156cf677086a2",
       "issue": 1454
-    },
-    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:8:review-presentation": {
-      "digest": "b54d64ae3d682c09d72bb4e8240f9524f8eaacf02f1cbefd41761f8d07b4c4b5",
-      "issue": 1453
-    },
-    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:8:review-complete": {
-      "digest": "c790d3fc345c10ffd00dd34b7c7c6c233cb3e5a747aef6a3e39b7dbad00a08f6",
-      "issue": 1453
-    },
-    "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528": {
-      "digest": "dcf60fb750e390c258d5c7ef646819c942cac7732409361ab4dde0d4185edf3a",
-      "issue": 1453,
-      "message": {
-        "kind": "queued",
-        "issue": 1453,
-        "at": 1794729054914,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "86e7623726ca67a9c0bb00e8d2e7a423b33c5465",
-        "delivered": true
-      }
-    },
-    "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:1:admit": {
-      "digest": "af7b082be5d50e46c37b124f87f40490b2b42e6270df7c2592e54bfdfa51fe1d",
-      "issue": 1453,
-      "message": {
-        "kind": "admitted",
-        "issue": 1453,
-        "at": 1794729058845,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "86e7623726ca67a9c0bb00e8d2e7a423b33c5465",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:5:return:return:1453": {
-      "digest": "4b4304f2eaeefe043bb4588095c3496240355fda8df996f3518d8ab34022352f",
-      "issue": 1453,
-      "message": {
-        "kind": "return",
-        "issue": 1453,
-        "at": 1794729810978,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1794729810978,
-          "entry": 1,
-          "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
-          "eventId": "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:5:return:return:1453"
-        },
-        "delivered": true
-      }
-    },
-    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd": {
-      "digest": "83d350ed8d37b5a9f823069c904b15e304d907da9f43edd48653f2f35e37a94b",
-      "issue": 1453,
-      "message": {
-        "kind": "queued",
-        "issue": 1453,
-        "at": 1794729879415,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-        "delivered": true
-      }
-    },
-    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:1:admit": {
-      "digest": "c994aa009c63557c20fd641ae1cc10223ece8ec739bce4381372c36a86e382c1",
-      "issue": 1453,
-      "message": {
-        "kind": "admitted",
-        "issue": 1453,
-        "at": 1794729883326,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:3:s6-complete": {
-      "digest": "650e06edab0bc754be1e843be99b5f8df618ffee6c49bfc5046a49eee936457b",
-      "issue": 1453,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1453,
-        "at": 1794730458527,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-        "phase": "review",
-        "evidence": {
-          "id": "20261115T080455936-2d380e23",
-          "name": "Тесты для задачи #1453 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261115T080455936-2d380e23/report.json",
-          "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-          "status": "passed",
-          "finishedAt": "2026-11-15T08:14:17.187Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Цель и решение\n\nРеализованы пять согласованных пунктов и кнопка удаления в настройках существующей комнаты. Новый `RoomContextMenu` владеет только выбором цели/переходом к инструменту; рендер и клавиатура переиспользуют `EditorContextMenu`. Геометрию сохраняют прежние Resize/Split/Merge/Delete, удаление использует общий `_openRoomDelete` и существующий диалог выбора. RU/EN/DE/FR и оба руководства обновлены; лишние два пункта не добавлены.\n\n### Риски и места для внимания\n\nПравый pointerdown в Plan больше не начинает pan: иначе native contextmenu приходил во время ложного жеста. При dismiss на площади комнаты поглощается только соответствующий click; новый физический ввод снимает барьер. В меню проверяются пространство, revision/epoch, навигация и writer context; смена режима/документа отзывает старые callbacks. Удаление из настроек проходит существующий `requestRoomClose`, включая защиту черновика и асинхронного продолжения. Сам алгоритм удаления/правила сохранения стен не перерабатывались.\n\n### Проверки и ограничения\n\nЛокально прошли сборка/типы, подготовка модулей и браузерной карточки, критичные данные/сохранение/права (153 кейса), startup View и новый native smoke `demo/smoke_room_context_menu.mjs` (отчёт `20261115T074809875-2dd3b253`). Smoke проверяет пять команд, предварительный выбор комнаты, отмену без записи, сохранение физических стен/двери и Undo, чистую/грязную форму, приоритет стены/проёма/узла, dismiss без рисования, следующий рабочий клик, защиту активного рисования, stale callback после server update и ухода в View. Проверки S6 на актуальном dev и код-ревью запускаются штатным `finish`; полный выпуск и real-HA E2E не требуются этой задачей и не объявляются выполненными.\n\n\n### Уточнение после первого полного S6\n\nПервый полный прогон `20261115T075339655-88b175a8`: 274 шага passed, 347 reused, три failed. Все браузерные проверки, включая новую регрессию, форму комнаты и ширину footer, прошли. Причины трёх отказов и изменения в `4f2d52534`:\n- `geometry-history-refusal`: завершение runtime в Node обращалось к `window.removeEventListener`, хотя меню не регистрировало dismiss-listeners. Теперь `clearDismissTail` сразу выходит при отсутствии владельца; зарегистрированные обработчики по-прежнему снимаются.\n- `core-source-readers` и `mutation-gate`: прежний текстовый якорь проверки secondary mouse button не учитывал добавленный режим Plan. Якорь обновлён к актуальной общей проверке; смысл мутации и native guard сохранены.\n\nДополнительно визуально проверены меню и кнопка удаления на 1100/390 px в RU/EN/DE/FR: все 16 проверок размещения/видимости прошли. Скриншоты синтетического плана и журнала находятся локально в `artifacts/task-1453/`. Повторный S6 выполняется штатным `finish`; эти адресные исправления не объявлены прошедшими до результата.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
     },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
       "digest": "a7f53fa9906dee3c79c8556d9b9c92e8d7cd413dfbb3f5810a2156cf677086a2",
