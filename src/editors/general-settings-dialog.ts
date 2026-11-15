@@ -159,6 +159,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           toggleRow({
             id: 'gs-volumetric-view', icon: 'mdi:cube-outline',
             title: t('gs.volumetric_view'), help: help(st('gs.volumetric_view_hint'),t('gs.volumetric_view')),
+            caption: st('gs.volumetric_view_development'),
             checked: d.volumetricView, onChange: (v) => set({ volumetricView: v }),
           }),
           c.summary ? toggleRow({

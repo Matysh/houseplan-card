@@ -161,6 +161,7 @@
   "gs.device_battery_off": "Keine",
   "gs.radar_show_live_hint": "Blendet alle Live-Radarziele ein oder aus. Die Beobachtungsaufzeichnung wird dadurch nicht gestartet oder gestoppt.",
   "gs.volumetric_view_hint": "Wände, Türen, Fenster und Gerätesymbole mit Tiefe. Dekor und der flache Plan bleiben unverändert.",
+  "gs.volumetric_view_development": "Diese Funktion befindet sich in Entwicklung. Darstellungsfehler sind möglich.",
   "gs.center_summary": "Seitenleiste beim Zentrieren berücksichtigen",
   "gs.center_summary_hint": "Zentriert und passt den Plan in der Ansicht in den Bereich ohne die sichtbare Übersichtsleiste ein. Standardmäßig aus. Externe Bildschirmprofile verwenden ihre eigene Einstellung.",
   "gs.moon": "Mond über dem Plan in Dämmerung und Nacht",

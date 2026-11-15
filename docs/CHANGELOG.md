@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Mark the 2.5D option as under development with a visible rendering-quality note in all supported languages (#1450).
+
 ## v1.85.3-beta.1 — 2026-11-15
 
 - Align closed-door Glow with the actual selected Iso leaf face inside its bounded wall slot; preserve Flat symbols, shared masonry, camera invariance and Sun (#1449).

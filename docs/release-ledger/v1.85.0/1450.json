@@ -1,0 +1,1 @@
+{"schema":1,"issue":1450,"baseStable":"v1.85.0","category":"major","rationale":"Make the experimental status of the existing 2.5D option visible before enabling it.","summary":{"ru":"У настройки 2.5D видна пометка о стадии разработки и возможных недочётах отображения.","en":"The 2.5D setting visibly notes that it is under development and may have rendering issues."}}
