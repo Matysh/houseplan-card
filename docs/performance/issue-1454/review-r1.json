@@ -1,0 +1,2565 @@
+{
+  "schema": 1,
+  "issue": 1454,
+  "date": "2026-11-15",
+  "conditions": {
+    "sameAs": "measurement.json",
+    "powerVerified": "High performance 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",
+    "parallelHeavyJobs": false,
+    "warmups": 1,
+    "samples": 7,
+    "note": "Fresh paired revalidation after first substantive code-review repair. All samples retained; earlier series unchanged."
+  },
+  "decision": {
+    "diskImprovement": 0.4464666021181791,
+    "missDelta": -30,
+    "warmDelta": 16.799999997019768,
+    "diskPass": true,
+    "missPass": true,
+    "warmPass": true
+  },
+  "series": {
+    "base": {
+      "sourceSha": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
+      "fingerprint": "d56a9d7b27417df4066e563826e6b46ee5312452d58a31b8be2305ca3161bdc9",
+      "profile": "large-house-v1",
+      "mode": "disk",
+      "samples": 7,
+      "warmups": 1,
+      "cpuRate": 1,
+      "runtime": "v22.23.4",
+      "browser": "151.0.7922.34",
+      "fixtureCounts": {
+        "floors": 3,
+        "rooms": 60,
+        "devices": 200,
+        "openings": 100,
+        "partitions": 60,
+        "columns": 40,
+        "decor": 500,
+        "stairs": 250
+      },
+      "summary": {
+        "cold": {
+          "median": 516.5,
+          "min": 500,
+          "max": 516.6999999880791
+        },
+        "memory": {
+          "median": 50,
+          "min": 49.20000000298023,
+          "max": 50.099999994039536
+        },
+        "mount": {
+          "median": 1235.5,
+          "min": 1219.6000000089407,
+          "max": 1245
+        }
+      },
+      "rows": [
+        {
+          "index": 0,
+          "mountReady": 1244.6000000089407,
+          "cold": {
+            "readyCurrentFrame": 504.70000000298023,
+            "animationComplete": 504.70000000298023,
+            "maxLongTask": 493,
+            "cache": null
+          },
+          "memory": {
+            "readyCurrentFrame": 49.8999999910593,
+            "animationComplete": 49.8999999910593,
+            "maxLongTask": 0,
+            "cache": null
+          },
+          "databaseOpenMs": [],
+          "freshReadCount": 2
+        },
+        {
+          "index": 1,
+          "mountReady": 1222.8999999910593,
+          "cold": {
+            "readyCurrentFrame": 500.90000000596046,
+            "animationComplete": 500.90000000596046,
+            "maxLongTask": 490,
+            "cache": null
+          },
+          "memory": {
+            "readyCurrentFrame": 49.400000005960464,
+            "animationComplete": 49.400000005960464,
+            "maxLongTask": 0,
+            "cache": null
+          },
+          "databaseOpenMs": [],
+          "freshReadCount": 2
+        },
+        {
+          "index": 2,
+          "mountReady": 1221.7999999970198,
+          "cold": {
+            "readyCurrentFrame": 516.6000000089407,
+            "animationComplete": 516.7000000029802,
+            "maxLongTask": 495,
+            "cache": null
+          },
+          "memory": {
+            "readyCurrentFrame": 49.20000000298023,
+            "animationComplete": 49.20000000298023,
+            "maxLongTask": 0,
+            "cache": null
+          },
+          "databaseOpenMs": [],
+          "freshReadCount": 2
+        },
+        {
+          "index": 3,
+          "mountReady": 1235.5,
+          "cold": {
+            "readyCurrentFrame": 500,
+            "animationComplete": 500,
+            "maxLongTask": 487,
+            "cache": null
+          },
+          "memory": {
+            "readyCurrentFrame": 50.099999994039536,
+            "animationComplete": 50.099999994039536,
+            "maxLongTask": 0,
+            "cache": null
+          },
+          "databaseOpenMs": [],
+          "freshReadCount": 2
+        },
+        {
+          "index": 4,
+          "mountReady": 1245,
+          "cold": {
+            "readyCurrentFrame": 516.5999999940395,
+            "animationComplete": 516.5999999940395,
+            "maxLongTask": 496,
+            "cache": null
+          },
+          "memory": {
+            "readyCurrentFrame": 50,
+            "animationComplete": 50,
+            "maxLongTask": 0,
+            "cache": null
+          },
+          "databaseOpenMs": [],
+          "freshReadCount": 2
+        },
+        {
+          "index": 5,
+          "mountReady": 1219.6000000089407,
+          "cold": {
+            "readyCurrentFrame": 516.5,
+            "animationComplete": 516.6000000089407,
+            "maxLongTask": 497,
+            "cache": null
+          },
+          "memory": {
+            "readyCurrentFrame": 50,
+            "animationComplete": 50,
+            "maxLongTask": 0,
+            "cache": null
+          },
+          "databaseOpenMs": [],
+          "freshReadCount": 2
+        },
+        {
+          "index": 6,
+          "mountReady": 1240.7000000029802,
+          "cold": {
+            "readyCurrentFrame": 516.6999999880791,
+            "animationComplete": 516.6999999880791,
+            "maxLongTask": 495,
+            "cache": null
+          },
+          "memory": {
+            "readyCurrentFrame": 50,
+            "animationComplete": 50,
+            "maxLongTask": 0,
+            "cache": null
+          },
+          "databaseOpenMs": [],
+          "freshReadCount": 2
+        }
+      ]
+    },
+    "disk": {
+      "sourceSha": "663f66a40b9a664e1394bf9079b590a863dc9242",
+      "fingerprint": "e15ffde724eb97e72a49bd0446a527ec58e313e8ea36842ec83327ff728df8ba",
+      "profile": "large-house-v1",
+      "mode": "disk",
+      "samples": 7,
+      "warmups": 1,
+      "cpuRate": 1,
+      "runtime": "v22.23.4",
+      "browser": "151.0.7922.34",
+      "fixtureCounts": {
+        "floors": 3,
+        "rooms": 60,
+        "devices": 200,
+        "openings": 100,
+        "partitions": 60,
+        "columns": 40,
+        "decor": 500,
+        "stairs": 250
+      },
+      "summary": {
+        "cold": {
+          "median": 285.90000000596046,
+          "min": 284.5,
+          "max": 287.6000000089407
+        },
+        "memory": {
+          "median": 66.79999999701977,
+          "min": 65.90000000596046,
+          "max": 98.59999999403954
+        },
+        "mount": {
+          "median": 1032.300000011921,
+          "min": 1014.0999999940395,
+          "max": 1052.5999999940395
+        }
+      },
+      "rows": [
+        {
+          "index": 0,
+          "mountReady": 1025.8999999910593,
+          "cold": {
+            "readyCurrentFrame": 287.59999999403954,
+            "animationComplete": 287.59999999403954,
+            "maxLongTask": 0,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 1238.2000000029802,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1462.3999999910593,
+              "diskHits": 2,
+              "memoryHits": 0,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.399999991059303,
+                3.2000000029802322
+              ],
+              "workerMs": [
+                222.29999999701977,
+                161
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  65.20000000298023,
+                  67.90000000596046,
+                  39.29999999701977,
+                  15.5,
+                  15.099999994039536,
+                  24.299999997019768
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 67,
+            "animationComplete": 67,
+            "maxLongTask": 60,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 2,
+              "memoryHits": 2,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.399999991059303,
+                3.2000000029802322
+              ],
+              "workerMs": [
+                222.29999999701977,
+                161
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  65.20000000298023,
+                  67.90000000596046,
+                  39.29999999701977,
+                  15.5,
+                  15.099999994039536,
+                  24.299999997019768
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            90.79999999701977
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 1,
+          "mountReady": 1031,
+          "cold": {
+            "readyCurrentFrame": 287.6000000089407,
+            "animationComplete": 287.6000000089407,
+            "maxLongTask": 0,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 1239.2999999970198,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1464.2999999970198,
+              "diskHits": 2,
+              "memoryHits": 0,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.200000002980232,
+                3.0999999940395355
+              ],
+              "workerMs": [
+                210.79999999701977,
+                156.69999998807907
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  67.70000000298023,
+                  70.5,
+                  42.6000000089407,
+                  16.600000008940697,
+                  16.400000005960464,
+                  26.80000001192093
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 66.79999999701977,
+            "animationComplete": 66.79999999701977,
+            "maxLongTask": 58,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 2,
+              "memoryHits": 2,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.200000002980232,
+                3.0999999940395355
+              ],
+              "workerMs": [
+                210.79999999701977,
+                156.69999998807907
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  67.70000000298023,
+                  70.5,
+                  42.6000000089407,
+                  16.600000008940697,
+                  16.400000005960464,
+                  26.80000001192093
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            93.70000000298023
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 2,
+          "mountReady": 1014.0999999940395,
+          "cold": {
+            "readyCurrentFrame": 284.69999998807907,
+            "animationComplete": 284.69999998807907,
+            "maxLongTask": 51,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 1239.699999988079,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1462.0999999940395,
+              "diskHits": 2,
+              "memoryHits": 0,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.200000002980232,
+                3.300000011920929
+              ],
+              "workerMs": [
+                196.19999998807907,
+                157.1000000089407
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  65.79999999701977,
+                  68.40000000596046,
+                  42.900000005960464,
+                  15.900000005960464,
+                  14.299999997019768,
+                  23
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 98.59999999403954,
+            "animationComplete": 98.59999999403954,
+            "maxLongTask": 86,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 2,
+              "memoryHits": 2,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.200000002980232,
+                3.300000011920929
+              ],
+              "workerMs": [
+                196.19999998807907,
+                157.1000000089407
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  65.79999999701977,
+                  68.40000000596046,
+                  42.900000005960464,
+                  15.900000005960464,
+                  14.299999997019768,
+                  23
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            90.90000000596046
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 3,
+          "mountReady": 1042.0999999940395,
+          "cold": {
+            "readyCurrentFrame": 284.80000001192093,
+            "animationComplete": 284.80000001192093,
+            "maxLongTask": 51,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 1245.7000000029802,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1472.5,
+              "diskHits": 2,
+              "memoryHits": 0,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 0,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                4.9000000059604645,
+                3.300000011920929
+              ],
+              "workerMs": [
+                202.8999999910593,
+                157
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 2,
+                "readMs": [
+                  65.3999999910593,
+                  67.70000000298023,
+                  40.29999999701977,
+                  12.099999994039536,
+                  15.700000002980232,
+                  26
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 66.70000000298023,
+            "animationComplete": 66.70000000298023,
+            "maxLongTask": 54,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 2,
+              "memoryHits": 2,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 0,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                4.9000000059604645,
+                3.300000011920929
+              ],
+              "workerMs": [
+                202.8999999910593,
+                157
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 2,
+                "readMs": [
+                  65.3999999910593,
+                  67.70000000298023,
+                  40.29999999701977,
+                  12.099999994039536,
+                  15.700000002980232,
+                  26
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            92
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 4,
+          "mountReady": 1052.5999999940395,
+          "cold": {
+            "readyCurrentFrame": 286.1000000089407,
+            "animationComplete": 286.1000000089407,
+            "maxLongTask": 50,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 1260.5,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1488.2000000029802,
+              "diskHits": 2,
+              "memoryHits": 0,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                4.9000000059604645,
+                3
+              ],
+              "workerMs": [
+                218.69999998807907,
+                159.19999998807907
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  64.90000000596046,
+                  67,
+                  40.20000000298023,
+                  10.900000005960464,
+                  15.400000005960464,
+                  27.599999994039536
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 65.90000000596046,
+            "animationComplete": 65.90000000596046,
+            "maxLongTask": 56,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 2,
+              "memoryHits": 2,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                4.9000000059604645,
+                3
+              ],
+              "workerMs": [
+                218.69999998807907,
+                159.19999998807907
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  64.90000000596046,
+                  67,
+                  40.20000000298023,
+                  10.900000005960464,
+                  15.400000005960464,
+                  27.599999994039536
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            92.5
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 5,
+          "mountReady": 1032.300000011921,
+          "cold": {
+            "readyCurrentFrame": 284.5,
+            "animationComplete": 284.5,
+            "maxLongTask": 50,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 1243.2000000029802,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1470,
+              "diskHits": 2,
+              "memoryHits": 0,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5,
+                3.199999988079071
+              ],
+              "workerMs": [
+                202.5,
+                158.29999999701977
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  65.1000000089407,
+                  67.6000000089407,
+                  40.79999999701977,
+                  25.69999998807907,
+                  15.200000002980232,
+                  25
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 66.79999999701977,
+            "animationComplete": 66.90000000596046,
+            "maxLongTask": 54,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 2,
+              "memoryHits": 2,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5,
+                3.199999988079071
+              ],
+              "workerMs": [
+                202.5,
+                158.29999999701977
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  65.1000000089407,
+                  67.6000000089407,
+                  40.79999999701977,
+                  25.69999998807907,
+                  15.200000002980232,
+                  25
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            93.70000000298023
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 6,
+          "mountReady": 1034.2000000029802,
+          "cold": {
+            "readyCurrentFrame": 285.90000000596046,
+            "animationComplete": 285.90000000596046,
+            "maxLongTask": 0,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 1244.2000000029802,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1471.7000000029802,
+              "diskHits": 2,
+              "memoryHits": 0,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.200000002980232,
+                3.2000000029802322
+              ],
+              "workerMs": [
+                212.5,
+                158.70000000298023
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  65.8999999910593,
+                  68.20000000298023,
+                  40.70000000298023,
+                  11.5,
+                  15.899999991059303,
+                  27
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 66.70000000298023,
+            "animationComplete": 66.70000000298023,
+            "maxLongTask": 58,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 2,
+              "memoryHits": 2,
+              "misses": 0,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.200000002980232,
+                3.2000000029802322
+              ],
+              "workerMs": [
+                212.5,
+                158.70000000298023
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 0,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 0,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 6,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  65.8999999910593,
+                  68.20000000298023,
+                  40.70000000298023,
+                  11.5,
+                  15.899999991059303,
+                  27
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            94.80000001192093
+          ],
+          "freshReadCount": 2
+        }
+      ]
+    },
+    "miss": {
+      "sourceSha": "663f66a40b9a664e1394bf9079b590a863dc9242",
+      "fingerprint": "e15ffde724eb97e72a49bd0446a527ec58e313e8ea36842ec83327ff728df8ba",
+      "profile": "large-house-v1",
+      "mode": "miss",
+      "samples": 7,
+      "warmups": 1,
+      "cpuRate": 1,
+      "runtime": "v22.23.4",
+      "browser": "151.0.7922.34",
+      "fixtureCounts": {
+        "floors": 3,
+        "rooms": 60,
+        "devices": 200,
+        "openings": 100,
+        "partitions": 60,
+        "columns": 40,
+        "decor": 500,
+        "stairs": 250
+      },
+      "summary": {
+        "cold": {
+          "median": 486.5,
+          "min": 463.79999999701977,
+          "max": 495.40000000596046
+        },
+        "memory": {
+          "median": 66.40000000596046,
+          "min": 62.1000000089407,
+          "max": 84.29999999701977
+        },
+        "mount": {
+          "median": 1074.4000000059605,
+          "min": 1018.8000000119209,
+          "max": 1099
+        }
+      },
+      "rows": [
+        {
+          "index": 0,
+          "mountReady": 1091.4000000059605,
+          "cold": {
+            "readyCurrentFrame": 486.5,
+            "animationComplete": 486.5,
+            "maxLongTask": 52,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1740.5,
+              "diskHits": 0,
+              "memoryHits": 0,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 0,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5,
+                3.199999988079071
+              ],
+              "workerMs": [
+                442.70000000298023,
+                366.90000000596046
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 2,
+                "readMs": [
+                  53.80000001192093,
+                  53.70000000298023,
+                  23.599999994039536,
+                  6,
+                  16.5,
+                  16.399999991059303
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 66.3999999910593,
+            "animationComplete": 66.3999999910593,
+            "maxLongTask": 57,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 0,
+              "memoryHits": 2,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 0,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5,
+                3.199999988079071
+              ],
+              "workerMs": [
+                442.70000000298023,
+                366.90000000596046
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 2,
+                "readMs": [
+                  53.80000001192093,
+                  53.70000000298023,
+                  23.599999994039536,
+                  6,
+                  16.5,
+                  16.399999991059303
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            85.79999999701977
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 1,
+          "mountReady": 1074.4000000059605,
+          "cold": {
+            "readyCurrentFrame": 463.79999999701977,
+            "animationComplete": 463.90000000596046,
+            "maxLongTask": 0,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1689.7000000029802,
+              "diskHits": 0,
+              "memoryHits": 0,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 0,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.299999997019768,
+                3.2000000029802322
+              ],
+              "workerMs": [
+                428,
+                349.59999999403954
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 2,
+                "readMs": [
+                  51.5,
+                  51.599999994039536,
+                  21.100000008940697,
+                  5.200000002980232,
+                  15.100000008940697,
+                  15.200000002980232
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 84.29999999701977,
+            "animationComplete": 84.29999999701977,
+            "maxLongTask": 77,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 0,
+              "memoryHits": 2,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 0,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.299999997019768,
+                3.2000000029802322
+              ],
+              "workerMs": [
+                428,
+                349.59999999403954
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 2,
+                "readMs": [
+                  51.5,
+                  51.599999994039536,
+                  21.100000008940697,
+                  5.200000002980232,
+                  15.100000008940697,
+                  15.200000002980232
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            84.79999999701977
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 2,
+          "mountReady": 1068.5,
+          "cold": {
+            "readyCurrentFrame": 488,
+            "animationComplete": 488,
+            "maxLongTask": 52,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1711,
+              "diskHits": 0,
+              "memoryHits": 0,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 0,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                4.899999991059303,
+                3.300000011920929
+              ],
+              "workerMs": [
+                420.09999999403954,
+                368.20000000298023
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 2,
+                "readMs": [
+                  53.79999999701977,
+                  54,
+                  23.200000002980232,
+                  5.300000011920929,
+                  15.400000005960464,
+                  15.5
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 62.1000000089407,
+            "animationComplete": 62.1000000089407,
+            "maxLongTask": 58,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 0,
+              "memoryHits": 2,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 0,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                4.899999991059303,
+                3.300000011920929
+              ],
+              "workerMs": [
+                420.09999999403954,
+                368.20000000298023
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 2,
+                "readMs": [
+                  53.79999999701977,
+                  54,
+                  23.200000002980232,
+                  5.300000011920929,
+                  15.400000005960464,
+                  15.5
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            89
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 3,
+          "mountReady": 1099,
+          "cold": {
+            "readyCurrentFrame": 484.70000000298023,
+            "animationComplete": 484.79999999701977,
+            "maxLongTask": 52,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1742.7999999970198,
+              "diskHits": 0,
+              "memoryHits": 0,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 0,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5,
+                3.2000000029802322
+              ],
+              "workerMs": [
+                444.5,
+                363.90000000596046
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 2,
+                "readMs": [
+                  54.79999999701977,
+                  54.8999999910593,
+                  23.5,
+                  7,
+                  16,
+                  16
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 83,
+            "animationComplete": 83,
+            "maxLongTask": 77,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 0,
+              "memoryHits": 2,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 0,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5,
+                3.2000000029802322
+              ],
+              "workerMs": [
+                444.5,
+                363.90000000596046
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 2,
+                "readMs": [
+                  54.79999999701977,
+                  54.8999999910593,
+                  23.5,
+                  7,
+                  16,
+                  16
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            90.79999999701977
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 4,
+          "mountReady": 1018.8000000119209,
+          "cold": {
+            "readyCurrentFrame": 495.40000000596046,
+            "animationComplete": 495.5,
+            "maxLongTask": 52,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1676.4000000059605,
+              "diskHits": 0,
+              "memoryHits": 0,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.5999999940395355,
+                3.300000011920929
+              ],
+              "workerMs": [
+                459.70000000298023,
+                378.5
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  53.6000000089407,
+                  53.69999998807907,
+                  23.099999994039536,
+                  6.200000002980232,
+                  14.5,
+                  14.400000005960464
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 64.1000000089407,
+            "animationComplete": 64.1000000089407,
+            "maxLongTask": 53,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 0,
+              "memoryHits": 2,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                5.5999999940395355,
+                3.300000011920929
+              ],
+              "workerMs": [
+                459.70000000298023,
+                378.5
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  53.6000000089407,
+                  53.69999998807907,
+                  23.099999994039536,
+                  6.200000002980232,
+                  14.5,
+                  14.400000005960464
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            85.09999999403954
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 5,
+          "mountReady": 1067.2000000029802,
+          "cold": {
+            "readyCurrentFrame": 474.90000000596046,
+            "animationComplete": 474.90000000596046,
+            "maxLongTask": 0,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1694.6000000089407,
+              "diskHits": 0,
+              "memoryHits": 0,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                4.799999997019768,
+                3.0999999940395355
+              ],
+              "workerMs": [
+                435.20000000298023,
+                359.29999999701977
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  50.5,
+                  50.5,
+                  21.400000005960464,
+                  6.200000002980232,
+                  15.800000011920929,
+                  15.900000005960464
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 67.09999999403954,
+            "animationComplete": 67.09999999403954,
+            "maxLongTask": 55,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 0,
+              "memoryHits": 2,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                4.799999997019768,
+                3.0999999940395355
+              ],
+              "workerMs": [
+                435.20000000298023,
+                359.29999999701977
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  50.5,
+                  50.5,
+                  21.400000005960464,
+                  6.200000002980232,
+                  15.800000011920929,
+                  15.900000005960464
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            83.5
+          ],
+          "freshReadCount": 2
+        },
+        {
+          "index": 6,
+          "mountReady": 1096.800000011921,
+          "cold": {
+            "readyCurrentFrame": 491.79999999701977,
+            "animationComplete": 491.8999999910593,
+            "maxLongTask": 55,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 1756.5999999940395,
+              "diskHits": 0,
+              "memoryHits": 0,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                4.899999991059303,
+                3.7000000029802322
+              ],
+              "workerMs": [
+                434.5,
+                371.1000000089407
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  54.79999999701977,
+                  55.20000000298023,
+                  22.299999997019768,
+                  6,
+                  14.200000002980232,
+                  14.099999994039536
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "memory": {
+            "readyCurrentFrame": 66.40000000596046,
+            "animationComplete": 66.40000000596046,
+            "maxLongTask": 54,
+            "producer": {
+              "wallBodiesGeometry": 0,
+              "floorFootprintGeometry": 0,
+              "cleanFloorGeometry": 0,
+              "directStructure": 0,
+              "recut": 0,
+              "directRecut": 0
+            },
+            "cache": {
+              "firstPreview": 0,
+              "firstCachedFullFrame": 0,
+              "readyCurrentFrame": 0,
+              "diskHits": 0,
+              "memoryHits": 2,
+              "misses": 2,
+              "familyFallbacks": 0,
+              "publicationAttempts": 2,
+              "publicationFailures": 1,
+              "previewBytes": 111900,
+              "hydrationMs": [
+                4.899999991059303,
+                3.7000000029802322
+              ],
+              "workerMs": [
+                434.5,
+                371.1000000089407
+              ],
+              "producers": [
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                },
+                {
+                  "owner": "worker",
+                  "counts": {
+                    "wallBodiesGeometry": 1,
+                    "floorFootprintGeometry": 0,
+                    "cleanFloorGeometry": 20,
+                    "directStructure": 0,
+                    "recut": 1,
+                    "directRecut": 1
+                  }
+                }
+              ],
+              "store": {
+                "reads": 6,
+                "hits": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "writes": 1,
+                "readMs": [
+                  54.79999999701977,
+                  55.20000000298023,
+                  22.299999997019768,
+                  6,
+                  14.200000002980232,
+                  14.099999994039536
+                ]
+              },
+              "scheduler": {
+                "workerJobs": 2,
+                "fallbackJobs": 0,
+                "cancelled": 0,
+                "workerErrors": 0
+              }
+            }
+          },
+          "databaseOpenMs": [
+            90.6000000089407
+          ],
+          "freshReadCount": 2
+        }
+      ]
+    }
+  }
+}

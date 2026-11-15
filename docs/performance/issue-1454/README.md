@@ -39,6 +39,23 @@ These are medians, not bounds on individual runs: all seven samples and their
 ranges remain in the raw report, including the 100ms maximum warm miss-series
 sample. The three accepted performance decisions pass without sample removal.
 
+After the first code-review light-refresh/publication repair, another paired
+series in [review-r1.json](review-r1.json) uses source
+`663f66a40b9a664e1394bf9079b590a863dc9242` against the same base. Power mode was
+verified again; all three series ran sequentially with one warm-up and seven
+retained samples, without concurrent heavy work.
+
+| Median, ms | Base | Disk-ready candidate | Cache-miss candidate |
+| --- | ---: | ---: | ---: |
+| Selected floor ready/current | 516.5 | 285.9 | 486.5 |
+| Return via memory | 50.0 | 66.8 | 66.4 |
+| Mount to ready/current | 1235.5 | 1032.3 | 1074.4 |
+
+Disk improvement is **44.6%**; miss is 30.0ms faster than its paired base and
+the largest warm-median addition is 16.8ms. All three accepted decisions pass.
+This does not turn sample maxima into guarantees; all raw samples and earlier
+series remain available.
+
 ## Storage, CPU and bytes
 
 Ordinary disk series: zero IDB timeouts in 42 observed reads; read/open intervals 11.4–79.2ms. Candidate cold worker processing 168.0–188.4ms on hits, 367.3–408.5ms on misses; main hydration 3.2–4.1ms. A separate **one-sample CDP 4x CPU diagnostic**, not a paired performance acceptance series, observed four timeouts in six reads, ordinary worker reconstruction and a complete current frame (961.2ms). Read elapsed time includes delayed event dispatch under main-thread load and can exceed the 100ms timer budget; this is not a claim that timers can preempt a busy JS task. CDP throttling is not a calibrated physical low-power machine. No errors are presented to users for a cache timeout.
