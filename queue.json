@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14341,
+  "revision": 14342,
   "nextTicket": 486,
   "nextFence": 486,
   "tasks": {
@@ -4885,7 +4885,10 @@
         "src/i18n/fr.json",
         "src/i18n/ru.json",
         "src/room-context-menu.ts"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1794729080353,
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
     }
   },
   "ownerDecisions": {},
@@ -5241,6 +5244,10 @@
     },
     "github:43691763992:1:completions:message:cd6df528904d78c1cb0b80fe3258faa0af2840c1d0ccd23491b71f7b6113fc15": {
       "digest": "c697ae630eb52046ef7b6e839e4530ebd8159bd54b0de7eadfc449636185e42a",
+      "issue": 1453
+    },
+    "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:3:automation-pending": {
+      "digest": "1d7fe76e90b4f1061d0a7cb10dc3302ed47394fe87a0da45696e99890602aa14",
       "issue": 1453
     },
     "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528": {
