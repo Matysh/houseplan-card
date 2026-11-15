@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14241,
+  "revision": 14242,
   "nextTicket": 484,
   "nextFence": 484,
   "tasks": {
@@ -4822,7 +4822,40 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794706635431,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "437f00caa403590f815c4324c6f54a9963fb2c08",
+      "review": {
+        "source": "published-release",
+        "sourceSha": "57c1b95bddff8ad9a1e637e5563f367f720a5ee4",
+        "tag": "v1.85.3-beta.1",
+        "verdict": "accepted",
+        "patchId": "437f00caa403590f815c4324c6f54a9963fb2c08",
+        "materialSha": "1646ed541c391476520c01a37ac3ac4c91bc9443"
+      },
+      "changedFiles": [
+        "custom_components/houseplan/const.py",
+        "custom_components/houseplan/manifest.json",
+        "demo/golden/baselines/baselines-index.json",
+        "demo/golden/baselines/general-color-popover-desktop-en.png",
+        "demo/golden/baselines/lighting-closed-door-panel-dark.png",
+        "demo/golden/baselines/lighting-closed-door-panel-iso-dark.png",
+        "demo/golden/baselines/lighting-closed-slide-door-panel-dark.png",
+        "demo/golden/baselines/lighting-open-door-panel-dark.png",
+        "demo/golden/baselines/panel-device-icon-picker-clear-hover-light-1376.png",
+        "demo/golden/baselines/panel-device-icon-picker-dark-1375.png",
+        "demo/golden/baselines/panel-lighting-opaque-glow-two-doorways-dark.png",
+        "demo/golden/baselines/settings-help-zoom-200-en-light.png",
+        "demo/golden/baselines/settings-help-zoom-200-ru-dark.png",
+        "demo/golden/baselines/vacuum-history-shown-dark.png",
+        "demo/golden/baselines/vacuum-history-shown-light.png",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/RELEASE-NOTES.md",
+        "package-lock.json",
+        "package.json",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5157,12 +5190,17 @@
     "token": "483:release-return-finish:6c61ba96-969a-45f7-a4fe-1060cc1edaab:finish:1:admit",
     "fence": 483,
     "materialSha": "1646ed541c391476520c01a37ac3ac4c91bc9443",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "2adee31b34799943d8e5d613b18dc40f426148f7",
+    "phase": "testing",
     "admittedAt": 1794706640142,
-    "expiresAt": 1794706940142
+    "expiresAt": 1794706946979,
+    "patchId": "437f00caa403590f815c4324c6f54a9963fb2c08"
   },
   "events": {
+    "release-return-finish:6c61ba96-969a-45f7-a4fe-1060cc1edaab:finish:2:synchronized": {
+      "digest": "89033f8a73010fbd5b430376b52fb331fba3463b9c6f2bbe2c9e3af417ee101f",
+      "issue": 1452
+    },
     "release-return:6c61ba96-969a-45f7-a4fe-1060cc1edaab": {
       "digest": "dbb85628ab8c09782c90fe0ff84100b2ccc62c509ab60d02c2ee2bcbfff970cb",
       "issue": 1452,
