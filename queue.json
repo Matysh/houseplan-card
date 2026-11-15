@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 14375,
-  "nextTicket": 486,
+  "revision": 14376,
+  "nextTicket": 487,
   "nextFence": 486,
   "tasks": {
     "1024": {
@@ -4812,14 +4812,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1453-room-context-menu",
-      "materialSha": "86e7623726ca67a9c0bb00e8d2e7a423b33c5465",
+      "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 485,
-      "queued": false,
+      "ticket": 486,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794729054914,
-      "reviewEntry": 1,
+      "readyAt": 1794729879415,
+      "reviewEntry": 2,
       "patchId": "e3d7974c562002fd021ee8d55489d0b41b5f06a7",
       "changedFiles": [
         "demo/smoke_room_context_menu.mjs",
@@ -4839,10 +4839,6 @@
         "src/i18n/ru.json",
         "src/room-context-menu.ts"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1794729080353,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json",
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5201,7 +5197,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1453
+  ],
   "active": null,
   "events": {
     "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:2:synchronized": {
@@ -5327,6 +5325,19 @@
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:5:return:return:1453"
         }
+      }
+    },
+    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd": {
+      "digest": "83d350ed8d37b5a9f823069c904b15e304d907da9f43edd48653f2f35e37a94b",
+      "issue": 1453,
+      "message": {
+        "kind": "queued",
+        "issue": 1453,
+        "at": 1794729879415,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383"
       }
     }
   },
