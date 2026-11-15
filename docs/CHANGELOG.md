@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Restore nightly mutation witnesses: prepare compiled fixtures reached through browser helper imports and model both independent late-HA recovery paths (#1455).
+- Restore nightly mutation witnesses: prepare compiled fixtures reached through browser helper imports and model both independent late-HA recovery paths, and verify missing-contact gate paint (#1455).
 - Mark the 2.5D option as under development with a visible rendering-quality note in all supported languages (#1450).
 - Add a room context menu in Plan for settings, Resize, Split, Merge and deletion, plus a Delete room button in room settings using the existing wall-retention choices (#1453).
 
