@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14414,
+  "revision": 14415,
   "nextTicket": 487,
   "nextFence": 487,
   "tasks": {
@@ -5165,18 +5165,12 @@
       }
     },
     "1454": {
-      "requestId": "spec:1454:d2d5df6007a36c286de92489f732b593323a809bfdeddcf667973676dde94301",
-      "contextDigest": "d2d5df6007a36c286de92489f732b593323a809bfdeddcf667973676dde94301",
+      "requestId": "spec:1454:b576aa22c41e46f909df62d65b83b0795b0d804b0fd53d70d09fdeee46742208",
+      "contextDigest": "b576aa22c41e46f909df62d65b83b0795b0d804b0fd53d70d09fdeee46742208",
       "base": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1794730208371,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43692683235",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1794730750792
     }
   },
   "reviewPublications": {
@@ -5217,6 +5211,19 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-15T08:14:26.995Z"
+      }
+    },
+    "spec:1454:spec:1454:b576aa22c41e46f909df62d65b83b0795b0d804b0fd53d70d09fdeee46742208": {
+      "issue": 1454,
+      "kind": "spec",
+      "requestId": "spec:1454:b576aa22c41e46f909df62d65b83b0795b0d804b0fd53d70d09fdeee46742208",
+      "materialSha": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
+      "expectedBase": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
+      "patchId": "b576aa22c41e46f909df62d65b83b0795b0d804b0fd53d70d09fdeee46742208",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-15T08:19:10.792Z"
       }
     }
   },
@@ -5391,6 +5398,10 @@
       "digest": "828f1ba9b9c237fd38b06d13079bd7fb3546fc1add23a7dcc13f99e5d4847308",
       "issue": 1453
     },
+    "github:43693917941:1:spec:1454:spec-request": {
+      "digest": "a7f53fa9906dee3c79c8556d9b9c92e8d7cd413dfbb3f5810a2156cf677086a2",
+      "issue": 1454
+    },
     "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528": {
       "digest": "dcf60fb750e390c258d5c7ef646819c942cac7732409361ab4dde0d4185edf3a",
       "issue": 1453,
@@ -5498,6 +5509,22 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
+      "digest": "a7f53fa9906dee3c79c8556d9b9c92e8d7cd413dfbb3f5810a2156cf677086a2",
+      "issue": 1454,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1454,
+        "at": 1794730750792,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1454:b576aa22c41e46f909df62d65b83b0795b0d804b0fd53d70d09fdeee46742208",
+        "reviewChanges": "### Цель и результат\n\nПовторное ревью ТЗ, редакция 2, ask. Владелец выбрал двухуровневый локальный кэш, попросил теоретический разбор серверной SVG и затем поручил довести #1454 до S8. S6 начнётся после принятия ТЗ. Числа первичной аналитики не выдаются за достигнутый текущий выигрыш. Исходные измерения, существенные выводы и риски сохранены; повторяющиеся общие предложения в первичной аналитике сведены к актуальному ТЗ, чтобы тело не превысило лимит GitHub.\n\n### Решение и альтернативы\n\nL1 — безопасная SVG-модель со **сохранённым рассчитанным fit-пакетом**, L2 — lossless DTO Flat/iso структурных результатов с semantic side-tables и per-floor summary scalar. Дисковый key — SHA-256 canonical inputs. Память и быстрый cached-full имеют приоритет над L1; scoped SWR не ждёт сервера. Global legacy LS_CFG не доказывает scope, одноразовая миграция требует fresh pair. На miss общий worker, current navigation приоритетнее явно demanded summary. Серверная SVG остаётся теоретическим источником L1; она не реализуется.\n\n### Риски и места для внимания\n\nРиски: скрытые pull-producers из `_effectiveProjection`/`_baseVb`/fit/summary, non-enumerable и WeakMap-семантика clone/codec, новое владение worker/authority, размеры DTO/сериализация и честное различение cached-full/fresh-current. Исследован `direct-wall-geometry.ts`, `polygon-paint.ts`, `iso-scene-render.ts`: их semantically retained данные не считаются необязательными memo. Предполагается scope-envelope cold hint, а не доверие global LS_CFG. Важны достаточность новых AC2/AC16, camera-переход для реально изменённых fit-входов, достижимость −30% с fresh light на критическом пути и доля IDB timeout на слабом клиенте. Это не ограничивает область ревью.\n\nОсновные исходники: `src/houseplan-card.ts`, `config-adoption.ts`, `floor-geometry-key.ts`, `demand-space-models.ts`, `space-model-selection.ts`, `room-floor-paint.ts`, `visual-continuity.ts`, `plan-host.ts`, `ha-plan-host.ts`, `render-snapshot-*`, `src/pdf/svg-snapshot.ts`; `demo/benchmark_large_house.mjs`, fixture/профили. Изучен dev `98806c06ec8eb601c8e8774ceeb748e1a4511982`; аналитика сделана на beta SHA `57c1b95bddff8ad9a1e637e5563f367f720a5ee4`. После начала S4 тело issue не редактируется в обычном ходе.\n\n### Проверки и ограничения\n\nЕсть исходный повторный stable-профиль и отдельные CPU profiles, приведённые выше. Для этой редакции выполнена только авторская механическая проверка заполнения ТЗ; продукт не менялся, новых build/test/golden/performance запусков нет. Численные цели не означают достигнутый результат: сравнительная серия и действующий worker/IDB будут работой S6 после принятия ТЗ в рамках уже данного поручения довести до S8. Модельное ревью оценивает реализуемость/полноту ТЗ, не выдаёт будущие проверки за выполненные.\n\n### Исправления по предыдущему ревью\n\nОснование: [раунд 1 — три блокера](https://github.com/Matysh/houseplan-card/issues/1454#issuecomment-6891505157). Материал повторной передачи — **ТЗ редакции 2**; прежний отчёт не менялся.\n\n1. Неполные producer families → добавлены iso physical source/проекции, demanded per-floor summary area, полный pull-путь и semantic non-enumerable/WeakMap DTO. AC2 проверяет реальные recut/iso rotation/area consumers и **отсутствие full-union fallback** после round-trip; AC4/AC16 — summary main-thread исключение и foreground priority. Нет неявного исключения 2.5D/summary из приёмки.\n2. Архитектурный bbox не равен camera frame → L1 хранит рассчитанный fit-пакет того же complete frame с независимым fit-key, layout/decor/outliers/iso-envelope зависимостями. AC11 разделён: неизменные fit-входы — строгий camera oracle; изменённые — existing controller transition, не обещание неподвижной камеры. При отсутствии fit-пакета L1 пропускается.\n3. Конфликт с cold SWR → явно сохраняется ранний полный cold-hint кадр с устройствами/живыми HA states при L2 hit **до** fresh pair; L1 не обязателен и не задерживает icons. Fresh-ready и cached-full — разные метрики. Учитывается global LS_CFG: новый scope-envelope, без раннего чтения недоказанного legacy hint; одноразовый upgrade miss описан отдельно.\n4. Дополнительные улучшения → SHA-256 canonical key, pre-open IDB без чтения чужого scope, timeout-rate в отчёт, worker/порционное кодирование больших DTO. Сохранение state-dependent barriers на диске не выбрано: свежий свет остаётся отдельным worker-этапом, его стоимость входит в readyCurrentFrame. Этапы разработки можно вести последовательно внутри задачи, но S8 требует всего принятого скоупа, не частичного результата.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
