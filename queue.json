@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14725,
+  "revision": 14726,
   "nextTicket": 492,
   "nextFence": 492,
   "tasks": {
@@ -4990,15 +4990,16 @@
         "tsconfig.test.json"
       ],
       "notice": {
-        "key": "3:checks-failed",
+        "key": "4:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794754851570,
-        "entry": 3,
-        "detail": "Браузер: choice row geometry 1447: failed; Браузер: golden harness input: failed; Браузер: resize junctions: failed; Браузер: resize through junction: failed; Браузер: space card bg: failed; Браузер: wall dimension hud: failed; Браузер: wall node delete: failed; Браузер: wall node topology: failed",
-        "eventId": "finish:6d30c3ac-6a6e-419b-9272-85b61be9e306:finish:3:return:return:1454"
-      }
+        "at": 1794759522409,
+        "entry": 4,
+        "detail": "Браузер: gear tabs: failed",
+        "eventId": "finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:3:return:return:1454"
+      },
+      "reason": "checks-failed"
     },
     "1455": {
       "issue": 1455,
@@ -5364,18 +5365,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1454,
-    "worker": "finish",
-    "token": "491:finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:1:admit",
-    "fence": 491,
-    "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
-    "expectedBase": "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa",
-    "phase": "testing",
-    "admittedAt": 1794755734572,
-    "expiresAt": 1794759817936,
-    "patchId": "99b77709353f96818ebb44d656979546238164fa"
-  },
+  "active": null,
   "events": {
     "github:43692634249:1:label:spec-request": {
       "digest": "be23c2d8528929891849728e337b326730ffe9e71f61f86425d4a615c34ae29a",
@@ -6221,6 +6211,10 @@
       "digest": "61b3210b530cc0e77c121aa12ec415ecd0f517372405cab280a9f6239088672f",
       "issue": 1454
     },
+    "finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:3:return": {
+      "digest": "0bdf47cee4ef57f07c604db0c27cd7806ffc8cf8ec6b812604d158a7c233131b",
+      "issue": 1454
+    },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
       "digest": "a7f53fa9906dee3c79c8556d9b9c92e8d7cd413dfbb3f5810a2156cf677086a2",
       "issue": 1454,
@@ -6422,6 +6416,26 @@
         "layer": "product",
         "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
         "phase": "sync"
+      }
+    },
+    "finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:3:return:return:1454": {
+      "digest": "0bdf47cee4ef57f07c604db0c27cd7806ffc8cf8ec6b812604d158a7c233131b",
+      "issue": 1454,
+      "message": {
+        "kind": "return",
+        "issue": 1454,
+        "at": 1794759522409,
+        "entry": 4,
+        "notice": {
+          "key": "4:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794759522409,
+          "entry": 4,
+          "detail": "Браузер: gear tabs: failed",
+          "eventId": "finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:3:return:return:1454"
+        }
       }
     }
   },
