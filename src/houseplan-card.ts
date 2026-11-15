@@ -8338,7 +8338,7 @@ export class HouseplanCard extends LitElement {
   private _stagePointerDown(ev: PointerEvent): void {
     if (!sceneGestureFromPath(ev.composedPath())) return;
     this._editorRuntime?._clearRoomFaceHover();
-    if (this._mode === 'decor' && ev.button === 2) return;
+    if ((this._mode === 'decor' || this._mode === 'plan') && ev.button === 2) return;
     this._bootSoftCancel();
     const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view'
       ? roomFitOwnerFromPath(ev.composedPath()) : null;
@@ -12856,7 +12856,8 @@ export class HouseplanCard extends LitElement {
           })}
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
-          @contextmenu=${this._mode === 'decor' ? (e: MouseEvent) => this._editorRuntime?.decorOrder.open(e) : nothing}
+          @contextmenu=${this._mode === 'decor' ? (e: MouseEvent) => this._editorRuntime?.decorOrder.open(e)
+            : this._mode === 'plan' ? (e: MouseEvent) => this._editorRuntime?.roomMenu.open(e) : nothing}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerleave=${(e: PointerEvent) => { this._editorRuntime?.properties.clearPlanHover(); this._stagePointerLeave(e); }}
@@ -13054,6 +13055,7 @@ export class HouseplanCard extends LitElement {
         ${this._editorRuntime?.properties.render()}
         ${dialogPresence(this._editorRuntime?.deviceCopy.render())}
         ${this._editorRuntime?.decorOrder.render()}
+        ${this._editorRuntime?.roomMenu.render()}
         ${this._editorRuntime?.nodeMove?.renderMenu()}
         ${dialogPresence(this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing, animateDialogExit(this, 'room'))}
         ${dialogPresence(this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing)}

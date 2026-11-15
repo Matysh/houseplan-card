@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Mark the 2.5D option as under development with a visible rendering-quality note in all supported languages (#1450).
+- Add a room context menu in Plan for settings, Resize, Split, Merge and deletion, plus a Delete room button in room settings using the existing wall-retention choices (#1453).
 
 ## v1.85.3-beta.1 — 2026-11-15
 

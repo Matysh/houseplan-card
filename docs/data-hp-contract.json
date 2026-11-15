@@ -62,6 +62,7 @@
     "decor-context-menu": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
     "catalog-context-menu": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
     "node-context-menu": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
+    "room-context-menu": { "elements": ["div"], "since": "1.85.3", "audience": ["test"] },
     "device-copy": { "elements": ["button"], "since": "1.82.0", "audience": ["test"] },
     "device-structure-pending": { "elements": ["span"], "since": "1.83.0", "audience": ["test"] },
     "device-structure-reconcile": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },

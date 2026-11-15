@@ -275,6 +275,12 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
         `}], st('dialog.section'))}
       </div>
       <div class="row dialog-action-footer hpf-footer" slot="footer">
+        ${edit && host._mode === 'plan'
+          ? html`<div class="dialog-action-group"><button class="btn ghost" data-hp="action" data-action="room-delete"
+              ?disabled=${this.roomSaveBusy} @click=${() => this.roomMenu.deleteFromSettings()}>
+              <ha-icon icon="mdi:delete-outline"></ha-icon>${t('room.delete')}
+            </button></div>`
+          : nothing}
         ${!edit && !host._pendingSplit
           ? html`<div class="dialog-action-group">
               <button class="btn ghost" data-hp="dialog-confirm" @click=${() => this._keepClosedAsPartitions()}>

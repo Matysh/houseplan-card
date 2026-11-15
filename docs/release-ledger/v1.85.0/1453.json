@@ -1,0 +1,1 @@
+{"schema":1,"issue":1453,"baseStable":"v1.85.0","category":"major","rationale":"Expose existing room operations through a room-specific context menu and a deletion action in room settings.","summary":{"ru":"Контекстное меню комнаты и кнопка удаления в её настройках.","en":"Room context menu and a deletion button in room settings."}}

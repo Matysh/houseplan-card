@@ -722,6 +722,8 @@ lovelace:
 | Thickness | Changes one span or every wall of a room, including zero-thickness walls |
 | Delete room | Deletes the room after choosing whether its exclusive physical walls remain; shared walls always remain |
 
+&emsp;&emsp;Right-click a room's empty floor area for **Room settings…**, **Resize**, **Split…**, **Merge with adjacent room…**, and **Delete room…**. Resize and Split start with that room selected; Merge waits for a neighbour with a shared wall. Clicking a node, wall, opening or staircase keeps that object's own interaction. **Esc** or an outside click closes the menu without changing the plan.
+
 &emsp;&emsp;While the **Thickness** dialog is open, its wall stays highlighted independently of the pointer or an unapplied field value. The band follows the physical wall when navigating the plan, not the dragged dialog. Closing the dialog or changing tool/floor removes the session-only selection.
 
 <a id="stairs"></a>
@@ -930,6 +932,8 @@ lovelace:
 ## 8. Room settings
 
 &emsp;&emsp;Open Room settings in Plan to choose an HA area, reading sources and this room’s own settings. To move its caption, return to the plan: that is a separate action.
+
+&emsp;&emsp;The **Delete room…** button at the bottom of an existing room's settings opens the same choice to keep its walls or remove them with the room. Unsaved edits first trigger the usual discard question; declining keeps the form and its entered values.
 
 ### What belongs to the room
 

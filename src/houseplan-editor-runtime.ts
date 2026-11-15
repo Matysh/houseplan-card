@@ -47,6 +47,7 @@ import { BackdropFrameGestureRuntime, type BackdropPlan } from './backdrop-frame
 import { displayVersion } from './card-version';
 import { CatalogContextMenu } from './catalog-context-menu';
 import { DecorOrderEditor } from './decor-order-editor';
+import { RoomContextMenu } from './room-context-menu';
 import { DecorLineDrawing, type DecorLineSession } from './editors/decor/line-drawing';
 import type { DecorSelectionPress } from './editors/decor/group-press';
 import { allDecorSelectionIds, toggleDecorSelectionId } from './editors/decor/selection';
@@ -1033,6 +1034,7 @@ export class HouseplanEditorRuntime {
   public readonly externalScreens = new ExternalScreensEditor(this);
   public readonly markerAlerts = new MarkerAlertsEditor(this);
   public readonly decorOrder = new DecorOrderEditor(this);
+  public readonly roomMenu = new RoomContextMenu(this);
   private readonly catalogMenu = new CatalogContextMenu(this);
   public readonly decorLine = new DecorLineDrawing({
     context: () => this.host.isConnected && this.host._mode === 'decor' && this.host._decorTool === 'line'
@@ -1069,7 +1071,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this._decorRotationInput=null; this._clearRoomFaceHover(); this._cancelOpeningDrag(); this.externalScreens.close(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this.wallDimensions.retire(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
+  public invalidateEditorNavigation(): void { this._decorRotationInput=null; this._clearRoomFaceHover(); this._cancelOpeningDrag(); this.externalScreens.close(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this.wallDimensions.retire(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.roomMenu.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -1318,7 +1320,7 @@ public _commitLiveEditor(deviceId?: string): void {
   this.properties.syncNative();
   if (this.host.isConnected) this.nodeMove?.paint();
 }
-public _disposeLiveEditor(): void { this.decorLine.reset(); this.properties.dispose(); this.optimizationUndo.retire(); this.optimizePlans.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { this.decorLine.reset(); this.properties.dispose(); this.optimizationUndo.retire(); this.optimizePlans.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); this.roomMenu.dispose(); disposeHouseplanEditor(this.host); }
 public _visualCommand<T>(command: () => Promise<T>): Promise<T> { return this.properties.command(command); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
@@ -3068,7 +3070,7 @@ private _existingWallFaceAt(raw: number[]): WallFaceCandidate | null {
     return cache.candidates.get(face.key) || null;
   }
 
-private _roomFaceObjectHit(raw: number[], path: readonly EventTarget[]): boolean {
+public _roomFaceObjectHit(raw: number[], path: readonly EventTarget[]): boolean {
     return !!this.properties.planHit(raw) || path.some(node => node instanceof Element && node.matches(
       '.physical-hit, .roomlabel, .rlhandle, button, [data-hp="wall-node"], [data-hp="opening"], [data-hp="stair"], [data-hp="stair-frame"]',
     ));
@@ -5703,8 +5705,15 @@ public _deleteRoomClick(raw: number[]): void {
       this.host._showToast(this.host._t('toast.delete_room_pick'), 'toast.delete_room_pick');
       return;
     }
-    if (!room.id) return;
-    this.host._roomDeleteDialog = { roomId: room.id, name: room.name };
+    if (room.id) this._openRoomDelete(room.id);
+  }
+
+public _openRoomDelete(roomId: string): void {
+    const room = this.host._spaceModel()?.rooms.find(candidate => candidate.id === roomId);
+    if (!room || this.host._mode !== 'plan' || !this.host._canEdit || this.host._kiosk
+      || !this.host._configWriteGuard()()) return;
+    this.host._roomDeleteDialog = { roomId, name: room.name };
+    this.host.requestUpdate();
   }
 
 public _confirmRoomDelete = (keepWalls: boolean): void => {
