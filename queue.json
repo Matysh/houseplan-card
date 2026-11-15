@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14758,
+  "revision": 14759,
   "nextTicket": 494,
   "nextFence": 494,
   "tasks": {
@@ -6365,6 +6365,10 @@
       "digest": "c7518f97eae46e5349e33cff9e1af23f7b2192ce36789db0a0bc7924bdfdbc7b",
       "issue": 1454
     },
+    "github:43736506557:1:completions:message:22b8718b7d40c99bc435dc5055ee3ae63ccfdacde48ea85daea42717fc5a1646": {
+      "digest": "9e9d1c17b6d05ea0b956785d324ae8c65331d514ed7176187d76e167edc32053",
+      "issue": 1454
+    },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
       "digest": "a7f53fa9906dee3c79c8556d9b9c92e8d7cd413dfbb3f5810a2156cf677086a2",
       "issue": 1454,
@@ -6578,7 +6582,8 @@
           "entry": 4,
           "detail": "Браузер: gear tabs: failed",
           "eventId": "finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:3:return:return:1454"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:c01979c8-e3af-4b4d-a9f0-dd0ea7c51851": {
