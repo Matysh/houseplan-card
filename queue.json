@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14410,
+  "revision": 14411,
   "nextTicket": 487,
   "nextFence": 487,
   "tasks": {
@@ -4817,7 +4817,7 @@
       "ownerDecision": null,
       "ticket": 486,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794729879415,
       "reviewEntry": 2,
       "patchId": "b8ccd252fcb52457d960230527a46d83dd240e44",
@@ -4849,6 +4849,15 @@
         "entry": 1,
         "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
         "eventId": "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:5:return:return:1453"
+      },
+      "s6": {
+        "id": "20261115T080455936-2d380e23",
+        "name": "Тесты для задачи #1453 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261115T080455936-2d380e23/report.json",
+        "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
+        "status": "passed",
+        "finishedAt": "2026-11-15T08:14:17.187Z",
+        "failures": []
       }
     }
   },
@@ -5199,9 +5208,9 @@
     "fence": 486,
     "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
     "expectedBase": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794729883326,
-    "expiresAt": 1794730721257,
+    "expiresAt": 1794734058527,
     "patchId": "b8ccd252fcb52457d960230527a46d83dd240e44"
   },
   "events": {
@@ -5426,6 +5435,34 @@
         "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:3:s6-complete": {
+      "digest": "650e06edab0bc754be1e843be99b5f8df618ffee6c49bfc5046a49eee936457b",
+      "issue": 1453,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1453,
+        "at": 1794730458527,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
+        "phase": "review",
+        "evidence": {
+          "id": "20261115T080455936-2d380e23",
+          "name": "Тесты для задачи #1453 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261115T080455936-2d380e23/report.json",
+          "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
+          "status": "passed",
+          "finishedAt": "2026-11-15T08:14:17.187Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и решение\n\nРеализованы пять согласованных пунктов и кнопка удаления в настройках существующей комнаты. Новый `RoomContextMenu` владеет только выбором цели/переходом к инструменту; рендер и клавиатура переиспользуют `EditorContextMenu`. Геометрию сохраняют прежние Resize/Split/Merge/Delete, удаление использует общий `_openRoomDelete` и существующий диалог выбора. RU/EN/DE/FR и оба руководства обновлены; лишние два пункта не добавлены.\n\n### Риски и места для внимания\n\nПравый pointerdown в Plan больше не начинает pan: иначе native contextmenu приходил во время ложного жеста. При dismiss на площади комнаты поглощается только соответствующий click; новый физический ввод снимает барьер. В меню проверяются пространство, revision/epoch, навигация и writer context; смена режима/документа отзывает старые callbacks. Удаление из настроек проходит существующий `requestRoomClose`, включая защиту черновика и асинхронного продолжения. Сам алгоритм удаления/правила сохранения стен не перерабатывались.\n\n### Проверки и ограничения\n\nЛокально прошли сборка/типы, подготовка модулей и браузерной карточки, критичные данные/сохранение/права (153 кейса), startup View и новый native smoke `demo/smoke_room_context_menu.mjs` (отчёт `20261115T074809875-2dd3b253`). Smoke проверяет пять команд, предварительный выбор комнаты, отмену без записи, сохранение физических стен/двери и Undo, чистую/грязную форму, приоритет стены/проёма/узла, dismiss без рисования, следующий рабочий клик, защиту активного рисования, stale callback после server update и ухода в View. Проверки S6 на актуальном dev и код-ревью запускаются штатным `finish`; полный выпуск и real-HA E2E не требуются этой задачей и не объявляются выполненными.\n\n\n### Уточнение после первого полного S6\n\nПервый полный прогон `20261115T075339655-88b175a8`: 274 шага passed, 347 reused, три failed. Все браузерные проверки, включая новую регрессию, форму комнаты и ширину footer, прошли. Причины трёх отказов и изменения в `4f2d52534`:\n- `geometry-history-refusal`: завершение runtime в Node обращалось к `window.removeEventListener`, хотя меню не регистрировало dismiss-listeners. Теперь `clearDismissTail` сразу выходит при отсутствии владельца; зарегистрированные обработчики по-прежнему снимаются.\n- `core-source-readers` и `mutation-gate`: прежний текстовый якорь проверки secondary mouse button не учитывал добавленный режим Plan. Якорь обновлён к актуальной общей проверке; смысл мутации и native guard сохранены.\n\nДополнительно визуально проверены меню и кнопка удаления на 1100/390 px в RU/EN/DE/FR: все 16 проверок размещения/видимости прошли. Скриншоты синтетического плана и журнала находятся локально в `artifacts/task-1453/`. Повторный S6 выполняется штатным `finish`; эти адресные исправления не объявлены прошедшими до результата.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
