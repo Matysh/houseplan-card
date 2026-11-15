@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14664,
+  "revision": 14665,
   "nextTicket": 492,
   "nextFence": 492,
   "tasks": {
@@ -4820,7 +4820,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794755730554,
       "reviewEntry": 4,
-      "patchId": "d18a353ecfd166a66da4ca5254a1ce1824f78280",
+      "patchId": "99b77709353f96818ebb44d656979546238164fa",
       "changedFiles": [
         "demo/golden/harness.mjs",
         "demo/helpers/ha-dialog-fixture.mjs",
@@ -4894,6 +4894,7 @@
         "demo/smoke_room_climate_placement.mjs",
         "demo/smoke_room_dimming_removed.mjs",
         "demo/smoke_room_settings.mjs",
+        "demo/smoke_space_card_bg.mjs",
         "demo/smoke_space_switch_transitions.mjs",
         "demo/smoke_space_tab_reorder.mjs",
         "demo/smoke_styling_hooks.mjs",
@@ -4917,7 +4918,9 @@
         "demo/smoke_wall_face_overlap.mjs",
         "demo/smoke_wall_junctions.mjs",
         "demo/smoke_wall_key_roundtrip.mjs",
+        "demo/smoke_wall_node_delete.mjs",
         "demo/smoke_wall_node_reliability.mjs",
+        "demo/smoke_wall_node_topology.mjs",
         "demo/smoke_wall_paper_corners.mjs",
         "demo/smoke_wall_thickness.mjs",
         "demo/smoke_wall_union_isolation.mjs",
@@ -5367,10 +5370,11 @@
     "token": "491:finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:1:admit",
     "fence": 491,
     "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa",
+    "phase": "testing",
     "admittedAt": 1794755734572,
-    "expiresAt": 1794756034572
+    "expiresAt": 1794756040950,
+    "patchId": "99b77709353f96818ebb44d656979546238164fa"
   },
   "events": {
     "github:43692634249:1:label:spec-request": {
@@ -5971,6 +5975,10 @@
     },
     "finish:6d30c3ac-6a6e-419b-9272-85b61be9e306:finish:3:return": {
       "digest": "3b331fc79d5836ab562531de4ef9bf65f6e039929c295bdd6e528d76e07c595e",
+      "issue": 1454
+    },
+    "finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:2:synchronized": {
+      "digest": "9f4632ad776624028e4650dac78c932cd29e3777c90b6b4d066d3e11d28ce390",
       "issue": 1454
     },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
