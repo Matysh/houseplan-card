@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14377,
+  "revision": 14378,
   "nextTicket": 487,
   "nextFence": 487,
   "tasks": {
@@ -4820,7 +4820,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794729879415,
       "reviewEntry": 2,
-      "patchId": "e3d7974c562002fd021ee8d55489d0b41b5f06a7",
+      "patchId": "b8ccd252fcb52457d960230527a46d83dd240e44",
       "changedFiles": [
         "demo/smoke_room_context_menu.mjs",
         "docs/CHANGELOG.md",
@@ -4829,6 +4829,7 @@
         "docs/USER-GUIDE.ru.md",
         "docs/data-hp-contract.json",
         "docs/release-ledger/v1.85.0/1453.json",
+        "scripts/mutation-registry.mjs",
         "src/editor-context-menu.ts",
         "src/editors/room-settings-dialog.ts",
         "src/houseplan-card.ts",
@@ -5204,10 +5205,11 @@
     "token": "486:finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:1:admit",
     "fence": 486,
     "materialSha": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "98806c06ec8eb601c8e8774ceeb748e1a4511982",
+    "phase": "testing",
     "admittedAt": 1794729883326,
-    "expiresAt": 1794730183326
+    "expiresAt": 1794730189595,
+    "patchId": "b8ccd252fcb52457d960230527a46d83dd240e44"
   },
   "events": {
     "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:2:synchronized": {
@@ -5284,6 +5286,10 @@
     },
     "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:5:return": {
       "digest": "4b4304f2eaeefe043bb4588095c3496240355fda8df996f3518d8ab34022352f",
+      "issue": 1453
+    },
+    "finish:4566122f-0c92-464a-bdd6-869269b8a8fd:finish:2:synchronized": {
+      "digest": "f707083f83d8a1c1a4df4a92028371b218731bd655e6c6f93b6d544f59694c9e",
       "issue": 1453
     },
     "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528": {
