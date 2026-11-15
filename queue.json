@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 14486,
-  "nextTicket": 488,
+  "revision": 14487,
+  "nextTicket": 489,
   "nextFence": 488,
   "tasks": {
     "1024": {
@@ -4812,14 +4812,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1454-floor-cache",
-      "materialSha": "f683e4e903feadb79e89b25bcb2561776736712e",
+      "materialSha": "57c21e67ab249d779f8a04945ef3c8455c1d294e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 487,
-      "queued": false,
+      "ticket": 488,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794740535974,
-      "reviewEntry": 1,
+      "readyAt": 1794741727491,
+      "reviewEntry": 2,
       "patchId": "388427e735887110f5e74e56a03f4b69e6fdc5a3",
       "changedFiles": [
         "demo/performance/floor-persistent-cache.mjs",
@@ -4875,7 +4875,6 @@
         "test/room-floor-paint-local.test.mjs",
         "tsconfig.test.json"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5227,7 +5226,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1454
+  ],
   "active": null,
   "events": {
     "github:43692634249:1:label:spec-request": {
@@ -5372,6 +5373,19 @@
           "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/data-hp-contract.test.mjs: failed; Поведение: test/isometric-contract.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/optional-space-model-contract.test.mjs: failed; Поведение: test/room-write-python.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed; Поведение: test/standalone-core-import-boundary.test.mjs: failed; Браузер: capture stability: failed; Браузер: choice row geometry 1447: failed; Браузер: context menu geometry 1444: failed; Браузер: decor group style cache: failed; Браузер: device contact editor frame: failed; Браузер: device icon picker: failed; Браузер: dialog picker 998: failed; Браузер: direct wall geometry: failed; Браузер: editor draft exit: cancelled; Браузер: editor gestures: cancelled; Браузер: editor guides lifecycle: Подготовка не завершена успешно; Браузер: editor nudge: Подготовка не завершена успешно; Браузер: floor cache storage: Подготовка не завершена успешно; Браузер: floor persistent cache: Подготовка не завершена успешно; Браузер: floor persistent cache isometric: Подготовка не завершена успешно; Браузер: geometry corpus: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: glass door sun: Подготовка не завершена успешно; Браузер: golden harness input: Подготовка не завершена успешно; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: junction holes: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lattice write barrier: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: led strip glow: Подготовка не завершена успешно; Браузер: marker state source: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: moon phase direction: Подготовка не завершена успешно; Браузер: native grid draw: Подготовка не завершена успешно; Браузер: node dependency carrier: Подготовка не завершена успешно; Браузер: node history context: Подготовка не завершена успешно; Браузер: opening drag: Подготовка не завершена успешно; Браузер: opening drag graph: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: opening escape wide: Подготовка не завершена успешно; Браузер: opening features: Подготовка не завершена успешно; Браузер: opening light transparent: Подготовка не завершена успешно; Браузер: opening measure: Подготовка не завершена успешно; Браузер: opening mode fill: Подготовка не завершена успешно; Браузер: opening preview: Подготовка не завершена успешно; Браузер: opening tunnel fill: Подготовка не завершена успешно; Браузер: partition openings preview: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan graph cold: Подготовка не завершена успешно; Браузер: plan graph editor: Подготовка не завершена успешно; Браузер: plan host: Подготовка не завершена успешно; Браузер: plan rotation editors: Подготовка не завершена успешно; Браузер: plan snap overlay: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: resize inner dimensions: Подготовка не завершена успешно; Браузер: resize junctions: Подготовка не завершена успешно; Браузер: resize through junction: Подготовка не завершена успешно; Браузер: room context menu: Подготовка не завершена успешно; Браузер: room device discovery: Подготовка не завершена успешно; Браузер: room face select: Подготовка не завершена успешно; Браузер: room opening host: Подготовка не завершена успешно; Браузер: selective invalidation: Подготовка не завершена успешно; Браузер: space copy categories: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: stairs: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: static zoom sharpness: Подготовка не завершена успешно; Браузер: summary panel: Подготовка не завершена успешно; Браузер: summary weather: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui button geometry 1431: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall chain merge: Подготовка не завершена успешно; Браузер: wall corner join: Подготовка не завершена успешно; Браузер: wall dimension hud: Подготовка не завершена успешно; Браузер: wall end align: Подготовка не завершена успешно; Браузер: wall face lineage: Подготовка не завершена успешно; Браузер: wall face room split: Подготовка не завершена успешно; Браузер: wall guide ownership: Подготовка не завершена успешно; Браузер: wall node attach: Подготовка не завершена успешно; Браузер: wall node connected: Подготовка не завершена успешно; Браузер: wall node delete: Подготовка не завершена успешно; Браузер: wall node hit: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно; Браузер: wall node move: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно; Браузер: wall node reliability: Подготовка не завершена успешно; Браузер: wall node topology: Подготовка не завершена успешно; Браузер: wall preview handoff 1247: Подготовка не завершена успешно; Браузер: wall side dimensions: Подготовка не завершена успешно; Браузер: wall side dimensions dense: Подготовка не завершена успешно; Браузер: wall side dimensions thin: Подготовка не завершена успешно; Браузер: wall thickness: Подготовка не завершена успешно; Браузер: wallthick standalone: Подготовка не завершена успешно; Браузер: warm geometry camera: Подготовка не завершена успешно; Браузер: write authority: Подготовка не завершена успешно; Браузер: writer fixed point: Подготовка не завершена успешно",
           "eventId": "finish:38847d0c-2968-4745-b1dc-f34a1c491b6d:finish:3:return:return:1454"
         }
+      }
+    },
+    "finish:e46dd4cc-9075-419a-a206-3ed09b72f10b": {
+      "digest": "95be1e8a16373b94c7f9410209fc8f4ccabdf6a13bd7658099c2b04f19b68aa7",
+      "issue": 1454,
+      "message": {
+        "kind": "queued",
+        "issue": 1454,
+        "at": 1794741727491,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "57c21e67ab249d779f8a04945ef3c8455c1d294e"
       }
     }
   },
