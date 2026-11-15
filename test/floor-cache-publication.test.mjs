@@ -122,3 +122,45 @@ test('#1454 a previously complete foreign owner cannot re-seed quarantined targe
 test('#1454 the same complete owner retains scoped-hint restoration rather than a blanket loaded gate',()=>{
   const h=scopedHintHarness('same');h.card._restoreScopedFloorHint();assert.equal(h.restores(),1);
 });
+
+function boundaryFixture(name,ports){
+  let declaration;
+  const find=node=>{if(ts.isMethodDeclaration(node)&&node.name.getText(source)===name)declaration=node.getText(source);ts.forEachChild(node,find);};
+  find(source);assert.ok(declaration,name);
+  const output=ts.transpileModule(`export class Fixture { ${declaration} }`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
+  const exports={};new Function(...Object.keys(ports),'exports',output)(...Object.values(ports),exports);
+  return new exports.Fixture();
+}
+test('#1454 silent light completion repaints without refitting or restoring the ready camera',()=>{
+  let host,updates=0,refits=0,restores=0;
+  const card=boundaryFixture('_ensureFloorPreparation',{FloorCacheRuntime:class{
+    constructor(value){host=value;}ensure(){return true;}
+  }});
+  Object.assign(card,{_floorPreparation:null,_floorRestoreZoom:null,_isoProjectionSnapshot:{},
+    requestUpdate(){updates++;},_refitView(){refits++;},_restoreZoom(){restores++;}});
+  assert.equal(card._ensureFloorPreparation(),true);
+  host.changed('light');
+  assert.equal(updates,1);assert.equal(refits,0);assert.equal(restores,0);
+  assert.equal(card._isoProjectionSnapshot,null);
+  host.changed('geometry');assert.equal(refits,1,'structural completion keeps its viewport reconciliation');
+});
+test('#1454 ready View consumes retained light during background refresh, never a synchronous recut',()=>{
+  const old={fingerprint:'accepted-light'},current={fingerprint:'current-light'};
+  let builds=0;
+  const card=boundaryFixture('_resolveLightBarriers',{
+    resolveLightBarrierRevision:()=>current,
+    lruRead:()=>({hit:false}),lruWrite(){},NORM_W:1000,
+    buildLightBarrierScene(){builds++;return current;},
+  });
+  Object.assign(card,{_mode:'view',_floorPreparation:{retainedLight:old},_renderProjection:'flat',
+    _spaceDisplayForRender:()=>({showBorders:false}),_floorCacheBuilds:{lightBarrier:0},
+    _lightBarrierPool:new Map(),_zeroWalls:()=>[],_wallUnionGeometry:()=>[]});
+  assert.equal(card._resolveLightBarriers({id:'floor'}),old);
+  assert.equal(builds,0);assert.equal(card._floorCacheBuilds.lightBarrier,0);
+  card._floorPreparation.retainedLight=undefined;
+  assert.equal(card._resolveLightBarriers({id:'floor'}),current);
+  assert.equal(builds,1,'a failed/unavailable refresh retains the honest canonical fallback');
+  card._floorPreparation.retainedLight=old;card._mode='plan';
+  assert.equal(card._resolveLightBarriers({id:'floor'}),current);
+  assert.equal(builds,2,'editor lighting never consumes the View-only refresh shortcut');
+});

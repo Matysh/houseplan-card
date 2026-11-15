@@ -2855,8 +2855,11 @@ export class HouseplanCard extends LitElement {
         return warm && scope && warm.scope === scope && warm.floor === this._space
           && warm.key === key && warm.preview.fitKey === fitKey ? warm.preview : null;
       },
-      changed: () => {
+      changed: (kind) => {
         this._isoProjectionSnapshot = null;
+        // A ready floor's live light tables are not a new spatial frame. Keep
+        // the camera and input surface intact while repainting current HA UI.
+        if (kind === 'light') { this.requestUpdate(); return; }
         if (!this._floorPreparation?.pending && this._warmViewportPending === 'projection') {
           this._floorRestoreZoom = null; // updated() owns the complete projection, not a passive/provisional base
         } else if (!this._floorPreparation?.pending && this._recoveryViewport) {
@@ -12326,6 +12329,12 @@ export class HouseplanCard extends LitElement {
       this._lightBarrierCache = pooled.value;
       return pooled.value.value;
     }
+    // The accepted structural frame remains interactive during a coalesced
+    // worker recut. Use its last light result briefly instead of rebuilding
+    // synchronously or freezing the current door/device presentation.
+    const retained = this._mode === 'view' ? this._floorPreparation?.retainedLight : undefined;
+    if (retained && typeof retained === 'object' && 'fingerprint' in retained)
+      return retained as NonNullable<typeof this._lightBarrierCache>['value'];
     this._floorCacheBuilds.lightBarrier++;
     const value = buildLightBarrierScene({
       space,

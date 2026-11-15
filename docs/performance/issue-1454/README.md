@@ -87,4 +87,30 @@ This reset is outside the golden harness's internal `mount`: the deliberate
 signing fixture waits for the exact accepted/painted candidate instead of a
 fixed delay; its URL, backoff and immediate expiry/aging oracles are unchanged.
 
+### First code-review repair: ready View light updates
+
+The first substantive review found that a contact/cover light revision made a
+ready View pending and inert. The new `smoke_floor_light_refresh.mjs` reproduced
+the lost native tap on the old build before the repair. After the repair, an
+explicitly held real module-worker light job leaves the stage/header live and
+paints the current door state. One native device tap dispatches exactly one
+current action. Eight intermediate updates plus a final cover position coalesce
+into two light jobs, with no worker termination, geometry job, synchronous
+fallback, full IDB write or publication attempt. The final light fingerprint has
+its own successful worker reply; camera/DOM/structural-pool identities stay the
+same, and navigation fences the late old-floor reply.
+
+The ready-only refresh does not replace navigation readiness or its strict
+current-state initial preparation. Main consumes the previous accepted light
+table briefly, not another synchronous recut, and light completion requests a
+repaint without camera refit. Generation publication remembers only the last
+confirmed generation per bounded floor bucket. An overwrite immediately retires
+the previous confirmation; rejected, stale or displaced inflight writes cannot
+confirm a generation. Addressed runtime/scheduler/main-boundary tests pass all
+34 cases, including the confirmed G1 → held G2 → return G1 → stale-success race.
+
+Two speculative review questions required no product changes: live isometric
+leaves/textures are already excluded from L1 capture, and the summary overlay
+and its area demand are intentionally absent in all three editors.
+
 The shared Ask S6 result and substantive code-review verdict are published by the normal queue, not claimed by this evidence file. No full stable/golden set or real HA ACL test is implied. Real HA follow-up before beta is recorded in [houseplan-e2e#71](https://github.com/Matysh/houseplan-e2e/issues/71). Backend format, backups, source images and legacy global LS_CFG wire stay unchanged; the unscoped legacy hint is not interactive cold-load authority. Server SVG remains a theoretical alternative, not implemented.

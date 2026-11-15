@@ -897,6 +897,12 @@ retains exact integers, shared references, non-enumerable topology and the
 direct/exact-paint/isometric semantic side tables. Clean-floor area remains
 lazy; serializing a frame must not trigger stair subtraction. The renderer's
 current-state light scene is prepared separately and never persisted.
+After structural readiness, contact/cover light revisions use a silent,
+coalesced worker refresh: the current door/device UI and input remain live,
+without a loading status, inert stage or camera refit. The last accepted light
+table can paint briefly until the latest result arrives; navigation and
+authority changes still retire that work. Light failure keeps the bounded
+canonical light fallback, not a permanent loading state.
 `geometry-work.ts` counts actual producer entries in each realm, including
 hidden full-union fallbacks; cache-hit counters alone are insufficient proof.
 
@@ -915,7 +921,8 @@ over replacing it with L1 while a new current-state candidate is prepared.
 The local IndexedDB generation is optional and separate from canonical data,
 backups and assets. See `WARM-REMOUNT.md` for scope, cold hints and failure
 behavior. Targeted witnesses are `floor-cache-*.test.mjs`,
-`smoke_floor_persistent_cache.mjs`, `smoke_floor_cache_storage.mjs` and
+`smoke_floor_persistent_cache.mjs`, `smoke_floor_cache_storage.mjs`,
+`smoke_floor_light_refresh.mjs` and
 `performance/floor-persistent-cache.mjs`; the benchmark distinguishes cached
 display from fresh accepted current readiness and retains every sample.
 

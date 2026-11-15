@@ -32,6 +32,16 @@ test('#1454 summary never preempts a navigation and navigation terminates summar
   assert.equal(worker.terminated,true);assert.equal(await summary,null);
   WorkerFake.all.at(-1).complete();await next;owner.dispose();
 });
+test('#1454 a light refresh queues without terminating active work and remains preemptible by navigation',async()=>{
+  WorkerFake.all=[];const owner=new FloorCacheScheduler(()=>new WorkerFake());
+  const summary=owner.run(job({id:'summary'}),'summary'),worker=WorkerFake.all.at(-1);
+  const light=owner.run(job({id:'light'}),'light');assert.equal(worker.terminated,false);
+  assert.equal(owner.metrics.workerJobs,1);assert.equal(await owner.run(job({id:'other-summary'}),'summary'),null);
+  worker.complete({area:2,ms:1});await summary;assert.equal(worker.message.job.raw.id,'light');
+  assert.equal(WorkerFake.all.length,1,'queued light reuses the live worker');
+  const nav=owner.run(job({id:'next'}));assert.equal(await light,null);assert.equal(worker.terminated,true);
+  WorkerFake.all.at(-1).complete({area:3,ms:1});await nav;owner.dispose();
+});
 test('#1454 unsupported/crashed worker has one honest degraded path, not a creation loop',async()=>{
   const raw=makeLargeHouseFixture({floors:1,roomsPerFloor:1,devices:0,openings:0,partitions:0,columns:0,decor:0,stairs:0}).config.spaces[0];
   let attempts=0;const owner=new FloorCacheScheduler(()=>{attempts++;throw Error('CSP')});

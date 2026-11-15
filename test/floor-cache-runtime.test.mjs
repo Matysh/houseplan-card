@@ -21,12 +21,12 @@ async function result(input){
     light:encodeGeometryValue({fingerprint:'current-light',occluders:[],floor:[],opaqueBodies:[],masonryGeometry:[]}),hit:false,ms:1};
 }
 function harness(initial){
-  let current=initial;const hydrated=[],jobs=[],reads=[],publications=[];
-  const owner=new FloorCacheRuntime({selection:()=>current,hydrate:frame=>hydrated.push(frame.id),changed(){}});
-  owner.scheduler={run(job){const d=defer();jobs.push({...d,job});return d.promise;},cancel(){},dispose(){this.disposed=true},metrics:{}};
+  let current=initial;const hydrated=[],jobs=[],reads=[],publications=[],changes=[],frames=[];
+  const owner=new FloorCacheRuntime({selection:()=>current,hydrate:(frame,light)=>{hydrated.push(frame.id);frames.push({frame,light});},changed:kind=>changes.push(kind)});
+  owner.scheduler={run(job,priority){const d=defer();jobs.push({...d,job,priority});return d.promise;},cancel(){this.cancels=(this.cancels||0)+1;},dispose(){this.disposed=true},metrics:{}};
   owner.store={read(address,level){if(level==='preview')return Promise.resolve(null);const d=defer();reads.push({...d,address});return d.promise;},
     publish(value,isCurrent){publications.push({value,isCurrent});return Promise.resolve(isCurrent());},close(){this.closed=true},metrics:{}};
-  return{owner,hydrated,jobs,reads,publications,set:value=>{current=value}};
+  return{owner,hydrated,jobs,reads,publications,changes,frames,set:value=>{current=value}};
 }
 test('#1454 late IDB replies cannot reacquire A after A→B→A navigation',async()=>{
   const authority={}, a=selection('A',authority), b=selection('B',authority), h=harness(a);
@@ -99,7 +99,7 @@ test('#1454 live light refresh retains the accepted geometry frame, wire and per
   h.jobs[0].resolve(await result(a.input));await flush();
   const accepted=h.owner.memory.get(a.persistentKey),reads=h.reads.length;
   const b={...a,light:{...a.light,fingerprint:'light-B'}};h.set(b);
-  assert.equal(h.owner.ensure(),false);await flush();
+  assert.equal(h.owner.ensure(),true);await flush();
   assert.equal(h.reads.length,reads,'accepted geometry does not reread disk');
   assert.equal(h.jobs[1].job.kind,'light');assert.equal(h.jobs[1].job.memory,accepted.wire);
   const light={fingerprint:'light-B',occluders:[],floor:[],opaqueBodies:[],masonryGeometry:[]};
@@ -110,6 +110,102 @@ test('#1454 live light refresh retains the accepted geometry frame, wire and per
   assert.equal(h.owner.pending,false);assert.equal(h.owner.metrics.memoryHits,1);
   assert.equal(h.owner.metrics.misses,1);assert.equal(h.owner.metrics.diskHits,0);
   assert.equal(h.owner.metrics.familyFallbacks,0,'light-only response needs no geometry wire');
+  h.owner.dispose();
+});
+const previewFor=selected=>{
+  const box={x:0,y:0,w:100,h:100};
+  return captureFloorPreview({querySelectorAll:()=>[]},{frame:{rect:box,all:box,outliers:0,hasContent:true},
+    base:[0,0,100,100],display:box,projection:'flat',rotation:0},selected.fitKey);
+};
+const lightResult=fingerprint=>({light:encodeGeometryValue({fingerprint,occluders:[],floor:[],opaqueBodies:[],masonryGeometry:[]}),ms:1});
+async function ready(h,selected){h.owner.ensure();h.reads.at(-1).resolve(null);await flush();h.jobs.at(-1).resolve(await result(selected.input));await flush();}
+test('#1454 live bursts stay ready and coalesce latest light without cancelling or republishing geometry',async()=>{
+  const a=selection('A',{}),h=harness(a);await ready(h,a);
+  h.owner.publish(previewFor(a),()=>true);await flush();assert.equal(h.owner.publicationNeeded,false);
+  h.owner.metrics.firstPreview=11;h.owner.metrics.firstCachedFullFrame=22;h.owner.metrics.readyCurrentFrame=33;
+  const entry=h.owner.memory.get(a.persistentKey),token=h.owner.paintToken,sequence=h.owner.sequence,cancels=h.owner.scheduler.cancels;
+  for(const fingerprint of ['light-B','light-C','light-D']){
+    h.set({...a,light:{...a.light,fingerprint}});assert.equal(h.owner.ensure(),true);
+    assert.equal(h.owner.pending,false);assert.equal(h.owner.paintToken,token);assert.equal(h.owner.sequence,sequence);
+    assert.equal(h.owner.retainedLight,entry.light);assert.equal(h.owner.publicationNeeded,false);
+  }
+  assert.equal(h.jobs.length,2,'one active light, not one terminated worker per tick');
+  assert.equal(h.jobs[1].priority,'light');assert.equal(h.owner.scheduler.cancels,cancels);
+  h.jobs[1].resolve(lightResult('light-B'));await flush();
+  assert.equal(h.frames.length,1,'superseded light never hydrates');assert.equal(h.jobs.length,3);
+  assert.equal(h.jobs[2].job.light.fingerprint,'light-D','only latest target follows the active job');
+  h.jobs[2].resolve(lightResult('light-D'));await flush();
+  const latest=h.owner.memory.get(a.persistentKey);
+  for(const key of ['frame','wire','payload'])assert.equal(latest[key],entry[key]);
+  assert.equal(latest.lightKey,'light-D');assert.equal(h.owner.retainedLight,undefined);
+  assert.deepEqual(h.changes,[undefined,'light']);assert.equal(h.owner.publicationNeeded,false);
+  assert.equal(h.publications.length,1);assert.equal(h.owner.scheduler.cancels,cancels);
+  assert.deepEqual([h.owner.metrics.firstPreview,h.owner.metrics.firstCachedFullFrame,h.owner.metrics.readyCurrentFrame],[11,22,33]);
+  h.owner.dispose();
+});
+test('#1454 failed silent light leaves geometry ready, releases retained light and retries only a new revision',async()=>{
+  const a=selection('A',{}),h=harness(a);await ready(h,a);const entry=h.owner.memory.get(a.persistentKey);
+  const b={...a,light:{...a.light,fingerprint:'light-B'}};h.set(b);h.owner.ensure();
+  assert.equal(h.owner.retainedLight,entry.light);h.jobs[1].resolve(null);await flush();
+  assert.equal(h.owner.pending,false);assert.equal(h.owner.retainedLight,undefined);
+  assert.equal(h.owner.memory.get(a.persistentKey),entry);assert.equal(h.owner.metrics.familyFallbacks,1);
+  for(let i=0;i<5;i++)assert.equal(h.owner.ensure(),true);
+  assert.equal(h.jobs.length,2,'failed revision does not create an update/retry loop');
+  h.set({...b,light:{...b.light,fingerprint:'light-C'}});h.owner.ensure();assert.equal(h.jobs.length,3);
+  h.set({...b,authority:{}});assert.equal(h.owner.retainedLight,undefined,'retired authority cannot borrow light before ensure');
+  h.owner.ensure();h.jobs[2].resolve(lightResult('light-C'));await flush();assert.equal(h.frames.length,1);
+  h.owner.dispose();
+});
+test('#1454 confirmed generations survive A→B→A while genuine fit changes publish again',async()=>{
+  const authority={},a=selection('A',authority),b=selection('B',authority),h=harness(a);
+  await ready(h,a);h.owner.publish(previewFor(a),()=>true);await flush();
+  h.set(b);await ready(h,b);h.owner.publish(previewFor(b),()=>true);await flush();
+  h.set(a);assert.equal(h.owner.ensure(),true);assert.equal(h.owner.publicationNeeded,false,'no DOM capture needed for already written A generation');
+  h.owner.publish(previewFor(a),()=>true);assert.equal(h.publications.length,2);
+  const fit={...a,fitKey:cacheSha256('new-fit')};h.set(fit);h.owner.ensure();assert.equal(h.owner.publicationNeeded,true);
+  h.owner.publish(previewFor(fit),()=>true);await flush();assert.equal(h.publications.length,3);assert.equal(h.owner.publicationNeeded,false);
+  h.set(a);h.owner.ensure();assert.equal(h.owner.publicationNeeded,true,'one stored generation per floor, not all historical fits');
+  h.owner.dispose();
+});
+test('#1454 publication deduplicates in-flight generations but never confirms a failed or stale writer',async()=>{
+  const a=selection('A',{}),h=harness(a);await ready(h,a);const writes=[];
+  h.owner.store.publish=(value,isCurrent)=>{const d=defer();writes.push({...d,value,isCurrent});return d.promise;};
+  h.owner.publish(previewFor(a),()=>true);assert.equal(h.owner.publicationNeeded,false);
+  h.owner.publish(previewFor(a),()=>true);assert.equal(writes.length,1);
+  h.set({...a,light:{...a.light,fingerprint:'light-B'}});h.owner.ensure();
+  assert.equal(writes[0].isCurrent(),true,'live light does not retire an immutable generation');
+  writes[0].resolve(false);await flush();assert.equal(h.owner.publicationNeeded,true);
+  h.owner.publish(previewFor(a),()=>true);assert.equal(writes.length,2);
+  const fit={...a,fitKey:cacheSha256('new-fit')};h.set(fit);h.owner.ensure();
+  assert.equal(writes[1].isCurrent(),false);writes[1].resolve(true);await flush();
+  assert.equal(h.owner.publicationNeeded,true,'stale successful response is not a confirmed current generation');
+  h.owner.publish(previewFor(fit),()=>true);writes[2].resolve(true);await flush();assert.equal(h.owner.publicationNeeded,false);
+  h.owner.dispose();
+});
+test('#1454 a stale successful overwrite cannot leave the previous generation falsely confirmed',async()=>{
+  const a=selection('A',{}),h=harness(a);await ready(h,a);
+  h.owner.publish(previewFor(a),()=>true);await flush();assert.equal(h.owner.publicationNeeded,false);
+  const writes=[];h.owner.store.publish=(value,isCurrent)=>{const d=defer();writes.push({...d,value,isCurrent});return d.promise;};
+  const second={...a,fitKey:cacheSha256('second-generation')};h.set(second);h.owner.ensure();
+  h.owner.publish(previewFor(second),()=>true);
+  assert.equal(writes[0].isCurrent(),true,'IDB may have passed its last authority check');
+  h.set(a);h.owner.ensure();assert.equal(writes[0].isCurrent(),false);
+  assert.equal(h.owner.publicationNeeded,true,'G1 is unsafe as soon as a different overwrite is scheduled');
+  writes[0].resolve(true);await flush();
+  assert.equal(h.owner.publicationNeeded,true,'committed stale G2 does not claim old G1 remains on disk');
+  h.owner.publish(previewFor(a),()=>true);writes[1].resolve(true);await flush();assert.equal(h.owner.publicationNeeded,false);
+  h.owner.dispose();
+});
+test('#1454 unresolved publication deduplication remains bounded across many floors',async()=>{
+  const authority={},h=harness(null),writes=[];
+  h.owner.store.publish=(value,isCurrent)=>{const d=defer();writes.push({...d,value,isCurrent});return d.promise;};
+  for(let i=0;i<12;i++){
+    const selected=selection('floor-'+i,authority);h.set(selected);await ready(h,selected);
+    h.owner.publish(previewFor(selected),()=>true);assert.ok(h.owner.publishing.size<=8);
+  }
+  assert.equal(h.owner.publishing.size,8);
+  writes[0].resolve(true);await flush();assert.equal(h.owner.published.size,0,'evicted retired ticket cannot confirm a floor');
+  assert.equal(h.owner.publishing.size,8,'old completion cannot retire newer pending buckets');
   h.owner.dispose();
 });
 test('#1454 repeated demanded area jobs keep their redacted producer diagnostics bounded',async()=>{

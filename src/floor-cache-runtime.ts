@@ -15,7 +15,7 @@ export interface FloorRuntimeHost {
   hydrate(frame: FloorGeometryFrame, light: unknown): void;
   contains?(frame: FloorGeometryFrame, light: unknown): boolean;
   preview?(fitKey: string, scope: string | undefined, persistentKey: string): FloorPreview | null;
-  changed(): void;
+  changed(kind?: 'geometry' | 'light'): void;
 }
 interface Entry { frame: FloorGeometryFrame; wire: GeometryWire; payload?: CachePayload; lightKey: string; light: unknown }
 /** One owner fences cache reads, work, hydration and publication. Authority
@@ -30,7 +30,10 @@ export class FloorCacheRuntime {
   private readyKey = '';
   private failed = new Set<string>();
   private disposed = false;
-  private published = '';
+  private published = new Map<string, string>();
+  private publishing = new Map<string, { generation: string }>();
+  private lightTask: { selection: Selection; sequence: number; frame: FloorGeometryFrame } | null = null;
+  private failedLight = '';
   private areaMemory = new Map<string, number | null>();
   private memoryAuthority?: object;
   private memoryConnection = -1;
@@ -44,8 +47,15 @@ export class FloorCacheRuntime {
   private selection(): Selection | null { try { return this.host.selection(); } catch { return null; } }
   get pending(): boolean { return !!this.key && this.readyKey !== this.key && !this.failed.has(this.key); }
   get publicationNeeded(): boolean {
-    return !!this.selected && !!this.selected.scope && !this.pending && this.published !== this.key
-      && !!this.memory.get(this.selected.persistentKey)?.payload;
+    const publication = this.publication();
+    return !!publication && this.published.get(publication.bucket) !== publication.generation
+      && this.publishing.get(publication.bucket)?.generation !== publication.generation;
+  }
+  /** A prior light table may paint briefly while the latest live revision is
+   * computed. It never lends geometry/read authority to another navigation. */
+  get retainedLight(): unknown {
+    const task = this.lightTask;
+    return task && this.lightCurrent(task) ? this.memory.get(task.selection.persistentKey)?.light : undefined;
   }
   get fit() { return this.pending ? this.preview?.fit : undefined; }
   get diagnostic() { return { ...this.metrics, store: this.store.metrics, scheduler: this.scheduler.metrics }; }
@@ -65,9 +75,64 @@ export class FloorCacheRuntime {
     if (entry && !this.pending && this.same(selection, this.selection())) this.host.hydrate(entry.frame, entry.light);
   }
   private same(a: Selection | null, b: Selection | null): boolean {
+    return this.sameStructure(a, b) && a!.light.fingerprint === b!.light.fingerprint;
+  }
+  private sameStructure(a: Selection | null, b: Selection | null): boolean {
     return !!a && !!b && a.authority === b.authority && a.connection === b.connection && a.scope === b.scope
-      && a.input.raw.id === b.input.raw.id && a.persistentKey === b.persistentKey
-      && a.light.fingerprint === b.light.fingerprint;
+      && a.input.raw.id === b.input.raw.id && a.persistentKey === b.persistentKey;
+  }
+  private lightCurrent(task: NonNullable<FloorCacheRuntime['lightTask']>): boolean {
+    return !this.disposed && task.sequence === this.sequence && !this.pending
+      && this.sameStructure(task.selection, this.selection())
+      && this.memory.get(task.selection.persistentKey)?.frame === task.frame;
+  }
+  private refreshLight(): void {
+    const selection = this.selected, entry = selection && this.memory.get(selection.persistentKey);
+    if (!selection || !entry || this.lightTask || this.pending || this.disposed
+      || !this.sameStructure(selection, this.selection()) || entry.lightKey === selection.light.fingerprint
+      || this.failedLight === `${this.sequence}|${selection.light.fingerprint}`) return;
+    const task = this.lightTask = { selection, sequence: this.sequence, frame: entry.frame };
+    void (async () => {
+      try {
+        const result = await this.scheduler.run({ kind: 'light', input: selection.input,
+          memory: entry.wire, light: selection.light }, 'light');
+        if (!this.lightCurrent(task)) return;
+        if (result) {
+          this.metrics.workerMs.push(result.ms);
+          if (this.metrics.workerMs.length > 100) this.metrics.workerMs.shift();
+          if (result.producer) this.metrics.producers.push(result.producer);
+          if (this.metrics.producers.length > 50) this.metrics.producers.shift();
+        }
+        // A newer live revision supersedes only the result, never terminates
+        // its worker. The finally block starts one latest coalesced request.
+        if (!this.same(selection, this.selection())) return;
+        if (!result?.light) throw new Error('floor-cache:light');
+        const light = decodeGeometryValue(result.light), current = this.memory.get(selection.persistentKey)!;
+        if (!light || typeof light !== 'object' || !('fingerprint' in light)
+          || light.fingerprint !== selection.light.fingerprint) throw new Error('floor-cache:light-revision');
+        this.memory.set(selection.persistentKey, { ...current, lightKey: selection.light.fingerprint, light });
+        this.metrics.memoryHits++;
+        this.host.hydrate(current.frame, light); this.host.changed('light');
+      } catch {
+        if (this.lightCurrent(task) && this.same(selection, this.selection())) {
+          // Keep structural readiness. Let the ordinary light reader provide
+          // its bounded canonical fallback instead of an endless retry loop.
+          this.failedLight = `${this.sequence}|${selection.light.fingerprint}`;
+          this.metrics.familyFallbacks++;
+          this.host.changed('light');
+        }
+      } finally {
+        if (this.lightTask === task) { this.lightTask = null; this.refreshLight(); }
+      }
+    })();
+  }
+  private publication() {
+    const selection = this.selected;
+    if (!selection?.scope || this.pending) return null;
+    const entry = this.memory.get(selection.persistentKey), address = this.address(selection);
+    if (!entry?.payload || !address) return null;
+    return { selection, entry, address, bucket: JSON.stringify([selection.scope, selection.input.raw.id]),
+      generation: cacheSha256([selection.persistentKey, selection.fitKey, entry.payload.checksum]) };
   }
   private address(selection: Selection): CacheAddress | null {
     return selection.scope ? { scope: selection.scope, floor: String(selection.input.raw.id), key: selection.persistentKey } : null;
@@ -95,9 +160,17 @@ export class FloorCacheRuntime {
       if (this.selected) this.invalidate();
       return true;
     }
+    const ready = this.memory.get(selection.persistentKey);
+    if (ready && !this.pending && this.sameStructure(this.selected, selection)) {
+      if (this.selected!.fitKey !== selection.fitKey) this.metrics.memoryHits++;
+      this.selected = selection;
+      if (this.host.contains?.(ready.frame, ready.light) === false) this.host.hydrate(ready.frame, ready.light);
+      this.refreshLight();
+      return true;
+    }
     if (this.same(this.selected, selection)) {
       if (this.selected!.fitKey !== selection.fitKey) {
-        this.selected = selection; this.published = '';
+        this.selected = selection;
         if (this.preview?.fitKey !== selection.fitKey) this.preview = null;
         if (this.pending) this.readPreview(selection, this.sequence);
         if (!this.pending) this.metrics.memoryHits++;
@@ -109,8 +182,9 @@ export class FloorCacheRuntime {
     }
     const authorityChanged = this.memoryAuthority !== selection.authority
       || this.memoryConnection !== selection.connection || this.memoryScope !== selection.scope;
-    if (authorityChanged) { this.memory.clear(); this.areaMemory.clear(); }
+    if (authorityChanged) { this.memory.clear(); this.areaMemory.clear(); this.published.clear(); this.publishing.clear(); }
     this.memoryAuthority = selection.authority; this.memoryConnection = selection.connection; this.memoryScope = selection.scope;
+    this.lightTask = null; this.failedLight = '';
     const sequence = ++this.sequence; this.scheduler.cancel(); this.selected = selection;
     this.key = `${sequence}|${selection.persistentKey}|${selection.light.fingerprint}`;
     this.failed.clear();
@@ -171,20 +245,36 @@ export class FloorCacheRuntime {
   /** Called only after the card's existing complete-frame paint/resource
    * barrier, with confirmed View source. Never from an editor/optimistic path. */
   publish(preview: FloorPreview, accepted: () => boolean): void {
-    const selection = this.selected, key = this.key, sequence = this.sequence;
-    if (!selection || this.pending || this.published === key || !accepted()) return;
-    const address = this.address(selection), entry = this.memory.get(selection.persistentKey);
-    if (!address || !entry?.payload || !validFloorPreview(preview, selection.fitKey)) return;
-    this.published = key;
+    const publication = this.publication(), sequence = this.sequence;
+    if (!publication || !this.publicationNeeded || !accepted()) return;
+    const { selection, address, entry, bucket, generation } = publication;
+    if (!validFloorPreview(preview, selection.fitKey)) return;
+    // A different generation can overwrite this floor after the final IDB
+    // authority check. From scheduling onward the old disk claim is unsafe,
+    // even if navigation returns to it before the new commit completes.
+    this.published.delete(bucket);
+    const ticket = { generation }; this.publishing.set(bucket, ticket);
+    while (this.publishing.size > 8) this.publishing.delete(this.publishing.keys().next().value!);
     const text = JSON.stringify(preview), bytes = new TextEncoder().encode(text).length;
     this.metrics.publicationAttempts++; this.metrics.previewBytes = bytes;
-    const current = () => !this.disposed && sequence === this.sequence && this.same(selection, this.selection())
-      && selection.fitKey === this.selected?.fitKey && accepted();
+    const current = () => {
+      const live = this.selection();
+      return !this.disposed && sequence === this.sequence && this.sameStructure(selection, live)
+        && selection.fitKey === live?.fitKey && selection.fitKey === this.selected?.fitKey && accepted();
+    };
     // Small bounded preview conversion only; the large L2 text/checksum came
     // from the worker. No large stringify runs after the first live frame.
-    void this.store.publish({ address, generation: cacheSha256([selection.persistentKey, selection.fitKey, entry.payload.checksum]),
-      created: Date.now(), preview: { text, bytes, checksum: cacheTextChecksum(text) }, geometry: entry.payload }, current)
-      .then(published => { if (!published) this.metrics.publicationFailures++; });
+    const complete = (published: boolean) => {
+      if (!published) this.metrics.publicationFailures++;
+      if (this.publishing.get(bucket) !== ticket) return;
+      this.publishing.delete(bucket);
+      if (published && current()) {
+        this.published.delete(bucket); this.published.set(bucket, generation);
+        while (this.published.size > 8) this.published.delete(this.published.keys().next().value!);
+      }
+    };
+    void this.store.publish({ address, generation, created: Date.now(),
+      preview: { text, bytes, checksum: cacheTextChecksum(text) }, geometry: entry.payload! }, current).then(complete, () => complete(false));
   }
   /** Demanded one-floor scalar; a pending navigation preempts this job. */
   private rememberArea(key: string, value: number | null): void {
@@ -213,7 +303,7 @@ export class FloorCacheRuntime {
     const current = () => !this.disposed && this.same(selection, this.selection()) && accepted();
     void this.store.publishArea({ scope: selection.scope, floor: String(raw.id), key }, value, current);
   }
-  invalidate(): void { this.sequence++; this.scheduler.cancel(); this.selected = null;
+  invalidate(): void { this.sequence++; this.lightTask = null; this.failedLight = ''; this.scheduler.cancel(); this.selected = null;
     this.key = ''; this.readyKey = ''; this.preview = null; }
   dispose(): void { this.disposed = true; this.invalidate(); this.scheduler.dispose(); this.store.close(); }
 }
