@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 894,
+  "revision": 895,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -121646,6 +121646,49 @@
         "assetName": "houseplan.zip",
         "bytes": 5072905,
         "observedAt": "2026-11-15T01:26:04.247Z"
+      },
+      "completion": {
+        "issues": {
+          "status": "running",
+          "eligible": [
+            1391,
+            1392,
+            1393,
+            1394,
+            1395,
+            1415,
+            1421,
+            1422,
+            1423,
+            1424,
+            1425,
+            1426,
+            1427,
+            1428,
+            1429,
+            1430,
+            1431,
+            1432,
+            1433,
+            1434,
+            1435,
+            1436,
+            1437,
+            1438,
+            1439,
+            1440,
+            1441,
+            1442,
+            1443,
+            1444,
+            1446,
+            1447,
+            1448,
+            1449
+          ],
+          "waitingForS8": [],
+          "completed": []
+        }
       }
     }
   },
@@ -127191,7 +127234,8 @@
     "beta1853-20261115-publish-final:prepared:6e7e3ca2-1ba7-442f-b349-09432c6d0c83": "c9fbff5780e2b26b82612926279fadeac731e1493e86429e8820c2183fa45a84",
     "beta1853-20261115-publish-final:started:891": "0a9c83556befad00fba110e31fd4128cfb9658dc2d412c45523c60842ca03446",
     "beta1853-20261115-publish-final:published": "207d87fcb6b624ef005ec06fe592a1c7942b0435cb75a8d1bed6ebe75f1f851b",
-    "beta1853-20261115-publish-final:completion:be4e0ab9-716a-4da1-ad3e-c9a467fef410": "5a611fdcbb323f3be9fdf8841812e2e7cb44e96c9aa0ccd66cc494a269f4080e"
+    "beta1853-20261115-publish-final:completion:be4e0ab9-716a-4da1-ad3e-c9a467fef410": "5a611fdcbb323f3be9fdf8841812e2e7cb44e96c9aa0ccd66cc494a269f4080e",
+    "beta1853-20261115-publish-final:completion:728102c9-9423-48ed-81f0-ab561573482f": "cb2248e2b8d256edcbcd7ab4be9536b8886f162515c9a1dd07b449c03f95ea42"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
