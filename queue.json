@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 14726,
-  "nextTicket": 492,
+  "revision": 14727,
+  "nextTicket": 493,
   "nextFence": 492,
   "tasks": {
     "1024": {
@@ -4815,11 +4815,11 @@
       "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 491,
-      "queued": false,
+      "ticket": 492,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794755730554,
-      "reviewEntry": 4,
+      "readyAt": 1794759763143,
+      "reviewEntry": 5,
       "patchId": "99b77709353f96818ebb44d656979546238164fa",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -4998,8 +4998,7 @@
         "entry": 4,
         "detail": "Браузер: gear tabs: failed",
         "eventId": "finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:3:return:return:1454"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1455": {
       "issue": 1455,
@@ -5364,7 +5363,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1454
+  ],
   "active": null,
   "events": {
     "github:43692634249:1:label:spec-request": {
@@ -6436,6 +6437,19 @@
           "detail": "Браузер: gear tabs: failed",
           "eventId": "finish:fa95c2cd-d20b-4806-9ee4-bcd3456b9113:finish:3:return:return:1454"
         }
+      }
+    },
+    "finish:c01979c8-e3af-4b4d-a9f0-dd0ea7c51851": {
+      "digest": "0283c45b6c16170841e6c6ba0e43ec9badca51ec12dd13225c8d098f3db85256",
+      "issue": 1454,
+      "message": {
+        "kind": "queued",
+        "issue": 1454,
+        "at": 1794759763143,
+        "entry": 5,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4"
       }
     }
   },
