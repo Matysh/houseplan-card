@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14488,
+  "revision": 14489,
   "nextTicket": 489,
   "nextFence": 489,
   "tasks": {
@@ -4820,9 +4820,14 @@
       "status": "S6-in-progress",
       "readyAt": 1794741727491,
       "reviewEntry": 2,
-      "patchId": "388427e735887110f5e74e56a03f4b69e6fdc5a3",
+      "patchId": "a0979c9e28323e703849b0ab36889a6d2bfe3409",
       "changedFiles": [
+        "demo/golden/harness.mjs",
+        "demo/helpers/ha-dialog-fixture.mjs",
+        "demo/helpers/hp-test.mjs",
         "demo/performance/floor-persistent-cache.mjs",
+        "demo/serve.mjs",
+        "demo/smoke_direct_wall_geometry.mjs",
         "demo/smoke_floor_cache_storage.mjs",
         "demo/smoke_floor_persistent_cache.mjs",
         "demo/smoke_floor_persistent_cache_isometric.mjs",
@@ -4836,7 +4841,10 @@
         "docs/performance/issue-1454/slow-open.json",
         "docs/release-ledger/v1.85.0/1454.json",
         "rollup.config.mjs",
+        "scripts/config-compatibility-inventory.json",
         "scripts/floor-worker-bundle.mjs",
+        "scripts/mutation-registry.mjs",
+        "scripts/sh3d-convert/geometry-runtime.generated.mjs",
         "scripts/source-fingerprint.mjs",
         "src/clean-floor.ts",
         "src/direct-wall-geometry.ts",
@@ -4868,10 +4876,15 @@
         "src/summary-panel-host.ts",
         "src/summary-panel-runtime-loaded.ts",
         "src/wall-thickness.ts",
+        "test/data-hp-contract.test.mjs",
         "test/floor-cache-codec.test.mjs",
         "test/floor-cache-preview.test.mjs",
+        "test/floor-cache-publication.test.mjs",
         "test/floor-cache-runtime.test.mjs",
         "test/floor-cache-scheduler.test.mjs",
+        "test/isometric-contract.test.mjs",
+        "test/mutation-browser-offload.test.mjs",
+        "test/optional-space-model-contract.test.mjs",
         "test/room-floor-paint-local.test.mjs",
         "tsconfig.test.json"
       ],
@@ -5233,10 +5246,11 @@
     "token": "488:finish:e46dd4cc-9075-419a-a206-3ed09b72f10b:finish:1:admit",
     "fence": 488,
     "materialSha": "57c21e67ab249d779f8a04945ef3c8455c1d294e",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "4f2d52534f1f4be398d2f6d5f2ab871a0afed383",
+    "phase": "testing",
     "admittedAt": 1794741732816,
-    "expiresAt": 1794742032816
+    "expiresAt": 1794742039703,
+    "patchId": "a0979c9e28323e703849b0ab36889a6d2bfe3409"
   },
   "events": {
     "github:43692634249:1:label:spec-request": {
@@ -5317,6 +5331,10 @@
     },
     "finish:38847d0c-2968-4745-b1dc-f34a1c491b6d:finish:3:return": {
       "digest": "1999c7ddea3019b74a20996fbb995c722d3e2e6eb07fd75516ba6c5e311c1ca4",
+      "issue": 1454
+    },
+    "finish:e46dd4cc-9075-419a-a206-3ed09b72f10b:finish:2:synchronized": {
+      "digest": "d61b4a68293cef5daac60aca16a9f7208b1d1eb0d813b7516a54587eb7ba54ab",
       "issue": 1454
     },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
