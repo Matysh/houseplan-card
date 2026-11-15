@@ -128,4 +128,20 @@ test('#1454 prepared frame is a bounded lossless runtime-cache payload, includin
   }
   const invalid=decodeGeometryText(text);delete invalid.union.value.sourceFingerprint;
   assert.equal(isFloorGeometryFrame(invalid,input),false);
+  for (const [label, change] of [
+    ['physical bodies key',frame=>{frame.bodies.key='wrong'}],
+    ['wall union key',frame=>{frame.union.key='wrong'}],
+    ['opening index key',frame=>{frame.openingIndex.key='wrong'}],
+    ['opening tunnel key',frame=>{frame.tunnels.key='wrong'}],
+    ['floor paint key',frame=>{frame.floorPaint.key='wrong'}],
+    ['source fingerprint',frame=>{frame.union.value.sourceFingerprint='wrong'}],
+    ['coordinate scale',frame=>{frame.union.value.coordinateScale=NORM_W/2}],
+    ['missing inner contours',frame=>{frame.inner=[]}],
+    ['missing clean floors',frame=>{frame.clean=[]}],
+    ['wrong inner room key',frame=>{frame.inner[0][0]='wrong'}],
+    ['wrong clean room key',frame=>{frame.clean[0][0]='wrong'}],
+  ]) {
+    const copy=decodeGeometryText(text);change(copy);
+    assert.equal(isFloorGeometryFrame(copy,input),false,`${label} must miss, not hydrate a hidden main-thread rebuild`);
+  }
 });

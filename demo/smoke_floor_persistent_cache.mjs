@@ -8,16 +8,21 @@ const fixture = makeLargeHouseFixture({ floors: 3, roomsPerFloor: 4, devices: 12
   partitions: 2, columns: 1, decor: 4, stairs: 3 });
 const isometric = process.argv.includes('--iso');
 if (isometric) fixture.config.settings = { ...fixture.config.settings, volumetric_view: true };
+const contact='binary_sensor.cache_opening';
+fixture.config.spaces[0].openings[1].contact=contact;
+fixture.states[contact]={entity_id:contact,state:'off',attributes:{device_class:'door'},last_changed:new Date(0).toISOString()};
+fixture.entities[contact]={entity_id:contact,platform:'demo'};
 const expectedArea = totalCleanFloorAreaM2(fixture.config, spaceModels(fixture.config));
 const changed = structuredClone(fixture.config);
 changed.spaces[1].stairs = [{ ...changed.spaces[0].stairs[0], id: 'new-summary-stair' }];
 const expectedChanged = totalCleanFloorAreaM2(changed, spaceModels(changed));
-const { page, browser } = await launch({ width: process.argv.includes('--narrow') ? 640 : 1440, height: 1000, deviceScaleFactor: 2 });
+const { page, browser } = await launch({ width: process.argv.includes('--narrow') ? 640 : 1440, height: 1000 }, 2);
 await page.emulateMedia({ reducedMotion: 'reduce' });
 page.on('worker', worker => worker.on('close', () => {}));
 page.on('console', message => { if (message.type() === 'error') console.log('BROWSER', message.text()); });
+await page.exposeFunction('__breakFloorWorkerAsset', async () => { await page.route('**/floor-worker-*.js', route => route.abort());return true; });
 try {
-  const result = await page.evaluate(async ({ fixture, expectedArea, expectedChanged }) => {
+  const result = await page.evaluate(async ({ fixture, expectedArea, expectedChanged, contact }) => {
     window.__card?.remove?.(); localStorage.clear();
     const databases = await indexedDB.databases();
     for (const db of databases) if (db.name === 'houseplan-derived-floors-v1') await new Promise(resolve => {
@@ -87,6 +92,15 @@ try {
     card._pickSpace(source.config.spaces[0].id); await settle(card);
     const warm = structuredClone(card._floorPreparation.diagnostic);
     const memoryReturned = card._space === source.config.spaces[0].id;
+    const initialAccepted=card._floorSourceAccepted(), configName=card._serverCfg.spaces[0].name,
+      hadName=Object.prototype.hasOwnProperty.call(card._serverCfg.spaces[0],'name');
+    card._serverCfg.spaces[0].name='not-yet-accepted';
+    const rejectedConfig=!card._floorSourceAccepted();
+    if(hadName)card._serverCfg.spaces[0].name=configName;else delete card._serverCfg.spaces[0].name;
+    card._layout.__unaccepted_test={x:.1,y:.2};
+    const rejectedLayout=!card._floorSourceAccepted();delete card._layout.__unaccepted_test;
+    card._saveConfigDebounced();const rejectedDeferred=!card._floorSourceAccepted();card._saveConfigDebounced.cancel();
+    const publicationSource=initialAccepted&&rejectedConfig&&rejectedLayout&&rejectedDeferred&&card._floorSourceAccepted();
     if (projection === 'iso') {
       const priorWrites=card._floorPreparation.diagnostic.store.writes;
       card._rotatePlan(1);
@@ -111,7 +125,11 @@ try {
       const project = element => [new DOMPoint(0,0),new DOMPoint(100,100)]
         .map(point => { const screen=point.matrixTransform(element.getScreenCTM());return [screen.x,screen.y]; });
       const screenBefore = sample ? project(sample) : null;
+      const oldLight=card._floorCacheSelection().light.fingerprint;
+      const nextStates={...card.hass.states,[contact]:{...card.hass.states[contact],state:'on'}};
+      card.hass={...card.hass,states:nextStates};
       await settle(card);
+      const currentLight=card._floorCacheSelection().light.fingerprint;
       const original = [...card.renderRoot.querySelectorAll('.stage path')].find(path => path.getAttribute('d') === d);
       const screenAfter = original ? project(original) : null;
       const after = card._viewOr(card._baseVb()), pixels = card._stageEl.clientWidth / after.w;
@@ -120,6 +138,7 @@ try {
         && Math.abs(before.y + before.h / 2 - after.y - after.h / 2) * pixels <= 1,
         before, after, screenBefore, screenAfter,
         screenCamera: !!screenBefore && !!screenAfter && screenBefore.every((point,i) => point.every((value,j) => Math.abs(value-screenAfter[i][j])<=1)),
+        freshLight: oldLight!==currentLight&&card._lightBarrierCache?.value.fingerprint===currentLight,
         phases: structuredClone(card._floorPreparation.diagnostic) };
     } finally { window.Worker = NativeWorker; }
     source = structuredClone(source);
@@ -223,20 +242,59 @@ try {
       window.Worker = NativeWorker;
       if(idbDescriptor)Object.defineProperty(window,'indexedDB',idbDescriptor);else delete window.indexedDB;
     }
+    await window.__breakFloorWorkerAsset();
+    card=await mount();await settle(card);
+    const missingAsset=card._floorPreparation.diagnostic.scheduler;
+    card.requestUpdate();await until(()=>card._floorPreparation.diagnostic.store.writes>0,'cold document seed');
     return { cold, disk, warm, cachedBeforeFresh, sameFit, diskBuilds, projection, isoBuilds, quarterTurnBuilds,
-      preview, summary, authority, corruptionRecovered, degraded, memoryReturned, noDeviceWritesFromCache: writes === savedWrites, current: card._space, first: source.config.spaces[0].id };
-  }, { fixture, expectedArea, expectedChanged });
+      preview, summary, authority, corruptionRecovered, degraded, missingAsset, publicationSource, memoryReturned, noDeviceWritesFromCache: writes === savedWrites, current: card._space, first: source.config.spaces[0].id };
+  }, { fixture, expectedArea, expectedChanged, contact });
+  // A real new document retires warmBoot's JS memo as well as the card. Merely
+  // remounting in the same document cannot prove the cold SWR contract.
+  await page.unroute('**/floor-worker-*.js');
+  await page.goto(new URL('/demo.html?panel-cold=1',page.url()).href,{waitUntil:'domcontentloaded'});
+  await page.evaluate(async()=>{await import('/assets/houseplan-card.js');await customElements.whenDefined('houseplan-card');});
+  result.coldDocument=await page.evaluate(async fixture=>{
+    window.__card?.remove();
+    const card=document.createElement('houseplan-card');let writes=0;
+    const start=performance.now();let freshPair=0;
+    card.hass={language:'en',locale:{language:'en'},user:{id:'different-cache-user',is_admin:false},
+      states:fixture.states,devices:fixture.devices,entities:fixture.entities,areas:fixture.areas,
+      connection:{connected:true,subscribeEvents:async()=>()=>{},subscribeMessage:async()=>()=>{}},
+      callWS:async message=>{
+        if(message.type==='houseplan/config/get'||message.type==='houseplan/layout/get'){
+          await new Promise(resolve=>setTimeout(resolve,2500));freshPair=performance.now();
+          return message.type==='houseplan/config/get'?{config:structuredClone(fixture.config),rev:1,can_write:false,summary_panel_api:1}
+            :{layout:structuredClone(fixture.layout),rev:1};
+        }
+        if(message.type==='config/device_registry/list')return Object.values(fixture.devices);
+        if(message.type==='config/entity_registry/list')return Object.values(fixture.entities);
+        if(/houseplan\/.*(?:set|save|delete)/.test(message.type))writes++;return{ok:true};},callService:async()=>{writes++;},localize:()=>null,
+      formatEntityState:state=>state.state,config:{unit_system:{length:'km'}}};
+    card.setConfig({type:'custom:houseplan-card',title:'Cache fixture',icon_size:3.4});document.getElementById('host').replaceChildren(card);
+    const until=async predicate=>{while(!predicate()){if(performance.now()-start>15000)throw Error('cold document did not paint '+JSON.stringify(card.houseplanFloorCacheDiagnostics()));await new Promise(resolve=>setTimeout(resolve,10));}};
+    await until(()=>card._floorPreparation?.diagnostic.firstCachedFullFrame>0);
+    const early=performance.now(),visible=!card._loadOk&&!card._booting&&!card._bootFading
+      &&!!card.renderRoot.querySelector('.dev')&&getComputedStyle(card.renderRoot.querySelector('.zoomwrap')).visibility==='visible';
+    const phases=structuredClone(card._floorPreparation.diagnostic);
+    await until(()=>card._loadOk&&card._floorPreparation.diagnostic.readyCurrentFrame>0);
+    const answer={visible,beforeFresh:early<freshPair,mountToCached:early-start,mountToFresh:freshPair-start,phases,noWrites:writes===0};
+    card.remove();return answer;
+  },fixture);
   console.log(JSON.stringify(result, null, 2));
   check('native worker used, not degraded', result.cold.scheduler.workerJobs > 0 && result.cold.scheduler.fallbackJobs === 0);
   check('disk hit before fresh pair includes devices', result.cachedBeforeFresh);
+  check('a new document visibly paints cached full before the fresh pair without write authority', result.coldDocument.visible&&result.coldDocument.beforeFresh&&result.coldDocument.noWrites);
   check('disk hit bypasses real structural consumers', ['wallUnion','physicalBodies','innerContour','cleanFloor','roomFloorPaint','lightBarrier']
     .every(key => result.diskBuilds[key] === 0));
   check('saved fit equals full frame', result.sameFit);
   check('memory navigation reused prepared geometry', result.warm.memoryHits > 0 && result.memoryReturned);
   check('cache did not command devices or write plan', result.noDeviceWritesFromCache);
+  check('in-place optimistic config/layout and deferred writes cannot authorize publication', result.publicationSource);
   check('L1 is a real painted passive basis without live layers', result.preview.passive && result.preview.shapeCount > 0);
   check('unchanged saved fit keeps preview and full camera', result.preview.camera);
   check('actual SVG screen transform stays within one pixel', result.preview.screenCamera);
+  check('a door change during worker preparation uses only the current light state', result.preview.freshLight);
   check('demanded summary has the canonical union/subtraction area', Math.abs(result.summary.area - result.summary.expectedArea) < 1e-8);
   check('foreign-floor stairs invalidate the scalar at equal server revision', Math.abs(result.summary.changed - result.summary.expectedChanged) < 1e-8);
   check('summary uses painted accepted persisted scalars without hidden-floor geometry warmup', result.summary.scalarPublished && result.summary.scalarHit);
@@ -248,6 +306,7 @@ try {
     && result.degraded.diagnostics.store.errors > 0 && result.degraded.diagnostics.scheduler.workerErrors === 1
     && result.degraded.diagnostics.scheduler.fallbackJobs >= 1 && result.degraded.diagnostics.familyFallbacks === 0);
   check('projection remains the requested one', result.projection, isometric ? 'iso' : 'flat');
+  check('a missing worker asset falls back once without an unhandled failure', result.missingAsset.workerErrors===1&&result.missingAsset.fallbackJobs===1);
   if(isometric)check('restored iso quarter turns never rebuild the physical source',
     result.isoBuilds === 0 && result.quarterTurnBuilds.every(count=>count===0));
 } finally { await finish(browser); }

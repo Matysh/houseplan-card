@@ -16,6 +16,7 @@ import { captureDirectGeometry, captureDirectParts, restoreDirectGeometry, resto
   type DirectGeometrySnapshot } from './direct-wall-geometry';
 import { wallGraphSource } from './wall-graph-source';
 import type { IsoCacheSnapshot } from './iso-scene-geometry';
+import { lightGeometryFingerprint } from './glow-scene';
 
 export interface FloorGeometryInput {
   raw: ServerConfig['spaces'][number];
@@ -122,6 +123,21 @@ export function isFloorGeometryFrame(value: unknown, input: FloorGeometryInput):
     || !frame.openingIndex || !Array.isArray(frame.openingIndex.value?.edges)
     || !Array.isArray(frame.tunnels?.value) || !(frame.floorPaint?.value instanceof Map)) return false;
   const union = frame.union.value;
+  // Validate the cheap input projections against the cache reader's actual
+  // keys, not merely their primitive types. Otherwise a well-formed but
+  // incomplete/mis-keyed DTO would hydrate successfully and silently make
+  // those readers enter the expensive canonical miss path on the main thread.
+  const space = spaceModels({ spaces: [input.raw] } as ServerConfig)[0];
+  if (!space) return false;
+  const cellCm = space.cellCm || 5;
+  const cuts = resolveZeroWalls(input.raw, space, NORM_W, GRID_PITCH * .02).contour;
+  const openings = geometryOpenings(input.raw, space, cellCm, GRID_PITCH, NORM_W);
+  const indexKey = openingWallIndexKey(space.id, space.rooms, input.raw.walls || [], cuts, [GRID_STEP_N, cellCm, GRID_PITCH]);
+  const tunnelKey = `${indexKey}|${openings.map(o => `${o.rx},${o.ry},${o.angle},${o.rlen}`).join(';')}`;
+  if (frame.bodies.key !== physicalBodiesKey(input.floorKey, cellCm, GRID_PITCH)
+    || frame.union.key !== wallUnionKey(input.floorKey, space.rooms.length)
+    || frame.openingIndex.key !== indexKey || frame.tunnels.key !== tunnelKey
+    || frame.floorPaint.key !== `${input.cleanKey}|${tunnelKey}`) return false;
   const point = (p: unknown): p is number[] => Array.isArray(p) && p.length >= 2 && p.every(Number.isFinite);
   const ring = (r: unknown): r is number[][] => Array.isArray(r) && r.every(point);
   const geom = (g: unknown): boolean => Array.isArray(g) && g.every(poly => Array.isArray(poly) && poly.every(ring));
@@ -132,6 +148,8 @@ export function isFloorGeometryFrame(value: unknown, input: FloorGeometryInput):
     Array.isArray(ringSet) && ringSet.every(ring)) || typeof frame.bodies.key !== 'string') return false;
   if (union && (!['roomComponents', 'openingIndex', 'openingPadUnits', 'coordinateScale', 'sourceFingerprint']
     .every(key => Object.prototype.hasOwnProperty.call(union, key)) || !Array.isArray(union.roomComponents)
+    || union.coordinateScale !== NORM_W
+    || (union as { sourceFingerprint?: unknown }).sourceFingerprint !== lightGeometryFingerprint(input.raw, cellCm, GRID_PITCH)
     || !union.roomComponents.every(component => typeof component.id === 'string' && geom(component.geom))
     || !Array.isArray(union.components) || !union.components.every(component => typeof component.id === 'string' && geom(component.geom))
     || !indexValid(union.openingIndex) || typeof union.d !== 'string' || typeof union.paperD !== 'string'
@@ -174,7 +192,19 @@ export function isFloorGeometryFrame(value: unknown, input: FloorGeometryInput):
       || !entry.geometry.sides.every(face => typeof face.d === 'string' && ring(face.points))
       || !entry.geometry.topFaces.every(face => typeof face.d === 'string' && Number.isFinite(face.depth))) return false;
   }
-  return frame.inner.every(entry => Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string'
+  const cutsKey = cuts.map(cut => cut.join(',')).join(';');
+  const expectedInner: string[] = [], expectedClean: string[] = [];
+  space.rooms.forEach((room, index) => {
+    if (!roomPoly(room)) return;
+    if (room.id) expectedInner.push(`${input.floorKey}|${room.id}|${cutsKey}`);
+    expectedClean.push(`${input.cleanKey}|${room.id || '#' + index}`);
+  });
+  const complete = (entries: Array<[string, unknown]>, expected: string[]) => {
+    const keys = entries.map(entry => entry?.[0]).sort();
+    return keys.length === expected.length && expected.sort().every((key, index) => key === keys[index]);
+  };
+  return complete(frame.inner, expectedInner) && complete(frame.clean, expectedClean)
+    && frame.inner.every(entry => Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string'
     && (entry[1] === null || ring(entry[1])))
     && frame.clean.every(entry => Array.isArray(entry) && entry.length === 2 && typeof entry[0] === 'string'
       && ring(entry[1]?.floor) && (entry[1].geom === null || geom(entry[1].geom)) && typeof entry[1]?.path === 'string'

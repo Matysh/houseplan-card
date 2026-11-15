@@ -10,11 +10,14 @@ import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 const arg=name=>process.argv.find(value=>value.startsWith(`--${name}=`))?.slice(name.length+3);
 const root=resolve(arg('target-root')||'.'), output=resolve(arg('output')||'artifacts/issue-1454/cache-benchmark.json');
 const samples=Number(arg('samples')||7), mode=arg('mode')||'disk';
+const cpuRate=Number(arg('cpu')||1);
 if(!Number.isSafeInteger(samples)||samples<1||!['disk','miss'].includes(mode))throw Error('invalid benchmark arguments');
+if(!Number.isFinite(cpuRate)||cpuRate<1||cpuRate>20)throw Error('invalid CPU profile');
 requirePinnedBrowser();
 const fixture=makeLargeHouseFixture();
 const {page,browser}=await launchColdView({width:1440,height:1000},1,[],{},resolve(root,'demo/srv'),root,'/demo.html?panel-cold=1',false);
 await page.emulateMedia({reducedMotion:'reduce'});
+if(cpuRate!==1){const cdp=await page.context().newCDPSession(page);await cdp.send('Emulation.setCPUThrottlingRate',{rate:cpuRate});}
 await page.evaluate(async()=>{await import('/assets/houseplan-card.js');await customElements.whenDefined('houseplan-card');});
 const fingerprint=await assertFreshDemoBundle(page,root),rows=[];
 const evaluate = async(index,seed=false)=>page.evaluate(async({fixture,index,seed,mode})=>{
@@ -81,7 +84,7 @@ try {
   }
   const stats=values=>{const sorted=[...values].sort((a,b)=>a-b);return{median:sorted[Math.floor(sorted.length/2)],min:sorted[0],max:sorted.at(-1)}};
   const report={sourceSha:arg('source-sha')||execFileSync('git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),
-    fingerprint,profile:'large-house-v1',mode,samples,warmups:1,runtime:process.version,browser:browser.version(),
+    fingerprint,profile:'large-house-v1',mode,samples,warmups:1,cpuRate,runtime:process.version,browser:browser.version(),
     fixtureCounts:fixture.counts,summary:{cold:stats(rows.map(row=>row.cold.readyCurrentFrame)),memory:stats(rows.map(row=>row.memory.readyCurrentFrame)),
       mount:stats(rows.map(row=>row.mountReady))},rows};
   mkdirSync(resolve(output,'..'),{recursive:true});writeFileSync(output,JSON.stringify(report,null,2)+'\n');

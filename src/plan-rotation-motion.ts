@@ -9,6 +9,7 @@ export interface PlanRotationMotionPort {
   requestFrame(callback: FrameRequestCallback): number;
   cancelFrame(id: number): void;
   now(): number;
+  settled?(): void;
 }
 const pixelScale = (stage: HTMLElement): number => {
   const box = stage.querySelector<SVGSVGElement>('svg.plan-svg')?.viewBox.baseVal;
@@ -41,7 +42,7 @@ export class PlanRotationMotion {
     await this.port.updated();
     if (epoch !== this.epoch) return;
     const stage = this.port.stage(), wrap = stage?.querySelector<HTMLElement>('.zoomwrap');
-    if (!request.current() || !stage || !wrap || this.port.reduced()) { this.active = false; void this.next(); return; }
+    if (!request.current() || !stage || !wrap || this.port.reduced()) { this.active = false; this.port.settled?.(); void this.next(); return; }
     const ratio = scale / pixelScale(stage), overflow = stage.style.overflow, inert = stage.inert;
     const origin = wrap.style.transformOrigin, willChange = wrap.style.willChange, transform = wrap.style.transform;
     this.restore = () => {
@@ -52,7 +53,7 @@ export class PlanRotationMotion {
     wrap.style.transformOrigin = '50% 50%'; wrap.style.willChange = 'transform';
     const start = this.port.now();
     const finish = () => {
-      this.frame = null; this.restore?.(); this.restore = null; this.active = false; void this.next();
+      this.frame = null; this.restore?.(); this.restore = null; this.active = false; this.port.settled?.(); void this.next();
     };
     const frame = (now: number) => {
       if (epoch !== this.epoch) return;

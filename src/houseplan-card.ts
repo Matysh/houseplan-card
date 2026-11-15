@@ -2881,9 +2881,8 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
     void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
       .then(() => {
-        const accepted = () => this.isConnected && this.planHost.authorityKey === owner && this._loadOk
-          && this._cfgEpoch === epoch && !this._cfgWriting && !this._writesPending && this._mode === 'view'
-          && !!this._adoption.snapshot(null) && runtime === this._floorPreparation;
+        const accepted = () => this.isConnected && this.planHost.authorityKey === owner
+          && this._cfgEpoch === epoch && this._floorSourceAccepted() && runtime === this._floorPreparation;
         if (!accepted()) return;
         for (const { raw, value } of values) if (this._serverCfg?.spaces.includes(raw)) {
           const key = floorCacheKeys(raw, raw, raw.cell_cm || 5, GRID_PITCH).clean;
@@ -5013,6 +5012,17 @@ export class HouseplanCard extends LitElement {
     } catch { /* missing/private/legacy unscoped data is a one-time miss */ }
   }
 
+  /** In-place editor mutations can precede the deferred write by 500ms. The
+   * adoption's remembered fingerprint alone does not prove the current body.
+   * Only the publication barrier pays these hashes, never a render/pull read. */
+  private _floorSourceAccepted(): boolean {
+    const snapshot = this._adoption.snapshot(null);
+    return this._loadOk && this._mode === 'view' && !this._cfgWriting && !this._writesPending
+      && !this._saveConfigDebounced.pending() && !this._persistLayout.pending() && !!snapshot
+      && contentFingerprint(this._serverCfg) === snapshot.config_fingerprint
+      && contentFingerprint(this._layout) === snapshot.layout_fingerprint;
+  }
+
   private _publishFloorCacheAfterPaint(): void {
     const runtime = this._floorPreparation;
     if (!runtime || runtime.pending || this._floorPublishing || !this._loadOk || this._mode !== 'view'
@@ -5021,15 +5031,13 @@ export class HouseplanCard extends LitElement {
       || !this._continuity.hasCompleteFrame || !this._continuityAssetsReady()) return;
     const raw = this._curSpaceCfg, space = this._space, owner = this.planHost.authorityKey;
     const selection = this._floorCacheSelection(); if (!selection) return;
+    const paintToken = runtime.paintToken;
     const accepted = () => {
-      const snapshot = this._adoption.snapshot(null);
       return this.isConnected && this.planHost.authorityKey === owner && this._space === space && this._mode === 'view'
-        && this._loadOk && !this._cfgWriting && !this._writesPending && !this._modeTransitionBusy
+        && this._floorSourceAccepted() && !this._modeTransitionBusy
         && !this._rotationMotion.running
         && !this._settingsDialog && !this._spaceDialog && !this._markerDialog && !this._roomDialog
-        && this._curSpaceCfg === raw && !!snapshot
-        && snapshot.config_fingerprint === this._adoption.configFingerprint
-        && snapshot.layout_fingerprint === this._adoption.layoutFingerprint;
+        && this._curSpaceCfg === raw;
     };
     this._floorPublishing = true;
     void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
@@ -5042,7 +5050,8 @@ export class HouseplanCard extends LitElement {
           if (preview) runtime.publish(preview, accepted);
         }
         if (this._floorPendingMode) { const mode = this._floorPendingMode; this._floorPendingMode = null; this._setMode(mode); }
-      }).finally(() => { this._floorPublishing = false; });
+      }).finally(() => { this._floorPublishing = false;
+        if (this.isConnected && runtime === this._floorPreparation && paintToken !== runtime.paintToken) this.requestUpdate(); });
   }
 
   private _beginContinuityCandidate(
@@ -8136,6 +8145,7 @@ export class HouseplanCard extends LitElement {
     updated: () => this.updateComplete,
     reduced: () => this.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches === true,
     blocked: () => this._modeTransitionBusy,
+    settled: () => this.requestUpdate(),
     requestFrame: callback => requestAnimationFrame(callback), cancelFrame: id => cancelAnimationFrame(id), now: () => performance.now(),
   });
   private readonly _rotationChanged = (event: Event): void => {

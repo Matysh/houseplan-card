@@ -39,8 +39,10 @@ export class FloorCacheScheduler {
     const computeFallback = () => void import('./floor-cache-compute')
       .then(module => this.active?.id === id && !this.disposed ? module.computeFloorJob(task.job) : null)
       .then(finish, () => finish(null));
+    let fallbackStarted = false;
     const fallback = () => {
-      if (this.active?.id !== id) return;
+      if (this.active?.id !== id || fallbackStarted) return;
+      fallbackStarted = true;
       clearTimeout(this.active.timer);
       this.worker?.terminate(); this.worker = null; this.degraded = true; this.metrics.workerErrors++;
       this.metrics.fallbackJobs++;
@@ -60,7 +62,8 @@ export class FloorCacheScheduler {
       if (!this.worker) this.worker = this.factory();
       this.worker.onmessage = event => { if (event.data?.id === id)
         event.data.fingerprint !== ENTRY_BUILD_FINGERPRINT || event.data.error ? fallback() : finish(event.data.result); };
-      this.worker.onerror = this.worker.onmessageerror = fallback;
+      const fault = (event: Event) => { event?.preventDefault(); fallback(); };
+      this.worker.onerror = fault; this.worker.onmessageerror = fault;
       this.metrics.workerJobs++; this.worker.postMessage({ id, job: task.job });
     } catch { fallback(); }
   }

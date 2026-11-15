@@ -45,7 +45,9 @@ test('#1454 an incompatible worker build cannot hydrate its result',async()=>{
   const raw=makeLargeHouseFixture({floors:1,roomsPerFloor:1,devices:0,openings:0,partitions:0,columns:0,decor:0,stairs:0}).config.spaces[0];
   const owner=new FloorCacheScheduler(()=>new WorkerFake()), pending=owner.run(job(raw));
   const worker=WorkerFake.all.at(-1);
+  const lateError=worker.onerror, lateDecodeError=worker.onmessageerror;
   worker.onmessage({data:{id:worker.message.id,fingerprint:'foreign-build',result:{area:999999,ms:1}}});
+  lateError();lateDecodeError();
   const value=await pending;
   assert.notEqual(value.area,999999);assert.equal(typeof value.area,'number');
   assert.equal(owner.metrics.workerErrors,1);assert.equal(owner.metrics.fallbackJobs,1);owner.dispose();

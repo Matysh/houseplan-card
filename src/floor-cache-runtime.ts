@@ -135,6 +135,7 @@ export class FloorCacheRuntime {
           this.failed.add(this.key); this.metrics.familyFallbacks++; this.preview = null; this.host.changed(); return;
         }
         this.metrics.workerMs.push(result.ms);
+        if (this.metrics.workerMs.length > 100) this.metrics.workerMs.shift();
         if (result.producer) this.metrics.producers.push(result.producer);
         if (this.metrics.producers.length > 50) this.metrics.producers.shift();
         const start = performance.now(), frame = decodeGeometryValue(result.wire);
@@ -147,7 +148,9 @@ export class FloorCacheRuntime {
         while (this.memory.size > 8) this.memory.delete(this.memory.keys().next().value!);
         if (result.hit) this.metrics.diskHits++; else if (warm) this.metrics.memoryHits++; else this.metrics.misses++;
         this.host.hydrate(frame, light); this.readyKey = this.key;
-        this.metrics.hydrationMs.push(performance.now() - start); this.host.changed();
+        this.metrics.hydrationMs.push(performance.now() - start);
+        if (this.metrics.hydrationMs.length > 100) this.metrics.hydrationMs.shift();
+        this.host.changed();
       } catch {
         if (!isCurrent()) return;
         // The shared canonical readers remain the last, bounded degraded
@@ -177,19 +180,23 @@ export class FloorCacheRuntime {
       .then(published => { if (!published) this.metrics.publicationFailures++; });
   }
   /** Demanded one-floor scalar; a pending navigation preempts this job. */
+  private rememberArea(key: string, value: number | null): void {
+    this.areaMemory.delete(key); this.areaMemory.set(key, value);
+    while (this.areaMemory.size > 256) this.areaMemory.delete(this.areaMemory.keys().next().value!);
+  }
   async area(raw: FloorGeometryInput['raw'], key: string, accepted: () => boolean): Promise<number | null | undefined> {
     const selection = this.selected, sequence = this.sequence;
     if (!selection || this.disposed || this.pending) return undefined;
     const current = () => !this.disposed && sequence === this.sequence && this.same(selection, this.selection()) && accepted();
-    if (this.areaMemory.has(key)) return this.areaMemory.get(key)!;
+    if (this.areaMemory.has(key)) { const value = this.areaMemory.get(key)!; this.rememberArea(key, value); return value; }
     const address = selection.scope ? { scope: selection.scope, floor: String(raw.id), key } : null;
     const disk = address ? await this.store.area(address) : undefined;
     if (!current()) return undefined;
-    if (disk !== undefined) { this.areaMemory.set(key, disk); return disk; }
+    if (disk !== undefined) { this.rememberArea(key, disk); return disk; }
     const result = await this.scheduler.run({ kind: 'area', raw }, 'summary');
     if (!result || !current() || result.area === undefined) return undefined;
     if (result.producer) this.metrics.producers.push(result.producer);
-    this.areaMemory.set(key, result.area);
+    this.rememberArea(key, result.area);
     return result.area;
   }
   persistArea(raw: FloorGeometryInput['raw'], key: string, value: number | null, accepted: () => boolean): void {

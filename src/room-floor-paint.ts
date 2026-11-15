@@ -2,6 +2,7 @@
 import { difference, union, type Geom } from 'polyclip-ts';
 import { polyclipPathD } from './physical-geometry';
 import type { OpeningTunnelGeometry } from './wall-thickness';
+import { subtractLocalWallGeometry } from './wall-local-boolean';
 
 export interface RoomFloorSeed { id: string; geom: Geom }
 export interface RoomFloorPaint { path: string; basePath: string; bounds: [number, number, number, number]; extended: boolean }
@@ -35,14 +36,20 @@ export function buildRoomFloorPaint(seeds: readonly RoomFloorSeed[],
   }
   const out = new Map<string, RoomFloorPaint>();
   const domain = all.length ? union(all[0], ...all.slice(1)) : null;
+  // Canonical disconnected polygons outside a room cannot alter its exact
+  // difference. Use the existing touching-box filter, rather than sending
+  // every opening and masonry island through every room's boolean sweep.
+  const masonry = blockers.flatMap<ReturnType<typeof union>[number]>(geom =>
+    geom.length && typeof geom[0][0][0] === 'number'
+      ? [geom as ReturnType<typeof union>[number]] : geom as ReturnType<typeof union>);
   for (const seed of seeds) {
     let geom = seed.geom;
     const faces = owned.get(seed.id) || [];
     // No color, alpha, HA state, camera or mode weight enters this projection.
-    if (domain?.length) geom = difference(geom, domain);
+    if (domain?.length) geom = subtractLocalWallGeometry(geom, domain);
     if (faces.length) {
       geom = union(geom, ...faces);
-      if (blockers.length) geom = difference(geom, ...blockers);
+      if (masonry.length) geom = subtractLocalWallGeometry(geom, masonry);
     }
     // Inputs and all operations above are MultiPolygons, not bare polygons.
     const points = (geom as [number, number][][][]).flat(2);
