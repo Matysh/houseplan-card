@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 14730,
-  "nextTicket": 493,
+  "revision": 14731,
+  "nextTicket": 494,
   "nextFence": 493,
   "tasks": {
     "1024": {
@@ -4815,11 +4815,11 @@
       "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 492,
-      "queued": false,
+      "ticket": 493,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794759763143,
-      "reviewEntry": 5,
+      "readyAt": 1794760297411,
+      "reviewEntry": 6,
       "patchId": "99b77709353f96818ebb44d656979546238164fa",
       "changedFiles": [
         "demo/golden/harness.mjs",
@@ -4997,8 +4997,7 @@
         "at": 1794760166402,
         "entry": 5,
         "eventId": "finish:c01979c8-e3af-4b4d-a9f0-dd0ea7c51851:finish:4:expire:return:1454"
-      },
-      "reason": "executor-admission-expired"
+      }
     },
     "1455": {
       "issue": 1455,
@@ -5363,7 +5362,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1454
+  ],
   "active": null,
   "events": {
     "github:43692634249:1:label:spec-request": {
@@ -6485,6 +6486,19 @@
           "entry": 5,
           "eventId": "finish:c01979c8-e3af-4b4d-a9f0-dd0ea7c51851:finish:4:expire:return:1454"
         }
+      }
+    },
+    "finish:06a2b354-2da4-4cd9-b7a7-bc4b7d769fa6": {
+      "digest": "93775a1b0bc4256cf4d7dd771b4a55827f8d4f2e825af55bca8be58cc3ef8826",
+      "issue": 1454,
+      "message": {
+        "kind": "queued",
+        "issue": 1454,
+        "at": 1794760297411,
+        "entry": 6,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "561196ce835feb0bdcb2b31d8a26b46cfda5dbf4"
       }
     }
   },
