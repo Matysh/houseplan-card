@@ -3234,14 +3234,6 @@ function compareCodePoints(a, b) {
     return (i < a.length ? 1 : 0) - (j < b.length ? 1 : 0);
 }
 
-/**
- * Wall thickness — pure geometry (docs/WALL-THICKNESS.md).
- *
- * Thickness is a rendering layer keyed by a segment identity that survives
- * resize. Wall bodies grow ±½ from the centreline; fills, glow, sun and
- * displayed m² use the inner (inset) contour. Wall-length rulers stay on the
- * centreline.
- */
 const WALL_MIN_CM = 1;
 const WALL_MAX_CM = 100;
 function clampWallCm(cm) {

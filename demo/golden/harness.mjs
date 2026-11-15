@@ -1167,8 +1167,14 @@ export async function prepareGoldenScenario(page, scenario) {
         await wait(15);
       }
     };
-    const settleMode = async (card) => {
-      await until(() => !card._modeTransitionBusy);
+    const settleMode = async (card, expected = card._floorPendingMode || card._mode) => {
+      // A Lit update may now show passive L1 while the real mode command is
+      // queued behind floor preparation. Wait for the requested user surface,
+      // not merely for the absence of an animation that has not started yet.
+      await until(() => card._mode === expected && !card._floorPreparation?.pending
+        && !card._floorPendingMode && !card._modeTransitionBusy
+        && !!card.renderRoot.querySelector(`.stage.mode-${expected}`)
+        && !card.renderRoot.querySelector('[data-hp-floor-cache="pending"]'));
       await card.updateComplete;
       await frame();
     };
@@ -1341,6 +1347,7 @@ export async function prepareGoldenScenario(page, scenario) {
       if (expectedDevices && !scenario.emptyPlan)
         await until(() => card._devices?.length >= expectedDevices);
       await until(() => card._booting === false);
+      if (fixture.config.spaces.length) await settleMode(card);
       // #474: designer furniture artwork is a lazy chunk. The boot gate holds
       // the veil until it settles, so by now every piece of the active space
       // must be drawn; a fallback here is red, not a silently empty frame
@@ -1380,11 +1387,12 @@ export async function prepareGoldenScenario(page, scenario) {
     if (scenario.space && card._space !== scenario.space) {
       card._pickSpace(scenario.space);
       await card.updateComplete;
+      await settleMode(card);
     }
     if (scenario.mode) {
       card._setMode(scenario.mode);
       await card.updateComplete;
-      await settleMode(card);
+      await settleMode(card, scenario.mode);
     }
     if (Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')) {
       const target = String(scenario.integrationVersion || '').trim();

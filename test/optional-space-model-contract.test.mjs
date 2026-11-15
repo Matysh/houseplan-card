@@ -87,8 +87,10 @@ test('empty render keeps create/import affordances without spatial layers', () =
   const shell = methodBody('_renderRoot');
   // #848 adds a sibling recovery notice, not another spatial branch. Keep the
   // complete stable shell order, including version recovery and danger confirm.
+  assert.match(shell, /return html`\$\{body\}/);
+  assert.match(shell, /this\._floorHolding \? html`[\s\S]*?role="status"[\s\S]*?: nothing/);
   assert.match(shell,
-    /return html`\$\{body\}\$\{this\._viewRuntimes\.render\(\)\}\$\{this\._viewRuntimes\.renderDeviceMenu\(\)\}\$\{this\._renderVersionBanner\(\)\}\$\{dialogPresence\(this\._renderDangerConfirm\(\), this\._dangerConfirmAnimateExit\)\}`;/);
+    /\$\{this\._viewRuntimes\.render\(\)\}\$\{this\._viewRuntimes\.renderDeviceMenu\(\)\}\$\{this\._renderVersionBanner\(\)\}\$\{dialogPresence\(this\._renderDangerConfirm\(\), this\._dangerConfirmAnimateExit\)\}`;/);
   assert.equal(render.includes('_renderVersionBanner'), false,
     'version recovery must remain available beside every non-empty body branch');
   assert.equal(render.includes('_renderDangerConfirm'), false,

@@ -126,6 +126,14 @@ export function installHpTest(selectors) {
   const settled = async () => {
     const c = card();
     if (c?.updateComplete) await c.updateComplete;
+    // Public readiness/input surfaces also cover asynchronous floor work.
+    // A revision/header tab can already be current while the previous scene
+    // is inert or the new floor still presents its passive basis.
+    await waitFor('settled', () => {
+      const root = rootOf(c);
+      return !root?.querySelector('ha-card[data-hp-floor-cache="pending"]')
+        && (!!root?.querySelector('hp-dialog') || !root?.querySelector('.stage[inert]'));
+    }, () => 'выбранный этаж ещё готовится или не принимает ввод');
     // An accepted close intentionally retains inert presentation until its
     // bounded exit terminal. "Settled" includes that terminal, not just Lit's
     // state update; tests must not act through an old modal still animating.

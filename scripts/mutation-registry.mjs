@@ -383,7 +383,7 @@ const MUTANT_DEFINITIONS = [
     id: 'plan-rotation-iso-keeps-zero-side-1070',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-frame.test.mjs',
     because: '#1070 AC9/AC11: four distinct camera-facing edges share one physical build. Registered only; nightly execution.',
-    patches: [{ file: 'src/iso-scene-render.ts',
+    patches: [{ file: 'src/iso-scene-geometry.ts',
       find: 'const camera = isoCameraFor(planRotation(input.rotation));',
       replace: 'const camera = ISO_CAMERA;' }],
   },
@@ -7593,8 +7593,8 @@ const MUTANT_DEFINITIONS = [
       + 'forever (#402)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    return html`${body}${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;",
-      replace: '    return html`${body}${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}`;',
+      find: '${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}',
+      replace: '',
     }],
   },
   {
@@ -8122,7 +8122,7 @@ const MUTANT_DEFINITIONS = [
       + '&& node --test --test-name-pattern="AC3 layout" test/iso-stage6.test.mjs',
     because: '#649 AC3: layout and collisions must see the 1.12 tile, otherwise raised tiles overlap',
     patches: [{
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: '    const core = baseDeviceUnits * presentation.scale * ISO_ICON_SCALE;',
       replace: '    const core = baseDeviceUnits * presentation.scale;',
     }],
@@ -10055,7 +10055,7 @@ const MUTANT_DEFINITIONS = [
     because: '#711 (owner, 2026-09-30): a device never moves because its HA state changed; a layout '
       + 'footprint that includes state text re-lays out the whole cluster on every toggle',
     patches: [{
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: '      kind: \'device\', core, presentation: stateFreePresentation(presentation),',
       replace: '      kind: \'device\', core, presentation,',
     }],
@@ -12842,7 +12842,7 @@ const MUTANT_DEFINITIONS = [
     because: 'hidden isometric wall and floor heights are visual geometry and must project to '
       + 'the same raster at 1 and 5 cm per cell (#239)',
     patches: [{
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: '  const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);\n'
         + '  const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);\n'
         + '  const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);\n'
@@ -14826,7 +14826,7 @@ const MUTANT_DEFINITIONS = [
       + 'falling back to floor/screen depth paints the rear sill over elevated glass without any '
       + 'runtime failure (#570)',
     patches: [{
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: '    return (surfaceA?.cameraDepth ?? surfaceA?.depth ?? 0)\n'
         + '      - (surfaceB?.cameraDepth ?? surfaceB?.depth ?? 0)',
       replace: '    return (surfaceA?.depth ?? 0) - (surfaceB?.depth ?? 0)',
@@ -14840,15 +14840,15 @@ const MUTANT_DEFINITIONS = [
       + 'array the id names was built only to be this key); keying the cache by a constant '
       + 'serves a placement, and with it the owner room, of a plan whose walls are gone (#473)',
     patches: [{
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: '  let placements = isoOverlayPlacementCache.get(input.structure);',
       replace: '  let placements = isoOverlayPlacementCache.get(ISO_PLACEMENT_CACHE_ANY);',
     }, {
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: '    isoOverlayPlacementCache.set(input.structure, placements);',
       replace: '    isoOverlayPlacementCache.set(ISO_PLACEMENT_CACHE_ANY, placements);',
     }, {
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: 'export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;',
       replace: 'export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;\nconst ISO_PLACEMENT_CACHE_ANY = {} as IsoWallGeometry;',
     }],
@@ -15054,7 +15054,7 @@ const MUTANT_DEFINITIONS = [
     because: '#713 (owner): room names stay on the floor where Flat puts them; only device tiles '
       + 'and lock badges rise to the wall top',
     patches: [{
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: "    const visualOffset = kind === 'room-label' ? 0 : wallHeight;",
       replace: '    const visualOffset = wallHeight;',
     }],
@@ -15066,7 +15066,7 @@ const MUTANT_DEFINITIONS = [
     because: '#713: tiles no longer move at runtime, so the home frame must not reserve the former '
       + '48 CSS px #651 budget around them',
     patches: [{
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: '  const base = overlay ? unionRect(input.baseBounds, overlay) : input.baseBounds;',
       replace: '  const base = overlay ? unionRect(input.baseBounds, { x: overlay.x - 48, y: overlay.y - 48, '
         + 'w: overlay.w + 96, h: overlay.h + 96 }) : input.baseBounds;',
@@ -15178,11 +15178,11 @@ const MUTANT_DEFINITIONS = [
     because: 'W7: HA sun state is live paint and must not enter the structural fingerprint or '
       + 'cause topology rebuilds (#160)',
     patches: [{
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: '  onBuild(): void;\n}',
       replace: '  onBuild(): void;\n  liveFingerprint?: string;\n}',
     }, {
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: '    algorithm: 6, // #713: vertical oblique projection\n  })}`;',
       replace: '    algorithm: 6, // #713: vertical oblique projection\n  })}|${input.liveFingerprint ?? \'\'}`;',
     }, {
@@ -15212,7 +15212,7 @@ const MUTANT_DEFINITIONS = [
     because: 'W9: door/gate hinge and face basis must retain the reviewed flip convention '
       + 'independently of live leaf state (#160)',
     patches: [{
-      file: 'src/iso-scene-render.ts',
+      file: 'src/iso-scene-geometry.ts',
       find: "        const faceFlipV = opening.type === 'gate' ? !opening.flipV : opening.flipV;",
       replace: "        const faceFlipV = opening.flipV;",
     }],

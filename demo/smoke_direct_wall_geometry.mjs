@@ -11,18 +11,22 @@ requirePinnedBrowser();const{page,browser}=await launch({width:1280,height:900})
 const fixture=makeSelectiveInvalidationFixture(false);fixture.config=commitWallSegmentModel(fixture.config).config;
 const frame=()=>page.evaluate(async()=>{await window.__card.updateComplete;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));});
 const counts=()=>page.evaluate(()=>({...window.__card._floorCacheBuilds}));
+const workerUnions=()=>page.evaluate(()=>window.__card.houseplanFloorCacheDiagnostics().cache.producers
+  .filter(job=>job.owner==='worker').reduce((sum,job)=>sum+job.counts.wallBodiesGeometry,0));
 const same=(a,b,label)=>{for(const key of ['wallUnion','physicalBodies','cleanFloor'])assert.equal(b[key],a[key],label+': '+key);};
 try{
  await installSelectiveInvalidationFixture(page,fixture);await frame();
  assert.equal(await page.evaluate(()=>window.__card._serverCfg.model_version),11);
- const before=await counts();
+ const before=await counts(),workerBefore=await workerUnions();
  await page.evaluate(()=>{const c=window.__card,old=c.hass.states['sensor.load_0'];c.hass={...c.hass,states:{...c.hass.states,'sensor.load_0':{...old,state:'42'}}};});
  await frame();same(before,await counts(),'HA tick');
  await page.evaluate(()=>window.__hpTest.setServerConfig(config=>{config.spaces[0].rooms[0].name='Synthetic renamed';config.spaces[0].settings.wall_fill={c:'#637b8c',a:1};return config;}));
  await frame();same(before,await counts(),'name/paint metadata');
  await page.screenshot({path:resolve(out,'view.png')});
  await page.evaluate(()=>window.__hpTest.switchSpace('f2'));await frame();const afterForeign=await counts();
- assert.equal(afterForeign.wallUnion-before.wallUnion,1,'one requested foreign floor');
+ const workerAfterForeign=await workerUnions();
+ assert.equal(afterForeign.wallUnion-before.wallUnion,0,'foreign floor must not build on the UI thread');
+ assert.equal(workerAfterForeign-workerBefore,1,'one requested foreign floor built in the actual worker');
  await page.evaluate(()=>window.__hpTest.switchSpace('f1'));await frame();same(afterForeign,await counts(),'warm return');
  await page.evaluate(async()=>{await window.__hpTest.setMode('plan');await window.__hpTest.setTool('select');});await frame();
  assert.ok(await page.locator('houseplan-card').locator('.hp-node-handle').count());
@@ -42,6 +46,6 @@ try{
  assert.deepEqual(await page.locator('houseplan-card').locator('[data-hp="room"]').evaluateAll(nodes=>nodes.map(n=>[n.getAttribute('data-id'),n.getAttribute('d')||n.getAttribute('points')])),first);
  await page.screenshot({path:resolve(out,'room-order.png')});
  assert.equal(await reportPageErrors(),false);
- const report={issue:1216,model:11,before,afterForeign,after:await counts(),checks:['HA state no masonry rebuild','name/paint no masonry rebuild','foreign floor demand','warm floor reuse','View/plan/ISO real card','nested/overlapping room layer and ID-owned path stable under projection permutation']};
+ const report={issue:1216,model:11,before,afterForeign,workerBefore,workerAfterForeign,after:await counts(),checks:['HA state no masonry rebuild','name/paint no masonry rebuild','foreign floor worker demand with no UI-thread rebuild','warm floor reuse','View/plan/ISO real card','nested/overlapping room layer and ID-owned path stable under projection permutation']};
  writeFileSync(resolve(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }finally{await browser.close();}

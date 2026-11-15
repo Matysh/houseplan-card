@@ -12,6 +12,7 @@ const openings = readFileSync(new URL('../src/iso-openings.ts', import.meta.url)
 const overlays = readFileSync(new URL('../src/iso-overlays.ts', import.meta.url), 'utf8');
 const projection = readFileSync(new URL('../src/iso-projection.ts', import.meta.url), 'utf8');
 const sceneRender = readFileSync(new URL('../src/iso-scene-render.ts', import.meta.url), 'utf8');
+const sceneGeometry = readFileSync(new URL('../src/iso-scene-geometry.ts', import.meta.url), 'utf8');
 const editorRuntime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
 const packageJson = readFileSync(new URL('../package.json', import.meta.url), 'utf8');
 const spaceCard = readFileSync(new URL('../src/space-card.ts', import.meta.url), 'utf8');
@@ -47,6 +48,8 @@ test('#649 2.5D is the General settings switch, presentation-only and absent fro
 });
 
 test('Stage 4 code is loaded only through the hidden alpha runtime boundary', () => {
+  assert.match(sceneRender, /export \* from '\.\/iso-scene-geometry'/,
+    'the lazy renderer must expose the same pure geometry implementation used by the worker');
   assert.equal([...card.matchAll(/await import\('\.\/iso-scene-render'\)/g)].length, 1);
   for (const module of ['iso-scene-render', 'iso-walls', 'iso-openings', 'iso-overlays']) {
     const valueImport = new RegExp(`import\\s+(?!type\\b)[^;]+from './${module}';`, 's');
@@ -163,13 +166,13 @@ test('Stage 4 keeps device, room and lock roots on one corrected low visual plan
 });
 
 test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes live paint', () => {
-  assert.match(sceneRender, /flipH: !!opening\.flip_h/);
-  assert.match(sceneRender, /flipV: !!opening\.flip_v/);
-  assert.match(sceneRender, /const floorEdgeHeight = gridVisualUnits\(ISO_FLOOR_EDGE_HEIGHT, input\.cellCm\)/);
-  assert.match(sceneRender, /const raisedHeight = gridVisualUnits\(ISO_RAISED_OVERLAY_HEIGHT, input\.cellCm\)/);
-  assert.match(sceneRender, /camera: ISO_CAMERA,[\s\S]*?wallHeight,[\s\S]*?raisedHeight,[\s\S]*?floorEdgeHeight,[\s\S]*?algorithm: 6/);
-  const source = section(sceneRender, 'export function createIsoStructuralSource', 'export interface ResolveIsoSceneInput');
-  const roomProjection = section(sceneRender,
+  assert.match(sceneGeometry, /flipH: !!opening\.flip_h/);
+  assert.match(sceneGeometry, /flipV: !!opening\.flip_v/);
+  assert.match(sceneGeometry, /const floorEdgeHeight = gridVisualUnits\(ISO_FLOOR_EDGE_HEIGHT, input\.cellCm\)/);
+  assert.match(sceneGeometry, /const raisedHeight = gridVisualUnits\(ISO_RAISED_OVERLAY_HEIGHT, input\.cellCm\)/);
+  assert.match(sceneGeometry, /camera: ISO_CAMERA,[\s\S]*?wallHeight,[\s\S]*?raisedHeight,[\s\S]*?floorEdgeHeight,[\s\S]*?algorithm: 6/);
+  const source = section(sceneGeometry, 'export function createIsoStructuralSource', 'export interface ResolveIsoSceneInput');
+  const roomProjection = section(sceneGeometry,
     'export function isoStructuralRoomGeometry', 'export type IsoStructuralOpeningHost');
   for (const field of ['id', 'x', 'y', 'w', 'h', 'poly', 'wall_ids'])
     assert.match(roomProjection, new RegExp(`${field}: room\\.${field}`));
@@ -178,7 +181,7 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   assert.match(source, /rooms: input\.space\.rooms\.map\(isoStructuralRoomGeometry\)/);
   assert.doesNotMatch(source, /rooms: input\.space\.rooms,/);
   assert.match(source, /openingHosts,[\s\S]*?openingGeometryPolicy,/);
-  const hostProjection = section(sceneRender,
+  const hostProjection = section(sceneGeometry,
     'export function isoStructuralOpeningHost', 'export interface IsoStructuralSourceInput');
   for (const field of ['hostId: resolved.host.id', 't: resolved.t', 'depth: resolved.depth',
     'face: partitionOpeningFace']) assert.ok(hostProjection.includes(field), `missing ${field}`);
@@ -211,16 +214,16 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   assert.doesNotMatch(source, /_openingAmt|openingAmount|\.hass|matchMedia|CSS\.supports|theme|hover|focus|selected|sunlight/);
   assert.match(card, /onBuild: \(\) => \{ this\._isoStructuralBuildCount \+= 1; \}/);
   assert.match(source, /projectIsoOpeningStructure\(basis\)/);
-  assert.match(sceneRender, /projectIsoOpening\(basis, visual\?\.leaves\?\.map\(leaf => leaf\.amount\) \|\| amountOf\(opening\), scene\?\.camera\)/);
-  assert.match(sceneRender, /lruWrite\(input\.cache, input\.source\.key, value, 8\)/);
+  assert.match(sceneGeometry, /projectIsoOpening\(basis, visual\?\.leaves\?\.map\(leaf => leaf\.amount\) \|\| amountOf\(opening\), scene\?\.camera\)/);
+  assert.match(sceneGeometry, /lruWrite\(input\.cache, input\.source\.key, value, 8\)/);
   assert.match(card, /data-hp-iso-structural-builds=\$\{iso \? this\._isoStructuralBuildCount : nothing\}/);
   // #724: the overlay caches are keyed by the structural wall geometry itself —
   // no silhouette array is built only to be that key.
-  assert.match(sceneRender, /geometry: buildIsoWallGeometry\(structural\.walls, ISO_CAMERA, wallHeight\)/);
-  assert.match(sceneRender, /structure: IsoWallGeometry;/);
-  assert.match(sceneRender, /let placements = isoOverlayPlacementCache\.get\(input\.structure\)/);
-  assert.match(sceneRender, /const previous = isoOverlayRenderSceneCache\.get\(input\.structure\)/);
-  assert.doesNotMatch(sceneRender, /wallSilhouettes|isoWallSilhouettesOf|resolveCollisions/);
+  assert.match(sceneGeometry, /geometry: buildIsoWallGeometry\(structural\.walls, ISO_CAMERA, wallHeight\)/);
+  assert.match(sceneGeometry, /structure: IsoWallGeometry;/);
+  assert.match(sceneGeometry, /let placements = isoOverlayPlacementCache\.get\(input\.structure\)/);
+  assert.match(sceneGeometry, /const previous = isoOverlayRenderSceneCache\.get\(input\.structure\)/);
+  assert.doesNotMatch(sceneGeometry, /wallSilhouettes|isoWallSilhouettesOf|resolveCollisions/);
 });
 
 test('show_borders:false keeps the Flat floor plane and removes every volume cue', () => {
@@ -277,16 +280,16 @@ test('one frame resolves one structural source and latches late topology/project
 });
 
 test('raised footprints participate in global and room fit without entering the structural LRU', () => {
-  assert.match(sceneRender, /screenHalfSize: PlanPoint/);
-  assert.match(sceneRender, /export function isoOverlaySceneBounds/);
-  assert.match(sceneRender, /export function resolveIsoOverlayFitEnvelope/);
+  assert.match(sceneGeometry, /screenHalfSize: PlanPoint/);
+  assert.match(sceneGeometry, /export function isoOverlaySceneBounds/);
+  assert.match(sceneGeometry, /export function resolveIsoOverlayFitEnvelope/);
   // #714: without a runtime nudge the fit and the final bounds read one point set.
-  assert.match(sceneRender, /const center = placement\.visualScene;/);
-  assert.match(sceneRender, /placement\.floorScene,\s*\.\.\.placement\.footprint,/);
-  assert.match(sceneRender, /const \[halfX, halfY\] = entry\.screenHalfSize/);
+  assert.match(sceneGeometry, /const center = placement\.visualScene;/);
+  assert.match(sceneGeometry, /placement\.floorScene,\s*\.\.\.placement\.footprint,/);
+  assert.match(sceneGeometry, /const \[halfX, halfY\] = entry\.screenHalfSize/);
   const scene = section(card, 'private _isoScene(', 'private _latchIsoFallback');
   assert.match(scene, /resolveIsoFitScene\([\s\S]*?overlays:[\s\S]*?_isoOverlayScene/);
-  const fitScene = section(sceneRender, 'export function resolveIsoFitScene', 'const unionRect');
+  const fitScene = section(sceneGeometry, 'export function resolveIsoFitScene', 'const unionRect');
   assert.match(fitScene, /resolveIsoScene\([\s\S]*?input\.overlays\?\.\(scene\)/);
   assert.match(fitScene, /resolveIsoOverlayFitEnvelope\([\s\S]*?overlayFitEntries/);
   assert.ok(fitScene.indexOf('resolveIsoScene') < fitScene.indexOf('resolveIsoOverlayFitEnvelope'));
@@ -294,7 +297,7 @@ test('raised footprints participate in global and room fit without entering the 
   assert.match(roomFit, /overlayFitEntries/);
   assert.match(roomFit, /ownerId: room\.id/);
   assert.match(roomFit, /resolveIsoOverlayFitEnvelope/);
-  const structural = section(sceneRender, 'export function resolveIsoScene', '/** Lazy orchestration');
+  const structural = section(sceneGeometry, 'export function resolveIsoScene', '/** Lazy orchestration');
   assert.doesNotMatch(structural, /overlayFitEntries|resolveIsoOverlayFitEnvelope|buildIsoOverlayRenderScene/);
 });
 

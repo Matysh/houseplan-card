@@ -123,7 +123,7 @@ export async function launchHaDialogFixture({
         }
       }
       response.writeHead(200, { 'content-type': type.startsWith('text/') ? `${type}; charset=utf-8` : type, 'cache-control': 'no-store',
-        'content-security-policy': "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' data:; font-src 'self' data:; img-src 'self' data: blob:; worker-src 'none'" }).end(body);
+        'content-security-policy': "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' data:; font-src 'self' data:; img-src 'self' data: blob:; worker-src 'self'" }).end(body);
     } catch (error) { errors.push(String(error)); response.writeHead(500).end('Diagnostic fixture error'); }
   });
   await new Promise((accept, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', accept); });

@@ -70,11 +70,12 @@ test('#659 2.5D CSS and generated material contracts stay unit-testable strings'
   contains('src/iso-tiles.ts', '${S} .dev .device-shell.with-values { gap:');
   contains('src/iso-sun.ts',
     'const streaks = beam.lightFloor ? [inset / length, 1 - inset / length] : [];');
-  contains('src/iso-scene-render.ts',
+  contains('src/iso-scene-geometry.ts',
     'const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);\n'
       + '  const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);\n'
       + '  const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);\n'
-      + '  const cached = lruRead(input.cache, input.source.key);',
+      + '  const cached = lruRead(input.cache, input.source.key);');
+  contains('src/iso-scene-render.ts',
     'return svg`<path class="iso-wall-top" d=${face.d} data-component=${face.component}');
   contains('src/hp-color-opacity.ts', 'return this.flatSwatch && !this.coverSwatch;');
 });

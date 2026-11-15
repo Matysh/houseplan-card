@@ -45,7 +45,6 @@ import { gridVisualScale, gridVisualUnits } from './grid-scale';
 import { iconUnit, type Rect } from './space-geometry';
 import { lruRead, lruWrite } from './card-runtime';
 import type { ResolvedDevicePresentation } from './device-presentation';
-import { deviceTextScale, legacySupplementalMetrics } from './device-face';
 import type { RenderOpening } from './interaction-types';
 import type { DevItem, RoomCfg, SpaceModel, OpeningFeatures } from './types';
 

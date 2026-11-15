@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "65d158c654e535efecc64908e9ead275e7f2758168d29c4b019b189edbc96d90",
+  "matchesSha256": "d67c11313ade975db9deefbbae746658c65fa4fef0b436c6d44bbf95a0665e47",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -4279,6 +4279,26 @@
       "reason": "Persisted representation: tap_action:cover. Rewriting cover to generic toggle can change chosen entity/service. It is still accepted guarded action data, not an expired enum alias."
     },
     {
+      "id": "32bd2af060ffa00bd361da4c",
+      "path": "src/houseplan-card.ts",
+      "line": 4557,
+      "text": "// The global LS_CFG stays wire-compatible for the static card and rollback,",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "session-state",
+      "reason": "#1454 browser-derived scoped cold hint; retained global localStorage wire supports the static card/rollback, not a persisted server configuration migration."
+    },
+    {
+      "id": "0fe763009b6c281e7b9e9664",
+      "path": "src/houseplan-card.ts",
+      "line": 5012,
+      "text": "} catch { /* missing/private/legacy unscoped data is a one-time miss */ }",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "session-state",
+      "reason": "#1454 browser-derived scoped cold hint; retained global localStorage wire supports the static card/rollback, not a persisted server configuration migration."
+    },
+    {
       "id": "19a9ce062383a29b80b0e3cf",
       "path": "src/houseplan-card.ts",
       "line": 5054,
@@ -5299,9 +5319,9 @@
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
     },
     {
-      "id": "4f636413048165fef0546f30",
-      "path": "src/iso-scene-render.ts",
-      "line": 48,
+      "id": "90ac0f84e2c7d63a6828ec83",
+      "path": "src/iso-scene-geometry.ts",
+      "line": 45,
       "text": "import { deviceTextScale, legacySupplementalMetrics } from './device-face';",
       "occurrence": 1,
       "kind": "branch",
@@ -5309,9 +5329,9 @@
       "reason": "Persisted representation: implicit temperature/humidity source + secondary metric. A second old metric and implicit primary resolution are observable. Preserve until explicit user choice; lossless total replacement does not exist."
     },
     {
-      "id": "16c91494902eadb35925e6f2",
-      "path": "src/iso-scene-render.ts",
-      "line": 305,
+      "id": "7b355412f2ebcd9cdcd7f97c",
+      "path": "src/iso-scene-geometry.ts",
+      "line": 301,
       "text": "for (const metric of legacySupplementalMetrics(presentation)) {",
       "occurrence": 1,
       "kind": "branch",
@@ -6997,6 +7017,26 @@
       "kind": "exclusion",
       "owner": "current-feature",
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
+    },
+    {
+      "id": "8a2e468afe2162957b51132f",
+      "path": "src/summary-panel-host.ts",
+      "line": 42,
+      "text": "/** Optional mounted View worker owner; absence keeps standalone/legacy",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "word-only",
+      "reason": "#1454 descriptive optional worker-port contract for existing mounted/standalone metric callers; no superseded persisted House Plan configuration representation."
+    },
+    {
+      "id": "61b39ca7fef1980a71fb1e38",
+      "path": "src/summary-panel-host.ts",
+      "line": 43,
+      "text": "* metric callers compatible without requiring browser persistence. */",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "word-only",
+      "reason": "#1454 descriptive optional worker-port contract for existing mounted/standalone metric callers; no superseded persisted House Plan configuration representation."
     },
     {
       "id": "f39ee7ad07ef2ed6fc882462",

@@ -200,6 +200,16 @@ async function launchInternal(
   // hass flows continuously in production; the stub sets it once — nudge a rebuild
   await page.evaluate(() => { const c = window.__card; c.hass = { ...c.hass }; });
   await page.waitForFunction(() => window.__card._devices.length > 0, { timeout: 9000 });
+  // #1454: model/device intake and the boot timer can finish before the
+  // asynchronous floor job. A smoke starts on the actual complete View, not
+  // on passive L1 or a queued editor intent. Older comparison bundles have no
+  // preparation owner and retain their existing ordinary stage readiness.
+  await page.waitForFunction(() => {
+    const card = window.__card, root = card.renderRoot;
+    return !card._floorPreparation?.pending && !card._floorPendingMode && !card._modeTransitionBusy
+      && !card._booting && !card._bootFading && !!root.querySelector('.stage.mode-view')
+      && !root.querySelector('[data-hp-floor-cache="pending"]');
+  }, { timeout: 9000 });
   // Existing product smokes exercise editor internals directly. They preload
   // the new #337 runtime without changing mode; the dedicated network smoke
   // uses launchColdView() and proves the real cold-View boundary separately.

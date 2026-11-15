@@ -5032,18 +5032,19 @@ export class HouseplanCard extends LitElement {
     const raw = this._curSpaceCfg, space = this._space, owner = this.planHost.authorityKey;
     const selection = this._floorCacheSelection(); if (!selection) return;
     const paintToken = runtime.paintToken;
-    const accepted = () => {
+    const current = () => {
       return this.isConnected && this.planHost.authorityKey === owner && this._space === space && this._mode === 'view'
-        && this._floorSourceAccepted() && !this._modeTransitionBusy
+        && this._loadOk && !this._modeTransitionBusy
         && !this._rotationMotion.running
         && !this._settingsDialog && !this._spaceDialog && !this._markerDialog && !this._roomDialog
         && this._curSpaceCfg === raw;
     };
+    const accepted = () => current() && this._floorSourceAccepted();
     this._floorPublishing = true;
     void this.updateComplete.then(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
       .then(() => {
-        if (!accepted() || runtime !== this._floorPreparation || runtime.pending) return;
-        if (runtime.publicationNeeded) {
+        if (!current() || runtime !== this._floorPreparation || runtime.pending) return;
+        if (runtime.publicationNeeded && accepted()) {
           const base = this._baseVb();
           const fit = { frame: this._frameOf(), base, display: this._displayBase(base), projection: this._renderProjection, rotation: this._rotation };
           const preview = captureFloorPreview(this.renderRoot, fit, selection.fitKey, diagnostic => { this._floorPreviewDiagnostic = diagnostic; });
@@ -5051,7 +5052,8 @@ export class HouseplanCard extends LitElement {
         }
         if (this._floorPendingMode) { const mode = this._floorPendingMode; this._floorPendingMode = null; this._setMode(mode); }
       }).finally(() => { this._floorPublishing = false;
-        if (this.isConnected && runtime === this._floorPreparation && paintToken !== runtime.paintToken) this.requestUpdate(); });
+        if (this.isConnected && runtime === this._floorPreparation
+          && (paintToken !== runtime.paintToken || raw !== this._curSpaceCfg)) this.requestUpdate(); });
   }
 
   private _beginContinuityCandidate(
@@ -12662,7 +12664,7 @@ export class HouseplanCard extends LitElement {
     const base = preview?.fit.base || [0, 0, NORM_W, NORM_W];
     const view = this._viewOr(base);
     const disp = this._spaceDisplayForRender();
-    return html`<ha-card data-hp-state="preparing" data-hp-mode="view" data-hp-floor-cache="pending">
+    return html`<ha-card data-hp-state="booting" data-hp-mode="view" data-hp-floor-cache="pending">
       ${this._renderPlanHeader()}
       <div class="stage mode-view" data-hp-floor-cache=${preview ? 'preview' : 'preparing'}
         style=${styleMap({ height: this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`,
