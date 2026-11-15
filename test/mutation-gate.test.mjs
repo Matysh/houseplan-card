@@ -1258,6 +1258,29 @@ function fakeRepo(files) {
   return { read: (file) => files[file] ?? '', exists: (file) => Object.hasOwn(files, file) };
 }
 
+test('#1455 preparation follows transitive browser imports in a cold tree', () => {
+  const files = {
+    'demo/smoke_fixture.mjs': "import './golden/harness.mjs';",
+    'demo/golden/harness.mjs': "export { makeFixture } from '../fixtures/resize.mjs';",
+    'demo/fixtures/resize.mjs': "import { migrate } from '../../test-build/plan-graph.js';",
+  };
+  const io = fakeRepo(files);
+  assert.equal(guardNeedsTestBuild('node demo/smoke_fixture.mjs', io), true,
+    'missing compiled output still requires preparation through two imports');
+  assert.equal(guardNeedsTestBuild('npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_fixture.mjs', io), false,
+    'explicit preparation must not be repeated');
+  delete files['demo/fixtures/resize.mjs'];
+  files['demo/golden/harness.mjs'] = 'export const makeFixture = () => ({});';
+  assert.equal(guardNeedsTestBuild('node demo/smoke_fixture.mjs', io), false,
+    'a bundle-only browser guard does not gain a needless compile');
+});
+
+test('#1455 affected browser guards prepare their shared model fixture', () => {
+  for (const id of ['static-opening-missing-contact-looks-active-1171', 'toolbar-close-target-below-24']) {
+    assert.equal(guardNeedsTestBuild(definition(id).guard), true, id);
+  }
+});
+
 test('#620: юнит-гард без браузера и Python не требует окружения', () => {
   const io = fakeRepo({
     'test/pure.test.mjs': "import { f } from '../scripts/pure.mjs';\n// python3 в комментарии без кавычек — не запуск",

@@ -3581,11 +3581,16 @@ const MUTANT_DEFINITIONS = [
     id: 'full-resume-forgets-late-hass',
     guard: 'node demo/smoke_view_recovery.mjs',
     because: '#824 AC2 requires actual placement tombstone ageing and Lit hass intake: '
-      + 'a long return before HA exists must defer exactly one real config/layout read without a page error.',
+      + 'a long return before HA exists must read exactly one real config/layout pair; '
+      + 'remove both deferred demand and the independent loaded-card connection recovery.',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: "    if (!this.planHost.environment.connected) { this._read.defer(); return; }",
       replace: "    if (!this.planHost.environment.connected) { return; }",
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: '        || before.connectionRevision !== environment.connectionRevision)) this._onConnReady();',
+      replace: '        || before.connectionRevision !== environment.connectionRevision) && !this._loadOk) this._onConnReady();',
     }],
   },
   ...['full', 'space'].map((kind) => ({

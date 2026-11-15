@@ -21,7 +21,7 @@
 // здесь — лишний круг задачи, не пропущенная поломка.
 import { posix } from 'node:path';
 
-import { guardNeedsBundle } from './mutation-execution.mjs';
+import { guardNeedsBundle } from './mutation-bundle-cache.mjs';
 import { guardFiles, wrapperInputs } from './mutation-selection.mjs';
 
 const GUARD_BROWSER_RE = /playwright|chromium/i;
