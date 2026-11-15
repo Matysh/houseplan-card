@@ -1278,6 +1278,8 @@ test('#1455 preparation follows transitive browser imports in a cold tree', () =
 test('#1455 affected browser guards prepare their shared model fixture', () => {
   for (const id of ['static-opening-missing-contact-looks-active-1171', 'toolbar-close-target-below-24']) {
     assert.equal(guardNeedsTestBuild(definition(id).guard), true, id);
+    assert.equal([definition(id).guard].some(guard => guardNeedsTestBuild(guard)), true,
+      'clean-run selection passes only the command, not the array index');
   }
 });
 

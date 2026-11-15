@@ -212,7 +212,7 @@ export function runCleanGuards(mutants, { bundleSeed = null } = {}) {
         if (bundleSeed) captureBundleSeed(dir, bundleSeed);
       }
       // Один worktree на все чистые гварды — значит и компиляция одна.
-      if (guards.some(guardNeedsTestBuild)) buildTestBuild(dir);
+      if (guards.some(guard => guardNeedsTestBuild(guard))) buildTestBuild(dir);
     } catch (error) {
       console.log(`FAIL чистая подготовка: ${error.message}`);
       return false;
