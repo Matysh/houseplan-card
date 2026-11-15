@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 14558,
-  "nextTicket": 489,
+  "revision": 14559,
+  "nextTicket": 490,
   "nextFence": 489,
   "tasks": {
     "1024": {
@@ -4899,6 +4899,20 @@
         "eventId": "finish:e46dd4cc-9075-419a-a206-3ed09b72f10b:finish:3:return:return:1454"
       },
       "reason": "checks-failed"
+    },
+    "1455": {
+      "issue": 1455,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/1455-mutation-witnesses",
+      "materialSha": "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 489,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794749506092,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5240,7 +5254,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1455
+  ],
   "active": null,
   "events": {
     "github:43692634249:1:label:spec-request": {
@@ -5694,6 +5710,19 @@
           "eventId": "finish:e46dd4cc-9075-419a-a206-3ed09b72f10b:finish:3:return:return:1454"
         },
         "delivered": true
+      }
+    },
+    "finish:33ed4230-095d-4b59-bb99-720f6d26c3bf": {
+      "digest": "1509b6df56955283d2cc6ba9bc398b33a14524a020eda844d8c3be33678c9568",
+      "issue": 1455,
+      "message": {
+        "kind": "queued",
+        "issue": 1455,
+        "at": 1794749506092,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa"
       }
     }
   },
