@@ -18,6 +18,27 @@ Disk improvement: **37.2%**, above the accepted 30% target. Miss adds 15.5ms; wa
 
 The first complete candidate series exposed a real miss regression (576.2ms). CPU profiling found full-domain room-floor clipping repeatedly processing distant unrelated operands. Production now uses the existing exact local boolean helper. The old full-sweep differential oracle covers holes, touching bounds, rotations, orphan/distant faces, both Polygon/MultiPolygon forms and all large-house floors. Coordinates/ownership/holes/bounds remain equal; SVG ring order/start or redundant collinear vertices can differ. No geometry test was weakened to gain speed. The intermediate failure and debugging logs remain in the local task artifacts.
 
+### Post-repair revalidation
+
+[revalidated.json](revalidated.json) retains another complete paired run after
+the expanded native-consumer repairs: base `98806c06ec8eb601c8e8774ceeb748e1a4511982`,
+product-source candidate `26b05d29e6d9cfedb21419e49920297dee938c71`.
+The same pinned environment, synthetic fixture, one warm-up and seven retained
+samples were used, with no concurrent heavy work; the Windows High Performance
+scheme was checked again. The earlier measurements above are not overwritten.
+
+| Median, ms | Base | Disk-ready candidate | Cache-miss candidate |
+| --- | ---: | ---: | ---: |
+| Selected floor ready/current | 532.9 | 290.7 | 495.3 |
+| Return via memory | 49.9 | 66.5 | 82.5 |
+| Mount to ready/current | 1245.8 | 1035.7 | 1095.4 |
+
+Disk improvement is **45.4%**; miss is 37.6ms faster than this paired base.
+The largest warm-median addition is 32.6ms, within the accepted 50ms allowance.
+These are medians, not bounds on individual runs: all seven samples and their
+ranges remain in the raw report, including the 100ms maximum warm miss-series
+sample. The three accepted performance decisions pass without sample removal.
+
 ## Storage, CPU and bytes
 
 Ordinary disk series: zero IDB timeouts in 42 observed reads; read/open intervals 11.4–79.2ms. Candidate cold worker processing 168.0–188.4ms on hits, 367.3–408.5ms on misses; main hydration 3.2–4.1ms. A separate **one-sample CDP 4x CPU diagnostic**, not a paired performance acceptance series, observed four timeouts in six reads, ordinary worker reconstruction and a complete current frame (961.2ms). Read elapsed time includes delayed event dispatch under main-thread load and can exceed the 100ms timer budget; this is not a claim that timers can preempt a busy JS task. CDP throttling is not a calibrated physical low-power machine. No errors are presented to users for a cache timeout.

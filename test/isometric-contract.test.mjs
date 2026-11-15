@@ -51,13 +51,18 @@ test('Stage 4 code is loaded only through the hidden alpha runtime boundary', ()
   assert.match(sceneRender, /export \* from '\.\/iso-scene-geometry'/,
     'the lazy renderer must expose the same pure geometry implementation used by the worker');
   assert.equal([...card.matchAll(/await import\('\.\/iso-scene-render'\)/g)].length, 1);
-  for (const module of ['iso-scene-render', 'iso-walls', 'iso-openings', 'iso-overlays']) {
+  for (const module of ['iso-scene-render', 'iso-scene-geometry', 'iso-walls', 'iso-openings', 'iso-overlays']) {
     const valueImport = new RegExp(`import\\s+(?!type\\b)[^;]+from './${module}';`, 's');
     assert.doesNotMatch(card, valueImport, `${module} leaked into the eager card graph`);
     assert.doesNotMatch(editorRuntime, valueImport, `${module} leaked into the lazy editor graph`);
   }
   for (const module of ['iso-walls', 'iso-openings', 'iso-overlays'])
-    assert.match(sceneRender, new RegExp(`from './${module}'`));
+    assert.match(sceneGeometry, new RegExp(`from './${module}'`),
+      `${module} must remain owned by the shared pure structural implementation`);
+  assert.match(sceneRender, /import \{ buildIsoWallDepthQueue,[\s\S]*?from '\.\/iso-scene-geometry'/,
+    'the lazy renderer consumes the shared geometry implementation, not duplicate producers');
+  assert.doesNotMatch(sceneGeometry, /from ['"](?:lit|@mdi\/js)['"]/,
+    'the worker-owned structural module must not import presentation assets');
   assert.match(card, /const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__'/);
   assert.match(sceneRender, /ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__'/);
   assert.match(card, /if \(this\._isoEnabled\) void this\._ensureIsoSceneRuntime\(\)/);
@@ -209,8 +214,18 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   assert.match(openings, /policy\.leafThicknessRatio[\s\S]*?policy\.frameThicknessRatio/);
   assert.match(contractSmoke,
     /presentationRoomUpdateKeepsStructuralCache[\s\S]*?roomSourceAfterPresentation\.key === roomSourceBeforePresentation\.key[\s\S]*?buildsAfterRoomPresentation === buildsBeforeRoomPresentation/);
-  assert.match(contractSmoke,
-    /roomGeometryUpdateInvalidatesStructuralCache[\s\S]*?roomSourceAfterGeometry\.key !== roomSourceAfterPresentation\.key[\s\S]*?buildsAfterRoomGeometry === buildsAfterRoomPresentation \+ 1/);
+  const geometryWitness = section(contractSmoke,
+    'result.roomGeometryUpdateInvalidatesStructuralCache =', 'configSpace.rooms[0] = originalRoomConfig;');
+  for (const positive of [
+    'roomSourceAfterGeometry.key !== roomSourceAfterPresentation.key',
+    'buildsAfterRoomGeometry === buildsAfterRoomPresentation',
+    'card.houseplanFloorCacheDiagnostics().cache.scheduler.workerJobs === workerJobsBeforeRoomGeometry + 1',
+    "card.houseplanFloorCacheDiagnostics().cache.producers.at(-1)?.owner === 'worker'",
+    'card.houseplanFloorCacheDiagnostics().cache.producers.at(-1)?.counts.wallBodiesGeometry > 0',
+  ]) assert.ok(geometryWitness.includes(positive), `missing worker-owned structural rebuild witness: ${positive}`);
+  assert.match(geometryWitness,
+    /card\._isoGeometryCache\.get\(roomSourceAfterGeometry\.key\)\?\.geometry\s*!== roomGeometryBeforePresentation/,
+    'a changed structural key must install different canonical geometry, not only report a worker job');
   assert.doesNotMatch(source, /_openingAmt|openingAmount|\.hass|matchMedia|CSS\.supports|theme|hover|focus|selected|sunlight/);
   assert.match(card, /onBuild: \(\) => \{ this\._isoStructuralBuildCount \+= 1; \}/);
   assert.match(source, /projectIsoOpeningStructure\(basis\)/);

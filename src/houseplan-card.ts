@@ -896,11 +896,12 @@ export class HouseplanCard extends LitElement {
   ): Promise<void> {
     if (!adopt) this._cancelPendingWarmMode();
     const request = ++this._editorModeRequest;
+    const owner = this.planHost.authorityKey;
     // Even changed geometry must wait for the restored editor's layout. The
     // camera equality decides what to preserve, not who owns the final refit.
     if (adopt) this._holdWarmRefit(request);
     const ready = mode === 'view' || await this._ensureEditorRuntime();
-    const current = ready && request === this._editorModeRequest && this.isConnected
+    const current = ready && owner === this.planHost.authorityKey && request === this._editorModeRequest && this.isConnected
       && (mode === 'view' || this._canEdit && !this._kiosk);
     if (!current) {
       this._releaseWarmRefit(request);
@@ -908,8 +909,10 @@ export class HouseplanCard extends LitElement {
       return;
     }
     const commit = () => {
-      if (request !== this._editorModeRequest || !this.isConnected
-        || mode !== 'view' && (!this._canEdit || this._kiosk)) return;
+      if (owner !== this.planHost.authorityKey || request !== this._editorModeRequest || !this.isConnected
+        || mode !== 'view' && (!this._canEdit || this._kiosk)) {
+        this._releaseWarmRefit(request); return;
+      }
       if (adopt === 'resume') {
         this._editorRuntime!.resumeWarmMode(mode, animate);
       } else if (adopt) {
@@ -1072,6 +1075,7 @@ export class HouseplanCard extends LitElement {
       this._backupImportDialog = null; this._backupExportDialog = null;
     }
     if (authorityChanged) {
+      this._floorPendingMode = null;
       this._decorAssetSyncToken++;
       this._renderLife.retireHass();
       this._haWallNodeAttachApi = null;
@@ -5105,7 +5109,8 @@ export class HouseplanCard extends LitElement {
         }
         if (this._floorPendingMode) {
           const intent = this._floorPendingMode; this._floorPendingMode = null;
-          if (intent.resume) intent.resume(); else this._setMode(intent.mode, intent.animate, intent.warm);
+          if (intent.resume) intent.resume();
+          else if (this._canEdit && !this._kiosk) this._setMode(intent.mode, intent.animate, intent.warm);
         }
       }).finally(() => { this._floorPublishing = false;
         if (this.isConnected && runtime === this._floorPreparation
