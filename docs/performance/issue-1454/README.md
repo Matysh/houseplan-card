@@ -79,4 +79,12 @@ consumer pool from an already prepared L2 frame is a positive memory hit, not a
 required canonical rebuild. These controls do not claim zero worker masonry
 work for every structural edit.
 
+Independent golden and node-command fixtures retire the preceding owner and
+clear its in-memory warm slot before creating a different test case. Otherwise
+a legitimate deferred editor restore or retained camera can leak between cases.
+This reset is outside the golden harness's internal `mount`: the deliberate
+`warmRemount` still claims its first mount, verified separately. The static-card
+signing fixture waits for the exact accepted/painted candidate instead of a
+fixed delay; its URL, backoff and immediate expiry/aging oracles are unchanged.
+
 The shared Ask S6 result and substantive code-review verdict are published by the normal queue, not claimed by this evidence file. No full stable/golden set or real HA ACL test is implied. Real HA follow-up before beta is recorded in [houseplan-e2e#71](https://github.com/Matysh/houseplan-e2e/issues/71). Backend format, backups, source images and legacy global LS_CFG wire stay unchanged; the unscoped legacy hint is not interactive cold-load authority. Server SVG remains a theoretical alternative, not implemented.

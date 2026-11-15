@@ -70,6 +70,12 @@ await page.exposeFunction('topologyWire', async message => {
 const mount = async cfg => {
   server = structuredClone(cfg); revision++;
   await page.evaluate(() => {
+    // Each mount supplies an independent topology/reload fixture. Its camera
+    // must not revive the preceding scenario's editor layout. The disconnect
+    // terminal below still remounts the same live owner without this reset.
+    const previous = window.__card;
+    previous.remove();
+    previous.constructor._warmBootReset();
     const hass = window.__mkHass(), old = hass.callWS.bind(hass);
     const subscribe = hass.connection.subscribeEvents.bind(hass.connection);
     hass.connection = { ...hass.connection, subscribeEvents: async (callback, type) => {
@@ -80,7 +86,7 @@ const mount = async cfg => {
     hass.devices = {}; hass.entities = {}; hass.states = {};
     hass.callWS = async m => m.type.endsWith('registry/list') ? [] : (await window.topologyWire(m)) ?? old(m);
     const card = document.createElement('houseplan-card'); card.setConfig({ type: 'custom:houseplan-card', language: 'en' });
-    window.__card.remove(); document.getElementById('host').appendChild(card); window.__card = card; card.hass = hass;
+    document.getElementById('host').appendChild(card); window.__card = card; card.hass = hass;
   });
   await page.waitForFunction(({ config, expectedRevision }) => {
     const card = window.__card;
@@ -109,10 +115,31 @@ const screen = p => page.evaluate(p => {
   q.x = p[0] * 1000; q.y = p[1] * 1000; const out = q.matrixTransform(svg.getScreenCTM()); return { x: out.x, y: out.y };
 }, p);
 const drag = async (point, target) => {
+  const handle = page.locator(`houseplan-card .hp-node-handle[cx="${point[0] * 1000}"][cy="${point[1] * 1000}"]`);
+  const targetState = () => handle.evaluate(node => {
+    const card = window.__card, stage = card._stageEl, rect = node.getBoundingClientRect();
+    const hit = card.renderRoot.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+    return { ownsHit: hit === node, hit: hit?.outerHTML.slice(0, 220),
+      bounds: rect.toJSON(), stage: stage.getBoundingClientRect().toJSON(), inert: !!node.closest('[inert]'),
+      mode: card._mode, loaded: card._loadOk, pending: !!card._floorPreparation?.pending,
+      view: card._view, painted: card.renderRoot.querySelector('svg.plan-svg')?.getAttribute('viewBox'),
+      warm: card._warmModeRequest, memo: card._warmVp, refit: card._refitRaf,
+      stageOwner: stage?.outerHTML.slice(0, 300),
+      ancestors: [...(function*(element) { for (; element; element = element.parentElement) yield element; })(node)]
+        .map(element => ({ tag: element.tagName, class: element.getAttribute('class'), inert: element.inert,
+          visibility: getComputedStyle(element).visibility, pointerEvents: getComputedStyle(element).pointerEvents })) };
+  });
   // A remounted card can finish its first layout after handles enter the DOM.
   // Wait for this actual handle's stable, hittable box before the one native
   // press; do not replay a missed gesture or relax any geometry/legacy oracle.
-  await page.locator(`houseplan-card .hp-node-handle[cx="${point[0] * 1000}"][cy="${point[1] * 1000}"]`).hover();
+  try { await handle.hover(); }
+  catch (error) {
+    console.log('diagnostic wall-node-target-after-hover-failure', JSON.stringify(await targetState()));
+    const directory = process.env.CI ? join(tmpdir(), 'smoke-logs') : 'artifacts/803-node';
+    mkdirSync(directory, { recursive: true });
+    await page.screenshot({ path: join(directory, 'wall-node-hover-blocked.png') });
+    throw error;
+  }
   await page.mouse.down();
   const captured = await page.evaluate(() => window.__card._editorRuntime.nodeMove.dragging);
   if (!captured) {
@@ -225,6 +252,7 @@ console.log('100 cancel/commit cycles: live roots/masks/session retired; cache b
 // Actual captured mouse + DOM lifecycle/input terminals. The second touch is
 // dispatched (not a trusted OS touch); capture loss is the browser's own event.
 for (const terminal of ['pointercancel', 'lostcapture', 'second-pointer', 'pagehide', 'tool', 'mode', 'floor', 'disconnect', 'revision', 'acl']) {
+  console.log('native lifecycle case', terminal);
   const cfg = structuredClone(cycle.cfg);
   if (terminal === 'floor') cfg.spaces.push({ ...structuredClone(cfg.spaces[0]), id: 'other', title: 'Other' });
   await mount(cfg); await drag(cycle.point, cycle.target);

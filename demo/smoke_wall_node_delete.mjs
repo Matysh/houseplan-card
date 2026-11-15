@@ -85,6 +85,10 @@ await page.exposeFunction('nodeDeleteWire', async message => {
 const boot = async (options = {}, editor = true, select = true) => {
   await page.evaluate(async options => {
     const previous = window.__card, hass = window.__mkHass(), base = hass.callWS.bind(hass);
+    // Each boot is an independent command/capability scenario, not a warm
+    // Lovelace replacement of the preceding editor and its pending intent.
+    previous.remove();
+    previous.constructor._warmBootReset();
     const connection = hass.connection, listeners = new Set();
     hass.connection = { ...connection, connected: true, subscribeEvents: async (callback, type) => {
       if (type !== 'houseplan_config_updated') return connection.subscribeEvents(callback, type);
@@ -100,10 +104,12 @@ const boot = async (options = {}, editor = true, select = true) => {
     };
     const card = document.createElement('houseplan-card');
     window.__nodeDeleteOptions = { type: 'custom:houseplan-card', title: 'Delete nodes', language: 'en', ...options };
-    card.setConfig(window.__nodeDeleteOptions); previous.remove();
+    card.setConfig(window.__nodeDeleteOptions);
     document.getElementById('host').appendChild(card); window.__card = card; card.hass = hass;
   }, options);
-  await page.waitForFunction(() => !window.__card._booting && window.__card._model?.some(space => space.id === 'delete-floor'));
+  await page.waitForFunction(() => window.__card._loadOk && !window.__card._booting
+    && window.__card._model?.some(space => space.id === 'delete-floor'));
+  await page.evaluate(() => window.__hpTest.settled());
   if (!editor) return;
   await page.evaluate(async select => {
     if (window.__card._space !== 'delete-floor') await window.__hpTest.switchSpace('delete-floor');
@@ -367,6 +373,8 @@ try {
     await boot(surface === 'kiosk' ? { kiosk: true } : {}, surface === 'devices');
     if (surface === 'devices') await page.evaluate(() => window.__hpTest.setMode('devices'));
     else await page.evaluate(() => window.__hpTest.setMode('view'));
+    check(`delete.${surface}.actual_public_mode`, await card.locator('ha-card[data-hp-mode]').getAttribute('data-hp-mode'),
+      surface === 'devices' ? 'devices' : 'view');
     await rightClick([.4, .3]); await settled();
     check(`delete.${surface}.inert`, [await menu.count(), deleteWrites().length, server], [0, 0, initial]);
   }

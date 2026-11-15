@@ -93,10 +93,24 @@ const res = await page.evaluate(async () => {
   await new Promise((r) => setTimeout(r, 150));
   out.noRetryStorm = signCalls === 2;
 
-  // 3) после выдержки повтор проходит
-  await new Promise((r) => setTimeout(r, 2100));
-  card.requestUpdate(); await card.updateComplete;
-  await new Promise((r) => setTimeout(r, 150));
+  // 3) The static card retries its retained candidate on a one-second timer.
+  // A tick just before the two-second signer backoff ends legitimately moves
+  // the successful attempt to the next tick. Await that actual accepted and
+  // painted candidate, not a fixed sleep followed by inspection of old DOM.
+  const retryDeadline = performance.now() + 6000;
+  const candidatePainted = () => signCalls === 3 && !card._loading && !card._read.busy
+    && card._continuity.state === 'steady'
+    && card._snap?.config?.spaces?.find(space => space.id === 'f1')?.plan_url === raw
+    && card.renderRoot.querySelector('.hp-static-stage svg image')?.getAttribute('href') === raw + '?authSig=SIG3';
+  while (!candidatePainted()) {
+    if (performance.now() > retryDeadline) throw Error('Protected static candidate did not settle: ' + JSON.stringify({
+      signCalls, loading: card._loading, busy: card._read.busy, continuity: card._continuity.state,
+      candidate: card._snap?.config?.spaces?.find(space => space.id === 'f1')?.plan_url,
+      href: card.renderRoot.querySelector('.hp-static-stage svg image')?.getAttribute('href'),
+    }));
+    await new Promise(resolve => setTimeout(resolve, 20));
+    await card.updateComplete;
+  }
   out.hrefAfterRetry = await href();
   out.retried = signCalls === 3;
 

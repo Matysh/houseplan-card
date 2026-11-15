@@ -1171,10 +1171,23 @@ export async function prepareGoldenScenario(page, scenario) {
       // A Lit update may now show passive L1 while the real mode command is
       // queued behind floor preparation. Wait for the requested user surface,
       // not merely for the absence of an animation that has not started yet.
-      await until(() => card._mode === expected && !card._floorPreparation?.pending
-        && !card._floorPendingMode && !card._modeTransitionBusy
-        && !!card.renderRoot.querySelector(`.stage.mode-${expected}`)
-        && !card.renderRoot.querySelector('[data-hp-floor-cache="pending"]'));
+      const describe = () => ({ expected, mode:card._mode, space:card._space,
+        floorPending:card._floorPendingMode && { mode:card._floorPendingMode.mode,
+          warm:card._floorPendingMode.warm,resume:!!card._floorPendingMode.resume },
+        floorPendingWork:card._floorPreparation?.pending, loadOk:card._loadOk, booting:card._booting,
+        warmVp:card._warmVp && { space:card._warmVp.space,mode:card._warmVp.mode,projection:card._warmVp.projection },
+        warmViewportPending:card._warmViewportPending,warmModeRequest:card._warmModeRequest,
+        editorModeRequest:card._editorModeRequest,canEdit:card._canEdit,editorRuntime:!!card._editorRuntime,
+        stageClasses:card.renderRoot.querySelector('.stage')?.className });
+      const initial = describe();
+      try {
+        await until(() => card._mode === expected && !card._floorPreparation?.pending
+          && !card._floorPendingMode && !card._modeTransitionBusy
+          && !!card.renderRoot.querySelector(`.stage.mode-${expected}`)
+          && !card.renderRoot.querySelector('[data-hp-floor-cache="pending"]'));
+      } catch (error) {
+        throw new Error(`${error.message}; mode state ${JSON.stringify({ initial,current:describe() })}`);
+      }
       await card.updateComplete;
       await frame();
     };
@@ -1214,6 +1227,10 @@ export async function prepareGoldenScenario(page, scenario) {
     window.__card?.remove?.();
     window.__goldenPanel = null;
     document.getElementById('golden-pdf-page')?.remove();
+    // Independent scenes must not inherit an editor/dialog from the previous
+    // scene's in-memory warm owner. Reset only here, never inside mount(): a
+    // scenario's deliberate warmRemount must still claim its own first mount.
+    customElements.get('houseplan-card')?._warmBootReset?.();
     localStorage.clear();
     const scenarioPath = scenario.panelHost ? scenario.panelKioskUrl || '/houseplan' : '/demo.html';
     history.replaceState(null, '', scenarioPath);
