@@ -8494,7 +8494,7 @@ const MUTANT_DEFINITIONS = [
     because: '#369e: both the card routing fence and the armed-tool fence reject a secondary mouse button. Bypassing both must not silently stamp furniture; the browser observes unchanged count and a later successful primary click.',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    if (this._mode === 'decor' && ev.button === 2) return;",
+      find: "    if ((this._mode === 'decor' || this._mode === 'plan') && ev.button === 2) return;",
       replace: '    // mutant: forward secondary decor input to the armed tool',
     }, {
       file: 'src/houseplan-editor-runtime.ts',

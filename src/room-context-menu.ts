@@ -44,6 +44,7 @@ export class RoomContextMenu {
   }
   dispose(): void { this.close(); this.clearDismissTail(); this.presentation.dispose(); }
   private clearDismissTail(): void {
+    if (!this.dismissTarget) return;
     this.dismissTarget = null;
     window.removeEventListener('click', this.dismissTail, true);
     window.removeEventListener('pointerdown', this.dismissTail, true);
