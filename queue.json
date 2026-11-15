@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14388,
+  "revision": 14389,
   "nextTicket": 487,
   "nextFence": 487,
   "tasks": {
@@ -5325,6 +5325,10 @@
       "digest": "ea303b5ca7b08c666dffd4bce44a73897dd669ab1b11b6fd4a6587e69a425167",
       "issue": 1453
     },
+    "github:43693198626:1:completions:message:6b611ec122a773b4e613ec9d50dc1fbf4a5740aad6413ed6e56ad7b7a9532890": {
+      "digest": "38e1a0ef2d2652dec0afb86cbf3cfac4382ff07fc085a4b8688ff84aec7d251d",
+      "issue": 1453
+    },
     "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528": {
       "digest": "dcf60fb750e390c258d5c7ef646819c942cac7732409361ab4dde0d4185edf3a",
       "issue": 1453,
@@ -5371,7 +5375,8 @@
           "entry": 1,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/geometry-history-refusal.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed",
           "eventId": "finish:8a09bb7f-7036-4b8c-91d2-3652f1183528:finish:5:return:return:1453"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:4566122f-0c92-464a-bdd6-869269b8a8fd": {
