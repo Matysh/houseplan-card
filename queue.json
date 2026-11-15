@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14906,
+  "revision": 14907,
   "nextTicket": 495,
   "nextFence": 495,
   "tasks": {
@@ -5402,14 +5402,10 @@
     "expectedBase": "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa",
     "phase": "testing",
     "admittedAt": 1794762393962,
-    "expiresAt": 1794765417482,
+    "expiresAt": 1794765441104,
     "patchId": "8c399f033ef1484901421c8a9230222c47c144e2"
   },
   "events": {
-    "finish:fc13efe9-5fd7-4cd6-9269-267e36609627": {
-      "digest": "62fad9ed1c373e56f3298e71f8c2788bbcf6a857abb76f1fb176b5e251221ccb",
-      "issue": 1454
-    },
     "finish:a518a11e-208a-49f7-bd3b-babc80fee446": {
       "digest": "775a9596b8b09d44f252275f9dd7ac8c13130f8d640c39f7fff28632bb4964fa",
       "issue": 1454
@@ -6344,6 +6340,10 @@
     },
     "1454-independent-heartbeat:604504df-8a6e-48f5-9235-673e5a6c1757": {
       "digest": "0664b9ea2a69d6d9764806c7743080e00ab12298fabea35bc80426e851677105",
+      "issue": 1454
+    },
+    "finish:226394cf-9a02-4da6-a0c0-bea1020342c2": {
+      "digest": "a1fbb207c032e9e1da17ede1ee058908e341c06d49596ec3a090b34459fc2b59",
       "issue": 1454
     },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
