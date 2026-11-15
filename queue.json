@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14759,
+  "revision": 14760,
   "nextTicket": 494,
   "nextFence": 494,
   "tasks": {
@@ -4992,7 +4992,7 @@
       "notice": {
         "key": "5:executor-admission-expired",
         "reason": "executor-admission-expired",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S6-in-progress",
         "at": 1794760166402,
         "entry": 5,
@@ -5413,10 +5413,6 @@
     "reviewRequest": "review:1454:6:99b77709353f96818ebb44d656979546238164fa:30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa"
   },
   "events": {
-    "github:43692634249:1:label:spec-request": {
-      "digest": "be23c2d8528929891849728e337b326730ffe9e71f61f86425d4a615c34ae29a",
-      "issue": 1454
-    },
     "github:43693198626:1:spec:1454:spec-presentation": {
       "digest": "426f71bf52d18bdc24616c43e75a968d299f00bb0f97730419d5acd3d62c410c",
       "issue": 1454
@@ -6367,6 +6363,10 @@
     },
     "github:43736506557:1:completions:message:22b8718b7d40c99bc435dc5055ee3ae63ccfdacde48ea85daea42717fc5a1646": {
       "digest": "9e9d1c17b6d05ea0b956785d324ae8c65331d514ed7176187d76e167edc32053",
+      "issue": 1454
+    },
+    "github:43736506557:1:completions:notice:671bf66285632c9aa403353af659c08e8e594ee9ee6d35bd31059d9b188f4c30": {
+      "digest": "402dce2344498501cae955988c35fe9a1b1ab4fdb0b251d3aede3d1bf9bd4927",
       "issue": 1454
     },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
