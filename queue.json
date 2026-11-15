@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 14787,
+  "revision": 14788,
   "nextTicket": 495,
   "nextFence": 495,
   "tasks": {
@@ -4820,7 +4820,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794762389469,
       "reviewEntry": 7,
-      "patchId": "99b77709353f96818ebb44d656979546238164fa",
+      "patchId": "8c399f033ef1484901421c8a9230222c47c144e2",
       "changedFiles": [
         "demo/golden/harness.mjs",
         "demo/helpers/ha-dialog-fixture.mjs",
@@ -4848,6 +4848,7 @@
         "demo/smoke_floor_cache_reuse.mjs",
         "demo/smoke_floor_cache_storage.mjs",
         "demo/smoke_floor_geometry_cache.mjs",
+        "demo/smoke_floor_light_refresh.mjs",
         "demo/smoke_floor_persistent_cache.mjs",
         "demo/smoke_floor_persistent_cache_isometric.mjs",
         "demo/smoke_font_scales.mjs",
@@ -4938,6 +4939,7 @@
         "docs/performance/issue-1454/README.md",
         "docs/performance/issue-1454/measurement.json",
         "docs/performance/issue-1454/revalidated.json",
+        "docs/performance/issue-1454/review-r1.json",
         "docs/performance/issue-1454/slow-open.json",
         "docs/release-ledger/v1.85.0/1454.json",
         "rollup.config.mjs",
@@ -5397,16 +5399,13 @@
     "token": "494:finish:3b24b178-e1c8-4e73-bfca-89023063aa23:finish:1:admit",
     "fence": 494,
     "materialSha": "e113183c2f03278d97e384caf4a7161a7b5034ca",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "30cb74bd7c8205f91a6ddd4fa9428c95a83b40aa",
+    "phase": "testing",
     "admittedAt": 1794762393962,
-    "expiresAt": 1794762698450
+    "expiresAt": 1794762701298,
+    "patchId": "8c399f033ef1484901421c8a9230222c47c144e2"
   },
   "events": {
-    "finish:d915d966-45cc-4650-a749-c1c3369059b8": {
-      "digest": "b1f451f0b7d3034c7cf7d4056bbb451b29870005facc044d31ad5a6174b85fab",
-      "issue": 1454
-    },
     "finish:fea166da-eefe-4a98-bfb5-ff61cdc85ec6": {
       "digest": "12b9e3ecca4847c68737902582a6183b5604c2d7847a4b5db69daa62094c56b4",
       "issue": 1454
@@ -6349,6 +6348,10 @@
     },
     "1454-independent-heartbeat:173a26bf-e649-45f1-aebd-bf87751d2f3b": {
       "digest": "dd4d448961431d524e45dd9ecc5001f246b5f89fe57b42f4269837ea83eb45fe",
+      "issue": 1454
+    },
+    "finish:3b24b178-e1c8-4e73-bfca-89023063aa23:finish:2:synchronized": {
+      "digest": "dc9d15761a1471fccf7797892772c943a5f503d688f9f5b91c96313750bbc41a",
       "issue": 1454
     },
     "github:43693917941:1:spec:1454:spec-request:spec-resubmitted:1454": {
