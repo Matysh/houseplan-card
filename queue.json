@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15053,
+  "revision": 15054,
   "nextTicket": 497,
   "nextFence": 497,
   "tasks": {
@@ -4856,7 +4856,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794820844182,
       "reviewEntry": 2,
-      "patchId": "00133a43c4f7f8a1ffa4351475403e1dd9aae98b",
+      "patchId": "5ee3cb5ef1b7a236b1ecbdac947da95d4ea10ca7",
       "changedFiles": [
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
@@ -5241,10 +5241,11 @@
     "token": "496:finish:987c8523-5a02-4783-8e15-dfaf4e4b8378:finish:1:admit",
     "fence": 496,
     "materialSha": "09f5f5082ce065406e1d5d275255875e082c6d34",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "e113183c2f03278d97e384caf4a7161a7b5034ca",
+    "phase": "testing",
     "admittedAt": 1794820848543,
-    "expiresAt": 1794821148543
+    "expiresAt": 1794821154854,
+    "patchId": "5ee3cb5ef1b7a236b1ecbdac947da95d4ea10ca7"
   },
   "events": {
     "finish:a4c8cb97-4fb6-46d1-b72e-f9cbf9fd341b:finish:2:synchronized": {
@@ -5317,6 +5318,10 @@
     },
     "github:43838213479:1:completions:metadata:c749391a-d5e7-4e9b-bcb2-3fcc66247848:task-notice:1456::": {
       "digest": "67775001c7fc2ed7a49dde9bafeb42f2775b17215a6589959cafc7d2eec7eefa",
+      "issue": 1456
+    },
+    "finish:987c8523-5a02-4783-8e15-dfaf4e4b8378:finish:2:synchronized": {
+      "digest": "e1a7f31c8c976f759acce2da761375093dd04dd2831a59481196e3655035e30f",
       "issue": 1456
     },
     "finish:a4c8cb97-4fb6-46d1-b72e-f9cbf9fd341b": {
