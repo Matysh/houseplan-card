@@ -4,6 +4,7 @@ import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import { minify } from 'terser';
 import { createHash } from 'node:crypto';
+import { dirname, join } from 'node:path';
 import { coverageMapsEnabled, coverageTypeScriptOptions, replaceChunkSource, rollupMap } from './coverage-maps.mjs';
 
 /** Isolated worker graph: do not let shared main-thread render chunks pull
@@ -14,13 +15,17 @@ export function floorWorkerBundlePlugin(fingerprint) {
   let fileName;
   return {
     name: 'houseplan-floor-worker',
-    async buildStart() {
+    async renderStart(outputOptions) {
+      // The source map is relative to the emitted Worker, not to cwd. Wait
+      // for the owner's output directory; prebuilt chunks can be emitted here.
+      const outputDirectory = outputOptions.dir || (outputOptions.file ? dirname(outputOptions.file) : process.cwd());
+      const workerDirectory = join(outputDirectory, 'houseplan-assets');
       const build = await rollup({ input: 'src/floor-cache-worker.ts',
         treeshake: { moduleSideEffects: false },
-        plugins: [resolve(), json(), typescript({ compilerOptions: { outDir: 'dist/.worker-ts', incremental: false,
+        plugins: [resolve(), json(), typescript({ compilerOptions: { outDir: join(workerDirectory, '.worker-ts'), incremental: false,
           ...(coverage ? coverageTypeScriptOptions() : {}) } })] });
       try {
-        const { output } = await build.generate({ format: 'es', inlineDynamicImports: true,
+        const { output } = await build.generate({ dir: workerDirectory, format: 'es', inlineDynamicImports: true,
           sourcemap: coverage ? 'hidden' : false });
         const chunks = output.filter(item => item.type === 'chunk');
         if (chunks.length !== 1) throw new Error('floor worker must be one isolated module');

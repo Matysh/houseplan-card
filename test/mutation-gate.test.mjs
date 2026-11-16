@@ -701,15 +701,18 @@ test('#1456 Python module guards inventory their entry and transitive helper', (
   const source = {
     'tests_backend/junction_parity.py': 'from tests_backend.pure_imports import load_pure',
     'tests_backend/pure_imports.py': 'def load_pure(): pass',
+    'tests_backend/__init__.py': '',
     'tools/__main__.py': '',
     'tools/__init__.py': '',
   };
   const exists = file => file in source;
   assert.deepEqual(guardFiles('python3 -m tests_backend.junction_parity --build-dir=out', exists),
-    ['tests_backend/junction_parity.py']);
+    ['tests_backend/junction_parity.py', 'tests_backend/__init__.py']);
   assert.deepEqual(guardInputs('python3 -m tests_backend.junction_parity', {
     exists, read: file => source[file], files: Object.keys(source),
-  }), ['tests_backend/junction_parity.py', 'tests_backend/pure_imports.py']);
+  }), ['tests_backend/__init__.py', 'tests_backend/junction_parity.py', 'tests_backend/pure_imports.py']);
+  const mutant = { id: 'parity', guard: 'python3 -m tests_backend.junction_parity', patches: [{ file: 'src/x.ts' }] };
+  assert.deepEqual(selectChangedMutants([mutant], ['tests_backend/__init__.py'], exists).map(item => item.id), ['parity']);
   assert.deepEqual(guardFiles('python -m tools', exists), ['tools/__main__.py', 'tools/__init__.py']);
   assert.deepEqual(guardFiles('node -m tools; python3 -m missing', exists), []);
 });
