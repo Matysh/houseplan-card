@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15047,
+  "revision": 15048,
   "nextTicket": 496,
   "nextFence": 496,
   "tasks": {
@@ -4853,7 +4853,7 @@
       "ownerDecision": null,
       "ticket": 495,
       "queued": false,
-      "status": "S7-code-review",
+      "status": "S6-in-progress",
       "readyAt": 1794819958802,
       "reviewEntry": 1,
       "patchId": "00133a43c4f7f8a1ffa4351475403e1dd9aae98b",
@@ -4891,6 +4891,20 @@
         "at": 1794820342994,
         "runId": null,
         "runAttempt": null
+      },
+      "reason": "review-findings",
+      "reviewCorrection": {
+        "requestId": "review:1456:1:00133a43c4f7f8a1ffa4351475403e1dd9aae98b:e113183c2f03278d97e384caf4a7161a7b5034ca",
+        "at": 1794820591108
+      },
+      "notice": {
+        "key": "1:review-findings",
+        "reason": "review-findings",
+        "status": "pending",
+        "fromStatus": "S7-code-review",
+        "at": 1794820591108,
+        "entry": 1,
+        "requestId": "review:1456:1:00133a43c4f7f8a1ffa4351475403e1dd9aae98b:e113183c2f03278d97e384caf4a7161a7b5034ca"
       }
     }
   },
@@ -5248,19 +5262,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1456,
-    "worker": "finish",
-    "token": "495:finish:a4c8cb97-4fb6-46d1-b72e-f9cbf9fd341b:finish:1:admit",
-    "fence": 495,
-    "materialSha": "68455343c9b82cd44f07a99c4a9cd46ddabb1de8",
-    "expectedBase": "e113183c2f03278d97e384caf4a7161a7b5034ca",
-    "phase": "review",
-    "admittedAt": 1794819962417,
-    "expiresAt": 1794823924815,
-    "patchId": "00133a43c4f7f8a1ffa4351475403e1dd9aae98b",
-    "reviewRequest": "review:1456:1:00133a43c4f7f8a1ffa4351475403e1dd9aae98b:e113183c2f03278d97e384caf4a7161a7b5034ca"
-  },
+  "active": null,
   "events": {
     "finish:a4c8cb97-4fb6-46d1-b72e-f9cbf9fd341b:finish:2:synchronized": {
       "digest": "fd2bc2dac68f27bced56849e1f081f6de98fc046528b8b27bbd10e4662314586",
@@ -5316,6 +5318,10 @@
     },
     "github:43838213479:1:tick:0:review-presentation": {
       "digest": "901b51aa4cc96e0d84bf723a8ceccebd494601e14572a53cbbbac536c100ec4e",
+      "issue": 1456
+    },
+    "github:43838213479:1:tick:0:return": {
+      "digest": "e444c0c41ebc0b120ba0fb4d1c351dfa5c3da03bbe2c9d208e0d8a5208ab7990",
       "issue": 1456
     },
     "finish:a4c8cb97-4fb6-46d1-b72e-f9cbf9fd341b": {
