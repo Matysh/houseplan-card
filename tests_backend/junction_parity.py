@@ -15,7 +15,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from pure_imports import HOUSEPLAN_ROOT, REPO, load_pure
+from tests_backend.pure_imports import HOUSEPLAN_ROOT, REPO, load_pure
 
 DEFAULT_FIXTURE = REPO / "test" / "fixtures" / "junction-limits-parity.json"
 DEFAULT_BUILD_DIR = REPO / "test-build" / "junction-parity"

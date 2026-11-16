@@ -19,16 +19,31 @@ export const LEGACY_MUTATION_REGISTRY_FILE = 'scripts/mutation-gate.mjs';
 /**
  * Файлы, на которые ссылается команда гарда (#475).
  *
- * Без парсинга команды: берутся токены с суффиксом `.mjs`, `.test.mjs` или
- * `.py`, которые существуют в репозитории. Флаги (`--test-name-pattern=…`),
+ * Берутся пути `.mjs`/`.py` и локальные точки входа `python -m package.module`,
+ * которые существуют в репозитории. Флаги (`--test-name-pattern=…`),
  * шаблоны и произвольные слова файлами не считаются. Фикстуры гардов
  * (`test/fixtures/*`, `tests_backend/fixtures/*`) по команде вывести нельзя —
  * это граница: их дрейф остаётся полному прогону.
  */
 export function guardFiles(guard, exists = (file) => existsSync(join(repoRoot, file))) {
   const files = new Set();
-  for (const token of String(guard || '').split(/\s+/)) {
+  const tokens = String(guard || '').split(/\s+/);
+  for (let index = 0; index < tokens.length; index++) {
+    const token = tokens[index];
     const bare = token.replace(/^["']|["']$/g, '');
+    if (bare === '-m' && /(?:^|\/)python(?:3(?:\.\d+)?)?$/.test(tokens[index - 1] ?? '')
+      && /^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$/.test(tokens[index + 1] ?? '')) {
+      const module = tokens[index + 1].replaceAll('.', '/');
+      const entry = exists(`${module}.py`) ? `${module}.py` : `${module}/__main__.py`;
+      if (exists(entry)) {
+        files.add(entry);
+        const parts = entry.split('/');
+        for (let n = 1; n < parts.length; n++) {
+          const init = `${parts.slice(0, n).join('/')}/__init__.py`;
+          if (exists(init)) files.add(init);
+        }
+      }
+    }
     // Путь, а не обрывок шаблона: только [A-Za-z0-9_./-], без кавычек,
     // «|» и флагов. `--test-name-pattern="a|b.mjs"` даёт токен `b.mjs"` —
     // он не файл, даже если бы такой существовал.

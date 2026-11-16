@@ -697,6 +697,23 @@ test('#475 AC3: флаги и шаблоны гарда файлами не сч
   assert.deepEqual(guardFiles('', always), []);
 });
 
+test('#1456 Python module guards inventory their entry and transitive helper', () => {
+  const source = {
+    'tests_backend/junction_parity.py': 'from tests_backend.pure_imports import load_pure',
+    'tests_backend/pure_imports.py': 'def load_pure(): pass',
+    'tools/__main__.py': '',
+    'tools/__init__.py': '',
+  };
+  const exists = file => file in source;
+  assert.deepEqual(guardFiles('python3 -m tests_backend.junction_parity --build-dir=out', exists),
+    ['tests_backend/junction_parity.py']);
+  assert.deepEqual(guardInputs('python3 -m tests_backend.junction_parity', {
+    exists, read: file => source[file], files: Object.keys(source),
+  }), ['tests_backend/junction_parity.py', 'tests_backend/pure_imports.py']);
+  assert.deepEqual(guardFiles('python -m tools', exists), ['tools/__main__.py', 'tools/__init__.py']);
+  assert.deepEqual(guardFiles('node -m tools; python3 -m missing', exists), []);
+});
+
 test('#475 AC5: дифф, не задевающий ни патчей, ни гардов, ничего не отбирает', () => {
   const m = { id: 'x', guard: 'node demo/smoke_x.mjs', patches: [{ file: 'src/x.ts' }] };
   assert.deepEqual(selectChangedMutants([m], ['docs/README.md', 'src/other.ts'], always), []);

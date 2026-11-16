@@ -976,6 +976,14 @@
       "testCallSites": 10
     },
     {
+      "path": "test/floor-worker-bundle.test.mjs",
+      "kind": "infrastructure",
+      "decision": "addressed",
+      "reason": "Real in-memory isolated Worker bundling and final diagnostic maps; run when this build mechanism changes, not as a product scenario.",
+      "mechanism": "test-harness",
+      "automaticReleaseRun": false
+    },
+    {
       "path": "test/coverage-maps.test.mjs",
       "kind": "infrastructure",
       "decision": "addressed",

@@ -8824,7 +8824,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'junction-limit-ts-python-parity-drift',
     guard: 'npx tsc -p tsconfig.junction-parity.json && node scripts/fix-test-build.mjs '
-      + '&& python3 tests_backend/junction_parity.py --build-dir=test-build/junction-parity',
+      + '&& python3 -m tests_backend.junction_parity --build-dir=test-build/junction-parity',
     because: 'the clean-runner parity job must turn red when either production mirror changes '
       + 'one shared rule; otherwise a green run can again mean that no cross-runtime comparison '
       + 'actually happened (#548 AC2)',

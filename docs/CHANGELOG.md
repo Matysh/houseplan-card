@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Restore the nightly junction parity module entry without PYTHONPATH and compose final diagnostic source maps for the isolated floor Worker, including generated asset URLs (#1456).
 - Restore nightly mutation witnesses: prepare compiled fixtures reached through browser helper imports and model both independent late-HA recovery paths, and verify missing-contact gate paint (#1455).
 - Reuse scoped persistent floor geometry and prepare cache misses in a module worker; keep passive architectural previews separate from current devices, opening states and fresh-server readiness (#1454).
 - Mark the 2.5D option as under development with a visible rendering-quality note in all supported languages (#1450).
