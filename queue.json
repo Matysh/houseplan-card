@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15072,
+  "revision": 15073,
   "nextTicket": 497,
   "nextFence": 497,
   "tasks": {
@@ -4901,6 +4901,103 @@
         "at": 1794821234129,
         "runId": null,
         "runAttempt": null
+      },
+      "review": {
+        "version": 1,
+        "issue": 1456,
+        "requestId": "review:1456:2:5ee3cb5ef1b7a236b1ecbdac947da95d4ea10ca7:e113183c2f03278d97e384caf4a7161a7b5034ca",
+        "kind": "code",
+        "base": "e113183c2f03278d97e384caf4a7161a7b5034ca",
+        "materialSha": "09f5f5082ce065406e1d5d275255875e082c6d34",
+        "patchId": "5ee3cb5ef1b7a236b1ecbdac947da95d4ea10ca7",
+        "verdict": "accepted",
+        "authorContext": {
+          "status": "provided",
+          "source": {
+            "kind": "issue-body",
+            "issue": 1456,
+            "url": "https://github.com/Matysh/houseplan-card/issues/1456",
+            "heading": "Контекст исполнителя для ревью"
+          },
+          "text": "### Решение и границы\n\nВетка `codex/1456-nightly-background`, трек show, слой infra. Продуктовые алгоритмы и ночное расписание не меняются. Добавлены регрессии запуска без PYTHONPATH, зависимостей Python module guard, финальных карт Worker/его владельца и отсутствия карт в обычной сборке. Новый тест сборки классифицирован как адресная инфраструктурная проверка, а не новая обязательная продуктовая проверка.\n\n### Проверки и ограничения\n\nДо правки адресные регрессии воспроизвели обе ошибки: неразрешимый Python-импорт и `Diagnostic final map missing` у Worker. После ремонта проверяются чистый parity и соответствующий мутант (должен быть пойман именно расхождением правил), карты минифицированных байтов и сохранность действующих правил backend hygiene. Итоговый S6 передаётся штатной очередью. После merge отдельно повторяется весь исходный GitHub-run 43823002895; до его окончания полный зелёный фон не заявляется.\n\nОсобое внимание: prebuilt chunk не получает map asset автоматически; сдвиги длины при подстановках URL/fingerprint должны менять карту, а вставленный текст не должен приписываться исходному TS. У `python -m` должны учитываться реальная точка входа и транзитивный helper при отборе/переиспользовании guard.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: [ревью 43837645831](https://github.com/Matysh/houseplan-card/actions/runs/43837645831), материал `68455343`.\n\n- Неверная база `sources` у Worker → сборка вложенного графа перенесена в `renderStart`, когда известен фактический output directory основного Rollup. Вложенный `generate` получает каталог итогового Worker; TypeScript outDir также согласован с ним. Источники разрешаются относительно реального расположения map asset, без привязки к cwd и без исключения Worker.\n- Недостаточная проверка пути через TraceMap без базы → тест сохраняет выпущенную пару JS/map в свой временный каталог и передаёт её настоящему `indexGeneratedFiles`, с манифестом хэша фактических байтов. Требуется отсутствие ошибок и `product: true` с точными путями `src/floor-cache-worker.ts` и `src/floor-cache-compute.ts`; проверяется и sourcesContent. До исправления тест падал, после — проходит. Обычная сборка остаётся без карт, тест также зелёный.\n- Дополнительный совет о Python package init → добавлен пакетный `tests_backend/__init__.py` в фикстуру module guard, проверены его вход в closure и отбор мутанта по изменению init. Адресный тест прошёл.\n\nS6 первого раунда прошёл: 7 744 известных кейса, 72 зачтённых шага. Новая передача повторяет только проверки с изменившимися входами штатным reuse. Отдельный чистый guard исполнил 15 сценариев; `junction-limit-ts-python-parity-drift` пойман (1/1). Полный исходный GitHub-run пока ожидает merge."
+        },
+        "model": "claude-opus-5-5",
+        "report": {
+          "verdict": "accept",
+          "summary": "Блокер первого раунда устранён. Вложенный Rollup для Worker теперь собирается в `renderStart` с `dir`, равным реальному каталогу итогового файла (`<output dir>/houseplan-assets`). Поэтому `sources` в карте Worker отсчитываются от места, где лежит сама карта, так же как у основных chunk, и валидатор покрытия разрешает их в `src/...` с `product: true`. Новый тест проверяет это настоящим `indexGeneratedFiles` по выпущенной паре JS/map во временном каталоге. При прежней ошибке базы путей он упал бы с `source-outside-candidate`, так что проверка отличает правильный результат от неправильного. Python-часть осталась прежней и по-прежнему корректна; совет добавить в фикстуру `tests_backend/__init__.py` выполнен. Блокирующих замечаний нет. Полный зелёный ночной фон автор правильно не заявляет до повторного GitHub-run 43823002895 после merge.",
+          "understanding": "Ночной запуск 43823002895 упал по двум причинам.\n1) Мутационный guard `junction-limit-ts-python-parity-drift` вызывал `python3 tests_backend/junction_parity.py`. При прямом запуске файла helper не может импортировать канонический пакет. Исправление: запуск через `python3 -m tests_backend.junction_parity`, абсолютный импорт `tests_backend.pure_imports`, а `guardFiles` распознаёт `python -m` и добавляет точку входа и `__init__.py` на пути.\n2) Диагностическая сборка покрытия отклоняла изолированный Worker из #1454: он выпускался как prebuilt chunk без карты. Исправление: в диагностическом режиме вложенный Rollup собирает Worker с картой. Подстановка fingerprint идёт через `replaceChunkSource` с композицией карты, Terser получает входную карту, итоговая карта прикрепляется к prebuilt chunk и выпускается отдельным asset. Подстановка адреса Worker в chunk владельца тоже обновляет его карту.\n\nВо втором раунде изменилось:\n- сборка Worker перенесена из `buildStart` в `renderStart(outputOptions)`, где известен `dir` основного вывода;\n- `generate` получает `dir: join(outputDirectory, 'houseplan-assets')`, а outDir TypeScript перенесён внутрь этого каталога (`.worker-ts`), что согласуется с проверкой @rollup/plugin-typescript «outDir внутри dir»;\n- тест прогоняет выпущенную пару через `indexGeneratedFiles` и требует точных путей `src/floor-cache-worker.ts` и `src/floor-cache-compute.ts` с `product: true` и без issues;\n- в фикстуру guard добавлен `tests_backend/__init__.py`.\n\nЧто разобрал:\n- `scripts/floor-worker-bundle.mjs` в версии head;\n- `scripts/coverage-maps.mjs` целиком: `coverageTypeScriptOptions` с абсолютным `sourceRoot`, `editMappedSource`, `replaceChunkSource`, `diagnosticMapAssetsPlugin`;\n- `rollup.config.mjs`: единственный output `dir: 'dist'` и порядок плагинов;\n- `cleanBundleOutputPlugin` (`buildStart`);\n- `scripts/coverage-identity.mjs:102-120`: как источники разрешаются от `dirname(mapPath)`;\n- новый тест и diff Python-части.",
+          "analysis": [
+            {
+              "topic": "База `sources` в карте Worker (прежний блокер)",
+              "assessment": "Устранено. Вложенный `generate` теперь получает `dir`, совпадающий с каталогом, куда фактически попадут `floor-worker-<hash>.js` и его `.map`. Rollup строит `sources` относительно этого каталога (`../../src/...`), а Terser с `sourceMap.content` их сохраняет. Валидатор разрешает их как `resolve(dirname(mapPath), source)` и получает `src/...`. Каталог берётся из `outputOptions` основного build, а не из жёстко заданного `dist`, поэтому решение верно и для временного каталога теста. `renderStart` подходит для этого шага: выходной bundle к этому моменту уже создан, prebuilt chunk и asset можно выпустить, а подстановка адреса Worker в `generateBundle` выполняется позже. В обычной сборке `dir` при `inlineDynamicImports` и одном chunk на байты кода не влияет, а новый outDir TypeScript не меняет emit.",
+              "evidence": "`scripts/floor-worker-bundle.mjs:19-32` (`renderStart`, `workerDirectory`, `generate({ dir: workerDirectory, ... })`); `rollup.config.mjs:25-26,65` (единственный output `dir: 'dist'`); `scripts/coverage-identity.mjs:106-119`."
+            },
+            {
+              "topic": "Различающая сила нового теста",
+              "assessment": "Тест теперь проверяет путь так же, как его читает потребитель. Он записывает выпущенную пару в `<tmp>/dist/houseplan-assets/`, строит манифест по фактическому хэшу байтов и вызывает настоящий `indexGeneratedFiles` с `root: process.cwd()`. При старой базе (от cwd) путь `src/...` разрешился бы внутрь временного каталога, `relative(root, …)` дал бы `../...`, и появился бы issue `source-outside-candidate`. Значит, `assert.deepEqual(index.issues, [])` упал бы, что согласуется со словами автора о покраске теста до исправления. Проверка `sourcesContent` против файлов в `src/` выполняется тем же кодом (`foreign-or-missing-sourcesContent`). Ветка с обычной сборкой проверяет, что карт нет совсем. Регулярное выражение в `mappedAt(worker, ...)` по-прежнему допускает любой префикс, но теперь это лишь проверка строки, а путь закрепляет индекс.",
+              "evidence": "`test/floor-worker-bundle.test.mjs:63-80` (запись пары, `indexGeneratedFiles`, точные `src/floor-cache-worker.ts` и `src/floor-cache-compute.ts`, `product`); `scripts/coverage-identity.mjs:109-117`."
+            },
+            {
+              "topic": "Композиция карт и обычная сборка",
+              "assessment": "По сравнению с первым раундом не изменилась, и прежняя положительная оценка сохраняется. Цепочка подстановка fingerprint → Terser с входной картой → `rollupMap` → prebuilt chunk + asset собрана корректно. Вставленный адрес Worker в chunk владельца получает сегмент без источника. Без режима покрытия `replaceChunkSource` выполняет обычный `replaceAll`, и карты не появляются. Комментарии о том, почему asset выпускается вручную и почему сборка ждёт `renderStart`, объясняют неочевидные причины, и их стоит сохранить.",
+              "evidence": "`scripts/coverage-maps.mjs:30-91,123-132`; `scripts/floor-worker-bundle.mjs:17-18,39-45,53`; `test/floor-worker-bundle.test.mjs:52-58`."
+            },
+            {
+              "topic": "Python: точка входа и отбор guard",
+              "assessment": "Решение верное и минимальное: без правки `sys.path` и без подмены пакета. Регрессия запускает `-m` в чистом интерпретаторе без PYTHONPATH, то есть ровно тот путь, который упал ночью. `guardFiles` консервативно разбирает только `python[3[.x]] -m <dotted>` и учитывает только существующие файлы. По совету первого раунда фикстура теперь фиксирует, что `tests_backend/__init__.py` входит в closure и что его изменение отбирает мутант.",
+              "evidence": "`tests_backend/junction_parity.py:18`; `tests_backend/test_junction_parity.py:12-22`; `scripts/mutation-selection.mjs:29-47`; `scripts/mutation-registry.mjs:8827`; `test/mutation-gate.test.mjs:700-719`."
+            }
+          ],
+          "blockers": [],
+          "improvements": [
+            "При повторном GitHub-run 43823002895 стоит посмотреть не только на зелёный статус, но и на `build-index.json` диагностики. У записи `dist/houseplan-assets/floor-worker-*.js` источники должны быть `src/floor-cache-*.ts` с `product: true`, а в отчёте покрытия должны появиться строки модулей Worker. Только так будет видно, что исполнение Worker действительно попадает в покрытие. Предназначение карт выполнено, но сборщик V8-покрытия может не собирать данные из контекста Worker; в этом раунде это не проверено (см. границы)."
+          ],
+          "boundaries": "Сборку, тесты и диагностику я не запускал: таковы правила S7. Опирался на статус S6 «Тесты для задачи #1456 (перед ревью)» для материала `09f5f508` (passed, без ошибок); содержимого отчёта я не видел. Утверждение автора, что тест падал до исправления, сверил по коду: при старой базе путей `indexGeneratedFiles` выдал бы `source-outside-candidate`. Вывод о путях `sources` сделан по исходникам `floor-worker-bundle.mjs`, `coverage-maps.mjs`, `coverage-identity.mjs`, `rollup.config.mjs` и по известному поведению Rollup и Terser. Отдельно не проверял, собирает ли сборщик V8-покрытия в `coverage-diagnostic` данные из контекста module Worker: задача требовала, чтобы Worker не выпадал из диагностики из-за карты, и это обеспечено. Повторный полный GitHub-run 43823002895 ещё не выполнен, он ожидает merge, и автор это прямо оговаривает."
+        },
+        "usage": {
+          "input_tokens": 10,
+          "cache_creation_input_tokens": 56903,
+          "cache_read_input_tokens": 181154,
+          "output_tokens": 8101,
+          "output_tokens_details": {
+            "thinking_tokens": 3466
+          },
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 56903,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "global",
+          "iterations": [
+            {
+              "input_tokens": 2,
+              "output_tokens": 608,
+              "cache_read_input_tokens": 48793,
+              "cache_creation_input_tokens": 12314,
+              "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 12314
+              },
+              "type": "message"
+            }
+          ],
+          "speed": "standard",
+          "fallback_credit": null
+        },
+        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nБлокер первого раунда устранён. Вложенный Rollup для Worker теперь собирается в `renderStart` с `dir`, равным реальному каталогу итогового файла (`<output dir>/houseplan-assets`). Поэтому `sources` в карте Worker отсчитываются от места, где лежит сама карта, так же как у основных chunk, и валидатор покрытия разрешает их в `src/...` с `product: true`. Новый тест проверяет это настоящим `indexGeneratedFiles` по выпущенной паре JS/map во временном каталоге. При прежней ошибке базы путей он упал бы с `source-outside-candidate`, так что проверка отличает правильный результат от неправильного. Python-часть осталась прежней и по-прежнему корректна; совет добавить в фикстуру `tests_backend/__init__.py` выполнен. Блокирующих замечаний нет. Полный зелёный ночной фон автор правильно не заявляет до повторного GitHub-run 43823002895 после merge.\n\n## Понимание решения\n\nНочной запуск 43823002895 упал по двум причинам.\n1) Мутационный guard `junction-limit-ts-python-parity-drift` вызывал `python3 tests_backend/junction_parity.py`. При прямом запуске файла helper не может импортировать канонический пакет. Исправление: запуск через `python3 -m tests_backend.junction_parity`, абсолютный импорт `tests_backend.pure_imports`, а `guardFiles` распознаёт `python -m` и добавляет точку входа и `__init__.py` на пути.\n2) Диагностическая сборка покрытия отклоняла изолированный Worker из #1454: он выпускался как prebuilt chunk без карты. Исправление: в диагностическом режиме вложенный Rollup собирает Worker с картой. Подстановка fingerprint идёт через `replaceChunkSource` с композицией карты, Terser получает входную карту, итоговая карта прикрепляется к prebuilt chunk и выпускается отдельным asset. Подстановка адреса Worker в chunk владельца тоже обновляет его карту.\n\nВо втором раунде изменилось:\n- сборка Worker перенесена из `buildStart` в `renderStart(outputOptions)`, где известен `dir` основного вывода;\n- `generate` получает `dir: join(outputDirectory, 'houseplan-assets')`, а outDir TypeScript перенесён внутрь этого каталога (`.worker-ts`), что согласуется с проверкой @rollup/plugin-typescript «outDir внутри dir»;\n- тест прогоняет выпущенную пару через `indexGeneratedFiles` и требует точных путей `src/floor-cache-worker.ts` и `src/floor-cache-compute.ts` с `product: true` и без issues;\n- в фикстуру guard добавлен `tests_backend/__init__.py`.\n\nЧто разобрал:\n- `scripts/floor-worker-bundle.mjs` в версии head;\n- `scripts/coverage-maps.mjs` целиком: `coverageTypeScriptOptions` с абсолютным `sourceRoot`, `editMappedSource`, `replaceChunkSource`, `diagnosticMapAssetsPlugin`;\n- `rollup.config.mjs`: единственный output `dir: 'dist'` и порядок плагинов;\n- `cleanBundleOutputPlugin` (`buildStart`);\n- `scripts/coverage-identity.mjs:102-120`: как источники разрешаются от `dirname(mapPath)`;\n- новый тест и diff Python-части.\n\n## Разбор решения\n\n### База `sources` в карте Worker (прежний блокер)\n\nУстранено. Вложенный `generate` теперь получает `dir`, совпадающий с каталогом, куда фактически попадут `floor-worker-<hash>.js` и его `.map`. Rollup строит `sources` относительно этого каталога (`../../src/...`), а Terser с `sourceMap.content` их сохраняет. Валидатор разрешает их как `resolve(dirname(mapPath), source)` и получает `src/...`. Каталог берётся из `outputOptions` основного build, а не из жёстко заданного `dist`, поэтому решение верно и для временного каталога теста. `renderStart` подходит для этого шага: выходной bundle к этому моменту уже создан, prebuilt chunk и asset можно выпустить, а подстановка адреса Worker в `generateBundle` выполняется позже. В обычной сборке `dir` при `inlineDynamicImports` и одном chunk на байты кода не влияет, а новый outDir TypeScript не меняет emit.\n\nОснование: `scripts/floor-worker-bundle.mjs:19-32` (`renderStart`, `workerDirectory`, `generate({ dir: workerDirectory, ... })`); `rollup.config.mjs:25-26,65` (единственный output `dir: 'dist'`); `scripts/coverage-identity.mjs:106-119`.\n\n### Различающая сила нового теста\n\nТест теперь проверяет путь так же, как его читает потребитель. Он записывает выпущенную пару в `<tmp>/dist/houseplan-assets/`, строит манифест по фактическому хэшу байтов и вызывает настоящий `indexGeneratedFiles` с `root: process.cwd()`. При старой базе (от cwd) путь `src/...` разрешился бы внутрь временного каталога, `relative(root, …)` дал бы `../...`, и появился бы issue `source-outside-candidate`. Значит, `assert.deepEqual(index.issues, [])` упал бы, что согласуется со словами автора о покраске теста до исправления. Проверка `sourcesContent` против файлов в `src/` выполняется тем же кодом (`foreign-or-missing-sourcesContent`). Ветка с обычной сборкой проверяет, что карт нет совсем. Регулярное выражение в `mappedAt(worker, ...)` по-прежнему допускает любой префикс, но теперь это лишь проверка строки, а путь закрепляет индекс.\n\nОснование: `test/floor-worker-bundle.test.mjs:63-80` (запись пары, `indexGeneratedFiles`, точные `src/floor-cache-worker.ts` и `src/floor-cache-compute.ts`, `product`); `scripts/coverage-identity.mjs:109-117`.\n\n### Композиция карт и обычная сборка\n\nПо сравнению с первым раундом не изменилась, и прежняя положительная оценка сохраняется. Цепочка подстановка fingerprint → Terser с входной картой → `rollupMap` → prebuilt chunk + asset собрана корректно. Вставленный адрес Worker в chunk владельца получает сегмент без источника. Без режима покрытия `replaceChunkSource` выполняет обычный `replaceAll`, и карты не появляются. Комментарии о том, почему asset выпускается вручную и почему сборка ждёт `renderStart`, объясняют неочевидные причины, и их стоит сохранить.\n\nОснование: `scripts/coverage-maps.mjs:30-91,123-132`; `scripts/floor-worker-bundle.mjs:17-18,39-45,53`; `test/floor-worker-bundle.test.mjs:52-58`.\n\n### Python: точка входа и отбор guard\n\nРешение верное и минимальное: без правки `sys.path` и без подмены пакета. Регрессия запускает `-m` в чистом интерпретаторе без PYTHONPATH, то есть ровно тот путь, который упал ночью. `guardFiles` консервативно разбирает только `python[3[.x]] -m <dotted>` и учитывает только существующие файлы. По совету первого раунда фикстура теперь фиксирует, что `tests_backend/__init__.py` входит в closure и что его изменение отбирает мутант.\n\nОснование: `tests_backend/junction_parity.py:18`; `tests_backend/test_junction_parity.py:12-22`; `scripts/mutation-selection.mjs:29-47`; `scripts/mutation-registry.mjs:8827`; `test/mutation-gate.test.mjs:700-719`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- При повторном GitHub-run 43823002895 стоит посмотреть не только на зелёный статус, но и на `build-index.json` диагностики. У записи `dist/houseplan-assets/floor-worker-*.js` источники должны быть `src/floor-cache-*.ts` с `product: true`, а в отчёте покрытия должны появиться строки модулей Worker. Только так будет видно, что исполнение Worker действительно попадает в покрытие. Предназначение карт выполнено, но сборщик V8-покрытия может не собирать данные из контекста Worker; в этом раунде это не проверено (см. границы).\n\n## Границы анализа\n\nСборку, тесты и диагностику я не запускал: таковы правила S7. Опирался на статус S6 «Тесты для задачи #1456 (перед ревью)» для материала `09f5f508` (passed, без ошибок); содержимого отчёта я не видел. Утверждение автора, что тест падал до исправления, сверил по коду: при старой базе путей `indexGeneratedFiles` выдал бы `source-outside-candidate`. Вывод о путях `sources` сделан по исходникам `floor-worker-bundle.mjs`, `coverage-maps.mjs`, `coverage-identity.mjs`, `rollup.config.mjs` и по известному поведению Rollup и Terser. Отдельно не проверял, собирает ли сборщик V8-покрытия в `coverage-diagnostic` данные из контекста module Worker: задача требовала, чтобы Worker не выпадал из диагностики из-за карты, и это обеспечено. Повторный полный GitHub-run 43823002895 ещё не выполнен, он ожидает merge, и автор это прямо оговаривает.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: e113183c2f03278d97e384caf4a7161a7b5034ca → 09f5f5082ce065406e1d5d275255875e082c6d34\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1456, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Решение и границы\n\nВетка `codex/1456-nightly-background`, трек show, слой infra. Продуктовые алгоритмы и ночное расписание не меняются. Добавлены регрессии запуска без PYTHONPATH, зависимостей Python module guard, финальных карт Worker/его владельца и отсутствия карт в обычной сборке. Новый тест сборки классифицирован как адресная инфраструктурная проверка, а не новая обязательная продуктовая проверка.\n\n### Проверки и ограничения\n\nДо правки адресные регрессии воспроизвели обе ошибки: неразрешимый Python-импорт и `Diagnostic final map missing` у Worker. После ремонта проверяются чистый parity и соответствующий мутант (должен быть пойман именно расхождением правил), карты минифицированных байтов и сохранность действующих правил backend hygiene. Итоговый S6 передаётся штатной очередью. После merge отдельно повторяется весь исходный GitHub-run 43823002895; до его окончания полный зелёный фон не заявляется.\n\nОсобое внимание: prebuilt chunk не получает map asset автоматически; сдвиги длины при подстановках URL/fingerprint должны менять карту, а вставленный текст не должен приписываться исходному TS. У `python -m` должны учитываться реальная точка входа и транзитивный helper при отборе/переиспользовании guard.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: [ревью 43837645831](https://github.com/Matysh/houseplan-card/actions/runs/43837645831), материал `68455343`.\n\n- Неверная база `sources` у Worker → сборка вложенного графа перенесена в `renderStart`, когда известен фактический output directory основного Rollup. Вложенный `generate` получает каталог итогового Worker; TypeScript outDir также согласован с ним. Источники разрешаются относительно реального расположения map asset, без привязки к cwd и без исключения Worker.\n- Недостаточная проверка пути через TraceMap без базы → тест сохраняет выпущенную пару JS/map в свой временный каталог и передаёт её настоящему `indexGeneratedFiles`, с манифестом хэша фактических байтов. Требуется отсутствие ошибок и `product: true` с точными путями `src/floor-cache-worker.ts` и `src/floor-cache-compute.ts`; проверяется и sourcesContent. До исправления тест падал, после — проходит. Обычная сборка остаётся без карт, тест также зелёный.\n- Дополнительный совет о Python package init → добавлен пакетный `tests_backend/__init__.py` в фикстуру module guard, проверены его вход в closure и отбор мутанта по изменению init. Адресный тест прошёл.\n\nS6 первого раунда прошёл: 7 744 известных кейса, 72 зачтённых шага. Новая передача повторяет только проверки с изменившимися входами штатным reuse. Отдельный чистый guard исполнил 15 сценариев; `junction-limit-ts-python-parity-drift` пойман (1/1). Полный исходный GitHub-run пока ожидает merge.\n```\n\n</details>\n",
+        "createdAt": "2026-11-16T09:29:47.470Z",
+        "artifactId": 14211479479,
+        "runId": 43839860600,
+        "runAttempt": 1,
+        "completedAt": "2026-11-16T09:29:53Z",
+        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/43839860600",
+        "runStatus": "completed",
+        "publicationPending": true,
+        "expectedBase": "e113183c2f03278d97e384caf4a7161a7b5034ca"
       }
     }
   },
@@ -5265,9 +5362,9 @@
     "fence": 496,
     "materialSha": "09f5f5082ce065406e1d5d275255875e082c6d34",
     "expectedBase": "e113183c2f03278d97e384caf4a7161a7b5034ca",
-    "phase": "review",
+    "phase": "ready-to-merge",
     "admittedAt": 1794820848543,
-    "expiresAt": 1794824812847,
+    "expiresAt": 1794825016459,
     "patchId": "5ee3cb5ef1b7a236b1ecbdac947da95d4ea10ca7",
     "reviewRequest": "review:1456:2:5ee3cb5ef1b7a236b1ecbdac947da95d4ea10ca7:e113183c2f03278d97e384caf4a7161a7b5034ca"
   },
@@ -5398,6 +5495,10 @@
     },
     "github:43840273133:1:tick:0:review-presentation": {
       "digest": "ba68ef4674a6469799a51202367dc3e95ab2de9360b3a9c818e3b6960c7cf726",
+      "issue": 1456
+    },
+    "github:43840273133:1:tick:0:review-complete": {
+      "digest": "43df42e4e04451e68fac1f7db8fcdcc2a4beb490d960f7dfaba605fb871472a1",
       "issue": 1456
     },
     "finish:a4c8cb97-4fb6-46d1-b72e-f9cbf9fd341b": {
