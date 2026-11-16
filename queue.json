@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15038,
+  "revision": 15039,
   "nextTicket": 496,
   "nextFence": 496,
   "tasks": {
@@ -4853,7 +4853,7 @@
       "ownerDecision": null,
       "ticket": 495,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794819958802,
       "reviewEntry": 1,
       "patchId": "00133a43c4f7f8a1ffa4351475403e1dd9aae98b",
@@ -4868,7 +4868,16 @@
         "test/mutation-gate.test.mjs",
         "tests_backend/junction_parity.py",
         "tests_backend/test_junction_parity.py"
-      ]
+      ],
+      "s6": {
+        "id": "20261116T090616138-410d5b22",
+        "name": "Тесты для задачи #1456 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261116T090616138-410d5b22/report.json",
+        "materialSha": "68455343c9b82cd44f07a99c4a9cd46ddabb1de8",
+        "status": "passed",
+        "finishedAt": "2026-11-16T09:12:00.574Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -5218,9 +5227,9 @@
     "fence": 495,
     "materialSha": "68455343c9b82cd44f07a99c4a9cd46ddabb1de8",
     "expectedBase": "e113183c2f03278d97e384caf4a7161a7b5034ca",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794819962417,
-    "expiresAt": 1794820561595,
+    "expiresAt": 1794823921955,
     "patchId": "00133a43c4f7f8a1ffa4351475403e1dd9aae98b"
   },
   "events": {
@@ -5273,6 +5282,34 @@
         "layer": "product",
         "materialSha": "68455343c9b82cd44f07a99c4a9cd46ddabb1de8",
         "phase": "sync"
+      }
+    },
+    "finish:a4c8cb97-4fb6-46d1-b72e-f9cbf9fd341b:finish:3:s6-complete": {
+      "digest": "44b7da387a27b101f3032705933b7890ad8cac1e054eb5d955b6c56a59e4953b",
+      "issue": 1456,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1456,
+        "at": 1794820321955,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "68455343c9b82cd44f07a99c4a9cd46ddabb1de8",
+        "phase": "review",
+        "evidence": {
+          "id": "20261116T090616138-410d5b22",
+          "name": "Тесты для задачи #1456 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261116T090616138-410d5b22/report.json",
+          "materialSha": "68455343c9b82cd44f07a99c4a9cd46ddabb1de8",
+          "status": "passed",
+          "finishedAt": "2026-11-16T09:12:00.574Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Решение и границы\n\nВетка `codex/1456-nightly-background`, трек show, слой infra. Продуктовые алгоритмы и ночное расписание не меняются. Добавлены регрессии запуска без PYTHONPATH, зависимостей Python module guard, финальных карт Worker/его владельца и отсутствия карт в обычной сборке. Новый тест сборки классифицирован как адресная инфраструктурная проверка, а не новая обязательная продуктовая проверка.\n\n### Проверки и ограничения\n\nДо правки адресные регрессии воспроизвели обе ошибки: неразрешимый Python-импорт и `Diagnostic final map missing` у Worker. После ремонта проверяются чистый parity и соответствующий мутант (должен быть пойман именно расхождением правил), карты минифицированных байтов и сохранность действующих правил backend hygiene. Итоговый S6 передаётся штатной очередью. После merge отдельно повторяется весь исходный GitHub-run 43823002895; до его окончания полный зелёный фон не заявляется.\n\nОсобое внимание: prebuilt chunk не получает map asset автоматически; сдвиги длины при подстановках URL/fingerprint должны менять карту, а вставленный текст не должен приписываться исходному TS. У `python -m` должны учитываться реальная точка входа и транзитивный helper при отборе/переиспользовании guard.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
