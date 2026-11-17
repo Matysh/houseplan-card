@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15240,
+  "revision": 15241,
   "nextTicket": 505,
   "nextFence": 504,
   "tasks": {
@@ -4904,7 +4904,7 @@
       "ownerDecision": null,
       "ticket": 503,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794947013195,
       "reviewEntry": 7,
       "patchId": "3a6eaadcf818ebb93ee0f6fba5b08487d8d5a153",
@@ -4983,19 +4983,15 @@
         "transitionConfirmed": true
       },
       "s6": {
-        "id": "20261117T194700160-6802425f",
+        "id": "20261117T202611060-decd12ea",
         "name": "Тесты для задачи #1458 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261117T194700160-6802425f/report.json",
-        "materialSha": "bdc4a72d0aa742fbbd085e172ccb3a04845d624e",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261117T202611060-decd12ea/report.json",
+        "materialSha": "4a6cd83f2e1fe40c3e8e7ec95ec588e412052ad3",
         "status": "passed",
-        "finishedAt": "2026-11-17T19:48:53.976Z",
+        "finishedAt": "2026-11-17T20:31:10.697Z",
         "failures": []
       },
-      "reviewRound": null,
-      "reviewCorrection": {
-        "requestId": "review:1458:6:e4a4074673a2f0ade2e97a7303a97bb35b1ab9ae:09f5f5082ce065406e1d5d275255875e082c6d34",
-        "at": 1794946165831
-      }
+      "reviewRound": null
     }
   },
   "ownerDecisions": {},
@@ -5361,9 +5357,9 @@
     "fence": 503,
     "materialSha": "4a6cd83f2e1fe40c3e8e7ec95ec588e412052ad3",
     "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794947067567,
-    "expiresAt": 1794947754470,
+    "expiresAt": 1794951071769,
     "patchId": "3a6eaadcf818ebb93ee0f6fba5b08487d8d5a153"
   },
   "events": {
@@ -6046,6 +6042,34 @@
         "track": "show",
         "layer": "product",
         "materialSha": "a7ada228a4b78f97b19808101c47eb1918b41148"
+      }
+    },
+    "finish:c62e5e5c-25a3-42a7-8a4d-3647669c130b:finish:2:s6-complete": {
+      "digest": "ce5c8b5b54a79a663c1ca10ff7c87c51f335d51d27f1ac9c0acd9a872b47827b",
+      "issue": 1458,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1458,
+        "at": 1794947471769,
+        "entry": 7,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "4a6cd83f2e1fe40c3e8e7ec95ec588e412052ad3",
+        "phase": "review",
+        "evidence": {
+          "id": "20261117T202611060-decd12ea",
+          "name": "Тесты для задачи #1458 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261117T202611060-decd12ea/report.json",
+          "materialSha": "4a6cd83f2e1fe40c3e8e7ec95ec588e412052ad3",
+          "status": "passed",
+          "finishedAt": "2026-11-17T20:31:10.697Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": true,
+        "reviewChanges": "### Результат и подход\n\nРеализован принятый в раунде 2 локальный IFC2X3/IFC4-профиль Archicad/Revit во внешнем конвертере: этажи, стены, комнаты, двери и окна → model v11 / export v2, выбор этажей, 2D-превью и пообъектный отчёт до скачивания. Привязки HA не создаются; КОМПАС и актуальные пользовательские версии без файлов не подтверждены.\n\nОдин async core/reader/writer для CLI и браузера, общий building frame до выбора этажей. Встроенная ST-фабрика web-ifc 0.0.79 в Blob Worker: никакого URL fallback; source patch до генерации, закрытие модели, generation/terminate/revoke. Чистая emsdk-пересборка воспроизвела engine SHA256 9991fc410b075a57c10135d6e8996f298c60064fb7f90fd59c672b6539502d75. Vendor и рецепт после этого не менялись. Обычный build-page --check сверяет digest без SDK. vendor-index.json сохраняет единственный HACS *manifest.json.\n\nПроверены source-host lineage после coalesce/T/X, физические единицы и offsets, mapped scale (16 m/40 cm/0.617 m при scale=2 с Body и без), многоэтажные стены/общий frame, выбранный Upper только со spanning walls, запрет фиктивных виртуальных границ при неподдержанных стенах, дверь через техническую коллинеарную точку. Настоящие изломы не спрямляются. Консервативный профиль и потери подробно описаны в IFC.md и IFC-VALIDATION.md.\n\n### Проверки и ограничения\n\nS6 на bdc4a72d завершился passed: 657 шагов, 9041 учтённый кейс; отчёт /home/sergey/houseplan-1227/.git/process-next/runs/20261117T194700160-6802425f/report.json. Для нового SHA перед повторным S7 выполняется штатный S6.\n\nПосле исправлений раунда 1: 39/39 адресных Node-проверок (IFC, страница/bundle, site-preparer, converter diagnostics) прошли; offline browser с настоящим Worker/WASM, RU/EN/390 px, cancel/stale/отказы/recovery и выбором Upper прошёл, сетевых попыток нет. IFC pytest — 5 passed через validators/preview/authenticated HA apply/export/reimport; прежние converter backend — 44, compiled consumers — 9. Native Python node_move UI проверил оба конца, меню/курсор после save, Undo/Redo и повторное открытие. Отдельный local-artifact → реальный disposable HA 2026.11.1 preflight: 4/4 формата + 2/2 setup, для IFC — node/window/room edits и reload. Это не доказательство опубликованного сайта.\n\nПолные фактические проверки/измерения: scripts/sh3d-convert/IFC-VALIDATION.md и evidence/ifc-public-profile.json. Старые реальные примеры: Archicad 20 — стены13/13, комнаты7/7, двери5/5, окна9/11; Revit2011 — 57/57,14/21,8/14,20/24. Часть имеет оговорки. Node RSS, WASM allocation и HTML/gzip отделены; не выдаются за универсальный memory budget.\n\nВсе 4 визуальных примера приняты владельцем в чате 17.11.2026 («Принять все 4 кадра»), сохранены в evidence/visual/ с reference-index.json и хешами. Принятый preview PNG после исправлений побайтно прежний. Это ручные контрольные примеры, не ложный pixel-golden pass.\n\nПосле принятия кода остаются публикация точного принятого конвертера и 4 published-page → private HA journeys, плюс RU/EN фактическая проверка CSP/Worker/скачивания/сетки форматов. Внешних файлов сайта пока не меняли; Caddy/HA-настройки не меняются. Выпуск версии Houseplan не запрошен.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1 кода](https://github.com/Matysh/houseplan-card/issues/1458#issuecomment-6959576056), материал bdc4a72d → новый коммит 4a6cd83f2.\n\n- Единственный блокер, смещение слоя на ломаной/off-local-X оси: при ненулевом физическом shift и непараллельном local X участке readWall теперь явно отказывает всей стене с ifc_wall_axis_unsupported. Ошибочного сдвига вдоль участка не выдаёт. RU/EN причина предлагает разделить стену при экспорте. Реальный IFC/WASM тест с Г-образной осью, referenceOffset и noWallBody требует один именованный пропуск из шести стен. Центральные изломы, повёрнутые прямые и mapped offsets остаются проверены.\n- До публикации устранён legacy CSS conflict: preparer узнаёт точный безымянный style прежней версии и заменяет только его. Старое repeat(3) не перекрывает repeat(4); при существующем owned id убирается дублирующий legacy block. Fixture механически получен базовым preparer 09f5f508; повтор идемпотентен. Проверен также фактический снимок текущего PHP-шаблона — прежний shell/редакционные блоки сохранены.\n- Добавлен сквозной reflected-placement IFC/WASM тест: стена, дверь и окно отражаются согласованно, оба проёма остаются на реальных hosts после экспорта.\n- В IFC.md таблица совместимости перенесена под Compatibility evidence, сборка — под Reproducible engine delivery; новое ограничение reference line описано на обоих языках.\n\nНеобязательное расширение геометрического профиля (IfcRelSpaceBoundary-disambiguation, TrimmedCurve и менее консервативный bbox) не включено в этот раунд: сохраняется явный пообъектный пропуск и опубликованные границы совместимости. Стандартная сторона двери остаётся partial как неперенесённая часть исходной семантики, с предупреждением до скачивания.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
