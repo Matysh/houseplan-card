@@ -39,6 +39,7 @@ export function ifcFixture(options = {}) {
     const floorPlacement = add('IFCLOCALPLACEMENT',buildingPlacement,axis([options.floorOffset && index ? 1 : 0,0,index*3]));
     const floor = add('IFCBUILDINGSTOREY',guid(),'$',text(index ? 'Upper' : 'Ground'),'$','$',floorPlacement,'$','$','.ELEMENT.',length(index*3));
     add('IFCRELAGGREGATES',guid(),'$','$','$',building,list([floor]));
+    if(options.emptyUpper&&index>0)continue;
     const contained = [];
     const wall = (a,b,t=.2,offset=-t/2,includeBody=true) => {
       t=options.wallThickness??t;

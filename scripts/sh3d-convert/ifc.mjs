@@ -12,10 +12,19 @@ const flip = p => [p[0], -p[1]];
 
 export async function convertIfc(bytes, options = {}) { return convertIfcModel(await readIfc(bytes), options); }
 
+/** One storey-membership rule for conversion and the browser's catalog. */
+export function ifcFloorContents(model, floor, entities = model.entities) {
+  const floorsById = new Map(model.floors.map(f => [f.id, f]));
+  const owned = entities.filter(e => e.floorId === floor.id);
+  const spanning = entities.filter(e => e.kind === 'wall' && e.floorId !== floor.id
+    && floorsById.get(e.floorId)?.buildingId === floor.buildingId
+    && Number.isFinite(floor.elevation) && e.walls?.some(w => w.zMin !== null && w.zMin <= floor.elevation + 1 && w.zMax > floor.elevation + 1));
+  return { owned, wallEntities: [...owned.filter(e => e.kind === 'wall'), ...spanning] };
+}
+
 export function convertIfcModel(model, options = {}) {
   const entities = [...model.entities.map(e => ({ ...e, results: [] })), ...model.floors.map(f => ({ ...f,
     sourceId: Number(f.id), kind: 'floor', floorId: f.id, outcome: 'transferred', results: [] }))];
-  const floorsById = new Map(model.floors.map(f => [f.id, f]));
   const report = { sourceFormat: 'ifc', schema: model.schema, metresPerUnit: model.metresPerUnit,
     sourceProgram: model.sourceProgram, sourcePreprocessor: model.sourcePreprocessor,
     measurements: { wasmLinearBytes: model.wasmLinearBytes },
@@ -25,11 +34,7 @@ export function convertIfcModel(model, options = {}) {
     levels: [], items: [{ code: 'ifc_profile' }, { code: 'ifc_room_area' }] };
   const candidates = [];
   for (const floor of model.floors) {
-    const owned = entities.filter(e => e.floorId === floor.id);
-    const multi = entities.filter(e => e.kind === 'wall' && e.outcome !== 'skipped' && e.floorId !== floor.id
-      && floorsById.get(e.floorId)?.buildingId === floor.buildingId
-      && Number.isFinite(floor.elevation) && e.walls.some(w => w.zMin !== null && w.zMin <= floor.elevation + 1 && w.zMax > floor.elevation + 1));
-    const wallEntities = [...owned.filter(e => e.kind === 'wall'), ...multi];
+    const { owned, wallEntities } = ifcFloorContents(model, floor, entities);
     const walls = joinIfcAxes(wallEntities.filter(e => e.outcome !== 'skipped').flatMap(e => e.walls.map((w, i) => ({ ...w, id: `ifc-w-${e.sourceId}-${i}`, sourceId: e.sourceId }))));
     const physicalWalls = [...walls];
     const notes = [], rooms = [], ids = makeIds(`ifc-${floor.id}`);

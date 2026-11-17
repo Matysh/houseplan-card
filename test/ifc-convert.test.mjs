@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { ifcFixture } from './helpers/ifc-fixture.mjs';
-import { convertIfc, readIfc } from '../scripts/sh3d-convert/ifc.mjs';
+import { convertIfc, convertIfcModel, readIfc } from '../scripts/sh3d-convert/ifc.mjs';
 import { IfcReader, validateIfcBytes } from '../scripts/sh3d-convert/ifc-read.mjs';
 import { transform } from '../scripts/sh3d-convert/ifc-math.mjs';
 import { MAX_IFC_BYTES } from '../scripts/sh3d-convert/ifc-errors.mjs';
@@ -69,6 +69,24 @@ test('#1458 low walls stay on their own storey, spanning walls reach actual addi
 test('#1458 no IfcSpace leaves independent editable walls, no invented room',async()=>{
   const r=await convertIfc(ifcFixture({noRooms:true}),options);
   assert.equal(space(r).rooms.length,0);assert.ok(space(r).partitions.length>=5);
+});
+
+test('#1458 an upper storey containing only spanning walls is still a real editable floor',async()=>{
+  const result=await convertIfc(ifcFixture({twoFloors:true,emptyUpper:true,wallHeight:6,noRooms:true,noOpenings:true}),options);
+  assert.equal(result.documents.length,2);
+  const upper=result.documents[1].payload.config.spaces[0];
+  assert.equal(upper.title,'Upper');assert.equal(upper.rooms.length,0);assert.equal(upper.partitions.length,7);
+  near(upper.partitions.reduce((sum,w)=>sum+Math.hypot(w.b[0]-w.a[0],w.b[1]-w.a[1])*upper.cell_cm*240/100,0),28);
+});
+
+test('#1458 unsupported spanning walls cannot become fictitious open room boundaries upstairs',async()=>{
+  const model=await readIfc(ifcFixture({twoFloors:true,wallHeight:6,wallThickness:1.2,noOpenings:true}));
+  // At this normalizer boundary only the lower storey declares walls; its
+  // measured six-metre walls also surround the real rooms declared upstairs.
+  model.entities=model.entities.filter(e=>!(e.kind==='wall'&&e.floorId===model.floors[1].id));
+  const result=convertIfcModel(model,options);
+  assert.equal(result.documents.length,0);
+  assert.equal(result.report.outcomes.skipped.room,4);
 });
 
 test('#1458 an entirely unsupported storey still produces an actionable report, never empty JSON',async()=>{

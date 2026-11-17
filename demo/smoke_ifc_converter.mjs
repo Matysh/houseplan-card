@@ -85,6 +85,14 @@ try{
   const reportEvent=page.waitForEvent('download');await page.locator('#shared-notes button').click();
   const reportDownload=await reportEvent,localized=JSON.parse(readFileSync(await reportDownload.path(),'utf8'));
   assert.equal(localized.language,'ru');assert.equal(localized.entities.filter(e=>e.kind==='wall'&&e.message?.includes('Толщина')).length,5);
+  await upload('spanning.ifc',{twoFloors:true,emptyUpper:true,wallHeight:6,noRooms:true,noOpenings:true});
+  await page.locator('#ifc-catalog input').last().waitFor();
+  assert.equal(await page.locator('#ifc-catalog input').last().isDisabled(),false,'upper floor with measured spanning walls must be selectable');
+  await page.locator('#ifc-catalog input').first().uncheck();await page.locator('#ifc-catalog .primary').click();
+  await page.locator('#result').waitFor({state:'visible'});assert.equal(await page.locator('svg.ifc-preview').count(),1);
+  const spanningEvent=page.waitForEvent('download');await page.locator('#levels .primary').click();
+  const spanningDownload=await spanningEvent,spanning=JSON.parse(readFileSync(await spanningDownload.path(),'utf8')).payload.config.spaces[0];
+  assert.equal(spanning.title,'Upper');assert.equal(spanning.rooms.length,0);assert.equal(spanning.partitions.length,7);
   await page.locator('[data-lang=en]').click();await page.setViewportSize({width:1100,height:900});
   await upload('gallery.ifc');await page.locator('#ifc-catalog input').first().waitFor();await page.locator('#ifc-catalog input').last().uncheck();
   await page.locator('#ifc-catalog .primary').click();await page.locator('#result').waitFor({state:'visible'});

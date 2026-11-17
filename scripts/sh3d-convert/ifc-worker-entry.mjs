@@ -1,4 +1,4 @@
-import { readIfc, convertIfcModel } from './ifc.mjs';
+import { readIfc, convertIfcModel, ifcFloorContents } from './ifc.mjs';
 import { MAX_IFC_BYTES } from './ifc-errors.mjs';
 let model = null;
 self.onmessage = async ({ data }) => {
@@ -12,8 +12,11 @@ self.onmessage = async ({ data }) => {
       const bytes = new Uint8Array(await data.file.arrayBuffer());
       send({ phase: 'parsing' });
       model = await readIfc(bytes);
-      send({ phase: 'catalog', floors: model.floors.map(f => ({ id: f.id, title: f.title, building: f.building,
-        elevation: f.elevation, count: model.entities.filter(e => e.floorId === f.id && e.outcome !== 'skipped').length })) });
+      send({ phase: 'catalog', floors: model.floors.map(f => {
+        const { owned, wallEntities } = ifcFloorContents(model,f);
+        return { id: f.id, title: f.title, building: f.building, elevation: f.elevation,
+          count: owned.filter(e=>e.outcome!=='skipped').length + wallEntities.filter(e=>e.floorId!==f.id&&e.outcome!=='skipped').length };
+      }) });
     } else if (action === 'convert' && model) {
       send({ phase: 'converting' });
       send({ phase: 'result', result: convertIfcModel(model, data.options || {}) });
