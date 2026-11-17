@@ -6,14 +6,59 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CONVERTER_CASES, CONVERTER_URL } from './process-next-converter-cases.mjs';
 import { openMaintenance, chooseBackup, previewReply } from './lib/backup.mjs';
-import { planConfig } from './lib/ha-ws.mjs';
+import { planConfig, waitForConfig } from './lib/ha-ws.mjs';
 import { expectPlanDrawn, evidence } from './lib/ha-page.mjs';
-import { selectSpace, field } from './lib/plan.mjs';
+import { selectSpace, field, enterEditor, useTool, centreOf, toClient } from './lib/plan.mjs';
 import { HP, hp } from './lib/hooks.mjs';
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const values = (rows, key) => (rows ?? []).map(row => row[key]).sort();
 const roomNames = space => values(space.rooms, 'name');
+
+/** IFC output must remain editable through actual HA writers, then reload. */
+async function editIfcSpace(page, host, original, testInfo) {
+  await evidence(testInfo,page,'converter-ifc-before-edit');
+  await enterEditor(host,'plan');await useTool(host,'select');
+  const graph=original.plan_graph, degree=id=>graph.edges.filter(e=>e.from===id||e.to===id).length;
+  const edge=graph.edges.find(e=>e.kind==='partition'&&degree(e.from)===1&&degree(e.to)===1);
+  expect(edge,'synthetic IFC has an isolated editable wall').toBeTruthy();
+  const partition=original.partitions.find(p=>p.id===edge.id);
+  // Native partitions are the canonical graph projection: a=from, b=to.
+  const key='a', opposite='b';
+  const handle=host.locator(hp('wall-node',{'data-node':edge.from})).first();
+  await expect(handle).toBeInViewport({ratio:1});
+  const start=await centreOf(handle), target=await toClient(host,(partition[key][0]+.01)*1000,(partition[key][1]+.01)*1000);
+  await page.mouse.move(start.x,start.y);await page.mouse.down();await page.mouse.move(target.x,target.y,{steps:6});await page.mouse.up();
+  const movedNode=await waitForConfig(c=>{
+    const p=c.spaces.find(s=>s.id===original.id)?.partitions?.find(p=>p.id===partition.id);
+    return p&&JSON.stringify(p[key])!==JSON.stringify(partition[key]);
+  });
+  expect(movedNode.spaces.find(s=>s.id===original.id).partitions.find(p=>p.id===partition.id)[opposite]).toEqual(partition[opposite]);
+  await page.mouse.click((await centreOf(handle)).x,(await centreOf(handle)).y,{button:'right'});
+  await expect(host.locator(hp('node-context-menu')).first()).toBeVisible();await page.keyboard.press('Escape');
+  const opening=movedNode.spaces.find(s=>s.id===original.id).openings.find(o=>o.type==='window');
+  const angle=opening.angle*Math.PI/180,from=await toClient(host,opening.x*1000,opening.y*1000);
+  const to=await toClient(host,(opening.x+.01*Math.cos(angle))*1000,(opening.y+.01*Math.sin(angle))*1000);
+  await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(to.x,to.y,{steps:6});await page.mouse.up();
+  const movedOpening=await waitForConfig(c=>{
+    const o=c.spaces.find(s=>s.id===original.id)?.openings?.find(o=>o.id===opening.id);
+    return o&&(o.x!==opening.x||o.y!==opening.y);
+  });
+  expect(movedOpening.spaces.find(s=>s.id===original.id).openings.find(o=>o.id===opening.id).length).toBe(opening.length);
+  const room=original.rooms.find(r=>r.name==='West'),xs=room.poly.map(p=>p[0]),ys=room.poly.map(p=>p[1]);
+  const inside=await toClient(host,(Math.min(...xs)+.02)*1000,(Math.min(...ys)+.02)*1000);
+  await page.mouse.click(inside.x,inside.y,{button:'right'});
+  const menu=host.locator(hp('room-context-menu')).first();await expect(menu).toBeVisible();
+  await menu.locator(hp('action',{action:'room-settings'})).click();
+  const dialog=host.locator(HP.dialog('room')).first();await expect(dialog).toBeVisible();
+  await field(dialog,'room-name').fill('IFC edited');await dialog.locator(HP.dialogConfirm).first().click();
+  const saved=await waitForConfig(c=>c.spaces.find(s=>s.id===original.id)?.rooms?.some(r=>r.id===room.id&&r.name==='IFC edited'));
+  const expected=saved.spaces.find(s=>s.id===original.id);
+  await page.reload();await expectPlanDrawn(page,host);await selectSpace(host,original.id);
+  expect((await planConfig()).config.spaces.find(s=>s.id===original.id)).toEqual(expected);
+  await evidence(testInfo,page,'converter-ifc-after-edit-reload');
+  return {node:true,opening:true,room:true,reload:true};
+}
 
 for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browser }, testInfo) => {
   const report = { format: fixture.id, status: 'unavailable', phase: 'published-page',
@@ -57,10 +102,15 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
     const chooser = converter.waitForEvent('filechooser');
     await converter.locator('#pick').click();
     await (await chooser).setFiles(fileURLToPath(new URL(`../fixtures/process-next-converters/${fixture.file}`, import.meta.url)));
+    if (fixture.id === 'ifc') {
+      await expect(converter.locator('#ifc-catalog input[type=checkbox]')).toHaveCount(2);
+      await converter.locator('#ifc-catalog input[type=checkbox]').last().uncheck();
+      await converter.locator('#ifc-catalog button.primary').click();
+    }
     await expect(converter.locator('#result')).toBeVisible();
-    await expect(converter.locator('.level button')).toHaveCount(1);
+    await expect(converter.locator('.level button.primary')).toHaveCount(1);
     const downloaded = converter.waitForEvent('download');
-    await converter.locator('.level button').click();
+    await converter.locator('.level button.primary').click();
     const download = await downloaded;
     const downloadedPath = testInfo.outputPath(`${fixture.id}.json`);
     await download.saveAs(downloadedPath);
@@ -154,6 +204,7 @@ for (const fixture of CONVERTER_CASES) test(fixture.title, async ({ page, browse
         return true;
       })).toBe(true);
     }
+    if(fixture.id==='ifc')report.edits=await editIfcSpace(page,host,space,testInfo);
     await evidence(testInfo, page, `converter-${fixture.id}-reopened`);
     report.phase = 'complete'; report.status = 'passed';
   } catch (error) {

@@ -43,6 +43,24 @@
   },
   "entries": [
     {
+      "path": "test/ifc-convert.test.mjs",
+      "kind": "converter",
+      "decision": "addressed",
+      "reason": "#1458 external IFC reader/geometry/offline delivery; addressed converter diagnostic, not an automatic product task gate."
+    },
+    {
+      "path": "tests_backend/test_ifc_converter.py",
+      "kind": "converter",
+      "decision": "addressed",
+      "reason": "#1458 IFC CLI documents against the real import schema/preview; converter diagnostic."
+    },
+    {
+      "path": "demo/smoke_ifc_converter.mjs",
+      "kind": "converter",
+      "decision": "addressed",
+      "reason": "#1458 actual offline IFC Worker/WASM, cancellation, download identity and source races; converter diagnostic."
+    },
+    {
       "path": "test/render-layout-read.test.mjs",
       "kind": "infrastructure",
       "decision": "addressed",

@@ -5,6 +5,7 @@ export const PLAN_CONVERTER = {
   formats: [
     { name: 'Sweet Home 3D', extensions: ['.sh3d'] },
     { name: 'Easy Floorplan', extensions: ['YAML', 'JSON'] },
+    { name: 'IFC — Archicad / Revit', extensions: ['.ifc'] },
   ] as readonly PlanConverterFormat[],
 } as const;
 

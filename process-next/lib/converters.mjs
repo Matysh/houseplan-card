@@ -23,7 +23,7 @@ export function makeConverterStep({ e2eRoot, workRoot, haVersion, candidateRoot,
     'companion-identity': e2eRoot && existsSync(e2eRoot) ? inputIdentity(e2eRoot, companionInputs).hash : 'unavailable',
     'candidate-root': candidateRoot, 'target-ref': targetRef, 'expected-version': expectedVersion })) if (value) args.push(`--${key}=${value}`);
   if (requires.includes('release-package')) args.push('--publish-failures');
-  return { id: 'converters-stable', name: 'Конвертеры перед stable: 3 формата → импорт в HA', cwd: 'root',
+  return { id: 'converters-stable', name: `Конвертеры перед stable: ${CONVERTER_CASES.length} формата → импорт в HA`, cwd: 'root',
     command: missing.length ? null : ['node', ...args, '--execute'],
     unavailable: missing.length ? 'Converter prerequisites: ' + missing.join('; ') : undefined,
     inputs: ['process-next/converters/**', 'process-next/lib/converters.mjs', 'process-next/lib/e2e.mjs',
@@ -33,7 +33,7 @@ export function makeConverterStep({ e2eRoot, workRoot, haVersion, candidateRoot,
     reusableReports: ['artifacts/process-next/converters/report.json'] };
 }
 
-/** Preserve three separate outcomes even if HA setup fails before discovery/tests. */
+/** Preserve per-format outcomes even if HA setup fails before discovery/tests. */
 export function converterReport(result, { error, workspace = result?.workspace, targetRef, expectedVersion, haVersion } = {}) {
   const formats = CONVERTER_CASES.map(row => {
     const file = workspace && path.join(workspace, 'artifacts/converters', `${row.id}.json`);
@@ -48,10 +48,11 @@ export function converterReport(result, { error, workspace = result?.workspace, 
   });
   const passed = formats.filter(row => row.status === 'passed').length;
   const failed = formats.filter(row => row.status === 'failed').length;
-  return { schema: 1, diagnostic: true, status: passed === 3 && result?.status === 'passed' && !error ? 'passed' : failed ? 'failed' : 'unavailable',
+  const total = CONVERTER_CASES.length;
+  return { schema: 1, diagnostic: true, status: passed === total && result?.status === 'passed' && !error ? 'passed' : failed ? 'failed' : 'unavailable',
     targetRef: targetRef ?? null, expectedVersion: expectedVersion ?? null, haVersion, workspace,
     generatedAt: new Date().toISOString(), formats, reason: error ?? null,
-    counts: { tests: 3, passed, failed, skipped: 3 - passed - failed } };
+    counts: { tests: total, passed, failed, skipped: total - passed - failed } };
 }
 
 const safe = value => stripVTControlCharacters(String(value ?? '')).replaceAll('`', 'ˋ').slice(0, 1800);

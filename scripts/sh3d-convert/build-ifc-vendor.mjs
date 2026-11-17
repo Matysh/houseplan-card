@@ -1,0 +1,89 @@
+#!/usr/bin/env node
+/** Explicit heavy preparation. Ordinary page builds only consume the artifact. */
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import ts from 'typescript';
+import { rollup } from 'rollup';
+import terser from '@rollup/plugin-terser';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const COMMIT = '8e9bfebfbc6505960f01376c24f5a8e76ded6042';
+const IMAGE = 'emscripten/emsdk@sha256:86537645c51e44899812d29820ee3b64b96c321ebb2aba4416a04ceeb1bcde62';
+const cache = resolve(process.env.IFC_VENDOR_CACHE || '/tmp/hp-ifc1458-source');
+const target = join(HERE, 'vendor/ifc');
+const sha = data => createHash('sha256').update(data).digest('hex');
+const recipeSha256 = sha(readFileSync(fileURLToPath(import.meta.url)));
+const run = (cmd, args, options = {}) => execFileSync(cmd, args, { stdio: 'inherit', ...options });
+mkdirSync(cache, { recursive: true }); mkdirSync(target, { recursive: true });
+const archive = join(cache, 'upstream.tgz');
+if (!existsSync(archive)) run('curl', ['-fsSL', '--retry', '2', `https://codeload.github.com/ThatOpen/engine_web-ifc/tar.gz/${COMMIT}`, '-o', archive]);
+// Start every build from the immutable archive; a previous patch is never reused.
+run('tar', ['-xzf', archive, '-C', cache, '--strip-components=1']);
+const cmake = readFileSync(join(cache, 'src/cpp/CMakeLists.txt'), 'utf8');
+const deps = [];
+for (const match of cmake.matchAll(/FetchContent_Declare\((\w+) GIT_REPOSITORY "https:\/\/github.com\/([^"]+)" GIT_TAG "([a-f0-9]{40})"/g)) {
+  const [, name, repo, commit] = match;
+  const dir = join(cache, 'hp-deps', name), tar = join(cache, 'hp-deps', `${name}.tgz`);
+  mkdirSync(dir, { recursive: true });
+  if (!existsSync(tar)) run('curl', ['-fsSL', '--retry', '2', `https://codeload.github.com/${repo}/tar.gz/${commit}`, '-o', tar]);
+  run('tar', ['-xzf', tar, '-C', dir, '--strip-components=1']);
+  deps.push({ name, repo, commit, sha256: sha(readFileSync(tar)) });
+}
+if (deps.length !== 9) throw Error('Unexpected pinned dependency list');
+const previous = existsSync(join(target, 'vendor-index.json')) ? JSON.parse(readFileSync(join(target, 'vendor-index.json'), 'utf8')) : null;
+const sourceSha256 = sha(readFileSync(archive));
+if (previous && previous.sourceSha256 !== sourceSha256) throw Error('Pinned source archive changed');
+for (const dep of deps) if (previous && previous.dependencies.find(d => d.name === dep.name)?.sha256 !== dep.sha256)
+  throw Error(`Pinned dependency archive changed: ${dep.name}`);
+const patch = join(HERE, 'ifc-vendor-patch.py');
+const patchSha256 = sha(readFileSync(patch));
+const cmakeArgs = deps.map(dep => `-DFETCHCONTENT_SOURCE_DIR_${dep.name.toUpperCase()}=/source/hp-deps/${dep.name}`).join(' ');
+const recipe = `test -x /source/hp-tools/cmake/data/bin/cmake || python3 -m pip install --disable-pip-version-check --target /source/hp-tools cmake==3.28.4; export PATH=/source/hp-tools/cmake/data/bin:$PATH; python3 /recipe/ifc-vendor-patch.py /source && emcmake cmake -S /source/src/cpp -B /source/hp-build -DCMAKE_BUILD_TYPE=Release ${cmakeArgs} && cmake --build /source/hp-build --target web-ifc --clean-first -j4 && cp /emsdk/upstream/emscripten/LICENSE /source/hp-build/LICENSE-emscripten.txt && chmod -R a+rwX /source/hp-build /source/src/ts`;
+run('docker', ['run', '--rm', '-e', 'SOURCE_DATE_EPOCH=0', '-v', `${cache}:/source`, '-v', `${HERE}:/recipe:ro`, IMAGE, 'bash', '-lc', recipe]);
+// This is an explicit module-format adapter, not a transport patch of output.
+writeFileSync(join(cache, 'src/ts/hp-wasm.mjs'), readFileSync(join(cache, 'hp-build/web-ifc.js'), 'utf8') + '\nexport default WebIFCWasm;\n');
+const entry = join(cache, 'hp-entry.mjs');
+writeFileSync(entry, `import { IfcAPI } from './src/ts/web-ifc-api.ts';\nexport function createIfcEngine() { return new IfcAPI(); }\n`);
+const bundle = await rollup({ input: entry, plugins: [{
+  name: 'pinned-typescript',
+  resolveId(source, importer) {
+    if (!importer || !source.startsWith('.')) return null;
+    const path = resolve(dirname(importer), source);
+    return existsSync(path) ? path : existsSync(path + '.ts') ? path + '.ts' : null;
+  },
+  transform(code, id) { if (id.endsWith('.ts')) return ts.transpileModule(code, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText; },
+}, terser({ compress: true, mangle: true, keep_classnames: true, format: { comments: false } })],
+onwarn(w, warn) { if (w.code === 'UNRESOLVED_IMPORT') throw Error(w.message); warn(w); } });
+try {
+  // Every binding needed by IfcAPI is enclosed in the serializable factory.
+  const { output } = await bundle.generate({ format: 'iife', name: 'HPIfc', exports: 'named' });
+  const code = `// Generated by build-ifc-vendor.mjs. MPL-2.0 / Emscripten MIT; see notices.\nexport function createIfcEngine() {\n${output[0].code}\nreturn HPIfc.createIfcEngine();\n}\n`;
+  for (const forbidden of [/\bfetch\s*\(/, /new\s+XMLHttpRequest/, /\bimportScripts\s*\(/, /\brequire\s*\(/, /\bimport\s*\(/])
+    if (forbidden.test(code)) throw Error(`Vendor still contains a transport/runtime import: ${forbidden}`);
+  const artifactSha256 = sha(code);
+  if (sha(readFileSync(patch)) !== patchSha256 || sha(readFileSync(fileURLToPath(import.meta.url))) !== recipeSha256)
+    throw Error('Recipe changed during vendor build; rerun with stable inputs');
+  if (process.argv.includes('--check') && previous?.artifactSha256 !== artifactSha256) throw Error('Vendor reproduction differs');
+  writeFileSync(join(target, 'engine.mjs'), code);
+  writeFileSync(join(target, 'LICENSE-MPL-2.0.txt'), readFileSync(join(cache, 'LICENSE.md')));
+  const manifest = { version: '0.0.79', commit: COMMIT, emsdk: '4.0.23', cmake: '3.28.4', image: IMAGE,
+    sourceSha256, patchSha256, recipeSha256,
+    artifactSha256, dependencies: deps, command: 'node scripts/sh3d-convert/build-ifc-vendor.mjs' };
+  const notices = ['web-ifc 0.0.79 — MPL-2.0\nCorresponding source: https://github.com/ThatOpen/engine_web-ifc/tree/' + COMMIT,
+    'Houseplan modifications and reproducible recipe: scripts/sh3d-convert/{build-ifc-vendor.mjs,ifc-vendor-patch.py}.',
+    'Emscripten 4.0.23 — https://github.com/emscripten-core/emscripten/tree/4.0.23\n'+readFileSync(join(cache,'hp-build/LICENSE-emscripten.txt'),'utf8')];
+  for (const dep of deps) {
+    const dir = join(cache, 'hp-deps', dep.name);
+    const files = readdirSync(dir).filter(f => /^(?:licen[cs]e|copying)(?:[.-]|$)/i.test(f));
+    if (!files.length) throw Error('Missing dependency license: ' + dep.name);
+    for (const file of files) notices.push(`${dep.name} — https://github.com/${dep.repo}/tree/${dep.commit}\n${readFileSync(join(dir,file),'utf8')}`);
+  }
+  writeFileSync(join(target, 'NOTICES.txt'), notices.join('\n\n') + '\n');
+  // Publish the matching manifest last; a failed preparation cannot authorize
+  // an engine with stale source patches or missing dependency notices.
+  writeFileSync(join(target,'vendor-index.json'),JSON.stringify(manifest,null,2)+'\n');
+  console.log(JSON.stringify({ bytes: Buffer.byteLength(code), artifactSha256 }));
+} finally { await bundle.close(); }

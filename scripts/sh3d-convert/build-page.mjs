@@ -8,10 +8,17 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 import { syncGeometryRuntime } from './build-runtime.mjs';
 import { isMainModule } from '../spawn-portable.mjs';
+import { syncIfcWorker } from './build-ifc-worker.mjs';
+import { createHash } from 'node:crypto';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const MARKER = '/* <!--BUNDLE--> */';
 export async function buildPage() {
+  const manifest = JSON.parse(readFileSync(join(HERE, 'vendor/ifc/vendor-index.json'), 'utf8'));
+  const engine = readFileSync(join(HERE, 'vendor/ifc/engine.mjs'));
+  if (createHash('sha256').update(engine).digest('hex') !== manifest.artifactSha256) throw new Error('IFC vendor digest mismatch');
+  for (const [file,key] of [['ifc-vendor-patch.py','patchSha256'],['build-ifc-vendor.mjs','recipeSha256']])
+    if(createHash('sha256').update(readFileSync(join(HERE,file))).digest('hex')!==manifest[key])throw new Error('IFC vendor recipe changed; run explicit vendor preparation');
   const shell = readFileSync(join(HERE, 'page/shell.html'), 'utf8').replace(/\r\n/g, '\n');
   if (!shell.includes(MARKER)) throw new Error('Missing converter bundle marker');
   const bundle = await rollup({ input: join(HERE, 'page/app.mjs'), plugins: [nodeResolve({ browser: true }),
@@ -23,12 +30,15 @@ export async function buildPage() {
       throw new Error('Converter page must be a single offline module');
     const code = output[0].code.replace(/<\/script/gi, '<\\/script');
     const license = readFileSync(join(HERE, '../../node_modules/yaml/LICENSE'), 'utf8').replace(/\r\n/g, '\n');
-    return shell.replace(MARKER, () => `/* Bundled yaml, ISC license:\n${license}\n*/\n${code}\nmount();`);
+    const ifcNotices = ['LICENSE-MPL-2.0.txt','NOTICES.txt'].map(name => readFileSync(join(HERE,'vendor/ifc',name),'utf8')).join('\n\n')
+      .replaceAll('*/','* /').replace(/<\/script/gi,'<\\/script');
+    return shell.replace(MARKER, () => `/* Bundled yaml, ISC license:\n${license}\n*/\n/* Bundled web-ifc and dependencies:\n${ifcNotices}\n*/\n${code}\nmount();`);
   } finally { await bundle.close(); }
 }
 if (isMainModule(import.meta.url)) {
   const check = process.argv.includes('--check');
   await syncGeometryRuntime(check);
+  await syncIfcWorker(check);
   const page = await buildPage(), target = fileURLToPath(new URL('./dist/index.html', import.meta.url));
   if (check) {
     if (readFileSync(target, 'utf8') !== page) throw new Error('Stale converter page: node scripts/sh3d-convert/build-page.mjs');

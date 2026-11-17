@@ -5,11 +5,11 @@ import { CONVERTER_DICTIONARIES, converterT } from '../test-build/i18n/converter
 
 test('#1020: both presentations and general settings project one canonical converter', () => {
   assert.equal(PLAN_CONVERTER.url, 'https://houseplan.tech/convert/');
-  assert.equal(planConverterFormats(), 'Sweet Home 3D (.sh3d), Easy Floorplan (YAML / JSON)');
+  assert.equal(planConverterFormats(), 'Sweet Home 3D (.sh3d), Easy Floorplan (YAML / JSON), IFC — Archicad / Revit (.ifc)');
   const formats = [...PLAN_CONVERTER.formats, { name: 'Future long format', extensions: ['.extra', '.other'] }];
   assert.equal(planConverterFormats(formats, '; '),
-    'Sweet Home 3D (.sh3d); Easy Floorplan (YAML / JSON); Future long format (.extra / .other)');
-  assert.equal(PLAN_CONVERTER.formats.length, 2, 'ordinary formatter input does not mutate the shared source');
+    'Sweet Home 3D (.sh3d); Easy Floorplan (YAML / JSON); IFC — Archicad / Revit (.ifc); Future long format (.extra / .other)');
+  assert.equal(PLAN_CONVERTER.formats.length, 3, 'ordinary formatter input does not mutate the shared source');
 });
 
 test('#1020: all four lazy dictionaries preserve segmented text and format interpolation', () => {

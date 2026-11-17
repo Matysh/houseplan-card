@@ -11,11 +11,12 @@ const once = (source, pattern, replacement) => {
 };
 export function prepareConverterSite(template, artifact, commit) {
   if (!/^[a-f0-9]{40}$/.test(commit)) throw Error('Expected immutable accepted source');
-  if (/data-format="picture"/.test(template)) throw Error('Picture already exists: inspect the current site');
   const module = artifact.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];
   if (!module || !module.includes('HOUSEPLAN_CONVERTER_COPY')) throw Error('Expected current canonical converter module');
   const asset = `converter-${digest(module).slice(0, 16)}.js`;
-  let page = once(template, /<button\b[^>]*data-format="easy"[\s\S]*?<\/button>/, button => button
+  let page = template;
+  if (!/data-format="picture"/.test(page)) {
+  page = once(page, /<button\b[^>]*data-format="easy"[\s\S]*?<\/button>/, button => button
     + '\n' + button.replace('data-format="easy"', 'data-format="picture"').replace('Easy Floorplan', 'picture-elements'));
   page = once(page, /<option value="easy">[^<]*<\/option>/, option => option + '\n<option value="picture">picture-elements (YAML / JSON)</option>');
   page = once(page, /<label for="paste"/, '<label id="paste-label" for="paste"');
@@ -29,15 +30,35 @@ export function prepareConverterSite(template, artifact, commit) {
       <label><span data-i18n="picture.size.height"></span><input id="picture-height" class="converter-input" type="number" min="1" max="100000" step="1"></label>
     </div><p id="picture-size-status" role="status"></p>
   </section><textarea id="paste"`);
-  page = once(page, /<script type="module" src="\/assets\/js\/converter\.js[^\n]*<\/script>/,
+  }
+  if (!/data-format="ifc"/.test(page)) {
+    page = once(page, /<button\b[^>]*data-format="easy"[\s\S]*?<\/button>/, button => button + '\n' + button
+      .replace('data-format="easy"', 'data-format="ifc"').replace('Easy Floorplan', 'IFC — Archicad / Revit')
+      .replace(/<small>[\s\S]*?<\/small>/, '<small>.ifc · IFC2x3 / IFC4</small>'));
+    page = once(page, /<option value="picture">[^<]*<\/option>/, option => option + '\n<option value="ifc">IFC — Archicad / Revit (.ifc)</option>');
+  }
+  if (!/id="ifc-info"/.test(page)) page = once(page, /<div\b[^>]*id="drop"[^>]*>/, drop => `<section id="ifc-info" class="converter-notice" hidden><p data-i18n="ifc.instructions"></p></section>
+<section id="ifc-catalog" class="converter-notice" hidden></section>`+drop);
+  if (!/id="busy-text"/.test(page)) page = once(page, /<p data-i18n="busy"/, '<p id="busy-text" data-i18n="busy"');
+  if (!/id="ifc-cancel"/.test(page)) page = once(page, /(<p\b[^>]*id="busy-text"[^>]*>[\s\S]*?<\/p>)/,
+    paragraph => paragraph + '<button id="ifc-cancel" type="button" class="btn" data-i18n="ifc.cancel" hidden></button>');
+  for (const id of ['ifc-info','ifc-catalog','busy-text','ifc-cancel','picture-size','paste-label','paste-instructions'])
+    if (page.split(`id="${id}"`).length !== 2) throw Error(`Unexpected site template: ${id}`);
+  page = once(page, /<script type="module" src="\/assets\/js\/converter(?:-[a-f0-9]+)?\.js[^\n]*<\/script>/,
     `<script type="module" src="/assets/js/${asset}"></script>`);
-  page = once(page, /<\/main>/, `</main>
-<style>
-.converter-formats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  const style = `<style id="houseplan-converter-formats">
+.converter-formats{grid-template-columns:repeat(4,minmax(0,1fr))}
 .converter-picture{margin-bottom:16px}.converter-size-row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
 .converter-size-row label{min-width:0;flex:1 1 100px}.converter-size-row .converter-input{width:100%;box-sizing:border-box;min-height:44px;height:44px;flex:none;resize:none;padding:8px 12px;margin:6px 0;font:inherit}
+.ifc-preview{display:block;width:100%;max-height:420px;margin:12px 0;background:var(--bg);color:var(--text)}
+#ifc-catalog label{display:flex;gap:10px;align-items:center;margin:10px 0}.ifc-note{font-size:12px;padding:2px 8px;margin-left:8px}
 @media(max-width:639px){.converter-formats{grid-template-columns:1fr}}
-</style><!-- converter-source ${commit}; module-sha256 ${digest(module)} -->`);
+</style>`;
+  if (/id="houseplan-converter-formats"/.test(page)) page = once(page, /<style id="houseplan-converter-formats">[\s\S]*?<\/style>/, style);
+  else page = once(page, /<\/main>/, '</main>\n' + style);
+  const sourceNote = `<!-- converter-source ${commit}; module-sha256 ${digest(module)} -->`;
+  if (/<!-- converter-source /.test(page)) page = once(page, /<!-- converter-source [^>]+-->/, sourceNote);
+  else page = once(page, /<\/main>/, '</main>' + sourceNote);
   return { page, module, asset, receipt: { source: commit, previousSha256: digest(template),
     templateSha256: digest(page), moduleSha256: digest(module), asset: `assets/js/${asset}` } };
 }

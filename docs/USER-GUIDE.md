@@ -322,6 +322,14 @@ lovelace:
 
 &emsp;&emsp;Separate static `image` is skipped too; the card backdrop is handled separately. The report counts transferred, partial and skipped elements and gives each loss a stable code, source index and available ID. Fractional positions survive import without grid snapping. YAML and image files stay local; stale image completion cannot replace newer input.
 
+### Importing IFC from Archicad or Revit
+
+&emsp;&emsp;Choose **IFC — Archicad / Revit** in the [converter](https://houseplan.tech/convert/), select a local IFC2x3/IFC4 `.ifc`, then select storeys. The standalone HTML also works from disk without a network connection. The engine runs in a separate Worker; **Cancel processing** or a new file discards the old job.
+
+&emsp;&emsp;Review the preview and expandable loss list before downloading. A partial result uses **Download with the listed omissions**; the report identifies each object by name and GUID/STEP id. **Show on plan** highlights known geometry. Import each storey through **Global settings → Backup and transfer**, then link HA areas/devices yourself. Walls, rooms and openings remain editable. Room contours use common wall axes, so their calculated area may differ from the IFC interior area.
+
+&emsp;&emsp;The profile supports straight constant-thickness walls, simple room contours and wall-hosted doors/windows. Curves, room holes, arbitrary body-only reconstruction and roof windows are reported as omissions. If rooms are absent, walls can still be transferred. Door opening direction must be checked manually. IFCZIP/IFCXML, IFC4X3 and native project files are not supported. KOMPAS requires a separately prepared export and remains unconfirmed. [Export settings, tested profiles and limitations](../scripts/sh3d-convert/IFC.md).
+
 <a id="main"></a>
 
 ## 3. Main screen and common editor controls

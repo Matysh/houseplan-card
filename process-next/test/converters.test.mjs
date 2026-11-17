@@ -21,15 +21,15 @@ const row = (format, status = 'passed') => ({ format, status, phase: status === 
   finishedAt: '2026-11-02T00:00:00Z',
   published: { url: 'https://houseplan.tech/convert/', sha256: 'a'.repeat(64) }, error: status === 'failed' ? 'conversion error' : undefined });
 
-test('three format results distinguish missing setup, converter failure and successful real journeys', t => {
+test('format results distinguish missing setup, converter failure and successful real journeys', t => {
   const workspace = lab(t);
   let report = converterReport(null, { workspace, error: 'Docker unavailable' });
-  assert.equal(report.status, 'unavailable'); assert.equal(report.counts.skipped, 3);
+  assert.equal(report.status, 'unavailable'); assert.equal(report.counts.skipped, CONVERTER_CASES.length);
   assert.match(converterMarkdown(report), /не выполнено/);
   put(workspace, 'artifacts/converters/sh3d.json', row('sh3d'));
   put(workspace, 'artifacts/converters/easy.json', row('easy', 'failed'));
   report = converterReport({ workspace, status: 'failed' });
-  assert.equal(report.status, 'failed'); assert.deepEqual(report.counts, { tests: 3, passed: 1, failed: 1, skipped: 1 });
+  assert.equal(report.status, 'failed'); assert.deepEqual(report.counts, { tests: CONVERTER_CASES.length, passed: 1, failed: 1, skipped: CONVERTER_CASES.length - 2 });
   for (const entry of CONVERTER_CASES) put(workspace, `artifacts/converters/${entry.id}.json`, row(entry.id));
   assert.equal(converterReport({ workspace, status: 'passed' }).status, 'passed');
   assert.equal(converterReport({ workspace, status: 'passed' }, { error: 'Owned container cleanup failed' }).status, 'unavailable');

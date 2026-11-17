@@ -16,6 +16,7 @@ import { readSh3d } from './sh3d.mjs';
 import { convertHome } from './convert.mjs';
 import { convertEasy, TOOL_VERSION } from './easy.mjs';
 import { convertPicture } from './picture.mjs';
+import { convertIfc } from './ifc.mjs';
 
 let args;
 try { args = parseArgs({ allowPositionals: true, options: {
@@ -25,27 +26,27 @@ try { args = parseArgs({ allowPositionals: true, options: {
 const input = args.positionals[0], outDir = args.values.out, now = args.values.now;
 
 if (!input || args.positionals.length !== 1) {
-  console.error('использование: cli.mjs <файл.sh3d|yaml|json> [--format sh3d|easy|picture] [--width <px> --height <px> | --aspect <w/h>] [--out <каталог>] [--report] [--now <iso>]');
+  console.error('использование: cli.mjs <файл.sh3d|ifc|yaml|json> [--format sh3d|easy|picture|ifc] [--width <px> --height <px> | --aspect <w/h>] [--out <каталог>] [--report] [--now <iso>]');
   process.exit(2);
 }
 
 try {
-  const format = args.values.format || (/\.sh3d$/i.test(input) ? 'sh3d' : 'easy');
-  if (!['sh3d', 'easy', 'picture'].includes(format)) throw new Error('format: sh3d | easy | picture');
-  if (statSync(input).size > (format === 'sh3d' ? 64 : 8) * 1024 * 1024)
-    throw Object.assign(new Error('Input file exceeds the size limit'), { code: 'file_too_large' });
+  const format = args.values.format || (/\.ifc$/i.test(input) ? 'ifc' : /\.sh3d$/i.test(input) ? 'sh3d' : 'easy');
+  if (!['sh3d', 'easy', 'picture', 'ifc'].includes(format)) throw new Error('format: sh3d | easy | picture | ifc');
+  if (statSync(input).size > (['sh3d','ifc'].includes(format) ? 64 : 8) * 1024 * 1024)
+    throw Object.assign(new Error('Input file exceeds the size limit'), { code: format==='ifc'?'ifc_file_too_large':'file_too_large' });
   const source = readFileSync(input);
   const options = {
     now: now || '1970-01-01T00:00:00Z',
     toolVersion: TOOL_VERSION,
   };
   const size = key => args.values[key] === undefined ? undefined : Number(args.values[key]);
-  const { documents, report } = format === 'sh3d'
+  const { documents, report } = format === 'ifc' ? await convertIfc(new Uint8Array(source), options) : format === 'sh3d'
     ? convertHome(await readSh3d(new Uint8Array(source)), options)
     : format === 'picture'
       ? convertPicture(source.toString('utf8'), { ...options, imageWidth: size('width'), imageHeight: size('height'), aspect: size('aspect') })
       : convertEasy(source.toString('utf8'), options);
-  const stem = basename(input).replace(/\.(sh3d|json|ya?ml)$/i, '');
+  const stem = basename(input).replace(/\.(sh3d|ifc|json|ya?ml)$/i, '');
   if (outDir) {
     mkdirSync(outDir, { recursive: true });
     for (const [index, document] of documents.entries()) {

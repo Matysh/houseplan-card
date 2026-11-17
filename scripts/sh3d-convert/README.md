@@ -9,6 +9,13 @@ support for an older backend just because it can read export-v2 envelopes.
 
 ## Boundaries
 
+- IFC (#1458): local IFC2x3/IFC4 architectural profile, shared building frame,
+  axis/layer or rectangular-body walls, simple room footprints and explicit
+  void/fill wall hosts. A serializable pinned web-ifc ST factory is embedded
+  once and reused by Node and the Blob Worker. Storeys, previews and losses
+  are reviewed before download; no HA bindings are inferred. [RU/EN profile,
+  export instructions and reproducible build](IFC.md). KOMPAS is separately
+  unconfirmed. Ordinary builds verify the committed vendor digest without SDK.
 - SH3D XML/archive parsing stays bounded and local. Physical centimetres are
   preserved, inner room faces aligned to wall axes and near vertices welded as
   before. Independent wall remainders and floors without rooms now survive.
@@ -47,7 +54,7 @@ support for an older backend just because it can read export-v2 envelopes.
   calibrate `cell_cm` in the imported space.
 - `geometry-entry.ts` imports the canonical DOM-free wall writer, coordinate
   canonicalizer and furniture catalogue. `build-runtime.mjs` compiles and bundles
-  them into `geometry-runtime.generated.mjs`. Both readers use `modernDocument`:
+  them into `geometry-runtime.generated.mjs`. The readers use `modernDocument`:
   real wall segments, one wall ID per contour edge, exact compatibility `walls`
   projection required by the current backend, partitions and unambiguous hosts.
   Do not copy the algorithm or merely increase an output version constant.
@@ -106,14 +113,15 @@ dependencies with `npm ci --ignore-scripts`:
 node scripts/sh3d-convert/build-page.mjs
 node scripts/sh3d-convert/build-page.mjs --check
 npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs
-node --test test/sh3d-convert*.test.mjs test/easy-floorplan-*.test.mjs test/picture-elements-*.test.mjs test/converter*.test.mjs
-.venv-backend/bin/python -m pytest tests_backend/test_sh3d_convert.py tests_backend/test_easy_floorplan_convert.py tests_backend/test_picture_elements_convert.py tests_backend/test_sh3d_import_preview.py tests_backend/test_ha_easy_floorplan_convert.py tests_backend/test_ha_picture_elements_convert.py -q
+node --test test/sh3d-convert*.test.mjs test/easy-floorplan-*.test.mjs test/picture-elements-*.test.mjs test/converter*.test.mjs test/ifc-convert.test.mjs
+.venv-backend/bin/python -m pytest tests_backend/test_ifc_converter.py tests_backend/test_sh3d_convert.py tests_backend/test_easy_floorplan_convert.py tests_backend/test_picture_elements_convert.py tests_backend/test_sh3d_import_preview.py tests_backend/test_ha_easy_floorplan_convert.py tests_backend/test_ha_picture_elements_convert.py -q
 node demo/smoke_plan_converter.mjs
+node demo/smoke_ifc_converter.mjs
 ```
 
 The browser smoke attests the actually launched pinned browser. It exercises
 the real artifact via file URL with blocked network, not a development wrapper.
-It covers all three formats, YAML/JSON, downloads/CLI parity with the same
+The old-format smoke covers SH3D, Easy and picture-elements; the IFC smoke covers the real embedded WASM/Worker, storeys, cancel/recovery and source races. Both cover downloads/CLI parity with the same
 explicit clock metadata, manual/measured image proportions, delayed local image
 completion and source/input races,
 retained stale click closures, RU/EN and a 360px form. It does not claim a physical
@@ -121,12 +129,13 @@ GPU observation. Full HA apply/export runs in the Linux harness, not pure Python
 or native Windows. Ordinary negative inputs are the cheap protective witnesses;
 there is no claim of an executed mutant run.
 
-CLI uses the same core. `--format easy|sh3d|picture` is explicit for picture-elements
-(the default extension detector remains compatible with the two old formats):
+CLI uses the same core. `--format easy|sh3d|picture|ifc` is explicit for picture-elements
+(.ifc is also detected by extension):
 
 ```sh
 node scripts/sh3d-convert/cli.mjs input.yaml --out /tmp/converted
 node scripts/sh3d-convert/cli.mjs input.sh3d --out /tmp/converted
+node scripts/sh3d-convert/cli.mjs input.ifc --out /tmp/converted
 node scripts/sh3d-convert/cli.mjs --format picture --width 1600 --height 1000 card.yaml --out /tmp/converted
 ```
 
@@ -156,8 +165,7 @@ Read the actual `includes/converter.php` and resolved root before preparation.
 `site-converter.mjs --template <snapshot.php> --artifact dist/index.html
 --commit <accepted-sha> --out <directory>` prepares the shared template and an
 immutable content-hashed JS asset. The module is byte-identical to the offline
-artifact. The patch refuses an unexpected/already-updated template. It adds the
-third format and required image-size controls without changing editable content.
+artifact. The patch refuses unexpected structure and can update its own existing slots idempotently. It adds IFC/storey controls and retains picture size controls without changing editable content.
 The site locale and editorial copy override only the matching runtime dictionary;
 the standalone page retains its saved/browser-language behavior.
 

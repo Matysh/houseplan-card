@@ -1,0 +1,68 @@
+{
+  "version": "0.0.79",
+  "commit": "8e9bfebfbc6505960f01376c24f5a8e76ded6042",
+  "emsdk": "4.0.23",
+  "cmake": "3.28.4",
+  "image": "emscripten/emsdk@sha256:86537645c51e44899812d29820ee3b64b96c321ebb2aba4416a04ceeb1bcde62",
+  "sourceSha256": "7389d58eadd0543bf6f57ac4e110b3bff99e8fb91a315948c173b21ee75247ce",
+  "patchSha256": "de645b6c716d9c3461f08477e8b8fe4d1a52db446b194c7082fc6c97219808dc",
+  "recipeSha256": "dc61826ab8fcc7e7c9dd774a91378ba49d97a1e7f563391cc117f029f536baff",
+  "artifactSha256": "9991fc410b075a57c10135d6e8996f298c60064fb7f90fd59c672b6539502d75",
+  "dependencies": [
+    {
+      "name": "fastfloat",
+      "repo": "fastfloat/fast_float",
+      "commit": "dbeabeeb3e6791cb96994c2a7a084c36e62ccfb2",
+      "sha256": "973e2e62805ae713e42b1df9bbcbb2ead610fb0525325dc6c00e0be0d30a5e0a"
+    },
+    {
+      "name": "tinynurbs",
+      "repo": "QuimMoya/tinynurbs",
+      "commit": "47115cd9b6e922b27bbc4ab01fdeac2e9ea597a4",
+      "sha256": "1b65bb6598f7af0cc4283f89798688065fd916549e49e5f6679c944a36b26e43"
+    },
+    {
+      "name": "tinycpptest",
+      "repo": "kovacsv/TinyCppTest",
+      "commit": "12e42c8ac6e032ce450fb3f772ebdfd1ddc6008c",
+      "sha256": "256c4889a313eea0727fcf01eebdf61234fbdf1a47241df6a53f73186287ba1d"
+    },
+    {
+      "name": "glm",
+      "repo": "g-truc/glm",
+      "commit": "8d1fd52e5ab5590e2c81768ace50c72bae28f2ed",
+      "sha256": "36eefbae41503e6822e8d9e1b4cc85c6a6621f17676f6258aaf0a64c2de0a09c"
+    },
+    {
+      "name": "earcut",
+      "repo": "mapbox/earcut.hpp",
+      "commit": "92acda9e2ed96ff1f910cda35de444727e9da7b0",
+      "sha256": "799dc5d93478f74ca5331eaba935946efa25772f00dc7274005e07e296d469a8"
+    },
+    {
+      "name": "cdt",
+      "repo": "artem-ogre/CDT",
+      "commit": "b4413ee44affb489099ed4d6ec65e94788cb6708",
+      "sha256": "7a358400ee2a478dd27b04de8c8c8d6318800c231bbd237c9cb0a0fc4162660c"
+    },
+    {
+      "name": "spdlog",
+      "repo": "gabime/spdlog",
+      "commit": "79524ddd08a4ec981b7fea76afd08ee05f83755d",
+      "sha256": "c6dee844e35a54cc80e3ab76aae2310763e0b49c7397549dfa4d4657d9737138"
+    },
+    {
+      "name": "stduuid",
+      "repo": "mariusbancila/stduuid",
+      "commit": "3afe7193facd5d674de709fccc44d5055e144d7a",
+      "sha256": "e11f9bf30c7f9c03d8e9a3a3fd7fe016eb5d8d9b89a2fe2c11b5f049e1d97916"
+    },
+    {
+      "name": "unordered_dense",
+      "repo": "martinus/unordered_dense",
+      "commit": "7c58a8b7a48e790fe72f6508eb3b46317cbba9d5",
+      "sha256": "88d2d30d63b69259a3e4b0b6ec48a41f19ab9a6b30422986f6f3d4bbc57b6950"
+    }
+  ],
+  "command": "node scripts/sh3d-convert/build-ifc-vendor.mjs"
+}

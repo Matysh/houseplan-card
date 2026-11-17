@@ -38,7 +38,8 @@ class Connection:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("filename", ["easy-content.space-1.json", "easy-public-demo.space-1.json",
-    "flat-two-rooms.space-1.json", "awkward.space-2.json", "picture-elements.space-1.json"])
+    "flat-two-rooms.space-1.json", "awkward.space-2.json", "picture-elements.space-1.json",
+    "ifc-synthetic.space-1.json", "ifc-synthetic.space-2.json"])
 async def test_issue_937_ha_applies_exports_and_deduplicates_without_changing_existing_plan(hass, filename):
     entry = MockConfigEntry(domain=DOMAIN, title="House Plan", data={}, options={})
     entry.add_to_hass(hass)

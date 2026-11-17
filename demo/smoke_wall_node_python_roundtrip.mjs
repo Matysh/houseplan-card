@@ -98,6 +98,16 @@ try {
     check(`revision ${next}: all node handles remain`, await page.locator('houseplan-card .hp-node-handle').count(), nodes.length);
   };
   await boot();
+  const captureDir=process.env.HP_NODE_ORDER_CAPTURE_DIR;
+  const capture=async name=>{
+    if(!captureDir)return;
+    mkdirSync(captureDir,{recursive:true});
+    await page.locator('houseplan-card [data-hp="zoom-fit"]').click();
+    await page.waitForFunction(()=>!window.__card._screenFitRequest&&!window.__card._cameraTransition.active);
+    await page.evaluate(()=>window.__hpTest.settled());
+    await page.screenshot({path:resolve(captureDir,name)});
+  };
+  await capture('imported-before-edit.png');
   await interaction(edge.from, 'before first move A');
   await interaction(edge.to, 'before first move B');
   for (const [id, label] of [[edge.from, 'A'], [edge.to, 'B']]) {
@@ -127,9 +137,10 @@ try {
   await boot();
   await interaction(edge.from, 'after reload A');
   await interaction(edge.to, 'after reload B');
+  await capture('imported-after-save.png');
   check('two moves, Undo and Redo are four node writes', writes.length, 4);
   const reportPath = resolve(process.env.HP_NODE_ORDER_REPORT || 'artifacts/node-projection-roundtrip.json');
   mkdirSync(dirname(reportPath), { recursive: true });
-  writeFileSync(reportPath, JSON.stringify({ fixture: backup ? 'owner-backup' : 'synthetic', browser: browser.version(),
+  writeFileSync(reportPath, JSON.stringify({ fixture: process.env.HP_NODE_ORDER_FIXTURE_LABEL || (backup ? 'owner-backup' : 'synthetic'), browser: browser.version(),
     nodeCount: nodes.length, writes: writes.map(w => ({ type: w.type, direction: w.direction })), observations }, null, 2));
 } finally { await finish(browser); }

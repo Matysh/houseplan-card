@@ -7,4 +7,6 @@ export const CONVERTER_CASES = [
     space: 'Full transfer', rooms: ['Room'], openings: ['door'], markers: 3 },
   { id: 'picture', file: 'picture-elements.yaml', title: 'picture-elements: published conversion and HA import',
     space: 'Ground floor', rooms: [], openings: [], markers: 11, width: 1600, height: 1000 },
+  { id: 'ifc', file: 'ifc-synthetic.ifc', title: 'IFC: offline engine, published conversion and HA import',
+    space: 'Ground', rooms: ['West','East'], openings: ['door','window'], markers: 0 },
 ];

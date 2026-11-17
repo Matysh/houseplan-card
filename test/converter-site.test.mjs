@@ -27,6 +27,8 @@ test('#1210 branded PHP publication keeps the shell and uses the exact canonical
 <button data-format="easy"><strong>Easy Floorplan</strong><small>YAML / JSON</small></button>
 <select id="format"><option value="easy">Easy Floorplan</option></select>
 <label for="paste" data-i18n="easy.paste"></label><p data-i18n="easy.instructions"></p><textarea id="paste"></textarea>
+<div id="busy"><p data-i18n="busy"></p></div>
+<div id="drop"></div>
 </main><script type="module" src="/assets/js/converter.js?v=<?= time() ?>"></script>
 <script type="module" src="/assets/js/converter-ui.js?v=old"></script>
 <?php include __DIR__ . '/footer.php'; ?>`;
@@ -40,7 +42,9 @@ test('#1210 branded PHP publication keeps the shell and uses the exact canonical
     assert.equal(result.page.split(`id="${id}"`).length, 2, id);
   assert(result.page.includes(`/assets/js/${result.asset}`));
   assert(result.page.includes('converter-ui.js?v=old'));
-  assert.throws(() => prepareConverterSite(result.page, artifact, 'a'.repeat(40)), /already exists/);
+  assert.match(result.page, /data-format="ifc"/);
+  for (const id of ['ifc-info','ifc-catalog','busy-text','ifc-cancel']) assert.equal(result.page.split(`id="${id}"`).length,2,id);
+  assert.equal(prepareConverterSite(result.page, artifact, 'a'.repeat(40)).page,result.page,'repeat publication is idempotent');
   assert.throws(() => prepareConverterSite(template.replace('id="paste"', 'id="other"'), artifact, 'a'.repeat(40)), /Unexpected site template/);
   assert.throws(() => prepareConverterSite(template, artifact, 'HEAD'), /immutable/);
 });

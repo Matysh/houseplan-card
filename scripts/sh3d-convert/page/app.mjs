@@ -17,6 +17,10 @@ import { convertEasy, TOOL_VERSION } from '../easy.mjs';
 import { MAX_EASY_BYTES } from '../easy-read.mjs';
 import { convertPicture } from '../picture.mjs';
 import { EXTRA_TEXT } from './extra-text.mjs';
+import { IFC_TEXT } from './ifc-text.mjs';
+import { ifcController, ifcPreview } from './ifc-ui.mjs';
+export { convertIfc } from '../ifc.mjs';
+export { IFC_WORKER_SOURCE } from './ifc-worker.generated.mjs';
 export { convertHome, readSh3d, convertEasy, convertPicture };
 
 const MAX_FILE_BYTES = 64 * 1024 * 1024;
@@ -122,7 +126,7 @@ export const TEXT = {
     'code.unknown': 'Unknown error while reading the file.',
   },
 };
-for (const language of ['ru', 'en']) Object.assign(TEXT[language], EXTRA_TEXT[language]);
+for (const language of ['ru', 'en']) Object.assign(TEXT[language], EXTRA_TEXT[language], IFC_TEXT[language]);
 
 let lang = 'en';
 
@@ -147,7 +151,7 @@ function applyLanguage(next) {
     node.classList.toggle('on', node.dataset.lang === lang);
   }
   if (lastResult) renderResult(lastResult);
-  const pasted = format() === 'picture' ? 'picture' : 'easy';
+  const pasted = format() === 'ifc' ? 'ifc' : format() === 'picture' ? 'picture' : 'easy';
   document.getElementById('drop').querySelector('h3').textContent = t(format() === 'sh3d' ? 'drop.title' : `drop.${pasted}`);
   document.getElementById('paste-instructions').textContent = t(`${pasted}.instructions`);
   document.getElementById('paste-label').textContent = t(`${pasted}.paste`);
@@ -208,8 +212,10 @@ function convertText(text, sourceFormat) {
 
 let lastResult = null;
 let generation = 0;
+let ifc = null;
 const format = () => document.getElementById('format').value;
 function invalidate() {
+  ifc?.stop();
   generation++; lastResult = null;
   pictureSize.pending = false; renderPictureSize();
   show('result', false); show('error', false); show('busy', false);
@@ -232,6 +238,7 @@ function noteText(note, codes = false) {
   const known = TEXT[lang][key] || TEXT.en[key];
   const values = note.reason ? { ...note, reason: t(`code.${note.reason}`) } : note;
   const text = known ? fill(known, values) : `${note.code}: ${JSON.stringify(note)}`;
+  if (String(note.type || '').startsWith('IFC')) return `${text} — ${note.name || '#' + note.id} (${note.type}; ${note.guid || '#' + note.id})`;
   return Number.isInteger(note.sourceIndex)
     ? `${text} [${note.code}; #${note.sourceIndex + 1}${note.sourceId ? `; id=${note.sourceId}` : ''}]`
     : codes ? `${text} [${note.code}${note.id ? `; id=${note.id}` : ''}]` : text;
@@ -250,18 +257,30 @@ function download(name, document_) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+function ifcFilename(stem, level) {
+  const part=(text,budget)=>{
+    const chars=Array.from(String(text||'').normalize('NFKC').replace(/[^\p{L}\p{N}_.-]+/gu,'-').slice(0,256));
+    while(chars.length&&new TextEncoder().encode(chars.join('')).length>budget)chars.pop();
+    return chars.join('');
+  };
+  return ['houseplan-ifc',part(stem,50),part(level.building,40),part(level.title,60),level.spaceId].filter(Boolean).join('-')+'.json';
+}
+
 function renderResult(result) {
   lastResult = result;
   const { documents, report, stem } = result;
   const picture = report.levels.some(level => Array.isArray(level.elements));
+  const isIfc = report.sourceFormat === 'ifc';
   const host = document.getElementById('levels');
   host.textContent = '';
   let downloadIndex = 0;
   for (const level of report.levels) {
     const card = element('div', 'level');
     card.append(element('h3', null, level.title || level.id || '—'));
+    let preview;
     if (level.skipped) {
-      card.append(element('p', 'muted', t(picture ? 'result.picture_skipped' : 'result.skipped')));
+      const key=isIfc?`code.${level.skipped}`:picture?'result.picture_skipped':'result.skipped';
+      card.append(element('p', 'muted', isIfc&&!TEXT[lang][key] ? `${t('code.ifc_floor_refused')} (${level.skipped})` : t(key)));
     } else {
       const stats = element('p', 'stats');
       stats.textContent = [
@@ -272,26 +291,60 @@ function renderResult(result) {
         ...(level.devices !== undefined ? [`${level.devices} ${t('result.devices')}`, `${level.decor} ${t('result.decor')}`] : []),
       ].join(' · ');
       card.append(stats);
-      const index = downloadIndex++;
-      const button = element('button', 'btn primary', t('result.download'));
-      const token = generation;
-      button.addEventListener('click', () => {
-        if (token === generation && lastResult === result) download(`${stem}.${level.spaceId}.json`, documents[index]);
-      });
-      card.append(button);
+      if (isIfc && !level.selected) card.append(element('p', 'muted', t('ifc.not_selected')));
+      else {
+        const index = downloadIndex++;
+        if (isIfc) {
+          preview = ifcPreview(documents[index], level, t); card.append(preview);
+          if (level.partial) card.append(element('p', 'muted', t('ifc.partial')));
+        }
+        const button = element('button', 'btn primary', t(isIfc && level.partial ? 'ifc.download_partial' : 'result.download'));
+        const token = generation;
+        button.addEventListener('click', () => {
+          if (token === generation && lastResult === result) download(isIfc?ifcFilename(stem,level):`${stem}.${level.spaceId}.json`, documents[index]);
+        });
+        card.append(button);
+      }
     }
     const notes = [...(level.notes || [])];
     if (notes.length) {
-      card.append(element('h4', 'notes-title', t('result.notes')));
+      let notesHost=card;
+      if(isIfc){notesHost=element('details');notesHost.append(element('summary',null,`${t('result.notes')} (${notes.length})`));card.append(notesHost);}
+      else card.append(element('h4', 'notes-title', t('result.notes')));
       const list = element('ul', 'notes');
-      for (const note of notes) list.append(element('li', null, noteText(note, picture)));
-      card.append(list);
+      for (const note of notes) {
+        const row = element('li', null, noteText(note, picture));
+        if (isIfc && preview && note.id) {
+          const locate = element('button', 'btn ifc-note', t('ifc.locate'));
+          locate.addEventListener('click', () => {
+            if (!preview.highlightSource?.(note.id)) {
+              const message = element('span', 'muted', ' — ' + t('ifc.no_position'));
+              row.append(message); locate.disabled = true;
+            }
+          }); row.append(locate);
+        }
+        list.append(row);
+      }
+      notesHost.append(list);
     }
     host.append(card);
   }
   const shared = element('ul', 'notes');
   for (const item of report.items) shared.append(element('li', null, noteText(item, picture)));
   document.getElementById('shared-notes').replaceChildren(shared);
+  if (isIfc) {
+    const reportButton = element('button', 'btn', t('ifc.report')), token = generation;
+    reportButton.addEventListener('click', () => {
+      if (token !== generation || lastResult !== result) return;
+      const localized={...report,language:lang,
+        entities:report.entities.map(e=>({...e,...(e.reason?{message:noteText({...e,id:e.sourceId,code:e.reason})}:{})})),
+        excludedVoids:(report.excludedVoids||[]).map(e=>({...e,message:noteText({...e,id:e.sourceId,code:e.reason})})),
+        levels:report.levels.map(level=>({...level,notes:(level.notes||[]).map(n=>({...n,message:noteText(n)}))})),
+        items:report.items.map(n=>({...n,message:noteText(n)}))};
+      download(ifcFilename(stem,{spaceId:'report'}),localized);
+    });
+    document.getElementById('shared-notes').append(reportButton);
+  }
   show('result', true);
   show('error', false);
   show('busy', false);
@@ -317,6 +370,7 @@ async function handleFile(file) {
   if (!file) return;
   invalidate();
   const token = generation, sourceFormat = format();
+  if (sourceFormat === 'ifc') { ifc.read(file); return; }
   show('busy', true);
   show('error', false);
   show('result', false);
@@ -350,10 +404,17 @@ export function mount() {
   if (TEXT[siteLanguage]) Object.assign(TEXT[siteLanguage], window.HOUSEPLAN_CONVERTER_COPY);
   const input = document.getElementById('file');
   const zone = document.getElementById('drop');
+  ifc = ifcController({ text: t, language: () => lang, onCancel: invalidate,
+    onBusy: phase => {
+      show('busy', !!phase); show('ifc-cancel', !!phase);
+      document.getElementById('busy-text').textContent = phase ? t(`ifc.${phase}`) : '';
+    }, onResult: renderResult, onError: renderError });
+  document.getElementById('ifc-cancel').addEventListener('click', invalidate);
   document.getElementById('format').addEventListener('change', () => {
     invalidate(); input.value = '';
-    input.accept = format() === 'sh3d' ? '.sh3d,application/zip' : '.yaml,.yml,.json,text/yaml,application/json';
-    show('easy-input', format() !== 'sh3d'); show('picture-size', format() === 'picture'); applyLanguage(lang);
+    input.accept = format() === 'sh3d' ? '.sh3d,application/zip' : format() === 'ifc' ? '.ifc' : '.yaml,.yml,.json,text/yaml,application/json';
+    show('easy-input', ['easy','picture'].includes(format())); show('picture-size', format() === 'picture'); show('ifc-info', format() === 'ifc');
+    show('ifc-cancel', false); document.getElementById('busy-text').textContent = t('busy'); applyLanguage(lang);
   });
   document.getElementById('paste').addEventListener('input', invalidate);
   document.getElementById('convert-paste').addEventListener('click', () => {

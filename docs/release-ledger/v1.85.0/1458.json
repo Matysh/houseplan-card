@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1458,
+  "baseStable": "v1.85.0",
+  "category": "major",
+  "rationale": "Adds architectural IFC input to the separately delivered converter and its entry points; IFC2x3/IFC4 plans become editable Houseplan spaces.",
+  "summary": {
+    "ru": "Архитектурный IFC из Archicad/Revit можно преобразовать локально в редактируемый план Houseplan с выбором этажей и отчётом о потерях.",
+    "en": "Architectural IFC from Archicad/Revit can be converted locally into editable Houseplan plans, with storey selection and loss reports."
+  }
+}

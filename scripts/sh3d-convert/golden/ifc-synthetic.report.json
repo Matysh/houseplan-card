@@ -1,0 +1,1509 @@
+{
+  "sourceFormat": "ifc",
+  "schema": "IFC4",
+  "metresPerUnit": 1,
+  "sourceProgram": "Houseplan tests",
+  "sourcePreprocessor": "Houseplan tests",
+  "measurements": {
+    "wasmLinearBytes": 139788288
+  },
+  "excludedVoids": [],
+  "minHouseplan": "1.84.0",
+  "toolVersion": "plan-convert 0.2",
+  "sourceCounts": {
+    "floor": 2,
+    "wall": 18,
+    "room": 4,
+    "door": 2,
+    "window": 2
+  },
+  "entities": [
+    {
+      "sourceId": 33,
+      "guid": "0000000000000000000031",
+      "name": "Wall 0",
+      "number": "Wall 0",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "16",
+      "walls": [
+        {
+          "a": [
+            0,
+            0
+          ],
+          "b": [
+            8,
+            0
+          ],
+          "cm": 20,
+          "zMin": 0,
+          "zMax": 2.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 53,
+      "guid": "0000000000000000000051",
+      "name": "Wall 1",
+      "number": "Wall 1",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "16",
+      "walls": [
+        {
+          "a": [
+            8,
+            0
+          ],
+          "b": [
+            8,
+            4
+          ],
+          "cm": 19.99999999999993,
+          "zMin": 0,
+          "zMax": 2.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 73,
+      "guid": "0000000000000000000071",
+      "name": "Wall 2",
+      "number": "Wall 2",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "16",
+      "walls": [
+        {
+          "a": [
+            8,
+            4
+          ],
+          "b": [
+            0,
+            4
+          ],
+          "cm": 19.99999999999997,
+          "zMin": 0,
+          "zMax": 2.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 93,
+      "guid": "0000000000000000000091",
+      "name": "Wall 3",
+      "number": "Wall 3",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "16",
+      "walls": [
+        {
+          "a": [
+            0,
+            4
+          ],
+          "b": [
+            0,
+            0
+          ],
+          "cm": 20,
+          "zMin": 0,
+          "zMax": 2.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 113,
+      "guid": "0000000000000000000111",
+      "name": "Wall 4",
+      "number": "Wall 4",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "16",
+      "walls": [
+        {
+          "a": [
+            4,
+            0
+          ],
+          "b": [
+            4,
+            4
+          ],
+          "cm": 19.99999999999997,
+          "zMin": 0,
+          "zMax": 2.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 133,
+      "guid": "0000000000000000000131",
+      "name": "Wall 5",
+      "number": "Wall 5",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "16",
+      "walls": [
+        {
+          "a": [
+            10,
+            0
+          ],
+          "b": [
+            10,
+            4
+          ],
+          "cm": 19.99999999999993,
+          "zMin": 0,
+          "zMax": 2.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 153,
+      "guid": "0000000000000000000151",
+      "name": "Wall 6",
+      "number": "Wall 6",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "16",
+      "walls": [
+        {
+          "a": [
+            9,
+            2
+          ],
+          "b": [
+            11,
+            2
+          ],
+          "cm": 20.000000000000018,
+          "zMin": 0,
+          "zMax": 2.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 173,
+      "guid": "0000000000000000000171",
+      "name": "Wall 7",
+      "number": "Wall 7",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "16",
+      "walls": [
+        {
+          "a": [
+            4,
+            2
+          ],
+          "b": [
+            6,
+            2
+          ],
+          "cm": 20.000000000000018,
+          "zMin": 0,
+          "zMax": 2.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 193,
+      "guid": "0000000000000000000191",
+      "name": "Wall 8",
+      "number": "Wall 8",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "16",
+      "walls": [
+        {
+          "a": [
+            5,
+            1
+          ],
+          "b": [
+            7,
+            1
+          ],
+          "cm": 20.000000000000007,
+          "zMin": 0,
+          "zMax": 2.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 273,
+      "guid": "0000000000000000000271",
+      "name": "Wall 0",
+      "number": "Wall 0",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "256",
+      "walls": [
+        {
+          "a": [
+            0,
+            0
+          ],
+          "b": [
+            8,
+            0
+          ],
+          "cm": 20,
+          "zMin": 3,
+          "zMax": 5.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 293,
+      "guid": "0000000000000000000291",
+      "name": "Wall 1",
+      "number": "Wall 1",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "256",
+      "walls": [
+        {
+          "a": [
+            8,
+            0
+          ],
+          "b": [
+            8,
+            4
+          ],
+          "cm": 19.99999999999993,
+          "zMin": 3,
+          "zMax": 5.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 313,
+      "guid": "0000000000000000000311",
+      "name": "Wall 2",
+      "number": "Wall 2",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "256",
+      "walls": [
+        {
+          "a": [
+            8,
+            4
+          ],
+          "b": [
+            0,
+            4
+          ],
+          "cm": 19.99999999999997,
+          "zMin": 3,
+          "zMax": 5.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 333,
+      "guid": "0000000000000000000331",
+      "name": "Wall 3",
+      "number": "Wall 3",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "256",
+      "walls": [
+        {
+          "a": [
+            0,
+            4
+          ],
+          "b": [
+            0,
+            0
+          ],
+          "cm": 20,
+          "zMin": 3,
+          "zMax": 5.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 353,
+      "guid": "0000000000000000000351",
+      "name": "Wall 4",
+      "number": "Wall 4",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "256",
+      "walls": [
+        {
+          "a": [
+            4,
+            0
+          ],
+          "b": [
+            4,
+            4
+          ],
+          "cm": 19.99999999999997,
+          "zMin": 3,
+          "zMax": 5.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 373,
+      "guid": "0000000000000000000371",
+      "name": "Wall 5",
+      "number": "Wall 5",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "256",
+      "walls": [
+        {
+          "a": [
+            10,
+            0
+          ],
+          "b": [
+            10,
+            4
+          ],
+          "cm": 19.99999999999993,
+          "zMin": 3,
+          "zMax": 5.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 393,
+      "guid": "0000000000000000000391",
+      "name": "Wall 6",
+      "number": "Wall 6",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "256",
+      "walls": [
+        {
+          "a": [
+            9,
+            2
+          ],
+          "b": [
+            11,
+            2
+          ],
+          "cm": 20.000000000000018,
+          "zMin": 3,
+          "zMax": 5.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 413,
+      "guid": "0000000000000000000411",
+      "name": "Wall 7",
+      "number": "Wall 7",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "256",
+      "walls": [
+        {
+          "a": [
+            4,
+            2
+          ],
+          "b": [
+            6,
+            2
+          ],
+          "cm": 20.000000000000018,
+          "zMin": 3,
+          "zMax": 5.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 433,
+      "guid": "0000000000000000000431",
+      "name": "Wall 8",
+      "number": "Wall 8",
+      "type": "IFCWALL",
+      "kind": "wall",
+      "floorId": "256",
+      "walls": [
+        {
+          "a": [
+            5,
+            1
+          ],
+          "b": [
+            7,
+            1
+          ],
+          "cm": 20.000000000000007,
+          "zMin": 3,
+          "zMax": 5.8
+        }
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 207,
+      "guid": "0000000000000000000205",
+      "name": "West",
+      "number": "West",
+      "type": "IFCSPACE",
+      "kind": "room",
+      "floorId": "16",
+      "poly": [
+        [
+          0.1,
+          0.1
+        ],
+        [
+          3.9,
+          0.1
+        ],
+        [
+          3.9,
+          3.9
+        ],
+        [
+          0.1,
+          3.9
+        ]
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "id": "ifc-16-room-207",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 218,
+      "guid": "0000000000000000000216",
+      "name": "East",
+      "number": "East",
+      "type": "IFCSPACE",
+      "kind": "room",
+      "floorId": "16",
+      "poly": [
+        [
+          4.1,
+          0.1
+        ],
+        [
+          7.9,
+          0.1
+        ],
+        [
+          7.9,
+          3.9
+        ],
+        [
+          4.1,
+          3.9
+        ]
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "id": "ifc-16-room-218",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 447,
+      "guid": "0000000000000000000445",
+      "name": "West",
+      "number": "West",
+      "type": "IFCSPACE",
+      "kind": "room",
+      "floorId": "256",
+      "poly": [
+        [
+          0.1,
+          0.1
+        ],
+        [
+          3.9,
+          0.1
+        ],
+        [
+          3.9,
+          3.9
+        ],
+        [
+          0.1,
+          3.9
+        ]
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "id": "ifc-256-room-447",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 458,
+      "guid": "0000000000000000000456",
+      "name": "East",
+      "number": "East",
+      "type": "IFCSPACE",
+      "kind": "room",
+      "floorId": "256",
+      "poly": [
+        [
+          4.1,
+          0.1
+        ],
+        [
+          7.9,
+          0.1
+        ],
+        [
+          7.9,
+          3.9
+        ],
+        [
+          4.1,
+          3.9
+        ]
+      ],
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "id": "ifc-256-room-458",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 234,
+      "guid": "0000000000000000000233",
+      "name": "door",
+      "number": "door",
+      "type": "IFCDOOR",
+      "kind": "door",
+      "floorId": "16",
+      "hostSourceId": 113,
+      "opening": {
+        "x": 4,
+        "y": 1,
+        "length": 0.8999999999999999,
+        "angle": 90,
+        "zMin": 0,
+        "zMax": 2
+      },
+      "outcome": "partial",
+      "reason": "ifc_door_orientation",
+      "results": [
+        {
+          "floorId": "16",
+          "id": "ifc-16-opening-234",
+          "outcome": "partial",
+          "reason": "ifc_door_orientation"
+        }
+      ]
+    },
+    {
+      "sourceId": 474,
+      "guid": "0000000000000000000473",
+      "name": "door",
+      "number": "door",
+      "type": "IFCDOOR",
+      "kind": "door",
+      "floorId": "256",
+      "hostSourceId": 353,
+      "opening": {
+        "x": 4,
+        "y": 1,
+        "length": 0.8999999999999999,
+        "angle": 90,
+        "zMin": 3,
+        "zMax": 5
+      },
+      "outcome": "partial",
+      "reason": "ifc_door_orientation",
+      "results": [
+        {
+          "floorId": "256",
+          "id": "ifc-256-opening-474",
+          "outcome": "partial",
+          "reason": "ifc_door_orientation"
+        }
+      ]
+    },
+    {
+      "sourceId": 250,
+      "guid": "0000000000000000000249",
+      "name": "window",
+      "number": "window",
+      "type": "IFCWINDOW",
+      "kind": "window",
+      "floorId": "16",
+      "hostSourceId": 33,
+      "opening": {
+        "x": 6,
+        "y": 0,
+        "length": 1.1999999999999993,
+        "angle": 0,
+        "zMin": 0,
+        "zMax": 2
+      },
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "16",
+          "id": "ifc-16-opening-250",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 490,
+      "guid": "0000000000000000000489",
+      "name": "window",
+      "number": "window",
+      "type": "IFCWINDOW",
+      "kind": "window",
+      "floorId": "256",
+      "hostSourceId": 273,
+      "opening": {
+        "x": 6,
+        "y": 0,
+        "length": 1.1999999999999993,
+        "angle": 0,
+        "zMin": 3,
+        "zMax": 5
+      },
+      "outcome": "transferred",
+      "results": [
+        {
+          "floorId": "256",
+          "id": "ifc-256-opening-490",
+          "outcome": "transferred"
+        }
+      ]
+    },
+    {
+      "sourceId": 16,
+      "guid": "0000000000000000000015",
+      "name": "Ground",
+      "number": "Ground",
+      "type": "IFCBUILDINGSTOREY",
+      "kind": "floor",
+      "id": "16",
+      "title": "Ground",
+      "elevation": 0,
+      "declaredElevation": 0,
+      "buildingId": "11",
+      "building": "House",
+      "floorId": "16",
+      "outcome": "partial",
+      "results": [
+        {
+          "floorId": "16",
+          "id": "ifc-16",
+          "outcome": "partial"
+        }
+      ]
+    },
+    {
+      "sourceId": 256,
+      "guid": "0000000000000000000255",
+      "name": "Upper",
+      "number": "Upper",
+      "type": "IFCBUILDINGSTOREY",
+      "kind": "floor",
+      "id": "256",
+      "title": "Upper",
+      "elevation": 3,
+      "declaredElevation": 3,
+      "buildingId": "11",
+      "building": "House",
+      "floorId": "256",
+      "outcome": "partial",
+      "results": [
+        {
+          "floorId": "256",
+          "id": "ifc-256",
+          "outcome": "partial"
+        }
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "16",
+      "title": "Ground",
+      "building": "House",
+      "elevation": 0,
+      "notes": [
+        {
+          "code": "ifc_door_orientation",
+          "id": "234",
+          "name": "door",
+          "guid": "0000000000000000000233",
+          "type": "IFCDOOR",
+          "detail": ""
+        }
+      ],
+      "sourceCounts": {
+        "floor": 1,
+        "wall": 9,
+        "room": 2,
+        "door": 1,
+        "window": 1
+      },
+      "selected": true,
+      "previewSources": [
+        {
+          "sourceId": 33,
+          "shapes": [
+            [
+              [
+                0.270833333,
+                0.583333333
+              ],
+              [
+                0.4375,
+                0.583333333
+              ]
+            ],
+            [
+              [
+                0.4375,
+                0.583333333
+              ],
+              [
+                0.604166667,
+                0.583333333
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 53,
+          "shapes": [
+            [
+              [
+                0.604166667,
+                0.583333333
+              ],
+              [
+                0.604166667,
+                0.416666667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 73,
+          "shapes": [
+            [
+              [
+                0.604166667,
+                0.416666667
+              ],
+              [
+                0.4375,
+                0.416666667
+              ]
+            ],
+            [
+              [
+                0.4375,
+                0.416666667
+              ],
+              [
+                0.270833333,
+                0.416666667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 93,
+          "shapes": [
+            [
+              [
+                0.270833333,
+                0.416666667
+              ],
+              [
+                0.270833333,
+                0.583333333
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 113,
+          "shapes": [
+            [
+              [
+                0.4375,
+                0.583333333
+              ],
+              [
+                0.4375,
+                0.5
+              ]
+            ],
+            [
+              [
+                0.4375,
+                0.5
+              ],
+              [
+                0.4375,
+                0.416666667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 133,
+          "shapes": [
+            [
+              [
+                0.6875,
+                0.583333333
+              ],
+              [
+                0.6875,
+                0.5
+              ]
+            ],
+            [
+              [
+                0.6875,
+                0.5
+              ],
+              [
+                0.6875,
+                0.416666667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 153,
+          "shapes": [
+            [
+              [
+                0.645833333,
+                0.5
+              ],
+              [
+                0.6875,
+                0.5
+              ]
+            ],
+            [
+              [
+                0.6875,
+                0.5
+              ],
+              [
+                0.729166667,
+                0.5
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 173,
+          "shapes": [
+            [
+              [
+                0.4375,
+                0.5
+              ],
+              [
+                0.520833333,
+                0.5
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 193,
+          "shapes": [
+            [
+              [
+                0.479166667,
+                0.541666667
+              ],
+              [
+                0.5625,
+                0.541666667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 207,
+          "shapes": [
+            [
+              [
+                0.270833333,
+                0.583333333
+              ],
+              [
+                0.4375,
+                0.583333333
+              ],
+              [
+                0.4375,
+                0.416666667
+              ],
+              [
+                0.270833333,
+                0.416666667
+              ],
+              [
+                0.270833333,
+                0.583333333
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 218,
+          "shapes": [
+            [
+              [
+                0.4375,
+                0.583333333
+              ],
+              [
+                0.604166667,
+                0.583333333
+              ],
+              [
+                0.604166667,
+                0.416666667
+              ],
+              [
+                0.4375,
+                0.416666667
+              ],
+              [
+                0.4375,
+                0.583333333
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 234,
+          "shapes": [
+            [
+              [
+                0.4375,
+                0.560416667
+              ],
+              [
+                0.4375,
+                0.522916667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 250,
+          "shapes": [
+            [
+              [
+                0.495833333,
+                0.583333333
+              ],
+              [
+                0.545833333,
+                0.583333333
+              ]
+            ]
+          ]
+        }
+      ],
+      "spaceId": "ifc-16",
+      "cellCm": 10,
+      "rooms": 2,
+      "walls": 14,
+      "openings": 2,
+      "partial": true
+    },
+    {
+      "id": "256",
+      "title": "Upper",
+      "building": "House",
+      "elevation": 3,
+      "notes": [
+        {
+          "code": "ifc_door_orientation",
+          "id": "474",
+          "name": "door",
+          "guid": "0000000000000000000473",
+          "type": "IFCDOOR",
+          "detail": ""
+        }
+      ],
+      "sourceCounts": {
+        "floor": 1,
+        "wall": 9,
+        "room": 2,
+        "door": 1,
+        "window": 1
+      },
+      "selected": true,
+      "previewSources": [
+        {
+          "sourceId": 273,
+          "shapes": [
+            [
+              [
+                0.270833333,
+                0.583333333
+              ],
+              [
+                0.4375,
+                0.583333333
+              ]
+            ],
+            [
+              [
+                0.4375,
+                0.583333333
+              ],
+              [
+                0.604166667,
+                0.583333333
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 293,
+          "shapes": [
+            [
+              [
+                0.604166667,
+                0.583333333
+              ],
+              [
+                0.604166667,
+                0.416666667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 313,
+          "shapes": [
+            [
+              [
+                0.604166667,
+                0.416666667
+              ],
+              [
+                0.4375,
+                0.416666667
+              ]
+            ],
+            [
+              [
+                0.4375,
+                0.416666667
+              ],
+              [
+                0.270833333,
+                0.416666667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 333,
+          "shapes": [
+            [
+              [
+                0.270833333,
+                0.416666667
+              ],
+              [
+                0.270833333,
+                0.583333333
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 353,
+          "shapes": [
+            [
+              [
+                0.4375,
+                0.583333333
+              ],
+              [
+                0.4375,
+                0.5
+              ]
+            ],
+            [
+              [
+                0.4375,
+                0.5
+              ],
+              [
+                0.4375,
+                0.416666667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 373,
+          "shapes": [
+            [
+              [
+                0.6875,
+                0.583333333
+              ],
+              [
+                0.6875,
+                0.5
+              ]
+            ],
+            [
+              [
+                0.6875,
+                0.5
+              ],
+              [
+                0.6875,
+                0.416666667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 393,
+          "shapes": [
+            [
+              [
+                0.645833333,
+                0.5
+              ],
+              [
+                0.6875,
+                0.5
+              ]
+            ],
+            [
+              [
+                0.6875,
+                0.5
+              ],
+              [
+                0.729166667,
+                0.5
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 413,
+          "shapes": [
+            [
+              [
+                0.4375,
+                0.5
+              ],
+              [
+                0.520833333,
+                0.5
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 433,
+          "shapes": [
+            [
+              [
+                0.479166667,
+                0.541666667
+              ],
+              [
+                0.5625,
+                0.541666667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 447,
+          "shapes": [
+            [
+              [
+                0.270833333,
+                0.583333333
+              ],
+              [
+                0.4375,
+                0.583333333
+              ],
+              [
+                0.4375,
+                0.416666667
+              ],
+              [
+                0.270833333,
+                0.416666667
+              ],
+              [
+                0.270833333,
+                0.583333333
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 458,
+          "shapes": [
+            [
+              [
+                0.4375,
+                0.583333333
+              ],
+              [
+                0.604166667,
+                0.583333333
+              ],
+              [
+                0.604166667,
+                0.416666667
+              ],
+              [
+                0.4375,
+                0.416666667
+              ],
+              [
+                0.4375,
+                0.583333333
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 474,
+          "shapes": [
+            [
+              [
+                0.4375,
+                0.560416667
+              ],
+              [
+                0.4375,
+                0.522916667
+              ]
+            ]
+          ]
+        },
+        {
+          "sourceId": 490,
+          "shapes": [
+            [
+              [
+                0.495833333,
+                0.583333333
+              ],
+              [
+                0.545833333,
+                0.583333333
+              ]
+            ]
+          ]
+        }
+      ],
+      "spaceId": "ifc-256",
+      "cellCm": 10,
+      "rooms": 2,
+      "walls": 14,
+      "openings": 2,
+      "partial": true
+    }
+  ],
+  "items": [
+    {
+      "code": "ifc_profile"
+    },
+    {
+      "code": "ifc_room_area"
+    }
+  ],
+  "outcomes": {
+    "transferred": {
+      "floor": 0,
+      "wall": 18,
+      "room": 4,
+      "door": 0,
+      "window": 2
+    },
+    "partial": {
+      "floor": 2,
+      "wall": 0,
+      "room": 0,
+      "door": 2,
+      "window": 0
+    },
+    "skipped": {
+      "floor": 0,
+      "wall": 0,
+      "room": 0,
+      "door": 0,
+      "window": 0
+    }
+  }
+}
