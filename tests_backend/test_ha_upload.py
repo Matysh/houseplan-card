@@ -388,7 +388,9 @@ async def test_issue_617_plan_upload_quota_answers_507_with_reason(
     _bytes, stored = await hass.async_add_executor_job(
         dir_usage, Path(hass.config.path(PLANS_DIR)),
     )
-    monkeypatch.setattr(hp_http, "MAX_PLANS_FILES", stored)  # no room for one more
+    from custom_components.houseplan.core import file_uploads
+
+    monkeypatch.setattr(file_uploads, "MAX_PLANS_FILES", stored)  # no room for one more
     resp = await client.post("/api/houseplan/plans/upload", data=_plan_form(b"PLAN"))
     assert resp.status == 507
     body = await resp.json()

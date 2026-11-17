@@ -61,11 +61,13 @@ async def test_deep_import_returns_safe_domain_error_and_next_preview_works(hass
 
 
 async def test_export_failure_never_reflects_private_exception_text(hass, monkeypatch):
+    from custom_components.houseplan.core import portable_commands
+
     await _setup(hass)
     sentinel = "/PRIVATE-FIXTURE/server-path TOKEN=PRIVATE-FIXTURE"
     def refused(*_args, **_kwargs):
         raise ImportFailure("invalid_config", sentinel)
-    monkeypatch.setattr(websocket_api, "create_export", refused)
+    monkeypatch.setattr(portable_commands, "prepare_export_document", refused)
     connection = _Connection()
     await websocket_api.ws_export_create.__wrapped__(hass, connection, {
         "id": 1, "type": "houseplan/export/create", "kind": "full", "card_version": "test",

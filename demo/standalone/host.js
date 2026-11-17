@@ -32,10 +32,11 @@ export function createCorePlanHost(capabilities){
     http:{postJson,async request(path,init){
       const body=init?.body instanceof FormData?init.body.get('file'):init?.body;
       const bytes=new Uint8Array(await body.arrayBuffer());let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
-      const result=await postJson(path,{name:body.name||'plan.json',mime:body.type,bytes:btoa(binary)});return Response.json(result);
+      const fields=init?.body instanceof FormData?Object.fromEntries([...init.body].filter(([key])=>key!=='file')):{};
+      const result=await postJson(path,{...fields,name:body.name||'plan.json',mime:body.type,bytes:btoa(binary)});return Response.json(result);
     }},
-    content:{async resolve(paths){return Object.fromEntries(paths.map(path=>[path,path]));},async resolveAssets(ids){
-      const {assets}=await request({type:'houseplan/assets/list'});return {assets:assets.filter(asset=>ids.includes(asset.asset_id))};}},
+    content:{async resolve(paths){return rpc({op:'content',paths});},async resolveAssets(ids){
+      return request({type:'houseplan/assets/resolve',asset_ids:ids});}},
   };
   const publish=patch=>{environment=Object.freeze({...environment,...patch});revision++;for(const receive of [...listeners])receive();};
   return {host,commands,get pendingCount(){return pending;},get listenerCount(){return listeners.size;},get subscriptionCount(){return [...events.values()].reduce((n,s)=>n+s.size,0);},

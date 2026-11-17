@@ -9,8 +9,6 @@ from typing import Any
 
 from .auth import may_write
 from .const import (
-    FILES_DIR,
-    PLANS_DIR,
     SUMMARY_PANEL_API_VERSION,
     SUPPORT_API_VERSION,
     VERSION,
@@ -22,9 +20,10 @@ from .core.command_ports import (
     HostIdentity,
     PlanPair,
 )
-from .core.plan_commands import PlanCommands
+from .core.content_files import FilesystemContent
+from .core.import_leases import DictionaryImportLeases
+from .core.plan_commands import PlanCommands, optimizer_backup_is_current
 from .import_export import ImportFailure
-from .plans import collect_attachments, collect_plans
 from .radar_validation import radar_registry_evidence
 from .store import (
     async_resolve_pending_pair,
@@ -124,7 +123,7 @@ class HaWriteAuthority:
 
     @property
     def archive_admin(self):
-        return self.can_write and bool(getattr(self.connection.user, "is_admin", False))
+        return self.can_write and bool(getattr(getattr(self.connection, "user", None), "is_admin", False))
 
     def ensure(self):
         if (getattr(self.connection, "user", None) is not self.user
@@ -177,22 +176,12 @@ class HaCommandEffects:
         return self.runtime.marker_history.refs() if self.runtime.marker_history is not None else set()
 
 
-class HaPlanContent:
-    def __init__(self, hass, cpu):
-        self.hass, self.cpu = hass, cpu
+class HaPlanContent(FilesystemContent):
+    def __init__(self, hass, cpu, runtime):
+        from .asset_integrity import get_asset_integrity_verifier
 
-    async def existing_plans(self, names):
-        if not names:
-            return set()
-        root = Path(self.hass.config.path(PLANS_DIR))
-        return await self.cpu.run(lambda: {name for name in names if (root / name).is_file()})
-
-    async def collect(self, previous, config, pinned):
-        def collect():
-            collect_plans(Path(self.hass.config.path(PLANS_DIR)), previous, config)
-            collect_attachments(Path(self.hass.config.path(FILES_DIR)), previous, config, pinned=pinned)
-
-        await self.cpu.run(collect)
+        super().__init__(Path(hass.config.path("")), cpu, lock=runtime.upload_lock,
+                         verifier=get_asset_integrity_verifier(hass))
 
 
 class HaCommandEvidence:
@@ -206,6 +195,15 @@ class HaCommandEvidence:
 
     def radar_registry(self):
         return radar_registry_evidence(self.hass)
+
+    def import_registry_snapshot(self):
+        from .registry_snapshot import import_registry_snapshot
+
+        try:
+            return import_registry_snapshot(self.hass)
+        except Exception:  # noqa: BLE001 - existing best-effort summary
+            _LOGGER.debug("House Plan import registry summary unavailable", exc_info=True)
+            return None
 
     async def configuration_extras(self, config, rev):
         from .support_package import PACKAGE_VERSIONS
@@ -231,13 +229,17 @@ class HaCommandEvidence:
 
 
 def plan_commands(hass, connection, runtime):
+    from .core.staging_commands import DictionaryStructuralStaging
+    from .core.structural_upload import uploads
     from .websocket_api import _build_identity
 
     cpu = HaCpuExecutor(hass)
     build = _build_identity(runtime)
-    environment = CommandEnvironment(HaPlanContent(hass, cpu), HaCommandEvidence(hass, connection, runtime),
+    environment = CommandEnvironment(HaPlanContent(hass, cpu, runtime), HaCommandEvidence(hass, connection, runtime),
                                      CommandPolicy.HA, HostIdentity(runtime.instance_id, VERSION,
-                                                                    build.fingerprint, build.build))
+                                                                    build.fingerprint, build.build),
+                                     leases=DictionaryImportLeases(runtime),
+                                     staging=DictionaryStructuralStaging(runtime.instance_id, uploads(runtime)))
     return PlanCommands(HaPlanStorage(runtime), cpu,
                         HaWriteAuthority(hass, connection, runtime),
                         HaCommandEffects(hass, runtime), environment)
@@ -253,15 +255,35 @@ async def dispatch_plan_command(hass, connection, message: dict[str, Any]) -> No
         connection.send_error(message["id"], "not_ready", "House Plan is not ready")
         return
     try:
+        operation = message.get("type")
+        if operation == "houseplan/export/create" and any(message.get(key) for key in (
+                "archive", "migration_source", "plan_graph_migration_source")):
+            from .command_legacy import export_special
+
+            await export_special(hass, connection, message, runtime)
+            return
+        if operation in {"houseplan/import/apply", "houseplan/import/revalidate"} and "archive" in (
+                runtime.import_previews.get(message.get("token")) or {}):
+            if operation == "houseplan/import/apply":
+                from .backup_transaction import apply_archive
+
+                await apply_archive(hass, connection, message, runtime)
+            else:
+                from .command_legacy import revalidate_archive
+
+                await revalidate_archive(hass, connection, message, runtime)
+            return
+        if operation == "houseplan/backup/cancel":
+            from .command_legacy import cancel_archive
+
+            if await cancel_archive(hass, connection, message, runtime):
+                return
         if message.get("type") == "houseplan/plan/optimize_undo":
             # The installation-backup variant is deliberately not a core
             # plan-only command. Recheck CAS under the same recovery fence
             # before handing its durable file/Zigbee transaction to HA.
             from .backup_transaction import undo_archive_locked
-            from .websocket_api import (
-                _optimizer_backup_is_current,
-                _resolved_write_pair,
-            )
+            from .websocket_api import _resolved_write_pair
 
             async with runtime.write_lock:
                 pair = await _resolved_write_pair(hass, connection, message["id"], runtime)
@@ -274,7 +296,7 @@ async def dispatch_plan_command(hass, connection, message: dict[str, Any]) -> No
                     if (message.get("expected_config_rev") != int(pair.config_data.get("rev", 0))
                             or message.get("expected_layout_rev") != int(pair.layout_data.get("rev", 0))):
                         raise CommandError("conflict", "Plan changed elsewhere")
-                    if not _optimizer_backup_is_current(pair.config_data, pair.layout_data):
+                    if not optimizer_backup_is_current(pair.config_data, pair.layout_data):
                         raise CommandError("no_backup", "The optimization backup is unavailable or a later edit made it stale")
                     await undo_archive_locked(hass, connection, message, runtime, pair.config_data, pair.layout_data)
                     return
@@ -283,3 +305,14 @@ async def dispatch_plan_command(hass, connection, message: dict[str, Any]) -> No
         connection.send_error(message["id"], error.code, error.public_message)
         return
     connection.send_result(message["id"], result)
+
+
+class HttpPrincipal:
+    """Observe the live HTTP principal again at the durable publication fence."""
+
+    def __init__(self, request):
+        self.request = request
+
+    @property
+    def user(self):
+        return self.request.get("hass_user")

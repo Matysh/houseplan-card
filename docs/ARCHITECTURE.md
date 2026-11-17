@@ -197,11 +197,22 @@ resolve to the same module, functions and exception classes. The mixed roots
 remain adapters: `graph_write.prepare_graph_pair`, `plan_graph_source` Store
 reads/writes, `radar_validation.radar_registry_evidence`,
 `backup_files.durable_file_job`, `asset_integrity.get_asset_integrity_verifier`,
-`zigbee_topology` MQTT coordinator and the remaining `plans` management code.
-The adapter owns locks, CAS/revisions, user/TTL/consume, executor dispatch,
-source-backup durability, paired intents, rollback and event publication in
-the previous order. Cancellation shielding remains outside the pure file job,
-so cancelling the caller cannot unlock an unfinished durable write.
+`zigbee_topology` MQTT coordinator. `plans`, `projection`, `space_copy` and
+`deletion_layout` now also have one canonical core owner (#1460).
+
+`core.plan_commands.PlanCommands` owns plan-only orchestration, CAS/no-op and
+revision decisions, validation, content-retirement intent, preview/staging
+leases, event order and the preparation-budget boundary. The HA decorators and
+HTTP framing delegate to it through `command_adapter`; only full ZIP,
+migration-source and archive Undo remain specialized HA paths. Physical locks,
+shared repositories, source-backup durability, paired journals and recovery
+remain storage-adapter obligations. Common file ports stage complete uploads
+before publication; cancellation settles the actual worker before unlocking.
+The reference standalone dispatcher uses this same service, not a second
+implementation. Standard wheel/sdist are staged from the exact canonical tree
+as `houseplan_core`, without HA or an embedded second source copy. See
+[CORE-HOST](CORE-HOST.md) for ports, operation coverage, installation,
+conformance factories and explicit single-process/non-production limitations.
 
 Source-reading consumer migration (facades are not substitute coverage):
 

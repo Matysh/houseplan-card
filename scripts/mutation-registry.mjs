@@ -220,9 +220,13 @@ const MUTANT_DEFINITIONS = [
     id: 'config-source-export-loses-post-await-admin-check-1015',
     guard: 'python3 -m pytest tests_backend/test_ha_config_migrations.py -q',
     because: '#1015: a real export worker may outlive permission; the original snapshot must not enter the response after admin/writer authority is lost. Registered only; nightly execution.',
-    patches: [{ file: 'custom_components/houseplan/websocket_api.py',
-      find: '            if not _check_write(hass, connection) or not archive_admin(hass, connection.user):',
-      replace: '            if False:' }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/command_legacy.py",
+    "find": "            if not _check_write(hass, connection) or not archive_admin(hass, connection.user):",
+    "replace": "            if False:"
+  }
+],
   },
   {
     id: 'config-migration-reports-before-durable-pair-1015',
@@ -2934,10 +2938,13 @@ const MUTANT_DEFINITIONS = [
     id: 'node-backend-processing-is-geometry-proof',
     guard: 'python -m pytest tests_backend/test_ha_websocket.py -q -k issue_891',
     because: '#891 AC3: real HA websocket registration must distinguish processing failure from proved invalid geometry',
-    patches: [{ file: 'custom_components/houseplan/websocket_api.py',
-      find: '            connection.send_error(msg["id"], "node_move_backend_unavailable",',
-      replace: '            connection.send_error(msg["id"], "node_move_invalid",',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "\"node_delete_backend_unavailable\" if deleting else \"node_move_backend_unavailable\"",
+    "replace": "\"node_delete_backend_unavailable\" if deleting else \"node_move_invalid\""
+  }
+],
   },
   {
     id: 'node-editor-every-write-refusal-is-unsafe-geometry',
@@ -4857,14 +4864,18 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: '#626 AC2/AC3: the stored plan filename and usage catalog is maintenance data for '
       + 'writers, not part of authenticated View.',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '    if not _check_write(hass, connection):\n'
-        + '        connection.send_error(msg["id"], "unauthorized", "Only writers may list plans")\n'
-        + '        return\n'
-        + '    rt = _runtime(hass, connection, msg["id"])\n',
-      replace: '    rt = _runtime(hass, connection, msg["id"])  # mutant: viewers list plan files\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/command_adapter.py",
+    "find": "{\"houseplan/config/get\", \"houseplan/layout/get\", \"houseplan/assets/resolve\"}",
+    "replace": "{\"houseplan/config/get\", \"houseplan/layout/get\", \"houseplan/assets/resolve\", \"houseplan/plans/list\"}"
+  },
+  {
+    "file": "custom_components/houseplan/core/content_commands.py",
+    "find": "if operation != \"houseplan/assets/resolve\":",
+    "replace": "if operation not in {\"houseplan/assets/resolve\", \"houseplan/plans/list\"}:"
+  }
+],
   },
   {
     id: 'acl-trail-view-exposes-source-entity',
@@ -8626,11 +8637,13 @@ const MUTANT_DEFINITIONS = [
     because: 'the streaming bound is inclusive: MAX_PLAN_BYTES passes and one byte more is refused '
       + 'before the body is buffered whole; a bound that slips by a chunk stores an oversized '
       + 'plan (#617 AC4)',
-    patches: [{
-      file: 'custom_components/houseplan/plans.py',
-      find: '        if size > limit:\n            return None\n',
-      replace: '        if size > limit + chunk:\n            return None\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plans.py",
+    "find": "        if size > limit:\n            return None\n",
+    "replace": "        if size > limit + chunk:\n            return None\n"
+  }
+],
   },
   {
     id: 'cold-view-vacuum-mapid-delegated',
@@ -8906,13 +8919,13 @@ const MUTANT_DEFINITIONS = [
     because: 'plan/optimize writes arbitrary client geometry; without the junction gate a '
       + 'crafted payload persists violations that inheritance then legalises for every later '
       + 'config/set (#333 AC1)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '            return validate_junction_limits(\n'
-        + '                msg["config"], config_data.get("config"),\n'
-        + '            ), None',
-      replace: '            return {}, None',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "counts = validate_junction_limits(checked, previous)\n                return checked, LAYOUT_SCHEMA(message[\"layout\"]), counts",
+    "replace": "counts = {}\n                return checked, LAYOUT_SCHEMA(message[\"layout\"]), counts"
+  }
+],
   },
   {
     id: 'junction-limit-backend-raw-baseline',
@@ -12680,11 +12693,13 @@ const MUTANT_DEFINITIONS = [
     because: 'разбор url строкой вместо urlsplit возвращает баг #225: кэш-бастер '
       + '?v=… делает имя файла не равным самому себе, ссылка читается как '
       + 'внутренняя-но-неканоническая, и бэкап с вложением снова не импортируется',
-    patches: [{
-      file: "custom_components/houseplan/core/import_export.py",
-      find: '    parsed = urlsplit(url)\n    if parsed.scheme or parsed.netloc:\n        return None\n    url = parsed.path',
-      replace: '    url = url.split("?", 1)[0]',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/content_index.py",
+    "find": "path = parsed.path",
+    "replace": "path = url"
+  }
+],
   },
   {
     id: 'internal-path-trusts-foreign-host',
@@ -12692,11 +12707,13 @@ const MUTANT_DEFINITIONS = [
     because: 'доверие к path при наличии scheme/netloc позволяет '
       + '"https://evil.example/houseplan_files/files/m1/doc.pdf" разрешиться в локальный '
       + 'файл, хотя _looks_internal считает такую ссылку внешней (ревью r1, M1)',
-    patches: [{
-      file: "custom_components/houseplan/core/import_export.py",
-      find: '    if parsed.scheme or parsed.netloc:\n        return None',
-      replace: '    if False:\n        return None',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/content_index.py",
+    "find": "if parsed.scheme or parsed.netloc:",
+    "replace": "if False:"
+  }
+],
   },
   {
     id: 'internal-path-allows-traversal',
@@ -12705,15 +12722,18 @@ const MUTANT_DEFINITIONS = [
       + 'отделения query; снимать их нельзя. Мутант снимает обе сразу: по одной '
       + 'защита эшелонирована (sanitize-сравнение ловит "..") и мутант был бы '
       + 'эквивалентным — выяснено прогоном при реализации',
-    patches: [{
-      file: "custom_components/houseplan/core/import_export.py",
-      find: '        if not raw_name or "/" in raw_name:\n            return None',
-      replace: '        raw_name = raw_name.split("/")[-1]\n        if not raw_name:\n            return None',
-    }, {
-      file: "custom_components/houseplan/core/import_export.py",
-      find: '            tail = url[len(prefix):].split("/")\n            if len(tail) != 2:\n                return None',
-      replace: '            tail = url[len(prefix):].split("/")[-2:]',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/content_index.py",
+    "find": "if not name or \"/\" in name or sanitize_filename(name) != name:",
+    "replace": "name = name.split(\"/\")[-1]\n        if not name or sanitize_filename(name) != name:"
+  },
+  {
+    "file": "custom_components/houseplan/core/content_index.py",
+    "find": "parts = path[len(prefix):].split(\"/\")",
+    "replace": "parts = path[len(prefix):].split(\"/\")[-2:]"
+  }
+],
   },
   {
     id: 'opening-dimensions-use-axis-ends',
@@ -13148,13 +13168,13 @@ const MUTANT_DEFINITIONS = [
       + '-k decor_asset_upload_deduplicates',
     because: 'an exact digest-proven orphan adds no physical bytes and must repair its sidecar '
       + 'even when physical count quota is already full (#434 AC2)',
-    patches: [{
-      file: 'custom_components/houseplan/http_api.py',
-      find: '            if blob.exists():\n'
-        + '                if not blob.is_file() or hashlib.sha256(blob.read_bytes()).hexdigest() != aid:',
-      replace: '            if False and blob.exists():\n'
-        + '                if not blob.is_file() or hashlib.sha256(blob.read_bytes()).hexdigest() != aid:',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/file_uploads.py",
+    "find": "exists = blob.exists()",
+    "replace": "exists = False"
+  }
+],
   },
   {
     id: 'decor-orphan-repair-claims-reuse',
@@ -13162,15 +13182,13 @@ const MUTANT_DEFINITIONS = [
       + '-k decor_asset_upload_deduplicates',
     because: 'reused:true means a valid catalog entry predated the request; rebuilding a lost or '
       + 'broken sidecar creates that entry and must report false (#434 AC2)',
-    patches: [{
-      file: 'custom_components/houseplan/http_api.py',
-      find: '                    os.replace(meta_temp, meta)\n'
-        + '                    return row, False\n'
-        + '                finally:',
-      replace: '                    os.replace(meta_temp, meta)\n'
-        + '                    return row, True\n'
-        + '                finally:',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/file_uploads.py",
+    "find": "{\"asset\": row, \"reused\": False}",
+    "replace": "{\"asset\": row, \"reused\": exists}"
+  }
+],
   },
   {
     id: 'decor-delete-skips-orphan-blobs',
@@ -13178,11 +13196,13 @@ const MUTANT_DEFINITIONS = [
       + '-k decor_asset_delete_removes_exact_orphans_only',
     because: 'explicit delete is the only bounded recovery path for invisible orphan blobs; '
       + 'depending on catalog metadata leaves quota permanently occupied (#434 AC3)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '            for extension in ASSET_EXTENSIONS:\n',
-      replace: '            for extension in ():\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/content_files.py",
+    "find": "for extension in ASSET_EXTENSIONS:",
+    "replace": "for extension in ():"
+  }
+],
   },
   {
     id: 'decor-svg-canonical-bytes-discarded',
@@ -13262,11 +13282,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'a read-only household member needs referenced images for View but must not use '
       + 'assets/resolve to probe or hash arbitrary catalog ids (#432 AC2)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '        allowed = requested & referenced\n',
-      replace: '        allowed = requested\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/content_commands.py",
+    "find": "allowed = requested & set(asset_refs(pair.config_data.get(\"config\") or {}))",
+    "replace": "allowed = requested"
+  }
+],
   },
   {
     id: 'asset-integrity-cache-hit-disabled',
@@ -13417,12 +13439,13 @@ const MUTANT_DEFINITIONS = [
     because: 'a pure test module that imports an HA-dependent backend module must be caught '
       + 'statically: pytest aborts on collection, so ALL pure tests stop running and the '
       + 'output looks nothing like a normal failure (#436, the #389 pattern)',
-    patches: [{
-      file: 'tests_backend/test_projection.py',
-      find: 'import copy\nimport importlib.util\nimport os',
-      replace: 'import copy\nimport importlib.util\nimport os\n'
-        + 'from custom_components.houseplan.store import async_save_config_state',
-    }],
+    patches: [
+  {
+    "file": "tests_backend/test_projection.py",
+    "find": "import copy\n",
+    "replace": "import copy\nfrom custom_components.houseplan.store import async_save_config_state\n"
+  }
+],
   },
   {
     id: 'benchmark-page-verdict-unwatched',
@@ -15581,18 +15604,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'a config save after a half-finished Optimize must resolve the durable pair before '
       + 'CAS, or it can consume the recovery intent and commit over mixed state (#491 AC3)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '    async with rt.write_lock:\n'
-        + '        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)\n'
-        + '        if resolved is None:\n'
-        + '            return\n'
-        + '        data = resolved.config_data\n'
-        + '        current_rev = data.get("rev", 0)\n',
-      replace: '    async with rt.write_lock:\n'
-        + '        data = await rt.config_store.async_load() or {}\n'
-        + '        current_rev = data.get("rev", 0)\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "pair = await self.load(transaction)\n            data, layout_data = pair.config_data, pair.layout_data",
+    "replace": "pair = PlanPair(await transaction.runtime.config_store.async_load() or {}, await transaction.runtime.store.async_load() or {})\n            data, layout_data = pair.config_data, pair.layout_data"
+  }
+],
   },
   {
     id: 'pair-recovery-point-writer-skips-fence',
@@ -15650,9 +15668,9 @@ const MUTANT_DEFINITIONS = [
       + 'has restored the exact before-pair and metadata (#491 AC1)',
     patches: [
   {
-    "file": "custom_components/houseplan/websocket_api.py",
-    "find": "        try:\n            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))\n        except PairCommitFailure as err:\n            message = (\n                \"Plan optimization failed; the previous plan is pending recovery\"\n",
-    "replace": "        try:\n            await _persist_pair_intent(rt, pending)\n            await _converge_pair(rt, pending)\n        except PairCommitFailure as err:\n            message = (\n                \"Plan optimization failed; the previous plan is pending recovery\"\n"
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "await transaction.commit_pair(target, rollback, authorize=self.authority.ensure)\n            except PairCommitFailure as error:\n                raise CommandError(\"commit_failed\", \"Plan optimization failed; the previous plan is pending recovery\"",
+    "replace": "from ..websocket_api import _persist_pair_intent, _converge_pair\n                await _persist_pair_intent(transaction.runtime, target)\n                await _converge_pair(transaction.runtime, target)\n            except PairCommitFailure as error:\n                raise CommandError(\"commit_failed\", \"Plan optimization failed; the previous plan is pending recovery\""
   }
 ],
   },
@@ -15665,9 +15683,9 @@ const MUTANT_DEFINITIONS = [
       + 'can leave a target intent over the still-live optimized pair (#491 AC2)',
     patches: [
   {
-    "file": "custom_components/houseplan/websocket_api.py",
-    "find": "        try:\n            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))\n        except PairCommitFailure as err:\n            message = (\n                \"Plan undo failed; the previous plan is pending recovery\"\n",
-    "replace": "        try:\n            await _persist_pair_intent(rt, pending)\n            await _converge_pair(rt, pending)\n        except PairCommitFailure as err:\n            message = (\n                \"Plan undo failed; the previous plan is pending recovery\"\n"
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "await transaction.commit_pair(target, rollback, authorize=self.authority.ensure)\n            except PairCommitFailure as error:\n                raise CommandError(\"commit_failed\", \"Plan undo failed; the previous plan is pending recovery\"",
+    "replace": "from ..websocket_api import _persist_pair_intent, _converge_pair\n                await _persist_pair_intent(transaction.runtime, target)\n                await _converge_pair(transaction.runtime, target)\n            except PairCommitFailure as error:\n                raise CommandError(\"commit_failed\", \"Plan undo failed; the previous plan is pending recovery\""
   }
 ],
   },
@@ -15754,13 +15772,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'Optimize must preserve an omitted summary namespace and enforce the same readable '
       + 'reference policy as config/set (#493 AC7)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '            checked = prepare_ordinary_summary_candidate(\n'
-        + '                msg["config"], config_data.get("config"), readable_entity_ids, _normalize,\n'
-        + '            )',
-      replace: '            checked = _normalize(msg["config"])  # mutant: Optimize bypasses summary guard',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "checked = prepare_ordinary_summary_candidate(copy.deepcopy(message[\"config\"]), previous, readable, normalize)",
+    "replace": "checked = normalize(copy.deepcopy(message[\"config\"]))"
+  }
+],
   },
   {
     id: 'import-apply-rechecks-preview-after-commit',
@@ -15769,11 +15787,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_import_export.py',
     because: 'once both halves are durable, a lapsed TTL or an eviction by a newer preview must '
       + 'not turn the accepted import into an error (#495 AC1/AC2)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '            rt.import_previews.pop(msg["token"], None)\n',
-      replace: '            get_candidate(rt, msg["token"], _connection_user_id(connection), consume=True)\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/portable_commands.py",
+    "find": "await env.leases.consume(session.authority.scope_id, message[\"token\"])",
+    "replace": "await candidate(session, message[\"token\"])\n                await env.leases.consume(session.authority.scope_id, message[\"token\"])"
+  }
+],
   },
   {
     id: 'trail-purge-drops-routes-in-memory-only',
@@ -16077,11 +16097,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'config/set is the ordinary and most frequent configuration writer; without its '
       + 'write-boundary check a crafted client can persist two active markers under one id (#625 AC3)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '            validate_active_marker_ids(msg["config"], stored_config)\n',
-      replace: '            # mutant: config/set skips the active marker id invariant\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "validate_active_marker_ids(checked, previous)\n                validate_marker_controls(checked, previous)\n                validate_marker_light_entities(checked, previous)\n                validate_marker_radars(checked, previous, registry=radar)\n                validate_marker_value_badges(checked, previous)\n                validate_marker_vacuum_routes(checked, previous)\n                validate_opening_passages(checked, previous)\n                validate_partition_opening_hosts(checked, geometry_previous",
+    "replace": "validate_marker_controls(checked, previous)\n                validate_marker_light_entities(checked, previous)\n                validate_marker_radars(checked, previous, registry=radar)\n                validate_marker_value_badges(checked, previous)\n                validate_marker_vacuum_routes(checked, previous)\n                validate_opening_passages(checked, previous)\n                validate_partition_opening_hosts(checked, geometry_previous"
+  }
+],
   },
   {
     id: 'node-move-ignores-junction-baseline-1102',
@@ -16089,9 +16111,9 @@ const MUTANT_DEFINITIONS = [
     because: '#1102: node movement must omit previous-side work only for an exact-revision junction baseline.',
     patches: [
   {
-    "file": "custom_components/houseplan/websocket_api.py",
-    "find": "                validate_partition_opening_hosts(candidate, proved_baseline)\n                inherited = rt.junction_baseline\n                counts = validate_junction_limits(candidate, previous, baseline_counts=(\n                    inherited[1] if inherited and inherited[0] == rev else None), touched_spaces=touched)\n",
-    "replace": "                validate_partition_opening_hosts(candidate, proved_baseline)\n                counts = validate_junction_limits(candidate, previous, touched_spaces=touched)\n"
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "inherited[1] if inherited and inherited[0] == rev else None), touched_spaces=touched)",
+    "replace": "None), touched_spaces=touched)"
   }
 ],
   },
@@ -16099,11 +16121,13 @@ const MUTANT_DEFINITIONS = [
     id: 'space-delete-cpu-on-event-loop-1101',
     guard: 'node scripts/backend-test-guard.mjs issue_1101_space_delete_large_house_cpu_runs_in_executor tests_backend/test_ha_space_delete_executor.py',
     because: '#1101: large-house preparation must run on a worker while the paired writer still owns write_lock.',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '                await hass.async_add_executor_job(_prepare_delete_cpu)\n',
-      replace: '                _prepare_delete_cpu()\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "target, rollback, dependencies, removed_layout, removed_markers = await self.cpu.run(prepare_delete)",
+    "replace": "target, rollback, dependencies, removed_layout, removed_markers = prepare_delete()"
+  }
+],
   },
   {
     id: 'space-delete-skips-active-marker-id-invariant',
@@ -16112,11 +16136,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'space/delete rewrites marker placement fields; a changed legacy duplicate group '
       + 'must not be committed merely because it existed before this structural write (#625 AC3)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '                validate_active_marker_ids(target_config, current_config)\n',
-      replace: '                # mutant: space/delete skips the active marker id invariant\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "candidate = CONFIG_SCHEMA(candidate)\n                    validate_active_marker_ids(candidate, config)",
+    "replace": "candidate = CONFIG_SCHEMA(candidate)\n                    # mutant skips active ids"
+  }
+],
   },
   {
     id: 'space-delete-ignores-remove-markers',
@@ -16125,11 +16151,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'the confirmed «Delete space with devices» must reach the candidate; dropping the '
       + 'flag answers space_in_use and the space never goes (#819 AC2)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '                    remove_markers=msg["remove_markers"],\n',
-      replace: '                    remove_markers=False,\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "remove_markers=message.get(\"remove_markers\", False)",
+    "replace": "remove_markers=False"
+  }
+],
   },
   {
     id: 'space-delete-markers-leave-no-tombstone',
@@ -16138,13 +16166,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'a device deleted with its space goes as with the dialog\'s Delete: without the '
       + 'binding tombstone discovery puts it straight back instead of «Available again» (#819 AC2)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '        if not virtual:\n'
-        + '            kept.append({"id": marker_id, "binding": binding, "removed": True, "hidden": True})\n',
-      replace: '        if False:\n'
-        + '            kept.append({"id": marker_id, "binding": binding, "removed": True, "hidden": True})\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/space_delete.py",
+    "find": "        if not virtual:\n            kept.append({\"id\": marker_id, \"binding\": binding, \"removed\": True, \"hidden\": True})\n",
+    "replace": "        if False:\n            kept.append({\"id\": marker_id, \"binding\": binding, \"removed\": True, \"hidden\": True})\n"
+  }
+],
   },
   {
     id: 'space-delete-markers-keep-control-links',
@@ -16153,11 +16181,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'the server mirror must clean other markers\' controls like the card\'s single delete; '
       + 'the shared fixture is the parity witness between the two (#819 TS/Python parity)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '        if len(links) != len(controls):\n            marker["controls"] = links or None\n',
-      replace: '        if False:\n            marker["controls"] = links or None\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/space_delete.py",
+    "find": "        if len(links) != len(controls):\n            marker[\"controls\"] = links or None\n",
+    "replace": "        if False:\n            marker[\"controls\"] = links or None\n"
+  }
+],
   },
   {
     id: 'space-delete-markers-keep-files-and-trails',
@@ -16166,11 +16196,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'attachments and robot trails of the deleted devices go after the durable write, as '
       + 'files/cleanup and trail/delete take them for one marker (#819 AC2)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '            if removed_markers:\n                # Under the lock',
-      replace: '            if False:\n                # Under the lock',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "if removed_markers:\n                    await self.effects.forget_deleted_markers",
+    "replace": "if False:\n                    await self.effects.forget_deleted_markers"
+  }
+],
   },
   {
     id: 'space-delete-markers-on-the-last-space',
@@ -16179,11 +16211,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'the last space keeps its own rule — its markers are detached, never deleted — even '
       + 'when a client sends the new flag (#819 AC5)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '    if remove_markers and not (len(spaces) == 1 and spaces[0].get("id") == space_id):\n',
-      replace: '    if remove_markers:\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/space_delete.py",
+    "find": "    if remove_markers and not (len(spaces) == 1 and spaces[0].get(\"id\") == space_id):\n",
+    "replace": "    if remove_markers:\n"
+  }
+],
   },
   {
     id: 'space-delete-mirror-keeps-control-links',
@@ -16262,11 +16296,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_space_delete_routes.py',
     because: 'the real writer must remove routes into the deleted space while preserving '
       + 'the dock and other routes; the frontend candidate cannot prove the stored pair (#822 AC1)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '                vacuum["map_routes"] = kept_routes\n',
-      replace: '                pass  # mutant: keep routes into the deleted space\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/space_delete.py",
+    "find": "                vacuum[\"map_routes\"] = kept_routes\n",
+    "replace": "                pass  # mutant: keep routes into the deleted space\n"
+  }
+],
   },
   {
     id: 'space-delete-server-revives-legacy-routes',
@@ -16275,14 +16311,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_space_delete_routes.py',
     because: 'an explicit empty route list must not become absent and revive retained legacy '
       + 'calibration after deleting the last space (#822 AC3)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '                vacuum["map_routes"] = kept_routes\n',
-      replace: '                if kept_routes:\n'
-        + '                    vacuum["map_routes"] = kept_routes\n'
-        + '                else:\n'
-        + '                    vacuum.pop("map_routes", None)\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/space_delete.py",
+    "find": "                vacuum[\"map_routes\"] = kept_routes\n",
+    "replace": "                if kept_routes:\n                    vacuum[\"map_routes\"] = kept_routes\n                else:\n                    vacuum.pop(\"map_routes\", None)\n"
+  }
+],
   },
   {
     id: 'plan-optimize-skips-active-marker-id-invariant',
@@ -16291,11 +16326,13 @@ const MUTANT_DEFINITIONS = [
       + 'tests_backend/test_ha_websocket.py',
     because: 'Optimize replaces the whole configuration and cannot be a side door around the '
       + 'same active marker id invariant enforced by the ordinary writer (#625 AC3)',
-    patches: [{
-      file: 'custom_components/houseplan/websocket_api.py',
-      find: '            validate_active_marker_ids(msg["config"], config_data.get("config"))\n',
-      replace: '            # mutant: Optimize skips the active marker id invariant\n',
-    }],
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "validate_active_marker_ids(checked, previous)\n                validate_marker_controls(checked, previous)\n                validate_marker_light_entities(checked, previous)\n                validate_marker_radars(checked, previous, registry=radar)\n                validate_marker_value_badges(checked, previous)\n                validate_marker_vacuum_routes(checked, previous)\n                validate_opening_passages(checked, previous)\n                validate_partition_opening_hosts(checked, previous, allow_optimize_rehost=True)",
+    "replace": "validate_marker_controls(checked, previous)\n                validate_marker_light_entities(checked, previous)\n                validate_marker_radars(checked, previous, registry=radar)\n                validate_marker_value_badges(checked, previous)\n                validate_marker_vacuum_routes(checked, previous)\n                validate_opening_passages(checked, previous)\n                validate_partition_opening_hosts(checked, previous, allow_optimize_rehost=True)"
+  }
+],
   },
   {
     id: 'support-palette-copies-any-key',
@@ -18873,9 +18910,9 @@ const contact1003GuardCases=[
     because:'#1003 AC11: authenticated config/set must reject stale layout revision without changing either durable half.',
     patches:[
   {
-    "file": "custom_components/houseplan/websocket_api.py",
-    "find": "            if not (\"contact_layout\" in msg or \"room_label_layout\" in msg) or msg.get(\"expected_layout_rev\") != layout_rev:",
-    "replace": "            if not (\"contact_layout\" in msg or \"room_label_layout\" in msg):"
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "or message.get(\"expected_layout_rev\") != layout_rev):",
+    "replace": "or False):"
   }
 ],
   },
@@ -18883,9 +18920,13 @@ const contact1003GuardCases=[
     id:'contact-pair-basis-validation-skipped-1003',
     guard:'node scripts/backend-test-guard.mjs contact_conflict_or_invalid_basis tests_backend/test_ha_device_contacts.py',
     because:'#1003 AC12: leaf validation alone does not prove config/set invokes it before committing the pair.',
-    patches:[{file:'custom_components/houseplan/websocket_api.py',
-      find:'                validate_contact_bases(msg["contact_layout"], layout_data.get("layout", {}))',
-      replace:'                validate_contact_bases({}, {})'}],
+    patches:[
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "validate_contact_bases(contacts, layout_data.get(\"layout\", {}))",
+    "replace": "validate_contact_bases({}, {})"
+  }
+],
   },
 ];
 const UNIT_GUARD_OVERRIDES = new Map(UNIT_GUARD_GROUPS.flatMap(([guard, ids]) => (
@@ -18985,9 +19026,13 @@ const wallNodeDelete1045Cases = [
   { id: 'node-delete-server-cas-bypassed-1045',
     guard: 'node scripts/backend-test-guard.mjs atomic_concurrency tests_backend/test_ha_wall_node_delete.py',
     because: '#1045 AC4: two real websocket clients at one revision can accept only one deletion and one durable revision.',
-    patches: [{ file: 'custom_components/houseplan/websocket_api.py',
-      find: '        if msg["expected_rev"] != rev:\n            connection.send_error(msg["id"], "conflict", "Plan revision changed; reopen the menu before deleting a node")',
-      replace: '        if False:\n            connection.send_error(msg["id"], "conflict", "Plan revision changed; reopen the menu before deleting a node")' }] },
+    patches: [
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "if message.get(\"expected_rev\") != rev:\n                raise CommandError(\"conflict\", \"Plan revision changed; reopen the menu before deleting a node\"",
+    "replace": "if False:\n                raise CommandError(\"conflict\", \"Plan revision changed; reopen the menu before deleting a node\""
+  }
+] },
   { id: 'node-delete-refused-inverse-removes-command-1045',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/node-delete-history.test.mjs',
     because: '#1045 AC5: every refused Delete inverse retains the exact command and both common-stack cursor identities.',
@@ -19173,15 +19218,13 @@ const editorLatency1075Cases = [
   {id:'node-delete-stale-junction-baseline-1075',
     guard:'node scripts/backend-test-guard.mjs exact_revision_authority tests_backend/test_ha_wall_node_delete.py',
     because:'#1075 AC6: authenticated writes must recompute a missing/stale junction baseline rather than trusting a different revision.',
-    patches:[{file:'custom_components/houseplan/websocket_api.py',
-      find:'            validate_partition_opening_hosts(candidate, baseline)\n'
-        + '            inherited = rt.junction_baseline\n'
-        + '            counts = validate_junction_limits(candidate, previous, baseline_counts=(\n'
-        + '                inherited[1] if inherited and inherited[0] == rev else None))',
-      replace:'            validate_partition_opening_hosts(candidate, baseline)\n'
-        + '            inherited = rt.junction_baseline\n'
-        + '            counts = validate_junction_limits(candidate, previous, baseline_counts=(\n'
-        + '                inherited[1] if inherited else None))'}]},
+    patches:[
+  {
+    "file": "custom_components/houseplan/core/plan_commands.py",
+    "find": "inherited[1] if inherited and inherited[0] == rev else None))",
+    "replace": "inherited[1] if inherited else None))"
+  }
+]},
 ];
 
 const decorStyle1071Cases = [
@@ -19283,9 +19326,13 @@ const scopedAttachment1096Cases = [{
   id: 'config-noop-scans-attachments-1096',
   guard: 'python3 -m pytest tests_backend/test_validation.py -q -k issue_1096_noop_write',
   because: '#1096 AC7: a write without dropped refs must not scan the files root; explicit maintenance still ages staging and respects pins.',
-  patches: [{file: 'custom_components/houseplan/plans.py',
-    find: '    if not can_drop and not sweep_staging:\n        return 0',
-    replace: '    if False:\n        return 0'}],
+  patches: [
+  {
+    "file": "custom_components/houseplan/core/plans.py",
+    "find": "    if not can_drop and not sweep_staging:\n        return 0",
+    "replace": "    if False:\n        return 0"
+  }
+],
 }];
 
 const planHass1111Cases = [

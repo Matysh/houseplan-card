@@ -2925,6 +2925,8 @@ async def test_full_export_waits_for_a_concurrent_paired_write(
 async def test_config_get_does_not_wait_for_slow_export_materialization(
     hass: HomeAssistant, monkeypatch,
 ) -> None:
+    from custom_components.houseplan.core import portable_commands
+
     await _setup(hass)
     rt = get_data(hass)
     assert rt is not None
@@ -2933,14 +2935,14 @@ async def test_config_get_does_not_wait_for_slow_export_materialization(
 
     started = threading.Event()
     release = threading.Event()
-    original = wsapi.create_export
+    original = portable_commands.prepare_export_document
 
     def slow_export(*args, **kwargs):
         started.set()
         assert release.wait(5), "test did not release the delayed export"
         return original(*args, **kwargs)
 
-    monkeypatch.setattr(wsapi, "create_export", slow_export)
+    monkeypatch.setattr(portable_commands, "prepare_export_document", slow_export)
     exported = _Connection()
     export_task = asyncio.create_task(wsapi.ws_export_create.__wrapped__(hass, exported, {
         "id": 45, "type": "houseplan/export/create", "kind": "full",
@@ -2965,16 +2967,20 @@ async def test_config_get_does_not_wait_for_slow_export_materialization(
 async def test_import_attachment_scan_runs_in_executor(
     hass: HomeAssistant, tmp_path: Path, monkeypatch,
 ) -> None:
+    from custom_components.houseplan.core.content_index import FilesystemContentIndex
+
     await _setup(hass)
     _rt, response, _document_value = await _candidate(hass, tmp_path)
     loop_thread = threading.get_ident()
     called_from: list[int] = []
 
-    def observed_scan(*_args):
-        called_from.append(threading.get_ident())
-        return set()
+    original = FilesystemContentIndex.existing
 
-    monkeypatch.setattr(wsapi, "_missing_internal_attachments", observed_scan)
+    def observed_scan(self, references):
+        called_from.append(threading.get_ident())
+        return original(self, references)
+
+    monkeypatch.setattr(FilesystemContentIndex, "existing", observed_scan)
     connection = await _apply(hass, response)
     assert connection.error is None and connection.result is not None
     assert called_from and all(thread_id != loop_thread for thread_id in called_from)
@@ -3042,19 +3048,22 @@ async def test_import_apply_conflict_preserves_state_and_preview_token(
 async def test_apply_confirmed_detach_does_not_collect_files_and_commits_pair(
     hass: HomeAssistant, tmp_path: Path, monkeypatch,
 ) -> None:
+    from custom_components.houseplan.command_adapter import HaPlanContent
+
     await _setup(hass)
     config = _config()
     config["spaces"][0]["plan_url"] = "/api/houseplan/content/plans/_/missing.svg"
     rt, response, _ = await _candidate(hass, tmp_path, target_config=config)
     assert response["preview"]["confirmation_required"] is True
-    monkeypatch.setattr(wsapi, "collect_plans", lambda *_args, **_kwargs: (_ for _ in ()).throw(
-        AssertionError("import apply must not collect plans")
-    ))
-    monkeypatch.setattr(wsapi, "collect_attachments", lambda *_args, **_kwargs: (_ for _ in ()).throw(
-        AssertionError("import apply must not collect attachments")
-    ))
+    collections = []
+
+    async def observed_collection(*args):
+        collections.append(args)
+
+    monkeypatch.setattr(HaPlanContent, "retire", observed_collection)
     connection = await _apply(hass, response, confirm=True)
     assert connection.error is None and connection.result and connection.result["ok"]
+    assert collections == [], "import apply must not collect plans or attachments"
     stored_config = await rt.config_store.async_load()
     stored_layout = await rt.store.async_load()
     assert stored_config["config"]["spaces"][0].get("plan_url") is None

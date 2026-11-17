@@ -143,21 +143,21 @@ covers failed/incompatible host handshakes after it loads.
 `demo/standalone/` is a synthetic contract laboratory, **not** a deployable
 backend. `host.js` implements the browser ports. The browser test routes those
 requests to `core-process.mjs` → an isolated Python stdio process
-`core_process.py`. The process reuses the real pure core for config/graph/schema
-validation, portable export/preview/apply, node proofs, structural staging and
-image validation. It owns only an in-memory revision pair, temporary files,
-preview tokens and one-deep Optimize intent. It does not prove production
+`core_process.py`. The process delegates to the same `PlanCommands` service as
+HA, including config/layout validation and transaction rules, portable JSON,
+node proofs, content catalogs/uploads and structural staging. It assembles
+only reference in-memory storage and temporary filesystem ports. It does not prove production
 durability, quotas, authentication, concurrency across processes or HA service
 behavior. HA import is prohibited in that subprocess and asserted in snapshots.
 
-This finite dispatcher is not a complete implementation of every allowed port
-operation. In particular `space/delete`, `plans/delete` and `geometry/repair`
-return `fixture_unsupported`; its `config/set` does not implement HA's complete
-deletion-layout reconciliation, null room-label removal, LED preservation or
-no-op revision semantics. It is evidence for the journeys enumerated below,
-not a storage adapter to copy into production. Implement the complete allowed
-command contract for a real host; the shared capability guard grants a feature,
-not a promise that this test dispatcher implements all of its subcommands.
+All base plan-only operations below have a shared implementation (#1460),
+including space/delete, plans/delete, repair dry/apply/undo, deletion-layout
+reconciliation, null room-label removal, LED preservation and no-op/CAS.
+There is no `fixture_unsupported` branch for these commands. The reference
+storage remains deliberately non-durable and single-process; a real host
+implements the ports in [CORE-HOST](CORE-HOST.md), not its own command rules.
+Legacy portable JSON cancellation retains HA's admin/no-op contract; it is not
+an immediate portable-token deletion API.
 
 For the actual request fields and responses, see the
 [WebSocket command table](ARCHITECTURE.md#integration-ws-api) and its handlers,
@@ -174,7 +174,8 @@ or returning acknowledgements without a validated, revisioned write.
 
 The separate `tests_backend/test_ha_standalone_core_transport.py` compares the
 dispatcher against authenticated real HA HTTP/WS/Stores on the same synthetic
-inputs: Save/CAS, paired Optimize/Undo, all four node APIs and structural
+inputs: Save/no-op/CAS, paired Optimize/Undo, all four node APIs, null labels,
+LED preservation, repair dry/apply/undo, space and plan deletion, and structural
 staging/compact commit. This does not turn the reference transport into a
 production server. The older echo fixture remains a fault/UI witness only;
 node API flags are no longer asserted by default for operations it cannot run.

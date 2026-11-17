@@ -23,6 +23,7 @@ from urllib.parse import urlsplit as urlsplit
 import voluptuous as vol
 
 from .config_migrations import migrate_pair as migrate_pair
+from .content_index import ContentIndex, ContentRef, FilesystemContentIndex, internal_reference
 from .constants import ASSETS_DIR as ASSETS_DIR
 from .constants import CONTENT_URL as CONTENT_URL
 from .constants import EXPORT_VERSION as EXPORT_VERSION
@@ -49,6 +50,7 @@ from .opening_repair import repair_imported_openings as repair_imported_openings
 from .plan_graph_exact import GraphError as GraphError
 from .portable_recovery import prepare_portable_markers as prepare_portable_markers
 from .ports import PortableRuntime as PortableRuntime
+from .ports import PortableIdentity
 from .room_appearance import normalize_room_appearance as normalize_room_appearance
 from .validation import CONFIG_SCHEMA as CONFIG_SCHEMA
 from .validation import LAYOUT_SCHEMA as LAYOUT_SCHEMA
@@ -485,36 +487,12 @@ def _internal_path(root: Path, url: str) -> tuple[str, Path] | None:
     # "https://evil.example/houseplan_files/files/m1/doc.pdf" resolve onto a
     # local file (review CODE-REVIEW-225-r1, M1). Such a url stays external,
     # which is also what _looks_internal says about it.
-    parsed = urlsplit(url)
-    if parsed.scheme or parsed.netloc:
+    reference = internal_reference(url)
+    if reference is None:
         return None
-    url = parsed.path
-    content_plan = CONTENT_URL + "/plans/_/"
-    if url.startswith(content_plan) or url.startswith(PLANS_URL + "/"):
-        prefix = content_plan if url.startswith(content_plan) else PLANS_URL + "/"
-        raw_name = url[len(prefix):]
-        if not raw_name or "/" in raw_name:
-            return None
-        name = sanitize_filename(raw_name)
-        if name != raw_name:
-            return None
-        return "plan", root / PLANS_DIR / name
-    asset_prefix = CONTENT_URL + "/assets/_/"
-    if url.startswith(asset_prefix):
-        raw_name = url[len(asset_prefix):]
-        if not re.fullmatch(r"[0-9a-f]{64}\.(?:png|jpg|webp|svg)", raw_name):
-            return None
-        return "decor_asset", root / ASSETS_DIR / raw_name
-    for prefix in (CONTENT_URL + "/files/", FILES_URL + "/"):
-        if url.startswith(prefix):
-            tail = url[len(prefix):].split("/")
-            if len(tail) != 2:
-                return None
-            marker, name = sanitize_marker_id(tail[0]), sanitize_filename(tail[1])
-            if marker != tail[-2] or name != tail[-1]:
-                return None
-            return "attachment", root / FILES_DIR / marker / name
-    return None
+    directory = {"plan": PLANS_DIR, "attachment": FILES_DIR, "asset_file": ASSETS_DIR}[reference.kind]
+    return ("decor_asset" if reference.kind == "asset_file" else reference.kind,
+            root / directory / reference.key)
 
 
 def _looks_internal(url: str) -> bool:
@@ -524,13 +502,18 @@ def _looks_internal(url: str) -> bool:
     ))
 
 
-def content_manifest(config: dict[str, Any], config_root: Path) -> list[dict[str, Any]]:
+def content_manifest(config: dict[str, Any], config_root: Path | None = None, *,
+                     content_index: ContentIndex | None = None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
+    if content_index is None:
+        if config_root is None:
+            raise ImportFailure("not_ready", "Content inventory is unavailable")
+        content_index = FilesystemContentIndex(config_root)
 
     def add(kind: str, owner: str, owner_id: str, field: str, value: Any) -> None:
         if not isinstance(value, str) or not value:
             return
-        internal = _internal_path(config_root, value)
+        internal = internal_reference(value)
         out.append({
             "kind": kind,
             "owner": owner,
@@ -538,7 +521,7 @@ def content_manifest(config: dict[str, Any], config_root: Path) -> list[dict[str
             "field": field,
             "url": value,
             "storage": "internal" if internal else "external",
-            "exists_at_export": internal[1].is_file() if internal else None,
+            "exists_at_export": content_index.lookup(internal).exists if internal else None,
         })
 
     for space in config.get("spaces") or []:
@@ -552,7 +535,6 @@ def content_manifest(config: dict[str, Any], config_root: Path) -> list[dict[str
     # Asset bytes are deliberately not embedded. The manifest records identity
     # and availability so a cross-instance import can preserve the image box as
     # a repairable editor placeholder instead of silently deleting geometry.
-    assets_root = config_root / ASSETS_DIR
     for space in config.get("spaces") or []:
         for shape in space.get("decor") or []:
             if not isinstance(shape, dict) or shape.get("kind") != "image":
@@ -560,29 +542,15 @@ def content_manifest(config: dict[str, Any], config_root: Path) -> list[dict[str
             aid = shape.get("asset_id")
             if not isinstance(aid, str) or not re.fullmatch(r"[0-9a-f]{64}", aid):
                 continue
-            matches = sorted(assets_root.glob(f"{aid}.*")) if assets_root.is_dir() else []
-            blob = next((path for path in matches if path.suffix in {".png", ".jpg", ".webp", ".svg"}), None)
-            metadata: dict[str, Any] = {}
-            try:
-                metadata = json.loads((assets_root / f"{aid}.json").read_text(encoding="utf-8"))
-            except (OSError, ValueError, TypeError):
-                pass
-            exists = False
-            if blob and blob.is_file():
-                try:
-                    exists = hashlib.sha256(blob.read_bytes()).hexdigest() == aid
-                except OSError:
-                    pass
+            info = content_index.lookup(ContentRef("decor_asset", aid))
             out.append({
                 "kind": "decor_asset", "owner": "decor",
                 "owner_id": f"{space.get('id', '')}:{shape.get('id', '')}", "field": "asset_id",
                 # Identity is extension-neutral: a missing target must compute
                 # exactly the same expected manifest as the source.
                 "url": aid, "asset_id": aid, "storage": "internal",
-                "mime": metadata.get("mime") or _DECOR_ASSET_MIME_BY_SUFFIX.get(
-                    blob.suffix if blob else ""
-                ),
-                "hash": aid, "exists_at_export": exists,
+                "mime": info.mime,
+                "hash": aid, "exists_at_export": info.exists,
             })
     return out
 
@@ -592,8 +560,8 @@ def _safe_title(value: str) -> str:
     return (safe or "space")[:60]
 
 
-def create_export(
-    runtime: PortableRuntime,
+def prepare_export_document(
+    runtime: PortableIdentity,
     config_data: dict[str, Any],
     layout_data: dict[str, Any],
     *,
@@ -601,9 +569,9 @@ def create_export(
     space_id: str | None,
     plan_only: bool = False,
     card_version: str,
-    config_root: Path,
     build: dict[str, str] | None = None,
 ) -> tuple[dict[str, Any], str]:
+    """Project exactly the selected payload before the host inspects its content."""
     if not isinstance(plan_only, bool) or plan_only and kind != "space":
         raise ImportFailure("invalid_format", "Plan-only export requires one space")
     raw_config = _json_copy(
@@ -735,13 +703,26 @@ def create_export(
         "model_version": model_version,
         "payload": {"config": config, "layout": layout},
         "placement_manifest": placement_manifest(config, layout),
-        "content_manifest": content_manifest(config, config_root),
+        "content_manifest": [],
         "transfer": {
             "dropped_marker_links": dropped_marker_links,
             **({"plan_only": True} if plan_only else {}),
             **({"recovery": recovery} if recovery["total"] else {}),
         },
     }
+    filename = (
+        f"houseplan-full-{stamp}.json" if kind == "full"
+        else f"houseplan-space-{_safe_title(title)}-{stamp}.json"
+    )
+    return document, filename
+
+
+def finalize_export_document(document: dict[str, Any], filename: str, *,
+                             config_root: Path | None = None,
+                             content_index: ContentIndex | None = None) -> tuple[dict[str, Any], str]:
+    """Attach the host's observation and prove the complete portable document."""
+    document["content_manifest"] = content_manifest(document["payload"]["config"], config_root,
+                                                    content_index=content_index)
     encoded = json.dumps(
         document, ensure_ascii=False, separators=(",", ":"), allow_nan=False
     ).encode("utf-8")
@@ -756,11 +737,19 @@ def create_export(
         duplicate_policy="skip", same_source=True, content=[],
         confirmation_required=False,
     )
-    filename = (
-        f"houseplan-full-{stamp}.json" if kind == "full"
-        else f"houseplan-space-{_safe_title(title)}-{stamp}.json"
-    )
     return document, filename
+
+
+def create_export(
+    runtime: PortableIdentity, config_data: dict[str, Any], layout_data: dict[str, Any], *,
+    kind: str, space_id: str | None, plan_only: bool = False, card_version: str,
+    config_root: Path | None = None, build: dict[str, str] | None = None,
+    content_index: ContentIndex | None = None,
+) -> tuple[dict[str, Any], str]:
+    """Compatibility entry using the same preparation/finalization as command ports."""
+    document, filename = prepare_export_document(runtime, config_data, layout_data,
+        kind=kind, space_id=space_id, plan_only=plan_only, card_version=card_version, build=build)
+    return finalize_export_document(document, filename, config_root=config_root, content_index=content_index)
 
 
 def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -1865,8 +1854,9 @@ def build_space_merge(
     }
 
 
-def _content_state(document: dict[str, Any], same_source: bool, config_root: Path,
-                   portable_content: frozenset[tuple[str, ...]] = frozenset()) -> tuple[list[dict[str, Any]], bool]:
+def _content_state(document: dict[str, Any], same_source: bool, config_root: Path | None,
+                   portable_content: frozenset[tuple[str, ...]] = frozenset(), *,
+                   content_index: ContentIndex | None = None) -> tuple[list[dict[str, Any]], bool]:
     """Validate the manifest against payload refs and resolve local policy.
 
     The manifest is descriptive, never authoritative: otherwise a crafted file
@@ -1874,7 +1864,11 @@ def _content_state(document: dict[str, Any], same_source: bool, config_root: Pat
     detach decision.  Every row must correspond exactly to a normalized config
     reference and its storage class is derived again on the target instance.
     """
-    expected = content_manifest(document["payload"]["config"], config_root)
+    if content_index is None:
+        if config_root is None:
+            raise ImportFailure("not_ready", "Content inventory is unavailable")
+        content_index = FilesystemContentIndex(config_root)
+    expected = content_manifest(document["payload"]["config"], content_index=content_index)
     supplied = document.get("content_manifest")
     if not isinstance(supplied, list):
         raise ImportFailure("invalid_content", "Missing content manifest")
@@ -1921,25 +1915,18 @@ def _content_state(document: dict[str, Any], same_source: bool, config_root: Pat
             # never selects or serves target bytes; the exact local hash below
             # remains authoritative for availability.
             row["mime"] = declared_mime
-            candidates = sorted((config_root / ASSETS_DIR).glob(f"{aid}.*"))
-            blob = next((path for path in candidates if path.suffix in {".png", ".jpg", ".webp", ".svg"}), None)
-            exists = False
-            if blob:
-                try:
-                    exists = hashlib.sha256(blob.read_bytes()).hexdigest() == aid
-                except OSError:
-                    pass
+            exists = content_index.lookup(ContentRef("decor_asset", aid)).exists
             row["exists_on_target"] = exists
             included = identity(item) in portable_content
             row["state"] = "available" if exists or included else "missing_preserved"
             confirmation = confirmation or not (exists or included)
             rows.append(row)
             continue
-        internal = _internal_path(config_root, item["url"])
+        internal = internal_reference(item["url"])
         if _looks_internal(item["url"]) and internal is None:
             raise ImportFailure("invalid_content", "Non-canonical internal content URL")
         if internal is not None:
-            exists = bool(internal and internal[1].is_file())
+            exists = content_index.lookup(internal).exists
             row["exists_on_target"] = exists
             state = "available" if (same_source and exists) or identity(item) in portable_content else "detach_required"
             confirmation = confirmation or state == "detach_required"
@@ -2159,20 +2146,23 @@ def _candidate_digest(candidate: dict[str, Any]) -> str:
     })
 
 
-def create_preview(
-    runtime: PortableRuntime,
+def prepare_preview(
+    runtime: PortableIdentity,
     raw: bytes,
     *,
     owner_id: str,
     duplicate_policy: str,
     current_config_data: dict[str, Any],
     current_layout_data: dict[str, Any],
-    config_root: Path,
+    config_root: Path | None = None,
     registry_snapshot: dict[str, set[str]] | None = None,
     portable_content: frozenset[tuple[str, ...]] = frozenset(),
     opening_repairs: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    document = parse_document(raw, opening_repairs=opening_repairs)
+    content_index: ContentIndex | None = None,
+    parsed_document: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Prepare a candidate without mutating host leases; parsed input is trusted internal output."""
+    document = parsed_document if parsed_document is not None else parse_document(raw, opening_repairs=opening_repairs)
     same_source = document.get("source_fingerprint") == source_fingerprint(runtime.instance_id)
     incoming_config = document["payload"]["config"]
     incoming_layout = document["payload"]["layout"]
@@ -2187,7 +2177,7 @@ def create_preview(
     except OpeningPassageError as err:
         raise ImportFailure(err.code, str(err)) from err
     content, content_confirmation = _content_state(
-        document, same_source, config_root, portable_content,
+        document, same_source, config_root, portable_content, content_index=content_index,
     )
     openings_confirmation = _openings_need_confirmation(document)
     confirmation = content_confirmation or openings_confirmation
@@ -2217,17 +2207,6 @@ def create_preview(
         "portable_content": sorted(portable_content),
     }
     candidate["digest"] = _candidate_digest(candidate)
-    # Opportunistic expiry and per-user oldest-first eviction.
-    runtime.import_previews = {
-        key: value for key, value in runtime.import_previews.items()
-        if value.get("expires", 0) > now
-    }
-    mine = [key for key, value in runtime.import_previews.items() if value.get("owner_id") == owner_id]
-    while len(mine) >= MAX_IMPORT_PREVIEWS_PER_USER:
-        runtime.import_previews.pop(mine.pop(0), None)
-    while len(runtime.import_previews) >= MAX_IMPORT_PREVIEWS_TOTAL:
-        runtime.import_previews.pop(next(iter(runtime.import_previews)), None)
-    runtime.import_previews[token] = candidate
     preview = {
         "kind": document["kind"],
         "plan_only": _transfer_plan_only(document),
@@ -2259,7 +2238,36 @@ def create_preview(
         "expected_config_rev": candidate["config_rev"],
         "expected_layout_rev": candidate["layout_rev"],
         "expires_at": datetime.fromtimestamp(candidate["expires"], UTC).isoformat().replace("+00:00", "Z"),
-    }
+    }, candidate
+
+
+def cache_preview(runtime: PortableRuntime, token: str, candidate: dict[str, Any]) -> None:
+    """Existing bounded retention policy; the storage adapter serializes publication."""
+    now = candidate["created"]
+    runtime.import_previews = {key: value for key, value in runtime.import_previews.items()
+                               if value.get("expires", 0) > now}
+    mine = [key for key, value in runtime.import_previews.items() if value.get("owner_id") == candidate["owner_id"]]
+    while len(mine) >= MAX_IMPORT_PREVIEWS_PER_USER:
+        runtime.import_previews.pop(mine.pop(0), None)
+    while len(runtime.import_previews) >= MAX_IMPORT_PREVIEWS_TOTAL:
+        runtime.import_previews.pop(next(iter(runtime.import_previews)), None)
+    runtime.import_previews[token] = candidate
+
+
+def create_preview(
+    runtime: PortableRuntime, raw: bytes, *, owner_id: str, duplicate_policy: str,
+    current_config_data: dict[str, Any], current_layout_data: dict[str, Any],
+    config_root: Path, registry_snapshot: dict[str, set[str]] | None = None,
+    portable_content: frozenset[tuple[str, ...]] = frozenset(),
+    opening_repairs: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Compatibility entry for existing standalone pure/archive callers."""
+    result, candidate = prepare_preview(runtime, raw, owner_id=owner_id, duplicate_policy=duplicate_policy,
+        current_config_data=current_config_data, current_layout_data=current_layout_data,
+        config_root=config_root, registry_snapshot=registry_snapshot, portable_content=portable_content,
+        opening_repairs=opening_repairs)
+    cache_preview(runtime, result["token"], candidate)
+    return result
 
 
 def get_candidate(runtime: PortableRuntime, token: str, owner_id: str, *, consume: bool = False) -> dict[str, Any]:
@@ -2285,6 +2293,7 @@ def revalidate_candidate(
     duplicate_policy: str,
     registry_snapshot: dict[str, set[str]] | None = None,
     config_root: Path | None = None,
+    content_index: ContentIndex | None = None,
 ) -> dict[str, Any]:
     """Refresh target-dependent preview data without uploading the file again."""
     if candidate.get("digest") != _candidate_digest(candidate):
@@ -2296,10 +2305,11 @@ def revalidate_candidate(
     current_layout = current_layout_data.get("layout") or {}
     previous_content = candidate.get("content")
     previous_confirmation = candidate.get("confirmation_required")
-    if config_root is not None:
+    if config_root is not None or content_index is not None:
         content, confirmation = _content_state(
             document, bool(candidate.get("same_source")), config_root,
             frozenset(tuple(row) for row in candidate.get("portable_content") or []),
+            content_index=content_index,
         )
         candidate["content"] = content
         candidate["confirmation_required"] = (

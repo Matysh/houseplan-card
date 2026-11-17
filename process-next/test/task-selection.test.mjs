@@ -25,6 +25,21 @@ async function fixture(files, run) {
     }
 }
 const select = (root, options = {}) => selectTaskTests({ root, inventory, track: 'ship', layer: 'product', ...options });
+test('#1460 shared command ports and independent package/host witnesses select storage contracts', async () => fixture({
+    'custom_components/houseplan/core/plan_commands.py': '',
+    'tests_backend/test_plan_commands.py': '',
+    'tests_backend/test_content_commands.py': '',
+    'tests_backend/test_core_conformance.py': '',
+    'tests_backend/test_core_distribution.py': '',
+}, async dir => {
+    const catalog = await testCatalog(dir, inventory);
+    const selection = await select(dir, { track: 'ask', changedFiles: ['custom_components/houseplan/core/plan_commands.py'] });
+    for (const path of ['tests_backend/test_plan_commands.py', 'tests_backend/test_content_commands.py',
+        'tests_backend/test_core_conformance.py', 'tests_backend/test_core_distribution.py']) {
+        assert.ok(catalog.rows.find(row => row.path === path).domains.includes('storage'), path);
+        assert.ok(JSON.stringify(selection).includes(path), path);
+    }
+}));
 test('#1395 explicit input policies select critical security ingress regressions', async () => fixture({
     'custom_components/houseplan/core/input_policy.py': 'STRICT=True',
     'tests_backend/test_input_policy.py': '',

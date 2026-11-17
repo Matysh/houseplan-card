@@ -1,5 +1,17 @@
 # Config compatibility registry
 
+## Shared command host (#1460)
+
+Host extraction changes no saved model, JSON or archive version. The HA and
+standalone adapters use one command implementation; historical pure imports
+remain identity facades. `CommandPolicy.PLAN_ONLY` is distinct from resource
+`InputPolicy` and refuses full/archive variants before creating a preview.
+Legacy JSON cancellation deliberately retains archive-admin/no-op semantics.
+Command API owns and closes preparation budgets before durable writes; callers
+must not add an external strict scope with a post-commit timeout checkpoint.
+See [CORE-HOST](CORE-HOST.md) for storage/content/lease guarantees and package
+dependencies; packaging does not imply a published website or release.
+
 ## Explicit input profiles (#1395)
 
 No schema/model/ZIP version changes. Installed HA keeps existing byte, storage,

@@ -8,8 +8,9 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 
 from .auth import may_write
+from .core.command_ports import CommandError
 from .store import get_data
-from .structural_upload import CONTROL_KEYS, UploadError, prepare_resolution, uploads
+from .structural_upload import CONTROL_KEYS, UploadError
 
 
 def structural_websocket_command(schema):
@@ -43,21 +44,11 @@ No access to HA's command registry or global websocket size is needed.
             if not may_write(hass, user):
                 connection.send_error(message["id"], "unauthorized", "Editing permission required")
                 return
-            owner = str(getattr(user, "id", ""))
-            manager = uploads(runtime)
             try:
-                # JSON/schema work is bounded but can exceed an event-loop
-                # turn. The ordinary writer still owns all domain/CAS proof.
-                snapshot, compact = manager.resolution_snapshot(message, owner)
-                expanded = await hass.async_add_executor_job(prepare_resolution, snapshot, compact)
-                expanded = await hass.async_add_executor_job(original_schema, expanded)
-                if not may_write(hass, getattr(connection, "user", None)) or connection.user is not user:
-                    raise UploadError("unauthorized")
-                # Recheck expiry/owner after awaits, and consume atomically in
-                # this event-loop turn. Concurrent/replayed commits cannot use
-                # the token twice, even when the original writer later fails.
-                manager.consume(message["upload_token"], owner, snapshot)
-            except (UploadError, vol.Invalid) as err:
+                from .command_adapter import plan_commands
+
+                expanded = await plan_commands(hass, connection, runtime).resolve_structural(message, original_schema)
+            except (UploadError, CommandError, vol.Invalid) as err:
                 connection.send_error(message["id"], getattr(err, "code", "invalid_format"), "Large write could not be accepted; reload and retry")
                 return
             return await inner(hass, connection, expanded)

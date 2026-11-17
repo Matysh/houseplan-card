@@ -12,6 +12,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.houseplan import command_adapter as adapter
 from custom_components.houseplan.const import DOMAIN
 from custom_components.houseplan.core import plan_commands as ws
+from custom_components.houseplan.core import command_state
 from custom_components.houseplan.store import get_data
 
 
@@ -49,7 +50,8 @@ async def test_issue_1101_space_delete_large_house_cpu_runs_in_executor(
     calls = []
     for name in ("_space_delete_target", "CONFIG_SCHEMA", "LAYOUT_SCHEMA",
                  "canonicalize_config_geometry", "canonicalize_layout_geometry"):
-        original = getattr(ws, name)
+        owner = command_state if name.startswith("canonicalize_") else ws
+        original = getattr(owner, name)
 
         def checked(*args, _name=name, _original=original, **kwargs):
             assert threading.get_ident() != loop_thread, f"{_name} ran on the event loop"
@@ -57,7 +59,7 @@ async def test_issue_1101_space_delete_large_house_cpu_runs_in_executor(
             calls.append(_name)
             return _original(*args, **kwargs)
 
-        monkeypatch.setattr(ws, name, checked)
+        monkeypatch.setattr(owner, name, checked)
     await client.send_json_auto_id({
         "type": "houseplan/space/delete", "space_id": config["spaces"][0]["id"],
         "remove_markers": True, "expected_config_rev": rev, "expected_layout_rev": 0,

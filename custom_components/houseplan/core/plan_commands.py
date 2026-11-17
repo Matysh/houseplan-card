@@ -14,6 +14,7 @@ from typing import Any
 
 import voluptuous as vol
 
+from .command_effects import BestEffortEffects
 from .command_execution import (
     begin_preparation,
     command_preparation,
@@ -31,10 +32,19 @@ from .command_ports import (
     PlanTransaction,
     WriteAuthority,
 )
-from .constants import CONTENT_URL, DECOR_ASSETS_API_VERSION, DEFAULT_CONFIG, PLANS_URL
+from .command_state import (
+    OPTIMIZE_BACKUP,
+    OPTIMIZE_PENDING,
+    layout_metadata,
+    maintenance_pair,
+    optimizer_backup_after_layout_maintenance,
+    optimizer_backup_is_current,
+    undo_kind,
+)
+from .constants import DECOR_ASSETS_API_VERSION, DEFAULT_CONFIG
 from .contact_basis import validate_contact_bases
+from .content_index import internal_plan_names
 from .coordinate_canonicalization import (
-    canonicalize_config_geometry,
     canonicalize_layout_geometry,
 )
 from .deletion_layout import deletion_layout_candidate
@@ -47,7 +57,7 @@ from .junction_limits import JunctionLimitError, validate_junction_limits
 from .led_strips import led_strip_link_report, preserve_led_strips
 from .opening_features import guard_opening_features_write
 from .plan_graph_exact import GraphError
-from .plans import plan_basename
+from .plans import content_retirement
 from .projection import project_config, project_layout
 from .radar_validation import RadarValidationError, validate_marker_radars
 from .room_appearance import config_appearance_materialized, normalize_room_appearance
@@ -88,28 +98,10 @@ from .wall_segment_model import WallSegmentMigrationError
 _LOGGER = logging.getLogger(__name__)
 
 
-OPTIMIZE_BACKUP = "optimize_backup"
-OPTIMIZE_PENDING = "optimize_pending"
-LAYOUT_CORE_KEYS = frozenset({"layout", "rev"})
 PLAN_APIS = {"wall_node_move_api": 1, "wall_node_merge_api": 1, "wall_node_attach_api": 1,
              "wall_node_delete_api": 1, "plan_graph_api": 1, "room_label_layout_api": 1,
              "graph_change_api": 2, "opening_features_api": 1, "structural_upload_api": 1,
              "decor_assets_api": DECOR_ASSETS_API_VERSION}
-
-
-def layout_metadata(data: dict) -> dict:
-    return {key: value for key, value in data.items() if key not in LAYOUT_CORE_KEYS}
-
-
-def internal_plan_names(config: dict | None) -> set[str]:
-    names = set()
-    for space in (config or {}).get("spaces") or []:
-        url = space.get("plan_url")
-        if isinstance(url, str) and (url.startswith(CONTENT_URL + "/plans/") or url.startswith(PLANS_URL + "/")):
-            name = plan_basename(url)
-            if name:
-                names.add(name)
-    return names
 
 
 def changed_summary_entity_ids(config: dict, previous: dict | None) -> set[str] | None:
@@ -134,45 +126,6 @@ def radar_changed(config: dict, previous: dict | None) -> bool:
     return radar is not missing and radar != old_settings.get("radar", missing)
 
 
-def optimizer_backup_after_layout_maintenance(data: dict, rev: int) -> dict:
-    backup = data.get(OPTIMIZE_BACKUP)
-    if not isinstance(backup, dict):
-        return {}
-    return {OPTIMIZE_BACKUP: {**backup, "after_layout_rev": rev}}
-
-
-def maintenance_pair(kind: str, config: dict, layout: dict, previous: PlanPair,
-                     config_rev: int, layout_rev: int, metadata: dict, *,
-                     canonical_config: bool = True) -> tuple[dict, dict]:
-    target = {"kind": kind, "config": canonicalize_config_geometry(config) if canonical_config else copy.deepcopy(config),
-              "layout": canonicalize_layout_geometry(layout), "config_rev": config_rev,
-              "layout_rev": layout_rev, "final_metadata": metadata}
-    rollback = {"kind": kind + "_rollback",
-                "config": canonicalize_config_geometry(previous.config_data.get("config") or DEFAULT_CONFIG),
-                "layout": canonicalize_layout_geometry(previous.layout_data.get("layout") or {}),
-                "config_rev": int(previous.config_data.get("rev", 0)),
-                "layout_rev": int(previous.layout_data.get("rev", 0)),
-                "final_metadata": layout_metadata(previous.layout_data)}
-    return target, rollback
-
-
-def optimizer_backup_is_current(config_data: dict, layout_data: dict) -> bool:
-    backup = layout_data.get(OPTIMIZE_BACKUP)
-    if not isinstance(backup, dict):
-        return False
-    try:
-        return (int(backup.get("after_config_rev", -1)) == int(config_data.get("rev", 0))
-                and int(backup.get("after_layout_rev", -1)) == int(layout_data.get("rev", 0)))
-    except (TypeError, ValueError):
-        return False
-
-
-def undo_kind(config_data: dict, layout_data: dict) -> str | None:
-    if not optimizer_backup_is_current(config_data, layout_data):
-        return None
-    return str(layout_data[OPTIMIZE_BACKUP].get("kind") or "optimize")
-
-
 @dataclass(slots=True)
 class PlanCommands:
     storage: PlanStorage
@@ -180,6 +133,10 @@ class PlanCommands:
     authority: WriteAuthority
     effects: CommandEffects
     environment: CommandEnvironment | None = None
+
+    def __post_init__(self):
+        if not isinstance(self.effects, BestEffortEffects):
+            self.effects = BestEffortEffects(self.effects)
 
     async def load(self, transaction: PlanTransaction) -> PlanPair:
         try:
@@ -196,14 +153,42 @@ class PlanCommands:
         return pair
 
     async def execute(self, message: dict[str, Any]) -> dict[str, Any]:
+        return await self._invoke(self._execute, message)
+
+    async def _invoke(self, handler, *args):
         environment = self.environment
         policy = (environment.input_policy or (STRICT_INPUT_POLICY if environment.policy is CommandPolicy.PLAN_ONLY
                                               else HA_INPUT_POLICY)) if environment is not None else HA_INPUT_POLICY
         try:
             with command_preparation(policy):
-                return await self._execute(message)
+                return await handler(*args)
         except InputLimit as error:
             raise CommandError(error.code) from error
+
+    async def import_preview(self, raw: bytes, duplicate_policy: str = "skip") -> dict:
+        from .portable_commands import import_preview
+
+        return await self._invoke(import_preview, self, raw, duplicate_policy)
+
+    async def upload_plan(self, raw: bytes, space_id: str, extension: str) -> dict:
+        from .upload_commands import upload_plan
+
+        return await self._invoke(upload_plan, self, raw, space_id, extension)
+
+    async def upload_asset(self, raw: bytes, filename: str, mime: str | None = None) -> dict:
+        from .upload_commands import upload_asset
+
+        return await self._invoke(upload_asset, self, raw, filename, mime)
+
+    async def stage_structural(self, blocks, declared_size: int | None = None) -> dict:
+        from .staging_commands import stage
+
+        return await self._invoke(stage, self, blocks, declared_size)
+
+    async def resolve_structural(self, compact: dict, schema=None) -> dict:
+        from .staging_commands import resolve
+
+        return await self._invoke(resolve, self, compact, schema)
 
     def before_commit(self):
         finish_preparation()
@@ -211,6 +196,20 @@ class PlanCommands:
 
     async def _execute(self, message: dict[str, Any]) -> dict[str, Any]:
         operation = message.get("type")
+        if operation in {"houseplan/plans/list", "houseplan/plans/delete", "houseplan/assets/list",
+                         "houseplan/assets/resolve", "houseplan/assets/delete"}:
+            from .content_commands import execute
+
+            return await execute(self, message)
+        if operation in {"houseplan/export/create", "houseplan/import/revalidate", "houseplan/import/apply",
+                         "houseplan/backup/cancel"}:
+            from . import portable_commands
+
+            handlers = {"houseplan/export/create": portable_commands.export_create,
+                        "houseplan/import/revalidate": portable_commands.import_revalidate,
+                        "houseplan/import/apply": portable_commands.import_apply,
+                        "houseplan/backup/cancel": portable_commands.backup_cancel}
+            return await handlers[operation](self, message)
         if operation == "houseplan/config/get":
             return await self.config_get(message)
         if operation == "houseplan/layout/get":
@@ -532,7 +531,8 @@ class PlanCommands:
             except Exception:  # noqa: BLE001 - post-commit cleanup cannot reject a durable write
                 _LOGGER.exception("House Plan: discarding stale optimization backup failed")
             try:
-                await environment.content.collect(previous, candidate, self.effects.pinned_attachment_refs())
+                intent = content_retirement(previous, candidate, self.effects.pinned_attachment_refs())
+                await environment.content.retire(intent)
             except Exception:  # noqa: BLE001 - preserves existing best-effort cleanup
                 _LOGGER.exception("House Plan: collecting superseded files failed")
             await self.effects.purge_trails(candidate)
@@ -544,10 +544,11 @@ class PlanCommands:
         self.effects.schedule_repairs()
         result = {"ok": True, "rev": new_rev}
         if candidate.get("model_version") == 11:
-            async with self.storage.transaction() as transaction:
-                accepted = await self.load(transaction)
-            result.update(config=candidate, layout=accepted.layout_data.get("layout", {}),
-                          config_rev=new_rev, layout_rev=int(accepted.layout_data.get("rev", 0)))
+            # Reply with this accepted pair, not a post-commit reread that can
+            # fail or observe another writer while keeping our older config.
+            result.update(config=candidate,
+                          layout=contact_layout if contact_layout is not None else layout_data.get("layout", {}),
+                          config_rev=new_rev, layout_rev=next_layout_rev if contact_layout is not None else layout_rev)
         if contact_layout is not None:
             result.update(layout_rev=next_layout_rev,
                           contact_layout={key: contact_layout.get(key) for key in message.get("contact_layout", {})},

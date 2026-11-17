@@ -1,5 +1,6 @@
 """Independent expected command results, not HA-vs-demo self-comparison."""
 import copy
+from types import SimpleNamespace
 
 import pytest
 
@@ -16,6 +17,8 @@ from custom_components.houseplan.core.memory_host import (
     ThreadCpuExecutor,
 )
 from custom_components.houseplan.core.plan_commands import PlanCommands
+from custom_components.houseplan.core.content_index import ContentSnapshot
+from custom_components.houseplan.core.import_leases import DictionaryImportLeases
 from custom_components.houseplan.core.room_appearance import normalize_room_appearance
 from custom_components.houseplan.core.validation import CONFIG_SCHEMA
 from custom_components.houseplan.core.wall_segment_model import (
@@ -27,8 +30,14 @@ class NoFiles:
     async def existing_plans(self, names):
         return set()
 
-    async def collect(self, previous, config, pinned):
+    async def retire(self, intent):
         return None
+
+    async def inspect(self, config):
+        return ContentSnapshot({})
+
+    async def existing_content(self, references):
+        return set()
 
 
 class NoEntities:
@@ -38,13 +47,18 @@ class NoEntities:
     def radar_registry(self):
         return None
 
+    def import_registry_snapshot(self):
+        return None
+
     async def configuration_extras(self, config, rev):
         return {}
 
 
 def environment():
+    runtime = SimpleNamespace(instance_id="reference-plan", integration_version="1.85.3-beta.1", import_previews={})
     return CommandEnvironment(NoFiles(), NoEntities(), CommandPolicy.PLAN_ONLY,
-                              HostIdentity("reference-plan", "1.85.3-beta.1", "a" * 64))
+                              HostIdentity("reference-plan", "1.85.3-beta.1", "a" * 64),
+                              leases=DictionaryImportLeases(runtime))
 
 
 def service():

@@ -11,7 +11,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, AsyncContextManager, Protocol, TypeVar
 
+from .content_index import ContentIndex, ContentRef
 from .input_policy import InputPolicy
+from .plans import ContentRetirement
+from .structural_upload import StructuralUploads
 
 Json = dict[str, Any]
 T = TypeVar("T")
@@ -118,10 +121,40 @@ class CommandEffects(Protocol):
     def pinned_attachment_refs(self) -> set[str]: ...
 
 
-class PlanContent(Protocol):
+class ContentAccess(Protocol):
+    def stage_plan(self, space_id: str, extension: str, raw: bytes) -> AsyncContextManager[Any]: ...
+
+    def stage_asset(self, validated: Any, filename: str) -> AsyncContextManager[Any]: ...
+
+    async def publish_upload(self, stage: Any) -> Json:
+        """Atomic publication; cancellation must settle before releasing the transaction."""
+        ...
+
+    async def plan_catalog(self) -> list[Json]: ...
+
+    async def delete_plan(self, name: str) -> bool: ...
+
+    async def asset_catalog(self) -> list[Json]: ...
+
+    async def resolve_assets(self, asset_ids: set[str]) -> list[Json]: ...
+
+    async def delete_asset(self, asset_id: str) -> bool: ...
+
+
+class PlanContent(ContentAccess, Protocol):
+    def transaction(self) -> AsyncContextManager[ContentAccess]: ...
+
     async def existing_plans(self, names: set[str]) -> set[str]: ...
 
-    async def collect(self, previous: Json | None, config: Json, pinned: set[str]) -> None: ...
+    async def existing_content(self, references: set[ContentRef]) -> set[ContentRef]: ...
+
+    async def retire(self, intent: ContentRetirement) -> None:
+        """Apply explicit post-commit retirements; never infer from config or age plans."""
+        ...
+
+    async def inspect(self, config: Json) -> ContentIndex:
+        """Snapshot only referenced metadata/integrity; no HA pathname required."""
+        ...
 
 
 class CommandEvidence(Protocol):
@@ -129,8 +162,37 @@ class CommandEvidence(Protocol):
 
     def radar_registry(self) -> Any: ...
 
+    def import_registry_snapshot(self) -> dict[str, set[str]] | None: ...
+
     async def configuration_extras(self, config: Json, rev: int) -> Json:
         """Host-only observations, not config mutation or validation callbacks."""
+        ...
+
+
+class ImportLeases(Protocol):
+    async def load(self, scope: str, token: str) -> Json | None: ...
+
+    async def publish(self, scope: str, token: str, candidate: Json) -> None:
+        """Atomically retain bounded per-owner/total previews with oldest-first eviction."""
+        ...
+
+    async def update(self, scope: str, token: str, expected_digest: str, candidate: Json) -> bool:
+        """Conditional update; never resurrect an evicted/expired/replaced lease."""
+        ...
+
+    async def consume(self, scope: str, token: str) -> None:
+        """Idempotent post-commit release; expiry is not a reason to fail."""
+        ...
+
+
+class StructuralStaging(Protocol):
+    def transaction(self, scope: str) -> AsyncContextManager[StructuralUploads]:
+        """Load/lock/persist canonical bounded lease records for exactly one scope.
+
+        External hosts use their actual shared repository lock/transaction, not
+        one process-local lock. Run the kernel only inside this transaction;
+        immutable snapshots alone may cross executor/transport awaits.
+        """
         ...
 
 
@@ -141,6 +203,8 @@ class CommandEnvironment:
     policy: CommandPolicy
     identity: HostIdentity
     input_policy: InputPolicy | None = None
+    leases: ImportLeases | None = None
+    staging: StructuralStaging | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,3 +213,15 @@ class HostIdentity:
     integration_version: str
     frontend_fingerprint: str | None
     build: dict[str, str] | None = None
+
+
+class CommandSession(Protocol):
+    storage: PlanStorage
+    cpu: CpuExecutor
+    authority: WriteAuthority
+    effects: CommandEffects
+    environment: CommandEnvironment | None
+
+    async def load(self, transaction: PlanTransaction) -> PlanPair: ...
+
+    def before_commit(self) -> None: ...

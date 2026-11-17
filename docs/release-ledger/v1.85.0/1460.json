@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1460,
+  "baseStable": "v1.85.0",
+  "category": "infra",
+  "rationale": "Extracts existing plan behavior behind shared host ports and prepares developer packaging/conformance. No new HA user operation, saved format, public website or published package is introduced; whole-house transfer and publishing are separate tasks.",
+  "summary": {
+    "ru": "Общий слой команд плана и пакет Python для подключения независимых хостов.",
+    "en": "Shared plan command layer and Python packaging for independent hosts."
+  }
+}

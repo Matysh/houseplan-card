@@ -13,6 +13,7 @@ import os
 import secrets
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -131,6 +132,29 @@ def sweep_upload_temps(files_dir: Path, now: float | None = None) -> int:
     return removed
 
 
+@dataclass(frozen=True, slots=True)
+class ContentRetirement:
+    plans: frozenset[str]
+    attachments: frozenset[str]
+    protected_attachments: frozenset[str]
+    sweep_staging: bool
+
+
+def content_retirement(old_cfg, new_cfg, pinned=(), *, sweep_staging=False) -> ContentRetirement:
+    """Pure accepted-transition intent; physical hosts do not infer deletion."""
+    new_plans = plan_refs(new_cfg)
+    old_by_space, new_by_space = plan_by_space(old_cfg), plan_by_space(new_cfg)
+    replaced = frozenset(name for space, name in old_by_space.items()
+                         if new_by_space.get(space) and new_by_space[space] != name
+                         and name not in new_plans and is_plan_file(name)
+                         and sanitize_filename(name) == name)
+    protected = frozenset(attachment_refs(new_cfg) | set(pinned))
+    departed = attachment_refs(old_cfg) - protected
+    live_markers = {str(marker.get("id")) for marker in (new_cfg or {}).get("markers") or []}
+    dropped = frozenset(key for key in departed if key.split("/", 1)[0] in live_markers)
+    return ContentRetirement(replaced, dropped, protected, bool(departed) or sweep_staging)
+
+
 def collect_attachments(
     files_dir: Path,
     old_cfg: dict[str, Any] | None,
@@ -138,6 +162,12 @@ def collect_attachments(
     now: float | None = None,
     *, pinned: set[str] | None = None, sweep_staging: bool = False,
 ) -> int:
+    intent = content_retirement(old_cfg, new_cfg, pinned or (), sweep_staging=sweep_staging)
+    return retire_attachments(files_dir, intent.attachments, intent.protected_attachments,
+                              now, sweep_staging=intent.sweep_staging)
+
+
+def retire_attachments(files_dir: Path, dropped_keys, new_refs, now=None, *, sweep_staging=False) -> int:
     """The same commit-scoped rule as `collect_plans`, for marker attachments.
 
     A file the old revision referenced and the new one does not, whose marker
@@ -148,16 +178,13 @@ def collect_attachments(
     maintenance explicitly requests that sweep; a write with no dropped refs
     performs no directory reads. Never raises: it runs behind a durable write.
     """
-    new_refs = attachment_refs(new_cfg) | (pinned or set())
-    old_refs = attachment_refs(old_cfg)
-    can_drop = bool(old_refs - new_refs)
+    can_drop = bool(dropped_keys)
     if not can_drop and not sweep_staging:
         return 0
     # Removing an attachment from a device that still exists is the user saying
     # "drop this one" — a trash button, no promise that anything is kept. A
     # device that is GONE is a different transition, and its files follow the
     # same rule as a deleted space's plan: kept.
-    live_markers = {str(m.get("id")) for m in (new_cfg or {}).get("markers") or []}
     # Same distinction as for plans. A staging folder (`up_*`) is different: it
     # only ever holds an upload from a dialog that was never saved, so the short
     # rule is exactly right there even on the timer.
@@ -185,7 +212,7 @@ def collect_attachments(
             rel = f"{folder.name}/{item.name}"
             if rel in new_refs:
                 continue
-            dropped = rel in old_refs and folder.name in live_markers
+            dropped = rel in dropped_keys
             if not dropped:
                 if not staging:
                     # Same rule as for plans: not asked for, so kept. A file in
@@ -380,65 +407,21 @@ def collect_plans(
     Never raises: the configuration is already stored by the time this runs, so
     a file-system problem must not turn a durable commit into a failed call.
     """
-    new_refs = plan_refs(new_cfg)
-    # A commit knows what it superseded. The timer only knows what nothing
-    # points at *right now*, and for a plan that is a reversible state: the
-    # editor detaches the image when a space switches to "draw" and says the
-    # file stays on disk. So the scheduled pass keeps anything belonging to a
-    # space that still exists, and waits a month for the rest.
-    # A space with NO plan_url has had its image detached — reversible, and the
-    # editor promises the file stays. A space that HAS one is different: any
-    # other file of its own is a superseded or rejected upload, so the short
-    # rule is right for those. Getting this distinction wrong (protecting
-    # nothing) destroyed two detached plans on 2026-07-28.
-    # The short rule fits exactly one case: a space that HAS a plan, where any
-    # other file of its own can only be a superseded or rejected upload.
-    old_by_space = plan_by_space(old_cfg)
-    new_by_space = plan_by_space(new_cfg)
-    # A file that left the configuration tells us nothing on its own: replacing a
-    # plan, detaching one and deleting a space all look identical from
-    # `old_refs - new_refs`. Only the first is a deletion the user asked for
-    # (HP-1465-01 — the guards below were written and then never reached,
-    # because the code decided "superseded" before asking why).
-    replaced = {
-        name for space, name in old_by_space.items()
-        if new_by_space.get(space) and new_by_space[space] != name
-    }
-    if not replaced:
-        # #1096: nothing was superseded, so no file can qualify below; the
-        # directory walk only ever served the `replaced` branch.
-        return 0
+    intent = content_retirement(old_cfg, new_cfg)
+    return retire_plans(plans_dir, intent.plans)
+
+
+def retire_plans(plans_dir: Path, names) -> int:
+    """Delete only explicitly retired logical keys, never inferred or aged files."""
     removed = 0
-    try:
-        items = sorted(plans_dir.iterdir()) if plans_dir.is_dir() else []
-    except OSError as err:
-        # The directory can vanish or turn unreadable between the check and the
-        # walk. This is housekeeping running behind a commit that is already
-        # durable, so it reports "nothing collected" instead of failing (R4-1).
-        _LOGGER.warning("House Plan: could not list %s: %s", plans_dir, err)
-        return 0
-    for item in items:
-        if not item.is_file() or item.name in new_refs or not is_plan_file(item.name):
-            continue
-        if item.name not in replaced:
-            # PRODUCT RULE (owner's decision, 2026-07-28): a plan file we were
-            # not told to delete is kept, however long it sits there. Detaching
-            # is one click to undo and the editor says the image stays; deleting
-            # a space is deliberate but the image was imported and may be
-            # nowhere else. The errors are not symmetrical — unnecessary
-            # megabytes can be removed by hand, a deleted file cannot be
-            # brought back.
-            #
-            # There is deliberately no age rule here. An earlier version aged
-            # out "rejected uploads" — a file of a space that has a plan, which
-            # was never the plan — and that raced a save: the sweep deleted the
-            # upload from the failed attempt while a retry was committing a
-            # reference to it. A rule that can delete a file somebody is about
-            # to point at is not worth the disk it reclaims.
+    for name in sorted(names):
+        if sanitize_filename(name) != name or not is_plan_file(name):
             continue
         try:
-            item.unlink()
-            removed += 1
+            item = plans_dir / name
+            if item.is_file():
+                item.unlink()
+                removed += 1
         except OSError as err:
-            _LOGGER.warning("House Plan: could not remove the old plan %s: %s", item, err)
+            _LOGGER.warning("House Plan: could not remove the old plan %s: %s", name, err)
     return removed

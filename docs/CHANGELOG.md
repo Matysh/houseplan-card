@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Share plan command, content/upload and preview/staging orchestration between HA and standalone hosts; prepare a self-contained Python wheel/sdist and adapter conformance suite without changing saved formats or publishing a service (#1460).
 - Add local offline IFC2x3/IFC4 conversion for architectural Archicad/Revit plans, with storey selection, editable walls/rooms/openings, previews and explicit loss reports; keep KOMPAS compatibility separately unconfirmed (#1458).
 - Restore nightly witnesses for full-LRU union build accounting during Resize and right-button consumption at the node editor boundary; retain prepared-floor restores and the stage's no-pan guard, update the browser inventory and wait for active-floor readiness in touch/kiosk and cold-View smokes (#1457).
 - Restore the nightly junction parity module entry without PYTHONPATH and compose final diagnostic source maps for the isolated floor Worker, including generated asset URLs (#1456).

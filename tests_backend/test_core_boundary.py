@@ -155,6 +155,10 @@ def _import_problems(source: str, module: str) -> list[str]:
             if name in {"eval", "exec"}:
                 problems.append("dynamic code")
             if name in dynamic_names | {"import_module", "__import__"}:
+                # The shipped conformance CLI deliberately imports an explicit
+                # caller-selected adapter factory, never from product dispatch.
+                if module == prefix + ".conformance" and name == "import_module":
+                    continue
                 if not node.args or not isinstance(node.args[0], ast.Constant) or not isinstance(node.args[0].value, str):
                     problems.append("nonliteral dynamic import")
                 elif node.args[0].value.startswith("."):

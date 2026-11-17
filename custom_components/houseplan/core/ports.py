@@ -5,13 +5,17 @@ from typing import Any as Any
 from typing import Protocol as Protocol
 
 
-class PortableRuntime(Protocol):
-    """Per-owner portable context; the adapter retains lock/TTL/dispatch ownership."""
-
+class PortableIdentity(Protocol):
+    """Identity used by pure export/preview preparation, without mutable leases."""
     instance_id: str
-    import_previews: dict[str, dict[str, Any]]
 
     @property
     def integration_version(self) -> str:
         """Version supplied by the host, not imported from a HA adapter."""
         ...
+
+
+class PortableRuntime(PortableIdentity, Protocol):
+    """Compatibility cache context; command adapters serialize its publication."""
+
+    import_previews: dict[str, dict[str, Any]]

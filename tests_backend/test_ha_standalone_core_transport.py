@@ -7,13 +7,21 @@ import copy
 import json
 
 import pytest
-from demo.standalone.core_process import CoreTestTransport
+from test_ha_structural_upload import _compact
+from test_ha_structural_upload import _setup as setup_http
 from test_ha_wall_node_delete import setup
-from test_ha_structural_upload import _setup as setup_http, _compact
-from test_wall_node_delete import fixture as delete_fixture, graph_intent
-from test_wall_node_move import fixture as move_fixture, current_intent
-from test_wall_node_merge import CASES as MERGES, config as merge_config, intent as merge_intent
-from test_wall_node_attach import CASES as ATTACHES, config as attach_config, intent as attach_intent
+from test_wall_node_attach import CASES as ATTACHES
+from test_wall_node_attach import config as attach_config
+from test_wall_node_attach import intent as attach_intent
+from test_wall_node_delete import fixture as delete_fixture
+from test_wall_node_delete import graph_intent
+from test_wall_node_merge import CASES as MERGES
+from test_wall_node_merge import config as merge_config
+from test_wall_node_merge import intent as merge_intent
+from test_wall_node_move import current_intent
+from test_wall_node_move import fixture as move_fixture
+
+from demo.standalone.core_process import CoreTestTransport
 
 
 @pytest.fixture(autouse=True)
@@ -44,12 +52,13 @@ async def test_config_cas_and_paired_optimize_undo_match_real_ha(hass, hass_ws_c
     message = {"type": "houseplan/config/set", "config": candidate, "expected_rev": before["rev"], "opening_features_api": 1}
     actual = await send(client, message)
     assert actual["success"], actual
-    expected = core.request(message)
+    expected = await core.request(message)
     reread = (await send(client, {"type": "houseplan/config/get"}))["result"]
     assert reread["config"] == expected["config"] and reread["rev"] == expected["rev"]
     assert (await send(client, message))["error"]["code"] == "conflict"
-    with pytest.raises(ValueError, match="conflict"):
-        core.request(message)
+    with pytest.raises(ValueError) as error:
+        await core.request(message)
+    assert error.value.code == "conflict"
 
     changed = copy.deepcopy(reread["config"])
     changed["spaces"][0]["title"] = "Paired intent"
@@ -57,12 +66,12 @@ async def test_config_cas_and_paired_optimize_undo_match_real_ha(hass, hass_ws_c
                 "expected_config_rev": reread["rev"], "expected_layout_rev": layout["rev"], "opening_features_api": 1}
     actual = await send(client, optimize)
     assert actual["success"], actual
-    expected = core.request(optimize)
+    expected = await core.request(optimize)
     assert {key: actual["result"][key] for key in expected} == expected
     undo = {"type": "houseplan/plan/optimize_undo", "expected_config_rev": expected["config_rev"], "expected_layout_rev": expected["layout_rev"]}
     actual = await send(client, undo)
     assert actual["success"], actual
-    expected = core.request(undo)
+    expected = await core.request(undo)
     assert {key: actual["result"][key] for key in expected} == expected
 
 
@@ -87,12 +96,12 @@ async def test_all_declared_node_apis_match_actual_ha_routes(hass, hass_ws_clien
                "space_id": "f", "intent": operation, "expected_rev": before["rev"]}
     actual = await send(client, message)
     assert actual["success"], actual
-    expected = core.request(message)
+    expected = await core.request(message)
     assert actual["result"] == expected
     undo = {**message, "expected_rev": expected["rev"], "direction": "undo", "before_space": before["config"]["spaces"][0]}
     actual = await send(client, undo)
     assert actual["success"], actual
-    assert actual["result"] == core.request(undo)
+    assert actual["result"] == await core.request(undo)
 
 
 async def test_structural_staging_controls_and_commit_match_actual_http_ws(hass, hass_client, hass_access_token, tmp_path):
@@ -106,13 +115,76 @@ async def test_structural_staging_controls_and_commit_match_actual_http_ws(hass,
     response = await http.post("/api/houseplan/structural/upload", data=raw, headers={"content-type": "application/json"})
     assert response.status == 200, await response.text()
     actual_stage = await response.json()
-    expected_stage = core.post("/api/houseplan/structural/upload", message)
+    expected_stage = await core.post("/api/houseplan/structural/upload", message)
     assert actual_stage["purpose"] == expected_stage["purpose"]
     assert actual_stage["sha256"] == expected_stage["sha256"]
     assert await socket.pair() == pair
     actual = await socket.send(_compact(message, actual_stage))
     assert actual["success"], actual
-    expected = core.request(_compact(message, expected_stage))
+    expected = await core.request(_compact(message, expected_stage))
     reread = await socket.pair()
     assert reread[0]["config"] == expected["config"] and reread[0]["rev"] == expected["rev"]
     assert reread[1] == layout
+
+
+async def test_noop_null_labels_repair_and_space_delete_match_real_ha(hass, hass_ws_client, tmp_path):
+    source = {"spaces": [{"id": "f", "title": "Floor", "view_box": [0, 0, 1, 1],
+        "rooms": [{"id": "room", "name": "Room", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]]}],
+        "led_strips": [{"id": "strip", "points": [[.1, .1], [.6, .1]], "marker": None, "active": True}]},
+        {"id": "upper", "title": "Upper", "view_box": [0, 0, 1, 1], "rooms": []}], "markers": [], "settings": {}}
+    _, client, before = await setup(hass, hass_ws_client, source=source)
+    layout = (await send(client, {"type": "houseplan/layout/get"}))["result"]
+    core = local(before, tmp_path, layout)
+
+    async def both(message):
+        actual = await send(client, message)
+        assert actual["success"], actual
+        expected = await core.request(message)
+        assert actual["result"] == expected
+        return expected
+
+    noop = {"type": "houseplan/config/set", "config": before["config"], "expected_rev": before["rev"], "opening_features_api": 1}
+    assert await both(noop) == {"ok": True, "rev": before["rev"]}
+    positions = {"rl_room": {"s": "f", "x": .2, "y": .3}}
+    saved = await both({"type": "houseplan/layout/set", "layout": positions, "expected_rev": layout["rev"]})
+    dry = await both({"type": "houseplan/geometry/repair", "space_id": "f", "aspect": 2, "dry_run": True})
+    assert dry["before"] == positions and dry["moved"] == 1
+    repair = await both({"type": "houseplan/geometry/repair", "space_id": "f", "aspect": 2, "expected_rev": saved["rev"]})
+    restored = await both({"type": "houseplan/geometry/repair", "space_id": "f", "aspect": 2,
+                           "undo": True, "expected_rev": repair["rev"]})
+    old_writer = copy.deepcopy(before["config"])
+    old_writer["spaces"][0].pop("led_strips")
+    changed = await both({**noop, "config": old_writer, "expected_layout_rev": restored["rev"], "room_label_layout": {"rl_room": None}})
+    assert changed["rev"] == before["rev"] and changed["layout_rev"] == restored["rev"] + 1
+    reread = (await send(client, {"type": "houseplan/config/get"}))["result"]
+    assert reread["config"]["spaces"][0]["led_strips"] == before["config"]["spaces"][0]["led_strips"]
+    assert core.layout == {}
+    deleted = await both({"type": "houseplan/space/delete", "space_id": "upper", "expected_config_rev": changed["rev"],
+                          "expected_layout_rev": changed["layout_rev"], "remove_markers": False, "opening_features_api": 1})
+    assert [space["id"] for space in deleted["config"]["spaces"]] == ["f"]
+    await both({"type": "houseplan/plan/optimize_undo", "expected_config_rev": deleted["config_rev"],
+                "expected_layout_rev": deleted["layout_rev"]})
+
+
+async def test_plan_catalog_delete_matches_real_ha_content_port(hass, hass_ws_client, tmp_path):
+    from pathlib import Path
+
+    from custom_components.houseplan.core.constants import PLANS_DIR
+
+    _, client, before = await setup(hass, hass_ws_client)
+    core = local(before, tmp_path)
+    name = "f.preview.png"
+
+    def seed_files():
+        for root in (tmp_path, Path(hass.config.path(""))):
+            folder = root / PLANS_DIR
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / name).write_bytes(b"synthetic plan bytes")
+
+    await hass.async_add_executor_job(seed_files)
+    command = {"type": "houseplan/plans/delete", "name": name}
+    actual = await send(client, command)
+    assert actual["success"]
+    assert actual["result"] == await core.request(command) == {"ok": True, "removed": True}
+    assert (await send(client, {"type": "houseplan/plans/list"}))["result"]["total"] == 0
+    assert (await core.request({"type": "houseplan/plans/list"}))["total"] == 0

@@ -1,17 +1,14 @@
 """House Plan WS commands: layout, space configuration, plan uploads."""
 from __future__ import annotations
 
-import asyncio
 import base64
 import binascii
-import copy
 import json
 import logging
 import re
 import secrets
 import time
 from collections import Counter
-from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -22,22 +19,18 @@ from homeassistant.const import __version__ as HA_VERSION
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
 
-from .asset_integrity import get_asset_integrity_verifier
 from .auth import may_write
 from .build_identity import UNKNOWN_BUILD, BuildIdentity
 from .const import (
-    ASSETS_DIR,
     CONTENT_URL,
     DEFAULT_CONFIG,
     DOMAIN,
     EXPORT_VERSION,
     FILES_DIR,
-    IMPORT_PREVIEW_TTL_S,
     MAX_FILES_BYTES,
     MAX_FILES_COUNT,
     MAX_PLANS_BYTES,
     MAX_PLANS_FILES,
-    MAX_PLANS_LISTED,
     MAX_SIGN_PATHS,
     MAX_SUPPORT_CONTACT_CODEPOINTS,
     MAX_SUPPORT_MESSAGE_CODEPOINTS,
@@ -45,16 +38,12 @@ from .const import (
     MAX_SUPPORT_PREVIEWS_TOTAL,
     PLAN_MODEL_VERSION,
     PLANS_DIR,
-    PLANS_URL,
     SUPPORT_PREVIEW_TTL_S,
     VERSION,
 )
 from .contact_basis import validate_contact_bases
-from .coordinate_canonicalization import (
-    canonicalize_config_geometry,
-    canonicalize_layout_geometry,
-)
 from .core.command_ports import PairCommitFailure
+from .core.command_state import layout_metadata as _layout_metadata
 from .core.space_delete import (
     _delete_plan_markers as _delete_plan_markers,
 )
@@ -67,23 +56,9 @@ from .core.space_delete import (
 from .core.space_delete import (
     _space_marker_dependencies as _space_marker_dependencies,
 )
-from .decor_assets import (
-    ASSET_EXTENSIONS,
-    ASSET_ID_RE,
-    asset_meta_path,
-    asset_refs,
-    public_asset,
-    read_asset,
-    read_catalog,
-)
 from .import_export import (
     ImportFailure,
-    content_manifest,
-    create_export,
-    get_candidate,
     live_layout,
-    prepare_apply,
-    revalidate_candidate,
 )
 from .marker_copy import marker_copy_candidate
 from .marker_history import HistoryError
@@ -91,9 +66,6 @@ from .marker_history_websocket import HISTORY_FIELDS
 from .plans import (
     QuotaError,
     check_quota,
-    is_plan_file,
-    plan_basename,
-    plan_refs,
     reserve_filename,
     store_plan_upload,
 )
@@ -104,20 +76,18 @@ from .radar_validation import (
 )
 from .registry_snapshot import import_registry_snapshot
 from .store import (
-    LAYOUT_STORE_CORE_KEYS,
+    OPTIMIZE_BACKUP as _OPTIMIZE_BACKUP,
+)
+from .store import (
+    OPTIMIZE_PENDING as _OPTIMIZE_PENDING,
+)
+from .store import (
     HouseplanData,
     ResolvedStorePair,
     async_converge_store_pair,
     async_resolve_pending_pair,
     async_save_layout_state,
     get_data,
-    get_entry,
-)
-from .store import (
-    OPTIMIZE_BACKUP as _OPTIMIZE_BACKUP,
-)
-from .store import (
-    OPTIMIZE_PENDING as _OPTIMIZE_PENDING,
 )
 from .structural_websocket import structural_websocket_command
 from .support_package import (
@@ -138,8 +108,6 @@ from .validation import (
     POS_SCHEMA,
     DuplicateMarkerIdError,
     MarkerControlError,
-    sanitize_filename,
-    summary_panel_entity_ids,
     valid_space_id,
     validate_active_marker_ids,
     validate_marker_controls,
@@ -167,41 +135,8 @@ def _debug_missing_revision_once(command: str, current_rev: int) -> None:
         current_rev,
     )
 
-def _optimizer_backup_after_layout_maintenance(
-    layout_data: dict[str, Any], new_layout_rev: int,
-) -> dict[str, Any]:
-    """Carry a one-deep plan snapshot across explicit layout maintenance.
-
-    Geometry repair is part of plan maintenance, not an ordinary user edit:
-    losing the Optimize/Import undo there makes the advertised safety net
-    disappear.  The snapshot must also follow the new layout revision or the
-    freshness guard will correctly, but unhelpfully, classify it as stale.
-    """
-    backup = layout_data.get(_OPTIMIZE_BACKUP)
-    if not isinstance(backup, dict):
-        return {}
-    return {
-        _OPTIMIZE_BACKUP: {
-            **backup,
-            "after_layout_rev": new_layout_rev,
-        }
-    }
 
 
-async def _discard_optimizer_snapshot(rt: HouseplanData) -> None:
-    """Free a snapshot made stale by a later ordinary config edit."""
-    data = await rt.store.async_load() or {}
-    if _OPTIMIZE_BACKUP not in data and _OPTIMIZE_PENDING not in data:
-        return
-    await async_save_layout_state(
-        rt,
-        data,
-        data.get("layout") or {},
-        int(data.get("rev", 0)),
-        remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
-    )
-    config_data = await rt.config_store.async_load() or {}
-    await _release_space_delete_snapshot(rt, data, config_data.get("config") or {}, {})
 
 
 async def _release_space_delete_snapshot(
@@ -430,12 +365,6 @@ def _support_preview_has_capacity(
     )
 
 
-def _layout_metadata(stored: dict[str, Any]) -> dict[str, Any]:
-    """Return the exact non-layout portion of a layout-store document."""
-    return {
-        key: value for key, value in stored.items()
-        if key not in LAYOUT_STORE_CORE_KEYS
-    }
 
 
 async def _persist_pair_intent(
@@ -669,101 +598,10 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
 )
 @websocket_api.async_response
 async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Build a consistent full or one-space JSON snapshot."""
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only editors may export House Plan")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    if msg.get("migration_source") or msg.get("plan_graph_migration_source"):
-        from .backup_http import archive_admin
-        from .config_migrations import CONFIG_MIGRATION_BACKUP
-        from .import_export import create_migration_source_export
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-        if not archive_admin(hass, connection.user):
-            connection.send_error(msg["id"], "unauthorized", "Administrator permission required")
-            return
-        if msg["kind"] != "full" or msg.get("archive") or msg.get("plan_only"):
-            connection.send_error(msg["id"], "invalid_format", "Original migration snapshot requires full JSON")
-            return
-        try:
-            async with rt.write_lock:
-                saved = await rt.store.async_load() or {}
-                if msg.get("plan_graph_migration_source") or msg.get("migration_source_kind") == "graph":
-                    from .plan_graph_source import BACKUP_KEY, load_source_at
-                    original = await load_source_at(hass, saved.get(BACKUP_KEY), msg.get("migration_source_sha256"))
-                    snapshot = {"version": 1,
-                                "config_data": {"config": original["config"], "rev": original["config_rev"]},
-                                "layout_data": {"layout": original["layout"], "rev": original["layout_rev"], **original.get("passports", {})}}
-                else:
-                    snapshot = copy.deepcopy(saved.get(CONFIG_MIGRATION_BACKUP))
-            document, filename = await hass.async_add_executor_job(partial(
-                create_migration_source_export, rt, snapshot,
-                card_version=msg.get("card_version", ""), config_root=Path(hass.config.path(""))))
-            if not _check_write(hass, connection) or not archive_admin(hass, connection.user):
-                connection.send_error(msg["id"], "unauthorized", "Administrator permission was lost")
-                return
-        except ImportFailure as err:
-            connection.send_error(msg["id"], err.code, "Original migration snapshot is unavailable or invalid")
-            return
-        except Exception:  # noqa: BLE001 - never expose stored source data in errors
-            connection.send_error(msg["id"], "invalid_config", "Original migration snapshot is unavailable")
-            return
-        connection.send_result(msg["id"], {"document": document, "filename": filename})
-        return
-    if msg.get("archive"):
-        from .backup_http import archive_admin
-        from .backup_service import get_backup_service
-
-        if not archive_admin(hass, connection.user) or msg["kind"] != "full" or msg.get("plan_only"):
-            connection.send_error(msg["id"], "unauthorized", "Full ZIP requires an administrator")
-            return
-        service = get_backup_service(hass, rt)
-        try:
-            async with asyncio.timeout(IMPORT_PREVIEW_TTL_S):
-                result = await service.export(_connection_user_id(connection), msg.get("card_version", ""), _build_identity(rt).build)
-            if not archive_admin(hass, connection.user):
-                await service.release(service.get(result["token"], _connection_user_id(connection)))
-                connection.send_error(msg["id"], "unauthorized", "Administrator permission was lost")
-                return
-        except ImportFailure as err:
-            _send_import_error(connection, msg["id"], err)
-            return
-        except Exception:  # noqa: BLE001 - no paths/provider data at the public boundary
-            connection.send_error(msg["id"], "zip_invalid", "Could not prepare full ZIP")
-            return
-        connection.send_result(msg["id"], result)
-        return
-    try:
-        async with rt.write_lock:
-            # Copy one coherent pair while writers are excluded, then release
-            # the global lock before hashing assets and building the document.
-            pair = await async_resolve_pending_pair(rt)
-            config_data, layout_data = copy.deepcopy(pair.config_data), copy.deepcopy(pair.layout_data)
-        document, filename = await hass.async_add_executor_job(
-            partial(
-                create_export,
-                rt,
-                config_data,
-                layout_data,
-                kind=msg["kind"],
-                space_id=msg.get("space_id"),
-                plan_only=msg.get("plan_only", False),
-                card_version=msg.get("card_version", ""),
-                config_root=Path(hass.config.path("")),
-                build=_build_identity(rt).build,
-            )
-        )
-    except ImportFailure as err:
-        _send_import_error(connection, msg["id"], err)
-        return
-    except Exception:  # noqa: BLE001 - defensive: a listener must never break the write path
-        _LOGGER.exception("House Plan export failed")
-        connection.send_error(msg["id"], "invalid_config", "Could not create export")
-        return
-    connection.send_result(msg["id"], {"document": document, "filename": filename,
-        **({"recovery": document["transfer"]["recovery"]} if document["transfer"].get("recovery") else {})})
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/export/create'})
 
 
 @websocket_api.websocket_command({
@@ -773,35 +611,10 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
 })
 @websocket_api.async_response
 async def ws_backup_cancel(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    from .backup_http import archive_admin
-    from .backup_service import get_backup_service
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    if not archive_admin(hass, connection.user):
-        connection.send_error(msg["id"], "unauthorized", "Administrator permission required")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    service = get_backup_service(hass, rt)
-    try:
-        if ("operation_id" in msg) == ("token" in msg):
-            raise ImportFailure("zip_invalid")
-        if "operation_id" in msg:
-            await service.cancel_import(_connection_user_id(connection), msg["operation_id"])
-            connection.send_result(msg["id"], {"ok": True})
-            return
-        # Import UI knows its preview token, not the internal ZIP session token.
-        session = service.sessions.get(msg["token"])
-        if session is None:
-            session = next((s for s in service.sessions.values() if s.preview_token == msg["token"]), None)
-        if session is not None:
-            if session.owner != _connection_user_id(connection):
-                raise ImportFailure("preview_owner_mismatch")
-            await service.release(session)
-    except ImportFailure as err:
-        _send_import_error(connection, msg["id"], err)
-        return
-    connection.send_result(msg["id"], {"ok": True})
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/backup/cancel'})
 
 
 @websocket_api.websocket_command(
@@ -813,64 +626,10 @@ async def ws_backup_cancel(hass: HomeAssistant, connection, msg: dict[str, Any])
 )
 @websocket_api.async_response
 async def ws_import_revalidate(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Re-evaluate a space candidate after its duplicate policy changes."""
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only editors may import House Plan")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    try:
-        async with rt.write_lock:
-            candidate = get_candidate(rt, msg["token"], _connection_user_id(connection))
-            archive_session = None
-            if "archive" in candidate:
-                from .backup_http import archive_admin
-                from .backup_service import get_backup_service
-                if not archive_admin(hass, connection.user):
-                    raise ImportFailure("unauthorized")
-                service = get_backup_service(hass, rt)
-                archive_session = service.candidate_session(candidate, _connection_user_id(connection))
-                pair = await async_resolve_pending_pair(rt)
-                config_data, layout_data = pair.config_data, pair.layout_data
-            else:
-                pair = await async_resolve_pending_pair(rt)
-                config_data, layout_data = pair.config_data, pair.layout_data
-            try:
-                registry_snapshot = import_registry_snapshot(hass)
-            except Exception:  # noqa: BLE001 - summary must not block revalidation
-                _LOGGER.debug("House Plan import registry summary unavailable", exc_info=True)
-                registry_snapshot = None
-            result = await hass.async_add_executor_job(
-                partial(
-                    revalidate_candidate,
-                    candidate,
-                    config_data,
-                    layout_data,
-                    duplicate_policy=msg["duplicate_policy"],
-                    registry_snapshot=registry_snapshot,
-                    config_root=Path(hass.config.path("")),
-                )
-            )
-            result["token"] = msg["token"]
-            if archive_session is not None:
-                from .import_export import _candidate_digest
-                try:
-                    snapshot = await rt.zigbee_coordinator.async_backup_snapshot()
-                except Exception as err:  # noqa: BLE001 - no raw lifecycle/storage exception in UI
-                    raise ImportFailure("conflict") from err
-                candidate["archive"]["cache_generation"] = snapshot["generation"]
-                candidate["confirmation_required"] = candidate["confirmation_required"] or not archive_session.manifest["complete"]
-                candidate["digest"] = _candidate_digest(candidate)
-                result["preview"]["confirmation_required"] = candidate["confirmation_required"]
-                result["preview"]["archive"] = service.summary(archive_session, candidate["target_config"])
-            result["expires_at"] = datetime.fromtimestamp(
-                candidate["expires"], UTC
-            ).isoformat().replace("+00:00", "Z")
-    except ImportFailure as err:
-        _send_import_error(connection, msg["id"], err)
-        return
-    connection.send_result(msg["id"], result)
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
+
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/import/revalidate'})
 
 
 @websocket_api.websocket_command(
@@ -885,164 +644,10 @@ async def ws_import_revalidate(hass: HomeAssistant, connection, msg: dict[str, A
 )
 @websocket_api.async_response
 async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Commit exactly the previewed candidate as one crash-resumable pair."""
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only editors may import House Plan")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    if "archive" in (rt.import_previews.get(msg["token"]) or {}):
-        from .backup_transaction import apply_archive
-        await apply_archive(hass, connection, msg, rt)
-        return
-    kind = ""
-    details: dict[str, Any] = {}
-    try:
-        async with rt.write_lock:
-            candidate = get_candidate(rt, msg["token"], _connection_user_id(connection))
-            resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-            if resolved is None:
-                return
-            config_data = resolved.config_data
-            layout_data = resolved.layout_data
-            config_rev = int(config_data.get("rev", 0))
-            layout_rev = int(layout_data.get("rev", 0))
-            if (
-                msg["expected_config_rev"] != config_rev
-                or msg["expected_layout_rev"] != layout_rev
-                or candidate.get("config_rev") != config_rev
-                or candidate.get("layout_rev") != layout_rev
-            ):
-                raise ImportFailure("conflict", "Plan changed after the preview")
-            kind = str(candidate["document"]["kind"])
-            requested_policy = msg.get("duplicate_policy", candidate.get("duplicate_policy"))
-            if kind == "space" and requested_policy != candidate.get("duplicate_policy"):
-                raise ImportFailure("conflict", "Duplicate policy changed after the preview")
-            target_config, target_layout, details = await hass.async_add_executor_job(
-                partial(
-                    prepare_apply,
-                    candidate,
-                    config_data.get("config") or {"spaces": [], "markers": [], "settings": {}},
-                    layout_data.get("layout") or {},
-                    duplicate_policy=candidate.get("duplicate_policy"),
-                    confirm_missing_content=msg["confirm_missing_content"],
-                )
-            )
-            missing = await hass.async_add_executor_job(
-                _missing_internal_plans,
-                Path(hass.config.path(PLANS_DIR)),
-                target_config,
-                config_data.get("config"),
-            )
-            if missing:
-                raise ImportFailure(
-                    "missing_plan",
-                    "Plan file no longer exists: " + ", ".join(sorted(missing)),
-                )
-            missing_attachments = await hass.async_add_executor_job(
-                _missing_internal_attachments,
-                Path(hass.config.path("")),
-                target_config,
-                config_data.get("config"),
-            )
-            if missing_attachments:
-                raise ImportFailure(
-                    "missing_content",
-                    "Attachment no longer exists: " + ", ".join(sorted(missing_attachments)),
-                )
-            new_config_rev = config_rev + 1
-            new_layout_rev = layout_rev + 1
-            backup = None
-            if kind == "full":
-                backup = {
-                    "kind": "import",
-                    "config": canonicalize_config_geometry(
-                        config_data.get("config") or DEFAULT_CONFIG
-                    ),
-                    "layout": canonicalize_layout_geometry(
-                        layout_data.get("layout") or {}
-                    ),
-                    "created": int(time.time()),
-                    "after_config_rev": new_config_rev,
-                    "after_layout_rev": new_layout_rev,
-                }
-            original_metadata = _layout_metadata(layout_data)
-            replaced_metadata = {_OPTIMIZE_PENDING, _OPTIMIZE_BACKUP}
-            if kind == "full":
-                replaced_metadata.update({"repair_backup", "geom_pending"})
-            final_metadata = {
-                key: value for key, value in original_metadata.items()
-                if key not in replaced_metadata
-            }
-            if backup is not None:
-                final_metadata[_OPTIMIZE_BACKUP] = backup
-            pending = {
-                "kind": "import",
-                "config": canonicalize_config_geometry(target_config),
-                "layout": canonicalize_layout_geometry(target_layout),
-                "config_rev": new_config_rev,
-                "layout_rev": new_layout_rev,
-                "final_metadata": final_metadata,
-            }
-            rollback = {
-                "kind": "import_rollback",
-                "config": canonicalize_config_geometry(
-                    config_data.get("config") or DEFAULT_CONFIG
-                ),
-                "layout": canonicalize_layout_geometry(
-                    layout_data.get("layout") or {}
-                ),
-                "config_rev": config_rev,
-                "layout_rev": layout_rev,
-                "final_metadata": original_metadata,
-            }
-            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))
-            # Both halves are durable: the token is spent no matter what
-            # happened to the preview registry meanwhile. Re-validating it
-            # here (TTL lapsed during the write, eviction by a newer preview
-            # of the same user) would report a failure for a plan that is
-            # already replaced — the outcome follows the commit (#495).
-            rt.import_previews.pop(msg["token"], None)
-    except ImportFailure as err:
-        _send_import_error(connection, msg["id"], err)
-        return
-    except PairCommitFailure as err:
-        message = (
-            "Import failed; the previous plan is pending recovery"
-            if err.recovery_pending
-            else "Import failed and the previous plan was restored"
-        )
-        connection.send_error(msg["id"], "commit_failed", message)
-        return
-    except Exception:  # noqa: BLE001 - defensive: a listener must never break the write path
-        _LOGGER.exception("House Plan import commit failed")
-        connection.send_error(msg["id"], "commit_failed", "Import commit failed")
-        return
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
-    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})
-    if kind == "full":
-        await _purge_trail_recorder(hass, target_config)
-        entry = get_entry(hass)
-        if entry is not None:
-            from .repairs import async_check_plan_files
-
-            hass.async_create_task(async_check_plan_files(hass, entry))
-    _refresh_trail_recorder(hass)
-    connection.send_result(msg["id"], {
-        "ok": True,
-        "kind": kind,
-        "config_rev": new_config_rev,
-        "layout_rev": new_layout_rev,
-        "counts": details.get("counts", {}),
-        "space_id": details.get("space_id"),
-        "repaired_target_refs": details.get("repaired_target_refs", 0),
-        "preserved_unresolved_refs": details.get("preserved_unresolved_refs", 0),
-        "reference_report": details.get("reference_report", {}),
-        "can_undo": kind == "full",
-        "config": pending["config"], "layout": pending["layout"],
-    })
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/import/apply'})
 
 
 # ---------------- layout ----------------
@@ -1068,10 +673,10 @@ def _live_layout(config: dict[str, Any], layout: dict[str, Any]) -> dict[str, An
 )
 @websocket_api.async_response
 async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Return the saved layout, optionally narrowed to one space (#256)."""
+    """HA transport delegates to the canonical plan command service."""
     from .command_adapter import dispatch_plan_command
 
-    await dispatch_plan_command(hass, connection, msg)
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/layout/get'})
 
 
 @structural_websocket_command(
@@ -1084,10 +689,10 @@ async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 )
 @websocket_api.async_response
 async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Transport schema and authority are HA; state semantics are shared."""
+    """HA transport delegates to the canonical plan command service."""
     from .command_adapter import dispatch_plan_command
 
-    await dispatch_plan_command(hass, connection, msg)
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/layout/set'})
 
 
 @structural_websocket_command(
@@ -1182,7 +787,7 @@ async def ws_geometry_repair(hass: HomeAssistant, connection, msg: dict[str, Any
     """HA transport delegates to the canonical plan command service."""
     from .command_adapter import dispatch_plan_command
 
-    await dispatch_plan_command(hass, connection, msg)
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/geometry/repair'})
 
 
 @websocket_api.websocket_command(
@@ -1267,55 +872,10 @@ async def ws_files_migrate(hass: HomeAssistant, connection, msg: dict[str, Any])
 @websocket_api.websocket_command({vol.Required("type"): "houseplan/plans/list"})
 @websocket_api.async_response
 async def ws_plans_list(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Plan images on the server, with what still uses them.
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    Files are never removed for being unreferenced (docs/SCOPE.md), which only
-    works as a policy if the user can see them: detaching a plan keeps the
-    image, and this is how it gets picked up again — or deleted on purpose.
-    """
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only writers may list plans")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    stored = await rt.config_store.async_load() or {}
-    cfg = stored.get("config") or {}
-    used: dict[str, list[str]] = {}
-    for space in cfg.get("spaces") or []:
-        name = plan_basename(space.get("plan_url"))
-        if name:
-            used.setdefault(name, []).append(space.get("title") or space.get("id") or "?")
-
-    plans_dir = Path(hass.config.path(PLANS_DIR))
-
-    def _scan() -> list[dict[str, Any]]:
-        out: list[dict[str, Any]] = []
-        if not plans_dir.is_dir():
-            return out
-        for item in sorted(plans_dir.iterdir()):
-            if not item.is_file() or not is_plan_file(item.name):
-                continue
-            try:
-                st = item.stat()
-            except OSError:
-                continue
-            out.append({
-                "name": item.name,
-                "url": f"{CONTENT_URL}/plans/_/{item.name}",
-                "size": st.st_size,
-                "modified": int(st.st_mtime),
-                "used_by": used.get(item.name, []),
-            })
-        out.sort(key=lambda x: -x["modified"])
-        return out
-
-    plans = await hass.async_add_executor_job(_scan)
-    # newest first and capped: a folder with thousands of files would otherwise
-    # become one huge message, one huge list and a signing request per row
-    connection.send_result(
-        msg["id"], {"plans": plans[:MAX_PLANS_LISTED], "total": len(plans)}
-    )
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/plans/list'})
 
 
 @websocket_api.websocket_command(
@@ -1326,44 +886,10 @@ async def ws_plans_list(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 )
 @websocket_api.async_response
 async def ws_plans_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Delete a plan image because the user asked — the only way one goes.
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    Refuses while a space still references it: the answer to "can I delete this"
-    is the stored configuration's, not the client's.
-    """
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only administrators may delete plans")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    name = sanitize_filename(msg["name"])
-    if not is_plan_file(name):
-        connection.send_error(msg["id"], "invalid_name", "Not a plan file")
-        return
-
-    async with rt.write_lock:
-        stored = await rt.config_store.async_load() or {}
-        cfg = stored.get("config") or {}
-        if name in plan_refs(cfg):
-            connection.send_error(
-                msg["id"], "in_use", "A space still uses this plan — detach it first"
-            )
-            return
-        path = Path(hass.config.path(PLANS_DIR)) / name
-
-        def _rm() -> bool:
-            try:
-                path.unlink()
-                return True
-            except FileNotFoundError:
-                return False
-            except OSError as err:
-                _LOGGER.warning("House Plan: could not delete %s: %s", path, err)
-                return False
-
-        removed = await hass.async_add_executor_job(_rm)
-    connection.send_result(msg["id"], {"ok": True, "removed": removed})
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/plans/delete'})
 
 
 @websocket_api.websocket_command(
@@ -1409,21 +935,10 @@ async def ws_content_sign(hass: HomeAssistant, connection, msg: dict[str, Any]) 
 @websocket_api.websocket_command({vol.Required("type"): "houseplan/assets/list"})
 @websocket_api.async_response
 async def ws_assets_list(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """List reusable custom images with authoritative reference counts."""
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only writers may list image assets")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    async with rt.write_lock, rt.upload_lock:
-        stored = await rt.config_store.async_load() or {}
-        refs = asset_refs(stored.get("config") or {})
-        root = Path(hass.config.path(ASSETS_DIR))
-        rows = await hass.async_add_executor_job(read_catalog, root)
-    connection.send_result(
-        msg["id"], {"assets": [public_asset(row, refs.get(row["asset_id"])) for row in rows]},
-    )
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
+
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/assets/list'})
 
 
 @websocket_api.websocket_command(
@@ -1436,37 +951,10 @@ async def ws_assets_list(hass: HomeAssistant, connection, msg: dict[str, Any]) -
 )
 @websocket_api.async_response
 async def ws_assets_resolve(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Resolve each unique id once; absent/corrupt content is reported missing."""
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    requested = set(msg["asset_ids"])
-    allowed = requested
-    if not _check_write(hass, connection):
-        async with rt.write_lock:
-            stored = await rt.config_store.async_load() or {}
-            referenced = set(asset_refs(stored.get("config") or {}))
-        allowed = requested & referenced
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    root = Path(hass.config.path(ASSETS_DIR))
-    verifier = get_asset_integrity_verifier(hass)
-
-    def _resolve() -> tuple[list[dict], list[str]]:
-        rows: list[dict] = []
-        found: set[str] = set()
-        for aid in sorted(allowed):
-            row = read_asset(root, aid)
-            if row is None:
-                continue
-            path = root / f"{aid}{row['ext']}"
-            if not verifier.verify(path, aid):
-                continue
-            rows.append(public_asset(row))
-            found.add(aid)
-        return rows, sorted(requested - found)
-
-    assets, missing = await hass.async_add_executor_job(_resolve)
-    connection.send_result(msg["id"], {"assets": assets, "missing": missing})
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/assets/resolve'})
 
 
 @websocket_api.websocket_command(
@@ -1477,47 +965,10 @@ async def ws_assets_resolve(hass: HomeAssistant, connection, msg: dict[str, Any]
 )
 @websocket_api.async_response
 async def ws_assets_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Delete only an explicitly requested, currently unreferenced asset."""
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only writers may delete images")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    aid = msg["asset_id"]
-    if not ASSET_ID_RE.fullmatch(aid):
-        connection.send_error(msg["id"], "invalid_format", "Invalid asset id")
-        return
-    root = Path(hass.config.path(ASSETS_DIR))
-    async with rt.write_lock, rt.upload_lock:
-        stored = await rt.config_store.async_load() or {}
-        refs = asset_refs(stored.get("config") or {}).get(aid, [])
-        if refs:
-            connection.send_error(msg["id"], "in_use", "A decor object still uses this image")
-            return
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-        def _delete() -> bool:
-            removed = False
-            for extension in ASSET_EXTENSIONS:
-                path = root / f"{aid}{extension}"
-                if not path.is_file():
-                    continue
-                try:
-                    path.unlink()
-                    removed = True
-                except FileNotFoundError:
-                    pass
-            meta = asset_meta_path(root, aid)
-            if meta.is_file():
-                try:
-                    meta.unlink()
-                    removed = True
-                except FileNotFoundError:
-                    pass
-            return removed
-
-        removed = await hass.async_add_executor_job(_delete)
-    connection.send_result(msg["id"], {"ok": True, "removed": removed})
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/assets/delete'})
 
 
 @websocket_api.websocket_command(
@@ -1665,7 +1116,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     """HA transport delegates to the canonical plan command service."""
     from .command_adapter import dispatch_plan_command
 
-    await dispatch_plan_command(hass, connection, msg)
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/config/get'})
 
 
 @websocket_api.websocket_command(
@@ -1714,104 +1165,14 @@ async def ws_virtual_light_toggle(
 
 
 
-def _internal_plan_names(config: dict[str, Any]) -> set[str]:
-    """Plan file names a configuration names through OUR urls.
-
-    Only `/api/houseplan/content/plans/_/<name>` and the legacy static path
-    count. Anything else belongs to the user and may point wherever they like.
-    """
-    out: set[str] = set()
-    for space in (config or {}).get("spaces") or []:
-        url = space.get("plan_url")
-        if not isinstance(url, str) or not url:
-            continue
-        if not (url.startswith(CONTENT_URL + "/plans/") or url.startswith(PLANS_URL + "/")):
-            continue
-        name = plan_basename(url)
-        if name:
-            out.add(name)
-    return out
 
 
-def _missing_internal_plans(
-    plans_dir: Path, config: dict[str, Any], previous: dict[str, Any] | None = None
-) -> set[str]:
-    """Newly named plan files that are not on disk.
-
-    Guards the pick-then-save window: another client may delete a plan between
-    the moment this one chose it and the moment it saves, which would otherwise
-    store a url with nothing behind it (HP-1470-02).
-
-    A name the stored configuration already carries is deliberately let through.
-    It is already broken — repairs says so — and refusing the write would lock
-    the owner out of every other edit, including the one that detaches it.
-    """
-    known = _internal_plan_names(previous or {})
-    return {
-        name
-        for name in _internal_plan_names(config)
-        if name not in known and not (plans_dir / name).is_file()
-    }
 
 
-def _missing_internal_attachments(
-    config_root: Path, config: dict[str, Any], previous: dict[str, Any] | None = None
-) -> set[str]:
-    """New local attachments that vanished between import preview and apply.
-
-    Existing broken references stay writable for the same reason as historical
-    plan URLs: refusing every unrelated write would prevent the user from
-    detaching or repairing them.
-    """
-    known = {
-        str(item["url"])
-        for item in content_manifest(previous or {}, config_root)
-        if item.get("kind") == "attachment" and item.get("storage") == "internal"
-    }
-    return {
-        str(item["url"])
-        for item in content_manifest(config, config_root)
-        if item.get("kind") == "attachment"
-        and item.get("storage") == "internal"
-        and item.get("exists_at_export") is False
-        and str(item["url"]) not in known
-    }
 
 
-def _changed_summary_entity_ids(config: dict[str, Any], previous: dict[str, Any] | None) -> set[str] | None:
-    """Entity ids the candidate's summary panel references, or None when the
-    panel is unchanged (a candidate without the key inherits the stored panel
-    through `preserve_summary_panel_namespace`, which is also unchanged)."""
-    settings = config.get("settings") if isinstance(config.get("settings"), dict) else {}
-    if "summary_panel" not in settings:
-        return None
-    old_settings = (previous or {}).get("settings") if isinstance((previous or {}).get("settings"), dict) else {}
-    if settings["summary_panel"] == old_settings.get("summary_panel"):
-        return None
-    return summary_panel_entity_ids(settings["summary_panel"])
 
 
-def _radar_changed(config: dict[str, Any], previous: dict[str, Any] | None) -> bool:
-    """Did any marker radar block or the global radar settings change?
-
-    Mirrors what `validate_marker_radars` re-validates; an unchanged radar set
-    never needs registry evidence (#1096).
-    """
-    old_markers = {
-        str(marker.get("id")): marker for marker in (previous or {}).get("markers") or []
-        if isinstance(marker, dict)
-    }
-    for marker in config.get("markers") or []:
-        if not isinstance(marker, dict) or "radar" not in marker or marker.get("radar") is None:
-            continue
-        old = old_markers.get(str(marker.get("id")), {}).get("radar", object())
-        if marker["radar"] != old:
-            return True
-    missing = object()
-    new_settings = config.get("settings") if isinstance(config.get("settings"), dict) else {}
-    old_settings = (previous or {}).get("settings") if isinstance((previous or {}).get("settings"), dict) else {}
-    settings = new_settings.get("radar", missing)
-    return settings is not missing and settings != old_settings.get("radar", missing)
 
 
 def _readable_entity_ids(
@@ -1861,7 +1222,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     """HA transport delegates to the canonical plan command service."""
     from .command_adapter import dispatch_plan_command
 
-    await dispatch_plan_command(hass, connection, msg)
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/config/set'})
 
 
 @structural_websocket_command(
@@ -1879,7 +1240,7 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
     """HA transport delegates to the canonical plan command service."""
     from .command_adapter import dispatch_plan_command
 
-    await dispatch_plan_command(hass, connection, msg)
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/wall/node_move'})
 
 
 @structural_websocket_command(
@@ -1897,7 +1258,7 @@ async def ws_wall_node_delete(hass: HomeAssistant, connection, msg: dict[str, An
     """HA transport delegates to the canonical plan command service."""
     from .command_adapter import dispatch_plan_command
 
-    await dispatch_plan_command(hass, connection, msg)
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/wall/node_delete'})
 
 
 # ---------------- whole-plan maintenance ----------------
@@ -1969,7 +1330,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
     """HA transport delegates to the canonical plan command service."""
     from .command_adapter import dispatch_plan_command
 
-    await dispatch_plan_command(hass, connection, msg)
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/space/delete'})
 
 
 @structural_websocket_command(
@@ -1988,7 +1349,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
     """HA transport delegates to the canonical plan command service."""
     from .command_adapter import dispatch_plan_command
 
-    await dispatch_plan_command(hass, connection, msg)
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/plan/optimize'})
 
 
 @structural_websocket_command(
@@ -2003,7 +1364,7 @@ async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, 
     """HA transport delegates to the canonical plan command service."""
     from .command_adapter import dispatch_plan_command
 
-    await dispatch_plan_command(hass, connection, msg)
+    await dispatch_plan_command(hass, connection, {**msg, "type": 'houseplan/plan/optimize_undo'})
 
 
 # ---------------- plan uploads ----------------

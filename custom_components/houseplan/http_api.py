@@ -5,13 +5,9 @@ breaks the connection on a large PDF) but via a plain multipart POST — like me
 """
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import os
-import shutil
 import tempfile
-from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
 
@@ -31,37 +27,26 @@ from .const import (
     CONTENT_URL,
     FILES_DIR,
     MAX_DECOR_ASSET_BYTES,
-    MAX_DECOR_ASSETS_BYTES,
-    MAX_DECOR_ASSETS_COUNT,
     MAX_EXPORT_BYTES,
     MAX_FILES_BYTES,
     MAX_FILES_COUNT,
-    MAX_PLANS_BYTES,
-    MAX_PLANS_FILES,
-    MIN_FREE_BYTES,
     PLANS_DIR,
 )
+from .core.command_ports import CommandError
 from .decor_assets import (
     ASSET_EXTENSIONS,
     ASSET_ID_RE,
     DecorAssetError,
-    asset_meta_path,
-    physical_asset_usage,
-    public_asset,
-    read_asset,
-    validate_asset,
 )
-from .import_export import ImportFailure, create_preview
+from .import_export import ImportFailure
 from .plans import (
     TMP_PREFIX,
     QuotaError,
     check_quota,
     read_bounded,
     reserve_filename,
-    store_plan_upload,
 )
-from .registry_snapshot import import_registry_snapshot
-from .store import async_resolve_pending_pair, get_data
+from .store import get_data
 from .validation import (
     FILE_EXTENSIONS,
     MAX_FILE_BYTES,
@@ -119,34 +104,12 @@ class HouseplanImportPreviewView(HomeAssistantView):
             if size > MAX_EXPORT_BYTES:
                 return web.json_response({"error": "too_large"}, status=413)
             blocks.append(block)
-        owner_id = str(getattr(user, "id", ""))
         try:
-            # Hold the global writer only while taking one coherent store
-            # snapshot. Parsing up to 32 MiB, schema validation and space remap
-            # are CPU work and apply will revalidate both revisions anyway.
-            async with runtime.write_lock:
-                pair = await async_resolve_pending_pair(runtime)
-                config_data, layout_data = pair.config_data, pair.layout_data
-            try:
-                registry_snapshot = import_registry_snapshot(hass)
-            except Exception:  # noqa: BLE001 - summary must not block a valid backup
-                _LOGGER.debug("House Plan import registry summary unavailable", exc_info=True)
-                registry_snapshot = None
-            result = await hass.async_add_executor_job(
-                partial(
-                    create_preview,
-                    runtime,
-                    b"".join(blocks),
-                    owner_id=owner_id,
-                    duplicate_policy=policy,
-                    current_config_data=config_data,
-                    current_layout_data=layout_data,
-                    config_root=Path(hass.config.path("")),
-                    registry_snapshot=registry_snapshot,
-                )
-            )
-        except ImportFailure as err:
-            status = 413 if err.code == "too_large" else 400
+            from .command_adapter import HttpPrincipal, plan_commands
+
+            result = await plan_commands(hass, HttpPrincipal(request), runtime).import_preview(b"".join(blocks), policy)
+        except (ImportFailure, CommandError) as err:
+            status = 403 if err.code == "unauthorized" else 413 if err.code == "too_large" else 400
             return web.json_response({"error": err.code, "message": err.public_message}, status=status)
         except Exception:  # noqa: BLE001 - the HTTP boundary must answer 400, never leak a traceback
             _LOGGER.exception("House Plan import preview failed")
@@ -162,7 +125,8 @@ class HouseplanStructuralUploadView(HomeAssistantView):
     requires_auth = True
 
     async def post(self, request: web.Request) -> web.Response:
-        from .structural_upload import UploadError, prepare_finish, uploads
+        from .command_adapter import HttpPrincipal, plan_commands
+        from .structural_upload import UploadError
 
         hass = request.app[KEY_HASS]
         user = request.get("hass_user")
@@ -171,32 +135,16 @@ class HouseplanStructuralUploadView(HomeAssistantView):
         runtime = get_data(hass)
         if runtime is None:
             return web.json_response({"error": "not_ready"}, status=503)
-        owner = str(getattr(user, "id", ""))
-        manager = uploads(runtime)
-        token = None
-        retained = False
         try:
-            token = manager.begin(owner, request.content_length)
-            async for block in request.content.iter_chunked(_CHUNK):
-                if not may_write(hass, user):
-                    raise UploadError("unauthorized")
-                manager.append(token, owner, block)
-            snapshot = manager.snapshot(token, owner)
-            prepared = await hass.async_add_executor_job(prepare_finish, snapshot)
-            if not may_write(hass, request.get("hass_user")) or request.get("hass_user") is not user:
-                raise UploadError("unauthorized")
-            result = manager.complete_finish(snapshot, prepared)
-            retained = True
+            result = await plan_commands(hass, HttpPrincipal(request), runtime).stage_structural(
+                request.content.iter_chunked(_CHUNK), request.content_length,
+            )
             return web.json_response(result)
-        except UploadError as err:
+        except (UploadError, CommandError) as err:
             status = 403 if err.code == "unauthorized" else 413 if err.code in {"too_large", "upload_capacity"} else 400
             return web.json_response({"error": err.code}, status=status)
         except (ConnectionError, ValueError):
             return web.json_response({"error": "invalid_format"}, status=400)
-        finally:
-            # Includes task cancellation/disconnect while streaming.
-            if token is not None and not retained:
-                manager.cancel(token, owner)
 
 
 class HouseplanContentView(HomeAssistantView):
@@ -312,90 +260,14 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
         if not filename:
             return web.json_response({"error": "invalid_format"}, status=400)
 
-        root = Path(hass.config.path(ASSETS_DIR))
-
-        def _store() -> tuple[dict, bool]:
-            root.mkdir(parents=True, exist_ok=True)
-            existing = read_asset(root, validated.asset_id)
-            if existing is not None:
-                existing_blob = root / f"{validated.asset_id}{existing['ext']}"
-                if hashlib.sha256(existing_blob.read_bytes()).hexdigest() != validated.asset_id:
-                    raise DecorAssetError("invalid_image", "The stored image failed its integrity check")
-                return existing, True
-            aid = validated.asset_id
-            blob = root / f"{aid}{validated.ext}"
-            meta = asset_meta_path(root, aid)
-            safe_display = sanitize_filename(Path(filename).name) or "image"
-            row = {
-                "asset_id": aid, "name": safe_display, "mime": validated.mime,
-                "ext": validated.ext, "width": validated.width, "height": validated.height,
-                "bytes": len(validated.data), "created_at": datetime.now(timezone.utc).isoformat(),
-            }
-            # A hard stop may have promoted the content-addressed blob before
-            # its sidecar. Its exact path and digest prove that no new physical
-            # bytes are needed, so repair remains possible even at full quota.
-            if blob.exists():
-                if not blob.is_file() or hashlib.sha256(blob.read_bytes()).hexdigest() != aid:
-                    raise DecorAssetError("invalid_image", "The stored image failed its integrity check")
-                fd, meta_temp_name = tempfile.mkstemp(prefix=".asset-meta-", dir=str(root))
-                os.close(fd)
-                meta_temp = Path(meta_temp_name)
-                try:
-                    with meta_temp.open("w", encoding="utf-8") as stream:
-                        stream.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")))
-                        stream.flush()
-                        os.fsync(stream.fileno())
-                    os.replace(meta_temp, meta)
-                    return row, False
-                finally:
-                    meta_temp.unlink(missing_ok=True)
-
-            count, used = physical_asset_usage(root)
-            if count >= MAX_DECOR_ASSETS_COUNT or used + len(validated.data) > MAX_DECOR_ASSETS_BYTES:
-                raise DecorAssetError("capacity_exceeded", "The decor image store is full")
-            try:
-                if shutil.disk_usage(root).free - len(validated.data) < MIN_FREE_BYTES:
-                    raise DecorAssetError("capacity_exceeded", "Not enough free disk space")
-            except OSError:
-                pass
-            fd, temp_name = tempfile.mkstemp(prefix=".asset-", dir=str(root))
-            os.close(fd)
-            temp = Path(temp_name)
-            meta_temp = temp.with_suffix(".json")
-            promoted_blob = False
-            try:
-                with temp.open("wb") as stream:
-                    stream.write(validated.data)
-                    stream.flush()
-                    os.fsync(stream.fileno())
-                with meta_temp.open("w", encoding="utf-8") as stream:
-                    stream.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")))
-                    stream.flush()
-                    os.fsync(stream.fileno())
-                os.replace(temp, blob)
-                promoted_blob = True
-                os.replace(meta_temp, meta)
-                return row, False
-            except Exception:
-                # A normal I/O failure is fully transactional. A process hard
-                # stop between the two renames is healed by the orphan branch
-                # above on the next identical upload.
-                if promoted_blob:
-                    blob.unlink(missing_ok=True)
-                raise
-            finally:
-                temp.unlink(missing_ok=True)
-                meta_temp.unlink(missing_ok=True)
+        from .command_adapter import HttpPrincipal, plan_commands
 
         try:
-            async with runtime.upload_lock:
-                # Pillow may consume far more RSS than the compressed body.
-                # Serialise decode/validation as well as quota+promotion so N
-                # parallel uploads cannot become N simultaneous decoders.
-                validated = await hass.async_add_executor_job(
-                    validate_asset, b"".join(blocks), filename, declared_mime,
-                )
-                row, reused = await hass.async_add_executor_job(_store)
+            result = await plan_commands(hass, HttpPrincipal(request), runtime).upload_asset(
+                b"".join(blocks), filename, declared_mime,
+            )
+        except CommandError as err:
+            return web.json_response({"error": err.code}, status=403 if err.code == "unauthorized" else 400)
         except DecorAssetError as err:
             status = (
                 507 if err.code == "capacity_exceeded"
@@ -406,7 +278,7 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
         except OSError as err:
             _LOGGER.warning("House Plan decor asset upload: store failed: %s", err)
             return web.json_response({"error": "io_error"}, status=500)
-        return web.json_response({"ok": True, "reused": reused, "asset": public_asset(row)})
+        return web.json_response(result)
 
 
 # Form fields other than the file are a space id (<= 64 chars) and an
@@ -475,22 +347,19 @@ class HouseplanPlanUploadView(HomeAssistantView):
         if raw is None:
             return web.json_response({"error": "no_file"}, status=400)
 
-        plans_dir = Path(hass.config.path(PLANS_DIR))
+        from .command_adapter import HttpPrincipal, plan_commands
+
         try:
-            async with runtime.upload_lock:
-                name = await hass.async_add_executor_job(
-                    partial(
-                        store_plan_upload, plans_dir, space_id, ext, raw,
-                        max_bytes=MAX_PLANS_BYTES, max_files=MAX_PLANS_FILES,
-                    )
-                )
+            result = await plan_commands(hass, HttpPrincipal(request), runtime).upload_plan(raw, space_id, ext)
+        except CommandError as err:
+            return web.json_response({"error": err.code}, status=403 if err.code == "unauthorized" else 400)
         except QuotaError as err:
             _LOGGER.warning("House Plan plan upload refused: %s", err.detail)
             return web.json_response({"error": err.reason, "detail": err.detail}, status=507)
         except OSError as err:
             _LOGGER.warning("House Plan plan upload: could not store the file: %s", err)
             return web.json_response({"error": "io_error"}, status=500)
-        return web.json_response({"ok": True, "url": f"{CONTENT_URL}/plans/_/{name}"})
+        return web.json_response(result)
 
 
 class HouseplanUploadView(HomeAssistantView):

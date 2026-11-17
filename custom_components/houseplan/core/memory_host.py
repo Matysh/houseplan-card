@@ -109,7 +109,7 @@ class MemoryPlanTransaction:
     async def save_config(self, config, rev, *, previous, canonical, authorize):
         authorize()
         self._cas()
-        self.storage.config_data = {"config": copy.deepcopy(config) if canonical
+        self.storage.config_data = {**copy.deepcopy(previous), "config": copy.deepcopy(config) if canonical
                                     else canonicalize_config_geometry(config), "rev": rev}
         self.cache.schema_clean_rev = None
         self._accepted()
@@ -130,7 +130,7 @@ class MemoryPlanTransaction:
         self._cas()
         # Prepare everything before either assignment; there is no await,
         # serialization or fallible copy between the two publications.
-        config = {"config": copy.deepcopy(target["config"]),
+        config = {**copy.deepcopy(self.storage.config_data), "config": copy.deepcopy(target["config"]),
                   "rev": target["config_rev"]}
         layout = {**copy.deepcopy(target.get("final_metadata", {})),
                   "layout": canonicalize_layout_geometry(target["layout"]),

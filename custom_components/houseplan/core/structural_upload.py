@@ -74,7 +74,9 @@ class Upload:
     digest: str | None = None
     purpose: str | None = None
     revision: int = 0
-    identity: object = field(default_factory=object)
+    # Stable across repository serialization; snapshots must survive a host
+    # opening another transaction, not depend on Python object identity.
+    identity: str = field(default_factory=lambda: secrets.token_urlsafe(24))
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,7 +84,7 @@ class UploadSnapshot:
     """Lease plus immutable bytes; only this value may cross into an executor."""
     token: str
     owner: str
-    identity: object
+    identity: str
     revision: int
     blocks: tuple[bytes, ...]
     digest: str | None
@@ -107,10 +109,11 @@ def prepare_resolution(snapshot: UploadSnapshot, compact: dict) -> dict:
 
 
 class StructuralUploads:
-    """Mutable records are owned by the HA event loop, never by its executor."""
-    def __init__(self, *, clock: Callable[[], float] = time.time) -> None:
+    """Canonical lease kernel; repository transactions own mutable records."""
+    def __init__(self, *, clock: Callable[[], float] = time.time,
+                 records: dict[str, Upload] | None = None) -> None:
         self.clock = clock
-        self.uploads: dict[str, Upload] = {}
+        self.uploads: dict[str, Upload] = {} if records is None else records
 
     def _expire(self) -> None:
         now = self.clock()
@@ -163,7 +166,7 @@ class StructuralUploads:
 
     def _lease(self, snapshot: UploadSnapshot) -> Upload:
         value = self._get(snapshot.token, snapshot.owner)
-        if value.identity is not snapshot.identity or value.revision != snapshot.revision:
+        if value.identity != snapshot.identity or value.revision != snapshot.revision:
             raise UploadError("upload_consumed")
         return value
 

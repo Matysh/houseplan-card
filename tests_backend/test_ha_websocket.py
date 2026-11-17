@@ -3631,7 +3631,7 @@ async def test_a_failing_collector_does_not_undo_an_accepted_save(
     accepted — and its retry then failed with `conflict`, because the server had
     moved on. The commit stands and the event fires regardless.
     """
-    from custom_components.houseplan import command_adapter as wsapi
+    from custom_components.houseplan.core import content_files as wsapi
 
     await _setup(hass)
     client = await hass_ws_client(hass)
@@ -3642,7 +3642,7 @@ async def test_a_failing_collector_does_not_undo_an_accepted_save(
     def _boom(*_a, **_k):
         raise OSError("the plans directory is on fire")
 
-    monkeypatch.setattr(wsapi, "collect_plans", _boom)
+    monkeypatch.setattr(wsapi, "retire_plans", _boom)
 
     cfg = await _cfg([{"id": "r5", "plan_url": None}])
     ok = await _save(client, cfg, 0)
@@ -3758,15 +3758,18 @@ async def test_decor_asset_upload_deduplicates_and_rejects_mime_spoofing(
 
         def __init__(self, mime: str) -> None:
             self._mime = mime
+            self._user = _User()
 
         def get(self, _key, default=None):
-            return _User()
+            return self._user
 
         async def multipart(self):
             return _Reader(self._mime)
 
     view = HouseplanDecorAssetUploadView()
-    real_validate = hp_http.validate_asset
+    from custom_components.houseplan.core import file_uploads, upload_commands
+
+    real_validate = upload_commands.validate_asset
     validation_lock = threading.Lock()
     active_validations = 0
     max_active_validations = 0
@@ -3783,7 +3786,7 @@ async def test_decor_asset_upload_deduplicates_and_rejects_mime_spoofing(
             with validation_lock:
                 active_validations -= 1
 
-    monkeypatch.setattr(hp_http, "validate_asset", observed_validate)
+    monkeypatch.setattr(upload_commands, "validate_asset", observed_validate)
     first, duplicate = await asyncio.gather(
         view.post(_Request("image/png")), view.post(_Request("image/png")),
     )
@@ -3799,7 +3802,7 @@ async def test_decor_asset_upload_deduplicates_and_rejects_mime_spoofing(
     aid = rows[0]["asset"]["asset_id"]
     root = Path(hass.config.path(ASSETS_DIR))
     (root / f"{aid}.json").unlink()
-    monkeypatch.setattr(hp_http, "MAX_DECOR_ASSETS_COUNT", 1)
+    monkeypatch.setattr(file_uploads, "MAX_DECOR_ASSETS_COUNT", 1)
     repaired = await view.post(_Request("image/png"))
     repaired_body = json.loads(repaired.text)
     assert repaired.status == 200
@@ -3809,7 +3812,7 @@ async def test_decor_asset_upload_deduplicates_and_rejects_mime_spoofing(
     # Only quota exhaustion is a storage-capacity response.
     (root / f"{aid}.json").unlink()
     (root / f"{aid}.png").unlink()
-    monkeypatch.setattr(hp_http, "MAX_DECOR_ASSETS_COUNT", 0)
+    monkeypatch.setattr(file_uploads, "MAX_DECOR_ASSETS_COUNT", 0)
     full = await view.post(_Request("image/png"))
     assert full.status == 507
     assert json.loads(full.text)["error"] == "capacity_exceeded"
@@ -3826,7 +3829,7 @@ async def test_decor_asset_upload_deduplicates_and_rejects_mime_spoofing(
 
     blob.unlink()
     monkeypatch.setattr(
-        hp_http, "physical_asset_usage",
+        file_uploads, "physical_asset_usage",
         lambda _root: (_ for _ in ()).throw(OSError("inventory failed")),
     )
     failed = await view.post(_Request("image/png"))
@@ -3847,7 +3850,7 @@ async def test_decor_asset_resolve_readonly_is_limited_to_referenced_ids(
     """#432 AC1/AC2: View keeps its images without exposing the catalog."""
     import hashlib
 
-    from custom_components.houseplan import websocket_api as wsapi
+    from custom_components.houseplan.core import content_files as wsapi
     from custom_components.houseplan.const import ASSETS_DIR
 
     await _setup(hass)
