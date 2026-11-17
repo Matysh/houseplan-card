@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15233,
-  "nextTicket": 504,
+  "revision": 15234,
+  "nextTicket": 505,
   "nextFence": 504,
   "tasks": {
     "1024": {
@@ -4880,6 +4880,20 @@
         "sourceSha": "09f5f5082ce065406e1d5d275255875e082c6d34"
       }
     },
+    "1457": {
+      "issue": 1457,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1457-nightly-witnesses",
+      "materialSha": "a7ada228a4b78f97b19808101c47eb1918b41148",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 504,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794947088452,
+      "reviewEntry": 1
+    },
     "1458": {
       "issue": 1458,
       "track": "ask",
@@ -5336,7 +5350,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1457
+  ],
   "active": {
     "issue": 1458,
     "worker": "github-coordinator",
@@ -5991,6 +6007,19 @@
           "failures": []
         },
         "delivered": true
+      }
+    },
+    "finish:f58538f5-1273-4bf7-a409-30e090fedf04": {
+      "digest": "5f697d2ab133869dfa5b748c95be57bd1ab1f81c6b26a9ca0a8ac6a2ef03e71e",
+      "issue": 1457,
+      "message": {
+        "kind": "queued",
+        "issue": 1457,
+        "at": 1794947088452,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "a7ada228a4b78f97b19808101c47eb1918b41148"
       }
     }
   },
