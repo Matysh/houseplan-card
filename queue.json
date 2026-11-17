@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15321,
+  "revision": 15322,
   "nextTicket": 507,
   "nextFence": 507,
   "tasks": {
@@ -5418,6 +5418,10 @@
       "digest": "27f2847f780320a701313c64a6a1e23d67ae5e36f1bea121fa60bbb5d38fa4e0",
       "issue": 1457
     },
+    "github:44174977412:1:completions:message:64a14fae597b97277de9d6972d1b6e489c6d5a2aca2e6fc89a6697751183d901": {
+      "digest": "cb2124012964d9b53f9950ffaa4a02cf34b70e75345fb811629cbb1ce6813a3c",
+      "issue": 1457
+    },
     "finish:f58538f5-1273-4bf7-a409-30e090fedf04": {
       "digest": "5f697d2ab133869dfa5b748c95be57bd1ab1f81c6b26a9ca0a8ac6a2ef03e71e",
       "issue": 1457,
@@ -5464,7 +5468,8 @@
           "entry": 1,
           "detail": "Поведение: test/mutation-gate.test.mjs: failed; Браузер: isometric live touch: failed",
           "eventId": "finish:f58538f5-1273-4bf7-a409-30e090fedf04:finish:2:return:return:1457"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:d7419c3a-b1bc-43c5-95d8-2bebb6eb1f5e": {
