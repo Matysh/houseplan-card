@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15395,
+  "revision": 15396,
   "nextTicket": 507,
   "nextFence": 507,
   "tasks": {
@@ -5358,7 +5358,8 @@
         "reviewChanges": "### Цель и подход\n\nПредлагается выделение оркестрации, а не новая реализация алгоритмов. Порты делают семантику общей, но оставляют durable HA journal и ACL в адаптере. Упаковка staging из канонического core выбрана вместо второго дерева или новой runtime pip-зависимости HACS. Вариант оставить команды в HA и просто расширить demo отклонён: внешний сервер повторил бы правила.\n\n### Места для внимания\n\n`websocket_api.py` config/set, `_commit_pair`, Optimize/Undo, space/delete; `store.py` recovery и HA hooks; `http_api.py` preview/upload; `core/import_export.py` прямые чтения config_root и runtime.import_previews; `demo/standalone/core_process.py` различия no-op/layout/LED. Существенны сохранение evidence-проверок скрытых HA данных, API-коды/формы ответов и отсутствие наружного доступа к installation-backup. Python >=3.14 соответствует текущей среде проекта; расширение поддержки старых Python не заявляется.\n\n### Проверки и ограничения\n\nНа S3 выполнено чтение owning source и контрактов, код продукта ещё не менялся. Запусков продукта, сборки или приёмки нет; перед S4 выполняется только авторская проверка формы данного ТЗ. Контракты реальной БД и production-сервис будут отдельно реализованы/проверены в приватном репозитории по #1459; эта задача не может доказать их заранее.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: https://github.com/Matysh/houseplan-card/issues/1460#issuecomment-6961543328.\n\n- Неопределённые варианты → добавлена отдельная CommandPolicy HA/PLAN_ONLY; существующие space/full JSON обслуживает общий путь, archive/migration_source/archive_snapshot остаются HA-only. Standalone отклоняет full до lease, без ослабления сохранённого space JSON контракта.\n- Cancel противоречил HA → выбран вариант A: сохраняются archive_admin, no-op для portable token и TTL; demo приводится к этому, новая отмена house typed lease относится к #1464. Не запрашивается неявное изменение HA поведения.\n- Необязательные улучшения → явные post-commit фазы, recovered_kind, атомарный повтор CAS, revision-scoped кеши, перенос contextvars и отсутствие финального strict-checkpoint после durable commit; промежуточные точки реализации и тесты.\n- Новая редакция только ТЗ; исходники не изменены, продуктовых прогонов нет. Авторская проверка формы повторяется перед передачей.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
