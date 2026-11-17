@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15184,
+  "revision": 15185,
   "nextTicket": 500,
   "nextFence": 500,
   "tasks": {
@@ -5528,7 +5528,8 @@
           "at": 1794942360943,
           "entry": 1,
           "eventId": "1458-visuals-and-private-dependencies-20261117:return:1458"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:5f644064-f440-43b7-8f04-cb062c3be145": {
