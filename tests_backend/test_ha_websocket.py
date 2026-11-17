@@ -4841,7 +4841,7 @@ async def test_uploads_are_bounded_by_a_store_quota(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch
 ) -> None:
     """HP-1470-01: nothing is deleted for being old, so growth stops at the door."""
-    from custom_components.houseplan import websocket_api as wsapi
+    from custom_components.houseplan.core import file_uploads as wsapi
 
     from pathlib import Path
 
@@ -4881,7 +4881,7 @@ async def test_parallel_uploads_cannot_slip_past_the_quota_together(
     import asyncio
     import base64
 
-    from custom_components.houseplan import websocket_api as wsapi
+    from custom_components.houseplan.core import file_uploads as wsapi
     from custom_components.houseplan.const import PLANS_DIR
     from custom_components.houseplan.plans import dir_usage
     from pathlib import Path
