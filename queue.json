@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15234,
+  "revision": 15235,
   "nextTicket": 505,
   "nextFence": 504,
   "tasks": {
@@ -4907,7 +4907,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794947013195,
       "reviewEntry": 7,
-      "patchId": "e4a4074673a2f0ade2e97a7303a97bb35b1ab9ae",
+      "patchId": "3a6eaadcf818ebb93ee0f6fba5b08487d8d5a153",
       "changedFiles": [
         "demo/smoke_ifc_converter.mjs",
         "demo/smoke_wall_node_python_roundtrip.mjs",
@@ -4964,6 +4964,7 @@
         "scripts/sh3d-convert/vendor/ifc/vendor-index.json",
         "src/plan-converter.ts",
         "test/converter-site.test.mjs",
+        "test/fixtures/converter-site-legacy.php",
         "test/helpers/ifc-fixture.mjs",
         "test/ifc-convert.test.mjs",
         "test/plan-converter.test.mjs",
@@ -5359,10 +5360,11 @@
     "token": "503:github:44168906924:1:tick:0:admit",
     "fence": 503,
     "materialSha": "4a6cd83f2e1fe40c3e8e7ec95ec588e412052ad3",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
+    "phase": "testing",
     "admittedAt": 1794947067567,
-    "expiresAt": 1794947367567
+    "expiresAt": 1794947458532,
+    "patchId": "3a6eaadcf818ebb93ee0f6fba5b08487d8d5a153"
   },
   "events": {
     "github:44128949850:1:label:spec-request": {
@@ -5635,6 +5637,10 @@
     },
     "github:44168906924:1:completions:message:b49b8de64685d2eff928b13954749f9673087d1162f538164ef4f18b0d011a96": {
       "digest": "19c364236218669541299248fc3658f66df5c9304ec72bba0875eaea48dd17a3",
+      "issue": 1458
+    },
+    "finish:c62e5e5c-25a3-42a7-8a4d-3647669c130b:finish:1:synchronized": {
+      "digest": "c938ccf521bc239e87f7e317eb0687f1f957a4754b5ea64a2d6a18b621d6e97e",
       "issue": 1458
     },
     "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
