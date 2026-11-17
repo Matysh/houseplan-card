@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15191,
+  "revision": 15192,
   "nextTicket": 500,
   "nextFence": 500,
   "tasks": {
@@ -5632,7 +5632,8 @@
           "entry": 3,
           "detail": "Браузер: device icon picker: cancelled; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: ifc converter: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan converter: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно",
           "eventId": "finish:2657dbd6-7a47-4b22-8023-af533521c132:finish:3:return:return:1458"
-        }
+        },
+        "delivered": true
       }
     }
   },
