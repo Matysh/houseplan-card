@@ -139,6 +139,28 @@ test('#1458 removing technical points never straightens a real bend',async()=>{
   assert.equal(wall.walls.length,2);near(wall.walls[0].b[1],.0001,1e-9);
 });
 
+test('#1458 a bent noncentral reference line is explicitly refused rather than misplaced',async()=>{
+  const result=await convertIfc(ifcFixture({axisElbow:true,referenceOffset:true,noWallBody:true,noRooms:true,noOpenings:true}),options);
+  const wall=result.report.entities.filter(e=>e.kind==='wall').at(-1);
+  assert.equal(wall.outcome,'skipped');assert.equal(wall.reason,'ifc_wall_axis_unsupported');
+  assert.ok(result.report.levels[0].notes.some(n=>n.id===String(wall.sourceId)&&n.code==='ifc_wall_axis_unsupported'));
+  assert.equal(result.report.sourceCounts.wall,6);assert.equal(result.report.outcomes.skipped.wall,1);
+});
+
+test('#1458 reflected placements keep walls and their door/window together through export',async()=>{
+  const bytes=ifcFixture({reflected:true}),model=await readIfc(bytes);
+  const door=model.entities.find(e=>e.kind==='door').opening,window_=model.entities.find(e=>e.kind==='window').opening;
+  near(door.x,4);near(door.y,-2);near(door.length,.9);
+  near(window_.x,6);near(window_.y,0);near(window_.length,1.2);
+  const s=space(await convertIfc(bytes,options));assert.equal(s.rooms.length,2);assert.equal(s.openings.length,2);
+  for(const o of s.openings){
+    const host=[...s.wall_segments,...s.partitions].find(w=>w.id===o.host.id);assert.ok(host);
+    near(o.length*s.cell_cm*240/100,o.type==='door'?.9:1.2);
+    const dx=host.b[0]-host.a[0],dy=host.b[1]-host.a[1];
+    near(Math.abs(dx*(o.y-host.a[1])-dy*(o.x-host.a[0]))/Math.hypot(dx,dy),0,1e-8);
+  }
+});
+
 test('#1458 indexed straight curves and coalesced source-host lineage remain usable',async()=>{
   const indexed=await convertIfc(ifcFixture({indexed:true}),options);
   assert.equal(space(indexed).rooms.length,2);assert.equal(space(indexed).openings.length,2);

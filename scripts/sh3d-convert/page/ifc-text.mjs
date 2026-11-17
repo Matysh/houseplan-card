@@ -22,6 +22,7 @@ const rows = [
   ['note.ifc_room_area', 'Контуры комнат приведены к осям стен. Площадь Houseplan пересчитывается по этим контурам и может отличаться от площади в IFC.', 'Room contours use wall centre lines. Houseplan recalculates area from those contours; it may differ from the IFC area.'],
 ];
 const reasons = [
+  ['ifc_wall_axis_unsupported', 'Не удалось надёжно применить смещение опорной линии стены. Разделите стену на отдельные прямые участки при экспорте; стена пропущена.', 'The wall reference-line offset cannot be applied reliably. Export the wall as separate straight segments; this wall was skipped.'],
   ['ifc_wall_height_unknown', 'План стены перенесён, но её высотный диапазон не определён. Для других этажей нужна отдельная стена или разбиение по уровням при экспорте.', 'The wall plan was transferred, but its height range is unknown. Other storeys need a separate wall or splitting by levels during export.'],
   ['ifc_elevation_unknown', 'Нет достоверного размещения этажа. Принадлежащий ему план сохранён, но многоэтажные стены не добавляются по предполагаемой высоте.', 'The storey has no reliable placement. Its own plan was retained, but spanning walls are not added at an assumed elevation.'],
   ['ifc_multiple_projects', 'В файле несколько IFC-проектов. Экспортируйте один проект отдельно.', 'The file contains multiple IFC projects. Export one project separately.'],

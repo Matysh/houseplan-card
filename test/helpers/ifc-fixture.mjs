@@ -17,7 +17,7 @@ export function ifcFixture(options = {}) {
   const guid = () => text(`000000000000000${String(serial).padStart(7,'0')}`);
   const project = add('IFCPROJECT',guid(),'$',text('Fixture'),'$','$','$','$',list([context]),units);
   const angle = (options.rotation || 0) * Math.PI/180;
-  const buildingPlacement = add('IFCLOCALPLACEMENT','$',axis(options.translation || [0,0,0], '$', direction(Math.cos(angle),Math.sin(angle),0)));
+  const buildingPlacement = add('IFCLOCALPLACEMENT','$',axis(options.translation || [0,0,0], options.reflected?direction(0,0,-1):'$', direction(Math.cos(angle),Math.sin(angle),0)));
   const building = add('IFCBUILDING',guid(),'$',text('House'),'$','$',buildingPlacement,'$','$','.ELEMENT.','$','$','$');
   add('IFCRELAGGREGATES',guid(),'$','$','$',project,list([building]));
   const productShape = representations => add('IFCPRODUCTDEFINITIONSHAPE','$','$',list(representations));
@@ -45,7 +45,8 @@ export function ifcFixture(options = {}) {
       t=options.wallThickness??t;
       const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);
       const placement=add('IFCLOCALPLACEMENT',floorPlacement,axis([...a,0],'$',direction(dx/len,dy/len,0)));
-      const representations=[shape('Axis','Curve2D',[polyline(options.axisSplit?[[0,0],[len/2,options.axisBend??0],[len,0]]:[[0,0],[len,0]])])];
+      const axisPoints=options.axisElbow?[[0,0],[len,0],[len,3]]:options.axisSplit?[[0,0],[len/2,options.axisBend??0],[len,0]]:[[0,0],[len,0]];
+      const representations=[shape('Axis','Curve2D',[polyline(axisPoints)])];
       if(includeBody&&!options.noWallBody) representations.push(shape('Body','SweptSolid',[solid(len,t,options.wallHeight??2.8,axis([len/2,offset+t/2,0]))]));
       const id=add('IFCWALL',guid(),'$',text('Wall '+contained.length),'$','$',placement,productShape(representations),'$','.NOTDEFINED.');
       const layer=add('IFCMATERIALLAYER','$',length(t),'.F.','$','$','$','$');

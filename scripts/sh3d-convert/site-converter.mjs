@@ -9,6 +9,14 @@ const once = (source, pattern, replacement) => {
   if ([...source.matchAll(new RegExp(pattern.source, 'g'))].length !== 1) throw Error(`Unexpected site template: ${pattern.source}`);
   return source.replace(pattern, replacement);
 };
+// Exact stylesheet emitted by the three-format preparer. Replace only this
+// owned legacy block, preserving unrelated editorial styles byte-for-byte.
+const LEGACY_FORMAT_STYLE = `
+.converter-formats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.converter-picture{margin-bottom:16px}.converter-size-row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+.converter-size-row label{min-width:0;flex:1 1 100px}.converter-size-row .converter-input{width:100%;box-sizing:border-box;min-height:44px;height:44px;flex:none;resize:none;padding:8px 12px;margin:6px 0;font:inherit}
+@media(max-width:639px){.converter-formats{grid-template-columns:1fr}}
+`;
 export function prepareConverterSite(template, artifact, commit) {
   if (!/^[a-f0-9]{40}$/.test(commit)) throw Error('Expected immutable accepted source');
   const module = artifact.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];
@@ -54,7 +62,13 @@ export function prepareConverterSite(template, artifact, commit) {
 #ifc-catalog label{display:flex;gap:10px;align-items:center;margin:10px 0}.ifc-note{font-size:12px;padding:2px 8px;margin-left:8px}
 @media(max-width:639px){.converter-formats{grid-template-columns:1fr}}
 </style>`;
-  if (/id="houseplan-converter-formats"/.test(page)) page = once(page, /<style id="houseplan-converter-formats">[\s\S]*?<\/style>/, style);
+  const legacy = [...page.matchAll(/<style>([\s\S]*?)<\/style>/g)]
+    .filter(match => match[1].replace(/\r\n/g,'\n').trim() === LEGACY_FORMAT_STYLE.trim());
+  if(legacy.length>1)throw Error('Unexpected duplicate legacy converter styles');
+  if (/id="houseplan-converter-formats"/.test(page)) {
+    page = once(page, /<style id="houseplan-converter-formats">[\s\S]*?<\/style>/, style);
+    if(legacy.length)page=page.replace(legacy[0][0],'');
+  } else if(legacy.length)page=page.replace(legacy[0][0],style);
   else page = once(page, /<\/main>/, '</main>\n' + style);
   const sourceNote = `<!-- converter-source ${commit}; module-sha256 ${digest(module)} -->`;
   if (/<!-- converter-source /.test(page)) page = once(page, /<!-- converter-source [^>]+-->/, sourceNote);

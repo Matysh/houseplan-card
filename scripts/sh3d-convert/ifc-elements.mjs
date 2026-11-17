@@ -98,7 +98,13 @@ export function readWall(reader, element, material) {
   const walls = [];
   for (const { points, matrix: lineMatrix } of lines) for (let i = 1; i < points.length; i++) {
     if (Math.abs(points[i][2] - points[i - 1][2]) > .001 || distance(points[i], points[i - 1]) < EPS) fail();
+    const tangent=sub(points[i],points[i-1]), localX=transform(lineMatrix,[1,0,0],true);
     const shift=transform(lineMatrix,[0,layer.offset,0],true);
+    // AXIS2 layer offsets are only proven for this straight local reference.
+    // A bent/off-axis segment needs separate exported wall coordinates; do
+    // not silently apply the same Y offset along that segment's length.
+    if(Math.hypot(...shift)>EPS&&Math.hypot(...cross3(tangent,localX))/(Math.hypot(...tangent)*Math.hypot(...localX))>EPS)
+      fail('ifc_wall_axis_unsupported');
     const shifted = [points[i - 1], points[i]].map(p => p.map((v, k) => v + shift[k]).slice(0, 2));
     walls.push({ a: shifted[0], b: shifted[1], cm: layer.thickness * Math.hypot(...transform(lineMatrix,[0,1,0],true)) * 100,
       zMin: bodies?.length === 1 ? bodies[0].zMin : null, zMax: bodies?.length === 1 ? bodies[0].zMax : null });

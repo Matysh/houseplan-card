@@ -48,3 +48,16 @@ test('#1210 branded PHP publication keeps the shell and uses the exact canonical
   assert.throws(() => prepareConverterSite(template.replace('id="paste"', 'id="other"'), artifact, 'a'.repeat(40)), /Unexpected site template/);
   assert.throws(() => prepareConverterSite(template, artifact, 'HEAD'), /immutable/);
 });
+
+test('#1458 updating a real legacy preparer result replaces its three-column styles',()=>{
+  const artifact=readFileSync(new URL('../scripts/sh3d-convert/dist/index.html',import.meta.url),'utf8');
+  const legacy=readFileSync(new URL('./fixtures/converter-site-legacy.php',import.meta.url),'utf8');
+  assert.match(legacy,/repeat\(3,minmax/);assert.doesNotMatch(legacy,/data-format="ifc"/);
+  const result=prepareConverterSite(legacy,artifact,'b'.repeat(40));
+  assert.doesNotMatch(result.page,/repeat\(3,minmax/);assert.match(result.page,/repeat\(4,minmax/);
+  assert.equal((result.page.match(/id="houseplan-converter-formats"/g)||[]).length,1);
+  assert.equal((result.page.match(/data-format=/g)||[]).length,4);
+  assert.ok(result.page.includes('<header>Existing brand and analytics</header>'));
+  assert.ok(result.page.endsWith("<?php include __DIR__ . '/footer.php'; ?>"));
+  assert.equal(prepareConverterSite(result.page,artifact,'b'.repeat(40)).page,result.page);
+});

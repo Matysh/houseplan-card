@@ -14,13 +14,13 @@ The standalone HTML contains the IFC engine and works from disk without a networ
 
 Straight vertical walls of constant thickness are supported through a reliable axis/layer offset or rectangular prismatic body. Curves, variable thickness and arbitrary body-only reconstruction are outside the profile. Simple room footprints and horizontal swept profiles are supported; holes, disconnected contours and ambiguous boundaries are reported. Open room boundaries remain wall-free. Doors/windows need an actual wall→void→filling relationship and a valid final carrier. Roof windows and holes in slabs/furniture are omitted. Door opening direction defaults to Houseplan and must be checked manually. No contact/lock entities, materials, furniture or automatic HA matching are invented.
 
+A bent/polyline axis with a noncentral layer reference is refused when a segment does not follow the supported local wall axis. Export that wall as separate straight walls. Central-reference bends are retained as straight segments; they are never replaced by a chord.
+
 Room contours move from interior faces to common wall axes. Consequently Houseplan area can differ from the IFC room area. Metres, millimetres and conversion-based length units such as feet retain physical scale. Storeys of one building share a frame; selecting fewer storeys does not change that frame. Unsupported objects are never silently straightened, stretched or clamped. Independent valid geometry can still be downloaded; an inconsistent floor graph is refused.
 
 ### Compatibility evidence
 
 The research inputs are Archicad 20 / IFC4 `AC20-FZK-Haus.ifc` and Revit Architecture 2011 / IFC2X3 `duplex.ifc`, pinned from [web-ifc public samples](https://github.com/ThatOpen/engine_web-ifc/tree/90b526b9b6284244850132193df541e4d3ac3b58/tests/ifcfiles/public). These old files do **not** certify current application versions or arbitrary export translators. Synthetic tests cover dimensions, units, nested/mapped placement, offsets, shared walls and void hosts independently. User exports need version/settings and a reference plan with known measurements; private files must not be committed without their owner's permission.
-
-### Reproducible engine delivery
 
 The 17 November 2026 local diagnostic produced the following editable results (counts are source objects, not split graph edges):
 
@@ -36,6 +36,8 @@ node scripts/sh3d-convert/check-ifc-public.mjs /path/to/local/samples report.jso
 ```
 
 It reports actual per-process peak Node RSS and WASM linear-memory allocation separately; neither is a claim about the complete browser process memory. Runtime memory limits are not substituted for measurements.
+
+### Reproducible engine delivery
 
 Ordinary page builds use `vendor/ifc/engine.mjs` and verify its manifest digest; they do not install emsdk. Only engine updates run:
 
@@ -59,6 +61,8 @@ The recipe pins web-ifc 0.0.79, its source commit, emsdk 4.0.23 Docker digest, C
 - **КОМПАС:** совместимость **не подтверждена** без реального подготовленного файла. Обычная сборка с proxy-объектами не распознаётся как дом. IFCConverter.xml задаёт классы и принадлежность этажам/помещениям, но не гарантирует оси, контуры и связи проёмов. [XML-кодирование АСКОН](https://help.ascon.ru/KOMPAS/24/ru-RU/sposob_ifc_xml.html).
 
 Переносятся прямые вертикальные стены постоянной толщины с достоверной осью/смещением слоёв либо прямоугольным призматическим телом. Кривые, переменная толщина и восстановление произвольных тел исключены. Для комнат подходят простые плановые контуры и горизонтальные профили; отверстия, несвязные контуры и неоднозначные границы попадают в отчёт. Открытые границы остаются без стен. Двери/окна требуют реальной связи «стена → вырез → заполнение» и допустимого носителя в итоговом графе. Окна кровли и отверстия в плитах/мебели пропускаются. Сторона открывания двери используется стандартная — её нужно проверить. Датчики, замки, материалы, мебель и привязки HA не придумываются.
+
+Стена с ломаной осью и нецентральной опорной линией пропускается, если смещение нельзя надёжно применить к каждому участку. При экспорте разделите её на отдельные прямые стены. Изломы центральной оси сохраняются прямыми участками и не заменяются хордой.
 
 Контуры помещений приводятся от внутренних граней к общим осям стен, поэтому площадь Houseplan может отличаться от IFC. Метры, миллиметры и единицы с коэффициентом, например футы, сохраняют физический масштаб. Этажи одного здания используют общую систему координат независимо от выбора этажей. Неподдерживаемые элементы не спрямляются, не растягиваются и не обрезаются молча. Независимый корректный остаток можно скачать; противоречивый граф этажа — нельзя.
 
