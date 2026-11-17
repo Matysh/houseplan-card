@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15299,
-  "nextTicket": 505,
+  "revision": 15300,
+  "nextTicket": 506,
   "nextFence": 505,
   "tasks": {
     "1024": {
@@ -4848,14 +4848,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1457-nightly-witnesses",
-      "materialSha": "80307b4726b0857dcd94196e2ba6b8e27e1af47a",
+      "materialSha": "8c15c683f5193238e792bd1170b3441776c249f7",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 504,
-      "queued": false,
+      "ticket": 505,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794947088452,
-      "reviewEntry": 1,
+      "readyAt": 1794948364806,
+      "reviewEntry": 2,
       "patchId": "292d53bf4cc359bc0ebd700a938848fa43ac8810",
       "changedFiles": [
         "demo/smoke_floor_geometry_cache.mjs",
@@ -4864,7 +4864,6 @@
         "scripts/mutation-registry.mjs",
         "test/wall-node-editor.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5268,7 +5267,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1457
+  ],
   "active": null,
   "events": {
     "github:44170732537:1:completions:message:a223304c1ef2f7c33ede06c7e40abd2d13bdc8e13404a036a867feb63cb97032": {
@@ -5366,6 +5367,19 @@
           "detail": "Поведение: test/mutation-gate.test.mjs: failed; Браузер: isometric live touch: failed",
           "eventId": "finish:f58538f5-1273-4bf7-a409-30e090fedf04:finish:2:return:return:1457"
         }
+      }
+    },
+    "finish:d7419c3a-b1bc-43c5-95d8-2bebb6eb1f5e": {
+      "digest": "31a3d97c5db7cc410aace297ef72d489c4707d5cf0c252a551e5194a68d0d5ed",
+      "issue": 1457,
+      "message": {
+        "kind": "queued",
+        "issue": 1457,
+        "at": 1794948364806,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "8c15c683f5193238e792bd1170b3441776c249f7"
       }
     }
   },
