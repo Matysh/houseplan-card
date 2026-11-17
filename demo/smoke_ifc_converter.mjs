@@ -6,12 +6,12 @@ import { chromium } from 'playwright';
 import { enforcePinnedBrowser, requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
 import { ifcFixture } from '../test/helpers/ifc-fixture.mjs';
 import { convertIfc } from '../scripts/sh3d-convert/ifc.mjs';
+import { watchPage, finish } from './serve.mjs';
 
 requirePinnedBrowser('#1458 offline IFC converter');
 const browser=await chromium.launch({args:['--no-sandbox']});await enforcePinnedBrowser(browser);
 const context=await browser.newContext({viewport:{width:1100,height:900},locale:'en-US'});
-const page=await context.newPage(),errors=[],requests=[];
-page.on('pageerror',e=>errors.push(e.message));
+const page=watchPage(await context.newPage()),requests=[];
 const artifact=pathToFileURL(fileURLToPath(new URL('../scripts/sh3d-convert/dist/index.html',import.meta.url))).href;
 await context.route('**/*',route=>{
   const url=route.request().url();
@@ -89,9 +89,9 @@ try{
   await upload('gallery.ifc');await page.locator('#ifc-catalog input').first().waitFor();await page.locator('#ifc-catalog input').last().uncheck();
   await page.locator('#ifc-catalog .primary').click();await page.locator('#result').waitFor({state:'visible'});
   await page.locator('.level').filter({has:page.locator('svg.ifc-preview')}).screenshot({path:output+'synthetic-ground-preview.png'});
-  assert.deepEqual(requests,[]);assert.deepEqual(errors,[]);
+  assert.deepEqual(requests,[]);
   const measurements={browser:browser.version(),htmlBytes:readFileSync(fileURLToPath(new URL('../scripts/sh3d-convert/dist/index.html',import.meta.url))).length,
     longTasks:tasks,cancelMs,workers:await page.evaluate(()=>window.ifcWorkers),terminated:await page.evaluate(()=>window.ifcTerminated)};
   writeFileSync(output+'measurements.json',JSON.stringify(measurements,null,2)+'\n');
   console.log(JSON.stringify({ok:true,...measurements}));
-}finally{await context.close();await browser.close();}
+}finally{await finish(browser,{ifcConverterArtifact:true});}

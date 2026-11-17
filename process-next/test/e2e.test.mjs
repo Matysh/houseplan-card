@@ -111,14 +111,14 @@ function fakeExecutor(opts, { failure = false, skip = false, extra = false } = {
   return { execute, calls };
 }
 
-test('converter journeys use three exact cases, own HA and setup only, without changing the companion checkout', async t => {
+test('converter journeys use all configured cases, own HA and setup only, without changing the companion checkout', async t => {
   const { opts, e2eRoot } = fixture(t);
   opts.suite = 'converters'; opts.selection = 'remainder';
   put(path.join(e2eRoot, 'scripts/users.mjs'), "export const USERS={admin:{storageState:'.auth/admin.json'}};");
   const { execute, calls } = fakeExecutor(opts);
   const before = readdirSync(e2eRoot).sort();
   const result = await runE2E(opts, { execute });
-  assert.equal(result.status, 'passed'); assert.equal(result.tests, 3);
+  assert.equal(result.status, 'passed'); assert.equal(result.tests, CONVERTER_CASES.length);
   const config = (await import(pathToFileURL(path.join(result.workspace, 'process-next.config.mjs')))).default;
   assert.deepEqual(config.projects.find(project => project.name === 'converters').dependencies, ['setup']);
   assert.ok(!config.projects.some(project => project.name === 'admin' || project.name === 'plan-model'));
