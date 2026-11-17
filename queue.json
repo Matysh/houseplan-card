@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15448,
+  "revision": 15449,
   "nextTicket": 511,
   "nextFence": 511,
   "tasks": {
@@ -4931,7 +4931,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794959330600,
       "reviewEntry": 4,
-      "patchId": "c3ce3d1a52a2bbaff31df2cd77414077a23a2cc7",
+      "patchId": "bcaea7b288c05513b0e3292ef20779215d8f8ee0",
       "changedFiles": [
         "custom_components/houseplan/command_adapter.py",
         "custom_components/houseplan/command_legacy.py",
@@ -5409,10 +5409,11 @@
     "token": "510:finish:ae6c101b-1c70-4ade-bfef-2be20d3cb37b:finish:1:admit",
     "fence": 510,
     "materialSha": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "6d28743ea061ad639f508675d0c48fe22865cb5c",
+    "phase": "testing",
     "admittedAt": 1794959334334,
-    "expiresAt": 1794959634334
+    "expiresAt": 1794959639953,
+    "patchId": "bcaea7b288c05513b0e3292ef20779215d8f8ee0"
   },
   "events": {
     "github:44179361876:1:spec:1460:spec-request": {
@@ -5581,6 +5582,10 @@
     },
     "finish:5cdba73e-08b9-4c19-9f14-d15395ded09a:finish:3:return": {
       "digest": "94311d6cff379428ae37ef669342102b0e8d4c78623da9c51d3f21ad17f64bbe",
+      "issue": 1460
+    },
+    "finish:ae6c101b-1c70-4ade-bfef-2be20d3cb37b:finish:2:synchronized": {
+      "digest": "71bba822228e994bd1060224eda378ea37b247d042962e5498efa94008bf07f7",
       "issue": 1460
     },
     "github:44180756362:1:label:spec-request:spec-resubmitted:1460": {
