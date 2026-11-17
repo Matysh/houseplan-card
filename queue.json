@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15192,
-  "nextTicket": 500,
+  "revision": 15193,
+  "nextTicket": 501,
   "nextFence": 500,
   "tasks": {
     "1024": {
@@ -4885,14 +4885,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1458-ifc-import",
-      "materialSha": "41f0340b38eea86f6c8feb5527893bd15024086a",
+      "materialSha": "828799ea93002e56dbc38161dc7c2a91441a18e1",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 499,
-      "queued": false,
+      "ticket": 500,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794943184945,
-      "reviewEntry": 3,
+      "readyAt": 1794943650929,
+      "reviewEntry": 4,
       "patchId": "f1fae51c23ef6f08ca3003d068713094fa6b20f6",
       "changedFiles": [
         "demo/smoke_ifc_converter.mjs",
@@ -4966,8 +4966,7 @@
         "entry": 3,
         "detail": "Браузер: device icon picker: cancelled; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: ifc converter: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan converter: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно",
         "eventId": "finish:2657dbd6-7a47-4b22-8023-af533521c132:finish:3:return:return:1458"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5323,7 +5322,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1458
+  ],
   "active": null,
   "events": {
     "github:44128949850:1:label:spec-request": {
@@ -5634,6 +5635,19 @@
           "eventId": "finish:2657dbd6-7a47-4b22-8023-af533521c132:finish:3:return:return:1458"
         },
         "delivered": true
+      }
+    },
+    "finish:5942b3b8-5cdb-47b5-a403-29d8a17949a0": {
+      "digest": "f457f2aa5efaec5ca3e9d0307983d8912996bb25e5a0cba38e58a2d6bb9a768e",
+      "issue": 1458,
+      "message": {
+        "kind": "queued",
+        "issue": 1458,
+        "at": 1794943650929,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "828799ea93002e56dbc38161dc7c2a91441a18e1"
       }
     }
   },
