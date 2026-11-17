@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15180,
+  "revision": 15181,
   "nextTicket": 500,
   "nextFence": 500,
   "tasks": {
@@ -4893,7 +4893,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794943184945,
       "reviewEntry": 3,
-      "patchId": "ec5728b9f3c98e03b3961cb5e19ac76cb4851649",
+      "patchId": "f1fae51c23ef6f08ca3003d068713094fa6b20f6",
       "changedFiles": [
         "demo/smoke_ifc_converter.mjs",
         "demo/smoke_wall_node_python_roundtrip.mjs",
@@ -4907,6 +4907,7 @@
         "process-next/converters/journeys.spec.mjs",
         "process-next/lib/converters.mjs",
         "process-next/test/converters.test.mjs",
+        "process-next/test/e2e.test.mjs",
         "scripts/sh3d-convert/IFC-VALIDATION.md",
         "scripts/sh3d-convert/IFC.md",
         "scripts/sh3d-convert/README.md",
@@ -5328,10 +5329,11 @@
     "token": "499:finish:2657dbd6-7a47-4b22-8023-af533521c132:finish:1:admit",
     "fence": 499,
     "materialSha": "41f0340b38eea86f6c8feb5527893bd15024086a",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
+    "phase": "testing",
     "admittedAt": 1794943202708,
-    "expiresAt": 1794943502708
+    "expiresAt": 1794943522670,
+    "patchId": "f1fae51c23ef6f08ca3003d068713094fa6b20f6"
   },
   "events": {
     "github:44128949850:1:label:spec-request": {
@@ -5456,6 +5458,10 @@
     },
     "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:3:return": {
       "digest": "26ba5ed73d3db35a921e8f914c2d0e366b775a6685fc30ea0209e62852ca5c87",
+      "issue": 1458
+    },
+    "finish:2657dbd6-7a47-4b22-8023-af533521c132:finish:2:synchronized": {
+      "digest": "4c62a9b45ad7cab68514a4cdf20cf70e9a234060df45b8feb611da189d2eef0d",
       "issue": 1458
     },
     "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
