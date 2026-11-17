@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15206,
-  "nextTicket": 502,
+  "revision": 15207,
+  "nextTicket": 503,
   "nextFence": 502,
   "tasks": {
     "1024": {
@@ -4885,14 +4885,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1458-ifc-import",
-      "materialSha": "36b3147da112e55a8e08f3dc4b5aa03d65db7afd",
+      "materialSha": "bdc4a72d0aa742fbbd085e172ccb3a04845d624e",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 501,
-      "queued": false,
+      "ticket": 502,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794944205690,
-      "reviewEntry": 5,
+      "readyAt": 1794944758534,
+      "reviewEntry": 6,
       "patchId": "b7a5d7138da4d8335135bbf9522d473e82cf0700",
       "changedFiles": [
         "demo/smoke_ifc_converter.mjs",
@@ -4966,8 +4966,7 @@
         "entry": 5,
         "detail": "Браузер: view edit permissions: cancelled",
         "eventId": "finish:64b32621-3e69-475b-bf8e-08b333f33b77:finish:3:return:return:1458"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5323,7 +5322,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1458
+  ],
   "active": null,
   "events": {
     "github:44128949850:1:label:spec-request": {
@@ -5768,6 +5769,19 @@
           "detail": "Браузер: view edit permissions: cancelled",
           "eventId": "finish:64b32621-3e69-475b-bf8e-08b333f33b77:finish:3:return:return:1458"
         }
+      }
+    },
+    "finish:06529d77-da0b-45e3-a1a4-57b4498d3b0f": {
+      "digest": "d45802f6dc81605abd4ed46a7ccef6403338edd204192ee9b084d947e31f5b78",
+      "issue": 1458,
+      "message": {
+        "kind": "queued",
+        "issue": 1458,
+        "at": 1794944758534,
+        "entry": 6,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "bdc4a72d0aa742fbbd085e172ccb3a04845d624e"
       }
     }
   },
