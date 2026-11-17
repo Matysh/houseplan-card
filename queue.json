@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15323,
+  "revision": 15324,
   "nextTicket": 507,
   "nextFence": 507,
   "tasks": {
@@ -5426,6 +5426,10 @@
       "digest": "7af02d2863cace70bcf4e9cccd3d4360f7ef3bfe028195c1e81ad1d6dd525526",
       "issue": 1457
     },
+    "github:44174977412:1:completions:message:a9a43d8572fc4c177c9887580b9e450f7492986d2f7bc6907248e53f1693e699": {
+      "digest": "9d366285a2597dd021125c9646848584212cf13c422552d149645df0277f5d37",
+      "issue": 1457
+    },
     "finish:f58538f5-1273-4bf7-a409-30e090fedf04": {
       "digest": "5f697d2ab133869dfa5b748c95be57bd1ab1f81c6b26a9ca0a8ac6a2ef03e71e",
       "issue": 1457,
@@ -5522,7 +5526,8 @@
           "entry": 2,
           "detail": "Браузер: cold view toggle: failed",
           "eventId": "finish:d7419c3a-b1bc-43c5-95d8-2bebb6eb1f5e:finish:3:return:return:1457"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:78166c32-88fb-4c90-a8dc-9079e0527333": {
