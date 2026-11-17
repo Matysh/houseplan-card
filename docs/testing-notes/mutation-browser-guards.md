@@ -41,6 +41,11 @@ Converted Node witnesses are absent from this browser inventory: their registry
 entries point to their ordinary `node --test` suite. Registration or ordinary
 PASS alone never claims that the mutation has been caught.
 
+#1457 moves `node-delete-right-down-starts-pan-1045` to the node editor's
+event-boundary unit test. The stage independently blocks right-button pan, so
+camera stability alone cannot witness a broken node-level consumption boundary.
+The native delete-menu smoke remains in the product checks.
+
 Witness repair #1012 preserves the two historical IDs. After #976, compact
 catalogue Help is deliberately 22px; `settings-help-size-leaks-into-catalogue-948`
 now additionally measures the public unscoped 32px target that still depends on
@@ -68,10 +73,10 @@ that transition events alone prove disposal.
 | Performance threshold | 9 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 105 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 107 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 106 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 58 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 274 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **557 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
+| **Total** | **556 / 200** | Retained diagnostic metadata for the existing registry reader; browser-only reasons are documented below. This is not a task or release gate. |
 
 
 ## Historical measurements (2026-09-27)
@@ -444,7 +449,6 @@ existing stage camera. A return to the origin must remain a drag without an
 item or history write. Registered for background; not executed in development.
 
 
-- `node-delete-right-down-starts-pan-1045`
 - `node-delete-pinch-compatibility-opens-menu-1045`
 - `node-delete-fresh-right-down-cannot-rearm-1045`
 

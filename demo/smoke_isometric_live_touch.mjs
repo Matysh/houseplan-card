@@ -498,6 +498,14 @@ const out = await page.evaluate(async () => {
     const started = performance.now();
     while ((!card._loadOk || card._booting) && performance.now() - started < 9000) await wait(30);
     await ensureIsoRuntime(card);
+    // #1457: data boot and lazy runtime readiness do not publish #1454's
+    // prepared floor. Native input needs the active scene, not its passive
+    // preview. Do not wait for iso-walls itself: that remains the assertion.
+    const active = () => card._loadOk && !card._booting && !card._bootFading
+      && !card._floorPreparation?.pending && !card._floorPassive
+      && !!root(card).querySelector('.stage:not([data-hp-floor-cache]) svg.plan-svg:not([data-hp-cache-preview])');
+    while (!active() && performance.now() - started < 9000) await wait(30);
+    result[kiosk ? 'kioskMountIsActive' : 'warmMountIsActive'] = active();
     await card.updateComplete;
     await frame();
     return card;
