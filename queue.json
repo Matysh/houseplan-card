@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15205,
+  "revision": 15206,
   "nextTicket": 502,
   "nextFence": 502,
   "tasks": {
@@ -4958,15 +4958,16 @@
         "tests_backend/test_ifc_converter.py"
       ],
       "notice": {
-        "key": "4:checks-failed",
+        "key": "5:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794943833387,
-        "entry": 4,
-        "detail": "Браузер: dialog picker 998: cancelled; Браузер: geometry history refusal: cancelled; Браузер: ifc converter: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan converter: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно",
-        "eventId": "finish:5942b3b8-5cdb-47b5-a403-29d8a17949a0:finish:3:return:return:1458"
-      }
+        "at": 1794944597660,
+        "entry": 5,
+        "detail": "Браузер: view edit permissions: cancelled",
+        "eventId": "finish:64b32621-3e69-475b-bf8e-08b333f33b77:finish:3:return:return:1458"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -5323,18 +5324,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1458,
-    "worker": "finish",
-    "token": "501:finish:64b32621-3e69-475b-bf8e-08b333f33b77:finish:1:admit",
-    "fence": 501,
-    "materialSha": "36b3147da112e55a8e08f3dc4b5aa03d65db7afd",
-    "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
-    "phase": "testing",
-    "admittedAt": 1794944211113,
-    "expiresAt": 1794944813162,
-    "patchId": "b7a5d7138da4d8335135bbf9522d473e82cf0700"
-  },
+  "active": null,
   "events": {
     "github:44128949850:1:label:spec-request": {
       "digest": "57616174c5aa9fb713adb0f2ba28f1636969bb9af7c22a3c1561ea84fe7f8fa4",
@@ -5514,6 +5504,10 @@
     },
     "finish:2385374a-b7ee-4109-8560-1928c567b212": {
       "digest": "07d6e0188250a4fb70c8cce030c26ebf9d459b70b2fb56c9b501ecf965cd9dca",
+      "issue": 1458
+    },
+    "finish:64b32621-3e69-475b-bf8e-08b333f33b77:finish:3:return": {
+      "digest": "1af055725661a23f2f812e92d2bfcf11ebd292e8ec51fa599a65ea4aa6e94da7",
       "issue": 1458
     },
     "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
@@ -5754,6 +5748,26 @@
         "layer": "product",
         "materialSha": "36b3147da112e55a8e08f3dc4b5aa03d65db7afd",
         "phase": "sync"
+      }
+    },
+    "finish:64b32621-3e69-475b-bf8e-08b333f33b77:finish:3:return:return:1458": {
+      "digest": "1af055725661a23f2f812e92d2bfcf11ebd292e8ec51fa599a65ea4aa6e94da7",
+      "issue": 1458,
+      "message": {
+        "kind": "return",
+        "issue": 1458,
+        "at": 1794944597660,
+        "entry": 5,
+        "notice": {
+          "key": "5:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794944597660,
+          "entry": 5,
+          "detail": "Браузер: view edit permissions: cancelled",
+          "eventId": "finish:64b32621-3e69-475b-bf8e-08b333f33b77:finish:3:return:return:1458"
+        }
       }
     }
   },
