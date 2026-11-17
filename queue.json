@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15405,
+  "revision": 15406,
   "nextTicket": 507,
   "nextFence": 507,
   "tasks": {
@@ -5404,7 +5404,8 @@
         "reviewChanges": "### Решение и альтернативы\n\nОдин ZIP выбран вместо JSON с base64: нынешний JSON 32 MiB не содержит bytes, встраивание дублирует их и быстро исчерпывает лимит; ZIP позволяет использовать уже проверенные bounded primitives и потоковую выдачу. Полный backup установки не подходит по приватности, правам и replace-семантике. Новое применение append-only через #1460, без вмешательства в существующие orphan-ссылки.\n\n### Места для внимания\n\n`core/import_export.py` one-space validators/build_space_merge/content_manifest, `core/backup_archive.py` принимает только full, `backup-archive-client.ts` сейчас отправляет любой ZIP в admin backup, `plan-capabilities.ts` различает space/full. Нельзя просто разрешить full ZIP по planTransfer или применить whole-config replace. Важны scoped ID, cross-floor links, текущая privacy allowlist, эффективный внешний вид, commit+файлы и реальная release provenance.\n\n### Проверки и ограничения\n\nКод пока не менялся, запусков продукта нет. Перед S4 только авторская проверка формы ТЗ. Реализация зависит от общего командного слоя #1460; публикация сайта/релиза не разрешена этим поручением. Для тестов используется только синтетический дом и локальный HA.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/44180045227 (полный отчёт сохранён в комментарии issue).\n\n- Двойная загрузка/неразличимый старый backend → обязательная первая stored mimetype entry, единый bounded prefix до 1 KiB, разрешено чтение только этой сигнатуры клиентом. Маршрут выбирается до upload, сервер проверяет prefix до staging и house cap; уточнены ошибки старого UI/backend и будущей версии.\n- Невыполнимая независимость вида → перечислены переносимые уже поддерживаемые space поля; глобальная палитра/эффекты без space representation остаются целевыми. Это отражено в AC1 и руководстве, Store модель не расширяется.\n- Рекомендации → отдельный house pool/cap, house_import pending без Zigbee с downgrade fence, запрет extracted JSON, один физический blob на unique content, EXIF предупреждение и независимость envelope version от kind.\n- Новая редакция только ТЗ, исходники не менялись, продуктовых прогонов нет; авторская проверка формы повторяется. Контракты зависимости и границы: #1460 (общие порты/транзакции/CommandPolicy), #1459 (сервер в приватном репозитории), #1465 (первый фактический stable/publishing). В #1460 сейчас отдельно выбран legacy portable cancel admin/no-op; #1464 добавляет только typed house cancel с правом writer.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
