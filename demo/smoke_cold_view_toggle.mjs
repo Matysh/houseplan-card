@@ -151,6 +151,12 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
 
   const node = (id) => card.renderRoot.querySelector(`.dev[data-id="${id}"]`);
+  // #1457: registry/config readiness is not #1454's active floor publication.
+  // Keep this genuinely cold (no editor/settled helper); only wait for the
+  // controls we will actually tap, not for any toggle outcome under test.
+  const controlsPainted = await waitFor(() => !card._floorPreparation?.pending && !card._floorPassive
+    && [controllerId, ...virtualIds, confirmId].every(id => !!node(id)));
+  if (!controlsPainted) throw new Error('cold View controls did not paint within the fixture deadline');
   const isOn = (id) => card._stateClass(card._devices.find((d) => d.id === id)).includes('on');
   const allVirtualOn = () => virtualIds.every(isOn);
   const out = { runtimeColdBefore: !card._editorRuntime };
