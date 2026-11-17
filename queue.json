@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15404,
+  "revision": 15405,
   "nextTicket": 507,
   "nextFence": 507,
   "tasks": {
@@ -5258,18 +5258,12 @@
       }
     },
     "1464": {
-      "requestId": "spec:1464:386b34abe3e1926105c7bd876a4b09503653cf0ac83a5d38bdf561310231e53f",
-      "contextDigest": "386b34abe3e1926105c7bd876a4b09503653cf0ac83a5d38bdf561310231e53f",
+      "requestId": "spec:1464:3c80852b2db5db6f245421a0680ced78222b1e90e90cad2bc1c181f932d0127d",
+      "contextDigest": "3c80852b2db5db6f245421a0680ced78222b1e90e90cad2bc1c181f932d0127d",
       "base": "6d28743ea061ad639f508675d0c48fe22865cb5c",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1794951261365,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44180045227",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1794951498687
     }
   },
   "reviewPublications": {
@@ -5297,6 +5291,19 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
+      }
+    },
+    "spec:1464:spec:1464:3c80852b2db5db6f245421a0680ced78222b1e90e90cad2bc1c181f932d0127d": {
+      "issue": 1464,
+      "kind": "spec",
+      "requestId": "spec:1464:3c80852b2db5db6f245421a0680ced78222b1e90e90cad2bc1c181f932d0127d",
+      "materialSha": "6d28743ea061ad639f508675d0c48fe22865cb5c",
+      "expectedBase": "6d28743ea061ad639f508675d0c48fe22865cb5c",
+      "patchId": "3c80852b2db5db6f245421a0680ced78222b1e90e90cad2bc1c181f932d0127d",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-17T21:38:18.687Z"
       }
     }
   },
@@ -5363,6 +5370,10 @@
       "digest": "6683493a456c069fca16eb0ff6951baea756088c5c5cb6d6c29466d1b3eb4c22",
       "issue": 1460
     },
+    "github:44181773849:1:label:spec-request": {
+      "digest": "c5c5a1512217eae2597403146c24657591370ded7f602915a265c046ea4da6ff",
+      "issue": 1464
+    },
     "github:44180756362:1:label:spec-request:spec-resubmitted:1460": {
       "digest": "4dbe3d624942a7be0c459e5adaedc90c4ed52de3a15719743143b038f2a8111d",
       "issue": 1460,
@@ -5378,6 +5389,22 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "github:44181773849:1:label:spec-request:spec-resubmitted:1464": {
+      "digest": "c5c5a1512217eae2597403146c24657591370ded7f602915a265c046ea4da6ff",
+      "issue": 1464,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1464,
+        "at": 1794951498687,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1464:3c80852b2db5db6f245421a0680ced78222b1e90e90cad2bc1c181f932d0127d",
+        "reviewChanges": "### Решение и альтернативы\n\nОдин ZIP выбран вместо JSON с base64: нынешний JSON 32 MiB не содержит bytes, встраивание дублирует их и быстро исчерпывает лимит; ZIP позволяет использовать уже проверенные bounded primitives и потоковую выдачу. Полный backup установки не подходит по приватности, правам и replace-семантике. Новое применение append-only через #1460, без вмешательства в существующие orphan-ссылки.\n\n### Места для внимания\n\n`core/import_export.py` one-space validators/build_space_merge/content_manifest, `core/backup_archive.py` принимает только full, `backup-archive-client.ts` сейчас отправляет любой ZIP в admin backup, `plan-capabilities.ts` различает space/full. Нельзя просто разрешить full ZIP по planTransfer или применить whole-config replace. Важны scoped ID, cross-floor links, текущая privacy allowlist, эффективный внешний вид, commit+файлы и реальная release provenance.\n\n### Проверки и ограничения\n\nКод пока не менялся, запусков продукта нет. Перед S4 только авторская проверка формы ТЗ. Реализация зависит от общего командного слоя #1460; публикация сайта/релиза не разрешена этим поручением. Для тестов используется только синтетический дом и локальный HA.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: https://github.com/Matysh/houseplan-card/actions/runs/44180045227 (полный отчёт сохранён в комментарии issue).\n\n- Двойная загрузка/неразличимый старый backend → обязательная первая stored mimetype entry, единый bounded prefix до 1 KiB, разрешено чтение только этой сигнатуры клиентом. Маршрут выбирается до upload, сервер проверяет prefix до staging и house cap; уточнены ошибки старого UI/backend и будущей версии.\n- Невыполнимая независимость вида → перечислены переносимые уже поддерживаемые space поля; глобальная палитра/эффекты без space representation остаются целевыми. Это отражено в AC1 и руководстве, Store модель не расширяется.\n- Рекомендации → отдельный house pool/cap, house_import pending без Zigbee с downgrade fence, запрет extracted JSON, один физический blob на unique content, EXIF предупреждение и независимость envelope version от kind.\n- Новая редакция только ТЗ, исходники не менялись, продуктовых прогонов нет; авторская проверка формы повторяется. Контракты зависимости и границы: #1460 (общие порты/транзакции/CommandPolicy), #1459 (сервер в приватном репозитории), #1465 (первый фактический stable/publishing). В #1460 сейчас отдельно выбран legacy portable cancel admin/no-op; #1464 добавляет только typed house cancel с правом writer.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
       }
     }
   },
