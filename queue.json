@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15164,
-  "nextTicket": 498,
+  "revision": 15165,
+  "nextTicket": 499,
   "nextFence": 498,
   "tasks": {
     "1024": {
@@ -4885,14 +4885,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1458-ifc-import",
-      "materialSha": "492d78bda1daa9e97aa6f6f17cc848d2bf0babd7",
+      "materialSha": "1eae56d95c687b22d9498231a00dfe50db2edce3",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 497,
-      "queued": false,
+      "ticket": 498,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794942125391,
-      "reviewEntry": 1,
+      "readyAt": 1794942450171,
+      "reviewEntry": 2,
       "patchId": "05feacab2058d8bd44e27efc72c05efd1208d5d8",
       "changedFiles": [
         "demo/smoke_ifc_converter.mjs",
@@ -4949,10 +4949,6 @@
         "tests_backend/test_ha_easy_floorplan_convert.py",
         "tests_backend/test_ifc_converter.py"
       ],
-      "automationError": "automation-error",
-      "automationSince": 1794942263205,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json",
-      "reason": "Add owner-approved visual references and prepare private dependency tree after symlink-root refusal",
       "notice": {
         "key": "1:Add owner-approved visual references and prepare private dependency tree after symlink-root refusal",
         "reason": "Add owner-approved visual references and prepare private dependency tree after symlink-root refusal",
@@ -5317,7 +5313,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1458
+  ],
   "active": null,
   "events": {
     "github:44128949850:1:label:spec-request": {
@@ -5459,6 +5457,19 @@
           "entry": 1,
           "eventId": "1458-visuals-and-private-dependencies-20261117:return:1458"
         }
+      }
+    },
+    "finish:5f644064-f440-43b7-8f04-cb062c3be145": {
+      "digest": "01eb0925891b9a782b08ae313bf99768d427fd185c68f68b25059c3c6c6f6ec7",
+      "issue": 1458,
+      "message": {
+        "kind": "queued",
+        "issue": 1458,
+        "at": 1794942450171,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "1eae56d95c687b22d9498231a00dfe50db2edce3"
       }
     }
   },
