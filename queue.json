@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15183,
+  "revision": 15184,
   "nextTicket": 500,
   "nextFence": 500,
   "tasks": {
@@ -4958,15 +4958,16 @@
         "tests_backend/test_ifc_converter.py"
       ],
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794943129560,
-        "entry": 2,
-        "detail": "Поведение: process-next/test/e2e.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
-        "eventId": "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:3:return:return:1458"
-      }
+        "at": 1794943337458,
+        "entry": 3,
+        "detail": "Браузер: device icon picker: cancelled; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: ifc converter: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan converter: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно",
+        "eventId": "finish:2657dbd6-7a47-4b22-8023-af533521c132:finish:3:return:return:1458"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -5323,18 +5324,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1458,
-    "worker": "finish",
-    "token": "499:finish:2657dbd6-7a47-4b22-8023-af533521c132:finish:1:admit",
-    "fence": 499,
-    "materialSha": "41f0340b38eea86f6c8feb5527893bd15024086a",
-    "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
-    "phase": "testing",
-    "admittedAt": 1794943202708,
-    "expiresAt": 1794943632739,
-    "patchId": "f1fae51c23ef6f08ca3003d068713094fa6b20f6"
-  },
+  "active": null,
   "events": {
     "github:44128949850:1:label:spec-request": {
       "digest": "57616174c5aa9fb713adb0f2ba28f1636969bb9af7c22a3c1561ea84fe7f8fa4",
@@ -5470,6 +5460,10 @@
     },
     "finish:60ac1585-77ee-4087-ba58-b77910755547": {
       "digest": "32367c1e1fa6495b87785d0ae5e6dbff4bdfeb3fd19788d710fca792167cabd2",
+      "issue": 1458
+    },
+    "finish:2657dbd6-7a47-4b22-8023-af533521c132:finish:3:return": {
+      "digest": "a701fbe9e46e3a924f268eb90faa00d766ed83bd72a3cdb4075da605b84d373c",
       "issue": 1458
     },
     "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
@@ -5609,6 +5603,26 @@
         "layer": "product",
         "materialSha": "41f0340b38eea86f6c8feb5527893bd15024086a",
         "phase": "sync"
+      }
+    },
+    "finish:2657dbd6-7a47-4b22-8023-af533521c132:finish:3:return:return:1458": {
+      "digest": "a701fbe9e46e3a924f268eb90faa00d766ed83bd72a3cdb4075da605b84d373c",
+      "issue": 1458,
+      "message": {
+        "kind": "return",
+        "issue": 1458,
+        "at": 1794943337458,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794943337458,
+          "entry": 3,
+          "detail": "Браузер: device icon picker: cancelled; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: ifc converter: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan converter: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно",
+          "eventId": "finish:2657dbd6-7a47-4b22-8023-af533521c132:finish:3:return:return:1458"
+        }
       }
     }
   },
