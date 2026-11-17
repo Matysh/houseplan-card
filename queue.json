@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15307,
-  "nextTicket": 506,
+  "revision": 15308,
+  "nextTicket": 507,
   "nextFence": 506,
   "tasks": {
     "1024": {
@@ -4848,14 +4848,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1457-nightly-witnesses",
-      "materialSha": "8c15c683f5193238e792bd1170b3441776c249f7",
+      "materialSha": "6d28743ea061ad639f508675d0c48fe22865cb5c",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 505,
-      "queued": false,
+      "ticket": 506,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794948364806,
-      "reviewEntry": 2,
+      "readyAt": 1794948917042,
+      "reviewEntry": 3,
       "patchId": "31091f201128afe2a7064166f4db7414b0417db9",
       "changedFiles": [
         "demo/smoke_floor_geometry_cache.mjs",
@@ -4875,8 +4875,7 @@
         "entry": 2,
         "detail": "Браузер: cold view toggle: failed",
         "eventId": "finish:d7419c3a-b1bc-43c5-95d8-2bebb6eb1f5e:finish:3:return:return:1457"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1458": {
       "issue": 1458,
@@ -5270,7 +5269,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1457
+  ],
   "active": null,
   "events": {
     "github:44170732537:1:completions:message:a223304c1ef2f7c33ede06c7e40abd2d13bdc8e13404a036a867feb63cb97032": {
@@ -5439,6 +5440,19 @@
           "detail": "Браузер: cold view toggle: failed",
           "eventId": "finish:d7419c3a-b1bc-43c5-95d8-2bebb6eb1f5e:finish:3:return:return:1457"
         }
+      }
+    },
+    "finish:78166c32-88fb-4c90-a8dc-9079e0527333": {
+      "digest": "2eb584be94fac520c079011ff95763f5aa28991258ab7b5b5e4bdb2f61dd3d05",
+      "issue": 1457,
+      "message": {
+        "kind": "queued",
+        "issue": 1457,
+        "at": 1794948917042,
+        "entry": 3,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "6d28743ea061ad639f508675d0c48fe22865cb5c"
       }
     }
   },
