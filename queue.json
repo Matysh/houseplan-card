@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15211,
+  "revision": 15212,
   "nextTicket": 503,
   "nextFence": 503,
   "tasks": {
@@ -4890,7 +4890,7 @@
       "ownerDecision": null,
       "ticket": 502,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794944758534,
       "reviewEntry": 6,
       "patchId": "e4a4074673a2f0ade2e97a7303a97bb35b1ab9ae",
@@ -4966,6 +4966,15 @@
         "entry": 5,
         "detail": "Браузер: view edit permissions: cancelled",
         "eventId": "finish:64b32621-3e69-475b-bf8e-08b333f33b77:finish:3:return:return:1458"
+      },
+      "s6": {
+        "id": "20261117T194700160-6802425f",
+        "name": "Тесты для задачи #1458 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261117T194700160-6802425f/report.json",
+        "materialSha": "bdc4a72d0aa742fbbd085e172ccb3a04845d624e",
+        "status": "passed",
+        "finishedAt": "2026-11-17T19:48:53.976Z",
+        "failures": []
       }
     }
   },
@@ -5330,9 +5339,9 @@
     "fence": 502,
     "materialSha": "bdc4a72d0aa742fbbd085e172ccb3a04845d624e",
     "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794944782800,
-    "expiresAt": 1794945197171,
+    "expiresAt": 1794948535426,
     "patchId": "e4a4074673a2f0ade2e97a7303a97bb35b1ab9ae"
   },
   "events": {
@@ -5817,6 +5826,34 @@
         "layer": "product",
         "materialSha": "bdc4a72d0aa742fbbd085e172ccb3a04845d624e",
         "phase": "sync"
+      }
+    },
+    "finish:06529d77-da0b-45e3-a1a4-57b4498d3b0f:finish:3:s6-complete": {
+      "digest": "e39a82d57d2d1603fcf5695e2a4f4940547f6742b1a34184d16edcb838217691",
+      "issue": 1458,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1458,
+        "at": 1794944935426,
+        "entry": 6,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "bdc4a72d0aa742fbbd085e172ccb3a04845d624e",
+        "phase": "review",
+        "evidence": {
+          "id": "20261117T194700160-6802425f",
+          "name": "Тесты для задачи #1458 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261117T194700160-6802425f/report.json",
+          "materialSha": "bdc4a72d0aa742fbbd085e172ccb3a04845d624e",
+          "status": "passed",
+          "finishedAt": "2026-11-17T19:48:53.976Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и результат\n\nРеализован согласованный в раунде 2 ограниченный IFC-профиль во внешнем конвертере. Новая команда владельца от 17.11.2026 разрешила внедрение после исследовательского этапа. Теперь IFC2X3/IFC4 локально превращается в model v11 / export v2: выбор этажей, редактируемые стены/комнаты/двери/окна, предпросмотр и пообъектный отчёт до скачивания. Привязки HA не создаются. Основной HACS runtime получает только строку формата.\n\n### Решение и места для внимания\n\nОдин async core для CLI и браузера; существующий writer/канонизация/штатный импорт. Пин web-ifc 0.0.79, ST фабрика с WASM, исходные патчи Emscripten до генерации, Blob Worker и ленивый запуск. Чистая пересборка C++/glue воспроизвела engine SHA256 9991fc410b075a57c10135d6e8996f298c60064fb7f90fd59c672b6539502d75. Ordinary build --check проверяет готовый artifact и recipe/patch digest без SDK. Индекс назван vendor-index.json: второй *manifest.json сломал бы HACS discovery.\n\nДополнительный авторский случай выявил mapped scale: толщина/offset слоя ранее брались только из placement объекта. Исправлено применением полной матрицы representation item, включая MappingOrigin/Target; Body-проверка толщины использует ту же шкалу. Два реальных IFC/WASM регрессионных случая независимо требуют длину 16 m, толщину 40 cm и offset 0.617 m при scale=2, с Body и без Body. 25 IFC + 4 bundle-page проверки и 5 backend прошли; принятый preview PNG байт-в-байт прежний. Авторские повторы S6 останавливались до S7 для включения выявленных пограничных случаев; сейчас передаётся обновлённый SHA.\n\nКаталог Worker теперь использует общую с CLI функцию принадлежности стен этажу: этаж только с измеренными spanning walls доступен для выбора. Browser-регрессия скачала такой Upper без вымышленных комнат; независимая проверка требует 28 m стен и 7 рёбер после двух T-разбиений. Неподдерживаемые толстые spanning walls также учитываются как зависимости комнат, чтобы не создавать виртуальные открытые границы сверху; этот отказ проверен отдельно.\n\nПрямая полилиния очищается от промежуточных коллинеарных точек до проверки ширины/host проёма: дверь через техническую точку сохраняется. Углы, развороты и реальные T/X остаются; отдельный контроль проверяет сохранение изгиба 0.1 mm. Golden документов/отчёта и согласованный preview PNG остались прежними.\n\nСвежим взглядом полезно проверить source host lineage после разбиения/совпадения стен; внутренние контуры против физических осей; общий building frame и многоэтажные стены; сохранение отчёта для полностью неподдерживаемого этажа; отзыв результатов при отмене/смене входа. Это список рисков, не ограничение ревью. Простые тела и Axis/layers поддерживаются; BREP/SurfaceModel без пригодного FootPrint, сложные стены и неоднозначные carriers дают явные потери. Дверь получает предупреждение о стандартной стороне открывания. Site-preparer обновляет фактический PHP-shell с picture-elements идемпотентно, сохраняя редакционные блоки/аналитику; Caddy/HA не меняются.\n\n### Проверки и ограничения\n\nПодробный фактический отчёт: scripts/sh3d-convert/IFC-VALIDATION.md; измеренный инвентарь с GUID/STEP/outcomes: evidence/ifc-public-profile.json рядом. 32 адресных Node-проверок прошли; 5 IFC pytest (реальный preview и authenticated HA apply/export/reimport) прошли. Более широкий адресный backend SH3D/Easy/picture — 44; compiled consumers/entry — 9. Product TypeScript/Rollup build прошёл. Реальный offline HTML в Chromium 151.0.7922.34 прошёл Node parity, выбор этажей, RU/EN/390 px, loss-only report, cancel/stale callbacks, Worker/WASM errors/recovery; сетевых попыток нет, main-thread long tasks >50 ms на синтетическом входе нет, отмена 36 ms. Прежние 3 формата browser smoke также прошли.\n\nNative pointer test с фактическими Python node_move ответами проверил оба конца независимой стены, противоположный конец/edge IDs, курсор/меню после сохранения, Undo/Redo и повторное открытие карточки. Дополнительно прошли 4/4 local-artifact → disposable HA 2026.11.1 journeys (и 2/2 setup): для IFC реально сохранены перенос узла, окна, имя комнаты, затем проверен reload. Это локальный preflight, не проверка опубликованного сайта. Извлечённый из HTML модуль с настоящим IFC/WASM также сравнен в Node с CLI golden, включая JSON-отчёт (4 page-теста прошли).\n\nВладелец в чате 17.11.2026 принял все четыре синтетических визуальных кадра («Принять все 4 кадра»). Они сохранены в scripts/sh3d-convert/evidence/visual/ вместе с reference-index.json: хеши входа/PNG и сведения о Chromium/WSL. Это согласованные контрольные примеры, не ложный отчёт автоматического pixel-сравнения основного golden-набора.\n\nПервый полный S6 завершил все 657 шагов: три отказа только в тестовой обвязке. Устранены старое ожидание 3 форматов в process-next/test/e2e.test.mjs и отсутствие общего watchPage/finish в новом IFC smoke. 35 адресных проверок этих механизмов прошли; повтор S6 использует прежние успешные результаты по их входам.\n\nРеальные публичные старые примеры: Archicad 20 — 13/13 стен, 7/7 комнат, 5/5 дверей, 9/11 окон; Revit 2011 — 57/57 стен, 14/21 комнат, 8/14 дверей, 20/24 окон. Часть перенесённых элементов имеет предупреждения. Размер HTML/gzip и раздельные замеры Node RSS/WASM записаны в evidence/ifc-public-profile.json; WASM linear allocation 139 788 288 отдельно от peak Node RSS. Это измерения данной среды, не memory budget/совместимость любых проектов. Актуальные пользовательские файлы и КОМПАС не предоставлены; совместимость не заявлена.\n\nПосле принятия кода обязательны публикация точного принятого конвертера и четыре published-page → отдельный реальный HA journeys, включая редактирование узла/окна/комнаты и reload для IFC. Эти шаги пока не выполнены; версия Houseplan/бета не выпускается.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
