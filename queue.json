@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15451,
+  "revision": 15452,
   "nextTicket": 511,
   "nextFence": 511,
   "tasks": {
@@ -4928,7 +4928,7 @@
       "ownerDecision": null,
       "ticket": 510,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1794959330600,
       "reviewEntry": 4,
       "patchId": "bcaea7b288c05513b0e3292ef20779215d8f8ee0",
@@ -5018,6 +5018,15 @@
         "entry": 3,
         "detail": "Backend: tests_backend/test_ha_websocket.py: failed",
         "eventId": "finish:5cdba73e-08b9-4c19-9f14-d15395ded09a:finish:3:return:return:1460"
+      },
+      "s6": {
+        "id": "20261117T234906725-05fa854d",
+        "name": "Тесты для задачи #1460 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261117T234906725-05fa854d/report.json",
+        "materialSha": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
+        "status": "passed",
+        "finishedAt": "2026-11-17T23:51:45.192Z",
+        "failures": []
       }
     }
   },
@@ -5410,9 +5419,9 @@
     "fence": 510,
     "materialSha": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
     "expectedBase": "6d28743ea061ad639f508675d0c48fe22865cb5c",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1794959334334,
-    "expiresAt": 1794959753513,
+    "expiresAt": 1794963106382,
     "patchId": "bcaea7b288c05513b0e3292ef20779215d8f8ee0"
   },
   "events": {
@@ -5796,6 +5805,34 @@
         "layer": "product",
         "materialSha": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
         "phase": "sync"
+      }
+    },
+    "finish:ae6c101b-1c70-4ade-bfef-2be20d3cb37b:finish:3:s6-complete": {
+      "digest": "b3de0c71b9a1f3b07c69625148a323ddb76f2f2f443165a741d142b9cf856bbd",
+      "issue": 1460,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1460,
+        "at": 1794959506382,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
+        "phase": "review",
+        "evidence": {
+          "id": "20261117T234906725-05fa854d",
+          "name": "Тесты для задачи #1460 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261117T234906725-05fa854d/report.json",
+          "materialSha": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
+          "status": "passed",
+          "finishedAt": "2026-11-17T23:51:45.192Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "### Цель и подход\n\nПредлагается выделение оркестрации, а не новая реализация алгоритмов. Порты делают семантику общей, но оставляют durable HA journal и ACL в адаптере. Упаковка staging из канонического core выбрана вместо второго дерева или новой runtime pip-зависимости HACS. Вариант оставить команды в HA и просто расширить demo отклонён: внешний сервер повторил бы правила.\n\n### Места для внимания\n\n`websocket_api.py` config/set, `_commit_pair`, Optimize/Undo, space/delete; `store.py` recovery и HA hooks; `http_api.py` preview/upload; `core/import_export.py` прямые чтения config_root и runtime.import_previews; `demo/standalone/core_process.py` различия no-op/layout/LED. Существенны сохранение evidence-проверок скрытых HA данных, API-коды/формы ответов и отсутствие наружного доступа к installation-backup. Python >=3.14 соответствует текущей среде проекта; расширение поддержки старых Python не заявляется.\n\n### Проверки и ограничения\n\nНа S3 выполнено чтение owning source и контрактов, код продукта ещё не менялся. Запусков продукта, сборки или приёмки нет; перед S4 выполняется только авторская проверка формы данного ТЗ. Контракты реальной БД и production-сервис будут отдельно реализованы/проверены в приватном репозитории по #1459; эта задача не может доказать их заранее.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: https://github.com/Matysh/houseplan-card/issues/1460#issuecomment-6961543328.\n\n- Неопределённые варианты → добавлена отдельная CommandPolicy HA/PLAN_ONLY; существующие space/full JSON обслуживает общий путь, archive/migration_source/archive_snapshot остаются HA-only. Standalone отклоняет full до lease, без ослабления сохранённого space JSON контракта.\n- Cancel противоречил HA → выбран вариант A: сохраняются archive_admin, no-op для portable token и TTL; demo приводится к этому, новая отмена house typed lease относится к #1464. Не запрашивается неявное изменение HA поведения.\n- Необязательные улучшения → явные post-commit фазы, recovered_kind, атомарный повтор CAS, revision-scoped кеши, перенос contextvars и отсутствие финального strict-checkpoint после durable commit; промежуточные точки реализации и тесты.\n- Новая редакция только ТЗ; исходники не изменены, продуктовых прогонов нет. Авторская проверка формы повторяется перед передачей.\n\nПосле принятого раунда 2 (https://github.com/Matysh/houseplan-card/issues/1460#issuecomment-6961705094) на S5 уточнены его неблокирующие рекомендации без нового модельного запуска: общий Undo import/адаптерный archive_snapshot, существующая стеночная budget-модель подготовки с выходом до commit, таблица post-commit порядка по командам. Это уточнение выбранного решения, не расширение скоупа.\n\n### Реализация и контекст код-ревью\n\nВетка `codex/1460-plan-commands`, исходная база `6d28743ea061ad639f508675d0c48fe22865cb5c`. Общая оркестрация находится в `core/plan_commands.py`, `portable_commands.py`, `content_commands.py`, `upload_commands.py`, `staging_commands.py`; HA-декораторы и HTTP-парсинг остаются транспортом. Специализированные archive/source/Undo archive маршруты сохранены в адаптере. PlanContent получает явный чистый ContentRetirement, а не повторяет правила удаления по двум конфигам. ReferencePlanHost заменил упрощённую реализацию demo. Файловые публикации staged + atomic, отмена ждёт worker до освобождения lock; общий budget закрывается до commit. Wheel/sdist staging копирует один канонический core в houseplan_core; второй tracked implementation отсутствует.\n\nПри адресной отладке: общий/backend boundary набор 43 PASS; дополнительные real-HA parity для null/LED/no-op/repair/space/delete и plans/delete — 2 PASS; content/staging отказные проверки — 6 PASS; conformance 9 независимых сценариев проходит с reference и JSON factory; wheel и sdist установлены в двух чистых окружениях без HA/custom_components, manifest и оба conformance factory проходят. Остальные адресные HA import/archive/config/node проверки выполнялись по переносимым участкам; результаты и точные команды сохраняются в локальных логах. Это не заявление о завершённом общем S6: его актуальный результат прикладывает `finish` после допуска очереди.\n\n35 существующих мутационных declarations перенесены на реальные новые owners без запуска мутантов; классификация новых backend/native проверок дополнена storage-правилами и адресно проверена. Эталоны/frontend snapshot не менялись. Решение companion E2E: https://github.com/Matysh/houseplan-e2e/issues/75 — новых browser-сценариев не требуется, реальные HTTP/WS/Store границы покрывает native HA parity. Production БД, многопроцессная надёжность, сайт, публикация пакета/версии и новый house ZIP этой задачей не заявляются; #1464 реализуется отдельно после общей базы.\n\nЗоны особого внимания ревью: точная CAS/no-op/Undo metadata семантика, after-await authority, recovery/paired commit, отсутствие ложного отказа после durable success, lifetime staged workers/leases и отсутствие HA-импортов в установленном пакете. Существующий JSON cancel намеренно writer unauthorized / admin no-op, без удаления portable preview. Содержательно принятое ревью повторно не запускается.\n\nФинальная механическая подготовка: первый S6 выполнил/переиспользовал 647 единиц и нашёл 6 устаревших файлов проверок (старые прямые адреса валидаторов/профилировщика, ожидание отказа full только на Apply и обязательный обход каталога). Адресные исправления прошли; legacy WS plan/set переведён на общий upload writer. Повторный S6 не имел отказов, но был явно отменён до ревью на 643-й единице: самопроверка обнаружила, что декларация мутации повторной проверки expired-preview стояла внутри best-effort cleanup и стала эквивалентной. Инъекция перенесена перед cleanup try, вне защиты, чтобы действительно эмулировать ложный отказ после durable commit. Продуктовый код в этой последней правке не менялся; `mutation-gate --check` PASS, мутанты не запускались. Модельное код-ревью до этого момента не вызывалось. Clean install wheel/sdist повторно прошёл на финальном core; актуальный полный S6 приложит очередной finish с зачётом применимых результатов.\n\nУточнение по итоговому отчёту повторов: в конце второго/третьем S6 также обнаружились 2 теста в `test_ha_websocket.py`, которые после перевода legacy WS upload патчили удалённую `websocket_api.MAX_PLANS_FILES`. Привязка перенесена на настоящий `core.file_uploads`; адресный повтор обоих — 2 PASS, включая «ровно один из двух запросов занимает последний слот» и точное число файлов. Третий S6 завершил все 647 единиц; единственный отказный файл — этот, остальные PASS/reused. Поэтому окончательный finish повторяет его и зачтёт остальные применимые результаты; ни один отрицательный/отменённый прогон не объявляется зелёным целиком.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
