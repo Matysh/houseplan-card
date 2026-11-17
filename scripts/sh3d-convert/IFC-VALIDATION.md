@@ -18,4 +18,6 @@ Addressed verification:
 
 Public model times/RSS and artifact raw/gzip bytes are in the inventory. WASM linear allocation (139,788,288 bytes here) and process peak RSS are distinct observations; neither is a browser-wide memory measurement or a guarantee for all files below the 64 MiB input cap. Current user exports and a prepared KOMPAS example were not supplied. Door operation defaults and unsupported geometry/carriers remain visible losses before download.
 
+The owner accepted all four [visual reference examples](evidence/visual/review.html) in the implementation chat on 17 November 2026. Their input/frame hashes and capture environment are in reference-index.json. These are manually reviewed examples, not an automatic pixel comparison receipt. A separate disposable HA 2026.11.1 preflight passed all four local-artifact import journeys (plus two setup cases), including native IFC node/window/room edits and reload.
+
 Publication and the four published-format → disposable HA journeys are a subsequent acceptance step, recorded in #1458 with the exact accepted source/module hash. No owner HA, stand configuration, Caddy configuration or Houseplan version release is part of this implementation.

@@ -1,0 +1,28 @@
+{
+  "issue": 1458,
+  "acceptedOn": "2026-11-17",
+  "decision": "Owner in implementation chat: Принять все 4 кадра",
+  "capturedOn": "Linux/WSL",
+  "browser": "Chromium 151.0.7922.34 rev 1234",
+  "input": "../../fixtures/ifc-synthetic.ifc",
+  "inputSha256": "b74db5ef783d13da8708a38b90bd9e0b7ff9de6729acd5aef644be9fc7db80f5",
+  "purpose": "Manually reviewed implementation examples, separate from the main product pixel-golden matrix",
+  "frames": [
+    {
+      "file": "source-control.png",
+      "sha256": "da4432574adfc510c1b2a8ab891b4965ee77e816d21075b8b6282573c2425bca"
+    },
+    {
+      "file": "converter-preview.png",
+      "sha256": "cdbb8721d8792d62de5d547c1fb0644695f07ed3d3c2b5048045ca9bedf15795"
+    },
+    {
+      "file": "imported-before-edit.png",
+      "sha256": "1e4ac874c71323b6555757ee9dc6abb632d536326a36014259873576794fd874"
+    },
+    {
+      "file": "imported-after-save.png",
+      "sha256": "ab27118fd26cd95e0f09b6c44ec1c3550bc7320afca0a27ce130ada91eaa1905"
+    }
+  ]
+}
