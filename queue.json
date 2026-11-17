@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15306,
+  "revision": 15307,
   "nextTicket": 506,
   "nextFence": 506,
   "tasks": {
@@ -4867,15 +4867,16 @@
         "test/wall-node-editor.test.mjs"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794948035665,
-        "entry": 1,
-        "detail": "Поведение: test/mutation-gate.test.mjs: failed; Браузер: isometric live touch: failed",
-        "eventId": "finish:f58538f5-1273-4bf7-a409-30e090fedf04:finish:2:return:return:1457"
-      }
+        "at": 1794948647383,
+        "entry": 2,
+        "detail": "Браузер: cold view toggle: failed",
+        "eventId": "finish:d7419c3a-b1bc-43c5-95d8-2bebb6eb1f5e:finish:3:return:return:1457"
+      },
+      "reason": "checks-failed"
     },
     "1458": {
       "issue": 1458,
@@ -5270,18 +5271,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1457,
-    "worker": "finish",
-    "token": "505:finish:d7419c3a-b1bc-43c5-95d8-2bebb6eb1f5e:finish:1:admit",
-    "fence": 505,
-    "materialSha": "8c15c683f5193238e792bd1170b3441776c249f7",
-    "expectedBase": "4a6cd83f2e1fe40c3e8e7ec95ec588e412052ad3",
-    "phase": "testing",
-    "admittedAt": 1794948379749,
-    "expiresAt": 1794948917078,
-    "patchId": "31091f201128afe2a7064166f4db7414b0417db9"
-  },
+  "active": null,
   "events": {
     "github:44170732537:1:completions:message:a223304c1ef2f7c33ede06c7e40abd2d13bdc8e13404a036a867feb63cb97032": {
       "digest": "0fd026c74cefe85f611b5befbe3e43fc8529a6a9f761c36e6db9272e39fb9a57",
@@ -5337,6 +5327,10 @@
     },
     "finish:b83d00c2-8c6b-4151-87e2-1e8f9a50dec2": {
       "digest": "f345d97376c8e2a16c2d0d6a4061053f5ee7c7d14c30a8b11663cb6bcabe9c2c",
+      "issue": 1457
+    },
+    "finish:d7419c3a-b1bc-43c5-95d8-2bebb6eb1f5e:finish:3:return": {
+      "digest": "d2255e8f304c8eb81b50f00919a1e7c1ecc7918e4e408994f22439eee1573152",
       "issue": 1457
     },
     "finish:f58538f5-1273-4bf7-a409-30e090fedf04": {
@@ -5425,6 +5419,26 @@
         "layer": "product",
         "materialSha": "8c15c683f5193238e792bd1170b3441776c249f7",
         "phase": "sync"
+      }
+    },
+    "finish:d7419c3a-b1bc-43c5-95d8-2bebb6eb1f5e:finish:3:return:return:1457": {
+      "digest": "d2255e8f304c8eb81b50f00919a1e7c1ecc7918e4e408994f22439eee1573152",
+      "issue": 1457,
+      "message": {
+        "kind": "return",
+        "issue": 1457,
+        "at": 1794948647383,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794948647383,
+          "entry": 2,
+          "detail": "Браузер: cold view toggle: failed",
+          "eventId": "finish:d7419c3a-b1bc-43c5-95d8-2bebb6eb1f5e:finish:3:return:return:1457"
+        }
       }
     }
   },
