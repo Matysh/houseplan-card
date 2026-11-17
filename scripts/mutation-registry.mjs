@@ -18936,10 +18936,10 @@ const wallNodeDelete1045Cases = [
       replace: '// mutant: capture hides fresh right down from the touch owner' }] },
   { id: 'node-delete-right-down-starts-pan-1045',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="1457 right mouse" test/wall-node-editor.test.mjs '
-      + '&& node demo/smoke_wall_node_delete.mjs',
+      + '&& node --test --test-name-pattern="1457 right mouse" test/wall-node-editor.test.mjs',
     because: '#1045 AC6 / #1457: a node consumes right down before downstream gesture owners; '
-      + 'test that component boundary as well as native no-pan behavior, which the stage independently protects.',
+      + 'the component boundary witnesses this defect, while the native no-pan smoke retains '
+      + 'the stage\'s independent protection in the product checks.',
     patches: [{ file: 'src/wall-node-editor.ts',
       find: "      // starts Move or reaches the stage's pan owner.\n      ev.preventDefault(); ev.stopImmediatePropagation(); return true;",
       replace: "      // mutant: allow the stage to arm pan\n      return false;" }] },
