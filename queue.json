@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15189,
+  "revision": 15190,
   "nextTicket": 500,
   "nextFence": 500,
   "tasks": {
@@ -5578,7 +5578,8 @@
           "entry": 2,
           "detail": "Поведение: process-next/test/e2e.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
           "eventId": "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:3:return:return:1458"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:2657dbd6-7a47-4b22-8023-af533521c132": {
