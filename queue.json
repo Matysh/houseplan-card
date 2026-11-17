@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15159,
+  "revision": 15160,
   "nextTicket": 498,
   "nextFence": 498,
   "tasks": {
@@ -4893,9 +4893,62 @@
       "status": "S6-in-progress",
       "readyAt": 1794942125391,
       "reviewEntry": 1,
-      "automationError": "automation-error",
-      "automationSince": 1794942181558,
-      "automationDetail": "GitHub PUT failed (400)"
+      "patchId": "05feacab2058d8bd44e27efc72c05efd1208d5d8",
+      "changedFiles": [
+        "demo/smoke_ifc_converter.mjs",
+        "demo/smoke_wall_node_python_roundtrip.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.85.0/1458.json",
+        "process-next/catalog/inventory.json",
+        "process-next/converters/cases.mjs",
+        "process-next/converters/journeys.spec.mjs",
+        "process-next/lib/converters.mjs",
+        "process-next/test/converters.test.mjs",
+        "scripts/sh3d-convert/IFC-VALIDATION.md",
+        "scripts/sh3d-convert/IFC.md",
+        "scripts/sh3d-convert/README.md",
+        "scripts/sh3d-convert/build-ifc-vendor.mjs",
+        "scripts/sh3d-convert/build-ifc-worker.mjs",
+        "scripts/sh3d-convert/build-page.mjs",
+        "scripts/sh3d-convert/check-ifc-public.mjs",
+        "scripts/sh3d-convert/cli.mjs",
+        "scripts/sh3d-convert/dist/index.html",
+        "scripts/sh3d-convert/evidence/ifc-public-profile.json",
+        "scripts/sh3d-convert/fixtures/ifc-synthetic.ifc",
+        "scripts/sh3d-convert/golden/ifc-synthetic.report.json",
+        "scripts/sh3d-convert/golden/ifc-synthetic.space-1.json",
+        "scripts/sh3d-convert/golden/ifc-synthetic.space-2.json",
+        "scripts/sh3d-convert/ifc-elements.mjs",
+        "scripts/sh3d-convert/ifc-errors.mjs",
+        "scripts/sh3d-convert/ifc-geometry.mjs",
+        "scripts/sh3d-convert/ifc-math.mjs",
+        "scripts/sh3d-convert/ifc-model.mjs",
+        "scripts/sh3d-convert/ifc-read.mjs",
+        "scripts/sh3d-convert/ifc-vendor-patch.py",
+        "scripts/sh3d-convert/ifc-worker-entry.mjs",
+        "scripts/sh3d-convert/ifc.mjs",
+        "scripts/sh3d-convert/page/app.mjs",
+        "scripts/sh3d-convert/page/ifc-text.mjs",
+        "scripts/sh3d-convert/page/ifc-ui.mjs",
+        "scripts/sh3d-convert/page/ifc-worker.generated.mjs",
+        "scripts/sh3d-convert/page/shell.html",
+        "scripts/sh3d-convert/site-converter.mjs",
+        "scripts/sh3d-convert/vendor/ifc/LICENSE-MPL-2.0.txt",
+        "scripts/sh3d-convert/vendor/ifc/NOTICES.txt",
+        "scripts/sh3d-convert/vendor/ifc/engine.mjs",
+        "scripts/sh3d-convert/vendor/ifc/vendor-index.json",
+        "src/plan-converter.ts",
+        "test/converter-site.test.mjs",
+        "test/helpers/ifc-fixture.mjs",
+        "test/ifc-convert.test.mjs",
+        "test/plan-converter.test.mjs",
+        "test/sh3d-convert-page.test.mjs",
+        "tests_backend/test_ha_easy_floorplan_convert.py",
+        "tests_backend/test_ifc_converter.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5258,10 +5311,11 @@
     "token": "497:finish:58ed0db1-ae74-4682-9dec-f83d6aa9a0c5:finish:1:admit",
     "fence": 497,
     "materialSha": "492d78bda1daa9e97aa6f6f17cc848d2bf0babd7",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
+    "phase": "testing",
     "admittedAt": 1794942134494,
-    "expiresAt": 1794942490694
+    "expiresAt": 1794942548853,
+    "patchId": "05feacab2058d8bd44e27efc72c05efd1208d5d8"
   },
   "events": {
     "github:44128949850:1:label:spec-request": {
@@ -5318,6 +5372,10 @@
     },
     "finish:014b365e-74af-45b9-8fae-204dc06c52e7": {
       "digest": "a03bb566b8db55ddb8ba3ec5da777ce65806487f2bedb447f3513693ffe6f062",
+      "issue": 1458
+    },
+    "finish:58ed0db1-ae74-4682-9dec-f83d6aa9a0c5:finish:3:synchronized": {
+      "digest": "b79fa1fe538f7a4675a1b445afabc0c6b1964221a9f2bf0677354df24be98006",
       "issue": 1458
     },
     "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
