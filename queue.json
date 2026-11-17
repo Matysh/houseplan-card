@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15166,
+  "revision": 15167,
   "nextTicket": 499,
   "nextFence": 499,
   "tasks": {
@@ -4893,7 +4893,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794942450171,
       "reviewEntry": 2,
-      "patchId": "05feacab2058d8bd44e27efc72c05efd1208d5d8",
+      "patchId": "ec5728b9f3c98e03b3961cb5e19ac76cb4851649",
       "changedFiles": [
         "demo/smoke_ifc_converter.mjs",
         "demo/smoke_wall_node_python_roundtrip.mjs",
@@ -4917,6 +4917,13 @@
         "scripts/sh3d-convert/cli.mjs",
         "scripts/sh3d-convert/dist/index.html",
         "scripts/sh3d-convert/evidence/ifc-public-profile.json",
+        "scripts/sh3d-convert/evidence/visual/converter-preview.png",
+        "scripts/sh3d-convert/evidence/visual/imported-after-save.png",
+        "scripts/sh3d-convert/evidence/visual/imported-before-edit.png",
+        "scripts/sh3d-convert/evidence/visual/reference-index.json",
+        "scripts/sh3d-convert/evidence/visual/review.html",
+        "scripts/sh3d-convert/evidence/visual/source-control.html",
+        "scripts/sh3d-convert/evidence/visual/source-control.png",
         "scripts/sh3d-convert/fixtures/ifc-synthetic.ifc",
         "scripts/sh3d-convert/golden/ifc-synthetic.report.json",
         "scripts/sh3d-convert/golden/ifc-synthetic.space-1.json",
@@ -5320,10 +5327,11 @@
     "token": "498:finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:1:admit",
     "fence": 498,
     "materialSha": "1eae56d95c687b22d9498231a00dfe50db2edce3",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
+    "phase": "testing",
     "admittedAt": 1794942465004,
-    "expiresAt": 1794942765004
+    "expiresAt": 1794942789052,
+    "patchId": "ec5728b9f3c98e03b3961cb5e19ac76cb4851649"
   },
   "events": {
     "github:44128949850:1:label:spec-request": {
@@ -5400,6 +5408,10 @@
     },
     "1458-visuals-and-private-dependencies-20261117": {
       "digest": "2a3ab67806192d4da221a680c656a7a0fcc042cf097f13b668ab3d6f8e4f00c3",
+      "issue": 1458
+    },
+    "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:2:synchronized": {
+      "digest": "7c3671f1a0cf26ad6143bf5ca2c06ec6d940c4e116de3924a586b0595b81cf1e",
       "issue": 1458
     },
     "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
