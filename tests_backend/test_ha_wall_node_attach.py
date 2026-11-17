@@ -68,19 +68,21 @@ async def test_attach_refusal_leaves_store_and_events_untouched(hass, hass_ws_cl
 
 
 async def test_attach_save_failure_and_revoked_acl_do_not_mutate(hass, hass_ws_client, monkeypatch):
+    from custom_components.houseplan import command_adapter as adapter
+
     _, client, before = await setup(hass, hass_ws_client, source=config(CASES[0]))
     operation = intent(before["config"]["spaces"][0], CASES[0])
-    original = endpoint.async_save_config_state
+    original = adapter.async_save_config_state
     async def failure(*args, **kwargs):
         from custom_components.houseplan.import_export import ImportFailure
         raise ImportFailure("commit_failed")
-    monkeypatch.setattr(endpoint, "async_save_config_state", failure)
+    monkeypatch.setattr(adapter, "async_save_config_state", failure)
     await client.send_json_auto_id(message(before, operation))
     assert not (await client.receive_json())["success"]
     saved = await get_data(hass).config_store.async_load()
     assert saved["config"] == before["config"] and saved["rev"] == before["rev"]
-    monkeypatch.setattr(endpoint, "async_save_config_state", original)
-    monkeypatch.setattr(endpoint, "_check_write", lambda *args: False)
+    monkeypatch.setattr(adapter, "async_save_config_state", original)
+    monkeypatch.setattr(adapter, "may_write", lambda *args: False)
     await client.send_json_auto_id(message(before, operation))
     response = await client.receive_json()
     assert not response["success"] and response["error"]["code"] == "unauthorized", response

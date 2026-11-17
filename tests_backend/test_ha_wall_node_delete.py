@@ -274,7 +274,7 @@ async def test_issue_1045_ws_independent_geometry_refusal_on_ordinary_accepted_s
 
 @pytest.mark.parametrize("cache", ["exact", "stale", "missing"])
 async def test_issue_1075_junction_baseline_has_exact_revision_authority(hass, hass_ws_client, monkeypatch, cache):
-    from custom_components.houseplan import websocket_api as endpoint
+    from custom_components.houseplan.core import plan_commands as endpoint
 
     _, client, snapshot = await setup(hass, hass_ws_client)
     rt = get_data(hass)

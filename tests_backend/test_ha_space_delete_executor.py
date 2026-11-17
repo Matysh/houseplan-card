@@ -2,16 +2,17 @@
 import asyncio
 import copy
 import json
-from pathlib import Path
 import subprocess
 import threading
+from pathlib import Path
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.houseplan import command_adapter as adapter
 from custom_components.houseplan.const import DOMAIN
+from custom_components.houseplan.core import plan_commands as ws
 from custom_components.houseplan.store import get_data
-from custom_components.houseplan import websocket_api as ws
 
 
 @pytest.fixture(autouse=True)
@@ -77,16 +78,16 @@ async def test_issue_1101_space_delete_keeps_lock_during_executor_before_competi
     client, rev = await _seed(hass, hass_ws_client, config)
     contender = await hass_ws_client(hass)
     entered, release = asyncio.Event(), asyncio.Event()
-    executor = hass.async_add_executor_job
+    executor = adapter.HaCpuExecutor.run
 
-    async def held_executor(fn, *args):
-        if fn.__name__ == "_prepare_delete_cpu":
+    async def held_executor(self, fn, *args):
+        if fn.__name__ == "prepare_delete":
             assert get_data(hass).write_lock.locked()
             entered.set()
             await release.wait()
-        return await executor(fn, *args)
+        return await executor(self, fn, *args)
 
-    monkeypatch.setattr(hass, "async_add_executor_job", held_executor)
+    monkeypatch.setattr(adapter.HaCpuExecutor, "run", held_executor)
     await client.send_json_auto_id({
         "type": "houseplan/space/delete", "space_id": "a",
         "expected_config_rev": rev, "expected_layout_rev": 0,

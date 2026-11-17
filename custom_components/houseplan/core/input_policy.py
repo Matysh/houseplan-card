@@ -100,6 +100,11 @@ def current_policy() -> InputPolicy:
     return budget.policy if budget is not None else HA_INPUT_POLICY
 
 
+def has_input_scope() -> bool:
+    """Command dispatch owns its preparation scope, never a late commit wrapper."""
+    return _request.get() is not None
+
+
 @contextmanager
 def input_scope(
     policy: InputPolicy | None = None, *, clock: Callable[[], float] = monotonic,

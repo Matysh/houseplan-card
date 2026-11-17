@@ -7,25 +7,9 @@ reshapes the default response would break clients that never asked for it.
 from __future__ import annotations
 
 import copy
-import importlib.util
-import os
-
-# Модуль грузится по пути, а не импортом пакета: `custom_components.houseplan`
-# исполняет `__init__`, который безусловно тянет homeassistant, и на машине без
-# HA ломается сбор всего каталога tests_backend, а не только этого файла (#135).
-# Тот же приём, что в test_virtual_lights.py; сам модуль не зависит ни от чего,
-# кроме стандартной библиотеки.
-_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "custom_components", "houseplan", "projection.py",
+from custom_components.houseplan.core.projection import (
+    project_config, project_layout, project_markers,
 )
-_spec = importlib.util.spec_from_file_location("hp_projection", _PATH)
-_projection = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_projection)
-
-project_config = _projection.project_config
-project_layout = _projection.project_layout
-project_markers = _projection.project_markers
 
 
 CONFIG = {

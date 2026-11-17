@@ -6,7 +6,6 @@ from test_ha_wall_node_delete import setup
 from test_wall_node_move import fixture, intent
 
 from custom_components.houseplan import junction_limits as limits
-from custom_components.houseplan import websocket_api as endpoint
 from custom_components.houseplan.store import get_data
 
 
@@ -21,7 +20,9 @@ async def test_issue_1102_node_move_junction_baseline_has_exact_revision_authori
 ):
     _, client, snapshot = await setup(hass, hass_ws_client, source=fixture())
     rt = get_data(hass)
-    original = endpoint.validate_junction_limits
+    from custom_components.houseplan.core import plan_commands as commands
+
+    original = commands.validate_junction_limits
     counts = original(snapshot["config"], snapshot["config"])
     rt.junction_baseline = None if cache == "missing" else (snapshot["rev"] + (cache == "stale"), counts)
     observed, previous_reads = [], []
@@ -37,7 +38,7 @@ async def test_issue_1102_node_move_junction_baseline_has_exact_revision_authori
         return original(config, previous, **kwargs)
 
     monkeypatch.setattr(limits, "_migrated_spaces", record_previous)
-    monkeypatch.setattr(endpoint, "validate_junction_limits", record)
+    monkeypatch.setattr(commands, "validate_junction_limits", record)
     await client.send_json_auto_id({
         "type": "houseplan/wall/node_move", "space_id": "f", "intent": intent(),
         "expected_rev": snapshot["rev"],

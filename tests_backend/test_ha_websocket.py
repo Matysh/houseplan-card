@@ -296,7 +296,7 @@ async def test_issue_803_second_host_identity_gate_rejects_foreign_rehost(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A future planner defect must not bypass the independent identity gate."""
-    from custom_components.houseplan import websocket_api as api
+    from custom_components.houseplan.core import plan_commands as api
     from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
     await _setup(hass)
@@ -349,7 +349,7 @@ async def test_issue_891_node_processing_refusal_is_safe_retryable_and_does_not_
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch: pytest.MonkeyPatch,
     failure: str,
 ) -> None:
-    from custom_components.houseplan import websocket_api as api
+    from custom_components.houseplan.core import plan_commands as api
     from custom_components.houseplan.wall_segment_model import WallSegmentMigrationError
     import voluptuous as vol
 
@@ -3631,7 +3631,7 @@ async def test_a_failing_collector_does_not_undo_an_accepted_save(
     accepted — and its retry then failed with `conflict`, because the server had
     moved on. The commit stands and the event fires regardless.
     """
-    from custom_components.houseplan import websocket_api as wsapi
+    from custom_components.houseplan import command_adapter as wsapi
 
     await _setup(hass)
     client = await hass_ws_client(hass)
@@ -5070,7 +5070,7 @@ async def test_330_config_set_validators_run_in_the_executor(
     """
     import threading
 
-    from custom_components.houseplan import websocket_api as hp_ws_module
+    from custom_components.houseplan.core import plan_commands as hp_ws_module
 
     await _setup(hass)
     client = await hass_ws_client(hass)
@@ -5200,7 +5200,7 @@ async def test_333_optimize_refreshes_the_junction_baseline_cache(
 ) -> None:
     """#333 AC3: после успешного optimize следующий config/set берёт
     baseline из кэша и не судит previous заново."""
-    from custom_components.houseplan import websocket_api as hp_ws_module
+    from custom_components.houseplan.core import plan_commands as hp_ws_module
 
     await _setup(hass)
     client = await hass_ws_client(hass)

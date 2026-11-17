@@ -32,6 +32,7 @@ from homeassistant.auth import models as auth_models
 from homeassistant.core import StateMachine
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.houseplan import command_adapter as adapter
 from custom_components.houseplan import coordinate_canonicalization as canon
 from custom_components.houseplan import junction_limits, room_appearance, zigbee_lqi
 from custom_components.houseplan import store as store_module
@@ -43,6 +44,7 @@ from custom_components.houseplan.const import (
     FILES_DIR,
     PLANS_DIR,
 )
+from custom_components.houseplan.core import plan_commands as commands
 from custom_components.houseplan.room_appearance import normalize_room_appearance
 from custom_components.houseplan.store import async_save_config_state, get_data
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
@@ -539,21 +541,21 @@ async def test_issue_1096_radar_registry_is_read_only_for_a_changed_block(hass, 
     await _setup(hass)
     client = await hass_ws_client(hass)
     evidence = {"calls": 0}
-    radar_registry_evidence = endpoint.radar_registry_evidence
+    radar_registry_evidence = adapter.radar_registry_evidence
 
     def counted(hass_):
         evidence["calls"] += 1
         return radar_registry_evidence(hass_)
 
-    monkeypatch.setattr(endpoint, "radar_registry_evidence", counted)
+    monkeypatch.setattr(adapter, "radar_registry_evidence", counted)
     validated: list[bool] = []
-    validate_marker_radars = endpoint.validate_marker_radars
+    validate_marker_radars = commands.validate_marker_radars
 
     def observed(config, previous=None, **kwargs):
         validated.append(kwargs.get("registry") is not None)
         return validate_marker_radars(config, previous, **kwargs)
 
-    monkeypatch.setattr(endpoint, "validate_marker_radars", observed)
+    monkeypatch.setattr(commands, "validate_marker_radars", observed)
 
     source = house()
     source["markers"][0]["radar"] = _radar("ar0")
@@ -617,7 +619,7 @@ async def test_issue_1096_one_canonicalisation_no_reload_no_copy(hass, hass_ws_c
         return await async_load()
 
     monkeypatch.setattr(rt.config_store, "async_load", counted_load)
-    save = endpoint.async_save_config_state
+    save = adapter.async_save_config_state
 
     async def observed_save(*args, **kwargs):
         in_save["active"] = True
@@ -626,7 +628,7 @@ async def test_issue_1096_one_canonicalisation_no_reload_no_copy(hass, hass_ws_c
         finally:
             in_save["active"] = False
 
-    monkeypatch.setattr(endpoint, "async_save_config_state", observed_save)
+    monkeypatch.setattr(adapter, "async_save_config_state", observed_save)
     deepcopy = room_appearance.deepcopy
 
     def counted_deepcopy(value):
@@ -634,13 +636,13 @@ async def test_issue_1096_one_canonicalisation_no_reload_no_copy(hass, hass_ws_c
         return deepcopy(value)
 
     monkeypatch.setattr(room_appearance, "deepcopy", counted_deepcopy)
-    normalize = endpoint.normalize_room_appearance
+    normalize = commands.normalize_room_appearance
 
     def counted_normalize(config):
         calls["normalize_in_get"] += 1
         return normalize(config)
 
-    monkeypatch.setattr(endpoint, "normalize_room_appearance", counted_normalize)
+    monkeypatch.setattr(commands, "normalize_room_appearance", counted_normalize)
 
     assert (await _write(client, house(), 0))["success"]
     assert calls["store_canonicalize"] == 0 and calls["load_in_save"] == 0
@@ -863,11 +865,11 @@ async def test_issue_1096_scoped_write_budget_on_large_house(hass, hass_ws_clien
     rt = get_data(hass)
     client = await hass_ws_client(hass)
     cpu = {"ms": None}
-    executor = hass.async_add_executor_job
+    executor = adapter.HaCpuExecutor.run
 
-    async def measured_executor(fn, *args):
-        if fn.__name__ != "_validate_config_cpu":
-            return await executor(fn, *args)
+    async def measured_executor(self, fn, *args):
+        if fn.__name__ != "validate_config":
+            return await executor(self, fn, *args)
 
         def work():
             started = time.perf_counter()
@@ -876,9 +878,9 @@ async def test_issue_1096_scoped_write_budget_on_large_house(hass, hass_ws_clien
             finally:
                 cpu["ms"] = (time.perf_counter() - started) * 1000
 
-        return await executor(work)
+        return await executor(self, work)
 
-    monkeypatch.setattr(hass, "async_add_executor_job", measured_executor)
+    monkeypatch.setattr(adapter.HaCpuExecutor, "run", measured_executor)
     seeded = await _write(client, copy.deepcopy(large_house), 0)
     assert seeded["success"], seeded
 

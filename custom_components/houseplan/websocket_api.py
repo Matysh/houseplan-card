@@ -28,7 +28,6 @@ from .build_identity import UNKNOWN_BUILD, BuildIdentity
 from .const import (
     ASSETS_DIR,
     CONTENT_URL,
-    DECOR_ASSETS_API_VERSION,
     DEFAULT_CONFIG,
     DOMAIN,
     EXPORT_VERSION,
@@ -47,8 +46,6 @@ from .const import (
     PLAN_MODEL_VERSION,
     PLANS_DIR,
     PLANS_URL,
-    SUMMARY_PANEL_API_VERSION,
-    SUPPORT_API_VERSION,
     SUPPORT_PREVIEW_TTL_S,
     VERSION,
 )
@@ -56,6 +53,19 @@ from .contact_basis import validate_contact_bases
 from .coordinate_canonicalization import (
     canonicalize_config_geometry,
     canonicalize_layout_geometry,
+)
+from .core.command_ports import PairCommitFailure
+from .core.space_delete import (
+    _delete_plan_markers as _delete_plan_markers,
+)
+from .core.space_delete import (
+    _space_delete_candidate as _space_delete_candidate,
+)
+from .core.space_delete import (
+    _space_delete_target as _space_delete_target,
+)
+from .core.space_delete import (
+    _space_marker_dependencies as _space_marker_dependencies,
 )
 from .decor_assets import (
     ASSET_EXTENSIONS,
@@ -66,7 +76,6 @@ from .decor_assets import (
     read_asset,
     read_catalog,
 )
-from .deletion_layout import deletion_layout_candidate
 from .import_export import (
     ImportFailure,
     content_manifest,
@@ -76,39 +85,30 @@ from .import_export import (
     prepare_apply,
     revalidate_candidate,
 )
-from .junction_limits import JunctionLimitError, validate_junction_limits
-from .led_strips import led_strip_link_report, preserve_led_strips
 from .marker_copy import marker_copy_candidate
 from .marker_history import HistoryError
 from .marker_history_websocket import HISTORY_FIELDS
-from .opening_features import guard_opening_features_write
-from .plan_graph_exact import GraphError
 from .plans import (
     QuotaError,
     check_quota,
-    collect_attachments,
-    collect_plans,
     is_plan_file,
     plan_basename,
     plan_refs,
     reserve_filename,
     store_plan_upload,
 )
-from .projection import project_config, project_layout
 from .radar_validation import (
     RadarValidationError,
     radar_registry_evidence,
     validate_marker_radars,
 )
 from .registry_snapshot import import_registry_snapshot
-from .room_appearance import config_appearance_materialized, normalize_room_appearance
 from .store import (
     LAYOUT_STORE_CORE_KEYS,
     HouseplanData,
     ResolvedStorePair,
     async_converge_store_pair,
     async_resolve_pending_pair,
-    async_save_config_state,
     async_save_layout_state,
     get_data,
     get_entry,
@@ -121,7 +121,6 @@ from .store import (
 )
 from .structural_websocket import structural_websocket_command
 from .support_package import (
-    PACKAGE_VERSIONS,
     SupportPackageError,
     build_support_package,
 )
@@ -139,14 +138,6 @@ from .validation import (
     POS_SCHEMA,
     DuplicateMarkerIdError,
     MarkerControlError,
-    OpeningPassageError,
-    OrdinaryWriteScope,
-    PartitionOpeningHostError,
-    PartitionOpeningJambMarginError,
-    WallModelClientOutdatedError,
-    external_screens_config_event,
-    ordinary_write_scope,
-    prepare_ordinary_summary_candidate,
     sanitize_filename,
     summary_panel_entity_ids,
     valid_space_id,
@@ -155,23 +146,10 @@ from .validation import (
     validate_marker_light_entities,
     validate_marker_vacuum_routes,
     validate_marker_value_badges,
-    validate_opening_passages,
-    validate_partition_opening_hosts,
-    validate_scoped_candidate,
-    validate_wall_model_transition,
 )
 from .virtual_lights import (
     EVENT_VIRTUAL_LIGHT_UPDATED,
     async_toggle_virtual_light,
-    async_virtual_light_snapshot,
-)
-from .wall_node_delete import (
-    NodeDeleteError,
-    prepare_node_delete,
-)
-from .wall_node_move import NodeMoveError, node_move_candidate, node_move_host_baseline
-from .wall_segment_model import (
-    WallSegmentMigrationError,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -188,20 +166,6 @@ def _debug_missing_revision_once(command: str, current_rev: int) -> None:
         command,
         current_rev,
     )
-
-def _optimizer_backup_is_current(config_data: dict[str, Any], layout_data: dict[str, Any]) -> bool:
-    """An optimization can be undone before any later ordinary plan edit."""
-    backup = layout_data.get(_OPTIMIZE_BACKUP)
-    if not isinstance(backup, dict):
-        return False
-    try:
-        return (
-            int(backup.get("after_config_rev", -1)) == int(config_data.get("rev", 0))
-            and int(backup.get("after_layout_rev", -1)) == int(layout_data.get("rev", 0))
-        )
-    except (TypeError, ValueError):
-        return False
-
 
 def _optimizer_backup_after_layout_maintenance(
     layout_data: dict[str, Any], new_layout_rev: int,
@@ -222,13 +186,6 @@ def _optimizer_backup_after_layout_maintenance(
             "after_layout_rev": new_layout_rev,
         }
     }
-
-
-def _undo_kind(config_data: dict[str, Any], layout_data: dict[str, Any]) -> str | None:
-    if not _optimizer_backup_is_current(config_data, layout_data):
-        return None
-    backup = layout_data.get(_OPTIMIZE_BACKUP)
-    return str(backup.get("kind") or "optimize") if isinstance(backup, dict) else None
 
 
 async def _discard_optimizer_snapshot(rt: HouseplanData) -> None:
@@ -284,14 +241,6 @@ async def _release_space_delete_snapshot(
         await rt.hass.async_add_executor_job(collect)
     except Exception:  # noqa: BLE001 - the accepting transaction is already durable
         _LOGGER.exception("House Plan: releasing expired space-delete attachments failed")
-
-
-class PairCommitFailure(Exception):
-    """A paired write failed after restoring, or while recovery stayed durable."""
-
-    def __init__(self, *, recovery_pending: bool) -> None:
-        super().__init__("paired store commit failed")
-        self.recovery_pending = recovery_pending
 
 
 async def _resolved_write_pair(
@@ -1120,24 +1069,9 @@ def _live_layout(config: dict[str, Any], layout: dict[str, Any]) -> dict[str, An
 @websocket_api.async_response
 async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
     """Return the saved layout, optionally narrowed to one space (#256)."""
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    async with rt.write_lock:
-        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
-            return
-        data, config_data = resolved.layout_data, resolved.config_data
-    connection.send_result(
-        msg["id"], {
-            "layout": project_layout(
-                data.get("layout", {}), space_id=msg.get("space_id"),
-            ),
-            "rev": int(data.get("rev", 0)),
-            "can_optimize_undo": _optimizer_backup_is_current(config_data, data),
-            "undo_kind": _undo_kind(config_data, data),
-        }
-    )
+    from .command_adapter import dispatch_plan_command
+
+    await dispatch_plan_command(hass, connection, msg)
 
 
 @structural_websocket_command(
@@ -1150,65 +1084,10 @@ async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 )
 @websocket_api.async_response
 async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Replace the layout entirely, with optimistic locking (audit B3).
+    """Transport schema and authority are HA; state semantics are shared."""
+    from .command_adapter import dispatch_plan_command
 
-    Wholesale layout writes used to have no revision check at all, so two
-    clients silently overwrote each other. `expected_rev` remains schema-
-    optional only for an empty-store bootstrap; once a saved layout exists it
-    is required semantically and is enforced exactly like the config store.
-    """
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only administrators may edit the layout")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    async with rt.write_lock:
-        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
-            return
-        config_data = resolved.config_data
-        data = resolved.layout_data
-        if ("expected_config_rev" in msg
-                and msg["expected_config_rev"] != int(config_data.get("rev", 0))):
-            connection.send_error(msg["id"], "conflict", "Device configuration changed elsewhere")
-            return
-        current_rev = int(data.get("rev", 0))
-        if "expected_rev" not in msg and current_rev:
-            # #356: without the revision the client read, a wholesale write is
-            # indistinguishable from a stale writer.  Keep the schema field
-            # optional only for rev-zero bootstrap and return the stable domain
-            # conflict here rather than allowing canonical no-op to bypass CAS.
-            _debug_missing_revision_once("layout/set", current_rev)
-            connection.send_error(
-                msg["id"], "conflict",
-                f"Layout revision is required; reload the layout, or — for "
-                f"external clients — include expected_rev from "
-                f"houseplan/layout/get (current rev {current_rev})",
-            )
-            return
-        if "expected_rev" in msg and msg["expected_rev"] != current_rev:
-            connection.send_error(
-                msg["id"], "conflict", f"Layout changed elsewhere (rev {current_rev})"
-            )
-            return
-        layout = _live_layout(config_data.get("config") or {}, msg["layout"])
-        try:
-            validate_contact_bases(layout, data.get("layout", {}))
-        except vol.Invalid as err:
-            connection.send_error(msg["id"], "invalid_format", str(err))
-            return
-        if layout == data.get("layout", {}):
-            connection.send_result(msg["id"], {"ok": True, "rev": current_rev})
-            return
-        new_rev = current_rev + 1
-        await async_save_layout_state(
-            rt, data, layout, new_rev,
-            remove=(_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING),
-        )
-        await _release_space_delete_snapshot(rt, data, config_data.get("config") or {}, {})
-    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
-    connection.send_result(msg["id"], {"ok": True, "rev": new_rev})
+    await dispatch_plan_command(hass, connection, msg)
 
 
 @structural_websocket_command(
@@ -1300,101 +1179,10 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
 )
 @websocket_api.async_response
 async def ws_geometry_repair(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Re-apply the square-canvas transform to ONE space's layout, explicitly.
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    For installations that hit the v1.48/v1.49 crash window: the config write
-    of the migration landed, the layout write did not, and the trigger fields
-    were already gone — markers and labels of that space are stranded in the
-    old coordinates with nothing able to tell (HP-1500-01). Nothing can be
-    detected reliably after the fact, and re-running a transform on a layout
-    that is already correct would corrupt it, so this NEVER runs by itself:
-    an administrator names the space and its old aspect, may preview with
-    `dry_run`, and gets a one-deep backup written in the same store write —
-    `undo` restores it.
-    """
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only administrators may repair the layout")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    from .geometry_migration import migrate_layout
-
-    space_id = msg["space_id"]
-    if not valid_space_id(space_id):
-        connection.send_error(msg["id"], "invalid_space_id", "space_id: only [a-z0-9_-], up to 64 characters")
-        return
-    async with rt.write_lock:
-        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
-            return
-        data = resolved.layout_data
-        layout = data.get("layout") or {}
-        current_rev = int(data.get("rev", 0))
-        if "expected_rev" in msg and msg["expected_rev"] != current_rev:
-            connection.send_error(
-                msg["id"], "conflict",
-                f"Layout was changed in another window (rev {current_rev} != {msg['expected_rev']})",
-            )
-            return
-        if msg.get("undo"):
-            backup = data.get("repair_backup")
-            if not isinstance(backup, dict) or backup.get("space") != space_id:
-                connection.send_error(msg["id"], "no_backup", "No repair backup stored for this space")
-                return
-            restored = dict(layout)
-            for key, pos in (backup.get("positions") or {}).items():
-                restored[key] = pos
-            new_rev = current_rev + 1
-            await async_save_layout_state(
-                rt, data, restored, new_rev,
-                metadata=_optimizer_backup_after_layout_maintenance(data, new_rev),
-                remove=("repair_backup",),
-            )
-            hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
-            connection.send_result(msg["id"], {"ok": True, "rev": new_rev,
-                                               "restored": len(backup.get("positions") or {})})
-            return
-        touched = {
-            k: dict(v) for k, v in layout.items()
-            if isinstance(v, dict) and str(v.get("s")) == space_id
-        }
-        if not touched:
-            # A typo'd space id used to "succeed" with moved: 0 — and its
-            # empty result REPLACED the one-deep backup, destroying the very
-            # undo this endpoint promises (HP-1501-02). Nothing to move means
-            # nothing to save: no write, no revision bump, the backup stays.
-            connection.send_error(
-                msg["id"], "nothing_to_repair",
-                f"No stored positions belong to space '{space_id}'",
-            )
-            return
-        preview = {k: dict(v) for k, v in touched.items()}
-        migrate_layout(preview, {space_id: msg["aspect"]})
-        if msg.get("dry_run"):
-            connection.send_result(msg["id"], {
-                "ok": True, "dry_run": True, "moved": len(preview),
-                "before": touched, "after": preview,
-            })
-            return
-        new_layout = {**layout, **preview}
-        new_rev = current_rev + 1
-        # the backup rides the same store write: either both are durable or
-        # neither — the deletion-shy rules of this project apply to positions
-        # too
-        await async_save_layout_state(
-            rt, data, new_layout, new_rev,
-            metadata={
-                **_optimizer_backup_after_layout_maintenance(data, new_rev),
-                "repair_backup": {
-                    "space": space_id,
-                    "positions": canonicalize_layout_geometry(touched),
-                },
-            },
-            remove=("repair_backup",),
-        )
-    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_rev})
-    connection.send_result(msg["id"], {"ok": True, "rev": new_rev, "moved": len(preview)})
+    await dispatch_plan_command(hass, connection, msg)
 
 
 @websocket_api.websocket_command(
@@ -1874,91 +1662,10 @@ _PROJECTION_FIELDS = vol.All([vol.All(str, vol.Length(min=1, max=100))], vol.Len
 )
 @websocket_api.async_response
 async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Return the configuration, its revision, and whether this user may write.
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    `can_write` is the single source of truth for the card's editor chrome
-    (audit P0-4): the UI must mirror `may_write`, not a hard-coded is_admin
-    check that drifted from the integration option.
-
-    Optional `space_id`/`fields`/`marker_fields` narrow ONLY the returned
-    document (#256). Revisions and capability flags are computed from the whole
-    stored configuration: a caller that asked for one floor must not receive a
-    revision that describes only that floor.
-    """
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    async with rt.write_lock:
-        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
-            return
-        data, layout_data = resolved.config_data, resolved.layout_data
-        config = {**DEFAULT_CONFIG, **data.get("config", {})}
-        # #1096: a document every ordinary write has materialised since #1037
-        # resolves to itself; only a legacy document still needs the copy.
-        if not config_appearance_materialized(config):
-            config = normalize_room_appearance(config)
-        config_rev = int(data.get("rev", 0))
-        try:
-            virtual_lights = await (
-                rt.virtual_lights.async_snapshot(config, config_rev)
-                if rt.virtual_lights is not None
-                else async_virtual_light_snapshot(rt.virtual_light_store, config, config_rev)
-            )
-        except Exception:  # noqa: BLE001 - config remains independently readable
-            _LOGGER.exception("House Plan: reading virtual-light state failed")
-            # Never expose a stale off bit after an unreadable/revision-gap
-            # operational store. Compatibility/default on is the safe frame.
-            virtual_lights = {"rev": 0, "config_rev": config_rev, "off": []}
-    connection.send_result(
-        msg["id"],
-        {
-            "config": project_config(
-                config,
-                space_id=msg.get("space_id"),
-                fields=msg.get("fields"),
-                marker_fields=msg.get("marker_fields"),
-            ),
-            "rev": config_rev,
-            "virtual_lights": virtual_lights,
-            "can_write": may_write(hass, getattr(connection, "user", None)),
-            "can_optimize_undo": _optimizer_backup_is_current(data, layout_data),
-            "undo_kind": _undo_kind(data, layout_data),
-            # #295: the card compares this against its own version to decide
-            # whether the «update House Plan» preflight hint can actually help.
-            "integration_version": VERSION,
-            # #836: build identity. Two builds of one version differ here; the
-            # card's version reconciliation (#462) compares the fingerprint.
-            "frontend_fingerprint": _build_identity(rt).fingerprint,
-            "build": _build_identity(rt).build,
-            # #423: protocol capability is independent from release skew.
-            "support_api": SUPPORT_API_VERSION,
-            "support_package_versions": list(PACKAGE_VERSIONS),
-            "wall_node_move_api": 1,
-            "wall_node_merge_api": 1,
-            "wall_node_attach_api": 1,
-            "wall_node_delete_api": 1,
-            "vacuum_dock_restart_api": 1,
-            "vacuum_history_api": 1,
-            "device_contact_api": 1,
-            "device_history_api": 1,
-            "plan_graph_api": 1,
-            "room_label_layout_api": 1,
-            "graph_change_api": 2,
-            "opening_features_api": 1,
-            "structural_upload_api": 1,
-            **({"graph_migration": {"version": 1, "source_available": True}}
-               if isinstance(layout_data.get("plan_graph_migration_backup"), dict) else {}),
-            "decor_assets_api": DECOR_ASSETS_API_VERSION,
-            "summary_panel_api": SUMMARY_PANEL_API_VERSION,
-            "external_screens_api": 2,
-        "external_screens_events_api": 1,
-            **({"radar_stage1_api": 1} if rt.radar_coordinator is not None else {}),
-            **({"zigbee_scan_api": 1, "zigbee_maps_api": 1} if rt.zigbee_coordinator is not None
-               and not rt.zigbee_coordinator.closed else {}),
-            **({"zigbee_lqi_api": 1} if rt.zigbee_lqi is not None and not rt.zigbee_lqi.closed else {}),
-        },
-    )
+    await dispatch_plan_command(hass, connection, msg)
 
 
 @websocket_api.websocket_command(
@@ -2151,315 +1858,10 @@ def _readable_entity_ids(
 )
 @websocket_api.async_response
 async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Replace the configuration with optimistic locking (expected_rev).
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    Protects against races between several open clients: if the config has changed since
-    the client's last read — a conflict error is returned, and the client must
-    re-read the config and re-apply its edit on top of the fresh version.
-    """
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only administrators may edit the configuration")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    # Per-field limits bound each list; this bounds their product (HP-1454-05).
-    # Everything below the caps can still add up to something no dashboard can
-    # render, and the store writes it to disk on every save.
-    size = len(json.dumps(msg["config"], ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
-    if size > MAX_CONFIG_BYTES:
-        connection.send_error(
-            msg["id"], "too_large",
-            f"Configuration is {size // 1024} KB, the limit is {MAX_CONFIG_BYTES // 1024} KB",
-        )
-        return
-    async with rt.write_lock:
-        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
-            return
-        data = resolved.config_data
-        current_rev = data.get("rev", 0)
-        contact_layout = None
-        layout_data = resolved.layout_data
-        layout_rev = int(layout_data.get("rev", 0))
-        if "contact_layout" in msg or "room_label_layout" in msg or "expected_layout_rev" in msg:
-            if not ("contact_layout" in msg or "room_label_layout" in msg) or msg.get("expected_layout_rev") != layout_rev:
-                connection.send_error(msg["id"], "conflict", "Device layout changed elsewhere")
-                return
-            try:
-                if "contact_layout" in msg:
-                    validate_contact_bases(msg["contact_layout"], layout_data.get("layout", {}))
-            except vol.Invalid as err:
-                connection.send_error(msg["id"], "invalid_format", str(err))
-                return
-            contact_layout = {**(layout_data.get("layout") or {}), **msg.get("contact_layout", {})}
-        if "expected_rev" not in msg and current_rev:
-            # #340: a request without the revision it read is indistinguishable
-            # from a stale writer.  Keep the schema field optional only for an
-            # empty-store bootstrap and so this path can return the same stable
-            # domain error as an explicit stale revision.  Accepting it over a
-            # saved document would bypass optimistic locking entirely.
-            _debug_missing_revision_once("config/set", current_rev)
-            connection.send_error(
-                msg["id"], "conflict",
-                f"Configuration revision is required; reload the configuration, "
-                f"or — for external clients — include expected_rev from "
-                f"houseplan/config/get (current rev {current_rev})",
-            )
-            return
-        if "expected_rev" in msg and msg["expected_rev"] != current_rev:
-            connection.send_error(
-                msg["id"], "conflict",
-                f"Configuration was changed in another window (rev {current_rev} != {msg['expected_rev']})",
-            )
-            return
-        # Marker-to-marker light links are a semantic graph layered on top of
-        # the lossless controls array. Validate only edges introduced by this
-        # write so an unrelated edit can still round-trip a legacy broken ref.
-        # #330 §4.1/§4.2: the CPU part of validation runs in the executor —
-        # schema + semantic validators cost seconds on a large plan and the
-        # event loop must not carry that (HA guideline: >50 ms). write_lock
-        # is still held across the await: writes stay serialised, only the
-        # loop is freed. The junction baseline of the STORED document is
-        # cached by rev, so a repeated write does not re-judge `previous`.
-        baseline = rt.junction_baseline
-        baseline_counts = baseline[1] if baseline and baseline[0] == current_rev else None
-        stored_config = data.get("config")
-        try:
-            # Judge the submitted whole record before any preservation or repair.
-            guard_opening_features_write(msg["config"], stored_config, msg.get("opening_features_api"))
-        except vol.Invalid as err:
-            connection.send_error(msg["id"], getattr(err, "code", "invalid_format"), str(err))
-            return
-        # #1096: the loop-side registry/state walks run only when the write
-        # can use their result. The summary validator looks up the entities
-        # its own blocks reference; the radar validator reads the registry
-        # only for a changed radar block (`radar_validation.py`, verified
-        # profile branch). An unchanged panel or radar set never pays for them.
-        summary_entity_ids = _changed_summary_entity_ids(msg["config"], stored_config)
-        readable_entity_ids = (
-            _readable_entity_ids(hass, connection, summary_entity_ids)
-            if summary_entity_ids is not None else set()
-        )
-        radar_registry = radar_registry_evidence(hass) if _radar_changed(msg["config"], stored_config) else None
-        # #1096: the stored document of this rev went through the full schema
-        # of this integration version in this runtime, so an untouched record
-        # equals its own validated form. Every other writer clears the stamp
-        # (`async_save_config_state`, `_commit_pair`) and bumps `rev` besides;
-        # a restart starts without one.
-        scoped_eligible = rt.schema_clean_rev == current_rev and bool(stored_config)
-
-        # #780: what the write path will normalise in LED strip links (an
-        # orphan becomes unbound, an empty marker.space adopts the strip's
-        # space). Reported back so a new client re-reads; old ones ignore it.
-        # An older writer omits the field: its stored shapes are kept first
-        # (r1 H1), so the report also counts their links.
-        preserve_led_strips(msg["config"], stored_config)
-        led_report = led_strip_link_report(msg["config"])
-
-        def _validate_config_cpu():
-            touched: set[str] | None = None
-
-            def _normalize(candidate):
-                nonlocal touched
-                from .graph_write import (
-                    prepare_graph_candidate,
-                    preserve_legacy_structure,
-                )
-                candidate = prepare_graph_candidate(candidate, stored_config, msg.get("graph_change"), schema_will_validate=True)
-                # Judged after the preservation steps of
-                # `prepare_ordinary_summary_candidate`: an older client that
-                # omitted a preserved field is compared on equal terms.
-                scope = (ordinary_write_scope(candidate, stored_config) if scoped_eligible
-                         else OrdinaryWriteScope(set(), set(), "stored document not stamped"))
-                touched = None if scope.full else set(scope.touched_spaces)
-                validate_wall_model_transition(candidate, stored_config, touched=touched)
-                checked = validate_scoped_candidate(candidate, stored_config, scope)
-                if int(candidate.get("model_version", 0) or 0) < 11:
-                    checked = preserve_legacy_structure(checked, candidate)
-                return checked
-
-            checked = prepare_ordinary_summary_candidate(
-                msg["config"], stored_config, readable_entity_ids, _normalize,
-            )
-            msg["config"].clear()
-            msg["config"].update(checked)
-            # #1227: a roomless copy preserves accepted geometry even though
-            # walls become partitions and all identities are new. Prove the
-            # entire delta against the stored source, after structural schema
-            # validation; arbitrary additions/edits retain the strict policy.
-            from .space_copy import is_saved_space_copy
-            copied = is_saved_space_copy(msg["config"], stored_config)
-            geometry_previous = msg["config"] if copied else stored_config
-            validate_active_marker_ids(msg["config"], stored_config)
-            validate_marker_controls(msg["config"], stored_config)
-            validate_marker_light_entities(msg["config"], stored_config)
-            validate_marker_radars(
-                msg["config"], stored_config, registry=radar_registry,
-            )
-            validate_marker_value_badges(msg["config"], stored_config)
-            validate_marker_vacuum_routes(msg["config"], stored_config)
-            validate_opening_passages(msg["config"], stored_config)
-            validate_partition_opening_hosts(
-                msg["config"], geometry_previous, allow_room_wall_promotion=True,
-            )
-            return validate_junction_limits(
-                msg["config"], geometry_previous,
-                baseline_counts=None if copied else baseline_counts,
-                touched_spaces=touched if baseline_counts is not None and not copied else None,
-            )
-        try:
-            candidate_counts = await hass.async_add_executor_job(_validate_config_cpu)
-        except (
-            DuplicateMarkerIdError, JunctionLimitError, MarkerControlError, OpeningPassageError,
-            PartitionOpeningHostError, PartitionOpeningJambMarginError,
-            WallModelClientOutdatedError,
-        ) as err:
-            connection.send_error(msg["id"], err.code, str(err))
-            return
-        except (RadarValidationError, GraphError) as err:
-            connection.send_error(msg["id"], err.code, str(err))
-            return
-        except vol.Invalid as err:
-            connection.send_error(msg["id"], "invalid_format", str(err))
-            return
-        # An internal plan url must name a file that exists. The card can pick a
-        # plan and then delete it from the same dialog, and two clients can do
-        # the same thing in either order — the lock serialises them but says
-        # nothing about whether the file survived (HP-1470-02). External and
-        # legacy urls are not ours to check and are left alone.
-        missing = await hass.async_add_executor_job(
-            _missing_internal_plans,
-            Path(hass.config.path(PLANS_DIR)),
-            msg["config"],
-            data.get("config"),
-        )
-        if missing:
-            connection.send_error(
-                msg["id"], "missing_plan",
-                "Plan file no longer exists: " + ", ".join(sorted(missing)),
-            )
-            return
-        if "contact_layout" in msg:
-            contact_layout = _live_layout(msg["config"], contact_layout)
-        try:
-            owned_layout, layout_changes = await hass.async_add_executor_job(deletion_layout_candidate,
-                data.get("config") or {}, msg["config"],
-                contact_layout if contact_layout is not None else layout_data.get("layout") or {},
-                msg.get("room_label_layout"))
-        except vol.Invalid as err:
-            connection.send_error(msg["id"], "invalid_format", str(err))
-            return
-        if layout_changes or "room_label_layout" in msg:
-            if len(owned_layout) > MAX_LAYOUT:
-                connection.send_error(msg["id"], "invalid_format", "Too many saved layout positions")
-                return
-            contact_layout = owned_layout
-        if (msg["config"] == data.get("config")
-                and (contact_layout is None or contact_layout == layout_data.get("layout", {}))):
-            # A semantic no-op still has to reconcile Repairs with external
-            # file-system changes. It must not create a revision, event, or
-            # discard the optimizer snapshot merely to refresh diagnostics.
-            entry = get_entry(hass)
-            if entry is not None:
-                from .repairs import async_check_plan_files
-
-                hass.async_create_task(async_check_plan_files(hass, entry))
-            unchanged: dict[str, Any] = {"ok": True, "rev": int(current_rev)}
-            if contact_layout is not None:
-                unchanged["layout_rev"] = layout_rev
-                unchanged["contact_layout"] = {key: contact_layout.get(key) for key in msg.get("contact_layout", {})}
-            connection.send_result(msg["id"], unchanged)
-            return
-        new_rev = current_rev + (msg["config"] != data.get("config"))
-        from .zigbee_topology import ZigbeeScanError
-
-        try:
-            if not _check_write(hass, connection):
-                connection.send_error(msg["id"], "unauthorized", "Editing permission was lost")
-                return
-            if contact_layout is None:
-                await async_save_config_state(
-                    rt, msg["config"], new_rev, previous_rev=int(current_rev),
-                    previous=data, canonical=True, authorize=_write_authority(hass, connection),
-                )
-            else:
-                if not _check_write(hass, connection):
-                    connection.send_error(msg["id"], "unauthorized", "Editing permission was lost")
-                    return
-                original_metadata = _layout_metadata(layout_data)
-                final_metadata = {k: v for k, v in original_metadata.items()
-                                  if k not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING}}
-                next_layout_rev = layout_rev + (contact_layout != layout_data.get("layout", {}))
-                await _commit_pair(rt, {
-                    "kind": "config_layout", "config": msg["config"], "layout": contact_layout,
-                    "config_rev": new_rev, "layout_rev": next_layout_rev, "final_metadata": final_metadata,
-                }, {
-                    "kind": "config_layout_rollback", "config": data.get("config") or DEFAULT_CONFIG,
-                    "layout": layout_data.get("layout") or {}, "config_rev": current_rev,
-                    "layout_rev": layout_rev, "final_metadata": original_metadata,
-                }, authorize=_write_authority(hass, connection))
-        except ImportFailure as err:
-            _send_import_error(connection, msg["id"], err)
-            return
-        except ZigbeeScanError as err:
-            connection.send_error(msg["id"], err.code, str(err))
-            return
-        except PairCommitFailure:
-            connection.send_error(msg["id"], "commit_failed", "Configuration/layout save failed; reload the plan")
-            return
-        # The candidate just became the stored document: its counts are the
-        # next write's baseline (#330 §4.2), and it is the validated output of
-        # this version's schema — the next ordinary write may scope (#1096).
-        rt.junction_baseline = (int(new_rev), candidate_counts)
-        rt.schema_clean_rev = int(new_rev)
-        try:
-            await _discard_optimizer_snapshot(rt)
-        except Exception:  # noqa: BLE001 — stale backup cleanup is best-effort
-            _LOGGER.exception("House Plan: discarding stale optimization backup failed")
-        # Still holding the lock: the file system is not part of the store's
-        # transaction, so collection has to be pinned to this commit (R3-1).
-        # It is best-effort housekeeping behind an already durable write — a
-        # failure here must not withhold the event and the success response,
-        # or the client retries an edit the server has already accepted and
-        # gets a conflict for its trouble (R4-1).
-        def _collect() -> None:
-            collect_plans(Path(hass.config.path(PLANS_DIR)), data.get("config"), msg["config"])
-            collect_attachments(Path(hass.config.path(FILES_DIR)), data.get("config"), msg["config"],
-                                pinned=rt.marker_history.refs() if rt.marker_history is not None else set())
-
-        try:
-            await hass.async_add_executor_job(_collect)
-        except Exception:  # noqa: BLE001 — see above: the commit stands regardless
-            _LOGGER.exception("House Plan: collecting superseded files failed")
-        # The config is already durable, so trail cleanup is best-effort and
-        # cannot turn this accepted write into a retryable client failure.
-        # Keep it under write_lock: a later config/set must not resurrect a
-        # marker between this commit and the ownership decision (#335).
-        await _purge_trail_recorder(hass, msg["config"])
-    hass.bus.async_fire("houseplan_config_updated", external_screens_config_event(
-        data.get("config") or DEFAULT_CONFIG, msg["config"], int(current_rev), int(new_rev)))
-    if contact_layout is not None:
-        hass.bus.async_fire("houseplan_layout_updated", {"rev": next_layout_rev})
-    _refresh_trail_recorder(hass)
-    # refresh repair issues (broken plan references) without waiting for a restart
-    entry = get_entry(hass)
-    if entry is not None:
-        from .repairs import async_check_plan_files
-
-        hass.async_create_task(async_check_plan_files(hass, entry))
-    result: dict[str, Any] = {"ok": True, "rev": new_rev}
-    if msg["config"].get("model_version") == 11:
-        accepted_layout = await rt.store.async_load() or {}
-        result.update(config=msg["config"], layout=accepted_layout.get("layout", {}),
-                      config_rev=new_rev, layout_rev=int(accepted_layout.get("rev", 0)))
-    if contact_layout is not None:
-        result["layout_rev"] = next_layout_rev
-        result["contact_layout"] = {key: contact_layout.get(key) for key in msg.get("contact_layout", {})}
-        result["layout_changes"] = layout_changes
-    if any(led_report.values()):
-        result["led_strips"] = led_report
-    connection.send_result(msg["id"], result)
+    await dispatch_plan_command(hass, connection, msg)
 
 
 @structural_websocket_command(
@@ -2474,91 +1876,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 )
 @websocket_api.async_response
 async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Narrow local node edit and its proved inverse; ordinary set stays strict."""
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Not allowed to edit the plan")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    if len(json.dumps(msg, separators=(",", ":"))) > MAX_CONFIG_BYTES:
-        connection.send_error(msg["id"], "too_large", "Node operation exceeds the configuration limit")
-        return
-    async with rt.write_lock:
-        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
-            return
-        data = resolved.config_data
-        rev = int(data.get("rev", 0))
-        if msg["expected_rev"] != rev:
-            connection.send_error(msg["id"], "conflict", "Plan revision changed; reload before moving a node")
-            return
-        previous = data.get("config", {})
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-        def _validate_node_cpu():
-            from .graph_validation_scope import graph_validation_scope
-
-            with graph_validation_scope():
-                trusted_current = rt.schema_clean_rev == rev
-                candidate = node_move_candidate(previous, msg["space_id"], msg["intent"],
-                                                msg["direction"], msg.get("before_space"), trusted_current=trusted_current)
-                # Only this runtime's exact-revision schema stamp authorizes
-                # untouched records. A cold/imported/legacy document is full.
-                scope = (ordinary_write_scope(candidate, previous) if trusted_current
-                         else OrdinaryWriteScope(set(), set(), "stored document not stamped"))
-                touched = None if scope.full else scope.touched_spaces
-                validate_wall_model_transition(candidate, previous, touched=touched)
-                candidate = validate_scoped_candidate(candidate, previous, scope)
-                validate_opening_passages(candidate, previous)
-                # Independently derive original host lineage; a cached graph
-                # index never grants authority to candidate or before_space.
-                proved_baseline = node_move_host_baseline(previous, candidate, msg["space_id"],
-                    msg["intent"], msg["direction"], msg.get("before_space"), trusted_current=trusted_current)
-                validate_partition_opening_hosts(candidate, proved_baseline)
-                inherited = rt.junction_baseline
-                counts = validate_junction_limits(candidate, previous, baseline_counts=(
-                    inherited[1] if inherited and inherited[0] == rev else None), touched_spaces=touched)
-                return candidate, counts
-
-        try:
-            candidate, counts = await hass.async_add_executor_job(_validate_node_cpu)
-        except (NodeMoveError, GraphError, JunctionLimitError, WallModelClientOutdatedError,
-                OpeningPassageError, PartitionOpeningHostError,
-                PartitionOpeningJambMarginError) as err:
-            connection.send_error(msg["id"], err.code, str(err))
-            return
-        except vol.Invalid:
-            connection.send_error(msg["id"], NodeMoveError().code, "Invalid node operation")
-            return
-        except Exception:  # noqa: BLE001 - processing failure is not proof of invalid geometry
-            _LOGGER.exception("House Plan: node operation processing failed")
-            connection.send_error(msg["id"], "node_move_backend_unavailable",
-                                  "Node operation could not be processed; try again")
-            return
-        if candidate == previous:
-            connection.send_result(msg["id"], {"ok": True, "rev": rev, "config": candidate})
-            return
-        if len(json.dumps(candidate, separators=(",", ":"))) > MAX_CONFIG_BYTES:
-            connection.send_error(msg["id"], "too_large", "Result exceeds the configuration limit")
-            return
-        new_rev = rev + 1
-        try:
-            # #1306: candidate is the canonical output of the schema above.
-            # Keep the central durable/ACL/migration barrier, without replaying
-            # graph projection and coordinate normalization in another worker.
-            await async_save_config_state(rt, candidate, new_rev, previous_rev=rev,
-                                          previous=data, canonical=True, authorize=_write_authority(hass, connection))
-        except ImportFailure as err:
-            _send_import_error(connection, msg["id"], err)
-            return
-        rt.junction_baseline = (new_rev, counts)
-        rt.schema_clean_rev = new_rev
-        try:
-            await _discard_optimizer_snapshot(rt)
-        except Exception:  # noqa: BLE001 - durable write already accepted
-            _LOGGER.exception("House Plan: discarding stale optimization backup failed")
-    hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
-    connection.send_result(msg["id"], {"ok": True, "rev": new_rev, "config": candidate})
+    await dispatch_plan_command(hass, connection, msg)
 
 
 @structural_websocket_command(
@@ -2573,272 +1894,21 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
 )
 @websocket_api.async_response
 async def ws_wall_node_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Delete only the proved two-section node under the existing atomic writer."""
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Not allowed to edit the plan")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    if len(json.dumps(msg, separators=(",", ":"))) > MAX_CONFIG_BYTES:
-        connection.send_error(msg["id"], "too_large", "Node operation exceeds the configuration limit")
-        return
-    async with rt.write_lock:
-        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
-            return
-        data = resolved.config_data
-        rev = int(data.get("rev", 0))
-        if msg["expected_rev"] != rev:
-            connection.send_error(msg["id"], "conflict", "Plan revision changed; reopen the menu before deleting a node")
-            return
-        previous = data.get("config", {})
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-        def _validate_delete_cpu():
-            prepared = prepare_node_delete(previous, msg["space_id"], msg["intent"],
-                                           msg["direction"], msg.get("before_space"))
-            candidate = prepared.candidate
-            validate_wall_model_transition(candidate, previous)
-            candidate = CONFIG_SCHEMA(candidate)
-            validate_opening_passages(candidate, previous)
-            # Original carrier IDs authorize the local rehost; candidate IDs
-            # do not grant themselves authority. Ordinary strict jambs remain.
-            baseline = prepared.host_baseline(candidate)
-            validate_partition_opening_hosts(candidate, baseline)
-            inherited = rt.junction_baseline
-            counts = validate_junction_limits(candidate, previous, baseline_counts=(
-                inherited[1] if inherited and inherited[0] == rev else None))
-            return candidate, counts
-
-        try:
-            candidate, counts = await hass.async_add_executor_job(_validate_delete_cpu)
-        except (NodeDeleteError, GraphError, JunctionLimitError, WallModelClientOutdatedError,
-                OpeningPassageError, PartitionOpeningHostError,
-                PartitionOpeningJambMarginError) as err:
-            connection.send_error(msg["id"], err.code, str(err))
-            return
-        except vol.Invalid:
-            connection.send_error(msg["id"], NodeDeleteError().code, "Invalid node deletion")
-            return
-        except Exception:  # noqa: BLE001 - processing failure does not authorize a write
-            _LOGGER.exception("House Plan: node deletion processing failed")
-            connection.send_error(msg["id"], "node_delete_backend_unavailable",
-                                  "Node deletion could not be processed; try again")
-            return
-        if candidate == previous:
-            connection.send_result(msg["id"], {"ok": True, "rev": rev, "config": candidate})
-            return
-        if len(json.dumps(candidate, separators=(",", ":"))) > MAX_CONFIG_BYTES:
-            connection.send_error(msg["id"], "too_large", "Result exceeds the configuration limit")
-            return
-        new_rev = rev + 1
-        try:
-            await async_save_config_state(rt, candidate, new_rev, previous_rev=rev,
-                                          authorize=_write_authority(hass, connection))
-        except ImportFailure as err:
-            _send_import_error(connection, msg["id"], err)
-            return
-        rt.junction_baseline = (new_rev, counts)
-        try:
-            await _discard_optimizer_snapshot(rt)
-        except Exception:  # noqa: BLE001 - durable write already accepted
-            _LOGGER.exception("House Plan: discarding stale optimization backup failed")
-    hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
-    connection.send_result(msg["id"], {"ok": True, "rev": new_rev, "config": candidate})
+    await dispatch_plan_command(hass, connection, msg)
 
 
 # ---------------- whole-plan maintenance ----------------
 
 
-def _space_marker_dependencies(
-    config: dict[str, Any], layout: dict[str, Any], space_id: str,
-) -> list[str]:
-    """Active marker ids that make deleting a space unsafe (deduplicated)."""
-    space = next(
-        (item for item in config.get("spaces") or [] if item.get("id") == space_id),
-        None,
-    )
-    room_ids = {
-        str(room.get("id")) for room in (space or {}).get("rooms") or []
-        if room.get("id") is not None
-    }
-    dependencies = {
-        str(marker.get("id"))
-        for marker in config.get("markers") or []
-        if marker.get("removed") is not True
-        and marker.get("id") is not None
-        and (
-            marker.get("space") == space_id
-            or (
-                marker.get("room_id") is not None
-                and str(marker.get("room_id")) in room_ids
-            )
-            or (layout.get(str(marker.get("id"))) or {}).get("s") == space_id
-        )
-    }
-    return sorted(dependencies)
 
 
-def _space_delete_candidate(
-    config: dict[str, Any], layout: dict[str, Any], space_id: str,
-) -> tuple[dict[str, Any], dict[str, Any], list[str], int]:
-    """Return a pure exact pair; blockers leave both inputs unchanged."""
-    candidate_config = json.loads(json.dumps(config))
-    candidate_layout = json.loads(json.dumps(layout))
-    dependencies = _space_marker_dependencies(candidate_config, candidate_layout, space_id)
-    spaces = candidate_config.get("spaces") or []
-    deleting_last_space = len(spaces) == 1 and spaces[0].get("id") == space_id
-    if dependencies and not deleting_last_space:
-        return candidate_config, candidate_layout, dependencies, 0
-    space = next(
-        (item for item in candidate_config.get("spaces") or []
-         if item.get("id") == space_id),
-        None,
-    )
-    room_ids = {
-        str(room.get("id")) for room in (space or {}).get("rooms") or []
-        if room.get("id") is not None
-    }
-    candidate_config["spaces"] = [
-        item for item in candidate_config.get("spaces") or []
-        if item.get("id") != space_id
-    ]
-    for remaining_space in candidate_config["spaces"]:
-        for stair in remaining_space.get("stairs") or []:
-            if isinstance(stair, dict) and stair.get("target_space_id") == space_id:
-                stair["target_space_id"] = None
-    for marker in candidate_config.get("markers") or []:
-        # #162/#822: fulfil the confirmation in the same authoritative pair.
-        vacuum = marker.get("vacuum")
-        routes = vacuum.get("map_routes") if isinstance(vacuum, dict) else None
-        if isinstance(routes, list):
-            kept_routes = [
-                route for route in routes
-                if not isinstance(route, dict) or route.get("space") != space_id
-            ]
-            if len(kept_routes) != len(routes):
-                vacuum["map_routes"] = kept_routes
-        marker_id = str(marker.get("id")) if marker.get("id") is not None else None
-        marker_position = candidate_layout.get(marker_id) if marker_id is not None else None
-        references_deleted_space = (
-            marker.get("space") == space_id
-            or (
-                marker.get("room_id") is not None
-                and str(marker.get("room_id")) in room_ids
-            )
-            or (
-                isinstance(marker_position, dict)
-                and marker_position.get("s") == space_id
-            )
-        )
-        if deleting_last_space and references_deleted_space:
-            marker.pop("space", None)
-            marker.pop("room_id", None)
-            continue
-        if marker.get("removed") is not True:
-            continue
-        if marker.get("space") == space_id:
-            marker.pop("space", None)
-        if (marker.get("room_id") is not None
-                and str(marker.get("room_id")) in room_ids):
-            marker.pop("room_id", None)
-    removed_layout = 0
-    for key in list(candidate_layout):
-        position = candidate_layout.get(key)
-        if isinstance(position, dict) and position.get("s") == space_id:
-            del candidate_layout[key]
-            removed_layout += 1
-    return candidate_config, candidate_layout, dependencies, removed_layout
 
 
-def _delete_plan_markers(
-    config: dict[str, Any], layout: dict[str, Any], marker_ids: list[str],
-) -> list[str]:
-    """Delete markers the way the device dialog's «Delete» does (#819).
-
-    Mirror of the card's ``deletePlanMarkerRecords`` and the cleanup around
-    it (``src/space-deletion.ts`` ``deletePlanMarkers``; the shared fixture
-    ``test/fixtures/space-delete-with-markers.json`` pins both): a real binding
-    drops every marker of that binding and leaves a hidden tombstone of the
-    exact binding, a virtual marker simply goes; links to the dropped ids in
-    other markers' ``controls``, LED strips and area snapshots go with them,
-    and so do their layout positions. Mutates the given (already copied)
-    pair; returns the dropped ids, sorted.
-    """
-    dropped: set[str] = set()
-    for marker_id in sorted(marker_ids):
-        markers = config.get("markers") or []
-        target = next(
-            (marker for marker in markers
-             if marker.get("id") == marker_id and marker.get("removed") is not True),
-            None,
-        )
-        if target is None:
-            continue
-        binding = target.get("binding")
-        virtual = binding == "virtual"
-        kept = []
-        for marker in markers:
-            if marker.get("id") == marker_id or (not virtual and marker.get("binding") == binding):
-                dropped.add(str(marker.get("id")))
-            else:
-                kept.append(marker)
-        if not virtual:
-            kept.append({"id": marker_id, "binding": binding, "removed": True, "hidden": True})
-        config["markers"] = kept
-    if not dropped:
-        return []
-    for marker in config.get("markers") or []:
-        controls = marker.get("controls")
-        if not isinstance(controls, list):
-            continue
-        links = [
-            ref for ref in controls
-            if not (isinstance(ref, str) and ref.startswith("marker:")
-                    and ref[len("marker:"):] in dropped)
-        ]
-        if len(links) != len(controls):
-            marker["controls"] = links or None
-    for space in config.get("spaces") or []:
-        for strip in space.get("led_strips") or []:
-            if isinstance(strip, dict) and strip.get("marker") in dropped:
-                strip["marker"] = None
-                strip["active"] = True
-    snapshot = (config.get("settings") or {}).get("marker_area_snapshot")
-    if isinstance(snapshot, dict):
-        for marker_id in dropped:
-            snapshot.pop(marker_id, None)
-    for marker_id in dropped:
-        layout.pop(marker_id, None)
-    return sorted(dropped)
 
 
-def _space_delete_target(
-    config: dict[str, Any], layout: dict[str, Any], space_id: str,
-    *, remove_markers: bool = False,
-) -> tuple[dict[str, Any], dict[str, Any], list[str], int, list[str]]:
-    """The exact pair ``space/delete`` commits, and the markers it deleted.
-
-    Without ``remove_markers`` this is the #244 candidate unchanged. With it
-    (#819) every active marker that blocks the delete first goes the way
-    ``_delete_plan_markers`` sends it, so the space is no longer in use. The
-    last space keeps its own rule: its markers are detached, never deleted.
-    """
-    source_config, source_layout = config, layout
-    removed_markers: list[str] = []
-    spaces = config.get("spaces") or []
-    if remove_markers and not (len(spaces) == 1 and spaces[0].get("id") == space_id):
-        source_config = json.loads(json.dumps(config))
-        source_layout = json.loads(json.dumps(layout))
-        removed_markers = _delete_plan_markers(
-            source_config, source_layout,
-            _space_marker_dependencies(source_config, source_layout, space_id),
-        )
-    target_config, target_layout, dependencies, removed_layout = _space_delete_candidate(
-        source_config, source_layout, space_id,
-    )
-    removed_layout += len(layout) - len(source_layout)
-    return target_config, target_layout, dependencies, removed_layout, removed_markers
 
 
 async def _forget_deleted_markers(
@@ -2896,134 +1966,10 @@ async def _forget_deleted_markers(
 )
 @websocket_api.async_response
 async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Delete one space as a crash-recoverable config/layout pair."""
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Only editors may delete spaces")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    space_id = msg["space_id"]
-    if not valid_space_id(space_id):
-        connection.send_error(msg["id"], "invalid_space_id", "Invalid space id")
-        return
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    try:
-        async with rt.write_lock:
-            resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-            if resolved is None:
-                return
-            config_data = resolved.config_data
-            layout_data = resolved.layout_data
-            config_rev = int(config_data.get("rev", 0))
-            layout_rev = int(layout_data.get("rev", 0))
-            if (msg["expected_config_rev"] != config_rev
-                    or msg["expected_layout_rev"] != layout_rev):
-                connection.send_error(msg["id"], "conflict", "Plan changed elsewhere")
-                return
-            current_config = config_data.get("config") or DEFAULT_CONFIG
-            current_layout = layout_data.get("layout") or {}
-            if not any(
-                item.get("id") == space_id for item in current_config.get("spaces") or []
-            ):
-                connection.send_error(msg["id"], "space_not_found", "Space no longer exists")
-                return
-            new_config_rev = config_rev + 1
-            new_layout_rev = layout_rev + 1
-
-            def _prepare_delete_cpu():
-                (
-                    target_config, target_layout, dependencies, removed_layout, removed_markers,
-                ) = _space_delete_target(
-                    current_config, current_layout, space_id,
-                    remove_markers=msg["remove_markers"],
-                )
-                guard_opening_features_write(target_config, current_config, msg.get("opening_features_api"))
-                spaces = current_config.get("spaces") or []
-                deleting_last_space = (
-                    len(spaces) == 1 and spaces[0].get("id") == space_id
-                )
-                if dependencies and not deleting_last_space:
-                    return None, None, dependencies, removed_layout, removed_markers
-                target_config = CONFIG_SCHEMA(target_config)
-                validate_active_marker_ids(target_config, current_config)
-                target_layout = LAYOUT_SCHEMA(target_layout)
-                original_metadata = _layout_metadata(layout_data)
-                final_metadata = {
-                    key: value for key, value in original_metadata.items()
-                    if key not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup", "geom_pending"}
-                }
-                final_metadata[_OPTIMIZE_BACKUP] = {
-                    "kind": "space_delete", "config": copy.deepcopy(current_config),
-                    "layout": copy.deepcopy(current_layout), "created": int(time.time()),
-                    "after_config_rev": new_config_rev, "after_layout_rev": new_layout_rev,
-                }
-                pending = {
-                    "kind": "space_delete",
-                    "config": canonicalize_config_geometry(target_config),
-                    "layout": canonicalize_layout_geometry(target_layout),
-                    "config_rev": new_config_rev,
-                    "layout_rev": new_layout_rev,
-                    "final_metadata": final_metadata,
-                }
-                rollback = {
-                    "kind": "space_delete_rollback",
-                    "config": canonicalize_config_geometry(current_config),
-                    "layout": canonicalize_layout_geometry(current_layout),
-                    "config_rev": config_rev,
-                    "layout_rev": layout_rev,
-                    "final_metadata": original_metadata,
-                }
-                return pending, rollback, dependencies, removed_layout, removed_markers
-
-            pending, rollback, dependencies, removed_layout, removed_markers = (
-                await hass.async_add_executor_job(_prepare_delete_cpu)
-            )
-            if pending is None:
-                connection.send_error(
-                    msg["id"], "space_in_use",
-                    f"Space is still used by {len(dependencies)} active marker(s)",
-                )
-                return
-            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))
-            if removed_markers:
-                # Under the lock, like config/set: a later write must not
-                # resurrect a marker between this commit and its clean-up.
-                await _forget_deleted_markers(hass, pending["config"], removed_markers)
-    except PairCommitFailure as err:
-        message = (
-            "Space delete failed; the previous plan is pending recovery"
-            if err.recovery_pending
-            else "Space delete failed and the previous plan was restored"
-        )
-        connection.send_error(msg["id"], "commit_failed", message)
-        return
-    except ImportFailure as err:
-        _send_import_error(connection, msg["id"], err)
-        return
-    except DuplicateMarkerIdError as err:
-        connection.send_error(msg["id"], err.code, str(err))
-        return
-    except vol.Invalid as err:
-        connection.send_error(msg["id"], getattr(err, "code", "invalid_config"), str(err))
-        return
-    except Exception:  # noqa: BLE001 - best-effort backup pruning never fails the request
-        _LOGGER.exception("House Plan space delete failed")
-        connection.send_error(msg["id"], "commit_failed", "Space delete failed")
-        return
-
-    hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
-    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})
-    _refresh_trail_recorder(hass)
-    connection.send_result(msg["id"], {
-        "ok": True,
-        "config_rev": new_config_rev,
-        "layout_rev": new_layout_rev,
-        "removed_layout": removed_layout,
-        "removed_markers": removed_markers,
-        "can_undo": True,
-        "config": pending["config"], "layout": pending["layout"],
-    })
+    await dispatch_plan_command(hass, connection, msg)
 
 
 @structural_websocket_command(
@@ -3039,206 +1985,10 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
 )
 @websocket_api.async_response
 async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Atomically-intended replacement of config+layout with one-deep undo.
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    Home Assistant stores are separate files, so a literal cross-file
-    transaction is impossible. Persisting the target as an intent before
-    either half changes makes a crash resumable during the next setup; the UI
-    only receives success once both halves are durable.
-    """
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Houseplan write permission is required to optimize plans")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
-    size = len(json.dumps(msg["config"], separators=(",", ":")))
-    if size > MAX_CONFIG_BYTES:
-        connection.send_error(
-            msg["id"], "too_large",
-            f"Configuration is {size // 1024} KB, the limit is {MAX_CONFIG_BYTES // 1024} KB",
-        )
-        return
-
-    async with rt.write_lock:
-        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
-            return
-        config_data = resolved.config_data
-        layout_data = resolved.layout_data
-        config_rev = int(config_data.get("rev", 0))
-        layout_rev = int(layout_data.get("rev", 0))
-        if msg["expected_config_rev"] != config_rev or msg["expected_layout_rev"] != layout_rev:
-            connection.send_error(
-                msg["id"], "conflict",
-                f"Plan changed elsewhere (config {config_rev}, layout {layout_rev})",
-            )
-            return
-
-        try:
-            guard_opening_features_write(msg["config"], config_data.get("config"), msg.get("opening_features_api"))
-        except vol.Invalid as err:
-            connection.send_error(msg["id"], getattr(err, "code", "invalid_format"), str(err))
-            return
-
-        readable_entity_ids = _readable_entity_ids(hass, connection)
-
-        # Optimization is a normal configuration write with an additional
-        # layout transaction. It must enforce the same marker-link semantics
-        # as config/set; otherwise a crafted client can persist a new cycle.
-        # #330 §4.1: the same executor treatment as config/set — Optimize
-        # carries schema + a possible full migration, the costliest CPU path
-        # of all writers, and it used to run on the event loop.
-        optimize_radar_registry = radar_registry_evidence(hass)
-
-        def _validate_optimize_cpu():
-            def _normalize(candidate):
-                from .graph_write import prepare_graph_candidate
-                validate_opening_passages(candidate, config_data.get("config"))
-                candidate = prepare_graph_candidate(candidate, config_data.get("config"), msg.get("graph_change"), force=True)
-                validate_wall_model_transition(candidate, config_data.get("config"))
-                return CONFIG_SCHEMA(candidate)
-
-            checked = prepare_ordinary_summary_candidate(
-                msg["config"], config_data.get("config"), readable_entity_ids, _normalize,
-            )
-            migrated_size = len(json.dumps(checked, separators=(",", ":")))
-            if migrated_size > MAX_CONFIG_BYTES:
-                return None, migrated_size
-            msg["config"].clear()
-            msg["config"].update(checked)
-            validate_active_marker_ids(msg["config"], config_data.get("config"))
-            validate_marker_controls(msg["config"], config_data.get("config"))
-            validate_marker_light_entities(msg["config"], config_data.get("config"))
-            validate_marker_radars(
-                msg["config"], config_data.get("config"),
-                registry=optimize_radar_registry,
-            )
-            validate_marker_value_badges(msg["config"], config_data.get("config"))
-            validate_marker_vacuum_routes(msg["config"], config_data.get("config"))
-            validate_opening_passages(msg["config"], config_data.get("config"))
-            validate_partition_opening_hosts(
-                msg["config"], config_data.get("config"),
-                allow_optimize_rehost=True,
-            )
-            # #333: Optimize is a normal configuration write for the junction
-            # limits too — an honest client's optimization never ADDS a
-            # violation (#329 AC10), so this gate is a no-op for legitimate
-            # flows and refuses only a crafted payload that used this command
-            # as a side door around config/set. Inheritance is counted per
-            # rule exactly as in config/set: repairing a legacy plan that
-            # already carries violations still passes.
-            return validate_junction_limits(
-                msg["config"], config_data.get("config"),
-            ), None
-        try:
-            optimize_counts, oversize = await hass.async_add_executor_job(
-                _validate_optimize_cpu,
-            )
-            if oversize is not None:
-                connection.send_error(
-                    msg["id"], "too_large",
-                    f"Configuration is {oversize // 1024} KB, "
-                    f"the limit is {MAX_CONFIG_BYTES // 1024} KB",
-                )
-                return
-        except (
-            DuplicateMarkerIdError, JunctionLimitError, MarkerControlError, OpeningPassageError,
-            PartitionOpeningHostError, PartitionOpeningJambMarginError,
-            WallModelClientOutdatedError,
-            WallSegmentMigrationError,
-        ) as err:
-            connection.send_error(msg["id"], err.code, str(err))
-            return
-        except (RadarValidationError, GraphError) as err:
-            connection.send_error(msg["id"], err.code, str(err))
-            return
-        except vol.Invalid as err:
-            connection.send_error(msg["id"], "invalid_format", str(err))
-            return
-
-        missing = await hass.async_add_executor_job(
-            _missing_internal_plans,
-            Path(hass.config.path(PLANS_DIR)),
-            msg["config"],
-            config_data.get("config"),
-        )
-        if missing:
-            connection.send_error(
-                msg["id"], "missing_plan",
-                "Plan file no longer exists: " + ", ".join(sorted(missing)),
-            )
-            return
-
-        new_config_rev = config_rev + 1
-        new_layout_rev = layout_rev + 1
-        backup = {
-            "kind": "optimize",
-            "config": copy.deepcopy(
-                config_data.get("config") or DEFAULT_CONFIG
-            ),
-            "layout": canonicalize_layout_geometry(
-                layout_data.get("layout", {})
-            ),
-            "created": int(time.time()),
-            "after_config_rev": new_config_rev,
-            "after_layout_rev": new_layout_rev,
-        }
-        original_metadata = _layout_metadata(layout_data)
-        final_metadata = {
-            key: value for key, value in original_metadata.items()
-            if key not in {
-                _OPTIMIZE_BACKUP, _OPTIMIZE_PENDING,
-                "repair_backup", "geom_pending",
-            }
-        }
-        final_metadata[_OPTIMIZE_BACKUP] = backup
-        pending = {
-            "kind": "optimize",
-            "config": canonicalize_config_geometry(msg["config"]),
-            "layout": canonicalize_layout_geometry(msg["layout"]),
-            "config_rev": new_config_rev,
-            "layout_rev": new_layout_rev,
-            "final_metadata": final_metadata,
-        }
-        rollback = {
-            "kind": "optimize_rollback",
-            "config": canonicalize_config_geometry(
-                config_data.get("config") or DEFAULT_CONFIG
-            ),
-            "layout": canonicalize_layout_geometry(
-                layout_data.get("layout") or {}
-            ),
-            "config_rev": config_rev,
-            "layout_rev": layout_rev,
-            "final_metadata": original_metadata,
-        }
-        try:
-            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))
-        except PairCommitFailure as err:
-            message = (
-                "Plan optimization failed; the previous plan is pending recovery"
-                if err.recovery_pending
-                else "Plan optimization failed and the previous plan was restored"
-            )
-            connection.send_error(msg["id"], "commit_failed", message)
-            return
-        # The optimized candidate is now the stored document: its junction
-        # counts are the next write's baseline (#333 AC3, symmetric with
-        # config/set — otherwise the next save re-judges `previous` for
-        # nothing and the #330 cache loses its point).
-        rt.junction_baseline = (int(new_config_rev), optimize_counts or {})
-
-    hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
-    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})
-    _refresh_trail_recorder(hass)
-    connection.send_result(msg["id"], {
-        "ok": True,
-        "config_rev": new_config_rev,
-        "layout_rev": new_layout_rev,
-        "can_undo": True,
-        "config": pending["config"], "layout": pending["layout"],
-    })
+    await dispatch_plan_command(hass, connection, msg)
 
 
 @structural_websocket_command(
@@ -3250,104 +2000,10 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
 )
 @websocket_api.async_response
 async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Restore the snapshot, but never overwrite edits made after optimization."""
-    if not _check_write(hass, connection):
-        connection.send_error(msg["id"], "unauthorized", "Houseplan write permission is required to undo optimization")
-        return
-    rt = _runtime(hass, connection, msg["id"])
-    if rt is None:
-        return
+    """HA transport delegates to the canonical plan command service."""
+    from .command_adapter import dispatch_plan_command
 
-    restored_kind = "optimize"
-    async with rt.write_lock:
-        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
-        if resolved is None:
-            return
-        config_data = resolved.config_data
-        layout_data = resolved.layout_data
-        config_rev = int(config_data.get("rev", 0))
-        layout_rev = int(layout_data.get("rev", 0))
-        if msg["expected_config_rev"] != config_rev or msg["expected_layout_rev"] != layout_rev:
-            connection.send_error(msg["id"], "conflict", "Plan changed elsewhere")
-            return
-        if not _optimizer_backup_is_current(config_data, layout_data):
-            connection.send_error(
-                msg["id"], "no_backup",
-                "The optimization backup is unavailable or a later edit made it stale",
-            )
-            return
-
-        backup = layout_data[_OPTIMIZE_BACKUP]
-        if "archive_snapshot" in backup:
-            from .backup_transaction import undo_archive_locked
-            await undo_archive_locked(hass, connection, msg, rt, config_data, layout_data)
-            return
-        restored_kind = str(backup.get("kind") or "optimize")
-        restored_config = copy.deepcopy(
-            backup.get("config") or DEFAULT_CONFIG
-        )
-        restored_layout = canonicalize_layout_geometry(
-            backup.get("layout") or {}
-        )
-        new_config_rev = config_rev + 1
-        new_layout_rev = layout_rev + 1
-        original_metadata = _layout_metadata(layout_data)
-        final_metadata = {
-            key: value for key, value in original_metadata.items()
-            if key not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup"}
-        }
-        pending = {
-            "kind": "import_undo" if restored_kind == "import" else "optimize_undo",
-            "config": restored_config,
-            "layout": restored_layout,
-            "config_rev": new_config_rev,
-            "layout_rev": new_layout_rev,
-            "final_metadata": final_metadata,
-        }
-        rollback = {
-            "kind": (
-                "import_undo_rollback"
-                if restored_kind == "import"
-                else "optimize_undo_rollback"
-            ),
-            "config": canonicalize_config_geometry(
-                config_data.get("config") or DEFAULT_CONFIG
-            ),
-            "layout": canonicalize_layout_geometry(
-                layout_data.get("layout") or {}
-            ),
-            "config_rev": config_rev,
-            "layout_rev": layout_rev,
-            "final_metadata": original_metadata,
-        }
-        try:
-            await _commit_pair(rt, pending, rollback, authorize=_write_authority(hass, connection))
-        except PairCommitFailure as err:
-            message = (
-                "Plan undo failed; the previous plan is pending recovery"
-                if err.recovery_pending
-                else "Plan undo failed and the previous plan was restored"
-            )
-            connection.send_error(msg["id"], "commit_failed", message)
-            return
-
-    hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
-    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})
-    if restored_kind == "import":
-        await _purge_trail_recorder(hass, restored_config)
-        entry = get_entry(hass)
-        if entry is not None:
-            from .repairs import async_check_plan_files
-
-            hass.async_create_task(async_check_plan_files(hass, entry))
-    _refresh_trail_recorder(hass)
-    connection.send_result(msg["id"], {
-        "ok": True,
-        "config_rev": new_config_rev,
-        "layout_rev": new_layout_rev,
-        "can_undo": False,
-        "config": pending["config"], "layout": pending["layout"],
-    })
+    await dispatch_plan_command(hass, connection, msg)
 
 
 # ---------------- plan uploads ----------------
