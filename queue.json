@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15437,
+  "revision": 15438,
   "nextTicket": 509,
   "nextFence": 509,
   "tasks": {
@@ -5010,15 +5010,16 @@
         "tools/smoke_core_package.py"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794958494008,
-        "entry": 1,
-        "detail": "Поведение: process-next/test/standalone-source-scope.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/standalone-core-import-boundary.test.mjs: failed; Backend: tests_backend/test_ha_config_set_scoped.py: failed; Backend: tests_backend/test_ha_editor_command_latency.py: failed; Backend: tests_backend/test_plan_upload.py: failed",
-        "eventId": "finish:c238e9cb-f702-4f97-8d29-8fe228fe1446:finish:3:return:return:1460"
-      }
+        "at": 1794958936600,
+        "entry": 2,
+        "detail": "Backend: tests_backend/test_ha_websocket.py: failed; Браузер: wall face lineage: cancelled; Браузер: wall face room split: cancelled; Браузер: wall node attach: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно",
+        "eventId": "finish:4481e07f-e3b4-416c-89db-71e0e09f6a1c:finish:3:return:return:1460"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -5403,18 +5404,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1460,
-    "worker": "finish",
-    "token": "508:finish:4481e07f-e3b4-416c-89db-71e0e09f6a1c:finish:1:admit",
-    "fence": 508,
-    "materialSha": "f017641b56fd78679cd5dc029663361110d40fee",
-    "expectedBase": "6d28743ea061ad639f508675d0c48fe22865cb5c",
-    "phase": "testing",
-    "admittedAt": 1794958656864,
-    "expiresAt": 1794959195889,
-    "patchId": "f73efcd8f57e9698a8c2f7e4bfebab57063e5f6a"
-  },
+  "active": null,
   "events": {
     "github:44179361876:1:spec:1460:spec-request": {
       "digest": "f2296eb6134c81b07ee45ff6eaab71d99d0417247637194b99415f3e49e1e14c",
@@ -5556,6 +5546,10 @@
       "digest": "d73a339eef1f36fa66fae04eff66e695fd9ba12a326c5f3204a83e3d85ab710d",
       "issue": 1460
     },
+    "finish:4481e07f-e3b4-416c-89db-71e0e09f6a1c:finish:3:return": {
+      "digest": "e798966d8c793ebe0af23e5818f55d5112fee784800512fa3959a92199b07463",
+      "issue": 1460
+    },
     "github:44180756362:1:label:spec-request:spec-resubmitted:1460": {
       "digest": "4dbe3d624942a7be0c459e5adaedc90c4ed52de3a15719743143b038f2a8111d",
       "issue": 1460,
@@ -5662,6 +5656,26 @@
         "layer": "product",
         "materialSha": "f017641b56fd78679cd5dc029663361110d40fee",
         "phase": "sync"
+      }
+    },
+    "finish:4481e07f-e3b4-416c-89db-71e0e09f6a1c:finish:3:return:return:1460": {
+      "digest": "e798966d8c793ebe0af23e5818f55d5112fee784800512fa3959a92199b07463",
+      "issue": 1460,
+      "message": {
+        "kind": "return",
+        "issue": 1460,
+        "at": 1794958936600,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794958936600,
+          "entry": 2,
+          "detail": "Backend: tests_backend/test_ha_websocket.py: failed; Браузер: wall face lineage: cancelled; Браузер: wall face room split: cancelled; Браузер: wall node attach: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно",
+          "eventId": "finish:4481e07f-e3b4-416c-89db-71e0e09f6a1c:finish:3:return:return:1460"
+        }
       }
     }
   },
