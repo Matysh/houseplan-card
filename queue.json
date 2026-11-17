@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15177,
+  "revision": 15178,
   "nextTicket": 499,
   "nextFence": 499,
   "tasks": {
@@ -4957,14 +4957,16 @@
         "tests_backend/test_ifc_converter.py"
       ],
       "notice": {
-        "key": "1:Add owner-approved visual references and prepare private dependency tree after symlink-root refusal",
-        "reason": "Add owner-approved visual references and prepare private dependency tree after symlink-root refusal",
+        "key": "2:checks-failed",
+        "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1794942360943,
-        "entry": 1,
-        "eventId": "1458-visuals-and-private-dependencies-20261117:return:1458"
-      }
+        "at": 1794943129560,
+        "entry": 2,
+        "detail": "Поведение: process-next/test/e2e.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
+        "eventId": "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:3:return:return:1458"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -5321,18 +5323,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1458,
-    "worker": "finish",
-    "token": "498:finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:1:admit",
-    "fence": 498,
-    "materialSha": "1eae56d95c687b22d9498231a00dfe50db2edce3",
-    "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
-    "phase": "testing",
-    "admittedAt": 1794942465004,
-    "expiresAt": 1794943361996,
-    "patchId": "ec5728b9f3c98e03b3961cb5e19ac76cb4851649"
-  },
+  "active": null,
   "events": {
     "github:44128949850:1:label:spec-request": {
       "digest": "57616174c5aa9fb713adb0f2ba28f1636969bb9af7c22a3c1561ea84fe7f8fa4",
@@ -5454,6 +5445,10 @@
       "digest": "37b46beb19d94ae709a4bc691ee70eeb05ee572c89e6c07ba2f4403b183f43bc",
       "issue": 1458
     },
+    "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:3:return": {
+      "digest": "26ba5ed73d3db35a921e8f914c2d0e366b775a6685fc30ea0209e62852ca5c87",
+      "issue": 1458
+    },
     "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
       "digest": "ceee9bb59e87f0cb827931c9dbe9ca9466f85d0fb5d4b2def92aff3ef6e9ee63",
       "issue": 1458,
@@ -5544,6 +5539,26 @@
         "layer": "product",
         "materialSha": "1eae56d95c687b22d9498231a00dfe50db2edce3",
         "phase": "sync"
+      }
+    },
+    "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:3:return:return:1458": {
+      "digest": "26ba5ed73d3db35a921e8f914c2d0e366b775a6685fc30ea0209e62852ca5c87",
+      "issue": 1458,
+      "message": {
+        "kind": "return",
+        "issue": 1458,
+        "at": 1794943129560,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794943129560,
+          "entry": 2,
+          "detail": "Поведение: process-next/test/e2e.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
+          "eventId": "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:3:return:return:1458"
+        }
       }
     }
   },
