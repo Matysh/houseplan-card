@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15147,
+  "revision": 15148,
   "nextTicket": 497,
   "nextFence": 497,
   "tasks": {
@@ -5192,18 +5192,12 @@
       }
     },
     "1458": {
-      "requestId": "spec:1458:5e7042742b3463e78702b92b4f7c65c741f852cac8dc640da4c558ab7d5b3f80",
-      "contextDigest": "5e7042742b3463e78702b92b4f7c65c741f852cac8dc640da4c558ab7d5b3f80",
+      "requestId": "spec:1458:cb4a142ec5c626474197b0aa5a9cef1e5d7b54c6e646f8cdd66680d675dfa13e",
+      "contextDigest": "cb4a142ec5c626474197b0aa5a9cef1e5d7b54c6e646f8cdd66680d675dfa13e",
       "base": "09f5f5082ce065406e1d5d275255875e082c6d34",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1794934195537,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44129081811",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1794934466759
     }
   },
   "reviewPublications": {
@@ -5232,6 +5226,19 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
+    },
+    "spec:1458:spec:1458:cb4a142ec5c626474197b0aa5a9cef1e5d7b54c6e646f8cdd66680d675dfa13e": {
+      "issue": 1458,
+      "kind": "spec",
+      "requestId": "spec:1458:cb4a142ec5c626474197b0aa5a9cef1e5d7b54c6e646f8cdd66680d675dfa13e",
+      "materialSha": "09f5f5082ce065406e1d5d275255875e082c6d34",
+      "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
+      "patchId": "cb4a142ec5c626474197b0aa5a9cef1e5d7b54c6e646f8cdd66680d675dfa13e",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-17T16:54:26.759Z"
+      }
     }
   },
   "waiting": [],
@@ -5256,6 +5263,26 @@
     "github:44130144804:1:completions:report:58dd4ff75d6f75271b91668306da9ac522544977be727253c45d0923d02ee26d": {
       "digest": "199253c3b8351ee3e815ba711504002d41752b7a84ea82bfd667fd0731ddc6ba",
       "issue": 1458
+    },
+    "github:44130920099:1:label:spec-request": {
+      "digest": "ceee9bb59e87f0cb827931c9dbe9ca9466f85d0fb5d4b2def92aff3ef6e9ee63",
+      "issue": 1458
+    },
+    "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
+      "digest": "ceee9bb59e87f0cb827931c9dbe9ca9466f85d0fb5d4b2def92aff3ef6e9ee63",
+      "issue": 1458,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1458,
+        "at": 1794934466759,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1458:cb4a142ec5c626474197b0aa5a9cef1e5d7b54c6e646f8cdd66680d675dfa13e",
+        "reviewChanges": "Подготовлено ТЗ, продуктовой реализации нет. Исходники изучены на dev `09f5f5082ce065406e1d5d275255875e082c6d34`: scripts/sh3d-convert/{page/app.mjs,build-page.mjs,output.mjs,easy-geometry.mjs,geometry-entry.ts}, типы RoomCfg/OpeningCfg, ограничения backend и тест автономной страницы. Пользователь выбрал встроенный движок и сохранение offline-контракта.\n\nДва настоящих старых IFC-экспорта проинвентаризированы по STEP-записям и связям; геометрическая конвертация не запускалась. ТЗ отделяет проверенные данные от будущих AC. web-ifc выбран по опубликованной версии и закреплённому исходнику; SINGLE_FILE/Worker требуют реализации и проверки, а не считаются доказанным готовым bundle. IfcOpenShell рассмотрен как альтернатива; его прямой JS/WASM существует, но в эту поставку не включён.\n\nМеста для внимания: reference line против оси физической стены; внутренние контуры комнат и общий граф; host после T/X-разбиения; многоэтажность и выбор frame; сквозные ограничения writer; честный частичный результат. КОМПАС не получает обещание распознавания произвольных тел: пригодность реального экспорта и XML ещё нужно подтвердить. ТЗ допускает поставку первичного Archicad/Revit-профиля с явным статусом «КОМПАС не подтверждён», если его файл не предоставлен; это соответствует отдельной проверке в исходном запросе.\n\nФайлы пользователей запрошены владельцем как возможный источник, но ещё не предоставлены. В ТЗ предусмотрена проверяемая таблица профилей; актуальные версии не объявляются поддержанными по старым примерам. Проверки сейчас: только авторская проверка формы данного ТЗ перед S4. Продуктовых тестов, SDK-установок, build, lint и прототипирования нет. После принятия ТЗ остановиться на S5; перехода к внедрению по этой команде нет.\n\n### Исправления по предыдущему ревью\n\n[Раунд 1 — нужны исправления](https://github.com/Matysh/houseplan-card/issues/1458#issuecomment-6954702287), workflow 44129081811. Один блокер устранён в ТЗ: отдельная emsdk vendor-сборка → закоммиченный артефакт/manifest → build-page/--check без SDK; source patch удаляет транспортные ветки, статический запрет не получает исключения; среда web,worker,node и единый async IFC API обеспечивают CLI/bundle/browser parity и происхождение backend golden.\n\nRead-only просмотр опубликованного web-ifc-api.js 0.0.79 подтвердил 4 fetch и 5 new XMLHttpRequest. Движок не запускался. Наличие этих ветвей в оригинале не выдаётся за доказательство, что уже подготовлена offline-сборка; необходимый custom loader описан как работа реализации. Добавлены проверка декодированного Worker/vendor и ограниченный отдельный маршрут пересборки vendor.\n\nПриняты уточнения: frameForEasy; 1 m только для дополнительных этажей, низкая стена собственного этажа сохраняется; открытая граница без boundaries только после проверки всех исходных стен; стена >100 cm — локальный пропуск с зависимостями; ленивый Init; доработка site-preparer для существующего PHP-shell с picture-elements и проверка CSP без самовольной правки Caddy. HEAD сайта сейчас вернул 200 без CSP/COOP/COEP — это наблюдение, не гарантия на момент выпуска.\n\nПроверки текущей редакции: авторская spec-check формы перед повторным S4; продуктовых прогонов/сборок/установок нет. Граница задачи прежняя: подготовка принятого ТЗ, затем остановка на S5.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
+      }
     }
   },
   "devWebhook": {
