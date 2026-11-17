@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15432,
+  "revision": 15433,
   "nextTicket": 509,
   "nextFence": 509,
   "tasks": {
@@ -4931,7 +4931,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794958652954,
       "reviewEntry": 2,
-      "patchId": "d2ecbec12dbe35b26cc409a37552ecc3bfb87cc9",
+      "patchId": "f73efcd8f57e9698a8c2f7e4bfebab57063e5f6a",
       "changedFiles": [
         "custom_components/houseplan/command_adapter.py",
         "custom_components/houseplan/command_legacy.py",
@@ -4978,15 +4978,19 @@
         "docs/STANDALONE-FRONTEND.md",
         "docs/release-ledger/v1.85.0/1460.json",
         "process-next/lib/task-selection.mjs",
+        "process-next/test/standalone-source-scope.test.mjs",
         "process-next/test/task-selection.test.mjs",
         "scripts/config-compatibility-inventory.json",
         "scripts/mutation-registry.mjs",
+        "test/open-passage-contract.test.mjs",
+        "test/standalone-core-import-boundary.test.mjs",
         "tests_backend/test_command_execution.py",
         "tests_backend/test_content_commands.py",
         "tests_backend/test_core_boundary.py",
         "tests_backend/test_core_conformance.py",
         "tests_backend/test_core_distribution.py",
         "tests_backend/test_ha_config_set_scoped.py",
+        "tests_backend/test_ha_editor_command_latency.py",
         "tests_backend/test_ha_import_export.py",
         "tests_backend/test_ha_input_security.py",
         "tests_backend/test_ha_space_delete_executor.py",
@@ -4999,6 +5003,7 @@
         "tests_backend/test_ha_wall_node_move_baseline.py",
         "tests_backend/test_ha_websocket.py",
         "tests_backend/test_plan_commands.py",
+        "tests_backend/test_plan_upload.py",
         "tests_backend/test_portable_commands.py",
         "tests_backend/test_projection.py",
         "tools/build_core_package.py",
@@ -5404,10 +5409,11 @@
     "token": "508:finish:4481e07f-e3b4-416c-89db-71e0e09f6a1c:finish:1:admit",
     "fence": 508,
     "materialSha": "f017641b56fd78679cd5dc029663361110d40fee",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "6d28743ea061ad639f508675d0c48fe22865cb5c",
+    "phase": "testing",
     "admittedAt": 1794958656864,
-    "expiresAt": 1794958956864
+    "expiresAt": 1794958962724,
+    "patchId": "f73efcd8f57e9698a8c2f7e4bfebab57063e5f6a"
   },
   "events": {
     "github:44179361876:1:spec:1460:spec-request": {
@@ -5528,6 +5534,10 @@
     },
     "finish:c238e9cb-f702-4f97-8d29-8fe228fe1446:finish:3:return": {
       "digest": "7ca3b2109fdede38108484d7425f2b67f7f26534eabf20c0c4785c9eaff227b0",
+      "issue": 1460
+    },
+    "finish:4481e07f-e3b4-416c-89db-71e0e09f6a1c:finish:2:synchronized": {
+      "digest": "146524e6c1350585eaf8456a2a163574dc8792faa5ac2029eac8bd615b221a18",
       "issue": 1460
     },
     "github:44180756362:1:label:spec-request:spec-resubmitted:1460": {
