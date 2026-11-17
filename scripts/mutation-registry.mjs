@@ -15790,8 +15790,8 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "custom_components/houseplan/core/portable_commands.py",
-    "find": "await env.leases.consume(session.authority.scope_id, message[\"token\"])",
-    "replace": "await candidate(session, message[\"token\"])\n                await env.leases.consume(session.authority.scope_id, message[\"token\"])"
+    "find": "            try:\n                await env.leases.consume(session.authority.scope_id, message[\"token\"])",
+    "replace": "            await candidate(session, message[\"token\"])\n            try:\n                await env.leases.consume(session.authority.scope_id, message[\"token\"])"
   }
 ],
   },
