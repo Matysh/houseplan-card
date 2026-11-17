@@ -50,14 +50,19 @@ function bodySolids(reader, element) {
   const matrix = reader.matrix(element);
   if (!horizontal(matrix)) fail();
   const bodies = reader.representations(element).filter(r => ifcText(r.RepresentationIdentifier).toLowerCase() === 'body');
-  return bodies.flatMap(r => reader.items(r, matrix)).map(({ item, matrix: m }) => solid(reader, item, m));
+  return bodies.flatMap(r => reader.items(r, matrix)).map(({ item, matrix: m }) => ({
+    ...solid(reader, item, m), layerScale: Math.hypot(...transform(m, [0, 1, 0], true)),
+  }));
 }
 
 export function readWall(reader, element, material) {
   const matrix = reader.matrix(element);
   if (!horizontal(matrix)) fail();
   const axes = reader.representations(element).filter(r => ifcText(r.RepresentationIdentifier).toLowerCase() === 'axis');
-  const lines = axes.flatMap(r => reader.items(r, matrix)).map(({ item, matrix: m }) => reader.curves(item, m));
+  const lines = axes.flatMap(r => reader.items(r, matrix)).map(({ item, matrix: m }) => {
+    if(!horizontal(m))fail();
+    return { points: reader.curves(item, m), matrix: m };
+  });
   let layer = null;
   if (material && reader.type(material) === 'IFCMATERIALLAYERSETUSAGE') {
     const set = reader.get(material.ForLayerSet);
@@ -65,12 +70,12 @@ export function readWall(reader, element, material) {
     if (ifcText(material.LayerSetDirection) !== 'AXIS2' || !(thickness > 0)) fail();
     const sign = ifcText(material.DirectionSense) === 'NEGATIVE' ? -1 : 1;
     const offset = reader.number(material.OffsetFromReferenceLine) * reader.scale + sign * thickness / 2;
-    layer = { thickness: thickness * Math.hypot(...transform(matrix, [0, 1, 0], true)), shift: transform(matrix, [0, offset, 0], true) };
+    layer = { thickness, offset };
   }
   let body, bodies, bodyError;
   try { bodies = bodySolids(reader, element); if (bodies.length === 1) body = { ...bodies[0], ...rectangle(bodies[0].poly) }; }
-  catch (error) { if (error.code === 'ifc_placement_cycle') throw error; bodyError = error.code; }
-  if (body && layer && Math.abs(body.thickness - layer.thickness) > .001) fail('ifc_thickness_conflict');
+  catch (error) { if (['ifc_placement_cycle','ifc_invalid_number','ifc_invalid_reference'].includes(error.code)) throw error; bodyError = error.code; }
+  if (body && layer && Math.abs(body.thickness - layer.thickness * body.layerScale) > .001) fail('ifc_thickness_conflict');
   // A trustworthy Axis/layer definition is the construction reference. The
   // rectangle body is a fallback, and can independently provide height.
   if (!lines.length || !layer) {
@@ -78,10 +83,11 @@ export function readWall(reader, element, material) {
     fail(bodyError);
   }
   const walls = [];
-  for (const points of lines) for (let i = 1; i < points.length; i++) {
+  for (const { points, matrix: lineMatrix } of lines) for (let i = 1; i < points.length; i++) {
     if (Math.abs(points[i][2] - points[i - 1][2]) > .001 || distance(points[i], points[i - 1]) < EPS) fail();
-    const shifted = [points[i - 1], points[i]].map(p => p.map((v, k) => v + layer.shift[k]).slice(0, 2));
-    walls.push({ a: shifted[0], b: shifted[1], cm: layer.thickness * 100,
+    const shift=transform(lineMatrix,[0,layer.offset,0],true);
+    const shifted = [points[i - 1], points[i]].map(p => p.map((v, k) => v + shift[k]).slice(0, 2));
+    walls.push({ a: shifted[0], b: shifted[1], cm: layer.thickness * Math.hypot(...transform(lineMatrix,[0,1,0],true)) * 100,
       zMin: bodies?.length === 1 ? bodies[0].zMin : null, zMax: bodies?.length === 1 ? bodies[0].zMax : null });
   }
   return walls;

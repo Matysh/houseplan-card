@@ -25,7 +25,8 @@ export function ifcFixture(options = {}) {
     const original=add('IFCSHAPEREPRESENTATION',context,text(label),text(type),list(items));
     if(!options.mapped)return original;
     const map=add('IFCREPRESENTATIONMAP',axis([1,2,0],'$',direction(0,1,0)),original);
-    const target=add('IFCCARTESIANTRANSFORMATIONOPERATOR3D',direction(0,1,0),direction(-1,0,0),point(1,2,0),'1.',direction(0,0,1));
+    const mappedScale=options.mappedScale??1;
+    const target=add('IFCCARTESIANTRANSFORMATIONOPERATOR3D',direction(0,1,0),direction(-1,0,0),point(mappedScale,2*mappedScale,0),n(mappedScale),direction(0,0,1));
     return add('IFCSHAPEREPRESENTATION',context,text(label),text('MappedRepresentation'),list([add('IFCMAPPEDITEM',map,target)]));
   };
   const polyline = points => options.indexed

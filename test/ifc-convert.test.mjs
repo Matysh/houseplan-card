@@ -97,6 +97,17 @@ test('#1458 repeated GUIDs do not merge rooms and are reported before download',
   assert.equal(result.report.levels[0].notes.filter(n=>n.code==='ifc_duplicate_guid').length,2);
 });
 
+for(const noWallBody of [false,true])test(`#1458 mapped scale preserves physical layer thickness, body absent=${noWallBody}`,async()=>{
+  const model=await readIfc(ifcFixture({mapped:true,mappedScale:2,referenceOffset:true,noRooms:true,noOpenings:true,noWallBody}));
+  const wall=model.entities.find(e=>e.kind==='wall');
+  assert.equal(wall.outcome,'transferred');
+  near(Math.hypot(wall.walls[0].b[0]-wall.walls[0].a[0],wall.walls[0].b[1]-wall.walls[0].a[1]),16);
+  near(wall.walls[0].cm,40);
+  near(wall.walls[0].a[0],0);near(wall.walls[0].a[1],0);
+  const offset=model.entities.filter(e=>e.kind==='wall').at(-1).walls[0];
+  near(offset.cm,40);near(offset.a[0],12);near(offset.a[1],.617);
+});
+
 test('#1458 source polyline walls retain openings on their actual segment',async()=>{
   const result=await convertIfc(ifcFixture({axisSplit:true,noWallBody:true,junctions:true}),options);
   assert.equal(space(result).openings.length,2);
