@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15185,
+  "revision": 15186,
   "nextTicket": 500,
   "nextFence": 500,
   "tasks": {
@@ -5542,7 +5542,8 @@
         "entry": 2,
         "track": "ask",
         "layer": "product",
-        "materialSha": "1eae56d95c687b22d9498231a00dfe50db2edce3"
+        "materialSha": "1eae56d95c687b22d9498231a00dfe50db2edce3",
+        "delivered": true
       }
     },
     "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:1:admit": {
