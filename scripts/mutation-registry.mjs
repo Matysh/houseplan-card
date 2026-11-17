@@ -17415,8 +17415,9 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'floor-cache-counter-skips-evicting-miss',
     guard: 'node demo/smoke_floor_geometry_cache.mjs',
-    because: '#769 AC7: a union built on a miss that evicts from the full pool must count; a counter '
-      + 'that skips that branch leaves the #735 guard as blind as the size snapshot it replaced',
+    because: '#769 AC7 / #1457: a new Resize preview builds a union while evicting from a full pool '
+      + 'and must increment its counter. A #1454 prepared-frame restore must stay build-free; '
+      + 'that warm path cannot witness the synchronous cold-build counter.',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: '        this._floorCacheBuilds.wallUnion++;\n',
@@ -18934,8 +18935,11 @@ const wallNodeDelete1045Cases = [
       find: "if (rightMouseDown) this._touchClickGuard.pointerDown((ev as PointerEvent).pointerId, 'mouse');",
       replace: '// mutant: capture hides fresh right down from the touch owner' }] },
   { id: 'node-delete-right-down-starts-pan-1045',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_wall_node_delete.mjs',
-    because: '#1045 AC6: the native right press and released-pointer motion must not arm pan or Move before the contextmenu.',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="1457 right mouse" test/wall-node-editor.test.mjs '
+      + '&& node demo/smoke_wall_node_delete.mjs',
+    because: '#1045 AC6 / #1457: a node consumes right down before downstream gesture owners; '
+      + 'test that component boundary as well as native no-pan behavior, which the stage independently protects.',
     patches: [{ file: 'src/wall-node-editor.ts',
       find: "      // starts Move or reaches the stage's pan owner.\n      ev.preventDefault(); ev.stopImmediatePropagation(); return true;",
       replace: "      // mutant: allow the stage to arm pan\n      return false;" }] },

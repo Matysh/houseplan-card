@@ -6,7 +6,7 @@ import { commitWallSegmentModel, WallSegmentModelError } from '../test-build/wal
 import { decodePoint, pointToNumbers } from '../test-build/plan-exact.js';
 import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-build/wall-node-move.js';
 
-function setup({ legacy = false, hitRadius = 0.0012 } = {}) {
+function setup({ legacy = false, hitRadius = 0.0012, deleteEnabled = false } = {}) {
   const raw = { model_version: 10, spaces: [{ id: 'f', rooms: [], wall_segments: [],
     partitions: [{ id: 'w', a: [0, 0], b: [1, 0], cm: 0 }] }], markers: [], settings: {} };
   const cfg = legacy ? raw : commitWallSegmentModel(raw).config;
@@ -46,6 +46,12 @@ function setup({ legacy = false, hitRadius = 0.0012 } = {}) {
       assert.deepEqual(r.space.plan_graph.nodes.find(n => n.id === h.intent.node_id).p, h.intent.target_p);
       return { ...cfg, spaces: [r.space] };
     }, record: (...args) => recorded.push(args), history: async () => {} };
+  if (deleteEnabled) port.delete = {
+    context: () => context, navigation: () => 0, epoch: () => 0, claim: () => () => true,
+    beforeIntent: () => true, basis: () => ({}), validate: () => true,
+    write: async () => { assert.fail('right down is not a delete command'); },
+    record: () => { assert.fail('right down cannot create history'); },
+  };
   const editor = new WallNodeEditor(port);
   let pointer = [0, 0];
   // A native up reports the current pointer, not an implicit jump to origin.
@@ -117,6 +123,24 @@ test('a successful node capture freezes the presented viewport before the first 
   assert.equal(s.writes.length, 1); assert.equal(s.recorded.length, 1);
   assert.equal(s.lifecycle.filter(phase => phase === 'freeze').length, 1);
   s.editor.dispose();
+});
+
+test('#1457 right mouse down is consumed before downstream gesture owners without acquiring Move', () => {
+  for (const enabled of [true, false]) {
+    const s = setup({ deleteEnabled: true }); s.context.enabled = enabled;
+    const calls = [];
+    const event = s.ev('pointerdown', 0, 0, { button: 2,
+      preventDefault: () => calls.push('prevent'), stopImmediatePropagation: () => calls.push('stop') });
+    try {
+      assert.equal(s.editor.guardEvent(event), enabled);
+      assert.deepEqual(calls, enabled ? ['prevent', 'stop'] : []);
+      assert.equal(s.editor.dragging, false);
+      assert.equal(s.editor.activePointerId, null);
+      assert.equal(s.capture.size, 0);
+      assert.deepEqual(s.lifecycle, []);
+      assert.equal(s.writes.length, 0); assert.equal(s.recorded.length, 0);
+    } finally { s.editor.dispose(); }
+  }
 });
 
 test('rejected node presses and failed capture do not acquire the viewport', () => {

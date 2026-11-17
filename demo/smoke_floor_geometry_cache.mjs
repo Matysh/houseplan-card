@@ -28,11 +28,10 @@
 //      union is the fresh card's on the stored record. (c) The bodies re-keyed
 //      for the preview are the fresh card's, a door cut into a partition next
 //      to the moving wall included.
-// #769 AC7 a planted cold build the size guard cannot see: the union pool is
-//      full (8), `garden`'s union is gone while its contours and clean floors
-//      stay warm. A four-switch cycle builds exactly that union — the build
-//      counter grows by one, it evicts one entry, every size stays — and the
-//      #735 switch-cycle decision names the wall union.
+// #769 AC7 / #1457: a full union pool must still count a real cold build.
+//      Resize uses a new preview record, outside #1454's prepared floor frame;
+//      it evicts from the full pool without increasing its size. A later warm
+//      switch deliberately restores the prepared frame without a main build.
 //
 // The independent card is the oracle: a new `houseplan-card` given the same
 // config through its own `config/get`, with nothing in its caches to reuse.
@@ -330,6 +329,15 @@ const res = await page.evaluate(async (fixture) => {
   out.ac2cGesture = box ? {
     x: box.left + box.width / 2, y: box.top + box.height / 2, toX: leftBy.x,
   } : null;
+  // private-ok: #1457 plants the same full-LRU boundary as #769 AC7, but on
+  // an actual new Resize record rather than a prepared frame's warm restore.
+  const pool = card._wallUnionPool;
+  for (let filler = 0; pool.size < 8; filler++)
+    pool.set(`preview-filler-${filler}`, { key: `preview-filler-${filler}`, value: null });
+  const storedKey = card._wallUnionCache?.key, storedEntry = pool.get(storedKey);
+  pool.delete(storedKey); pool.set(storedKey, storedEntry);
+  diag.ac7PreviewPool = { keys: [...pool.keys()], storedKey };
+  out.ac7PreviewStartsWithFullPool = pool.size === 8 && !!storedEntry;
   diag.ac8BuildsBeforeDrag = window.__hpSwitchCycleGuard.builds(card);
   return out;
 }, fixture);
@@ -394,6 +402,11 @@ if (gesture) {
     diag.ac8bBuildsBeforeCancel = builds();
     diag.ac8aUnionBuildsOnTheWayToTheFirstHostRender = beforeHostRender.wallUnion - diag.ac8BuildsBeforeDrag.wallUnion;
     return {
+      ac7PreviewReallyEvictsFromFullPool: card._wallUnionPool.size === 8
+        && card._wallUnionCache?.key !== diag.ac7PreviewPool.storedKey
+        && !diag.ac7PreviewPool.keys.includes(card._wallUnionCache?.key)
+        && diag.ac7PreviewPool.keys.some(key => !card._wallUnionPool.has(key)),
+      ac7EvictingPreviewMissCountsBuild: diag.ac8aUnionBuildsOnTheWayToTheFirstHostRender > 0,
       ac2cStateTickActuallyDefers: deferredRenders === 0 && beforeSecondMetadata === firstMetadataRenders,
       ac2cMetadataActuallyRendersTwice: firstMetadataRenders === 1 && renders - beforeSecondMetadata === 1,
       ac2cStimuliKeepTheAuthorityContext: card.hass.connection === context[0] && card.hass.user === context[1],
@@ -484,7 +497,7 @@ if (gesture) {
   }
 }
 
-// ======== AC7 (#769): a cold union in a full pool, every size unchanged =======
+// ======== AC7 (#769/#1454): prepared restore in a full pool builds nothing ===
 Object.assign(checks, await page.evaluate(async () => {
   const card = window.__card;
   const hp = window.__hpTest;
@@ -516,7 +529,7 @@ Object.assign(checks, await page.evaluate(async () => {
   const sizesAfter = guard.snapshot(card);
   const buildsAfter = guard.builds(card);
   const verdict = guard.judge({ before: buildsBefore, after: buildsAfter, switches });
-  out.ac7TheCycleBuildsTheUnionOnce = buildsAfter.wallUnion - buildsBefore.wallUnion;
+  out.ac7TheWarmCycleBuildsNoUnion = buildsAfter.wallUnion - buildsBefore.wallUnion;
   out.ac7PreparedFrameRestoresEvictedUnion = card.houseplanFloorCacheDiagnostics().cache.memoryHits > preparedHitsBefore;
   out.ac7ItsContoursAndFloorsStayWarm = [
     buildsAfter.innerContour - buildsBefore.innerContour, buildsAfter.cleanFloor - buildsBefore.cleanFloor,
@@ -525,7 +538,7 @@ Object.assign(checks, await page.evaluate(async () => {
   out.ac7EverySizeStays = JSON.stringify(sizesAfter) === JSON.stringify(sizesBefore);
   // The guard before #769: green, nothing grew.
   out.ac7TheSizeGuardSeesNothing = Object.keys(sizesAfter).filter((key) => sizesAfter[key] > sizesBefore[key]);
-  out.ac7TheDecisionNamesTheWallUnion = verdict.failures;
+  out.ac7TheDecisionAcceptsPreparedRestore = verdict.failures;
   return out;
 }));
 
@@ -569,11 +582,11 @@ checkAll(checks, {
   ac8aHostRendersMidDragBuildNoUnion: 0,
   ac8cTheDragNeverRebuildsTheBodies: 0,
   ac8bCancelAndViewBuildNoUnionBodiesContoursOrFloors: [0, 0, 0, 0],
-  ac7TheCycleBuildsTheUnionOnce: 0,
+  ac7TheWarmCycleBuildsNoUnion: 0,
   ac7PreparedFrameRestoresEvictedUnion: true,
   ac7ItsContoursAndFloorsStayWarm: [0, 0],
   ac7TheSizeGuardSeesNothing: [],
-  ac7TheDecisionNamesTheWallUnion: [],
+  ac7TheDecisionAcceptsPreparedRestore: [],
   ac1GardenVisitBuildsNoWallUnion: 0,
   ac1GardenVisitBuildsNoContour: 0,
   ac1GardenVisitBuildsNoCleanFloor: 0,

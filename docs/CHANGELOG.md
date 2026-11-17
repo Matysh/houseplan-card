@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Add local offline IFC2x3/IFC4 conversion for architectural Archicad/Revit plans, with storey selection, editable walls/rooms/openings, previews and explicit loss reports; keep KOMPAS compatibility separately unconfirmed (#1458).
+- Restore nightly witnesses for full-LRU union build accounting during Resize and right-button consumption at the node editor boundary, retaining prepared-floor restores and the stage's independent no-pan guard (#1457).
 - Restore the nightly junction parity module entry without PYTHONPATH and compose final diagnostic source maps for the isolated floor Worker, including generated asset URLs (#1456).
 - Restore nightly mutation witnesses: prepare compiled fixtures reached through browser helper imports and model both independent late-HA recovery paths, and verify missing-contact gate paint (#1455).
 - Reuse scoped persistent floor geometry and prepare cache misses in a module worker; keep passive architectural previews separate from current devices, opening states and fresh-server readiness (#1454).
