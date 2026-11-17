@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15394,
+  "revision": 15395,
   "nextTicket": 507,
   "nextFence": 507,
   "tasks": {
@@ -5244,18 +5244,12 @@
       }
     },
     "1460": {
-      "requestId": "spec:1460:852d01c366cd27e50cdc4ddc026da74ab6fd575d7c2d480d002f663f1ea26e53",
-      "contextDigest": "852d01c366cd27e50cdc4ddc026da74ab6fd575d7c2d480d002f663f1ea26e53",
+      "requestId": "spec:1460:0b66014cfdcb6a797e9f2238f4af56bac08d717361a96c15e30a7afab143a4ac",
+      "contextDigest": "0b66014cfdcb6a797e9f2238f4af56bac08d717361a96c15e30a7afab143a4ac",
       "base": "6d28743ea061ad639f508675d0c48fe22865cb5c",
-      "round": 1,
-      "status": "changes_requested",
-      "updatedAt": 1794950973803,
-      "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44179434916",
-      "transition": {
-        "from": "S4-spec-review",
-        "to": "S3-spec",
-        "confirmed": true
-      }
+      "round": 2,
+      "status": "pending",
+      "updatedAt": 1794951131885
     },
     "1464": {
       "requestId": "spec:1464:386b34abe3e1926105c7bd876a4b09503653cf0ac83a5d38bdf561310231e53f",
@@ -5305,6 +5299,19 @@
         "round": 1,
         "occurredAt": "2026-11-17T21:27:29.360Z"
       }
+    },
+    "spec:1460:spec:1460:0b66014cfdcb6a797e9f2238f4af56bac08d717361a96c15e30a7afab143a4ac": {
+      "issue": 1460,
+      "kind": "spec",
+      "requestId": "spec:1460:0b66014cfdcb6a797e9f2238f4af56bac08d717361a96c15e30a7afab143a4ac",
+      "materialSha": "6d28743ea061ad639f508675d0c48fe22865cb5c",
+      "expectedBase": "6d28743ea061ad639f508675d0c48fe22865cb5c",
+      "patchId": "0b66014cfdcb6a797e9f2238f4af56bac08d717361a96c15e30a7afab143a4ac",
+      "status": "pending",
+      "presentation": {
+        "round": 2,
+        "occurredAt": "2026-11-17T21:32:11.885Z"
+      }
     }
   },
   "waiting": [],
@@ -5333,6 +5340,26 @@
     "github:44180285499:1:completions:report:ce1f76d28e733e6f42d71488edffaf4cabb3578c33e7c25817f5861b321528f5": {
       "digest": "395b632c97f53926d6367097beed7002edd7ec5d6cd8ba5afb2c927b9a8d0cc2",
       "issue": 1460
+    },
+    "github:44180756362:1:label:spec-request": {
+      "digest": "4dbe3d624942a7be0c459e5adaedc90c4ed52de3a15719743143b038f2a8111d",
+      "issue": 1460
+    },
+    "github:44180756362:1:label:spec-request:spec-resubmitted:1460": {
+      "digest": "4dbe3d624942a7be0c459e5adaedc90c4ed52de3a15719743143b038f2a8111d",
+      "issue": 1460,
+      "message": {
+        "kind": "spec-resubmitted",
+        "issue": 1460,
+        "at": 1794951131885,
+        "previousRound": 1,
+        "round": 2,
+        "requestId": "spec:1460:0b66014cfdcb6a797e9f2238f4af56bac08d717361a96c15e30a7afab143a4ac",
+        "reviewChanges": "### Цель и подход\n\nПредлагается выделение оркестрации, а не новая реализация алгоритмов. Порты делают семантику общей, но оставляют durable HA journal и ACL в адаптере. Упаковка staging из канонического core выбрана вместо второго дерева или новой runtime pip-зависимости HACS. Вариант оставить команды в HA и просто расширить demo отклонён: внешний сервер повторил бы правила.\n\n### Места для внимания\n\n`websocket_api.py` config/set, `_commit_pair`, Optimize/Undo, space/delete; `store.py` recovery и HA hooks; `http_api.py` preview/upload; `core/import_export.py` прямые чтения config_root и runtime.import_previews; `demo/standalone/core_process.py` различия no-op/layout/LED. Существенны сохранение evidence-проверок скрытых HA данных, API-коды/формы ответов и отсутствие наружного доступа к installation-backup. Python >=3.14 соответствует текущей среде проекта; расширение поддержки старых Python не заявляется.\n\n### Проверки и ограничения\n\nНа S3 выполнено чтение owning source и контрактов, код продукта ещё не менялся. Запусков продукта, сборки или приёмки нет; перед S4 выполняется только авторская проверка формы данного ТЗ. Контракты реальной БД и production-сервис будут отдельно реализованы/проверены в приватном репозитории по #1459; эта задача не может доказать их заранее.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: https://github.com/Matysh/houseplan-card/issues/1460#issuecomment-6961543328.\n\n- Неопределённые варианты → добавлена отдельная CommandPolicy HA/PLAN_ONLY; существующие space/full JSON обслуживает общий путь, archive/migration_source/archive_snapshot остаются HA-only. Standalone отклоняет full до lease, без ослабления сохранённого space JSON контракта.\n- Cancel противоречил HA → выбран вариант A: сохраняются archive_admin, no-op для portable token и TTL; demo приводится к этому, новая отмена house typed lease относится к #1464. Не запрашивается неявное изменение HA поведения.\n- Необязательные улучшения → явные post-commit фазы, recovered_kind, атомарный повтор CAS, revision-scoped кеши, перенос contextvars и отсутствие финального strict-checkpoint после durable commit; промежуточные точки реализации и тесты.\n- Новая редакция только ТЗ; исходники не изменены, продуктовых прогонов нет. Авторская проверка формы повторяется перед передачей.",
+        "fromStatus": "S3-spec",
+        "toStatus": "S4-spec-review",
+        "transitionConfirmed": true
+      }
     }
   },
   "devWebhook": {
