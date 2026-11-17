@@ -10,8 +10,10 @@ import time
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.houseplan import websocket_api as endpoint
+from custom_components.houseplan.command_adapter import HaCpuExecutor, HaPlanTransaction
 from custom_components.houseplan.const import DOMAIN
+from custom_components.houseplan.core import plan_commands as endpoint
+from custom_components.houseplan.core.plan_commands import PlanCommands
 from custom_components.houseplan.store import get_data
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
@@ -94,15 +96,15 @@ async def test_issue_1075_actual_handler_phase_report(hass, hass_ws_client, monk
         sync_observer(endpoint, "node_delete_candidate", "candidate")
         sync_observer(endpoint, "node_delete_host_baseline", "host_baseline")
     for owner, name, phase in [(rt.config_store, "async_save", "persist"),
-                              (endpoint, "_resolved_write_pair", "resolved_read"),
-                              (endpoint, "async_save_config_state", "save_with_dependents"),
-                              (endpoint, "_discard_optimizer_snapshot", "maintenance")]:
+                              (PlanCommands, "load", "resolved_read"),
+                              (HaPlanTransaction, "save_config", "save_with_dependents"),
+                              (PlanCommands, "discard_optimizer_snapshot", "maintenance")]:
         async_observer(owner, name, phase)
-    executor = hass.async_add_executor_job
+    executor = HaCpuExecutor.run
 
-    async def measured_executor(fn, *args):
-        if fn.__name__ != "_validate_delete_cpu":
-            return await executor(fn, *args)
+    async def measured_executor(self, fn, *args):
+        if fn.__name__ != "validate_node":
+            return await executor(self, fn, *args)
         queued = time.perf_counter()
 
         def work():
@@ -113,9 +115,9 @@ async def test_issue_1075_actual_handler_phase_report(hass, hass_ws_client, monk
             finally:
                 active["cpu_total"] = (time.perf_counter() - started) * 1000
 
-        return await executor(work)
+        return await executor(self, work)
 
-    monkeypatch.setattr(hass, "async_add_executor_job", measured_executor)
+    monkeypatch.setattr(HaCpuExecutor, "run", measured_executor)
     for sample in range(6):
         for direction in ["apply", "undo"]:
             active.clear()

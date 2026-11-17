@@ -742,7 +742,9 @@ async def test_issue_1096_file_collection_lists_only_what_a_commit_can_drop(hass
     candidate = copy.deepcopy(stored["config"])
     candidate["spaces"][0]["plan_url"] = "/api/houseplan/content/plans/_/a.new.png"
     assert (await _write(client, candidate, stored["rev"]))["success"]
-    assert str(plans_dir) in listed and str(files_dir / "m1") not in listed
+    # #1460: retirement now names the exact old key; no plan-directory scan
+    # is needed even for replacement. The behavioral deletion checks remain.
+    assert str(plans_dir) not in listed and str(files_dir / "m1") not in listed
     assert not await hass.async_add_executor_job(exists, "a.tok.png")
     assert await hass.async_add_executor_job(exists, "a.new.png")
     assert await hass.async_add_executor_job(exists, "a.reject.png")

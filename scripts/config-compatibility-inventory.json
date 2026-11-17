@@ -2741,7 +2741,7 @@
     {
       "id": "901a3675f5d3c1959c0b88d0",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 128,
+      "line": 123,
       "text": "\"\"\"Log one low-noise diagnostic per legacy write command.\"\"\"",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2751,7 +2751,7 @@
     {
       "id": "1c3a35c5815af265d42c7aa5",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 385,
+      "line": 380,
       "text": "raise  # Preserve legacy callers; ZIP must also survive lost intent ACKs.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2761,7 +2761,7 @@
     {
       "id": "a84ab341afd915288a91f447",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 662,
+      "line": 657,
       "text": "only a legacy naming convention, however; an explicit real marker remains",
       "occurrence": 1,
       "kind": "exclusion",

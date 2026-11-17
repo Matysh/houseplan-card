@@ -100,8 +100,7 @@ test('#1423 ordinary legacy space is repaired by portable core; full installatio
   const marker=repaired.config.markers.find(m=>m.binding==='entity:light.old');assert.ok(marker);
   assert.ok(repaired.config.spaces.flatMap(space=>space.rooms||[]).some(room=>room.id===marker.room_id),'legacy room binding follows the core identity remap');
   const full=structuredClone(document);delete full.transfer;full.kind='full';
-  const fullPreview=(await core.rpc({op:'post',path:'/api/houseplan/import/preview',value:{bytes:Buffer.from(JSON.stringify(full)).toString('base64')}})).result;
-  await assert.rejects(request(core,{type:'houseplan/import/apply',token:fullPreview.token,expected_config_rev:fullPreview.expected_config_rev,
-    expected_layout_rev:fullPreview.expected_layout_rev,confirm_missing_content:true}),{code:'not_ready'});
+  await assert.rejects(core.rpc({op:'post',path:'/api/houseplan/import/preview',
+    value:{bytes:Buffer.from(JSON.stringify(full)).toString('base64')}}),{code:'invalid_format'});
   assert.deepEqual((await core.rpc({op:'snapshot'})).result.config,repaired.config);
 });

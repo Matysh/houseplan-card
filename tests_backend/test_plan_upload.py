@@ -11,7 +11,6 @@ import re
 from pathlib import Path
 
 import pytest
-
 from pure_imports import HOUSEPLAN_ROOT, load_pure
 
 plans = load_pure("custom_components.houseplan.plans", HOUSEPLAN_ROOT / "plans.py")
@@ -107,14 +106,14 @@ def test_issue_617_store_plan_upload_quota_refusal_leaves_nothing(tmp_path: Path
 
 
 def test_issue_617_both_transports_write_through_the_one_writer():
-    """AC7: the HTTP view and ws_plan_set share `store_plan_upload`; neither
+    """AC7: the HTTP view and ws_plan_set share the common upload command; neither
     carries its own copy of the naming/quota/write sequence."""
     http_src = (HOUSEPLAN_ROOT / "http_api.py").read_text(encoding="utf-8")
     ws_src = (HOUSEPLAN_ROOT / "websocket_api.py").read_text(encoding="utf-8")
     view = http_src.split("class HouseplanPlanUploadView", 1)[1].split("\nclass ", 1)[0]
     ws = ws_src.split("async def ws_plan_set", 1)[1].split("\ndef ", 1)[0]
     for body in (view, ws):
-        assert body.count("store_plan_upload,") == 1
+        assert body.count(".upload_plan(") == 1
         assert "atomic_write(" not in body and "check_quota(" not in body
         assert "token_hex(" not in body
     assert "MAX_PLAN_BYTES" in view and "read_bounded(part, MAX_PLAN_BYTES" in view

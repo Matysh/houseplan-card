@@ -9,7 +9,6 @@ import re
 import secrets
 import time
 from collections import Counter
-from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -29,15 +28,12 @@ from .const import (
     FILES_DIR,
     MAX_FILES_BYTES,
     MAX_FILES_COUNT,
-    MAX_PLANS_BYTES,
-    MAX_PLANS_FILES,
     MAX_SIGN_PATHS,
     MAX_SUPPORT_CONTACT_CODEPOINTS,
     MAX_SUPPORT_MESSAGE_CODEPOINTS,
     MAX_SUPPORT_PREVIEWS_PER_USER,
     MAX_SUPPORT_PREVIEWS_TOTAL,
     PLAN_MODEL_VERSION,
-    PLANS_DIR,
     SUPPORT_PREVIEW_TTL_S,
     VERSION,
 )
@@ -67,7 +63,6 @@ from .plans import (
     QuotaError,
     check_quota,
     reserve_filename,
-    store_plan_upload,
 )
 from .radar_validation import (
     RadarValidationError,
@@ -1402,24 +1397,22 @@ async def ws_plan_set(hass: HomeAssistant, connection, msg: dict[str, Any]) -> N
     # base64 frame of a plan above ~3 MiB exceeds the 4 MiB WebSocket message
     # limit and the socket closes before this handler runs — the size check
     # above is reachable only for small files on this path. Both transports
-    # write through the same `store_plan_upload` (copy-on-write naming, quota,
-    # atomic write), so the contract below cannot drift between them.
-    plans_dir = Path(hass.config.path(PLANS_DIR))
+    # call the same upload command and staged physical writer.
     data = _runtime(hass, connection, msg["id"])
     if data is None:
         return
-    async with data.upload_lock:
-        try:
-            name = await hass.async_add_executor_job(
-                partial(
-                    store_plan_upload, plans_dir, space_id, msg["ext"], raw,
-                    max_bytes=MAX_PLANS_BYTES, max_files=MAX_PLANS_FILES,
-                )
-            )
-        except QuotaError as err:
-            connection.send_error(msg["id"], err.reason, err.detail)
-            return
-    connection.send_result(msg["id"], {"ok": True, "url": f"{CONTENT_URL}/plans/_/{name}"})
+    from .command_adapter import plan_commands
+    from .core.command_ports import CommandError
+
+    try:
+        result = await plan_commands(hass, connection, data).upload_plan(raw, space_id, msg["ext"])
+    except QuotaError as err:
+        connection.send_error(msg["id"], err.reason, err.detail)
+        return
+    except CommandError as err:
+        connection.send_error(msg["id"], err.code, err.public_message)
+        return
+    connection.send_result(msg["id"], result)
 
 
 def _refresh_trail_recorder(hass: HomeAssistant) -> None:

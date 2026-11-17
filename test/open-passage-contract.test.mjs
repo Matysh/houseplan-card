@@ -6,7 +6,7 @@ import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 const card = readHouseplanProductionSource();
 const styles = readAllStylesSource();
-const backend = readFileSync(new URL('../custom_components/houseplan/websocket_api.py', import.meta.url), 'utf8');
+const backend = readFileSync(new URL('../custom_components/houseplan/core/plan_commands.py', import.meta.url), 'utf8');
 const importer = readFileSync(new URL('../custom_components/houseplan/core/import_export.py', import.meta.url), 'utf8');
 const en = JSON.parse(readFileSync(new URL('../src/i18n/en.json', import.meta.url)));
 const ru = JSON.parse(readFileSync(new URL('../src/i18n/ru.json', import.meta.url)));
@@ -63,13 +63,13 @@ test('placement preview adds passage-only cut geometry without changing saved sy
 
 test('all write/import paths invoke the semantic passage validator', () => {
   assert.equal((backend.match(/validate_opening_passages\(/g) || []).length, 5);
-  const nodeDelete = backend.slice(backend.indexOf('async def ws_wall_node_delete('),
-    backend.indexOf('# ---------------- whole-plan maintenance'));
+  const nodeDelete = backend.slice(backend.indexOf('async def node_edit('), backend.indexOf('async def config_set('));
   assert.match(nodeDelete, /validate_opening_passages\(candidate, previous\)/,
     'Delete validates the independently proved candidate before the common writer');
-  assert.match(backend, /validate_opening_passages\(candidate, config_data\.get\("config"\)\)/,
+  const optimize = backend.slice(backend.indexOf('async def optimize('), backend.indexOf('async def optimize_undo('));
+  assert.match(optimize, /validate_opening_passages\(candidate, previous\)/,
     'Optimize validates the submitted v7 model before the identity barrier');
-  assert.match(backend, /validate_opening_passages\(msg\["config"\], config_data\.get\("config"\)\)/,
+  assert.match(optimize, /validate_opening_passages\(checked, previous\)/,
     'Optimize validates the committed v8 model before persistence');
   assert.match(importer, /validate_opening_passages\(merged_config, current_config\)/);
   assert.match(importer, /validate_opening_passages\(incoming_config, validate_all=True\)/);

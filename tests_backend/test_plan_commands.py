@@ -144,6 +144,27 @@ async def test_config_noop_has_independent_unchanged_pair_and_no_events():
     assert commands.effects.events == []
 
 
+async def test_operational_effect_failure_does_not_reject_durable_config(monkeypatch):
+    commands = valid_service()
+    config = copy.deepcopy(commands.storage.config_data["config"])
+    config["spaces"][0]["title"] = "Durably accepted"
+
+    def failed(*args):
+        raise OSError("synthetic effect failure")
+
+    async def async_failed(*args):
+        raise OSError("synthetic effect failure")
+
+    monkeypatch.setattr(type(commands.effects.delegate), "emit", failed)
+    monkeypatch.setattr(type(commands.effects.delegate), "purge_trails", async_failed)
+    monkeypatch.setattr(type(commands.effects.delegate), "refresh_trails", failed)
+    monkeypatch.setattr(type(commands.effects.delegate), "schedule_repairs", failed)
+    reply = await commands.execute({"type": "houseplan/config/set", "expected_rev": 4,
+                                    "config": config, "opening_features_api": 1})
+    assert reply["ok"] and reply["rev"] == 5
+    assert commands.storage.config_data["config"]["spaces"][0]["title"] == "Durably accepted"
+
+
 async def test_explicit_null_room_label_changes_only_layout_and_removes_position():
     commands = valid_service()
     before = commands.storage.snapshot()
