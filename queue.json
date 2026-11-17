@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15198,
-  "nextTicket": 501,
+  "revision": 15199,
+  "nextTicket": 502,
   "nextFence": 501,
   "tasks": {
     "1024": {
@@ -4885,14 +4885,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1458-ifc-import",
-      "materialSha": "828799ea93002e56dbc38161dc7c2a91441a18e1",
+      "materialSha": "36b3147da112e55a8e08f3dc4b5aa03d65db7afd",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 500,
-      "queued": false,
+      "ticket": 501,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794943650929,
-      "reviewEntry": 4,
+      "readyAt": 1794944205690,
+      "reviewEntry": 5,
       "patchId": "1a5a2eb0bf45f5ce1273bf8c70af273f98155f37",
       "changedFiles": [
         "demo/smoke_ifc_converter.mjs",
@@ -4966,8 +4966,7 @@
         "entry": 4,
         "detail": "Браузер: dialog picker 998: cancelled; Браузер: geometry history refusal: cancelled; Браузер: ifc converter: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan converter: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно",
         "eventId": "finish:5942b3b8-5cdb-47b5-a403-29d8a17949a0:finish:3:return:return:1458"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5323,7 +5322,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1458
+  ],
   "active": null,
   "events": {
     "github:44128949850:1:label:spec-request": {
@@ -5697,6 +5698,19 @@
           "detail": "Браузер: dialog picker 998: cancelled; Браузер: geometry history refusal: cancelled; Браузер: ifc converter: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan converter: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно",
           "eventId": "finish:5942b3b8-5cdb-47b5-a403-29d8a17949a0:finish:3:return:return:1458"
         }
+      }
+    },
+    "finish:64b32621-3e69-475b-bf8e-08b333f33b77": {
+      "digest": "aed41401839b9e4c0aef195d3b2fa347c2776643a29ca085af6749a5c9b0cd6d",
+      "issue": 1458,
+      "message": {
+        "kind": "queued",
+        "issue": 1458,
+        "at": 1794944205690,
+        "entry": 5,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "36b3147da112e55a8e08f3dc4b5aa03d65db7afd"
       }
     }
   },
