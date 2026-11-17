@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15220,
+  "revision": 15221,
   "nextTicket": 503,
   "nextFence": 503,
   "tasks": {
@@ -5594,6 +5594,10 @@
       "digest": "191a1e56ea59640fb66693b63f66f01623caeeaf6bcdc8cdc5d2369420fd034c",
       "issue": 1458
     },
+    "github:44162638981:1:completions:message:21a4513c84e12b2b346c437b2e9178b5391a9097c8c3c58677457c9b5220e4c5": {
+      "digest": "7cad73970b400c72752ec369a0d7c0c2d7f0e0db21b9469c4bbfb558c0b2e125",
+      "issue": 1458
+    },
     "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
       "digest": "ceee9bb59e87f0cb827931c9dbe9ca9466f85d0fb5d4b2def92aff3ef6e9ee63",
       "issue": 1458,
@@ -5806,7 +5810,8 @@
           "entry": 4,
           "detail": "Браузер: dialog picker 998: cancelled; Браузер: geometry history refusal: cancelled; Браузер: ifc converter: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan converter: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно",
           "eventId": "finish:5942b3b8-5cdb-47b5-a403-29d8a17949a0:finish:3:return:return:1458"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:64b32621-3e69-475b-bf8e-08b333f33b77": {
