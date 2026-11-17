@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15178,
-  "nextTicket": 499,
+  "revision": 15179,
+  "nextTicket": 500,
   "nextFence": 499,
   "tasks": {
     "1024": {
@@ -4885,14 +4885,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1458-ifc-import",
-      "materialSha": "1eae56d95c687b22d9498231a00dfe50db2edce3",
+      "materialSha": "41f0340b38eea86f6c8feb5527893bd15024086a",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 498,
-      "queued": false,
+      "ticket": 499,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1794942450171,
-      "reviewEntry": 2,
+      "readyAt": 1794943184945,
+      "reviewEntry": 3,
       "patchId": "ec5728b9f3c98e03b3961cb5e19ac76cb4851649",
       "changedFiles": [
         "demo/smoke_ifc_converter.mjs",
@@ -4965,8 +4965,7 @@
         "entry": 2,
         "detail": "Поведение: process-next/test/e2e.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
         "eventId": "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:3:return:return:1458"
-      },
-      "reason": "checks-failed"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5322,7 +5321,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1458
+  ],
   "active": null,
   "events": {
     "github:44128949850:1:label:spec-request": {
@@ -5559,6 +5560,19 @@
           "detail": "Поведение: process-next/test/e2e.test.mjs: failed; Поведение: test/smoke-exception-guard.test.mjs: failed; Поведение: test/smoke-harness-contract.test.mjs: failed",
           "eventId": "finish:5f644064-f440-43b7-8f04-cb062c3be145:finish:3:return:return:1458"
         }
+      }
+    },
+    "finish:2657dbd6-7a47-4b22-8023-af533521c132": {
+      "digest": "eb35e139cca01cf4ba64ae37f994e390c5269981d7ddf3401f7652c596ca35a9",
+      "issue": 1458,
+      "message": {
+        "kind": "queued",
+        "issue": 1458,
+        "at": 1794943184945,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "41f0340b38eea86f6c8feb5527893bd15024086a"
       }
     }
   },
