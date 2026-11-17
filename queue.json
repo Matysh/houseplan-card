@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15464,
+  "revision": 15465,
   "nextTicket": 511,
   "nextFence": 511,
   "tasks": {
@@ -5681,6 +5681,10 @@
       "digest": "aae5acf24c2cb16d2d22566ef04b5093bf77dff958bbf4ec712c29d0af4431f9",
       "issue": 1460
     },
+    "github:44203024030:1:completions:message:dede91083be707c61059c80be89110e425dc775feb2b57edabfb1bac07f12d1a": {
+      "digest": "22900af2ff3d3fddb591787af4f85df302772d338975a23a05a2ee7bd66ba150",
+      "issue": 1460
+    },
     "github:44180756362:1:label:spec-request:spec-resubmitted:1460": {
       "digest": "4dbe3d624942a7be0c459e5adaedc90c4ed52de3a15719743143b038f2a8111d",
       "issue": 1460,
@@ -5761,7 +5765,8 @@
           "entry": 1,
           "detail": "Поведение: process-next/test/standalone-source-scope.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/standalone-core-import-boundary.test.mjs: failed; Backend: tests_backend/test_ha_config_set_scoped.py: failed; Backend: tests_backend/test_ha_editor_command_latency.py: failed; Backend: tests_backend/test_plan_upload.py: failed",
           "eventId": "finish:c238e9cb-f702-4f97-8d29-8fe228fe1446:finish:3:return:return:1460"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:4481e07f-e3b4-416c-89db-71e0e09f6a1c": {
