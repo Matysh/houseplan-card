@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15294,
+  "revision": 15295,
   "nextTicket": 505,
   "nextFence": 505,
   "tasks": {
@@ -5287,6 +5287,10 @@
       "digest": "017e2f9f17e20308a41c1f56e0b26f5e26f4b187111b2a8531c813aed7fea54c",
       "issue": 1457
     },
+    "dev-build:44170732537:1:webhook:1c549dd8-f7e4-4ada-8620-ec6be6135139:delivered": {
+      "digest": "0d37bfed48bb4b0ada3c93f43a3b063f1fcebba5ed5aba9f74bdb9dc25f5879f",
+      "issue": 1457
+    },
     "finish:f58538f5-1273-4bf7-a409-30e090fedf04": {
       "digest": "5f697d2ab133869dfa5b748c95be57bd1ab1f81c6b26a9ca0a8ac6a2ef03e71e",
       "issue": 1457,
@@ -5331,7 +5335,7 @@
   },
   "devWebhook": {
     "sourceSha": "4a6cd83f2e1fe40c3e8e7ec95ec588e412052ad3",
-    "status": "pending",
+    "status": "delivered",
     "integrationTree": "a610cf379b8bb1967d1098a97accd6ce0aaf25d4"
   }
 }
