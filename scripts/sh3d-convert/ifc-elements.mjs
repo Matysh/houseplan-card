@@ -1,6 +1,6 @@
 import { IfcError } from './ifc-errors.mjs';
 import { ifcText, value } from './ifc-read.mjs';
-import { distance, EPS, horizontal, multiply, project, sub, transform, unit, validPolygon } from './ifc-math.mjs';
+import { cross3, distance, EPS, horizontal, multiply, project, sub, transform, unit, validPolygon } from './ifc-math.mjs';
 
 const xy = poly => poly.map(p => p.slice(0, 2));
 const clean = poly => {
@@ -61,7 +61,20 @@ export function readWall(reader, element, material) {
   const axes = reader.representations(element).filter(r => ifcText(r.RepresentationIdentifier).toLowerCase() === 'axis');
   const lines = axes.flatMap(r => reader.items(r, matrix)).map(({ item, matrix: m }) => {
     if(!horizontal(m))fail();
-    return { points: reader.curves(item, m), matrix: m };
+    const points = reader.curves(item, m), straight = [];
+    // Interior points on one straight reference line are not wall ends.
+    // Retain actual bends and reversals; never approximate a curved axis.
+    for(const point of points){
+      while(straight.length>1){
+        const a=straight.at(-2),b=straight.at(-1);
+        const length=distance(a,point);
+        if(length<=EPS||Math.hypot(...cross3(sub(point,a),sub(b,a)))/length>EPS
+          ||distance(a,b)+distance(b,point)-length>EPS)break;
+        straight.pop();
+      }
+      straight.push(point);
+    }
+    return { points: straight, matrix: m };
   });
   let layer = null;
   if (material && reader.type(material) === 'IFCMATERIALLAYERSETUSAGE') {

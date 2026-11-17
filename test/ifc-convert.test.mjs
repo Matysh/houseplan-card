@@ -126,11 +126,17 @@ for(const noWallBody of [false,true])test(`#1458 mapped scale preserves physical
   near(offset.cm,40);near(offset.a[0],12);near(offset.a[1],.617);
 });
 
-test('#1458 source polyline walls retain openings on their actual segment',async()=>{
-  const result=await convertIfc(ifcFixture({axisSplit:true,noWallBody:true,junctions:true}),options);
+for(const junctions of [false,true])test(`#1458 source polyline walls retain openings across technical points, junctions=${junctions}`,async()=>{
+  const result=await convertIfc(ifcFixture({axisSplit:true,noWallBody:true,junctions}),options);
   assert.equal(space(result).openings.length,2);
   assert.equal(result.report.outcomes.skipped.door,0);
   assert.equal(result.report.outcomes.skipped.window,0);
+});
+
+test('#1458 removing technical points never straightens a real bend',async()=>{
+  const model=await readIfc(ifcFixture({axisSplit:true,axisBend:.0001,noWallBody:true,noRooms:true,noOpenings:true}));
+  const wall=model.entities.find(e=>e.kind==='wall');
+  assert.equal(wall.walls.length,2);near(wall.walls[0].b[1],.0001,1e-9);
 });
 
 test('#1458 indexed straight curves and coalesced source-host lineage remain usable',async()=>{
