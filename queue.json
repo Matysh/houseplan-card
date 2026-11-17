@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15157,
+  "revision": 15158,
   "nextTicket": 498,
   "nextFence": 498,
   "tasks": {
@@ -4892,7 +4892,10 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794942125391,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "automationError": "automation-error",
+      "automationSince": 1794942181558,
+      "automationDetail": "GitHub PUT failed (400)"
     }
   },
   "ownerDecisions": {},
@@ -5307,6 +5310,10 @@
     },
     "github:44154202302:1:completions:message:36a2ec7e22a735b97212bda3b28a5dd2ee7604e7572b0c93c0e28883a5b4fc30": {
       "digest": "5fefbfd5dbb2bb6a46c39d611d016fe64b37803369d17f7ee35db87443626c82",
+      "issue": 1458
+    },
+    "finish:58ed0db1-ae74-4682-9dec-f83d6aa9a0c5:finish:2:automation-pending": {
+      "digest": "0a640d98e47cc5d3c14e42823d3f695ea220f4d1189bc6d4754edc05c37b43d3",
       "issue": 1458
     },
     "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
