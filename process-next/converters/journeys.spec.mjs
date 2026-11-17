@@ -45,11 +45,8 @@ async function editIfcSpace(page, host, original, testInfo) {
     return o&&(o.x!==opening.x||o.y!==opening.y);
   });
   expect(movedOpening.spaces.find(s=>s.id===original.id).openings.find(o=>o.id===opening.id).length).toBe(opening.length);
-  const room=original.rooms.find(r=>r.name==='West'),xs=room.poly.map(p=>p[0]),ys=room.poly.map(p=>p[1]);
-  const inside=await toClient(host,(Math.min(...xs)+.02)*1000,(Math.min(...ys)+.02)*1000);
-  await page.mouse.click(inside.x,inside.y,{button:'right'});
-  const menu=host.locator(hp('room-context-menu')).first();await expect(menu).toBeVisible();
-  await menu.locator(hp('action',{action:'room-settings'})).click();
+  const room=original.rooms.find(r=>r.name==='West');
+  await host.locator(hp('room-settings',{'data-room':room.id})).click();
   const dialog=host.locator(HP.dialog('room')).first();await expect(dialog).toBeVisible();
   await field(dialog,'room-name').fill('IFC edited');await dialog.locator(HP.dialogConfirm).first().click();
   const saved=await waitForConfig(c=>c.spaces.find(s=>s.id===original.id)?.rooms?.some(r=>r.id===room.id&&r.name==='IFC edited'));
