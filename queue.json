@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15163,
+  "revision": 15164,
   "nextTicket": 498,
   "nextFence": 498,
   "tasks": {
@@ -4951,7 +4951,17 @@
       ],
       "automationError": "automation-error",
       "automationSince": 1794942263205,
-      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json"
+      "automationDetail": "Symlink leaves root: node_modules/@mdi/svg/meta.json",
+      "reason": "Add owner-approved visual references and prepare private dependency tree after symlink-root refusal",
+      "notice": {
+        "key": "1:Add owner-approved visual references and prepare private dependency tree after symlink-root refusal",
+        "reason": "Add owner-approved visual references and prepare private dependency tree after symlink-root refusal",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794942360943,
+        "entry": 1,
+        "eventId": "1458-visuals-and-private-dependencies-20261117:return:1458"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5308,18 +5318,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1458,
-    "worker": "finish",
-    "token": "497:finish:58ed0db1-ae74-4682-9dec-f83d6aa9a0c5:finish:1:admit",
-    "fence": 497,
-    "materialSha": "492d78bda1daa9e97aa6f6f17cc848d2bf0babd7",
-    "expectedBase": "09f5f5082ce065406e1d5d275255875e082c6d34",
-    "phase": "testing",
-    "admittedAt": 1794942134494,
-    "expiresAt": 1794942632234,
-    "patchId": "05feacab2058d8bd44e27efc72c05efd1208d5d8"
-  },
+  "active": null,
   "events": {
     "github:44128949850:1:label:spec-request": {
       "digest": "57616174c5aa9fb713adb0f2ba28f1636969bb9af7c22a3c1561ea84fe7f8fa4",
@@ -5393,6 +5392,10 @@
       "digest": "16e61e8bd490481a78295b445bc25d0d0836297da4640e44822481f5e2c04993",
       "issue": 1458
     },
+    "1458-visuals-and-private-dependencies-20261117": {
+      "digest": "2a3ab67806192d4da221a680c656a7a0fcc042cf097f13b668ab3d6f8e4f00c3",
+      "issue": 1458
+    },
     "github:44130920099:1:label:spec-request:spec-resubmitted:1458": {
       "digest": "ceee9bb59e87f0cb827931c9dbe9ca9466f85d0fb5d4b2def92aff3ef6e9ee63",
       "issue": 1458,
@@ -5437,6 +5440,25 @@
         "materialSha": "492d78bda1daa9e97aa6f6f17cc848d2bf0babd7",
         "phase": "sync",
         "delivered": true
+      }
+    },
+    "1458-visuals-and-private-dependencies-20261117:return:1458": {
+      "digest": "2a3ab67806192d4da221a680c656a7a0fcc042cf097f13b668ab3d6f8e4f00c3",
+      "issue": 1458,
+      "message": {
+        "kind": "return",
+        "issue": 1458,
+        "at": 1794942360943,
+        "entry": 1,
+        "notice": {
+          "key": "1:Add owner-approved visual references and prepare private dependency tree after symlink-root refusal",
+          "reason": "Add owner-approved visual references and prepare private dependency tree after symlink-root refusal",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794942360943,
+          "entry": 1,
+          "eventId": "1458-visuals-and-private-dependencies-20261117:return:1458"
+        }
       }
     }
   },
