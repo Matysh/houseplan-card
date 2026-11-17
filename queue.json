@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15429,
+  "revision": 15430,
   "nextTicket": 508,
   "nextFence": 508,
   "tasks": {
@@ -5003,7 +5003,18 @@
         "tests_backend/test_projection.py",
         "tools/build_core_package.py",
         "tools/smoke_core_package.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794958494008,
+        "entry": 1,
+        "detail": "Поведение: process-next/test/standalone-source-scope.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/standalone-core-import-boundary.test.mjs: failed; Backend: tests_backend/test_ha_config_set_scoped.py: failed; Backend: tests_backend/test_ha_editor_command_latency.py: failed; Backend: tests_backend/test_plan_upload.py: failed",
+        "eventId": "finish:c238e9cb-f702-4f97-8d29-8fe228fe1446:finish:3:return:return:1460"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5388,18 +5399,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1460,
-    "worker": "finish",
-    "token": "507:finish:c238e9cb-f702-4f97-8d29-8fe228fe1446:finish:1:admit",
-    "fence": 507,
-    "materialSha": "f9f74e1f83720246e9de17001846fac5b2331d2f",
-    "expectedBase": "6d28743ea061ad639f508675d0c48fe22865cb5c",
-    "phase": "testing",
-    "admittedAt": 1794957975035,
-    "expiresAt": 1794958754050,
-    "patchId": "d2ecbec12dbe35b26cc409a37552ecc3bfb87cc9"
-  },
+  "active": null,
   "events": {
     "github:44179361876:1:spec:1460:spec-request": {
       "digest": "f2296eb6134c81b07ee45ff6eaab71d99d0417247637194b99415f3e49e1e14c",
@@ -5517,6 +5517,10 @@
       "digest": "3d351865211540d199ecea602b881b5423babfb6d65a90ecb91cb3d19943f2c6",
       "issue": 1460
     },
+    "finish:c238e9cb-f702-4f97-8d29-8fe228fe1446:finish:3:return": {
+      "digest": "7ca3b2109fdede38108484d7425f2b67f7f26534eabf20c0c4785c9eaff227b0",
+      "issue": 1460
+    },
     "github:44180756362:1:label:spec-request:spec-resubmitted:1460": {
       "digest": "4dbe3d624942a7be0c459e5adaedc90c4ed52de3a15719743143b038f2a8111d",
       "issue": 1460,
@@ -5576,6 +5580,26 @@
         "layer": "product",
         "materialSha": "f9f74e1f83720246e9de17001846fac5b2331d2f",
         "phase": "sync"
+      }
+    },
+    "finish:c238e9cb-f702-4f97-8d29-8fe228fe1446:finish:3:return:return:1460": {
+      "digest": "7ca3b2109fdede38108484d7425f2b67f7f26534eabf20c0c4785c9eaff227b0",
+      "issue": 1460,
+      "message": {
+        "kind": "return",
+        "issue": 1460,
+        "at": 1794958494008,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794958494008,
+          "entry": 1,
+          "detail": "Поведение: process-next/test/standalone-source-scope.test.mjs: failed; Поведение: test/open-passage-contract.test.mjs: failed; Поведение: test/standalone-core-import-boundary.test.mjs: failed; Backend: tests_backend/test_ha_config_set_scoped.py: failed; Backend: tests_backend/test_ha_editor_command_latency.py: failed; Backend: tests_backend/test_plan_upload.py: failed",
+          "eventId": "finish:c238e9cb-f702-4f97-8d29-8fe228fe1446:finish:3:return:return:1460"
+        }
       }
     }
   },
