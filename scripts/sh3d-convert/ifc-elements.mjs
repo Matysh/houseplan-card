@@ -70,11 +70,13 @@ export function readWall(reader, element, material) {
   let body, bodies, bodyError;
   try { bodies = bodySolids(reader, element); if (bodies.length === 1) body = { ...bodies[0], ...rectangle(bodies[0].poly) }; }
   catch (error) { if (error.code === 'ifc_placement_cycle') throw error; bodyError = error.code; }
-  if (body) {
-    if (layer && Math.abs(body.thickness - layer.thickness) > .001) fail('ifc_thickness_conflict');
-    return [{ a: body.a.slice(0, 2), b: body.b.slice(0, 2), cm: body.thickness * 100, zMin: body.zMin, zMax: body.zMax }];
+  if (body && layer && Math.abs(body.thickness - layer.thickness) > .001) fail('ifc_thickness_conflict');
+  // A trustworthy Axis/layer definition is the construction reference. The
+  // rectangle body is a fallback, and can independently provide height.
+  if (!lines.length || !layer) {
+    if(body)return [{ a: body.a.slice(0, 2), b: body.b.slice(0, 2), cm: body.thickness * 100, zMin: body.zMin, zMax: body.zMax }];
+    fail(bodyError);
   }
-  if (!lines.length || !layer) fail(bodyError);
   const walls = [];
   for (const points of lines) for (let i = 1; i < points.length; i++) {
     if (Math.abs(points[i][2] - points[i - 1][2]) > .001 || distance(points[i], points[i - 1]) < EPS) fail();
