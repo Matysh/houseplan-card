@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15774,
-  "nextTicket": 518,
+  "revision": 15775,
+  "nextTicket": 519,
   "nextFence": 518,
   "tasks": {
     "1024": {
@@ -4593,14 +4593,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1451-accepted-25d",
-      "materialSha": "8b9044dff26c65919618fdb0a4707a55499d5f03",
+      "materialSha": "a11073ebf2f8c89433196c51adb8a2a06f2a3536",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 517,
-      "queued": false,
+      "ticket": 518,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795031446929,
-      "reviewEntry": 3,
+      "readyAt": 1795033829588,
+      "reviewEntry": 4,
       "patchId": "397061d2576db02332447b5f6a5a9d7d1c044636",
       "changedFiles": [
         ".gitignore",
@@ -4812,8 +4812,7 @@
         "entry": 3,
         "detail": "Поведение: test/iso-overlay-fixture-types.test.mjs: failed; Браузер: floor persistent cache isometric: failed; Браузер: isometric live touch: failed",
         "eventId": "finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:3:return:return:1451"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1452": {
       "issue": 1452,
@@ -5582,7 +5581,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1451
+  ],
   "active": null,
   "events": {
     "github:44358531868:1:label:spec-request": {
@@ -5987,6 +5988,19 @@
           "detail": "Поведение: test/iso-overlay-fixture-types.test.mjs: failed; Браузер: floor persistent cache isometric: failed; Браузер: isometric live touch: failed",
           "eventId": "finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:3:return:return:1451"
         }
+      }
+    },
+    "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5": {
+      "digest": "c2c766c7b80ab43058c06bf20bb054487542682a8bbb0caffc55e5449fd4256d",
+      "issue": 1451,
+      "message": {
+        "kind": "queued",
+        "issue": 1451,
+        "at": 1795033829588,
+        "entry": 4,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "a11073ebf2f8c89433196c51adb8a2a06f2a3536"
       }
     }
   },
