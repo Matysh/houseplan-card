@@ -75,6 +75,10 @@
       "configs": 1
     },
     {
+      "file": "test/fixtures/1464-house-prefix.json",
+      "configs": 0
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },

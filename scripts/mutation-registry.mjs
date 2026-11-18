@@ -9868,8 +9868,8 @@ const MUTANT_DEFINITIONS = [
       + 'Optimize intent even for internal writers which bypass WebSocket schema (#248)',
     patches: [{
       file: 'custom_components/houseplan/store.py',
-      find: '    out["layout"] = canonicalize_layout_geometry(layout)',
-      replace: '    out["layout"] = layout',
+      find: '    out["layout"] = copy.deepcopy(layout) if preserve_exact else canonicalize_layout_geometry(layout)',
+      replace: '    out["layout"] = copy.deepcopy(layout) if preserve_exact else layout',
     }],
   },
   {

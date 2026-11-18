@@ -94,8 +94,8 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   );
 
   const componentRoot = resolve(root, 'custom_components/houseplan');
-  const pythonFiles = readdirSync(componentRoot)
-    .filter((name) => name.endsWith('.py'));
+  const pythonFiles = readdirSync(componentRoot, { recursive: true })
+    .filter((name) => name.endsWith('.py')).map(name => name.replaceAll('\\', '/')).sort();
   for (const name of pythonFiles) {
     const source = readFileSync(resolve(componentRoot, name), 'utf8');
     if (name === 'store.py') continue;
@@ -105,35 +105,52 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
     }
   }
   const store = readFileSync(resolve(componentRoot, 'store.py'), 'utf8');
-  if (!/out\["layout"\] = canonicalize_layout_geometry\(layout\)/.test(store)) {
+  if (!/out\["layout"\] = copy\.deepcopy\(layout\) if preserve_exact else canonicalize_layout_geometry\(layout\)/.test(store)) {
     errors.push('backend layout_store_payload bypasses lattice canonicalization');
   }
   if (!/canonical_config = canonicalize_config_geometry\(config\)/.test(store)) {
     errors.push('backend async_save_config_state bypasses lattice canonicalization');
   }
-  // #1096/#1306: the ordinary and node-move writers hand over their schema's
-  // canonical output. Inventory each caller; another writer cannot borrow it.
+  // #1391 moved the two schema-validated writers into the common command core.
+  // The HA adapter only forwards their explicit claim; it cannot invent one.
   const canonicalCallers = pythonFiles.filter((name) => name !== 'store.py'
-    && /canonical=True/.test(readFileSync(resolve(componentRoot, name), 'utf8')));
-  if (canonicalCallers.join(',') !== 'websocket_api.py') {
+    && /canonical=(?:True|not deleting)/.test(readFileSync(resolve(componentRoot, name), 'utf8')));
+  if (canonicalCallers.join(',') !== 'core/plan_commands.py') {
     errors.push(`backend canonical=True writer inventory: ${canonicalCallers.join(',') || 'none'}`);
-  } else {
-    const api = readFileSync(resolve(componentRoot, 'websocket_api.py'), 'utf8');
-    const canonicalWrites = occurrences(api, 'canonical=True');
-    if (canonicalWrites.length !== 2) errors.push(`backend canonical=True call inventory: ${canonicalWrites.length}`);
-    for (const index of canonicalWrites) {
-      const prefix = api.slice(0, index), caller = [...prefix.matchAll(/^async def (\w+)\(/gm)].at(-1);
-      const window = api.slice(caller?.index ?? index, index);
-      const ordinary = caller?.[1] === 'ws_config_set'
-        && /validate_scoped_candidate\(candidate, stored_config, scope\)/.test(window)
-        && /msg\["config"\]\.update\(checked\)/.test(window);
-      const node = caller?.[1] === 'ws_wall_node_move'
-        && /candidate = validate_scoped_candidate\(candidate, previous, scope\)/.test(window)
-        && /candidate, counts = await hass\.async_add_executor_job\(_validate_node_cpu\)/.test(window)
-        && /async_save_config_state\(rt, candidate, new_rev, previous_rev=rev,/.test(window);
-      if (!ordinary && !node) {
-        errors.push('backend canonical=True write is not the validated ordinary candidate');
-      }
+  }
+  const commands = readFileSync(resolve(componentRoot, 'core/plan_commands.py'), 'utf8');
+  const node = commands.slice(commands.indexOf('            def validate_node():'), commands.indexOf('            if not deleting:\n                transaction.cache.schema_clean_rev'));
+  const ordinary = commands.slice(commands.indexOf('            def validate_config():'), commands.indexOf('            transaction.cache.junction_baseline = (new_rev, counts)', commands.indexOf('            def validate_config():')));
+  if (occurrences(commands, 'canonical=True').length !== 1
+      || occurrences(commands, 'canonical=not deleting').length !== 1
+      || !/candidate = validate_scoped_candidate\(candidate, previous, scope\)/.test(node)
+      || !/candidate, counts = await self\.cpu\.run\(validate_node\)/.test(node)
+      || !/save_config\(candidate, new_rev, previous=data, canonical=not deleting/.test(node)
+      || !/checked = validate_scoped_candidate\(source, previous, scope\)/.test(ordinary)
+      || !/return checked, counts/.test(ordinary)
+      || !/candidate, counts = await self\.cpu\.run\(validate_config\)/.test(ordinary)
+      || !/save_config\(candidate, new_rev, previous=data, canonical=True/.test(ordinary)) {
+    errors.push('backend canonical=True write is not the validated ordinary candidate');
+  }
+  const adapter = readFileSync(resolve(componentRoot, 'command_adapter.py'), 'utf8');
+  if (!/previous=previous, canonical=canonical,/.test(adapter)
+      || occurrences(adapter, 'canonical=canonical').length !== 1) {
+    errors.push('backend canonical command adapter does not forward the validated claim');
+  }
+  // #1464 preserves the pre-existing target verbatim for an additive house
+  // transaction. No ordinary writer may borrow that recovery-only exception.
+  const api = readFileSync(resolve(componentRoot, 'websocket_api.py'), 'utf8');
+  const houseFence = 'exact_house = pending.get("kind") in {"house_import", "house_import_rollback"} and "house_files" in pending';
+  if (occurrences(store, houseFence).length !== 1 || occurrences(api, houseFence).length !== 1
+      || occurrences(store, 'preserve_exact=exact_house').length !== 2
+      || occurrences(api, 'preserve_exact=exact_house').length !== 2
+      || occurrences(store, 'preserve_exact=preserve_exact').length !== 1
+      || occurrences(store, 'canonical=exact_house').length !== 1) {
+    errors.push('backend exact layout preservation escaped its typed house transaction');
+  }
+  for (const name of pythonFiles.filter(name => !['store.py', 'websocket_api.py'].includes(name))) {
+    if (/\bpreserve_exact\s*=/.test(readFileSync(resolve(componentRoot, name), 'utf8'))) {
+      errors.push(`backend unregistered exact layout writer: ${name}`);
     }
   }
   if (occurrences(store, 'runtime.store.async_save(').length !== 1

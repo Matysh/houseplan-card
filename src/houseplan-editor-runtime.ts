@@ -9822,8 +9822,11 @@ public async _applyBackupImport(): Promise<void> {
         markers: String(outcomeCounts?.markers || 0),
         refs: String(result.repaired_target_refs || 0),
       };
-      showToast(result.kind === 'house' ? this._toolsT('backup.house_done', outcomeValues)
-        : this.host._t(outcome as I18nKey, outcomeValues), outcome);
+      if (result.kind === 'house') {
+        showToast(this._toolsT('backup.house_done', outcomeValues), 'backup.house_done');
+      } else {
+        showToast(this.host._t(outcome as I18nKey, outcomeValues), outcome);
+      }
     } catch (error: any) {
       if (!this._ownsBackupImport(request)) return;
       if (error?.code === 'conflict' && this.host._backupImportDialog?.token) {
