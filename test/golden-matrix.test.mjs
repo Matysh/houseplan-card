@@ -1048,7 +1048,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
   assert.match(harness, /forcedColors: scenario\.forcedColors \? 'active' : 'none'/);
   assert.match(harness, /Stage 4 golden raised a floor-bound vacuum/);
   assert.match(harness, /Stage 4 no-borders golden retained low overlays/);
-  assert.match(harness, /!scenario\.stage3Golden\?\.noBorders[\s\S]*?data-hp-iso-stage/,
+  assert.match(harness, /!scenario\.stage3Golden\?\.noBorders\s*&&\s*!window\.__hpRenderedIsoReady\(card\)/,
     'no-borders remains true Iso without requiring the intentionally absent volume stage');
   assert.match(harness,
     /\.\.\.\(scenario\.stage3Golden[\s\S]*?\? \{ themes: \{ darkMode: scenario\.theme === 'dark' \} \}[\s\S]*?: \{\}\)/,
