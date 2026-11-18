@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15511,
+  "revision": 15512,
   "nextTicket": 512,
   "nextFence": 512,
   "tasks": {
@@ -4954,7 +4954,67 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1794966928040,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "360bc868dcba154fb9e41d2d47d771cceec956ad",
+      "changedFiles": [
+        "custom_components/houseplan/command_adapter.py",
+        "custom_components/houseplan/core/backup_archive.py",
+        "custom_components/houseplan/core/backup_files.py",
+        "custom_components/houseplan/core/command_ports.py",
+        "custom_components/houseplan/core/conformance.py",
+        "custom_components/houseplan/core/conformance_example.py",
+        "custom_components/houseplan/core/constants.py",
+        "custom_components/houseplan/core/house_archive.py",
+        "custom_components/houseplan/core/house_commands.py",
+        "custom_components/houseplan/core/house_document.py",
+        "custom_components/houseplan/core/house_files.py",
+        "custom_components/houseplan/core/house_prefix.py",
+        "custom_components/houseplan/core/house_resources.py",
+        "custom_components/houseplan/core/memory_host.py",
+        "custom_components/houseplan/core/plan_commands.py",
+        "custom_components/houseplan/core/reference_host.py",
+        "custom_components/houseplan/ha_integration.py",
+        "custom_components/houseplan/house_http.py",
+        "custom_components/houseplan/store.py",
+        "custom_components/houseplan/websocket_api.py",
+        "demo/standalone/core_process.py",
+        "demo/standalone/host.js",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/CORE-HOST.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/release-ledger/v1.85.0/1464.json",
+        "docs/security/1395-input-audit.md",
+        "process-next/lib/task-selection.mjs",
+        "process-next/test/task-selection.test.mjs",
+        "src/backup-archive-client.ts",
+        "src/backup-archive-lazy.ts",
+        "src/house-transfer-prefix.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/i18n/tools/de.json",
+        "src/i18n/tools/en.json",
+        "src/i18n/tools/fr.json",
+        "src/i18n/tools/ru.json",
+        "src/plan-capabilities.ts",
+        "src/styles/editor-dialogs.styles.ts",
+        "src/styles/settings-dialogs.styles.ts",
+        "src/version-recovery-card.ts",
+        "test/backup-archive-client.test.mjs",
+        "test/fixtures/1464-house-prefix.json",
+        "test/house-transfer-prefix.test.mjs",
+        "test/standalone-core-import-boundary.test.mjs",
+        "tests_backend/test_core_conformance.py",
+        "tests_backend/test_ha_house_transfer.py",
+        "tests_backend/test_house_archive.py",
+        "tests_backend/test_house_commands.py",
+        "tests_backend/test_house_document.py",
+        "tests_backend/test_house_files.py",
+        "tests_backend/test_house_prefix.py",
+        "tools/smoke_core_package.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5359,10 +5419,11 @@
     "token": "511:finish:33d21e3f-105b-40dd-9287-25349c19a450:finish:1:admit",
     "fence": 511,
     "materialSha": "3faa728b1d372b3082c4944eec053d80b527bf88",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
+    "phase": "testing",
     "admittedAt": 1794966932017,
-    "expiresAt": 1794967232017
+    "expiresAt": 1794967238198,
+    "patchId": "360bc868dcba154fb9e41d2d47d771cceec956ad"
   },
   "events": {
     "github:44179894168:1:label:spec-request": {
@@ -5403,6 +5464,10 @@
     },
     "github:44182598184:1:completions:report:2e57c5a9621117608dd5d7e08cdd1f9387023fe4cf5ad965368e543f0152e8b0": {
       "digest": "6c25ceb053f4542d3712a8a47f6c7a45e4516655b20a3fe9809abc032aef1c64",
+      "issue": 1464
+    },
+    "finish:33d21e3f-105b-40dd-9287-25349c19a450:finish:2:synchronized": {
+      "digest": "38224f9931a31382ccd388981757a516517efc88e7d6d7de3d04748fb8cb4085",
       "issue": 1464
     },
     "github:44181773849:1:label:spec-request:spec-resubmitted:1464": {
