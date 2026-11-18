@@ -339,7 +339,7 @@ import {
   isoDisplayWallHeight, isoCameraFor, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
 } from './iso-projection';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
-import {canonicalPhysicalCamera, physicalViewCamera, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
+import {canonicalPhysicalCamera, physicalViewCamera, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
 import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume } from './iso-lab-furniture';
 import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
 import { FURNITURE_VOLUME_RUNTIME } from './furniture-volume-runtime';
@@ -3746,8 +3746,8 @@ export class HouseplanCard extends LitElement {
 
   private _adoptViewPlane(plane: ViewPlane): void {
     const target = this._projectionViewFrame(plane);
-    if (this._viewPlaneKnown && !!this._viewPlane !== !!plane && this._view
-      && this._viewFrame && this._viewFrameSpace === this._space) {
+    if (this._viewPlaneKnown && this._view && this._viewFrame
+      && this._viewFrameSpace === this._space && shouldRebaseViewFrame(this._viewFrame, target)) {
       // A mode handoff already owns the physical camera. Do not reinterpret
       // its newly encoded destination as the outgoing projection a second time.
       const camera = this._modeTransitionVisual?.viewport
@@ -7980,7 +7980,7 @@ export class HouseplanCard extends LitElement {
       id: m.id, model: m, layout, devs: this._displayDevices,
       far: this._showFar, grow, rect, all, outliers: cf.outliers, hasContent: cf.all !== null,
     };
-    if (f?.id === m.id && this._view && this._lastValidStageSize && !this._modeTransitionBusy
+    if (f?.id === m.id && this._view && this._lastValidStageSize && !this._modeTransitionBusy && !this._viewPlane
         && (this._mode !== 'view' || !this._isoEnabled)
         && (f.rect.x !== rect.x || f.rect.y !== rect.y || f.rect.w !== rect.w || f.rect.h !== rect.h)) {
       const [width, height] = this._lastValidStageSize;
@@ -7991,6 +7991,11 @@ export class HouseplanCard extends LitElement {
         centerY: this._view.y + this._view.h / 2, pixelsPerUnit: width / previous.w },
       [rect.x, rect.y, rect.w, rect.h], turnRect(rect, this._rotation), this._rotation, width, height);
       this._view = camera.viewBox; this._zoom = camera.zoom;
+      // This Flat geometry owner has already rebased its camera. Publish the
+      // matching basis so render adoption cannot reapply the same change.
+      this._viewFrame = {base:[rect.x,rect.y,rect.w,rect.h],display:turnRect(rect,this._rotation),
+        rotation:this._rotation,plane:null,size:[width,height]};
+      this._viewFrameSpace = m.id;
       if (this._loadOk) this._saveZoom();
     }
     return this._frame;

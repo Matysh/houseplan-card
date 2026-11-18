@@ -16,6 +16,16 @@ export interface ProjectionViewFrame {
   size: readonly [number, number];
 }
 
+/** A changed fit is a new camera basis even when both frames are Flat.
+ * Quarter-turn commands deliberately orbit the plan; stage resizing already
+ * has a physical-camera owner and must not be applied a second time here. */
+export function shouldRebaseViewFrame(from: ProjectionViewFrame, to: ProjectionViewFrame): boolean {
+  if (!!from.plane !== !!to.plane) return true;
+  return from.rotation === to.rotation && (from.base.length !== to.base.length
+    || from.base.some((value,index)=>value !== to.base[index])
+    || (['x','y','w','h'] as const).some(key=>from.display[key] !== to.display[key]));
+}
+
 export function presentedView(view: ViewRect, zoom: number, frame: ProjectionViewFrame): ViewRect {
   return presentationViewport(view, frame.base, frame.display, frame.rotation, zoom,
     frame.size, null, frame.plane?.floorScaleY ?? 1);

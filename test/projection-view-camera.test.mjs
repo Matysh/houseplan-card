@@ -1,11 +1,30 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {physicalViewCamera, canonicalPhysicalCamera,
-  presentedView} from '../test-build/projection-view-camera.js';
+  presentedView, shouldRebaseViewFrame} from '../test-build/projection-view-camera.js';
 import {isoCameraFor, unprojectFloorPoint} from '../test-build/iso-projection.js';
 import {turnRect, turnPoint, inversePlanRotation} from '../test-build/view-frame.js';
 
 const close = (a,b) => assert.ok(Math.abs(a-b)<1e-8, `${a} != ${b}`);
+test('#1451 provisional Flat fit becoming the prepared frame rebases the physical camera once',()=>{
+  for(const rotation of [90,270]) {
+    const square={x:0,y:0,w:1000,h:1000},real={x:-50,y:50,w:1100,h:900};
+    const from={base:[0,0,1000,1000],display:turnRect(square,rotation),rotation,plane:null,size:[1440,1007]};
+    const to={...from,base:[real.x,real.y,real.w,real.h],display:turnRect(real,rotation)};
+    const wanted={centerX:345.05,centerY:486.49,pixelsPerUnit:1.1747};
+    const current=canonicalPhysicalCamera(wanted,from);
+    assert.equal(shouldRebaseViewFrame(from,to),true);
+    // Keeping _view/_zoom while replacing the basis is the original failure.
+    assert.ok(Math.abs(physicalViewCamera(current.viewBox,current.zoom,to).pixelsPerUnit-wanted.pixelsPerUnit)>.05);
+    const next=canonicalPhysicalCamera(physicalViewCamera(current.viewBox,current.zoom,from),to);
+    const actual=physicalViewCamera(next.viewBox,next.zoom,to);
+    close(actual.centerX,wanted.centerX);close(actual.centerY,wanted.centerY);
+    close(actual.pixelsPerUnit,wanted.pixelsPerUnit);
+    assert.equal(shouldRebaseViewFrame(to,{...to}),false,'an already rebased owner is not applied twice');
+    assert.equal(shouldRebaseViewFrame(to,{...to,size:[1080,812]}),false,'resize has its own camera owner');
+    assert.equal(shouldRebaseViewFrame(from,{...to,rotation:rotation===90?270:90}),false,'rotation orbits rather than projection-rebases');
+  }
+});
 for (const rotation of [0,90,180,270]) {
   const flatRect={x:63,y:146,w:742,h:613};
   // Deliberately asymmetric elevated bounds: the displayed/canonical centres

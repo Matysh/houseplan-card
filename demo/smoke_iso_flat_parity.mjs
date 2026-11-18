@@ -15,6 +15,7 @@ const repoRoot = resolve(fileURLToPath(new URL('..',import.meta.url)));
 const roundtripOnly = process.argv.includes('--roundtrip-only');
 const hiddenOnly = process.argv.includes('--hidden-only');
 const screenOnly = process.argv.includes('--screen-only');
+const screen90Only = process.argv.includes('--screen-90-only');
 // Freeze already built sources/assets in an owned artifact, so another author
 // cannot replace a chunk between browser requests. The ordinary freshness
 // guard still verifies the complete copied tree; no stale bypass/rebuild.
@@ -201,7 +202,7 @@ if(screenOnly || (!roundtripOnly && !hiddenOnly)) {
     await page.waitForFunction(()=>!!window.__card.renderRoot.querySelector('.summary-overlay:not([inert])'));
     await settled(page);
     const rows=[];
-    for(const rotation of [90,270]) {
+    for(const rotation of screen90Only?[90]:[90,270]) {
       while((await snapshot(page)).rotation!==rotation)await rotate(page);
       await fit(page);
       const offset=await page.evaluate(()=>{
