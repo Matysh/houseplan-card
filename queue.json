@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15749,
+  "revision": 15750,
   "nextTicket": 518,
   "nextFence": 518,
   "tasks": {
@@ -4601,7 +4601,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795031446929,
       "reviewEntry": 3,
-      "patchId": "294f95911bfd9a37efea8cb827fa9fa13e350888",
+      "patchId": "397061d2576db02332447b5f6a5a9d7d1c044636",
       "changedFiles": [
         ".gitignore",
         "assets/furniture/houseplan-0.4.1/svg/volume/ac.svg",
@@ -4675,6 +4675,7 @@
         "custom_components/houseplan/core/validation.py",
         "custom_components/houseplan/websocket_api.py",
         "demo/smoke_iso_flat_parity.mjs",
+        "demo/smoke_isometric_live_touch.mjs",
         "demo/ui-lab/furniture-gallery.css",
         "demo/ui-lab/furniture-gallery.html",
         "demo/ui-lab/server.mjs",
@@ -4703,8 +4704,10 @@
         "scripts/build-furniture-gallery.mjs",
         "scripts/config-compatibility-inventory.json",
         "scripts/config-schema.json",
+        "scripts/coordinate-write-barrier-guard.mjs",
         "scripts/dump-config-schema.py",
         "scripts/generate-furniture-volume.mjs",
+        "scripts/mutation-registry.mjs",
         "src/canvas-constants.ts",
         "src/card-runtime.ts",
         "src/device-contact-card.ts",
@@ -4766,9 +4769,12 @@
         "src/version-recovery-card.ts",
         "src/view-frame-view.ts",
         "src/view-frame.ts",
+        "test/coordinate-write-barrier-guard.test.mjs",
         "test/device-contact-card.test.mjs",
         "test/device-contact-screen.test.mjs",
         "test/device-face.test.mjs",
+        "test/fixtures/477-writer-fixed-point-writers.json",
+        "test/fixtures/845-wall-corpus-current-identities.json",
         "test/fixtures/furniture-volume/accepted-meshes.json",
         "test/furniture-transform-contract.test.mjs",
         "test/furniture-volume-catalog.test.mjs",
@@ -4781,14 +4787,18 @@
         "test/iso-opening-masonry.test.mjs",
         "test/iso-opening-refinement.test.mjs",
         "test/iso-openings.test.mjs",
+        "test/iso-overlays.test.mjs",
         "test/iso-projection.test.mjs",
         "test/iso-scene-render.test.mjs",
+        "test/iso-stage6.test.mjs",
         "test/iso-walls.test.mjs",
         "test/iso-worker-cache-profile.test.mjs",
         "test/isometric-contract.test.mjs",
+        "test/mutation-browser-offload.test.mjs",
         "test/pdf-workstation.test.mjs",
         "test/projection-view-camera.test.mjs",
         "test/screen-camera.test.mjs",
+        "test/styles-split.test.mjs",
         "test/view-frame.test.mjs",
         "tests_backend/test_config_schema_manifest.py",
         "tests_backend/test_furniture_workstation.py"
@@ -5578,10 +5588,11 @@
     "token": "517:finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:1:admit",
     "fence": 517,
     "materialSha": "8b9044dff26c65919618fdb0a4707a55499d5f03",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "d108e0dfc158ce0a00a22173a95292eff40fe13a",
+    "phase": "testing",
     "admittedAt": 1795031572805,
-    "expiresAt": 1795031872805
+    "expiresAt": 1795031881938,
+    "patchId": "397061d2576db02332447b5f6a5a9d7d1c044636"
   },
   "events": {
     "github:44358531868:1:label:spec-request": {
@@ -5746,6 +5757,10 @@
     },
     "finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:3:return": {
       "digest": "6d6aaa11b23d01541b0de7c1ad17e474afda65a8ed530005d89a9e9286e52853",
+      "issue": 1451
+    },
+    "finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:2:synchronized": {
+      "digest": "1b82ed450c62fe79b41f95ecad80a069b105f84ec78c110855c5b522526ae853",
       "issue": 1451
     },
     "finish:4d0cf01c-334e-4c98-aa92-eb59288ac117": {
