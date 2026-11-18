@@ -30,6 +30,7 @@ import { makeStaticWallOpeningsFixture } from '../fixtures/static-wall-openings.
 import { prepareStaticWallOpenings } from './static-wall-openings.mjs';
 import { makeResizeJunctionFixture } from '../fixtures/resize-junctions.mjs';
 import { prepareResizeJunctions } from './resize-junctions.mjs';
+import { testSurfaceReady, renderedIsoReady } from '../helpers/test-surface-ready.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -1125,6 +1126,7 @@ async function preparePlanKeyboardCapture(page, scenario) {
 
 export async function prepareGoldenScenario(page, scenario) {
   await stableEnvironment(page, scenario);
+  await page.addScriptTag({ content: `window.__hpTestSurfaceReady=${testSurfaceReady.toString()};window.__hpRenderedIsoReady=${renderedIsoReady.toString()};` });
   {
     // Default capture entry is pointer input, independent of the preceding
     // scene's Tab history. Explicit keyboard/device-focus scenes establish
@@ -1181,10 +1183,8 @@ export async function prepareGoldenScenario(page, scenario) {
         stageClasses:card.renderRoot.querySelector('.stage')?.className });
       const initial = describe();
       try {
-        await until(() => card._mode === expected && !card._floorPreparation?.pending
-          && !card._floorPendingMode && !card._modeTransitionBusy
-          && !!card.renderRoot.querySelector(`.stage.mode-${expected}`)
-          && !card.renderRoot.querySelector('[data-hp-floor-cache="pending"]'));
+        await until(() => window.__hpTestSurfaceReady(card, expected,
+          scenario.emptyPlan === true || !!scenario.firstSpace));
       } catch (error) {
         throw new Error(`${error.message}; mode state ${JSON.stringify({ initial,current:describe() })}`);
       }
@@ -1644,12 +1644,9 @@ export async function prepareGoldenScenario(page, scenario) {
         throw new Error(`isometric golden rendered Flat: ${scenario.id}`);
       }
       await until(() => card._renderProjection === 'iso');
-      const stage = card.renderRoot.querySelector('.stage');
-      const structuralBuilds = Number(stage?.getAttribute('data-hp-iso-structural-builds'));
       if (!scenario.stage3Golden?.noBorders
-          && (stage?.getAttribute('data-hp-iso-stage') !== '4'
-            || !Number.isFinite(structuralBuilds) || structuralBuilds < 1)) {
-        throw new Error(`isometric golden did not render the Stage 4 contract: ${scenario.id}`);
+          && !window.__hpRenderedIsoReady(card)) {
+        throw new Error(`isometric golden did not render ready Stage 4 masonry: ${scenario.id}`);
       }
     }
     if (scenario.stage3Golden) {

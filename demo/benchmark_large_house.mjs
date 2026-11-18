@@ -19,6 +19,7 @@ import {
 } from './performance/card-contract.mjs';
 import { attributeResizeLongTask } from './performance/resize-attribution.mjs';
 import { floorCacheBuilds, floorCacheSnapshot, judgeSwitchCycle } from './performance/switch-cycle-guard.mjs';
+import { testSurfaceReady } from './helpers/test-surface-ready.mjs';
 import {
   ISOMETRIC_STAGE3_DENSE_PROFILE,
   makeIsometricStage3DenseFixture,
@@ -141,6 +142,7 @@ await page.addScriptTag({
     + `builds: ${floorCacheBuilds.toString()}, judge: ${judgeSwitchCycle.toString()} };`,
 });
 const chromium = await browser.version();
+await page.addScriptTag({ content: `window.__hpTestSurfaceReady=${testSurfaceReady.toString()};` });
 let buildFingerprint;
 try {
   buildFingerprint = await assertFreshDemoBundle(page, targetRoot);
@@ -452,6 +454,7 @@ try {
       const modelReadyMs = Number((performance.now() - loadStarted).toFixed(2));
       await until(() => card._booting === false);
       if (interaction && '_bootSoft' in card) await until(() => card._bootSoft === false);
+      await until(() => window.__hpTestSurfaceReady(card, 'view'));
       await frame();
       if (planRotation && card.renderRoot.querySelector('.stage')?.getAttribute('data-hp-plan-rotation') !== String(planRotation))
         throw new Error(`interaction requested ${planRotation} degrees but the painted stage did not adopt it`);
@@ -541,6 +544,7 @@ try {
       const spaceSwitch = await duration(async () => {
         card._pickSpace('perf-floor-2');
         await card.updateComplete;
+        await until(() => window.__hpTestSurfaceReady(card, 'view'));
       });
 
       const steadyStage3 = stage3Dense ? stage3Snapshot(card) : null;
@@ -898,7 +902,7 @@ try {
         card._path = [[100, 100]];
         card.requestUpdate();
         await card.updateComplete;
-        await until(() => !card._modeTransitionBusy && card._continuity.state === 'steady');
+        await until(() => window.__hpTestSurfaceReady(card, 'plan') && card._continuity.state === 'steady');
         for (let index = 0; index < 5; index++) await frame();
         let editorStage = card.renderRoot.querySelector('.stage');
         // Cache the actual painted canonical-to-screen basis before each timed
@@ -1044,7 +1048,7 @@ try {
         card._decorSel = decorShape.id;
         card.requestUpdate();
         await card.updateComplete;
-        await until(() => !card._modeTransitionBusy && card._continuity.state === 'steady');
+        await until(() => window.__hpTestSurfaceReady(card, 'decor') && card._continuity.state === 'steady');
         for (let index = 0; index < 5; index++) await frame();
         card._dtMeasure();
         await card.updateComplete;
@@ -1091,6 +1095,7 @@ try {
 
         card._setMode('view', false);
         await card.updateComplete;
+        await until(() => window.__hpTestSurfaceReady(card, 'view'));
         await frame();
         deltas.panMoveFullRenders = panMoveRenders;
         deltas.terminalFullRenders = panTerminalRenders;
@@ -1132,6 +1137,7 @@ try {
         card._path = [];
         card.requestUpdate();
         await card.updateComplete;
+        await until(() => window.__hpTestSurfaceReady(card, 'plan'));
         await frame();
         const stage = card.renderRoot.querySelector('.stage');
         const overlay = card.renderRoot.querySelector('[data-hp="plan-snap-overlay"]');
@@ -1232,12 +1238,14 @@ try {
         }
         card._setMode('view');
         await card.updateComplete;
+        await until(() => window.__hpTestSurfaceReady(card, 'view'));
       }) : null;
 
       const resizePreview = await duration(async () => {
         card._setMode('plan');
         card._tool = 'resize';
         await card.updateComplete;
+        await until(() => window.__hpTestSurfaceReady(card, 'plan'));
         const room = card._rszRooms()[0];
         const pointerId = 777;
         const quietEvent = {
@@ -1273,11 +1281,7 @@ try {
       // A user cannot wheel the inert stage while the preceding editor return
       // is still running. Keep its preparation/hold outside this steady-View
       // metric rather than timing a synthetic cancellation of that transition.
-      const panReadyStarted = performance.now();
-      while (card._modeTransitionBusy) {
-        if (performance.now() - panReadyStarted > 5000) throw new Error('View did not settle before panZoom');
-        await frame();
-      }
+      await until(() => window.__hpTestSurfaceReady(card, 'view'), 5000);
       await card.updateComplete;
       await frame();
       const stage = card.renderRoot.querySelector('.stage');
@@ -1310,10 +1314,12 @@ try {
       for (let floor = 1; floor <= fixture.counts.floors; floor++) {
         card._pickSpace(`perf-floor-${floor}`);
         await card.updateComplete;
+        await until(() => window.__hpTestSurfaceReady(card, 'view'));
         await frame();
       }
       card._pickSpace('perf-floor-2');
       await card.updateComplete;
+      await until(() => window.__hpTestSurfaceReady(card, 'view'));
       await frame();
 
       const switchCycleCachesBefore = guard.snapshot(card);
@@ -1326,6 +1332,7 @@ try {
         for (let index = 0; index < switchCycleSwitches; index++) {
           card._pickSpace(`perf-floor-${(index % fixture.counts.floors) + 1}`);
           await card.updateComplete;
+          await until(() => window.__hpTestSurfaceReady(card, 'view'));
           // A user cannot produce twelve tab clicks in one JavaScript task.
           // Yield between interactions so Long Task entries describe one
           // switch, while switchCycleMs still measures the complete cycle.
@@ -1379,6 +1386,7 @@ try {
           const passesBefore = card.__diag.updates;
           card._pickSpace(`perf-floor-${(index % fixture.counts.floors) + 1}`);
           for (let wait = 0; wait < 20 && !(await card.updateComplete); wait++);
+          await until(() => window.__hpTestSurfaceReady(card, 'view'));
           floorSwitchPasses.push(card.__diag.updates - passesBefore);
         }
       }
@@ -1390,6 +1398,7 @@ try {
         for (let index = 0; index < 12; index++) {
           card._pickSpace(`perf-floor-${(index % fixture.counts.floors) + 1}`);
           await card.updateComplete;
+          await until(() => window.__hpTestSurfaceReady(card, 'view'));
           await new Promise((done) => setTimeout(done, 0));
         }
         await forceGc();
