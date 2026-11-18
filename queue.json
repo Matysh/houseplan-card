@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15776,
+  "revision": 15777,
   "nextTicket": 519,
   "nextFence": 519,
   "tasks": {
@@ -4601,7 +4601,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795033829588,
       "reviewEntry": 4,
-      "patchId": "397061d2576db02332447b5f6a5a9d7d1c044636",
+      "patchId": "7fb961e3697fa7e901e2149c72a575f296df0da6",
       "changedFiles": [
         ".gitignore",
         "assets/furniture/houseplan-0.4.1/svg/volume/ac.svg",
@@ -5588,10 +5588,11 @@
     "token": "518:finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:1:admit",
     "fence": 518,
     "materialSha": "a11073ebf2f8c89433196c51adb8a2a06f2a3536",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "d108e0dfc158ce0a00a22173a95292eff40fe13a",
+    "phase": "testing",
     "admittedAt": 1795033833393,
-    "expiresAt": 1795034133393
+    "expiresAt": 1795034140066,
+    "patchId": "7fb961e3697fa7e901e2149c72a575f296df0da6"
   },
   "events": {
     "github:44358531868:1:label:spec-request": {
@@ -5856,6 +5857,10 @@
     },
     "finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:3:return": {
       "digest": "b0e462cc80a44ff9eecbe9a9408665191210aa90e6c8e5976c80098f33c48162",
+      "issue": 1451
+    },
+    "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:2:synchronized": {
+      "digest": "c2713957d793ccca5269d72122ffecd0f624182933445e37b03c475175f8ce48",
       "issue": 1451
     },
     "finish:4d0cf01c-334e-4c98-aa92-eb59288ac117": {
