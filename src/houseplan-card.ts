@@ -3446,7 +3446,7 @@ export class HouseplanCard extends LitElement {
       if (Number.isFinite(saved) && saved > 0) this._screenRestoreZoom = saved;
     }
     const fullReference = !previous && !this._hasScreenProfile
-      ? screenCameraTarget(vb, display, this._rotation, size, screenFreeArea(...size, null), 1) : null;
+      ? screenCameraTarget(vb, display, this._rotation, size, screenFreeArea(...size, null), 1, this._sceneDepthScale) : null;
     // A rapid panel reversal still owns automatic centring. The visible
     // intermediate frame is not a manual pan away from the reference.
     const followingSummary = this._screenCameraTransition && this._screenCameraAutomatic
@@ -3459,7 +3459,7 @@ export class HouseplanCard extends LitElement {
       || !!previous && onScreenReference(current, previous,
       this._cameraTransition.active || this._pointers.size > 0));
     const free = screenFreeArea(...size, this._centerSummary ? geometry.panel : null);
-    const reference = screenCameraTarget(vb, display, this._rotation, size, free, this._hasScreenProfile ? screen.zoom ?? 1 : 1);
+    const reference = screenCameraTarget(vb, display, this._rotation, size, free, this._hasScreenProfile ? screen.zoom ?? 1 : 1, this._sceneDepthScale);
     if (!reference) return;
     this._screenReference = reference; this._screenReferenceKey = key;
     this._screenSummaryVisible = !!geometry.panel;
@@ -3469,7 +3469,7 @@ export class HouseplanCard extends LitElement {
     if (follow || explicit) {
       const multiplier = this._screenRestoreZoom === null ? 1 : this._screenRestoreZoom / reference.camera.zoom;
       const target = explicit || this._screenRestoreZoom !== null
-        ? screenCameraTarget(vb, display, this._rotation, size, free, explicit ? 1 : multiplier)! : reference;
+        ? screenCameraTarget(vb, display, this._rotation, size, free, explicit ? 1 : multiplier, this._sceneDepthScale)! : reference;
       this._cancelCameraTransition(false);
       this._screenCameraTransition = true;
       this._screenCameraAutomatic = !explicit;
@@ -3479,9 +3479,11 @@ export class HouseplanCard extends LitElement {
         this._screenCameraTransition = false; this._screenCameraAutomatic = false;
       }
     } else if (previous) {
-      const view = current.viewBox;
-      const camera = physicalPlanCamera({ centerX: view.x + view.w / 2, centerY: view.y + view.h / 2,
-        pixelsPerUnit: previous.pixelsPerUnit * previous.camera.viewBox.w / view.w }, vb, display, this._rotation, ...size);
+      // The reference can belong to the previous projection. Decode the
+      // camera already adopted for this frame, never its old fit-width ratio.
+      const frame = this._projectionViewFrame();
+      const physical = physicalViewCamera(current.viewBox, current.zoom, this._viewFrame ?? frame);
+      const camera = canonicalPhysicalCamera(physical, {...frame, size});
       this._cancelCameraTransition(false); this._zoom = camera.zoom; this._view = camera.viewBox;
     }
     this._screenRestoreZoom = null;

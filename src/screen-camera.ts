@@ -24,10 +24,11 @@ export function screenFreeArea(width: number, height: number,
 
 /** Uses the existing canonical/projected bounds, never a second geometry walk. */
 export function screenCameraTarget(vb: number[], display: FrameRect, rotation: PlanRotation,
-  size: readonly [number, number], free: FrameRect, multiplier: number): ScreenCameraTarget | null {
+  size: readonly [number, number], free: FrameRect, multiplier: number,
+  floorScaleY = 1): ScreenCameraTarget | null {
   const [width, height] = size;
   const bounds = rotation ? display : { x: vb[0], y: vb[1], w: vb[2], h: vb[3] };
-  if (![width, height, free.w, free.h, bounds.w, bounds.h, multiplier].every(n => Number.isFinite(n) && n > 0)) return null;
+  if (![width, height, free.w, free.h, bounds.w, bounds.h, multiplier, floorScaleY].every(n => Number.isFinite(n) && n > 0)) return null;
   const fit = fitView(vb, width / height);
   const displayFit = rotation ? fitView([display.x, display.y, display.w, display.h], width / height) : fit;
   const fitPixelsPerUnit = Math.min(free.w / bounds.w, free.h / bounds.h);
@@ -37,7 +38,7 @@ export function screenCameraTarget(vb: number[], display: FrameRect, rotation: P
   const displayed = { x: bounds.x + bounds.w / 2 + (width / 2 - free.x - free.w / 2) / pixelsPerUnit - w / 2,
     y: bounds.y + bounds.h / 2 + (height / 2 - free.y - free.h / 2) / pixelsPerUnit - h / 2, w, h };
   return { camera: { zoom, viewBox: canonicalView(displayed,
-    { x: vb[0], y: vb[1], w: vb[2], h: vb[3] }, display, rotation, zoom, fit) },
+    { x: vb[0], y: vb[1], w: vb[2], h: vb[3] }, display, rotation, zoom, fit, floorScaleY) },
     fit, fitPixelsPerUnit, pixelsPerUnit, size };
 }
 

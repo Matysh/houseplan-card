@@ -3,6 +3,48 @@ import assert from 'node:assert/strict';
 import { screenFreeArea, screenCameraTarget, onScreenReference, screenZoomBadge } from '../test-build/screen-camera.js';
 import { turnRect, presentationViewport } from '../test-build/view-frame.js';
 import { spaceSwipeTargetForOwner } from '../test-build/logic.js';
+import {projectedFrame, isoCameraFor, isoDisplayWallHeight} from '../test-build/iso-projection.js';
+import {physicalViewCamera, canonicalPhysicalCamera} from '../test-build/projection-view-camera.js';
+
+test('#1451 orthographic screen profiles centre projected bounds beside right and bottom panels', () => {
+  const rect={x:123,y:192,w:760,h:486},size=[1440,1007];
+  const canonical=projectedFrame({rect,wallHeight:isoDisplayWallHeight()},isoCameraFor(0));
+  const vb=[canonical.x,canonical.y,canonical.w,canonical.h];
+  for(const rotation of [90,270]) {
+    const plane=isoCameraFor(rotation), display=projectedFrame({rect,wallHeight:isoDisplayWallHeight()},plane);
+    for(const free of [{x:0,y:0,w:1100,h:1007},{x:0,y:0,w:1440,h:720}]) {
+      const target=screenCameraTarget(vb,display,rotation,size,free,1,plane.floorScaleY);
+      const shown=presentationViewport(target.camera.viewBox,vb,display,rotation,target.camera.zoom,size,null,plane.floorScaleY);
+      const ppu=size[0]/shown.w;
+      assert.ok(Math.abs((display.x+display.w/2-shown.x)*ppu-(free.x+free.w/2))<1e-8);
+      assert.ok(Math.abs((display.y+display.h/2-shown.y)*ppu-(free.y+free.h/2))<1e-8);
+      assert.ok(Math.abs(ppu-target.pixelsPerUnit)<1e-10);
+    }
+  }
+});
+
+test('#1451 manual screen camera keeps physical scale across projection changes and same-plane resize', () => {
+  const rect={x:123,y:192,w:760,h:486},size=[1440,1007],free={x:0,y:0,w:1100,h:1007};
+  const canonical=projectedFrame({rect,wallHeight:isoDisplayWallHeight()},isoCameraFor(0));
+  const vb=[canonical.x,canonical.y,canonical.w,canonical.h];
+  for(const rotation of [90,270]) {
+    const plane=isoCameraFor(rotation), display=projectedFrame({rect,wallHeight:isoDisplayWallHeight()},plane);
+    const volume={base:vb,display,rotation,plane,size};
+    const flat={base:[rect.x,rect.y,rect.w,rect.h],display:turnRect(rect,rotation),rotation,plane:null,size};
+    const reference=screenCameraTarget(vb,display,rotation,size,free,1,plane.floorScaleY);
+    const pan={...reference.camera.viewBox,x:reference.camera.viewBox.x+60,y:reference.camera.viewBox.y-20};
+    const physical=physicalViewCamera(pan,reference.camera.zoom,volume);
+    let current={zoom:reference.camera.zoom,viewBox:pan}, source=volume;
+    for(const target of [flat,{...flat,size:[1080,812]}, {...volume,size:[1080,812]},volume]) {
+      current=canonicalPhysicalCamera(physicalViewCamera(current.viewBox,current.zoom,source),target);
+      const actual=physicalViewCamera(current.viewBox,current.zoom,target);
+      assert.ok(Math.abs(actual.centerX-physical.centerX)<1e-8);
+      assert.ok(Math.abs(actual.centerY-physical.centerY)<1e-8);
+      assert.ok(Math.abs(actual.pixelsPerUnit-physical.pixelsPerUnit)<1e-10);
+      source=target;
+    }
+  }
+});
 
 test('#1165 physical profile fit centres in the free area at every rotation and zoom', () => {
   const vb = [-300, 20, 1800, 700], bounds = { x: vb[0], y: vb[1], w: vb[2], h: vb[3] };

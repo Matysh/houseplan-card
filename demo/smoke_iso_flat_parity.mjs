@@ -14,6 +14,7 @@ import { fixtureWallKey } from './fixtures/wall-key.mjs';
 const repoRoot = resolve(fileURLToPath(new URL('..',import.meta.url)));
 const roundtripOnly = process.argv.includes('--roundtrip-only');
 const hiddenOnly = process.argv.includes('--hidden-only');
+const screenOnly = process.argv.includes('--screen-only');
 // Freeze already built sources/assets in an owned artifact, so another author
 // cannot replace a chunk between browser requests. The ordinary freshness
 // guard still verifies the complete copied tree; no stale bypass/rebuild.
@@ -125,7 +126,7 @@ const fit = async page => { await page.locator('[data-hp="zoom-fit"]').first().c
 const rotate = async page => { await page.locator('[data-hp="rotate-right"]').first().click(); await settled(page); };
 const out = {}, detail = {};
 
-{
+if(!screenOnly) {
   const {page,browser} = await start();
   try {
     const original = await snapshot(page);
@@ -184,7 +185,57 @@ const out = {}, detail = {};
   } finally { await finish(browser); }
 }
 
-for(const kind of roundtripOnly || hiddenOnly ? [] : ['structure','furniture']) {
+if(screenOnly || (!roundtripOnly && !hiddenOnly)) {
+  const {page,browser} = await start();
+  try {
+    await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{
+      cfg.settings={...cfg.settings,center_summary:true,summary_panel:{version:1,title:'Synthetic summary',
+        show_on_mobile:true,blocks:[{id:'native-screen',title:'State',visible:true,scope:{type:'all'},
+          values:[{id:'v',label:'Value',source:{type:'entity',entity_id:'sensor.profile_value'}}]}]}};
+      return cfg;
+    }));
+    await settled(page);
+    await page.waitForFunction(()=>window.__card._summary && window.__card._screenReference);
+    if(!await page.locator('.summary-overlay:not([inert])').count())
+      await page.locator('[data-hp="summary-toggle"]').first().click();
+    await page.waitForFunction(()=>!!window.__card.renderRoot.querySelector('.summary-overlay:not([inert])'));
+    await settled(page);
+    const rows=[];
+    for(const rotation of [90,270]) {
+      while((await snapshot(page)).rotation!==rotation)await rotate(page);
+      await fit(page);
+      const offset=await page.evaluate(()=>{
+        const c=window.__card,stage=c._stageEl,svg=stage.querySelector('svg.plan-svg');
+        const geometry=c._summary.screenGeometry(true),display=c._displayBase(c._baseVb());
+        const panel=geometry?.panel;
+        if(!panel)return {present:false};
+        const free=panel.side==='right'?{w:panel.rect.x,h:stage.clientHeight}
+          :{w:stage.clientWidth,h:panel.rect.y};
+        const p=new DOMPoint(display.x+display.w/2,display.y+display.h/2).matrixTransform(svg.getScreenCTM());
+        const bounds=stage.getBoundingClientRect();
+        return {present:true,actual:[p.x-bounds.left-stage.clientLeft,p.y-bounds.top-stage.clientTop],
+          expected:[free.w/2,free.h/2]};
+      });
+      await page.locator('[data-hp="zoom-in"]').first().click();await settled(page);
+      const bounds=await page.locator('.stage:not([inert])').first().boundingBox();
+      await page.mouse.move(bounds.x+24,bounds.y+24);await page.mouse.down();
+      await page.mouse.move(bounds.x+111,bounds.y+66,{steps:6});await page.mouse.up();await settled(page);
+      const before=await snapshot(page);
+      await iso(page,false);const flat=await snapshot(page);
+      await iso(page,true);const back=await snapshot(page);
+      const result={rotation,offset,offsetCorrect:offset.present&&close(offset.actual,offset.expected,1),
+        centrePreserved:[flat,back].every(state=>close(state.worldCenter,before.worldCenter)),
+        scalePreserved:[flat,back].every(state=>Math.abs(state.pixelsPerSceneUnit-before.pixelsPerSceneUnit)<.002),
+        centres:[before,flat,back].map(state=>state.worldCenter),
+        scales:[before,flat,back].map(state=>state.pixelsPerSceneUnit)};
+      out['screenProfile'+rotation]=result.offsetCorrect&&result.centrePreserved&&result.scalePreserved;
+      rows.push(result);
+    }
+    detail.screenProfiles=rows;
+  } finally {await finish(browser);}
+}
+
+for(const kind of roundtripOnly || hiddenOnly || screenOnly ? [] : ['structure','furniture']) {
   const {page,browser} = await start();
   try {
     const result = await page.evaluate(async kind=>{
