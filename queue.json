@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15509,
-  "nextTicket": 511,
+  "revision": 15510,
+  "nextTicket": 512,
   "nextFence": 511,
   "tasks": {
     "1024": {
@@ -4941,6 +4941,20 @@
         "status": "published",
         "sourceSha": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1"
       }
+    },
+    "1464": {
+      "issue": 1464,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1464-house-transfer",
+      "materialSha": "3faa728b1d372b3082c4944eec053d80b527bf88",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 511,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1794966928040,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5338,7 +5352,9 @@
       "runId": 44203059590
     }
   },
-  "waiting": [],
+  "waiting": [
+    1464
+  ],
   "active": null,
   "events": {
     "github:44179894168:1:label:spec-request": {
@@ -5396,6 +5412,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:33d21e3f-105b-40dd-9287-25349c19a450": {
+      "digest": "3aac52c05d6591fbc9c773b0520e2409ffd67931211cc2d027afd68907c7eb9c",
+      "issue": 1464,
+      "message": {
+        "kind": "queued",
+        "issue": 1464,
+        "at": 1794966928040,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "3faa728b1d372b3082c4944eec053d80b527bf88"
       }
     }
   },
