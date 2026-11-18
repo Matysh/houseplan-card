@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { parse } from 'yaml';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { mutationShardForDate, runBackground, publishBackgroundFailure } from '../lib/background.mjs';
@@ -25,6 +26,22 @@ test('#1466 background entry forwards the weekly default and keeps explicit loca
     await backgroundJob({ env: { PROCESS_NEXT_ENABLED: 'true', HP_BACKGROUND_KIND: 'mutations',
       ...(override ? {HP_MUTATION_SHARDS: override} : {}) }, run: async value => { received = value; return {}; } });
     assert.equal(received.shardCount, expected);
+  }
+});
+
+test('#1466 scheduled workflow and its template dispatch the weekly default', async () => {
+  for (const file of ['../../.github/workflows/process-next-background.yml', '../templates/background.yml']) {
+    const workflow = parse(readFileSync(new URL(file, import.meta.url), 'utf8'));
+    const expression = workflow.jobs.background.env.HP_MUTATION_SHARDS;
+    // GitHub supplies this fallback when no repository override is installed.
+    const fallback = /\|\|\s*'(\d+)'/.exec(expression)?.[1];
+    assert.ok(fallback, file);
+    let received;
+    await backgroundJob({env: {PROCESS_NEXT_ENABLED: 'true', HP_BACKGROUND_KIND: 'mutations',
+      HP_MUTATION_SHARDS: fallback}, run: async value => {received = value; return {};}});
+    assert.equal(received.shardCount, 7, file);
+    assert.equal(new Set(Array.from({length: 7}, (_, day) =>
+      mutationShardForDate(new Date(Date.UTC(2026, 10, day + 1)), received.shardCount))).size, 7);
   }
 });
 
