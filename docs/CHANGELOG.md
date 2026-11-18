@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.85.3-beta.2 — 2026-11-19
+
 - Restore five nightly mutation witnesses for stale authority, queued subscriptions, autofocus, prepared-cache eviction and Line input; run seven smaller nightly parts over a week with the same time limit (#1466).
 - Integrate the accepted angled 2.5D presentation into ordinary View: shared main/worker camera, refined masonry and openings, 60 matching volume models, occlusion-aware live overlays and safe complete Flat fallback. Persist desk/computer links through history, copies, plan-only/full/house transfer and top-view printing, with an optional older-writer fence (#1451).
 
