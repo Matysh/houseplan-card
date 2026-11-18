@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15712,
+  "revision": 15713,
   "nextTicket": 517,
   "nextFence": 517,
   "tasks": {
@@ -4601,7 +4601,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795027834338,
       "reviewEntry": 2,
-      "patchId": "2209717a241e0213b166e32102b15d94badc479e",
+      "patchId": "294f95911bfd9a37efea8cb827fa9fa13e350888",
       "changedFiles": [
         ".gitignore",
         "assets/furniture/houseplan-0.4.1/svg/volume/ac.svg",
@@ -4758,6 +4758,7 @@
         "src/plan-optimize-write.ts",
         "src/projection-view-camera.ts",
         "src/room-fit.ts",
+        "src/screen-camera.ts",
         "src/space-copy.ts",
         "src/styles/iso-lab-markers.styles.ts",
         "src/styles/iso-tiles.styles.ts",
@@ -4787,6 +4788,7 @@
         "test/isometric-contract.test.mjs",
         "test/pdf-workstation.test.mjs",
         "test/projection-view-camera.test.mjs",
+        "test/screen-camera.test.mjs",
         "test/view-frame.test.mjs",
         "tests_backend/test_config_schema_manifest.py",
         "tests_backend/test_furniture_workstation.py"
@@ -5575,10 +5577,11 @@
     "token": "516:finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:1:admit",
     "fence": 516,
     "materialSha": "d7f65198e07b8c84f32927cd0cd30d9178e82539",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "d108e0dfc158ce0a00a22173a95292eff40fe13a",
+    "phase": "testing",
     "admittedAt": 1795027842146,
-    "expiresAt": 1795028142146
+    "expiresAt": 1795028156327,
+    "patchId": "294f95911bfd9a37efea8cb827fa9fa13e350888"
   },
   "events": {
     "github:44358531868:1:label:spec-request": {
@@ -5603,6 +5606,10 @@
     },
     "finish:4d0cf01c-334e-4c98-aa92-eb59288ac117:finish:2:synchronized": {
       "digest": "58c74792ccad78ec1f7eaed77e953b669b4d3f83c4c4bc4c267812780801ce37",
+      "issue": 1451
+    },
+    "finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:2:synchronized": {
+      "digest": "2f663fa06134a0a958f7816d9e0633521b3738fd1649e9b75b096c237f5a2fe5",
       "issue": 1451
     },
     "finish:4d0cf01c-334e-4c98-aa92-eb59288ac117": {
