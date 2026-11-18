@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15803,
+  "revision": 15804,
   "nextTicket": 520,
   "nextFence": 520,
   "tasks": {
@@ -4601,7 +4601,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795035326254,
       "reviewEntry": 5,
-      "patchId": "7fb961e3697fa7e901e2149c72a575f296df0da6",
+      "patchId": "df1b68b37dcaae67d1bf0bf814eeb7877d6e3c13",
       "changedFiles": [
         ".gitignore",
         "assets/furniture/houseplan-0.4.1/svg/volume/ac.svg",
@@ -4776,6 +4776,7 @@
         "test/fixtures/477-writer-fixed-point-writers.json",
         "test/fixtures/845-wall-corpus-current-identities.json",
         "test/fixtures/furniture-volume/accepted-meshes.json",
+        "test/floor-cache-publication.test.mjs",
         "test/furniture-transform-contract.test.mjs",
         "test/furniture-volume-catalog.test.mjs",
         "test/furniture-volume-generator.test.mjs",
@@ -5588,10 +5589,11 @@
     "token": "519:finish:2d5d76f4-61ba-41bc-823f-c477418b9f36:finish:1:admit",
     "fence": 519,
     "materialSha": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "d108e0dfc158ce0a00a22173a95292eff40fe13a",
+    "phase": "testing",
     "admittedAt": 1795035330424,
-    "expiresAt": 1795035630424
+    "expiresAt": 1795035637092,
+    "patchId": "df1b68b37dcaae67d1bf0bf814eeb7877d6e3c13"
   },
   "events": {
     "github:44358531868:1:label:spec-request": {
@@ -5956,6 +5958,10 @@
     },
     "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:3:return": {
       "digest": "40b49ecd0bf6da1637e77a01f158e00eee7ce5a12560b2b7b8d88d9dffbd43c0",
+      "issue": 1451
+    },
+    "finish:2d5d76f4-61ba-41bc-823f-c477418b9f36:finish:2:synchronized": {
+      "digest": "c4162e89b6becf202ce7a007572d845c7f397b2f0e6b07d1b7acbf313ed62785",
       "issue": 1451
     },
     "finish:4d0cf01c-334e-4c98-aa92-eb59288ac117": {
