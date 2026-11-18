@@ -43,7 +43,8 @@ test('#1464 house format, files, prefix and HA transaction regressions select st
     }
     for (const file of ['src/house-transfer-prefix.ts', 'custom_components/houseplan/core/house_files.py',
         'custom_components/houseplan/core/house_resources.py', 'custom_components/houseplan/house_http.py',
-        'tools/smoke_core_package.py']) {
+        'tools/smoke_core_package.py', 'custom_components/houseplan/core/conformance.py',
+        'custom_components/houseplan/core/conformance_example.py', 'demo/standalone/core_process.py', 'demo/standalone/host.js']) {
         assert.ok(domainsOf(file).includes('storage'), file);
     }
 }));
