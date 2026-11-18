@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15897,
+  "revision": 15898,
   "nextTicket": 521,
   "nextFence": 521,
   "tasks": {
@@ -5004,7 +5004,18 @@
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
         "test/performance-surface-ready.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1795039153720,
+        "entry": 1,
+        "detail": "Поведение: test/golden-matrix.test.mjs: failed",
+        "eventId": "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:3:return:return:1467"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5417,18 +5428,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1467,
-    "worker": "finish",
-    "token": "520:finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:1:admit",
-    "fence": 520,
-    "materialSha": "bb9f9b13c5ddbee1eef3a6d7ac28f4bfd7dc1ab7",
-    "expectedBase": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-    "phase": "testing",
-    "admittedAt": 1795038931939,
-    "expiresAt": 1795039411146,
-    "patchId": "31e3d28c33900fcf8b4195294bbddb7f70c934db"
-  },
+  "active": null,
   "events": {
     "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:2:synchronized": {
       "digest": "a38faa8015628e15da63ea63d48b962063d9960dcb04729caa473c62980d4379",
@@ -5444,6 +5444,10 @@
     },
     "finish:3c9b7ccc-d560-4744-9080-e1efc062234a": {
       "digest": "c7a578cefb79f403916c1e2b077036690b5ae831509089dc12bd28a7e2441913",
+      "issue": 1467
+    },
+    "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:3:return": {
+      "digest": "5963f68e285428a750b521d3071a8d504d2367deaf2ca691ad0b15077c810ad8",
       "issue": 1467
     },
     "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d": {
@@ -5471,6 +5475,26 @@
         "layer": "product",
         "materialSha": "bb9f9b13c5ddbee1eef3a6d7ac28f4bfd7dc1ab7",
         "phase": "sync"
+      }
+    },
+    "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:3:return:return:1467": {
+      "digest": "5963f68e285428a750b521d3071a8d504d2367deaf2ca691ad0b15077c810ad8",
+      "issue": 1467,
+      "message": {
+        "kind": "return",
+        "issue": 1467,
+        "at": 1795039153720,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795039153720,
+          "entry": 1,
+          "detail": "Поведение: test/golden-matrix.test.mjs: failed",
+          "eventId": "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:3:return:return:1467"
+        }
       }
     }
   },
