@@ -7,11 +7,12 @@ export interface ModeSceneLayer {
 }
 /** Contiguous paint slots preserve z-order and the existing live camera. */
 export function renderModeSceneLayers(
-  layers: readonly ModeSceneLayer[], view: { x: number; y: number; w: number; h: number }, transform: string | undefined, gridStep: number, mode: string, observed?: (id: string) => void, split = true,
+  layers: readonly ModeSceneLayer[], view: { x: number; y: number; w: number; h: number }, transform: string | undefined, gridStep: number, mode: string, observed?: (id: string) => void, split = true, rotation = 0,
 ): TemplateResult {
   const render = (layer: ModeSceneLayer): TemplateResult => svg`<svg
     class=${((layer.id === 'rooms' && mode !== 'plan') || (layer.id === 'room-ink' && mode === 'plan')) ? 'plan-svg hp-mode-scene-svg' : 'hp-mode-scene-svg'}
     data-hp=${((layer.id === 'rooms' && mode !== 'plan') || (layer.id === 'room-ink' && mode === 'plan')) ? 'stage' : nothing}
+    data-projection="flat" data-yaw=${rotation} data-rotation=${rotation} data-floor-scale-y="1"
     data-grid-step=${((layer.id === 'rooms' && mode !== 'plan') || (layer.id === 'room-ink' && mode === 'plan')) ? gridStep : nothing}
     data-hp-layer=${((layer.id === 'rooms' && mode !== 'plan') || (layer.id === 'room-ink' && mode === 'plan')) ? 'plan' : layer.id}
     aria-hidden=${mode !== 'plan' && (layer.id === 'plan-base' || layer.id === 'plan-ink') ? 'true' : nothing}
@@ -24,6 +25,7 @@ export function renderModeSceneLayers(
     </g>
   </svg>`;
   if (!split) return svg`<svg class="plan-svg hp-mode-scene-svg" data-hp="stage" data-grid-step=${gridStep}
+    data-projection="flat" data-yaw=${rotation} data-rotation=${rotation} data-floor-scale-y="1"
     data-hp-layer="plan" data-hp-live-viewbox="floor" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
     preserveAspectRatio="xMidYMid meet" style="z-index:1;pointer-events:none">
     ${layers.filter(layer => !['paper-ink','room-ink','grid','editor-guides','plan-base','zero-editor','plan-ink','editor-top'].includes(layer.id)).map(layer => svg`<g data-hp-mode-layer=${layer.id} transform=${transform || nothing} style="pointer-events:auto">

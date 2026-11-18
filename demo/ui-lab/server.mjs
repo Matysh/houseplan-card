@@ -125,7 +125,7 @@ export function createLabServer(options = {}) {
       else if (path === '/plan-host-fixture.js') reply = fileReply(resolve(config.repoRoot, 'demo/srv'), 'plan-host-fixture.js');
       else if (config.assets && /^\/api\/houseplan\/content\/assets\/_\/[a-f0-9]{64}\.(png|jpg|webp|svg)$/.test(path)) reply = fileReply(config.assets, path.split('/').pop());
       else if (/^\/gallery-assets\/(?:chunks\/)?[a-zA-Z0-9_-][a-zA-Z0-9_.-]*\.js$/.test(path)) reply = fileReply(resolve(config.labRoot, 'gallery-dist'), path.slice('/gallery-assets/'.length));
-      else if (/^\/volume-source\/[a-z][a-z0-9_]*\.svg$/.test(path)) reply = fileReply(resolve(config.repoRoot, 'assets/furniture/houseplan-0.4.1/svg/volume'), path.split('/').pop());
+      else if (/^\/volume-source\/[a-z][a-z0-9_-]*\.svg$/.test(path)) reply = fileReply(resolve(config.repoRoot, 'assets/furniture/houseplan-0.4.1/svg/volume'), path.split('/').pop());
       else if (path === '/') reply = fileReply(config.labRoot, 'index.html');
       else if (labFiles.has(path.slice(1))) reply = fileReply(config.labRoot, path.slice(1));
       else if (path === '/favicon.ico') { res.writeHead(204, headers).end(); return; }

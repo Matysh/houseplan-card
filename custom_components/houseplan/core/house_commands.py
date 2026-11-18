@@ -67,7 +67,12 @@ async def _prepare(session, lease, payload, pair):
         raise CommandError("wall_model_client_outdated")
     document, files = await port.prepare(lease, payload, internal_plan_names(config))
     candidate, positions, details = await session.cpu.run(build_merge, document, config, layout)
+    repairs = getattr(payload, "workstation_repairs", None)
+    if repairs:
+        details["warnings"].append({"code": "workstations_detached", "count": repairs["detached"]})
     result = _summary(document, config, details, payload.manifest)
+    if repairs:
+        result["workstation_repairs"] = copy.deepcopy(repairs)
     record = {"kind": "house", "payload": payload, "candidate": candidate, "layout": positions,
               "files": files, "config_rev": int(pair.config_data.get("rev", 0)),
               "layout_rev": int(pair.layout_data.get("rev", 0)), "summary": result,

@@ -141,20 +141,23 @@ test('#1070 AC9/AC11: four ISO camera sides expose front faces while one physica
     const scene = resolveIsoScene({ source, cache, cellCm: 5,
       liveFrame: { x: 100, y: 200, w: 800, h: 400 }, rotation });
     const floor = ring.map(point => projectPlanPoint(point, 0, camera));
-    const frontY = Math.max(...floor.map(point => point[1]));
-    assert.equal(scene.geometry.sides.length, 1);
-    assert.equal(scene.geometry.sides[0].points[0][1], frontY);
-    assert.equal(scene.geometry.sides[0].points[1][1], frontY);
-    assert.ok(scene.geometry.sides[0].points[2][1] < frontY, 'wall height rises screen-up');
-    assert.equal(scene.frame.w, rotation === 90 || rotation === 270 ? 400 : 800);
+    assert.equal(scene.geometry.sides.length, 2,'the angled camera exposes both facing rectangle edges');
+    for(const face of scene.geometry.sides) {
+      assert.deepEqual(face.points[0],projectPlanPoint(face.planEdge[0],0,camera));
+      assert.deepEqual(face.points[1],projectPlanPoint(face.planEdge[1],0,camera));
+      assert.ok(face.points[2][1]<face.points[1][1],'wall height rises screen-up');
+    }
+    const projectedWidth = Math.max(...floor.map(point=>point[0]))-Math.min(...floor.map(point=>point[0]));
+    assert.equal(scene.frame.w,projectedWidth);
     const matrix = isoPlaneMatrix(0, camera);
-    assert.ok(matrix.slice(0, 4).every(value => value === 0 || value === 1 || value === -1));
-    assert.deepEqual(unprojectFloorPoint(projectPlanPoint([-1234.5, 2000.25], 0, camera), camera), [-1234.5, 2000.25]);
+    assert.ok(Math.abs(matrix[0]*matrix[3]-matrix[1]*matrix[2]-Math.sin(40*Math.PI/180))<1e-12);
+    const restored = unprojectFloorPoint(projectPlanPoint([-1234.5, 2000.25], 0, camera), camera);
+    assert.ok(Math.abs(restored[0]+1234.5)<1e-9 && Math.abs(restored[1]-2000.25)<1e-9);
     if (!initial) initial = scene;
-    sides.push(scene.geometry.sides[0].edge);
+    sides.push(scene.geometry.sides.map(face=>face.edge).sort().join(','));
     if (sides.length === 5) assert.equal(scene.geometry, initial.geometry);
   }
-  assert.equal(new Set(sides.slice(0, 4)).size, 4, 'the camera sees all four distinct sides');
+  assert.equal(new Set(sides.slice(0, 4)).size, 4, 'each quarter turn sees a different pair of physical sides');
   assert.equal(builds, 1, 'no floor booleans or physical bodies are rebuilt by rotation');
 });
 

@@ -6,6 +6,7 @@
   "backup.house_floors": "Hinzuzufügende Etagen",
   "backup.house_target_settings": "Globale Darstellungs- und Lichteinstellungen des Zielhauses bleiben erhalten. Etagenbezogene Einstellungen werden soweit unterstützt übertragen; die Darstellung kann abweichen. Kein globales Import-Rückgängig.",
   "backup.house_warnings": "Übertragungswarnungen",
+  "backup.workstations_detached": "Ungültige Verbindungen zwischen Computer und Schreibtisch entfernt: {n}. Die Möbel wurden beibehalten; stellen Sie den Computer bei Bedarf im Hintergrund-Editor erneut auf den Schreibtisch.",
   "backup.house_dangling_stair": "Treppenverknüpfung zur fehlenden Etage {target} wird entfernt.",
   "backup.house_confirm_missing": "Ohne nicht verfügbare Bilder fortfahren. Fehlende Hintergründe werden getrennt, Dekorbilder bleiben reparierbare Platzhalter. Externe URLs bleiben erhalten, werden aber nicht vom Server geladen.",
   "backup.house_add": "Haus hinzufügen",

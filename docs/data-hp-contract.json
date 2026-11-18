@@ -92,6 +92,7 @@
     },
     "decor": {
       "elements": [
+        "g",
         "ellipse",
         "image",
         "line",
@@ -114,6 +115,9 @@
           "furniture",
           "path"
         ]
+      },
+      "attributeMetadata": {
+        "data-hp-furniture-volume": { "value": "string", "meaning": "glass on a rendered 2.5D furniture group; absent on Flat art", "audience": ["test"] }
       }
     },
     "device": {
@@ -495,6 +499,7 @@
           "colour-reset",
           "decor-delete",
           "decor-properties",
+          "desktop-mount",
           "device-catalog-add",
           "device-catalog-add-virtual",
           "device-catalog-disable",
@@ -870,6 +875,10 @@
         "test"
       ],
       "attributeMetadata": {
+        "data-projection": { "value": "string", "meaning": "effective painted floor profile: flat or iso, not the saved preference; hidden borders and fallback are flat", "audience": ["test"] },
+        "data-yaw": { "value": "string", "meaning": "effective floor yaw in degrees; volume is 35 plus quarter-turn", "audience": ["test"] },
+        "data-rotation": { "value": "string", "meaning": "presentation quarter-turn: 0, 90, 180 or 270", "audience": ["test"] },
+        "data-floor-scale-y": { "value": "string", "meaning": "finite positive floor compression; sin(40 degrees) for volume, one for Flat", "audience": ["test"] },
         "data-grid-step": {
           "since": "1.83.0",
           "value": "string",

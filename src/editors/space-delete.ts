@@ -42,6 +42,7 @@ export async function completeSpaceDeletion(
       expected_config_rev: host._cfgRev,
       expected_layout_rev: host._layoutRev,
       ...(host._haOpeningFeaturesApi === 1 ? { opening_features_api: 1 } : {}),
+      ...(host._haFurnitureWorkstationApi === 1 ? { furniture_workstation_api: 1 } : {}),
       // Only when asked: an older integration refuses an unknown key.
       ...(removeMarkers ? { remove_markers: true } : {}),
     });

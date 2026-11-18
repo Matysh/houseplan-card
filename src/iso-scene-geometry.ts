@@ -547,7 +547,7 @@ export function createIsoStructuralSource(
     wallHeight,
     raisedHeight,
     floorEdgeHeight,
-    algorithm: 6, // #713: vertical oblique projection
+    algorithm: 7, // #1451: fixed orthographic cutaway and physical opening masonry
   })}`;
   return {
     key,
@@ -625,7 +625,8 @@ export interface ResolveIsoSceneInput {
 }
 
 export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
-  const camera = isoCameraFor(planRotation(input.rotation));
+  const rotation = planRotation(input.rotation);
+  const camera = isoCameraFor(rotation);
   const wallHeight = gridVisualUnits(isoDisplayWallHeight(), input.cellCm);
   const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);
   const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);
@@ -642,10 +643,10 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
     isoPhysicalScenes.set(value, structural);
     lruWrite(input.cache, input.source.key, value, 8);
   }
-  if (camera.rotDeg !== ISO_CAMERA.rotDeg) {
+  if (rotation !== 0) {
     let projections = isoProjectedScenes.get(value);
     if (!projections) { projections = new Map(); isoProjectedScenes.set(value, projections); }
-    let projected = projections.get(camera.rotDeg);
+    let projected = projections.get(rotation);
     if (!projected) {
       const physical = isoPhysicalScenes.get(value);
       if (!physical) throw new Error('missing physical isometric source');
@@ -658,7 +659,7 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
             ...surface, id: basis.id, sourceIndex: basis.sourceIndex, type: basis.type,
           })))),
       };
-      projections.set(camera.rotDeg, projected);
+      projections.set(rotation, projected);
     }
     value = projected;
   }

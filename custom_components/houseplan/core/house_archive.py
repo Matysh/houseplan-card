@@ -141,6 +141,8 @@ class HousePayload:
     document: dict
     manifest: dict
     archive_sha256: str
+    # Computed by our parser, never read from archive metadata.
+    workstation_repairs: dict | None = None
 
 
 def archive_digest(path, check=None):
@@ -211,7 +213,9 @@ def read_archive(path: Path, check=None) -> HousePayload:
                     or not isinstance(manifest["images"], list) or not isinstance(manifest["blobs"], dict)):
                 raise fail()
             document_meta = _descriptor(manifest["document"], "document.json", MAX_EXPORT_BYTES)
-            document = parse_document(reader.checked("document.json", document_meta, MAX_EXPORT_BYTES))
+            workstation_repairs = {}
+            document = parse_document(reader.checked("document.json", document_meta, MAX_EXPORT_BYTES),
+                                      workstation_repairs=workstation_repairs)
             refs = {ref_key(ref.record()): ref for ref in image_refs(document["payload"]["config"])}
             expected, seen, used = {"mimetype", "document.json", "manifest.json"}, set(), set()
             for name, metadata in manifest["blobs"].items():
@@ -259,7 +263,8 @@ def read_archive(path: Path, check=None) -> HousePayload:
         after = archive_digest(path) if check is None else archive_digest(path, check)
         if after != before:
             raise fail("zip_changed")
-        return HousePayload(document, manifest, before)
+        return HousePayload(document, manifest, before,
+                            workstation_repairs if workstation_repairs.get("detached") else None)
     except InputLimit as error:
         raise ImportFailure(error.code, reason=error.reason) from error
     except DecorAssetError as error:

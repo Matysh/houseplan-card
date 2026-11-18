@@ -1,29 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isoLabYaw, isoLabCamera, isoLabOpeningAmount, isoLabOpeningPreview } from '../test-build/iso-lab-camera.js';
+import { spawnSync } from 'node:child_process';
+import { ISO_VIEW_PROFILE, ISO_LAB_CAMERA, isoLabYaw, isoLabCamera, isoLabOpeningAmount, isoLabOpeningPreview } from '../test-build/iso-lab-camera.js';
 import {
   ISO_CAMERA, ISO_OVERLAY_VISUAL_OFFSET, ISO_RAISED_OVERLAY_HEIGHT,
   ISO_WALL_HEIGHT, applyIsoMatrix, clientToScenePoint, isoFloorMatrix,
   isoOverlayVisualHeight, isoPlaneMatrix, isoPlaneMatrixCss, projectPlanPoint,
-  projectedFrame, unprojectFloorPoint, isoFloorLinearCss, isoTileDepthStyles,
+  projectedFrame, unprojectFloorPoint, isoFloorLinearCss, isoTileDepthStyles, isoCameraFor, isoDisplayWallHeight, isoCameraDepth,
 } from '../test-build/iso-projection.js';
 
 const close = (actual, expected, epsilon = 1e-9) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
 
-test('#1451 opening preview overrides all leaves without mutating saved state and is opt-in',()=>{
+test('#1451 former lab preview cannot override live opening amounts or unknown state',()=>{
   const visual={mechanism:'swing',direction:'end',side:'negative',unsupported:false,
     leaves:[{id:'a',hinge:'start',amount:.3,unknown:false,sensorDriven:true},
       {id:'b',hinge:'end',amount:0,unknown:true,sensorDriven:false}]};
   const before=structuredClone(visual);
-  for(const [mode,amount] of [['closed',0],['half',.5],['open',1]]) {
-    assert.equal(isoLabOpeningAmount(false,'?sashes1451='+mode),null);
-    const forced=isoLabOpeningAmount(true,'?sashes1451='+mode);
-    assert.equal(forced,amount);
-    assert.deepEqual(isoLabOpeningPreview(visual,forced).leaves.map(l=>l.amount),[amount,amount]);
+  for(const mode of ['closed','half','open','saved','junk']) for (const enabled of [false,true]) {
+    assert.equal(isoLabOpeningAmount(enabled,'?sashes1451='+mode),null);
+    assert.equal(isoLabOpeningPreview(visual,.5),visual);
     assert.deepEqual(visual,before);
   }
-  for(const mode of ['', 'saved','junk'])assert.equal(isoLabOpeningAmount(true,'?sashes1451='+mode),null);
   assert.equal(isoLabOpeningPreview(visual,null),visual);
 });
 
@@ -54,20 +52,50 @@ test('#1451 marker-local corners follow the floor and inverse preserves the scre
   }
 });
 
-test('#1451 camera is opt-in and accepts only the comparison presets', () => {
-  assert.equal(isoLabYaw(false, '?view1451=angle&angle1451=45'), 0);
-  assert.equal(isoLabYaw(true, ''), 35);
-  assert.deepEqual(isoLabCamera(true, ''), { yaw:35, floorScaleY:Math.sin(40*Math.PI/180), tiltDeg:50 });
-  assert.equal(isoLabYaw(true, '?view1451=dev&angle1451=45'), 0);
-  for (const angle of [25, 35, 45]) assert.equal(isoLabYaw(true, `?view1451=angle&angle1451=${angle}`), angle);
-  for (const angle of ['', 'NaN', 'Infinity', '-25', '360']) assert.equal(isoLabYaw(true, `?view1451=angle&angle1451=${angle}`), 35);
+test('#1451 accepted product camera is fixed and ignores former laboratory controls', () => {
+  const expected = { yaw:35, floorScaleY:Math.sin(40*Math.PI/180), tiltDeg:50 };
+  assert.deepEqual(ISO_LAB_CAMERA,expected);
+  assert.equal(ISO_VIEW_PROFILE.sectionHeightCm,140);
+  assert.ok(Object.isFrozen(ISO_VIEW_PROFILE));
+  for (const enabled of [false,true]) for (const search of ['', '?view1451=dev',
+    '?view1451=angle&angle1451=25', '?angle1451=45&elevation1451=30&openings1451=base&furniture1451=flat']) {
+    assert.equal(isoLabYaw(enabled,search),35);
+    assert.deepEqual(isoLabCamera(enabled,search),expected);
+  }
+  for (const rotation of [0,90,180,270]) {
+    assert.equal(isoCameraFor(rotation).rotDeg,35+rotation);
+    assert.equal(isoCameraFor(rotation),isoCameraFor(rotation));
+  }
+  for (const rotation of [35,125,-90,360,NaN]) assert.throws(()=>isoCameraFor(rotation));
+  close(isoDisplayWallHeight(),140*(1000/240)/5);
 });
 
-test('#1451 reference camera compresses floor depth and raises height with one orthographic elevation', () => {
-  assert.deepEqual(isoLabCamera(false, '?view1451=depth'), { yaw:0, floorScaleY:1, tiltDeg:20 });
-  assert.deepEqual(isoLabCamera(true, '?view1451=angle&angle1451=25'), { yaw:25, floorScaleY:1, tiltDeg:20 });
+test('#1451 product profile loads identically in worker and browser contexts without reading globals', () => {
+  const url = new URL('../test-build/iso-lab-camera.js',import.meta.url).href;
+  const code = `Object.defineProperty(globalThis,'document',{get(){throw Error('unexpected DOM read')}});
+    Object.defineProperty(globalThis,'location',{get(){throw Error('unexpected URL read')}});
+    const {ISO_LAB_CAMERA}=await import(${JSON.stringify(url)});
+    console.log(JSON.stringify(ISO_LAB_CAMERA));`;
+  const result = spawnSync(process.execPath,['--input-type=module','-e',code],{encoding:'utf8'});
+  assert.equal(result.status,0,result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout),ISO_LAB_CAMERA);
+});
+
+test('#1451 depth ordering follows the same orthographic ray as point projection', () => {
+  for (const rotation of [0,90,180,270]) for (const [xyScale,zScale] of [[1,1],[2,.75]]) {
+    const camera = {...isoCameraFor(rotation),xyScale,zScale};
+    const angle = camera.rotDeg*Math.PI/180;
+    const dy = 17*zScale*Math.sin(camera.tiltDeg*Math.PI/180)/(xyScale*camera.floorScaleY);
+    const rear = [219,737], front = [rear[0]+dy*Math.sin(angle),rear[1]+dy*Math.cos(angle)];
+    const a = projectPlanPoint(rear,23,camera), b = projectPlanPoint(front,40,camera);
+    close(a[0],b[0]); close(a[1],b[1]);
+    assert.ok(isoCameraDepth(front,40,camera)>isoCameraDepth(rear,23,camera));
+  }
+});
+
+test('#1451 projection compresses floor depth and raises height with one orthographic elevation', () => {
   for (const elevation of [30,35,40]) for (const yaw of [25,35,45]) for (const turn of [0,90,180,270]) {
-    const profile = isoLabCamera(true, `?view1451=depth&angle1451=${yaw}&elevation1451=${elevation}`);
+    const profile = {yaw,floorScaleY:Math.sin(elevation*Math.PI/180),tiltDeg:90-elevation};
     const camera = { ...ISO_CAMERA, ...profile, rotDeg: profile.yaw+turn };
     const sin = Math.sin(elevation*Math.PI/180), cos = Math.cos(elevation*Math.PI/180);
     close(profile.floorScaleY,sin);
@@ -101,7 +129,7 @@ test('#1451 angled floor, anchors and pointer inverse share one projection on ev
       const hit = unprojectFloorPoint(clientToScenePoint(client, stage, view), camera);
       close(hit[0], point[0]); close(hit[1], point[1]);
       const raised = projectPlanPoint(point, 4, camera);
-      close(raised[0], floor[0]); close(raised[1], floor[1] - 4 * Math.sin(20 * Math.PI / 180));
+      close(raised[0], floor[0]); close(raised[1], floor[1] - 4 * Math.sin(camera.tiltDeg * Math.PI / 180));
       for (const z of [0, ISO_WALL_HEIGHT]) {
         const p = projectPlanPoint(point, z, camera);
         assert.ok(p[0] >= view.x - 1e-8 && p[0] <= view.x + view.w + 1e-8);
@@ -115,9 +143,10 @@ test('#1451 angled floor, anchors and pointer inverse share one projection on ev
   }
 });
 
-test('Stage 4 camera is the exact fixed zero-yaw camera with the 20° wall rise', () => {
-  assert.equal(ISO_CAMERA.rotDeg, 0);
-  assert.equal(ISO_CAMERA.tiltDeg, 20);
+test('#1451 default camera is the accepted 35° yaw and 40° elevation profile', () => {
+  assert.equal(ISO_CAMERA.rotDeg, 35);
+  assert.equal(ISO_CAMERA.tiltDeg, 50);
+  close(ISO_CAMERA.floorScaleY,Math.sin(40*Math.PI/180));
   const origin = projectPlanPoint([500, 500], 0);
   assert.deepEqual(origin, [500, 500]);
   assert.equal(ISO_WALL_HEIGHT, 84);
@@ -125,23 +154,23 @@ test('Stage 4 camera is the exact fixed zero-yaw camera with the 20° wall rise'
   assert.equal(ISO_RAISED_OVERLAY_HEIGHT, 4);
 });
 
-test('#713 AC1: the 2.5D floor is the Flat plane and height rises straight up', () => {
-  const s = Math.sin(20 * Math.PI / 180);
-  assert.deepEqual(isoPlaneMatrix(0).map((value) => value + 0), [1, 0, 0, 1, 0, 0],
-    'the floor matrix is the identity: no cos 20° foreshortening');
+test('#1451 default orthographic floor is invertible and height rises straight up', () => {
+  const s = Math.cos(40 * Math.PI / 180);
+  const [a,b,c,d] = isoPlaneMatrix(0);
+  close(a*d-b*c,Math.sin(40*Math.PI/180));
   for (const point of [[0, 0], [250, 750], [-3000, 4000], [1000, 1000]]) {
-    assert.deepEqual(projectPlanPoint(point, 0), point, 'floor points keep their Flat position');
-    assert.deepEqual(unprojectFloorPoint(point), point, 'floor hit testing is the identity too');
+    const floor = projectPlanPoint(point,0);
+    const restored = unprojectFloorPoint(floor);
+    close(restored[0],point[0]); close(restored[1],point[1]);
     for (const z of [ISO_WALL_HEIGHT, 7, 168]) {
       const lifted = projectPlanPoint(point, z);
-      close(lifted[0], point[0]);
-      close(lifted[1], point[1] - z * s);
+      close(lifted[0], floor[0]);
+      close(lifted[1], floor[1] - z * s);
     }
   }
   const wall = [300, 400];
   close(projectPlanPoint(wall, 0)[1] - projectPlanPoint(wall, ISO_WALL_HEIGHT)[1],
-    ISO_WALL_HEIGHT * 0.3420201433256687, 1e-12);
-  close(ISO_WALL_HEIGHT * s, 28.729692039353627, 1e-9);
+    ISO_WALL_HEIGHT * s, 1e-12);
 });
 
 test('floor projection round-trips across the infinite canvas contract', () => {
@@ -211,7 +240,8 @@ test('Stage 4 frame already contains the low overlay plane at zero yaw', () => {
   ].map((point) => projectPlanPoint(point, 0));
   const projectedWidth = Math.max(...projectedFloor.map((point) => point[0]))
     - Math.min(...projectedFloor.map((point) => point[0]));
-  close(projectedWidth, rect.w);
+  close(projectedWidth, Math.abs(Math.cos(35*Math.PI/180))*rect.w
+    + Math.abs(Math.sin(35*Math.PI/180))*rect.h);
 });
 
 test('client coordinates map through the current scene view', () => {

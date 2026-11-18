@@ -34,7 +34,7 @@ import {
   resolveIsoOverlayOwner,
 } from '../test-build/iso-overlays.js';
 import {
-  ISO_WALL_HEIGHT,
+  isoDisplayWallHeight,
   projectPlanPoint, isoFloorMatrix,
 } from '../test-build/iso-projection.js';
 
@@ -543,7 +543,7 @@ test('opening lock without a canonical host owner never guesses from point conta
   // #713: no placement search runs, so a missing owner is no search failure;
   // the badge simply stands on the wall-top plane above its anchor.
   assert.equal(placement?.plane, 'raised');
-  assert.deepEqual(placement?.visualScene, projectPlanPoint(placement.floorAnchor, ISO_WALL_HEIGHT));
+  assert.deepEqual(placement?.visualScene, projectPlanPoint(placement.floorAnchor, isoDisplayWallHeight()));
 });
 
 test('Stage 4 reuses pure overlay placements, and fit and the live frame share one snapshot', () => {
@@ -585,7 +585,7 @@ test('Stage 4 reuses pure overlay placements, and fit and the live frame share o
     'unchanged HA/render passes reuse the exact pure placement result');
   // #713: the tile stands on the wall-top plane right above its anchor even
   // next to a wall; no wall test and no nudge in the live scene.
-  assert.deepEqual(live.devices.get('device')?.visualScene, projectPlanPoint([5, 50], ISO_WALL_HEIGHT));
+  assert.deepEqual(live.devices.get('device')?.visualScene, projectPlanPoint([5, 50], isoDisplayWallHeight()));
 
   // #724: the fit envelope and the live frame ask with the same inputs and read
   // one snapshot — there is no search for them to differ by (#713). Zoom, pan
@@ -630,7 +630,7 @@ test('render scene keeps coincident devices coincident, leaves labels alone and 
   const deviceEntries = scene.entries.filter((entry) => entry.kind === 'device');
   for (let index = 0; index < deviceEntries.length; index++) {
     assert.deepEqual(deviceEntries[index].placement.visualScene,
-      projectPlanPoint([200, 200], ISO_WALL_HEIGHT), 'every device only rises to the wall top');
+      projectPlanPoint([200, 200], isoDisplayWallHeight()), 'an explicitly unaligned device uses the section-top lift');
     for (let other = 0; other < index; other++) {
       const a = deviceEntries[index], b = deviceEntries[other];
       assert.deepEqual(a.placement.visualScene, b.placement.visualScene,
@@ -639,7 +639,7 @@ test('render scene keeps coincident devices coincident, leaves labels alone and 
   }
   const label = scene.entries.find((entry) => entry.kind === 'room-label');
   assert.ok(label, 'fixture includes a room label at the same floor anchor');
-  assert.deepEqual(label.placement.visualScene, [200, 200],
+  assert.deepEqual(label.placement.visualScene, projectPlanPoint([200, 200],0),
     'coincident devices do not push the room label');
 
   const permuted = overlayScene({ ...input, devices: [...devices].reverse() });
@@ -949,7 +949,9 @@ test('opening geometry policy is both fingerprinted and consumed by the structur
   const changed = createIsoStructuralSource(input, policy);
   assert.notEqual(changed.key, original.key);
   const basis = changed.build().openings[0];
-  assert.equal(basis.leafThickness, basis.wallHeight * policy.leafThicknessRatio);
+  assert.equal(basis.leafThickness, original.build().openings[0].leafThickness * 2,
+    'detail thickness follows the recipe reference, not the taller section cut');
+  assert.equal(basis.wallHeight,isoDisplayWallHeight());
 });
 
 // #473. Перф-дельта #160 (f1b9bbf3..b3ca0ca2) ввела кэш размещений, кэш по
@@ -1103,21 +1105,21 @@ test('#724 AC2: a room edit that changes the owner is a new structure — no own
     'the tile at the same point now belongs to the room that grew over it');
 });
 
-test('#713 AC3: every tile gets one straight-up shift from its Flat anchor', () => {
+test('explicit overlay lift moves vertically from the projected floor anchor', () => {
   // Live zoom is no overlay input (#732): the fixture typecheck rejects a view,
   // and the #724 AC2 test zooms the structural scene on the production path.
   const { input } = perfFixture();
-  const lift = projectPlanPoint([0, 0], 0)[1] - projectPlanPoint([0, 0], ISO_WALL_HEIGHT)[1];
+  const lift = projectPlanPoint([0, 0], 0)[1] - projectPlanPoint([0, 0], isoDisplayWallHeight())[1];
   for (const position of [{ x: 60, y: 20 }, { x: 5, y: 50 }]) {
     const live = overlayScene({ ...input, positionOf: () => position }).devices.get('device');
-    assert.deepEqual(live.floorScene, [position.x, position.y], 'the floor anchor is the Flat point');
-    assert.equal(live.visualScene[0], position.x, 'no horizontal displacement');
+    assert.deepEqual(live.floorScene, projectPlanPoint([position.x, position.y],0), 'the floor anchor is projected once');
+    assert.equal(live.visualScene[0], live.floorScene[0], 'height adds no horizontal displacement');
     assert.ok(Math.abs(live.floorScene[1] - live.visualScene[1] - lift) < 1e-9,
       'the vertical displacement is the wall-top rise for every tile');
   }
 });
 
-test('#713 K5: room names stay on the Flat floor point while devices share the wall-top rise', () => {
+test('room names stay on their projected floor point independently of explicit device lift', () => {
   const { input } = perfFixture();
   const owner = { ...input.space.rooms[0], name: 'Owner' };
   const scene = overlayScene({
@@ -1128,7 +1130,7 @@ test('#713 K5: room names stay on the Flat floor point while devices share the w
   });
   const label = scene.rooms.get(owner);
   assert.ok(label, 'the room label is placed');
-  assert.deepEqual(label.visualScene, [30, 40], 'the name keeps its Flat position');
+  assert.deepEqual(label.visualScene, projectPlanPoint([30, 40],0), 'the name keeps its canonical projected position');
   const device = scene.devices.get('device');
-  assert.deepEqual(device.visualScene, projectPlanPoint([5, 50], ISO_WALL_HEIGHT));
+  assert.deepEqual(device.visualScene, projectPlanPoint([5, 50], isoDisplayWallHeight()));
 });

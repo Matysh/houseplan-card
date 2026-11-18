@@ -19,6 +19,7 @@ export interface PlanOptimizeWriteHost extends PlanHostProvider {
   readonly _haPlanGraphApi?: number | null;
   readonly _haGraphChangeApi?: number | null;
   readonly _haOpeningFeaturesApi?: number | null;
+  readonly _haFurnitureWorkstationApi?: number | null;
   /** #500: identity owner — bodies and revisions of the pair land through it. */
   readonly _adoption: ConfigAdoption;
   _geometryHistory: Clearable;
@@ -63,6 +64,7 @@ export async function commitPlanOptimization(
   const response = await sendHouseplanWrite<Record<string, unknown>>(writeHost, {
     type: 'houseplan/plan/optimize',
     ...(host._haOpeningFeaturesApi === 1 ? { opening_features_api: 1 } : {}),
+    ...(host._haFurnitureWorkstationApi === 1 ? { furniture_workstation_api: 1 } : {}),
     config,
     layout,
     expected_config_rev: expectedConfigRev,

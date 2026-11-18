@@ -6,6 +6,7 @@
   "backup.house_floors": "Étages à ajouter",
   "backup.house_target_settings": "Les réglages globaux d’apparence et d’éclairage de la maison cible restent inchangés. Les réglages par étage sont transférés lorsque possible ; l’apparence peut différer. Aucune annulation globale de l’import.",
   "backup.house_warnings": "Avertissements de transfert",
+  "backup.workstations_detached": "Liens invalides entre ordinateur et bureau supprimés : {n}. Le mobilier est conservé ; replacez l’ordinateur sur son bureau dans l’éditeur d’arrière-plan si nécessaire.",
   "backup.house_dangling_stair": "Le lien d’escalier vers l’étage absent {target} sera supprimé.",
   "backup.house_confirm_missing": "Continuer sans les images indisponibles. Les arrière-plans absents seront dissociés ; les images de décor resteront réparables. Les URL externes sont conservées, mais non téléchargées par le serveur.",
   "backup.house_add": "Ajouter la maison",

@@ -49,6 +49,8 @@ export type WarmViewport = {
   space: string;
   mode: 'view' | 'plan' | 'devices' | 'decor';
   projection: 'flat' | 'iso';
+  /** Volumetric floor versus hidden-borders Flat, even when projection is iso. */
+  volumePlane?: boolean;
   activeLabsIso: boolean;
   logicalCenter: { x: number; y: number } | null;
   zoom: number;

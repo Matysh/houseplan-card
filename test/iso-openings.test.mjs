@@ -7,7 +7,7 @@ import {
   projectIsoOpeningStructure, resolveIsoDecoration,
 } from '../test-build/iso-openings.js';
 import { openingAmount } from '../test-build/logic.js';
-import { ISO_WALL_HEIGHT, projectPlanPoint } from '../test-build/iso-projection.js';
+import { ISO_CAMERA, ISO_WALL_HEIGHT, projectPlanPoint, isoCameraDepth } from '../test-build/iso-projection.js';
 
 const opening = (patch = {}) => ({
   id: 'op-1', sourceIndex: 0, type: 'door', x: 100, y: 80,
@@ -384,17 +384,16 @@ test('decoration degradation never removes structure or creates floating panels'
   });
 });
 
-test('#713 AC7: opening depth runs along the oblique projector (s·y + z)', () => {
-  const s = Math.sin(20 * Math.PI / 180);
+test('#1451 opening faces use the accepted orthographic projector depth', () => {
   const basis = buildIsoOpeningBasis(opening());
   const leaf = basis.leaves[0];
   const top = projectIsoOpening(basis, 0)[0].surfaces.find((surface) => surface.kind === 'leaf-top');
   assert.ok(top, 'the closed door leaf has a top face');
   // The four top corners straddle the leaf axis symmetrically, so their mean
   // plan point is the middle of the closed leaf.
-  const meanY = leaf.hinge[1] + leaf.closedVector[1] / 2;
-  assert.ok(Math.abs(top.cameraDepth - (s * meanY + leaf.top)) < 1e-9,
-    `${top.cameraDepth} != s·y + z = ${s * meanY + leaf.top}`);
-  assert.ok(Math.abs(top.cameraDepth - (s * meanY + leaf.top * Math.cos(20 * Math.PI / 180))) > 1e-3,
-    'the former orthographic key y·sin 20° + z·cos 20° is gone');
+  const mean = [leaf.hinge[0]+leaf.closedVector[0]/2,leaf.hinge[1]+leaf.closedVector[1]/2];
+  assert.ok(Math.abs(top.cameraDepth-isoCameraDepth(mean,leaf.top,ISO_CAMERA))<1e-9);
+  const yaw = ISO_CAMERA.rotDeg*Math.PI/180;
+  const former = (mean[0]*Math.sin(yaw)+mean[1]*Math.cos(yaw))*Math.sin(ISO_CAMERA.tiltDeg*Math.PI/180)+leaf.top;
+  assert.ok(Math.abs(top.cameraDepth-former)>1e-3,'unit Z coefficient would reintroduce the obsolete oblique policy');
 });

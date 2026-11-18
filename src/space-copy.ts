@@ -3,6 +3,8 @@ import { clearOpeningBindings } from './opening-features';
 import { transportOpeningOrientations, type OpeningOrientationSpace } from './opening-orientation';
 import { projectGraphSpace, type PlanGraph } from './plan-graph';
 import { commitWallSegmentModel } from './wall-segment-model';
+import { remapWorkstationItems } from './iso-lab-workstation';
+import type { DecorShape } from './editors/decor/types';
 
 export const SPACE_COPY_LIMITS = Object.freeze({
   spaces: 50,
@@ -182,7 +184,9 @@ export function createSpaceCopyCandidate(
     };
     return clearOpeningBindings(copied as unknown as OpeningCfg);
   });
-  const copiedDecor = decor.map((item) => ({ ...clone(item), id: nextId('cd') }));
+  const decorIds = new Map(decor.map(item => [item.id, nextId('cd')]));
+  const copiedDecorRows = decor.map(item => ({ ...clone(item), id: decorIds.get(item.id)! }));
+  const copiedDecor = remapWorkstationItems(copiedDecorRows as unknown as DecorShape[], decorIds) as unknown as SpaceRecord[];
   const copiedColumns = columns.map((item) => ({ ...clone(item), id: nextId('cc') }));
   const copiedStairs = stairs.map((item) => ({ ...clone(item), id: nextId('cs') }));
 

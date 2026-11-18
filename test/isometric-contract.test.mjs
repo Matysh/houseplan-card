@@ -6,6 +6,7 @@ import { createIsoStructuralSource, renderIsoWalls, resolveIsoFramePresentation,
   resolveIsoScene } from '../test-build/iso-scene-render.js';
 import { ISO_OPENING_GEOMETRY_POLICY, buildIsoOpeningBasis } from '../test-build/iso-openings.js';
 import { openingSymbolOffset } from '../test-build/opening-symbol-placement.js';
+import { wallKey } from '../test-build/wall-thickness.js';
 
 const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
 const labs = readFileSync(new URL('../src/labs.ts', import.meta.url), 'utf8');
@@ -133,7 +134,13 @@ test('Stage 4 composes ordered inert SVG surfaces below screen-facing HTML', () 
   // Walk Lit's emitted bindings in paint order. The input deliberately places the near face first.
   function paintedPaths(value) {
     if (Array.isArray(value)) return value.flatMap(paintedPaths);
-    if (value?.strings) return value.values.flatMap(paintedPaths);
+    if (value?.strings) {
+      let defs = 0;
+      return value.strings.flatMap((part,index)=>{
+        for(const tag of part.matchAll(/<\/?defs\b[^>]*>/g)) defs += tag[0].startsWith('</') ? -1 : 1;
+        return defs ? [] : paintedPaths(value.values[index]);
+      });
+    }
     return [near, pane, far].includes(value) ? [value] : [];
   }
   assert.deepEqual(paintedPaths(walls), [far, pane, near]);
@@ -187,7 +194,7 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   assert.match(sceneGeometry, /flipV: !!opening\.flip_v/);
   assert.match(sceneGeometry, /const floorEdgeHeight = gridVisualUnits\(ISO_FLOOR_EDGE_HEIGHT, input\.cellCm\)/);
   assert.match(sceneGeometry, /const raisedHeight = gridVisualUnits\(ISO_RAISED_OVERLAY_HEIGHT, input\.cellCm\)/);
-  assert.match(sceneGeometry, /camera: ISO_CAMERA,[\s\S]*?wallHeight,[\s\S]*?raisedHeight,[\s\S]*?floorEdgeHeight,[\s\S]*?algorithm: 6/);
+  assert.match(sceneGeometry, /camera: ISO_CAMERA,[\s\S]*?wallHeight,[\s\S]*?raisedHeight,[\s\S]*?floorEdgeHeight,[\s\S]*?algorithm: 7/);
   const source = section(sceneGeometry, 'export function createIsoStructuralSource', 'export interface ResolveIsoSceneInput');
   const roomProjection = section(sceneGeometry,
     'export function isoStructuralRoomGeometry', 'export type IsoStructuralOpeningHost');
@@ -204,8 +211,9 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
     'face: partitionOpeningFace']) assert.ok(hostProjection.includes(field), `missing ${field}`);
   const room = {id:'test',poly:[[0,0],[100,0],[100,100],[0,100]]};
   const input = {space:{id:'floor',rooms:[room],partitions:[],wall_columns:[],wall_segments:[],room_drafts:[]},
-    openings:[{id:'window',type:'window',rx:50,ry:0,rlen:20,angle:0}],walls:[],openCuts:[],
-    roomOpenings:()=>[],partitionCuts:()=>[],onBuild:()=>{},gridPitch:5,cellCm:5,coordinateScale:1,wallKeyPitch:1};
+    openings:[{id:'window',type:'window',rx:50,ry:0,rlen:20,angle:0}],
+    walls:[{key:wallKey([0,0],[100,0],1),cm:20}],openCuts:[],
+    roomOpenings:()=>[{x:50,y:0,length:20,angle:0}],partitionCuts:()=>[],onBuild:()=>{},gridPitch:5,cellCm:5,coordinateScale:1,wallKeyPitch:1};
   const policy = ISO_OPENING_GEOMETRY_POLICY;
   const normal = createIsoStructuralSource(input);
   assert.notEqual(createIsoStructuralSource(input, {...policy,revision:policy.revision+1}).key, normal.key);

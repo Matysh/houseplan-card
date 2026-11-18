@@ -6,6 +6,7 @@ import re
 
 import voluptuous as vol
 
+from .furniture_workstation import remap_workstation_items
 from .opening_features import clear_opening_bindings
 from .opening_orientation import transport_opening_orientations
 
@@ -63,9 +64,11 @@ def space_copy_candidate(config: dict, source_id: str, title: str, seed: str,
                 "host": {**copy.deepcopy(host), "kind": "partition", "id": mapping[host["id"]]}}
         item = clear_opening_bindings(item)
         openings.append(item)
-    decoration = [{**copy.deepcopy(item), "id": new_id("cd")}
-                  for item in source.get("decor", [])
-                  if (furniture if item.get("kind") == "furniture" else decor)]
+    selected_decor = [item for item in source.get("decor", [])
+                      if (furniture if item.get("kind") == "furniture" else decor)]
+    decor_ids = {item["id"]: new_id("cd") for item in selected_decor}
+    decoration = remap_workstation_items(
+        [{**copy.deepcopy(item), "id": decor_ids[item["id"]]} for item in selected_decor], decor_ids)
     columns = [{**copy.deepcopy(item), "id": new_id("cc")} for item in source.get("wall_columns", [])]
     stairs = [{**copy.deepcopy(item), "id": new_id("cs")} for item in source.get("stairs", [])]
     target = {"id": "s" + seed, "title": title.strip(), "rooms": [], "wall_segments": [],

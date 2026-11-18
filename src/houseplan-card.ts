@@ -338,7 +338,8 @@ import {
 import {
   isoDisplayWallHeight, isoCameraFor, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
 } from './iso-projection';
-import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE, ISO_LAB_OPENING_AMOUNT, isoLabOpeningPreview } from './iso-lab-camera';
+import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
+import {logicalViewCenter, reprojectViewPlane, type ViewPlane} from './projection-view-camera';
 import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume } from './iso-lab-furniture';
 import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
 import { FURNITURE_VOLUME_RUNTIME } from './furniture-volume-runtime';
@@ -3205,6 +3206,7 @@ export class HouseplanCard extends LitElement {
   private _haGraphChangeApi: number | null = null;
   private _haOpeningFeaturesApi: number | null = null;
   private _haHouseTransferApi: number | null = null;
+  private _haFurnitureWorkstationApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
   private _haVacuumHistoryApi: number | null = null;
   private _haDeviceHistoryApi: number | null = null;
@@ -3694,18 +3696,45 @@ export class HouseplanCard extends LitElement {
   /** #649: one installation-wide switch in General settings › Display (no alpha, no per-device choice). */
   private get _isoEnabled(): boolean { return volumetricViewOf(this._settings); }
 
+  private readonly _furnitureVolumeObserver = ((owner: HouseplanCard) => ({
+    get isConnected() { return owner.isConnected; },
+    requestUpdate() {
+      owner._isoProjectionSnapshot = null;
+      if (owner.isConnected) owner.requestUpdate();
+    },
+  }))(this);
+  private get _needsFurnitureVolume(): boolean {
+    if (this._mode !== 'view' || !this._isoEnabled) return false;
+    const display = this._spaceDisplayForRender();
+    return display.showBorders && !display.hideDecor && this._decorList.some(item => item.kind === 'furniture');
+  }
+  private _furnitureVolumePending(): boolean {
+    if (!this._needsFurnitureVolume) return false;
+    void FURNITURE_VOLUME_RUNTIME.ensure(this._furnitureVolumeObserver);
+    return FURNITURE_VOLUME_RUNTIME.state() === 'pending';
+  }
+
   private get _desiredProjection(): 'flat' | 'iso' {
     return this._mode === 'view' && this._isoEnabled ? 'iso' : 'flat';
   }
 
-  /** #713: the 2.5D floor is the Flat plane, so the view centre is already logical. */
+  private _viewPlane: ViewPlane = null;
+  private _viewPlaneKnown = false;
+
+  /** The zero-quarter viewport and plan XY no longer share their centre. */
   private _logicalViewCenter(): { x: number; y: number } | null {
-    const view = this._view;
-    return view && { x: view.x + view.w / 2, y: view.y + view.h / 2 };
+    return logicalViewCenter(this._view, this._viewPlane);
   }
 
-  /** #713: the floor is one plane in both projections. Keep the camera (screen
-   *  scale and centre) and re-read the scalar zoom against the effective frame. */
+  private _adoptViewPlane(plane: ViewPlane): void {
+    if (this._viewPlaneKnown && this._viewPlane !== plane && this._view) {
+      this._view = reprojectViewPlane(this._view, this._viewPlane, plane);
+      this._rezoom();
+    }
+    this._viewPlane = plane; this._viewPlaneKnown = true;
+  }
+
+  /** Re-read the normalized zoom after retaining screen width on a new plane. */
   private _rezoom(): void {
     const v = this._view;
     const z = v ? fitView(this._baseVb(), v.w / v.h).w / v.w : 0;
@@ -3713,6 +3742,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _convertProjectionView(from: 'flat' | 'iso', to: 'flat' | 'iso'): void {
+    this._adoptViewPlane(to === 'iso' && this._renderIsoScene ? isoCameraFor(0) : null);
     if (from === to) return;
     // Intake can discover the requested projection after a warm camera has
     // already been restored in that destination. It is not a second cold fit.
@@ -3723,7 +3753,8 @@ export class HouseplanCard extends LitElement {
     // Only a camera that was on screen is kept; a cold 2.5D start opens home.
     if (this._projectionShown === from) this._rezoom();
     else {
-      const center = this._logicalViewCenter();
+      const oldView = this._view;
+      const center = oldView && {x: oldView.x + oldView.w / 2, y: oldView.y + oldView.h / 2};
       this._view = null;
       this._applyView(this._zoom, center?.x, center?.y);
     }
@@ -4807,9 +4838,12 @@ export class HouseplanCard extends LitElement {
     this._zoom = vp.zoom;
     const projection = this._effectiveProjection();
     const sameProjection = projection === vp.projection && this._isoEnabled === vp.activeLabsIso;
-    // #713: one floor plane, and the window size is in the memo key, so the
-    // saved camera is valid in either projection; only zoom is re-read.
+    // Retain the memo's coordinate plane until the destination runtime is ready.
     this._view = vp.view ? { ...vp.view } : null;
+    this._viewPlane = (vp.volumePlane ?? (vp.projection === 'iso' && vp.activeLabsIso
+      && this._spaceDisplayForRender().showBorders)) ? isoCameraFor(0) : null;
+    this._viewPlaneKnown = true;
+    this._adoptViewPlane(projection === 'iso' && this._renderIsoScene ? isoCameraFor(0) : null);
     this._screenRecoveredCamera = !!this._view && this._usesScreenCamera;
     this._floorRestoreZoom = null;
     this._warmCameraAdopted = true;
@@ -4869,6 +4903,7 @@ export class HouseplanCard extends LitElement {
       space: this._space,
       mode: this._mode,
       projection,
+      volumePlane: !!this._viewPlane,
       activeLabsIso: this._isoEnabled,
       logicalCenter: this._logicalViewCenter(),
       zoom: this._zoom,
@@ -5157,6 +5192,7 @@ export class HouseplanCard extends LitElement {
     // here used to let the previous DOM be blessed while the replacement
     // config was still being projected.
     if (!this._model.length) return false;
+    if (this._furnitureVolumePending()) return false;
     const space = this._model.length ? this._spaceModel() : null;
     return !space?.bg?.href || this._signer.isReady(this.planHost, space.bg.href);
   }
@@ -8001,6 +8037,10 @@ export class HouseplanCard extends LitElement {
     this._renderIsoScene = null;
     if ((this._modeProjectionSource ?? this._desiredProjection) !== 'iso' || !this._model.length || !this._isoSceneRuntime)
       return finish('flat');
+    if (this._needsFurnitureVolume) {
+      void FURNITURE_VOLUME_RUNTIME.ensure(this._furnitureVolumeObserver);
+      if (FURNITURE_VOLUME_RUNTIME.state() === 'fallback') return fallback();
+    }
     if (!this._spaceDisplayForRender().showBorders)
       return this._isoFallback.has(`${this._space}|no-borders`) ? fallback() : finish('iso');
     let key = this._isoInvalidKey();
@@ -8395,7 +8435,7 @@ export class HouseplanCard extends LitElement {
       const h = this._stageEl ? this._stageEl.clientHeight : 0;
       if (h !== this._bootLastH) { this._bootLastH = h; this._bootLastChange = now; }
       const elapsed = now - this._bootStart;
-      if (elapsed >= BOOT_MAX_MS || (elapsed >= BOOT_MIN_MS && h > 0 && now - this._bootLastChange >= BOOT_QUIET_MS && !furnitureArtBootPending(FURNITURE_ART_RUNTIME, this._serverCfg, furnitureArtIsLazy))) {
+      if (elapsed >= BOOT_MAX_MS || (elapsed >= BOOT_MIN_MS && h > 0 && now - this._bootLastChange >= BOOT_QUIET_MS && !furnitureArtBootPending(FURNITURE_ART_RUNTIME, this._serverCfg, furnitureArtIsLazy) && !this._furnitureVolumePending())) {
         this._bootSettled();
         return;
       }
@@ -9733,6 +9773,7 @@ export class HouseplanCard extends LitElement {
       const response = await sendHouseplanWrite<any>(writeHass, {
         type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: expectedRev,
         ...(this._haOpeningFeaturesApi === 1 ? { opening_features_api: 1 } : {}),
+        ...(this._haFurnitureWorkstationApi === 1 ? { furniture_workstation_api: 1 } : {}),
         ...(graph_change ? {graph_change} : {}),
         ...(contactLayout?{contact_layout:contactLayout}:{}),
         ...(roomLabels?{room_label_layout:roomLabels}:{}),
@@ -10549,7 +10590,7 @@ export class HouseplanCard extends LitElement {
         // open in an older one, not break it.
         const art = furnitureGraphic(sh.symbol, this);
         if (!art) return nothing;
-        const tower = sh.symbol === 'computer' && sh.lab_workstation === 'tower';
+        const tower = sh.symbol === 'computer' && sh.workstation === 'tower';
         const tr = furnitureRenderTransform(sh, W, H, tower ? TOWER_BOX.width : art.viewW,
           tower ? TOWER_BOX.height : art.viewH);
         const visibleStrokePx = furnitureStrokePx(strokeWidth, furnitureScreenScale);
@@ -10577,7 +10618,7 @@ export class HouseplanCard extends LitElement {
         if (tower) return svg`<g transform=${tr}><svg width=${TOWER_BOX.width} height=${TOWER_BOX.height}
           viewBox=${`${TOWER_BOX.x} 0 ${TOWER_BOX.width} ${TOWER_BOX.height}`} overflow="hidden">${draw(art.d,nothing)}</svg></g>`;
         const surface = desktopSurface(sh.symbol);
-        const pc = surface && sh.lab_workstation === 'mounted' && furnitureGraphic('computer',this);
+        const pc = surface && sh.workstation === 'mounted' && furnitureGraphic('computer',this);
         if (pc && surface) return svg`<g transform=${tr}>${draw(art.d,nothing)}<svg x=${surface.x} y=${surface.y}
           width=${80*surface.scale} height=${60*surface.scale} viewBox="0 0 80 60"
           overflow="hidden">${draw(pc.d,nothing)}</svg></g>`;
@@ -12985,10 +13026,11 @@ export class HouseplanCard extends LitElement {
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
     const deviceBasePct = effectiveDeviceBaseSize(iconPct);
     let isoScene = iso ? this._renderIsoScene : null;
+    this._adoptViewPlane(isoScene ? isoCameraFor(0) : null);
     let view = this._viewOr(this._baseVb(projection, isoScene));
     let isoFrame: IsoFramePresentation | null = null;
     const scale = gridVisualScale(this._cellCm);
-    const useFurnitureVolume = iso && disp.showBorders && ISO_LAB_FURNITURE && this._mode === 'view';
+    let useFurnitureVolume = iso && disp.showBorders && ISO_LAB_FURNITURE && this._mode === 'view';
     let labelOccluders: Parameters<typeof roomFurnitureOverlap>[2] = [];
     let furnitureShadows: TemplateResult | TemplateResult[] | typeof nothing = nothing;
     try {
@@ -13009,9 +13051,9 @@ export class HouseplanCard extends LitElement {
       isoFrame = isoRuntime?.resolveIsoFramePresentation({
         projection, display: disp, scene: isoScene, openings: this._openingsR, furniture,
         amountOf: opening => this._openingAmtForProjection(opening, projection), cellCm: this._cellCm,
-        visualOf: opening => isoLabOpeningPreview(resolveOpeningVisual(opening,
+        visualOf: opening => resolveOpeningVisual(opening,
           eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null,
-          this._openingAmt(opening)), this._openingPreviewAmount(opening, projection)),
+          this._openingAmt(opening)),
         overlays: (layers) => this._isoOverlayScene(
           space, devs, disp, layers, isoScene, iconPct, deviceBasePct, showLqi),
       }) ?? null;
@@ -13026,6 +13068,8 @@ export class HouseplanCard extends LitElement {
       this._cancelCameraTransition(false); projection = 'flat'; iso = false; isoScene = null; isoFrame = null;
       this._renderProjection = 'flat'; this._renderIsoScene = null;
       this._isoProjectionSnapshot = 'flat'; this._view = null;
+      this._viewPlane = null; this._viewPlaneKnown = true;
+      useFurnitureVolume = false; labelOccluders = []; furnitureShadows = nothing;
       view = this._viewOr(this._baseVb('flat', null));
     }
     const floorCamera = this._isoFloorCamera;
@@ -13362,6 +13406,8 @@ export class HouseplanCard extends LitElement {
               ${isoFrame?.underlay ?? nothing}
             </svg>` : nothing}
           ${iso ? svg`<svg class="plan-svg" data-hp="stage" data-grid-step=${this._gridPitch} data-hp-layer="plan"
+            data-projection=${isoScene ? 'iso' : 'flat'} data-yaw=${isoScene?.camera.rotDeg ?? this._rotation}
+            data-rotation=${this._rotation} data-floor-scale-y=${isoScene?.camera.floorScaleY ?? 1}
             data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
             viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
             preserveAspectRatio="xMidYMid meet">
@@ -13464,7 +13510,7 @@ export class HouseplanCard extends LitElement {
             ${this._mode === 'plan' && this._editorRuntime ? this._editorRuntime.stairs.renderFrame(view) : nothing}
             <g data-hp-live-editor></g>
             </g>
-          </svg>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk)}
+          </svg>` : renderModeSceneLayers(modeLayers, view, this._rotation ? turnMatrix(this._rotation) : undefined, this._gridPitch, this._mode, id => { this._modeSceneBuilds[id] = (this._modeSceneBuilds[id] || 0) + 1; }, !!this._editorRuntime && this._canEdit && !this._kiosk, this._rotation)}
           ${litCache(iso && isoLayers?.structural ? svg`<svg class="iso-shadows-svg" data-hp-live-viewbox="camera"
               viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
@@ -14773,17 +14819,9 @@ export class HouseplanCard extends LitElement {
       ? this._renderPlanHass.states[eid] : null);
   }
 
-  private _openingPreviewAmount(opening: OpeningCfg, projection: 'iso' | 'flat'): number | null {
-    if (projection !== 'iso' || ISO_LAB_OPENING_AMOUNT === null) return null;
-    const limit = opening.contact
-      ? this._renderPlanHass.states[opening.contact]?.attributes?.ui_lab_preview_max_position : undefined;
-    return typeof limit === 'number' && limit >= 0 && limit <= 100
-      ? Math.min(ISO_LAB_OPENING_AMOUNT, limit / 100) : ISO_LAB_OPENING_AMOUNT;
-  }
-
-  /** Drawn leaf and Glow must seal the same aperture in a lab preview. */
-  private _openingAmtForProjection(opening: OpeningCfg, projection: 'iso' | 'flat'): number {
-    return this._openingPreviewAmount(opening, projection) ?? this._openingAmt(opening);
+  /** Drawn leaves and optical barriers consume the same authoritative state. */
+  private _openingAmtForProjection(opening: OpeningCfg, _projection: 'iso' | 'flat'): number {
+    return this._openingAmt(opening);
   }
 
   /** Deleted bindings are unavailable to every plan-level consumer. */

@@ -15,6 +15,11 @@ import voluptuous as vol
 
 from .backup_archive import image_refs, strict_json
 from .constants import DEFAULT_CONFIG, MAX_EXPORT_BYTES
+from .furniture_workstation import (
+    has_workstations,
+    remap_workstation_items,
+    repair_workstations,
+)
 from .import_export import (
     FORMAT,
     PLAN_MODEL_VERSION,
@@ -168,14 +173,15 @@ def export_document(identity, config_data, layout_data, card_version="", build=N
         "created_at": stamp.isoformat().replace("+00:00", "Z"),
         "source_fingerprint": source_fingerprint(identity.instance_id), "card_version": card_version,
         "integration_version": identity.integration_version, "model_version": PLAN_MODEL_VERSION,
-        "required_api": dict(REQUIRED_API), "payload": {"config": config, "layout": layout},
+        "required_api": {**REQUIRED_API, **({"furniture_workstation_api": 1} if has_workstations(config) else {})},
+        "payload": {"config": config, "layout": layout},
         "transfer": {"plan_only": True}, **({"build": dict(build)} if build else {})}
     sanitize_image_urls(document)
     parse_document(json.dumps(document, ensure_ascii=False, allow_nan=False).encode())
     return document, f"houseplan-house-{stamp.strftime('%Y-%m-%d_%H-%M-%S')}.zip"
 
 
-def parse_document(raw):
+def parse_document(raw, *, workstation_repairs=None):
     document = strict_json(raw, MAX_EXPORT_BYTES)
     if set(document) - _ENVELOPE or document.get("format") != FORMAT or document.get("kind") != "house":
         raise fail()
@@ -186,9 +192,12 @@ def parse_document(raw):
     if type(model) is not int or model != PLAN_MODEL_VERSION:
         raise fail("future_model" if type(model) is int and model > PLAN_MODEL_VERSION else "invalid_config")
     required = document.get("required_api")
-    if not isinstance(required, dict) or set(required) != {"house_transfer_api"} or type(required.get("house_transfer_api")) is not int:
+    if (not isinstance(required, dict) or "house_transfer_api" not in required
+            or any(type(value) is not int for value in required.values())):
         raise fail()
-    if required != REQUIRED_API:
+    if (set(required) - {"house_transfer_api", "furniture_workstation_api"}
+            or required["house_transfer_api"] != 1
+            or required.get("furniture_workstation_api", 1) != 1):
         raise fail("unsupported-transfer")
     if document.get("transfer") != {"plan_only": True} or type(document["transfer"].get("plan_only")) is not bool:
         raise fail()
@@ -212,7 +221,13 @@ def parse_document(raw):
     payload = document.get("payload")
     if not isinstance(payload, dict) or set(payload) != {"config", "layout"}:
         raise fail()
-    config, layout = _privacy(payload["config"], payload["layout"])
+    incoming = _json_copy(payload["config"])
+    if isinstance(incoming, dict) and has_workstations(incoming) and "furniture_workstation_api" not in required:
+        raise fail("unsupported-transfer")
+    repaired = repair_workstations(incoming)
+    config, layout = _privacy(incoming, payload["layout"])
+    if workstation_repairs is not None:
+        workstation_repairs.update(repaired)
     for ref in image_refs(config):
         if ref.kind == "plan" and _portable_url(str(ref.target[ref.key])) != ref.target[ref.key]:
             raise fail()
@@ -276,6 +291,8 @@ def build_merge(document, current_config, current_layout):
         for collection, namespace in COLLECTIONS:
             for item in space.get(collection) or []:
                 item["id"] = scoped[namespace][item["id"]]
+        if "decor" in space:
+            space["decor"] = remap_workstation_items(space["decor"], scoped["decor"])
         for room in space.get("rooms") or []:
             if room.get("open_to"):
                 try:

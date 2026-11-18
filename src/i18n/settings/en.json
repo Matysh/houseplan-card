@@ -160,7 +160,7 @@
   "gs.device_battery_low": "Low only",
   "gs.device_battery_off": "None",
   "gs.radar_show_live_hint": "Hides or shows all live radar targets. This does not start or stop observation recording.",
-  "gs.volumetric_view_hint": "Renders walls, doors, windows and device markers with depth. Decor and the flat plan stay unchanged.",
+  "gs.volumetric_view_hint": "Renders walls, openings, furniture and device markers with depth. Editors and the normal view stay flat; saved plan data stays unchanged.",
   "gs.volumetric_view_development": "This feature is under development. Some rendering issues may occur.",
   "gs.center_summary": "Account for the side panel when centering",
   "gs.center_summary_hint": "In View, centers and fits the plan in the area not covered by the visible summary panel. Off by default. External-screen profiles use their own setting.",

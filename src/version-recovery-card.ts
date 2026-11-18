@@ -56,6 +56,7 @@ export interface ConfigCapabilitiesCardPort extends PlanHostProvider {
   _haGraphChangeApi?: number | null;
   _haOpeningFeaturesApi?: number | null;
   _haHouseTransferApi?: number | null;
+  _haFurnitureWorkstationApi?: number | null;
   _haVacuumDockRestartApi?: number | null;
   _haVacuumHistoryApi?: number | null;
   _haDeviceHistoryApi?: number | null;
@@ -88,6 +89,7 @@ export interface AuthoritativeConfigResponse {
   readonly graph_change_api?: unknown;
   readonly opening_features_api?: unknown;
   readonly house_transfer_api?: unknown;
+  readonly furniture_workstation_api?: unknown;
   readonly vacuum_dock_restart_api?: unknown;
   readonly vacuum_history_api?: unknown;
   readonly device_history_api?: unknown;
@@ -101,7 +103,7 @@ export function adoptCardConfigCapabilities(
   const capabilities = response && typeof response === 'object'
     ? response as Partial<Record<
         'integration_version' | 'frontend_fingerprint' | 'build' | 'support_api' | 'decor_assets_api'
-        | 'summary_panel_api' | 'external_screens_api' | 'external_screens_events_api' | 'radar_stage1_api' | 'wall_node_move_api' | 'wall_node_delete_api' | 'wall_node_merge_api' | 'wall_node_attach_api' | 'plan_graph_api' | 'room_label_layout_api' | 'graph_change_api' | 'opening_features_api' | 'house_transfer_api' | 'vacuum_dock_restart_api' | 'vacuum_history_api' | 'device_history_api' | 'support_package_versions', unknown
+        | 'summary_panel_api' | 'external_screens_api' | 'external_screens_events_api' | 'radar_stage1_api' | 'wall_node_move_api' | 'wall_node_delete_api' | 'wall_node_merge_api' | 'wall_node_attach_api' | 'plan_graph_api' | 'room_label_layout_api' | 'graph_change_api' | 'opening_features_api' | 'house_transfer_api' | 'furniture_workstation_api' | 'vacuum_dock_restart_api' | 'vacuum_history_api' | 'device_history_api' | 'support_package_versions', unknown
       >> : {};
   host._haIntegrationVersion = normalizeRuntimeVersion(capabilities.integration_version);
   host._haBackendBuild = {
@@ -131,6 +133,7 @@ export function adoptCardConfigCapabilities(
   host._haGraphChangeApi = capabilities.graph_change_api === 2 ? 2 : null;
   host._haOpeningFeaturesApi = capabilities.opening_features_api === 1 ? 1 : null;
   host._haHouseTransferApi = capabilities.house_transfer_api === 1 ? 1 : null;
+  host._haFurnitureWorkstationApi = capabilities.furniture_workstation_api === 1 ? 1 : null;
   host._haVacuumDockRestartApi = capabilities.vacuum_dock_restart_api === 1 ? 1 : null;
   host._haVacuumHistoryApi = capabilities.vacuum_history_api === 1 ? 1 : null;
   host._haDeviceHistoryApi = capabilities.device_history_api === 1 ? 1 : null;

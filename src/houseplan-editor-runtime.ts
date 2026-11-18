@@ -1,5 +1,5 @@
 import type { PlanHost, HostPresentationContext } from './plan-host';
-import { workstationTarget, toggleWorkstation } from './iso-lab-workstation';
+import { workstationTarget, toggleWorkstation, removeWorkstationItems } from './iso-lab-workstation';
 import { hasMarkers } from './plan-capabilities';
 import { ModeChromeLayouts, type ModeChromeProbe } from './mode-chrome-layout';
 import {WallSideDimensionEditor} from './wall-side-dimension-editor';
@@ -589,6 +589,7 @@ export interface HouseplanEditorHostPort {
   readonly _haPlanGraphApi: number | null;
   readonly _haOpeningFeaturesApi: number | null;
   readonly _haHouseTransferApi: number | null;
+  readonly _haFurnitureWorkstationApi: number | null;
   _haWallNodeDeleteApi: number | null;
   _haVacuumDockRestartApi: number | null;
   _haVacuumHistoryApi: number | null;
@@ -4814,7 +4815,7 @@ public _deleteDecor(id: string): void {
     if (!this.host._decorList.some((shape) => shape.id === id)) return;
     const before = this._geometrySnapshot();
     const sp = this.host._curSpaceCfg;
-    sp.decor = this.host._decorList.filter((shape) => shape.id !== id);
+    sp.decor = [...removeWorkstationItems(this.host._decorList, new Set([id]))];
     if (this.host._decorSel === id) this.host._decorSel = null;
     this._recordGeometry(this.host._t('history.decor_delete'), before);
     this._saveConfig();
@@ -5364,7 +5365,7 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
     const selected = this.host._dtSel;
     if (selected) {
       const label = this.host._t((`decor.${selected.kind}`) as any);
-      const workstation = document.documentElement.dataset.uiLabCamera1451 === 'true'
+      const workstation = this.host._canEdit && this.host._haFurnitureWorkstationApi === 1
         ? workstationTarget(this.host._decorList, selected) : null;
       return {
         contextId,
@@ -5379,16 +5380,22 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
                 @click=${() => this._runEditorContext(contextId, () => {
                   const current = this.host._dtSel;
                   const space = this.host._curSpaceCfg;
-                  if (!space || !this.host._canEdit || !current || current.id !== selected.id) return;
+                  if (!space || !this.host._canEdit || this.host._haFurnitureWorkstationApi !== 1
+                      || !current || current.id !== selected.id) return;
                   const target = workstationTarget(this.host._decorList, current);
                   if (!target) return;
+                  const items = this.host._decorList;
+                  const next = toggleWorkstation(items, target.desk, target.pc);
+                  if (next === items) return;
                   const before = this._geometrySnapshot();
-                  space.decor = toggleWorkstation(this.host._decorList, target.desk, target.pc);
+                  space.decor = [...next];
                   this.host._decorSel = target.desk.id;
-                  this._recordGeometry(target.desk.lab_workstation === 'mounted' ? 'Снять со стола' : 'Поставить на стол', before);
+                  this._recordGeometry(this.host._t(target.desk.workstation === 'mounted'
+                    ? 'decor.workstation_unmount' : 'decor.workstation_mount'), before);
                   this._saveConfig();
                   this.host.requestUpdate();
-                })}>${workstation.desk.lab_workstation === 'mounted' ? 'Снять со стола' : 'Поставить на стол'}</button>` : nothing}
+                })}>${this.host._t(workstation.desk.workstation === 'mounted'
+                  ? 'decor.workstation_unmount' : 'decor.workstation_mount')}</button>` : nothing}
             ${(['front', 'back'] as const).map(direction => html`<button class="btn ghost" data-hp="action" data-action=${`decor-${direction}`}
               ?disabled=${(direction === 'front' ? this.host._decorList[this.host._decorList.length - 1] : this.host._decorList[0])?.id === selected.id}
               @click=${() => this._runEditorContext(contextId, () => this.decorOrder.command(selected.id, direction))}>
@@ -9964,6 +9971,8 @@ public _renderBackupImportDialog(): TemplateResult {
     const detachedOpenings = Number(repairs.detached) || 0;
     const keptOffWalls = detachedOpenings + (Number(repairs.legacy_detached) || 0);
     const repairExamples: Array<Record<string, string>> = Array.isArray(repairs.examples) ? repairs.examples : [];
+    const detachedWorkstations = Number(p?.workstation_repairs?.detached) || 0;
+    const houseWarnings = (p?.warnings || []).filter((warning: {code?: string}) => warning.code !== 'workstations_detached');
     const house = p?.kind === 'house';
     const zipIncomplete = !!(p?.archive && !p.archive.complete) || !!(house && !p.complete);
     const contentConfirm = zipIncomplete || ((p?.content || []) as ContentItem[])
@@ -10027,6 +10036,8 @@ public _renderBackupImportDialog(): TemplateResult {
           ${keptOffWalls ? html`${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${this._toolsT('backup.openings_detached', {
             n: String(keptOffWalls),
           })}` })}` : nothing}
+          ${detachedWorkstations ? callout({className:'backupwarn',kind:'warning',role:'note',
+            text:this._toolsT('backup.workstations_detached',{n:String(detachedWorkstations)})}) : nothing}
           ${repairExamples.length ? html`${disclosure({ className:'backupdetails hpf-reading-block hpf-reading-padded', action:'backup-openings-details', title:this._toolsT('backup.openings_details'), content:html`<div class="backupdetailrows">${repairExamples.map((item) => html`<span>${item.space_title || item.space_id} — ${this.host._t(
               item.type === 'window' ? 'opening.window' : item.type === 'passage' ? 'opening.passage'
                 : item.type === 'gate' ? 'opening.gate' : 'opening.door',
@@ -10058,8 +10069,8 @@ public _renderBackupImportDialog(): TemplateResult {
             <ul>${(p.spaces || []).map((space: { source_title: string; title: string }) => html`<li>${space.source_title} → ${space.title}</li>`)}</ul>
             <span>${this._toolsT('backup.zip_images_summary', { n: String(counts.images || 0) })}</span>
             ${callout({ kind:'warning', role:'note', text:this._toolsT('backup.house_target_settings') })}
-            ${(p.warnings || []).length ? disclosure({ title:this._toolsT('backup.house_warnings'),
-              content:html`<ul>${(p.warnings || []).map((warning: { code: string; ref?: { url: string }; target?: string }) => html`<li>${warning.code === 'dangling_stair'
+            ${houseWarnings.length ? disclosure({ title:this._toolsT('backup.house_warnings'),
+              content:html`<ul>${houseWarnings.map((warning: { code: string; ref?: { url: string }; target?: string }) => html`<li>${warning.code === 'dangling_stair'
                 ? this._toolsT('backup.house_dangling_stair', { target: warning.target || '—' })
                 : html`${warning.ref?.url || ''} — ${this._toolsT((`backup.zip_reason.${warning.code.slice(6)}`) as ToolsI18nKey)}`}</li>`)}</ul>` }) : nothing}
           </div>` : p.kind === 'full' ? html`

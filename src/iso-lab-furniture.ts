@@ -1,4 +1,4 @@
-/** Local #1451 furniture study. Saved decor remains a flat, editable box. */
+/** Shared #1451 volume renderer. Saved decor remains a flat, editable box. */
 import type { FurnitureTransformBox } from './furniture';
 import type {DecorFurniture} from './editors/decor/types';
 import {workstationParts} from './iso-lab-workstation';
@@ -101,7 +101,7 @@ export function furnitureViewDepth(shape: FurnitureTransformBox, canvasW: number
   return x*sin+y*cos;
 }
 
-type FurnitureSubject = FurnitureTransformBox & Pick<DecorFurniture,'symbol'|'lab_workstation'>;
+type FurnitureSubject = FurnitureTransformBox & Pick<DecorFurniture,'symbol'|'workstation'>;
 const meshCache = new WeakMap<FurnitureSubject,{camera:IsoCamera; key:string; volume:FurnitureVolume}>();
 
 export function furnitureMesh(shape: FurnitureSubject,
@@ -112,13 +112,13 @@ export function furnitureMesh(shape: FurnitureSubject,
 export function furnitureVolume(shape: FurnitureSubject,
   canvasW: number, canvasH: number, camera: IsoCamera, visualScale=1): FurnitureVolume | null {
   const base=furnitureParts(shape.symbol);
-  if (!base || ![shape.x,shape.y,shape.w,shape.h,canvasW,canvasH,visualScale].every(Number.isFinite)
+  if (!base || ![shape.x,shape.y,shape.w,shape.h,Number(shape.angle ?? 0),canvasW,canvasH,visualScale].every(Number.isFinite)
     || shape.w<=0 || shape.h<=0 || canvasW<=0 || canvasH<=0 || visualScale<=0) return null;
-  const key = [shape.symbol,shape.lab_workstation,shape.x,shape.y,shape.w,shape.h,shape.angle,shape.flip_h,shape.flip_v,
+  const key = [shape.symbol,shape.workstation,shape.x,shape.y,shape.w,shape.h,shape.angle,shape.flip_h,shape.flip_v,
     canvasW,canvasH,visualScale].join('|');
   const cached = meshCache.get(shape);
   if (cached?.camera === camera && cached.key === key) return cached.volume;
-  const parts=shape.lab_workstation ? workstationParts(shape,base,furnitureParts('computer') || []) : base;
+  const parts=shape.workstation ? workstationParts(shape,base,furnitureParts('computer') || []) : base;
   const [cos,sin]=isoRotationBasis(camera), scale=FURNITURE_HEIGHT_SCALE*visualScale;
   const elevation=(90-camera.tiltDeg)*Math.PI/180;
   const transform=(p:PlanPoint) => furniturePlanPoint(shape,p,canvasW,canvasH);

@@ -59,6 +59,7 @@ test('Unsupported or invalid furniture uses the original flat fallback',()=>{
   assert.equal(furnitureMesh({...box,symbol:'future_symbol'},1000,1000,camera),null);
   assert.equal(furnitureMesh({...box,w:0},1000,1000,camera),null);
   assert.equal(furnitureMesh({...box,x:NaN},1000,1000,camera),null);
+  assert.equal(furnitureMesh({...box,angle:Infinity},1000,1000,camera),null);
 });
 
 test('A farther table paints before the sofa; turning around reverses the order',()=>{

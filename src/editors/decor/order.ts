@@ -2,6 +2,7 @@ import { CANVAS_LIMIT, NORM_W } from '../../canvas-constants';
 import { SPACE_COPY_LIMITS } from '../../space-copy';
 import { nudgeDecorShape } from './geometry';
 import type { DecorShape } from './types';
+import { standaloneWorkstation } from '../../iso-lab-workstation';
 
 export type DecorOrder = 'front' | 'back';
 
@@ -18,7 +19,8 @@ export type DecorCopyResult = { shape: DecorShape } | { error: 'limit' | 'no_spa
 
 /** A new instance owns its values; an image continues to reference its asset. */
 export function copyDecor(items: DecorShape[], id: string, newId: string, gridPitch: number): DecorCopyResult {
-  const source = items.find(item => item.id === id);
+  const original = items.find(item => item.id === id);
+  const source = original && standaloneWorkstation(original);
   if (items.length >= SPACE_COPY_LIMITS.decor) return { error: 'limit' };
   if (!source || !newId || items.some(item => item.id === newId)
       || !Number.isFinite(gridPitch) || gridPitch <= 0) return { error: 'no_space' };

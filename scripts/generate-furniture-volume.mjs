@@ -7,7 +7,7 @@ const fail=message=>{throw new Error('Furniture volume: '+message);};
 const identifier=value=>typeof value==='string'&&/^[a-z][a-z0-9_-]*$/.test(value)&&!['constructor','prototype'].includes(value);
 function attributes(text,allowed){
   const result=Object.create(null);
-  const remainder=text.replace(/([\w-]+)="([^"<>]*)"/g,(_,key,value)=>{
+  const remainder=(' '+text).replace(/\s+([\w-]+)="([^"<>]*)"/g,(_,key,value)=>{
     if(!allowed.includes(key)||Object.hasOwn(result,key)||value.includes('&'))fail('unsupported or duplicate attribute '+key);
     result[key]=value;return '';
   });
@@ -53,7 +53,7 @@ export function parseVolumeSvg(source,symbol){
     if(version==='2'&&tag==='rect')p.profile='rect';
     if(tag==='ellipse')p.profile='ellipse';
     if(points){p.profile='polygon';p.points=points.map(([x,y])=>[norm(x,w),norm(y,h)]);}
-    if(a['data-hp-hole-points']){
+    if(Object.hasOwn(a,'data-hp-hole-points')){
       const hole=a['data-hp-hole-points'].trim().split(/\s+/).map(pair=>{const p=pair.split(',');if(p.length!==2)fail('hole point');return p.map(v=>number(v,'hole point'));});
       if(hole.length<3||hole.length>48)fail('hole vertex count');
       validatePolygon(hole);
@@ -66,21 +66,21 @@ export function parseVolumeSvg(source,symbol){
         if(edgesMeet(hole[i],hole[(i+1)%hole.length],points[j],points[(j+1)%points.length]))fail('hole intersects profile');
       p.hole=hole.map(([x,y])=>[norm(x,w),norm(y,h)]);
     }
-    if(a['data-hp-plane']){
+    if(Object.hasOwn(a,'data-hp-plane')){
       if(!['xy','xz','yz'].includes(a['data-hp-plane'])||tag==='polygon')fail('unsupported profile plane');
       p.plane=a['data-hp-plane'];
     }
-    if(a['data-hp-inset-cm']){
+    if(Object.hasOwn(a,'data-hp-inset-cm')){
       const inset=number(a['data-hp-inset-cm'],'inset'),plane=p.plane||'xy';
       const limits=plane==='xy'?[width,height]:plane==='xz'?[width,p.top-p.bottom]:[height,p.top-p.bottom];
       if(tag==='polygon'||inset<=0||limits.some(v=>inset*2>=v))fail('invalid inset');
       p.inset=[norm(inset,w),norm(inset,h),inset];
     }
-    if(a['data-hp-base-scale']){
+    if(Object.hasOwn(a,'data-hp-base-scale')){
       p.baseScale=number(a['data-hp-base-scale'],'base scale');
       if((p.plane&&p.plane!=='xy')||p.baseScale<.05||p.baseScale>1)fail('invalid base scale');
     }
-    if(a['data-hp-top-scale']||a['data-hp-top-offset']){
+    if(Object.hasOwn(a,'data-hp-top-scale')||Object.hasOwn(a,'data-hp-top-offset')){
       p.topScale=number(a['data-hp-top-scale'],'top scale');
       p.topOffset=(a['data-hp-top-offset']||'0,0').split(',').map(v=>number(v,'top offset'));
       if((p.plane&&p.plane!=='xy')||p.topScale<.05||p.topScale>1||p.topOffset.length!==2||p.topOffset.some(v=>Math.abs(v)+p.topScale/2>.5))fail('invalid top profile');
@@ -118,13 +118,21 @@ function edgesMeet(a,b,c,d){
 }
 export function loadVolumeModels(packRoot){
   const pack=JSON.parse(fs.readFileSync(path.join(packRoot,'pack.json'),'utf8'));
+  if(!Array.isArray(pack.symbols)||!pack.symbols.length)fail('catalog is empty');
+  const symbols=new Map();
+  for(const symbol of pack.symbols){
+    if(!identifier(symbol.id)||symbols.has(symbol.id))fail('invalid/duplicate catalog id');
+    symbols.set(symbol.id,symbol);
+  }
   const directory=path.join(packRoot,'svg/volume'),models={};
   for(const file of fs.readdirSync(directory).sort()){
     if(!file.endsWith('.svg'))fail('unexpected file '+file);
-    const id=file.slice(0,-4),symbol=pack.symbols.find(s=>s.id===id);
+    const id=file.slice(0,-4),symbol=symbols.get(id);
     if(!symbol||!identifier(id))fail('unknown model '+id);
     models[id]=parseVolumeSvg(fs.readFileSync(path.join(directory,file),'utf8'),symbol);
   }
+  const missing=[...symbols.keys()].filter(id=>!Object.hasOwn(models,id));
+  if(missing.length)fail('missing model '+missing.join(', '));
   return models;
 }
 export function generateVolume(root=ROOT,check=false){

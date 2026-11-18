@@ -23,7 +23,6 @@ from urllib.parse import urlsplit as urlsplit
 import voluptuous as vol
 
 from .config_migrations import migrate_pair as migrate_pair
-from .content_index import ContentIndex, ContentRef, FilesystemContentIndex, internal_reference
 from .constants import ASSETS_DIR as ASSETS_DIR
 from .constants import CONTENT_URL as CONTENT_URL
 from .constants import EXPORT_VERSION as EXPORT_VERSION
@@ -36,6 +35,18 @@ from .constants import MAX_IMPORT_PREVIEWS_TOTAL as MAX_IMPORT_PREVIEWS_TOTAL
 from .constants import PLAN_MODEL_VERSION as PLAN_MODEL_VERSION
 from .constants import PLANS_DIR as PLANS_DIR
 from .constants import PLANS_URL as PLANS_URL
+from .content_index import (
+    ContentIndex,
+    ContentRef,
+    FilesystemContentIndex,
+    internal_reference,
+)
+from .furniture_workstation import (
+    has_workstations,
+    remap_workstation_items,
+    repair_workstations,
+)
+from .furniture_workstation import merge_repair_reports as merge_workstation_reports
 from .geometry_migration import migrate_layout as migrate_layout
 from .geometry_migration import pending_from_config as pending_from_config
 from .input_policy import InputLimit, check_json_bounds, checkpoint, finite_json_float
@@ -49,8 +60,8 @@ from .opening_repair import merge_repair_reports as merge_repair_reports
 from .opening_repair import repair_imported_openings as repair_imported_openings
 from .plan_graph_exact import GraphError as GraphError
 from .portable_recovery import prepare_portable_markers as prepare_portable_markers
-from .ports import PortableRuntime as PortableRuntime
 from .ports import PortableIdentity
+from .ports import PortableRuntime as PortableRuntime
 from .room_appearance import normalize_room_appearance as normalize_room_appearance
 from .validation import CONFIG_SCHEMA as CONFIG_SCHEMA
 from .validation import LAYOUT_SCHEMA as LAYOUT_SCHEMA
@@ -174,7 +185,8 @@ _DECOR_KIND_FIELDS = {
     "rect": ("x", "y", "w", "h", "angle", "fill", "fill_color", "fill_opacity"),
     "ellipse": ("x", "y", "w", "h", "angle", "fill", "fill_color", "fill_opacity"),
     "text": ("x", "y", "text", "size", "size_cm", "scale", "angle"),
-    "furniture": ("symbol", "x", "y", "w", "h", "angle", "flip_h", "flip_v"),
+    "furniture": ("symbol", "x", "y", "w", "h", "angle", "flip_h", "flip_v",
+                  "workstation", "workstation_tower_id"),
     "image": ("asset_id", "x", "y", "w", "h", "angle", "flip_h", "flip_v"),
 }
 
@@ -688,7 +700,7 @@ def prepare_export_document(
     dropped_marker_links += recovery["counts"].get("controls", 0) + recovery["counts"].get("value", 0)
     document = {
         "format": FORMAT,
-        "export_version": EXPORT_VERSION if any(
+        "export_version": 4 if has_workstations(config) else EXPORT_VERSION if any(
             "opening_features" in opening for space in config.get("spaces", [])
             for opening in space.get("openings", [])
         ) else 2,
@@ -765,6 +777,7 @@ def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 def parse_document(
     raw: bytes, *, opening_repairs: dict[str, Any] | None = None,
+    workstation_repairs: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Parse and validate one export; ``opening_repairs`` is a report this
     server already made for the same document (a ZIP is parsed twice)."""
@@ -794,7 +807,7 @@ def parse_document(
         raise ImportFailure("invalid_json", str(err)) from err
     if not isinstance(document, dict) or document.get("format") != FORMAT:
         raise ImportFailure("invalid_format", "Not a House Plan export")
-    if document.get("export_version") not in (1, 2, EXPORT_VERSION):
+    if type(document.get("export_version")) is not int or document["export_version"] not in (1, 2, EXPORT_VERSION, 4):
         raise ImportFailure("unsupported_export_version", "Unsupported export version")
     if document.get("kind") not in ("full", "space"):
         raise ImportFailure("invalid_format", "Export kind must be full or space")
@@ -811,6 +824,9 @@ def parse_document(
         # A future or mixed extension must not disappear in import repair.
         if not isinstance(config_candidate, dict):
             raise vol.Invalid("Configuration must be an object")
+        if has_workstations(config_candidate) and document["export_version"] < 4:
+            raise ImportFailure("unsupported_export_version", "Workstation links require export version 4")
+        workstations = merge_workstation_reports(workstation_repairs, repair_workstations(config_candidate))
         for space in config_candidate.get("spaces", []):
             if not isinstance(space, dict):
                 raise vol.Invalid("Space must be an object")
@@ -892,6 +908,9 @@ def parse_document(
     # Computed here, never trusted from the file.
     document["transfer"].pop("unbound_led_strips", None)
     document["transfer"]["opening_repairs"] = repairs
+    # Ignore any file-provided report. Only server-made repairs cross the
+    # archive/preview double-parse boundary through the keyword above.
+    document["transfer"]["workstation_repairs"] = workstations
     if unbound_led_strips:
         document["transfer"]["unbound_led_strips"] = unbound_led_strips
     if plan_only:
@@ -1498,6 +1517,8 @@ def build_space_merge(
                 id_map[old] = _fresh(prefix, old, used)
                 id_maps[prefix][old] = id_map[old]
                 item["id"] = id_map[old]
+    if "decor" in space:
+        space["decor"] = remap_workstation_items(space["decor"], id_maps["decor"])
     old_room_ids = id_maps["room"]
     for room in space.get("rooms") or []:
         if room.get("open_to"):
@@ -2090,6 +2111,8 @@ def _materialize_import_candidate(
     details = _json_copy(details)
     details["migration"] = migration
     details["opening_repairs"] = repairs
+    details["workstation_repairs"] = merge_workstation_reports(
+        (prepared.get("transfer") or {}).get("workstation_repairs"))
     details["counts"] = _counts(config, layout)
     return config, layout, details
 
@@ -2158,11 +2181,13 @@ def prepare_preview(
     registry_snapshot: dict[str, set[str]] | None = None,
     portable_content: frozenset[tuple[str, ...]] = frozenset(),
     opening_repairs: dict[str, Any] | None = None,
+    workstation_repairs: dict[str, Any] | None = None,
     content_index: ContentIndex | None = None,
     parsed_document: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Prepare a candidate without mutating host leases; parsed input is trusted internal output."""
-    document = parsed_document if parsed_document is not None else parse_document(raw, opening_repairs=opening_repairs)
+    document = parsed_document if parsed_document is not None else parse_document(
+        raw, opening_repairs=opening_repairs, workstation_repairs=workstation_repairs)
     same_source = document.get("source_fingerprint") == source_fingerprint(runtime.instance_id)
     incoming_config = document["payload"]["config"]
     incoming_layout = document["payload"]["layout"]
@@ -2229,6 +2254,7 @@ def prepare_preview(
             + (["instance_bookkeeping_dropped"] if not same_source and document["kind"] == "full" else [])
             + (["content_detach_required"] if content_confirmation else [])
             + (["openings_detached"] if openings_confirmation else [])
+            + (["workstations_detached"] if details.get("workstation_repairs", {}).get("detached") else [])
             + (["full_replaces_current"] if document["kind"] == "full" else []),
         **details,
     }
@@ -2260,12 +2286,13 @@ def create_preview(
     config_root: Path, registry_snapshot: dict[str, set[str]] | None = None,
     portable_content: frozenset[tuple[str, ...]] = frozenset(),
     opening_repairs: dict[str, Any] | None = None,
+    workstation_repairs: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compatibility entry for existing standalone pure/archive callers."""
     result, candidate = prepare_preview(runtime, raw, owner_id=owner_id, duplicate_policy=duplicate_policy,
         current_config_data=current_config_data, current_layout_data=current_layout_data,
         config_root=config_root, registry_snapshot=registry_snapshot, portable_content=portable_content,
-        opening_repairs=opening_repairs)
+        opening_repairs=opening_repairs, workstation_repairs=workstation_repairs)
     cache_preview(runtime, result["token"], candidate)
     return result
 

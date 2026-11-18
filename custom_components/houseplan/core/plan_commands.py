@@ -48,6 +48,7 @@ from .coordinate_canonicalization import (
     canonicalize_layout_geometry,
 )
 from .deletion_layout import deletion_layout_candidate
+from .furniture_workstation import guard_workstation_write
 from .geometry_migration import migrate_layout
 from .graph_validation_scope import graph_validation_scope
 from .graph_write import prepare_graph_candidate, preserve_legacy_structure
@@ -101,7 +102,7 @@ _LOGGER = logging.getLogger(__name__)
 PLAN_APIS = {"wall_node_move_api": 1, "wall_node_merge_api": 1, "wall_node_attach_api": 1,
              "wall_node_delete_api": 1, "plan_graph_api": 1, "room_label_layout_api": 1,
              "graph_change_api": 2, "opening_features_api": 1, "structural_upload_api": 1,
-             "decor_assets_api": DECOR_ASSETS_API_VERSION}
+             "decor_assets_api": DECOR_ASSETS_API_VERSION, "furniture_workstation_api": 1}
 
 
 def changed_summary_entity_ids(config: dict, previous: dict | None) -> set[str] | None:
@@ -453,6 +454,7 @@ class PlanCommands:
             previous = data.get("config")
             try:
                 guard_opening_features_write(candidate, previous, message.get("opening_features_api"))
+                guard_workstation_write(candidate, previous, message.get("furniture_workstation_api"))
             except vol.Invalid as error:
                 raise CommandError(getattr(error, "code", "invalid_format"), str(error)) from error
             entity_ids = changed_summary_entity_ids(candidate, previous)
@@ -596,6 +598,7 @@ class PlanCommands:
                     candidate, positions, dependencies, removed_layout, removed_markers = _space_delete_target(
                         config, layout, space_id, remove_markers=message.get("remove_markers", False))
                     guard_opening_features_write(candidate, config, message.get("opening_features_api"))
+                    guard_workstation_write(candidate, config, message.get("furniture_workstation_api"))
                     spaces = config.get("spaces") or []
                     last = len(spaces) == 1 and spaces[0].get("id") == space_id
                     if dependencies and not last:
@@ -712,6 +715,7 @@ class PlanCommands:
             previous = config_data.get("config")
             try:
                 guard_opening_features_write(message["config"], previous, message.get("opening_features_api"))
+                guard_workstation_write(message["config"], previous, message.get("furniture_workstation_api"))
             except vol.Invalid as error:
                 raise CommandError(getattr(error, "code", "invalid_format"), str(error)) from error
             readable = environment.evidence.readable_entity_ids(None)

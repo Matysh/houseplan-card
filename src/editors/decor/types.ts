@@ -72,10 +72,10 @@ export interface DecorText extends DecorBase {
 export interface DecorFurniture extends DecorBoxBase {
   kind: 'furniture';
   symbol: string;
-  /** Local UI Lab only. Mounted equipment shares the desk's editable transform. */
-  lab_workstation?: 'mounted' | 'tower';
-  /** The separately movable tower of a computer placed by the user. */
-  lab_tower_id?: string;
+  /** Mounted equipment is derived from its desk; the tower keeps its own box. */
+  workstation?: 'mounted' | 'tower';
+  /** Same-space computer/tower owned by this mounted desk. */
+  workstation_tower_id?: string;
   /** Mirroring is presentation state; persisted extents always stay positive. */
   flip_h?: boolean;
   flip_v?: boolean;

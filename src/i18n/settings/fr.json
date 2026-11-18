@@ -160,7 +160,7 @@
   "gs.device_battery_low": "Faible uniquement",
   "gs.device_battery_off": "Aucune",
   "gs.radar_show_live_hint": "Affiche ou masque toutes les cibles radar en direct. Cela ne démarre ni n’arrête l’enregistrement d’observation.",
-  "gs.volumetric_view_hint": "Murs, portes, fenêtres et icônes d'appareils en relief. La décoration et le plan à plat ne changent pas.",
+  "gs.volumetric_view_hint": "Murs, ouvertures, mobilier et icônes d’appareils en relief. Les éditeurs et la vue normale restent à plat ; les données du plan ne changent pas.",
   "gs.volumetric_view_development": "Cette fonction est en cours de développement. Des défauts d’affichage sont possibles.",
   "gs.center_summary": "Tenir compte du panneau latéral pour le centrage",
   "gs.center_summary_hint": "Dans la vue, centre et ajuste le plan dans la zone non couverte par le panneau récapitulatif visible. Désactivé par défaut. Les profils d’écran externe utilisent leur propre réglage.",

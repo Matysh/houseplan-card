@@ -1,5 +1,5 @@
 import { quarterBasis, validPlanRotation, type PlanRotation } from './view-frame';
-import { ISO_LAB_CAMERA, ISO_LAB_FLOOR_MARKERS } from './iso-lab-camera';
+import { ISO_LAB_CAMERA, ISO_VIEW_PROFILE } from './iso-lab-camera';
 import { GRID_PITCH, GRID_VISUAL_REFERENCE_CELL_CM } from './canvas-constants';
 export type PlanPoint = readonly [number, number];
 export type ScenePoint = readonly [number, number];
@@ -11,7 +11,7 @@ export interface IsoCamera {
   xyScale: number;
   zScale: number;
   origin: PlanPoint;
-  /** Optional orthographic depth compression; production dev keeps 1. */
+  /** Orthographic floor depth scale; omitted means an unsqueezed test camera. */
   floorScaleY?: number;
 }
 
@@ -36,6 +36,7 @@ export const ISO_CAMERA: Readonly<IsoCamera> = Object.freeze({
 
 const quarterCameras = new Map<PlanRotation, Readonly<IsoCamera>>([[0, ISO_CAMERA]]);
 export function isoCameraFor(rotation: PlanRotation): Readonly<IsoCamera> {
+  if (!validPlanRotation(rotation)) throw new Error('invalid plan rotation');
   let camera = quarterCameras.get(rotation);
   if (!camera) { camera = Object.freeze({ ...ISO_CAMERA, rotDeg: ISO_CAMERA.rotDeg + rotation }); quarterCameras.set(rotation, camera); }
   return camera;
@@ -49,10 +50,10 @@ export function isoRotationBasis(camera: IsoCamera): readonly [number, number] {
 export const ISO_WALL_HEIGHT = 84;
 // The cutaway represents half of a 280 cm wall. Callers apply gridVisualUnits
 // to these reference-scale units for the current space's centimetres per cell.
-const ISO_LAB_STANDARD_WALL_HEIGHT = 140 * GRID_PITCH / GRID_VISUAL_REFERENCE_CELL_CM;
-/** Live UI Lab section height. Independent of the scale of furniture and fixtures. */
+const ISO_SECTION_WALL_HEIGHT = ISO_VIEW_PROFILE.sectionHeightCm * GRID_PITCH / GRID_VISUAL_REFERENCE_CELL_CM;
+/** Physical section height, independent of the furniture recipe reference. */
 export function isoDisplayWallHeight(): number {
-  return ISO_LAB_FLOOR_MARKERS ? ISO_LAB_STANDARD_WALL_HEIGHT : ISO_WALL_HEIGHT;
+  return ISO_SECTION_WALL_HEIGHT;
 }
 export const ISO_FLOOR_EDGE_HEIGHT = 10;
 /** Low visual lift above the floor; callers scale it with the same grid policy. */
@@ -92,9 +93,9 @@ export function unprojectFloorPoint(
  * Canonical plan-plane affine matrix at one logical height. Floor SVG, raised
  * plates and individual point projection all use this exact transform.
  *
- * #713: a vertical oblique projection. The floor keeps the Flat plan (no
- * foreshortening), a height moves a point straight up the screen by
- * `z × sin(tilt)`: the on-screen wall height of the former 20° camera.
+ * The accepted orthographic camera compresses floor depth by sin(elevation).
+ * Height rises straight up by z × cos(elevation), represented as sin(tilt).
+ * Flat/editor/no-borders use their own exact quarter-turn matrix instead.
  */
 export function isoPlaneMatrix(
   zUnits = 0, camera: IsoCamera = ISO_CAMERA,
@@ -115,6 +116,17 @@ export function isoPlaneMatrix(
 
 export function isoFloorMatrix(camera: IsoCamera = ISO_CAMERA): IsoAffineMatrix {
   return isoPlaneMatrix(0, camera);
+}
+
+/** Depth along the projector's null direction. Screen Y is
+ * xyScale·floorScaleY·rotatedY − zScale·sin(tilt)·z; the perpendicular
+ * coefficient pair orders two points which project to the same screen point. */
+export function isoCameraDepth(point: PlanPoint, zUnits: number, camera: IsoCamera = ISO_CAMERA): number {
+  if (!finiteCamera(camera) || !Number.isFinite(point[0]) || !Number.isFinite(point[1])
+      || !Number.isFinite(zUnits)) throw new Error('invalid isometric depth input');
+  const [cos, sin] = isoRotationBasis(camera);
+  return (point[0] * sin + point[1] * cos) * camera.zScale * Math.sin(camera.tiltDeg * Math.PI / 180)
+    + zUnits * camera.xyScale * (camera.floorScaleY ?? 1);
 }
 
 export function applyIsoMatrix(point: PlanPoint, matrix: IsoAffineMatrix): ScenePoint {

@@ -26,6 +26,10 @@ from .coordinate_canonicalization import (
 )
 from .coordinate_canonicalization import canonicalize_number as canonicalize_number
 from .coordinate_canonicalization import canonicalize_position as canonicalize_position
+from .furniture_workstation import (
+    validate_workstation_shape,
+    validate_workstation_space,
+)
 from .input_policy import charge_work
 from .led_strips import LED_STRIPS_SCHEMA as LED_STRIPS_SCHEMA
 from .led_strips import config_led_strip_links as config_led_strip_links
@@ -1809,7 +1813,7 @@ _DECOR_COMMON = {
 # Decor lives on the same unbounded canvas as everything else (docs/CANVAS.md):
 # it used to be pinned to -1..2, i.e. "one canvas of slack around the square".
 _NORM = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
-DECOR_SCHEMA = vol.Any(
+DECOR_SCHEMA = vol.All(vol.Any(
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "line",
                 vol.Required("x1"): _NORM, vol.Required("y1"): _NORM,
                 vol.Required("x2"): _NORM, vol.Required("y2"): _NORM,
@@ -1859,6 +1863,8 @@ DECOR_SCHEMA = vol.Any(
                 vol.Required("x"): _NORM, vol.Required("y"): _NORM,
                 vol.Required("w"): _FURN_SIZE, vol.Required("h"): _FURN_SIZE,
                 vol.Optional("flip_h"): bool, vol.Optional("flip_v"): bool,
+                vol.Optional("workstation"): vol.In(("mounted", "tower")),
+                vol.Optional("workstation_tower_id"): vol.All(str, vol.Length(min=1, max=512)),
                 vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0))},
                extra=vol.ALLOW_EXTRA),
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "image",
@@ -1868,7 +1874,7 @@ DECOR_SCHEMA = vol.Any(
                 vol.Optional("flip_h"): bool, vol.Optional("flip_v"): bool,
                 vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0))},
                extra=vol.ALLOW_EXTRA),
-)
+), validate_workstation_shape)
 
 
 def _strict_stair(value: dict) -> dict:
@@ -2207,7 +2213,7 @@ def _space_geometry_invariants(value: dict) -> dict:
             )
         if fault:
             raise vol.Invalid(fault)
-    return value
+    return validate_workstation_space(value)
 
 
 SPACE_SCHEMA = vol.All(vol.Schema(

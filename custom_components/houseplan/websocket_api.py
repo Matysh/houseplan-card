@@ -1218,6 +1218,7 @@ def _readable_entity_ids(
         vol.Optional("expected_layout_rev"): int,
         vol.Optional("graph_change"): dict,
         vol.Optional("opening_features_api"): object,
+        vol.Optional("furniture_workstation_api"): object,
     }
 )
 @websocket_api.async_response
@@ -1321,6 +1322,7 @@ async def _forget_deleted_markers(
     {
         vol.Required("type"): "houseplan/space/delete",
         vol.Optional("opening_features_api"): object,
+        vol.Optional("furniture_workstation_api"): object,
         vol.Required("space_id"): str,
         vol.Required("expected_config_rev"): int,
         vol.Required("expected_layout_rev"): int,
@@ -1341,6 +1343,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
         vol.Required("type"): "houseplan/plan/optimize",
         vol.Required("config"): dict,
         vol.Optional("opening_features_api"): object,
+        vol.Optional("furniture_workstation_api"): object,
         vol.Optional("graph_change"): dict,
         vol.Required("layout"): LAYOUT_SCHEMA,
         vol.Required("expected_config_rev"): int,

@@ -60,3 +60,22 @@ test('Lazy volume load is shared, notifies connected hosts once and preserves fl
  const mismatch=new FurnitureVolumeRuntime('b',async()=>module,()=>{});await mismatch.ensure();assert.equal(mismatch.state(),'fallback');assert.equal(mismatch.parts('sofa'),null);
  const offline=new FurnitureVolumeRuntime('a',async()=>{throw Error('offline');},()=>{});await offline.ensure();assert.equal(offline.state(),'fallback');assert.equal(offline.parts('sofa'),null);
 });
+
+test('Volume runtime safely settles synchronous and malformed loads and never resolves inherited model names',async()=>{
+ const model={FURNITURE_VOLUME_FINGERPRINT:'a',FURNITURE_VOLUME_MODELS:{sofa:parseVolumeSvg(source,sofa)}};
+ const ready=new FurnitureVolumeRuntime('a',async()=>model,()=>{});await ready.ensure();
+ for(const name of ['constructor','toString','__proto__'])assert.equal(ready.parts(name),null);
+ for(const load of [()=>{throw Error('sync offline');},async()=>({FURNITURE_VOLUME_FINGERPRINT:'a'}),
+   async()=>({...model,FURNITURE_VOLUME_MODELS:{}}),async()=>({...model,FURNITURE_VOLUME_MODELS:{sofa:[]}}),
+   async()=>({...model,FURNITURE_VOLUME_MODELS:{sofa:[{...model.FURNITURE_VOLUME_MODELS.sofa[0],top:NaN}]}})]){
+  let calls=0,updates=0,disconnected=0;
+  const runtime=new FurnitureVolumeRuntime('a',()=>{calls++;return load();},()=>{throw Error('logger unavailable');});
+  const host={isConnected:true,requestUpdate(){updates++;}};
+  const first=runtime.ensure(host);
+  await runtime.ensure({isConnected:false,requestUpdate(){disconnected++;}});
+  await first;
+  assert.equal(runtime.state(),'fallback');assert.equal(runtime.parts('sofa'),null);
+  assert.equal(updates,1);assert.equal(disconnected,0);
+  await runtime.ensure(host);assert.equal(calls,1);assert.equal(updates,1);
+ }
+});
