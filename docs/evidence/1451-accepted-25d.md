@@ -18,9 +18,9 @@
 | SHA-256 исходного patch | `1b4c1a475a28d3c6a1525e9d7a0b3fd13d41d1ab136d648540ebacff6bdd5e12` |
 | База принятого прототипа | `09f5f5082ce065406e1d5d275255875e082c6d34` |
 | Fingerprint принятого прототипа | `ff45c3efb16d6e9be13b79765b76ac901501cc8622a4318ef9a8189d62016c4b` |
-| Исходник окончательной визуальной/native серии | `60f6eeb34695c616ba10343dab390e5cfce202ff` |
-| Digest установленного текущего кандидата | `af2474e9fef4aaca41a84381ff4bc92db8557c68d66a2ba4167376953a89217b` |
-| Fingerprint текущего frontend | `375cf03488a4de90bfd5c086587dbf2772ce23d6bf494c0461ae287fd58943d2` |
+| Исходник окончательной визуальной/native серии | `fac0ba5fe8df4a4c7b7a0bb809fc9b4932820c52` |
+| Digest установленного текущего кандидата | `021b1fa6c3e321d6fb5b4df4f82e58ef482eb9084f417ab2452d2b7868def89c` |
+| Fingerprint текущего frontend | `628cbd3a9c90bc951994d688ab0999cefa19a7f788ab1f9504fdd13a1566324c` |
 
 SHA архива совпал с передачей; применимость patch была проверена до
 интеграции. Прототиповые числа `309 tests` и нулевая разница его собственных
@@ -155,15 +155,16 @@ loopback HA и синтетический план; личная HA-устано
 ```sh
 npx playwright test tests/isometric-product.admin.spec.mjs --project=admin --no-deps \
   --grep='native 2.5D' --workers=1 --max-failures=1 \
-  --output="$RESULTS/native-final60f-results" --reporter=line
+  --output="$RESULTS/native-finalfac-results" --reporter=line
 ```
 
-Результат на окончательном `60f6eeb…`: **2/2 PASS, 34.5 с**, без пропусков — обычная панель и
+Результат на окончательном `fac0ba5…`: **2/2 PASS, 39.6 с**, без пропусков — обычная панель и
 обычная Lovelace-карточка, четыре стороны, compression sin(40°), переход в
 редактор, перезагрузка, отсутствие view-only writes и неизменность документов/
 ревизий. Это свежая проверка всех исправлений камеры, включая принятие
-только измеренного pixel frame при холодном открытии. Предыдущие 2/2 PASS
-на `001ffa9…` (38.2 с) сохранены как история, не подменяют этот результат.
+измеренного pixel frame при холодном открытии и plane пассивного preview.
+Предыдущие 2/2 PASS на `001ffa9…` (38.2 с) и `60f6eeb…` (34.5 с)
+сохранены как история, не подменяют этот результат.
 
 Ранее на `bf8dfb97e7d9b21c823c27cae74e1a642dd90faa` прошли реальные straight
 и corner workstation journeys: установка одной записью, Undo/Redo,
@@ -180,14 +181,17 @@ assertions; после исправления только этот journey по
 **синтетический**, а не отсутствующий private LOCAL-REFERENCE план.
 Нулевая попиксельная разница разных сцен не требуется и не заявляется.
 
-На окончательном `60f6eeb…` обновлены все восемь кадров: 1480×1080, DPR 1,
+На окончательном `fac0ba5…` обновлены все восемь кадров: 1480×1080, DPR 1,
 fit/reduced motion, 35/125/215/305°, светлая и тёмная темы. Во всех кадрах
 проверены отсутствие camera lab flag, пять volume-furniture ID, отсутствие
 page errors и изменения fixture от просмотра. Fingerprint установленного
 кандидата и synthetic capture проверен на совпадение. Прежние зелёные
 gallery60/60 и HTTP200 всех 60 SVG не повторялись: их входы не изменились.
 После замены контрола цвета отдельно проверено реальное поведение общего
-picker в галерее; это не повторная проверка моделей/маршрутов.
+picker в галерее; это не повторная проверка моделей/маршрутов. Все восемь
+PNG и обе контактные таблицы побайтно совпали с `60f6eeb…`: cache-camera
+ремонт не изменил согласованный вид готовой сцены. Свежий native card
+кадр и его SHA обновлены; panel кадр также совпал побайтно.
 
 Просмотрены все восемь пар в двух contact sheets и full-resolution детали
 light125° / dark305°. Ракурс, формы мебели, материалы, wall top/side и поднятые
@@ -204,7 +208,7 @@ light125° / dark305°. Ракурс, формы мебели, материал�
 [straight reload](1451/native-desk-reload.png),
 [corner reload](1451/native-corner-desk-reload.png).
 Два workstation reload кадра относятся к указанному прежнему зелёному срезу;
-camera comparison/panel/card — к окончательному `60f6eeb…` кандидату.
+camera comparison/panel/card — к окончательному `fac0ba5…` кандидату.
 
 ## Разбор полного S6 и адресное исправление отказов
 
@@ -258,6 +262,47 @@ caught 1/1, exit 0. Четыре отдельных detached workspace, не roo
 журналы `output/1451-proof-<id>.log`. Это не полный ночной шард и не новый
 обязательный гейт для остальных задач. Зелёные модели, реальные
 workstation journeys и gallery routes без изменения входов не повторялись.
+
+### Второй S6: готовность и камера пассивного превью
+
+Второй завершённый S6 `20261118T195311402-750d819e` на `8b9044dff…`:
+800 шагов, 158 зачтены повторно, три отказа. Это не положительное ревью.
+Остальные первоначальные отказы закрыты; итог следующего S6 публикует очередь.
+
+1. Новый stage6 unit передал scene literal мимо действующего typed-fixture
+   gate. Объект объявлен `OverlaySceneFixture` без cast/ослабления validator,
+   функциональные assertions неизменны. Повторён только упавший consumer:
+   PASS, `output/1451-typed-fixture-repaired.log`.
+2. При preview→full центр повторно ISO-проецировался: вычисленный результат
+   совпал со смещением из лога с ошибкой `1.14e-13`. Единая presentation-plane
+   authority теперь берёт проверенные projection/base/display/rotation
+   реально нарисованного preview, а не отсутствие lazy geometry за Flat.
+   Frame принимается только с измеренными pixels; depth использует ту же
+   authority. Flat/no-borders и старая ещё видимая live-сцена при подготовке
+   другого режима сохраняют свой смысл. Ключи/схема пакета не менялись.
+   Три новых policy unit PASS (`output/1451-passive-preview-policy.log`).
+   Исходный native с неизменённым 1 px oracle PASS на `fac0ba5…`:
+   viewport до/после совпадает точно, максимум SVG delta `5.68e-14 px`,
+   ISO builds=0, четыре quarter builds=[0,0,0,0], disk main producers=0,
+   freshLight и запрет cache/device writes сохранены. Команда:
+   `node demo/smoke_floor_persistent_cache_isometric.mjs`, журнал
+   `output/1451-cache-preview-camera-native.log`.
+3. Kiosk setting-off оказался гонкой ожидания теста, не терминальным
+   ready-ISO состоянием продукта. После реального push revision 7 уже
+   принята и setting=false, но public state=booting/cache=pending и старая
+   ISO-сцена ещё удерживается. После bounded ожидания публичного ready
+   именно текущего киоска state=ready/cache отсутствует и stage=Flat.
+   Ожидание не зависит от желаемой проекции; прежние три результата и все
+   остальные проверки сохранены. `node demo/smoke_isometric_live_touch.mjs`
+   PASS всех 47 результатов, `output/1451-touch-kiosk-readiness-fac0.log`,
+   подробности `output/1451-touch-kiosk-readiness-result.md`.
+
+Подготовка этого ремонта сначала обнаружила пропущенный import planRotation;
+он добавлен, свежие TypeScript/test-build и build прошли. Demo обновлён
+прямым `node scripts/bundle-sync.mjs`, без повторной сборки из npm-алиаса.
+Точные окончательные HA/capture команды и происхождение изображений:
+`output/1451-final-preview-camera-results.md`; исторический
+`output/1451-final-camera-native-results.md` для `60f6eeb…` сохранён.
 
 ## Привязка к AC и оставшиеся ограничения
 
