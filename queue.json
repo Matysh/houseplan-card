@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15562,
+  "revision": 15563,
   "nextTicket": 514,
   "nextFence": 514,
   "tasks": {
@@ -5701,6 +5701,10 @@
       "digest": "947739a8730639d1c0af616dc6041b404e36a8dc28336f1edf6b6405fe978344",
       "issue": 1464
     },
+    "github:44224571981:1:completions:message:251d35670bb8180fc75004dd01607d427466268b858609ab42fa60d329a348cd": {
+      "digest": "70ecf662f9e6d6e866fe424fdb7d4443bf4f89d32a7f3672e0fa252f6b112264",
+      "issue": 1464
+    },
     "github:44181773849:1:label:spec-request:spec-resubmitted:1464": {
       "digest": "c5c5a1512217eae2597403146c24657591370ded7f602915a265c046ea4da6ff",
       "issue": 1464,
@@ -5764,7 +5768,8 @@
           "entry": 1,
           "detail": "Поведение: test/coordinate-write-barrier-guard.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
           "eventId": "finish:33d21e3f-105b-40dd-9287-25349c19a450:finish:3:return:return:1464"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:8e863a54-07cf-4e10-a6d0-368f72ff08cf": {
