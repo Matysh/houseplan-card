@@ -1183,8 +1183,16 @@ function commitGraphEditStep<T extends Record<string,any>>(beforeNormalizedSpace
       const explicit=intent.kind==='openings'&&intent.ids.includes(opening.id);
       if(!previous||explicit||!old||edgeKey(old)!==edgeKey(edge)
           ||!Q.pointEq(index.points.get(old.from)!,current.points.get(edge.from)!)
-          ||!Q.pointEq(index.points.get(old.to)!,current.points.get(edge.to)!))
-        opening.angle=Q.projectedAxisAngle(current.points.get(edge.from)!,current.points.get(edge.to)!);
+          ||!Q.pointEq(index.points.get(old.to)!,current.points.get(edge.to)!)) {
+        const axisAngle=Q.projectedAxisAngle(current.points.get(edge.from)!,current.points.get(edge.to)!);
+        // An unoriented wall axis may be 180 degrees away from the saved door.
+        // Keep its directed basis when editing hardware on the same aperture.
+        const sameDoor=explicit && opening.type==='door' && previous?.type==='door'
+          && old && edgeKey(old)===edgeKey(edge) && previous.x===opening.x && previous.y===opening.y
+          && previous.angle===opening.angle;
+        const difference=opening.angle-axisAngle;
+        if (!sameDoor || Math.abs(difference-180*Math.round(difference/180))>1e-8) opening.angle=axisAngle;
+      }
     }
   }
   let resizeWallRecords:GraphWallRecordProof|undefined;

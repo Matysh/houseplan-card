@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 75" data-hp-volume-schema="2" data-hp-model="bathtub" data-hp-back="top">
+  <rect data-hp-part="bath-base" x="15.3" y="9" width="139.4" height="57" rx="11.25" data-hp-radius-ratio="0.15" data-hp-z-min-cm="0" data-hp-z-max-cm="10" />
+  <rect data-hp-part="bath-bottom" x="20.689" y="10.86" width="128.622" height="53.28" rx="7.5" data-hp-radius-ratio="0.1" data-hp-z-min-cm="10" data-hp-z-max-cm="13" />
+  <rect data-hp-part="bath-bowl" x="2.55" y="1.5" width="164.9" height="72" rx="9" data-hp-radius-ratio="0.12" data-hp-z-min-cm="12" data-hp-z-max-cm="56" data-hp-inset-cm="8" data-hp-base-scale="0.82" />
+  <rect data-hp-part="bath-rim" x="2.55" y="1.5" width="164.9" height="72" rx="9" data-hp-radius-ratio="0.12" data-hp-z-min-cm="56" data-hp-z-max-cm="58" data-hp-inset-cm="8" />
+  <ellipse data-hp-part="bath-drain" cx="85" cy="37.5" rx="9.894" ry="5.04" data-hp-z-min-cm="13" data-hp-z-max-cm="13.7" />
+  <rect data-hp-part="bath-tap-stem" x="153" y="22.5" width="4.25" height="3.375" rx="0.45" data-hp-radius-ratio="0.006" data-hp-z-min-cm="58" data-hp-z-max-cm="72" />
+  <rect data-hp-part="bath-tap-spout" x="153" y="23.625" width="4.25" height="10.5" rx="0.45" data-hp-radius-ratio="0.006" data-hp-z-min-cm="70" data-hp-z-max-cm="73" />
+</svg>

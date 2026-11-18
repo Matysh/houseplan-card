@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" data-hp-volume-schema="2" data-hp-model="dishwasher" data-hp-back="top">
+  <rect data-hp-part="case-base" x="1.2" y="1.2" width="57.6" height="56.4" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="4" data-hp-z-max-cm="7" />
+  <rect data-hp-part="case-top" x="1.2" y="1.2" width="57.6" height="56.4" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="81" data-hp-z-max-cm="84" />
+  <rect data-hp-part="case-left" x="1.2" y="1.2" width="1.5" height="56.4" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="81" />
+  <rect data-hp-part="case-right" x="57.3" y="1.2" width="1.5" height="56.4" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="81" />
+  <rect data-hp-part="case-back" x="2.7" y="1.2" width="54.6" height="2.1" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="81" />
+  <rect data-hp-part="door" x="2.1" y="56.4" width="55.8" height="2.4" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="8" data-hp-z-max-cm="75" />
+  <rect data-hp-part="control-strip" x="2.1" y="56.4" width="55.8" height="2.4" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="76" data-hp-z-max-cm="82" />
+  <rect data-hp-part="recessed-handle" x="18" y="58.8" width="24" height="1.08" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="72" data-hp-z-max-cm="74" />
+  <rect data-hp-part="plinth" x="4.2" y="3.6" width="51.6" height="51" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="5" />
+</svg>

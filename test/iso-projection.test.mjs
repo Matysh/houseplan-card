@@ -1,14 +1,119 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { isoLabYaw, isoLabCamera, isoLabOpeningAmount, isoLabOpeningPreview } from '../test-build/iso-lab-camera.js';
 import {
   ISO_CAMERA, ISO_OVERLAY_VISUAL_OFFSET, ISO_RAISED_OVERLAY_HEIGHT,
   ISO_WALL_HEIGHT, applyIsoMatrix, clientToScenePoint, isoFloorMatrix,
   isoOverlayVisualHeight, isoPlaneMatrix, isoPlaneMatrixCss, projectPlanPoint,
-  projectedFrame, unprojectFloorPoint,
+  projectedFrame, unprojectFloorPoint, isoFloorLinearCss, isoTileDepthStyles,
 } from '../test-build/iso-projection.js';
 
 const close = (actual, expected, epsilon = 1e-9) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
+
+test('#1451 opening preview overrides all leaves without mutating saved state and is opt-in',()=>{
+  const visual={mechanism:'swing',direction:'end',side:'negative',unsupported:false,
+    leaves:[{id:'a',hinge:'start',amount:.3,unknown:false,sensorDriven:true},
+      {id:'b',hinge:'end',amount:0,unknown:true,sensorDriven:false}]};
+  const before=structuredClone(visual);
+  for(const [mode,amount] of [['closed',0],['half',.5],['open',1]]) {
+    assert.equal(isoLabOpeningAmount(false,'?sashes1451='+mode),null);
+    const forced=isoLabOpeningAmount(true,'?sashes1451='+mode);
+    assert.equal(forced,amount);
+    assert.deepEqual(isoLabOpeningPreview(visual,forced).leaves.map(l=>l.amount),[amount,amount]);
+    assert.deepEqual(visual,before);
+  }
+  for(const mode of ['', 'saved','junk'])assert.equal(isoLabOpeningAmount(true,'?sashes1451='+mode),null);
+  assert.equal(isoLabOpeningPreview(visual,null),visual);
+});
+
+test('#1451 solid tile edge remains vertically down through camera turns', () => {
+  for (const turn of [0,90,180,270]) {
+    const camera={...ISO_CAMERA,rotDeg:35+turn,tiltDeg:55,floorScaleY:Math.sin(35*Math.PI/180)};
+    const [a,b,c,d]=isoFloorMatrix(camera),styles=isoTileDepthStyles(camera);
+    const dx=Number(styles['--hp-iso-edge-unit-x']),dy=Number(styles['--hp-iso-edge-unit-y']);
+    close(a*dx+c*dy,0); close(b*dx+d*dy,.22);
+  }
+});
+
+test('#1451 marker-local corners follow the floor and inverse preserves the screen hit target', () => {
+  for (const turn of [0,90,180,270]) {
+    const camera = {...ISO_CAMERA,rotDeg:35+turn,tiltDeg:55,floorScaleY:Math.sin(35*Math.PI/180)};
+    const parse = css => css.slice(7,-1).split(',').map(Number);
+    const linear = parse(isoFloorLinearCss(camera));
+    const inverse = parse(isoFloorLinearCss(camera,true));
+    const anchor = [180,720], projected = projectPlanPoint(anchor,0,camera);
+    for(const offset of [[-22,-22],[22,-22],[22,22],[-22,22]]) {
+      const relative = applyIsoMatrix(offset,linear);
+      const floorCorner = projectPlanPoint([anchor[0]+offset[0],anchor[1]+offset[1]],0,camera);
+      close(projected[0]+relative[0],floorCorner[0]);
+      close(projected[1]+relative[1],floorCorner[1]);
+      const hit = applyIsoMatrix(applyIsoMatrix(offset,inverse),linear);
+      close(hit[0],offset[0]); close(hit[1],offset[1]);
+    }
+  }
+});
+
+test('#1451 camera is opt-in and accepts only the comparison presets', () => {
+  assert.equal(isoLabYaw(false, '?view1451=angle&angle1451=45'), 0);
+  assert.equal(isoLabYaw(true, ''), 35);
+  assert.deepEqual(isoLabCamera(true, ''), { yaw:35, floorScaleY:Math.sin(40*Math.PI/180), tiltDeg:50 });
+  assert.equal(isoLabYaw(true, '?view1451=dev&angle1451=45'), 0);
+  for (const angle of [25, 35, 45]) assert.equal(isoLabYaw(true, `?view1451=angle&angle1451=${angle}`), angle);
+  for (const angle of ['', 'NaN', 'Infinity', '-25', '360']) assert.equal(isoLabYaw(true, `?view1451=angle&angle1451=${angle}`), 35);
+});
+
+test('#1451 reference camera compresses floor depth and raises height with one orthographic elevation', () => {
+  assert.deepEqual(isoLabCamera(false, '?view1451=depth'), { yaw:0, floorScaleY:1, tiltDeg:20 });
+  assert.deepEqual(isoLabCamera(true, '?view1451=angle&angle1451=25'), { yaw:25, floorScaleY:1, tiltDeg:20 });
+  for (const elevation of [30,35,40]) for (const yaw of [25,35,45]) for (const turn of [0,90,180,270]) {
+    const profile = isoLabCamera(true, `?view1451=depth&angle1451=${yaw}&elevation1451=${elevation}`);
+    const camera = { ...ISO_CAMERA, ...profile, rotDeg: profile.yaw+turn };
+    const sin = Math.sin(elevation*Math.PI/180), cos = Math.cos(elevation*Math.PI/180);
+    close(profile.floorScaleY,sin);
+    for (const p of [[0,0],[1000,1000],[-5000,3000],[219,739]]) {
+      const projected = projectPlanPoint(p,0,camera), plain = projectPlanPoint(p,0,{...camera,floorScaleY:1});
+      close(projected[0],plain[0]); close(projected[1]-500,(plain[1]-500)*sin);
+      assert.deepEqual(applyIsoMatrix(p,isoFloorMatrix(camera)),projected);
+      const back = unprojectFloorPoint(projected,camera);
+      close(back[0],p[0]); close(back[1],p[1]);
+      close(projectPlanPoint(p,84,camera)[1],projected[1]-84*cos);
+    }
+  }
+  for (const floorScaleY of [0,-1,NaN,Infinity]) {
+    assert.throws(()=>isoFloorMatrix({...ISO_CAMERA,floorScaleY}));
+    assert.throws(()=>unprojectFloorPoint([500,500],{...ISO_CAMERA,floorScaleY}));
+  }
+});
+
+test('#1451 angled floor, anchors and pointer inverse share one projection on every side', () => {
+  for (const yaw of [25, 35, 45]) for (const turn of [0, 90, 180, 270]) {
+    const camera = { ...ISO_CAMERA, rotDeg: yaw + turn };
+    const matrix = isoFloorMatrix(camera);
+    const stage = { left: 29, top: 117, width: 1280, height: 760 };
+    const rect = { x: -200, y: -100, w: 1600, h: 1300 };
+    const view = projectedFrame({ rect, wallHeight: ISO_WALL_HEIGHT }, camera);
+    for (const point of [[-200, -100], [1400, 1200], [500, 500], [107, 803]]) {
+      const floor = projectPlanPoint(point, 0, camera);
+      assert.deepEqual(applyIsoMatrix(point, matrix), floor);
+      const client = [stage.left + (floor[0] - view.x) / view.w * stage.width,
+        stage.top + (floor[1] - view.y) / view.h * stage.height];
+      const hit = unprojectFloorPoint(clientToScenePoint(client, stage, view), camera);
+      close(hit[0], point[0]); close(hit[1], point[1]);
+      const raised = projectPlanPoint(point, 4, camera);
+      close(raised[0], floor[0]); close(raised[1], floor[1] - 4 * Math.sin(20 * Math.PI / 180));
+      for (const z of [0, ISO_WALL_HEIGHT]) {
+        const p = projectPlanPoint(point, z, camera);
+        assert.ok(p[0] >= view.x - 1e-8 && p[0] <= view.x + view.w + 1e-8);
+        assert.ok(p[1] >= view.y - 1e-8 && p[1] <= view.y + view.h + 1e-8);
+      }
+    }
+    for (const end of [[600, 500], [500, 600]]) {
+      assert.ok(Math.abs(projectPlanPoint(end, 0, camera)[0] - 500) > 40,
+        'both wall directions have a visible face instead of collapsing to a line');
+    }
+  }
+});
 
 test('Stage 4 camera is the exact fixed zero-yaw camera with the 20° wall rise', () => {
   assert.equal(ISO_CAMERA.rotDeg, 0);

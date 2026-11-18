@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 35" data-hp-volume-schema="2" data-hp-model="cabinet_shoe" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="8" y="3.85" width="4.8" height="2.1" rx="0.35" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="8" />
+  <rect data-hp-part="leg-0-1" x="8" y="28.7" width="4.8" height="2.1" rx="0.35" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="8" />
+  <rect data-hp-part="leg-1-0" x="66.4" y="3.85" width="4.8" height="2.1" rx="0.35" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="8" />
+  <rect data-hp-part="leg-1-1" x="66.4" y="28.7" width="4.8" height="2.1" rx="0.35" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="8" />
+  <rect data-hp-part="shoe-cabinet-base" x="1.6" y="0.7" width="76.8" height="33.6" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="10" />
+  <rect data-hp-part="shoe-cabinet-top" x="1.6" y="0.7" width="76.8" height="33.6" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="89" data-hp-z-max-cm="92" />
+  <rect data-hp-part="shoe-cabinet-left" x="1.6" y="0.7" width="2" height="33.6" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="10" data-hp-z-max-cm="89" />
+  <rect data-hp-part="shoe-cabinet-right" x="76.4" y="0.7" width="2" height="33.6" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="10" data-hp-z-max-cm="89" />
+  <rect data-hp-part="shoe-cabinet-back" x="3.6" y="0.7" width="72.8" height="1.225" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="10" data-hp-z-max-cm="89" />
+  <rect data-hp-part="shoe-cabinet-drawer-0" x="4" y="32.9" width="72" height="0.875" rx="0.21" data-hp-radius-ratio="0.006" data-hp-z-min-cm="10.7" data-hp-z-max-cm="35.633333333333326" />
+  <rect data-hp-part="shoe-cabinet-handle-0" x="27.712" y="33.775" width="24.576" height="0.525" rx="0.21" data-hp-radius-ratio="0.006" data-hp-z-min-cm="31.33333333333333" data-hp-z-max-cm="33.33333333333333" />
+  <rect data-hp-part="shoe-cabinet-drawer-1" x="4" y="32.9" width="72" height="0.875" rx="0.21" data-hp-radius-ratio="0.006" data-hp-z-min-cm="37.03333333333333" data-hp-z-max-cm="61.96666666666666" />
+  <rect data-hp-part="shoe-cabinet-handle-1" x="27.712" y="33.775" width="24.576" height="0.525" rx="0.21" data-hp-radius-ratio="0.006" data-hp-z-min-cm="57.666666666666664" data-hp-z-max-cm="59.666666666666664" />
+  <rect data-hp-part="shoe-cabinet-drawer-2" x="4" y="32.9" width="72" height="0.875" rx="0.21" data-hp-radius-ratio="0.006" data-hp-z-min-cm="63.36666666666667" data-hp-z-max-cm="88.3" />
+  <rect data-hp-part="shoe-cabinet-handle-2" x="27.712" y="33.775" width="24.576" height="0.525" rx="0.21" data-hp-radius-ratio="0.006" data-hp-z-min-cm="84" data-hp-z-max-cm="86" />
+</svg>

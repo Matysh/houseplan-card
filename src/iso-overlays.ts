@@ -45,6 +45,8 @@ export interface IsoOverlayPlacementInput extends IsoOverlayOwnerInput {
 }
 
 export interface IsoOverlayPlacement {
+  /** Local #1451 context, without moving the immutable floor anchor. */
+  occluded?: boolean;
   plane: IsoOverlayPlane;
   owner: IsoOverlayOwner | null;
   /** This is always the input logical point; the raised visual never mutates it. */

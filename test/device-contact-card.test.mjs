@@ -4,6 +4,22 @@ import { contactValueFrameChanged,syncHouseplanDeviceContacts } from '../test-bu
 import { spaceModels } from '../test-build/space-geometry.js';
 import { floorGeometryKeyReader } from '../test-build/floor-geometry-key.js';
 
+test('#1451 floor-aligned View uses the native contact adapter in plan coordinates', () => {
+  let frame,cleared=0;
+  const host={_renderProjection:'iso',_mode:'view',_markup:false,_rotation:90,
+    _isoFloorMarkerPlane:[.8,.3,-.6,.5,0,0],_kioskScale:{icon:1},_renderDevices:[],
+    _deviceHits:{},renderRoot:{},_layout:{},_cfgEpoch:1,_renderCfg:{spaces:[]},
+    _curSpaceCfg:{id:'floor',rooms:[],cell_cm:5},_spaceModel:()=>({id:'floor',rooms:[],cell_cm:5}),
+    _spaceDisplayForRender:()=>({showBorders:true}),_wallUnionGeometry:()=>({components:[]}),_zeroWalls:()=>({lines:[]})};
+  const renderer={hit:()=>{},clear:()=>cleared++,sync:(_,value)=>{frame=value;return false;}};
+  syncHouseplanDeviceContacts(host,renderer);
+  assert.equal(cleared,0); assert.equal(frame.rotation,0,'the floor already turns the contour');
+  assert.deepEqual(frame.plane,host._isoFloorMarkerPlane);
+  host._isoFloorMarkerPlane=undefined;
+  syncHouseplanDeviceContacts(host,renderer);
+  assert.equal(cleared,1,'ordinary dev is unchanged');
+});
+
 test('#1003 contour-only sync invalidates hits without scheduling another editor frame', () => {
   for (const [before, after, changed, expectedUpdates] of [
     [false, false, true, 0], [false, true, true, 1],

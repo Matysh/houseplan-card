@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" data-hp-volume-schema="2" data-hp-model="fireplace" data-hp-back="top">
+  <rect data-hp-part="hearth" x="1.2" y="0.4" width="117.6" height="39.2" rx="1.2" data-hp-radius-ratio="0.03" data-hp-z-min-cm="0" data-hp-z-max-cm="10" />
+  <rect data-hp-part="firebox-frame" x="9.6" y="3.2" width="100.8" height="31.2" rx="0.8" data-hp-radius-ratio="0.02" data-hp-z-min-cm="10" data-hp-z-max-cm="98" data-hp-plane="xz" data-hp-inset-cm="12" />
+  <rect data-hp-part="mantel" x="1.2" y="0.4" width="117.6" height="39.2" rx="1" data-hp-radius-ratio="0.025" data-hp-z-min-cm="98" data-hp-z-max-cm="105" />
+  <rect data-hp-part="back-panel" x="21.6" y="3.2" width="76.8" height="1.4" rx="0.6" data-hp-radius-ratio="0.015" data-hp-z-min-cm="22" data-hp-z-max-cm="84" />
+  <ellipse data-hp-part="log-left" cx="40.8" cy="22.8" rx="12" ry="10" data-hp-z-min-cm="23" data-hp-z-max-cm="35" data-hp-plane="yz" />
+  <ellipse data-hp-part="log-right" cx="78" cy="22.8" rx="12" ry="10" data-hp-z-min-cm="23" data-hp-z-max-cm="35" data-hp-plane="yz" />
+</svg>

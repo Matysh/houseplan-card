@@ -14,8 +14,10 @@ import type { SpaceModel } from './types';
 import { adoptDeviceContactStyles } from './device-contact.styles';
 import { contactBasisMarker } from './device-contact-basis';
 import { DeviceContactLayout } from './device-contact-layout';
-import { screenContactMarker, screenContactScene } from './device-contact-screen';
+import { screenContactMarker, screenContactScene, projectedContactHit } from './device-contact-screen';
 import type { PlanRotation } from './view-frame';
+import { isoMarkerGlass } from './iso-marker-outline';
+import { renderIsoMarkerGlass } from './iso-marker-glass';
 
 export interface DeviceContactFrame {
   key: string;
@@ -28,6 +30,8 @@ export interface DeviceContactFrame {
   layout?: Readonly<Record<string,{x:number;y:number;s?:string;contact_basis?:unknown}|undefined>>;
   invalidate?: () => void;
   rotation?: PlanRotation;
+  /** A floor-aligned presentation; contact layout stays in canonical plan units. */
+  plane?: readonly number[];
 }
 interface MeasuredMarker { element: HTMLElement; ink: HTMLElement }
 const metricKey = (shell: Element | null | undefined): string => shell
@@ -40,6 +44,7 @@ export class DeviceContactRenderer {
   }>();
   public readonly hit = (marker: HTMLElement, candidate: DeviceHitCandidate, width: number, height: number): void => {
     const contact = this.hitShapes.get(marker); if (!contact) return;
+    if (this.plane) { projectedContactHit(candidate,contact,width,height,this.plane); return; }
     const { x, y } = candidate.center;
     candidate.painted = { left: x + contact.bounds.left*width, right: x + contact.bounds.right*width,
       top: y + contact.bounds.top*height, bottom: y + contact.bounds.bottom*height };
@@ -56,6 +61,7 @@ export class DeviceContactRenderer {
   private authored = new Map<string,ContactMarker>();
   private fontContext = '';
   private rotation: PlanRotation = 0;
+  private plane: readonly number[] | undefined;
   private screen: { source: DeviceContactScene; rotation: PlanRotation; scene: DeviceContactScene } | null = null;
   private fontDocument: Document | null = null;
   private invalidate: (() => void) | undefined;
@@ -86,6 +92,7 @@ export class DeviceContactRenderer {
   }
 
   public clear(): void {
+    this.plane = undefined;
     this.preparedFont = null;
     this.reflowed=false;
     this.retireElements(); this.layout.clear(); this.authored.clear();
@@ -96,6 +103,7 @@ export class DeviceContactRenderer {
     for (const { element, ink } of this.elements.values()) {
       element.removeAttribute('data-hp-device-contact');
       element.removeAttribute('data-hp-device-component');
+      element.removeAttribute('data-hp-iso-body-outline');
       this.hitShapes.delete(element); render(nothing, ink);
     }
     this.elements.clear(); this.frameKey = ''; this.floorKey = ''; this.scene = null;
@@ -112,8 +120,9 @@ export class DeviceContactRenderer {
   public prepare(root: ParentNode): void { this.preparedFont = { root, value: this.fontKey(root) }; }
   public sync(root: ParentNode, frame: DeviceContactFrame): boolean {
     if (!frame.enabled) { const active = !!this.scene; if (active) this.clear(); return active; }
-    const turned = this.rotation !== (frame.rotation ?? 0);
+    const turned = this.rotation !== (frame.rotation ?? 0) || String(this.plane) !== String(frame.plane);
     this.rotation = frame.rotation ?? 0;
+    this.plane = frame.plane;
     adoptDeviceContactStyles(root);
     this.invalidate=frame.invalidate;
     const doc=(root as ShadowRoot).ownerDocument;
@@ -214,7 +223,7 @@ export class DeviceContactRenderer {
       // A standalone marker keeps its old CSS face until a real edge exists.
       probe.setAttribute('data-hp-device-contact', ''); probe.removeAttribute('data-id');
       probe.removeAttribute('data-hp'); probe.setAttribute('aria-hidden', 'true'); probe.inert = true;
-      probe.style.cssText = 'position:absolute;left:0;top:0;margin:0;width:800px;height:800px;--dev-size:800px;visibility:hidden;pointer-events:none';
+      probe.style.cssText = 'position:absolute;left:0;top:0;margin:0;width:800px;height:800px;--dev-size:800px;transform:none;visibility:hidden;pointer-events:none';
       probe.querySelector('.device-contact-ink')?.replaceChildren();
       element.parentElement?.append(probe);
       return { key, probe };
@@ -268,14 +277,16 @@ export class DeviceContactRenderer {
       const owner = group[0];
       const active = joined || Object.keys(owner.walls).length > 0;
       const outline = active ? contactOutline(group,true) : '';
+      const glass = this.plane ? isoMarkerGlass(group,this.plane) : null;
       const virtual=group.every(s=>s.marker.virtual===true);
       for (const s of group) {
         const item = this.elements.get(s.marker.id); if (!item) continue;
         const custom = joined || Object.keys(s.walls).length > 0;
         item.element.toggleAttribute('data-hp-device-contact', custom);
+        item.element.toggleAttribute('data-hp-iso-body-outline',!!this.plane);
         if (joined) item.element.dataset.hpDeviceComponent = owner.marker.id;
         else item.element.removeAttribute('data-hp-device-component');
-        if (!custom) { this.hitShapes.delete(item.element); render(nothing, item.ink); continue; }
+        if (!custom && !this.plane) { this.hitShapes.delete(item.element); render(nothing, item.ink); continue; }
         const sides: ContactShape['walls'] = { ...s.walls };
         for (const id of scene.edges.get(s.marker.id) || []) {
           const side = joinedContactSide(scene.shapes.get(s.marker.id)!, scene.shapes.get(id)!,false); if (side) sides[side] = 'device';
@@ -286,10 +297,13 @@ export class DeviceContactRenderer {
             top: s.box.top / s.marker.diameter, bottom: s.box.bottom / s.marker.diameter }, radius: s.radius / s.marker.diameter };
         this.hitShapes.set(item.element, { bounds: contactBounds(normalized),
           contains: (x, y) => contactContains(normalized, [x,y]) });
+        if (!custom && !this.plane) { render(nothing, item.ink); continue; }
         const d = s.marker.diameter;
-        render(svg`<svg viewBox=${`${s.marker.x - d / 2} ${s.marker.y - d / 2} ${d} ${d}`}
+        const viewBox=`${s.marker.x - d / 2} ${s.marker.y - d / 2} ${d} ${d}`;
+        render(svg`${s === owner && glass ? renderIsoMarkerGlass(glass,viewBox,virtual) : nothing}
+        <svg viewBox=${viewBox}
           preserveAspectRatio="none" aria-hidden="true">
-          ${s === owner ? svg`<path data-hp="device-contact-contour" data-component=${owner.marker.id} data-grouped=${String(joined)} class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} stroke-dasharray=${virtual?'4 3':'none'} d=${outline}></path>` : nothing}
+          ${s === owner && !glass ? svg`<path data-hp="device-contact-contour" data-component=${owner.marker.id} data-grouped=${String(joined)} class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} stroke-dasharray=${virtual?'4 3':'none'} d=${outline}></path>` : nothing}
           <path class="device-contact-hit" d=${contactOutline([own])}></path>
         </svg>`, item.ink);
         this.work.paints++;

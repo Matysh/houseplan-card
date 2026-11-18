@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 45" data-hp-volume-schema="2" data-hp-model="cabinet_tv" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="8.4" y="4.95" width="8.4" height="2.7" rx="0.45" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="12" />
+  <rect data-hp-part="leg-0-1" x="8.4" y="36.9" width="8.4" height="2.7" rx="0.45" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="12" />
+  <rect data-hp-part="leg-1-0" x="123.2" y="4.95" width="8.4" height="2.7" rx="0.45" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="12" />
+  <rect data-hp-part="leg-1-1" x="123.2" y="36.9" width="8.4" height="2.7" rx="0.45" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="12" />
+  <rect data-hp-part="console-base" x="2.1" y="0.9" width="135.8" height="43.2" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="10" data-hp-z-max-cm="13" />
+  <rect data-hp-part="console-top" x="2.1" y="0.9" width="135.8" height="43.2" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="48" data-hp-z-max-cm="51" />
+  <rect data-hp-part="console-left" x="2.1" y="0.9" width="3.5" height="43.2" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="48" />
+  <rect data-hp-part="console-right" x="134.4" y="0.9" width="3.5" height="43.2" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="48" />
+  <rect data-hp-part="console-back" x="5.6" y="0.9" width="128.8" height="1.575" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="48" />
+  <rect data-hp-part="left-door" x="5.6" y="42.3" width="40.6" height="1.575" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="14" data-hp-z-max-cm="47" />
+  <rect data-hp-part="right-door" x="93.8" y="42.3" width="40.6" height="1.575" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="14" data-hp-z-max-cm="47" />
+  <rect data-hp-part="divider-left" x="46.2" y="2.7" width="2.8" height="39.6" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="48" />
+  <rect data-hp-part="divider-right" x="91" y="2.7" width="2.8" height="39.6" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="48" />
+  <rect data-hp-part="open-shelf" x="49" y="2.7" width="42" height="39.6" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="28" data-hp-z-max-cm="31" />
+  <rect data-hp-part="left-pull" x="35" y="43.875" width="8.4" height="0.9" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="36" data-hp-z-max-cm="38" />
+  <rect data-hp-part="right-pull" x="96.6" y="43.875" width="8.4" height="0.9" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="36" data-hp-z-max-cm="38" />
+</svg>

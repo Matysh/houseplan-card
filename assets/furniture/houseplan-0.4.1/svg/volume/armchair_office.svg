@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 65" data-hp-volume-schema="2" data-hp-model="armchair_office" data-hp-back="top">
+  <polygon data-hp-part="spoke-0" points="32.5,34.125 58.5,34.125 58.5,30.875 32.5,30.875" data-hp-z-min-cm="7" data-hp-z-max-cm="11" />
+  <ellipse data-hp-part="caster-0" cx="58.5" cy="32.5" rx="2.925" ry="2.925" data-hp-z-min-cm="0" data-hp-z-max-cm="7" />
+  <polygon data-hp-part="spoke-1" points="30.954533,33.002153 38.988975,57.729622 42.079909,56.725317 34.045467,31.997847" data-hp-z-min-cm="7" data-hp-z-max-cm="11" />
+  <ellipse data-hp-part="caster-1" cx="40.534442" cy="57.227469" rx="2.925" ry="2.925" data-hp-z-min-cm="0" data-hp-z-max-cm="7" />
+  <polygon data-hp-part="spoke-2" points="31.544849,31.185347 10.510407,46.467764 12.420709,49.097069 33.455151,33.814653" data-hp-z-min-cm="7" data-hp-z-max-cm="11" />
+  <ellipse data-hp-part="caster-2" cx="11.465558" cy="47.782417" rx="2.925" ry="2.925" data-hp-z-min-cm="0" data-hp-z-max-cm="7" />
+  <polygon data-hp-part="spoke-3" points="33.455151,31.185347 12.420709,15.902931 10.510407,18.532236 31.544849,33.814653" data-hp-z-min-cm="7" data-hp-z-max-cm="11" />
+  <ellipse data-hp-part="caster-3" cx="11.465558" cy="17.217583" rx="2.925" ry="2.925" data-hp-z-min-cm="0" data-hp-z-max-cm="7" />
+  <polygon data-hp-part="spoke-4" points="34.045467,33.002153 42.079909,8.274683 38.988975,7.270378 30.954533,31.997847" data-hp-z-min-cm="7" data-hp-z-max-cm="11" />
+  <ellipse data-hp-part="caster-4" cx="40.534442" cy="7.772531" rx="2.925" ry="2.925" data-hp-z-min-cm="0" data-hp-z-max-cm="7" />
+  <ellipse data-hp-part="lift" cx="32.5" cy="32.5" rx="2.925" ry="2.925" data-hp-z-min-cm="10" data-hp-z-max-cm="43" />
+  <rect data-hp-part="seat" x="11.05" y="14.3" width="42.9" height="43.55" rx="9.75" data-hp-radius-ratio="0.15" data-hp-z-min-cm="43" data-hp-z-max-cm="49" />
+  <rect data-hp-part="back-support" x="29.9" y="7.8" width="5.2" height="4.55" rx="0.975" data-hp-radius-ratio="0.015" data-hp-z-min-cm="45" data-hp-z-max-cm="85" />
+  <rect data-hp-part="backrest" x="12.35" y="3.25" width="40.3" height="10.4" rx="5.2" data-hp-radius-ratio="0.08" data-hp-z-min-cm="52" data-hp-z-max-cm="102" data-hp-plane="xz" />
+  <rect data-hp-part="left-arm-support" x="9.75" y="26" width="2.6" height="5.2" rx="0.975" data-hp-radius-ratio="0.015" data-hp-z-min-cm="45" data-hp-z-max-cm="66" />
+  <rect data-hp-part="right-arm-support" x="52.65" y="26" width="2.6" height="5.2" rx="0.975" data-hp-radius-ratio="0.015" data-hp-z-min-cm="45" data-hp-z-max-cm="66" />
+  <rect data-hp-part="arm-left" x="6.5" y="18.85" width="6.5" height="27.3" rx="3.25" data-hp-radius-ratio="0.05" data-hp-z-min-cm="66" data-hp-z-max-cm="70" />
+  <rect data-hp-part="arm-right" x="52" y="18.85" width="6.5" height="27.3" rx="3.25" data-hp-radius-ratio="0.05" data-hp-z-min-cm="66" data-hp-z-max-cm="70" />
+</svg>

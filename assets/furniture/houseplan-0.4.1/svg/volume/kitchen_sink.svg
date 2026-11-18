@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 50" data-hp-volume-schema="2" data-hp-model="kitchen_sink" data-hp-back="top">
+  <rect data-hp-part="sink-bottom" x="7.302" y="13.33" width="45.396" height="30.34" rx="5" data-hp-radius-ratio="0.1" data-hp-z-min-cm="73" data-hp-z-max-cm="76" />
+  <rect data-hp-part="sink-bowl" x="0.9" y="8" width="58.2" height="41" rx="6" data-hp-radius-ratio="0.12" data-hp-z-min-cm="75" data-hp-z-max-cm="90" data-hp-inset-cm="4" data-hp-base-scale="0.82" />
+  <rect data-hp-part="sink-rim" x="0.9" y="8" width="58.2" height="41" rx="6" data-hp-radius-ratio="0.12" data-hp-z-min-cm="90" data-hp-z-max-cm="92" data-hp-inset-cm="4" />
+  <ellipse data-hp-part="sink-drain" cx="30" cy="28.5" rx="3.492" ry="2.87" data-hp-z-min-cm="76" data-hp-z-max-cm="76.7" />
+  <rect data-hp-part="tap-deck" x="0.9" y="0.75" width="58.2" height="7.25" rx="1.25" data-hp-radius-ratio="0.025" data-hp-z-min-cm="88" data-hp-z-max-cm="92" />
+  <rect data-hp-part="tap-stem" x="29.4" y="1.25" width="1.5" height="2.25" rx="0.3" data-hp-radius-ratio="0.006" data-hp-z-min-cm="92" data-hp-z-max-cm="106" />
+  <rect data-hp-part="tap-spout" x="29.4" y="2" width="1.5" height="7" rx="0.3" data-hp-radius-ratio="0.006" data-hp-z-min-cm="104" data-hp-z-max-cm="107" />
+</svg>

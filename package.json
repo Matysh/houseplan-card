@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "tsc --noEmit && rollup -c",
+    "build": "node scripts/generate-furniture-volume.mjs --check && tsc --noEmit && rollup -c",
     "build:standalone": "tsc --noEmit && node scripts/standalone-build.mjs",
     "watch": "rollup -c --watch",
     "ui-lab:prepare": "node demo/ui-lab/prepare-ha.mjs",
@@ -53,6 +53,9 @@
     "benchmark:zigbee-topology": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/benchmark_zigbee_topology.mjs",
     "furniture:generate": "node scripts/generate-furniture-assets.mjs",
     "furniture:check": "node scripts/generate-furniture-assets.mjs --check",
+    "furniture:volume:generate": "node scripts/generate-furniture-volume.mjs",
+    "furniture:volume:check": "node scripts/generate-furniture-volume.mjs --check",
+    "ui-lab:gallery:build": "node scripts/build-furniture-gallery.mjs",
     "moon:generate": "node scripts/generate-moon-assets.mjs",
     "moon:check": "node scripts/generate-moon-assets.mjs --check",
     "pdf-font:generate": "node scripts/generate-pdf-font.mjs",

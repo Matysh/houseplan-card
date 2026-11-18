@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 35" data-hp-volume-schema="2" data-hp-model="shelf_floor" data-hp-back="top">
+  <rect data-hp-part="shelving-base" x="2" y="1.05" width="96" height="32.9" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="3" data-hp-z-max-cm="6" />
+  <rect data-hp-part="shelving-top" x="2" y="1.05" width="96" height="32.9" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="193" data-hp-z-max-cm="196" />
+  <rect data-hp-part="shelving-left" x="2" y="1.05" width="2.5" height="32.9" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="6" data-hp-z-max-cm="193" />
+  <rect data-hp-part="shelving-right" x="95.5" y="1.05" width="2.5" height="32.9" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="6" data-hp-z-max-cm="193" />
+  <rect data-hp-part="shelf-1" x="4.5" y="2.275" width="91" height="30.8" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="40" data-hp-z-max-cm="43" />
+  <rect data-hp-part="shelf-2" x="4.5" y="2.275" width="91" height="30.8" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="77" data-hp-z-max-cm="80" />
+  <rect data-hp-part="shelf-3" x="4.5" y="2.275" width="91" height="30.8" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="114" data-hp-z-max-cm="117" />
+  <rect data-hp-part="shelf-4" x="4.5" y="2.275" width="91" height="30.8" rx="0.525" data-hp-radius-ratio="0.015" data-hp-z-min-cm="151" data-hp-z-max-cm="154" />
+</svg>

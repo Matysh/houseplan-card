@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 25" data-hp-volume-schema="2" data-hp-model="ac" data-hp-back="top">
+  <rect data-hp-part="wall-unit" x="1.35" y="0.75" width="87.3" height="23.25" rx="4" data-hp-radius-ratio="0.16" data-hp-z-min-cm="215" data-hp-z-max-cm="243" />
+  <rect data-hp-part="front-cover" x="4.05" y="22" width="81.9" height="2" rx="1.25" data-hp-radius-ratio="0.05" data-hp-z-min-cm="225" data-hp-z-max-cm="240" />
+  <rect data-hp-part="outlet" x="6.3" y="23" width="77.4" height="1.5" rx="0.5" data-hp-radius-ratio="0.02" data-hp-z-min-cm="218" data-hp-z-max-cm="222" />
+  <rect data-hp-part="vane" x="6.3" y="22" width="77.4" height="2.5" rx="0.375" data-hp-radius-ratio="0.015" data-hp-z-min-cm="218" data-hp-z-max-cm="219" />
+  <rect data-hp-part="display" x="71.1" y="24.25" width="8.1" height="0.375" rx="0.375" data-hp-radius-ratio="0.015" data-hp-z-min-cm="232" data-hp-z-max-cm="235" />
+</svg>

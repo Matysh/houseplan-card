@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 50" data-hp-volume-schema="2" data-hp-model="hood" data-hp-back="top">
+  <rect data-hp-part="canopy-lip" x="0.9" y="1" width="58.2" height="48" rx="1.25" data-hp-radius-ratio="0.025" data-hp-z-min-cm="170" data-hp-z-max-cm="175" />
+  <rect data-hp-part="tapered-canopy" x="0.9" y="1" width="58.2" height="48" rx="1" data-hp-radius-ratio="0.02" data-hp-z-min-cm="175" data-hp-z-max-cm="197" data-hp-top-scale="0.4" data-hp-top-offset="0,-0.25" />
+  <rect data-hp-part="chimney" x="19.2" y="3.5" width="21.6" height="19" rx="0.75" data-hp-radius-ratio="0.015" data-hp-z-min-cm="197" data-hp-z-max-cm="238" />
+</svg>

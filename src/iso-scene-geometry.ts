@@ -6,13 +6,16 @@
  * SVG volume layers so the main Lit shell does not also become a renderer.
  */
 import { ISO_ICON_SCALE } from './iso-tiles';
+import { ISO_LAB_OPENINGS } from './iso-lab-camera';
+import { isoMarkerOccluded } from './iso-marker-context';
+import type { ContactMasonry } from './device-contact-walls';
 // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
-import type { ResolvedOpeningVisual } from './opening-features';
+import { openingWindowHandleSides, type ResolvedOpeningVisual } from './opening-features';
 import { clampScale, fitView, islandsOf, roomPoly, type SpaceDisplay } from './logic';
 import {
   ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT,
-  ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT,
-  projectedFrame, isoCameraFor, type PlanPoint, type ScenePoint, type IsoCamera,
+  ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT, isoDisplayWallHeight,
+  projectedFrame, isoCameraFor, isoFloorMatrix, type PlanPoint, type ScenePoint, type IsoCamera,
 } from './iso-projection';
 import { planRotation, type PlanRotation } from './view-frame';
 import {
@@ -21,7 +24,7 @@ import {
 } from './iso-walls';
 import {
   ISO_OPENING_GEOMETRY_POLICY, buildIsoOpeningBasis, isoOpeningBounds, projectIsoOpening,
-  projectIsoOpeningStructure, resolveIsoDecoration,
+  projectIsoOpeningStructure, isoOpeningMasonry, resolveIsoDecoration,
   type IsoDecorationLayers, type IsoOpeningBasis, type IsoOpeningPanel,
   type IsoOpeningGeometryPolicy, type IsoOpeningSurface,
 } from './iso-openings';
@@ -86,6 +89,7 @@ const isoDepthStableKey = (entry: IsoWallDepthQueueEntry): string => {
 export function buildIsoWallDepthQueue(
   geometry: IsoWallGeometry,
   openingSurfaces: readonly IsoOpeningRenderSurface[],
+  uniformTopPlane = false,
 ): readonly IsoWallDepthQueueEntry[] {
   const entries: IsoWallDepthQueueEntry[] = [
     ...geometry.sides.map((face) => ({
@@ -117,13 +121,21 @@ export function buildIsoWallDepthQueue(
       || isoDepthStableKey(a).localeCompare(isoDepthStableKey(b));
   });
   const nextOpeningSlot = new Map<string, number>();
-  return Object.freeze(entries.map((entry) => {
+  const ordered = entries.map((entry) => {
     if (entry.layer !== 'opening') return entry;
     const key = `${entry.surface.type}\u0000${entry.surface.id}`;
     const index = nextOpeningSlot.get(key) || 0;
     nextOpeningSlot.set(key, index + 1);
     return openingSlots.get(key)?.[index] || entry;
-  }));
+  });
+  // In the tilted lab camera all wall caps share the highest horizontal plane.
+  // A component-wide screen-depth key can put that plane behind a side at a T
+  // junction. Lower vertical surfaces must finish before this common top plane.
+  const isCap = (entry: IsoWallDepthQueueEntry) => entry.layer === 'wall-top'
+    || (entry.layer === 'opening' && entry.surface.kind === 'opening-lintel-top');
+  return Object.freeze(uniformTopPlane
+    ? [...ordered.filter(e=>!isCap(e)),...ordered.filter(isCap)]
+    : ordered);
 }
 
 export type IsoOverlayRenderEntry = {
@@ -394,6 +406,7 @@ export type IsoStructuralSource = {
   key: string;
   build: () => {
     walls: unknown;
+    roundColumnRings?: number[][][];
     floor: unknown;
     openings: readonly IsoOpeningBasis[];
     openingSurfaces: readonly IsoOpeningRenderSurface[];
@@ -513,7 +526,8 @@ export function createIsoStructuralSource(
   const openings = isoSourceOpenings(input.openings, input.coordinateScale);
   const openingHosts = openings.map((opening) =>
     isoStructuralOpeningHost(input.openings[opening.sourceIndex], opening));
-  const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);
+  const wallHeight = gridVisualUnits(isoDisplayWallHeight(), input.cellCm);
+  const referenceHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);
   const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);
   const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);
   const key = `${input.space.id}|${isoGeometryFingerprint({
@@ -523,6 +537,7 @@ export function createIsoStructuralSource(
     openings,
     openingHosts,
     openingGeometryPolicy,
+    ...(ISO_LAB_OPENINGS ? { openingMasonryRevision: 4 } : {}),
     partitions: input.space.partitions,
     columns: input.space.wall_columns,
     cellCm: input.cellCm,
@@ -538,10 +553,13 @@ export function createIsoStructuralSource(
     key,
     build: () => {
       input.onBuild();
-      const extras = physicalBodyParts(
+      const bodies = physicalBodyParts(
         input.space, input.cellCm, input.gridPitch, input.gridPitch * 0.0002,
         input.partitionCuts(),
-      ).all;
+      );
+      const extras = bodies.all;
+      const roundColumnRings = bodies.columns.filter((_, index) =>
+        input.space.wall_columns?.[index]?.shape === 'circle');
       const roomOpenings = input.roomOpenings();
       const united = input.walls.length || extras.length
         ? wallBodiesGeometry(
@@ -574,16 +592,19 @@ export function createIsoStructuralSource(
                 flip_v: faceFlipV,
               })
             : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
-        return buildIsoOpeningBasis({ ...opening, face,
-          topShift: 20 / input.cellCm * input.gridPitch }, wallHeight, openingGeometryPolicy);
+        const handleSides = opening.type === 'window' ? openingWindowHandleSides(
+          input.openings[opening.sourceIndex], input.space.rooms, face.cm, input.cellCm, input.gridPitch) : undefined;
+        return buildIsoOpeningBasis({ ...opening, face, handleSides,
+          topShift: 20 / input.cellCm * input.gridPitch }, wallHeight, openingGeometryPolicy, referenceHeight);
       });
       const frozenBases = Object.freeze(openingBases);
       return {
         walls: united?.components.flatMap((component) => component.geom) || [],
+        roundColumnRings,
         floor,
         openings: frozenBases,
         openingSurfaces: Object.freeze(frozenBases.flatMap((basis) =>
-          projectIsoOpeningStructure(basis).map((surface) => Object.freeze({
+          projectIsoOpeningStructure(basis, ISO_CAMERA, ISO_LAB_OPENINGS).map((surface) => Object.freeze({
             ...surface,
             id: basis.id,
             sourceIndex: basis.sourceIndex,
@@ -605,7 +626,7 @@ export interface ResolveIsoSceneInput {
 
 export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
   const camera = isoCameraFor(planRotation(input.rotation));
-  const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);
+  const wallHeight = gridVisualUnits(isoDisplayWallHeight(), input.cellCm);
   const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);
   const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);
   const cached = lruRead(input.cache, input.source.key);
@@ -613,7 +634,7 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
   if (!value) {
     const structural = input.source.build();
     value = {
-      geometry: buildIsoWallGeometry(structural.walls, ISO_CAMERA, wallHeight),
+      geometry: buildIsoWallGeometry(structural.walls, ISO_CAMERA, wallHeight, structural.roundColumnRings),
       floor: buildIsoFloorGeometry(structural.floor, floorEdgeHeight),
       openings: structural.openings,
       openingSurfaces: structural.openingSurfaces,
@@ -629,11 +650,11 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
       const physical = isoPhysicalScenes.get(value);
       if (!physical) throw new Error('missing physical isometric source');
       projected = {
-        geometry: buildIsoWallGeometry(physical.walls, camera, wallHeight),
+        geometry: buildIsoWallGeometry(physical.walls, camera, wallHeight, physical.roundColumnRings),
         floor: buildIsoFloorGeometry(physical.floor, floorEdgeHeight, camera),
         openings: physical.openings,
         openingSurfaces: Object.freeze(physical.openings.flatMap(basis =>
-          projectIsoOpeningStructure(basis, camera).map(surface => Object.freeze({
+          projectIsoOpeningStructure(basis, camera, ISO_LAB_OPENINGS).map(surface => Object.freeze({
             ...surface, id: basis.id, sourceIndex: basis.sourceIndex, type: basis.type,
           })))),
       };
@@ -641,7 +662,7 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
     }
     value = projected;
   }
-  const openingFrame = isoOpeningBounds(value.openings);
+  const openingFrame = isoOpeningBounds(value.openings, ISO_LAB_OPENINGS);
   const structuralFrame = openingFrame ? unionRect(input.liveFrame, openingFrame) : input.liveFrame;
   const frame = projectedFrame({
     rect: structuralFrame,
@@ -743,6 +764,10 @@ export function resolveIsoOverlayFitEnvelope(
 
 export interface IsoOverlaySceneInput {
   camera?: Readonly<IsoCamera>;
+  /** Local UI Lab opt-in: project tile faces onto the floor at their saved point. */
+  floorAlignedMarkers?: boolean;
+  contactMasonry?: ContactMasonry;
+  openingBases?: readonly IsoOpeningBasis[];
   space: SpaceModel;
   devices: readonly DevItem[];
   openings: readonly RenderOpening[];
@@ -829,10 +854,16 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
   const cameraSignature = JSON.stringify(input.camera || ISO_CAMERA);
   const roomRows = isoOverlayRooms(input.space);
   const rooms = roomRows.map((row) => row.overlayRoom);
-  // #713: device tiles and lock badges stand on the wall-top plane, one common
-  // straight-up shift for every marker; room names stay on the floor where
-  // Flat puts them. No placement search: markers may meet walls and each other.
-  const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);
+  const wallHeight = gridVisualUnits(isoDisplayWallHeight(), input.cellCm);
+  const markerHalfSize = (size: PlanPoint): PlanPoint => {
+    if (!input.floorAlignedMarkers) return size;
+    const [a, b, c, d] = isoFloorMatrix(input.camera);
+    return [Math.abs(a) * size[0] + Math.abs(c) * size[1],
+      Math.abs(b) * size[0] + Math.abs(d) * size[1]];
+  };
+  const masonry = input.contactMasonry ?? [];
+  const openingMasonry = ISO_LAB_OPENINGS
+    ? (input.openingBases ?? []).map(isoOpeningMasonry).filter(volume => volume !== null) : [];
   const devices = new Map<string, IsoOverlayPlacement>();
   const roomPlacements = new Map<RoomCfg, IsoOverlayPlacement>();
   const locks = new Map<string, IsoOverlayPlacement>();
@@ -855,14 +886,17 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     floorAnchor: PlanPoint,
     footprintHalfSize: PlanPoint,
     preferredRoomId?: string | null,
+    core?: number,
+    signal?: {text: string; belowBadge: boolean},
   ): IsoOverlayPlacement => {
-    const visualOffset = kind === 'room-label' ? 0 : wallHeight;
+    const visualOffset = kind === 'room-label' || input.floorAlignedMarkers ? 0 : wallHeight;
     const cacheKey = `${kind}\u0000${id}`;
     // Nothing here depends on zoom or stage size, so a pinch, wheel or resize
     // reuses the immutable placement and Lit keeps the raised SVG subtree.
     const signature = [floorAnchor[0], floorAnchor[1],
       footprintHalfSize[0], footprintHalfSize[1],
       preferredRoomId || '', wallHeight, visualOffset, cameraSignature,
+      core ?? '', signal?.text ?? '', !!signal?.belowBadge, !!input.floorAlignedMarkers,
     ].join('|');
     const cached = lruRead(placements!, cacheKey);
     if (cached.hit && cached.value.signature === signature) return cached.value.placement;
@@ -889,6 +923,22 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       visualOffset,
       camera: input.camera,
     });
+    if(input.floorAlignedMarkers && kind !== 'room-label') {
+      const occlusionHalfSize: PlanPoint = core ? [core/2,core/2] : footprintHalfSize;
+      const camera = input.camera ?? ISO_CAMERA;
+      const behindWall = (center: PlanPoint, half: PlanPoint) =>
+        isoMarkerOccluded(center, half, masonry, wallHeight, camera)
+        || openingMasonry.some(volume => isoMarkerOccluded(center, half,
+          [[volume.ring.map(point => [point[0], point[1]])]], volume.top, camera, volume.bottom));
+      placement.occluded = behindWall(floorAnchor, occlusionHalfSize);
+      if (!placement.occluded && core && signal) {
+        const font = core * ISO_RAISED_FOOTPRINT.deviceLqiFontSize;
+        const top = core * (signal.belowBadge ? ISO_RAISED_FOOTPRINT.deviceLqiBelowBottomBadgeTop
+          : ISO_RAISED_FOOTPRINT.deviceLqiTop);
+        placement.occluded = behindWall([floorAnchor[0], floorAnchor[1] + top + font / 2],
+          [conservativeTextAdvance(signal.text) * font / 2, font / 2]);
+      }
+    }
     lruWrite(placements!, cacheKey, { signature, placement }, ISO_OVERLAY_PLACEMENT_CACHE_LIMIT);
     return placement;
   };
@@ -897,7 +947,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     const pos = input.positionOf(device);
     const presentation = input.presentationOf(device, input.showLqi);
     // #649: the 2.5D tile is ICON_SCALE larger; layout and fit see that size.
-    const core = baseDeviceUnits * presentation.scale * ISO_ICON_SCALE;
+    const core = baseDeviceUnits * presentation.scale * (input.floorAlignedMarkers ? 1 : ISO_ICON_SCALE);
     const halfSize = isoRaisedOverlayHalfSize({ kind: 'device', core, presentation });
     const layoutHalfSize = isoRaisedOverlayHalfSize({
       kind: 'device', core, presentation: stateFreePresentation(presentation),
@@ -909,14 +959,16 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       'device', device.id, [pos.x, pos.y],
       layoutHalfSize,
       preferredRoomId,
+      core,
+      presentation.lqiText != null ? {text: String(presentation.lqiText), belowBadge: presentation.valueBadge?.position === 'bottom'} : undefined,
     );
     devices.set(device.id, placement);
     entries.push({
       id: device.id,
       kind: 'device',
       placement,
-      screenHalfSize: halfSize,
-      layoutHalfSize,
+      screenHalfSize: markerHalfSize(halfSize),
+      layoutHalfSize: markerHalfSize(layoutHalfSize),
     });
   }
 
@@ -950,7 +1002,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     for (const opening of lockItems) {
       const lockPlacement = isoOpeningLockPlacement(opening, openingWallIndex, input.cellCm);
       const floorAnchor = lockPlacement.floorAnchor;
-      const size = baseIconUnits * 0.62 * ISO_ICON_SCALE;
+      const size = baseIconUnits * 0.62 * (input.floorAlignedMarkers ? 1 : ISO_ICON_SCALE);
       const halfSize = isoRaisedOverlayHalfSize({ kind: 'opening-lock', size });
       const placement = place(
         'opening-lock', String(opening.id), floorAnchor,
@@ -961,7 +1013,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
         id: String(opening.id),
         kind: 'opening-lock',
         placement,
-        screenHalfSize: halfSize,
+        screenHalfSize: markerHalfSize(halfSize),
       });
     }
   }
@@ -969,7 +1021,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
   const layoutSignature = entries.map((entry) => {
     const placement = entry.placement;
     return [entry.kind, entry.id, placement.floorAnchor[0], placement.floorAnchor[1],
-      placement.visualScene[0], placement.visualScene[1], placement.owner?.id || '',
+      placement.visualScene[0], placement.visualScene[1], placement.owner?.id || '', !!placement.occluded,
       layoutHalfSizeOf(entry)[0], layoutHalfSizeOf(entry)[1]].join('|');
   }).sort().join('\u0001');
   if (previous?.layoutSignature === layoutSignature
@@ -1097,7 +1149,9 @@ export function resolveIsoOpeningPanels(
     const opening = openings[basis.sourceIndex];
     const visual = opening && visualOf?.(opening);
     return opening && !visual?.unsupported
-      ? projectIsoOpening(basis, visual?.leaves?.map(leaf => leaf.amount) || amountOf(opening), scene?.camera) : [];
+      ? projectIsoOpening(basis, visual?.leaves?.map(leaf => leaf.amount) || amountOf(opening),
+          scene.camera, ISO_LAB_OPENINGS, opening.light_transparent === true,
+          visual?.leaves?.map(leaf => leaf.shade?.amount)) : [];
   });
   return panels.sort((a, b) => a.depth - b.depth
     || a.sourceIndex - b.sourceIndex || a.leaf - b.leaf);

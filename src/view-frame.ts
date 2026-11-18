@@ -31,6 +31,14 @@ export function turnVector(point: FramePoint, rotation: PlanRotation): [number, 
   }
 }
 
+/** Rotate a camera offset in a compressed scene: D × R × inverse(D).
+ * Plan geometry still uses turnVector; this is only the camera-space basis. */
+export function turnSceneVector(point: FramePoint, rotation: PlanRotation, floorScaleY = 1): [number, number] {
+  if (!(Number.isFinite(floorScaleY) && floorScaleY > 1e-12)) throw new Error('invalid scene depth scale');
+  const [x, y] = turnVector([point[0], point[1] / floorScaleY], rotation);
+  return [x, y * floorScaleY];
+}
+
 export function turnPoint(
   point: FramePoint, rotation: PlanRotation, origin: FramePoint = PLAN_ROTATION_ORIGIN,
 ): [number, number] {
@@ -77,10 +85,11 @@ const center = (rect: FrameRect): [number, number] => [rect.x + rect.w / 2, rect
 export function presentationView(
   canonical: FrameRect, canonicalBase: FrameRect, displayBase: FrameRect,
   rotation: PlanRotation, zoom: number, displayFit: FrameRect,
+  floorScaleY = 1,
 ): FrameRect {
   if (!rotation) return canonical;
   const c = center(canonical), base = center(canonicalBase), display = center(displayBase);
-  const delta = turnVector([c[0] - base[0], c[1] - base[1]], rotation);
+  const delta = turnSceneVector([c[0] - base[0], c[1] - base[1]], rotation, floorScaleY);
   const w = displayFit.w / zoom, h = displayFit.h / zoom;
   return { x: display[0] + delta[0] - w / 2, y: display[1] + delta[1] - h / 2, w, h };
 }
@@ -89,10 +98,11 @@ export function presentationView(
 export function canonicalView(
   displayed: FrameRect, canonicalBase: FrameRect, displayBase: FrameRect,
   rotation: PlanRotation, zoom: number, canonicalFit: FrameRect,
+  floorScaleY = 1,
 ): FrameRect {
   if (!rotation) return displayed;
   const c = center(displayed), base = center(canonicalBase), display = center(displayBase);
-  const delta = turnVector([c[0] - display[0], c[1] - display[1]], inversePlanRotation(rotation));
+  const delta = turnSceneVector([c[0] - display[0], c[1] - display[1]], inversePlanRotation(rotation), floorScaleY);
   const w = canonicalFit.w / zoom, h = canonicalFit.h / zoom;
   return { x: base[0] + delta[0] - w / 2, y: base[1] + delta[1] - h / 2, w, h };
 }
@@ -115,13 +125,14 @@ export function presentationViewport(
   view: FrameRect, vb: number[], display: FrameRect, rotation: PlanRotation, zoom: number,
   size: readonly [number, number] | null,
   visual: { stageWidth: number; stageHeight: number } | null,
+  floorScaleY = 1,
 ): FrameRect {
   if (!rotation) return view;
   const aspect = visual ? visual.stageWidth / visual.stageHeight
     : size ? size[0] / size[1] : view.w / view.h;
   if (visual) zoom = fitView(vb, aspect).w / view.w;
   return presentationView(view, { x: vb[0], y: vb[1], w: vb[2], h: vb[3] }, display,
-    rotation, zoom, fitView([display.x, display.y, display.w, display.h], aspect));
+    rotation, zoom, fitView([display.x, display.y, display.w, display.h], aspect), floorScaleY);
 }
 
 /** Pointer anchoring and clamping meet at the canonical/display boundary. */
@@ -129,22 +140,23 @@ export function planZoomTarget(
   anchor: CameraState, zoom: number, vb: number[], display: FrameRect, rotation: PlanRotation,
   width: number, height: number, sx: number, sy: number,
   clamp: (view: FrameRect, fit: FrameRect) => FrameRect,
+  floorScaleY = 1,
 ): { target: CameraState; fit: FrameRect } | null {
   const fit = fitView(vb, width / height);
-  const displayed = presentationViewport(anchor.viewBox, vb, display, rotation, anchor.zoom, [width, height], null);
+  const displayed = presentationViewport(anchor.viewBox, vb, display, rotation, anchor.zoom, [width, height], null, floorScaleY);
   const displayFit = rotation ? fitView([display.x, display.y, display.w, display.h], width / height) : fit;
   const target = cameraTargetAtAnchor({ zoom: anchor.zoom, viewBox: displayed }, zoom, displayFit, width, height, sx, sy);
   if (!target) return null;
   target.viewBox = clamp(canonicalView(target.viewBox, { x: vb[0], y: vb[1], w: vb[2], h: vb[3] },
-    display, rotation, zoom, fit), fit);
+    display, rotation, zoom, fit, floorScaleY), fit);
   return { target, fit };
 }
 
-export function homeArrowPosition(base: number[], view: FrameRect | null, rotation: PlanRotation) {
+export function homeArrowPosition(base: number[], view: FrameRect | null, rotation: PlanRotation, floorScaleY = 1) {
   if (!view?.w || !view.h) return null;
   const [x, y, w, h] = base;
   if (!(x + w <= view.x || x >= view.x + view.w || y + h <= view.y || y >= view.y + view.h)) return null;
-  const toward = turnVector([x + w / 2 - view.x - view.w / 2, y + h / 2 - view.y - view.h / 2], rotation);
+  const toward = turnSceneVector([x + w / 2 - view.x - view.w / 2, y + h / 2 - view.y - view.h / 2], rotation, floorScaleY);
   const angle = Math.atan2(toward[1], toward[0]);
   return { left: 50 + Math.cos(angle) * 38, top: 50 + Math.sin(angle) * 38, angle: angle * 180 / Math.PI };
 }

@@ -248,6 +248,8 @@ export const planStyles = css`
       pointer-events: none;
     }
     .iso-floor-texture { fill: url(#hp-iso-floor-texture); opacity: 0.1; }
+    /* Local #1451: smooth materials, including glass; no dot/hatch overlay. */
+    .stage.projection-iso[data-hp-iso-floor-markers] .iso-material-texture { display: none; }
     .iso-texture-mark { fill: rgba(36, 43, 47, 0.34); }
     .iso-texture-line {
       fill: none;
@@ -299,6 +301,46 @@ export const planStyles = css`
       fill-opacity: 0.96;
       stroke: #9fc4d5;
     }
+    /* Local #1451: materials decorate the derived surfaces only. */
+    [data-hp-opening-masonry] .iso-door.iso-material-matte-leaf {
+      fill: #f1f2ef; fill-opacity: 1;
+    }
+    [data-hp-opening-masonry] .iso-door.iso-material-light-frame {
+      fill: #c2cfd2; fill-opacity: 1; stroke: none;
+    }
+    [data-hp-opening-masonry] .iso-door.iso-opening-door-glass {
+      fill: #78b5c8; fill-opacity: .43; stroke: none;
+    }
+    [data-hp-opening-masonry] .iso-door.iso-opening-leaf-edge,
+    [data-hp-opening-masonry] .iso-door.iso-opening-leaf-top {
+      fill: #bec5c5;
+    }
+    [data-hp-opening-masonry] .iso-window.iso-material-light-frame {
+      fill: #f3f4f0; fill-opacity: 1; stroke: none;
+    }
+    [data-hp-opening-masonry] .iso-window.iso-material-glass-side {
+      fill: #cde4ee; fill-opacity: .74; stroke: none;
+    }
+    [data-hp-opening-masonry] .iso-window.iso-material-blind-fabric { fill: #c8bdb0; fill-opacity: 1; stroke: none; }
+    [data-hp-opening-masonry] .iso-window.iso-material-glass-over-fabric { fill: #cde4ee; fill-opacity: .16; stroke: none; }
+    [data-hp-opening-masonry] .iso-window.iso-material-blind-hem { fill: #958b7e; fill-opacity: 1; stroke: none; }
+    [data-hp-opening-masonry] .iso-opening-door-frame {
+      fill: #e9ece8; fill-opacity: 1; stroke: none;
+    }
+    [data-hp-opening-masonry] .iso-wall-side { fill: var(--iso-side-mid, #adadad); stroke: none; }
+    [data-hp-opening-masonry] .iso-opening-panel { stroke: none; }
+    [data-hp-opening-masonry] .iso-material-reveal { fill: #8b8d8c; fill-opacity: 1; }
+    [data-hp-opening-masonry] .iso-material-light-sill { fill: #e6e8e3; fill-opacity: 1; }
+    [data-hp-opening-masonry] .iso-opening-window-sill { fill: #fffefa; }
+    [data-hp-opening-masonry] .iso-material-hardware { fill: #657078; fill-opacity: 1; }
+    [data-hp-opening-masonry] + .iso-opening-indicators :is(path, text) {
+      paint-order: stroke fill;
+      stroke: rgba(255,255,255,.8);
+      stroke-linejoin: round;
+      stroke-width: .14em;
+    }
+    [data-hp-opening-masonry] .iso-material-gate-panel { fill: #aab6b9; fill-opacity: 1; }
+    [data-hp-opening-masonry] .iso-material-gate-metal { fill: #7e8d92; fill-opacity: 1; }
     .iso-ambient-shadow {
       fill: rgba(15, 21, 25, 0.22);
       filter: url(#hp-iso-ambient-shadow);

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 60" data-hp-volume-schema="2" data-hp-model="wardrobe" data-hp-back="top">
+  <rect data-hp-part="wardrobe-base" x="2.7" y="0.9" width="174.6" height="58.2" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="3" data-hp-z-max-cm="6" />
+  <rect data-hp-part="wardrobe-top" x="2.7" y="0.9" width="174.6" height="58.2" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="209" data-hp-z-max-cm="212" />
+  <rect data-hp-part="wardrobe-left" x="2.7" y="0.9" width="4.5" height="58.2" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="6" data-hp-z-max-cm="209" />
+  <rect data-hp-part="wardrobe-right" x="172.8" y="0.9" width="4.5" height="58.2" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="6" data-hp-z-max-cm="209" />
+  <rect data-hp-part="wardrobe-back" x="7.2" y="0.9" width="165.6" height="2.1" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="6" data-hp-z-max-cm="209" />
+  <rect data-hp-part="wardrobe-door-0" x="7.2" y="56.4" width="53.76" height="1.68" rx="0.24" data-hp-radius-ratio="0.004" data-hp-z-min-cm="6.5" data-hp-z-max-cm="208.5" />
+  <rect data-hp-part="wardrobe-pull-0" x="51.2832" y="58.08" width="2.16" height="1.02" rx="0.24" data-hp-radius-ratio="0.004" data-hp-z-min-cm="99.5" data-hp-z-max-cm="115.5" />
+  <rect data-hp-part="wardrobe-door-1" x="62.4" y="56.4" width="53.76" height="1.68" rx="0.24" data-hp-radius-ratio="0.004" data-hp-z-min-cm="6.5" data-hp-z-max-cm="208.5" />
+  <rect data-hp-part="wardrobe-pull-1" x="106.4832" y="58.08" width="2.16" height="1.02" rx="0.24" data-hp-radius-ratio="0.004" data-hp-z-min-cm="99.5" data-hp-z-max-cm="115.5" />
+  <rect data-hp-part="wardrobe-door-2" x="117.6" y="56.4" width="53.76" height="1.68" rx="0.24" data-hp-radius-ratio="0.004" data-hp-z-min-cm="6.5" data-hp-z-max-cm="208.5" />
+  <rect data-hp-part="wardrobe-pull-2" x="161.6832" y="58.08" width="2.16" height="1.02" rx="0.24" data-hp-radius-ratio="0.004" data-hp-z-min-cm="99.5" data-hp-z-max-cm="115.5" />
+  <rect data-hp-part="plinth" x="9" y="3.3" width="162" height="52.8" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="5" />
+</svg>

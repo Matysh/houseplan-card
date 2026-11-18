@@ -8,6 +8,8 @@ export const NORM_W = 1000;
 export const CANVAS_LIMIT = 5000;
 export const GRID_N = 240;
 export const GRID_PITCH = NORM_W / GRID_N;
+/** Centimetres per cell at the reference scale for visual geometry. */
+export const GRID_VISUAL_REFERENCE_CELL_CM = 5;
 export const GRID_STEP_N = 1 / GRID_N;
 /** Existing persisted-coordinate noise allowance, measured in lattice steps. */
 export const LATTICE_NOISE_STEPS = 1e-4;

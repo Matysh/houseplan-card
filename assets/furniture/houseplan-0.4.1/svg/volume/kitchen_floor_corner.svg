@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 90" data-hp-volume-schema="2" data-hp-model="kitchen_floor_corner" data-hp-back="top">
+  <polygon data-hp-part="bottom" points="1.8,1.8 45,1.8 45,45 88.2,45 88.2,88.2 1.8,88.2" data-hp-z-min-cm="10" data-hp-z-max-cm="13" />
+  <polygon data-hp-part="top" points="1.8,1.8 45,1.8 45,45 88.2,45 88.2,88.2 1.8,88.2" data-hp-z-min-cm="84" data-hp-z-max-cm="87" />
+  <rect data-hp-part="back-left" x="1.8" y="1.8" width="2.25" height="86.4" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="84" />
+  <rect data-hp-part="back-bottom" x="4.05" y="85.95" width="84.15" height="2.25" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="84" />
+  <rect data-hp-part="side-top" x="4.05" y="1.8" width="40.95" height="2.25" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="84" />
+  <rect data-hp-part="side-right" x="85.95" y="45" width="2.25" height="40.95" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="84" />
+  <rect data-hp-part="door-left" x="42.75" y="4.05" width="2.25" height="39.6" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="84" />
+  <rect data-hp-part="door-right" x="45" y="45" width="40.95" height="2.25" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="84" />
+  <rect data-hp-part="pull-left" x="45" y="33.3" width="1.26" height="5.4" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="38" data-hp-z-max-cm="50" />
+  <rect data-hp-part="pull-right" x="48.6" y="43.2" width="5.4" height="1.8" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="38" data-hp-z-max-cm="40" />
+  <polygon data-hp-part="plinth" points="1.8,1.8 45,1.8 45,45 88.2,45 88.2,88.2 1.8,88.2" data-hp-z-min-cm="0" data-hp-z-max-cm="10" />
+  <polygon data-hp-part="worktop" points="1.8,1.8 45,1.8 45,45 88.2,45 88.2,88.2 1.8,88.2" data-hp-z-min-cm="87" data-hp-z-max-cm="91" />
+</svg>

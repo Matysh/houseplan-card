@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 25" data-hp-volume-schema="2" data-hp-model="shelf_wall" data-hp-back="top">
+  <rect data-hp-part="shelf-board" x="1" y="0.5" width="98" height="24" rx="0.375" data-hp-radius-ratio="0.015" data-hp-z-min-cm="139" data-hp-z-max-cm="143" />
+  <rect data-hp-part="bracket-left" x="10" y="2" width="3.5" height="18.75" rx="0.375" data-hp-radius-ratio="0.015" data-hp-z-min-cm="121" data-hp-z-max-cm="139" />
+  <rect data-hp-part="bracket-right" x="86.5" y="2" width="3.5" height="18.75" rx="0.375" data-hp-radius-ratio="0.015" data-hp-z-min-cm="121" data-hp-z-max-cm="139" />
+</svg>

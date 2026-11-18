@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 120" data-hp-volume-schema="2" data-hp-model="exercise" data-hp-back="top">
+  <rect data-hp-part="rear-stabilizer" x="7" y="8.4" width="56" height="6.6" rx="1.4" data-hp-radius-ratio="0.02" data-hp-z-min-cm="0" data-hp-z-max-cm="6" />
+  <rect data-hp-part="front-stabilizer" x="7" y="104.4" width="56" height="6.6" rx="1.4" data-hp-radius-ratio="0.02" data-hp-z-min-cm="0" data-hp-z-max-cm="6" />
+  <rect data-hp-part="main-frame" x="29.4" y="10.8" width="11.2" height="96" rx="3.5" data-hp-radius-ratio="0.05" data-hp-z-min-cm="6" data-hp-z-max-cm="30" />
+  <ellipse data-hp-part="flywheel" cx="35" cy="60" rx="9.8" ry="18" data-hp-z-min-cm="12" data-hp-z-max-cm="52" data-hp-plane="yz" />
+  <rect data-hp-part="seat-post" x="32.2" y="16.8" width="4.9" height="9.6" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="30" data-hp-z-max-cm="80" />
+  <rect data-hp-part="saddle" x="23.1" y="9.6" width="23.8" height="30" rx="8.4" data-hp-radius-ratio="0.12" data-hp-z-min-cm="80" data-hp-z-max-cm="86" />
+  <rect data-hp-part="handlebar-post" x="32.9" y="90" width="4.2" height="9.6" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="30" data-hp-z-max-cm="112" />
+  <rect data-hp-part="handlebar" x="8.4" y="87.6" width="53.2" height="6" rx="1.4" data-hp-radius-ratio="0.02" data-hp-z-min-cm="110" data-hp-z-max-cm="115" />
+  <rect data-hp-part="left-grip" x="8.4" y="87.6" width="3.5" height="25.2" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="110" data-hp-z-max-cm="115" />
+  <rect data-hp-part="right-grip" x="58.1" y="87.6" width="3.5" height="25.2" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="110" data-hp-z-max-cm="115" />
+  <rect data-hp-part="pedal-left" x="0.7" y="30" width="12.6" height="9.6" rx="2.1" data-hp-radius-ratio="0.03" data-hp-z-min-cm="24" data-hp-z-max-cm="28" />
+  <rect data-hp-part="pedal-right" x="56.7" y="60" width="12.6" height="9.6" rx="2.1" data-hp-radius-ratio="0.03" data-hp-z-min-cm="33" data-hp-z-max-cm="37" />
+  <rect data-hp-part="left-crank" x="13.3" y="34.8" width="16.1" height="3" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="25" data-hp-z-max-cm="28" />
+  <rect data-hp-part="right-crank" x="40.6" y="63.6" width="16.1" height="3" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="34" data-hp-z-max-cm="37" />
+</svg>

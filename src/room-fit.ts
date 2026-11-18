@@ -1,4 +1,4 @@
-import { projectPlanPoint, isoCameraFor, ISO_WALL_HEIGHT, ISO_FLOOR_EDGE_HEIGHT, type PlanPoint, type IsoCamera } from './iso-projection';
+import { projectPlanPoint, isoCameraFor, isoDisplayWallHeight, ISO_FLOOR_EDGE_HEIGHT, type PlanPoint, type IsoCamera } from './iso-projection';
 import type { CameraState, CameraViewBox } from './viewport-transition';
 import type { RoomCfg, SpaceModel, WallEntry } from './types';
 import { roomPoly } from './logic';
@@ -12,7 +12,8 @@ export function roomFitPlanBounds(input: {
   borders: boolean; wallKeyPitch: number; cellCm: number; gridPitch: number;
   coordinateScale: number; projection: 'flat' | 'iso'; rotation: PlanRotation;
 }) {
-  const { room, space, walls, openCuts, borders, cellCm, projection, rotation } = input;
+  const { room, space, walls, openCuts, borders, cellCm, rotation } = input;
+  const projection = borders ? input.projection : 'flat';
   const own = roomPoly(room);
   if (!own || !room.id) return null;
   const floor = walls.length ? input.innerFloor() || own : own;
@@ -24,7 +25,7 @@ export function roomFitPlanBounds(input: {
   }
   const bounds = roomFitGeometryBounds({
     camera: isoCameraFor(rotation), floor, wall, projection,
-    wallHeight: projection === 'iso' && borders ? gridVisualUnits(ISO_WALL_HEIGHT, cellCm) : 0,
+    wallHeight: projection === 'iso' && borders ? gridVisualUnits(isoDisplayWallHeight(), cellCm) : 0,
     floorDepth: projection === 'iso' && borders ? gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, cellCm) : 0,
     padding: borders ? gridVisualUnits(1.25, cellCm) : 0,
   });
@@ -32,11 +33,11 @@ export function roomFitPlanBounds(input: {
 }
 
 export function roomFitPlanTarget(input: RoomFitTargetInput & {
-  canonicalBase: CameraViewBox; displayBase: CameraViewBox; rotation: PlanRotation; canonicalFit: CameraViewBox;
+  canonicalBase: CameraViewBox; displayBase: CameraViewBox; rotation: PlanRotation; canonicalFit: CameraViewBox; floorScaleY?: number;
 }) {
   const target = roomFitCameraTarget(input);
   if (target) target.viewBox = canonicalView(target.viewBox, input.canonicalBase,
-    input.displayBase, input.rotation, target.zoom, input.canonicalFit);
+    input.displayBase, input.rotation, target.zoom, input.canonicalFit, input.floorScaleY);
   return target;
 }
 

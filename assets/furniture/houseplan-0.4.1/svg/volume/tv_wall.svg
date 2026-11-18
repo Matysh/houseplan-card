@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 15" data-hp-volume-schema="2" data-hp-model="tv_wall" data-hp-back="top">
+  <rect data-hp-part="wall-bracket" x="51.6" y="7.8" width="16.8" height="6.3" rx="0.225" data-hp-radius-ratio="0.015" data-hp-z-min-cm="117" data-hp-z-max-cm="148" />
+  <rect data-hp-part="screen-frame" x="1.8" y="5.1" width="116.4" height="3" rx="0.3" data-hp-radius-ratio="0.02" data-hp-z-min-cm="100" data-hp-z-max-cm="169" data-hp-plane="xz" data-hp-inset-cm="1.7" />
+  <rect data-hp-part="display" x="3.6" y="5.475" width="112.8" height="1.8" rx="0.3" data-hp-radius-ratio="0.02" data-hp-z-min-cm="102" data-hp-z-max-cm="167" />
+</svg>

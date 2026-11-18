@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 50" data-hp-volume-schema="2" data-hp-model="cooktop_two" data-hp-back="top">
+  <rect data-hp-part="cooktop-base" x="0.45" y="0.75" width="29.1" height="48.5" rx="1.35" data-hp-radius-ratio="0.045" data-hp-z-min-cm="88" data-hp-z-max-cm="92" />
+  <ellipse data-hp-part="burner-0" cx="15" cy="13.5" rx="5.55" ry="9.25" data-hp-z-min-cm="92" data-hp-z-max-cm="93.5" data-hp-inset-cm="1.1" />
+  <ellipse data-hp-part="burner-1" cx="15" cy="36.5" rx="5.55" ry="9.25" data-hp-z-min-cm="92" data-hp-z-max-cm="93.5" data-hp-inset-cm="1.1" />
+</svg>

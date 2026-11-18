@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" data-hp-volume-schema="2" data-hp-model="rug" data-hp-back="top">
+  <rect data-hp-part="woven-base" x="2" y="1.4" width="196" height="137.2" rx="9.8" data-hp-radius-ratio="0.07" data-hp-z-min-cm="0" data-hp-z-max-cm="0.8" />
+  <rect data-hp-part="bound-edge" x="2" y="1.4" width="196" height="137.2" rx="9.8" data-hp-radius-ratio="0.07" data-hp-z-min-cm="0.8" data-hp-z-max-cm="1.2" data-hp-inset-cm="2" />
+</svg>

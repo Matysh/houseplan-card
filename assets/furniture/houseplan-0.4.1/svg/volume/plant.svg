@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" data-hp-volume-schema="2" data-hp-model="plant" data-hp-back="top">
+  <ellipse data-hp-part="pot" cx="20" cy="20" rx="10" ry="10" data-hp-z-min-cm="0" data-hp-z-max-cm="28" data-hp-inset-cm="2" data-hp-base-scale="0.7" />
+  <ellipse data-hp-part="soil" cx="20" cy="20" rx="8.4" ry="8.4" data-hp-z-min-cm="22" data-hp-z-max-cm="24" />
+  <rect data-hp-part="stem" x="19" y="19" width="2" height="2" rx="0.8" data-hp-radius-ratio="0.02" data-hp-z-min-cm="24" data-hp-z-max-cm="78" />
+  <ellipse data-hp-part="leaf-0" cx="10.6" cy="20" rx="8.6" ry="1.6" data-hp-z-min-cm="45" data-hp-z-max-cm="86" data-hp-plane="xz" />
+  <ellipse data-hp-part="leaf-1" cx="28.6" cy="19.4" rx="9.4" ry="1.8" data-hp-z-min-cm="52" data-hp-z-max-cm="94" data-hp-plane="xz" />
+  <ellipse data-hp-part="leaf-2" cx="19.6" cy="13.9" rx="8" ry="1.5" data-hp-z-min-cm="65" data-hp-z-max-cm="112" data-hp-plane="xz" />
+  <ellipse data-hp-part="leaf-3" cx="18.8" cy="9.6" rx="1.6" ry="8.4" data-hp-z-min-cm="51" data-hp-z-max-cm="91" data-hp-plane="yz" />
+  <ellipse data-hp-part="leaf-4" cx="20" cy="30.2" rx="1.6" ry="8.6" data-hp-z-min-cm="46" data-hp-z-max-cm="88" data-hp-plane="yz" />
+  <ellipse data-hp-part="leaf-5" cx="23.1" cy="18.8" rx="1.5" ry="8" data-hp-z-min-cm="67" data-hp-z-max-cm="108" data-hp-plane="yz" />
+</svg>

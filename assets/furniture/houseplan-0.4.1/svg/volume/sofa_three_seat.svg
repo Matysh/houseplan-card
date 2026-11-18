@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 90" data-hp-volume-schema="2" data-hp-model="sofa_three_seat" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="19.2" y="9" width="10.8" height="4.05" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-0-1" x="19.2" y="75.6" width="10.8" height="4.05" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-1-0" x="211.2" y="9" width="10.8" height="4.05" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-1-1" x="211.2" y="75.6" width="10.8" height="4.05" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="base" x="6" y="4.5" width="228" height="81.9" rx="8.55" data-hp-radius-ratio="0.095" data-hp-z-min-cm="12" data-hp-z-max-cm="29" />
+  <rect data-hp-part="arm-left" x="2.4" y="15.3" width="21.6" height="64.8" rx="8.1" data-hp-radius-ratio="0.09" data-hp-z-min-cm="25" data-hp-z-max-cm="66" />
+  <rect data-hp-part="arm-right" x="216" y="15.3" width="21.6" height="64.8" rx="8.1" data-hp-radius-ratio="0.09" data-hp-z-min-cm="25" data-hp-z-max-cm="66" />
+  <rect data-hp-part="seat-0" x="25.2" y="24.3" width="62.4" height="58.5" rx="6.75" data-hp-radius-ratio="0.075" data-hp-z-min-cm="29" data-hp-z-max-cm="44" />
+  <rect data-hp-part="back-0" x="25.2" y="3.6" width="62.4" height="20.7" rx="7.2" data-hp-radius-ratio="0.08" data-hp-z-min-cm="29" data-hp-z-max-cm="85" />
+  <rect data-hp-part="seat-1" x="88.8" y="24.3" width="62.4" height="58.5" rx="6.75" data-hp-radius-ratio="0.075" data-hp-z-min-cm="29" data-hp-z-max-cm="44" />
+  <rect data-hp-part="back-1" x="88.8" y="3.6" width="62.4" height="20.7" rx="7.2" data-hp-radius-ratio="0.08" data-hp-z-min-cm="29" data-hp-z-max-cm="85" />
+  <rect data-hp-part="seat-2" x="152.4" y="24.3" width="62.4" height="58.5" rx="6.75" data-hp-radius-ratio="0.075" data-hp-z-min-cm="29" data-hp-z-max-cm="44" />
+  <rect data-hp-part="back-2" x="152.4" y="3.6" width="62.4" height="20.7" rx="7.2" data-hp-radius-ratio="0.08" data-hp-z-min-cm="29" data-hp-z-max-cm="85" />
+</svg>

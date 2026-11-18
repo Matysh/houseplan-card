@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90" data-hp-volume-schema="2" data-hp-model="table_dining" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="11.2" y="9" width="9.6" height="5.4" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="71" />
+  <rect data-hp-part="leg-0-1" x="11.2" y="75.6" width="9.6" height="5.4" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="71" />
+  <rect data-hp-part="leg-1-0" x="139.2" y="9" width="9.6" height="5.4" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="71" />
+  <rect data-hp-part="leg-1-1" x="139.2" y="75.6" width="9.6" height="5.4" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="71" />
+  <rect data-hp-part="tabletop" x="3.2" y="1.8" width="153.6" height="86.4" rx="2.25" data-hp-radius-ratio="0.025" data-hp-z-min-cm="71" data-hp-z-max-cm="75" />
+</svg>

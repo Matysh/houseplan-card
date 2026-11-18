@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { readAllStylesSource } from './styles-source.mjs';
-import { buildIsoOpeningBasis } from '../test-build/iso-openings.js';
+import { createIsoStructuralSource, renderIsoWalls, resolveIsoFramePresentation, resolveIsoOpeningPanels,
+  resolveIsoScene } from '../test-build/iso-scene-render.js';
+import { ISO_OPENING_GEOMETRY_POLICY, buildIsoOpeningBasis } from '../test-build/iso-openings.js';
 import { openingSymbolOffset } from '../test-build/opening-symbol-placement.js';
 
 const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
@@ -123,8 +125,18 @@ test('Stage 4 composes ordered inert SVG surfaces below screen-facing HTML', () 
     'the invisible safety footprint must never become painted SVG geometry');
   assert.doesNotMatch(sceneRender, /class="iso-overlay-tether"|class="iso-overlay-ground"/,
     'the reviewed near-floor treatment has no debug tethers or ground dots');
-  assert.match(sceneRender, /const depthQueue = buildIsoWallDepthQueue\(scene\.geometry, openingSurfaces\)/);
-  assert.match(sceneRender, /depthQueue\.map\(\(entry\) =>/);
+  const far = 'M0 0h2v2z', pane = 'M0 1h2v2z', near = 'M0 2h2v2z';
+  const scene = { key:'layers', geometry:{topFaces:[], sides:[
+    {d:near, depth:3, edge:0}, {d:far, depth:1, edge:1},
+  ]}, openingSurfaces:[{id:'window', type:'window', material:'glass', kind:'glass', d:pane, depth:2}] };
+  const walls = renderIsoWalls('iso', {structural:true, panels:true}, scene, [], 5);
+  // Walk Lit's emitted bindings in paint order. The input deliberately places the near face first.
+  function paintedPaths(value) {
+    if (Array.isArray(value)) return value.flatMap(paintedPaths);
+    if (value?.strings) return value.values.flatMap(paintedPaths);
+    return [near, pane, far].includes(value) ? [value] : [];
+  }
+  assert.deepEqual(paintedPaths(walls), [far, pane, near]);
   assert.match(sceneRender, /entry\.layer === 'wall-top'[\s\S]*?fill-rule="evenodd"/,
     'each independently sorted wall component must retain evenodd hole semantics');
   assert.match(sceneRender, /aria-hidden="true" pointer-events="none"/);
@@ -190,7 +202,23 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
     'export function isoStructuralOpeningHost', 'export interface IsoStructuralSourceInput');
   for (const field of ['hostId: resolved.host.id', 't: resolved.t', 'depth: resolved.depth',
     'face: partitionOpeningFace']) assert.ok(hostProjection.includes(field), `missing ${field}`);
-  assert.match(openings, /ISO_OPENING_GEOMETRY_POLICY[\s\S]*?revision: 3/);
+  const room = {id:'test',poly:[[0,0],[100,0],[100,100],[0,100]]};
+  const input = {space:{id:'floor',rooms:[room],partitions:[],wall_columns:[],wall_segments:[],room_drafts:[]},
+    openings:[{id:'window',type:'window',rx:50,ry:0,rlen:20,angle:0}],walls:[],openCuts:[],
+    roomOpenings:()=>[],partitionCuts:()=>[],onBuild:()=>{},gridPitch:5,cellCm:5,coordinateScale:1,wallKeyPitch:1};
+  const policy = ISO_OPENING_GEOMETRY_POLICY;
+  const normal = createIsoStructuralSource(input);
+  assert.notEqual(createIsoStructuralSource(input, {...policy,revision:policy.revision+1}).key, normal.key);
+  const thicker = createIsoStructuralSource(input, {...policy,leafThicknessRatio:2*policy.leafThicknessRatio});
+  assert.notEqual(thicker.key, normal.key);
+  assert.equal(thicker.build().openings[0].leafThickness, 2*normal.build().openings[0].leafThickness);
+  assert.ok(normal.build().openingSurfaces.length > 0);
+  const cache = new Map();
+  const renderScene = () => resolveIsoScene({source:normal, cache, cellCm:5, liveFrame:{x:0,y:0,w:100,h:100}});
+  const closed = renderScene(), opened = renderScene();
+  assert.equal(opened.geometry, closed.geometry);
+  const panels = (scene, amount) => resolveIsoOpeningPanels({panels:true}, scene, input.openings, () => amount);
+  assert.notDeepEqual(panels(closed, 0), panels(opened, 1));
   assert.match(openings, /openingLeafOriginOffset\(input\.type, input\.face, 'iso-volume'\)/,
     'Iso consumes the shared ground-plane placement authority');
   for (const face of [{ ox:20, oy:0, cm:20, side:1 }, { ox:0, oy:20, cm:20, side:1 }]) {
@@ -203,8 +231,6 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
       assert.deepEqual(openingSymbolOffset(type,false,0,face),{ox:0,oy:0},'Flat remains on the saved axis');
     }
   }
-  assert.match(source,
-    /buildIsoOpeningBasis\(\{ \.\.\.opening, face,\s*topShift: 20 \/ input\.cellCm \* input\.gridPitch \}, wallHeight, openingGeometryPolicy\)/);
   assert.match(openings, /policy\.gateTurnDeg[\s\S]*?policy\.gateTopRatio/);
   assert.match(openings, /policy\.windowSashBottomRatio[\s\S]*?policy\.windowSashTopRatio/);
   assert.match(openings, /policy\.windowGlassBottomRatio[\s\S]*?policy\.windowGlassTopRatio/);
@@ -228,13 +254,10 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
     'a changed structural key must install different canonical geometry, not only report a worker job');
   assert.doesNotMatch(source, /_openingAmt|openingAmount|\.hass|matchMedia|CSS\.supports|theme|hover|focus|selected|sunlight/);
   assert.match(card, /onBuild: \(\) => \{ this\._isoStructuralBuildCount \+= 1; \}/);
-  assert.match(source, /projectIsoOpeningStructure\(basis\)/);
-  assert.match(sceneGeometry, /projectIsoOpening\(basis, visual\?\.leaves\?\.map\(leaf => leaf\.amount\) \|\| amountOf\(opening\), scene\?\.camera\)/);
   assert.match(sceneGeometry, /lruWrite\(input\.cache, input\.source\.key, value, 8\)/);
   assert.match(card, /data-hp-iso-structural-builds=\$\{iso \? this\._isoStructuralBuildCount : nothing\}/);
   // #724: the overlay caches are keyed by the structural wall geometry itself —
   // no silhouette array is built only to be that key.
-  assert.match(sceneGeometry, /geometry: buildIsoWallGeometry\(structural\.walls, ISO_CAMERA, wallHeight\)/);
   assert.match(sceneGeometry, /structure: IsoWallGeometry;/);
   assert.match(sceneGeometry, /let placements = isoOverlayPlacementCache\.get\(input\.structure\)/);
   assert.match(sceneGeometry, /const previous = isoOverlayRenderSceneCache\.get\(input\.structure\)/);
@@ -244,18 +267,15 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
 test('show_borders:false keeps the Flat floor plane and removes every volume cue', () => {
   assert.match(card, /isoLayers && !isoLayers\.floorSymbols/);
   assert.match(card, /<svg class="plan-svg"[\s\S]*?data-hp-live-viewbox=\$\{iso \? 'camera' : 'floor'\}/);
-  // #1070: the floor plane has only the exact presentation quarter turn;
-  // neither branch adds a second isometric floor projection.
-  assert.match(card, /<g class=\$\{iso \? 'iso-floor-scene' : nothing\} transform=\$\{this\._rotation \? turnMatrix\(this\._rotation\) : nothing\}>/);
-  assert.doesNotMatch(card, /isoFloorMatrixCss|unprojectFloorPoint/);
+  // The browser parity test compares the painted plane, fit and input at all four turns.
+  assert.match(card, /class=\$\{iso \? 'iso-floor-scene' : nothing\} transform=\$\{this\._floorTransform\}/);
   assert.match(card,
     /\$\{litCache\(iso && isoLayers\?\.structural \? svg`<svg class="iso-shadows-svg"/);
   assert.match(card, /if \(!runtime \|\| !layers\?\.structural \|\| !structural\) return null/);
   const baseView = section(card, 'private _baseVb(', '/** How many objects');
-  assert.match(baseView, /if \(!this\._spaceDisplayForRender\(\)\.showBorders\)[\s\S]*?projectedFrame\(\{[\s\S]*?wallHeight:\s*0/);
   const effective = section(card, 'private _effectiveProjection()', 'private _floorView');
-  assert.ok(effective.indexOf("if (!this._spaceDisplayForRender().showBorders)")
-    < effective.indexOf('const source = this._isoSource()'));
+  const hidden = effective.indexOf('if (!this._spaceDisplayForRender().showBorders)');
+  assert.ok(hidden >= 0 && hidden < effective.indexOf('const source = this._isoSource()'));
   assert.doesNotMatch(baseView, /ISO_WALL_HEIGHT|raisedHeight|floorDepth/);
   assert.doesNotMatch(baseView, /accepted Stage 1|Stage 2 structure is absent/);
 });
@@ -290,8 +310,12 @@ test('one frame resolves one structural source and latches late topology/project
   assert.match(renderBody, /this\._view = null;[\s\S]*?_baseVb\('flat', null\)/);
   const resolver = section(sceneRender, 'export function resolveIsoFramePresentation', 'const emptySvg');
   for (const step of ['resolveIsoDecorationLayers', 'resolveIsoOpeningPanels', 'renderIsoUnderlay',
-    'renderIsoShadows', 'renderIsoWalls'])
+    'renderIsoShadows'])
     assert.ok(resolver.includes(step), `late Stage 4 step escaped the frame boundary: ${step}`);
+  const fault = new Error('structural paint failed');
+  const brokenScene = {openings:[], openingSurfaces:[], get geometry() { throw fault; }};
+  assert.throws(() => resolveIsoFramePresentation({projection:'iso', display:{showBorders:true},
+    scene:brokenScene, openings:[], amountOf:()=>0, overlays:()=>null,cellCm:5}), error => error === fault);
 });
 
 test('raised footprints participate in global and room fit without entering the structural LRU', () => {

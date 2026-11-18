@@ -144,6 +144,7 @@ test('door and gate expose matte fixed-thickness leaf prisms plus real jamb reve
 test('window separates neutral fixed/sash frames from blue glass above the sill', () => {
   const basis = buildIsoOpeningBasis(opening({ type: 'window' }));
   assert.deepEqual(basis.windowProfile, {
+    handleSides: [false, false],
     frameBottom: ISO_WALL_HEIGHT * 0.38,
     frameTop: ISO_WALL_HEIGHT,
     sashBottom: ISO_WALL_HEIGHT * 0.40,
@@ -188,7 +189,7 @@ test('window and gate retain two leaves with reviewed height and turn policies',
   const windowBasis = buildIsoOpeningBasis(opening({ type: 'window' }));
   const gateBasis = buildIsoOpeningBasis(opening({ type: 'gate', flipV: true }));
   assert.equal(windowBasis.leaves.length, 2);
-  assert.equal(ISO_OPENING_GEOMETRY_POLICY.revision, 3);
+  assert.equal(ISO_OPENING_GEOMETRY_POLICY.revision, 4);
   assert.equal(windowBasis.leaves.every((leaf) => leaf.bottom === ISO_WALL_HEIGHT * 0.40
     && leaf.top === ISO_WALL_HEIGHT * 0.98 && Math.abs(leaf.turnDeg) === 65), true);
   assert.deepEqual(gateBasis.leaves.map((leaf) => Math.abs(leaf.turnDeg)), [10, 10]);

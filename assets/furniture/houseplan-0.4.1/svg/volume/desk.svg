@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 70" data-hp-volume-schema="2" data-hp-model="desk" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="9.8" y="7" width="8.4" height="4.2" rx="0.7" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="71" />
+  <rect data-hp-part="leg-0-1" x="9.8" y="58.8" width="8.4" height="4.2" rx="0.7" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="71" />
+  <rect data-hp-part="pedestal-base" x="98" y="4.2" width="36.4" height="60.9" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="10" />
+  <rect data-hp-part="pedestal-top" x="98" y="4.2" width="36.4" height="60.9" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="68" data-hp-z-max-cm="71" />
+  <rect data-hp-part="pedestal-left" x="98" y="4.2" width="3.5" height="60.9" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="10" data-hp-z-max-cm="68" />
+  <rect data-hp-part="pedestal-right" x="130.9" y="4.2" width="3.5" height="60.9" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="10" data-hp-z-max-cm="68" />
+  <rect data-hp-part="pedestal-back" x="101.5" y="4.2" width="29.4" height="2.45" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="10" data-hp-z-max-cm="68" />
+  <rect data-hp-part="pedestal-drawer-0" x="102.2" y="62.3" width="28" height="1.75" rx="0.42" data-hp-radius-ratio="0.006" data-hp-z-min-cm="10.7" data-hp-z-max-cm="28.633333333333333" />
+  <rect data-hp-part="pedestal-handle-0" x="110.376" y="64.05" width="11.648" height="1.05" rx="0.42" data-hp-radius-ratio="0.006" data-hp-z-min-cm="24.333333333333332" data-hp-z-max-cm="26.333333333333332" />
+  <rect data-hp-part="pedestal-drawer-1" x="102.2" y="62.3" width="28" height="1.75" rx="0.42" data-hp-radius-ratio="0.006" data-hp-z-min-cm="30.03333333333333" data-hp-z-max-cm="47.96666666666666" />
+  <rect data-hp-part="pedestal-handle-1" x="110.376" y="64.05" width="11.648" height="1.05" rx="0.42" data-hp-radius-ratio="0.006" data-hp-z-min-cm="43.666666666666664" data-hp-z-max-cm="45.666666666666664" />
+  <rect data-hp-part="pedestal-drawer-2" x="102.2" y="62.3" width="28" height="1.75" rx="0.42" data-hp-radius-ratio="0.006" data-hp-z-min-cm="49.36666666666667" data-hp-z-max-cm="67.3" />
+  <rect data-hp-part="pedestal-handle-2" x="110.376" y="64.05" width="11.648" height="1.05" rx="0.42" data-hp-radius-ratio="0.006" data-hp-z-min-cm="63" data-hp-z-max-cm="65" />
+  <rect data-hp-part="tabletop" x="1.4" y="0.7" width="137.2" height="68.6" rx="1.75" data-hp-radius-ratio="0.025" data-hp-z-min-cm="71" data-hp-z-max-cm="75" />
+  <rect data-hp-part="back-rail" x="16.8" y="5.6" width="89.6" height="2.8" rx="1.05" data-hp-radius-ratio="0.015" data-hp-z-min-cm="50" data-hp-z-max-cm="64" />
+</svg>

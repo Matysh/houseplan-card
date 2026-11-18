@@ -27,7 +27,11 @@ test('#383 furniture selection halo follows the symbol path and adds 20 physical
   const layer = card.slice(card.indexOf('private _renderDecorLayer('), card.indexOf('// ================= shared editor secondary surface'));
   assert.match(layer, /class="dshape dfurniturehit"/);
   assert.match(layer, /strokeWidth \+ decorCmToUnits\(20, this\._cellCm, this\._gridPitch\)/);
-  assert.match(layer, /data-symbol="\$\{sh\.symbol\}" d="\$\{art\.d\}" transform=\$\{tr\}/);
+  for (const className of ['dfurn','dfurniturehit']) {
+    const path = layer.match(new RegExp('<path\\s+class="[^"]*\\b' + className + '"[^>]*>'))?.[0] ?? '';
+    assert.match(path, /data-symbol="\$\{sh\.symbol\}" d="\$\{d\}" transform=\$\{transform\}/);
+  }
+  assert.match(layer, /return draw\(art\.d,\s*tr\)/);
   assert.match(styles, /dtool-select \.decorlayer \.dshape\.dfurniturehit[\s\S]*pointer-events: stroke/);
   assert.doesNotMatch(layer, /dfurniturehit[\s\S]{0,200}bounding-box/);
 });

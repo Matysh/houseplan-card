@@ -4,9 +4,27 @@ import {
   buildIsoFloorGeometry, buildIsoWallGeometry, isoEffectiveView, isoGeometryFingerprint,
 } from '../test-build/iso-walls.js';
 import { floorFootprintGeometry } from '../test-build/wall-thickness.js';
+import { columnBody } from '../test-build/physical-geometry.js';
+import { isoCameraFor, projectPlanPoint } from '../test-build/iso-projection.js';
 
 const closed = (points) => [...points, points[0]];
 const square = closed([[0, 0], [100, 0], [100, 100], [0, 100]]);
+
+test('round column facets follow the camera and wall height, square edges stay independent', () => {
+  const circle = columnBody({shape:'circle', center:[180,70], cm:40}, 5, 8);
+  for (const turn of [0,90,180,270]) for (const height of [84,105]) {
+    const camera = isoCameraFor(turn);
+    const geometry = buildIsoWallGeometry([[square],[closed(circle)]], camera, height, [circle]);
+    const facets = geometry.sides.filter(face => face.polygon === 1);
+    assert.ok(facets.length >= circle.length / 2 - 1);
+    assert.ok(geometry.sides.filter(face => face.polygon === 0).every(face => face.roundColumn === undefined));
+    for (const face of facets) {
+      assert.equal(face.roundColumn, 0);
+      assert.deepEqual(face.points[0], projectPlanPoint(face.planEdge[0], 0, camera));
+      assert.deepEqual(face.points[3], projectPlanPoint(face.planEdge[0], height, camera));
+    }
+  }
+});
 
 test('one top and only O(E) visible sides are built deterministically', () => {
   const first = buildIsoWallGeometry([[square]]);

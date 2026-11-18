@@ -8,6 +8,8 @@
 // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
 export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
+import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_OPENINGS } from './iso-lab-camera';
+import { clipIsoOpeningDepthQueue, furnitureOcclusion } from './iso-lab-visibility';
 import { mdiWeatherSunny, mdiWeatherSunnyOff } from '@mdi/js';
 import type { ResolvedOpeningVisual } from './opening-features';
 import type { SpaceDisplay } from './logic';
@@ -29,6 +31,13 @@ export interface IsoFramePresentation {
   underlay: TemplateResult;
   shadows: TemplateResult;
   walls: TemplateResult;
+  foreground: TemplateResult | typeof nothing;
+}
+
+export interface IsoFurniturePaint {
+  footprint: readonly PlanPoint[];
+  height: number;
+  body: TemplateResult;
 }
 
 /** Resolve every lazy Stage 4 artifact inside the card's single failure boundary. */
@@ -41,19 +50,24 @@ export function resolveIsoFramePresentation(input: {
   visualOf?: (opening: RenderOpening) => ResolvedOpeningVisual;
   overlays: (layers: IsoDecorationLayers) => IsoOverlayRenderScene | null;
   cellCm: number;
+  furniture?: readonly IsoFurniturePaint[];
 }): IsoFramePresentation {
   const layers = resolveIsoDecorationLayers(input.display);
   const panels = layers.panels
     ? resolveIsoOpeningPanels(layers, input.scene, input.openings, input.amountOf, input.visualOf)
     : [];
   const overlays = input.overlays(layers);
-  const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => ({
-    layers: renderLayers, panels, overlays,
-    underlay: renderIsoUnderlay(renderLayers, input.scene?.floor, input.cellCm),
-    shadows: renderIsoShadows(renderLayers, panels, input.scene?.geometry, input.cellCm),
-    walls: svg`${renderIsoWalls(input.projection, renderLayers, input.scene, panels, input.cellCm)}
-      ${renderLayers.panels ? renderIsoOpeningIndicators(input.scene, input.openings, input.visualOf, input.cellCm, input.display.color) : nothing}`,
-  });
+  const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => {
+    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture);
+    const indicators = renderLayers.panels ? renderIsoOpeningIndicators(input.scene, input.openings, input.visualOf, input.cellCm, input.display.color) : nothing;
+    return {
+      layers: renderLayers, panels, overlays,
+      underlay: renderIsoUnderlay(renderLayers, input.scene?.floor, input.cellCm),
+      shadows: renderIsoShadows(renderLayers, panels, input.scene?.geometry, input.cellCm),
+      walls: svg`${structure.walls}${structure.foreground === nothing ? indicators : nothing}`,
+      foreground: structure.foreground === nothing ? nothing : svg`${structure.foreground}${indicators}`,
+    };
+  };
   try { return render(layers); } catch (error) {
     // A material/shadow presentation failure loses only decorative nuance.
     // Structural projection errors above (panels/overlays), or failures that
@@ -71,22 +85,40 @@ function renderIsoOpeningIndicators(scene: IsoRenderScene | null, openings: read
   const scale = gridVisualScale(cellCm);
   return svg`<g class="iso-opening-indicators" pointer-events="none" aria-hidden="true">${scene.openings.flatMap(basis => {
     const opening = openings[basis.sourceIndex], visual = opening && visualOf(opening);
-    if (!visual?.leaves || basis.type !== 'window') return [];
+    if (!visual?.leaves?.some(leaf => leaf.unknown || leaf.shade) || basis.type !== 'window') return [];
+    const leaves = visual.leaves;
     const side = visual.side === 'negative' ? -1 : 1;
-    return visual.leaves.map((leaf, index) => {
-      const fraction = (index + .5) / visual.leaves!.length;
+    const sill = basis.windowProfile?.frameBottom ?? 0;
+    const start = projectPlanPoint(basis.axis.start, sill, scene.camera);
+    const end = projectPlanPoint(basis.axis.end, sill, scene.camera);
+    const dx = end[0] - start[0], dy = end[1] - start[1];
+    const span = Math.hypot(dx, dy), bay = span / leaves.length;
+    const markerScale = ISO_LAB_OPENINGS ? Math.max(scale * .75, Math.min(scale, bay / 18)) : scale;
+    const extra = ISO_LAB_OPENINGS ? Math.max(0, 22 * markerScale - bay) : 0;
+    return leaves.map((leaf, index) => {
+      const fraction = (index + .5) / leaves.length;
       const center: PlanPoint = [basis.axis.start[0] + (basis.axis.end[0] - basis.axis.start[0]) * fraction,
         basis.axis.start[1] + (basis.axis.end[1] - basis.axis.start[1]) * fraction];
-      const point = (sign: number) => projectPlanPoint([
-        center[0] + basis.axis.normal[0] * sign * (basis.face.depth / 2 + 12 * scale),
-        center[1] + basis.axis.normal[1] * sign * (basis.face.depth / 2 + 12 * scale),
-      ], basis.windowProfile?.frameBottom ?? 0, scene.camera);
+      // Keep per-sash order along the projected opening, even when it is too
+      // narrow to fit four legible symbols at their exact plan spacing.
+      const shift = span > 0 ? (index - (leaves.length - 1) / 2) * extra / span : 0;
+      const point = (sign: number) => {
+        const p = projectPlanPoint([
+          center[0] + basis.axis.normal[0] * sign * (basis.face.depth / 2 + 12 * scale),
+          center[1] + basis.axis.normal[1] * sign * (basis.face.depth / 2 + 12 * scale),
+        ], sill, scene.camera);
+        const centreX = start[0] + dx * fraction, centreY = start[1] + dy * fraction;
+        const across = span ? ((p[1] - centreY) * dx - (p[0] - centreX) * dy) / span : 0;
+        const clearance = ISO_LAB_OPENINGS && span ? Math.sign(across)
+          * Math.max(0, 11 * markerScale - Math.abs(across)) / span : 0;
+        return [p[0] + dx * shift - dy * clearance, p[1] + dy * shift + dx * clearance];
+      };
       const shade = point(-side), unknown = point(side);
-      return svg`${leaf.shade ? svg`<g class="op-shade-indicator" transform="translate(${shade[0]} ${shade[1]}) scale(${.55 * scale})" fill=${color}>
+      return svg`${leaf.shade ? svg`<g class="op-shade-indicator" data-opening-id=${basis.id} data-opening-leaf=${leaf.id} transform="translate(${shade[0]} ${shade[1]}) scale(${.55 * markerScale})" fill=${color}>
         ${leaf.shade.amount === null ? svg`<text text-anchor="middle" dominant-baseline="central" font-size="19">?</text>`
           : svg`<path d=${leaf.shade.amount === 0 ? mdiWeatherSunnyOff : mdiWeatherSunny} transform="translate(-12 -12)"></path>`}
-        </g>` : nothing}${leaf.unknown ? svg`<text class="op-leaf-unknown" x=${unknown[0]} y=${unknown[1]} fill=${color}
-          text-anchor="middle" dominant-baseline="central" font-size=${11 * scale}>?</text>` : nothing}`;
+        </g>` : nothing}${leaf.unknown ? svg`<text class="op-leaf-unknown" data-opening-id=${basis.id} data-opening-leaf=${leaf.id} x=${unknown[0]} y=${unknown[1]} fill=${color}
+          text-anchor="middle" dominant-baseline="central" font-size=${11 * markerScale}>?</text>` : nothing}`;
     });
   })}</g>`;
 }
@@ -160,13 +192,21 @@ export function renderIsoShadows(
 }
 
 export function renderIsoWalls(
+  projection: 'flat' | 'iso', layers: IsoDecorationLayers, scene: IsoRenderScene | null,
+  panels: readonly IsoOpeningPanel[], cellCm: number,
+): TemplateResult {
+  return renderIsoStructure(projection, layers, scene, panels, cellCm).walls;
+}
+
+function renderIsoStructure(
   projection: 'flat' | 'iso',
   layers: IsoDecorationLayers,
   scene: IsoRenderScene | null,
   panels: readonly IsoOpeningPanel[],
   cellCm: number,
-): TemplateResult {
-  if (projection !== 'iso' || !layers.structural || !scene) return emptySvg();
+  furniture: readonly IsoFurniturePaint[] = [],
+): Pick<IsoFramePresentation,'walls'|'foreground'> {
+  if (projection !== 'iso' || !layers.structural || !scene) return {walls:emptySvg(), foreground:nothing};
   const openingSurfaces: IsoOpeningRenderSurface[] = layers.panels ? [
     ...scene.openingSurfaces,
     ...panels.flatMap((panel) => panel.surfaces.map((surface) => ({
@@ -176,16 +216,60 @@ export function renderIsoWalls(
       type: panel.type,
       leaf: panel.leaf,
     }))),
-  ] : [];
-  const depthQueue = buildIsoWallDepthQueue(scene.geometry, openingSurfaces);
-  return svg`<g class="iso-walls" data-hp="iso-walls" data-fingerprint=${scene.key}>
-    ${renderIsoDefs(layers, 'walls', cellCm)}
-    <g class=${layers.panels ? 'iso-wall-depth-queue iso-openings' : 'iso-wall-depth-queue'}
-      data-hp=${layers.panels ? 'iso-openings' : nothing}
-      aria-hidden="true" pointer-events="none">${depthQueue.map((entry) => {
+  ] : scene.openingSurfaces.filter(surface => surface.material === 'wall-side' || surface.material === 'wall-top');
+  const ordered = buildIsoWallDepthQueue(scene.geometry, openingSurfaces,
+    (scene.camera?.floorScaleY ?? 1) !== 1);
+  const depthQueue = ISO_LAB_OPENINGS && scene.camera ? clipIsoOpeningDepthQueue(ordered,scene.camera) : ordered;
+  // Fill adjoining visible masonry faces together. Separately antialiased
+  // edges otherwise leave a light hairline where a window apron meets its wall.
+  const masonrySides = ISO_LAB_OPENINGS ? depthQueue.flatMap(entry => {
+    if (entry.layer === 'wall-side' && entry.face.roundColumn === undefined) return [entry.face.d];
+    if (entry.layer === 'opening' && entry.surface.material === 'wall-side') return [entry.surface.d];
+    return [];
+  }).join(' ') : '';
+  // Keep individual planes for visibility. Paint adjacent visible facets as a
+  // single SVG fill so antialiasing cannot expose the floor between them.
+  const columnPaint = new Map<number, string[]>();
+  const columnRuns = new Map<number, string[]>();
+  const columnBounds = new Map<number, { left: number; right: number }>();
+  for (const face of scene.geometry.sides) {
+    if (face.roundColumn === undefined) continue;
+    const bounds = columnBounds.get(face.roundColumn) ?? {left: Infinity, right: -Infinity};
+    for (const [x] of face.points) {
+      bounds.left = Math.min(bounds.left, x);
+      bounds.right = Math.max(bounds.right, x);
+    }
+    columnBounds.set(face.roundColumn, bounds);
+  }
+  let previous: number | undefined;
+  depthQueue.forEach((entry, index) => {
+    const column = entry.layer === 'wall-side' ? entry.face.roundColumn : undefined;
+    if (entry.layer === 'wall-side' && column !== undefined) {
+      // The legacy painter can interleave an object between two facets. Only
+      // the depth-clipped pass may coalesce across other objects in the queue.
+      let run = columnPaint.get(column);
+      if (!run || (!ISO_LAB_OPENINGS && previous !== column)) {
+        run = [];
+        columnPaint.set(column, run);
+        columnRuns.set(index, run);
+      }
+      run.push(entry.face.d);
+    }
+    previous = column;
+  });
+  const visibility = scene.camera ? furniture.map(item=>furnitureOcclusion(depthQueue,scene.camera!,item.footprint,item.height)) : [];
+  const glassSlots = new Map<number,number>();
+  visibility.forEach((item,slot)=>item.frontGlass.forEach(index=>glassSlots.set(index,slot)));
+  const entries = depthQueue.map((entry,index)=>({entry,index}));
+  const paintEntry = ({entry,index}:typeof entries[number]) => {
         if (entry.layer === 'wall-side') {
           const face = entry.face;
-          return svg`<path class="iso-wall-side" d=${face.d} data-edge=${face.edge}></path>${layers.materialNuance
+          if (face.roundColumn !== undefined) {
+            const paths = columnRuns.get(index);
+            return paths ? svg`<path data-hp-round-column=${face.roundColumn} d=${paths.join(' ')}
+              fill=${layers.materialNuance ? 'url(#hp-iso-column-'+face.roundColumn+')' : 'var(--iso-side-mid, #adadad)'}></path>` : nothing;
+          }
+          return svg`<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${layers.materialNuance
             ? svg`<path class="iso-material-texture iso-wall-texture" d=${face.d}></path>`
             : nothing}`;
         }
@@ -198,13 +282,50 @@ export function renderIsoWalls(
             : nothing}`;
         }
         const surface = entry.surface;
+        if (surface.material === 'wall-side' || surface.material === 'wall-top') {
+          return svg`<path class="iso-${surface.material}" d=${surface.d} fill-rule="evenodd"
+            data-id=${surface.id} data-kind=${surface.type} data-surface=${surface.kind}></path>`;
+        }
         /* css-uses {"owner":"renderIsoWalls","kind":"class","values":["iso-door","iso-window"],"reason":"Opening surfaces have exactly the door/window type union"} */
         return svg`<path class="iso-opening-panel iso-${surface.type} iso-opening-${surface.kind} iso-material-${surface.material}"
-          d=${surface.d} data-id=${surface.id} data-kind=${surface.type}
+          d=${surface.d} fill-rule="evenodd" data-id=${surface.id} data-kind=${surface.type}
           data-surface=${surface.kind} data-leaf=${surface.leaf ?? nothing}></path>${layers.materialNuance
             ? svg`<path class="iso-material-texture iso-wall-texture iso-opening-texture"
                 d=${surface.d}></path>`
             : nothing}`;
-      })}</g>
-  </g>` as unknown as TemplateResult;
+  };
+  const walls = svg`<g class="iso-walls" data-hp="iso-walls" data-fingerprint=${scene.key} ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>
+    ${renderIsoDefs(layers, 'walls', cellCm)}
+    <defs>${ISO_LAB_FLOOR_MARKERS ? svg`<g id="hp-room-wall-silhouette" fill-rule="evenodd">
+      ${depthQueue.map(entry => {
+        if (entry.layer !== 'opening') return svg`<path d=${entry.face.d}></path>`;
+        const {material,d} = entry.surface;
+        return material === 'wall-side' || material === 'wall-top' ? svg`<path d=${d}></path>` : nothing;
+      })}
+    </g>` : nothing}
+    ${Array.from(columnBounds, ([id, bounds]) => svg`
+      <linearGradient id=${'hp-iso-column-'+id} gradientUnits="userSpaceOnUse"
+        x1=${bounds.left} x2=${bounds.right} y1="0" y2="0">
+        <stop offset="0" class="iso-side-mid"></stop><stop offset=".28" class="iso-side-hi"></stop>
+        <stop offset="1" class="iso-side-lo"></stop>
+      </linearGradient>`)}</defs>
+    <g class=${layers.panels ? 'iso-wall-depth-queue iso-openings' : 'iso-wall-depth-queue'}
+      data-hp=${layers.panels ? 'iso-openings' : nothing}
+      aria-hidden="true" pointer-events="none">
+      ${masonrySides ? svg`<path class="iso-masonry-underpaint" fill="var(--iso-side-mid, #adadad)"
+        d=${masonrySides}></path>` : nothing}
+      ${entries.filter(({index})=>!glassSlots.has(index)).map(paintEntry)}
+    </g></g>`;
+  const foreground = furniture.length ? svg`<g class="iso-walls" ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>
+      ${furniture.map((item,slot)=>{
+        const {mask,box} = visibility[slot];
+        const id = 'hp-furniture-foreground-'+slot;
+        return svg`${mask ? svg`<mask id=${id} maskUnits="userSpaceOnUse" x=${box[0]} y=${box[1]}
+          width=${box[2]-box[0]} height=${box[3]-box[1]}>
+          <rect x=${box[0]} y=${box[1]} width=${box[2]-box[0]} height=${box[3]-box[1]} fill="white"></rect>
+          <path d=${mask} fill="black"></path></mask>` : nothing}
+          <g mask=${mask ? 'url(#'+id+')' : nothing}>${item.body}</g>
+          ${entries.filter(({index})=>glassSlots.get(index)===slot).map(paintEntry)}`;
+      })}</g>` : nothing;
+  return {walls,foreground};
 }

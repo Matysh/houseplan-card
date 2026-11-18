@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 28" data-hp-volume-schema="2" data-hp-model="tv" data-hp-back="top">
+  <rect data-hp-part="stand-base" x="43.2" y="2.8" width="33.6" height="22.4" rx="0.7" data-hp-radius-ratio="0.025" data-hp-z-min-cm="0" data-hp-z-max-cm="3" />
+  <rect data-hp-part="stand-neck" x="56.4" y="10.08" width="7.2" height="6.16" rx="0.28" data-hp-radius-ratio="0.01" data-hp-z-min-cm="3" data-hp-z-max-cm="16" />
+  <rect data-hp-part="screen-frame" x="1.8" y="9.52" width="116.4" height="5.6" rx="0.56" data-hp-radius-ratio="0.02" data-hp-z-min-cm="12" data-hp-z-max-cm="81" data-hp-plane="xz" data-hp-inset-cm="1.7" />
+  <rect data-hp-part="display" x="3.6" y="10.22" width="112.8" height="3.36" rx="0.56" data-hp-radius-ratio="0.02" data-hp-z-min-cm="14" data-hp-z-max-cm="79" />
+</svg>

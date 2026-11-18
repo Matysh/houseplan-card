@@ -14,6 +14,22 @@ const face = (rippleColor) => ({
   },
 });
 
+test('#1451 floor shadow measures text capsules without duplicating interactive content', () => {
+  const flatten = value => value?.strings ? value.strings.map((s,i)=>s+flatten(value.values[i])).join('')
+    : Array.isArray(value)?value.map(flatten).join(''):typeof value==='symbol'?'':String(value??'');
+  const presentation = {...face('#ff9800'), icon:'mdi:thermometer', valueText:'22.4°', valueFullText:'22.4°',
+    valueBadge:null, tempText:null, humText:null, battery:{state:'warning'}, lqiText:'185'};
+  const shadow=flatten(renderDeviceShadowFace(presentation,true));
+  assert.match(shadow,/class=device-shell text-shell aria-hidden="true"/);
+  assert.match(shadow,/class="valtext"/);
+  assert.ok(shadow.includes(`--value-font-scale:${deviceTextScale('22.4°')}`));
+  assert.match(shadow,/>22\.4°<\/span>/);
+  assert.doesNotMatch(shadow,/ha-icon|device-contact|device-pulse|device-battery|lqi|tabindex|@click|with-values/);
+  assert.equal(flatten(renderDeviceShadowFace(presentation)), '', 'ordinary dev keeps its root-only shadow');
+  const icon=flatten(renderDeviceShadowFace({...presentation,valueText:null},true));
+  assert.match(icon,/class="device-core"/);assert.doesNotMatch(icon,/valtext|ha-icon/);
+});
+
 test('#1081 hidden status uses exactly the new-dot geometry and takes priority over new', () => {
   const flatten = value => value?.strings ? value.strings.map((s,i)=>s+flatten(value.values[i])).join('')
     : Array.isArray(value)?value.map(flatten).join(''):typeof value==='symbol'?'':String(value??'');

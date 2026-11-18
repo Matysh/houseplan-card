@@ -1,6 +1,7 @@
 /** #649 п.1: raised-tile markers in the 2.5D View (numbers: src/iso-tiles.ts). */
 import { css, unsafeCSS, type CSSResultGroup } from 'lit';
 import { isoTileGeometryCss, isoTileStateCss } from '../iso-tiles';
+import { isoLabMarkersStyles } from './iso-lab-markers.styles';
 
 // The build's css minifier accepts no interpolation: the generated tables
 // (one numeric source, src/iso-tiles.ts) are separate CSSResults.
@@ -122,5 +123,7 @@ const isoTilesStatic = css`
 `;
 
 export const isoTilesStyles: CSSResultGroup = [
-  unsafeCSS(isoTileGeometryCss()), unsafeCSS(isoTileStateCss()), isoTilesStatic,
+  ...[isoTileGeometryCss(), isoTileStateCss(), isoTilesStatic.cssText].map(text => unsafeCSS(
+    text.replaceAll('.stage.projection-iso.mode-view', '.stage.projection-iso.mode-view:not([data-hp-iso-floor-markers])'))),
+  isoLabMarkersStyles,
 ];

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" data-hp-volume-schema="2" data-hp-model="water_heater" data-hp-back="top">
+  <ellipse data-hp-part="tank" cx="22.5" cy="22.5" rx="21.15" ry="20.7" data-hp-z-min-cm="110" data-hp-z-max-cm="191" />
+  <ellipse data-hp-part="top-cap" cx="22.5" cy="22.5" rx="20.25" ry="19.8" data-hp-z-min-cm="191" data-hp-z-max-cm="194" />
+  <rect data-hp-part="pipe-cold" x="13.05" y="14.4" width="1.8" height="2.7" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="96" data-hp-z-max-cm="113" />
+  <rect data-hp-part="pipe-hot" x="30.15" y="14.4" width="1.8" height="2.7" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="96" data-hp-z-max-cm="113" />
+  <ellipse data-hp-part="thermometer" cx="22.5" cy="41.7375" rx="4.5" ry="0.7875" data-hp-z-min-cm="164" data-hp-z-max-cm="175" data-hp-plane="xz" />
+</svg>

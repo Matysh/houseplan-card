@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" data-hp-volume-schema="2" data-hp-model="chair" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="6" y="6" width="3.5" height="3.5" rx="0.5" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="44" />
+  <rect data-hp-part="leg-0-1" x="6" y="40" width="3.5" height="3.5" rx="0.5" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="44" />
+  <rect data-hp-part="leg-1-0" x="40" y="6" width="3.5" height="3.5" rx="0.5" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="44" />
+  <rect data-hp-part="leg-1-1" x="40" y="40" width="3.5" height="3.5" rx="0.5" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="44" />
+  <rect data-hp-part="seat" x="1.5" y="8" width="47" height="41" rx="6" data-hp-radius-ratio="0.12" data-hp-z-min-cm="44" data-hp-z-max-cm="49" />
+  <rect data-hp-part="back-left-post" x="7" y="5" width="3" height="3.5" rx="0.75" data-hp-radius-ratio="0.015" data-hp-z-min-cm="44" data-hp-z-max-cm="89" />
+  <rect data-hp-part="back-right-post" x="40" y="5" width="3" height="3.5" rx="0.75" data-hp-radius-ratio="0.015" data-hp-z-min-cm="44" data-hp-z-max-cm="89" />
+  <rect data-hp-part="backrest" x="3" y="0.5" width="44" height="10" rx="5" data-hp-radius-ratio="0.1" data-hp-z-min-cm="58" data-hp-z-max-cm="89" />
+</svg>

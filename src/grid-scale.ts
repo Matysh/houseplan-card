@@ -1,7 +1,6 @@
 import { wallCmToUnits } from './wall-thickness';
-
-/** Historical plan-cell size whose raw SVG constants define the visual baseline. */
-export const GRID_VISUAL_REFERENCE_CELL_CM = 5;
+import { GRID_VISUAL_REFERENCE_CELL_CM } from './canvas-constants';
+export { GRID_VISUAL_REFERENCE_CELL_CM } from './canvas-constants';
 
 /** Canonical centimetres in one imperial grid cell (one inch). */
 export const GRID_IMPERIAL_CELL_CM = 2.54;

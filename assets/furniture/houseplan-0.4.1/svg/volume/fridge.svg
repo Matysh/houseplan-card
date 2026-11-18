@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 65" data-hp-volume-schema="2" data-hp-model="fridge" data-hp-back="top">
+  <rect data-hp-part="cabinet-base" x="1.2" y="1.3" width="57.6" height="61.1" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="4" data-hp-z-max-cm="7" />
+  <rect data-hp-part="cabinet-top" x="1.2" y="1.3" width="57.6" height="61.1" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="185" data-hp-z-max-cm="188" />
+  <rect data-hp-part="cabinet-left" x="1.2" y="1.3" width="1.5" height="61.1" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="185" />
+  <rect data-hp-part="cabinet-right" x="57.3" y="1.3" width="1.5" height="61.1" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="185" />
+  <rect data-hp-part="cabinet-back" x="2.7" y="1.3" width="54.6" height="2.275" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="185" />
+  <rect data-hp-part="lower-door" x="1.5" y="61.1" width="57" height="2.6" rx="1.2" data-hp-radius-ratio="0.02" data-hp-z-min-cm="7" data-hp-z-max-cm="66" />
+  <rect data-hp-part="upper-door" x="1.5" y="61.1" width="57" height="2.6" rx="1.2" data-hp-radius-ratio="0.02" data-hp-z-min-cm="68" data-hp-z-max-cm="186" />
+  <rect data-hp-part="freezer-handle" x="4.8" y="63.7" width="1.5" height="1.3" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="48" data-hp-z-max-cm="63" />
+  <rect data-hp-part="fridge-handle" x="4.8" y="63.7" width="1.5" height="1.3" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="74" data-hp-z-max-cm="108" />
+  <rect data-hp-part="feet" x="6" y="6.5" width="48" height="48.75" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="4" />
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 48" data-hp-volume-schema="2" data-hp-model="chair_bar" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="8.1" y="12" width="3.15" height="3.36" rx="0.45" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="73" />
+  <rect data-hp-part="leg-0-1" x="8.1" y="36.48" width="3.15" height="3.36" rx="0.45" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="73" />
+  <rect data-hp-part="leg-1-0" x="33.75" y="12" width="3.15" height="3.36" rx="0.45" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="73" />
+  <rect data-hp-part="leg-1-1" x="33.75" y="36.48" width="3.15" height="3.36" rx="0.45" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="73" />
+  <ellipse data-hp-part="seat" cx="22.5" cy="26.688" rx="21.465" ry="21.312" data-hp-z-min-cm="73" data-hp-z-max-cm="78" />
+  <rect data-hp-part="back-left-post" x="3.15" y="11.04" width="2.475" height="2.88" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="73" data-hp-z-max-cm="104" />
+  <rect data-hp-part="back-right-post" x="39.375" y="11.04" width="2.475" height="2.88" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="73" data-hp-z-max-cm="104" />
+  <polygon data-hp-part="backrest" points="43.743,14.8035 44.68575,13.39005 45,11.7822 44.68575,10.17435 43.743,8.7609 41.555828,6.787602 39.19055,5.041488 36.664922,3.534305 33.9967,2.2778 31.217484,1.287773 28.361,0.575238 25.448191,0.144533 22.5,0 19.551809,0.144533 16.639,0.575238 13.782516,1.287773 11.0033,2.2778 8.335078,3.534305 5.80945,5.041488 3.444172,6.787602 1.257,8.7609 0.31425,10.17435 0,11.7822 0.31425,13.39005 1.257,14.8035 2.676719,15.742088 4.2917,16.05495 5.906681,15.742088 7.3264,14.8035 10.607231,12.136867 14.32205,10.173687 18.332444,8.961164 22.5,8.5465 26.667556,8.961164 30.67795,10.173688 34.392769,12.136867 37.6736,14.8035 39.093319,15.742088 40.7083,16.05495 42.323281,15.742088" data-hp-z-min-cm="91" data-hp-z-max-cm="118" />
+  <rect data-hp-part="footrest-front" x="9.675" y="38.16" width="25.65" height="1.68" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="29" data-hp-z-max-cm="32" />
+  <rect data-hp-part="footrest-left" x="9.675" y="13.68" width="1.575" height="24.48" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="29" data-hp-z-max-cm="32" />
+  <rect data-hp-part="footrest-right" x="34.65" y="13.68" width="1.575" height="24.48" rx="0.675" data-hp-radius-ratio="0.015" data-hp-z-min-cm="29" data-hp-z-max-cm="32" />
+</svg>

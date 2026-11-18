@@ -2,7 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DeviceContactScene, contactBounds } from '../test-build/device-contact-scene.js';
 import { contactContains } from '../test-build/device-contact-geometry.js';
-import { screenContactScene } from '../test-build/device-contact-screen.js';
+import { screenContactScene, projectedContactHit } from '../test-build/device-contact-screen.js';
+import { isoFloorMatrix } from '../test-build/iso-projection.js';
+
+test('#1451 floor-aligned contact hit uses the inverse projection, preserving member ownership', () => {
+  const normalized={marker:{id:'a',x:0,y:0,diameter:1},angle:0,radius:.5,
+    box:{left:-.5,right:.5,top:-.5,bottom:.5},walls:{}};
+  const contact={bounds:contactBounds(normalized),contains:(x,y)=>contactContains(normalized,[x,y])};
+  for(const yaw of [35,125,215,305]) for(const size of [18,44,120]) {
+    const plane=isoFloorMatrix({rotDeg:yaw,tiltDeg:55,xyScale:1,zScale:1,origin:[500,500],floorScaleY:Math.sin(35*Math.PI/180)});
+    const [a,b,c,d]=plane, candidate={id:'a',center:{x:300,y:400},painted:{},floorRadius:22};
+    const point=([u,v])=>({x:300+(a*u+c*v)*size,y:400+(b*u+d*v)*size});
+    projectedContactHit(candidate,contact,size*(Math.abs(a)+Math.abs(c)),size*(Math.abs(b)+Math.abs(d)),plane);
+    assert.equal(candidate.contains(point([0,0])),true);
+    assert.equal(candidate.contains(point([.49,0])),true);
+    assert.equal(candidate.contains(point([.49,.49])),false,'empty corners do not steal a neighbouring marker');
+    assert.equal(candidate.contains(point([1.125,0])),false,'the other stack member keeps its hit');
+    assert.equal(candidate.floorRadius,22,'44px minimum stays screen-facing');
+  }
+});
 
 test('#1119 asymmetric screen-facing badge boxes are re-derived rather than rotated old contours', () => {
   const marker = { id: 'a', x: 400, y: 500, diameter: 20, box: { left: -10, right: 40, top: -10, bottom: 10 } };

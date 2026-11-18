@@ -1,0 +1,2306 @@
+[
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "e8cfc5fc4556e387844b40902d0698d827dd77ab595d0046a2a24b287d113cc3"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "00836868212720004815e87625af11cc6f771df53dda99e8410fdd96d5a1c3c4"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "0c1287f73378968fa1181e7fc6c35707db6153492a817710814e40b4851e47c2"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "ae6605b9cec363fe5d934e8d0909ad7f28832510d0b953f93dbe2ec59d2d6a46"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "1b5a4658c67a67ea4ca45fea5ba861f3191f6aa348f6849e2d210be796b79e4f"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "bf46540c2a58a89f8f06025d5bac30e369e622db9e40aabc0df1eebd71dd6940"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "90253c6d064d07c43d9c87797e6eb53c253a9cce131faf706d0f4df1330c4080"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "6e47608f042bf040eb9bbd588e9f8e7d160b9fe78bdfe768acf01895e89b95d6"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "cd18ce24c19bcd7096740cdccd49c59ce85837b94bec9688d07352cb1c95d3d2"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "930494c1d8ab63de067ff75ec94081d1c69b49cd23a72953d61529b6444aa80e"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "c79b0ed73d24f2eeba456eed6b3b58803470182da429cc2945709c6e1cf3f2ee"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "78121c48e1f713212c8c690fe7f3998d4eaf7739048b6fa0422bd0c75e920cef"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "90319fff4dd843db0ca8c2685ac4050aee88b85e1b4478d1c95f0e28db4ecfb5"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "d78ec5f48a93260e352168b7bbb6b82b057f5b29a99e943bbaa71265f0afa905"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "28df62d6a08bfb39fdfe658227a20953c7b02d1275560b62de741b78f13e592e"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "719ef0a1610159c97b5589e3e530869267f9e7264af41266dd296fbd69406765"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "d824a772be3efeed8df2bce64f08fdbfb86bfbb1c7ae673d735a0aac3de5f594"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "e131ab401033351e0df1dd5c53724424c633f9c8a628833610018832d6391d0c"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "999b8259369f4cbd83dd2174ceb520636c29a7f9d6ce81233c1fccf5b3385a14"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "e53b488a8b2469ded3e89bfe3fd875d8fcf13e5ced04cd9542df570a47afb15a"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "bc3b1e0c6c6f9194f5568b97652004e9b86783455b420c5f2a8f83867658264d"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "fe6916eda5465004a68082910eb071ccf2c48b7e491caea9fcc7d3d33207e7e1"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "b01e0f966d1d1bc6b2b802c488e3e9dfd0d9a17a9950c0faf8293a6e83598bb9"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "6a17e19fc736b679c1d33186efa505c8fed877ed1c140a62462bb87c50b9d140"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "c6d869bb4c5b5bee5ec4701077a874d199a66c73d7a0271e94883f080bbfa371"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "703160b333e942d3925d7983b75e5079b8715a9a5eaf1645a5482800e1a41a3c"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "2b4fed3cbfab44f6737ae3e8cfb5d92fab200279e52003a7b7b865715b9413d8"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "4a395a503f25d958f53cd5f818008fdd1ad351023f307955fd007daca47a2205"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "42b229a60080615fffbbc979cbc25b8fc887907f14b79cbce37b2d6bd2a30670"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "aee1960c6bf04376a35d427b0222e68680297048e05860612be3eebdb12380dd"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "f89c8c4c63f673cc15b9e9367393b4f47563341d0ac51552a1671d124ed6a6b9"
+  },
+  {
+    "shape": {
+      "symbol": "sofa",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "60b52b0469ba62813acc3030a8a9a5d374a275f19cb45a71dfac3283d0d6f5b3"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "f41b915ce6685a5c3267c25824b5e44f1541e8edbdae180ab01ab2f74f47b18a"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "13ee903505431187ae549bcfa5346f40ae8dcc0ea4974290e36b6ab945f1e6db"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "f1a32e7fa374aca98d12344cdd8735134276b9332d432f0cab2d2627fc98e99d"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "273657942a742e6f7fca4891a0238358d8bbad8f881686cda311968ec2987873"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "4d18817bd016505f634bdae95d732d024cb18f3b1e93bc0d83a75a38ae7c7816"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "eb67fe5d3b9877c80ea85c59be4e5d0d57ffe2798523fa4e10ee84bdc2b1ddc4"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "d9be5dd89ecec533c3145b4fa794a0856fa720e77cc287c73541e078207cc5bd"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "3971a3f4f6ba8271671ec3b5e7c002bf6118ada69ba8267515f315e4b6615569"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "38b840e501a819cd92c62bee0dee0c41bd1e1ff940991649c9fa5997ba8326a6"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "1060f059722dc44ae3799bb0984a7efcb4062f01a38114e75bc8cf2838d375bf"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "b7ba2b81591eb66dd19129e0e6322b5f698a619b8c14c6113a45a7a22795ec8f"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "a98dbc9954de08aa9a8a652f5fbe37230094f7fb666fd9f7c17bb9c051f3d776"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "cb835c2ccbffb82b070326341fb04c9556a2d018883b5d0cad57bd5b491d22ba"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "3be0c6250f882e395ea7ada46330d9ccca04cff494470142e137f90cd8134021"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "a5b3e2e5e93c2c1dbb5810ce81b1e59d8fc1f6f38d4596ca4cfb06125580f651"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "df46f87613ae5c2ce37ea839853bac69270dbf65c2d320ff571409f6f208b5b1"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "27ff7fa121cbbeb3c88e1fc7d148dd5d39eccc0b7d9136279ed580ea034ee2ce"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "c137d77a85439df5ac19aebe25eadabcc1a946fa651e195e31bf35b6d42c7596"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "30da5e7956995060528e6a3cc2aa4a695761216ac29568c8d71eb39f18eaee04"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "6af5a7e3384f22347a8b4c5b1a606fb568634622004a44d0f16f744ac200be94"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "97267b4f2adb569a439257a4dadf4d71f4c6cc5e645c1c52b95a499085f29b20"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "2a6f94020ec3aaf8b53e06256fae302b669438fde667b3e428a4a1d55459619d"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "a65464fc3ebb9d9324146e6f6e377037b9ca69e9c33686b1b53bb403bf27a869"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "5c7d7a70c1345f28a421899c25bcb71e4996d84121ed1c52ee8927826a8bdc95"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "46afa44486f51e4ebbf24ab55b8fa346c4cf4a2b2658ccbb795bc1a182aceb69"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "0f740198e1a5e72fc84f3a8d45e737d72900ebaba4fac614b4e797893a0e7573"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "17e2b656f9d88f42bc23bcebaf20a06f2d3714b1762056608b4da30d985091b1"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "fc152cd4333792dd35344c66b88e5265846f8ee3a15ca07fc7b64d5b850ac198"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "38587c93dfc88e18f9ef67fa22566161364422961f2d0bcd2554052c39664abb"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "a5adbf8d28d9e80f9a24a2a28a92429457221bd6cfc516b3f4c48ced6fe6a450"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "125057551075069ba063734670217ea04ff002cf99cba08352cbae66c768bc4b"
+  },
+  {
+    "shape": {
+      "symbol": "coffee_table",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "2b7f77a9574d677ecdc2468eff7e90c564e88ab7fb7be552520a93a3f13bbce9"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "e45d3b1eba3ac942296ccc6faf5770b80e7b4e95233f4e31db8ab26447a34946"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "d3a5036cb69279f32054348acc3014fe5dfe10d704cecfd25444148a8b6217d6"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "b0ee58225b64481d642ef48fdc133da3a93a60769db5fa0a03b7e7f974289057"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "86e7a2ee3b887efd018a502d11f501a325df2d5edd0e2c78defde08b0ea14ce1"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "df775e4fb03fd20f932830e843428219b247e04d4c36ae939ca31ba84c9315d1"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "d43ff1f85d59aeafb3974b316d4fcc5a4dddfcd6da93d38c92879e5809a714c2"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "7c0ca5446d22277d5869ea4d4bb539b3199ca57b9fc7db3a946c1352b9bd996f"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 35,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "5dd243fedaba157134a1370b7f8fb4823417d4be82b465a1cb812b56f8697b4b"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "c184d894748e257767e32bac67ebeaeb89eba1313083e607b909724cd054274d"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "6179cb7bd5942a5888762dae4cbebaeecbd92bc4b3bac14cbe016be010207868"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "6d09f145f1655a137421c887c60ea28a759949d785af1740d9e484666848ef57"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "546b03e5f1bc5a6f738079c1ba055b51ae7ce916482dc2bb48d5c8297dd311c9"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "55f9a67cbb8be340b4309fac130665f5f1091d1429ef20a6db41872cb09eca5e"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "eddd1ef3b19778e3dc0b23db14785a74ba2dae9d814359569e254fb4ef3b5c1b"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "600d1df699a5795f18e6374bd17afb4014edb284de70cdc91f79d81844ccaa7a"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 125,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "4d38696238801dc40388db170c6720a6327109dec28a8694a88a1fdfb849aa99"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "2c90c58f73f08ebb0f43f7d100e675aee10baab5e5fb73a3994476bcdf28ae67"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "ed7749d6a4aebf0bde58a14cf8262244dd0ee6c624f15fe28ef414c97df8b360"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "a0dc82b8f5face75df4115b6cd7bd1874064101441d93ed67930c0ff42fdb47b"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "d76ca33140e6c822f405f2ff13253ee57eb6e8de0303c566906198cfc5d16977"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "ef0a109204c186d849a45e5da57c4d5743e9abc1a3298280ec606b89591ac412"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "500d1471abdc3d2683d05097e08dcb23aea8c6408d1f102c60408f21857c0478"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "3e2a257e24ea2c27a8a94eac0a0edd2f35235e369609e827902cd79364853a3b"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 215,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "2e88198e70a9728afa3380150d10d8cae174b3a6dd7ae5f5fdf3cac0bdbae671"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "0e45dbdb0dd47c7fc3176b8945383db82168f42b1bea43b81dce33abb439078b"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "8ddfc10455c14b1b2522c310ecce190dafbe50e154e838acc90c7f86e2ea9262"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "accf4db699dc5bfd0112f9268e2f2f720994bf512bb01157aae65013fc31ad2c"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": false,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "b48d6c8cf189b9d73f156be3c254c512ee424b6e4a2b97416792fba3611ccac4"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "84bdeb0e87506dcee4771e7d04b89b37432ed12c5baaf9228a01a392f9b52146"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": false
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "f730f0948fe2e8b38712453653b329ea4f70d98b921bc3d4090348208ed13074"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.23,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "c854816ceb9561f62a26c63383edcebc9e0f7ee77a42ce8e713f59ea5853a111"
+  },
+  {
+    "shape": {
+      "symbol": "bed_double",
+      "x": 0.15,
+      "y": 0.27,
+      "w": 0.36800000000000005,
+      "h": 0.12,
+      "angle": 23,
+      "flip_h": true,
+      "flip_v": true
+    },
+    "camera": {
+      "rotDeg": 305,
+      "tiltDeg": 50,
+      "xyScale": 1,
+      "zScale": 1,
+      "origin": [
+        500,
+        500
+      ],
+      "floorScaleY": 0.6427876096865393
+    },
+    "sha256": "91c460fb3c6a27c75d9749f6a6226e128a53f0de4c22430f9364dee8a2d9b780"
+  }
+]

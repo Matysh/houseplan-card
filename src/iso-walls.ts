@@ -5,6 +5,9 @@ import {
 
 export interface IsoWallFace {
   d: string;
+  roundColumn?: number;
+  planEdge?: readonly [PlanPoint, PlanPoint];
+  height?: number;
   /** Exact visible quad, reused by Stage 4 overlay collision geometry. */
   points: readonly ScenePoint[];
   depth: number;
@@ -18,6 +21,8 @@ export interface IsoWallTopFace {
   d: string;
   depth: number;
   component: number;
+  projectedRings?: readonly (readonly ScenePoint[])[];
+  height?: number;
 }
 
 export interface IsoWallGeometry {
@@ -112,8 +117,18 @@ export function buildIsoWallGeometry(
   geometry: any,
   camera: IsoCamera = ISO_CAMERA,
   height = ISO_WALL_HEIGHT,
+  roundColumnRings: readonly number[][][] = [],
 ): IsoWallGeometry {
   if (!Number.isFinite(height) || height < 0) throw new Error('invalid wall height');
+  // Match the actual column perimeter in the physical union. Square columns
+  // and straight wall edges keep their own faces and material boundaries.
+  const columnEdges = new Map<string, number>();
+  const edgeKey = (a: readonly number[], b: readonly number[]) => {
+    const first = pointText([a[0], a[1]]), second = pointText([b[0], b[1]]);
+    return first < second ? first + ':' + second : second + ':' + first;
+  };
+  roundColumnRings.forEach((ring, index) => ring.forEach((a, i) =>
+    columnEdges.set(edgeKey(a, ring[(i + 1) % ring.length]), index)));
   const tops: string[] = [];
   const topFaces: IsoWallTopFace[] = [];
   const sides: IsoWallFace[] = [];
@@ -122,6 +137,7 @@ export function buildIsoWallGeometry(
   for (let polygon = 0; polygon < (geometry || []).length; polygon++) {
     const source = geometry[polygon];
     const componentPaths: string[] = [];
+    const projectedRings: ScenePoint[][] = [];
     let componentDepth = -Infinity;
     for (let ring = 0; ring < (source || []).length; ring++) {
       const points = normalizedRing(source[ring], ring > 0);
@@ -129,6 +145,7 @@ export function buildIsoWallGeometry(
       const topPath = topRingPath(points, camera, height);
       tops.push(topPath);
       componentPaths.push(topPath);
+      projectedRings.push(points.map(point => projectPlanPoint(point,height,camera)));
       componentDepth = Math.max(componentDepth,
         ...points.map((point) => projectPlanPoint(point, height, camera)[1]));
       edgeCount += points.length;
@@ -144,6 +161,8 @@ export function buildIsoWallGeometry(
         sides.push({
           d: `M ${facePoints.map(pointText).join(' L ')} Z`,
           points: facePoints,
+          planEdge: [a,b], height,
+          roundColumn: columnEdges.size ? columnEdges.get(edgeKey(a, b)) : undefined,
           depth: Math.max(floorA[1], floorB[1]), polygon, ring, edge,
         });
       }
@@ -153,6 +172,7 @@ export function buildIsoWallGeometry(
         d: componentPaths.join(' '),
         depth: componentDepth,
         component: polygon,
+        projectedRings, height,
       });
     }
   }

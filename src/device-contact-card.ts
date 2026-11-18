@@ -17,6 +17,7 @@ interface ContactCard extends FloorKeySource {
   _config?: { icon_size?: number };
   _renderProjection: string; _mode: string; _markup: boolean;
   readonly _rotation: PlanRotation;
+  readonly _isoFloorMarkerPlane?: readonly number[];
   _kioskScale: { icon: number };
   _renderDevices: readonly DevItem[];
   _deviceHits: DeviceHitController;
@@ -57,7 +58,8 @@ const wallKeys = new WeakMap<object, (spaceId: string) => string>();
 export function syncHouseplanDeviceContacts(value: object, renderer: DeviceContactRenderer): void {
   const host = value as ContactCard, space = host._spaceModel();
   if (host._deviceHits.contactGeometry !== renderer.hit) host._deviceHits.contactGeometry = renderer.hit;
-  if (!space || host._renderProjection === 'iso') { renderer.clear(); return; }
+  const plane = host._isoFloorMarkerPlane;
+  if (!space || host._renderProjection === 'iso' && !plane) { renderer.clear(); return; }
   const visible = host._spaceDisplayForRender().showBorders || host._markup;
   let keyOf = wallKeys.get(host);
   if (!keyOf) { keyOf = floorGeometryKeyReader(host); wallKeys.set(host, keyOf); }
@@ -73,7 +75,7 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
     * (host._mode === 'view' ? host._kioskScale.icon : 1);
   const wasReflowed=renderer.reflowed;
   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
-    space:space.id,layout:host._layout,rotation:host._rotation,invalidate:()=>host.requestUpdate(),
+    space:space.id,layout:host._layout,rotation:plane ? 0 : host._rotation,plane,invalidate:()=>host.requestUpdate(),
     markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => ({
       id: d.id, ...host._pos(d,false), virtual:d.virtual===true||d.bindingKind==='virtual', diameter: base * host._devicePresentation(d).scale,
     })) });

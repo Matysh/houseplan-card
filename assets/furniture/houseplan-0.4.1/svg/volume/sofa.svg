@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 90" data-hp-volume-schema="1" data-hp-model="sofa" data-hp-back="top">
+  <rect data-hp-part="leg-0" x="16.2" y="8.1" width="8.1" height="5.85" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-1" x="155.7" y="8.1" width="8.1" height="5.85" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-2" x="16.2" y="76.05" width="8.1" height="5.85" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-3" x="155.7" y="76.05" width="8.1" height="5.85" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="base" x="6.3" y="4.95" width="167.4" height="81.9" rx="8.55" data-hp-radius-ratio="0.095" data-hp-z-min-cm="12" data-hp-z-max-cm="29" />
+  <rect data-hp-part="seat-left" x="22.5" y="22.5" width="66.6" height="64.35" rx="6.75" data-hp-radius-ratio="0.075" data-hp-z-min-cm="29" data-hp-z-max-cm="44" />
+  <rect data-hp-part="seat-right" x="90.9" y="22.5" width="66.6" height="64.35" rx="6.75" data-hp-radius-ratio="0.075" data-hp-z-min-cm="29" data-hp-z-max-cm="44" />
+  <rect data-hp-part="back-left" x="18.9" y="1.35" width="70.2" height="20.7" rx="6.75" data-hp-radius-ratio="0.075" data-hp-z-min-cm="29" data-hp-z-max-cm="85" />
+  <rect data-hp-part="back-right" x="90.9" y="1.35" width="70.2" height="20.7" rx="6.75" data-hp-radius-ratio="0.075" data-hp-z-min-cm="29" data-hp-z-max-cm="85" />
+  <rect data-hp-part="arm-left" x="0" y="9.9" width="22.5" height="78.3" rx="5.4" data-hp-radius-ratio="0.06" data-hp-z-min-cm="25" data-hp-z-max-cm="66" />
+  <rect data-hp-part="arm-right" x="157.5" y="9.9" width="22.5" height="78.3" rx="5.4" data-hp-radius-ratio="0.06" data-hp-z-min-cm="25" data-hp-z-max-cm="66" />
+</svg>

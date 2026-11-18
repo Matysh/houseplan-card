@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" data-hp-volume-schema="2" data-hp-model="kitchen_floor" data-hp-back="top">
+  <rect data-hp-part="base-cabinet-base" x="1.5" y="1.5" width="57" height="55.8" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="10" data-hp-z-max-cm="13" />
+  <rect data-hp-part="base-cabinet-top" x="1.5" y="1.5" width="57" height="55.8" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="84" data-hp-z-max-cm="87" />
+  <rect data-hp-part="base-cabinet-left" x="1.5" y="1.5" width="1.5" height="55.8" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="84" />
+  <rect data-hp-part="base-cabinet-right" x="57" y="1.5" width="1.5" height="55.8" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="84" />
+  <rect data-hp-part="base-cabinet-back" x="3" y="1.5" width="54" height="2.1" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="13" data-hp-z-max-cm="84" />
+  <rect data-hp-part="base-cabinet-door-0" x="3" y="54.6" width="53.52" height="1.68" rx="0.24" data-hp-radius-ratio="0.004" data-hp-z-min-cm="13.5" data-hp-z-max-cm="83.5" />
+  <rect data-hp-part="base-cabinet-pull-0" x="46.8864" y="56.28" width="0.72" height="1.02" rx="0.24" data-hp-radius-ratio="0.004" data-hp-z-min-cm="40.5" data-hp-z-max-cm="56.5" />
+  <rect data-hp-part="plinth" x="3.6" y="4.2" width="52.8" height="49.8" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="10" />
+  <rect data-hp-part="worktop" x="0.6" y="0.6" width="58.8" height="58.8" rx="1.2" data-hp-radius-ratio="0.02" data-hp-z-min-cm="87" data-hp-z-max-cm="91" />
+</svg>

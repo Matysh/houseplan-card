@@ -1,4 +1,5 @@
 import type { PlanHost, HostPresentationContext } from './plan-host';
+import { workstationTarget, toggleWorkstation } from './iso-lab-workstation';
 import { hasMarkers } from './plan-capabilities';
 import { ModeChromeLayouts, type ModeChromeProbe } from './mode-chrome-layout';
 import {WallSideDimensionEditor} from './wall-side-dimension-editor';
@@ -5363,6 +5364,8 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
     const selected = this.host._dtSel;
     if (selected) {
       const label = this.host._t((`decor.${selected.kind}`) as any);
+      const workstation = document.documentElement.dataset.uiLabCamera1451 === 'true'
+        ? workstationTarget(this.host._decorList, selected) : null;
       return {
         contextId,
         kind: 'selection',
@@ -5371,6 +5374,21 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
         layout: 'actions',
         content: html`
           <div class="decor-selection-actions">
+            ${workstation
+              ? html`<button class="btn ghost" data-hp="action" data-action="desktop-mount"
+                @click=${() => this._runEditorContext(contextId, () => {
+                  const current = this.host._dtSel;
+                  const space = this.host._curSpaceCfg;
+                  if (!space || !this.host._canEdit || !current || current.id !== selected.id) return;
+                  const target = workstationTarget(this.host._decorList, current);
+                  if (!target) return;
+                  const before = this._geometrySnapshot();
+                  space.decor = toggleWorkstation(this.host._decorList, target.desk, target.pc);
+                  this.host._decorSel = target.desk.id;
+                  this._recordGeometry(target.desk.lab_workstation === 'mounted' ? 'Снять со стола' : 'Поставить на стол', before);
+                  this._saveConfig();
+                  this.host.requestUpdate();
+                })}>${workstation.desk.lab_workstation === 'mounted' ? 'Снять со стола' : 'Поставить на стол'}</button>` : nothing}
             ${(['front', 'back'] as const).map(direction => html`<button class="btn ghost" data-hp="action" data-action=${`decor-${direction}`}
               ?disabled=${(direction === 'front' ? this.host._decorList[this.host._decorList.length - 1] : this.host._decorList[0])?.id === selected.id}
               @click=${() => this._runEditorContext(contextId, () => this.decorOrder.command(selected.id, direction))}>

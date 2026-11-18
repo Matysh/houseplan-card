@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 90" data-hp-volume-schema="2" data-hp-model="shower" data-hp-back="top">
+  <rect data-hp-part="tray-bottom" x="1.8" y="1.8" width="86.4" height="86.4" rx="3.6" data-hp-radius-ratio="0.04" data-hp-z-min-cm="0" data-hp-z-max-cm="4" />
+  <rect data-hp-part="tray-rim" x="1.35" y="1.35" width="87.3" height="87.3" rx="4.5" data-hp-radius-ratio="0.05" data-hp-z-min-cm="4" data-hp-z-max-cm="10" data-hp-inset-cm="4" />
+  <rect data-hp-part="glass-left" x="2.25" y="2.25" width="2.25" height="84.6" rx="0.54" data-hp-radius-ratio="0.006" data-hp-z-min-cm="10" data-hp-z-max-cm="209" />
+  <rect data-hp-part="glass-back" x="4.5" y="2.25" width="82.8" height="2.25" rx="0.54" data-hp-radius-ratio="0.006" data-hp-z-min-cm="10" data-hp-z-max-cm="209" />
+  <rect data-hp-part="glass-front" x="5.4" y="84.15" width="80.1" height="2.25" rx="0.54" data-hp-radius-ratio="0.006" data-hp-z-min-cm="10" data-hp-z-max-cm="205" />
+  <rect data-hp-part="left-upright" x="2.25" y="82.8" width="2.25" height="2.7" rx="0.45" data-hp-radius-ratio="0.005" data-hp-z-min-cm="10" data-hp-z-max-cm="210" />
+  <rect data-hp-part="right-upright" x="85.05" y="82.8" width="2.25" height="2.7" rx="0.45" data-hp-radius-ratio="0.005" data-hp-z-min-cm="10" data-hp-z-max-cm="210" />
+  <rect data-hp-part="door-pull" x="72.9" y="86.4" width="1.8" height="1.8" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="98" data-hp-z-max-cm="122" />
+  <rect data-hp-part="shower-riser" x="42.3" y="5.85" width="2.25" height="2.25" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="98" data-hp-z-max-cm="202" />
+  <rect data-hp-part="head-arm" x="42.3" y="5.85" width="2.25" height="22.5" rx="1.35" data-hp-radius-ratio="0.015" data-hp-z-min-cm="198" data-hp-z-max-cm="202" />
+  <ellipse data-hp-part="shower-head" cx="43.65" cy="25.65" rx="7.65" ry="7.65" data-hp-z-min-cm="199" data-hp-z-max-cm="203" />
+  <ellipse data-hp-part="drain" cx="45" cy="45" rx="3.6" ry="3.6" data-hp-z-min-cm="4" data-hp-z-max-cm="5" />
+</svg>

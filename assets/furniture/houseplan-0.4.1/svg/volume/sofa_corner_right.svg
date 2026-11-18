@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170" data-hp-volume-schema="2" data-hp-model="sofa_corner_right" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="15.6" y="13.6" width="10.4" height="6.8" rx="1.7" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-0-1" x="15.6" y="81.6" width="10.4" height="6.8" rx="1.7" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-1-0" x="228.8" y="13.6" width="10.4" height="6.8" rx="1.7" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-1-1" x="228.8" y="81.6" width="10.4" height="6.8" rx="1.7" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="chaise-leg-left" x="171.6" y="153" width="10.4" height="6.8" rx="2.55" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="chaise-leg-right" x="234" y="153" width="10.4" height="6.8" rx="2.55" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="base-main" x="7.8" y="6.8" width="244.4" height="86.7" rx="8.5" data-hp-radius-ratio="0.05" data-hp-z-min-cm="12" data-hp-z-max-cm="29" />
+  <rect data-hp-part="base-chaise" x="166.4" y="91.8" width="85.8" height="73.1" rx="8.5" data-hp-radius-ratio="0.05" data-hp-z-min-cm="12" data-hp-z-max-cm="29" />
+  <rect data-hp-part="arm-left" x="2.6" y="15.3" width="18.2" height="69.7" rx="6.8" data-hp-radius-ratio="0.04" data-hp-z-min-cm="25" data-hp-z-max-cm="66" />
+  <rect data-hp-part="arm-right" x="241.8" y="15.3" width="15.6" height="142.8" rx="6.8" data-hp-radius-ratio="0.04" data-hp-z-min-cm="25" data-hp-z-max-cm="66" />
+  <rect data-hp-part="back-0" x="23.4" y="4.25" width="70.2" height="17.85" rx="5.1" data-hp-radius-ratio="0.03" data-hp-z-min-cm="29" data-hp-z-max-cm="85" />
+  <rect data-hp-part="back-1" x="95.42" y="4.25" width="70.2" height="17.85" rx="5.1" data-hp-radius-ratio="0.03" data-hp-z-min-cm="29" data-hp-z-max-cm="85" />
+  <rect data-hp-part="back-2" x="167.44" y="4.25" width="70.2" height="17.85" rx="5.1" data-hp-radius-ratio="0.03" data-hp-z-min-cm="29" data-hp-z-max-cm="85" />
+  <rect data-hp-part="seat-left" x="23.4" y="22.95" width="70.2" height="68" rx="10.2" data-hp-radius-ratio="0.06" data-hp-z-min-cm="29" data-hp-z-max-cm="44" />
+  <rect data-hp-part="seat-middle" x="96.2" y="22.95" width="70.2" height="68" rx="10.2" data-hp-radius-ratio="0.06" data-hp-z-min-cm="29" data-hp-z-max-cm="44" />
+  <rect data-hp-part="chaise-cushion" x="169" y="22.95" width="71.5" height="140.25" rx="10.2" data-hp-radius-ratio="0.06" data-hp-z-min-cm="29" data-hp-z-max-cm="44" />
+</svg>

@@ -11,7 +11,7 @@ const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
   '.json': 'application/json; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png',
   '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff': 'font/woff', '.woff2': 'font/woff2' };
 const labFiles = new Set(['index.html', 'app.mjs', 'mock-ha.mjs', 'session.mjs', 'ha-bootstrap.mjs', 'theme.css', 'lab.css',
-  'plan-host.html', 'plan-host.mjs']);
+  'plan-host.html', 'plan-host.mjs', 'furniture-gallery.html', 'furniture-gallery.css']);
 const overrides = new Set(['houseplan-card.css', 'houseplan-panel.css', 'hp-dialog.css', 'ha-dialog.css']);
 const csp = "default-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'none'; object-src 'none'; worker-src 'none'; frame-src 'none'; frame-ancestors 'none'; form-action 'none'; base-uri 'none'";
 const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
@@ -124,6 +124,8 @@ export function createLabServer(options = {}) {
       } else if (path === '/fixture-state.js') reply = fileReply(resolve(config.repoRoot, 'demo/srv'), 'fixture-state.js');
       else if (path === '/plan-host-fixture.js') reply = fileReply(resolve(config.repoRoot, 'demo/srv'), 'plan-host-fixture.js');
       else if (config.assets && /^\/api\/houseplan\/content\/assets\/_\/[a-f0-9]{64}\.(png|jpg|webp|svg)$/.test(path)) reply = fileReply(config.assets, path.split('/').pop());
+      else if (/^\/gallery-assets\/(?:chunks\/)?[a-zA-Z0-9_-][a-zA-Z0-9_.-]*\.js$/.test(path)) reply = fileReply(resolve(config.labRoot, 'gallery-dist'), path.slice('/gallery-assets/'.length));
+      else if (/^\/volume-source\/[a-z][a-z0-9_]*\.svg$/.test(path)) reply = fileReply(resolve(config.repoRoot, 'assets/furniture/houseplan-0.4.1/svg/volume'), path.split('/').pop());
       else if (path === '/') reply = fileReply(config.labRoot, 'index.html');
       else if (labFiles.has(path.slice(1))) reply = fileReply(config.labRoot, path.slice(1));
       else if (path === '/favicon.ico') { res.writeHead(204, headers).end(); return; }

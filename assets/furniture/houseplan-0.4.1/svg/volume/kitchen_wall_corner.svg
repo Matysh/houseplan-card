@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" data-hp-volume-schema="2" data-hp-model="kitchen_wall_corner" data-hp-back="top">
+  <polygon data-hp-part="bottom" points="1.2,1.2 30,1.2 30,30 58.8,30 58.8,58.8 1.2,58.8" data-hp-z-min-cm="145" data-hp-z-max-cm="148" />
+  <polygon data-hp-part="top" points="1.2,1.2 30,1.2 30,30 58.8,30 58.8,58.8 1.2,58.8" data-hp-z-min-cm="212" data-hp-z-max-cm="215" />
+  <rect data-hp-part="back-left" x="1.2" y="1.2" width="1.5" height="57.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="148" data-hp-z-max-cm="212" />
+  <rect data-hp-part="back-bottom" x="2.7" y="57.3" width="56.1" height="1.5" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="148" data-hp-z-max-cm="212" />
+  <rect data-hp-part="side-top" x="2.7" y="1.2" width="27.3" height="1.5" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="148" data-hp-z-max-cm="212" />
+  <rect data-hp-part="side-right" x="57.3" y="30" width="1.5" height="27.3" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="148" data-hp-z-max-cm="212" />
+  <rect data-hp-part="door-left" x="28.5" y="2.7" width="1.5" height="26.4" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="148" data-hp-z-max-cm="212" />
+  <rect data-hp-part="door-right" x="30" y="30" width="27.3" height="1.5" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="148" data-hp-z-max-cm="212" />
+  <rect data-hp-part="pull-left" x="30" y="22.2" width="0.84" height="3.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="173" data-hp-z-max-cm="185" />
+  <rect data-hp-part="pull-right" x="32.4" y="28.8" width="3.6" height="1.2" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="173" data-hp-z-max-cm="175" />
+  <polygon data-hp-part="internal-shelf" points="1.2,1.2 30,1.2 30,30 58.8,30 58.8,58.8 1.2,58.8" data-hp-z-min-cm="177" data-hp-z-max-cm="180" />
+</svg>

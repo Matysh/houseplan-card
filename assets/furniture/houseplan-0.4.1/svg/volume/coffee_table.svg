@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60" data-hp-volume-schema="1" data-hp-model="coffee_table" data-hp-back="top">
+  <rect data-hp-part="leg-0" x="10.8" y="5.4" width="5.4" height="3.9" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="33" />
+  <rect data-hp-part="leg-1" x="103.8" y="5.4" width="5.4" height="3.9" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="33" />
+  <rect data-hp-part="leg-2" x="10.8" y="50.7" width="5.4" height="3.9" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="33" />
+  <rect data-hp-part="leg-3" x="103.8" y="50.7" width="5.4" height="3.9" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="33" />
+  <rect data-hp-part="tabletop" x="0" y="0" width="120" height="60" rx="2.7" data-hp-radius-ratio="0.045" data-hp-z-min-cm="33" data-hp-z-max-cm="38" />
+</svg>

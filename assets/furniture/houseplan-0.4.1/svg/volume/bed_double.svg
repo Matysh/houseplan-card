@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 200" data-hp-volume-schema="1" data-hp-model="bed_double" data-hp-back="top">
+  <rect data-hp-part="leg-0" x="14.4" y="18" width="7.2" height="13" rx="2.4" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="12" />
+  <rect data-hp-part="leg-1" x="138.4" y="18" width="7.2" height="13" rx="2.4" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="12" />
+  <rect data-hp-part="leg-2" x="14.4" y="169" width="7.2" height="13" rx="2.4" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="12" />
+  <rect data-hp-part="leg-3" x="138.4" y="169" width="7.2" height="13" rx="2.4" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="12" />
+  <rect data-hp-part="frame" x="2.4" y="5" width="155.2" height="192" rx="6.4" data-hp-radius-ratio="0.04" data-hp-z-min-cm="11" data-hp-z-max-cm="28" />
+  <rect data-hp-part="mattress" x="7.2" y="15" width="145.6" height="180" rx="10.4" data-hp-radius-ratio="0.065" data-hp-z-min-cm="28" data-hp-z-max-cm="49" />
+  <rect data-hp-part="headboard" x="0" y="0" width="160" height="13" rx="4" data-hp-radius-ratio="0.025" data-hp-z-min-cm="10" data-hp-z-max-cm="88" />
+  <rect data-hp-part="pillow-left" x="22.4" y="24" width="49.6" height="41" rx="11.2" data-hp-radius-ratio="0.07" data-hp-z-min-cm="49" data-hp-z-max-cm="60" />
+  <rect data-hp-part="pillow-right" x="88" y="24" width="49.6" height="41" rx="11.2" data-hp-radius-ratio="0.07" data-hp-z-min-cm="49" data-hp-z-max-cm="60" />
+  <rect data-hp-part="duvet" x="6.4" y="77" width="147.2" height="119" rx="6.4" data-hp-radius-ratio="0.04" data-hp-z-min-cm="49" data-hp-z-max-cm="53" />
+</svg>

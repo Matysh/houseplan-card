@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" data-hp-volume-schema="2" data-hp-model="stove" data-hp-back="top">
+  <rect data-hp-part="cooktop-base" x="0.9" y="0.9" width="58.2" height="58.2" rx="2.7" data-hp-radius-ratio="0.045" data-hp-z-min-cm="88" data-hp-z-max-cm="92" />
+  <ellipse data-hp-part="burner-0" cx="15" cy="15" rx="8.1" ry="8.1" data-hp-z-min-cm="92" data-hp-z-max-cm="93.5" data-hp-inset-cm="1.1" />
+  <ellipse data-hp-part="burner-1" cx="45" cy="15" rx="8.1" ry="8.1" data-hp-z-min-cm="92" data-hp-z-max-cm="93.5" data-hp-inset-cm="1.1" />
+  <ellipse data-hp-part="burner-2" cx="15" cy="45" rx="8.1" ry="8.1" data-hp-z-min-cm="92" data-hp-z-max-cm="93.5" data-hp-inset-cm="1.1" />
+  <ellipse data-hp-part="burner-3" cx="45" cy="45" rx="8.1" ry="8.1" data-hp-z-min-cm="92" data-hp-z-max-cm="93.5" data-hp-inset-cm="1.1" />
+</svg>

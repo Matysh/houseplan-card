@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 90" data-hp-volume-schema="2" data-hp-model="armchair" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="13.5" y="14.4" width="5.85" height="5.85" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-0-1" x="13.5" y="70.2" width="5.85" height="5.85" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-1-0" x="69.3" y="14.4" width="5.85" height="5.85" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="leg-1-1" x="69.3" y="70.2" width="5.85" height="5.85" rx="0.9" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="13" />
+  <rect data-hp-part="base" x="5.4" y="6.3" width="79.2" height="79.2" rx="9" data-hp-radius-ratio="0.1" data-hp-z-min-cm="12" data-hp-z-max-cm="29" />
+  <rect data-hp-part="seat" x="18" y="25.2" width="54" height="55.8" rx="8.1" data-hp-radius-ratio="0.09" data-hp-z-min-cm="29" data-hp-z-max-cm="44" />
+  <rect data-hp-part="back" x="10.8" y="3.6" width="68.4" height="21.6" rx="8.1" data-hp-radius-ratio="0.09" data-hp-z-min-cm="29" data-hp-z-max-cm="85" />
+  <rect data-hp-part="arm-left" x="3.15" y="14.4" width="14.85" height="66.6" rx="7.65" data-hp-radius-ratio="0.085" data-hp-z-min-cm="25" data-hp-z-max-cm="66" />
+  <rect data-hp-part="arm-right" x="72" y="14.4" width="14.85" height="66.6" rx="7.65" data-hp-radius-ratio="0.085" data-hp-z-min-cm="25" data-hp-z-max-cm="66" />
+</svg>

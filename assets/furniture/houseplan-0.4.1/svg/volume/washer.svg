@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" data-hp-volume-schema="2" data-hp-model="washer" data-hp-back="top">
+  <rect data-hp-part="case-base" x="1.2" y="1.2" width="57.6" height="54.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="4" data-hp-z-max-cm="7" />
+  <rect data-hp-part="case-top" x="1.2" y="1.2" width="57.6" height="54.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="82" data-hp-z-max-cm="85" />
+  <rect data-hp-part="case-left" x="1.2" y="1.2" width="1.5" height="54.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="82" />
+  <rect data-hp-part="case-right" x="57.3" y="1.2" width="1.5" height="54.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="82" />
+  <rect data-hp-part="case-back" x="2.7" y="1.2" width="54.6" height="2.1" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="7" data-hp-z-max-cm="82" />
+  <rect data-hp-part="front-left" x="2.1" y="55.8" width="7.2" height="2.7" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="8" data-hp-z-max-cm="70" />
+  <rect data-hp-part="front-right" x="50.7" y="55.8" width="7.2" height="2.7" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="8" data-hp-z-max-cm="70" />
+  <rect data-hp-part="front-bottom" x="9.3" y="55.8" width="41.4" height="2.7" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="8" data-hp-z-max-cm="18" />
+  <rect data-hp-part="control-panel" x="2.1" y="55.8" width="55.8" height="2.7" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="65" data-hp-z-max-cm="82" />
+  <ellipse data-hp-part="porthole-frame" cx="30" cy="57.45" rx="19.2" ry="1.65" data-hp-z-min-cm="21" data-hp-z-max-cm="61" data-hp-plane="xz" data-hp-inset-cm="3.3" />
+  <ellipse data-hp-part="porthole-glass" cx="30" cy="57.45" rx="15.9" ry="0.75" data-hp-z-min-cm="24.3" data-hp-z-max-cm="57.7" data-hp-plane="xz" />
+  <ellipse data-hp-part="selector" cx="11.7" cy="59.16" rx="2.1" ry="0.66" data-hp-z-min-cm="73" data-hp-z-max-cm="78" data-hp-plane="xz" />
+  <rect data-hp-part="display" x="37.8" y="58.56" width="12" height="1.08" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="73" data-hp-z-max-cm="79" />
+  <rect data-hp-part="detergent-drawer" x="18" y="58.56" width="13.2" height="1.08" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="72" data-hp-z-max-cm="79" />
+</svg>

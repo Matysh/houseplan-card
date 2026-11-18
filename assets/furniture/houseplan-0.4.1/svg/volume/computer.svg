@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60" data-hp-volume-schema="2" data-hp-model="computer" data-hp-back="top">
+  <rect data-hp-part="monitor-base" x="26.4" y="0.6" width="28.8" height="20.4" rx="1.2" data-hp-radius-ratio="0.02" data-hp-z-min-cm="74" data-hp-z-max-cm="77" />
+  <rect data-hp-part="monitor-neck" x="38.4" y="6" width="6" height="9" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="77" data-hp-z-max-cm="90" />
+  <rect data-hp-part="monitor-frame" x="0.6" y="6.6" width="79.2" height="6.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="88" data-hp-z-max-cm="125" data-hp-plane="xz" data-hp-inset-cm="1.2" />
+  <rect data-hp-part="monitor-screen" x="1.92" y="7.8" width="76.56" height="3.3" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="89.2" data-hp-z-max-cm="123.8" />
+  <rect data-hp-part="keyboard" x="7.2" y="39.6" width="51.6" height="15" rx="2.4" data-hp-radius-ratio="0.04" data-hp-z-min-cm="74" data-hp-z-max-cm="77" />
+  <ellipse data-hp-part="mouse" cx="75" cy="47.1" rx="4.2" ry="7.5" data-hp-z-min-cm="74" data-hp-z-max-cm="79" />
+  <rect data-hp-part="tower-base" x="91.2" y="1.2" width="27" height="57.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="0" data-hp-z-max-cm="3" />
+  <rect data-hp-part="tower-top" x="91.2" y="1.2" width="27" height="57.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="45" data-hp-z-max-cm="48" />
+  <rect data-hp-part="tower-left" x="91.2" y="1.2" width="3" height="57.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="3" data-hp-z-max-cm="45" />
+  <rect data-hp-part="tower-right" x="115.2" y="1.2" width="3" height="57.6" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="3" data-hp-z-max-cm="45" />
+  <rect data-hp-part="tower-back" x="94.2" y="1.2" width="21" height="2.1" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="3" data-hp-z-max-cm="45" />
+  <rect data-hp-part="tower-front" x="92.4" y="57" width="24.6" height="2.1" rx="0.9" data-hp-radius-ratio="0.015" data-hp-z-min-cm="3" data-hp-z-max-cm="45" />
+  <ellipse data-hp-part="power-button" cx="96.3" cy="59.46" rx="1.5" ry="0.36" data-hp-z-min-cm="39" data-hp-z-max-cm="42" data-hp-plane="xz" />
+</svg>

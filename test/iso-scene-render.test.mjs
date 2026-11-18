@@ -26,6 +26,7 @@ import {
   projectIsoOpeningStructure,
 } from '../test-build/iso-openings.js';
 import { buildIsoWallGeometry } from '../test-build/iso-walls.js';
+import { isoMarkerBehindWall, isoMarkerOccluded } from '../test-build/iso-marker-context.js';
 import { fitView } from '../test-build/logic.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 import {
@@ -34,7 +35,7 @@ import {
 } from '../test-build/iso-overlays.js';
 import {
   ISO_WALL_HEIGHT,
-  projectPlanPoint,
+  projectPlanPoint, isoFloorMatrix,
 } from '../test-build/iso-projection.js';
 
 /**
@@ -43,6 +44,29 @@ import {
  */
 const structureOf = (walls = []) => buildIsoWallGeometry(walls);
 const wallRect = (x0, y0, x1, y1) => [[[[x0, y0], [x1, y0], [x1, y1], [x0, y1]]]];
+
+test('#1451 occlusion uses finite wall solids in the camera direction', () => {
+  for (const yaw of [35,125,215,305]) {
+    const camera={rotDeg:yaw,tiltDeg:55,xyScale:1,zScale:1,origin:[0,0],floorScaleY:Math.sin(35*Math.PI/180)};
+    const cos=Math.cos(yaw*Math.PI/180),sin=Math.sin(yaw*Math.PI/180);
+    const plan=([x,y])=>[cos*x+sin*y,-sin*x+cos*y];
+    const wall=wallRect(-50,30,50,35).map(p=>p.map(r=>r.map(plan)));
+    assert.equal(isoMarkerBehindWall(plan([0,0]),wall,84,camera),true);
+    assert.equal(isoMarkerBehindWall(plan([0,50]),wall,84,camera),false,'wall behind the marker');
+    assert.equal(isoMarkerBehindWall(plan([0,-200]),wall,84,camera),false,'below finite wall height');
+    assert.equal(isoMarkerBehindWall(plan([100,0]),wall,84,camera),false,'past the end of the wall');
+  }
+});
+
+test('#1451 door gaps and masonry holes stay clear; partial tile overlap is marked', () => {
+  const camera={rotDeg:0,tiltDeg:55,xyScale:1,zScale:1,origin:[0,0],floorScaleY:Math.sin(35*Math.PI/180)};
+  const gap=[...wallRect(-50,30,-5,35),...wallRect(5,30,50,35)];
+  assert.equal(isoMarkerBehindWall([0,0],gap,84,camera),false);
+  assert.equal(isoMarkerOccluded([0,0],[10,10],gap,84,camera),true);
+  const shell=[[[[-50,-300],[50,-300],[50,300],[-50,300]],
+    [[-20,-250],[-20,250],[20,250],[20,-250]]]];
+  assert.equal(isoMarkerBehindWall([0,0],shell,84,camera),false,'ray remains inside the empty courtyard');
+});
 
 /**
  * #732: an overlay fixture names only fields of the production input type; the
@@ -69,9 +93,71 @@ const room = (id, x0, y0, x1, y1) => ({
   poly: [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
 });
 
+test('#1451 floor-aligned device and lock keep their flat anchors through turns and fit', () => {
+  const space = {id:'floor',title:'Floor',cellCm:5,vb:[0,0,100,100],bg:null,
+    rooms:[room('owner',0,0,100,100)],wall_segments:[],room_drafts:[],partitions:[],wall_columns:[]};
+  /** @type {OverlaySceneFixture} */
+  const input = {
+    space,structure:structureOf(wallRect(0,45,100,55)),
+    devices:[{id:'device',space:'floor',marker:{room_id:'owner'}}],
+    openings:[{id:'door',type:'door',rx:50,ry:50,rlen:40,angle:0,flip_h:false,flip_v:false,
+      lock:'lock.door',partitionHost:{depth:10,axis:{ux:1,uy:0},partition:{cm:10}}}],
+    display:{showNames:true,cardFontScale:1},iconPct:3.4,deviceBasePct:3.4,showLqi:false,
+    cellCm:5,kioskIconScale:1,kioskFontScale:1,
+    positionOf:()=>({x:20,y:70}),labelPositionOf:()=>({x:30,y:40}),labelScaleOf:()=>1,
+    presentationOf:()=>({scale:1,valueText:'22.4°',valueFullText:'22.4°',valueBadge:null,
+      tempText:null,humText:null,lqiText:null,pulse:{animated:false,diameterScale:1}}),
+    openingEntityAvailable:()=>true,openingWallIndex:()=>({adjacencyEps:0.1,edges:[]}),
+  };
+  for(const turn of [0,90,180,270]) {
+    const camera={rotDeg:35+turn,tiltDeg:55,xyScale:1,zScale:1,origin:[500,500],floorScaleY:Math.sin(35*Math.PI/180)};
+    const raised=overlayScene({...input,camera});
+    const aligned=overlayScene({...input,camera,floorAlignedMarkers:true});
+    assert.strictEqual(overlayScene({...input,camera,floorAlignedMarkers:true}),aligned,'stable frame is reused');
+    for(const entry of aligned.entries) {
+      assert.deepEqual(entry.placement.floorScene,projectPlanPoint(entry.placement.floorAnchor,0,camera));
+      assert.deepEqual(entry.placement.visualScene,entry.placement.floorScene);
+      if(entry.kind==='room-label') continue;
+      const previous=raised.entries.find(p=>p.id===entry.id && p.kind===entry.kind);
+      assert.deepEqual(entry.placement.floorAnchor,previous.placement.floorAnchor,'saved point stays exact');
+      const [a,b,c,d]=isoFloorMatrix(camera),[hx,hy]=previous.screenHalfSize.map(size=>size/1.12);
+      for(const [x,y] of [[-hx,-hy],[hx,-hy],[hx,hy],[-hx,hy]]) {
+        assert.ok(Math.abs(a*x+c*y)<=entry.screenHalfSize[0]+1e-9);
+        assert.ok(Math.abs(b*x+d*y)<=entry.screenHalfSize[1]+1e-9);
+      }
+    }
+    assert.deepEqual(aligned.devices.get('device').floorAnchor,[20,70]);
+    const restored=overlayScene({...input,camera});
+    assert.deepEqual(restored.devices.get('device').visualScene,raised.devices.get('device').visualScene,'default wall-top policy is restored');
+  }
+  const camera = {rotDeg:0,tiltDeg:45,xyScale:1,zScale:1,origin:[0,0],floorScaleY:Math.SQRT1_2};
+  const masonry = wallRect(0,80,100,82);
+  const marker = overlayScene({...input,structure:structureOf(masonry),contactMasonry:masonry,
+    positionOf:()=>({x:50,y:0}),deviceBasePct:1,camera,floorAlignedMarkers:true}).devices.get('device');
+  assert.equal(marker.occluded,true,'the low device is behind the wall');
+});
+
 test('every Stage 4 shadow plane uses the same scale-aware fixed-light vector', () => {
   assert.equal(isoFixedLightTransform(5), 'translate(4 8)');
   assert.equal(isoFixedLightTransform(1), 'translate(20 40)');
+});
+
+test('#1451 room labels keep their projected anchor and defer partial coverage to the wall mask',()=>{
+  const owner={...room('label-room',0,0,100,100),name:'Room'},masonry=wallRect(0,45,100,55);
+  const space={id:'labels',title:'Labels',cellCm:5,vb:[0,0,100,100],bg:null,rooms:[owner],
+    wall_segments:[],room_drafts:[],partitions:[],wall_columns:[]};
+  const input={space,structure:structureOf(masonry),contactMasonry:masonry,devices:[],openings:[],
+    display:{showNames:true,cardNameScale:1,cardLabelScale:1},iconPct:3.4,deviceBasePct:3.4,showLqi:false,
+    cellCm:5,kioskIconScale:1,kioskFontScale:1,labelPositionOf:()=>({x:50,y:10}),labelScaleOf:()=>1,
+    openingEntityAvailable:()=>true,openingWallIndex:()=>({adjacencyEps:.1,edges:[]})};
+  for(const yaw of [0,90,180,270]) {
+    const camera={rotDeg:yaw,tiltDeg:50,xyScale:1,zScale:1,origin:[0,0],floorScaleY:Math.sin(40*Math.PI/180)};
+    const result=overlayScene({...input,camera,floorAlignedMarkers:true}).rooms.get(owner);
+    assert.equal(result.occluded,undefined);assert.deepEqual(result.floorAnchor,[50,10]);
+    assert.deepEqual(result.visualScene,projectPlanPoint([50,10],0,camera));
+    assert.equal(overlayScene({...input,camera,floorAlignedMarkers:false}).rooms.get(owner).occluded,undefined,
+      'ordinary dev mode does not reuse the local fading result');
+  }
 });
 
 test('device footprint contains value capsule, bottom badge and displaced LQI row', () => {
@@ -257,6 +343,17 @@ test('one painter queue paints a nearer wall after an unrelated rear opening', (
     'later SVG paint order must let the near wall occlude the rear opening');
   assert.deepEqual(buildIsoWallDepthQueue(geometry, [rearOpening]), queue,
     'the combined wall/opening order is deterministic');
+});
+
+test('#1451 tilted T-junction caps stay above vertical walls on their common height plane',()=>{
+  const wall=[[[[0,0],[180,0],[180,10],[100,10],[100,100],[80,100],[80,10],[0,10],[0,0]]]];
+  for(const yaw of[35,125,215,305]){
+    const geometry=buildIsoWallGeometry(wall,{rotDeg:yaw,tiltDeg:55,xyScale:1,zScale:1,origin:[0,0],floorScaleY:Math.sin(35*Math.PI/180)});
+    const queue=buildIsoWallDepthQueue(geometry,[],true),cap=queue.findIndex(e=>e.layer==='wall-top');
+    assert.ok(cap>0);assert.ok(queue.slice(cap).every(e=>e.layer==='wall-top'));
+    assert.equal(queue.filter(e=>e.layer==='wall-top')[0].face.d,geometry.topPath,'physical cap geometry is preserved');
+    assert.equal(queue.filter(e=>e.layer==='wall-side').length,geometry.sides.length);
+  }
 });
 
 test('shared painter queue puts elevated window glass over its rear sill only in window slots', () => {

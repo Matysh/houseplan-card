@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 40" data-hp-volume-schema="2" data-hp-model="nightstand" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="5" y="4.4" width="3" height="2.4" rx="0.4" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="9" />
+  <rect data-hp-part="leg-0-1" x="5" y="32.8" width="3" height="2.4" rx="0.4" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="9" />
+  <rect data-hp-part="leg-1-0" x="41.5" y="4.4" width="3" height="2.4" rx="0.4" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="9" />
+  <rect data-hp-part="leg-1-1" x="41.5" y="32.8" width="3" height="2.4" rx="0.4" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="9" />
+  <rect data-hp-part="cabinet-base" x="1" y="0.8" width="48" height="38.4" rx="0.6" data-hp-radius-ratio="0.015" data-hp-z-min-cm="8" data-hp-z-max-cm="11" />
+  <rect data-hp-part="cabinet-top" x="1" y="0.8" width="48" height="38.4" rx="0.6" data-hp-radius-ratio="0.015" data-hp-z-min-cm="49" data-hp-z-max-cm="52" />
+  <rect data-hp-part="cabinet-left" x="1" y="0.8" width="1.25" height="38.4" rx="0.6" data-hp-radius-ratio="0.015" data-hp-z-min-cm="11" data-hp-z-max-cm="49" />
+  <rect data-hp-part="cabinet-right" x="47.75" y="0.8" width="1.25" height="38.4" rx="0.6" data-hp-radius-ratio="0.015" data-hp-z-min-cm="11" data-hp-z-max-cm="49" />
+  <rect data-hp-part="cabinet-back" x="2.25" y="0.8" width="45.5" height="1.4" rx="0.6" data-hp-radius-ratio="0.015" data-hp-z-min-cm="11" data-hp-z-max-cm="49" />
+  <rect data-hp-part="cabinet-drawer-0" x="2.5" y="37.6" width="45" height="1" rx="0.24" data-hp-radius-ratio="0.006" data-hp-z-min-cm="11.7" data-hp-z-max-cm="29.3" />
+  <rect data-hp-part="cabinet-handle-0" x="17.32" y="38.6" width="15.36" height="0.6" rx="0.24" data-hp-radius-ratio="0.006" data-hp-z-min-cm="25" data-hp-z-max-cm="27" />
+  <rect data-hp-part="cabinet-drawer-1" x="2.5" y="37.6" width="45" height="1" rx="0.24" data-hp-radius-ratio="0.006" data-hp-z-min-cm="30.7" data-hp-z-max-cm="48.3" />
+  <rect data-hp-part="cabinet-handle-1" x="17.32" y="38.6" width="15.36" height="0.6" rx="0.24" data-hp-radius-ratio="0.006" data-hp-z-min-cm="44" data-hp-z-max-cm="46" />
+</svg>

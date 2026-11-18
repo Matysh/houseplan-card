@@ -1,4 +1,6 @@
 import { quarterBasis, validPlanRotation, type PlanRotation } from './view-frame';
+import { ISO_LAB_CAMERA, ISO_LAB_FLOOR_MARKERS } from './iso-lab-camera';
+import { GRID_PITCH, GRID_VISUAL_REFERENCE_CELL_CM } from './canvas-constants';
 export type PlanPoint = readonly [number, number];
 export type ScenePoint = readonly [number, number];
 export type IsoAffineMatrix = readonly [number, number, number, number, number, number];
@@ -9,6 +11,8 @@ export interface IsoCamera {
   xyScale: number;
   zScale: number;
   origin: PlanPoint;
+  /** Optional orthographic depth compression; production dev keeps 1. */
+  floorScaleY?: number;
 }
 
 export interface ViewRect { x: number; y: number; w: number; h: number; }
@@ -22,17 +26,18 @@ export interface IsoFrameInput {
 }
 
 export const ISO_CAMERA: Readonly<IsoCamera> = Object.freeze({
-  rotDeg: 0,
-  tiltDeg: 20,
+  rotDeg: ISO_LAB_CAMERA.yaw,
+  tiltDeg: ISO_LAB_CAMERA.tiltDeg,
   xyScale: 1,
   zScale: 1,
   origin: Object.freeze([500, 500]) as PlanPoint,
+  ...(ISO_LAB_CAMERA.floorScaleY !== 1 ? { floorScaleY: ISO_LAB_CAMERA.floorScaleY } : {}),
 });
 
 const quarterCameras = new Map<PlanRotation, Readonly<IsoCamera>>([[0, ISO_CAMERA]]);
 export function isoCameraFor(rotation: PlanRotation): Readonly<IsoCamera> {
   let camera = quarterCameras.get(rotation);
-  if (!camera) { camera = Object.freeze({ ...ISO_CAMERA, rotDeg: rotation }); quarterCameras.set(rotation, camera); }
+  if (!camera) { camera = Object.freeze({ ...ISO_CAMERA, rotDeg: ISO_CAMERA.rotDeg + rotation }); quarterCameras.set(rotation, camera); }
   return camera;
 }
 export function isoRotationBasis(camera: IsoCamera): readonly [number, number] {
@@ -42,6 +47,13 @@ export function isoRotationBasis(camera: IsoCamera): readonly [number, number] {
 }
 
 export const ISO_WALL_HEIGHT = 84;
+// The cutaway represents half of a 280 cm wall. Callers apply gridVisualUnits
+// to these reference-scale units for the current space's centimetres per cell.
+const ISO_LAB_STANDARD_WALL_HEIGHT = 140 * GRID_PITCH / GRID_VISUAL_REFERENCE_CELL_CM;
+/** Live UI Lab section height. Independent of the scale of furniture and fixtures. */
+export function isoDisplayWallHeight(): number {
+  return ISO_LAB_FLOOR_MARKERS ? ISO_LAB_STANDARD_WALL_HEIGHT : ISO_WALL_HEIGHT;
+}
 export const ISO_FLOOR_EDGE_HEIGHT = 10;
 /** Low visual lift above the floor; callers scale it with the same grid policy. */
 export const ISO_OVERLAY_VISUAL_OFFSET = 4;
@@ -50,7 +62,8 @@ export const ISO_RAISED_OVERLAY_HEIGHT = ISO_OVERLAY_VISUAL_OFFSET;
 function finiteCamera(camera: IsoCamera): boolean {
   return [camera.rotDeg, camera.tiltDeg, camera.xyScale, camera.zScale,
     camera.origin[0], camera.origin[1]].every(Number.isFinite)
-    && Math.abs(camera.xyScale) > 1e-12;
+    && Math.abs(camera.xyScale) > 1e-12
+    && Number.isFinite(camera.floorScaleY ?? 1) && (camera.floorScaleY ?? 1) > 1e-12;
 }
 
 export function projectPlanPoint(
@@ -68,7 +81,7 @@ export function unprojectFloorPoint(
     throw new Error('invalid isometric projection input');
   const [cos, sin] = isoRotationBasis(camera);
   const rx = (point[0] - camera.origin[0]) / camera.xyScale;
-  const ry = (point[1] - camera.origin[1]) / camera.xyScale;
+  const ry = (point[1] - camera.origin[1]) / camera.xyScale / (camera.floorScaleY ?? 1);
   return [
     camera.origin[0] + rx * cos + ry * sin,
     camera.origin[1] - rx * sin + ry * cos,
@@ -92,8 +105,8 @@ export function isoPlaneMatrix(
   const tilt = camera.tiltDeg * Math.PI / 180;
   const a = camera.xyScale * cos;
   const c = -camera.xyScale * sin;
-  const b = camera.xyScale * sin;
-  const d = camera.xyScale * cos;
+  const b = camera.xyScale * sin * (camera.floorScaleY ?? 1);
+  const d = camera.xyScale * cos * (camera.floorScaleY ?? 1);
   const e = camera.origin[0] - a * camera.origin[0] - c * camera.origin[1];
   const f = camera.origin[1] - b * camera.origin[0] - d * camera.origin[1]
     - zUnits * camera.zScale * Math.sin(tilt);
@@ -118,6 +131,22 @@ export function isoPlaneMatrixCss(zUnits = 0, camera: IsoCamera = ISO_CAMERA): s
 
 export function isoFloorMatrixCss(camera: IsoCamera = ISO_CAMERA): string {
   return isoPlaneMatrixCss(0, camera);
+}
+
+/** Marker-local vectors use the floor basis, without translating its origin.
+ * The inverse keeps the invisible minimum hit area screen-facing. */
+export function isoFloorLinearCss(camera: IsoCamera = ISO_CAMERA, inverse = false): string {
+  const [a, b, c, d] = isoFloorMatrix(camera);
+  const det = a * d - b * c;
+  const linear = inverse ? [d / det, -b / det, -c / det, a / det] : [a, b, c, d];
+  return `matrix(${[...linear, 0, 0].join(',')})`;
+}
+
+/** Local offsets whose projection is a vertical, screen-space tile edge. */
+export function isoTileDepthStyles(camera: IsoCamera): Record<string,string> {
+  const [a,b,c,d]=isoFloorMatrix(camera),det=a*d-b*c;
+  return {'--hp-iso-edge-unit-x':String(-c/det*.22),
+    '--hp-iso-edge-unit-y':String(a/det*.22)};
 }
 
 export function isoOverlayVisualHeight(visualOffset: number): number {

@@ -733,7 +733,7 @@ export function renderGlowPools(input: {
     </defs>
     <g class="glowlayer glow-pools-frame" data-hp="glow-layer" pointer-events="none" aria-hidden="true"
       filter=${input.featherEnabled ? 'url(#hp-glowfeather)' : nothing}>
-      <g class="glow-pools ${input.screenBlend ? 'blend-screen' : 'blend-normal'}"
+      <g id="hp-room-light-pools" class="glow-pools ${input.screenBlend ? 'blend-screen' : 'blend-normal'}"
         data-blend=${input.screenBlend ? 'screen' : 'normal'}
         data-feather-px="${GLOW_EDGE_FEATHER_PX}"
         clip-path=${enabledClip ? 'url(#hp-glow-enabled)' : nothing}>

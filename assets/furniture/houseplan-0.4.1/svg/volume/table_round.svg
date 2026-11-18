@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 110" data-hp-volume-schema="2" data-hp-model="table_round" data-hp-back="top">
+  <rect data-hp-part="leg-0-0" x="25.3" y="25.3" width="6.6" height="6.6" rx="1.1" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="71" />
+  <rect data-hp-part="leg-0-1" x="25.3" y="78.1" width="6.6" height="6.6" rx="1.1" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="71" />
+  <rect data-hp-part="leg-1-0" x="78.1" y="25.3" width="6.6" height="6.6" rx="1.1" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="71" />
+  <rect data-hp-part="leg-1-1" x="78.1" y="78.1" width="6.6" height="6.6" rx="1.1" data-hp-radius-ratio="0.01" data-hp-z-min-cm="0" data-hp-z-max-cm="71" />
+  <ellipse data-hp-part="tabletop" cx="55" cy="55" rx="52.8" ry="52.8" data-hp-z-min-cm="71" data-hp-z-max-cm="75" />
+</svg>

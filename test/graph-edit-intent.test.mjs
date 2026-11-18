@@ -8,6 +8,17 @@ const copy=structuredClone;
 const rectangle=(id,x0=0,x1=1)=>({id,name:id,poly:[[x0,0],[x1,0],[x1,1],[x0,1]],custom:{keep:id}});
 const migrate=space=>G.migrateGraphSpace(space).space;
 const base=()=>migrate({id:'floor',rooms:[rectangle('a')],extra:{keep:1}});
+test('saving the hinge hand and swing side preserves the directed axis of an existing door',()=>{
+  const before=base(),wall=before.wall_segments.find(w=>w.a[0]===1 && w.b[0]===1);
+  const opening={id:'door',type:'door',angle:90,x:1,y:.5,length:.12,host:{kind:'wall',id:wall.id,t:.5,tq:['1','2']}};
+  before.openings=[opening];
+  for(const flip_h of [false,true]) for(const flip_v of [false,true]) {
+    const draft=copy(before);
+    Object.assign(draft.openings[0],{flip_h,flip_v});
+    const after=commitGraphEdit(before,draft,{kind:'openings',ids:['door']});
+    assert.deepEqual(after.openings[0],{...opening,flip_h,flip_v});
+  }
+});
 test('#1264 Resize nodes the fixed neighbour and reuses its exact shared source atoms',()=>{
   const before=incidentFixture(),snapshot=copy(before),result=commitGraphEditResult(before,incidentDraft(before),
     {kind:'resize',rooms:['upper-left','upper-right']}),space=result.space;
