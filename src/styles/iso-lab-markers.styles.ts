@@ -13,16 +13,16 @@ export const isoLabMarkersStyles = css`
   }
   /* The mask and label share the camera layer during live pan and zoom.
      Names, Area links and the metrics below them all cross the same edge. */
-  .iso-room-label-plane {
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane {
     position: absolute; inset: 0; pointer-events: none; z-index: -3;
     mask-image: url(#hp-room-wall-mask);
   }
-  .iso-furniture-foreground {
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-furniture-foreground {
     position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
     pointer-events: none; z-index: -2;
   }
-  :host([data-pointer-hover]) .iso-room-label-plane:hover,
-  .iso-room-label-plane:focus-within {
+  :host([data-pointer-hover]) .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane:hover,
+  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane:focus-within {
     mask-image: none;
   }
   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev,

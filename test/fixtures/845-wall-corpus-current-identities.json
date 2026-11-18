@@ -243,6 +243,10 @@
       "configs": 2
     },
     {
+      "file": "test/fixtures/furniture-volume/accepted-meshes.json",
+      "configs": 0
+    },
+    {
       "file": "test/fixtures/glow/additive-pools.json",
       "configs": 1
     },

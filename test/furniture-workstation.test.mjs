@@ -4,6 +4,8 @@ import {workstationTarget, toggleWorkstation, standaloneWorkstation, removeWorks
   remapWorkstationItems, desktopSurface} from '../test-build/iso-lab-workstation.js';
 import {copyDecor} from '../test-build/editors/decor/order.js';
 import {createSpaceCopyCandidate} from '../test-build/space-copy.js';
+import {CommandStack} from '../test-build/command-stack.js';
+import {PhysicalWriteHistory, physicalHistoryChanged} from '../test-build/physical-write-history.js';
 
 const desk = {id:'desk', kind:'furniture', symbol:'desk', x:.2,y:.2,w:.3,h:.2,angle:0,color:'#123456'};
 const computer = {id:'computer',kind:'furniture',symbol:'computer',x:.26,y:.23,w:.12,h:.06,
@@ -13,6 +15,60 @@ const towerCenter = shape => {
   const a=(shape.angle||0)*Math.PI/180, dx=(shape.flip_h?-1:1)*shape.w*.375;
   return [shape.x+shape.w/2+dx*Math.cos(a),shape.y+shape.h/2+dx*Math.sin(a)];
 };
+
+test('#1451 workstation context command records decoration history without becoming a physical geometry writer',async()=>{
+  globalThis.window ??= {customCards:[]};
+  const {HouseplanEditorRuntime}=await import('../test-build/houseplan-editor-runtime.js');
+  const space={id:'workstation-floor',rooms:[{id:'room',poly:[[0,0],[1,0],[1,1],[0,1]],
+    wall_ids:['top','right','bottom','left']}],
+    wall_segments:[{id:'top',a:[0,0],b:[1,0],cm:15},{id:'right',a:[1,0],b:[1,1],cm:15},
+      {id:'bottom',a:[1,1],b:[0,1],cm:15},{id:'left',a:[0,1],b:[0,0],cm:15}],
+    walls:[],partitions:[],wall_columns:[],open_spans:[],
+    openings:[{id:'door',host:{kind:'wall',id:'top'},type:'door',x:.5,y:0,length:.1,angle:0}],
+    decor:structuredClone([desk,computer])};
+  const config={model_version:11,spaces:[space],markers:[],settings:{}};
+  const history=new CommandStack(), physicalHistory=new PhysicalWriteHistory();
+  let saves=0;
+  const host={_editorSecondaryContextId:'current-workstation',_decorTool:'select',_decorSel:desk.id,
+    _canEdit:true,_haFurnitureWorkstationApi:1,_mode:'decor',_space:space.id,_serverCfg:config,
+    _geometryHistory:history,_pendingPhysicalWrites:new Map(),_cfgEpoch:0,
+    _t:key=>key,requestUpdate(){},_saveConfigDebounced(){saves++;},
+    get _decorList(){return space.decor;},get _dtSel(){return space.decor.find(item=>item.id===this._decorSel);},
+    get _curSpaceCfg(){return space;}};
+  const runtime=Object.assign(Object.create(HouseplanEditorRuntime.prototype),{host,
+    physicalWriteHistory:physicalHistory,decorLine:{reset(){}},decorOrder:{label:direction=>direction},
+    _runEditorContext:(context,action)=>{assert.equal(context,host._editorSecondaryContextId);action();}});
+  const findAction=template=>{
+    if(!template||typeof template!=='object')return null;
+    if(template.strings?.join('').includes('data-action="desktop-mount"'))
+      return template.values.find(value=>typeof value==='function');
+    for(const value of Array.isArray(template)?template:template.values||[]){
+      const action=findAction(value);if(action)return action;
+    }
+    return null;
+  };
+  const original=runtime._geometrySnapshot();
+  for(const mounted of [true,false]){
+    const model=runtime._renderDecorSecondary(),action=findAction(model.content);
+    assert.equal(typeof action,'function','the real context menu exposes mount/detach');
+    action();
+    const command=history.peekUndo();
+    assert.notDeepEqual(command.before.decor,command.after.decor,'a genuine decoration transaction was recorded');
+    assert.equal(physicalHistoryChanged(command.before,command.after),false);
+    for(const key of ['plan_graph','rooms','openings','walls','wall_segments','open_spans','partitions','wall_columns'])
+      assert.deepEqual(command.after[key],command.before[key],key+' is not rewritten by mounting');
+    assert.equal(physicalHistory.capture(command.before).size,0,'no physical write batch owns the decoration command');
+    assert.equal(space.decor[0].workstation,mounted?'mounted':undefined);
+  }
+  assert.equal(history.size,2);assert.equal(saves,2);
+  assert.deepEqual(history.commands()[0].before,original,'Undo retains the exact complete original canonical record');
+  const detached=runtime._geometrySnapshot();
+  assert.equal(physicalHistoryChanged(original,detached),false,'the complete mount/detach sequence leaves physical geometry unchanged');
+  for(const [index,item] of detached.decor.entries())for(const key of ['x','y','w','h'])
+    near(item[key],original.decor[index][key]);
+  const damaged=structuredClone(original);damaged.wall_segments[0].b[0]+=.01;
+  assert.equal(physicalHistoryChanged(original,damaged),true,'the comparator still rejects an actual wall edit');
+});
 
 test('#1451 mount requires an existing computer and only a straight/corner work desk', () => {
   assert.equal(workstationTarget([desk],desk),null);

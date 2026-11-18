@@ -388,7 +388,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-frame.test.mjs',
     because: '#1070 AC9/AC11: four distinct camera-facing edges share one physical build. Registered only; nightly execution.',
     patches: [{ file: 'src/iso-scene-geometry.ts',
-      find: 'const camera = isoCameraFor(planRotation(input.rotation));',
+      find: 'const camera = isoCameraFor(rotation);',
       replace: 'const camera = ISO_CAMERA;' }],
   },
   {
@@ -7892,13 +7892,8 @@ const MUTANT_DEFINITIONS = [
       + 'every intermediate transition frame (#152 AC10)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'space.rooms.map((r) => this._renderRoomLabel(\n'
-        + '                  r, space, view, disp, isoOverlays?.rooms.get(r),\n'
-        + '                ))',
-      replace: 'space.rooms.map((r) => this._renderRoomLabel(\n'
-        + '                  r, space, this._cameraTransition.target?.viewBox || view, disp, '
-        + 'isoOverlays?.rooms.get(r),\n'
-        + '                ))',
+      find: 'const label = this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r));',
+      replace: 'const label = this._renderRoomLabel(r, space, this._cameraTransition.target?.viewBox || view, disp, isoOverlays?.rooms.get(r));',
     }],
   },
   {
@@ -8140,10 +8135,12 @@ const MUTANT_DEFINITIONS = [
     id: 'iso-collision-without-icon-scale',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="AC3 layout" test/iso-stage6.test.mjs',
-    because: '#649 AC3: layout and collisions must see the 1.12 tile, otherwise raised tiles overlap',
+    because: '#1451 accepted floor-aligned markers retain scale 1.0. The compatibility/explicit '
+      + 'raised helper branch still reserves the #649 1.12 tile in layout and collisions, '
+      + 'otherwise raised tiles overlap; this witness targets that branch only.',
     patches: [{
       file: 'src/iso-scene-geometry.ts',
-      find: '    const core = baseDeviceUnits * presentation.scale * ISO_ICON_SCALE;',
+      find: '    const core = baseDeviceUnits * presentation.scale * (input.floorAlignedMarkers ? 1 : ISO_ICON_SCALE);',
       replace: '    const core = baseDeviceUnits * presentation.scale;',
     }],
   },
@@ -12872,12 +12869,12 @@ const MUTANT_DEFINITIONS = [
       + 'the same raster at 1 and 5 cm per cell (#239)',
     patches: [{
       file: 'src/iso-scene-geometry.ts',
-      find: '  const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);\n'
+      find: '  const wallHeight = gridVisualUnits(isoDisplayWallHeight(), input.cellCm);\n'
         + '  const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);\n'
         + '  const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);\n'
         + '  const cached = lruRead(input.cache, input.source.key);\n'
         + '  let value = cached.hit ? cached.value : undefined;',
-      replace: '  const wallHeight = ISO_WALL_HEIGHT;\n'
+      replace: '  const wallHeight = isoDisplayWallHeight();\n'
         + '  const floorEdgeHeight = ISO_FLOOR_EDGE_HEIGHT;\n'
         + '  const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);\n'
         + '  const cached = lruRead(input.cache, input.source.key);\n'
@@ -15070,25 +15067,25 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'iso-floor-foreshortening-returns',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#713 AC1" test/iso-projection.test.mjs',
-    because: '#713: the 2.5D floor is the Flat plane. Restoring the cos 20° floor factor squashes '
-      + 'the plan, the decor and every anchor towards the centre again',
+      + '&& node --test --test-name-pattern="default camera is the accepted" test/iso-projection.test.mjs',
+    because: '#1451 supersedes the unsqueezed #713 plane: the accepted 40° elevation must '
+      + 'compress floor depth by sin(40°). Removing it restores the obsolete Flat-depth plane.',
     patches: [{
-      file: 'src/iso-projection.ts',
-      find: '  const d = camera.xyScale * cos;',
-      replace: '  const d = camera.xyScale * cos * Math.cos(tilt);',
+      file: 'src/iso-lab-camera.ts',
+      find: '  floorScaleY: Math.sin(40 * Math.PI / 180), tiltDeg: 50, sectionHeightCm: 140 });',
+      replace: '  floorScaleY: 1, tiltDeg: 50, sectionHeightCm: 140 });',
     }],
   },
   {
     id: 'iso-room-labels-lift-with-devices',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#713 K5" test/iso-scene-render.test.mjs',
-    because: '#713 (owner): room names stay on the floor where Flat puts them; only device tiles '
-      + 'and lock badges rise to the wall top',
+      + '&& node --test --test-name-pattern="room names stay on their projected floor point" test/iso-scene-render.test.mjs',
+    because: '#1451 keeps room names on their projected floor anchor independently of '
+      + 'the optional explicit device lift; a room label never inherits wall height.',
     patches: [{
       file: 'src/iso-scene-geometry.ts',
-      find: "    const visualOffset = kind === 'room-label' ? 0 : wallHeight;",
-      replace: '    const visualOffset = wallHeight;',
+      find: "    const visualOffset = kind === 'room-label' || input.floorAlignedMarkers ? 0 : wallHeight;",
+      replace: '    const visualOffset = input.floorAlignedMarkers ? 0 : wallHeight;',
     }],
   },
   {
@@ -15107,24 +15104,24 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'iso-opening-depth-orthographic-again',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#713 AC7" test/iso-openings.test.mjs',
-    because: '#713: opening faces are ordered along the oblique projector s·y + z; the former '
-      + 'orthographic key weighs height by cos 20° and can reorder glass, sill and leaf faces',
+      + '&& node --test --test-name-pattern="opening faces use the accepted orthographic" test/iso-openings.test.mjs',
+    because: '#1451 orders opening faces along the accepted orthographic projector ray. '
+      + 'Restoring the obsolete unit-Z oblique coefficient can reorder glass, sill and leaf faces.',
     patches: [{
       file: 'src/iso-openings.ts',
-      find: '    + value.z, 0) / points.length;',
-      replace: '    + value.z * Math.cos(tilt), 0) / points.length;',
+      find: '    + isoCameraDepth(value.point, value.z, camera), 0) / points.length;',
+      replace: '    + isoCameraDepth(value.point, value.z, { ...camera, floorScaleY: 1 }), 0) / points.length;',
     }],
   },
   {
     id: 'stage4-w1-camera-rotation-regresses',
-    guard: 'node --test --test-name-pattern="exact fixed" test/iso-projection.test.mjs',
-    because: 'W1: the reviewed Stage 4 camera is exactly 0 degrees; restoring the old +4 degree '
-      + 'yaw must fail the exact designer-handoff projection contract (#570)',
+    guard: 'node --test --test-name-pattern="default camera is the accepted" test/iso-projection.test.mjs',
+    because: '#1451 supersedes the Stage 4 zero-yaw profile: the reviewed camera is exactly '
+      + '35 degrees; an extra +4 degree yaw must fail the accepted designer-handoff contract.',
     patches: [{
-      file: 'src/iso-projection.ts',
-      find: '  rotDeg: 0,\n',
-      replace: '  rotDeg: 4,\n',
+      file: 'src/iso-lab-camera.ts',
+      find: 'export const ISO_LAB_CAMERA = Object.freeze({ yaw: ISO_VIEW_PROFILE.yaw,',
+      replace: 'export const ISO_LAB_CAMERA = Object.freeze({ yaw: ISO_VIEW_PROFILE.yaw + 4,',
     }],
   },
   {
@@ -15215,8 +15212,8 @@ const MUTANT_DEFINITIONS = [
       replace: '  onBuild(): void;\n  liveFingerprint?: string;\n}',
     }, {
       file: 'src/iso-scene-geometry.ts',
-      find: '    algorithm: 6, // #713: vertical oblique projection\n  })}`;',
-      replace: '    algorithm: 6, // #713: vertical oblique projection\n  })}|${input.liveFingerprint ?? \'\'}`;',
+      find: '    algorithm: 7, // #1451: fixed orthographic cutaway and physical opening masonry\n  })}`;',
+      replace: '    algorithm: 7, // #1451: fixed orthographic cutaway and physical opening masonry\n  })}|${input.liveFingerprint ?? \'\'}`;',
     }, {
       file: 'src/houseplan-card.ts',
       find: '      onBuild: () => { this._isoStructuralBuildCount += 1; },',
@@ -18910,8 +18907,8 @@ const contact1003GuardCases=[
     id:'contact-effective-point-not-painted-1003',guard:'node demo/smoke_device_contact_reflow.mjs',
     because:'#1003 AC5/AC10: actual DOM centres must remain registered to reflowed SVG after trusted settings Save and cold Lit mount; pure solver tests cannot prove its consumer.',
     patches:[{file:'src/houseplan-card.ts',
-      find:"    return !contacts || this._renderProjection==='iso' ? point : this._deviceContacts?.position(d.id,point) ?? point;",
-      replace:"    return !contacts || this._renderProjection==='iso' ? point : point;"}],
+      find:"    return !contacts || this._renderProjection==='iso' && !ISO_LAB_FLOOR_MARKERS ? point : this._deviceContacts?.position(d.id,point) ?? point;",
+      replace:"    return !contacts || this._renderProjection==='iso' && !ISO_LAB_FLOOR_MARKERS ? point : point;"}],
   },
   {
     id:'contact-pair-layout-cas-skipped-1003',

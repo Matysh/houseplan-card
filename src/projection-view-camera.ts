@@ -16,6 +16,14 @@ export interface ProjectionViewFrame {
   size: readonly [number, number];
 }
 
+/** Placeholder fit dimensions are scene units, never an observed pixel size.
+ * Only an accepted stage (or its trusted warm memo) can establish a camera. */
+export function acceptedViewFrame(view: ViewRect | null, frame: ProjectionViewFrame,
+  pixels: readonly [number,number] | null | undefined): ProjectionViewFrame | null {
+  if (!view || !pixels || ![...pixels,view.w,view.h].every(value=>Number.isFinite(value)&&value>0)) return null;
+  return {...frame,size:[pixels[0],pixels[1]]};
+}
+
 /** A changed fit is a new camera basis even when both frames are Flat.
  * Quarter-turn commands deliberately orbit the plan; stage resizing already
  * has a physical-camera owner and must not be applied a second time here. */

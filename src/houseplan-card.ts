@@ -339,7 +339,7 @@ import {
   isoDisplayWallHeight, isoCameraFor, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
 } from './iso-projection';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
-import {canonicalPhysicalCamera, physicalViewCamera, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
+import {acceptedViewFrame, canonicalPhysicalCamera, physicalViewCamera, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
 import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume } from './iso-lab-furniture';
 import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
 import { FURNITURE_VOLUME_RUNTIME } from './furniture-volume-runtime';
@@ -3745,8 +3745,10 @@ export class HouseplanCard extends LitElement {
   }
 
   private _adoptViewPlane(plane: ViewPlane): void {
-    const target = this._projectionViewFrame(plane);
-    if (this._viewPlaneKnown && this._view && this._viewFrame
+    const pixels = this._modeSceneSize ?? this._lastValidStageSize
+      ?? (this._viewPlaneKnown ? this._viewFrame?.size : null);
+    const target = acceptedViewFrame(this._view,this._projectionViewFrame(plane),pixels);
+    if (target && this._viewPlaneKnown && this._view && this._viewFrame
       && this._viewFrameSpace === this._space && shouldRebaseViewFrame(this._viewFrame, target)) {
       // A mode handoff already owns the physical camera. Do not reinterpret
       // its newly encoded destination as the outgoing projection a second time.
@@ -3755,7 +3757,7 @@ export class HouseplanCard extends LitElement {
       const next = canonicalPhysicalCamera(camera, target);
       this._view = next.viewBox; this._zoom = next.zoom;
     }
-    this._viewPlane = plane; this._viewPlaneKnown = true;
+    this._viewPlane = plane; this._viewPlaneKnown = !!target;
     this._viewFrame = target; this._viewFrameSpace = this._space;
   }
 

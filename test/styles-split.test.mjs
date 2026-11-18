@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cssOfSource } from '../scripts/css-source.mjs';
-import { parseRules } from '../scripts/css-lex.mjs';
+import { cssTokens, parseRules } from '../scripts/css-lex.mjs';
 import { cardStyles, baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles }
   from '../test-build/styles.js';
 import { CARD_DIALOG_FORM_KIT, formKitCss } from '../test-build/styles/form-kit.styles.js';
@@ -41,11 +41,63 @@ test('issue 266 the aggregator is exactly the five surface files in the cascade 
     'the cascade order is a contract — the golden set was accepted against it');
 });
 
+// Require the three positive classes on the same actual stage compound.
+// Attribute/pseudo modifiers may refine that stage, but text inside an
+// attribute or :not/:is argument must not manufacture a positive scope.
+function isoViewScoped(selector) {
+  const tokens = cssTokens(selector), classes = new Set();
+  const gated = () => ['stage', 'projection-iso', 'mode-view'].every(name => classes.has(name));
+  let round = 0, square = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i], kind = token.kind;
+    if (kind === 'comment') continue;
+    if (kind === '[') { square++; continue; }
+    if (kind === ']') { square--; continue; }
+    if (square) continue;
+    if (kind === '(') { round++; continue; }
+    if (kind === ')') { round--; continue; }
+    if (round) continue;
+    if (kind === ',') return false; // parseRules supplies individual selectors.
+    if (['space', '>', '+', '~', '|'].includes(kind)) {
+      if (gated()) {
+        const next = tokens.slice(i).find(t => !['space', 'comment'].includes(t.kind));
+        // A sibling of the stage is outside it; a descendant/child stays in it.
+        return !['+', '~', '|', ','].includes(next?.kind);
+      }
+      classes.clear();
+    } else if (kind === '.' && tokens[i + 1]?.kind === 'name' && tokens[i + 1].start === token.end) {
+      classes.add(tokens[i + 1].value);
+    }
+  }
+  return !round && !square && gated();
+}
+
+test('#1451 the iso View scope accepts same-stage modifiers, not lookalikes or negative scopes', () => {
+  for (const selector of [
+    '.stage.projection-iso.mode-view .dev',
+    '.stage.projection-iso.mode-view:not([data-hp-iso-floor-markers]) .devlayer',
+    '.stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane',
+    ':host([data-pointer-hover]) .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev:hover',
+    '.stage.mode-view.projection-iso[data-note="quoted + space"] > .dev',
+    '.stage.projection-iso.mode-view .dev + .dev',
+  ]) assert.equal(isoViewScoped(selector), true, selector);
+  for (const selector of [
+    '.iso-room-label-plane', '.iso-furniture-foreground',
+    '.stage.mode-view .dev', '.stage.projection-iso.mode-decor .dev',
+    '.stage.projection-iso.mode-viewer .dev', '.stage.projection-iso-disabled.mode-view .dev',
+    '.stage.projection-iso .mode-view .dev',
+    ':not(.stage.projection-iso.mode-view) .dev',
+    ':is(.stage.projection-iso.mode-view, .flat) .dev',
+    '[data-scope=".stage.projection-iso.mode-view"] .dev',
+    '.stage.projection-iso.mode-view + .flat', '.stage.projection-iso.mode-view ~ .flat',
+  ]) assert.equal(isoViewScoped(selector), false, selector);
+});
+
 test('#649 every 2.5D tile rule is scoped to the 2.5D View stage', () => {
   const rules = parseRules(isoTilesStyles.map(sheet => sheet.cssText).join('\n')).filter(rule => rule.kind === 'rule');
   assert.ok(rules.length > 40, `expected the generated tables, got ${rules.length} rules`);
   for (const rule of rules) for (const selector of rule.selectors) {
-    assert.match(selector, /\.stage\.projection-iso\.mode-view /, `unscoped 2.5D rule: ${selector}`);
+    assert.ok(isoViewScoped(selector), `unscoped 2.5D rule: ${selector}`);
   }
 });
 

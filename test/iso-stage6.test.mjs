@@ -286,6 +286,7 @@ test('#1024 ISO sunlight masks shares without shortening the parent gradient or 
 test('#649 AC3 layout and collisions see the 2.5D tile size (× ISO_ICON_SCALE)', async () => {
   const { buildIsoOverlayRenderScene, isoRaisedOverlayHalfSize } = await import('../test-build/iso-scene-render.js');
   const { iconUnit } = await import('../test-build/space-geometry.js');
+  const {isoCameraFor,projectPlanPoint,unprojectFloorPoint}=await import('../test-build/iso-projection.js');
   const presentation = { scale: 1, pulse: { animated: false }, classes: [], supplemental: [] };
   const space = {
     id: 'floor', title: 'Floor', cellCm: 5, vb: [0, 0, 1000, 1000], bg: null,
@@ -302,14 +303,27 @@ test('#649 AC3 layout and collisions see the 2.5D tile size (× ISO_ICON_SCALE)'
     presentationOf: () => presentation, labelPositionOf: () => ({ x: 0, y: 0 }), labelScaleOf: () => 1,
     openingEntityAvailable: () => true, openingWallIndex: () => ({ adjacencyEps: 0.1, edges: [] }),
   };
-  const scene = buildIsoOverlayRenderScene(input);
-  const footprint = scene.devices.get('d1').footprint;
-  const half = (Math.max(...footprint.map((p) => p[0])) - Math.min(...footprint.map((p) => p[0]))) / 2;
   const base = 3 * iconUnit(space) / 100;
-  const scaled = isoRaisedOverlayHalfSize({ kind: 'device', core: base * ISO_ICON_SCALE, presentation })[0];
-  const flat = isoRaisedOverlayHalfSize({ kind: 'device', core: base, presentation })[0];
-  assert.ok(Math.abs(half - scaled) < 1e-6, `footprint half ${half} = the 1.12 tile ${scaled}`);
-  assert.ok(half > flat * 1.1, 'the Flat size would let 2.5D tiles overlap');
+  const flat = isoRaisedOverlayHalfSize({ kind: 'device', core: base, presentation });
+  for(const rotation of [0,90,180,270]) for(const floorAlignedMarkers of [false,true]) {
+    const camera=isoCameraFor(rotation);
+    const scene=buildIsoOverlayRenderScene({...input,camera,floorAlignedMarkers});
+    const footprint=scene.devices.get('d1').footprint;
+    const expected=isoRaisedOverlayHalfSize({kind:'device',
+      core:base*(floorAlignedMarkers?1:ISO_ICON_SCALE),presentation});
+    // Screen AABBs widen under yaw. Collision dimensions are checked back
+    // in plan space; height translation cannot change their span.
+    const local=footprint.map(point=>unprojectFloorPoint(point,camera));
+    const span=(points,axis)=>Math.max(...points.map(p=>p[axis]))-Math.min(...points.map(p=>p[axis]));
+    for(const axis of [0,1])assert.ok(Math.abs(span(local,axis)/2-expected[axis])<1e-6);
+    const projected=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>
+      projectPlanPoint([500+x*expected[0],500+y*expected[1]],0,camera));
+    for(const axis of [0,1])assert.ok(Math.abs(span(footprint,axis)-span(projected,axis))<1e-6);
+    if(!floorAlignedMarkers)assert.ok(span(local,0)/2>flat[0]*1.1,
+      'legacy raised tiles retain their 1.12 collision scale');
+    else assert.ok(Math.abs(span(local,0)/2-flat[0])<1e-6,
+      'the accepted floor-aligned product keeps its actual uninflated marker scale');
+  }
 });
 
 test('#649 AC7 the 2.5D beam is cut by the same physical bodies as Flat, on the far side of the body', () => {

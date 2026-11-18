@@ -49,6 +49,23 @@ test('the canonical config writer cannot drop its expected revision (#340)', () 
         .includes('frontend config/set bypasses the canonical boundary'),
     );
     writeFileSync(cardPath, productionCard);
+    const optimizePath = resolve(fixtureRoot, 'src/plan-optimize-write.ts');
+    const productionOptimize = readFileSync(optimizePath, 'utf8');
+    for (const field of ['expected_config_rev: expectedConfigRev,', 'expected_layout_rev: expectedLayoutRev,']) {
+      const withoutRevision = productionOptimize.replace(field, '');
+      assert.notEqual(withoutRevision, productionOptimize, `negative control removes ${field}`);
+      writeFileSync(optimizePath, withoutRevision);
+      assert.ok(checkCoordinateWriteBarriers(fixtureRoot)
+        .includes('frontend Optimize transaction bypasses the canonical boundary'), field);
+    }
+    // Future optional capabilities do not change the boundary or either CAS.
+    const paddedOptimize = productionOptimize.replace("type: 'houseplan/plan/optimize',",
+      `type: 'houseplan/plan/optimize',\n    /* ${'capability metadata '.repeat(40)} */`);
+    assert.notEqual(paddedOptimize, productionOptimize);
+    writeFileSync(optimizePath, paddedOptimize);
+    assert.ok(!checkCoordinateWriteBarriers(fixtureRoot)
+      .includes('frontend Optimize transaction bypasses the canonical boundary'));
+    writeFileSync(optimizePath, productionOptimize);
     const contactPath = resolve(fixtureRoot, 'src/device-contact-write.ts');
     const contacts = readFileSync(contactPath, 'utf8');
     const withoutCanonicalization = contacts.replace('canonicalizePosition(c.placement)', 'c.placement');

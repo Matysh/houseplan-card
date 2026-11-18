@@ -8,7 +8,7 @@ import {
 } from '../test-build/iso-overlays.js';
 import {
   ISO_RAISED_OVERLAY_HEIGHT,
-  projectPlanPoint,
+  projectPlanPoint, isoCameraFor, isoFloorMatrix,
 } from '../test-build/iso-projection.js';
 
 const close = (actual, expected, epsilon = 1e-7) =>
@@ -94,16 +94,22 @@ test('a degenerate or missing owner room still raises the overlay straight up', 
 });
 
 test('footprint corners use the same affine camera on the raised plane', () => {
-  const footprint = buildIsoFootprintPolygon([50, 50], [10, 5], ISO_RAISED_OVERLAY_HEIGHT);
   const logical = [[40, 45], [60, 45], [60, 55], [40, 55]];
-  logical.forEach((point, index) => {
-    const projected = projectPlanPoint(point, ISO_RAISED_OVERLAY_HEIGHT);
-    close(footprint[index][0], projected[0]);
-    close(footprint[index][1], projected[1]);
-  });
-  close(footprint[0][1], footprint[1][1]);
-  assert.ok(footprint[2][1] > footprint[1][1],
-    'zero yaw keeps the screen-facing footprint aligned with the plan axes');
+  for (const rotation of [0,90,180,270]) {
+    const camera=isoCameraFor(rotation);
+    const footprint=buildIsoFootprintPolygon([50,50],[10,5],ISO_RAISED_OVERLAY_HEIGHT,camera);
+    logical.forEach((point,index)=>{
+      const projected=projectPlanPoint(point,ISO_RAISED_OVERLAY_HEIGHT,camera);
+      close(footprint[index][0],projected[0]);close(footprint[index][1],projected[1]);
+    });
+    // Accepted yaw is 35 degrees, not zero: both edges follow the affine
+    // camera basis, not an axis-aligned screen rectangle.
+    const [a,b,c,d]=isoFloorMatrix(camera);
+    close(footprint[1][0]-footprint[0][0],20*a);
+    close(footprint[1][1]-footprint[0][1],20*b);
+    close(footprint[2][0]-footprint[1][0],10*c);
+    close(footprint[2][1]-footprint[1][1],10*d);
+  }
 });
 
 // #724: what a placement carries is what someone reads — no invisible tether or

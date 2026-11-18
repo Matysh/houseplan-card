@@ -1,11 +1,33 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {physicalViewCamera, canonicalPhysicalCamera,
-  presentedView, shouldRebaseViewFrame} from '../test-build/projection-view-camera.js';
+  presentedView, shouldRebaseViewFrame, acceptedViewFrame} from '../test-build/projection-view-camera.js';
 import {isoCameraFor, unprojectFloorPoint} from '../test-build/iso-projection.js';
 import {turnRect, turnPoint, inversePlanRotation} from '../test-build/view-frame.js';
 
 const close = (a,b) => assert.ok(Math.abs(a-b)<1e-8, `${a} != ${b}`);
+test('#1451 cold fit placeholders never establish a presented physical camera',()=>{
+  const placeholder={base:[0,0,1000,1000],display:{x:0,y:0,w:1000,h:1000},
+    rotation:0,plane:null,size:[1,1]};
+  const view={x:61.68498509396136,y:149.17140151219405,w:876.6300298120773,h:891.2405303089452};
+  assert.equal(acceptedViewFrame(null,placeholder,null),null);
+  assert.equal(acceptedViewFrame(view,{...placeholder,size:[view.w,view.h]},null),null,
+    'a scene-unit fit cannot masquerade as the stage pixel dimensions');
+  assert.equal(acceptedViewFrame(view,placeholder,[0,793]),null);
+  const actual={...placeholder,base:[60,349.5833333333333,880,490.4166666666667],
+    display:{x:60,y:349.5833333333333,w:880,h:490.4166666666667}};
+  const accepted=acceptedViewFrame(view,actual,[780,793]);
+  assert.deepEqual(accepted.size,[780,793]);
+  const physical=physicalViewCamera(view,1.0038442331123942,accepted);
+  close(physical.pixelsPerUnit,780/view.w);
+  const warmed=acceptedViewFrame(view,actual,accepted.size);
+  const next=canonicalPhysicalCamera(physical,warmed);
+  close(next.viewBox.w,view.w);
+  assert.ok(next.viewBox.w<1000,'the camera cannot square876 scene units into768480');
+  const oldFalseCamera=physicalViewCamera(view,1,placeholder);
+  const oldFailure=canonicalPhysicalCamera(oldFalseCamera,{...actual,size:[view.w,view.h]});
+  close(oldFailure.viewBox.w,view.w*view.w);
+});
 test('#1451 provisional Flat fit becoming the prepared frame rebases the physical camera once',()=>{
   for(const rotation of [90,270]) {
     const square={x:0,y:0,w:1000,h:1000},real={x:-50,y:50,w:1100,h:900};

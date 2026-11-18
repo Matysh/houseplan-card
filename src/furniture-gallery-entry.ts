@@ -1,4 +1,6 @@
 import {html,svg,render,nothing} from 'lit';
+import './hp-color-opacity';
+import type {ColorPickerLabels} from './hp-color-opacity';
 import {FURNITURE_GALLERY_CATALOG} from './furniture-gallery-catalog.generated';
 import {GENERATED_FURNITURE_ART} from './furniture-plan-art.generated';
 import {furnitureRenderTransform} from './furniture';
@@ -9,6 +11,7 @@ import {isoFloorMatrix,projectPlanPoint,type PlanPoint,type IsoCamera} from './i
 
 const mount=document.querySelector<HTMLElement>('#gallery')!;
 const state={search:'',group:'all',status:'all',size:'overview',yaw:35,elevation:40,angle:0,flipH:false,flipV:false,width:1,depth:1,opacity:1,color:'#627783',dark:false};
+const pickerLabels:ColorPickerLabels={title:'Выбор цвета',hue:'Оттенок',saturation:'Насыщенность',value:'Яркость',hex:'Цвет HEX',invalidHex:'Введите цвет HEX из 3 или 6 цифр',confirm:'ОК'};
 const groups:Record<string,string>={furniture:'Мебель',appliance:'Техника',sanitary:'Сантехника',other:'Прочее'};
 type Symbol=(typeof FURNITURE_GALLERY_CATALOG)[number];
 const known=Object.keys(GENERATED_FURNITURE_ART);
@@ -54,7 +57,8 @@ function draw(){
   <section class="controls" aria-label="Настройки галереи">
    <div class="filters"><label class="search">Поиск<input type="search" aria-label="Поиск модели" placeholder="Название или ID модели" .value=${state.search} @input=${(e:Event)=>{state.search=(e.target as HTMLInputElement).value;draw();}}></label>${select('Категория','group',[['all','Все категории'],...Object.entries(groups)])}${select('Размер карточек','size',[['overview','Обзор'],['large','Крупно'],['detail','Подробно']])}${select('Готовность','status',[['all','Вся библиотека'],['ready','Объём из SVG'],['flat','Пока плоская']])}</div>
    <div class="settings">${select('Камера','yaw',[35,125,215,305].map(v=>[String(v),v+'°']))}${select('Высота взгляда','elevation',[30,35,40].map(v=>[String(v),v+'°']))}${select('Поворот предмета','angle',[0,35,90,180,270].map(v=>[String(v),v+'°']))}${select('Ширина','width',[['0.7','70%'],['1','100%'],['1.4','140%']])}${select('Глубина','depth',[['0.7','70%'],['1','100%'],['1.4','140%']])}${select('Непрозрачность','opacity',[['0.35','35%'],['0.7','70%'],['1','100%']])}
-    <label>Цвет<input aria-label="Цвет мебели" type="color" .value=${state.color} @input=${(e:Event)=>{state.color=(e.target as HTMLInputElement).value;draw();}}></label>
+    <hp-color-opacity class="gallery-color" .label=${'Цвет'} .triggerLabel=${'Цвет мебели'} .color=${state.color} .opacity=${1} .showOpacity=${false} .flatSwatch=${true} .pointerHover=${true} .pickerLabels=${pickerLabels}
+      @hp-color-opacity-change=${(e:CustomEvent<{color:string}>)=>{state.color=e.detail.color;draw();}}></hp-color-opacity>
     <button aria-pressed=${String(state.flipH)} @click=${()=>{state.flipH=!state.flipH;draw();}}>Зеркало X</button><button aria-pressed=${String(state.flipV)} @click=${()=>{state.flipV=!state.flipV;draw();}}>Зеркало Y</button><button class="reset" @click=${reset}>Сбросить</button>
    </div></section>
   <div class="section-label"><span aria-live="polite">Показано ${filtered.length} из ${symbols.length}</span><span>${FURNITURE_VOLUME_RUNTIME.state()==='fallback'?'Объёмные модели не загрузились. Показан обычный рисунок; обновите страницу.':`Объём из SVG: ${ready} из ${symbols.length}. Исходный рисунок плана сохранён.`}</span></div>

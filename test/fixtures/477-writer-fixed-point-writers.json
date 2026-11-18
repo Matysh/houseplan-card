@@ -27,6 +27,7 @@
     { "owner": "_dtUp", "class": "fixed-point", "witness": "test/align-grid.test.mjs" },
     { "owner": "_deleteDecor", "class": "fixed-point", "witness": "test/align-grid.test.mjs" },
     { "owner": "_furnPlace", "class": "continuous-transform-exemption", "witness": "test/align-grid.test.mjs" },
+    { "owner": "_renderDecorSecondary", "class": "continuous-transform-exemption", "witness": "test/furniture-workstation.test.mjs" },
     { "owner": "_saveBackdropDialog", "class": "fixed-point", "witness": "test/align-grid.test.mjs" },
     { "owner": "_bdReset", "class": "fixed-point", "witness": "test/align-grid.test.mjs" },
     { "owner": "_bdUp", "class": "fixed-point", "witness": "test/align-grid.test.mjs" }

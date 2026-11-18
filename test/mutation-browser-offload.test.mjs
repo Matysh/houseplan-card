@@ -71,7 +71,7 @@ test('#659 2.5D CSS and generated material contracts stay unit-testable strings'
   contains('src/iso-sun.ts',
     'const streaks = beam.lightFloor ? [inset / length, 1 - inset / length] : [];');
   contains('src/iso-scene-geometry.ts',
-    'const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);\n'
+    'const wallHeight = gridVisualUnits(isoDisplayWallHeight(), input.cellCm);\n'
       + '  const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);\n'
       + '  const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);\n'
       + '  const cached = lruRead(input.cache, input.source.key);');

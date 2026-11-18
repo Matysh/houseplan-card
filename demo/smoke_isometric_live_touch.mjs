@@ -88,22 +88,36 @@ const out = await page.evaluate(async () => {
   await frame();
 
   const count = (selector) => root(original).querySelectorAll(selector).length;
+  const identities = (selector) => [...root(original).querySelectorAll(selector)]
+    .map(node => node.dataset.id).filter(Boolean).sort();
+  const unique = values => [...new Set(values)];
+  const decorSelector = '.decorlayer [data-hp="decor"], [data-hp-furniture-volume]';
+  const furnitureSelector = '.decorlayer .dfurn, [data-hp-furniture-volume]';
   const layers = () => ({
     rooms: count('[data-hp="room"]'),
     roomFills: count('[data-hp="room"].filled'),
-    decor: count('.decorlayer [data-hp="decor"]'),
-    furniture: count('.decorlayer .dfurn'),
+    decor: unique(identities(decorSelector)).length,
+    furniture: unique(identities(furnitureSelector)).length,
+    decorIds: unique(identities(decorSelector)),
+    furnitureIds: unique(identities(furnitureSelector)),
+    decorDuplicateFree: identities(decorSelector).length === unique(identities(decorSelector)).length,
+    furnitureDuplicateFree: identities(furnitureSelector).length === unique(identities(furnitureSelector)).length,
+    rawDecor: count('.decorlayer [data-hp="decor"]'),
+    rawFlatFurniture: count('.decorlayer .dfurn'),
+    rawVolumeFurniture: count('[data-hp-furniture-volume]'),
     backdrop: count('.hp-backdrop'),
     glowBase: count('.glow-base-layer .glow-base'),
     glowSources: count('.glowlayer [data-glow-source]'),
     sun: count('.sunlayer'),
     openings: count('[data-hp="opening"]'),
     verticalOpenings: count('[data-hp="iso-openings"] .iso-opening-panel'),
+    openingIds: unique(identities('[data-hp="opening"], [data-hp="iso-openings"] .iso-opening-panel')),
     devices: count('[data-hp="device"]'),
     hover: count('.room-hover-fill'),
     vacuumPucks: count('.vacpuck'),
     vacuumTrails: count('.vactrail path.core'),
   });
+  const stableLayers = ({verticalOpenings,rawDecor,rawFlatFurniture,rawVolumeFurniture,...stable}) => stable;
   const flat = layers();
   const flatVacuumTrailD = root(original).querySelector('.vactrail path.core[data-vacuum-owner="iso-vacuum"]')?.getAttribute('d') || '';
   const flatSpillParts = [...root(original).querySelectorAll('.glow-pool')]
@@ -161,6 +175,7 @@ const out = await page.evaluate(async () => {
   };
   await window.__hpTest.settled();
   const after = layers();
+  window.__isoTouchLayerDiagnostics = {flat,before,after};
   const afterSpillParts = [...root(original).querySelectorAll('.glow-pool')]
     .map((node) => node.getAttribute('data-lit-parts'));
   const sunBefore = original.hass.states['sun.sun'];
@@ -191,32 +206,57 @@ const out = await page.evaluate(async () => {
   const overlaySvg = root(original).querySelector('.iso-overlays-svg');
   const wallSvg = root(original).querySelector('.iso-walls-svg');
   const doorResolved = original._openingsR.find((opening) => opening.id === 'iso-door');
-  // #713: the 2.5D floor is the Flat plane — the floor group carries no transform.
-  const isoFloorGroupPlain = !!root(original).querySelector('.iso-floor-scene')
-    && !root(original).querySelector('.iso-floor-scene')?.hasAttribute('transform');
-  const isoFloorMatrix = [1, 0, 0, 1, 0, 0];
-  const wallHeight = 84 * (5 / original._cellCm);
-  const openingTopPoint = doorResolved && isoFloorMatrix.length === 6
-    ? new DOMPoint(
-      isoFloorMatrix[0] * doorResolved.rx + isoFloorMatrix[2] * doorResolved.ry + isoFloorMatrix[4],
-      isoFloorMatrix[1] * doorResolved.rx + isoFloorMatrix[3] * doorResolved.ry + isoFloorMatrix[5]
-        - wallHeight * Math.sin(20 * Math.PI / 180),
-    ) : null;
+  const windowResolved = original._openingsR.find((opening) => opening.id === 'iso-window');
+  // Independent #1451 oracle: accepted yaw35/elevation40, centred at500.
+  // Do not derive the expected matrix from the product's projection helper.
+  const yaw=(35+original._rotation)*Math.PI/180,depth=Math.sin(40*Math.PI/180);
+  const a=Math.cos(yaw),b=Math.sin(yaw)*depth,c=-Math.sin(yaw),d=Math.cos(yaw)*depth;
+  const isoFloorMatrix=[a,b,c,d,500-a*500-c*500,500-b*500-d*500];
+  const floorMatrix=root(original).querySelector('.iso-floor-scene')?.transform.baseVal.consolidate()?.matrix;
+  const isoFloorUsesAcceptedCamera=!!floorMatrix
+    && [floorMatrix.a,floorMatrix.b,floorMatrix.c,floorMatrix.d,floorMatrix.e,floorMatrix.f]
+      .every((value,index)=>Math.abs(value-isoFloorMatrix[index])<1e-7);
+  const wallHeight=140/original._cellCm*original._gridPitch;
+  const openingPoint = (opening,height) => opening ? new DOMPoint(
+    isoFloorMatrix[0]*opening.rx+isoFloorMatrix[2]*opening.ry+isoFloorMatrix[4],
+    isoFloorMatrix[1]*opening.rx+isoFloorMatrix[3]*opening.ry+isoFloorMatrix[5]
+      -height*Math.cos(40*Math.PI/180)) : null;
+  const openingTopPoint=openingPoint(doorResolved,wallHeight);
+  const clearDoorPoint=openingPoint(doorResolved,wallHeight*.5);
+  const windowApronPoint=openingPoint(windowResolved,wallHeight*.18);
   const wallTopPathsBeforeHide = [...root(original).querySelectorAll('.iso-wall-top')]
     .map((path) => path.getAttribute('d'));
-  const openingCutIsEmpty = openingTopPoint
-    && ![...root(original).querySelectorAll('.iso-wall-top')]
-      .some((path) => path.isPointInFill(openingTopPoint));
+  const contains=(selector,point)=>!!point&&[...root(original).querySelectorAll(selector)]
+    .some(path=>path.isPointInFill(point));
+  // #1451 deliberately closes the top eight percent above a door, while
+  // leaving the doorway clear below it. Windows retain solid masonry below
+  // the sill; external gates never gain a floating lintel.
+  const masonryContract=()=>({
+    doorLintel:contains('.iso-wall-top[data-id="iso-door"][data-surface="opening-lintel-top"]',openingTopPoint),
+    doorGapClear:!!clearDoorPoint&&!contains('.iso-wall-top[data-id="iso-door"],.iso-wall-side[data-id="iso-door"]',clearDoorPoint),
+    windowApron:contains('[data-id="iso-window"][data-surface^="window-apron-"]',windowApronPoint),
+    gateNoLintel:!root(original).querySelector('[data-id="iso-gate"][data-surface^="opening-lintel-"]'),
+  });
+  const masonryBefore=masonryContract();
+  window.__isoTouchLayerDiagnostics.masonry={...masonryBefore,wallHeight,
+    doorFace:doorResolved?.face,windowFace:windowResolved?.face,
+    surfaceKinds:[...root(original).querySelectorAll('[data-id="iso-door"],[data-id="iso-window"]')]
+      .map(node=>node.dataset.surface).filter(Boolean)};
   const result = {
     isoOnTouch: root(original).querySelector('.stage')?.getAttribute('data-hp-iso-stage') === '4'
       && !!root(original).querySelector('[data-hp="iso-walls"]'),
-    flatIsoLayerParity: JSON.stringify({ ...flat, openings: 0, verticalOpenings: before.verticalOpenings })
-        === JSON.stringify(before)
+    flatIsoLayerParity: JSON.stringify(stableLayers({ ...flat, openings: 0 }))
+        === JSON.stringify(stableLayers(before))
       && JSON.stringify(flatSpillParts) === JSON.stringify(beforeSpillParts),
-    liveLayersPresent: before.rooms > 0 && before.roomFills > 0 && before.decor >= 2
-      && before.furniture > 0 && before.backdrop > 0 && before.glowBase === 0
+    liveLayersPresent: before.rooms > 0 && before.roomFills > 0
+      && JSON.stringify(before.decorIds) === JSON.stringify(['iso-line','iso-sofa'])
+      && JSON.stringify(before.furnitureIds) === JSON.stringify(['iso-sofa'])
+      && before.decorDuplicateFree && before.furnitureDuplicateFree
+      && before.rawFlatFurniture === 0 && before.rawVolumeFurniture === 1
+      && before.backdrop > 0 && before.glowBase === 0
       && before.glowSources >= 2 && before.sun > 0 && before.openings === 0
       && before.verticalOpenings >= 5
+      && JSON.stringify(before.openingIds) === JSON.stringify(['iso-door','iso-gate','iso-window'])
       && before.devices > 0 && before.hover > 0 && before.vacuumPucks > 0
       && before.vacuumTrails >= 1,
     // #1002 removes the casing; #872 still preserves all four native points,
@@ -227,7 +267,9 @@ const out = await page.evaluate(async () => {
       && isoVacuumTrailD.startsWith('M 100 100'),
     nativeTrailExactEndpointWithoutConnector: isoVacuumTrailD.endsWith('L 325 350')
       && isoVacuumTips === 0,
-    liveLayersStable: JSON.stringify(after) === JSON.stringify(before),
+    // Pose-dependent clipping may change the number of surface paths, not
+    // physical opening membership or any other live floor layer.
+    liveLayersStable: JSON.stringify(stableLayers(after)) === JSON.stringify(stableLayers(before)),
     spillBarrierStable: JSON.stringify(afterSpillParts) === JSON.stringify(beforeSpillParts)
       && beforeSpillParts.length >= 2 && beforeSpillParts.every((parts) => Number(parts) > 0),
     floorToOverlayOrderPreserved: ordered.every(Boolean)
@@ -255,9 +297,9 @@ const out = await page.evaluate(async () => {
       && original._isoGeometryCache.size === 1,
     oneLightModel: !root(original).querySelector('.window-light,.iso-window-light,.iso-glow,.iso-sun'),
     oldFloorSymbolsNotDuplicated: before.openings === 0,
-    visibleOpeningHasMasonryCut: Boolean(openingCutIsEmpty)
+    openingMasonryMatchesAcceptedCut: Object.values(masonryBefore).every(value=>value===true)
       && wallTopPathsBeforeHide.length > 0,
-    isoFloorGroupPlain,
+    isoFloorUsesAcceptedCamera,
   };
 
   configSpace.settings.hide_openings = true;
@@ -272,9 +314,7 @@ const out = await page.evaluate(async () => {
     && root(original).querySelectorAll('.glowlayer [data-glow-source]').length >= 2
     && JSON.stringify([...root(original).querySelectorAll('.iso-wall-top')]
       .map((path) => path.getAttribute('d'))) === JSON.stringify(wallTopPathsBeforeHide)
-    && openingTopPoint
-    && ![...root(original).querySelectorAll('.iso-wall-top')]
-      .some((path) => path.isPointInFill(openingTopPoint));
+    && Object.values(masonryContract()).every(value=>value===true);
 
   configSpace.settings.hide_openings = false;
   const runtimeBeforeNoBorders = original._isoSceneRuntime;
@@ -563,5 +603,6 @@ out.kioskSettingOffIsFlat = await page.evaluate(async () => {
     && !card.renderRoot.querySelector('[data-hp="projection-toggle"]');
 });
 
+console.log(JSON.stringify({touchLayerDiagnostics:await page.evaluate(()=>window.__isoTouchLayerDiagnostics)},null,2));
 checkAll(out);
 await finish(browser, out);

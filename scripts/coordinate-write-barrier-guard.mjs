@@ -87,11 +87,16 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
 
   const optimizeWrites = occurrences(frontend, "type: 'houseplan/plan/optimize'");
   if (optimizeWrites.length !== 1) errors.push(`frontend Optimize writer inventory: ${optimizeWrites.length}`);
-  for (const index of optimizeWrites) requireWindow(
-    errors, frontend, index,
-    /const expectedConfigRev = guard\?\.source.configRev \?\? this\._cfgRev;[\s\S]*const expectedLayoutRev = guard\?\.source.layoutRev \?\? this\._layoutRev;[\s\S]*config,[\s\S]*layout,[\s\S]*expected_config_rev: expectedConfigRev,[\s\S]*expected_layout_rev: expectedLayoutRev/,
-    'frontend Optimize transaction', 1300,
-  );
+  for (const index of optimizeWrites) {
+    // Read the complete registered payload, not a character budget which an
+    // optional feature capability can consume before the revision fields.
+    // The following options boundary belongs to this exact transport call.
+    const end = frontend.indexOf('\n  }, { isCurrent:', index);
+    const transaction = end < 0 ? '' : frontend.slice(Math.max(0, index - 1300), end);
+    if (!/const expectedConfigRev = guard\?\.source.configRev \?\? this\._cfgRev;[\s\S]*const expectedLayoutRev = guard\?\.source.layoutRev \?\? this\._layoutRev;[\s\S]*const response = await sendHouseplanWrite[^\n]+\(writeHost, \{[\s\S]*type: 'houseplan\/plan\/optimize',[\s\S]*config,[\s\S]*layout,[\s\S]*expected_config_rev: expectedConfigRev,[\s\S]*expected_layout_rev: expectedLayoutRev/.test(transaction)) {
+      errors.push('frontend Optimize transaction bypasses the canonical boundary');
+    }
+  }
 
   const componentRoot = resolve(root, 'custom_components/houseplan');
   const pythonFiles = readdirSync(componentRoot, { recursive: true })
