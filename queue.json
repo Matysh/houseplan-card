@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15822,
+  "revision": 15823,
   "nextTicket": 520,
   "nextFence": 520,
   "tasks": {
@@ -6062,6 +6062,10 @@
       "digest": "6e41d2cc67a6719c2a3ea1dfd990ed28948b175ce17355762a75473740190faa",
       "issue": 1451
     },
+    "github:44396452383:1:completions:message:217fbe6a7e0f9308e949b535ddce1a310e22643175d6a1c211fa34e47d6ff6a4": {
+      "digest": "61d81373413772c686bf978744fda689dfe5f07cb5e46dfea4036dc2e8e166b0",
+      "issue": 1451
+    },
     "finish:4d0cf01c-334e-4c98-aa92-eb59288ac117": {
       "digest": "8f1f12ac0308f6a4ef23d69d665acf96bd0de8a36f388447633fdfde65e14c23",
       "issue": 1451,
@@ -6257,7 +6261,8 @@
           "entry": 4,
           "detail": "Поведение: test/floor-cache-publication.test.mjs: failed",
           "eventId": "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:3:return:return:1451"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:2d5d76f4-61ba-41bc-823f-c477418b9f36": {
