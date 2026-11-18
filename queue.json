@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15746,
+  "revision": 15747,
   "nextTicket": 517,
   "nextFence": 517,
   "tasks": {
@@ -4794,14 +4794,16 @@
         "tests_backend/test_furniture_workstation.py"
       ],
       "notice": {
-        "key": "1:executor-admission-expired",
-        "reason": "executor-admission-expired",
+        "key": "2:checks-failed",
+        "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795027747050,
-        "entry": 1,
-        "eventId": "finish:3e47154c-493c-4991-9729-85e4059a2a92:finish:1:expire:return:1451"
-      }
+        "at": 1795029863158,
+        "entry": 2,
+        "detail": "Поведение: test/color-picker.test.mjs: failed; Поведение: test/coordinate-write-barrier-guard.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/iso-overlays.test.mjs: failed; Поведение: test/iso-stage6.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Поведение: test/writer-fixed-point.test.mjs: failed; Браузер: isometric live touch: failed; Браузер: wall node topology: failed",
+        "eventId": "finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:3:return:return:1451"
+      },
+      "reason": "checks-failed"
     },
     "1452": {
       "issue": 1452,
@@ -5571,18 +5573,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1451,
-    "worker": "finish",
-    "token": "516:finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:1:admit",
-    "fence": 516,
-    "materialSha": "d7f65198e07b8c84f32927cd0cd30d9178e82539",
-    "expectedBase": "d108e0dfc158ce0a00a22173a95292eff40fe13a",
-    "phase": "testing",
-    "admittedAt": 1795027842146,
-    "expiresAt": 1795030118095,
-    "patchId": "294f95911bfd9a37efea8cb827fa9fa13e350888"
-  },
+  "active": null,
   "events": {
     "github:44358531868:1:label:spec-request": {
       "digest": "67b5c887bc8842741e94242a95968ad6d2023ae67965d93bc0e37ab4dc77f01d",
@@ -5744,6 +5735,10 @@
       "digest": "19ea4b0c165e915464c2e3e5af2f51f5ba0f452a141a5d66c9f6d387446ec5fe",
       "issue": 1451
     },
+    "finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:3:return": {
+      "digest": "6d6aaa11b23d01541b0de7c1ad17e474afda65a8ed530005d89a9e9286e52853",
+      "issue": 1451
+    },
     "finish:4d0cf01c-334e-4c98-aa92-eb59288ac117": {
       "digest": "8f1f12ac0308f6a4ef23d69d665acf96bd0de8a36f388447633fdfde65e14c23",
       "issue": 1451,
@@ -5815,6 +5810,26 @@
         "layer": "product",
         "materialSha": "d7f65198e07b8c84f32927cd0cd30d9178e82539",
         "phase": "sync"
+      }
+    },
+    "finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:3:return:return:1451": {
+      "digest": "6d6aaa11b23d01541b0de7c1ad17e474afda65a8ed530005d89a9e9286e52853",
+      "issue": 1451,
+      "message": {
+        "kind": "return",
+        "issue": 1451,
+        "at": 1795029863158,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795029863158,
+          "entry": 2,
+          "detail": "Поведение: test/color-picker.test.mjs: failed; Поведение: test/coordinate-write-barrier-guard.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/iso-overlays.test.mjs: failed; Поведение: test/iso-stage6.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Поведение: test/writer-fixed-point.test.mjs: failed; Браузер: isometric live touch: failed; Браузер: wall node topology: failed",
+          "eventId": "finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:3:return:return:1451"
+        }
       }
     }
   },
