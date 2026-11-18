@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15640,
-  "nextTicket": 514,
+  "revision": 15641,
+  "nextTicket": 515,
   "nextFence": 514,
   "tasks": {
     "1024": {
@@ -4921,6 +4921,20 @@
         "status": "published",
         "sourceSha": "46c8b6a510f882687a1fa00f0fb74e707481e0cc"
       }
+    },
+    "1466": {
+      "issue": 1466,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/1466-nightly-witnesses",
+      "materialSha": "d108e0dfc158ce0a00a22173a95292eff40fe13a",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 514,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795022412204,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5304,9 +5318,25 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1466
+  ],
   "active": null,
-  "events": {},
+  "events": {
+    "finish:4dd3f6fc-b73c-430e-849c-8226e7b9ef97": {
+      "digest": "88b81bf2b510cb6965ec3444646193471d4b41195b17fcc931f856f666b79470",
+      "issue": 1466,
+      "message": {
+        "kind": "queued",
+        "issue": 1466,
+        "at": 1795022412204,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "d108e0dfc158ce0a00a22173a95292eff40fe13a"
+      }
+    }
+  },
   "devWebhook": {
     "sourceSha": "46c8b6a510f882687a1fa00f0fb74e707481e0cc",
     "status": "delivered",
