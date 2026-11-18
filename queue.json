@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15529,
+  "revision": 15530,
   "nextTicket": 512,
   "nextFence": 512,
   "tasks": {
@@ -5014,7 +5014,18 @@
         "tests_backend/test_house_files.py",
         "tests_backend/test_house_prefix.py",
         "tools/smoke_core_package.py"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending",
+        "fromStatus": "S6-in-progress",
+        "at": 1794967984194,
+        "entry": 1,
+        "detail": "Поведение: test/coordinate-write-barrier-guard.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
+        "eventId": "finish:33d21e3f-105b-40dd-9287-25349c19a450:finish:3:return:return:1464"
+      }
     }
   },
   "ownerDecisions": {},
@@ -5413,18 +5424,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1464,
-    "worker": "finish",
-    "token": "511:finish:33d21e3f-105b-40dd-9287-25349c19a450:finish:1:admit",
-    "fence": 511,
-    "materialSha": "3faa728b1d372b3082c4944eec053d80b527bf88",
-    "expectedBase": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
-    "phase": "testing",
-    "admittedAt": 1794966932017,
-    "expiresAt": 1794968251160,
-    "patchId": "360bc868dcba154fb9e41d2d47d771cceec956ad"
-  },
+  "active": null,
   "events": {
     "github:44179894168:1:label:spec-request": {
       "digest": "7acfc0d709192e62aa2d7125e04fd4fff67588da7a6d40c23ff54863ade433fa",
@@ -5538,6 +5538,10 @@
       "digest": "76122f78d98c74c010621f57c1d6fc4d2859ada46b5dce210dd60fbe4399411e",
       "issue": 1464
     },
+    "finish:33d21e3f-105b-40dd-9287-25349c19a450:finish:3:return": {
+      "digest": "25ab168d3ca0db43e366ff202f0a38df2edfd401a9f43bb6d62f0defd760fffd",
+      "issue": 1464
+    },
     "github:44181773849:1:label:spec-request:spec-resubmitted:1464": {
       "digest": "c5c5a1512217eae2597403146c24657591370ded7f602915a265c046ea4da6ff",
       "issue": 1464,
@@ -5580,6 +5584,26 @@
         "layer": "product",
         "materialSha": "3faa728b1d372b3082c4944eec053d80b527bf88",
         "phase": "sync"
+      }
+    },
+    "finish:33d21e3f-105b-40dd-9287-25349c19a450:finish:3:return:return:1464": {
+      "digest": "25ab168d3ca0db43e366ff202f0a38df2edfd401a9f43bb6d62f0defd760fffd",
+      "issue": 1464,
+      "message": {
+        "kind": "return",
+        "issue": 1464,
+        "at": 1794967984194,
+        "entry": 1,
+        "notice": {
+          "key": "1:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1794967984194,
+          "entry": 1,
+          "detail": "Поведение: test/coordinate-write-barrier-guard.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/toast-identity-source.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed",
+          "eventId": "finish:33d21e3f-105b-40dd-9287-25349c19a450:finish:3:return:return:1464"
+        }
       }
     }
   },
