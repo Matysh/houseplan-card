@@ -30,7 +30,7 @@ import { makeStaticWallOpeningsFixture } from '../fixtures/static-wall-openings.
 import { prepareStaticWallOpenings } from './static-wall-openings.mjs';
 import { makeResizeJunctionFixture } from '../fixtures/resize-junctions.mjs';
 import { prepareResizeJunctions } from './resize-junctions.mjs';
-import { testSurfaceReady, renderedIsoReady } from '../helpers/test-surface-ready.mjs';
+import { testSurfaceReady, renderedIsoReady, floorAlignedIsoOverlaysReady } from '../helpers/test-surface-ready.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -1126,7 +1126,7 @@ async function preparePlanKeyboardCapture(page, scenario) {
 
 export async function prepareGoldenScenario(page, scenario) {
   await stableEnvironment(page, scenario);
-  await page.addScriptTag({ content: `window.__hpTestSurfaceReady=${testSurfaceReady.toString()};window.__hpRenderedIsoReady=${renderedIsoReady.toString()};` });
+  await page.addScriptTag({ content: `window.__hpTestSurfaceReady=${testSurfaceReady.toString()};window.__hpRenderedIsoReady=${renderedIsoReady.toString()};window.__hpFloorAlignedIsoOverlaysReady=${floorAlignedIsoOverlaysReady.toString()};` });
   {
     // Default capture entry is pointer input, independent of the preceding
     // scene's Tab history. Explicit keyboard/device-focus scenes establish
@@ -1677,19 +1677,10 @@ export async function prepareGoldenScenario(page, scenario) {
             || raisedRoots.some((root) => root.getAttribute('data-hp-iso-raised') !== 'true')) {
           throw new Error(`Stage 4 golden lost the corrected low visual plane: ${scenario.id}`);
         }
-        // #713: device tiles and lock badges rise straight up by the wall-top
-        // height, room names keep their Flat floor point; nothing is nudged.
-        if (contract.requireOneRise) {
-          const lift = 84 * (5 / card._cellCm) * Math.sin(20 * Math.PI / 180);
-          const off = raisedRoots.filter((root) => {
-            const [fx, fy] = root.getAttribute('data-hp-iso-floor').split(',').map(Number);
-            const [vx, vy] = root.getAttribute('data-hp-iso-visual').split(',').map(Number);
-            const rise = root.getAttribute('data-hp-iso-overlay-kind') === 'room-label' ? 0 : lift;
-            return !(Math.abs(vx - fx) <= 1e-6 && Math.abs(fy - vy - rise) <= 1e-6)
-              || root.getAttribute('data-hp-iso-nudged') !== 'false';
-          });
-          if (off.length) throw new Error(`Stage 4 golden lost the one wall-top rise (#713): ${scenario.id}`);
-        }
+        // Retain the historical scene selector, but judge the accepted #1451
+        // floor-aligned placement, not the superseded 84*sin(20) raised plane.
+        if (contract.requireOneRise && !window.__hpFloorAlignedIsoOverlaysReady(card))
+          throw new Error(`Stage 4 golden lost the accepted floor-aligned plane (#1451): ${scenario.id}`);
       }
       const materialDefs = card.renderRoot.querySelectorAll('[data-hp-iso-material-def]').length;
       if (contract.requireMaterialDefs

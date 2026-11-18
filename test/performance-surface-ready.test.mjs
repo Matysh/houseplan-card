@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {testSurfaceReady, renderedIsoReady} from '../demo/helpers/test-surface-ready.mjs';
+import {testSurfaceReady, renderedIsoReady, floorAlignedIsoOverlaysReady} from '../demo/helpers/test-surface-ready.mjs';
 
 function fixture() {
   const attrs = new Map([['data-hp-state','ready']]);
@@ -66,4 +66,20 @@ test('#1467 browser injection executes the identical standalone contracts',()=>{
   const h=fixture();assert.equal(surface(h.card),true);assert.equal(iso(h.card),true);
   h.card._floorPendingMode={mode:'view'};assert.equal(surface(h.card),false);
   h.faces([]);assert.equal(iso(h.card),false);
+});
+
+test('#1451 golden overlay placement rejects the old lift, nudging and absent metadata',()=>{
+  const attrs=new Map([['data-hp-iso-floor','24.5,31.25'],['data-hp-iso-visual','24.5,31.25'],['data-hp-iso-nudged','false']]);
+  let enabled='true',nodes=[{getAttribute:name=>attrs.get(name)??null}];
+  const card={renderRoot:{querySelector:()=>({getAttribute:()=>enabled}),querySelectorAll:()=>nodes}};
+  const injected=new Function(`return (${floorAlignedIsoOverlaysReady.toString()});`)();
+  assert.equal(injected(card),true);
+  attrs.set('data-hp-iso-visual',`24.5,${31.25-84*Math.sin(20*Math.PI/180)}`);
+  assert.equal(injected(card),false,'the retired wall-top lift cannot pass');
+  attrs.set('data-hp-iso-visual','25.5,31.25');assert.equal(injected(card),false,'no horizontal nudge');
+  attrs.set('data-hp-iso-visual','NaN,31.25');assert.equal(injected(card),false);
+  attrs.set('data-hp-iso-visual','24.5,31.25');attrs.set('data-hp-iso-nudged','true');assert.equal(injected(card),false);
+  attrs.set('data-hp-iso-nudged','false');enabled='false';assert.equal(injected(card),false,'floor plane must be declared');
+  enabled='true';attrs.delete('data-hp-iso-floor');assert.equal(injected(card),false);
+  nodes=[];assert.equal(injected(card),false,'an absent overlay is not correct placement');
 });

@@ -4,6 +4,7 @@
 
 ## v1.85.3-beta.2 — 2026-11-19
 
+- Judge the retained dense ISO golden scenes against the accepted floor-aligned marker plane, retaining finite-coordinate, no-nudge and missing-overlay negative controls; remove only the superseded wall-top lift oracle (#1451).
 - Await actual live/empty surfaces in golden and performance fixtures; accept worker/cache ISO geometry only with ready painted masonry rather than mandatory main-thread builds. Keep pending/inert negative controls and measure floor switches through readiness (#1467).
 
 - Restore five nightly mutation witnesses for stale authority, queued subscriptions, autofocus, prepared-cache eviction and Line input; run seven smaller nightly parts over a week with the same time limit (#1466).
