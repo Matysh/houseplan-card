@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15532,
+  "revision": 15533,
   "nextTicket": 513,
   "nextFence": 513,
   "tasks": {
@@ -4955,7 +4955,7 @@
       "status": "S6-in-progress",
       "readyAt": 1794968455401,
       "reviewEntry": 2,
-      "patchId": "360bc868dcba154fb9e41d2d47d771cceec956ad",
+      "patchId": "ab0b54ec75d33e05c3ddf90236eec54c812f89fe",
       "changedFiles": [
         "custom_components/houseplan/command_adapter.py",
         "custom_components/houseplan/core/backup_archive.py",
@@ -4989,6 +4989,8 @@
         "docs/security/1395-input-audit.md",
         "process-next/lib/task-selection.mjs",
         "process-next/test/task-selection.test.mjs",
+        "scripts/coordinate-write-barrier-guard.mjs",
+        "scripts/mutation-registry.mjs",
         "src/backup-archive-client.ts",
         "src/backup-archive-lazy.ts",
         "src/house-transfer-prefix.ts",
@@ -5003,7 +5005,9 @@
         "src/styles/settings-dialogs.styles.ts",
         "src/version-recovery-card.ts",
         "test/backup-archive-client.test.mjs",
+        "test/coordinate-write-barrier-guard.test.mjs",
         "test/fixtures/1464-house-prefix.json",
+        "test/fixtures/845-wall-corpus-current-identities.json",
         "test/house-transfer-prefix.test.mjs",
         "test/standalone-core-import-boundary.test.mjs",
         "tests_backend/test_core_conformance.py",
@@ -5429,10 +5433,11 @@
     "token": "512:finish:8e863a54-07cf-4e10-a6d0-368f72ff08cf:finish:1:admit",
     "fence": 512,
     "materialSha": "46c8b6a510f882687a1fa00f0fb74e707481e0cc",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "b6cfd4a28b123a1305f6095f651bcbc8f0e3ccd1",
+    "phase": "testing",
     "admittedAt": 1794968459183,
-    "expiresAt": 1794968759183
+    "expiresAt": 1794968766030,
+    "patchId": "ab0b54ec75d33e05c3ddf90236eec54c812f89fe"
   },
   "events": {
     "github:44179894168:1:label:spec-request": {
@@ -5549,6 +5554,10 @@
     },
     "finish:33d21e3f-105b-40dd-9287-25349c19a450:finish:3:return": {
       "digest": "25ab168d3ca0db43e366ff202f0a38df2edfd401a9f43bb6d62f0defd760fffd",
+      "issue": 1464
+    },
+    "finish:8e863a54-07cf-4e10-a6d0-368f72ff08cf:finish:2:synchronized": {
+      "digest": "19c77e7b627f1e7c95f73d2b4aaf3fd07a7dd6a1dcd451a8402dbbd21bbc172f",
       "issue": 1464
     },
     "github:44181773849:1:label:spec-request:spec-resubmitted:1464": {
