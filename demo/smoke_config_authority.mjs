@@ -9,9 +9,14 @@ const out = await page.evaluate(async () => {
   await pause(650); c._saveConfigDebounced.flush(); await c._writeChain.catch(() => {});
   const base = c.hass.callWS, options = copy(c._config);
   let server = copy(c._serverCfg), rev = c._cfgRev;
-  const writes = [];
+  const writes = [], queuedConfigCallbacks = [];
+  const originalConnection = c.hass.connection;
+  const trackedConnection = { ...originalConnection, subscribeEvents: async (receive, event) => {
+    if (event === 'houseplan_config_updated') queuedConfigCallbacks.push(receive);
+    return originalConnection.subscribeEvents.call(originalConnection, receive, event);
+  } };
   let refuse = null, heldWrite = null;
-  c.hass = { ...c.hass, callWS: async (message) => {
+  c.hass = { ...c.hass, connection: trackedConnection, callWS: async (message) => {
     if (message.type === 'houseplan/config/get') {
       const response = await base(message); server = copy(response.config); rev = response.rev;
       return { ...response, can_write: true };
@@ -25,6 +30,8 @@ const out = await page.evaluate(async () => {
     }
     return base(message);
   } };
+  for (let i = 0; i < 100 && (!c._loadOk || c._liveSyncAttempt); i++) await pause();
+  o.trackedAuthorityReady = c._loadOk && queuedConfigCallbacks.length > 0;
   const stale = { config: copy(server), rev, layout: copy(c._layout), layout_rev: c._layoutRev };
   const hp = window.__hpTest;
   const spaceDialog = await hp.openSpaceDialog('edit', c._serverCfg.spaces[0].id);
@@ -90,7 +97,8 @@ const out = await page.evaluate(async () => {
   const configB = copy(server); configB.spaces[0].title = 'Authority B';
   let releaseB; const waitB = new Promise((resolve) => { releaseB = resolve; });
   let bWrites = 0, bConfigReads = 0, bLayoutReads = 0;
-  o.oldSubscriptionInstalledBeforeSwitch = typeof c._unsubCfg === 'function';
+  const queuedOldEvent = queuedConfigCallbacks.at(-1);
+  o.oldSubscriptionInstalledBeforeSwitch = typeof c._unsubCfg === 'function' && typeof queuedOldEvent === 'function';
   // #890 AC6: B has its own event bus, not a copy of A's subscribeEvents.
   // The already installed A subscription still receives the explicit late
   // server push below; isolating B must not hide that delivery.
@@ -113,6 +121,9 @@ const out = await page.evaluate(async () => {
   // through its public push API. This also remains valid on the honest fixture
   // which emitted once during base(message): both late A events must be fenced.
   const lateARevision = window.__pushServerConfig(copy(server));
+  // A callback already queued by the transport may run after unsubscribe.
+  // Deliver the real installed transport callback, not the card's private receiver.
+  queuedOldEvent({ event_type: 'houseplan_config_updated', data: { rev: lateARevision } });
   await pause();
   o.lateAEventDoesNotStartConfigOnlyReadInB = lateARevision > 3
     && bConfigReads === bReadsBeforeLateA && bLayoutReads === bLayoutsBeforeLateA;

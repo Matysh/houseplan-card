@@ -11,7 +11,7 @@ export async function backgroundJob({ env = process.env, reportOnly = false, run
   const kind = env.HP_BACKGROUND_KIND;
   if (!['mutations', 'coverage'].includes(kind)) throw Error('Unknown background job');
   const root = resolve(env.HP_BACKGROUND_ROOT ?? '.'), outputDir = join(root, 'artifacts/process-next/background');
-  if (!reportOnly) return run({ root, kind, shardCount: Number(env.HP_MUTATION_SHARDS || 5), outputDir,
+  if (!reportOnly) return run({ root, kind, shardCount: Number(env.HP_MUTATION_SHARDS || 7), outputDir,
     onProgress: value => console.log(JSON.stringify(value)) });
   const result = readJson(join(outputDir, `${kind}.json`), { kind, status: 'unavailable', reason: 'Background preparation or execution did not finish', materialSha: env.GITHUB_SHA });
   if (kind === 'coverage' || env.GITHUB_EVENT_NAME !== 'schedule' || result.status === 'passed') return { result, issue: { required: false } };

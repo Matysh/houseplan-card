@@ -24,7 +24,7 @@ jobs:
     env:
       PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
       HP_BACKGROUND_KIND: ${{ matrix.kind }}
-      HP_MUTATION_SHARDS: ${{ vars.PROCESS_NEXT_MUTATION_SHARDS || '5' }}
+      HP_MUTATION_SHARDS: ${{ vars.PROCESS_NEXT_MUTATION_SHARDS || '7' }}
       GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

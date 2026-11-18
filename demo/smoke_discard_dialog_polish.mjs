@@ -5,6 +5,7 @@ import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 
 const { page, browser } = await launch({ width: 1280, height: 900 });
 const results = {};
+let idleBorder = ''; // Same safe footer action before it receives any keyboard focus.
 const owner = page.locator('hp-dialog[data-kind="settings"]');
 const question = page.locator('hp-confirm hp-dialog');
 const back = question.locator('[slot="footer"] [data-hp="dialog-cancel"]');
@@ -24,7 +25,7 @@ const openDirty = async () => {
 const openQuestion = async () => {
   // Sample the same rendering turn as the public cancel click; a locator's
   // stability wait would deliberately miss a correctly moving entrance.
-  return page.evaluate(async () => {
+  return page.evaluate(async (idleBorder) => {
     const root = window.__card.shadowRoot;
     root.querySelector('hp-dialog[data-kind="settings"] [slot="footer"] [data-hp="dialog-cancel"]').click();
     await window.__card.updateComplete;
@@ -49,10 +50,11 @@ const openQuestion = async () => {
         && Number.parseFloat(paint.translate.split(/\s+/).at(-1)) < 0
         && Number.parseFloat(paint.translate.split(/\s+/).at(-1)) >= -10,
       keyboardTarget: root.activeElement === button,
-      noInitialRing: buttonPaint.outlineStyle === 'none' && buttonPaint.boxShadow === 'none',
+      noInitialRing: buttonPaint.outlineStyle === 'none' && buttonPaint.boxShadow === 'none'
+        && buttonPaint.borderTopColor === idleBorder,
       modal: dialog.shadowRoot.querySelector('dialog').matches(':modal'),
     };
-  });
+  }, idleBorder);
 };
 const finishEntrance = () => question.locator('.surface').evaluate(surface => {
   for (const animation of surface.getAnimations()) animation.finish();
@@ -79,6 +81,7 @@ try {
     }, theme);
     await page.mouse.move(2, 2);
     await openDirty();
+    idleBorder = await owner.locator('[slot="footer"] [data-hp="dialog-cancel"]').evaluate(button => getComputedStyle(button).borderTopColor);
     const saved = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
     const draft = await owner.locator('#gs-room-tooltip').isChecked();
     await page.keyboard.press('Tab');

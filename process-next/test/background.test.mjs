@@ -12,13 +12,29 @@ test('daily rotation visits each explicit shard once and wraps without another s
   assert.throws(() => mutationShardForDate('invalid'), /Valid rotation/);
 });
 
+test('#1466 default rotation completes seven smaller parts in one week', () => {
+  const week = Array.from({length: 14}, (_, day) => mutationShardForDate(new Date(Date.UTC(2026, 10, day + 1))));
+  assert.equal(new Set(week.slice(0, 7)).size, 7);
+  assert.ok(week.every(shard => /^[1-7]\/7$/.test(shard)));
+  assert.deepEqual(week.slice(0, 7), week.slice(7));
+});
+
+test('#1466 background entry forwards the weekly default and keeps explicit local overrides', async () => {
+  for (const [override, expected] of [[undefined, 7], ['3', 3]]) {
+    let received;
+    await backgroundJob({ env: { PROCESS_NEXT_ENABLED: 'true', HP_BACKGROUND_KIND: 'mutations',
+      ...(override ? {HP_MUTATION_SHARDS: override} : {}) }, run: async value => { received = value; return {}; } });
+    assert.equal(received.shardCount, expected);
+  }
+});
+
 test('background notices mutation failure even when the common runner treats its step as diagnostic', async t => {
   const root = mkdtempSync(join(tmpdir(), 'background-test-')); t.after(() => rmSync(root, { recursive: true, force: true }));
   let requested;
   const result = await runBackground({ root, kind: 'mutations', gitSha: () => 'a'.repeat(40),
     plan: async value => { requested = value; return {}; },
     run: async () => ({ status: 'passed', results: [{ id: 'mutation-shard', diagnostic: true, status: 'failed' }] }) });
-  assert.equal(requested.event, 'mutation'); assert.match(requested.mutationShard, /^[1-5]\/5$/);
+  assert.equal(requested.event, 'mutation'); assert.match(requested.mutationShard, /^[1-7]\/7$/);
   assert.equal(result.status, 'failed');
 });
 

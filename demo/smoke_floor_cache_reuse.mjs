@@ -659,4 +659,25 @@ checkAll(ac7, {
   remountIsTheFreshCards: [],
 });
 
-await finish(browser, { ac1, ac2, ac3, ac7 });
+// #1466: consumer pools can now restore a prepared frame without recomputing.
+// Fill the current producer cache through real navigation to nine cold floors;
+// unlike a consumer-pool eviction, this must record every preparation miss.
+const producerEviction = await page.evaluate(async () => {
+  const card = window.__card, hp = window.__hpTest;
+  const ids = Array.from({ length: 9 }, (_, i) => `eviction-1466-${i}`);
+  await hp.setServerConfig(cfg => {
+    const source = cfg.spaces.find(space => space.id === 'loft');
+    cfg.spaces.push(...ids.map(id => ({ ...structuredClone(source), id, title: id })));
+    return cfg;
+  });
+  const before = card.houseplanFloorCacheDiagnostics().cache.misses;
+  for (const id of ids) { await hp.switchSpace(id); await hp.settled(); }
+  const diagnostics = card.houseplanFloorCacheDiagnostics();
+  return {
+    allColdPreparationsCounted: diagnostics.cache.misses - before === ids.length,
+    preparedFramesRemainBounded: card._floorPreparation.memory.size === 8,
+    lastFrameIncludesTunnels: card._space === ids.at(-1) && card._openingTunnelCache.value.length > 0,
+  };
+});
+checkAll(producerEviction);
+await finish(browser, { ac1, ac2, ac3, ac7, producerEviction });

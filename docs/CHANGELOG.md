@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Restore five nightly mutation witnesses for stale authority, queued subscriptions, autofocus, prepared-cache eviction and Line input; run seven smaller nightly parts over a week with the same time limit (#1466).
 - Add a separate writer-only whole-house plan ZIP: all floors, scoped stairs and image bytes append atomically without devices/HA bindings, target orphan repair or global-setting replacement; share projection/commands with standalone hosts and retain old JSON/full-backup contracts (#1464).
 
 - Share plan command, content/upload and preview/staging orchestration between HA and standalone hosts; prepare a self-contained Python wheel/sdist and adapter conformance suite without changing saved formats or publishing a service (#1460).

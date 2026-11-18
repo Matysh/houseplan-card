@@ -7,7 +7,7 @@ import { runPlan, executeStep } from './runner.mjs';
 import { writeJson } from './storage.mjs';
 import { mutationGateReport, REPORT_TITLE_MARKER } from '../../scripts/mutation-gate-report.mjs';
 
-export function mutationShardForDate(date = new Date(), count = 5) {
+export function mutationShardForDate(date = new Date(), count = 7) {
   if (!Number.isSafeInteger(count) || count < 1 || count > 100) throw Error('Mutation shard count must be 1–100');
   const epoch = Date.parse(date instanceof Date ? date.toISOString() : String(date));
   if (!Number.isFinite(epoch)) throw Error('Valid rotation date required');
@@ -15,7 +15,7 @@ export function mutationShardForDate(date = new Date(), count = 5) {
 }
 
 /** Two independent background jobs; neither changes task/release readiness. */
-export async function runBackground({ root, kind, date = new Date(), shardCount = 5,
+export async function runBackground({ root, kind, date = new Date(), shardCount = 7,
   outputDir = resolve(root, 'artifacts/process-next/background'), signal,
   plan = planProfile, run = runPlan, execute = executeStep, onProgress = () => {},
   gitSha = () => execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim() }) {

@@ -2030,7 +2030,10 @@ const MUTANT_DEFINITIONS = [
     because: '#890 AC6 / #1386: bypass physical-owner fencing and current-handler routing together so an actual retired subscription invokes its old callback and interrupts the new mandatory pair; removing only one redundant protection is not the defect.',
     patches: [{ file: 'src/houseplan-card.ts',
       find: '        const receive = (ev: unknown) => {',
-      replace: '        const receive = (ev: unknown) => {\n          if (Boolean(true)) return callback(ev); // bypass both routing protections' }],
+      replace: '        const receive = (ev: unknown) => {\n          if (Boolean(true)) return callback(ev); // bypass card routing protections' },
+      { file: 'src/ha-plan-host.ts',
+        find: '      if (live && this.identity() === lease.key && this.writeRevision === lease.revision\n          && this.rights() === lease.rights) return receive(value as HostEvent);',
+        replace: '      return receive(value as HostEvent); // forward a queued retired transport event' }],
   },
   {
     id: 'view-space-change-keeps-pending-hold',
@@ -2440,7 +2443,13 @@ const MUTANT_DEFINITIONS = [
       replace: "      if (acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });\n      this._adoption.acceptConfigWrite(canonicalCandidate, response);" },
       { file: 'src/houseplan-card.ts',
         find: '}, { isCurrent: () => isCurrent()\n        && (!acknowledgementCurrent || acknowledgementCurrent()) });',
-        replace: '}, { isCurrent: () => true\n        && (!acknowledgementCurrent || acknowledgementCurrent()) });' }],
+        replace: '}, { isCurrent: () => true\n        && (!acknowledgementCurrent || acknowledgementCurrent()) });' },
+      { file: 'src/large-write-transport.ts',
+        find: 'if (!options.isCurrent() || current.authorityKey !== authority || current.writeAuthorityRevision !== revision) {',
+        replace: 'if (!options.isCurrent()) {' },
+      { file: 'src/ha-plan-host.ts',
+        find: '      const result = await run();\n      this.assert(lease);',
+        replace: '      const result = await run(); // accept a late foreign reply' }],
   },
   {
     id: 'vacuum-route-write-forgets-canonical-attempt',
@@ -18151,12 +18160,12 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'opening-tunnel-evicting-miss-uncounted',
     guard: 'node demo/smoke_floor_cache_reuse.mjs',
-    because: '#814 AC2: a tunnel built on a miss that evicts from the full pool must count; a counter '
-      + 'that skips that branch hides a cold floor while every size stays the same',
+    because: '#814 AC2 / #1466: prepared frames now own tunnel work; a cold frame that fills or evicts '
+      + 'the eight-entry runtime pool must still increment misses, unlike a restored warm frame.',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '        this._floorCacheBuilds.openingTunnel++;\n',
-      replace: '        if (this._openingTunnelPool.size < 8) this._floorCacheBuilds.openingTunnel++; // mutant: not on an evicting miss\n',
+      file: 'src/floor-cache-runtime.ts',
+      find: '        if (warm) this.metrics.memoryHits++; else if (result.hit) this.metrics.diskHits++; else this.metrics.misses++;',
+      replace: '        if (warm) this.metrics.memoryHits++; else if (result.hit) this.metrics.diskHits++; else if (this.memory.size < 8) this.metrics.misses++;',
     }],
   },
   {
@@ -18856,7 +18865,7 @@ const discardConfirmMotionGuardCases = [
     because: '#990 AC2: automatic safe focus must have no ring, while real Tab focus remains visibly indicated; only mounted browser paint distinguishes these states.',
     patches: [{ file: 'src/hp-confirm.ts',
       find: '    prepareDialogReturnFocus(button);',
-      replace: "    button?.classList.remove('hp-dialog-return-focus');",
+      replace: "    button?.classList.add('hpf-tab-focus');",
     }],
   },
   {
@@ -19076,7 +19085,7 @@ const decorLine1046Cases = [
   { id:'decor-line-synthetic-click-accepted-1046', guard:'node --test test/decor-line-drawing.test.mjs',
     because:'#1046 AC4: a click without its own clean pointer pair cannot author a segment.',
     patches:[{file:'src/editors/decor/line-drawing.ts',find:'const ready = this.ready; this.ready = null;',
-      replace:"const ready = this.ready ?? { x:event.clientX, y:event.clientY, type:'mouse' }; this.ready = null;"}] },
+      replace:"const ready = this.ready ?? { x:event.clientX, y:event.clientY, type:'mouse', point: [...this.port.point(event)] }; this.ready = null;"}] },
   { id:'decor-line-shift-ray-bypassed-1046', guard:'node --test test/decor-line-drawing.test.mjs',
     because:'#1046 AC2: an incompatible positional magnet cannot skew an exact Shift ray.',
     patches:[{file:'src/editors/decor/line-drawing.ts',find:'if (!shift) return magnet;',replace:'if (true) return magnet;'}] },
