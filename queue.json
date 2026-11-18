@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15800,
+  "revision": 15801,
   "nextTicket": 519,
   "nextFence": 519,
   "tasks": {
@@ -4804,15 +4804,16 @@
         "tests_backend/test_furniture_workstation.py"
       ],
       "notice": {
-        "key": "3:checks-failed",
+        "key": "4:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795033025786,
-        "entry": 3,
-        "detail": "Поведение: test/iso-overlay-fixture-types.test.mjs: failed; Браузер: floor persistent cache isometric: failed; Браузер: isometric live touch: failed",
-        "eventId": "finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:3:return:return:1451"
-      }
+        "at": 1795035239065,
+        "entry": 4,
+        "detail": "Поведение: test/floor-cache-publication.test.mjs: failed",
+        "eventId": "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:3:return:return:1451"
+      },
+      "reason": "checks-failed"
     },
     "1452": {
       "issue": 1452,
@@ -5582,18 +5583,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1451,
-    "worker": "finish",
-    "token": "518:finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:1:admit",
-    "fence": 518,
-    "materialSha": "a11073ebf2f8c89433196c51adb8a2a06f2a3536",
-    "expectedBase": "d108e0dfc158ce0a00a22173a95292eff40fe13a",
-    "phase": "testing",
-    "admittedAt": 1795033833393,
-    "expiresAt": 1795035536230,
-    "patchId": "7fb961e3697fa7e901e2149c72a575f296df0da6"
-  },
+  "active": null,
   "events": {
     "github:44358531868:1:label:spec-request": {
       "digest": "67b5c887bc8842741e94242a95968ad6d2023ae67965d93bc0e37ab4dc77f01d",
@@ -5955,6 +5945,10 @@
       "digest": "50d14903446c356d0358fa7de40e0affdb85c0ab23dc75d7603baf8ecc3f3e7e",
       "issue": 1451
     },
+    "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:3:return": {
+      "digest": "40b49ecd0bf6da1637e77a01f158e00eee7ce5a12560b2b7b8d88d9dffbd43c0",
+      "issue": 1451
+    },
     "finish:4d0cf01c-334e-4c98-aa92-eb59288ac117": {
       "digest": "8f1f12ac0308f6a4ef23d69d665acf96bd0de8a36f388447633fdfde65e14c23",
       "issue": 1451,
@@ -6120,6 +6114,26 @@
         "layer": "product",
         "materialSha": "a11073ebf2f8c89433196c51adb8a2a06f2a3536",
         "phase": "sync"
+      }
+    },
+    "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:3:return:return:1451": {
+      "digest": "40b49ecd0bf6da1637e77a01f158e00eee7ce5a12560b2b7b8d88d9dffbd43c0",
+      "issue": 1451,
+      "message": {
+        "kind": "return",
+        "issue": 1451,
+        "at": 1795035239065,
+        "entry": 4,
+        "notice": {
+          "key": "4:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795035239065,
+          "entry": 4,
+          "detail": "Поведение: test/floor-cache-publication.test.mjs: failed",
+          "eventId": "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:3:return:return:1451"
+        }
       }
     }
   },
