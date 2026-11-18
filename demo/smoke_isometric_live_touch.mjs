@@ -1,9 +1,17 @@
 // #122/#160/#570 Stage 4: live-floor preservation, low overlays, openings and touch paths.
 import { launch, checkAll, finish } from './serve.mjs';
+import {commitWallSegmentModel} from '../test-build/wall-segment-model.js';
+import {editGraphFixture} from './helpers/graph-fixture.mjs';
 
 const { page, browser } = await launch(
   { width: 430, height: 820 }, 1, [], { hasTouch: true, isMobile: true },
 );
+// The original demo has zero-depth borders. Real masonry needs explicit
+// positive physical carriers; author them through the canonical fixture gate.
+const solidConfig=commitWallSegmentModel(await page.evaluate(()=>structuredClone(window.__card._serverCfg))).config;
+editGraphFixture(solidConfig,'f1',{kind:'thickness',rooms:solidConfig.spaces.find(space=>space.id==='f1').rooms.map(room=>room.id),cm:15},
+  draft=>{for(const wall of draft.wall_segments)wall.cm=15;});
+await page.evaluate(config=>window.__hpTest.setServerConfig(()=>config),solidConfig);
 const out = await page.evaluate(async () => {
   const original = window.__card;
   const root = (card) => card.renderRoot;
@@ -53,9 +61,9 @@ const out = await page.evaluate(async () => {
       calibration: { m1: [0.5, 0, 0, 0, 0.5, 0] },
     },
   });
-  // Put one real interactive device almost on the shared wall: since #713 it
-  // must rise straight up like every other tile, without a nudge.
-  original._layout.d_light1 = { ...original._layout.d_light1, s: 'f1', x: 0.548, y: 0.22 };
+  // Keep a real interactive light near the shared wall, but outside its
+  // positive 15 cm body: its floor anchor must not receive a visual nudge.
+  original._layout.d_light1 = { ...original._layout.d_light1, s: 'f1', x: 0.53, y: 0.22 };
   original._layout['iso-vacuum'] = { s: 'f1', x: 0.18, y: 0.78 };
   original._hoverRoom = { space: 'f1', room: original._spaceModel('f1').rooms[0] };
   original.hass = {
@@ -91,7 +99,7 @@ const out = await page.evaluate(async () => {
   const identities = (selector) => [...root(original).querySelectorAll(selector)]
     .map(node => node.dataset.id).filter(Boolean).sort();
   const unique = values => [...new Set(values)];
-  const decorSelector = '.decorlayer [data-hp="decor"], [data-hp-furniture-volume]';
+  const decorSelector = '.decorlayer [data-hp="decor"]:not(.dselecthit):not(.dfurniturehit):not(.derasehit), [data-hp-furniture-volume]';
   const furnitureSelector = '.decorlayer .dfurn, [data-hp-furniture-volume]';
   const layers = () => ({
     rooms: count('[data-hp="room"]'),
@@ -212,10 +220,13 @@ const out = await page.evaluate(async () => {
   const yaw=(35+original._rotation)*Math.PI/180,depth=Math.sin(40*Math.PI/180);
   const a=Math.cos(yaw),b=Math.sin(yaw)*depth,c=-Math.sin(yaw),d=Math.cos(yaw)*depth;
   const isoFloorMatrix=[a,b,c,d,500-a*500-c*500,500-b*500-d*500];
-  const floorMatrix=root(original).querySelector('.iso-floor-scene')?.transform.baseVal.consolidate()?.matrix;
-  const isoFloorUsesAcceptedCamera=!!floorMatrix
-    && [floorMatrix.a,floorMatrix.b,floorMatrix.c,floorMatrix.d,floorMatrix.e,floorMatrix.f]
-      .every((value,index)=>Math.abs(value-isoFloorMatrix[index])<1e-7);
+  const floorTransform=root(original).querySelector('.iso-floor-scene')?.getAttribute('transform')||'';
+  // SVGTransformList.consolidate() recomposes through Chromium float32 and
+  // mutates the attribute. Check the actual twelve-decimal paint instruction,
+  // keeping this independent oracle stricter than that DOMMatrix conversion.
+  const floorMatrix=/^matrix\(([^)]+)\)$/.exec(floorTransform)?.[1].trim().split(/[,\s]+/).map(Number);
+  const isoFloorUsesAcceptedCamera=floorMatrix?.length===6
+    && floorMatrix.every((value,index)=>Math.abs(value-isoFloorMatrix[index])<1e-9);
   const wallHeight=140/original._cellCm*original._gridPitch;
   const openingPoint = (opening,height) => opening ? new DOMPoint(
     isoFloorMatrix[0]*opening.rx+isoFloorMatrix[2]*opening.ry+isoFloorMatrix[4],
@@ -240,6 +251,9 @@ const out = await page.evaluate(async () => {
   const masonryBefore=masonryContract();
   window.__isoTouchLayerDiagnostics.masonry={...masonryBefore,wallHeight,
     doorFace:doorResolved?.face,windowFace:windowResolved?.face,
+    floorExpected:isoFloorMatrix,floorActual:floorMatrix,floorTransform,
+    openingFaces:original._renderIsoScene?.openings.map(opening=>({id:opening.id,face:opening.face})),
+    decorNodes:[...root(original).querySelectorAll(decorSelector)].map(node=>({id:node.dataset.id,class:node.getAttribute('class')})),
     surfaceKinds:[...root(original).querySelectorAll('[data-id="iso-door"],[data-id="iso-window"]')]
       .map(node=>node.dataset.surface).filter(Boolean)};
   const result = {

@@ -18,9 +18,9 @@
 | SHA-256 исходного patch | `1b4c1a475a28d3c6a1525e9d7a0b3fd13d41d1ab136d648540ebacff6bdd5e12` |
 | База принятого прототипа | `09f5f5082ce065406e1d5d275255875e082c6d34` |
 | Fingerprint принятого прототипа | `ff45c3efb16d6e9be13b79765b76ac901501cc8622a4318ef9a8189d62016c4b` |
-| Исходник основной визуальной/native серии | `001ffa9b3c7f67a95201b7815214d2470dfdf64b` |
-| Digest установленного текущего кандидата | `3e6770d0a2ea3ed7a3cdc451bb837e18dc37d48d07734e16f0c022dd66c24745` |
-| Fingerprint текущего frontend | `79c46894433b53fd5c69b0d7b350434e0e702d01b203476eedfe6c227ea486e4` |
+| Исходник окончательной визуальной/native серии | `60f6eeb34695c616ba10343dab390e5cfce202ff` |
+| Digest установленного текущего кандидата | `af2474e9fef4aaca41a84381ff4bc92db8557c68d66a2ba4167376953a89217b` |
+| Fingerprint текущего frontend | `375cf03488a4de90bfd5c086587dbf2772ce23d6bf494c0461ae287fd58943d2` |
 
 SHA архива совпал с передачей; применимость patch была проверена до
 интеграции. Прототиповые числа `309 tests` и нулевая разница его собственных
@@ -132,7 +132,7 @@ space/delete и optimize, отсутствие выдачи прав через 
 
 ## Текущий native/camera срез
 
-На `001ffa9…` пройдены native smoke: ordinary entry и все четыре off-centre
+На первом профильном срезе `001ffa9…` пройдены native smoke: ordinary entry и все четыре off-centre
 возврата View→Flat editor→View (`output/1451-projection-native-roundtrip-ctm.log`),
 а также ordinary entry и все четыре hidden-border случая
 (`output/1451-projection-native-hidden-camera.log`). Проверялись physical
@@ -155,13 +155,15 @@ loopback HA и синтетический план; личная HA-устано
 ```sh
 npx playwright test tests/isometric-product.admin.spec.mjs --project=admin --no-deps \
   --grep='native 2.5D' --workers=1 --max-failures=1 \
-  --output="$RESULTS/native-camera001-results" --reporter=line
+  --output="$RESULTS/native-final60f-results" --reporter=line
 ```
 
-Результат на текущем кандидате: **2/2 PASS, 38.2 с** — обычная панель и
+Результат на окончательном `60f6eeb…`: **2/2 PASS, 34.5 с**, без пропусков — обычная панель и
 обычная Lovelace-карточка, четыре стороны, compression sin(40°), переход в
 редактор, перезагрузка, отсутствие view-only writes и неизменность документов/
-ревизий. Это свежая проверка camera-исправления.
+ревизий. Это свежая проверка всех исправлений камеры, включая принятие
+только измеренного pixel frame при холодном открытии. Предыдущие 2/2 PASS
+на `001ffa9…` (38.2 с) сохранены как история, не подменяют этот результат.
 
 Ранее на `bf8dfb97e7d9b21c823c27cae74e1a642dd90faa` прошли реальные straight
 и corner workstation journeys: установка одной записью, Undo/Redo,
@@ -178,12 +180,14 @@ assertions; после исправления только этот journey по
 **синтетический**, а не отсутствующий private LOCAL-REFERENCE план.
 Нулевая попиксельная разница разных сцен не требуется и не заявляется.
 
-На текущем `001ffa9…` обновлены все восемь кадров: 1480×1080, DPR 1,
+На окончательном `60f6eeb…` обновлены все восемь кадров: 1480×1080, DPR 1,
 fit/reduced motion, 35/125/215/305°, светлая и тёмная темы. Во всех кадрах
 проверены отсутствие camera lab flag, пять volume-furniture ID, отсутствие
-page errors и изменения fixture от просмотра. Галерея показала 60/60 ready,
-все 60 исходных SVG вернулись HTTP200. Fingerprint установленного кандидата
-и synthetic capture проверен на совпадение.
+page errors и изменения fixture от просмотра. Fingerprint установленного
+кандидата и synthetic capture проверен на совпадение. Прежние зелёные
+gallery60/60 и HTTP200 всех 60 SVG не повторялись: их входы не изменились.
+После замены контрола цвета отдельно проверено реальное поведение общего
+picker в галерее; это не повторная проверка моделей/маршрутов.
 
 Просмотрены все восемь пар в двух contact sheets и full-resolution детали
 light125° / dark305°. Ракурс, формы мебели, материалы, wall top/side и поднятые
@@ -200,7 +204,60 @@ light125° / dark305°. Ракурс, формы мебели, материал�
 [straight reload](1451/native-desk-reload.png),
 [corner reload](1451/native-corner-desk-reload.png).
 Два workstation reload кадра относятся к указанному прежнему зелёному срезу;
-camera comparison/panel/card — к текущему кандидату.
+camera comparison/panel/card — к окончательному `60f6eeb…` кандидату.
+
+## Разбор полного S6 и адресное исправление отказов
+
+Первый завершённый полный S6 (`20261118T185107912-9d66b84a`) на
+`d7f65198e…`: materialClean=true, 800 шагов, 13 отказов. Это не принятие
+кода. Все найденные отказы разобраны; повторный S6 перед ревью выполняет
+общая очередь с применимым reuse, а не этот авторский отчёт.
+
+| Отказ | Исправление и адресное подтверждение |
+| --- | --- |
+| Native color в новой галерее | Использован общий `hp-color-opacity`, отдельная прозрачность сохранена. Упавший case 1/1 PASS; одна gallery-сборка и реальное HEX→ОК, цвет desk/corner, opacity .35, фильтры/тема/Escape PASS, без page errors |
+| CSS scope | Четыре helper-правила действительно ограничены ISO View. Lexer проверяет положительные классы одного stage, без исключений из сканирования: 18 probes и ранее упавший compiled case PASS |
+| Coordinate write guard | Реальная граница payload вместо произвольных 260 символов. Обе CAS-ревизии и длинные capability metadata покрыты положительным/отрицательными контролями: TAP 2/2 PASS |
+| Source readers / mutation gate / guard-name reader / offload | Обновлены 10 смещённых якорей и устаревшие контрактные фильтры, не восстановлены отменённые zero-yaw ожидания. 1790 определений проверены без исполнения; два anchor consumer и один name consumer PASS, текущий height/offload case PASS |
+| Два ISO unit | Четыре affine-ракурса и inverse footprint вместо zero-yaw/screen-AABB предположений. Оба ранее упавших case PASS; legacy ×1.12 и floor-aligned ×1.0 остаются проверяемыми |
+| Wall corpus / writer manifest | Добавлена только строка нового mesh JSON с configs=0; все 578 геометрических документов/baseline сохранены. Новый decor-only writer зарегистрирован с настоящим runtime/history witness: physical fields неизменны, wall-edit negative control работает. Оба упавших metadata case и новый witness PASS |
+| Live touch | Старые identity/2D-symbol/raw-face-count ожидания заменены принятой математикой и physical membership. Исправлен сам fixture: canonical hosted стены 15 cm вместо void hosts, источник света вне тела стены. Все проверки PASS; реальные поверхности 156→149 при контакте, остальные слои/ID стабильны; два glow source и live color сохранены |
+| Wall-node topology | Найден настоящий cold-camera дефект: frame [1,1] до mount принимался за pixels, последующая конверсия раздувала viewBox до 768480. `acceptedViewFrame` не принимает placeholder без live view/измеренного stage; тёплая доверенная камера сохраняется. Новый unit и исходный native сценарий без force PASS: 4 scenarios / 100 cycles / 112 writes, lifecycle/legacy проверки |
+
+Точные локальные closure-журналы: `output/1451-coordinate-guard-repaired.log`,
+`1451-mutation-anchors-repaired.log`, `1451-anchor-consumers-repaired.log`,
+`1451-name-filter-consumer-repaired.log`, `1451-offload-current-profile.log`,
+`1451-corpus-inventory-repaired.log`, `1451-writer-registration-repaired.log`,
+`1451-s6-addressed-cold-affine-workstation.log`,
+`1451-s6-workstation-history-witness.log`, `1451-s6-native-wall-repaired.log`,
+`1451-s6-native-touch-final.log`. Локальные notes с точными gallery/native
+argv и путями: `output/1451-gallery-repair-results.md`,
+`output/1451-final-camera-native-results.md`.
+
+Первый запуск нового runtime witness остановился из-за отсутствующего
+`decorOrder.label` в unit host. Дополнен только fixture; повторён только
+новый case, PASS. Coordinate unit дал зелёный TAP, но внешний shell wrapper
+ошибся при чтении `$?`; это отдельно сохранено в
+`output/1451-coordinate-guard-wrapper-note.md`, не выдано за чистый shell exit.
+Перед native повтором guard корректно остановил оба сценария на старом
+demo manifest до функциональных cases. Demo синхронизирован штатно;
+`npm run bundle:sync` оказался алиасом с дополнительной сборкой — лишний
+build зафиксирован, не скрыт как «sync без build». После синхронизации
+строгие freshness guards включены и оба native сценария прошли.
+
+Отдельная адресная валидация смыслового ремонта мутаций на `60f6eeb…`:
+
+```sh
+node scripts/mutation-gate.mjs --execute-nightly --id=<id>
+```
+
+Для `iso-floor-foreshortening-returns`, `iso-room-labels-lift-with-devices`,
+`iso-opening-depth-orthographic-again`, `stage4-w1-camera-rotation-regresses`
+каждый clean named guard PASS, затем заявленный тест обнаружил искажение,
+caught 1/1, exit 0. Четыре отдельных detached workspace, не root dist;
+журналы `output/1451-proof-<id>.log`. Это не полный ночной шард и не новый
+обязательный гейт для остальных задач. Зелёные модели, реальные
+workstation journeys и gallery routes без изменения входов не повторялись.
 
 ## Привязка к AC и оставшиеся ограничения
 
