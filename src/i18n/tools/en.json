@@ -1,5 +1,6 @@
 {
   "backup.house": "Whole house — plan only",
+  "backup.house_export_hint": "Choose what to export: the installation, the current space, or the whole house plan without devices. Review what is included before downloading.",
   "backup.house_hint": "ZIP with every floor, stair links, backgrounds and decor images. No devices or Home Assistant bindings. Adds the house without replacing the current plan.",
   "backup.house_privacy": "Names, static text, exact geometry and original image metadata (including EXIF) remain in this file. Keep it private. No device data or Home Assistant bindings are included.",
   "backup.house_floors": "Floors to add",

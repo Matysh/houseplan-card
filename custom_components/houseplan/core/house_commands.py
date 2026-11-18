@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from functools import partial
 
+from .command_execution import begin_preparation
 from .command_ports import CommandError, PairCommitFailure
 from .command_state import OPTIMIZE_BACKUP, OPTIMIZE_PENDING, layout_metadata
 from .constants import DEFAULT_CONFIG
@@ -42,11 +43,13 @@ def _summary(document, config, details, manifest):
               for key in ("rooms", "partitions", "wall_segments", "wall_columns", "openings", "decor", "stairs", "led_strips")}
     counts["spaces"] = len(source)
     counts["images"] = len(manifest["blobs"])
+    counts.update(walls=counts["wall_segments"] + counts["partitions"], markers=0,
+                  layout=len(document["payload"]["layout"]))
     missing = [row for row in manifest["images"] if "reason" in row]
     # These target globals intentionally remain authoritative, not pixel parity.
     settings = config.get("settings") or {}
     appearance = {key: copy.deepcopy(settings.get(key)) for key in (
-        "moon", "volumetric", "sun_ray_origin", "room_colors", "night_brightness") if key in settings}
+        "moon", "volumetric_view", "sun_ray_origin", "fill_colors", "night_brightness") if key in settings}
     return {"kind": "house", "plan_only": True, "counts": counts, "spaces": details["spaces"],
             "warnings": [*details["warnings"], *({"code": "image_" + row["reason"], "ref": row["ref"]} for row in missing)],
             "missing_content": missing, "complete": manifest["complete"], "target_appearance": appearance,
@@ -99,7 +102,7 @@ async def export_create(session, message):
         pair = await session.load(transaction)
         document, filename = await session.cpu.run(partial(export_document, env.identity,
             pair.config_data, pair.layout_data, message.get("card_version", ""), env.identity.build))
-    session.before_commit()
+    session.authority.ensure()
     lease = await port.begin(session.authority.scope_id, session.authority.owner_id,
                              message.get("operation_id") or secrets.token_urlsafe(24), "export")
     try:
@@ -114,6 +117,7 @@ async def export_create(session, message):
                          "owner_id": row["ref"]["owner_id"]} for row in manifest["images"] if "reason" in row],
             "missing_content": [row for row in manifest["images"] if "reason" in row],
             "privacy_warning": "images_may_contain_metadata"}}
+        session.before_commit()
         await port.publish(lease, token, record)
         session.authority.ensure()
         return {**_reply(lease), "download_url": f"/api/houseplan/transfer/export/{token}"}
@@ -125,12 +129,17 @@ async def export_create(session, message):
 async def preview(session, blocks, declared_size, operation):
     session.authority.ensure()
     port = resources(session)
+    # Resolve/pin any previous durable house intent before private TTL cleanup.
+    async with session.storage.transaction() as transaction:
+        await session.load(transaction, prepare=False)
     # The transport already routed the canonical first 1 KiB; the common reader
     # rechecks it before trusting ZIP metadata or any projected document.
-    session.before_commit()
+    session.authority.ensure()
     lease = await port.begin(session.authority.scope_id, session.authority.owner_id, operation, "import")
     try:
-        payload = await port.upload(lease, blocks, declared_size)
+        await port.upload(lease, blocks, declared_size, session.input_policy())
+        begin_preparation()
+        payload = await port.read(lease)
         async with session.storage.transaction() as transaction:
             pair = await session.load(transaction)
             async with port.transaction():
@@ -176,7 +185,8 @@ async def apply(session, message):
             if record.get("kind") != "house":
                 raise CommandError("invalid_format")
             cr, lr = int(pair.config_data.get("rev", 0)), int(pair.layout_data.get("rev", 0))
-            if (message.get("expected_config_rev") != cr or message.get("expected_layout_rev") != lr
+            if (type(message.get("expected_config_rev")) is not int or type(message.get("expected_layout_rev")) is not int
+                    or message.get("expected_config_rev") != cr or message.get("expected_layout_rev") != lr
                     or record["config_rev"] != cr or record["layout_rev"] != lr
                     or record["base_digest"] != await session.cpu.run(_digest, (pair.config_data, pair.layout_data))):
                 raise CommandError("conflict")
@@ -214,7 +224,14 @@ async def apply(session, message):
 async def cancel(session, message):
     session.authority.ensure()
     port = resources(session)
-    # Recovery wins before cancellation: no deletion of bytes pinned by an intent.
+    # Signal a preparatory worker before waiting for the state lock it may own.
+    # A durable/pinned operation refuses removal; then the recovery fence wins.
+    try:
+        await port.cancel(session.authority.scope_id, session.authority.owner_id,
+                          message.get("token"), message.get("operation_id"))
+    except CommandError as error:
+        if error.code != "zip_busy":
+            raise
     async with session.storage.transaction() as transaction:
         await session.load(transaction)
         session.before_commit()

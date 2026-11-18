@@ -10,6 +10,8 @@ import asyncio
 import copy
 import os
 import secrets
+import shutil
+import stat
 import time
 from contextlib import asynccontextmanager
 from functools import partial
@@ -18,10 +20,12 @@ from pathlib import Path
 from . import house_archive, house_files
 from .backup_archive import CHUNK, _source_image
 from .command_ports import CommandError
+from .constants import MIN_FREE_BYTES
 from .house_prefix import PREFIX_BYTES
-from .input_policy import current_policy
+from .input_policy import InputLimit
 
 TTL = 600
+MAX_STAGING_BYTES = house_archive.MAX_ARCHIVE_BYTES + 8 * 1024**2 + 64 * 1024
 
 
 class FilesystemHouseResources:
@@ -34,7 +38,7 @@ class FilesystemHouseResources:
         self.cancelled_operations = {}
         self.transaction_owner = None
 
-    async def _settle(self, function, *args):
+    async def _settle(self, function, *args, on_cancel=None):
         job = asyncio.create_task(self.cpu.run(function, *args))
         cancelled = False
         while True:
@@ -43,6 +47,8 @@ class FilesystemHouseResources:
                 break
             except asyncio.CancelledError:
                 cancelled = True
+                if on_cancel is not None:
+                    on_cancel()
                 if job.cancelled():
                     raise
             except BaseException:
@@ -70,6 +76,11 @@ class FilesystemHouseResources:
                 or self.clock() >= lease["expires"]):
             raise CommandError("preview_expired")
 
+    def _worker_check(self, lease, _growth=0):
+        if (lease["cancelled"].is_set() or self.clock() >= lease["expires"]
+                or self.active.get(lease["scope"]) is not lease):
+            raise InputLimit("cancelled", code="zip_cancelled")
+
     async def _release(self, lease):
         if lease.get("pinned"):
             raise CommandError("zip_busy")
@@ -95,9 +106,14 @@ class FilesystemHouseResources:
                 if old["owner"] != owner and old["expires"] > self.clock() or old.get("pinned"):
                     raise CommandError("zip_busy")
                 await self._release(old)
+            retained = await self._settle(house_files.prune_stages, self.root,
+                self.clock() - TTL, {value["session"] for value in self.active.values()})
+            if retained > MAX_STAGING_BYTES:
+                raise CommandError("zip_limit")
             lease = {"session": secrets.token_hex(16), "scope": scope, "owner": owner,
                      "operation": operation, "kind": kind, "expires": self.clock() + TTL,
-                     "cancelled": asyncio.Event(), "io": asyncio.Lock(), "pinned": False}
+                     "cancelled": asyncio.Event(), "io": asyncio.Lock(), "pinned": False,
+                     "retained_bytes": retained}
             self.active[scope] = lease
             try:
                 await self._settle(house_files.new_stage, self.root, lease["session"])
@@ -119,8 +135,8 @@ class FilesystemHouseResources:
                     task.cancel()
             await asyncio.gather(read, cancelled, return_exceptions=True)
 
-    async def upload(self, lease, blocks, declared_size):
-        limit = min(house_archive.MAX_ARCHIVE_BYTES, current_policy().archive_bytes)
+    async def upload(self, lease, blocks, declared_size, policy):
+        limit = min(house_archive.MAX_ARCHIVE_BYTES, policy.archive_bytes)
         if (declared_size is not None and (type(declared_size) is not int or declared_size < 0
                                           or declared_size > limit)):
             raise CommandError("zip_limit")
@@ -147,7 +163,14 @@ class FilesystemHouseResources:
                     # Bounded writes, regardless of a transport's chunk choice.
                     for start in range(0, len(block), CHUNK):
                         self._check(lease)
-                        await self._settle(stream.write, block[start:start + CHUNK])
+
+                        def write_chunk(raw):
+                            if (lease["retained_bytes"] + stream.tell() + len(raw) > MAX_STAGING_BYTES
+                                    or shutil.disk_usage(self.root).free < MIN_FREE_BYTES + len(raw)):
+                                raise CommandError("zip_limit")
+                            stream.write(raw)
+
+                        await self._settle(write_chunk, block[start:start + CHUNK])
                 if declared_size is not None and size != declared_size:
                     raise CommandError("zip_invalid")
                 house_archive.check_prefix(prefix)
@@ -156,7 +179,14 @@ class FilesystemHouseResources:
             finally:
                 await self._settle(stream.close)
             self._check(lease)
-            payload = await self._settle(house_archive.read_archive, path)
+    
+    async def read(self, lease):
+        async with lease["io"]:
+            self._check(lease)
+            folder = await self._settle(house_files.identified_stage, self.root, lease["session"])
+            path = folder / "archive.zip"
+            payload = await self._settle(house_archive.read_archive, path, partial(self._worker_check, lease),
+                                         on_cancel=lease["cancelled"].set)
             self._check(lease)
             return payload
 
@@ -164,8 +194,17 @@ class FilesystemHouseResources:
         async with lease["io"]:
             self._check(lease)
             path = (await self._settle(house_files.identified_stage, self.root, lease["session"])) / "archive.zip"
+            reserved = lease["retained_bytes"]
+
+            def reserve(growth):
+                nonlocal reserved
+                self._worker_check(lease)
+                reserved += growth
+                if reserved > MAX_STAGING_BYTES or shutil.disk_usage(self.root).free < MIN_FREE_BYTES + growth:
+                    raise CommandError("zip_limit")
+
             result = await self._settle(house_archive.build_archive, path, document,
-                                        partial(_source_image, self.root))
+                                        partial(_source_image, self.root), reserve, on_cancel=lease["cancelled"].set)
             self._check(lease)
             return result
 
@@ -175,7 +214,8 @@ class FilesystemHouseResources:
             raise RuntimeError("house preparation requires the shared content transaction")
         async with lease["io"]:
             result = await self._settle(partial(house_files.prepare_files, self.root, lease["session"],
-                                              payload, protected_plans=protected_plans))
+                                              payload, protected_plans=protected_plans,
+                                              check=partial(self._worker_check, lease)), on_cancel=lease["cancelled"].set)
             self._check(lease)
             return result
 
@@ -189,6 +229,8 @@ class FilesystemHouseResources:
         self.tokens[token] = lease
 
     async def load(self, scope, owner, token):
+        if not isinstance(token, str) or not 1 <= len(token) <= 128:
+            raise CommandError("preview_expired")
         lease = self.tokens.get(token)
         if lease is None or lease["scope"] != scope or lease["owner"] != owner:
             raise CommandError("preview_expired")
@@ -218,6 +260,8 @@ class FilesystemHouseResources:
 
     async def cancel(self, scope, owner, token, operation):
         if token is None and operation is None:
+            raise CommandError("invalid_format")
+        if token is not None and (not isinstance(token, str) or not 1 <= len(token) <= 128):
             raise CommandError("invalid_format")
         async with self.pool_lock:
             lease = self.tokens.get(token) if token else self.active.get(scope)
@@ -258,6 +302,9 @@ class FilesystemHouseResources:
 
                 def open_stream():
                     fd = os.open(folder / "archive.zip", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+                    if not stat.S_ISREG(os.fstat(fd).st_mode):
+                        os.close(fd)
+                        raise CommandError("zip_invalid")
                     return os.fdopen(fd, "rb")
 
                 stream = await self._settle(open_stream)

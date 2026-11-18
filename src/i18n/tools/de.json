@@ -1,5 +1,6 @@
 {
   "backup.house": "Ganzes Haus — nur Grundriss",
+  "backup.house_export_hint": "Wählen Sie die Installation, den aktuellen Bereich oder den Hausgrundriss ohne Geräte. Prüfen Sie vor dem Download den Inhalt.",
   "backup.house_hint": "ZIP mit allen Etagen, Treppenverknüpfungen, Hintergründen und Dekorbildern. Ohne Geräte oder Home-Assistant-Verknüpfungen. Fügt das Haus hinzu, ohne den bestehenden Plan zu ersetzen.",
   "backup.house_privacy": "Namen, statischer Text, genaue Geometrie und ursprüngliche Bildmetadaten einschließlich EXIF bleiben erhalten. Privat aufbewahren. Gerätedaten und Home-Assistant-Verknüpfungen sind nicht enthalten.",
   "backup.house_floors": "Hinzuzufügende Etagen",

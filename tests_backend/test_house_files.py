@@ -166,3 +166,24 @@ def test_symlink_destination_is_not_followed(tmp_path):
     with pytest.raises(ImportFailure):
         house_files.publish_files(tmp_path, descriptor)
     assert foreign.read_bytes() == PNG and dest.is_symlink()
+
+
+def test_private_ttl_pruning_is_owned_bounded_and_never_counts_published_hardlinks_twice(tmp_path):
+    folder, _, descriptor = prepared(tmp_path)
+    house_files.publish_files(tmp_path, descriptor)
+    for child in folder.iterdir():
+        os.utime(child, (1, 1))
+    used = house_files.prune_stages(tmp_path, 10, {SESSION})
+    assert used == (folder / "owner.json").stat().st_size + (folder / "archive.zip").stat().st_size
+    assert folder.exists(), "a pinned recovery session cannot expire"
+    assert house_files.prune_stages(tmp_path, 10, set()) == 0
+    assert not folder.exists()
+    assert all((tmp_path / item["dest"]).exists() for item in descriptor["files"])
+
+
+def test_missing_private_proof_never_prevents_rollback_of_pair_or_deletes_public_strangers(tmp_path):
+    _, _, descriptor = prepared(tmp_path)
+    house_files.publish_files(tmp_path, descriptor)
+    house_files.cleanup_stage(tmp_path, SESSION)
+    house_files.rollback_publication(tmp_path, descriptor)
+    assert all((tmp_path / item["dest"]).exists() for item in descriptor["files"])

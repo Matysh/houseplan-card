@@ -414,7 +414,8 @@ export const editorDialogsStyles = unsafeCSS(css`
       .backupcounts { grid-template-columns: 1fr; }
     }
     .backupplanonly { margin-inline-start: var(--sp-4) !important; align-items: flex-start !important; }
-    .backupplanonly > span:first-of-type { display: grid; gap: 2px; white-space: normal; }
+    .backuphouse { align-items: flex-start !important; }
+    .backupplanonly > span:first-of-type, .backuphouse > span:first-of-type { display: grid; gap: 2px; white-space: normal; min-width: 0; }
 
     .backupfile, .backupsummary, .backupcontent {
       display: flex;

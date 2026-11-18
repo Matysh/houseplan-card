@@ -9862,7 +9862,7 @@ public _renderBackupExportDialog(): TemplateResult {
     return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host._presentation} data-kind="backup" .title=${this.host._t('backup.export_title')}
       icon="mdi:download" dismiss-on-scrim @hp-close=${() => this._closeBackupExport()}>
       <div class="body backupbody">
-        <div class="rhint">${this.host._t('backup.export_hint')}</div>
+        <div class="rhint">${this.host._haHouseTransferApi === 1 ? this._toolsT('backup.house_export_hint') : this.host._t('backup.export_hint')}</div>
         ${!this.host.planHost.capabilities.installationBackup && this.host._haHouseTransferApi !== 1 ? callout({ text: this._toolsT('backup.single_space_limit') }) : nothing}
         ${this.host.planHost.capabilities.installationBackup ? html`<label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="backup-kind" data-value="full" type="radio" name="backup-kind" value="full"
           .checked=${d.kind === 'full'}
@@ -9884,7 +9884,7 @@ public _renderBackupExportDialog(): TemplateResult {
             }} />
           <span><b>${this.host._t('backup.plan_only')}</b><small>${this.host._t('backup.plan_only_hint')}</small></span>
         </label>` : nothing}
-        ${this.host.planHost.capabilities.planTransfer && this.host._haHouseTransferApi === 1 ? html`<label class="hpf-check hpf-check-wrap srcrow"><input
+        ${this.host.planHost.capabilities.planTransfer && this.host._haHouseTransferApi === 1 ? html`<label class="hpf-check hpf-check-wrap srcrow backuphouse"><input
           data-hp="field" data-field="backup-kind" data-value="house" type="radio" name="backup-kind" value="house"
           .checked=${d.kind === 'house'} ?disabled=${d.busy || !(this.host._serverCfg?.spaces?.length)}
           @change=${() => this.backupTransfer.selectKind('house')} />
@@ -10032,7 +10032,7 @@ public _renderBackupImportDialog(): TemplateResult {
                 <code>${item.owner} → ${item.reference}</code>
               `)}
             </div>` })}` : nothing}
-          ${house ? html`<div class="backupsummary hpf-reading-entry" data-hp="house-preview">
+          ${house ? html`<div class="backupsummary hpf-reading-entry">
             <b>${this._toolsT('backup.house_floors')}</b>
             <ul>${(p.spaces || []).map((space: { source_title: string; title: string }) => html`<li>${space.source_title} → ${space.title}</li>`)}</ul>
             <span>${this._toolsT('backup.zip_images_summary', { n: String(counts.images || 0) })}</span>

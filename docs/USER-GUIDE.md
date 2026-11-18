@@ -2340,7 +2340,7 @@ cycle: 30
 
 &emsp;&emsp;For Home Assistant administrators, **Full backup** creates a ZIP containing the complete model, used background images, custom-image decor, graphical device attachments and the saved Zigbee link snapshot. Images are copied, not just linked; PDFs and text attachments are not packed. Backgrounds travel as they are, under the same rule as uploading a background: an SVG with room labels and styles or a very large raster image is included, as long as the file is what its name says.
 
-&emsp;&emsp;ZIP export, restore and its Undo require administrator permission. Ordinary editors keep full JSON; **Current space** and **Plan only** remain JSON for everyone.
+&emsp;&emsp;Full-backup ZIP export, restore and its Undo require administrator permission. Ordinary editors keep full JSON; **Current space** and its **Plan only** remain JSON for everyone. The separate house-plan ZIP below is available to editors.
 
 &emsp;&emsp;If an image is missing, unsafe or external, the report names it and explains how to repair it. Nothing downloads automatically: **Download incomplete backup** is a separate confirmation and the filename marks the incomplete copy. The restore preview repeats the report and requires consent before detaching missing backgrounds/attachments; missing custom images remain repairable placeholders.
 
@@ -2369,6 +2369,20 @@ cycle: 30
 &emsp;&emsp;Live values in text labels become `—`; surrounding static text stays intact. The import preview marks this file as plan-only and adds it through the normal space-import flow.
 
 &emsp;&emsp;Plan-only is not full anonymisation: space and room names, static text, file names, exact coordinates and external URLs remain in the JSON. Internal plan files are still referenced rather than embedded and may need to be detached on another Home Assistant instance.
+
+### Whole house — plan only
+
+&emsp;&emsp;The third export option transfers all floors, inter-floor stairs, backgrounds and decor images in one ZIP. It is available to writers, including a standalone editor whose host supports the optional house-transfer API. An empty house cannot be exported.
+
+&emsp;&emsp;No real/virtual devices, device positions, HA bindings, sensors, locks, automations, Zigbee data, vacuum paths or global settings are transferred. Room labels and their positions remain; live text values become `—`. Names, static text, exact geometry and original image metadata including EXIF remain, so this is not full anonymisation.
+
+&emsp;&emsp;Choose the ZIP through the normal import picker. Preview lists floors, their new names, object/image counts and warnings. **Add house** appends one independent copy without replacing existing floors, devices, global settings or unresolved target references. Stairs link the new floors to each other. Re-importing creates another independent copy; no global import Undo is created.
+
+&emsp;&emsp;Supported per-floor appearance settings travel with the copy. Global palettes, lighting, Moon and volumetric settings remain the target home's authority, so exact visual parity is not promised. Unavailable images need explicit download/import consent: missing backgrounds are detached and decor stays repairable. External URLs remain but the server does not fetch them. Corrupt embedded files are never treated as declared missing images.
+
+&emsp;&emsp;The HA limit is 576 MiB compressed and expanded, 512 entries; existing individual file/storage limits remain. Standalone hosts may use lower limits. One separate house operation per installation lasts ten minutes; closing/cancelling releases it immediately. Installation backups use their own pool and retain their existing rules.
+
+&emsp;&emsp;If the target does not support this format, update the card and integration: no file is uploaded to the wrong importer. Extracting document.json is not a workaround. Errors preserve the old plan; after interruption HA completes the paired save or rollback before another edit. Do not downgrade the integration until that recovery finishes.
 
 ### Storage locations
 

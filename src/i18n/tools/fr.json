@@ -1,5 +1,6 @@
 {
   "backup.house": "Maison entière — plan uniquement",
+  "backup.house_export_hint": "Choisissez l’installation, l’espace actuel ou le plan de toute la maison sans appareils. Vérifiez le contenu avant le téléchargement.",
   "backup.house_hint": "ZIP avec tous les étages, les liens d’escalier, les arrière-plans et les images de décor. Sans appareils ni liaisons Home Assistant. Ajoute la maison sans remplacer le plan actuel.",
   "backup.house_privacy": "Les noms, textes statiques, coordonnées précises et métadonnées originales des images, dont EXIF, sont conservés. Gardez ce fichier privé. Aucune donnée d’appareil ni liaison Home Assistant n’est incluse.",
   "backup.house_floors": "Étages à ajouter",

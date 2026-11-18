@@ -143,11 +143,13 @@ class HousePayload:
     archive_sha256: str
 
 
-def archive_digest(path):
+def archive_digest(path, check=None):
     digest = hashlib.sha256()
     with path.open("rb") as source:
         while block := source.read(CHUNK):
             checkpoint()
+            if check is not None:
+                check(0)
             digest.update(block)
     return digest.hexdigest()
 
@@ -188,7 +190,7 @@ def read_archive(path: Path, check=None) -> HousePayload:
         with path.open("rb") as source:
             check_prefix(source.read(PREFIX_BYTES))
         _check_directory(path, entry_limit=MAX_ENTRIES, archive_limit=MAX_ARCHIVE_BYTES)
-        before = archive_digest(path)
+        before = archive_digest(path) if check is None else archive_digest(path, check)
         with zipfile.ZipFile(path) as archive:
             infos = archive.infolist()
             names = [info.filename for info in infos]
@@ -250,9 +252,12 @@ def read_archive(path: Path, check=None) -> HousePayload:
                 owners = [refs[ref_key(row["ref"])] for row in manifest["images"] if row.get("blob") == name]
                 raw = reader.checked(name, metadata, min(ref.limit for ref in owners))
                 extension, mime = _validated_image(raw, Path(name).suffix, owners)
+                if check is not None:
+                    check(0)
                 if name != f"images/{hashlib.sha256(raw).hexdigest()}{extension}" or metadata["mime"] != mime:
                     raise fail()
-        if archive_digest(path) != before:
+        after = archive_digest(path) if check is None else archive_digest(path, check)
+        if after != before:
             raise fail("zip_changed")
         return HousePayload(document, manifest, before)
     except InputLimit as error:

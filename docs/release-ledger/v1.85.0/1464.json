@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1464,
+  "baseStable": "v1.85.0",
+  "category": "major",
+  "rationale": "New user-visible writer-only whole-house plan transfer, with all floors and images added independently without HA bindings or installation replacement; separate from the existing full-backup and single-space formats.",
+  "summary": {
+    "ru": "Перенос планировки всего дома с этажами, лестницами и изображениями одним ZIP.",
+    "en": "Transfer the whole house plan, floors, stairs and images in one ZIP."
+  }
+}

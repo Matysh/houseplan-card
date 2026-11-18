@@ -84,6 +84,18 @@ def test_source_missing_and_external_are_declared_without_network_or_attachment_
     assert repaired["payload"]["config"]["spaces"][1]["plan_url"].startswith("https://example.invalid/")
 
 
+@pytest.mark.parametrize("key", ["key", "accessToken", "auth_sig", "client-secret", "X-Amz-Credential", "X-Goog-Signature", "%74oken"])
+def test_external_image_query_credential_aliases_never_enter_portable_house(tmp_path, key):
+    source = document()
+    source["payload"]["config"]["spaces"][0]["plan_url"] = f"https://user:secret@example.invalid/plan.png?{key}=private&width=640"
+    path = tmp_path / "clean.zip"
+    house_archive.build_archive(path, source, lambda ref: (PNG, ".png"))
+    restored = house_archive.read_archive(path)
+    url = restored.document["payload"]["config"]["spaces"][0]["plan_url"]
+    assert url == "https://example.invalid/plan.png?width=640"
+    assert "private" not in json.dumps(restored.manifest)
+
+
 @pytest.mark.parametrize("mutation", ["blob_hash", "mime", "owner", "duplicate_ref", "boolean_version", "unknown_entry", "traversal"])
 def test_corrupt_or_forged_house_container_is_not_a_missing_image_import(tmp_path, mutation):
     path, manifest = archive(tmp_path)

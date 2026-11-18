@@ -1,5 +1,35 @@
 # Config compatibility registry
 
+## Plan-only house container (#1464)
+
+This is a separate `houseplan-plan-transfer` ZIP, archive_version1, with a first
+stored `mimetype` entry `application/vnd.houseplan.plan+zip;version=1`. Its
+document is houseplan-export export_version4/kind house/model11 and requires
+house_transfer_api1 plus literal transfer.plan_only=true. These numbers do not
+replace space/full JSON versions1/2/3 or full-backup archive_version1. Extracted
+document.json is refused by the ordinary JSON ingress. Keep all old readers.
+
+The optional handshake selects one upload route before sending bytes. A known
+house prefix on an old backend gets an update notice without upload; a future
+house version gets unsupported-transfer; the new house endpoint rejects a
+non-house container before allocating staging. Full ZIP stays installation-
+backup/admin-only; typed house cancellation is a separate writer operation.
+
+All floor IDs and scoped structural IDs are mapped before cross-floor stairs.
+Append does not repair target orphans or replace existing settings/layout.
+Representable inherited appearance is materialized per floor; global palettes,
+lighting, Moon and volumetric settings remain the target's authority. This is
+not a pixel-identical snapshot. Original image bytes/EXIF are not anonymized.
+
+The HA house cap is 576 MiB compressed/expanded and 512 ZIP entries; strict hosts
+retain their lower 256/512 MiB caps. Background/decor and public storage limits
+remain unchanged. Recovery uses its own typed house_import files+pair intent,
+without saved Zigbee cache or full-backup slots. Finish any pending intent
+before downgrading; a completed imported plan uses the existing saved model.
+
+Introduction is #1464; the first actual stable and package publication remain
+pending #1465. No minimum released version or sunset date is invented here.
+
 ## Shared command host (#1460)
 
 Host extraction changes no saved model, JSON or archive version. The HA and

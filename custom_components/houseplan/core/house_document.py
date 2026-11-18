@@ -49,7 +49,9 @@ _ENVELOPE = frozenset({"format", "export_version", "kind", "created_at", "source
                        "card_version", "integration_version", "model_version", "required_api",
                        "payload", "transfer", "build"})
 _CREDENTIAL_QUERY = frozenset({"authsig", "token", "access_token", "api_key", "apikey", "api-key",
-                              "signature", "sig", "authorization", "password", "secret", "auth", "jwt"})
+                              "signature", "sig", "authorization", "password", "secret", "auth", "jwt",
+                              "key", "accesskey", "accesstoken", "authtoken", "clientsecret", "credential",
+                              "credentials", "securitytoken", "sessiontoken", "passwd"})
 
 
 def _portable_url(value):
@@ -57,8 +59,11 @@ def _portable_url(value):
         parsed = urlsplit(value)
     except ValueError as error:
         raise fail() from error
-    query = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True)
-             if key.lower() not in _CREDENTIAL_QUERY and not key.lower().startswith(("x-amz-", "x-goog-"))]
+    def credential(key):
+        normalized = re.sub(r"[^a-z0-9]", "", key.lower())
+        return normalized in _CREDENTIAL_QUERY or normalized.startswith(("xamz", "xgoog"))
+
+    query = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if not credential(key)]
     return urlunsplit(parsed._replace(netloc=parsed.netloc.rsplit("@", 1)[-1], query=urlencode(query)))
 
 
@@ -240,6 +245,21 @@ def build_merge(document, current_config, current_layout):
             for collection in [[space], *(space.get(name) or [] for name, _ in COLLECTIONS)]
             for item in collection if isinstance(item, dict) and "id" in item}
     used.update(str(marker.get("id")) for marker in target.get("markers") or [])
+    # Unresolved target references/layout owners must not accidentally become
+    # resolved by a freshly minted ID. Include unknown retained fields too,
+    # without rewriting or trying to interpret them as one-space repair maps.
+    pending = [target, layout]
+    while pending:
+        checkpoint()
+        value = pending.pop()
+        if isinstance(value, dict):
+            used.update(str(key) for key in value)
+            used.update(key[3:] for key in value if isinstance(key, str) and key.startswith("rl_"))
+            pending.extend(value.values())
+        elif isinstance(value, list):
+            pending.extend(value)
+        elif isinstance(value, str):
+            used.add(value)
     space_map = {space["id"]: _mint("space", space["id"], used) for space in spaces}
     maps = {}
     for space in spaces:

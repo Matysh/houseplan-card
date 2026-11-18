@@ -136,6 +136,7 @@ F5 относятся к реализации будущего сервиса, �
 |---|---|---|---|
 | Portable JSON / config |32/16 MiB|те же|`import_export.parse_document`, config schema/Store|
 | ZIP / expanded total |2/2 GiB|256/512 MiB|`backup_archive._check_directory`, `expanded_size`, streaming `read`|
+| House-only ZIP (#1464) |576/576 MiB,512 entries|256/512 MiB,512 entries|canonical prefix before staging, bounded central directory before ZipInfo, one verified image at a time; old full-backup caps unchanged|
 | Central directory / entries |2 MiB/1600 actual|те же|pre-ZipFile header walk + `_validate_info`|
 | Manifest / plan / decor / attachment input bytes |2/8/2/50 MiB|те же внешние ceilings; ниже дополнительные content caps|descriptors, actual bytes, typed image validation|
 | Structural payload / staged total |32/64 MiB|те же + JSON bounds|`structural_upload.parse_payload`, manager append|

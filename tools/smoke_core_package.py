@@ -29,13 +29,14 @@ for name, digest in info["sources_sha256"].items():
     assert hashlib.sha256((root / name).read_bytes()).hexdigest() == digest, name
 for module in pkgutil.walk_packages(houseplan_core.__path__, "houseplan_core."):
     importlib.import_module(module.name)
-from houseplan_core.conformance import ReferenceAdapter, run
+from houseplan_core.conformance import ReferenceAdapter, run, run_house
 from houseplan_core.conformance_example import JsonClientAdapter
 with tempfile.TemporaryDirectory() as folder:
     for factory in (ReferenceAdapter, JsonClientAdapter):
         assert len(asyncio.run(run(factory, Path(folder)))) == 9
+        assert len(asyncio.run(run_house(factory, Path(folder) / "house"))) == 1
 assert "homeassistant" not in sys.modules and "custom_components" not in sys.modules
-print(json.dumps({"installed": str(root), "version": info["version"], "source_files": len(info["sources_sha256"]), "conformance": 18}))
+print(json.dumps({"installed": str(root), "version": info["version"], "source_files": len(info["sources_sha256"]), "conformance": 18, "house_conformance": 2}))
 '''
 
 

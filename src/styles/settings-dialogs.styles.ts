@@ -188,7 +188,7 @@ hp-dialog.ui-dialog .supportlinks{align-items:stretch;flex-direction:column;}
 ${readingGlyphCss('hp-dialog.ui-dialog .rprev', 'preview', 'primary')}
 ${readingGlyphCss('hp-dialog.ui-dialog .device-inbox-icon', 'avatar', 'primary')}
 ${readingTextCss('.supportsummary', 'form-label', 'primary')}
-${readingTextCss('.backupplanonly small')}
+${readingTextCss('.backupplanonly small,.backuphouse small')}
 ${readingSeparatorCss('hp-dialog.ui-dialog .supportsection + .supportsection')}
 ${readingTextCss('hp-dialog.ui-dialog .supportform > label:not(.srcrow),.backupchoices legend', 'form-label', 'primary')}
 ${readingTextCss('.aboutver,.supporthash,.backupcounts,.backupfile span,.backupsummary span,.backupcontent span,.backupdetails code,.device-inbox-meta,.device-inbox-reason,.device-inbox-copy code,.device-inbox-selected')}

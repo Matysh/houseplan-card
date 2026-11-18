@@ -25,6 +25,27 @@ async function fixture(files, run) {
     }
 }
 const select = (root, options = {}) => selectTaskTests({ root, inventory, track: 'ship', layer: 'product', ...options });
+test('#1464 house format, files, prefix and HA transaction regressions select storage by their owning source', async () => fixture({
+    'custom_components/houseplan/core/house_commands.py': '',
+    'tests_backend/test_house_document.py': '',
+    'tests_backend/test_house_prefix.py': '',
+    'tests_backend/test_house_archive.py': '',
+    'tests_backend/test_house_files.py': '',
+    'tests_backend/test_house_commands.py': '',
+    'tests_backend/test_ha_house_transfer.py': '',
+    'test/house-transfer-prefix.test.mjs': '',
+}, async dir => {
+    const catalog = await testCatalog(dir, inventory);
+    const selected = await select(dir, { track:'ask', changedFiles:['custom_components/houseplan/core/house_commands.py'] });
+    for (const row of catalog.rows.filter(row => row.path.includes('house'))) {
+        assert.ok(row.domains.includes('storage'), row.path);
+        assert.ok(JSON.stringify(selected).includes(row.path), row.path);
+    }
+    for (const file of ['src/house-transfer-prefix.ts', 'custom_components/houseplan/core/house_files.py',
+        'custom_components/houseplan/core/house_resources.py', 'custom_components/houseplan/house_http.py']) {
+        assert.ok(domainsOf(file).includes('storage'), file);
+    }
+}));
 test('#1460 shared command ports and independent package/host witnesses select storage contracts', async () => fixture({
     'custom_components/houseplan/core/plan_commands.py': '',
     'tests_backend/test_plan_commands.py': '',

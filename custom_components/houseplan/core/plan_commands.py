@@ -138,7 +138,7 @@ class PlanCommands:
         if not isinstance(self.effects, BestEffortEffects):
             self.effects = BestEffortEffects(self.effects)
 
-    async def load(self, transaction: PlanTransaction) -> PlanPair:
+    async def load(self, transaction: PlanTransaction, *, prepare: bool = True) -> PlanPair:
         try:
             pair = await transaction.load()
         except CommandError:
@@ -149,18 +149,21 @@ class PlanCommands:
         if pair.recovered_kind is not None:
             self.effects.emit("houseplan_config_updated", {"rev": int(pair.config_data.get("rev", 0))})
             self.effects.emit("houseplan_layout_updated", {"rev": int(pair.layout_data.get("rev", 0))})
-        begin_preparation()
+        if prepare:
+            begin_preparation()
         return pair
 
     async def execute(self, message: dict[str, Any]) -> dict[str, Any]:
         return await self._invoke(self._execute, message)
 
-    async def _invoke(self, handler, *args):
+    def input_policy(self):
         environment = self.environment
-        policy = (environment.input_policy or (STRICT_INPUT_POLICY if environment.policy is CommandPolicy.PLAN_ONLY
-                                              else HA_INPUT_POLICY)) if environment is not None else HA_INPUT_POLICY
+        return (environment.input_policy or (STRICT_INPUT_POLICY if environment.policy is CommandPolicy.PLAN_ONLY
+                                            else HA_INPUT_POLICY)) if environment is not None else HA_INPUT_POLICY
+
+    async def _invoke(self, handler, *args):
         try:
-            with command_preparation(policy):
+            with command_preparation(self.input_policy()):
                 return await handler(*args)
         except InputLimit as error:
             raise CommandError(error.code) from error

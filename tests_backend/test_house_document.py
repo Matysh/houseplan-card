@@ -90,6 +90,25 @@ def test_additive_merge_scopes_duplicate_local_ids_and_does_not_repair_target_or
     assert detail["warnings"] == []
 
 
+def test_minting_excludes_target_orphan_destinations_and_layout_only_owners(monkeypatch):
+    from custom_components.houseplan.core import house_document
+
+    document, _ = exported()
+    config = {"model_version": 11, "spaces": [], "markers": [{"id": "orphan", "binding": "virtual",
+        "room_id": "orphan-room", "space": "orphan-floor", "future": {"destination": "unknown-owner"}}], "settings": {}}
+    layout = {"rl_layout-only-room": {"s": "orphan-floor", "x": .1, "y": .2}}
+    fresh = house_document._fresh
+
+    def checked(namespace, old, used):
+        assert {"orphan-room", "orphan-floor", "unknown-owner", "layout-only-room"} <= used
+        return fresh(namespace, old, used)
+
+    monkeypatch.setattr(house_document, "_fresh", checked)
+    candidate, positions, _ = build_merge(document, config, layout)
+    assert candidate["markers"] == config["markers"]
+    assert positions["rl_layout-only-room"] == layout["rl_layout-only-room"]
+
+
 @pytest.mark.parametrize("mutation", [
     lambda document: document.update(export_version=True),
     lambda document: document.update(model_version=True),

@@ -49,6 +49,7 @@ class ReferencePlanHost:
     def __init__(self, config: dict, fingerprint: str | None, version: str, root: Path,
                  *, scope: str = "reference-plan", owner: str = "reference-owner"):
         self.root = root
+        root.mkdir(parents=True, exist_ok=True)
         self.version, self.fingerprint = version, fingerprint
         # Bootstrap a synthetic fixture only. Persistent hosts load and recover
         # their authoritative pair before exposing command ports.

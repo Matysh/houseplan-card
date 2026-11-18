@@ -20,7 +20,7 @@ class JsonClientAdapter:
         # A real client would send the serialized envelope to its test server.
         envelope = json.loads(json.dumps({"method": method, "arguments": arguments}))
         args = envelope["arguments"]
-        if method in {"preview", "stage", "upload_plan", "upload_asset"}:
+        if method in {"preview", "stage", "upload_plan", "upload_asset", "house_preview"}:
             args[0] = base64.b64decode(args[0])
         result = await getattr(self.service, method)(*args)
         return json.loads(json.dumps(result))
@@ -38,6 +38,12 @@ class JsonClientAdapter:
 
     async def preview(self, raw):
         return await self._call("preview", base64.b64encode(raw).decode())
+
+    async def house_preview(self, raw, operation):
+        return await self._call("house_preview", base64.b64encode(raw).decode(), operation)
+
+    async def download_house(self, token):
+        return await self._call("download_house", token)
 
     async def stage(self, raw):
         return await self._call("stage", base64.b64encode(raw).decode())

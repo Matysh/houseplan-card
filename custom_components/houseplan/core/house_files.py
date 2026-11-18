@@ -105,6 +105,36 @@ def cleanup_stage(root: Path, session: str):
     shutil.rmtree(path)
 
 
+def prune_stages(root: Path, before: float, protected: set[str]) -> int:
+    """Bound positively identified private leftovers after the recovery fence.
+
+    Published hardlinks are charged to public content quotas, not again as a
+    private copy. Unknown files/links are never swept on an age inference.
+    """
+    parent = root / STAGING_DIR
+    if not parent.exists() and not parent.is_symlink():
+        return 0
+    fd = directory_fd(root, Path(STAGING_DIR))
+    os.close(fd)
+    total = 0
+    for index, folder in enumerate(parent.iterdir()):
+        if index >= 128 or not _SESSION.fullmatch(folder.name):
+            raise fail("zip_limit")
+        identified_stage(root, folder.name)
+        if folder.name not in protected and (folder / "owner.json").lstat().st_mtime < before:
+            cleanup_stage(root, folder.name)
+            continue
+        for count, file in enumerate(folder.iterdir()):
+            if count > 2 * MAX_ENTRIES + 2:
+                raise fail("zip_limit")
+            value = file.lstat()
+            if not stat.S_ISREG(value.st_mode):
+                raise fail()
+            if value.st_nlink == 1:
+                total += value.st_size
+    return total
+
+
 def _identity(path):
     value = path.lstat()
     if not stat.S_ISREG(value.st_mode):
@@ -138,7 +168,7 @@ def _quotas(root, files):
         raise fail("zip_limit")
 
 
-def _check_archive(folder, expected):
+def _check_archive(folder, expected, check=None):
     path = folder / "archive.zip"
     if not _HASH.fullmatch(expected) or not stat.S_ISREG(path.lstat().st_mode):
         raise fail()
@@ -147,15 +177,15 @@ def _check_archive(folder, expected):
     # Bound central-directory allocation before hashing or constructing ZipInfo.
     from .backup_archive import _check_directory
     _check_directory(path, entry_limit=MAX_ENTRIES, archive_limit=MAX_ARCHIVE_BYTES)
-    if archive_digest(path) != expected:
+    if archive_digest(path, check) != expected:
         raise fail("zip_changed")
     return path
 
 
-def prepare_files(root: Path, session: str, payload, *, protected_plans=frozenset()):
+def prepare_files(root: Path, session: str, payload, *, protected_plans=frozenset(), check=None):
     """Return a rewritten document and data-only recovery descriptor; publish none."""
     folder = identified_stage(root, session)
-    archive_path = _check_archive(folder, payload.archive_sha256)
+    archive_path = _check_archive(folder, payload.archive_sha256, check)
     document = missing_projection(payload)
     refs = {ref_key(ref.record()): ref for ref in image_refs(document["payload"]["config"])}
     files, destinations, plans = [], {}, {}
@@ -170,8 +200,10 @@ def prepare_files(root: Path, session: str, payload, *, protected_plans=frozense
             if _PLAN.fullmatch(f"{PLANS_DIR}/{path.name}") and stat.S_ISREG(path.lstat().st_mode):
                 plans.setdefault((path.suffix, path.stat().st_size), []).append(path.name)
     with zipfile.ZipFile(archive_path) as archive:
-        reader = Reader(archive)
+        reader = Reader(archive, check)
         for row in payload.manifest["images"]:
+            if check is not None:
+                check(0)
             if "blob" not in row:
                 continue
             ref = refs[ref_key(row["ref"])]
@@ -185,6 +217,8 @@ def prepare_files(root: Path, session: str, payload, *, protected_plans=frozense
                     name = f"house.{sha}{extension}"
                     for existing in plans.get((extension, len(raw)), []):
                         checkpoint()
+                        if check is not None:
+                            check(0)
                         if safe_read(root, root / PLANS_DIR / existing, len(raw)) == raw:
                             name = existing
                             break

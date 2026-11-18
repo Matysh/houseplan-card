@@ -7,6 +7,45 @@ Pillow are required. The package is prepared locally here; publishing is #1465.
 
 ## Ports and ownership
 
+### Optional whole-house transfer (#1464)
+
+Configure `CommandEnvironment.house` to advertise `house_transfer_api: 1` in
+config/get. It is optional and does not enlarge the standalone base handshake.
+The shared command layer owns `kind: house, plan_only: true`, preview, scoped
+identity maps, revalidation, revision CAS and the additive paired commit. It
+never invokes the single-space importer repeatedly or grants full-backup access.
+
+`HouseResources` supplies one owner/scope-bound import/export lease, private
+stream staging, verified image reads/destination preparation and a data-only
+file descriptor for the storage journal. A lease exposes token, expiry, record
+and pinned state; records remain private, not exported configuration. A host
+can store those records and blobs transactionally in its own repository. It
+need not use HA directories, an HTTP route, Zigbee or the reference filesystem.
+`FilesystemHouseResources` is a single-process adapter using the existing
+content lock. Like `ReferencePlanHost`, it is not a multi-process website DB.
+
+Route only the canonical first stored `mimetype` record (at most 1 KiB) before
+allocating the house operation. Upload has an explicit byte policy; start the
+single preparation budget after the network body is staged, retain it through
+ZIP decoding/projection/remapping and close it before publishing the preview or
+committing the stores. Never wrap a durable command with a late strict deadline.
+Cancellation/expiry must settle workers before removing the positively-owned
+stage. The private house pool is distinct from installation-backup slots.
+
+The host's paired writer must retain a typed `house_import` target/rollback
+intent with the file descriptor. Promote only verified complete files before
+publishing their config references; reuse requires matching bytes/identity.
+Preserve the existing target config/layout exactly, including unresolved refs
+and unknown metadata; invalidate the old optimizer snapshot, without global
+import Undo. Recover the pending unit before any following revision comparison.
+Pin its private archive/inode proofs until the two stores and rollback policy
+are durable. Do not route it through full-backup/Zigbee recovery or downgrade
+while it remains pending. Missing ownership proof never authorizes file removal.
+
+The separately callable `conformance.run_house(factory, root)` extension adds
+house_preview and download_house to the adapter fixture. The wheel and sdist
+smoke installs execute it with both example factories without importing HA.
+
 The contracts are in `command_ports.py`. Construct a request-scoped command
 service with storage, CPU execution, current write authority, after-commit
 effects and a `CommandEnvironment`. The environment selects `CommandPolicy.HA`

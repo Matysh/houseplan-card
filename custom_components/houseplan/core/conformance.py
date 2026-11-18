@@ -13,8 +13,10 @@ import base64
 import copy
 import importlib
 import inspect
+import io
 import json
 import tempfile
+import zipfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -87,6 +89,19 @@ class ReferenceAdapter:
     async def preview(self, raw):
         return await self.host.preview(raw)
 
+    async def house_preview(self, raw, operation):
+        async def blocks():
+            yield raw
+
+        return await self.host.commands.house_preview(blocks(), len(raw), operation)
+
+    async def download_house(self, token):
+        from .house_commands import download
+
+        async with download(self.host.commands, token, True) as (filename, blocks):
+            raw = b"".join([block async for block in blocks])
+        return {"filename": filename, "bytes": base64.b64encode(raw).decode()}
+
     async def upload_plan(self, raw, space, extension):
         return await self.host.commands.upload_plan(raw, space, extension)
 
@@ -115,6 +130,49 @@ async def _error(awaitable, code):
         assert getattr(error, "code", None) == code, (code, type(error).__name__, str(error))
     else:
         raise AssertionError("Expected refusal: " + code)
+
+
+async def run_house(factory, work_root: Path):
+    """Optional house API extension; does not enlarge the base host handshake."""
+    adapter = factory(work_root)
+    if inspect.isawaitable(adapter):
+        adapter = await adapter
+    source = seed()
+    source["spaces"][0]["stairs"] = [{"id": "stair", "kind": "straight", "x": .5, "y": .5,
+        "angle": 0, "direction": "forward", "target_space_id": "upper", "length": .3, "width": .2}]
+    await adapter.reset(source)
+    read = await adapter.request({"type": "houseplan/config/get"})
+    assert read["house_transfer_api"] == 1
+    plan = await adapter.upload_plan(PNG, "floor", "png")
+    asset = await adapter.upload_asset(PNG, "sample.png")
+    candidate = copy.deepcopy(read["config"])
+    candidate["spaces"][0]["plan_url"] = plan["url"]
+    candidate["spaces"][0].setdefault("decor", []).append({"id": "image", "kind": "image", "asset_id": asset["asset"]["asset_id"],
+        "x": .2, "y": .2, "w": .1, "h": .1})
+    await adapter.request({"type": "houseplan/config/set", "config": candidate,
+        "expected_rev": read["rev"], "opening_features_api": 1})
+    before = await adapter.snapshot()
+    exported = await adapter.request({"type": "houseplan/export/create", "kind": "house", "plan_only": True})
+    assert exported["complete"] and exported["images"] == 1
+    file = await adapter.download_house(exported["token"])
+    raw = base64.b64decode(file["bytes"])
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        assert archive.read("mimetype") == b"application/vnd.houseplan.plan+zip;version=1"
+        manifest = json.loads(archive.read("manifest.json"))
+        document = json.loads(archive.read("document.json"))
+        assert document["kind"] == "house" and document["export_version"] == 4
+        assert archive.read(next(iter(manifest["blobs"]))) == PNG
+    reply = await adapter.house_preview(raw, "conformance-house")
+    assert (await adapter.snapshot())["config_data"] == before["config_data"]
+    result = await adapter.request({"type": "houseplan/import/apply", "transfer_kind": "house", "token": reply["token"],
+        "expected_config_rev": reply["expected_config_rev"], "expected_layout_rev": reply["expected_layout_rev"]})
+    after = await adapter.snapshot()
+    assert result["ok"] and result["can_undo"] is False
+    actual = after["config_data"]["config"]
+    assert actual["spaces"][:2] == before["config_data"]["config"]["spaces"]
+    added = actual["spaces"][2:]
+    assert len(added) == 2 and added[0]["stairs"][0]["target_space_id"] == added[1]["id"]
+    return ["house_transfer_images_stairs_append"]
 
 
 async def run(factory, work_root: Path):
