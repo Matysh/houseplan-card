@@ -13,6 +13,7 @@ import { fixtureWallKey } from './fixtures/wall-key.mjs';
 
 const repoRoot = resolve(fileURLToPath(new URL('..',import.meta.url)));
 const roundtripOnly = process.argv.includes('--roundtrip-only');
+const hiddenOnly = process.argv.includes('--hidden-only');
 // Freeze already built sources/assets in an owned artifact, so another author
 // cannot replace a chunk between browser requests. The ordinary freshness
 // guard still verifies the complete copied tree; no stale bypass/rebuild.
@@ -92,6 +93,10 @@ const snapshot = page => page.evaluate(()=>{
   const svg = stage.querySelector('svg.plan-svg');
   const floor = svg.querySelector(':scope > g');
   const bounds = svg.getBoundingClientRect(), matrix = floor.getScreenCTM();
+  // _view is canonical; quarterturn display-fit may have a different width.
+  // The root SVG matrix measures actual scene-units-to-pixels, independently
+  // of the card's converter and without counting floor depth compression.
+  const sceneMatrix = svg.getScreenCTM();
   const point = new DOMPoint(bounds.left+bounds.width/2,bounds.top+bounds.height/2).matrixTransform(matrix.inverse());
   const local = floor.transform.baseVal.consolidate()?.matrix || new DOMMatrix();
   const camera = card._renderIsoScene?.camera;
@@ -105,7 +110,7 @@ const snapshot = page => page.evaluate(()=>{
   return {rotation:card._rotation,projection:card._renderProjection,mode:card._mode,
     camera:camera?{yaw:camera.rotDeg,depth:camera.floorScaleY,tilt:camera.tiltDeg}:null,
     worldCenter:[point.x,point.y],view:{...card._view},zoom:card._zoom,
-    stageSize:[stage.clientWidth,stage.clientHeight],pixelsPerSceneUnit:stage.clientWidth/card._view.w,
+    stageSize:[stage.clientWidth,stage.clientHeight],pixelsPerSceneUnit:Math.hypot(sceneMatrix.a,sceneMatrix.b),
     matrix:[local.a,local.b,local.c,local.d,local.e,local.f],inverseHit,
     volumeIds:ids('[data-hp-furniture-volume]'),flatIds:ids('.dfurn[data-id]'),
     walls:stage.querySelectorAll('.iso-wall-top,.iso-wall-side').length,
@@ -127,7 +132,7 @@ const out = {}, detail = {};
     out.nativeEntry = !original.hasLabFlag && !original.query && original.camera?.yaw===35
       && Math.abs(original.camera.depth-Math.sin(40*Math.PI/180))<1e-12 && original.volumeIds.length===5;
     const turns = [];
-    for(const rotation of [0,90,180,270]) {
+    for(const rotation of hiddenOnly ? [] : [0,90,180,270]) {
       await fit(page);
       const home = await snapshot(page);
       await page.locator('[data-hp="zoom-in"]').first().click(); await settled(page);
@@ -179,7 +184,7 @@ const out = {}, detail = {};
   } finally { await finish(browser); }
 }
 
-for(const kind of roundtripOnly ? [] : ['structure','furniture']) {
+for(const kind of roundtripOnly || hiddenOnly ? [] : ['structure','furniture']) {
   const {page,browser} = await start();
   try {
     const result = await page.evaluate(async kind=>{
