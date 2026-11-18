@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "b06292efb6a02c19819afd6b9f31013e0fb2ec1c12f60cb41717892d9dc23db8",
+  "matchesSha256": "90d5b95c8abc25d2b7fb776bf60417342e5557d950a8448e90c665e58e4003eb",
   "hits": [
     {
       "id": "d87c2cf8d9801a9970e5fad1",
@@ -3189,11 +3189,11 @@
       "reason": "Persisted representation: implicit temperature/humidity source + secondary metric. A second old metric and implicit primary resolution are observable. Preserve until explicit user choice; lossless total replacement does not exist."
     },
     {
-      "id": "9a3edcff0f05abd64c6503b8",
+      "id": "5d1b0299038880f2ee46bbf0",
       "path": "src/device-face.ts",
-      "line": 185,
-      "text": "if (!badge && legacyMetrics.length === 0) return nothing;",
-      "occurrence": 1,
+      "line": 188,
+      "text": "const hasSections = !!badge || legacyMetrics.length > 0;",
+      "occurrence": 2,
       "kind": "branch",
       "owner": "marker-value-presentation",
       "reason": "Persisted representation: implicit temperature/humidity source + secondary metric. A second old metric and implicit primary resolution are observable. Preserve until explicit user choice; lossless total replacement does not exist."
@@ -5379,6 +5379,16 @@
       "reason": "Persisted representation: grp_<HA-area> and old/missing space references. A missing HA roster or ambiguous owner prevents a total migration. Current f1 hint alone is not ownership; keep refusal/proof paths."
     },
     {
+      "id": "fd67cfa0ef231a8f8c69f414",
+      "path": "src/iso-lab-camera.ts",
+      "line": 9,
+      "text": "// ordinary volumetric switch. Legacy arguments cannot select another profile",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Historical prototype function arguments are ignored by the pure fixed production profile; this does not decode any persisted configuration representation."
+    },
+    {
       "id": "ce0960f4741e0358604c7f6d",
       "path": "src/iso-openings.ts",
       "line": 189,
@@ -5407,6 +5417,16 @@
       "kind": "branch",
       "owner": "marker-value-presentation",
       "reason": "Persisted representation: implicit temperature/humidity source + secondary metric. A second old metric and implicit primary resolution are observable. Preserve until explicit user choice; lossless total replacement does not exist."
+    },
+    {
+      "id": "d0f87867627e1cfcc2ed0820",
+      "path": "src/iso-scene-render.ts",
+      "line": 248,
+      "text": "// The legacy painter can interleave an object between two facets. Only",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Comment about current depth-composition algorithms, not reading a superseded persisted plan format."
     },
     {
       "id": "8356e2c7968f349141c9eec5",

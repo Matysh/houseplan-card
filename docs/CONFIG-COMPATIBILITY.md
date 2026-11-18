@@ -1,12 +1,85 @@
 # Config compatibility registry
 
+## Desk-computer workstation (#1451)
+
+Optional `spaces[].decor[]` fields do not bump plan model11, Store or a ZIP
+container version. A `furniture` record for `desk`/`desk_corner` may carry
+`workstation: 'mounted'` and `workstation_tower_id`; its single same-space
+`computer` endpoint carries `workstation: 'tower'` and no reference field.
+The role enum and nonempty bounded string are declared in the furniture type
+schema; semantic validation additionally requires the proper symbols and a
+unique one-to-one link. A missing/duplicate/cross-floor endpoint or use on
+another decor kind is not a valid new save. Other table types and roles are
+not implicitly enabled by generic furniture categories or `ALLOW_EXTRA`.
+
+The data remain ordinary positive furniture boxes, mirrors and angles. The
+desktop components are derived from the desk; the tower stores its existing
+world placement as a crop. No volume mesh, per-part heights, second geometry
+model or camera is persisted. Existing plans without these fields keep their
+boxes and identifiers without background migration. `lab_workstation` and
+`lab_tower_id` are private prototype data, not compatibility aliases or an
+automatically imported product API. Unknown furniture IDs retain their
+existing readable/opaque behavior.
+
+`config/get` advertises optional `furniture_workstation_api: 1`. A capable
+client sends that exact integer on `config/set`, `space/delete` and
+`plan/optimize`; it is not a new mandatory/base standalone-host handshake.
+Before normalization and storage, the shared old-writer guard compares endpoint
+presence, kind/symbol, role and reference by `(space.id, decor.id)`. Without
+the exact marker, creating, changing or dropping that metadata or an endpoint
+refuses with `furniture_workstation_client_outdated`; changing coordinates or
+style while preserving the relationship is permitted. Boolean `true` is not
+API version `1`. The marker grants no ACL, CAS, invariant or size-limit bypass.
+Node intents derive their candidates from stored data and retain decor, so
+they do not acquire this whole-document marker. View remains read-only, and
+workstation editing is unavailable when the capability is absent/unsupported.
+
+Mount/remove, endpoint cleanup, history and copies use the existing
+transactional command lane. A partial-object copy becomes standalone; copying
+a complete pair remaps its own decor IDs. The roomless space-copy proof is
+mirrored in TS and Python. Single-space import and whole-house append use
+their respective complete/scoped decor maps; they never bind to source or
+another floor's IDs. In an import, only a malformed optional relationship is
+detached, with a server-computed `workstation_repairs` report and
+`workstations_detached` warning. The objects remain; an orphaned tower is
+reassembled when its existing bounds allow it. File-provided repair reports
+are not trusted. Full-ZIP double parsing preserves the first server report,
+and house repair metadata travels outside its closed wire document. These
+repairs do not remove unknown/private fields to make a plan-only file pass
+its independent privacy validation.
+
+Full/space JSON containing the relationship uses `export_version: 4`, including
+a raw migration-source rollback export; without it, the previous version
+selection (1/2/3 as applicable) remains unchanged. A v1/2/3 document cannot
+smuggle workstation metadata. The JSON reader accepts v4 only for its existing
+`full`/`space` kinds: an extracted `kind: house` document is still refused.
+The house ZIP keeps its existing export v4 and adds
+`required_api.furniture_workstation_api: 1` only when the relationship is
+present. Unsupported integer API requirements fail as `unsupported-transfer`;
+malformed requirement values are invalid input. The physical archive remains
+unchanged. This preserves refusal by older strict readers instead of silently
+losing a pointer during remap.
+
+Older cards cannot faithfully draw the split top-view computer; retaining raw
+optional fields is not a promise of old visual parity. Downgrade does not
+rewrite the plan or invent a migration. Keep a compatible backup before
+editing with an older installation. Flat View/editor and PDF retain the
+relationship's meaning through shared source crops; the static space card is
+not given new furniture support. The volume camera/profile and the changed
+2.5D-only depiction of legacy `hinge: top` are presentation contracts in
+[ISOMETRIC](ISOMETRIC.md), not migrations of saved window data.
+
+Introduction is #1451; its first published stable and any retirement boundary
+remain pending actual publication. No new minimum released version is assumed.
+
 ## Plan-only house container (#1464)
 
 This is a separate `houseplan-plan-transfer` ZIP, archive_version1, with a first
 stored `mimetype` entry `application/vnd.houseplan.plan+zip;version=1`. Its
 document is houseplan-export export_version4/kind house/model11 and requires
 house_transfer_api1 plus literal transfer.plan_only=true. These numbers do not
-replace space/full JSON versions1/2/3 or full-backup archive_version1. Extracted
+replace the independently selected space/full JSON versions (including the
+conditional workstation v4 above) or full-backup archive_version1. Extracted
 document.json is refused by the ordinary JSON ingress. Keep all old readers.
 
 The optional handshake selects one upload route before sending bytes. A known
@@ -83,8 +156,10 @@ unrelated data only if every extended parent is semantically identical,
 including geometry and removal. Boolean/number substitution is not equality.
 Ordinary ACL/CAS/graph/fit checks still apply; no permission bypass is added.
 
-Portable documents containing the extension use export_version3; old documents
-remain version2 and versions1/2 are still read. ZIP container format is unchanged.
+Portable documents containing the extension use export_version3 unless the
+workstation extension above requires version4; documents without either retain
+their previous version selection, and versions1/2 are still read. ZIP container
+format is unchanged.
 Full/space transfer, recovery and history preserve nested settings. Plan-only
 uses its existing source-removal semantics. Space Copy clears every contact/
 lock, including disabled shades, retains local leaf IDs/manual values and proves

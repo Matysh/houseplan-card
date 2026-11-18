@@ -45,6 +45,17 @@ def test_issue_33_manifest_is_fresh_and_deterministic():
     assert len(first["fields"]) > 200
 
 
+def test_workstation_semantic_wrapper_preserves_all_decor_schema_variants():
+    fields = _load_dump_module().build_manifest()["fields"]
+    for kind in ("line", "ellipse|rect", "text", "furniture", "image"):
+        assert f"config.spaces[].decor[]<{kind}>.id" in fields, kind
+        assert f"config.spaces[].decor[]<{kind}>.kind" in fields, kind
+    assert "config.spaces[].decor[]<line>.x1" in fields
+    assert "config.spaces[].decor[]<image>.asset_id" in fields
+    assert "config.spaces[].decor[]<furniture>.flip_h" in fields
+    assert fields["config.spaces[].decor[]<furniture>.workstation"]["enum"] == ["mounted", "tower"]
+
+
 def _collect_paths(node, prefix=""):
     paths = set()
     if isinstance(node, dict):

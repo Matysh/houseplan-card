@@ -491,6 +491,46 @@ same `asset_id`: no new file/catalog item, upload or resource deletion. Order,
 copy and delete use one named transaction each in the existing history/writer.
 No new schema or migration, View actions, sorting during render or touch gesture.
 
+### 6.2. Desk-mounted computer (#1451)
+
+The selected free `computer`, or an eligible `desk`/`desk_corner` beneath it,
+offers **Place on desk** in the Background editor's selection actions. The
+computer's equipment centre must lie on the real usable surface, not the cutout
+of a corner desk. Empty desks and other table families do not create equipment.
+A mounted desk offers **Remove from desk**. These actions require the optional
+server capability `furniture_workstation_api: 1`, desktop editor write
+permission and the same current space/revision/authority as other decor
+commands. A stale callback or readonly View cannot perform them.
+
+Mounting creates a typed same-floor one-to-one relationship between the two
+existing decor records. The desk carries the derived monitor, keyboard and
+mouse; the computer record becomes its independent tower crop. The tower
+keeps its physical location, angle, reflections and style. Moving, reflecting,
+resizing or rotating the desk changes only the desk and its derived equipment,
+not that floor tower. Removal restores the complete computer around the
+tower's current box, even if the desk changed in the meantime. Exact crop
+coordinates and transform formulas are in [FURNITURE](FURNITURE.md#desk-mounted-computer-1451).
+
+Each completed mount/removal uses the existing geometry snapshot, one named
+history step and the ordinary configuration writer. Undo/Redo restores both
+records atomically. Deleting one endpoint detaches its surviving counterpart
+in the same delete transaction; it never removes unrelated objects or files.
+A refused write must not leave half of the relationship saved.
+
+Single-object **Create a copy** copies independently: a desk copy is ordinary,
+and a tower copy is first reassembled into a complete computer and then gets
+the normal one-cell offset and fresh identity. The original pair is unchanged.
+No copy may point into the source pair. Whole-space/furniture transfers remap
+both IDs and the relationship together; they do not turn transient selection
+groups into new saved groups.
+
+The Flat editor and architectural PDF use original top-view SVG artwork:
+desktop equipment is cropped onto the desk, and only the tower is drawn in
+the saved tower box. The PDF remains vector-based, with the same angle,
+reflections and crop-aware fit; neither print nor View writes geometry.
+Static `houseplan-space-card` still displays supported decor images rather
+than furniture and is not expanded by this feature.
+
 ## 7. Custom image lifecycle
 
 
@@ -589,3 +629,12 @@ Device furniture remains a marker and is not copied. Group selection is
 transient, so copying a category does not introduce saved parent/child links.
 Selected objects retain paint order, styles, asset_id and live text references
 with fresh IDs; excluding a category only affects the new space.
+
+An explicitly saved workstation (#1451) is not a transient selection group.
+With Furniture selected, both endpoints are copied and their local reference
+is rewritten to the new computer ID by the shared TS/Python copy contract.
+With Furniture excluded, neither endpoint is copied. The original pair and
+all other spaces remain untouched. Full/space JSON, plan-only space transfer
+and the whole-house container preserve the same relationship; unsupported
+optional links are detached with a computed import warning, not guessed from
+another floor's IDs. See [compatibility](CONFIG-COMPATIBILITY.md#desk-computer-workstation-1451).

@@ -4,13 +4,18 @@ Status: **implemented and expanded by issues #159 and #383**. The Background edi
 stores furniture as ordinary decor:
 
 ```text
-{ kind: "furniture", symbol, x, y, w, h, color, opacity, width_cm, angle?, flip_h?, flip_v? }
+{ kind: "furniture", symbol, x, y, w, h, color, opacity, width_cm, angle?, flip_h?, flip_v?,
+  workstation?, workstation_tower_id? }
 ```
 
 `w` and `h` are always positive physical extents. Optional boolean `flip_h`
 and `flip_v` mirror the drawing inside that unchanged box; absent flags are
 the original orientation. Existing furniture therefore keeps its position,
 size, rotation, orientation and styling after an update.
+
+`workstation` and `workstation_tower_id` are the optional, explicitly edited
+desk/computer relationship described below. They are absent on ordinary
+furniture; no relationship is inferred or saved by viewing a plan.
 
 ## Library and source
 
@@ -132,6 +137,13 @@ Consequently:
 - an id unknown to an older card remains valid data and simply renders
   nothing instead of breaking the plan.
 
+The workstation below is the narrow compound-art exception: a mounted desk
+also draws the computer's desktop equipment, while the independent computer
+record draws only its tower. Flat View/editor and architectural PDF use the
+same original top-view artwork and crop coordinates; they do not flatten a
+volume mesh. Static `houseplan-space-card` still supports decor images, not
+furniture: #1451 does not add furniture rendering to that surface.
+
 The top edge of every drawing is BACK (`y = 0`). Placement and dragging put
 BACK on a **physical surface** of a wall, including the local atomic
 half-thickness; the invisible centreline is not the contact surface. An outer
@@ -144,6 +156,68 @@ surface. `Shift` keeps free placement and bypasses the wall magnet. Preview,
 commit and drag share the same surface resolver. Furniture is decor:
 it has no entity, state, room aggregation, collision model or automatic
 binding to later wall edits, and already saved coordinates are never migrated.
+
+## Desk-mounted computer (#1451)
+
+The accepted 2.5D presentation uses the 60 accompanying volume SVGs as derived
+art, not another stored model. The scene and developer gallery share one
+validated, lazily loaded registry. The ordinary plan artwork above remains
+the source of the Flat editor and PDF. See [ISOMETRIC](ISOMETRIC.md) for the
+camera, materials, layer order and complete Flat failure boundary.
+
+In the desktop Background editor, a writer can explicitly **Place on desk**
+when an existing free `computer` lies over the usable surface of a straight
+`desk` or `desk_corner`. A selected eligible desk can target that same computer.
+The corner's missing quadrant is not a mounting surface. An empty desk does
+not create a computer, and dining/coffee tables are not supported targets.
+The mounted desk offers **Remove from desk**. Ordinary View/kiosk remain
+non-editing; the action also requires the server's optional
+`furniture_workstation_api: 1` capability and the normal live write authority.
+
+Persisted representation:
+
+- The desk owns `workstation: 'mounted'` and a nonempty
+  `workstation_tower_id` pointing to one `computer` on the same floor.
+- That computer owns `workstation: 'tower'`, no tower-reference field, and
+  its own ordinary position, positive extents, angle, mirrors and style.
+- Roles, furniture symbols and a unique one-to-one reference are validated.
+  A new malformed, cross-floor or ambiguous relationship is not a valid save.
+- Monitor, keyboard and mouse are derived from the desk's transform and
+  tabletop recipe. Moving, resizing or mirroring the desk does not move the
+  independently editable tower. No mesh, equipment coordinates or view camera
+  are written into the plan.
+
+The original computer SVG has source dimensions 120 × 60. Desktop equipment
+is cropped to `[0, 0, 80, 60]`; the tower uses `TOWER_BOX = [90, 0, 30, 60]`.
+Mounting crops the existing tower **in place**, without adopting the desk's
+angle or mirrors. For the original computer's normalized width `w`, centre
+`C` and angle `a`, the tower centre is
+`C + R(a) × [(flip_h ? -1 : 1) × 0.375w, 0]`; its saved width becomes `w/4`,
+with the original depth, orientation and style. Its x/y are the unrotated box
+origin around that centre.
+
+Removal reverses this crop around the **current** tower: full width is four
+times its current width, with the same inverse centre offset and current
+depth/angle/mirrors. It does not use the desk's old dimensions or placement.
+Thus a tower moved independently remains the anchor of the restored ordinary
+computer even after the desk was resized or reflected. Undo restores the
+whole before-snapshot, rather than attempting that inverse as a second edit.
+
+Mount/remove and counterpart cleanup use one existing geometry-history step
+and one configuration write. Deleting the desk restores the surviving
+computer; deleting the computer leaves an ordinary desk. Deleting both removes
+both without touching other decor. A single-object copy is independent: a
+copied desk has no equipment link, while a copied tower becomes an ordinary
+full computer before the normal copy offset. The source pair is untouched.
+A complete furniture/space or plan transfer remaps both decor IDs and the
+reference together. There is no pointer back to the original space.
+
+Architectural PDF draws the desk plus clipped equipment and the independently
+positioned clipped tower as vectors. Clip, drawing, rotation, reflection and
+print-fit translation use the same affine transform. Discarded parts of the
+original computer path do not enlarge the printed footprint; a crop does not
+leak into following PDF commands. This changes neither the plan nor the
+ordinary print options.
 
 ## Compatibility and performance
 
@@ -173,3 +247,11 @@ from another build counts as a failed load, and the boot veil waits for the
 artwork only up to the card's `BOOT_MAX_MS` cap. Touch View/kiosk support is
 blocking; editor ergonomics on touch remain best effort under
 `docs/TOUCH-SUPPORT.md`.
+
+The #1451 volume registry is a separate optional lazy resource. Its load,
+fingerprint or construction failure uses the complete Flat scene and the
+ordinary plan artwork, without clearing the saved 2.5D preference or dropping
+part of a workstation. The older plan-artwork-load failure described above is
+not a reason to leave the scene empty merely because volume art failed.
+New workstation data, portable version selection and the old-client write
+barrier are documented in [CONFIG-COMPATIBILITY](CONFIG-COMPATIBILITY.md#desk-computer-workstation-1451).

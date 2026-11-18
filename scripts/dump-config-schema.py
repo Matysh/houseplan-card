@@ -149,6 +149,16 @@ def build_manifest():
         return isinstance(candidate, (vol.Schema, dict)) and isinstance(
             candidate.schema if isinstance(candidate, vol.Schema) else candidate, dict)
 
+    def _structural_part(candidate) -> bool:
+        if isinstance(candidate, (vol.Schema, dict, list, tuple)):
+            return True
+        # A semantic validator may wrap an existing discriminated union, not
+        # only one dictionary. Keep every variant visible to schema consumers.
+        return isinstance(candidate, vol.Any) and any(
+            _is_struct(part) for part in candidate.validators
+        ) and all(_is_struct(part) or part is None or part is type(None)
+                  for part in candidate.validators)
+
     def walk(node, path: str):
         if isinstance(node, vol.Any):
             non_null = [p for p in node.validators if p is not None and p is not type(None)]
@@ -173,8 +183,7 @@ def build_manifest():
         if isinstance(node, vol.All):
             # A dict wrapped in vol.All carries semantic validators after the
             # structural schema; walk the structural part only.
-            structural = [p for p in node.validators
-                          if isinstance(p, (vol.Schema, dict, list, tuple))]
+            structural = [p for p in node.validators if _structural_part(p)]
             if structural:
                 for part in structural:
                     walk(part, path)
@@ -212,8 +221,7 @@ def build_manifest():
                         leaves.setdefault(f"{child}[]", {}).update(info)
                     walk(value[0], f"{child}[]")
                 elif isinstance(value, vol.All) and any(
-                        isinstance(p, (vol.Schema, dict, list, tuple))
-                        for p in value.validators):
+                        _structural_part(p) for p in value.validators):
                     if info:
                         leaves.setdefault(child, {}).update(info)
                     walk(value, child)

@@ -284,7 +284,7 @@
   "opening.features.help_position": "Without a sensor, choose a saved open or closed position. An assigned sensor always has priority; missing data stays unknown.",
   "opening.features.help_contact": "Choose the exact sensor or compatible cover. Removing its marker from the plan does not remove this binding.",
   "opening.features.help_invert": "Reverses a known sensor position. Unknown or unavailable remains unknown.",
-  "opening.features.help_hinge": "Start and end are relative to this window. Upward opening uses a symbolic parallel shift.",
+  "opening.features.help_hinge": "Start and end are relative to this window. In 2.5D, upward opening tilts around the fixed lower edge; the Flat symbol stays unchanged.",
   "opening.features.help_shade": "A light-blocking option for this leaf only. No physical shutter panels are drawn.",
   "opening.features.help_shade_contact": "An assigned sensor or cover sets the shade position. Without one, use the manual position.",
   "opening.features.confirm_remove_title": "Remove leaf?",

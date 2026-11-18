@@ -1,4 +1,5 @@
 import type { DevItem } from './types';
+import type { ProjectionViewFrame } from './projection-view-camera';
 import { normalizeUnifiedWallTool } from './wall-tool-compat';
 
 export const strictNumber = (value: string): number | null => {
@@ -51,6 +52,8 @@ export type WarmViewport = {
   projection: 'flat' | 'iso';
   /** Volumetric floor versus hidden-borders Flat, even when projection is iso. */
   volumePlane?: boolean;
+  /** Exact source bounds/basis of the locally remembered painted viewport. */
+  frame?: ProjectionViewFrame;
   activeLabsIso: boolean;
   logicalCenter: { x: number; y: number } | null;
   zoom: number;

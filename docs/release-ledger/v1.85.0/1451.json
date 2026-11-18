@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1451,
+  "baseStable": "v1.85.0",
+  "category": "major",
+  "rationale": "Owner-approved product integration of the accepted angled 2.5D UI Lab presentation, including detailed openings, all 60 volume furniture models and persisted computer-to-desk relationships; not merely a repair within the current beta.",
+  "summary": {
+    "ru": "Наклонный 2.5D-вид с проработанными проёмами, объёмной мебелью и компьютером на рабочем столе.",
+    "en": "Angled 2.5D View with refined openings, volumetric furniture and computers mounted on work desks."
+  }
+}

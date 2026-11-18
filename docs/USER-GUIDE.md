@@ -852,7 +852,7 @@ lovelace:
 
 ### Independent leaves, shades and sliding openings (#1024)
 
-&emsp;&emsp;Window settings offer 1–4 equal leaves and one common opening side. Open a row to choose its sensor, manual position and left/right/top hinges. The preview follows plan orientation and highlights the selected leaf. Top opening is a symbolic 20 cm parallel shift, not a measured angle.
+&emsp;&emsp;Window settings offer 1–4 equal leaves and one common opening side. Open a row to choose its sensor, manual position and left/right/top hinges. The preview follows plan orientation and highlights the selected leaf. In 2.5D, top opening is depicted as a tilted leaf with its lower edge fixed, up to 30°. This is a visual convention, not a measured angle; saved sensors and the Flat symbol stay unchanged.
 
 ![Window settings: width, opening direction and individual leaves.](images/guide-2026-11/en/opening-settings.png)
 
@@ -1612,6 +1612,12 @@ Boiler: {climate.boiler:hvac_action}
 
 &emsp;&emsp;After choosing a symbol, mouse hover shows the exact future position, size and rotation; editing width/depth updates that preview and a click places it there. Leaving the plan, `Esc`, changing tool/space/editor cancels it. On touch there is no hover preview: a clean tap places, while movement, pointer cancellation or a second finger cancels. Near a wall, furniture aligns to the nearest physical face and rotates parallel. `Shift` bypasses only wall magnetism while decor/room/grid snapping still applies.
 
+### Computer on a work desk
+
+&emsp;&emsp;In the Background editor, place an ordinary computer over the usable surface of a straight or corner work desk. Select the computer or that desk and choose **Place on desk**. The monitor, keyboard and mouse become part of the desktop; the tower keeps its current floor position. Moving, rotating, mirroring or resizing the desk moves its equipment, not the tower.
+
+&emsp;&emsp;Select the equipped desk and choose **Remove from desk** to restore a plain desk and an ordinary computer assembled around the tower's current position. Mount and unmount each use one Undo/Redo step. The link survives reload, space copies and export/import, including plan-only transfer. A single copied item is independent and never points into its original pair. An older tab must reload before changing the relationship; the furniture itself is retained.
+
 ### Custom images
 
 &emsp;&emsp;The Image palette stores reusable files privately in House Plan. Each processed file in storage is at most 2 MiB; PNG, JPEG, WebP and safe SVG are supported. When a raster source exceeds that limit, the warning dialog offers to upload a reduced copy while keeping the oversized original unavailable. After picking a file, you can place one instance: the pointer preview shows the result, one click adds it at 100 cm wide (aspect-preserving, height capped at 200 cm), and the tool returns to Select.
@@ -1892,11 +1898,13 @@ cycle: 30
 
 ### 2.5D presentation
 
-&emsp;&emsp;A user with House Plan editing permission turns the volumetric plan on: **General settings → Appearance and background → Show the plan in 2.5D**. After saving, View and kiosk in every space and on every device show walls, doors, windows and device markers with depth. The plan itself does not move: rooms, furniture, other decor and room names stay exactly where they are on the flat plan, and walls grow straight up from it.
+&emsp;&emsp;A user with House Plan editing permission turns the volumetric plan on: **General settings → Appearance and background → Show the plan in 2.5D**. View and kiosk use the accepted 35° yaw and 40° viewing elevation; rotation buttons change the side by 90°. Walls have a 140 cm cutaway, windows retain masonry below their sills, and doors and passages have lintels. All 60 library items have matching volumetric forms. Saved dimensions, positions and states remain authoritative; no second 3D plan is stored.
 
-&emsp;&emsp;Every device marker and door lock is lifted by the same distance — the wall height — as a raised tile with a soft shadow; near a wall a tile may overlap it. Windows cast a soft wash of sunlight (when sun rays are on and north is set). Walls keep their space colour in light and dark themes alike. Switching the option, or opening an editor from the 2.5D View, keeps the zoom and position on screen.
+&emsp;&emsp;Markers keep their plan anchors. A wall-covered marker is dimmed and loses its shadow, but retains its ordinary action. A group has one outline and individual member actions. Furniture masks only the intersecting part of a room caption; the name and Area link retain their normal accessibility. Windows cast sunlight onto the floor beneath furniture when sun rays and north are configured. Walls retain their colour in both themes. Changing views or entering an editor preserves the physical floor point at the camera centre without editing plan data.
 
 &emsp;&emsp;Editors are always flat. The option is off by default; turning it off or **Reset** returns the flat plan. There is no separate button on the card.
+
+&emsp;&emsp;Hidden wall borders disable volume: furniture, coordinates and hits use the Flat presentation. If the volume registry cannot load or the scene fails to build, House Plan safely displays the complete Flat plan without deleting furniture or clearing the saved preference.
 
 ### Room fills and light
 

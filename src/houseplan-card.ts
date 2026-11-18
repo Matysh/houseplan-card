@@ -302,7 +302,7 @@ import {
 } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
 import {
-  ModeTransitionController, viewportFromViewBox, modeStageHeight, modeRasterExposureClip, modeRasterOriginBias,
+  ModeTransitionController, modeStageHeight, modeRasterExposureClip, modeRasterOriginBias,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
 } from './mode-transition';
 import {
@@ -339,7 +339,7 @@ import {
   isoDisplayWallHeight, isoCameraFor, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
 } from './iso-projection';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
-import {logicalViewCenter, reprojectViewPlane, type ViewPlane} from './projection-view-camera';
+import {canonicalPhysicalCamera, physicalViewCamera, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
 import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume } from './iso-lab-furniture';
 import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
 import { FURNITURE_VOLUME_RUNTIME } from './furniture-volume-runtime';
@@ -1788,8 +1788,9 @@ export class HouseplanCard extends LitElement {
       editorChromeHeight: chromeHeight,
       stageWidth: stage.clientWidth,
       stageHeight: stage.clientHeight,
-      viewport: { ...viewportFromViewBox(view, stage.clientWidth),
-        pixelsPerUnit: stage.clientWidth / this._viewOr(this._baseVb()).w },
+      viewport: { ...physicalViewCamera(view, this._zoom,
+        {...(this._viewFrame ?? this._projectionViewFrame()),
+          size: [stage.clientWidth, stage.clientHeight]}), viewBox: {...view} },
       stageColor: getComputedStyle(stage).backgroundColor || 'rgb(255, 255, 255)',
       paperColor: paper ? getComputedStyle(paper).fill : 'rgb(255, 255, 255)',
       sceneBrightness: Number.isFinite(brightness) ? brightness : 1,
@@ -1821,8 +1822,8 @@ export class HouseplanCard extends LitElement {
   }
 
   private _physicalCamera(camera: ModeVisualState['viewport'], width: number, height: number): CameraState {
-    const vb = this._baseVb();
-    return physicalPlanCamera(camera, vb, this._displayBase(vb), this._rotation, width, height);
+    return canonicalPhysicalCamera(camera, {...this._projectionViewFrame(),
+      size: [width, height]});
   }
 
   /** Only presentation properties and the existing live camera are painted
@@ -3720,18 +3721,40 @@ export class HouseplanCard extends LitElement {
 
   private _viewPlane: ViewPlane = null;
   private _viewPlaneKnown = false;
+  private _viewFrame: ProjectionViewFrame | null = null;
+  private _viewFrameSpace = '';
+
+  private _projectionViewFrame(plane?: ViewPlane): ProjectionViewFrame {
+    const projection = this._effectiveProjection();
+    const base = this._baseVb();
+    const activePlane = plane === undefined ? projection === 'iso' ? this._renderIsoScene?.camera : null : plane;
+    const size = this._modeSceneSize ?? this._lastValidStageSize
+      ?? [this._view?.w || 1, this._view?.h || 1] as const;
+    return {base: [...base], display: {...this._displayBase(base)}, rotation: this._rotation,
+      plane: activePlane ? isoCameraFor(this._rotation) : null, size: [...size]};
+  }
 
   /** The zero-quarter viewport and plan XY no longer share their centre. */
   private _logicalViewCenter(): { x: number; y: number } | null {
-    return logicalViewCenter(this._view, this._viewPlane);
+    if (!this._view) return null;
+    const camera = physicalViewCamera(this._view, this._zoom,
+      this._viewFrame ?? this._projectionViewFrame(this._viewPlane));
+    return {x: camera.centerX, y: camera.centerY};
   }
 
   private _adoptViewPlane(plane: ViewPlane): void {
-    if (this._viewPlaneKnown && this._viewPlane !== plane && this._view) {
-      this._view = reprojectViewPlane(this._view, this._viewPlane, plane);
-      this._rezoom();
+    const target = this._projectionViewFrame(plane);
+    if (this._viewPlaneKnown && !!this._viewPlane !== !!plane && this._view
+      && this._viewFrame && this._viewFrameSpace === this._space) {
+      // A mode handoff already owns the physical camera. Do not reinterpret
+      // its newly encoded destination as the outgoing projection a second time.
+      const camera = this._modeTransitionVisual?.viewport
+        ?? physicalViewCamera(this._view, this._zoom, this._viewFrame);
+      const next = canonicalPhysicalCamera(camera, target);
+      this._view = next.viewBox; this._zoom = next.zoom;
     }
     this._viewPlane = plane; this._viewPlaneKnown = true;
+    this._viewFrame = target; this._viewFrameSpace = this._space;
   }
 
   /** Re-read the normalized zoom after retaining screen width on a new plane. */
@@ -4843,6 +4866,7 @@ export class HouseplanCard extends LitElement {
     this._viewPlane = (vp.volumePlane ?? (vp.projection === 'iso' && vp.activeLabsIso
       && this._spaceDisplayForRender().showBorders)) ? isoCameraFor(0) : null;
     this._viewPlaneKnown = true;
+    this._viewFrame = vp.frame ?? null; this._viewFrameSpace = vp.space;
     this._adoptViewPlane(projection === 'iso' && this._renderIsoScene ? isoCameraFor(0) : null);
     this._screenRecoveredCamera = !!this._view && this._usesScreenCamera;
     this._floorRestoreZoom = null;
@@ -4904,6 +4928,8 @@ export class HouseplanCard extends LitElement {
       mode: this._mode,
       projection,
       volumePlane: !!this._viewPlane,
+      frame: this._viewFrame ? {...this._viewFrame, base: [...this._viewFrame.base],
+        display: {...this._viewFrame.display}, size: [...this._viewFrame.size]} : undefined,
       activeLabsIso: this._isoEnabled,
       logicalCenter: this._logicalViewCenter(),
       zoom: this._zoom,

@@ -284,7 +284,7 @@
   "opening.features.help_position": "Ohne Sensor wird eine manuelle Position gespeichert. Ein zugeordneter Sensor hat Vorrang; fehlende Daten bleiben unbekannt.",
   "opening.features.help_contact": "Den genauen Sensor oder ein kompatibles Cover wählen. Das Entfernen seines Symbols löst diese Zuordnung nicht.",
   "opening.features.help_invert": "Kehrt eine bekannte Sensorposition um. Unbekannte oder nicht verfügbare Zustände bleiben unbekannt.",
-  "opening.features.help_hinge": "Anfang und Ende beziehen sich auf das Fenster. Die obere Öffnung wird durch paralleles Verschieben dargestellt.",
+  "opening.features.help_hinge": "Anfang und Ende beziehen sich auf das Fenster. In 2.5D kippt die obere Öffnung um die feste Unterkante; das flache Symbol bleibt unverändert.",
   "opening.features.help_shade": "Lichtblockierung nur für diesen Flügel. Keine physischen Rollladenblätter werden gezeichnet.",
   "opening.features.help_shade_contact": "Ein zugeordneter Sensor oder ein Cover bestimmt die Position. Ohne Zuordnung gilt die manuelle Position.",
   "opening.features.confirm_remove_title": "Flügel entfernen?",

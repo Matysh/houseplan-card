@@ -284,7 +284,7 @@
   "opening.features.help_position": "Sans capteur, choisissez une position enregistrée. Un capteur affecté est prioritaire ; l’absence de données reste inconnue.",
   "opening.features.help_contact": "Choisissez le capteur exact ou un cover compatible. Supprimer son icône ne supprime pas cette liaison.",
   "opening.features.help_invert": "Inverse une position connue. Un état inconnu ou indisponible reste inconnu.",
-  "opening.features.help_hinge": "Le début et la fin sont relatifs à la fenêtre. L’ouverture vers le haut est un déplacement parallèle symbolique.",
+  "opening.features.help_hinge": "Le début et la fin sont relatifs à la fenêtre. En 2.5D, l’ouverture vers le haut bascule autour du bord inférieur fixe ; le symbole à plat reste inchangé.",
   "opening.features.help_shade": "Option de blocage de lumière pour ce vantail uniquement. Aucun panneau physique n’est dessiné.",
   "opening.features.help_shade_contact": "Un capteur ou cover affecté définit la position. Sans liaison, utilisez la position manuelle.",
   "opening.features.confirm_remove_title": "Supprimer le vantail ?",
