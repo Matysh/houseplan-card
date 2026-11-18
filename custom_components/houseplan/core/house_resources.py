@@ -22,6 +22,7 @@ from .backup_archive import CHUNK, _source_image
 from .command_ports import CommandError
 from .constants import MIN_FREE_BYTES
 from .house_prefix import PREFIX_BYTES
+from .import_export import ImportFailure
 from .input_policy import InputLimit
 
 TTL = 600
@@ -51,9 +52,12 @@ class FilesystemHouseResources:
                     on_cancel()
                 if job.cancelled():
                     raise
-            except BaseException:
+            except BaseException as error:
                 if cancelled:
                     raise asyncio.CancelledError from None
+                if (isinstance(error, (OSError, ValueError, TypeError, KeyError))
+                        and not isinstance(error, (CommandError, ImportFailure))):
+                    raise CommandError("zip_invalid") from error
                 raise
         if cancelled:
             raise asyncio.CancelledError

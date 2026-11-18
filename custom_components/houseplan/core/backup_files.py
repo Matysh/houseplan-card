@@ -35,7 +35,7 @@ from .validation import sanitize_marker_id as sanitize_marker_id
 
 STAGING_DIR = "houseplan/.backup-staging"
 _SESSION = re.compile(r"[a-f0-9]{32}\Z")
-_DEST = re.compile(r"houseplan/(?:plans/[A-Za-z0-9_.-]+|files/[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+|assets/[a-f0-9]{64}\.(?:json|png|jpg|svg|webp))\Z")
+_DEST = re.compile(r"houseplan/(?:plans/[A-Za-z0-9_.-]+|files/[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+|assets/[a-f0-9]{64}\.(?:json|png|jpg|jpeg|svg|webp))\Z")
 
 
 

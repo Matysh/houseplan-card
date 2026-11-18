@@ -311,3 +311,20 @@ async def test_cancel_reaches_image_worker_and_state_locked_preparation_before_w
     assert error.value.code in {"zip_cancelled", "preview_expired"}
     assert await asyncio.wait_for(cancel, 5) == {"ok": True}
     assert not target.house.active and len(target.config["spaces"]) == 1
+
+
+async def test_corrupt_existing_metadata_is_a_safe_domain_error_not_a_raw_adapter_exception(tmp_path):
+    import hashlib
+
+    from test_house_archive import PNG
+
+    raw = archive(tmp_path)[0].read_bytes()
+    target = host(tmp_path / "target")
+    assets = target.root / "houseplan/assets"
+    assets.mkdir(parents=True)
+    (assets / (hashlib.sha256(PNG).hexdigest() + ".json")).write_bytes(b"not valid JSON")
+    before = target.storage.snapshot()
+    with pytest.raises(CommandError) as error:
+        await preview(target, raw)
+    assert error.value.code == "zip_invalid" and error.value.public_message == "zip_invalid"
+    assert not target.house.active and target.storage.snapshot() == before

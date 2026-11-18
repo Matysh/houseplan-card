@@ -1,10 +1,12 @@
 """House publication uses a distinct private ZIP and positive hardlink ownership."""
 import copy
 import hashlib
+import io
 import json
 import os
 
 import pytest
+from PIL import Image
 from test_house_archive import PNG, document
 
 from custom_components.houseplan.core import house_archive, house_files
@@ -187,3 +189,33 @@ def test_missing_private_proof_never_prevents_rollback_of_pair_or_deletes_public
     house_files.cleanup_stage(tmp_path, SESSION)
     house_files.rollback_publication(tmp_path, descriptor)
     assert all((tmp_path / item["dest"]).exists() for item in descriptor["files"])
+
+
+@pytest.mark.parametrize("existing_blob", [True, False])
+def test_existing_jpeg_alias_reuses_hash_and_preserves_metadata_without_duplicate_destinations(tmp_path, existing_blob):
+    stream = io.BytesIO()
+    Image.new("RGB", (2, 2), "#334455").save(stream, "JPEG")
+    raw, source = stream.getvalue(), document()
+    sha = hashlib.sha256(raw).hexdigest()
+    for space in source["payload"]["config"]["spaces"]:
+        space["decor"][-1]["asset_id"] = sha
+    plans, assets = tmp_path / "houseplan/plans", tmp_path / "houseplan/assets"
+    plans.mkdir(parents=True)
+    assets.mkdir(parents=True)
+    (plans / "existing.jpeg").write_bytes(raw)
+    if existing_blob:
+        (assets / f"{sha}.jpeg").write_bytes(raw)
+    metadata = {"asset_id": sha, "name": "Existing name", "ext": ".jpeg", "mime": "image/jpeg",
+                "width": 2, "height": 2, "bytes": len(raw)}
+    side_raw = json.dumps(metadata).encode()
+    (assets / f"{sha}.json").write_bytes(side_raw)
+    folder = house_files.new_stage(tmp_path, SESSION)
+    house_archive.build_archive(folder / "archive.zip", source, lambda ref: (raw, ".jpeg"))
+    payload = house_archive.read_archive(folder / "archive.zip")
+    rewritten, descriptor = house_files.prepare_files(tmp_path, SESSION, payload)
+    assert all(space["plan_url"].endswith("/existing.jpeg") for space in rewritten["payload"]["config"]["spaces"])
+    house_files.publish_files(tmp_path, descriptor)
+    assert [path.name for path in plans.iterdir()] == ["existing.jpeg"]
+    assert (assets / f"{sha}.jpeg").read_bytes() == raw
+    assert not (assets / f"{sha}.jpg").exists()
+    assert (assets / f"{sha}.json").read_bytes() == side_raw

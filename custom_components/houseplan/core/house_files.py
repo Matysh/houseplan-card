@@ -42,8 +42,8 @@ from .input_policy import checkpoint
 STAGING_DIR = "houseplan/.house-staging"
 _SESSION = re.compile(r"[a-f0-9]{32}\Z")
 _HASH = re.compile(r"[a-f0-9]{64}\Z")
-_PLAN = re.compile(r"houseplan/plans/[A-Za-z0-9_.-]+\.(?:png|jpg|svg|webp)\Z")
-_ASSET = re.compile(r"houseplan/assets/[a-f0-9]{64}\.(?:png|jpg|svg|webp)\Z")
+_PLAN = re.compile(r"houseplan/plans/[A-Za-z0-9_.-]+\.(?:png|jpg|jpeg|svg|webp)\Z")
+_ASSET = re.compile(r"houseplan/assets/[a-f0-9]{64}\.(?:png|jpg|jpeg|svg|webp)\Z")
 _META = re.compile(r"houseplan/assets/[a-f0-9]{64}\.json\Z")
 _BLOB = re.compile(r"images/[a-f0-9]{64}\.(?:png|jpg|svg|webp)\Z")
 
@@ -142,6 +142,11 @@ def _identity(path):
     return [value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns]
 
 
+def _extension(path):
+    suffix = Path(path).suffix
+    return ".jpg" if suffix == ".jpeg" else suffix
+
+
 def _existing(root, relative, raw):
     path = root / relative
     try:
@@ -198,7 +203,7 @@ def prepare_files(root: Path, session: str, payload, *, protected_plans=frozense
             if index >= MAX_PLANS_FILES:
                 raise fail("zip_limit")
             if _PLAN.fullmatch(f"{PLANS_DIR}/{path.name}") and stat.S_ISREG(path.lstat().st_mode):
-                plans.setdefault((path.suffix, path.stat().st_size), []).append(path.name)
+                plans.setdefault((_extension(path), path.stat().st_size), []).append(path.name)
     with zipfile.ZipFile(archive_path) as archive:
         reader = Reader(archive, check)
         for row in payload.manifest["images"]:
@@ -232,6 +237,15 @@ def prepare_files(root: Path, session: str, payload, *, protected_plans=frozense
                     relative = f"{PLANS_DIR}/{name}"
                     url = f"{CONTENT_URL}/plans/_/{name}"
                 else:
+                    # Existing catalogs accept the .jpeg alias too. Reuse its
+                    # verified bytes/sidecar rather than duplicating or renaming.
+                    side_path = root / ASSETS_DIR / f"{sha}.json"
+                    if side_path.exists() or side_path.is_symlink():
+                        old = json.loads(safe_read(root, side_path, 4096))
+                        if (not isinstance(old, dict) or not isinstance(old.get("ext"), str)
+                                or old["ext"] not in {extension, ".jpeg" if extension == ".jpg" else extension}):
+                            raise fail("zip_collision")
+                        extension = old["ext"]
                     relative, url = f"{ASSETS_DIR}/{sha}{extension}", sha
                 item = _item(root, relative, kind, raw, len(files), source=blob)
                 files.append(item)
@@ -245,7 +259,8 @@ def prepare_files(root: Path, session: str, payload, *, protected_plans=frozense
                     if (root / side_dest).exists() or (root / side_dest).is_symlink():
                         old_raw = safe_read(root, root / side_dest, 4096)
                         old = json.loads(old_raw)
-                        if not isinstance(old, dict) or any(old.get(k) != sidecar[k] for k in sidecar if k != "name"):
+                        if (not isinstance(old, dict) or _extension("image" + str(old.get("ext"))) != image.ext
+                                or any(old.get(k) != sidecar[k] for k in sidecar if k not in {"name", "ext"})):
                             raise fail("zip_collision")
                         side_raw = old_raw
                     files.append(_item(root, side_dest, "decor_meta", side_raw, len(files), metadata=side_raw.decode("utf8")))
@@ -284,7 +299,7 @@ def _validated_descriptor(descriptor):
                      or digest(item["metadata"].encode()) != item["sha256"]):
             raise fail()
         if not meta and (Path(item["source"]).stem != item["sha256"]
-                         or Path(item["source"]).suffix != Path(item["dest"]).suffix
+                         or _extension(item["source"]) != _extension(item["dest"])
                          or item["kind"] == "decor_asset" and (
                              item["bytes"] > MAX_DECOR_ASSET_BYTES or Path(item["dest"]).stem != item["sha256"])):
             raise fail()
