@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15565,
+  "revision": 15566,
   "nextTicket": 514,
   "nextFence": 514,
   "tasks": {
@@ -5713,6 +5713,10 @@
       "digest": "b5b77aa9bf35ba9d86ed0c065ad4dc951384723adcaea115917cca2f3e432058",
       "issue": 1464
     },
+    "github:44224571981:1:completions:message:f5c9515cd11f7b34e763b1a1905c96f9be4bcd3357ab340a7daeb5b06e276fb2": {
+      "digest": "a415eb23c1bfdbaa51303a696fb7f169b4ded2bdbca5294fe262eb99d719ccd6",
+      "issue": 1464
+    },
     "github:44181773849:1:label:spec-request:spec-resubmitted:1464": {
       "digest": "c5c5a1512217eae2597403146c24657591370ded7f602915a265c046ea4da6ff",
       "issue": 1464,
@@ -5885,7 +5889,8 @@
         "reviewChanges": "### Решение и альтернативы\n\nРеализация на базе принятого #1460: отдельный houseplan-plan-transfer ZIP v1 с документом house/export_version 4/model 11. Только планировка всех этажей, scoped remap всех ID и межэтажных лестниц, изображения с проверенными хешами; без устройств, HA-привязок, истории и глобальных настроек. Существующие plan-only allowlist/валидаторы используются повторно. Старый JSON пространства и полная копия не расширены до нового формата. Импорт append-only, одна долговечная пара config/layout вместе с файлами. Существующая цель сохраняется без нормализации, включая orphan-ссылки.\n\n### Места для внимания\n\n- Общие house_commands/house_resources/house_files работают через необязательный house_transfer_api=1; HA и автономный JSON-адаптер используют один сервис. Основной standalone handshake не меняется. Reference/JSON host не заявлены как production DB.\n- Первый stored mimetype record выбирает ровно один маршрут до upload; браузер читает только 1 KiB. Чужой ZIP, будущая версия и старый backend различаются без двойной загрузки.\n- Один owner-bound active lease на установку, typed writer cancel, immediate retry, отмена worker до cleanup. Отдельный от full-backup pool. Один CPU budget после сетевого staging, не сбрасываемый по этажам; timeout закрывается до durable commit.\n- Новый typed house_import/rollback pending с файлом архива и closed data-only descriptor. Recovery до CAS, pin до завершения пары, собственные inode-only rollback/cleanup. Не перезаписываются чужие или reused bytes/sidecars. Сохраняются JPEG .jpeg aliases; полная копия использует те же физические helpers с прежними defaults.\n- При непустой pre-model11 цели новый перенос дома пока безопасно отказывает: не мигрирует существующую цель скрыто. Пустая цель поддержана без фиктивного этажа. Глобальные эффекты/палитра цели остаются целевыми; переносятся только перечисленные в ТЗ representable space-поля.\n- Реальное опубликование API/пакета и первый stable остаются #1465. Этим поручением сайт, package registry, релиз и HA владельца не менялись.\n\n### Проверки и ограничения\n\nАдресные Python/TS/Node проверки покрывают projection/privacy/scoped IDs/cross-floor cycles, архив/лимиты/отмену, файлы/hash reuse/rollback, CAS/revalidate/recovery и HA HTTP/WS writer/admin boundaries. Изолированная no-HA командная цепочка и optional house conformance прошли на Reference и JSON hosts. Wheel и sdist локально построены и установлены: каждый 18 base + 2 house conformance, все 75 pure modules без импорта HA/custom_components; не опубликованы.\n\nСопутствующий настоящий браузерный тест находится в Matysh/houseplan-e2e#76, PR #77 (a99a806): synthetic HA 2026.11.1 + Playwright 1.62.0, export/download ZIP с изображениями, cancel/retry, append/apply/reload, неизменная цель, mapped stairs и реальные bytes. Последний прогон на 3faa728b1: 1 passed (12.6 s), prerequisites 3 passed. Контейнер остановлен, owner HA не затронут. Найденное реальное обрезание описания новой опции исправлено существующим dialog grid/wrap правилом. После этого продукта изменено только явное разделение toast-ветвей без изменения текста/поведения. Визуальные эталоны не обновлялись.\n\nПервый S6 20261118T015545298-8bf1ebe6 выполнил 699 шагов и вернул пять статических отказов; модель code review ещё не вызывалась. Исправлены адресно: координатный reader перенесён на фактические core writers и typed house exception с отрицательными контролями; якорь мутации привязан к обычной canonical ветви, без выполнения мутантов; toast явно несёт идентификатор перевода; в wall corpus добавлено только membership нового non-config prefix fixture (configs=0), без изменения документов/исторического oracle. Все пять адресных проверок и test-build после ремонта прошли. Повторный finish должен переиспользовать применимые успешные результаты и сформировать итоговый S6 report.\n\nКонсервативный fallback выбора тестов сохранён видимым: aggregate card, release-ledger JSON и package smoke tool не получают выдуманный executable static reader.\n\n### Исправления по предыдущему ревью\n\nS4 раунд 2 принят (run 44181932993); обе блокировки S4 раунда 1 учтены обязательным prefix routing и ограниченным обещанием внешнего вида. Также реализованы замечания о downgrade fence pending, scope/owner lease, ZIP directory limits до ZipInfo allocation, отмене и recovery. Первого содержательного code review ещё не было.",
         "fromStatus": "S6-in-progress",
         "toStatus": "S7-code-review",
-        "transitionConfirmed": true
+        "transitionConfirmed": true,
+        "delivered": true
       }
     }
   },
