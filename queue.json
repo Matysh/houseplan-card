@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15642,
+  "revision": 15643,
   "nextTicket": 515,
   "nextFence": 515,
   "tasks": {
@@ -4934,7 +4934,22 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795022412204,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "ec2ac67301b591631114d788ac0b709823c32174",
+      "changedFiles": [
+        ".github/workflows/process-next-background.yml",
+        "PROCESS.md",
+        "demo/smoke_config_authority.mjs",
+        "demo/smoke_discard_dialog_polish.mjs",
+        "demo/smoke_floor_cache_reuse.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/lib/background.mjs",
+        "process-next/templates/background-job.mjs",
+        "process-next/templates/background.yml",
+        "process-next/test/background.test.mjs",
+        "scripts/mutation-registry.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5325,12 +5340,17 @@
     "token": "514:finish:4dd3f6fc-b73c-430e-849c-8226e7b9ef97:finish:1:admit",
     "fence": 514,
     "materialSha": "d108e0dfc158ce0a00a22173a95292eff40fe13a",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "46c8b6a510f882687a1fa00f0fb74e707481e0cc",
+    "phase": "testing",
     "admittedAt": 1795022417478,
-    "expiresAt": 1795022717478
+    "expiresAt": 1795022727517,
+    "patchId": "ec2ac67301b591631114d788ac0b709823c32174"
   },
   "events": {
+    "finish:4dd3f6fc-b73c-430e-849c-8226e7b9ef97:finish:2:synchronized": {
+      "digest": "0f0ccf543ff8a950af8c75b9658475631f4e12a32aacf1dfb7abd7d4e548fb57",
+      "issue": 1466
+    },
     "finish:4dd3f6fc-b73c-430e-849c-8226e7b9ef97": {
       "digest": "88b81bf2b510cb6965ec3444646193471d4b41195b17fcc931f856f666b79470",
       "issue": 1466,
