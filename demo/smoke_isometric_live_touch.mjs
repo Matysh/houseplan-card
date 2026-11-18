@@ -608,15 +608,46 @@ out.kioskSettingOffIsFlat = await page.evaluate(async () => {
   const cfg = structuredClone(card._serverCfg);
   cfg.settings = { ...(cfg.settings || {}), volumetric_view: false };
   const rev = window.__pushServerConfig(cfg);
+  const diagnostics = window.__kioskSettingOffDiagnostics = [];
+  const snapshot = (phase) => {
+    const shell = card.renderRoot.querySelector('ha-card[data-hp-state]');
+    const stage = card.renderRoot.querySelector('.stage');
+    diagnostics.push({ phase, targetRevision: rev, acceptedRevision: card._cfgRev,
+      volumetricView: card._serverCfg?.settings?.volumetric_view ?? null,
+      state: shell?.getAttribute('data-hp-state') ?? null,
+      floorCache: shell?.getAttribute('data-hp-floor-cache') ?? null,
+      projection: stage?.getAttribute('data-projection') ?? null,
+      stageClass: stage?.getAttribute('class') ?? null });
+  };
+  snapshot('push-delivered');
   const started = performance.now();
   while (card._cfgRev < rev && performance.now() - started < 5000) await new Promise((done) => setTimeout(done, 30));
   await card.updateComplete;
   await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+  snapshot('after-revision-wait');
+  if (card._cfgRev < rev || card._serverCfg?.settings?.volumetric_view !== false)
+    throw new Error('kiosk setting push was not adopted: ' + JSON.stringify(diagnostics));
+  // Revision acknowledgement is not scene readiness: asynchronous floor work
+  // can deliberately retain the previous complete ISO frame. Wait for this
+  // mounted kiosk's public ready terminal, never for the desired projection.
+  // The global test facade still addresses the removed original card here.
+  const ready = () => {
+    const shell = card.renderRoot.querySelector('ha-card[data-hp-state]');
+    return shell?.getAttribute('data-hp-state') === 'ready'
+      && !shell.hasAttribute('data-hp-floor-cache')
+      && !!card.renderRoot.querySelector('.stage:not([data-hp-floor-cache])');
+  };
+  const readinessStarted = performance.now();
+  while (!ready() && performance.now() - readinessStarted < 5000)
+    await new Promise((done) => setTimeout(done, 30));
+  snapshot(ready() ? 'ready' : 'readiness-timeout');
+  if (!ready()) throw new Error('kiosk scene did not settle after setting push: ' + JSON.stringify(diagnostics));
   return !card.renderRoot.querySelector('[data-hp="iso-walls"]')
     && !card.renderRoot.querySelector('.stage.projection-iso')
     && !card.renderRoot.querySelector('[data-hp="projection-toggle"]');
 });
 
-console.log(JSON.stringify({touchLayerDiagnostics:await page.evaluate(()=>window.__isoTouchLayerDiagnostics)},null,2));
+console.log(JSON.stringify({touchLayerDiagnostics:await page.evaluate(()=>window.__isoTouchLayerDiagnostics),
+  kioskSettingOffDiagnostics:await page.evaluate(()=>window.__kioskSettingOffDiagnostics)},null,2));
 checkAll(out);
 await finish(browser, out);

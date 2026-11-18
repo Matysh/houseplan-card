@@ -307,7 +307,8 @@ test('#649 AC3 layout and collisions see the 2.5D tile size (× ISO_ICON_SCALE)'
   const flat = isoRaisedOverlayHalfSize({ kind: 'device', core: base, presentation });
   for(const rotation of [0,90,180,270]) for(const floorAlignedMarkers of [false,true]) {
     const camera=isoCameraFor(rotation);
-    const scene=buildIsoOverlayRenderScene({...input,camera,floorAlignedMarkers});
+    /** @type {OverlaySceneFixture} */ const rotatedInput={...input,camera,floorAlignedMarkers};
+    const scene=buildIsoOverlayRenderScene(rotatedInput);
     const footprint=scene.devices.get('d1').footprint;
     const expected=isoRaisedOverlayHalfSize({kind:'device',
       core:base*(floorAlignedMarkers?1:ISO_ICON_SCALE),presentation});

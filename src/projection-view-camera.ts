@@ -1,10 +1,19 @@
-import {projectPlanPoint, unprojectFloorPoint, type IsoCamera, type ViewRect} from './iso-projection';
+import {isoCameraFor, projectPlanPoint, unprojectFloorPoint, type IsoCamera, type ViewRect} from './iso-projection';
 import {fitView} from './logic';
-import {canonicalView, inversePlanRotation, presentationViewport, turnPoint,
+import {canonicalView, inversePlanRotation, planRotation, presentationViewport, turnPoint,
   type FrameRect, type PlanRotation} from './view-frame';
 import type {CameraState} from './viewport-transition';
 
 export type ViewPlane = Readonly<IsoCamera> | null;
+
+/** Passive SVG already contains the captured projection. Lazy geometry is not
+ * evidence of Flat; an ISO packet with hidden borders is Flat by contract.
+ * Without a preview, the still-presented live camera remains the authority. */
+export function presentedViewPlane(preview: {projection:'flat'|'iso';rotation:number} | null,
+  showBorders: boolean, live: ViewPlane): ViewPlane {
+  return preview ? preview.projection === 'iso' && showBorders
+    ? isoCameraFor(planRotation(preview.rotation)) : null : live;
+}
 
 /** The frame which actually presented a canonical viewport. Bounds include
  * extrusion, so their centre is deliberately not the projected floor centre. */

@@ -339,7 +339,7 @@ import {
   isoDisplayWallHeight, isoCameraFor, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
 } from './iso-projection';
 import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
-import {acceptedViewFrame, canonicalPhysicalCamera, physicalViewCamera, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
+import {acceptedViewFrame, canonicalPhysicalCamera, physicalViewCamera, presentedViewPlane, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
 import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume } from './iso-lab-furniture';
 import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
 import { FURNITURE_VOLUME_RUNTIME } from './furniture-volume-runtime';
@@ -348,7 +348,7 @@ import { roomFurnitureOverlap } from './iso-room-furniture-overlap';
 import { isoLockGlass } from './iso-marker-outline';
 import { renderIsoMarkerGlass } from './iso-marker-glass';
 import {
-  PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, stepPlanRotation,
+  PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, stepPlanRotation, planRotation,
   turnPoint, turnSceneVector, turnRect, turnMatrix, inversePlanRotation, framePercent,
   presentationViewport, physicalPlanCamera, planZoomTarget, type FrameRect, type PlanRotation,
 } from './view-frame';
@@ -3726,14 +3726,25 @@ export class HouseplanCard extends LitElement {
   private _viewFrame: ProjectionViewFrame | null = null;
   private _viewFrameSpace = '';
 
+  private get _presentedPreviewFit() {
+    return this._floorPassive ? this._floorPreparation?.preview?.fit ?? null : null;
+  }
+
+  private _presentedViewPlane(projection: 'flat'|'iso' = this._renderProjection): ViewPlane {
+    return presentedViewPlane(this._presentedPreviewFit,this._spaceDisplayForRender().showBorders,
+      projection === 'iso' ? this._renderIsoScene?.camera ?? null : null);
+  }
+
   private _projectionViewFrame(plane?: ViewPlane): ProjectionViewFrame {
-    const projection = this._effectiveProjection();
-    const base = this._baseVb();
-    const activePlane = plane === undefined ? projection === 'iso' ? this._renderIsoScene?.camera : null : plane;
+    const preview = this._presentedPreviewFit;
+    const projection = preview?.projection ?? this._effectiveProjection();
+    const base = preview ? [...preview.base] : this._baseVb();
+    const activePlane = plane === undefined ? this._presentedViewPlane(projection) : plane;
+    const rotation = preview ? planRotation(preview.rotation) : this._rotation;
     const size = this._modeSceneSize ?? this._lastValidStageSize
       ?? [this._view?.w || 1, this._view?.h || 1] as const;
-    return {base: [...base], display: {...this._displayBase(base)}, rotation: this._rotation,
-      plane: activePlane ? isoCameraFor(this._rotation) : null, size: [...size]};
+    return {base: [...base], display: {...(preview?.display ?? this._displayBase(base))}, rotation,
+      plane: activePlane ? isoCameraFor(rotation) : null, size: [...size]};
   }
 
   /** The zero-quarter viewport and plan XY no longer share their centre. */
@@ -3769,7 +3780,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _convertProjectionView(from: 'flat' | 'iso', to: 'flat' | 'iso'): void {
-    this._adoptViewPlane(to === 'iso' && this._renderIsoScene ? isoCameraFor(0) : null);
+    this._adoptViewPlane(this._presentedViewPlane(to));
     if (from === to) return;
     // Intake can discover the requested projection after a warm camera has
     // already been restored in that destination. It is not a second cold fit.
@@ -4871,7 +4882,8 @@ export class HouseplanCard extends LitElement {
       && this._spaceDisplayForRender().showBorders)) ? isoCameraFor(0) : null;
     this._viewPlaneKnown = true;
     this._viewFrame = vp.frame ?? null; this._viewFrameSpace = vp.space;
-    this._adoptViewPlane(projection === 'iso' && this._renderIsoScene ? isoCameraFor(0) : null);
+    // Keep the trusted source plane until a real preview/full render adopts
+    // its destination. Missing lazy geometry is not a Flat presentation.
     this._screenRecoveredCamera = !!this._view && this._usesScreenCamera;
     this._floorRestoreZoom = null;
     this._warmCameraAdopted = true;
@@ -8333,7 +8345,7 @@ export class HouseplanCard extends LitElement {
   }
   // With hidden borders, 2.5D uses Flat's quarter turn for both paint and input.
   private get _isoFloorCamera() {
-    return this._renderProjection === 'iso' ? this._renderIsoScene?.camera : undefined;
+    return this._presentedViewPlane() ?? undefined;
   }
   private get _floorTransform() {
     const camera = this._isoFloorCamera;
@@ -12886,6 +12898,7 @@ export class HouseplanCard extends LitElement {
     // Warm viewport adoption can follow Lit's template evaluation. Pending
     // frames deliberately skip the live-layer writer, so update only this
     // anonymous passive viewport without another render/fit or live targets.
+    this._adoptViewPlane(this._presentedViewPlane());
     const view = this._viewOr(this._baseVb());
     const value = `${view.x} ${view.y} ${view.w} ${view.h}`;
     if (svg.getAttribute('viewBox') !== value) svg.setAttribute('viewBox', value);
@@ -12896,6 +12909,7 @@ export class HouseplanCard extends LitElement {
     this._floorPassive = true;
     const preview = this._floorPreparation?.preview || null;
     const base = preview?.fit.base || [0, 0, NORM_W, NORM_W];
+    if (preview) this._adoptViewPlane(this._presentedViewPlane(preview.fit.projection));
     const view = this._viewOr(base);
     const disp = this._spaceDisplayForRender();
     return this._renderPreparedFloorFrame(html`

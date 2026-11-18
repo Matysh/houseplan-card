@@ -1,11 +1,54 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {physicalViewCamera, canonicalPhysicalCamera,
-  presentedView, shouldRebaseViewFrame, acceptedViewFrame} from '../test-build/projection-view-camera.js';
-import {isoCameraFor, unprojectFloorPoint} from '../test-build/iso-projection.js';
+  presentedView, shouldRebaseViewFrame, acceptedViewFrame, presentedViewPlane} from '../test-build/projection-view-camera.js';
+import {isoCameraFor, unprojectFloorPoint, projectedFrame} from '../test-build/iso-projection.js';
 import {turnRect, turnPoint, inversePlanRotation} from '../test-build/view-frame.js';
 
 const close = (a,b) => assert.ok(Math.abs(a-b)<1e-8, `${a} != ${b}`);
+test('#1451 passive preview plane follows the painted packet rather than desired/lazy geometry',()=>{
+  const live=isoCameraFor(0),preview={projection:'iso',rotation:90};
+  assert.strictEqual(presentedViewPlane(preview,true,null),isoCameraFor(90));
+  assert.strictEqual(presentedViewPlane(preview,true,live),isoCameraFor(90));
+  assert.equal(presentedViewPlane(preview,false,live),null,'ISO without borders is the Flat floor');
+  assert.equal(presentedViewPlane({...preview,projection:'flat'},true,live),null,'a Flat packet is never desired ISO');
+  assert.strictEqual(presentedViewPlane(null,false,live),live,'unreplaced live ISO remains visible during settings preparation');
+  assert.equal(presentedViewPlane(null,true,null),null);
+});
+
+test('#1451 passive preview ISO90 same-fit cold and warm cameras adopt once without a second projection',()=>{
+  const rect={x:137,y:209,w:760,h:486},rotation=90,size=[780,927],plane=isoCameraFor(rotation);
+  const baseRect=projectedFrame({rect,wallHeight:116.66666666666667},isoCameraFor(0));
+  const display=projectedFrame({rect,wallHeight:116.66666666666667},plane);
+  const fit={base:[baseRect.x,baseRect.y,baseRect.w,baseRect.h],display,projection:'iso',rotation};
+  const frozen=structuredClone(fit),live={...fit,plane,size};
+  const canonical=canonicalPhysicalCamera({centerX:723.5,centerY:286.25,pixelsPerUnit:1.3},live);
+  const passive={...fit,plane:presentedViewPlane(fit,true,null),size};
+  assert.equal(acceptedViewFrame(canonical.viewBox,passive,null),null,'a packet is not an observed pixel stage');
+  const accepted=acceptedViewFrame(canonical.viewBox,passive,size);
+  for(const source of [accepted,structuredClone(accepted)]) {
+    const full=canonicalPhysicalCamera(physicalViewCamera(canonical.viewBox,canonical.zoom,source),live);
+    for(const key of ['x','y','w','h'])close(full.viewBox[key],canonical.viewBox[key]);
+    const before=presentedView(canonical.viewBox,canonical.zoom,source),after=presentedView(full.viewBox,full.zoom,live);
+    for(const key of ['x','y','w','h'])close(before[key],after[key]);
+  }
+  const wrong=canonicalPhysicalCamera(physicalViewCamera(canonical.viewBox,canonical.zoom,{...passive,plane:null}),live);
+  assert.ok(Math.hypot(wrong.viewBox.x-canonical.viewBox.x,wrong.viewBox.y-canonical.viewBox.y)>10,
+    'the witness detects treating an already projected preview camera as Flat');
+  assert.deepEqual(fit,frozen,'adoption does not rewrite the stored fit or require geometry');
+});
+
+test('#1451 passive preview Flat and ISO-no-borders packets keep their exact Flat camera',()=>{
+  const rect={x:61,y:184,w:830,h:516},rotation=90,size=[780,927];
+  const live={base:[rect.x,rect.y,rect.w,rect.h],display:turnRect(rect,rotation),rotation,plane:null,size};
+  const canonical=canonicalPhysicalCamera({centerX:687,centerY:302,pixelsPerUnit:1.4},live);
+  for(const [projection,borders] of [['flat',true],['iso',false]]) {
+    const fit={...live,projection},passive={...live,plane:presentedViewPlane(fit,borders,isoCameraFor(rotation))};
+    const accepted=acceptedViewFrame(canonical.viewBox,passive,size);
+    const full=canonicalPhysicalCamera(physicalViewCamera(canonical.viewBox,canonical.zoom,accepted),live);
+    for(const key of ['x','y','w','h'])close(full.viewBox[key],canonical.viewBox[key]);
+  }
+});
 test('#1451 cold fit placeholders never establish a presented physical camera',()=>{
   const placeholder={base:[0,0,1000,1000],display:{x:0,y:0,w:1000,h:1000},
     rotation:0,plane:null,size:[1,1]};
