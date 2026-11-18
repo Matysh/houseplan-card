@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15773,
+  "revision": 15774,
   "nextTicket": 518,
   "nextFence": 518,
   "tasks": {
@@ -4804,15 +4804,16 @@
         "tests_backend/test_furniture_workstation.py"
       ],
       "notice": {
-        "key": "2:checks-failed",
+        "key": "3:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795029863158,
-        "entry": 2,
-        "detail": "Поведение: test/color-picker.test.mjs: failed; Поведение: test/coordinate-write-barrier-guard.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/iso-overlays.test.mjs: failed; Поведение: test/iso-stage6.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Поведение: test/writer-fixed-point.test.mjs: failed; Браузер: isometric live touch: failed; Браузер: wall node topology: failed",
-        "eventId": "finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:3:return:return:1451"
-      }
+        "at": 1795033025786,
+        "entry": 3,
+        "detail": "Поведение: test/iso-overlay-fixture-types.test.mjs: failed; Браузер: floor persistent cache isometric: failed; Браузер: isometric live touch: failed",
+        "eventId": "finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:3:return:return:1451"
+      },
+      "reason": "checks-failed"
     },
     "1452": {
       "issue": 1452,
@@ -5582,18 +5583,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1451,
-    "worker": "finish",
-    "token": "517:finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:1:admit",
-    "fence": 517,
-    "materialSha": "8b9044dff26c65919618fdb0a4707a55499d5f03",
-    "expectedBase": "d108e0dfc158ce0a00a22173a95292eff40fe13a",
-    "phase": "testing",
-    "admittedAt": 1795031572805,
-    "expiresAt": 1795033251063,
-    "patchId": "397061d2576db02332447b5f6a5a9d7d1c044636"
-  },
+  "active": null,
   "events": {
     "github:44358531868:1:label:spec-request": {
       "digest": "67b5c887bc8842741e94242a95968ad6d2023ae67965d93bc0e37ab4dc77f01d",
@@ -5855,6 +5845,10 @@
       "digest": "cec4c41c1a511a5f4e2f651d7c1e82f6c1704c57b45cce649c6bce435fabdcbe",
       "issue": 1451
     },
+    "finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:3:return": {
+      "digest": "b0e462cc80a44ff9eecbe9a9408665191210aa90e6c8e5976c80098f33c48162",
+      "issue": 1451
+    },
     "finish:4d0cf01c-334e-4c98-aa92-eb59288ac117": {
       "digest": "8f1f12ac0308f6a4ef23d69d665acf96bd0de8a36f388447633fdfde65e14c23",
       "issue": 1451,
@@ -5973,6 +5967,26 @@
         "layer": "product",
         "materialSha": "8b9044dff26c65919618fdb0a4707a55499d5f03",
         "phase": "sync"
+      }
+    },
+    "finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:3:return:return:1451": {
+      "digest": "b0e462cc80a44ff9eecbe9a9408665191210aa90e6c8e5976c80098f33c48162",
+      "issue": 1451,
+      "message": {
+        "kind": "return",
+        "issue": 1451,
+        "at": 1795033025786,
+        "entry": 3,
+        "notice": {
+          "key": "3:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795033025786,
+          "entry": 3,
+          "detail": "Поведение: test/iso-overlay-fixture-types.test.mjs: failed; Браузер: floor persistent cache isometric: failed; Браузер: isometric live touch: failed",
+          "eventId": "finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:3:return:return:1451"
+        }
       }
     }
   },
