@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15901,
+  "revision": 15902,
   "nextTicket": 522,
   "nextFence": 522,
   "tasks": {
@@ -4993,7 +4993,7 @@
       "ownerDecision": null,
       "ticket": 521,
       "queued": false,
-      "status": "S6-in-progress",
+      "status": "S7-code-review",
       "readyAt": 1795039282608,
       "reviewEntry": 2,
       "patchId": "b55aa500811693f84b7f77711b7738d0d9085b83",
@@ -5015,6 +5015,15 @@
         "entry": 1,
         "detail": "Поведение: test/golden-matrix.test.mjs: failed",
         "eventId": "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:3:return:return:1467"
+      },
+      "s6": {
+        "id": "20261118T220140377-d46368b9",
+        "name": "Тесты для задачи #1467 (перед ревью)",
+        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261118T220140377-d46368b9/report.json",
+        "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
+        "status": "passed",
+        "finishedAt": "2026-11-18T22:02:11.464Z",
+        "failures": []
       }
     }
   },
@@ -5435,9 +5444,9 @@
     "fence": 521,
     "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
     "expectedBase": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-    "phase": "testing",
+    "phase": "review",
     "admittedAt": 1795039287153,
-    "expiresAt": 1795039593868,
+    "expiresAt": 1795042932599,
     "patchId": "b55aa500811693f84b7f77711b7738d0d9085b83"
   },
   "events": {
@@ -5537,6 +5546,34 @@
         "layer": "product",
         "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
         "phase": "sync"
+      }
+    },
+    "finish:61d737f2-8d22-4c54-b150-aa1e93e30a4d:finish:3:s6-complete": {
+      "digest": "ba996f00c340b474307d15678ab078161bc4f5f9a7ded8f87eff794a032e4c39",
+      "issue": 1467,
+      "message": {
+        "kind": "s6-complete",
+        "issue": 1467,
+        "at": 1795039332599,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
+        "phase": "review",
+        "evidence": {
+          "id": "20261118T220140377-d46368b9",
+          "name": "Тесты для задачи #1467 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261118T220140377-d46368b9/report.json",
+          "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
+          "status": "passed",
+          "finishedAt": "2026-11-18T22:02:11.464Z",
+          "failures": []
+        },
+        "newReview": true,
+        "resubmission": false,
+        "reviewChanges": "Общий standalone helper `demo/helpers/test-surface-ready.mjs` используется golden и benchmark через одинаковые внедрённые функции. Он отвергает незавершённые floor/mode intents, подготовку, booting и inert; empty допустим только по явному параметру фикстуры и при действительно пустой модели/готовом empty DOM. ISO требует настоящий Stage 4/readiness, конечный целочисленный count>=0, fingerprint и видимые непустые masonry paths с положительным getBBox; ноль построений main thread больше не выдаётся за отсутствие геометрии. Другие semantic/pixel assertions и матрица не менялись.\n\nБенчмарк ждёт готовность внутри времени первого кадра/смены этажа и режимных операций; ожидание View перед wheel остаётся снаружи wheel-метрики. Прогрев и циклы не обрывают отложенную подготовку следующим переключением. Историческую сопоставимость определяет прежний строгий runnerHash/окружение — несовпадающие серии не объявляются сравнимыми.\n\nПоложительные/отрицательные unit: 4/4 PASS, включая исполнение сериализованных функций как в браузере (`output/1467-unit.log`, первоначальное имя test-surface-ready, затем файл переименован в performance-surface-ready для наследования области). Каталог/план включает новый regression test в performance и три адресных поведения; окончательный S6 выполняет очередь. Изменены только тестовые инструменты и технические changelog, продуктовые source и эталоны не менялись. Полный beta-набор повторять не нужно: после слияния ремонтированных инструментов в кандидат будут повторены именно 13 упавших предусловий и диагностический замер. Новое содержимое кадров по-прежнему требует отдельного решения владельца.\n\nМатериал: `codex/1467-release-readiness` (два коммита: основной ремонт `bb9f9b13…`, затем адаптация source guard). Существенный риск для ревью: не превратить ожидание готовности в ожидание желаемого изображения, не разрешить empty/zero-build без фактических предусловий. До ремонта единственное настоящее PNG-отличие — кнопка удаления из #1453; его не скрывали изменением порога.\n\nПервый S6 `20261118T215544542-a0a0fd3f`: 302 шага, 251 зачтён, один отказ. Старый source guard `issue 570 Stage 4 reuses…` искал inline `data-hp-iso-stage` после noBorders-условия. Теперь он проверяет сохранённое noBorders-условие перед общим `__hpRenderedIsoReady`, не меняя ни одной сцены/порогов/проверок материала. Повторён только упавший case, 1/1 PASS (`output/1467-no-borders-reader.log`). Модель ещё не вызывалась.\n\nДва адресных browser preparation сценария реально прошли через общий golden harness после ремонта: `panel-isometric-geometry-view-light` (ready Stage4, настоящая кладка, count=0) и `first-space-empty-light` (ready empty, без stage). Диагностика `output/1467-native-preconditions.log`, не пиксельная приёмка. Адресный benchmark `--profile=large-house-v1 --warmups=0 --samples=1 --output=output/1467-performance-smoke.json` завершился exit0 (`output/1467-performance-smoke.log`), включая реальную готовность перед wheel и циклы переключения без новых построений. Один образец — проверка работоспособности ремонта, не семисэмпловый релизный замер и не основание сравнивать скорость со stable. Полный замер повторится на окончательном beta-кандидате; успешные прежние продуктовые/HA результаты повторять не нужно.",
+        "fromStatus": "S6-in-progress",
+        "toStatus": "S7-code-review"
       }
     }
   },
