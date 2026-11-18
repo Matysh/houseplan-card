@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15820,
+  "revision": 15821,
   "nextTicket": 520,
   "nextFence": 520,
   "tasks": {
@@ -6054,6 +6054,10 @@
       "digest": "2c88c1700c9073f89d5e1269eab8f2d7e62ec96bd5b41599892b6b7a030d9093",
       "issue": 1451
     },
+    "github:44396452383:1:completions:message:db5f61cc29df354751c6a1645ef6d118ff00d5a90399b8229d65cc9fb4cb67d6": {
+      "digest": "8b22ca65ffa483a1c877d9899c4325279d19d4f9c0983d095f492babba8922eb",
+      "issue": 1451
+    },
     "finish:4d0cf01c-334e-4c98-aa92-eb59288ac117": {
       "digest": "8f1f12ac0308f6a4ef23d69d665acf96bd0de8a36f388447633fdfde65e14c23",
       "issue": 1451,
@@ -6199,7 +6203,8 @@
           "entry": 3,
           "detail": "Поведение: test/iso-overlay-fixture-types.test.mjs: failed; Браузер: floor persistent cache isometric: failed; Браузер: isometric live touch: failed",
           "eventId": "finish:27e66433-a08b-4212-908c-5f085fc6bc5d:finish:3:return:return:1451"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5": {
