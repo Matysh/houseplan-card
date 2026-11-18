@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15801,
-  "nextTicket": 519,
+  "revision": 15802,
+  "nextTicket": 520,
   "nextFence": 519,
   "tasks": {
     "1024": {
@@ -4593,14 +4593,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1451-accepted-25d",
-      "materialSha": "a11073ebf2f8c89433196c51adb8a2a06f2a3536",
+      "materialSha": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 518,
-      "queued": false,
+      "ticket": 519,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795033829588,
-      "reviewEntry": 4,
+      "readyAt": 1795035326254,
+      "reviewEntry": 5,
       "patchId": "7fb961e3697fa7e901e2149c72a575f296df0da6",
       "changedFiles": [
         ".gitignore",
@@ -4812,8 +4812,7 @@
         "entry": 4,
         "detail": "Поведение: test/floor-cache-publication.test.mjs: failed",
         "eventId": "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:3:return:return:1451"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1452": {
       "issue": 1452,
@@ -5582,7 +5581,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1451
+  ],
   "active": null,
   "events": {
     "github:44358531868:1:label:spec-request": {
@@ -6134,6 +6135,19 @@
           "detail": "Поведение: test/floor-cache-publication.test.mjs: failed",
           "eventId": "finish:9c13ac69-968c-4c12-b47a-93a7b0f1f3f5:finish:3:return:return:1451"
         }
+      }
+    },
+    "finish:2d5d76f4-61ba-41bc-823f-c477418b9f36": {
+      "digest": "e3a69d3a4aa080c0cac5ca865cd9f898cb994c4201aa0c33521f3bfda547d2d6",
+      "issue": 1451,
+      "message": {
+        "kind": "queued",
+        "issue": 1451,
+        "at": 1795035326254,
+        "entry": 5,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381"
       }
     }
   },
