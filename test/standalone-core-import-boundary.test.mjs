@@ -5,6 +5,34 @@ import { standaloneFixture } from '../demo/standalone/fixture.mjs';
 
 const initial=()=>({config:standaloneFixture(),fingerprint:'a'.repeat(64),version:'1.85.2'});
 const request=async(core,command)=>(await core.rpc({op:'request',command})).result;
+test('#1464 isolated packaged core transfers all floors and image bytes without HA',async t=>{
+  const core=await createCoreProcess(initial());t.after(()=>core.close());
+  const before=await request(core,{type:'houseplan/config/get'});
+  assert.equal(before.house_transfer_api,1);
+  const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+  const backdrop=(await core.rpc({op:'post',path:'/api/houseplan/plans/upload',value:{bytes:png,space_id:'local',ext:'png'}})).result;
+  const image=(await core.rpc({op:'post',path:'/api/houseplan/assets/upload',value:{bytes:png,name:'sample.png',mime:'image/png'}})).result;
+  const config=structuredClone(before.config);config.spaces[0].plan_url=backdrop.url;
+  config.spaces[0].decor.push({id:'image',kind:'image',asset_id:image.asset.asset_id,x:.2,y:.2,w:.1,h:.1});
+  await request(core,{type:'houseplan/config/set',config,expected_rev:before.rev,opening_features_api:1});
+  const saved=(await core.rpc({op:'snapshot'})).result;
+  const exported=await request(core,{type:'houseplan/export/create',kind:'house',plan_only:true,operation_id:'house-export'});
+  assert.equal(exported.transfer_kind,'house');assert.equal(exported.complete,true);assert.equal(exported.images,1);
+  const download=(await core.rpc({op:'get',path:exported.download_url})).result;
+  assert.equal(download.mime,'application/zip');assert.ok(Buffer.from(download.bytes,'base64').subarray(0,4).equals(Buffer.from('504b0304','hex')));
+  const preview=(await core.rpc({op:'post',path:'/api/houseplan/transfer/import/preview',value:{bytes:download.bytes,operation_id:'house-import'}})).result;
+  assert.equal(preview.preview.kind,'house');assert.equal(preview.preview.counts.spaces,2);assert.equal(preview.preview.counts.images,1);
+  const applied=await request(core,{type:'houseplan/import/apply',transfer_kind:'house',token:preview.token,
+    expected_config_rev:preview.expected_config_rev,expected_layout_rev:preview.expected_layout_rev});
+  assert.equal(applied.can_undo,false);
+  const after=(await core.rpc({op:'snapshot'})).result;
+  assert.equal(after.config.spaces.length,4);assert.deepEqual(after.config.spaces.slice(0,2),saved.config.spaces);
+  assert.deepEqual(after.config.markers,saved.config.markers);assert.deepEqual(after.config.settings,saved.config.settings);
+  const added=after.config.spaces.slice(2),lower=added.find(s=>s.stairs?.length),upper=added.find(s=>s!==lower);
+  assert.equal(lower.stairs[0].target_space_id,upper.id);assert.equal(after.haImported,false);
+  const resolved=(await core.rpc({op:'content',paths:[lower.plan_url]})).result;
+  assert.ok(Object.values(resolved)[0].endsWith(png),'the actual backdrop bytes survive the complete ZIP journey');
+});
 function equivalentProjection(source,target){
   const map=new Map([[target.id,source.id]]);
   const selectors={rooms:['poly','name'],wall_segments:['a','b'],partitions:['a','b'],wall_columns:['center','shape'],

@@ -172,10 +172,10 @@ def plan_files(payload: ArchivePayload, root: Path, session: str, reserve=None) 
     return document, files, frozenset(included)
 
 
-def check_files(root: Path, archive: dict[str, Any], *, publish: bool = False) -> None:
+def check_files(root: Path, archive: dict[str, Any], *, publish: bool = False,
+                private_stage: Path | None = None) -> None:
     """Validate every staged/reused byte and aggregate quota before linking anything."""
-    staged = stage_folder(root, archive["session"])
-    groups: dict[str, list[dict[str, Any]]] = {"plan": [], "attachment": [], "decor_asset": []}
+    staged = stage_folder(root, archive["session"]) if private_stage is None else private_stage
     files = archive["files"]
     if not isinstance(files, list) or len(files) > 1600:
         raise fail()
@@ -193,6 +193,16 @@ def check_files(root: Path, archive: dict[str, Any], *, publish: bool = False) -
         raw = safe_read(root if item["reuse"] else staged, path, item["bytes"])
         if len(raw) != item["bytes"] or digest(raw) != item["sha256"]:
             raise fail()
+    check_quotas(root, files)
+    if publish:
+        for item in files:
+            publish_file(root, staged, item)
+
+
+def check_quotas(root: Path, files: list[dict[str, Any]], *, kinds: set[str] | None = None) -> None:
+    """One aggregate check under the caller's shared content transaction."""
+    groups: dict[str, list[dict[str, Any]]] = {"plan": [], "attachment": [], "decor_asset": []}
+    for item in files:
         if not item["reuse"] and item["kind"] in groups:
             groups[item["kind"]].append(item)
     for kind, subdir, max_bytes, max_count in (
@@ -200,6 +210,8 @@ def check_files(root: Path, archive: dict[str, Any], *, publish: bool = False) -
         ("attachment", FILES_DIR, MAX_FILES_BYTES, MAX_FILES_COUNT),
         ("decor_asset", ASSETS_DIR, MAX_DECOR_ASSETS_BYTES, MAX_DECOR_ASSETS_COUNT),
     ):
+        if kinds is not None and kind not in kinds:
+            continue
         if kind == "decor_asset":
             count, used = physical_asset_usage(root / subdir)
         else:
@@ -210,35 +222,38 @@ def check_files(root: Path, archive: dict[str, Any], *, publish: bool = False) -
             raise fail("zip_limit")
     if shutil.disk_usage(root).free < MIN_FREE_BYTES:
         raise fail("zip_limit")
-    if not publish:
+
+
+def publish_file(root: Path, staged: Path, item: dict[str, Any]) -> None:
+    """Link one prevalidated complete inode; never overwrite an equal stranger."""
+    if item["reuse"]:
         return
-    for item in files:
-        if item["reuse"]:
-            continue
-        dest = root / item["dest"]
-        parent = directory_fd(root, dest.parent.relative_to(root))
-        source_fd = directory_fd(root, staged.relative_to(root))
+    if not _DEST.fullmatch(item["dest"]) or not re.fullmatch(r"(?:blob|meta)-[0-9]+", item["stage"]):
+        raise fail()
+    dest = root / item["dest"]
+    parent = directory_fd(root, dest.parent.relative_to(root))
+    source_fd = directory_fd(root, staged.relative_to(root))
+    try:
         try:
-            try:
-                os.link(item["stage"], dest.name, src_dir_fd=source_fd,
-                        dst_dir_fd=parent, follow_symlinks=False)
-            except FileExistsError:
-                # Idempotent recovery requires the SAME inode, not an equal filename/hash.
-                source_stat = os.stat(item["stage"], dir_fd=source_fd, follow_symlinks=False)
-                dest_stat = os.stat(dest.name, dir_fd=parent, follow_symlinks=False)
-                if not stat.S_ISREG(dest_stat.st_mode) or (source_stat.st_dev, source_stat.st_ino) != (dest_stat.st_dev, dest_stat.st_ino):
-                    raise fail("zip_collision") from None
-            os.fsync(parent)
-            if digest(safe_read(root, dest, item["bytes"])) != item["sha256"]:
-                raise fail()
-        finally:
-            os.close(source_fd)
-            os.close(parent)
+            os.link(item["stage"], dest.name, src_dir_fd=source_fd,
+                    dst_dir_fd=parent, follow_symlinks=False)
+        except FileExistsError:
+            # Idempotent recovery requires the SAME inode, not an equal filename/hash.
+            source_stat = os.stat(item["stage"], dir_fd=source_fd, follow_symlinks=False)
+            dest_stat = os.stat(dest.name, dir_fd=parent, follow_symlinks=False)
+            if not stat.S_ISREG(dest_stat.st_mode) or (source_stat.st_dev, source_stat.st_ino) != (dest_stat.st_dev, dest_stat.st_ino):
+                raise fail("zip_collision") from None
+        os.fsync(parent)
+        if digest(safe_read(root, dest, item["bytes"])) != item["sha256"]:
+            raise fail()
+    finally:
+        os.close(source_fd)
+        os.close(parent)
 
 
-def rollback_files(root: Path, archive: dict[str, Any]) -> None:
+def rollback_files(root: Path, archive: dict[str, Any], *, private_stage: Path | None = None) -> None:
     """Unlink ONLY proven operation-owned hardlinks, never an inferred orphan."""
-    staged = stage_folder(root, archive["session"])
+    staged = stage_folder(root, archive["session"]) if private_stage is None else private_stage
     for item in archive["files"]:
         if item["reuse"]:
             continue

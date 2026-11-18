@@ -370,17 +370,20 @@ async def _persist_pair_intent(
     stored = await rt.store.async_load() or {}
     metadata = dict(pending.get("final_metadata") or {})
     metadata[_OPTIMIZE_PENDING] = pending
+    exact_house = pending.get("kind") in {"house_import", "house_import_rollback"} and "house_files" in pending
     try:
         await async_save_layout_state(
             rt, stored, stored.get("layout") or {}, int(stored.get("rev", 0)),
             metadata=metadata, replace_metadata=True,
+            preserve_exact=exact_house,
         )
     except Exception:
-        if "archive" not in pending:
+        if "archive" not in pending and not exact_house:
             raise  # Preserve legacy callers; ZIP must also survive lost intent ACKs.
         from .store import layout_store_payload
         expected = layout_store_payload(stored, stored.get("layout") or {},
-                                        int(stored.get("rev", 0)), metadata=metadata, replace_metadata=True)
+                                        int(stored.get("rev", 0)), metadata=metadata, replace_metadata=True,
+                                        preserve_exact=exact_house)
         if await rt.store.async_load() != expected:
             raise
 
@@ -405,7 +408,8 @@ async def _commit_pair(
     finish an import that was reported as failed.
     """
     from .graph_write import prepare_graph_pair
-    if getattr(rt, "hass", None) is not None:
+    if (getattr(rt, "hass", None) is not None
+            and pending.get("kind") not in {"house_import", "house_import_rollback"}):
         from .plan_graph_exact import GraphError
         try:
             await prepare_graph_pair(rt, pending, rollback)
@@ -580,7 +584,8 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/export/create",
-        vol.Required("kind"): vol.In(["full", "space"]),
+        vol.Required("kind"): vol.In(["full", "space", "house"]),
+        vol.Optional("operation_id"): str,
         vol.Optional("space_id"): str,
         vol.Optional("plan_only", default=False): bool,
         vol.Optional("card_version", default=""): str,
@@ -601,6 +606,7 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
 
 @websocket_api.websocket_command({
     vol.Required("type"): "houseplan/backup/cancel",
+    vol.Optional("transfer_kind"): vol.In(["house"]),
     vol.Optional("token"): str,
     vol.Optional("operation_id"): str,
 })
@@ -615,6 +621,7 @@ async def ws_backup_cancel(hass: HomeAssistant, connection, msg: dict[str, Any])
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/import/revalidate",
+        vol.Optional("transfer_kind"): vol.In(["house"]),
         vol.Required("token"): str,
         vol.Optional("duplicate_policy", default="skip"): vol.In(["skip", "virtual"]),
     }
@@ -630,6 +637,7 @@ async def ws_import_revalidate(hass: HomeAssistant, connection, msg: dict[str, A
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/import/apply",
+        vol.Optional("transfer_kind"): vol.In(["house"]),
         vol.Required("token"): str,
         vol.Required("expected_config_rev"): int,
         vol.Required("expected_layout_rev"): int,

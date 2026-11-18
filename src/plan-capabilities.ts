@@ -36,7 +36,7 @@ export function permitsCommand(c: PlanCapabilities, command: HouseplanCommand): 
   if (Object.values(c).every(Boolean)) return true; // HA retains its version/ACL negotiation.
   if (['config/get', 'config/set', 'layout/get', 'layout/set', 'space/delete',
     'wall/node_move', 'wall/node_delete', 'wall/node_merge', 'wall/node_attach'].includes(name)) return true;
-  if (name === 'export/create') return command.kind === 'space' ? c.planTransfer : c.installationBackup;
+  if (name === 'export/create') return command.kind === 'space' || command.kind === 'house' ? c.planTransfer : c.installationBackup;
   if (name.startsWith('import/')) return c.planTransfer || c.installationBackup;
   if (name.startsWith('backup/')) return name === 'backup/cancel'
     ? c.planTransfer || c.installationBackup : c.installationBackup;
@@ -60,6 +60,7 @@ export function permitsHttp(c: PlanCapabilities, path: string): boolean {
   if (name === '/api/houseplan/assets/upload') return c.decorAssets;
   if (name === '/api/houseplan/upload') return hasMarkers(c);
   if (name === '/api/houseplan/import/preview') return c.planTransfer || c.installationBackup;
+  if (name.startsWith('/api/houseplan/transfer/')) return c.planTransfer;
   if (name.startsWith('/api/houseplan/backup/')) return c.installationBackup;
   if (name.startsWith('/api/houseplan/support/')) return c.supportDiagnostics;
   return false;

@@ -81,6 +81,7 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     hp_ws.async_register(hass)
     from .backup_http import HouseplanArchiveDownloadView, HouseplanArchivePreviewView
     from .frontend_assets import HouseplanFrontendAssetView
+    from .house_http import HouseplanHouseDownloadView, HouseplanHousePreviewView
     from .http_api import (
         HouseplanContentView,
         HouseplanDecorAssetUploadView,
@@ -98,6 +99,8 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     hass.http.register_view(HouseplanStructuralUploadView())
     hass.http.register_view(HouseplanArchivePreviewView())
     hass.http.register_view(HouseplanArchiveDownloadView())
+    hass.http.register_view(HouseplanHousePreviewView())
+    hass.http.register_view(HouseplanHouseDownloadView())
     hass.http.register_view(HouseplanFrontendAssetView())
     return True
 

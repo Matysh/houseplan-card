@@ -196,6 +196,42 @@ class StructuralStaging(Protocol):
         ...
 
 
+class HouseResources(Protocol):
+    """Separate bounded house pool; never installation-backup/cache authority.
+
+    Tokens are owner+scope-bound, cancel/expiry settle workers before cleanup,
+    and a durable pair intent pins its recovery bytes until complete/rollback.
+    The file descriptor is host-private, data-only and paired with the stores.
+    A database host can supply transactional blobs instead of filesystem paths.
+    """
+
+    def transaction(self) -> AsyncContextManager[Any]: ...
+
+    async def begin(self, scope: str, owner: str, operation: str, kind: str) -> Json: ...
+
+    async def upload(self, lease: Json, blocks: Any, declared_size: int | None) -> Any: ...
+
+    async def build(self, lease: Json, document: Json) -> Json: ...
+
+    async def prepare(self, lease: Json, payload: Any, protected_plans: set[str]) -> tuple[Json, Json]: ...
+
+    async def publish(self, lease: Json, token: str, record: Json) -> None: ...
+
+    async def load(self, scope: str, owner: str, token: str) -> Json: ...
+
+    async def update(self, lease: Json, record: Json) -> None: ...
+
+    async def pin(self, lease: Json) -> None: ...
+
+    async def complete(self, lease: Json) -> None: ...
+
+    async def cancel(self, scope: str, owner: str, token: str | None, operation: str | None) -> None: ...
+
+    async def recover(self, descriptor: Json, action: str) -> None: ...
+
+    def stream(self, lease: Json) -> AsyncContextManager[Any]: ...
+
+
 @dataclass(frozen=True, slots=True)
 class CommandEnvironment:
     content: PlanContent
@@ -205,6 +241,7 @@ class CommandEnvironment:
     input_policy: InputPolicy | None = None
     leases: ImportLeases | None = None
     staging: StructuralStaging | None = None
+    house: HouseResources | None = None
 
 
 @dataclass(frozen=True, slots=True)

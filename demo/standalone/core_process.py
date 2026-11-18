@@ -54,6 +54,15 @@ class CoreTestTransport(ReferencePlanHost):
         if path == "/api/houseplan/structural/upload":
             return await self.stage(json.dumps(value, separators=(",", ":")).encode())
         raw = base64.b64decode(value["bytes"])
+        if path == "/api/houseplan/transfer/import/preview":
+            from custom_components.houseplan.core.house_archive import check_prefix
+
+            check_prefix(raw[:1024])
+
+            async def blocks():
+                yield raw
+
+            return await self.commands.house_preview(blocks(), len(raw), value.get("operation_id", "lab-house"))
         if path.startswith("/api/houseplan/import/preview"):
             from urllib.parse import parse_qs, urlsplit
 
@@ -64,6 +73,24 @@ class CoreTestTransport(ReferencePlanHost):
         if path == "/api/houseplan/plans/upload":
             return await self.commands.upload_plan(raw, value.get("space_id"), value.get("ext"))
         raise CommandError("invalid_format", "Unknown lab HTTP route")
+
+    async def get(self, path):
+        from urllib.parse import parse_qs, urlsplit
+
+        from custom_components.houseplan.core.house_commands import download
+
+        parsed = urlsplit(path)
+        prefix = "/api/houseplan/transfer/export/"
+        if not parsed.path.startswith(prefix):
+            raise CommandError("invalid_format", "Unknown lab GET route")
+        token = parsed.path[len(prefix):]
+        consent = parse_qs(parsed.query).get("confirm_missing_content", ["0"])[0]
+        if consent not in {"0", "1"}:
+            raise CommandError("invalid_format")
+        async with download(self.commands, token, consent == "1") as (filename, blocks):
+            raw = b"".join([block async for block in blocks])
+        # RPC-only synthetic transport. The real HA endpoint streams chunks.
+        return {"bytes": base64.b64encode(raw).decode(), "mime": "application/zip", "filename": filename}
 
     async def resolve_content(self, paths):
         def read():
@@ -100,6 +127,8 @@ def main():
                     result = runner.run(transport.request(envelope["command"]))
                 elif op == "post":
                     result = runner.run(transport.post(envelope["path"], envelope["value"]))
+                elif op == "get":
+                    result = runner.run(transport.get(envelope["path"]))
                 elif op == "content":
                     result = runner.run(transport.resolve_content(envelope["paths"]))
                 elif op == "snapshot":

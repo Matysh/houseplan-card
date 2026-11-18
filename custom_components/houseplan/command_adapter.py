@@ -239,10 +239,21 @@ def plan_commands(hass, connection, runtime):
                                      CommandPolicy.HA, HostIdentity(runtime.instance_id, VERSION,
                                                                     build.fingerprint, build.build),
                                      leases=DictionaryImportLeases(runtime),
-                                     staging=DictionaryStructuralStaging(runtime.instance_id, uploads(runtime)))
+                                     staging=DictionaryStructuralStaging(runtime.instance_id, uploads(runtime)),
+                                     house=house_resources(runtime))
     return PlanCommands(HaPlanStorage(runtime), cpu,
                         HaWriteAuthority(hass, connection, runtime),
                         HaCommandEffects(hass, runtime), environment)
+
+
+def house_resources(runtime):
+    """One pool and upload lock for the installation, including startup recovery."""
+    from .core.house_resources import FilesystemHouseResources
+
+    if runtime.house_resources is None:
+        runtime.house_resources = FilesystemHouseResources(Path(runtime.hass.config.path("")),
+            HaCpuExecutor(runtime.hass), lock=runtime.upload_lock)
+    return runtime.house_resources
 
 
 async def dispatch_plan_command(hass, connection, message: dict[str, Any]) -> None:
@@ -256,13 +267,13 @@ async def dispatch_plan_command(hass, connection, message: dict[str, Any]) -> No
         return
     try:
         operation = message.get("type")
-        if operation == "houseplan/export/create" and any(message.get(key) for key in (
+        if operation == "houseplan/export/create" and message.get("kind") != "house" and any(message.get(key) for key in (
                 "archive", "migration_source", "plan_graph_migration_source")):
             from .command_legacy import export_special
 
             await export_special(hass, connection, message, runtime)
             return
-        if operation in {"houseplan/import/apply", "houseplan/import/revalidate"} and "archive" in (
+        if message.get("transfer_kind") != "house" and operation in {"houseplan/import/apply", "houseplan/import/revalidate"} and "archive" in (
                 runtime.import_previews.get(message.get("token")) or {}):
             if operation == "houseplan/import/apply":
                 from .backup_transaction import apply_archive
@@ -273,7 +284,7 @@ async def dispatch_plan_command(hass, connection, message: dict[str, Any]) -> No
 
                 await revalidate_archive(hass, connection, message, runtime)
             return
-        if operation == "houseplan/backup/cancel":
+        if operation == "houseplan/backup/cancel" and message.get("transfer_kind") != "house":
             from .command_legacy import cancel_archive
 
             if await cancel_archive(hass, connection, message, runtime):

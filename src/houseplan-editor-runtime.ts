@@ -587,6 +587,7 @@ export interface HouseplanEditorHostPort {
   _haWallNodeMoveApi: number | null;
   readonly _haPlanGraphApi: number | null;
   readonly _haOpeningFeaturesApi: number | null;
+  readonly _haHouseTransferApi: number | null;
   _haWallNodeDeleteApi: number | null;
   _haVacuumDockRestartApi: number | null;
   _haVacuumHistoryApi: number | null;
@@ -9711,8 +9712,8 @@ public async _importBackupFile(file: File, request = this.host._backupImportInte
           expectedLayoutRev: data.expected_layout_rev,
           busy: false,
         };
-      } else if (data.preview?.archive) {
-        this.backupTransfer.discard(data.token);
+      } else if (data.preview?.archive || data.preview?.kind === 'house') {
+        this.backupTransfer.discard(data.token, data.preview?.kind === 'house');
       }
     } catch (error: unknown) {
       if (this._ownsBackupImport(request) && this.host._backupImportDialog) {
@@ -9767,6 +9768,7 @@ public async _applyBackupImport(): Promise<void> {
     try {
       const result: any = await this.host.planHost.request({
         type: 'houseplan/import/apply',
+        ...(d.preview.kind === 'house' ? { transfer_kind: 'house' } : {}),
         token: d.token,
         expected_config_rev: d.expectedConfigRev,
         expected_layout_rev: d.expectedLayoutRev,
@@ -9783,7 +9785,7 @@ public async _applyBackupImport(): Promise<void> {
       const adopted = await this.host._adoptAuthoritative({ cfgResp: configResponse, layResp: layoutResponse, reason: 'import-apply', profile: 'post-write' });
       if (!this._ownsBackupImport(request)) return;
       if (adopted.status !== 'adopted') { this.host._backupImportDialog = { ...d, busy: false, error: '' }; this.host.requestUpdate(); return; }
-      if (d.preview.archive) {
+      if (d.preview.archive || d.preview.kind === 'house') {
         await this.host._syncDecorAssets(this.host._serverCfg).catch(() => undefined);
         if (!this._ownsBackupImport(request)) return;
       }
@@ -9814,11 +9816,14 @@ public async _applyBackupImport(): Promise<void> {
       this.host._cacheSnapshot();
       this.host.requestUpdate();
       const outcomeCounts = result.kind === 'space' ? d.preview.counts : result.counts;
-      showToast(this.host._t(result.kind === 'space' ? 'backup.space_done' : 'backup.full_done', {
+      const outcome = result.kind === 'house' ? 'backup.house_done' : result.kind === 'space' ? 'backup.space_done' : 'backup.full_done';
+      const outcomeValues = {
         spaces: String(outcomeCounts?.spaces || 0), rooms: String(outcomeCounts?.rooms || 0),
         markers: String(outcomeCounts?.markers || 0),
         refs: String(result.repaired_target_refs || 0),
-      }), result.kind === 'space' ? 'backup.space_done' : 'backup.full_done');
+      };
+      showToast(result.kind === 'house' ? this._toolsT('backup.house_done', outcomeValues)
+        : this.host._t(outcome as I18nKey, outcomeValues), outcome);
     } catch (error: any) {
       if (!this._ownsBackupImport(request)) return;
       if (error?.code === 'conflict' && this.host._backupImportDialog?.token) {
@@ -9826,6 +9831,7 @@ public async _applyBackupImport(): Promise<void> {
           const current = this.host._backupImportDialog;
           const refreshed: any = await this.host.planHost.request({
             type: 'houseplan/import/revalidate', token: current.token,
+            ...(current.preview?.kind === 'house' ? { transfer_kind: 'house' } : {}),
             duplicate_policy: current.duplicatePolicy,
           });
           if (!this._ownsBackupImport(request)) return;
@@ -9857,7 +9863,7 @@ public _renderBackupExportDialog(): TemplateResult {
       icon="mdi:download" dismiss-on-scrim @hp-close=${() => this._closeBackupExport()}>
       <div class="body backupbody">
         <div class="rhint">${this.host._t('backup.export_hint')}</div>
-        ${!this.host.planHost.capabilities.installationBackup ? callout({ text: this._toolsT('backup.single_space_limit') }) : nothing}
+        ${!this.host.planHost.capabilities.installationBackup && this.host._haHouseTransferApi !== 1 ? callout({ text: this._toolsT('backup.single_space_limit') }) : nothing}
         ${this.host.planHost.capabilities.installationBackup ? html`<label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="backup-kind" data-value="full" type="radio" name="backup-kind" value="full"
           .checked=${d.kind === 'full'}
           ?disabled=${d.busy} @change=${() => this.backupTransfer.selectKind('full')} />
@@ -9878,16 +9884,22 @@ public _renderBackupExportDialog(): TemplateResult {
             }} />
           <span><b>${this.host._t('backup.plan_only')}</b><small>${this.host._t('backup.plan_only_hint')}</small></span>
         </label>` : nothing}
+        ${this.host.planHost.capabilities.planTransfer && this.host._haHouseTransferApi === 1 ? html`<label class="hpf-check hpf-check-wrap srcrow"><input
+          data-hp="field" data-field="backup-kind" data-value="house" type="radio" name="backup-kind" value="house"
+          .checked=${d.kind === 'house'} ?disabled=${d.busy || !(this.host._serverCfg?.spaces?.length)}
+          @change=${() => this.backupTransfer.selectKind('house')} />
+          <span><b>${this._toolsT('backup.house')}</b><small>${this._toolsT('backup.house_hint')}</small></span>
+        </label>` : nothing}
         ${d.kind === 'full' ? html`<div class="rhint">${this._toolsT(this.host.planHost.environment.permissions.admin ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}
         ${this.backupTransfer.renderSummary((key, values) => this._toolsT(key, values), d.archive)}
         ${this.backupTransfer.renderRecovery((key, values) => this._toolsT(key, values), recovery, true)}
-        ${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${d.kind === 'full' && this.host.planHost.environment.permissions.admin ? this._toolsT('backup.zip_privacy_warning') : this.host._t('backup.privacy_warning')}` })}
+        ${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${d.kind === 'house' ? this._toolsT('backup.house_privacy') : d.kind === 'full' && this.host.planHost.environment.permissions.admin ? this._toolsT('backup.zip_privacy_warning') : this.host._t('backup.privacy_warning')}` })}
         ${d.error ? html`${callout({ className:'backuperror', kind:'danger', role:'alert', body:html`${d.error}` })}` : nothing}
       </div>
       <div class="row" slot="footer">
         <button class="btn ghost" autofocus data-hp="dialog-cancel" @click=${() => this._closeBackupExport()}>${this.host._t('btn.cancel')}</button>
         <span class="spacer"></span>
-        <button class="btn on" data-hp="dialog-confirm" ?disabled=${d.busy || (d.kind === 'space' && !currentSpace)}
+        <button class="btn on" data-hp="dialog-confirm" ?disabled=${d.busy || (d.kind === 'space' && !currentSpace) || (d.kind === 'house' && !this.host._serverCfg?.spaces?.length)}
           @click=${() => this._runBackupExport()}>
           <ha-icon icon="mdi:download"></ha-icon>${d.busy ? this._toolsT('backup.zip_preparing') : recovery?.total ? this._toolsT('backup.recovery.download') : d.archive && !d.archive.complete ? this._toolsT('backup.zip_download_incomplete') : this.host._t('backup.download')}
         </button>
@@ -9931,25 +9943,26 @@ public _renderBackupImportDialog(): TemplateResult {
     const detachedOpenings = Number(repairs.detached) || 0;
     const keptOffWalls = detachedOpenings + (Number(repairs.legacy_detached) || 0);
     const repairExamples: Array<Record<string, string>> = Array.isArray(repairs.examples) ? repairs.examples : [];
-    const zipIncomplete = !!(p?.archive && !p.archive.complete);
+    const house = p?.kind === 'house';
+    const zipIncomplete = !!(p?.archive && !p.archive.complete) || !!(house && !p.complete);
     const contentConfirm = zipIncomplete || ((p?.content || []) as ContentItem[])
       .some((item) => item.state === 'detach_required' || item.state === 'missing_preserved');
-    const contentConfirmText = zipIncomplete ? this._toolsT('backup.zip_confirm_incomplete')
+    const contentConfirmText = house ? this._toolsT('backup.house_confirm_missing') : zipIncomplete ? this._toolsT('backup.zip_confirm_incomplete')
       : this.host._t(missingDecor.length ? 'backup.confirm_missing_images' : 'backup.confirm_detach');
     const confirmText = detachedOpenings && !contentConfirm ? this._toolsT('backup.confirm_openings')
       : detachedOpenings ? `${contentConfirmText} ${this._toolsT('backup.confirm_openings')}` : contentConfirmText;
     return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host._presentation} data-kind="backup" .title=${this.host._t('backup.import_title')}
       icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => this._closeBackupImport()}>
       <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
-        ${!this.host.planHost.capabilities.installationBackup ? callout({ text: this._toolsT('backup.single_space_limit') }) : nothing}
+        ${!this.host.planHost.capabilities.installationBackup && this.host._haHouseTransferApi !== 1 ? callout({ text: this._toolsT('backup.single_space_limit') }) : nothing}
         <div class="backupfile hpf-reading-entry"><b>${d.filename}</b><span>${(d.size / 1024).toFixed(1)} KB</span></div>
         ${d.busy && !p ? html`<div class="rhint" role="status" aria-live="polite">${this.host._t('backup.reading')}</div>` : nothing}
         ${d.error ? html`${callout({ className:'backuperror', kind:'danger', role:'alert', body:html`${d.error}` })}` : nothing}
         ${p ? html`
           <div class="backupsummary hpf-reading-entry">
-            <b>${this.host._t(p.kind === 'full' ? 'backup.full' : 'backup.current_space')}</b>
+            <b>${house ? this._toolsT('backup.house') : this.host._t(p.kind === 'full' ? 'backup.full' : 'backup.current_space')}</b>
             ${p.plan_only ? html`<span class="backupplanonlystatus hpf-tag">${this.host._t('backup.plan_only_preview')}</span>` : nothing}
-            <span>${this.host._t(p.source === 'same' ? 'backup.same_source' : 'backup.foreign_source')}</span>
+            ${house ? nothing : html`<span>${this.host._t(p.source === 'same' ? 'backup.same_source' : 'backup.foreign_source')}</span>`}
             <span>${this.host._t('backup.created', { value: p.created_at || '—' })}</span>
             <span>${this.host._t('backup.versions', {
               card: p.card_version || '—', integration: p.integration_version || '—',
@@ -10019,7 +10032,16 @@ public _renderBackupImportDialog(): TemplateResult {
                 <code>${item.owner} → ${item.reference}</code>
               `)}
             </div>` })}` : nothing}
-          ${p.kind === 'full' ? html`
+          ${house ? html`<div class="backupsummary hpf-reading-entry" data-hp="house-preview">
+            <b>${this._toolsT('backup.house_floors')}</b>
+            <ul>${(p.spaces || []).map((space: { source_title: string; title: string }) => html`<li>${space.source_title} → ${space.title}</li>`)}</ul>
+            <span>${this._toolsT('backup.zip_images_summary', { n: String(counts.images || 0) })}</span>
+            ${callout({ kind:'warning', role:'note', text:this._toolsT('backup.house_target_settings') })}
+            ${(p.warnings || []).length ? disclosure({ title:this._toolsT('backup.house_warnings'),
+              content:html`<ul>${(p.warnings || []).map((warning: { code: string; ref?: { url: string }; target?: string }) => html`<li>${warning.code === 'dangling_stair'
+                ? this._toolsT('backup.house_dangling_stair', { target: warning.target || '—' })
+                : html`${warning.ref?.url || ''} — ${this._toolsT((`backup.zip_reason.${warning.code.slice(6)}`) as ToolsI18nKey)}`}</li>`)}</ul>` }) : nothing}
+          </div>` : p.kind === 'full' ? html`
             ${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${this.host._t('backup.replace_warning')}` })}
             ${p.source === 'foreign' ? html`<div class="rhint">${this.host._t('backup.foreign_bookkeeping')}</div>` : nothing}` : html`
             <div class="backupsummary hpf-reading-entry"><b>${this.host._t('backup.final_name')}</b><span>${p.space_title}</span></div>
@@ -10055,7 +10077,7 @@ public _renderBackupImportDialog(): TemplateResult {
         ${p ? html`<button class="btn ${p.kind === 'full' ? 'danger' : 'on'}" data-hp="dialog-confirm"
           ?disabled=${!this.host._canImportBackup || d.busy || (p.confirmation_required && !d.confirmMissing)} @click=${() => this._applyBackupImport()}>
           <ha-icon icon=${p.kind === 'full' ? 'mdi:database-import' : 'mdi:plus'}></ha-icon>
-          ${d.busy ? '…' : this.host._t(p.kind === 'full' ? 'backup.replace' : 'backup.add')}
+          ${d.busy ? '…' : house ? this._toolsT('backup.house_add') : this.host._t(p.kind === 'full' ? 'backup.replace' : 'backup.add')}
         </button>` : nothing}
       </div>
     </hp-dialog>`;

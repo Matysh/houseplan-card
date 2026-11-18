@@ -12,6 +12,7 @@ from types import SimpleNamespace
 from .command_ports import CommandEnvironment, CommandPolicy, HostIdentity
 from .content_files import FilesystemContent
 from .graph_write import prepare_graph_candidate
+from .house_resources import FilesystemHouseResources
 from .import_leases import DictionaryImportLeases
 from .memory_host import (
     MemoryAuthority,
@@ -60,9 +61,11 @@ class ReferencePlanHost:
         self.uploads = StructuralUploads()
         self.cpu = ThreadCpuExecutor()
         self.content = FilesystemContent(root, self.cpu)
+        self.house = FilesystemHouseResources(root, self.cpu, lock=self.content.lock)
+        self.storage.house = self.house
         self.environment = CommandEnvironment(self.content, NoHostEntities(), CommandPolicy.PLAN_ONLY,
             HostIdentity(scope, version, fingerprint), leases=DictionaryImportLeases(self.runtime),
-            staging=DictionaryStructuralStaging(scope, self.uploads))
+            staging=DictionaryStructuralStaging(scope, self.uploads), house=self.house)
         self.commands = PlanCommands(self.storage, self.cpu, self.authority, self.effects, self.environment)
 
     async def request(self, message):

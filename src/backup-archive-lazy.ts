@@ -29,9 +29,10 @@ export class LazyBackupArchiveClient {
   public cancelExport(): void { this.exportEpoch++; this.client?.cancelExport(); }
   public cancelImport(): void { this.importEpoch++; this.client?.cancelImport(); }
   public dispose(): void { this.cancelExport(); this.cancelImport(); }
-  public discard(token: string): void { this.client?.discard(token); }
+  public discard(token: string, house = false): void { this.client?.discard(token, undefined, house); }
 
-  public selectKind(kind: 'full' | 'space'): void {
+  public selectKind(kind: 'full' | 'space' | 'house'): void {
+    if (kind === 'house' && this.host._haHouseTransferApi !== 1) return;
     const state = this.host._backupExportDialog;
     if (!state || state.busy) return;
     this.cancelExport();

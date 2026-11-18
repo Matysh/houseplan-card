@@ -3196,6 +3196,7 @@ export class HouseplanCard extends LitElement {
   private _haRoomLabelLayoutApi: number | null = null;
   private _haGraphChangeApi: number | null = null;
   private _haOpeningFeaturesApi: number | null = null;
+  private _haHouseTransferApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
   private _haVacuumHistoryApi: number | null = null;
   private _haDeviceHistoryApi: number | null = null;

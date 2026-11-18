@@ -4,6 +4,7 @@ import { BackupArchiveClient } from '../test-build/backup-archive-client.js';
 import * as archiveModule from '../test-build/backup-archive-client.js';
 import { LazyBackupArchiveClient } from '../test-build/backup-archive-lazy.js';
 import { HaPlanHost } from '../test-build/ha-plan-host.js';
+import { readFileSync } from 'node:fs';
 
 const prepared = (complete = true) => ({ archive: true, token: 'owned', filename: 'copy.zip',
   complete, images: 1, missing: complete ? [] : [{ name: 'Kitchen', reason: 'missing' }], snapshot: [] });
@@ -14,6 +15,84 @@ function host(hass) {
   return { hass, isConnected: true, _space: 'one', _backupExportDialog: state(),
     _showToast() {}, _t: key => key };
 }
+
+const housePrefix = Buffer.from(JSON.parse(readFileSync(new URL('./fixtures/1464-house-prefix.json', import.meta.url))).prefixHex, 'hex');
+const futureHousePrefix = Buffer.from('504b030414000000000000002100d72f55482c0000002c000000080000006d696d65747970656170706c69636174696f6e2f766e642e686f757365706c616e2e706c616e2b7a69703b76657273696f6e3d32', 'hex');
+
+test('#1464 house routing reads only first KiB and uploads once through writer route', async () => {
+  const calls = [], slices = [];
+  const file = new File([housePrefix, 'server owns all JSON/schema parsing'], 'renamed.json');
+  const slice = file.slice.bind(file);
+  file.slice = (start, end) => { slices.push([start, end]); return slice(start, end); };
+  const owner = host({ user: { is_admin: false }, callWS: async message => { calls.push(message); },
+    fetchWithAuth: async (path, init) => {
+      calls.push({ path, body: init.body });
+      return Response.json({ token:'house', preview:{ kind:'house' }, expected_config_rev:1, expected_layout_rev:2 });
+    } });
+  owner._haHouseTransferApi = 1;
+  const client = new BackupArchiveClient(owner);
+  const result = await client.preview(file);
+  assert.equal(result.preview.kind, 'house');
+  assert.deepEqual(slices, [[0, 1024]]);
+  assert.deepEqual(calls, [{ path:'/api/houseplan/transfer/import/preview', body:file }]);
+  client.cancelImport(); await new Promise(resolve => setImmediate(resolve));
+  assert.equal(calls[1].type, 'houseplan/backup/cancel');
+  assert.equal(calls[1].transfer_kind, 'house');
+});
+
+for (const [api, prefix, code] of [
+  [undefined, housePrefix, 'house_transfer_update_required'],
+  [2, housePrefix, 'house_transfer_update_required'],
+  [1, futureHousePrefix, 'unsupported-transfer'],
+]) test(`#1464 unsupported house has zero uploads: ${api}/${code}`, async () => {
+  let uploads = 0;
+  const owner = host({ user:{ is_admin:true }, callWS:async () => {}, fetchWithAuth:async () => { uploads++; } });
+  owner._haHouseTransferApi = api;
+  await assert.rejects(new BackupArchiveClient(owner).preview(new File([prefix], 'house.zip')), { code });
+  assert.equal(uploads, 0);
+});
+
+test('#1464 incomplete house uses same candidate and GET consent, not the full-backup endpoint', async t => {
+  const files = downloads(t), requests = [], commands = [];
+  const owner = host({ user:{ is_admin:false }, callWS:async message => {
+    commands.push(message); return { ...prepared(false), transfer_kind:'house' };
+  }, fetchWithAuth:async (path, init) => {
+    requests.push({ path, method:init.method, body:init.body });
+    return new Response('PK frozen house', { headers:{ 'content-type':'application/zip' } });
+  } });
+  owner._haHouseTransferApi = 1;
+  owner._backupExportDialog.kind = 'house';
+  const client = new BackupArchiveClient(owner);
+  await client.export({ card_version:'test' }, String);
+  assert.equal(files.length, 0); assert.equal(requests.length, 0);
+  await client.export({ card_version:'test' }, String);
+  assert.equal(commands.length, 1);
+  assert.equal(commands[0].kind, 'house'); assert.equal(commands[0].plan_only, true);
+  assert.deepEqual(requests, [{ path:'/api/houseplan/transfer/export/owned?confirm_missing_content=1', method:'GET', body:undefined }]);
+  assert.equal(files[0].name, 'copy.zip');
+});
+
+test('#1464 delayed house export cancellation keeps the typed writer cleanup', async t => {
+  const files = downloads(t), calls = [];
+  let finish, started;
+  const ready = new Promise(resolve => { started = resolve; });
+  const owner = host({ user:{ is_admin:false }, callWS:message => {
+    calls.push(message);
+    if (message.type === 'houseplan/export/create') {
+      started(); return new Promise(resolve => { finish = resolve; });
+    }
+    return Promise.resolve({ ok:true });
+  } });
+  owner._haHouseTransferApi = 1; owner._backupExportDialog.kind = 'house';
+  const client = new BackupArchiveClient(owner);
+  const pending = client.export({ card_version:'test' }, String);
+  await ready;
+  client.cancelExport(); owner._backupExportDialog = null;
+  finish({ ...prepared(), transfer_kind:'house' });
+  await pending; await new Promise(resolve => setImmediate(resolve));
+  assert.equal(files.length, 0);
+  assert.deepEqual(calls[1], { type:'houseplan/backup/cancel', token:'owned', transfer_kind:'house' });
+});
 
 test('#1392 pending ZIP cleanup never sends a former user token to the replacement authority', async () => {
   const calls = [], raw = { connection: {}, user: { id: 'a', is_admin: true },

@@ -6,6 +6,7 @@ import type { I18nKey } from './i18n';
 import type { ToolsI18nKey } from './i18n/tools';
 import { planHostOf, type PlanHostProvider } from './ha-plan-host';
 import type { PlanHost, HouseplanHttpPath } from './plan-host';
+import { readHousePrefix } from './house-transfer-prefix';
 
 export type RecoveryKind = 'radar' | 'vacuum' | 'controls' | 'value';
 export interface RecoveryReport {
@@ -14,6 +15,7 @@ export interface RecoveryReport {
   examples: Array<{ kind: RecoveryKind; marker_id: string; name: string; count: number }>;
 }
 export interface ArchiveSummary {
+  transfer_kind?: 'house';
   complete: boolean;
   images: number;
   missing: Array<{ name: string; reason: string; kind: string; owner_id: string }>;
@@ -23,12 +25,13 @@ export interface ArchiveSummary {
 }
 export interface ArchiveExport extends ArchiveSummary { archive: true; token: string; filename: string }
 export interface BackupExportState {
-  kind: 'full' | 'space'; planOnly: boolean; busy: boolean; error: string; archive?: ArchiveExport;
+  kind: 'full' | 'space' | 'house'; planOnly: boolean; busy: boolean; error: string; archive?: ArchiveExport;
   preparedJson?: LegacyExport;
 }
 interface TransferHost extends PlanHostProvider {
   isConnected: boolean;
   _space: string;
+  readonly _haHouseTransferApi?: number | null;
   _backupExportDialog: BackupExportState | null;
   _showToast(message: string, id?: string): void;
   _t(key: I18nKey, values?: Record<string, string>): string;
@@ -37,7 +40,7 @@ interface LegacyExport { archive?: false; document: unknown; filename: string; r
 interface PreviewReply {
   token: string; preview: Record<string, unknown>; expected_config_rev: number; expected_layout_rev: number;
 }
-interface TransferOwner { port: PlanHost; key: object; revision: number }
+interface TransferOwner { port: PlanHost; key: object; revision: number; house?: boolean }
 
 function transferError(code: string): Error & { code: string } {
   return Object.assign(new Error(code), { code });
@@ -66,9 +69,10 @@ export class BackupArchiveClient {
     return port.authorityKey === owner.key && (cleanup || port.writeAuthorityRevision === owner.revision);
   }
 
-  public discard(token: string, owner = this.owner()): void {
+  public discard(token: string, owner = this.owner(), house = owner.house): void {
     if (token) this.cleanup = this.cleanup.then(async () => {
-      if (this.current(owner, true)) await owner.port.request({ type: 'houseplan/backup/cancel', token });
+      if (this.current(owner, true)) await owner.port.request({ type: 'houseplan/backup/cancel', token,
+        ...(house ? { transfer_kind: 'house' } : {}) });
     }).catch(() => undefined);
   }
 
@@ -94,17 +98,19 @@ export class BackupArchiveClient {
 
   private async flushImportCancels(): Promise<void> {
     for (const [operation_id, owner] of this.pendingImportCancels) {
-      if (this.current(owner, true)) await owner.port.request({ type: 'houseplan/backup/cancel', operation_id });
+      if (this.current(owner, true)) await owner.port.request({ type: 'houseplan/backup/cancel', operation_id,
+        ...(owner.house ? { transfer_kind: 'house' } : {}) });
       this.pendingImportCancels.delete(operation_id);
     }
   }
 
   public dispose(): void { this.cancelExport(); this.cancelImport(); }
 
-  public selectKind(kind: 'full' | 'space'): void {
+  public selectKind(kind: 'full' | 'space' | 'house'): void {
     const state = this.host._backupExportDialog;
     const c = planHostOf(this.host).capabilities;
     if (kind === 'full' ? !c.installationBackup : !c.planTransfer) return;
+    if (kind === 'house' && this.host._haHouseTransferApi !== 1) return;
     if (!state || state.busy) return;
     this.cancelExport();
     this.host._backupExportDialog = { ...state, kind, planOnly: !c.installationBackup, archive: undefined, preparedJson: undefined, error: '' };
@@ -124,17 +130,23 @@ export class BackupArchiveClient {
     const owner = this.owner(); this.importOwner = owner;
     await this.cleanup;
     if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
-    const magic = new Uint8Array(await file.slice(0, 4).arrayBuffer());
-    const zip = (magic[0] === 0x50 && magic[1] === 0x4b) || file.name.toLowerCase().endsWith('.zip');
-    if (zip && !owner.port.capabilities.installationBackup) throw transferError('invalid_format');
-    if (zip && !owner.port.environment.permissions.admin) throw transferError('zip_admin_only');
+    const prefix = await readHousePrefix(file);
+    if (prefix.kind === 'unsupported') throw transferError('unsupported-transfer');
+    const house = prefix.kind === 'house';
+    owner.house = house;
+    if (house && (!owner.port.capabilities.planTransfer || this.host._haHouseTransferApi !== 1)) {
+      throw transferError('house_transfer_update_required'); // no upload to an old backend
+    }
+    const zip = prefix.zip || file.name.toLowerCase().endsWith('.zip');
+    if (zip && !house && !owner.port.capabilities.installationBackup) throw transferError('invalid_format');
+    if (zip && !house && !owner.port.environment.permissions.admin) throw transferError('zip_admin_only');
     if (zip) await this.flushImportCancels();
     if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
     const operation = zip ? Array.from(crypto.getRandomValues(new Uint8Array(16)),
       byte => byte.toString(16).padStart(2, '0')).join('') : undefined;
     this.importOperation = operation;
     try {
-      const response = await this.fetch(zip ? '/api/houseplan/backup/import/preview'
+      const response = await this.fetch(house ? '/api/houseplan/transfer/import/preview' : zip ? '/api/houseplan/backup/import/preview'
         : '/api/houseplan/import/preview?duplicate_policy=skip', {
         method: 'POST', body: file, signal: controller.signal,
         headers: { 'content-type': zip ? 'application/zip' : 'application/json',
@@ -144,7 +156,8 @@ export class BackupArchiveClient {
       const data = await response.json().catch(() => { throw transferError(fallback); }) as PreviewReply & { error?: string };
       if (!this.current(owner)) throw transferError('context-changed');
       if (!response.ok || data.error) throw transferError(data.error || fallback);
-      if (data.preview.kind === 'space' ? !owner.port.capabilities.planTransfer : !owner.port.capabilities.installationBackup) {
+      if ((house && data.preview.kind !== 'house') || (!house && data.preview.kind === 'house')
+        || (data.preview.kind === 'space' || data.preview.kind === 'house' ? !owner.port.capabilities.planTransfer : !owner.port.capabilities.installationBackup)) {
         this.discard(data.token, owner);
         throw transferError('invalid_format');
       }
@@ -165,6 +178,8 @@ export class BackupArchiveClient {
     const showToast = captureToast(this.host);
     const host = this.host, state = host._backupExportDialog, owner = this.owner();
     if (!state || state.busy || !owner.port.environment.ready) return;
+    owner.house = state.kind === 'house';
+    if (owner.house && (host._haHouseTransferApi !== 1 || !owner.port.capabilities.planTransfer)) return;
     this.exportOwner = owner;
     const epoch = ++this.exportEpoch;
     this.exportAbort?.abort();
@@ -178,6 +193,7 @@ export class BackupArchiveClient {
       const result = state.archive || state.preparedJson || await owner.port.request<ArchiveExport | LegacyExport>({
         type: 'houseplan/export/create', kind: state.kind,
         ...(state.kind === 'space' ? { space_id: host._space, plan_only: !owner.port.capabilities.installationBackup || state.planOnly } : {}),
+        ...(state.kind === 'house' ? { plan_only: true } : {}),
         ...(state.kind === 'full' && owner.port.environment.permissions.admin ? { archive: true } : {}),
         card_version: metadata.card_version,
       });
@@ -192,9 +208,14 @@ export class BackupArchiveClient {
           host._backupExportDialog = { ...state, archive: result, busy: false, error: '' };
           return; // A second, distinctly labelled action is the consent.
         }
-        const response = await this.fetch(`/api/houseplan/backup/export/${encodeURIComponent(result.token)}`, {
-          method: 'POST', signal: controller.signal, headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ confirm_missing_content: !result.complete }),
+        const house = result.transfer_kind === 'house';
+        if (house !== !!owner.house) throw transferError('invalid_format');
+        const response = await this.fetch(house
+          ? `/api/houseplan/transfer/export/${encodeURIComponent(result.token)}?confirm_missing_content=${result.complete ? '0' : '1'}`
+          : `/api/houseplan/backup/export/${encodeURIComponent(result.token)}`, {
+          method: house ? 'GET' : 'POST', signal: controller.signal,
+          ...(!house ? { headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ confirm_missing_content: !result.complete }) } : {}),
         }, owner);
         if (!response.ok) {
           const error = await response.json().catch(() => ({})) as { error?: string };
@@ -257,7 +278,7 @@ export function renderArchiveSummary(t: (key: ToolsI18nKey, values?: Record<stri
   }).join('; ');
   return html`<div class="backupcontent hpf-reading-block hpf-reading-padded" data-hp="archive-summary">
     <b>${t('backup.zip_images_summary', { n: String(summary.images) })}</b>
-    <span>${summary.snapshot.length ? t('backup.zip_snapshot_summary', { date: dates }) : t('backup.zip_snapshot_absent')}</span>
+    ${summary.transfer_kind === 'house' ? nothing : html`<span>${summary.snapshot.length ? t('backup.zip_snapshot_summary', { date: dates }) : t('backup.zip_snapshot_absent')}</span>`}
     ${restoring ? html`<span>${t('backup.zip_snapshot_replace_notice')}</span>` : nothing}
     ${summary.snapshot_ignored_off ? html`${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`<div class="backupdetailrows">${t('backup.zip_snapshot_ignored_off')}</div>` })}` : nothing}
     ${!summary.complete ? html`${callout({ className:'backupwarn', kind:'warning', role:'alert', body:html`<div class="backupdetailrows"><b>${t('backup.zip_incomplete_title')}</b>

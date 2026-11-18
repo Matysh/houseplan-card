@@ -11,7 +11,7 @@ import copy
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 
-from .command_ports import CommandCache, CommandError, PlanPair
+from .command_ports import CommandCache, CommandError, PairCommitFailure, PlanPair
 from .coordinate_canonicalization import (
     canonicalize_config_geometry,
     canonicalize_layout_geometry,
@@ -132,9 +132,21 @@ class MemoryPlanTransaction:
         # serialization or fallible copy between the two publications.
         config = {**copy.deepcopy(self.storage.config_data), "config": copy.deepcopy(target["config"]),
                   "rev": target["config_rev"]}
+        house = target.get("house_files")
         layout = {**copy.deepcopy(target.get("final_metadata", {})),
-                  "layout": canonicalize_layout_geometry(target["layout"]),
+                  "layout": copy.deepcopy(target["layout"]) if house else canonicalize_layout_geometry(target["layout"]),
                   "rev": target["layout_rev"]}
+        if house:
+            resources = getattr(self.storage, "house", None)
+            if resources is None:
+                raise CommandError("not_ready")
+            try:
+                await resources.recover(house["descriptor"], house["action"])
+                authorize()
+                self._cas()
+            except Exception as error:
+                await resources.recover(house["descriptor"], "rollback")
+                raise PairCommitFailure(recovery_pending=False) from error
         self.storage.config_data, self.storage.layout_data = config, layout
         self.cache.schema_clean_rev = None
         self._accepted()

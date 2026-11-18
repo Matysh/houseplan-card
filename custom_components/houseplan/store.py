@@ -138,6 +138,8 @@ class HouseplanData:
     # #936: private ZIP sessions; no archive bytes or tokens enter config/export.
     backup_service: Any | None = None
     backup_root: str = ""
+    # Independent plan-only transfer pool; no Zigbee/full-backup lifecycle.
+    house_resources: Any | None = None
     # #1073: bounded connection-owned marker history; never part of config/export.
     marker_history: Any | None = None
     marker_history_owner: Any | None = None
@@ -198,6 +200,7 @@ def layout_store_payload(
     metadata: dict[str, Any] | None = None,
     remove: tuple[str, ...] = (),
     replace_metadata: bool = False,
+    preserve_exact: bool = False,
 ) -> dict[str, Any]:
     """Build one layout-store write without silently dropping metadata.
 
@@ -212,7 +215,7 @@ def layout_store_payload(
     }
     if metadata:
         out.update(metadata)
-    out["layout"] = canonicalize_layout_geometry(layout)
+    out["layout"] = copy.deepcopy(layout) if preserve_exact else canonicalize_layout_geometry(layout)
     out["rev"] = rev
     return out
 
@@ -226,6 +229,7 @@ async def async_save_layout_state(
     metadata: dict[str, Any] | None = None,
     remove: tuple[str, ...] = (),
     replace_metadata: bool = False,
+    preserve_exact: bool = False,
 ) -> dict[str, Any]:
     """Persist layout and return the exact store document written."""
     payload = layout_store_payload(
@@ -235,6 +239,7 @@ async def async_save_layout_state(
         metadata=metadata,
         remove=remove,
         replace_metadata=replace_metadata,
+        preserve_exact=preserve_exact,
     )
     await runtime.store.async_save(payload)
     return payload
@@ -378,6 +383,21 @@ async def async_converge_store_pair(
     layout_data: dict[str, Any] | None = None,
 ) -> ResolvedStorePair:
     """Converge legacy pairs, or one fenced ZIP files/cache/config/layout unit."""
+    house = pending.get("house_files")
+    if house is not None:
+        if (pending.get("kind") not in {"house_import", "house_import_rollback"}
+                or not isinstance(house, dict) or set(house) != {"action", "descriptor"}
+                or house["action"] != ("rollback" if pending["kind"].endswith("_rollback") else "publish")
+                or "archive" in pending):
+            raise ValueError("invalid house intent")
+        from .command_adapter import house_resources
+
+        resources = house_resources(runtime)
+        async with resources.transaction():
+            await resources.recover(house["descriptor"], house["action"])
+            result = await _async_converge_pair_documents(runtime, pending,
+                config_data=config_data, layout_data=layout_data)
+        return result
     archive = pending.get("archive")
     if archive is None:
         return await _async_converge_pair_documents(
@@ -432,9 +452,10 @@ async def _async_converge_pair_documents(
     if layout_data is None:
         layout_data = await runtime.store.async_load() or {}
 
-    target_config = (copy.deepcopy(pending["config"]) if str(pending.get("kind", "")).endswith("_rollback")
+    exact_house = pending.get("kind") in {"house_import", "house_import_rollback"} and "house_files" in pending
+    target_config = (copy.deepcopy(pending["config"]) if exact_house or str(pending.get("kind", "")).endswith("_rollback")
                      else canonicalize_config_geometry(pending["config"]))
-    target_layout = canonicalize_layout_geometry(pending["layout"])
+    target_layout = copy.deepcopy(pending["layout"]) if exact_house else canonicalize_layout_geometry(pending["layout"])
     config_rev = int(config_data.get("rev", 0))
     layout_rev = int(layout_data.get("rev", 0))
     target_config_rev = int(pending.get(
@@ -470,6 +491,7 @@ async def _async_converge_pair_documents(
                 previous_rev=previous_config_rev,
                 observe_history=False,
                 graph_pair=True,
+                canonical=exact_house,
             )
         except Exception:
             # A Store write is allowed to fail after its atomic replacement.
@@ -503,6 +525,7 @@ async def _async_converge_pair_documents(
         metadata=metadata,
         remove=tuple(remove_metadata),
         replace_metadata=replace_metadata,
+        preserve_exact=exact_house,
     )
     try:
         layout_data = await async_save_layout_state(
@@ -513,6 +536,7 @@ async def _async_converge_pair_documents(
             metadata=metadata,
             remove=tuple(remove_metadata),
             replace_metadata=replace_metadata,
+            preserve_exact=exact_house,
         )
     except Exception:
         layout_data = await runtime.store.async_load() or {}
@@ -546,6 +570,13 @@ async def async_resolve_pending_pair(runtime: HouseplanData) -> ResolvedStorePai
         )
         config_data, layout_data = recovered.config_data, recovered.layout_data
         recovered_kind = recovered.recovered_kind
+        if "house_files" in pending:
+            from .command_adapter import house_resources
+
+            try:
+                await house_resources(runtime).recovery_complete(pending["house_files"]["descriptor"])
+            except Exception:  # noqa: BLE001 - both stores already converged
+                _LOGGER.warning("House Plan: recovered house staging cleanup deferred", exc_info=True)
     config = config_data.get("config")
     if isinstance(config, dict):
         migrated = migrate_pair(config, layout_data.get("layout") or {},

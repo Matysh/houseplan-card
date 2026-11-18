@@ -232,6 +232,8 @@ def build_merge(document, current_config, current_layout):
     target = _json_copy(current_config)
     layout = _json_copy(current_layout)
     existing = target.setdefault("spaces", [])
+    if not existing:
+        target["model_version"] = PLAN_MODEL_VERSION
     if len(existing) + len(spaces) > MAX_SPACES:
         raise fail("space_limit")
     used = {str(item["id"]) for space in [*existing, *spaces]

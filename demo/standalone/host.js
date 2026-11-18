@@ -10,7 +10,7 @@ export function createCorePlanHost(capabilities){
   const rpc=async value=>{
     const authority=key,sequence=epoch;
     if(!environment.ready||!environment.connected)throw error('not_ready');
-    if(!environment.permissions.write&&(value.op==='post'||value.op==='request'&&!value.command.type.endsWith('/get')))throw error('unauthorized');
+    if(!environment.permissions.write&&(value.op==='post'||value.op==='get'||value.op==='request'&&!value.command.type.endsWith('/get')))throw error('unauthorized');
     if(fail){const code=fail;fail=undefined;throw error(code);}
     if(hold){const wait=hold;hold=undefined;await wait;}
     if(authority!==key||sequence!==epoch)throw error('context-changed');
@@ -30,10 +30,16 @@ export function createCorePlanHost(capabilities){
       return ()=>{if(live){live=false;set.delete(receive);}};},
     subscribeEnvironment(receive){listeners.add(receive);return ()=>listeners.delete(receive);},
     http:{postJson,async request(path,init){
+      if((init?.method||'GET')==='GET'){
+        const result=await rpc({op:'get',path});
+        const binary=atob(result.bytes),bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+        return new Response(bytes,{headers:{'Content-Type':result.mime,'Content-Disposition':`attachment; filename="${result.filename}"`}});
+      }
       const body=init?.body instanceof FormData?init.body.get('file'):init?.body;
       const bytes=new Uint8Array(await body.arrayBuffer());let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
       const fields=init?.body instanceof FormData?Object.fromEntries([...init.body].filter(([key])=>key!=='file')):{};
-      const result=await postJson(path,{...fields,name:body.name||'plan.json',mime:body.type,bytes:btoa(binary)});return Response.json(result);
+      const result=await postJson(path,{...fields,name:body.name||'plan.json',mime:body.type,bytes:btoa(binary),
+        operation_id:new Headers(init?.headers).get('x-houseplan-operation')||undefined});return Response.json(result);
     }},
     content:{async resolve(paths){return rpc({op:'content',paths});},async resolveAssets(ids){
       return request({type:'houseplan/assets/resolve',asset_ids:ids});}},

@@ -170,6 +170,11 @@ class PlanCommands:
 
         return await self._invoke(import_preview, self, raw, duplicate_policy)
 
+    async def house_preview(self, blocks, declared_size, operation_id) -> dict:
+        from .house_commands import preview
+
+        return await self._invoke(preview, self, blocks, declared_size, operation_id)
+
     async def upload_plan(self, raw: bytes, space_id: str, extension: str) -> dict:
         from .upload_commands import upload_plan
 
@@ -203,6 +208,14 @@ class PlanCommands:
             return await execute(self, message)
         if operation in {"houseplan/export/create", "houseplan/import/revalidate", "houseplan/import/apply",
                          "houseplan/backup/cancel"}:
+            if message.get("kind") == "house" or message.get("transfer_kind") == "house":
+                from . import house_commands
+
+                handler = {"houseplan/export/create": house_commands.export_create,
+                           "houseplan/import/revalidate": house_commands.revalidate,
+                           "houseplan/import/apply": house_commands.apply,
+                           "houseplan/backup/cancel": house_commands.cancel}[operation]
+                return await handler(self, message)
             from . import portable_commands
 
             handlers = {"houseplan/export/create": portable_commands.export_create,
@@ -249,6 +262,7 @@ class PlanCommands:
             "integration_version": environment.identity.integration_version,
             "frontend_fingerprint": environment.identity.frontend_fingerprint,
             "build": environment.identity.build, **PLAN_APIS,
+            **({"house_transfer_api": 1} if environment.house is not None else {}),
             **({"graph_migration": {"version": 1, "source_available": True}}
                if isinstance(pair.layout_data.get("plan_graph_migration_backup"), dict) else {})}
 
