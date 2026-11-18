@@ -30,8 +30,9 @@ test('#1466 background entry forwards the weekly default and keeps explicit loca
 });
 
 test('#1466 scheduled workflow and its template dispatch the weekly default', async () => {
-  for (const file of ['../../.github/workflows/process-next-background.yml', '../templates/background.yml']) {
-    const workflow = parse(readFileSync(new URL(file, import.meta.url), 'utf8'));
+  for (const file of [new URL('../../.github/workflows/process-next-background.yml', import.meta.url),
+    new URL('../templates/background.yml', import.meta.url)]) {
+    const workflow = parse(readFileSync(file, 'utf8'));
     const expression = workflow.jobs.background.env.HP_MUTATION_SHARDS;
     // GitHub supplies this fallback when no repository override is installed.
     const fallback = /\|\|\s*'(\d+)'/.exec(expression)?.[1];
