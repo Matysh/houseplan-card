@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15931,
+  "revision": 15932,
   "nextTicket": 522,
   "nextFence": 522,
   "tasks": {
@@ -5001,163 +5001,25 @@
     },
     "1467": {
       "issue": 1467,
+      "branch": "codex/1467-release-readiness",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1467-release-readiness",
-      "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 521,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795039282608,
-      "reviewEntry": 2,
-      "patchId": "b55aa500811693f84b7f77711b7738d0d9085b83",
-      "changedFiles": [
-        "demo/benchmark_large_house.mjs",
-        "demo/golden/harness.mjs",
-        "demo/helpers/test-surface-ready.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "test/golden-matrix.test.mjs",
-        "test/performance-surface-ready.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
-        "fromStatus": "S6-in-progress",
-        "at": 1795039153720,
-        "entry": 1,
-        "detail": "Поведение: test/golden-matrix.test.mjs: failed",
-        "eventId": "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:3:return:return:1467"
-      },
-      "s6": {
-        "id": "20261118T220140377-d46368b9",
-        "name": "Тесты для задачи #1467 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261118T220140377-d46368b9/report.json",
-        "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-        "status": "passed",
-        "finishedAt": "2026-11-18T22:02:11.464Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
+      "mergedSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
+      "mergedAt": 1795039602758,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1467:2:b55aa500811693f84b7f77711b7738d0d9085b83:25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-      "reviewMaterial": {
-        "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-        "expectedBase": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-        "patchId": "b55aa500811693f84b7f77711b7738d0d9085b83"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1467,
-        "requestId": "review:1467:2:b55aa500811693f84b7f77711b7738d0d9085b83:25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-        "kind": "code",
-        "base": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-        "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-        "patchId": "b55aa500811693f84b7f77711b7738d0d9085b83",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1467,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1467",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Общий standalone helper `demo/helpers/test-surface-ready.mjs` используется golden и benchmark через одинаковые внедрённые функции. Он отвергает незавершённые floor/mode intents, подготовку, booting и inert; empty допустим только по явному параметру фикстуры и при действительно пустой модели/готовом empty DOM. ISO требует настоящий Stage 4/readiness, конечный целочисленный count>=0, fingerprint и видимые непустые masonry paths с положительным getBBox; ноль построений main thread больше не выдаётся за отсутствие геометрии. Другие semantic/pixel assertions и матрица не менялись.\n\nБенчмарк ждёт готовность внутри времени первого кадра/смены этажа и режимных операций; ожидание View перед wheel остаётся снаружи wheel-метрики. Прогрев и циклы не обрывают отложенную подготовку следующим переключением. Историческую сопоставимость определяет прежний строгий runnerHash/окружение — несовпадающие серии не объявляются сравнимыми.\n\nПоложительные/отрицательные unit: 4/4 PASS, включая исполнение сериализованных функций как в браузере (`output/1467-unit.log`, первоначальное имя test-surface-ready, затем файл переименован в performance-surface-ready для наследования области). Каталог/план включает новый regression test в performance и три адресных поведения; окончательный S6 выполняет очередь. Изменены только тестовые инструменты и технические changelog, продуктовые source и эталоны не менялись. Полный beta-набор повторять не нужно: после слияния ремонтированных инструментов в кандидат будут повторены именно 13 упавших предусловий и диагностический замер. Новое содержимое кадров по-прежнему требует отдельного решения владельца.\n\nМатериал: `codex/1467-release-readiness` (два коммита: основной ремонт `bb9f9b13…`, затем адаптация source guard). Существенный риск для ревью: не превратить ожидание готовности в ожидание желаемого изображения, не разрешить empty/zero-build без фактических предусловий. До ремонта единственное настоящее PNG-отличие — кнопка удаления из #1453; его не скрывали изменением порога.\n\nПервый S6 `20261118T215544542-a0a0fd3f`: 302 шага, 251 зачтён, один отказ. Старый source guard `issue 570 Stage 4 reuses…` искал inline `data-hp-iso-stage` после noBorders-условия. Теперь он проверяет сохранённое noBorders-условие перед общим `__hpRenderedIsoReady`, не меняя ни одной сцены/порогов/проверок материала. Повторён только упавший case, 1/1 PASS (`output/1467-no-borders-reader.log`). Модель ещё не вызывалась.\n\nДва адресных browser preparation сценария реально прошли через общий golden harness после ремонта: `panel-isometric-geometry-view-light` (ready Stage4, настоящая кладка, count=0) и `first-space-empty-light` (ready empty, без stage). Диагностика `output/1467-native-preconditions.log`, не пиксельная приёмка. Адресный benchmark `--profile=large-house-v1 --warmups=0 --samples=1 --output=output/1467-performance-smoke.json` завершился exit0 (`output/1467-performance-smoke.log`), включая реальную готовность перед wheel и циклы переключения без новых построений. Один образец — проверка работоспособности ремонта, не семисэмпловый релизный замер и не основание сравнивать скорость со stable. Полный замер повторится на окончательном beta-кандидате; успешные прежние продуктовые/HA результаты повторять не нужно."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Ремонт можно принимать. Golden и бенчмарк теперь используют одну проверку готовности: `demo/helpers/test-surface-ready.mjs`. В браузер она попадает в неизменном виде через `toString()`. Проверка ждёт состояние карточки, а не нужную картинку. Требуется, чтобы применились режим и намерения смены этажа, загрузка закончилась, подготовка этажа и режимный переход завершились, `ha-card` был в состоянии `ready` без пассивного preview, а stage существовал и не был `inert`. Пустой экран засчитывается только в явно пустой фикстуре, при `_model.length === 0` и наличии `[data-hp=\"empty\"]`. ISO по-прежнему проверяется строго: Stage 4, readiness=ready, целое неотрицательное значение счётчика, fingerprint, непустые пути кладки и ненулевой `getBBox`. Значение счётчика 0 само по себе не даёт PASS. В бенчмарке ожидание готовности смены этажа и первого кадра входит в измеряемые интервалы. Ожидание перед wheel остаётся вне метрики `panZoom`. Блокеров нет. Для релиза остаются два риска, которые не проверены в S6. Первый: изменилась семантика проверяемой пробы `floorSwitchPasses` в профиле `large-house-isometric-backdrop-v1`, а адресный замер был только на `large-house-v1`. Второй: проверка ISO выполняется один раз, без ожидания.",
-          "understanding": "Проблема. После #1454 геометрию этажа может асинхронно подготовить Worker или кэш, поэтому старые предусловия перестали отражать реальную готовность. Golden ISO требовал `data-hp-iso-structural-builds >= 1`, хотя при попадании в кэш или работе Worker значение законно равно 0. Пустые и no-storage сцены ждали `.stage.mode-view`, хотя готовый пустой экран — это `ha-card` с `[data-hp=\"empty\"]` без stage (`src/houseplan-card.ts:12993-13007`). Бенчмарк перед wheel ждал только `!_modeTransitionBusy`, а возврат в View после Resize откладывается. В итоге `_mode` ещё был `plan`, и срабатывала ошибка `panZoom requires an interactive steady View`.\n\nПосле ремонта `testSurfaceReady(card, expected, allowEmpty)` проверяет: `_mode`, `_booting`, `_floorPreparation.pending`, `_floorPendingMode`, `_modeTransitionBusy` (getter = preparing || active, `src/houseplan-card.ts:1648`), `_modeTransitionPreparing`; атрибут `data-hp-floor-cache` на `ha-card` (ставится при pending/passive, `src/houseplan-card.ts:13650-13658`) и на вложенных узлах (stage `preview`/`preparing`, `:12916`); `data-hp-state` (`booting` при pending, `:13657`). Пустой экран допускается только для `view` и только при явном флаге и пустой модели. Иначе нужны `_loadOk` и неинертный `.stage.mode-${expected}` (класс формируется в `:13408`). `renderedIsoReady` использует реальные атрибуты stage (`:13415-13416`) и DOM кладки из `src/iso-scene-render.ts:269-318`: `data-hp=\"iso-walls\"` с `data-fingerprint`, `.iso-wall-depth-queue`, `path.iso-wall-top` / `path.iso-wall-side` / `path[data-hp-round-column]`.\n\nКакие пути разобраны:\n- `settleMode` в golden harness (`demo/golden/harness.mjs:1172-1193`), в том числе флаг `scenario.emptyPlan === true || !!scenario.firstSpace` и сцены матрицы (`matrix.mjs:358, 1631, 1636`);\n- ISO-ветка (`harness.mjs:1639-1651`) и обновлённый source guard в `test/golden-matrix.test.mjs`;\n- в бенчмарке: первый стабильный кадр (`:451-469`, ожидание внутри `firstStableRenderMs`), `spaceSwitch`, режимные операции plan/decor/resize, ожидание перед wheel (`:1281-1290`), прогрев, `switchCycle`, проба `floorSwitchPasses` (`:1383-1391`) и её оценка в `demo/performance/evaluate.mjs:65-77`, циклы памяти;\n- `reducedMotion: 'reduce'` в основных прогонах (`:121`): режимные переходы атомарны, поэтому ожидание plan внутри `resizePreview` почти не добавляет времени анимации.",
-          "analysis": [
-            {
-              "topic": "Граница готовности описывает состояние, а не нужную картинку",
-              "assessment": "Предикат проверяет только флаги жизненного цикла и структурный DOM: режим, отсутствие pending, preparing, passive и inert. Пиксели, цвета и состав сцены он не смотрит. Поэтому он не может превратиться в ожидание нужного изображения, а остальные семантические и пиксельные проверки harness не затронуты. Отказы приводят к таймауту с описанием состояния, а не к пропуску. Удачно, что `ha-card[data-hp-floor-cache]` и вложенный stage `preview`/`preparing` отвергаются одним условием по наличию атрибута. Так закрыты оба пассивных представления подготовки.",
-              "evidence": "`demo/helpers/test-surface-ready.mjs:2-17`; `src/houseplan-card.ts:12916, 13650-13658`; `harness.mjs:1185-1190` (диагностика `describe()` сохранена)."
-            },
-            {
-              "topic": "Пустой экран только при фактической пустоте",
-              "assessment": "`allowEmpty` лишь разрешает пустой экран и не делает его обязательным. Ветка срабатывает только при `expected === 'view'`, `_model.length === 0` и наличии `[data-hp=\"empty\"]`. Проверки booting, pending и `data-hp-state` выполняются раньше. Если в firstSpace-сцене позже появляется этаж, предикат переходит к обычной проверке stage. Обходной путь для непустой модели закрыт и покрыт unit-тестом.",
-              "evidence": "`test-surface-ready.mjs:11-13`; `src/houseplan-card.ts:12993-13007`; `test/performance-surface-ready.test.mjs` (второй тест: nonempty model и `_floorPendingMode` дают false)."
-            },
-            {
-              "topic": "ISO: значение счётчика 0 допустимо только при нарисованной кладке",
-              "assessment": "Условие строже прежнего по всем признакам, кроме нижней границы счётчика. Теперь нужны Stage 4, readiness=`ready`, `Number.isSafeInteger(count) && count >= 0` (отсутствующий атрибут превращается в NaN), непустой fingerprint, хотя бы одна грань с непустым `d` и положительный конечный bbox очереди. Отсутствие геометрии или пустая очередь не проходят. Для сцен noBorders исключение осталось прежним.",
-              "evidence": "`test-surface-ready.mjs:20-37`; `src/iso-scene-render.ts:269-318`; `harness.mjs:1647-1650`; отрицательные мутации в третьем unit-тесте."
-            },
-            {
-              "topic": "Бенчмарк: что попадает в измеряемые интервалы",
-              "assessment": "Ожидание готовности добавлено внутрь `firstStableRenderMs`, `spaceSwitch`, `switchCycle` и `resizePreview`, как требует задача. Ожидание перед wheel, наоборот, вынесено за `duration` `panZoom`. Прогрев и циклы памяти больше не прерывают отложенную подготовку следующим `_pickSpace`. Базу и кандидата измеряет один runner, поэтому относительное сравнение внутри прогона остаётся честным. Абсолютный уровень метрик меняется, и автор правильно опирается на `runnerHash`.",
-              "evidence": "`demo/benchmark_large_house.mjs:457-469, 544-549, 1244-1279, 1281-1298, 1313-1340, 1397-1403`."
-            },
-            {
-              "topic": "Изменилась семантика оцениваемой пробы `floorSwitchPasses`",
-              "assessment": "Раньше считались проходы обновления до первого `updateComplete === true`. Теперь подсчёт идёт до готовой поверхности (`:1389`), а `evaluate.mjs` для профиля backdrop требует ровно 1 проход на кандидате. По смыслу #739 AC2 («тёплая смена этажа рендерится один раз») новый счёт честнее: отложенный второй проход больше не прячется. Если поверхность готова сразу, `until` возвращается без ожидания, и число не меняется. Но если тёплая смена этажа с backdrop теперь проходит через асинхронную подготовку, кандидат упадёт на этой пробе. Это будет продуктовый сигнал, а не дефект ремонта. Адресный замер S6 охватил только `large-house-v1`, поэтому для этого профиля это гипотеза. Её подтвердит или опровергнет прогон `large-house-isometric-backdrop-v1`.",
-              "evidence": "`demo/benchmark_large_house.mjs:1375-1391` (комментарий над пробой описывает прежнюю границу подсчёта); `demo/performance/evaluate.mjs:65-77`."
-            },
-            {
-              "topic": "Внедрение функций и unit-контроли",
-              "assessment": "Функции standalone, без замыканий, поэтому подходят для `toString()` и `addScriptTag`. Четвёртый unit-тест исполняет сериализованные копии, что закрывает главный риск такого внедрения. Unit-фикстуры — моки DOM. Реальность селекторов я подтвердил чтением исходников продукта, а реальный DOM проверен браузерными прогонами из S6.",
-              "evidence": "`test/performance-surface-ready.test.mjs:61-68`; `harness.mjs:1129`; `benchmark_large_house.mjs:145`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "ISO-проверка в `harness.mjs:1647-1650` выполняется один раз, хотя теперь включает `data-hp-iso-readiness === 'ready'`. Раньше readiness не проверялась. Если готовность бумаги или runtime отстанет на кадр, сцена упадёт с ошибкой предусловия, а не дождётся готовности. Можно заменить проверку на `until(() => window.__hpRenderedIsoReady(card), <таймаут>)` с той же ошибкой при таймауте. Строгость сохранится: отсутствие кладки по-прежнему даст отказ, только позже. Цена — одна строка. Это не блокер: адресный прогон `panel-isometric-geometry-view-light` прошёл.",
-            "Обновить комментарий над пробой `floorSwitchPasses` (`benchmark_large_house.mjs:1375-1382`). Сейчас он говорит, что проходы считаются «until updateComplete reports quiescence», а граница теперь — готовая поверхность. Иначе следующий читатель неверно поймёт, почему счёт может включать проход после асинхронной подготовки.",
-            "В целевой повтор перед бетой включить профиль `large-house-isometric-backdrop-v1` или явно подтвердить, что он входит в повторяемый «диагностический замер». Иначе изменение проверяемой пробы `floorSwitchPasses` впервые проверится только на окончательном кандидате.",
-            "Пустую ветку можно дополнительно ограничить `ha-card` без `data-fixed-floor-state`. Экран ожидания fixed-floor тоже содержит `[data-hp=\"empty\"]` со спиннером (`src/houseplan-card.ts:12968-12975`). В текущих фикстурах fixed floor не используется, поэтому пользы немного; это защита от будущих сцен."
-          ],
-          "boundaries": "Ревью выполнено только по исходникам: helper, harness (`settleMode`, ISO-ветка), бенчмарк (все места вставок и окружающие измеряемые окна), `evaluate.mjs`, разметка карточки (`ha-card`, stage, пустые экраны, атрибуты ISO), `iso-scene-render.ts` и `iso-first-frame.ts`. Сам я ничего не запускал. Использовал результаты исполнителя и квитанцию S6 `20261118T220140377-d46368b9` (passed на `68fb9d6e`). Из них: unit-тесты 4/4; повтор упавшего source guard 1/1; два адресных браузерных сценария golden (ISO count=0 и ready empty); один образец бенчмарка `large-house-v1` с exit 0. Логи `output/1467-*` я не читал: в pinned-материале их нет, поэтому опираюсь на описание автора. Не проверено: остальные 11 из 13 упавших golden-предусловий, профили бенчмарка кроме `large-house-v1` (особенно backdrop с проверяемым `floorSwitchPasses`), а также совместимость нового предиката с базовыми (stable) бандлами в межверсионном прогоне. В исходниках базы я не проверял наличие классов `.stage.mode-plan`/`mode-decor` и `ha-card`. Если чего-то нет, прогон упадёт по таймауту, а не пройдёт ложно. Пиксельное отличие room-temperature (#1453) вне объёма задачи и требует решения владельца.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 36,
-          "cache_creation_input_tokens": 91788,
-          "cache_read_input_tokens": 877551,
-          "output_tokens": 16552,
-          "output_tokens_details": {
-            "thinking_tokens": 7658
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 91788,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 974,
-              "cache_read_input_tokens": 76833,
-              "cache_creation_input_tokens": 16676,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 16676
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРемонт можно принимать. Golden и бенчмарк теперь используют одну проверку готовности: `demo/helpers/test-surface-ready.mjs`. В браузер она попадает в неизменном виде через `toString()`. Проверка ждёт состояние карточки, а не нужную картинку. Требуется, чтобы применились режим и намерения смены этажа, загрузка закончилась, подготовка этажа и режимный переход завершились, `ha-card` был в состоянии `ready` без пассивного preview, а stage существовал и не был `inert`. Пустой экран засчитывается только в явно пустой фикстуре, при `_model.length === 0` и наличии `[data-hp=\"empty\"]`. ISO по-прежнему проверяется строго: Stage 4, readiness=ready, целое неотрицательное значение счётчика, fingerprint, непустые пути кладки и ненулевой `getBBox`. Значение счётчика 0 само по себе не даёт PASS. В бенчмарке ожидание готовности смены этажа и первого кадра входит в измеряемые интервалы. Ожидание перед wheel остаётся вне метрики `panZoom`. Блокеров нет. Для релиза остаются два риска, которые не проверены в S6. Первый: изменилась семантика проверяемой пробы `floorSwitchPasses` в профиле `large-house-isometric-backdrop-v1`, а адресный замер был только на `large-house-v1`. Второй: проверка ISO выполняется один раз, без ожидания.\n\n## Понимание решения\n\nПроблема. После #1454 геометрию этажа может асинхронно подготовить Worker или кэш, поэтому старые предусловия перестали отражать реальную готовность. Golden ISO требовал `data-hp-iso-structural-builds >= 1`, хотя при попадании в кэш или работе Worker значение законно равно 0. Пустые и no-storage сцены ждали `.stage.mode-view`, хотя готовый пустой экран — это `ha-card` с `[data-hp=\"empty\"]` без stage (`src/houseplan-card.ts:12993-13007`). Бенчмарк перед wheel ждал только `!_modeTransitionBusy`, а возврат в View после Resize откладывается. В итоге `_mode` ещё был `plan`, и срабатывала ошибка `panZoom requires an interactive steady View`.\n\nПосле ремонта `testSurfaceReady(card, expected, allowEmpty)` проверяет: `_mode`, `_booting`, `_floorPreparation.pending`, `_floorPendingMode`, `_modeTransitionBusy` (getter = preparing || active, `src/houseplan-card.ts:1648`), `_modeTransitionPreparing`; атрибут `data-hp-floor-cache` на `ha-card` (ставится при pending/passive, `src/houseplan-card.ts:13650-13658`) и на вложенных узлах (stage `preview`/`preparing`, `:12916`); `data-hp-state` (`booting` при pending, `:13657`). Пустой экран допускается только для `view` и только при явном флаге и пустой модели. Иначе нужны `_loadOk` и неинертный `.stage.mode-${expected}` (класс формируется в `:13408`). `renderedIsoReady` использует реальные атрибуты stage (`:13415-13416`) и DOM кладки из `src/iso-scene-render.ts:269-318`: `data-hp=\"iso-walls\"` с `data-fingerprint`, `.iso-wall-depth-queue`, `path.iso-wall-top` / `path.iso-wall-side` / `path[data-hp-round-column]`.\n\nКакие пути разобраны:\n- `settleMode` в golden harness (`demo/golden/harness.mjs:1172-1193`), в том числе флаг `scenario.emptyPlan === true || !!scenario.firstSpace` и сцены матрицы (`matrix.mjs:358, 1631, 1636`);\n- ISO-ветка (`harness.mjs:1639-1651`) и обновлённый source guard в `test/golden-matrix.test.mjs`;\n- в бенчмарке: первый стабильный кадр (`:451-469`, ожидание внутри `firstStableRenderMs`), `spaceSwitch`, режимные операции plan/decor/resize, ожидание перед wheel (`:1281-1290`), прогрев, `switchCycle`, проба `floorSwitchPasses` (`:1383-1391`) и её оценка в `demo/performance/evaluate.mjs:65-77`, циклы памяти;\n- `reducedMotion: 'reduce'` в основных прогонах (`:121`): режимные переходы атомарны, поэтому ожидание plan внутри `resizePreview` почти не добавляет времени анимации.\n\n## Разбор решения\n\n### Граница готовности описывает состояние, а не нужную картинку\n\nПредикат проверяет только флаги жизненного цикла и структурный DOM: режим, отсутствие pending, preparing, passive и inert. Пиксели, цвета и состав сцены он не смотрит. Поэтому он не может превратиться в ожидание нужного изображения, а остальные семантические и пиксельные проверки harness не затронуты. Отказы приводят к таймауту с описанием состояния, а не к пропуску. Удачно, что `ha-card[data-hp-floor-cache]` и вложенный stage `preview`/`preparing` отвергаются одним условием по наличию атрибута. Так закрыты оба пассивных представления подготовки.\n\nОснование: `demo/helpers/test-surface-ready.mjs:2-17`; `src/houseplan-card.ts:12916, 13650-13658`; `harness.mjs:1185-1190` (диагностика `describe()` сохранена).\n\n### Пустой экран только при фактической пустоте\n\n`allowEmpty` лишь разрешает пустой экран и не делает его обязательным. Ветка срабатывает только при `expected === 'view'`, `_model.length === 0` и наличии `[data-hp=\"empty\"]`. Проверки booting, pending и `data-hp-state` выполняются раньше. Если в firstSpace-сцене позже появляется этаж, предикат переходит к обычной проверке stage. Обходной путь для непустой модели закрыт и покрыт unit-тестом.\n\nОснование: `test-surface-ready.mjs:11-13`; `src/houseplan-card.ts:12993-13007`; `test/performance-surface-ready.test.mjs` (второй тест: nonempty model и `_floorPendingMode` дают false).\n\n### ISO: значение счётчика 0 допустимо только при нарисованной кладке\n\nУсловие строже прежнего по всем признакам, кроме нижней границы счётчика. Теперь нужны Stage 4, readiness=`ready`, `Number.isSafeInteger(count) && count >= 0` (отсутствующий атрибут превращается в NaN), непустой fingerprint, хотя бы одна грань с непустым `d` и положительный конечный bbox очереди. Отсутствие геометрии или пустая очередь не проходят. Для сцен noBorders исключение осталось прежним.\n\nОснование: `test-surface-ready.mjs:20-37`; `src/iso-scene-render.ts:269-318`; `harness.mjs:1647-1650`; отрицательные мутации в третьем unit-тесте.\n\n### Бенчмарк: что попадает в измеряемые интервалы\n\nОжидание готовности добавлено внутрь `firstStableRenderMs`, `spaceSwitch`, `switchCycle` и `resizePreview`, как требует задача. Ожидание перед wheel, наоборот, вынесено за `duration` `panZoom`. Прогрев и циклы памяти больше не прерывают отложенную подготовку следующим `_pickSpace`. Базу и кандидата измеряет один runner, поэтому относительное сравнение внутри прогона остаётся честным. Абсолютный уровень метрик меняется, и автор правильно опирается на `runnerHash`.\n\nОснование: `demo/benchmark_large_house.mjs:457-469, 544-549, 1244-1279, 1281-1298, 1313-1340, 1397-1403`.\n\n### Изменилась семантика оцениваемой пробы `floorSwitchPasses`\n\nРаньше считались проходы обновления до первого `updateComplete === true`. Теперь подсчёт идёт до готовой поверхности (`:1389`), а `evaluate.mjs` для профиля backdrop требует ровно 1 проход на кандидате. По смыслу #739 AC2 («тёплая смена этажа рендерится один раз») новый счёт честнее: отложенный второй проход больше не прячется. Если поверхность готова сразу, `until` возвращается без ожидания, и число не меняется. Но если тёплая смена этажа с backdrop теперь проходит через асинхронную подготовку, кандидат упадёт на этой пробе. Это будет продуктовый сигнал, а не дефект ремонта. Адресный замер S6 охватил только `large-house-v1`, поэтому для этого профиля это гипотеза. Её подтвердит или опровергнет прогон `large-house-isometric-backdrop-v1`.\n\nОснование: `demo/benchmark_large_house.mjs:1375-1391` (комментарий над пробой описывает прежнюю границу подсчёта); `demo/performance/evaluate.mjs:65-77`.\n\n### Внедрение функций и unit-контроли\n\nФункции standalone, без замыканий, поэтому подходят для `toString()` и `addScriptTag`. Четвёртый unit-тест исполняет сериализованные копии, что закрывает главный риск такого внедрения. Unit-фикстуры — моки DOM. Реальность селекторов я подтвердил чтением исходников продукта, а реальный DOM проверен браузерными прогонами из S6.\n\nОснование: `test/performance-surface-ready.test.mjs:61-68`; `harness.mjs:1129`; `benchmark_large_house.mjs:145`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- ISO-проверка в `harness.mjs:1647-1650` выполняется один раз, хотя теперь включает `data-hp-iso-readiness === 'ready'`. Раньше readiness не проверялась. Если готовность бумаги или runtime отстанет на кадр, сцена упадёт с ошибкой предусловия, а не дождётся готовности. Можно заменить проверку на `until(() => window.__hpRenderedIsoReady(card), <таймаут>)` с той же ошибкой при таймауте. Строгость сохранится: отсутствие кладки по-прежнему даст отказ, только позже. Цена — одна строка. Это не блокер: адресный прогон `panel-isometric-geometry-view-light` прошёл.\n- Обновить комментарий над пробой `floorSwitchPasses` (`benchmark_large_house.mjs:1375-1382`). Сейчас он говорит, что проходы считаются «until updateComplete reports quiescence», а граница теперь — готовая поверхность. Иначе следующий читатель неверно поймёт, почему счёт может включать проход после асинхронной подготовки.\n- В целевой повтор перед бетой включить профиль `large-house-isometric-backdrop-v1` или явно подтвердить, что он входит в повторяемый «диагностический замер». Иначе изменение проверяемой пробы `floorSwitchPasses` впервые проверится только на окончательном кандидате.\n- Пустую ветку можно дополнительно ограничить `ha-card` без `data-fixed-floor-state`. Экран ожидания fixed-floor тоже содержит `[data-hp=\"empty\"]` со спиннером (`src/houseplan-card.ts:12968-12975`). В текущих фикстурах fixed floor не используется, поэтому пользы немного; это защита от будущих сцен.\n\n## Границы анализа\n\nРевью выполнено только по исходникам: helper, harness (`settleMode`, ISO-ветка), бенчмарк (все места вставок и окружающие измеряемые окна), `evaluate.mjs`, разметка карточки (`ha-card`, stage, пустые экраны, атрибуты ISO), `iso-scene-render.ts` и `iso-first-frame.ts`. Сам я ничего не запускал. Использовал результаты исполнителя и квитанцию S6 `20261118T220140377-d46368b9` (passed на `68fb9d6e`). Из них: unit-тесты 4/4; повтор упавшего source guard 1/1; два адресных браузерных сценария golden (ISO count=0 и ready empty); один образец бенчмарка `large-house-v1` с exit 0. Логи `output/1467-*` я не читал: в pinned-материале их нет, поэтому опираюсь на описание автора. Не проверено: остальные 11 из 13 упавших golden-предусловий, профили бенчмарка кроме `large-house-v1` (особенно backdrop с проверяемым `floorSwitchPasses`), а также совместимость нового предиката с базовыми (stable) бандлами в межверсионном прогоне. В исходниках базы я не проверял наличие классов `.stage.mode-plan`/`mode-decor` и `ha-card`. Если чего-то нет, прогон упадёт по таймауту, а не пройдёт ложно. Пиксельное отличие room-temperature (#1453) вне объёма задачи и требует решения владельца.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: 25b910a9598b6bfa6805a1f2a52f74e14a9f6381 → 68fb9d6ec311e669bd7a9299022173d6a551e599\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1467, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nОбщий standalone helper `demo/helpers/test-surface-ready.mjs` используется golden и benchmark через одинаковые внедрённые функции. Он отвергает незавершённые floor/mode intents, подготовку, booting и inert; empty допустим только по явному параметру фикстуры и при действительно пустой модели/готовом empty DOM. ISO требует настоящий Stage 4/readiness, конечный целочисленный count>=0, fingerprint и видимые непустые masonry paths с положительным getBBox; ноль построений main thread больше не выдаётся за отсутствие геометрии. Другие semantic/pixel assertions и матрица не менялись.\n\nБенчмарк ждёт готовность внутри времени первого кадра/смены этажа и режимных операций; ожидание View перед wheel остаётся снаружи wheel-метрики. Прогрев и циклы не обрывают отложенную подготовку следующим переключением. Историческую сопоставимость определяет прежний строгий runnerHash/окружение — несовпадающие серии не объявляются сравнимыми.\n\nПоложительные/отрицательные unit: 4/4 PASS, включая исполнение сериализованных функций как в браузере (`output/1467-unit.log`, первоначальное имя test-surface-ready, затем файл переименован в performance-surface-ready для наследования области). Каталог/план включает новый regression test в performance и три адресных поведения; окончательный S6 выполняет очередь. Изменены только тестовые инструменты и технические changelog, продуктовые source и эталоны не менялись. Полный beta-набор повторять не нужно: после слияния ремонтированных инструментов в кандидат будут повторены именно 13 упавших предусловий и диагностический замер. Новое содержимое кадров по-прежнему требует отдельного решения владельца.\n\nМатериал: `codex/1467-release-readiness` (два коммита: основной ремонт `bb9f9b13…`, затем адаптация source guard). Существенный риск для ревью: не превратить ожидание готовности в ожидание желаемого изображения, не разрешить empty/zero-build без фактических предусловий. До ремонта единственное настоящее PNG-отличие — кнопка удаления из #1453; его не скрывали изменением порога.\n\nПервый S6 `20261118T215544542-a0a0fd3f`: 302 шага, 251 зачтён, один отказ. Старый source guard `issue 570 Stage 4 reuses…` искал inline `data-hp-iso-stage` после noBorders-условия. Теперь он проверяет сохранённое noBorders-условие перед общим `__hpRenderedIsoReady`, не меняя ни одной сцены/порогов/проверок материала. Повторён только упавший case, 1/1 PASS (`output/1467-no-borders-reader.log`). Модель ещё не вызывалась.\n\nДва адресных browser preparation сценария реально прошли через общий golden harness после ремонта: `panel-isometric-geometry-view-light` (ready Stage4, настоящая кладка, count=0) и `first-space-empty-light` (ready empty, без stage). Диагностика `output/1467-native-preconditions.log`, не пиксельная приёмка. Адресный benchmark `--profile=large-house-v1 --warmups=0 --samples=1 --output=output/1467-performance-smoke.json` завершился exit0 (`output/1467-performance-smoke.log`), включая реальную готовность перед wheel и циклы переключения без новых построений. Один образец — проверка работоспособности ремонта, не семисэмпловый релизный замер и не основание сравнивать скорость со stable. Полный замер повторится на окончательном beta-кандидате; успешные прежние продуктовые/HA результаты повторять не нужно.\n```\n\n</details>\n",
-        "createdAt": "2026-11-18T22:06:13.964Z",
-        "artifactId": 14476401669,
-        "runId": 44407623998,
-        "runAttempt": 1,
-        "completedAt": "2026-11-18T22:06:17Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44407623998",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381"
+      "devBuild": {
+        "status": "pending"
       }
     }
   },
@@ -5571,198 +5433,8 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1467,
-    "worker": "finish",
-    "token": "521:finish:61d737f2-8d22-4c54-b150-aa1e93e30a4d:finish:1:admit",
-    "fence": 521,
-    "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-    "expectedBase": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795039287153,
-    "expiresAt": 1795043199920,
-    "patchId": "b55aa500811693f84b7f77711b7738d0d9085b83",
-    "reviewRequest": "review:1467:2:b55aa500811693f84b7f77711b7738d0d9085b83:25b910a9598b6bfa6805a1f2a52f74e14a9f6381"
-  },
-  "events": {
-    "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:2:synchronized": {
-      "digest": "a38faa8015628e15da63ea63d48b962063d9960dcb04729caa473c62980d4379",
-      "issue": 1467
-    },
-    "finish:5b6f3892-b3bc-4508-99ce-62974c33dc6e": {
-      "digest": "f38670df8fe479d840b67f7a5c0e55608941e87f7ea60f23fed7707b872fd1a3",
-      "issue": 1467
-    },
-    "finish:8aded851-230b-444d-ac33-397a4ec4e06b": {
-      "digest": "1e1ffdd7f63be0379c12191155d6bd06c721a229fb2949a65826f16173e385f4",
-      "issue": 1467
-    },
-    "finish:3c9b7ccc-d560-4744-9080-e1efc062234a": {
-      "digest": "c7a578cefb79f403916c1e2b077036690b5ae831509089dc12bd28a7e2441913",
-      "issue": 1467
-    },
-    "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:3:return": {
-      "digest": "5963f68e285428a750b521d3071a8d504d2367deaf2ca691ad0b15077c810ad8",
-      "issue": 1467
-    },
-    "finish:61d737f2-8d22-4c54-b150-aa1e93e30a4d:finish:2:synchronized": {
-      "digest": "324685101c7fe3873d9caa403cd4d7d12e5e59416bed4c635d6948d51f2a6a35",
-      "issue": 1467
-    },
-    "finish:61d737f2-8d22-4c54-b150-aa1e93e30a4d:finish:3:s6-label": {
-      "digest": "3d3b3ab6ecd4cf2e28e1c6c7a741095abf2c16e0cf40e77c0a34f0de4b9ebfe7",
-      "issue": 1467
-    },
-    "finish:61d737f2-8d22-4c54-b150-aa1e93e30a4d:finish:4:review-requested": {
-      "digest": "c07e2a68cf551eb7b292844fdb19f1796061718a65f1361ed862078588cd3935",
-      "issue": 1467
-    },
-    "github:44407584103:1:completions:message:407180731cf4f5fac00e5164c2d8fdb8331317bf681f453a7878158f369ada58": {
-      "digest": "1f43981090f578e456fb93013927d595eb83930a72d90a5794f027dc6559c875",
-      "issue": 1467
-    },
-    "github:44407584103:1:completions:message:fb3bf8ab7c3ef63ef0522441f50dae54d9051cfe8b164d521b5553dccd3fd7e5": {
-      "digest": "de5bb7b4d8a10505230b1a59780016c382af1c4305728551daf526f31ecc49ac",
-      "issue": 1467
-    },
-    "github:44407584103:1:completions:message:d1b2dde5034d88e2c78d2fb7e22dd673187cf529844e1fef580be609044a3b5d": {
-      "digest": "f48a1b19362d7a17713e282553b077486bfeed25cb8aa22ac10b7bcb1dd78067",
-      "issue": 1467
-    },
-    "github:44407584103:1:completions:message:c47a4ff84311c2b2160991879c0ae2b40b3223006a1d6f414fb3623d0166b297": {
-      "digest": "750f78373d2874eea3add843322d9a52d686f78c2dd0e9530c2ea1c8ffbeba7d",
-      "issue": 1467
-    },
-    "github:44407584103:1:completions:notice:534449262cbcb1733ec07eacea7ace91d75f12b854659759723148bd9dcc6dfe": {
-      "digest": "d45de59775f9afe8639e9e968a5b4522d214372d731fdf504bbabfe87d717cf6",
-      "issue": 1467
-    },
-    "github:44407584103:1:completions:message:534449262cbcb1733ec07eacea7ace91d75f12b854659759723148bd9dcc6dfe": {
-      "digest": "42b9086d48fbf1f23c4a8ffc43c35e7518b57a76c51e683f04bdc6518e62bf1f",
-      "issue": 1467
-    },
-    "github:44407584103:1:completions:message:e1e97dd611f3137c6f247e76b6728ed447bce58bb3628f4f7af23383f69b6397": {
-      "digest": "2f1bfbff8fcf8ad9881fa2737f05ce5e30a113a2cfdec2c7e23c641458ac8d23",
-      "issue": 1467
-    },
-    "github:44408274478:1:tick:0:review-presentation": {
-      "digest": "9820532e3ccb862d2d9e1b143554b869772ae0ae7df332635947d3d561b3ba5a",
-      "issue": 1467
-    },
-    "github:44408274478:1:tick:0:review-complete": {
-      "digest": "dc95132b2c5abcb5e1257d79695f9d9df4d2159cd17c6ae8a840528866641010",
-      "issue": 1467
-    },
-    "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d": {
-      "digest": "8d6f0065128bf256b6880dd34119c4c65431894681516c857e41edf9425a2c2b",
-      "issue": 1467,
-      "message": {
-        "kind": "queued",
-        "issue": 1467,
-        "at": 1795038928223,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "bb9f9b13c5ddbee1eef3a6d7ac28f4bfd7dc1ab7",
-        "delivered": true
-      }
-    },
-    "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:1:admit": {
-      "digest": "9bff3ec987c28fb8ce3a7e807c93e365a6d85029fc3e8a7a66ba0177452960b9",
-      "issue": 1467,
-      "message": {
-        "kind": "admitted",
-        "issue": 1467,
-        "at": 1795038931939,
-        "entry": 1,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "bb9f9b13c5ddbee1eef3a6d7ac28f4bfd7dc1ab7",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:3:return:return:1467": {
-      "digest": "5963f68e285428a750b521d3071a8d504d2367deaf2ca691ad0b15077c810ad8",
-      "issue": 1467,
-      "message": {
-        "kind": "return",
-        "issue": 1467,
-        "at": 1795039153720,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795039153720,
-          "entry": 1,
-          "detail": "Поведение: test/golden-matrix.test.mjs: failed",
-          "eventId": "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:3:return:return:1467"
-        },
-        "delivered": true
-      }
-    },
-    "finish:61d737f2-8d22-4c54-b150-aa1e93e30a4d": {
-      "digest": "493ce81c41ca8d6493d68d2788d6814b703e8c78961025a6bd85ae70b0112c13",
-      "issue": 1467,
-      "message": {
-        "kind": "queued",
-        "issue": 1467,
-        "at": 1795039282608,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-        "delivered": true
-      }
-    },
-    "finish:61d737f2-8d22-4c54-b150-aa1e93e30a4d:finish:1:admit": {
-      "digest": "8cf3a31753b237c95e2496254a70562e9407dfe9849043f3317d7e11687dae46",
-      "issue": 1467,
-      "message": {
-        "kind": "admitted",
-        "issue": 1467,
-        "at": 1795039287153,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:61d737f2-8d22-4c54-b150-aa1e93e30a4d:finish:3:s6-complete": {
-      "digest": "ba996f00c340b474307d15678ab078161bc4f5f9a7ded8f87eff794a032e4c39",
-      "issue": 1467,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1467,
-        "at": 1795039332599,
-        "entry": 2,
-        "track": "show",
-        "layer": "product",
-        "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-        "phase": "review",
-        "evidence": {
-          "id": "20261118T220140377-d46368b9",
-          "name": "Тесты для задачи #1467 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261118T220140377-d46368b9/report.json",
-          "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-          "status": "passed",
-          "finishedAt": "2026-11-18T22:02:11.464Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Общий standalone helper `demo/helpers/test-surface-ready.mjs` используется golden и benchmark через одинаковые внедрённые функции. Он отвергает незавершённые floor/mode intents, подготовку, booting и inert; empty допустим только по явному параметру фикстуры и при действительно пустой модели/готовом empty DOM. ISO требует настоящий Stage 4/readiness, конечный целочисленный count>=0, fingerprint и видимые непустые masonry paths с положительным getBBox; ноль построений main thread больше не выдаётся за отсутствие геометрии. Другие semantic/pixel assertions и матрица не менялись.\n\nБенчмарк ждёт готовность внутри времени первого кадра/смены этажа и режимных операций; ожидание View перед wheel остаётся снаружи wheel-метрики. Прогрев и циклы не обрывают отложенную подготовку следующим переключением. Историческую сопоставимость определяет прежний строгий runnerHash/окружение — несовпадающие серии не объявляются сравнимыми.\n\nПоложительные/отрицательные unit: 4/4 PASS, включая исполнение сериализованных функций как в браузере (`output/1467-unit.log`, первоначальное имя test-surface-ready, затем файл переименован в performance-surface-ready для наследования области). Каталог/план включает новый regression test в performance и три адресных поведения; окончательный S6 выполняет очередь. Изменены только тестовые инструменты и технические changelog, продуктовые source и эталоны не менялись. Полный beta-набор повторять не нужно: после слияния ремонтированных инструментов в кандидат будут повторены именно 13 упавших предусловий и диагностический замер. Новое содержимое кадров по-прежнему требует отдельного решения владельца.\n\nМатериал: `codex/1467-release-readiness` (два коммита: основной ремонт `bb9f9b13…`, затем адаптация source guard). Существенный риск для ревью: не превратить ожидание готовности в ожидание желаемого изображения, не разрешить empty/zero-build без фактических предусловий. До ремонта единственное настоящее PNG-отличие — кнопка удаления из #1453; его не скрывали изменением порога.\n\nПервый S6 `20261118T215544542-a0a0fd3f`: 302 шага, 251 зачтён, один отказ. Старый source guard `issue 570 Stage 4 reuses…` искал inline `data-hp-iso-stage` после noBorders-условия. Теперь он проверяет сохранённое noBorders-условие перед общим `__hpRenderedIsoReady`, не меняя ни одной сцены/порогов/проверок материала. Повторён только упавший case, 1/1 PASS (`output/1467-no-borders-reader.log`). Модель ещё не вызывалась.\n\nДва адресных browser preparation сценария реально прошли через общий golden harness после ремонта: `panel-isometric-geometry-view-light` (ready Stage4, настоящая кладка, count=0) и `first-space-empty-light` (ready empty, без stage). Диагностика `output/1467-native-preconditions.log`, не пиксельная приёмка. Адресный benchmark `--profile=large-house-v1 --warmups=0 --samples=1 --output=output/1467-performance-smoke.json` завершился exit0 (`output/1467-performance-smoke.log`), включая реальную готовность перед wheel и циклы переключения без новых построений. Один образец — проверка работоспособности ремонта, не семисэмпловый релизный замер и не основание сравнивать скорость со stable. Полный замер повторится на окончательном beta-кандидате; успешные прежние продуктовые/HA результаты повторять не нужно.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    }
-  },
+  "active": null,
+  "events": {},
   "devWebhook": {
     "sourceSha": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
     "status": "delivered",
