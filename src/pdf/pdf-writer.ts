@@ -23,7 +23,9 @@ export type PdfCommand =
   | { kind: 'line'; points: readonly (readonly [number, number])[];
       stroke: PdfColor; width: number; dash?: readonly number[] }
   | { kind: 'vector'; ops: readonly PdfVectorOp[]; fill?: PdfColor; stroke?: PdfColor;
-      width: number; fillRule?: PdfFillRule }
+      width: number; fillRule?: PdfFillRule;
+      /** Optional even-odd crop in the same top-down page coordinates as ops. */
+      clip?: readonly (readonly (readonly [number, number])[])[] }
   | { kind: 'text'; x: number; y: number; text: string; size: number;
       color?: PdfColor; angle?: number; align?: 'left' | 'center' | 'right'; rotateWithPlan?: boolean }
   | { kind: 'image'; imageId: string; x: number; y: number; width: number; height: number;
@@ -236,7 +238,12 @@ function contentStream(
       }
       out.push('S', 'Q');
     } else if (command.kind === 'vector') {
+      if (command.clip && !command.clip.some(ring => ring.length >= 3)) continue;
       out.push('q');
+      if (command.clip) {
+        emitPath(command.clip);
+        out.push('W*', 'n');
+      }
       if (command.fill) out.push(`${color(command.fill)} rg`);
       if (command.stroke) out.push(`${color(command.stroke)} RG ${fmt(command.width)} w`, '1 J 1 j');
       for (const entry of command.ops) {

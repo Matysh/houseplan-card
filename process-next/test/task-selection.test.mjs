@@ -25,6 +25,34 @@ async function fixture(files, run) {
     }
 }
 const select = (root, options = {}) => selectTaskTests({ root, inventory, track: 'ship', layer: 'product', ...options });
+test('#1451 workstation storage and product projection select their addressed witnesses', async () => fixture({
+    'custom_components/houseplan/core/furniture_workstation.py': '',
+    'src/iso-lab-workstation.ts': '',
+    'src/projection-view-camera.ts': '',
+    'src/pdf/pdf-scene.ts': '',
+    'tests_backend/test_furniture_workstation.py': '',
+    'test/furniture-workstation.test.mjs': '',
+    'test/projection-view-camera.test.mjs': '',
+    'test/iso-worker-cache-profile.test.mjs': '',
+    'test/furniture-volume-generator.test.mjs': '',
+    'test/pdf-workstation.test.mjs': '',
+}, async dir => {
+    const catalog = await testCatalog(dir, inventory);
+    const selection = await select(dir, {track:'ask',changedFiles:[
+        'custom_components/houseplan/core/furniture_workstation.py','src/projection-view-camera.ts','src/pdf/pdf-scene.ts']});
+    for (const path of ['custom_components/houseplan/core/furniture_workstation.py','src/iso-lab-workstation.ts',
+        'tests_backend/test_furniture_workstation.py','test/furniture-workstation.test.mjs']) {
+        assert.ok(domainsOf(path).includes('storage'),path);
+    }
+    for (const [path,domain] of [
+        ['test/projection-view-camera.test.mjs','isometry'],['test/iso-worker-cache-profile.test.mjs','isometry'],
+        ['test/furniture-volume-generator.test.mjs','decor'],['test/pdf-workstation.test.mjs','pdf']]) {
+        const row=catalog.rows.find(row=>row.path===path);
+        assert.ok(row?.domains.includes(domain),path);
+        assert.equal(row.classified,true,path);
+        assert.ok(JSON.stringify(selection).includes(path),path);
+    }
+}));
 test('#1464 house format, files, prefix and HA transaction regressions select storage by their owning source', async () => fixture({
     'custom_components/houseplan/core/house_commands.py': '',
     'tests_backend/test_house_document.py': '',

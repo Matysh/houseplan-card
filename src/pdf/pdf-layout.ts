@@ -9,7 +9,9 @@ export function rotatePdfCommands(commands: readonly PdfCommand[], rotation: Pla
   return commands.map((command): PdfCommand => {
     if (command.kind === 'path') return { ...command, rings: command.rings.map(ring => ring.map(point)) };
     if (command.kind === 'line') return { ...command, points: command.points.map(point) };
-    if (command.kind === 'vector') return { ...command, ops: command.ops.map(op => {
+    if (command.kind === 'vector') return { ...command,
+      ...(command.clip ? {clip: command.clip.map(ring => ring.map(point))} : {}),
+      ops: command.ops.map(op => {
       if (op.op === 'M' || op.op === 'L') { const [x, y] = point([op.x, op.y]); return { ...op, x, y }; }
       if (op.op === 'C') {
         const [x, y] = point([op.x, op.y]), [x1, y1] = point([op.x1, op.y1]), [x2, y2] = point([op.x2, op.y2]);
@@ -90,7 +92,22 @@ export function pdfCommandBounds(commands: readonly PdfCommand[]): PdfBounds {
     } else if (command.kind === 'line') {
       for (const [x, y] of command.points) extend(bounds, x, y, command.width / 2);
     } else if (command.kind === 'vector') {
-      extendVector(bounds, command.ops, command.width / 2);
+      if (!command.clip) extendVector(bounds, command.ops, command.width / 2);
+      else {
+        const ink = emptyPdfBounds(), crop = emptyPdfBounds();
+        extendVector(ink, command.ops, command.width / 2);
+        for (const ring of command.clip) {
+          if (ring.length >= 3) for (const [x, y] of ring) extend(crop, x, y);
+        }
+        if (validPdfBounds(ink) && validPdfBounds(crop)) {
+          const clipped = {minX:Math.max(ink.minX,crop.minX), minY:Math.max(ink.minY,crop.minY),
+            maxX:Math.min(ink.maxX,crop.maxX), maxY:Math.min(ink.maxY,crop.maxY)};
+          if (validPdfBounds(clipped)) {
+            extend(bounds, clipped.minX, clipped.minY);
+            extend(bounds, clipped.maxX, clipped.maxY);
+          }
+        }
+      }
     } else if (command.kind === 'text') {
       const text = pdfTextBounds(command);
       extend(bounds, text.minX, text.minY);
@@ -131,6 +148,7 @@ export function translatePdfCommands(
     };
     if (command.kind === 'vector') return {
       ...command, ops: command.ops.map((operation) => translateVectorOperation(operation, dx, dy)),
+      ...(command.clip ? {clip:command.clip.map(ring => ring.map(([x,y]) => [x+dx,y+dy] as const))} : {}),
     };
     return { ...command, x: command.x + dx, y: command.y + dy };
   });

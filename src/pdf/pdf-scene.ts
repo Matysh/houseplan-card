@@ -45,7 +45,8 @@ import {
   measurePdfText, pdfTextBounds, type PdfCommand, type PdfJpegImage, type PdfPage,
   type PdfTextBounds,
 } from './pdf-writer';
-import { transformSvgPath } from './svg-path';
+import { transformSvgPath, type PdfAffine } from './svg-path';
+import { desktopSurface, TOWER_BOX } from '../iso-lab-workstation';
 import { pdfLocalDate } from './pdf-date';
 import { rotatePdfCommands } from './pdf-layout';
 import { planRotation, type PlanRotation } from '../view-frame';
@@ -410,6 +411,10 @@ function buildPdfCandidate(
       f: top + (constantY - bounds.minY) * pointPerUnit,
     };
   };
+  const furnitureCrop = (matrix: PdfAffine, x: number, y: number, w: number, h: number): [number,number][][] => [
+    [[x,y],[x+w,y],[x+w,y+h],[x,y+h]].map(([px,py]): [number,number] =>
+      [matrix.a*px+matrix.c*py+matrix.e,matrix.b*px+matrix.d*py+matrix.f]),
+  ];
 
   let commands: PdfCommand[] = [];
   // Architectural export deliberately has no marker/device projection pass.
@@ -465,11 +470,28 @@ function buildPdfCandidate(
     });
     else if (shape.kind === 'furniture') {
       const art = GENERATED_FURNITURE_ART[canonicalFurnitureId(shape.symbol)];
-      if (art) commands.push({
-        kind: 'vector', ops: transformSvgPath(art.d, furnitureMatrix(shape, art.viewW, art.viewH)),
-        stroke: INK,
-        width: Math.max(0.2 * MM, decorStrokeCm(shape, built.cellCm, GRID_PITCH) * 10 * MM / scale),
-      });
+      if (art) {
+        const width = Math.max(0.2 * MM, decorStrokeCm(shape, built.cellCm, GRID_PITCH) * 10 * MM / scale);
+        const tower = shape.symbol === 'computer' && shape.workstation === 'tower';
+        const matrix = furnitureMatrix(shape, tower ? TOWER_BOX.width : art.viewW,
+          tower ? TOWER_BOX.height : art.viewH);
+        if (tower) {
+          // The persisted box is the tower crop, not a shrunken full computer.
+          matrix.e -= matrix.a*TOWER_BOX.x;
+          matrix.f -= matrix.b*TOWER_BOX.x;
+        }
+        commands.push({kind:'vector', ops:transformSvgPath(art.d,matrix), stroke:INK, width,
+          ...(tower ? {clip:furnitureCrop(matrix,TOWER_BOX.x,TOWER_BOX.y,TOWER_BOX.width,TOWER_BOX.height)} : {})});
+        const surface = desktopSurface(shape.symbol), computer = GENERATED_FURNITURE_ART.computer;
+        if (surface && computer && shape.workstation === 'mounted') {
+          const equipment = {a:matrix.a*surface.scale,b:matrix.b*surface.scale,
+            c:matrix.c*surface.scale,d:matrix.d*surface.scale,
+            e:matrix.e+matrix.a*surface.x+matrix.c*surface.y,
+            f:matrix.f+matrix.b*surface.x+matrix.d*surface.y};
+          commands.push({kind:'vector', ops:transformSvgPath(computer.d,equipment), stroke:INK, width,
+            clip:furnitureCrop(equipment,0,0,80,60)});
+        }
+      }
       else commands.push({
         kind: 'path', rings: [boxCorners(shape).map(([x, y]) => pt([x * NORM_W, y * NORM_W]))],
         stroke: INK, width: 0.25 * MM,

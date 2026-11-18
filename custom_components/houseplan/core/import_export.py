@@ -117,7 +117,8 @@ def create_migration_source_export(runtime: PortableRuntime, snapshot: dict[str,
     migrate_layout(layout, unfinished_layout)
     model = _stored_model_version(config)
     document = {
-        "format": FORMAT, "export_version": 1, "kind": "full", "model_version": model,
+        "format": FORMAT, "export_version": 4 if has_workstations(config) else 1,
+        "kind": "full", "model_version": model,
         "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "source_fingerprint": source_fingerprint(runtime.instance_id),
         "card_version": card_version, "integration_version": runtime.integration_version,

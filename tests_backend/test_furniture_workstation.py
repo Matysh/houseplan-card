@@ -19,6 +19,7 @@ from custom_components.houseplan.core.import_export import (
     ImportFailure,
     build_space_merge,
     create_export,
+    create_migration_source_export,
     parse_document,
     prepare_preview,
 )
@@ -118,6 +119,25 @@ def test_json_v4_keeps_links_and_old_version_selection_stays_when_feature_absent
                           space_id="floor" if kind == "space" else None,
                           plan_only=plan_only, card_version="test", config_root=tmp_path)
     assert old["export_version"] == 2
+
+
+def test_migration_source_uses_v4_for_links_without_rewriting_the_raw_pair(tmp_path):
+    snapshot = {"version": 1, "config_data": {"rev": 4, "config": source()},
+                "layout_data": {"rev": 7, "layout": {}}}
+    before = copy.deepcopy(snapshot)
+    document, _ = create_migration_source_export(IDENTITY, snapshot, card_version="test", config_root=tmp_path)
+    assert document["export_version"] == 4
+    assert document["model_version"] == 0
+    assert document["payload"] == {"config": before["config_data"]["config"], "layout": {}}
+    assert snapshot == before
+    for item in snapshot["config_data"]["config"]["spaces"][0]["decor"]:
+        item.pop("workstation", None)
+        item.pop("workstation_tower_id", None)
+    before = copy.deepcopy(snapshot)
+    old, _ = create_migration_source_export(IDENTITY, snapshot, card_version="test", config_root=tmp_path)
+    assert old["export_version"] == 1
+    assert old["payload"] == {"config": before["config_data"]["config"], "layout": {}}
+    assert snapshot == before
 
 
 def test_all_copy_and_remap_routes_keep_their_own_pair_without_source_aliases(tmp_path):
