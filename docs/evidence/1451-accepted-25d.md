@@ -304,6 +304,30 @@ workstation journeys и gallery routes без изменения входов н
 `output/1451-final-preview-camera-results.md`; исторический
 `output/1451-final-camera-native-results.md` для `60f6eeb…` сохранён.
 
+### Третий S6: изолированный host пассивной камеры
+
+Третий завершённый S6 `20261118T203048023-ac6c2def` на
+`a11073ebf2f8c89433196c51adb8a2a06f2a3536`: materialClean=true,
+800 шагов, 446 зачтены, 799 успешных и один отказ. Новых продуктовых
+отказов нет: source-extracted unit `_syncFloorPreviewCamera` не предоставил
+своему host новые `_presentedViewPlane` / `_adoptViewPlane` зависимости.
+Остальные первоначальные и повторные отказы прошли общий S6.
+
+Исправлен только host этого unit: явная плоскость 125°/40°, принятие камеры
+до чтения и записи SVG, отсутствие повторной записи для той же камеры.
+Refit, live/config writes и requestUpdate запрещены явными assertions.
+Это не no-op adoption и не изменение настоящей математики камеры.
+Повторён только упавший case:
+
+```sh
+node --test --test-name-pattern='passive SVG follows an adopted camera' test/floor-cache-publication.test.mjs
+```
+
+1/1 PASS, `output/1451-publication-preview-fixture-repaired.log`.
+Продуктовые исходники, native oracle 1 px, кандидат, изображения и эталоны
+не менялись. Повторных build/HA/gallery/capture/mutation прогонов для
+этого ремонта нет; окончательный S6 и передачу на ревью фиксирует очередь.
+
 ## Привязка к AC и оставшиеся ограничения
 
 | AC | Подтверждение и граница |

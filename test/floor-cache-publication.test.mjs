@@ -85,11 +85,22 @@ test('#1454 passive SVG follows an adopted camera without refitting, live writes
   const find=node=>{if(ts.isMethodDeclaration(node)&&node.name.getText(source)==='_syncFloorPreviewCamera')declaration=node.getText(source);ts.forEachChild(node,find);};
   find(source);const output=ts.transpileModule(`export class Fixture { ${declaration} }`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
   const exports={};new Function('exports',output)(exports);const card=new exports.Fixture();
-  let value='0 0 1000 1000',writes=0;const svg={getAttribute:()=>value,setAttribute(name,next){assert.equal(name,'viewBox');value=next;writes++;}};
+  const plane={rotDeg:125,tiltDeg:50,xyScale:1,zScale:1,origin:[500,500],floorScaleY:Math.sin(40*Math.PI/180)};
+  const adopted={x:491,y:-104,w:777,h:924},calls=[];
+  let camera={x:0,y:0,w:1000,h:1000},value='0 0 1000 1000',writes=0;
+  const forbidden=()=>assert.fail('passive camera sync cannot refit, write live state or request another update');
+  const svg={getAttribute:()=>value,setAttribute(name,next){assert.equal(name,'viewBox');calls.push('write');value=next;writes++;}};
   Object.assign(card,{renderRoot:{querySelector(selector){assert.equal(selector,'[data-hp-cache-preview]');return svg;}},
-    _baseVb:()=>[0,0,1000,1000],_viewOr:()=>({x:491,y:-104,w:777,h:924})});
+    _presentedViewPlane(){calls.push('plane');return plane;},
+    _adoptViewPlane(actual){assert.strictEqual(actual,plane);calls.push('adopt');camera=adopted;},
+    _baseVb:()=>[0,0,1000,1000],_viewOr(){calls.push('read');assert.strictEqual(camera,adopted);return camera;},
+    _refitView:forbidden,_applyView:forbidden,_restoreZoom:forbidden,_saveZoom:forbidden,
+    _saveConfig:forbidden,_writeConfig:forbidden,_persistLayout:forbidden,requestUpdate:forbidden});
   card._syncFloorPreviewCamera();assert.equal(value,'491 -104 777 924');assert.equal(writes,1);
+  assert.deepEqual(calls,['plane','adopt','read','write'],'adopt the actual presented plane before reading and painting its camera');
+  calls.length=0;
   card._syncFloorPreviewCamera();assert.equal(writes,1,'same camera does not schedule/write again');
+  assert.deepEqual(calls,['plane','adopt','read'],'unchanged adoption causes no second attribute write or update');
 });
 
 function scopedHintHarness(previous){
