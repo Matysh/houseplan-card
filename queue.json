@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 15660,
+  "revision": 15661,
   "nextTicket": 515,
   "nextFence": 515,
   "tasks": {
@@ -4966,9 +4966,6 @@
         "expectedBase": "46c8b6a510f882687a1fa00f0fb74e707481e0cc",
         "patchId": "ec2ac67301b591631114d788ac0b709823c32174"
       },
-      "automationError": "automation-error",
-      "automationSince": 1795022984504,
-      "automationDetail": "GitHub POST failed (403)",
       "reviewRetry": {
         "requestId": "review:1466:1:ec2ac67301b591631114d788ac0b709823c32174:46c8b6a510f882687a1fa00f0fb74e707481e0cc",
         "eventId": "github:44359251542:1:tick:0:review-retry",
@@ -5403,7 +5400,7 @@
     "expectedBase": "46c8b6a510f882687a1fa00f0fb74e707481e0cc",
     "phase": "review",
     "admittedAt": 1795022417478,
-    "expiresAt": 1795026566963,
+    "expiresAt": 1795026618295,
     "patchId": "ec2ac67301b591631114d788ac0b709823c32174",
     "reviewRequest": "review:1466:1:ec2ac67301b591631114d788ac0b709823c32174:46c8b6a510f882687a1fa00f0fb74e707481e0cc"
   },
@@ -5474,6 +5471,10 @@
     },
     "github:44359251542:1:tick:0:review-retry": {
       "digest": "bbc19e841ba47884306418645f5f13a74819a94fc208f6be740dd3b526d282ec",
+      "issue": 1466
+    },
+    "finish:716dbdb5-4196-4469-8ecf-48c5326e7a54:finish:1:heartbeat": {
+      "digest": "d4f71e5a6c58c45ac3f7f6e8347d637f26b7cb4d3313b0ab4453fcd2caaec85d",
       "issue": 1466
     },
     "finish:4dd3f6fc-b73c-430e-849c-8226e7b9ef97": {
