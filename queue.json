@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15747,
-  "nextTicket": 517,
+  "revision": 15748,
+  "nextTicket": 518,
   "nextFence": 517,
   "tasks": {
     "1024": {
@@ -4593,14 +4593,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1451-accepted-25d",
-      "materialSha": "d7f65198e07b8c84f32927cd0cd30d9178e82539",
+      "materialSha": "8b9044dff26c65919618fdb0a4707a55499d5f03",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 516,
-      "queued": false,
+      "ticket": 517,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795027834338,
-      "reviewEntry": 2,
+      "readyAt": 1795031446929,
+      "reviewEntry": 3,
       "patchId": "294f95911bfd9a37efea8cb827fa9fa13e350888",
       "changedFiles": [
         ".gitignore",
@@ -4802,8 +4802,7 @@
         "entry": 2,
         "detail": "Поведение: test/color-picker.test.mjs: failed; Поведение: test/coordinate-write-barrier-guard.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/iso-overlays.test.mjs: failed; Поведение: test/iso-stage6.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Поведение: test/writer-fixed-point.test.mjs: failed; Браузер: isometric live touch: failed; Браузер: wall node topology: failed",
         "eventId": "finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:3:return:return:1451"
-      },
-      "reason": "checks-failed"
+      }
     },
     "1452": {
       "issue": 1452,
@@ -5572,7 +5571,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1451
+  ],
   "active": null,
   "events": {
     "github:44358531868:1:label:spec-request": {
@@ -5830,6 +5831,19 @@
           "detail": "Поведение: test/color-picker.test.mjs: failed; Поведение: test/coordinate-write-barrier-guard.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/iso-overlays.test.mjs: failed; Поведение: test/iso-stage6.test.mjs: failed; Поведение: test/mutation-browser-offload.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Поведение: test/writer-fixed-point.test.mjs: failed; Браузер: isometric live touch: failed; Браузер: wall node topology: failed",
           "eventId": "finish:f7e4165c-9d96-45bb-a0c0-ba20a793e7ad:finish:3:return:return:1451"
         }
+      }
+    },
+    "finish:ea015a55-347c-46b3-9b9d-42ccc4ea0e05": {
+      "digest": "c8694457c2673dbc632baeea6ddd956f713af86ba201083e5538a59b28613af0",
+      "issue": 1451,
+      "message": {
+        "kind": "queued",
+        "issue": 1451,
+        "at": 1795031446929,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "8b9044dff26c65919618fdb0a4707a55499d5f03"
       }
     }
   },
