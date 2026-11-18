@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 15898,
-  "nextTicket": 521,
+  "revision": 15899,
+  "nextTicket": 522,
   "nextFence": 521,
   "tasks": {
     "1024": {
@@ -4988,14 +4988,14 @@
       "track": "show",
       "layer": "product",
       "branch": "codex/1467-release-readiness",
-      "materialSha": "bb9f9b13c5ddbee1eef3a6d7ac28f4bfd7dc1ab7",
+      "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 520,
-      "queued": false,
+      "ticket": 521,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795038928223,
-      "reviewEntry": 1,
+      "readyAt": 1795039282608,
+      "reviewEntry": 2,
       "patchId": "31e3d28c33900fcf8b4195294bbddb7f70c934db",
       "changedFiles": [
         "demo/benchmark_large_house.mjs",
@@ -5005,7 +5005,6 @@
         "docs/CHANGELOG.ru.md",
         "test/performance-surface-ready.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5427,7 +5426,9 @@
       "runId": 44396497384
     }
   },
-  "waiting": [],
+  "waiting": [
+    1467
+  ],
   "active": null,
   "events": {
     "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:2:synchronized": {
@@ -5495,6 +5496,19 @@
           "detail": "Поведение: test/golden-matrix.test.mjs: failed",
           "eventId": "finish:6b6ee3bc-5764-46b5-a578-940b10648d0d:finish:3:return:return:1467"
         }
+      }
+    },
+    "finish:61d737f2-8d22-4c54-b150-aa1e93e30a4d": {
+      "digest": "493ce81c41ca8d6493d68d2788d6814b703e8c78961025a6bd85ae70b0112c13",
+      "issue": 1467,
+      "message": {
+        "kind": "queued",
+        "issue": 1467,
+        "at": 1795039282608,
+        "entry": 2,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599"
       }
     }
   },
