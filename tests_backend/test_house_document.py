@@ -95,6 +95,7 @@ def test_additive_merge_scopes_duplicate_local_ids_and_does_not_repair_target_or
     lambda document: document.update(model_version=True),
     lambda document: document.update(required_api={"house_transfer_api": True}),
     lambda document: document.update(transfer={"plan_only": 1}),
+    lambda document: document.update(build={"private_binding": "device:secret"}),
     lambda document: document["payload"]["config"].update(markers=[{"id": "private"}]),
     lambda document: document["payload"]["config"].update(settings={"sun_ray_origin": "outer"}),
     lambda document: document["payload"]["config"]["spaces"][0]["rooms"][0].update(area="private"),

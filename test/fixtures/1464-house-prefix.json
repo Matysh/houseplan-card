@@ -1,0 +1,6 @@
+{
+  "description": "Independent canonical local ZIP header: version20, flags0, stored, time0/date33, CRC d15c7e6d, length44, name8, no extra; not a generated test snapshot.",
+  "mimetype": "application/vnd.houseplan.plan+zip;version=1",
+  "prefixHex": "504b0304140000000000000021006d7e5cd12c0000002c000000080000006d696d65747970656170706c69636174696f6e2f766e642e686f757365706c616e2e706c616e2b7a69703b76657273696f6e3d31",
+  "length": 82
+}

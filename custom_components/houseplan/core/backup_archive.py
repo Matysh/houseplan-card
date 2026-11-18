@@ -352,10 +352,13 @@ def build_archive(path: Path, document: dict[str, Any], root: Path,
     return manifest
 
 
-def _check_directory(path: Path) -> None:
+def _check_directory(path: Path, *, entry_limit: int | None = None,
+                     archive_limit: int | None = None) -> None:
     """Bound directory allocations BEFORE ZipFile constructs ZipInfo objects."""
     size = path.stat().st_size
-    maximum = min(MAX_ARCHIVE_BYTES, current_policy().archive_bytes)
+    maximum = min(MAX_ARCHIVE_BYTES, current_policy().archive_bytes,
+                  MAX_ARCHIVE_BYTES if archive_limit is None else archive_limit)
+    entries = MAX_ENTRIES if entry_limit is None else min(MAX_ENTRIES, entry_limit)
     if size > maximum or size < 22:
         raise fail("zip_limit" if size > maximum else "zip_invalid")
     with path.open("rb") as source:
@@ -366,7 +369,9 @@ def _check_directory(path: Path) -> None:
         raise fail()
     fields = struct.unpack("<4s4H2IH", tail[pos:pos + 22])
     _, disk, central_disk, count_disk, count, central_size, offset, comment_len = fields
-    if (disk or central_disk or count != count_disk or not 1 <= count <= MAX_ENTRIES
+    if entry_limit is not None and count > entries:
+        raise fail("zip_limit")
+    if (disk or central_disk or count != count_disk or not 1 <= count <= entries
             or central_size > MAX_MANIFEST_BYTES or pos + 22 + comment_len != len(tail)
             or offset + central_size != size - len(tail) + pos):
         raise fail()
@@ -385,7 +390,7 @@ def _check_directory(path: Path) -> None:
         name_size, extra_size, comment_size = struct.unpack_from("<3H", central, at + 28)
         at += 46 + name_size + extra_size + comment_size
         actual += 1
-        if actual > MAX_ENTRIES:
+        if actual > entries:
             raise fail("zip_limit")
         if at > central_size:
             raise fail()

@@ -7,11 +7,13 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from datetime import UTC, datetime
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import voluptuous as vol
 
-from .backup_archive import strict_json
+from .backup_archive import image_refs, strict_json
 from .constants import DEFAULT_CONFIG, MAX_EXPORT_BYTES
 from .import_export import (
     FORMAT,
@@ -46,6 +48,24 @@ COLLECTIONS = (("rooms", "room"), ("partitions", "partition"), ("wall_segments",
 _ENVELOPE = frozenset({"format", "export_version", "kind", "created_at", "source_fingerprint",
                        "card_version", "integration_version", "model_version", "required_api",
                        "payload", "transfer", "build"})
+_CREDENTIAL_QUERY = frozenset({"authsig", "token", "access_token", "api_key", "apikey", "api-key",
+                              "signature", "sig", "authorization", "password", "secret", "auth", "jwt"})
+
+
+def _portable_url(value):
+    try:
+        parsed = urlsplit(value)
+    except ValueError as error:
+        raise fail() from error
+    query = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+             if key.lower() not in _CREDENTIAL_QUERY and not key.lower().startswith(("x-amz-", "x-goog-"))]
+    return urlunsplit(parsed._replace(netloc=parsed.netloc.rsplit("@", 1)[-1], query=urlencode(query)))
+
+
+def sanitize_image_urls(document):
+    for ref in image_refs(document["payload"]["config"]):
+        if ref.kind == "plan":
+            ref.target[ref.key] = _portable_url(str(ref.target[ref.key]))
 
 
 def fail(code="invalid_format"):
@@ -145,6 +165,7 @@ def export_document(identity, config_data, layout_data, card_version="", build=N
         "integration_version": identity.integration_version, "model_version": PLAN_MODEL_VERSION,
         "required_api": dict(REQUIRED_API), "payload": {"config": config, "layout": layout},
         "transfer": {"plan_only": True}, **({"build": dict(build)} if build else {})}
+    sanitize_image_urls(document)
     parse_document(json.dumps(document, ensure_ascii=False, allow_nan=False).encode())
     return document, f"houseplan-house-{stamp.strftime('%Y-%m-%d_%H-%M-%S')}.zip"
 
@@ -169,10 +190,27 @@ def parse_document(raw):
     for key in ("created_at", "source_fingerprint", "card_version", "integration_version"):
         if not isinstance(document.get(key), str) or len(document[key]) > 256:
             raise fail()
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", document["source_fingerprint"]):
+        raise fail()
+    try:
+        created = datetime.fromisoformat(document["created_at"])
+        if created.utcoffset() is None:
+            raise ValueError
+    except ValueError as error:
+        raise fail() from error
+    if "build" in document:
+        build = document["build"]
+        if (not isinstance(build, dict) or set(build) != {"channel", "source"}
+                or build.get("channel") != "dev" or not isinstance(build.get("source"), str)
+                or not re.fullmatch(r"[0-9a-f]{40}", build["source"])):
+            raise fail()
     payload = document.get("payload")
     if not isinstance(payload, dict) or set(payload) != {"config", "layout"}:
         raise fail()
     config, layout = _privacy(payload["config"], payload["layout"])
+    for ref in image_refs(config):
+        if ref.kind == "plan" and _portable_url(str(ref.target[ref.key])) != ref.target[ref.key]:
+            raise fail()
     document["payload"] = {"config": config, "layout": layout}
     return document
 
