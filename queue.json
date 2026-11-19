@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16061,
+  "revision": 16062,
   "nextTicket": 523,
   "nextFence": 523,
   "tasks": {
@@ -5399,6 +5399,14 @@
         "confirmed": true
       }
     },
+    "1469": {
+      "requestId": "spec:1469:dcd6be59512d3d26e4880c96335fedd66c7102b000b25c4cd720320bfb0d1273",
+      "contextDigest": "dcd6be59512d3d26e4880c96335fedd66c7102b000b25c4cd720320bfb0d1273",
+      "base": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+      "round": 1,
+      "status": "pending",
+      "updatedAt": 1795069181217
+    },
     "1470": {
       "requestId": "spec:1470:a18683c930e94fbdb36b75d7e10dd85058a6569e842f9b111baa6497f679adb9",
       "contextDigest": "a18683c930e94fbdb36b75d7e10dd85058a6569e842f9b111baa6497f679adb9",
@@ -5453,6 +5461,19 @@
         "round": 1,
         "occurredAt": "2026-11-19T06:18:02.947Z"
       }
+    },
+    "spec:1469:spec:1469:dcd6be59512d3d26e4880c96335fedd66c7102b000b25c4cd720320bfb0d1273": {
+      "issue": 1469,
+      "kind": "spec",
+      "requestId": "spec:1469:dcd6be59512d3d26e4880c96335fedd66c7102b000b25c4cd720320bfb0d1273",
+      "materialSha": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+      "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+      "patchId": "dcd6be59512d3d26e4880c96335fedd66c7102b000b25c4cd720320bfb0d1273",
+      "status": "pending",
+      "presentation": {
+        "round": 1,
+        "occurredAt": "2026-11-19T06:19:41.217Z"
+      }
     }
   },
   "waiting": [],
@@ -5465,6 +5486,10 @@
     "1470-spec-20261119-r1:spec-retry": {
       "digest": "8dd9cbcd0c4db7a985637902cefb3501d99b83db52e93eba5c776b2ffede13d9",
       "issue": 1470
+    },
+    "1469-spec-label-20261119-first:spec-request": {
+      "digest": "caa34aa03d6b9102e0396c00dd46a3201977617950db76f84d14edf5454c2c59",
+      "issue": 1469
     }
   },
   "devWebhook": {
