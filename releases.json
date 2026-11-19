@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 979,
+  "revision": 980,
   "active": "1.85.3-beta.2",
   "candidates": {
     "v1.84.0-beta.2": {
@@ -129946,7 +129946,7 @@
         "evidenceStatus": "complete",
         "diagnostics": []
       },
-      "metricsAcceptedSha": null,
+      "metricsAcceptedSha": "503a34e70eadec042391d463abf05b334af2e24e",
       "portToDev": [
         {
           "from": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
@@ -129973,7 +129973,13 @@
           "status": "pending"
         }
       ],
-      "diagnostics": []
+      "diagnostics": [],
+      "metricsDecision": {
+        "decisionId": "beta1853-2-owner-20261119",
+        "source": "chat",
+        "sourceRef": "chat:call_7deead69108a4df68b36afe21b5df1be/1",
+        "decisionText": "Владелец явно принял для 1.85.3-beta.2 ZIP 5,38 МБ (+7,3%), весь frontend gzip 2,23 МБ (+6,6%), начальную загрузку 469 КБ (+9,4%) и публикацию после фиксации согласованных 14 эталонов: Да, принять размеры и выпустить бету. Финальный кандидат отличается от рассмотренного только этими PNG и метаданными их принятия, без изменения продукта. Временные замеры завершены, но со старым измерителем несопоставимы."
+      }
     }
   },
   "published": {
@@ -135603,7 +135609,8 @@
     "beta1853-2-r3-metrics": "94d6ec87247d9851df2a5225ab6b9d7a727caa7d20a22bcd16bc0fe990963977",
     "beta1853-2-20261119-owner-approved-golden": "ef44c080ed3013bfe64f90fe84bfb585f14fcbe709d78773bce8b3074a28ed48",
     "beta1853-2-approved-r4-report": "76a2041603ac385375cc0dc15e1763e24d005f6d691cde67fd0867b566245008",
-    "beta1853-2-approved-r4-metrics": "a010f0d427300eacd6e97d96e7cf8a6aeef3d977590f5a608d3d2537235578a9"
+    "beta1853-2-approved-r4-metrics": "a010f0d427300eacd6e97d96e7cf8a6aeef3d977590f5a608d3d2537235578a9",
+    "beta1853-2-20261119-owner-metrics": "ec017d55b9e3bb97408a692e88a46ae7eb889b96c29eec970554434856eecd61"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
