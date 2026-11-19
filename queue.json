@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16558,
+  "revision": 16559,
   "nextTicket": 536,
   "nextFence": 536,
   "tasks": {
@@ -5067,7 +5067,68 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795086894613,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "c6614acceb8004abe73d653d339693a204afbce3",
+      "changedFiles": [
+        "custom_components/houseplan/core/coordinate_canonicalization.py",
+        "custom_components/houseplan/core/import_export.py",
+        "custom_components/houseplan/core/opening_features.py",
+        "custom_components/houseplan/core/opening_orientation.py",
+        "custom_components/houseplan/core/validation.py",
+        "demo/smoke_swing_door_placement.mjs",
+        "demo/smoke_wall_thickness.mjs",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/CONFIG-COMPATIBILITY.md",
+        "docs/ISOMETRIC.md",
+        "docs/LIGHT.md",
+        "docs/PDF-EXPORT.md",
+        "docs/USER-GUIDE.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/WALL-THICKNESS.md",
+        "docs/release-ledger/v1.85.0/1475.json",
+        "scripts/config-schema.json",
+        "scripts/mutation-registry.mjs",
+        "src/coordinate-canonicalization.ts",
+        "src/editors/properties/catalog.ts",
+        "src/editors/properties/editor.ts",
+        "src/editors/properties/patch.ts",
+        "src/editors/properties/physical.ts",
+        "src/editors/properties/strings.ts",
+        "src/floor-cache-key.ts",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/i18n/de.json",
+        "src/i18n/en.json",
+        "src/i18n/fr.json",
+        "src/i18n/ru.json",
+        "src/interaction-types.ts",
+        "src/iso-openings.ts",
+        "src/iso-scene-geometry.ts",
+        "src/opening-dialog-model.ts",
+        "src/opening-orientation.ts",
+        "src/opening-symbol-placement.ts",
+        "src/partition-openings.ts",
+        "src/pdf/pdf-scene.ts",
+        "src/plan-geometry-preflight.ts",
+        "src/render/opening-symbol.ts",
+        "src/space-render.ts",
+        "src/structural-space-record.ts",
+        "src/types.ts",
+        "src/wall-node-preview.ts",
+        "src/wall-thickness.ts",
+        "test/iso-openings.test.mjs",
+        "test/isometric-contract.test.mjs",
+        "test/opening-optics.test.mjs",
+        "test/opening-symbol-placement.test.mjs",
+        "test/opening-symbol.test.mjs",
+        "test/pdf-scene.test.mjs",
+        "tests_backend/test_ha_import_export.py",
+        "tests_backend/test_ha_space_copy.py",
+        "tests_backend/test_house_document.py",
+        "tests_backend/test_opening_features.py",
+        "tests_backend/test_opening_orientation.py"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -5542,10 +5603,11 @@
     "token": "535:finish:decf5f53-3f63-4810-9322-f758039e4ac2:finish:1:admit",
     "fence": 535,
     "materialSha": "750975d245a5abf887dd597f4fa054d9cc0e30e4",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
+    "phase": "testing",
     "admittedAt": 1795086898567,
-    "expiresAt": 1795087198567
+    "expiresAt": 1795087207267,
+    "patchId": "c6614acceb8004abe73d653d339693a204afbce3"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5606,6 +5668,10 @@
     },
     "github:44511988033:1:completions:report:b04ecbcf53eaeb6a9f3b21f364a6a5257378f3da21192ca0bb4d95fce10eb2fc": {
       "digest": "b3b429988716048a78e1af22b2e13eb1e38208d4b357166c451f56e28c2b24ff",
+      "issue": 1475
+    },
+    "finish:decf5f53-3f63-4810-9322-f758039e4ac2:finish:2:synchronized": {
+      "digest": "5b62043b9c1bdfacad64859d81e995a45510bdec35eebaf69692e49dced1cb44",
       "issue": 1475
     },
     "github:44511339319:1:spec:1475:spec-request:spec-resubmitted:1475": {
