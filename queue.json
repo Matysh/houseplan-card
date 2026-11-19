@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16181,
+  "revision": 16182,
   "nextTicket": 527,
   "nextFence": 527,
   "tasks": {
@@ -5034,160 +5034,26 @@
     },
     "1469": {
       "issue": 1469,
+      "branch": "codex/1469-cold-iso-camera",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/1469-cold-iso-camera",
-      "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 526,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795075978727,
-      "reviewEntry": 3,
-      "patchId": "a68b8b1db853ac96c12ec4b68a7e1cbfd0742f3c",
-      "changedFiles": [
-        "demo/smoke_projection_cold_view_camera.mjs",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/ISOMETRIC.md",
-        "docs/release-ledger/v1.85.0/1469.json",
-        "src/houseplan-card.ts",
-        "src/projection-view-camera.ts",
-        "test/floor-cache-publication.test.mjs",
-        "test/projection-view-camera.test.mjs"
-      ],
-      "notice": {
-        "key": "2:review-findings",
-        "reason": "review-findings",
-        "status": "delivered",
-        "fromStatus": "S7-code-review",
-        "at": 1795074459403,
-        "entry": 2,
-        "requestId": "review:1469:2:5db93bbfa27dd3c80a48d48d871d8cf16068cd4e:f4f474cf489015af967bbd6fa03cda62c07bc975",
-        "transitionConfirmed": true
-      },
-      "s6": {
-        "id": "20261119T081315756-b52f3c16",
-        "name": "Тесты для задачи #1469 (правки после ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T081315756-b52f3c16/report.json",
-        "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-        "status": "passed",
-        "finishedAt": "2026-11-19T08:25:25.162Z",
-        "failures": []
-      },
-      "reviewRound": null,
+      "status": "S8-merged",
+      "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+      "mergedSha": "7d1e756b122790a51466a8670096a5e06773ee85",
+      "mergedAt": 1795076967607,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1469:3:a68b8b1db853ac96c12ec4b68a7e1cbfd0742f3c:f4f474cf489015af967bbd6fa03cda62c07bc975",
-      "reviewMaterial": {
-        "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-        "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975",
-        "patchId": "a68b8b1db853ac96c12ec4b68a7e1cbfd0742f3c"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "review": {
-        "version": 1,
-        "issue": 1469,
-        "requestId": "review:1469:3:a68b8b1db853ac96c12ec4b68a7e1cbfd0742f3c:f4f474cf489015af967bbd6fa03cda62c07bc975",
-        "kind": "code",
-        "base": "f4f474cf489015af967bbd6fa03cda62c07bc975",
-        "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-        "patchId": "a68b8b1db853ac96c12ec4b68a7e1cbfd0742f3c",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1469,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1469",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Решение и альтернативы\n\nРеализован handoff через существующий `_restoreZoom`/`_refitView`: до первого показанного плана `_convertProjectionView` не создаёт квадратный fallback, а восстанавливает per-space scalar только после измерения обеих осей stage. Показанная/warm камера сохраняет прежний physical-camera путь. Zero-size отвергается и в отложенном восстановлении.\n\nДополнительно bare kiosk без bootveil больше не объявляет пустой/preparing Flat shell показанной камерой и не публикует из него L1 preview, пока ISO first-frame readiness ещё pending. Используется существующий readiness guard, в том числе повторная проверка после paint barrier; формат кэша и геометрия не менялись. Отдельного observer, camera state, таймера, forced wheel или unconditional Fit нет.\n\n### Риски и места для внимания\n\nProducer подтверждён: `_convertProjectionView` вызывал `_applyView` до stage, а поздние config intake/первый refit считали ненулевой `_view` уже принятым. При delayed runtime измеренный, но скрытый Flat frame дополнительно перекодировал saved zoom. В kiosk ранняя отметка `_projectionShown` и публикация preview обходили смысл first-frame barrier. Особенно полезно проверить совместимость восстановления с `_adoptViewPlane`, screen reference, warm camera и safe Flat fallback. Принятая геометрия/рисунок #1451 не меняются; эталоны не обновлялись.\n\n### Проверки и ограничения\n\nНа исходной beta.2 ошибка воспроизведена и публичной синтетической сценой (107/107 и 106/106 наблюдаемых кадров со сдвигом для обычного/summary View). Адресные pure camera tests — 14/14 PASS. Новый native smoke — PASS: шесть сочетаний panel/Lovelace/kiosk, wide/narrow, quarter turns 0/90/180/270, 165%/218%, summary on/off; настоящий cold document и reload с disk hit, passive preview и delayed worker/runtime; скрытый начальный stage; первый live frame до wheel/pan/fit согласован не хуже 1 CSS px, saved zoom/storage и счётчики WS/service writes не меняются.\n\nКоманды: `npm run build`, `node scripts/bundle-sync.mjs`, `node --test test/projection-view-camera.test.mjs`, `node demo/smoke_projection_cold_view_camera.mjs`. Локальные результаты: `output/1469-addressed-build.log`, `output/1469-camera-unit.log`, `output/1469-cold-native.log`. Финальный S6 выполняется штатным `finish`; его отчёт не подменяется этими адресными прогонами. В выборку включены native pan, room-fit/no-op resize, summary/warm camera, ISO safe actions и failure fallback. Companion-потребность: https://github.com/Matysh/houseplan-e2e/issues/81 . Частный owner fixture/сырой трейс не публикуются, реальный HA не изменялся. GPU-приёмки владельцем нет.\n\nПервый S6 `20261119T071452132-265886bc` завершён: единственный отказ — unit-fixture `floor-cache-publication`, извлекавший реальный метод без нового readiness port; остальные 673 пункта прошли/переиспользованы. Fixture дополнен этим портом и поведенческим negative-control: ISO pending до входа и появившийся во время paint await запрещает capture/publication и не теряет editor intent; после readiness обычный путь снова работает. Адресный `node --test test/floor-cache-publication.test.mjs` — 15/15 PASS (`output/1469-publication-unit.log`). Продуктовый код после зелёного native не менялся. Следующий `finish` подтвердит S6 с применимым reuse; модельное код-ревью ещё не запускалось.\n\n### Исправления по предыдущему ревью\n\nПредыдущее содержательное ревью: https://github.com/Matysh/houseplan-card/issues/1469#issuecomment-7003067528 (нужны исправления, workflow 44481594503). Его отчёт и история не редактировались. Предыдущий S6 `20261119T074003256-5d69b7cb` был зелёным; замечания относятся к дополнительным граничным случаям кода, а не к сбою среды.\n\nМатериал новой передачи: `7d1e756b122790a51466a8670096a5e06773ee85` (поверх `9ddf4f8`); финальная native матрица — 8/8 сценариев, адресные unit — 35/35.\n\n- **Same-size после скрытия → исправлено.** В `_refitView` ветка знакомого размера завершает отсутствующую камеру через существующий `_applyView(this._zoom)`. При уже имеющейся камере delivery остаётся no-op: новая пользовательская команда не отменяется. Новый native путь проходит `измеренный stage → display:none → restore → тот же размер`, а unit выполняет реальный метод с отсутствующей/существующей камерой и проверяет отсутствие вмешательства в активную команду.\n- **Проверять показанный масштаб, а не только поле → исправлено.** Native берёт fit ширину из реальных projected/display bounds и измеренного stage и делит на фактический SVG viewBox width. Это обнаруживает согласованные по aspect/якорям, но неверные по масштабу кадры; `_view === null` больше не может спрятаться за правильным `_zoom`.\n- **Kiosk recovery при позднем ISO → гипотеза подтверждена, исправлено.** Native через настоящие pan/wheel и `_reloadDocument()` создаёт штатный одноразовый session memo. При задержке ISO runtime 2200 мс восстановление раньше потребляло memo до установки renderer, а затем cold restore заменял его 218%-ным центрированным видом; новая проверка падала по scalar и точной камере. Теперь существующий recovery owner удерживает memo до измеренного stage и готовности destination runtime. `_convertProjectionView` отдаёт ему приоритет и принимает memo сразу в destination plane, не перекодируя его как временный Flat frame и не вызывая cold Fit. Новый lifecycle-флаг/таймер и изменение формата memo не добавлены. Проверяются bare kiosk и экранный профиль, точная камера, первый видимый масштаб и однократное потребление memo.\n- **Избыточные условия `_projectionShown` → упрощено.** Убраны уже исключённые ранним return passive/pending проверки; оставлена существенная проверка существования модели и пояснение про пустой kiosk shell.\n\nАдресная проверка после правок: сборка и свежая доставка в demo; native матрица с реальным reload, включая поздний/ранний runtime относительно подготовки кэша и экранный профиль; `node --test test/projection-view-camera.test.mjs test/kiosk-viewport-recovery.test.mjs test/floor-cache-publication.test.mjs` — 35/35 PASS. Новые локальные результаты: `output/1469-after-review-build.log`, `output/1469-after-review-native.log`, `output/1469-after-review-unit.log`. Профильный recovery может не иметь подходящего L1 fit key: там проверяется настоящий L2 disk hit и точная recovery-камера; остальные L1-сценарии по-прежнему требуют реально показанного passive preview. Эталоны не менялись. Финальный S6 после исправлений выполняет следующий штатный `finish`; его результат публикует координатор вместе с повторной передачей."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Оба существенных замечания прошлого раунда устранены, новых блокеров нет. Работу можно принимать.\n\n1. **Восстановление после скрытого stage того же размера.** Если камеру сбросили, пока stage был скрыт, первая доставка знакомого размера теперь её достраивает: в `_refitView` на ветке `sameSize` добавлен `_applyView(this._zoom)` при `!this._view`. Если камера уже есть, доставка, как и раньше, ничего не делает и не прерывает активную команду пользователя.\n2. **Kiosk recovery при позднем ISO.** Одноразовую память камеры теперь держит её владелец, `_restoreKioskViewport`, пока не измерен stage и не готов ISO first frame. Холодная ветка `_convertProjectionView` уступает ей приоритет и принимает память сразу в целевой плоскости, без rebase из Flat и без холодного Fit.\n\nNative-проверка теперь вычисляет показанный масштаб из фактического `viewBox` и измеренного stage, а не читает только поле `_zoom`. Поэтому ловится и класс ошибок «`_zoom` верен, а `_view` нет». Остальная часть решения не изменилась с прошлого раунда: квадратную камеру больше не создаёт холодная ветка, переход к существующему владельцу камеры через `_restoreZoom`, запрет публикации L1 preview, пока ISO first frame pending.",
-          "understanding": "**Проблема.** На beta.2 холодная ветка `_convertProjectionView` вызывала `_applyView` до того, как stage был измерен. `_stageAspect` в этот момент брал соотношение сторон `vb`, и получался квадратный `_view`. Первый `_refitView` (`!previous`) не трогал уже существующий `_view`, а следующие доставки уходили в `sameSize`. В итоге SVG вписывал квадрат с полями (`xMidYMid meet`), а HTML-проценты растягивались на весь прямоугольник.\n\n**Решение (повторный раунд, head 7d1e756).**\n- Холодная ветка обнуляет `_view` и вызывает `_restoreZoom()`. Тот применяет сохранённый per-space zoom сразу, только если обе оси stage измерены (`hasMeasuredViewSize`). Иначе камеру достраивает rAF или первая валидная доставка `_refitView`.\n- **Новое:** на ветке `sameSize` в `_refitView` при `!this._view` вызывается `_applyView(this._zoom)`. Центр берётся из `_cameraView`, то есть из центра fit — это совпадает с центром плана, который использует `_restoreZoom`.\n- **Новое:** `_convertProjectionView` сначала отдаёт приоритет `_restoreKioskViewport`, если есть `_recoveryViewport`. Он выставляет `_zoom`/`_view` из памяти, сбрасывает `_viewPlaneKnown`/`_viewFrame` (чтобы `_adoptViewPlane` не делал rebase) и принимает целевую плоскость.\n- **Новое:** `_restoreKioskViewport` держит память, пока `_isoFirstFrame.pending(...)`. После готовности paper/runtime её применяет `_syncPlanViewportObservers` на следующем `updated()`.\n- **Новое:** условие `_projectionShown` упрощено до `_spaceModel()` плюс прежние проверки boot/ISO pending.\n\n**Что разобрано по исходникам head.**\n- `_convertProjectionView` (3782-3812);\n- `_adoptViewPlane`/`_projectionViewFrame` (3738-3773);\n- install ISO runtime (809-817);\n- `IsoFirstFrameState.pending` (src/iso-first-frame.ts:79-81);\n- `_restoreKioskViewport`/`_reloadDocument` (5433-5466);\n- `_updatedModeReadScope` (5810-5907), в том числе вызов `_restoreKioskViewport` из `_syncPlanViewportObservers` (5912) и `_refitView` при `!_view` (5880);\n- `_stageAspect`/`_cameraView` (8309-8317), `_applyView` (8453-8479);\n- `_refitView` (8574-8644), `_restoreZoom` (8760-8802);\n- новый unit для `_refitView` и native-сценарий.",
-          "analysis": [
-            {
-              "topic": "Блокер 1 прошлого раунда: same-size после скрытия — устранён",
-              "assessment": "Исправление точечное и стоит там, где нужно. Проблема была в том, что ветка `sameSize` выходила раньше, чем `_view === null` получал камеру. Теперь та же ветка завершает восстановление. Отмена активной команды не грозит: `_applyView` (а с ним и `_cancelCameraTransition`) вызывается только при отсутствии `_view`, а если камера отсутствует, выполнять нечего. Центр нового вида — центр fit (`_cameraView` при `_view === null`), он совпадает с центром плана в `_restoreZoom`, поэтому видимого расхождения с обычным restore нет. Ветка `!previous` работает так же, то есть два входа ведут себя согласованно. Цикла обновлений нет: после применения `_view` ненулевой, и `updated()` (5880) перестаёт вызывать `_refitView`.",
-              "evidence": "src/houseplan-card.ts:8596-8601 (новая ветка), 8605-8609 (аналог для `!previous`), 8315-8317 (`_cameraView` при null → fit), 8461-8462 (центр по умолчанию). test/projection-view-camera.test.mjs: реальный `_refitView` с отсутствующей и с существующей камерой, проверяются 0 cancellations и сохранение `_cameraTransition.active`. demo/smoke_projection_cold_view_camera.mjs: `same-size-hidden-restore` (display:none → `_restoreZoom` → `_view===null` → показ того же размера → видимый масштаб из viewBox равен `_zoom`)."
-            },
-            {
-              "topic": "Блокер 2 прошлого раунда: kiosk recovery при позднем ISO — подтверждён и устранён",
-              "assessment": "Исправление оставляет одного владельца памяти. `_restoreKioskViewport` не отдаёт память, пока ISO first frame pending, а `_convertProjectionView` при установке runtime не перекодирует её как Flat-камеру и не запускает холодный restore. Сброс `_viewPlaneKnown`/`_viewFrame` перед `_adoptViewPlane` правильный: память уже закодирована в целевой плоскости, и rebase через `canonicalPhysicalCamera` исказил бы её второй раз. Pending покрывает и paper: для image-плана первый ISO-кадр требует разрешённого paper. Поэтому память применяется на следующем `updated()`, когда `_isoFirstFrame.sync` (5862) уже зафиксировал paper, а `_syncPlanViewportObservers` (5878→5912) повторно вызывает `_restoreKioskViewport`. Отказ загрузки ISO снимает pending, и память применяется во Flat, так что зависания нет. Ключ памяти включает `contentFingerprint(config)`, поэтому смена volumetric-настройки в окне удержания делает память недействительной, и неверной плоскости не будет.",
-              "evidence": "src/houseplan-card.ts:3783-3791, 5441-5453 (удержание до `!_isoFirstFrame.pending` и измеренного stage), 5431 (ключ с fingerprint config), 5912, 809-817; src/iso-first-frame.ts:79-81. Native: `recovery-before-late-ISO`, `recovery-held-until-ISO`, `recovered-camera-retained` для bare kiosk и экранного профиля с задержкой render runtime 2200 мс; по словам автора, до исправления проверка падала по scalar и точной камере."
-            },
-            {
-              "topic": "Проверка показанного масштаба в native",
-              "assessment": "Улучшение из прошлого раунда принято: `saved-zoom` теперь сравнивает и `card._zoom`, и `visibleZoom`. `visibleZoom` — это ширина fit, вычисленная из display bounds и измеренного stage, делённая на фактический `viewBox.width`. Поэтому кадр, согласованный по aspect и якорям, но показанный в масштабе Fit, больше не пройдёт. Вместе со сравнением SVG CTM и HTML `left/top` с допуском 1 CSS px это закрывает AC1/AC3 на уровне первого видимого кадра.",
-              "evidence": "demo/smoke_projection_cold_view_camera.mjs: `visibleZoom=Math.max(bounds.w,bounds.h*rect.width/rect.height)/vb.width`, `saved-zoom` проверяет обе величины; `first-visible-camera` — `maxError<=1`."
-            },
-            {
-              "topic": "Упрощение условия `_projectionShown`",
-              "assessment": "Мёртвые проверки passive/pending убраны. Остался единственный содержательный признак — `_spaceModel()`, и комментарий называет причину: пустой kiosk shell без модели — ещё не показанная камера. Сопровождающему теперь понятно, зачем нужно условие.",
-              "evidence": "src/houseplan-card.ts:5871-5874; ранний return для passive/pending — 5811-5835."
-            },
-            {
-              "topic": "Остальная часть решения (без изменений с прошлого раунда)",
-              "assessment": "Холодная ветка через `_restoreZoom`, отказ от zero-size в rAF, `hasMeasuredViewSize` в `acceptedViewFrame` и запрет публикации L1 preview при pending ISO first frame остались прежними. Прошлый разбор этих частей в силе. Совместимость с warm-путём (`afterAdopt` → `_warmAdoptViewport`) новые правки не затрагивают.",
-              "evidence": "src/houseplan-card.ts:3801-3811, 8780-8801; src/projection-view-camera.ts (`hasMeasuredViewSize`)."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Пока память kiosk удерживается до готовности ISO, каждый `updated()` заново выставляет `_zoom`/`_view` из памяти (5442). Поэтому pan/wheel пользователя в окне загрузки ISO runtime молча откатывается. Класс поведения существовал и раньше (удержание до измерения stage), теперь окно немного шире. Если это заметно на медленных киосках, можно применять значения из памяти только при первом входе в удержание, а дальше лишь проверять готовность. Цена — ещё одна ветка в `_restoreKioskViewport`. Сейчас это не обязательно."
-          ],
-          "boundaries": "**Что прочитано.** Исходники head 7d1e756: src/houseplan-card.ts (holdover в `_convertProjectionView`, `_restoreKioskViewport`, `_updatedModeReadScope`/`_syncPlanViewportObservers`, `_refitView`, `_restoreZoom`, `_applyView`, `_cameraView`, install ISO runtime), src/iso-first-frame.ts, изменения в unit-тестах и в native-сценарии.\n\n**Что не делалось.** Сборку, тесты и native я не запускал. Выводы о поведении выведены трассировкой кода. Построчно не разбирал `presentationViewport`/`_syncScreenCamera` для экранного профиля с удерживаемой памятью: их корректность подтверждает только native-случай profile, по описанию автора. Достижимость `display:none` после измерения в реальных HA-хостах не проверялась. Native-тест вызывает `_restoreZoom` напрямую, а не через естественный producer.\n\n**Какие результаты S6 использованы.** Квитанция finish `20261119T081315756-b52f3c16` на материале 7d1e756 (passed, без отказов) и описание автора: native 8/8, адресные unit 35/35. Логи `output/1469-after-review-*` мне недоступны. GPU-приёмки владельцем нет."
-        },
-        "usage": {
-          "input_tokens": 18,
-          "cache_creation_input_tokens": 100388,
-          "cache_read_input_tokens": 639440,
-          "output_tokens": 12283,
-          "output_tokens_details": {
-            "thinking_tokens": 5884
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 100388,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 951,
-              "cache_read_input_tokens": 91361,
-              "cache_creation_input_tokens": 13231,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 13231
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nОба существенных замечания прошлого раунда устранены, новых блокеров нет. Работу можно принимать.\n\n1. **Восстановление после скрытого stage того же размера.** Если камеру сбросили, пока stage был скрыт, первая доставка знакомого размера теперь её достраивает: в `_refitView` на ветке `sameSize` добавлен `_applyView(this._zoom)` при `!this._view`. Если камера уже есть, доставка, как и раньше, ничего не делает и не прерывает активную команду пользователя.\n2. **Kiosk recovery при позднем ISO.** Одноразовую память камеры теперь держит её владелец, `_restoreKioskViewport`, пока не измерен stage и не готов ISO first frame. Холодная ветка `_convertProjectionView` уступает ей приоритет и принимает память сразу в целевой плоскости, без rebase из Flat и без холодного Fit.\n\nNative-проверка теперь вычисляет показанный масштаб из фактического `viewBox` и измеренного stage, а не читает только поле `_zoom`. Поэтому ловится и класс ошибок «`_zoom` верен, а `_view` нет». Остальная часть решения не изменилась с прошлого раунда: квадратную камеру больше не создаёт холодная ветка, переход к существующему владельцу камеры через `_restoreZoom`, запрет публикации L1 preview, пока ISO first frame pending.\n\n## Понимание решения\n\n**Проблема.** На beta.2 холодная ветка `_convertProjectionView` вызывала `_applyView` до того, как stage был измерен. `_stageAspect` в этот момент брал соотношение сторон `vb`, и получался квадратный `_view`. Первый `_refitView` (`!previous`) не трогал уже существующий `_view`, а следующие доставки уходили в `sameSize`. В итоге SVG вписывал квадрат с полями (`xMidYMid meet`), а HTML-проценты растягивались на весь прямоугольник.\n\n**Решение (повторный раунд, head 7d1e756).**\n- Холодная ветка обнуляет `_view` и вызывает `_restoreZoom()`. Тот применяет сохранённый per-space zoom сразу, только если обе оси stage измерены (`hasMeasuredViewSize`). Иначе камеру достраивает rAF или первая валидная доставка `_refitView`.\n- **Новое:** на ветке `sameSize` в `_refitView` при `!this._view` вызывается `_applyView(this._zoom)`. Центр берётся из `_cameraView`, то есть из центра fit — это совпадает с центром плана, который использует `_restoreZoom`.\n- **Новое:** `_convertProjectionView` сначала отдаёт приоритет `_restoreKioskViewport`, если есть `_recoveryViewport`. Он выставляет `_zoom`/`_view` из памяти, сбрасывает `_viewPlaneKnown`/`_viewFrame` (чтобы `_adoptViewPlane` не делал rebase) и принимает целевую плоскость.\n- **Новое:** `_restoreKioskViewport` держит память, пока `_isoFirstFrame.pending(...)`. После готовности paper/runtime её применяет `_syncPlanViewportObservers` на следующем `updated()`.\n- **Новое:** условие `_projectionShown` упрощено до `_spaceModel()` плюс прежние проверки boot/ISO pending.\n\n**Что разобрано по исходникам head.**\n- `_convertProjectionView` (3782-3812);\n- `_adoptViewPlane`/`_projectionViewFrame` (3738-3773);\n- install ISO runtime (809-817);\n- `IsoFirstFrameState.pending` (src/iso-first-frame.ts:79-81);\n- `_restoreKioskViewport`/`_reloadDocument` (5433-5466);\n- `_updatedModeReadScope` (5810-5907), в том числе вызов `_restoreKioskViewport` из `_syncPlanViewportObservers` (5912) и `_refitView` при `!_view` (5880);\n- `_stageAspect`/`_cameraView` (8309-8317), `_applyView` (8453-8479);\n- `_refitView` (8574-8644), `_restoreZoom` (8760-8802);\n- новый unit для `_refitView` и native-сценарий.\n\n## Разбор решения\n\n### Блокер 1 прошлого раунда: same-size после скрытия — устранён\n\nИсправление точечное и стоит там, где нужно. Проблема была в том, что ветка `sameSize` выходила раньше, чем `_view === null` получал камеру. Теперь та же ветка завершает восстановление. Отмена активной команды не грозит: `_applyView` (а с ним и `_cancelCameraTransition`) вызывается только при отсутствии `_view`, а если камера отсутствует, выполнять нечего. Центр нового вида — центр fit (`_cameraView` при `_view === null`), он совпадает с центром плана в `_restoreZoom`, поэтому видимого расхождения с обычным restore нет. Ветка `!previous` работает так же, то есть два входа ведут себя согласованно. Цикла обновлений нет: после применения `_view` ненулевой, и `updated()` (5880) перестаёт вызывать `_refitView`.\n\nОснование: src/houseplan-card.ts:8596-8601 (новая ветка), 8605-8609 (аналог для `!previous`), 8315-8317 (`_cameraView` при null → fit), 8461-8462 (центр по умолчанию). test/projection-view-camera.test.mjs: реальный `_refitView` с отсутствующей и с существующей камерой, проверяются 0 cancellations и сохранение `_cameraTransition.active`. demo/smoke_projection_cold_view_camera.mjs: `same-size-hidden-restore` (display:none → `_restoreZoom` → `_view===null` → показ того же размера → видимый масштаб из viewBox равен `_zoom`).\n\n### Блокер 2 прошлого раунда: kiosk recovery при позднем ISO — подтверждён и устранён\n\nИсправление оставляет одного владельца памяти. `_restoreKioskViewport` не отдаёт память, пока ISO first frame pending, а `_convertProjectionView` при установке runtime не перекодирует её как Flat-камеру и не запускает холодный restore. Сброс `_viewPlaneKnown`/`_viewFrame` перед `_adoptViewPlane` правильный: память уже закодирована в целевой плоскости, и rebase через `canonicalPhysicalCamera` исказил бы её второй раз. Pending покрывает и paper: для image-плана первый ISO-кадр требует разрешённого paper. Поэтому память применяется на следующем `updated()`, когда `_isoFirstFrame.sync` (5862) уже зафиксировал paper, а `_syncPlanViewportObservers` (5878→5912) повторно вызывает `_restoreKioskViewport`. Отказ загрузки ISO снимает pending, и память применяется во Flat, так что зависания нет. Ключ памяти включает `contentFingerprint(config)`, поэтому смена volumetric-настройки в окне удержания делает память недействительной, и неверной плоскости не будет.\n\nОснование: src/houseplan-card.ts:3783-3791, 5441-5453 (удержание до `!_isoFirstFrame.pending` и измеренного stage), 5431 (ключ с fingerprint config), 5912, 809-817; src/iso-first-frame.ts:79-81. Native: `recovery-before-late-ISO`, `recovery-held-until-ISO`, `recovered-camera-retained` для bare kiosk и экранного профиля с задержкой render runtime 2200 мс; по словам автора, до исправления проверка падала по scalar и точной камере.\n\n### Проверка показанного масштаба в native\n\nУлучшение из прошлого раунда принято: `saved-zoom` теперь сравнивает и `card._zoom`, и `visibleZoom`. `visibleZoom` — это ширина fit, вычисленная из display bounds и измеренного stage, делённая на фактический `viewBox.width`. Поэтому кадр, согласованный по aspect и якорям, но показанный в масштабе Fit, больше не пройдёт. Вместе со сравнением SVG CTM и HTML `left/top` с допуском 1 CSS px это закрывает AC1/AC3 на уровне первого видимого кадра.\n\nОснование: demo/smoke_projection_cold_view_camera.mjs: `visibleZoom=Math.max(bounds.w,bounds.h*rect.width/rect.height)/vb.width`, `saved-zoom` проверяет обе величины; `first-visible-camera` — `maxError<=1`.\n\n### Упрощение условия `_projectionShown`\n\nМёртвые проверки passive/pending убраны. Остался единственный содержательный признак — `_spaceModel()`, и комментарий называет причину: пустой kiosk shell без модели — ещё не показанная камера. Сопровождающему теперь понятно, зачем нужно условие.\n\nОснование: src/houseplan-card.ts:5871-5874; ранний return для passive/pending — 5811-5835.\n\n### Остальная часть решения (без изменений с прошлого раунда)\n\nХолодная ветка через `_restoreZoom`, отказ от zero-size в rAF, `hasMeasuredViewSize` в `acceptedViewFrame` и запрет публикации L1 preview при pending ISO first frame остались прежними. Прошлый разбор этих частей в силе. Совместимость с warm-путём (`afterAdopt` → `_warmAdoptViewport`) новые правки не затрагивают.\n\nОснование: src/houseplan-card.ts:3801-3811, 8780-8801; src/projection-view-camera.ts (`hasMeasuredViewSize`).\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Пока память kiosk удерживается до готовности ISO, каждый `updated()` заново выставляет `_zoom`/`_view` из памяти (5442). Поэтому pan/wheel пользователя в окне загрузки ISO runtime молча откатывается. Класс поведения существовал и раньше (удержание до измерения stage), теперь окно немного шире. Если это заметно на медленных киосках, можно применять значения из памяти только при первом входе в удержание, а дальше лишь проверять готовность. Цена — ещё одна ветка в `_restoreKioskViewport`. Сейчас это не обязательно.\n\n## Границы анализа\n\n**Что прочитано.** Исходники head 7d1e756: src/houseplan-card.ts (holdover в `_convertProjectionView`, `_restoreKioskViewport`, `_updatedModeReadScope`/`_syncPlanViewportObservers`, `_refitView`, `_restoreZoom`, `_applyView`, `_cameraView`, install ISO runtime), src/iso-first-frame.ts, изменения в unit-тестах и в native-сценарии.\n\n**Что не делалось.** Сборку, тесты и native я не запускал. Выводы о поведении выведены трассировкой кода. Построчно не разбирал `presentationViewport`/`_syncScreenCamera` для экранного профиля с удерживаемой памятью: их корректность подтверждает только native-случай profile, по описанию автора. Достижимость `display:none` после измерения в реальных HA-хостах не проверялась. Native-тест вызывает `_restoreZoom` напрямую, а не через естественный producer.\n\n**Какие результаты S6 использованы.** Квитанция finish `20261119T081315756-b52f3c16` на материале 7d1e756 (passed, без отказов) и описание автора: native 8/8, адресные unit 35/35. Логи `output/1469-after-review-*` мне недоступны. GPU-приёмки владельцем нет.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: f4f474cf489015af967bbd6fa03cda62c07bc975 → 7d1e756b122790a51466a8670096a5e06773ee85\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1469, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Решение и альтернативы\n\nРеализован handoff через существующий `_restoreZoom`/`_refitView`: до первого показанного плана `_convertProjectionView` не создаёт квадратный fallback, а восстанавливает per-space scalar только после измерения обеих осей stage. Показанная/warm камера сохраняет прежний physical-camera путь. Zero-size отвергается и в отложенном восстановлении.\n\nДополнительно bare kiosk без bootveil больше не объявляет пустой/preparing Flat shell показанной камерой и не публикует из него L1 preview, пока ISO first-frame readiness ещё pending. Используется существующий readiness guard, в том числе повторная проверка после paint barrier; формат кэша и геометрия не менялись. Отдельного observer, camera state, таймера, forced wheel или unconditional Fit нет.\n\n### Риски и места для внимания\n\nProducer подтверждён: `_convertProjectionView` вызывал `_applyView` до stage, а поздние config intake/первый refit считали ненулевой `_view` уже принятым. При delayed runtime измеренный, но скрытый Flat frame дополнительно перекодировал saved zoom. В kiosk ранняя отметка `_projectionShown` и публикация preview обходили смысл first-frame barrier. Особенно полезно проверить совместимость восстановления с `_adoptViewPlane`, screen reference, warm camera и safe Flat fallback. Принятая геометрия/рисунок #1451 не меняются; эталоны не обновлялись.\n\n### Проверки и ограничения\n\nНа исходной beta.2 ошибка воспроизведена и публичной синтетической сценой (107/107 и 106/106 наблюдаемых кадров со сдвигом для обычного/summary View). Адресные pure camera tests — 14/14 PASS. Новый native smoke — PASS: шесть сочетаний panel/Lovelace/kiosk, wide/narrow, quarter turns 0/90/180/270, 165%/218%, summary on/off; настоящий cold document и reload с disk hit, passive preview и delayed worker/runtime; скрытый начальный stage; первый live frame до wheel/pan/fit согласован не хуже 1 CSS px, saved zoom/storage и счётчики WS/service writes не меняются.\n\nКоманды: `npm run build`, `node scripts/bundle-sync.mjs`, `node --test test/projection-view-camera.test.mjs`, `node demo/smoke_projection_cold_view_camera.mjs`. Локальные результаты: `output/1469-addressed-build.log`, `output/1469-camera-unit.log`, `output/1469-cold-native.log`. Финальный S6 выполняется штатным `finish`; его отчёт не подменяется этими адресными прогонами. В выборку включены native pan, room-fit/no-op resize, summary/warm camera, ISO safe actions и failure fallback. Companion-потребность: https://github.com/Matysh/houseplan-e2e/issues/81 . Частный owner fixture/сырой трейс не публикуются, реальный HA не изменялся. GPU-приёмки владельцем нет.\n\nПервый S6 `20261119T071452132-265886bc` завершён: единственный отказ — unit-fixture `floor-cache-publication`, извлекавший реальный метод без нового readiness port; остальные 673 пункта прошли/переиспользованы. Fixture дополнен этим портом и поведенческим negative-control: ISO pending до входа и появившийся во время paint await запрещает capture/publication и не теряет editor intent; после readiness обычный путь снова работает. Адресный `node --test test/floor-cache-publication.test.mjs` — 15/15 PASS (`output/1469-publication-unit.log`). Продуктовый код после зелёного native не менялся. Следующий `finish` подтвердит S6 с применимым reuse; модельное код-ревью ещё не запускалось.\n\n### Исправления по предыдущему ревью\n\nПредыдущее содержательное ревью: https://github.com/Matysh/houseplan-card/issues/1469#issuecomment-7003067528 (нужны исправления, workflow 44481594503). Его отчёт и история не редактировались. Предыдущий S6 `20261119T074003256-5d69b7cb` был зелёным; замечания относятся к дополнительным граничным случаям кода, а не к сбою среды.\n\nМатериал новой передачи: `7d1e756b122790a51466a8670096a5e06773ee85` (поверх `9ddf4f8`); финальная native матрица — 8/8 сценариев, адресные unit — 35/35.\n\n- **Same-size после скрытия → исправлено.** В `_refitView` ветка знакомого размера завершает отсутствующую камеру через существующий `_applyView(this._zoom)`. При уже имеющейся камере delivery остаётся no-op: новая пользовательская команда не отменяется. Новый native путь проходит `измеренный stage → display:none → restore → тот же размер`, а unit выполняет реальный метод с отсутствующей/существующей камерой и проверяет отсутствие вмешательства в активную команду.\n- **Проверять показанный масштаб, а не только поле → исправлено.** Native берёт fit ширину из реальных projected/display bounds и измеренного stage и делит на фактический SVG viewBox width. Это обнаруживает согласованные по aspect/якорям, но неверные по масштабу кадры; `_view === null` больше не может спрятаться за правильным `_zoom`.\n- **Kiosk recovery при позднем ISO → гипотеза подтверждена, исправлено.** Native через настоящие pan/wheel и `_reloadDocument()` создаёт штатный одноразовый session memo. При задержке ISO runtime 2200 мс восстановление раньше потребляло memo до установки renderer, а затем cold restore заменял его 218%-ным центрированным видом; новая проверка падала по scalar и точной камере. Теперь существующий recovery owner удерживает memo до измеренного stage и готовности destination runtime. `_convertProjectionView` отдаёт ему приоритет и принимает memo сразу в destination plane, не перекодируя его как временный Flat frame и не вызывая cold Fit. Новый lifecycle-флаг/таймер и изменение формата memo не добавлены. Проверяются bare kiosk и экранный профиль, точная камера, первый видимый масштаб и однократное потребление memo.\n- **Избыточные условия `_projectionShown` → упрощено.** Убраны уже исключённые ранним return passive/pending проверки; оставлена существенная проверка существования модели и пояснение про пустой kiosk shell.\n\nАдресная проверка после правок: сборка и свежая доставка в demo; native матрица с реальным reload, включая поздний/ранний runtime относительно подготовки кэша и экранный профиль; `node --test test/projection-view-camera.test.mjs test/kiosk-viewport-recovery.test.mjs test/floor-cache-publication.test.mjs` — 35/35 PASS. Новые локальные результаты: `output/1469-after-review-build.log`, `output/1469-after-review-native.log`, `output/1469-after-review-unit.log`. Профильный recovery может не иметь подходящего L1 fit key: там проверяется настоящий L2 disk hit и точная recovery-камера; остальные L1-сценарии по-прежнему требуют реально показанного passive preview. Эталоны не менялись. Финальный S6 после исправлений выполняет следующий штатный `finish`; его результат публикует координатор вместе с повторной передачей.\n```\n\n</details>\n",
-        "createdAt": "2026-11-19T08:28:45.353Z",
-        "artifactId": 14511322246,
-        "runId": 44487515117,
-        "runAttempt": 1,
-        "completedAt": "2026-11-19T08:28:51Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44487515117",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1795076960344,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1470": {
       "issue": 1470,
@@ -5674,19 +5540,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1469,
-    "worker": "finish",
-    "token": "526:finish:219aa181-afbc-4ad3-be51-d30015b55512:finish:1:admit",
-    "fence": 526,
-    "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-    "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795075982832,
-    "expiresAt": 1795080555111,
-    "patchId": "a68b8b1db853ac96c12ec4b68a7e1cbfd0742f3c",
-    "reviewRequest": "review:1469:3:a68b8b1db853ac96c12ec4b68a7e1cbfd0742f3c:f4f474cf489015af967bbd6fa03cda62c07bc975"
-  },
+  "active": null,
   "events": {
     "github:44471079007:1:label:spec-request": {
       "digest": "74159ceb50f4362cfd27b63623e240b79b57082a586eb65f4c3caafff437d99a",
@@ -5695,10 +5549,6 @@
     "1470-spec-20261119-r1:spec-retry": {
       "digest": "8dd9cbcd0c4db7a985637902cefb3501d99b83db52e93eba5c776b2ffede13d9",
       "issue": 1470
-    },
-    "1469-spec-label-20261119-first:spec-request": {
-      "digest": "caa34aa03d6b9102e0396c00dd46a3201977617950db76f84d14edf5454c2c59",
-      "issue": 1469
     },
     "github:44471696307:1:spec:1470:spec-presentation": {
       "digest": "7c82a319172e832a8e2526845e601cba17762cd315a83a1e31b1effd179125d0",
@@ -5715,26 +5565,6 @@
     "github:44471696307:1:completions:report:bcb7e103a6a964f170799613876d5a34ce21164a4122220e1bdb47722837161c": {
       "digest": "c435576cb1c07e092d800f1cae3dbdda56dbd3b1b9978f31c5b21e002076b497",
       "issue": 1470
-    },
-    "github:44471843883:1:spec:1469:spec-presentation": {
-      "digest": "1c053ece81d7db7d211ef365b20daa929a43cd704e955ffcf623918ed45df03a",
-      "issue": 1469
-    },
-    "github:44471843883:1:spec:1469:spec-complete": {
-      "digest": "c138f2b8ffd24098ed1b3a668867f45b94c7486e951b591f6bee28eeaaf226a8",
-      "issue": 1469
-    },
-    "1469-spec-observe-20261119-accepted:spec-complete": {
-      "digest": "f83afa558c15a5bcd7540441e74b490289e494c8f106a2c9b911db61810ca176",
-      "issue": 1469
-    },
-    "1469-spec-observe-20261119-accepted:spec-label": {
-      "digest": "46d4772057484fc8d9a0ff5752a56753552103383a9e3f59b70a0d81d3f440ec",
-      "issue": 1469
-    },
-    "github:44471843883:1:completions:report:9b79d40a2c0c87611ff996794102c530093d52e2ae91ca30d1a18250da998ea6": {
-      "digest": "dfd2e6ab83bf6a9df33ccb303385ce69cfea4159e400a0591f1845fed1fd7045",
-      "issue": 1469
     },
     "github:44472051036:1:label:spec-request": {
       "digest": "10aa67c67df712216e7f225fc653ba581c5fd36f6038a16dbf85103b2e53d0bb",
@@ -5755,114 +5585,6 @@
     "github:44472398750:1:completions:report:bb43c8a21cde35cfa25feabd5fb6bc8622f380bcbb1bb5c3090e6c044feb1956": {
       "digest": "4837ab4ceeac5a2248d71ba9b976652dae41aafeac77638285e716e075a32dbe",
       "issue": 1470
-    },
-    "finish:b36cf078-c598-40bb-a099-292e93e914c3:finish:2:synchronized": {
-      "digest": "a7be6ea89f6af172de9b671b83239f3d05e7d7d58b747f0b9dabf31b9d52e430",
-      "issue": 1469
-    },
-    "finish:c0934b18-265d-4db0-9acd-29e714dbf420": {
-      "digest": "0e79c723fb5bf1d4c41c923506c47b7a433b541e1beee5e8ed99b26a5a3402a1",
-      "issue": 1469
-    },
-    "finish:68e971c9-9af3-421e-81a5-3d3a64ee680e": {
-      "digest": "0070e403b7a29af83d0714fd9a0502430678fcfacd155c8a6b01050b3929d94a",
-      "issue": 1469
-    },
-    "finish:acd75363-1b0c-4bc2-aa3c-fd7001cf75c2": {
-      "digest": "ad38a269c091518eb7d2614f54aa32f946f4f21a800e65d5b3c080d8a5a405d4",
-      "issue": 1469
-    },
-    "finish:b9468c26-da34-4430-b6c3-b8f12c61c302": {
-      "digest": "df23e3b59380617e252696679eb93d6413e30be34d33956b3de9e0cefc9d9aea",
-      "issue": 1469
-    },
-    "finish:7ea9df28-0c73-4b60-a30d-8d048404839c": {
-      "digest": "14be50eab9d7f8872f51a643ed88abe613f4d28bebad6b293ede648d811ea4d6",
-      "issue": 1469
-    },
-    "finish:6aea946a-d1dd-45a4-ac46-a3d143579586": {
-      "digest": "73f31731703b8b1f415c24bf6231545aa6c623a2e422c8f251ecf69fa4a7ac88",
-      "issue": 1469
-    },
-    "finish:a1692a98-f1fd-4728-bdd5-47a7deadf5b9": {
-      "digest": "46bd2730cca15da252cc0ed367ea970dae2600ece962107a681bef56641649e9",
-      "issue": 1469
-    },
-    "finish:4ec3bab7-5b9a-4d90-94a2-771fb92bce3e": {
-      "digest": "1bc481531df4db178aa7bb3d5e8a7f4adbd486bb83df5613900c6364e332f26b",
-      "issue": 1469
-    },
-    "finish:94c80e12-781c-4d98-a4ab-fb3469b619ff": {
-      "digest": "536ce8b0f1f45d1db244e9d9444d04d9df92e2ea832b457ab18343bc145a7fde",
-      "issue": 1469
-    },
-    "finish:89e6e0e8-56fb-47e8-82a1-22197221bc5c": {
-      "digest": "1802ec4fa67125b68c623a561391869c2c1283e682a7a7cc2d1dae47d25b7f85",
-      "issue": 1469
-    },
-    "finish:b46cd58c-f98e-417b-84d8-94cf8815c052": {
-      "digest": "b1c46a00e429bd1a4bbb749ba2fd9e4f1d48d3428e1cf9fe7867dfdad4bd7b37",
-      "issue": 1469
-    },
-    "finish:55a5af9f-66c4-4d40-8ccb-559f0b5ab024": {
-      "digest": "266f277d2e55778ea9a07889b5b65817ca91598d8e863f50abd0eab16c445c18",
-      "issue": 1469
-    },
-    "finish:b36cf078-c598-40bb-a099-292e93e914c3:finish:3:return": {
-      "digest": "1cd44eb33696aff4203c2b1e34a2c75016b5f41ca4d72642bb3d59294f12f9dd",
-      "issue": 1469
-    },
-    "github:44481103464:1:completions:notice:e834bb5954025d1d8bca284514f142f59b592b539b713619ab4d72d0a20b0ca3": {
-      "digest": "a102f0c3a5d613b3ab833240bb87d036121880c77e1beb215baf236fdb7922dd",
-      "issue": 1469
-    },
-    "finish:a486435e-2b29-45aa-ae66-2475ec5fd0db:finish:2:synchronized": {
-      "digest": "9e0c7b40496604ee7c5807b97ed566b1fc906d6741560c72c1f3f585683b9656",
-      "issue": 1469
-    },
-    "finish:3a3dcd83-59ff-4984-87c8-a75832004f8e": {
-      "digest": "f47189f99339803895caef2bc6281a6d9a9f0c3dc2d85be3dbc48fe73ba7262d",
-      "issue": 1469
-    },
-    "finish:a486435e-2b29-45aa-ae66-2475ec5fd0db:finish:3:s6-label": {
-      "digest": "cc98fe0dc415c2383c1ebf8d1e07342b4fc01eb16f8627ed60eb66ecc49cb715",
-      "issue": 1469
-    },
-    "finish:a486435e-2b29-45aa-ae66-2475ec5fd0db:finish:4:review-requested": {
-      "digest": "416eb05c4e3e2acc58112d3cbb693d46bbb0a8d56cb5b9c719d17fef2bb4deca",
-      "issue": 1469
-    },
-    "github:44481566584:1:completions:message:548ebd9fb1697f9ccb85d871395e8f84dceda8f64da362ac6212a9f6e3cb85b1": {
-      "digest": "ec05b65a9beb44de75ea5807366cc13e0528ea64fdf228c2e216a5e7af281d97",
-      "issue": 1469
-    },
-    "github:44481566584:1:completions:message:553518ef97b3c61b15f49a0eaa9171fb57475eedae581b4b88cd5a7acd194b15": {
-      "digest": "a87dfa061b2c0b50be0050135d11487e8ed90fb1e06a7b41a6d189c7c0e0e169",
-      "issue": 1469
-    },
-    "github:44481566584:1:completions:message:f1565b3b49bfb070d226aca9c44e02dc27f5be59fc13270a1b8996c459491bb9": {
-      "digest": "094e3e8c60987e8e667d127811443b31d4c20983e7f8bb02949475f247b4cd89",
-      "issue": 1469
-    },
-    "finish:a486435e-2b29-45aa-ae66-2475ec5fd0db:finish:9:review-presentation": {
-      "digest": "1f97fb77d0689ea02e7c83d729cfcf0088e4f3888380b895a964d4a092c7c1e0",
-      "issue": 1469
-    },
-    "finish:a486435e-2b29-45aa-ae66-2475ec5fd0db:finish:9:return": {
-      "digest": "f39fd8b1df7661eaad128cb38a27c7a34b69df051b7bca484c74055ab86e7c4f",
-      "issue": 1469
-    },
-    "finish:a486435e-2b29-45aa-ae66-2475ec5fd0db:finish:9:return-label": {
-      "digest": "0cd6e110b2ea30f67268fa28468079b3acaeac6bad50e2af8efb073c7143d26a",
-      "issue": 1469
-    },
-    "github:44482334374:1:completions:report:772ecf0a1d5bb0fe24ad0ddab3ccc74daceb71e4abf0c1edf2513640076332ff": {
-      "digest": "66a82716ccd986fa1a463d7e8e7ddb9930901c57ccf0c82ccbfb74ea42608ca5",
-      "issue": 1469
-    },
-    "github:44482334374:1:completions:metadata:ea61bb49-fda5-4755-9e0e-6bfcb263fb4b:task-notice:1469::": {
-      "digest": "c72869cc41a3250c052a619651e09bb31348a80b0a3176385584f13b2f5e8f91",
-      "issue": 1469
     },
     "finish:a726cb58-f0d2-4887-9e3f-ba9cd085f6bd:finish:2:synchronized": {
       "digest": "20cf589a544e9900bbc4a50edbd7b5a9d4b2c5b4b10ed6a5aa2e94327c24334d",
@@ -5924,97 +5646,9 @@
       "digest": "9fe634278dda978194c002b5772bfe4b9cd5bdb8c70965302e02ce72ab144209",
       "issue": 1470
     },
-    "finish:219aa181-afbc-4ad3-be51-d30015b55512:finish:2:synchronized": {
-      "digest": "c0c5884a23a929abd22d7d38dd5fa20cd0ae49c36dc4078d2e93eddebdb154c3",
-      "issue": 1469
-    },
-    "finish:fa2b894e-d2cd-4d19-98db-7973f555ca7c": {
-      "digest": "16f8f172fa8fdb8c6b6054c25a1f9ff0ac5a0eb428fb1671c669313e2e48a137",
-      "issue": 1469
-    },
-    "finish:fe30109a-5e3b-46a9-b211-a08e48bc5a94": {
-      "digest": "35e9a8a1bad8160093fa1abaf41850c3526419d59290b5c8f6a8916e76a978ec",
-      "issue": 1469
-    },
-    "finish:b12703fa-f1b2-445a-bcd7-5668438f6d25": {
-      "digest": "b149da5317d37b8e5352b675e01c490c482a659bc6db63e143094134e33e40f0",
-      "issue": 1469
-    },
-    "finish:3f7d2e03-8f94-425b-a53e-27dd5b151ec5": {
-      "digest": "25ac3d77ac6812bc12e9adc1f42b8047ebbead7f902e5cabe691b87d95bbe8c7",
-      "issue": 1469
-    },
-    "finish:3d0047d8-9dab-49fd-aeb2-525572cb4838": {
-      "digest": "1ce03223e232a1826b9a3a45b9c365eb8425dee0c2330fd3872d4d7f6116d16e",
-      "issue": 1469
-    },
-    "finish:5acd2ee1-1c67-4b77-a369-bdbf8ca15a26": {
-      "digest": "00f01062bf2d34cdf4022e13b2cd12f1b741c03ab6cab03c1e5dbbe19abb865a",
-      "issue": 1469
-    },
-    "finish:a7f9c5a2-a1de-48c8-b0fa-1bb29b4a55e8": {
-      "digest": "9aa3765b540732dd188e6c09c19e71d520e8a85aa7a4050ae7ac5ac17c208cfb",
-      "issue": 1469
-    },
-    "finish:f7ededc5-6407-4e8e-97b6-2334c90d377f": {
-      "digest": "093aa317a3d7564c1831f017851494733214da93dd9f90fe4e1e314c97ef123c",
-      "issue": 1469
-    },
-    "finish:b07338fb-1cf0-4b28-91bb-b93c5a4aaf34": {
-      "digest": "e9f74c4b44cd2522181b92f0271e633a69930aacca29b44d9f1d2080ae32c67d",
-      "issue": 1469
-    },
-    "finish:939fbd95-0bf1-4cc0-bb2e-a0a65e0c33f4": {
-      "digest": "f4bfee94466331b5869b8a9d295a459e38cb0cc946751973a1e02a71843ee065",
-      "issue": 1469
-    },
-    "finish:8b0e569c-6f37-4fe8-a00e-6578ca355785": {
-      "digest": "5e52be4536717b6dd126a564ab44ed0ddf928f9640deec6b4c8c9e665260951d",
-      "issue": 1469
-    },
-    "finish:eb5dca3f-3342-4186-894f-9c267451a0ba": {
-      "digest": "1e2a7a9e387474ac9184696a40a3e421252d53dcce996945fceba94bf1e7ab23",
-      "issue": 1469
-    },
-    "finish:219aa181-afbc-4ad3-be51-d30015b55512:finish:3:s6-label": {
-      "digest": "e56eff6a797fd346d762bc5c6827e57457eae8eb8a4781bd25982ed06d062577",
-      "issue": 1469
-    },
-    "finish:219aa181-afbc-4ad3-be51-d30015b55512:finish:4:review-requested": {
-      "digest": "e2754e38090efdeadef3953a687f8ab536b7a77b22504736ce7f0e727f84fc07",
-      "issue": 1469
-    },
     "github:44487483633:1:completions:notice:10e3af5ee088282f333f58144120d875d9856a0abfefcf797f2af16908d48434": {
       "digest": "12e7187a6b8e2ca5d3b960dc20d5af8b42cbd28a7abadfd5ded186c0dd254fa0",
       "issue": 1470
-    },
-    "github:44487483633:1:completions:message:10e3af5ee088282f333f58144120d875d9856a0abfefcf797f2af16908d48434": {
-      "digest": "1b764a1a42b4452fdb7ffe5909729737ef8652f1ea23599d7898155d82a97e81",
-      "issue": 1469
-    },
-    "github:44487483633:1:completions:message:1a9c4e6eb8128fd67c41b884eb4d4cdf33897297450abfe52b3c250a8207f0d3": {
-      "digest": "9d403f1ec1a5ffaebf29b8a0eeed23a8f06504b2751f0d4fe1f20fb6992c015d",
-      "issue": 1469
-    },
-    "github:44487483633:1:completions:message:9f83e87875de3f74e2708d881feee4a58cc16efea2b499916099171704db3d7b": {
-      "digest": "19447cd77c0ea7140a64ee987e75d26e6f5d402fd833f17bf9214f7aa83cbfa8",
-      "issue": 1469
-    },
-    "github:44487483633:1:completions:message:d0d117f10bab71632903a6276ac65f6f1348e72358d76f5f9a2affcbf1cd6a7c": {
-      "digest": "cf1bdfaf947434183f333e4de86e239b3adfd8d555bb86ac7a49b7626f51fd01",
-      "issue": 1469
-    },
-    "finish:219aa181-afbc-4ad3-be51-d30015b55512:finish:7:review-presentation": {
-      "digest": "1fe9c86abb39e7b3b552c90f63822ce6b4dd7b5bbd7bb263bf6483722534025f",
-      "issue": 1469
-    },
-    "finish:219aa181-afbc-4ad3-be51-d30015b55512:finish:7:review-complete": {
-      "digest": "22cd0a92ab201c99269bf1a994a6120aea302d3258af870c90ab840d47658195",
-      "issue": 1469
-    },
-    "github:44487956115:1:tick:0:automation-pending": {
-      "digest": "bed5c35c8228127d59ede602cccab7e0a8ace553f667c4f33543960d22c096dd",
-      "issue": 1469
     },
     "github:44472051036:1:label:spec-request:spec-resubmitted:1470": {
       "digest": "10aa67c67df712216e7f225fc653ba581c5fd36f6038a16dbf85103b2e53d0bb",
@@ -6029,115 +5663,6 @@
         "reviewChanges": "### Цель и решение\n\nИсправляем P1 регрессию View после #1451, не меняя принятый дизайн. Начальное направление — сократить площадь/повтор полноэкранных label-mask surfaces и неизменный paint, затем измерить результат. Конкретная эквивалентная компоновка уточняется адресными синтетическими пробами; растровый gesture snapshot намеренно исключён как существенно более сложный lifecycle. Маски, мебель, свет и скрытие стен не отключаются в продукте.\n\n### Риски и ограничения\n\nОсобое внимание: alpha для накладывающихся подписей, mask coordinate space после поворота/zoom, native hit targets, смена света/створки, bounded ресурсы. Исходная приватная аналитика показала вклад масок около 29%, но сама по себе не доказывает достаточность единственной правки. AC1 требует большего итогового результата на публичной синтетической сцене; AC4 не позволяет купить его визуальной деградацией. Камерные методы параллельной #1469 не входят в этот ремонт.\n\n### Проверки\n\nДля S4 продуктовых проверок и реализации ещё нет. Исходные измерения и границы приведены в аналитике; авторский spec-check проверяет форму именно этого ТЗ. На S6 автор дополнит этот контекст фактическими SHA, результатами и ограничениями.\n\n### Исправления по предыдущему ревью\n\nРаунд 1: [workflow 44471177658](https://github.com/Matysh/houseplan-card/actions/runs/44471177658), вердикт «нужны исправления», статус возвращён на S3.\n\n- Оракул вида → основным стал парный base/fix захват всей сцены и crop каждой подписи с явными pixel-допусками, четырьмя поворотами/темами/overlap/hover/focus. Старые непанельные кадры не используются для оправдания регрессий. При этом уточнение факта истории: на текущем base f4f474c уже есть возврат опубликованной beta.2; панельные ISO PNG обновлены owner-approved коммитами 503a34e70/8c5fb6541 после #1451. Указанная ревьюером дата старых непанельных PNG не описывает принятый панельный набор. Это не отменяет усиления парного оракула.\n- Мебельное перекрытие → контракт теперь явно сохраняет **приглушение всей одной подписи** с текущим коэффициентом/порогом, отдельно от попиксельной стеновой маски. Нет нового мебельного masking и распространения opacity на соседей.\n- Возможные улучшения → добавлены явная остановка без самовольного снижения AC1/деградации, baseline ISO/Flat и ablation для репрезентативности сцены, hover/HA-change в «не хуже» замере и кандидаты дополнительных paint-оптимизаций без выключения эффектов.\n\nМатериал повторной передачи — редакция ТЗ 2. Продуктовые исходники не менялись. Локальные DOM-only диагностические пробы crop/anchor не являются реализацией и не публикуют частные данные.",
         "fromStatus": "S3-spec",
         "toStatus": "S4-spec-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
-    },
-    "finish:b36cf078-c598-40bb-a099-292e93e914c3": {
-      "digest": "b01d7b2d80827888a62c5c4e9a741edf71fd518f7cb08bc0dd83ca8ea20f7fb6",
-      "issue": 1469,
-      "message": {
-        "kind": "queued",
-        "issue": 1469,
-        "at": 1795072476078,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "9e6d5c0c3f304c8b75c6dc0551997a330938b684",
-        "delivered": true
-      }
-    },
-    "finish:b36cf078-c598-40bb-a099-292e93e914c3:finish:1:admit": {
-      "digest": "5afd56f2f1b932067892ac3227c0df056e57598e7c357a74fbfcc143f76cb49b",
-      "issue": 1469,
-      "message": {
-        "kind": "admitted",
-        "issue": 1469,
-        "at": 1795072480114,
-        "entry": 1,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "9e6d5c0c3f304c8b75c6dc0551997a330938b684",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:b36cf078-c598-40bb-a099-292e93e914c3:finish:3:return:return:1469": {
-      "digest": "1cd44eb33696aff4203c2b1e34a2c75016b5f41ca4d72642bb3d59294f12f9dd",
-      "issue": 1469,
-      "message": {
-        "kind": "return",
-        "issue": 1469,
-        "at": 1795073222763,
-        "entry": 1,
-        "notice": {
-          "key": "1:checks-failed",
-          "reason": "checks-failed",
-          "status": "pending",
-          "fromStatus": "S6-in-progress",
-          "at": 1795073222763,
-          "entry": 1,
-          "detail": "Поведение: test/floor-cache-publication.test.mjs: failed",
-          "eventId": "finish:b36cf078-c598-40bb-a099-292e93e914c3:finish:3:return:return:1469"
-        },
-        "delivered": true
-      }
-    },
-    "finish:a486435e-2b29-45aa-ae66-2475ec5fd0db": {
-      "digest": "62a5e591f88a3b7fa5d6a7b0172951f01cc7abe79abeb9828c7e261f3fa509ab",
-      "issue": 1469,
-      "message": {
-        "kind": "queued",
-        "issue": 1469,
-        "at": 1795073986124,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
-        "delivered": true
-      }
-    },
-    "finish:a486435e-2b29-45aa-ae66-2475ec5fd0db:finish:1:admit": {
-      "digest": "13979cccc1200f7e7e27bd6bbed16783a3ec2c72a67ae9b02f86378704e17e29",
-      "issue": 1469,
-      "message": {
-        "kind": "admitted",
-        "issue": 1469,
-        "at": 1795073990055,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:a486435e-2b29-45aa-ae66-2475ec5fd0db:finish:3:s6-complete": {
-      "digest": "34d2d8dc5464a194e51aabef7df1477035c1c2bf767ac401ea7baf368cebfe5b",
-      "issue": 1469,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1469,
-        "at": 1795074089027,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
-        "phase": "review",
-        "evidence": {
-          "id": "20261119T074003256-5d69b7cb",
-          "name": "Тесты для задачи #1469 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T074003256-5d69b7cb/report.json",
-          "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
-          "status": "passed",
-          "finishedAt": "2026-11-19T07:41:27.669Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "### Решение и альтернативы\n\nРеализован handoff через существующий `_restoreZoom`/`_refitView`: до первого показанного плана `_convertProjectionView` не создаёт квадратный fallback, а восстанавливает per-space scalar только после измерения обеих осей stage. Показанная/warm камера сохраняет прежний physical-camera путь. Zero-size отвергается и в отложенном восстановлении.\n\nДополнительно bare kiosk без bootveil больше не объявляет пустой/preparing Flat shell показанной камерой и не публикует из него L1 preview, пока ISO first-frame readiness ещё pending. Используется существующий readiness guard, в том числе повторная проверка после paint barrier; формат кэша и геометрия не менялись. Отдельного observer, camera state, таймера, forced wheel или unconditional Fit нет.\n\n### Риски и места для внимания\n\nProducer подтверждён: `_convertProjectionView` вызывал `_applyView` до stage, а поздние config intake/первый refit считали ненулевой `_view` уже принятым. При delayed runtime измеренный, но скрытый Flat frame дополнительно перекодировал saved zoom. В kiosk ранняя отметка `_projectionShown` и публикация preview обходили смысл first-frame barrier. Особенно полезно проверить совместимость восстановления с `_adoptViewPlane`, screen reference, warm camera и safe Flat fallback. Принятая геометрия/рисунок #1451 не меняются; эталоны не обновлялись.\n\n### Проверки и ограничения\n\nНа исходной beta.2 ошибка воспроизведена и публичной синтетической сценой (107/107 и 106/106 наблюдаемых кадров со сдвигом для обычного/summary View). Адресные pure camera tests — 14/14 PASS. Новый native smoke — PASS: шесть сочетаний panel/Lovelace/kiosk, wide/narrow, quarter turns 0/90/180/270, 165%/218%, summary on/off; настоящий cold document и reload с disk hit, passive preview и delayed worker/runtime; скрытый начальный stage; первый live frame до wheel/pan/fit согласован не хуже 1 CSS px, saved zoom/storage и счётчики WS/service writes не меняются.\n\nКоманды: `npm run build`, `node scripts/bundle-sync.mjs`, `node --test test/projection-view-camera.test.mjs`, `node demo/smoke_projection_cold_view_camera.mjs`. Локальные результаты: `output/1469-addressed-build.log`, `output/1469-camera-unit.log`, `output/1469-cold-native.log`. Финальный S6 выполняется штатным `finish`; его отчёт не подменяется этими адресными прогонами. В выборку включены native pan, room-fit/no-op resize, summary/warm camera, ISO safe actions и failure fallback. Companion-потребность: https://github.com/Matysh/houseplan-e2e/issues/81 . Частный owner fixture/сырой трейс не публикуются, реальный HA не изменялся. GPU-приёмки владельцем нет.\n\nПервый S6 `20261119T071452132-265886bc` завершён: единственный отказ — unit-fixture `floor-cache-publication`, извлекавший реальный метод без нового readiness port; остальные 673 пункта прошли/переиспользованы. Fixture дополнен этим портом и поведенческим negative-control: ISO pending до входа и появившийся во время paint await запрещает capture/publication и не теряет editor intent; после readiness обычный путь снова работает. Адресный `node --test test/floor-cache-publication.test.mjs` — 15/15 PASS (`output/1469-publication-unit.log`). Продуктовый код после зелёного native не менялся. Следующий `finish` подтвердит S6 с применимым reuse; модельное код-ревью ещё не запускалось.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
       }
@@ -6189,83 +5714,6 @@
           "detail": "Поведение: test/bundle-assets.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: iso theme walls: failed",
           "eventId": "finish:a726cb58-f0d2-4887-9e3f-ba9cd085f6bd:finish:3:return:return:1470"
         },
-        "delivered": true
-      }
-    },
-    "finish:219aa181-afbc-4ad3-be51-d30015b55512": {
-      "digest": "6d3a41baf020dc955bf94b3023c33f82cc5bfe4362987785a5ed95f62055a167",
-      "issue": 1469,
-      "message": {
-        "kind": "queued",
-        "issue": 1469,
-        "at": 1795075978727,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-        "evidence": {
-          "id": "20261119T074003256-5d69b7cb",
-          "name": "Тесты для задачи #1469 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T074003256-5d69b7cb/report.json",
-          "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
-          "status": "passed",
-          "finishedAt": "2026-11-19T07:41:27.669Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:219aa181-afbc-4ad3-be51-d30015b55512:finish:1:admit": {
-      "digest": "5a4e43921e9cd294353b1a8a873924820ffa7b9878c02e99eabf76e75d7a1c59",
-      "issue": 1469,
-      "message": {
-        "kind": "admitted",
-        "issue": 1469,
-        "at": 1795075982832,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-        "phase": "sync",
-        "evidence": {
-          "id": "20261119T074003256-5d69b7cb",
-          "name": "Тесты для задачи #1469 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T074003256-5d69b7cb/report.json",
-          "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
-          "status": "passed",
-          "finishedAt": "2026-11-19T07:41:27.669Z",
-          "failures": []
-        },
-        "delivered": true
-      }
-    },
-    "finish:219aa181-afbc-4ad3-be51-d30015b55512:finish:3:s6-complete": {
-      "digest": "903599f711ae362bc1dc2dc1b650de2f0627886ef6d8a230bd01aee58433b6ad",
-      "issue": 1469,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1469,
-        "at": 1795076726135,
-        "entry": 3,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-        "phase": "review",
-        "evidence": {
-          "id": "20261119T081315756-b52f3c16",
-          "name": "Тесты для задачи #1469 (правки после ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T081315756-b52f3c16/report.json",
-          "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
-          "status": "passed",
-          "finishedAt": "2026-11-19T08:25:25.162Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": true,
-        "reviewChanges": "### Решение и альтернативы\n\nРеализован handoff через существующий `_restoreZoom`/`_refitView`: до первого показанного плана `_convertProjectionView` не создаёт квадратный fallback, а восстанавливает per-space scalar только после измерения обеих осей stage. Показанная/warm камера сохраняет прежний physical-camera путь. Zero-size отвергается и в отложенном восстановлении.\n\nДополнительно bare kiosk без bootveil больше не объявляет пустой/preparing Flat shell показанной камерой и не публикует из него L1 preview, пока ISO first-frame readiness ещё pending. Используется существующий readiness guard, в том числе повторная проверка после paint barrier; формат кэша и геометрия не менялись. Отдельного observer, camera state, таймера, forced wheel или unconditional Fit нет.\n\n### Риски и места для внимания\n\nProducer подтверждён: `_convertProjectionView` вызывал `_applyView` до stage, а поздние config intake/первый refit считали ненулевой `_view` уже принятым. При delayed runtime измеренный, но скрытый Flat frame дополнительно перекодировал saved zoom. В kiosk ранняя отметка `_projectionShown` и публикация preview обходили смысл first-frame barrier. Особенно полезно проверить совместимость восстановления с `_adoptViewPlane`, screen reference, warm camera и safe Flat fallback. Принятая геометрия/рисунок #1451 не меняются; эталоны не обновлялись.\n\n### Проверки и ограничения\n\nНа исходной beta.2 ошибка воспроизведена и публичной синтетической сценой (107/107 и 106/106 наблюдаемых кадров со сдвигом для обычного/summary View). Адресные pure camera tests — 14/14 PASS. Новый native smoke — PASS: шесть сочетаний panel/Lovelace/kiosk, wide/narrow, quarter turns 0/90/180/270, 165%/218%, summary on/off; настоящий cold document и reload с disk hit, passive preview и delayed worker/runtime; скрытый начальный stage; первый live frame до wheel/pan/fit согласован не хуже 1 CSS px, saved zoom/storage и счётчики WS/service writes не меняются.\n\nКоманды: `npm run build`, `node scripts/bundle-sync.mjs`, `node --test test/projection-view-camera.test.mjs`, `node demo/smoke_projection_cold_view_camera.mjs`. Локальные результаты: `output/1469-addressed-build.log`, `output/1469-camera-unit.log`, `output/1469-cold-native.log`. Финальный S6 выполняется штатным `finish`; его отчёт не подменяется этими адресными прогонами. В выборку включены native pan, room-fit/no-op resize, summary/warm camera, ISO safe actions и failure fallback. Companion-потребность: https://github.com/Matysh/houseplan-e2e/issues/81 . Частный owner fixture/сырой трейс не публикуются, реальный HA не изменялся. GPU-приёмки владельцем нет.\n\nПервый S6 `20261119T071452132-265886bc` завершён: единственный отказ — unit-fixture `floor-cache-publication`, извлекавший реальный метод без нового readiness port; остальные 673 пункта прошли/переиспользованы. Fixture дополнен этим портом и поведенческим negative-control: ISO pending до входа и появившийся во время paint await запрещает capture/publication и не теряет editor intent; после readiness обычный путь снова работает. Адресный `node --test test/floor-cache-publication.test.mjs` — 15/15 PASS (`output/1469-publication-unit.log`). Продуктовый код после зелёного native не менялся. Следующий `finish` подтвердит S6 с применимым reuse; модельное код-ревью ещё не запускалось.\n\n### Исправления по предыдущему ревью\n\nПредыдущее содержательное ревью: https://github.com/Matysh/houseplan-card/issues/1469#issuecomment-7003067528 (нужны исправления, workflow 44481594503). Его отчёт и история не редактировались. Предыдущий S6 `20261119T074003256-5d69b7cb` был зелёным; замечания относятся к дополнительным граничным случаям кода, а не к сбою среды.\n\nМатериал новой передачи: `7d1e756b122790a51466a8670096a5e06773ee85` (поверх `9ddf4f8`); финальная native матрица — 8/8 сценариев, адресные unit — 35/35.\n\n- **Same-size после скрытия → исправлено.** В `_refitView` ветка знакомого размера завершает отсутствующую камеру через существующий `_applyView(this._zoom)`. При уже имеющейся камере delivery остаётся no-op: новая пользовательская команда не отменяется. Новый native путь проходит `измеренный stage → display:none → restore → тот же размер`, а unit выполняет реальный метод с отсутствующей/существующей камерой и проверяет отсутствие вмешательства в активную команду.\n- **Проверять показанный масштаб, а не только поле → исправлено.** Native берёт fit ширину из реальных projected/display bounds и измеренного stage и делит на фактический SVG viewBox width. Это обнаруживает согласованные по aspect/якорям, но неверные по масштабу кадры; `_view === null` больше не может спрятаться за правильным `_zoom`.\n- **Kiosk recovery при позднем ISO → гипотеза подтверждена, исправлено.** Native через настоящие pan/wheel и `_reloadDocument()` создаёт штатный одноразовый session memo. При задержке ISO runtime 2200 мс восстановление раньше потребляло memo до установки renderer, а затем cold restore заменял его 218%-ным центрированным видом; новая проверка падала по scalar и точной камере. Теперь существующий recovery owner удерживает memo до измеренного stage и готовности destination runtime. `_convertProjectionView` отдаёт ему приоритет и принимает memo сразу в destination plane, не перекодируя его как временный Flat frame и не вызывая cold Fit. Новый lifecycle-флаг/таймер и изменение формата memo не добавлены. Проверяются bare kiosk и экранный профиль, точная камера, первый видимый масштаб и однократное потребление memo.\n- **Избыточные условия `_projectionShown` → упрощено.** Убраны уже исключённые ранним return passive/pending проверки; оставлена существенная проверка существования модели и пояснение про пустой kiosk shell.\n\nАдресная проверка после правок: сборка и свежая доставка в demo; native матрица с реальным reload, включая поздний/ранний runtime относительно подготовки кэша и экранный профиль; `node --test test/projection-view-camera.test.mjs test/kiosk-viewport-recovery.test.mjs test/floor-cache-publication.test.mjs` — 35/35 PASS. Новые локальные результаты: `output/1469-after-review-build.log`, `output/1469-after-review-native.log`, `output/1469-after-review-unit.log`. Профильный recovery может не иметь подходящего L1 fit key: там проверяется настоящий L2 disk hit и точная recovery-камера; остальные L1-сценарии по-прежнему требуют реально показанного passive preview. Эталоны не менялись. Финальный S6 после исправлений выполняет следующий штатный `finish`; его результат публикует координатор вместе с повторной передачей.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
         "delivered": true
       }
     }
