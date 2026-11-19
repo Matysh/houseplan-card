@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16155,
-  "nextTicket": 526,
+  "revision": 16156,
+  "nextTicket": 527,
   "nextFence": 526,
   "tasks": {
     "1024": {
@@ -5037,14 +5037,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1469-cold-iso-camera",
-      "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
+      "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 524,
-      "queued": false,
+      "ticket": 526,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795073986124,
-      "reviewEntry": 2,
+      "readyAt": 1795075978727,
+      "reviewEntry": 3,
       "patchId": "5db93bbfa27dd3c80a48d48d871d8cf16068cd4e",
       "changedFiles": [
         "demo/smoke_projection_cold_view_camera.mjs",
@@ -5077,13 +5077,6 @@
         "failures": []
       },
       "reviewRound": null,
-      "reviewRequest": "review:1469:2:5db93bbfa27dd3c80a48d48d871d8cf16068cd4e:f4f474cf489015af967bbd6fa03cda62c07bc975",
-      "reviewMaterial": {
-        "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
-        "expectedBase": "f4f474cf489015af967bbd6fa03cda62c07bc975",
-        "patchId": "5db93bbfa27dd3c80a48d48d871d8cf16068cd4e"
-      },
-      "reason": "review-findings",
       "reviewCorrection": {
         "requestId": "review:1469:2:5db93bbfa27dd3c80a48d48d871d8cf16068cd4e:f4f474cf489015af967bbd6fa03cda62c07bc975",
         "at": 1795074459403
@@ -5559,7 +5552,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1469
+  ],
   "active": null,
   "events": {
     "github:44471079007:1:label:spec-request": {
@@ -5970,6 +5965,28 @@
           "entry": 1,
           "detail": "Поведение: test/bundle-assets.test.mjs: failed; Поведение: test/wall-identity-corpus.test.mjs: failed; Браузер: iso theme walls: failed",
           "eventId": "finish:a726cb58-f0d2-4887-9e3f-ba9cd085f6bd:finish:3:return:return:1470"
+        }
+      }
+    },
+    "finish:219aa181-afbc-4ad3-be51-d30015b55512": {
+      "digest": "6d3a41baf020dc955bf94b3023c33f82cc5bfe4362987785a5ed95f62055a167",
+      "issue": 1469,
+      "message": {
+        "kind": "queued",
+        "issue": 1469,
+        "at": 1795075978727,
+        "entry": 3,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85",
+        "evidence": {
+          "id": "20261119T074003256-5d69b7cb",
+          "name": "Тесты для задачи #1469 (перед ревью)",
+          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T074003256-5d69b7cb/report.json",
+          "materialSha": "9ddf4f8c3c7cc7f8649c1d30e6bf6c1943bf640e",
+          "status": "passed",
+          "finishedAt": "2026-11-19T07:41:27.669Z",
+          "failures": []
         }
       }
     }
