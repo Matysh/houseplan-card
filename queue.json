@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16209,
+  "revision": 16210,
   "nextTicket": 527,
   "nextFence": 527,
   "tasks": {
@@ -2004,40 +2004,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "5d522469dd04bb0630f3a890652e32e94fe02c2e"
-      }
-    },
-    "1378": {
-      "issue": 1378,
-      "branch": "issue/1378-release-return-fe1f3b3776eb",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "9ccb758699da09595e59ca45df689e07b1140f50",
-      "mergedSha": "1862202d4be66cdc8b9b8d4165a350af70f62876",
-      "mergedAt": 1794292956984,
-      "mergedFromStatus": "S6-in-progress",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "completion": {
-        "labels": true,
-        "milestone": "not-required",
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S6-in-progress",
-        "removedToRelease": false,
-        "commentCurrent": true,
-        "commentDigest": "34c7bc28ce5c545336ab",
-        "commentFacts": {
-          "labels": true,
-          "milestone": "not-required",
-          "target": null
-        }
-      },
-      "releaseTag": "v1.85.1",
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "1862202d4be66cdc8b9b8d4165a350af70f62876"
       }
     },
     "1379": {
@@ -5066,7 +5032,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "7d1e756b122790a51466a8670096a5e06773ee85"
       }
     },
     "1470": {
@@ -5715,6 +5682,18 @@
           "eventId": "finish:a726cb58-f0d2-4887-9e3f-ba9cd085f6bd:finish:3:return:return:1470"
         },
         "delivered": true
+      }
+    },
+    "dev-build:44487956115:1:1469": {
+      "digest": "aa740fe965f1dd3901400eeea612000bf970c48e216ff9a06ca78b9d1fcc55dc",
+      "issue": 1469,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1469,
+        "at": 1795077131032,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "7d1e756b122790a51466a8670096a5e06773ee85"
       }
     }
   },
