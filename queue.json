@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "revision": 15989,
+  "revision": 15990,
   "nextTicket": 523,
-  "nextFence": 522,
+  "nextFence": 523,
   "tasks": {
     "1024": {
       "issue": 1024,
@@ -5035,7 +5035,7 @@
       "materialSha": "f4f474cf489015af967bbd6fa03cda62c07bc975",
       "ownerDecision": null,
       "ticket": 522,
-      "queued": true,
+      "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1795065749591,
       "reviewEntry": 1
@@ -5450,10 +5450,18 @@
       "runId": 44407623998
     }
   },
-  "waiting": [
-    1468
-  ],
-  "active": null,
+  "waiting": [],
+  "active": {
+    "issue": 1468,
+    "worker": "finish",
+    "token": "522:release-return-finish:7fb220b7-874a-4b76-83b8-aead9bff6064:finish:1:admit",
+    "fence": 522,
+    "materialSha": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+    "expectedBase": null,
+    "phase": "sync",
+    "admittedAt": 1795065754074,
+    "expiresAt": 1795066054074
+  },
   "events": {
     "release-return:7fb220b7-874a-4b76-83b8-aead9bff6064": {
       "digest": "bb16e47d1f3ca3e0e0fc127a6994f5d7ec822e41d1e5b148f3dca7df21404a17",
@@ -5466,6 +5474,20 @@
         "track": "show",
         "layer": "product",
         "materialSha": "f4f474cf489015af967bbd6fa03cda62c07bc975"
+      }
+    },
+    "release-return-finish:7fb220b7-874a-4b76-83b8-aead9bff6064:finish:1:admit": {
+      "digest": "c3e1390b10f7bff3f29f077af563b1586db523b3a6e4b3c0df3529dd99fa7f5a",
+      "issue": 1468,
+      "message": {
+        "kind": "admitted",
+        "issue": 1468,
+        "at": 1795065754074,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "f4f474cf489015af967bbd6fa03cda62c07bc975",
+        "phase": "sync"
       }
     }
   },
