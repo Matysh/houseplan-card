@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16449,
+  "revision": 16450,
   "nextTicket": 533,
   "nextFence": 533,
   "tasks": {
@@ -5146,15 +5146,16 @@
         "tests_backend/test_support_config_projection.py"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
         "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1795082857841,
-        "entry": 1,
-        "detail": "Поведение: test/config-lifecycle.test.mjs: failed; Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/i18n-dead-keys.test.mjs: failed; Поведение: test/mutation-gate.test.mjs: failed; Поведение: test/mutation-guard-outcome.test.mjs: failed; Поведение: test/styles-split.test.mjs: failed; Поведение: test/view-accessibility.test.mjs: failed; Backend: tests_backend/test_config_schema_manifest.py: failed; Backend: tests_backend/test_plan_graph_support.py: failed; Браузер: device icon picker: cancelled; Браузер: dialog picker 998: cancelled; Браузер: direct wall geometry: Подготовка не завершена успешно; Браузер: edit walk: Подготовка не завершена успешно; Браузер: editor command latency: Подготовка не завершена успешно; Браузер: editor dimensions: Подготовка не завершена успешно; Браузер: editor draft exit: Подготовка не завершена успешно; Браузер: editor gestures: Подготовка не завершена успешно; Браузер: editor guides lifecycle: Подготовка не завершена успешно; Браузер: editor nudge: Подготовка не завершена успешно; Браузер: floor persistent cache: Подготовка не завершена успешно; Браузер: floor persistent cache isometric: Подготовка не завершена успешно; Браузер: geometry corpus: Подготовка не завершена успешно; Браузер: geometry history refusal: Подготовка не завершена успешно; Браузер: glass door sun: Подготовка не завершена успешно; Браузер: golden harness input: Подготовка не завершена успешно; Браузер: header actions menu: Подготовка не завершена успешно; Браузер: header observer retirement: Подготовка не завершена успешно; Браузер: household journeys: Подготовка не завершена успешно; Браузер: iso first frame: Подготовка не завершена успешно; Браузер: iso label bounds: Подготовка не завершена успешно; Браузер: iso room label metrics: Подготовка не завершена успешно; Браузер: iso theme walls: Подготовка не завершена успешно; Браузер: isometric contract: Подготовка не завершена успешно; Браузер: isometric live touch: Подготовка не завершена успешно; Браузер: junction holes: Подготовка не завершена успешно; Браузер: kiosk space navigation: Подготовка не завершена успешно; Браузер: lattice write barrier: Подготовка не завершена успешно; Браузер: lazy admin locale: Подготовка не завершена успешно; Браузер: marker state source: Подготовка не завершена успешно; Браузер: modes: Подготовка не завершена успешно; Браузер: moon phase direction: Подготовка не завершена успешно; Браузер: native grid draw: Подготовка не завершена успешно; Браузер: node dependency carrier: Подготовка не завершена успешно; Браузер: node history context: Подготовка не завершена успешно; Браузер: opening drag: Подготовка не завершена успешно; Браузер: opening drag graph: Подготовка не завершена успешно; Браузер: opening entity search: Подготовка не завершена успешно; Браузер: opening escape wide: Подготовка не завершена успешно; Браузер: opening features: Подготовка не завершена успешно; Браузер: opening light transparent: Подготовка не завершена успешно; Браузер: opening measure: Подготовка не завершена успешно; Браузер: opening mode fill: Подготовка не завершена успешно; Браузер: opening preview: Подготовка не завершена успешно; Браузер: opening tunnel fill: Подготовка не завершена успешно; Браузер: partition openings preview: Подготовка не завершена успешно; Браузер: pdf export: Подготовка не завершена успешно; Браузер: plan graph cold: Подготовка не завершена успешно; Браузер: plan graph editor: Подготовка не завершена успешно; Браузер: plan host: Подготовка не завершена успешно; Браузер: plan rotation editors: Подготовка не завершена успешно; Браузер: plan snap overlay: Подготовка не завершена успешно; Браузер: portable recovery: Подготовка не завершена успешно; Браузер: readonly cold start: Подготовка не завершена успешно; Браузер: resize inner dimensions: Подготовка не завершена успешно; Браузер: resize junctions: Подготовка не завершена успешно; Браузер: resize through junction: Подготовка не завершена успешно; Браузер: room co2: Подготовка не завершена успешно; Браузер: room context menu: Подготовка не завершена успешно; Браузер: room device discovery: Подготовка не завершена успешно; Браузер: room face select: Подготовка не завершена успешно; Браузер: room opening host: Подготовка не завершена успешно; Браузер: space copy categories: Подготовка не завершена успешно; Браузер: space switch transitions: Подготовка не завершена успешно; Браузер: stairs: Подготовка не завершена успешно; Браузер: standalone entry: Подготовка не завершена успешно; Браузер: standalone presentation: Подготовка не завершена успешно; Браузер: static wall openings: Подготовка не завершена успешно; Браузер: static zoom sharpness: Подготовка не завершена успешно; Браузер: sun: Подготовка не завершена успешно; Браузер: toggle confirmation: Подготовка не завершена успешно; Браузер: toolbar stable width: Подготовка не завершена успешно; Браузер: ui button geometry 1431: Подготовка не завершена успешно; Браузер: ui polish 963: Подготовка не завершена успешно; Браузер: view edit permissions: Подготовка не завершена успешно; Браузер: view recovery: Подготовка не завершена успешно; Браузер: wall chain merge: Подготовка не завершена успешно; Браузер: wall corner join: Подготовка не завершена успешно; Браузер: wall dimension hud: Подготовка не завершена успешно; Браузер: wall end align: Подготовка не завершена успешно; Браузер: wall face lineage: Подготовка не завершена успешно; Браузер: wall face room split: Подготовка не завершена успешно; Браузер: wall guide ownership: Подготовка не завершена успешно; Браузер: wall node attach: Подготовка не завершена успешно; Браузер: wall node connected: Подготовка не завершена успешно; Браузер: wall node delete: Подготовка не завершена успешно; Браузер: wall node hit: Подготовка не завершена успешно; Браузер: wall node merge: Подготовка не завершена успешно; Браузер: wall node move: Подготовка не завершена успешно; Браузер: wall node python roundtrip: Подготовка не завершена успешно; Браузер: wall node reliability: Подготовка не завершена успешно; Браузер: wall node topology: Подготовка не завершена успешно; Браузер: wall preview handoff 1247: Подготовка не завершена успешно; Браузер: wall side dimensions: Подготовка не завершена успешно; Браузер: wall side dimensions dense: Подготовка не завершена успешно; Браузер: wall side dimensions thin: Подготовка не завершена успешно; Браузер: wall thickness: Подготовка не завершена успешно; Браузер: wallthick standalone: Подготовка не завершена успешно; Браузер: warm geometry camera: Подготовка не завершена успешно; Браузер: write authority: Подготовка не завершена успешно; Браузер: writer fixed point: Подготовка не завершена успешно",
-        "eventId": "finish:a8d99469-b763-4dc7-9e24-e5b892c2dc7b:finish:2:return:return:1474"
-      }
+        "at": 1795084233355,
+        "entry": 2,
+        "detail": "Браузер: isometric contract: failed",
+        "eventId": "finish:9526f35c-b374-4884-99b3-81933eb453fb:finish:3:return:return:1474"
+      },
+      "reason": "checks-failed"
     }
   },
   "ownerDecisions": {},
@@ -5609,18 +5610,7 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1474,
-    "worker": "finish",
-    "token": "532:finish:9526f35c-b374-4884-99b3-81933eb453fb:finish:1:admit",
-    "fence": 532,
-    "materialSha": "4e110b40238efd322aafcbb11a4402d2c830fd1d",
-    "expectedBase": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-    "phase": "testing",
-    "admittedAt": 1795082887932,
-    "expiresAt": 1795084530579,
-    "patchId": "c0e0cc6b9bc75820607dfdf4ff266675b55081ba"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5798,6 +5788,10 @@
       "digest": "4d0a25f60dffb711dfcfa408a2fd522c4f831ab00efc8adcfc0c226b4d791a8a",
       "issue": 1474
     },
+    "finish:9526f35c-b374-4884-99b3-81933eb453fb:finish:3:return": {
+      "digest": "f3b2e53c584d2a92dfa5feff54fd08182e2d5c721bf56ffabfb097d874c57a80",
+      "issue": 1474
+    },
     "finish:a8d99469-b763-4dc7-9e24-e5b892c2dc7b": {
       "digest": "a03c07aa551707b08d373fb0f2f6193f185d6dffe2178eec0a99a6f30d3e7a2e",
       "issue": 1474,
@@ -5872,6 +5866,26 @@
         "layer": "product",
         "materialSha": "4e110b40238efd322aafcbb11a4402d2c830fd1d",
         "phase": "sync"
+      }
+    },
+    "finish:9526f35c-b374-4884-99b3-81933eb453fb:finish:3:return:return:1474": {
+      "digest": "f3b2e53c584d2a92dfa5feff54fd08182e2d5c721bf56ffabfb097d874c57a80",
+      "issue": 1474,
+      "message": {
+        "kind": "return",
+        "issue": 1474,
+        "at": 1795084233355,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1795084233355,
+          "entry": 2,
+          "detail": "Браузер: isometric contract: failed",
+          "eventId": "finish:9526f35c-b374-4884-99b3-81933eb453fb:finish:3:return:return:1474"
+        }
       }
     }
   },
