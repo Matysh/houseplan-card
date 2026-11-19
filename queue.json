@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16138,
-  "nextTicket": 525,
+  "revision": 16139,
+  "nextTicket": 526,
   "nextFence": 525,
   "tasks": {
     "1024": {
@@ -5088,6 +5088,20 @@
         "requestId": "review:1469:2:5db93bbfa27dd3c80a48d48d871d8cf16068cd4e:f4f474cf489015af967bbd6fa03cda62c07bc975",
         "at": 1795074459403
       }
+    },
+    "1470": {
+      "issue": 1470,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1470-iso-performance",
+      "materialSha": "e143f8591f471e31fcd40c3d7bdc0eb6ca5f49c7",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 525,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795074693534,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5513,7 +5527,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1470
+  ],
   "active": null,
   "events": {
     "github:44471079007:1:label:spec-request": {
@@ -5816,6 +5832,19 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:a726cb58-f0d2-4887-9e3f-ba9cd085f6bd": {
+      "digest": "e2da617c996229f9c011b35f074242aabc6e56b6818a49556805d5486be8fc3b",
+      "issue": 1470,
+      "message": {
+        "kind": "queued",
+        "issue": 1470,
+        "at": 1795074693534,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "e143f8591f471e31fcd40c3d7bdc0eb6ca5f49c7"
       }
     }
   },
