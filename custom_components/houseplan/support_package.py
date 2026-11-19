@@ -238,7 +238,7 @@ def _space_settings(value: object) -> dict[str, Any]:
         out["show_lqi_mode"] = value["show_lqi_mode"]
     if isinstance(value, dict) and value.get("show_device_battery_mode") in ("inherit", "all", "low", "off"):
         out["show_device_battery_mode"] = value["show_device_battery_mode"]
-    for key in ("custom_fill", "name_color", "wall_fill"):
+    for key in ("custom_fill", "name_color", "wall_fill", "opening_accent_3d"):
         if isinstance(value, dict) and key in value:
             out[key] = _custom_fill(value.get(key))
     return out

@@ -554,7 +554,7 @@
   "space.zero_wall_style.help": "Gestrichelte Wände ohne Dicke lassen Glow und Sonnenstrahlen durch, durchgezogene blockieren sie als Barriere ohne Fläche. Die Auswahl gilt für alle solchen Wände im Bereich, auch wenn ihre Linie in der Ansicht ausgeblendet ist.",
   "space.zero_wall_style.help.aria": "Hilfe: Darstellung der Wände ohne Dicke",
   "space.show_names": "Raumnamen anzeigen",
-  "space.room_color": "Wandfarbe",
+  "space.room_color": "Wandschraffurfarbe (Wandoberseiten in 3D)",
   "space.opacity": "Deckkraft",
   "space.fill_label": "Raumausfüllung",
   "space.fill_mode.help": "„Eigene Farbe“ gestaltet den Bereich; „Licht“, „Temperatur“ und „LQI“ verwenden aktuelle Daten aus Home Assistant. Glow wird separat aktiviert.",

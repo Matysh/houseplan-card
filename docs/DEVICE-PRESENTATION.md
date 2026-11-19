@@ -11,6 +11,15 @@ through the existing coherent frame/reuse boundaries.
 
 In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. (#1089)
 
+
+In 2.5D View, device faces, badge faces, LED tape and lock markers sit on the
+shared 140 cm wall-cut plane. Bodies keep their authored top shape and fixed
+gray sides. Occlusion affects body, badge and contact outline independently.
+The two readable glyph orientations also apply to values, battery, Zigbee and
+locks. The configured device glyph angle composes around its own centre.
+Filled floor shadows and visible positions never replace saved layout
+anchors. See [full 2.5D contract](ISOMETRIC.md).
+
 ## Effective consumer dependencies (#1093)
 
 Only current-floor demanded faces are resolved; hidden/off-floor light controllers and room aggregate sources remain in the coherent HA projection when a visible consumer reads them. Per-device metadata, effective battery overrides, activity and confirmed alert issues drive incremental face invalidation; equivalent roster clones and unrelated paint revisions do not reset all faces. Registry removal/disable, source metadata and authority changes fail open to current roster/ownership checks. Hidden confirmation clocks keep authoritative condition edges, suspend visual deadlines, and consume elapsed confirmation on reveal; route/card/HA retirement still discards the owner. Hidden decor sources are captured again before reveal, including pending display previews.

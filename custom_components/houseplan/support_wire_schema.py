@@ -344,6 +344,7 @@ SPACE_SETTINGS = Object(
         "custom_fill": nullable(FILL_COLOR),
         "name_color": FILL_COLOR,
         "wall_fill": FILL_COLOR,
+        "opening_accent_3d": FILL_COLOR,
         "show_lqi_mode": enum("inherit", "on", "low", "off"),
         "show_device_battery_mode": enum("inherit", "all", "low", "off"),
     }

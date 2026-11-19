@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1474,
+  "baseStable": "v1.85.0",
+  "category": "major",
+  "rationale": "User-visible appearance and a new per-space opening accent for 2.5D View.",
+  "summary": {
+    "ru": "Объёмные значки и подписи 2.5D, свет на стенах и акцентный цвет 3D окон и дверей.",
+    "en": "Raised devices and room labels, illuminated wall faces and an accent colour for 3D windows and doors."
+  }
+}

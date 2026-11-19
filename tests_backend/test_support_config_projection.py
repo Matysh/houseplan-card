@@ -52,7 +52,8 @@ def test_issue1024_nested_sources_share_pseudonyms_but_local_leaf_ids_are_parent
 def test_issue1037_caption_and_wall_colors_survive_closed_support_projection():
     from custom_components.houseplan.support_wire_schema import CONFIG, validate
     color = {"c": "#123456", "a": 0, "private": "must disappear"}
-    source = {"spaces": [{"id": "s", "title": "Private", "settings": {"name_color": color, "wall_fill": color},
+    source = {"spaces": [{"id": "s", "title": "Private",
+                          "settings": {"name_color": color, "wall_fill": color, "opening_accent_3d": color},
                           "rooms": [{"id": "r", "name": "Private", "settings": {"name_color": color}}]}]}
     result, _ = project(source)
     result["model_version"] = 10
@@ -60,6 +61,7 @@ def test_issue1037_caption_and_wall_colors_survive_closed_support_projection():
     space = result["spaces"][0]
     assert space["settings"]["name_color"] == {"c": "#123456", "a": 0}
     assert space["settings"]["wall_fill"] == {"c": "#123456", "a": 0}
+    assert space["settings"]["opening_accent_3d"] == {"c": "#123456", "a": 0}
     assert space["rooms"][0]["settings"]["name_color"] == {"c": "#123456", "a": 0}
 
 

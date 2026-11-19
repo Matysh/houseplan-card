@@ -24,6 +24,7 @@ import {
   compactPoints, emitterSamples, isClosedStrip, type FaceContext, type Pt,
 } from './led-strip-geometry';
 import type { LedStripView } from './led-strip-runtime';
+import type { IsoWallLightSource } from './iso-wall-light';
 
 /**
  * `guard` without its own shared chunk: an unchanged field (same cached
@@ -312,6 +313,7 @@ const grey = (value: number): string => {
 };
 
 export interface LedFieldInput {
+  capture?: (source: IsoWallLightSource) => void;
   views: readonly LedStripView[];
   scene: LightBarrierScene | null;
   polygons: readonly LightRoomPolygon[];
@@ -430,6 +432,11 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
   });
   pruneGlowSources(lifecycle.state, lifecycle.host, input.spaceId, seen);
   if (!fields.length) return svg`` as unknown as TemplateResult;
+  for (const { view, geometry, transition } of fields) input.capture?.({
+    key: `led:${input.spaceId}|${view.strip.id}`, color: view.appearance.c, alpha: view.appearance.alpha,
+    radius: view.radius, points: view.strip.points, visible: geometry.pieces.map(piece => piece.clip),
+    rule: 'nonzero', floorClip: fieldFloor(scene), entering: transition.entering, leaving: transition.leaving,
+  });
   const bands = Array.from({ length: LED_FIELD_BANDS }, (_, k) => {
     const outer = 1 - k / LED_FIELD_BANDS;
     const inner = 1 - (k + 1) / LED_FIELD_BANDS;

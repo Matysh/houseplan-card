@@ -57,3 +57,18 @@ test('space drafts preserve legacy alpha and unknown colour siblings; fresh defa
   assert.deepEqual(saved.name_color,{future:'keep',c:'#123456',a:0.45});
   assert.equal(saved.future,1);
 });
+
+test('the opening accent stays optional and edits preserve extension fields', () => {
+  const legacy = {id:'legacy',title:'Floor',settings:{}};
+  const draft = savedSpaceDialogDraft(legacy,false);
+  assert.equal(draft.openingAccent3d,undefined);
+  assert.equal(Object.hasOwn(spaceDialogSettings(draft),'opening_accent_3d'),false);
+
+  const accent = {c:'#e08030',a:0,future:7};
+  const floor = {...legacy,settings:{opening_accent_3d:accent}};
+  const loaded = savedSpaceDialogDraft(floor,false);
+  assert.deepEqual(loaded.openingAccent3d,{c:'#e08030',a:0});
+  const updated = spaceDialogSettings({...loaded,openingAccent3d:{c:'#152732',a:.35}},floor.settings);
+  assert.deepEqual(updated.opening_accent_3d,{c:'#152732',a:.35,future:7});
+  assert.deepEqual(floor.settings.opening_accent_3d,accent);
+});

@@ -3,10 +3,14 @@ import { nothing, svg, type TemplateResult } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
 import { controlMotion } from './ui-motion';
 import {
-  cachedStairMarkup, cachedStairRenderGeometry, stairList, stairStyleVars, type Stair,
+  cachedStairMarkup, cachedStairRenderGeometry, stairList, stairStyleVars, stairVisualStyle, type Stair,
 } from './stairs';
 import { stairTargetState } from './stairs-editor-model';
 import type { SpaceModel } from './types';
+import { stairVolume, type StairVolume } from './stairs-volume';
+import type { IsoCamera } from './iso-projection';
+import { renderIsoLabFurniture } from './iso-lab-furniture-render';
+import { gridVisualScale } from './grid-scale';
 
 export interface StairViewHostPort {
   _mode: 'view' | 'plan' | 'devices' | 'decor';
@@ -102,7 +106,11 @@ export class StairViewRuntime {
     this.suppressClick = false;
   }
 
-  public renderLayer(): TemplateResult {
+  public volumeItems(camera:IsoCamera):Map<string,StairVolume> {
+    return new Map(this.stairs.flatMap(stair=>{const volume=stairVolume(stair,this.owner._cellCm,camera);return volume?[[stair.id,volume] as const]:[];}));
+  }
+
+  public renderLayer(volumes?:ReadonlyMap<string,StairVolume>,part:'flat'|'volume'='flat'): TemplateResult {
     // #694: the card's `_model` getter fingerprints the whole config on every
     // read; read it once per layer, not once more per navigable stair.
     const model = this.owner._model;
@@ -110,7 +118,7 @@ export class StairViewRuntime {
     const interactive = this.owner._mode === 'view';
     const renderedSpace = this.owner._space;
     const arrival = interactive && this.arrival?.space === renderedSpace ? this.arrival : null;
-    const items = this.stairs.map((stair) => {
+    const items = this.stairs.filter(stair=>part==='volume'?volumes?.has(stair.id):!volumes?.has(stair.id)).map((stair) => {
       const geometry = cachedStairRenderGeometry(stair, this.owner._cellCm);
       const markup = cachedStairMarkup(geometry);
       const targetState = stairTargetState(
@@ -142,9 +150,12 @@ export class StairViewRuntime {
         if (this.owner._mode === 'view' && this.owner._space === target && target !== renderedSpace) this.arrive(renderedSpace, target);
       };
       const highlight = arrival && stair.target_space_id === arrival.from;
+      const volume=volumes?.get(stair.id),style=stairVisualStyle(stair,this.owner._decorStyle);
       if (highlight) arrival.rendered = true;
       return renderStairSymbol({
         stair, geometry, markup,
+        volume: volume ? {height:volume.height,steps:volume.steps,hit:volume.hit,
+          body:renderIsoLabFurniture(volume.mesh,stair.id,'stairs',style.color,gridVisualScale(this.owner._cellCm),false)} : undefined,
         classes: 'hp-stair-view ' + (active ? 'navigable' : '') + ' ' + (interactive ? 'input-enabled' : ''),
         targetState, style: stairStyleVars(stair, this.owner._cellCm, this.owner._gridPitch, this.owner._decorStyle),
         role: active ? 'link' : 'img', focusable: active, label: this.owner._t('markup.stairs'),
@@ -153,7 +164,9 @@ export class StairViewRuntime {
         key: event => {
           if (active && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); navigate(event); }
         },
-        extra: highlight ? keyed(arrival.token, svg`<polygon class="hpf-arrival-highlight hpf-motion"
+        extra: highlight ? keyed(arrival.token, volume
+          ? svg`<path class="hpf-arrival-highlight hpf-motion" data-hp="stair-arrival" d=${volume.hit} aria-hidden="true"></path>`
+          : svg`<polygon class="hpf-arrival-highlight hpf-motion"
           data-hp="stair-arrival" points=${markup.outline} aria-hidden="true"></polygon>`) : nothing,
       });
     });

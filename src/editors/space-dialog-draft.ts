@@ -43,6 +43,7 @@ export function savedSpaceDialogDraft(sp: SavedSpace, imperial: boolean, globalM
     zeroWallStyle: zeroWallStyleOf(sp), displayTouched: true,
     hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings, roomColor: disp.color, roomOpacity: disp.opacity,
     nameColor: disp.nameColor, wallFill: disp.wallFill,
+    openingAccent3d: disp.openingAccent3d,
     fillMode: disp.fill === 'none' ? 'custom' : disp.fill,
     customFill: disp.fill === 'none' ? { ...(storedCustom || DEFAULT_CUSTOM_FILL), a: 0 } : storedCustom,
     glowEnabled: disp.glow, bgColor: disp.bgColor,
@@ -69,6 +70,10 @@ export function spaceDialogSettings(d: SpaceDialogState, previous?: Record<strin
     room_color: d.roomColor, room_opacity: d.roomOpacity, bg_color: d.bgColor || undefined,
     name_color: { ...((previous?.name_color as Record<string, unknown> | undefined) || {}), ...appearance.nameColor },
     wall_fill: { ...((previous?.wall_fill as Record<string, unknown> | undefined) || {}), ...appearance.wallFill },
+    ...(d.openingAccent3d ? { opening_accent_3d: {
+      ...(previous?.opening_accent_3d as Record<string, unknown> | undefined),
+      ...d.openingAccent3d,
+    } } : {}),
     bg_mode: d.bgMode || undefined, north_deg: d.northDeg ?? undefined, sun_rays: d.sunRays ?? undefined,
     fill_mode: d.fillMode, custom_fill: d.customFill || undefined, glow_enabled: true,
     temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,

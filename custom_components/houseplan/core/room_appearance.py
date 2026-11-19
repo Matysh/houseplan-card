@@ -71,8 +71,9 @@ def normalize_room_appearance(config: dict) -> dict:
 def preserve_space_appearance(candidate: dict, previous: dict | None) -> None:
     """An older ordinary writer cannot reintroduce global colour inheritance.
 
-    Room name override absence still means an intentional reset. Only the two
-    materialised space fields are protected, not authoritative imports. A
+    Room name override absence still means an intentional reset. Preserve
+    saved space appearance, including an explicit 2.5D opening accent, on
+    ordinary writes. Authoritative imports own the values they supply. A
     materialised previous space hands its fields over directly; a legacy one
     (saved before #1037) resolves them by the same rule as
     `normalize_room_appearance`, without copying the whole document (#1096).
@@ -86,6 +87,13 @@ def preserve_space_appearance(candidate: dict, previous: dict | None) -> None:
         if before is None:
             continue
         settings = space.setdefault("settings", {})
+        before_settings = before.get("settings")
+        if (
+            "opening_accent_3d" not in settings
+            and isinstance(before_settings, dict)
+            and "opening_accent_3d" in before_settings
+        ):
+            settings["opening_accent_3d"] = deepcopy(before_settings["opening_accent_3d"])
         if all(key in settings for key in APPEARANCE_KEYS):
             continue
         resolved = resolve_space_appearance(before, general)

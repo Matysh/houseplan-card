@@ -26,7 +26,7 @@ def test_legacy_parity_copy_only_idempotence_and_unknown_fields():
         assert result["future"] == source["future"]
 
 
-@pytest.mark.parametrize("key", ["name_color", "wall_fill"])
+@pytest.mark.parametrize("key", ["name_color", "wall_fill", "opening_accent_3d"])
 @pytest.mark.parametrize("value", [None, {}, {"c": "#123456", "a": True}, {"c": "#123456", "a": "0"},
                                    {"c": "red", "a": 1}, {"c": "#123456\n", "a": 1},
                                    {"c": "#123456", "a": -0.1}, {"c": "#123456", "a": 1.1},
@@ -67,3 +67,21 @@ def test_room_null_inherits_but_invalid_explicit_alpha_is_rejected():
     for value in [True, "0", None, -0.1, 1.1, float("nan")]:
         with pytest.raises(vol.Invalid):
             validation.ROOM_SCHEMA({**base, "settings": {"name_color": {"c": "#123456", "a": value}}})
+
+
+def test_opening_accent_preserves_older_writes_without_materializing_a_legacy_default():
+    color = {"c": "#765432", "a": 0.4}
+    settings = {"name_color": color, "wall_fill": color}
+    legacy = {"id": "legacy", "settings": deepcopy(settings)}
+    saved = {"id": "saved", "settings": {**settings, "opening_accent_3d": color}}
+    candidate = {"spaces": [deepcopy(legacy), {"id": "saved", "settings": deepcopy(settings)}]}
+
+    appearance.preserve_space_appearance(candidate, {"spaces": [legacy, saved]})
+    assert "opening_accent_3d" not in candidate["spaces"][0]["settings"]
+    assert candidate["spaces"][1]["settings"]["opening_accent_3d"] == color
+    assert candidate["spaces"][1]["settings"]["opening_accent_3d"] is not color
+
+    neutral = {"c": "#ffffff", "a": 1}
+    candidate["spaces"][1]["settings"]["opening_accent_3d"] = neutral
+    appearance.preserve_space_appearance(candidate, {"spaces": [saved]})
+    assert candidate["spaces"][1]["settings"]["opening_accent_3d"] == neutral

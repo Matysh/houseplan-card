@@ -2,9 +2,9 @@
  * #649 (docs/ISOMETRIC.md, Stage 6): presentation colours of the 2.5D View
  * that follow the user's data, never the Home Assistant theme.
  *
- * - Walls: the top face is the space's resolved `settings.wall_fill` colour, the side
- *   faces are the same colour darkened per channel. With the default white
- *   this is the designer lab's matte look (#c5c5c0 → #999b97 sides).
+ * - Walls: the UI Lab's explicit top/side colours follow the space's wall
+ *   hatching/fill settings respectively. Single-colour callers retain the
+ *   legacy material with darker side faces.
  * - Floor lightness: relative luma of the room floor (its fill composited over
  *   the plan paper) decides the "light floor" variants of tile shadows and
  *   window light (lab: luma > 0.55).
@@ -63,22 +63,36 @@ export interface IsoWallMaterial {
   sideLo: string;
 }
 
-export function isoWallMaterial(wallFill: unknown): IsoWallMaterial {
-  const base = parseHexColor(wallFill) ?? [255, 255, 255];
+export function isoWallMaterial(topColor: unknown, sideColor?: unknown): IsoWallMaterial {
+  const base = parseHexColor(topColor) ?? [255, 255, 255];
+  const side = parseHexColor(sideColor);
   return {
     topHi: hex(base),
     topLo: hex(scale(base, ISO_WALL_TOP_LO)),
-    sideHi: hex(scale(base, ISO_WALL_SIDE[0])),
-    sideMid: hex(scale(base, ISO_WALL_SIDE[1])),
-    sideLo: hex(scale(base, ISO_WALL_SIDE[2])),
+    sideHi: hex(side ? scale(side, 1.12) : scale(base, ISO_WALL_SIDE[0])),
+    sideMid: hex(side ?? scale(base, ISO_WALL_SIDE[1])),
+    sideLo: hex(side ? scale(side, .88) : scale(base, ISO_WALL_SIDE[2])),
   };
 }
 
 /** CSS custom properties for the 2.5D stage style attribute. */
-export function isoWallMaterialVars(wallFill: unknown): string {
-  const m = isoWallMaterial(wallFill);
+export function isoWallMaterialVars(topColor: unknown, sideColor?: unknown): string {
+  const m = isoWallMaterial(topColor, sideColor);
   return `--iso-top-hi:${m.topHi};--iso-top-lo:${m.topLo};--iso-side-hi:${m.sideHi};`
     + `--iso-side-mid:${m.sideMid};--iso-side-lo:${m.sideLo}`;
+}
+
+/** An adjustable tint over the original white materials. White is a no-op;
+ * shading between frames, leaves and reveals remains visible. */
+export function isoOpeningMaterialVars(accent: unknown, opacity = 1): Record<string, string> {
+  const color = parseHexColor(accent) ?? [255, 255, 255];
+  const a = Number.isFinite(opacity) ? Math.min(1, Math.max(0, opacity)) : 1;
+  return Object.fromEntries(Object.entries({
+    leaf: '#f1f2ef', frame: '#c2cfd2', edge: '#bec5c5',
+    'window-frame': '#f3f4f0', 'door-frame': '#e9ece8', reveal: '#8b8d8c',
+    'sill-side': '#e6e8e3', 'sill-top': '#fffefa',
+  }).map(([name, base]) => [`--iso-opening-${name}`,
+    hex(parseHexColor(base)!.map((channel, i) => channel * (1 - a + a * color[i] / 255)) as unknown as Rgb)]));
 }
 
 /** `#hex` or `rgb(a)(r, g, b …)` as computed styles report it; anything else → null. */

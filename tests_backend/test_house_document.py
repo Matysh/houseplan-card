@@ -28,7 +28,9 @@ def source():
             "decor": [{"id": "label", "kind": "text", "x": .2, "y": .3,
                        "text": "Static {sensor.private} text", "size_cm": 12}],
             "led_strips": [{"id": "strip", "points": [[.1, .1], [.6, .1]], "marker": "secret", "active": True}],
-            "settings": {"bg_color": "#abcdef"} if index == 1 else {}})
+            "settings": {
+                "bg_color": "#abcdef", "opening_accent_3d": {"c": "#e08030", "a": .35},
+            } if index == 1 else {}})
     return {"spaces": spaces, "markers": [{"id": "secret", "binding": "device:private"}],
             "settings": {"bg_mode": "daynight", "bg_color": "#123456", "north_deg": 45,
                          "sun_rays": True, "moon": False, "volumetric_view": True,
@@ -60,6 +62,10 @@ def test_projection_keeps_every_floor_and_scoped_stairs_without_ha_or_globals():
         assert settings["bg_mode"] == "daynight" and settings["north_deg"] == 45 and settings["sun_rays"] is True
         assert settings["bg_color"] == ("#abcdef" if index == 1 else "#123456")
         assert settings["wall_fill"] == {"c": "#334455", "a": .7}
+        if index == 1:
+            assert settings["opening_accent_3d"] == {"c": "#e08030", "a": .35}
+        else:
+            assert "opening_accent_3d" not in settings
     assert payload["layout"] == {"rl_room": {"s": "floor1", "x": .3, "y": .4, "k": 1.2}}
     assert parse_document(json.dumps(document).encode()) == document
     with pytest.raises(ImportFailure):

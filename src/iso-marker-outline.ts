@@ -1,5 +1,6 @@
 /** Local #1451 paint envelope. Native contact layout and hit ownership stay Flat. */
 import { intersection, union, type Geom } from 'polyclip-ts';
+import type { IsoDeviceSurface } from './iso-overlays';
 import { contactOutline, contactRotate, freeContactShape,
   type ContactPoint as Point, type ContactShape, type ContactSide } from './device-contact-geometry';
 
@@ -137,31 +138,40 @@ export function isoLockBodyOutline(plane:readonly number[]):string {
   return path;
 }
 
-export interface IsoMarkerGlass { front: string; back: string; top: string; bottom: string }
+export interface IsoMarkerGlass {
+  front: string; back: string; top: string; bottom: string;
+  frontFaces: IsoDeviceSurface[]; backFaces: IsoDeviceSurface[];
+}
 /** Extrude the native open contact boundary, not its already swept silhouette.
  * Front and rear surfaces are separate paint layers around the unchanged face.
  * Wall-owned edges stay open and grouped contours retain their concavities. */
-export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly number[]):IsoMarkerGlass {
-  const result:IsoMarkerGlass={front:'',back:'',top:'',bottom:''};
+export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly number[],topAnchored=false):IsoMarkerGlass {
+  const result:IsoMarkerGlass={front:'',back:'',top:'',bottom:'',frontFaces:[],backFaces:[]};
   if(!shapes.length)return result;
   const [a,b,c,d]=plane,det=a*d-b*c;
   if(!Number.isFinite(det)||Math.abs(det)<1e-8)return result;
   const half=Math.max(...shapes.map(s=>s.marker.diameter))*.12;
   const v:Point=[-c/det*half,a/det*half];
-  // Keep the base at the body's underside, raise only the lip by 0.08 D.
-  const lip=-5/3;
+  // Raised device caps and their upper rim share one plane. An extra raised
+  // lip shifts the projected ellipse off-centre even with identical XY.
+  const lip=topAnchored ? 0 : -5/3;
+  const bottom=topAnchored ? 2 : 1;
   const path=(points:Point[])=>points.map((p,i)=>`${i?'L':'M'}${p.map(n=>+n.toFixed(7)).join(' ')}`).join(' ');
   for(const chain of rings(contactOutline(shapes,true),true)) {
     result.top+=path(chain.map(p=>add(p,v,lip)))+' ';
-    result.bottom+=path(chain.map(p=>add(p,v,1)))+' ';
+    result.bottom+=path(chain.map(p=>add(p,v,bottom)))+' ';
     let run:Point[]=[];let front=false;
     const flush=()=>{
       if(run.length<2)return;
-      result[front?'front':'back']+=path([...run.map(p=>add(p,v,lip)),...[...run].reverse().map(p=>add(p,v,1))])+' Z ';
+      result[front?'front':'back']+=path([...run.map(p=>add(p,v,lip)),...[...run].reverse().map(p=>add(p,v,bottom))])+' Z ';
     };
     for(let i=1;i<chain.length;i++) {
       const p=chain[i-1],q=chain[i],dx=a*(q[0]-p[0])+c*(q[1]-p[1]);
       const next=dx<0;
+      if(Math.hypot(q[0]-p[0],q[1]-p[1])>1e-8)result[next?'frontFaces':'backFaces'].push([
+        [...add(p,v,lip),half*lip],[...add(q,v,lip),half*lip],
+        [...add(q,v,bottom),half*bottom],[...add(p,v,bottom),half*bottom],
+      ]);
       if(run.length && next!==front){flush();run=[];}
       front=next;if(!run.length)run.push(p);run.push(q);
     }
@@ -174,7 +184,7 @@ const lockGlass=new Map<string,IsoMarkerGlass>();
 export function isoLockGlass(plane:readonly number[]):IsoMarkerGlass {
   const key=plane.slice(0,4).join(',');let glass=lockGlass.get(key);
   if(!glass){glass=isoMarkerGlass([freeContactShape({id:'lock',x:0,y:0,diameter:80,
-    box:{left:-50.75,right:50.75,top:-50.75,bottom:50.75}})],plane);
+    box:{left:-50.75,right:50.75,top:-50.75,bottom:50.75}})],plane,true);
     if(lockGlass.size>=16)lockGlass.clear();lockGlass.set(key,glass);}
   return glass;
 }

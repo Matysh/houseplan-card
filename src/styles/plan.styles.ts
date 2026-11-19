@@ -241,6 +241,10 @@ export const planStyles = css`
       stroke-width: 0.8;
       vector-effect: non-scaling-stroke;
     }
+    .iso-wall-fill { opacity: var(--iso-wall-top-op, 1); }
+    .iso-wall-side-fill { opacity: var(--iso-wall-side-op, .55); }
+    :is(.iso-wall-fill, .iso-wall-side-fill) :is(.iso-wall-side, .iso-wall-top) { stroke: none; }
+    .iso-wall-contour { fill: none; stroke-linejoin: round; }
     .iso-material-texture {
       fill: url(#hp-iso-wall-texture);
       stroke: none;
@@ -303,20 +307,20 @@ export const planStyles = css`
     }
     /* Local #1451: materials decorate the derived surfaces only. */
     [data-hp-opening-masonry] .iso-door.iso-material-matte-leaf {
-      fill: #f1f2ef; fill-opacity: 1;
+      fill: var(--iso-opening-leaf, #f1f2ef); fill-opacity: 1;
     }
     [data-hp-opening-masonry] .iso-door.iso-material-light-frame {
-      fill: #c2cfd2; fill-opacity: 1; stroke: none;
+      fill: var(--iso-opening-frame, #c2cfd2); fill-opacity: 1; stroke: none;
     }
     [data-hp-opening-masonry] .iso-door.iso-opening-door-glass {
       fill: #78b5c8; fill-opacity: .43; stroke: none;
     }
     [data-hp-opening-masonry] .iso-door.iso-opening-leaf-edge,
     [data-hp-opening-masonry] .iso-door.iso-opening-leaf-top {
-      fill: #bec5c5;
+      fill: var(--iso-opening-edge, #bec5c5);
     }
     [data-hp-opening-masonry] .iso-window.iso-material-light-frame {
-      fill: #f3f4f0; fill-opacity: 1; stroke: none;
+      fill: var(--iso-opening-window-frame, #f3f4f0); fill-opacity: 1; stroke: none;
     }
     [data-hp-opening-masonry] .iso-window.iso-material-glass-side {
       fill: #cde4ee; fill-opacity: .74; stroke: none;
@@ -325,13 +329,17 @@ export const planStyles = css`
     [data-hp-opening-masonry] .iso-window.iso-material-glass-over-fabric { fill: #cde4ee; fill-opacity: .16; stroke: none; }
     [data-hp-opening-masonry] .iso-window.iso-material-blind-hem { fill: #958b7e; fill-opacity: 1; stroke: none; }
     [data-hp-opening-masonry] .iso-opening-door-frame {
-      fill: #e9ece8; fill-opacity: 1; stroke: none;
+      fill: var(--iso-opening-door-frame, #e9ece8); fill-opacity: 1; stroke: none;
     }
     [data-hp-opening-masonry] .iso-wall-side { fill: var(--iso-side-mid, #adadad); stroke: none; }
     [data-hp-opening-masonry] .iso-opening-panel { stroke: none; }
     [data-hp-opening-masonry] .iso-material-reveal { fill: #8b8d8c; fill-opacity: 1; }
+    [data-hp-opening-masonry] :is(.iso-door, .iso-window).iso-material-reveal {
+      fill: var(--iso-opening-reveal, #8b8d8c);
+    }
     [data-hp-opening-masonry] .iso-material-light-sill { fill: #e6e8e3; fill-opacity: 1; }
-    [data-hp-opening-masonry] .iso-opening-window-sill { fill: #fffefa; }
+    [data-hp-opening-masonry] .iso-window.iso-material-light-sill { fill: var(--iso-opening-sill-side, #e6e8e3); }
+    [data-hp-opening-masonry] .iso-window.iso-opening-window-sill { fill: var(--iso-opening-sill-top, #fffefa); }
     [data-hp-opening-masonry] .iso-material-hardware { fill: #657078; fill-opacity: 1; }
     [data-hp-opening-masonry] + .iso-opening-indicators :is(path, text) {
       paint-order: stroke fill;

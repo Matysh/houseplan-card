@@ -44,7 +44,19 @@ export interface IsoOverlayPlacementInput extends IsoOverlayOwnerInput {
   resolvedOwner?: IsoOverlayOwner | null;
 }
 
+export interface IsoDeviceFace {
+  left: number; top: number; right: number; bottom: number; rx: number; ry: number;
+}
+/** Plan-plane XY plus vertical screen drop below the marker's top plane. */
+export type IsoDeviceSurface = readonly (readonly [number, number, number])[];
+export interface IsoDeviceWallMask {
+  path: string; transform: string;
+  bodyMask: (faces: readonly IsoDeviceFace[]) => { body: string; occluded: string };
+  glassMask: (faces: readonly IsoDeviceSurface[]) => string;
+}
 export interface IsoOverlayPlacement {
+  deviceSize?: number;
+  wallMask?: IsoDeviceWallMask;
   /** Local #1451 context, without moving the immutable floor anchor. */
   occluded?: boolean;
   plane: IsoOverlayPlane;

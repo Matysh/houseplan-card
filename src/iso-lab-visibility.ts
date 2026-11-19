@@ -1,7 +1,8 @@
 /** Local #1451 visibility in the common projection. Remove only the portions
  * hidden by a nearer opaque face; never change plan coordinates or leaf poses.
  * A single average depth cannot order an open leaf crossing a long wall. */
-import { projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
+import { isoFloorMatrix, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
+import type { IsoDeviceFace, IsoDeviceSurface, IsoOverlayPlacement } from './iso-overlays';
 import type { IsoWallDepthQueueEntry } from './iso-scene-geometry';
 
 type Point = [number,number];
@@ -167,6 +168,113 @@ export function furnitureOcclusion(queue: readonly IsoWallDepthQueueEntry[], cam
   const result = {box, mask:path(opaque), frontGlass};
   masks.set(footprint,{height,result});
   return result;
+}
+
+let deviceMasks=new WeakMap<IsoOverlayPlacement,IsoOverlayPlacement['wallMask']>();
+let deviceQueue:readonly IsoWallDepthQueueEntry[]|undefined,deviceCamera:IsoCamera|undefined;
+let deviceFaces:(Face|null)[]=[];
+/** Glass occupies the wall-cut band. Solid faces additionally compare their
+ * actual surface depth, so a wall behind a cap never cuts into its top. */
+export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],camera:IsoCamera,
+  placement:IsoOverlayPlacement,height:number):IsoOverlayPlacement['wallMask'] {
+  const size=placement.deviceSize;
+  if(!size)return undefined;
+  if(queue!==deviceQueue||camera!==deviceCamera){
+    deviceQueue=queue;deviceCamera=camera;deviceFaces=queue.map(entry=>faceOf(entry,camera));deviceMasks=new WeakMap();
+  }
+  if(deviceMasks.has(placement))return deviceMasks.get(placement);
+  const lift=projectPlanPoint([0,0],0,camera)[1]-projectPlanPoint([0,0],1,camera)[1];
+  const bottom=height-size*.24/lift,[cx,cy]=placement.visualScene,r=size*5,covered:Multi=[];
+  const nearby:Face[]=[];
+  for(const face of deviceFaces){
+    if(!face?.opaque)continue;
+    const [x0,y0,x1,y1]=face.bounds;
+    if(x1<cx-r||x0>cx+r||y1<cy-r||y0>cy+r)continue;
+    nearby.push(face);
+    for(const [ring] of face.geom){
+      const clipped=halfPlane(ring,[face.plane[0],face.plane[1],face.plane[2]-bottom]);
+      if(clipped.length){if(area(clipped)<0)clipped.reverse();covered.push([clipped]);}
+    }
+  }
+  const mask=path(covered);
+  if(!mask){deviceMasks.set(placement,undefined);return undefined;}
+  const [a,b,c,d]=isoFloorMatrix(camera),det=a*d-b*c,[x,y]=placement.visualScene;
+  let lastFaces:readonly IsoDeviceFace[]|undefined,lastBody={body:'',occluded:''};
+  const bodyMask=(faces:readonly IsoDeviceFace[])=>{
+    if(faces===lastFaces)return lastBody;
+    const caps:Point[][]=[],sides:{ring:Point[];plane:Plane}[]=[];
+    for(const face of faces){
+      const {left:l,right:r,top:t,bottom:bt,rx,ry}=face,cap:Point[]=[];
+      // Match the real rounded DOM face, including fitted numeric pills and
+      // badges. All coordinates come from the existing cached measure batch.
+      for(let corner=0;corner<4;corner++)for(let step=0;step<=16;step++){
+        const angle=(-90+corner*90+step*90/16)*Math.PI/180;
+        const px=(corner<2?r-rx:l+rx)+Math.cos(angle)*rx;
+        const py=(corner===0||corner===3?t+ry:bt-ry)+Math.sin(angle)*ry;
+        cap.push([cx+(a*px+c*py)*size,cy+(b*px+d*py)*size]);
+      }
+      caps.push(cap);
+      for(let i=0;i<cap.length;i++){
+        const p=cap[i],q=cap[(i+1)%cap.length];
+        if(q[0]>=p[0]-1e-8)continue; // only camera-facing vertical sides
+        const lowP:Point=[p[0],p[1]+size*.24],lowQ:Point=[q[0],q[1]+size*.24];
+        const plane=heightPlane([[...p,height],[...q,height],[...lowQ,bottom]]);
+        if(plane)sides.push({ring:[p,q,lowQ,lowP],plane});
+      }
+    }
+    const hidden:Multi=[];
+    for(const side of sides)for(const wall of nearby){
+      const delta=wall.plane.map((n,i)=>n-side.plane[i]) as Plane;
+      for(const [ring] of wall.geom){
+        let overlap=halfPlane(ring,[delta[0],delta[1],delta[2]-DEPTH_EPS]);
+        const sign=Math.sign(area(side.ring));
+        for(let i=0;i<side.ring.length&&overlap.length;i++){
+          const p=side.ring[i],q=side.ring[(i+1)%side.ring.length];
+          overlap=halfPlane(overlap,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign]);
+        }
+        if(!overlap.length)continue;
+        // The cap is nearer than every side, including another badge's side.
+        let visible:Multi=[[overlap]];
+        for(const cap of caps)visible=visible.flatMap(poly=>subtractConvex(poly[0],cap));
+        hidden.push(...visible);
+      }
+    }
+    const solid:Multi=[...caps.map(cap=>[cap]),...sides.map(side=>[side.ring])];
+    for(const geom of [solid,hidden])for(const [ring] of geom)if(area(ring)<0)ring.reverse();
+    lastFaces=faces;return lastBody={body:path(solid),occluded:path(hidden)};
+  };
+  const glassMasks=new WeakMap<readonly IsoDeviceSurface[],string>();
+  const structureFaces=deviceFaces;
+  const glassMask=(surfaces:readonly IsoDeviceSurface[]):string=>{
+    const cached=glassMasks.get(surfaces);if(cached!==undefined)return cached;
+    const hidden:Multi=[];
+    for(const surface of surfaces){
+      const vertices=surface.map(([x,y,drop])=>[...projectPlanPoint([x,y],height,camera),height-drop/lift]);
+      const ring=vertices.map(p=>[p[0],p[1]] as Point),plane=heightPlane(vertices);
+      if(!plane)continue;
+      const sign=Math.sign(area(ring));
+      const bounds=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];
+      for(const wall of structureFaces){
+        if(!wall?.opaque||wall.bounds[2]<bounds[0]||wall.bounds[0]>bounds[2]||wall.bounds[3]<bounds[1]||wall.bounds[1]>bounds[3])continue;
+        const delta=wall.plane.map((n,i)=>n-plane[i]) as Plane;
+        for(const [wallRing] of wall.geom){
+          let overlap=halfPlane(wallRing,[delta[0],delta[1],delta[2]-DEPTH_EPS]);
+          for(let i=0;i<ring.length&&overlap.length;i++){
+            const p=ring[i],q=ring[(i+1)%ring.length];
+            overlap=halfPlane(overlap,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign]);
+          }
+          if(overlap.length){if(area(overlap)<0)overlap.reverse();hidden.push([overlap]);}
+        }
+      }
+    }
+    const origin=projectPlanPoint([0,0],height,camera);
+    const local=hidden.map(poly=>poly.map(ring=>ring.map(p=>{
+      const x=p[0]-origin[0],y=p[1]-origin[1];return [(d*x-c*y)/det,(-b*x+a*y)/det] as Point;
+    })));
+    const result=path(local);glassMasks.set(surfaces,result);return result;
+  };
+  const result={path:mask,bodyMask,glassMask,transform:`matrix(${d/det/size} ${-b/det/size} ${-c/det/size} ${a/det/size} ${.5-(d*x-c*y)/det/size} ${.5-(-b*x+a*y)/det/size})`};
+  deviceMasks.set(placement,result);return result;
 }
 
 let lastKey='',lastResult:readonly IsoWallDepthQueueEntry[]=[];

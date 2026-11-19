@@ -295,6 +295,18 @@ export function paintLiveViewport(
       if (svg.style.clipPath !== clip) svg.style.clipPath = clip;
     } else if (svg.style.clipPath) svg.style.removeProperty('clip-path');
   }
+  // Keep the shadow mask's raster window bounded to the same exposed viewport.
+  // Its paths and HTML shadows retain the painted basis and move together;
+  // only these four bounds change on the existing scene-anchor budget.
+  const maskX = (next.frame.view.x - painted.view.x) / painted.view.w;
+  const maskY = (next.frame.view.y - painted.view.y) / painted.view.h;
+  const maskW = next.frame.view.w / painted.view.w, maskH = next.frame.view.h / painted.view.h;
+  for (const mask of root.querySelectorAll<SVGElement>('[data-hp-live-mask="camera"]')) {
+    for (const [name, value] of [['x',maskX-maskW*.25],['y',maskY-maskH*.25],['width',maskW*1.5],['height',maskH*1.5]] as const) {
+      const text = String(value);
+      if (mask.getAttribute(name) !== text) mask.setAttribute(name, text);
+    }
+  }
   for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
     // Keeping an identity transform after terminal reconciliation changes the
     // browser compositing path and therefore the settled raster by a few colour

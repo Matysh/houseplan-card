@@ -31,7 +31,7 @@ function views(s:Symbol){
  const drawing=svg`<path d=${art.d} transform=${transform} fill="none" stroke=${state.color} stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" opacity=${state.opacity}></path>`;
  return html`<div class="pair">
    <figure><figcaption>Обычный план</figcaption><svg role="img" aria-label=${s.name_ru+' — обычный план'} viewBox=${fit(corners)}>${drawing}</svg></figure>
-   <figure class="volume"><figcaption>${mesh?'Объём':'Плоский в проекции'}</figcaption><svg role="img" aria-label=${s.name_ru+' — проекция'} viewBox=${fit(bounds)}><g transform=${`matrix(${isoFloorMatrix(camera).join(' ')})`}>${mesh?renderIsoLabFurniture(mesh,'gallery-'+s.id,s.id,state.color,state.opacity,1):drawing}</g></svg></figure>
+   <figure class="volume"><figcaption>${mesh?'Объём':'Плоский в проекции'}</figcaption><svg role="img" aria-label=${s.name_ru+' — проекция'} viewBox=${fit(bounds)}><g transform=${`matrix(${isoFloorMatrix(camera).join(' ')})`}>${mesh?renderIsoLabFurniture(mesh,'gallery-'+s.id,s.id,state.color,1):drawing}</g></svg></figure>
  </div>`;
 }
 function select(label:string,key:string,options:[string,string][]){

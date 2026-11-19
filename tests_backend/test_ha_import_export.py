@@ -120,7 +120,10 @@ def _config() -> dict:
 def test_issue1037_appearance_survives_transfer_without_target_global_leak(tmp_path, kind, plan_only):
     source = _config()
     source["settings"]["fill_colors"] = {"wall_fill": {"c": "#112233", "a": 0}}
-    source["spaces"][0]["settings"] = {"room_color": "#456789", "room_opacity": 0.2, "future": 7}
+    accent = {"c": "#987654", "a": 0.65}
+    source["spaces"][0]["settings"] = {
+        "room_color": "#456789", "room_opacity": 0.2, "future": 7, "opening_accent_3d": accent,
+    }
     source["spaces"][0]["rooms"][0]["settings"] = {"name_color": {"c": "#abcdef", "a": 0}}
     before = copy.deepcopy(source)
     document, _ = create_export(SimpleNamespace(integration_version=INTEGRATION_VERSION, instance_id="same"), {"config": source, "rev": 2},
@@ -130,6 +133,7 @@ def test_issue1037_appearance_survives_transfer_without_target_global_leak(tmp_p
     space = parsed["payload"]["config"]["spaces"][0]
     assert space["settings"]["name_color"] == {"c": "#456789", "a": 0.45}
     assert space["settings"]["wall_fill"] == {"c": "#112233", "a": 0}
+    assert space["settings"]["opening_accent_3d"] == accent
     assert space["rooms"][0]["settings"]["name_color"] == {"c": "#abcdef", "a": 0}
     assert source == before
     if kind == "space":
@@ -138,6 +142,7 @@ def test_issue1037_appearance_survives_transfer_without_target_global_leak(tmp_p
         target_before = copy.deepcopy(target["settings"])
         merged, _layout, _details = build_space_merge(parsed, target, {}, "skip")
         assert merged["spaces"][-1]["settings"]["wall_fill"] == {"c": "#112233", "a": 0}
+        assert merged["spaces"][-1]["settings"]["opening_accent_3d"] == accent
         assert merged["settings"] == target_before
 
 

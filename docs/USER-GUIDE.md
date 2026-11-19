@@ -1900,7 +1900,11 @@ cycle: 30
 
 &emsp;&emsp;A user with House Plan editing permission turns the volumetric plan on: **General settings → Appearance and background → Show the plan in 2.5D**. View and kiosk use the accepted 35° yaw and 40° viewing elevation; rotation buttons change the side by 90°. Walls have a 140 cm cutaway, windows retain masonry below their sills, and doors and passages have lintels. All 60 library items have matching volumetric forms. Saved dimensions, positions and states remain authoritative; no second 3D plan is stored.
 
-&emsp;&emsp;Markers keep their plan anchors. A wall-covered marker is dimmed and loses its shadow, but retains its ordinary action. A group has one outline and individual member actions. Furniture masks only the intersecting part of a room caption; the name and Area link retain their normal accessibility. Windows cast sunlight onto the floor beneath furniture when sun rays and north are configured. Walls retain their colour in both themes. Changing views or entering an editor preserves the physical floor point at the camera centre without editing plan data.
+&emsp;&emsp;Device icons, LED strips, door locks and room names sit level with the top of the walls. Names and their readings are visible over the walls. Icons and labels turn with the view and stay upright. Lights can also illuminate the sides of nearby walls.
+
+&emsp;&emsp;Open **Space settings → Room appearance** to adjust the wall cut and sides separately. **Wall hatching color** sets the top and **Wall fill color** sets the sides. **Accent color for 3D windows and doors** tints frames, door panels, reveals and sills. Set white or 0% to restore the original colour. The percentage controls the strength of the tint. Glass, shades and hardware keep their own appearance.
+
+&emsp;&emsp;Markers keep their plan anchors. Where a foreground wall covers a marker, the covered part is dimmed and the wall hides the shadow. A group has one outline and individual member actions. Windows cast sunlight onto the floor beneath furniture when sun rays and north are configured. Walls retain their colour in both themes. Changing views or entering an editor preserves the physical floor point at the camera centre without editing plan data.
 
 &emsp;&emsp;Editors are always flat. The option is off by default; turning it off or **Reset** returns the flat plan. There is no separate button on the card.
 

@@ -347,6 +347,13 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
           color('name'),
           color('border'),
           color('wall-fill'),
+          colorRow({label:st('space.opening_accent_3d'),help:shelp('space.opening_accent_3d.help'),
+            picker:colorField({hex:d.openingAccent3d?.c || '#ffffff',opacity:d.openingAccent3d?.a ?? 1,
+              picker:html`<hp-color-opacity data-hp="field" data-field=${id('opening-accent-3d')}
+                .label=${st('space.opening_accent_3d')} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
+                .pickerLabels=${host._colorPickerLabels} .color=${d.openingAccent3d?.c || '#ffffff'} .opacity=${d.openingAccent3d?.a ?? 1}
+                @hp-color-opacity-change=${(e:CustomEvent<{color:string;opacity:number}>)=>set(port,{...d,openingAccent3d:{c:e.detail.color,a:e.detail.opacity}})}
+              ></hp-color-opacity>`})}),
           field({label:t('space.fill_label'),help:port.help('space.fill_mode.help'),control:selectControl({
       name:id('fill-mode'),value:d.fillMode === 'none' ? 'custom' : d.fillMode,ariaLabel:t('space.fill_label'),
       options:SPACE_FILL_UI_MODES.filter(value => permitsRoomFill(planHostOf(host).capabilities,value) || value === d.fillMode)

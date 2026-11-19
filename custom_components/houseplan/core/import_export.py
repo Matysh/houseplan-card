@@ -170,6 +170,7 @@ _SPACE_PLAN_FIELDS = (
 )
 _SPACE_DISPLAY_FIELDS = (
     "show_borders", "show_names", "room_color", "bg_color", "room_opacity", "name_color", "wall_fill",
+    "opening_accent_3d",
     "fill_mode", "custom_fill", "glow_enabled", "temp_min", "temp_max",
     "show_lqi", "show_lqi_mode", "hide_decor", "hide_openings", "label_temp", "label_hum",
     "label_co2", "label_lqi", "label_light", "card_font_scale", "card_name_scale", "card_label_scale",

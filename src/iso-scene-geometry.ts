@@ -890,7 +890,8 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     core?: number,
     signal?: {text: string; belowBadge: boolean},
   ): IsoOverlayPlacement => {
-    const visualOffset = kind === 'room-label' || input.floorAlignedMarkers ? 0 : wallHeight;
+    // UI Lab: devices, room labels and door locks share the wall-cut plane.
+    const visualOffset = wallHeight;
     const cacheKey = `${kind}\u0000${id}`;
     // Nothing here depends on zoom or stage size, so a pinch, wheel or resize
     // reuses the immutable placement and Lit keeps the raised SVG subtree.
@@ -924,13 +925,15 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       visualOffset,
       camera: input.camera,
     });
-    if(input.floorAlignedMarkers && kind !== 'room-label') {
+    if (kind === 'device') placement.deviceSize = core;
+    if(input.floorAlignedMarkers && kind === 'opening-lock') {
       const occlusionHalfSize: PlanPoint = core ? [core/2,core/2] : footprintHalfSize;
       const camera = input.camera ?? ISO_CAMERA;
       const behindWall = (center: PlanPoint, half: PlanPoint) =>
-        isoMarkerOccluded(center, half, masonry, wallHeight, camera)
+        isoMarkerOccluded(center, half, masonry, Math.max(0, wallHeight - visualOffset), camera)
         || openingMasonry.some(volume => isoMarkerOccluded(center, half,
-          [[volume.ring.map(point => [point[0], point[1]])]], volume.top, camera, volume.bottom));
+          [[volume.ring.map(point => [point[0], point[1]])]], Math.max(0, volume.top - visualOffset), camera,
+          Math.max(0, volume.bottom - visualOffset)));
       placement.occluded = behindWall(floorAnchor, occlusionHalfSize);
       if (!placement.occluded && core && signal) {
         const font = core * ISO_RAISED_FOOTPRINT.deviceLqiFontSize;

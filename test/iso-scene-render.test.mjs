@@ -93,7 +93,7 @@ const room = (id, x0, y0, x1, y1) => ({
   poly: [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
 });
 
-test('#1451 floor-aligned device and lock keep their flat anchors through turns and fit', () => {
+test('#1474 raised geometry keeps the floor anchors through turns and fit', () => {
   const space = {id:'floor',title:'Floor',cellCm:5,vb:[0,0,100,100],bg:null,
     rooms:[room('owner',0,0,100,100)],wall_segments:[],room_drafts:[],partitions:[],wall_columns:[]};
   /** @type {OverlaySceneFixture} */
@@ -116,7 +116,8 @@ test('#1451 floor-aligned device and lock keep their flat anchors through turns 
     assert.strictEqual(overlayScene({...input,camera,floorAlignedMarkers:true}),aligned,'stable frame is reused');
     for(const entry of aligned.entries) {
       assert.deepEqual(entry.placement.floorScene,projectPlanPoint(entry.placement.floorAnchor,0,camera));
-      assert.deepEqual(entry.placement.visualScene,entry.placement.floorScene);
+      assert.deepEqual(entry.placement.visualScene,
+        projectPlanPoint(entry.placement.floorAnchor,isoDisplayWallHeight(),camera));
       if(entry.kind==='room-label') continue;
       const previous=raised.entries.find(p=>p.id===entry.id && p.kind===entry.kind);
       assert.deepEqual(entry.placement.floorAnchor,previous.placement.floorAnchor,'saved point stays exact');
@@ -134,7 +135,7 @@ test('#1451 floor-aligned device and lock keep their flat anchors through turns 
   const masonry = wallRect(0,80,100,82);
   const marker = overlayScene({...input,structure:structureOf(masonry),contactMasonry:masonry,
     positionOf:()=>({x:50,y:0}),deviceBasePct:1,camera,floorAlignedMarkers:true}).devices.get('device');
-  assert.equal(marker.occluded,true,'the low device is behind the wall');
+  assert.equal(marker.occluded,undefined,'devices use the foreground face masks, not whole-device dimming');
 });
 
 test('every Stage 4 shadow plane uses the same scale-aware fixed-light vector', () => {
@@ -142,7 +143,7 @@ test('every Stage 4 shadow plane uses the same scale-aware fixed-light vector', 
   assert.equal(isoFixedLightTransform(1), 'translate(20 40)');
 });
 
-test('#1451 room labels keep their projected anchor and defer partial coverage to the wall mask',()=>{
+test('#1474 raised room labels retain their original floor anchor and stay unoccluded',()=>{
   const owner={...room('label-room',0,0,100,100),name:'Room'},masonry=wallRect(0,45,100,55);
   const space={id:'labels',title:'Labels',cellCm:5,vb:[0,0,100,100],bg:null,rooms:[owner],
     wall_segments:[],room_drafts:[],partitions:[],wall_columns:[]};
@@ -154,9 +155,9 @@ test('#1451 room labels keep their projected anchor and defer partial coverage t
     const camera={rotDeg:yaw,tiltDeg:50,xyScale:1,zScale:1,origin:[0,0],floorScaleY:Math.sin(40*Math.PI/180)};
     const result=overlayScene({...input,camera,floorAlignedMarkers:true}).rooms.get(owner);
     assert.equal(result.occluded,undefined);assert.deepEqual(result.floorAnchor,[50,10]);
-    assert.deepEqual(result.visualScene,projectPlanPoint([50,10],0,camera));
+    assert.deepEqual(result.visualScene,projectPlanPoint([50,10],isoDisplayWallHeight(),camera));
     assert.equal(overlayScene({...input,camera,floorAlignedMarkers:false}).rooms.get(owner).occluded,undefined,
-      'ordinary dev mode does not reuse the local fading result');
+      'the alternate tile scale shares the unoccluded room label');
   }
 });
 
@@ -630,7 +631,7 @@ test('render scene keeps coincident devices coincident, leaves labels alone and 
   const deviceEntries = scene.entries.filter((entry) => entry.kind === 'device');
   for (let index = 0; index < deviceEntries.length; index++) {
     assert.deepEqual(deviceEntries[index].placement.visualScene,
-      projectPlanPoint([200, 200], isoDisplayWallHeight()), 'an explicitly unaligned device uses the section-top lift');
+      projectPlanPoint([200, 200], isoDisplayWallHeight()), 'the device uses the wall-cut lift');
     for (let other = 0; other < index; other++) {
       const a = deviceEntries[index], b = deviceEntries[other];
       assert.deepEqual(a.placement.visualScene, b.placement.visualScene,
@@ -639,7 +640,7 @@ test('render scene keeps coincident devices coincident, leaves labels alone and 
   }
   const label = scene.entries.find((entry) => entry.kind === 'room-label');
   assert.ok(label, 'fixture includes a room label at the same floor anchor');
-  assert.deepEqual(label.placement.visualScene, projectPlanPoint([200, 200],0),
+  assert.deepEqual(label.placement.visualScene, projectPlanPoint([200, 200],isoDisplayWallHeight()),
     'coincident devices do not push the room label');
 
   const permuted = overlayScene({ ...input, devices: [...devices].reverse() });
@@ -1119,7 +1120,7 @@ test('explicit overlay lift moves vertically from the projected floor anchor', (
   }
 });
 
-test('room names stay on their projected floor point independently of explicit device lift', () => {
+test('room names and devices share the wall-cut height without moving on the plan', () => {
   const { input } = perfFixture();
   const owner = { ...input.space.rooms[0], name: 'Owner' };
   const scene = overlayScene({
@@ -1130,7 +1131,8 @@ test('room names stay on their projected floor point independently of explicit d
   });
   const label = scene.rooms.get(owner);
   assert.ok(label, 'the room label is placed');
-  assert.deepEqual(label.visualScene, projectPlanPoint([30, 40],0), 'the name keeps its canonical projected position');
+  assert.deepEqual(label.floorAnchor,[30,40]);
+  assert.deepEqual(label.visualScene, projectPlanPoint([30, 40],isoDisplayWallHeight()));
   const device = scene.devices.get('device');
   assert.deepEqual(device.visualScene, projectPlanPoint([5, 50], isoDisplayWallHeight()));
 });

@@ -1,7 +1,7 @@
 /** Shared Flat DOM adapter. Face geometry is measured only on metric invalidation. */
 import { nothing, render, svg } from 'lit';
 import {
-  contactContains, contactContourShapes, contactOutline, joinedContactSide,
+  contactContains, contactContourShapes, contactOutline, freeContactShape, joinedContactSide,
   type ContactMarker, type ContactRect, type ContactShape, type ContactWall,
 } from './device-contact-geometry';
 import { contactBounds, DeviceContactScene } from './device-contact-scene';
@@ -16,8 +16,9 @@ import { contactBasisMarker } from './device-contact-basis';
 import { DeviceContactLayout } from './device-contact-layout';
 import { screenContactMarker, screenContactScene, projectedContactHit } from './device-contact-screen';
 import type { PlanRotation } from './view-frame';
-import { isoMarkerGlass } from './iso-marker-outline';
+import { isoMarkerBodyOutline, isoMarkerGlass } from './iso-marker-outline';
 import { renderIsoMarkerGlass } from './iso-marker-glass';
+import type { IsoDeviceFace, IsoDeviceWallMask } from './iso-overlays';
 
 export interface DeviceContactFrame {
   key: string;
@@ -54,6 +55,7 @@ export class DeviceContactRenderer {
   public reflowed = false;
   public readonly work = { measurements: 0, measurementBatches: 0, rebuilds: 0, paints: 0 };
   private readonly metrics = new Map<string, ContactRect>();
+  private readonly faces = new Map<string, readonly IsoDeviceFace[]>();
   private elements = new Map<string, MeasuredMarker>();
   private frameKey = '';
   private floorKey = '';
@@ -142,6 +144,7 @@ export class DeviceContactRenderer {
       m.virtual,JSON.stringify(frame.layout?.[m.id]?.contact_basis),
       metricKey(nodes.get(m.id)?.querySelector('.device-shell'))].join(':')).join('|');
     if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) {
+      this.paintWallMasks(nodes);
       if (turned && this.scene) this.paint(this.scene.shapes.keys());
       return turned;
     }
@@ -156,6 +159,7 @@ export class DeviceContactRenderer {
       }
     }
     const fresh = this.measure(pending);
+    this.paintWallMasks(nodes);
     for (const m of frame.markers) {
       const element = nodes.get(m.id), shell = element?.querySelector<HTMLElement>('.device-shell');
       const ink = element?.querySelector<HTMLElement>('.device-contact-ink');
@@ -236,12 +240,38 @@ export class DeviceContactRenderer {
         top: (face.top - core.top - core.height / 2) / core.width,
         bottom: (face.bottom - core.top - core.height / 2) / core.width,
       });
+      if(core.width>0)this.faces.set(key,[...probe.querySelectorAll<HTMLElement>('.device-core,.value-badge')].map(node=>{
+        const rect=node.getBoundingClientRect(),style=getComputedStyle(node);
+        const radius=style.borderTopLeftRadius.split(' ');
+        const radiusX=radius[0],radiusY=radius[1]||radiusX;
+        const rx=Math.min(rect.width/2,radiusX.endsWith('%')?parseFloat(radiusX)*rect.width/100:parseFloat(radiusX));
+        const ry=Math.min(rect.height/2,radiusY.endsWith('%')?parseFloat(radiusY)*rect.height/100:parseFloat(radiusY));
+        return {left:(rect.left-core.left-core.width/2)/core.width,right:(rect.right-core.left-core.width/2)/core.width,
+          top:(rect.top-core.top-core.height/2)/core.width,bottom:(rect.bottom-core.top-core.height/2)/core.width,
+          rx:rx/core.width,ry:ry/core.width};
+      }));
     }
     for (const { probe } of probes) probe.remove();
     for (const [key, metric] of result) this.metrics.set(key, metric);
-    while (this.metrics.size > 256) this.metrics.delete(this.metrics.keys().next().value!);
+    while (this.metrics.size > 256) {
+      const key=this.metrics.keys().next().value!;this.metrics.delete(key);this.faces.delete(key);
+    }
     this.work.measurements += probes.length; this.work.measurementBatches++;
     return result;
+  }
+
+  private paintWallMasks(nodes:ReadonlyMap<string,HTMLElement>):void {
+    if(!this.plane)return;
+    for(const node of nodes.values()){
+      const mask=(node as HTMLElement&{hpIsoWallMask?:IsoDeviceWallMask}).hpIsoWallMask;
+      const faces=this.faces.get(metricKey(node.querySelector('.device-shell')));
+      if(!mask||!faces)continue;
+      const body=mask.bodyMask(faces);
+      for(const [selector,value] of [['[data-hp-wall-body]',body.body],['[data-hp-wall-body-hidden]',body.occluded]]){
+        const path=node.querySelector(selector);
+        if(path&&path.getAttribute('d')!==value)path.setAttribute('d',value);
+      }
+    }
   }
 
   public move(id: string, x: number, y: number): void {
@@ -274,10 +304,14 @@ export class DeviceContactRenderer {
     for (const rawGroup of scene.components(affected)) {
       const group=contactContourShapes(rawGroup);
       const joined = group.length > 1;
-      const owner = group[0];
+      // The full shared glass starts behind every solid member. Each nearer
+      // member repaints only its own front-glass intersection below.
+      const owner = this.plane ? group.reduce((back,s) =>
+        this.plane![1]*s.marker.x+this.plane![3]*s.marker.y <
+        this.plane![1]*back.marker.x+this.plane![3]*back.marker.y ? s : back) : group[0];
       const active = joined || Object.keys(owner.walls).length > 0;
       const outline = active ? contactOutline(group,true) : '';
-      const glass = this.plane ? isoMarkerGlass(group,this.plane) : null;
+      const glass = this.plane ? isoMarkerGlass(group,this.plane,true) : null;
       const virtual=group.every(s=>s.marker.virtual===true);
       for (const s of group) {
         const item = this.elements.get(s.marker.id); if (!item) continue;
@@ -300,7 +334,22 @@ export class DeviceContactRenderer {
         if (!custom && !this.plane) { render(nothing, item.ink); continue; }
         const d = s.marker.diameter;
         const viewBox=`${s.marker.x - d / 2} ${s.marker.y - d / 2} ${d} ${d}`;
-        render(svg`${s === owner && glass ? renderIsoMarkerGlass(glass,viewBox,virtual) : nothing}
+        // A transformed member is its own stacking context. Repaint just the
+        // shared near glass over its opaque body; keep the rest on the owner
+        // so neighbouring shells never accumulate translucent coats.
+        let memberGlass: {id:string;clip:string}|undefined;
+        if(glass && this.plane && s!==owner){
+          const [a,b,c,e]=this.plane,det=a*e-b*c;
+          const box={left:-d/2,right:d/2,top:-d/2,bottom:d/2};
+          if(item.element.classList.contains('valonly') && !item.element.querySelector('.with-values')){
+            box.left=s.marker.box.left+d*.134375;box.right=s.marker.box.right-d*.134375;
+          }
+          const body=freeContactShape({...s.marker,x:s.marker.x-c/det*d*.12,y:s.marker.y+a/det*d*.12,box});
+          memberGlass={id:`hp-glass-member-${encodeURIComponent(s.marker.id)}`,clip:isoMarkerBodyOutline([body],this.plane)};
+        }
+        const wallMask=(item.element as HTMLElement&{hpIsoWallMask?:IsoDeviceWallMask}).hpIsoWallMask;
+        render(svg`${glass ? renderIsoMarkerGlass(glass,viewBox,virtual,memberGlass,
+          wallMask ? {id:`hp-glass-wall-${encodeURIComponent(s.marker.id)}`,mask:wallMask} : undefined) : nothing}
         <svg viewBox=${viewBox}
           preserveAspectRatio="none" aria-hidden="true">
           ${s === owner && !glass ? svg`<path data-hp="device-contact-contour" data-component=${owner.marker.id} data-grouped=${String(joined)} class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} stroke-dasharray=${virtual?'4 3':'none'} d=${outline}></path>` : nothing}

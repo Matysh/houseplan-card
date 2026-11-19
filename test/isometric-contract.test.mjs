@@ -143,7 +143,7 @@ test('Stage 4 composes ordered inert SVG surfaces below screen-facing HTML', () 
     }
     return [near, pane, far].includes(value) ? [value] : [];
   }
-  assert.deepEqual(paintedPaths(walls), [far, pane, near]);
+  assert.deepEqual(paintedPaths(walls), [far, near, pane], 'walls share a masonry opacity group before openings');
   assert.match(sceneRender, /entry\.layer === 'wall-top'[\s\S]*?fill-rule="evenodd"/,
     'each independently sorted wall component must retain evenodd hole semantics');
   assert.match(sceneRender, /aria-hidden="true" pointer-events="none"/);
@@ -169,16 +169,15 @@ test('Stage 4 composes ordered inert SVG surfaces below screen-facing HTML', () 
   assert.equal([...sceneRender.matchAll(/iso-sun/g)].length, 1, 'only the lazy re-export mentions iso-sun');
 });
 
-test('Stage 4 keeps device, room and lock roots on one corrected low visual plane', () => {
+test('2.5D treats wall-cut overlays and their floor shadows as separate visual planes', () => {
   for (const renderer of [
     '_renderDecorLayer(undefined, view)', '_renderRoomHoverFill(roomHover)', '_renderGlowLayer(space, disp, view)',
     '_renderSunRays(space)', '_renderOpenings(disp)',
     '_renderVacuums(this._renderVacuumDevices, view, space.id)',
   ]) assert.ok(card.includes(renderer), `missing ${renderer}`);
-  // #713: the 2.5D floor is the Flat plane, so a floor anchor is its own scene point.
-  assert.match(card, /const point = isoPlacement\?\.visualScene \?\? \[pos\.x, pos\.y\]/);
-  assert.match(card, /const point = isoPlacement\?\.visualScene \?\? \[p\.x, p\.y\]/);
-  assert.match(card, /const point = isoPlacement\?\.visualScene \?\? floorAnchor/);
+  assert.match(card, /isoPlacement\.floorScene : isoPlacement\.visualScene\s*:\s*\[pos\.x, pos\.y\]/);
+  assert.match(card, /isoPlacement\.floorScene : isoPlacement\.visualScene : \[p\.x, p\.y\]/);
+  assert.match(card, /isoPlacement\.floorScene : isoPlacement\.visualScene\s*:\s*floorAnchor/);
   assert.doesNotMatch(card, /_scenePoint/);
   assert.doesNotMatch(readFileSync(new URL('../src/live-editor.ts', import.meta.url), 'utf8'), /_scenePoint/,
     'the live editor paints a dragged marker at its Flat point too');
@@ -378,7 +377,7 @@ test('Stage 4 materials are bounded and capability-safe; #649 walls follow the u
   assert.doesNotMatch(styles, /\.stage(?:\.theme-dark|:not\(\.theme-light\)) \.iso-(?:side|top|wall|floor-side|opening|texture)/);
   assert.match(styles, /\.iso-top-hi\s*\{\s*stop-color:\s*var\(--iso-top-hi/);
   assert.match(styles, /\.iso-side-mid\s*\{\s*stop-color:\s*var\(--iso-side-mid/);
-  assert.match(card, /\.\.\.\(iso \? Object\.fromEntries\(isoWallMaterialVars\(disp\.wallFill\.c\)\.split\(';'\)/);
+  assert.match(card, /\.\.\.\(iso \? Object\.fromEntries\(isoWallMaterialVars\(disp\.color, disp\.wallFill\.c\)\.split\(';'\)/);
   assert.doesNotMatch(styles, /iso-overlay-plate|hp-iso-overlay-texture/,
     'themes and forced colors must not recreate a painted footprint');
   assert.doesNotMatch(styles, /iso-overlay-ground|iso-overlay-tether/,

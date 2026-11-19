@@ -8,12 +8,13 @@
 // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
 export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
-import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_OPENINGS } from './iso-lab-camera';
-import { clipIsoOpeningDepthQueue, furnitureOcclusion } from './iso-lab-visibility';
-import { mdiWeatherSunny, mdiWeatherSunnyOff } from '@mdi/js';
+import { union, type Geom } from 'polyclip-ts';
+import { ISO_LAB_OPENINGS } from './iso-lab-camera';
+import { clipIsoOpeningDepthQueue, deviceWallOcclusion, furnitureOcclusion } from './iso-lab-visibility';
+import { isoWallLightPainter, type IsoWallLightSource } from './iso-wall-light';
 import type { ResolvedOpeningVisual } from './opening-features';
 import type { SpaceDisplay } from './logic';
-import { projectPlanPoint, type PlanPoint } from './iso-projection';
+import { isoDisplayWallHeight, projectPlanPoint, type PlanPoint } from './iso-projection';
 import type { IsoFloorGeometry, IsoWallGeometry } from './iso-walls';
 import type { IsoDecorationLayers, IsoOpeningPanel } from './iso-openings';
 import { gridVisualScale, gridVisualUnits } from './grid-scale';
@@ -24,6 +25,26 @@ import { buildIsoWallDepthQueue, resolveIsoDecorationLayers, resolveIsoOpeningPa
   type IsoOverlayRenderScene, type IsoRenderScene, type IsoOpeningRenderSurface } from './iso-scene-geometry';
 export const ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
+const wallCutPaint = new WeakMap<object, string>();
+/** Wall and lintel caps are one cut plane. Outline only their outer boundary;
+ * the joints above a doorway are construction seams, not visible edges. */
+function continuousWallCut(scene:IsoRenderScene,queue:ReturnType<typeof buildIsoWallDepthQueue>):string {
+  const cached=wallCutPaint.get(queue);if(cached!==undefined)return cached;
+  const parts:Geom[]=[];
+  const ring=(points:readonly (readonly number[])[]):[number,number][]=>{
+    const out=points.map(p=>[Number(p[0].toFixed(6)),Number(p[1].toFixed(6))] as [number,number]);
+    if(out.length)out.push(out[0]);return out;
+  };
+  for(const entry of queue){
+    if(entry.layer==='wall-top'&&entry.face.projectedRings)parts.push(entry.face.projectedRings.map(ring));
+    else if(entry.layer==='opening'&&entry.surface.kind==='opening-lintel-top'&&entry.surface.points&&scene.camera)
+      parts.push([ring(entry.surface.points.map(p=>projectPlanPoint(p.point,p.z,scene.camera)))]);
+  }
+  const merged=parts.length ? union(parts[0],...parts.slice(1)) : [];
+  const result=merged.flatMap(poly=>poly.map(ring=>`M ${ring.map(p=>p.join(' ')).join(' L ')} Z`)).join(' ');
+  wallCutPaint.set(queue,result);return result;
+}
+
 export interface IsoFramePresentation {
   layers: IsoDecorationLayers;
   panels: readonly IsoOpeningPanel[];
@@ -32,6 +53,7 @@ export interface IsoFramePresentation {
   shadows: TemplateResult;
   walls: TemplateResult;
   foreground: TemplateResult | typeof nothing;
+  shadowSilhouette: TemplateResult;
 }
 
 export interface IsoFurniturePaint {
@@ -51,6 +73,7 @@ export function resolveIsoFramePresentation(input: {
   overlays: (layers: IsoDecorationLayers) => IsoOverlayRenderScene | null;
   cellCm: number;
   furniture?: readonly IsoFurniturePaint[];
+  wallLights?: readonly IsoWallLightSource[];
 }): IsoFramePresentation {
   const layers = resolveIsoDecorationLayers(input.display);
   const panels = layers.panels
@@ -58,7 +81,7 @@ export function resolveIsoFramePresentation(input: {
     : [];
   const overlays = input.overlays(layers);
   const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => {
-    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture);
+    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture, overlays, input.wallLights);
     const indicators = renderLayers.panels ? renderIsoOpeningIndicators(input.scene, input.openings, input.visualOf, input.cellCm, input.display.color) : nothing;
     return {
       layers: renderLayers, panels, overlays,
@@ -66,6 +89,7 @@ export function resolveIsoFramePresentation(input: {
       shadows: renderIsoShadows(renderLayers, panels, input.scene?.geometry, input.cellCm),
       walls: svg`${structure.walls}${structure.foreground === nothing ? indicators : nothing}`,
       foreground: structure.foreground === nothing ? nothing : svg`${structure.foreground}${indicators}`,
+      shadowSilhouette: structure.shadowSilhouette,
     };
   };
   try { return render(layers); } catch (error) {
@@ -85,7 +109,7 @@ function renderIsoOpeningIndicators(scene: IsoRenderScene | null, openings: read
   const scale = gridVisualScale(cellCm);
   return svg`<g class="iso-opening-indicators" pointer-events="none" aria-hidden="true">${scene.openings.flatMap(basis => {
     const opening = openings[basis.sourceIndex], visual = opening && visualOf(opening);
-    if (!visual?.leaves?.some(leaf => leaf.unknown || leaf.shade) || basis.type !== 'window') return [];
+    if (!visual?.leaves?.some(leaf => leaf.unknown) || basis.type !== 'window') return [];
     const leaves = visual.leaves;
     const side = visual.side === 'negative' ? -1 : 1;
     const sill = basis.windowProfile?.frameBottom ?? 0;
@@ -113,11 +137,10 @@ function renderIsoOpeningIndicators(scene: IsoRenderScene | null, openings: read
           * Math.max(0, 11 * markerScale - Math.abs(across)) / span : 0;
         return [p[0] + dx * shift - dy * clearance, p[1] + dy * shift + dx * clearance];
       };
-      const shade = point(-side), unknown = point(side);
-      return svg`${leaf.shade ? svg`<g class="op-shade-indicator" data-opening-id=${basis.id} data-opening-leaf=${leaf.id} transform="translate(${shade[0]} ${shade[1]}) scale(${.55 * markerScale})" fill=${color}>
-        ${leaf.shade.amount === null ? svg`<text text-anchor="middle" dominant-baseline="central" font-size="19">?</text>`
-          : svg`<path d=${leaf.shade.amount === 0 ? mdiWeatherSunnyOff : mdiWeatherSunny} transform="translate(-12 -12)"></path>`}
-        </g>` : nothing}${leaf.unknown ? svg`<text class="op-leaf-unknown" data-opening-id=${basis.id} data-opening-leaf=${leaf.id} x=${unknown[0]} y=${unknown[1]} fill=${color}
+      // Curtains already show light transmission in volume; retain only an
+      // unknown sash-position indicator, independently of the shade state.
+      const unknown = point(side);
+      return svg`${leaf.unknown ? svg`<text class="op-leaf-unknown" data-opening-id=${basis.id} data-opening-leaf=${leaf.id} x=${unknown[0]} y=${unknown[1]} fill=${color}
           text-anchor="middle" dominant-baseline="central" font-size=${11 * markerScale}>?</text>` : nothing}`;
     });
   })}</g>`;
@@ -205,8 +228,10 @@ function renderIsoStructure(
   panels: readonly IsoOpeningPanel[],
   cellCm: number,
   furniture: readonly IsoFurniturePaint[] = [],
-): Pick<IsoFramePresentation,'walls'|'foreground'> {
-  if (projection !== 'iso' || !layers.structural || !scene) return {walls:emptySvg(), foreground:nothing};
+  overlays: IsoOverlayRenderScene | null = null,
+  wallLights: readonly IsoWallLightSource[] = [],
+): Pick<IsoFramePresentation,'walls'|'foreground'|'shadowSilhouette'> {
+  if (projection !== 'iso' || !layers.structural || !scene) return {walls:emptySvg(), foreground:nothing, shadowSilhouette:emptySvg()};
   const openingSurfaces: IsoOpeningRenderSurface[] = layers.panels ? [
     ...scene.openingSurfaces,
     ...panels.flatMap((panel) => panel.surfaces.map((surface) => ({
@@ -220,6 +245,10 @@ function renderIsoStructure(
   const ordered = buildIsoWallDepthQueue(scene.geometry, openingSurfaces,
     (scene.camera?.floorScaleY ?? 1) !== 1);
   const depthQueue = ISO_LAB_OPENINGS && scene.camera ? clipIsoOpeningDepthQueue(ordered,scene.camera) : ordered;
+  const wallCut = ISO_LAB_OPENINGS ? continuousWallCut(scene,depthQueue) : '';
+  if (scene.camera && overlays) for (const placement of overlays.devices.values()) {
+    placement.wallMask = deviceWallOcclusion(depthQueue,scene.camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
+  }
   // Fill adjoining visible masonry faces together. Separately antialiased
   // edges otherwise leave a light hairline where a window apron meets its wall.
   const masonrySides = ISO_LAB_OPENINGS ? depthQueue.flatMap(entry => {
@@ -261,19 +290,25 @@ function renderIsoStructure(
   const glassSlots = new Map<number,number>();
   visibility.forEach((item,slot)=>item.frontGlass.forEach(index=>glassSlots.set(index,slot)));
   const entries = depthQueue.map((entry,index)=>({entry,index}));
+  const masonry = ({entry}:typeof entries[number]) => entry.layer !== 'opening'
+    || entry.surface.material === 'wall-side' || entry.surface.material === 'wall-top';
+  const masonrySide = ({entry}:typeof entries[number]) => entry.layer === 'wall-side'
+    || (entry.layer === 'opening' && entry.surface.material === 'wall-side');
+  const paintWallLight = scene.camera ? isoWallLightPainter(wallLights, scene.camera, cellCm, scene.geometry) : () => nothing;
   const paintEntry = ({entry,index}:typeof entries[number]) => {
         if (entry.layer === 'wall-side') {
           const face = entry.face;
           if (face.roundColumn !== undefined) {
             const paths = columnRuns.get(index);
-            return paths ? svg`<path data-hp-round-column=${face.roundColumn} d=${paths.join(' ')}
-              fill=${layers.materialNuance ? 'url(#hp-iso-column-'+face.roundColumn+')' : 'var(--iso-side-mid, #adadad)'}></path>` : nothing;
+            return svg`${paths ? svg`<path data-hp-round-column=${face.roundColumn} d=${paths.join(' ')}
+              fill=${layers.materialNuance ? 'url(#hp-iso-column-'+face.roundColumn+')' : 'var(--iso-side-mid, #adadad)'}></path>` : nothing}${paintWallLight(entry,index)}`;
           }
           return svg`<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${layers.materialNuance
             ? svg`<path class="iso-material-texture iso-wall-texture" d=${face.d}></path>`
-            : nothing}`;
+            : nothing}${paintWallLight(entry,index)}`;
         }
         if (entry.layer === 'wall-top') {
+          if(wallCut)return nothing;
           const face = entry.face;
           return svg`<path class="iso-wall-top" d=${face.d} data-component=${face.component}
             fill-rule="evenodd"></path>${layers.materialNuance
@@ -282,9 +317,10 @@ function renderIsoStructure(
             : nothing}`;
         }
         const surface = entry.surface;
+        if(wallCut&&surface.kind==='opening-lintel-top')return nothing;
         if (surface.material === 'wall-side' || surface.material === 'wall-top') {
           return svg`<path class="iso-${surface.material}" d=${surface.d} fill-rule="evenodd"
-            data-id=${surface.id} data-kind=${surface.type} data-surface=${surface.kind}></path>`;
+            data-id=${surface.id} data-kind=${surface.type} data-surface=${surface.kind}></path>${paintWallLight(entry,index)}`;
         }
         /* css-uses {"owner":"renderIsoWalls","kind":"class","values":["iso-door","iso-window"],"reason":"Opening surfaces have exactly the door/window type union"} */
         return svg`<path class="iso-opening-panel iso-${surface.type} iso-opening-${surface.kind} iso-material-${surface.material}"
@@ -296,13 +332,7 @@ function renderIsoStructure(
   };
   const walls = svg`<g class="iso-walls" data-hp="iso-walls" data-fingerprint=${scene.key} ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>
     ${renderIsoDefs(layers, 'walls', cellCm)}
-    <defs>${ISO_LAB_FLOOR_MARKERS ? svg`<g id="hp-room-wall-silhouette" fill-rule="evenodd">
-      ${depthQueue.map(entry => {
-        if (entry.layer !== 'opening') return svg`<path d=${entry.face.d}></path>`;
-        const {material,d} = entry.surface;
-        return material === 'wall-side' || material === 'wall-top' ? svg`<path d=${d}></path>` : nothing;
-      })}
-    </g>` : nothing}
+    <defs>
     ${Array.from(columnBounds, ([id, bounds]) => svg`
       <linearGradient id=${'hp-iso-column-'+id} gradientUnits="userSpaceOnUse"
         x1=${bounds.left} x2=${bounds.right} y1="0" y2="0">
@@ -312,9 +342,27 @@ function renderIsoStructure(
     <g class=${layers.panels ? 'iso-wall-depth-queue iso-openings' : 'iso-wall-depth-queue'}
       data-hp=${layers.panels ? 'iso-openings' : nothing}
       aria-hidden="true" pointer-events="none">
-      ${masonrySides ? svg`<path class="iso-masonry-underpaint" fill="var(--iso-side-mid, #adadad)"
-        d=${masonrySides}></path>` : nothing}
-      ${entries.filter(({index})=>!glassSlots.has(index)).map(paintEntry)}
+      ${/* Composite the masonry once, including its seam underpaint and light.
+           Per-face alpha would darken overlaps; opening materials stay independent.
+           The depth queue already clips surfaces against nearer opaque geometry. */nothing}
+      <g class="iso-wall-side-fill">
+        ${masonrySides ? svg`<path class="iso-masonry-underpaint" fill="var(--iso-side-mid, #adadad)"
+          d=${masonrySides}></path>` : nothing}
+        ${entries.filter(masonrySide).map(paintEntry)}
+      </g>
+      <g class="iso-wall-fill">
+        ${entries.filter(row=>masonry(row)&&!masonrySide(row)).map(paintEntry)}
+        ${wallCut ? svg`<path class="iso-wall-top" data-hp="iso-wall-cut" d=${wallCut} fill-rule="evenodd"></path>` : nothing}
+      </g>
+      <g class="iso-wall-contours">
+        ${wallCut ? svg`<path class="iso-wall-top iso-wall-contour" d=${wallCut}></path>` : nothing}
+        ${entries.filter(masonry).map(({entry}) => entry.layer === 'wall-top'
+          ? wallCut ? nothing : svg`<path class="iso-wall-top iso-wall-contour" d=${entry.face.d}></path>`
+          : entry.layer === 'opening' && entry.surface.material === 'wall-top'
+            && !(wallCut && entry.surface.kind === 'opening-lintel-top')
+            ? svg`<path class="iso-wall-top iso-wall-contour" d=${entry.surface.d}></path>` : nothing)}
+      </g>
+      ${entries.filter(row=>!masonry(row)&&!glassSlots.has(row.index)).map(paintEntry)}
     </g></g>`;
   const foreground = furniture.length ? svg`<g class="iso-walls" ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>
       ${furniture.map((item,slot)=>{
@@ -327,5 +375,10 @@ function renderIsoStructure(
           <g mask=${mask ? 'url(#'+id+')' : nothing}>${item.body}</g>
           ${entries.filter(({index})=>glassSlots.get(index)===slot).map(paintEntry)}`;
       })}</g>` : nothing;
-  return {walls,foreground};
+  // Own these paths inside the shadow mask. A <use> of the independently
+  // promoted wall SVG can retain stale clipping during live camera rebases.
+  const shadowSilhouette = svg`<g fill-rule="evenodd">${depthQueue.map(entry =>
+    svg`<path d=${entry.layer === 'opening' ? entry.surface.d : entry.face.d}
+      stroke="black" stroke-width=".5" stroke-linejoin="round"></path>`)}</g>`;
+  return {walls,foreground,shadowSilhouette};
 }

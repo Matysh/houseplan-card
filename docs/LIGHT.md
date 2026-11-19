@@ -1,5 +1,15 @@
 # Light on the plan — the model (source of truth)
 
+
+In 2.5D View, visible vertical wall sides also sample the existing optical
+field at their base. The gradient varies along each wall and keeps colour
+and brightness constant up each vertical line. Lamps and LED polylines use
+the same radius, obstacle visibility, floor clip and falloff as the floor
+field. The cut and horizontal sills keep their material. The profile cache
+follows source/visibility changes, physical scale and the visible side.
+Pan and zoom transform the painted field through the camera without a new
+optical solve.
+
 ## Per-leaf shade transmission and sliding apertures (#1024)
 
 Window shade intervals are applied only after proving existing interior

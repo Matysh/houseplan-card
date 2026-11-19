@@ -554,7 +554,7 @@
   "space.zero_wall_style.help": "Dashed zero-thickness walls pass Glow and sun rays, while solid ones block them as zero-area barriers. The choice affects every such wall in the space even when its line is hidden in View.",
   "space.zero_wall_style.help.aria": "Help: zero-thickness wall style",
   "space.show_names": "Show room names",
-  "space.room_color": "Wall color",
+  "space.room_color": "Wall hatching color (top of walls in 3D)",
   "space.opacity": "Opacity",
   "space.fill_label": "Room fill",
   "space.fill_mode.help": "“Custom colour” is styling, while “Light”, “Temperature” and “LQI” use current Home Assistant data; Glow is enabled separately.",

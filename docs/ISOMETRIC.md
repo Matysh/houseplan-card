@@ -120,33 +120,36 @@ with masonry/openings. A nearer wall occludes furniture, while the far-wall
 monitor remains visible. Sunlight remains on the floor; room lighting also
 affects the mounted equipment and its separately placed computer tower.
 
-Markers stay at their saved plan anchors. The accepted floor-aligned tiles and
-group shells replace the older uniform wall-top marker policy in this view.
-A wall-covered device is dimmed and loses its shadow, not its action/focus
-target. Solid and dashed outlines remain distinct, and one common contact
-shell does not merge members' actions. Forced colours retain meaningful targets
-without depending on decorative filters.
+Devices, contacts, door locks, LED strips and room labels keep their saved
+plan anchors. Their top faces sit at the shared wall-cut height of 140 cm.
+Device and label edges use fixed gray. Zigbee and battery edges use a darker
+version of their own colour. Device glyphs, values, badges, Zigbee, charge,
+locks and room captions use the same two readable orientations. The device's
+own icon angle still applies. Bodies, anchors, hit targets and downward depth
+retain their original orientation and geometry.
 
-Walls dim only the covered label pixels through a luminance mask. Furniture
-instead dims the entire individual label when its existing 64×16 row probe
-finds alpha above 64: `opacity = 1 - .7 * coveredOpacity`. It does not apply
-that opacity to neighbouring labels. The room-fit
-target and Area link retain their existing mouse/keyboard policy; touch keeps
-the established Area-link safety contract. The ordinary lock card and its
-confirmation remain the only sanctioned lock actuation surface. Rendering,
-occlusion and hover never create a service call.
+A nearer wall dims covered parts of device bodies, badges and common frames.
+The room captions and their metrics and Area links are painted over masonry
+and furniture. Their room-fit and Area link inputs retain the native keyboard
+and touch policy. Filled shadows project directly underneath onto the floor.
+The floor-and-structure mask follows the live camera during a gesture, then
+matches the committed frame. The lock card and its confirmation own lock
+actuation. LED light remains on the floor while the tape and its hit target
+use the raised plane.
+
+Space appearance uses room border colour/opacity for the wall top and wall fill
+for the side faces, with independent material on the windows and doors. The
+optional opening accent tints frames, leaves, reveals and all sill faces.
+Its alpha controls tint strength. White and zero strength reproduce the
+original material. Glass, shades, hardware and garage gates retain their own
+materials.
 
 ## Caches and safe failure
 
-Room-label wall masks are paint-bounded to the transformed name, absolute
-metrics row and touch/focus padding, not one full-viewport surface per room
-(#1470). Mask transforms use that local scene rectangle; furniture probes still
-use the viewport pixel scale. A scene-owned ResizeObserver/rAF updates bounds
-after text/font/viewport changes and disconnects with the label. Native hit
-targets and each label's independent hover/focus unmasking remain intact.
 Furniture lighting references the same room-light field through isolated
-silhouette clips, retaining its transparent screen-blend backdrop and .8 alpha
-without generating a repeating light-pattern tile for each part.
+silhouette clips and a transparent screen-blend backdrop. Furniture and stairs
+ascending from this floor share the material opacity multiplier .65, including
+the .52 room-light layer. Downstairs retain the Flat symbol.
 
 Physical geometry and projected variants stay separate. The structural LRU
 remains bounded at eight entries; variants are keyed by saved quarter turns,

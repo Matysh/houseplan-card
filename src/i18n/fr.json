@@ -554,7 +554,7 @@
   "space.zero_wall_style.help": "Les murs d’épaisseur nulle en pointillés laissent passer le halo et les rayons du soleil, tandis que les murs pleins les bloquent comme une barrière sans surface. Ce choix s’applique à tous ces murs de l’espace, même si leur ligne est masquée en mode Vue.",
   "space.zero_wall_style.help.aria": "Aide : style des murs d’épaisseur nulle",
   "space.show_names": "Afficher les noms des pièces",
-  "space.room_color": "Couleur des murs",
+  "space.room_color": "Couleur des hachures (dessus des murs en 3D)",
   "space.opacity": "Opacité",
   "space.fill_label": "Remplissage de la pièce",
   "space.fill_mode.help": "« Couleur personnalisée » définit le style, tandis que « Lumière », « Température » et « LQI » utilisent les données actuelles de Home Assistant. Le halo s’active séparément.",

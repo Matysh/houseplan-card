@@ -21,7 +21,9 @@ import { resolvedLightSources } from './devices';
 import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 import { NORM_W, iconUnit } from './space-geometry';
 import { roomGlowOf, roomPoly } from './logic';
-import { ISO_ICON_SCALE, ISO_TILE, isoEdgeColor, isoTileShadow } from './iso-tiles';
+import { ISO_ICON_SCALE, isoTileShadow } from './iso-tiles';
+import { isoCameraFor, isoDisplayWallHeight, isoFloorMatrix } from './iso-projection';
+import { gridVisualUnits } from './grid-scale';
 import { deviceThemeClass } from './device-face';
 import type { VirtualLightSnapshot } from './virtual-light-state';
 import { geometryAllRings, pointInPhysicalBody, pointInPhysicalGeometry } from './physical-geometry';
@@ -205,9 +207,10 @@ export interface LedHandlers {
 /** 2.5D View (ТЗ §7): the stripe raised like a tile, its edge and floor shadow. */
 export interface LedIsoStyle {
   rotation?: PlanRotation;
-  /** Raise of the stripe, plan units: ISO_TILE.lift × D (0.075 D). */
+  plane?: readonly number[];
+  /** Screen-space lift to the common wall/device top plane. */
   lift: number;
-  /** Visible edge below the raised stripe: ISO_TILE.depth × D (0.1 D). */
+  /** Shallow vertical edge, matching the room-name extrusion. */
   depth: number;
   edge: string;
   shadow: { dx: number; dy: number; sigma: number; opacity: number };
@@ -215,6 +218,7 @@ export interface LedIsoStyle {
 
 export interface LedStripeInput {
   views: readonly LedStripView[];
+  paint?: 'all' | 'body' | 'shadow';
   iso?: LedIsoStyle | null;
   /** Base device diameter D in plan units (icon_size of this card × iconUnit). */
   d: number;
@@ -299,7 +303,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
   const iso = input.iso;
   return svg`<g class="led-strips" data-hp-led-strips="${ordered.length}"
       data-hp-iso=${iso ? 'raised' : nothing}>
-    ${iso ? svg`<defs><filter id="hp-led-iso-shadow" filterUnits="userSpaceOnUse"
+    ${iso && input.paint !== 'body' ? svg`<defs><filter id="hp-led-iso-shadow" filterUnits="userSpaceOnUse"
       x="-100000" y="-100000" width="200000" height="200000">
       <feGaussianBlur stdDeviation="${iso.shadow.sigma}"></feGaussianBlur></filter></defs>` : nothing}
     <style>
@@ -325,11 +329,19 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
       // 2.5D: an inert floor shadow, the edge swept below the raised body,
       // then the body itself; the field below stays on the floor plane.
       const shift = (x: number, y: number) => {
+        if(iso?.plane){
+          const [a,b,c,d]=iso.plane,det=a*d-b*c;
+          return `translate(${(d*x-c*y)/det} ${(-b*x+a*y)/det})`;
+        }
         const [dx, dy] = turnVector([x, y], inversePlanRotation(iso?.rotation || 0));
         return `translate(${dx} ${dy})`;
       };
       const lifted = iso ? shift(0, -iso.lift) : nothing;
-      return svg`<g class="led-strip state-${view.state}" data-led-strip="${view.strip.id}"
+      const shadow=iso && input.paint !== 'body' ? svg`<path class="led-iso-shadow" d=${d} fill="none" stroke="black"
+        stroke-opacity=${iso.shadow.opacity} stroke-width=${t} stroke-linecap="round" stroke-linejoin="round"
+        filter="url(#hp-led-iso-shadow)" pointer-events="none" transform=${shift(iso.shadow.dx,iso.shadow.dy)}></path>` : nothing;
+      if(input.paint==='shadow')return shadow;
+      return svg`${shadow}<g class="led-strip state-${view.state}" data-led-strip="${view.strip.id}"
           data-marker="${dev.id}" data-state="${view.state}" data-closed="${path.closed ? 'true' : 'false'}">
         ${off ? svg`<defs><mask id="${cutout}" maskUnits="userSpaceOnUse" x="${mx}" y="${my}" width="${mw}" height="${mh}">
           <rect x="${mx}" y="${my}" width="${mw}" height="${mh}" fill="white"></rect>
@@ -337,11 +349,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
             stroke-linecap="round" stroke-linejoin="round"></path>
         </mask></defs>` : nothing}
         <g transform=${lifted}><g class="led-body" mask=${off ? `url(#${cutout})` : nothing}>
-        ${iso ? svg`<path class="led-iso-shadow" d="${d}" fill="none" stroke="black"
-          stroke-opacity="${iso.shadow.opacity}" stroke-width="${t}" stroke-linecap="round"
-          stroke-linejoin="round" filter="url(#hp-led-iso-shadow)" pointer-events="none"
-          transform=${shift(iso.shadow.dx, iso.shadow.dy)}></path>
-          ${[1, 0.5].map((k) => svg`<path class="led-iso-edge" d="${d}" fill="none" stroke="${iso.edge}"
+        ${iso ? svg`${[1,.875,.75,.625,.5,.375,.25,.125].map((k) => svg`<path class="led-iso-edge" d="${d}" fill="none" stroke="${iso.edge}"
           stroke-width="${t}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"
           transform=${shift(0, iso.depth * k)}></path>`)}` : nothing}
         <path class="led-outline" d="${d}" fill="none" stroke="${OUTLINE}" stroke-width="${t}"
@@ -593,6 +601,7 @@ export function ledFrameFor(host: LedCardHost, space: SpaceModel, spaceGlow: boo
 /** The stripes and hit paths; actions only in View (the Devices editor selects). */
 export function renderLedLayerFor(
   host: LedCardHost, space: SpaceModel, spaceGlow: boolean, view: { w: number },
+  paint: LedStripeInput['paint'] = 'all',
 ): TemplateResult {
   const frame = ledFrameFor(host, space, spaceGlow);
   const width = host._renderPixelsPerUnit ? host._renderPixelsPerUnit(view) * view.w : host._stageEl?.clientWidth;
@@ -602,15 +611,18 @@ export function renderLedLayerFor(
   const theme = deviceThemeClass(host._renderPlanHass) === 'theme-dark' ? 'dark' : 'light';
   const lightFloor = !!host._isoLightFloors?.size;
   const shadow = isoTileShadow(theme, lightFloor);
+  const camera=isoCameraFor(host._rotation ?? 0);
   const stripes = renderLedStripes({
     views: frame.views,
     d,
+    paint,
     iso: iso ? {
       rotation: host._rotation,
-      lift: ISO_TILE.lift * d,
-      depth: ISO_TILE.depth * d,
-      edge: isoEdgeColor(OUTLINE, theme, lightFloor),
-      shadow: { dx: shadow.dx * d, dy: shadow.dy * d, sigma: shadow.sigma * d, opacity: shadow.opacityWhite },
+      plane: isoFloorMatrix(camera),
+      lift: gridVisualUnits(isoDisplayWallHeight(),host._cellCm)*camera.zScale*Math.sin(camera.tiltDeg*Math.PI/180),
+      depth: frame.d * .075,
+      edge: '#808080',
+      shadow: { dx: 0, dy: 0, sigma: shadow.sigma * d, opacity: shadow.opacityWhite },
     } : null,
     faces: frame.faces,
     perUnit: width && view.w ? width / view.w : 1,
@@ -638,13 +650,15 @@ export function renderLedLayerFor(
     pointer-events=${passive ? 'none' : nothing}>${stripes}</g>` as unknown as TemplateResult;
 }
 
-export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean): TemplateResult {
+export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean,
+  capture?: (source: import('./iso-wall-light').IsoWallLightSource) => void): TemplateResult {
   if (host.isConnected === false) return svg`` as unknown as TemplateResult;
   const frame = ledFrameFor(host, space, spaceGlow);
   const module = frame.scene && (fieldWanted(frame.views) || field?.hasLedField(host))
     ? field || ledField(space.id, () => host.isConnected !== false && host.requestUpdate()) : null;
   if (!module) return svg`` as unknown as TemplateResult;
   return module.renderLedField({
+    capture,
     views: frame.views,
     scene: frame.scene,
     polygons: frame.polygons,

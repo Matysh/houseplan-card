@@ -1282,6 +1282,7 @@ export interface SpaceDisplay {
   opacity: number;  // 0..1 — wall lines/hatching
   nameColor: FillColorEntry;
   wallFill: FillColorEntry;
+  openingAccent3d?: FillColorEntry;
   fill: RoomFillMode;
   /** Resolved space-level custom fill; rooms may override it. */
   customFill: FillColorEntry;
@@ -1405,6 +1406,8 @@ export function spaceDisplayOf(spaceCfg: unknown, general?: unknown): SpaceDispl
     ? clampScale(value) : legacyFontScale;
   return {
     ...spaceAppearanceOf(spaceCfg, general),
+    openingAccent3d: s.opening_accent_3d == null ? undefined
+      : customFillOf(s.opening_accent_3d, { c: '#ffffff', a: 1 }),
     showBorders: s.show_borders ?? noPlan,
     showNames: s.show_names ?? noPlan,
     color: safeStoredColor(s.room_color, DEFAULT_ROOM_COLOR),

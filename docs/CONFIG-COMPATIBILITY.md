@@ -357,6 +357,17 @@ update performs no destructive downgrade migration or trail-store reset.
 
 ## Independent room appearance (#1037)
 
+
+The space may also carry an optional **2.5D opening accent** (#1474) at
+`space.settings.opening_accent_3d`, with six-digit HEX `c` and finite
+opacity `a` between 0 and 1. The reader treats absence as neutral white at
+strength 1. An older ordinary writer that omits the field preserves a saved
+value. Space copy, full and plan-only backups, whole-house transfer and
+support settings carry an explicit value. The portable house allowlist
+includes the field. Wall tops continue to read `room_color` / `room_opacity`
+and sides read `wall_fill`. The coordinates, physical wall cut, masks and
+light profiles require no new persisted representation.
+
 Additive optional `space.settings.name_color` and `space.settings.wall_fill`
 store `{c: '#RRGGBB', a: finite JSON number 0..1}`. New writes reject null,
 booleans, strings and out-of-range alpha; zero is explicit. Compatible unknown

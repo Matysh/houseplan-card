@@ -18,6 +18,12 @@ On wide Plan cards (≥960 px), Properties exposes centre, continuous dimensions
 fixed and its field is disabled. Native gestures, full-dialog entry, routing,
 landing geometry and existing history remain unchanged (#931).
 
+In 2.5D View, ascending stairs have treads at heights derived from the existing
+straight or spiral symbol. The last tread reaches the 140 cm wall cut.
+Furniture and ascending stairs share the same material and .65 opacity
+multiplier. Descending stairs retain the flat symbol. Both use the existing
+placement and floor-navigation target without storing a separate mesh.
+
 The Plan editor has one **Stairs** group with **Straight** and **Spiral** tools.
 With a mouse, the armed tool shows one pointer-transparent default stair under
 the cursor before a press (#1253). It uses the same size, current colour and
@@ -136,9 +142,9 @@ changing that physical symbol or persisted data.
 
 The footprint overlap is removed from clean room floor area exactly once. It
 does not cut the visible floor, change room or wall geometry, create a light
-occluder, affect Glow/sun/vacuum, or participate in Optimize. In 2.5D the first
-version remains a flat symbol projected with the floor/decor plane; it has no
-height, risers, railings or shadows.
+occluder, affect Glow/sun/vacuum, or participate in Optimize. In 2.5D View,
+the ascending staircase also contributes its volume and floor shadow to the
+display, using the furniture depth order and masonry occlusion.
 
 ## Persisted model
 
