@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16386,
+  "revision": 16387,
   "nextTicket": 532,
   "nextFence": 531,
   "tasks": {
@@ -5038,145 +5038,25 @@
     },
     "1473": {
       "issue": 1473,
+      "branch": "codex/1473-render-layout-read",
       "track": "show",
       "layer": "infra",
-      "branch": "codex/1473-render-layout-read",
-      "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 530,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1795081864415,
-      "reviewEntry": 1,
-      "patchId": "67c5c04450a45a45960581124030b410d8f5ba9e",
-      "changedFiles": [
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "scripts/render-layout-read.mjs",
-        "test/render-layout-read.test.mjs"
-      ],
-      "s6": {
-        "id": "20261119T095119810-d0648062",
-        "name": "Тесты для задачи #1473 (перед ревью)",
-        "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T095119810-d0648062/report.json",
-        "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-        "status": "passed",
-        "finishedAt": "2026-11-19T09:51:21.022Z",
-        "failures": []
-      },
-      "reviewRound": 1,
+      "status": "S8-merged",
+      "expectedBase": "fbfbdea4442539a5e6aadc46c16d2645165e449e",
+      "mergedSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
+      "mergedAt": 1795082056514,
+      "mergedFromStatus": "S7-code-review",
+      "branchDeleted": true,
+      "removedToRelease": false,
       "reviewRequest": "review:1473:1:67c5c04450a45a45960581124030b410d8f5ba9e:fbfbdea4442539a5e6aadc46c16d2645165e449e",
-      "reviewMaterial": {
-        "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-        "expectedBase": "fbfbdea4442539a5e6aadc46c16d2645165e449e",
-        "patchId": "67c5c04450a45a45960581124030b410d8f5ba9e"
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "reviewRetry": {
-        "requestId": "review:1473:1:67c5c04450a45a45960581124030b410d8f5ba9e:fbfbdea4442539a5e6aadc46c16d2645165e449e",
-        "eventId": "finish:3b9da799-c271-4ef5-829b-478fb7598980:finish:4:review-retry",
-        "at": 1795081898497,
-        "runId": null,
-        "runAttempt": null
-      },
-      "review": {
-        "version": 1,
-        "issue": 1473,
-        "requestId": "review:1473:1:67c5c04450a45a45960581124030b410d8f5ba9e:fbfbdea4442539a5e6aadc46c16d2645165e449e",
-        "kind": "code",
-        "base": "fbfbdea4442539a5e6aadc46c16d2645165e449e",
-        "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-        "patchId": "67c5c04450a45a45960581124030b410d8f5ba9e",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1473,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1473",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "Материал: `fbfbdea44425 → 94bb2d3c6`, ветка `codex/1473-render-layout-read`, инфраструктурный show. Продуктовые исходники, реестр мутантов, PNG и лимиты не менялись.\n\nВ `iso-room-furniture-overlap.ts` разрешены только inline callback настоящего `requestAnimationFrame` и единственный измерительный метод `RoomFurnitureOverlap.boundPaint`. Весь остальной код файла всё ещё проверяется. Любое синхронное обращение `this.boundPaint` вне отложенного callback запрещено, включая helper/getter, строковый доступ, взятие ссылки и map callback. Отсутствующий/дублированный измерительный владелец — ошибка. Чистые ISO helpers, четыре защищённых метода card и прежний summary-контракт остались строгими. Это уточнение существующего гарда, не исключение файла и не новый этап продуктовых задач.\n\nПроверено на текущем материале:\n\n- `node --test test/render-layout-read.test.mjs`: **21/21 PASS**. Включает существующие summary/card контроли, новые фазовые отрицательные контроли и запуск настоящего CLI на текущих исходниках.\n- `node scripts/render-layout-read.mjs`: чистый код PASS (до изменения воспроизводился FAIL с перечислением измерений директивы).\n- Штатный `scripts/mutation-gate.mjs --id=<id> --execute-nightly`: все **3/3** существующих мутанта этого гарда пойманы, каждый после успешного чистого гарда: `iso-first-frame-reads-paper-during-render`, `iso-scene-reads-stage-box-during-render`, `summary-layout-reads-safe-insets-during-render`. Это реальные применения мутаций, не статический поиск якорей; сборка для AST-гарда не требуется.\n- Классификация `test/render-layout-read.test.mjs` уже infrastructure/addressed/render-layout-guard; этот файл импортирует изменённый механизм и должен входить в S6 именно по этой связи. Новые кейсы не добавляются к каждой продуктовой задаче.\n\nОграничения: весь ночной шард 1/7 повторно не запускался; исправлен и адресно подтверждён единственный красный чистый guard из его отчёта. Это не утверждение о зелёных всех семи частях или JS/TS coverage. Перед ревью обычный finish проверит синтаксис и адресный механизм через центральный профиль infra; продуктовую сборку не добавляем без причины."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Рекомендую принять. Гард `scripts/render-layout-read.mjs` ложно падал на чистом коде: директиву подписи `iso-room-furniture-overlap.ts` он проверял так же строго, как чистые ISO-хелперы, хотя её измерения выполняются после render внутри `requestAnimationFrame`. Исправление адресное. Для этого файла исключены только inline-callback настоящего `requestAnimationFrame` и один метод `RoomFurnitureOverlap.boundPaint`. Остальной код файла, включая `update()`/`render()` директивы, проверяется по-прежнему. Любая синхронная ссылка `this.boundPaint`/`this[\"boundPaint\"]` вне rAF считается ошибкой. Остальные `iso-*.ts`, четыре метода card и summary-контракт не изменились. Если файл или метод переименуют, гард снова станет строгим и упадёт, а не начнёт молча пропускать. Блокеров нет. Есть одна узкая лазейка: деструктуризация `const { boundPaint } = this`. Она отнесена к улучшениям.",
-          "understanding": "Проблема. Ночной мутационный шард 1/7 упал не из-за сбежавшего мутанта, а потому что сам гард `node scripts/render-layout-read.mjs` красный на исправном коде. Причина: цикл по `isoTexts` вызывал `layoutReads` по всему файлу без исключений. В `src/iso-room-furniture-overlap.ts` есть `RoomFurnitureOverlap` (AsyncDirective), который читает `clientWidth`/`offsetWidth`/`getComputedStyle` внутри rAF (стр. 85–128) и в `boundPaint` (стр. 145–195). По истории это не ново: в версии импорта e44a5cbf rAF-callback уже читал `plane.clientWidth`/`row.offsetWidth`, а #1470 добавил `boundPaint`. Значит, гард был красным на этих источниках с момента импорта прототипа.\n\nДо изменения любой `src/iso-*.ts` должен был не содержать ни одного layout-чтения. После изменения для одного файла (`ISO_LABEL_MEASURE_FILE`) работает отдельная функция `inspectIsoLabelReads`:\n1) `layoutReads` с `skip`, который пропускает поддерево метода `boundPaint` класса `RoomFurnitureOverlap` (и считает такие методы) и стрелку/функцию, переданную первым аргументом в вызов идентификатора `requestAnimationFrame`;\n2) ошибка, если владельцев `boundPaint` не ровно один;\n3) второй обход ищет `this.boundPaint`/`this['boundPaint']` вне тех же исключённых поддеревьев.\n\nРазобранные пути. Lit-commit вызывает `update()` директивы (стр. 68–81). Оттуда идут `paintBasis()` и `releaseBounds()`: в них только запись стилей и атрибутов, layout не читается. Дальше `schedule()` — стрелочное свойство: его тело до rAF проверяется, тело внутри rAF исключено. `boundPaint` вызывается только из rAF (стр. 106). `coveringOpacity` на уровне модуля по-прежнему проверяется строго; `getImageData` в списке запретов нет. Других `requestAnimationFrame` в `src/iso-*.ts` нет, так что новое правило касается ровно одного места. Все три зарегистрированных мутанта этого гарда (`scripts/mutation-registry.mjs:17279`, `:17407`, `:17420`) патчат `houseplan-card.ts`/summary, а не изменённую ветку. Значит, их срабатывание от правки не зависит, и автор сообщает, что все три пойманы.",
-          "analysis": [
-            {
-              "topic": "Точность исключения и fail-closed поведение",
-              "assessment": "Исключение сделано по фазе выполнения, а не по файлу целиком. Это ровно то, что требовала аналитика задачи. Условие `deferredFrame` узкое: голый идентификатор `requestAnimationFrame` и функция первым аргументом. `this.requestAnimationFrame(...)`, `[1].map(...)` и обёртки не проходят. Переименование файла возвращает его в строгую ветку (упадёт); переименование или дублирование `boundPaint` даёт ошибку «expected one». Чтобы молча расширить исключение, нужно явно править гард. Это решение стоит сохранить.",
-              "evidence": "scripts/render-layout-read.mjs:55-78, 148-152; test/render-layout-read.test.mjs: кейсы `only native deferred callbacks…`, `measurement ownership stays explicit…`"
-            },
-            {
-              "topic": "Защита от синхронного вызова измерителя из update/render",
-              "assessment": "Если бы проверялось только тело `boundPaint`, `update()` мог бы вызвать его синхронно, и вся пользы гарда пропала бы. Поэтому второй проход запрещает любые `this.boundPaint` вне rAF и вне самого метода: вызов, ссылку, строковый доступ, вызов из хелпера или getter, map-callback. Это проще, чем граф вызовов из summary-части (стр. 113–146), и строже: никакой синхронный путь не учитывается вовсе. Для одного метода с единственным законным вызывающим это подходящий компромисс. Остаётся непокрытым доступ без property/element access (деструктуризация, алиас `this`), см. improvements.",
-              "evidence": "scripts/render-layout-read.mjs:69-76; src/iso-room-furniture-overlap.ts:106 (единственный вызов, внутри rAF на стр. 85); тесты `render/update cannot perform or borrow…` и `a synchronous helper or getter cannot launder…`"
-            },
-            {
-              "topic": "Сохранность прежних контрактов и мутантов",
-              "assessment": "Ветки card (`render`, `_renderBody`, `willUpdate`, `_isoScene`) и summary (`measureLayout`/`measurePanelBox` и обход от `render`/`layout`/`willUpdate`) не тронуты. Строгая проверка прочих `iso-*.ts` сохранена; есть отрицательный контроль: в `iso-pure.ts` rAF не даёт исключения. Мутанты целятся в неизменённые ветки гарда. Отчёт автора о 3/3 пойманных мутантах после чистого PASS с этим согласуется.",
-              "evidence": "scripts/render-layout-read.mjs:80-146, 153-154; scripts/mutation-registry.mjs:17279-17287, 17406-17425; diff не затрагивает эти строки"
-            },
-            {
-              "topic": "Тест на реальных источниках",
-              "assessment": "Новый тест запускает настоящий CLI на текущем `src/`. Он ловит именно класс ошибки этой задачи (ложный красный на чистом коде), который синтетические сниппеты не видят. Цена: unit-тест теперь повторяет сам гард. Любое будущее продуктовое нарушение уронит оба одновременно, но это ожидаемо и дёшево.",
-              "evidence": "test/render-layout-read.test.mjs:58-63"
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Закрыть обход через деструктуризацию: `const { boundPaint } = this; boundPaint.call(this, …)` в `update()` не будет пойман. `readName` умеет `BindingElement`, но во втором проходе условие требует `PropertyAccess`/`ElementAccess` с `this` (scripts/render-layout-read.mjs:71-72). Достаточно добавить ветку для `BindingElement` с `readName(node) === 'boundPaint'` в `ObjectBindingPattern` и один отрицательный тест. Цена — пара строк. Сценарий маловероятен для нечаянной регрессии, поэтому это не блокер, хотя контекст автора обещает защиту от «взятия ссылки».",
-            "Запись в пользовательском `CHANGELOG` о починке ночного гарда пользователю ничего не сообщает. Если по правилам проекта инфраструктурные изменения без видимого эффекта туда не попадают, запись можно убрать. Если правила этого требуют — оставить как есть."
-          ],
-          "boundaries": "Код, тесты, `src/iso-room-furniture-overlap.ts` (текущая версия и версия импорта e44a5cbf), записи мутантов в `scripts/mutation-registry.mjs` и места использования `requestAnimationFrame` в `src/` изучены только чтением; сам я ничего не запускал. Результаты прогонов (`node --test test/render-layout-read.test.mjs` 21/21, чистый CLI PASS, 3/3 мутанта через `mutation-gate --execute-nightly`) взяты из контекста исполнителя и квитанции S6 `20261119T095119810-d0648062` (passed на 94bb2d3c6). Содержимое report.json я не видел. Весь ночной шард 1/7 и остальные шарды не перезапускались; о них ничего не утверждается.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 16,
-          "cache_creation_input_tokens": 43329,
-          "cache_read_input_tokens": 192445,
-          "output_tokens": 7391,
-          "output_tokens_details": {
-            "thinking_tokens": 2216
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 43329,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 947,
-              "cache_read_input_tokens": 37286,
-              "cache_creation_input_tokens": 10247,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 10247
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Код-ревью — принято\n\n## Вывод\n\nРекомендую принять. Гард `scripts/render-layout-read.mjs` ложно падал на чистом коде: директиву подписи `iso-room-furniture-overlap.ts` он проверял так же строго, как чистые ISO-хелперы, хотя её измерения выполняются после render внутри `requestAnimationFrame`. Исправление адресное. Для этого файла исключены только inline-callback настоящего `requestAnimationFrame` и один метод `RoomFurnitureOverlap.boundPaint`. Остальной код файла, включая `update()`/`render()` директивы, проверяется по-прежнему. Любая синхронная ссылка `this.boundPaint`/`this[\"boundPaint\"]` вне rAF считается ошибкой. Остальные `iso-*.ts`, четыре метода card и summary-контракт не изменились. Если файл или метод переименуют, гард снова станет строгим и упадёт, а не начнёт молча пропускать. Блокеров нет. Есть одна узкая лазейка: деструктуризация `const { boundPaint } = this`. Она отнесена к улучшениям.\n\n## Понимание решения\n\nПроблема. Ночной мутационный шард 1/7 упал не из-за сбежавшего мутанта, а потому что сам гард `node scripts/render-layout-read.mjs` красный на исправном коде. Причина: цикл по `isoTexts` вызывал `layoutReads` по всему файлу без исключений. В `src/iso-room-furniture-overlap.ts` есть `RoomFurnitureOverlap` (AsyncDirective), который читает `clientWidth`/`offsetWidth`/`getComputedStyle` внутри rAF (стр. 85–128) и в `boundPaint` (стр. 145–195). По истории это не ново: в версии импорта e44a5cbf rAF-callback уже читал `plane.clientWidth`/`row.offsetWidth`, а #1470 добавил `boundPaint`. Значит, гард был красным на этих источниках с момента импорта прототипа.\n\nДо изменения любой `src/iso-*.ts` должен был не содержать ни одного layout-чтения. После изменения для одного файла (`ISO_LABEL_MEASURE_FILE`) работает отдельная функция `inspectIsoLabelReads`:\n1) `layoutReads` с `skip`, который пропускает поддерево метода `boundPaint` класса `RoomFurnitureOverlap` (и считает такие методы) и стрелку/функцию, переданную первым аргументом в вызов идентификатора `requestAnimationFrame`;\n2) ошибка, если владельцев `boundPaint` не ровно один;\n3) второй обход ищет `this.boundPaint`/`this['boundPaint']` вне тех же исключённых поддеревьев.\n\nРазобранные пути. Lit-commit вызывает `update()` директивы (стр. 68–81). Оттуда идут `paintBasis()` и `releaseBounds()`: в них только запись стилей и атрибутов, layout не читается. Дальше `schedule()` — стрелочное свойство: его тело до rAF проверяется, тело внутри rAF исключено. `boundPaint` вызывается только из rAF (стр. 106). `coveringOpacity` на уровне модуля по-прежнему проверяется строго; `getImageData` в списке запретов нет. Других `requestAnimationFrame` в `src/iso-*.ts` нет, так что новое правило касается ровно одного места. Все три зарегистрированных мутанта этого гарда (`scripts/mutation-registry.mjs:17279`, `:17407`, `:17420`) патчат `houseplan-card.ts`/summary, а не изменённую ветку. Значит, их срабатывание от правки не зависит, и автор сообщает, что все три пойманы.\n\n## Разбор решения\n\n### Точность исключения и fail-closed поведение\n\nИсключение сделано по фазе выполнения, а не по файлу целиком. Это ровно то, что требовала аналитика задачи. Условие `deferredFrame` узкое: голый идентификатор `requestAnimationFrame` и функция первым аргументом. `this.requestAnimationFrame(...)`, `[1].map(...)` и обёртки не проходят. Переименование файла возвращает его в строгую ветку (упадёт); переименование или дублирование `boundPaint` даёт ошибку «expected one». Чтобы молча расширить исключение, нужно явно править гард. Это решение стоит сохранить.\n\nОснование: scripts/render-layout-read.mjs:55-78, 148-152; test/render-layout-read.test.mjs: кейсы `only native deferred callbacks…`, `measurement ownership stays explicit…`\n\n### Защита от синхронного вызова измерителя из update/render\n\nЕсли бы проверялось только тело `boundPaint`, `update()` мог бы вызвать его синхронно, и вся пользы гарда пропала бы. Поэтому второй проход запрещает любые `this.boundPaint` вне rAF и вне самого метода: вызов, ссылку, строковый доступ, вызов из хелпера или getter, map-callback. Это проще, чем граф вызовов из summary-части (стр. 113–146), и строже: никакой синхронный путь не учитывается вовсе. Для одного метода с единственным законным вызывающим это подходящий компромисс. Остаётся непокрытым доступ без property/element access (деструктуризация, алиас `this`), см. improvements.\n\nОснование: scripts/render-layout-read.mjs:69-76; src/iso-room-furniture-overlap.ts:106 (единственный вызов, внутри rAF на стр. 85); тесты `render/update cannot perform or borrow…` и `a synchronous helper or getter cannot launder…`\n\n### Сохранность прежних контрактов и мутантов\n\nВетки card (`render`, `_renderBody`, `willUpdate`, `_isoScene`) и summary (`measureLayout`/`measurePanelBox` и обход от `render`/`layout`/`willUpdate`) не тронуты. Строгая проверка прочих `iso-*.ts` сохранена; есть отрицательный контроль: в `iso-pure.ts` rAF не даёт исключения. Мутанты целятся в неизменённые ветки гарда. Отчёт автора о 3/3 пойманных мутантах после чистого PASS с этим согласуется.\n\nОснование: scripts/render-layout-read.mjs:80-146, 153-154; scripts/mutation-registry.mjs:17279-17287, 17406-17425; diff не затрагивает эти строки\n\n### Тест на реальных источниках\n\nНовый тест запускает настоящий CLI на текущем `src/`. Он ловит именно класс ошибки этой задачи (ложный красный на чистом коде), который синтетические сниппеты не видят. Цена: unit-тест теперь повторяет сам гард. Любое будущее продуктовое нарушение уронит оба одновременно, но это ожидаемо и дёшево.\n\nОснование: test/render-layout-read.test.mjs:58-63\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Закрыть обход через деструктуризацию: `const { boundPaint } = this; boundPaint.call(this, …)` в `update()` не будет пойман. `readName` умеет `BindingElement`, но во втором проходе условие требует `PropertyAccess`/`ElementAccess` с `this` (scripts/render-layout-read.mjs:71-72). Достаточно добавить ветку для `BindingElement` с `readName(node) === 'boundPaint'` в `ObjectBindingPattern` и один отрицательный тест. Цена — пара строк. Сценарий маловероятен для нечаянной регрессии, поэтому это не блокер, хотя контекст автора обещает защиту от «взятия ссылки».\n- Запись в пользовательском `CHANGELOG` о починке ночного гарда пользователю ничего не сообщает. Если по правилам проекта инфраструктурные изменения без видимого эффекта туда не попадают, запись можно убрать. Если правила этого требуют — оставить как есть.\n\n## Границы анализа\n\nКод, тесты, `src/iso-room-furniture-overlap.ts` (текущая версия и версия импорта e44a5cbf), записи мутантов в `scripts/mutation-registry.mjs` и места использования `requestAnimationFrame` в `src/` изучены только чтением; сам я ничего не запускал. Результаты прогонов (`node --test test/render-layout-read.test.mjs` 21/21, чистый CLI PASS, 3/3 мутанта через `mutation-gate --execute-nightly`) взяты из контекста исполнителя и квитанции S6 `20261119T095119810-d0648062` (passed на 94bb2d3c6). Содержимое report.json я не видел. Весь ночной шард 1/7 и остальные шарды не перезапускались; о них ничего не утверждается.\n\n<details>\n<summary>Материал ревью и контекст исполнителя</summary>\n\nМодель: claude-opus-5-5\n\nМатериал: fbfbdea4442539a5e6aadc46c16d2645165e449e → 94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1473, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nМатериал: `fbfbdea44425 → 94bb2d3c6`, ветка `codex/1473-render-layout-read`, инфраструктурный show. Продуктовые исходники, реестр мутантов, PNG и лимиты не менялись.\n\nВ `iso-room-furniture-overlap.ts` разрешены только inline callback настоящего `requestAnimationFrame` и единственный измерительный метод `RoomFurnitureOverlap.boundPaint`. Весь остальной код файла всё ещё проверяется. Любое синхронное обращение `this.boundPaint` вне отложенного callback запрещено, включая helper/getter, строковый доступ, взятие ссылки и map callback. Отсутствующий/дублированный измерительный владелец — ошибка. Чистые ISO helpers, четыре защищённых метода card и прежний summary-контракт остались строгими. Это уточнение существующего гарда, не исключение файла и не новый этап продуктовых задач.\n\nПроверено на текущем материале:\n\n- `node --test test/render-layout-read.test.mjs`: **21/21 PASS**. Включает существующие summary/card контроли, новые фазовые отрицательные контроли и запуск настоящего CLI на текущих исходниках.\n- `node scripts/render-layout-read.mjs`: чистый код PASS (до изменения воспроизводился FAIL с перечислением измерений директивы).\n- Штатный `scripts/mutation-gate.mjs --id=<id> --execute-nightly`: все **3/3** существующих мутанта этого гарда пойманы, каждый после успешного чистого гарда: `iso-first-frame-reads-paper-during-render`, `iso-scene-reads-stage-box-during-render`, `summary-layout-reads-safe-insets-during-render`. Это реальные применения мутаций, не статический поиск якорей; сборка для AST-гарда не требуется.\n- Классификация `test/render-layout-read.test.mjs` уже infrastructure/addressed/render-layout-guard; этот файл импортирует изменённый механизм и должен входить в S6 именно по этой связи. Новые кейсы не добавляются к каждой продуктовой задаче.\n\nОграничения: весь ночной шард 1/7 повторно не запускался; исправлен и адресно подтверждён единственный красный чистый guard из его отчёта. Это не утверждение о зелёных всех семи частях или JS/TS coverage. Перед ревью обычный finish проверит синтаксис и адресный механизм через центральный профиль infra; продуктовую сборку не добавляем без причины.\n```\n\n</details>\n",
-        "createdAt": "2026-11-19T09:53:45.736Z",
-        "artifactId": 14517291322,
-        "runId": 44500260892,
-        "runAttempt": 1,
-        "completedAt": "2026-11-19T09:53:50Z",
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/44500260892",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "fbfbdea4442539a5e6aadc46c16d2645165e449e"
+      "devBuild": {
+        "status": "not-required"
       }
     },
     "1474": {
@@ -5648,19 +5528,7 @@
   "waiting": [
     1474
   ],
-  "active": {
-    "issue": 1473,
-    "worker": "finish",
-    "token": "530:finish:3b9da799-c271-4ef5-829b-478fb7598980:finish:1:admit",
-    "fence": 530,
-    "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-    "expectedBase": "fbfbdea4442539a5e6aadc46c16d2645165e449e",
-    "phase": "ready-to-merge",
-    "admittedAt": 1795081868310,
-    "expiresAt": 1795085651109,
-    "patchId": "67c5c04450a45a45960581124030b410d8f5ba9e",
-    "reviewRequest": "review:1473:1:67c5c04450a45a45960581124030b410d8f5ba9e:fbfbdea4442539a5e6aadc46c16d2645165e449e"
-  },
+  "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
       "digest": "fa2b070b281ac7f8242ce50259340f77469135d36ee5b9e8167cf1b532b89118",
@@ -5681,101 +5549,6 @@
     "github:44491001936:1:completions:report:8071fbf39359a730797d1dcdd1ffafd592dad5f37e29ed1abe73fe643be11d2f": {
       "digest": "4d6dc68b361be1330b0ccf9b978cae8842d0e6a20e6faffa5bf02667c95e2c3b",
       "issue": 1472
-    },
-    "finish:3b9da799-c271-4ef5-829b-478fb7598980:finish:2:synchronized": {
-      "digest": "2867bc9d2dede950b57fade739b15940c1599179b56dff881191d0940c167e8b",
-      "issue": 1473
-    },
-    "github:44500182424:1:tick:0:label": {
-      "digest": "794189661e7a91dae55fe8fc8749b4fde18c6e94fe20861c679136f0c8372dc7",
-      "issue": 1473
-    },
-    "github:44500182424:1:tick:0:review-requested": {
-      "digest": "f1665b28a013e121f5830864ec11e290d2fa4ebe7f5d58865bc526c4e9ae17e5",
-      "issue": 1473
-    },
-    "finish:3b9da799-c271-4ef5-829b-478fb7598980:finish:4:review-retry": {
-      "digest": "7a42e78174184b71f68e381d0c42c0e44b4f047d70786982c5649667e5ee85ad",
-      "issue": 1473
-    },
-    "github:44500182424:1:completions:message:f5b2c6d3af6b485d30ff86cbcab372061247b6cc3f0550f27f211ee75e0de21f": {
-      "digest": "439dcfbe5c67c7b3d8adecae81e45e10d68ba7a8a73c632da8b544014c8c4899",
-      "issue": 1473
-    },
-    "github:44500182424:1:completions:message:e81560f1a805f598a116f05d9a633f126bf3224e587d61aad2c76e693a07750c": {
-      "digest": "eb982fa41c9d4ebaf923f4b9f54da49409bb9219a0e6d4f05e3478a1af164e1e",
-      "issue": 1473
-    },
-    "github:44500182424:1:completions:message:40322665ab5a5768aa30f98582bbe80a5dae0f3623d2378947f752923f80f2b3": {
-      "digest": "1e641b0d60328c75887023739b5faf46132e468c3e07b51021b008bc23ec1af9",
-      "issue": 1473
-    },
-    "finish:3b9da799-c271-4ef5-829b-478fb7598980:finish:6:review-presentation": {
-      "digest": "05a1e455cd1d35f50b81626436823ccbb648676dbef2d8742c207bbcba36fa88",
-      "issue": 1473
-    },
-    "finish:3b9da799-c271-4ef5-829b-478fb7598980:finish:6:review-complete": {
-      "digest": "b5eb2d757dabd1459c520df6537d0e1cf72a77e7f11907aca5b9e9ddb321467d",
-      "issue": 1473
-    },
-    "finish:3b9da799-c271-4ef5-829b-478fb7598980": {
-      "digest": "ded1cce7284f98f5493dcbb616a05425d7cc322f62274d25e3b889551d8e047d",
-      "issue": 1473,
-      "message": {
-        "kind": "queued",
-        "issue": 1473,
-        "at": 1795081864415,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-        "delivered": true
-      }
-    },
-    "finish:3b9da799-c271-4ef5-829b-478fb7598980:finish:1:admit": {
-      "digest": "88bfad351b89646bb6c3666f4d0ce583976e764ffa86fa36ce4e2d95d42b101f",
-      "issue": 1473,
-      "message": {
-        "kind": "admitted",
-        "issue": 1473,
-        "at": 1795081868310,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-        "phase": "sync",
-        "delivered": true
-      }
-    },
-    "finish:3b9da799-c271-4ef5-829b-478fb7598980:finish:3:s6-complete": {
-      "digest": "895fbd9b9eb86e71556ed6d499740e171a4987cf10761122bd18486289390b4d",
-      "issue": 1473,
-      "message": {
-        "kind": "s6-complete",
-        "issue": 1473,
-        "at": 1795081881822,
-        "entry": 1,
-        "track": "show",
-        "layer": "infra",
-        "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-        "phase": "review",
-        "evidence": {
-          "id": "20261119T095119810-d0648062",
-          "name": "Тесты для задачи #1473 (перед ревью)",
-          "reportPath": "/home/sergey/houseplan-1227/.git/process-next/runs/20261119T095119810-d0648062/report.json",
-          "materialSha": "94bb2d3c6dc5c5e89b8dd7c12ba15bd97ff6355c",
-          "status": "passed",
-          "finishedAt": "2026-11-19T09:51:21.022Z",
-          "failures": []
-        },
-        "newReview": true,
-        "resubmission": false,
-        "reviewChanges": "Материал: `fbfbdea44425 → 94bb2d3c6`, ветка `codex/1473-render-layout-read`, инфраструктурный show. Продуктовые исходники, реестр мутантов, PNG и лимиты не менялись.\n\nВ `iso-room-furniture-overlap.ts` разрешены только inline callback настоящего `requestAnimationFrame` и единственный измерительный метод `RoomFurnitureOverlap.boundPaint`. Весь остальной код файла всё ещё проверяется. Любое синхронное обращение `this.boundPaint` вне отложенного callback запрещено, включая helper/getter, строковый доступ, взятие ссылки и map callback. Отсутствующий/дублированный измерительный владелец — ошибка. Чистые ISO helpers, четыре защищённых метода card и прежний summary-контракт остались строгими. Это уточнение существующего гарда, не исключение файла и не новый этап продуктовых задач.\n\nПроверено на текущем материале:\n\n- `node --test test/render-layout-read.test.mjs`: **21/21 PASS**. Включает существующие summary/card контроли, новые фазовые отрицательные контроли и запуск настоящего CLI на текущих исходниках.\n- `node scripts/render-layout-read.mjs`: чистый код PASS (до изменения воспроизводился FAIL с перечислением измерений директивы).\n- Штатный `scripts/mutation-gate.mjs --id=<id> --execute-nightly`: все **3/3** существующих мутанта этого гарда пойманы, каждый после успешного чистого гарда: `iso-first-frame-reads-paper-during-render`, `iso-scene-reads-stage-box-during-render`, `summary-layout-reads-safe-insets-during-render`. Это реальные применения мутаций, не статический поиск якорей; сборка для AST-гарда не требуется.\n- Классификация `test/render-layout-read.test.mjs` уже infrastructure/addressed/render-layout-guard; этот файл импортирует изменённый механизм и должен входить в S6 именно по этой связи. Новые кейсы не добавляются к каждой продуктовой задаче.\n\nОграничения: весь ночной шард 1/7 повторно не запускался; исправлен и адресно подтверждён единственный красный чистый guard из его отчёта. Это не утверждение о зелёных всех семи частях или JS/TS coverage. Перед ревью обычный finish проверит синтаксис и адресный механизм через центральный профиль infra; продуктовую сборку не добавляем без причины.",
-        "fromStatus": "S6-in-progress",
-        "toStatus": "S7-code-review",
-        "transitionConfirmed": true,
-        "delivered": true
-      }
     },
     "finish:a8d99469-b763-4dc7-9e24-e5b892c2dc7b": {
       "digest": "a03c07aa551707b08d373fb0f2f6193f185d6dffe2178eec0a99a6f30d3e7a2e",
