@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16037,
+  "revision": 16038,
   "nextTicket": 523,
   "nextFence": 523,
   "tasks": {
@@ -5441,20 +5441,6 @@
         "round": null,
         "occurredAt": "2026-11-08T11:26:20.862Z"
       }
-    },
-    "code:1467:review:1467:2:b55aa500811693f84b7f77711b7738d0d9085b83:25b910a9598b6bfa6805a1f2a52f74e14a9f6381": {
-      "issue": 1467,
-      "kind": "code",
-      "requestId": "review:1467:2:b55aa500811693f84b7f77711b7738d0d9085b83:25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-      "materialSha": "68fb9d6ec311e669bd7a9299022173d6a551e599",
-      "expectedBase": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
-      "patchId": "b55aa500811693f84b7f77711b7738d0d9085b83",
-      "status": "pending",
-      "presentation": {
-        "round": null,
-        "occurredAt": "2026-11-18T22:02:21.829Z"
-      },
-      "runId": 44407623998
     }
   },
   "waiting": [],
