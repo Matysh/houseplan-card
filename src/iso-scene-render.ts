@@ -9,7 +9,7 @@
 export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
 import { difference, union, type Geom } from 'polyclip-ts';
-import { ISO_LAB_OPENINGS } from './iso-lab-camera';
+import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_OPENINGS } from './iso-lab-camera';
 import { clipIsoOpeningDepthQueue, deviceWallOcclusion, furnitureOcclusion } from './iso-lab-visibility';
 import { isoWallLightPainter, type IsoWallLightSource } from './iso-wall-light';
 export { isoFurnitureLightSampler } from './iso-wall-light';
@@ -115,12 +115,13 @@ export function resolveIsoFramePresentation(input: {
     ? resolveIsoOpeningPanels(layers, input.scene, input.openings, input.amountOf, input.visualOf)
     : [];
   const overlays = input.overlays(layers);
+  const smoothMaterials = ISO_LAB_FLOOR_MARKERS && !!input.scene?.camera;
   const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => {
     const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture, overlays, input.wallLights);
     const indicators = renderLayers.panels ? renderIsoOpeningIndicators(input.scene, input.openings, input.visualOf, input.cellCm, input.display.color) : nothing;
     return {
       layers: renderLayers, panels, overlays,
-      underlay: renderIsoUnderlay(renderLayers, input.scene?.floor, input.cellCm),
+      underlay: renderIsoUnderlay(renderLayers, input.scene?.floor, input.cellCm, smoothMaterials),
       shadows: renderIsoShadows(renderLayers, panels, input.scene?.geometry, input.cellCm),
       walls: svg`${structure.walls}${structure.foreground === nothing ? indicators : nothing}`,
       foreground: structure.foreground === nothing ? nothing : svg`${structure.foreground}${indicators}`,
@@ -224,6 +225,7 @@ export function renderIsoUnderlay(
   layers: IsoDecorationLayers,
   floor: IsoFloorGeometry | undefined,
   cellCm: number,
+  smoothMaterials = false,
 ): TemplateResult {
   if (!layers.structural || !floor) return emptySvg();
   return svg`<g class="iso-underlay" data-hp="iso-underlay" aria-hidden="true" pointer-events="none">
@@ -234,7 +236,7 @@ export function renderIsoUnderlay(
       : nothing}
     <g class="iso-floor-edge">${floor.sides.map((face) =>
       svg`<path class="iso-floor-side" d=${face.d} data-component=${face.component}
-        data-edge=${face.edge}></path>${layers.materialNuance
+        data-edge=${face.edge}></path>${layers.materialNuance && !smoothMaterials
         ? svg`<path class="iso-material-texture iso-floor-texture" d=${face.d}></path>`
         : nothing}`)}</g>
   </g>` as unknown as TemplateResult;
@@ -330,6 +332,9 @@ function renderIsoStructure(
   const masonrySide = ({entry}:typeof entries[number]) => entry.layer === 'wall-side'
     || (entry.layer === 'opening' && entry.surface.material === 'wall-side');
   const paintWallLight = scene.camera ? isoWallLightPainter(wallLights, scene.camera, cellCm, scene.geometry) : () => nothing;
+  // The raised-marker presentation has smooth surfaces. Avoid mounting the
+  // duplicate path strings that its CSS previously hid during every paint.
+  const textures = layers.materialNuance && !(ISO_LAB_FLOOR_MARKERS && scene.camera);
   const paintEntry = ({entry,index}:typeof entries[number]) => {
         if (entry.layer === 'wall-side') {
           const face = entry.face;
@@ -338,7 +343,7 @@ function renderIsoStructure(
             return svg`${paths ? svg`<path data-hp-round-column=${face.roundColumn} d=${paths.join(' ')}
               fill=${layers.materialNuance ? 'url(#hp-iso-column-'+face.roundColumn+')' : 'var(--iso-side-mid, #adadad)'}></path>` : nothing}${paintWallLight(entry,index)}`;
           }
-          return svg`<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${layers.materialNuance
+          return svg`<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${textures
             ? svg`<path class="iso-material-texture iso-wall-texture" d=${face.d}></path>`
             : nothing}${paintWallLight(entry,index)}`;
         }
@@ -346,7 +351,7 @@ function renderIsoStructure(
           if(wallCut)return nothing;
           const face = entry.face;
           return svg`<path class="iso-wall-top" d=${face.d} data-component=${face.component}
-            fill-rule="evenodd"></path>${layers.materialNuance
+            fill-rule="evenodd"></path>${textures
             ? svg`<path class="iso-material-texture iso-wall-texture" d=${face.d}
                 fill-rule="evenodd"></path>`
             : nothing}`;
@@ -360,7 +365,7 @@ function renderIsoStructure(
         /* css-uses {"owner":"renderIsoWalls","kind":"class","values":["iso-door","iso-window"],"reason":"Opening surfaces have exactly the door/window type union"} */
         return svg`<path class="iso-opening-panel iso-${surface.type} iso-opening-${surface.kind} iso-material-${surface.material}"
           d=${surface.d} fill-rule="evenodd" data-id=${surface.id} data-kind=${surface.type}
-          data-surface=${surface.kind} data-leaf=${surface.leaf ?? nothing}></path>${layers.materialNuance
+          data-surface=${surface.kind} data-leaf=${surface.leaf ?? nothing}></path>${textures
             ? svg`<path class="iso-material-texture iso-wall-texture iso-opening-texture"
                 d=${surface.d}></path>`
             : nothing}`;

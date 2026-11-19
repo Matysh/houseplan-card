@@ -253,6 +253,19 @@ test('#1451 visibility removes only nearer portions, independent of painter orde
   assert.deepEqual(forward.map(e=>[e.surface.id,e.surface.d]).sort(),reverse.map(e=>[e.surface.id,e.surface.d]).sort());
 });
 
+test('#1478 a disjoint foreground face with overlapping bounds leaves one uncut wall polygon', () => {
+  const camera = cam(0);
+  const face = (id, corners, z) => ({ layer: 'opening', depth: z, surface: {
+    id, type: 'door', sourceIndex: 0, kind: 'leaf-front', material: 'matte-leaf', d: id,
+    points: corners.map(([x, y]) => ({ point: [x, (y + z * Math.sin(50 * Math.PI / 180)) / camera.floorScaleY], z })),
+  } });
+  const wall = face('wall', [[0, 0], [100, 0], [0, 100]], 0);
+  const foreground = face('foreground', [[90, 60], [130, 60], [90, 130]], 10);
+  const result = clipIsoOpeningDepthQueue([wall, foreground], camera).find(entry => entry.surface.id === 'wall');
+  assert.equal(result.surface.d.match(/M/g).length, 1);
+  assert.equal(area(result.surface.d), 5000);
+});
+
 test('#1451 doors, gate ribs and handles stay finite at all quarter views and motion states',()=>{
   const started=performance.now();let rendered=0;
   for(const type of ['door','gate']) for(const yaw of [35,125,215,305]) for(const amount of [0,.4,1]) {

@@ -53,7 +53,10 @@ function subtractConvex(subject:Point[],clip:Point[]):Multi {
     const outside=halfPlane(inside,plane,false);if(outside.length)out.push([outside]);
     inside=halfPlane(inside,plane);
   }
-  return out;
+  // The extended clip edges can split a disjoint polygon into strips before
+  // the last edge proves there was no intersection. Keep the original in
+  // that case so later occluders do not process those artificial fragments.
+  return inside.length ? out : [[subject]];
 }
 /** Even-odd vertical slabs turn a wall cap, including courtyard holes, into
  * convex trapezoids. This local display operation never invokes or changes
@@ -80,7 +83,7 @@ function convexParts(poly:Polygon):Multi {
   return out;
 }
 const path=(geom:Multi)=>geom.flatMap(poly=>poly.map(ring=>
-  `M ${ring.map(p=>p.map(v=>Number(v.toFixed(4))).join(' ')).join(' L ')} Z`)).join(' ');
+  `M ${ring.map(p=>p.map(v=>Number(v.toFixed(4))).join(' ')).join(' ')} Z`)).join(' ');
 
 function faceOf(entry:IsoWallDepthQueueEntry,camera:IsoCamera):Face|null {
   let geom:Multi,vertices:number[][],opaque=true;
