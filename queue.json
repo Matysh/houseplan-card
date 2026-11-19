@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16829,
-  "nextTicket": 541,
+  "revision": 16830,
+  "nextTicket": 542,
   "nextFence": 541,
   "tasks": {
     "1024": {
@@ -5159,14 +5159,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1478-camera-performance",
-      "materialSha": "f77fe172da83cebf5efd7087abbb1e62a04d90e6",
+      "materialSha": "e6d8764b99533d417e7870fd45d1d62d1ac14003",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 540,
-      "queued": false,
+      "ticket": 541,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795130191617,
-      "reviewEntry": 1,
+      "readyAt": 1795132011130,
+      "reviewEntry": 2,
       "patchId": "c19a7ae53a973d66fff9876c14ff6acd5e1c3c6e",
       "changedFiles": [
         "demo/benchmark_iso_edge_zoom.mjs",
@@ -5232,7 +5232,6 @@
         "test/mutation-browser-offload.test.mjs",
         "test/viewport-transition.test.mjs"
       ],
-      "reason": "executor-admission-expired",
       "notice": {
         "key": "1:executor-admission-expired",
         "reason": "executor-admission-expired",
@@ -5709,7 +5708,9 @@
       }
     }
   },
-  "waiting": [],
+  "waiting": [
+    1478
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5884,6 +5885,19 @@
           "entry": 1,
           "eventId": "finish:cea817d2-249c-44de-af6d-7d11ffb24998:finish:1:expire:return:1478"
         }
+      }
+    },
+    "finish:6be7faaa-07fb-4baf-87cf-3281e6aacb45": {
+      "digest": "58052a4dd59da663dc5cc12435a6ad66565b3e8054792f689e602facf05246a4",
+      "issue": 1478,
+      "message": {
+        "kind": "queued",
+        "issue": 1478,
+        "at": 1795132011130,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "e6d8764b99533d417e7870fd45d1d62d1ac14003"
       }
     }
   },
