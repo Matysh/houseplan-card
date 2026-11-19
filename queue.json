@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16351,
+  "revision": 16352,
   "nextTicket": 530,
   "nextFence": 530,
   "tasks": {
@@ -2004,44 +2004,6 @@
       "devBuild": {
         "status": "published",
         "sourceSha": "5d522469dd04bb0630f3a890652e32e94fe02c2e"
-      }
-    },
-    "1379": {
-      "issue": 1379,
-      "branch": "codex/1379-backend-quality-guard",
-      "track": "show",
-      "layer": "product",
-      "status": "S8-merged",
-      "expectedBase": "1862202d4be66cdc8b9b8d4165a350af70f62876",
-      "mergedSha": "a05e6437f7a062f67c67200842698aef8987439f",
-      "mergedAt": 1794302739543,
-      "mergedFromStatus": "S7-code-review",
-      "branchDeleted": true,
-      "removedToRelease": false,
-      "reviewRequest": "review:1379:1:5799ca457b14b79be42903fbba9d175ece6a103d:1862202d4be66cdc8b9b8d4165a350af70f62876",
-      "completion": {
-        "labels": true,
-        "milestone": true,
-        "comment": true,
-        "status": "complete",
-        "errors": {},
-        "labelsFrom": "S7-code-review",
-        "removedToRelease": false,
-        "milestoneTarget": {
-          "milestone": null,
-          "cycleMilestone": 15
-        },
-        "commentCurrent": true,
-        "commentDigest": "d1c65df9ac3a3cbebb03",
-        "commentFacts": {
-          "labels": true,
-          "milestone": true,
-          "target": null
-        }
-      },
-      "devBuild": {
-        "status": "published",
-        "sourceSha": "a05e6437f7a062f67c67200842698aef8987439f"
       }
     },
     "1380": {
@@ -5070,7 +5032,8 @@
         }
       },
       "devBuild": {
-        "status": "pending"
+        "status": "published",
+        "sourceSha": "fbfbdea4442539a5e6aadc46c16d2645165e449e"
       }
     }
   },
@@ -5533,6 +5496,18 @@
     "github:44491001936:1:completions:report:8071fbf39359a730797d1dcdd1ffafd592dad5f37e29ed1abe73fe643be11d2f": {
       "digest": "4d6dc68b361be1330b0ccf9b978cae8842d0e6a20e6faffa5bf02667c95e2c3b",
       "issue": 1472
+    },
+    "dev-build:44497760273:1:1470": {
+      "digest": "e99ae3ec663ed513fc9305ae263c89d6724e5d93401ff3c2d0276b39fbbf77a9",
+      "issue": 1470,
+      "message": {
+        "kind": "dev-build",
+        "issue": 1470,
+        "at": 1795081087787,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "fbfbdea4442539a5e6aadc46c16d2645165e449e"
+      }
     }
   },
   "devWebhook": {
