@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 1022,
+  "revision": 1023,
   "active": null,
   "candidates": {
     "v1.84.0-beta.2": {
@@ -129922,37 +129922,43 @@
           "from": "25b910a9598b6bfa6805a1f2a52f74e14a9f6381",
           "to": "e7a50bf634e8802fddf82f2fe6d437221e03d75b",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "163fc4a94159e91516c21c6b520ccfc5455a32f0"
         },
         {
           "from": "e7a50bf634e8802fddf82f2fe6d437221e03d75b",
           "to": "d3a21391edd38811a1e9f36647cfb4aab5fef666",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "163fc4a94159e91516c21c6b520ccfc5455a32f0"
         },
         {
           "from": "d3a21391edd38811a1e9f36647cfb4aab5fef666",
           "to": "978e74516a6d6864c943360c8d813dbc09d6b345",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "163fc4a94159e91516c21c6b520ccfc5455a32f0"
         },
         {
           "from": "978e74516a6d6864c943360c8d813dbc09d6b345",
           "to": "503a34e70eadec042391d463abf05b334af2e24e",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "163fc4a94159e91516c21c6b520ccfc5455a32f0"
         },
         {
           "from": "503a34e70eadec042391d463abf05b334af2e24e",
           "to": "8c5fb654195356e161d78da56bccb4abf3b67655",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "superseded",
+          "supersededBy": "163fc4a94159e91516c21c6b520ccfc5455a32f0"
         },
         {
           "from": "8c5fb654195356e161d78da56bccb4abf3b67655",
           "to": "163fc4a94159e91516c21c6b520ccfc5455a32f0",
           "syncMode": "merge",
-          "status": "pending"
+          "status": "ported",
+          "devSha": "f4f474cf489015af967bbd6fa03cda62c07bc975"
         }
       ],
       "diagnostics": [],
@@ -130878,7 +130884,8 @@
           "sha": "57c1b95bddff8ad9a1e637e5563f367f720a5ee4"
         },
         "return-to-dev": {
-          "status": "running",
+          "status": "completed",
+          "devSha": "f4f474cf489015af967bbd6fa03cda62c07bc975",
           "issue": 1468,
           "branch": "issue/1468-release-return-163fc4a94159",
           "worktree": "/home/sergey/hp-1380-witness-repairs/artifacts/process-next/return-worktrees/163fc4a94159"
@@ -136532,7 +136539,8 @@
     "beta1853-2-20261119-publish-approved:completion:8b482c2b-9611-4b5e-9cd8-6d75b3590f31": "3012d9d059c3b384d8267ae4816e826022aa6dfb5663a6b5ce3c0bce9a7ceff1",
     "beta1853-2-20261119-publish-approved:completion:9083a2f3-f669-4c58-96a5-445af89afb2a": "c41c6ab4f46724b3e58dc18b9bee28005229758e0a9291a14871085bc9c9e64b",
     "beta1853-2-20261119-publish-approved:completion:45009a7b-a596-4b26-bed3-5ef0585da66f": "1fc04432c5acbf7ff0df1180169e9bd99dbae226644991661735d78b295128ff",
-    "beta1853-2-20261119-publish-approved:completion:b6821d40-c9c1-431f-beb6-4e72d1761fce": "5813e8578ffc96eeff56bd32f34bf06d662edb74f1293998802a4cfc18e17b5a"
+    "beta1853-2-20261119-publish-approved:completion:b6821d40-c9c1-431f-beb6-4e72d1761fce": "5813e8578ffc96eeff56bd32f34bf06d662edb74f1293998802a4cfc18e17b5a",
+    "beta1853-2-20261119-publish-approved:completion:5d0d06cf-24fc-468f-b229-3482f1885fcc": "87a33269f0ca701f9ce12c5e3202224b2a65bf7e00be1afa3672dad66d4f5bb6"
   },
   "shipReviews": {
     "ship-review:5f3d7fbaba821bece3bf9fd01e5ef39179b79aa968d33375d717fbd34df8d2ee": {
