@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16586,
-  "nextTicket": 536,
+  "revision": 16587,
+  "nextTicket": 537,
   "nextFence": 536,
   "tasks": {
     "1024": {
@@ -5060,14 +5060,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1475-swing-door-placement",
-      "materialSha": "750975d245a5abf887dd597f4fa054d9cc0e30e4",
+      "materialSha": "8a9cd979795b857b22af3cff5ae3fb282cc8caa0",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 535,
-      "queued": false,
+      "ticket": 536,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1795086894613,
-      "reviewEntry": 1,
+      "readyAt": 1795088542849,
+      "reviewEntry": 2,
       "patchId": "c6614acceb8004abe73d653d339693a204afbce3",
       "changedFiles": [
         "custom_components/houseplan/core/coordinate_canonicalization.py",
@@ -5129,7 +5129,6 @@
         "tests_backend/test_opening_features.py",
         "tests_backend/test_opening_orientation.py"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -5607,7 +5606,9 @@
       "runId": 44508138259
     }
   },
-  "waiting": [],
+  "waiting": [
+    1475
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5844,6 +5845,19 @@
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/floor-geometry-key.test.mjs: failed; Поведение: test/glow-scene.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed",
           "eventId": "finish:decf5f53-3f63-4810-9322-f758039e4ac2:finish:3:return:return:1475"
         }
+      }
+    },
+    "finish:e1fc2c20-30f7-464a-898b-d804c5382222": {
+      "digest": "45673849fc1a4fdc996792b6a09cb12df1d44ada07b05ea1a55b6bc3a04d3d17",
+      "issue": 1475,
+      "message": {
+        "kind": "queued",
+        "issue": 1475,
+        "at": 1795088542849,
+        "entry": 2,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "8a9cd979795b857b22af3cff5ae3fb282cc8caa0"
       }
     }
   },
