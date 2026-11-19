@@ -44,7 +44,11 @@ const resetCamera = async () => {
 const liveState = () => page.evaluate(() => {
   const card = document.querySelector('houseplan-card');
   const root = card.renderRoot;
-  const scenes = [...root.querySelectorAll('[data-hp-live-scene="floor"],[data-hp-live-viewbox]')].filter(node=>node.getAttribute('data-hp-live-viewbox')!=='floor'||!node.closest('[data-hp-live-scene="floor"]'));
+  const scenes = [...root.querySelectorAll('[data-hp-live-scene],[data-hp-live-viewbox]')]
+    .filter(node => !node.matches('[data-hp-live-viewbox]') || !node.closest('[data-hp-live-scene],[data-hp-live-layer]'));
+  const bounded = node => node.getAttribute('data-hp-live-overflow') === 'clip'
+    ? !node.style.overflow && !node.style.clipPath
+    : node.style.overflow === 'visible' && /^inset\(/.test(node.style.clipPath);
   const centre = (node) => {
     const rect = node?.getBoundingClientRect();
     return rect ? [rect.left + rect.width / 2, rect.top + rect.height / 2] : null;
@@ -54,20 +58,19 @@ const liveState = () => page.evaluate(() => {
     view: structuredClone(card._view),
     transformed: scenes.filter((node) => node.style.transform).length,
     sceneCount: scenes.length,
-    // #689: an exposed scene opens only within its bound; the filtered
-    // day-cycle outline (marked clip) is projected but never opened.
-    allSceneOverflowOpen: scenes.length > 0
-      && scenes.every((node) => (node.getAttribute('data-hp-live-overflow') === 'clip'
-        ? !node.style.overflow && !node.style.clipPath
-        : node.style.overflow === 'visible' && node.style.clipPath === 'inset(-25%)')),
+    // The actual reserve depends on visible content and the surface budget.
+    allSceneOverflowOpen: scenes.length > 0 && scenes.every(bounded),
     allScenePromoted: scenes.length > 0 && scenes.every((node) => node.style.transform
       && node.style.transformOrigin && node.style.willChange === 'transform'
-      && (node.getAttribute('data-hp-live-overflow') === 'clip'
-        ? !node.style.overflow && !node.style.clipPath
-        : node.style.overflow === 'visible' && node.style.clipPath === 'inset(-25%)')),
-    allTemporaryStylesCleared: scenes.every((node) => !node.style.overflow
-      && !node.style.clipPath
-      && !node.style.transform && !node.style.transformOrigin && !node.style.willChange),
+      && bounded(node)),
+    allTemporaryStylesCleared: scenes.every((node) => {
+      if (node.matches('.iso-scene-surface')) {
+        const transform = getComputedStyle(node).transform;
+        return transform === 'none' || new DOMMatrix(transform).isIdentity;
+      }
+      return !node.style.overflow && !node.style.clipPath && !node.style.transform
+        && !node.style.transformOrigin && !node.style.willChange;
+    }),
     marker: centre(root.querySelector('[data-hp="device"]')),
     room: centre(root.querySelector('[data-hp="room"]')),
     effects: {
@@ -394,11 +397,10 @@ const runStablePromotion = async () => {
   checks.stablePromotionStartsOnce = initial.allScenePromoted;
   checks.stablePromotionSurvivesRefresh = active.sceneCount > 0 && active.allPromoted
     && active.demotedOldValues === 0;
-  // The forced Lit commit contributes one deliberate anchor write per scene;
-  // subtract it before judging the ordinary 100 ms / 15% refresh budget.
-  const budgetedViewBoxMutations = active.viewBoxMutations - active.viewBoxAnchorCount;
-  checks.stablePromotionKeepsViewBoxBudget = budgetedViewBoxMutations >= active.viewBoxAnchorCount * 3
-    && budgetedViewBoxMutations <= active.viewBoxAnchorCount * 5;
+  // The movement stays within the anchor's twofold scale and coverage. The
+  // induced full Lit frame can write once, and elapsed time alone cannot.
+  checks.stablePromotionKeepsViewBoxBudget = active.viewBoxAnchorCount > 0
+    && active.styleMutations > 0 && active.viewBoxMutations <= active.viewBoxAnchorCount;
   checks.stablePromotionCleansAtTerminal = terminal.allTemporaryStylesCleared;
 };
 

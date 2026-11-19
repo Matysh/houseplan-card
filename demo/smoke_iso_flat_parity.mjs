@@ -93,7 +93,7 @@ const snapshot = page => page.evaluate(()=>{
   const card = window.__card, root = card.renderRoot;
   const stage = root.querySelector('.stage:not([inert])') || root.querySelector('.stage');
   const svg = stage.querySelector('svg.plan-svg');
-  const floor = svg.querySelector(':scope > g');
+  const floor = svg.querySelector(':scope > .iso-floor-scene') ?? svg.querySelector(':scope > g');
   const bounds = svg.getBoundingClientRect(), matrix = floor.getScreenCTM();
   // _view is canonical; quarterturn display-fit may have a different width.
   // The root SVG matrix measures actual scene-units-to-pixels, independently

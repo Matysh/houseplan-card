@@ -67,6 +67,21 @@ try {
       && front.getAnimations()[0].currentTime === 250;
   }));
   await page.mouse.up();
+  const beforeWheel = await page.locator(root + ' > svg').first().getAttribute('viewBox');
+  await page.mouse.move(stage.x + stage.width * .88, stage.y + stage.height * .66);
+  for (let step = 0; step < 8; step++) {
+    await page.mouse.wheel(0, 80);
+    assert.ok(await page.locator(root).evaluate(pair => {
+      const [front, old] = pair.children;
+      return front.getAttribute('viewBox') === old.getAttribute('viewBox')
+        && front.getAnimations()[0].currentTime === 250 && old.getAnimations()[0].currentTime === 250
+        && !!front.querySelector('.iso-wall-top') && !!old.querySelector('.iso-wall-top');
+    }));
+  }
+  await page.waitForFunction(({ before }) => {
+    const scene = window.__isoPaint.renderRoot.querySelector('.iso-scene-surface');
+    return scene?.firstElementChild?.getAttribute('viewBox') !== before;
+  }, { before: beforeWheel });
   await toggle();
   assert.ok(await page.locator(root).evaluate(pair => {
     return pair.children.length === 2 && [...pair.children].every(svg => svg.getAnimations()[0].currentTime === 250);

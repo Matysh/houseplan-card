@@ -35,6 +35,8 @@ const pathOf = (d: string): Path2D => {
 type Profile = number[][];
 type Profiles = { key: string; byEdge: Map<string, Profile | null> };
 const profiles = new WeakMap<IsoWallGeometry, Profiles>();
+type FurnitureLightSample = { source: IsoWallLightSource; alpha: number }[];
+const furnitureSamples = new WeakMap<IsoWallGeometry, { key: string; values: Map<string, FurnitureLightSample> }>();
 
 function floorEdge(entry: IsoWallDepthQueueEntry): readonly [PlanPoint, PlanPoint] | null {
   if (entry.layer === 'wall-side') return entry.face.planEdge ?? null;
@@ -69,7 +71,7 @@ function falloff(fraction: number): number {
 }
 
 /** One world-space sample per furniture part, sharing the wall optical field. */
-export function isoFurnitureLightSampler(sources: readonly IsoWallLightSource[]) {
+export function isoFurnitureLightSampler(sources: readonly IsoWallLightSource[], geometry?: IsoWallGeometry) {
   if (typeof Path2D === 'undefined' || !sources.length) return undefined;
   context ??= document.createElement('canvas').getContext('2d');
   const ctx = context;
@@ -77,11 +79,23 @@ export function isoFurnitureLightSampler(sources: readonly IsoWallLightSource[])
   const field = sources.map(source => ({
     source, visible: pathOf(source.visible.join(' ')), floor: source.floorClip?.map(pathOf),
   }));
-  return ([x, y]: PlanPoint) => field.flatMap(({ source, visible, floor }) => {
-    const alpha = source.alpha * falloff(distance(source.points, x, y) / source.radius);
-    return alpha > .0001 && ctx.isPointInPath(visible, x, y, source.rule ?? 'evenodd')
-      && (!floor || floor.some(path => ctx.isPointInPath(path, x, y, 'evenodd'))) ? [{ source, alpha }] : [];
-  });
+  const key = JSON.stringify(sources);
+  const previous = geometry && furnitureSamples.get(geometry);
+  const values = previous?.key === key ? previous.values : new Map<string, FurnitureLightSample>();
+  if (geometry && previous?.key !== key) furnitureSamples.set(geometry, { key, values });
+  return ([x, y]: PlanPoint) => {
+    const point = `${x},${y}`;
+    const saved = values.get(point);
+    if (saved) return saved;
+    const sampled = field.flatMap(({ source, visible, floor }) => {
+      const alpha = source.alpha * falloff(distance(source.points, x, y) / source.radius);
+      return alpha > .0001 && ctx.isPointInPath(visible, x, y, source.rule ?? 'evenodd')
+        && (!floor || floor.some(path => ctx.isPointInPath(path, x, y, 'evenodd'))) ? [{ source, alpha }] : [];
+    });
+    if (values.size >= 2048) values.delete(values.keys().next().value!);
+    values.set(point, sampled);
+    return sampled;
+  };
 }
 
 /** Preserve the sampled gradient to within one alpha level while dropping

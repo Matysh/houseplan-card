@@ -144,6 +144,7 @@ export class IsoCameraRaster {
         (limits.content && !intersects(anchor, limits.content))) return;
     const bounds = viewportExposure(anchor, limits);
     let url: string | undefined;
+    let frame: ImageBitmap | undefined;
     try {
       session.source ??= rasterSource(scene, stage, canvas.width, canvas.height);
       if (!session.source) { session.failed = true; return; }
@@ -155,12 +156,10 @@ export class IsoCameraRaster {
       performance.mark('houseplan.iso.raster.prepare', { detail: { bounds, pixels: canvas.width * canvas.height } });
       await image.decode();
       if (this.session !== session) return;
-      const frame = await createImageBitmap(image);
-      if (this.session !== session || !rasterCovers(bounds, session.view, limits.content)) {
-        frame.close();
-        return;
-      }
+      frame = await createImageBitmap(image);
+      if (this.session !== session || !rasterCovers(bounds, session.view, limits.content)) return;
       session.renderer.transferFromImageBitmap(frame);
+      frame = undefined;
       const previous = session.active;
       session.active = { anchor, bounds };
       if (!canvas.isConnected) session.surface.after(canvas);
@@ -169,6 +168,7 @@ export class IsoCameraRaster {
     } catch {
       session.failed = true;
     } finally {
+      frame?.close();
       if (url) URL.revokeObjectURL(url);
       this.preparing = undefined;
     }

@@ -16,8 +16,8 @@ const snapshot=()=>page.evaluate(()=>{
   const card=window.__isoPaint,root=card.renderRoot;
   const layer=root.querySelector('.devlayer').getBoundingClientRect();
   return {layout:JSON.stringify(card._layout),
-    labels:[...root.querySelectorAll('.iso-room-label-plane')].map(plane=>{
-      const label=plane.querySelector('.roomlabel'),r=label.getBoundingClientRect();
+    labels:[...root.querySelectorAll('.iso-room-label-plane .roomlabel')].map(label=>{
+      const plane=label.parentElement,r=label.getBoundingClientRect();
       const x=layer.left+parseFloat(label.style.left)*layer.width/100;
       const y=layer.top+parseFloat(label.style.top)*layer.height/100;
       return {error:Math.max(Math.abs((r.left+r.right)/2-x),Math.abs((r.top+r.bottom)/2-y)),
@@ -73,9 +73,9 @@ try {
   await page.locator('[data-hp="space-tab"]').first().click();await settleIsoPaint(page);
   check('returning to the floor restores all raised labels',aligned(await snapshot()));
   check('all resources belong to the disconnected scene',await page.evaluate(async()=>{
-    const card=window.__isoPaint,planes=[...card.renderRoot.querySelectorAll('.iso-room-label-plane')];
+    const card=window.__isoPaint,labels=[...card.renderRoot.querySelectorAll('.iso-room-label-plane .roomlabel')];
     card.remove();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    return planes.length===8&&planes.every(plane=>!plane.isConnected);
+    return labels.length===8&&labels.every(label=>!label.isConnected);
   }));
   await page.evaluate(()=>document.getElementById('host').append(window.__isoPaint));await settleIsoPaint(page);
   const reconnected=await snapshot();
@@ -92,8 +92,8 @@ try {
       settle.call(this,state);
       requestAnimationFrame(()=>{
         const layer=c.renderRoot.querySelector('.devlayer').getBoundingClientRect();
-        const rows=[...c.renderRoot.querySelectorAll('.iso-room-label-plane')].map(plane=>{
-          const label=plane.querySelector('.roomlabel'),r=label.getBoundingClientRect();
+        const rows=[...c.renderRoot.querySelectorAll('.iso-room-label-plane .roomlabel')].map(label=>{
+          const r=label.getBoundingClientRect();
           const x=layer.left+parseFloat(label.style.left)*layer.width/100;
           const y=layer.top+parseFloat(label.style.top)*layer.height/100;
           return {error:Math.max(Math.abs((r.left+r.right)/2-x),Math.abs((r.top+r.bottom)/2-y))};

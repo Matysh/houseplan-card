@@ -13243,7 +13243,7 @@ export class HouseplanCard extends LitElement {
         isoLedField = field.led;
         isoWallLights = field.lights;
       } else this._isoLight.clear();
-      const sampleFurnitureLight = isoRuntime?.isoFurnitureLightSampler(isoWallLights);
+      const sampleFurnitureLight = isoRuntime?.isoFurnitureLightSampler(isoWallLights, isoScene?.geometry);
       const camera = isoScene?.camera;
       const furniture = useFurnitureVolume && camera && !disp.hideDecor
         ? this._decorList.filter((item): item is Extract<DecorShape,{kind:'furniture'}> => item.kind === 'furniture')
