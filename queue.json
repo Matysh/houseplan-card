@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16588,
+  "revision": 16589,
   "nextTicket": 537,
   "nextFence": 537,
   "tasks": {
@@ -5068,7 +5068,7 @@
       "status": "S6-in-progress",
       "readyAt": 1795088542849,
       "reviewEntry": 2,
-      "patchId": "c6614acceb8004abe73d653d339693a204afbce3",
+      "patchId": "accc40190c987d86031baa98c99153d36faf677e",
       "changedFiles": [
         "custom_components/houseplan/core/coordinate_canonicalization.py",
         "custom_components/houseplan/core/import_export.py",
@@ -5089,6 +5089,9 @@
         "docs/release-ledger/v1.85.0/1475.json",
         "scripts/config-schema.json",
         "scripts/mutation-registry.mjs",
+        "scripts/sh3d-convert/dist/index.html",
+        "scripts/sh3d-convert/geometry-runtime.generated.mjs",
+        "scripts/sh3d-convert/page/ifc-worker.generated.mjs",
         "src/coordinate-canonicalization.ts",
         "src/editors/properties/catalog.ts",
         "src/editors/properties/editor.ts",
@@ -5613,10 +5616,11 @@
     "token": "536:finish:e1fc2c20-30f7-464a-898b-d804c5382222:finish:1:admit",
     "fence": 536,
     "materialSha": "8a9cd979795b857b22af3cff5ae3fb282cc8caa0",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
+    "phase": "testing",
     "admittedAt": 1795088547646,
-    "expiresAt": 1795088847646
+    "expiresAt": 1795088857262,
+    "patchId": "accc40190c987d86031baa98c99153d36faf677e"
   },
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5789,6 +5793,10 @@
     },
     "finish:decf5f53-3f63-4810-9322-f758039e4ac2:finish:3:return": {
       "digest": "6edc03554580520b5f7624982eaa88a88c1efdc8ed5ba41b5eeaa8e1de3105aa",
+      "issue": 1475
+    },
+    "finish:e1fc2c20-30f7-464a-898b-d804c5382222:finish:2:synchronized": {
+      "digest": "cea72a8e96e2d6c2cc34dc1060fc77a91e67e7f1659786687a85aeba130b526e",
       "issue": 1475
     },
     "github:44511339319:1:spec:1475:spec-request:spec-resubmitted:1475": {
