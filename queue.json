@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16611,
+  "revision": 16612,
   "nextTicket": 537,
   "nextFence": 537,
   "tasks": {
@@ -5920,6 +5920,10 @@
       "digest": "e4fdaa1230585026da293c93f9b00668257e4aef81d3c245323097ca0525298c",
       "issue": 1475
     },
+    "github:44519144612:1:completions:message:9dd2e4ccf59845c92748e80ce85e2db26889510279233a753b328e28452801c9": {
+      "digest": "744f5bb53324757b5aa28ee19d3552be752d8269caf7639b8e959e305c1dca3c",
+      "issue": 1475
+    },
     "github:44511339319:1:spec:1475:spec-request:spec-resubmitted:1475": {
       "digest": "c8354c8440ca354aa42835362fd000b6d505d4145b0ee081df5d2fb2d95dca5c",
       "issue": 1475,
@@ -5983,7 +5987,8 @@
           "entry": 1,
           "detail": "Поведение: test/core-source-readers.test.mjs: failed; Поведение: test/floor-geometry-key.test.mjs: failed; Поведение: test/glow-scene.test.mjs: failed; Поведение: test/sh3d-convert-page.test.mjs: failed",
           "eventId": "finish:decf5f53-3f63-4810-9322-f758039e4ac2:finish:3:return:return:1475"
-        }
+        },
+        "delivered": true
       }
     },
     "finish:e1fc2c20-30f7-464a-898b-d804c5382222": {
