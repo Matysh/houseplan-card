@@ -1,0 +1,48 @@
+{
+  "identity": {
+    "base": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
+    "revision": 2,
+    "cases": 336,
+    "visible": 328,
+    "calibrated": true
+  },
+  "samples": [
+    {
+      "theme": "dark",
+      "zoom": "rows",
+      "cells": 336,
+      "failures": []
+    },
+    {
+      "theme": "dark",
+      "zoom": "close",
+      "cells": 336,
+      "failures": []
+    },
+    {
+      "theme": "dark",
+      "zoom": "all",
+      "cells": 336,
+      "failures": []
+    },
+    {
+      "theme": "light",
+      "zoom": "rows",
+      "cells": 336,
+      "failures": []
+    },
+    {
+      "theme": "light",
+      "zoom": "close",
+      "cells": 336,
+      "failures": []
+    },
+    {
+      "theme": "light",
+      "zoom": "all",
+      "cells": 336,
+      "failures": []
+    }
+  ],
+  "errors": []
+}

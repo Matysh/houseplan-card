@@ -1,4 +1,4 @@
-import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
@@ -56,7 +56,7 @@ const definitions=[
  ['scale','Размер 75% / 140%','Чередование размеров; группа содержит неодинаковые тела.'],
 ];
 const rows=definitions.map(([key,title,note],i)=>({id:String(i+1).padStart(2,'0'),key,title,note}));
-const grid={left:300,top:100,col:300,row:170,width:2700,height:100+rows.length*170};
+const grid={left:380,top:110,col:420,row:230,width:3740,height:110+rows.length*230};
 const plan={id:space,title:'#1129 · Матрица устройств',plan_url:null,view_box:[0,0,grid.width/1000,grid.height/1000],cell_cm:5,rooms:[],walls:[],partitions:[],wall_segments:[],openings:[],wall_columns:[],decor:[],settings:{show_names:false,show_borders:false,fill_mode:'none',glow_enabled:false,bg_color:'#18222e'}};
 fixture.config.spaces.push(plan);
 fixture.areas.matrix1129={area_id:'matrix1129',name:'Матрица устройств #1129'};
@@ -69,12 +69,14 @@ fixture.integrations=[{entry_id:'lab_entry',domain:'demo',title:'Synthetic UI La
 let seq=0;
 function label(text,x,y,size=13,color='#b9c9de'){plan.decor.push({id:'mx_text_'+(++seq),kind:'text',x:x/1000,y:y/1000,text,size_cm:size*1.2,color,opacity:1});}
 function line(x1,y1,x2,y2){plan.decor.push({id:'mx_line_'+(++seq),kind:'line',x1:x1/1000,y1:y1/1000,x2:x2/1000,y2:y2/1000,color:'#43546b',opacity:.65,width_cm:.65});}
-label('#1129  /  СОСТОЯНИЯ × ФОРМЫ',20,26,20,'#e4edf8');
-label('Один код в таблице = одна ячейка на плане. Только синтетические устройства.',20,51,12);
+label('#1129  /  СОСТОЯНИЯ × ФОРМЫ',grid.width/2,26,20,'#e4edf8');
+label('Один код в таблице = одна ячейка на плане. Только синтетические устройства.',grid.width/2,51,12);
 cols.forEach((c,i)=>label(c.id+' · '+c.title,grid.left+i*grid.col+grid.col/2,82,13,'#e4edf8'));
 for(let i=0;i<=cols.length;i++)line(grid.left+i*grid.col,62,grid.left+i*grid.col,grid.height);
 for(let i=0;i<=rows.length;i++)line(0,grid.top+i*grid.row,grid.width,grid.top+i*grid.row);
 const cells=[],events=[];
+const offsetsFile=resolve(here,'layout-offsets.json');
+const offsets=existsSync(offsetsFile)?JSON.parse(readFileSync(offsetsFile,'utf8')):{};
 function entity(id,domain,suffix,state,attrs={},reg={}){
  const eid=`${domain}.${id}_${suffix}`;
  fixture.entities[eid]={entity_id:eid,device_id:id,platform:'demo',config_entry_id:'lab_entry',disabled_by:null,original_name:suffix,...reg};
@@ -87,7 +89,7 @@ for(const [ri,row] of rows.entries()){
  for(const [ci,col] of cols.entries()){
   const code=row.id+col.id,id='mx_'+code.toLowerCase(),key=row.key;
   const grouped=['group','groupboth'].includes(col.shape),hasValue=['value','long','both','groupboth'].includes(col.shape),longValue=['long','both','groupboth'].includes(col.shape),hasBadge=['badge','longbadge','both','groupboth'].includes(col.shape),longBadge=['longbadge','both','groupboth'].includes(col.shape);
-  const x=grid.left+ci*grid.col+(hasBadge||grouped?100:150);
+  const x=grid.left+ci*grid.col+grid.col/2;
   const marker={id,binding:'device:'+id,space,name:`${code} · ${row.title} · ${col.title}`,icon:'mdi:lightbulb-outline',display:hasValue?'value':'icon_ripple',size:2,tap_action:'info',is_light:false,value_badge:{enabled:false},hide_battery:true,hide_signal:true};
   fixture.devices[id]={id,name:marker.name,name_by_user:null,model:'Synthetic #1129 '+code,manufacturer:'UI Lab',area_id:'matrix1129',identifiers:[['ui_lab',id]],config_entries:['lab_entry'],disabled_by:null,entry_type:null,via_device_id:null};
   let domain='switch',state=['off','new','hidden','disabled','orphan','virtual','hover','selected','focus'].includes(key)?'off':'on',attrs={};
@@ -136,15 +138,19 @@ for(const [ri,row] of rows.entries()){
   const ordinarySuppressed=hasValue&&['working','event','presence','transition','terminal','custompulse'].includes(key);
   let hint=ordinarySuppressed?'Волны активности выключены в Value':key==='virtual'&&hasValue?'Штатный fallback: иконка':key==='selected'?'Зафиксирован стиль выделения':key==='focus'?'Зафиксирован focus-visible':'';
   if(key==='disabled')label('Не рисуется в текущем dev',grid.left+ci*grid.col+grid.col/2,y,12);
-  if(hint)label(hint,grid.left+ci*grid.col+grid.col/2,grid.top+ri*grid.row+155,10);
-  cells.push({code,id,row:row.id,key,column:col.id,shape:col.shape,neighbor,ordinarySuppressed,primary,x,y,hasValue,hasBadge});
+  if(hint)label(hint,grid.left+ci*grid.col+grid.col/2,grid.top+ri*grid.row+grid.row-18,10);
+  const cell={code,id,row:row.id,key,column:col.id,shape:col.shape,neighbor,ordinarySuppressed,primary,x,y,hasValue,hasBadge};
+  for(const markerId of [id,neighbor].filter(Boolean)){
+   const offset=offsets[markerId];if(offset)fixture.layout[markerId]={s:space,x:(x+offset.x)/1000,y:(y+offset.y)/1000};
+  }
+  cells.push(cell);
  }
 }
 fixture.config.spaces=[plan,...fixture.config.spaces.filter(s=>s.id!==space)];
-const matrix={issue:1129,base:execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),space,grid,columns:cols,rows,cells,events};
+const matrix={issue:1129,revision:2,layoutCalibrated:Object.keys(offsets).length>0,base:execFileSync('git',['rev-parse','HEAD'],{cwd:repo,encoding:'utf8'}).trim(),space,grid,columns:cols,rows,cells,events};
 mkdirSync(here,{recursive:true});
 writeFileSync(resolve(here,'fixture.json'),JSON.stringify(fixture,null,2)+'\n');
 writeFileSync(resolve(here,'matrix.json'),JSON.stringify(matrix,null,2)+'\n');
-const md=`## Диагностическая матрица UI Lab для #1129\n\nБаза: dev@${matrix.base} (19.11.2026). Это **визуализация текущего поведения**, а не предложенное исправление волн и не реализация #1129. Прежний согласованный стенд UI-060/UI-061 (#1474) сохранён отдельно. Локальные продуктовые overrides сюда не подключены: используется только код указанного dev.\n\nОтдельное пространство **«#1129 · Матрица устройств»**. Строка = состояние, столбец = форма. Код **07F** на плане соответствует ячейке **07 × F**. В групповых столбцах слева от проверяемого устройства — нейтральный сосед; его цвет не должен присваиваться сигналу проверяемого устройства.\n\n| Код / состояние | A · Иконка | B · Значение | C · Длинное значение | D · Иконка + бейдж | E · Длинный бейдж | F · Длинные оба | G · Иконка в группе | H · Длинные оба в группе |\n|---|---|---|---|---|---|---|---|---|\n`+rows.map(row=>'| '+row.id+' · '+row.title+' | '+cols.map(col=>{const cell=cells.find(c=>c.row===row.id&&c.column===col.id);return cell.code+(cell.ordinarySuppressed?' †':'');}).join(' | ')+' |').join('\n')+`\n\n**†** Обычные волны доступны только в режиме «Активность» (icon_ripple). В режиме «Значение» они штатно отсутствуют; красная тревога остаётся и на овалах. Здесь ограничения продукта показаны честно, не обходятся.\n\n### Что задаёт каждая строка\n\n`+rows.map(r=>`- **${r.id}. ${r.title}:** ${r.note}`).join('\n')+`\n\n### Оси проверки, общие для всей сетки\n\n- Светлая / тёмная тема, обычный View / 2.5D, системное уменьшение движения, включение/выключение live states. Это отдельные режимы всей матрицы: их не смешиваем с ложными per-device настройками. При reduced motion обычная активность становится точкой, тревога остаётся красной без анимированных колец.\n- Hover / focus / выделение в строках 22–26 закреплены только лабораторией, используя декларации штатных стилей. Это показывает внешний вид одновременно в нескольких ячейках; настоящий hover, Tab и редактор устройств остаются доступны для проверки взаимодействия.\n- Все пять display modes, четыре позиции бейджа (right по умолчанию, left/top/bottom отдельными строками), разные размеры, угол, короткие и длинные значения, собственный цвет/диаметр волн.\n- Доступность самого устройства независима от отсутствующего/недоступного value/badge. Off, unknown и unavailable не смешиваются.\n- Нативная тревога, пользовательское внимание, обслуживание и приоритет тревоги; четыре класса пульса (none/alarm/short/continuous) и причины event/presence/transition/running.\n- Новое/скрытое/HA-disabled/осиротевшее/виртуальное, четыре состояния батареи и диапазоны LQI. Недопустимые состояния (например, работа HA-disabled) не подделываются.\n\nЭто конечный каталог визуальных ветвей и существенных сочетаний, а не бесконечный перебор всех текстов, чисел, цветов и декартова произведения независимых настроек. Показания подобраны так, чтобы обнаружить ошибки геометрии. Пылесос в движении, линии LED, радарные цели и символы проёмов — отдельные изображения плана, не варианты корпуса этой иконки; в #1129 их не подменяем обычным значком.\n\nПолная синтетическая fixture и machine-readable matrix.json генерируются из одного описания; имена/код ячейки доступны в штатной подсказке устройства. Лабораторные действия не вызывают настоящий HA.\n`;
+const md=`## Диагностическая матрица UI Lab для #1129\n\nРедакция 2: увеличенные ячейки 420 × 230, фиксированная раскладка с учётом всего блока устройства. Сохранена для последующих тестов и визуальных эталонов; проверка границ и параметры съёмки входят в пакет.\n\nБаза: dev@${matrix.base} (19.11.2026). Это **визуализация текущего поведения**, а не предложенное исправление волн и не реализация #1129. Прежний согласованный стенд UI-060/UI-061 (#1474) сохранён отдельно. Локальные продуктовые overrides сюда не подключены: используется только код указанного dev.\n\nОтдельное пространство **«#1129 · Матрица устройств»**. Строка = состояние, столбец = форма. Код **07F** на плане соответствует ячейке **07 × F**. В групповых столбцах слева от проверяемого устройства — нейтральный сосед; его цвет не должен присваиваться сигналу проверяемого устройства.\n\n| Код / состояние | A · Иконка | B · Значение | C · Длинное значение | D · Иконка + бейдж | E · Длинный бейдж | F · Длинные оба | G · Иконка в группе | H · Длинные оба в группе |\n|---|---|---|---|---|---|---|---|---|\n`+rows.map(row=>'| '+row.id+' · '+row.title+' | '+cols.map(col=>{const cell=cells.find(c=>c.row===row.id&&c.column===col.id);return cell.code+(cell.ordinarySuppressed?' †':'');}).join(' | ')+' |').join('\n')+`\n\n**†** Обычные волны доступны только в режиме «Активность» (icon_ripple). В режиме «Значение» они штатно отсутствуют; красная тревога остаётся и на овалах. Здесь ограничения продукта показаны честно, не обходятся.\n\n### Что задаёт каждая строка\n\n`+rows.map(r=>`- **${r.id}. ${r.title}:** ${r.note}`).join('\n')+`\n\n### Оси проверки, общие для всей сетки\n\n- Светлая / тёмная тема, обычный View / 2.5D, системное уменьшение движения, включение/выключение live states. Это отдельные режимы всей матрицы: их не смешиваем с ложными per-device настройками. При reduced motion обычная активность становится точкой, тревога остаётся красной без анимированных колец.\n- Hover / focus / выделение в строках 22–26 закреплены только лабораторией, используя декларации штатных стилей. Это показывает внешний вид одновременно в нескольких ячейках; настоящий hover, Tab и редактор устройств остаются доступны для проверки взаимодействия.\n- Все пять display modes, четыре позиции бейджа (right по умолчанию, left/top/bottom отдельными строками), разные размеры, угол, короткие и длинные значения, собственный цвет/диаметр волн.\n- Доступность самого устройства независима от отсутствующего/недоступного value/badge. Off, unknown и unavailable не смешиваются.\n- Нативная тревога, пользовательское внимание, обслуживание и приоритет тревоги; четыре класса пульса (none/alarm/short/continuous) и причины event/presence/transition/running.\n- Новое/скрытое/HA-disabled/осиротевшее/виртуальное, четыре состояния батареи и диапазоны LQI. Недопустимые состояния (например, работа HA-disabled) не подделываются.\n\nЭто конечный каталог визуальных ветвей и существенных сочетаний, а не бесконечный перебор всех текстов, чисел, цветов и декартова произведения независимых настроек. Показания подобраны так, чтобы обнаружить ошибки геометрии. Пылесос в движении, линии LED, радарные цели и символы проёмов — отдельные изображения плана, не варианты корпуса этой иконки; в #1129 их не подменяем обычным значком.\n\nПолная синтетическая fixture и machine-readable matrix.json генерируются из одного описания; имена/код ячейки доступны в штатной подсказке устройства. Лабораторные действия не вызывают настоящий HA.\n`;
 writeFileSync(resolve(here,'MATRIX.md'),md);
 console.log(JSON.stringify({rows:rows.length,columns:cols.length,cells:cells.length,markers:cells.length+cells.filter(c=>c.neighbor).length}));

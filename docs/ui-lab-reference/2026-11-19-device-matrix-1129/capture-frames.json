@@ -1,0 +1,69 @@
+{
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "deviceScaleFactor": 1,
+  "frames": {
+    "overview": {
+      "row": 0,
+      "pulseMs": 600,
+      "base": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
+      "revision": 2,
+      "view": {
+        "x": -15,
+        "y": 90,
+        "w": 3840,
+        "h": 2030
+      }
+    },
+    "alarms": {
+      "row": 6,
+      "pulseMs": 600,
+      "base": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
+      "revision": 2,
+      "view": {
+        "x": -15,
+        "y": 1470,
+        "w": 3840,
+        "h": 2030
+      }
+    },
+    "interactions": {
+      "row": 21,
+      "pulseMs": 600,
+      "base": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
+      "revision": 2,
+      "view": {
+        "x": -15,
+        "y": 4920,
+        "w": 3840,
+        "h": 2030
+      }
+    },
+    "diagnosticsLight": {
+      "row": 26,
+      "pulseMs": 600,
+      "base": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
+      "revision": 2,
+      "view": {
+        "x": -15,
+        "y": 6070,
+        "w": 3840,
+        "h": 2030
+      }
+    },
+    "badgesAndSizes": {
+      "row": 34,
+      "pulseMs": 600,
+      "base": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de",
+      "revision": 2,
+      "view": {
+        "x": -15,
+        "y": 7910,
+        "w": 3840,
+        "h": 2030
+      }
+    }
+  }
+}

@@ -15,7 +15,7 @@ const native=server.listeners('request')[0];server.removeListener('request',nati
 server.on('request',(req,res)=>{
  if(!new RegExp('^(localhost|127\\.0\\.0\\.1)(:'+port+')?$').test(req.headers.host||'')||!['GET','HEAD'].includes(req.method)){res.writeHead(403).end();return;}
  const path=req.url.split('?')[0];
- if(['/matrix.mjs','/matrix.json','/MATRIX.md'].includes(path)){
+ if(['/matrix.mjs','/layout.mjs','/matrix.json','/MATRIX.md'].includes(path)){
   const data=readFileSync(resolve(here,path.slice(1)));
   res.writeHead(200,{'Content-Type':path.endsWith('.mjs')?'text/javascript; charset=utf-8':path.endsWith('.json')?'application/json; charset=utf-8':'text/plain; charset=utf-8','Content-Length':data.length,'Cache-Control':'no-store'});res.end(req.method==='HEAD'?undefined:data);return;
  }

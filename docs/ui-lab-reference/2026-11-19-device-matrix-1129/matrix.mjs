@@ -1,3 +1,4 @@
+import {measureMatrix,centerMatrix} from './layout.mjs';
 const matrix=await (await fetch('/matrix.json')).json();
 for(let i=0;i<200&&!window.__lab?.card?._renderDevices?.length;i++)await new Promise(r=>setTimeout(r,100));
 const {card,mock,panel}=window.__lab,root=card.shadowRoot;
@@ -77,13 +78,26 @@ async function alignGroups(){
  const layout={...card._layout};let count=0;
  for(const cell of matrix.cells.filter(c=>c.neighbor)){
   const a=scene.shapes.get(cell.id),b=scene.shapes.get(cell.neighbor);if(!a||!b)continue;
-  const depth=Math.min(a.marker.diameter,b.marker.diameter)*.14375;
+  const depth=Math.min(a.marker.diameter,b.marker.diameter)*13/80-(a.marker.diameter+b.marker.diameter)*.009375;
   layout[cell.neighbor]={...layout[cell.neighbor],x:(a.marker.x+a.box.left+depth-b.box.right)/1000,y:a.marker.y/1000};count++;
  }
  if(!count)return false;card._layout=layout;card._deviceContacts?.clear?.();card.requestUpdate();grouped=true;return count;
 }
 window.__matrix1129={matrix,focusRows,replay,alignGroups,byId,get pinned(){return pins;},get groupsAligned(){return grouped;},report(){return matrix.cells.map(cell=>{const el=root.querySelector('.dev[data-id="'+cell.id+'"]'),d=card._renderDevices?.find(d=>d.id===cell.id),p=d?card._devicePresentation(d):null;return {code:cell.code,key:cell.key,id:cell.id,visible:!!el,classes:el?.className,pulse:p?.pulse,visual:p?.visual,own:p?.ownAvailability,badge:p?.valueBadge?.text,value:p?.valueText,battery:p?.battery?.state,lqi:p?.lqiText,maintenance:p?.maintenance,attention:!!p?.attention,group:el?.dataset.hpDeviceComponent};});}};
+Object.assign(window.__matrix1129,{measureLayout:()=>measureMatrix(card,matrix),centerLayout:()=>centerMatrix(card,matrix)});
+// Stable screenshot phase; only explicitly requested by a capture tool.
+window.__matrix1129.captureFrame=async({row=0,pulseMs=600}={})=>{
+ auto=false;bar.querySelector('[data-mx=auto]').setAttribute('aria-pressed','false');
+ await focusRows(row);replay();await new Promise(resolve=>setTimeout(resolve,300));
+ await card.updateComplete;
+ for(const node of root.querySelectorAll('.device-pulse i'))for(const animation of node.getAnimations()){
+  animation.pause();animation.currentTime=pulseMs;
+ }
+ return {row,pulseMs,base:matrix.base,revision:matrix.revision,view:{...card._view}};
+};
+await document.fonts.ready;
 await new Promise(r=>setTimeout(r,1600));
 card._setShowHidden(true);await focusRows(0);
-for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,200));if(await alignGroups())break;}
+if(matrix.layoutCalibrated)grouped=true;
+else for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,200));if(await alignGroups())break;}
 await focusRows(0);setTimeout(replay,800);

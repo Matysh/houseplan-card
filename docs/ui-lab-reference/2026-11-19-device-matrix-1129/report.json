@@ -3,30 +3,30 @@
     "space": "matrix-1129",
     "view": {
       "x": -15,
-      "y": 80,
-      "w": 2800,
-      "h": 1480.2083333333333
+      "y": 90,
+      "w": 3840,
+      "h": 2030
     },
     "groups": true,
-    "groupedContours": 80,
+    "groupedContours": 82,
     "groupExamples": [
       {
         "id": "mx_07g",
         "layout": {
           "s": "matrix-1129",
-          "x": 2.2,
-          "y": 1.2135
+          "x": 3.12804817708,
+          "y": 1.61200008138
         },
         "neighbor": {
           "s": "matrix-1129",
-          "x": 2.149375,
-          "y": 1.2135
+          "x": 3.07742317708,
+          "y": 1.61200008138
         },
         "shape": {
           "marker": {
             "id": "mx_07g",
-            "x": 2200,
-            "y": 1213.5,
+            "x": 3128.04817708,
+            "y": 1612.00008138,
             "virtual": false,
             "diameter": 45,
             "box": {
@@ -55,19 +55,19 @@
         "id": "mx_07h",
         "layout": {
           "s": "matrix-1129",
-          "x": 2.5,
-          "y": 1.2135
+          "x": 3.47838446045,
+          "y": 1.61200008138
         },
         "neighbor": {
           "s": "matrix-1129",
-          "x": 2.449375,
-          "y": 1.2135
+          "x": 3.42775946045,
+          "y": 1.61200008138
         },
         "shape": {
           "marker": {
             "id": "mx_07h",
-            "x": 2500,
-            "y": 1213.5,
+            "x": 3478.38446045,
+            "y": 1612.00008138,
             "virtual": false,
             "diameter": 45,
             "box": {
@@ -96,27 +96,27 @@
     "pins": [
       {
         "code": "17A",
-        "html": "<div data-hp=\"device\" data-selected=\"false\" data-id=\"mx_17a\" data-entity=\"switch.mx_17a_main\" data-area=\"matrix1129\" data-binding-status=\"active\" data-state=\"neutral\" aria-label=\"17A · Новое устройство · Иконка, Обычное состояние\" class=\"dev theme-dark power-off      \" style=\"left: 16.6071%; top: 191.426%; --dev-scale: 2;\" role=\"button\" tabindex=\"0\" data-matrix-case=\"17A\">\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$--><span aria-hidden=\"true\" class=\"newdot\" title=\"Новое устройство — откройте его редактор, чтобы снять отметку\"></span>\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$--><span class=\"device-contact-ink\" aria-hidden=\"true\"><!----></span>\n    <span aria-hidden=\"true\" class=\"device-shell\">\n      <span class=\"device-shell-frame\"></span>\n      <span class=\"device-core\">\n        <!--?lit$760551165$--><ha-icon icon=\"mdi:lightbulb-outline\"></ha-icon>\n      </span>\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n    </span>\n    <!--?lit$760551165$-->\n  \n      <!--?lit$760551165$-->\n    </div>",
+        "html": "<div data-hp=\"device\" data-selected=\"false\" data-id=\"mx_17a\" data-entity=\"switch.mx_17a_main\" data-area=\"matrix1129\" data-binding-status=\"active\" data-state=\"neutral\" aria-label=\"17A · Новое устройство · Иконка, Обычное состояние\" class=\"dev theme-dark power-off      \" style=\"left: 15.7551%; top: 188.277%; --dev-scale: 2;\" role=\"button\" tabindex=\"0\" data-matrix-case=\"17A\">\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$--><span aria-hidden=\"true\" class=\"newdot\" title=\"Новое устройство — откройте его редактор, чтобы снять отметку\"></span>\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$--><span class=\"device-contact-ink\" aria-hidden=\"true\"><!----></span>\n    <span aria-hidden=\"true\" class=\"device-shell\">\n      <span class=\"device-shell-frame\"></span>\n      <span class=\"device-core\">\n        <!--?lit$316204871$--><ha-icon icon=\"mdi:lightbulb-outline\"></ha-icon>\n      </span>\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n    </span>\n    <!--?lit$316204871$-->\n  \n      <!--?lit$316204871$-->\n    </div>",
         "core": "rgb(37, 37, 37)"
       },
       {
         "code": "18A",
-        "html": "<div data-hp=\"device\" data-selected=\"false\" data-id=\"mx_18a\" data-entity=\"switch.mx_18a_main\" data-area=\"matrix1129\" data-binding-status=\"active\" data-state=\"neutral\" aria-label=\"18A · Скрытое + новое · Иконка, Обычное состояние\" class=\"dev theme-dark power-off      \" style=\"left: 16.6071%; top: 202.911%; --dev-scale: 2;\" role=\"button\" tabindex=\"0\" data-matrix-case=\"18A\">\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$--><span aria-hidden=\"true\" class=\"newdot hiddendot\" title=\"\"></span>\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$--><span class=\"device-contact-ink\" aria-hidden=\"true\"><!----></span>\n    <span aria-hidden=\"true\" class=\"device-shell\">\n      <span class=\"device-shell-frame\"></span>\n      <span class=\"device-core\">\n        <!--?lit$760551165$--><ha-icon icon=\"mdi:lightbulb-outline\"></ha-icon>\n      </span>\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n    </span>\n    <!--?lit$760551165$-->\n  \n      <!--?lit$760551165$-->\n    </div>",
+        "html": "<div data-hp=\"device\" data-selected=\"false\" data-id=\"mx_18a\" data-entity=\"switch.mx_18a_main\" data-area=\"matrix1129\" data-binding-status=\"active\" data-state=\"neutral\" aria-label=\"18A · Скрытое + новое · Иконка, Обычное состояние\" class=\"dev theme-dark power-off      \" style=\"left: 15.7551%; top: 199.605%; --dev-scale: 2;\" role=\"button\" tabindex=\"0\" data-matrix-case=\"18A\">\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$--><span aria-hidden=\"true\" class=\"newdot hiddendot\" title=\"\"></span>\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$--><span class=\"device-contact-ink\" aria-hidden=\"true\"><!----></span>\n    <span aria-hidden=\"true\" class=\"device-shell\">\n      <span class=\"device-shell-frame\"></span>\n      <span class=\"device-core\">\n        <!--?lit$316204871$--><ha-icon icon=\"mdi:lightbulb-outline\"></ha-icon>\n      </span>\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n    </span>\n    <!--?lit$316204871$-->\n  \n      <!--?lit$316204871$-->\n    </div>",
         "core": "rgb(37, 37, 37)"
       },
       {
         "code": "22A",
-        "html": "<div data-hp=\"device\" data-selected=\"false\" data-id=\"mx_22a\" data-entity=\"switch.mx_22a_main\" data-area=\"matrix1129\" data-binding-status=\"active\" data-state=\"neutral\" aria-label=\"22A · Hover · Иконка, Обычное состояние\" class=\"dev theme-dark power-off      \" style=\"left: 16.6071%; top: 248.85%; --dev-scale: 2;\" role=\"button\" tabindex=\"0\" data-matrix-case=\"22A\" data-matrix-hover=\"\">\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$--><span class=\"device-contact-ink\" aria-hidden=\"true\"><!----></span>\n    <span aria-hidden=\"true\" class=\"device-shell\">\n      <span class=\"device-shell-frame\"></span>\n      <span class=\"device-core\">\n        <!--?lit$760551165$--><ha-icon icon=\"mdi:lightbulb-outline\"></ha-icon>\n      </span>\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n    </span>\n    <!--?lit$760551165$-->\n  \n      <!--?lit$760551165$-->\n    </div>",
+        "html": "<div data-hp=\"device\" data-selected=\"false\" data-id=\"mx_22a\" data-entity=\"switch.mx_22a_main\" data-area=\"matrix1129\" data-binding-status=\"active\" data-state=\"neutral\" aria-label=\"22A · Hover · Иконка, Обычное состояние\" class=\"dev theme-dark power-off      \" style=\"left: 15.7551%; top: 244.926%; --dev-scale: 2;\" role=\"button\" tabindex=\"0\" data-matrix-case=\"22A\" data-matrix-hover=\"\">\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$--><span class=\"device-contact-ink\" aria-hidden=\"true\"><!----></span>\n    <span aria-hidden=\"true\" class=\"device-shell\">\n      <span class=\"device-shell-frame\"></span>\n      <span class=\"device-core\">\n        <!--?lit$316204871$--><ha-icon icon=\"mdi:lightbulb-outline\"></ha-icon>\n      </span>\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n    </span>\n    <!--?lit$316204871$-->\n  \n      <!--?lit$316204871$-->\n    </div>",
         "core": "rgb(12, 130, 240)"
       },
       {
         "code": "25A",
-        "html": "<div data-hp=\"device\" data-selected=\"false\" data-id=\"mx_25a\" data-entity=\"switch.mx_25a_main\" data-area=\"matrix1129\" data-binding-status=\"active\" data-state=\"neutral\" aria-label=\"25A · Выделено в редакторе · Иконка, Обычное состояние\" class=\"dev theme-dark power-off      \" style=\"left: 16.6071%; top: 283.305%; --dev-scale: 2;\" role=\"button\" tabindex=\"0\" data-matrix-case=\"25A\" data-matrix-selected=\"\">\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$--><span class=\"device-contact-ink\" aria-hidden=\"true\"><!----></span>\n    <span aria-hidden=\"true\" class=\"device-shell\">\n      <span class=\"device-shell-frame\"></span>\n      <span class=\"device-core\">\n        <!--?lit$760551165$--><ha-icon icon=\"mdi:lightbulb-outline\"></ha-icon>\n      </span>\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n    </span>\n    <!--?lit$760551165$-->\n  \n      <!--?lit$760551165$-->\n    </div>",
+        "html": "<div data-hp=\"device\" data-selected=\"false\" data-id=\"mx_25a\" data-entity=\"switch.mx_25a_main\" data-area=\"matrix1129\" data-binding-status=\"active\" data-state=\"neutral\" aria-label=\"25A · Выделено в редакторе · Иконка, Обычное состояние\" class=\"dev theme-dark power-off      \" style=\"left: 15.7551%; top: 278.915%; --dev-scale: 2;\" role=\"button\" tabindex=\"0\" data-matrix-case=\"25A\" data-matrix-selected=\"\">\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$--><span class=\"device-contact-ink\" aria-hidden=\"true\"><!----></span>\n    <span aria-hidden=\"true\" class=\"device-shell\">\n      <span class=\"device-shell-frame\"></span>\n      <span class=\"device-core\">\n        <!--?lit$316204871$--><ha-icon icon=\"mdi:lightbulb-outline\"></ha-icon>\n      </span>\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n    </span>\n    <!--?lit$316204871$-->\n  \n      <!--?lit$316204871$-->\n    </div>",
         "core": "rgb(12, 130, 240)"
       },
       {
         "code": "26A",
-        "html": "<div data-hp=\"device\" data-selected=\"false\" data-id=\"mx_26a\" data-entity=\"switch.mx_26a_main\" data-area=\"matrix1129\" data-binding-status=\"active\" data-state=\"neutral\" aria-label=\"26A · Клавиатурный фокус · Иконка, Обычное состояние\" class=\"dev theme-dark power-off      \" style=\"left: 16.6071%; top: 294.79%; --dev-scale: 2;\" role=\"button\" tabindex=\"0\" data-matrix-case=\"26A\" data-matrix-focus=\"\">\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$-->\n    <!--?lit$760551165$--><span class=\"device-contact-ink\" aria-hidden=\"true\"><!----></span>\n    <span aria-hidden=\"true\" class=\"device-shell\">\n      <span class=\"device-shell-frame\"></span>\n      <span class=\"device-core\">\n        <!--?lit$760551165$--><ha-icon icon=\"mdi:lightbulb-outline\"></ha-icon>\n      </span>\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n      <!--?lit$760551165$-->\n    </span>\n    <!--?lit$760551165$-->\n  \n      <!--?lit$760551165$-->\n    </div>",
+        "html": "<div data-hp=\"device\" data-selected=\"false\" data-id=\"mx_26a\" data-entity=\"switch.mx_26a_main\" data-area=\"matrix1129\" data-binding-status=\"active\" data-state=\"neutral\" aria-label=\"26A · Клавиатурный фокус · Иконка, Обычное состояние\" class=\"dev theme-dark power-off      \" style=\"left: 15.7551%; top: 290.246%; --dev-scale: 2;\" role=\"button\" tabindex=\"0\" data-matrix-case=\"26A\" data-matrix-focus=\"\">\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$-->\n    <!--?lit$316204871$--><span class=\"device-contact-ink\" aria-hidden=\"true\"><!----></span>\n    <span aria-hidden=\"true\" class=\"device-shell\">\n      <span class=\"device-shell-frame\"></span>\n      <span class=\"device-core\">\n        <!--?lit$316204871$--><ha-icon icon=\"mdi:lightbulb-outline\"></ha-icon>\n      </span>\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n      <!--?lit$316204871$-->\n    </span>\n    <!--?lit$316204871$-->\n  \n      <!--?lit$316204871$-->\n    </div>",
         "core": "rgb(37, 37, 37)"
       }
     ],
@@ -585,7 +585,7 @@
           "kind": "short",
           "reason": "event",
           "generation": 2,
-          "expiresAt": 1795085936916,
+          "expiresAt": 1795090639276,
           "color": "#0C82F0",
           "diameterScale": 1.5,
           "animated": true,
@@ -666,7 +666,7 @@
           "kind": "short",
           "reason": "event",
           "generation": 2,
-          "expiresAt": 1795085936916,
+          "expiresAt": 1795090639276,
           "color": "#0C82F0",
           "diameterScale": 1.5,
           "animated": true,
@@ -694,7 +694,7 @@
           "kind": "short",
           "reason": "event",
           "generation": 2,
-          "expiresAt": 1795085936916,
+          "expiresAt": 1795090639276,
           "color": "#0C82F0",
           "diameterScale": 1.5,
           "animated": true,
@@ -750,7 +750,7 @@
           "kind": "short",
           "reason": "event",
           "generation": 2,
-          "expiresAt": 1795085936916,
+          "expiresAt": 1795090639276,
           "color": "#0C82F0",
           "diameterScale": 1.5,
           "animated": true,
@@ -1251,7 +1251,7 @@
           "kind": "short",
           "reason": "transition",
           "generation": 3,
-          "expiresAt": 1795085936916,
+          "expiresAt": 1795090639276,
           "color": "#0C82F0",
           "diameterScale": 1.5,
           "animated": true,
@@ -1332,7 +1332,7 @@
           "kind": "short",
           "reason": "transition",
           "generation": 3,
-          "expiresAt": 1795085936916,
+          "expiresAt": 1795090639276,
           "color": "#0C82F0",
           "diameterScale": 1.5,
           "animated": true,
@@ -1360,7 +1360,7 @@
           "kind": "short",
           "reason": "transition",
           "generation": 3,
-          "expiresAt": 1795085936916,
+          "expiresAt": 1795090639276,
           "color": "#0C82F0",
           "diameterScale": 1.5,
           "animated": true,
@@ -1416,7 +1416,7 @@
           "kind": "short",
           "reason": "transition",
           "generation": 3,
-          "expiresAt": 1795085936916,
+          "expiresAt": 1795090639276,
           "color": "#0C82F0",
           "diameterScale": 1.5,
           "animated": true,
@@ -9445,7 +9445,8 @@
         "value": null,
         "lqi": null,
         "maintenance": false,
-        "attention": false
+        "attention": false,
+        "group": "mx_42g"
       },
       {
         "code": "42H",
@@ -9473,7 +9474,8 @@
         "value": "Ожидание связи",
         "lqi": null,
         "maintenance": false,
-        "attention": false
+        "attention": false,
+        "group": "mx_42h"
       }
     ]
   },
