@@ -156,27 +156,25 @@ const out = await page.evaluate(async () => {
   const hasOpeningSurface = (id, surface, material) => !!root().querySelector(
     `[data-hp="iso-openings"] [data-id="${id}"][data-surface="${surface}"].iso-material-${material}`,
   );
+  // A single view only owns the visible facets. The opening-geometry tests
+  // separately cover faces that this camera and masonry hide.
   result.stage4OpeningMaterials = [
     ['iso-centred-door', 'jamb-reveal', 'reveal'],
     ['iso-centred-door', 'leaf-front', 'matte-leaf'],
     ['iso-centred-door', 'leaf-back', 'matte-leaf'],
     ['iso-centred-door', 'leaf-edge', 'matte-leaf'],
     ['iso-centred-door', 'leaf-top', 'matte-leaf'],
-    ['iso-flipped-window', 'window-frame-side', 'light-frame'],
-    ['iso-flipped-window', 'window-frame-top', 'light-frame'],
     ['iso-flipped-window', 'window-sill', 'light-sill'],
     ['iso-flipped-window', 'window-sash-side', 'light-frame'],
     ['iso-flipped-window', 'window-sash-bottom', 'light-frame'],
     ['iso-flipped-window', 'window-sash-top', 'light-frame'],
     ['iso-flipped-window', 'window-glass', 'glass-side'],
-    ['iso-flipped-window', 'window-glass-top', 'glass-top'],
     ['iso-centred-gate', 'jamb-reveal', 'reveal'],
-    ['iso-centred-gate', 'leaf-front', 'matte-leaf'],
   ].every(([id, surface, material]) => hasOpeningSurface(id, surface, material))
+    && !!root().querySelector('[data-hp="iso-openings"] [data-id="iso-centred-gate"].iso-material-matte-leaf')
     && !root().querySelector('[data-hp="iso-openings"] .iso-material-dark-glass');
-  // #713: device tiles and lock badges rise straight up by the wall-top height;
-  // room names keep their Flat floor point.
-  const isoLift = 84 * (5 / card._cellCm) * Math.sin(20 * Math.PI / 180);
+  // #1474: devices, locks and captions share the 140 cm wall cut.
+  const isoLift = 140 / card._cellCm * card._gridPitch * Math.cos(40 * Math.PI / 180);
   const liftOf = (node) => {
     const floorPoint = (node?.getAttribute('data-hp-iso-floor') || '').split(',').map(Number);
     const visual = (node?.getAttribute('data-hp-iso-visual') || '').split(',').map(Number);
@@ -185,16 +183,14 @@ const out = await page.evaluate(async () => {
   };
   const liftMatches = (node) => {
     const [dx, dy] = liftOf(node);
-    return node?.getAttribute('data-hp-iso-overlay-kind') === 'room-label'
-      ? Math.abs(dx) < 1e-6 && Math.abs(dy) < 1e-6
-      : Math.abs(dx) < 1e-6 && Math.abs(dy - isoLift) < 1e-6;
+    return Math.abs(dx) < 1e-6 && Math.abs(dy - isoLift) < 1e-6;
   };
   const raisedRoot = (node, kind) => node?.getAttribute('data-hp-iso-overlay-kind') === kind
     && node.getAttribute('data-hp-iso-raised') === 'true'
     && node.getAttribute('data-hp-iso-floor')
     && node.getAttribute('data-hp-iso-visual')
     && liftMatches(node);
-  result.stage4UsesExactLowInteractiveRoots = raisedRoot(device, 'device')
+  result.wallCutHeightOfInteractiveRoots = raisedRoot(device, 'device')
     && raisedRoot(roomLabel, 'room-label')
     && raisedRoot(openingLock, 'opening-lock')
     && !root().querySelector('.iso-overlay-tether, .iso-overlay-ground, #hp-iso-overlay-ground');

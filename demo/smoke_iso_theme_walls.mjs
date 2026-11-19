@@ -5,10 +5,11 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
-const WALL = '#d9c8b4';
-await page.evaluate((wall) => window.__hpTest.setServerConfig((cfg) => {
+const TOP = '#667788', WALL = '#d9c8b4';
+await page.evaluate(({top,wall}) => window.__hpTest.setServerConfig((cfg) => {
   const space = cfg.spaces.find((item) => item.id === 'f1');
-  space.settings = { ...(space.settings || {}), show_borders: true, show_names: true };
+  space.settings = { ...space.settings, show_borders: true, show_names: true,
+    room_color: top, room_opacity: .75, wall_fill: { c: wall, a: .5 } };
   // A wall body of the plan model (room outlines alone raise no 2.5D wall here).
   space.partitions = [{ id: 'tw-wall', a: [0.15, 0.12], b: [0.85, 0.12], cm: 15 }];
   space.openings = [
@@ -21,10 +22,8 @@ await page.evaluate((wall) => window.__hpTest.setServerConfig((cfg) => {
     { id: 'tw-sofa', kind: 'furniture', symbol: 'sofa', x: 0.62, y: 0.55,
       w: 0.2, h: 0.12, color: '#667788', opacity: 0.7, width_cm: 2 },
   ];
-  // Half-transparent on purpose: Flat keeps the opacity, the 2.5D prism is opaque.
-  cfg.settings = { ...(cfg.settings || {}), fill_colors: { ...(cfg.settings?.fill_colors || {}), wall_fill: { c: wall, a: 0.5 } } };
   return cfg;
-}), WALL);
+}), {top:TOP,wall:WALL});
 
 const snapshot = () => page.evaluate(() => {
   const root = window.__card.renderRoot;
@@ -51,7 +50,9 @@ const snapshot = () => page.evaluate(() => {
     sig,
     stops: ['iso-top-hi', 'iso-top-lo', 'iso-side-hi', 'iso-side-mid', 'iso-side-lo'].map(stop),
     faces: root.querySelectorAll('.iso-wall-top, .iso-wall-side').length,
-    topOpacity: top ? [getComputedStyle(top).opacity, getComputedStyle(top).fillOpacity] : null,
+    topOpacity: top ? getComputedStyle(top.closest('.iso-wall-fill')).opacity : null,
+    sideOpacity: root.querySelector('.iso-wall-side-fill')
+      ? getComputedStyle(root.querySelector('.iso-wall-side-fill')).opacity : null,
     label: label ? [getComputedStyle(label).color, getComputedStyle(label).textShadow] : null,
     furnitureStroke: furn ? Number(furn.getAttribute('stroke-width')) : NaN,
     furnitureVector: furn?.getAttribute('vector-effect') ?? null,
@@ -88,11 +89,11 @@ await page.emulateMedia({ colorScheme: 'light' });
 const rgb = (hex, k = 1) => `rgb(${[1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * k)).join(', ')})`;
 const res = {};
 res.isoOn = light.iso && dark.iso;
-res.topIsUserColour = light.stops[0] === rgb(WALL) && light.stops[1] === rgb(WALL, 0.93);
-res.sideDerivedFromUserColour = light.stops[2] === rgb(WALL, 0.77) && light.stops[3] === rgb(WALL, 0.68)
-  && light.stops[4] === rgb(WALL, 0.6);
+res.topIsUserColour = light.stops[0] === rgb(TOP) && light.stops[1] === rgb(TOP, 0.93);
+res.sideDerivedFromUserColour = light.stops[2] === rgb(WALL, 1.12) && light.stops[3] === rgb(WALL)
+  && light.stops[4] === rgb(WALL, 0.88);
 res.wallFacesDrawn = light.faces > 0;
-res.prismOpaque = !!light.topOpacity && light.topOpacity.every((v) => Number(v) === 1);
+res.separateWallOpacity = Number(light.topOpacity) === .75 && Number(light.sideOpacity) === .5;
 res.themeKeepsWalls = light.sig.length > 10 && JSON.stringify(light.sig) === JSON.stringify(dark.sig);
 res.colourSchemeKeepsWalls = JSON.stringify(light.sig) === JSON.stringify(scheme.sig);
 res.themeKeepsStops = JSON.stringify(light.stops) === JSON.stringify(dark.stops);

@@ -23,7 +23,7 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   await frame();
 
-  const labels = () => [...root().querySelectorAll('.roomlabel')]
+  const labels = () => [...root().querySelectorAll('[data-hp="room-label"]')]
     .filter((label) => label.querySelector('.rlname') && label.querySelector('.rlmetrics'));
   const measure = () => labels().map((label) => {
     const name = label.querySelector('.rlname').getBoundingClientRect();
@@ -70,7 +70,7 @@ const out = await page.evaluate(async () => {
   // device covers.
   const cls = (el) => el ? `${el.tagName.toLowerCase()}.${[...el.classList].join('.')}` : null;
   const underDevice = (el) => !!el?.closest?.('.dev, .oplock');
-  const probes = [...root().querySelectorAll('.stage.projection-iso.mode-view .roomlabel')].map((label) => {
+  const probes = [...root().querySelectorAll('.stage.projection-iso.mode-view [data-hp="room-label"]')].map((label) => {
     const rect = label.getBoundingClientRect();
     const pseudo = getComputedStyle(label, '::before');
     const centre = [rect.left + rect.width / 2, rect.top + rect.height / 2];

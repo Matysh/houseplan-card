@@ -172,6 +172,8 @@ async def test_1024_space_delete_requires_a_current_opening_writer(hass, hass_ws
 async def test_1024_frontend_copy_matches_server_and_clears_nested_disabled_bindings(hass, hass_ws_client):
     # The ordinary frontend copy starts from config/get's materialized appearance.
     source = normalize_room_appearance(await setup_source(hass, "wall", 11))
+    accent = {"c": "#e08030", "a": .35}
+    source["spaces"][0].setdefault("settings", {})["opening_accent_3d"] = accent
     opening = source["spaces"][0]["openings"][0]
     opening["type"] = "window"
     opening["opening_features"] = {"version": 1, "side": "positive", "leaves": [
@@ -184,6 +186,7 @@ async def test_1024_frontend_copy_matches_server_and_clears_nested_disabled_bind
     assert source == before
     assert candidate == CONFIG_SCHEMA(space_copy_candidate(source, "source", "Copy", "features"))
     assert is_saved_space_copy(candidate, source)
+    assert candidate["spaces"][1]["settings"]["opening_accent_3d"] == accent
     leaves = candidate["spaces"][1]["openings"][0]["opening_features"]["leaves"]
     assert [leaf["id"] for leaf in leaves] == ["first", "upper"]
     assert all("contact" not in leaf for leaf in leaves)

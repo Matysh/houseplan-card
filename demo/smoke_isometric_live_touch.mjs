@@ -243,8 +243,8 @@ const out = await page.evaluate(async () => {
   // leaving the doorway clear below it. Windows retain solid masonry below
   // the sill; external gates never gain a floating lintel.
   const masonryContract=()=>({
-    doorLintel:contains('.iso-wall-top[data-id="iso-door"][data-surface="opening-lintel-top"]',openingTopPoint),
-    doorGapClear:!!clearDoorPoint&&!contains('.iso-wall-top[data-id="iso-door"],.iso-wall-side[data-id="iso-door"]',clearDoorPoint),
+    doorLintel:contains('[data-hp="iso-wall-cut"]',openingTopPoint),
+    doorGapClear:!!clearDoorPoint&&!contains('[data-hp="iso-wall-cut"],.iso-wall-side[data-id="iso-door"]',clearDoorPoint),
     windowApron:contains('[data-id="iso-window"][data-surface^="window-apron-"]',windowApronPoint),
     gateNoLintel:!root(original).querySelector('[data-id="iso-gate"][data-surface^="opening-lintel-"]'),
   });
