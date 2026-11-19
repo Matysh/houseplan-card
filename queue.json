@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 16556,
-  "nextTicket": 535,
+  "revision": 16557,
+  "nextTicket": 536,
   "nextFence": 535,
   "tasks": {
     "1024": {
@@ -5054,6 +5054,20 @@
         "status": "published",
         "sourceSha": "e5c56c0e45d6c0742e4c3302611d27ff3d3d85de"
       }
+    },
+    "1475": {
+      "issue": 1475,
+      "track": "ask",
+      "layer": "product",
+      "branch": "codex/1475-swing-door-placement",
+      "materialSha": "750975d245a5abf887dd597f4fa054d9cc0e30e4",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 535,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1795086894613,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -5521,7 +5535,9 @@
       "runId": 44508138259
     }
   },
-  "waiting": [],
+  "waiting": [
+    1475
+  ],
   "active": null,
   "events": {
     "spec-1472-r1-submit-20261119:spec-request": {
@@ -5599,6 +5615,19 @@
         "toStatus": "S4-spec-review",
         "transitionConfirmed": true,
         "delivered": true
+      }
+    },
+    "finish:decf5f53-3f63-4810-9322-f758039e4ac2": {
+      "digest": "9f35fe51fb3eb1c5c1c5fcf5673178331dd3f56cf261572d264581a4473ebc4c",
+      "issue": 1475,
+      "message": {
+        "kind": "queued",
+        "issue": 1475,
+        "at": 1795086894613,
+        "entry": 1,
+        "track": "ask",
+        "layer": "product",
+        "materialSha": "750975d245a5abf887dd597f4fa054d9cc0e30e4"
       }
     }
   },
