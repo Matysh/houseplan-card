@@ -1,0 +1,8 @@
+
+> houseplan-card@1.85.3-beta.2 build
+> node scripts/generate-furniture-volume.mjs --check && tsc --noEmit && rollup -c
+
+Furniture volume: 60/60 models; current.
+
+src/houseplan-ha-card-entry.ts, src/houseplan-panel.ts → dist...
+created dist in 35.4s

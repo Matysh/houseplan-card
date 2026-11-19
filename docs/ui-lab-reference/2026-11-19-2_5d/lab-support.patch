@@ -1,0 +1,194 @@
+diff --git a/demo/ui-lab/app.mjs b/demo/ui-lab/app.mjs
+index 79457444b..bd4a3c3a4 100644
+--- a/demo/ui-lab/app.mjs
++++ b/demo/ui-lab/app.mjs
+@@ -1,4 +1,5 @@
+-import { installNetworkGuard, MAX_SESSION_BYTES, parseSession, saveSession, serializeSession } from './session.mjs';
++import { installNetworkGuard, MAX_SESSION_BYTES, parseSession, serializeSession } from './session.mjs';
++import { resetBrowserSession, saveBrowserSession } from './session-storage.mjs';
+ 
+ installNetworkGuard(window);
+ const notice = document.querySelector('#lab-notice');
+@@ -46,8 +47,9 @@ try {
+     mock.setDarkMode(theme.value === 'dark'); savePreferences();
+   };
+   const language = document.querySelector('#lab-language'); language.value = mock.hass.language;
+-  language.onchange = () => {
+-    mock.persist(); preferences.language = language.value; savePreferences(); location.reload();
++  language.onchange = async () => {
++    if (!await mock.persist()) return;
++    preferences.language = language.value; savePreferences(); location.reload();
+   };
+ 
+   const confirmDialog = document.querySelector('#lab-confirm');
+@@ -61,13 +63,13 @@ try {
+   };
+   document.querySelector('#lab-confirm-cancel').onclick = () => confirmDialog.close();
+   confirmDialog.addEventListener('close', () => { pendingConfirmation = undefined; });
+-  document.querySelector('#lab-confirm-accept').onclick = () => {
++  document.querySelector('#lab-confirm-accept').onclick = async () => {
+     const action = pendingConfirmation; pendingConfirmation = undefined; confirmDialog.close();
+-    try { action?.(); } catch (error) { notify(error.message); }
++    try { await action?.(); } catch (error) { notify(error.message); }
+   };
+   document.querySelector('#lab-reset').onclick = () => confirm('Вернуть исходный снимок?',
+     'Текущие локальные правки этого набора данных будут заменены исходными. Другие сессии и настоящий HA не изменятся. При необходимости сначала экспортируйте сессию.',
+-    () => { localStorage.removeItem(mock.sessionKey); location.reload(); });
++    async () => { await resetBrowserSession(mock.identity); location.reload(); });
+   document.querySelector('#lab-export').onclick = () => {
+     try {
+       const url = URL.createObjectURL(new Blob([serializeSession(mock.identity, mock.snapshot())], { type: 'application/json' }));
+@@ -85,7 +87,7 @@ try {
+       const snapshot = parseSession(await file.text(), mock.identity);
+       confirm('Заменить текущую локальную сессию?',
+         'Правки и состояния этого стенда будут заменены импортированной сессией. Набор данных и сборка проверены. Это не импорт в настоящий House Plan.',
+-        () => { saveSession(localStorage, mock.identity, snapshot); location.reload(); });
++        async () => { await saveBrowserSession(mock.identity, snapshot); location.reload(); });
+     } catch (error) { notify(`Импорт отклонён: ${error.message}`); }
+   };
+ 
+diff --git a/demo/ui-lab/mock-ha.mjs b/demo/ui-lab/mock-ha.mjs
+index 04690ac3c..6273157fd 100644
+--- a/demo/ui-lab/mock-ha.mjs
++++ b/demo/ui-lab/mock-ha.mjs
+@@ -1,14 +1,14 @@
+ import { createFixtureStore } from '/fixture-state.js';
+-import { loadSession, saveSession, sessionIdentity, sessionKey } from './session.mjs';
++import { sessionIdentity, sessionKey } from './session.mjs';
++import { loadBrowserSession, saveBrowserSession } from './session-storage.mjs';
+ export async function createMockHa(notify) {
+   const provenance = await (await fetch('/provenance.json')).json();
+   const fixture = await (await fetch('/fixture.json')).json();
+   const identity = sessionIdentity(provenance);
+   // Never overwrite sessions for other datasets, product builds or old labs.
+   const KEY = sessionKey(identity);
+-  let saved;
+-  try { saved = loadSession(localStorage, identity); }
+-  catch (error) { notify(`Сессия не загружена: ${error.message}. Исходная запись сохранена.`); }
++  // Fail closed instead of silently replacing an unreadable session with the fixture.
++  const saved = await loadBrowserSession(identity);
+   const listeners = new Map();
+   const emit = (type, rev, extra) => queueMicrotask(() => {
+     for (const fn of listeners.get(type) || []) fn({ event_type: type, data: { rev, ...extra } });
+@@ -24,10 +24,16 @@ export async function createMockHa(notify) {
+   services.vacuum = { start: {}, pause: {}, stop: {}, return_to_base: {} };
+   services.climate = { turn_on: {}, turn_off: {}, toggle: {}, set_hvac_mode: {}, set_temperature: {} };
+   const snapshot = () => ({ config: store.handle({ type: 'houseplan/config/get' }).config, layout: store.handle({ type: 'houseplan/layout/get' }).layout, states: runtime.states, virtualLightsOff: [...virtualOff] });
+-  const persist = () => {
+-    try { saveSession(localStorage, identity, snapshot()); return true; }
+-    catch (error) { notify(`Не удалось сохранить локальную сессию: ${error.message}`); return false; }
++  let pendingSaves = 0, saveFailed = false;
++  const persist = async () => {
++    pendingSaves++;
++    try { await saveBrowserSession(identity, snapshot()); saveFailed = false; return true; }
++    catch (error) { saveFailed = true; notify(`Не удалось сохранить локальную сессию: ${error.message}`); return false; }
++    finally { pendingSaves--; }
+   };
++  addEventListener('beforeunload', event => {
++    if (pendingSaves || saveFailed) { event.preventDefault(); event.returnValue = ''; }
++  });
+   const connection = {
+     connected: true,
+     subscribeEvents: async (fn, type) => {
+@@ -81,13 +87,13 @@ export async function createMockHa(notify) {
+         if (!marker) throw Object.assign(Error('Marker is not a manual virtual light'), { code: 'not_toggleable' });
+         if (virtualOff.has(marker.id)) virtualOff.delete(marker.id); else virtualOff.add(marker.id);
+         const result = { marker_id: marker.id, on: !virtualOff.has(marker.id), rev: ++virtualRev };
+-        persist(); for (const fn of listeners.get('houseplan_virtual_light_updated') || []) fn({ event_type: 'houseplan_virtual_light_updated', data: result });
++        await persist(); for (const fn of listeners.get('houseplan_virtual_light_updated') || []) fn({ event_type: 'houseplan_virtual_light_updated', data: result });
+         return result;
+       }
+       const result = store.handle(message, Object.values(runtime.entities));
+       if (result !== undefined) {
+         if (type === 'houseplan/config/get') return { ...result, integration_version: provenance.productVersion, opening_features_api: 1, decor_assets_api: 1, summary_panel_api: 1, external_screens_api: 2, wall_node_move_api: 1, radar_stage1_api: 1, zigbee_scan_api: 1, zigbee_maps_api: 1, virtual_lights: { rev: virtualRev, config_rev: store.configRev, off: [...virtualOff] } };
+-        if (type !== 'houseplan/layout/get') persist();
++        if (type !== 'houseplan/layout/get') await persist();
+         return result;
+       }
+       if (/houseplan\/(plans|assets)\/list$/.test(type)) return { plans: [], assets: [] };
+@@ -124,7 +130,7 @@ export async function createMockHa(notify) {
+         runtime.states = { ...runtime.states, [id]: { ...old, state, attributes, last_updated: new Date().toISOString() } };
+       }
+       hass.states = runtime.states; if (panel) panel.hass = { ...hass };
+-      persist(); notify('Демо: изменено только локальное состояние');
++      if (await persist()) notify('Демо: изменено только локальное состояние');
+       return { response: null };
+     },
+   };
+diff --git a/demo/ui-lab/server.mjs b/demo/ui-lab/server.mjs
+index 8575d1afa..6ab3358cc 100644
+--- a/demo/ui-lab/server.mjs
++++ b/demo/ui-lab/server.mjs
+@@ -10,7 +10,7 @@ import { HA_LOCK, digest, safeFile, verifyHaRuntime } from './ha-runtime.mjs';
+ const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
+   '.json': 'application/json; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png',
+   '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff': 'font/woff', '.woff2': 'font/woff2' };
+-const labFiles = new Set(['index.html', 'app.mjs', 'mock-ha.mjs', 'session.mjs', 'ha-bootstrap.mjs', 'theme.css', 'lab.css',
++const labFiles = new Set(['index.html', 'app.mjs', 'mock-ha.mjs', 'session.mjs', 'session-storage.mjs', 'ha-bootstrap.mjs', 'theme.css', 'lab.css',
+   'plan-host.html', 'plan-host.mjs', 'furniture-gallery.html', 'furniture-gallery.css']);
+ const overrides = new Set(['houseplan-card.css', 'houseplan-panel.css', 'hp-dialog.css', 'ha-dialog.css']);
+ const csp = "default-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'none'; object-src 'none'; worker-src 'none'; frame-src 'none'; frame-ancestors 'none'; form-action 'none'; base-uri 'none'";
+diff --git a/demo/ui-lab/session-storage.mjs b/demo/ui-lab/session-storage.mjs
+new file mode 100644
+index 000000000..48e6f0076
+--- /dev/null
++++ b/demo/ui-lab/session-storage.mjs
+@@ -0,0 +1,58 @@
++// Local UI Lab storage only. Large snapshots do not share localStorage's small
++// quota with old builds. Legacy records remain untouched as recovery copies.
++import { parseSession, serializeSession, sessionKey } from './session.mjs';
++
++let database;
++let writes = Promise.resolve();
++function openDatabase() {
++  if (!database) database = new Promise((resolve, reject) => {
++    const request = indexedDB.open('houseplan-ui-lab', 1);
++    request.onupgradeneeded = () => request.result.createObjectStore('sessions');
++    request.onsuccess = () => resolve(request.result);
++    request.onerror = () => { database = undefined; reject(request.error); };
++    request.onblocked = () => reject(Error('Закройте другие вкладки UI Lab и повторите сохранение'));
++  });
++  return database;
++}
++
++async function transaction(mode, action) {
++  const db = await openDatabase();
++  return new Promise((resolve, reject) => {
++    const tx = db.transaction('sessions', mode);
++    const request = action(tx.objectStore('sessions'));
++    // A request succeeding is not proof that the transaction committed.
++    tx.oncomplete = () => resolve(request.result);
++    tx.onabort = () => reject(tx.error || Error('Сохранение локальной сессии прервано'));
++    tx.onerror = () => {}; // onabort supplies the final failure.
++  });
++}
++
++// undefined = never saved, null = explicitly reset. A tombstone prevents an
++// old localStorage snapshot from returning after the user resets this lab.
++export async function readStoredSession(identity) {
++  await writes;
++  const key = sessionKey(identity);
++  const stored = await transaction('readonly', store => store.get(key));
++  return stored === undefined ? localStorage.getItem(key) ?? undefined : stored;
++}
++
++export async function loadBrowserSession(identity) {
++  const text = await readStoredSession(identity);
++  return text == null ? null : parseSession(text, identity);
++}
++
++function write(identity, text) {
++  const key = sessionKey(identity);
++  const pending = writes.then(() => transaction('readwrite', store => store.put(text, key)));
++  writes = pending.catch(() => {}); // One failed save must not block retries.
++  return pending;
++}
++
++export function saveBrowserSession(identity, snapshot) {
++  // Capture and validate at invocation, before another edit can mutate input.
++  return write(identity, serializeSession(identity, snapshot));
++}
++
++export function resetBrowserSession(identity) {
++  return write(identity, null);
++}

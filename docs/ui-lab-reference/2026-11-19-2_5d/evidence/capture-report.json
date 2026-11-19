@@ -1,0 +1,49 @@
+{
+  "capturedAt": "2026-11-19T09:05:22.376Z",
+  "browser": "151.0.7922.34",
+  "viewport": {
+    "width": 1480,
+    "height": 1080
+  },
+  "dpr": 1,
+  "synthetic": true,
+  "observations": [
+    {
+      "rotation": 0,
+      "devices": 12,
+      "stairs": 1,
+      "led": 1,
+      "locks": 1,
+      "wallLightFaces": 11,
+      "labelTransform": "matrix(0.8191520442889918,0.3686878264946123,-0.573576436351046,0.5265407845183632,0,0)"
+    },
+    {
+      "rotation": 90,
+      "devices": 12,
+      "stairs": 1,
+      "led": 1,
+      "locks": 1,
+      "wallLightFaces": 10,
+      "labelTransform": "matrix(0.5735764363510462,-0.5265407845183632,0.8191520442889918,0.3686878264946124,0,0)"
+    },
+    {
+      "rotation": 180,
+      "devices": 12,
+      "stairs": 1,
+      "led": 1,
+      "locks": 1,
+      "wallLightFaces": 11,
+      "labelTransform": "matrix(0.8191520442889918,0.3686878264946123,-0.573576436351046,0.5265407845183632,0,0)"
+    },
+    {
+      "rotation": 270,
+      "devices": 12,
+      "stairs": 1,
+      "led": 1,
+      "locks": 1,
+      "wallLightFaces": 12,
+      "labelTransform": "matrix(0.5735764363510462,-0.5265407845183632,0.8191520442889918,0.3686878264946124,0,0)"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,2033 @@
+diff --git a/src/device-contact-render.ts b/src/device-contact-render.ts
+index 67778d2cb..592e6707f 100644
+--- a/src/device-contact-render.ts
++++ b/src/device-contact-render.ts
+@@ -1,7 +1,7 @@
+ /** Shared Flat DOM adapter. Face geometry is measured only on metric invalidation. */
+ import { nothing, render, svg } from 'lit';
+ import {
+-  contactContains, contactContourShapes, contactOutline, joinedContactSide,
++  contactContains, contactContourShapes, contactOutline, freeContactShape, joinedContactSide,
+   type ContactMarker, type ContactRect, type ContactShape, type ContactWall,
+ } from './device-contact-geometry';
+ import { contactBounds, DeviceContactScene } from './device-contact-scene';
+@@ -16,8 +16,9 @@ import { contactBasisMarker } from './device-contact-basis';
+ import { DeviceContactLayout } from './device-contact-layout';
+ import { screenContactMarker, screenContactScene, projectedContactHit } from './device-contact-screen';
+ import type { PlanRotation } from './view-frame';
+-import { isoMarkerGlass } from './iso-marker-outline';
++import { isoMarkerBodyOutline, isoMarkerGlass } from './iso-marker-outline';
+ import { renderIsoMarkerGlass } from './iso-marker-glass';
++import type { IsoDeviceFace, IsoDeviceWallMask } from './iso-overlays';
+ 
+ export interface DeviceContactFrame {
+   key: string;
+@@ -54,6 +55,7 @@ export class DeviceContactRenderer {
+   public reflowed = false;
+   public readonly work = { measurements: 0, measurementBatches: 0, rebuilds: 0, paints: 0 };
+   private readonly metrics = new Map<string, ContactRect>();
++  private readonly faces = new Map<string, readonly IsoDeviceFace[]>();
+   private elements = new Map<string, MeasuredMarker>();
+   private frameKey = '';
+   private floorKey = '';
+@@ -142,6 +144,7 @@ export class DeviceContactRenderer {
+       m.virtual,JSON.stringify(frame.layout?.[m.id]?.contact_basis),
+       metricKey(nodes.get(m.id)?.querySelector('.device-shell'))].join(':')).join('|');
+     if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) {
++      this.paintWallMasks(nodes);
+       if (turned && this.scene) this.paint(this.scene.shapes.keys());
+       return turned;
+     }
+@@ -156,6 +159,7 @@ export class DeviceContactRenderer {
+       }
+     }
+     const fresh = this.measure(pending);
++    this.paintWallMasks(nodes);
+     for (const m of frame.markers) {
+       const element = nodes.get(m.id), shell = element?.querySelector<HTMLElement>('.device-shell');
+       const ink = element?.querySelector<HTMLElement>('.device-contact-ink');
+@@ -236,14 +240,40 @@ export class DeviceContactRenderer {
+         top: (face.top - core.top - core.height / 2) / core.width,
+         bottom: (face.bottom - core.top - core.height / 2) / core.width,
+       });
++      if(core.width>0)this.faces.set(key,[...probe.querySelectorAll<HTMLElement>('.device-core,.value-badge')].map(node=>{
++        const rect=node.getBoundingClientRect(),style=getComputedStyle(node);
++        const radius=style.borderTopLeftRadius.split(' ');
++        const radiusX=radius[0],radiusY=radius[1]||radiusX;
++        const rx=Math.min(rect.width/2,radiusX.endsWith('%')?parseFloat(radiusX)*rect.width/100:parseFloat(radiusX));
++        const ry=Math.min(rect.height/2,radiusY.endsWith('%')?parseFloat(radiusY)*rect.height/100:parseFloat(radiusY));
++        return {left:(rect.left-core.left-core.width/2)/core.width,right:(rect.right-core.left-core.width/2)/core.width,
++          top:(rect.top-core.top-core.height/2)/core.width,bottom:(rect.bottom-core.top-core.height/2)/core.width,
++          rx:rx/core.width,ry:ry/core.width};
++      }));
+     }
+     for (const { probe } of probes) probe.remove();
+     for (const [key, metric] of result) this.metrics.set(key, metric);
+-    while (this.metrics.size > 256) this.metrics.delete(this.metrics.keys().next().value!);
++    while (this.metrics.size > 256) {
++      const key=this.metrics.keys().next().value!;this.metrics.delete(key);this.faces.delete(key);
++    }
+     this.work.measurements += probes.length; this.work.measurementBatches++;
+     return result;
+   }
+ 
++  private paintWallMasks(nodes:ReadonlyMap<string,HTMLElement>):void {
++    if(!this.plane)return;
++    for(const node of nodes.values()){
++      const mask=(node as HTMLElement&{hpIsoWallMask?:IsoDeviceWallMask}).hpIsoWallMask;
++      const faces=this.faces.get(metricKey(node.querySelector('.device-shell')));
++      if(!mask||!faces)continue;
++      const body=mask.bodyMask(faces);
++      for(const [selector,value] of [['[data-hp-wall-body]',body.body],['[data-hp-wall-body-hidden]',body.occluded]]){
++        const path=node.querySelector(selector);
++        if(path&&path.getAttribute('d')!==value)path.setAttribute('d',value);
++      }
++    }
++  }
++
+   public move(id: string, x: number, y: number): void {
+     if (!this.scene) return;
+     this.paint(this.scene.move(id, x, y));
+@@ -274,10 +304,14 @@ export class DeviceContactRenderer {
+     for (const rawGroup of scene.components(affected)) {
+       const group=contactContourShapes(rawGroup);
+       const joined = group.length > 1;
+-      const owner = group[0];
++      // The full shared glass starts behind every solid member. Each nearer
++      // member repaints only its own front-glass intersection below.
++      const owner = this.plane ? group.reduce((back,s) =>
++        this.plane![1]*s.marker.x+this.plane![3]*s.marker.y <
++        this.plane![1]*back.marker.x+this.plane![3]*back.marker.y ? s : back) : group[0];
+       const active = joined || Object.keys(owner.walls).length > 0;
+       const outline = active ? contactOutline(group,true) : '';
+-      const glass = this.plane ? isoMarkerGlass(group,this.plane) : null;
++      const glass = this.plane ? isoMarkerGlass(group,this.plane,true) : null;
+       const virtual=group.every(s=>s.marker.virtual===true);
+       for (const s of group) {
+         const item = this.elements.get(s.marker.id); if (!item) continue;
+@@ -300,7 +334,22 @@ export class DeviceContactRenderer {
+         if (!custom && !this.plane) { render(nothing, item.ink); continue; }
+         const d = s.marker.diameter;
+         const viewBox=`${s.marker.x - d / 2} ${s.marker.y - d / 2} ${d} ${d}`;
+-        render(svg`${s === owner && glass ? renderIsoMarkerGlass(glass,viewBox,virtual) : nothing}
++        // A transformed member is its own stacking context. Repaint just the
++        // shared near glass over its opaque body; keep the rest on the owner
++        // so neighbouring shells never accumulate translucent coats.
++        let memberGlass: {id:string;clip:string}|undefined;
++        if(glass && this.plane && s!==owner){
++          const [a,b,c,e]=this.plane,det=a*e-b*c;
++          const box={left:-d/2,right:d/2,top:-d/2,bottom:d/2};
++          if(item.element.classList.contains('valonly') && !item.element.querySelector('.with-values')){
++            box.left=s.marker.box.left+d*.134375;box.right=s.marker.box.right-d*.134375;
++          }
++          const body=freeContactShape({...s.marker,x:s.marker.x-c/det*d*.12,y:s.marker.y+a/det*d*.12,box});
++          memberGlass={id:`hp-glass-member-${encodeURIComponent(s.marker.id)}`,clip:isoMarkerBodyOutline([body],this.plane)};
++        }
++        const wallMask=(item.element as HTMLElement&{hpIsoWallMask?:IsoDeviceWallMask}).hpIsoWallMask;
++        render(svg`${glass ? renderIsoMarkerGlass(glass,viewBox,virtual,memberGlass,
++          wallMask ? {id:`hp-glass-wall-${encodeURIComponent(s.marker.id)}`,mask:wallMask} : undefined) : nothing}
+         <svg viewBox=${viewBox}
+           preserveAspectRatio="none" aria-hidden="true">
+           ${s === owner && !glass ? svg`<path data-hp="device-contact-contour" data-component=${owner.marker.id} data-grouped=${String(joined)} class=${joined ? 'device-contact-contour grouped' : 'device-contact-contour'} stroke-dasharray=${virtual?'4 3':'none'} d=${outline}></path>` : nothing}
+diff --git a/src/editors/space-dialog-draft.ts b/src/editors/space-dialog-draft.ts
+index 03abb8060..dee6f4b9a 100644
+--- a/src/editors/space-dialog-draft.ts
++++ b/src/editors/space-dialog-draft.ts
+@@ -22,6 +22,7 @@ export function newSpaceDialogDraft(imperial: boolean): SpaceDialogState {
+     ...initialSpaceDisplayDraft('draw'), hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
+     roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
+     nameColor: { ...DEFAULT_NAME_COLOR }, wallFill: { ...DEFAULT_WALL_FILL },
++    openingAccent3d: { c: '#ffffff', a: 1 },
+     customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 }, glowEnabled: true, bgColor: null,
+     bgMode: 'daynight', northDeg: null, northDegInput: '', sunRays: null,
+     tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
+@@ -43,6 +44,7 @@ export function savedSpaceDialogDraft(sp: SavedSpace, imperial: boolean, globalM
+     zeroWallStyle: zeroWallStyleOf(sp), displayTouched: true,
+     hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings, roomColor: disp.color, roomOpacity: disp.opacity,
+     nameColor: disp.nameColor, wallFill: disp.wallFill,
++    openingAccent3d: disp.openingAccent3d,
+     fillMode: disp.fill === 'none' ? 'custom' : disp.fill,
+     customFill: disp.fill === 'none' ? { ...(storedCustom || DEFAULT_CUSTOM_FILL), a: 0 } : storedCustom,
+     glowEnabled: disp.glow, bgColor: disp.bgColor,
+@@ -69,6 +71,7 @@ export function spaceDialogSettings(d: SpaceDialogState, previous?: Record<strin
+     room_color: d.roomColor, room_opacity: d.roomOpacity, bg_color: d.bgColor || undefined,
+     name_color: { ...((previous?.name_color as Record<string, unknown> | undefined) || {}), ...appearance.nameColor },
+     wall_fill: { ...((previous?.wall_fill as Record<string, unknown> | undefined) || {}), ...appearance.wallFill },
++    opening_accent_3d: d.openingAccent3d || { c: '#ffffff', a: 1 },
+     bg_mode: d.bgMode || undefined, north_deg: d.northDeg ?? undefined, sun_rays: d.sunRays ?? undefined,
+     fill_mode: d.fillMode, custom_fill: d.customFill || undefined, glow_enabled: true,
+     temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
+diff --git a/src/editors/space-form.ts b/src/editors/space-form.ts
+index 37d35f51e..49a012f46 100644
+--- a/src/editors/space-form.ts
++++ b/src/editors/space-form.ts
+@@ -347,6 +347,13 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
+           color('name'),
+           color('border'),
+           color('wall-fill'),
++          colorRow({label:st('space.opening_accent_3d'),help:shelp('space.opening_accent_3d.help'),
++            picker:colorField({hex:d.openingAccent3d?.c || '#ffffff',opacity:d.openingAccent3d?.a ?? 1,
++              picker:html`<hp-color-opacity data-hp="field" data-field=${id('opening-accent-3d')}
++                .label=${st('space.opening_accent_3d')} hide-label flat-swatch .opacityLabel=${t('space.opacity')}
++                .pickerLabels=${host._colorPickerLabels} .color=${d.openingAccent3d?.c || '#ffffff'} .opacity=${d.openingAccent3d?.a ?? 1}
++                @hp-color-opacity-change=${(e:CustomEvent<{color:string;opacity:number}>)=>set(port,{...d,openingAccent3d:{c:e.detail.color,a:e.detail.opacity}})}
++              ></hp-color-opacity>`})}),
+           field({label:t('space.fill_label'),help:port.help('space.fill_mode.help'),control:selectControl({
+       name:id('fill-mode'),value:d.fillMode === 'none' ? 'custom' : d.fillMode,ariaLabel:t('space.fill_label'),
+       options:SPACE_FILL_UI_MODES.filter(value => permitsRoomFill(planHostOf(host).capabilities,value) || value === d.fillMode)
+diff --git a/src/furniture-gallery-entry.ts b/src/furniture-gallery-entry.ts
+index 0be123069..933c18376 100644
+--- a/src/furniture-gallery-entry.ts
++++ b/src/furniture-gallery-entry.ts
+@@ -31,7 +31,7 @@ function views(s:Symbol){
+  const drawing=svg`<path d=${art.d} transform=${transform} fill="none" stroke=${state.color} stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" opacity=${state.opacity}></path>`;
+  return html`<div class="pair">
+    <figure><figcaption>Обычный план</figcaption><svg role="img" aria-label=${s.name_ru+' — обычный план'} viewBox=${fit(corners)}>${drawing}</svg></figure>
+-   <figure class="volume"><figcaption>${mesh?'Объём':'Плоский в проекции'}</figcaption><svg role="img" aria-label=${s.name_ru+' — проекция'} viewBox=${fit(bounds)}><g transform=${`matrix(${isoFloorMatrix(camera).join(' ')})`}>${mesh?renderIsoLabFurniture(mesh,'gallery-'+s.id,s.id,state.color,state.opacity,1):drawing}</g></svg></figure>
++   <figure class="volume"><figcaption>${mesh?'Объём':'Плоский в проекции'}</figcaption><svg role="img" aria-label=${s.name_ru+' — проекция'} viewBox=${fit(bounds)}><g transform=${`matrix(${isoFloorMatrix(camera).join(' ')})`}>${mesh?renderIsoLabFurniture(mesh,'gallery-'+s.id,s.id,state.color,1):drawing}</g></svg></figure>
+  </div>`;
+ }
+ function select(label:string,key:string,options:[string,string][]){
+diff --git a/src/houseplan-card.ts b/src/houseplan-card.ts
+index 16deff641..487d9588e 100755
+--- a/src/houseplan-card.ts
++++ b/src/houseplan-card.ts
+@@ -339,12 +339,12 @@ import {
+   isoDisplayWallHeight, isoCameraFor, isoFloorMatrix, isoFloorMatrixCss, isoFloorLinearCss, isoTileDepthStyles, projectPlanPoint, unprojectFloorPoint,
+ } from './iso-projection';
+ import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_FURNITURE } from './iso-lab-camera';
++import type { IsoWallLightSource } from './iso-wall-light';
+ import {acceptedViewFrame, canonicalPhysicalCamera, physicalViewCamera, presentedViewPlane, shouldRebaseViewFrame, type ProjectionViewFrame, type ViewPlane} from './projection-view-camera';
+ import { furnitureMesh, furnitureParts, furnitureViewDepth, furnitureVolume } from './iso-lab-furniture';
+ import {desktopSurface, TOWER_BOX} from './iso-lab-workstation';
+ import { FURNITURE_VOLUME_RUNTIME } from './furniture-volume-runtime';
+ import { renderIsoLabFurniture, furnitureShadow } from './iso-lab-furniture-render';
+-import { roomFurnitureOverlap } from './iso-room-furniture-overlap';
+ import { isoLockGlass } from './iso-marker-outline';
+ import { renderIsoMarkerGlass } from './iso-marker-glass';
+ import {
+@@ -410,7 +410,7 @@ import { ViewRuntimes, type ViewRuntimeHost } from './view-runtimes';
+ import { renderHeaderActions, renderHiddenDevicesToggle } from './header-menu';
+ import { LazyChromeTooltips } from './chrome-tooltip-lazy';
+ import { HiddenDevicePreference, HiddenDeviceRoster, hiddenDevicePreferenceKey, hiddenDeviceStorage } from './hidden-device-visibility';
+-import { isoWallMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
++import { isoWallMaterialVars, isoOpeningMaterialVars, parseCssColor } from './iso-materials'; import { IsoFirstFrameState, isoPaperContext } from './iso-first-frame';
+ import { renderIsoTileShadow } from './iso-tiles';
+ import { displayVersion } from './card-version';
+ import { ConfigFingerprintPass } from './config-fingerprint-pass';
+@@ -2072,8 +2072,12 @@ export class HouseplanCard extends LitElement {
+         owner.set(node, 'top', (parseFloat(top) * projection.scaleY + projection.translateYPercent) + '%');
+       }
+       const text = `${current.x} ${current.y} ${current.w} ${current.h}`;
+-      for (const svg of layer.querySelectorAll<SVGElement>('[data-hp-live-inherited-scene="camera"]'))
++      for (const svg of layer.querySelectorAll<SVGElement>('[data-hp-live-inherited-scene="camera"]')) {
++        // HTML shadows use the layer's pixel coordinates. Giving their SVG
++        // wrapper a world viewBox would apply the camera a second time.
++        if (svg.hasAttribute('data-hp-live-pixel-plane')) continue;
+         if (svg.getAttribute('viewBox') !== text) svg.setAttribute('viewBox', text);
++      }
+       owner.set(layer, 'left', '0px'); owner.set(layer, 'top', '0px');
+     }
+   }
+@@ -10627,7 +10631,7 @@ export class HouseplanCard extends LitElement {
+         if (paint === 'volume') {
+           const scale=gridVisualScale(this._cellCm);
+           const mesh=furnitureMesh(sh,W,H,isoCameraFor(this._rotation),scale);
+-          if(mesh) return renderIsoLabFurniture(mesh,sh.id,sh.symbol,style.color,style.opacity,scale);
++          if(mesh) return renderIsoLabFurniture(mesh,sh.id,sh.symbol,style.color,scale);
+         }
+         // One path per piece. Designer art keeps its native viewBox and is
+         // scaled to the user's stored box; vector-effect rejects that local
+@@ -11071,6 +11075,7 @@ export class HouseplanCard extends LitElement {
+       color: dialog.roomColor,
+       opacity: dialog.roomOpacity,
+       ...spaceDraftAppearanceOf(dialog,this._curSpaceCfg,this._settings),
++      openingAccent3d: dialog.openingAccent3d || { c: '#ffffff', a: 1 },
+       fill: dialog.fillMode,
+       customFill: dialog.customFill ? customFillOf(dialog.customFill) : DEFAULT_CUSTOM_FILL,
+       glow: dialog.glowEnabled,
+@@ -12524,6 +12529,7 @@ export class HouseplanCard extends LitElement {
+   private _renderGlowLayer(
+     space: SpaceModel, disp: SpaceDisplay,
+     view = this._viewOr(this._baseVb()),
++    capture?: (sources: readonly IsoWallLightSource[]) => void,
+   ): TemplateResult {
+     const colors = this._fillColors;
+     const defaultR = (this._glowRadiusCm / this._cellCm) * this._gridPitch;
+@@ -12638,6 +12644,9 @@ export class HouseplanCard extends LitElement {
+         'M ' + points.map((point) => point[0] + ' ' + point[1]).join(' L ') + ' Z';
+       return [clean || path(floorPoly), ...holes.map(path)].join(' ');
+     });
++    capture?.(spots.map(spot => ({ key: spot.key, color: spot.c, alpha: spot.alpha,
++      radius: spot.r, points: [[spot.pos.x, spot.pos.y]], visible: spot.geometry?.lit ?? [],
++      floorClip: enabledClip, entering: spot.entering, leaving: spot.leaving })));
+     // A hair on SCREEN, so an edge stays a hairline at any zoom instead of
+     // turning into a smear when the plan is enlarged.
+     const perUnit = this._renderPixelsPerUnit(view);
+@@ -13078,10 +13087,13 @@ export class HouseplanCard extends LitElement {
+     this._adoptViewPlane(isoScene ? isoCameraFor(0) : null);
+     let view = this._viewOr(this._baseVb(projection, isoScene));
+     let isoFrame: IsoFramePresentation | null = null;
++    let isoGlowLayer: TemplateResult | undefined;
++    let isoLedField: TemplateResult | undefined;
++    const isoWallLights: IsoWallLightSource[] = [];
+     const scale = gridVisualScale(this._cellCm);
+     let useFurnitureVolume = iso && disp.showBorders && ISO_LAB_FURNITURE && this._mode === 'view';
+-    let labelOccluders: Parameters<typeof roomFurnitureOverlap>[2] = [];
+     let furnitureShadows: TemplateResult | TemplateResult[] | typeof nothing = nothing;
++    let stairVolumes: ReturnType<StairViewRuntime['volumeItems']> | undefined;
+     try {
+       const camera = isoScene?.camera;
+       const furniture = useFurnitureVolume && camera && !disp.hideDecor
+@@ -13092,13 +13104,30 @@ export class HouseplanCard extends LitElement {
+             if (!volume) return [];
+             const {mesh,footprint,height} = volume;
+             const style = this._decorResolvedStyle(item);
+-            return [{footprint,height,mesh,opacity:style.opacity,
+-              shadow:svg`<g opacity=${style.opacity}>${furnitureShadow(mesh,scale)}</g>`,
++            return [{footprint,height,mesh,opacity:1,
++              shadow:furnitureShadow(mesh,scale),
+               body:svg`<g transform=${isoFloorMatrixCss(camera)}>
+-                ${renderIsoLabFurniture(mesh,item.id,item.symbol,style.color,style.opacity,scale,false,slot)}</g>`}];
++                ${renderIsoLabFurniture(mesh,item.id,item.symbol,style.color,scale,false,slot)}</g>`}];
+           }) : [];
++      if(iso && camera){
++        stairVolumes=this._stairsView.volumeItems(camera);
++        for(const [id,volume] of stairVolumes){
++          furniture.push({...volume,opacity:1,
++            shadow:furnitureShadow(volume.mesh,scale),
++            body:svg`<g transform=${isoFloorMatrixCss(camera)}>${this._stairsView.renderLayer(new Map([[id,volume]]),'volume')}</g>`});
++        }
++        const [,b,,d]=isoFloorMatrix(camera);
++        const depth=(item:typeof furniture[number])=>item.footprint.reduce((sum,p)=>sum+b*p[0]+d*p[1],0)/item.footprint.length;
++        furniture.sort((x,y)=>depth(x)-depth(y));
++      }
++      if (iso) {
++        isoGlowLayer = this._renderGlowLayer(space, disp, view, sources => isoWallLights.push(...sources));
++        isoLedField = this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow,
++          source => isoWallLights.push(source));
++      }
+       isoFrame = isoRuntime?.resolveIsoFramePresentation({
+         projection, display: disp, scene: isoScene, openings: this._openingsR, furniture,
++        wallLights: isoWallLights,
+         amountOf: opening => this._openingAmtForProjection(opening, projection), cellCm: this._cellCm,
+         visualOf: opening => resolveOpeningVisual(opening,
+           eid => this._renderOpeningEntityAvailable(eid) ? this._renderPlanHass.states[eid] : null,
+@@ -13106,10 +13135,9 @@ export class HouseplanCard extends LitElement {
+         overlays: (layers) => this._isoOverlayScene(
+           space, devs, disp, layers, isoScene, iconPct, deviceBasePct, showLqi),
+       }) ?? null;
+-      if (useFurnitureVolume && !disp.hideDecor) {
+-        labelOccluders = furniture;
++      if (useFurnitureVolume) {
+         furnitureShadows = isoFrame?.layers.structural && furniture.length
+-          ? furniture.map(item => item.shadow) : this._renderDecorLayer(undefined, view, 'volume');
++          ? furniture.map(item => item.shadow) : !disp.hideDecor ? this._renderDecorLayer(undefined, view, 'volume') : nothing;
+       }
+     } catch (error) {
+       this._latchIsoFallback(disp.showBorders
+@@ -13118,14 +13146,20 @@ export class HouseplanCard extends LitElement {
+       this._renderProjection = 'flat'; this._renderIsoScene = null;
+       this._isoProjectionSnapshot = 'flat'; this._view = null;
+       this._viewPlane = null; this._viewPlaneKnown = true;
+-      useFurnitureVolume = false; labelOccluders = []; furnitureShadows = nothing;
++      useFurnitureVolume = false; furnitureShadows = nothing;
++      stairVolumes = undefined; isoGlowLayer = undefined; isoLedField = undefined;
+       view = this._viewOr(this._baseVb('flat', null));
+     }
+     const floorCamera = this._isoFloorCamera;
+     const markerCamera = ISO_LAB_FLOOR_MARKERS && floorCamera;
++    // Labels follow the plan axes, but opposite views share readable lettering.
++    const roomLabelCamera = markerCamera ? { ...markerCamera,
++      rotDeg: ((markerCamera.rotDeg + 90) % 180 + 180) % 180 - 90 } : null;
++    const roomLabelDepth = roomLabelCamera ? isoTileDepthStyles(roomLabelCamera) : null;
+     const isoLayers = isoFrame?.layers ?? null;
+     const isoOverlays = isoFrame?.overlays ?? null;
+-    const maskRoomLabels = ISO_LAB_FLOOR_MARKERS && isoLayers?.structural && !!isoScene && disp.showNames;
++    const maskFloorShadows = ISO_LAB_FLOOR_MARKERS && isoLayers?.structural && !!isoScene;
++    const maskRoomLabels = maskFloorShadows && disp.showNames;
+     const floorView = this._planVisibleRect(view);
+     // Background around the plan (view/kiosk; editors keep their own canvas).
+     // Both settings dialogs preview their pending value live.
+@@ -13348,7 +13382,7 @@ export class HouseplanCard extends LitElement {
+                    stored shapes so they remain editable. */}
+             ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view)}` },
+       { id: "stairs", inputs: [...sceneInputs, ...[this._mode === 'plan', this._mode === 'view']], render: () => svg`${this._mode === 'plan' && this._editorRuntime
+-              ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer()}
++              ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer(stairVolumes)}
+             ${this._mode === 'plan' ? svg`<g data-hp-live-stairs></g>` : nothing}` },
+       { id: "glow", inputs: [...(glowInputs ?? []), this._effSunRays() && activeGlow], render: () => svg`${guard([...(glowInputs ?? [])], () => glowInputs ? svg`${this._renderGlowLayer(space, disp, view)}
+             ${this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) ?? nothing}` : nothing)}
+@@ -13422,9 +13456,16 @@ export class HouseplanCard extends LitElement {
+             '--hp-cell-visual-scale': String(gridVisualScale(this._cellCm)),
+             '--hp-iso-marker-plane': markerCamera ? isoFloorLinearCss(markerCamera) : undefined,
+             '--hp-iso-marker-hit-plane': markerCamera ? isoFloorLinearCss(markerCamera, true) : undefined,
++            '--hp-iso-room-plane': roomLabelCamera ? isoFloorLinearCss(roomLabelCamera) : undefined,
++            '--hp-iso-room-hit-plane': roomLabelCamera ? isoFloorLinearCss(roomLabelCamera, true) : undefined,
++            '--hp-iso-room-edge-x': roomLabelDepth?.['--hp-iso-edge-unit-x'],
++            '--hp-iso-room-edge-y': roomLabelDepth?.['--hp-iso-edge-unit-y'],
+             ...(markerCamera ? isoTileDepthStyles(markerCamera) : {}),
+             '--wall-fill': disp.wallFill.c, '--wall-fill-op': String(disp.wallFill.a),
+-            ...(iso ? Object.fromEntries(isoWallMaterialVars(disp.wallFill.c).split(';').filter(Boolean).map(entry => { const at=entry.indexOf(':');return [entry.slice(0,at),entry.slice(at+1)]; })) : {}),
++            '--iso-wall-top-op': iso ? String(disp.opacity) : undefined,
++            '--iso-wall-side-op': iso ? String(disp.wallFill.a) : undefined,
++            ...(iso ? isoOpeningMaterialVars(disp.openingAccent3d?.c, disp.openingAccent3d?.a) : {}),
++            ...(iso ? Object.fromEntries(isoWallMaterialVars(disp.color, disp.wallFill.c).split(';').filter(Boolean).map(entry => { const at=entry.indexOf(':');return [entry.slice(0,at),entry.slice(at+1)]; })) : {}),
+           })}
+           @click=${(e: MouseEvent) => this._markupClick(e)}
+           @wheel=${(e: WheelEvent) => this._onWheel(e)}
+@@ -13499,10 +13540,10 @@ export class HouseplanCard extends LitElement {
+                    stored shapes so they remain editable. */}
+             ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view, useFurnitureVolume ? 'floor' : 'all')}
+             ${this._mode === 'plan' && this._editorRuntime
+-              ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer()}
++              ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer(stairVolumes)}
+             ${this._mode === 'plan' ? svg`<g data-hp-live-stairs></g>` : nothing}
+-            ${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}
+-            ${glowLayerVisible ? this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) : nothing}
++            ${glowLayerVisible ? isoGlowLayer ?? this._renderGlowLayer(space, disp, view) : nothing}
++            ${glowLayerVisible ? isoLedField ?? this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) : nothing}
+             ${this._renderSunRays(space)}
+             ${''/* #1451: the wash stays on the floor, visible through translucent
+                    furniture instead of painting a yellow stripe over its body. */}
+@@ -13544,7 +13585,7 @@ export class HouseplanCard extends LitElement {
+               : isoLayers && !isoLayers.floorSymbols
+                 ? nothing
+                 : this._renderOpenings(disp)}
+-            ${this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view) ?? nothing}
++            ${!iso ? this._ledRt(space)?.renderLedLayerFor(this as never, space, disp.glow, view) ?? nothing : nothing}
+             ${this._mode === 'devices' && (this._ledEditor || space.led_strips?.some((s) => s.active !== false))
+               ? this._ledEd(space.id)?.layer(space) : nothing}
+             ${this._renderWallThickUi()}
+@@ -13583,7 +13624,7 @@ export class HouseplanCard extends LitElement {
+                  base is resolved before `iconCqw`; only the per-device and
+                  kiosk multipliers still feed --dev-size. */}
+           <div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._effectiveKioskScale.font : 1}">
+-            ${maskRoomLabels ? svg`<svg width="0" height="0" aria-hidden="true" style="position:absolute;pointer-events:none"><defs>
++            ${maskFloorShadows ? svg`<svg width="0" height="0" aria-hidden="true" style="position:absolute;pointer-events:none"><defs>
+               <mask id="hp-room-wall-mask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox"
+                 x="0" y="0" width="1" height="1" style="mask-type:luminance">
+                 <rect width="1" height="1" fill="white"></rect>
+@@ -13593,7 +13634,11 @@ export class HouseplanCard extends LitElement {
+             </defs></svg>` : nothing}
+             ${isoFrame && isoFrame.foreground !== nothing ? svg`<svg class="iso-furniture-foreground"
+               data-hp-live-inherited-scene="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+-              preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">${isoFrame.foreground}</svg>` : nothing}
++              preserveAspectRatio="xMidYMid meet" aria-hidden=${stairVolumes?.size ? nothing : 'true'} pointer-events="none">${isoFrame.foreground}</svg>` : nothing}
++            ${iso ? svg`<svg class="iso-led-plane" data-hp-live-inherited-scene="camera"
++              viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
++              <g transform=${this._floorTransform}>${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'body') ?? nothing}</g>
++            </svg>` : nothing}
+             ${renderRadarLive(
+               [...this._radarLive.frames.values()].filter((frame) => {
+                 const marker = this._serverCfg?.markers.find((item) => item.id === frame.marker_id);
+@@ -13602,7 +13647,9 @@ export class HouseplanCard extends LitElement {
+               view,
+               (point) => floorCamera ? projectPlanPoint(point, 0, floorCamera) : turnPoint(point, this._rotation),
+             )}
+-            ${keyed(space.id, repeat(devs, (d) => d.id, (d) => this._renderDevice(
++            ${keyed(space.id, repeat(isoOverlays ? [...devs].sort((a,b) =>
++              (isoOverlays.devices.get(a.id)?.floorScene[1] ?? 0) - (isoOverlays.devices.get(b.id)?.floorScene[1] ?? 0)
++                || a.id.localeCompare(b.id)) : devs, (d) => d.id, (d) => this._renderDevice(
+               d, view, showLqi, isoOverlays?.devices.get(d.id),
+             )))}
+             ${ledDevs.map((d) => this._ledBadge(d, view, isoOverlays?.devices.get(d.id)))}
+@@ -13613,11 +13660,26 @@ export class HouseplanCard extends LitElement {
+               ? space.rooms.map((r) => {
+                   const label = this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r));
+                   return maskRoomLabels && label !== nothing
+-                    ? html`<div class="iso-room-label-plane" ${roomFurnitureOverlap(isoOverlays?.rooms.get(r)?.floorAnchor, view.w, labelOccluders)}>${label}</div>` : label;
++                    ? html`<div class="iso-room-label-plane">${label}</div>` : label;
+                 })
+               : nothing}
+             ${this._editorRuntime && this._canEdit && !this._kiosk ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
+-            ${''/* #649: one floor-shadow layer (z below every tile), after the markers in DOM order */}${iso ? html`<div class="iso-tile-shadows" aria-hidden="true">${repeat(devs, (d) => d.id, (d) => this._renderDevice(d, view, showLqi, isoOverlays?.devices.get(d.id), true))}${this._renderOpeningLocks(view, isoOverlays?.locks, true)}</div>` : nothing}
++            ${''/* Mask the whole SVG group, including incoming overflow during camera gestures. */}${iso ? svg`<svg class="iso-floor-shadow-plane" data-hp-live-inherited-scene="camera" data-hp-live-pixel-plane aria-hidden="true">
++              <defs><mask id="hp-floor-shadow-mask" data-hp-live-mask="camera" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox"
++                x="-.25" y="-.25" width="1.5" height="1.5" style="mask-type:luminance">
++                <path d=${isoScene?.floor.footprintPath ?? ''} fill="white" fill-rule="evenodd"
++                  transform="scale(${1/view.w} ${1/view.h}) translate(${-view.x} ${-view.y})"></path>
++                <g data-hp-floor-shadow-structure fill="black"
++                  transform="scale(${1/view.w} ${1/view.h}) translate(${-view.x} ${-view.y})">${isoFrame?.shadowSilhouette ?? nothing}</g>
++              </mask></defs>
++              <g mask=${maskFloorShadows ? 'url(#hp-floor-shadow-mask)' : nothing}>
++              <foreignObject width="100%" height="100%" style="overflow:visible">
++              ${html`<div class="iso-tile-shadows">${repeat(devs, (d) => d.id, (d) => this._renderDevice(d, view, showLqi, isoOverlays?.devices.get(d.id), true))}${this._renderOpeningLocks(view, isoOverlays?.locks, true)}
++              ${disp.showNames ? space.rooms.map(r => this._renderRoomLabel(r, space, view, disp, isoOverlays?.rooms.get(r), true)) : nothing}
++              ${svg`<svg class="iso-led-shadow-plane" data-hp-live-inherited-scene="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="xMidYMid meet">
++                <g transform=${this._floorTransform}>${this._ledRt(space)?.renderLedLayerFor(this as never,space,disp.glow,view,'shadow') ?? nothing}</g>
++              </svg>`}
++            </div>`}</foreignObject></g></svg>` : nothing}
+             ${this._renderHaZigbeeTopology(space.id, view)}
+           </div>
+           <div data-hp-live-editor-html></div>
+@@ -14318,16 +14380,21 @@ export class HouseplanCard extends LitElement {
+     return html`${guard([this._modeSceneRevision, this._devicePresentation(d, showLqi),
+       d.id, d.name, d.primary, d.area, d.virtual, d.hidden, d.userHidden, d.bindingStatus?.kind,
+       ...(isoPlacement || ghost ? [view.x, view.y, view.w, view.h] : []),
+-      showLqi, isoPlacement, ghost, this._rotation, this._selId,
++      showLqi, isoPlacement, isoPlacement?.wallMask?.path, ghost, this._rotation, this._selId,
+       this._mode === 'devices' && this._selId === d.id], () => {
+     this._modeSceneBuilds['device-shells'] = (this._modeSceneBuilds['device-shells'] || 0) + 1;
+     const pos = this._pos(d);
+-    const point = isoPlacement?.visualScene ?? [pos.x, pos.y];
++    const point = isoPlacement
++      ? ghost && ISO_LAB_FLOOR_MARKERS ? isoPlacement.floorScene : isoPlacement.visualScene
++      : [pos.x, pos.y];
+     const [left, top] = this._framePercent(point, view, !!isoPlacement);
+     const resolved = this._devicePresentation(d, showLqi);
+     const presentation = this._rotation && !(this._isoFloorCamera && ISO_LAB_FLOOR_MARKERS) && typeof d.marker?.angle === 'number'
+       ? { ...resolved, angle: resolved.angle + this._rotation } : resolved;
+     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
++    const wallMask = isoPlacement?.wallMask;
++    const wallMaskId = `hp-device-wall-${encodeURIComponent(d.id)}`;
++    if (wallMask && !ghost) st.push(`mask:url(#${wallMaskId});mask-clip:no-clip`);
+     const floorLight = this._isoLightFloors?.has(isoPlacement?.owner?.id ?? (this._isoLightFloors.size ? this._spaceModel()?.rooms.find((r) => this._pointInRoom([pos.x, pos.y], r))?.id : '') ?? '') ? 'iso-floor-light' : '';
+     if (ghost && ISO_LAB_FLOOR_MARKERS && isoPlacement?.occluded) return html``;
+     if (ghost) return renderIsoTileShadow('dev', d.id, `${deviceThemeClass(this._renderPlanHass)} ${presentation.classes.join(' ')} ${floorLight} ${ISO_LAB_FLOOR_MARKERS && presentation.valueText != null ? 'valonly' : ''}`,
+@@ -14358,6 +14425,7 @@ export class HouseplanCard extends LitElement {
+              attribute binding REMOVES the attribute, so a virtual marker has
+              no data-entity at all rather than "undefined". */}
+       data-hp="device"
++      .hpIsoWallMask=${wallMask}
+       data-selected=${String(this._mode === 'devices' && this._selId === d.id)}
+       data-id="${d.id}"
+       data-entity=${d.primary || nothing}
+@@ -14395,6 +14463,14 @@ export class HouseplanCard extends LitElement {
+       @pointercancel=${(e: PointerEvent) => this._pointerCancel(e, d)}
+       @lostpointercapture=${(e: PointerEvent) => this._pointerCancel(e, d)}
+     >
++      ${wallMask ? svg`<svg width="0" height="0" aria-hidden="true" style="position:absolute;pointer-events:none"><defs>
++        <mask id=${wallMaskId} maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox"
++          x="-8" y="-8" width="17" height="17" style="mask-type:luminance">
++          <rect x="-8" y="-8" width="17" height="17" fill="white"></rect>
++          <path data-hp-wall-body transform=${wallMask.transform} fill="white"></path>
++          <path data-hp-wall-body-hidden transform=${wallMask.transform} fill="#4d4d4d"></path>
++        </mask>
++      </defs></svg>` : nothing}
+       ${guard([presentation, this._newIds.has(d.id), d.userHidden, d.marker?.hidden, ghostLabel, this._config?.language], () => { this._modeSceneBuilds['device-faces'] = (this._modeSceneBuilds['device-faces'] || 0) + 1; return renderDeviceFace(presentation, {
+         surface: 'interactive-plan',
+         newDevice: this._newIds.has(d.id),
+@@ -14594,12 +14670,13 @@ export class HouseplanCard extends LitElement {
+     view: { x: number; y: number; w: number; h: number },
+     disp: SpaceDisplay,
+     isoPlacement?: IsoOverlayPlacement,
++    ghost = false,
+   ): TemplateResult | typeof nothing {
+     // audit/feedback: rooms without a name still need their gear in the Plan
+     // editor — that is where you name them (field report, 2026-07-27)
+     if (!r.name && !this._markup) return nothing;
+     const p = this._labelPos(r, space.id);
+-    const point = isoPlacement?.visualScene ?? [p.x, p.y];
++    const point = isoPlacement ? ghost ? isoPlacement.floorScene : isoPlacement.visualScene : [p.x, p.y];
+     const [left, top] = this._framePercent(point, view, !!isoPlacement);
+     const nameColor = this._roomDialog && this._roomEditId === r.id
+       ? roomNameColorOf(disp.nameColor, { settings: { name_color: this._roomNameColor } })
+@@ -14650,6 +14727,14 @@ export class HouseplanCard extends LitElement {
+     const areaLinkInteractive = areaAffordance.interactive;
+     const separateAreaAction = showAreaLink && areaLinkInteractive;
+     const areaName = r.area && this.hass?.areas?.[r.area]?.name || r.name || r.area || '';
++    const labelGeometry = `left:${left}%;top:${top}%;--rl-scale:${k};--rl-space:${disp.cardNameScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale) * disp.cardLabelScale / disp.cardNameScale}`;
++    if (ghost) return html`<div class="roomlabel iso-room-label-shadow ${rows.length ? 'card' : ''}"
++      data-room-shadow-of=${r.id || nothing} aria-hidden="true" inert
++      style="${labelGeometry};color:#1c2026;opacity:${op * .3}">
++      <span class="rlname"><span class="rlfit">${r.name}</span>${showAreaLink
++        ? html`<span class="rlgo ${separateAreaAction ? 'rlarea' : ''}"><ha-icon icon="mdi:open-in-new"></ha-icon></span>` : nothing}</span>
++      ${rows.length ? html`<span class="rlmetrics">${rows}</span>` : nothing}
++    </div>`;
+     return html`<div class="roomlabel ${rows.length ? 'card' : ''}"
+       data-hp="room-label" data-id=${r.id || nothing} data-area=${r.area || nothing}
+       data-hp-iso-overlay-kind=${isoPlacement?.plane === 'raised' ? 'room-label' : nothing}
+@@ -14660,7 +14745,7 @@ export class HouseplanCard extends LitElement {
+       role=${this._mode === 'view' && !separateAreaAction ? 'button' : nothing}
+       tabindex=${this._mode === 'view' && !separateAreaAction ? '0' : nothing}
+       aria-label=${this._mode === 'view' && !separateAreaAction ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
+-      style="left:${left}%;top:${top}%;color:${nameColor.c};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardNameScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale) * disp.cardLabelScale / disp.cardNameScale}"
++      style="${labelGeometry};color:${nameColor.c};opacity:${op}"
+       @keydown=${this._mode === 'view' && !separateAreaAction && r.id
+         ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
+       @pointerdown=${this._markup
+@@ -15010,7 +15095,9 @@ export class HouseplanCard extends LitElement {
+         gateFace,
+       }, this._cellCm)[0];
+       const isoPlacement = isoPlacements?.get(String(o.id));
+-      const point = isoPlacement?.visualScene ?? floorAnchor;
++      const point = isoPlacement
++        ? ghost && ISO_LAB_FLOOR_MARKERS ? isoPlacement.floorScene : isoPlacement.visualScene
++        : floorAnchor;
+       const [left, top] = this._framePercent(point, view, !!isoPlacement);
+       const lockState = `${locked ? 'locked' : known ? 'unlocked' : 'unknown'} ${this._isoLightFloors?.has(isoPlacement?.owner?.id ?? '') ? 'iso-floor-light' : ''}`;
+       if (ghost && ISO_LAB_FLOOR_MARKERS && isoPlacement?.occluded) return html``;
+@@ -15018,6 +15105,7 @@ export class HouseplanCard extends LitElement {
+         `left:${left}%;top:${top}%`,
+         ISO_LAB_FLOOR_MARKERS ? html`<span class="oplock-shell"><span class="oplock-core"></span></span>` : nothing);
+       return html`<div class="oplock ${deviceThemeClass(this._renderPlanHass)} ${lockState}"
++        data-opening-id=${o.id}
+         role=${this._mode === 'view' ? 'button' : nothing}
+         tabindex=${this._mode === 'view' ? '0' : nothing}
+         aria-label=${this._mode === 'view' ? this._t('opening.lock_info_label') : nothing}
+diff --git a/src/i18n/ru.json b/src/i18n/ru.json
+index e1880cf4c..1a894f638 100644
+--- a/src/i18n/ru.json
++++ b/src/i18n/ru.json
+@@ -554,7 +554,7 @@
+   "space.zero_wall_style.help": "Пунктирные стены нулевой толщины пропускают Glow и солнечные лучи, сплошные блокируют их как барьер нулевой площади. Выбор меняет все такие стены пространства, даже когда их линии скрыты в просмотре.",
+   "space.zero_wall_style.help.aria": "Подсказка: вид стен нулевой толщины",
+   "space.show_names": "Показывать названия комнат",
+-  "space.room_color": "Цвет стен",
++  "space.room_color": "Цвет штриховки стен (верхний срез стен в 3D)",
+   "space.opacity": "Прозрачность",
+   "space.fill_label": "Заливка комнат",
+   "space.fill_mode.help": "«Свой цвет» задаёт оформление, а «Свет», «Температура» и «LQI» используют текущие данные Home Assistant; Glow включается отдельно.",
+diff --git a/src/i18n/settings/en.json b/src/i18n/settings/en.json
+index 8624a5e98..d6f945990 100644
+--- a/src/i18n/settings/en.json
++++ b/src/i18n/settings/en.json
+@@ -72,6 +72,9 @@
+   "space.wall_fill": "Wall fill color",
+   "space.wall_fill.help": "The body of thick walls below hatching. Independent of room fills and wall lines.",
+   "space.wall_fill.help.aria": "Help: wall fill colour",
++  "space.opening_accent_3d": "Accent color for 3D windows and doors",
++  "space.opening_accent_3d.help": "Tints light frames, door leaves, reveals and window sills in 3D only. Transparency controls the tint strength. White or fully transparent color preserves the original material. Glass and curtains stay unchanged.",
++  "space.opening_accent_3d.help.aria": "Help: 3D window and door accent color",
+   "room.name_color": "Name color",
+   "room.name_color_inherit": "As in the space",
+   "room.name_color_own": "Custom color",
+diff --git a/src/i18n/settings/ru.json b/src/i18n/settings/ru.json
+index 930f170a1..eb8e2dffa 100644
+--- a/src/i18n/settings/ru.json
++++ b/src/i18n/settings/ru.json
+@@ -69,9 +69,12 @@
+   "space.name_color": "Цвет названий",
+   "space.name_color.help": "Цвет и прозрачность названий комнат и показателей под ними. В комнате можно задать свой цвет.",
+   "space.name_color.help.aria": "Подсказка: цвет подписей комнат",
+-  "space.wall_fill": "Цвет заливки стен",
+-  "space.wall_fill.help": "Тело толстых стен под штриховкой. Не зависит от заливки комнат и цвета линий стен.",
++  "space.wall_fill": "Цвет заливки стен (боковые грани стен в 3D)",
++  "space.wall_fill.help": "Цвет и прозрачность заливки стен под штриховкой в плоском режиме и боковых граней стен в 3D. Не меняет заливку комнат.",
+   "space.wall_fill.help.aria": "Подсказка: цвет заливки стен",
++  "space.opening_accent_3d": "Акцентный цвет для 3D окон и дверей",
++  "space.opening_accent_3d.help": "Тонирует светлые рамы, дверные полотна, откосы и подоконники только в 3D. Прозрачность регулирует силу наложения цвета. Белый или полностью прозрачный цвет сохраняет исходный материал. Стекло и шторы не меняются.",
++  "space.opening_accent_3d.help.aria": "Подсказка: акцентный цвет окон и дверей в 3D",
+   "room.name_color": "Цвет названия",
+   "room.name_color_inherit": "Как у пространства",
+   "room.name_color_own": "Свой цвет",
+@@ -309,7 +312,7 @@
+   "space.background_label": "Фон вокруг плана",
+   "space.image.help": "Выберите изображение плана в SVG, PNG, JPG или WebP. Комнаты и устройства остаются редактируемыми.",
+   "space.decor.help": "Показывать декоративный слой на плане. Скрытые объекты остаются в редакторе подложки.",
+-  "space.border_color.help": "Цвет и прозрачность линий, контуров и штриховки стен этого пространства. Не меняет названия комнат.",
++  "space.border_color.help": "Цвет и прозрачность линий и штриховки стен в плоском режиме и верхнего среза стен в 3D. Не меняет названия комнат.",
+   "space.fill_color.help": "Собственная заливка комнат пространства. Отдельная комната может выбрать свою заливку.",
+   "space.comfort.help": "Нижняя и верхняя границы комфорта для заливки по температуре.",
+   "space.name_size.help": "Базовый размер названий комнат пространства. Комната может дополнительно задать свой масштаб названия.",
+@@ -322,7 +325,7 @@
+   "space.names.help": "Показывать названия и выбранные показатели комнат. Скрытие сохраняет их настройки и положение.",
+   "space.image.help.aria": "Подсказка: Изображение плана",
+   "space.decor.help.aria": "Подсказка: Декоративный слой",
+-  "space.border_color.help.aria": "Подсказка: цвет стен",
++  "space.border_color.help.aria": "Подсказка: цвет штриховки стен",
+   "space.fill_color.help.aria": "Подсказка: Цвет заливки",
+   "space.comfort.help.aria": "Подсказка: Комфортная температура",
+   "space.name_size.help.aria": "Подсказка: Размер названия",
+diff --git a/src/iso-lab-furniture-render.ts b/src/iso-lab-furniture-render.ts
+index ff04fcaf3..0279c4d45 100644
+--- a/src/iso-lab-furniture-render.ts
++++ b/src/iso-lab-furniture-render.ts
+@@ -1,31 +1,34 @@
+ import { svg } from 'lit';
+ import type { FurnitureMesh } from './iso-lab-furniture';
+ 
++// Shared material for furniture and upstairs stairs: 35% less opaque.
++const materialOpacity = .65;
++
+ export function furnitureShadow(mesh: FurnitureMesh, visualScale: number) {
+   return svg`<path d=${mesh.shadow} fill="#233b46" fill-opacity=".12" stroke="none"
+     style=${`filter:blur(${3.5*visualScale}px)`}></path>`;
+ }
+ 
+-/** Inert view paint: flat editing, hit targets and saved layout stay native. */
++/** Inert view paint: one translucent material, independent of Flat outline opacity. */
+ export function renderIsoLabFurniture(mesh: FurnitureMesh, id: string, symbol: string,
+-  color: string, opacity: number, visualScale: number, withShadow = true, lightSlot?: number) {
++  color: string, visualScale: number, withShadow = true, lightSlot?: number) {
+   return svg`<g data-hp="decor" data-id=${id} data-kind="furniture" data-symbol=${symbol}
+     data-hp-furniture-volume="glass" pointer-events="none" aria-hidden="true"
+-    color=${color} opacity=${opacity} stroke-linejoin="round" stroke-linecap="round">
++    color=${color} stroke-linejoin="round" stroke-linecap="round">
+     ${withShadow ? furnitureShadow(mesh,visualScale) : null}
+     ${mesh.parts.map((p,i)=>svg`<g data-furniture-part=${p.name}>
+-      <path d=${p.side} fill="#e4edf0" fill-opacity=".52" stroke="currentColor"
+-        stroke-opacity=".26" stroke-width=${.7*visualScale}></path>
+-      <path d=${p.side} fill="currentColor" fill-opacity=".06" stroke="none"></path>
+-      <path d=${p.top} fill="#f7fbfc" fill-opacity=".72" stroke="currentColor"
+-        stroke-opacity=".34" stroke-width=${.7*visualScale}></path>
+-      <path d=${p.top} fill="none" stroke="#ffffff" stroke-opacity=".4"
++      <path d=${p.side} fill="#e4edf0" fill-opacity=${.52*materialOpacity} stroke="currentColor"
++        stroke-opacity=${.26*materialOpacity} stroke-width=${.7*visualScale}></path>
++      <path d=${p.side} fill="currentColor" fill-opacity=${.06*materialOpacity} stroke="none"></path>
++      <path d=${p.top} fill="#f7fbfc" fill-opacity=${.72*materialOpacity} stroke="currentColor"
++        stroke-opacity=${.34*materialOpacity} stroke-width=${.7*visualScale}></path>
++      <path d=${p.top} fill="none" stroke="#ffffff" stroke-opacity=${.4*materialOpacity}
+         stroke-width=${.3*visualScale}></path>
+       ${lightSlot === undefined ? null : svg`<defs><pattern id=${'hp-surface-light-'+lightSlot+'-'+i}
+           patternUnits="userSpaceOnUse" x=${mesh.lightBox[0]} y=${mesh.lightBox[1]}
+           width=${mesh.lightBox[2]} height=${mesh.lightBox[3]} viewBox=${mesh.lightBox.join(' ')}>
+           <use href="#hp-room-light-pools" transform=${'translate('+p.lightOffset.join(' ')+')'}></use>
+-        </pattern></defs><g fill=${'url(#hp-surface-light-'+lightSlot+'-'+i+')'} opacity=".8" stroke="none">
++        </pattern></defs><g fill=${'url(#hp-surface-light-'+lightSlot+'-'+i+')'} opacity=${.8*materialOpacity} stroke="none">
+           <path d=${p.side}></path><path d=${p.top}></path></g>`}
+     </g>`)}
+   </g>`;
+diff --git a/src/iso-lab-visibility.ts b/src/iso-lab-visibility.ts
+index 10a4c1142..b43e187cb 100644
+--- a/src/iso-lab-visibility.ts
++++ b/src/iso-lab-visibility.ts
+@@ -1,7 +1,8 @@
+ /** Local #1451 visibility in the common projection. Remove only the portions
+  * hidden by a nearer opaque face; never change plan coordinates or leaf poses.
+  * A single average depth cannot order an open leaf crossing a long wall. */
+-import { projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
++import { isoFloorMatrix, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
++import type { IsoDeviceFace, IsoDeviceSurface, IsoOverlayPlacement } from './iso-overlays';
+ import type { IsoWallDepthQueueEntry } from './iso-scene-geometry';
+ 
+ type Point = [number,number];
+@@ -169,6 +170,113 @@ export function furnitureOcclusion(queue: readonly IsoWallDepthQueueEntry[], cam
+   return result;
+ }
+ 
++let deviceMasks=new WeakMap<IsoOverlayPlacement,IsoOverlayPlacement['wallMask']>();
++let deviceQueue:readonly IsoWallDepthQueueEntry[]|undefined,deviceCamera:IsoCamera|undefined;
++let deviceFaces:(Face|null)[]=[];
++/** Glass occupies the wall-cut band. Solid faces additionally compare their
++ * actual surface depth, so a wall behind a cap never cuts into its top. */
++export function deviceWallOcclusion(queue:readonly IsoWallDepthQueueEntry[],camera:IsoCamera,
++  placement:IsoOverlayPlacement,height:number):IsoOverlayPlacement['wallMask'] {
++  const size=placement.deviceSize;
++  if(!size)return undefined;
++  if(queue!==deviceQueue||camera!==deviceCamera){
++    deviceQueue=queue;deviceCamera=camera;deviceFaces=queue.map(entry=>faceOf(entry,camera));deviceMasks=new WeakMap();
++  }
++  if(deviceMasks.has(placement))return deviceMasks.get(placement);
++  const lift=projectPlanPoint([0,0],0,camera)[1]-projectPlanPoint([0,0],1,camera)[1];
++  const bottom=height-size*.24/lift,[cx,cy]=placement.visualScene,r=size*5,covered:Multi=[];
++  const nearby:Face[]=[];
++  for(const face of deviceFaces){
++    if(!face?.opaque)continue;
++    const [x0,y0,x1,y1]=face.bounds;
++    if(x1<cx-r||x0>cx+r||y1<cy-r||y0>cy+r)continue;
++    nearby.push(face);
++    for(const [ring] of face.geom){
++      const clipped=halfPlane(ring,[face.plane[0],face.plane[1],face.plane[2]-bottom]);
++      if(clipped.length){if(area(clipped)<0)clipped.reverse();covered.push([clipped]);}
++    }
++  }
++  const mask=path(covered);
++  if(!mask){deviceMasks.set(placement,undefined);return undefined;}
++  const [a,b,c,d]=isoFloorMatrix(camera),det=a*d-b*c,[x,y]=placement.visualScene;
++  let lastFaces:readonly IsoDeviceFace[]|undefined,lastBody={body:'',occluded:''};
++  const bodyMask=(faces:readonly IsoDeviceFace[])=>{
++    if(faces===lastFaces)return lastBody;
++    const caps:Point[][]=[],sides:{ring:Point[];plane:Plane}[]=[];
++    for(const face of faces){
++      const {left:l,right:r,top:t,bottom:bt,rx,ry}=face,cap:Point[]=[];
++      // Match the real rounded DOM face, including fitted numeric pills and
++      // badges. All coordinates come from the existing cached measure batch.
++      for(let corner=0;corner<4;corner++)for(let step=0;step<=16;step++){
++        const angle=(-90+corner*90+step*90/16)*Math.PI/180;
++        const px=(corner<2?r-rx:l+rx)+Math.cos(angle)*rx;
++        const py=(corner===0||corner===3?t+ry:bt-ry)+Math.sin(angle)*ry;
++        cap.push([cx+(a*px+c*py)*size,cy+(b*px+d*py)*size]);
++      }
++      caps.push(cap);
++      for(let i=0;i<cap.length;i++){
++        const p=cap[i],q=cap[(i+1)%cap.length];
++        if(q[0]>=p[0]-1e-8)continue; // only camera-facing vertical sides
++        const lowP:Point=[p[0],p[1]+size*.24],lowQ:Point=[q[0],q[1]+size*.24];
++        const plane=heightPlane([[...p,height],[...q,height],[...lowQ,bottom]]);
++        if(plane)sides.push({ring:[p,q,lowQ,lowP],plane});
++      }
++    }
++    const hidden:Multi=[];
++    for(const side of sides)for(const wall of nearby){
++      const delta=wall.plane.map((n,i)=>n-side.plane[i]) as Plane;
++      for(const [ring] of wall.geom){
++        let overlap=halfPlane(ring,[delta[0],delta[1],delta[2]-DEPTH_EPS]);
++        const sign=Math.sign(area(side.ring));
++        for(let i=0;i<side.ring.length&&overlap.length;i++){
++          const p=side.ring[i],q=side.ring[(i+1)%side.ring.length];
++          overlap=halfPlane(overlap,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign]);
++        }
++        if(!overlap.length)continue;
++        // The cap is nearer than every side, including another badge's side.
++        let visible:Multi=[[overlap]];
++        for(const cap of caps)visible=visible.flatMap(poly=>subtractConvex(poly[0],cap));
++        hidden.push(...visible);
++      }
++    }
++    const solid:Multi=[...caps.map(cap=>[cap]),...sides.map(side=>[side.ring])];
++    for(const geom of [solid,hidden])for(const [ring] of geom)if(area(ring)<0)ring.reverse();
++    lastFaces=faces;return lastBody={body:path(solid),occluded:path(hidden)};
++  };
++  const glassMasks=new WeakMap<readonly IsoDeviceSurface[],string>();
++  const structureFaces=deviceFaces;
++  const glassMask=(surfaces:readonly IsoDeviceSurface[]):string=>{
++    const cached=glassMasks.get(surfaces);if(cached!==undefined)return cached;
++    const hidden:Multi=[];
++    for(const surface of surfaces){
++      const vertices=surface.map(([x,y,drop])=>[...projectPlanPoint([x,y],height,camera),height-drop/lift]);
++      const ring=vertices.map(p=>[p[0],p[1]] as Point),plane=heightPlane(vertices);
++      if(!plane)continue;
++      const sign=Math.sign(area(ring));
++      const bounds=[Math.min(...ring.map(p=>p[0])),Math.min(...ring.map(p=>p[1])),Math.max(...ring.map(p=>p[0])),Math.max(...ring.map(p=>p[1]))];
++      for(const wall of structureFaces){
++        if(!wall?.opaque||wall.bounds[2]<bounds[0]||wall.bounds[0]>bounds[2]||wall.bounds[3]<bounds[1]||wall.bounds[1]>bounds[3])continue;
++        const delta=wall.plane.map((n,i)=>n-plane[i]) as Plane;
++        for(const [wallRing] of wall.geom){
++          let overlap=halfPlane(wallRing,[delta[0],delta[1],delta[2]-DEPTH_EPS]);
++          for(let i=0;i<ring.length&&overlap.length;i++){
++            const p=ring[i],q=ring[(i+1)%ring.length];
++            overlap=halfPlane(overlap,[(p[1]-q[1])*sign,(q[0]-p[0])*sign,(p[0]*q[1]-q[0]*p[1])*sign]);
++          }
++          if(overlap.length){if(area(overlap)<0)overlap.reverse();hidden.push([overlap]);}
++        }
++      }
++    }
++    const origin=projectPlanPoint([0,0],height,camera);
++    const local=hidden.map(poly=>poly.map(ring=>ring.map(p=>{
++      const x=p[0]-origin[0],y=p[1]-origin[1];return [(d*x-c*y)/det,(-b*x+a*y)/det] as Point;
++    })));
++    const result=path(local);glassMasks.set(surfaces,result);return result;
++  };
++  const result={path:mask,bodyMask,glassMask,transform:`matrix(${d/det/size} ${-b/det/size} ${-c/det/size} ${a/det/size} ${.5-(d*x-c*y)/det/size} ${.5-(-b*x+a*y)/det/size})`};
++  deviceMasks.set(placement,result);return result;
++}
++
+ let lastKey='',lastResult:readonly IsoWallDepthQueueEntry[]=[];
+ export function clipIsoOpeningDepthQueue(entries:readonly IsoWallDepthQueueEntry[],camera:IsoCamera):readonly IsoWallDepthQueueEntry[] {
+   const key=JSON.stringify(camera)+entries.map(e=>e.layer==='opening'
+diff --git a/src/iso-marker-glass.ts b/src/iso-marker-glass.ts
+index 9610db359..29ad3a9c6 100644
+--- a/src/iso-marker-glass.ts
++++ b/src/iso-marker-glass.ts
+@@ -1,15 +1,34 @@
+ /** Local #1451 translucent shell; all glass paint is inert. */
+-import { svg } from 'lit';
++import { nothing, svg } from 'lit';
+ import type { IsoMarkerGlass } from './iso-marker-outline';
++import type { IsoDeviceWallMask } from './iso-overlays';
+ 
+-export function renderIsoMarkerGlass(glass:IsoMarkerGlass,viewBox:string,virtual=false) {
++export function renderIsoMarkerGlass(glass:IsoMarkerGlass,viewBox:string,virtual=false,
++  member?:{id:string;clip:string},wall?:{id:string;mask:IsoDeviceWallMask}) {
++  const front=wall?.mask.glassMask(glass.frontFaces),back=wall?.mask.glassMask(glass.backFaces);
++  const points=[...glass.frontFaces,...glass.backFaces].flat();
++  const x=Math.min(...points.map(p=>p[0]))-1,y=Math.min(...points.map(p=>p[1]))-1;
++  const w=Math.max(...points.map(p=>p[0]))-x+1,h=Math.max(...points.map(p=>p[1]))-y+1;
++  const mask=(side:string,path:string|undefined)=>path ? svg`<defs>
++    <mask id=${`${wall!.id}-${side}`} maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse"
++      x=${x} y=${y} width=${w} height=${h} style="mask-type:luminance">
++      <rect x=${x} y=${y} width=${w} height=${h} fill="white"></rect>
++      <path d=${path} fill="#4d4d4d"></path>
++    </mask></defs>` : nothing;
+   return svg`
+-    <svg class=${`iso-marker-glass rear${virtual?' virtual':''}`} viewBox=${viewBox} preserveAspectRatio="none" aria-hidden="true">
++    ${member ? nothing : svg`<svg class=${`iso-marker-glass rear${virtual?' virtual':''}`} viewBox=${viewBox} preserveAspectRatio="none" aria-hidden="true">
++      ${mask('back',back)}
++      <g mask=${back ? `url(#${wall!.id}-back)` : nothing}>
+       <path class="glass-back" d=${glass.back}></path>
+       <path class="glass-rim lower" stroke-dasharray=${virtual?'6 5':'none'} d=${glass.bottom}></path>
+-    </svg>
++      </g>
++    </svg>`}
+     <svg class=${`iso-marker-glass front${virtual?' virtual':''}`} viewBox=${viewBox} preserveAspectRatio="none" aria-hidden="true">
++      ${mask('front',front)}
++      ${member ? svg`<defs><clipPath id=${member.id}><path d=${member.clip}></path></clipPath></defs>` : nothing}
++      <g clip-path=${member ? `url(#${member.id})` : nothing} mask=${front ? `url(#${wall!.id}-front)` : nothing}>
+       <path class="glass-front" d=${glass.front}></path>
+       <path class="glass-rim upper" stroke-dasharray=${virtual?'6 5':'none'} d=${glass.top}></path>
++      </g>
+     </svg>`;
+ }
+diff --git a/src/iso-marker-outline.ts b/src/iso-marker-outline.ts
+index be5950f23..dff776567 100644
+--- a/src/iso-marker-outline.ts
++++ b/src/iso-marker-outline.ts
+@@ -1,5 +1,6 @@
+ /** Local #1451 paint envelope. Native contact layout and hit ownership stay Flat. */
+ import { intersection, union, type Geom } from 'polyclip-ts';
++import type { IsoDeviceSurface } from './iso-overlays';
+ import { contactOutline, contactRotate, freeContactShape,
+   type ContactPoint as Point, type ContactShape, type ContactSide } from './device-contact-geometry';
+ 
+@@ -137,31 +138,40 @@ export function isoLockBodyOutline(plane:readonly number[]):string {
+   return path;
+ }
+ 
+-export interface IsoMarkerGlass { front: string; back: string; top: string; bottom: string }
++export interface IsoMarkerGlass {
++  front: string; back: string; top: string; bottom: string;
++  frontFaces: IsoDeviceSurface[]; backFaces: IsoDeviceSurface[];
++}
+ /** Extrude the native open contact boundary, not its already swept silhouette.
+  * Front and rear surfaces are separate paint layers around the unchanged face.
+  * Wall-owned edges stay open and grouped contours retain their concavities. */
+-export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly number[]):IsoMarkerGlass {
+-  const result:IsoMarkerGlass={front:'',back:'',top:'',bottom:''};
++export function isoMarkerGlass(shapes:readonly ContactShape[],plane:readonly number[],topAnchored=false):IsoMarkerGlass {
++  const result:IsoMarkerGlass={front:'',back:'',top:'',bottom:'',frontFaces:[],backFaces:[]};
+   if(!shapes.length)return result;
+   const [a,b,c,d]=plane,det=a*d-b*c;
+   if(!Number.isFinite(det)||Math.abs(det)<1e-8)return result;
+   const half=Math.max(...shapes.map(s=>s.marker.diameter))*.12;
+   const v:Point=[-c/det*half,a/det*half];
+-  // Keep the base at the body's underside, raise only the lip by 0.08 D.
+-  const lip=-5/3;
++  // Raised device caps and their upper rim share one plane. An extra raised
++  // lip shifts the projected ellipse off-centre even with identical XY.
++  const lip=topAnchored ? 0 : -5/3;
++  const bottom=topAnchored ? 2 : 1;
+   const path=(points:Point[])=>points.map((p,i)=>`${i?'L':'M'}${p.map(n=>+n.toFixed(7)).join(' ')}`).join(' ');
+   for(const chain of rings(contactOutline(shapes,true),true)) {
+     result.top+=path(chain.map(p=>add(p,v,lip)))+' ';
+-    result.bottom+=path(chain.map(p=>add(p,v,1)))+' ';
++    result.bottom+=path(chain.map(p=>add(p,v,bottom)))+' ';
+     let run:Point[]=[];let front=false;
+     const flush=()=>{
+       if(run.length<2)return;
+-      result[front?'front':'back']+=path([...run.map(p=>add(p,v,lip)),...[...run].reverse().map(p=>add(p,v,1))])+' Z ';
++      result[front?'front':'back']+=path([...run.map(p=>add(p,v,lip)),...[...run].reverse().map(p=>add(p,v,bottom))])+' Z ';
+     };
+     for(let i=1;i<chain.length;i++) {
+       const p=chain[i-1],q=chain[i],dx=a*(q[0]-p[0])+c*(q[1]-p[1]);
+       const next=dx<0;
++      if(Math.hypot(q[0]-p[0],q[1]-p[1])>1e-8)result[next?'frontFaces':'backFaces'].push([
++        [...add(p,v,lip),half*lip],[...add(q,v,lip),half*lip],
++        [...add(q,v,bottom),half*bottom],[...add(p,v,bottom),half*bottom],
++      ]);
+       if(run.length && next!==front){flush();run=[];}
+       front=next;if(!run.length)run.push(p);run.push(q);
+     }
+@@ -174,7 +184,7 @@ const lockGlass=new Map<string,IsoMarkerGlass>();
+ export function isoLockGlass(plane:readonly number[]):IsoMarkerGlass {
+   const key=plane.slice(0,4).join(',');let glass=lockGlass.get(key);
+   if(!glass){glass=isoMarkerGlass([freeContactShape({id:'lock',x:0,y:0,diameter:80,
+-    box:{left:-50.75,right:50.75,top:-50.75,bottom:50.75}})],plane);
++    box:{left:-50.75,right:50.75,top:-50.75,bottom:50.75}})],plane,true);
+     if(lockGlass.size>=16)lockGlass.clear();lockGlass.set(key,glass);}
+   return glass;
+ }
+diff --git a/src/iso-materials.ts b/src/iso-materials.ts
+index aecf013a0..ebe627c57 100644
+--- a/src/iso-materials.ts
++++ b/src/iso-materials.ts
+@@ -2,9 +2,9 @@
+  * #649 (docs/ISOMETRIC.md, Stage 6): presentation colours of the 2.5D View
+  * that follow the user's data, never the Home Assistant theme.
+  *
+- * - Walls: the top face is the space's resolved `settings.wall_fill` colour, the side
+- *   faces are the same colour darkened per channel. With the default white
+- *   this is the designer lab's matte look (#c5c5c0 → #999b97 sides).
++ * - Walls: the UI Lab's explicit top/side colours follow the space's wall
++ *   hatching/fill settings respectively. Single-colour callers retain the
++ *   legacy material with darker side faces.
+  * - Floor lightness: relative luma of the room floor (its fill composited over
+  *   the plan paper) decides the "light floor" variants of tile shadows and
+  *   window light (lab: luma > 0.55).
+@@ -63,24 +63,38 @@ export interface IsoWallMaterial {
+   sideLo: string;
+ }
+ 
+-export function isoWallMaterial(wallFill: unknown): IsoWallMaterial {
+-  const base = parseHexColor(wallFill) ?? [255, 255, 255];
++export function isoWallMaterial(topColor: unknown, sideColor?: unknown): IsoWallMaterial {
++  const base = parseHexColor(topColor) ?? [255, 255, 255];
++  const side = parseHexColor(sideColor);
+   return {
+     topHi: hex(base),
+     topLo: hex(scale(base, ISO_WALL_TOP_LO)),
+-    sideHi: hex(scale(base, ISO_WALL_SIDE[0])),
+-    sideMid: hex(scale(base, ISO_WALL_SIDE[1])),
+-    sideLo: hex(scale(base, ISO_WALL_SIDE[2])),
++    sideHi: hex(side ? scale(side, 1.12) : scale(base, ISO_WALL_SIDE[0])),
++    sideMid: hex(side ?? scale(base, ISO_WALL_SIDE[1])),
++    sideLo: hex(side ? scale(side, .88) : scale(base, ISO_WALL_SIDE[2])),
+   };
+ }
+ 
+ /** CSS custom properties for the 2.5D stage style attribute. */
+-export function isoWallMaterialVars(wallFill: unknown): string {
+-  const m = isoWallMaterial(wallFill);
++export function isoWallMaterialVars(topColor: unknown, sideColor?: unknown): string {
++  const m = isoWallMaterial(topColor, sideColor);
+   return `--iso-top-hi:${m.topHi};--iso-top-lo:${m.topLo};--iso-side-hi:${m.sideHi};`
+     + `--iso-side-mid:${m.sideMid};--iso-side-lo:${m.sideLo}`;
+ }
+ 
++/** An adjustable tint over the original white materials. White is a no-op;
++ * shading between frames, leaves and reveals remains visible. */
++export function isoOpeningMaterialVars(accent: unknown, opacity = 1): Record<string, string> {
++  const color = parseHexColor(accent) ?? [255, 255, 255];
++  const a = Number.isFinite(opacity) ? Math.min(1, Math.max(0, opacity)) : 1;
++  return Object.fromEntries(Object.entries({
++    leaf: '#f1f2ef', frame: '#c2cfd2', edge: '#bec5c5',
++    'window-frame': '#f3f4f0', 'door-frame': '#e9ece8', reveal: '#8b8d8c',
++    'sill-side': '#e6e8e3', 'sill-top': '#fffefa',
++  }).map(([name, base]) => [`--iso-opening-${name}`,
++    hex(parseHexColor(base)!.map((channel, i) => channel * (1 - a + a * color[i] / 255)) as unknown as Rgb)]));
++}
++
+ /** `#hex` or `rgb(a)(r, g, b …)` as computed styles report it; anything else → null. */
+ export function parseCssColor(value: unknown): Rgb | null {
+   const hexRgb = parseHexColor(value);
+diff --git a/src/iso-overlays.ts b/src/iso-overlays.ts
+index 1f573a23a..a73fcb543 100644
+--- a/src/iso-overlays.ts
++++ b/src/iso-overlays.ts
+@@ -44,7 +44,19 @@ export interface IsoOverlayPlacementInput extends IsoOverlayOwnerInput {
+   resolvedOwner?: IsoOverlayOwner | null;
+ }
+ 
++export interface IsoDeviceFace {
++  left: number; top: number; right: number; bottom: number; rx: number; ry: number;
++}
++/** Plan-plane XY plus vertical screen drop below the marker's top plane. */
++export type IsoDeviceSurface = readonly (readonly [number, number, number])[];
++export interface IsoDeviceWallMask {
++  path: string; transform: string;
++  bodyMask: (faces: readonly IsoDeviceFace[]) => { body: string; occluded: string };
++  glassMask: (faces: readonly IsoDeviceSurface[]) => string;
++}
+ export interface IsoOverlayPlacement {
++  deviceSize?: number;
++  wallMask?: IsoDeviceWallMask;
+   /** Local #1451 context, without moving the immutable floor anchor. */
+   occluded?: boolean;
+   plane: IsoOverlayPlane;
+diff --git a/src/iso-scene-geometry.ts b/src/iso-scene-geometry.ts
+index 0a3a79550..3a71a6a4d 100644
+--- a/src/iso-scene-geometry.ts
++++ b/src/iso-scene-geometry.ts
+@@ -890,7 +890,8 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
+     core?: number,
+     signal?: {text: string; belowBadge: boolean},
+   ): IsoOverlayPlacement => {
+-    const visualOffset = kind === 'room-label' || input.floorAlignedMarkers ? 0 : wallHeight;
++    // UI Lab: devices, room labels and door locks share the wall-cut plane.
++    const visualOffset = wallHeight;
+     const cacheKey = `${kind}\u0000${id}`;
+     // Nothing here depends on zoom or stage size, so a pinch, wheel or resize
+     // reuses the immutable placement and Lit keeps the raised SVG subtree.
+@@ -924,13 +925,15 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
+       visualOffset,
+       camera: input.camera,
+     });
+-    if(input.floorAlignedMarkers && kind !== 'room-label') {
++    if (kind === 'device') placement.deviceSize = core;
++    if(input.floorAlignedMarkers && kind === 'opening-lock') {
+       const occlusionHalfSize: PlanPoint = core ? [core/2,core/2] : footprintHalfSize;
+       const camera = input.camera ?? ISO_CAMERA;
+       const behindWall = (center: PlanPoint, half: PlanPoint) =>
+-        isoMarkerOccluded(center, half, masonry, wallHeight, camera)
++        isoMarkerOccluded(center, half, masonry, Math.max(0, wallHeight - visualOffset), camera)
+         || openingMasonry.some(volume => isoMarkerOccluded(center, half,
+-          [[volume.ring.map(point => [point[0], point[1]])]], volume.top, camera, volume.bottom));
++          [[volume.ring.map(point => [point[0], point[1]])]], Math.max(0, volume.top - visualOffset), camera,
++          Math.max(0, volume.bottom - visualOffset)));
+       placement.occluded = behindWall(floorAnchor, occlusionHalfSize);
+       if (!placement.occluded && core && signal) {
+         const font = core * ISO_RAISED_FOOTPRINT.deviceLqiFontSize;
+diff --git a/src/iso-scene-render.ts b/src/iso-scene-render.ts
+index deb1ac7af..63f1f969a 100644
+--- a/src/iso-scene-render.ts
++++ b/src/iso-scene-render.ts
+@@ -8,12 +8,13 @@
+ // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
+ export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
+ import { nothing, svg, type TemplateResult } from 'lit';
++import { union, type Geom } from 'polyclip-ts';
+ import { ISO_LAB_FLOOR_MARKERS, ISO_LAB_OPENINGS } from './iso-lab-camera';
+-import { clipIsoOpeningDepthQueue, furnitureOcclusion } from './iso-lab-visibility';
+-import { mdiWeatherSunny, mdiWeatherSunnyOff } from '@mdi/js';
++import { clipIsoOpeningDepthQueue, deviceWallOcclusion, furnitureOcclusion } from './iso-lab-visibility';
++import { isoWallLightPainter, type IsoWallLightSource } from './iso-wall-light';
+ import type { ResolvedOpeningVisual } from './opening-features';
+ import type { SpaceDisplay } from './logic';
+-import { projectPlanPoint, type PlanPoint } from './iso-projection';
++import { isoDisplayWallHeight, projectPlanPoint, type PlanPoint } from './iso-projection';
+ import type { IsoFloorGeometry, IsoWallGeometry } from './iso-walls';
+ import type { IsoDecorationLayers, IsoOpeningPanel } from './iso-openings';
+ import { gridVisualScale, gridVisualUnits } from './grid-scale';
+@@ -24,6 +25,26 @@ import { buildIsoWallDepthQueue, resolveIsoDecorationLayers, resolveIsoOpeningPa
+   type IsoOverlayRenderScene, type IsoRenderScene, type IsoOpeningRenderSurface } from './iso-scene-geometry';
+ export const ISO_SCENE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
+ 
++const wallCutPaint = new WeakMap<object, string>();
++/** Wall and lintel caps are one cut plane. Outline only their outer boundary;
++ * the joints above a doorway are construction seams, not visible edges. */
++function continuousWallCut(scene:IsoRenderScene,queue:ReturnType<typeof buildIsoWallDepthQueue>):string {
++  const cached=wallCutPaint.get(queue);if(cached!==undefined)return cached;
++  const parts:Geom[]=[];
++  const ring=(points:readonly (readonly number[])[]):[number,number][]=>{
++    const out=points.map(p=>[Number(p[0].toFixed(6)),Number(p[1].toFixed(6))] as [number,number]);
++    if(out.length)out.push(out[0]);return out;
++  };
++  for(const entry of queue){
++    if(entry.layer==='wall-top'&&entry.face.projectedRings)parts.push(entry.face.projectedRings.map(ring));
++    else if(entry.layer==='opening'&&entry.surface.kind==='opening-lintel-top'&&entry.surface.points&&scene.camera)
++      parts.push([ring(entry.surface.points.map(p=>projectPlanPoint(p.point,p.z,scene.camera)))]);
++  }
++  const merged=parts.length ? union(parts[0],...parts.slice(1)) : [];
++  const result=merged.flatMap(poly=>poly.map(ring=>`M ${ring.map(p=>p.join(' ')).join(' L ')} Z`)).join(' ');
++  wallCutPaint.set(queue,result);return result;
++}
++
+ export interface IsoFramePresentation {
+   layers: IsoDecorationLayers;
+   panels: readonly IsoOpeningPanel[];
+@@ -32,6 +53,7 @@ export interface IsoFramePresentation {
+   shadows: TemplateResult;
+   walls: TemplateResult;
+   foreground: TemplateResult | typeof nothing;
++  shadowSilhouette: TemplateResult;
+ }
+ 
+ export interface IsoFurniturePaint {
+@@ -51,6 +73,7 @@ export function resolveIsoFramePresentation(input: {
+   overlays: (layers: IsoDecorationLayers) => IsoOverlayRenderScene | null;
+   cellCm: number;
+   furniture?: readonly IsoFurniturePaint[];
++  wallLights?: readonly IsoWallLightSource[];
+ }): IsoFramePresentation {
+   const layers = resolveIsoDecorationLayers(input.display);
+   const panels = layers.panels
+@@ -58,7 +81,7 @@ export function resolveIsoFramePresentation(input: {
+     : [];
+   const overlays = input.overlays(layers);
+   const render = (renderLayers: IsoDecorationLayers): IsoFramePresentation => {
+-    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture);
++    const structure = renderIsoStructure(input.projection, renderLayers, input.scene, panels, input.cellCm, input.furniture, overlays, input.wallLights);
+     const indicators = renderLayers.panels ? renderIsoOpeningIndicators(input.scene, input.openings, input.visualOf, input.cellCm, input.display.color) : nothing;
+     return {
+       layers: renderLayers, panels, overlays,
+@@ -66,6 +89,7 @@ export function resolveIsoFramePresentation(input: {
+       shadows: renderIsoShadows(renderLayers, panels, input.scene?.geometry, input.cellCm),
+       walls: svg`${structure.walls}${structure.foreground === nothing ? indicators : nothing}`,
+       foreground: structure.foreground === nothing ? nothing : svg`${structure.foreground}${indicators}`,
++      shadowSilhouette: structure.shadowSilhouette,
+     };
+   };
+   try { return render(layers); } catch (error) {
+@@ -85,7 +109,7 @@ function renderIsoOpeningIndicators(scene: IsoRenderScene | null, openings: read
+   const scale = gridVisualScale(cellCm);
+   return svg`<g class="iso-opening-indicators" pointer-events="none" aria-hidden="true">${scene.openings.flatMap(basis => {
+     const opening = openings[basis.sourceIndex], visual = opening && visualOf(opening);
+-    if (!visual?.leaves?.some(leaf => leaf.unknown || leaf.shade) || basis.type !== 'window') return [];
++    if (!visual?.leaves?.some(leaf => leaf.unknown) || basis.type !== 'window') return [];
+     const leaves = visual.leaves;
+     const side = visual.side === 'negative' ? -1 : 1;
+     const sill = basis.windowProfile?.frameBottom ?? 0;
+@@ -113,11 +137,10 @@ function renderIsoOpeningIndicators(scene: IsoRenderScene | null, openings: read
+           * Math.max(0, 11 * markerScale - Math.abs(across)) / span : 0;
+         return [p[0] + dx * shift - dy * clearance, p[1] + dy * shift + dx * clearance];
+       };
+-      const shade = point(-side), unknown = point(side);
+-      return svg`${leaf.shade ? svg`<g class="op-shade-indicator" data-opening-id=${basis.id} data-opening-leaf=${leaf.id} transform="translate(${shade[0]} ${shade[1]}) scale(${.55 * markerScale})" fill=${color}>
+-        ${leaf.shade.amount === null ? svg`<text text-anchor="middle" dominant-baseline="central" font-size="19">?</text>`
+-          : svg`<path d=${leaf.shade.amount === 0 ? mdiWeatherSunnyOff : mdiWeatherSunny} transform="translate(-12 -12)"></path>`}
+-        </g>` : nothing}${leaf.unknown ? svg`<text class="op-leaf-unknown" data-opening-id=${basis.id} data-opening-leaf=${leaf.id} x=${unknown[0]} y=${unknown[1]} fill=${color}
++      // Curtains already show light transmission in volume; retain only an
++      // unknown sash-position indicator, independently of the shade state.
++      const unknown = point(side);
++      return svg`${leaf.unknown ? svg`<text class="op-leaf-unknown" data-opening-id=${basis.id} data-opening-leaf=${leaf.id} x=${unknown[0]} y=${unknown[1]} fill=${color}
+           text-anchor="middle" dominant-baseline="central" font-size=${11 * markerScale}>?</text>` : nothing}`;
+     });
+   })}</g>`;
+@@ -205,8 +228,10 @@ function renderIsoStructure(
+   panels: readonly IsoOpeningPanel[],
+   cellCm: number,
+   furniture: readonly IsoFurniturePaint[] = [],
+-): Pick<IsoFramePresentation,'walls'|'foreground'> {
+-  if (projection !== 'iso' || !layers.structural || !scene) return {walls:emptySvg(), foreground:nothing};
++  overlays: IsoOverlayRenderScene | null = null,
++  wallLights: readonly IsoWallLightSource[] = [],
++): Pick<IsoFramePresentation,'walls'|'foreground'|'shadowSilhouette'> {
++  if (projection !== 'iso' || !layers.structural || !scene) return {walls:emptySvg(), foreground:nothing, shadowSilhouette:emptySvg()};
+   const openingSurfaces: IsoOpeningRenderSurface[] = layers.panels ? [
+     ...scene.openingSurfaces,
+     ...panels.flatMap((panel) => panel.surfaces.map((surface) => ({
+@@ -220,6 +245,10 @@ function renderIsoStructure(
+   const ordered = buildIsoWallDepthQueue(scene.geometry, openingSurfaces,
+     (scene.camera?.floorScaleY ?? 1) !== 1);
+   const depthQueue = ISO_LAB_OPENINGS && scene.camera ? clipIsoOpeningDepthQueue(ordered,scene.camera) : ordered;
++  const wallCut = ISO_LAB_OPENINGS ? continuousWallCut(scene,depthQueue) : '';
++  if (scene.camera && overlays) for (const placement of overlays.devices.values()) {
++    placement.wallMask = deviceWallOcclusion(depthQueue,scene.camera,placement,gridVisualUnits(isoDisplayWallHeight(),cellCm));
++  }
+   // Fill adjoining visible masonry faces together. Separately antialiased
+   // edges otherwise leave a light hairline where a window apron meets its wall.
+   const masonrySides = ISO_LAB_OPENINGS ? depthQueue.flatMap(entry => {
+@@ -261,19 +290,25 @@ function renderIsoStructure(
+   const glassSlots = new Map<number,number>();
+   visibility.forEach((item,slot)=>item.frontGlass.forEach(index=>glassSlots.set(index,slot)));
+   const entries = depthQueue.map((entry,index)=>({entry,index}));
++  const masonry = ({entry}:typeof entries[number]) => entry.layer !== 'opening'
++    || entry.surface.material === 'wall-side' || entry.surface.material === 'wall-top';
++  const masonrySide = ({entry}:typeof entries[number]) => entry.layer === 'wall-side'
++    || (entry.layer === 'opening' && entry.surface.material === 'wall-side');
++  const paintWallLight = scene.camera ? isoWallLightPainter(wallLights, scene.camera, cellCm) : () => nothing;
+   const paintEntry = ({entry,index}:typeof entries[number]) => {
+         if (entry.layer === 'wall-side') {
+           const face = entry.face;
+           if (face.roundColumn !== undefined) {
+             const paths = columnRuns.get(index);
+-            return paths ? svg`<path data-hp-round-column=${face.roundColumn} d=${paths.join(' ')}
+-              fill=${layers.materialNuance ? 'url(#hp-iso-column-'+face.roundColumn+')' : 'var(--iso-side-mid, #adadad)'}></path>` : nothing;
++            return svg`${paths ? svg`<path data-hp-round-column=${face.roundColumn} d=${paths.join(' ')}
++              fill=${layers.materialNuance ? 'url(#hp-iso-column-'+face.roundColumn+')' : 'var(--iso-side-mid, #adadad)'}></path>` : nothing}${paintWallLight(entry,index)}`;
+           }
+           return svg`<path class="iso-wall-side" d=${face.d} fill-rule="evenodd" data-edge=${face.edge}></path>${layers.materialNuance
+             ? svg`<path class="iso-material-texture iso-wall-texture" d=${face.d}></path>`
+-            : nothing}`;
++            : nothing}${paintWallLight(entry,index)}`;
+         }
+         if (entry.layer === 'wall-top') {
++          if(wallCut)return nothing;
+           const face = entry.face;
+           return svg`<path class="iso-wall-top" d=${face.d} data-component=${face.component}
+             fill-rule="evenodd"></path>${layers.materialNuance
+@@ -282,9 +317,10 @@ function renderIsoStructure(
+             : nothing}`;
+         }
+         const surface = entry.surface;
++        if(wallCut&&surface.kind==='opening-lintel-top')return nothing;
+         if (surface.material === 'wall-side' || surface.material === 'wall-top') {
+           return svg`<path class="iso-${surface.material}" d=${surface.d} fill-rule="evenodd"
+-            data-id=${surface.id} data-kind=${surface.type} data-surface=${surface.kind}></path>`;
++            data-id=${surface.id} data-kind=${surface.type} data-surface=${surface.kind}></path>${paintWallLight(entry,index)}`;
+         }
+         /* css-uses {"owner":"renderIsoWalls","kind":"class","values":["iso-door","iso-window"],"reason":"Opening surfaces have exactly the door/window type union"} */
+         return svg`<path class="iso-opening-panel iso-${surface.type} iso-opening-${surface.kind} iso-material-${surface.material}"
+@@ -312,9 +348,27 @@ function renderIsoStructure(
+     <g class=${layers.panels ? 'iso-wall-depth-queue iso-openings' : 'iso-wall-depth-queue'}
+       data-hp=${layers.panels ? 'iso-openings' : nothing}
+       aria-hidden="true" pointer-events="none">
+-      ${masonrySides ? svg`<path class="iso-masonry-underpaint" fill="var(--iso-side-mid, #adadad)"
+-        d=${masonrySides}></path>` : nothing}
+-      ${entries.filter(({index})=>!glassSlots.has(index)).map(paintEntry)}
++      ${/* Composite the masonry once, including its seam underpaint and light.
++           Per-face alpha would darken overlaps; opening materials stay independent.
++           The depth queue already clips surfaces against nearer opaque geometry. */nothing}
++      <g class="iso-wall-side-fill">
++        ${masonrySides ? svg`<path class="iso-masonry-underpaint" fill="var(--iso-side-mid, #adadad)"
++          d=${masonrySides}></path>` : nothing}
++        ${entries.filter(masonrySide).map(paintEntry)}
++      </g>
++      <g class="iso-wall-fill">
++        ${entries.filter(row=>masonry(row)&&!masonrySide(row)).map(paintEntry)}
++        ${wallCut ? svg`<path class="iso-wall-top" data-hp="iso-wall-cut" d=${wallCut} fill-rule="evenodd"></path>` : nothing}
++      </g>
++      <g class="iso-wall-contours">
++        ${wallCut ? svg`<path class="iso-wall-top iso-wall-contour" d=${wallCut}></path>` : nothing}
++        ${entries.filter(masonry).map(({entry}) => entry.layer === 'wall-top'
++          ? wallCut ? nothing : svg`<path class="iso-wall-top iso-wall-contour" d=${entry.face.d}></path>`
++          : entry.layer === 'opening' && entry.surface.material === 'wall-top'
++            && !(wallCut && entry.surface.kind === 'opening-lintel-top')
++            ? svg`<path class="iso-wall-top iso-wall-contour" d=${entry.surface.d}></path>` : nothing)}
++      </g>
++      ${entries.filter(row=>!masonry(row)&&!glassSlots.has(row.index)).map(paintEntry)}
+     </g></g>`;
+   const foreground = furniture.length ? svg`<g class="iso-walls" ?data-hp-opening-masonry=${ISO_LAB_OPENINGS}>
+       ${furniture.map((item,slot)=>{
+@@ -327,5 +381,10 @@ function renderIsoStructure(
+           <g mask=${mask ? 'url(#'+id+')' : nothing}>${item.body}</g>
+           ${entries.filter(({index})=>glassSlots.get(index)===slot).map(paintEntry)}`;
+       })}</g>` : nothing;
+-  return {walls,foreground};
++  // Own these paths inside the shadow mask. A <use> of the independently
++  // promoted wall SVG can retain stale clipping during live camera rebases.
++  const shadowSilhouette = svg`<g fill-rule="evenodd">${depthQueue.map(entry =>
++    svg`<path d=${entry.layer === 'opening' ? entry.surface.d : entry.face.d}
++      stroke="black" stroke-width=".5" stroke-linejoin="round"></path>`)}</g>`;
++  return {walls,foreground,shadowSilhouette};
+ }
+diff --git a/src/led-strip-field.ts b/src/led-strip-field.ts
+index e46a49839..83d9928da 100644
+--- a/src/led-strip-field.ts
++++ b/src/led-strip-field.ts
+@@ -24,6 +24,7 @@ import {
+   compactPoints, emitterSamples, isClosedStrip, type FaceContext, type Pt,
+ } from './led-strip-geometry';
+ import type { LedStripView } from './led-strip-runtime';
++import type { IsoWallLightSource } from './iso-wall-light';
+ 
+ /**
+  * `guard` without its own shared chunk: an unchanged field (same cached
+@@ -312,6 +313,7 @@ const grey = (value: number): string => {
+ };
+ 
+ export interface LedFieldInput {
++  capture?: (source: IsoWallLightSource) => void;
+   views: readonly LedStripView[];
+   scene: LightBarrierScene | null;
+   polygons: readonly LightRoomPolygon[];
+@@ -430,6 +432,11 @@ export function renderLedField(input: LedFieldInput): TemplateResult {
+   });
+   pruneGlowSources(lifecycle.state, lifecycle.host, input.spaceId, seen);
+   if (!fields.length) return svg`` as unknown as TemplateResult;
++  for (const { view, geometry, transition } of fields) input.capture?.({
++    key: `led:${input.spaceId}|${view.strip.id}`, color: view.appearance.c, alpha: view.appearance.alpha,
++    radius: view.radius, points: view.strip.points, visible: geometry.pieces.map(piece => piece.clip),
++    rule: 'nonzero', floorClip: fieldFloor(scene), entering: transition.entering, leaving: transition.leaving,
++  });
+   const bands = Array.from({ length: LED_FIELD_BANDS }, (_, k) => {
+     const outer = 1 - k / LED_FIELD_BANDS;
+     const inner = 1 - (k + 1) / LED_FIELD_BANDS;
+diff --git a/src/led-strip-runtime.ts b/src/led-strip-runtime.ts
+index 1236fb45e..4bd28a155 100755
+--- a/src/led-strip-runtime.ts
++++ b/src/led-strip-runtime.ts
+@@ -21,7 +21,9 @@ import { resolvedLightSources } from './devices';
+ import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
+ import { NORM_W, iconUnit } from './space-geometry';
+ import { roomGlowOf, roomPoly } from './logic';
+-import { ISO_ICON_SCALE, ISO_TILE, isoEdgeColor, isoTileShadow } from './iso-tiles';
++import { ISO_ICON_SCALE, isoTileShadow } from './iso-tiles';
++import { isoCameraFor, isoDisplayWallHeight, isoFloorMatrix } from './iso-projection';
++import { gridVisualUnits } from './grid-scale';
+ import { deviceThemeClass } from './device-face';
+ import type { VirtualLightSnapshot } from './virtual-light-state';
+ import { geometryAllRings, pointInPhysicalBody, pointInPhysicalGeometry } from './physical-geometry';
+@@ -205,9 +207,10 @@ export interface LedHandlers {
+ /** 2.5D View (ТЗ §7): the stripe raised like a tile, its edge and floor shadow. */
+ export interface LedIsoStyle {
+   rotation?: PlanRotation;
+-  /** Raise of the stripe, plan units: ISO_TILE.lift × D (0.075 D). */
++  plane?: readonly number[];
++  /** Screen-space lift to the common wall/device top plane. */
+   lift: number;
+-  /** Visible edge below the raised stripe: ISO_TILE.depth × D (0.1 D). */
++  /** Shallow vertical edge, matching the room-name extrusion. */
+   depth: number;
+   edge: string;
+   shadow: { dx: number; dy: number; sigma: number; opacity: number };
+@@ -215,6 +218,7 @@ export interface LedIsoStyle {
+ 
+ export interface LedStripeInput {
+   views: readonly LedStripView[];
++  paint?: 'all' | 'body' | 'shadow';
+   iso?: LedIsoStyle | null;
+   /** Base device diameter D in plan units (icon_size of this card × iconUnit). */
+   d: number;
+@@ -299,7 +303,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
+   const iso = input.iso;
+   return svg`<g class="led-strips" data-hp-led-strips="${ordered.length}"
+       data-hp-iso=${iso ? 'raised' : nothing}>
+-    ${iso ? svg`<defs><filter id="hp-led-iso-shadow" filterUnits="userSpaceOnUse"
++    ${iso && input.paint !== 'body' ? svg`<defs><filter id="hp-led-iso-shadow" filterUnits="userSpaceOnUse"
+       x="-100000" y="-100000" width="200000" height="200000">
+       <feGaussianBlur stdDeviation="${iso.shadow.sigma}"></feGaussianBlur></filter></defs>` : nothing}
+     <style>
+@@ -325,11 +329,19 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
+       // 2.5D: an inert floor shadow, the edge swept below the raised body,
+       // then the body itself; the field below stays on the floor plane.
+       const shift = (x: number, y: number) => {
++        if(iso?.plane){
++          const [a,b,c,d]=iso.plane,det=a*d-b*c;
++          return `translate(${(d*x-c*y)/det} ${(-b*x+a*y)/det})`;
++        }
+         const [dx, dy] = turnVector([x, y], inversePlanRotation(iso?.rotation || 0));
+         return `translate(${dx} ${dy})`;
+       };
+       const lifted = iso ? shift(0, -iso.lift) : nothing;
+-      return svg`<g class="led-strip state-${view.state}" data-led-strip="${view.strip.id}"
++      const shadow=iso && input.paint !== 'body' ? svg`<path class="led-iso-shadow" d=${d} fill="none" stroke="black"
++        stroke-opacity=${iso.shadow.opacity} stroke-width=${t} stroke-linecap="round" stroke-linejoin="round"
++        filter="url(#hp-led-iso-shadow)" pointer-events="none" transform=${shift(iso.shadow.dx,iso.shadow.dy)}></path>` : nothing;
++      if(input.paint==='shadow')return shadow;
++      return svg`${shadow}<g class="led-strip state-${view.state}" data-led-strip="${view.strip.id}"
+           data-marker="${dev.id}" data-state="${view.state}" data-closed="${path.closed ? 'true' : 'false'}">
+         ${off ? svg`<defs><mask id="${cutout}" maskUnits="userSpaceOnUse" x="${mx}" y="${my}" width="${mw}" height="${mh}">
+           <rect x="${mx}" y="${my}" width="${mw}" height="${mh}" fill="white"></rect>
+@@ -337,11 +349,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
+             stroke-linecap="round" stroke-linejoin="round"></path>
+         </mask></defs>` : nothing}
+         <g transform=${lifted}><g class="led-body" mask=${off ? `url(#${cutout})` : nothing}>
+-        ${iso ? svg`<path class="led-iso-shadow" d="${d}" fill="none" stroke="black"
+-          stroke-opacity="${iso.shadow.opacity}" stroke-width="${t}" stroke-linecap="round"
+-          stroke-linejoin="round" filter="url(#hp-led-iso-shadow)" pointer-events="none"
+-          transform=${shift(iso.shadow.dx, iso.shadow.dy)}></path>
+-          ${[1, 0.5].map((k) => svg`<path class="led-iso-edge" d="${d}" fill="none" stroke="${iso.edge}"
++        ${iso ? svg`${[1,.875,.75,.625,.5,.375,.25,.125].map((k) => svg`<path class="led-iso-edge" d="${d}" fill="none" stroke="${iso.edge}"
+           stroke-width="${t}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"
+           transform=${shift(0, iso.depth * k)}></path>`)}` : nothing}
+         <path class="led-outline" d="${d}" fill="none" stroke="${OUTLINE}" stroke-width="${t}"
+@@ -593,6 +601,7 @@ export function ledFrameFor(host: LedCardHost, space: SpaceModel, spaceGlow: boo
+ /** The stripes and hit paths; actions only in View (the Devices editor selects). */
+ export function renderLedLayerFor(
+   host: LedCardHost, space: SpaceModel, spaceGlow: boolean, view: { w: number },
++  paint: LedStripeInput['paint'] = 'all',
+ ): TemplateResult {
+   const frame = ledFrameFor(host, space, spaceGlow);
+   const width = host._renderPixelsPerUnit ? host._renderPixelsPerUnit(view) * view.w : host._stageEl?.clientWidth;
+@@ -602,15 +611,18 @@ export function renderLedLayerFor(
+   const theme = deviceThemeClass(host._renderPlanHass) === 'theme-dark' ? 'dark' : 'light';
+   const lightFloor = !!host._isoLightFloors?.size;
+   const shadow = isoTileShadow(theme, lightFloor);
++  const camera=isoCameraFor(host._rotation ?? 0);
+   const stripes = renderLedStripes({
+     views: frame.views,
+     d,
++    paint,
+     iso: iso ? {
+       rotation: host._rotation,
+-      lift: ISO_TILE.lift * d,
+-      depth: ISO_TILE.depth * d,
+-      edge: isoEdgeColor(OUTLINE, theme, lightFloor),
+-      shadow: { dx: shadow.dx * d, dy: shadow.dy * d, sigma: shadow.sigma * d, opacity: shadow.opacityWhite },
++      plane: isoFloorMatrix(camera),
++      lift: gridVisualUnits(isoDisplayWallHeight(),host._cellCm)*camera.zScale*Math.sin(camera.tiltDeg*Math.PI/180),
++      depth: frame.d * .075,
++      edge: '#808080',
++      shadow: { dx: 0, dy: 0, sigma: shadow.sigma * d, opacity: shadow.opacityWhite },
+     } : null,
+     faces: frame.faces,
+     perUnit: width && view.w ? width / view.w : 1,
+@@ -638,13 +650,15 @@ export function renderLedLayerFor(
+     pointer-events=${passive ? 'none' : nothing}>${stripes}</g>` as unknown as TemplateResult;
+ }
+ 
+-export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean): TemplateResult {
++export function renderLedFieldFor(host: LedCardHost, space: SpaceModel, spaceGlow: boolean,
++  capture?: (source: import('./iso-wall-light').IsoWallLightSource) => void): TemplateResult {
+   if (host.isConnected === false) return svg`` as unknown as TemplateResult;
+   const frame = ledFrameFor(host, space, spaceGlow);
+   const module = frame.scene && (fieldWanted(frame.views) || field?.hasLedField(host))
+     ? field || ledField(space.id, () => host.isConnected !== false && host.requestUpdate()) : null;
+   if (!module) return svg`` as unknown as TemplateResult;
+   return module.renderLedField({
++    capture,
+     views: frame.views,
+     scene: frame.scene,
+     polygons: frame.polygons,
+diff --git a/src/live-viewport.ts b/src/live-viewport.ts
+index 24c7ee3ac..b8d0f5a1b 100644
+--- a/src/live-viewport.ts
++++ b/src/live-viewport.ts
+@@ -295,6 +295,18 @@ export function paintLiveViewport(
+       if (svg.style.clipPath !== clip) svg.style.clipPath = clip;
+     } else if (svg.style.clipPath) svg.style.removeProperty('clip-path');
+   }
++  // Keep the shadow mask's raster window bounded to the same exposed viewport.
++  // Its paths and HTML shadows retain the painted basis and move together;
++  // only these four bounds change on the existing scene-anchor budget.
++  const maskX = (next.frame.view.x - painted.view.x) / painted.view.w;
++  const maskY = (next.frame.view.y - painted.view.y) / painted.view.h;
++  const maskW = next.frame.view.w / painted.view.w, maskH = next.frame.view.h / painted.view.h;
++  for (const mask of root.querySelectorAll<SVGElement>('[data-hp-live-mask="camera"]')) {
++    for (const [name, value] of [['x',maskX-maskW*.25],['y',maskY-maskH*.25],['width',maskW*1.5],['height',maskH*1.5]] as const) {
++      const text = String(value);
++      if (mask.getAttribute(name) !== text) mask.setAttribute(name, text);
++    }
++  }
+   for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
+     // Keeping an identity transform after terminal reconciliation changes the
+     // browser compositing path and therefore the settled raster by a few colour
+diff --git a/src/logic.ts b/src/logic.ts
+index af5b1bfb1..934793de6 100644
+--- a/src/logic.ts
++++ b/src/logic.ts
+@@ -1282,6 +1282,7 @@ export interface SpaceDisplay {
+   opacity: number;  // 0..1 — wall lines/hatching
+   nameColor: FillColorEntry;
+   wallFill: FillColorEntry;
++  openingAccent3d?: FillColorEntry;
+   fill: RoomFillMode;
+   /** Resolved space-level custom fill; rooms may override it. */
+   customFill: FillColorEntry;
+@@ -1405,6 +1406,7 @@ export function spaceDisplayOf(spaceCfg: unknown, general?: unknown): SpaceDispl
+     ? clampScale(value) : legacyFontScale;
+   return {
+     ...spaceAppearanceOf(spaceCfg, general),
++    openingAccent3d: customFillOf(s.opening_accent_3d, { c: '#ffffff', a: 1 }),
+     showBorders: s.show_borders ?? noPlan,
+     showNames: s.show_names ?? noPlan,
+     color: safeStoredColor(s.room_color, DEFAULT_ROOM_COLOR),
+diff --git a/src/space-dialog.ts b/src/space-dialog.ts
+index b7417d154..35216bf1b 100644
+--- a/src/space-dialog.ts
++++ b/src/space-dialog.ts
+@@ -38,6 +38,7 @@ export interface SpaceDialogState {
+   roomOpacity: number;
+   nameColor: FillColorEntry;
+   wallFill: FillColorEntry;
++  openingAccent3d?: FillColorEntry;
+   bgColor: string | null;
+   bgMode: 'static' | 'daynight' | null;
+   northDeg: number | null;
+diff --git a/src/stairs-symbol.ts b/src/stairs-symbol.ts
+index ce9905a8a..b6c78da75 100644
+--- a/src/stairs-symbol.ts
++++ b/src/stairs-symbol.ts
+@@ -20,6 +20,7 @@ interface StairSymbol {
+   leave?: () => void;
+   key?: (event: KeyboardEvent) => void;
+   extra?: unknown;
++  volume?: { body: unknown; hit: string; height: number; steps: number };
+ }
+ 
+ /** One Lit template identity preserves the heavy symbol when its input owner changes. */
+@@ -27,13 +28,15 @@ export function renderStairSymbol(input: StairSymbol): TemplateResult {
+   const { stair, geometry, markup } = input;
+   return svg`<g class="hp-stair ${input.classes}"
+     data-hp="stair" data-id=${stair.id} data-kind=${stair.kind}
++    data-hp-stair-volume=${input.volume ? 'true' : nothing}
++    data-height=${input.volume?.height ?? nothing} data-steps=${input.volume?.steps ?? nothing}
+     data-target-state=${input.targetState} style=${input.style}
+     role=${input.role} tabindex=${input.focusable ? '0' : nothing} aria-label=${input.label}
+     @pointerdown=${input.down ?? nothing} @click=${input.click ?? nothing}
+     @dblclick=${input.doubleClick ?? nothing} @pointerenter=${input.enter ?? nothing}
+     @pointermove=${input.move ?? nothing} @pointerleave=${input.leave ?? nothing}
+     @keydown=${input.key ?? nothing}>
+-    ${guard([geometry, markup], () => svg`
++    ${input.volume ? svg`${input.volume.body}<path class="hp-stair-hit" d=${input.volume.hit}></path>` : guard([geometry, markup], () => svg`
+       <polygon class="hp-stair-outline" points=${markup.outline}></polygon>
+       <polygon class="hp-stair-hit" points=${markup.outline}></polygon>
+       ${geometry.trapezoid.map(line => svg`<line class="hp-stair-trapezoid"
+diff --git a/src/stairs-view.ts b/src/stairs-view.ts
+index 532323521..64341f23d 100644
+--- a/src/stairs-view.ts
++++ b/src/stairs-view.ts
+@@ -3,10 +3,14 @@ import { nothing, svg, type TemplateResult } from 'lit';
+ import { keyed } from 'lit/directives/keyed.js';
+ import { controlMotion } from './ui-motion';
+ import {
+-  cachedStairMarkup, cachedStairRenderGeometry, stairList, stairStyleVars, type Stair,
++  cachedStairMarkup, cachedStairRenderGeometry, stairList, stairStyleVars, stairVisualStyle, type Stair,
+ } from './stairs';
+ import { stairTargetState } from './stairs-editor-model';
+ import type { SpaceModel } from './types';
++import { stairVolume, type StairVolume } from './stairs-volume';
++import type { IsoCamera } from './iso-projection';
++import { renderIsoLabFurniture } from './iso-lab-furniture-render';
++import { gridVisualScale } from './grid-scale';
+ 
+ export interface StairViewHostPort {
+   _mode: 'view' | 'plan' | 'devices' | 'decor';
+@@ -102,7 +106,11 @@ export class StairViewRuntime {
+     this.suppressClick = false;
+   }
+ 
+-  public renderLayer(): TemplateResult {
++  public volumeItems(camera:IsoCamera):Map<string,StairVolume> {
++    return new Map(this.stairs.flatMap(stair=>{const volume=stairVolume(stair,this.owner._cellCm,camera);return volume?[[stair.id,volume] as const]:[];}));
++  }
++
++  public renderLayer(volumes?:ReadonlyMap<string,StairVolume>,part:'flat'|'volume'='flat'): TemplateResult {
+     // #694: the card's `_model` getter fingerprints the whole config on every
+     // read; read it once per layer, not once more per navigable stair.
+     const model = this.owner._model;
+@@ -110,7 +118,7 @@ export class StairViewRuntime {
+     const interactive = this.owner._mode === 'view';
+     const renderedSpace = this.owner._space;
+     const arrival = interactive && this.arrival?.space === renderedSpace ? this.arrival : null;
+-    const items = this.stairs.map((stair) => {
++    const items = this.stairs.filter(stair=>part==='volume'?volumes?.has(stair.id):!volumes?.has(stair.id)).map((stair) => {
+       const geometry = cachedStairRenderGeometry(stair, this.owner._cellCm);
+       const markup = cachedStairMarkup(geometry);
+       const targetState = stairTargetState(
+@@ -142,9 +150,12 @@ export class StairViewRuntime {
+         if (this.owner._mode === 'view' && this.owner._space === target && target !== renderedSpace) this.arrive(renderedSpace, target);
+       };
+       const highlight = arrival && stair.target_space_id === arrival.from;
++      const volume=volumes?.get(stair.id),style=stairVisualStyle(stair,this.owner._decorStyle);
+       if (highlight) arrival.rendered = true;
+       return renderStairSymbol({
+         stair, geometry, markup,
++        volume: volume ? {height:volume.height,steps:volume.steps,hit:volume.hit,
++          body:renderIsoLabFurniture(volume.mesh,stair.id,'stairs',style.color,gridVisualScale(this.owner._cellCm),false)} : undefined,
+         classes: 'hp-stair-view ' + (active ? 'navigable' : '') + ' ' + (interactive ? 'input-enabled' : ''),
+         targetState, style: stairStyleVars(stair, this.owner._cellCm, this.owner._gridPitch, this.owner._decorStyle),
+         role: active ? 'link' : 'img', focusable: active, label: this.owner._t('markup.stairs'),
+@@ -153,7 +164,9 @@ export class StairViewRuntime {
+         key: event => {
+           if (active && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); navigate(event); }
+         },
+-        extra: highlight ? keyed(arrival.token, svg`<polygon class="hpf-arrival-highlight hpf-motion"
++        extra: highlight ? keyed(arrival.token, volume
++          ? svg`<path class="hpf-arrival-highlight hpf-motion" data-hp="stair-arrival" d=${volume.hit} aria-hidden="true"></path>`
++          : svg`<polygon class="hpf-arrival-highlight hpf-motion"
+           data-hp="stair-arrival" points=${markup.outline} aria-hidden="true"></polygon>`) : nothing,
+       });
+     });
+diff --git a/src/styles/iso-lab-markers.styles.ts b/src/styles/iso-lab-markers.styles.ts
+index f4170b014..fdb681ccb 100644
+--- a/src/styles/iso-lab-markers.styles.ts
++++ b/src/styles/iso-lab-markers.styles.ts
+@@ -2,20 +2,54 @@
+ import { css } from 'lit';
+ 
+ export const isoLabMarkersStyles = css`
++  .iso-led-plane, .iso-led-shadow-plane {
++    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none;
++  }
++  .iso-led-plane { z-index: 1; }
++  .iso-floor-shadow-plane {
++    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
++    pointer-events: none; z-index: -4;
++  }
+   /* Keep the name centred on its saved anchor. Its metrics and Area action
+      share the same scene plane; the invisible touch floor stays screen-sized. */
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel {
+-    transform: translate(-50%, -50%) var(--hp-iso-marker-plane);
++    transform: translate(-50%, -50%) var(--hp-iso-room-plane);
+     transform-origin: 50% 50%;
++    --hp-iso-edge-unit-x: var(--hp-iso-room-edge-x);
++    --hp-iso-edge-unit-y: var(--hp-iso-room-edge-y);
+   }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel::before {
+-    transform: translate(-50%, -50%) var(--hp-iso-marker-hit-plane);
++    transform: translate(-50%, -50%) var(--hp-iso-room-hit-plane);
+   }
+   /* The mask and label share the camera layer during live pan and zoom.
+      Names, Area links and the metrics below them all cross the same edge. */
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-plane {
+-    position: absolute; inset: 0; pointer-events: none; z-index: -3;
+-    mask-image: url(#hp-room-wall-mask);
++    position: absolute; inset: 0; pointer-events: none; z-index: 0;
++  }
++  /* One shallow extrusion, about one bold glyph stroke thick. The inverse
++     camera vector keeps its sides vertical at every quarter turn. Eight
++     sharp slices form a solid edge, without the old blurred text shadow. */
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel .rlname,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel .rlmetrics,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon {
++    --hp-glyph-depth: .15em;
++    --hp-glyph-x: calc(var(--hp-glyph-depth) * var(--hp-iso-edge-unit-x) / .22);
++    --hp-glyph-y: calc(var(--hp-glyph-depth) * var(--hp-iso-edge-unit-y) / .22);
++    --hp-glyph-side: #808080;
++    text-shadow: none;
++    filter:
++      drop-shadow(calc(var(--hp-glyph-x) * .125) calc(var(--hp-glyph-y) * .125) 0 var(--hp-glyph-side))
++      drop-shadow(calc(var(--hp-glyph-x) * .125) calc(var(--hp-glyph-y) * .125) 0 var(--hp-glyph-side))
++      drop-shadow(calc(var(--hp-glyph-x) * .25) calc(var(--hp-glyph-y) * .25) 0 var(--hp-glyph-side))
++      drop-shadow(calc(var(--hp-glyph-x) * .5) calc(var(--hp-glyph-y) * .5) 0 var(--hp-glyph-side));
++  }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon {
++    --hp-glyph-side: color-mix(in srgb, currentColor 65%, #30343a);
++  }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon {
++    --hp-glyph-depth: calc(var(--battery-frame) * .15);
+   }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-furniture-foreground {
+     position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+@@ -35,23 +69,18 @@ export const isoLabMarkersStyles = css`
+     --hp-iso-edge-y: calc(var(--hp-iso-d) * var(--hp-iso-edge-unit-y));
+     --hp-iso-rim-x: calc(var(--hp-iso-edge-x) * 1.090909091);
+     --hp-iso-rim-y: calc(var(--hp-iso-edge-y) * 1.090909091);
+-    --hp-iso-side: color-mix(in srgb, var(--device-face-bg, var(--oplock-core-bg)) 90%, #000);
+-    --hp-iso-ground-shadow:
+-      calc(var(--hp-iso-edge-x) * 3.2) calc(var(--hp-iso-edge-y) * 3.2)
+-        calc(var(--hp-iso-d) * .27) calc(var(--hp-iso-d) * -.12) rgb(28 32 38 / 26%),
+-      calc(var(--hp-iso-edge-x) * 3.2) calc(var(--hp-iso-edge-y) * 3.2)
+-        calc(var(--hp-iso-d) * .52) calc(var(--hp-iso-d) * -.04) rgb(28 32 38 / 14%);
++    --hp-iso-side: #808080;
+   }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev::before,
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock::before {
+     transform: translate(-50%, -50%) var(--hp-iso-marker-hit-plane);
+   }
+-  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-shell.text-shell:not(.with-values) {
+-    left: 50%; transform: translateX(-50%);
+-  }
++  /* Preserve the Flat face's local anchor: the shared contact contour uses
++     those same metrics. Separately centring a text pill offsets its glass. */
+   /* The 0.24 D body straddles the saved anchor. A solid top and one continuous
+      side convey thickness without a gradient or a second disc underneath. */
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .device-core,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .value-badge,
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock-core {
+     translate: calc(var(--hp-iso-rim-x) * -.5) calc(var(--hp-iso-rim-y) * -.5);
+     background-image: none;
+@@ -70,6 +99,18 @@ export const isoLabMarkersStyles = css`
+       var(--hp-iso-rim-x) var(--hp-iso-rim-y) 0 var(--hp-iso-side);
+     filter: none;
+   }
++  /* UI Lab: the root is the device's top plane, aligned with the wall cut. */
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-core,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .value-badge,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock-core {
++    translate: none;
++  }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock {
++    --hp-iso-d: var(--oplock-core-size);
++  }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .value-badge {
++    --hp-iso-side: #808080;
++  }
+   /* The native contact renderer paints the envelope of the entire body.
+      Hide only the old flat ring, not its canonical measurement or hit area. */
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev[data-hp="device"][data-hp-iso-body-outline] .device-shell-frame {
+@@ -78,8 +119,7 @@ export const isoLabMarkersStyles = css`
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock-shell {
+     border-color: transparent; z-index: 2;
+   }
+-  /* Let the rear glass sit behind the face and the near side veil its edge.
+-     The native contact contours extend slightly above the core's top face. */
++  /* The upper glass rim shares the cap's plane; the near side veils its edge. */
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .device-contact-ink { z-index: auto; }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-marker-glass {
+     position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+@@ -113,27 +153,61 @@ export const isoLabMarkersStyles = css`
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .device-contact-contour { filter: none; }
+   /* Reuse the shared inert layer so shadows never cover another icon in a stack. */
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadows {
+-    position: absolute; inset: 0; z-index: -1;
++    position: absolute; inset: 0; z-index: -4;
+     pointer-events: none; contain: layout style;
++    /* The enclosing SVG group owns the structural mask, including overflow. */
+   }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow,
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow * {
+     pointer-events: none;
+   }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow::before { display: none; }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow { box-shadow: none; }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .device-core,
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .value-badge,
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .oplock-core {
++    position: relative;
+     translate: none;
+     background: transparent; color: transparent;
+-    box-shadow: var(--hp-iso-ground-shadow);
++    box-shadow: none;
+     filter: none;
+   }
++  /* A box-shadow clips out its source box. Raised bodies need a complete
++     silhouette on the floor, including the area under their old position. */
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow :is(.device-core, .value-badge, .oplock-core)::before,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow :is(.device-core, .value-badge, .oplock-core)::after {
++    content: ''; position: absolute; border-radius: inherit;
++    translate: none;
++    pointer-events: none;
++  }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow :is(.device-core, .value-badge, .oplock-core)::before {
++    inset: calc(var(--hp-iso-d) * .12);
++    background: rgb(28 32 38 / 26%);
++    filter: blur(calc(var(--hp-iso-d) * .135));
++  }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow :is(.device-core, .value-badge, .oplock-core)::after {
++    inset: calc(var(--hp-iso-d) * .04);
++    background: rgb(28 32 38 / 14%);
++    filter: blur(calc(var(--hp-iso-d) * .26));
++  }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .oplock-shell { border-color: transparent; translate: none; }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .valtext,
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadow .value-badge-content {
+     visibility: hidden;
+   }
++  /* Names and their metrics cast the same floor-only, vertically aligned
++     shadow as devices. Reuse the label geometry, without its solid edges. */
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-shadow {
++    filter: blur(.16em);
++    pointer-events: none;
++  }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-shadow *,
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-shadow :is(.rlname, .rlmetrics) {
++    filter: none; text-shadow: none; pointer-events: none;
++  }
++  .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-room-label-shadow::before {
++    display: none;
++  }
+   .stage.projection-iso.mode-view[data-hp-iso-floor-markers] [data-hp-iso-occluded] {
+     opacity: .3;
+   }
+@@ -144,8 +218,13 @@ export const isoLabMarkersStyles = css`
+     z-index: 5;
+   }
+   @media (forced-colors: active) {
++    .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel .rlname,
++    .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .roomlabel .rlmetrics,
++    .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .lqi,
++    .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .dev .device-battery-icon { filter: none; }
+     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .iso-tile-shadows { display: none; }
+     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .device-core,
++    .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .value-badge,
+     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .oplock-core { box-shadow: none; background-image: none; translate: none; }
+     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .glass-front,
+     .stage.projection-iso.mode-view[data-hp-iso-floor-markers] .glass-back { fill: none; }
+diff --git a/src/styles/plan.styles.ts b/src/styles/plan.styles.ts
+index 3d2a399fd..d964968a7 100644
+--- a/src/styles/plan.styles.ts
++++ b/src/styles/plan.styles.ts
+@@ -241,6 +241,10 @@ export const planStyles = css`
+       stroke-width: 0.8;
+       vector-effect: non-scaling-stroke;
+     }
++    .iso-wall-fill { opacity: var(--iso-wall-top-op, 1); }
++    .iso-wall-side-fill { opacity: var(--iso-wall-side-op, .55); }
++    :is(.iso-wall-fill, .iso-wall-side-fill) :is(.iso-wall-side, .iso-wall-top) { stroke: none; }
++    .iso-wall-contour { fill: none; stroke-linejoin: round; }
+     .iso-material-texture {
+       fill: url(#hp-iso-wall-texture);
+       stroke: none;
+@@ -303,20 +307,20 @@ export const planStyles = css`
+     }
+     /* Local #1451: materials decorate the derived surfaces only. */
+     [data-hp-opening-masonry] .iso-door.iso-material-matte-leaf {
+-      fill: #f1f2ef; fill-opacity: 1;
++      fill: var(--iso-opening-leaf, #f1f2ef); fill-opacity: 1;
+     }
+     [data-hp-opening-masonry] .iso-door.iso-material-light-frame {
+-      fill: #c2cfd2; fill-opacity: 1; stroke: none;
++      fill: var(--iso-opening-frame, #c2cfd2); fill-opacity: 1; stroke: none;
+     }
+     [data-hp-opening-masonry] .iso-door.iso-opening-door-glass {
+       fill: #78b5c8; fill-opacity: .43; stroke: none;
+     }
+     [data-hp-opening-masonry] .iso-door.iso-opening-leaf-edge,
+     [data-hp-opening-masonry] .iso-door.iso-opening-leaf-top {
+-      fill: #bec5c5;
++      fill: var(--iso-opening-edge, #bec5c5);
+     }
+     [data-hp-opening-masonry] .iso-window.iso-material-light-frame {
+-      fill: #f3f4f0; fill-opacity: 1; stroke: none;
++      fill: var(--iso-opening-window-frame, #f3f4f0); fill-opacity: 1; stroke: none;
+     }
+     [data-hp-opening-masonry] .iso-window.iso-material-glass-side {
+       fill: #cde4ee; fill-opacity: .74; stroke: none;
+@@ -325,13 +329,17 @@ export const planStyles = css`
+     [data-hp-opening-masonry] .iso-window.iso-material-glass-over-fabric { fill: #cde4ee; fill-opacity: .16; stroke: none; }
+     [data-hp-opening-masonry] .iso-window.iso-material-blind-hem { fill: #958b7e; fill-opacity: 1; stroke: none; }
+     [data-hp-opening-masonry] .iso-opening-door-frame {
+-      fill: #e9ece8; fill-opacity: 1; stroke: none;
++      fill: var(--iso-opening-door-frame, #e9ece8); fill-opacity: 1; stroke: none;
+     }
+     [data-hp-opening-masonry] .iso-wall-side { fill: var(--iso-side-mid, #adadad); stroke: none; }
+     [data-hp-opening-masonry] .iso-opening-panel { stroke: none; }
+     [data-hp-opening-masonry] .iso-material-reveal { fill: #8b8d8c; fill-opacity: 1; }
++    [data-hp-opening-masonry] :is(.iso-door, .iso-window).iso-material-reveal {
++      fill: var(--iso-opening-reveal, #8b8d8c);
++    }
+     [data-hp-opening-masonry] .iso-material-light-sill { fill: #e6e8e3; fill-opacity: 1; }
+-    [data-hp-opening-masonry] .iso-opening-window-sill { fill: #fffefa; }
++    [data-hp-opening-masonry] .iso-window.iso-material-light-sill { fill: var(--iso-opening-sill-side, #e6e8e3); }
++    [data-hp-opening-masonry] .iso-window.iso-opening-window-sill { fill: var(--iso-opening-sill-top, #fffefa); }
+     [data-hp-opening-masonry] .iso-material-hardware { fill: #657078; fill-opacity: 1; }
+     [data-hp-opening-masonry] + .iso-opening-indicators :is(path, text) {
+       paint-order: stroke fill;
+diff --git a/src/iso-wall-light.ts b/src/iso-wall-light.ts
+new file mode 100644
+index 000000000..0507ed4a2
+--- /dev/null
++++ b/src/iso-wall-light.ts
+@@ -0,0 +1,126 @@
++/** UI Lab: sample the existing floor field at a wall's foot, then extrude
++ * that one-dimensional lighting profile vertically. No second light sweep. */
++import { nothing, svg } from 'lit';
++import { GLOW_FALLOFF } from './glow-scene';
++import { gridVisualUnits } from './grid-scale';
++import { isoRotationBasis, projectPlanPoint, type IsoCamera, type PlanPoint } from './iso-projection';
++import type { IsoWallDepthQueueEntry } from './iso-scene-geometry';
++
++export interface IsoWallLightSource {
++  key: string;
++  color: string;
++  alpha: number;
++  radius: number;
++  /** One point for a lamp; a continuous polyline for an LED strip. */
++  points: readonly (readonly number[])[];
++  visible: readonly string[];
++  rule?: CanvasFillRule;
++  floorClip?: readonly string[] | null;
++  entering: boolean;
++  leaving: boolean;
++}
++
++const paths = new Map<string, Path2D>();
++let context: CanvasRenderingContext2D | null = null;
++const pathOf = (d: string): Path2D => {
++  let path = paths.get(d);
++  if (!path) {
++    path = new Path2D(d);
++    if (paths.size >= 128) paths.delete(paths.keys().next().value!);
++    paths.set(d, path);
++  }
++  return path;
++};
++type Profile = { values: number[][]; edge: readonly [PlanPoint, PlanPoint] };
++const profiles = new WeakMap<IsoWallDepthQueueEntry, { key: string; profile: Profile | null }>();
++
++function floorEdge(entry: IsoWallDepthQueueEntry): readonly [PlanPoint, PlanPoint] | null {
++  if (entry.layer === 'wall-side') return entry.face.planEdge ?? null;
++  if (entry.layer !== 'opening' || entry.surface.material !== 'wall-side') return null;
++  const points = entry.surface.points;
++  if (!points?.length || Math.max(...points.map(p => p.z)) - Math.min(...points.map(p => p.z)) < 1e-5) return null;
++  const unique: PlanPoint[] = [];
++  for (const { point } of points) if (!unique.some(p => Math.hypot(p[0] - point[0], p[1] - point[1]) < 1e-5)) unique.push(point);
++  // Vertical masonry faces have precisely two plan-space ends. Horizontal
++  // sills, lintel undersides and the wall cut are outside this experiment.
++  return unique.length === 2 ? [unique[0], unique[1]] : null;
++}
++
++function distance(points: IsoWallLightSource['points'], x: number, y: number): number {
++  if (!points.length) return Infinity;
++  let best = Math.hypot(x - points[0][0], y - points[0][1]);
++  for (let i = 1; i < points.length; i++) {
++    const a = points[i - 1], b = points[i], dx = b[0] - a[0], dy = b[1] - a[1], length = dx * dx + dy * dy;
++    const t = length ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / length)) : 0;
++    best = Math.min(best, Math.hypot(x - a[0] - t * dx, y - a[1] - t * dy));
++  }
++  return best;
++}
++
++function falloff(fraction: number): number {
++  const value = Math.max(0, fraction) * 100;
++  for (let i = 1; i < GLOW_FALLOFF.length; i++) {
++    const [a, av] = GLOW_FALLOFF[i - 1], [b, bv] = GLOW_FALLOFF[i];
++    if (value <= b) return av + (bv - av) * (value - a) / (b - a);
++  }
++  return 0;
++}
++
++export function isoWallLightPainter(sources: readonly IsoWallLightSource[], camera: IsoCamera, cellCm: number) {
++  if (!sources.length || typeof Path2D === 'undefined') return () => nothing;
++  context ??= document.createElement('canvas').getContext('2d');
++  const ctx = context;
++  if (!ctx) return () => nothing;
++  const field = sources.map(source => ({ source, visible: pathOf(source.visible.join(' ')),
++    floor: source.floorClip?.map(pathOf) ?? null }));
++  // Pan and zoom do not enter this key. Cached profiles only change when the
++  // actual source/visibility field, camera-facing side or physical scale does.
++  const key = JSON.stringify([camera.rotDeg, cellCm, sources.map(s =>
++    [s.points, s.radius, s.alpha, s.visible, s.rule, s.floorClip])]);
++  const [cos, sin] = isoRotationBasis(camera);
++  const epsilon = gridVisualUnits(.05, cellCm);
++  return (entry: IsoWallDepthQueueEntry, faceIndex: number) => {
++    let cached = profiles.get(entry);
++    if (!cached || cached.key !== key) {
++      const edge = floorEdge(entry);
++      let profile: Profile | null = null;
++      if (edge) {
++        const [a, b] = edge, dx = b[0] - a[0], dy = b[1] - a[1], length = Math.hypot(dx, dy);
++        if (length > 1e-5) {
++          // Every painted vertical face looks towards this camera. Sample a
++          // hair outside its masonry, on the same side as its visible surface.
++          const sign = dy * sin - dx * cos >= 0 ? 1 : -1;
++          const nx = sign * dy / length * epsilon, ny = -sign * dx / length * epsilon;
++          const steps = Math.min(128, Math.max(2, Math.ceil(length / gridVisualUnits(10, cellCm))));
++          const values = field.map(({ source, visible, floor }) => Array.from({ length: steps + 1 }, (_, i) => {
++            const t = Math.max(1e-6, Math.min(1 - 1e-6, i / steps));
++            const x = a[0] + t * dx + nx, y = a[1] + t * dy + ny;
++            if (!ctx.isPointInPath(visible, x, y, source.rule ?? 'evenodd')
++                || floor && !floor.some(path => ctx.isPointInPath(path, x, y, 'evenodd'))) return 0;
++            return source.alpha * falloff(distance(source.points, x, y) / source.radius);
++          }));
++          if (values.some(row => row.some(value => value > .0001))) profile = { edge, values };
++        }
++      }
++      cached = { key, profile }; profiles.set(entry, cached);
++    }
++    const profile = cached.profile;
++    if (!profile) return nothing;
++    const a = projectPlanPoint(profile.edge[0], 0, camera), b = projectPlanPoint(profile.edge[1], 0, camera);
++    if (Math.abs(b[0] - a[0]) < 1e-6) return nothing;
++    const d = entry.layer === 'opening' ? entry.surface.d : entry.face.d;
++    // A sheared gradient keeps each iso-vertical line at one intensity: its
++    // local x follows the floor edge, local y follows world height.
++    const transform = `matrix(${b[0] - a[0]} ${b[1] - a[1]} 0 -1 ${a[0]} ${a[1]})`;
++    return svg`<g class="iso-wall-light" data-wall-light-face=${faceIndex} pointer-events="none" aria-hidden="true">
++      ${profile.values.map((values, index) => {
++        if (!values.some(value => value > .0001)) return nothing;
++        const source = sources[index], id = `hp-wall-light-${faceIndex}-${index}`;
++        return svg`<defs><linearGradient id=${id} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0" gradientTransform=${transform}>
++          ${values.map((alpha, i) => svg`<stop offset=${i / (values.length - 1)} stop-color=${source.color} stop-opacity=${alpha}></stop>`)}
++        </linearGradient></defs><path class="glow-spot ${source.entering ? 'is-entering' : ''} ${source.leaving ? 'is-leaving' : ''}"
++          data-wall-light-source=${source.key} d=${d} fill=${`url(#${id})`} fill-rule="evenodd" style="mix-blend-mode:screen"></path>`;
++      })}
++    </g>`;
++  };
++}
+diff --git a/src/stairs-volume.ts b/src/stairs-volume.ts
+new file mode 100644
+index 000000000..0cae7a3c7
+--- /dev/null
++++ b/src/stairs-volume.ts
+@@ -0,0 +1,74 @@
++/** UI Lab: derived stair solids; authored dimensions and navigation stay native. */
++import { cachedStairRenderGeometry, type Stair } from './stairs';
++import { NORM_W } from './canvas-constants';
++import { gridVisualUnits } from './grid-scale';
++import { isoCameraDepth, isoDisplayWallHeight, projectPlanPoint, unprojectFloorPoint,
++  type IsoCamera, type PlanPoint } from './iso-projection';
++import type { FurnitureMesh, FurnitureMeshPart } from './iso-lab-furniture';
++
++type Vertex = readonly [number,number,number];
++export interface StairVolume {
++  mesh: FurnitureMesh; footprint: PlanPoint[]; height: number; hit: string; steps: number;
++}
++const cache=new WeakMap<object,Map<IsoCamera,StairVolume>>();
++const path=(points:readonly PlanPoint[])=>`M ${points.map(p=>p.map(v=>+v.toFixed(5)).join(' ')).join(' L ')} Z`;
++
++export function stairVolume(stair:Stair,cellCm:number,camera:IsoCamera):StairVolume|null {
++  if(stair.kind==='straight'&&stair.direction!=='forward')return null;
++  const geometry=cachedStairRenderGeometry(stair,cellCm);
++  const previous=cache.get(geometry)?.get(camera);if(previous)return previous;
++  const height=gridVisualUnits(isoDisplayWallHeight(),cellCm),parts:FurnitureMeshPart[]=[];
++  const angle=stair.angle*Math.PI/180,c=Math.cos(angle),s=Math.sin(angle);
++  const world=(x:number,y:number,z:number):Vertex=>[stair.x*NORM_W+x*c-y*s,stair.y*NORM_W+x*s+y*c,z];
++  const add=(name:string,vertices:readonly Vertex[],cap=false)=>{
++    const screen=vertices.map(([x,y,z])=>projectPlanPoint([x,y],z,camera));
++    const area=screen.reduce((sum,p,i)=>{const q=screen[(i+1)%screen.length];return sum+p[0]*q[1]-q[0]*p[1];},0);
++    if(area<=1e-8)return;
++    const ink=path(screen.map(p=>unprojectFloorPoint(p,camera)));
++    const z=vertices.reduce((sum,p)=>sum+p[2],0)/vertices.length;
++    parts.push({name,top:cap?ink:'',side:cap?'':ink,
++      depth:vertices.reduce((sum,[x,y,z])=>sum+isoCameraDepth([x,y],z,camera),0)/vertices.length,
++      lightOffset:unprojectFloorPoint(projectPlanPoint([0,0],z,camera),camera)});
++  };
++  let steps:number;
++  if(stair.kind==='straight'){
++    steps=geometry.treads.length+1;
++    const length=stair.length*NORM_W,width=stair.width*NORM_W,dx=length/steps,dz=height/steps;
++    for(let i=0;i<steps;i++){
++      const x=-length/2+i*dx,next=x+dx,z=(i+1)*dz;
++      add(`tread-${i+1}`,[world(x,-width/2,z),world(next,-width/2,z),world(next,width/2,z),world(x,width/2,z)],true);
++      add(`riser-${i+1}`,[world(x,width/2,i*dz),world(x,-width/2,i*dz),world(x,-width/2,z),world(x,width/2,z)]);
++    }
++    // Each flank is one stepped face, without vertical seams between blocks.
++    for(const side of [-1,1]){
++      const y=side*width/2,profile:Vertex[]=[world(-length/2,y,0),world(length/2,y,0)];
++      for(let i=steps-1;i>=0;i--){const x=-length/2+i*dx,z=(i+1)*dz;profile.push(world(x+dx,y,z),world(x,y,z));}
++      add(side<0?'left-flank':'right-flank',side<0?profile:profile.reverse());
++    }
++    add('upper-end',[world(length/2,-width/2,0),world(length/2,width/2,0),world(length/2,width/2,height),world(length/2,-width/2,height)]);
++  } else {
++    steps=geometry.treads.length;
++    const radius=stair.radius*NORM_W,sign=stair.direction==='clockwise'?1:-1;
++    const prism=(name:string,raw:PlanPoint[],bottom:number,top:number)=>{
++      const area=raw.reduce((sum,p,i)=>{const q=raw[(i+1)%raw.length];return sum+p[0]*q[1]-q[0]*p[1];},0);
++      const ring=area>0?raw:[...raw].reverse();
++      add(name,ring.map(([x,y])=>world(x,y,top)),true);
++      for(let j=0;j<ring.length;j++){const p=ring[j],q=ring[(j+1)%ring.length];
++        add(`${name}-side-${j}`,[world(...p,bottom),world(...q,bottom),world(...q,top),world(...p,top)]);}
++    };
++    for(let i=0;i<steps;i++){
++      const point=(k:number,r:number):PlanPoint=>{const a=(i+k)*2*Math.PI/steps*sign;return [Math.cos(a)*r,Math.sin(a)*r];};
++      const ring=[...Array.from({length:9},(_,j)=>point(j/8,radius)),...Array.from({length:9},(_,j)=>point(1-j/8,radius*.18))];
++      prism(`tread-${i+1}`,ring,Math.max(0,(i+.8)*height/steps),(i+1)*height/steps);
++    }
++    prism('centre-post',Array.from({length:32},(_,i)=>[Math.cos(i*Math.PI/16)*radius*.18,Math.sin(i*Math.PI/16)*radius*.18]),0,height);
++  }
++  parts.sort((a,b)=>a.depth-b.depth);
++  const footprint=geometry.outline.map(p=>[p[0],p[1]] as PlanPoint);
++  const points=[...footprint,...footprint.map(p=>unprojectFloorPoint(projectPlanPoint(p,height,camera),camera))];
++  const left=Math.min(...points.map(p=>p[0]))-1,top=Math.min(...points.map(p=>p[1]))-1;
++  const lightBox=[left,top,Math.max(...points.map(p=>p[0]))-left+1,Math.max(...points.map(p=>p[1]))-top+1] as const;
++  const result={mesh:{parts,shadow:path(footprint),lightBox},footprint,height,steps,hit:parts.map(p=>p.top+' '+p.side).join(' ')};
++  let cameras=cache.get(geometry);if(!cameras){cameras=new Map();cache.set(geometry,cameras);}cameras.set(camera,result);
++  return result;
++}

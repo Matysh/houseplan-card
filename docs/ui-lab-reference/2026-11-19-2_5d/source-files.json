@@ -1,0 +1,191 @@
+{
+  "base": "163fc4a94159e91516c21c6b520ccfc5455a32f0",
+  "files": [
+    {
+      "path": "demo/ui-lab/app.mjs",
+      "sha256": "df417bf1081d81b062389e6da907d9389cfbb4fd1636363d39b4d8000bfd5f96",
+      "bytes": 10655,
+      "scope": "lab-support"
+    },
+    {
+      "path": "demo/ui-lab/mock-ha.mjs",
+      "sha256": "ec48d091e1bdc4386e50125d9313d30ddf4a4ac2b3f75954f52be17a5de53ff4",
+      "bytes": 11208,
+      "scope": "lab-support"
+    },
+    {
+      "path": "demo/ui-lab/server.mjs",
+      "sha256": "064755c8281127a26afa47c1c2cb6d07b0e13e48e1fa0ac29cff5766e4c01416",
+      "bytes": 11205,
+      "scope": "lab-support"
+    },
+    {
+      "path": "demo/ui-lab/session-storage.mjs",
+      "sha256": "1f3662b17434ea42a4500245fb42516b06a9ca3a3d552d5229316bbe465c7000",
+      "bytes": 2493,
+      "scope": "lab-support"
+    },
+    {
+      "path": "src/device-contact-render.ts",
+      "sha256": "25613c58099824cdf7ce7b2c00d09b6eb704f5fb6a75e5f5b05dc831edc80e0b",
+      "bytes": 21169,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/editors/space-dialog-draft.ts",
+      "sha256": "5803f0e1e13b57414ba0ce51ceff0c908fad8d6444def7a4770bbb513cd9348b",
+      "bytes": 5871,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/editors/space-form.ts",
+      "sha256": "1ad5a8b7e14903e80a585dd32ecf2deb5c1b4888701fbf72168c276923514191",
+      "bytes": 31836,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/furniture-gallery-entry.ts",
+      "sha256": "fa6d2a97a11c0cf275757540ac74bee1cd5fed3948894ba13938e65248099a11",
+      "bytes": 9643,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/houseplan-card.ts",
+      "sha256": "50fbea98c5282dc7a3c4b2850050dd11b61fa590cbb52bd8765b8a9e58077a5e",
+      "bytes": 811598,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/i18n/ru.json",
+      "sha256": "d5cf687b64d4bb1b2610b97ffeff0a8f0096ef88cc37d8c87149b38d8502cad0",
+      "bytes": 143129,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/i18n/settings/en.json",
+      "sha256": "6a3aa94ad33118ca47c63009b619c57d80b8548a0bd379c2d17adf97e110e9b6",
+      "bytes": 37647,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/i18n/settings/ru.json",
+      "sha256": "6608e05f0a2add9c79f826d4c07d3cc12141534526261aa1fe8cb3ec8af7046d",
+      "bytes": 58904,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/iso-lab-furniture-render.ts",
+      "sha256": "63dddcd88188b49bc774eba7e439acc4571add6673f077ac8d9c587da4dde3db",
+      "bytes": 2230,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/iso-lab-visibility.ts",
+      "sha256": "07547b7e50d537ea8a272f41692b3565e36a3e4e43ae693b9f0efea67b89b56d",
+      "bytes": 17076,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/iso-marker-glass.ts",
+      "sha256": "d7b8de04492bd35b8da5b78586604b95b9b04aaab94c98405291d642a1ae5ea4",
+      "bytes": 2114,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/iso-marker-outline.ts",
+      "sha256": "873fd425e2f985d426e0efa7372c664a95a64e45e7d81421589ab6b3f4452032",
+      "bytes": 10278,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/iso-materials.ts",
+      "sha256": "4885638941b317a19ed81cfe389798532b382583642ba0ee591ebac6cb3cc608",
+      "bytes": 5760,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/iso-overlays.ts",
+      "sha256": "79722e0fe132e653878f59b4e822d9978640445ef89b85e7549551474f93544a",
+      "bytes": 9039,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/iso-scene-geometry.ts",
+      "sha256": "ab4886443635ed0b381baa6fd50b0cbd83b28488886db9ddde56faa603469f8c",
+      "bytes": 50157,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/iso-scene-render.ts",
+      "sha256": "6aced0f45a2e7b5123d8dd6fbbac66ce0c1f114e3534446a68b0913163e5cc25",
+      "bytes": 22171,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/iso-wall-light.ts",
+      "sha256": "21f8a3d1099b3c89d17ffb08d9726e800bd75f3a115edf8b29bd952147a7f555",
+      "bytes": 6687,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/led-strip-field.ts",
+      "sha256": "2e7c1968d100341ad6d6f483ee6b3dc9d7bd66772ff6c9a64082f7f86da62db7",
+      "bytes": 21789,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/led-strip-runtime.ts",
+      "sha256": "b3a71fcf4b4ec109dcb5cb718ccdaf1884a0fb00320bfa190c72c0bb3d992450",
+      "bytes": 34744,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/live-viewport.ts",
+      "sha256": "9b68850551dcb2110aaf1bc735b8a399acaf67a1ad4f0dc85c7624c427f1606a",
+      "bytes": 19377,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/logic.ts",
+      "sha256": "7c47f4eff701d5e7543bfd65de3c3dc6cf992da2c5daa9a079210600f265cdf5",
+      "bytes": 97314,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/space-dialog.ts",
+      "sha256": "e6f6717789093017db9e03f86f2d0292c91e518ecc50e06e7e7c868a9aafbc0b",
+      "bytes": 7029,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/stairs-symbol.ts",
+      "sha256": "2a8fd72e1faeae9dfa16760250cb1f400f3c79e6861805177875d7bb462b961b",
+      "bytes": 2669,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/stairs-view.ts",
+      "sha256": "f3d108c1ad192a236121dc4e3107ca6cd8a132a76fa52b4be2557d2a05932ef3",
+      "bytes": 8323,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/stairs-volume.ts",
+      "sha256": "15e407e28843be69cfefe67d25a07197fff6177c5f49d0f58422853313d784ae",
+      "bytes": 4884,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/styles/iso-lab-markers.styles.ts",
+      "sha256": "2ce3d7fa4f38184ceedf396344a621feca53db28cfb5786e5ce0c9c93c429376",
+      "bytes": 14032,
+      "scope": "product-prototype"
+    },
+    {
+      "path": "src/styles/plan.styles.ts",
+      "sha256": "77e63947ba776beab12c1755aba96467e40dc205dd773f5d8febec6502994471",
+      "bytes": 65504,
+      "scope": "product-prototype"
+    }
+  ]
+}
