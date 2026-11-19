@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 16663,
+  "revision": 16664,
   "nextTicket": 538,
   "nextFence": 538,
   "tasks": {
@@ -5101,7 +5101,16 @@
         "docs/USER-GUIDE.ru.md",
         "docs/release-ledger/v1.85.0/1476.json",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "s6": {
+        "id": "20261119T120440780-56410cdb",
+        "name": "Тесты для задачи #1476 (перед слиянием)",
+        "reportPath": "/home/sergey/hp-1407-background-repair/.git/process-next/runs/20261119T120440780-56410cdb/report.json",
+        "materialSha": "3ab955f133610ea40e7e41c7cc4f5a3288346413",
+        "status": "passed",
+        "finishedAt": "2026-11-19T12:09:32.880Z",
+        "failures": []
+      }
     }
   },
   "ownerDecisions": {},
@@ -5591,9 +5600,9 @@
     "fence": 537,
     "materialSha": "3ab955f133610ea40e7e41c7cc4f5a3288346413",
     "expectedBase": "8a9cd979795b857b22af3cff5ae3fb282cc8caa0",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1795089866115,
-    "expiresAt": 1795090461597,
+    "expiresAt": 1795093774143,
     "patchId": "1c32e4850728a69ddbfd9f11fc3f54e9f1e98791"
   },
   "events": {
@@ -5655,6 +5664,10 @@
     },
     "finish:45d08d0b-6cc1-4fca-80de-34e6cfa3ac4d": {
       "digest": "95ac1f1cbb7e66a325865118e6c53a45e1e2f458643ec09db9358e200f8afd8d",
+      "issue": 1476
+    },
+    "finish:897f2d7e-c292-4252-8d4f-f2f07d3a4803:finish:3:s6-complete": {
+      "digest": "b2d0df878e9fcddbb584b7b35476d47477e389e7a1e42be5f2b6cc8954368826",
       "issue": 1476
     },
     "finish:897f2d7e-c292-4252-8d4f-f2f07d3a4803": {
